@@ -10,6 +10,7 @@ Welcome to AvaFrame's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+AvaFrame test text
 
 
 Indices and tables
