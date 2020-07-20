@@ -6,11 +6,37 @@
 Welcome to AvaFrame's documentation!
 ====================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
-AvaFrame test text
+Overview
+========
+
+* :doc:`introduction`
+* :doc:`develop`
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Overview
+
+   introduction.rst
+   develop.rst
+
+Modules
+=======
+
+* :doc:`moduleOverview`
+* :doc:`moduleStdDFA`
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Modules
+
+   moduleOverview.rst
+   moduleStdDFA.rst
+
+
+
 
 
 Indices and tables
