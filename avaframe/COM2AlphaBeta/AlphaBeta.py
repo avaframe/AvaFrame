@@ -278,16 +278,12 @@ def main():
     """ Run AlphaBetaMain model on test case"""
     ProfileLayer = '/home/matthiastonnel/Documents/gitea/AvaFrame/avaframe/COM2AlphaBeta/avalanche_path.xyz'
     DGMSource = '/home/matthiastonnel/Documents/gitea/AvaFrame/avaframe/COM2AlphaBeta/GBG_DGM.asc'
+    DGMSource = '/home/matthiastonnel/Documents/gitea/AvaFrame/avaframe/COM2AlphaBeta/BeispielTopographie.asc'
     print("[M] Running AlphaBetaMain model on test case DEM : ",DGMSource,'with profile:',ProfileLayer )
 
     [header,rasterdata] = ReadRaster(DGMSource)
     avapath = ReadAvaPath(ProfileLayer)
-    splitPoint = np.array([246572,367826])
-
-
-    xcoord = (avapath[0])
-    ycoord = (avapath[1])
-
+    splitPoint = np.array([1000,500])
 
 
     AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallAva = False)
