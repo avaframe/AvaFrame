@@ -6,6 +6,26 @@ Develop AvaFrame
 Notes on design principles and how to contribute to AvaFrame
 
 
+How to install
+--------------
+
+Clone repository::
+
+  git clone https://github.com/avaframe/AvaFrame.git
+
+Change directory::
+
+  cd AvaFrame
+
+And install avaframe::
+
+  pip install -e .
+
+This installs avaframe in editable mode, so everytime you import avaframe the
+current (local) version will be used.
+
+
+
 Our suggested git workflow
 --------------------------
 
