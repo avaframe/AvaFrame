@@ -162,6 +162,37 @@ def writeResultToAsc(header, resultArray, outType=None):
 
     outfile.close()
 
+# def writeABResult(header, resultArray, outType=None):
+#     #print "choose output file location and name"
+# (beta,alpha,x,y,s,z,ids_10Point,ids_alpha,ids_alphaM1SD,ids_alphaM2SD,abVersion,ParameterSet,saveOutPath):
+#     if outType != None:
+#         outfile = asksaveasfile(mode='w',
+#                 defaultextension='.asc',
+#                 title='Save Output File %s'%(outType),
+#                 filetypes=[('ASCII','*.asc')],
+#                 initialfile='path.asc',
+#                 initialdir=os.getcwd())
+#     else:
+#         outfile = asksaveasfile(mode='w',
+#                     defaultextension='.asc',
+#                     title='Save Output File',
+#                     filetypes=[('ASCII','*.asc')],
+#                     initialfile='path.asc',
+#                     initialdir=os.getcwd())
+#
+#     outfile.write("Parameter Set %s\n" % header.ncols)
+#     outfile.write("nrows %d\n" % header.nrows)
+#     outfile.write("xllcorner %.2f\n" % header.xllcorner)
+#     outfile.write("yllcorner %.2f\n" % header.yllcorner)
+#     outfile.write("cellsize %.2f\n" % header.cellsize)
+#     outfile.write("nodata_value %.2f\n" % header.noDataValue)
+#
+#     for i in range (resultArray.shape[0]):
+#         for j in range (resultArray.shape[1]):
+#             outfile.write("%f " % resultArray[i][j])
+#         outfile.write("\n")
+#
+#     outfile.close()
 
 def readpathdata2numpyArray (fName):
     infile = open(fName,"r")
