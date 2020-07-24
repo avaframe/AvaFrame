@@ -42,14 +42,18 @@ def AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallA
         ParameterSet = "Standard"
         LayerShortAppendix = "STD"
 
-
+    # read inputs, ressample ava path, make pofile and project split point on path
     AvaProfile, SplitPoint, indSplit = PrepareLine(header,rasterdata,avapath,splitPoint,distance=10)
 
-    # Sanity check if first element of z is highest:
+
+    # Sanity check if first element of AvaProfile[3,:] (i.e z component) is highest:
     # if not, flip all arrays
     if AvaProfile[2,-1] > AvaProfile[2,0]:
         print('[ABM] Profile reversed')
-        AvaProfile = np.flipud(AvaProfile)
+        L = AvaProfile[3,-1]
+        AvaProfile = np.fliplr(AvaProfile)
+        AvaProfile[3,:] = L - AvaProfile[3,:]
+        indSplit = np.shape(AvaProfile)[1]-indSplit
 
     s = AvaProfile[3,:]
     x = AvaProfile[0,:]
@@ -126,7 +130,7 @@ def AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallA
         print('-2 SD out of profile')
         ids_alphaM2SD = None
 
-    # Plot the whole shebang
+    # Plot the whole profile with beta, alpha ... points and lines
     plt.close("all")
     fig = plt.figure(4,figsize=(10,6))
     titleText = 'Profile'
@@ -137,7 +141,7 @@ def AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallA
     plt.xlabel(xlabelText,multialignment='center')
 
     plt.ylabel('Height [m]')
-    # plt.plot(x,z,'-', color=colors[0], label = 'DEM')
+
     plt.plot(s,z,'-', label = 'DEM')
     plt.plot(s,poly(s),':', label = 'QuadFit')
     plt.axvline(x=s[indSplit], color='0.7', \
@@ -154,8 +158,7 @@ def AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallA
         label='Alpha - 2SD')
 
     ax = plt.gca()
-    # plt.text(0, 0, 'matplotlib', horizontalalignment='center', \
-    #          verticalalignment='center', transform=ax.transAxes)
+
     versionText =  datetime.datetime.now().strftime("%d.%m.%y")  + \
     '; ' + 'AlphaBeta ' + abVersion + ' ' + ParameterSet
     plt.text(0, 0, versionText, fontsize=8 , verticalalignment='bottom', \
@@ -175,18 +178,21 @@ def AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallA
 
     # Plot Rater and path
     fig1,ax1 = plt.subplots()
-    cmap = mpl.cm.Greys  # Can be any colormap that you want after the cm
+    cmap = mpl.cm.Greys
     cmap.set_bad(color='white')
     im1 = plt.imshow(rasterdata, cmap,origin='lower')
     divider = make_axes_locatable(ax1)
     cax = divider.append_axes("right", size="5%", pad=0.1)
     cb1 = fig1.colorbar(im1, cax=cax)
     path1 = ax1.plot((x-header.xllcorner)/header.cellsize,(y-header.yllcorner)/header.cellsize)
-    ax1.plot((AvaProfile[0]-header.xllcorner)/header.cellsize,(AvaProfile[1]-header.yllcorner)/header.cellsize,'k')
-    ax1.plot((splitPoint[0]-header.xllcorner)/header.cellsize,(splitPoint[1]-header.yllcorner)/header.cellsize,'.',color='0.6', label = 'Split point')
-    ax1.plot((SplitPoint[0]-header.xllcorner)/header.cellsize,(SplitPoint[1]-header.yllcorner)/header.cellsize,'.',color='0.3', label = 'Projection of Split Point on ava path')
-    # plt.legend(loc="upper left")
-
+    ax1.plot((AvaProfile[0]-header.xllcorner)/header.cellsize,\
+    (AvaProfile[1]-header.yllcorner)/header.cellsize,'k')
+    ax1.plot((splitPoint[0]-header.xllcorner)/header.cellsize,\
+    (splitPoint[1]-header.yllcorner)/header.cellsize,'.',color='0.6',\
+     label = 'Split point')
+    ax1.plot((SplitPoint[0]-header.xllcorner)/header.cellsize,\
+    (SplitPoint[1]-header.yllcorner)/header.cellsize,'.',color='0.3',\
+     label = 'Projection of Split Point on ava path')
     plt.show()
     plt.close(fig)
     plt.close(fig1)
@@ -197,18 +203,22 @@ def AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallA
 def ProjectOnRaster(header,rasterdata,Points):
     ''' Projects the points Points on Raster and returns the z coord
     Input :
-    Points: list of points (x,y) 2 colums as many rows as Points
+    Points: list of points (x,y) 2 rows as many columns as Points
     Output:
-    PointsZ: list of points (x,y,z) 3 colums as many rows as Points'''
+    PointsZ: list of points (x,y,z) 3 rows as many columns as Points'''
     xllcorner = header.xllcorner
     yllcorner = header.yllcorner
     cellsize = header.cellsize
+    ncol = header.ncols
+    nrow = header.nrows
     xcoor = Points[0]
     ycoor = Points[1]
     zcoor = np.array([])
     for i in range(np.shape(xcoor)[0]):
         Lx = int(np.round((xcoor[i]-xllcorner)/cellsize))
         Ly = int(np.round((ycoor[i]-yllcorner)/cellsize))
+        if (Ly<0 or Ly>nrow or Lx<0 or Lx>ncol):
+            raise ValueError('Avalanche path exceeds DEM extend')
         zcoor = np.append(zcoor,rasterdata[Ly][Lx])
     PointsZ = np.vstack((Points,zcoor))
     return (PointsZ)
@@ -232,7 +242,7 @@ def PrepareLine(header,rasterdata,avapath,splitPoint,distance=10):
         Vy = ycoor[i+1]-ycoor[i]
         D = np.sqrt(Vx**2+Vy**2)
         nd = int(np.round(D/distance)+1)
-        # Resample
+        # Resample each segment
         S0 = s[-1]
         for j in range(1,nd):
             xn = j/(nd-1)*Vx + xcoor[i]
@@ -262,29 +272,34 @@ def PrepareLine(header,rasterdata,avapath,splitPoint,distance=10):
 def ReadRaster(DGMSource):
     print('[RR] Reading DEM :',DGMSource)
     header = IOf.readASCheader(DGMSource)
-    print(header)
+    # print(header)
     rasterdata = IOf.readASCdata2numpyArray (DGMSource,header)
     rasterdata[rasterdata == header.noDataValue] = np.NaN
     return [header,np.flipud(rasterdata)]
 
 def ReadAvaPath(PathSource):
-    print('[RAP] Reading avalanch path :',PathSource)
-    avapath = np.transpose(np.loadtxt(PathSource))
+    print('[RAP] Reading avalanche path :',PathSource)
+    # avapath = np.transpose(np.loadtxt(PathSource))
+    avapath = IOf.readpathdata2numpyArray (PathSource)
+    if np.shape(avapath)[0]<2:
+        raise ValueError('Ava path file should contain at least 2 columns')
 
     return avapath
 
 
 def main():
     """ Run AlphaBetaMain model on test case"""
-    ProfileLayer = '/home/matthiastonnel/Documents/gitea/AvaFrame/avaframe/COM2AlphaBeta/avalanche_path.xyz'
-    DGMSource = '/home/matthiastonnel/Documents/gitea/AvaFrame/avaframe/COM2AlphaBeta/GBG_DGM.asc'
-    DGMSource = '/home/matthiastonnel/Documents/gitea/AvaFrame/avaframe/COM2AlphaBeta/BeispielTopographie.asc'
+    ProfileLayer = '/home/matthiastonnel/Documents/gitea/AvaFrame/avaframe/data/avalanche_path_Slide.txt'
+    DGMSource = '/home/matthiastonnel/Documents/gitea/AvaFrame/avaframe/data/Slide_Topographie.asc'
     print("[M] Running AlphaBetaMain model on test case DEM : ",DGMSource,'with profile:',ProfileLayer )
 
     [header,rasterdata] = ReadRaster(DGMSource)
     avapath = ReadAvaPath(ProfileLayer)
     splitPoint = np.array([1000,500])
-
+    Lx = int(np.round((splitPoint[0]-header.xllcorner)/header.cellsize))
+    Ly = int(np.round((splitPoint[1]-header.yllcorner)/header.cellsize))
+    if (Ly<0 or Ly>header.nrows or Lx<0 or Lx>header.ncols):
+        raise ValueError('Split point is not on the DEM')
 
     AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallAva = False)
 
