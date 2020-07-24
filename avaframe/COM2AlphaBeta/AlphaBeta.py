@@ -131,6 +131,30 @@ def AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallA
         print('-2 SD out of profile')
         ids_alphaM2SD = None
 
+    # Plot Rater and path
+    fig1,ax1 = plt.subplots()
+    cmap = mpl.cm.Greys
+    cmap.set_bad(color='white')
+    im1 = plt.imshow(rasterdata, cmap,origin='lower')
+    divider = make_axes_locatable(ax1)
+    cax = divider.append_axes("right", size="5%", pad=0.1)
+    cb1 = fig1.colorbar(im1, cax=cax)
+    path1 = ax1.plot((x-header.xllcorner)/header.cellsize,(y-header.yllcorner)/header.cellsize)
+    ax1.plot((AvaProfile[0]-header.xllcorner)/header.cellsize,\
+    (AvaProfile[1]-header.yllcorner)/header.cellsize,'k')
+    ax1.plot((splitPoint[0]-header.xllcorner)/header.cellsize,\
+    (splitPoint[1]-header.yllcorner)/header.cellsize,'.',color='0.6',\
+     label = 'Split point')
+    ax1.plot((SplitPoint[0]-header.xllcorner)/header.cellsize,\
+    (SplitPoint[1]-header.yllcorner)/header.cellsize,'.',color='0.3',\
+     label = 'Projection of Split Point on ava path')
+    plt.show()
+
+    # Plot the whole profile with beta, alpha ... points and lines
+    plotSaveResults(beta,alpha,x,y,s,z,f,poly,indSplit,ids_10Point,ids_alpha,ids_alphaM1SD,ids_alphaM2SD,abVersion,ParameterSet,saveOutPath)
+
+
+def plotSaveResults(beta,alpha,x,y,s,z,f,poly,indSplit,ids_10Point,ids_alpha,ids_alphaM1SD,ids_alphaM2SD,abVersion,ParameterSet,saveOutPath):
     # Plot the whole profile with beta, alpha ... points and lines
     plotSaveResults(beta,alpha,x,y,s,z,f,poly,indSplit,ids_10Point,ids_alpha,ids_alphaM1SD,ids_alphaM2SD,abVersion,ParameterSet,saveOutPath)
     # print(z)
@@ -185,7 +209,6 @@ def plotSaveResults(beta,alpha,x,y,s,z,f,poly,indSplit,ids_10Point,ids_alpha,ids
     plt.grid(linestyle=':',color='0.9')
     plt.legend(frameon=False)
     plt.draw()
-    # plt.show()
     print('[ABM] Saving profile figure to:',saveOutPath)
     save_file = os.path.join(saveOutPath, 'AlphaBeta_.pdf')
     plt.savefig(save_file)
@@ -221,8 +244,6 @@ def ProjectOnRaster(header,rasterdata,Points):
     for i in range(np.shape(xcoor)[0]):
         Lx = int(np.round((xcoor[i]-xllcorner)/cellsize))
         Ly = int(np.round((ycoor[i]-yllcorner)/cellsize))
-        if (Ly<0 or Ly>nrow or Lx<0 or Lx>ncol):
-            raise ValueError('Avalanche path exceeds DEM extend')
         zcoor = np.append(zcoor,rasterdata[Ly][Lx])
     PointsZ = np.vstack((Points,zcoor))
     return (PointsZ)
