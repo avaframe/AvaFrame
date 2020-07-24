@@ -25,7 +25,8 @@ Modules
 =======
 
 * :doc:`moduleOverview`
-* :doc:`moduleStdDFA`
+* :doc:`moduleCom1DFA`
+* :doc:`moduleCom2AB`
 
 .. toctree::
    :maxdepth: 1
@@ -33,7 +34,8 @@ Modules
    :caption: Modules
 
    moduleOverview.rst
-   moduleStdDFA.rst
+   moduleCom1DFA.rst
+   moduleCom2AB.rst
 
 
 

@@ -1,4 +1,4 @@
-Module Standard DFA-Kernel
+com2AB: Module AlphaBeta 
 ==========================
 
 Input
