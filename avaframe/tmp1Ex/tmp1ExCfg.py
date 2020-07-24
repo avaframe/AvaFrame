@@ -5,9 +5,9 @@ So copy this file to local_tmp1ExmpleConf.py, adjust your variables there
 This file serves as template file and general settings file
 """
 
-###########################
-## Required settings
-###########################
+# ##########################
+# Required settings
+# ##########################
 
 # Input directory containing avalanche data
 inputDir = 'Path to avalanche directory'
@@ -15,9 +15,9 @@ inputDir = 'Path to avalanche directory'
 # path to work directory
 workDir = 'Path to working directory'
 
-###########################
-## Optional settings
-###########################
+# ##########################
+# Optional settings
+# ##########################
 
 # Some example flag
 fullLog = True
