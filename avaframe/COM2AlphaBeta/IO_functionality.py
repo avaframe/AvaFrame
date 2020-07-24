@@ -161,3 +161,27 @@ def writeResultToAsc(header, resultArray, outType=None):
         outfile.write("\n")
 
     outfile.close()
+
+
+def readpathdata2numpyArray (fName):
+    infile = open(fName,"r")
+    i = 0
+    for aline in infile:
+        item = aline.split()
+        test = True
+        try:
+            float(item[0])
+        except:
+            test = False
+        if test:
+            break
+        i += 1
+    if not test:
+        raise ValueError('[ReadPD2NA] wrong type of path input file')
+
+
+    data = numpy.transpose(numpy.loadtxt(fName, skiprows=i))
+
+
+
+    return (data)
