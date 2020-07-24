@@ -153,11 +153,14 @@ def AlphaBetaMain(header,rasterdata,avapath,splitPoint,saveOutPath = './',smallA
     # Plot the whole profile with beta, alpha ... points and lines
     plotSaveResults(beta,alpha,x,y,s,z,f,poly,indSplit,ids_10Point,ids_alpha,ids_alphaM1SD,ids_alphaM2SD,abVersion,ParameterSet,saveOutPath)
 
+    print('Parameter Set %s\n' % ParameterSet)
+    print('Alpha point (x,y,s) in [m]:(%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (x[ids_alpha],y[ids_alpha],s[ids_alpha],alpha))
+    print('Beta point (x,y,s) in [m]:(%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (x[ids_10Point],y[ids_10Point],s[ids_10Point],beta))
+    print('alphaM1SD point (x,y,s) in [m]:(%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (x[ids_alphaM1SD],y[ids_alphaM1SD],s[ids_alphaM1SD],alphaSD[1]))
+    print('alphaM2SD point (x,y,s) in [m]:(%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (x[ids_alphaM2SD],y[ids_alphaM2SD],s[ids_alphaM2SD],alphaSD[2]))
+    print('alphaP1SD point (x,y,s) in [m]:(%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (x[ids_alphaP1SD],y[ids_alphaP1SD],s[ids_alphaP1SD],alphaSD[0]))
 
 def plotSaveResults(beta,alpha,x,y,s,z,f,poly,indSplit,ids_10Point,ids_alpha,ids_alphaM1SD,ids_alphaM2SD,abVersion,ParameterSet,saveOutPath):
-    # Plot the whole profile with beta, alpha ... points and lines
-    plotSaveResults(beta,alpha,x,y,s,z,f,poly,indSplit,ids_10Point,ids_alpha,ids_alphaM1SD,ids_alphaM2SD,abVersion,ParameterSet,saveOutPath)
-    # print(z)
     print('Parameter Set %s\n' % ParameterSet)
     print('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (x[ids_alpha],y[ids_alpha],z[ids_alpha],s[ids_alpha],alpha))
     print('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (x[ids_10Point],y[ids_10Point],z[ids_10Point],s[ids_10Point],beta))
