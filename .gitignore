@@ -1,0 +1,4 @@
+# local settings/configurations files
+local_*
+
+__pycache__
