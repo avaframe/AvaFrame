@@ -24,6 +24,22 @@ And install avaframe::
 This installs avaframe in editable mode, so everytime you import avaframe the
 current (local) version will be used.
 
+How to test
+-----------
+
+To run some simple tests just run::
+
+  pytest
+
+and you should see something like::
+
+  ===========================test session starts ======================
+  platform linux -- Python 3.8.3, pytest-5.4.3, py-1.9.0, pluggy-0.13.1
+  collected 1 item                                                                                                             
+  tests/test_tmp1Ex.py .                                       [100%]
+
+  ==========================1 passed in 0.02s =========================
+
 
 
 Our suggested git workflow
