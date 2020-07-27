@@ -5,6 +5,7 @@ import numpy
 from decimal import *
 from numpy import *
 
+
 class cASCheader:
     def __init__(self):
         self.nrows = None
@@ -25,8 +26,9 @@ class cASCheader:
 
 
 def readASCheader(fname):
-    '''input: Filename (z.B.: 'xx/xx/file.asc')
-    returns: ascHeader for filename (see class cASCheader)'''
+    """input: Filename (z.B.: 'xx/xx/file.asc')
+    returns: ascHeader for filename (see class cASCheader)
+    """
 
     dhmInfo = cASCheader()
     infile = open(fname, "r")

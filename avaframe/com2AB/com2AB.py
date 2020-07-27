@@ -3,21 +3,22 @@
 """ Main file for module com2AB - Alpha Beta
 """
 
+
 import os
+import datetime
 import numpy as np
 import matplotlib.pyplot as plt
-import datetime
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
+# Local imports
+import avaframe.in3Utils as IOf
+
 colors = ["#393955", "#8A8A9B", "#E9E940"]
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
-# Local imports
-import avaframe
-import avaframe.com2AB.com2ABCfg as conf
-import avaframe.com2AB.IO_functionality as IOf
 
-def setEqParameters(smallAva=False,customParam=[]):
+def setEqParameters(smallAva=False,customParam=None):
     """Set alpha beta equation parameters to
     - standard (default)
     - small avalanche
@@ -25,7 +26,7 @@ def setEqParameters(smallAva=False,customParam=[]):
     TODO: test
     """
 
-    eqParameters = []
+    eqParameters = {}
 
     if smallAva is True:
         print('[com2AB] Using small Avalanche Setup')
@@ -71,7 +72,7 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
 
     eqParams, ParameterSet = setEqParameters(smallAva)
 
-    #TODO: make rest work with dict
+    # TODO: make rest work with dict
     k1 = eqParams['k1']
     k2 = eqParams['k2']
     k3 = eqParams['k3']
@@ -80,7 +81,7 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
 
     # read inputs, ressample ava path
     # make pofile and project split point on path
-    AvaProfile, SplitPoint, indSplit = PrepareLine(
+    AvaProfile, SplitPoint, indSplit = prepareLine(
         header, rasterdata, avapath, splitPoint, distance=10)
 
     # Sanity check if first element of AvaProfile[3,:]
@@ -272,7 +273,7 @@ def plotSaveResults(beta, alpha, x, y, s, z, f, poly, indSplit,
 
 def WriteResults(beta, alpha, x, y, s, z, ids_10Point, ids_alpha,
                  ids_alphaM1SD, ids_alphaM2SD, ids_alphaP1SD,
-                 alphaSD, abVersion, ParameterSet, saveOutPath):
+                 alphaSD, ParameterSet, saveOutPath):
     """ Write com2AB results to file """
 
     FileName_ext = saveOutPath + 'results_python.txt'
@@ -290,7 +291,7 @@ def WriteResults(beta, alpha, x, y, s, z, ids_10Point, ids_alpha,
             x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD], s[ids_alphaP1SD], alphaSD[0]))
 
 
-def ProjectOnRaster(header, rasterdata, Points):
+def projectOnRaster(header, rasterdata, Points):
     """ Projects the points Points on Raster and returns the z coord
     Input :
     Points: list of points (x,y) 2 rows as many columns as Points
@@ -314,7 +315,7 @@ def ProjectOnRaster(header, rasterdata, Points):
     PointsZ = np.vstack((Points, zcoor))
     return (PointsZ)
 
-def PrepareLine(header, rasterdata, avapath, splitPoint, distance=10):
+def prepareLine(header, rasterdata, avapath, splitPoint, distance=10):
     """ 1- Resample the avapath line with a max intervall of distance=10m
     between points (projected distance on the horizontal plane).
     2- Make avalanch profile out of the path (affect a z value using the DEM)
@@ -350,7 +351,7 @@ def PrepareLine(header, rasterdata, avapath, splitPoint, distance=10):
     # header.cellsize*(header.nrows-1)]]))
     # Test = ProjectOnRaster(header,rasterdata,test)
     ResampAvaPath = np.vstack((xcoornew, ycoornew))
-    AvaProfile = ProjectOnRaster(header, rasterdata, ResampAvaPath)
+    AvaProfile = projectOnRaster(header, rasterdata, ResampAvaPath)
     AvaProfile = np.vstack((AvaProfile, s))
 
     # find split point by computing the distance to the line
@@ -362,7 +363,7 @@ def PrepareLine(header, rasterdata, avapath, splitPoint, distance=10):
     return AvaProfile, SplitPoint, indSplit
 
 
-def ReadRaster(fname):
+def readRaster(fname):
     """ Read raster file from raster filename (.asc)"""
 
     print('[com2AB] Reading DEM :', fname)
@@ -372,7 +373,7 @@ def ReadRaster(fname):
     return [header, np.flipud(rasterdata)]
 
 
-def ReadAvaPath(fname, header):
+def readAvaPath(fname, header):
     """ Read avalanche path file from .txt or .xyz"""
 
     print('[com2AB] Reading avalanche path :', fname)
@@ -387,7 +388,7 @@ def ReadAvaPath(fname, header):
     return avapath
 
 
-def ReadSplitPoint(fname, header):
+def readSplitPoint(fname, header):
     """ Read split point path file from .txt or .xyz"""
 
     print('[com2AB] Reading split point :', fname)
