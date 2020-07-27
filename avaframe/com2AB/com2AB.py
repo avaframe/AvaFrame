@@ -1,54 +1,75 @@
 #!/usr/bin/env python
 # coding: utf-8
-""" Main file for module com2AB - Alpha Beta"""
-import csv
+""" Main file for module com2AB - Alpha Beta
+"""
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-# from shapely.geometry import Point, LineString
-import time
 import datetime
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 colors = ["#393955", "#8A8A9B", "#E9E940"]
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
-
-# Local import
+# Local imports
 import avaframe
 import avaframe.com2AB.com2ABCfg as conf
 import avaframe.com2AB.IO_functionality as IOf
 
+def setEqParameters(smallAva=False,customParam=[]):
+    """Set alpha beta equation parameters to
+    - standard (default)
+    - small avalanche
+    - custom
+    TODO: test
+    """
+
+    eqParameters = []
+
+    if smallAva is True:
+        print('[com2AB] Using small Avalanche Setup')
+        eqParameters['k1'] = 0.933
+        eqParameters['k2'] = 0.0
+        eqParameters['k3'] = 0.0088
+        eqParameters['k4'] = -5.02
+        eqParameters['SD'] = 2.36
+
+        ParameterSet = "Small avalanches"
+
+    elif customParam:
+        print('[com2AB] Using standard Avalanche Setup')
+        eqParameters['k1'] = customParam['k1']
+        eqParameters['k2'] = customParam['k2']
+        eqParameters['k3'] = customParam['k3']
+        eqParameters['k4'] = customParam['k4']
+        eqParameters['SD'] = customParam['SD']
+
+        ParameterSet = "Custom"
+
+    else:
+        print('[com2AB] Using standard Avalanche Setup')
+        eqParameters['k1'] = 1.05
+        eqParameters['k2'] = -3130.0
+        eqParameters['k3'] = 0.0
+        eqParameters['k4'] = -2.38
+        eqParameters['SD'] = 1.25
+
+        ParameterSet = "Standard"
+
+    return eqParameters, ParameterSet
+
 
 def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
-                  smallAva=False):
-    ''' Computes the AlphaBeta model given an input raster (of the DEM),
-    an Avalanche path and a split point
-    '''
+               smallAva=False):
+    """ Computes the AlphaBeta model given an input raster (of the DEM),
+    an avalanche path and a split point
+    """
+
     abVersion = '4.1'
     print('Running Version: ', abVersion)
 
-    if smallAva == True:
-        print('Using small Avalanche Setup')
-        k1 = 0.933
-        k2 = 0.0
-        k3 = 0.0088
-        k4 = -5.02
-        SD = 2.36
-
-        ParameterSet = "Kleinlawinen"
-        LayerShortAppendix = "SM"
-
-    else:
-        print('Using standard Avalanche Setup')
-        k1 = 1.05
-        k2 = -3130.0
-        k3 = 0.0
-        k4 = -2.38
-        SD = 1.25
-
-        ParameterSet = "Standard"
-        LayerShortAppendix = "STD"
+    k1, k2, k3, k4, ParameterSet = setEqParameters(smallAva)
 
     # read inputs, ressample ava path
     # make pofile and project split point on path
@@ -58,6 +79,7 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
     # Sanity check if first element of AvaProfile[3,:]
     # (i.e z component) is highest:
     # if not, flip all arrays
+    # TODO: break out to testable function
     if AvaProfile[2, -1] > AvaProfile[2, 0]:
         print('[com2AB] Profile reversed')
         L = AvaProfile[3, -1]
@@ -65,6 +87,11 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
         AvaProfile[3, :] = L - AvaProfile[3, :]
         indSplit = np.shape(AvaProfile)[1]-indSplit
 
+    # END TODO
+
+
+    # TODO: breackout to testable function
+    # TODO: more descriptiv: what is s? x,y,z are clear
     s = AvaProfile[3, :]
     x = AvaProfile[0, :]
     y = AvaProfile[1, :]
@@ -101,6 +128,12 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
     SDs = [SD, -1*SD, -2*SD]
     alphaSD = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4 + SDs
 
+    # TODO END: breackout to testable function
+
+
+    # TODO: the rest is plotting + analytical stuff
+    # I (FSO) suggest we just write it out and move these functions to IO module?
+
     # Line down to alpha
     f = z[0] + np.tan(np.deg2rad(-alpha)) * s
     fplus1SD = z[0] + np.tan(np.deg2rad(-alphaSD[0])) * s
@@ -136,7 +169,7 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
     except print('-2 SD out of profile'):
         ids_alphaM2SD = None
 
-    # Plot Rater and path
+    # Plot raster and path
     fig1, ax1 = plt.subplots()
     cmap = mpl.cm.Greys
     cmap.set_bad(color='white')
@@ -149,16 +182,18 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
     ax1.plot((AvaProfile[0]-header.xllcorner)/header.cellsize,
              (AvaProfile[1]-header.yllcorner)/header.cellsize, 'k')
     ax1.plot((splitPoint[0]-header.xllcorner)/header.cellsize,
-             (splitPoint[1]-header.yllcorner)/header.cellsize, '.', color='0.6', label='Split point')
+             (splitPoint[1]-header.yllcorner)/header.cellsize, '.',
+             color='0.6', label='Split point')
     ax1.plot((SplitPoint[0]-header.xllcorner)/header.cellsize,
-             (SplitPoint[1]-header.yllcorner)/header.cellsize, '.', color='0.3', label='Projection of Split Point on ava path')
+             (SplitPoint[1]-header.yllcorner)/header.cellsize, '.',
+             color='0.3', label='Projection of Split Point on ava path')
     plt.show()
 
     # Plot the whole profile with beta, alpha ... points and lines
     plotSaveResults(beta, alpha, x, y, s, z, f, poly, indSplit, ids_10Point,
                     ids_alpha, ids_alphaM1SD, ids_alphaM2SD, abVersion,
                     ParameterSet, saveOutPath)
-    # print(z)
+
     print('Parameter Set %s\n' % ParameterSet)
     print('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
         x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
@@ -174,7 +209,12 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
                  ids_alphaM2SD, ids_alphaP1SD, alphaSD, abVersion, ParameterSet, saveOutPath)
 
 
-def plotSaveResults(beta, alpha, x, y, s, z, f, poly, indSplit, ids_10Point, ids_alpha, ids_alphaM1SD, ids_alphaM2SD, abVersion, ParameterSet, saveOutPath):
+def plotSaveResults(beta, alpha, x, y, s, z, f, poly, indSplit,
+                    ids_10Point, ids_alpha, ids_alphaM1SD,
+                    ids_alphaM2SD, abVersion, ParameterSet, saveOutPath):
+    """TODO: - doc
+    - split into save and plot"""
+
     # Plot the whole profile with beta, alpha ... points and lines
     plt.close("all")
     fig = plt.figure(4, figsize=(10, 6))
@@ -223,8 +263,11 @@ def plotSaveResults(beta, alpha, x, y, s, z, f, poly, indSplit, ids_10Point, ids
     plt.close(fig)
     plt.close("all")
 
-def WriteResults(beta, alpha, x, y, s, z, ids_10Point, ids_alpha, ids_alphaM1SD, ids_alphaM2SD, ids_alphaP1SD, alphaSD, abVersion, ParameterSet, saveOutPath):
-    ''' Write results to file '''
+def WriteResults(beta, alpha, x, y, s, z, ids_10Point, ids_alpha,
+                 ids_alphaM1SD, ids_alphaM2SD, ids_alphaP1SD,
+                 alphaSD, abVersion, ParameterSet, saveOutPath):
+    """ Write com2AB results to file """
+
     FileName_ext = saveOutPath + 'results_python.txt'
     with open(FileName_ext, 'w') as outfile:
         outfile.write('Parameter Set %s\n' % ParameterSet)
@@ -241,11 +284,14 @@ def WriteResults(beta, alpha, x, y, s, z, ids_10Point, ids_alpha, ids_alphaM1SD,
 
 
 def ProjectOnRaster(header, rasterdata, Points):
-    ''' Projects the points Points on Raster and returns the z coord
+    """ Projects the points Points on Raster and returns the z coord
     Input :
     Points: list of points (x,y) 2 rows as many columns as Points
     Output:
-    PointsZ: list of points (x,y,z) 3 rows as many columns as Points'''
+    PointsZ: list of points (x,y,z) 3 rows as many columns as Points
+
+    TODO: test
+    """
     xllcorner = header.xllcorner
     yllcorner = header.yllcorner
     cellsize = header.cellsize
@@ -261,13 +307,14 @@ def ProjectOnRaster(header, rasterdata, Points):
     PointsZ = np.vstack((Points, zcoor))
     return (PointsZ)
 
-
 def PrepareLine(header, rasterdata, avapath, splitPoint, distance=10):
-    ''' 1- Resample the avapath line with a max intervall of distance=10m
+    """ 1- Resample the avapath line with a max intervall of distance=10m
     between points (projected distance on the horizontal plane).
     2- Make avalanch profile out of the path (affect a z value using the DEM)
     3- Get projected split point on the profil (closest point)
-    '''
+
+    TODO: test
+    """
 
     xcoor = avapath[0]
     ycoor = avapath[1]
@@ -309,21 +356,19 @@ def PrepareLine(header, rasterdata, avapath, splitPoint, distance=10):
 
 
 def ReadRaster(fname):
-    ''' Read raster file from raster filename (.asc)'''
+    """ Read raster file from raster filename (.asc)"""
 
     print('[com2AB] Reading DEM :', fname)
     header = IOf.readASCheader(fname)
-    # print(header)
     rasterdata = IOf.readASCdata2numpyArray(fname, header)
     rasterdata[rasterdata == header.noDataValue] = np.NaN
     return [header, np.flipud(rasterdata)]
 
 
 def ReadAvaPath(fname, header):
-    ''' Read avalanche path file from .txt or .xyz'''
+    """ Read avalanche path file from .txt or .xyz"""
 
     print('[com2AB] Reading avalanche path :', fname)
-    # avapath = np.transpose(np.loadtxt(PathSource))
     avapath = IOf.readpathdata2numpyArray(fname)
     if np.shape(avapath)[0] < 2:
         raise ValueError('Ava path file should contain at least 2 columns')
@@ -335,9 +380,8 @@ def ReadAvaPath(fname, header):
     return avapath
 
 
-
 def ReadSplitPoint(fname, header):
-    ''' Read split point path file from .txt or .xyz'''
+    """ Read split point path file from .txt or .xyz"""
 
     print('[com2AB] Reading split point :', fname)
     splitPoint = IOf.readpathdata2numpyArray(fname)
@@ -349,16 +393,3 @@ def ReadSplitPoint(fname, header):
         raise ValueError('Split point is not on the DEM')
     return splitPoint
 
-def main():
-    """ Run AlphaBetaMain model on test case"""
-    print("[com2AB] Running com2ABMain model on test case DEM : ",
-          conf.DGMSource, 'with profile:', conf.ProfileLayer)
-
-    [header, rasterdata] = ReadRaster(conf.DGMSource)
-    avapath = ReadAvaPath(conf.ProfileLayer, header)
-    splitPoint = ReadSplitPoint(conf.SplitPointSource, header)
-
-    com2ABMain(header, rasterdata, avapath, splitPoint, conf.saveOutPath, conf.smallAva)
-
-if __name__ == "__main__":
-    main()

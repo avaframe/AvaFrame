@@ -1,24 +1,9 @@
-#####################################################
-# Input-Output functions  for GraviProMod
-# Einlesen und Ausschreiben von Hohenmodellen, Start-
-# zellen bzw. Ergebnisrastern, etc.
-#####################################################
-# from: 11.03.2013
-# by: Huber A.
-# last modified: 23.07.2020
-# by: Tonnel M.
-#####################################################
-# Import numpypy
-import math
+""" ASCII file readers and handlers
+TODO: move to proper module """
 import os
-import sys
-import copy
 import numpy
-from tkinter import filedialog  # was from tkFileDialog import * in python 2
 from decimal import *
 from numpy import *
-#from topslide_classes_functions import *
-
 
 class cASCheader:
     def __init__(self):
