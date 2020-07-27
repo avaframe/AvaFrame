@@ -17,7 +17,7 @@ import numpy
 from tkinter import filedialog  # was from tkFileDialog import * in python 2
 from decimal import *
 from numpy import *
-##from topslide_classes_functions import *
+#from topslide_classes_functions import *
 
 
 class cASCheader:
@@ -40,10 +40,9 @@ class cASCheader:
 
 
 def readASCheader(fname):
-    ########################################################
-    #input: Filename (z.B.: 'xx/xx/file.asc')              #
-    #returns: ascHeader for filename (see class cASCheader)#
-    ########################################################
+    '''input: Filename (z.B.: 'xx/xx/file.asc')
+    returns: ascHeader for filename (see class cASCheader)'''
+
     dhmInfo = cASCheader()
     infile = open(fname, "r")
     i = 0
@@ -70,12 +69,12 @@ def readASCheader(fname):
             dhmInfo.noDataValue = float(item[1])
         ln += 1
 
-    if dhmInfo.xllcenter == None and dhmInfo.yllcenter == None:
-        dhmInfo.xllcenter = dhmInfo.xllcorner + dhmInfo.cellsize/2
-        dhmInfo.yllcenter = dhmInfo.yllcorner + dhmInfo.cellsize/2
+    if dhmInfo.xllcenter is None and dhmInfo.yllcenter is None:
+        dhmInfo.xllcenter = dhmInfo.xllcorner + dhmInfo.cellsize / 2
+        dhmInfo.yllcenter = dhmInfo.yllcorner + dhmInfo.cellsize / 2
     else:
-        dhmInfo.xllcorner = dhmInfo.xllcenter - dhmInfo.cellsize/2
-        dhmInfo.yllcorner = dhmInfo.yllcenter - dhmInfo.cellsize/2
+        dhmInfo.xllcorner = dhmInfo.xllcenter - dhmInfo.cellsize / 2
+        dhmInfo.yllcorner = dhmInfo.yllcenter - dhmInfo.cellsize / 2
 
     infile.close()
     return dhmInfo
@@ -94,7 +93,7 @@ def isEqualASCheader(headerA, headerB):
 
 def readASCdata2numpyArray(fName, headerFile=None):
 
-    if headerFile != None:
+    if headerFile is not None:
         # open input File
         infile = open(fName, "r")
 
@@ -110,7 +109,7 @@ def readASCdata2numpyArray(fName, headerFile=None):
             item = aline.split()
             if i > 5:
                 for x in range(headerFile.ncols):
-                    data[i-6, j] = float(item[x])
+                    data[i - 6, j] = float(item[x])
                     j += 1
                 j = 0
             i += 1
@@ -142,7 +141,7 @@ def readASCdata2numpyArray(fName, headerFile=None):
 def writeResultToAsc(header, resultArray, outType=None):
     # print "choose output file location and name"
 
-    if outType != None:
+    if outType is not None:
         outfile = asksaveasfile(mode='w',
                                 defaultextension='.asc',
                                 title='Save Output File %s' % (outType),

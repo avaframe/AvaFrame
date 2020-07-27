@@ -15,7 +15,9 @@ colors = ["#393955", "#8A8A9B", "#E9E940"]
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
 
-def AlphaBetaMain(header, rasterdata, avapath, splitPoint, saveOutPath='./', smallAva=False):
+
+def AlphaBetaMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
+                  smallAva=False):
     ''' Computes the AlphaBeta model given an input raster (of the DEM),
     an Avalanch path and a split point
     '''
@@ -44,11 +46,13 @@ def AlphaBetaMain(header, rasterdata, avapath, splitPoint, saveOutPath='./', sma
         ParameterSet = "Standard"
         LayerShortAppendix = "STD"
 
-    # read inputs, ressample ava path, make pofile and project split point on path
+    # read inputs, ressample ava path
+    # make pofile and project split point on path
     AvaProfile, SplitPoint, indSplit = PrepareLine(
         header, rasterdata, avapath, splitPoint, distance=10)
 
-    # Sanity check if first element of AvaProfile[3,:] (i.e z component) is highest:
+    # Sanity check if first element of AvaProfile[3,:]
+    # (i.e z component) is highest:
     # if not, flip all arrays
     if AvaProfile[2, -1] > AvaProfile[2, 0]:
         print('[ABM] Profile reversed')
@@ -110,26 +114,22 @@ def AlphaBetaMain(header, rasterdata, avapath, splitPoint, saveOutPath='./', sma
     # Only get the first index past the splitpoint
     try:
         ids_alpha = ids_alpha[s[ids_alpha] > CuSplit][0]
-    except:
-        print('Alpha out of profile')
+    except print('Alpha out of profile'):
         ids_alpha = None
 
     try:
         ids_alphaP1SD = ids_alphaP1SD[s[ids_alphaP1SD] > CuSplit][0]
-    except:
-        print('+1 SD above beta point')
+    except print('+1 SD above beta point'):
         ids_alphaP1SD = None
 
     try:
         ids_alphaM1SD = ids_alphaM1SD[s[ids_alphaM1SD] > CuSplit][0]
-    except:
-        print('-1 SD out of profile')
+    except print('-1 SD out of profile'):
         ids_alphaM1SD = None
 
     try:
         ids_alphaM2SD = ids_alphaM2SD[s[ids_alphaM2SD] > CuSplit][0]
-    except:
-        print('-2 SD out of profile')
+    except print('-2 SD out of profile'):
         ids_alphaM2SD = None
 
     # Plot Rater and path
@@ -140,20 +140,20 @@ def AlphaBetaMain(header, rasterdata, avapath, splitPoint, saveOutPath='./', sma
     divider = make_axes_locatable(ax1)
     cax = divider.append_axes("right", size="5%", pad=0.1)
     cb1 = fig1.colorbar(im1, cax=cax)
-    path1 = ax1.plot((x-header.xllcorner)/header.cellsize, (y-header.yllcorner)/header.cellsize)
+    path1 = ax1.plot((x-header.xllcorner)/header.cellsize,
+                     (y-header.yllcorner)/header.cellsize)
     ax1.plot((AvaProfile[0]-header.xllcorner)/header.cellsize,
              (AvaProfile[1]-header.yllcorner)/header.cellsize, 'k')
     ax1.plot((splitPoint[0]-header.xllcorner)/header.cellsize,
-             (splitPoint[1]-header.yllcorner)/header.cellsize, '.', color='0.6',
-             label='Split point')
+             (splitPoint[1]-header.yllcorner)/header.cellsize, '.', color='0.6', label='Split point')
     ax1.plot((SplitPoint[0]-header.xllcorner)/header.cellsize,
-             (SplitPoint[1]-header.yllcorner)/header.cellsize, '.', color='0.3',
-             label='Projection of Split Point on ava path')
+             (SplitPoint[1]-header.yllcorner)/header.cellsize, '.', color='0.3', label='Projection of Split Point on ava path')
     plt.show()
 
     # Plot the whole profile with beta, alpha ... points and lines
-    plotSaveResults(beta, alpha, x, y, s, z, f, poly, indSplit, ids_10Point, ids_alpha,
-                    ids_alphaM1SD, ids_alphaM2SD, abVersion, ParameterSet, saveOutPath)
+    plotSaveResults(beta, alpha, x, y, s, z, f, poly, indSplit, ids_10Point,
+                    ids_alpha, ids_alphaM1SD, ids_alphaM2SD, abVersion,
+                    ParameterSet, saveOutPath)
     # print(z)
     print('Parameter Set %s\n' % ParameterSet)
     print('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
@@ -164,7 +164,7 @@ def AlphaBetaMain(header, rasterdata, avapath, splitPoint, saveOutPath='./', sma
         x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
     print('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
         x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
-    print('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+    print('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle  in [°] : %.2f\n' % (
         x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD], s[ids_alphaP1SD], alphaSD[0]))
     WriteResults(beta, alpha, x, y, s, z, ids_10Point, ids_alpha, ids_alphaM1SD,
                  ids_alphaM2SD, ids_alphaP1SD, alphaSD, abVersion, ParameterSet, saveOutPath)
@@ -221,6 +221,7 @@ def plotSaveResults(beta, alpha, x, y, s, z, f, poly, indSplit, ids_10Point, ids
     # time.sleep(2)
 
 def WriteResults(beta, alpha, x, y, s, z, ids_10Point, ids_alpha, ids_alphaM1SD, ids_alphaM2SD, ids_alphaP1SD, alphaSD, abVersion, ParameterSet, saveOutPath):
+    ''' Write results to file '''
     FileName_ext = saveOutPath + 'results_python.txt'
     with open(FileName_ext, 'w') as outfile:
         outfile.write('Parameter Set %s\n' % ParameterSet)
@@ -251,8 +252,8 @@ def ProjectOnRaster(header, rasterdata, Points):
     ycoor = Points[1]
     zcoor = np.array([])
     for i in range(np.shape(xcoor)[0]):
-        Lx = int(np.round((xcoor[i]-xllcorner)/cellsize))
-        Ly = int(np.round((ycoor[i]-yllcorner)/cellsize))
+        Lx = int(np.round((xcoor[i] - xllcorner) / cellsize))
+        Ly = int(np.round((ycoor[i] - yllcorner) / cellsize))
         zcoor = np.append(zcoor, rasterdata[Ly][Lx])
     PointsZ = np.vstack((Points, zcoor))
     return (PointsZ)
@@ -272,30 +273,31 @@ def PrepareLine(header, rasterdata, avapath, splitPoint, distance=10):
     s = np.array([0])  # curvilinear coordinate
     # loop on the points of the avapath
     for i in range(np.shape(xcoor)[0]-1):
-        Vx = xcoor[i+1]-xcoor[i]
-        Vy = ycoor[i+1]-ycoor[i]
-        D = np.sqrt(Vx**2+Vy**2)
-        nd = int(np.round(D/distance)+1)
+        Vx = xcoor[i+1] - xcoor[i]
+        Vy = ycoor[i+1] - ycoor[i]
+        D = np.sqrt(Vx**2 + Vy**2)
+        nd = int(np.round(D / distance) + 1)
         # Resample each segment
         S0 = s[-1]
         for j in range(1, nd):
-            xn = j/(nd-1)*Vx + xcoor[i]
-            yn = j/(nd-1)*Vy + ycoor[i]
+            xn = j / (nd - 1) * Vx + xcoor[i]
+            yn = j / (nd - 1) * Vy + ycoor[i]
             xcoornew = np.append(xcoornew, xn)
             ycoornew = np.append(ycoornew, yn)
-            s = np.append(s, S0+D*j/nd)
+            s = np.append(s, S0 + D * j / nd)
 
     # test = np.transpose(np.array([[header.xllcorner,header.yllcorner],
     # [header.xllcorner+header.cellsize*(header.ncols-1),header.yllcorner],
     # [header.xllcorner,header.yllcorner+header.cellsize*(header.nrows-1)],
-    # [header.xllcorner+header.cellsize*(header.ncols-1),header.yllcorner+header.cellsize*(header.nrows-1)]]))
+    # [header.xllcorner+header.cellsize*(header.ncols-1),header.yllcorner+
+    # header.cellsize*(header.nrows-1)]]))
     # Test = ProjectOnRaster(header,rasterdata,test)
     ResampAvaPath = np.vstack((xcoornew, ycoornew))
     AvaProfile = ProjectOnRaster(header, rasterdata, ResampAvaPath)
     AvaProfile = np.vstack((AvaProfile, s))
 
     # find split point by computing the distance to the line
-    dist = np.sqrt((xcoornew-splitPoint[0])**2+(ycoornew-splitPoint[1])**2)
+    dist = np.sqrt((xcoornew - splitPoint[0])**2 + (ycoornew - splitPoint[1])**2)
     indSplit = np.argmin(dist)
     SplitPoint = AvaProfile[:, indSplit]
     SplitPoint = np.append(SplitPoint, s[indSplit])
@@ -304,6 +306,7 @@ def PrepareLine(header, rasterdata, avapath, splitPoint, distance=10):
 
 
 def ReadRaster(fname):
+    ''' Read raster file from raster filename (.asc)'''
     print('[RR] Reading DEM :', fname)
     header = IOf.readASCheader(fname)
     # print(header)
@@ -313,26 +316,28 @@ def ReadRaster(fname):
 
 
 def ReadAvaPath(fname, header):
+    ''' Read avalanche path file from .txt or .xyz'''
     print('[RAP] Reading avalanche path :', fname)
     # avapath = np.transpose(np.loadtxt(PathSource))
     avapath = IOf.readpathdata2numpyArray(fname)
     if np.shape(avapath)[0] < 2:
         raise ValueError('Ava path file should contain at least 2 columns')
     for i in range(np.shape(avapath)[1]):
-        Lx = int(np.round((avapath[0, i]-header.xllcorner)/header.cellsize))
-        Ly = int(np.round((avapath[1, i]-header.yllcorner)/header.cellsize))
+        Lx = int(np.round((avapath[0, i] - header.xllcorner) / header.cellsize))
+        Ly = int(np.round((avapath[1, i] - header.yllcorner) / header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
             raise ValueError('Avalanche path exceeds DEM extend')
     return avapath
 
 
 def ReadSplitPoint(fname, header):
+    ''' Read split point path file from .txt or .xyz'''
     print('[RAP] Reading split point :', fname)
     splitPoint = IOf.readpathdata2numpyArray(fname)
     if np.shape(splitPoint)[0] < 2:
         raise ValueError('split point file should contain at least 2 columns')
-    Lx = int(np.round((splitPoint[0]-header.xllcorner)/header.cellsize))
-    Ly = int(np.round((splitPoint[1]-header.yllcorner)/header.cellsize))
+    Lx = int(np.round((splitPoint[0] - header.xllcorner) / header.cellsize))
+    Ly = int(np.round((splitPoint[1] - header.yllcorner) / header.cellsize))
     if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
         raise ValueError('Split point is not on the DEM')
     return splitPoint
