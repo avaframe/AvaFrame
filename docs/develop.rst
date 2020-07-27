@@ -41,6 +41,55 @@ and you should see something like::
   ==========================1 passed in 0.02s =========================
 
 
+Local documentation
+-------------------
+
+For local documentation install sphinx with::
+
+  pip install sphinx
+
+(or equivalent conda command)
+
+We use the ReadTheDocs theme, which you need to install with::
+
+  pip install sphinx-rtd-theme
+
+Goto docs directory and e.g.::
+
+  make html
+
+to generate html documentation within the _build directory.
+
+
+Logging
+-------
+
+Use python provided logging module. See most simple example in runTmp1Ex.py and tmp1Ex.py
+
+Basically: in your main script call::
+
+  import logging
+  import sys
+
+  # create logger, set to logging.DEBUG to see all messages
+  logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                    format='%(module)s:%(levelname)s - %(message)s')
+
+And in your modules/subscripts add::
+
+  import logging
+  log = logging.getLogger(__name__)
+
+So you can use::
+
+  log.debug('Should be here')
+  log.info('DEM is %s',variable)
+
+To get output that looks like::
+
+  tmp1Ex:DEBUG - Should be here 
+
+  
 
 Our suggested git workflow
 --------------------------
