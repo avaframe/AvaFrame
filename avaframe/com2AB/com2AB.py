@@ -69,7 +69,14 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
     abVersion = '4.1'
     print('Running Version: ', abVersion)
 
-    k1, k2, k3, k4, ParameterSet = setEqParameters(smallAva)
+    eqParams, ParameterSet = setEqParameters(smallAva)
+
+    #TODO: make rest work with dict
+    k1 = eqParams['k1']
+    k2 = eqParams['k2']
+    k3 = eqParams['k3']
+    k4 = eqParams['k4']
+    SD = eqParams['SD']
 
     # read inputs, ressample ava path
     # make pofile and project split point on path
