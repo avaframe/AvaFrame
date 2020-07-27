@@ -1,11 +1,6 @@
-<<<<<<< HEAD
 # local settings/configurations files
 local_*
 
 __pycache__
 
 _build
-=======
-/avaframe/COM2AlphaBeta/local_settings.py
-/avaframe/COM2AlphaBeta/AlphaBeta_.pdf
->>>>>>> updating git ignore
