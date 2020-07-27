@@ -4,28 +4,6 @@
 
 The documentation is hosted on ReadTheDocs: http://docs.avaframe.org
 
-For local documentation install sphinx with:
-
-```
-  pip install sphinx
-```
-
-(or equivalent conda command)
-
-We use the ReadTheDocs theme, which you need to install with::
-
-```
-  pip install sphinx-rtd-theme
-```
-
-Goto docs directory and e.g.::
-
-```
-  make html
-```
-
-to generate html documentation within the _build directory.
-
 
 
 
