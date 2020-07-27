@@ -1,25 +1,29 @@
 #!/usr/bin/env python
 # coding: utf-8
+""" Main file for module com2AB - Alpha Beta"""
 import csv
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 # from shapely.geometry import Point, LineString
-from settings import *
 import time
 import datetime
-import IO_functionality as IOf
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 colors = ["#393955", "#8A8A9B", "#E9E940"]
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
 
+# Local import
+import avaframe
+import avaframe.com2AB.com2ABCfg as conf
+import avaframe.com2AB.IO_functionality as IOf
 
-def AlphaBetaMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
+
+def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
                   smallAva=False):
     ''' Computes the AlphaBeta model given an input raster (of the DEM),
-    an Avalanch path and a split point
+    an Avalanche path and a split point
     '''
     abVersion = '4.1'
     print('Running Version: ', abVersion)
@@ -55,7 +59,7 @@ def AlphaBetaMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
     # (i.e z component) is highest:
     # if not, flip all arrays
     if AvaProfile[2, -1] > AvaProfile[2, 0]:
-        print('[ABM] Profile reversed')
+        print('[com2AB] Profile reversed')
         L = AvaProfile[3, -1]
         AvaProfile = np.fliplr(AvaProfile)
         AvaProfile[3, :] = L - AvaProfile[3, :]
@@ -213,12 +217,11 @@ def plotSaveResults(beta, alpha, x, y, s, z, f, poly, indSplit, ids_10Point, ids
     plt.legend(frameon=False)
     plt.draw()
     # plt.show()
-    print('[ABM] Saving profile figure to:', saveOutPath)
+    print('[com2AB] Saving profile figure to:', saveOutPath)
     save_file = os.path.join(saveOutPath, 'AlphaBeta_.pdf')
     plt.savefig(save_file)
     plt.close(fig)
     plt.close("all")
-    # time.sleep(2)
 
 def WriteResults(beta, alpha, x, y, s, z, ids_10Point, ids_alpha, ids_alphaM1SD, ids_alphaM2SD, ids_alphaP1SD, alphaSD, abVersion, ParameterSet, saveOutPath):
     ''' Write results to file '''
@@ -307,7 +310,8 @@ def PrepareLine(header, rasterdata, avapath, splitPoint, distance=10):
 
 def ReadRaster(fname):
     ''' Read raster file from raster filename (.asc)'''
-    print('[RR] Reading DEM :', fname)
+
+    print('[com2AB] Reading DEM :', fname)
     header = IOf.readASCheader(fname)
     # print(header)
     rasterdata = IOf.readASCdata2numpyArray(fname, header)
@@ -317,7 +321,8 @@ def ReadRaster(fname):
 
 def ReadAvaPath(fname, header):
     ''' Read avalanche path file from .txt or .xyz'''
-    print('[RAP] Reading avalanche path :', fname)
+
+    print('[com2AB] Reading avalanche path :', fname)
     # avapath = np.transpose(np.loadtxt(PathSource))
     avapath = IOf.readpathdata2numpyArray(fname)
     if np.shape(avapath)[0] < 2:
@@ -330,9 +335,11 @@ def ReadAvaPath(fname, header):
     return avapath
 
 
+
 def ReadSplitPoint(fname, header):
     ''' Read split point path file from .txt or .xyz'''
-    print('[RAP] Reading split point :', fname)
+
+    print('[com2AB] Reading split point :', fname)
     splitPoint = IOf.readpathdata2numpyArray(fname)
     if np.shape(splitPoint)[0] < 2:
         raise ValueError('split point file should contain at least 2 columns')
@@ -342,17 +349,16 @@ def ReadSplitPoint(fname, header):
         raise ValueError('Split point is not on the DEM')
     return splitPoint
 
-
 def main():
     """ Run AlphaBetaMain model on test case"""
-    print("[M] Running AlphaBetaMain model on test case DEM : ",
-          DGMSource, 'with profile:', ProfileLayer)
+    print("[com2AB] Running com2ABMain model on test case DEM : ",
+          conf.DGMSource, 'with profile:', conf.ProfileLayer)
 
-    [header, rasterdata] = ReadRaster(DGMSource)
-    avapath = ReadAvaPath(ProfileLayer, header)
-    splitPoint = ReadSplitPoint(SplitPointSource, header)
+    [header, rasterdata] = ReadRaster(conf.DGMSource)
+    avapath = ReadAvaPath(conf.ProfileLayer, header)
+    splitPoint = ReadSplitPoint(conf.SplitPointSource, header)
 
-    AlphaBetaMain(header, rasterdata, avapath, splitPoint, saveOutPath, smallAva=False)
+    com2ABMain(header, rasterdata, avapath, splitPoint, conf.saveOutPath, conf.smallAva)
 
 if __name__ == "__main__":
     main()
