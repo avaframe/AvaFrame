@@ -24,7 +24,7 @@ saveOutPath = os.path.join(dirname, './Outputs/')
 # Optional settings
 # ##########################
 
-fullLog = True
+
 # if small avalanche set is wanted
 smallAva = False
 # if custom avalanche set is wanted
@@ -54,6 +54,6 @@ flags['WriteRes'] = True
 # Do not change anything below this line
 ###########################
 try:
-    from local_com2ABCfg import *
+    from .local_com2ABCfg import *
 except ImportError:
     pass

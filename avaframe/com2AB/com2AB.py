@@ -311,11 +311,6 @@ def calcAB(eqInput, eqParameters):
     SDs = [SD, -1*SD, -2*SD]
     alphaSD = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4 + SDs
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> including plot save flag
     eqOutput['CuSplit'] = CuSplit
     eqOutput['ids_10Point'] = ids_10Point
     eqOutput['poly'] = poly
