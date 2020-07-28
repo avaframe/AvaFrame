@@ -89,6 +89,17 @@ To get output that looks like::
 
   tmp1Ex:DEBUG - Should be here 
 
+From this configuration you can extend e.g. to also log to a file at the same
+time (internet search is your friend...)::
+
+  logging.basicConfig(
+      level=logging.DEBUG,
+      format="%(module)s [%(levelname)s] %(message)s",
+      handlers=[
+          logging.FileHandler("debug.log", "w"),
+          logging.StreamHandler()
+      ]
+  )
   
 
 Our suggested git workflow
