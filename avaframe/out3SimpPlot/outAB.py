@@ -15,8 +15,6 @@ mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
 
 def readABresults(saveOutPath):
-    # TODO: the rest is plotting + analytical stuff
-    # I (FSO) suggest we just write it out and move these functions to IO module?
     save_file = os.path.join(saveOutPath, 'com2AB_param.pickle')
     with open(save_file, 'rb') as handle:
         eqParams = pickle.load(handle)
