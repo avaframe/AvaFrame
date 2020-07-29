@@ -63,7 +63,28 @@ def setEqParameters(smallAva=False, customParam=None):
     return eqParameters
 
 
-def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
+def com2ABMain(header, rasterdata, Avapath, SplitPoint, saveOutPath='./',
+               smallAva=False, distance=10):
+    """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
+    """
+    NameAva = Avapath['Name']
+    StartAva = Avapath['Start']
+    LengthAva = Avapath['Length']
+    CoordAva = Avapath['Coord']
+
+    CoordSplit = SplitPoint['Coord']
+
+    for i in range(len(NameAva)):
+        name = NameAva[i]
+        OutPath = saveOutPath + 'Outputs/'
+        start = StartAva[i]
+        end = start + LengthAva[i] - 1
+        avapath = CoordAva[:,int(start):int(end)]
+        com2AB(header, rasterdata, avapath, CoordSplit, OutPath, name)
+
+
+
+def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
                smallAva=False, distance=10):
     """ Computes the AlphaBeta model given an input raster (of the DEM),
     an avalanche path and a split point
@@ -95,10 +116,12 @@ def com2ABMain(header, rasterdata, avapath, splitPoint, saveOutPath='./',
 
     # TODO: more descriptiv: what is s? x,y,z are clear
     eqOut = calcAB(eqIn, eqParams)
-    save_file = os.path.join(saveOutPath, 'com2AB_param.pickle')
+    savename = name + '_com2AB_param.pickle'
+    save_file = os.path.join(OutPath, savename)
     with open(save_file, 'wb') as handle:
         pickle.dump(eqParams, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    save_file = os.path.join(saveOutPath, 'com2AB_out.pickle')
+    savename = name + 'com2AB_out.pickle'
+    save_file = os.path.join(OutPath, savename)
     with open(save_file, 'wb') as handle:
         pickle.dump(eqOut, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -167,13 +190,27 @@ def prepareLine(header, rasterdata, avapath, splitPoint, distance=10):
     AvaProfile = np.vstack((AvaProfile, s))
 
     # find split point by computing the distance to the line
-    dist = np.sqrt((xcoornew - splitPoint[0])**2 + (ycoornew - splitPoint[1])**2)
-    indSplit = np.argmin(dist)
-    SplitPoint = AvaProfile[:, indSplit]
-    SplitPoint = np.append(SplitPoint, s[indSplit])
+    SplitPoint, indSplit = findSplitPoint(AvaProfile,splitPoint, s, xcoornew, ycoornew)
 
     return AvaProfile, SplitPoint, indSplit
 
+
+def findSplitPoint(AvaProfile,splitPoint, s, xcoornew, ycoornew):
+    """ find split point by computing the distance to the line
+    """
+    Dist = np.empty((0))
+    IndSplit = np.empty((0))
+    for i in range(np.shape(splitPoint)[0]):
+        dist = np.sqrt((xcoornew - splitPoint[0,i])**2 + (ycoornew - splitPoint[1,i])**2)
+        indSplit = np.argmin(dist)
+        IndSplit = np.append(IndSplit, indSplit)
+        Dist = np.append(Dist,dist[indSplit])
+
+    ind = np.argmin(Dist)
+    indSplit = int(IndSplit[ind])
+    SplitPoint = AvaProfile[:, indSplit]
+    SplitPoint = np.append(SplitPoint, s[indSplit])
+    return SplitPoint, indSplit
 
 def readRaster(fname):
     """ Read raster file from raster filename (.asc)"""
@@ -190,8 +227,8 @@ def readAvaPath(fname, header):
 
     log.info('Reading avalanche path : %s ', fname)
     defname = 'SHP'
-    avapathHeader, avapath = shpConv.SHP2NXYZ(fname, defname)
-    # avapath = IOf.readpathdata2numpyArray(fname)
+    Avapath = shpConv.SHP2Array(fname, defname)
+    avapath = Avapath['Coord']
     if np.shape(avapath)[0] < 2:
         raise ValueError('Ava path file should contain at least 2 columns')
     for i in range(np.shape(avapath)[1]):
@@ -199,7 +236,7 @@ def readAvaPath(fname, header):
         Ly = int(np.round((avapath[1, i] - header.yllcorner) / header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
             raise ValueError('Avalanche path exceeds DEM extend')
-    return avapathHeader, avapath
+    return Avapath
 
 
 def readSplitPoint(fname, header):
@@ -207,15 +244,16 @@ def readSplitPoint(fname, header):
 
     log.info('Reading split point : %s ', fname)
     defname = 'SHP'
-    splitHeader, splitPoint = shpConv.SHP2NXYZ(fname, defname)
-    # splitPoint = IOf.readpathdata2numpyArray(fname)
+    SplitPoint = shpConv.SHP2Array(fname, defname)
+    splitPoint = SplitPoint['Coord']
     if np.shape(splitPoint)[0] < 2:
         raise ValueError('split point file should contain at least 2 columns')
-    Lx = int(np.round((splitPoint[0] - header.xllcorner) / header.cellsize))
-    Ly = int(np.round((splitPoint[1] - header.yllcorner) / header.cellsize))
-    if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
-        raise ValueError('Split point is not on the DEM')
-    return splitHeader, splitPoint
+    for i in range(np.shape(splitPoint)[1]):
+        Lx = int(np.round((splitPoint[0, i] - header.xllcorner) / header.cellsize))
+        Ly = int(np.round((splitPoint[1, i] - header.yllcorner) / header.cellsize))
+        if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
+            raise ValueError('Split point is not on the DEM')
+    return SplitPoint
 
 
 def checkProfile(indSplit, AvaProfile):

@@ -145,12 +145,14 @@ def SHP2Array(infile, defname):
     records = sf.shapeRecords()
     shps = sf.shapes()
 
-    SHPHeader = {}
-    SHPHeader['sks'] = sks
+    SHPdata = {}
+    SHPdata['sks'] = sks
     Name = []
-    Length = np.empty()
-    Start = np.empty()
-    Coord = np.empty()
+    Length = np.empty((0))
+    Start = np.empty((0))
+    Coordx = np.empty((0))
+    Coordy = np.empty((0))
+    Coordz = np.empty((0))
     start = 0
 
     for n, item in enumerate(shps):
@@ -165,7 +167,7 @@ def SHP2Array(infile, defname):
                 name = name.lower()
                 if (name == 'name'):
                     layername = value
-                    Name.append(name)
+                    Name.append(layername)
                 if (name == 'd0'):
                     d0 = value
                 if (name == 'rho'):
@@ -190,16 +192,21 @@ def SHP2Array(infile, defname):
         length = len(pts)
         Length = np.append(Length,length)
         start += length
-        for (pt, z) in zip(pts, zs):
-            Coord[0,:] = np.append(Coord[0,:],pt[0])
-            Coord[1,:] = np.append(Coord[1,:],pt[1])
-            Coord[2,:] = np.append(Coord[2,:],z)
 
-        print(Coord)
-        SHPHeader['Name'] = name
-        SHPHeader['Start'] = Start
-        SHPHeader['Length'] = Length
-        return SHPHeader, Coord
+        for (pt, z) in zip(pts, zs):
+            Coordx = np.append(Coordx,pt[0])
+            Coordy = np.append(Coordy,pt[1])
+            Coordz = np.append(Coordz,z)
+
+
+
+    SHPdata['Name'] = Name
+    SHPdata['Start'] = Start
+    SHPdata['Length'] = Length
+    Coord = np.vstack((Coordx,Coordy))
+    Coord = np.vstack((Coord,Coordz))
+    SHPdata['Coord'] = Coord
+    return SHPdata
 
 
 def NXYZ2SHP(infile, info):
