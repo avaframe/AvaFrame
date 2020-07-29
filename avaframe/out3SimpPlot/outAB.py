@@ -14,17 +14,19 @@ colors = ["#393955", "#8A8A9B", "#E9E940"]
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
 
-def readABresults(saveOutPath):
-    save_file = os.path.join(saveOutPath, 'com2AB_param.pickle')
+def readABresults(saveOutPath,name):
+    savename = name + '_com2AB_param.pickle'
+    save_file = os.path.join(saveOutPath, savename)
     with open(save_file, 'rb') as handle:
         eqParams = pickle.load(handle)
-    save_file = os.path.join(saveOutPath, 'com2AB_out.pickle')
+    savename = name + 'com2AB_out.pickle'
+    save_file = os.path.join(saveOutPath, savename)
     with open(save_file, 'rb') as handle:
         eqOut = pickle.load(handle)
 
     return eqParams, eqOut
 
-def processABresults(eqParams, eqOut, saveOutPath):
+def processABresults(eqParams, eqOut):
 
     s = eqOut['s']
     x = eqOut['x']
@@ -52,25 +54,30 @@ def processABresults(eqParams, eqOut, saveOutPath):
     ids_alphaM1SD = np.argwhere(np.diff(np.sign(fminus1SD - z))).flatten()
     ids_alphaM2SD = np.argwhere(np.diff(np.sign(fminus2SD - z))).flatten()
 
+
     # Only get the first index past the splitpoint
     try:
         ids_alpha = ids_alpha[s[ids_alpha] > CuSplit][0]
-    except log.info('Alpha out of profile'):
+    except:
+        log.info('Alpha out of profile')
         ids_alpha = None
 
     try:
         ids_alphaP1SD = ids_alphaP1SD[s[ids_alphaP1SD] > CuSplit][0]
-    except log.info('+1 SD above beta point'):
+    except:
+        log.info('+1 SD above beta point')
         ids_alphaP1SD = None
 
     try:
         ids_alphaM1SD = ids_alphaM1SD[s[ids_alphaM1SD] > CuSplit][0]
-    except log.info('-1 SD out of profile'):
+    except:
+        log.info('-1 SD out of profile')
         ids_alphaM1SD = None
 
     try:
         ids_alphaM2SD = ids_alphaM2SD[s[ids_alphaM2SD] > CuSplit][0]
-    except log.info('-2 SD out of profile'):
+    except:
+        log.info('-2 SD out of profile')
         ids_alphaM2SD = None
 
 
@@ -82,15 +89,30 @@ def processABresults(eqParams, eqOut, saveOutPath):
 
     return eqOut
 
-def writeABpostOut(header, rasterdata, avapath, splitPoint, saveOutPath):
 
-    eqParams, eqOut = readABresults(saveOutPath)
-    eqPost = processABresults(eqParams, eqOut, saveOutPath)
-    ParameterSet = eqParams['ParameterSet']
-    # Plot the whole profile with beta, alpha ... points and lines
-    plotSaveResults(header, rasterdata, avapath, splitPoint, eqPost, ParameterSet, saveOutPath)
+def writeABpostOut(header, rasterdata, Avapath, SplitPoint, saveOutPath):
+    """ Loops on the given Avapath and runs AlpahBeta Postprocessing
+    """
+    NameAva = Avapath['Name']
+    StartAva = Avapath['Start']
+    LengthAva = Avapath['Length']
+    CoordAva = Avapath['Coord']
 
-    WriteResults(eqPost, ParameterSet, saveOutPath)
+    CoordSplit = SplitPoint['Coord']
+
+    for i in range(len(NameAva)):
+        name = NameAva[i]
+        OutPath = saveOutPath + 'Outputs/'
+        start = StartAva[i]
+        end = start + LengthAva[i] - 1
+        avapath = CoordAva[:,int(start):int(end)]
+        eqParams, eqOut = readABresults(OutPath,name)
+        eqPost = processABresults(eqParams, eqOut)
+        ParameterSet = eqParams['ParameterSet']
+        # Plot the whole profile with beta, alpha ... points and lines
+        plotSaveResults(header, rasterdata, avapath, CoordSplit, eqPost, ParameterSet, saveOutPath)
+
+        WriteResults(eqPost, ParameterSet, saveOutPath)
 
 
 def plotSaveResults(header, rasterdata,avapath, splitPoint, eqOutput, ParameterSet, saveOutPath):
@@ -114,6 +136,7 @@ def plotSaveResults(header, rasterdata,avapath, splitPoint, eqOutput, ParameterS
     ids_alphaM1SD = eqOutput['ids_alphaM1SD']
     ids_alphaM2SD = eqOutput['ids_alphaM2SD']
     indSplit = eqOutput['indSplit']
+
 
     # Plot raster and path
     fig1, ax1 = plt.subplots()
@@ -157,7 +180,7 @@ def plotSaveResults(header, rasterdata,avapath, splitPoint, eqOutput, ParameterS
                 linewidth=1, linestyle='-.', label='Beta')
 
     plt.plot(s, f, '-', label='AlphaLine')
-    if ids_alpha:
+    if ids_alphaM1SD:
         plt.plot(s[ids_alphaM1SD], z[ids_alphaM1SD], 'x', markersize=8,
                  label='Alpha - 1SD')
     if ids_alphaM2SD:
@@ -212,10 +235,16 @@ def WriteResults(eqOutput, ParameterSet, saveOutPath):
         x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
     log.info('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
         x[ids_10Point], y[ids_10Point], z[ids_10Point], s[ids_10Point], beta))
-    log.info('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
-        x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
-    log.info('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
-        x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
+    if ids_alphaM1SD:
+        log.info('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+            x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
+    else:
+        log.info('alphaM1SD point out of profile\n')
+    if ids_alphaM2SD:
+        log.info('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+            x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
+    else:
+        log.info('alphaM2SD point out of profile\n')
     log.info('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle  in [°] : %.2f\n' % (
         x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD], s[ids_alphaP1SD], alphaSD[0]))
 
@@ -226,9 +255,15 @@ def WriteResults(eqOutput, ParameterSet, saveOutPath):
             x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
         outfile.write('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
             x[ids_10Point], y[ids_10Point], z[ids_10Point], s[ids_10Point], beta))
-        outfile.write('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
-            x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
-        outfile.write('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
-            x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
+        if ids_alphaM1SD:
+            outfile.write('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+                x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
+        else:
+            log.info('alphaM1SD point out of profile\n')
+        if ids_alphaM2SD:
+            outfile.write('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+                x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
+        else:
+            log.info('alphaM2SD point out of profile\n')
         outfile.write('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
             x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD], s[ids_alphaP1SD], alphaSD[0]))
