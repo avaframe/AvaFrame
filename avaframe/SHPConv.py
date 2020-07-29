@@ -13,7 +13,6 @@ import getopt
 import ntpath
 import numpy as np
 
-
 def read_nxyzfile(fname):
     out_array = []
 
