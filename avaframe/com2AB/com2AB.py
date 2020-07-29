@@ -311,6 +311,62 @@ def calcAB(eqInput, eqParameters):
 
 
 
+
+def checkProfile(indSplit, AvaProfile):
+    if AvaProfile[2, -1] > AvaProfile[2, 0]:
+        log.info('Profile reversed')
+        L = AvaProfile[3, -1]
+        AvaProfile = np.fliplr(AvaProfile)
+        AvaProfile[3, :] = L - AvaProfile[3, :]
+        indSplit = np.shape(AvaProfile)[1]-indSplit
+        return indSplit, AvaProfile
+    else:
+        return indSplit, AvaProfile
+
+
+def calcAB(eqInput, eqParameters):
+    k1 = eqParameters['k1']
+    k2 = eqParameters['k2']
+    k3 = eqParameters['k3']
+    k4 = eqParameters['k4']
+    SD = eqParameters['SD']
+
+    s = eqInput['s']
+    x = eqInput['x']
+    y = eqInput['y']
+    z = eqInput['z']
+    indSplit = eqInput['indSplit']
+    eqOutput = eqInput.copy()
+    ds = np.abs(s - np.roll(s, 1))
+    dz = np.abs(z - np.roll(z, 1))
+    ds[0] = 0.0
+    dz[0] = 0.0
+    angle = np.rad2deg(np.arctan2(dz, ds))
+    CuSplit = s[indSplit]
+    # TODO SPLIT POINT READING
+    # get all values where Angle < 10 but >0
+    # get index of first occurance and go one back to get previous value
+    # (i.e. last value above 10 deg)
+    # tmp = x[(angle < 10.0) & (angle > 0.0) & (x > 450)]
+    tmp = np.where((angle < 10.0) & (angle > 0.0) & (s > CuSplit))
+    ids_10Point = tmp[0][0] - 1
+    # Do a quadtratic fit and get the polynom for 2nd derivative later
+    zQuad = np.polyfit(s, z, 2)
+    poly = np.poly1d(zQuad)
+    # Get H0: max - min for parabola
+    H0 = max(poly(s)) - min(poly(s))
+    # get beta
+    dz_beta = z[0] - z[ids_10Point]
+    beta = np.rad2deg(np.arctan2(dz_beta, s[ids_10Point]))
+    # get Alpha
+    alpha = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4
+
+    # get Alpha standard deviations
+    SDs = [SD, -1*SD, -2*SD]
+    alphaSD = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4 + SDs
+
+
+
     eqOutput['CuSplit'] = CuSplit
     eqOutput['ids_10Point'] = ids_10Point
     eqOutput['poly'] = poly
