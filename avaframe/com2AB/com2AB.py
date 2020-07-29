@@ -76,12 +76,10 @@ def com2ABMain(header, rasterdata, Avapath, SplitPoint, saveOutPath='./',
 
     for i in range(len(NameAva)):
         name = NameAva[i]
-        OutPath = saveOutPath + 'Outputs/'
         start = StartAva[i]
         end = start + LengthAva[i] - 1
-        avapath = CoordAva[:,int(start):int(end)]
-        com2AB(header, rasterdata, avapath, CoordSplit, OutPath, name)
-
+        avapath = CoordAva[:, int(start):int(end)]
+        com2AB(header, rasterdata, avapath, CoordSplit, saveOutPath, name)
 
 
 def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
@@ -231,6 +229,7 @@ def findSplitPoint(AvaProfile, splitPoint, s, xcoornew, ycoornew):
     SplitPoint = AvaProfile[:, indSplit]
     SplitPoint = np.append(SplitPoint, s[indSplit])
     return SplitPoint, indSplit
+
 
 def readRaster(fname):
     """ Read raster file (.asc)"""

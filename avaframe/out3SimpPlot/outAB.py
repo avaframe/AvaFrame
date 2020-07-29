@@ -1,14 +1,15 @@
+import copy
+import datetime
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import pickle
 import os
 import logging
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
-import pickle
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import datetime
 
 colors = ["#393955", "#8A8A9B", "#E9E940"]
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
@@ -55,7 +56,6 @@ def processABresults(eqParams, eqOut):
     ids_alphaP1SD = np.argwhere(np.diff(np.sign(fplus1SD - z))).flatten()
     ids_alphaM1SD = np.argwhere(np.diff(np.sign(fminus1SD - z))).flatten()
     ids_alphaM2SD = np.argwhere(np.diff(np.sign(fminus2SD - z))).flatten()
-
 
     # Only get the first index past the splitpoint
     try:
