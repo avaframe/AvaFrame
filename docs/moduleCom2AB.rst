@@ -39,18 +39,20 @@ Index j={-1,-2,0,1} and \alpha_j= \alpha + j SD
 Numerics:
 -------
 Pre-processing :
-* The avalanche path (x,y) is first re-sampled. Default value for re-sampling is distance=10m (maximal horizontal distance between two points).
-  We introduce the curvilinear coordinate s.
+
+* The avalanche path (x,y) is first re-sampled. Default value for re-sampling is distance=10m (maximal horizontal distance between two points). We introduce the curvilinear coordinate s.
 * The avalanche path is projected on the DEM to generate the profile using the closest lower left corner of the DEM to the point of interest.
 * The split point is projected on the avalanche path.
 We end up with the (x,y,z) and (s,z) coordinates of the avalanche profile
 
 AlphaBeta Model:
+
 * Find the 10° point from (s,z).
 * Calculate \beta.
-* Calculate the \alpha_j angles using the adequate standard ot small avalanche parameter set.
+* Calculate the \alpha_j angles using the adequate standard of small avalanche parameter set.
 
 Post-processing:
+
 * Plot and save results.
 
 Optional configuring parameters:
