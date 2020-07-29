@@ -13,6 +13,7 @@ import getopt
 import ntpath
 import numpy as np
 
+
 def read_nxyzfile(fname):
     out_array = []
 
@@ -57,7 +58,6 @@ def SHP2NXYZ(infile, defname):
     outfile = infile+'.nxyz'
     # print('Writing to file: ', outfile)
     nxyz = open(outfile, 'w')
-
 
     # FSO--- set defaults for variables
     layername = None
@@ -127,7 +127,6 @@ def SHP2Array(infile, defname):
     # FSO--- Input shapefile
     sf = shapefile.Reader(infile)
 
-
     # FSO--- set defaults for variables
     layername = None
     d0 = None
@@ -188,23 +187,21 @@ def SHP2Array(infile, defname):
 
         print('SHPConv: Found layer ', layername)
 
-        Start = np.append(Start,start)
+        Start = np.append(Start, start)
         length = len(pts)
-        Length = np.append(Length,length)
+        Length = np.append(Length, length)
         start += length
 
         for (pt, z) in zip(pts, zs):
-            Coordx = np.append(Coordx,pt[0])
-            Coordy = np.append(Coordy,pt[1])
-            Coordz = np.append(Coordz,z)
-
-
+            Coordx = np.append(Coordx, pt[0])
+            Coordy = np.append(Coordy, pt[1])
+            Coordz = np.append(Coordz, z)
 
     SHPdata['Name'] = Name
     SHPdata['Start'] = Start
     SHPdata['Length'] = Length
-    Coord = np.vstack((Coordx,Coordy))
-    Coord = np.vstack((Coord,Coordz))
+    Coord = np.vstack((Coordx, Coordy))
+    Coord = np.vstack((Coord, Coordz))
     SHPdata['Coord'] = Coord
     return SHPdata
 
@@ -224,8 +221,6 @@ def NXYZ2SHP(infile, info):
     # FSO--- Input nxyz
     allLines = read_nxyzfile(infile)
 
-
-
     # FSO--- Check whether file is a PSA file (via name)
     # to then output polygon. Default is polyline
     # FSO--- Output shapefile
@@ -236,9 +231,9 @@ def NXYZ2SHP(infile, info):
 
     # Default to Polyline
     if psaFlag:
-        w = shapefile.Writer(outfile,shapeType=5)
+        w = shapefile.Writer(outfile, shapeType=5)
     else:
-        w = shapefile.Writer(outfile,shapeType=3)
+        w = shapefile.Writer(outfile, shapeType=3)
 
     w.autoBalance = 1
     w.field('Layer', 'C', '40')
@@ -274,14 +269,14 @@ if __name__ == "__main__":
 
     # FSO--- get Inputfile and action from commandline arguments
     try:
-        opts, args = getopt.getopt(sys.argv[1:],'hi:a:n:s:',
+        opts, args = getopt.getopt(sys.argv[1:], 'hi:a:n:s:',
                                    ['infile=', 'action=', 'name=', 'sks='])
     except getopt.GetoptError:
         print('SHPConv.py -i <inputfile> -a <import/export>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print( 'SHPConv.py -i <inputfile> -a <import/export>')
+            print('SHPConv.py -i <inputfile> -a <import/export>')
             sys.exit()
         elif opt in ("-i", "--infile"):
             infile = arg
@@ -291,7 +286,6 @@ if __name__ == "__main__":
             defname = arg
         elif opt in ("-s", "--sks"):
             info = arg
-
 
     print('SHPConv: ', action, ' file: ', infile)
 
