@@ -3,6 +3,8 @@
 """ Main file for module com2AB - Alpha Beta
 """
 
+import avaframe.SHPConv as shpConv
+import avaframe.in3Utils as IOf
 import pickle
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
 # import matplotlib as mpl
@@ -16,8 +18,6 @@ log = logging.getLogger(__name__)
 
 
 # Local imports
-import avaframe.in3Utils as IOf
-import avaframe.SHPConv as shpConv
 
 
 def setEqParameters(smallAva=False, customParam=None):
@@ -76,16 +76,14 @@ def com2ABMain(header, rasterdata, Avapath, SplitPoint, saveOutPath='./',
 
     for i in range(len(NameAva)):
         name = NameAva[i]
-        OutPath = saveOutPath + 'Outputs/'
         start = StartAva[i]
         end = start + LengthAva[i] - 1
-        avapath = CoordAva[:,int(start):int(end)]
-        com2AB(header, rasterdata, avapath, CoordSplit, OutPath, name)
-
+        avapath = CoordAva[:, int(start):int(end)]
+        com2AB(header, rasterdata, avapath, CoordSplit, saveOutPath, name)
 
 
 def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
-               smallAva=False, distance=10):
+           smallAva=False, distance=10):
     """ Computes the AlphaBeta model given an input raster (of the DEM),
     an avalanche path and a split point
     """
@@ -124,6 +122,7 @@ def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
     save_file = os.path.join(OutPath, savename)
     with open(save_file, 'wb') as handle:
         pickle.dump(eqOut, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
 
 def projectOnRaster(header, rasterdata, Points):
     """ Projects the points Points on Raster and returns the z coord
@@ -190,21 +189,21 @@ def prepareLine(header, rasterdata, avapath, splitPoint, distance=10):
     AvaProfile = np.vstack((AvaProfile, s))
 
     # find split point by computing the distance to the line
-    SplitPoint, indSplit = findSplitPoint(AvaProfile,splitPoint, s, xcoornew, ycoornew)
+    SplitPoint, indSplit = findSplitPoint(AvaProfile, splitPoint, s, xcoornew, ycoornew)
 
     return AvaProfile, SplitPoint, indSplit
 
 
-def findSplitPoint(AvaProfile,splitPoint, s, xcoornew, ycoornew):
+def findSplitPoint(AvaProfile, splitPoint, s, xcoornew, ycoornew):
     """ find split point by computing the distance to the line
     """
     Dist = np.empty((0))
     IndSplit = np.empty((0))
     for i in range(np.shape(splitPoint)[0]):
-        dist = np.sqrt((xcoornew - splitPoint[0,i])**2 + (ycoornew - splitPoint[1,i])**2)
+        dist = np.sqrt((xcoornew - splitPoint[0, i])**2 + (ycoornew - splitPoint[1, i])**2)
         indSplit = np.argmin(dist)
         IndSplit = np.append(IndSplit, indSplit)
-        Dist = np.append(Dist,dist[indSplit])
+        Dist = np.append(Dist, dist[indSplit])
 
     ind = np.argmin(Dist)
     indSplit = int(IndSplit[ind])
@@ -212,8 +211,9 @@ def findSplitPoint(AvaProfile,splitPoint, s, xcoornew, ycoornew):
     SplitPoint = np.append(SplitPoint, s[indSplit])
     return SplitPoint, indSplit
 
+
 def readRaster(fname):
-    """ Read raster file from raster filename (.asc)"""
+    """ Read raster file (.asc)"""
 
     log.info('Reading DEM : %s', fname)
     header = IOf.readASCheader(fname)
@@ -223,7 +223,7 @@ def readRaster(fname):
 
 
 def readAvaPath(fname, header):
-    """ Read avalanche path file from .txt or .xyz"""
+    """ Read avalanche path from  .shp"""
 
     log.info('Reading avalanche path : %s ', fname)
     defname = 'SHP'
@@ -240,7 +240,7 @@ def readAvaPath(fname, header):
 
 
 def readSplitPoint(fname, header):
-    """ Read split point path file from .txt or .xyz"""
+    """ Read split point path from .shp"""
 
     log.info('Reading split point : %s ', fname)
     defname = 'SHP'
@@ -257,6 +257,7 @@ def readSplitPoint(fname, header):
 
 
 def checkProfile(indSplit, AvaProfile):
+    """ check that the avalanche profiles goes from top to bottom """
     if AvaProfile[2, -1] > AvaProfile[2, 0]:
         log.info('Profile reversed')
         L = AvaProfile[3, -1]
@@ -269,6 +270,7 @@ def checkProfile(indSplit, AvaProfile):
 
 
 def calcAB(eqInput, eqParameters):
+    """ Calculate Alpha Beta according to chosen eqParameters """
     k1 = eqParameters['k1']
     k2 = eqParameters['k2']
     k3 = eqParameters['k3']
@@ -308,8 +310,6 @@ def calcAB(eqInput, eqParameters):
     # get Alpha standard deviations
     SDs = [SD, -1*SD, -2*SD]
     alphaSD = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4 + SDs
-
-
 
     eqOutput['CuSplit'] = CuSplit
     eqOutput['ids_10Point'] = ids_10Point

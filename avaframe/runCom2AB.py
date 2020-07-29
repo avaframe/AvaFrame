@@ -22,5 +22,6 @@ print("[com2AB] Running com2ABMain model on test case DEM : ",
 avapath = com2AB.readAvaPath(conf.ProfileLayer, header)
 splitPoint = com2AB.readSplitPoint(conf.SplitPointSource, header)
 
-com2AB.com2ABMain(header, rasterdata, avapath, splitPoint, conf.saveOutPath, conf.smallAva, conf.distance)
-outAB.writeABpostOut(header, rasterdata, avapath, splitPoint, conf.saveOutPath)
+com2AB.com2ABMain(header, rasterdata, avapath, splitPoint,
+                  conf.saveOutPath, conf.smallAva, conf.distance)
+outAB.writeABpostOut(header, rasterdata, avapath, splitPoint, conf.saveOutPath, conf.flags)

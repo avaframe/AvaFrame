@@ -157,6 +157,7 @@ def writeResultToAsc(header, resultArray, outType=None):
 
     outfile.close()
 
+
 def readpathdata2numpyArray(fName):
     infile = open(fName, "r")
     i = 0
