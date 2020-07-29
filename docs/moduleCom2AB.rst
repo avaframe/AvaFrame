@@ -27,7 +27,7 @@ To run:
 
 
 Theory:
-~~~~~~
+-------
 
 .. math::
 
@@ -37,7 +37,7 @@ where k_1, k_2, k_3 and k_4 are coefficients and SD the standard deviation
 Index j={-1,-2,0,1} and \alpha_j= \alpha + j SD
 
 Numerics:
-~~~~~~~~
+-------
 Pre-processing :
 * The avalanche path (x,y) is first re-sampled. Default value for re-sampling is distance=10m (maximal horizontal distance between two points).
   We introduce the curvilinear coordinate s.
@@ -54,7 +54,7 @@ Post-processing:
 * Plot and save results.
 
 Optional configuring parameters:
-~~~~~~
+-------
 * distance: re-sampling distance. The given avalanche path is re-sampled with a 10m (default) step.
 * smallAva: is True or False (default) depending on if you want to apply the (k_1, k_2, k_3, k_4, SD) set of small avalanches or standard avalanche
 * customParam: enables to choose an custom (k_1, k_2, k_3, k_4, SD). customParam = None as default. Otherwise customParam has to be declared as a python dictionary:

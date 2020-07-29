@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 # Local imports
 import avaframe.in3Utils as IOf
-
+import avaframe.SHPConv as shpConv
 
 
 def setEqParameters(smallAva=False, customParam=None):
@@ -189,7 +189,9 @@ def readAvaPath(fname, header):
     """ Read avalanche path file from .txt or .xyz"""
 
     log.info('Reading avalanche path : %s ', fname)
-    avapath = IOf.readpathdata2numpyArray(fname)
+    defname = 'SHP'
+    avapathHeader, avapath = shpConv.SHP2NXYZ(fname, defname)
+    # avapath = IOf.readpathdata2numpyArray(fname)
     if np.shape(avapath)[0] < 2:
         raise ValueError('Ava path file should contain at least 2 columns')
     for i in range(np.shape(avapath)[1]):
@@ -197,21 +199,23 @@ def readAvaPath(fname, header):
         Ly = int(np.round((avapath[1, i] - header.yllcorner) / header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
             raise ValueError('Avalanche path exceeds DEM extend')
-    return avapath
+    return avapathHeader, avapath
 
 
 def readSplitPoint(fname, header):
     """ Read split point path file from .txt or .xyz"""
 
     log.info('Reading split point : %s ', fname)
-    splitPoint = IOf.readpathdata2numpyArray(fname)
+    defname = 'SHP'
+    splitHeader, splitPoint = shpConv.SHP2NXYZ(fname, defname)
+    # splitPoint = IOf.readpathdata2numpyArray(fname)
     if np.shape(splitPoint)[0] < 2:
         raise ValueError('split point file should contain at least 2 columns')
     Lx = int(np.round((splitPoint[0] - header.xllcorner) / header.cellsize))
     Ly = int(np.round((splitPoint[1] - header.yllcorner) / header.cellsize))
     if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
         raise ValueError('Split point is not on the DEM')
-    return splitPoint
+    return splitHeader, splitPoint
 
 
 def checkProfile(indSplit, AvaProfile):
