@@ -56,6 +56,7 @@ def processABresults(eqParams, eqOut):
     ids_alphaM1SD = np.argwhere(np.diff(np.sign(fminus1SD - z))).flatten()
     ids_alphaM2SD = np.argwhere(np.diff(np.sign(fminus2SD - z))).flatten()
 
+
     # Only get the first index past the splitpoint
     try:
         ids_alpha = ids_alpha[s[ids_alpha] > CuSplit][0]
