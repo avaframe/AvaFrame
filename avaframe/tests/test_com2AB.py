@@ -6,19 +6,49 @@ import avaframe.com2AB.com2AB as com2AB
 import avaframe.com2AB.com2ABCfg as conf
 import unittest
 
-# def test_setEqParameters(capfd):
-#     '''Simple test for module setEqParameters'''
-#     # small avalanche
-#     eqParameters = {}
-#     eqParameters['ParameterSet'] = 'Small avalanches'
-#     eqParameters['k1'] = 0.933
-#     eqParameters['k2'] = 0.0
-#     eqParameters['k3'] = 0.0088
-#     eqParameters['k4'] = -5.02
-#     eqParameters['SD'] = 2.36
-#
-#     eqParams = com2AB.setEqParameters(smallAva=True, customParam=None)
-#     assert(eqParams == pytest.approx(eqParameters))
+def test_setEqParameters(capfd):
+    '''Simple test for module setEqParameters'''
+    # small avalanche
+    eqParameters = {}
+    eqParameters['ParameterSet'] = 'Small avalanches'
+    eqParameters['k1'] = 0.933
+    eqParameters['k2'] = 0.0
+    eqParameters['k3'] = 0.0088
+    eqParameters['k4'] = -5.02
+    eqParameters['SD'] = 2.36
+
+    eqParams = com2AB.setEqParameters(smallAva=True, customParam=None)
+    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
+
+    eqParameters = {}
+    eqParameters['ParameterSet'] = 'Standard'
+    eqParameters['k1'] = 1.05
+    eqParameters['k2'] = -3130.0
+    eqParameters['k3'] = 0.0
+    eqParameters['k4'] = -2.38
+    eqParameters['SD'] = 1.25
+
+    eqParams = com2AB.setEqParameters(smallAva=False, customParam=None)
+    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
+
+
+    customParam = {}
+    customParam['k1'] = 1
+    customParam['k2'] = 2
+    customParam['k3'] = 3
+    customParam['k4'] = 4
+    customParam['SD'] = 5
+
+    eqParameters = {}
+    eqParameters['ParameterSet'] = 'Custom'
+    eqParameters['k1'] = customParam['k1']
+    eqParameters['k2'] = customParam['k2']
+    eqParameters['k3'] = customParam['k3']
+    eqParameters['k4'] = customParam['k4']
+    eqParameters['SD'] = customParam['SD']
+
+    eqParams = com2AB.setEqParameters(smallAva=False, customParam=customParam)
+    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
 
 # def test_prepareLine(capfd):
 #     '''Simple test for function prepareLine'''
