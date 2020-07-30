@@ -66,6 +66,10 @@ def setEqParameters(smallAva=False, customParam=None):
 def com2ABMain(header, rasterdata, Avapath, SplitPoint, saveOutPath='./',
                smallAva=False, distance=10):
     """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
+    Inputs : DEM header and rater (as np array), Avapath and Split points
+            .shp file optional output save path, avalanche type and reamplind lenght
+            for the Avapath
+    Outputs : writes raw results to saveOutPath
     """
     NameAva = Avapath['Name']
     StartAva = Avapath['Start']
@@ -82,29 +86,14 @@ def com2ABMain(header, rasterdata, Avapath, SplitPoint, saveOutPath='./',
         com2AB(header, rasterdata, avapath, CoordSplit, saveOutPath, name)
 
 
-def com2AB(header, rasterdata, Avapath, SplitPoint, OutPath, name,
-           smallAva=False, distance=10):
-    """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
-    """
-    NameAva = Avapath['Name']
-    StartAva = Avapath['Start']
-    LengthAva = Avapath['Length']
-    CoordAva = Avapath['Coord']
-
-    CoordSplit = SplitPoint['Coord']
-
-    for i in range(len(NameAva)):
-        name = NameAva[i]
-        start = StartAva[i]
-        end = start + LengthAva[i] - 1
-        avapath = CoordAva[:, int(start):int(end)]
-        com2AB(header, rasterdata, avapath, CoordSplit, OutPath, name)
-
-
 def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
            smallAva=False, distance=10):
     """ Computes the AlphaBeta model given an input raster (of the DEM),
-    an avalanche path and a split point
+    an avalanche path and split points
+    Inputs : DEM header and rater (as np array), single avapath and Split points
+            as np arrays
+            output save path, avalanche type and reamplind lenght for the Avapath
+    Outputs : writes raw results to OutPath
     """
 
     abVersion = '4.1'
@@ -214,7 +203,8 @@ def prepareLine(header, rasterdata, avapath, splitPoint, distance=10):
 
 
 def findSplitPoint(AvaProfile, splitPoint, s, xcoornew, ycoornew):
-    """ find split point by computing the distance to the line
+    """ find split point by computing the distance between splitpoints and the line
+        selects the closest splitpoint (if several were given in input)
     """
     Dist = np.empty((0))
     IndSplit = np.empty((0))
@@ -289,7 +279,7 @@ def checkProfile(indSplit, AvaProfile):
 
 
 def calcAB(eqInput, eqParameters):
-    """ Calculate Alpha Beta according to chosen eqParameters """
+    """ Calculate Alpha Beta for data in eqInput according to chosen eqParameters """
     k1 = eqParameters['k1']
     k2 = eqParameters['k2']
     k3 = eqParameters['k3']
