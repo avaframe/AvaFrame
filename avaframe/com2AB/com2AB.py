@@ -3,7 +3,7 @@
 """ Main file for module com2AB - Alpha Beta
 """
 
-import avaframe.SHPConv as shpConv
+import avaframe.com2AB.readCom2ABInputs as shpConv
 import avaframe.in3Utils as IOf
 import pickle
 # from mpl_toolkits.axes_grid1 import make_axes_locatable
