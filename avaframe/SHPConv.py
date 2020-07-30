@@ -1,4 +1,3 @@
-# !---------written by Felix Oesterle (FSO)------------------
 # -DESCRIPTION:
 #   Usage: python SHPConv.py import/export FILENAME
 #   all modules can be install via pip install

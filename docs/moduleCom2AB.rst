@@ -21,7 +21,8 @@ To run:
 
 * cp com2ABCfg.py to local_com2ABCfg.py (if not, the demo example is used)
 * enter paths to the desired datasets and output files in local_com2ABCfg.py (if not, the demo example is used)
-* in AvaFrame/ run python3 avaframe/runCom2AB.py
+* in AvaFrame/ run::
+ python3 avaframe/runCom2AB.py
 
 
 Theory:

@@ -1,7 +1,7 @@
 """
 Config file
-will be overridden by local_tmp1ExampleConf.py
-So copy this file to local_tmp1ExmpleConf.py, adjust your variables there
+will be overridden by local_com2ABCfg.py
+So copy this file to local_com2ABCfg.py, adjust your variables there
 This file serves as template file and general settings file
 """
 import os
@@ -18,7 +18,7 @@ DGMSource = os.path.join(dirname, '../data/avaSlide/slideTopo.asc')  # 'YOUR PAT
 SplitPointSource = os.path.join(
     dirname, '../data/avaSlide/POINTS/slidePoints')  # 'YOUR PATH TO SPLITPOINT'
 
-saveOutPath = os.path.join(dirname, './Outputs/')
+saveOutPath = os.path.join(dirname, 'Outputs/')
 
 # ##########################
 # Optional settings

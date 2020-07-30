@@ -98,7 +98,7 @@ def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
 
     abVersion = '4.1'
     log.info('Running Version: %s ', abVersion)
-
+    log.info('Running Alpha Beta model on: %s ', name)
     eqParams = setEqParameters(smallAva)
 
     # TODO: make rest work with dict
@@ -122,11 +122,11 @@ def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
 
     # TODO: more descriptiv: what is s? x,y,z are clear
     eqOut = calcAB(eqIn, eqParams)
-    savename = name + '_com2AB_param.pickle'
+    savename = name + '_com2AB_eqparam.pickle'
     save_file = os.path.join(OutPath, savename)
     with open(save_file, 'wb') as handle:
         pickle.dump(eqParams, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    savename = name + 'com2AB_out.pickle'
+    savename = name + '_com2AB_eqout.pickle'
     save_file = os.path.join(OutPath, savename)
     with open(save_file, 'wb') as handle:
         pickle.dump(eqOut, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -280,6 +280,7 @@ def checkProfile(indSplit, AvaProfile):
 
 def calcAB(eqInput, eqParameters):
     """ Calculate Alpha Beta for data in eqInput according to chosen eqParameters """
+    log.info("Calculating alpha beta")
     k1 = eqParameters['k1']
     k2 = eqParameters['k2']
     k3 = eqParameters['k3']
