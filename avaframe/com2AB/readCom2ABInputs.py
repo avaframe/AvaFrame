@@ -8,6 +8,7 @@ import sys
 import os
 import numpy as np
 
+
 def SHP2Array(infile, defname):
     """ Read shapefile and convert it to a python dictionnary
     containing the name of the paths in the shape file, the np array with
