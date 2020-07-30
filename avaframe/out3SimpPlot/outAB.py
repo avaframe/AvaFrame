@@ -2,7 +2,7 @@
 # coding: utf-8
 """ Main file for Post processing Alpha Beta results
 """
-
+import copy
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
