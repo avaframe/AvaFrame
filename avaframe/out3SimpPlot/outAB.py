@@ -1,4 +1,8 @@
-import copy
+#!/usr/bin/env python
+# coding: utf-8
+""" Main file for Post processing Alpha Beta results
+"""
+
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,7 +34,7 @@ def readABresults(saveOutPath, name):
 
 
 def processABresults(eqParams, eqOut):
-    """ prepare AB results for plotting and writing results """
+    """ prepare AlphaBeta results for plotting and writing results """
     s = eqOut['s']
     x = eqOut['x']
     y = eqOut['y']
@@ -121,7 +125,7 @@ def writeABpostOut(header, rasterdata, Avapath, SplitPoint, saveOutPath, flags):
 
 
 def plotResults(header, rasterdata, avapath, splitPoint, eqOutput, save_file, flags):
-    """ Plot and save results 8depending on flags options"""
+    """ Plot and save results depending on flags options"""
 
     s = eqOutput['s']
     x = eqOutput['x']
@@ -214,7 +218,7 @@ def plotResults(header, rasterdata, avapath, splitPoint, eqOutput, save_file, fl
 
 
 def WriteResults(eqOutput, saveOutPath, name):
-    """ Write com2AB results to file """
+    """ Write AB results to file """
     s = eqOutput['s']
     x = eqOutput['x']
     y = eqOutput['y']
