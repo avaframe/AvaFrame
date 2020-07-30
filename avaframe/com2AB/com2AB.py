@@ -97,7 +97,7 @@ def com2AB(header, rasterdata, Avapath, SplitPoint, OutPath, name,
         start = StartAva[i]
         end = start + LengthAva[i] - 1
         avapath = CoordAva[:, int(start):int(end)]
-        com2AB(header, rasterdata, avapath, CoordSplit, saveOutPath, name)
+        com2AB(header, rasterdata, avapath, CoordSplit, OutPath, name)
 
 def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
            smallAva=False, distance=10):
