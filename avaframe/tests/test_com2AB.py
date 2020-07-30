@@ -13,7 +13,7 @@ def test_com2AB(capfd):
     A = -B/4000
     C = 1000
     N = 1000
-    s =  np.linspace(0.0, -B/(2*A), num=N)
+    s = np.linspace(0.0, -B/(2*A), num=N)
     z = np.empty(np.shape(s))
     for i in range(N):
         if (s[i] < (-B/(2*A))):
@@ -24,7 +24,7 @@ def test_com2AB(capfd):
     theta_beta = 10
     x_beta = (-np.tan(np.deg2rad(theta_beta)) - B)/(2*A)
     y_beta = A*x_beta*x_beta + B*x_beta + C
-    beta = np.rad2deg(np.arctan2((C-y_beta),x_beta))
+    beta = np.rad2deg(np.arctan2((C-y_beta), x_beta))
     # use standard coeef
     k1 = 1.05
     k2 = -3130.0
@@ -48,5 +48,6 @@ def test_com2AB(capfd):
     alphaSD = eqOut['alphaSD']
 
     # compare results with a relative tolerance of tol
-    tol = 0.001 # here 0.1% relative diff
-    assert (alpha == pytest.approx(alpha_ref,rel=tol)) and (alphaSD[0] == pytest.approx(alphaSD_ref[0],rel=tol)) and (alphaSD[1] == pytest.approx(alphaSD_ref[1],rel=tol)) and (alphaSD[2] == pytest.approx(alphaSD_ref[2],rel=tol))
+    tol = 0.001  # here 0.1% relative diff
+    assert (alpha == pytest.approx(alpha_ref, rel=tol)) and (alphaSD[0] == pytest.approx(alphaSD_ref[0], rel=tol)) and (
+        alphaSD[1] == pytest.approx(alphaSD_ref[1], rel=tol)) and (alphaSD[2] == pytest.approx(alphaSD_ref[2], rel=tol))
