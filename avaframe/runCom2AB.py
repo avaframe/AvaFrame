@@ -1,9 +1,19 @@
 """Run script for module com2AB
 """
 
+import logging
+import sys
+
 # Local imports
 from avaframe.com2AB import com2AB
 import avaframe.com2AB.com2ABCfg as conf
+from avaframe.out3SimpPlot import outAB
+
+# create logger, set to logging.DEBUG to see all messages
+# logging.basicConfig(filename='com2AB.log', filemode='w', level=logging.INFO,
+#                     format='%(module)s:%(levelname)s - %(message)s')
+logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                    format='%(module)s:%(levelname)s - %(message)s')
 
 print("[com2AB] Running com2ABMain model on test case DEM : ",
       conf.DGMSource, 'with profile:', conf.ProfileLayer)
@@ -12,4 +22,6 @@ print("[com2AB] Running com2ABMain model on test case DEM : ",
 avapath = com2AB.readAvaPath(conf.ProfileLayer, header)
 splitPoint = com2AB.readSplitPoint(conf.SplitPointSource, header)
 
-# com2AB.com2ABMain(header, rasterdata, avapath, splitPoint, conf.saveOutPath, conf.smallAva)
+com2AB.com2ABMain(header, rasterdata, avapath, splitPoint,
+                  conf.saveOutPath, conf.smallAva, conf.distance)
+outAB.writeABpostOut(header, rasterdata, avapath, splitPoint, conf.saveOutPath, conf.flags)
