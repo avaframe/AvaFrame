@@ -172,9 +172,9 @@ def prepareLine(header, rasterdata, avapath, splitPoint, distance=10):
     ycoornew = np.array([ycoor[0]])
     s = np.array([0])  # curvilinear coordinate
     # loop on the points of the avapath
-    for i in range(np.shape(xcoor)[0]-1):
-        Vx = xcoor[i+1] - xcoor[i]
-        Vy = ycoor[i+1] - ycoor[i]
+    for i in range(np.shape(xcoor)[0] - 1):
+        Vx = xcoor[i + 1] - xcoor[i]
+        Vy = ycoor[i + 1] - ycoor[i]
         D = np.sqrt(Vx**2 + Vy**2)
         nd = int(np.round(D / distance) + 1)
         # Resample each segment
@@ -272,7 +272,7 @@ def checkProfile(indSplit, AvaProfile):
         L = AvaProfile[3, -1]
         AvaProfile = np.fliplr(AvaProfile)
         AvaProfile[3, :] = L - AvaProfile[3, :]
-        indSplit = np.shape(AvaProfile)[1]-indSplit
+        indSplit = np.shape(AvaProfile)[1] - indSplit
         return indSplit, AvaProfile
     else:
         return indSplit, AvaProfile
