@@ -14,8 +14,9 @@ from avaframe.out3SimpPlot import outAB
 #                     format='%(module)s:%(levelname)s - %(message)s')
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format='%(module)s:%(levelname)s - %(message)s')
+log = logging.getLogger(__name__)
 
-print("[com2AB] Running com2ABMain model on test case DEM : ",
+log.info("[com2AB] Running com2ABMain model on test case DEM : ",
       conf.DGMSource, 'with profile:', conf.ProfileLayer)
 
 [header, rasterdata] = com2AB.readRaster(conf.DGMSource)
@@ -24,4 +25,7 @@ splitPoint = com2AB.readSplitPoint(conf.SplitPointSource, header)
 
 com2AB.com2ABMain(header, rasterdata, avapath, splitPoint,
                   conf.saveOutPath, conf.smallAva, conf.distance)
-outAB.writeABpostOut(header, rasterdata, avapath, splitPoint, conf.saveOutPath, conf.flags)
+FileNamePlot_ext, FileNameWrite_ext = outAB.writeABpostOut(header, rasterdata, avapath, splitPoint, conf.saveOutPath, conf.flags)
+
+print(FileNamePlot_ext)
+print(FileNameWrite_ext)
