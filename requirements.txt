@@ -1,1 +1,3 @@
-numpy pyshp
+numpy
+matplotlib
+pyshp
