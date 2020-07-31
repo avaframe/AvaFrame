@@ -2,15 +2,16 @@
 # coding: utf-8
 """ Main file for Post processing Alpha Beta results
 """
+
+import pickle
+import os
+import logging
 import copy
 import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import pickle
-import os
-import logging
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
@@ -35,10 +36,12 @@ def readABresults(saveOutPath, name):
 
 def processABresults(eqParams, eqOut):
     """ prepare AlphaBeta results for plotting and writing results """
+
     s = eqOut['s']
     x = eqOut['x']
     y = eqOut['y']
     z = eqOut['z']
+
     CuSplit = eqOut['CuSplit']
     ids_10Point = eqOut['ids_10Point']
     poly = eqOut['poly']
@@ -47,6 +50,7 @@ def processABresults(eqParams, eqOut):
     SDs = eqOut['SDs']
     alphaSD = eqOut['alphaSD']
     indSplit = eqOut['indSplit']
+
     # Line down to alpha
     f = z[0] + np.tan(np.deg2rad(-alpha)) * s
     fplus1SD = z[0] + np.tan(np.deg2rad(-alphaSD[0])) * s
@@ -241,23 +245,23 @@ def WriteResults(eqOutput, saveOutPath, name):
     indSplit = eqOutput['indSplit']
     ParameterSet = eqOutput['ParameterSet']
 
-    log.info('Profile name %s\n' % name)
-    log.info('Parameter Set %s\n' % ParameterSet)
-    log.info('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+    log.info('Profile name %s' % name)
+    log.info('Parameter Set %s' % ParameterSet)
+    log.info('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
         x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
-    log.info('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+    log.info('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
         x[ids_10Point], y[ids_10Point], z[ids_10Point], s[ids_10Point], beta))
     if ids_alphaM1SD:
-        log.info('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+        log.info('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
             x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
     else:
-        log.info('alphaM1SD point out of profile\n')
+        log.info('alphaM1SD point out of profile')
     if ids_alphaM2SD:
-        log.info('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+        log.info('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
             x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
     else:
-        log.info('alphaM2SD point out of profile\n')
-    log.info('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle  in [°] : %.2f\n' % (
+        log.info('alphaM2SD point out of profile')
+    log.info('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle  in [°] : %.2f' % (
         x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD], s[ids_alphaP1SD], alphaSD[0]))
 
     FileName_ext = saveOutPath + name + '_results_python.txt'
