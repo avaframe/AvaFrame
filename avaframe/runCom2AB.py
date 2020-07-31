@@ -16,8 +16,8 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format='%(module)s:%(levelname)s - %(message)s')
 log = logging.getLogger(__name__)
 
-log.info("[com2AB] Running com2ABMain model on test case DEM : ",
-      conf.DGMSource, 'with profile:', conf.ProfileLayer)
+log.info("Running com2ABMain model on test case DEM %s with profile %s ",
+         conf.DGMSource, conf.ProfileLayer)
 
 [header, rasterdata] = com2AB.readRaster(conf.DGMSource)
 avapath = com2AB.readAvaPath(conf.ProfileLayer, header)
@@ -25,7 +25,11 @@ splitPoint = com2AB.readSplitPoint(conf.SplitPointSource, header)
 
 com2AB.com2ABMain(header, rasterdata, avapath, splitPoint,
                   conf.saveOutPath, conf.smallAva, conf.distance)
-FileNamePlot_ext, FileNameWrite_ext = outAB.writeABpostOut(header, rasterdata, avapath, splitPoint, conf.saveOutPath, conf.flags)
 
-print(FileNamePlot_ext)
-print(FileNameWrite_ext)
+fileNamePlot_ext, fileNameWrite_ext = outAB.writeABpostOut(header, rasterdata,
+                                                           avapath, splitPoint,
+                                                           conf.saveOutPath,
+                                                           conf.flags)
+
+log.info('Plotted to: %s', fileNamePlot_ext)
+log.info('Data written: %s', fileNameWrite_ext)

@@ -3,11 +3,14 @@ Conversion functions to read/ write Shape files or xyz profiles
 requires import shapefile -> pip/pip3 install pyshp
 """
 
+import os
 import shapefile
 import sys
-import os
 import numpy as np
+import logging 
 
+# create local logger
+log = logging.getLogger(__name__)
 
 def SHP2Array(infile, defname):
     """ Read shapefile and convert it to a python dictionnary
@@ -81,7 +84,7 @@ def SHP2Array(infile, defname):
         if layername is None:
             layername = defname+'_'+str(n)
 
-        print('SHPConv: Found layer ', layername)
+        log.debug('SHPConv: Found layer %s', layername)
 
         Start = np.append(Start, start)
         length = len(pts)
