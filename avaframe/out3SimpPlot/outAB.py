@@ -255,12 +255,12 @@ def WriteResults(eqOutput, saveOutPath, name):
         log.info('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
             x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
     else:
-        log.info('alphaM1SD point out of profile')
+        log.warning('alphaM1SD point out of profile')
     if ids_alphaM2SD:
         log.info('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
             x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
     else:
-        log.info('alphaM2SD point out of profile')
+        log.warning('alphaM2SD point out of profile')
     log.info('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle  in [°] : %.2f' % (
         x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD], s[ids_alphaP1SD], alphaSD[0]))
 
