@@ -3,17 +3,15 @@
 """ Main file for module com2AB - Alpha Beta
 """
 
-import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in3Utils as IOf
-import pickle
-# from mpl_toolkits.axes_grid1 import make_axes_locatable
-# import matplotlib as mpl
-# import matplotlib.pyplot as plt
-import numpy as np
 import os
+import pickle
 import logging
+import numpy as np
+
+import avaframe.in2Trans.shpConversion as shpConv
+import avaframe.in3Utils.ascUtils as IOf
+
 # create local logger
-# change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
 
@@ -120,7 +118,6 @@ def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
     eqIn['z'] = AvaProfile[2, :]  # z coordinate of the path (projection of x,y on the raster)
     eqIn['indSplit'] = indSplit  # index of split point
 
-    # TODO: more descriptiv: what is s? x,y,z are clear
     eqOut = calcAB(eqIn, eqParams)
     savename = name + '_com2AB_eqparam.pickle'
     save_file = os.path.join(OutPath, savename)
