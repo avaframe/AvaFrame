@@ -7,7 +7,7 @@ import os
 import shapefile
 import sys
 import numpy as np
-import logging 
+import logging
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -64,8 +64,7 @@ def SHP2Array(infile, defname):
                 # get entity name
                 name = name.lower()
                 if (name == 'name'):
-                    layername = value
-                    Name.append(layername)
+                    layername = str(value)
                 if (name == 'd0'):
                     d0 = value
                 if (name == 'rho'):
@@ -82,8 +81,9 @@ def SHP2Array(infile, defname):
 
         # if layer still not defined, use generic
         if layername is None:
-            layername = defname+'_'+str(n)
+            layername = defname
 
+        Name.append(layername)
         log.debug('SHPConv: Found layer %s', layername)
 
         Start = np.append(Start, start)

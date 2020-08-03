@@ -61,8 +61,8 @@ def setEqParameters(smallAva=False, customParam=None):
     return eqParameters
 
 
-def com2ABMain(header, rasterdata, Avapath, SplitPoint, saveOutPath='./',
-               smallAva=False, distance=10):
+def com2ABMain(header, rasterdata, Avapath, SplitPoint,
+                saveOutPath, smallAva=False, distance=10):
     """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
     Inputs : DEM header and rater (as np array), Avapath and Split points
             .shp file optional output save path, avalanche type and reamplind lenght
@@ -75,11 +75,11 @@ def com2ABMain(header, rasterdata, Avapath, SplitPoint, saveOutPath='./',
     CoordAva = Avapath['Coord']
 
     CoordSplit = SplitPoint['Coord']
-
+    print(NameAva,StartAva)
     for i in range(len(NameAva)):
         name = NameAva[i]
         start = StartAva[i]
-        end = start + LengthAva[i] - 1
+        end = start + LengthAva[i]
         avapath = CoordAva[:, int(start):int(end)]
         com2AB(header, rasterdata, avapath, CoordSplit, saveOutPath, name)
 
@@ -176,9 +176,9 @@ def prepareLine(header, rasterdata, avapath, splitPoint, distance=10):
         nd = int(np.round(D / distance) + 1)
         # Resample each segment
         S0 = s[-1]
-        for j in range(1, nd):
-            xn = j / (nd - 1) * Vx + xcoor[i]
-            yn = j / (nd - 1) * Vy + ycoor[i]
+        for j in range(1, nd + 1):
+            xn = j / (nd) * Vx + xcoor[i]
+            yn = j / (nd) * Vy + ycoor[i]
             xcoornew = np.append(xcoornew, xn)
             ycoornew = np.append(ycoornew, yn)
             s = np.append(s, S0 + D * j / nd)
@@ -205,7 +205,7 @@ def findSplitPoint(AvaProfile, splitPoint, s, xcoornew, ycoornew):
     """
     Dist = np.empty((0))
     IndSplit = np.empty((0))
-    for i in range(np.shape(splitPoint)[0]):
+    for i in range(np.shape(splitPoint)[1]):
         dist = np.sqrt((xcoornew - splitPoint[0, i])**2 + (ycoornew - splitPoint[1, i])**2)
         indSplit = np.argmin(dist)
         IndSplit = np.append(IndSplit, indSplit)
@@ -228,11 +228,11 @@ def readRaster(fname):
     return [header, np.flipud(rasterdata)]
 
 
-def readAvaPath(fname, header):
+def readAvaPath(fname, outputName, header):
     """ Read avalanche path from  .shp"""
 
     log.info('Reading avalanche path : %s ', fname)
-    defname = 'SHP'
+    defname = outputName
     Avapath = shpConv.SHP2Array(fname, defname)
     avapath = Avapath['Coord']
     if np.shape(avapath)[0] < 2:
