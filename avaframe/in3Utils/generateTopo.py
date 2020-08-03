@@ -77,7 +77,6 @@ def inclinedplane(cG, ncols, nrows, cT, cC, cF):
     c_ff = float(cC['c_ff'])
     c_radius = float(cC['c_radius'])
 
-
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
     yv = np.arange(-0.5*y_end, 0.5*y_end, dx)
@@ -270,7 +269,7 @@ def hockey(cG, f_len, A, B, ncols, nrows, cT, cC, cF):
     x, y = np.meshgrid(xv, yv)
     zv = np.zeros((nrows, ncols))
     zv0 = np.zeros((nrows, ncols))
-    zv1 =  np.zeros((nrows, ncols))
+    zv1 = np.zeros((nrows, ncols))
 
     # If a channel shall be introduced
     if float(cF['channel']) == 1:
@@ -454,7 +453,6 @@ def plotDEM(x, y, z, name_ext, cD, cG):
     y_end = float(cG['y_end']) + dx
     xl = float(cD['xl'])
     yl = float(cD['yl'])
-
 
     # Set coordinate grid with given origin
     xp = np.arange(xl, xl + x_end, dx)
