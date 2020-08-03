@@ -11,14 +11,15 @@ dirname = os.path.dirname(__file__)
 # ##########################
 
 # 'YOUR PATH TO AVALANCHE PATH'
-ProfileLayer = os.path.join(dirname, '../data/avaSlide/LINES/slideProfiles')
+ProfileLayer = os.path.join(dirname, '../data/avaSlide/LINES/SlideProfile3')
 
 DGMSource = os.path.join(dirname, '../data/avaSlide/slideTopo.asc')  # 'YOUR PATH TO DEM'
 
 SplitPointSource = os.path.join(
-    dirname, '../data/avaSlide/POINTS/slidePoints')  # 'YOUR PATH TO SPLITPOINT'
+    dirname, '../data/avaSlide/POINTS/slidePoints3')  # 'YOUR PATH TO SPLITPOINT'
 
 saveOutPath = os.path.join(dirname, 'Outputs/')
+outputName = 'SlideProfile3'
 
 # ##########################
 # Optional settings
