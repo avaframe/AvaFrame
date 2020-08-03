@@ -51,7 +51,7 @@ def flatplane(cG, ncols, nrows, z_elev):
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5*y_end, 0.5*y_end, dx)
+    yv = np.arange(-0.5 *y_end, 0.5 *y_end, dx)
     x, y = np.meshgrid(xv, yv)
     # Set elevation of surface
     zv = np.zeros((nrows, ncols)) + z_elev
@@ -79,7 +79,7 @@ def inclinedplane(cG, ncols, nrows, cT, cC, cF):
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5*y_end, 0.5*y_end, dx)
+    yv = np.arange(-0.5 *y_end, 0.5 *y_end, dx)
     x, y = np.meshgrid(xv, yv)
     zv = np.zeros((nrows, ncols))
     zv0 = np.zeros((nrows, ncols))
@@ -94,10 +94,12 @@ def inclinedplane(cG, ncols, nrows, cT, cC, cF):
         c_extent = np.zeros(ncols) + c_radius
 
         # Introduce channel by cutting channel out as half sphere shaped feature
-        # if flags['topoconst'] == 0 - add layer of channel depth everywhere and cut out half-sphere shaped feature
+        # if flags['topoconst'] == 0 - add layer of channel depth everywhere and
+        # cut out half-sphere shaped feature
         for m in range(ncols):
             for k in range(nrows):
-                # if location within horizontal extent of channel, make half sphere shaped channel with radius given by channel horizontal extent
+                # if location within horizontal extent of channel,
+                # make half sphere shaped channel with radius given by channel horizontal extent
                 if abs(yv[k]) < c_extent[m]:
                     if float(cF['topoconst']) == 1:
                         zv[k, m] = zv[k, m] - c_extent[m] * c_0[m] * \
@@ -124,8 +126,8 @@ def inclinedplane(cG, ncols, nrows, cT, cC, cF):
 
 def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
     """
-        Compute coordinates of an inclined plane with a flat foreland
-        defined by total fall height z0, angle to flat foreland (mean_alpha) and a radius (r_circ) to
+        Compute coordinates of an inclined plane with a flat foreland  defined by
+        total fall height z0, angle to flat foreland (mean_alpha) and a radius (r_circ) to
         smooth the transition from inclined plane to flat foreland
     """
 
@@ -144,7 +146,7 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5*y_end, 0.5*y_end, dx)
+    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     x, y = np.meshgrid(xv, yv)
     zv = np.zeros((nrows, ncols))
     zv0 = np.zeros((nrows, ncols))
@@ -155,7 +157,9 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
     # Compute distance to flat foreland for given mean_alpha
     x1 = z0 / np.tan(np.radians(mean_alpha))
     if x1 >= x_end * 0.9:
-        logging.warning('Your domain (x_end) is to small or the slope angle (mean_alpha) to shallow to produce a signifcant (>10 percent of domain, in your case: %.2f m) flat foreland!' % (0.1*(x_end-dx)))
+        logging.warning('Your domain (x_end) is to small or the slope angle (mean_alpha) to' \
+        'shallow to produce a signifcant (>10 percent of domain, in your case: %.2f m)' \
+         'flat foreland!' % (0.1 * (x_end - dx)))
 
     # Compute circle parameters for smoothing the transition
     beta = (0.5 * (180. - (mean_alpha)))
@@ -169,12 +173,12 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
     # Set surface elevation
     for m in range(len(xv)):
         lv[m] = (r_circ / xc) * xv[m] - d1
-        if xv[m] < x1-yc:
+        if xv[m] < x1 - yc:
             zv[:, m] = z0 - np.tan(np.radians(mean_alpha)) * xv[m]
             zv0[:, m] = z0 - np.tan(np.radians(mean_alpha)) * xv[m]
             lv[m] = np.nan
             cv[:, m] = np.nan
-        elif x1-yc <= xv[m] <= x1+xc:
+        elif x1 - yc <= xv[m] <= x1 + xc:
             r_circ + np.sqrt(r_circ**2 - (xv[m] - x_circ)**2)
             zv[:, m] = r_circ - np.sqrt(r_circ**2 - (x_circ - xv[m])**2)
             zv0[:, m] = r_circ - np.sqrt(r_circ**2 - (x_circ - xv[m])**2)
@@ -203,7 +207,8 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
         c_2 = 1. - norm.cdf(xv, c_muendFP * (x1), c_ff)
         c_0 = np.zeros(ncols)
 
-        # combine both into one function separated at the the middle of the channel longprofile location
+        # combine both into one function separated at the the middle of
+        #  the channel longprofile location
         for l in range(ncols):
             if xv[l] < (x1 * (0.5 * (c_mustart + c_muendFP))):
                 c_0[l] = c_1[l]
@@ -265,7 +270,7 @@ def hockey(cG, f_len, A, B, ncols, nrows, cT, cC, cF):
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5*y_end, 0.5*y_end, dx)
+    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     x, y = np.meshgrid(xv, yv)
     zv = np.zeros((nrows, ncols))
     zv0 = np.zeros((nrows, ncols))
@@ -297,9 +302,9 @@ def hockey(cG, f_len, A, B, ncols, nrows, cT, cC, cF):
                 zv0[k, m] = A * xv[m]**2 + B * xv[m] + C
                 zv1[k, m] = A * xv[m]**2 + B * xv[m] + C
             else:
-                zv[k, m] = (-B**2) / (4.*A) + C
-                zv0[k, m] = (-B**2) / (4.*A) + C
-                zv1[k, m] = (-B**2) / (4.*A) + C
+                zv[k, m] = (-B**2) / (4. * A) + C
+                zv0[k, m] = (-B**2) / (4. * A) + C
+                zv1[k, m] = (-B**2) / (4. * A) + C
 
             # Add surface elevation modification introduced by channel
             if float(cF['channel']) == 1:
@@ -340,8 +345,8 @@ def bowl(cG, ncols, nrows, r_bowl):
     y_end = float(cG['y_end']) + dx
 
     # Compute coordinate grid
-    xv = np.arange(-0.5*x_end, 0.5*x_end, dx)
-    yv = np.arange(-0.5*y_end, 0.5*y_end, dx)
+    xv = np.arange(-0.5 * x_end, 0.5 * x_end, dx)
+    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     x, y = np.meshgrid(xv, yv)
     zv = np.zeros((nrows, ncols))
 
@@ -350,7 +355,7 @@ def bowl(cG, ncols, nrows, r_bowl):
         for k in range(nrows):
             radius = np.sqrt(xv[m]**2 + yv[k]**2)
             if radius <= r_bowl:
-                zv[k, m] = r_bowl - r_bowl * np.sqrt(1 - (radius/r_bowl)**2)
+                zv[k, m] = r_bowl - r_bowl * np.sqrt(1 - (radius / r_bowl)**2)
             else:
                 zv[k, m] = r_bowl
 
@@ -379,7 +384,7 @@ def helix(cG, ncols, nrows, cT, f_len, A, B, cC, cF):
     c_muend = float(cC['c_muend'])
 
     # Compute coordinate grid
-    xv = np.arange(-0.5*x_end, 0.5*x_end, dx)
+    xv = np.arange(-0.5 * x_end, 0.5 * x_end, dx)
     yv = np.arange(-y_end, 0, dx)
     x, y = np.meshgrid(xv, yv)
     zv = np.zeros((nrows, ncols))
@@ -389,17 +394,17 @@ def helix(cG, ncols, nrows, cT, f_len, A, B, cC, cF):
         for k in range(nrows):
             radius = np.sqrt(xv[m]**2 + yv[k]**2)
             theta = np.arctan2(yv[k], xv[m]) + np.pi
-            if (theta*r_helix) < f_len:
-                zv[k, m] = A * (theta*r_helix)**2 + B * (theta*r_helix) + C
+            if (theta * r_helix) < f_len:
+                zv[k, m] = A * (theta * r_helix)**2 + B * (theta * r_helix) + C
             else:
-                zv[k, m] = (-B**2) / (4.*A) + C
+                zv[k, m] = (-B**2) / (4. * A) + C
 
             # If channel is introduced to topography
             if float(cF['channel']) == 1:
                 if (theta * r_helix) < (0.5 * (c_mustart + c_muend) * f_len):
-                    c_0 = norm.cdf(theta*r_helix, c_mustart*f_len, c_ff)
+                    c_0 = norm.cdf(theta * r_helix, c_mustart * f_len, c_ff)
                 else:
-                    c_0 = 1. - norm.cdf(theta*r_helix, c_muend*f_len, c_ff)
+                    c_0 = 1. - norm.cdf(theta * r_helix, c_muend * f_len, c_ff)
 
                 # If channel of constant width or becoming narrower in the middle
                 if float(cF['narrowing']) == 1:
@@ -506,7 +511,7 @@ def generateTopo():
 
     # Load all input Parameters
     cfg = configparser.ConfigParser()
-    if os.path.isfile('avaframe/in3Utils/local_generateTopoCfg.ini') == True:
+    if os.path.isfile('avaframe/in3Utils/local_generateTopoCfg.ini'):
         cfg.read('avaframe/in3Utils/local_generateTopoCfg.ini')
     else:
         cfg.read('avaframe/in3Utils/generateTopoCfg.ini')
