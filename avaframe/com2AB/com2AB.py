@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 # Local imports
 
 
-def setEqParameters(smallAva=False, customParam=None):
+def setEqParameters(smallAva, customParam):
     """Set alpha beta equation parameters to
     - standard (default)
     - small avalanche
@@ -62,7 +62,7 @@ def setEqParameters(smallAva=False, customParam=None):
 
 
 def com2ABMain(header, rasterdata, Avapath, SplitPoint,
-                saveOutPath, smallAva=False, distance=10):
+                saveOutPath, smallAva, customParam, distance):
     """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
     Inputs : DEM header and rater (as np array), Avapath and Split points
             .shp file optional output save path, avalanche type and reamplind lenght
@@ -81,11 +81,12 @@ def com2ABMain(header, rasterdata, Avapath, SplitPoint,
         start = StartAva[i]
         end = start + LengthAva[i]
         avapath = CoordAva[:, int(start):int(end)]
-        com2AB(header, rasterdata, avapath, CoordSplit, saveOutPath, name)
+        com2AB(header, rasterdata, avapath, CoordSplit, saveOutPath, name,
+           smallAva, customParam, distance)
 
 
 def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
-           smallAva=False, distance=10):
+           smallAva, customParam, distance):
     """ Computes the AlphaBeta model given an input raster (of the DEM),
     an avalanche path and split points
     Inputs : DEM header and rater (as np array), single avapath and Split points
@@ -97,14 +98,14 @@ def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
     abVersion = '4.1'
     log.info('Running Version: %s ', abVersion)
     log.info('Running Alpha Beta model on: %s ', name)
-    eqParams = setEqParameters(smallAva)
+    eqParams = setEqParameters(smallAva, customParam)
 
     # TODO: make rest work with dict
 
     # read inputs, ressample ava path
     # make pofile and project split point on path
     AvaProfile, SplitPoint, indSplit = prepareLine(
-        header, rasterdata, avapath, splitPoint, distance=10)
+        header, rasterdata, avapath, splitPoint, distance)
 
     # Sanity check if first element of AvaProfile[3,:]
     # (i.e z component) is highest:
@@ -154,7 +155,7 @@ def projectOnRaster(header, rasterdata, Points):
     return (PointsZ)
 
 
-def prepareLine(header, rasterdata, avapath, splitPoint, distance=10):
+def prepareLine(header, rasterdata, avapath, splitPoint, distance):
     """ 1- Resample the avapath line with a max intervall of distance=10m
     between points (projected distance on the horizontal plane).
     2- Make avalanch profile out of the path (affect a z value using the DEM)
