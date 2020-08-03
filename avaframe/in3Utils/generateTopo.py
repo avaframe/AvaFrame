@@ -51,7 +51,7 @@ def flatplane(cG, ncols, nrows, z_elev):
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5 *y_end, 0.5 *y_end, dx)
+    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     x, y = np.meshgrid(xv, yv)
     # Set elevation of surface
     zv = np.zeros((nrows, ncols)) + z_elev
@@ -79,7 +79,7 @@ def inclinedplane(cG, ncols, nrows, cT, cC, cF):
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5 *y_end, 0.5 *y_end, dx)
+    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     x, y = np.meshgrid(xv, yv)
     zv = np.zeros((nrows, ncols))
     zv0 = np.zeros((nrows, ncols))
@@ -157,9 +157,9 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
     # Compute distance to flat foreland for given mean_alpha
     x1 = z0 / np.tan(np.radians(mean_alpha))
     if x1 >= x_end * 0.9:
-        logging.warning('Your domain (x_end) is to small or the slope angle (mean_alpha) to' \
-        'shallow to produce a signifcant (>10 percent of domain, in your case: %.2f m)' \
-         'flat foreland!' % (0.1 * (x_end - dx)))
+        logging.warning('Your domain (x_end) is to small or the slope angle (mean_alpha) to'
+                        'shallow to produce a signifcant (>10 percent of domain, in your case:'
+                        ' %.2f m) flat foreland!' % (0.1 * (x_end - dx)))
 
     # Compute circle parameters for smoothing the transition
     beta = (0.5 * (180. - (mean_alpha)))
