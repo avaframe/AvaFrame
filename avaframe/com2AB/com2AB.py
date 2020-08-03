@@ -7,7 +7,7 @@ import os
 import pickle
 import logging
 import numpy as np
-
+import matplotlib.pyplot as plt
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.ascUtils as IOf
 
@@ -75,7 +75,6 @@ def com2ABMain(header, rasterdata, Avapath, SplitPoint,
     CoordAva = Avapath['Coord']
 
     CoordSplit = SplitPoint['Coord']
-    print(NameAva,StartAva)
     for i in range(len(NameAva)):
         name = NameAva[i]
         start = StartAva[i]
@@ -148,9 +147,37 @@ def projectOnRaster(header, rasterdata, Points):
     ycoor = Points[1]
     zcoor = np.array([])
     for i in range(np.shape(xcoor)[0]):
-        Lx = int(np.round((xcoor[i] - xllcorner) / cellsize))
-        Ly = int(np.round((ycoor[i] - yllcorner) / cellsize))
-        zcoor = np.append(zcoor, rasterdata[Ly][Lx])
+        # Lx = int(np.floor((xcoor[i] - xllcorner) / cellsize))
+        # Ly = int(np.floor((ycoor[i] - yllcorner) / cellsize))
+        Lx = (xcoor[i] - xllcorner) / cellsize
+        Ly = (ycoor[i] - yllcorner) / cellsize
+        Lx0 = int(np.floor(Lx))
+        Ly0 = int(np.floor(Ly))
+        # zcoor = np.append(zcoor, rasterdata[Ly0][Lx0])
+        Lx1 = int(np.floor(Lx)) + 1
+        Ly1 = int(np.floor(Ly)) + 1
+        dx = (Lx-Lx0)
+        dy = (Ly-Ly0)
+        dist = 0
+        value = 0
+        dist1 = (np.sqrt(2)-np.sqrt(dx**2+dy**2))**2
+        dist += dist1
+        value += dist1 * rasterdata[Ly0][Lx0]
+        dist1 = (np.sqrt(2)-np.sqrt(dx**2+(1-dy)**2))**2
+        dist += dist1
+        value += dist1 * rasterdata[Ly1][Lx0]
+        dist1 = (np.sqrt(2)-np.sqrt((1-dx)**2+(1-dy)**2))**2
+        dist += dist1
+        value += dist1 * rasterdata[Ly1][Lx1]
+        dist1 = (np.sqrt(2)-np.sqrt((1-dx)**2+dy**2))**2
+        dist += dist1
+        value += dist1 * rasterdata[Ly0][Lx1]
+        value = value/dist
+
+        value2 = rasterdata[Ly0][Lx0] + (rasterdata[Ly0][Lx1]-rasterdata[Ly0][Lx0])*dx + (rasterdata[Ly1][Lx0]-rasterdata[Ly0][Lx0])*dy + rasterdata[Ly0][Lx0]+ (rasterdata[Ly1][Lx1]-rasterdata[Ly1][Lx0]-rasterdata[Ly0][Lx1])*dy*dx
+
+        # print(value,rasterdata[Ly0][Lx0])
+        zcoor = np.append(zcoor, value)
     PointsZ = np.vstack((Points, zcoor))
     return (PointsZ)
 
@@ -174,7 +201,7 @@ def prepareLine(header, rasterdata, avapath, splitPoint, distance):
         Vx = xcoor[i + 1] - xcoor[i]
         Vy = ycoor[i + 1] - ycoor[i]
         D = np.sqrt(Vx**2 + Vy**2)
-        nd = int(np.round(D / distance) + 1)
+        nd = int(np.floor(D / distance) + 1)
         # Resample each segment
         S0 = s[-1]
         for j in range(1, nd + 1):
@@ -239,8 +266,8 @@ def readAvaPath(fname, outputName, header):
     if np.shape(avapath)[0] < 2:
         raise ValueError('Ava path file should contain at least 2 columns')
     for i in range(np.shape(avapath)[1]):
-        Lx = int(np.round((avapath[0, i] - header.xllcorner) / header.cellsize))
-        Ly = int(np.round((avapath[1, i] - header.yllcorner) / header.cellsize))
+        Lx = int(np.floor((avapath[0, i] - header.xllcorner) / header.cellsize))
+        Ly = int(np.floor((avapath[1, i] - header.yllcorner) / header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
             raise ValueError('Avalanche path exceeds DEM extend')
     return Avapath
@@ -256,8 +283,8 @@ def readSplitPoint(fname, header):
     if np.shape(splitPoint)[0] < 2:
         raise ValueError('split point file should contain at least 2 columns')
     for i in range(np.shape(splitPoint)[1]):
-        Lx = int(np.round((splitPoint[0, i] - header.xllcorner) / header.cellsize))
-        Ly = int(np.round((splitPoint[1, i] - header.yllcorner) / header.cellsize))
+        Lx = int(np.floor((splitPoint[0, i] - header.xllcorner) / header.cellsize))
+        Ly = int(np.floor((splitPoint[1, i] - header.yllcorner) / header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
             raise ValueError('Split point is not on the DEM')
     return SplitPoint
@@ -297,6 +324,9 @@ def calcAB(eqInput, eqParameters):
     dz[0] = 0.0
     angle = np.rad2deg(np.arctan2(dz, ds))
     CuSplit = s[indSplit]
+    fig = plt.figure(4, figsize=(10, 6))
+    plt.plot(s,angle)
+    plt.show()
     # TODO SPLIT POINT READING
     # get all values where Angle < 10 but >0
     # get index of first occurance and go one back to get previous value
