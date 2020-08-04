@@ -11,12 +11,12 @@ dirname = os.path.dirname(__file__)
 # ##########################
 
 # 'YOUR PATH TO AVALANCHE PATH'
-ProfileLayer = os.path.join(dirname, '../data/avaSlide/LINES/paraProfile1')
+ProfileLayer = os.path.join(dirname, '../data/avaSlide/LINES/slideProfiles')
 
-DGMSource = os.path.join(dirname, '../data/avaSlide/Parabola_Topo.asc')  # 'YOUR PATH TO DEM'
+DGMSource = os.path.join(dirname, '../data/avaSlide/slideTopo.asc')  # 'YOUR PATH TO DEM'
 
 SplitPointSource = os.path.join(
-    dirname, '../data/avaSlide/POINTS/paraPoint1')  # 'YOUR PATH TO SPLITPOINT'
+    dirname, '../data/avaSlide/POINTS/slidePoints')  # 'YOUR PATH TO SPLITPOINT'
 
 saveOutPath = os.path.join(dirname, 'Outputs/')
 outputName = 'SlideProfile3'
@@ -39,7 +39,7 @@ customParam = None
 
 
 # resampling step [m]
-distance = 10
+distance = 11
 
 # Some example flag
 fullLog = True

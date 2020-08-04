@@ -62,7 +62,7 @@ def setEqParameters(smallAva, customParam):
 
 
 def com2ABMain(header, rasterdata, Avapath, SplitPoint,
-                saveOutPath, smallAva, customParam, distance):
+               saveOutPath, smallAva, customParam, distance):
     """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
     Inputs : DEM header and rater (as np array), Avapath and Split points
             .shp file optional output save path, avalanche type and reamplind lenght
@@ -81,7 +81,7 @@ def com2ABMain(header, rasterdata, Avapath, SplitPoint,
         end = start + LengthAva[i]
         avapath = CoordAva[:, int(start):int(end)]
         com2AB(header, rasterdata, avapath, CoordSplit, saveOutPath, name,
-           smallAva, customParam, distance)
+               smallAva, customParam, distance)
 
 
 def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
@@ -130,7 +130,8 @@ def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
 
 
 def projectOnRaster(header, rasterdata, Points):
-    """ Projects the points Points on Raster and returns the z coord
+    """ Projects the points Points on Raster using a bilinear interpolation
+    and returns the z coord
     Input :
     Points: list of points (x,y) 2 rows as many columns as Points
     Output:
@@ -147,37 +148,22 @@ def projectOnRaster(header, rasterdata, Points):
     ycoor = Points[1]
     zcoor = np.array([])
     for i in range(np.shape(xcoor)[0]):
-        # Lx = int(np.floor((xcoor[i] - xllcorner) / cellsize))
-        # Ly = int(np.floor((ycoor[i] - yllcorner) / cellsize))
         Lx = (xcoor[i] - xllcorner) / cellsize
         Ly = (ycoor[i] - yllcorner) / cellsize
         Lx0 = int(np.floor(Lx))
         Ly0 = int(np.floor(Ly))
-        # zcoor = np.append(zcoor, rasterdata[Ly0][Lx0])
         Lx1 = int(np.floor(Lx)) + 1
         Ly1 = int(np.floor(Ly)) + 1
-        dx = (Lx-Lx0)
-        dy = (Ly-Ly0)
-        dist = 0
-        value = 0
-        dist1 = (np.sqrt(2)-np.sqrt(dx**2+dy**2))**2
-        dist += dist1
-        value += dist1 * rasterdata[Ly0][Lx0]
-        dist1 = (np.sqrt(2)-np.sqrt(dx**2+(1-dy)**2))**2
-        dist += dist1
-        value += dist1 * rasterdata[Ly1][Lx0]
-        dist1 = (np.sqrt(2)-np.sqrt((1-dx)**2+(1-dy)**2))**2
-        dist += dist1
-        value += dist1 * rasterdata[Ly1][Lx1]
-        dist1 = (np.sqrt(2)-np.sqrt((1-dx)**2+dy**2))**2
-        dist += dist1
-        value += dist1 * rasterdata[Ly0][Lx1]
-        value = value/dist
-
-        value2 = rasterdata[Ly0][Lx0] + (rasterdata[Ly0][Lx1]-rasterdata[Ly0][Lx0])*dx + (rasterdata[Ly1][Lx0]-rasterdata[Ly0][Lx0])*dy + rasterdata[Ly0][Lx0]+ (rasterdata[Ly1][Lx1]-rasterdata[Ly1][Lx0]-rasterdata[Ly0][Lx1])*dy*dx
-
-        # print(value,rasterdata[Ly0][Lx0])
+        dx = Lx - Lx0
+        dy = Ly - Ly0
+        f11 = rasterdata[Ly0][Lx0]
+        f12 = rasterdata[Ly1][Lx0]
+        f21 = rasterdata[Ly0][Lx1]
+        f22 = rasterdata[Ly1][Lx1]
+        # using bilinear interpolation on the cell
+        value = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
         zcoor = np.append(zcoor, value)
+
     PointsZ = np.vstack((Points, zcoor))
     return (PointsZ)
 
@@ -325,7 +311,7 @@ def calcAB(eqInput, eqParameters):
     angle = np.rad2deg(np.arctan2(dz, ds))
     CuSplit = s[indSplit]
     fig = plt.figure(4, figsize=(10, 6))
-    plt.plot(s,angle)
+    plt.plot(s, angle)
     plt.show()
     # TODO SPLIT POINT READING
     # get all values where Angle < 10 but >0

@@ -268,20 +268,22 @@ def WriteResults(eqOutput, saveOutPath, name):
     with open(FileName_ext, 'w') as outfile:
         outfile.write('Profile name %s\n' % name)
         outfile.write('Parameter Set %s\n' % ParameterSet)
-        outfile.write('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+        outfile.write('x y z s angle\n')
+        outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
+        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
             x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
-        outfile.write('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
             x[ids_10Point], y[ids_10Point], z[ids_10Point], s[ids_10Point], beta))
         if ids_alphaM1SD:
-            outfile.write('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
                 x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
         else:
             outfile.write('alphaM1SD point out of profile\n')
         if ids_alphaM2SD:
-            outfile.write('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
                 x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
         else:
             outfile.write('alphaM2SD point out of profile\n')
-        outfile.write('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f\n' % (
+        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
             x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD], s[ids_alphaP1SD], alphaSD[0]))
     return FileName_ext
