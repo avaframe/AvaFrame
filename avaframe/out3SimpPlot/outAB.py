@@ -129,9 +129,9 @@ def writeABpostOut(header, rasterdata, Avapath, SplitPoint, saveOutPath, flags):
             header, rasterdata, avapath, CoordSplit, eqPost, name, save_file, flags)
         if flags['WriteRes']:
             FileNameWrite_ext[i] = WriteResults(eqPost, saveOutPath, name)
-    plt.draw()
-    plt.pause(0.001)
-    input("Press [enter] to continue.")
+    if flags['PlotPath'] or flags['PlotProfile']:
+        plt.pause(0.001)
+        input("Press [enter] to continue.")
     return FileNamePlot_ext, FileNameWrite_ext
 
 
