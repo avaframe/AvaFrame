@@ -101,7 +101,7 @@ def test_calcAB(capfd):
     eqIn['y'] = []  # y coordinate of the path
     eqIn['z'] = z  # z coordinate of the path (projection of x,y on the raster)
     eqIn['indSplit'] = 2  # index of split point
-    eqParams = com2AB.setEqParameters(smallAva=False)
+    eqParams = com2AB.setEqParameters(smallAva=False,customParam=None)
     eqOut = com2AB.calcAB(eqIn, eqParams)
     alpha = eqOut['alpha']
     alphaSD = eqOut['alphaSD']
