@@ -1,7 +1,8 @@
 com2AB: Module AlphaBeta
 ==========================
 
-Calculates the run-out of an avalanche for a given DEM, avalanche path and split point according to the alphabeta model.
+Calculates the run-out of an avalanche for a given DEM, avalanche path and split point according to the alphabeta model
+suited for avalanches in the Austrian Alps.
 
 Input
 -----
@@ -35,7 +36,7 @@ Theory
         Topographical variables for the calculation of :math:`\alpha`
 
 
-The snow avalanche runout distance is calculated using a statistical model based on data collected for real
+The snow avalanche run-out distance is calculated using a statistical model based on data collected for real
 avalanches ([Lied_1980]_, [Bakkehøi_1983]_ and [Wagner]_). An equation of the following type is fitted to the data:
 
 .. math::
@@ -45,7 +46,14 @@ where :math:`H_0` is the elevation loss of the quadratic fit of the avalanche pr
 :math:`\beta` is the angle of the line between the :math:`10^\circ` point (first point where the avalanche profiles slope is under :math:`10^\circ`)
 and the starting point. The coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard deviation :math:`SD` are calculated during the fitting process.
 Index :math:`j=\{-1,-2,0,1\}` and :math:`\alpha_j= \alpha + j SD`. These coefficients obviously depend on the initial set of chosen data. :math:`\alpha_0= \alpha`
-is the angle between the stopping and the starting point of the avalanche. :math:`\alpha_j= \alpha + j SD` takes into account the uncertainty of the process.
+is the angle between the stopping and the starting point of the avalanche. :math:`\alpha_j= \alpha + j SD` takes into account the variability of the process.
+The values of the SD used are based on normal distribution. It is important to note that a bigger run-out angle leads to a shorter run-out distance. This means
+that :math:`\alpha_{-1}= \alpha - SD` leads to a longer run-out. In other words, the probability of the run-out being shorter
+than :math:`x_{\alpha_{-1}}` corresponding to :math:`\alpha_{-1}` is approximately 83%.
+
+
+In this module, the coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard deviation :math:`SD` are already known, they are simply used in the :math:`\alpha`
+equation to calculate the run-out on a new profile.
 
 Numerics
 --------
