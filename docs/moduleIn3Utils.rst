@@ -5,12 +5,12 @@ Generate DEM files for idealised/generic topographies that can be used as requir
 
 The following topography types can be chosen:
 
-* flat plane
-* inclined plane of constant slope
-* hockey stick - using a parabola to describe the sloping plane that then transitions into a flat foreland
-* hockey stick smooth - using an linearly sloping plane with smoothed transition to the flat foreland
-* bowl-shaped topography
-* helix-shaped topography
+* flat plane (FP)
+* inclined plane of constant slope (IP)
+* hockey stick - using a parabola to describe the sloping plane that then transitions into a flat foreland (HS)
+* hockey stick smooth - using an linearly sloping plane with smoothed transition to the flat foreland (HS2)
+* bowl-shaped topography (BL)
+* helix-shaped topography (HX)
 
 On top of these topographies, channels can be introduced (then set flag_channel=1), and these channels can also be set to become narrower along the channel and wider at the end of the channel (then set flag_narrowing=1).
 There is the option to introduce these channels by either cutting them into the original topography or by adding a 'channel layer' (max thickness=channel depth) on top of the topography.
@@ -23,8 +23,9 @@ Input
 Outputs:
 --------
 
-* 3D surface plot of generated topography
+* 3D surface plot of generated topography as .png file and possibly shown to screen (see flags)
 * .asc file of DEM data
+* .png file of DEM plot
 
 To run:
 -------
@@ -59,15 +60,15 @@ Topography parameters:
 * z0: 		max elevation [m]
 * z_elev:	  elevation of flat plane [m]
 * r_circ: 	radius of smoothing circle [m]
-* DEM_type
+* DEM_type: topography types (FP, IP, HS, HS2, BL, HX - explanation given in the introductory description)
 
 
-Flags for channels:
+Flags for channels and plotting:
 
 * channel: 1 - introduce channel; 0 - no channel
 * narrowing: 1 - channel is wide at start and end and narrow in the middle part; 0 - channel is uniform
 * topoconst: 1 - cut channel into original topography; 0 - add channel layer
-
+* showplot: 1 - show plot of generated DEM
 
 Channel parameters:
 

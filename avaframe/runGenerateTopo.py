@@ -7,11 +7,15 @@ import sys
 import logging
 
 # Local imports
-import avaframe as af
 from avaframe.in3Utils import generateTopo as gT
+from avaframe.out3SimpPlot import outGenerateTopo as oT
 
 # create logger, set to logging.DEBUG to see all messages
 logging.basicConfig(stream=sys.stdout, level=logging.INFO,
                     format='%(module)s:%(levelname)s - %(message)s')
 
-gT.generateTopo()
+# Call main function to generate DEMs
+[z, name_ext] = gT.generateTopo()
+
+# Plot new topogrpahy
+oT.plotDEM(z, name_ext)
