@@ -34,22 +34,14 @@ def readABresults(saveOutPath, name):
     return eqParams, eqOut
 
 
-def processABresults(eqParams, eqOut):
+def processABresults(eqParams, name, eqOut):
     """ prepare AlphaBeta results for plotting and writing results """
 
     s = eqOut['s']
-    x = eqOut['x']
-    y = eqOut['y']
     z = eqOut['z']
-
     CuSplit = eqOut['CuSplit']
-    ids_10Point = eqOut['ids_10Point']
-    poly = eqOut['poly']
-    beta = eqOut['beta']
     alpha = eqOut['alpha']
-    SDs = eqOut['SDs']
     alphaSD = eqOut['alphaSD']
-    indSplit = eqOut['indSplit']
 
     # Line down to alpha
     f = z[0] + np.tan(np.deg2rad(-alpha)) * s
@@ -68,26 +60,22 @@ def processABresults(eqParams, eqOut):
     # Only get the first index past the splitpoint
     try:
         ids_alpha = ids_alpha[s[ids_alpha] > CuSplit][0]
-    except:
-        log.warning('Alpha out of profile')
+    except log.warning('Alpha out of profile'):
         ids_alpha = None
 
     try:
         ids_alphaP1SD = ids_alphaP1SD[s[ids_alphaP1SD] > CuSplit][0]
-    except:
-        log.warning('+1 SD above beta point')
+    except log.warning('+1 SD above beta point'):
         ids_alphaP1SD = None
 
     try:
         ids_alphaM1SD = ids_alphaM1SD[s[ids_alphaM1SD] > CuSplit][0]
-    except:
-        log.warning('-1 SD out of profile')
+    except log.warning('-1 SD out of profile'):
         ids_alphaM1SD = None
 
     try:
         ids_alphaM2SD = ids_alphaM2SD[s[ids_alphaM2SD] > CuSplit][0]
-    except:
-        log.warning('-2 SD out of profile')
+    except log.warning('-2 SD out of profile'):
         ids_alphaM2SD = None
 
     eqOut['f'] = f
@@ -98,64 +86,45 @@ def processABresults(eqParams, eqOut):
 
     ParameterSet = eqParams['ParameterSet']
     eqOut['ParameterSet'] = ParameterSet
+    eqOut['Name'] = name
 
     return eqOut
 
 
-def writeABpostOut(header, rasterdata, Avapath, SplitPoint, saveOutPath, flags):
+def writeABpostOut(header, rasterdata, Avapath, SplitPoint,
+                   saveOutPath, flags):
     """ Loops on the given Avapath, runs AlpahBeta Postprocessing
     plots Results and Write Results
     """
     NameAva = Avapath['Name']
-    StartAva = Avapath['Start']
-    LengthAva = Avapath['Length']
-    CoordAva = Avapath['Coord']
-
     CoordSplit = SplitPoint['Coord']
     FileNamePlot_ext = [None] * len(NameAva)
     FileNameWrite_ext = [None] * len(NameAva)
     for i in range(len(NameAva)):
         name = NameAva[i]
-        start = StartAva[i]
-        end = start + LengthAva[i] - 1
-        avapath = CoordAva[:, int(start):int(end)]
         eqParams, eqOut = readABresults(saveOutPath, name)
-        eqPost = processABresults(eqParams, eqOut)
+        eqPost = processABresults(eqParams, name, eqOut)
         # Plot the whole profile with beta, alpha ... points and lines
         savename = name + '_AlphaBeta.pdf'
         save_file = os.path.join(saveOutPath, savename)
-        plotPath(header, rasterdata, avapath, CoordSplit, eqPost, name, flags)
-        FileNamePlot_ext[i] = plotProfile(
-            header, rasterdata, avapath, CoordSplit, eqPost, name, save_file, flags)
+        plotPath(header, rasterdata, CoordSplit, eqPost, flags)
+        FileNamePlot_ext[i] = plotProfile(header, rasterdata, CoordSplit,
+                                          eqPost, save_file, flags)
         if flags['WriteRes']:
-            FileNameWrite_ext[i] = WriteResults(eqPost, saveOutPath, name)
+            FileNameWrite_ext[i] = WriteResults(eqPost, saveOutPath)
     if flags['PlotPath'] or flags['PlotProfile']:
         plt.pause(0.001)
         input("Press [enter] to continue.")
     return FileNamePlot_ext, FileNameWrite_ext
 
 
-def plotPath(header, rasterdata, avapath, splitPoint, eqOutput, name, flags):
+def plotPath(header, rasterdata, splitPoint, eqOutput, flags):
     """ Plot and save results depending on flags options"""
 
-    s = eqOutput['s']
     x = eqOutput['x']
     y = eqOutput['y']
-    z = eqOutput['z']
-    CuSplit = eqOutput['CuSplit']
-    ids_10Point = eqOutput['ids_10Point']
-    poly = eqOutput['poly']
-    beta = eqOutput['beta']
-    alpha = eqOutput['alpha']
-    SDs = eqOutput['SDs']
-    alphaSD = eqOutput['alphaSD']
-    f = eqOutput['f']
-    ids_alpha = eqOutput['ids_alpha']
-    ids_alphaP1SD = eqOutput['ids_alphaP1SD']
-    ids_alphaM1SD = eqOutput['ids_alphaM1SD']
-    ids_alphaM2SD = eqOutput['ids_alphaM2SD']
     indSplit = eqOutput['indSplit']
-    ParameterSet = eqOutput['ParameterSet']
+    name = eqOutput['Name']
 
     if flags['PlotPath']:
         # Plot raster and path
@@ -167,50 +136,45 @@ def plotPath(header, rasterdata, avapath, splitPoint, eqOutput, name, flags):
         im1 = plt.imshow(rasterdata, cmap, origin='lower')
         divider = make_axes_locatable(ax1)
         cax = divider.append_axes("right", size="5%", pad=0.1)
-        cb1 = fig1.colorbar(im1, cax=cax)
-        path1 = ax1.plot((x-header.xllcorner)/header.cellsize,
-                         (y-header.yllcorner)/header.cellsize)
+        fig1.colorbar(im1, cax=cax)
+        # path1 = ax1.plot((x-header.xllcorner)/header.cellsize,
+        #                  (y-header.yllcorner)/header.cellsize)
         ax1.plot((x-header.xllcorner)/header.cellsize,
-                 (y-header.yllcorner)/header.cellsize, 'k')
-        ax1.plot((x[indSplit]-header.xllcorner)/header.cellsize,
-                 (y[indSplit]-header.yllcorner)/header.cellsize, '.',
-                 color='0.6', label='Projection header, rasterdata, avapath, splitPoint, of Split Point on ava path')
+                 (y-header.yllcorner)/header.cellsize, 'k',
+                 label='avapath')
         ax1.plot((splitPoint[0]-header.xllcorner)/header.cellsize,
                  (splitPoint[1]-header.yllcorner)/header.cellsize, '.',
-                 color='0.3', label='Split point''Projection of Split Point on ava path')
+                 color='0.3', label='Split points')
+        ax1.plot((x[indSplit]-header.xllcorner)/header.cellsize,
+                 (y[indSplit]-header.yllcorner)/header.cellsize, '.',
+                 color='0.6', label='Projection of Split Point on ava path')
+        fig1.legend(frameon=False, loc='lower center')
         plt.show(block=False)
 
 
-def plotProfile(header, rasterdata, avapath, splitPoint, eqOutput, name, save_file, flags):
+def plotProfile(header, rasterdata, splitPoint, eqOutput, save_file, flags):
     """ Plot and save results depending on flags options"""
 
     s = eqOutput['s']
-    x = eqOutput['x']
-    y = eqOutput['y']
     z = eqOutput['z']
-    CuSplit = eqOutput['CuSplit']
     ids_10Point = eqOutput['ids_10Point']
     poly = eqOutput['poly']
     beta = eqOutput['beta']
     alpha = eqOutput['alpha']
-    SDs = eqOutput['SDs']
-    alphaSD = eqOutput['alphaSD']
     f = eqOutput['f']
-    ids_alpha = eqOutput['ids_alpha']
-    ids_alphaP1SD = eqOutput['ids_alphaP1SD']
     ids_alphaM1SD = eqOutput['ids_alphaM1SD']
     ids_alphaM2SD = eqOutput['ids_alphaM2SD']
     indSplit = eqOutput['indSplit']
     ParameterSet = eqOutput['ParameterSet']
-
+    name = eqOutput['Name']
     # Plot the whole profile with beta, alpha ... points and lines
     # plt.close("all")
     fig_prof = plt.figure(figsize=(10, 6))
     titleText = name
     plt.title(titleText)
 
-    xlabelText = 'Distance [m]\nBeta: '+str(round(beta, 1)) + '$^\circ$' + \
-        '  Alpha: '+str(round(alpha, 1)) + '$^\circ$'
+    xlabelText = 'Distance [m]\nBeta: ' + str(round(beta, 1)) + \
+        '$^\circ$' + '  Alpha: ' + str(round(alpha, 1)) + '$^\circ$'
     plt.xlabel(xlabelText, multialignment='center')
 
     plt.ylabel('Height [m]')
@@ -254,45 +218,49 @@ def plotProfile(header, rasterdata, avapath, splitPoint, eqOutput, name, save_fi
     return save_file
 
 
-def WriteResults(eqOutput, saveOutPath, name):
+def WriteResults(eqOutput, saveOutPath):
     """ Write AB results to file """
     s = eqOutput['s']
     x = eqOutput['x']
     y = eqOutput['y']
     z = eqOutput['z']
-    CuSplit = eqOutput['CuSplit']
     ids_10Point = eqOutput['ids_10Point']
-    poly = eqOutput['poly']
     beta = eqOutput['beta']
     alpha = eqOutput['alpha']
-    SDs = eqOutput['SDs']
     alphaSD = eqOutput['alphaSD']
-    f = eqOutput['f']
     ids_alpha = eqOutput['ids_alpha']
     ids_alphaP1SD = eqOutput['ids_alphaP1SD']
     ids_alphaM1SD = eqOutput['ids_alphaM1SD']
     ids_alphaM2SD = eqOutput['ids_alphaM2SD']
-    indSplit = eqOutput['indSplit']
     ParameterSet = eqOutput['ParameterSet']
+    name = eqOutput['Name']
 
     log.info('Profile name %s' % name)
     log.info('Parameter Set %s' % ParameterSet)
-    log.info('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
-        x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
-    log.info('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
-        x[ids_10Point], y[ids_10Point], z[ids_10Point], s[ids_10Point], beta))
+    log.info('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
+             ' angle in [°] : %.2f' % (x[ids_alpha], y[ids_alpha],
+                                       z[ids_alpha], s[ids_alpha], alpha))
+    log.info('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
+             ' angle in [°] : %.2f' % (x[ids_10Point], y[ids_10Point],
+                                       z[ids_10Point], s[ids_10Point], beta))
     if ids_alphaM1SD:
-        log.info('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
-            x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
+        log.info('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
+                 ' angle in [°] : %.2f' % (x[ids_alphaM1SD], y[ids_alphaM1SD],
+                                           z[ids_alphaM1SD], s[ids_alphaM1SD],
+                                           alphaSD[1]))
     else:
         log.warning('alphaM1SD point out of profile')
     if ids_alphaM2SD:
-        log.info('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle in [°] : %.2f' % (
-            x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
+        log.info('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
+                 ' angle in [°] : %.2f' % (x[ids_alphaM2SD], y[ids_alphaM2SD],
+                                           z[ids_alphaM2SD], s[ids_alphaM2SD],
+                                           alphaSD[2]))
     else:
         log.warning('alphaM2SD point out of profile')
-    log.info('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and angle  in [°] : %.2f' % (
-        x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD], s[ids_alphaP1SD], alphaSD[0]))
+    log.info('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
+             ' angle  in [°] : %.2f' % (x[ids_alphaP1SD], y[ids_alphaP1SD],
+                                        z[ids_alphaP1SD], s[ids_alphaP1SD],
+                                        alphaSD[0]))
 
     FileName_ext = saveOutPath + name + '_results_python.txt'
     with open(FileName_ext, 'w') as outfile:
@@ -302,18 +270,30 @@ def WriteResults(eqOutput, saveOutPath, name):
         outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
         outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
             x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
-        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
-            x[ids_10Point], y[ids_10Point], z[ids_10Point], s[ids_10Point], beta))
+        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_10Point],
+                                                      y[ids_10Point],
+                                                      z[ids_10Point],
+                                                      s[ids_10Point],
+                                                      beta))
         if ids_alphaM1SD:
-            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
-                x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD], s[ids_alphaM1SD], alphaSD[1]))
+            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_alphaM1SD],
+                                                          y[ids_alphaM1SD],
+                                                          z[ids_alphaM1SD],
+                                                          s[ids_alphaM1SD],
+                                                          alphaSD[1]))
         else:
             outfile.write('alphaM1SD point out of profile\n')
         if ids_alphaM2SD:
-            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
-                x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD], s[ids_alphaM2SD], alphaSD[2]))
+            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_alphaM2SD],
+                                                          y[ids_alphaM2SD],
+                                                          z[ids_alphaM2SD],
+                                                          s[ids_alphaM2SD],
+                                                          alphaSD[2]))
         else:
             outfile.write('alphaM2SD point out of profile\n')
-        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
-            x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD], s[ids_alphaP1SD], alphaSD[0]))
+        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_alphaP1SD],
+                                                      y[ids_alphaP1SD],
+                                                      z[ids_alphaP1SD],
+                                                      s[ids_alphaP1SD],
+                                                      alphaSD[0]))
     return FileName_ext
