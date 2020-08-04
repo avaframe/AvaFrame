@@ -9,8 +9,6 @@
 
 # load modules
 import numpy as np
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from scipy.stats import norm
 import os
 import configparser
@@ -89,7 +87,7 @@ def inclinedplane(cfgTopo, ncols, nrows, cfgChannel):
     zv = z0 - np.tan(np.radians(mean_alpha)) * x
 
     # If a channel shall be introduced
-    if float(cfgTopo['channel']) == 1:
+    if cfgTopo.getboolean('channel'):
         # Compute cumulative distribution function and set horizontal extent of channel
         c_0 = norm.cdf(xv, 0, c_ff)
         c_extent = np.zeros(ncols) + c_radius
@@ -102,17 +100,17 @@ def inclinedplane(cfgTopo, ncols, nrows, cfgChannel):
                 # if location within horizontal extent of channel,
                 # make half sphere shaped channel with radius given by channel horizontal extent
                 if abs(yv[k]) < c_extent[m]:
-                    if float(cfgTopo['topoconst']) == 1:
+                    if cfgTopo.getboolean('topoconst'):
                         zv[k, m] = zv[k, m] - c_extent[m] * c_0[m] * \
                             np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2)))
-                    elif float(cfgTopo['topoconst']) == 0:
+                    else:
                         zv[k, m] = zv[k, m] + c_extent[m] * c_0[m] * \
                             (1. - np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2))))
                 else:
-                    if float(cfgTopo['topoconst']) == 1:
+                    if cfgTopo.getboolean('topoconst'):
                         # outside of the channel no modifcation
                         zv[k, m] = zv[k, m]
-                    elif float(cfgTopo['topoconst']) == 0:
+                    else:
                         # outside of the channel, add layer of channel depth
                         zv[k, m] = zv[k, m] + c_extent[m] * c_0[m]
 
@@ -189,7 +187,7 @@ def hockeysmooth(cfgTopo, ncols, nrows, cfgChannel):
             cv[:, m] = np.nan
 
     # If a channel shall be introduced
-    if float(cfgTopo['channel']) == 1:
+    if cfgTopo.getboolean('channel'):
         # Compute cumulative distribution function - c_1 for upper part (start)
         # of channel and c_2 for lower part (end) of channel
         c_1 = norm.cdf(xv, c_mustart * (x1), c_ff)
@@ -205,7 +203,7 @@ def hockeysmooth(cfgTopo, ncols, nrows, cfgChannel):
                 c_0[l] = c_2[l]
 
         # Is the channel of constant width or narrowing
-        if float(cfgTopo['narrowing']) == 1:
+        if cfgTopo.getboolean('narrowing'):
             c_extent = c_init * (1 - c_0[:]) + (c_0[:] * c_radius)
         else:
             c_extent = np.zeros(ncols) + c_radius
@@ -214,19 +212,19 @@ def hockeysmooth(cfgTopo, ncols, nrows, cfgChannel):
         for m in range(ncols):
             for k in range(nrows):
                 # Add surface elevation modification introduced by channel
-                if float(cfgTopo['channel']) == 1:
+                if cfgTopo.getboolean('channel'):
                     if abs(yv[k]) < c_extent[m]:
-                        if float(cfgTopo['topoconst']) == 1:
+                        if cfgTopo.getboolean('topoconst'):
                             zv[k, m] = zv[k, m] - c_extent[m] * c_0[m] * \
                                 np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2)))
-                        elif float(cfgTopo['topoconst']) == 0:
+                        else:
                             zv[k, m] = zv[k, m] + c_extent[m] * c_0[m] * \
                                 (1. - np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2))))
                     else:
-                        if float(cfgTopo['topoconst']) == 1:
+                        if cfgTopo.getboolean('topoconst'):
                             # outside of the channel no modifcation
                             zv[k, m] = zv[k, m]
-                        elif float(cfgTopo['topoconst']) == 0:
+                        else:
                             # outside of the channel, add layer of channel depth
                             zv[k, m] = zv[k, m] + c_extent[m] * c_0[m]
 
@@ -265,7 +263,7 @@ def hockey(cfgTopo, f_len, A, B, ncols, nrows, cfgChannel):
     zv1 = np.zeros((nrows, ncols))
 
     # If a channel shall be introduced
-    if float(cfgTopo['channel']) == 1:
+    if cfgTopo.getboolean('channel'):
         c_1 = norm.cdf(xv, c_mustart * f_len, c_ff)
         c_2 = 1. - norm.cdf(xv, c_muend * f_len, c_ff)
         c_0 = np.zeros(ncols)
@@ -277,7 +275,7 @@ def hockey(cfgTopo, f_len, A, B, ncols, nrows, cfgChannel):
                 c_0[l] = c_2[l]
 
         # Is the channel of constant width or narrowing
-        if float(cfgTopo['narrowing']) == 1:
+        if cfgTopo.getboolean('narrowing'):
             c_extent = c_init * (1 - c_0[:]) + (c_0[:] * c_radius)
         else:
             c_extent = np.zeros(ncols) + c_radius
@@ -295,23 +293,23 @@ def hockey(cfgTopo, f_len, A, B, ncols, nrows, cfgChannel):
                 zv1[k, m] = (-B**2) / (4. * A) + C
 
             # Add surface elevation modification introduced by channel
-            if float(cfgTopo['channel']) == 1:
+            if cfgTopo.getboolean('channel'):
                 if abs(yv[k]) < c_extent[m]:
-                    if float(cfgTopo['topoconst']) == 1:
+                    if cfgTopo.getboolean('topoconst'):
                         zv[k, m] = zv[k, m] - c_extent[m] * c_0[m] * \
                             np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2)))
                         zv1[k, m] = zv[k, m] + c_extent[m] * c_0[m] * \
                             (1. - np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2))))
-                    elif float(cfgTopo['topoconst']) == 0:
+                    else:
                         zv[k, m] = zv[k, m] + c_extent[m] * c_0[m] * \
                             (1. - np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2))))
 
                 else:
-                    if float(cfgTopo['topoconst']) == 1:
+                    if cfgTopo.getboolean('topoconst'):
                         # outside of the channel no modifcation
                         zv[k, m] = zv[k, m]
                         zv1[k, m] = zv[k, m] + c_extent[m] * c_0[m]
-                    elif float(cfgTopo['topoconst']) == 0:
+                    else:
                         # outside of the channel, add layer of channel depth
                         zv[k, m] = zv[k, m] + c_extent[m] * c_0[m]
 
@@ -389,14 +387,14 @@ def helix(cfgTopo, ncols, nrows, f_len, A, B, cfgChannel):
                 zv[k, m] = (-B**2) / (4. * A) + C
 
             # If channel is introduced to topography
-            if float(cfgTopo['channel']) == 1:
+            if cfgTopo.getboolean('channel'):
                 if (theta * r_helix) < (0.5 * (c_mustart + c_muend) * f_len):
                     c_0 = norm.cdf(theta * r_helix, c_mustart * f_len, c_ff)
                 else:
                     c_0 = 1. - norm.cdf(theta * r_helix, c_muend * f_len, c_ff)
 
                 # If channel of constant width or becoming narrower in the middle
-                if float(cfgTopo['narrowing']) == 1:
+                if cfgTopo.getboolean('narrowing'):
                     c_extent = c_init * (1. - c_0) + c_0 * c_radius
                 else:
                     c_extent = c_radius
@@ -408,25 +406,25 @@ def helix(cfgTopo, ncols, nrows, f_len, A, B, cfgChannel):
                 # Set channel
                 if (radius >= r_helix) and (radius < bound_ext):
                     radius = radius - r_helix
-                    if float(cfgTopo['topoconst']) == 1:
+                    if cfgTopo.getboolean('topoconst'):
                         zv[k, m] = zv[k, m] - c_0 * c_extent * \
                             np.sqrt(1. - (radius**2 / c_extent**2))
-                    elif float(cfgTopo['topoconst']) == 0:
+                    else:
                         zv[k, m] = zv[k, m] + c_0 * c_extent * \
                             (1. - np.sqrt(1. - (radius**2 / c_extent**2)))
 
                 elif (radius < r_helix) and (radius > bound_in):
                     radius = r_helix - radius
-                    if float(cfgTopo['topoconst']) == 1:
+                    if cfgTopo.getboolean('topoconst'):
                         zv[k, m] = zv[k, m] - c_0 * c_extent * \
                             np.sqrt(1. - (radius**2 / c_extent**2))
-                    elif float(cfgTopo['topoconst']) == 0:
+                    else:
                         zv[k, m] = zv[k, m] + c_0 * c_extent * \
                             (1. - np.sqrt(1. - (radius**2 / c_extent**2)))
                 else:
-                    if float(cfgTopo['topoconst']) == 1:
+                    if cfgTopo.getboolean('topoconst'):
                         zv[k, m] = zv[k, m]
-                    elif float(cfgTopo['topoconst']) == 0:
+                    else:
                         zv[k, m] = zv[k, m] + c_0 * c_extent
 
     # Name extension for this type of topography
