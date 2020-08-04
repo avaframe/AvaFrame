@@ -86,7 +86,7 @@ Optional configuration parameters
     customParam['k4'] = 'your value'
     customParam['SD'] = 'your value'
 
-:PlotPath: Path for saving plot; default False
+:PlotPath: Plot Avalanche path on raster; default False
 :PlotProfile: Plot profile; default False
 :SaveProfile: Save profile to file; default True
 :WriteRes: Write result to file: default True
