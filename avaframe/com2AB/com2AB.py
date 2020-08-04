@@ -319,8 +319,8 @@ def calcAB(eqInput, eqParameters):
     dz[0] = 0.0
     angle = np.rad2deg(np.arctan2(dz, ds))
     CuSplit = s[indSplit]
-    plt.figure(figsize=(10, 6))
-    plt.plot(s, angle)
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(s, angle)
     # plt.show()
     # TODO SPLIT POINT READING
     # get all values where Angle < 10 but >0
