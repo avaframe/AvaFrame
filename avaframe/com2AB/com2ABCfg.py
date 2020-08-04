@@ -39,15 +39,15 @@ customParam = None
 
 
 # resampling step [m]
-distance = 11
+distance = 10
 
 # Some example flag
 fullLog = True
 
 # plot save results
 flags = {}
-flags['PlotPath'] = True
-flags['PlotProfile'] = True
+flags['PlotPath'] = False
+flags['PlotProfile'] = False
 flags['SaveProfile'] = True
 flags['WriteRes'] = True
 
@@ -56,6 +56,6 @@ flags['WriteRes'] = True
 # Do not change anything below this line
 ###########################
 try:
-    from local_com2ABCfg import *
+    from .local_com2ABCfg import *
 except ImportError:
     pass
