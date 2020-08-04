@@ -11,43 +11,45 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
 from scipy.stats import norm
-import seaborn
 import os
 import configparser
 import logging
-logging.basicConfig(level=logging.INFO)
+
+# create local logger
+# change log level in calling module to DEBUG to see log messages
+log = logging.getLogger(__name__)
 
 
-def getParams(cT):
+def getParams(cfgTopo):
     """ Compute parameters for parabola """
 
     # input parameters
-    C = float(cT['C'])
-    f_lens = float(cT['f_lens'])
-    mean_alpha = float(cT['mean_alpha'])
+    C = float(cfgTopo['C'])
+    f_lens = float(cfgTopo['f_lens'])
+    mean_alpha = float(cfgTopo['mean_alpha'])
 
     # If mean slope is given or distance to the start of the flat plane
     if mean_alpha != 0:
         f_len = C / np.tan(np.radians(mean_alpha))
-        logging.info('flen computed from mean alpha: %.2f meters' % f_len)
+        log.info('flen computed from mean alpha: %.2f meters' % f_len)
     else:
         f_len = f_lens
-        logging.info('flen directly set to: %.2f meters' % f_len)
+        log.info('flen directly set to: %.2f meters' % f_len)
     A = C / (f_len**2)
     B = (-C * 2.) / f_len
 
     return A, B, f_len
 
 
-def flatplane(cG, ncols, nrows, z_elev):
+def flatplane(cfgTopo, ncols, nrows):
     """ Compute coordinates of flat plane topography """
 
     # input parameters
-    dx = float(cG['dx'])
-    x_end = float(cG['x_end']) + dx
-    y_end = float(cG['y_end']) + dx
+    dx = float(cfgTopo['dx'])
+    x_end = float(cfgTopo['x_end']) + dx
+    y_end = float(cfgTopo['y_end']) + dx
+    z_elev = float(cfgTopo['z_elev'])
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
@@ -60,35 +62,34 @@ def flatplane(cG, ncols, nrows, z_elev):
     name_ext = 'FP'
 
     # Log info here
-    logging.info('Flatplane coordinates computed')
+    log.info('Flatplane coordinates computed')
 
     return x, y, zv, name_ext
 
 
-def inclinedplane(cG, ncols, nrows, cT, cC, cF):
+def inclinedplane(cfgTopo, ncols, nrows, cfgChannel):
     """ Compute coordinates of inclined plane with given slope (mean_alpha)"""
 
     # input parameters
-    dx = float(cG['dx'])
-    x_end = float(cG['x_end']) + dx
-    y_end = float(cG['y_end']) + dx
-    z0 = float(cT['z0'])
-    mean_alpha = float(cT['mean_alpha'])
-    c_ff = float(cC['c_ff'])
-    c_radius = float(cC['c_radius'])
+    dx = float(cfgTopo['dx'])
+    x_end = float(cfgTopo['x_end']) + dx
+    y_end = float(cfgTopo['y_end']) + dx
+    z0 = float(cfgTopo['z0'])
+    mean_alpha = float(cfgTopo['mean_alpha'])
+    c_ff = float(cfgChannel['c_ff'])
+    c_radius = float(cfgChannel['c_radius'])
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
     yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     x, y = np.meshgrid(xv, yv)
     zv = np.zeros((nrows, ncols))
-    zv0 = np.zeros((nrows, ncols))
 
     # Set surface elevation from slope and max. elevation
     zv = z0 - np.tan(np.radians(mean_alpha)) * x
 
     # If a channel shall be introduced
-    if float(float(cF['channel'])) == 1:
+    if float(cfgTopo['channel']) == 1:
         # Compute cumulative distribution function and set horizontal extent of channel
         c_0 = norm.cdf(xv, 0, c_ff)
         c_extent = np.zeros(ncols) + c_radius
@@ -101,17 +102,17 @@ def inclinedplane(cG, ncols, nrows, cT, cC, cF):
                 # if location within horizontal extent of channel,
                 # make half sphere shaped channel with radius given by channel horizontal extent
                 if abs(yv[k]) < c_extent[m]:
-                    if float(cF['topoconst']) == 1:
+                    if float(cfgTopo['topoconst']) == 1:
                         zv[k, m] = zv[k, m] - c_extent[m] * c_0[m] * \
                             np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2)))
-                    elif float(cF['topoconst']) == 0:
+                    elif float(cfgTopo['topoconst']) == 0:
                         zv[k, m] = zv[k, m] + c_extent[m] * c_0[m] * \
                             (1. - np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2))))
                 else:
-                    if float(cF['topoconst']) == 1:
+                    if float(cfgTopo['topoconst']) == 1:
                         # outside of the channel no modifcation
                         zv[k, m] = zv[k, m]
-                    elif float(cF['topoconst']) == 0:
+                    elif float(cfgTopo['topoconst']) == 0:
                         # outside of the channel, add layer of channel depth
                         zv[k, m] = zv[k, m] + c_extent[m] * c_0[m]
 
@@ -119,12 +120,12 @@ def inclinedplane(cG, ncols, nrows, cT, cC, cF):
     name_ext = 'IP'
 
     # Log info here
-    logging.info('Inclined plane coordinates computed')
+    log.info('Inclined plane coordinates computed')
 
     return x, y, zv, name_ext
 
 
-def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
+def hockeysmooth(cfgTopo, ncols, nrows, cfgChannel):
     """
         Compute coordinates of an inclined plane with a flat foreland  defined by
         total fall height z0, angle to flat foreland (mean_alpha) and a radius (r_circ) to
@@ -132,17 +133,17 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
     """
 
     # input parameters
-    dx = float(cG['dx'])
-    x_end = float(cG['x_end']) + dx
-    y_end = float(cG['y_end']) + dx
-    r_circ = float(cT['r_circ'])
-    mean_alpha = float(cT['mean_alpha'])
-    z0 = float(cT['z0'])
-    c_ff = float(cC['c_ff'])
-    c_radius = float(cC['c_radius'])
-    c_init = float(cC['c_init'])
-    c_mustart = float(cC['c_mustart'])
-    c_muendFP = float(cC['c_muendFP'])
+    dx = float(cfgTopo['dx'])
+    x_end = float(cfgTopo['x_end']) + dx
+    y_end = float(cfgTopo['y_end']) + dx
+    r_circ = float(cfgTopo['r_circ'])
+    mean_alpha = float(cfgTopo['mean_alpha'])
+    z0 = float(cfgTopo['z0'])
+    c_ff = float(cfgChannel['c_ff'])
+    c_radius = float(cfgChannel['c_radius'])
+    c_init = float(cfgChannel['c_init'])
+    c_mustart = float(cfgChannel['c_mustart'])
+    c_muendFP = float(cfgChannel['c_muendFP'])
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
@@ -157,7 +158,7 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
     # Compute distance to flat foreland for given mean_alpha
     x1 = z0 / np.tan(np.radians(mean_alpha))
     if x1 >= x_end * 0.9:
-        logging.warning('Your domain (x_end) is to small or the slope angle (mean_alpha) to'
+        log.warning('Your domain (x_end) is to small or the slope angle (mean_alpha) to'
                         'shallow to produce a signifcant (>10 percent of domain, in your case:'
                         ' %.2f m) flat foreland!' % (0.1 * (x_end - dx)))
 
@@ -165,7 +166,6 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
     beta = (0.5 * (180. - (mean_alpha)))
     xc = r_circ / np.tan(np.radians(beta))
     yc = xc * np.cos(np.radians(mean_alpha))
-    zc = r_circ
     x_circ = x1 + xc
     # for plotting
     d1 = np.tan(np.radians(beta)) * x1
@@ -188,19 +188,8 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
             zv0[:, m] = 0.0
             cv[:, m] = np.nan
 
-    # # Plot the smoothing transition
-    # plt.plot(xv, zv[1,:])
-    # plt.plot(xv, cv[1,:], 'r-')
-    # plt.plot(xv, lv, 'g-')
-    # plt.plot(x_circ, zc, 'g*')
-    # plt.title('Long profile of hockey stick smooth topo')
-    # plt.xlabel('Along valley distance [m]')
-    # plt.ylabel('Surface elevation [m]')
-    # plt.axis('equal')
-    # plt.show()
-
     # If a channel shall be introduced
-    if float(cF['channel']) == 1:
+    if float(cfgTopo['channel']) == 1:
         # Compute cumulative distribution function - c_1 for upper part (start)
         # of channel and c_2 for lower part (end) of channel
         c_1 = norm.cdf(xv, c_mustart * (x1), c_ff)
@@ -216,7 +205,7 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
                 c_0[l] = c_2[l]
 
         # Is the channel of constant width or narrowing
-        if float(cF['narrowing']) == 1:
+        if float(cfgTopo['narrowing']) == 1:
             c_extent = c_init * (1 - c_0[:]) + (c_0[:] * c_radius)
         else:
             c_extent = np.zeros(ncols) + c_radius
@@ -225,19 +214,19 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
         for m in range(ncols):
             for k in range(nrows):
                 # Add surface elevation modification introduced by channel
-                if float(cF['channel']) == 1:
+                if float(cfgTopo['channel']) == 1:
                     if abs(yv[k]) < c_extent[m]:
-                        if float(cF['topoconst']) == 1:
+                        if float(cfgTopo['topoconst']) == 1:
                             zv[k, m] = zv[k, m] - c_extent[m] * c_0[m] * \
                                 np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2)))
-                        elif float(cF['topoconst']) == 0:
+                        elif float(cfgTopo['topoconst']) == 0:
                             zv[k, m] = zv[k, m] + c_extent[m] * c_0[m] * \
                                 (1. - np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2))))
                     else:
-                        if float(cF['topoconst']) == 1:
+                        if float(cfgTopo['topoconst']) == 1:
                             # outside of the channel no modifcation
                             zv[k, m] = zv[k, m]
-                        elif float(cF['topoconst']) == 0:
+                        elif float(cfgTopo['topoconst']) == 0:
                             # outside of the channel, add layer of channel depth
                             zv[k, m] = zv[k, m] + c_extent[m] * c_0[m]
 
@@ -245,28 +234,27 @@ def hockeysmooth(cG, ncols, nrows, cT, cC, cF):
     name_ext = 'HS2'
 
     # Log info here
-    logging.info('Hockeystick smooth coordinates computed')
+    log.info('Hockeystick smooth coordinates computed')
 
     return x, y, zv, name_ext
 
 
-def hockey(cG, f_len, A, B, ncols, nrows, cT, cC, cF):
+def hockey(cfgTopo, f_len, A, B, ncols, nrows, cfgChannel):
     """
         Compute coordinates of a parabolically-shaped slope with a flat foreland
         defined by total fall height C, angle (mean_alpha) or distance (f_len) to flat foreland
     """
 
     # input parameters
-    dx = float(cG['dx'])
-    x_end = float(cG['x_end']) + dx
-    y_end = float(cG['y_end']) + dx
-    mean_alpha = float(cT['mean_alpha'])
-    C = float(cT['C'])
-    c_ff = float(cC['c_ff'])
-    c_radius = float(cC['c_radius'])
-    c_init = float(cC['c_init'])
-    c_mustart = float(cC['c_mustart'])
-    c_muend = float(cC['c_muend'])
+    dx = float(cfgTopo['dx'])
+    x_end = float(cfgTopo['x_end']) + dx
+    y_end = float(cfgTopo['y_end']) + dx
+    C = float(cfgTopo['C'])
+    c_ff = float(cfgChannel['c_ff'])
+    c_radius = float(cfgChannel['c_radius'])
+    c_init = float(cfgChannel['c_init'])
+    c_mustart = float(cfgChannel['c_mustart'])
+    c_muend = float(cfgChannel['c_muend'])
 
     # Compute coordinate grid
     xv = np.arange(0, x_end, dx)
@@ -277,7 +265,7 @@ def hockey(cG, f_len, A, B, ncols, nrows, cT, cC, cF):
     zv1 = np.zeros((nrows, ncols))
 
     # If a channel shall be introduced
-    if float(cF['channel']) == 1:
+    if float(cfgTopo['channel']) == 1:
         c_1 = norm.cdf(xv, c_mustart * f_len, c_ff)
         c_2 = 1. - norm.cdf(xv, c_muend * f_len, c_ff)
         c_0 = np.zeros(ncols)
@@ -289,7 +277,7 @@ def hockey(cG, f_len, A, B, ncols, nrows, cT, cC, cF):
                 c_0[l] = c_2[l]
 
         # Is the channel of constant width or narrowing
-        if float(cF['narrowing']) == 1:
+        if float(cfgTopo['narrowing']) == 1:
             c_extent = c_init * (1 - c_0[:]) + (c_0[:] * c_radius)
         else:
             c_extent = np.zeros(ncols) + c_radius
@@ -307,23 +295,23 @@ def hockey(cG, f_len, A, B, ncols, nrows, cT, cC, cF):
                 zv1[k, m] = (-B**2) / (4. * A) + C
 
             # Add surface elevation modification introduced by channel
-            if float(cF['channel']) == 1:
+            if float(cfgTopo['channel']) == 1:
                 if abs(yv[k]) < c_extent[m]:
-                    if float(cF['topoconst']) == 1:
+                    if float(cfgTopo['topoconst']) == 1:
                         zv[k, m] = zv[k, m] - c_extent[m] * c_0[m] * \
                             np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2)))
                         zv1[k, m] = zv[k, m] + c_extent[m] * c_0[m] * \
                             (1. - np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2))))
-                    elif float(cF['topoconst']) == 0:
+                    elif float(cfgTopo['topoconst']) == 0:
                         zv[k, m] = zv[k, m] + c_extent[m] * c_0[m] * \
                             (1. - np.sqrt(1. - (yv[k]**2 / (c_extent[m]**2))))
 
                 else:
-                    if float(cF['topoconst']) == 1:
+                    if float(cfgTopo['topoconst']) == 1:
                         # outside of the channel no modifcation
                         zv[k, m] = zv[k, m]
                         zv1[k, m] = zv[k, m] + c_extent[m] * c_0[m]
-                    elif float(cF['topoconst']) == 0:
+                    elif float(cfgTopo['topoconst']) == 0:
                         # outside of the channel, add layer of channel depth
                         zv[k, m] = zv[k, m] + c_extent[m] * c_0[m]
 
@@ -331,18 +319,19 @@ def hockey(cG, f_len, A, B, ncols, nrows, cT, cC, cF):
     name_ext = 'HS'
 
     # Log info here
-    logging.info('Hockeystick coordinates computed')
+    log.info('Hockeystick coordinates computed')
 
     return x, y, zv, name_ext
 
 
-def bowl(cG, ncols, nrows, r_bowl):
+def bowl(cfgTopo, ncols, nrows):
     """ Compute coordinates of sphere with given radius (r_bowl) """
 
     # input parameters
-    dx = float(cG['dx'])
-    x_end = float(cG['x_end']) + dx
-    y_end = float(cG['y_end']) + dx
+    dx = float(cfgTopo['dx'])
+    x_end = float(cfgTopo['x_end']) + dx
+    y_end = float(cfgTopo['y_end']) + dx
+    r_bowl = float(cfgTopo['r_bowl'])
 
     # Compute coordinate grid
     xv = np.arange(-0.5 * x_end, 0.5 * x_end, dx)
@@ -363,25 +352,25 @@ def bowl(cG, ncols, nrows, r_bowl):
     name_ext = 'BL'
 
     # Log info here
-    logging.info('Bowl coordinates computed')
+    log.info('Bowl coordinates computed')
 
     return x, y, zv, name_ext
 
 
-def helix(cG, ncols, nrows, cT, f_len, A, B, cC, cF):
+def helix(cfgTopo, ncols, nrows, f_len, A, B, cfgChannel):
     """ Compute coordinates of helix-shaped topography with given radius (r_helix) """
 
     # input parameters
-    dx = float(cG['dx'])
-    x_end = float(cG['x_end']) + dx
-    y_end = float(cG['y_end']) + dx
-    r_helix = float(cT['r_helix'])
-    C = float(cT['C'])
-    c_ff = float(cC['c_ff'])
-    c_radius = float(cC['c_radius'])
-    c_init = float(cC['c_init'])
-    c_mustart = float(cC['c_mustart'])
-    c_muend = float(cC['c_muend'])
+    dx = float(cfgTopo['dx'])
+    x_end = float(cfgTopo['x_end']) + dx
+    y_end = float(cfgTopo['y_end']) + dx
+    r_helix = float(cfgTopo['r_helix'])
+    C = float(cfgTopo['C'])
+    c_ff = float(cfgChannel['c_ff'])
+    c_radius = float(cfgChannel['c_radius'])
+    c_init = float(cfgChannel['c_init'])
+    c_mustart = float(cfgChannel['c_mustart'])
+    c_muend = float(cfgChannel['c_muend'])
 
     # Compute coordinate grid
     xv = np.arange(-0.5 * x_end, 0.5 * x_end, dx)
@@ -400,14 +389,14 @@ def helix(cG, ncols, nrows, cT, f_len, A, B, cC, cF):
                 zv[k, m] = (-B**2) / (4. * A) + C
 
             # If channel is introduced to topography
-            if float(cF['channel']) == 1:
+            if float(cfgTopo['channel']) == 1:
                 if (theta * r_helix) < (0.5 * (c_mustart + c_muend) * f_len):
                     c_0 = norm.cdf(theta * r_helix, c_mustart * f_len, c_ff)
                 else:
                     c_0 = 1. - norm.cdf(theta * r_helix, c_muend * f_len, c_ff)
 
                 # If channel of constant width or becoming narrower in the middle
-                if float(cF['narrowing']) == 1:
+                if float(cfgTopo['narrowing']) == 1:
                     c_extent = c_init * (1. - c_0) + c_0 * c_radius
                 else:
                     c_extent = c_radius
@@ -419,76 +408,46 @@ def helix(cG, ncols, nrows, cT, f_len, A, B, cC, cF):
                 # Set channel
                 if (radius >= r_helix) and (radius < bound_ext):
                     radius = radius - r_helix
-                    if float(cF['topoconst']) == 1:
+                    if float(cfgTopo['topoconst']) == 1:
                         zv[k, m] = zv[k, m] - c_0 * c_extent * \
                             np.sqrt(1. - (radius**2 / c_extent**2))
-                    elif float(cF['topoconst']) == 0:
+                    elif float(cfgTopo['topoconst']) == 0:
                         zv[k, m] = zv[k, m] + c_0 * c_extent * \
                             (1. - np.sqrt(1. - (radius**2 / c_extent**2)))
 
                 elif (radius < r_helix) and (radius > bound_in):
                     radius = r_helix - radius
-                    if float(cF['topoconst']) == 1:
+                    if float(cfgTopo['topoconst']) == 1:
                         zv[k, m] = zv[k, m] - c_0 * c_extent * \
                             np.sqrt(1. - (radius**2 / c_extent**2))
-                    elif float(cF['topoconst']) == 0:
+                    elif float(cfgTopo['topoconst']) == 0:
                         zv[k, m] = zv[k, m] + c_0 * c_extent * \
                             (1. - np.sqrt(1. - (radius**2 / c_extent**2)))
                 else:
-                    if float(cF['topoconst']) == 1:
+                    if float(cfgTopo['topoconst']) == 1:
                         zv[k, m] = zv[k, m]
-                    elif float(cF['topoconst']) == 0:
+                    elif float(cfgTopo['topoconst']) == 0:
                         zv[k, m] = zv[k, m] + c_0 * c_extent
 
     # Name extension for this type of topography
     name_ext = 'HX'
 
     # Log info here
-    logging.info('Helix coordinates computed')
+    log.info('Helix coordinates computed')
 
     return x, y, zv, name_ext
 
 
-def plotDEM(x, y, z, name_ext, cD, cG):
-    """ Plot DEM with given information on the origin of the DEM """
-
-    # input parameters
-    dx = float(cG['dx'])
-    x_end = float(cG['x_end']) + dx
-    y_end = float(cG['y_end']) + dx
-    xl = float(cD['xl'])
-    yl = float(cD['yl'])
-
-    # Set coordinate grid with given origin
-    xp = np.arange(xl, xl + x_end, dx)
-    yp = np.arange(yl, yl + y_end, dx)
-    X, Y = np.meshgrid(xp, yp)
-
-    topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'HS': 'Hockeystick',
-                 'HS2': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix'}
-
-    ax = plt.axes(projection='3d')
-    ax.plot_surface(X, Y, z, cmap=plt.cm.viridis,
-                    linewidth=0, antialiased=False)
-
-    ax.set_title('Generated DEM: %s' % (topoNames[name_ext]))
-    ax.set_xlabel('along valley distance [m]')
-    ax.set_ylabel('across valley distance [m]')
-    ax.set_zlabel('surface elevation [m]')
-
-    plt.show()
-
-
-def writeDEM(z, name_ext, ncols, nrows, dx, cD):
+def writeDEM(z, name_ext, ncols, nrows, dx, cfgDEM):
     """ Write topography information to file """
 
     # Read lower left corner coordinates, cellsize and noDATA value
-    xllcorner = float(cD['xl'])
-    yllcorner = float(cD['yl'])
+    xllcorner = float(cfgDEM['xl'])
+    yllcorner = float(cfgDEM['yl'])
     cellsize = dx
-    noDATA = float(cD['nodata_value'])
-    dem_name = cD['dem_name']
-    dpath = cD['path']
+    noDATA = float(cfgDEM['nodata_value'])
+    dem_name = cfgDEM['dem_name']
+    dpath = cfgDEM['path']
 
     # Save elevation data to .asc file and add header lines
     z_mat = np.matrix(z)
@@ -503,7 +462,7 @@ def writeDEM(z, name_ext, ncols, nrows, dx, cD):
             np.savetxt(f, line, fmt='%f')
 
     # Log info here
-    logging.info('DEM written to: %s_%s_Topo.asc' % (dem_name, name_ext))
+    log.info('DEM written to: %s_%s_Topo.asc' % (dem_name, name_ext))
 
 
 def generateTopo():
@@ -515,47 +474,45 @@ def generateTopo():
         cfg.read('avaframe/in3Utils/local_generateTopoCfg.ini')
     else:
         cfg.read('avaframe/in3Utils/generateTopoCfg.ini')
-    cG = cfg['GENERAL']
-    cT = cfg['TOPO']
-    cF = cfg['FLAGS']
-    cC = cfg['CHANNEL']
-    cD = cfg['DEMDATA']
+    cfgTopo = cfg['TOPO']
+    cfgChannel = cfg['CHANNELS']
+    cfgDEM = cfg['DEMDATA']
 
     # Which DEM type
-    DEM_type = cT['DEM_type']
+    DEM_type = cfgTopo['DEM_type']
 
-    logging.info('DEM type is set to: %s' % DEM_type)
+    log.info('DEM type is set to: %s' % DEM_type)
+
     # determine number of rows and columns to define domain
-    dx = float(cG['dx'])
-    x_end = float(cG['x_end']) + dx
-    y_end = float(cG['y_end']) + dx
+    dx = float(cfgTopo['dx'])
+    x_end = float(cfgTopo['x_end']) + dx
+    y_end = float(cfgTopo['y_end']) + dx
     nrows = int(y_end / dx)                    # number of rows
     ncols = int(x_end / dx)                    # number of columns
 
     # Get parabola Parameters
-    [A, B, f_len] = getParams(cT)
+    [A, B, f_len] = getParams(cfgTopo)
 
     # Call topography type
     if DEM_type == 'FP':
-        [x, y, z, name_ext] = flatplane(cG, ncols, nrows, float(cT['z_elev']))
+        [x, y, z, name_ext] = flatplane(cfgTopo, ncols, nrows)
 
     elif DEM_type == 'IP':
-        [x, y, z, name_ext] = inclinedplane(cG, ncols, nrows, cT, cC, cF)
+        [x, y, z, name_ext] = inclinedplane(cfgTopo, ncols, nrows, cfgChannel)
 
     elif DEM_type == 'HS':
-        [x, y, z, name_ext] = hockey(cG, f_len, A, B, ncols, nrows, cT, cC, cF)
+        [x, y, z, name_ext] = hockey(cfgTopo, f_len, A, B, ncols, nrows, cfgChannel)
 
     elif DEM_type == 'HS2':
-        [x, y, z, name_ext] = hockeysmooth(cG, ncols, nrows, cT, cC, cF)
+        [x, y, z, name_ext] = hockeysmooth(cfgTopo, ncols, nrows, cfgChannel)
 
     elif DEM_type == 'BL':
-        [x, y, z, name_ext] = bowl(cG, ncols, nrows, float(cT['r_bowl']))
+        [x, y, z, name_ext] = bowl(cfgTopo, ncols, nrows)
 
     elif DEM_type == 'HX':
-        [x, y, z, name_ext] = helix(cG, ncols, nrows, cT, f_len, A, B, cC, cF)
-
-    # Plot new topogrpahy
-    plotDEM(x, y, z, name_ext, cD, cG)
+        [x, y, z, name_ext] = helix(cfgTopo, ncols, nrows, f_len, A, B, cfgChannel)
 
     # Write DEM to file
-    writeDEM(z, name_ext, ncols, nrows, float(cG['dx']), cD)
+    writeDEM(z, name_ext, ncols, nrows, float(cfgTopo['dx']), cfgDEM)
+
+    return(z, name_ext)
