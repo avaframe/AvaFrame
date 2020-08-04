@@ -12,8 +12,8 @@ The following topography types can be chosen:
 * bowl-shaped topography (BL)
 * helix-shaped topography (HX)
 
-On top of these topographies, channels can be introduced (then set flag_channel=1), and these channels can also be set to become narrower along the channel and wider at the end of the channel (then set flag_narrowing=1).
-There is the option to introduce these channels by either cutting them into the original topography or by adding a 'channel layer' (max thickness=channel depth) on top of the topography.
+On top of these topographies, channels can be introduced (then set flag_channel=True), and these channels can also be set to become narrower along the channel and wider at the end of the channel (then set flag_narrowing=True).
+There is the option to introduce these channels by either cutting them into the original topography (flag_topoconst=True) or by adding a 'channel layer' (max thickness=channel depth) on top of the topography.
 
 Input
 -----
@@ -25,7 +25,7 @@ Outputs:
 
 * 3D surface plot of generated topography as .png file and possibly shown to screen (see flags)
 * .asc file of DEM data
-* .png file of DEM plot
+
 
 To run:
 -------
@@ -65,15 +65,15 @@ Topography parameters:
 
 Flags for channels and plotting:
 
-* channel: 1 - introduce channel; 0 - no channel
-* narrowing: 1 - channel is wide at start and end and narrow in the middle part; 0 - channel is uniform
-* topoconst: 1 - cut channel into original topography; 0 - add channel layer
-* showplot: 1 - show plot of generated DEM
+* channel: True - introduce channel; False - no channel
+* narrowing: True - channel is wide at start and end and narrow in the middle part; False - channel is uniform
+* topoconst: True - cut channel into original topography; False - add channel layer
+* showplot: True - show plot of generated DEM
 
 Channel parameters:
 
 * c_radius:  standard channel radius
-* c_init: start and end radius of channel that is narrower in the middle and part
+* c_init: start and end half width of channel that is narrower in the middle part
 * c_ff: standard deviation sigma
 * c_mustart: mean mu - represents upper part of the channel
-* c_mustart: mean mu - represents lower part of the channel
+* c_muend: mean mu - represents lower part of the channel

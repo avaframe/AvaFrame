@@ -54,5 +54,5 @@ def plotDEM(z, name_ext):
     plt.savefig(os.path.join(dpath, '%s_%s_plot.png' % (dem_name, name_ext)))
 
     # If flag is set, plot figure
-    if int(cfgDEM['showplot']) == 1:
+    if cfgDEM.getboolean('showplot'):
         plt.show()
