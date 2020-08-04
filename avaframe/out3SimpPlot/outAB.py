@@ -124,13 +124,18 @@ def writeABpostOut(header, rasterdata, Avapath, SplitPoint, saveOutPath, flags):
         # Plot the whole profile with beta, alpha ... points and lines
         savename = name + '_AlphaBeta.pdf'
         save_file = os.path.join(saveOutPath, savename)
-        FileNamePlot_ext[i] = plotResults(header, rasterdata, avapath, CoordSplit, eqPost, save_file, flags)
+        plotPath(header, rasterdata, avapath, CoordSplit, eqPost, name, flags)
+        FileNamePlot_ext[i] = plotProfile(
+            header, rasterdata, avapath, CoordSplit, eqPost, name, save_file, flags)
         if flags['WriteRes']:
             FileNameWrite_ext[i] = WriteResults(eqPost, saveOutPath, name)
-    return  FileNamePlot_ext, FileNameWrite_ext
+    plt.draw()
+    plt.pause(0.001)
+    input("Press [enter] to continue.")
+    return FileNamePlot_ext, FileNameWrite_ext
 
 
-def plotResults(header, rasterdata, avapath, splitPoint, eqOutput, save_file, flags):
+def plotPath(header, rasterdata, avapath, splitPoint, eqOutput, name, flags):
     """ Plot and save results depending on flags options"""
 
     s = eqOutput['s']
@@ -152,9 +157,11 @@ def plotResults(header, rasterdata, avapath, splitPoint, eqOutput, save_file, fl
     indSplit = eqOutput['indSplit']
     ParameterSet = eqOutput['ParameterSet']
 
-    if flags['PlotRes']:
+    if flags['PlotPath']:
         # Plot raster and path
         fig1, ax1 = plt.subplots()
+        titleText = name
+        plt.title(titleText)
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
         cmap.set_bad(color='white')
         im1 = plt.imshow(rasterdata, cmap, origin='lower')
@@ -171,12 +178,35 @@ def plotResults(header, rasterdata, avapath, splitPoint, eqOutput, save_file, fl
         ax1.plot((splitPoint[0]-header.xllcorner)/header.cellsize,
                  (splitPoint[1]-header.yllcorner)/header.cellsize, '.',
                  color='0.3', label='Split point''Projection of Split Point on ava path')
-        plt.show()
+        plt.show(block=False)
+
+
+def plotProfile(header, rasterdata, avapath, splitPoint, eqOutput, name, save_file, flags):
+    """ Plot and save results depending on flags options"""
+
+    s = eqOutput['s']
+    x = eqOutput['x']
+    y = eqOutput['y']
+    z = eqOutput['z']
+    CuSplit = eqOutput['CuSplit']
+    ids_10Point = eqOutput['ids_10Point']
+    poly = eqOutput['poly']
+    beta = eqOutput['beta']
+    alpha = eqOutput['alpha']
+    SDs = eqOutput['SDs']
+    alphaSD = eqOutput['alphaSD']
+    f = eqOutput['f']
+    ids_alpha = eqOutput['ids_alpha']
+    ids_alphaP1SD = eqOutput['ids_alphaP1SD']
+    ids_alphaM1SD = eqOutput['ids_alphaM1SD']
+    ids_alphaM2SD = eqOutput['ids_alphaM2SD']
+    indSplit = eqOutput['indSplit']
+    ParameterSet = eqOutput['ParameterSet']
 
     # Plot the whole profile with beta, alpha ... points and lines
-    plt.close("all")
-    fig = plt.figure(4, figsize=(10, 6))
-    titleText = 'Profile'
+    # plt.close("all")
+    fig_prof = plt.figure(figsize=(10, 6))
+    titleText = name
     plt.title(titleText)
 
     xlabelText = 'Distance [m]\nBeta: '+str(round(beta, 1)) + '$^\circ$' + \
@@ -214,13 +244,13 @@ def plotResults(header, rasterdata, avapath, splitPoint, eqOutput, save_file, fl
     plt.grid(linestyle=':', color='0.9')
     plt.legend(frameon=False)
     plt.draw()
-    if flags['PlotRes']:
-        plt.show()
-    if flags['SavePlot']:
+    if flags['PlotProfile']:
+        plt.show(block=False)
+    if flags['SaveProfile']:
         log.info('Saving profile figure to: %s', save_file)
-        plt.savefig(save_file)
-    plt.close(fig)
-    plt.close("all")
+        fig_prof.savefig(save_file)
+    # plt.close(fig_prof)
+    # plt.close("all")
     return save_file
 
 
