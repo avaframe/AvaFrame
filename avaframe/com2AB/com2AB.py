@@ -64,9 +64,11 @@ def setEqParameters(smallAva, customParam):
 def com2ABMain(header, rasterdata, Avapath, SplitPoint,
                saveOutPath, smallAva, customParam, distance):
     """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
-    Inputs : DEM header and rater (as np array), Avapath and Split points
-            .shp file optional output save path, avalanche type and reamplind lenght
-            for the Avapath
+    Inputs : DEM header and rater (as np array),
+            Avapath and Split points .shp file,
+            optional output save path,
+            avalanche type,
+            reamplind lenght for the Avapath
     Outputs : writes raw results to saveOutPath
     """
     NameAva = Avapath['Name']
@@ -88,9 +90,12 @@ def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
            smallAva, customParam, distance):
     """ Computes the AlphaBeta model given an input raster (of the DEM),
     an avalanche path and split points
-    Inputs : DEM header and rater (as np array), single avapath and Split points
-            as np arrays
-            output save path, avalanche type and reamplind lenght for the Avapath
+    Inputs : DEM header and rater (as np array),
+            single avapath as np array,
+            Split points as np array,
+            output save path,
+            avalanche type,
+            resamplind lenght for the Avapath
     Outputs : writes raw results to OutPath
     """
 
@@ -115,7 +120,7 @@ def com2AB(header, rasterdata, avapath, splitPoint, OutPath, name,
     eqIn['s'] = AvaProfile[3, :]  # curvilinear coordinate (of the x, y path)
     eqIn['x'] = AvaProfile[0, :]  # x coordinate of the path
     eqIn['y'] = AvaProfile[1, :]  # y coordinate of the path
-    eqIn['z'] = AvaProfile[2, :]  # z coordinate of the path (projection of x,y on the raster)
+    eqIn['z'] = AvaProfile[2, :]  # z coordinate of the path (projection)
     eqIn['indSplit'] = indSplit  # index of split point
 
     eqOut = calcAB(eqIn, eqParams)
@@ -142,8 +147,6 @@ def projectOnRaster(header, rasterdata, Points):
     xllcorner = header.xllcorner
     yllcorner = header.yllcorner
     cellsize = header.cellsize
-    ncol = header.ncols
-    nrow = header.nrows
     xcoor = Points[0]
     ycoor = Points[1]
     zcoor = np.array([])
@@ -208,7 +211,8 @@ def prepareLine(header, rasterdata, avapath, splitPoint, distance):
     AvaProfile = np.vstack((AvaProfile, s))
 
     # find split point by computing the distance to the line
-    SplitPoint, indSplit = findSplitPoint(AvaProfile, splitPoint, s, xcoornew, ycoornew)
+    SplitPoint, indSplit = findSplitPoint(AvaProfile, splitPoint,
+                                          s, xcoornew, ycoornew)
 
     return AvaProfile, SplitPoint, indSplit
 
@@ -220,7 +224,8 @@ def findSplitPoint(AvaProfile, splitPoint, s, xcoornew, ycoornew):
     Dist = np.empty((0))
     IndSplit = np.empty((0))
     for i in range(np.shape(splitPoint)[1]):
-        dist = np.sqrt((xcoornew - splitPoint[0, i])**2 + (ycoornew - splitPoint[1, i])**2)
+        dist = np.sqrt((xcoornew - splitPoint[0, i])**2 +
+                       (ycoornew - splitPoint[1, i])**2)
         indSplit = np.argmin(dist)
         IndSplit = np.append(IndSplit, indSplit)
         Dist = np.append(Dist, dist[indSplit])
@@ -252,8 +257,10 @@ def readAvaPath(fname, outputName, header):
     if np.shape(avapath)[0] < 2:
         raise ValueError('Ava path file should contain at least 2 columns')
     for i in range(np.shape(avapath)[1]):
-        Lx = int(np.floor((avapath[0, i] - header.xllcorner) / header.cellsize))
-        Ly = int(np.floor((avapath[1, i] - header.yllcorner) / header.cellsize))
+        Lx = int(np.floor((avapath[0, i] - header.xllcorner) /
+                          header.cellsize))
+        Ly = int(np.floor((avapath[1, i] - header.yllcorner) /
+                          header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
             raise ValueError('Avalanche path exceeds DEM extend')
     return Avapath
@@ -269,8 +276,10 @@ def readSplitPoint(fname, header):
     if np.shape(splitPoint)[0] < 2:
         raise ValueError('split point file should contain at least 2 columns')
     for i in range(np.shape(splitPoint)[1]):
-        Lx = int(np.floor((splitPoint[0, i] - header.xllcorner) / header.cellsize))
-        Ly = int(np.floor((splitPoint[1, i] - header.yllcorner) / header.cellsize))
+        Lx = int(np.floor((splitPoint[0, i] - header.xllcorner) /
+                          header.cellsize))
+        Ly = int(np.floor((splitPoint[1, i] - header.yllcorner) /
+                          header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
             raise ValueError('Split point is not on the DEM')
     return SplitPoint
@@ -290,7 +299,9 @@ def checkProfile(indSplit, AvaProfile):
 
 
 def calcAB(eqInput, eqParameters):
-    """ Calculate Alpha Beta for data in eqInput according to chosen eqParameters """
+    """
+    Calculate Alpha Beta for data in eqInput according to chosen eqParameters
+    """
     log.info("Calculating alpha beta")
     k1 = eqParameters['k1']
     k2 = eqParameters['k2']
@@ -299,8 +310,6 @@ def calcAB(eqInput, eqParameters):
     SD = eqParameters['SD']
 
     s = eqInput['s']
-    x = eqInput['x']
-    y = eqInput['y']
     z = eqInput['z']
     indSplit = eqInput['indSplit']
     eqOutput = eqInput.copy()
@@ -310,7 +319,7 @@ def calcAB(eqInput, eqParameters):
     dz[0] = 0.0
     angle = np.rad2deg(np.arctan2(dz, ds))
     CuSplit = s[indSplit]
-    fig = plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 6))
     plt.plot(s, angle)
     # plt.show()
     # TODO SPLIT POINT READING
