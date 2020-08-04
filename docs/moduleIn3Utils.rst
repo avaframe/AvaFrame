@@ -1,5 +1,10 @@
-in3Utils: Module Project Utilities - generateTopo.py
-====================================================
+in3Utils: Module Project Utilities
+==================================
+
+
+
+Generate Topography
+-------------------
 
 Generate DEM files for idealised/generic topographies that can be used as required DEM input data for snow avalanche simulations.
 
@@ -16,32 +21,33 @@ On top of these topographies, channels can be introduced (then set flag_channel=
 There is the option to introduce these channels by either cutting them into the original topography (flag_topoconst=True) or by adding a 'channel layer' (max thickness=channel depth) on top of the topography.
 
 Input
------
+~~~~~
 
 * in generateTopoCfg.ini all required input parameters are listed (does include default values for all parameters)
 
-Outputs:
---------
+Outputs
+~~~~~~~
 
 * 3D surface plot of generated topography as .png file and possibly shown to screen (see flags)
 * .asc file of DEM data
 
 
-To run:
--------
+To run
+~~~~~~
 
 * copy generateTopoCfg.ini to local_generateTopoCfg.ini (and set desired parameter values, if not, the default values are used)
-* in Avaframe/ run:
+* in Avaframe/ run::
+
 	python3 runGenerateTopo.py
 
 
-Theory:
--------
+Theory
+~~~~~~
 Topographies are generated using inclined and flat planes, parabolas, spheres and circles.
 Channels are introduced as half-sphere shaped features with smooth transition from no channel to channel using cumulative distribution functions.
 
-Configuration parameters:
--------------------------
+Configuration parameters
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Domain parameters:
 
