@@ -46,8 +46,9 @@ fullLog = True
 
 # plot save results
 flags = {}
-flags['PlotRes'] = True
-flags['SavePlot'] = True
+flags['PlotPath'] = True
+flags['PlotProfile'] = True
+flags['SaveProfile'] = True
 flags['WriteRes'] = True
 
 
