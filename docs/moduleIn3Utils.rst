@@ -24,7 +24,7 @@ There is the option to introduce these channels by either cutting them into the 
 Input
 -----
 
-* in generateTopoCfg.ini all required input parameters are listed (does include default values for all parameters)
+* in ``generateTopoCfg.ini`` all required input parameters are listed (does include default values for all parameters)
 
 Outputs
 -------
@@ -36,8 +36,8 @@ Outputs
 To run
 ------
 
-* copy generateTopoCfg.ini to local_generateTopoCfg.ini (and set desired parameter values, if not, the default values are used)
-* in Avaframe/ run::
+* copy ``generateTopoCfg.ini`` to ``local_generateTopoCfg.ini`` (and set desired parameter values, if not, the default values are used)
+* in ``Avaframe/`` run::
 
 	python3 runGenerateTopo.py
 
@@ -85,3 +85,48 @@ Configuration parameters
 :c_ff: standard deviation sigma
 :c_mustart: mean mu - represents upper part of the channel
 :c_muend: mean mu - represents lower part of the channel
+
+
+Read Write Compare raster from or to ASCII files
+===================
+
+``ascUtilis.py`` is a module created to handle raster ASCII files. It contains different functions
+to read ASCII files, either just the header or also the raster matrix and write the data to a numpy array or to
+compare raster file headers as well as to write a raster to an ASCII file given a header and data.
+
+Functions
+------------------------
+
+**Header Class:**
+
+Header information are read and stored as object from ``class cASCheader``:
+
+::
+
+		header = cASCheader()
+		header.nrows = None
+  	header.ncols = None
+		header.cellsize = None
+  	header.xllcorner = None
+  	header.xllcenter = None
+  	header.yllcorner = None
+  	header.yllcenter = None
+  	header.noDataValue = None
+
+**Read ASCII header:**
+
+``header = readASCheader(fname)`` takes a .asc file name as input and returns the header information.
+
+**Compare headers:**
+
+``isEqualASCheader(headerA, headerB)`` takes two headers as input and checks if they are equal.
+
+**Read ASCII file to numpy array:**
+
+``header, data = readASCdata2numpyArray(fName, headerFile=None):`` takes a .asc file name as input and returns the
+header information as well as the raster data in a numpy array.
+
+**Write ASCII file:**
+
+``writeResultToAsc(header, resultArray, outType=None):`` takes a header and numpy array as inputs and writes the
+corresponding raster ASCII file.
