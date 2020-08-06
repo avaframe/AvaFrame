@@ -3,6 +3,7 @@ import numpy as np
 import pytest
 import avaframe.com2AB.com2AB as com2AB
 
+
 def test_setEqParameters(capfd):
     '''Simple test for module setEqParameters'''
     # small avalanche
@@ -114,26 +115,26 @@ def test_calcAB(capfd):
 
 def test_find_10Point(capfd):
     '''find_10Point'''
-    s = np.linspace(0,400,41)
-    angle = np.linspace(40,0,41)
+    s = np.linspace(0, 400, 41)
+    angle = np.linspace(40, 0, 41)
     tmp = np.where((angle < 10.0) & (angle > 0.0))
     delta_ind = 3
-    ids_10Point = com2AB.find_10Point(tmp,delta_ind)
-    assert ids_10Point==30
+    ids_10Point = com2AB.find_10Point(tmp, delta_ind)
+    assert ids_10Point == 30
 
     delta_ind = 0
-    ids_10Point = com2AB.find_10Point(tmp,delta_ind)
-    assert ids_10Point==30
+    ids_10Point = com2AB.find_10Point(tmp, delta_ind)
+    assert ids_10Point == 30
 
     angle[10] = 8
     angle[11] = 8
     angle[12] = 8
     tmp = np.where((angle < 10.0) & (angle > 0.0))
     delta_ind = 3
-    ids_10Point = com2AB.find_10Point(tmp,delta_ind)
-    assert ids_10Point==30
+    ids_10Point = com2AB.find_10Point(tmp, delta_ind)
+    assert ids_10Point == 30
 
     angle[13] = 8
     tmp = np.where((angle < 10.0) & (angle > 0.0))
-    ids_10Point = com2AB.find_10Point(tmp,delta_ind)
-    assert ids_10Point==9
+    ids_10Point = com2AB.find_10Point(tmp, delta_ind)
+    assert ids_10Point == 9
