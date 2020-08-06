@@ -13,41 +13,37 @@ import matplotlib
 import numpy as np
 
 
-def Main_aimec(fname):
+def Run_aimec(fname):
     f = open(fname, 'r')
     aD = aimecdata.fromString(f.read())
     runner = AimecRunner()
     tasklist = [runner.tasks[0]]
-    # runner.runall(aD, tasklist)
+    runner.runall(aD, tasklist)
 
-    data = aD
 
+def Run_part_aimec():
     pathPressure = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_pressure/'
     pathAvalanchePath = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Inputs/avalanche_path.xyz'
     pathResult = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/AimecResults/coordtrans/'
     depthfile = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_depth/'
     pathDHM = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Inputs/GBG_DGM.asc'
     calcPressureLimit = 1
-
-    
+    domainWidth = 600
 
     pressurefileList = [str(pathPressure) +
                         '/' +
                         str(name) for name in
                         sorted(os.listdir(pathPressure)) if os.path.isfile(os.path.join(pathPressure, name))]
     set_name = pressurefileList[0].split('/')[-3]
-    project_name = str(data.pathAvalanchePath).split('/')[-4]
-    path_name = str(data.pathAvalanchePath).split('/')[-1]
-
-
-
+    project_name = pathAvalanchePath.split('/')[-4]
+    path_name = pathAvalanchePath.split('/')[-1]
 
     # -----------------------------------------------------------
     # create new raster + preparing new raster assignment function
     # -----------------------------------------------------------
     deskewedRasterInd = processData.processDataInd(pressurefileList,
                                                    pathAvalanchePath,
-                                                   data.domainWidth,
+                                                   domainWidth,
                                                    False,
                                                    '',
                                                    False,
@@ -63,7 +59,6 @@ def Main_aimec(fname):
 
     deskewedRasterPressure = processData.assignData(pressurefileList, deskewedRasterInd)
 
-
     depthfileList = [str(depthfile) +
                      '/' +
                      str(name) for name in
@@ -71,9 +66,7 @@ def Main_aimec(fname):
 
     deskewedRasterDepth = processData.assignData(depthfileList, deskewedRasterInd)
 
-
     deskewedRasterDHM = processData.assignData([pathDHM], deskewedRasterInd)
-
 
     deskewedRasterDoku = None
     # -----------------------------------------------------------
@@ -129,4 +122,5 @@ if __name__ == '__main__':
     dirname = os.path.dirname(__file__)
     fname = os.path.join(dirname, 'NameOfAvalanche/Outputs/aimecPathFile.txt')
 
-    Main_aimec(fname)
+    # Run_aimec(fname)
+    Run_part_aimec()
