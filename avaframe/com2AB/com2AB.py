@@ -13,7 +13,7 @@ import avaframe.in3Utils.ascUtils as IOf
 
 # create local logger
 log = logging.getLogger(__name__)
-
+debugPlot = False
 
 # Local imports
 
@@ -308,6 +308,24 @@ def checkProfile(SplitPoint, AvaProfile):
 
     return SplitPoint, AvaProfile
 
+def find_10Point(tmp,delta_ind):
+    """ find the beta point: first point under 10°
+     (make sure that the delta_ind next indexes are also under 10°)
+     otherwise keep looking
+     """
+    i = 0
+    while True:
+        ind = tmp[0][i]
+        condition = True
+        for j in range(delta_ind):
+            condition = condition and (tmp[0][i+j+1]==ind+j+1)
+            if not condition:
+                i = i + j + 1
+                break
+        if condition:
+            ids_10Point = ind - 1
+            break
+    return ids_10Point
 
 def calcAB(AvaProfile, eqParameters):
     """
@@ -322,6 +340,8 @@ def calcAB(AvaProfile, eqParameters):
 
     s = AvaProfile['s']
     z = AvaProfile['z']
+    distance = s[1] - s[0]
+    delta_ind = int(np.floor(30/distance))
     indSplit = AvaProfile['indSplit']
     ds = np.abs(s - np.roll(s, 1))
     dz = np.abs(z - np.roll(z, 1))
@@ -329,16 +349,25 @@ def calcAB(AvaProfile, eqParameters):
     dz[0] = 0.0
     angle = np.rad2deg(np.arctan2(dz, ds))
     CuSplit = s[indSplit]
-    # plt.figure(figsize=(10, 6))
-    # plt.plot(s, angle)
-    # plt.show()
     # TODO SPLIT POINT READING
     # get all values where Angle < 10 but >0
     # get index of first occurance and go one back to get previous value
     # (i.e. last value above 10 deg)
     # tmp = x[(angle < 10.0) & (angle > 0.0) & (x > 450)]
+
     tmp = np.where((angle < 10.0) & (angle > 0.0) & (s > CuSplit))
-    ids_10Point = tmp[0][0] - 1
+
+    # find the beta point: first point under 10°
+    # (make sure that the 30 next meters are also under 10°)
+    ids_10Point = find_10Point(tmp,delta_ind)
+    if debugPlot:
+        plt.figure(figsize=(10, 6))
+        plt.plot(s, angle)
+        plt.plot(s[ids_10Point], angle[ids_10Point],'or')
+        plt.axhline(y=10, color='0.8',
+                    linewidth=1, linestyle='-.', label='10^\circ line')
+        plt.show()
+
     # Do a quadtratic fit and get the polynom for 2nd derivative later
     zQuad = np.polyfit(s, z, 2)
     poly = np.poly1d(zQuad)

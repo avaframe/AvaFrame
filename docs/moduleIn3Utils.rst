@@ -87,8 +87,8 @@ Configuration parameters
 :c_muend: mean mu - represents lower part of the channel
 
 
-Read Write Compare raster from or to ASCII files
-===================
+Read / Write / Compare raster from or to ASCII files
+=========================================================
 
 ``ascUtilis.py`` is a module created to handle raster ASCII files. It contains different functions
 to read ASCII files, either just the header or also the raster matrix and write the data to a numpy array or to

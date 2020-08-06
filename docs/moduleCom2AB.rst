@@ -11,13 +11,13 @@ Input
 * set of avalanche paths (as a shape file). There can be multiple paths in the shape file.
 * Split point (as a shape file). There can be multiple split points in the shape file.
 
-Outputs:
+Outputs
 --------
 
 * profile plot with alpha, beta and run-out points
 * txt file with angle and coordinates of the different points
 
-To run:
+To run
 -------
 
 * copy ``com2ABCfg.py`` to ``local_com2ABCfg.py`` (if not, the demo example is used)
@@ -55,7 +55,7 @@ than :math:`x_{\alpha_{-1}}` corresponding to :math:`\alpha_{-1}` is approximate
 In this module, the coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard deviation :math:`SD` are already known, they are simply used in the :math:`\alpha`
 equation to calculate the run-out on a new profile.
 
-Numerics
+Procedure
 --------
 
 Pre-processing :

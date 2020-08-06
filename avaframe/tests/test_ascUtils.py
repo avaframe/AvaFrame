@@ -1,9 +1,5 @@
 """Tests for module com2AB"""
-import numpy as np
-import math
-import pytest
 import avaframe.in3Utils.ascUtils as IOf
-import unittest
 import os
 
 
