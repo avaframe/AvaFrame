@@ -60,22 +60,26 @@ def processABresults(eqParams, eqOut):
     # Only get the first index past the splitpoint
     try:
         ids_alpha = ids_alpha[s[ids_alpha] > CuSplit][0]
-    except log.warning('Alpha out of profile'):
+    except IndexError:
+        log.warning('Alpha out of profile')
         ids_alpha = None
 
     try:
         ids_alphaP1SD = ids_alphaP1SD[s[ids_alphaP1SD] > CuSplit][0]
-    except log.warning('+1 SD above beta point'):
+    except IndexError:
+        log.warning('+1 SD above beta point')
         ids_alphaP1SD = None
 
     try:
         ids_alphaM1SD = ids_alphaM1SD[s[ids_alphaM1SD] > CuSplit][0]
-    except log.warning('-1 SD out of profile'):
+    except IndexError:
+        log.warning('-1 SD out of profile')
         ids_alphaM1SD = None
 
     try:
         ids_alphaM2SD = ids_alphaM2SD[s[ids_alphaM2SD] > CuSplit][0]
-    except log.warning('-2 SD out of profile'):
+    except IndexError:
+        log.warning('-2 SD out of profile')
         ids_alphaM2SD = None
 
     eqOut['f'] = f
