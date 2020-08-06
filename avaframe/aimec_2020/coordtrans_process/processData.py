@@ -753,9 +753,9 @@ if __name__ == '__main__':
     b = [1.1, 5, 2, 8.8, 8.0]
     arr = rasterize(a,b, 10, 15);
     arr1 = poly2mask_simple(a,b, 10, 15);
-    pressurefileList = ['/home/matthiastonnel/Documents/gitea/AvaFrame_PSAM_UH/NameOfAvalanche/Outputs/dfa_pressure/000001.txt']
-    depthfileList = ['/home/matthiastonnel/Documents/gitea/AvaFrame_PSAM_UH/NameOfAvalanche/Outputs/dfa_depth/000001.txt']
-    ava_data = processDataInd(pressurefileList, '/home/matthiastonnel/Documents/gitea/AvaFrame_PSAM_UH/NameOfAvalanche/Inputs/avalanche_path.xyz', 300, False, 'doku_name', False, 'damages_name',
+    pressurefileList = ['/home/matthiastonnel/Documents/github/Avaframe/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_pressure/000001.txt']
+    depthfileList = ['/home/matthiastonnel/Documents/github/Avaframe/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_depth/000001.txt']
+    ava_data = processDataInd(pressurefileList, '/home/matthiastonnel/Documents/github/Avaframe/avaframe/aimec_2020/NameOfAvalanche/Inputs/avalanche_path.xyz', 300, False, 'doku_name', False, 'damages_name',
          'visu', './', False, 'dpp_threshold')
     deskewedRasterPressure = assignData(pressurefileList, ava_data)
     deskewedRasterDepth = assignData(depthfileList, ava_data)
