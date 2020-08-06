@@ -34,7 +34,7 @@ def readABresults(saveOutPath, name):
     return eqParams, eqOut
 
 
-def processABresults(eqParams, name, eqOut):
+def processABresults(eqParams, eqOut):
     """ prepare AlphaBeta results for plotting and writing results """
 
     s = eqOut['s']
@@ -86,30 +86,26 @@ def processABresults(eqParams, name, eqOut):
 
     ParameterSet = eqParams['ParameterSet']
     eqOut['ParameterSet'] = ParameterSet
-    eqOut['Name'] = name
 
     return eqOut
 
 
-def writeABpostOut(header, rasterdata, Avapath, SplitPoint,
-                   saveOutPath, flags):
+def writeABpostOut(DGM, Avapath, SplitPoint, saveOutPath, flags):
     """ Loops on the given Avapath, runs AlpahBeta Postprocessing
     plots Results and Write Results
     """
     NameAva = Avapath['Name']
-    CoordSplit = SplitPoint['Coord']
     FileNamePlot_ext = [None] * len(NameAva)
     FileNameWrite_ext = [None] * len(NameAva)
     for i in range(len(NameAva)):
         name = NameAva[i]
         eqParams, eqOut = readABresults(saveOutPath, name)
-        eqPost = processABresults(eqParams, name, eqOut)
+        eqPost = processABresults(eqParams, eqOut)
         # Plot the whole profile with beta, alpha ... points and lines
         savename = name + '_AlphaBeta.pdf'
         save_file = os.path.join(saveOutPath, savename)
-        plotPath(header, rasterdata, CoordSplit, eqPost, flags)
-        FileNamePlot_ext[i] = plotProfile(header, rasterdata, CoordSplit,
-                                          eqPost, save_file, flags)
+        plotPath(DGM, SplitPoint, eqPost, flags)
+        FileNamePlot_ext[i] = plotProfile(DGM, eqPost, save_file, flags)
         if flags['WriteRes']:
             FileNameWrite_ext[i] = WriteResults(eqPost, saveOutPath)
     if flags['PlotPath'] or flags['PlotProfile']:
@@ -118,9 +114,10 @@ def writeABpostOut(header, rasterdata, Avapath, SplitPoint,
     return FileNamePlot_ext, FileNameWrite_ext
 
 
-def plotPath(header, rasterdata, splitPoint, eqOutput, flags):
+def plotPath(DGM, splitPoint, eqOutput, flags):
     """ Plot and save results depending on flags options"""
-
+    header = DGM['header']
+    rasterdata = DGM['rasterdata']
     x = eqOutput['x']
     y = eqOutput['y']
     indSplit = eqOutput['indSplit']
@@ -142,8 +139,8 @@ def plotPath(header, rasterdata, splitPoint, eqOutput, flags):
         ax1.plot((x-header.xllcorner)/header.cellsize,
                  (y-header.yllcorner)/header.cellsize, 'k',
                  label='avapath')
-        ax1.plot((splitPoint[0]-header.xllcorner)/header.cellsize,
-                 (splitPoint[1]-header.yllcorner)/header.cellsize, '.',
+        ax1.plot((splitPoint['x']-header.xllcorner)/header.cellsize,
+                 (splitPoint['y']-header.yllcorner)/header.cellsize, '.',
                  color='0.3', label='Split points')
         ax1.plot((x[indSplit]-header.xllcorner)/header.cellsize,
                  (y[indSplit]-header.yllcorner)/header.cellsize, '.',
@@ -152,9 +149,8 @@ def plotPath(header, rasterdata, splitPoint, eqOutput, flags):
         plt.show(block=False)
 
 
-def plotProfile(header, rasterdata, splitPoint, eqOutput, save_file, flags):
+def plotProfile(DGM, eqOutput, save_file, flags):
     """ Plot and save results depending on flags options"""
-
     s = eqOutput['s']
     z = eqOutput['z']
     ids_10Point = eqOutput['ids_10Point']

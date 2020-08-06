@@ -19,15 +19,15 @@ log = logging.getLogger(__name__)
 log.info("Running com2ABMain model on test case DEM %s with profile %s ",
          conf.DGMSource, conf.ProfileLayer)
 
-[header, rasterdata] = com2AB.readRaster(conf.DGMSource)
-avapath = com2AB.readAvaPath(conf.ProfileLayer, conf.outputName, header)
-splitPoint = com2AB.readSplitPoint(conf.SplitPointSource, header)
+DGM = com2AB.readRaster(conf.DGMSource)
+Avapath = com2AB.readAvaPath(conf.ProfileLayer, conf.outputName, DGM['header'])
+SplitPoint = com2AB.readSplitPoint(conf.SplitPointSource, DGM['header'])
 
-com2AB.com2ABMain(header, rasterdata, avapath, splitPoint, conf.saveOutPath,
+com2AB.com2ABMain(DGM, Avapath, SplitPoint, conf.saveOutPath,
                   conf.smallAva, conf.customParam, conf.distance)
 
-fileNamePlot_ext, fileNameWrite_ext = outAB.writeABpostOut(header, rasterdata,
-                                                           avapath, splitPoint,
+fileNamePlot_ext, fileNameWrite_ext = outAB.writeABpostOut(DGM,
+                                                           Avapath, SplitPoint,
                                                            conf.saveOutPath,
                                                            conf.flags)
 

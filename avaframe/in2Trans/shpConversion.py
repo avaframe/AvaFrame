@@ -12,6 +12,7 @@ import logging
 # create local logger
 log = logging.getLogger(__name__)
 
+
 def SHP2Array(infile, defname):
     """ Read shapefile and convert it to a python dictionnary
     containing the name of the paths in the shape file, the np array with
@@ -99,7 +100,7 @@ def SHP2Array(infile, defname):
     SHPdata['Name'] = Name
     SHPdata['Start'] = Start
     SHPdata['Length'] = Length
-    Coord = np.vstack((Coordx, Coordy))
-    Coord = np.vstack((Coord, Coordz))
-    SHPdata['Coord'] = Coord
+    SHPdata['x'] = Coordx
+    SHPdata['y'] = Coordy
+    SHPdata['z'] = Coordz
     return SHPdata
