@@ -1,11 +1,7 @@
 """Tests for module com2AB"""
 import numpy as np
-import math
 import pytest
 import avaframe.com2AB.com2AB as com2AB
-import avaframe.com2AB.com2ABCfg as conf
-import unittest
-
 
 def test_setEqParameters(capfd):
     '''Simple test for module setEqParameters'''
@@ -114,3 +110,30 @@ def test_calcAB(capfd):
     tol = 0.001  # here 0.1% relative diff
     assert (alpha == pytest.approx(alpha_ref, rel=tol)) and (alphaSD[0] == pytest.approx(alphaSD_ref[0], rel=tol)) and (
         alphaSD[1] == pytest.approx(alphaSD_ref[1], rel=tol)) and (alphaSD[2] == pytest.approx(alphaSD_ref[2], rel=tol))
+
+
+def test_find_10Point(capfd):
+    '''find_10Point'''
+    s = np.linspace(0,400,41)
+    angle = np.linspace(40,0,41)
+    tmp = np.where((angle < 10.0) & (angle > 0.0))
+    delta_ind = 3
+    ids_10Point = com2AB.find_10Point(tmp,delta_ind)
+    assert ids_10Point==30
+
+    delta_ind = 0
+    ids_10Point = com2AB.find_10Point(tmp,delta_ind)
+    assert ids_10Point==30
+
+    angle[10] = 8
+    angle[11] = 8
+    angle[12] = 8
+    tmp = np.where((angle < 10.0) & (angle > 0.0))
+    delta_ind = 3
+    ids_10Point = com2AB.find_10Point(tmp,delta_ind)
+    assert ids_10Point==30
+
+    angle[13] = 8
+    tmp = np.where((angle < 10.0) & (angle > 0.0))
+    ids_10Point = com2AB.find_10Point(tmp,delta_ind)
+    assert ids_10Point==9
