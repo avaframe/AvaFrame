@@ -308,7 +308,8 @@ def checkProfile(SplitPoint, AvaProfile):
 
     return SplitPoint, AvaProfile
 
-def find_10Point(tmp,delta_ind):
+
+def find_10Point(tmp, delta_ind):
     """ find the beta point: first point under 10°
      (make sure that the delta_ind next indexes are also under 10°)
      otherwise keep looking
@@ -318,7 +319,7 @@ def find_10Point(tmp,delta_ind):
         ind = tmp[0][i]
         condition = True
         for j in range(delta_ind):
-            condition = condition and (tmp[0][i+j+1]==ind+j+1)
+            condition = condition and (tmp[0][i+j+1] == ind+j+1)
             if not condition:
                 i = i + j + 1
                 break
@@ -326,6 +327,7 @@ def find_10Point(tmp,delta_ind):
             ids_10Point = ind - 1
             break
     return ids_10Point
+
 
 def calcAB(AvaProfile, eqParameters):
     """
@@ -341,7 +343,7 @@ def calcAB(AvaProfile, eqParameters):
     s = AvaProfile['s']
     z = AvaProfile['z']
     distance = s[1] - s[0]
-    delta_ind = max(int(np.floor(30/distance)),1)
+    delta_ind = max(int(np.floor(30/distance)), 1)
     indSplit = AvaProfile['indSplit']
     ds = np.abs(s - np.roll(s, 1))
     dz = np.abs(z - np.roll(z, 1))
@@ -359,11 +361,11 @@ def calcAB(AvaProfile, eqParameters):
 
     # find the beta point: first point under 10°
     # (make sure that the 30 next meters are also under 10°)
-    ids_10Point = find_10Point(tmp,delta_ind)
+    ids_10Point = find_10Point(tmp, delta_ind)
     if debugPlot:
         plt.figure(figsize=(10, 6))
         plt.plot(s, angle)
-        plt.plot(s[ids_10Point], angle[ids_10Point],'or')
+        plt.plot(s[ids_10Point], angle[ids_10Point], 'or')
         plt.axhline(y=10, color='0.8',
                     linewidth=1, linestyle='-.', label='10^\circ line')
         plt.show()
