@@ -25,7 +25,6 @@ outputName = 'SlideProfile3'
 # Optional settings
 # ##########################
 
-fullLog = True
 # if small avalanche set is wanted
 smallAva = False
 # if custom avalanche set is wanted
@@ -44,13 +43,15 @@ distance = 10
 # Some example flag
 fullLog = True
 
+
 # plot save results
 flags = {}
 flags['PlotPath'] = False
 flags['PlotProfile'] = False
 flags['SaveProfile'] = True
 flags['WriteRes'] = True
-
+# keepe intermediate results
+flags['fullOut'] = False
 
 ###########################
 # Do not change anything below this line
