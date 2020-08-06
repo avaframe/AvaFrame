@@ -6,6 +6,7 @@ import avaframe.com2AB.com2AB as com2AB
 import avaframe.com2AB.com2ABCfg as conf
 import unittest
 
+
 def test_setEqParameters(capfd):
     '''Simple test for module setEqParameters'''
     # small avalanche
@@ -18,7 +19,8 @@ def test_setEqParameters(capfd):
     eqParameters['SD'] = 2.36
 
     eqParams = com2AB.setEqParameters(smallAva=True, customParam=None)
-    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
+    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (
+        eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
 
     eqParameters = {}
     eqParameters['ParameterSet'] = 'Standard'
@@ -29,8 +31,8 @@ def test_setEqParameters(capfd):
     eqParameters['SD'] = 1.25
 
     eqParams = com2AB.setEqParameters(smallAva=False, customParam=None)
-    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
-
+    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (
+        eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
 
     customParam = {}
     customParam['k1'] = 1
@@ -48,7 +50,8 @@ def test_setEqParameters(capfd):
     eqParameters['SD'] = customParam['SD']
 
     eqParams = com2AB.setEqParameters(smallAva=False, customParam=customParam)
-    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
+    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (
+        eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
 
 # def test_prepareLine(capfd):
 #     '''Simple test for function prepareLine'''
@@ -63,6 +66,7 @@ def test_setEqParameters(capfd):
 #     avapath = np.array([[], []])
 #     AvaProfile, SplitPoint, indSplit = prepareLine(
 #         header, rasterdata, avapath, splitPoint, distance=10)
+
 
 def test_calcAB(capfd):
     '''Simple test for function calcAB'''
@@ -101,7 +105,7 @@ def test_calcAB(capfd):
     eqIn['y'] = []  # y coordinate of the path
     eqIn['z'] = z  # z coordinate of the path (projection of x,y on the raster)
     eqIn['indSplit'] = 2  # index of split point
-    eqParams = com2AB.setEqParameters(smallAva=False,customParam=None)
+    eqParams = com2AB.setEqParameters(smallAva=False, customParam=None)
     eqOut = com2AB.calcAB(eqIn, eqParams)
     alpha = eqOut['alpha']
     alphaSD = eqOut['alphaSD']
