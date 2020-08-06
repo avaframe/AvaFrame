@@ -122,7 +122,7 @@ def test_find_10Point(capfd):
     ids_10Point = com2AB.find_10Point(tmp, delta_ind)
     assert ids_10Point == 30
 
-    delta_ind = 0
+    delta_ind = 1
     ids_10Point = com2AB.find_10Point(tmp, delta_ind)
     assert ids_10Point == 30
 

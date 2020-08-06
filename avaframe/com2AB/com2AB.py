@@ -341,7 +341,7 @@ def calcAB(AvaProfile, eqParameters):
     s = AvaProfile['s']
     z = AvaProfile['z']
     distance = s[1] - s[0]
-    delta_ind = int(np.floor(30/distance))
+    delta_ind = max(int(np.floor(30/distance)),1)
     indSplit = AvaProfile['indSplit']
     ds = np.abs(s - np.roll(s, 1))
     dz = np.abs(z - np.roll(z, 1))
