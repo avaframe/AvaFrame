@@ -3,6 +3,7 @@
 
 import logging
 import sys
+import os
 
 # Local imports
 from avaframe.com2AB import com2AB
@@ -12,11 +13,20 @@ from avaframe.out3SimpPlot import outAB
 # create logger, set to logging.DEBUG to see all messages
 # logging.basicConfig(filename='com2AB.log', filemode='w', level=logging.INFO,
 #                     format='%(module)s:%(levelname)s - %(message)s')
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format='%(module)s:%(levelname)s - %(message)s')
+# logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+#                     format='%(module)s:%(levelname)s - %(message)s')
+logFileName = os.path.join(conf.saveOutPath, "runCom2AB.log")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(module)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler(logFileName, "w"),
+        logging.StreamHandler()
+    ]
+)
 log = logging.getLogger(__name__)
 
-log.info("Running com2ABMain model on test case DEM %s with profile %s ",
+log.info("Running com2ABMain model on test case DEM \n %s \n with profile \n %s ",
          conf.DGMSource, conf.ProfileLayer)
 
 DGM = com2AB.readRaster(conf.DGMSource)
