@@ -30,7 +30,7 @@ class AimecRunner(object):
 
         self.results = []
         for task in self.tasks:
-            print('[ARunner] taskChanged',task)
+            print('[ARunner] taskChanged',task.name())
 
             if task in tasklist:
                 print('[ARunner] validating %s'%(task.name()))
@@ -46,6 +46,7 @@ class AimecRunner(object):
                     print('[ARunner] validation of %s failed. Skipping task'%(task.name()))
                     self.results.append(None)
             else:
+                print('[ARunner] %s is not a task'%(task.name()))
                 self.results.append(None)
         print('[ARunner] finished')
         self.results = []

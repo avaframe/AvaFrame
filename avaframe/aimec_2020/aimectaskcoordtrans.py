@@ -54,20 +54,11 @@ class AimecTaskCoordTrans(AimecTask):
         # -----------------------------------------------------------
         # create new raster + preparing new raster assignment function
         # -----------------------------------------------------------
-        #
-        # pressurefileList = [str(data.pathPressure) +
-        #                     str(QtCore.QDir.separator()) +
-        #                     str(name) for name in
-        #                     QtCore.QDir(data.pathPressure).entryList(QtCore.QDir.Files)]
 
         pressurefileList = [str(data.pathPressure) +
                             '/' +
                             str(name) for name in
                             sorted(os.listdir(data.pathPressure)) if os.path.isfile(os.path.join(data.pathPressure, name))]
-        # print(data)
-        # print([str(name) for name in
-        # QtCore.QDir(data.pathPressure).entryList(QtCore.QDir.Files)])
-        # print(pressurefileList)
 
         set_name = pressurefileList[0].split('/')[-3]
         project_name = str(data.pathAvalanchePath).split('/')[-4]
@@ -95,8 +86,6 @@ class AimecTaskCoordTrans(AimecTask):
             print('[MAIN] ----------------------------------')
             print('[MAIN] assigning depth data in new raster')
             # assign depth data
-            # depthfileList = [str(data.pathFlowHeight)+str(QtCore.QDir.separator())+str(name)
-            #                  for name in QtCore.QDir(data.pathFlowHeight).entryList(QtCore.QDir.Files)]
 
             depthfileList = [str(data.pathFlowHeight) +
                                 '/' +
@@ -202,7 +191,7 @@ class AimecTaskCoordTrans(AimecTask):
                                              data.calcPressureLimit,
                                              pressurefileList, deskewedRasterPressure,
                                              deskewedRasterDepth,
-                                             True,  # data.with__(data.pathMapResult),
+                                             False,  # data.with__(data.pathMapResult),
                                              str(data.pathResult),
                                              data.with__(data.pathResult))
 
@@ -297,9 +286,7 @@ class AimecTaskCoordTrans(AimecTask):
 
 if __name__ == '__main__':
 
-    #    infile = '/home/matti/Privat/rheo/aimec/rgf_voellmy.txt'
-    # infile ='/home/kofler/frei/software/aimec/python/test_example/test_arzler/aimec_parameters_arzler.txt'
-    infile = '/home/matthiastonnel/Documents/gitea/AvaFrame_PSAM_UH/NameOfAvalanche/Outputs/aimecPathFile.txt'
+    infile = '/home/matthiastonnel/Documents/github/Avaframe/avaframe/aimec_2020/NameOfAvalanche/Outputs/aimecPathFile.txt'
     f = open(infile, 'r')
     indata = aimecdata.fromString(f.read())
 

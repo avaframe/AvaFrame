@@ -65,7 +65,6 @@ def main():
     print('running aimec with dataset:\n' + aD.__str__()+'\n')
 
     runner = AimecRunner()
-    print(runner.tasks)
     #runner.killwhenFinished = True
 
 
