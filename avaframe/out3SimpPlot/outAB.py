@@ -26,13 +26,13 @@ def readABresults(saveOutPath, name, flags):
     save_file = os.path.join(saveOutPath, savename)
     with open(save_file, 'rb') as handle:
         eqParams = pickle.load(handle)
-    if not flags['fullOut']:
+    if not flags.getboolean('fullOut'):
         os.remove(save_file)
     savename = name + '_com2AB_eqout.pickle'
     save_file = os.path.join(saveOutPath, savename)
     with open(save_file, 'rb') as handle:
         eqOut = pickle.load(handle)
-    if not flags['fullOut']:
+    if not flags.getboolean('fullOut'):
         os.remove(save_file)
 
     return eqParams, eqOut
@@ -114,9 +114,9 @@ def writeABpostOut(DGM, Avapath, SplitPoint, saveOutPath, flags):
         save_file = os.path.join(saveOutPath, savename)
         plotPath(DGM, SplitPoint, eqPost, flags)
         FileNamePlot_ext[i] = plotProfile(DGM, eqPost, save_file, flags)
-        if flags['WriteRes']:
+        if flags.getboolean('WriteRes'):
             FileNameWrite_ext[i] = WriteResults(eqPost, saveOutPath)
-    if flags['PlotPath'] or flags['PlotProfile']:
+    if flags.getboolean('PlotPath') or flags.getboolean('PlotProfile'):
         plt.pause(0.001)
         input("Press [enter] to continue.")
     return FileNamePlot_ext, FileNameWrite_ext
@@ -131,7 +131,7 @@ def plotPath(DGM, splitPoint, eqOutput, flags):
     indSplit = eqOutput['indSplit']
     name = eqOutput['Name']
 
-    if flags['PlotPath']:
+    if flags.getboolean('PlotPath'):
         # Plot raster and path
         fig1, ax1 = plt.subplots()
         titleText = name
@@ -212,9 +212,9 @@ def plotProfile(DGM, eqOutput, save_file, flags):
     plt.grid(linestyle=':', color='0.9')
     plt.legend(frameon=False)
     plt.draw()
-    if flags['PlotProfile']:
+    if flags.getboolean('PlotProfile'):
         plt.show(block=False)
-    if flags['SaveProfile']:
+    if flags.getboolean('SaveProfile'):
         log.info('Saving profile figure to: %s', save_file)
         fig_prof.savefig(save_file)
     # plt.close(fig_prof)

@@ -2,44 +2,69 @@
 """
 
 import logging
+import logging.config
 import sys
 import os
+import configparser
 
 # Local imports
 from avaframe.com2AB import com2AB
-import avaframe.com2AB.com2ABCfg as conf
 from avaframe.out3SimpPlot import outAB
 
-# create logger, set to logging.DEBUG to see all messages
-# logging.basicConfig(filename='com2AB.log', filemode='w', level=logging.INFO,
-#                     format='%(module)s:%(levelname)s - %(message)s')
-# logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-#                     format='%(module)s:%(levelname)s - %(message)s')
-logFileName = os.path.join(conf.saveOutPath, "runCom2AB.log")
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(module)s [%(levelname)s] %(message)s",
-    handlers=[
-        logging.FileHandler(logFileName, "w"),
-        logging.StreamHandler()
-    ]
-)
+#---------------------------------------------
+#---------------------------------------------
+#############################################
+# Load all input Parameters from congig file #
+#############################################
+cfg = configparser.ConfigParser(allow_no_value=True)
+if os.path.isfile('avaframe/com2AB/local_com2ABCfg.ini'):
+    cfg.read('avaframe/com2AB/local_com2ABCfg.ini')
+else:
+    cfg.read('avaframe/com2AB/com2ABCfg.ini')
+
+cfgPath = cfg['INPATH']
+cfgsetup = cfg['ABSETUP']
+cfgFlags = cfg['FLAGS']
+
+#########################################
+# Load all input Parameters for logging #
+#########################################
+logFileName = os.path.join(cfgPath['saveOutPath'], "runCom2AB.log")
+logging.config.fileConfig(fname='avaframe/logging.conf', defaults={'logfilename': logFileName}, disable_existing_loggers=False)
 log = logging.getLogger(__name__)
 
+
+#---------------------------------------------
+# Start ALPHABETA
+#---------------------------------------------
+
+#################################
+# Read input data for ALPHABETA #
+# Preprocessing
+#################################
 log.info("Running com2ABMain model on test case DEM \n %s \n with profile \n %s ",
-         conf.DGMSource, conf.ProfileLayer)
+         cfgPath['DGMSource'], cfgPath['ProfileLayer'])
 
-DGM = com2AB.readRaster(conf.DGMSource)
-Avapath = com2AB.readAvaPath(conf.ProfileLayer, conf.outputName, DGM['header'])
-SplitPoint = com2AB.readSplitPoint(conf.SplitPointSource, DGM['header'])
+DGM = com2AB.readRaster(cfgPath['DGMSource'])
+Avapath = com2AB.readAvaPath(cfgPath['ProfileLayer'], cfgPath['outputName'], DGM['header'])
+SplitPoint = com2AB.readSplitPoint(cfgPath['SplitPointSource'], DGM['header'])
 
-com2AB.com2ABMain(DGM, Avapath, SplitPoint, conf.saveOutPath,
-                  conf.smallAva, conf.customParam, conf.distance)
+#################################
+# Calculate ALPHABETA #
+# Processing
+#################################
+com2AB.com2ABMain(DGM, Avapath, SplitPoint, cfgPath['saveOutPath'],
+                  cfgsetup)
 
+
+#################################
+# Analyse/ plot/ write results #
+# Postprocessing
+#################################
 fileNamePlot_ext, fileNameWrite_ext = outAB.writeABpostOut(DGM,
                                                            Avapath, SplitPoint,
-                                                           conf.saveOutPath,
-                                                           conf.flags)
+                                                           cfgPath['saveOutPath'],
+                                                           cfgFlags)
 
 log.info('Plotted to: %s', fileNamePlot_ext)
 log.info('Data written: %s', fileNameWrite_ext)
