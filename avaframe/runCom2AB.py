@@ -10,12 +10,14 @@ import configparser
 # Local imports
 from avaframe.com2AB import com2AB
 from avaframe.out3SimpPlot import outAB
+from avaframe.configLogger import ConfigLogger
 
 #---------------------------------------------
 #---------------------------------------------
 #############################################
 # Load all input Parameters from congig file #
 #############################################
+
 cfg = configparser.ConfigParser(allow_no_value=True)
 if os.path.isfile('avaframe/com2AB/local_com2ABCfg.ini'):
     cfg.read('avaframe/com2AB/local_com2ABCfg.ini')
@@ -30,9 +32,12 @@ cfgFlags = cfg['FLAGS']
 # Load all input Parameters for logging #
 #########################################
 logFileName = os.path.join(cfgPath['saveOutPath'], "runCom2AB.log")
+if os.path.exists(logFileName):
+    os.remove(logFileName)
 logging.config.fileConfig(fname='avaframe/logging.conf', defaults={'logfilename': logFileName}, disable_existing_loggers=False)
 log = logging.getLogger(__name__)
-
+config_logger = ConfigLogger(log)
+config_logger(cfg)
 
 #---------------------------------------------
 # Start ALPHABETA
