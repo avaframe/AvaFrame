@@ -61,8 +61,7 @@ def setEqParameters(smallAva, customParam):
     return eqParameters
 
 
-def com2ABMain(DGM, Avapath, SplitPoint, saveOutPath, smallAva, customParam,
-               distance):
+def com2ABMain(DGM, Avapath, SplitPoint, saveOutPath, cfgsetup):
     """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
     Inputs : DEM header and rater (as np array),
             Avapath and Split points .shp file,
@@ -71,6 +70,11 @@ def com2ABMain(DGM, Avapath, SplitPoint, saveOutPath, smallAva, customParam,
             reamplind lenght for the Avapath
     Outputs : writes raw results to saveOutPath
     """
+    smallAva = cfgsetup.getboolean('smallAva')
+    customParam = cfgsetup.get('customParam')
+    # customParam = str(customParam or None)
+    distance = float(cfgsetup['distance'])
+
     NameAva = Avapath['Name']
     StartAva = Avapath['Start']
     LengthAva = Avapath['Length']
