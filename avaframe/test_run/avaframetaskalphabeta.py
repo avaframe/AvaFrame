@@ -38,7 +38,9 @@ class AvaframeTaskAlphaBeta(AvaframeTask):
 
     def description(self):
 
-        return ('running Alpha Beta model')
+        return ('Runs the Alpha Beta model. Parameter \"pathAvalancheName=<value>\" is requiered.\n' +
+                'If no local_com2ABCfg configuration file is provided, the standard setting will be used.\n' +
+                'Run \"python Main_avaframe.py -init locCfgAB=1\" if you want to change the com2ABCfg file.')
 
     def validateData(self, data):
 
@@ -46,14 +48,13 @@ class AvaframeTaskAlphaBeta(AvaframeTask):
         return True
 
     def run(self, data, callBack=None):
-
         """Run script for module com2AB
         """
 
         startTime = time.time()
 
-        #---------------------------------------------
-        #---------------------------------------------
+        # ---------------------------------------------
+        # ---------------------------------------------
         #############################################
         # Load all input Parameters from congig file #
         #############################################
@@ -78,16 +79,16 @@ class AvaframeTaskAlphaBeta(AvaframeTask):
         if os.path.exists(logFileName):
             os.remove(logFileName)
         logConfigLocName = os.path.join(pathAvaName, 'local_logging.conf')
-        logging.config.fileConfig(fname=logConfigLocName, defaults={'logfilename': logFileName}, disable_existing_loggers=False)
+        logging.config.fileConfig(fname=logConfigLocName, defaults={
+                                  'logfilename': logFileName}, disable_existing_loggers=False)
         log = logging.getLogger(__name__)
         log.info(datetime.now().strftime("%H_%M_%d_%m_%Y"))
         config_logger = ConfigLogger(log)
         config_logger(cfg)
 
-
-        #---------------------------------------------
+        # ---------------------------------------------
         # Start ALPHABETA
-        #---------------------------------------------
+        # ---------------------------------------------
 
         #################################
         # Read input data for ALPHABETA #
@@ -95,7 +96,6 @@ class AvaframeTaskAlphaBeta(AvaframeTask):
         #################################
         log.info("Running com2ABMain model on test case DEM \n %s \n with profile \n %s ",
                  cfgPath['DGMSource'], cfgPath['ProfileLayer'])
-
 
         DGM = com2AB.readRaster(cfgPath['DGMSource'])
         Avapath = com2AB.readAvaPath(cfgPath['ProfileLayer'], cfgPath['outputName'], DGM['header'])
@@ -107,7 +107,6 @@ class AvaframeTaskAlphaBeta(AvaframeTask):
         #################################
         com2AB.com2ABMain(DGM, Avapath, SplitPoint, cfgPath['saveOutPath'],
                           cfgsetup)
-
 
         #################################
         # Analyse/ plot/ write results #
@@ -123,4 +122,5 @@ class AvaframeTaskAlphaBeta(AvaframeTask):
 
         endTime = time.time()
         log.info('Done with AlphaBeta module')
-        log.info('Took %.2f seconds to run AlphaBeta module and process results.' % (endTime - startTime))
+        log.info('Took %.2f seconds to run AlphaBeta module and process results.' %
+                 (endTime - startTime))

@@ -38,7 +38,7 @@ class AvaframeTaskInitialize(AvaframeTask):
 
     def description(self):
 
-        return ('Running initialization sequence. Creating repository structure. Creating local copies of config files')
+        return ('Running initialization sequence. Creating repository structure. Creating local copies of config files if specified')
 
     def validateData(self, data):
 
