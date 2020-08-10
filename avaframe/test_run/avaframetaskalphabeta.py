@@ -30,7 +30,7 @@ class AvaframeTaskAlphaBeta(AvaframeTask):
 
     def name(self):
 
-        return 'Alpha Beta com module'
+        return 'Alpha Beta computation module'
 
     def resultPath(self):
 
