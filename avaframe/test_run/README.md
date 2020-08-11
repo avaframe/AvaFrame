@@ -3,14 +3,23 @@
 11.08.2020
 
 #### Initialization
-The initialization sequence enables the creation of the avaframe folder structure. run::
-python path/to/Main_avaframe.py --help
-for details about what is available.
+The initialization sequence enables the creation of the avaframe folder structure.
+run::
 
-To initialize a directory run::
-python path/to/Main_avaframe.py -init pathAvalancheName=/path/to/NameofAvalanche ParameterSet
-for example run::
-python avaframe/test_run/Main_avaframe.py -init pathAvalancheName=/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/TestAva1 locCfgAB=1
+    python path/to/Main_avaframe.py --help
+    for details about what is available.
+
+To initialize a directory run:
+
+run::
+
+    python path/to/Main_avaframe.py -init pathAvalancheName=/path/to/NameofAvalanche ParameterSet
+
+for example:
+
+run::
+
+    python avaframe/test_run/Main_avaframe.py -init pathAvalancheName=/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/TestAva1 locCfgAB=1
 
 This creates the following folder structure:
 
@@ -29,7 +38,14 @@ This creates the following folder structure:
 
 
 #### Running ALPHABETA
-Move all the required input files to Inputs and run::
-python path/to/Main_avaframe.py -alphabeta pathAvalancheName=/path/to/NameofAvalanche
-for example run::
-python avaframe/test_run/Main_avaframe.py -alphabeta pathAvalancheName=/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/TestAva/
+Move all the required input files to Inputs and run:
+
+run::
+
+    python path/to/Main_avaframe.py -alphabeta pathAvalancheName=/path/to/NameofAvalanche
+
+for example:
+
+run::
+
+    python avaframe/test_run/Main_avaframe.py -alphabeta pathAvalancheName=/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/TestAva/
