@@ -42,6 +42,12 @@ class AvaframeTaskAlphaBeta(AvaframeTask):
                 'If no local_com2ABCfg configuration file is provided, the standard setting will be used.\n' +
                 'Run \"python Main_avaframe.py -init locCfgAB=1\" if you want to change the com2ABCfg file.')
 
+    def requierments(self):
+
+        return ('The following files need to be added in the Inputs folder:\n \t -DEM .asc file \n' +
+                '\t -The avalanche path in LINES as a .shp file\n' +
+                '\t -The split points in POINTS as a .shp file\n')
+
     def validateData(self, data):
 
         # TODO fixme

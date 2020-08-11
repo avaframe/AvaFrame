@@ -28,6 +28,8 @@ def richtextToTerminal(richtext):
     richtext = richtext.replace('</i>', FG_DEFAULT)
     richtext = richtext.replace('<em>', FG_MAGENTA)
     richtext = richtext.replace('</em>', FG_DEFAULT)
+    richtext = richtext.replace('<g>', FG_GREEN)
+    richtext = richtext.replace('</g>', FG_DEFAULT)
 
     return richtext
 
@@ -102,17 +104,17 @@ def usage():
         if not '__' in param:
             print('%s : %s' %(richtextToTerminal('<em>'+param+'</em>'), richtextToTerminal(ad.__explainationDict__[param])))
 
-    print('The parameters are not case sensitive.')
+    print('The parameters are not case sensitive.\n')
     # print('The parameters will be read from command line, from the parameter file (if given) or from the gui.\n')
 
     print('The following tasks are availible:\n')
 
     runner = AvaframeRunner()
     for task in runner.tasks:
-        print('%s (%s) \n%s' %(richtextToTerminal('<em>'+task.cliName()+'</em>'), richtextToTerminal('<i>'+task.name()+'</i>'), richtextToTerminal(task.description())))
+        print('%s (%s) \n%s\n%s' %(richtextToTerminal('<em>'+task.cliName()+'</em>'), richtextToTerminal('<i>'+task.name()+'</i>'), richtextToTerminal(task.description()), richtextToTerminal('<b>'+task.requierments()+'</b>')))
 
     print('\n')
-    print('\n(c) BFW 2020 - all rights reserved\n')
+    print('\n' + richtextToTerminal('<g>'+'(c) BFW 2020 - all rights reserved'+'</g>') +'\n')
 
 if __name__ == '__main__':
     main()

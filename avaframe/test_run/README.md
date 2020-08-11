@@ -7,7 +7,8 @@ The initialization sequence enables the creation of the avaframe folder structur
 run::
 
     python path/to/Main_avaframe.py --help
-    for details about what is available.
+
+for details about what is available.
 
 To initialize a directory run:
 

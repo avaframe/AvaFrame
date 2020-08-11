@@ -47,8 +47,8 @@ class AvaframeData(object):
 #       explainationDict --> Explanation of fields
 
         self.__explainationDict__['pathAvalancheName'] = 'path where the avalanche folder will be created'
-        self.__explainationDict__['locCfgAB'] = '1 if you want to use your custom AB configuration file'
-        self.__explainationDict__['locCfg1DFA'] = '1 if you want to use your custom DFA configuration file'
+        self.__explainationDict__['locCfgAB'] = '1 if you want to use your custom AB configuration file. Use only with task \"-init\"'
+        self.__explainationDict__['locCfg1DFA'] = '1 if you want to use your custom DFA configuration file. Use only with task \"-init\"'
 
     def __str__(self):
 

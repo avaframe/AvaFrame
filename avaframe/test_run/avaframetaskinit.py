@@ -40,6 +40,10 @@ class AvaframeTaskInitialize(AvaframeTask):
 
         return ('Running initialization sequence. Creating repository structure. Creating local copies of config files if specified')
 
+    def requierments(self):
+
+        return ('')
+
     def validateData(self, data):
 
         # TODO fixme
