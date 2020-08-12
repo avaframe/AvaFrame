@@ -3,6 +3,9 @@
 import configparser
 import sys
 import os
+import logging
+log = logging.getLogger(__name__)
+
 
 def getModuleConfig(module, fileOverride=''):
     ''' Returns the configuration for a given module
@@ -24,6 +27,7 @@ def getModuleConfig(module, fileOverride=''):
     TODO:
     - pytest
     '''
+
 
     # initialize a configparser object
     cfg = configparser.ConfigParser()
@@ -51,6 +55,8 @@ def getModuleConfig(module, fileOverride=''):
         iniFile = defaultFile
     else:
         raise FileNotFoundError('None of the provided cfg files exist ')
+
+    log.info('Reading config from: %s', iniFile)
 
     # Finally read it
     cfg.read(iniFile)

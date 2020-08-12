@@ -253,19 +253,19 @@ def readABinputs(cfgAva):
 
     cfgPath = {}
 
-    ProfileLayer = glob.glob(cfgAva + '/Inputs/LINES/*.shp')
-    cfgPath['ProfileLayer'] = ''.join(ProfileLayer)
+    profileLayer = glob.glob(cfgAva + '/Inputs/LINES/*.shp')
+    cfgPath['profileLayer'] = ''.join(profileLayer)
 
-    DGMSource = glob.glob(cfgAva + '/Inputs/*.asc')
+    dgmSource = glob.glob(cfgAva + '/Inputs/*.asc')
     try:
-        assert len(DGMSource)==1, 'There should be only one DEM .asc file in ' + cfgAva + '/Inputs/'
+        assert len(dgmSource)==1, 'There should be only one DEM .asc file in ' + cfgAva + '/Inputs/'
     except AssertionError as e:
         raise
 
-    cfgPath['DGMSource'] = ''.join(DGMSource)
+    cfgPath['dgmSource'] = ''.join(dgmSource)
 
-    SplitPointSource = glob.glob(cfgAva + '/Inputs/POINTS/*.shp')
-    cfgPath['SplitPointSource'] = ''.join(SplitPointSource)
+    splitPointSource = glob.glob(cfgAva + '/Inputs/POINTS/*.shp')
+    cfgPath['splitPointSource'] = ''.join(splitPointSource)
 
     saveOutPath = os.path.join(cfgAva, 'Outputs/')
     if not os.path.exists(saveOutPath):
@@ -273,8 +273,8 @@ def readABinputs(cfgAva):
         os.makedirs(saveOutPath)
     cfgPath['saveOutPath'] = saveOutPath
 
-    DefaultName = str(cfgAva).split('/')[-1]
-    cfgPath['DefaultName'] = DefaultName
+    defaultName = str(cfgAva).split('/')[-1]
+    cfgPath['defaultName'] = defaultName
 
     return cfgPath
 
