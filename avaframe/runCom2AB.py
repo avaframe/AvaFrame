@@ -10,7 +10,7 @@ import configparser
 # Local imports
 from avaframe.com2AB import com2AB
 from avaframe.out3SimpPlot import outAB
-from avaframe.configLogger import ConfigLogger
+from avaframe.in3Utils.configLogger import ConfigLogger
 
 #---------------------------------------------
 #---------------------------------------------
@@ -24,7 +24,7 @@ if os.path.isfile('avaframe/com2AB/local_com2ABCfg.ini'):
 else:
     cfg.read('avaframe/com2AB/com2ABCfg.ini')
 
-cfgPath = cfg['INPATH']
+cfgPath = com2AB.readABinputs(cfg['INPATH'])
 cfgsetup = cfg['ABSETUP']
 cfgFlags = cfg['FLAGS']
 
@@ -32,9 +32,7 @@ cfgFlags = cfg['FLAGS']
 # Load all input Parameters for logging #
 #########################################
 logFileName = os.path.join(cfgPath['saveOutPath'], "runCom2AB.log")
-if os.path.exists(logFileName):
-    os.remove(logFileName)
-logging.config.fileConfig(fname='avaframe/logging.conf', defaults={'logfilename': logFileName}, disable_existing_loggers=False)
+logging.config.fileConfig(fname='avaframe/in3Utils/logging.conf', defaults={'logfilename': logFileName}, disable_existing_loggers=False)
 log = logging.getLogger(__name__)
 config_logger = ConfigLogger(log)
 config_logger(cfg)
@@ -47,11 +45,12 @@ config_logger(cfg)
 # Read input data for ALPHABETA #
 # Preprocessing
 #################################
+
 log.info("Running com2ABMain model on test case DEM \n %s \n with profile \n %s ",
          cfgPath['DGMSource'], cfgPath['ProfileLayer'])
 
 DGM = com2AB.readRaster(cfgPath['DGMSource'])
-Avapath = com2AB.readAvaPath(cfgPath['ProfileLayer'], cfgPath['outputName'], DGM['header'])
+Avapath = com2AB.readAvaPath(cfgPath['ProfileLayer'], cfgPath['DefaltName'], DGM['header'])
 SplitPoint = com2AB.readSplitPoint(cfgPath['SplitPointSource'], DGM['header'])
 
 #################################

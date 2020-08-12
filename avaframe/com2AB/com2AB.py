@@ -4,6 +4,7 @@
 """
 
 import os
+import glob
 import pickle
 import logging
 import numpy as np
@@ -71,7 +72,7 @@ def com2ABMain(DGM, Avapath, SplitPoint, saveOutPath, cfgsetup):
     Outputs : writes raw results to saveOutPath
     """
     smallAva = cfgsetup.getboolean('smallAva')
-    customParam = cfgsetup.get('customParam')
+    customParam = cfgsetup.getboolean('customParam')
     # customParam = str(customParam or None)
     distance = float(cfgsetup['distance'])
 
@@ -245,6 +246,33 @@ def findSplitPoint(AvaProfile, splitPoint):
     return SplitPoint, splitPoint
 
 
+
+def readABinputs(cfgINPATH):
+    cfgAva = cfgINPATH['AvaLancheRoot']
+    cfgPath = {}
+
+    ProfileLayer = glob.glob(cfgAva + '/Inputs/LINES/*.shp')
+    cfgPath['ProfileLayer'] = ''.join(ProfileLayer)
+
+    DGMSource = glob.glob(cfgAva + '/Inputs/*.asc')
+    cfgPath['DGMSource'] = ''.join(DGMSource)
+
+    SplitPointSource = glob.glob(cfgAva + '/Inputs/POINTS/*.shp')
+    cfgPath['SplitPointSource'] = ''.join(SplitPointSource)
+
+    saveOutPath = os.path.join(cfgAva, 'Outputs/')
+    if not os.path.exists(saveOutPath):
+        # log.info('Creating output folder %s', saveOutPath)
+        os.makedirs(saveOutPath)
+    cfgPath['saveOutPath'] = saveOutPath
+
+    DefaltName = str(cfgAva).split('/')[-1]
+    cfgPath['DefaltName'] = DefaltName
+
+    return cfgPath
+
+
+
 def readRaster(fname):
     """ Read raster file (.asc)"""
 
@@ -258,11 +286,10 @@ def readRaster(fname):
     return DGM
 
 
-def readAvaPath(fname, outputName, header):
+def readAvaPath(fname, defname, header):
     """ Read avalanche path from  .shp"""
 
     log.info('Reading avalanche path : %s ', fname)
-    defname = outputName
     Avapath = shpConv.SHP2Array(fname, defname)
     coordx = Avapath['x']
     coordy = Avapath['y']
