@@ -5,21 +5,35 @@ from avaframe.test_run.avaframerunner import *
 import string
 import sys
 import re
+import logging
+
+# create logger, set to logging.DEBUG to see all messages
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(module)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler("Main_Avaframe.log", "w"),
+        logging.StreamHandler()
+    ]
+)
+logmain = logging.getLogger(__name__)
 
 version_major = 0
 version_minor = 1
 
+
 def versionstring():
     return 'Avaframe ' + version_major.__str__() + '.' + version_minor.__str__()
 
+
 def richtextToTerminal(richtext):
-    FG_RED      = '\033[31m'
-    FG_GREEN    = '\033[32m'
-    FG_YELLOW   = '\033[33m'
-    FG_BLUE     = '\033[34m'
-    FG_MAGENTA  = '\033[35m'
-    FG_CYAN     = '\033[36m'
-    FG_DEFAULT  = '\033[39m'
+    FG_RED = '\033[31m'
+    FG_GREEN = '\033[32m'
+    FG_YELLOW = '\033[33m'
+    FG_BLUE = '\033[34m'
+    FG_MAGENTA = '\033[35m'
+    FG_CYAN = '\033[36m'
+    FG_DEFAULT = '\033[39m'
 
     richtext = richtext.replace('<br/>', '\n')
     richtext = richtext.replace('<b>', FG_YELLOW)
@@ -33,6 +47,7 @@ def richtextToTerminal(richtext):
 
     return richtext
 
+
 def main():
 
     if '--help' in sys.argv:
@@ -43,28 +58,27 @@ def main():
         print(versionstring())
         sys.exit(0)
 
-    #check if there is a file to open
+    # check if there is a file to open
     usefile = False
     for arg in sys.argv:
-        s = re.search(r'.*open=(.*)', arg, re.M|re.I)
+        s = re.search(r'.*open=(.*)', arg, re.M | re.I)
         if s:
             try:
                 f = open(s.group(1), 'r')
             except IOError as e:
-                print('I/O error({0}): {1}'.format(e.errno, e.strerror))
+                log.error('I/O error({0}): {1}'.format(e.errno, e.strerror))
                 return
-            print('using file %s to get parameters' %(s.group(1)))
+            log.info('using file %s to get parameters' % (s.group(1)))
             aD = avaframedata.fromString(f.read())
             usefile = True
     if not usefile:
-        print('reading command line arguments to get parameters')
+        logmain.info('reading command line arguments to get parameters')
         aD = avaframedata.fromStringList(sys.argv)
 
-    print('running avaframe with dataset:\n' + aD.__str__()+'\n')
+    logmain.info('running avaframe with dataset:\n' + aD.__str__()+'\n')
 
     runner = AvaframeRunner()
     #runner.killwhenFinished = True
-
 
     tasklist = []
     for task in runner.tasks:
@@ -72,25 +86,28 @@ def main():
             if arg == task.cliName():
                 tasklist.append(task)
 
+
+    if not aD.pathAvalancheName:
+        logmain.error('No \"pathAvalancheName\" sepcified. Exiting application')
+        return
     if len(tasklist) == 0:
-        print('[Avaframe] Error: no task sepcified. Exiting application')
+        logmain.error('No task sepcified. Exiting application')
         return
     else:
-        print('[Avaframe] running the following Avaframe tasks')
+        logmain.info('running the following Avaframe tasks :')
         for task in tasklist:
-            print('%s'%(task.name()))
-        print('\n')
+            logmain.info('\t-%s' % (task.name()))
 
-
-    #runner.start()
+    # runner.start()
     runner.runall(aD, tasklist)
     #ret = app.exec_()
     del runner
     sys.exit(0)
 
+
 def usage():
-    print('I am avaframe %s' %(versionstring()))
-    print('usage: %s [options] [parameter=<value>] [task]' %(sys.argv[0]))
+    print('I am avaframe %s' % (versionstring()))
+    print('usage: %s [options] [parameter=<value>] [task]' % (sys.argv[0]))
 
     print('\nThe options are:\n')
     print('--help\t\t\t\tprint this message and exit')
@@ -102,7 +119,8 @@ def usage():
     ad = avaframedata.AvaframeData()
     for param in ad.__dict__.keys():
         if not '__' in param:
-            print('%s : %s' %(richtextToTerminal('<em>'+param+'</em>'), richtextToTerminal(ad.__explainationDict__[param])))
+            print('%s : %s' % (richtextToTerminal('<em>'+param+'</em>'),
+                               richtextToTerminal(ad.__explainationDict__[param])))
 
     print('The parameters are not case sensitive.\n')
     # print('The parameters will be read from command line, from the parameter file (if given) or from the gui.\n')
@@ -111,10 +129,12 @@ def usage():
 
     runner = AvaframeRunner()
     for task in runner.tasks:
-        print('%s (%s) \n%s\n%s' %(richtextToTerminal('<em>'+task.cliName()+'</em>'), richtextToTerminal('<i>'+task.name()+'</i>'), richtextToTerminal(task.description()), richtextToTerminal('<b>'+task.requierments()+'</b>')))
+        print('%s (%s) \n%s\n%s' % (richtextToTerminal('<em>'+task.cliName()+'</em>'), richtextToTerminal('<i>' +
+                                                                                                          task.name()+'</i>'), richtextToTerminal(task.description()), richtextToTerminal('<b>'+task.requierments()+'</b>')))
 
     print('\n')
-    print('\n' + richtextToTerminal('<g>'+'(c) BFW 2020 - all rights reserved'+'</g>') +'\n')
+    print('\n' + richtextToTerminal('<g>'+'(c) BFW 2020 - all rights reserved'+'</g>') + '\n')
+
 
 if __name__ == '__main__':
     main()

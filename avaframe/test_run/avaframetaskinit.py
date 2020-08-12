@@ -38,7 +38,10 @@ class AvaframeTaskInitialize(AvaframeTask):
 
     def description(self):
 
-        return ('Running initialization sequence. Creating repository structure. Creating local copies of config files if specified')
+        return ('Running initialization sequence. Creating repository structure. \n' +
+                'Creating local copies of config files if specified.\n' +
+                'Parameter \"pathAvalancheName=<value>\" is requiered.\n'+
+                'If folder already exists, checking the structure.')
 
     def requierments(self):
 
@@ -58,11 +61,9 @@ class AvaframeTaskInitialize(AvaframeTask):
         logConfigLocName = os.path.join(pathAvaName, 'local_logging.conf')
         logConfigName = 'avaframe/logging.conf'
         if os.path.exists(pathAvaName):
-            logConf = True
-            if not os.path.exists(logConfigName):
+            if not os.path.exists(logConfigLocName):
                 shutil.copyfile(logConfigName, logConfigLocName)
-                logConf = False
-            logging.config.fileConfig(fname=logConfigName, defaults={'logfilename': logFileName}, disable_existing_loggers=False)
+            logging.config.fileConfig(fname=logConfigName, defaults={'logfilename': logFileName}, disable_existing_loggers=True)
             log = logging.getLogger(__name__)
             log.info(datetime.now().strftime("%H_%M_%d_%m_%Y"))
             log.info("Running initialization sequecnce for avalanche %s", str(pathAvaName))
@@ -81,6 +82,8 @@ class AvaframeTaskInitialize(AvaframeTask):
             log.info("Running initialization sequecnce for avalanche %s", str(pathAvaName))
             createFolderStruct(data)
             log.info("Done initializing avalanche %s", str(pathAvaName).split('/')[-1])
+
+        # log.disabled = True
 
 
 

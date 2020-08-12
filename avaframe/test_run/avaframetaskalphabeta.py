@@ -130,3 +130,5 @@ class AvaframeTaskAlphaBeta(AvaframeTask):
         log.info('Done with AlphaBeta module')
         log.info('Took %.2f seconds to run AlphaBeta module and process results.' %
                  (endTime - startTime))
+
+        # log.handlers.clear()

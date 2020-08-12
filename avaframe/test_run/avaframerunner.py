@@ -2,7 +2,7 @@ import avaframetaskinit
 import avaframetaskalphabeta
 import copy
 import logging
-log = logging.getLogger(__name__)
+logmain = logging.getLogger(__name__)
 
 class AvaframeRunner(object):
 
@@ -17,7 +17,7 @@ class AvaframeRunner(object):
         pass
 
     def setProgress(self, progress, overall):
-        print('[ARunner] progressChanged', progress)
+        logmain.info('progressChanged', progress)
 
     def run(self):
 
@@ -26,26 +26,29 @@ class AvaframeRunner(object):
 
         self.results = []
         for task in self.tasks:
-            print('[ARunner] taskChanged', task.name())
+
 
             if task in tasklist:
-                print('[ARunner] validating %s' % (task.name()))
+                logmain.info('taskChanged %s' % (task.name()))
+                logmain.info('validating %s' % (task.name()))
                 if task.validateData(data):
-                    print('[ARunner] running %s' % (task.name()))
+                    logmain.info('running %s' % (task.name()))
                     try:
                         self.results.append(task.run(data, self))
-                        print('[ARunner] finished %s: %s' % (task.name(), self.results[-1]))
+                        # fh = logging.FileHandler("Main_Avaframe.log")
+                        # logmain.addHandler(fh)
+                        logmain.info('finished %s' % (task.name()))
                     except RuntimeError as e:
-                        print('[ARunner] %s raised a runtime exception: %s' %
+                        logmain.info('%s raised a runtime exception: %s' %
                               (task.name(), e.message))
                         self.results.append(None)
                 else:
-                    print('[ARunner] validation of %s failed. Skipping task' % (task.name()))
+                    logmain.info('validation of %s failed. Skipping task' % (task.name()))
                     self.results.append(None)
-            else:
-                print('[ARunner] %s is not a task' % (task.name()))
-                self.results.append(None)
-        print('[ARunner] finished')
+            # else:
+            #     logmain.info('%s is not a task' % (task.name()))
+            #     self.results.append(None)
+        logmain.info('finished')
         self.results = []
         return
 
