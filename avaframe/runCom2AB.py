@@ -5,28 +5,32 @@ import logging
 import logging.config
 import sys
 import os
-import configparser
 
 # Local imports
 from avaframe.com2AB import com2AB
 from avaframe.out3SimpPlot import outAB
+from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils.configLogger import ConfigLogger
 
+#-----------Required settings-----------------
+
+# TODO: move this to a main cfg file! (alongside flags for intermediate data/results/plots)
+# and have function cfgUtils.readGlobalCfg that allows for a local_MainCfg
+
+avalancheDir = 'data/avaSlide'
+
 #---------------------------------------------
-#---------------------------------------------
+
 #############################################
-# Load all input Parameters from congig file #
+# Load all input Parameters from config file #
 #############################################
 
-cfg = configparser.ConfigParser(allow_no_value=True)
-if os.path.isfile('avaframe/com2AB/local_com2ABCfg.ini'):
-    cfg.read('avaframe/com2AB/local_com2ABCfg.ini')
-else:
-    cfg.read('avaframe/com2AB/com2ABCfg.ini')
+# get the configuration of an already imported module
+cfg = cfgUtils.getModuleConfig(com2AB)
 
-cfgPath = com2AB.readABinputs(cfg['INPATH'])
-cfgsetup = cfg['ABSETUP']
+cfgSetup = cfg['ABSETUP']
 cfgFlags = cfg['FLAGS']
+print(cfg.sections())
 
 #########################################
 # Load all input Parameters for logging #
@@ -46,6 +50,9 @@ config_logger(cfg)
 # Preprocessing
 #################################
 
+# extract input file locations
+cfgPath = com2AB.readABinputs(avalancheDir)
+
 log.info("Running com2ABMain model on test case DEM \n %s \n with profile \n %s ",
          cfgPath['DGMSource'], cfgPath['ProfileLayer'])
 
@@ -58,7 +65,7 @@ SplitPoint = com2AB.readSplitPoint(cfgPath['SplitPointSource'], DGM['header'])
 # Processing
 #################################
 com2AB.com2ABMain(DGM, Avapath, SplitPoint, cfgPath['saveOutPath'],
-                  cfgsetup)
+                  cfgSetup)
 
 
 #################################

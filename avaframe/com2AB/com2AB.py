@@ -9,6 +9,8 @@ import pickle
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
+
+# Local imports
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.ascUtils as IOf
 
@@ -247,8 +249,8 @@ def findSplitPoint(AvaProfile, splitPoint):
 
 
 
-def readABinputs(cfgINPATH):
-    cfgAva = cfgINPATH['AvaLancheRoot']
+def readABinputs(cfgAva):
+
     cfgPath = {}
 
     ProfileLayer = glob.glob(cfgAva + '/Inputs/LINES/*.shp')
@@ -256,7 +258,7 @@ def readABinputs(cfgINPATH):
 
     DGMSource = glob.glob(cfgAva + '/Inputs/*.asc')
     try:
-        assert len(DGMSource)==1, 'There should be only one and only one DEM .asc file in ' + cfgAva + '/Inputs/'
+        assert len(DGMSource)==1, 'There should be only one DEM .asc file in ' + cfgAva + '/Inputs/'
     except AssertionError as e:
         raise
 
@@ -429,3 +431,4 @@ def calcAB(AvaProfile, eqParameters):
     AvaProfile['SDs'] = SDs
     AvaProfile['alphaSD'] = alphaSD
     return AvaProfile
+
