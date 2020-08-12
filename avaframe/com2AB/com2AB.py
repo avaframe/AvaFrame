@@ -255,6 +255,11 @@ def readABinputs(cfgINPATH):
     cfgPath['ProfileLayer'] = ''.join(ProfileLayer)
 
     DGMSource = glob.glob(cfgAva + '/Inputs/*.asc')
+    try:
+        assert len(DGMSource)==1, 'There should be only one and only one DEM .asc file in ' + cfgAva + '/Inputs/'
+    except AssertionError as e:
+        raise
+
     cfgPath['DGMSource'] = ''.join(DGMSource)
 
     SplitPointSource = glob.glob(cfgAva + '/Inputs/POINTS/*.shp')
@@ -266,8 +271,8 @@ def readABinputs(cfgINPATH):
         os.makedirs(saveOutPath)
     cfgPath['saveOutPath'] = saveOutPath
 
-    DefaltName = str(cfgAva).split('/')[-1]
-    cfgPath['DefaltName'] = DefaltName
+    DefaultName = str(cfgAva).split('/')[-1]
+    cfgPath['DefaultName'] = DefaultName
 
     return cfgPath
 

@@ -32,7 +32,7 @@ cfgFlags = cfg['FLAGS']
 # Load all input Parameters for logging #
 #########################################
 logFileName = os.path.join(cfgPath['saveOutPath'], "runCom2AB.log")
-logging.config.fileConfig(fname='avaframe/in3Utils/logging.conf', defaults={'logfilename': logFileName}, disable_existing_loggers=False)
+logging.config.fileConfig(fname='avaframe/in3Utils/logging.conf', defaults={'logfilename': logFileName})
 log = logging.getLogger(__name__)
 config_logger = ConfigLogger(log)
 config_logger(cfg)
