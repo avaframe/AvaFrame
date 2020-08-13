@@ -151,7 +151,7 @@ def path2domain(x, y, w, csz):
 #==============================================================================
 # process_data_ind
 #==============================================================================
-def processDataInd(DGMsource, ProfileLayer, DefaltName, w, with_doku, doku_name, with_damages, damages_name,
+def processDataInd(DGMsource, ProfileLayer, DefaltName, w,
          visu, outpath, out, dpp_threshold):
     """
     process data ind
@@ -190,18 +190,15 @@ def processDataInd(DGMsource, ProfileLayer, DefaltName, w, with_doku, doku_name,
     rasterdata = DGM['rasterdata']
 
     Avapath = com2AB.readAvaPath(ProfileLayer, DefaltName, DGM['header'])
+    AvaProfile, SplitPoint, splitPoint = prepareLine(DGM, Avapath, splitPoint=None, distance=10)
+    x_path = Avapath['x']
+    y_path = Avapath['y']
+    z_path = np,zeros(np.shape(Avapath['x']))
 
-    pdata = pd.read_csv(polyfnames, delimiter=',') #
-    if 'X' in pdata.columns: x_path = np.array(pdata.X)
-    if 'x' in pdata.columns: x_path = np.array(pdata.x)
-    if 'Y' in pdata.columns: y_path = np.array(pdata.Y)
-    if 'y' in pdata.columns: y_path = np.array(pdata.y)
-    if 'Z' in pdata.columns: z_path = np.array(pdata.Z)
-    if 'z' in pdata.columns: z_path = np.array(pdata.z)
 
 #    output which file is analyzed
     if statusoutput:
-        print('[PD] Creating new raster along polyline: %s' % polyfnames)
+        print('[PD] Creating new raster along polyline: %s' % ProfileLayer)
 
 #     erzeugung der eckpuntke der segmente des unregelmaesigen gitters,
 #     Domain Boundaries DB
@@ -412,30 +409,6 @@ def processDataInd(DGMsource, ProfileLayer, DefaltName, w, with_doku, doku_name,
     refs = [ref2[0], ref3[0]]
 
     labels = ['flow path', 'domain']
-         # falls doku vorhanden
-    if with_doku and isinstance(doku_name, basestring):
-        depdata = np.loadtxt(doku_name)
-        xdep = depdata[:, 0]
-        ydep = depdata[:, 1]
-        ref4 = plt.plot(xdep, ydep,
-                        'r', linewidth = lw, label = 'doku data')
-        refs.append(ref4[0])
-        labels.append('doku data')
-
-    if with_damages and isinstance(damages_name[0], basestring):
-        damage_name = damages_name
-#        for damage_name in damages_name:
-        damdata = np.loadtxt(damage_name)
-        if len(damdata.shape) == 1:
-            xdam = damdata[0]
-            ydam = damdata[1]
-            ref5 = plt.plot(xdam, ydam, 'm*', linewidth = lw, label = 'damages')
-        else:
-            xdam = damdata[:, 0]
-            ydam = damdata[:, 1]
-            ref5 = plt.plot(xdam, ydam, 'm-*', linewidth = lw, label = 'damages')
-        refs.append(ref5[0])
-        labels.append('damages')
 
     plt.legend(refs, labels, loc=0)
     plt.xlim([xx.min()*cellsize+xllcenter, xx.max()*cellsize+xllcenter])
@@ -444,9 +417,9 @@ def processDataInd(DGMsource, ProfileLayer, DefaltName, w, with_doku, doku_name,
     plt.ylabel('y [m]')
     cbh = plt.colorbar()
     cbh.set_label('peak pressure [kPa]')
-    # plt.show()
+    plt.show()
     if out:
-        pro_name = fnames[0].split('/')[-3] # CoSiCa-samos-structure
+        pro_name = DGMSource.split('/')[-3] # CoSiCa-samos-structure
 #        pro_name = fnames[0].split('/')[-5] + '_' + fnames[0].split('/')[-2] # DAKUMO_structure
         outname_fin = ''.join([outpath, '/pics/', pro_name,
                                '_dptr', str(int(dpp_threshold)),
