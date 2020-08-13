@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-
-#-----------------------------------------------------------
-#packages
-#-----------------------------------------------------------
 import os
+import logging
 import math
 import numpy as np
 import pandas as pd
@@ -13,10 +9,17 @@ from matplotlib import cm
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.geoTrans as geoTrans
+import avaframe.in3Utils.ascUtils as IOf
 
-#-----------------------------------------------------------
+
+# create local logger
+log = logging.getLogger(__name__)
+
+# -----------------------------------------------------------
 # result_write
-#-----------------------------------------------------------
+# -----------------------------------------------------------
+
+
 def result_write(data_name, data, outfile, header):
     """
     This function is used as standart output file
@@ -32,12 +35,12 @@ def result_write(data_name, data, outfile, header):
         os.makedirs(os.path.dirname(outfile))
 
     output = data
-    fid = open(outfile,'w')
+    fid = open(outfile, 'w')
     fid.write(header)
     for i in range(len(output[0])):
         tmp = os.path.basename(data_name[i])
 #        name = tmp.split('.')[0] # CoSiCa-Samos
-        name = os.path.splitext(tmp)[0] # DAKUMO
+        name = os.path.splitext(tmp)[0]  # DAKUMO
         fid.write('%s' % name)
         for j in range(len(output)):
             try:
@@ -47,11 +50,13 @@ def result_write(data_name, data, outfile, header):
         fid.write('\n')
     fid.close()
 
-    print('[OUT] File written: %s' % outfile)
+    log.info('File written: %s' % outfile)
 
-#-----------------------------------------------------------
-#colorvar
-#-----------------------------------------------------------
+# -----------------------------------------------------------
+# colorvar
+# -----------------------------------------------------------
+
+
 def colorvar(k, k_end, colorflag, disp=0):
     """
     jt colorvariation editor - JT 2012
@@ -79,59 +84,61 @@ def colorvar(k, k_end, colorflag, disp=0):
     """
 
     colors = {
-    'ry': [1., k/k_end, 0.], #rot zu gelb
-    'bb': [0., k/k_end, 1.], #blau zu hellbalu
-    'pw': [0.8, k/k_end, 0.8], #pink zu weiss
-    'kg': [0., k/k_end, 0.], #schwarz zu gruen
-    'bp': [k/k_end, 0., 1.], #blau zu pink
-    'pb': [1.-k/k_end, 1., 0.], #blau zu pink
-    'gy': [k/k_end, 1., 0.], #green zu yellow
-    'cw': [k/k_end, 1., 1.], #cyan zu weiss
-    'kr': [k/k_end, 1., 1.], #black to red
-    'gb': [0., 1., k/k_end], #gruen zu blau
-    'rp': [1., 0., k/k_end], #rot zu pink
-    'yw': [1., 1., k/k_end], #yellow to white
-    'kb': [0., 0., k/k_end], #black tp blue
-    'kc': [0., k/k_end, k/k_end], #black zu cyan
-    'kp': [k/k_end, 0., k/k_end],  #black zu pink
-    'kw': [1.-k/k_end, 1.-k/k_end, 1.-k/k_end] #black to white
+        'ry': [1., k/k_end, 0.],  # rot zu gelb
+        'bb': [0., k/k_end, 1.],  # blau zu hellbalu
+        'pw': [0.8, k/k_end, 0.8],  # pink zu weiss
+        'kg': [0., k/k_end, 0.],  # schwarz zu gruen
+        'bp': [k/k_end, 0., 1.],  # blau zu pink
+        'pb': [1.-k/k_end, 1., 0.],  # blau zu pink
+        'gy': [k/k_end, 1., 0.],  # green zu yellow
+        'cw': [k/k_end, 1., 1.],  # cyan zu weiss
+        'kr': [k/k_end, 1., 1.],  # black to red
+        'gb': [0., 1., k/k_end],  # gruen zu blau
+        'rp': [1., 0., k/k_end],  # rot zu pink
+        'yw': [1., 1., k/k_end],  # yellow to white
+        'kb': [0., 0., k/k_end],  # black tp blue
+        'kc': [0., k/k_end, k/k_end],  # black zu cyan
+        'kp': [k/k_end, 0., k/k_end],  # black zu pink
+        'kw': [1.-k/k_end, 1.-k/k_end, 1.-k/k_end]  # black to white
     }
 
     colornames = {
-    'ry': 'rot zu gelb',
-    'bb': 'blau zu hellblau',
-    'pw': 'pink zu weiss',
-    'kg': 'schwarz zu gruen',
-    'bp': 'blau zu pink',
-    'pb': 'blau zu pink',
-    'gy': 'green zu yellow',
-    'cw': 'cyan zu weiss',
-    'kr': 'black to red',
-    'gb': 'gruen zu blau',
-    'rp': 'rot zu pink',
-    'yw': 'yellow to white',
-    'kb': 'black tp blue',
-    'kc': 'black zu cyan',
-    'kp': 'black zu pink',
-    'kw': 'black to white'
+        'ry': 'red to yellow',
+        'bb': 'blue to cyan',
+        'pw': 'pink to white',
+        'kg': 'black to green',
+        'bp': 'blue to pink',
+        'pb': 'blue to pink',
+        'gy': 'green to yellow',
+        'cw': 'cyan to white',
+        'kr': 'black to red',
+        'gb': 'green to blue',
+        'rp': 'rot to pink',
+        'yw': 'yellow to white',
+        'kb': 'black to blue',
+        'kc': 'black to cyan',
+        'kp': 'black to pink',
+        'kw': 'black to white'
     }
 
     if colorflag.lower() in colors:
         farbe = colors.get(colorflag.lower())
         if k == 0:
-            print('[CVAR] Color is: %s' % colornames.get(colorflag.lower()))
+            log.info('Color is: %s' % colornames.get(colorflag.lower()))
     else:
         farbe = [0, 0, 0]
         if k == 0:
-            print('[CVAR] Color is black')
+            log.info('Color is black')
 
     return farbe
 
-#-----------------------------------------------------------
+# -----------------------------------------------------------
 # result_visu
-#-----------------------------------------------------------
-def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
-                mean_max_dpp, doku, GI, dpp_threshold, outpath):
+# -----------------------------------------------------------
+
+
+def result_visu(fnames, rasterSource, ProfileLayer, runout, mean_max_dpp,
+                max_max_dpp, doku, GI, dpp_threshold, outpath, DefaultName=None):
     """
     Visualize results in a nice way
     Jan-Thomas Fischer BFW 2010-2012
@@ -149,53 +156,32 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
     # 1 = rddp
     # 2 = frontal shape
     # 3 = groth index
-    flag = 1
+    # 4 = runout for intrapraevent
+    # 5 = pressure data
+    flag = 3
     if (len(fnames) > 100):
         plot_density = 1
     else:
         plot_density = 0
 
     if flag == 1:
-        print('[VISU] visualizing pressure data')
-        tipo = 'rddp'
-        data = mean_max_dpp/ mean_max_dpp[0]
-        yaxis_label = 'rAMPP [-]'
+        log.info('Visualizing pressure data')
+        tipo = 'rapp'
+        data = mean_max_dpp / mean_max_dpp[0]
+        yaxis_label = 'rAPP [-]'
         ytick_increment = 0.25
         ymax = 3
-#    elif flag == 2:
-#        print('[VISU] visualizing  frontal shape data')
-#        tipo = 'FS'
-#        data = FS
-#        yaxis_label = 'frontal shape [FS]; frontal length ='.join([str(frontal_length), '[m]'])
-#        ytick_increment = 0.5
-    elif flag == 3:
-        print('[VISU] visualizing EGU growth index data')
+    elif flag == 2:
+        log.info('Visualizing EGU growth index data')
         tipo = 'GI'
         data = GI
         yaxis_label = 'growth index [GI]'
         ytick_increment = 2
-    elif flag == 4:
-        print('[VISU] visualizing e_b - runout for intrapraevent')
-        tipo = 'eb'
-        dat_name = '/home/P/Projekte/15160-CoSiCaCV/simulation/intrapraevent/dfa_cosicaCV_41_fric_lhs.txt'
-        with open(dat_name, 'r') as fid:
-            header = fid.readline()
-            par_names = [i.strip() for i in header.split(',')][1:]
-        par_data = np.loadtxt(dat_name, skiprows=1, delimiter=';')[:,1:]
-        e_b = par_data[1:, 14]
-        data = e_b
-        yaxis_label = 'eb [J/m2]'
-        ytick_increment = 500.
-        mks = 12
-        ymax = max(data)+(max(data)-min(data))*0.1
-        ymin = min(data)-(max(data)-min(data))*0.1
-#        ymax = 4.
-#        ymin = 0.0
-    elif flag == 5:
-        print('[VISU] visualizing pressure data')
-        tipo = 'rmddp'
+    elif flag == 3:
+        log.info('Visualizing pressure data')
+        tipo = 'rmpp'
         data = max_max_dpp / max_max_dpp[0]
-        yaxis_label = 'rMMPP [-]'
+        yaxis_label = 'rMPP [-]'
         ytick_increment = 0.1
 #        ymax = 0.12
 #        ymin = 0.08
@@ -204,12 +190,11 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
         ymax = max(data[1:])+(max(data[1:])-min(data[1:]))*0.1
         ymin = min(data[1:])-(max(data[1:])-min(data[1:]))*0.1
     else:
-        print('[VISU] wrong flag')
+        log.error('Wrong flag')
         return None
 
-
-    #read data
-    dem = com2AB.readRaster(rasterSource)
+    # read data
+    dem = IOf.readRaster(rasterSource)
     header = dem['header']
     xllcenter = header.xllcenter
     yllcenter = header.yllcenter
@@ -217,8 +202,9 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
 
     rasterdata = dem['rasterdata']
 
-    Avapath = shpConv.readLines(ProfileLayer, DefaultName, dem['header'])
-    AvaProfile, SplitPoint, splitPoint = geoTrans.prepareLine(dem, Avapath, splitPoint=None, distance=10)
+    Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem['header'])
+    AvaProfile, SplitPoint, splitPoint = geoTrans.prepareLine(
+        dem, Avapath, splitPoint=None, distance=10)
     x_path = AvaProfile['x']
     y_path = AvaProfile['y']
     z_path = AvaProfile['z']
@@ -226,8 +212,8 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
 
     xlim_prof_axis = max(s_path) + 50
 
-    ## Final result diagram - z_profile+data
-    fig = plt.figure(figsize = (figure_width, figure_height), dpi=300)
+    # Final result diagram - z_profile+data
+    fig = plt.figure(figsize=(figure_width, figure_height), dpi=300)
 
     markers = ['+', 'o', 'x', '*', 's', 'd', '^', 'v', '>', '<', 'p', 'h', '.',
                '^', 'v', '>', '<', 'p', 'h', '.']
@@ -240,12 +226,13 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
 #    plt.ylim([0, ymax])
 #    plt.yticks(np.arange([0, math.ceil(max(data)+0.25), ytick_increment]))
     ax1.set_ylabel(yaxis_label, color='b', fontsize=2*fs)
-    ax1.set_xlabel(''.join(['s [m] - runout with ', str(dpp_threshold), ' kPa threshold']), color='black', fontsize=2*fs)
-    if plot_density: # estimate 2D histogram --> create pcolormesh
+    ax1.set_xlabel(''.join(['s [m] - runout with ', str(dpp_threshold),
+                            ' kPa threshold']), color='black', fontsize=2*fs)
+    if plot_density:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
         H = np.flipud(np.rot90(H))
-        Hmasked = np.ma.masked_where(H==0,H)
+        Hmasked = np.ma.masked_where(H == 0, H)
         data_density = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
 #        data_density = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.cool)
         cbar = plt.colorbar(data_density, orientation='horizontal')
@@ -260,13 +247,15 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
             topo_name = fnames[k].split('/')[-1]
             pfarbe = colorvar(float(k), len(runout), colorflag)
             if k == 0:
-                ax1.plot(runout[k], data[k], marker='+', markersize=2*mks, color='g', label = topo_name)
+                ax1.plot(runout[k], data[k], marker='+',
+                         markersize=2*mks, color='g', label=topo_name)
     #            plt.yticks(np.arange([0,5000,250]))
                 # Make the y-tick labels of first axes match the line color.
                 for tl in ax1.get_yticklabels():
                     tl.set_color('b')
             else:
-                ax1.plot(runout[k], data[k], label=topo_name, marker=markers[mk], markersize=mks, color=pfarbe, linewidth=lw)
+                ax1.plot(runout[k], data[k], label=topo_name, marker=markers[mk],
+                         markersize=mks, color=pfarbe, linewidth=lw)
             mk = mk+1
             if mk == len(markers):
                 mk = 1
@@ -276,7 +265,8 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
 #    ax2.legend(loc=0)
 
     pro_name = fnames[0].split('/')[-3]
-    outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr', str(int(dpp_threshold)), '_', tipo,'.pdf'])
+    outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr',
+                           str(int(dpp_threshold)), '_', tipo, '.pdf'])
 
     if not os.path.exists(os.path.dirname(outname_fin)):
         os.makedirs(os.path.dirname(outname_fin))
@@ -284,24 +274,24 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
 
     plt.close(fig)
 
-    ## Final result diagram - roc-plots
+    # Final result diagram - roc-plots
     rTP = (np.array(doku[0]) / (float(doku[0][0]) + float(doku[1][0]))).astype(float)
     rFP = (np.array(doku[2]) / (float(doku[2][0]) + float(doku[3][0]))).astype(float)
 
 
 #    rFP = (np.array(doku[2]) / (float(doku[0][0]) + float(doku[1][0]))).astype(float)
 
-    fig = plt.figure(figsize = (figure_width, figure_height), dpi=300)
+    fig = plt.figure(figsize=(figure_width, figure_height), dpi=300)
 
     mk = 0
     ax1 = fig.add_subplot(111)
     ax1.set_ylabel('True positive rate', fontsize=2*fs)
     ax1.set_xlabel('False positive rate', fontsize=2*fs)
-    if plot_density: # estimate 2D histogram --> create pcolormesh
+    if plot_density:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)
         H = np.flipud(np.rot90(H))
-        Hmasked = np.ma.masked_where(H==0,H)
+        Hmasked = np.ma.masked_where(H == 0, H)
 #        data_density = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
         data_density = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.cool)
         cbar = plt.colorbar(data_density, orientation='horizontal')
@@ -310,7 +300,8 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
         for k in range(len(rTP)):
             topo_name = fnames[k].split('/')[-1]
             pfarbe = colorvar(float(k), len(rTP), colorflag)
-            ax1.plot(rFP[k], rTP[k], label=topo_name, marker=markers[mk], markersize=mks, color=pfarbe, linewidth=lw)
+            ax1.plot(rFP[k], rTP[k], label=topo_name, marker=markers[mk],
+                     markersize=mks, color=pfarbe, linewidth=lw)
             mk = mk+1
             if mk == len(markers):
                 mk = 0
@@ -318,7 +309,8 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
     plt.ylim([0, 1])
     plt.grid('on')
 
-    outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr', str(int(dpp_threshold)), '_ROC.pdf'])
+    outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr',
+                           str(int(dpp_threshold)), '_ROC.pdf'])
 
     if not os.path.exists(os.path.dirname(outname_fin)):
         os.makedirs(os.path.dirname(outname_fin))

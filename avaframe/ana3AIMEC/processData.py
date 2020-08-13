@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-#==============================================================================
+# ==============================================================================
 # packages
-#==============================================================================
-import os, sys
+# ==============================================================================
+import os
+import sys
+import logging
 from time import sleep as sleep
 import math
 import numpy as np
@@ -16,10 +18,15 @@ import matplotlib
 import warnings
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.ascUtils as IOf
+
+# create local logger
+log = logging.getLogger(__name__)
+
+
 # coordtrans_process.
-#==============================================================================
+# ==============================================================================
 # bresenham
-#==============================================================================
+# ==============================================================================
 def bresenham(x0, y0, x1, y1, cs):
     """
     RASTERIZE - bresenham algorithmus - JT 2011
@@ -51,14 +58,14 @@ def bresenham(x0, y0, x1, y1, cs):
 
     dx = abs(x1-x0)
     dy = abs(y1-y0)
-    sx = np.sign(x1-x0) # step in x direction
-    sy = np.sign(y1-y0) # step in y direction
+    sx = np.sign(x1-x0)  # step in x direction
+    sy = np.sign(y1-y0)  # step in y direction
     err = dx-dy
 
     z = []
     while True:
         z.append([x0*cs, y0*cs])
-        if x0 == x1 and y0 == y1: # if no step exists we are already there
+        if x0 == x1 and y0 == y1:  # if no step exists we are already there
             break
         e2 = 2*err
         if (e2 > -dy):
@@ -70,9 +77,11 @@ def bresenham(x0, y0, x1, y1, cs):
 
     return z
 
-#==============================================================================
+# ==============================================================================
 # path2domain
-#==============================================================================
+# ==============================================================================
+
+
 def path2domain(x, y, w, csz):
     """
     path2domain
@@ -146,11 +155,13 @@ def path2domain(x, y, w, csz):
 
     return OX, OY, OOXX, OOYY
 
-#==============================================================================
+# ==============================================================================
 # process_data_ind
-#==============================================================================
-def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
-         visu, outpath, out):
+# ==============================================================================
+
+
+def processDataInd(rasterSource, ProfileLayer, w,
+                   visu, outpath, out, DefaultName=None):
     """
     process data ind
     this function is used to process the rasterdata such that it can be
@@ -165,7 +176,6 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     ouput: structure{x coordinate along new raster, y coordinate, rasterdata}
     """
 
-    statusoutput = 1
 #    fnames:       full name of data file including path and extension
 #    polyfnames:   file with polylinie
 
@@ -177,8 +187,8 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     n_total = 0
     m_alt = 0
 
-    print('[PD] Data-file %s analysed' % rasterSource)
-    #read data
+    log.info('Data-file %s analysed' % rasterSource)
+    # read data
     dem = IOf.readRaster(rasterSource)
     header = dem['header']
     xllcenter = header.xllcenter
@@ -192,10 +202,7 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     y_path = Avapath['y']
     z_path = np.zeros(np.shape(Avapath['x']))
 
-
-#    output which file is analyzed
-    if statusoutput:
-        print('[PD] Creating new raster along polyline: %s' % ProfileLayer)
+    log.info('Creating new raster along polyline: %s' % ProfileLayer)
 
 #     erzeugung der eckpuntke der segmente des unregelmaesigen gitters,
 #     Domain Boundaries DB
@@ -204,11 +211,6 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     DB_x_rl, DB_y_rl, DB_x_csz, DB_y_csz = path2domain(x_path, y_path,
                                                        w/2., cellsize)
 
-    # plt.figure(2)
-    # plt.plot(DB_x_rl, DB_y_rl,'r')
-    # plt.plot(DB_x_csz, DB_y_csz,'b')
-    # plt.plot(x_path, y_path,'k')
-    # plt.show()
 #     Shift path to raster because raster is not in global grid
     DB_x_rl -= xllcenter
     DB_y_rl -= yllcenter
@@ -216,14 +218,9 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     DB_x_csz -= xllcenter
     DB_y_csz -= yllcenter
 
-    # plt.figure(3)
-    # plt.plot(DB_x_rl, DB_y_rl,'r')
-    # plt.plot(DB_x_csz, DB_y_csz,'b')
-    # plt.plot(x_path-xllcenter, y_path-yllcenter,'k')
-    # plt.show()
 #    use bresemham algorithm to determine the new raster
     for i in range(len(DB_x_rl[0])):
-#   for each segment check the number of CROSS-cells
+        #   for each segment check the number of CROSS-cells
         n = bresenham(DB_x_rl[0, i], DB_y_rl[0, i],
                       DB_x_rl[1, i], DB_y_rl[1, i], cellsize)
         n_total = max(n_total, len(n))
@@ -252,16 +249,15 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     l_coord = np.linspace(-w/2, w/2, n_total)
     s_coord = np.zeros(m_total)
     ds1 = 0
-    if statusoutput: # output which file is analyzed
-        print('[PD] Transferring data from old to new raster')
-    for i in range(len(DB_x_rl[0])-1): # for each segment
+    log.info('Transferring data from old to new raster')
+    for i in range(len(DB_x_rl[0])-1):  # for each segment
         # Division of side edges in n segments
         # x-/y-values of lines are linspace(x0,x1,m) etc.
         # DB_x_rl, DB_y_rl are values from polyline2path
-        bxl = np.linspace(DB_x_rl[0][i], DB_x_rl[0][i+1], m[i]) # left
+        bxl = np.linspace(DB_x_rl[0][i], DB_x_rl[0][i+1], m[i])  # left
         byl = np.linspace(DB_y_rl[0][i], DB_y_rl[0][i+1], m[i])
 
-        bxr = np.linspace(DB_x_rl[1][i], DB_x_rl[1][i+1], m[i]) # right
+        bxr = np.linspace(DB_x_rl[1][i], DB_x_rl[1][i+1], m[i])  # right
         byr = np.linspace(DB_y_rl[1][i], DB_y_rl[1][i+1], m[i])
 
         # => generation of grid points for each segment
@@ -270,15 +266,15 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
         new_rastersegment = np.zeros((2, m[i], n_total))
 
         for j in range(m[i]):
-            x = np.linspace(bxl[j], bxr[j], n_total) # line coordinates x
-            y = np.linspace(byl[j], byr[j], n_total) # line coordinates y
+            x = np.linspace(bxl[j], bxr[j], n_total)  # line coordinates x
+            y = np.linspace(byl[j], byr[j], n_total)  # line coordinates y
             for k in range(n_total):
                 # x,y-Koordinaten of cells on line
                 # xy_coord = bresenham(x(k),y(k),x(k),y(k),cellsize);
                 xy_coord = [round(x[k]/cellsize) * cellsize,
                             round(y[k]/cellsize) * cellsize]
                 # cell coordinates of new raster
-                xy_ind = [xy_coord[0]/cellsize +1, xy_coord[1]/cellsize +1]
+                xy_ind = [xy_coord[0]/cellsize + 1, xy_coord[1]/cellsize + 1]
                 # translate coordinate of cell to cell index
                 # THIS IS THE NEAREST NEIGHBOUR APPROXIMATION
                 # Assign pressure data to loc
@@ -306,7 +302,7 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
 
         s_coord[m_alt:m_alt+m_neu] = np.linspace(ds0, ds0+ds1, m[i])
         m_alt = m_alt+m_neu-1
-        if (i==0):
+        if (i == 0):
             s_coordmin = s_coord[0]
         s_coord -= s_coordmin
 
@@ -318,7 +314,7 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
 #        seg_boundary_lines = len(DB_x_csz)-2
 #    else:
     seg_boundary_lines = len(DB_x_csz)-1
-    for i in range(seg_boundary_lines): # for offset segment boundary lines
+    for i in range(seg_boundary_lines):  # for offset segment boundary lines
         # DB_x_rl DB_y_rl for i --> Koordinaten
         x_DB_i = np.linspace(DB_x_csz[i][0], DB_x_csz[i][1], n_total+1)
         y_DB_i = np.linspace(DB_y_csz[i][0], DB_y_csz[i][1], n_total+1)
@@ -326,7 +322,7 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
         x_DB_ii = np.linspace(DB_x_csz[i+1][0], DB_x_csz[i+1][1], n_total+1)
         y_DB_ii = np.linspace(DB_y_csz[i+1][0], DB_y_csz[i+1][1], n_total+1)
 
-        if i % 2 == 0: # i gerade
+        if i % 2 == 0:  # i gerade
             for j in range(n_total):
                 x_seg_j = [x_DB_i[j], x_DB_ii[j]]
                 y_seg_j = [y_DB_i[j], y_DB_ii[j]]
@@ -342,8 +338,8 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
                                                 (x_seg_j[k]-x_seg_jj[k+1]))
 
             sum_mi = sum_mi+1
-        else: # i ungerade
-            m_i = int(np.floor((i/2))) # m for each segment
+        else:  # i ungerade
+            m_i = int(np.floor((i/2)))  # m for each segment
             for j in range(n_total):
                 x_seg_j = np.linspace(x_DB_i[j], x_DB_ii[j], m[m_i]-1)
                 y_seg_j = np.linspace(y_DB_i[j], y_DB_ii[j], m[m_i]-1)
@@ -362,9 +358,9 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
 
             sum_mi = a + 1
 
-    print('[PD] Size of rasterdata- old: %d x %d - new: %d x %d' % (
-    np.size(rasterdata, 0), np.size(rasterdata,1),
-    np.size(new_raster, 1), np.size(new_raster, 2)))
+    log.info('Size of rasterdata- old: %d x %d - new: %d x %d' % (
+        np.size(rasterdata, 0), np.size(rasterdata, 1),
+        np.size(new_raster, 1), np.size(new_raster, 2)))
 
     aval_data['header'] = header
     aval_data['s_coord'] = s_coord
@@ -381,7 +377,7 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
 
 #    for figure: referenz-simulation bei p_lim=1
     new_rasterdata = rasterdata
-    masked_array = np.ma.masked_where(new_rasterdata==0, new_rasterdata)
+    masked_array = np.ma.masked_where(new_rasterdata == 0, new_rasterdata)
     cmap = copy.copy(matplotlib.cm.jet)
     cmap.set_bad('w', 1.)
 
@@ -389,20 +385,20 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     xx, yy = np.meshgrid(np.arange(m), np.arange(n))
 
     ref1 = plt.imshow(masked_array, vmin=new_rasterdata.min(),
-               vmax=new_rasterdata.max(),
-               origin='lower',
-               cmap=cmap,
-               label='pressure data',
-               aspect='auto',
-               extent=[xx.min()*cellsize+xllcenter, xx.max()*cellsize+xllcenter,
-                       yy.min()*cellsize+yllcenter, yy.max()*cellsize+yllcenter])
+                      vmax=new_rasterdata.max(),
+                      origin='lower',
+                      cmap=cmap,
+                      label='pressure data',
+                      aspect='auto',
+                      extent=[xx.min()*cellsize+xllcenter, xx.max()*cellsize+xllcenter,
+                              yy.min()*cellsize+yllcenter, yy.max()*cellsize+yllcenter])
     plt.autoscale(False)
     ref2 = plt.plot(x_path, y_path,
-                    'b-', linewidth = lw, label = 'flow path')
+                    'b-', linewidth=lw, label='flow path')
     ref3 = plt.plot(DB_x_rl+xllcenter, DB_y_rl+yllcenter,
-                    'g-', linewidth = lw, label = 'domain')
+                    'g-', linewidth=lw, label='domain')
     ref3 = plt.plot(DB_x_rl.T+xllcenter, DB_y_rl.T+yllcenter,
-                    'g-', linewidth = lw, label = 'domain')
+                    'g-', linewidth=lw, label='domain')
     refs = [ref2[0], ref3[0]]
 
     labels = ['flow path', 'domain']
@@ -417,10 +413,10 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     if visu:
         plt.show()
     if out:
-        pro_name = rasterSource.split('/')[-3] # CoSiCa-samos-structure
+        pro_name = rasterSource.split('/')[-3]  # CoSiCa-samos-structure
 #        pro_name = fnames[0].split('/')[-5] + '_' + fnames[0].split('/')[-2] # DAKUMO_structure
         outname_fin = ''.join([outpath, '/pics/', pro_name,
-                               '_simulationxy','.pdf'])
+                               '_simulationxy', '.pdf'])
         if not os.path.exists(os.path.dirname(outname_fin)):
             os.makedirs(os.path.dirname(outname_fin))
         fig.savefig(outname_fin, transparent=True)
@@ -430,33 +426,35 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     return aval_data
 
 
-def poly2mask_simple(ydep,xdep,ncols,nrows):
-    mask = np.zeros((nrows,ncols))
-    xyframe = bresenham(xdep[0],ydep[0],xdep[1],ydep[1],1)
-    xyframe = np.delete(xyframe,-1,0)
+def poly2mask_simple(ydep, xdep, ncols, nrows):
+    mask = np.zeros((nrows, ncols))
+    xyframe = bresenham(xdep[0], ydep[0], xdep[1], ydep[1], 1)
+    xyframe = np.delete(xyframe, -1, 0)
     xyframe = np.transpose(xyframe)
-    for i in range(1,len(xdep)-1):
-        xyline = bresenham(xdep[i],ydep[i],xdep[i+1],ydep[i+1],1)
-        xyline = np.delete(xyline,-1,0) # letzer punkt ist erster punkt der neun linie
+    for i in range(1, len(xdep)-1):
+        xyline = bresenham(xdep[i], ydep[i], xdep[i+1], ydep[i+1], 1)
+        xyline = np.delete(xyline, -1, 0)  # letzer punkt ist erster punkt der neun linie
         xyline = np.transpose(xyline)
-        xyframe = np.hstack((xyframe,xyline));
+        xyframe = np.hstack((xyframe, xyline))
 
-    xyline = bresenham(xdep[-1],ydep[-1],xdep[0],ydep[0],1)
-    xyline = np.delete(xyline,-1,0)
+    xyline = bresenham(xdep[-1], ydep[-1], xdep[0], ydep[0], 1)
+    xyline = np.delete(xyline, -1, 0)
     xyline = np.transpose(xyline)
-    xyframe = np.hstack((xyframe,xyline));
-    for i in range(0,len(xyframe[0,:])) :
-        mask[xyframe[0,i],xyframe[1,i]] = 1
+    xyframe = np.hstack((xyframe, xyline))
+    for i in range(0, len(xyframe[0, :])):
+        mask[xyframe[0, i], xyframe[1, i]] = 1
 
     # inneres des polygons mit einsen füllen
     # [i, j] = find(mask);
     # i, j = np.where(mask == 1)
     i = xyframe[0]
     j = xyframe[1]
-    mv, nv = np.meshgrid(np.linspace(0,nrows-1,nrows),np.linspace(0,ncols-1,ncols)) # create index space
-    mask = inpolygon(mv,nv,i,j)
+    mv, nv = np.meshgrid(np.linspace(0, nrows-1, nrows),
+                         np.linspace(0, ncols-1, ncols))  # create index space
+    mask = inpolygon(mv, nv, i, j)
     mask = np.transpose(mask)
     return mask
+
 
 def inpolygon(X, Y, xv, yv):
 
@@ -468,14 +466,14 @@ def inpolygon(X, Y, xv, yv):
     for i in range(npol-1):
         delta_xv = xv[j] - xv[i]
         delta_yv = yv[j] - yv[i]
-        ## distance = [distance from (X,Y) to edge] * length(edge)
+        # distance = [distance from (X,Y) to edge] * length(edge)
         distance = delta_xv*(Y-yv[i]) - (X-xv[i])*delta_yv
-        ## is Y between the y-values of edge i,j
-        ##        AND (X,Y) on the left of the edge ?
+        # is Y between the y-values of edge i,j
+        # AND (X,Y) on the left of the edge ?
         for ii in range(lx):
             for jj in range(ly):
-                if (((yv[i]<=Y[ii][jj] and Y[ii][jj]<yv[j]) or (yv[j]<=Y[ii][jj] and Y[ii][jj]<yv[i]) ) and 0< distance[ii][jj]*delta_yv):
-                    if IN[ii][jj]==0:
+                if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and 0 < distance[ii][jj]*delta_yv):
+                    if IN[ii][jj] == 0:
                         IN[ii][jj] = 1
                     else:
                         IN[ii][jj] = 0
@@ -486,9 +484,9 @@ def inpolygon(X, Y, xv, yv):
     return IN
 
 
-#==============================================================================
+# ==============================================================================
 # create_mask
-#==============================================================================
+# ==============================================================================
 def createMask(rasterIndData, polydepfnames, p_lim):
     """
     creating rasterdata for deposit
@@ -521,7 +519,7 @@ def createMask(rasterIndData, polydepfnames, p_lim):
         mask[np.where(mask >= p_lim)] = 1
     elif QtCore.QString(polydepfnames).endsWith('.xyz'):
         print('[CM] create mask from polyline: %s' % polydepfnames.split('/')[-1])
-        depdata =  np.loadtxt(polydepfnames)
+        depdata = np.loadtxt(polydepfnames)
         if len(depdata.shape) == 1:
             mask = np.zeros((ncols, nrows))
             mask[int((depdata[0]-xllcenter)/cellsize), int((depdata[1]-yllcenter)/cellsize)] = 1
@@ -538,16 +536,16 @@ def createMask(rasterIndData, polydepfnames, p_lim):
         else:
             xdep = (depdata[:, 0]-xllcenter)/cellsize
             ydep = (depdata[:, 1]-yllcenter)/cellsize
-            #Teste ob Polygon geschlossen und im Fall schließen
+            # Teste ob Polygon geschlossen und im Fall schließen
             if xdep[0] != xdep[-1] or ydep[0] != ydep[-1]:
-                print ('[CM]: Polygonzug nicht geschlossen, 1. Punkt wird hinten angehängt')
+                print('[CM]: Polygonzug nicht geschlossen, 1. Punkt wird hinten angehängt')
                 xdep = np.append(xdep, xdep[0])
                 ydep = np.append(ydep, ydep[0])
             if len(xdep) != len(ydep):
                 warnings.warn('[CM] Y und X Werte des Polygons sind nicht gleich lang')
             # mask = rasterize(xdep, ydep, ncols, nrows)
             mask = poly2mask_simple(xdep, ydep, ncols, nrows)
-            print ('[CM]: we are in the else')
+            print('[CM]: we are in the else')
     else:
         warnings.warn('file ending not known. options are txt, asc, xyz.')
         return
@@ -564,11 +562,13 @@ def createMask(rasterIndData, polydepfnames, p_lim):
         for y_ind in range(new_mask.shape[1]):
             i_ib += 1
             try:
-                new_mask[x_ind, y_ind] = mask[xy_oldind[1][x_ind, y_ind]][xy_oldind[0][x_ind, y_ind]]
+                new_mask[x_ind, y_ind] = mask[xy_oldind[1]
+                                              [x_ind, y_ind]][xy_oldind[0][x_ind, y_ind]]
             except:
                 i_oob += 1
                 new_mask[x_ind][y_ind] = np.NaN
-    print('[AD] %d raster values transferred and %d are out of original raster bounds!' % (i_ib-i_oob, i_oob))
+    print('[AD] %d raster values transferred and %d are out of original raster bounds!' %
+          (i_ib-i_oob, i_oob))
 
 #    aval_data[0] = header
 #    aval_data[1] = rasterIndData[1]
@@ -578,9 +578,11 @@ def createMask(rasterIndData, polydepfnames, p_lim):
 
     return aval_data
 
-#==============================================================================
+# ==============================================================================
 # transform
-#==============================================================================
+# ==============================================================================
+
+
 def transform(fname, rasterIndData, statusoutput=0):
     name = fname.split('/')
 
@@ -593,12 +595,11 @@ def transform(fname, rasterIndData, statusoutput=0):
     yllcenter = header.yllcenter
     cellsize = header.cellsize
 
-
     rasterdata = dem['rasterdata']
 
 #        out of bounds counter
     i_oob = 0
-    i_ib  = 0
+    i_ib = 0
 
     new_raster = np.zeros((len(rasterIndData['s_coord']), len(rasterIndData['l_coord'])))
 
@@ -606,12 +607,14 @@ def transform(fname, rasterIndData, statusoutput=0):
         for y_ind in range(new_raster.shape[1]):
             i_ib += 1
             try:
-                new_raster[x_ind, y_ind] = rasterdata[xy_oldind[1][x_ind, y_ind]][xy_oldind[0][x_ind, y_ind]]
+                new_raster[x_ind, y_ind] = rasterdata[xy_oldind[1]
+                                                      [x_ind, y_ind]][xy_oldind[0][x_ind, y_ind]]
             except:
                 i_oob += 1
                 new_raster[x_ind, y_ind] = np.NaN
     if statusoutput:
-        print('[AD] Data-file: %s - %d raster values transferred - %d out of original raster bounds!' % (name[-1], i_ib-i_oob, i_oob))
+        log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
+                 (name[-1], i_ib-i_oob, i_oob))
 
 
 #        aval_data[topo_num][0] = header
@@ -620,9 +623,11 @@ def transform(fname, rasterIndData, statusoutput=0):
 #        aval_data[topo_num][3] = new_raster
     return new_raster
 
-#==============================================================================
+# ==============================================================================
 # assign_data
-#==============================================================================
+# ==============================================================================
+
+
 def assignData(fnames, rasterIndData):
     """
     process data
@@ -650,34 +655,37 @@ def assignData(fnames, rasterIndData):
 #    aval_data = np.array([[None for m in xrange(4)] for n in xrange(maxtopo)])
     aval_data = np.array(([None] * maxtopo))
 
-    print( '[AD] Transfer data of %d file(s) from old to new raster' % maxtopo)
+    log.info('Transfer data of %d file(s) from old to new raster' % maxtopo)
 
     pool = Pool()
-    aval_data = pool.map(functools.partial(transform, rasterIndData = rasterIndData, statusoutput = 1), fnames)
+    aval_data = pool.map(functools.partial(
+        transform, rasterIndData=rasterIndData, statusoutput=1), fnames)
     pool.close()
     pool.join()
 
     return aval_data
 
-#==============================================================================
+
+# ==============================================================================
 # rasterize example
-#==============================================================================
+# ==============================================================================
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     a = [1.1, 5.3, 8, 8.5, 2]
     b = [1.1, 5, 2, 8.8, 8.0]
-    arr1 = poly2mask_simple(a,b, 10, 15);
-    pressurefileList = ['/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_pressure/000001.txt']
-    depthfileList = ['/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_depth/000001.txt']
+    arr1 = poly2mask_simple(a, b, 10, 15)
+    pressurefileList = [
+        '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_pressure/000001.txt']
+    depthfileList = [
+        '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_depth/000001.txt']
     ava_data = processDataInd('/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_pressure/000001.txt', '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Inputs/avalanche_path.shp', ' DefaultName', 600,
-         'visu', './', False)
+                              'visu', './', False)
     deskewedRasterPressure = assignData(pressurefileList, ava_data)
     deskewedRasterDepth = assignData(depthfileList, ava_data)
 
     fig, ax = plt.subplots()
     ax.imshow(deskewedRasterPressure[0], cmap=plt.cm.jet, interpolation='nearest')
     plt.show()
-
 
     # a = np.append(a,a[0])
     # b = np.append(b,b[0])
