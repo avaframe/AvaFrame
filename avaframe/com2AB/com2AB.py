@@ -214,7 +214,10 @@ def prepareLine(dem, avapath, splitPoint, distance):
     ResampAvaPath['s'] = s
     AvaProfile = ResampAvaPath
     # find split point by computing the distance to the line
-    SplitPoint, splitPoint = findSplitPoint(AvaProfile, splitPoint)
+    if splitPoint:
+        SplitPoint, splitPoint = findSplitPoint(AvaProfile, splitPoint)
+    else:
+        SplitPoint = None
 
     return AvaProfile, SplitPoint, splitPoint
 

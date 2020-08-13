@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib import cm
+from avaframe.com2AB import com2AB
 
 #-----------------------------------------------------------
 # result_write
@@ -126,8 +127,8 @@ def colorvar(k, k_end, colorflag, disp=0):
 #-----------------------------------------------------------
 # result_visu
 #-----------------------------------------------------------
-def result_visu(fnames, polyname, runout, mean_max_dpp, doku, GI, dpp_threshold,
-                outpath):
+def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
+                mean_max_dpp, doku, GI, dpp_threshold, outpath):
     """
     Visualize results in a nice way
     Jan-Thomas Fischer BFW 2010-2012
@@ -203,41 +204,24 @@ def result_visu(fnames, polyname, runout, mean_max_dpp, doku, GI, dpp_threshold,
         print('[VISU] wrong flag')
         return None
 
-#TAKE FINE POLYLINE IF IT IS POSSIBLE
-# should we use fine path for visualization?
-    tmp = polyname.split('.')
-    polyname_fine = ''.join([tmp[0], '_fine.', tmp[1]])
-    if os.path.isfile(polyname_fine):
-        pdata = pd.read_csv(polyname_fine, delimiter=',')
-        print('[VISU] fine data path found!')
-    else:
-#        pdata = np.loadtxt(polyname)
-        pdata = pd.read_csv(polyname, delimiter=',')
-        print('[VISU] No fine data path found, using rough one')
 
-    if 'X' in pdata.columns: x_path = np.array(pdata.X)
-    if 'x' in pdata.columns: x_path = np.array(pdata.x)
-    if 'Y' in pdata.columns: y_path = np.array(pdata.Y)
-    if 'y' in pdata.columns: y_path = np.array(pdata.y)
-    z_flag = 0
-    if 'Z' in pdata.columns: z_path = np.array(pdata.Z); z_flag = 1
-    if 'z' in pdata.columns: z_path = np.array(pdata.z); z_flag = 1
+    #read data
+    dem = com2AB.readRaster(rasterSource)
+    header = dem['header']
+    xllcenter = header.xllcenter
+    yllcenter = header.yllcenter
+    cellsize = header.cellsize
 
-# If Polyline has z-values, calculate height profile
-# Otherwise, use standard topography
-    if z_flag:
-        polyx = np.zeros((len(x_path)))
-        #polyy = pdata(:,2)
-        polyz = z_path
-        dx0 = 0
-        polyx[0] = 0
-        for j in range(1, len(polyx)):
-            dx1 = dx0 + math.sqrt((x_path[j]-x_path[j-1])**2 +
-                                  (y_path[j]-y_path[j-1])**2)
-            polyx[j] = dx1
-            dx0 = dx1
-    # polyz = spline(polyx,polyz);
-    xlim_prof_axis = max(polyx) + 50
+    rasterdata = dem['rasterdata']
+
+    Avapath = com2AB.readAvaPath(ProfileLayer, DefaultName, dem['header'])
+    AvaProfile, SplitPoint, splitPoint = com2AB.prepareLine(dem, Avapath, splitPoint=None, distance=10)
+    x_path = AvaProfile['x']
+    y_path = AvaProfile['y']
+    z_path = AvaProfile['z']
+    s_path = AvaProfile['s']
+
+    xlim_prof_axis = max(s_path) + 50
 
     ## Final result diagram - z_profile+data
     fig = plt.figure(figsize = (figure_width, figure_height), dpi=300)
@@ -265,9 +249,9 @@ def result_visu(fnames, polyname, runout, mean_max_dpp, doku, GI, dpp_threshold,
         cbar.ax.set_ylabel('Counts')
     ax2 = ax1.twinx()
     ax2.set_ylabel('z [m]', color='g', fontsize=2*fs)
-    ax2.plot(polyx, polyz, color='green', label='path', linestyle='--', linewidth=2*lw)
+    ax2.plot(s_path, z_path, color='green', label='path', linestyle='--', linewidth=2*lw)
     plt.xlim([0, xlim_prof_axis])
-    plt.ylim([math.floor(min(polyz)/10)*10, math.ceil(max(polyz)/10)*10])
+    plt.ylim([math.floor(min(z_path)/10)*10, math.ceil(max(z_path)/10)*10])
     if not plot_density:
         for k in range(len(runout)):
             topo_name = fnames[k].split('/')[-1]
@@ -291,9 +275,6 @@ def result_visu(fnames, polyname, runout, mean_max_dpp, doku, GI, dpp_threshold,
     pro_name = fnames[0].split('/')[-3]
     outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr', str(int(dpp_threshold)), '_', tipo,'.pdf'])
 
-    pro_name = fnames[0].split('/')[-3]
-    outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr', str(int(dpp_threshold)), '_', tipo,'.pdf'])
-
     if not os.path.exists(os.path.dirname(outname_fin)):
         os.makedirs(os.path.dirname(outname_fin))
     fig.savefig(outname_fin, transparent=True)
@@ -303,6 +284,8 @@ def result_visu(fnames, polyname, runout, mean_max_dpp, doku, GI, dpp_threshold,
     ## Final result diagram - roc-plots
     rTP = (np.array(doku[0]) / (float(doku[0][0]) + float(doku[1][0]))).astype(float)
     rFP = (np.array(doku[2]) / (float(doku[2][0]) + float(doku[3][0]))).astype(float)
+
+
 #    rFP = (np.array(doku[2]) / (float(doku[0][0]) + float(doku[1][0]))).astype(float)
 
     fig = plt.figure(figsize = (figure_width, figure_height), dpi=300)
