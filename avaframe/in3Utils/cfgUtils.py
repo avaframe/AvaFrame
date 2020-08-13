@@ -1,7 +1,6 @@
 '''Utilities for handling configuration files'''
 
 import configparser
-import sys
 import os
 import logging
 log = logging.getLogger(__name__)
@@ -28,7 +27,6 @@ def getModuleConfig(module, fileOverride=''):
     - pytest
     '''
 
-
     # initialize a configparser object
     cfg = configparser.ConfigParser()
 
@@ -39,8 +37,8 @@ def getModuleConfig(module, fileOverride=''):
     modName = os.path.basename(module.__file__)
     modName = os.path.splitext(modName)[0]
 
-    localFile = os.path.join(modPath,'local_'+modName+'Cfg.ini')
-    defaultFile = os.path.join(modPath,modName+'Cfg.ini')
+    localFile = os.path.join(modPath, 'local_'+modName+'Cfg.ini')
+    defaultFile = os.path.join(modPath, modName+'Cfg.ini')
 
     # Decide which one to take
     if fileOverride:
@@ -62,5 +60,3 @@ def getModuleConfig(module, fileOverride=''):
     cfg.read(iniFile)
 
     return cfg
-
-

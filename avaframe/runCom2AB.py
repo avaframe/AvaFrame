@@ -1,17 +1,13 @@
 """Run script for module com2AB
 """
 
-import sys
-import os
-import logging
-
 # Local imports
 from avaframe.com2AB import com2AB
 from avaframe.out3SimpPlot import outAB
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
-#-----------Required settings-----------------
+# -----------Required settings-----------------
 
 # TODO: move this to a main cfg file! (alongside flags for intermediate data/results/plots)
 # and have function cfgUtils.readGlobalCfg that allows for a local_MainCfg
@@ -24,7 +20,7 @@ avalancheDir = 'data/avaSlide'
 # log file name; leave empty to use default runLog.log
 logName = 'runCom2AB'
 
-#---------------------------------------------
+# ---------------------------------------------
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
