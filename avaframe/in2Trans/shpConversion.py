@@ -104,3 +104,37 @@ def SHP2Array(infile, defname):
     SHPdata['y'] = Coordy
     SHPdata['z'] = Coordz
     return SHPdata
+
+def readLine(fname, defname, header):
+    """ Read avalanche path from  .shp"""
+
+    log.debug('Reading avalanche path : %s ', fname)
+    Line = SHP2Array(fname, defname)
+    coordx = Line['x']
+    coordy = Line['y']
+    for i in range(len(coordx)):
+        Lx = int(np.floor((coordx[i] - header.xllcorner) /
+                          header.cellsize))
+        Ly = int(np.floor((coordy[i] - header.yllcorner) /
+                          header.cellsize))
+        if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
+            raise ValueError('Avalanche path exceeds dem extend')
+    return Line
+
+
+def readPoints(fname, header):
+    """ Read split point path from .shp"""
+
+    log.debug('Reading split point : %s ', fname)
+    defname = 'SHP'
+    Points = SHP2Array(fname, defname)
+    Pointx = Points['x']
+    Pointy = Points['y']
+    for i in range(len(Pointx)):
+        Lx = int(np.floor((Pointx[i] - header.xllcorner) /
+                          header.cellsize))
+        Ly = int(np.floor((Pointy[i] - header.yllcorner) /
+                          header.cellsize))
+        if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
+            raise ValueError('Split point is not on the dem')
+    return Points

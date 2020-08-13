@@ -9,7 +9,10 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib import cm
-from avaframe.com2AB import com2AB
+
+# Local imports
+import avaframe.in2Trans.shpConversion as shpConv
+import avaframe.in2Trans.geoTrans as geoTrans
 
 #-----------------------------------------------------------
 # result_write
@@ -214,8 +217,8 @@ def result_visu(fnames, rasterSource, ProfileLayer, DefaultName, runout,
 
     rasterdata = dem['rasterdata']
 
-    Avapath = com2AB.readAvaPath(ProfileLayer, DefaultName, dem['header'])
-    AvaProfile, SplitPoint, splitPoint = com2AB.prepareLine(dem, Avapath, splitPoint=None, distance=10)
+    Avapath = shpConv.readLines(ProfileLayer, DefaultName, dem['header'])
+    AvaProfile, SplitPoint, splitPoint = geoTrans.prepareLine(dem, Avapath, splitPoint=None, distance=10)
     x_path = AvaProfile['x']
     y_path = AvaProfile['y']
     z_path = AvaProfile['z']

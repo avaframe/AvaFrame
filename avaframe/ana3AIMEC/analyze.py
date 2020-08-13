@@ -14,7 +14,6 @@ import matplotlib
 import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 import warnings
-
 #==============================================================================
 # analyzeDocu
 #==============================================================================
@@ -40,14 +39,14 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
 
     if with_doku:
         print('[DOCU]: Compare pressure data with doku data')
-        s_coordinate_doku = rasterInd[1]
-        l_coordinate_doku = rasterInd[2]
+        s_coordinate_doku = rasterInd['s_coord']
+        l_coordinate_doku = rasterInd['l_coord']
         new_mask = dokuData
     else:
         warnings.warn('[DOCU] No doku found. Use ref-sim: %s instead' % (fnames[0].split('/')[-1]))
         # if no docu-polyline --> ref.sim. ≃ doku
-        s_coordinate_doku = rasterInd[1]
-        l_coordinate_doku = rasterInd[2]
+        s_coordinate_doku = rasterInd['s_coord']
+        l_coordinate_doku = rasterInd['l_coord']
         new_mask = copy.deepcopy(pressureData[0])
 
         doku_cross = np.array((np.nanmax(new_mask, 1),
@@ -79,11 +78,12 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
 
 #     rasterinfo
     n_start, m_start = np.nonzero(np.nan_to_num(new_mask))
+    print(n_start)
     n_start = min(n_start)
 
-    n_total = len(rasterInd[1])
-    m_total = len(rasterInd[2])
-    cellarea = rasterInd[4]
+    n_total = len(rasterInd['s_coord'])
+    m_total = len(rasterInd['l_coord'])
+    cellarea = rasterInd['absRasterData']
 
     for i in range(n_topo):
         rasterdata = pressureData[i]
@@ -263,8 +263,8 @@ def analyzeDataWithDepth(rasterInd, p_lim, fname, data, data_depth, visu, outpat
     mmd = np.zeros((n_topo))
     frontal_shape = np.zeros((n_topo))
 
-    s_coordinate = rasterInd[1]
-    l_coordinate = rasterInd[2]
+    s_coordinate = rasterInd['s_coord']
+    l_coordinate = rasterInd['l_coord']
 
     p_cross_all = np.zeros((n_topo, len(s_coordinate)))
     print('[DATA] Sim number \t rRunout \t rampp \t ramd \t FS')
@@ -461,20 +461,12 @@ def analyzeEntrainmentdata(fnames):
     grGrad = np.ones(len(fnames))
     releaseMass = np.ones(len(fnames))
     entrainedMass = np.ones(len(fnames))
-    # m(t=0), m_max(t_?), m_end(t_end)
-#    time_results = np.zeros((numb_sim,3))
-    # m(t=0), m_max(t_?), m_end(t_end)
-    fnames_ent = np.array(([name.replace('pressure','mass_balance') for name in fnames]))
+
     print('[ENT] Sim number\t GI\t Ggrad')
 
-#    pool = Pool()
-#    ent_result = pool.map(read_write, fnames_ent)
-#    pool.close()
-#    pool.join()
 
-    for i in range(len(fnames_ent)):
-        releaseMass[i], entrainedMass[i], grIndex[i], grGrad[i] = read_write(fnames_ent[i])
-#        releaseMass[i], entrainedMass[i], grIndex[i], grGrad[i] = ent_result[i]
+    for i in range(len(fnames)):
+        releaseMass[i], entrainedMass[i], grIndex[i], grGrad[i] = read_write(fnames[i])
 
     if (releaseMass==releaseMass[0]).any():
         releaseMass = releaseMass[0]

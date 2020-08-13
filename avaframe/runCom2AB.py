@@ -4,6 +4,8 @@
 # Local imports
 from avaframe.com2AB import com2AB
 from avaframe.out3SimpPlot import outAB
+import avaframe.in2Trans.shpConversion as shpConv
+import avaframe.in3Utils.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
@@ -14,7 +16,7 @@ from avaframe.in3Utils import logUtils
 
 # Avalanche directory; see doc.avaframe.org for setup
 # TODO: full path needed?
-avalancheDir = 'data/avaSlide'
+avalancheDir = 'avaframe/data/avaSlide'
 
 
 # log file name; leave empty to use default runLog.log
@@ -44,9 +46,9 @@ log.info("Running com2ABMain model on DEM \n \t %s \n \t with profile \n \t %s "
          cfgPath['demSource'], cfgPath['profileLayer'])
 
 # Read input data for ALPHABETA
-dem = com2AB.readRaster(cfgPath['demSource'])
-avaPath = com2AB.readAvaPath(cfgPath['profileLayer'], cfgPath['defaultName'], dem['header'])
-splitPoint = com2AB.readSplitPoint(cfgPath['splitPointSource'], dem['header'])
+dem = IOf.readRaster(cfgPath['demSource'])
+avaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'], dem['header'])
+splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], dem['header'])
 
 # Calculate ALPHABETA
 com2AB.com2ABMain(dem, avaPath, splitPoint, cfgPath['saveOutPath'],

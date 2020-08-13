@@ -14,10 +14,8 @@ from multiprocessing import Pool
 from matplotlib import pyplot as plt
 import matplotlib
 import warnings
-# from PyQt5 import QtCore
-# from PyQt5 import QtGui
+import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.ascUtils as IOf
-from avaframe.com2AB import com2AB
 # coordtrans_process.
 #==============================================================================
 # bresenham
@@ -171,7 +169,7 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
 #    fnames:       full name of data file including path and extension
 #    polyfnames:   file with polylinie
 
-    aval_data = np.array(([None]*5))
+    aval_data = {}
 
     m = 0
     n = 0
@@ -181,7 +179,7 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
 
     print('[PD] Data-file %s analysed' % rasterSource)
     #read data
-    dem = com2AB.readRaster(rasterSource)
+    dem = IOf.readRaster(rasterSource)
     header = dem['header']
     xllcenter = header.xllcenter
     yllcenter = header.yllcenter
@@ -189,7 +187,7 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
 
     rasterdata = dem['rasterdata']
 
-    Avapath = com2AB.readAvaPath(ProfileLayer, DefaultName, dem['header'])
+    Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem['header'])
     x_path = Avapath['x']
     y_path = Avapath['y']
     z_path = np.zeros(np.shape(Avapath['x']))
@@ -368,11 +366,11 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     np.size(rasterdata, 0), np.size(rasterdata,1),
     np.size(new_raster, 1), np.size(new_raster, 2)))
 
-    aval_data[0] = header
-    aval_data[1] = s_coord
-    aval_data[2] = l_coord
-    aval_data[3] = new_raster
-    aval_data[4] = abs(new_raster_area)
+    aval_data['header'] = header
+    aval_data['s_coord'] = s_coord
+    aval_data['l_coord'] = l_coord
+    aval_data['rasterData'] = new_raster
+    aval_data['absRasterData'] = abs(new_raster_area)
 
     # visu
     figure_width = 2*5
@@ -430,53 +428,6 @@ def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
     plt.close(fig)
 
     return aval_data
-
-
-#==============================================================================
-# rasterize
-#==============================================================================
-def rasterize(xcoords, ycoords, width, height):
-    """
-    Simple function to rasterize a polygon
-    using the Qt toolkit (QPainter on QImage)
-    Takes a list the x-coordiantes, a list of the y-coordinates,
-    the width (integer) and the height (integer)
-
-    Depends on PyQt4.QtCore and PyQt4.QtGui
-    """
-
-    polygon = QtGui.QPolygonF()
-
-    for x,y in zip(xcoords, ycoords):
-        polygon.append(QtCore.QPointF(x,y))
-
-    return rasterizePolygon(polygon, QtCore.QSize(width, height))
-
-#==============================================================================
-# rasterizePolygon
-#==============================================================================
-def rasterizePolygon(polygon, size):
-    """
-    Simple function to rasterize a polygon
-    Takes a QPolygonF and QSize as input
-    """
-
-    #use QPainter to print the polygon
-    painterpath = QtGui.QPainterPath()
-    painterpath.addPolygon(polygon)
-    img = QtGui.QImage(size, QtGui.QImage.Format_ARGB32)
-    img.fill(QtGui.QColor(0, 0, 0, 255))
-    p = QtGui.QPainter(img)
-    p.fillPath(painterpath, QtGui.QColor(1, 1, 1, 255))
-    p.end()
-
-    #extract pointer to QImage data structure
-    ptr = img.bits()
-    ptr.setsize(img.byteCount())
-
-    #reshape and copy the  QImage data structures
-    return np.copy(np.asarray(ptr).reshape(img.height(), img.width(), 4)[:,:,0])
-
 
 
 def poly2mask_simple(ydep,xdep,ncols,nrows):
@@ -555,7 +506,7 @@ def createMask(rasterIndData, polydepfnames, p_lim):
                      y coordinate, rasterdata_xind, rasterdata_yind}
     """
 
-    header = rasterIndData[0]
+    header = rasterIndData['header']
 #    create mask from deposit-polygon
     ncols = int(header.ncols)
     nrows = int(header.nrows)
@@ -602,8 +553,8 @@ def createMask(rasterIndData, polydepfnames, p_lim):
         return
 
 #   transformation mask in new raster (like in assign_data)
-    new_mask = np.zeros((len(rasterIndData[1]), len(rasterIndData[2])))
-    xy_oldind = rasterIndData[3].astype('int')
+    new_mask = np.zeros((len(rasterIndData['s_coord']), len(rasterIndData['l_coord'])))
+    xy_oldind = rasterIndData['rasterData'].astype('int')
 
     print('[CM] Transferring mask from old to new raster')
 
@@ -633,21 +584,23 @@ def createMask(rasterIndData, polydepfnames, p_lim):
 def transform(fname, rasterIndData, statusoutput=0):
     name = fname.split('/')
 
-    xy_oldind = rasterIndData[3].astype('int')
+    # xy_oldind = rasterIndData[3].astype('int')
+    xy_oldind = rasterIndData['rasterData'].astype('int')
 
-    header = IOf.readASCheader(fname)
+    dem = IOf.readRaster(fname)
+    header = dem['header']
     xllcenter = header.xllcenter
     yllcenter = header.yllcenter
     cellsize = header.cellsize
 
-    rasterdata = np.flipud(np.loadtxt(fname, skiprows=6))
-    rasterdata[rasterdata == header.noDataValue] = np.NaN
+
+    rasterdata = dem['rasterdata']
 
 #        out of bounds counter
     i_oob = 0
     i_ib  = 0
 
-    new_raster = np.zeros((len(rasterIndData[1]), len(rasterIndData[2])))
+    new_raster = np.zeros((len(rasterIndData['s_coord']), len(rasterIndData['l_coord'])))
 
     for x_ind in range(new_raster.shape[0]):
         for y_ind in range(new_raster.shape[1]):
@@ -659,6 +612,7 @@ def transform(fname, rasterIndData, statusoutput=0):
                 new_raster[x_ind, y_ind] = np.NaN
     if statusoutput:
         print('[AD] Data-file: %s - %d raster values transferred - %d out of original raster bounds!' % (name[-1], i_ib-i_oob, i_oob))
+
 
 #        aval_data[topo_num][0] = header
 #        aval_data[topo_num][1] = rasterIndData[1]
@@ -712,7 +666,6 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     a = [1.1, 5.3, 8, 8.5, 2]
     b = [1.1, 5, 2, 8.8, 8.0]
-    # arr = rasterize(a,b, 10, 15);
     arr1 = poly2mask_simple(a,b, 10, 15);
     pressurefileList = ['/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_pressure/000001.txt']
     depthfileList = ['/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_depth/000001.txt']

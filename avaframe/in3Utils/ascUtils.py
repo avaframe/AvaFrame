@@ -1,10 +1,13 @@
 """ ASCII file readers and handlers
 TODO: move to proper module """
 import os
-import numpy
 from decimal import *
-from numpy import *
+import numpy as np
+import logging
 
+
+# create local logger
+log = logging.getLogger(__name__)
 
 class cASCheader:
     def __init__(self):
@@ -87,8 +90,8 @@ def readASCdata2numpyArray(fName, headerFile=None):
         # create numpy array with dimesions based on ncols and nrows
         # initialize values of array with respective noDataValue obtained
         # from the header file
-        data = zeros((headerFile.nrows, headerFile.ncols))
-        data = where(data == 0, float(headerFile.noDataValue), data)
+        data = np.zeros((headerFile.nrows, headerFile.ncols))
+        data = np.where(data == 0, float(headerFile.noDataValue), data)
 
         i = 0  # index in vertical direction (row-count)
         j = 0  # index in horizontal direction (column-count)
@@ -108,8 +111,8 @@ def readASCdata2numpyArray(fName, headerFile=None):
         # create numpy array with dimesions based on ncols and nrows
         # initialize values of array with respective noDataValue obtained
         # from the header file
-        data = zeros((header.nrows, header.ncols))
-        data = where(data == 0, float(header.noDataValue), data)
+        data = np.zeros((header.nrows, header.ncols))
+        data = np.where(data == 0, float(header.noDataValue), data)
 
         i = 0  # index in vertical direction (row-count)
         j = 0  # index in horizontal direction (column-count)
@@ -123,6 +126,18 @@ def readASCdata2numpyArray(fName, headerFile=None):
             i += 1
 
     return (data)
+
+def readRaster(fname):
+    """ Read raster file (.asc)"""
+
+    log.debug('Reading dem : %s', fname)
+    header = readASCheader(fname)
+    rasterdata = readASCdata2numpyArray(fname, header)
+    rasterdata[rasterdata == header.noDataValue] = np.NaN
+    dem = {}
+    dem['header'] = header
+    dem['rasterdata'] = np.flipud(rasterdata)
+    return dem
 
 
 def writeResultToAsc(header, resultArray, outType=None):
