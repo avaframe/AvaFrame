@@ -27,7 +27,9 @@ Modules
 * :doc:`moduleOverview`
 * :doc:`moduleCom1DFA`
 * :doc:`moduleCom2AB`
+* :doc:`moduleAna3AIMEC`
 * :doc:`moduleIn3Utils`
+* :doc:`moduleIn2Trans`
 
 .. toctree::
    :maxdepth: 1
@@ -37,4 +39,6 @@ Modules
    moduleOverview.rst
    moduleCom1DFA.rst
    moduleCom2AB.rst
+   moduleAna3AIMEC.rst
    moduleIn3Utils.rst
+   moduleIn2Trans.rst

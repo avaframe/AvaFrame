@@ -124,7 +124,18 @@ Header information are read and stored as object from ``class cASCheader``:
 **Read ASCII file to numpy array:**
 
 ``header, data = readASCdata2numpyArray(fName, headerFile=None):`` takes a .asc file name as input and returns the
-header information as well as the raster data in a numpy array.
+raster data in a numpy array.
+
+
+**Read ASCII file to dictionary:**
+
+``rasterHeaderData = readRaster(fname):`` takes a .asc file name as input uses readASCdata2numpyArray and returns the
+header information as well as the raster data in a numpy array in a dictionary.
+::
+
+		rasterHeaderData['header'] = header
+		rasterHeaderData['rasterData'] = rasterData
+
 
 **Write ASCII file:**
 
