@@ -11,10 +11,10 @@ The documentation is hosted on ReadTheDocs: http://docs.avaframe.org
 
 ```
   -avaframe: main python scripts etc
-      |-data: data needed for calibration/tests/etc
+      |-data: avalanche input data
       |-tests: pytest scripts
 
-  -benchmarks: our references 
+  -benchmarks: our references and data needed for calibration/tests/etc
 
   -docs: rst for ReadTheDoc documentation
 ```
