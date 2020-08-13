@@ -40,6 +40,9 @@ def getModuleConfig(module, fileOverride=''):
     localFile = os.path.join(modPath, 'local_'+modName+'Cfg.ini')
     defaultFile = os.path.join(modPath, modName+'Cfg.ini')
 
+    log.debug('localFile: %s', localFile)
+    log.debug('defaultFile: %s', defaultFile)
+
     # Decide which one to take
     if fileOverride:
         if os.path.isfile(fileOverride):
