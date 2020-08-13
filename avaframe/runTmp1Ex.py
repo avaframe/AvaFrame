@@ -25,8 +25,7 @@ log.info('Current avalanche: %s', avalancheDir)
 cfg = cfgUtils.getModuleConfig(tmp1Ex)
 
 # Dump config to log file
-logUtils.writeCfg2Log(cfg,'tmp1Ex')
+logUtils.writeCfg2Log(cfg, 'tmp1Ex')
 
 # Different ways to call functions
 tmp1Ex.tmp1ExMain(cfg)
-

@@ -3,6 +3,7 @@
 from avaframe.tmp1Ex import tmp1Ex
 from avaframe.in3Utils import cfgUtils
 
+
 def test_tmp1ExMain(capfd):
     '''Simple test for module template main'''
 
