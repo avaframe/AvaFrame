@@ -3,6 +3,10 @@ import os
 import logging
 import glob
 
+# create local logger
+log = logging.getLogger(__name__)
+
+
 def readAIMECinputs(avalancheDir):
 
     cfgPath = {}
@@ -45,15 +49,12 @@ def readAIMECinputs(avalancheDir):
     defaultName = str(avalancheDir).split('/')[-1]
     cfgPath['defaultName'] = defaultName
 
-    set_name = pressurefileList[0].split('/')[-3]
+    set_name = pressurefileList[0].split('/')[-4]
     cfgPath['set_name'] = set_name
     project_name = str(profileLayer).split('/')[-4]
     cfgPath['project_name'] = project_name
-    path_name = str(profileLayer).split('/')[-1]
+    path_name = str(profileLayer[0]).split('/')[-1]
     cfgPath['path_name'] = path_name
-
-    print(set_name, project_name, path_name)
-
 
 
     return cfgPath
