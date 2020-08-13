@@ -12,8 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 # create local logger
-# change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
 colors = ["#393955", "#8A8A9B", "#E9E940"]
@@ -215,10 +215,9 @@ def plotProfile(DGM, eqOutput, save_file, flags):
     if flags.getboolean('PlotProfile'):
         plt.show(block=False)
     if flags.getboolean('SaveProfile'):
-        log.info('Saving profile figure to: %s', save_file)
+        log.debug('Saving profile figure to: %s', save_file)
         fig_prof.savefig(save_file)
-    # plt.close(fig_prof)
-    # plt.close("all")
+
     return save_file
 
 
@@ -236,11 +235,10 @@ def WriteResults(eqOutput, saveOutPath):
     ids_alphaP1SD = eqOutput['ids_alphaP1SD']
     ids_alphaM1SD = eqOutput['ids_alphaM1SD']
     ids_alphaM2SD = eqOutput['ids_alphaM2SD']
-    ParameterSet = eqOutput['ParameterSet']
+    parameterSet = eqOutput['ParameterSet']
     name = eqOutput['Name']
 
-    log.info('Profile name %s' % name)
-    log.info('Parameter Set %s' % ParameterSet)
+    log.info('Profile: %s with %s parameter set',  name, parameterSet)
     log.info('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
              ' angle in [°] : %.2f' % (x[ids_alpha], y[ids_alpha],
                                        z[ids_alpha], s[ids_alpha], alpha))
@@ -269,7 +267,7 @@ def WriteResults(eqOutput, saveOutPath):
     FileName_ext = saveOutPath + name + '_results_python.txt'
     with open(FileName_ext, 'w') as outfile:
         outfile.write('Profile name %s\n' % name)
-        outfile.write('Parameter Set %s\n' % ParameterSet)
+        outfile.write('Parameter Set %s\n' % parameterSet)
         outfile.write('x y z s angle\n')
         outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
         outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (

@@ -30,7 +30,7 @@ def setEqParameters(smallAva, customParam):
     eqParameters = {}
 
     if smallAva is True:
-        log.info('Using small Avalanche Setup')
+        log.debug('Using small Avalanche Setup')
         eqParameters['k1'] = 0.933
         eqParameters['k2'] = 0.0
         eqParameters['k3'] = 0.0088
@@ -40,7 +40,7 @@ def setEqParameters(smallAva, customParam):
         ParameterSet = "Small avalanches"
 
     elif customParam:
-        log.info('Using custom Avalanche Setup')
+        log.debug('Using custom Avalanche Setup')
         eqParameters['k1'] = customParam['k1']
         eqParameters['k2'] = customParam['k2']
         eqParameters['k3'] = customParam['k3']
@@ -50,7 +50,7 @@ def setEqParameters(smallAva, customParam):
         ParameterSet = "Custom"
 
     else:
-        log.info('Using standard Avalanche Setup')
+        log.debug('Using standard Avalanche Setup')
         eqParameters['k1'] = 1.05
         eqParameters['k2'] = -3130.0
         eqParameters['k3'] = 0.0
@@ -106,8 +106,7 @@ def com2AB(dem, avapath, splitPoint, OutPath,
     """
     name = avapath['Name']
     abVersion = '4.1'
-    log.info('Running Version: %s ', abVersion)
-    log.info('Running Alpha Beta model on: %s ', name)
+    log.info('Running Alpha Beta %s on: %s ', abVersion, name)
     eqParams = setEqParameters(smallAva, customParam)
 
     # TODO: make rest work with dict
@@ -279,7 +278,7 @@ def readABinputs(cfgAva):
 def readRaster(fname):
     """ Read raster file (.asc)"""
 
-    log.info('Reading dem : %s', fname)
+    log.debug('Reading dem : %s', fname)
     header = IOf.readASCheader(fname)
     rasterdata = IOf.readASCdata2numpyArray(fname, header)
     rasterdata[rasterdata == header.noDataValue] = np.NaN
@@ -292,7 +291,7 @@ def readRaster(fname):
 def readAvaPath(fname, defname, header):
     """ Read avalanche path from  .shp"""
 
-    log.info('Reading avalanche path : %s ', fname)
+    log.debug('Reading avalanche path : %s ', fname)
     Avapath = shpConv.SHP2Array(fname, defname)
     coordx = Avapath['x']
     coordy = Avapath['y']
@@ -311,7 +310,7 @@ def readAvaPath(fname, defname, header):
 def readSplitPoint(fname, header):
     """ Read split point path from .shp"""
 
-    log.info('Reading split point : %s ', fname)
+    log.debug('Reading split point : %s ', fname)
     defname = 'SHP'
     SplitPoint = shpConv.SHP2Array(fname, defname)
     splitPointx = SplitPoint['x']
@@ -367,7 +366,7 @@ def calcAB(AvaProfile, eqParameters):
     """
     Calculate Alpha Beta for data in eqInput according to chosen eqParameters
     """
-    log.info("Calculating alpha beta")
+    log.debug("Calculating alpha beta")
     k1 = eqParameters['k1']
     k2 = eqParameters['k2']
     k3 = eqParameters['k3']

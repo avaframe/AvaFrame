@@ -40,7 +40,7 @@ logUtils.writeCfg2Log(cfg,'com2AB')
 # Extract input file locations
 cfgPath = com2AB.readABinputs(avalancheDir)
 
-log.info("Running com2ABMain model on test case DEM \n %s \n with profile \n %s ",
+log.info("Running com2ABMain model on DEM \n \t %s \n \t with profile \n \t %s ",
          cfgPath['demSource'], cfgPath['profileLayer'])
 
 # Read input data for ALPHABETA
