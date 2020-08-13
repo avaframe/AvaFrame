@@ -13,7 +13,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def SHP2Array(infile, defname):
+def SHP2Array(infile, defname=None):
     """ Read shapefile and convert it to a python dictionnary
     containing the name of the paths in the shape file, the np array with
     the coordinates of the path points (all stacked in the same array)

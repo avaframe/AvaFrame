@@ -21,7 +21,7 @@ def projectOnRaster(dem, Points):
     TODO: test
     """
     header = dem['header']
-    rasterdata = dem['rasterdata']
+    rasterdata = dem['rasterData']
     xllcorner = header.xllcorner
     yllcorner = header.yllcorner
     cellsize = header.cellsize

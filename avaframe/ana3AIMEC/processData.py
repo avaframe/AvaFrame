@@ -195,7 +195,7 @@ def processDataInd(rasterSource, ProfileLayer, w,
     yllcenter = header.yllcenter
     cellsize = header.cellsize
 
-    rasterdata = dem['rasterdata']
+    rasterdata = dem['rasterData']
 
     Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem['header'])
     x_path = Avapath['x']
@@ -595,7 +595,7 @@ def transform(fname, rasterIndData, statusoutput=0):
     yllcenter = header.yllcenter
     cellsize = header.cellsize
 
-    rasterdata = dem['rasterdata']
+    rasterdata = dem['rasterData']
 
 #        out of bounds counter
     i_oob = 0

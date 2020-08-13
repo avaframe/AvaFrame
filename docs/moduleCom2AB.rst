@@ -56,7 +56,7 @@ In this module, the coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard d
 equation to calculate the run-out on a new profile.
 
 Procedure
---------
+-----------
 
 Pre-processing :
 

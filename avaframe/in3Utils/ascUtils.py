@@ -136,7 +136,7 @@ def readRaster(fname):
     rasterdata[rasterdata == header.noDataValue] = np.NaN
     dem = {}
     dem['header'] = header
-    dem['rasterdata'] = np.flipud(rasterdata)
+    dem['rasterData'] = np.flipud(rasterdata)
     return dem
 
 

@@ -125,7 +125,7 @@ def writeABpostOut(DGM, Avapath, SplitPoint, saveOutPath, flags):
 def plotPath(DGM, splitPoint, eqOutput, flags):
     """ Plot and save results depending on flags options"""
     header = DGM['header']
-    rasterdata = DGM['rasterdata']
+    rasterdata = DGM['rasterData']
     x = eqOutput['x']
     y = eqOutput['y']
     indSplit = eqOutput['indSplit']
