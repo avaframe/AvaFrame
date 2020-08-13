@@ -4,8 +4,8 @@ import logging.config
 import os
 from datetime import datetime
 
-def dumpCfg(cfg, cfgName='Unspecified'):
-    '''Dumps a configParser objecct to log file'''
+def writeCfg2Log(cfg, cfgName='Unspecified'):
+    '''Dumps a configparser object to log file'''
 
     log = logging.getLogger('root')
 

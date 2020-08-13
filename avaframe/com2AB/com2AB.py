@@ -18,9 +18,6 @@ import avaframe.in3Utils.ascUtils as IOf
 log = logging.getLogger(__name__)
 debugPlot = False
 
-# Local imports
-
-
 def setEqParameters(smallAva, customParam):
     """Set alpha beta equation parameters to
     - standard (default)
@@ -64,9 +61,9 @@ def setEqParameters(smallAva, customParam):
     return eqParameters
 
 
-def com2ABMain(DGM, Avapath, SplitPoint, saveOutPath, cfgsetup):
+def com2ABMain(dem, Avapath, SplitPoint, saveOutPath, cfgsetup):
     """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
-    Inputs : DEM header and rater (as np array),
+    Inputs : dem header and rater (as np array),
             Avapath and Split points .shp file,
             optional output save path,
             avalanche type,
@@ -90,15 +87,15 @@ def com2ABMain(DGM, Avapath, SplitPoint, saveOutPath, cfgsetup):
         avapath['x'] = Avapath['x'][int(start):int(end)]
         avapath['y'] = Avapath['y'][int(start):int(end)]
         avapath['Name'] = name
-        com2AB(DGM, avapath, SplitPoint, saveOutPath,
+        com2AB(dem, avapath, SplitPoint, saveOutPath,
                smallAva, customParam, distance)
 
 
-def com2AB(DGM, avapath, splitPoint, OutPath,
+def com2AB(dem, avapath, splitPoint, OutPath,
            smallAva, customParam, distance):
-    """ Computes the AlphaBeta model given an input raster (of the DEM),
+    """ Computes the AlphaBeta model given an input raster (of the dem),
     an avalanche path and split points
-    Inputs : DEM header and rater (as np array),
+    Inputs : dem header and rater (as np array),
             single avapath as np array,
             Split points as np array,
             output save path,
@@ -117,7 +114,7 @@ def com2AB(DGM, avapath, splitPoint, OutPath,
     # read inputs, ressample ava path
     # make pofile and project split point on path
     AvaProfile, SplitPoint, splitPoint = prepareLine(
-        DGM, avapath, splitPoint, distance)
+        dem, avapath, splitPoint, distance)
 
     # Sanity check if first element of AvaProfile[3,:]
     # (i.e z component) is highest:
@@ -137,7 +134,7 @@ def com2AB(DGM, avapath, splitPoint, OutPath,
         pickle.dump(eqOut, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def projectOnRaster(DGM, Points):
+def projectOnRaster(dem, Points):
     """ Projects the points Points on Raster using a bilinear interpolation
     and returns the z coord
     Input :
@@ -147,8 +144,8 @@ def projectOnRaster(DGM, Points):
 
     TODO: test
     """
-    header = DGM['header']
-    rasterdata = DGM['rasterdata']
+    header = dem['header']
+    rasterdata = dem['rasterdata']
     xllcorner = header.xllcorner
     yllcorner = header.yllcorner
     cellsize = header.cellsize
@@ -176,10 +173,10 @@ def projectOnRaster(DGM, Points):
     return Points
 
 
-def prepareLine(DGM, avapath, splitPoint, distance):
+def prepareLine(dem, avapath, splitPoint, distance):
     """ 1- Resample the avapath line with a max intervall of distance=10m
     between points (projected distance on the horizontal plane).
-    2- Make avalanch profile out of the path (affect a z value using the DEM)
+    2- Make avalanch profile out of the path (affect a z value using the dem)
     3- Get projected split point on the profil (closest point)
 
     TODO: test
@@ -213,7 +210,7 @@ def prepareLine(DGM, avapath, splitPoint, distance):
     ResampAvaPath = avapath
     ResampAvaPath['x'] = xcoornew
     ResampAvaPath['y'] = ycoornew
-    ResampAvaPath = projectOnRaster(DGM, ResampAvaPath)
+    ResampAvaPath = projectOnRaster(dem, ResampAvaPath)
     ResampAvaPath['s'] = s
     AvaProfile = ResampAvaPath
     # find split point by computing the distance to the line
@@ -256,13 +253,13 @@ def readABinputs(cfgAva):
     profileLayer = glob.glob(cfgAva + '/Inputs/LINES/*.shp')
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
-    dgmSource = glob.glob(cfgAva + '/Inputs/*.asc')
+    demSource = glob.glob(cfgAva + '/Inputs/*.asc')
     try:
-        assert len(dgmSource)==1, 'There should be only one DEM .asc file in ' + cfgAva + '/Inputs/'
+        assert len(demSource)==1, 'There should be exactly one topography .asc file in ' + cfgAva + '/Inputs/'
     except AssertionError as e:
         raise
 
-    cfgPath['dgmSource'] = ''.join(dgmSource)
+    cfgPath['demSource'] = ''.join(demSource)
 
     splitPointSource = glob.glob(cfgAva + '/Inputs/POINTS/*.shp')
     cfgPath['splitPointSource'] = ''.join(splitPointSource)
@@ -283,14 +280,14 @@ def readABinputs(cfgAva):
 def readRaster(fname):
     """ Read raster file (.asc)"""
 
-    log.info('Reading DEM : %s', fname)
+    log.info('Reading dem : %s', fname)
     header = IOf.readASCheader(fname)
     rasterdata = IOf.readASCdata2numpyArray(fname, header)
     rasterdata[rasterdata == header.noDataValue] = np.NaN
-    DGM = {}
-    DGM['header'] = header
-    DGM['rasterdata'] = np.flipud(rasterdata)
-    return DGM
+    dem = {}
+    dem['header'] = header
+    dem['rasterdata'] = np.flipud(rasterdata)
+    return dem
 
 
 def readAvaPath(fname, defname, header):
@@ -308,7 +305,7 @@ def readAvaPath(fname, defname, header):
         Ly = int(np.floor((coordy[i] - header.yllcorner) /
                           header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
-            raise ValueError('Avalanche path exceeds DEM extend')
+            raise ValueError('Avalanche path exceeds dem extend')
     return Avapath
 
 
@@ -328,7 +325,7 @@ def readSplitPoint(fname, header):
         Ly = int(np.floor((splitPointy[i] - header.yllcorner) /
                           header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
-            raise ValueError('Split point is not on the DEM')
+            raise ValueError('Split point is not on the dem')
     return SplitPoint
 
 
