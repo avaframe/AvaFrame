@@ -39,26 +39,26 @@ cfgSetup = cfg['ABSETUP']
 cfgFlags = cfg['FLAGS']
 
 # Dump config to log file
-logUtils.dumpCfg(cfg,'com2AB')
+logUtils.writeCfg2Log(cfg,'com2AB')
 
 # Extract input file locations
 cfgPath = com2AB.readABinputs(avalancheDir)
 
 log.info("Running com2ABMain model on test case DEM \n %s \n with profile \n %s ",
-         cfgPath['dgmSource'], cfgPath['profileLayer'])
+         cfgPath['demSource'], cfgPath['profileLayer'])
 
 # Read input data for ALPHABETA
-dgm = com2AB.readRaster(cfgPath['dgmSource'])
-avaPath = com2AB.readAvaPath(cfgPath['profileLayer'], cfgPath['defaultName'], dgm['header'])
-splitPoint = com2AB.readSplitPoint(cfgPath['splitPointSource'], dgm['header'])
+dem = com2AB.readRaster(cfgPath['demSource'])
+avaPath = com2AB.readAvaPath(cfgPath['profileLayer'], cfgPath['defaultName'], dem['header'])
+splitPoint = com2AB.readSplitPoint(cfgPath['splitPointSource'], dem['header'])
 
 # Calculate ALPHABETA
-com2AB.com2ABMain(dgm, avaPath, splitPoint, cfgPath['saveOutPath'],
+com2AB.com2ABMain(dem, avaPath, splitPoint, cfgPath['saveOutPath'],
                   cfgSetup)
 
 
 # Analyse/ plot/ write results #
-plotFile, writeFile = outAB.writeABpostOut(dgm,
+plotFile, writeFile = outAB.writeABpostOut(dem,
                                            avaPath, splitPoint,
                                            cfgPath['saveOutPath'],
                                            cfgFlags)
