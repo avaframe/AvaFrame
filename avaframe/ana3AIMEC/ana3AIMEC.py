@@ -4,11 +4,14 @@ import logging
 import glob
 
 def readAIMECinputs(avalancheDir):
+
+    cfgPath = {}
     pathPressure = avalancheDir + '/Outputs/dfa_pressure'
     pathFlowHeight = avalancheDir + '/Outputs/dfa_depth'
+    pathMassBalance = avalancheDir + '/Outputs/dfa_mass_balance'
 
-    ProfileLayer = glob.glob(avalancheDir + '/Inputs/LINES/*aimec*.shp')
-    cfgPath['ProfileLayer'] = = ''.join(ProfileLayer)
+    profileLayer = glob.glob(avalancheDir + '/Inputs/LINES/*aimec*.shp')
+    cfgPath['profileLayer'] = ''.join(profileLayer)
 
     demSource = glob.glob(avalancheDir + '/Inputs/*.asc')
     try:
@@ -29,6 +32,13 @@ def readAIMECinputs(avalancheDir):
                      sorted(os.listdir(pathFlowHeight)) if os.path.isfile(os.path.join(pathFlowHeight, name))]
     cfgPath['depthfileList'] = depthfileList
 
+
+    massfileList = [str(pathMassBalance) +
+                     '/' +
+                     str(name) for name in
+                     sorted(os.listdir(pathMassBalance)) if os.path.isfile(os.path.join(pathMassBalance, name))]
+    cfgPath['massfileList'] = massfileList
+
     pathResult = avalancheDir + '/Outputs/AimecResults'
     cfgPath['pathResult'] = pathResult
 
@@ -37,9 +47,9 @@ def readAIMECinputs(avalancheDir):
 
     set_name = pressurefileList[0].split('/')[-3]
     cfgPath['set_name'] = set_name
-    project_name = str(ProfileLayer).split('/')[-4]
+    project_name = str(profileLayer).split('/')[-4]
     cfgPath['project_name'] = project_name
-    path_name = str(ProfileLayer).split('/')[-1]
+    path_name = str(profileLayer).split('/')[-1]
     cfgPath['path_name'] = path_name
 
     print(set_name, project_name, path_name)
