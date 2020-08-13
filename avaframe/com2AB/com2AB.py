@@ -18,6 +18,7 @@ import avaframe.in3Utils.ascUtils as IOf
 log = logging.getLogger(__name__)
 debugPlot = False
 
+
 def setEqParameters(smallAva, customParam):
     """Set alpha beta equation parameters to
     - standard (default)
@@ -245,7 +246,6 @@ def findSplitPoint(AvaProfile, splitPoint):
     return SplitPoint, splitPoint
 
 
-
 def readABinputs(cfgAva):
 
     cfgPath = {}
@@ -256,7 +256,7 @@ def readABinputs(cfgAva):
     demSource = glob.glob(cfgAva + '/Inputs/*.asc')
     try:
         assert len(demSource)==1, 'There should be exactly one topography .asc file in ' + cfgAva + '/Inputs/'
-    except AssertionError as e:
+    except AssertionError:
         raise
 
     cfgPath['demSource'] = ''.join(demSource)
@@ -274,7 +274,6 @@ def readABinputs(cfgAva):
     cfgPath['defaultName'] = defaultName
 
     return cfgPath
-
 
 
 def readRaster(fname):
@@ -428,4 +427,3 @@ def calcAB(AvaProfile, eqParameters):
     AvaProfile['SDs'] = SDs
     AvaProfile['alphaSD'] = alphaSD
     return AvaProfile
-
