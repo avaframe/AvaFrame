@@ -1,17 +1,32 @@
 """Run script for module template"""
 
-import logging
-import sys
-
 # Local imports
-import avaframe as af
 from avaframe.tmp1Ex import tmp1Ex
+from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import logUtils
 
-# create logger, set to logging.DEBUG to see all messages
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format='%(module)s:%(levelname)s - %(message)s')
+# -----------Required settings-----------------
+
+# Avalanche directory; see doc.avaframe.org for setup
+avalancheDir = './'
+
+# log file name; leave empty to use default runLog.log
+logName = 'runTmp1Ex'
+
+# ---------------------------------------------
+
+# Start logging
+log = logUtils.initiateLogger(avalancheDir, logName)
+log.info('MAIN SCRIPT')
+log.info('Current avalanche: %s', avalancheDir)
+
+# Load all input Parameters from config file
+# get the configuration of an already imported module
+cfg = cfgUtils.getModuleConfig(tmp1Ex)
+
+# Dump config to log file
+logUtils.writeCfg2Log(cfg,'tmp1Ex')
 
 # Different ways to call functions
-tmp1Ex.tmp1ExMain()
+tmp1Ex.tmp1ExMain(cfg)
 
-# af.tmp1Ex.tmp1Ex.tmp1ExMain()
