@@ -151,8 +151,8 @@ def path2domain(x, y, w, csz):
 #==============================================================================
 # process_data_ind
 #==============================================================================
-def processDataInd(DGMsource, ProfileLayer, DefaltName, w,
-         visu, outpath, out, dpp_threshold):
+def processDataInd(rasterSource, ProfileLayer, DefaultName, w,
+         visu, outpath, out):
     """
     process data ind
     this function is used to process the rasterdata such that it can be
@@ -179,21 +179,20 @@ def processDataInd(DGMsource, ProfileLayer, DefaltName, w,
     n_total = 0
     m_alt = 0
 
-    print('[PD] Data-file %s analysed' % DGMSource)
+    print('[PD] Data-file %s analysed' % rasterSource)
     #read data
-    DGM = com2AB.readRaster(DGMSource)
-    header = DGM['header']
+    dem = com2AB.readRaster(rasterSource)
+    header = dem['header']
     xllcenter = header.xllcenter
     yllcenter = header.yllcenter
     cellsize = header.cellsize
 
-    rasterdata = DGM['rasterdata']
+    rasterdata = dem['rasterdata']
 
-    Avapath = com2AB.readAvaPath(ProfileLayer, DefaltName, DGM['header'])
-    AvaProfile, SplitPoint, splitPoint = prepareLine(DGM, Avapath, splitPoint=None, distance=10)
+    Avapath = com2AB.readAvaPath(ProfileLayer, DefaultName, dem['header'])
     x_path = Avapath['x']
     y_path = Avapath['y']
-    z_path = np,zeros(np.shape(Avapath['x']))
+    z_path = np.zeros(np.shape(Avapath['x']))
 
 
 #    output which file is analyzed
@@ -417,12 +416,12 @@ def processDataInd(DGMsource, ProfileLayer, DefaltName, w,
     plt.ylabel('y [m]')
     cbh = plt.colorbar()
     cbh.set_label('peak pressure [kPa]')
-    plt.show()
+    if visu:
+        plt.show()
     if out:
-        pro_name = DGMSource.split('/')[-3] # CoSiCa-samos-structure
+        pro_name = rasterSource.split('/')[-3] # CoSiCa-samos-structure
 #        pro_name = fnames[0].split('/')[-5] + '_' + fnames[0].split('/')[-2] # DAKUMO_structure
         outname_fin = ''.join([outpath, '/pics/', pro_name,
-                               '_dptr', str(int(dpp_threshold)),
                                '_simulationxy','.pdf'])
         if not os.path.exists(os.path.dirname(outname_fin)):
             os.makedirs(os.path.dirname(outname_fin))
@@ -713,12 +712,12 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     a = [1.1, 5.3, 8, 8.5, 2]
     b = [1.1, 5, 2, 8.8, 8.0]
-    arr = rasterize(a,b, 10, 15);
+    # arr = rasterize(a,b, 10, 15);
     arr1 = poly2mask_simple(a,b, 10, 15);
-    pressurefileList = ['/home/matthiastonnel/Documents/github/Avaframe/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_pressure/000001.txt']
-    depthfileList = ['/home/matthiastonnel/Documents/github/Avaframe/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_depth/000001.txt']
-    ava_data = processDataInd(pressurefileList, '/home/matthiastonnel/Documents/github/Avaframe/avaframe/aimec_2020/NameOfAvalanche/Inputs/avalanche_path.xyz', 300, False, 'doku_name', False, 'damages_name',
-         'visu', './', False, 'dpp_threshold')
+    pressurefileList = ['/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_pressure/000001.txt']
+    depthfileList = ['/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_depth/000001.txt']
+    ava_data = processDataInd('/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Outputs/dfa_pressure/000001.txt', '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/aimec_2020/NameOfAvalanche/Inputs/avalanche_path.shp', ' DefaultName', 600,
+         'visu', './', False)
     deskewedRasterPressure = assignData(pressurefileList, ava_data)
     deskewedRasterDepth = assignData(depthfileList, ava_data)
 
