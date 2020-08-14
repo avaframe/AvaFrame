@@ -3,6 +3,9 @@
     This file is part of Avaframe.
 """
 
+# Load modules
+import os
+
 # Local imports
 from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
@@ -27,8 +30,11 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
+# Get path of module
+modPath = os.path.dirname(com1DFA.__file__)
+
 # Load input parameters from configuration file
-[cfg, modPath] = cfgUtils.getModuleConfig(com1DFA, flagPath=True)
+cfg = cfgUtils.getModuleConfig(com1DFA)
 
 
 # Run Standalone DFA
