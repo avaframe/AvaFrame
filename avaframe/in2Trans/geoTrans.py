@@ -118,6 +118,7 @@ def findSplitPoint(AvaProfile, splitPoint):
     projSplitPoint['indSplit'] = indSplit
     return projSplitPoint, splitPoint
 
+
 def checkProfile(AvaProfile, projSplitPoint):
     """ check that the avalanche profiles goes from top to bottom """
     if projSplitPoint:
@@ -136,7 +137,6 @@ def checkProfile(AvaProfile, projSplitPoint):
             projSplitPoint = None
 
     return projSplitPoint, AvaProfile
-
 
 
 def bresenham(x0, y0, x1, y1, cs):
@@ -276,7 +276,7 @@ def poly2mask_simple(ydep, xdep, ncols, nrows):
     xyframe = np.transpose(xyframe)
     for i in range(1, len(xdep)-1):
         xyline = bresenham(xdep[i], ydep[i], xdep[i+1], ydep[i+1], 1)
-         # last point is first point of the next line
+        # last point is first point of the next line
         xyline = np.delete(xyline, -1, 0)
         xyline = np.transpose(xyline)
         xyframe = np.hstack((xyframe, xyline))
