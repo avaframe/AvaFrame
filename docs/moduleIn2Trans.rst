@@ -63,7 +63,6 @@ Functions
 ------------------------
 
 **Read shape file:**
-
 ``SHPdata = SHP2Array(fname, defname=None)`` takes a .shp file name as input (and eventualy a default name for the layer)
 and returns a SHPdata dictionnary containing the layer information (can be multiple points or lines):
 ::
@@ -76,12 +75,10 @@ and returns a SHPdata dictionnary containing the layer information (can be multi
 		SHPdata['Length'] = 'list of length of each Line in 'x''
 
 **Read shape file as Lines:**
-
 ``Line = readLine(fname, defname, header)`` takes a .shp file name as input,  a default name for the layer and a DEM header
 reads the shape file, checks that the Lines lay on the DEM and returns the SHPdata dictionnary containing the Lines information.
 
 
 **Read shape file as Points:**
-
 ``Points = readPoints(fname, header)`` takes a .shp file name as input,  a default name for the layer and a DEM header
 reads the shape file, checks that the Lines lay on the DEM and returns the SHPdata dictionnary containing the Points information.
