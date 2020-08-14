@@ -263,7 +263,7 @@ def readABinputs(cfgAva):
     splitPointSource = glob.glob(cfgAva + '/Inputs/POINTS/*.shp')
     cfgPath['splitPointSource'] = ''.join(splitPointSource)
 
-    saveOutPath = os.path.join(cfgAva, 'Outputs/')
+    saveOutPath = os.path.join(cfgAva, 'Outputs/com2AB/')
     if not os.path.exists(saveOutPath):
         # log.info('Creating output folder %s', saveOutPath)
         os.makedirs(saveOutPath)
