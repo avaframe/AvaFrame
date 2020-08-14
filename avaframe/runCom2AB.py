@@ -16,7 +16,7 @@ from avaframe.in3Utils import logUtils
 
 # Avalanche directory; see doc.avaframe.org for setup
 # TODO: full path needed?
-avalancheDir = 'avaframe/data/Helix'
+avalancheDir = 'data/avaSlide'
 
 
 # log file name; leave empty to use default runLog.log

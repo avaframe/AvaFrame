@@ -37,6 +37,9 @@ def readAIMECinputs(avalancheDir):
     pathFlowHeight = avalancheDir + '/Outputs/com1DFA/dfa_depth'
     pathMassBalance = avalancheDir + '/Outputs/com1DFA/dfa_mass_balance'
 
+    if not os.path.exists(pathMassBalance):
+        os.makedirs(pathMassBalance)
+
     profileLayer = glob.glob(avalancheDir + '/Inputs/LINES/*aimec*.shp')
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
