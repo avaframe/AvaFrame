@@ -157,7 +157,7 @@ def runSamos(cfg, avaDir):
     flagVarMu = cfgGen.getboolean('flagVarMu')
     inputf = cfgGen['inputf']
     fullOut = cfgGen.getboolean('flagOut')
-    cfgAimec= cfg['AIMEC']
+    cfgAimec = cfg['AIMEC']
     aimecDir = os.path.join(avaDir, cfgAimec['aimecDir'])
     # Get path of module
     modPath = os.path.dirname(__file__)
@@ -232,7 +232,6 @@ def runSamos(cfg, avaDir):
             copyReplace(workFile, workFile, '##COUNTREL##', countRel)
             # Count total number of simulations
             countRel = countRel + 2
-
 
         execSamos(samosAT, workFile, avaDir, fullOut)
 
