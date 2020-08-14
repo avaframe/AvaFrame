@@ -35,6 +35,7 @@ def makeAimecDirs(avaDir):
     os.makedirs(massDir)
     log.info('Aimec Work folders created to start postprocessing com1DFA data')
 
+
 def writeAimecPathsFile(cfgSetup, avaDir):
     """ Write a pathFile to inform Aimec where its input data is located """
 
@@ -103,7 +104,7 @@ def getDFAData(avaDir, cfgDFA):
     sufNo = len(suffix)
 
     # Path to com1DFA results
-    resPath =  os.path.join(inputDir, cfgDFA['filesDir'])
+    resPath = os.path.join(inputDir, cfgDFA['filesDir'])
 
     countpfd = 0
     countppr = 0
@@ -113,17 +114,18 @@ def getDFAData(avaDir, cfgDFA):
             for k in range(sNo):
                 shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
                                       logDict['simName'][k], logDict['suffix'][m]),
-                                      '%s/dfa_depth/%06d.txt'  % (workDir, countpfd))
-
-                #log.info('%s%f/%s/raster/%s_%s.asc to the new file %s/dfa_depth/%06d.txt' % (resPath, logDict['Mu'][k], logDict['simName'][k],
+                                      '%s/dfa_depth/%06d.txt' % (workDir, countpfd))
+                # log.info('%s%f/%s/raster/%s_%s.asc to the new file %s/dfa_depth/%06d.txt' % (resPath,
+                #                     logDict['Mu'][k], logDict['simName'][k],
                 #                     logDict['simName'][k], logDict['suffix'][m], outputDir, countpfd))
                 countpfd = countpfd + 1
+
         elif logDict['suffix'][m] == 'ppr':
             for k in range(sNo):
                 shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
                                       logDict['simName'][k], logDict['suffix'][m]),
-                                      '%s/dfa_pressure/%06d.txt'  % (workDir, countppr))
-
-                #log.info('%s%f/%s/raster/%s_%s.asc to the new file %s/dfa_pressure/%06d.txt' % (resPath, logDict['Mu'][k], logDict['simName'][k],
+                                      '%s/dfa_pressure/%06d.txt' % (workDir, countppr))
+                # log.info('%s%f/%s/raster/%s_%s.asc to the new file %s/dfa_pressure/%06d.txt' % (resPath,
+                #                     logDict['Mu'][k], logDict['simName'][k],
                 #                     logDict['simName'][k], logDict['suffix'][m], outputDir, countppr))
                 countppr = countppr + 1
