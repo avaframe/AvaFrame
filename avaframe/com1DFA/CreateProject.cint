@@ -1,0 +1,126 @@
+int MAXSTRLEN = 512;
+// testing
+// the
+// header
+void CreateProject(char BasePath[], char SamosProjectDir[], char DhmFile[],
+                   char DhmName[], char RelFile[][512],
+                   char EntFile[][512],
+                   char ResFile[][512],
+                   char cellsize[]) {
+  int i;
+  char name[512];
+  char Dhm[512];
+  char ProjDir[512];
+  char Release[512];
+  char Entrainment[512];
+  char Resistance[512];
+  char BaseSimName[512];
+
+  char Areas[1000*MAXSTRLEN];
+  int nAreas;
+  char CuName[512];
+  char CuArea[512];
+
+  strcpy(BaseSimName,"Exp");
+
+  set("", "Close", "");
+
+  // if not exist:
+  // sprintf(ProjDir, "%s/%s", BasePath, SamosProjectDir);
+  sprintf(ProjDir, "%s", SamosProjectDir);
+  set("", "SaveProjectAs", ProjDir);
+
+  // choose DHM
+  sprintf(Dhm, "%s", DhmFile);
+  set("Project/DHMs", "SimulationDefaultCellSize", cellsize);
+  set("Project/DHMs", "Import", Dhm);
+  sprintf(name,"Project/DHMs/%s_simulation",DhmName);
+  set(name, "Active", "1");
+
+
+  // ReleaseAreas
+  set("Project/ReleaseAreas", "import_release_entrainment", RelFile);
+
+  // Make sure rel areas are projected onto dgm
+  get("Project/ReleaseAreas", "GetComponentList", Areas);
+  nAreas = list_size(Areas);
+  sprintf(name,"../../DHMs/%s_simulation",DhmName);
+  for(i = 0; i < nAreas; i++){
+    get_list_element(Areas, i, CuName);
+    sprintf(CuArea, "Project/ReleaseAreas/%s", CuName);
+    set(CuArea, "ProjectOnto", name);
+    set(CuArea, "UpdateMass", "");
+  }
+
+  // EntrainmentAreas
+  set("Project/EntrainmentAreas", "import_release_entrainment", EntFile);
+
+  // Make sure rel areas are projected onto dgm
+  get("Project/EntrainmentAreas", "GetComponentList", Areas);
+  nAreas = list_size(Areas);
+  sprintf(name,"../../DHMs/%s_simulation",DhmName);
+  for(i = 0; i < nAreas; i++){
+    get_list_element(Areas, i, CuName);
+    sprintf(CuArea, "Project/EntrainmentAreas/%s", CuName);
+    set(CuArea, "ProjectOnto", name);
+    set(CuArea, "UpdateMass", "");
+  }
+
+
+  // ResistanceAreas
+  set("Project/ResistanceAreas", "import_resistance", ResFile);
+
+  // Make sure rel areas are projected onto dgm
+  get("Project/ResistanceAreas", "GetComponentList", Areas);
+  nAreas = list_size(Areas);
+  sprintf(name,"../../DHMs/%s_simulation",DhmName);
+  for(i = 0; i < nAreas; i++){
+    get_list_element(Areas, i, CuName);
+    sprintf(CuArea, "Project/ResistanceAreas/%s", CuName);
+    set(CuArea, "ProjectOnto", name);
+  }
+
+  set("Project/ReleaseAreas", "VariableValues", "");
+  set("Project/ResistanceAreas", "VariableValues", "");
+  set("Project/EntrainmentAreas", "VariableValues", "");
+
+  set("", "SaveProject", "");
+  set("", "Close", "");
+}
+//-------------------------
+//-------------------------
+
+
+// ################################# main #####################################
+int main()
+{
+  char BasePath[512];
+  char SamosProjectDir[512];
+  char DhmPath[512], DhmName[512], DhmFile[512];
+  char SimName[512];
+  char ReleaseFile[512];
+  char CellSize[128];
+  char RelFiles[512];
+  char EntFiles[512];
+  char ResFiles[512];
+  char val[256], argv[256*10];
+  int argc, i;
+
+
+  // --- Setup
+  strcpy(BasePath, "##BASEPATH##");
+  strcpy(SamosProjectDir, "##PROJECTDIR##");
+  strcpy(DhmFile,  "##DHMFILE##");
+  strcpy(DhmName,  "##DHMNAME##");
+  strcpy(CellSize,  "##CELLSIZE##");
+  strcpy(RelFiles,"##RELFILE##");
+  strcpy(EntFiles,"##ENTFILE##");
+  strcpy(ResFiles,"##RESFILE##");
+
+  // --- Calls
+  CreateProject(BasePath, SamosProjectDir, DhmFile,
+                DhmName, RelFiles, EntFiles,  ResFiles, CellSize);
+
+  printf("[BatchSamos] Project %s created!\n", SamosProjectDir);
+  return 0;
+}
