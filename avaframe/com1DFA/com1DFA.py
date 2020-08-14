@@ -12,6 +12,7 @@ import subprocess
 import shutil
 import numpy as np
 import logging
+from avaframe.ana3AIMEC import aimecHelper
 
 
 # create local logger
