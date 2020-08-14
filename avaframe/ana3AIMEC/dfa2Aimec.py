@@ -35,7 +35,10 @@ def makeAimecDirs(avaDir):
     os.makedirs(massDir)
     log.info('Aimec Work folders created to start postprocessing com1DFA data')
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> Add function to export output data for postprocessing with aimec
 def writeAimecPathsFile(cfgSetup, avaDir):
     """ Write a pathFile to inform Aimec where its input data is located """
 
