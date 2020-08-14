@@ -188,6 +188,8 @@ int main()
   char BasePath[512];
   char SamosProjectDir[512];
   char ResDir[512];
+  char countRelStr[512];
+  int countRel;
 
   // --- Setup
   strcpy(BasePath, "##BASEPATH##");
