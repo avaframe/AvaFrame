@@ -1,47 +1,58 @@
-import sys
+'''Functions to initialize project, i.e create folder structurec'''
+
 import os
 import logging
+
 log = logging.getLogger(__name__)
 
 
 def initializeFolderStruct(pathAvaName):
+    ''' Initialize the standard folder structure
+
+    str: pathAvaName : string with base avalanche path
+
+    '''
+
+    avaName = os.path.basename(os.path.normpath(pathAvaName))
+
+    log.info("Running initialization sequence for avalanche %s", avaName)
     if os.path.exists(pathAvaName):
-        log.info("Running initialization sequence for avalanche %s", str(pathAvaName))
-        log.warning("Folder %s already exists. Checking folder structure and adding missing files and folders.", str(
-            pathAvaName).split('/')[-1])
+        log.warning("Folder %s already exists. Continuing", avaName)
         createFolderStruct(pathAvaName)
+
     else:
         try:
             os.makedirs(pathAvaName)
         except IOError as e:
             print('I/O error({0}): {1}'.format(e.errno, e.strerror))
             return
-        log.info("Running initialization sequence for avalanche %s", str(pathAvaName))
+
+        log.info("Running initialization sequence for avalanche %s", avaName)
+
         createFolderStruct(pathAvaName)
-        log.info("Done initializing avalanche %s", str(pathAvaName).split('/')[-1])
+
+    log.info("Done initializing avalanche %s", avaName)
+
+
+def checkMakeDir(base, dirName):
+    '''combines base and dir, checks whether it exists, if not creates it
+    '''
+
+    pathName = os.path.join(base, dirName)
+    if not os.path.exists(pathName):
+        os.makedirs(pathName)
+    return pathName
 
 
 def createFolderStruct(pathAvaName):
+    '''creates the folder structure with avalanche base path'''
 
-    Inputs = os.path.join(pathAvaName, 'Inputs/')
-    if not os.path.exists(Inputs):
-        os.makedirs(Inputs)
-    Res = os.path.join(Inputs, 'RES/')
-    if not os.path.exists(Res):
-        os.makedirs(Res)
-    Rel = os.path.join(Inputs, 'REL/')
-    if not os.path.exists(Rel):
-        os.makedirs(Rel)
-    Ent = os.path.join(Inputs, 'ENT/')
-    if not os.path.exists(Ent):
-        os.makedirs(Ent)
-    Points = os.path.join(Inputs, 'POINTS/')
-    if not os.path.exists(Points):
-        os.makedirs(Points)
-    Lines = os.path.join(Inputs, 'LINES/')
-    if not os.path.exists(Lines):
-        os.makedirs(Lines)
+    Inputs = checkMakeDir(pathAvaName, 'Inputs')
 
-    Outputs = os.path.join(pathAvaName, 'Outputs/')
-    if not os.path.exists(Outputs):
-        os.makedirs(Outputs)
+    inputsSubDirs = ['RES', 'REL', 'ENT',
+                     'POINTS', 'LINES']
+
+    for cuDir in inputsSubDirs:
+        checkMakeDir(Inputs, cuDir)
+
+    checkMakeDir(pathAvaName, 'Outputs')
