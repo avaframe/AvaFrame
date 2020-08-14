@@ -6,7 +6,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def getModuleConfig(module, fileOverride='', flagPath=False):
+def getModuleConfig(module, fileOverride=''):
     ''' Returns the configuration for a given module
     returns a configParser object
 
@@ -62,7 +62,4 @@ def getModuleConfig(module, fileOverride='', flagPath=False):
     # Finally read it
     cfg.read(iniFile)
 
-    if flagPath:
-        return cfg, modPath
-    else:
-        return cfg
+    return cfg
