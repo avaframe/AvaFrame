@@ -146,7 +146,7 @@ def writeAimecPathsFile(cfgAimec, avaDir, dem):
         pfile.write('pathResult=%s,\n' % (os.path.join(outputDir, 'AimecResults')))
 
 
-def runSamos(cfg, avaDir, modPath):
+def runSamos(cfg, avaDir):
     """ Run main model"""
 
     # Setup configuration
@@ -159,6 +159,8 @@ def runSamos(cfg, avaDir, modPath):
     fullOut = cfgGen.getboolean('flagOut')
     cfgAimec= cfg['AIMEC']
     aimecDir = os.path.join(avaDir, cfgAimec['aimecDir'])
+    # Get path of module
+    modPath = os.path.dirname(__file__)
 
     # Log chosen settings
     log.info('The chosen settings: entrainment - %s , resistance - %s ' % (flagEnt, flagRes))

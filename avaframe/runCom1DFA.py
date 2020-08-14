@@ -30,12 +30,8 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
-# Get path of module
-modPath = os.path.dirname(com1DFA.__file__)
-
 # Load input parameters from configuration file
 cfg = cfgUtils.getModuleConfig(com1DFA)
 
-
 # Run Standalone DFA
-com1DFA.runSamos(cfg, avalancheDir, modPath)
+com1DFA.runSamos(cfg, avalancheDir)
