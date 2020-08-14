@@ -112,7 +112,7 @@ def com2AB(dem, avapath, splitPoint, OutPath,
 
     # read inputs, ressample ava path
     # make pofile and project split point on path
-    AvaProfile, projSplitPoint, splitPoint = geoTrans.prepareLine(
+    AvaProfile, projSplitPoint = geoTrans.prepareLine(
         dem, avapath, splitPoint, distance)
 
     # Sanity check if first element of AvaProfile[3,:]
