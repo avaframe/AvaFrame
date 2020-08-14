@@ -86,11 +86,11 @@ def prepareLine(dem, avapath, splitPoint, distance):
     AvaProfile = ResampAvaPath
     # find split point by computing the distance to the line
     if splitPoint:
-        projSplitPoint, splitPoint = findSplitPoint(AvaProfile, splitPoint)
+        projSplitPoint = findSplitPoint(AvaProfile, splitPoint)
     else:
         projSplitPoint = None
 
-    return AvaProfile, projSplitPoint, splitPoint
+    return AvaProfile, projSplitPoint
 
 
 def findSplitPoint(AvaProfile, splitPoint):
@@ -116,7 +116,7 @@ def findSplitPoint(AvaProfile, splitPoint):
     projSplitPoint['z'] = AvaProfile['z'][indSplit]
     projSplitPoint['s'] = AvaProfile['s'][indSplit]
     projSplitPoint['indSplit'] = indSplit
-    return projSplitPoint, splitPoint
+    return projSplitPoint
 
 
 def checkProfile(AvaProfile, projSplitPoint):

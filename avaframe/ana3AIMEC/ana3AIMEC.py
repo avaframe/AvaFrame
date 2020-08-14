@@ -1031,7 +1031,7 @@ def result_visu(fnames, rasterSource, ProfileLayer, runout, mean_max_dpp,
     rasterdata = dem['rasterData']
 
     Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem['header'])
-    AvaProfile, SplitPoint, splitPoint = geoTrans.prepareLine(
+    AvaProfile, SplitPoint = geoTrans.prepareLine(
         dem, Avapath, splitPoint=None, distance=10)
     x_path = AvaProfile['x']
     y_path = AvaProfile['y']
