@@ -40,8 +40,9 @@ reverts it if necessary and returns the correct "projSplitPoint" and "AvaProfile
 the z = (x,y) list of the cells hit by the line between the two input points.
 
 
-**:**
-``OX, OY, OOXX, OOYY = path2domain(x, y, w, csz)``
+**Path to domain:**
+``OX, OY, OOXX, OOYY = path2domain(x, y, w, csz)`` takes the (x,y) coordinates of a polyline,
+a domain width and a cell size in input and returns the path of width w along the polyline.
 
 **Polygon to mask:**
 ``mask = poly2mask_simple(ydep, xdep, ncols, nrows)`` takes the (x,y) coordinates
@@ -67,12 +68,12 @@ Functions
 and returns a SHPdata dictionnary containing the layer information (can be multiple points or lines):
 ::
 
-		SHPdata['Name'] = list of paths names
-		SHPdata['x'] = np array of the x coords of points in paths
-		SHPdata['y'] = np array of the y coords of points in paths
-		SHPdata['z'] = np array of the z coords of points in paths
-		SHPdata['Start'] = list of starting index of each Line in 'x'
-		SHPdata['Length'] = list of length of each Line in 'x'
+		SHPdata['Name'] = 'list of paths names'
+		SHPdata['x'] = 'np array of the x coords of points in paths'
+		SHPdata['y'] = 'np array of the y coords of points in paths'
+		SHPdata['z'] = 'np array of the z coords of points in paths'
+		SHPdata['Start'] = 'list of starting index of each Line in 'x''
+		SHPdata['Length'] = 'list of length of each Line in 'x''
 
 **Read shape file as Lines:**
 
