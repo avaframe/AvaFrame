@@ -26,15 +26,15 @@ logName = 'initializeProject'
 
 
 # Start logging
-log = logUtils.initiateLogger('./', logName)
+log = logUtils.initiateLogger('.', logName)
 log.info('MAIN SCRIPT')
 log.info('Initializing Project: %s', avalancheDir)
 
 # Initialize project
 initializeProject.initializeFolderStruct(avalancheDir)
 
-logOrigin = os.path.join('./', logName + '.log')
+logOrigin = os.path.join('.', logName + '.log')
 
-logDest = os.path.join(avalancheDir, logName)
+logDest = os.path.join(avalancheDir, logName + '.log')
 
 shutil.move(logOrigin, logDest)
