@@ -100,7 +100,6 @@ Functions
 **Header Class:**
 
 Header information are read and stored as object from ``class cASCheader``:
-
 ::
 
 		header = cASCheader()
