@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 import matplotlib
 import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
+from matplotlib import cm
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
