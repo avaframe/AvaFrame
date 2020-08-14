@@ -45,25 +45,3 @@ def createFolderStruct(pathAvaName):
     Outputs = os.path.join(pathAvaName, 'Outputs/')
     if not os.path.exists(Outputs):
         os.makedirs(Outputs)
-
-    Work = os.path.join(pathAvaName, 'Work/')
-    if not os.path.exists(Work):
-        os.makedirs(Work)
-
-    # if data.locCfgAB:
-    #     ABCfgLocName = os.path.join(pathAvaName, 'local_com2ABCfg.ini')
-    #     ABCfgName = 'avaframe/com2AB/com2ABCfg.ini'
-    #     if not os.path.exists(ABCfgLocName):
-    #         log.info("Creating local copy of %s to %s", str(ABCfgName), str(ABCfgLocName))
-    #         shutil.copyfile(ABCfgName, ABCfgLocName)
-    #     else:
-    #         log.warning("%s already exists", str(ABCfgLocName))
-    #
-    # if data.locCfg1DFA:
-    #     DFACfgLocName = os.path.join(pathAvaName, 'local_com1DFACfg.ini')
-    #     DFACfgName = 'avaframe/com1DFA/com1DFACfg.ini'
-    #     if not os.path.exists(DFACfgLocName):
-    #         log.info("Creating local copy of %s to %s", str(DFACfgName), str(DFACfgLocName))
-    #         shutil.copyfile(DFACfgName, DFACfgLocName)
-    #     else:
-    #         log.warning("%s already exists", str(DFACfgLocName)
