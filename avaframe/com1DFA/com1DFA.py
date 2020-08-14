@@ -50,7 +50,7 @@ def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
     # Set directories for inputs, outputs and current work
     inputDir = os.path.join(avaDir, 'Inputs')
     outputDir = os.path.join(avaDir, 'Outputs/com1DFA')
-    workDir = os.path.join(avaDir, 'Work')
+    workDir = os.path.join(avaDir, 'Work/com1DFA')
 
     # Initialise release areas, default is to look for shapefiles
     if inputf == 'nxyz':
@@ -90,6 +90,10 @@ def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
     os.makedirs(outputDir)
     os.makedirs(workDir)
 
+    # Initialise full experiment log file
+    with open(os.path.join(outputDir, 'ExpLog.txt'), 'w') as logFile:
+        logFile.write("NoOfSimulation,SimulationRunName,Mu\n")
+
     # return DEM, first item of release, entrainment and resistance areas
     return demFile[0], relFiles, entFiles[0], resFiles[0]
 
@@ -116,36 +120,6 @@ def copyReplace(origFile, workFile, searchString, replString):
         file.write(fileData)
 
 
-def writeAimecPathsFile(cfgAimec, avaDir, dem):
-
-    # Load parameters for Aimec postprocessing
-    calcPressureLimit = float(cfgAimec['calcPressureLimit'])
-    domainWidth = float(cfgAimec['domainWidth'])
-
-    # For Aimec absolute path is required!
-    ava1 = os.path.join(os.getcwd(), avaDir)
-    outputDir = os.path.join(ava1, 'Outputs/com1DFA/')
-    inputDir = os.path.join(ava1, 'Inputs')
-
-    emptyVar = ""
-    with open(os.path.join(ava1, outputDir, 'aimecPathFile.txt'), 'w') as pfile:
-        pfile.write('pathPressure=%s,\n' % (os.path.join(outputDir, 'dfa_pressure')))
-        pfile.write('pathMass=%s,\n' % (os.path.join(outputDir, 'dfa_mass_balance')))
-        pfile.write('pathDocDamage=%s,\n' % (emptyVar))
-        pfile.write('pathDocRadar=%s,\n' % (emptyVar))
-        pfile.write('pathNumInfo=%s,\n' % (emptyVar))
-        pfile.write('pathFlowHeight=%s,\n' % (os.path.join(outputDir, 'dfa_depth')))
-        pfile.write('pathAvalanchePath=%s,\n' % (os.path.join(inputDir, 'avalanche_path.xyz')))
-        pfile.write('calcPressureLimit=%s,\n' % (calcPressureLimit))
-        pfile.write('domainWidth=%s,\n' % (domainWidth))
-        pfile.write('pathDepoArea=%s,\n' % (emptyVar))
-        pfile.write('pathAOI=%s,\n' % (emptyVar))
-        pfile.write('pathDHM=%s,\n' % (dem))
-        pfile.write('pathEnergy=%s,\n' % (emptyVar))
-        pfile.write('pathVelocity=%s,\n' % (emptyVar))
-        pfile.write('pathResult=%s,\n' % (os.path.join(outputDir, 'AimecResults')))
-
-
 def runSamos(cfg, avaDir):
     """ Run main model"""
 
@@ -158,7 +132,7 @@ def runSamos(cfg, avaDir):
     inputf = cfgGen['inputf']
     fullOut = cfgGen.getboolean('flagOut')
     cfgAimec = cfg['AIMEC']
-    aimecDir = os.path.join(avaDir, cfgAimec['aimecDir'])
+    resDir = os.path.join(avaDir, 'Outputs/com1DFA')
     # Get path of module
     modPath = os.path.dirname(__file__)
 
@@ -183,8 +157,8 @@ def runSamos(cfg, avaDir):
 
         # Initialise CreateProject cint file
         templateFile = os.path.join(modPath, 'CreateProject.cint')
-        workFile = os.path.join(avaDir, 'Work', 'CreateProject.cint')
-        projDir = os.path.join(avaDir, 'Work', simName)
+        workFile = os.path.join(avaDir, 'Work/com1DFA', 'CreateProject.cint')
+        projDir = os.path.join(avaDir, 'Work/com1DFA', simName)
         demName = os.path.splitext(os.path.basename(dem))[0]
 
         # Set Parameters in cint file
@@ -201,7 +175,7 @@ def runSamos(cfg, avaDir):
 
         # Initialise CreateSimulations cint file and set parameters
         templateFile = os.path.join(modPath, 'CreateSimulations.cint')
-        workFile = os.path.join(avaDir, 'Work', 'CreateSimulations.cint')
+        workFile = os.path.join(avaDir, 'Work/com1DFA', 'CreateSimulations.cint')
         copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
         copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
         copyReplace(workFile, workFile, '##BASESIMNAME##', simName)
@@ -209,31 +183,28 @@ def runSamos(cfg, avaDir):
 
         # If mu shall be varied
         if flagVarMu:
-            varFile = os.path.join(avaDir, 'Work', simName+'_VarMu.txt')
+            varFile = os.path.join(avaDir, 'Work/com1DFA', simName+'_VarMu.txt')
             varF = open(varFile, 'w')
             varF.write('0.155\n')
             varF.write('0.055\n')
             varF.close()
             templateFile = os.path.join(modPath, 'varyMuRunExport.cint')
-            workFile = os.path.join(avaDir, 'Work', 'varyMuRunExport.cint')
+            workFile = os.path.join(avaDir, 'Work/com1DFA', 'varyMuRunExport.cint')
             copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
             copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
-            copyReplace(workFile, workFile, '##AIMECRESDIR##', aimecDir)
+            copyReplace(workFile, workFile, '##RESDIR##', resDir)
             copyReplace(workFile, workFile, '##COUNTREL##', countRel)
             # Count total number of simulations
             countRel = countRel + 3
 
         else:
             templateFile = os.path.join(modPath, '%s.cint' % (cfgGen['RunCint']))
-            workFile = os.path.join(avaDir, 'Work', '%s.cint' % (cfgGen['RunCint']))
+            workFile = os.path.join(avaDir, 'Work/com1DFA', '%s.cint' % (cfgGen['RunCint']))
             copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
             copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
-            copyReplace(workFile, workFile, '##AIMECRESDIR##', aimecDir)
+            copyReplace(workFile, workFile, '##RESDIR##', resDir)
             copyReplace(workFile, workFile, '##COUNTREL##', countRel)
             # Count total number of simulations
             countRel = countRel + 2
 
         execSamos(samosAT, workFile, avaDir, fullOut)
-
-        # Postprocessing with aimec
-        writeAimecPathsFile(cfgAimec, avaDir, dem)

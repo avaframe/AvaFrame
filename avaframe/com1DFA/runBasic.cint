@@ -43,64 +43,22 @@ int running(char project_dir[],char sim_name[]) {
 }
 
 
-///////////////////////////////////////////////
-// make directories for exporting output data
-
-void make_result_dirs(char result_dir[]){
-
-    char name[512];
-
-    // if(make_directory(result_dir)){ set_error("cannot create directory"); return;}
-    printf("\n[BatchSamos] Creating result directories in: %s\n",result_dir);
-    sprintf(name,"%sreport",result_dir);
-    if(make_directory(name)){ set_error("cannot create directory"); return; }
-    sprintf(name,"%sdfa_pressure",result_dir);
-    if(make_directory(name)){ set_error("cannot create directory"); return; }
-    sprintf(name,"%sdfa_depth",result_dir);
-    if(make_directory(name)){ set_error("cannot create directory"); return; }
-}
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // postprocessing of simulation runs
 
-void postprocessing(char ResultDir[], char SimName[], char output_name[], float Mu){
+void postprocessing(char ResultDir[], char SimName[], float Mu){
 
-    char name[512],name2[512];
+    char name[512];
     char MuString[512];
     char ResultDir_rep[512];
 
     // Prepare for postprocessing
     sprintf(name,"Project/Simulations/%s",SimName);
-    set("Project/Polylines", "Active", "1");
-    set("Project/ReleaseDHMs", "Active", "0");
-    set(name, "LoadLastTimeStep", "");
-    set("", "Autofit", "");
 
-    //------------------------export DFA PeakFlowDepth
-    sprintf(name,"Project/Simulations/%s/PeakFlowDepth",SimName);
-    set(name, "Active", "1");
-    // This step is implemented because in the case of entrainment samosat has to recalculate particle distribution and resets the time to zero
-    sprintf(name,"Project/Simulations/%s",SimName);
-    set(name, "LoadLastTimeStep", "");
-    sprintf(name,"Project/Simulations/%s/PeakFlowDepth",SimName);
-    sprintf(name2,"%sdfa_depth/%s.txt",ResultDir,output_name);
-    set(name, "ExportFieldRasterAscii", name2);
-    sprintf(name,"Project/Simulations/%s/PeakFlowDepth",SimName);
-    set(name, "Active", "0");
-
-    //------------------------export DFA DynamicPeakPressure
-    sprintf(name,"Project/Simulations/%s/DynamicPeakPressure",SimName);
-    set(name, "Active", "1");
-    sprintf(name,"Project/Simulations/%s/DynamicPeakPressure",SimName);
-    sprintf(name2,"%sdfa_pressure/%s.txt",ResultDir,output_name);
-    set(name, "ExportFieldRasterAscii", name2);
-    sprintf(name,"Project/Simulations/%s/DynamicPeakPressure",SimName);
-    set(name, "Active", "0");
 
     // Generate a full report
     sprintf(MuString,"%.3f",Mu);
-    sprintf(ResultDir_rep,"%sreport/FullOutput_mu_%s",ResultDir,MuString);
+    sprintf(ResultDir_rep,"%s/FullOutput_mu_%s",ResultDir,MuString);
     if(make_directory(ResultDir_rep)){ set_error("cannot create report directory"); return;}
     printf("\n[BatchSamos] Report is saved to %s \n",ResultDir_rep);
     sprintf(name,"Project/Simulations/%s",SimName);
@@ -113,13 +71,14 @@ void postprocessing(char ResultDir[], char SimName[], char output_name[], float 
 ///////////////////////////////////////////////////////////////////////////////
 // Run calls for simulations
 
-void RunExport(char BasePath[], char SamosProjectDir[], char AimecResDir[], int countRel)
+void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int countRel)
 {
   char ProjDir[512];
   char s[1000*MAXSTRLEN];
   char CuSim[512];
   char Sim[512];
   char FPath[512];
+  char F2Path[512];
   char output_name[512];
   char ResultDir[512];
   int Status;
@@ -129,7 +88,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char AimecResDir[], int 
   int ExpCount;
   float Mu;
   FILE *ExpLog;
-
+  FILE *ExpLog2;
 
   Mu = 0.155;
 
@@ -143,12 +102,14 @@ void RunExport(char BasePath[], char SamosProjectDir[], char AimecResDir[], int 
   ExpLog = fopen(FPath,"w");
   printf("\n[BatchSamos] ExpLog %s\n",FPath);
   fprintf(ExpLog, "N;SimName;mu\n");
+  // Open second experiment log file for postprocessing
+  sprintf(F2Path, "%s/ExpLog.txt", ResDir);
+  ExpLog2 = fopen(F2Path,"a");
+  printf("\n[BatchSamos] Full ExpLog %s\n",F2Path);
 
   // Count Simulation runs
   ExpCount = countRel;
 
-  // Make result directories
-  make_result_dirs(AimecResDir);
 
   // Simulations
   get("Project/Simulations", "GetComponentList", s);
@@ -167,6 +128,8 @@ void RunExport(char BasePath[], char SamosProjectDir[], char AimecResDir[], int 
 
       // Update log
       fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,Mu);
+      fprintf(ExpLog2, "%d  %s  %f\n",ExpCount,CuSim,Mu);
+
 
       //------------Set time stepping--------------------
       set(Sim, "EndTime", "150");
@@ -179,8 +142,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char AimecResDir[], int 
       set(Sim, "Run", "");
 
       // Postprocessing with mu set to the std default 0.155
-      sprintf(output_name,"%06d",ExpCount);
-      postprocessing(AimecResDir,CuSim,output_name,Mu);
+      postprocessing(ResDir,CuSim,Mu);
 
     }
     // else perform standard simulation without entrainment and resistance
@@ -189,6 +151,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char AimecResDir[], int 
       // Set ExpCount and update log
       ExpCount++;
       fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,Mu);
+      fprintf(ExpLog2, "%d  %s  %f\n",ExpCount,CuSim,Mu);
 
       // TEST IF DIFFERENCE
       set(Sim, "FrictionType", "samosAT_Standard");
@@ -205,13 +168,13 @@ void RunExport(char BasePath[], char SamosProjectDir[], char AimecResDir[], int 
       set(Sim, "Run", "");
 
       //------------- postprocessing
-      sprintf(output_name,"%06d",ExpCount);
-      postprocessing(AimecResDir,CuSim,output_name,Mu);
+      postprocessing(ResDir,CuSim,Mu);
 
     } // End of simulation loop
   }
 
   fclose(ExpLog);
+  fclose(ExpLog2);
 
   // Save project
   set("", "SaveProject", "");
@@ -224,14 +187,14 @@ int main()
 {
   char BasePath[512];
   char SamosProjectDir[512];
-  char AimecResDir[512];
+  char ResDir[512];
   char countRelStr[512];
   int countRel;
 
   // --- Setup
   strcpy(BasePath, "##BASEPATH##");
   strcpy(SamosProjectDir, "##PROJECTDIR##");
-  strcpy(AimecResDir, "##AIMECRESDIR##");
+  strcpy(ResDir, "##RESDIR##");
   strcpy(countRelStr, "##COUNTREL##");
 
   // Setup total number of simulations for file naming
@@ -240,7 +203,7 @@ int main()
   printf("[BatchSamos] Number of total sims now %d \n",countRel);
 
   // --- Calls
-  RunExport(BasePath, SamosProjectDir, AimecResDir, countRel);
+  RunExport(BasePath, SamosProjectDir, ResDir, countRel);
 
 
   printf("[BatchSamos] Project %s done\n", SamosProjectDir);
