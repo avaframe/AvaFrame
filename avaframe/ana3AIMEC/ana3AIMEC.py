@@ -28,6 +28,7 @@ log = logging.getLogger(__name__)
 # Aimec read inputs tools
 # -----------------------------------------------------------
 
+
 def readAIMECinputs(avalancheDir):
     """
     Reads the requiered files for AIMEC postpocessing
@@ -63,11 +64,10 @@ def readAIMECinputs(avalancheDir):
                      sorted(os.listdir(pathFlowHeight)) if os.path.isfile(os.path.join(pathFlowHeight, name))]
     cfgPath['depthfileList'] = depthfileList
 
-
     massfileList = [str(pathMassBalance) +
-                     '/' +
-                     str(name) for name in
-                     sorted(os.listdir(pathMassBalance)) if os.path.isfile(os.path.join(pathMassBalance, name))]
+                    '/' +
+                    str(name) for name in
+                    sorted(os.listdir(pathMassBalance)) if os.path.isfile(os.path.join(pathMassBalance, name))]
     cfgPath['massfileList'] = massfileList
 
     pathResult = avalancheDir + '/Outputs/AimecResults'
@@ -141,7 +141,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
 #     input: mittlerer path
 #     output: eckpunkte für punkt entlang der linie
     DB_x_rl, DB_y_rl, DB_x_csz, DB_y_csz = geoTrans.path2domain(x_path, y_path,
-                                                       w/2., cellsize)
+                                                                w/2., cellsize)
 
 #     Shift path to raster because raster is not in global grid
     DB_x_rl -= xllcenter
@@ -154,17 +154,17 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     for i in range(len(DB_x_rl[0])):
         #   for each segment check the number of CROSS-cells
         n = geoTrans.bresenham(DB_x_rl[0, i], DB_y_rl[0, i],
-                      DB_x_rl[1, i], DB_y_rl[1, i], cellsize)
+                               DB_x_rl[1, i], DB_y_rl[1, i], cellsize)
         n_total = max(n_total, len(n))
 #   number of raster cells of edges parallel to polyline
     m = np.zeros(len(DB_x_rl[0])-1).astype('int')
     for i in range(len(DB_x_rl[0])-1):
         # left edge
         zl = geoTrans.bresenham(DB_x_rl[0, i], DB_y_rl[0, i],
-                       DB_x_rl[0, i+1], DB_y_rl[0, i+1], cellsize)
+                                DB_x_rl[0, i+1], DB_y_rl[0, i+1], cellsize)
         # right edge
         zr = geoTrans.bresenham(DB_x_rl[1, i], DB_y_rl[1, i],
-                       DB_x_rl[1, i+1], DB_y_rl[1, i+1], cellsize)
+                                DB_x_rl[1, i+1], DB_y_rl[1, i+1], cellsize)
         m[i] = max(len(zl), len(zr))
 #    delete the lines that are double at ech segment connection
     m_total = sum(m) - (len(DB_x_rl[0])-2)
@@ -405,7 +405,7 @@ def transform(fname, rasterIndData):
                 new_raster[x_ind, y_ind] = np.NaN
 
     log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
-                 (name[-1], i_ib-i_oob, i_oob))
+             (name[-1], i_ib-i_oob, i_oob))
 
     return new_raster
 
@@ -465,7 +465,6 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
     ouput: structure{teilfächen(4),mean-values for pressure and depth(4)} +
     runout-length of doku
     """
-
 
     n_topo = len(fnames)
     avalData = np.array([[None for m in range(n_topo)] for n in range(8)])
@@ -598,7 +597,6 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
 
     runout_doku = s_coordinate_doku[clower_doku]
 
-
     # if dhm delta h analysis
     # Achtung Fehler in SamosAT: Druckraster und DHM-Raster stimmen nicht exakt überein!
     # Eventuell shift in assignData berücksichtigen
@@ -606,7 +604,7 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
     # find first cells that have flow - (randomly) choose simulation
     # P(s)
     p_cross = np.array((np.nanmax(rasterdata, 1),
-    np.nanmean(rasterdata, 1)))
+                        np.nanmean(rasterdata, 1)))
 
     # search in max values
     lindex = np.nonzero(p_cross[0] > p_lim)[0]
@@ -795,6 +793,7 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
 
     return runout, runout_mean, ampp, mmpp, amd, mmd
 
+
 def read_write(fname_ent):
     #    load data
     #    time, total mass, entrained mass
@@ -851,7 +850,6 @@ def analyzeEntrainmentdata(fnames):
         log.warning('Release masses differs between simulations!')
 
     return releaseMass, entrainedMass, grIndex, grGrad
-
 
 
 # -----------------------------------------------------------

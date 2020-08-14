@@ -142,7 +142,8 @@ def readABinputs(cfgAva):
 
     demSource = glob.glob(cfgAva + '/Inputs/*.asc')
     try:
-        assert len(demSource)==1, 'There should be exactly one topography .asc file in ' + cfgAva + '/Inputs/'
+        assert len(demSource) == 1, 'There should be exactly one topography .asc file in ' + \
+            cfgAva + '/Inputs/'
     except AssertionError:
         raise
 
@@ -161,7 +162,6 @@ def readABinputs(cfgAva):
     cfgPath['defaultName'] = defaultName
 
     return cfgPath
-
 
 
 def find_10Point(tmp, delta_ind):
