@@ -3,10 +3,12 @@ import os
 import logging
 log = logging.getLogger(__name__)
 
+
 def initializeFolderStruct(pathAvaName):
     if os.path.exists(pathAvaName):
         log.info("Running initialization sequecnce for avalanche %s", str(pathAvaName))
-        log.warning("Folder %s already exists. Checking folder structure and adding missing files and folders.", str(pathAvaName).split('/')[-1])
+        log.warning("Folder %s already exists. Checking folder structure and adding missing files and folders.", str(
+            pathAvaName).split('/')[-1])
         createFolderStruct(pathAvaName)
     else:
         try:
@@ -17,7 +19,6 @@ def initializeFolderStruct(pathAvaName):
         log.info("Running initialization sequecnce for avalanche %s", str(pathAvaName))
         createFolderStruct(pathAvaName)
         log.info("Done initializing avalanche %s", str(pathAvaName).split('/')[-1])
-
 
 
 def createFolderStruct(pathAvaName):
