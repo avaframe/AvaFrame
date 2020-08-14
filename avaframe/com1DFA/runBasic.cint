@@ -78,6 +78,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
   char CuSim[512];
   char Sim[512];
   char FPath[512];
+  char F2Path[512];
   char output_name[512];
   char ResultDir[512];
   int Status;
@@ -87,7 +88,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
   int ExpCount;
   float Mu;
   FILE *ExpLog;
-
+  FILE *ExpLog2;
 
   Mu = 0.155;
 
@@ -101,6 +102,10 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
   ExpLog = fopen(FPath,"w");
   printf("\n[BatchSamos] ExpLog %s\n",FPath);
   fprintf(ExpLog, "N;SimName;mu\n");
+  // Open second experiment log file for postprocessing
+  sprintf(F2Path, "%s/ExpLog.txt", ResDir);
+  ExpLog2 = fopen(F2Path,"a");
+  printf("\n[BatchSamos] Full ExpLog %s\n",F2Path);
 
   // Count Simulation runs
   ExpCount = countRel;
@@ -123,6 +128,8 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
 
       // Update log
       fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,Mu);
+      fprintf(ExpLog2, "%d  %s  %f\n",ExpCount,CuSim,MuST);
+
 
       //------------Set time stepping--------------------
       set(Sim, "EndTime", "150");
@@ -144,6 +151,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
       // Set ExpCount and update log
       ExpCount++;
       fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,Mu);
+      fprintf(ExpLog2, "%d  %s  %f\n",ExpCount,CuSim,Mu);
 
       // TEST IF DIFFERENCE
       set(Sim, "FrictionType", "samosAT_Standard");
@@ -166,6 +174,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
   }
 
   fclose(ExpLog);
+  fclose(ExpLog2);
 
   // Save project
   set("", "SaveProject", "");
