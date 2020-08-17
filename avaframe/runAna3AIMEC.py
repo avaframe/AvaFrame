@@ -41,7 +41,7 @@ cfg = cfgUtils.getModuleConfig(ana3AIMEC)
 cfgSetup = cfg['AIMECSETUP']
 cfgDFA = cfg['DFA']
 
-# Dump config to log file
+# write config to log file
 logUtils.writeCfg2Log(cfg, 'ana3AIMEC')
 
 # Setup input from com1DFA
@@ -52,9 +52,6 @@ dfa2Aimec.writeAimecPathsFile(cfgSetup, avalancheDir)
 saveOutPath = avalancheDir + '/Outputs'
 # Extract input file locations
 cfgPath = ana3AIMEC.readAIMECinputs(avalancheDir)
-
-# write config to log file
-logUtils.writeCfg2Log(cfg, 'ana3AIMEC')
 
 startTime = time.time()
 
