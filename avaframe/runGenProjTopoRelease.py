@@ -4,9 +4,12 @@
 """
 
 import sys
+import os
 import logging
+import shutil
 
 # Local imports
+from avaframe.in3Utils import initializeProject
 from avaframe.in3Utils import getReleaseArea as gR
 from avaframe.in3Utils import generateTopo as gT
 from avaframe.in3Utils import cfgUtils, logUtils
@@ -18,11 +21,27 @@ from avaframe.out3SimpPlot import outGenerateTopo as oT
 
 # Avalanche directory; see doc.avaframe.org for setup
 # TODO: full path needed?
-avalancheDir = 'data/avaHelix'
+avalancheDir = 'data/avaInlcinedPlane'
 
 # log file name; leave empty to use default runLog.log
-logName = 'generateTopoGetReleaseArea'
+logName = 'genProjTopoRelease'
 #------------------------------------------
+
+
+# Start logging
+log = logUtils.initiateLogger('.', logName)
+log.info('MAIN SCRIPT')
+log.info('Initializing Project: %s', avalancheDir)
+
+
+# Initialize project
+initializeProject.initializeFolderStruct(avalancheDir)
+
+logOrigin = os.path.join('.', logName + '.log')
+
+logDest = os.path.join(avalancheDir, logName + '.log')
+
+shutil.move(logOrigin, logDest)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
