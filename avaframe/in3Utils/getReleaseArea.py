@@ -181,7 +181,6 @@ def getReleaseArea(cfgT, cfgR, outDir):
     cfgFP = cfgR['FP']
     cfgIP = cfgR['IP']
     cfgHS = cfgR['HS']
-    cfgHX = cfgR['HX']
     cfgFile = cfgR['FILE']
 
     # Which DEM type
