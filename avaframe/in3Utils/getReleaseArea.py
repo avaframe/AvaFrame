@@ -25,8 +25,8 @@ def getCorners_FP(x_end, y_end, dx, cfgFP, cfgGen):
     hr = float(cfgGen['hr'])
     vol = float(cfgGen['vol'])
     dh = float(cfgGen['dh'])
-    xStart = float(cfgFP['xStart'])
-    lenp = int(cfgFP['lenP'])
+    xStart = float(cfgGen['xStart'])
+    lenp = int(cfgGen['lenP'])
 
     # Compute release area ---------------------------------------------------------------------------------------
     xr = float(cfgFP['xExtent'])
@@ -52,7 +52,7 @@ def getCorners_FP(x_end, y_end, dx, cfgFP, cfgGen):
     return xv, yv, xyPoints
 
 
-def getCorners_IP(x_end, y_end, dx, mean_alpha, cfgIP, cfgGen):
+def getCorners_IP(x_end, y_end, dx, mean_alpha, cfgGen):
 
     # Terrain parameters
     xv = np.arange(0, x_end, dx)
@@ -61,8 +61,8 @@ def getCorners_IP(x_end, y_end, dx, mean_alpha, cfgIP, cfgGen):
     vol = float(cfgGen['vol'])
     dh = float(cfgGen['dh'])
 
-    xStart = float(cfgIP['xStart'])
-    lenp = int(cfgIP['lenP'])
+    xStart = float(cfgGen['xStart'])
+    lenp = int(cfgGen['lenP'])
 
     # Compute release area ---------------------------------------------------------------------------------------
     xr = hr / np.sin(np.radians(mean_alpha))        # along valley extent of release area
@@ -97,7 +97,7 @@ def getCorners_HS(x_end, y_end, dx, mean_alpha, cfgHS, cfgGen, cfgTopo):
     hr = float(cfgGen['hr'])
     vol = float(cfgGen['vol'])
     dh = float(cfgGen['dh'])
-    lenp = int(cfgHS['lenP'])
+    lenp = int(cfgGen['lenP'])
     alpha_stop = float(cfgHS['alpha_stop'])
 
     # get A, B from HS
@@ -190,7 +190,6 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
     cfgDEM = cfgT['DEMDATA']
     cfgGen = cfgR['GENERAL']
     cfgFP = cfgR['FP']
-    cfgIP = cfgR['IP']
     cfgHS = cfgR['HS']
     cfgFile = cfgR['FILE']
 
@@ -214,7 +213,7 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
 
     elif DEM_type == 'IP':
         [xv, yv, xyPoints] = getCorners_IP(
-            x_end, y_end, dx, float(cfgTopo['mean_alpha']), cfgIP, cfgGen)
+            x_end, y_end, dx, float(cfgTopo['mean_alpha']), cfgGen)
         flagCont = True
 
     elif DEM_type == 'HS':
@@ -224,7 +223,7 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
 
     elif DEM_type == 'HS2':
         [xv, yv, xyPoints] = getCorners_IP(
-            x_end, y_end, dx, float(cfgTopo['mean_alpha']), cfgIP, cfgGen)
+            x_end, y_end, dx, float(cfgTopo['mean_alpha']), cfgGen)
         flagCont = True
 
     elif DEM_type == 'HX':
