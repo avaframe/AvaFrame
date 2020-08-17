@@ -466,7 +466,7 @@ def writeDEM(z, name_ext, ncols, nrows, dx, cfgDEM, outDir):
 def makeOutputDir(avalancheDir):
     """ Make output directory """
 
-    outDir = os.path.join(avalancheDir, 'Outputs', 'in3Utils', 'generateTopo')
+    outDir = os.path.join(avalancheDir, 'Inputs')
     if os.path.isdir(outDir):
         log.warning('Be careful %s already existed - new data is added' % (outDir))
     else:

@@ -21,7 +21,7 @@ from avaframe.out3SimpPlot import outGenerateTopo as oT
 
 # Avalanche directory; see doc.avaframe.org for setup
 # TODO: full path needed?
-avalancheDir = 'data/avaInlcinedPlane'
+avalancheDir = 'data/avaHelix'
 
 # log file name; leave empty to use default runLog.log
 logName = 'genProjTopoRelease'
@@ -60,14 +60,11 @@ oT.plotDEM(z, name_ext, cfgT, outDir)
 # Initialise DEM_type
 DEM_type = cfgT['TOPO']['DEM_type']
 
-# Initialise output dir
-outDir = gT.makeOutputDir(avalancheDir)
-
 if DEM_type == 'HX' or DEM_type == 'BL':
     log.warning('There is no release area available for this DEM type')
 else:
     # Make release area
-    [xv, yv, xyPoints] = gR.getReleaseArea(cfgT, cfgR, outDir)
+    [xv, yv, xyPoints] = gR.getReleaseArea(cfgT, cfgR, avalancheDir)
 
     # Plot Release Area
     if cfgR.getboolean('GENERAL', 'showplot'):
