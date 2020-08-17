@@ -104,7 +104,8 @@ def getCorners_HS(x_end, y_end, dx, mean_alpha, cfgHS, cfgGen, cfgTopo):
     [A, B, f_len] = gT.getParams(cfgTopo)
 
     # Compute release area ---------------------------------------------------------------------------------------
-    xStop = (np.tan(np.radians(-alpha_stop)) - B) / (2. * A)    # along valley margin of release area at alpha_stop° point
+    # along valley margin of release area at alpha_stop° point
+    xStop = (np.tan(np.radians(-alpha_stop)) - B) / (2. * A)
     xr = hr / np.sin(np.radians(alpha_stop))
     xrp = hr / np.tan(np.radians(alpha_stop))
     yr = vol / (xr * dh)
@@ -139,9 +140,7 @@ def correctOrigin(xv, yv, xyPoints, cfgT, y_end):
     xyPoints[:,0] = xyPoints[:,0] + xl
     xyPoints[:,1] = xyPoints[:,1] + yl + 0.5 * y_end
 
-
     return xv, yv, xyPoints
-
 
 
 def writeNXYZ(xyPoints, DEM_type, cfgFile, cfgGen, outDir):
@@ -168,7 +167,8 @@ def writeNXYZ(xyPoints, DEM_type, cfgFile, cfgGen, outDir):
     # Log info here
     log.info('Release Area written to: %s/release_%d%s.nxyz' % (outDir, rel_no, DEM_type))
     if cfgGen.getboolean('outputtxt'):
-        shutil.copyfile(os.path.join(outDir, 'release_%d%s.nxyz' % (rel_no, DEM_type)), os.path.join(outDir, 'release_%d%s.txt' % (rel_no, DEM_type)))
+        shutil.copyfile(os.path.join(outDir, 'release_%d%s.nxyz' % (rel_no, DEM_type)),
+        os.path.join(outDir, 'release_%d%s.txt' % (rel_no, DEM_type)))
 
 
 def makeOutputDir(avalancheDir):
@@ -181,6 +181,7 @@ def makeOutputDir(avalancheDir):
         os.makedirs(outDir)
 
     return outDir
+
 
 def getReleaseArea(cfgT, cfgR, avalancheDir):
     """ Main function to compute release areas """
@@ -231,7 +232,6 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
 
     elif DEM_type == 'BL':
         log.warning('no release area available for DEM_type: %s' % (DEM_type))
-
 
     if flagCont:
 

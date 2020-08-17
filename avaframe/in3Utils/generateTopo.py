@@ -462,7 +462,6 @@ def writeDEM(z, name_ext, ncols, nrows, dx, cfgDEM, outDir):
     log.info('DEM written to: %s/%s_%s_Topo.asc' % (outDir, dem_name, name_ext))
 
 
-
 def makeOutputDir(avalancheDir):
     """ Make output directory """
 
@@ -477,7 +476,6 @@ def makeOutputDir(avalancheDir):
 
 def generateTopo(cfg, avalancheDir):
     """ Compute coordinates of desired topography with given inputs """
-
 
     cfgTopo = cfg['TOPO']
     cfgChannel = cfg['CHANNELS']

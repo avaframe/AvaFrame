@@ -15,7 +15,7 @@ from avaframe.in3Utils import generateTopo as gT
 from avaframe.in3Utils import cfgUtils, logUtils
 from avaframe.out3SimpPlot import outGenerateTopo as oT
 
-#----------Rewquired Settings---------------
+# ----------Required Settings---------------
 
 #TODO move this to a main cfg file!
 
@@ -25,7 +25,7 @@ avalancheDir = 'data/avaInclinedPlane'
 
 # log file name; leave empty to use default runLog.log
 logName = 'genProjTopoRelease'
-#------------------------------------------
+# ------------------------------------------
 
 
 # Start logging

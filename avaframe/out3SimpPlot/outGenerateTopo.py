@@ -55,7 +55,7 @@ def plotReleasePoints(xv, yv, xyPoints, DEM_type):
 
     plt.figure()
     plt.plot(xv, np.zeros(len(xv))+yv[0], 'k-')
-    plt.plot(xv,  np.zeros(len(xv))+yv[-1], 'k-')
+    plt.plot(xv, np.zeros(len(xv))+yv[-1], 'k-')
     plt.plot(np.zeros(len(yv))+xv[0], yv, 'k-')
     plt.plot(np.zeros(len(yv))+xv[-1], yv, 'k-')
     plt.plot(xyPoints[:, 0], xyPoints[:, 1], 'r*')
