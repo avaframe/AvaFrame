@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 # Aimec read inputs tools
 # -----------------------------------------------------------
-
+debugPlotFlag = True
 
 def readAIMECinputs(avalancheDir):
     """
@@ -195,6 +195,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     """
 
     rasterSource = cfgPath['pressurefileList'][0]
+    # rasterSource = cfgPath['demSource']
     ProfileLayer = cfgPath['profileLayer']
     w = domainWidth
     outpath = cfgPath['pathResult']
@@ -202,11 +203,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
 
     aval_data = {}
 
-    m = 0
-    n = 0
-    m_total = 0
-    n_total = 0
-    m_alt = 0
+
 
     log.info('Data-file %s analysed' % rasterSource)
     # read data
@@ -217,18 +214,20 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     cellsize = header.cellsize
 
     rasterdata = dem['rasterData']
-
     Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem['header'])
     x_path = Avapath['x']
     y_path = Avapath['y']
     z_path = np.zeros(np.shape(Avapath['x']))
+    # numper of points describing the avaPath
+    n_pnt = np.shape(x_path)[0]
+
 
     log.info('Creating new raster along polyline: %s' % ProfileLayer)
 
 #     erzeugung der eckpuntke der segmente des unregelmaesigen gitters,
 #     Domain Boundaries DB
-#     input: mittlerer path
-#     output: eckpunkte für punkt entlang der linie
+#     input: ava path
+#     output: Left and right side points for the domain
     DB_x_rl, DB_y_rl, DB_x_csz, DB_y_csz = geoTrans.path2domain(x_path, y_path,
                                                                 w/2., cellsize)
 
@@ -239,15 +238,185 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     DB_x_csz -= xllcenter
     DB_y_csz -= yllcenter
 
+    if debugPlotFlag:
+        # visu
+        figure_width = 2*5
+        figure_height = 2*4
+        lw = 1
+        fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
+
+    #    for figure: referenz-simulation bei p_lim=1
+        new_rasterdata = rasterdata
+        masked_array = rasterdata #np.ma.masked_where(rasterdata == 0, rasterdata)
+        cmap = copy.copy(matplotlib.cm.jet)
+        cmap.set_bad('w', 1.)
+
+        n, m = np.shape(rasterdata)
+        xx, yy = np.meshgrid(np.arange(n), np.arange(m))
+        ref1 = plt.imshow(masked_array, vmin=rasterdata.min(),
+                          vmax=rasterdata.max(),
+                          origin='lower',
+                          cmap=cmap,
+                          label='pressure data',
+                          aspect='auto')#,extent=[xx.min()*cellsize, xx.max()*cellsize,yy.min()*cellsize, yy.max()*cellsize]
+        # plt.autoscale(False)
+        ref2 = plt.plot((x_path-xllcenter)/cellsize, (y_path-yllcenter)/cellsize,
+                        'b-', linewidth=lw, label='flow path')
+        ref3 = plt.plot((DB_x_rl)/cellsize, (DB_y_rl)/cellsize,
+                        'g-', linewidth=lw, label='domain')
+        ref3 = plt.plot((DB_x_rl.T)/cellsize, (DB_y_rl.T)/cellsize,
+                        'g-', linewidth=lw, label='domain')
+        ref3 = plt.plot((DB_x_csz)/cellsize, (DB_y_csz)/cellsize,
+                        'k-', linewidth=lw, label='domain')
+        ref3 = plt.plot((DB_x_csz.T)/cellsize, (DB_y_csz.T)/cellsize,
+                        'k-', linewidth=lw, label='domain')
+        refs = [ref2[0], ref3[0]]
+
+
+    m_tmp = np.array([]).astype('int')
+    n = 0
+    m_total = 0
+    n_total = 0
+    m_alt = 0
+
+#    Make transformation matrix
+#    Working with no dimentions (the cellsize scaling will be readded at the end)
+#    l_coord is distance from polyline
+    n_total = np.ceil(w/cellsize)
+    n_total = int(n_total+1) if ((n_total % 2) == 0) else int(n_total) # take the next odd integer
+    n_2tot = int(np.floor(n_total/2))
+    l_coord = np.linspace(-n_2tot, n_2tot, n_total) # this way, 0 is in l_coord
+    new_grid_raster = np.array([])
+    new_area_raster = np.array([])
+    for i in range(n_pnt-1):
+        xl0 = DB_x_rl[0][i]
+        xl1 = DB_x_rl[0][i+1]
+        yl0 = DB_y_rl[0][i]
+        yl1 = DB_y_rl[0][i+1]
+        dxl = xl1 - xl0
+        dyl = yl1 - yl0
+        Vl = np.array((dxl,dyl))
+        # left edge
+        zl = np.linalg.norm(Vl)
+        xr0 = DB_x_rl[1][i]
+        xr1 = DB_x_rl[1][i+1]
+        yr0 = DB_y_rl[1][i]
+        yr1 = DB_y_rl[1][i+1]
+        dxr = xr1 - xr0
+        dyr = yr1 - yr0
+        Vr = np.array((dxr,dyr))
+
+        # right edge
+        zr = np.linalg.norm(Vr)
+
+        m = int(max(np.ceil(zl/cellsize), np.ceil(zr/cellsize)))
+
+        bxl = np.linspace(xl0, xl1, m)  # left
+        byl = np.linspace(yl0, yl1, m)
+
+        bxr = np.linspace(xr0, xr1, m)  # right
+        byr = np.linspace(yr0, yr1, m)
+
+        m_tmp = np.append(m_tmp,m)
+        new_rastersegment = np.zeros((2, m, n_total))
+        for j in range(m):
+            x = np.linspace(bxl[j], bxr[j], n_total)  # line coordinates x
+            y = np.linspace(byl[j], byr[j], n_total)  # line coordinates y
+            for k in range(n_total):
+                # x,y-Koordinaten of cells on line
+                # xy_coord = bresenham(x(k),y(k),x(k),y(k),cellsize);
+                xy_coord = [x[k]/cellsize, y[k]/cellsize]
+
+                new_rastersegment[:, j, k] = [xy_coord[0], xy_coord[1]]
+
+                # plt.plot(xy_coord[0],xy_coord[1],'k.')
+        if i==0:
+            new_grid_raster = new_rastersegment
+        else:
+            new_grid_raster = np.append(new_grid_raster, np.atleast_3d([new_rastersegment[0],new_rastersegment[1]]), axis=1)
+
+
+    new_area_raster = copy.deepcopy(new_grid_raster)
+    print(np.shape(new_area_raster))
+    print(np.shape(new_area_raster[:,:,-2]))
+    new_area_raster = np.append(new_area_raster, np.atleast_3d(new_area_raster[:,:,-2]), axis=2)
+    print(np.shape(new_area_raster))
+    print(np.shape(np.swapaxes([new_area_raster[:,-2,:]],0,1)))
+    new_area_raster = np.append(new_area_raster, np.atleast_3d(np.swapaxes([new_area_raster[:,-2,:]],0,1)), axis=1)
+    print(np.shape(new_area_raster))
+    print(np.shape(new_area_raster[0,0:-1,:]))
+    dx = new_area_raster[0,1:514,0:121]-new_area_raster[0,0:513,0:121]
+    dy = new_area_raster[1,0:513,1:122]-new_area_raster[1,0:513,0:121]
+    A = np.abs(dx*dy)
+    print(np.shape(dx))
+    print(np.shape(dy))
+    print(np.shape(A))
+    fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
+    plt.imshow(dx)
+    cbh = plt.colorbar()
+    plt.show()
+
+
+
+        # bxl, byl, bxr, byr, m = splitLine(DB_x_rl, DB_y_rl, cellsize, i)
+#    delete the lines that are double at each segment connection
+    m_total = np.sum(m_tmp)
+
+    new_raster = np.zeros((2, m_total, n_total)) + np.NaN
+
+#    s_coord is distance from the start of the polyline
+    s_coord = np.zeros(m_total)
+    ds1 = 0
+    log.info('Transferring data from old to new raster')
+    for i in range(n_pnt-1):  # for each segment
+        # Division of side edges in n segments
+        # x-/y-values of lines are linspace(x0,x1,m) etc.
+        # DB_x_rl, DB_y_rl are values from polyline2path
+        bxl = np.linspace(DB_x_rl[0][i], DB_x_rl[0][i+1], m[i])  # left
+        byl = np.linspace(DB_y_rl[0][i], DB_y_rl[0][i+1], m[i])
+
+        bxr = np.linspace(DB_x_rl[1][i], DB_x_rl[1][i+1], m[i])  # right
+        byr = np.linspace(DB_y_rl[1][i], DB_y_rl[1][i+1], m[i])
+
+        # => generation of grid points for each segment
+        # grid points can be assigned to original raster data, using
+        # rasterize function
+        new_rastersegment = np.zeros((2, m[i], n_total))
+
+        for j in range(m[i]):
+            x = np.linspace(bxl[j], bxr[j], n_total)  # line coordinates x
+            y = np.linspace(byl[j], byr[j], n_total)  # line coordinates y
+            for k in range(n_total):
+                # x,y-Koordinaten of cells on line
+                # xy_coord = bresenham(x(k),y(k),x(k),y(k),cellsize);
+                xy_coord = [round(x[k]/cellsize) * cellsize,
+                            round(y[k]/cellsize) * cellsize]
+                # cell coordinates of new raster
+                xy_ind = [xy_coord[0]/cellsize + 1, xy_coord[1]/cellsize + 1]
+                # translate coordinate of cell to cell index
+                # THIS IS THE NEAREST NEIGHBOUR APPROXIMATION
+                # Assign pressure data to loc
+                new_rastersegment[:, j, k] = [xy_ind[0], xy_ind[1]]
+
+
+
+
+
+    n = 0
+    m_total = 0
+    n_total = 0
+    m_alt = 0
+
+
 #    use bresemham algorithm to determine the new raster
-    for i in range(len(DB_x_rl[0])):
+    for i in range(n_pnt):
         #   for each segment check the number of CROSS-cells
         n = geoTrans.bresenham(DB_x_rl[0, i], DB_y_rl[0, i],
                                DB_x_rl[1, i], DB_y_rl[1, i], cellsize)
         n_total = max(n_total, len(n))
 #   number of raster cells of edges parallel to polyline
     m = np.zeros(len(DB_x_rl[0])-1).astype('int')
-    for i in range(len(DB_x_rl[0])-1):
+    for i in range(n_pnt-1):
         # left edge
         zl = geoTrans.bresenham(DB_x_rl[0, i], DB_y_rl[0, i],
                                 DB_x_rl[0, i+1], DB_y_rl[0, i+1], cellsize)
@@ -255,7 +424,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
         zr = geoTrans.bresenham(DB_x_rl[1, i], DB_y_rl[1, i],
                                 DB_x_rl[1, i+1], DB_y_rl[1, i+1], cellsize)
         m[i] = max(len(zl), len(zr))
-#    delete the lines that are double at ech segment connection
+#    delete the lines that are double at each segment connection
     m_total = sum(m) - (len(DB_x_rl[0])-2)
 
 #    Calculation of segments
@@ -271,7 +440,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     s_coord = np.zeros(m_total)
     ds1 = 0
     log.info('Transferring data from old to new raster')
-    for i in range(len(DB_x_rl[0])-1):  # for each segment
+    for i in range(n_pnt-1):  # for each segment
         # Division of side edges in n segments
         # x-/y-values of lines are linspace(x0,x1,m) etc.
         # DB_x_rl, DB_y_rl are values from polyline2path

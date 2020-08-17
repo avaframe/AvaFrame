@@ -32,7 +32,6 @@ def readASCheader(fname):
     """input: Filename (z.B.: 'xx/xx/file.asc')
     returns: ascHeader for filename (see class cASCheader)
     """
-
     dhmInfo = cASCheader()
     infile = open(fname, "r")
     i = 0
