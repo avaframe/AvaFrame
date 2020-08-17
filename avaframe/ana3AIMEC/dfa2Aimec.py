@@ -20,13 +20,13 @@ def makeAimecDirs(avaDir):
     """ Make directories where Aimec reads input data from """
 
     # Set directories for Aimec inputs
-    workDir = os.path.join(avaDir, 'Work/ana3AIMEC/com1DFA')
+    workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
     flowDepthDir = os.path.join(workDir, 'dfa_depth')
     pressureDir = os.path.join(workDir, 'dfa_pressure')
     massDir = os.path.join(workDir, 'dfa_mass_balance')
 
     if os.path.isdir(workDir):
-        log.warning('Be careful Work/ana3AIMEC/com1DFA directories already existed - but got now deleted')
+        log.warning('Be careful directories in %s already existed - but got now deleted' % (workDir))
         shutil.rmtree(workDir, ignore_errors=True)
 
     os.makedirs(workDir)
@@ -48,7 +48,7 @@ def writeAimecPathsFile(cfgSetup, avaDir):
     domainWidth = float(cfgSetup['domainWidth'])
 
     # Path to com1DFA output in Aimec format
-    workDir = os.path.join(avaDir, 'Work/ana3AIMEC')
+    workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC')
 
     # Create empty variable
     emptyVar = ""
@@ -75,9 +75,9 @@ def getDFAData(avaDir, cfgDFA):
     """ Export the required input data from com1DFA output """
 
     # Initialise directories
-    inputDir = os.path.join(avaDir, 'Outputs/com1DFA/')
-    workDir = os.path.join(avaDir, 'Work/ana3AIMEC/com1DFA')
-    workDirMain = os.path.join(avaDir, 'Work/ana3AIMEC')
+    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
+    workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
+    workDirMain = os.path.join(avaDir, 'Work', 'ana3AIMEC')
 
     noSim = []      # number of Simulation
     simName = []    # name of Simulation
