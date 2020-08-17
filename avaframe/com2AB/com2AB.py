@@ -113,7 +113,7 @@ def com2AB(dem, avapath, splitPoint, OutPath,
     # read inputs, ressample ava path
     # make pofile and project split point on path
     AvaProfile, projSplitPoint = geoTrans.prepareLine(
-        dem, avapath, splitPoint, distance)
+        dem, avapath, distance, splitPoint)
 
     # Sanity check if first element of AvaProfile[3,:]
     # (i.e z component) is highest:
