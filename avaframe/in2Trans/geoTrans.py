@@ -50,11 +50,19 @@ def projectOnRaster(dem, Points):
     return Points
 
 
-def prepareLine(dem, avapath, splitPoint, distance):
+def prepareLine(dem, avapath, distance=10, Point=None):
     """ 1- Resample the avapath line with a max intervall of distance=10m
     between points (projected distance on the horizontal plane).
-    2- Make avalanch profile out of the path (affect a z value using the dem)
-    3- Get projected split point on the profil (closest point)
+    2- Make avalanche profile out of the path (affect a z value using the dem)
+    3- Get projection of points on the profil (closest point)
+    Inputs : - a dem dictionary
+             - a avapath line dictionary
+             - a resampling Distance
+             - a point dictionary (optional, can contain several point)
+    Outputs : - the resampled avaprofile
+              - the projection of the point on the profile (if several points
+              were give in input, only the closest point to the profile
+              is projected)
 
     TODO: test
     """
@@ -85,17 +93,17 @@ def prepareLine(dem, avapath, splitPoint, distance):
     ResampAvaPath['s'] = s
     AvaProfile = ResampAvaPath
     # find split point by computing the distance to the line
-    if splitPoint:
-        projSplitPoint = findSplitPoint(AvaProfile, splitPoint)
+    if Point:
+        projPoint = findSplitPoint(AvaProfile, Point)
     else:
-        projSplitPoint = None
+        projPoint = None
 
-    return AvaProfile, projSplitPoint
+    return AvaProfile, projPoint
 
 
-def findSplitPoint(AvaProfile, splitPoint):
-    """ find split point by computing the distance between splitpoints and the line
-        selects the closest splitpoint (if several were given in input)
+def findSplitPoint(AvaProfile, Points):
+    """ Finds the closest point in Points to the AvaProfile and returns
+    its projection on AvaProfile.
     """
     xcoor = AvaProfile['x']
     ycoor = AvaProfile['y']

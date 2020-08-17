@@ -47,48 +47,137 @@ def readAIMECinputs(avalancheDir):
 
     demSource = glob.glob(avalancheDir + '/Inputs/*.asc')
     try:
-        assert len(demSource) == 1, 'There should be only one and only one DEM .asc file in ' + \
+        assert len(demSource) == 1, 'There should be exactly one topography .asc file in ' + \
             avalancheDir + '/Inputs/'
-    except AssertionError as e:
+    except AssertionError:
         raise
     cfgPath['demSource'] = ''.join(demSource)
-    pressurefileList = [pathPressure +
-                        '/' +
-                        str(name) for name in
-                        sorted(os.listdir(pathPressure)) if os.path.isfile(os.path.join(pathPressure, name))]
-    cfgPath['pressurefileList'] = pressurefileList
 
-    depthfileList = [str(pathFlowHeight) +
-                     '/' +
-                     str(name) for name in
-                     sorted(os.listdir(pathFlowHeight)) if os.path.isfile(os.path.join(pathFlowHeight, name))]
-    cfgPath['depthfileList'] = depthfileList
-
-    massfileList = [str(pathMassBalance) +
-                    '/' +
-                    str(name) for name in
-                    sorted(os.listdir(pathMassBalance)) if os.path.isfile(os.path.join(pathMassBalance, name))]
-    cfgPath['massfileList'] = massfileList
+    cfgPath['pressurefileList'] = getFileList(pathPressure)
+    cfgPath['depthfileList'] = getFileList(pathFlowHeight)
+    cfgPath['massfileList'] = getFileList(pathMassBalance)
 
     pathResult = avalancheDir + '/Outputs/AimecResults'
     cfgPath['pathResult'] = pathResult
 
-    defaultName = str(avalancheDir).split('/')[-1]
-    cfgPath['defaultName'] = defaultName
-
-    set_name = pressurefileList[0].split('/')[-4]
-    cfgPath['set_name'] = set_name
-    project_name = str(profileLayer).split('/')[-4]
+    project_name = os.path.basename(avalancheDir)
     cfgPath['project_name'] = project_name
-    path_name = str(profileLayer[0]).split('/')[-1]
+    path_name = os.path.basename(profileLayer[0])
     cfgPath['path_name'] = path_name
 
     return cfgPath
 
 
+def getFileList(path2Folder):
+    """ Get list of all files in folder """
+    fileList = [path2Folder +
+                os.path.sep +
+                str(name) for name in
+                sorted(os.listdir(path2Folder)) if os.path.isfile(os.path.join(path2Folder, name))]
+    return fileList
+
+# -----------------------------------------------------------
+# Aimec main
+# -----------------------------------------------------------
+
+
+def mainAIMEC(cfgPath, cfg):
+    """
+    Main logic for AIMEC postprocessing
+    """
+
+    # Extract input parameters
+    cfgSetup = cfg['AIMECSETUP']
+    cfgFlags = cfg['FLAGS']
+    domainWidth = float(cfgSetup['domainWidth'])
+    pressureLimit = float(cfgSetup['pressureLimit'])
+
+    log.info('Prepare data for post-ptocessing')
+    # create new raster + preparing new raster assignment function
+    log.info("Creating new deskewed raster and preparing new raster assignment function")
+    deskewedRasterInd = processDataInd(cfgPath, domainWidth, cfgFlags)
+
+    # transform pressure_data and depth_data in new raster
+
+    # assign pressure data
+    log.info("Assigning pressure data to deskewed raster")
+    deskewedRasterPressure = assignData(cfgPath['pressurefileList'], deskewedRasterInd)
+
+    # assign depth data
+    log.info("Assigning depth data to deskewed raster")
+    deskewedRasterDepth = assignData(cfgPath['depthfileList'], deskewedRasterInd)
+
+    # assign dem data
+    log.info("Assigning dem data to deskewed raster")
+    deskewedRasterDEM = assignData([cfgPath['demSource']], deskewedRasterInd)
+    dem_name = os.path.basename(cfgPath['demSource'])
+
+    # Analyze data
+    log.info('Analyzing data')
+    # analyze doku
+    log.info('Comparing data to reference')
+    doku, runout_doku, delta_h, elevRel = analyzeDocu(pressureLimit,
+                                                      cfgPath['pressurefileList'],
+                                                      deskewedRasterInd,
+                                                      deskewedRasterPressure,
+                                                      deskewedRasterDepth,
+                                                      deskewedRasterPressure[0],
+                                                      deskewedRasterDEM,
+                                                      with_doku=False)
+
+    # analyze mass / entrainment
+    log.info('Analyzing entrainment data')
+    # determine growth index from entrainment data
+    # [relMass, entMass, gr_index, gr_grad] = analyze.analyzeEntrainmentdata(cfgPath['massfileList'])
+    gr_index = 0
+    relMass = 0
+    entMass = 0
+    # analyze pressure_data and depth_data
+    # determine runount, AMPP, AMD, FS,
+    log.info('Analyzing data in path coordinate system')
+    [runout, runout_mean, AMPP, MMPP, AMD, MMD] = analyzeDataWithDepth(deskewedRasterInd,
+                                                                       pressureLimit,
+                                                                       deskewedRasterPressure,
+                                                                       deskewedRasterDepth,
+                                                                       cfgPath,
+                                                                       cfgFlags)
+
+    # -----------------------------------------------------------
+    # result visualisation + report
+    # -----------------------------------------------------------
+    log.info('Visualisation of results')
+    result_visu(cfgPath, runout, AMPP, MMPP, doku, gr_index, pressureLimit)
+
+    # -----------------------------------------------------------
+    # write results to file
+    # -----------------------------------------------------------
+    log.info('Writing results to file')
+    doku_name = None
+    dam_mean = []
+    out_header = ''.join(['project_name: ',  cfgPath['project_name'], '\n',
+                          'path: ', cfgPath['path_name'], '\n',
+                          'docu: ', str(doku_name), '\n',
+                          'dhm: ', str(dem_name), '\n',
+                          'domain_width: ', str(domainWidth), '\n',
+                          'pressure_limit: ', str(pressureLimit), '\n',
+                          'runout_doku: ', str(runout_doku), '\n',
+                          'fall_height: ', str(delta_h), '\n',
+                          'release_mass: ', str(relMass), '\n',
+                          'elevation_release: ', str(elevRel),  '\n',
+                          'filenr, runout, AMPP, MMPP, entMass, growth_index, AMD, MMD, TPs, FNs, FPs, TNs, TP_depth, TP_pressure, damages_mean (%i)\n' % len(dam_mean)])
+    outname = ''.join([cfgPath['pathResult'], os.path.sep,
+                       'Results_pl', str(int(pressureLimit)), '_w', str(int(domainWidth)), '.txt'])
+
+    log.info('write output file: %s' % outname)
+    resfile = [runout, AMPP, MMPP, entMass, gr_index, AMD, MMD,
+               doku[0], doku[1], doku[2], doku[3], doku[4], doku[6]]
+    resfile.extend(dam_mean)
+    result_write(cfgPath['pressurefileList'], resfile, outname, out_header)
+
 # -----------------------------------------------------------
 # Aimec processing tools
 # -----------------------------------------------------------
+
 
 def processDataInd(cfgPath, domainWidth, cfgFlags):
     """
@@ -109,7 +198,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     ProfileLayer = cfgPath['profileLayer']
     w = domainWidth
     outpath = cfgPath['pathResult']
-    DefaultName = cfgPath['defaultName']
+    DefaultName = cfgPath['project_name']
 
     aval_data = {}
 
@@ -965,13 +1054,19 @@ def colorvar(k, k_end, colorflag, disp=0):
     return farbe
 
 
-def result_visu(fnames, rasterSource, ProfileLayer, runout, mean_max_dpp,
-                max_max_dpp, doku, GI, dpp_threshold, outpath, DefaultName=None):
+def result_visu(cfgPath, runout, mean_max_dpp, max_max_dpp, doku, GI, dpp_threshold):
     """
     Visualize results in a nice way
     Jan-Thomas Fischer BFW 2010-2012
     AK BFW 2014-2015
     """
+
+    fnames = cfgPath['pressurefileList']
+    rasterSource = cfgPath['demSource']
+    ProfileLayer = cfgPath['profileLayer']
+    outpath = cfgPath['pathResult']
+    DefaultName = cfgPath['project_name']
+
     cvar = ['ry', 'bb', 'pw', 'gy']
     colorflag = cvar[0]
 
@@ -1031,8 +1126,7 @@ def result_visu(fnames, rasterSource, ProfileLayer, runout, mean_max_dpp,
     rasterdata = dem['rasterData']
 
     Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem['header'])
-    AvaProfile, SplitPoint = geoTrans.prepareLine(
-        dem, Avapath, splitPoint=None, distance=10)
+    AvaProfile, SplitPoint = geoTrans.prepareLine(dem, Avapath, distance=10)
     x_path = AvaProfile['x']
     y_path = AvaProfile['y']
     z_path = AvaProfile['z']

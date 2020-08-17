@@ -37,8 +37,6 @@ log.info('Current avalanche: %s', avalancheDir)
 # get the configuration of an already imported module
 cfg = cfgUtils.getModuleConfig(ana3AIMEC)
 
-cfgSetup = cfg['AIMECSETUP']
-cfgFlags = cfg['FLAGS']
 cfgDFA = cfg['DFA']
 
 # Dump config to log file
@@ -48,3 +46,21 @@ logUtils.writeCfg2Log(cfg, 'ana3AIMEC')
 dfa2Aimec.makeAimecDirs(avalancheDir)
 dfa2Aimec.getDFAData(avalancheDir, cfgDFA)
 dfa2Aimec.writeAimecPathsFile(cfgSetup, avalancheDir)
+
+saveOutPath = avalancheDir + '/Outputs'
+# Extract input file locations
+cfgPath = ana3AIMEC.readAIMECinputs(avalancheDir)
+
+# write config to log file
+logUtils.writeCfg2Log(cfg, 'ana3AIMEC')
+
+startTime = time.time()
+
+log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
+         cfgPath['demSource'], cfgPath['profileLayer'])
+
+ana3AIMEC.mainAIMEC(cfgPath, cfg)
+
+endTime = time.time()
+
+log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
