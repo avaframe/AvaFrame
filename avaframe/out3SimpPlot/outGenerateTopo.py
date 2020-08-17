@@ -12,15 +12,9 @@ import numpy as np
 import configparser
 
 
-def plotDEM(z, name_ext):
+def plotDEM(z, name_ext, cfg, outDir):
     """ Plot DEM with given information on the origin of the DEM """
 
-    # Load all input Parameters
-    cfg = configparser.ConfigParser()
-    if os.path.isfile('avaframe/in3Utils/local_generateTopoCfg.ini'):
-        cfg.read('avaframe/in3Utils/local_generateTopoCfg.ini')
-    else:
-        cfg.read('avaframe/in3Utils/generateTopoCfg.ini')
     cfgTopo = cfg['TOPO']
     cfgDEM = cfg['DEMDATA']
 
@@ -31,7 +25,6 @@ def plotDEM(z, name_ext):
     xl = float(cfgDEM['xl'])
     yl = float(cfgDEM['yl'])
     dem_name = cfgDEM['dem_name']
-    dpath = cfgDEM['path']
 
     # Set coordinate grid with given origin
     xp = np.arange(xl, xl + x_end, dx)
@@ -51,8 +44,23 @@ def plotDEM(z, name_ext):
     ax.set_zlabel('surface elevation [m]')
 
     # Save figure to file
-    plt.savefig(os.path.join(dpath, '%s_%s_plot.png' % (dem_name, name_ext)))
+    plt.savefig(os.path.join(outDir, '%s_%s_plot.png' % (dem_name, name_ext)))
 
     # If flag is set, plot figure
     if cfgDEM.getboolean('showplot'):
         plt.show()
+
+
+def plotReleasePoints(xv, yv, xyPoints, DEM_type):
+
+    plt.figure()
+    plt.plot(xv, np.zeros(len(xv))+yv[0], 'k-')
+    plt.plot(xv,  np.zeros(len(xv))+yv[-1], 'k-')
+    plt.plot(np.zeros(len(yv))+xv[0], yv, 'k-')
+    plt.plot(np.zeros(len(yv))+xv[-1], yv, 'k-')
+    plt.plot(xyPoints[:, 0], xyPoints[:, 1], 'r*')
+    plt.title('Domain and release area of %s - projected' % DEM_type)
+    plt.xlabel('along valley [m]')
+    plt.ylabel('across valley [m]')
+
+    plt.show()

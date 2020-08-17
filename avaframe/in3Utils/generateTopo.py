@@ -436,7 +436,7 @@ def helix(cfgTopo, ncols, nrows, f_len, A, B, cfgChannel):
     return x, y, zv, name_ext
 
 
-def writeDEM(z, name_ext, ncols, nrows, dx, cfgDEM):
+def writeDEM(z, name_ext, ncols, nrows, dx, cfgDEM, outDir):
     """ Write topography information to file """
 
     # Read lower left corner coordinates, cellsize and noDATA value
@@ -445,11 +445,10 @@ def writeDEM(z, name_ext, ncols, nrows, dx, cfgDEM):
     cellsize = dx
     noDATA = float(cfgDEM['nodata_value'])
     dem_name = cfgDEM['dem_name']
-    dpath = cfgDEM['path']
 
     # Save elevation data to .asc file and add header lines
     z_mat = np.matrix(z)
-    with open(os.path.join(dpath, '%s_%s_Topo.asc' % (dem_name, name_ext)), 'w') as f:
+    with open(os.path.join(outDir, '%s_%s_Topo.asc' % (dem_name, name_ext)), 'w') as f:
         f.write('ncols  %d\n' % (ncols))
         f.write('nrows  %d\n' % (nrows))
         f.write('xllcorner  %.02f\n' % (xllcorner))
@@ -460,18 +459,26 @@ def writeDEM(z, name_ext, ncols, nrows, dx, cfgDEM):
             np.savetxt(f, line, fmt='%f')
 
     # Log info here
-    log.info('DEM written to: %s_%s_Topo.asc' % (dem_name, name_ext))
+    log.info('DEM written to: %s/%s_%s_Topo.asc' % (outDir, dem_name, name_ext))
 
 
-def generateTopo():
+
+def makeOutputDir(avalancheDir):
+    """ Make output directory """
+
+    outDir = os.path.join(avalancheDir, 'Outputs', 'in3Utils', 'generateTopo')
+    if os.path.isdir(outDir):
+        log.warning('Be careful %s already existed - new data is added' % (outDir))
+    else:
+        os.makedirs(outDir)
+
+    return outDir
+
+
+def generateTopo(cfg, avalancheDir):
     """ Compute coordinates of desired topography with given inputs """
 
-    # Load all input Parameters
-    cfg = configparser.ConfigParser()
-    if os.path.isfile('avaframe/in3Utils/local_generateTopoCfg.ini'):
-        cfg.read('avaframe/in3Utils/local_generateTopoCfg.ini')
-    else:
-        cfg.read('avaframe/in3Utils/generateTopoCfg.ini')
+
     cfgTopo = cfg['TOPO']
     cfgChannel = cfg['CHANNELS']
     cfgDEM = cfg['DEMDATA']
@@ -510,7 +517,10 @@ def generateTopo():
     elif DEM_type == 'HX':
         [x, y, z, name_ext] = helix(cfgTopo, ncols, nrows, f_len, A, B, cfgChannel)
 
-    # Write DEM to file
-    writeDEM(z, name_ext, ncols, nrows, float(cfgTopo['dx']), cfgDEM)
+    # Make output directory
+    outDir = makeOutputDir(avalancheDir)
 
-    return(z, name_ext)
+    # Write DEM to file
+    writeDEM(z, name_ext, ncols, nrows, float(cfgTopo['dx']), cfgDEM, outDir)
+
+    return(z, name_ext, outDir)
