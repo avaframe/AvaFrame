@@ -13,7 +13,7 @@ from avaframe.out3SimpPlot import outGenerateTopo as oT
 
 # ----------Required Settings---------------
 
-#TODO move this to a main cfg file!
+# TODO move this to a main cfg file!
 
 # Avalanche directory; see doc.avaframe.org for setup
 # TODO: full path needed?
