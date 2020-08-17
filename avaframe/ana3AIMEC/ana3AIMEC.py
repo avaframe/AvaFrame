@@ -35,17 +35,17 @@ def readAIMECinputs(avalancheDir):
     given an avalanche directory
     """
     cfgPath = {}
-    pathPressure = avalancheDir + '/Work/ana3AIMEC/com1DFA/dfa_pressure'
-    pathFlowHeight = avalancheDir + '/Work/ana3AIMEC/com1DFA/dfa_depth'
-    pathMassBalance = avalancheDir + '/Work/ana3AIMEC/com1DFA/dfa_mass_balance'
+    pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', 'com1DFA','dfa_pressure')
+    pathFlowHeight = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', 'com1DFA','dfa_depth')
+    pathMassBalance = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', 'com1DFA','dfa_mass_balance')
 
     if not os.path.exists(pathMassBalance):
         os.makedirs(pathMassBalance)
 
-    profileLayer = glob.glob(avalancheDir + '/Inputs/LINES/*aimec*.shp')
+    profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES', '*aimec*.shp'))
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
-    demSource = glob.glob(avalancheDir + '/Inputs/*.asc')
+    demSource = glob.glob(os.path.join(avalancheDir, 'Inputs','*.asc'))
     try:
         assert len(demSource) == 1, 'There should be exactly one topography .asc file in ' + \
             avalancheDir + '/Inputs/'
@@ -57,7 +57,7 @@ def readAIMECinputs(avalancheDir):
     cfgPath['depthfileList'] = getFileList(pathFlowHeight)
     cfgPath['massfileList'] = getFileList(pathMassBalance)
 
-    pathResult = avalancheDir + '/Outputs/AimecResults'
+    pathResult = os.path.join(avalancheDir, 'Outputs', 'AimecResults')
     cfgPath['pathResult'] = pathResult
 
     project_name = os.path.basename(avalancheDir)
