@@ -171,7 +171,18 @@ def writeNXYZ(xyPoints, DEM_type, cfgFile, cfgGen, outDir):
         shutil.copyfile(os.path.join(outDir, 'release_%d%s.nxyz' % (rel_no, DEM_type)), os.path.join(outDir, 'release_%d%s.txt' % (rel_no, DEM_type)))
 
 
-def getReleaseArea(cfgT, cfgR, outDir):
+def makeOutputDir(avalancheDir):
+    """ Make output directory """
+
+    outDir = os.path.join(avalancheDir, 'Inputs', 'REL')
+    if os.path.isdir(outDir):
+        log.warning('Be careful %s already existed - new data is added' % (outDir))
+    else:
+        os.makedirs(outDir)
+
+    return outDir
+
+def getReleaseArea(cfgT, cfgR, avalancheDir):
     """ Main function to compute release areas """
 
     cfgTopo = cfgT['TOPO']
@@ -224,6 +235,9 @@ def getReleaseArea(cfgT, cfgR, outDir):
 
 
     if flagCont:
+
+        # Make output directory
+        outDir = makeOutputDir(avalancheDir)
 
         # Move to correct correctOrigin
         [xv, yv, xyPoints] = correctOrigin(xv, yv, xyPoints, cfgT, y_end)
