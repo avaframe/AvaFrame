@@ -149,8 +149,8 @@ def checkProfile(AvaProfile, projSplitPoint):
 
 def bresenham(x0, y0, x1, y1, cs):
     """
-    RASTERIZE - bresenham algorithmus - JT 2011
-
+    bresenham algorithmus - JT 2011
+    Find all the cells of a raster (defined by its cellsize) that a line (defines by two points P0 and P1) crosses.
     input: x0, y0, x1, y1,cellsize
     output: array of x y coodinates of cells hit inbetween
 
@@ -201,6 +201,8 @@ def bresenham(x0, y0, x1, y1, cs):
 def path2domain(x, y, w, csz):
     """
     path2domain
+    Creates a domain (irregular raster) along a path, given the path polyline, a domain width
+    and a raster cellsize
     Usage:
         [xp, yp, ] = path2domain(x, y, w, csz)
        Input:
@@ -210,19 +212,23 @@ def path2domain(x, y, w, csz):
        Output:
            xp, yp: Arrays determining a path of width w along a polyline
 
-       Uwe Schlifkowitz/ BFW, June 2011
+    [Fischer2013] Fischer, Jan-Thomas. (2013).
+    A novel approach to evaluate and compare computational snow avalanche simulation.
+    Natural Hazards and Earth System Sciences. 13. 1655-. 10.5194/nhess-13-1655-2013.
+    Uwe Schlifkowitz/ BFW, June 2011
     """
 #    Difference between x- bzw. y-Coordinates of Polyline
 #    first and last  Vertex: Difference between this and the next
 #    other vertices: Difference between previous and next
     dx = np.array((x[1]-x[0]))
     dy = np.array((y[1]-y[0]))
-    for i in range(2, len(x)):
+    n = len(x)
+    for i in range(2, n):
         dx = np.append(dx, (x[i]-x[i-2])/2.)
         dy = np.append(dy, (y[i]-y[i-2])/2.)
 
-    dx = np.append(dx, x[len(x)-1]-x[len(x)-2])
-    dy = np.append(dy, y[len(x)-1]-y[len(x)-2])
+    dx = np.append(dx, x[-1]-x[-2])
+    dy = np.append(dy, y[-1]-y[-2])
 
 #    Direction of normal vector of difference,
 #    a.k.a. bisecting line of angle
