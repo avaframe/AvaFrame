@@ -35,9 +35,9 @@ def readAIMECinputs(avalancheDir):
     given an avalanche directory
     """
     cfgPath = {}
-    pathPressure = avalancheDir + '/Outputs/com1DFA/dfa_pressure'
-    pathFlowHeight = avalancheDir + '/Outputs/com1DFA/dfa_depth'
-    pathMassBalance = avalancheDir + '/Outputs/com1DFA/dfa_mass_balance'
+    pathPressure = avalancheDir + '/Work/ana3AIMEC/com1DFA/dfa_pressure'
+    pathFlowHeight = avalancheDir + '/Work/ana3AIMEC/com1DFA/dfa_depth'
+    pathMassBalance = avalancheDir + '/Work/ana3AIMEC/com1DFA/dfa_mass_balance'
 
     if not os.path.exists(pathMassBalance):
         os.makedirs(pathMassBalance)

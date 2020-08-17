@@ -8,6 +8,7 @@
 
 # Load modules
 import logging
+import time
 
 # Local imports
 from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC
@@ -37,6 +38,7 @@ log.info('Current avalanche: %s', avalancheDir)
 # get the configuration of an already imported module
 cfg = cfgUtils.getModuleConfig(ana3AIMEC)
 
+cfgSetup = cfg['AIMECSETUP']
 cfgDFA = cfg['DFA']
 
 # Dump config to log file

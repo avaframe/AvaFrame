@@ -109,22 +109,22 @@ def findSplitPoint(AvaProfile, Points):
     ycoor = AvaProfile['y']
     Dist = np.empty((0))
     IndSplit = np.empty((0))
-    for i in range(len(splitPoint['x'])):
-        dist = np.sqrt((xcoor - splitPoint['x'][i])**2 +
-                       (ycoor - splitPoint['y'][i])**2)
+    for i in range(len(Points['x'])):
+        dist = np.sqrt((xcoor - Points['x'][i])**2 +
+                       (ycoor - Points['y'][i])**2)
         indSplit = np.argmin(dist)
         IndSplit = np.append(IndSplit, indSplit)
         Dist = np.append(Dist, dist[indSplit])
 
     ind = np.argmin(Dist)
     indSplit = int(IndSplit[ind])
-    projSplitPoint = {}
-    projSplitPoint['x'] = AvaProfile['x'][indSplit]
-    projSplitPoint['y'] = AvaProfile['y'][indSplit]
-    projSplitPoint['z'] = AvaProfile['z'][indSplit]
-    projSplitPoint['s'] = AvaProfile['s'][indSplit]
-    projSplitPoint['indSplit'] = indSplit
-    return projSplitPoint
+    projPoint = {}
+    projPoint['x'] = AvaProfile['x'][indSplit]
+    projPoint['y'] = AvaProfile['y'][indSplit]
+    projPoint['z'] = AvaProfile['z'][indSplit]
+    projPoint['s'] = AvaProfile['s'][indSplit]
+    projPoint['indSplit'] = indSplit
+    return projPoint
 
 
 def checkProfile(AvaProfile, projSplitPoint):
