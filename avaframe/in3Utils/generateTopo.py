@@ -134,7 +134,7 @@ def inclinedplane(cfg):
     return x, y, zv
 
 
-def hckeysmooth(cfg):
+def hockeysmooth(cfg):
     """
         Compute coordinates of an inclined plane with a flat foreland  defined by
         total fall height z0, angle to flat foreland (mean_alpha) and a radius (r_circ) to
