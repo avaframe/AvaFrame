@@ -27,15 +27,16 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 debugPlotFlag = False
 
-def readAIMECinputs(avalancheDir, dirName = 'com1DFA'):
+
+def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     """
     Reads the requiered files for AIMEC postpocessing
     given an avalanche directory
     """
     cfgPath = {}
-    pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,'dfa_pressure')
-    pathFlowHeight = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,'dfa_depth')
-    pathMassBalance = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,'dfa_mass_balance')
+    pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_pressure')
+    pathFlowHeight = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_depth')
+    pathMassBalance = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_mass_balance')
 
     if not os.path.exists(pathMassBalance):
         os.makedirs(pathMassBalance)
@@ -43,7 +44,7 @@ def readAIMECinputs(avalancheDir, dirName = 'com1DFA'):
     profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES', '*aimec*.shp'))
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
-    demSource = glob.glob(os.path.join(avalancheDir, 'Inputs','*.asc'))
+    demSource = glob.glob(os.path.join(avalancheDir, 'Inputs', '*.asc'))
     try:
         assert len(demSource) == 1, 'There should be exactly one topography .asc file in ' + \
             avalancheDir + '/Inputs/'
@@ -62,7 +63,7 @@ def readAIMECinputs(avalancheDir, dirName = 'com1DFA'):
     cfgPath['project_name'] = project_name
     path_name = os.path.basename(profileLayer[0])
     cfgPath['path_name'] = path_name
-    cfgPath['dirName']  = 'com1DFA'
+    cfgPath['dirName'] = 'com1DFA'
 
     return cfgPath
 
@@ -94,35 +95,32 @@ def mainAIMEC(cfgPath, cfg):
     log.info('Prepare data for post-ptocessing')
     # create new raster + preparing new raster assignment function
     log.info("Creating new deskewed raster and preparing new raster assignment function")
-    deskewedRasterInd = processDataInd(cfgPath, domainWidth, cfgFlags)
+    raster_transfo = processDataInd(cfgPath, domainWidth, cfgFlags)
 
     # transform pressure_data and depth_data in new raster
-
+    newRasters = {}
     # assign pressure data
     log.info("Assigning pressure data to deskewed raster")
-    deskewedRasterPressure = assignData(cfgPath['pressurefileList'], deskewedRasterInd)
-
+    newRasterPressure = assignData(cfgPath['pressurefileList'], raster_transfo)
+    newRasters['newRasterPressure'] = newRasterPressure
     # assign depth data
     log.info("Assigning depth data to deskewed raster")
-    deskewedRasterDepth = assignData(cfgPath['depthfileList'], deskewedRasterInd)
-
+    newRasterDepth = assignData(cfgPath['depthfileList'], raster_transfo)
+    newRasters['newRasterDepth'] = newRasterDepth
     # assign dem data
     log.info("Assigning dem data to deskewed raster")
-    deskewedRasterDEM = assignData([cfgPath['demSource']], deskewedRasterInd)
+    newRasterDEM = assignData([cfgPath['demSource']], raster_transfo)
     dem_name = os.path.basename(cfgPath['demSource'])
+    newRasters['newRasterDEM'] = newRasterDEM
 
     # Analyze data
     log.info('Analyzing data')
-    # analyze doku
-    log.info('Comparing data to reference')
-    doku, runout_doku, delta_h, elevRel = analyzeDocu(pressureLimit,
-                                                      cfgPath['pressurefileList'],
-                                                      deskewedRasterInd,
-                                                      deskewedRasterPressure,
-                                                      deskewedRasterDepth,
-                                                      deskewedRasterPressure[0],
-                                                      deskewedRasterDEM,
-                                                      with_doku=False)
+    # # analyze doku
+    # log.info('Comparing data to reference')
+    # doku, runout_doku, delta_h, elevRel = analyzeDocu(pressureLimit,
+    #                                                   cfgPath['pressurefileList'],
+    #                                                   raster_transfo,
+    #                                                   newRasters)
 
     # analyze mass / entrainment
     log.info('Analyzing entrainment data')
@@ -134,63 +132,59 @@ def mainAIMEC(cfgPath, cfg):
     # analyze pressure_data and depth_data
     # determine runount, AMPP, AMD, FS,
     log.info('Analyzing data in path coordinate system')
-    [runout, runout_mean, AMPP, MMPP, AMD, MMD] = analyzeDataWithDepth(deskewedRasterInd,
-                                                                       pressureLimit,
-                                                                       deskewedRasterPressure,
-                                                                       deskewedRasterDepth,
-                                                                       cfgPath,
-                                                                       cfgFlags)
+    resAnalysis = analyzeDataWithDepth(raster_transfo, pressureLimit, newRasters, cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
-    log.info('Visualisation of results')
-    result_visu(cfgPath, runout, AMPP, MMPP, doku, gr_index, pressureLimit)
+    # log.info('Visualisation of results')
+    # result_visu(cfgPath, resAnalysis, doku, gr_index, pressureLimit)
 
     # -----------------------------------------------------------
     # write results to file
     # -----------------------------------------------------------
     log.info('Writing results to file')
-    doku_name = None
-    dam_mean = []
     out_header = ''.join(['project_name: ',  cfgPath['project_name'], '\n',
                           'path: ', cfgPath['path_name'], '\n',
-                          'docu: ', str(doku_name), '\n',
                           'dhm: ', str(dem_name), '\n',
                           'domain_width: ', str(domainWidth), '\n',
                           'pressure_limit: ', str(pressureLimit), '\n',
-                          'runout_doku: ', str(runout_doku), '\n',
-                          'fall_height: ', str(delta_h), '\n',
+                          #'fall_height: ', str(delta_h), '\n',
                           'release_mass: ', str(relMass), '\n',
-                          'elevation_release: ', str(elevRel),  '\n',
-                          'filenr, runout, AMPP, MMPP, entMass, growth_index, AMD, MMD, TPs, FNs, FPs, TNs, TP_depth, TP_pressure, damages_mean (%i)\n' % len(dam_mean)])
+                          #'elevation_release: ', str(elevRel),  '\n',
+                          'filenr, runout, AMPP, MMPP, entMass, growth_index, AMD, MMD\n'])
     outname = ''.join([cfgPath['pathResult'], os.path.sep,
                        'Results_pl', str(int(pressureLimit)), '_w', str(int(domainWidth)), '.txt'])
 
     log.info('write output file: %s' % outname)
-    resfile = [runout, AMPP, MMPP, entMass, gr_index, AMD, MMD,
-               doku[0], doku[1], doku[2], doku[3], doku[4], doku[6]]
-    resfile.extend(dam_mean)
+    runout = resAnalysis['runout']
+    AMPP = resAnalysis['AMPP']
+    MMPP = resAnalysis['MMPP']
+    AMD = resAnalysis['AMD']
+    MMD = resAnalysis['MMD']
+    resfile = [runout, AMPP, MMPP, entMass, gr_index, AMD, MMD]
     result_write(cfgPath['pressurefileList'], resfile, outname, out_header)
 
 # -----------------------------------------------------------
 # Aimec processing tools
 # -----------------------------------------------------------
+
+
 def processDataInd(cfgPath, domainWidth, cfgFlags):
     """
-    process data ind
     this function is used to process the rasterdata such that it can be
     analysed with the methods for a regular grid
     data given in a regular grid is projected on a nonuniform grid given by
     a polyline
+    This function returns the information about this transformation
 
-    JT Fischer, Uwe Schlifkowitz BFW 2010-2012
-    AK BFW 2014
-
-    input: names of rasterfiles, poly names, path width
-    ouput: structure{x coordinate along new raster, y coordinate, rasterdata}
+    input: cfgPath, domainWidth, cfgFlags
+    ouput: raster_transfo =
+            -(x,y) coordinates of the points of the new raster
+            -(s,l) new coordinate System
+            -rasterArea, real area of the cells of the new raster
     """
-    #Read input parameters
+    # Read input parameters
     rasterSource = cfgPath['pressurefileList'][0]
     ProfileLayer = cfgPath['profileLayer']
     w = domainWidth
@@ -218,17 +212,15 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     # output: Left and right side points for the domain
     DB = geoTrans.path2domain(Avapath, w, header)
 
-
-
-    ### Make transformation matrix
+    # Make transformation matrix
     raster_transfo = makeTransfoMat(raster_transfo, DB, w, cellsize)
 
     # calculate the real area of the new cells as well as the s_coord
     raster_transfo = getSArea(raster_transfo)
 
     log.info('Size of rasterdata- old: %d x %d - new: %d x %d' % (
-            np.size(rasterdata, 0), np.size(rasterdata, 1),
-            np.size(raster_transfo['grid_x'], 0), np.size(raster_transfo['grid_x'], 1)))
+        np.size(rasterdata, 0), np.size(rasterdata, 1),
+        np.size(raster_transfo['grid_x'], 0), np.size(raster_transfo['grid_x'], 1)))
 
     # affect values
     raster_transfo['header'] = header
@@ -239,7 +231,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     raster_transfo['grid_y'] = raster_transfo['grid_y']*cellsize + header.yllcorner
     raster_transfo['rasterArea'] = raster_transfo['rasterArea']*cellsize*cellsize
 
-    aval_data = transform(rasterSource,raster_transfo)
+    aval_data = transform(rasterSource, raster_transfo)
     # visu
     input_data = {}
     input_data['aval_data'] = aval_data
@@ -248,7 +240,6 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     input_data['DB'] = DB
 
     visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags)
-
 
     return raster_transfo
 
@@ -264,7 +255,7 @@ def split_section(DB, i):
     yl1 = DB['DB_y_l'][i+1]
     dxl = xl1 - xl0
     dyl = yl1 - yl0
-    Vl = np.array((dxl,dyl))
+    Vl = np.array((dxl, dyl))
     zl = np.linalg.norm(Vl)
 
     # right edge
@@ -274,7 +265,7 @@ def split_section(DB, i):
     yr1 = DB['DB_y_r'][i+1]
     dxr = xr1 - xr0
     dyr = yr1 - yr0
-    Vr = np.array((dxr,dyr))
+    Vr = np.array((dxr, dyr))
     zr = np.linalg.norm(Vr)
 
     # number of segments
@@ -288,6 +279,7 @@ def split_section(DB, i):
 
     return bxl, byl, bxr, byr, m
 
+
 def makeTransfoMat(raster_transfo, DB, w, cellsize):
     """ Make transformation matrix.
         Takes a Domain Boundary and finds the (x,y) coordinates of the new raster
@@ -295,18 +287,18 @@ def makeTransfoMat(raster_transfo, DB, w, cellsize):
     """
     # number of points describing the avaPath
     n_pnt = np.shape(DB['DB_x_r'])[0]
-    ## Working with no dimentions (the cellsize scaling will be readded at the end)
+    # Working with no dimentions (the cellsize scaling will be readded at the end)
     # l_coord is the distance from polyline (cross section)
     # maximum step should be smaller then the cellsize
     n_total = np.ceil(w/cellsize)
     # take the next odd integer. This ensure that the l_coord = o exists
     n_total = int(n_total+1) if ((n_total % 2) == 0) else int(n_total)
     n_2tot = int(np.floor(n_total/2))
-    l_coord = np.linspace(-n_2tot, n_2tot, n_total) # this way, 0 is in l_coord
+    l_coord = np.linspace(-n_2tot, n_2tot, n_total)  # this way, 0 is in l_coord
 
     # initialize new_rasters
-    new_grid_raster_x = np.array([]) # x_coord of the points of the new raster
-    new_grid_raster_y = np.array([]) # y_coord of the points of the new raster
+    new_grid_raster_x = np.array([])  # x_coord of the points of the new raster
+    new_grid_raster_y = np.array([])  # y_coord of the points of the new raster
     # loop on each section of the path
     for i in range(n_pnt-1):
         # split edges in segments
@@ -318,24 +310,25 @@ def makeTransfoMat(raster_transfo, DB, w, cellsize):
             x = np.linspace(bxl[j], bxr[j], n_total)  # line coordinates x
             y = np.linspace(byl[j], byr[j], n_total)  # line coordinates y
             # save x and y coordinates of the new raster points
-            if i==0 and j==0:
-                new_grid_raster_x = x.reshape(1,n_total)
-                new_grid_raster_y = y.reshape(1,n_total)
+            if i == 0 and j == 0:
+                new_grid_raster_x = x.reshape(1, n_total)
+                new_grid_raster_y = y.reshape(1, n_total)
             else:
-                new_grid_raster_x = np.append(new_grid_raster_x,x.reshape(1,n_total), axis=0)
-                new_grid_raster_y = np.append(new_grid_raster_y,y.reshape(1,n_total), axis=0)
+                new_grid_raster_x = np.append(new_grid_raster_x, x.reshape(1, n_total), axis=0)
+                new_grid_raster_y = np.append(new_grid_raster_y, y.reshape(1, n_total), axis=0)
 
     # add last column
     x = np.linspace(bxl[m-1], bxr[m-1], n_total)  # line coordinates x
     y = np.linspace(byl[m-1], byr[m-1], n_total)  # line coordinates y
-    new_grid_raster_x = np.append(new_grid_raster_x,x.reshape(1,n_total), axis=0)
-    new_grid_raster_y = np.append(new_grid_raster_y,y.reshape(1,n_total), axis=0)
+    new_grid_raster_x = np.append(new_grid_raster_x, x.reshape(1, n_total), axis=0)
+    new_grid_raster_y = np.append(new_grid_raster_y, y.reshape(1, n_total), axis=0)
 
     raster_transfo['l_coord'] = l_coord
     raster_transfo['grid_x'] = new_grid_raster_x
     raster_transfo['grid_y'] = new_grid_raster_y
 
     return raster_transfo
+
 
 def getSArea(raster_transfo):
     """
@@ -346,21 +339,21 @@ def getSArea(raster_transfo):
     y_coord = raster_transfo['grid_y']
     # add ghost lines and columns to the coord matrix
     # in order to perform dx and dy calculation
-    n, m =np.shape(x_coord)
-    x_coord = np.append(x_coord, x_coord[:,-2].reshape(n, 1), axis=1)
-    y_coord = np.append(y_coord, y_coord[:,-2].reshape(n, 1), axis=1)
-    n, m =np.shape(x_coord)
-    x_coord = np.append(x_coord, x_coord[-2,:].reshape(1, m), axis=0)
-    y_coord = np.append(y_coord, y_coord[-2,:].reshape(1, m), axis=0)
-    n, m =np.shape(x_coord)
+    n, m = np.shape(x_coord)
+    x_coord = np.append(x_coord, x_coord[:, -2].reshape(n, 1), axis=1)
+    y_coord = np.append(y_coord, y_coord[:, -2].reshape(n, 1), axis=1)
+    n, m = np.shape(x_coord)
+    x_coord = np.append(x_coord, x_coord[-2, :].reshape(1, m), axis=0)
+    y_coord = np.append(y_coord, y_coord[-2, :].reshape(1, m), axis=0)
+    n, m = np.shape(x_coord)
     # calculate dx and dy for each point in the l direction
-    dxl = x_coord[0:n-1,1:m]-x_coord[0:n-1,0:m-1]
-    dyl = y_coord[0:n-1,1:m]-y_coord[0:n-1,0:m-1]
+    dxl = x_coord[0:n-1, 1:m]-x_coord[0:n-1, 0:m-1]
+    dyl = y_coord[0:n-1, 1:m]-y_coord[0:n-1, 0:m-1]
     # deduce the distance in l direction
     Vl = np.sqrt(dxl*dxl + dyl*dyl)
     # calculate dx and dy for each point in the s direction
-    dxs = x_coord[1:n,0:m-1]-x_coord[0:n-1,0:m-1]
-    dys = y_coord[1:n,0:m-1]-y_coord[0:n-1,0:m-1]
+    dxs = x_coord[1:n, 0:m-1]-x_coord[0:n-1, 0:m-1]
+    dys = y_coord[1:n, 0:m-1]-y_coord[0:n-1, 0:m-1]
     # deduce the distance in s direction
     Vs = np.sqrt(dxs*dxs + dys*dys)
 
@@ -368,11 +361,12 @@ def getSArea(raster_transfo):
     new_area_raster = np.abs(Vl*Vs)
     raster_transfo['rasterArea'] = new_area_raster
     # get s_coord
-    ds = Vs[:,int(np.floor(m/2))-1]
+    ds = Vs[:, int(np.floor(m/2))-1]
     s_coord = np.cumsum(ds)-ds[0]
     raster_transfo['s_coord'] = s_coord
 
     return raster_transfo
+
 
 def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
     """
@@ -393,7 +387,7 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
     x_path = Avapath['x']*cellsize+xllcenter
     y_path = Avapath['y']*cellsize+yllcenter
     # read domain boundarries with scale
-    DB =input_data['DB']
+    DB = input_data['DB']
     DB_x_l = DB['DB_x_l']*cellsize+xllcenter
     DB_x_r = DB['DB_x_r']*cellsize+xllcenter
     DB_y_l = DB['DB_y_l']*cellsize+yllcenter
@@ -429,7 +423,7 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
                     'g-', linewidth=lw, label='domain')
     ref3 = plt.plot(DB_x_r, DB_y_r,
                     'g-', linewidth=lw, label='domain')
-    ref3 = plt.plot([DB_x_l, DB_x_r],[DB_y_l, DB_y_r],
+    ref3 = plt.plot([DB_x_l, DB_x_r], [DB_y_l, DB_y_r],
                     'g-', linewidth=lw, label='domain')
     refs = [ref2[0], ref3[0]]
 
@@ -446,7 +440,7 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
     ax2 = plt.subplot(122)
     ax2.title.set_text('sl Domain')
     isosurf = copy.deepcopy(input_data['aval_data'])
-    xx, yy = np.meshgrid(raster_transfo['l_coord'], raster_transfo['s_coord'] )
+    xx, yy = np.meshgrid(raster_transfo['l_coord'], raster_transfo['s_coord'])
     masked_array = np.ma.masked_where(isosurf == 0, isosurf)
     cmap = copy.copy(matplotlib.cm.jet)
     cmap.set_bad('w', 1.)
@@ -476,8 +470,8 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
 
     plt.close(fig)
 
-def transform(fname, raster_transfo):
 
+def transform(fname, raster_transfo):
     """
     Affect value to the points of the new raster (after domain transormation)
     input:
@@ -500,10 +494,11 @@ def transform(fname, raster_transfo):
     Points['x'] = xx.flatten()
     Points['y'] = yy.flatten()
     Points = geoTrans.projectOnRaster_Vect(data, Points)
-    new_data = Points['z'].reshape(n,m)
+    new_data = Points['z'].reshape(n, m)
     log.info('Data-file: %s - raster values transferred' % (name))
 
     return new_data
+
 
 def assignData(fnames, raster_transfo):
     """
@@ -520,7 +515,7 @@ def assignData(fnames, raster_transfo):
     log.info('Transfer data of %d file(s) from old to new raster' % maxtopo)
     for i in range(maxtopo):
         fname = fnames[i]
-        aval_data[i] = transform(fname,raster_transfo)
+        aval_data[i] = transform(fname, raster_transfo)
 
     return aval_data
 
@@ -529,8 +524,7 @@ def assignData(fnames, raster_transfo):
 # Aimec analysis tools
 # -----------------------------------------------------------
 
-def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
-                depthData, dokuData, dhmData, with_doku):
+def analyzeDocu(p_lim, fnames, raster_transfo, newRasters):
     """
     Compare Simulation - Documentation
 
@@ -543,45 +537,34 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
     ouput: structure{teilfächen(4),mean-values for pressure and depth(4)} +
     runout-length of doku
     """
-
     n_topo = len(fnames)
     avalData = np.array([[None for m in range(n_topo)] for n in range(8)])
+    pressureData = newRasters['newRasterPressure']
+    depthData = newRasters['newRasterDepth']
+    demData = newRasters['newRasterDEM']
+    s_coord = raster_transfo['s_coord']
+    l_coord = raster_transfo['l_coord']
+    rasterArea = raster_transfo['rasterArea']
+    # take first simulation as reference
+    new_mask = copy.deepcopy(pressureData[0])
 
-    if with_doku:
-        log.info('Compare pressure data with doku data')
-        s_coordinate_doku = rasterInd['s_coord']
-        l_coordinate_doku = rasterInd['l_coord']
-        new_mask = dokuData
+    # get mean max for each cross section on the refference
+    refCrossMean = np.nansum(new_mask*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+    refCrossMax = np.array((np.nanmax(new_mask, 1)))
+
+    lindex = np.nonzero(refCrossMax > p_lim)[0]
+    if lindex.any():
+        cupper_doku = min(lindex)
+        clower_doku = max(lindex)
     else:
-        log.warning('No doku found. Use ref-sim: %s instead' % (fnames[0].split('/')[-1]))
-        # if no docu-polyline --> ref.sim. ≃ doku
-        s_coordinate_doku = rasterInd['s_coord']
-        l_coordinate_doku = rasterInd['l_coord']
-        new_mask = copy.deepcopy(pressureData[0])
+        log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % p_lim)
+        cupper_doku = 0
+        clower_doku = 0
+    refRunout = s_coord[clower_doku]
 
-        doku_cross = np.array((np.nanmax(new_mask, 1),
-                               np.nanmean(new_mask, 1)))
-#        doku(s)
-#        search in doku values
-        lindex = np.nonzero(doku_cross[0] > p_lim)[0]
-        if lindex.any():
-            cupper_doku = min(lindex)
-            clower_doku = max(lindex)
-        else:
-            log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % p_lim)
-            cupper_doku = 0
-            clower_doku = 0
-        runout_doku = s_coordinate_doku[clower_doku]
-#    analyze shape of the avalanche front (last frontshape m)
-#    from runout point frontshapelength back and measure medium??? width
-#    find the point of frontal length before runout
-        fs_i, fs_v = min(enumerate(abs(s_coordinate_doku - runout_doku + 200)),
-                         key=operator.itemgetter(1))
-#        fs_i, fs_v = min(enumerate(abs(s_coordinate_doku - runout_doku + frontshape_length)),
-#                         key=operator.itemgetter(1))
-        new_mask[0:fs_i] = 0
-        new_mask[np.where(np.nan_to_num(new_mask) < p_lim)] = 0
-        new_mask[np.where(np.nan_to_num(new_mask) >= p_lim)] = 1
+
+    new_mask[np.where(np.nan_to_num(new_mask) < p_lim)] = 0
+    new_mask[np.where(np.nan_to_num(new_mask) >= p_lim)] = 1
 
 #   comparison rasterdata with mask
     log.info('Sim number\tTP\tFN\tFP\tTN')
@@ -590,9 +573,9 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
     n_start, m_start = np.nonzero(np.nan_to_num(new_mask))
     n_start = min(n_start)
 
-    n_total = len(rasterInd['s_coord'])
-    m_total = len(rasterInd['l_coord'])
-    cellarea = rasterInd['rasterArea']
+    n_total = len(raster_transfo['s_coord'])
+    m_total = len(raster_transfo['l_coord'])
+    cellarea = raster_transfo['rasterArea']
 
     for i in range(n_topo):
         rasterdata = pressureData[i]
@@ -673,12 +656,12 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
             cupper_doku = 0
             clower_doku = 0
 
-    runout_doku = s_coordinate_doku[clower_doku]
+    runout_doku = s_coord[clower_doku]
 
     # if dhm delta h analysis
     # Achtung Fehler in SamosAT: Druckraster und DHM-Raster stimmen nicht exakt überein!
     # Eventuell shift in assignData berücksichtigen
-    new_dhm = dhmData[0]
+    new_dem = demData[0]
     # find first cells that have flow - (randomly) choose simulation
     # P(s)
     p_cross = np.array((np.nanmax(rasterdata, 1),
@@ -691,13 +674,13 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
     else:
         log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % p_lim)
         cupper = 0
-    elevRel = new_dhm[cupper, int(m_total/2)]
-    deltah = new_dhm[cupper, int(m_total/2)] - new_dhm[clower_doku, int(m_total/2)]
+    elevRel = new_dem[cupper, int(m_total/2)]
+    deltah = new_dem[cupper, int(m_total/2)] - new_dem[clower_doku, int(m_total/2)]
 
     return avalData, runout_doku, deltah, elevRel
 
 
-def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
+def analyzeDataWithDepth(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     """
     ANALYZEData
 
@@ -706,14 +689,16 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
     fname = cfgPath['pressurefileList']
     outpath = cfgPath['pathResult']
 
-    if data_depth == None:
-        use_depth = None
-    else:
-        use_depth = 1
+    data = newRasters['newRasterPressure']
+    data_depth = newRasters['newRasterDepth']
+    s_coord = raster_transfo['s_coord']
+    l_coord = raster_transfo['l_coord']
+    rasterArea = raster_transfo['rasterArea']
 
-#    initialize Arrays
+    resAnalysis = {}
+
+    # initialize Arrays
     n_topo = len(fname)
-
     runout = np.zeros((n_topo))
     runout_mean = np.zeros((n_topo))
     ampp = np.zeros((n_topo))
@@ -722,32 +707,32 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
     mmd = np.zeros((n_topo))
     frontal_shape = np.zeros((n_topo))
 
-    s_coordinate = rasterInd['s_coord']
-    l_coordinate = rasterInd['l_coord']
 
-    p_cross_all = np.zeros((n_topo, len(s_coordinate)))
+    p_cross_all = np.zeros((n_topo, len(s_coord)))
     log.info('Sim number \t rRunout \t rampp \t ramd \t FS')
-#    For each data set
+    # For each data set
     for i in range(n_topo):
         rasterdata = data[i]
-#    include for depth
-        if use_depth:
-            rasterdata_depth = data_depth[i]
-#    Maximum and averaged Values of pressure and depth
-        # P(s)
-        p_cross = np.array((np.nanmax(rasterdata, 1),
-                            np.nanmean(rasterdata, 1)))
-#        # P(l)
-#        p_long = np.array((np.amax(rasterdata, 0),
-#                           np.mean(rasterdata, 0)))
-        # D(s)
-        if use_depth:
-            d_cross = np.array((np.nanmax(rasterdata_depth, 1),
-                                np.nanmean(rasterdata_depth, 1)))
+        rasterdata_depth = data_depth[i]
 
-#    Determine runout according to maximum and averaged values
+        # get mean max for each cross section for pressure
+        presCrossMean = np.nansum(rasterdata*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+        presCrossMax = np.nanmax(rasterdata, 1)
+        # also get the Area corresponding to those cells
+        ind_presCrossMax = np.nanargmax(rasterdata, 1)
+        ind_1 = np.arange(np.shape(rasterdata)[0])
+        AreapresCrossMax = rasterArea[ind_1,ind_presCrossMax]
+        # get mean max for each cross section for pressure
+        dCrossMean = np.nansum(rasterdata_depth*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+        dCrossMax = np.nanmax(rasterdata_depth, 1)
+        # also get the Area corresponding to those cells
+        ind_dCrossMax = np.nanargmax(rasterdata_depth, 1)
+        ind_1 = np.arange(np.shape(rasterdata_depth)[0])
+        AreadCrossMax = rasterArea[ind_1,ind_dCrossMax]
+
+        #   Determine runout according to maximum and averaged values
         # search in max values
-        lindex = np.nonzero(p_cross[0] > p_lim)[0]
+        lindex = np.nonzero(presCrossMax > p_lim)[0]
         if lindex.any():
             cupper = min(lindex)
             clower = max(lindex)
@@ -755,8 +740,8 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
             log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % p_lim)
             cupper = 0
             clower = 0
-        #        search in mean values
-        lindex = np.nonzero(p_cross[1] > p_lim)[0]
+        # search in mean values
+        lindex = np.nonzero(presCrossMean > p_lim)[0]
         if lindex.any():
             cupper_m = min(lindex)
             clower_m = max(lindex)
@@ -764,16 +749,15 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
             log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % p_lim)
             cupper_m = 0
             clower_m = 0
-    #    Mean max dpp of Cross-Section
-        ampp[i] = np.mean(p_cross[0][cupper:clower+1])
-        mmpp[i] = max(p_cross[0][cupper:clower+1])
-        if use_depth:
-            amd[i] = np.mean(d_cross[0][cupper:clower+1])
-            mmd[i] = max(d_cross[0][cupper:clower+1])
-    #    Runout
-        runout[i] = s_coordinate[clower]
-        runout_mean[i] = s_coordinate[clower_m]
+        # Mean max dpp of Cross-Section
+        ampp[i] = np.nansum((presCrossMax*AreapresCrossMax)[cupper:clower+1])/np.nansum(AreapresCrossMax[cupper:clower+1])
+        mmpp[i] = max(presCrossMax[cupper:clower+1])
 
+        amd[i] = np.nansum((dCrossMax*AreadCrossMax)[cupper:clower+1])/np.nansum(AreadCrossMax[cupper:clower+1])
+        mmd[i] = max(dCrossMax[cupper:clower+1])
+    #    Runout
+        runout[i] = s_coord[clower]
+        runout_mean[i] = s_coord[clower_m]
 
         log.info('%s\t%10.4f\t%10.4f\t%10.4f' % (i+1, runout[i], ampp[i], amd[i]))
 
@@ -784,16 +768,16 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
         if i == 0:
             fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
             ax1 = plt.subplot(121)
-            ref1 = ax1.plot([l_coordinate[0], l_coordinate[len(l_coordinate)-1]],
-                            [s_coordinate[clower], s_coordinate[clower]], 'g-')
-            ref2 = ax1.plot([l_coordinate[0], l_coordinate[len(l_coordinate)-1]],
-                            [s_coordinate[clower_m], s_coordinate[clower_m]], 'r-')
-#            ref3 = ax1.plot([l_coordinate[frleft], l_coordinate[frleft]],
-#                            [s_coordinate[fs_i], s_coordinate[clower]],'k-')
-#            ref4 = ax1.plot([l_coordinate[frright], l_coordinate[frright]],
-#                         [s_coordinate[fs_i], s_coordinate[clower]],'k-')
+            ref1 = ax1.plot([l_coord[0], l_coord[len(l_coord)-1]],
+                            [s_coord[clower], s_coord[clower]], 'g-')
+            ref2 = ax1.plot([l_coord[0], l_coord[len(l_coord)-1]],
+                            [s_coord[clower_m], s_coord[clower_m]], 'r-')
+#            ref3 = ax1.plot([l_coord[frleft], l_coord[frleft]],
+#                            [s_coord[fs_i], s_coord[clower]],'k-')
+#            ref4 = ax1.plot([l_coord[frright], l_coord[frright]],
+#                         [s_coord[fs_i], s_coord[clower]],'k-')
             isosurf = copy.deepcopy(rasterdata)
-            xx, yy = np.meshgrid(l_coordinate, s_coordinate)
+            xx, yy = np.meshgrid(l_coord, s_coord)
             masked_array = np.ma.masked_where(isosurf == 0, isosurf)
             cmap = copy.copy(matplotlib.cm.jet)
             cmap.set_bad('w', 1.)
@@ -815,18 +799,18 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
 #                       ('runout max', 'runout mean', 'frontal width'), loc=0)
             ax1.legend((ref1[0], ref2[0]), ('runout max', 'runout mean'), loc=0)
 
-        p_cross_all[i] = p_cross[0]
+        p_cross_all[i] = presCrossMax
 
     ax2 = plt.subplot(122)
 #    p_mean = p_cross_all.mean(axis=0)
     p_median = np.median(p_cross_all, axis=0)
     p_percentile = sp.percentile(p_cross_all, [2.5, 50, 97.5], axis=0)
-    ax2.fill_betweenx(s_coordinate, p_percentile[2], p_percentile[0],
+    ax2.fill_betweenx(s_coord, p_percentile[2], p_percentile[0],
                       facecolor=[.8, .8, .8], alpha=0.5)
     ref1 = mpatches.Patch(alpha=0.5, color=[.8, .8, .8])
-    ax2.plot(p_median, s_coordinate, color='r')
+    ax2.plot(p_median, s_coord, color='r')
     ref2 = mlines.Line2D([], [], color='r', linewidth=2)
-#    ax2.plot(p_mean, s_coordinate, color='b')
+#    ax2.plot(p_mean, s_coord, color='b')
 #    ref3 = mlines.Line2D([], [], color='b', linewidth=2)
     ax2.set_ylabel('s [m]')
     ax2.set_ylim([yy.min(), yy.max()])
@@ -850,7 +834,14 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
     else:
         plt.ioff()
 
-    return runout, runout_mean, ampp, mmpp, amd, mmd
+    resAnalysis['runout'] = runout
+    resAnalysis['runout_mean'] = runout_mean
+    resAnalysis['AMPP'] = ampp
+    resAnalysis['MMPP'] = mmpp
+    resAnalysis['AMD'] = amd
+    resAnalysis['MMD'] = mmd
+
+    return resAnalysis
 
 
 def read_write(fname_ent):
@@ -1024,7 +1015,7 @@ def colorvar(k, k_end, colorflag, disp=0):
     return farbe
 
 
-def result_visu(cfgPath, runout, mean_max_dpp, max_max_dpp, doku, GI, dpp_threshold):
+def result_visu(cfgPath, resAnalysis, doku, GI, dpp_threshold):
     """
     Visualize results in a nice way
     Jan-Thomas Fischer BFW 2010-2012
@@ -1036,6 +1027,10 @@ def result_visu(cfgPath, runout, mean_max_dpp, max_max_dpp, doku, GI, dpp_thresh
     ProfileLayer = cfgPath['profileLayer']
     outpath = cfgPath['pathResult']
     DefaultName = cfgPath['project_name']
+
+    runout = resAnalysis['runout']
+    mean_max_dpp = resAnalysis['AMPP']
+    max_max_dpp = resAnalysis['MMPP']
 
     cvar = ['ry', 'bb', 'pw', 'gy']
     colorflag = cvar[0]
