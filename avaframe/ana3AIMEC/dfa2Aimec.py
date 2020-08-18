@@ -70,6 +70,59 @@ def writeAimecPathsFile(cfgSetup, avaDir):
         pfile.write('pathVelocity=%s,\n' % (emptyVar))
         pfile.write('pathResult=%s,\n' % (os.path.join(workDir, 'AimecResults')))
 
+def extractMBInfo(avaDir):
+    """ Extract the mass balance info from the log file """
+
+    inputDir = os.path.join(avaDir, 'Inputs')
+    relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.shp')
+    relNames = []
+    for rels in relFiles:
+        relNames.append(os.path.splitext(os.path.basename(rels))[0])
+
+    countFile = 0
+    for relName in relNames:
+        print(relName)
+
+        # Initialise fields
+        time = []
+        mass = []
+        entrMass = []
+        indRun = [0]
+
+        countMass = 0
+        flagStop = 0
+
+        # Read log file
+        with open(os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (relName)), 'r') as file:
+            for line in file:
+                if "computing time step" in line:
+                    ltime = line.split()[3]
+                    timeNum = ltime.split('...')[0]
+                    time.append(float(timeNum))
+                elif "entrained DFA mass" in line:
+                    entrMass.append(float(line.split()[3]))
+                elif "total DFA mass" in line:
+                    mass.append(float(line.split()[3]))
+                    countMass = countMass + 1
+                elif "terminated" in line:
+                    indRun.append(countMass)
+
+        logDict = {'time' : np.asarray(time), 'mass' : np.asarray(mass), 'entrMass' : np.asarray(entrMass)}
+
+
+
+        for k in range(len(indRun)-1):
+            with open(os.path.join(os.getcwd(), avaDir, 'Work/ana3AIMEC/com1DFA/dfa_mass_balance/%6d.txt' % (countFile)), 'w') as MBFile:
+                MBFile.write('time, current, entrained\n')
+
+                for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
+                    if countFile == 0:
+                        MBFile.write('%.02f,   %.06f,     %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
+                    else:
+                        MBFile.write('%.02f,   %.06f ,    %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
+
+            countFile = countFile + 1
+
 
 def getDFAData(avaDir, cfgDFA):
     """ Export the required input data from com1DFA output """
@@ -129,3 +182,5 @@ def getDFAData(avaDir, cfgDFA):
                 #                     logDict['Mu'][k], logDict['simName'][k],
                 #                     logDict['simName'][k], logDict['suffix'][m], outputDir, countppr))
                 countppr = countppr + 1
+
+    # Extract the mb info from logfile

@@ -19,7 +19,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def execSamos(samosAT, cintFile, avaDir, fullOut=False):
+def execSamos(samosAT, cintFile, avaDir, fullOut=False, simName=''):
     """ Execute compiled SamosAT file using cintFile to set configuration
         and run options """
 
@@ -29,7 +29,7 @@ def execSamos(samosAT, cintFile, avaDir, fullOut=False):
                             universal_newlines=True)
 
     # initialise log file to save stoudt
-    f_log = open(os.path.join(avaDir, 'Outputs', 'com1DFA', 'start.log'), 'w')
+    f_log = open(os.path.join(avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName)), 'w')
     # FSO--- loop through output
     for line in proc.stdout:
         f_log.write(line)
@@ -207,4 +207,4 @@ def runSamos(cfg, avaDir):
             # Count total number of simulations
             countRel = countRel + 2
 
-        execSamos(samosAT, workFile, avaDir, fullOut)
+        execSamos(samosAT, workFile, avaDir, fullOut, relName)

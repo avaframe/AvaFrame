@@ -48,6 +48,7 @@ logUtils.writeCfg2Log(cfg, 'ana3AIMEC')
 dfa2Aimec.makeAimecDirs(avalancheDir)
 dfa2Aimec.getDFAData(avalancheDir, cfgDFA)
 dfa2Aimec.writeAimecPathsFile(cfgSetup, avalancheDir)
+dfa2Aimec.extractMBInfo(avalancheDir)
 
 saveOutPath = avalancheDir + '/Outputs'
 # Extract input file locations
