@@ -356,8 +356,8 @@ def helix(cfg):
     xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
 
     # recompute xv yv and x, y as they are shifted (TODO: necessary??)
-    xv = np.arange(-0.5 * x_end, 0.5 * x_end, dx)
-    yv = np.arange(-y_end, 0, dx)
+    xv = np.arange(-0.5 * xEnd, 0.5 * xEnd, dx)
+    yv = np.arange(-yEnd, 0, dx)
     x, y = np.meshgrid(xv, yv)
 
     # Get parabola Parameters
