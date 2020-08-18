@@ -92,8 +92,8 @@ def inclinedplane(cfg):
     z0 = float(cfg['TOPO']['z0'])
     meanAlpha = float(cfg['TOPO']['meanAlpha'])
 
-    cFf = float(cfg['CHANNEL']['c_ff'])
-    cRadius = float(cfg['CHANNEL']['c_radius'])
+    cFf = float(cfg['CHANNELS']['c_ff'])
+    cRadius = float(cfg['CHANNELS']['c_radius'])
 
     xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
 
@@ -134,7 +134,7 @@ def inclinedplane(cfg):
     return x, y, zv
 
 
-def hockeysmooth(cfg):
+def hckeysmooth(cfg):
     """
         Compute coordinates of an inclined plane with a flat foreland  defined by
         total fall height z0, angle to flat foreland (mean_alpha) and a radius (r_circ) to
@@ -146,11 +146,11 @@ def hockeysmooth(cfg):
     mean_alpha = float(cfg['TOPO']['mean_alpha'])
     z0 = float(cfg['TOPO']['z0'])
 
-    c_ff = float(cfg['CHANNEL']['c_ff'])
-    c_radius = float(cfg['CHANNEL']['c_radius'])
-    c_init = float(cfg['CHANNEL']['c_init'])
-    c_mustart = float(cfg['CHANNEL']['c_mustart'])
-    c_muendFP = float(cfg['CHANNEL']['c_muendFP'])
+    c_ff = float(cfg['CHANNELS']['c_ff'])
+    c_radius = float(cfg['CHANNELS']['c_radius'])
+    c_init = float(cfg['CHANNELS']['c_init'])
+    c_mustart = float(cfg['CHANNELS']['c_mustart'])
+    c_muendFP = float(cfg['CHANNELS']['c_muendFP'])
 
     dx, xEnd, yEnd, nRows, nCols = getGridDefs(cfg)
 
@@ -238,11 +238,11 @@ def hockey(cfg):
     """
 
     C = float(cfg['TOPO']['C'])
-    c_ff = float(cfg['CHANNEL']['c_ff'])
-    c_radius = float(cfg['CHANNEL']['c_radius'])
-    c_init = float(cfg['CHANNEL']['c_init'])
-    c_mustart = float(cfg['CHANNEL']['c_mustart'])
-    c_muend = float(cfg['CHANNEL']['c_muend'])
+    c_ff = float(cfg['CHANNELS']['c_ff'])
+    c_radius = float(cfg['CHANNELS']['c_radius'])
+    c_init = float(cfg['CHANNELS']['c_init'])
+    c_mustart = float(cfg['CHANNELS']['c_mustart'])
+    c_muend = float(cfg['CHANNELS']['c_muend'])
 
     # Get grid definitons
     dx, xEnd, yEnd, nRows, nCols = getGridDefs(cfg)
@@ -342,11 +342,11 @@ def helix(cfg):
     # input parameters
     r_helix = float(cfg['TOPO']['r_helix'])
     C = float(cfg['TOPO']['C'])
-    c_ff = float(cfg['CHANNEL']['c_ff'])
-    c_radius = float(cfg['CHANNEL']['c_radius'])
-    c_init = float(cfg['CHANNEL']['c_init'])
-    c_mustart = float(cfg['CHANNEL']['c_mustart'])
-    c_muend = float(cfg['CHANNEL']['c_muend'])
+    c_ff = float(cfg['CHANNELS']['c_ff'])
+    c_radius = float(cfg['CHANNELS']['c_radius'])
+    c_init = float(cfg['CHANNELS']['c_init'])
+    c_mustart = float(cfg['CHANNELS']['c_mustart'])
+    c_muend = float(cfg['CHANNELS']['c_muend'])
 
 
     # Get grid definitions
@@ -423,14 +423,14 @@ def helix(cfg):
 def writeDEM(cfg, z, nCols, nRows, outDir):
     """ Write topography information to file """
     #TODO: reduce arguments by getting nCols and nRows from z
-    nameExt = cfg['TOPO']['demType']
+    nameExt = cfg['TOPO']['DEM_type']
 
     # Read lower left corner coordinates, cellsize and noDATA value
-    xllcorner = float(cfg['DEM']['xl'])
-    yllcorner = float(cfg['DEM']['yl'])
+    xllcorner = float(cfg['DEMDATA']['xl'])
+    yllcorner = float(cfg['DEMDATA']['yl'])
     cellsize = float(cfg['TOPO']['dx'])
-    noDATA = float(cfg['DEM']['nodata_value'])
-    dem_name = cfg['DEM']['dem_name']
+    noDATA = float(cfg['DEMDATA']['nodata_value'])
+    dem_name = cfg['DEMDATA']['dem_name']
 
     # Save elevation data to .asc file and add header lines
     z_mat = np.matrix(z)
@@ -452,7 +452,7 @@ def generateTopo(cfg, avalancheDir):
     """ Compute coordinates of desired topography with given inputs """
 
     # Which DEM type
-    demType = cfg['TOPO']['demType']
+    demType = cfg['TOPO']['DEM_type']
 
     log.info('DEM type is set to: %s' % demType)
 
