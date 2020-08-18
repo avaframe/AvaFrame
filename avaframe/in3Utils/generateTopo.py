@@ -462,18 +462,6 @@ def writeDEM(z, name_ext, ncols, nrows, dx, cfgDEM, outDir):
     log.info('DEM written to: %s/%s_%s_Topo.asc' % (outDir, dem_name, name_ext))
 
 
-def makeOutputDir(avalancheDir):
-    """ Make output directory """
-
-    outDir = os.path.join(avalancheDir, 'Inputs')
-    if os.path.isdir(outDir):
-        log.warning('Be careful %s already existed - new data is added' % (outDir))
-    else:
-        os.makedirs(outDir)
-
-    return outDir
-
-
 def generateTopo(cfg, avalancheDir):
     """ Compute coordinates of desired topography with given inputs """
 
@@ -485,6 +473,14 @@ def generateTopo(cfg, avalancheDir):
     DEM_type = cfgTopo['DEM_type']
 
     log.info('DEM type is set to: %s' % DEM_type)
+
+    # Set Output directory
+    outDir = os.path.join(avalancheDir, 'Inputs')
+    if os.path.isdir(outDir):
+        log.info('The new DEM is saved to %s' % (outDir))
+    else:
+        log.error('Required folder structure: NameOfAvalanche/Inputs missing! \
+                    Run runInitializeProject first!')
 
     # determine number of rows and columns to define domain
     dx = float(cfgTopo['dx'])
@@ -514,9 +510,6 @@ def generateTopo(cfg, avalancheDir):
 
     elif DEM_type == 'HX':
         [x, y, z, name_ext] = helix(cfgTopo, ncols, nrows, f_len, A, B, cfgChannel)
-
-    # Make output directory
-    outDir = makeOutputDir(avalancheDir)
 
     # Write DEM to file
     writeDEM(z, name_ext, ncols, nrows, float(cfgTopo['dx']), cfgDEM, outDir)

@@ -21,7 +21,7 @@ from avaframe.out3SimpPlot import outGenerateTopo as oT
 
 # Avalanche directory; see doc.avaframe.org for setup
 # TODO: full path needed?
-avalancheDir = 'data/avaInclinedPlane'
+avalancheDir = 'data/avaHockey'
 
 # log file name; leave empty to use default runLog.log
 logName = 'genProjTopoRelease'
