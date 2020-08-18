@@ -73,12 +73,14 @@ def writeAimecPathsFile(cfgSetup, avaDir):
 def extractMBInfo(avaDir):
     """ Extract the mass balance info from the log file """
 
+    # Get release area names
     inputDir = os.path.join(avaDir, 'Inputs')
     relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.shp')
     relNames = []
     for rels in relFiles:
         relNames.append(os.path.splitext(os.path.basename(rels))[0])
 
+    # Read mass data from log and save to file for each simulation run
     countFile = 0
     for relName in relNames:
         print(relName)
@@ -88,7 +90,6 @@ def extractMBInfo(avaDir):
         mass = []
         entrMass = []
         indRun = [0]
-
         countMass = 0
         flagStop = 0
 
@@ -106,11 +107,10 @@ def extractMBInfo(avaDir):
                     countMass = countMass + 1
                 elif "terminated" in line:
                     indRun.append(countMass)
-
+        # Save to dictionary
         logDict = {'time' : np.asarray(time), 'mass' : np.asarray(mass), 'entrMass' : np.asarray(entrMass)}
 
-
-
+        # Write mass balance info files
         for k in range(len(indRun)-1):
             with open(os.path.join(os.getcwd(), avaDir, 'Work/ana3AIMEC/com1DFA/dfa_mass_balance/%6d.txt' % (countFile)), 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
@@ -182,5 +182,3 @@ def getDFAData(avaDir, cfgDFA):
                 #                     logDict['Mu'][k], logDict['simName'][k],
                 #                     logDict['simName'][k], logDict['suffix'][m], outputDir, countppr))
                 countppr = countppr + 1
-
-    # Extract the mb info from logfile
