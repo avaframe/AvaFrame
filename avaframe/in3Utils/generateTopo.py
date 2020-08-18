@@ -19,25 +19,36 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def getParams(cfgTopo):
+def getParabolaParams(cfg):
     """ Compute parameters for parabola """
 
     # input parameters
-    C = float(cfgTopo['C'])
-    f_lens = float(cfgTopo['f_lens'])
-    mean_alpha = float(cfgTopo['mean_alpha'])
+    C = float(cfg['TOPO']['C'])
+    fLens = float(cfg['TOPO']['f_lens'])
+    meanAlpha = float(cfg['TOPO']['mean_alpha'])
 
     # If mean slope is given or distance to the start of the flat plane
-    if mean_alpha != 0:
-        f_len = C / np.tan(np.radians(mean_alpha))
-        log.info('flen computed from mean alpha: %.2f meters' % f_len)
+    if meanAlpha != 0:
+        fLen = C / np.tan(np.radians(meanAlpha))
+        log.info('fLen computed from mean alpha: %.2f meters' % fLen)
     else:
-        f_len = f_lens
-        log.info('flen directly set to: %.2f meters' % f_len)
-    A = C / (f_len**2)
-    B = (-C * 2.) / f_len
+        fLen = fLens
+        log.info('flen directly set to: %.2f meters' % fLen)
+    A = C / (fLen**2)
+    B = (-C * 2.) / fLen
 
-    return A, B, f_len
+    return A, B, fLen
+
+
+def getGridDefs(cfg):
+    # determine number of rows and columns to define domain
+    dx = float(cfg['TOPO']['dx'])
+    xEnd = float(cfg['TOPO']['x_end']) + dx
+    yEnd = float(cfg['TOPO']['y_end']) + dx
+    nRows = int(yEnd / dx)                    # number of rows
+    nCols = int(xEnd / dx)                    # number of columns
+
+    return dx, xEnd, yEnd, nRows, nCols
 
 
 def flatplane(cfgTopo, ncols, nrows):
@@ -72,6 +83,7 @@ def inclinedplane(cfgTopo, ncols, nrows, cfgChannel):
     dx = float(cfgTopo['dx'])
     x_end = float(cfgTopo['x_end']) + dx
     y_end = float(cfgTopo['y_end']) + dx
+
     z0 = float(cfgTopo['z0'])
     mean_alpha = float(cfgTopo['mean_alpha'])
     c_ff = float(cfgChannel['c_ff'])
@@ -263,6 +275,10 @@ def hockey(cfgTopo, f_len, A, B, ncols, nrows, cfgChannel):
     zv1 = np.zeros((nrows, ncols))
 
     # If a channel shall be introduced
+
+    # Get parabola Parameters
+    [A, B, f_len] = getParabolaParams(cfgTopo)
+
     if cfgTopo.getboolean('channel'):
         c_1 = norm.cdf(xv, c_mustart * f_len, c_ff)
         c_2 = 1. - norm.cdf(xv, c_muend * f_len, c_ff)
@@ -377,6 +393,10 @@ def helix(cfgTopo, ncols, nrows, f_len, A, B, cfgChannel):
     zv = np.zeros((nrows, ncols))
 
     # Set surface elevation
+
+    # Get parabola Parameters
+    [A, B, f_len] = getParabolaParams(cfgTopo)
+
     for m in range(ncols):
         for k in range(nrows):
             radius = np.sqrt(xv[m]**2 + yv[k]**2)
@@ -465,14 +485,10 @@ def writeDEM(z, name_ext, ncols, nrows, dx, cfgDEM, outDir):
 def generateTopo(cfg, avalancheDir):
     """ Compute coordinates of desired topography with given inputs """
 
-    cfgTopo = cfg['TOPO']
-    cfgChannel = cfg['CHANNELS']
-    cfgDEM = cfg['DEMDATA']
-
     # Which DEM type
-    DEM_type = cfgTopo['DEM_type']
+    demType = cfg['TOPO']['demType']
 
-    log.info('DEM type is set to: %s' % DEM_type)
+    log.info('DEM type is set to: %s' % demType)
 
     # Set Output directory
     outDir = os.path.join(avalancheDir, 'Inputs')
@@ -482,36 +498,28 @@ def generateTopo(cfg, avalancheDir):
         log.error('Required folder structure: NameOfAvalanche/Inputs missing! \
                     Run runInitializeProject first!')
 
-    # determine number of rows and columns to define domain
-    dx = float(cfgTopo['dx'])
-    x_end = float(cfgTopo['x_end']) + dx
-    y_end = float(cfgTopo['y_end']) + dx
-    nrows = int(y_end / dx)                    # number of rows
-    ncols = int(x_end / dx)                    # number of columns
-
-    # Get parabola Parameters
-    [A, B, f_len] = getParams(cfgTopo)
+    dx, xEnd, yEnd, nRows, nCols = getGridDefs(cfg)
 
     # Call topography type
-    if DEM_type == 'FP':
-        [x, y, z, name_ext] = flatplane(cfgTopo, ncols, nrows)
+    if demType == 'FP':
+        [x, y, z, nameExt] = flatplane(cfg)
 
-    elif DEM_type == 'IP':
-        [x, y, z, name_ext] = inclinedplane(cfgTopo, ncols, nrows, cfgChannel)
+    elif demType == 'IP':
+        [x, y, z, nameExt] = inclinedplane(cfg)
 
-    elif DEM_type == 'HS':
-        [x, y, z, name_ext] = hockey(cfgTopo, f_len, A, B, ncols, nrows, cfgChannel)
+    elif demType == 'HS':
+        [x, y, z, nameExt] = hockey(cfg)
 
-    elif DEM_type == 'HS2':
-        [x, y, z, name_ext] = hockeysmooth(cfgTopo, ncols, nrows, cfgChannel)
+    elif demType == 'HS2':
+        [x, y, z, nameExt] = hockeysmooth(cfg)
 
-    elif DEM_type == 'BL':
-        [x, y, z, name_ext] = bowl(cfgTopo, ncols, nrows)
+    elif demType == 'BL':
+        [x, y, z, nameExt] = bowl(cfgTopo)
 
-    elif DEM_type == 'HX':
-        [x, y, z, name_ext] = helix(cfgTopo, ncols, nrows, f_len, A, B, cfgChannel)
+    elif demType == 'HX':
+        [x, y, z, nameExt] = helix(cfgTopo)
 
     # Write DEM to file
-    writeDEM(z, name_ext, ncols, nrows, float(cfgTopo['dx']), cfgDEM, outDir)
+    writeDEM(z, nameExt, nCols, nRows, float(cfg['TOPO']['dx']), cfg['DEM'], outDir)
 
-    return(z, name_ext, outDir)
+    return(z, nameExt, outDir)
