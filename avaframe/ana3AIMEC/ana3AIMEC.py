@@ -1,15 +1,13 @@
 import sys
 import os
+import time
 import logging
 import glob
 import math
 import numpy as np
 import scipy as sp
-import pandas as pd
 import copy
-import functools
 import operator
-from multiprocessing import Pool
 from matplotlib import pyplot as plt
 import matplotlib
 import matplotlib.lines as mlines
@@ -27,17 +25,17 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 # Aimec read inputs tools
 # -----------------------------------------------------------
-debugPlotFlag = True
+debugPlotFlag = False
 
-def readAIMECinputs(avalancheDir):
+def readAIMECinputs(avalancheDir, dirName = 'com1DFA'):
     """
     Reads the requiered files for AIMEC postpocessing
     given an avalanche directory
     """
     cfgPath = {}
-    pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', 'com1DFA','dfa_pressure')
-    pathFlowHeight = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', 'com1DFA','dfa_depth')
-    pathMassBalance = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', 'com1DFA','dfa_mass_balance')
+    pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,'dfa_pressure')
+    pathFlowHeight = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,'dfa_depth')
+    pathMassBalance = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,'dfa_mass_balance')
 
     if not os.path.exists(pathMassBalance):
         os.makedirs(pathMassBalance)
@@ -64,6 +62,7 @@ def readAIMECinputs(avalancheDir):
     cfgPath['project_name'] = project_name
     path_name = os.path.basename(profileLayer[0])
     cfgPath['path_name'] = path_name
+    cfgPath['dirName']  = 'com1DFA'
 
     return cfgPath
 
@@ -177,14 +176,12 @@ def mainAIMEC(cfgPath, cfg):
 # -----------------------------------------------------------
 # Aimec processing tools
 # -----------------------------------------------------------
-
-
 def processDataInd(cfgPath, domainWidth, cfgFlags):
     """
     process data ind
     this function is used to process the rasterdata such that it can be
     analysed with the methods for a regular grid
-    data given in a regulare grid is projected on a nonuniform grid given by
+    data given in a regular grid is projected on a nonuniform grid given by
     a polyline
 
     JT Fischer, Uwe Schlifkowitz BFW 2010-2012
@@ -193,514 +190,337 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     input: names of rasterfiles, poly names, path width
     ouput: structure{x coordinate along new raster, y coordinate, rasterdata}
     """
-
+    #Read input parameters
     rasterSource = cfgPath['pressurefileList'][0]
-    # rasterSource = cfgPath['demSource']
     ProfileLayer = cfgPath['profileLayer']
     w = domainWidth
     outpath = cfgPath['pathResult']
     DefaultName = cfgPath['project_name']
 
-    aval_data = {}
-
-
-
     log.info('Data-file %s analysed' % rasterSource)
     # read data
-    dem = IOf.readRaster(rasterSource)
-    header = dem['header']
+    # read raster data
+    sourceData = IOf.readRaster(rasterSource)
+    header = sourceData['header']
     xllcenter = header.xllcenter
     yllcenter = header.yllcenter
     cellsize = header.cellsize
-
-    rasterdata = dem['rasterData']
-    Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem['header'])
-    x_path = Avapath['x']
-    y_path = Avapath['y']
-    z_path = np.zeros(np.shape(Avapath['x']))
-    # numper of points describing the avaPath
-    n_pnt = np.shape(x_path)[0]
-
+    rasterdata = sourceData['rasterData']
+    # read avaPath
+    Avapath = shpConv.readLine(ProfileLayer, DefaultName, sourceData['header'])
 
     log.info('Creating new raster along polyline: %s' % ProfileLayer)
+    # Initialize transformation dictionary
+    raster_transfo = {}
 
-#     erzeugung der eckpuntke der segmente des unregelmaesigen gitters,
-#     Domain Boundaries DB
-#     input: ava path
-#     output: Left and right side points for the domain
-    DB_x_rl, DB_y_rl, DB_x_csz, DB_y_csz = geoTrans.path2domain(x_path, y_path,
-                                                                w/2., cellsize)
-
-#     Shift path to raster because raster is not in global grid
-    DB_x_rl -= xllcenter
-    DB_y_rl -= yllcenter
-#    for calculation cellsize
-    DB_x_csz -= xllcenter
-    DB_y_csz -= yllcenter
-
-    if debugPlotFlag:
-        # visu
-        figure_width = 2*5
-        figure_height = 2*4
-        lw = 1
-        fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
-
-    #    for figure: referenz-simulation bei p_lim=1
-        new_rasterdata = rasterdata
-        masked_array = rasterdata #np.ma.masked_where(rasterdata == 0, rasterdata)
-        cmap = copy.copy(matplotlib.cm.jet)
-        cmap.set_bad('w', 1.)
-
-        n, m = np.shape(rasterdata)
-        xx, yy = np.meshgrid(np.arange(n), np.arange(m))
-        ref1 = plt.imshow(masked_array, vmin=rasterdata.min(),
-                          vmax=rasterdata.max(),
-                          origin='lower',
-                          cmap=cmap,
-                          label='pressure data',
-                          aspect='auto')#,extent=[xx.min()*cellsize, xx.max()*cellsize,yy.min()*cellsize, yy.max()*cellsize]
-        # plt.autoscale(False)
-        ref2 = plt.plot((x_path-xllcenter)/cellsize, (y_path-yllcenter)/cellsize,
-                        'b-', linewidth=lw, label='flow path')
-        ref3 = plt.plot((DB_x_rl)/cellsize, (DB_y_rl)/cellsize,
-                        'g-', linewidth=lw, label='domain')
-        ref3 = plt.plot((DB_x_rl.T)/cellsize, (DB_y_rl.T)/cellsize,
-                        'g-', linewidth=lw, label='domain')
-        ref3 = plt.plot((DB_x_csz)/cellsize, (DB_y_csz)/cellsize,
-                        'k-', linewidth=lw, label='domain')
-        ref3 = plt.plot((DB_x_csz.T)/cellsize, (DB_y_csz.T)/cellsize,
-                        'k-', linewidth=lw, label='domain')
-        refs = [ref2[0], ref3[0]]
-
-
-    m_tmp = np.array([]).astype('int')
-    n = 0
-    m_total = 0
-    n_total = 0
-    m_alt = 0
-
-#    Make transformation matrix
-#    Working with no dimentions (the cellsize scaling will be readded at the end)
-#    l_coord is distance from polyline
-    n_total = np.ceil(w/cellsize)
-    n_total = int(n_total+1) if ((n_total % 2) == 0) else int(n_total) # take the next odd integer
-    n_2tot = int(np.floor(n_total/2))
-    l_coord = np.linspace(-n_2tot, n_2tot, n_total) # this way, 0 is in l_coord
-    new_grid_raster = np.array([])
-    new_area_raster = np.array([])
-    for i in range(n_pnt-1):
-        xl0 = DB_x_rl[0][i]
-        xl1 = DB_x_rl[0][i+1]
-        yl0 = DB_y_rl[0][i]
-        yl1 = DB_y_rl[0][i+1]
-        dxl = xl1 - xl0
-        dyl = yl1 - yl0
-        Vl = np.array((dxl,dyl))
-        # left edge
-        zl = np.linalg.norm(Vl)
-        xr0 = DB_x_rl[1][i]
-        xr1 = DB_x_rl[1][i+1]
-        yr0 = DB_y_rl[1][i]
-        yr1 = DB_y_rl[1][i+1]
-        dxr = xr1 - xr0
-        dyr = yr1 - yr0
-        Vr = np.array((dxr,dyr))
-
-        # right edge
-        zr = np.linalg.norm(Vr)
-
-        m = int(max(np.ceil(zl/cellsize), np.ceil(zr/cellsize)))
-
-        bxl = np.linspace(xl0, xl1, m)  # left
-        byl = np.linspace(yl0, yl1, m)
-
-        bxr = np.linspace(xr0, xr1, m)  # right
-        byr = np.linspace(yr0, yr1, m)
-
-        m_tmp = np.append(m_tmp,m)
-        new_rastersegment = np.zeros((2, m, n_total))
-        for j in range(m):
-            x = np.linspace(bxl[j], bxr[j], n_total)  # line coordinates x
-            y = np.linspace(byl[j], byr[j], n_total)  # line coordinates y
-            for k in range(n_total):
-                # x,y-Koordinaten of cells on line
-                # xy_coord = bresenham(x(k),y(k),x(k),y(k),cellsize);
-                xy_coord = [x[k]/cellsize, y[k]/cellsize]
-
-                new_rastersegment[:, j, k] = [xy_coord[0], xy_coord[1]]
-
-                # plt.plot(xy_coord[0],xy_coord[1],'k.')
-        if i==0:
-            new_grid_raster = new_rastersegment
-        else:
-            new_grid_raster = np.append(new_grid_raster, np.atleast_3d([new_rastersegment[0],new_rastersegment[1]]), axis=1)
-
-
-    new_area_raster = copy.deepcopy(new_grid_raster)
-    print(np.shape(new_area_raster))
-    print(np.shape(new_area_raster[:,:,-2]))
-    new_area_raster = np.append(new_area_raster, np.atleast_3d(new_area_raster[:,:,-2]), axis=2)
-    print(np.shape(new_area_raster))
-    print(np.shape(np.swapaxes([new_area_raster[:,-2,:]],0,1)))
-    new_area_raster = np.append(new_area_raster, np.atleast_3d(np.swapaxes([new_area_raster[:,-2,:]],0,1)), axis=1)
-    print(np.shape(new_area_raster))
-    print(np.shape(new_area_raster[0,0:-1,:]))
-    dx = new_area_raster[0,1:514,0:121]-new_area_raster[0,0:513,0:121]
-    dy = new_area_raster[1,0:513,1:122]-new_area_raster[1,0:513,0:121]
-    A = np.abs(dx*dy)
-    print(np.shape(dx))
-    print(np.shape(dy))
-    print(np.shape(A))
-    fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
-    plt.imshow(dx)
-    cbh = plt.colorbar()
-    plt.show()
+    # Get new Domain Boundaries DB
+    # input: ava path
+    # output: Left and right side points for the domain
+    DB = geoTrans.path2domain(Avapath, w, header)
 
 
 
-        # bxl, byl, bxr, byr, m = splitLine(DB_x_rl, DB_y_rl, cellsize, i)
-#    delete the lines that are double at each segment connection
-    m_total = np.sum(m_tmp)
+    ### Make transformation matrix
+    raster_transfo = makeTransfoMat(raster_transfo, DB, w, cellsize)
 
-    new_raster = np.zeros((2, m_total, n_total)) + np.NaN
-
-#    s_coord is distance from the start of the polyline
-    s_coord = np.zeros(m_total)
-    ds1 = 0
-    log.info('Transferring data from old to new raster')
-    for i in range(n_pnt-1):  # for each segment
-        # Division of side edges in n segments
-        # x-/y-values of lines are linspace(x0,x1,m) etc.
-        # DB_x_rl, DB_y_rl are values from polyline2path
-        bxl = np.linspace(DB_x_rl[0][i], DB_x_rl[0][i+1], m[i])  # left
-        byl = np.linspace(DB_y_rl[0][i], DB_y_rl[0][i+1], m[i])
-
-        bxr = np.linspace(DB_x_rl[1][i], DB_x_rl[1][i+1], m[i])  # right
-        byr = np.linspace(DB_y_rl[1][i], DB_y_rl[1][i+1], m[i])
-
-        # => generation of grid points for each segment
-        # grid points can be assigned to original raster data, using
-        # rasterize function
-        new_rastersegment = np.zeros((2, m[i], n_total))
-
-        for j in range(m[i]):
-            x = np.linspace(bxl[j], bxr[j], n_total)  # line coordinates x
-            y = np.linspace(byl[j], byr[j], n_total)  # line coordinates y
-            for k in range(n_total):
-                # x,y-Koordinaten of cells on line
-                # xy_coord = bresenham(x(k),y(k),x(k),y(k),cellsize);
-                xy_coord = [round(x[k]/cellsize) * cellsize,
-                            round(y[k]/cellsize) * cellsize]
-                # cell coordinates of new raster
-                xy_ind = [xy_coord[0]/cellsize + 1, xy_coord[1]/cellsize + 1]
-                # translate coordinate of cell to cell index
-                # THIS IS THE NEAREST NEIGHBOUR APPROXIMATION
-                # Assign pressure data to loc
-                new_rastersegment[:, j, k] = [xy_ind[0], xy_ind[1]]
-
-
-
-
-
-    n = 0
-    m_total = 0
-    n_total = 0
-    m_alt = 0
-
-
-#    use bresemham algorithm to determine the new raster
-    for i in range(n_pnt):
-        #   for each segment check the number of CROSS-cells
-        n = geoTrans.bresenham(DB_x_rl[0, i], DB_y_rl[0, i],
-                               DB_x_rl[1, i], DB_y_rl[1, i], cellsize)
-        n_total = max(n_total, len(n))
-#   number of raster cells of edges parallel to polyline
-    m = np.zeros(len(DB_x_rl[0])-1).astype('int')
-    for i in range(n_pnt-1):
-        # left edge
-        zl = geoTrans.bresenham(DB_x_rl[0, i], DB_y_rl[0, i],
-                                DB_x_rl[0, i+1], DB_y_rl[0, i+1], cellsize)
-        # right edge
-        zr = geoTrans.bresenham(DB_x_rl[1, i], DB_y_rl[1, i],
-                                DB_x_rl[1, i+1], DB_y_rl[1, i+1], cellsize)
-        m[i] = max(len(zl), len(zr))
-#    delete the lines that are double at each segment connection
-    m_total = sum(m) - (len(DB_x_rl[0])-2)
-
-#    Calculation of segments
-    new_raster = np.zeros((2, m_total, n_total)) + np.NaN
-    # new raster filled with NaN
-
-#    Each dataset needs its own s_coord, l_coord. This is saved to a cell array
-#    and returned from this function for use in other parts of the
-#    program package
-
-#    l_coord is distance from polyline
-    l_coord = np.linspace(-w/2, w/2, n_total)
-    s_coord = np.zeros(m_total)
-    ds1 = 0
-    log.info('Transferring data from old to new raster')
-    for i in range(n_pnt-1):  # for each segment
-        # Division of side edges in n segments
-        # x-/y-values of lines are linspace(x0,x1,m) etc.
-        # DB_x_rl, DB_y_rl are values from polyline2path
-        bxl = np.linspace(DB_x_rl[0][i], DB_x_rl[0][i+1], m[i])  # left
-        byl = np.linspace(DB_y_rl[0][i], DB_y_rl[0][i+1], m[i])
-
-        bxr = np.linspace(DB_x_rl[1][i], DB_x_rl[1][i+1], m[i])  # right
-        byr = np.linspace(DB_y_rl[1][i], DB_y_rl[1][i+1], m[i])
-
-        # => generation of grid points for each segment
-        # grid points can be assigned to original raster data, using
-        # rasterize function
-        new_rastersegment = np.zeros((2, m[i], n_total))
-
-        for j in range(m[i]):
-            x = np.linspace(bxl[j], bxr[j], n_total)  # line coordinates x
-            y = np.linspace(byl[j], byr[j], n_total)  # line coordinates y
-            for k in range(n_total):
-                # x,y-Koordinaten of cells on line
-                # xy_coord = bresenham(x(k),y(k),x(k),y(k),cellsize);
-                xy_coord = [round(x[k]/cellsize) * cellsize,
-                            round(y[k]/cellsize) * cellsize]
-                # cell coordinates of new raster
-                xy_ind = [xy_coord[0]/cellsize + 1, xy_coord[1]/cellsize + 1]
-                # translate coordinate of cell to cell index
-                # THIS IS THE NEAREST NEIGHBOUR APPROXIMATION
-                # Assign pressure data to loc
-                new_rastersegment[:, j, k] = [xy_ind[0], xy_ind[1]]
-
-#        For each segment following the first we must delete the first
-#        line since it is identical to the last line of the previous
-#        segment.
-
-#        s_coord = x-Coordinate along Polyline.
-#        % Start of Polylinie at x = 0
-        m_neu = m[i]
-
-        if (i == 0):
-            # Distance from starting point of current segment
-            # from beginning of polyline
-            ds0 = 0
-        else:
-            ds0 += ds1
-
-        ds1 = math.sqrt((x_path[i+1]-x_path[i])**2 +
-                        (y_path[i+1]-y_path[i])**2)
-        new_raster[:, m_alt:m_alt+m_neu, :] = [new_rastersegment[0],
-                                               new_rastersegment[1]]
-
-        s_coord[m_alt:m_alt+m_neu] = np.linspace(ds0, ds0+ds1, m[i])
-        m_alt = m_alt+m_neu-1
-        if (i == 0):
-            s_coordmin = s_coord[0]
-        s_coord -= s_coordmin
-
-#    calclation of cellsize (for area)
-    new_raster_area = np.zeros((m_total, n_total)) + np.NaN
-    sum_mi = 0
-
-#    if m_total % 2 == 0:
-#        seg_boundary_lines = len(DB_x_csz)-2
-#    else:
-    seg_boundary_lines = len(DB_x_csz)-1
-    for i in range(seg_boundary_lines):  # for offset segment boundary lines
-        # DB_x_rl DB_y_rl for i --> Koordinaten
-        x_DB_i = np.linspace(DB_x_csz[i][0], DB_x_csz[i][1], n_total+1)
-        y_DB_i = np.linspace(DB_y_csz[i][0], DB_y_csz[i][1], n_total+1)
-        # DB_x_rl DB_y_rl for i+1 --> Koordinaten
-        x_DB_ii = np.linspace(DB_x_csz[i+1][0], DB_x_csz[i+1][1], n_total+1)
-        y_DB_ii = np.linspace(DB_y_csz[i+1][0], DB_y_csz[i+1][1], n_total+1)
-
-        if i % 2 == 0:  # i gerade
-            for j in range(n_total):
-                x_seg_j = [x_DB_i[j], x_DB_ii[j]]
-                y_seg_j = [y_DB_i[j], y_DB_ii[j]]
-
-                x_seg_jj = [x_DB_i[j+1], x_DB_ii[j+1]]
-                y_seg_jj = [y_DB_i[j+1], y_DB_ii[j+1]]
-
-                k = 0
-                a = sum_mi
-                new_raster_area[a][j] = 1./2 * ((y_seg_j[k]-y_seg_jj[k+1]) *
-                                                (x_seg_jj[k]-x_seg_j[k+1]) +
-                                                (y_seg_j[k+1]-y_seg_jj[k]) *
-                                                (x_seg_j[k]-x_seg_jj[k+1]))
-
-            sum_mi = sum_mi+1
-        else:  # i ungerade
-            m_i = int(np.floor((i/2)))  # m for each segment
-            for j in range(n_total):
-                x_seg_j = np.linspace(x_DB_i[j], x_DB_ii[j], m[m_i]-1)
-                y_seg_j = np.linspace(y_DB_i[j], y_DB_ii[j], m[m_i]-1)
-
-                x_seg_jj = np.linspace(x_DB_i[j+1], x_DB_ii[j+1], m[m_i]-1)
-                y_seg_jj = np.linspace(y_DB_i[j+1], y_DB_ii[j+1], m[m_i]-1)
-
-                for k in range(m[m_i]-2):
-                    a = sum_mi+k
-                    # print(np.shape(new_raster_area))
-                    # print(a,j)
-                    new_raster_area[a, j] = 1./2*((y_seg_j[k]-y_seg_jj[k+1]) *
-                                                  (x_seg_jj[k]-x_seg_j[k+1]) +
-                                                  (y_seg_j[k+1]-y_seg_jj[k]) *
-                                                  (x_seg_j[k]-x_seg_jj[k+1]))
-
-            sum_mi = a + 1
+    # calculate the real area of the new cells as well as the s_coord
+    raster_transfo = getSArea(raster_transfo)
 
     log.info('Size of rasterdata- old: %d x %d - new: %d x %d' % (
-        np.size(rasterdata, 0), np.size(rasterdata, 1),
-        np.size(new_raster, 1), np.size(new_raster, 2)))
+            np.size(rasterdata, 0), np.size(rasterdata, 1),
+            np.size(raster_transfo['grid_x'], 0), np.size(raster_transfo['grid_x'], 1)))
 
-    aval_data['header'] = header
-    aval_data['s_coord'] = s_coord
-    aval_data['l_coord'] = l_coord
-    aval_data['rasterData'] = new_raster
-    aval_data['absRasterData'] = abs(new_raster_area)
+    # affect values
+    raster_transfo['header'] = header
+    # put back scale and origin
+    raster_transfo['s_coord'] = raster_transfo['s_coord']*cellsize
+    raster_transfo['l_coord'] = raster_transfo['l_coord']*cellsize
+    raster_transfo['grid_x'] = raster_transfo['grid_x']*cellsize + header.xllcorner
+    raster_transfo['grid_y'] = raster_transfo['grid_y']*cellsize + header.yllcorner
+    raster_transfo['rasterArea'] = raster_transfo['rasterArea']*cellsize*cellsize
 
+    aval_data = transform(rasterSource,raster_transfo)
     # visu
-    figure_width = 2*5
-    figure_height = 2*4
+    input_data = {}
+    input_data['aval_data'] = aval_data
+    input_data['sourceData'] = sourceData
+    input_data['Avapath'] = Avapath
+    input_data['DB'] = DB
+
+    visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags)
+
+
+    return raster_transfo
+
+
+def split_section(DB, i):
+    """
+    Splits the domain DB in the s direction (direction of the path)
+    """
+    # left edge
+    xl0 = DB['DB_x_l'][i]
+    xl1 = DB['DB_x_l'][i+1]
+    yl0 = DB['DB_y_l'][i]
+    yl1 = DB['DB_y_l'][i+1]
+    dxl = xl1 - xl0
+    dyl = yl1 - yl0
+    Vl = np.array((dxl,dyl))
+    zl = np.linalg.norm(Vl)
+
+    # right edge
+    xr0 = DB['DB_x_r'][i]
+    xr1 = DB['DB_x_r'][i+1]
+    yr0 = DB['DB_y_r'][i]
+    yr1 = DB['DB_y_r'][i+1]
+    dxr = xr1 - xr0
+    dyr = yr1 - yr0
+    Vr = np.array((dxr,dyr))
+    zr = np.linalg.norm(Vr)
+
+    # number of segments
+    m = int(max(np.ceil(zl), np.ceil(zr))+1)
+    # make left segment
+    bxl = np.linspace(xl0, xl1, m)
+    byl = np.linspace(yl0, yl1, m)
+    # make right segment
+    bxr = np.linspace(xr0, xr1, m)
+    byr = np.linspace(yr0, yr1, m)
+
+    return bxl, byl, bxr, byr, m
+
+def makeTransfoMat(raster_transfo, DB, w, cellsize):
+    """ Make transformation matrix.
+        Takes a Domain Boundary and finds the (x,y) coordinates of the new raster
+        (the one following the path)
+    """
+    # number of points describing the avaPath
+    n_pnt = np.shape(DB['DB_x_r'])[0]
+    ## Working with no dimentions (the cellsize scaling will be readded at the end)
+    # l_coord is the distance from polyline (cross section)
+    # maximum step should be smaller then the cellsize
+    n_total = np.ceil(w/cellsize)
+    # take the next odd integer. This ensure that the l_coord = o exists
+    n_total = int(n_total+1) if ((n_total % 2) == 0) else int(n_total)
+    n_2tot = int(np.floor(n_total/2))
+    l_coord = np.linspace(-n_2tot, n_2tot, n_total) # this way, 0 is in l_coord
+
+    # initialize new_rasters
+    new_grid_raster_x = np.array([]) # x_coord of the points of the new raster
+    new_grid_raster_y = np.array([]) # y_coord of the points of the new raster
+    # loop on each section of the path
+    for i in range(n_pnt-1):
+        # split edges in segments
+        bxl, byl, bxr, byr, m = split_section(DB, i)
+        # bxl, byl, bxr, byr reprensent the s direction (olong path)
+        # loop on segments of section
+        for j in range(m-1):
+            # this is the cross section segment (l direction)
+            x = np.linspace(bxl[j], bxr[j], n_total)  # line coordinates x
+            y = np.linspace(byl[j], byr[j], n_total)  # line coordinates y
+            # save x and y coordinates of the new raster points
+            if i==0 and j==0:
+                new_grid_raster_x = x.reshape(1,n_total)
+                new_grid_raster_y = y.reshape(1,n_total)
+            else:
+                new_grid_raster_x = np.append(new_grid_raster_x,x.reshape(1,n_total), axis=0)
+                new_grid_raster_y = np.append(new_grid_raster_y,y.reshape(1,n_total), axis=0)
+
+    # add last column
+    x = np.linspace(bxl[m-1], bxr[m-1], n_total)  # line coordinates x
+    y = np.linspace(byl[m-1], byr[m-1], n_total)  # line coordinates y
+    new_grid_raster_x = np.append(new_grid_raster_x,x.reshape(1,n_total), axis=0)
+    new_grid_raster_y = np.append(new_grid_raster_y,y.reshape(1,n_total), axis=0)
+
+    raster_transfo['l_coord'] = l_coord
+    raster_transfo['grid_x'] = new_grid_raster_x
+    raster_transfo['grid_y'] = new_grid_raster_y
+
+    return raster_transfo
+
+def getSArea(raster_transfo):
+    """
+    Find the s_coord corresponding to the transformation and the Area of
+    the cells of the new raster
+    """
+    x_coord = raster_transfo['grid_x']
+    y_coord = raster_transfo['grid_y']
+    # add ghost lines and columns to the coord matrix
+    # in order to perform dx and dy calculation
+    n, m =np.shape(x_coord)
+    x_coord = np.append(x_coord, x_coord[:,-2].reshape(n, 1), axis=1)
+    y_coord = np.append(y_coord, y_coord[:,-2].reshape(n, 1), axis=1)
+    n, m =np.shape(x_coord)
+    x_coord = np.append(x_coord, x_coord[-2,:].reshape(1, m), axis=0)
+    y_coord = np.append(y_coord, y_coord[-2,:].reshape(1, m), axis=0)
+    n, m =np.shape(x_coord)
+    # calculate dx and dy for each point in the l direction
+    dxl = x_coord[0:n-1,1:m]-x_coord[0:n-1,0:m-1]
+    dyl = y_coord[0:n-1,1:m]-y_coord[0:n-1,0:m-1]
+    # deduce the distance in l direction
+    Vl = np.sqrt(dxl*dxl + dyl*dyl)
+    # calculate dx and dy for each point in the s direction
+    dxs = x_coord[1:n,0:m-1]-x_coord[0:n-1,0:m-1]
+    dys = y_coord[1:n,0:m-1]-y_coord[0:n-1,0:m-1]
+    # deduce the distance in s direction
+    Vs = np.sqrt(dxs*dxs + dys*dys)
+
+    # calculate area of each cell
+    new_area_raster = np.abs(Vl*Vs)
+    raster_transfo['rasterArea'] = new_area_raster
+    # get s_coord
+    ds = Vs[:,int(np.floor(m/2))-1]
+    s_coord = np.cumsum(ds)-ds[0]
+    raster_transfo['s_coord'] = s_coord
+
+    return raster_transfo
+
+def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
+    """
+    Plot and save the domain transformation figure
+    """
+    # read paths
+    pathResult = cfgPath['pathResult']
+    project_name = cfgPath['dirName']
+    # read rasterdata
+    sourceData = input_data['sourceData']
+    header = sourceData['header']
+    xllcenter = header.xllcenter
+    yllcenter = header.yllcenter
+    cellsize = header.cellsize
+    rasterdata = sourceData['rasterData']
+    # read avaPath with scale
+    Avapath = input_data['Avapath']
+    x_path = Avapath['x']*cellsize+xllcenter
+    y_path = Avapath['y']*cellsize+yllcenter
+    # read domain boundarries with scale
+    DB =input_data['DB']
+    DB_x_l = DB['DB_x_l']*cellsize+xllcenter
+    DB_x_r = DB['DB_x_r']*cellsize+xllcenter
+    DB_y_l = DB['DB_y_l']*cellsize+yllcenter
+    DB_y_r = DB['DB_y_r']*cellsize+yllcenter
+
+    figure_width = 2*10
+    figure_height = 2*5
     lw = 1
 
     fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
 
 #    for figure: referenz-simulation bei p_lim=1
+    ax1 = plt.subplot(121)
     new_rasterdata = rasterdata
     masked_array = np.ma.masked_where(new_rasterdata == 0, new_rasterdata)
     cmap = copy.copy(matplotlib.cm.jet)
     cmap.set_bad('w', 1.)
 
     n, m = np.shape(new_rasterdata)
-    xx, yy = np.meshgrid(np.arange(m), np.arange(n))
-
-    ref1 = plt.imshow(masked_array, vmin=new_rasterdata.min(),
+    xx, yy = np.meshgrid(np.arange(m)*cellsize+xllcenter, np.arange(n)*cellsize+yllcenter)
+    ref1 = ax1.imshow(masked_array, vmin=new_rasterdata.min(),
                       vmax=new_rasterdata.max(),
                       origin='lower',
                       cmap=cmap,
                       label='pressure data',
                       aspect='auto',
-                      extent=[xx.min()*cellsize+xllcenter, xx.max()*cellsize+xllcenter,
-                              yy.min()*cellsize+yllcenter, yy.max()*cellsize+yllcenter])
+                      extent=[xx.min(), xx.max(),
+                              yy.min(), yy.max()])
     plt.autoscale(False)
     ref2 = plt.plot(x_path, y_path,
                     'b-', linewidth=lw, label='flow path')
-    ref3 = plt.plot(DB_x_rl+xllcenter, DB_y_rl+yllcenter,
+    ref3 = plt.plot(DB_x_l, DB_y_l,
                     'g-', linewidth=lw, label='domain')
-    ref3 = plt.plot(DB_x_rl.T+xllcenter, DB_y_rl.T+yllcenter,
+    ref3 = plt.plot(DB_x_r, DB_y_r,
+                    'g-', linewidth=lw, label='domain')
+    ref3 = plt.plot([DB_x_l, DB_x_r],[DB_y_l, DB_y_r],
                     'g-', linewidth=lw, label='domain')
     refs = [ref2[0], ref3[0]]
 
     labels = ['flow path', 'domain']
-
-    plt.legend(refs, labels, loc=0)
-    plt.xlim([xx.min()*cellsize+xllcenter, xx.max()*cellsize+xllcenter])
-    plt.ylim([yy.min()*cellsize+yllcenter, yy.max()*cellsize+yllcenter])
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
-    cbh = plt.colorbar()
+    ax1.title.set_text('XY Domain')
+    ax1.legend(refs, labels, loc=0)
+    ax1.set_xlim([xx.min(), xx.max()])
+    ax1.set_ylim([yy.min(), yy.max()])
+    ax1.set_xlabel('x [m]')
+    ax1.set_ylabel('y [m]')
+    cbh = plt.colorbar(ref1, use_gridspec=True)
     cbh.set_label('peak pressure [kPa]')
+
+    ax2 = plt.subplot(122)
+    ax2.title.set_text('sl Domain')
+    isosurf = copy.deepcopy(input_data['aval_data'])
+    xx, yy = np.meshgrid(raster_transfo['l_coord'], raster_transfo['s_coord'] )
+    masked_array = np.ma.masked_where(isosurf == 0, isosurf)
+    cmap = copy.copy(matplotlib.cm.jet)
+    cmap.set_bad('w', 1.)
+    # ref0 = plt.pcolormesh(xx,yy,masked_array, vmin=isosurf.min(),
+    #                   vmax=isosurf.max(), cmap=cmap,
+    #                   #extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+    #                   label='pressure data')
+    ref0 = ax2.imshow(masked_array, vmin=isosurf.min(),
+                      vmax=isosurf.max(), origin='lower', cmap=cmap,
+                      extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+                      aspect='auto', label='pressure data')
+    ax2.set_xlim([xx.min(), xx.max()])
+    ax2.set_ylim([yy.min(), yy.max()])
+    ax2.set_xlabel('l [m]')
+    ax2.set_ylabel('s [m]')
+    cbh = plt.colorbar(ref0, use_gridspec=True)
+    cbh.set_label('peak pressure [kPa]')
+
     if cfgFlags.getboolean('plotFigure'):
         plt.show()
     if cfgFlags.getboolean('savePlot'):
-        pro_name = rasterSource.split('/')[-3]  # CoSiCa-samos-structure
-#        pro_name = fnames[0].split('/')[-5] + '_' + fnames[0].split('/')[-2] # DAKUMO_structure
-        outname_fin = ''.join([outpath, '/pics/', pro_name,
-                               '_simulationxy', '.pdf'])
+        outname_fin = ''.join([pathResult, '/pics/', project_name,
+                               '_domTransfo', '.pdf'])
         if not os.path.exists(os.path.dirname(outname_fin)):
             os.makedirs(os.path.dirname(outname_fin))
         fig.savefig(outname_fin, transparent=True)
 
     plt.close(fig)
 
-    return aval_data
+def transform(fname, raster_transfo):
 
-
-def transform(fname, rasterIndData):
     """
-    transform
-    this function is used to process the rasterdata such that it can be
-    analysed with the methods for a regular grid
-    data given in a regular grid is projected on a nonuniform grid given
-    a transformation raster
-
-    JT Fischer, Uwe Schlifkowitz BFW 2010-2012
-    AK BFW 2014
-
-    input: names of rasterfiles, transformation raster
-    ouput: structure{x coordinate along new raster, y coordinate, rasterdata_xind, rasterdata_yind}
-
-    fnames:       full name of data file including path and extension
-    rasterIndData: raster of new shape containing indices from corresponding points of old raster
+    Affect value to the points of the new raster (after domain transormation)
+    input:
+            -fname = name of rasterfile to transform
+            -raster_transfo = transformation info
+    ouput:
+            -new_data = z, pressure or depth... corresponding to fname on the new raster
     """
-    name = fname.split('/')
+    name = os.path.basename(fname)
+    data = IOf.readRaster(fname)
 
-    # xy_oldind = rasterIndData[3].astype('int')
-    xy_oldind = rasterIndData['rasterData'].astype('int')
+    # read tranformation info
+    new_grid_raster_x = raster_transfo['grid_x']
+    new_grid_raster_y = raster_transfo['grid_y']
 
-    dem = IOf.readRaster(fname)
-    header = dem['header']
-    xllcenter = header.xllcenter
-    yllcenter = header.yllcenter
-    cellsize = header.cellsize
+    n, m = np.shape(new_grid_raster_x)
+    xx = new_grid_raster_x
+    yy = new_grid_raster_y
+    Points = {}
+    Points['x'] = xx.flatten()
+    Points['y'] = yy.flatten()
+    Points = geoTrans.projectOnRaster_Vect(data, Points)
+    new_data = Points['z'].reshape(n,m)
+    log.info('Data-file: %s - raster values transferred' % (name))
 
-    rasterdata = dem['rasterData']
+    return new_data
 
-#        out of bounds counter
-    i_oob = 0
-    i_ib = 0
-
-    new_raster = np.zeros((len(rasterIndData['s_coord']), len(rasterIndData['l_coord'])))
-
-    for x_ind in range(new_raster.shape[0]):
-        for y_ind in range(new_raster.shape[1]):
-            i_ib += 1
-            try:
-                new_raster[x_ind, y_ind] = rasterdata[xy_oldind[1]
-                                                      [x_ind, y_ind]][xy_oldind[0][x_ind, y_ind]]
-            except:
-                i_oob += 1
-                new_raster[x_ind, y_ind] = np.NaN
-
-    log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
-             (name[-1], i_ib-i_oob, i_oob))
-
-    return new_raster
-
-
-def assignData(fnames, rasterIndData):
+def assignData(fnames, raster_transfo):
     """
-    assignData
-
-    this function is used to process the rasterdata such that it can be
-    analysed with the methods for a regular grid
-    data given in a regular grid is projected on a nonuniform grid given
-    a transformation raster
-
-    JT Fischer, Uwe Schlifkowitz BFW 2010-2012
-    AK BFW 2014
-
-    input: names of rasterfiles, transformation raster
-    ouput: structure{x coordinate along new raster, y coordinate, rasterdata_xind, rasterdata_yind}
-
-    fnames:       full name of data file including path and extension
-    rasterIndData: raster of new shape containing indices from corresponding points of old raster
+    Affect value to the points of the new raster (after domain transormation)
+    input:
+            -fnames = list of names of rasterfiles to transform
+            -raster_transfo = transformation info
+    ouput: aval_data = z, pressure or depth... corresponding to fnames on the new rasters
     """
-# if started without arguments
-#    if (nargin == 0):
-#        return None
 
     maxtopo = len(fnames)
-#    aval_data = np.array([[None for m in xrange(4)] for n in xrange(maxtopo)])
     aval_data = np.array(([None] * maxtopo))
 
     log.info('Transfer data of %d file(s) from old to new raster' % maxtopo)
-
-    pool = Pool()
-    aval_data = pool.map(functools.partial(
-        transform, rasterIndData=rasterIndData), fnames)
-    pool.close()
-    pool.join()
+    for i in range(maxtopo):
+        fname = fnames[i]
+        aval_data[i] = transform(fname,raster_transfo)
 
     return aval_data
 
@@ -772,7 +592,7 @@ def analyzeDocu(p_lim, fnames, rasterInd, pressureData,
 
     n_total = len(rasterInd['s_coord'])
     m_total = len(rasterInd['l_coord'])
-    cellarea = rasterInd['absRasterData']
+    cellarea = rasterInd['rasterArea']
 
     for i in range(n_topo):
         rasterdata = pressureData[i]
@@ -954,29 +774,6 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
         runout[i] = s_coordinate[clower]
         runout_mean[i] = s_coordinate[clower_m]
 
-# analyze shape of the avalanche front (last frontshape m)
-# from runout point frontshapelength back and measure medium??? width
-# find the point of frontal length before runout
-#        fs_i, fs_v = min(enumerate(abs(s_coordinate - runout[i] + frontshape_length)),
-#                         key=operator.itemgetter(1))
-# determine the width of the frontal zone
-#        p_frontlong = np.array((np.amax(rasterdata[fs_i:clower+1, :], 0),
-#                                   np.mean(rasterdata[fs_i:clower+1, :], 0)))
-#       # P(X) % maximum value and averaged value
-#        frontalIndex = np.where(p_frontlong[0] > p_lim)[0]
-#       # p_long only in frontal area
-#
-#        if frontalIndex.any():
-#            frleft = min(frontalIndex)
-#            frright = max(frontalIndex)
-#        else:
-#            print('[DATA]: No values > p_lim found for frontal width determination. p_lim = %10.4f, too high?' % p_lim
-#            frleft = 0
-##            frright = len(p_long[0])-1
-#            frright = 0
-#
-#        front_width = abs(l_coordinate[frright]-l_coordinate[frleft])
-#        frontal_shape[i] = front_width/frontshape_length
 
         log.info('%s\t%10.4f\t%10.4f\t%10.4f' % (i+1, runout[i], ampp[i], amd[i]))
 
@@ -1000,6 +797,10 @@ def analyzeDataWithDepth(rasterInd, p_lim, data, data_depth, cfgPath, cfgFlags):
             masked_array = np.ma.masked_where(isosurf == 0, isosurf)
             cmap = copy.copy(matplotlib.cm.jet)
             cmap.set_bad('w', 1.)
+            # ref0 = plt.pcolormesh(xx,yy,masked_array, vmin=isosurf.min(),
+            #                   vmax=isosurf.max(), cmap=cmap,
+            #                   #extent=[xx.min(), xx.max(), yy.min(), yy.max()],
+            #                   label='pressure data')
             ref0 = ax1.imshow(masked_array, vmin=isosurf.min(),
                               vmax=isosurf.max(), origin='lower', cmap=cmap,
                               extent=[xx.min(), xx.max(), yy.min(), yy.max()],

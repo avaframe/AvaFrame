@@ -4,6 +4,7 @@ Opperations and transformations of rasters and lines
 
 import math
 import numpy as np
+import copy
 import logging
 
 
@@ -38,13 +39,72 @@ def projectOnRaster(dem, Points):
         Ly1 = int(np.floor(Ly)) + 1
         dx = Lx - Lx0
         dy = Ly - Ly0
-        f11 = rasterdata[Ly0][Lx0]
-        f12 = rasterdata[Ly1][Lx0]
-        f21 = rasterdata[Ly0][Lx1]
-        f22 = rasterdata[Ly1][Lx1]
-        # using bilinear interpolation on the cell
-        value = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
+        try:
+            f11 = rasterdata[Ly0][Lx0]
+            f12 = rasterdata[Ly1][Lx0]
+            f21 = rasterdata[Ly0][Lx1]
+            f22 = rasterdata[Ly1][Lx1]
+            # using bilinear interpolation on the cell
+            value = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
+        except IndexError:
+            value = np.NaN
+
         zcoor = np.append(zcoor, value)
+
+    Points['z'] = zcoor
+    return Points
+
+
+def projectOnRaster_Vect(dem, Points):
+    """
+    Vectorized version of projectOnRaster
+    Projects the points Points on Raster using a bilinear interpolation
+    and returns the z coord
+    Input :
+    Points: list of points (x,y) 2 rows as many columns as Points
+    Output:
+    PointsZ: list of points (x,y,z) 3 rows as many columns as Points
+
+    TODO: test
+    """
+    header = dem['header']
+    rasterdata = dem['rasterData']
+    ncol = header.ncols
+    nrow = header.nrows
+    xllcorner = header.xllcorner
+    yllcorner = header.yllcorner
+    cellsize = header.cellsize
+    xcoor = Points['x']
+    ycoor = Points['y']
+    zcoor = np.array([])
+
+    Lxx = (xcoor - xllcorner) / cellsize
+    Lyy = (ycoor - yllcorner) / cellsize
+    Lx = copy.deepcopy(Lxx)
+    Ly = copy.deepcopy(Lyy)
+    Lx[np.where((Lxx < 0))] = 0
+    Ly[np.where((Lxx < 0))] = 0
+    Lx[np.where(Lxx > (ncol-1))] = 0
+    Ly[np.where(Lxx > (ncol-1))] = 0
+    Lx[np.where(Lyy < 0)] = 0
+    Ly[np.where(Lyy < 0)] = 0
+    Lx[np.where(Lyy > (nrow-1))] = 0
+    Ly[np.where(Lyy > (nrow-1))] = 0
+
+    Lx0 = np.floor(Lx).astype('int')
+    Ly0 = np.floor(Ly).astype('int')
+    Lx1 = Lx0 + 1
+    Ly1 = Ly0 + 1
+    dx = Lx - Lx0
+    dy = Ly - Ly0
+    f11 = rasterdata[Ly0, Lx0]
+    f12 = rasterdata[Ly1, Lx0]
+    f21 = rasterdata[Ly0, Lx1]
+    f22 = rasterdata[Ly1, Lx1]
+    # using bilinear interpolation on the cell
+    value = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
+
+    zcoor = value
 
     Points['z'] = zcoor
     return Points
@@ -198,28 +258,40 @@ def bresenham(x0, y0, x1, y1, cs):
     return z
 
 
-def path2domain(x, y, w, csz):
+def path2domain(xy_path, w, header):
     """
     path2domain
     Creates a domain (irregular raster) along a path, given the path polyline, a domain width
     and a raster cellsize
     Usage:
-        [xp, yp, ] = path2domain(x, y, w, csz)
+        [DB] = path2domain(xy_path, w, header)
        Input:
-           x, y:   Polyline Coordinates
+           xy_path:   Polyline Coordinates
            w:      Domain width
-           csz:    cell size
+           header:  header info  
        Output:
-           xp, yp: Arrays determining a path of width w along a polyline
+           DB : xp, yp Arrays determining a path of width w along a polyline
 
     [Fischer2013] Fischer, Jan-Thomas. (2013).
     A novel approach to evaluate and compare computational snow avalanche simulation.
     Natural Hazards and Earth System Sciences. 13. 1655-. 10.5194/nhess-13-1655-2013.
     Uwe Schlifkowitz/ BFW, June 2011
     """
-#    Difference between x- bzw. y-Coordinates of Polyline
-#    first and last  Vertex: Difference between this and the next
-#    other vertices: Difference between previous and next
+    xllcenter = header.xllcenter
+    yllcenter = header.yllcenter
+    csz = header.cellsize
+    x = xy_path['x']
+    y = xy_path['y']
+    w = w/2/csz
+    # Shift grid origin to (0,0)
+    x -= xllcenter
+    y -= yllcenter
+    # remove scaling due to cellsize
+    x /= csz
+    y /= csz
+    # Difference between x- bzw. y-Coordinates of Polyline
+    # first and last  Vertex: Difference between this and the next
+    # other vertices: Difference between previous and next
     dx = np.array((x[1]-x[0]))
     dy = np.array((y[1]-y[0]))
     n = len(x)
@@ -230,45 +302,25 @@ def path2domain(x, y, w, csz):
     dx = np.append(dx, x[-1]-x[-2])
     dy = np.append(dy, y[-1]-y[-2])
 
-#    Direction of normal vector of difference,
-#    a.k.a. bisecting line of angle
+    # Direction of normal vector of difference,
+    # a.k.a. bisecting line of angle
     d = np.arctan2(dy, dx) + math.pi/2
 
-#    x- and y-Coordinates (left and right) of path edges,
-#    total width w
-#    x-KOO[left right]
-    OX = np.array((x + w * np.cos(d),
-                   x + w * np.cos(d + math.pi)))
-#    y-KOO[left right]
-    OY = np.array((y + w * np.sin(d),
-                   y + w * np.sin(d + math.pi)))
+    # x- and y-Coordinates (left and right) of path edges,
+    # total width w
+    # x-KOO[left right]
+    DB_x_l = np.array((x + w * np.cos(d)))
+    DB_x_r = np.array((x + w * np.cos(d + math.pi)))
+    # y-KOO[left right]
+    DB_y_l = np.array((y + w * np.sin(d)))
+    DB_y_r = np.array((y + w * np.sin(d + math.pi)))
+    DB = {}
+    DB['DB_x_l'] = DB_x_l
+    DB['DB_x_r'] = DB_x_r
+    DB['DB_y_l'] = DB_y_l
+    DB['DB_y_r'] = DB_y_r
 
-#    AK 2013
-#    x- and y-Coordinates (left and right) of path edges,
-#    total width w + shift for area/rastersize
-    # x-KOO[[left],[right]]
-    OOX = np.array((x + (w+csz/2) * np.cos(d),
-                    x + (w+csz/2) * np.cos(d + math.pi)))
-    # y-KOO[[left],[right]]
-    OOY = np.array((y + (w+csz/2) * np.sin(d),
-                    y + (w+csz/2) * np.sin(d + math.pi)))
-
-#    x-KOO[[left right], ... ,[left right]]
-    OOXX = np.zeros((len(OOX[0])*2, len(OOX)))
-#    y-KOO[[left right], ... ,[left right]]
-    OOYY = np.zeros((len(OOY[0])*2, len(OOY)))
-#        vorwärts
-    OOXX[0:-1:2, 0] = OOX[0] + csz/2. * np.cos(d + 1./2*math.pi)
-    OOXX[0:-1:2, 1] = OOX[1] + csz/2. * np.cos(d + 1./2*math.pi)
-    OOYY[0:-1:2, 0] = OOY[0] + csz/2. * np.sin(d + 1./2*math.pi)
-    OOYY[0:-1:2, 1] = OOY[1] + csz/2. * np.sin(d + 1./2*math.pi)
-#        rückwärts
-    OOXX[1::2, 0] = OOX[0] + csz/2. * np.cos(d + 3./2*math.pi)
-    OOXX[1::2, 1] = OOX[1] + csz/2. * np.cos(d + 3./2*math.pi)
-    OOYY[1::2, 0] = OOY[0] + csz/2. * np.sin(d + 3./2*math.pi)
-    OOYY[1::2, 1] = OOY[1] + csz/2. * np.sin(d + 3./2*math.pi)
-
-    return OX, OY, OOXX, OOYY
+    return DB
 
 
 def poly2mask_simple(ydep, xdep, ncols, nrows):
