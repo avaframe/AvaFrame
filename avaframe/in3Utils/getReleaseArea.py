@@ -16,17 +16,36 @@ import shutil
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
+def makexyPoints(x1, x2, y1, cfgGen):
+    """ Make xy Points of release area from given extent and start and end points """
 
-def getCorners_FP(x_end, y_end, dx, cfgFP, cfgGen):
+    lenp = int(cfgGen['lenP'])
+
+    # define corner coordinates
+    xyPoints = np.zeros((lenp, 2))
+    xyPoints[0, 0] = x1 + x2          # xlr
+    xyPoints[0, 1] = -0.5 * y1        # ylr
+    xyPoints[1, 0] = x1 + x2          # xur
+    xyPoints[1, 1] = 0.5 * y1         # yur
+    xyPoints[2, 0] = x1               # xul
+    xyPoints[2, 1] = 0.5 * y1         # yul
+    xyPoints[3, 0] = x1               # xll
+    xyPoints[3, 1] = -0.5 * y1        # yll
+
+    # list all points
+    for m in range(lenp):
+        log.info('Point %d: x %f y %f' % (m, xyPoints[m, 0], xyPoints[m, 1]))
+
+    return xyPoints
+
+
+def getCorners_FP(xv, yv, dx, cfgFP, cfgGen):
 
     # Terrain parameters
-    xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     hr = float(cfgGen['hr'])
     vol = float(cfgGen['vol'])
     dh = float(cfgGen['dh'])
     xStart = float(cfgGen['xStart'])
-    lenp = int(cfgGen['lenP'])
 
     # Compute release area ---------------------------------------------------------------------------------------
     xr = float(cfgFP['xExtent'])
@@ -34,35 +53,19 @@ def getCorners_FP(x_end, y_end, dx, cfgFP, cfgGen):
 
     log.info('volume is: %f' % (yr*xr*dh))
 
-    # define corner coordinates
-    xyPoints = np.zeros((lenp, 2))
-    xyPoints[0, 0] = xStart + xr       # xll
-    xyPoints[0, 1] = -0.5 * yr         # yll
-    xyPoints[1, 0] = xStart + xr       # xlr
-    xyPoints[1, 1] = 0.5 * yr          # ylr
-    xyPoints[2, 0] = xStart            # xur
-    xyPoints[2, 1] = 0.5 * yr          # yur
-    xyPoints[3, 0] = xStart            # xul
-    xyPoints[3, 1] = -0.5 * yr         # yul
-
-    # list all points
-    for m in range(lenp):
-        log.info('%f: %f' % (xyPoints[m, 0], xyPoints[m, 1]))
+    # make corner coordinates of release area
+    xyPoints = makexyPoints(xStart, xr, yr, cfgGen)
 
     return xv, yv, xyPoints
 
 
-def getCorners_IP(x_end, y_end, dx, mean_alpha, cfgGen):
+def getCorners_IP(xv, yv, dx, mean_alpha, cfgGen):
 
     # Terrain parameters
-    xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     hr = float(cfgGen['hr'])
     vol = float(cfgGen['vol'])
     dh = float(cfgGen['dh'])
-
     xStart = float(cfgGen['xStart'])
-    lenp = int(cfgGen['lenP'])
 
     # Compute release area ---------------------------------------------------------------------------------------
     xr = hr / np.sin(np.radians(mean_alpha))        # along valley extent of release area
@@ -71,29 +74,15 @@ def getCorners_IP(x_end, y_end, dx, mean_alpha, cfgGen):
 
     log.info('volume is: %f, xr: %f, xrp: %f' % (yr*xr*dh, xr, xrp))
 
-    # define corner coordinates
-    xyPoints = np.zeros((lenp, 2))
-    xyPoints[0, 0] = xStart + xrp       # xll
-    xyPoints[0, 1] = -0.5 * yr          # yll
-    xyPoints[1, 0] = xStart + xrp       # xlr
-    xyPoints[1, 1] = 0.5 * yr           # ylr
-    xyPoints[2, 0] = xStart             # xur
-    xyPoints[2, 1] = 0.5 * yr           # yur
-    xyPoints[3, 0] = xStart             # xul
-    xyPoints[3, 1] = -0.5 * yr          # yul
-
-    # list all points
-    for m in range(lenp):
-        log.info('Point %d: x %f y %f' % (m, xyPoints[m, 0], xyPoints[m, 1]))
+    # make corner coordinates of release area
+    xyPoints = makexyPoints(xStart, xrp, yr, cfgGen)
 
     return xv, yv, xyPoints
 
 
-def getCorners_HS(x_end, y_end, dx, mean_alpha, cfgHS, cfgGen, cfgTopo):
+def getCorners_HS(xv, yv, dx, mean_alpha, cfgHS, cfgGen, cfgTopo):
 
     # Terrain parameters
-    xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     hr = float(cfgGen['hr'])
     vol = float(cfgGen['vol'])
     dh = float(cfgGen['dh'])
@@ -110,20 +99,9 @@ def getCorners_HS(x_end, y_end, dx, mean_alpha, cfgHS, cfgGen, cfgTopo):
     xrp = hr / np.tan(np.radians(alpha_stop))
     yr = vol / (xr * dh)
 
-    # define corner coordinates
-    xyPoints = np.zeros((lenp, 2))
-    xyPoints[0, 0] = xStop - xrp        # xll
-    xyPoints[0, 1] = -0.5 * yr           # yll
-    xyPoints[1, 0] = xStop              # xlr
-    xyPoints[1, 1] = -0.5 * yr          # ylr
-    xyPoints[2, 0] = xStop             # xur
-    xyPoints[2, 1] = 0.5 * yr           # yur
-    xyPoints[3, 0] = xStop - xrp       # xul
-    xyPoints[3, 1] = 0.5 * yr           # yul
-
-    # list all points
-    for m in range(lenp):
-        log.info('Point %d: x %f y %f' % (m, xyPoints[m, 0], xyPoints[m, 1]))
+    xStart = xStop - xrp
+    # make corner coordinates of release area
+    xyPoints = makexyPoints(xStart, xrp, yr, cfgGen)
 
     return xv, yv, xyPoints
 
@@ -158,7 +136,7 @@ def writeNXYZ(xyPoints, DEM_type, cfgFile, cfgGen, outDir):
     # Save elevation data to .asc file and add header lines
     with open(os.path.join(outDir, 'release_%d%s.nxyz' % (rel_no, DEM_type)), 'w') as f:
         f.write('name=%s\n' % (rel_name))
-        f.write('ah=%.2f\n' % (rel_h))
+        f.write('d0=%.2f\n' % (rel_h))
         f.write('rho=None\n')
         f.write('%d\n' % (lenp))
         for line in p_mat:
@@ -169,18 +147,6 @@ def writeNXYZ(xyPoints, DEM_type, cfgFile, cfgGen, outDir):
     if cfgGen.getboolean('outputtxt'):
         shutil.copyfile(os.path.join(outDir, 'release_%d%s.nxyz' % (rel_no, DEM_type)),
         os.path.join(outDir, 'release_%d%s.txt' % (rel_no, DEM_type)))
-
-
-def makeOutputDir(avalancheDir):
-    """ Make output directory """
-
-    outDir = os.path.join(avalancheDir, 'Inputs', 'REL')
-    if os.path.isdir(outDir):
-        log.warning('Be careful %s already existed - new data is added' % (outDir))
-    else:
-        os.makedirs(outDir)
-
-    return outDir
 
 
 def getReleaseArea(cfgT, cfgR, avalancheDir):
@@ -199,32 +165,42 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
 
     log.info('DEM type is set to: %s' % DEM_type)
 
+    # Set Output directory
+    outDir = os.path.join(avalancheDir, 'Inputs', 'REL')
+    if os.path.isdir(outDir):
+        log.info('The new release area is saved to %s' % (outDir))
+    else:
+        log.error('Required folder structure: NameOfAvalanche/Inputs missing! \
+                    Run runInitializeProject first!')
+
     # determine number of rows and columns to define domain
     dx = float(cfgTopo['dx'])
     x_end = float(cfgTopo['x_end']) + dx
     y_end = float(cfgTopo['y_end']) + dx
+    xv = np.arange(0, x_end, dx)
+    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
     nrows = int(y_end / dx)                    # number of rows
     ncols = int(x_end / dx)                    # number of columns
 
     flagCont = False
     # Get release area
     if DEM_type == 'FP':
-        [xv, yv, xyPoints] = getCorners_FP(x_end, y_end, dx, cfgFP, cfgGen)
+        [xv, yv, xyPoints] = getCorners_FP(xv, yv, dx, cfgFP, cfgGen)
         flagCont = True
 
     elif DEM_type == 'IP':
         [xv, yv, xyPoints] = getCorners_IP(
-            x_end, y_end, dx, float(cfgTopo['mean_alpha']), cfgGen)
+            xv, yv, dx, float(cfgTopo['mean_alpha']), cfgGen)
         flagCont = True
 
     elif DEM_type == 'HS':
         [xv, yv, xyPoints] = getCorners_HS(
-            x_end, y_end, dx, float(cfgTopo['mean_alpha']), cfgHS, cfgGen, cfgTopo)
+            xv, yv, dx, float(cfgTopo['mean_alpha']), cfgHS, cfgGen, cfgTopo)
         flagCont = True
 
     elif DEM_type == 'HS2':
         [xv, yv, xyPoints] = getCorners_IP(
-            x_end, y_end, dx, float(cfgTopo['mean_alpha']), cfgGen)
+            xv, yv, dx, float(cfgTopo['mean_alpha']), cfgGen)
         flagCont = True
 
     elif DEM_type == 'HX':
@@ -234,9 +210,6 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
         log.warning('no release area available for DEM_type: %s' % (DEM_type))
 
     if flagCont:
-
-        # Make output directory
-        outDir = makeOutputDir(avalancheDir)
 
         # Move to correct correctOrigin
         [xv, yv, xyPoints] = correctOrigin(xv, yv, xyPoints, cfgT, y_end)
