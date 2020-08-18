@@ -51,29 +51,40 @@ def getGridDefs(cfg):
     return dx, xEnd, yEnd, nRows, nCols
 
 
-def flatplane(cfgTopo, ncols, nrows):
-    """ Compute coordinates of flat plane topography """
+def computeCoordGrid(dx, xEnd, yEnd):
 
-    # input parameters
-    dx = float(cfgTopo['dx'])
-    x_end = float(cfgTopo['x_end']) + dx
-    y_end = float(cfgTopo['y_end']) + dx
-    z_elev = float(cfgTopo['z_elev'])
+    # TODO: use size instad
+    nRows = int(yEnd / dx)                    # number of rows
+    nCols = int(xEnd / dx)                    # number of columns
 
     # Compute coordinate grid
-    xv = np.arange(0, x_end, dx)
-    yv = np.arange(-0.5 * y_end, 0.5 * y_end, dx)
+    xv = np.arange(0, xEnd, dx)
+    yv = np.arange(-0.5 * yEnd, 0.5 * yEnd, dx)
     x, y = np.meshgrid(xv, yv)
+    zv = np.zeros((nRows, nCols))
+
+    return xv, yv, zv, x, y
+
+
+def flatplane(cfg):
+    """ Compute coordinates of flat plane topography """
+
+    dx, xEnd, yEnd = getGridDefs(cfg)
+
+    zElev = float(cfg['TOPO']['z_elev'])
+
+    xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
+
     # Set elevation of surface
-    zv = np.zeros((nrows, ncols)) + z_elev
+    zv = zv + zElev
 
     # Name extension for this type of topography
-    name_ext = 'FP'
+    nameExt = 'FP'
 
     # Log info here
     log.info('Flatplane coordinates computed')
 
-    return x, y, zv, name_ext
+    return x, y, zv, nameExt
 
 
 def inclinedplane(cfgTopo, ncols, nrows, cfgChannel):
