@@ -24,6 +24,8 @@ def makeAimecDirs(avaDir):
     flowDepthDir = os.path.join(workDir, 'dfa_depth')
     pressureDir = os.path.join(workDir, 'dfa_pressure')
     massDir = os.path.join(workDir, 'dfa_mass_balance')
+    massDirTemp = os.path.join(workDir, 'dfa_mass_balance_temp')
+
 
     if os.path.isdir(workDir):
         log.warning('Be careful directories in %s already existed - but got now deleted' % (workDir))
@@ -33,6 +35,8 @@ def makeAimecDirs(avaDir):
     os.makedirs(flowDepthDir)
     os.makedirs(pressureDir)
     os.makedirs(massDir)
+    os.makedirs(massDirTemp)
+
     log.info('Aimec Work folders created to start postprocessing com1DFA data')
 
 
@@ -121,7 +125,7 @@ def extractMBInfo(avaDir):
 
         # Write mass balance info files
         for k in range(len(indRun)-1):
-            with open(os.path.join(os.getcwd(), avaDir, 'Work','ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile)), 'w') as MBFile:
+            with open(os.path.join(os.getcwd(), avaDir, 'Work','ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', '%06d.txt' % (countFile)), 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
                     if countFile == 0:
@@ -132,14 +136,17 @@ def extractMBInfo(avaDir):
             countFile = countFile + 1
 
     # Delete the files that are not in the local Exp Log
-    for m in range(len(logDictExp['simName'])):
-        fname = ('%06d.txt' % m)
-        if m not in indSims:
-            fname = ('%06d.txt' % m)
-            os.remove(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', fname))
-        else:
-            log.info('Simulation %s mass balance info is copied to ana3AIMEC' % logDictExp['simName'][m])
+    countSims = 0
+    for l in range(len(logDictExp['simName'])):
+        if l in indSims:
+            fname = ('%06d.txt' % l)
+            fnameNew = ('%06d.txt' % countSims)
+            shutil.copyfile(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', fname),
+             os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % countSims))
+            countSims = countSims + 1
+            log.info('NEW files: %s new is %s' % (fname, fnameNew))
 
+    shutil.rmtree(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp'))
 
 def readLogFile(avaDir):
     """ Read experiment log file """
