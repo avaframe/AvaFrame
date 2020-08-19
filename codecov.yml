@@ -3,7 +3,7 @@ coverage:
     project:
       default:
         # basic
-        target: auto
-        threshold: 4%
-        base: auto 
+        # target: auto
+        # threshold: 4%
+        # base: auto 
         informational: true
