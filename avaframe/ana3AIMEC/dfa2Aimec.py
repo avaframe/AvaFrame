@@ -70,6 +70,7 @@ def writeAimecPathsFile(cfgSetup, avaDir):
         pfile.write('pathVelocity=%s,\n' % (emptyVar))
         pfile.write('pathResult=%s,\n' % (os.path.join(workDir, 'AimecResults')))
 
+
 def extractMBInfo(avaDir):
     """ Extract the mass balance info from the log file """
 
@@ -80,10 +81,17 @@ def extractMBInfo(avaDir):
     for rels in relFiles:
         relNames.append(os.path.splitext(os.path.basename(rels))[0])
 
+    # Get logFile
+    logDict = readLogFile(avaDir)
+    simName = []
+    for name in logDict['simName']:
+        simName.append(name.split('_')[0])
+    relNames = set(simName)
+
     # Read mass data from log and save to file for each simulation run
     countFile = 0
     for relName in relNames:
-        print(relName)
+        log.info('These are the release areas: %s ' % (relName))
 
         # Initialise fields
         time = []
@@ -124,17 +132,13 @@ def extractMBInfo(avaDir):
             countFile = countFile + 1
 
 
-def getDFAData(avaDir, cfgDFA):
-    """ Export the required input data from com1DFA output """
+def readLogFile(avaDir):
+    """ Read experiment log file """
 
     # Initialise directories
     inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
-    workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
     workDirMain = os.path.join(avaDir, 'Work', 'ana3AIMEC')
 
-    noSim = []      # number of Simulation
-    simName = []    # name of Simulation
-    Mu = []         # Mu parameter value
     # Read the experiment log - if copied to local_ExpLog take this!
     if os.path.isfile(os.path.join(workDirMain, 'local_ExpLog.txt')):
         logFile = open(os.path.join(workDirMain, 'local_ExpLog.txt'), 'r')
@@ -142,6 +146,10 @@ def getDFAData(avaDir, cfgDFA):
     else:
         logFile = open(os.path.join(inputDir, 'ExpLog.txt'), 'r')
         log.info('Take com1DFA full experiment log')
+
+    noSim = []      # number of Simulation
+    simName = []    # name of Simulation
+    Mu = []         # Mu parameter value
 
     lines = logFile.readlines()[1:]
     for line in lines:
@@ -153,8 +161,23 @@ def getDFAData(avaDir, cfgDFA):
     # Save info to dictionary
     suffix = ['pfd', 'ppr', 'pv', 'fd']
     logDict = {'noAva' : noSim, 'simName' : simName, 'Mu' : Mu, 'suffix' : suffix}
-    sNo = len(noSim)
-    sufNo = len(suffix)
+
+    return logDict
+
+
+def getDFAData(avaDir, cfgDFA):
+    """ Export the required input data from com1DFA output """
+
+    # Initialise directories
+    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
+    workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
+    workDirMain = os.path.join(avaDir, 'Work', 'ana3AIMEC')
+
+    # Read log file information
+    logDict = readLogFile(avaDir)
+    # Get number of values
+    sNo = len(logDict['noAva'])
+    sufNo = len(logDict['suffix'])
 
     # Path to com1DFA results
     resPath = os.path.join(inputDir, cfgDFA['filesDir'])
