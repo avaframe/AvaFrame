@@ -78,36 +78,55 @@ def projectOnRaster_Vect(dem, Points):
     ycoor = Points['y']
     zcoor = np.array([])
 
+    # initialize outputs
+    zcoor = np.ones((np.shape(xcoor)))*np.NaN
+    dx = np.ones((np.shape(xcoor)))*np.NaN
+    dy = np.ones((np.shape(xcoor)))*np.NaN
+    f11 = np.ones((np.shape(xcoor)))*np.NaN
+    f12 = np.ones((np.shape(xcoor)))*np.NaN
+    f21 = np.ones((np.shape(xcoor)))*np.NaN
+    f22 = np.ones((np.shape(xcoor)))*np.NaN
+
+    # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     Lxx = (xcoor - xllcorner) / cellsize
     Lyy = (ycoor - yllcorner) / cellsize
     Lx = copy.deepcopy(Lxx)
     Ly = copy.deepcopy(Lyy)
-    Lx[np.where((Lxx < 0))] = 0
-    Ly[np.where((Lxx < 0))] = 0
-    Lx[np.where(Lxx > (ncol-1))] = 0
-    Ly[np.where(Lxx > (ncol-1))] = 0
-    Lx[np.where(Lyy < 0)] = 0
-    Ly[np.where(Lyy < 0)] = 0
-    Lx[np.where(Lyy > (nrow-1))] = 0
-    Ly[np.where(Lyy > (nrow-1))] = 0
 
+    # find out of bound indexes
+    Lx[np.where((Lxx < 0))] = np.NaN
+    Ly[np.where((Lxx < 0))] = np.NaN
+    Lx[np.where(Lxx > (ncol-1))] = np.NaN
+    Ly[np.where(Lxx > (ncol-1))] = np.NaN
+    Lx[np.where(Lyy < 0)] = np.NaN
+    Ly[np.where(Lyy < 0)] = np.NaN
+    Lx[np.where(Lyy > (nrow-1))] = np.NaN
+    Ly[np.where(Lyy > (nrow-1))] = np.NaN
+
+    # find index of index of not nan value
+    mask = ~np.isnan(Lx+Ly)
+    mask_ind = np.argwhere(~np.isnan(Lx+Ly))[:,0]
+    i_tot = len(Lx)
+    i_inb = len(mask_ind)
+    i_oob = i_tot - i_inb
+
+    # find coordinates of the 4 nearest cornes on the raster
     Lx0 = np.floor(Lx).astype('int')
     Ly0 = np.floor(Ly).astype('int')
     Lx1 = Lx0 + 1
     Ly1 = Ly0 + 1
-    dx = Lx - Lx0
-    dy = Ly - Ly0
-    f11 = rasterdata[Ly0, Lx0]
-    f12 = rasterdata[Ly1, Lx0]
-    f21 = rasterdata[Ly0, Lx1]
-    f22 = rasterdata[Ly1, Lx1]
+    # prepare for bilinear interpolation (do not take out of bound into account)
+    dx[mask_ind] = Lx[mask] - Lx0[mask]
+    dy[mask_ind] = Ly[mask] - Ly0[mask]
+    f11[mask_ind] = rasterdata[Ly0[mask], Lx0[mask]]
+    f12[mask_ind] = rasterdata[Ly1[mask], Lx0[mask]]
+    f21[mask_ind] = rasterdata[Ly0[mask], Lx1[mask]]
+    f22[mask_ind] = rasterdata[Ly1[mask], Lx1[mask]]
     # using bilinear interpolation on the cell
-    value = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
-
-    zcoor = value
+    zcoor = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
 
     Points['z'] = zcoor
-    return Points
+    return Points, i_tot, i_oob
 
 
 def prepareLine(dem, avapath, distance=10, Point=None):
@@ -268,7 +287,7 @@ def path2domain(xy_path, w, header):
        Input:
            xy_path:   Polyline Coordinates
            w:      Domain width
-           header:  header info  
+           header:  header info
        Output:
            DB : xp, yp Arrays determining a path of width w along a polyline
 
