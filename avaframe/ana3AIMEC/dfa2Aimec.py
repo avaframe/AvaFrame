@@ -82,13 +82,13 @@ def extractMBInfo(avaDir):
         relNames.append(os.path.splitext(os.path.basename(rels))[0])
 
     # Get logFile
-    logDictExp = readLogFile(avaDir)
+    [logDictExp, indSims] = readLogFile(avaDir)
     simName = []
     for name in logDictExp['simName']:
         simName.append(name.split('_')[0])
     relNames = set(simName)
 
-    indSims = cleanDirs(avaDir)
+
     # Read mass data from log and save to file for each simulation run
     countFile = 0
     for relName in relNames:
@@ -146,6 +146,7 @@ def readLogFile(avaDir):
 
     # Initialise directories
     inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
+    workDirMain = os.path.join(avaDir, 'Work', 'ana3AIMEC')
 
     logFile = open(os.path.join(inputDir, 'ExpLog.txt'), 'r')
     log.info('Take com1DFA full experiment log')
@@ -165,7 +166,26 @@ def readLogFile(avaDir):
     suffix = ['pfd', 'ppr', 'pv', 'fd']
     logDict = {'noAva' : noSim, 'simName' : simName, 'Mu' : Mu, 'suffix' : suffix}
 
-    return logDict
+    # Read the experiment log - if copied to local_ExpLog take this!
+    if os.path.isfile(os.path.join(workDirMain, 'local_ExpLog.txt')):
+        logFileLocal = open(os.path.join(workDirMain, 'local_ExpLog.txt'), 'r')
+        log.info('Take local (potentially modified) experiment log')
+    else:
+        logFileLocal = open(os.path.join(inputDir, 'ExpLog.txt'), 'r')
+        log.warning('There is no file local_ExpLog - using all simulations')
+
+    # Read simulation names from local exp Log
+    simName = []
+    lines = logFileLocal.readlines()[1:]
+    for line in lines:
+        vals = line.strip().split()
+        simName.append(vals[1])
+
+    # Identify common simulations
+    setSim = set(simName)
+    indSims = [i for i, item in enumerate(logDict['simName']) if item in setSim]
+
+    return logDict, indSims
 
 
 def getDFAData(avaDir, cfgDFA):
@@ -176,10 +196,8 @@ def getDFAData(avaDir, cfgDFA):
     workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
     workDirMain = os.path.join(avaDir, 'Work', 'ana3AIMEC')
 
-    # Get an index array of those simulations that shall be exported 
-    indSims = desiredSims(avaDir)
     # Read log file information
-    logDict = readLogFile(avaDir)
+    [logDict, indSims] = readLogFile(avaDir)
     # Get number of values
     sNo = len(logDict['noAva'])
     sufNo = len(logDict['suffix'])
@@ -210,33 +228,3 @@ def getDFAData(avaDir, cfgDFA):
                                           '%s/dfa_pressure/%06d.txt' % (workDir, countppr))
                     log.info('Simulation %s is copied to ana3AIMEC' % logDict['simName'][k])
                     countppr = countppr + 1
-
-def desiredSims(avaDir):
-    """ Get indices of those sims that are in the local_ExpLog """
-
-    # Initialise directories
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
-    workDirMain = os.path.join(avaDir, 'Work', 'ana3AIMEC')
-
-    # Read the experiment log - if copied to local_ExpLog take this!
-    if os.path.isfile(os.path.join(workDirMain, 'local_ExpLog.txt')):
-        logFile = open(os.path.join(workDirMain, 'local_ExpLog.txt'), 'r')
-        log.info('Take local (potentially modified) experiment log')
-    else:
-        log.warning('There is no file local_ExpLog - using all simulations')
-
-    # Read simulation names from local exp Log
-    simName = []
-    lines = logFile.readlines()[1:]
-    for line in lines:
-        vals = line.strip().split()
-        simName.append(vals[1])
-
-    # Read the full exp log file information
-    logDict = readLogFile(avaDir)
-
-    # Identify common simulations
-    setSim = set(simName)
-    indSims = [i for i, item in enumerate(logDict['simName']) if item in setSim]
-
-    return indSims
