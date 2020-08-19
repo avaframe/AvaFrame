@@ -8,16 +8,13 @@ import numpy as np
 import scipy as sp
 import copy
 import operator
-from matplotlib import pyplot as plt
-import matplotlib
-import matplotlib.lines as mlines
-import matplotlib.patches as mpatches
-from matplotlib import cm
+
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in3Utils.ascUtils as IOf
+import avaframe.out3SimpPlot.outAIMEC as outAimec
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -110,60 +107,35 @@ def mainAIMEC(cfgPath, cfg):
     # assign dem data
     log.info("Assigning dem data to deskewed raster")
     newRasterDEM = assignData([cfgPath['demSource']], raster_transfo)
-    dem_name = os.path.basename(cfgPath['demSource'])
-    newRasters['newRasterDEM'] = newRasterDEM
+    newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
     log.info('Analyzing data')
-    # # analyze doku
-    # log.info('Comparing data to reference')
-    # doku, runout_doku, delta_h, elevRel = analyzeDocu(pressureLimit,
-    #                                                   cfgPath['pressurefileList'],
-    #                                                   raster_transfo,
-    #                                                   newRasters)
 
     # analyze mass / entrainment
     log.info('Analyzing entrainment data')
     # determine growth index from entrainment data
-    # [relMass, entMass, gr_index, gr_grad] = analyze.analyzeEntrainmentdata(cfgPath['massfileList'])
+    # [relMass, entMass, gr_index, gr_grad] = analyzeEntrainmentdata(cfgPath['massfileList'])
     gr_index = 0
     relMass = 0
     entMass = 0
     # analyze pressure_data and depth_data
     # determine runount, AMPP, AMD, FS,
     log.info('Analyzing data in path coordinate system')
-    resAnalysis = analyzeDataWithDepth(raster_transfo, pressureLimit, newRasters, cfgPath, cfgFlags)
+    resAnalysis = analyzeData(raster_transfo, pressureLimit, newRasters, cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
     # log.info('Visualisation of results')
-    # result_visu(cfgPath, resAnalysis, doku, gr_index, pressureLimit)
+    # outAimec.result_visu(cfgPath, resAnalysis, doku, gr_index, pressureLimit)
 
     # -----------------------------------------------------------
     # write results to file
     # -----------------------------------------------------------
     log.info('Writing results to file')
-    out_header = ''.join(['project_name: ',  cfgPath['project_name'], '\n',
-                          'path: ', cfgPath['path_name'], '\n',
-                          'dhm: ', str(dem_name), '\n',
-                          'domain_width: ', str(domainWidth), '\n',
-                          'pressure_limit: ', str(pressureLimit), '\n',
-                          #'fall_height: ', str(delta_h), '\n',
-                          'release_mass: ', str(relMass), '\n',
-                          #'elevation_release: ', str(elevRel),  '\n',
-                          'filenr, runout, AMPP, MMPP, entMass, growth_index, AMD, MMD\n'])
-    outname = ''.join([cfgPath['pathResult'], os.path.sep,
-                       'Results_pl', str(int(pressureLimit)), '_w', str(int(domainWidth)), '.txt'])
 
-    log.info('write output file: %s' % outname)
-    runout = resAnalysis['runout']
-    AMPP = resAnalysis['AMPP']
-    MMPP = resAnalysis['MMPP']
-    AMD = resAnalysis['AMD']
-    MMD = resAnalysis['MMD']
-    resfile = [runout, AMPP, MMPP, entMass, gr_index, AMD, MMD]
-    result_write(cfgPath['pressurefileList'], resfile, outname, out_header)
+    outAimec.result_write(cfgPath, cfgSetup, resAnalysis)
 
 # -----------------------------------------------------------
 # Aimec processing tools
@@ -185,7 +157,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
             -rasterArea, real area of the cells of the new raster
     """
     # Read input parameters
-    rasterSource = cfgPath['pressurefileList'][0]
+    rasterSource = cfgPath['pressurefileList'][0] #cfgPath['demSource'] #
     ProfileLayer = cfgPath['profileLayer']
     w = domainWidth
     outpath = cfgPath['pathResult']
@@ -239,7 +211,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     input_data['Avapath'] = Avapath
     input_data['DB'] = DB
 
-    visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags)
+    outAimec.visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags)
 
     return raster_transfo
 
@@ -368,109 +340,6 @@ def getSArea(raster_transfo):
     return raster_transfo
 
 
-def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
-    """
-    Plot and save the domain transformation figure
-    """
-    # read paths
-    pathResult = cfgPath['pathResult']
-    project_name = cfgPath['dirName']
-    # read rasterdata
-    sourceData = input_data['sourceData']
-    header = sourceData['header']
-    xllcenter = header.xllcenter
-    yllcenter = header.yllcenter
-    cellsize = header.cellsize
-    rasterdata = sourceData['rasterData']
-    # read avaPath with scale
-    Avapath = input_data['Avapath']
-    x_path = Avapath['x']*cellsize+xllcenter
-    y_path = Avapath['y']*cellsize+yllcenter
-    # read domain boundarries with scale
-    DB = input_data['DB']
-    DB_x_l = DB['DB_x_l']*cellsize+xllcenter
-    DB_x_r = DB['DB_x_r']*cellsize+xllcenter
-    DB_y_l = DB['DB_y_l']*cellsize+yllcenter
-    DB_y_r = DB['DB_y_r']*cellsize+yllcenter
-
-    figure_width = 2*10
-    figure_height = 2*5
-    lw = 1
-
-    fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
-
-#    for figure: referenz-simulation bei p_lim=1
-    ax1 = plt.subplot(121)
-    new_rasterdata = rasterdata
-    masked_array = np.ma.masked_where(new_rasterdata == 0, new_rasterdata)
-    cmap = copy.copy(matplotlib.cm.jet)
-    cmap.set_bad('w', 1.)
-
-    n, m = np.shape(new_rasterdata)
-    xx, yy = np.meshgrid(np.arange(m)*cellsize+xllcenter, np.arange(n)*cellsize+yllcenter)
-    ref1 = ax1.imshow(masked_array, vmin=new_rasterdata.min(),
-                      vmax=new_rasterdata.max(),
-                      origin='lower',
-                      cmap=cmap,
-                      label='pressure data',
-                      aspect='auto',
-                      extent=[xx.min(), xx.max(),
-                              yy.min(), yy.max()])
-    plt.autoscale(False)
-    ref2 = plt.plot(x_path, y_path,
-                    'b-', linewidth=lw, label='flow path')
-    ref3 = plt.plot(DB_x_l, DB_y_l,
-                    'g-', linewidth=lw, label='domain')
-    ref3 = plt.plot(DB_x_r, DB_y_r,
-                    'g-', linewidth=lw, label='domain')
-    ref3 = plt.plot([DB_x_l, DB_x_r], [DB_y_l, DB_y_r],
-                    'g-', linewidth=lw, label='domain')
-    refs = [ref2[0], ref3[0]]
-
-    labels = ['flow path', 'domain']
-    ax1.title.set_text('XY Domain')
-    ax1.legend(refs, labels, loc=0)
-    ax1.set_xlim([xx.min(), xx.max()])
-    ax1.set_ylim([yy.min(), yy.max()])
-    ax1.set_xlabel('x [m]')
-    ax1.set_ylabel('y [m]')
-    cbh = plt.colorbar(ref1, use_gridspec=True)
-    cbh.set_label('peak pressure [kPa]')
-
-    ax2 = plt.subplot(122)
-    ax2.title.set_text('sl Domain')
-    isosurf = copy.deepcopy(input_data['aval_data'])
-    xx, yy = np.meshgrid(raster_transfo['l_coord'], raster_transfo['s_coord'])
-    masked_array = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap = copy.copy(matplotlib.cm.jet)
-    cmap.set_bad('w', 1.)
-    # ref0 = plt.pcolormesh(xx,yy,masked_array, vmin=isosurf.min(),
-    #                   vmax=isosurf.max(), cmap=cmap,
-    #                   #extent=[xx.min(), xx.max(), yy.min(), yy.max()],
-    #                   label='pressure data')
-    ref0 = ax2.imshow(masked_array, vmin=isosurf.min(),
-                      vmax=isosurf.max(), origin='lower', cmap=cmap,
-                      extent=[xx.min(), xx.max(), yy.min(), yy.max()],
-                      aspect='auto', label='pressure data')
-    ax2.set_xlim([xx.min(), xx.max()])
-    ax2.set_ylim([yy.min(), yy.max()])
-    ax2.set_xlabel('l [m]')
-    ax2.set_ylabel('s [m]')
-    cbh = plt.colorbar(ref0, use_gridspec=True)
-    cbh.set_label('peak pressure [kPa]')
-
-    if cfgFlags.getboolean('plotFigure'):
-        plt.show()
-    if cfgFlags.getboolean('savePlot'):
-        outname_fin = ''.join([pathResult, '/pics/', project_name,
-                               '_domTransfo', '.pdf'])
-        if not os.path.exists(os.path.dirname(outname_fin)):
-            os.makedirs(os.path.dirname(outname_fin))
-        fig.savefig(outname_fin, transparent=True)
-
-    plt.close(fig)
-
-
 def transform(fname, raster_transfo):
     """
     Affect value to the points of the new raster (after domain transormation)
@@ -493,9 +362,9 @@ def transform(fname, raster_transfo):
     Points = {}
     Points['x'] = xx.flatten()
     Points['y'] = yy.flatten()
-    Points = geoTrans.projectOnRaster_Vect(data, Points)
+    Points, i_ib, i_oob = geoTrans.projectOnRaster_Vect(data, Points)
     new_data = Points['z'].reshape(n, m)
-    log.info('Data-file: %s - raster values transferred' % (name))
+    log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' % (name, i_ib-i_oob, i_oob))
 
     return new_data
 
@@ -524,173 +393,17 @@ def assignData(fnames, raster_transfo):
 # Aimec analysis tools
 # -----------------------------------------------------------
 
-def analyzeDocu(p_lim, fnames, raster_transfo, newRasters):
-    """
-    Compare Simulation - Documentation
-
-    Andreas Kofler, 2013
-
-    this function is used to compare each simulation with a given doku-polyline
-    (or if isn't existing a documatation: simulation#1 (ref-sim) --> documentation)
-
-    input: p_lim(doku),names of sim-files,deskewed_rasterInd,pressureData,depthData,dokuData
-    ouput: structure{teilfächen(4),mean-values for pressure and depth(4)} +
-    runout-length of doku
-    """
-    n_topo = len(fnames)
-    avalData = np.array([[None for m in range(n_topo)] for n in range(8)])
-    pressureData = newRasters['newRasterPressure']
-    depthData = newRasters['newRasterDepth']
-    demData = newRasters['newRasterDEM']
-    s_coord = raster_transfo['s_coord']
-    l_coord = raster_transfo['l_coord']
-    rasterArea = raster_transfo['rasterArea']
-    # take first simulation as reference
-    new_mask = copy.deepcopy(pressureData[0])
-
-    # get mean max for each cross section on the refference
-    refCrossMean = np.nansum(new_mask*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
-    refCrossMax = np.array((np.nanmax(new_mask, 1)))
-
-    lindex = np.nonzero(refCrossMax > p_lim)[0]
-    if lindex.any():
-        cupper_doku = min(lindex)
-        clower_doku = max(lindex)
-    else:
-        log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % p_lim)
-        cupper_doku = 0
-        clower_doku = 0
-    refRunout = s_coord[clower_doku]
-
-
-    new_mask[np.where(np.nan_to_num(new_mask) < p_lim)] = 0
-    new_mask[np.where(np.nan_to_num(new_mask) >= p_lim)] = 1
-
-#   comparison rasterdata with mask
-    log.info('Sim number\tTP\tFN\tFP\tTN')
-
-#     rasterinfo
-    n_start, m_start = np.nonzero(np.nan_to_num(new_mask))
-    n_start = min(n_start)
-
-    n_total = len(raster_transfo['s_coord'])
-    m_total = len(raster_transfo['l_coord'])
-    cellarea = raster_transfo['rasterArea']
-
-    for i in range(n_topo):
-        rasterdata = pressureData[i]
-        # include for depth
-        rasterdata_depth = depthData[i]
-
-        """
-        area
-        # true positive: reality(mask)=1, model(rasterdata)=1
-        # false negative: reality(mask)=1, model(rasterdata)=0
-        # false positive: reality(mask)=0, model(rasterdata)=1
-        # true negative: reality(mask)=0, model(rasterdata)=0
-        """
-#    for each pressure-file p_lim is introduced (1/3/.. kPa), where the avalanche has stopped
-        new_rasterdata = copy.deepcopy(rasterdata)
-        new_rasterdata[np.where(np.nan_to_num(new_rasterdata) < p_lim)] = 0
-        new_rasterdata[np.where(np.nan_to_num(new_rasterdata) >= p_lim)] = 1
-
-        tpInd = np.where((new_mask[n_start:n_total+1] == True) &
-                         (new_rasterdata[n_start:n_total+1] == True))
-        fpInd = np.where((new_mask[n_start:n_total+1] == False) &
-                         (new_rasterdata[n_start:n_total+1] == True))
-        fnInd = np.where((new_mask[n_start:n_total+1] == True) &
-                         (new_rasterdata[n_start:n_total+1] == False))
-        tnInd = np.where((new_mask[n_start:n_total+1] == False) &
-                         (new_rasterdata[n_start:n_total+1] == False))
-
-#     Teilrasterpunkte
-        tpCount = len(tpInd[0])
-        fpCount = len(fpInd[0])
-        fnCount = len(fnInd[0])
-        tnCount = len(tnInd[0])
-
-#     subareas
-        tp = sum(cellarea[tpInd[0] + n_start, tpInd[1]])
-        fp = sum(cellarea[fpInd[0] + n_start, fpInd[1]])
-        fn = sum(cellarea[fnInd[0] + n_start, fnInd[1]])
-        tn = sum(cellarea[tnInd[0] + n_start, tnInd[1]])
-
-# for mean-pressure and mean-depth over simualtion(s)
-        if tpCount == 0:
-            tp_pressure_mean = 0
-            tp_depth_mean = 0
-        else:
-            tp_pressure_mean = sum(rasterdata[tpInd[0] + n_start, tpInd[1]]) / tpCount
-            tp_depth_mean = sum(rasterdata_depth[tpInd[0] + n_start, tpInd[1]]) / tpCount
-        if fpCount == 0:
-            fp_pressure_mean = 0
-            fp_depth_mean = 0
-        else:
-            fp_pressure_mean = sum(rasterdata[fpInd[0] + n_start, fpInd[1]]) / fpCount
-            fp_depth_mean = sum(rasterdata_depth[fpInd[0] + n_start, fpInd[1]]) / fpCount
-
-        avalData[0][i] = tp
-        avalData[1][i] = fn
-        avalData[2][i] = fp
-        avalData[3][i] = tn
-        avalData[4][i] = tp_depth_mean
-        avalData[5][i] = fp_depth_mean
-        avalData[6][i] = tp_pressure_mean
-        avalData[7][i] = fp_pressure_mean
-
-        area_sum = tp + fn + fp + tn
-        log.info('%s\t %f\t %f\t %f\t %f' % (i+1, tp/area_sum, fn/area_sum,
-                                             fp/area_sum, tn/area_sum))
-        # runout
-        # doku(s)
-        doku_cross = np.array((np.nanmax(new_mask, 1),
-                               np.nanmean(new_mask, 1)))
-        # search in doku values
-#        lindex = np.nonzero(doku_cross[0] == p_lim)[0]
-        lindex = np.nonzero(doku_cross[0] == 1)[0]
-        if lindex.any():
-            cupper_doku = min(lindex)
-            clower_doku = max(lindex)
-        else:
-            log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % p_lim)
-            cupper_doku = 0
-            clower_doku = 0
-
-    runout_doku = s_coord[clower_doku]
-
-    # if dhm delta h analysis
-    # Achtung Fehler in SamosAT: Druckraster und DHM-Raster stimmen nicht exakt überein!
-    # Eventuell shift in assignData berücksichtigen
-    new_dem = demData[0]
-    # find first cells that have flow - (randomly) choose simulation
-    # P(s)
-    p_cross = np.array((np.nanmax(rasterdata, 1),
-                        np.nanmean(rasterdata, 1)))
-
-    # search in max values
-    lindex = np.nonzero(p_cross[0] > p_lim)[0]
-    if lindex.any():
-        cupper = min(lindex)
-    else:
-        log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % p_lim)
-        cupper = 0
-    elevRel = new_dem[cupper, int(m_total/2)]
-    deltah = new_dem[cupper, int(m_total/2)] - new_dem[clower_doku, int(m_total/2)]
-
-    return avalData, runout_doku, deltah, elevRel
-
-
-def analyzeDataWithDepth(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
+def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     """
     ANALYZEData
-
-    JT Fischer BFW 2010 - 2012
     """
     fname = cfgPath['pressurefileList']
+    fname_mass = cfgPath['massfileList']
     outpath = cfgPath['pathResult']
 
-    data = newRasters['newRasterPressure']
-    data_depth = newRasters['newRasterDepth']
+    dataPressure = newRasters['newRasterPressure']
+    dataDepth = newRasters['newRasterDepth']
+    dataDEM = newRasters['newRasterDEM']
     s_coord = raster_transfo['s_coord']
     l_coord = raster_transfo['l_coord']
     rasterArea = raster_transfo['rasterArea']
@@ -705,31 +418,39 @@ def analyzeDataWithDepth(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     mmpp = np.zeros((n_topo))
     amd = np.zeros((n_topo))
     mmd = np.zeros((n_topo))
-    frontal_shape = np.zeros((n_topo))
+    elevRel = np.zeros((n_topo))
+    deltaH = np.zeros((n_topo))
+    grIndex = np.ones((n_topo))
+    grGrad = np.ones((n_topo))
+    releaseMass = np.ones((n_topo))
+    entrainedMass = np.ones((n_topo))
 
-
+    n = np.shape(l_coord)[0]
     p_cross_all = np.zeros((n_topo, len(s_coord)))
-    log.info('Sim number \t rRunout \t rampp \t ramd \t FS')
+    # log.info('Sim number \t rRunout \t rampp \t ramd \t FS')
+    log.info('{: <15} {: <15} {: <15} {: <15}'.format(
+        'Sim number ', 'rRunout ', 'rampp ', 'ramd ', 'FS'))
     # For each data set
     for i in range(n_topo):
-        rasterdata = data[i]
-        rasterdata_depth = data_depth[i]
+        rasterdataPres = dataPressure[i]
+        rasterdataDepth = dataDepth[i]
 
         # get mean max for each cross section for pressure
-        presCrossMean = np.nansum(rasterdata*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
-        presCrossMax = np.nanmax(rasterdata, 1)
+        presCrossMean = np.nansum(rasterdataPres*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+        presCrossMax = np.nanmax(rasterdataPres, 1)
         # also get the Area corresponding to those cells
-        ind_presCrossMax = np.nanargmax(rasterdata, 1)
-        ind_1 = np.arange(np.shape(rasterdata)[0])
-        AreapresCrossMax = rasterArea[ind_1,ind_presCrossMax]
+        ind_presCrossMax = np.nanargmax(rasterdataPres, 1)
+        ind_1 = np.arange(np.shape(rasterdataPres)[0])
+        AreapresCrossMax = rasterArea[ind_1, ind_presCrossMax]
         # get mean max for each cross section for pressure
-        dCrossMean = np.nansum(rasterdata_depth*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
-        dCrossMax = np.nanmax(rasterdata_depth, 1)
+        dCrossMean = np.nansum(rasterdataDepth*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+        dCrossMax = np.nanmax(rasterdataDepth, 1)
         # also get the Area corresponding to those cells
-        ind_dCrossMax = np.nanargmax(rasterdata_depth, 1)
-        ind_1 = np.arange(np.shape(rasterdata_depth)[0])
-        AreadCrossMax = rasterArea[ind_1,ind_dCrossMax]
+        ind_dCrossMax = np.nanargmax(rasterdataDepth, 1)
+        ind_1 = np.arange(np.shape(rasterdataDepth)[0])
+        AreadCrossMax = rasterArea[ind_1, ind_dCrossMax]
 
+        p_cross_all[i] = presCrossMax
         #   Determine runout according to maximum and averaged values
         # search in max values
         lindex = np.nonzero(presCrossMax > p_lim)[0]
@@ -750,89 +471,35 @@ def analyzeDataWithDepth(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
             cupper_m = 0
             clower_m = 0
         # Mean max dpp of Cross-Section
-        ampp[i] = np.nansum((presCrossMax*AreapresCrossMax)[cupper:clower+1])/np.nansum(AreapresCrossMax[cupper:clower+1])
+        ampp[i] = np.nansum((presCrossMax*AreapresCrossMax)[cupper:clower+1]) / \
+            np.nansum(AreapresCrossMax[cupper:clower+1])
         mmpp[i] = max(presCrossMax[cupper:clower+1])
 
-        amd[i] = np.nansum((dCrossMax*AreadCrossMax)[cupper:clower+1])/np.nansum(AreadCrossMax[cupper:clower+1])
+        amd[i] = np.nansum((dCrossMax*AreadCrossMax)[cupper:clower+1]) / \
+            np.nansum(AreadCrossMax[cupper:clower+1])
         mmd[i] = max(dCrossMax[cupper:clower+1])
     #    Runout
         runout[i] = s_coord[clower]
         runout_mean[i] = s_coord[clower_m]
 
-        log.info('%s\t%10.4f\t%10.4f\t%10.4f' % (i+1, runout[i], ampp[i], amd[i]))
+        elevRel[i] = dataDEM[cupper, int(np.floor(n/2)+1)]
+        deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
 
-    # visu
-        figure_width = 3*5
-        figure_height = 3*4
+        # analyze mass
+        try:
+            releaseMass[i], entrainedMass[i], grIndex[i], grGrad[i] = read_write(fname_mass[i])
+            if (releaseMass == releaseMass[0]).any():
+                releaseMass = releaseMass[0]
+            else:
+                log.warning('Release masses differs between simulations!')
+        except IndexError:
+            releaseMass[i] = np.NaN
+            entrainedMass[i] = np.NaN
+            grIndex[i] = np.NaN
+            grGrad[i] = np.NaN
 
-        if i == 0:
-            fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
-            ax1 = plt.subplot(121)
-            ref1 = ax1.plot([l_coord[0], l_coord[len(l_coord)-1]],
-                            [s_coord[clower], s_coord[clower]], 'g-')
-            ref2 = ax1.plot([l_coord[0], l_coord[len(l_coord)-1]],
-                            [s_coord[clower_m], s_coord[clower_m]], 'r-')
-#            ref3 = ax1.plot([l_coord[frleft], l_coord[frleft]],
-#                            [s_coord[fs_i], s_coord[clower]],'k-')
-#            ref4 = ax1.plot([l_coord[frright], l_coord[frright]],
-#                         [s_coord[fs_i], s_coord[clower]],'k-')
-            isosurf = copy.deepcopy(rasterdata)
-            xx, yy = np.meshgrid(l_coord, s_coord)
-            masked_array = np.ma.masked_where(isosurf == 0, isosurf)
-            cmap = copy.copy(matplotlib.cm.jet)
-            cmap.set_bad('w', 1.)
-            # ref0 = plt.pcolormesh(xx,yy,masked_array, vmin=isosurf.min(),
-            #                   vmax=isosurf.max(), cmap=cmap,
-            #                   #extent=[xx.min(), xx.max(), yy.min(), yy.max()],
-            #                   label='pressure data')
-            ref0 = ax1.imshow(masked_array, vmin=isosurf.min(),
-                              vmax=isosurf.max(), origin='lower', cmap=cmap,
-                              extent=[xx.min(), xx.max(), yy.min(), yy.max()],
-                              aspect='auto', label='pressure data')
-            ax1.set_xlim([xx.min(), xx.max()])
-            ax1.set_ylim([yy.min(), yy.max()])
-            ax1.set_xlabel('l [m]')
-            ax1.set_ylabel('s [m]')
-            cbh = plt.colorbar(ref0, use_gridspec=True)
-            cbh.set_label('peak pressure [kPa]')
-#            ax1.legend((ref1[0], ref2[0], ref3[0]),
-#                       ('runout max', 'runout mean', 'frontal width'), loc=0)
-            ax1.legend((ref1[0], ref2[0]), ('runout max', 'runout mean'), loc=0)
-
-        p_cross_all[i] = presCrossMax
-
-    ax2 = plt.subplot(122)
-#    p_mean = p_cross_all.mean(axis=0)
-    p_median = np.median(p_cross_all, axis=0)
-    p_percentile = sp.percentile(p_cross_all, [2.5, 50, 97.5], axis=0)
-    ax2.fill_betweenx(s_coord, p_percentile[2], p_percentile[0],
-                      facecolor=[.8, .8, .8], alpha=0.5)
-    ref1 = mpatches.Patch(alpha=0.5, color=[.8, .8, .8])
-    ax2.plot(p_median, s_coord, color='r')
-    ref2 = mlines.Line2D([], [], color='r', linewidth=2)
-#    ax2.plot(p_mean, s_coord, color='b')
-#    ref3 = mlines.Line2D([], [], color='b', linewidth=2)
-    ax2.set_ylabel('s [m]')
-    ax2.set_ylim([yy.min(), yy.max()])
-    ax2.set_xlim(auto=True)
-    ax2.set_xlabel('Pmax(s) [kPa]')
-    ax2.legend((ref1, ref2),
-               ('quantiles', 'median'), loc=0)
-
-    fig.tight_layout()
-
-    if cfgFlags.getboolean('savePlot'):
-        pro_name = fname[0].split('/')[-3]
-        outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr',
-                               str(int(p_lim)), '_simulationsl', '.pdf'])
-        if not os.path.exists(os.path.dirname(outname_fin)):
-            os.makedirs(os.path.dirname(outname_fin))
-        fig.savefig(outname_fin, transparent=True)
-
-    if cfgFlags.getboolean('plotFigure'):
-        plt.show()
-    else:
-        plt.ioff()
+        # log.info('%s\t%10.4f\t%10.4f\t%10.4f' % (i+1, runout[i], ampp[i], amd[i]))
+        log.info('{: <15} {:<15.4f} {:<15.4f} {:<15.4f}'.format(*[i+1, runout[i], ampp[i], amd[i]]))
 
     resAnalysis['runout'] = runout
     resAnalysis['runout_mean'] = runout_mean
@@ -840,6 +507,24 @@ def analyzeDataWithDepth(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     resAnalysis['MMPP'] = mmpp
     resAnalysis['AMD'] = amd
     resAnalysis['MMD'] = mmd
+    resAnalysis['elevRel'] = elevRel
+    resAnalysis['deltaH'] = deltaH
+    resAnalysis['relMass'] = releaseMass
+    resAnalysis['entMass'] = entrainedMass
+    resAnalysis['growthIndex'] = grIndex
+    resAnalysis['growthGrad'] = grGrad
+
+    # prepare for plot
+    inputPlot = {}
+    inputPlot['p_mean'] = p_cross_all.mean(axis=0)
+    inputPlot['p_median'] = np.median(p_cross_all, axis=0)
+    inputPlot['p_percentile'] = sp.percentile(p_cross_all, [2.5, 50, 97.5], axis=0)
+    inputPlot['dataPressure'] = newRasters['newRasterPressure']
+    inputPlot['runout'] = resAnalysis['runout']
+    inputPlot['runout_mean'] = resAnalysis['runout_mean']
+    inputPlot['pressureLimit'] = p_lim
+
+    outAimec.visu_runout(raster_transfo, inputPlot, cfgPath, cfgFlags)
 
     return resAnalysis
 
@@ -856,353 +541,6 @@ def read_write(fname_ent):
     relMass = totMassResults[0]
     entMass = entMassResults[2]
 #   growth results
-#    growth index = maxmasse / anfang
-#    growth index =  endmasse / anfangs
-#    growthIndex = totMassResults[1]/totMassResults[0]
     growthIndex = totMassResults[2]/totMassResults[0]
-#    (MASS_max - MASS_start) / T(MASS_max) - T(0)
-#    (MASS_end - MASS_start) / T(MASS_end) - T(0)
-#    growthGrad  = (totMassResults[1]-totMassResults[0])/(timeResults[1]-timeResults[0])
     growthGrad = (totMassResults[2] - totMassResults[0]) / (timeResults[2] - timeResults[0])
-#    print('[ENT] %s\t %s\t %s\t %f\t %f\t' % (fname_ent.split('/')[-1],
-#                                              relMass, entMass, growthIndex, growthGrad)
     return relMass, entMass, growthIndex, growthGrad
-
-
-def analyzeEntrainmentdata(fnames):
-    """
-    Jan-Thomas Fischer BFW 2012
-
-    header: lauf, q, es, ed, eb, rhorel, rhoSnowCover
-
-    folgende hierachie ist zu beachten:
-        ist ein entrainment dhm gesetzt wird das daraus berechnete q_DHM
-        verwendet, nicht das hier gesetzte!
-        wenn e_b gesetzt ist sind e_s und e_d irrelevant!
-        rho_rel = 150 kg/m³ rhosc = 50 kg/m² standard...
-        der zusammenhang von e_d und e_s ist uber q gegeben.. e_s = q* e_d
-        wenn e_b klein ist ist q_er = q
-    """
-
-    grIndex = np.ones(len(fnames))
-    grGrad = np.ones(len(fnames))
-    releaseMass = np.ones(len(fnames))
-    entrainedMass = np.ones(len(fnames))
-
-    log.info('Sim number\t GI\t Ggrad')
-
-    for i in range(len(fnames)):
-        releaseMass[i], entrainedMass[i], grIndex[i], grGrad[i] = read_write(fnames[i])
-
-    if (releaseMass == releaseMass[0]).any():
-        releaseMass = releaseMass[0]
-    else:
-        log.warning('Release masses differs between simulations!')
-
-    return releaseMass, entrainedMass, grIndex, grGrad
-
-
-# -----------------------------------------------------------
-# Aimec out tools
-# -----------------------------------------------------------
-
-def result_write(data_name, data, outfile, header):
-    """
-    This function is used as standart output file
-
-    example path: 'log/doublestep_5_5m_calibration_results.txt'
-    example header: 'runout, maxvel, rho, mu, tau_0, R_s^0, kappa, R, B, q \n'
-
-    INPUT: data, path, header
-    """
-
-#    chekc if folder exists / create
-    if not os.path.exists(os.path.dirname(outfile)):
-        os.makedirs(os.path.dirname(outfile))
-
-    output = data
-    fid = open(outfile, 'w')
-    fid.write(header)
-    for i in range(len(output[0])):
-        tmp = os.path.basename(data_name[i])
-#        name = tmp.split('.')[0] # CoSiCa-Samos
-        name = os.path.splitext(tmp)[0]  # DAKUMO
-        fid.write('%s' % name)
-        for j in range(len(output)):
-            try:
-                fid.write(',%5.2f' % output[j][i])
-            except:
-                fid.write(',NaN')
-        fid.write('\n')
-    fid.close()
-
-    log.info('File written: %s' % outfile)
-
-
-def colorvar(k, k_end, colorflag, disp=0):
-    """
-    jt colorvariation editor - JT 2012
-    determine how color changes from runnumber = 1 to runnumber = runlength
-    input: runnumber,runlength,colorflag,verbose
-    output: [R G B]
-
-    possible colorflags:
-    'ry': red to yellow
-    'bb': blue to light blue
-    'pw': pink to white
-    'kg' black to green
-    'bp' blue to pink
-    'pb' pink to blue
-    'gy' green to yellow
-    'cw' cyan to white
-    'kr' black to red
-    'gb' green to blue
-    'rp' red to pink
-    'yw' yellow to white
-    'kb' black to blue
-    'kc' black to cyan
-    'kp' black to pink
-    'kw' black to white
-    """
-
-    colors = {
-        'ry': [1., k/k_end, 0.],  # rot zu gelb
-        'bb': [0., k/k_end, 1.],  # blau zu hellbalu
-        'pw': [0.8, k/k_end, 0.8],  # pink zu weiss
-        'kg': [0., k/k_end, 0.],  # schwarz zu gruen
-        'bp': [k/k_end, 0., 1.],  # blau zu pink
-        'pb': [1.-k/k_end, 1., 0.],  # blau zu pink
-        'gy': [k/k_end, 1., 0.],  # green zu yellow
-        'cw': [k/k_end, 1., 1.],  # cyan zu weiss
-        'kr': [k/k_end, 1., 1.],  # black to red
-        'gb': [0., 1., k/k_end],  # gruen zu blau
-        'rp': [1., 0., k/k_end],  # rot zu pink
-        'yw': [1., 1., k/k_end],  # yellow to white
-        'kb': [0., 0., k/k_end],  # black tp blue
-        'kc': [0., k/k_end, k/k_end],  # black zu cyan
-        'kp': [k/k_end, 0., k/k_end],  # black zu pink
-        'kw': [1.-k/k_end, 1.-k/k_end, 1.-k/k_end]  # black to white
-    }
-
-    colornames = {
-        'ry': 'red to yellow',
-        'bb': 'blue to cyan',
-        'pw': 'pink to white',
-        'kg': 'black to green',
-        'bp': 'blue to pink',
-        'pb': 'blue to pink',
-        'gy': 'green to yellow',
-        'cw': 'cyan to white',
-        'kr': 'black to red',
-        'gb': 'green to blue',
-        'rp': 'rot to pink',
-        'yw': 'yellow to white',
-        'kb': 'black to blue',
-        'kc': 'black to cyan',
-        'kp': 'black to pink',
-        'kw': 'black to white'
-    }
-
-    if colorflag.lower() in colors:
-        farbe = colors.get(colorflag.lower())
-        if k == 0:
-            log.info('Color is: %s' % colornames.get(colorflag.lower()))
-    else:
-        farbe = [0, 0, 0]
-        if k == 0:
-            log.info('Color is black')
-
-    return farbe
-
-
-def result_visu(cfgPath, resAnalysis, doku, GI, dpp_threshold):
-    """
-    Visualize results in a nice way
-    Jan-Thomas Fischer BFW 2010-2012
-    AK BFW 2014-2015
-    """
-
-    fnames = cfgPath['pressurefileList']
-    rasterSource = cfgPath['demSource']
-    ProfileLayer = cfgPath['profileLayer']
-    outpath = cfgPath['pathResult']
-    DefaultName = cfgPath['project_name']
-
-    runout = resAnalysis['runout']
-    mean_max_dpp = resAnalysis['AMPP']
-    max_max_dpp = resAnalysis['MMPP']
-
-    cvar = ['ry', 'bb', 'pw', 'gy']
-    colorflag = cvar[0]
-
-    figure_width = 7*2
-    figure_height = 4*2
-    fs = 20
-    mks = 10
-    lw = 2
-    # includes flag for y axis -
-    # 1 = rddp
-    # 2 = frontal shape
-    # 3 = groth index
-    # 4 = runout for intrapraevent
-    # 5 = pressure data
-    flag = 3
-    if (len(fnames) > 100):
-        plot_density = 1
-    else:
-        plot_density = 0
-
-    if flag == 1:
-        log.info('Visualizing pressure data')
-        tipo = 'rapp'
-        data = mean_max_dpp / mean_max_dpp[0]
-        yaxis_label = 'rAPP [-]'
-        ytick_increment = 0.25
-        ymax = 3
-    elif flag == 2:
-        log.info('Visualizing EGU growth index data')
-        tipo = 'GI'
-        data = GI
-        yaxis_label = 'growth index [GI]'
-        ytick_increment = 2
-    elif flag == 3:
-        log.info('Visualizing pressure data')
-        tipo = 'rmpp'
-        data = max_max_dpp / max_max_dpp[0]
-        yaxis_label = 'rMPP [-]'
-        ytick_increment = 0.1
-#        ymax = 0.12
-#        ymin = 0.08
-#        ymax = 0.5
-#        ymin = 0.3
-        ymax = max(data[1:])+(max(data[1:])-min(data[1:]))*0.1
-        ymin = min(data[1:])-(max(data[1:])-min(data[1:]))*0.1
-    else:
-        log.error('Wrong flag')
-        return None
-
-    # read data
-    dem = IOf.readRaster(rasterSource)
-    header = dem['header']
-    xllcenter = header.xllcenter
-    yllcenter = header.yllcenter
-    cellsize = header.cellsize
-
-    rasterdata = dem['rasterData']
-
-    Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem['header'])
-    AvaProfile, SplitPoint = geoTrans.prepareLine(dem, Avapath, distance=10)
-    x_path = AvaProfile['x']
-    y_path = AvaProfile['y']
-    z_path = AvaProfile['z']
-    s_path = AvaProfile['s']
-
-    xlim_prof_axis = max(s_path) + 50
-
-    # Final result diagram - z_profile+data
-    fig = plt.figure(figsize=(figure_width, figure_height), dpi=300)
-
-    markers = ['+', 'o', 'x', '*', 's', 'd', '^', 'v', '>', '<', 'p', 'h', '.',
-               '^', 'v', '>', '<', 'p', 'h', '.']
-    mk = 0
-
-#    show flow path
-    ax1 = fig.add_subplot(111)
-#    plt.xlim([0, xlim_prof_axis])
-#    plt.ylim([0, math.ceil(max(data)+0.25)])
-#    plt.ylim([0, ymax])
-#    plt.yticks(np.arange([0, math.ceil(max(data)+0.25), ytick_increment]))
-    ax1.set_ylabel(yaxis_label, color='b', fontsize=2*fs)
-    ax1.set_xlabel(''.join(['s [m] - runout with ', str(dpp_threshold),
-                            ' kPa threshold']), color='black', fontsize=2*fs)
-    if plot_density:  # estimate 2D histogram --> create pcolormesh
-        nbins = 100
-        H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
-        H = np.flipud(np.rot90(H))
-        Hmasked = np.ma.masked_where(H == 0, H)
-        data_density = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
-#        data_density = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.cool)
-        cbar = plt.colorbar(data_density, orientation='horizontal')
-        cbar.ax.set_ylabel('Counts')
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('z [m]', color='g', fontsize=2*fs)
-    ax2.plot(s_path, z_path, color='green', label='path', linestyle='--', linewidth=2*lw)
-    plt.xlim([0, xlim_prof_axis])
-    plt.ylim([math.floor(min(z_path)/10)*10, math.ceil(max(z_path)/10)*10])
-    if not plot_density:
-        for k in range(len(runout)):
-            topo_name = fnames[k].split('/')[-1]
-            pfarbe = colorvar(float(k), len(runout), colorflag)
-            if k == 0:
-                ax1.plot(runout[k], data[k], marker='+',
-                         markersize=2*mks, color='g', label=topo_name)
-    #            plt.yticks(np.arange([0,5000,250]))
-                # Make the y-tick labels of first axes match the line color.
-                for tl in ax1.get_yticklabels():
-                    tl.set_color('b')
-            else:
-                ax1.plot(runout[k], data[k], label=topo_name, marker=markers[mk],
-                         markersize=mks, color=pfarbe, linewidth=lw)
-            mk = mk+1
-            if mk == len(markers):
-                mk = 1
-    plt.grid('on')
-#    plt.legend()
-#    ax1.legend(loc=0)
-#    ax2.legend(loc=0)
-
-    pro_name = fnames[0].split('/')[-3]
-    outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr',
-                           str(int(dpp_threshold)), '_', tipo, '.pdf'])
-
-    if not os.path.exists(os.path.dirname(outname_fin)):
-        os.makedirs(os.path.dirname(outname_fin))
-    fig.savefig(outname_fin, transparent=True)
-
-    plt.close(fig)
-
-    # Final result diagram - roc-plots
-    rTP = (np.array(doku[0]) / (float(doku[0][0]) + float(doku[1][0]))).astype(float)
-    rFP = (np.array(doku[2]) / (float(doku[2][0]) + float(doku[3][0]))).astype(float)
-
-
-#    rFP = (np.array(doku[2]) / (float(doku[0][0]) + float(doku[1][0]))).astype(float)
-
-    fig = plt.figure(figsize=(figure_width, figure_height), dpi=300)
-
-    mk = 0
-    ax1 = fig.add_subplot(111)
-    ax1.set_ylabel('True positive rate', fontsize=2*fs)
-    ax1.set_xlabel('False positive rate', fontsize=2*fs)
-    if plot_density:  # estimate 2D histogram --> create pcolormesh
-        nbins = 100
-        H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)
-        H = np.flipud(np.rot90(H))
-        Hmasked = np.ma.masked_where(H == 0, H)
-#        data_density = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
-        data_density = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.cool)
-        cbar = plt.colorbar(data_density, orientation='horizontal')
-        cbar.ax.set_ylabel('hit rate density')
-    if not plot_density:
-        for k in range(len(rTP)):
-            topo_name = fnames[k].split('/')[-1]
-            pfarbe = colorvar(float(k), len(rTP), colorflag)
-            ax1.plot(rFP[k], rTP[k], label=topo_name, marker=markers[mk],
-                     markersize=mks, color=pfarbe, linewidth=lw)
-            mk = mk+1
-            if mk == len(markers):
-                mk = 0
-    plt.xlim([0, max(1, max(rFP))])
-    plt.ylim([0, 1])
-    plt.grid('on')
-
-    outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr',
-                           str(int(dpp_threshold)), '_ROC.pdf'])
-
-    if not os.path.exists(os.path.dirname(outname_fin)):
-        os.makedirs(os.path.dirname(outname_fin))
-    fig.savefig(outname_fin, transparent=True)
-
-    plt.close(fig)
-
-    return
