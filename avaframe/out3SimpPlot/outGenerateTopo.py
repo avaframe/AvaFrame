@@ -20,8 +20,8 @@ def plotDEM(z, name_ext, cfg, outDir):
 
     # input parameters
     dx = float(cfgTopo['dx'])
-    x_end = float(cfgTopo['x_end']) + dx
-    y_end = float(cfgTopo['y_end']) + dx
+    x_end = float(cfgTopo['xEnd']) + dx
+    y_end = float(cfgTopo['yEnd']) + dx
     xl = float(cfgDEM['xl'])
     yl = float(cfgDEM['yl'])
     dem_name = cfgDEM['dem_name']

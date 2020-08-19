@@ -23,8 +23,8 @@ def getParabolaParams(cfg):
 
     # input parameters
     C = float(cfg['TOPO']['C'])
-    fLens = float(cfg['TOPO']['f_lens'])
-    meanAlpha = float(cfg['TOPO']['mean_alpha'])
+    fLens = float(cfg['TOPO']['fLens'])
+    meanAlpha = float(cfg['TOPO']['meanAlpha'])
 
     # If mean slope is given or distance to the start of the flat plane
     if meanAlpha != 0:
@@ -42,27 +42,23 @@ def getParabolaParams(cfg):
 def getGridDefs(cfg):
     # determine number of rows and columns to define domain
     dx = float(cfg['TOPO']['dx'])
-    xEnd = float(cfg['TOPO']['x_end']) + dx
-    yEnd = float(cfg['TOPO']['y_end']) + dx
-    nRows = int(yEnd / dx)                    # number of rows
-    nCols = int(xEnd / dx)                    # number of columns
+    xEnd = float(cfg['TOPO']['xEnd']) + dx
+    yEnd = float(cfg['TOPO']['yEnd']) + dx
 
-    return dx, xEnd, yEnd, nRows, nCols
+    return dx, xEnd, yEnd
 
 
 def computeCoordGrid(dx, xEnd, yEnd):
 
-    # TODO: use size instad
-    nRows = int(yEnd / dx)                    # number of rows
-    nCols = int(xEnd / dx)                    # number of columns
-
     # Compute coordinate grid
     xv = np.arange(0, xEnd, dx)
     yv = np.arange(-0.5 * yEnd, 0.5 * yEnd, dx)
+    nRows = len(yv)
+    nCols = len(xv)
     x, y = np.meshgrid(xv, yv)
     zv = np.zeros((nRows, nCols))
 
-    return xv, yv, zv, x, y
+    return xv, yv, zv, x, y, nRows, nCols
 
 
 def flatplane(cfg):
@@ -70,7 +66,7 @@ def flatplane(cfg):
 
     dx, xEnd, yEnd = getGridDefs(cfg)
 
-    zElev = float(cfg['TOPO']['z_elev'])
+    zElev = float(cfg['TOPO']['zElev'])
 
     xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
 
@@ -84,10 +80,10 @@ def flatplane(cfg):
 
 
 def inclinedplane(cfg):
-    """ Compute coordinates of inclined plane with given slope (mean_alpha)"""
+    """ Compute coordinates of inclined plane with given slope (meanAlpha)"""
 
     # input parameters
-    dx, xEnd, yEnd, nRows, nCols = getGridDefs(cfg)
+    dx, xEnd, yEnd = getGridDefs(cfg)
 
     z0 = float(cfg['TOPO']['z0'])
     meanAlpha = float(cfg['TOPO']['meanAlpha'])
@@ -95,7 +91,7 @@ def inclinedplane(cfg):
     cFf = float(cfg['CHANNELS']['c_ff'])
     cRadius = float(cfg['CHANNELS']['c_radius'])
 
-    xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
+    xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
 
     # Set surface elevation from slope and max. elevation
     zv = z0 - np.tan(np.radians(meanAlpha)) * x
@@ -137,13 +133,13 @@ def inclinedplane(cfg):
 def hockeysmooth(cfg):
     """
         Compute coordinates of an inclined plane with a flat foreland  defined by
-        total fall height z0, angle to flat foreland (mean_alpha) and a radius (r_circ) to
+        total fall height z0, angle to flat foreland (meanAlpha) and a radius (r_circ) to
         smooth the transition from inclined plane to flat foreland
     """
 
     # input parameters
     r_circ = float(cfg['TOPO']['r_circ'])
-    mean_alpha = float(cfg['TOPO']['mean_alpha'])
+    meanAlpha = float(cfg['TOPO']['meanAlpha'])
     z0 = float(cfg['TOPO']['z0'])
 
     c_ff = float(cfg['CHANNELS']['c_ff'])
@@ -152,23 +148,23 @@ def hockeysmooth(cfg):
     c_mustart = float(cfg['CHANNELS']['c_mustart'])
     c_muendFP = float(cfg['CHANNELS']['c_muendFP'])
 
-    dx, xEnd, yEnd, nRows, nCols = getGridDefs(cfg)
+    dx, xEnd, yEnd = getGridDefs(cfg)
 
     # Compute coordinate grid
-    xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
+    xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
 
 
-    # Compute distance to flat foreland for given mean_alpha
-    x1 = z0 / np.tan(np.radians(mean_alpha))
+    # Compute distance to flat foreland for given meanAlpha
+    x1 = z0 / np.tan(np.radians(meanAlpha))
     if x1 >= xEnd * 0.9:
-        log.warning('Your domain (xEnd) is to small or the slope angle (mean_alpha) to'
+        log.warning('Your domain (xEnd) is to small or the slope angle (meanAlpha) to'
                         'shallow to produce a signifcant (>10 percent of domain, in your case:'
                         ' %.2f m) flat foreland!' % (0.1 * (xEnd - dx)))
 
     # Compute circle parameters for smoothing the transition
-    beta = (0.5 * (180. - (mean_alpha)))
+    beta = (0.5 * (180. - (meanAlpha)))
     xc = r_circ / np.tan(np.radians(beta))
-    yc = xc * np.cos(np.radians(mean_alpha))
+    yc = xc * np.cos(np.radians(meanAlpha))
     x_circ = x1 + xc
     # for plotting
     d1 = np.tan(np.radians(beta)) * x1
@@ -176,7 +172,7 @@ def hockeysmooth(cfg):
     # Set surface elevation
     for m in range(len(xv)):
         if xv[m] < x1 - yc:
-            zv[:, m] = z0 - np.tan(np.radians(mean_alpha)) * xv[m]
+            zv[:, m] = z0 - np.tan(np.radians(meanAlpha)) * xv[m]
         elif x1 - yc <= xv[m] <= x1 + xc:
             r_circ + np.sqrt(r_circ**2 - (xv[m] - x_circ)**2)
             zv[:, m] = r_circ - np.sqrt(r_circ**2 - (x_circ - xv[m])**2)
@@ -234,7 +230,7 @@ def hockeysmooth(cfg):
 def hockey(cfg):
     """
         Compute coordinates of a parabolically-shaped slope with a flat foreland
-        defined by total fall height C, angle (mean_alpha) or distance (f_len) to flat foreland
+        defined by total fall height C, angle (meanAlpha) or distance (fLen) to flat foreland
     """
 
     C = float(cfg['TOPO']['C'])
@@ -245,23 +241,23 @@ def hockey(cfg):
     c_muend = float(cfg['CHANNELS']['c_muend'])
 
     # Get grid definitons
-    dx, xEnd, yEnd, nRows, nCols = getGridDefs(cfg)
+    dx, xEnd, yEnd = getGridDefs(cfg)
 
     # Compute coordinate grid
-    xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
+    xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
 
     # Get parabola Parameters
-    [A, B, f_len] = getParabolaParams(cfg)
+    [A, B, fLen] = getParabolaParams(cfg)
 
     # If a channel shall be introduced
 
     if cfg['TOPO'].getboolean('channel'):
-        c_1 = norm.cdf(xv, c_mustart * f_len, c_ff)
-        c_2 = 1. - norm.cdf(xv, c_muend * f_len, c_ff)
+        c_1 = norm.cdf(xv, c_mustart * fLen, c_ff)
+        c_2 = 1. - norm.cdf(xv, c_muend * fLen, c_ff)
         c_0 = np.zeros(nCols)
 
         for l in range(nCols):
-            if xv[l] < (f_len * (0.5 * (c_mustart + c_muend))):
+            if xv[l] < (fLen * (0.5 * (c_mustart + c_muend))):
                 c_0[l] = c_1[l]
             else:
                 c_0[l] = c_2[l]
@@ -275,7 +271,7 @@ def hockey(cfg):
     # Set surface elevation
     for m in range(nCols):
         for k in range(nRows):
-            if xv[m] < f_len:
+            if xv[m] < fLen:
                 zv[k, m] = A * xv[m]**2 + B * xv[m] + C
             else:
                 zv[k, m] = (-B**2) / (4. * A) + C
@@ -311,12 +307,12 @@ def bowl(cfg):
     r_bowl = float(cfg['TOPO']['r_bowl'])
 
     # Get grid definitions
-    dx, xEnd, yEnd, nRows, nCols = getGridDefs(cfg)
+    dx, xEnd, yEnd = getGridDefs(cfg)
 
     # Compute coordinate grid
-    xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
+    xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
 
-    # recompute xv yv and x, y as they are shifted (TODO: necessary??)
+    # recompute xv yv and x, y as they are shifted
     xv = np.arange(-0.5 * xEnd, 0.5 * xEnd, dx)
     yv = np.arange(-0.5 * yEnd, 0.5 * yEnd, dx)
     x, y = np.meshgrid(xv, yv)
@@ -350,35 +346,35 @@ def helix(cfg):
 
 
     # Get grid definitions
-    dx, xEnd, yEnd, nRows, nCols = getGridDefs(cfg)
+    dx, xEnd, yEnd = getGridDefs(cfg)
 
     # Compute coordinate grid
-    xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
+    xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
 
-    # recompute xv yv and x, y as they are shifted (TODO: necessary??)
+    # recompute xv yv and x, y as they are shifted
     xv = np.arange(-0.5 * xEnd, 0.5 * xEnd, dx)
     yv = np.arange(-yEnd, 0, dx)
     x, y = np.meshgrid(xv, yv)
 
     # Get parabola Parameters
-    [A, B, f_len] = getParabolaParams(cfg)
+    [A, B, fLen] = getParabolaParams(cfg)
 
     # Set surface elevation
     for m in range(nCols):
         for k in range(nRows):
             radius = np.sqrt(xv[m]**2 + yv[k]**2)
             theta = np.arctan2(yv[k], xv[m]) + np.pi
-            if (theta * r_helix) < f_len:
+            if (theta * r_helix) < fLen:
                 zv[k, m] = A * (theta * r_helix)**2 + B * (theta * r_helix) + C
             else:
                 zv[k, m] = (-B**2) / (4. * A) + C
 
             # If channel is introduced to topography
             if cfg['TOPO'].getboolean('channel'):
-                if (theta * r_helix) < (0.5 * (c_mustart + c_muend) * f_len):
-                    c_0 = norm.cdf(theta * r_helix, c_mustart * f_len, c_ff)
+                if (theta * r_helix) < (0.5 * (c_mustart + c_muend) * fLen):
+                    c_0 = norm.cdf(theta * r_helix, c_mustart * fLen, c_ff)
                 else:
-                    c_0 = 1. - norm.cdf(theta * r_helix, c_muend * f_len, c_ff)
+                    c_0 = 1. - norm.cdf(theta * r_helix, c_muend * fLen, c_ff)
 
                 # If channel of constant width or becoming narrower in the middle
                 if cfg['TOPO'].getboolean('narrowing'):
@@ -420,10 +416,12 @@ def helix(cfg):
     return x, y, zv
 
 
-def writeDEM(cfg, z, nCols, nRows, outDir):
+def writeDEM(cfg, z, outDir):
     """ Write topography information to file """
-    #TODO: reduce arguments by getting nCols and nRows from z
     nameExt = cfg['TOPO']['DEM_type']
+    nRows = z.shape[0]
+    nCols = z.shape[1]
+
 
     # Read lower left corner coordinates, cellsize and noDATA value
     xllcorner = float(cfg['DEMDATA']['xl'])
@@ -464,9 +462,6 @@ def generateTopo(cfg, avalancheDir):
         log.error('Required folder structure: NameOfAvalanche/Inputs missing! \
                     Run runInitializeProject first!')
 
-    #TODO : remove this when writeDEM determines nRows nCols in function
-    dx, xEnd, yEnd, nRows, nCols = getGridDefs(cfg)
-
     # Call topography type
     if demType == 'FP':
         [x, y, z] = flatplane(cfg)
@@ -487,6 +482,6 @@ def generateTopo(cfg, avalancheDir):
         [x, y, z] = helix(cfg)
 
     # Write DEM to file
-    writeDEM(cfg, z, nCols, nRows, outDir)
+    writeDEM(cfg, z, outDir)
 
     return(z, demType, outDir)
