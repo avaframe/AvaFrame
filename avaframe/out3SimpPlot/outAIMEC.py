@@ -12,6 +12,11 @@ from matplotlib import cm
 from matplotlib.image import NonUniformImage
 
 
+# Local imports
+import avaframe.in2Trans.shpConversion as shpConv
+import avaframe.in2Trans.geoTrans as geoTrans
+import avaframe.in3Utils.ascUtils as IOf
+
 # create local logger
 log = logging.getLogger(__name__)
 
