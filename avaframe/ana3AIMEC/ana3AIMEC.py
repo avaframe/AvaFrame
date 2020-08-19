@@ -362,7 +362,7 @@ def transform(fname, raster_transfo):
     Points = {}
     Points['x'] = xx.flatten()
     Points['y'] = yy.flatten()
-    Points, i_ib, i_oob = geoTrans.projectOnRaster_Vect(data, Points)
+    Points, i_ib, i_oob = geoTrans.projectOnRaster_Vect(data, Points, interp='bilinear')
     new_data = Points['z'].reshape(n, m)
     log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' % (name, i_ib-i_oob, i_oob))
 

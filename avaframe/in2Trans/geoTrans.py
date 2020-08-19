@@ -55,7 +55,7 @@ def projectOnRaster(dem, Points):
     return Points
 
 
-def projectOnRaster_Vect(dem, Points):
+def projectOnRaster_Vect(dem, Points, interp='bilinear'):
     """
     Vectorized version of projectOnRaster
     Projects the points Points on Raster using a bilinear interpolation
@@ -116,8 +116,13 @@ def projectOnRaster_Vect(dem, Points):
     Lx1 = Lx0 + 1
     Ly1 = Ly0 + 1
     # prepare for bilinear interpolation (do not take out of bound into account)
-    dx[mask_ind] = Lx[mask] - Lx0[mask]
-    dy[mask_ind] = Ly[mask] - Ly0[mask]
+    if interp == 'nearest':
+        dx[mask_ind] = np.round(Lx[mask] - Lx0[mask])
+        dy[mask_ind] = np.round(Ly[mask] - Ly0[mask])
+    elif interp == 'bilinear':
+        dx[mask_ind] = Lx[mask] - Lx0[mask]
+        dy[mask_ind] = Ly[mask] - Ly0[mask]
+
     f11[mask_ind] = rasterdata[Ly0[mask], Lx0[mask]]
     f12[mask_ind] = rasterdata[Ly1[mask], Lx0[mask]]
     f21[mask_ind] = rasterdata[Ly0[mask], Lx1[mask]]
