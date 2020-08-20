@@ -54,8 +54,8 @@ Configuration parameters
 **Domain parameters:**
 
 :dx: DEM spatial resolution [m]
-:x_end: total horizontal extent of the domain [m]
-:y_end:	 total horizontal extent of the domain [m]
+:xEnd: total horizontal extent of the domain [m]
+:yEnd:	 total horizontal extent of the domain [m]
 
 
 **Topography parameters:**
@@ -63,11 +63,11 @@ Configuration parameters
 :f_lens: 	distance to point where slope transitions into flat plane [m]
 :mean_alpha: 	slope angle from max. elevation to start flat plane [°] - or slope of inclined plane [°]
 :C: 		total fall height [m]
-:r_bowl:	  bowl radius [m]
-:r_helix:	  radius for helix [m]
+:rBowl:	  bowl radius [m]
+:rHelix:	  radius for helix [m]
 :z0: 		max elevation [m]
-:z_elev:	  elevation of flat plane [m]
-:r_circ: 	radius of smoothing circle [m]
+:zElev:	  elevation of flat plane [m]
+:rCirc: 	radius of smoothing circle [m]
 :DEM_type: topography types (FP, IP, HS, HS2, BL, HX - explanation given in the introductory description**
 
 
