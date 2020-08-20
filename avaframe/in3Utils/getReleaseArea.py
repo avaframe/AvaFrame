@@ -54,7 +54,7 @@ def getCorners_FP(cfgR, cfgT):
     log.info('volume is: %f' % (yr*xr*dh))
 
     # make corner coordinates of release area
-    xyPoints = makexyPoints(xStart, xr, yr, cfgT)
+    xyPoints = makexyPoints(xStart, xr, yr, cfgR)
 
     return xyPoints
 

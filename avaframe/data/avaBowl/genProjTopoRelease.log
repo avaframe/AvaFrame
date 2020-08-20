@@ -1,0 +1,10 @@
+logUtils - INFO -  Started logging at: 20.08.2020 14:30:32
+logUtils - INFO -  Also logging to: data/avaBowl/genProjTopoRelease.log
+runGenProjTopoRelease - INFO -  MAIN SCRIPT
+cfgUtils - INFO -  Reading config from: /home/anna/repos/github/AvaFrame/avaframe/in3Utils/local_generateTopoCfg.ini
+cfgUtils - INFO -  Reading config from: /home/anna/repos/github/AvaFrame/avaframe/in3Utils/local_getReleaseAreaCfg.ini
+generateTopo - INFO -  DEM type is set to: BL
+generateTopo - INFO -  The new DEM is saved to data/avaBowl/Inputs
+generateTopo - INFO -  Bowl coordinates computed
+generateTopo - INFO -  DEM written to: data/avaBowl/Inputs/myDEM_BL_Topo.asc
+runGenProjTopoRelease - WARNING -  There is no release area available for this DEM type

@@ -1,0 +1,17 @@
+logUtils - INFO -  Started logging at: 20.08.2020 14:56:12
+logUtils - INFO -  Also logging to: data/avaHockeySmoothSmall/genProjTopoRelease.log
+runGenProjTopoRelease - INFO -  MAIN SCRIPT
+cfgUtils - INFO -  Reading config from: /home/anna/repos/github/AvaFrame/avaframe/in3Utils/local_generateTopoCfg.ini
+cfgUtils - INFO -  Reading config from: /home/anna/repos/github/AvaFrame/avaframe/in3Utils/local_getReleaseAreaCfg.ini
+generateTopo - INFO -  DEM type is set to: HS2
+generateTopo - INFO -  The new DEM is saved to data/avaHockeySmoothSmall/Inputs
+generateTopo - INFO -  Hockeystick smooth coordinates computed
+generateTopo - INFO -  DEM written to: data/avaHockeySmoothSmall/Inputs/myDEM_HS2_Topo.asc
+getReleaseArea - INFO -  DEM type is set to: HS2
+getReleaseArea - INFO -  The new release area is saved to data/avaHockeySmoothSmall/Inputs/REL
+getReleaseArea - INFO -  volume is: 50000.000000, xr: 357.658330, xrp: 296.512194
+getReleaseArea - INFO -  Point 0: x 396.512194 y -69.899113
+getReleaseArea - INFO -  Point 1: x 396.512194 y 69.899113
+getReleaseArea - INFO -  Point 2: x 100.000000 y 69.899113
+getReleaseArea - INFO -  Point 3: x 100.000000 y -69.899113
+getReleaseArea - INFO -  Release Area written to: data/avaHockeySmoothSmall/Inputs/REL/release_1HS2.nxyz

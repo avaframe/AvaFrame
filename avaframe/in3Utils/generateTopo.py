@@ -68,7 +68,7 @@ def flatplane(cfg):
 
     zElev = float(cfg['TOPO']['zElev'])
 
-    xv, yv, zv, x, y = computeCoordGrid(dx, xEnd, yEnd)
+    xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
 
     # Set elevation of surface
     zv = zv + zElev
