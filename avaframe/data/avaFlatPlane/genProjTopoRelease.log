@@ -1,0 +1,17 @@
+logUtils - INFO -  Started logging at: 20.08.2020 14:17:12
+logUtils - INFO -  Also logging to: data/avaFlatPlane/genProjTopoRelease.log
+runGenProjTopoRelease - INFO -  MAIN SCRIPT
+cfgUtils - INFO -  Reading config from: /home/anna/repos/github/AvaFrame/avaframe/in3Utils/local_generateTopoCfg.ini
+cfgUtils - INFO -  Reading config from: /home/anna/repos/github/AvaFrame/avaframe/in3Utils/local_getReleaseAreaCfg.ini
+generateTopo - INFO -  DEM type is set to: FP
+generateTopo - INFO -  The new DEM is saved to data/avaFlatPlane/Inputs
+generateTopo - INFO -  Flatplane coordinates computed
+generateTopo - INFO -  DEM written to: data/avaFlatPlane/Inputs/myDEM_FP_Topo.asc
+getReleaseArea - INFO -  DEM type is set to: FP
+getReleaseArea - INFO -  The new release area is saved to data/avaFlatPlane/Inputs/REL
+getReleaseArea - INFO -  volume is: 100000.000000
+getReleaseArea - INFO -  Point 0: x 300.000000 y -250.000000
+getReleaseArea - INFO -  Point 1: x 300.000000 y 250.000000
+getReleaseArea - INFO -  Point 2: x 100.000000 y 250.000000
+getReleaseArea - INFO -  Point 3: x 100.000000 y -250.000000
+getReleaseArea - INFO -  Release Area written to: data/avaFlatPlane/Inputs/REL/release_1FP.nxyz
