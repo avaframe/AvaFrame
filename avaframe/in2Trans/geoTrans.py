@@ -361,17 +361,17 @@ def poly2mask_simple(ydep, xdep, ncols, nrows):
 
     """
     mask = np.zeros((nrows, ncols))
-    xyframe = bresenham(xdep[0], ydep[0], xdep[1], ydep[1], 1)
+    xyframe = findCellsCrossedByLine_bresenham(xdep[0], ydep[0], xdep[1], ydep[1], 1)
     xyframe = np.delete(xyframe, -1, 0)
     xyframe = np.transpose(xyframe)
     for i in range(1, len(xdep)-1):
-        xyline = bresenham(xdep[i], ydep[i], xdep[i+1], ydep[i+1], 1)
+        xyline = findCellsCrossedByLine_bresenham(xdep[i], ydep[i], xdep[i+1], ydep[i+1], 1)
         # last point is first point of the next line
         xyline = np.delete(xyline, -1, 0)
         xyline = np.transpose(xyline)
         xyframe = np.hstack((xyframe, xyline))
 
-    xyline = bresenham(xdep[-1], ydep[-1], xdep[0], ydep[0], 1)
+    xyline = findCellsCrossedByLine_bresenham(xdep[-1], ydep[-1], xdep[0], ydep[0], 1)
     xyline = np.delete(xyline, -1, 0)
     xyline = np.transpose(xyline)
     xyframe = np.hstack((xyframe, xyline))
