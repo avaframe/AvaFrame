@@ -125,25 +125,20 @@ def extractMBInfo(avaDir):
 
         # Write mass balance info files
         for k in range(len(indRun)-1):
-            with open(os.path.join(os.getcwd(), avaDir, 'Work','ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', '%06d.txt' % (countFile)), 'w') as MBFile:
+            with open(os.path.join(os.getcwd(), avaDir, 'Work','ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', '%06d.txt' % (countFile + 1)), 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
                     MBFile.write('%.02f,    %.06f,    %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
-                    # if countFile == 0:
-                    #     MBFile.write('%.02f,    %.06f,    %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
-                    # else:
-                    #     MBFile.write('%.02f,    %.06f,    %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
-
             countFile = countFile + 1
 
     # Delete the files that are not in the local Exp Log
     countSims = 0
     for l in range(len(logDictExp['simName'])):
         if l in indSims:
-            fname = ('%06d.txt' % l)
-            fnameNew = ('%06d.txt' % countSims)
+            fname = ('%06d.txt' % (l+1))
+            fnameNew = ('%06d.txt' % (countSims+1))
             shutil.copyfile(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', fname),
-             os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % countSims))
+             os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', fnameNew))
             countSims = countSims + 1
             log.info('NEW files: %s new is %s' % (fname, fnameNew))
 
@@ -222,7 +217,7 @@ def getDFAData(avaDir, cfgDFA):
                 if k in indSims:
                     shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
                                           logDict['simName'][k], logDict['suffix'][m]),
-                                          '%s/dfa_depth/%06d.txt' % (workDir, countpfd))
+                                          '%s/dfa_depth/%06d.txt' % (workDir, countpfd+1))
                     # log.info('%s%f/%s/raster/%s_%s.asc to the new file %s/dfa_depth/%06d.txt' % (resPath,
                     #                     logDict['Mu'][k], logDict['simName'][k],
                     #                     logDict['simName'][k], logDict['suffix'][m], outputDir, countpfd))
@@ -233,6 +228,6 @@ def getDFAData(avaDir, cfgDFA):
                 if k in indSims:
                     shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
                                           logDict['simName'][k], logDict['suffix'][m]),
-                                          '%s/dfa_pressure/%06d.txt' % (workDir, countppr))
+                                          '%s/dfa_pressure/%06d.txt' % (workDir, countppr+1))
                     log.info('Simulation %s is copied to ana3AIMEC' % logDict['simName'][k])
                     countppr = countppr + 1
