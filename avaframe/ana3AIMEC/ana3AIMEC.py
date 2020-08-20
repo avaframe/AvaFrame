@@ -41,6 +41,9 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES', '*aimec*.shp'))
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
+    splitPointLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'POINTS', '*.shp'))
+    cfgPath['splitPointSource'] = ''.join(splitPointLayer)
+
     demSource = glob.glob(os.path.join(avalancheDir, 'Inputs', '*.asc'))
     try:
         assert len(demSource) == 1, 'There should be exactly one topography .asc file in ' + \
@@ -162,6 +165,7 @@ def processDataInd(cfgPath, cfgSetup, cfgFlags):
     """
     # Read input parameters
     rasterSource = cfgPath['pressurefileList'][0]  # cfgPath['demSource'] #
+    demSource = cfgPath['demSource']
     ProfileLayer = cfgPath['profileLayer']
     outpath = cfgPath['pathResult']
     DefaultName = cfgPath['project_name']
@@ -173,6 +177,7 @@ def processDataInd(cfgPath, cfgSetup, cfgFlags):
     # read data
     # read raster data
     sourceData = IOf.readRaster(rasterSource)
+    dem = IOf.readRaster(demSource)
     header = sourceData['header']
     xllcenter = header.xllcenter
     yllcenter = header.yllcenter
@@ -180,6 +185,8 @@ def processDataInd(cfgPath, cfgSetup, cfgFlags):
     rasterdata = sourceData['rasterData']
     # read avaPath
     Avapath = shpConv.readLine(ProfileLayer, DefaultName, sourceData['header'])
+    # read split point
+    splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], sourceData['header'])
 
     log.info('Creating new raster along polyline: %s' % ProfileLayer)
     # Initialize transformation dictionary
@@ -203,11 +210,28 @@ def processDataInd(cfgPath, cfgSetup, cfgFlags):
     # affect values
     raster_transfo['header'] = header
     # put back scale and origin
-    raster_transfo['s_coord'] = raster_transfo['s_coord']*cellsize
-    raster_transfo['l_coord'] = raster_transfo['l_coord']*cellsize
+    raster_transfo['s'] = raster_transfo['s']*cellsize
+    raster_transfo['l'] = raster_transfo['l']*cellsize
     raster_transfo['grid_x'] = raster_transfo['grid_x']*cellsize + header.xllcorner
     raster_transfo['grid_y'] = raster_transfo['grid_y']*cellsize + header.yllcorner
     raster_transfo['rasterArea'] = raster_transfo['rasterArea']*cellsize*cellsize
+    # (x,y) coordinates of the resamples avapth (centerline where l = 0)
+    n = np.shape(raster_transfo['l'])[0]
+    ind_center = int(np.floor(n/2)+1)
+    raster_transfo['x'] = raster_transfo['grid_x'][:,ind_center]
+    raster_transfo['y'] = raster_transfo['grid_y'][:,ind_center]
+    # add 'z' coordinate to the centerline
+    raster_transfo = geoTrans.projectOnRaster(dem, raster_transfo)
+    # find projection of split point on the centerline centerline
+    projPoint = geoTrans.findSplitPoint(raster_transfo, splitPoint)
+    raster_transfo['indSplit'] = projPoint['indSplit']
+
+    # prepare find Beta points
+    betaValue = 10
+    angle, tmp, delta_ind = geoTrans.prepareFind10Point(betaValue, raster_transfo)
+    # find the beta point: first point under 10°
+    indBetaPoint = geoTrans.find10Point(tmp, delta_ind)
+    raster_transfo['indBeta'] = indBetaPoint
 
     aval_data = transform(rasterSource, raster_transfo, interpMethod)
     # visu
@@ -301,7 +325,7 @@ def makeTransfoMat(raster_transfo, DB, w, cellsize):
     new_grid_raster_x = np.append(new_grid_raster_x, x.reshape(1, n_total), axis=0)
     new_grid_raster_y = np.append(new_grid_raster_y, y.reshape(1, n_total), axis=0)
 
-    raster_transfo['l_coord'] = l_coord
+    raster_transfo['l'] = l_coord
     raster_transfo['grid_x'] = new_grid_raster_x
     raster_transfo['grid_y'] = new_grid_raster_y
 
@@ -341,7 +365,7 @@ def getSArea(raster_transfo):
     # get s_coord
     ds = Vs[:, int(np.floor(m/2))-1]
     s_coord = np.cumsum(ds)-ds[0]
-    raster_transfo['s_coord'] = s_coord
+    raster_transfo['s'] = s_coord
 
     return raster_transfo
 
@@ -411,8 +435,8 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     dataPressure = newRasters['newRasterPressure']
     dataDepth = newRasters['newRasterDepth']
     dataDEM = newRasters['newRasterDEM']
-    s_coord = raster_transfo['s_coord']
-    l_coord = raster_transfo['l_coord']
+    s_coord = raster_transfo['s']
+    l_coord = raster_transfo['l']
     rasterArea = raster_transfo['rasterArea']
 
     resAnalysis = {}

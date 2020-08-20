@@ -164,26 +164,6 @@ def readABinputs(cfgAva):
     return cfgPath
 
 
-def find_10Point(tmp, delta_ind):
-    """ find the beta point: first point under 10°
-     (make sure that the delta_ind next indexes are also under 10°)
-     otherwise keep looking
-     """
-    i = 0
-    while True:
-        ind = tmp[0][i]
-        condition = True
-        for j in range(delta_ind):
-            condition = condition and (tmp[0][i+j+1] == ind+j+1)
-            if not condition:
-                i = i + j + 1
-                break
-        if condition:
-            ids_10Point = ind - 1
-            break
-    return ids_10Point
-
-
 def calcAB(AvaProfile, eqParameters):
     """
     Calculate Alpha Beta for data in eqInput according to chosen eqParameters
@@ -197,30 +177,18 @@ def calcAB(AvaProfile, eqParameters):
 
     s = AvaProfile['s']
     z = AvaProfile['z']
-    distance = s[1] - s[0]
-    delta_ind = max(int(np.floor(30/distance)), 1)
-    indSplit = AvaProfile['indSplit']
-    ds = np.abs(s - np.roll(s, 1))
-    dz = np.abs(z - np.roll(z, 1))
-    ds[0] = 0.0
-    dz[0] = 0.0
-    angle = np.rad2deg(np.arctan2(dz, ds))
-    CuSplit = s[indSplit]
-    # TODO SPLIT POINT READING
-    # get all values where Angle < 10 but >0
-    # get index of first occurance and go one back to get previous value
-    # (i.e. last value above 10 deg)
-    # tmp = x[(angle < 10.0) & (angle > 0.0) & (x > 450)]
 
-    tmp = np.where((angle < 10.0) & (angle > 0.0) & (s > CuSplit))
+    # prepare find Beta points
+    betaValue = 10
+    angle, tmp, deltaInd = geoTrans.prepareFind10Point(betaValue, AvaProfile)
 
     # find the beta point: first point under 10°
     # (make sure that the 30 next meters are also under 10°)
-    ids_10Point = find_10Point(tmp, delta_ind)
+    ids10Point = geoTrans.find10Point(tmp, deltaInd)
     if debugPlot:
         plt.figure(figsize=(10, 6))
         plt.plot(s, angle)
-        plt.plot(s[ids_10Point], angle[ids_10Point], 'or')
+        plt.plot(s[ids_10Point], angle[ids10Point], 'or')
         plt.axhline(y=10, color='0.8',
                     linewidth=1, linestyle='-.', label='10^\circ line')
         plt.show()
@@ -231,8 +199,8 @@ def calcAB(AvaProfile, eqParameters):
     # Get H0: max - min for parabola
     H0 = max(poly(s)) - min(poly(s))
     # get beta
-    dz_beta = z[0] - z[ids_10Point]
-    beta = np.rad2deg(np.arctan2(dz_beta, s[ids_10Point]))
+    dz_beta = z[0] - z[ids10Point]
+    beta = np.rad2deg(np.arctan2(dz_beta, s[ids10Point]))
     # get Alpha
     alpha = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4
 
@@ -240,8 +208,8 @@ def calcAB(AvaProfile, eqParameters):
     SDs = [SD, -1*SD, -2*SD]
     alphaSD = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4 + SDs
 
-    AvaProfile['CuSplit'] = CuSplit
-    AvaProfile['ids_10Point'] = ids_10Point
+    AvaProfile['CuSplit'] = s[AvaProfile['indSplit']]
+    AvaProfile['ids_10Point'] = ids10Point
     AvaProfile['poly'] = poly
     AvaProfile['beta'] = beta
     AvaProfile['alpha'] = alpha
