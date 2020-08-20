@@ -419,18 +419,18 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
 
     # initialize Arrays
     n_topo = len(fname)
-    runout = np.zeros((n_topo))
-    runout_mean = np.zeros((n_topo))
-    ampp = np.zeros((n_topo))
-    mmpp = np.zeros((n_topo))
-    amd = np.zeros((n_topo))
-    mmd = np.zeros((n_topo))
-    elevRel = np.zeros((n_topo))
-    deltaH = np.zeros((n_topo))
-    grIndex = np.ones((n_topo))
-    grGrad = np.ones((n_topo))
-    releaseMass = np.ones((n_topo))
-    entrainedMass = np.ones((n_topo))
+    runout = np.empty((n_topo))
+    runout_mean = np.empty((n_topo))
+    ampp = np.empty((n_topo))
+    mmpp = np.empty((n_topo))
+    amd = np.empty((n_topo))
+    mmd = np.empty((n_topo))
+    elevRel = np.empty((n_topo))
+    deltaH = np.empty((n_topo))
+    grIndex = np.empty((n_topo))
+    grGrad = np.empty((n_topo))
+    releaseMass = np.empty((n_topo))
+    entrainedMass = np.empty((n_topo))
 
     n = np.shape(l_coord)[0]
     p_cross_all = np.zeros((n_topo, len(s_coord)))
@@ -493,17 +493,14 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
         deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
 
         # analyze mass
-        try:
-            releaseMass[i], entrainedMass[i], grIndex[i], grGrad[i] = read_write(fname_mass[i])
-            if (releaseMass == releaseMass[0]).any():
-                releaseMass = releaseMass[0]
-            else:
-                log.warning('Release masses differs between simulations!')
-        except IndexError:
-            releaseMass[i] = np.NaN
-            entrainedMass[i] = np.NaN
-            grIndex[i] = np.NaN
-            grGrad[i] = np.NaN
+        relM, entM, grI, grG = read_write(fname_mass[i])
+        releaseMass[i] = relM
+        entrainedMass[i] = entM
+        grIndex[i] = grI
+        grGrad[i] = grG
+        if not (releaseMass[i] == releaseMass[0]):
+            log.warning('Release masses differs between simulations!')
+
 
         # log.info('%s\t%10.4f\t%10.4f\t%10.4f' % (i+1, runout[i], ampp[i], amd[i]))
         log.info('{: <15} {:<15.4f} {:<15.4f} {:<15.4f}'.format(*[i+1, runout[i], ampp[i], amd[i]]))
@@ -539,7 +536,7 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
 def read_write(fname_ent):
     #    load data
     #    time, total mass, entrained mass
-    mass_time = np.loadtxt(fname_ent, skiprows=2)
+    mass_time = np.loadtxt(fname_ent, delimiter=',', skiprows=1)
     maxind, maxval = max(enumerate(mass_time[:, 1]),
                          key=operator.itemgetter(1))
     timeResults = [mass_time[0, 0], mass_time[maxind, 0], mass_time[-1, 0]]
