@@ -410,10 +410,6 @@ def result_visu(cfgPath, resAnalysis, doku, GI, dpp_threshold):
         data = max_max_dpp / max_max_dpp[0]
         yaxis_label = 'rMPP [-]'
         ytick_increment = 0.1
-#        ymax = 0.12
-#        ymin = 0.08
-#        ymax = 0.5
-#        ymin = 0.3
         ymax = max(data[1:])+(max(data[1:])-min(data[1:]))*0.1
         ymin = min(data[1:])-(max(data[1:])-min(data[1:]))*0.1
     else:
@@ -486,9 +482,6 @@ def result_visu(cfgPath, resAnalysis, doku, GI, dpp_threshold):
             if mk == len(markers):
                 mk = 1
     plt.grid('on')
-#    plt.legend()
-#    ax1.legend(loc=0)
-#    ax2.legend(loc=0)
 
     pro_name = fnames[0].split('/')[-3]
     outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr',
