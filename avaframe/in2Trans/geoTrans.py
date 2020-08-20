@@ -231,7 +231,7 @@ def checkProfile(AvaProfile, projSplitPoint):
     return projSplitPoint, AvaProfile
 
 
-def bresenham(x0, y0, x1, y1, cs):
+def findCellsCrossedByLine_bresenham(x0, y0, x1, y1, cs):
     """
     bresenham algorithmus - JT 2011
     Find all the cells of a raster (defined by its cellsize) that a line (defines by two points P0 and P1) crosses.
