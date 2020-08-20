@@ -88,25 +88,29 @@ def mainAIMEC(cfgPath, cfg):
     cfgFlags = cfg['FLAGS']
     domainWidth = float(cfgSetup['domainWidth'])
     pressureLimit = float(cfgSetup['pressureLimit'])
+    interpMethod = cfgSetup['interpMethod']
 
     log.info('Prepare data for post-ptocessing')
     # create new raster + preparing new raster assignment function
     log.info("Creating new deskewed raster and preparing new raster assignment function")
-    raster_transfo = processDataInd(cfgPath, domainWidth, cfgFlags)
+    raster_transfo = processDataInd(cfgPath, cfgSetup, cfgFlags)
 
     # transform pressure_data and depth_data in new raster
     newRasters = {}
     # assign pressure data
     log.info("Assigning pressure data to deskewed raster")
-    newRasterPressure = assignData(cfgPath['pressurefileList'], raster_transfo)
+    newRasterPressure = assignData(cfgPath['pressurefileList'], raster_transfo,
+                                   interpMethod)
     newRasters['newRasterPressure'] = newRasterPressure
     # assign depth data
     log.info("Assigning depth data to deskewed raster")
-    newRasterDepth = assignData(cfgPath['depthfileList'], raster_transfo)
+    newRasterDepth = assignData(cfgPath['depthfileList'], raster_transfo,
+                                interpMethod)
     newRasters['newRasterDepth'] = newRasterDepth
     # assign dem data
     log.info("Assigning dem data to deskewed raster")
-    newRasterDEM = assignData([cfgPath['demSource']], raster_transfo)
+    newRasterDEM = assignData([cfgPath['demSource']], raster_transfo,
+                              interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
@@ -142,7 +146,7 @@ def mainAIMEC(cfgPath, cfg):
 # -----------------------------------------------------------
 
 
-def processDataInd(cfgPath, domainWidth, cfgFlags):
+def processDataInd(cfgPath, cfgSetup, cfgFlags):
     """
     this function is used to process the rasterdata such that it can be
     analysed with the methods for a regular grid
@@ -157,11 +161,13 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
             -rasterArea, real area of the cells of the new raster
     """
     # Read input parameters
-    rasterSource = cfgPath['pressurefileList'][0] #cfgPath['demSource'] #
+    rasterSource = cfgPath['pressurefileList'][0]  # cfgPath['demSource'] #
     ProfileLayer = cfgPath['profileLayer']
-    w = domainWidth
     outpath = cfgPath['pathResult']
     DefaultName = cfgPath['project_name']
+
+    w = float(cfgSetup['domainWidth'])
+    interpMethod = cfgSetup['interpMethod']
 
     log.info('Data-file %s analysed' % rasterSource)
     # read data
@@ -203,7 +209,7 @@ def processDataInd(cfgPath, domainWidth, cfgFlags):
     raster_transfo['grid_y'] = raster_transfo['grid_y']*cellsize + header.yllcorner
     raster_transfo['rasterArea'] = raster_transfo['rasterArea']*cellsize*cellsize
 
-    aval_data = transform(rasterSource, raster_transfo)
+    aval_data = transform(rasterSource, raster_transfo, interpMethod)
     # visu
     input_data = {}
     input_data['aval_data'] = aval_data
@@ -340,7 +346,7 @@ def getSArea(raster_transfo):
     return raster_transfo
 
 
-def transform(fname, raster_transfo):
+def transform(fname, raster_transfo, interpMethod):
     """
     Affect value to the points of the new raster (after domain transormation)
     input:
@@ -362,14 +368,15 @@ def transform(fname, raster_transfo):
     Points = {}
     Points['x'] = xx.flatten()
     Points['y'] = yy.flatten()
-    Points, i_ib, i_oob = geoTrans.projectOnRaster_Vect(data, Points, interp='bilinear')
+    Points, i_ib, i_oob = geoTrans.projectOnRaster_Vect(data, Points, interp=interpMethod)
     new_data = Points['z'].reshape(n, m)
-    log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' % (name, i_ib-i_oob, i_oob))
+    log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
+             (name, i_ib-i_oob, i_oob))
 
     return new_data
 
 
-def assignData(fnames, raster_transfo):
+def assignData(fnames, raster_transfo, interpMethod):
     """
     Affect value to the points of the new raster (after domain transormation)
     input:
@@ -384,7 +391,7 @@ def assignData(fnames, raster_transfo):
     log.info('Transfer data of %d file(s) from old to new raster' % maxtopo)
     for i in range(maxtopo):
         fname = fnames[i]
-        aval_data[i] = transform(fname, raster_transfo)
+        aval_data[i] = transform(fname, raster_transfo, interpMethod)
 
     return aval_data
 
