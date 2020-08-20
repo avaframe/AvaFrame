@@ -128,10 +128,11 @@ def extractMBInfo(avaDir):
             with open(os.path.join(os.getcwd(), avaDir, 'Work','ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', '%06d.txt' % (countFile)), 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
-                    if countFile == 0:
-                        MBFile.write('%.02f,   %.06f,     %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
-                    else:
-                        MBFile.write('%.02f,   %.06f ,    %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
+                    MBFile.write('%.02f,    %.06f,    %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
+                    # if countFile == 0:
+                    #     MBFile.write('%.02f,    %.06f,    %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
+                    # else:
+                    #     MBFile.write('%.02f,    %.06f,    %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
 
             countFile = countFile + 1
 
