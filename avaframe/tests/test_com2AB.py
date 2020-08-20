@@ -1,7 +1,10 @@
 """Tests for module com2AB"""
 import numpy as np
 import pytest
+
+# Local imports
 import avaframe.com2AB.com2AB as com2AB
+import avaframe.in2Trans.geoTrans as geoTrans
 
 
 def test_setEqParameters(capfd):
@@ -113,17 +116,17 @@ def test_calcAB(capfd):
         alphaSD[1] == pytest.approx(alphaSD_ref[1], rel=tol)) and (alphaSD[2] == pytest.approx(alphaSD_ref[2], rel=tol))
 
 
-def test_find_10Point(capfd):
+def test_find10Point(capfd):
     '''find_10Point'''
     s = np.linspace(0, 400, 41)
     angle = np.linspace(40, 0, 41)
     tmp = np.where((angle < 10.0) & (angle > 0.0))
     delta_ind = 3
-    ids_10Point = com2AB.find_10Point(tmp, delta_ind)
+    ids_10Point = geoTrans.find10Point(tmp, delta_ind)
     assert ids_10Point == 30
 
     delta_ind = 1
-    ids_10Point = com2AB.find_10Point(tmp, delta_ind)
+    ids_10Point = geoTrans.find10Point(tmp, delta_ind)
     assert ids_10Point == 30
 
     angle[10] = 8
@@ -131,10 +134,10 @@ def test_find_10Point(capfd):
     angle[12] = 8
     tmp = np.where((angle < 10.0) & (angle > 0.0))
     delta_ind = 3
-    ids_10Point = com2AB.find_10Point(tmp, delta_ind)
+    ids_10Point = geoTrans.find10Point(tmp, delta_ind)
     assert ids_10Point == 30
 
     angle[13] = 8
     tmp = np.where((angle < 10.0) & (angle > 0.0))
-    ids_10Point = com2AB.find_10Point(tmp, delta_ind)
+    ids_10Point = geoTrans.find10Point(tmp, delta_ind)
     assert ids_10Point == 9

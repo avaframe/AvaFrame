@@ -231,6 +231,47 @@ def checkProfile(AvaProfile, projSplitPoint):
     return projSplitPoint, AvaProfile
 
 
+
+def find10Point(tmp, deltaInd):
+    """ find the beta point: first point under 10°
+     (make sure that the delta_ind next indexes are also under 10°)
+     otherwise keep looking
+     """
+    i = 0
+    while True:
+        ind = tmp[0][i]
+        condition = True
+        for j in range(deltaInd):
+            condition = condition and (tmp[0][i+j+1] == ind+j+1)
+            if not condition:
+                i = i + j + 1
+                break
+        if condition:
+            ids10Point = ind - 1
+            break
+    return ids10Point
+
+def prepareFind10Point(beta, AvaProfile):
+    s = AvaProfile['s']
+    z = AvaProfile['z']
+    distance = s[1] - s[0]
+    delta_ind = max(int(np.floor(30/distance)), 1)
+    indSplit = AvaProfile['indSplit']
+    ds = np.abs(s - np.roll(s, 1))
+    dz = np.abs(z - np.roll(z, 1))
+    ds[0] = 0.0
+    dz[0] = 0.0
+    angle = np.rad2deg(np.arctan2(dz, ds))
+    CuSplit = s[indSplit]
+    # get all values where Angle < 10 but >0
+    # get index of first occurance and go one back to get previous value
+    # (i.e. last value above 10 deg)
+    # tmp = x[(angle < 10.0) & (angle > 0.0) & (x > 450)]
+
+    tmp = np.where((angle < beta) & (angle > 0.0) & (s > CuSplit))
+    return angle, tmp, delta_ind
+
+
 def findCellsCrossedByLine_bresenham(x0, y0, x1, y1, cs):
     """
     bresenham algorithmus - JT 2011

@@ -54,6 +54,9 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
 
 #    for figure: referenz-simulation bei p_lim=1
     ax1 = plt.subplot(121)
+    indBeta = raster_transfo['indBeta']
+    xx = raster_transfo['x'][indBeta]
+    yy = raster_transfo['y'][indBeta]
     new_rasterdata = rasterdata
     masked_array = new_rasterdata #np.ma.masked_where(np.isnan(new_rasterdata), new_rasterdata)
     cmap = copy.copy(matplotlib.cm.jet)
@@ -65,11 +68,12 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
     y = np.arange(n)*cellsize+yllcenter
     im = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
-    im.set_clim(vmin=0.000001)
+    im.set_clim(vmin=0.000000001)
     im.set_data(x, y, masked_array)
     ref1 = ax1.images.append(im)
     cbar = ax1.figure.colorbar(im, ax=ax1, use_gridspec=True)
     plt.autoscale(False)
+    ref0 = plt.plot(xx, yy, 'ro', label='Beta point')
     ref2 = plt.plot(x_path, y_path,
                     'b-', linewidth=lw, label='flow path')
     ref3 = plt.plot(DB_x_l, DB_y_l,
@@ -78,9 +82,9 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
                     'g-', linewidth=lw, label='domain')
     ref3 = plt.plot([DB_x_l, DB_x_r], [DB_y_l, DB_y_r],
                     'g-', linewidth=lw, label='domain')
-    refs = [ref2[0], ref3[0]]
+    refs = [ref0[0], ref2[0], ref3[0]]
 
-    labels = ['flow path', 'domain']
+    labels = ['Beta point', 'flow path', 'domain']
     ax1.title.set_text('XY Domain')
     ax1.legend(refs, labels, loc=0)
     ax1.set_xlim([x.min(), x.max()])
@@ -91,13 +95,15 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
     ax2 = plt.subplot(122)
     ax2.title.set_text('sl Domain \n Black = out of raster')
     isosurf = copy.deepcopy(input_data['aval_data'])
-    l_coord = raster_transfo['l_coord']
-    s_coord = raster_transfo['s_coord']
+    l_coord = raster_transfo['l']
+    s_coord = raster_transfo['s']
+    ref1 = ax2.axhline(y=s_coord[indBeta], color='r', linewidth=1,
+                       linestyle='-', label='Beta point')
     masked_array = isosurf #np.ma.array(isosurf,mask=np.isnan(isosurf))
     im = NonUniformImage(ax2, extent=[l_coord.min(), l_coord.max(),
                                       s_coord.min(), s_coord.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
-    im.set_clim(vmin=0.000001)
+    im.set_clim(vmin=0.000000001)
     im.set_data(l_coord, s_coord, masked_array)
     ref0 = ax2.images.append(im)
     cbar = ax2.figure.colorbar(im, ax=ax2, use_gridspec=True)
@@ -106,6 +112,7 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
     ax2.set_ylim([s_coord.min(), s_coord.max()])
     ax2.set_xlabel('l [m]')
     ax2.set_ylabel('s [m]')
+    ax2.legend(loc=0)
 
     fig.tight_layout()
     if cfgFlags.getboolean('plotFigure'):
@@ -130,8 +137,9 @@ def visu_runout(raster_transfo, inputPlot, cfgPath, cfgFlags):
     pathResult = cfgPath['pathResult']
     project_name = cfgPath['dirName']
     # read data
-    s_coord = raster_transfo['s_coord']
-    l_coord = raster_transfo['l_coord']
+    s_coord = raster_transfo['s']
+    l_coord = raster_transfo['l']
+    indBeta = raster_transfo['indBeta']
     rasterArea = raster_transfo['rasterArea']
     dataPressure = inputPlot['dataPressure']
     rasterdataPres = dataPressure[0]  # ana3AIMEC.makeRasterAverage(dataPressure)
@@ -149,6 +157,8 @@ def visu_runout(raster_transfo, inputPlot, cfgPath, cfgFlags):
     fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
     ax1 = plt.subplot(121)
     ax1.title.set_text('Peak Pressure 2D plot for the reference')
+    ref1 = ax1.axhline(y=s_coord[indBeta], color='k', linewidth=1,
+                       linestyle='-', label='Beta point')
     ref1 = ax1.axhline(y=np.max(runout), color='r', linewidth=1,
                        linestyle='-', label='runout max')
     ref2 = ax1.axhline(y=np.average(runout), color='y', linewidth=1,
