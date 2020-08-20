@@ -133,12 +133,12 @@ def inclinedplane(cfg):
 def hockeysmooth(cfg):
     """
         Compute coordinates of an inclined plane with a flat foreland  defined by
-        total fall height z0, angle to flat foreland (meanAlpha) and a radius (r_circ) to
+        total fall height z0, angle to flat foreland (meanAlpha) and a radius (rCirc) to
         smooth the transition from inclined plane to flat foreland
     """
 
     # input parameters
-    r_circ = float(cfg['TOPO']['r_circ'])
+    rCirc = float(cfg['TOPO']['rCirc'])
     meanAlpha = float(cfg['TOPO']['meanAlpha'])
     z0 = float(cfg['TOPO']['z0'])
 
@@ -163,7 +163,7 @@ def hockeysmooth(cfg):
 
     # Compute circle parameters for smoothing the transition
     beta = (0.5 * (180. - (meanAlpha)))
-    xc = r_circ / np.tan(np.radians(beta))
+    xc = rCirc / np.tan(np.radians(beta))
     yc = xc * np.cos(np.radians(meanAlpha))
     x_circ = x1 + xc
     # for plotting
@@ -174,8 +174,8 @@ def hockeysmooth(cfg):
         if xv[m] < x1 - yc:
             zv[:, m] = z0 - np.tan(np.radians(meanAlpha)) * xv[m]
         elif x1 - yc <= xv[m] <= x1 + xc:
-            r_circ + np.sqrt(r_circ**2 - (xv[m] - x_circ)**2)
-            zv[:, m] = r_circ - np.sqrt(r_circ**2 - (x_circ - xv[m])**2)
+            rCirc + np.sqrt(rCirc**2 - (xv[m] - x_circ)**2)
+            zv[:, m] = rCirc - np.sqrt(rCirc**2 - (x_circ - xv[m])**2)
         else:
             zv[:, m] = 0.0
 
@@ -301,10 +301,10 @@ def hockey(cfg):
 
 
 def bowl(cfg):
-    """ Compute coordinates of sphere with given radius (r_bowl) """
+    """ Compute coordinates of sphere with given radius (rBwol) """
 
     # input parameters
-    r_bowl = float(cfg['TOPO']['r_bowl'])
+    rBwol = float(cfg['TOPO']['rBwol'])
 
     # Get grid definitions
     dx, xEnd, yEnd = getGridDefs(cfg)
@@ -321,10 +321,10 @@ def bowl(cfg):
     for m in range(nCols):
         for k in range(nRows):
             radius = np.sqrt(xv[m]**2 + yv[k]**2)
-            if radius <= r_bowl:
-                zv[k, m] = r_bowl - r_bowl * np.sqrt(1 - (radius / r_bowl)**2)
+            if radius <= rBwol:
+                zv[k, m] = rBwol - rBwol * np.sqrt(1 - (radius / rBwol)**2)
             else:
-                zv[k, m] = r_bowl
+                zv[k, m] = rBwol
 
     # Log info here
     log.info('Bowl coordinates computed')
@@ -333,10 +333,10 @@ def bowl(cfg):
 
 
 def helix(cfg):
-    """ Compute coordinates of helix-shaped topography with given radius (r_helix) """
+    """ Compute coordinates of helix-shaped topography with given radius (rHelix) """
 
     # input parameters
-    r_helix = float(cfg['TOPO']['r_helix'])
+    rHelix = float(cfg['TOPO']['rHelix'])
     C = float(cfg['TOPO']['C'])
     c_ff = float(cfg['CHANNELS']['c_ff'])
     c_radius = float(cfg['CHANNELS']['c_radius'])
@@ -364,17 +364,17 @@ def helix(cfg):
         for k in range(nRows):
             radius = np.sqrt(xv[m]**2 + yv[k]**2)
             theta = np.arctan2(yv[k], xv[m]) + np.pi
-            if (theta * r_helix) < fLen:
-                zv[k, m] = A * (theta * r_helix)**2 + B * (theta * r_helix) + C
+            if (theta * rHelix) < fLen:
+                zv[k, m] = A * (theta * rHelix)**2 + B * (theta * rHelix) + C
             else:
                 zv[k, m] = (-B**2) / (4. * A) + C
 
             # If channel is introduced to topography
             if cfg['TOPO'].getboolean('channel'):
-                if (theta * r_helix) < (0.5 * (c_mustart + c_muend) * fLen):
-                    c_0 = norm.cdf(theta * r_helix, c_mustart * fLen, c_ff)
+                if (theta * rHelix) < (0.5 * (c_mustart + c_muend) * fLen):
+                    c_0 = norm.cdf(theta * rHelix, c_mustart * fLen, c_ff)
                 else:
-                    c_0 = 1. - norm.cdf(theta * r_helix, c_muend * fLen, c_ff)
+                    c_0 = 1. - norm.cdf(theta * rHelix, c_muend * fLen, c_ff)
 
                 # If channel of constant width or becoming narrower in the middle
                 if cfg['TOPO'].getboolean('narrowing'):
@@ -383,12 +383,12 @@ def helix(cfg):
                     c_extent = c_radius
 
                 # Inner and outer boundaries of the channel
-                bound_in = r_helix - c_extent
-                bound_ext = r_helix + c_extent
+                bound_in = rHelix - c_extent
+                bound_ext = rHelix + c_extent
 
                 # Set channel
-                if (radius >= r_helix) and (radius < bound_ext):
-                    radius = radius - r_helix
+                if (radius >= rHelix) and (radius < bound_ext):
+                    radius = radius - rHelix
                     if cfg['TOPO'].getboolean('topoconst'):
                         zv[k, m] = zv[k, m] - c_0 * c_extent * \
                             np.sqrt(1. - (radius**2 / c_extent**2))
@@ -396,8 +396,8 @@ def helix(cfg):
                         zv[k, m] = zv[k, m] + c_0 * c_extent * \
                             (1. - np.sqrt(1. - (radius**2 / c_extent**2)))
 
-                elif (radius < r_helix) and (radius > bound_in):
-                    radius = r_helix - radius
+                elif (radius < rHelix) and (radius > bound_in):
+                    radius = rHelix - radius
                     if cfg['TOPO'].getboolean('topoconst'):
                         zv[k, m] = zv[k, m] - c_0 * c_extent * \
                             np.sqrt(1. - (radius**2 / c_extent**2))
