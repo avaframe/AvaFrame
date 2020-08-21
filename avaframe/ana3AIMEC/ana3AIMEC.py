@@ -8,6 +8,9 @@ import numpy as np
 import scipy as sp
 import copy
 import operator
+import matplotlib.pyplot as plt
+import matplotlib
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 # Local imports
@@ -134,8 +137,8 @@ def mainAIMEC(cfgPath, cfg):
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
-    # log.info('Visualisation of results')
-    # outAimec.result_visu(cfgPath, resAnalysis, doku, gr_index, pressureLimit)
+    log.info('Visualisation of results')
+    outAimec.result_visu(cfgPath, raster_transfo, resAnalysis, pressureLimit)
 
     # -----------------------------------------------------------
     # write results to file
@@ -217,9 +220,9 @@ def processDataInd(cfgPath, cfgSetup, cfgFlags):
     raster_transfo['rasterArea'] = raster_transfo['rasterArea']*cellsize*cellsize
     # (x,y) coordinates of the resamples avapth (centerline where l = 0)
     n = np.shape(raster_transfo['l'])[0]
-    ind_center = int(np.floor(n/2)+1)
-    raster_transfo['x'] = raster_transfo['grid_x'][:,ind_center]
-    raster_transfo['y'] = raster_transfo['grid_y'][:,ind_center]
+    indCenter = int(np.floor(n/2)+1)
+    raster_transfo['x'] = raster_transfo['grid_x'][:,indCenter]
+    raster_transfo['y'] = raster_transfo['grid_y'][:,indCenter]
     # add 'z' coordinate to the centerline
     raster_transfo = geoTrans.projectOnRaster(dem, raster_transfo)
     # find projection of split point on the centerline centerline
@@ -227,7 +230,7 @@ def processDataInd(cfgPath, cfgSetup, cfgFlags):
     raster_transfo['indSplit'] = projPoint['indSplit']
 
     # prepare find Beta points
-    betaValue = 10
+    betaValue = 15
     angle, tmp, delta_ind = geoTrans.prepareFind10Point(betaValue, raster_transfo)
     # find the beta point: first point under 10°
     indBetaPoint = geoTrans.find10Point(tmp, delta_ind)
@@ -351,17 +354,27 @@ def getSArea(raster_transfo):
     # calculate dx and dy for each point in the l direction
     dxl = x_coord[0:n-1, 1:m]-x_coord[0:n-1, 0:m-1]
     dyl = y_coord[0:n-1, 1:m]-y_coord[0:n-1, 0:m-1]
-    # deduce the distance in l direction
-    Vl = np.sqrt(dxl*dxl + dyl*dyl)
     # calculate dx and dy for each point in the s direction
     dxs = x_coord[1:n, 0:m-1]-x_coord[0:n-1, 0:m-1]
     dys = y_coord[1:n, 0:m-1]-y_coord[0:n-1, 0:m-1]
     # deduce the distance in s direction
-    Vs = np.sqrt(dxs*dxs + dys*dys)
+    Vs2 = (dxs*dxs + dys*dys)
+    Vs = np.sqrt(Vs2)
 
     # calculate area of each cell
-    new_area_raster = np.abs(Vl*Vs)
+    new_area_raster = np.abs(dxl*dys - dxs*dyl)
     raster_transfo['rasterArea'] = new_area_raster
+
+    if debugPlotFlag:
+        fig, ax1 = plt.subplots()
+        cmap = copy.copy(matplotlib.cm.jet)
+        cmap.set_bad(color='white')
+        im1 = plt.imshow(new_area_raster, cmap, origin='lower')
+        divider = make_axes_locatable(ax1)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        fig.colorbar(im1, cax=cax)
+        plt.show()
+
     # get s_coord
     ds = Vs[:, int(np.floor(m/2))-1]
     s_coord = np.cumsum(ds)-ds[0]
@@ -428,6 +441,18 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     """
     ANALYZEData
     """
+
+
+    resAnalysis = analyzePressureDepth(raster_transfo, p_lim, newRasters, cfgPath)
+
+    resAnalysis = analyzeArea(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath)
+
+    outAimec.visu_runout(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath, cfgFlags)
+
+    return resAnalysis
+
+def analyzePressureDepth(raster_transfo, p_lim, newRasters, cfgPath):
+
     fname = cfgPath['pressurefileList']
     fname_mass = cfgPath['massfileList']
     outpath = cfgPath['pathResult']
@@ -438,6 +463,8 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     s_coord = raster_transfo['s']
     l_coord = raster_transfo['l']
     rasterArea = raster_transfo['rasterArea']
+    indBeta = raster_transfo['indBeta']
+    sBeta = s_coord[indBeta]
 
     resAnalysis = {}
 
@@ -458,7 +485,6 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
 
     n = np.shape(l_coord)[0]
     p_cross_all = np.zeros((n_topo, len(s_coord)))
-    # log.info('Sim number \t rRunout \t rampp \t ramd \t FS')
     log.info('{: <15} {: <15} {: <15} {: <15}'.format(
         'Sim number ', 'rRunout ', 'rampp ', 'ramd ', 'FS'))
     # For each data set
@@ -510,8 +536,8 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
             np.nansum(AreadCrossMax[cupper:clower+1])
         mmd[i] = max(dCrossMax[cupper:clower+1])
     #    Runout
-        runout[i] = s_coord[clower]
-        runout_mean[i] = s_coord[clower_m]
+        runout[i] = s_coord[clower] - sBeta
+        runout_mean[i] = s_coord[clower_m] - sBeta
 
         elevRel[i] = dataDEM[cupper, int(np.floor(n/2)+1)]
         deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
@@ -541,18 +567,96 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     resAnalysis['entMass'] = entrainedMass
     resAnalysis['growthIndex'] = grIndex
     resAnalysis['growthGrad'] = grGrad
+    resAnalysis['p_cross_all'] = p_cross_all
 
-    # prepare for plot
-    inputPlot = {}
-    inputPlot['p_mean'] = p_cross_all.mean(axis=0)
-    inputPlot['p_median'] = np.median(p_cross_all, axis=0)
-    inputPlot['p_percentile'] = sp.percentile(p_cross_all, [2.5, 50, 97.5], axis=0)
-    inputPlot['dataPressure'] = newRasters['newRasterPressure']
-    inputPlot['runout'] = resAnalysis['runout']
-    inputPlot['runout_mean'] = resAnalysis['runout_mean']
-    inputPlot['pressureLimit'] = p_lim
+    return resAnalysis
 
-    outAimec.visu_runout(raster_transfo, inputPlot, cfgPath, cfgFlags)
+
+def analyzeArea(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath):
+
+    fname = cfgPath['pressurefileList']
+
+    dataPressure = newRasters['newRasterPressure']
+    s_coord = raster_transfo['s']
+    l_coord = raster_transfo['l']
+    cellarea = raster_transfo['rasterArea']
+    indBeta = raster_transfo['indBeta']
+
+    # initialize Arrays
+    n_topo = len(fname)
+    TP = np.empty((n_topo))
+    FN = np.empty((n_topo))
+    FP = np.empty((n_topo))
+    TN = np.empty((n_topo))
+
+    # take first simulation as reference
+    new_mask = copy.deepcopy(dataPressure[0])
+    # prepare mask for area resAnalysis
+    new_mask[0:indBeta] = 0
+    new_mask[np.where(np.nan_to_num(new_mask) < p_lim)] = 0
+    new_mask[np.where(np.nan_to_num(new_mask) >= p_lim)] = 1
+
+    # comparison rasterdata with mask
+    log.info('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
+    'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
+    # rasterinfo
+    n_start, m_start = np.nonzero(np.nan_to_num(new_mask))
+    n_start = min(n_start)
+
+    n_total = len(s_coord)
+    m_total = len(l_coord)
+
+
+    for i in range(n_topo):
+        rasterdata = dataPressure[i]
+
+        """
+        area
+        # true positive: reality(mask)=1, model(rasterdata)=1
+        # false negative: reality(mask)=1, model(rasterdata)=0
+        # false positive: reality(mask)=0, model(rasterdata)=1
+        # true negative: reality(mask)=0, model(rasterdata)=0
+        """
+        # for each pressure-file p_lim is introduced (1/3/.. kPa), where the avalanche has stopped
+        new_rasterdata = copy.deepcopy(rasterdata)
+        new_rasterdata[np.where(np.nan_to_num(new_rasterdata) < p_lim)] = 0
+        new_rasterdata[np.where(np.nan_to_num(new_rasterdata) >= p_lim)] = 1
+
+        tpInd = np.where((new_mask[n_start:n_total+1] == True) &
+                         (new_rasterdata[n_start:n_total+1] == True))
+        fpInd = np.where((new_mask[n_start:n_total+1] == False) &
+                         (new_rasterdata[n_start:n_total+1] == True))
+        fnInd = np.where((new_mask[n_start:n_total+1] == True) &
+                         (new_rasterdata[n_start:n_total+1] == False))
+        tnInd = np.where((new_mask[n_start:n_total+1] == False) &
+                         (new_rasterdata[n_start:n_total+1] == False))
+
+        # Teilrasterpunkte
+        tpCount = len(tpInd[0])
+        fpCount = len(fpInd[0])
+        fnCount = len(fnInd[0])
+        tnCount = len(tnInd[0])
+
+        # subareas
+        tp = sum(cellarea[tpInd[0] + n_start, tpInd[1]])
+        fp = sum(cellarea[fpInd[0] + n_start, fpInd[1]])
+        fn = sum(cellarea[fnInd[0] + n_start, fnInd[1]])
+        tn = sum(cellarea[tnInd[0] + n_start, tnInd[1]])
+
+        # take reference (first simulation) as normalizing area
+        area_sum = tp + fn
+
+        TP[i] = tp
+        FN[i] = fn
+        FP[i] = fp
+        TN[i] = tn
+
+        log.info('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(*[i+1, tp/area_sum, fn/area_sum, fp/area_sum, tn/area_sum]))
+
+    resAnalysis['TP'] = TP
+    resAnalysis['FN'] = FN
+    resAnalysis['FP'] = FP
+    resAnalysis['TN'] = TN
 
     return resAnalysis
 
