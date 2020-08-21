@@ -219,12 +219,8 @@ def visu_runout(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath, cfgFlag
 
 def result_write(cfgPath, cfgSetup, resAnalysis):
     """
-    This function is used as standart output file
-
-    example path: 'log/doublestep_5_5m_calibration_results.txt'
-    example header: 'runout, maxvel, rho, mu, tau_0, R_s^0, kappa, R, B, q \n'
-
-    INPUT: data, path, header
+    This function writes the main Aimec results to a file (outputFile)
+    in cfgPath
     """
 
     project_name = cfgPath['project_name']
@@ -290,82 +286,6 @@ def result_write(cfgPath, cfgSetup, resAnalysis):
     log.info('File written: %s' % outname)
 
 
-def colorvar(k, k_end, colorflag, disp=0):
-    """
-    jt colorvariation editor - JT 2012
-    determine how color changes from runnumber = 1 to runnumber = runlength
-    input: runnumber,runlength,colorflag,verbose
-    output: [R G B]
-
-    possible colorflags:
-    'ry': red to yellow
-    'bb': blue to light blue
-    'pw': pink to white
-    'kg' black to green
-    'bp' blue to pink
-    'pb' pink to blue
-    'gy' green to yellow
-    'cw' cyan to white
-    'kr' black to red
-    'gb' green to blue
-    'rp' red to pink
-    'yw' yellow to white
-    'kb' black to blue
-    'kc' black to cyan
-    'kp' black to pink
-    'kw' black to white
-    """
-
-    colors = {
-        'ry': [1., k/k_end, 0.],  # rot zu gelb
-        'bb': [0., k/k_end, 1.],  # blau zu hellbalu
-        'pw': [0.8, k/k_end, 0.8],  # pink zu weiss
-        'kg': [0., k/k_end, 0.],  # schwarz zu gruen
-        'bp': [k/k_end, 0., 1.],  # blau zu pink
-        'pb': [1.-k/k_end, 1., 0.],  # blau zu pink
-        'gy': [k/k_end, 1., 0.],  # green zu yellow
-        'cw': [k/k_end, 1., 1.],  # cyan zu weiss
-        'kr': [k/k_end, 1., 1.],  # black to red
-        'gb': [0., 1., k/k_end],  # gruen zu blau
-        'rp': [1., 0., k/k_end],  # rot zu pink
-        'yw': [1., 1., k/k_end],  # yellow to white
-        'kb': [0., 0., k/k_end],  # black tp blue
-        'kc': [0., k/k_end, k/k_end],  # black zu cyan
-        'kp': [k/k_end, 0., k/k_end],  # black zu pink
-        'kw': [1.-k/k_end, 1.-k/k_end, 1.-k/k_end]  # black to white
-    }
-
-    colornames = {
-        'ry': 'red to yellow',
-        'bb': 'blue to cyan',
-        'pw': 'pink to white',
-        'kg': 'black to green',
-        'bp': 'blue to pink',
-        'pb': 'blue to pink',
-        'gy': 'green to yellow',
-        'cw': 'cyan to white',
-        'kr': 'black to red',
-        'gb': 'green to blue',
-        'rp': 'rot to pink',
-        'yw': 'yellow to white',
-        'kb': 'black to blue',
-        'kc': 'black to cyan',
-        'kp': 'black to pink',
-        'kw': 'black to white'
-    }
-
-    if colorflag.lower() in colors:
-        farbe = colors.get(colorflag.lower())
-        if k == 0:
-            log.info('Color is: %s' % colornames.get(colorflag.lower()))
-    else:
-        farbe = [0, 0, 0]
-        if k == 0:
-            log.info('Color is black')
-
-    return farbe
-
-
 def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     """
     Visualize results in a nice way
@@ -389,7 +309,7 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     runout = resAnalysis['runout'] + sBeta
     mean_max_dpp = resAnalysis['AMPP']
     max_max_dpp = resAnalysis['MMPP']
-
+    GI = resAnalysis['growthIndex']
 
 
     cvar = ['ry', 'bb', 'pw', 'gy']
@@ -401,19 +321,17 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     mks = 10
     lw = 2
     # includes flag for y axis -
-    # 1 = rddp
-    # 2 = frontal shape
-    # 3 = groth index
-    # 4 = runout for intrapraevent
-    # 5 = pressure data
-    flag = 3
+    # 1 = mean pressure data
+    # 2 = groth index
+    # 3 = max pressure data
+    flag = 2
     if (len(fnames) > 100):
         plot_density = 1
     else:
         plot_density = 0
 
     if flag == 1:
-        log.info('Visualizing pressure data')
+        log.info('Visualizing mean pressure data')
         tipo = 'rapp'
         data = mean_max_dpp / mean_max_dpp[0]
         yaxis_label = 'rAPP [-]'
@@ -426,7 +344,7 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
         yaxis_label = 'growth index [GI]'
         ytick_increment = 2
     elif flag == 3:
-        log.info('Visualizing pressure data')
+        log.info('Visualizing max pressure data')
         tipo = 'rmpp'
         data = max_max_dpp / max_max_dpp[0]
         yaxis_label = 'rMPP [-]'
@@ -449,10 +367,6 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
 
 #    show flow path
     ax1 = fig.add_subplot(111)
-#    plt.xlim([0, xlim_prof_axis])
-#    plt.ylim([0, math.ceil(max(data)+0.25)])
-#    plt.ylim([0, ymax])
-#    plt.yticks(np.arange([0, math.ceil(max(data)+0.25), ytick_increment]))
     ax1.set_ylabel(yaxis_label, color='b', fontsize=2*fs)
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(dpp_threshold),
                             ' kPa threshold']), color='black', fontsize=2*fs)
@@ -471,9 +385,10 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     plt.xlim([0, xlim_prof_axis])
     plt.ylim([math.floor(min(z_path)/10)*10, math.ceil(max(z_path)/10)*10])
     if not plot_density:
+        color = np.flip(cm.autumn(np.linspace(0,1,len(runout))))
         for k in range(len(runout)):
-            topo_name = fnames[k].split('/')[-1]
-            pfarbe = colorvar(float(k), len(runout), colorflag)
+            topo_name = cfgPath['project_name']
+            pfarbe = color[k] #(float(k), len(runout), colorflag)
             if k == 0:
                 ax1.plot(runout[k], data[k], marker='+',
                          markersize=2*mks, color='g', label=topo_name)
@@ -489,9 +404,9 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
                 mk = 1
     plt.grid('on')
 
-    pro_name = fnames[0].split('/')[-3]
-    outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr',
-                           str(int(dpp_threshold)), '_', tipo, '.pdf'])
+    outname_fin = ''.join([cfgPath['pathResult'], os.path.sep, 'pics',
+                          os.path.sep, cfgPath['dirName'], '_dptr',
+                          str(int(dpp_threshold)), '_', tipo, '.pdf'])
 
     if not os.path.exists(os.path.dirname(outname_fin)):
         os.makedirs(os.path.dirname(outname_fin))
@@ -519,9 +434,10 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
         cbar = plt.colorbar(data_density, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     if not plot_density:
+        color = np.flip(cm.autumn(np.linspace(0,1,len(runout))))
         for k in range(len(rTP)):
-            topo_name = fnames[k].split('/')[-1]
-            pfarbe = colorvar(float(k), len(rTP), colorflag)
+            topo_name = cfgPath['project_name']
+            pfarbe = color[k] #colorvar(float(k), len(rTP), colorflag)
             ax1.plot(rFP[k], rTP[k], label=topo_name, marker=markers[mk],
                      markersize=mks, color=pfarbe, linewidth=lw)
             mk = mk+1
@@ -531,8 +447,9 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     plt.ylim([0, 1])
     plt.grid('on')
 
-    outname_fin = ''.join([outpath, '/pics/', pro_name, '_dptr',
-                           str(int(dpp_threshold)), '_ROC.pdf'])
+    outname_fin = ''.join([cfgPath['pathResult'], os.path.sep, 'pics',
+                            os.path.sep, cfgPath['dirName'], '_dptr',
+                            str(int(dpp_threshold)), '_ROC.pdf'])
 
     if not os.path.exists(os.path.dirname(outname_fin)):
         os.makedirs(os.path.dirname(outname_fin))

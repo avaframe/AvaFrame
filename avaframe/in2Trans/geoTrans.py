@@ -233,9 +233,10 @@ def checkProfile(AvaProfile, projSplitPoint):
 
 
 def find10Point(tmp, deltaInd):
-    """ find the beta point: first point under 10°
-     (make sure that the delta_ind next indexes are also under 10°)
-     otherwise keep looking
+    """
+    Find the beta point: first point under the beta value given in
+    prepareFind10Point. Make sure that the delta_ind next indexes are also
+    under the beta value otherwise keep looking
      """
     i = 0
     while True:
@@ -252,6 +253,11 @@ def find10Point(tmp, deltaInd):
     return ids10Point
 
 def prepareFind10Point(beta, AvaProfile):
+    """
+    Prepare inputs for findBetaPoint function: Read profile, compute Angle
+    look for points for which the slope is under the given Beta value and
+    that are located downstreem of the splitPoint
+    """
     s = AvaProfile['s']
     z = AvaProfile['z']
     distance = s[1] - s[0]
