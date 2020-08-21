@@ -4,3 +4,7 @@ local_*
 __pycache__
 
 _build
+
+.png
+.log 
+
