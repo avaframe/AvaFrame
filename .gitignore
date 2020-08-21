@@ -5,8 +5,8 @@ __pycache__
 
 _build
 
-.log
+*.log
 
-avaframe/*.png
+avaframe/**/*.png
 
-avaframe/*.shp.nxyz
+avaframe/**/*.shp.nxyz
