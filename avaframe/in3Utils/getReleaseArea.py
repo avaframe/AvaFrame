@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from avaframe.in3Utils import generateTopo as gT
 import os
+import shapefile
 import logging
 import shutil
 
@@ -131,7 +132,7 @@ def correctOrigin(xyPoints, cfgT):
     return xv, yv, xyPoints
 
 
-def writeNXYZ(xyPoints, DEM_type, cfgR, outDir):
+def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
     """ Write topography information to file """
 
     lenp = len(xyPoints)
@@ -153,10 +154,23 @@ def writeNXYZ(xyPoints, DEM_type, cfgR, outDir):
             np.savetxt(f, line, fmt='%f')
 
     # Log info here
-    log.info('Release Area written to: %s/release_%d%s.nxyz' % (outDir, relNo, DEM_type))
+    log.info('Release Area written to: %s/release_%d%s as .nxyz and .shp' % (outDir, relNo, DEM_type))
     if cfgR.getboolean('GENERAL','outputtxt'):
         shutil.copyfile(os.path.join(outDir, 'release_%d%s.nxyz' % (relNo, DEM_type)),
         os.path.join(outDir, 'release_%d%s.txt' % (relNo, DEM_type)))
+
+    # Make list of Points
+    xy = []
+    for m in range(len(xyPoints)):
+        xy.append([xyPoints[m,0], xyPoints[m,1]])
+
+    # Wr
+    w = shapefile.Writer(os.path.join(outDir, 'release_%d%s' % (relNo, DEM_type)))
+    w.poly([[xy[3], xy[2], xy[1], xy[0]]])
+    w.field('ID', 'C', '40')
+    w.field('Name', 'C', '40')
+    w.record('1', 'poly')
+    w.close()
 
 
 def getReleaseArea(cfgT, cfgR, avalancheDir):
@@ -206,6 +220,6 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
         [xv, yv, xyPoints] = correctOrigin(xyPoints, cfgT)
 
         # Write release area
-        writeNXYZ(xyPoints, DEM_type, cfgR, outDir)
+        writeReleaseArea(xyPoints, DEM_type, cfgR, outDir)
 
     return xv, yv, xyPoints
