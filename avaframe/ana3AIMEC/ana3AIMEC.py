@@ -10,6 +10,7 @@ import copy
 import operator
 import matplotlib.pyplot as plt
 import matplotlib
+from matplotlib.image import NonUniformImage
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
@@ -25,7 +26,7 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 # Aimec read inputs tools
 # -----------------------------------------------------------
-debugPlotFlag = False
+debugPlotFlag = True
 
 
 def readAIMECinputs(avalancheDir, dirName='com1DFA'):
@@ -251,7 +252,7 @@ def processDataInd(cfgPath, cfgSetup, cfgFlags):
 
 def split_section(DB, i):
     """
-    Splits the domain DB in the s direction (direction of the path)
+    Splits the i segment of domain DB in the s direction (direction of the path)
     """
     # left edge
     xl0 = DB['DB_x_l'][i]
@@ -439,7 +440,7 @@ def assignData(fnames, raster_transfo, interpMethod):
 
 def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     """
-    ANALYZEData
+    Analyse pressure and depth deskewed data
     """
 
 
@@ -452,7 +453,11 @@ def analyzeData(raster_transfo, p_lim, newRasters, cfgPath, cfgFlags):
     return resAnalysis
 
 def analyzePressureDepth(raster_transfo, p_lim, newRasters, cfgPath):
-
+    """
+    Analyse pressure and depth.
+    Calculate runout, Max Peak Pressure, Average PP... same for depth
+    Get mass and entrainement
+    """
     fname = cfgPath['pressurefileList']
     fname_mass = cfgPath['massfileList']
     outpath = cfgPath['pathResult']
@@ -555,6 +560,7 @@ def analyzePressureDepth(raster_transfo, p_lim, newRasters, cfgPath):
         # log.info('%s\t%10.4f\t%10.4f\t%10.4f' % (i+1, runout[i], ampp[i], amd[i]))
         log.info('{: <15} {:<15.4f} {:<15.4f} {:<15.4f}'.format(*[i+1, runout[i], ampp[i], amd[i]]))
 
+    # affect values to output dictionary
     resAnalysis['runout'] = runout
     resAnalysis['runout_mean'] = runout_mean
     resAnalysis['AMPP'] = ampp
@@ -573,7 +579,10 @@ def analyzePressureDepth(raster_transfo, p_lim, newRasters, cfgPath):
 
 
 def analyzeArea(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath):
-
+    """
+    Compare results to reference.
+    Compute True positive, False negative... areas.
+    """
     fname = cfgPath['pressurefileList']
 
     dataPressure = newRasters['newRasterPressure']
@@ -619,8 +628,51 @@ def analyzeArea(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath):
         """
         # for each pressure-file p_lim is introduced (1/3/.. kPa), where the avalanche has stopped
         new_rasterdata = copy.deepcopy(rasterdata)
+        new_rasterdata[0:indBeta] = 0
         new_rasterdata[np.where(np.nan_to_num(new_rasterdata) < p_lim)] = 0
         new_rasterdata[np.where(np.nan_to_num(new_rasterdata) >= p_lim)] = 1
+
+        if debugPlotFlag and i>0:
+            fig = plt.figure(dpi=150)
+            y_lim = s_coord[indBeta+20]+resAnalysis['runout'][0]
+        #    for figure: referenz-simulation bei p_lim=1
+            ax1 = plt.subplot(121)
+            ax1.title.set_text('Reference Peak Presseure in the RunOut area')
+            cmap = copy.copy(matplotlib.cm.jet)
+            cmap.set_under(color='w')
+            cmap.set_bad(color='k')
+            im = NonUniformImage(ax1, extent=[l_coord.min(), l_coord.max(),
+                                              s_coord.min(), s_coord.max()], cmap=cmap)
+            im.set_clim(vmin=p_lim, vmax=np.max((dataPressure[0])[n_start:n_total+1]))
+            im.set_data(l_coord, s_coord, dataPressure[0])
+            ref0 = ax1.images.append(im)
+            cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, use_gridspec=True)
+            cbar.ax.set_ylabel('peak pressure [kPa]')
+            ax1.set_xlim([l_coord.min(), l_coord.max()])
+            ax1.set_ylim([s_coord[indBeta-20], y_lim])
+            ax1.set_xlabel('l [m]')
+            ax1.set_ylabel('s [m]')
+
+            ax2 = plt.subplot(122)
+            ax2.title.set_text('Difference between current and reference in the RunOut area\n  Blue = FN, Red = FP')
+            colorsList = [[0,0,1],[1,1,1],[1,0,0]]
+            cmap = matplotlib.colors.ListedColormap(colorsList)
+            cmap.set_under(color='b')
+            cmap.set_over(color='r')
+            cmap.set_bad(color='k')
+            im = NonUniformImage(ax2, extent=[l_coord.min(), l_coord.max(),
+                                              s_coord.min(), s_coord.max()], cmap=cmap)
+            im.set_clim(vmin=-0.000000001, vmax=0.000000001)
+            im.set_data(l_coord, s_coord, new_rasterdata-new_mask)
+            ref0 = ax2.images.append(im)
+            # cbar = ax2.figure.colorbar(im, ax=ax2, extend='both', use_gridspec=True)
+            # cbar.ax.set_ylabel('peak pressure [kPa]')
+            ax2.set_xlim([l_coord.min(), l_coord.max()])
+            ax2.set_ylim([s_coord[indBeta-20], y_lim])
+            ax2.set_xlabel('l [m]')
+            ax2.set_ylabel('s [m]')
+            # fig.tight_layout()
+            plt.show()
 
         tpInd = np.where((new_mask[n_start:n_total+1] == True) &
                          (new_rasterdata[n_start:n_total+1] == True))
@@ -662,6 +714,10 @@ def analyzeArea(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath):
 
 
 def read_write(fname_ent):
+    """
+    Read mass balance files to get mass properties of the simulation
+    (total mass, entrained mass...)
+    """
     #    load data
     #    time, total mass, entrained mass
     mass_time = np.loadtxt(fname_ent, delimiter=',', skiprows=1)
