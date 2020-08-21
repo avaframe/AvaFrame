@@ -129,7 +129,7 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
     plt.close(fig)
 
 
-def visu_runout(raster_transfo, inputPlot, cfgPath, cfgFlags):
+def visu_runout(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath, cfgFlags):
     """
     Plot and save the Peak Pressure  distribution after coord transfo
     """
@@ -140,16 +140,18 @@ def visu_runout(raster_transfo, inputPlot, cfgPath, cfgFlags):
     s_coord = raster_transfo['s']
     l_coord = raster_transfo['l']
     indBeta = raster_transfo['indBeta']
+    sBeta = s_coord[indBeta]
     rasterArea = raster_transfo['rasterArea']
-    dataPressure = inputPlot['dataPressure']
+    dataPressure = newRasters['newRasterPressure']
     rasterdataPres = dataPressure[0]  # ana3AIMEC.makeRasterAverage(dataPressure)
-    runout = inputPlot['runout']
-    runout_mean = inputPlot['runout_mean']
-    p_lim = inputPlot['pressureLimit']
+    runout = resAnalysis['runout'] + sBeta
+    runout_mean = resAnalysis['runout_mean'] + sBeta
+    p_cross_all = resAnalysis['p_cross_all']
 
-    p_mean = inputPlot['p_mean']
-    p_median = inputPlot['p_median']
-    p_percentile = inputPlot['p_percentile']
+    # prepare for plot
+    p_mean = np.mean(p_cross_all, axis=0)
+    p_median = np.median(p_cross_all, axis=0)
+    p_percentile = sp.percentile(p_cross_all, [2.5, 50, 97.5], axis=0)
 
     figure_width = 3*5
     figure_height = 3*3
@@ -364,7 +366,7 @@ def colorvar(k, k_end, colorflag, disp=0):
     return farbe
 
 
-def result_visu(cfgPath, resAnalysis, doku, GI, dpp_threshold):
+def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     """
     Visualize results in a nice way
     Jan-Thomas Fischer BFW 2010-2012
@@ -377,9 +379,18 @@ def result_visu(cfgPath, resAnalysis, doku, GI, dpp_threshold):
     outpath = cfgPath['pathResult']
     DefaultName = cfgPath['project_name']
 
-    runout = resAnalysis['runout']
+    x_path = raster_transfo['x']
+    y_path = raster_transfo['y']
+    z_path = raster_transfo['z']
+    s_path = raster_transfo['s']
+
+    indBeta = raster_transfo['indBeta']
+    sBeta = s_path[indBeta]
+    runout = resAnalysis['runout'] + sBeta
     mean_max_dpp = resAnalysis['AMPP']
     max_max_dpp = resAnalysis['MMPP']
+
+
 
     cvar = ['ry', 'bb', 'pw', 'gy']
     colorflag = cvar[0]
@@ -426,21 +437,6 @@ def result_visu(cfgPath, resAnalysis, doku, GI, dpp_threshold):
         log.error('Wrong flag')
         return None
 
-    # read data
-    dem = IOf.readRaster(rasterSource)
-    header = dem['header']
-    xllcenter = header.xllcenter
-    yllcenter = header.yllcenter
-    cellsize = header.cellsize
-
-    rasterdata = dem['rasterData']
-
-    Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem['header'])
-    AvaProfile, SplitPoint = geoTrans.prepareLine(dem, Avapath, distance=10)
-    x_path = AvaProfile['x']
-    y_path = AvaProfile['y']
-    z_path = AvaProfile['z']
-    s_path = AvaProfile['s']
 
     xlim_prof_axis = max(s_path) + 50
 
@@ -504,11 +500,8 @@ def result_visu(cfgPath, resAnalysis, doku, GI, dpp_threshold):
     plt.close(fig)
 
     # Final result diagram - roc-plots
-    rTP = (np.array(doku[0]) / (float(doku[0][0]) + float(doku[1][0]))).astype(float)
-    rFP = (np.array(doku[2]) / (float(doku[2][0]) + float(doku[3][0]))).astype(float)
-
-
-#    rFP = (np.array(doku[2]) / (float(doku[0][0]) + float(doku[1][0]))).astype(float)
+    rTP = resAnalysis['TP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
+    rFP = resAnalysis['FN'] / (resAnalysis['FP'][0] + resAnalysis['TN'][0])
 
     fig = plt.figure(figsize=(figure_width, figure_height), dpi=300)
 
