@@ -18,7 +18,7 @@ logName = 'runCom1DFA'
 #------------------------------------------
 
 # Load avalanche directory from general configuration file
-cfgMain = cfgUtils.getModuleConfig(general=True)
+cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 
 # Start logging
