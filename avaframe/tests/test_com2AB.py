@@ -114,30 +114,3 @@ def test_calcAB(capfd):
     tol = 0.001  # here 0.1% relative diff
     assert (alpha == pytest.approx(alpharef, rel=tol)) and (alphaSD[0] == pytest.approx(alphaSDref[0], rel=tol)) and (
         alphaSD[1] == pytest.approx(alphaSDref[1], rel=tol)) and (alphaSD[2] == pytest.approx(alphaSDref[2], rel=tol))
-
-
-def test_findAngleProfile(capfd):
-    '''findAngleProfile'''
-    s = np.linspace(0, 400, 41)
-    angle = np.linspace(40, 0, 41)
-    tmp = np.where((angle < 10.0) & (angle > 0.0))
-    deltaInd = 3
-    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
-    assert ids10Point == 30
-
-    deltaInd = 1
-    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
-    assert ids10Point == 30
-
-    angle[10] = 8
-    angle[11] = 8
-    angle[12] = 8
-    tmp = np.where((angle < 10.0) & (angle > 0.0))
-    deltaInd = 3
-    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
-    assert ids10Point == 30
-
-    angle[13] = 8
-    tmp = np.where((angle < 10.0) & (angle > 0.0))
-    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
-    assert ids10Point == 9
