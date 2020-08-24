@@ -10,6 +10,7 @@ import shutil
 # Local imports
 from avaframe.in3Utils import initializeProject
 from avaframe.in3Utils import logUtils
+from avaframe.in3Utils import cfgUtils
 
 
 # log file name; leave empty to use default runLog.log
