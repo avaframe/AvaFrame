@@ -188,7 +188,7 @@ def calcAB(AvaProfile, eqParameters):
     if debugPlot:
         plt.figure(figsize=(10, 6))
         plt.plot(s, angle)
-        plt.plot(s[ids_10Point], angle[ids10Point], 'or')
+        plt.plot(s[ids10Point], angle[ids10Point], 'or')
         plt.axhline(y=10, color='0.8',
                     linewidth=1, linestyle='-.', label='10^\circ line')
         plt.show()
