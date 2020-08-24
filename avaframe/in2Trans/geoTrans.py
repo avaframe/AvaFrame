@@ -105,7 +105,7 @@ def projectOnRaster_Vect(dem, Points, interp='bilinear'):
 
     # find index of index of not nan value
     mask = ~np.isnan(Lx+Ly)
-    mask_ind = np.argwhere(~np.isnan(Lx+Ly))[:,0]
+    mask_ind = np.argwhere(~np.isnan(Lx+Ly))[:, 0]
     i_tot = len(Lx)
     i_inb = len(mask_ind)
     i_oob = i_tot - i_inb
@@ -220,7 +220,7 @@ def checkProfile(AvaProfile, projSplitPoint=None):
         AvaProfile['x'] = np.flip(AvaProfile['x'])
         AvaProfile['y'] = np.flip(AvaProfile['y'])
         AvaProfile['z'] = np.flip(AvaProfile['z'])
-        try :
+        try:
             L = AvaProfile['s'][-1]
             AvaProfile['s'] = L - np.flip(AvaProfile['s'])
         except KeyError:
@@ -235,7 +235,6 @@ def checkProfile(AvaProfile, projSplitPoint=None):
             AvaProfile['indSplit'] = None
 
     return projSplitPoint, AvaProfile
-
 
 
 def find10Point(tmp, deltaInd):
@@ -257,6 +256,7 @@ def find10Point(tmp, deltaInd):
             ids10Point = ind - 1
             break
     return ids10Point
+
 
 def prepareFind10Point(beta, AvaProfile):
     """
