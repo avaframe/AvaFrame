@@ -15,18 +15,13 @@ from avaframe.in3Utils import generateTopo as gT
 from avaframe.in3Utils import cfgUtils, logUtils
 from avaframe.out3SimpPlot import outGenerateTopo as oT
 
-# ----------Required Settings---------------
-
-# TODO move this to a main cfg file!
-
-# Avalanche directory; see doc.avaframe.org for setup
-# TODO: full path needed?
-avalancheDir = 'data/avaHockey'
 
 # log file name; leave empty to use default runLog.log
 logName = 'genProjTopoRelease'
-# ------------------------------------------
 
+# Load avalanche directory from general configuration file
+cfgMain = cfgUtils.getGeneralConfig()
+avalancheDir = cfgMain['MAIN']['avalancheDir']
 
 # Start logging
 log = logUtils.initiateLogger('.', logName)

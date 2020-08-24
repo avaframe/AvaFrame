@@ -12,18 +12,12 @@ from avaframe.in3Utils import initializeProject
 from avaframe.in3Utils import logUtils
 
 
-# ----------Rewquired Settings---------------
-
-# TODO move this to a main cfg file!
-
-# Avalanche directory; see doc.avaframe.org for setup
-# TODO: full path needed?
-avalancheDir = 'data/TestAva'
-
 # log file name; leave empty to use default runLog.log
 logName = 'initializeProject'
-# ------------------------------------------
 
+# Load avalanche directory from general configuration file
+cfgMain = cfgUtils.getGeneralConfig()
+avalancheDir = cfgMain['MAIN']['avalancheDir']
 
 # Start logging
 log = logUtils.initiateLogger('.', logName)
