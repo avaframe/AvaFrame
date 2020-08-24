@@ -33,14 +33,10 @@ def makexyPoints(x1, x2, y1, cfgR):
     xyPoints[3, 0] = x1               # xll
     xyPoints[3, 1] = -0.5 * y1        # yll
 
-    # list all points
-    for m in range(lenp):
-        log.info('Point %d: x %f y %f' % (m, xyPoints[m, 0], xyPoints[m, 1]))
-
     return xyPoints
 
 
-def getCorners_FP(cfgR, cfgT):
+def getCornersFP(cfgR):
 
     # Terrain parameters
     hr = float(cfgR['GENERAL']['hr'])
@@ -60,7 +56,7 @@ def getCorners_FP(cfgR, cfgT):
     return xyPoints
 
 
-def getCorners_IP(cfgR, cfgT):
+def getCornersIP(cfgR, cfgT):
 
     # Terrain parameters
     hr = float(cfgR['GENERAL']['hr'])
@@ -82,23 +78,23 @@ def getCorners_IP(cfgR, cfgT):
     return xyPoints
 
 
-def getCorners_HS(cfgR, cfgT):
+def getCornersHS(cfgR, cfgT):
 
     # Terrain parameters
     hr = float(cfgR['GENERAL']['hr'])
     vol = float(cfgR['GENERAL']['vol'])
     dh = float(cfgR['GENERAL']['dh'])
     lenp = int(cfgR['GENERAL']['lenP'])
-    alpha_stop = float(cfgR['HS']['alpha_stop'])
+    alphaStop = float(cfgR['HS']['alphaStop'])
 
     # get A, B from HS
     [A, B, fLen] = gT.getParabolaParams(cfgT)
 
     # Compute release area ---------------------------------------------------------------------------------------
     # along valley margin of release area at alpha_stop° point
-    xStop = (np.tan(np.radians(-alpha_stop)) - B) / (2. * A)
-    xr = hr / np.sin(np.radians(alpha_stop))
-    xrp = hr / np.tan(np.radians(alpha_stop))
+    xStop = (np.tan(np.radians(-alphaStop)) - B) / (2. * A)
+    xr = hr / np.sin(np.radians(alphaStop))
+    xrp = hr / np.tan(np.radians(alphaStop))
     yr = vol / (xr * dh)
 
     xStart = xStop - xrp
@@ -113,13 +109,13 @@ def correctOrigin(xyPoints, cfgT):
 
     # determine number of rows and columns to define domain
     dx = float(cfgT['TOPO']['dx'])
-    xEnd = float(cfgT['TOPO']['xEnd']) + dx
-    yEnd = float(cfgT['TOPO']['yEnd']) + dx
+    xEnd = float(cfgT['TOPO']['xEnd'])
+    yEnd = float(cfgT['TOPO']['yEnd'])
 
     # Compute coordinate grid
-    xv = np.arange(0, xEnd, dx)
-    yv = np.arange(-0.5 * yEnd, 0.5 * yEnd, dx)
-
+    xv = np.arange(0, xEnd+dx, dx)
+    yv = np.arange(-0.5 * yEnd, 0.5 * (yEnd+dx), dx)
+    print(yv[0], yv[-1])
     xl = float(cfgT['DEMDATA']['xl'])
     yl = float(cfgT['DEMDATA']['yl'])
 
@@ -128,6 +124,10 @@ def correctOrigin(xyPoints, cfgT):
 
     xyPoints[:,0] = xyPoints[:,0] + xl
     xyPoints[:,1] = xyPoints[:,1] + yl + 0.5 * yEnd
+
+    # list all points
+    for m in range(len(xyPoints)):
+        log.info('Point %d: x %f y %f' % (m, xyPoints[m, 0], xyPoints[m, 1]))
 
     return xv, yv, xyPoints
 
@@ -169,7 +169,7 @@ def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
     w.poly([[xy[3], xy[2], xy[1], xy[0]]])
     w.field('ID', 'C', '40')
     w.field('Name', 'C', '40')
-    w.record('1', 'poly')
+    w.record('1', 'Rel_Example')
     w.close()
 
 
@@ -193,19 +193,19 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
     flagCont = False
     # Get release area
     if DEM_type == 'FP':
-        xyPoints = getCorners_FP(cfgR, cfgT)
+        xyPoints = getCornersFP(cfgR)
         flagCont = True
 
     elif DEM_type == 'IP':
-        xyPoints = getCorners_IP(cfgR, cfgT)
+        xyPoints = getCornersIP(cfgR, cfgT)
         flagCont = True
 
     elif DEM_type == 'HS':
-        xyPoints = getCorners_HS(cfgR, cfgT)
+        xyPoints = getCornersHS(cfgR, cfgT)
         flagCont = True
 
     elif DEM_type == 'HS2':
-        xyPoints = getCorners_IP(cfgR, cfgT)
+        xyPoints = getCornersIP(cfgR, cfgT)
         flagCont = True
 
     elif DEM_type == 'HX':
