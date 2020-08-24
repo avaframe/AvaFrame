@@ -34,19 +34,22 @@ def projectOnRaster(dem, Points):
         Lx = (xcoor[i] - xllcorner) / cellsize
         Ly = (ycoor[i] - yllcorner) / cellsize
         Lx0 = int(np.floor(Lx))
-        Ly0 = int(np.floor(Ly))
-        Lx1 = int(np.floor(Lx)) + 1
-        Ly1 = int(np.floor(Ly)) + 1
-        dx = Lx - Lx0
-        dy = Ly - Ly0
         try:
-            f11 = rasterdata[Ly0][Lx0]
-            f12 = rasterdata[Ly1][Lx0]
-            f21 = rasterdata[Ly0][Lx1]
-            f22 = rasterdata[Ly1][Lx1]
-            # using bilinear interpolation on the cell
-            value = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
-        except IndexError:
+            Ly0 = int(np.floor(Ly))
+            Lx1 = int(np.floor(Lx)) + 1
+            Ly1 = int(np.floor(Ly)) + 1
+            dx = Lx - Lx0
+            dy = Ly - Ly0
+            try:
+                f11 = rasterdata[Ly0][Lx0]
+                f12 = rasterdata[Ly1][Lx0]
+                f21 = rasterdata[Ly0][Lx1]
+                f22 = rasterdata[Ly1][Lx1]
+                # using bilinear interpolation on the cell
+                value = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
+            except IndexError:
+                value = np.NaN
+        except ValueError :
             value = np.NaN
 
         zcoor = np.append(zcoor, value)
@@ -96,12 +99,12 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
     # find out of bound indexes
     Lx[np.where((Lxx < 0))] = np.NaN
     Ly[np.where((Lxx < 0))] = np.NaN
-    Lx[np.where(Lxx > (ncol-1))] = np.NaN
-    Ly[np.where(Lxx > (ncol-1))] = np.NaN
+    Lx[np.where(Lxx >= (ncol-1))] = np.NaN
+    Ly[np.where(Lxx >= (ncol-1))] = np.NaN
     Lx[np.where(Lyy < 0)] = np.NaN
     Ly[np.where(Lyy < 0)] = np.NaN
-    Lx[np.where(Lyy > (nrow-1))] = np.NaN
-    Ly[np.where(Lyy > (nrow-1))] = np.NaN
+    Lx[np.where(Lyy >= (nrow-1))] = np.NaN
+    Ly[np.where(Lyy >= (nrow-1))] = np.NaN
 
     # find index of index of not nan value
     mask = ~np.isnan(Lx+Ly)
@@ -117,16 +120,16 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
     Ly1 = Ly0 + 1
     # prepare for bilinear interpolation (do not take out of bound into account)
     if interp == 'nearest':
-        dx[maskInd] = np.round(Lx[mask] - Lx0[mask])
-        dy[maskInd] = np.round(Ly[mask] - Ly0[mask])
+        dx[mask] = np.round(Lx[mask] - Lx0[mask])
+        dy[mask] = np.round(Ly[mask] - Ly0[mask])
     elif interp == 'bilinear':
-        dx[maskInd] = Lx[mask] - Lx0[mask]
-        dy[maskInd] = Ly[mask] - Ly0[mask]
+        dx[mask] = Lx[mask] - Lx0[mask]
+        dy[mask] = Ly[mask] - Ly0[mask]
 
-    f11[maskInd] = rasterdata[Ly0[mask], Lx0[mask]]
-    f12[maskInd] = rasterdata[Ly1[mask], Lx0[mask]]
-    f21[maskInd] = rasterdata[Ly0[mask], Lx1[mask]]
-    f22[maskInd] = rasterdata[Ly1[mask], Lx1[mask]]
+    f11[mask] = rasterdata[Ly0[mask], Lx0[mask]]
+    f12[mask] = rasterdata[Ly1[mask], Lx0[mask]]
+    f21[mask] = rasterdata[Ly0[mask], Lx1[mask]]
+    f22[mask] = rasterdata[Ly1[mask], Lx1[mask]]
     # using bilinear interpolation on the cell
     zcoor = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
 
@@ -227,7 +230,7 @@ def checkProfile(AvaProfile, projSplitPoint=None):
             pass
 
         if projSplitPoint:
-            indSplit = len(AvaProfile['x']) - indSplit
+            indSplit = len(AvaProfile['x']) - indSplit - 1
             projSplitPoint['indSplit'] = indSplit
             AvaProfile['indSplit'] = indSplit
         else:
