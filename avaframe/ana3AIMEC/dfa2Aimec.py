@@ -26,7 +26,6 @@ def makeAimecDirs(avaDir):
     massDir = os.path.join(workDir, 'dfa_mass_balance')
     massDirTemp = os.path.join(workDir, 'dfa_mass_balance_temp')
 
-
     if os.path.isdir(workDir):
         log.warning('Be careful directories in %s already existed - but got now deleted' % (workDir))
         shutil.rmtree(workDir, ignore_errors=True)
@@ -92,7 +91,6 @@ def extractMBInfo(avaDir):
         simName.append(name.split('_')[0])
     relNames = set(simName)
 
-
     # Read mass data from log and save to file for each simulation run
     countFile = 0
     for relName in relNames:
@@ -121,14 +119,16 @@ def extractMBInfo(avaDir):
                 elif "terminated" in line:
                     indRun.append(countMass)
         # Save to dictionary
-        logDict = {'time' : np.asarray(time), 'mass' : np.asarray(mass), 'entrMass' : np.asarray(entrMass)}
+        logDict = {'time': np.asarray(time), 'mass': np.asarray(mass),
+                   'entrMass': np.asarray(entrMass)}
 
         # Write mass balance info files
         for k in range(len(indRun)-1):
-            with open(os.path.join(os.getcwd(), avaDir, 'Work','ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', '%06d.txt' % (countFile + 1)), 'w') as MBFile:
+            with open(os.path.join(os.getcwd(), avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', '%06d.txt' % (countFile + 1)), 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
-                    MBFile.write('%.02f,    %.06f,    %.06f\n' % (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
+                    MBFile.write('%.02f,    %.06f,    %.06f\n' %
+                                 (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
             countFile = countFile + 1
 
     # Delete the files that are not in the local Exp Log
@@ -138,11 +138,12 @@ def extractMBInfo(avaDir):
             fname = ('%06d.txt' % (l+1))
             fnameNew = ('%06d.txt' % (countSims+1))
             shutil.copyfile(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', fname),
-             os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', fnameNew))
+                            os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', fnameNew))
             countSims = countSims + 1
             log.info('NEW files: %s new is %s' % (fname, fnameNew))
 
     shutil.rmtree(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp'))
+
 
 def readLogFile(avaDir):
     """ Read experiment log file """
@@ -167,7 +168,7 @@ def readLogFile(avaDir):
 
     # Save info to dictionary
     suffix = ['pfd', 'ppr', 'pv', 'fd']
-    logDict = {'noAva' : noSim, 'simName' : simName, 'Mu' : Mu, 'suffix' : suffix}
+    logDict = {'noAva': noSim, 'simName': simName, 'Mu': Mu, 'suffix': suffix}
 
     # Read the experiment log - if copied to local_ExpLog take this!
     if os.path.isfile(os.path.join(workDirMain, 'local_ExpLog.txt')):
@@ -216,8 +217,8 @@ def getDFAData(avaDir, cfgDFA):
             for k in range(sNo):
                 if k in indSims:
                     shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
-                                          logDict['simName'][k], logDict['suffix'][m]),
-                                          '%s/dfa_depth/%06d.txt' % (workDir, countpfd+1))
+                                                                 logDict['simName'][k], logDict['suffix'][m]),
+                                '%s/dfa_depth/%06d.txt' % (workDir, countpfd+1))
                     # log.info('%s%f/%s/raster/%s_%s.asc to the new file %s/dfa_depth/%06d.txt' % (resPath,
                     #                     logDict['Mu'][k], logDict['simName'][k],
                     #                     logDict['simName'][k], logDict['suffix'][m], outputDir, countpfd))
@@ -227,8 +228,8 @@ def getDFAData(avaDir, cfgDFA):
             for k in range(sNo):
                 if k in indSims:
                     shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
-                                          logDict['simName'][k], logDict['suffix'][m]),
-                                          '%s/dfa_pressure/%06d.txt' % (workDir, countppr+1))
+                                                                 logDict['simName'][k], logDict['suffix'][m]),
+                                '%s/dfa_pressure/%06d.txt' % (workDir, countppr+1))
                     log.info('Simulation %s is copied to ana3AIMEC' % logDict['simName'][k])
                     countppr = countppr + 1
 
