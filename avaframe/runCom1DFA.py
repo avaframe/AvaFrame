@@ -12,10 +12,8 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 
-#----------Rewquired Settings---------------
 # log file name; leave empty to use default runLog.log
 logName = 'runCom1DFA'
-#------------------------------------------
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
