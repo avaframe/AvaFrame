@@ -231,3 +231,12 @@ def getDFAData(avaDir, cfgDFA):
                                           '%s/dfa_pressure/%06d.txt' % (workDir, countppr+1))
                     log.info('Simulation %s is copied to ana3AIMEC' % logDict['simName'][k])
                     countppr = countppr + 1
+
+
+def mainDfa2Aimec(avalancheDir, cfgDFA, cfgSetup):
+    """ Exports the required data from com1DFA to be used by Aimec """
+    # Setup input from com1DFA
+    makeAimecDirs(avalancheDir)
+    getDFAData(avalancheDir, cfgDFA)
+    writeAimecPathsFile(cfgSetup, avalancheDir)
+    extractMBInfo(avalancheDir)

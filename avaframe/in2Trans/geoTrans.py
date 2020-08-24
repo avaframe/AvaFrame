@@ -211,22 +211,28 @@ def findSplitPoint(AvaProfile, Points):
     return projPoint
 
 
-def checkProfile(AvaProfile, projSplitPoint):
+def checkProfile(AvaProfile, projSplitPoint=None):
     """ check that the avalanche profiles goes from top to bottom """
     if projSplitPoint:
         indSplit = projSplitPoint['indSplit']
     if AvaProfile['z'][-1] > AvaProfile['z'][0]:
         log.info('Profile reversed')
-        L = AvaProfile['s'][-1]
         AvaProfile['x'] = np.flip(AvaProfile['x'])
         AvaProfile['y'] = np.flip(AvaProfile['y'])
         AvaProfile['z'] = np.flip(AvaProfile['z'])
-        AvaProfile['s'] = L - np.flip(AvaProfile['s'])
+        try :
+            L = AvaProfile['s'][-1]
+            AvaProfile['s'] = L - np.flip(AvaProfile['s'])
+        except KeyError:
+            pass
+
         if projSplitPoint:
             indSplit = len(AvaProfile['x']) - indSplit
             projSplitPoint['indSplit'] = indSplit
+            AvaProfile['indSplit'] = indSplit
         else:
             projSplitPoint = None
+            AvaProfile['indSplit'] = None
 
     return projSplitPoint, AvaProfile
 
@@ -258,6 +264,7 @@ def prepareFind10Point(beta, AvaProfile):
     look for points for which the slope is under the given Beta value and
     that are located downstreem of the splitPoint
     """
+
     s = AvaProfile['s']
     z = AvaProfile['z']
     distance = s[1] - s[0]
