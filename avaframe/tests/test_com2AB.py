@@ -84,19 +84,19 @@ def test_calcAB(capfd):
         else:
             z[i] = 1*(-B*B / (4*A) + C)
 
-    theta_beta = 10
-    x_beta = (-np.tan(np.deg2rad(theta_beta)) - B)/(2*A)
-    y_beta = A*x_beta*x_beta + B*x_beta + C
-    beta = np.rad2deg(np.arctan2((C-y_beta), x_beta))
+    thetaBeta = 10
+    xBeta = (-np.tan(np.deg2rad(thetaBeta)) - B)/(2*A)
+    yBeta = A*xBeta*xBeta + B*xBeta + C
+    beta = np.rad2deg(np.arctan2((C-yBeta), xBeta))
     # use standard coeef
     k1 = 1.05
     k2 = -3130.0
     k3 = 0.0
     k4 = -2.38
     SD = 1.25
-    alpha_ref = k1 * beta + k2 * 2*A + k3 * B*B/(2*A) + k4
+    alpharef = k1 * beta + k2 * 2*A + k3 * B*B/(2*A) + k4
     SDs = [SD, -1*SD, -2*SD]
-    alphaSD_ref = k1 * beta + k2 * 2*A + k3 * B*B/(2*A) + k4 + SDs
+    alphaSDref = k1 * beta + k2 * 2*A + k3 * B*B/(2*A) + k4 + SDs
 
     # Using com2AB.calcAB to get the solution
     eqIn = {}
@@ -112,32 +112,32 @@ def test_calcAB(capfd):
 
     # compare results with a relative tolerance of tol
     tol = 0.001  # here 0.1% relative diff
-    assert (alpha == pytest.approx(alpha_ref, rel=tol)) and (alphaSD[0] == pytest.approx(alphaSD_ref[0], rel=tol)) and (
-        alphaSD[1] == pytest.approx(alphaSD_ref[1], rel=tol)) and (alphaSD[2] == pytest.approx(alphaSD_ref[2], rel=tol))
+    assert (alpha == pytest.approx(alpharef, rel=tol)) and (alphaSD[0] == pytest.approx(alphaSDref[0], rel=tol)) and (
+        alphaSD[1] == pytest.approx(alphaSDref[1], rel=tol)) and (alphaSD[2] == pytest.approx(alphaSDref[2], rel=tol))
 
 
-def test_find10Point(capfd):
-    '''find_10Point'''
+def test_findAngleProfile(capfd):
+    '''findAngleProfile'''
     s = np.linspace(0, 400, 41)
     angle = np.linspace(40, 0, 41)
     tmp = np.where((angle < 10.0) & (angle > 0.0))
-    delta_ind = 3
-    ids_10Point = geoTrans.find10Point(tmp, delta_ind)
-    assert ids_10Point == 30
+    deltaInd = 3
+    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
+    assert ids10Point == 30
 
-    delta_ind = 1
-    ids_10Point = geoTrans.find10Point(tmp, delta_ind)
-    assert ids_10Point == 30
+    deltaInd = 1
+    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
+    assert ids10Point == 30
 
     angle[10] = 8
     angle[11] = 8
     angle[12] = 8
     tmp = np.where((angle < 10.0) & (angle > 0.0))
-    delta_ind = 3
-    ids_10Point = geoTrans.find10Point(tmp, delta_ind)
-    assert ids_10Point == 30
+    deltaInd = 3
+    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
+    assert ids10Point == 30
 
     angle[13] = 8
     tmp = np.where((angle < 10.0) & (angle > 0.0))
-    ids_10Point = geoTrans.find10Point(tmp, delta_ind)
-    assert ids_10Point == 9
+    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
+    assert ids10Point == 9

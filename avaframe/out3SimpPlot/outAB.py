@@ -161,7 +161,7 @@ def plotProfile(DGM, eqOutput, save_file, flags):
     """ Plot and save results depending on flags options"""
     s = eqOutput['s']
     z = eqOutput['z']
-    ids_10Point = eqOutput['ids_10Point']
+    ids10Point = eqOutput['ids10Point']
     poly = eqOutput['poly']
     beta = eqOutput['beta']
     alpha = eqOutput['alpha']
@@ -187,7 +187,7 @@ def plotProfile(DGM, eqOutput, save_file, flags):
     plt.plot(s, poly(s), ':', label='QuadFit')
     plt.axvline(x=s[indSplit], color='0.7',
                 linewidth=1, linestyle='--', label='Split point')
-    plt.axvline(x=s[ids_10Point], color='0.8',
+    plt.axvline(x=s[ids10Point], color='0.8',
                 linewidth=1, linestyle='-.', label='Beta')
 
     plt.plot(s, f, '-', label='AlphaLine')
@@ -227,7 +227,7 @@ def WriteResults(eqOutput, saveOutPath):
     x = eqOutput['x']
     y = eqOutput['y']
     z = eqOutput['z']
-    ids_10Point = eqOutput['ids_10Point']
+    ids10Point = eqOutput['ids10Point']
     beta = eqOutput['beta']
     alpha = eqOutput['alpha']
     alphaSD = eqOutput['alphaSD']
@@ -243,8 +243,8 @@ def WriteResults(eqOutput, saveOutPath):
              ' angle in [°] : %.2f' % (x[ids_alpha], y[ids_alpha],
                                        z[ids_alpha], s[ids_alpha], alpha))
     log.info('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
-             ' angle in [°] : %.2f' % (x[ids_10Point], y[ids_10Point],
-                                       z[ids_10Point], s[ids_10Point], beta))
+             ' angle in [°] : %.2f' % (x[ids10Point], y[ids10Point],
+                                       z[ids10Point], s[ids10Point], beta))
     if ids_alphaM1SD:
         log.info('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
                  ' angle in [°] : %.2f' % (x[ids_alphaM1SD], y[ids_alphaM1SD],
@@ -272,10 +272,10 @@ def WriteResults(eqOutput, saveOutPath):
         outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
         outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
             x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
-        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_10Point],
-                                                      y[ids_10Point],
-                                                      z[ids_10Point],
-                                                      s[ids_10Point],
+        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids10Point],
+                                                      y[ids10Point],
+                                                      z[ids10Point],
+                                                      s[ids10Point],
                                                       beta))
         if ids_alphaM1SD:
             outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_alphaM1SD],
