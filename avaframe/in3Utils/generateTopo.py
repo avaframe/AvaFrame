@@ -42,8 +42,8 @@ def getParabolaParams(cfg):
 def getGridDefs(cfg):
     # determine number of rows and columns to define domain
     dx = float(cfg['TOPO']['dx'])
-    xEnd = float(cfg['TOPO']['xEnd']) + dx
-    yEnd = float(cfg['TOPO']['yEnd']) + dx
+    xEnd = float(cfg['TOPO']['xEnd'])
+    yEnd = float(cfg['TOPO']['yEnd'])
 
     return dx, xEnd, yEnd
 
@@ -51,8 +51,8 @@ def getGridDefs(cfg):
 def computeCoordGrid(dx, xEnd, yEnd):
 
     # Compute coordinate grid
-    xv = np.arange(0, xEnd, dx)
-    yv = np.arange(-0.5 * yEnd, 0.5 * yEnd, dx)
+    xv = np.arange(0, xEnd+dx, dx)
+    yv = np.arange(-0.5 * yEnd, 0.5 * (yEnd+dx), dx)
     nRows = len(yv)
     nCols = len(xv)
     x, y = np.meshgrid(xv, yv)
@@ -313,8 +313,8 @@ def bowl(cfg):
     xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
 
     # recompute xv yv and x, y as they are shifted
-    xv = np.arange(-0.5 * xEnd, 0.5 * xEnd, dx)
-    yv = np.arange(-0.5 * yEnd, 0.5 * yEnd, dx)
+    xv = np.arange(-0.5 * xEnd, 0.5 * (xEnd+dx), dx)
+    yv = np.arange(-0.5 * yEnd, 0.5 * (yEnd+dx), dx)
     x, y = np.meshgrid(xv, yv)
 
     # Set surface elevation
@@ -350,10 +350,11 @@ def helix(cfg):
 
     # Compute coordinate grid
     xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
+    print('helix coordinates,', yv[0], yv[-1], yEnd)
 
     # recompute xv yv and x, y as they are shifted
-    xv = np.arange(-0.5 * xEnd, 0.5 * xEnd, dx)
-    yv = np.arange(-yEnd, 0, dx)
+    xv = np.arange(-0.5 * xEnd, 0.5 * (xEnd+dx), dx)
+    yv = np.arange(-yEnd, 0+dx, dx)
     x, y = np.meshgrid(xv, yv)
 
     # Get parabola Parameters
