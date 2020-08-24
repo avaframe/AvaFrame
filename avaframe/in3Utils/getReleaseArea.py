@@ -115,7 +115,7 @@ def correctOrigin(xyPoints, cfgT):
     # Compute coordinate grid
     xv = np.arange(0, xEnd+dx, dx)
     yv = np.arange(-0.5 * yEnd, 0.5 * (yEnd+dx), dx)
-    print(yv[0], yv[-1])
+
     xl = float(cfgT['DEMDATA']['xl'])
     yl = float(cfgT['DEMDATA']['yl'])
 
