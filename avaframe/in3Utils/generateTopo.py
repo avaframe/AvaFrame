@@ -304,7 +304,7 @@ def bowl(cfg):
     """ Compute coordinates of sphere with given radius (rBwol) """
 
     # input parameters
-    rBwol = float(cfg['TOPO']['rBwol'])
+    rBwol = float(cfg['TOPO']['rBowl'])
 
     # Get grid definitions
     dx, xEnd, yEnd = getGridDefs(cfg)
@@ -350,7 +350,6 @@ def helix(cfg):
 
     # Compute coordinate grid
     xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
-    print('helix coordinates,', yv[0], yv[-1], yEnd)
 
     # recompute xv yv and x, y as they are shifted
     xv = np.arange(-0.5 * xEnd, 0.5 * (xEnd+dx), dx)
@@ -410,6 +409,10 @@ def helix(cfg):
                         zv[k, m] = zv[k, m]
                     else:
                         zv[k, m] = zv[k, m] + c_0 * c_extent
+
+    # set last row at Center to fall height
+    indCols = int(0.5*nCols)
+    zv[-1,0:indCols] = C
 
     # Log info here
     log.info('Helix coordinates computed')
