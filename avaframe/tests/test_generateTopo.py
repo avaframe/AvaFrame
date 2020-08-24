@@ -131,7 +131,8 @@ def test_inclinedplane():
     x, y, z = gT.inclinedplane(cfg)
 
     # Load reference solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe/tests/refData/myDEM_IP_Topo.asc'), skiprows=6)
+    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaInclinedPlane',
+                      'Inputs', 'myDEM_IP_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
@@ -154,12 +155,13 @@ def test_hockeysmooth():
     x, y, z = gT.hockeysmooth(cfg)
 
     # Load reference Solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe/tests/refData/myDEM_HS2_Topo.asc'), skiprows=6)
+    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaHockeySmoothChannel',
+                      'Inputs', 'myDEM_HS2_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=5.e-6)
 
-    Test
+    # Test
     assert (testRes == True)
 
 
@@ -176,7 +178,8 @@ def test_hockey():
     x, y, z = gT.hockey(cfg)
 
     # Load reference Solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe/tests/refData/myDEM_HS_Topo.asc'), skiprows=6)
+    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaHockey',
+                      'Inputs', 'myDEM_HS_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
@@ -198,7 +201,8 @@ def test_helix():
     x, y, z = gT.helix(cfg)
 
     # Load reference Solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe/tests/refData/myDEM_HX_Topo.asc'), skiprows=6)
+    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaHelixChannel',
+                      'Inputs', 'myDEM_HX_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
