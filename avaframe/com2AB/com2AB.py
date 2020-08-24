@@ -124,12 +124,12 @@ def com2AB(dem, avapath, splitPoint, OutPath,
 
     eqOut = calcAB(AvaProfile, eqParams)
     savename = name + '_com2AB_eqparam.pickle'
-    save_file = os.path.join(OutPath, savename)
-    with open(save_file, 'wb') as handle:
+    saveFile = os.path.join(OutPath, savename)
+    with open(saveFile, 'wb') as handle:
         pickle.dump(eqParams, handle, protocol=pickle.HIGHEST_PROTOCOL)
     savename = name + '_com2AB_eqout.pickle'
-    save_file = os.path.join(OutPath, savename)
-    with open(save_file, 'wb') as handle:
+    saveFile = os.path.join(OutPath, savename)
+    with open(saveFile, 'wb') as handle:
         pickle.dump(eqOut, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -180,11 +180,11 @@ def calcAB(AvaProfile, eqParameters):
 
     # prepare find Beta points
     betaValue = 10
-    angle, tmp, deltaInd = geoTrans.prepareFind10Point(betaValue, AvaProfile)
+    angle, tmp, deltaInd = geoTrans.prepareAngleProfile(betaValue, AvaProfile)
 
     # find the beta point: first point under 10°
     # (make sure that the 30 next meters are also under 10°)
-    ids10Point = geoTrans.find10Point(tmp, deltaInd)
+    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
     if debugPlot:
         plt.figure(figsize=(10, 6))
         plt.plot(s, angle)
@@ -199,8 +199,8 @@ def calcAB(AvaProfile, eqParameters):
     # Get H0: max - min for parabola
     H0 = max(poly(s)) - min(poly(s))
     # get beta
-    dz_beta = z[0] - z[ids10Point]
-    beta = np.rad2deg(np.arctan2(dz_beta, s[ids10Point]))
+    dzBeta = z[0] - z[ids10Point]
+    beta = np.rad2deg(np.arctan2(dzBeta, s[ids10Point]))
     # get Alpha
     alpha = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4
 
@@ -209,7 +209,7 @@ def calcAB(AvaProfile, eqParameters):
     alphaSD = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4 + SDs
 
     AvaProfile['CuSplit'] = s[AvaProfile['indSplit']]
-    AvaProfile['ids_10Point'] = ids10Point
+    AvaProfile['ids10Point'] = ids10Point
     AvaProfile['poly'] = poly
     AvaProfile['beta'] = beta
     AvaProfile['alpha'] = alpha

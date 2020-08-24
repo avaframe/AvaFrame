@@ -55,7 +55,7 @@ def projectOnRaster(dem, Points):
     return Points
 
 
-def projectOnRaster_Vect(dem, Points, interp='bilinear'):
+def projectOnRasterVect(dem, Points, interp='bilinear'):
     """
     Vectorized version of projectOnRaster
     Projects the points Points on Raster using a bilinear interpolation
@@ -105,10 +105,10 @@ def projectOnRaster_Vect(dem, Points, interp='bilinear'):
 
     # find index of index of not nan value
     mask = ~np.isnan(Lx+Ly)
-    mask_ind = np.argwhere(~np.isnan(Lx+Ly))[:, 0]
-    i_tot = len(Lx)
-    i_inb = len(mask_ind)
-    i_oob = i_tot - i_inb
+    maskInd = np.argwhere(~np.isnan(Lx+Ly))[:, 0]
+    itot = len(Lx)
+    iinb = len(maskInd)
+    ioob = itot - iinb
 
     # find coordinates of the 4 nearest cornes on the raster
     Lx0 = np.floor(Lx).astype('int')
@@ -117,21 +117,21 @@ def projectOnRaster_Vect(dem, Points, interp='bilinear'):
     Ly1 = Ly0 + 1
     # prepare for bilinear interpolation (do not take out of bound into account)
     if interp == 'nearest':
-        dx[mask_ind] = np.round(Lx[mask] - Lx0[mask])
-        dy[mask_ind] = np.round(Ly[mask] - Ly0[mask])
+        dx[maskInd] = np.round(Lx[mask] - Lx0[mask])
+        dy[maskInd] = np.round(Ly[mask] - Ly0[mask])
     elif interp == 'bilinear':
-        dx[mask_ind] = Lx[mask] - Lx0[mask]
-        dy[mask_ind] = Ly[mask] - Ly0[mask]
+        dx[maskInd] = Lx[mask] - Lx0[mask]
+        dy[maskInd] = Ly[mask] - Ly0[mask]
 
-    f11[mask_ind] = rasterdata[Ly0[mask], Lx0[mask]]
-    f12[mask_ind] = rasterdata[Ly1[mask], Lx0[mask]]
-    f21[mask_ind] = rasterdata[Ly0[mask], Lx1[mask]]
-    f22[mask_ind] = rasterdata[Ly1[mask], Lx1[mask]]
+    f11[maskInd] = rasterdata[Ly0[mask], Lx0[mask]]
+    f12[maskInd] = rasterdata[Ly1[mask], Lx0[mask]]
+    f21[maskInd] = rasterdata[Ly0[mask], Lx1[mask]]
+    f22[maskInd] = rasterdata[Ly1[mask], Lx1[mask]]
     # using bilinear interpolation on the cell
     zcoor = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
 
     Points['z'] = zcoor
-    return Points, i_tot, i_oob
+    return Points, itot, ioob
 
 
 def prepareLine(dem, avapath, distance=10, Point=None):
@@ -237,7 +237,7 @@ def checkProfile(AvaProfile, projSplitPoint=None):
     return projSplitPoint, AvaProfile
 
 
-def find10Point(tmp, deltaInd):
+def findAngleProfile(tmp, deltaInd):
     """
     Find the beta point: first point under the beta value given in
     prepareFind10Point. Make sure that the delta_ind next indexes are also
@@ -258,7 +258,7 @@ def find10Point(tmp, deltaInd):
     return ids10Point
 
 
-def prepareFind10Point(beta, AvaProfile):
+def prepareAngleProfile(beta, AvaProfile):
     """
     Prepare inputs for findBetaPoint function: Read profile, compute Angle
     look for points for which the slope is under the given Beta value and
@@ -268,7 +268,7 @@ def prepareFind10Point(beta, AvaProfile):
     s = AvaProfile['s']
     z = AvaProfile['z']
     distance = s[1] - s[0]
-    delta_ind = max(int(np.floor(30/distance)), 1)
+    deltaInd = max(int(np.floor(30/distance)), 1)
     indSplit = AvaProfile['indSplit']
     ds = np.abs(s - np.roll(s, 1))
     dz = np.abs(z - np.roll(z, 1))
@@ -282,10 +282,10 @@ def prepareFind10Point(beta, AvaProfile):
     # tmp = x[(angle < 10.0) & (angle > 0.0) & (x > 450)]
 
     tmp = np.where((angle < beta) & (angle > 0.0) & (s > CuSplit))
-    return angle, tmp, delta_ind
+    return angle, tmp, deltaInd
 
 
-def findCellsCrossedByLine_bresenham(x0, y0, x1, y1, cs):
+def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
     """
     bresenham algorithmus - JT 2011
     Find all the cells of a raster (defined by its cellsize) that a line (defines by two points P0 and P1) crosses.
@@ -336,15 +336,15 @@ def findCellsCrossedByLine_bresenham(x0, y0, x1, y1, cs):
     return z
 
 
-def path2domain(xy_path, w, header):
+def path2domain(xyPath, w, header):
     """
     path2domain
     Creates a domain (irregular raster) along a path, given the path polyline, a domain width
     and a raster cellsize
     Usage:
-        [DB] = path2domain(xy_path, w, header)
+        [DB] = path2domain(xyPath, w, header)
        Input:
-           xy_path:   Polyline Coordinates
+           xyPath:   Polyline Coordinates
            w:      Domain width
            header:  header info
        Output:
@@ -358,8 +358,8 @@ def path2domain(xy_path, w, header):
     xllcenter = header.xllcenter
     yllcenter = header.yllcenter
     csz = header.cellsize
-    x = xy_path['x']
-    y = xy_path['y']
+    x = xyPath['x']
+    y = xyPath['y']
     w = w/2/csz
     # Shift grid origin to (0,0)
     x -= xllcenter
@@ -387,26 +387,26 @@ def path2domain(xy_path, w, header):
     # x- and y-Coordinates (left and right) of path edges,
     # total width w
     # x-KOO[left right]
-    DB_x_l = np.array((x + w * np.cos(d)))
-    DB_x_r = np.array((x + w * np.cos(d + math.pi)))
+    DBXl = np.array((x + w * np.cos(d)))
+    DBXr = np.array((x + w * np.cos(d + math.pi)))
     # y-KOO[left right]
-    DB_y_l = np.array((y + w * np.sin(d)))
-    DB_y_r = np.array((y + w * np.sin(d + math.pi)))
+    DBYl = np.array((y + w * np.sin(d)))
+    DBYr = np.array((y + w * np.sin(d + math.pi)))
     DB = {}
-    DB['DB_x_l'] = DB_x_l
-    DB['DB_x_r'] = DB_x_r
-    DB['DB_y_l'] = DB_y_l
-    DB['DB_y_r'] = DB_y_r
+    DB['DBXl'] = DBXl
+    DB['DBXr'] = DBXr
+    DB['DBYl'] = DBYl
+    DB['DBYr'] = DBYr
 
     return DB
 
 
-def poly2mask_simple(ydep, xdep, ncols, nrows):
+def poly2maskSimple(ydep, xdep, ncols, nrows):
     """
-    poly2mask_simple
+    poly2maskSimple
     Create a mask from a polyline
     Usage:
-        mask = poly2mask_simple(ydep, xdep, ncols, nrows)
+        mask = poly2maskSimple(ydep, xdep, ncols, nrows)
        Input:
            ydep, xdep:      Polyline Coordinates
            ncols, nrows:    Raster size
@@ -415,17 +415,17 @@ def poly2mask_simple(ydep, xdep, ncols, nrows):
 
     """
     mask = np.zeros((nrows, ncols))
-    xyframe = findCellsCrossedByLine_bresenham(xdep[0], ydep[0], xdep[1], ydep[1], 1)
+    xyframe = findCellsCrossedByLineBresenham(xdep[0], ydep[0], xdep[1], ydep[1], 1)
     xyframe = np.delete(xyframe, -1, 0)
     xyframe = np.transpose(xyframe)
     for i in range(1, len(xdep)-1):
-        xyline = findCellsCrossedByLine_bresenham(xdep[i], ydep[i], xdep[i+1], ydep[i+1], 1)
+        xyline = findCellsCrossedByLineBresenham(xdep[i], ydep[i], xdep[i+1], ydep[i+1], 1)
         # last point is first point of the next line
         xyline = np.delete(xyline, -1, 0)
         xyline = np.transpose(xyline)
         xyframe = np.hstack((xyframe, xyline))
 
-    xyline = findCellsCrossedByLine_bresenham(xdep[-1], ydep[-1], xdep[0], ydep[0], 1)
+    xyline = findCellsCrossedByLineBresenham(xdep[-1], ydep[-1], xdep[0], ydep[0], 1)
     xyline = np.delete(xyline, -1, 0)
     xyline = np.transpose(xyline)
     xyframe = np.hstack((xyframe, xyline))
@@ -465,15 +465,15 @@ def inpolygon(X, Y, xv, yv):
     IN = np.zeros(np.shape(X))
     j = npol-1
     for i in range(npol-1):
-        delta_xv = xv[j] - xv[i]
-        delta_yv = yv[j] - yv[i]
+        deltaxv = xv[j] - xv[i]
+        deltayv = yv[j] - yv[i]
         # distance = [distance from (X,Y) to edge] * length(edge)
-        distance = delta_xv*(Y-yv[i]) - (X-xv[i])*delta_yv
+        distance = deltaxv*(Y-yv[i]) - (X-xv[i])*deltayv
         # is Y between the y-values of edge i,j
         # AND (X,Y) on the left of the edge ?
         for ii in range(lx):
             for jj in range(ly):
-                if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and 0 < distance[ii][jj]*delta_yv):
+                if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and 0 < distance[ii][jj]*deltayv):
                     if IN[ii][jj] == 0:
                         IN[ii][jj] = 1
                     else:
