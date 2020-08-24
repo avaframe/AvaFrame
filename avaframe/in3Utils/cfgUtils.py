@@ -6,7 +6,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def getModuleConfig(module, fileOverride=''):
+def getModuleConfig(module='', fileOverride='', general=False):
     ''' Returns the configuration for a given module
     returns a configParser object
 
@@ -30,11 +30,17 @@ def getModuleConfig(module, fileOverride=''):
     # initialize a configparser object
     cfg = configparser.ConfigParser()
 
-    # get path of module
-    modPath = os.path.dirname(module.__file__)
+    if general:
+        # get path of module
+        modPath = os.path.dirname('avaframeCfg.ini')
+        # get filename of module
+        modName = 'avaframe'
+    else:
+        # get path of module
+        modPath = os.path.dirname(module.__file__)
+        # get filename of module
+        modName = os.path.basename(module.__file__)
 
-    # get filename of module
-    modName = os.path.basename(module.__file__)
     modName = os.path.splitext(modName)[0]
 
     localFile = os.path.join(modPath, 'local_'+modName+'Cfg.ini')
