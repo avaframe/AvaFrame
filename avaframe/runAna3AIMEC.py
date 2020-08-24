@@ -21,7 +21,7 @@ from avaframe.in3Utils import logUtils
 
 # Avalanche directory; see doc.avaframe.org for setup
 # TODO: full path needed?
-avalancheDir = 'data/Helix'
+avalancheDir = 'data/avaSlide'
 
 
 # log file name; leave empty to use default runLog.log
@@ -45,10 +45,7 @@ cfgDFA = cfg['DFA']
 logUtils.writeCfg2Log(cfg, 'ana3AIMEC')
 
 # Setup input from com1DFA
-dfa2Aimec.makeAimecDirs(avalancheDir)
-dfa2Aimec.getDFAData(avalancheDir, cfgDFA)
-dfa2Aimec.writeAimecPathsFile(cfgSetup, avalancheDir)
-dfa2Aimec.extractMBInfo(avalancheDir)
+dfa2Aimec.mainDfa2Aimec(avalancheDir, cfgDFA, cfgSetup)
 
 saveOutPath = avalancheDir + '/Outputs'
 # Extract input file locations
@@ -58,7 +55,7 @@ startTime = time.time()
 
 log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
          cfgPath['demSource'], cfgPath['profileLayer'])
-
+# Run AIMEC postprocessing
 ana3AIMEC.mainAIMEC(cfgPath, cfg)
 
 endTime = time.time()

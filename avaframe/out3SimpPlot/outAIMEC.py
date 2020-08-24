@@ -21,6 +21,7 @@ import avaframe.in3Utils.ascUtils as IOf
 # create local logger
 log = logging.getLogger(__name__)
 
+
 def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
     """
     Plot and save the domain transformation figure
@@ -54,11 +55,11 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
 
 #    for figure: referenz-simulation bei p_lim=1
     ax1 = plt.subplot(121)
-    indBeta = raster_transfo['indBeta']
-    xx = raster_transfo['x'][indBeta]
-    yy = raster_transfo['y'][indBeta]
+    indRunoutPoint = raster_transfo['indRunoutPoint']
+    xx = raster_transfo['x'][indRunoutPoint]
+    yy = raster_transfo['y'][indRunoutPoint]
     new_rasterdata = rasterdata
-    masked_array = new_rasterdata #np.ma.masked_where(np.isnan(new_rasterdata), new_rasterdata)
+    masked_array = new_rasterdata  # np.ma.masked_where(np.isnan(new_rasterdata), new_rasterdata)
     cmap = copy.copy(matplotlib.cm.jet)
     cmap.set_under(color='w')
     cmap.set_bad(color='k')
@@ -97,9 +98,9 @@ def visu_transfo(raster_transfo, input_data, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(input_data['aval_data'])
     l_coord = raster_transfo['l']
     s_coord = raster_transfo['s']
-    ref1 = ax2.axhline(y=s_coord[indBeta], color='r', linewidth=1,
+    ref1 = ax2.axhline(y=s_coord[indRunoutPoint], color='r', linewidth=1,
                        linestyle='-', label='Beta point')
-    masked_array = isosurf #np.ma.array(isosurf,mask=np.isnan(isosurf))
+    masked_array = isosurf  # np.ma.array(isosurf,mask=np.isnan(isosurf))
     im = NonUniformImage(ax2, extent=[l_coord.min(), l_coord.max(),
                                       s_coord.min(), s_coord.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
@@ -139,8 +140,8 @@ def visu_runout(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath, cfgFlag
     # read data
     s_coord = raster_transfo['s']
     l_coord = raster_transfo['l']
-    indBeta = raster_transfo['indBeta']
-    sBeta = s_coord[indBeta]
+    indRunoutPoint = raster_transfo['indRunoutPoint']
+    sBeta = s_coord[indRunoutPoint]
     rasterArea = raster_transfo['rasterArea']
     dataPressure = newRasters['newRasterPressure']
     rasterdataPres = dataPressure[0]  # ana3AIMEC.makeRasterAverage(dataPressure)
@@ -159,7 +160,7 @@ def visu_runout(raster_transfo, resAnalysis, p_lim, newRasters, cfgPath, cfgFlag
     fig = plt.figure(figsize=(figure_width, figure_height), dpi=150)
     ax1 = plt.subplot(121)
     ax1.title.set_text('Peak Pressure 2D plot for the reference')
-    ref1 = ax1.axhline(y=s_coord[indBeta], color='k', linewidth=1,
+    ref1 = ax1.axhline(y=s_coord[indRunoutPoint], color='k', linewidth=1,
                        linestyle='-', label='Beta point')
     ref1 = ax1.axhline(y=np.max(runout), color='r', linewidth=1,
                        linestyle='-', label='runout max')
@@ -304,13 +305,12 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     z_path = raster_transfo['z']
     s_path = raster_transfo['s']
 
-    indBeta = raster_transfo['indBeta']
-    sBeta = s_path[indBeta]
+    indRunoutPoint = raster_transfo['indRunoutPoint']
+    sBeta = s_path[indRunoutPoint]
     runout = resAnalysis['runout'] + sBeta
     mean_max_dpp = resAnalysis['AMPP']
     max_max_dpp = resAnalysis['MMPP']
     GI = resAnalysis['growthIndex']
-
 
     cvar = ['ry', 'bb', 'pw', 'gy']
     colorflag = cvar[0]
@@ -324,7 +324,7 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     # 1 = mean pressure data
     # 2 = groth index
     # 3 = max pressure data
-    flag = 2
+    flag = 3
     if (len(fnames) > 100):
         plot_density = 1
     else:
@@ -355,7 +355,6 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
         log.error('Wrong flag')
         return None
 
-
     xlim_prof_axis = max(s_path) + 50
 
     # Final result diagram - z_profile+data
@@ -385,10 +384,10 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     plt.xlim([0, xlim_prof_axis])
     plt.ylim([math.floor(min(z_path)/10)*10, math.ceil(max(z_path)/10)*10])
     if not plot_density:
-        color = np.flip(cm.autumn(np.linspace(0,1,len(runout))))
+        color = cm.get_cmap('autumn', len(runout) + 3)
         for k in range(len(runout)):
             topo_name = cfgPath['project_name']
-            pfarbe = color[k] #(float(k), len(runout), colorflag)
+            pfarbe = color(k)  # (float(k), len(runout), colorflag)
             if k == 0:
                 ax1.plot(runout[k], data[k], marker='+',
                          markersize=2*mks, color='g', label=topo_name)
@@ -405,8 +404,8 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     plt.grid('on')
 
     outname_fin = ''.join([cfgPath['pathResult'], os.path.sep, 'pics',
-                          os.path.sep, cfgPath['dirName'], '_dptr',
-                          str(int(dpp_threshold)), '_', tipo, '.pdf'])
+                           os.path.sep, cfgPath['dirName'], '_dptr',
+                           str(int(dpp_threshold)), '_', tipo, '.pdf'])
 
     if not os.path.exists(os.path.dirname(outname_fin)):
         os.makedirs(os.path.dirname(outname_fin))
@@ -434,10 +433,10 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
         cbar = plt.colorbar(data_density, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     if not plot_density:
-        color = np.flip(cm.autumn(np.linspace(0,1,len(runout))))
+        color = cm.get_cmap('autumn', len(runout) + 3)
         for k in range(len(rTP)):
             topo_name = cfgPath['project_name']
-            pfarbe = color[k] #colorvar(float(k), len(rTP), colorflag)
+            pfarbe = color(k)  # colorvar(float(k), len(rTP), colorflag)
             ax1.plot(rFP[k], rTP[k], label=topo_name, marker=markers[mk],
                      markersize=mks, color=pfarbe, linewidth=lw)
             mk = mk+1
@@ -448,8 +447,8 @@ def result_visu(cfgPath, raster_transfo, resAnalysis, dpp_threshold):
     plt.grid('on')
 
     outname_fin = ''.join([cfgPath['pathResult'], os.path.sep, 'pics',
-                            os.path.sep, cfgPath['dirName'], '_dptr',
-                            str(int(dpp_threshold)), '_ROC.pdf'])
+                           os.path.sep, cfgPath['dirName'], '_dptr',
+                           str(int(dpp_threshold)), '_ROC.pdf'])
 
     if not os.path.exists(os.path.dirname(outname_fin)):
         os.makedirs(os.path.dirname(outname_fin))
