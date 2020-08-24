@@ -16,18 +16,13 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 # -----------Required settings-----------------
-
-# TODO: move this to a main cfg file!
-
-# Avalanche directory; see doc.avaframe.org for setup
-# TODO: full path needed?
-avalancheDir = 'data/avaSlide'
-
-
 # log file name; leave empty to use default runLog.log
 logName = 'runAna3AIMEC'
 
 # ---------------------------------------------
+# Load avalanche directory from general configuration file
+cfgMain = cfgUtils.getGeneralConfig()
+avalancheDir = cfgMain['MAIN']['avalancheDir']
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
