@@ -368,8 +368,8 @@ def path2domain(xyPath, w, header):
     x -= xllcenter
     y -= yllcenter
     # remove scaling due to cellsize
-    x /= csz
-    y /= csz
+    x = x/csz
+    y = y/csz
     # Difference between x- bzw. y-Coordinates of Polyline
     # first and last  Vertex: Difference between this and the next
     # other vertices: Difference between previous and next
