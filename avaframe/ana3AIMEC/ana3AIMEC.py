@@ -185,8 +185,8 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     sourceData = IOf.readRaster(rasterSource)
     dem = IOf.readRaster(demSource)
     header = sourceData['header']
-    xllcenter = header.xllcenter
-    yllcenter = header.yllcenter
+    xllcorner = header.xllcorner
+    yllcorner = header.yllcorner
     cellsize = header.cellsize
     rasterdata = sourceData['rasterData']
     # read avaPath

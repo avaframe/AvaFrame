@@ -32,20 +32,20 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     # read rasterdata
     sourceData = inputData['sourceData']
     header = sourceData['header']
-    xllcenter = header.xllcenter
-    yllcenter = header.yllcenter
+    xllcorner = header.xllcorner
+    yllcorner = header.yllcorner
     cellsize = header.cellsize
     rasterdata = sourceData['rasterData']
     # read avaPath with scale
     Avapath = inputData['Avapath']
-    xPath = Avapath['x']#*cellsize+xllcenter
-    yPath = Avapath['y']#*cellsize+yllcenter
+    xPath = Avapath['x']
+    yPath = Avapath['y']
     # read domain boundarries with scale
     DB = inputData['DB']
-    DBXl = DB['DBXl']*cellsize+xllcenter
-    DBXr = DB['DBXr']*cellsize+xllcenter
-    DBYl = DB['DBYl']*cellsize+yllcenter
-    DBYr = DB['DBYr']*cellsize+yllcenter
+    DBXl = DB['DBXl']*cellsize+xllcorner
+    DBXr = DB['DBXr']*cellsize+xllcorner
+    DBYl = DB['DBYl']*cellsize+yllcorner
+    DBYr = DB['DBYr']*cellsize+yllcorner
 
     figureWidth = 2*10
     figureHight = 2*5
@@ -65,8 +65,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     cmap.set_bad(color='k')
 
     n, m = np.shape(newRasterdata)
-    x = np.arange(m)*cellsize+xllcenter
-    y = np.arange(n)*cellsize+yllcenter
+    x = np.arange(m)*cellsize+xllcorner
+    y = np.arange(n)*cellsize+yllcorner
     im = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
     im.set_clim(vmin=0.000000001)

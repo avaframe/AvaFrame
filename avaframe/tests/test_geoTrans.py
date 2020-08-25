@@ -147,8 +147,8 @@ def test_findAngleProfile(capfd):
 def test_path2domain(capfd):
     '''test_path2domain'''
     header = IOf.cASCheader()
-    header.xllcenter = 1
-    header.yllcenter = 2
+    header.xllcorner = 1
+    header.yllcorner = 2
     header.cellsize = 2
     xyPath = {}
     xyPath['x'] = np.array((0, 10, 20, 30, 40))
