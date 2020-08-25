@@ -149,7 +149,7 @@ def test_path2domain(capfd):
     header = IOf.cASCheader()
     header.xllcenter = 1
     header.yllcenter = 2
-    header.cellsize = 1
+    header.cellsize = 2
     xyPath = {}
     xyPath['x'] = np.array((0, 10, 20, 30, 40))
     xyPath['y'] = np.array((10, 20, 30, 40, 50))
@@ -159,15 +159,15 @@ def test_path2domain(capfd):
 
     atol = 1e-8
     # Compare result to reference solution
-    zSol = np.array([-4.53553391,  5.46446609, 15.46446609, 25.46446609, 35.46446609])
+    zSol = np.array([-2.26776695,  2.73223305,  7.73223305, 12.73223305, 17.73223305])
     testRes = np.allclose(DB['DBXl'], zSol, atol=atol)
     assert (testRes == True)
-    zSol = np.array([2.53553391, 12.53553391, 22.53553391, 32.53553391, 42.53553391])
+    zSol = np.array([ 1.26776695,  6.26776695, 11.26776695, 16.26776695, 21.26776695])
     testRes = np.allclose(DB['DBXr'], zSol, atol=atol)
     assert (testRes == True)
-    zSol = np.array([11.53553391, 21.53553391, 31.53553391, 41.53553391, 51.53553391])
+    zSol = np.array([ 5.76776695, 10.76776695, 15.76776695, 20.76776695, 25.76776695])
     testRes = np.allclose(DB['DBYl'], zSol, atol=atol)
     assert (testRes == True)
-    zSol = np.array([4.46446609, 14.46446609, 24.46446609, 34.46446609, 44.46446609])
+    zSol = np.array([ 2.23223305,  7.23223305, 12.23223305, 17.23223305, 22.23223305])
     testRes = np.allclose(DB['DBYr'], zSol, atol=atol)
     assert (testRes == True)

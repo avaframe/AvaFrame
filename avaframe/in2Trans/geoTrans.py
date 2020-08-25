@@ -365,11 +365,12 @@ def path2domain(xyPath, w, header):
     y = xyPath['y']
     w = w/2/csz
     # Shift grid origin to (0,0)
-    x -= xllcenter
-    y -= yllcenter
+    x = x - xllcenter
+    y = y - yllcenter
     # remove scaling due to cellsize
     x = x/csz
     y = y/csz
+
     # Difference between x- bzw. y-Coordinates of Polyline
     # first and last  Vertex: Difference between this and the next
     # other vertices: Difference between previous and next

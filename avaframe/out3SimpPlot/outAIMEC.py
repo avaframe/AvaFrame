@@ -38,8 +38,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     rasterdata = sourceData['rasterData']
     # read avaPath with scale
     Avapath = inputData['Avapath']
-    xPath = Avapath['x']*cellsize+xllcenter
-    yPath = Avapath['y']*cellsize+yllcenter
+    xPath = Avapath['x']#*cellsize+xllcenter
+    yPath = Avapath['y']#*cellsize+yllcenter
     # read domain boundarries with scale
     DB = inputData['DB']
     DBXl = DB['DBXl']*cellsize+xllcenter
@@ -404,7 +404,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
                            str(int(plim)), '_', tipo, '.pdf'])
     outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
-    
+
     if not os.path.exists(os.path.dirname(outname)):
         os.makedirs(os.path.dirname(outname))
     fig.savefig(outname, transparent=True)
