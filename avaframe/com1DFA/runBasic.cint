@@ -132,8 +132,8 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
 
 
       //------------Set time stepping--------------------
-      set(Sim, "EndTime", "150");
-      set(Sim, "DeltaOut", "20");
+      // set(Sim, "EndTime", "150");
+      // set(Sim, "DeltaOut", "20");
 
       // *************Start processing************************
       set("", "SaveProject", "");
@@ -157,7 +157,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
       set(Sim, "FrictionType", "samosAT_Standard");
 
       //------------Set time stepping---------------------
-      //set(Sim, "EndTime", "40");
+      // set(Sim, "EndTime", "40");
       // set(Sim, "DeltaOut", "20");
 
       //------------- start processing
