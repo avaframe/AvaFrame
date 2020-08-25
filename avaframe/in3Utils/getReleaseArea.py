@@ -17,6 +17,7 @@ import shutil
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
+
 def makexyPoints(x1, x2, y1, cfgR):
     """ Make xy Points of release area from given extent and start and end points """
 
@@ -157,7 +158,7 @@ def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
     log.info('Release Area written to: %s/release_%d%s as .nxyz and .shp' % (outDir, relNo, DEM_type))
     if cfgR.getboolean('GENERAL','outputtxt'):
         shutil.copyfile(os.path.join(outDir, 'release_%d%s.nxyz' % (relNo, DEM_type)),
-        os.path.join(outDir, 'release_%d%s.txt' % (relNo, DEM_type)))
+                        os.path.join(outDir, 'release_%d%s.txt' % (relNo, DEM_type)))
 
     # Make list of Points
     xy = []
