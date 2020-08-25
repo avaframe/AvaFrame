@@ -146,7 +146,7 @@ def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
     p_mat = np.matrix(np.append(xyPoints, z, axis=1))
 
     # Save elevation data to .asc file and add header lines
-    with open(os.path.join(outDir, 'release_%d%s.nxyz' % (relNo, DEM_type)), 'w') as f:
+    with open(os.path.join(outDir, 'release%d%s.nxyz' % (relNo, DEM_type)), 'w') as f:
         f.write('name=%s\n' % (relName))
         f.write('d0=%.2f\n' % (relH))
         f.write('rho=None\n')
