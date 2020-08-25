@@ -358,15 +358,15 @@ def path2domain(xyPath, w, header):
     Natural Hazards and Earth System Sciences. 13. 1655-. 10.5194/nhess-13-1655-2013.
     Uwe Schlifkowitz/ BFW, June 2011
     """
-    xllcenter = header.xllcenter
-    yllcenter = header.yllcenter
+    xllcorner = header.xllcorner
+    yllcorner = header.yllcorner
     csz = header.cellsize
     x = xyPath['x']
     y = xyPath['y']
     w = w/2/csz
     # Shift grid origin to (0,0)
-    x = x - xllcenter
-    y = y - yllcenter
+    x = x - xllcorner
+    y = y - yllcorner
     # remove scaling due to cellsize
     x = x/csz
     y = y/csz
