@@ -58,15 +58,15 @@ average :math:`\bar{A}_{cross}(s)` of the two dimensional distribution :math:`A(
 
 The run-out point corresponding to a given pressure threshold :math:`P_{lim}>0kPa` is
 
-.. figure:: _static/aimec_comparison_real_topo.png
-        :width: 40%
+.. list-table::
 
-        label 1
+    * - .. figure:: _static/aimec_comparison_real_topo.png
 
-.. figure:: _static/aimec_comparison_new_topo.png
-          :width: 40%
+          In the real coordinate system (x,y)
 
-          label 2
+      - .. figure:: _static/aimec_comparison_new_topo.png
+
+          In the new coordinate system (s,l)
 
 Procedure
 -----------
