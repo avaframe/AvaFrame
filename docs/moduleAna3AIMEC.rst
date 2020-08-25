@@ -9,23 +9,24 @@ Input
 -----
 
 * raster of the DEM (.asc file)
-* avalanche path (as a shape file).
+* aimec avalanche path in LINES (as a shape file with "aimec" in the name).
+* a splitPoint in POINTS (as a shape file).
 * Results from avalanche simulation (structured in a similar way as the output from com1DFA)
 
 Outputs
 --------
 
-* output figures in ``NameOfAvalanche/Outputs/AimecResults/pics/``
-* txt file with results in ``NameOfAvalanche/Outputs/AimecResults/``
+* output figures in ``NameOfAvalanche/Outputs/ana3AIMEC/pics/``
+* txt file with results in ``NameOfAvalanche/Outputs/ana3AIMEC/``
 
 To run
 -------
 
-* copy ``ana3AIMECCfg.py`` to ``local_ana3AIMECCfg.py`` (if not, the demo example is used)
-* enter paths to the desired datasets and output files in ``local_ana3AIMECCfg.py`` (if not, the demo example is used)
-* in ``AvaFrame/`` run::
+* copy ``ana3AIMECCfg.py`` to ``local_ana3AIMECCfg.py`` (if not, the standard settings are used)
+* enter paths to the desired ``NameOfAvalanche/`` folder in ``AvaFrame/avaframe/avaframeCfg.ini``
+* in ``AvaFrame/avaframe/`` run::
 
-      python3 avaframe/runAna3AIMEC.py
+      python3 runAna3AIMEC.py
 
 Theory
 -----------
@@ -36,8 +37,8 @@ that it is possible to compare characteristic values such as runout, maximum pea
 AIMEC (Automated Indicator based Model Evaluation and Comparison) was developed by J.-T. Fischer ([Fischer2013]_) to analyze and compare simulations.
 In AIMEC, the choice was made to analyze and compare the results by projecting the results along one chosen poly-line
 (same line for all the results that are compared) called avalanche path. The raster data, initially located on a regular grid (with coordinates x y)
-is projected on a non uniform raster that follows the poly-line (with curvilinear coordinates s l).
-This raster is then being "straightened" or "deskewed" to end up with a regular grid raster(with coordinates s l).
+is projected on a non uniform raster that follows the poly-line (with curvilinear coordinates (s,l)).
+This raster is then being "straightened" or "deskewed" to end up with a regular grid raster(with coordinates (s,l).
 The following figure illustrates the process.
 
       .. figure:: _static/aimec_transfo.png

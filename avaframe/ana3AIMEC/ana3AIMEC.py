@@ -60,7 +60,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     cfgPath['depthfileList'] = getFileList(pathFlowHeight)
     cfgPath['massfileList'] = getFileList(pathMassBalance)
 
-    pathResult = os.path.join(avalancheDir, 'Outputs', 'AimecResults')
+    pathResult = os.path.join(avalancheDir, 'Outputs', 'ana3AIMEC')
     cfgPath['pathResult'] = pathResult
 
     projectName = os.path.basename(avalancheDir)
