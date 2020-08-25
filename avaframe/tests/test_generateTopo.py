@@ -74,8 +74,8 @@ def test_getGridDefs():
     dx2, xEnd2, yEnd2 = gT.getGridDefs(cfg)
 
     # Test
-    assert xEnd == pytest.approx(15.0, abs=1.e-12)
-    assert yEnd == pytest.approx(105.0, abs=1.e-12)
+    assert xEnd == pytest.approx(10.0, abs=1.e-12)
+    assert yEnd == pytest.approx(100.0, abs=1.e-12)
     assert xEnd2 != pytest.approx(15.0, abs=1.e-12)
     assert yEnd2 != pytest.approx(105.0, abs=1.e-12)
 
@@ -89,12 +89,12 @@ def test_computeCoordGrid():
     xv, yv, zv, x, y, nRows, nCols = gT.computeCoordGrid(1., 5., 3.)
 
     # Define correct results
-    xvTest = np.array([0, 1, 2, 3 ,4])
-    yvTest = np.array([-1.5, -0.5, 0.5])
+    xvTest = np.array([0, 1, 2, 3 , 4, 5])
+    yvTest = np.array([-1.5, -0.5, 0.5, 1.5])
 
     # Test
-    assert nCols == 5
-    assert nRows == 3
+    assert nCols == 6
+    assert nRows == 4
     assert xv[2] == xvTest[2]
     assert yv[-1] == yvTest[-1]
 

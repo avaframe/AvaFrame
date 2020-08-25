@@ -153,13 +153,12 @@ def hockeysmooth(cfg):
     # Compute coordinate grid
     xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
 
-
     # Compute distance to flat foreland for given meanAlpha
     x1 = z0 / np.tan(np.radians(meanAlpha))
     if x1 >= xEnd * 0.9:
         log.warning('Your domain (xEnd) is to small or the slope angle (meanAlpha) to'
-                        'shallow to produce a signifcant (>10 percent of domain, in your case:'
-                        ' %.2f m) flat foreland!' % (0.1 * (xEnd - dx)))
+                    'shallow to produce a signifcant (>10 percent of domain, in your case:'
+                    ' %.2f m) flat foreland!' % (0.1 * (xEnd - dx)))
 
     # Compute circle parameters for smoothing the transition
     beta = (0.5 * (180. - (meanAlpha)))
@@ -344,7 +343,6 @@ def helix(cfg):
     c_mustart = float(cfg['CHANNELS']['c_mustart'])
     c_muend = float(cfg['CHANNELS']['c_muend'])
 
-
     # Get grid definitions
     dx, xEnd, yEnd = getGridDefs(cfg)
 
@@ -412,7 +410,7 @@ def helix(cfg):
 
     # set last row at Center to fall height
     indCols = int(0.5*nCols)
-    zv[-1,0:indCols] = C
+    zv[-1, 0:indCols] = C
 
     # Log info here
     log.info('Helix coordinates computed')
@@ -425,7 +423,6 @@ def writeDEM(cfg, z, outDir):
     nameExt = cfg['TOPO']['DEM_type']
     nRows = z.shape[0]
     nCols = z.shape[1]
-
 
     # Read lower left corner coordinates, cellsize and noDATA value
     xllcorner = float(cfg['DEMDATA']['xl'])
