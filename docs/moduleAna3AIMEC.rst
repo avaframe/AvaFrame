@@ -1,11 +1,11 @@
 ana3AIMEC: Module Aimec
 ==========================
 
-Aimec is a post-processing module to analyze results from avalanche simulations.
-It enables the comparison of different runs of a same avalanche.
+Aimec is a post-processing module to analyze and compare results from avalanche simulations.
+It enables the comparison of different runs of a same avalanche in a standardized way.
 
 
-Input
+Inputs
 -----
 
 * raster of the DEM (.asc file)
@@ -44,15 +44,17 @@ The following figure illustrates the process.
       .. figure:: _static/aimec_transfo.png
               :width: 90%
 
-              Pressure field on real raster (in blue the chosen path) and on the deskewed raster along given path
+              Pressure field on real raster (in blue the chosen path) and on the "deskewed" raster along given path
 
-
+Both pressure results and depth results are projected following this method and the "deskewed" fields are then analyzed.
+The maximum and average PeakPressure and depth are computed in each cross-section ()
 
 Procedure
 -----------
 
-* Coordinate transformation: Find transformation (from real raster to deskewed raster along given path). Create the transformation matrix.
-* Projection of results (Speed, Pressure...) on deskewed raster: Use the transformation matrix to affect results to new raster.
+* Coordinate transformation: Find the transformation (from real raster to "deskewed" raster along the  given path).
+Create the transformation matrix.
+* Projection of results (Speed, Pressure...) on "deskewed" raster: Use the transformation matrix to affect results to new raster.
 * Analyze results: Calculates the desired indicators
 * Plot and save results
 
