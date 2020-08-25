@@ -55,7 +55,6 @@ def test_projectOnRasterVect(capfd):
     dem['rasterData'] = rasterdata
 
     Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points, interp='bilinear')
-    print(Points)
     atol = 1e-8
     # Compare result to reference solution
     zSol = np.array([[4.99600361e-13, 4.00000000e+00],
