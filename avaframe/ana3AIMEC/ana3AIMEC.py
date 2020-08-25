@@ -239,7 +239,7 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    runoutAngle = 20
+    runoutAngle = 10
     _, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle, rasterTransfo)
     # find the runout point: first point under runoutAngle
     indRunoutPoint = geoTrans.findAngleProfile(tmp, delta_ind)
