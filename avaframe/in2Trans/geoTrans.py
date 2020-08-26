@@ -339,34 +339,39 @@ def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
     return z
 
 
-def path2domain(xyPath, w, header):
+def path2domain(xyPath, rasterTransfo):
     """
     path2domain
     Creates a domain (irregular raster) along a path, given the path polyline, a domain width
     and a raster cellsize
     Usage:
-        [DB] = path2domain(xyPath, w, header)
+        [rasterTransfo] = path2domain(xyPath, rasterTransfo)
        Input:
-           xyPath:   Polyline Coordinates
-           w:      Domain width
-           header:  header info
-       Output:
-           DB : xp, yp Arrays determining a path of width w along a polyline
+           -xyPath:   Polyline Coordinates
+           -rasterTransfo['w']:      Domain width
+           -rasterTransfo['xllc']: xllc
+           -rasterTransfo['yllc']: yllc
+           -rasterTransfo['cellsize']: cellsize
+       Output: xp, yp Arrays determining a path of width w along a polyline
+            -rasterTransfo['DBXl']: x coord of the left boundary
+            -rasterTransfo['DBXr']: x coord of the right boundary
+            -rasterTransfo['DBYl']: y coord of the left boundary
+            -rasterTransfo['DBYr']: y coord of the right boundary
 
     [Fischer2013] Fischer, Jan-Thomas. (2013).
     A novel approach to evaluate and compare computational snow avalanche simulation.
     Natural Hazards and Earth System Sciences. 13. 1655-. 10.5194/nhess-13-1655-2013.
     Uwe Schlifkowitz/ BFW, June 2011
     """
-    xllcorner = header.xllcorner
-    yllcorner = header.yllcorner
-    csz = header.cellsize
+    xllc = rasterTransfo['xllc']
+    yllc = rasterTransfo['yllc']
+    csz = rasterTransfo['cellsize']
     x = xyPath['x']
     y = xyPath['y']
-    w = w/2/csz
+    w = rasterTransfo['domainWidth']/2/csz
     # Shift grid origin to (0,0)
-    x = x - xllcorner
-    y = y - yllcorner
+    x = x - xllc
+    y = y - yllc
     # remove scaling due to cellsize
     x = x/csz
     y = y/csz
@@ -396,13 +401,13 @@ def path2domain(xyPath, w, header):
     # y-KOO[left right]
     DBYl = np.array((y + w * np.sin(d)))
     DBYr = np.array((y + w * np.sin(d + math.pi)))
-    DB = {}
-    DB['DBXl'] = DBXl
-    DB['DBXr'] = DBXr
-    DB['DBYl'] = DBYl
-    DB['DBYr'] = DBYr
 
-    return DB
+    rasterTransfo['DBXl'] = DBXl
+    rasterTransfo['DBXr'] = DBXr
+    rasterTransfo['DBYl'] = DBYl
+    rasterTransfo['DBYr'] = DBYr
+
+    return rasterTransfo
 
 
 def poly2maskSimple(ydep, xdep, ncols, nrows):
