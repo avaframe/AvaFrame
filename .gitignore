@@ -10,3 +10,8 @@ _build
 avaframe/**/*.png
 
 avaframe/**/*.shp.nxyz
+
+avaframe/**/*.xml
+
+avaframe/**/**/Outputs
+

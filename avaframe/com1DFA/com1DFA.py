@@ -12,6 +12,7 @@ import subprocess
 import shutil
 import numpy as np
 import logging
+from avaframe.in3Utils import fileHandlerUtils as fU
 
 
 # create local logger
@@ -52,7 +53,9 @@ def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
     # Set directories for inputs, outputs and current work
     inputDir = os.path.join(avaDir, 'Inputs')
     outputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
+    fU.makeADir(outputDir)
     workDir = os.path.join(avaDir, 'Work', 'com1DFA')
+    fU.makeADir(workDir)
 
     # Initialise release areas, default is to look for shapefiles
     if inputf == 'nxyz':
@@ -83,14 +86,6 @@ def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
 
     # Initialise DEM
     demFile = glob.glob(inputDir+os.sep+'*.asc')
-
-    # in case new simulations are performed in the same directory, clean first
-    # ignore_errors=True errors from failed removals will be ignored
-    shutil.rmtree(outputDir, ignore_errors=True)
-    shutil.rmtree(workDir, ignore_errors=True)
-    # create new directories
-    os.makedirs(outputDir)
-    os.makedirs(workDir)
 
     # Initialise full experiment log file
     with open(os.path.join(outputDir, 'ExpLog.txt'), 'w') as logFile:
