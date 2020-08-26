@@ -121,7 +121,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
         plt.ioff()
     if cfgFlags.getboolean('savePlot'):
         outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
-                            projectName, '_domTransfo', '.pdf'])
+                           projectName, '_domTransfo', '.pdf'])
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
         fig.savefig(outname, transparent=True)
@@ -245,7 +245,8 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
 
     legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'elevRel', 'deltaH', 'AMPP',
               'MMPP', 'entMass', 'GI', 'GR', 'AMD', 'MMD']
-    resfile = [runout[1,:], runout[2,:], runout[0,:], elevRel, deltaH, AMPP, MMPP, entMass, GI, GR, AMD, MMD]
+    resfile = [runout[1, :], runout[2, :], runout[0, :],
+               elevRel, deltaH, AMPP, MMPP, entMass, GI, GR, AMD, MMD]
 
     header = ''.join(['projectName: ',  projectName, '\n',
                       'path: ', pathName, '\n',
@@ -368,7 +369,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
                             ' kPa threshold']), color='black', fontsize=2*fs)
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
-        H, xedges, yedges = np.histogram2d(runout[0,:], data, bins=nbins)
+        H, xedges, yedges = np.histogram2d(runout[0, :], data, bins=nbins)
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
         dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
@@ -381,19 +382,19 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     plt.xlim([0, xlimProfAxis])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
     if not plotDensity:
-        color = cm.get_cmap('autumn', len(runout[0,:]) + 3)
-        for k in range(len(runout[0,:])):
+        color = cm.get_cmap('autumn', len(runout[0, :]) + 3)
+        for k in range(len(runout[0, :])):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # (float(k), len(runout), colorflag)
             if k == 0:
-                ax1.plot(runout[0,k], data[k], marker='+',
+                ax1.plot(runout[0, k], data[k], marker='+',
                          markersize=2*mks, color='g', label=topoName)
     #            plt.yticks(np.arange([0,5000,250]))
                 # Make the y-tick labels of first axes match the line color.
                 for tl in ax1.get_yticklabels():
                     tl.set_color('b')
             else:
-                ax1.plot(runout[0,k], data[k], label=topoName, marker=markers[mk],
+                ax1.plot(runout[0, k], data[k], label=topoName, marker=markers[mk],
                          markersize=mks, color=pfarbe, linewidth=lw)
             mk = mk+1
             if mk == len(markers):
@@ -412,7 +413,8 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 
     # Final result diagram - roc-plots
     rTP = resAnalysis['TP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
-    rFP = resAnalysis['FN'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0]) #/ (resAnalysis['FP'][0] + resAnalysis['TN'][0])
+    # / (resAnalysis['FP'][0] + resAnalysis['TN'][0])
+    rFP = resAnalysis['FN'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
 
     fig = plt.figure(figsize=(figureWidth, figureHight), dpi=300)
 
@@ -430,7 +432,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     if not plotDensity:
-        color = cm.get_cmap('autumn', len(runout[0,:]) + 3)
+        color = cm.get_cmap('autumn', len(runout[0, :]) + 3)
         for k in range(len(rTP)):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # colorvar(float(k), len(rTP), colorflag)
