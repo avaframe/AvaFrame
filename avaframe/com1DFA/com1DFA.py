@@ -29,10 +29,12 @@ def execSamos(samosAT, cintFile, avaDir, fullOut=False, simName=''):
                             universal_newlines=True)
 
     # initialise log file to save stoudt
-    f_log = open(os.path.join(avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName)), 'w')
+    if simName != '':
+        f_log = open(os.path.join(avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName)), 'w')
     # FSO--- loop through output
     for line in proc.stdout:
-        f_log.write(line)
+        if simName != '':
+            f_log.write(line)
         if fullOut:
             log.info((line.rstrip()))
         elif 'BatchSamos' in line:
