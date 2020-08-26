@@ -32,20 +32,19 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     # read rasterdata
     sourceData = inputData['sourceData']
     header = sourceData['header']
-    xllcorner = header.xllcorner
-    yllcorner = header.yllcorner
-    cellsize = header.cellsize
+    xllc = rasterTransfo['xllc']
+    yllc = rasterTransfo['yllc']
+    cellsize = rasterTransfo['cellsize']
     rasterdata = sourceData['rasterData']
     # read avaPath with scale
     Avapath = inputData['Avapath']
     xPath = Avapath['x']
     yPath = Avapath['y']
     # read domain boundarries with scale
-    DB = inputData['DB']
-    DBXl = DB['DBXl']*cellsize+xllcorner
-    DBXr = DB['DBXr']*cellsize+xllcorner
-    DBYl = DB['DBYl']*cellsize+yllcorner
-    DBYr = DB['DBYr']*cellsize+yllcorner
+    DBXl = rasterTransfo['DBXl']*cellsize+xllc
+    DBXr = rasterTransfo['DBXr']*cellsize+xllc
+    DBYl = rasterTransfo['DBYl']*cellsize+yllc
+    DBYr = rasterTransfo['DBYr']*cellsize+yllc
 
     figureWidth = 2*10
     figureHight = 2*5
@@ -65,8 +64,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     cmap.set_bad(color='k')
 
     n, m = np.shape(newRasterdata)
-    x = np.arange(m)*cellsize+xllcorner
-    y = np.arange(n)*cellsize+yllcorner
+    x = np.arange(m)*cellsize+xllc
+    y = np.arange(n)*cellsize+yllc
     im = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
     im.set_clim(vmin=0.000000001)
@@ -90,8 +89,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ax1.legend(refs, labels, loc=0)
     ax1.set_xlim([x.min(), x.max()])
     ax1.set_ylim([y.min(), y.max()])
-    ax1.set_xlabel('x [m]')
-    ax1.set_ylabel('y [m]')
+    ax1.set_xlabel(r'$x\;[m]$')
+    ax1.set_ylabel(r'$y\;[m]$')
 
     ax2 = plt.subplot(122)
     ax2.title.set_text('sl Domain \n Black = out of raster')
@@ -111,8 +110,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     cbar.ax.set_ylabel('peak pressure [kPa]')
     ax2.set_xlim([lcoord.min(), lcoord.max()])
     ax2.set_ylim([scoord.min(), scoord.max()])
-    ax2.set_xlabel('l [m]')
-    ax2.set_ylabel('s [m]')
+    ax2.set_xlabel(r'$l\;[m]$')
+    ax2.set_ylabel(r'$s\;[m]$')
     ax2.legend(loc=0)
 
     fig.tight_layout()
@@ -183,8 +182,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     plt.autoscale(False)
     ax1.set_xlim([xx.min(), xx.max()])
     ax1.set_ylim([yy.min(), yy.max()])
-    ax1.set_xlabel('l [m]')
-    ax1.set_ylabel('s [m]')
+    ax1.set_xlabel(r'$l\;[m]$')
+    ax1.set_ylabel(r'$s\;[m]$')
     ax1.legend(loc=0)
 
     ax2 = plt.subplot(122)
@@ -195,10 +194,10 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ref2 = ax2.plot(pMedian, scoord, color='r', linewidth=2, label='median')
     ref3 = ax2.plot(pMean, scoord, color='b', linewidth=1, label='mean')
     # ref3 = mlines.Line2D([], [], color='b', linewidth=2)
-    ax2.set_ylabel('s [m]')
+    ax2.set_ylabel(r'$l\;[m]$')
     ax2.set_ylim([yy.min(), yy.max()])
     ax2.set_xlim(auto=True)
-    ax2.set_xlabel('Pmax(s) [kPa]')
+    ax2.set_xlabel(r'$P_max(s)\;[kPa]$')
     ax2.legend(loc=0)
 
     fig.tight_layout()
@@ -241,12 +240,12 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     elevRel = resAnalysis['elevRel']
     relMass = resAnalysis['relMass']
     entMass = resAnalysis['entMass']
-    growthIndex = resAnalysis['growthIndex']
-    growthGrad = resAnalysis['growthGrad']
+    GI = resAnalysis['growthIndex']
+    GR = resAnalysis['growthGrad']
 
-    legend = ['fileNr', 'runout', 'elevRel', 'deltaH', 'AMPP',
-              'MMPP', 'entMass', 'growthIndex', 'AMD', 'MMD']
-    resfile = [runout, elevRel, deltaH, AMPP, MMPP, entMass, growthIndex, AMD, MMD]
+    legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'elevRel', 'deltaH', 'AMPP',
+              'MMPP', 'entMass', 'GI', 'GR', 'AMD', 'MMD']
+    resfile = [runout[1,:], runout[2,:], runout[0,:], elevRel, deltaH, AMPP, MMPP, entMass, GI, GR, AMD, MMD]
 
     header = ''.join(['projectName: ',  projectName, '\n',
                       'path: ', pathName, '\n',
@@ -273,11 +272,11 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
         fid.write('{:<12s}'.format(legend[j]))
     fid.write('\n')
     # write table values
-    for i in range(len(output[0])):
+    for i in range(np.shape(output)[1]):
         tmp = os.path.basename(dataName[i])
         name = os.path.splitext(tmp)[0]
         fid.write('{:<12s}'.format(name))
-        for j in range(len(output)):
+        for j in range(np.shape(output)[0]):
             try:
                 fid.write('{:<12.3f}'.format(output[j][i]))
             except:
@@ -369,7 +368,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
                             ' kPa threshold']), color='black', fontsize=2*fs)
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
-        H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
+        H, xedges, yedges = np.histogram2d(runout[0,:], data, bins=nbins)
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
         dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
@@ -382,19 +381,19 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     plt.xlim([0, xlimProfAxis])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
     if not plotDensity:
-        color = cm.get_cmap('autumn', len(runout) + 3)
-        for k in range(len(runout)):
+        color = cm.get_cmap('autumn', len(runout[0,:]) + 3)
+        for k in range(len(runout[0,:])):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # (float(k), len(runout), colorflag)
             if k == 0:
-                ax1.plot(runout[k], data[k], marker='+',
+                ax1.plot(runout[0,k], data[k], marker='+',
                          markersize=2*mks, color='g', label=topoName)
     #            plt.yticks(np.arange([0,5000,250]))
                 # Make the y-tick labels of first axes match the line color.
                 for tl in ax1.get_yticklabels():
                     tl.set_color('b')
             else:
-                ax1.plot(runout[k], data[k], label=topoName, marker=markers[mk],
+                ax1.plot(runout[0,k], data[k], label=topoName, marker=markers[mk],
                          markersize=mks, color=pfarbe, linewidth=lw)
             mk = mk+1
             if mk == len(markers):
@@ -431,7 +430,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     if not plotDensity:
-        color = cm.get_cmap('autumn', len(runout) + 3)
+        color = cm.get_cmap('autumn', len(runout[0,:]) + 3)
         for k in range(len(rTP)):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # colorvar(float(k), len(rTP), colorflag)

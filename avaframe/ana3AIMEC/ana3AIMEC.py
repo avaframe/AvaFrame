@@ -7,7 +7,6 @@ import math
 import numpy as np
 import scipy as sp
 import copy
-import operator
 import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.image import NonUniformImage
@@ -60,7 +59,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     cfgPath['depthfileList'] = getFileList(pathFlowHeight)
     cfgPath['massfileList'] = getFileList(pathMassBalance)
 
-    pathResult = os.path.join(avalancheDir, 'Outputs', 'ana3AIMEC')
+    pathResult = os.path.join(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
     cfgPath['pathResult'] = pathResult
 
     projectName = os.path.basename(avalancheDir)
@@ -93,7 +92,6 @@ def mainAIMEC(cfgPath, cfg):
     # Extract input parameters
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
-    domainWidth = float(cfgSetup['domainWidth'])
     pressureLimit = float(cfgSetup['pressureLimit'])
     interpMethod = cfgSetup['interpMethod']
 
@@ -121,17 +119,6 @@ def mainAIMEC(cfgPath, cfg):
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
-    log.info('Analyzing data')
-
-    # analyze mass / entrainment
-    log.info('Analyzing entrainment data')
-    # determine growth index from entrainment data
-    # [relMass, entMass, gr_index, gr_grad] = analyzeEntrainmentdata(cfgPath['massfileList'])
-    gr_index = 0
-    relMass = 0
-    entMass = 0
-    # analyze pressure_data and depth_data
-    # determine runount, AMPP, AMD, FS,
     log.info('Analyzing data in path coordinate system')
     resAnalysis = analyzeData(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
 
@@ -185,10 +172,17 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     sourceData = IOf.readRaster(rasterSource)
     dem = IOf.readRaster(demSource)
     header = sourceData['header']
-    xllcorner = header.xllcorner
-    yllcorner = header.yllcorner
+    xllc = header.xllcorner
+    yllc = header.yllcorner
     cellsize = header.cellsize
     rasterdata = sourceData['rasterData']
+    # Initialize transformation dictionary
+    rasterTransfo = {}
+    rasterTransfo['domainWidth'] = w
+    rasterTransfo['xllc'] = xllc
+    rasterTransfo['yllc'] = yllc
+    rasterTransfo['cellsize'] = cellsize
+
     # read avaPath
     Avapath = shpConv.readLine(ProfileLayer, DefaultName, sourceData['header'])
     # read split point
@@ -199,16 +193,14 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     _, Avapath = geoTrans.checkProfile(Avapath, projSplitPoint=None)
 
     log.info('Creating new raster along polyline: %s' % ProfileLayer)
-    # Initialize transformation dictionary
-    rasterTransfo = {}
 
     # Get new Domain Boundaries DB
     # input: ava path
     # output: Left and right side points for the domain
-    DB = geoTrans.path2domain(Avapath, w, header)
+    rasterTransfo = geoTrans.path2domain(Avapath, rasterTransfo)
 
     # Make transformation matrix
-    rasterTransfo = makeTransfoMat(rasterTransfo, DB, w, cellsize)
+    rasterTransfo = makeTransfoMat(rasterTransfo)
 
     # calculate the real area of the new cells as well as the scoord
     rasterTransfo = getSArea(rasterTransfo)
@@ -223,8 +215,8 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     # put back scale and origin
     rasterTransfo['s'] = rasterTransfo['s']*cellsize
     rasterTransfo['l'] = rasterTransfo['l']*cellsize
-    rasterTransfo['gridx'] = rasterTransfo['gridx']*cellsize + header.xllcorner
-    rasterTransfo['gridy'] = rasterTransfo['gridy']*cellsize + header.yllcorner
+    rasterTransfo['gridx'] = rasterTransfo['gridx']*cellsize + xllc
+    rasterTransfo['gridy'] = rasterTransfo['gridy']*cellsize + yllc
     rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*cellsize*cellsize
     # (x,y) coordinates of the resamples avapth (centerline where l = 0)
     n = np.shape(rasterTransfo['l'])[0]
@@ -239,7 +231,8 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    runoutAngle = 10
+    runoutAngle = 20
+    rasterTransfo['runoutAngle'] = runoutAngle
     _, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle, rasterTransfo)
     # find the runout point: first point under runoutAngle
     indRunoutPoint = geoTrans.findAngleProfile(tmp, delta_ind)
@@ -253,7 +246,6 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     inputData['avalData'] = avalData
     inputData['sourceData'] = sourceData
     inputData['Avapath'] = Avapath
-    inputData['DB'] = DB
 
     outAimec.visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags)
 
@@ -302,19 +294,19 @@ def split_section(DB, i):
     return bxl, byl, bxr, byr, m
 
 
-def makeTransfoMat(rasterTransfo, DB, w, cellsize):
+def makeTransfoMat(rasterTransfo):
     """ Make transformation matrix.
         Takes a Domain Boundary and finds the (x,y) coordinates of the new
         raster point (the one following the path)
-        input: - rasterTransfo dictionary to fill in output
-               - DB domain Boundary dictionary
-               - w domain width
-               - cellsize
+        input: - rasterTransfo dictionary (containing the domain Boundary cell
+                    size and domain width information) to fill in output
         ouput: rasterTransfo dictionary updated with the (gridx,gridy)
-                coordinates of the new raster points
+                coordinates of the new raster points and the l coordinate
     """
+    w = rasterTransfo['domainWidth']
+    cellsize = rasterTransfo['cellsize']
     # number of points describing the avaPath
-    n_pnt = np.shape(DB['DBXr'])[0]
+    n_pnt = np.shape(rasterTransfo['DBXr'])[0]
     # Working with no dimentions (the cellsize scaling will be readded at the end)
     # lcoord is the distance from the polyline (cross section)
     # maximum step should be smaller then the cellsize
@@ -330,7 +322,7 @@ def makeTransfoMat(rasterTransfo, DB, w, cellsize):
     # loop on each section of the path
     for i in range(n_pnt-1):
         # split edges in segments
-        bxl, byl, bxr, byr, m = split_section(DB, i)
+        bxl, byl, bxr, byr, m = split_section(rasterTransfo, i)
         # bxl, byl, bxr, byr reprensent the s direction (olong path)
         # loop on segments of section
         for j in range(m-1):
@@ -380,6 +372,9 @@ def getSArea(rasterTransfo):
     # calculate dx and dy for each point in the l direction
     dxl = xcoord[0:n-1, 1:m]-xcoord[0:n-1, 0:m-1]
     dyl = ycoord[0:n-1, 1:m]-ycoord[0:n-1, 0:m-1]
+    # # deduce the distance in l direction
+    # Vl2 = (dxl*dxl + dyl*dyl)
+    # Vl = np.sqrt(Vl2)
     # calculate dx and dy for each point in the s direction
     dxs = xcoord[1:n, 0:m-1]-xcoord[0:n-1, 0:m-1]
     dys = ycoord[1:n, 0:m-1]-ycoord[0:n-1, 0:m-1]
@@ -485,7 +480,8 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
     dataDEM = newRasters['newRasterDEM']
     scoord = rasterTransfo['s']
     lcoord = rasterTransfo['l']
-    rasterArea = rasterTransfo['rasterArea']
+    x = rasterTransfo['x']
+    y = rasterTransfo['y']
     indRunoutPoint = rasterTransfo['indRunoutPoint']
     sBeta = scoord[indRunoutPoint]
 
@@ -493,8 +489,8 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
 
     # initialize Arrays
     nTopo = len(fname)
-    runout = np.empty((nTopo))
-    runoutMean = np.empty((nTopo))
+    runout = np.empty((3, nTopo))
+    runoutMean = np.empty((3, nTopo))
     ampp = np.empty((nTopo))
     mmpp = np.empty((nTopo))
     amd = np.empty((nTopo))
@@ -508,24 +504,59 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
 
     n = np.shape(lcoord)[0]
     pCrossAll = np.zeros((nTopo, len(scoord)))
-    log.info('{: <15} {: <15} {: <15} {: <15}'.format(
-        'Sim number ', 'rRunout ', 'rampp ', 'ramd ', 'FS'))
+    log.info('{: <10} {: <10} {: <10} {: <10} {: <10} {: <10} {: <10} {: <10}'.format(
+        'Sim number ', 'Runout ', 'ampp ', 'mmpp ', 'amd ', 'mmd ', 'GI ', 'GR '))
     # For each data set
     for i in range(nTopo):
         rasterdataPres = dataPressure[i]
         rasterdataDepth = dataDepth[i]
-
+        rasterArea = rasterTransfo['rasterArea']
+        rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
         # get mean max for each cross section for pressure
-        # presCrossMean = np.nansum(rasterdataPres*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
-        presCrossMean = np.nanmean(rasterdataPres, axis=1)
+        presCrossMean = np.nansum(rasterdataPres*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+        presCrossMean1 = np.nanmean(rasterdataPres, axis=1)
+
+        if debugPlotFlag:
+            figureWidth = 2*10
+            figureHight = 2*5
+            lw = 1
+
+            fig = plt.figure(figsize=(figureWidth, figureHight), dpi=150)
+        #    for figure: referenz-simulation bei pLim=1
+            ax1 = plt.subplot(121)
+            ax1.title.set_text('Area of the cells of the new raster\n' + 'Black = out of original raster')
+            cmap = copy.copy(matplotlib.cm.jet)
+            cmap.set_under(color='w')
+            cmap.set_bad(color='k')
+            im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
+                                              scoord.min(), scoord.max()], cmap=cmap)
+            im.set_clim(vmin=np.nanmin(rasterArea), vmax=np.nanmax(rasterArea))
+            im.set_data(lcoord, scoord, rasterArea)
+            ref0 = ax1.images.append(im)
+            cbar = ax1.figure.colorbar(im, ax=ax1, use_gridspec=True)
+            cbar.ax.set_ylabel(r'area $[m^2]$')
+            ax1.set_xlim([lcoord.min(), lcoord.max()])
+            ax1.set_ylim([scoord.min(), scoord.max()])
+            ax1.set_xlabel(r'$l\;[m]$')
+            ax1.set_ylabel(r'$s\;[m]$')
+
+            ax2 = plt.subplot(122)
+            ax2.title.set_text(r'$P_{cross}^{max}(s)$')
+            ax2.plot(scoord,presCrossMean1,'k', label='simple average')
+            ax2.plot(scoord,presCrossMean,'b', label='weighted average')
+            ax2.set_xlabel(r'$l\;[m]$')
+            ax2.set_ylabel(r'$s\;[m]$')
+            ax2.legend(loc=0)
+            plt.show()
+
         presCrossMax = np.nanmax(rasterdataPres, 1)
         # also get the Area corresponding to those cells
         indPresCrossMax = np.nanargmax(rasterdataPres, 1)
         ind1 = np.arange(np.shape(rasterdataPres)[0])
         AreapresCrossMax = rasterArea[ind1, indPresCrossMax]
         # get mean max for each cross section for pressure
-        # dCrossMean = np.nansum(rasterdataDepth*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
-        dCrossMean = np.nanmean(rasterdataDepth, axis=1)
+        dCrossMean = np.nansum(rasterdataDepth*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+        # dCrossMean = np.nanmean(rasterdataDepth, axis=1)
         dCrossMax = np.nanmax(rasterdataDepth, 1)
         # also get the Area corresponding to those cells
         indDCrossMax = np.nanargmax(rasterdataDepth, 1)
@@ -561,8 +592,12 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
             np.nansum(AreadCrossMax[cupper:clower+1])
         mmd[i] = max(dCrossMax[cupper:clower+1])
     #    Runout
-        runout[i] = scoord[clower] - sBeta
-        runoutMean[i] = scoord[clowerm] - sBeta
+        runout[0,i] = scoord[clower] - sBeta
+        runout[1,i] = x[clower]
+        runout[2,i] = y[clower]
+        runoutMean[0,i] = scoord[clowerm] - sBeta
+        runoutMean[1,i] = x[clower]
+        runoutMean[2,i] = y[clower]
 
         elevRel[i] = dataDEM[cupper, int(np.floor(n/2)+1)]
         deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
@@ -573,7 +608,8 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
             log.warning('Release masses differs between simulations!')
 
         # log.info('%s\t%10.4f\t%10.4f\t%10.4f' % (i+1, runout[i], ampp[i], amd[i]))
-        log.info('{: <15} {:<15.4f} {:<15.4f} {:<15.4f}'.format(*[i+1, runout[i], ampp[i], amd[i]]))
+        log.info('{: <10} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f}'.format(
+                    *[i+1, runout[0,i], ampp[i], mmpp[i], amd[i], mmd[i], grIndex[i], grGrad[i]]))
 
     # affect values to output dictionary
     resAnalysis['runout'] = runout
@@ -589,6 +625,7 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis['growthIndex'] = grIndex
     resAnalysis['growthGrad'] = grGrad
     resAnalysis['pCrossAll'] = pCrossAll
+    resAnalysis['pressureLimit'] = pLim
 
     return resAnalysis
 
@@ -667,8 +704,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
             cbar.ax.set_ylabel('peak pressure [kPa]')
             ax1.set_xlim([lcoord.min(), lcoord.max()])
             ax1.set_ylim([scoord[indRunoutPoint-20], y_lim])
-            ax1.set_xlabel('l [m]')
-            ax1.set_ylabel('s [m]')
+            ax1.set_xlabel(r'$l\;[m]$')
+            ax1.set_ylabel(r'$s\;[m]$')
 
             ax2 = plt.subplot(122)
             ax2.title.set_text(
@@ -687,8 +724,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
             # cbar.ax.set_ylabel('peak pressure [kPa]')
             ax2.set_xlim([lcoord.min(), lcoord.max()])
             ax2.set_ylim([scoord[indRunoutPoint-20], y_lim])
-            ax2.set_xlabel('l [m]')
-            ax2.set_ylabel('s [m]')
+            ax2.set_xlabel(r'$l\;[m]$')
+            ax2.set_ylabel(r'$s\;[m]$')
             # fig.tight_layout()
             plt.show()
 
@@ -740,14 +777,12 @@ def readWrite(fname_ent):
     #    load data
     #    time, total mass, entrained mass
     massTime = np.loadtxt(fname_ent, delimiter=',', skiprows=1)
-    maxind, maxval = max(enumerate(massTime[:, 1]),
-                         key=operator.itemgetter(1))
-    timeResults = [massTime[0, 0], massTime[maxind, 0], massTime[-1, 0]]
-    totMassResults = [massTime[0, 1], massTime[maxind, 1], massTime[-1, 1]]
-    entMassResults = [massTime[0, 2], massTime[maxind, 2], massTime[-1, 2]]
+    timeResults = [massTime[0, 0], massTime[-1, 0]]
+    totMassResults = [massTime[0, 1], massTime[-1, 1]]
+    entMassResults = [massTime[0, 2], massTime[-1, 2]]
     relMass = totMassResults[0]
-    entMass = entMassResults[2]
+    entMass = entMassResults[1]
 #   growth results
-    growthIndex = totMassResults[2]/totMassResults[0]
-    growthGrad = (totMassResults[2] - totMassResults[0]) / (timeResults[2] - timeResults[0])
+    growthIndex = totMassResults[1]/totMassResults[0]
+    growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])
     return relMass, entMass, growthIndex, growthGrad
