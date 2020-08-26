@@ -524,7 +524,8 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
             fig = plt.figure(figsize=(figureWidth, figureHight), dpi=150)
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
-            ax1.title.set_text('Area of the cells of the new raster\n' + 'Black = out of original raster')
+            ax1.title.set_text('Area of the cells of the new raster\n' +
+                               'Black = out of original raster')
             cmap = copy.copy(matplotlib.cm.jet)
             cmap.set_under(color='w')
             cmap.set_bad(color='k')
@@ -542,8 +543,8 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
 
             ax2 = plt.subplot(122)
             ax2.title.set_text(r'$P_{cross}^{max}(s)$')
-            ax2.plot(scoord,presCrossMean1,'k', label='simple average')
-            ax2.plot(scoord,presCrossMean,'b', label='weighted average')
+            ax2.plot(scoord, presCrossMean1, 'k', label='simple average')
+            ax2.plot(scoord, presCrossMean, 'b', label='weighted average')
             ax2.set_xlabel(r'$l\;[m]$')
             ax2.set_ylabel(r'$s\;[m]$')
             ax2.legend(loc=0)
@@ -592,12 +593,12 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
             np.nansum(AreadCrossMax[cupper:clower+1])
         mmd[i] = max(dCrossMax[cupper:clower+1])
     #    Runout
-        runout[0,i] = scoord[clower] - sBeta
-        runout[1,i] = x[clower]
-        runout[2,i] = y[clower]
-        runoutMean[0,i] = scoord[clowerm] - sBeta
-        runoutMean[1,i] = x[clower]
-        runoutMean[2,i] = y[clower]
+        runout[0, i] = scoord[clower] - sBeta
+        runout[1, i] = x[clower]
+        runout[2, i] = y[clower]
+        runoutMean[0, i] = scoord[clowerm] - sBeta
+        runoutMean[1, i] = x[clower]
+        runoutMean[2, i] = y[clower]
 
         elevRel[i] = dataDEM[cupper, int(np.floor(n/2)+1)]
         deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
@@ -609,7 +610,7 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
 
         # log.info('%s\t%10.4f\t%10.4f\t%10.4f' % (i+1, runout[i], ampp[i], amd[i]))
         log.info('{: <10} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f}'.format(
-                    *[i+1, runout[0,i], ampp[i], mmpp[i], amd[i], mmd[i], grIndex[i], grGrad[i]]))
+            *[i+1, runout[0, i], ampp[i], mmpp[i], amd[i], mmd[i], grIndex[i], grGrad[i]]))
 
     # affect values to output dictionary
     resAnalysis['runout'] = runout
