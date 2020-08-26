@@ -10,34 +10,11 @@ import glob
 import logging
 import numpy as np
 import shutil
+from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
-
-
-def makeAimecDirs(avaDir):
-    """ Make directories where Aimec reads input data from """
-
-    # Set directories for Aimec inputs
-    workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
-    flowDepthDir = os.path.join(workDir, 'dfa_depth')
-    pressureDir = os.path.join(workDir, 'dfa_pressure')
-    massDir = os.path.join(workDir, 'dfa_mass_balance')
-    massDirTemp = os.path.join(workDir, 'dfa_mass_balance_temp')
-
-    if os.path.isdir(workDir):
-        log.warning('Be careful directories in %s already existed - but got now deleted' % (workDir))
-        shutil.rmtree(workDir, ignore_errors=True)
-
-    os.makedirs(workDir)
-    os.makedirs(flowDepthDir)
-    os.makedirs(pressureDir)
-    os.makedirs(massDir)
-    os.makedirs(massDirTemp)
-
-    log.info('Aimec Work folders created to start postprocessing com1DFA data')
-
 
 def writeAimecPathsFile(cfgSetup, avaDir):
     """ Write a pathFile to inform Aimec where its input data is located """
@@ -85,7 +62,7 @@ def extractMBInfo(avaDir):
         relNames.append(os.path.splitext(os.path.basename(rels))[0])
 
     # Get logFile
-    [logDictExp, indSims] = readLogFile(avaDir)
+    [logDictExp, indSims] = fU.readLogFile(avaDir)
     simName = []
     for name in logDictExp['simName']:
         simName.append(name.split('_')[0])
@@ -145,99 +122,31 @@ def extractMBInfo(avaDir):
     shutil.rmtree(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp'))
 
 
-def readLogFile(avaDir):
-    """ Read experiment log file """
-
-    # Initialise directories
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
-    workDirMain = os.path.join(avaDir, 'Work', 'ana3AIMEC')
-
-    logFile = open(os.path.join(inputDir, 'ExpLog.txt'), 'r')
-    log.info('Take com1DFA full experiment log')
-
-    noSim = []      # number of Simulation
-    simName = []    # name of Simulation
-    Mu = []         # Mu parameter value
-
-    lines = logFile.readlines()[1:]
-    for line in lines:
-        vals = line.strip().split()
-        noSim.append(float(vals[0]))
-        simName.append(vals[1])
-        Mu.append(float(vals[2]))
-
-    # Save info to dictionary
-    suffix = ['pfd', 'ppr', 'pv', 'fd']
-    logDict = {'noAva': noSim, 'simName': simName, 'Mu': Mu, 'suffix': suffix}
-
-    # Read the experiment log - if copied to local_ExpLog take this!
-    if os.path.isfile(os.path.join(workDirMain, 'local_ExpLog.txt')):
-        logFileLocal = open(os.path.join(workDirMain, 'local_ExpLog.txt'), 'r')
-        log.info('Take local (potentially modified) experiment log')
-    else:
-        logFileLocal = open(os.path.join(inputDir, 'ExpLog.txt'), 'r')
-        log.warning('There is no file local_ExpLog - using all simulations')
-
-    # Read simulation names from local exp Log
-    simName = []
-    lines = logFileLocal.readlines()[1:]
-    for line in lines:
-        vals = line.strip().split()
-        simName.append(vals[1])
-
-    # Identify common simulations
-    setSim = set(simName)
-    indSims = [i for i, item in enumerate(logDict['simName']) if item in setSim]
-
-    return logDict, indSims
-
-
-def getDFAData(avaDir, cfgDFA):
-    """ Export the required input data from com1DFA output """
-
-    # Initialise directories
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
-    workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
-    workDirMain = os.path.join(avaDir, 'Work', 'ana3AIMEC')
-
-    # Read log file information
-    [logDict, indSims] = readLogFile(avaDir)
-    # Get number of values
-    sNo = len(logDict['noAva'])
-    sufNo = len(logDict['suffix'])
-
-    # Path to com1DFA results
-    resPath = os.path.join(inputDir, cfgDFA['filesDir'])
-
-    countpfd = 0
-    countppr = 0
-
-    for m in range(sufNo):
-        if logDict['suffix'][m] == 'pfd':
-            for k in range(sNo):
-                if k in indSims:
-                    shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
-                                                                 logDict['simName'][k], logDict['suffix'][m]),
-                                '%s/dfa_depth/%06d.txt' % (workDir, countpfd+1))
-                    # log.info('%s%f/%s/raster/%s_%s.asc to the new file %s/dfa_depth/%06d.txt' % (resPath,
-                    #                     logDict['Mu'][k], logDict['simName'][k],
-                    #                     logDict['simName'][k], logDict['suffix'][m], outputDir, countpfd))
-                    countpfd = countpfd + 1
-
-        elif logDict['suffix'][m] == 'ppr':
-            for k in range(sNo):
-                if k in indSims:
-                    shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
-                                                                 logDict['simName'][k], logDict['suffix'][m]),
-                                '%s/dfa_pressure/%06d.txt' % (workDir, countppr+1))
-                    log.info('Simulation %s is copied to ana3AIMEC' % logDict['simName'][k])
-                    countppr = countppr + 1
-
-
-def mainDfa2Aimec(avalancheDir, cfgDFA, cfgSetup):
+def mainDfa2Aimec(avaDir, cfgDFA, cfgSetup):
     """ Exports the required data from com1DFA to be used by Aimec """
+
+    # Create required directories
+    workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
+    fU.makeADir(workDir)
+    flowDepthDir = os.path.join(workDir, 'dfa_depth')
+    fU.makeADir(flowDepthDir)
+    pressureDir = os.path.join(workDir, 'dfa_pressure')
+    fU.makeADir(pressureDir)
+    massDir = os.path.join(workDir, 'dfa_mass_balance')
+    fU.makeADir(massDir)
+    massDirTemp = os.path.join(workDir, 'dfa_mass_balance_temp')
+    fU.makeADir(massDirTemp)
+    log.info('Aimec Work folders created to start postprocessing com1DFA data')
+
     # Setup input from com1DFA
-    makeAimecDirs(avalancheDir)
-    getDFAData(avalancheDir, cfgDFA)
-    writeAimecPathsFile(cfgSetup, avalancheDir)
-    extractMBInfo(avalancheDir)
+    suffix = {'type' : ['pfd', 'ppr'], 'directory' : ['dfa_depth', 'dfa_pressure']}
+    countsuf = 0
+    for suf in suffix['type']:
+        fU.getDFAData(avaDir, cfgDFA['filesDir'], workDir, suf, suffix['directory'][countsuf])
+        countsuf = countsuf + 1
+
+    # Write the paths to this files to a file
+    writeAimecPathsFile(cfgSetup, avaDir)
+
+    # Extract the MB info
+    extractMBInfo(avaDir)
