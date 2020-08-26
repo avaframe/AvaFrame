@@ -146,15 +146,20 @@ def test_findAngleProfile(capfd):
 
 def test_path2domain(capfd):
     '''test_path2domain'''
-    header = IOf.cASCheader()
-    header.xllcorner = 1
-    header.yllcorner = 2
-    header.cellsize = 2
+    xllc = 1
+    yllc = 2
+    csz = 2
+    w = 10
     xyPath = {}
     xyPath['x'] = np.array((0, 10, 20, 30, 40))
     xyPath['y'] = np.array((10, 20, 30, 40, 50))
-    w = 10
-    DB = geoTrans.path2domain(xyPath, w, header)
+    rasterTransfo = {}
+    rasterTransfo['xllc'] = xllc
+    rasterTransfo['yllc'] = yllc
+    rasterTransfo['cellsize'] = csz
+    rasterTransfo['domainWidth'] = w
+
+    DB = geoTrans.path2domain(xyPath, rasterTransfo)
     print(DB)
 
     atol = 1e-8
