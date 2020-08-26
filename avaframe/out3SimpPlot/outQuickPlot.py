@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from avaframe.in3Utils import fileHandlerUtils as fU
 import numpy as np
 import os
-import seaborn
+import seaborn as sns
 import logging
 import shutil
 import glob
@@ -93,24 +93,30 @@ def quickPlot(avaDir, suffix, com1DFAOutput, simName):
     nx_loc = int(ny *0.5)
 
     # Plot data
-    fig, ax = plt.subplots(nrows=2, sharex=True)
-    ax[0].imshow(data1)
-    ax[1].imshow(data2)
-    ax[1].set_xlabel('Along track [ncols]')
-    ax[0].set_ylabel('Across track [nrows]')
-    ax[0].set_title('%s ' % (data['names'][indSuffix[0]]))
-    ax[1].set_ylabel('Across track [nrows]')
-    ax[1].set_title('%s ' % (data['names'][indSuffix[1]]))
+    # Figure 1 shows the result parameter data
+    sns.set()
+    fig = plt.figure()
+    fig.set_size_inches(10, 5)
+    ax1 = fig.add_subplot(121)
+    ax2 = fig.add_subplot(122)
+    cmap = sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True)
+    sns.heatmap(data1, cmap=cmap, ax=ax1)
+    sns.heatmap(data2, cmap=cmap, ax=ax2)
+    ax1.set_title('%s' % data['names'][indSuffix[0]])
+    ax2.set_title('%s' % data['names'][indSuffix[1]])
 
+
+    # Fgiure 2 cross and lonprofile 
     fig, ax = plt.subplots(ncols=2, figsize=(10, 5))
-    fig.suptitle('Profiles')
-    ax[0].plot(data1[:, ny_loc], 'k')
-    ax[0].plot(data2[:, ny_loc], 'b')
+    ax[0].plot(data1[:, ny_loc], 'k', linewidth=4, label='Reference')
+    ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
     ax[0].set_xlabel('Location across track [nrows]')
-    ax[0].set_ylabel('%s' % suffix)
-    ax[1].plot(data1[nx_loc, :], 'k')
-    ax[1].plot(data2[nx_loc, :], 'b')
+    ax[0].set_ylabel('Result parameter %s' % suffix, fontsize=12)
+    plt.legend()
+    ax[1].plot(data1[nx_loc, :], 'k', linewidth=4, label='Reference')
+    ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
     ax[1].set_xlabel('Location along track [ncols]')
-    ax[1].set_ylabel('%s' % suffix)
+    ax[1].set_ylabel('Result parameter %s' % suffix, fontsize=12 )
+    plt.legend()
 
     plt.show()
