@@ -170,7 +170,7 @@ def test_hockey():
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
-    cfg['TOPO'] = {'C' : 1000, 'meanAlpha' : 34, 'fLens' : 0, 'dx': 5, 'xEnd': 5000.,
+    cfg['TOPO'] = {'C' : 2200, 'meanAlpha' : 34, 'fLens' : 0, 'dx': 5, 'xEnd': 5000.,
                   'yEnd': 2000., 'channel': 'False', 'topoconst': 'True'}
     cfg['CHANNELS'] ={'c_ff': 250, 'c_radius': 100, 'c_mustart' : 0.2, 'c_muend' : 0.6, 'c_init' : 250}
 
