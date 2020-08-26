@@ -157,8 +157,8 @@ def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
     # Log info here
     log.info('Release Area written to: %s/release_%d%s as .nxyz and .shp' % (outDir, relNo, DEM_type))
     if cfgR.getboolean('GENERAL','outputtxt'):
-        shutil.copyfile(os.path.join(outDir, 'release_%d%s.nxyz' % (relNo, DEM_type)),
-                        os.path.join(outDir, 'release_%d%s.txt' % (relNo, DEM_type)))
+        shutil.copyfile(os.path.join(outDir, 'release%d%s.nxyz' % (relNo, DEM_type)),
+                        os.path.join(outDir, 'release%d%s.txt' % (relNo, DEM_type)))
 
     # Make list of Points
     xy = []
@@ -166,7 +166,7 @@ def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
         xy.append([xyPoints[m,0], xyPoints[m,1]])
 
     # Wr
-    w = shapefile.Writer(os.path.join(outDir, 'release_%d%s' % (relNo, DEM_type)))
+    w = shapefile.Writer(os.path.join(outDir, 'release%d%s' % (relNo, DEM_type)))
     w.poly([[xy[3], xy[2], xy[1], xy[0]]])
     w.field('ID', 'C', '40')
     w.field('Name', 'C', '40')
