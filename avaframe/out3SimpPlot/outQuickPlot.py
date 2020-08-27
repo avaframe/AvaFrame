@@ -89,34 +89,41 @@ def quickPlot(avaDir, suffix, com1DFAOutput, simName):
     log.info('dataset2: %s' % data['files'][indSuffix[1]])
 
     # Location of Profiles
-    ny_loc = int(nx *0.15)
+    ny_loc = int(nx *0.5)
     nx_loc = int(ny *0.5)
 
     # Plot data
     # Figure 1 shows the result parameter data
     sns.set()
     fig = plt.figure()
-    fig.set_size_inches(10, 5)
-    ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
+    fig.set_size_inches(15, 5)
+    ax1 = fig.add_subplot(131)
+    ax2 = fig.add_subplot(132)
+    ax3 = fig.add_subplot(133)
     cmap = sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True)
     sns.heatmap(data1, cmap=cmap, ax=ax1)
     sns.heatmap(data2, cmap=cmap, ax=ax2)
+    cmapdiv = sns.color_palette("RdBu_r")
+    sns.heatmap(data1-data2, cmap=cmapdiv, ax=ax3)
     ax1.set_title('%s' % data['names'][indSuffix[0]])
     ax2.set_title('%s' % data['names'][indSuffix[1]])
+    ax3.set_title('Difference ref-sim')
 
-
-    # Fgiure 2 cross and lonprofile 
-    fig, ax = plt.subplots(ncols=2, figsize=(10, 5))
+    # Fgiure 2 cross and lonprofile
+    fig, ax = plt.subplots(ncols=2, figsize=(15, 5))
     ax[0].plot(data1[:, ny_loc], 'k', linewidth=4, label='Reference')
     ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
     ax[0].set_xlabel('Location across track [nrows]')
     ax[0].set_ylabel('Result parameter %s' % suffix, fontsize=12)
+    ax[0].set_title('Cross profile at y =  %d' % ny_loc)
     plt.legend()
     ax[1].plot(data1[nx_loc, :], 'k', linewidth=4, label='Reference')
     ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
     ax[1].set_xlabel('Location along track [ncols]')
     ax[1].set_ylabel('Result parameter %s' % suffix, fontsize=12 )
-    plt.legend()
+    ax[1].set_title('Long profile at x =  %d' % nx_loc)
+
+    ax[0].legend()
+    ax[1].legend()
 
     plt.show()
