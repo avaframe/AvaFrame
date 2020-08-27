@@ -108,3 +108,25 @@ def getDFAData(avaDir, com1DFAOutput, workDir, suffix, nameDir=''):
                         shutil.copy2('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
                                     logDict['simName'][k], logDict['suffix'][m]), workDir)
                     countsuf = countsuf + 1
+
+
+def getRefData(avaDir, outputDir, suffix):
+    """ Grab reference data and save to outputDir
+
+        Inputs:
+        avaDir          avalanche directory
+        suffix          result parameter abbreviation (e.g. 'ppr')
+        outputDir       folder where files should be copied to
+    """
+
+    # Input directory and load input datasets
+    ava = avaDir.split(os.sep)[1]
+    refDir = os.path.join('..', 'benchmarks', ava)
+
+    dataRefFiles = glob.glob(refDir+os.sep + '*%s.asc' % suffix)
+
+    # copy these files to desired working directory for outQuickPlot
+    for files in dataRefFiles:
+        shutil.copy2(files, outputDir)
+
+    log.info('Reference files copied from directory: %s' % refDir)

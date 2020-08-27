@@ -25,12 +25,20 @@ log = logging.getLogger(__name__)
 
 
 def prepareData(avaDir, inputDir):
-    """ Prepare data files to be plotted """
+    """ Read all files in input directory and generate a dictionary
+        with info on:
 
-    # Input directory and load input datasets
+            files:      full file path
+            values:     actual data (e.g. raster of peak pressure)
+            names:      file name
+            simType:    entres or null (e.g. entres is simulation with entrainment and resistance)
+            resType:    which result parameter (e.g. 'ppr' is peak pressure)
+    """
+
+    # Load input datasets from input directory
     datafiles = glob.glob(inputDir+os.sep + '*.asc')
 
-    # make directory of input file names and datasets
+    # Make dictionary of input data info
     data = {'files' : [], 'values' : [], 'names' : [], 'resType' : [], 'simType' : []}
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
@@ -43,23 +51,22 @@ def prepareData(avaDir, inputDir):
     return data
 
 
-def getRefData(avaDir, outputDir, suffix):
-    """ Grab reference data to be plotted with quick plot function """
-
-    # Input directory and load input datasets
-    ava = avaDir.split(os.sep)[1]
-    refDir = os.path.join('..', 'benchmarks', ava)
-
-    dataRefFiles = glob.glob(refDir+os.sep + '*%s.asc' % suffix)
-
-    for files in dataRefFiles:
-        shutil.copy2(files, outputDir)
-
-    log.info('Reference files copied from directory: %s' % refDir)
-
-
 def quickPlot(avaDir, suffix, com1DFAOutput, simName):
-    """ Plot two raster datasets of same dimension """
+    """ Plot two raster datasets of identical dimension:
+
+        Inputs:
+
+        avaDir          avalanche directory
+        suffix          result parameter abbreviation (e.g. 'ppr')
+        com1DFAOutput   folder where results to be plotted are located
+        simName         entres or null for simulation type
+
+        Outputs:
+
+        figure 1: plot raster data for dataset1, dataset2 and their difference
+        figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
+        -plots are saved to Outputs/out3SimpPlot
+    """
 
     # Create required directories
     workDir = os.path.join(avaDir, 'Work', 'out3SimplPlot')
@@ -69,18 +76,18 @@ def quickPlot(avaDir, suffix, com1DFAOutput, simName):
     fU.getDFAData(avaDir, com1DFAOutput, workDir, suffix)
 
     # Get data from reference run
-    getRefData(avaDir, workDir, suffix)
+    fU.getRefData(avaDir, workDir, suffix)
 
     # prepare data
     data = prepareData(avaDir, workDir)
 
-    print('In here suffix is: ', suffix, ' and sim Name', simName)
-    # sava file, name, and data to dictionary
+    # get list of indices of files that are of correct simulation type and result paramete
     indSuffix = []
     for m in range(len(data['files'])):
         if data['resType'][m] == suffix and data['simType'][m] == simName:
             indSuffix.append(m)
 
+    # Load data
     data1 = data['values'][indSuffix[0]]
     data2 = data['values'][indSuffix[1]]
     ny = data1.shape[0]
