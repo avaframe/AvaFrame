@@ -231,6 +231,8 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     domainWidth = cfgSetup['domainWidth']
     pressureLimit = cfgSetup['pressureLimit']
 
+    runoutAngle = resAnalysis['runoutAngle']
+
     runout = resAnalysis['runout']
     AMPP = resAnalysis['AMPP']
     MMPP = resAnalysis['MMPP']
@@ -251,9 +253,10 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     header = ''.join(['projectName: ',  projectName, '\n',
                       'path: ', pathName, '\n',
                       'dhm: ', demName, '\n',
-                      'domain_width: ', str(domainWidth), '\n',
-                      'pressure_limit: ', str(pressureLimit), '\n',
-                      'release_mass: ', str(relMass[0]), '\n'])
+                      'domain_width: ', str(domainWidth), ' m\n',
+                      'pressure_limit: ', str(pressureLimit), ' kPa\n',
+                      'release_mass: ', str(relMass[0]), ' kg\n'
+                      'start of runout area Angle: ', str(runoutAngle), ' °\n'])
 
     outname = ''.join([cfgPath['pathResult'], os.path.sep,
                        'Results_pl', str(pressureLimit),
