@@ -532,7 +532,7 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
             cmap.set_bad(color='k')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
                                               scoord.min(), scoord.max()], cmap=cmap)
-            im.set_clim(vmin=np.nanmin(rasterArea), vmax=np.nanmax(rasterArea))
+            im.set_clim(vmin=np.floor(np.nanmin(rasterArea)), vmax=np.floor(np.nanmax(rasterArea)+1))
             im.set_data(lcoord, scoord, rasterArea)
             ref0 = ax1.images.append(im)
             cbar = ax1.figure.colorbar(im, ax=ax1, use_gridspec=True)

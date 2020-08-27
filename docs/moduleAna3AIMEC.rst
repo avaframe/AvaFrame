@@ -3,7 +3,7 @@ ana3AIMEC: Module Aimec
 
 Aimec is a post-processing module to analyze and compare results from avalanche simulations.
 It enables the comparison of different simulations (with different input parameters variations for example)
-of a same avalanche (meaning using the same DEM and going down the same avalanche path) in a standardized way.
+of the same avalanche (meaning using the same DEM and going down the same avalanche path) in a standardized way.
 
 
 Inputs
@@ -36,9 +36,9 @@ To run
 Theory
 -----------
 
-The simulation results (two dimensional field such as peak pressure or flow depth) are processed in a way
+The simulation results (two dimensional fields of e.g. peak pressure or flow depth) are processed in a way
 that it is possible to compare characteristic values such as for example, run-out, maximum peak pressure or
-depth, maximum peak velocity or speed for different simulations.
+flow depth, maximum peak velocity or speed for different simulations.
 
 
 AIMEC (Automated Indicator based Model Evaluation and Comparison, [Fischer2013]_) was developed
@@ -47,7 +47,7 @@ The simulations are analyzed and compared by projecting the results along a chos
 that are compared) called avalanche path.
 The raster data, initially located on a regular and uniform grid (with coordinates x and y) is projected on a regular non uniform grid
 (grid points are not uniformly spaced) that follows the avalanche path (with curvilinear coordinates (s,l)).
-This grid is then being "straightened" or "deskewed" to form a regular grid (with coordinates (s,l)).
+This grid can then be "straightened" or "deskewed" in order to plot it in the (s,l) coordinates system.
 The following figure illustrates the process.
 
 .. list-table::
@@ -71,7 +71,7 @@ The following figure illustrates the process.
 
 Mean and max values along path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-All two dimensional field results (for example peak pressure or depth) can be projected into the curvilinear system using
+All two dimensional field results (for example peak pressure or flow depth) can be projected into the curvilinear system using
 the previously described method. The maximum and average values of those fields are computed in each cross-section (l direction).
 For example the maximum :math:`A_{cross}^{max}(s)` and average :math:`\bar{A}_{cross}(s)` of the two
 dimensional distribution :math:`A(s,l)` is:
@@ -107,7 +107,7 @@ the global maximum (MMA) and average maximum (AMA) values of the two dimensional
 Area indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 When comparing the run-out area (corresponding to a given pressure threshold) of two simulations,
-it is possible to distinguish 4 different zones. For example, if the first simulation (sim1) is taken as reference and if True corresponds
+it is possible to distinguish four different zones. For example, if the first simulation (sim1) is taken as reference and if True corresponds
 to the assertion that the avalanche covered this zone and False there was no avalanche in this zone, those four zones are:
 
     * TP (true positive) zone: green zone on :numref:`fig-aimec-comp-new` , sim1 = True  sim2 = True
@@ -150,20 +150,20 @@ The transformation information are stored in a ``rasterTransfo`` dictionary:
 :yllc: y coordinate of the lower left cell of the (x,y) domain
 :cellsize: original raster cell size
 :domainWidth: desired width for the new domain
-:gridx: x coordinate of the points of the new raster points (2D numpy array of size (n,m))
-:gridy: y coordinate of the points of the new raster points (2D numpy array of size (n,m))
+:gridx: x coordinate of the new raster points (2D numpy array of size (n,m))
+:gridy: y coordinate of the new raster points (2D numpy array of size (n,m))
 :s: new s coordinates (1D numpy array of size n)
 :l: new l coordinates (1D numpy array  of size m)
-:x: x coordinate of the points of the centerline (s,l=0) of the new raster (1D numpy arrayof size n)
-:y: y coordinate of the points of the centerline (s,l=0) of the new raster (1D numpy arrayof size m)
+:x: x coordinate of the centerline (s,l=0) of the new raster (1D numpy arrayof size n)
+:y: y coordinate of the centerline (s,l=0) of the new raster (1D numpy arrayof size m)
 :rasterArea: area of the cells of the new raster grid (2D numpy array of size (n,m))
 :indSplit: index of the projected split point on the avalanche path
-:runoutAngle: runout Angle value (in degres)
+:runoutAngle: run-out angle value (in degres)
 :indRunoutPoint: index of the run-out point (first point under the given runoutAngle)
 
 Assign data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The results (for example peak pressure or depth) of the simulations are projected on the new grid using the
+The simulation results (for example peak pressure or flow depth) are projected on the new grid using the
 transformation information. The projected results are stored in the ``newRasters`` dictionary.
 
 .. _analyze-results:
@@ -186,7 +186,7 @@ Returns a ``resAnalysis`` dictionary with the analysis results.
 :growthIndex: growth Index
 :growthGrad: growth Gradient
 :pressureLimit: pressure Threshold
-:pCrossAll: PcrossMax for each simulation
+:pCrossAll: :math:`P_{cross}^{max}(s)` for each simulation
 
 .. _plot-save-results:
 

@@ -259,10 +259,14 @@ def WriteResults(eqOutput, saveOutPath):
                                            alphaSD[2]))
     else:
         log.warning('alphaM2SD point out of profile')
-    log.info('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
-             ' angle  in [°] : %.2f' % (x[ids_alphaP1SD], y[ids_alphaP1SD],
-                                        z[ids_alphaP1SD], s[ids_alphaP1SD],
-                                        alphaSD[0]))
+    if ids_alphaP1SD:
+        log.info('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
+                 ' angle  in [°] : %.2f' % (x[ids_alphaP1SD], y[ids_alphaP1SD],
+                                            z[ids_alphaP1SD], s[ids_alphaP1SD],
+                                            alphaSD[0]))
+    else:
+        log.warning('alphaP1SD point above Beta point')
+
 
     FileName_ext = saveOutPath + name + '_results_python.txt'
     with open(FileName_ext, 'w') as outfile:
@@ -293,9 +297,13 @@ def WriteResults(eqOutput, saveOutPath):
                                                           alphaSD[2]))
         else:
             outfile.write('alphaM2SD point out of profile\n')
-        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_alphaP1SD],
-                                                      y[ids_alphaP1SD],
-                                                      z[ids_alphaP1SD],
-                                                      s[ids_alphaP1SD],
-                                                      alphaSD[0]))
+        if ids_alphaP1SD:
+            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_alphaP1SD],
+                                                          y[ids_alphaP1SD],
+                                                          z[ids_alphaP1SD],
+                                                          s[ids_alphaP1SD],
+                                                          alphaSD[0]))
+        else:
+            outfile.write('alphaP1SD point above Beta point')
+
     return FileName_ext
