@@ -272,13 +272,17 @@ def prepareAngleProfile(beta, AvaProfile):
     z = AvaProfile['z']
     distance = s[1] - s[0]
     deltaInd = max(int(np.floor(30/distance)), 1)
-    indSplit = AvaProfile['indSplit']
+    try:
+        indSplit = AvaProfile['indSplit']
+        CuSplit = s[indSplit]
+    except KeyError:
+        log.warning('No split Point given!')
+        CuSplit = 0
     ds = np.abs(s - np.roll(s, 1))
     dz = np.abs(z - np.roll(z, 1))
     ds[0] = 0.0
     dz[0] = 0.0
     angle = np.rad2deg(np.arctan2(dz, ds))
-    CuSplit = s[indSplit]
     # get all values where Angle < 10 but >0
     # get index of first occurance and go one back to get previous value
     # (i.e. last value above 10 deg)
