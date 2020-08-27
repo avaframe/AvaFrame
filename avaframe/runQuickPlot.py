@@ -32,4 +32,4 @@ simName = 'entres'
 # Plot data comparison for all output variables defined in suffix
 for var in outputVariable:
     # Run Standalone DFA
-    outQuickPlot.quickPlot(avalancheDir, var, com1DFAOutput, simName)
+    outQuickPlot.quickPlot(avalancheDir, var, cfgMain, com1DFAOutput, simName)

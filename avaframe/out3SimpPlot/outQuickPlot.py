@@ -51,7 +51,7 @@ def prepareData(avaDir, inputDir):
     return data
 
 
-def quickPlot(avaDir, suffix, com1DFAOutput, simName):
+def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
     """ Plot two raster datasets of identical dimension:
 
         Inputs:
@@ -60,6 +60,7 @@ def quickPlot(avaDir, suffix, com1DFAOutput, simName):
         suffix          result parameter abbreviation (e.g. 'ppr')
         com1DFAOutput   folder where results to be plotted are located
         simName         entres or null for simulation type
+        cfgR            configuration for plots
 
         Outputs:
 
@@ -71,6 +72,8 @@ def quickPlot(avaDir, suffix, com1DFAOutput, simName):
     # Create required directories
     workDir = os.path.join(avaDir, 'Work', 'out3SimplPlot')
     fU.makeADir(workDir)
+    outDir = os.path.join(avaDir, 'Outputs', 'out3SimplPlot')
+    fU.makeADir(outDir, True)
 
     # Setup input from com1DFA
     fU.getDFAData(avaDir, com1DFAOutput, workDir, suffix)
@@ -115,6 +118,7 @@ def quickPlot(avaDir, suffix, com1DFAOutput, simName):
     ax1.set_title('%s' % data['names'][indSuffix[0]])
     ax2.set_title('%s' % data['names'][indSuffix[1]])
     ax3.set_title('Difference ref-sim')
+    fig.savefig(os.path.join(outDir, 'refDfa_%s.png' % suffix))
 
     # Fgiure 2 cross and lonprofile
     fig, ax = plt.subplots(ncols=2, figsize=(15, 5))
@@ -132,5 +136,9 @@ def quickPlot(avaDir, suffix, com1DFAOutput, simName):
 
     ax[0].legend()
     ax[1].legend()
+    fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s.png' % suffix))
 
-    plt.show()
+    log.info('Figures saved to: %s' % outDir)
+
+    if cfg['FLAGS'].getboolean('showPlot'):
+        plt.show()
