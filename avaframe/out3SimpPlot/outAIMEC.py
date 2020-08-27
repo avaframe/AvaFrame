@@ -416,7 +416,6 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 
     # Final result diagram - roc-plots
     rTP = resAnalysis['TP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
-    # / (resAnalysis['FP'][0] + resAnalysis['TN'][0])
     rFP = resAnalysis['FN'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
 
     fig = plt.figure(figsize=(figureWidth, figureHight), dpi=300)
