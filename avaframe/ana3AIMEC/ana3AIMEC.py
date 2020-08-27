@@ -25,7 +25,7 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 # Aimec read inputs tools
 # -----------------------------------------------------------
-debugPlotFlag = False
+debugPlotFlag = True
 
 
 def readAIMECinputs(avalancheDir, dirName='com1DFA'):
@@ -232,6 +232,7 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
     runoutAngle = 20
+    log.info('Measuring run-out length from the %s ° point' % runoutAngle)
     rasterTransfo['runoutAngle'] = runoutAngle
     _, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle, rasterTransfo)
     # find the runout point: first point under runoutAngle
@@ -627,6 +628,7 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis['growthGrad'] = grGrad
     resAnalysis['pCrossAll'] = pCrossAll
     resAnalysis['pressureLimit'] = pLim
+    resAnalysis['runoutAngle'] = rasterTransfo['runoutAngle']
 
     return resAnalysis
 
@@ -689,7 +691,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
             lw = 1
 
             fig = plt.figure(figsize=(figureWidth, figureHight), dpi=150)
-            y_lim = scoord[indRunoutPoint+20]+resAnalysis['runout'][0]
+            y_lim = scoord[indRunoutPoint+20]+resAnalysis['runout'][0,0]
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
             ax1.title.set_text('Reference Peak Presseure in the RunOut area')
