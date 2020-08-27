@@ -104,13 +104,13 @@ Header information are read and stored as object from ``class cASCheader``:
 
 		header = cASCheader()
 		header.nrows = None
-  	header.ncols = None
+		header.ncols = None
 		header.cellsize = None
-  	header.xllcorner = None
-  	header.xllcenter = None
-  	header.yllcorner = None
-  	header.yllcenter = None
-  	header.noDataValue = None
+		header.xllcorner = None
+		header.xllcenter = None
+		header.yllcorner = None
+		header.yllcenter = None
+		header.noDataValue = None
 
 **Read ASCII header:**
 

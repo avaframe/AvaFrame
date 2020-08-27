@@ -256,9 +256,9 @@ def findAngleProfile(tmp, deltaInd):
                 i = i + j + 1
                 break
         if condition:
-            ids10Point = ind - 1
+            idsAnglePoint = ind - 1
             break
-    return ids10Point
+    return idsAnglePoint
 
 
 def prepareAngleProfile(beta, AvaProfile):
