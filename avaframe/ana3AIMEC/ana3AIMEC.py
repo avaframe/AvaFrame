@@ -539,38 +539,6 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         # get mean max for each cross section for pressure
         presCrossMean = np.nansum(rasterdataPres*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
         presCrossMean1 = np.nanmean(rasterdataPres, axis=1)
-
-        if debugPlotFlag:
-
-            fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
-            ax1 = plt.subplot(121)
-            ax1.title.set_text('Area of the cells of the new raster\n' +
-                               'Black = out of original raster')
-            cmap = cmap1
-            cmap.set_under(color='w')
-            cmap.set_bad(color='k')
-            im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
-                                              scoord.min(), scoord.max()], cmap=cmap)
-            im.set_clim(vmin=np.floor(np.nanmin(rasterArea)), vmax=np.floor(np.nanmax(rasterArea)+1))
-            im.set_data(lcoord, scoord, rasterArea)
-            ref0 = ax1.images.append(im)
-            cbar = ax1.figure.colorbar(im, ax=ax1, use_gridspec=True)
-            cbar.ax.set_ylabel(r'area $[m^2]$')
-            ax1.set_xlim([lcoord.min(), lcoord.max()])
-            ax1.set_ylim([scoord.min(), scoord.max()])
-            ax1.set_xlabel(r'$l\;[m]$')
-            ax1.set_ylabel(r'$s\;[m]$')
-
-            ax2 = plt.subplot(122)
-            ax2.title.set_text(r'$P_{cross}^{max}(s)$')
-            ax2.plot(scoord, presCrossMean1, 'k', label='simple average')
-            ax2.plot(scoord, presCrossMean, 'b', label='weighted average')
-            ax2.set_xlabel(r'$l\;[m]$')
-            ax2.set_ylabel(r'$s\;[m]$')
-            ax2.legend(loc=0)
-            plt.subplots_adjust(wspace = 0.3)
-            plt.show()
-
         presCrossMax = np.nanmax(rasterdataPres, 1)
         # also get the Area corresponding to those cells
         indPresCrossMax = np.nanargmax(rasterdataPres, 1)
