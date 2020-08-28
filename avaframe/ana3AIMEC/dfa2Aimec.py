@@ -127,15 +127,15 @@ def mainDfa2Aimec(avaDir, cfgDFA, cfgSetup):
 
     # Create required directories
     workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
-    fU.makeADir(workDir, FlagRemDir=True)
+    fU.makeADir(workDir, flagRemDir=True)
     flowDepthDir = os.path.join(workDir, 'dfa_depth')
-    fU.makeADir(flowDepthDir, FlagRemDir=True)
+    fU.makeADir(flowDepthDir, flagRemDir=True)
     pressureDir = os.path.join(workDir, 'dfa_pressure')
-    fU.makeADir(pressureDir, FlagRemDir=True)
+    fU.makeADir(pressureDir, flagRemDir=True)
     massDir = os.path.join(workDir, 'dfa_mass_balance')
-    fU.makeADir(massDir, FlagRemDir=True)
+    fU.makeADir(massDir, flagRemDir=True)
     massDirTemp = os.path.join(workDir, 'dfa_mass_balance_temp')
-    fU.makeADir(massDirTemp, FlagRemDir=True)
+    fU.makeADir(massDirTemp, flagRemDir=True)
     log.info('Aimec Work folders created to start postprocessing com1DFA data')
 
     # Setup input from com1DFA
