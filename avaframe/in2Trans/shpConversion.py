@@ -1,7 +1,9 @@
 """
-Conversion functions to read/ write Shape files or xyz profiles
-requires import shapefile -> pip/pip3 install pyshp
+    Conversion functions to read/ write Shape files or xyz profiles
+
+    This file is part of Avaframe.
 """
+
 
 import os
 import shapefile

@@ -1,4 +1,9 @@
-'''Utilities for handling configuration files'''
+'''
+    Utilities for handling configuration files
+
+    This file is part of Avaframe.
+
+'''
 
 import configparser
 import os
@@ -50,7 +55,7 @@ def getModuleConfig(module, fileOverride=''):
 
     # get path of module
     modPath = os.path.dirname(module.__file__)
-    
+
     # get filename of module
     modName = os.path.basename(module.__file__)
     modName = os.path.splitext(modName)[0]

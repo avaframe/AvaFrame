@@ -1,6 +1,7 @@
-#!/usr/bin/env python
-# coding: utf-8
-""" Main file for Post processing Alpha Beta results
+"""
+    Plotting and saving Alpha Beta results
+
+    This file is part of Avaframe.
 """
 
 import pickle

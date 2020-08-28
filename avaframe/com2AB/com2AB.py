@@ -1,7 +1,8 @@
-#!/usr/bin/env python
-# coding: utf-8
-""" Main file for module com2AB - Alpha Beta
 """
+    Main logic for Alpha beta computational module
+
+    This file is part of Avaframe.
+""""
 
 import os
 import glob

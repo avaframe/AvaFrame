@@ -1,3 +1,9 @@
+"""
+    Plotting and saving AIMEC results
+
+    This file is part of Avaframe.
+"""
+
 import sys
 import os
 import logging
@@ -11,7 +17,6 @@ import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 from matplotlib import cm
 from matplotlib.image import NonUniformImage
-import seaborn as sns
 
 
 # Local imports

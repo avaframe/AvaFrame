@@ -1,3 +1,9 @@
+"""
+    Main logic for AIMEC post processing
+
+    This file is part of Avaframe.
+"""
+
 import sys
 import os
 import time
