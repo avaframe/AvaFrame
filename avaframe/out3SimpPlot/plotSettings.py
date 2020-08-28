@@ -33,4 +33,4 @@ cmapjet = copy.copy(matplotlib.cm.jet)
 cmapjet.set_bad(color='k')
 # divergent color map
 cmapdiv = sns.color_palette("RdBu_r")
-cmapdiv.set_bad(color='k')
+# cmapdiv.set_bad(color='k')
