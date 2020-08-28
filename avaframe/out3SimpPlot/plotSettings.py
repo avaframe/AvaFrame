@@ -10,8 +10,8 @@ import copy
 import matplotlib
 
 # define figure dimentions
-figW = 12
-figH = 8
+figW = 6
+figH = 6
 # define figure resolution
 figReso = 150
 # define lines and marker properties
@@ -20,7 +20,7 @@ ms = 10
 markers = ['+', 'o', 'x', '*', 's', 'd', '^', 'v', '>', '<', 'p', 'h', '.',
            '^', 'v', '>', '<', 'p', 'h', '.']
 # font size
-fs = 10
+fs = 12
 
 # define seaborn style and color maps
 sns.set(font_scale = 1)

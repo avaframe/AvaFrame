@@ -53,7 +53,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     DBYl = rasterTransfo['DBYl']*cellsize+yllc
     DBYr = rasterTransfo['DBYr']*cellsize+yllc
 
-    fig = plt.figure(figsize=(figW, figH), dpi=figReso)
+    fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
 
 #    for figure: referenz-simulation bei pLim=1
     ax1 = plt.subplot(121)
@@ -157,7 +157,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     pPercentile = sp.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
 
 
-    fig = plt.figure(figsize=(figW, figH), dpi=figReso)
+    fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
     ax1 = plt.subplot(121)
     ax1.title.set_text('Peak Pressure 2D plot for the reference')
     ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
@@ -357,7 +357,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     xlimProfAxis = max(sPath) + 50
 
     # Final result diagram - z_profile+data
-    fig = plt.figure(figsize=(figW, figH), dpi=300)
+    fig = plt.figure(figsize=(figW*2, figH), dpi=300)
 
 
     mk = 0
@@ -378,7 +378,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         cbar.ax.set_ylabel('Counts')
     ax2 = ax1.twinx()
     ax2.set_ylabel('z [m]', color='g', fontsize=2*fs)
-    ax2.plot(sPath, zPath, color='green', label='path', linestyle='--', linewidth=2*lw)
+    ax2.plot(sPath, zPath, color='green', label='path', linestyle='--', linewidth=lw)
     plt.xlim([0, xlimProfAxis])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
     if not plotDensity:
@@ -400,7 +400,6 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
             if mk == len(markers):
                 mk = 1
     plt.grid('on')
-
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
                            str(int(plim)), '_', tipo, '.pdf'])
     outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
@@ -419,8 +418,8 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 
     mk = 0
     ax1 = fig.add_subplot(111)
-    ax1.set_ylabel('True positive rate', fontsize=2*fs)
-    ax1.set_xlabel('False positive rate', fontsize=2*fs)
+    ax1.set_ylabel('True positive rate', fontsize=fs)
+    ax1.set_xlabel('False positive rate', fontsize=fs)
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)

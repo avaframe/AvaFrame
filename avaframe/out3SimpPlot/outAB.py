@@ -204,7 +204,7 @@ def plotProfile(DGM, eqOutput, save_file, flags):
                  label='Alpha - 2SD')
 
     ax = plt.gca()
-
+    fig_prof.tight_layout()
     versionText = datetime.datetime.now().strftime("%d.%m.%y") + \
         '; ' + 'AlphaBeta ' + ParameterSet
     plt.text(0, 0, versionText, fontsize=8, verticalalignment='bottom',

@@ -18,6 +18,8 @@ import logging
 import shutil
 import glob
 
+# Local imports
+from avaframe.out3SimpPlot.plotSettings import *
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -105,15 +107,13 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
     # Plot data
     # Figure 1 shows the result parameter data
     sns.set()
-    fig = plt.figure()
-    fig.set_size_inches(15, 5)
+    fig = plt.figure(figsize=(figW*3, figH), dpi=figReso)
     ax1 = fig.add_subplot(131)
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
-    cmap = sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True)
+    cmap = cmapGB
     sns.heatmap(data1, cmap=cmap, ax=ax1)
     sns.heatmap(data2, cmap=cmap, ax=ax2)
-    cmapdiv = sns.color_palette("RdBu_r")
     sns.heatmap(data1-data2, cmap=cmapdiv, ax=ax3)
     ax1.set_title('%s' % data['names'][indSuffix[0]])
     ax2.set_title('%s' % data['names'][indSuffix[1]])
@@ -121,17 +121,17 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
     fig.savefig(os.path.join(outDir, 'refDfa_%s.png' % suffix))
 
     # Fgiure 2 cross and lonprofile
-    fig, ax = plt.subplots(ncols=2, figsize=(15, 5))
-    ax[0].plot(data1[:, ny_loc], 'k', linewidth=4, label='Reference')
+    fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH), dpi=figReso)
+    ax[0].plot(data1[:, ny_loc], 'k', linewidth=lw, label='Reference')
     ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
     ax[0].set_xlabel('Location across track [nrows]')
-    ax[0].set_ylabel('Result parameter %s' % suffix, fontsize=12)
+    ax[0].set_ylabel('Result parameter %s' % suffix, fontsize=fs)
     ax[0].set_title('Cross profile at y =  %d' % ny_loc)
     plt.legend()
-    ax[1].plot(data1[nx_loc, :], 'k', linewidth=4, label='Reference')
+    ax[1].plot(data1[nx_loc, :], 'k', linewidth=lw, label='Reference')
     ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
     ax[1].set_xlabel('Location along track [ncols]')
-    ax[1].set_ylabel('Result parameter %s' % suffix, fontsize=12 )
+    ax[1].set_ylabel('Result parameter %s' % suffix, fontsize=fs )
     ax[1].set_title('Long profile at x =  %d' % nx_loc)
 
     ax[0].legend()
