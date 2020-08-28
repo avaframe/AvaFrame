@@ -43,7 +43,7 @@ cmapViridis = copy.copy(matplotlib.cm.viridis)
 cmapPlasma.set_bad(color='k')
 
 # divergent color map
-cmapdiv = sns.color_palette("RdBu_r")
+cmapdiv = copy.copy(matplotlib.cm.RdBu_r) #sns.color_palette("RdBu_r")
 
 
 cmap1 = cmapViridis

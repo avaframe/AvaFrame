@@ -10,15 +10,16 @@ This file is part of Avaframe.
 """
 
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from avaframe.in3Utils import fileHandlerUtils as fU
 import numpy as np
 import os
-import seaborn as sns
 import logging
 import shutil
 import glob
 
 # Local imports
+import avaframe.in3Utils.ascUtils as IOf
 from avaframe.out3SimpPlot.plotSettings import *
 
 # create local logger
@@ -49,7 +50,8 @@ def prepareData(avaDir, inputDir):
         data['names'].append(name)
         data['simType'].append(name.split('_')[1])
         data['resType'].append(name.split('_')[3])
-
+        header = IOf.readASCheader(datafiles[m])
+        data['cellsize'] = header.cellsize
     return data
 
 
@@ -85,7 +87,7 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
 
     # prepare data
     data = prepareData(avaDir, workDir)
-
+    cellsize = data['cellsize']
     # get list of indices of files that are of correct simulation type and result paramete
     indSuffix = []
     for m in range(len(data['files'])):
@@ -97,6 +99,8 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
     data2 = data['values'][indSuffix[1]]
     ny = data1.shape[0]
     nx = data1.shape[1]
+    Ly = ny*cellsize
+    Lx = nx*cellsize
     log.info('dataset1: %s' % data['files'][indSuffix[0]])
     log.info('dataset2: %s' % data['files'][indSuffix[1]])
 
@@ -108,18 +112,27 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
     # Figure 1 shows the result parameter data
     fig = plt.figure(figsize=(figW*3, figH), dpi=figReso)
     ax1 = fig.add_subplot(131)
-    ax2 = fig.add_subplot(132)
-    ax3 = fig.add_subplot(133)
     cmap = cmapGB
-    sns.heatmap(data1, cmap=cmap, ax=ax1, xticklabels=False, yticklabels=False)
-    sns.heatmap(data2, cmap=cmap, ax=ax2, xticklabels=False, yticklabels=False)
-    sns.heatmap(data1-data2, cmap=cmapdiv, ax=ax3, xticklabels=False, yticklabels=False)
+    im1 = plt.imshow(data1, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
+    fig.colorbar(im1, ax=ax1)
+    ax1.set_aspect('auto')
     ax1.set_title('%s' % data['names'][indSuffix[0]])
-    ax1.invert_yaxis()
-    ax2.invert_yaxis()
-    ax3.invert_yaxis()
+    ax1.set_xlabel('$x\;[m]$')
+    ax1.set_ylabel('$y\;[m]$')
+    ax2 = fig.add_subplot(132)
+    im2 = plt.imshow(data2, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
+    fig.colorbar(im2, ax=ax2)
+    ax2.set_aspect('auto')
+    ax2.set_xlabel('$x\;[m]$')
     ax2.set_title('%s' % data['names'][indSuffix[1]])
+    ax3 = fig.add_subplot(133)
+    cmap = cmapdiv
+    im3 = plt.imshow(data1-data2, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
+    fig.colorbar(im3, ax=ax3)
+    ax3.set_aspect('auto')
+    ax3.set_xlabel('$x\;[m]$')
     ax3.set_title('Difference ref-sim')
+    fig.tight_layout()
     fig.savefig(os.path.join(outDir, 'refDfa_%s.png' % suffix))
 
     # Fgiure 2 cross and lonprofile
@@ -129,7 +142,6 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
     ax[0].set_xlabel('Location across track [nrows]')
     ax[0].set_ylabel('Result parameter %s' % suffix, fontsize=fs)
     ax[0].set_title('Cross profile at y =  %d' % ny_loc)
-    plt.legend()
     ax[1].plot(data1[nx_loc, :], 'k', linewidth=lw, label='Reference')
     ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
     ax[1].set_xlabel('Location along track [ncols]')
@@ -138,6 +150,7 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
 
     ax[0].legend()
     ax[1].legend()
+    fig.tight_layout()
     fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s.png' % suffix))
 
     log.info('Figures saved to: %s' % outDir)
