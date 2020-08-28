@@ -527,7 +527,7 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
 
         if debugPlotFlag:
 
-            fig = plt.figure(figsize=(figW, figH), dpi=figReso)
+            fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
             ax1 = plt.subplot(121)
             ax1.title.set_text('Area of the cells of the new raster\n' +
                                'Black = out of original raster')
@@ -691,7 +691,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
         newRasterData[np.where(np.nan_to_num(newRasterData) >= pLim)] = 1
 
         if debugPlotFlag and i > 0:
-            fig = plt.figure(figsize=(figW, figH), dpi=figReso)
+            fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
             y_lim = scoord[indRunoutPoint+20]+resAnalysis['runout'][0,0]
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
