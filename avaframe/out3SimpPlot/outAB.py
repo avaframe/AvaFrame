@@ -12,6 +12,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import seaborn as sns
+
+# Local imports
+from avaframe.out3SimpPlot.plotSettings import *
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -133,7 +137,7 @@ def plotPath(DGM, splitPoint, eqOutput, flags):
 
     if flags.getboolean('PlotPath'):
         # Plot raster and path
-        fig1, ax1 = plt.subplots()
+        fig1, ax1 = plt.subplots(figsize=(figW, figH), dpi=figReso)
         titleText = name
         plt.title(titleText)
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
@@ -173,7 +177,7 @@ def plotProfile(DGM, eqOutput, save_file, flags):
     name = eqOutput['Name']
     # Plot the whole profile with beta, alpha ... points and lines
     # plt.close("all")
-    fig_prof = plt.figure(figsize=(10, 6))
+    fig_prof = plt.figure(figsize=(figW, figH), dpi=figReso)
     titleText = name
     plt.title(titleText)
 

@@ -11,12 +11,14 @@ import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 from matplotlib import cm
 from matplotlib.image import NonUniformImage
+import seaborn as sns
 
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in3Utils.ascUtils as IOf
+from avaframe.out3SimpPlot.plotSettings import *
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -46,11 +48,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     DBYl = rasterTransfo['DBYl']*cellsize+yllc
     DBYr = rasterTransfo['DBYr']*cellsize+yllc
 
-    figureWidth = 2*10
-    figureHight = 2*5
-    lw = 1
-
-    fig = plt.figure(figsize=(figureWidth, figureHight), dpi=150)
+    fig = plt.figure(figsize=(figW, figH), dpi=figReso)
 
 #    for figure: referenz-simulation bei pLim=1
     ax1 = plt.subplot(121)
@@ -59,21 +57,20 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     yy = rasterTransfo['y'][indRunoutPoint]
     newRasterdata = rasterdata
     maskedArray = newRasterdata  # np.ma.masked_where(np.isnan(newRasterdata), newRasterdata)
-    cmap = copy.copy(matplotlib.cm.jet)
+    cmap = cmap1
     cmap.set_under(color='w')
-    cmap.set_bad(color='k')
 
     n, m = np.shape(newRasterdata)
     x = np.arange(m)*cellsize+xllc
     y = np.arange(n)*cellsize+yllc
-    im = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
+    im0 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
-    im.set_clim(vmin=0.000000001)
-    im.set_data(x, y, maskedArray)
-    ref1 = ax1.images.append(im)
-    cbar = ax1.figure.colorbar(im, ax=ax1, use_gridspec=True)
+    im0.set_clim(vmin=0.000000001)
+    im0.set_data(x, y, maskedArray)
+    ref1 = ax1.images.append(im0)
+    # cbar = ax1.figure.colorbar(im0, ax=ax1, use_gridspec=True)
     plt.autoscale(False)
-    ref0 = plt.plot(xx, yy, 'ro', label='Beta point')
+    ref0 = plt.plot(xx, yy, 'ro', markersize=ms, label='Beta point')
     ref2 = plt.plot(xPath, yPath,
                     'b-', linewidth=lw, label='flow path')
     ref3 = plt.plot(DBXl, DBYl,
@@ -97,7 +94,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(inputData['avalData'])
     lcoord = rasterTransfo['l']
     scoord = rasterTransfo['s']
-    ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='r', linewidth=1,
+    ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='r', linewidth=lw,
                        linestyle='-', label='Beta point')
     maskedArray = isosurf  # np.ma.array(isosurf,mask=np.isnan(isosurf))
     im = NonUniformImage(ax2, extent=[lcoord.min(), lcoord.max(),
@@ -112,7 +109,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ax2.set_ylim([scoord.min(), scoord.max()])
     ax2.set_xlabel(r'$l\;[m]$')
     ax2.set_ylabel(r'$s\;[m]$')
-    ax2.legend(loc=0)
+    ax2.legend()
+
 
     fig.tight_layout()
     if cfgFlags.getboolean('plotFigure'):
@@ -153,25 +151,23 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     pMedian = np.median(pCrossAll, axis=0)
     pPercentile = sp.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
 
-    figureWidth = 3*5
-    figureHight = 3*3
 
-    fig = plt.figure(figsize=(figureWidth, figureHight), dpi=150)
+    fig = plt.figure(figsize=(figW, figH), dpi=figReso)
     ax1 = plt.subplot(121)
     ax1.title.set_text('Peak Pressure 2D plot for the reference')
-    ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k', linewidth=1,
+    ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
                        linestyle='-', label='Beta point')
-    ref1 = ax1.axhline(y=np.max(runout), color='r', linewidth=1,
+    ref1 = ax1.axhline(y=np.max(runout), color='r', linewidth=lw,
                        linestyle='-', label='runout max')
-    ref2 = ax1.axhline(y=np.average(runout), color='y', linewidth=1,
+    ref2 = ax1.axhline(y=np.average(runout), color='y', linewidth=lw,
                        linestyle='-', label='runout mean')
-    ref3 = ax1.axhline(y=np.min(runout), color='g', linewidth=1,
+    ref3 = ax1.axhline(y=np.min(runout), color='g', linewidth=lw,
                        linestyle='-', label='runout min')
     # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
     isosurf = copy.deepcopy(rasterdataPres)
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap = copy.copy(matplotlib.cm.jet)
+    cmap = cmap1
     cmap.set_bad('w', 1.)
     im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
@@ -191,8 +187,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ax2.fill_betweenx(scoord, pPercentile[2], pPercentile[0],
                       facecolor=[.8, .8, .8], alpha=0.5, label='quantiles')
     ref1 = mpatches.Patch(alpha=0.5, color=[.8, .8, .8])
-    ref2 = ax2.plot(pMedian, scoord, color='r', linewidth=2, label='median')
-    ref3 = ax2.plot(pMean, scoord, color='b', linewidth=1, label='mean')
+    ref2 = ax2.plot(pMedian, scoord, color='r', linewidth=2*lw, label='median')
+    ref3 = ax2.plot(pMean, scoord, color='b', linewidth=lw, label='mean')
     # ref3 = mlines.Line2D([], [], color='b', linewidth=2)
     ax2.set_ylabel(r'$l\;[m]$')
     ax2.set_ylim([yy.min(), yy.max()])
@@ -316,11 +312,8 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     maxMaxDPP = resAnalysis['MMPP']
     GI = resAnalysis['growthIndex']
 
-    figureWidth = 7*2
-    figureHight = 4*2
-    fs = 20
+
     mks = 10
-    lw = 2
     # includes flag for y axis -
     # 1 = mean pressure data
     # 2 = groth index
@@ -359,10 +352,9 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     xlimProfAxis = max(sPath) + 50
 
     # Final result diagram - z_profile+data
-    fig = plt.figure(figsize=(figureWidth, figureHight), dpi=300)
+    fig = plt.figure(figsize=(figW, figH), dpi=300)
 
-    markers = ['+', 'o', 'x', '*', 's', 'd', '^', 'v', '>', '<', 'p', 'h', '.',
-               '^', 'v', '>', '<', 'p', 'h', '.']
+
     mk = 0
 
 #    show flow path
@@ -418,7 +410,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     rTP = resAnalysis['TP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
     rFP = resAnalysis['FN'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
 
-    fig = plt.figure(figsize=(figureWidth, figureHight), dpi=300)
+    fig = plt.figure(figsize=(figW, figH), dpi=figReso)
 
     mk = 0
     ax1 = fig.add_subplot(111)
