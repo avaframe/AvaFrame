@@ -477,6 +477,8 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
 
     resAnalysis = analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath)
 
+
+    outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
     outAimec.visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
     return resAnalysis
@@ -531,6 +533,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     for i in range(nTopo):
         rasterdataPres = dataPressure[i]
         rasterdataDepth = dataDepth[i]
+        rasterdataSpeed = dataSpeed[i]
         rasterArea = rasterTransfo['rasterArea']
         rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
         # get mean max for each cross section for pressure

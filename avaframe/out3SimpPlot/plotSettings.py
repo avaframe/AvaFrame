@@ -6,8 +6,8 @@
 
 import seaborn as sns
 from matplotlib import cm
-import copy
 import matplotlib
+import cmocean
 
 # define figure dimentions
 figW = 6
@@ -35,15 +35,26 @@ cmapGB.set_bad(color='k')
 cmapPP = sns.cubehelix_palette(8, as_cmap=True)
 cmapPP.set_bad(color='k')
 
-cmapjet = copy.copy(matplotlib.cm.jet)
+cmapReds = matplotlib.cm.Reds
+cmapReds.set_bad(color='k')
+cmapBlues = matplotlib.cm.Blues
+cmapBlues.set_bad(color='k')
+
+cmapjet = matplotlib.cm.jet
 cmapjet.set_bad(color='k')
-cmapPlasma = copy.copy(matplotlib.cm.plasma)
+cmapPlasma = matplotlib.cm.plasma
 cmapPlasma.set_bad(color='k')
-cmapViridis = copy.copy(matplotlib.cm.viridis)
-cmapPlasma.set_bad(color='k')
+cmapViridis = matplotlib.cm.viridis
+cmapViridis.set_bad(color='k')
+
+cmapIce = cmocean.cm.ice
+cmapIce.set_bad(color='k')
+
+cmapDense = cmocean.cm.dense
+cmapDense.set_bad(color='k')
 
 # divergent color map
-cmapdiv = copy.copy(matplotlib.cm.RdBu_r) #sns.color_palette("RdBu_r")
+cmapdiv = matplotlib.cm.RdBu_r #sns.color_palette("RdBu_r")
 
 
 cmap1 = cmapViridis
