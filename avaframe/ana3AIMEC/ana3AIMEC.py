@@ -45,6 +45,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_pressure')
     pathFlowHeight = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_depth')
     pathMassBalance = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_mass_balance')
+    pathSpeed = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_speed')
 
     if not os.path.exists(pathMassBalance):
         os.makedirs(pathMassBalance)
@@ -66,6 +67,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     cfgPath['pressurefileList'] = getFileList(pathPressure)
     cfgPath['depthfileList'] = getFileList(pathFlowHeight)
     cfgPath['massfileList'] = getFileList(pathMassBalance)
+    cfgPath['speedfileList'] = getFileList(pathSpeed)
 
     pathResult = os.path.join(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
     cfgPath['pathResult'] = pathResult
@@ -120,6 +122,13 @@ def mainAIMEC(cfgPath, cfg):
     newRasterDepth = assignData(cfgPath['depthfileList'], rasterTransfo,
                                 interpMethod)
     newRasters['newRasterDepth'] = newRasterDepth
+    # assign speed data
+    if cfgPath['speedfileList']:
+        log.info("Assigning speed data to deskewed raster")
+        newRasterSpeed = assignData(cfgPath['speedfileList'], rasterTransfo,
+                                    interpMethod)
+        newRasters['newRasterSpeed'] = newRasterSpeed
+
     # assign dem data
     log.info("Assigning dem data to deskewed raster")
     newRasterDEM = assignData([cfgPath['demSource']], rasterTransfo,
@@ -464,7 +473,7 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     Analyse pressure and depth deskewed data
     """
 
-    resAnalysis = analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath)
+    resAnalysis = analyzeFields(rasterTransfo, pLim, newRasters, cfgPath)
 
     resAnalysis = analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath)
 
@@ -473,9 +482,9 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     return resAnalysis
 
 
-def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
+def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     """
-    Analyse pressure and depth.
+    Analyse pressure speed and depth.
     Calculate runout, Max Peak Pressure, Average PP... same for depth
     Get mass and entrainement
     """
@@ -486,6 +495,7 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
 
     dataPressure = newRasters['newRasterPressure']
     dataDepth = newRasters['newRasterDepth']
+    dataSpeed = newRasters['newRasterSpeed']
     dataDEM = newRasters['newRasterDEM']
     scoord = rasterTransfo['s']
     lcoord = rasterTransfo['l']
@@ -504,6 +514,8 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
     mmpp = np.empty((nTopo))
     amd = np.empty((nTopo))
     mmd = np.empty((nTopo))
+    ams = np.empty((nTopo))
+    mms = np.empty((nTopo))
     elevRel = np.empty((nTopo))
     deltaH = np.empty((nTopo))
     grIndex = np.empty((nTopo))
@@ -561,7 +573,7 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
         indPresCrossMax = np.nanargmax(rasterdataPres, 1)
         ind1 = np.arange(np.shape(rasterdataPres)[0])
         AreapresCrossMax = rasterArea[ind1, indPresCrossMax]
-        # get mean max for each cross section for pressure
+        # get mean max for each cross section for depth
         dCrossMean = np.nansum(rasterdataDepth*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
         # dCrossMean = np.nanmean(rasterdataDepth, axis=1)
         dCrossMax = np.nanmax(rasterdataDepth, 1)
@@ -569,6 +581,14 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
         indDCrossMax = np.nanargmax(rasterdataDepth, 1)
         ind1 = np.arange(np.shape(rasterdataDepth)[0])
         AreadCrossMax = rasterArea[ind1, indDCrossMax]
+        # get mean max for each cross section for speed
+        sCrossMean = np.nansum(rasterdataSpeed*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+        # dCrossMean = np.nanmean(rasterdataDepth, axis=1)
+        sCrossMax = np.nanmax(rasterdataSpeed, 1)
+        # also get the Area corresponding to those cells
+        indSCrossMax = np.nanargmax(rasterdataSpeed, 1)
+        ind1 = np.arange(np.shape(rasterdataSpeed)[0])
+        AreasCrossMax = rasterArea[ind1, indSCrossMax]
 
         pCrossAll[i] = presCrossMax
         #   Determine runout according to maximum and averaged values
@@ -598,6 +618,10 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
         amd[i] = np.nansum((dCrossMax*AreadCrossMax)[cupper:clower+1]) / \
             np.nansum(AreadCrossMax[cupper:clower+1])
         mmd[i] = max(dCrossMax[cupper:clower+1])
+
+        ams[i] = np.nansum((sCrossMax*AreasCrossMax)[cupper:clower+1]) / \
+            np.nansum(AreasCrossMax[cupper:clower+1])
+        mms[i] = max(sCrossMax[cupper:clower+1])
     #    Runout
         runout[0, i] = scoord[clower] - sBeta
         runout[1, i] = x[clower]
@@ -625,6 +649,8 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis['MMPP'] = mmpp
     resAnalysis['AMD'] = amd
     resAnalysis['MMD'] = mmd
+    resAnalysis['AMS'] = ams
+    resAnalysis['MMS'] = mms
     resAnalysis['elevRel'] = elevRel
     resAnalysis['deltaH'] = deltaH
     resAnalysis['relMass'] = releaseMass
