@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.image import NonUniformImage
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import seaborn as sns
 
 
 # Local imports
@@ -18,6 +19,7 @@ import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in3Utils.ascUtils as IOf
 import avaframe.out3SimpPlot.outAIMEC as outAimec
+from avaframe.out3SimpPlot.plotSettings import *
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 # Aimec read inputs tools
 # -----------------------------------------------------------
-debugPlotFlag = True
+debugPlotFlag = False
 
 
 def readAIMECinputs(avalancheDir, dirName='com1DFA'):
@@ -518,16 +520,12 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
         presCrossMean1 = np.nanmean(rasterdataPres, axis=1)
 
         if debugPlotFlag:
-            figureWidth = 2*10
-            figureHight = 2*5
-            lw = 1
 
-            fig = plt.figure(figsize=(figureWidth, figureHight), dpi=150)
-        #    for figure: referenz-simulation bei pLim=1
+            fig = plt.figure(figsize=(figW, figH), dpi=figReso)
             ax1 = plt.subplot(121)
             ax1.title.set_text('Area of the cells of the new raster\n' +
                                'Black = out of original raster')
-            cmap = copy.copy(matplotlib.cm.jet)
+            cmap = cmap1
             cmap.set_under(color='w')
             cmap.set_bad(color='k')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
@@ -549,6 +547,7 @@ def analyzePressureDepth(rasterTransfo, pLim, newRasters, cfgPath):
             ax2.set_xlabel(r'$l\;[m]$')
             ax2.set_ylabel(r'$s\;[m]$')
             ax2.legend(loc=0)
+            plt.subplots_adjust(wspace = 0.3)
             plt.show()
 
         presCrossMax = np.nanmax(rasterdataPres, 1)
@@ -686,16 +685,12 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
         newRasterData[np.where(np.nan_to_num(newRasterData) >= pLim)] = 1
 
         if debugPlotFlag and i > 0:
-            figureWidth = 2*10
-            figureHight = 2*5
-            lw = 1
-
-            fig = plt.figure(figsize=(figureWidth, figureHight), dpi=150)
+            fig = plt.figure(figsize=(figW, figH), dpi=figReso)
             y_lim = scoord[indRunoutPoint+20]+resAnalysis['runout'][0,0]
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
             ax1.title.set_text('Reference Peak Presseure in the RunOut area')
-            cmap = copy.copy(matplotlib.cm.jet)
+            cmap = cmap2
             cmap.set_under(color='w')
             cmap.set_bad(color='k')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
@@ -729,6 +724,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
             ax2.set_ylim([scoord[indRunoutPoint-20], y_lim])
             ax2.set_xlabel(r'$l\;[m]$')
             ax2.set_ylabel(r'$s\;[m]$')
+            plt.subplots_adjust(wspace = 0.3)
             # fig.tight_layout()
             plt.show()
 
