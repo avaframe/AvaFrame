@@ -42,7 +42,8 @@ def prepareData(avaDir, inputDir):
     datafiles = glob.glob(inputDir+os.sep + '*.asc')
 
     # Make dictionary of input data info
-    data = {'files' : [], 'values' : [], 'names' : [], 'resType' : [], 'simType' : []}
+    data = {'files' : [], 'values' : [], 'names' : [], 'resType' : [],
+            'simType' : [], 'releaseArea' : []}
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
         data['values'].append( np.loadtxt(datafiles[m], skiprows=6))
@@ -50,10 +51,11 @@ def prepareData(avaDir, inputDir):
         data['names'].append(name)
         data['simType'].append(name.split('_')[1])
         data['resType'].append(name.split('_')[3])
+        data['releaseArea'].append(name.split('_')[0])
         header = IOf.readASCheader(datafiles[m])
         data['cellsize'] = header.cellsize
-    return data
 
+    return data
 
 def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
     """ Plot two raster datasets of identical dimension:
@@ -75,7 +77,7 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
 
     # Create required directories
     workDir = os.path.join(avaDir, 'Work', 'out3SimplPlot')
-    fU.makeADir(workDir, flagRemDir=True)
+    fU.makeADir(workDir, flagRemDir=False)
     outDir = os.path.join(avaDir, 'Outputs', 'out3SimplPlot')
     fU.makeADir(outDir, flagRemDir=False)
 
@@ -88,72 +90,78 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
     # prepare data
     data = prepareData(avaDir, workDir)
     cellsize = data['cellsize']
-    # get list of indices of files that are of correct simulation type and result paramete
-    indSuffix = []
-    for m in range(len(data['files'])):
-        if data['resType'][m] == suffix and data['simType'][m] == simName:
-            indSuffix.append(m)
 
-    # Load data
-    data1 = data['values'][indSuffix[0]]
-    data2 = data['values'][indSuffix[1]]
-    ny = data1.shape[0]
-    nx = data1.shape[1]
-    Ly = ny*cellsize
-    Lx = nx*cellsize
-    log.info('dataset1: %s' % data['files'][indSuffix[0]])
-    log.info('dataset2: %s' % data['files'][indSuffix[1]])
+    # Count the number of release areas
+    relAreas = set(data['releaseArea'])
+    print(relAreas)
 
-    # Location of Profiles
-    ny_loc = int(nx *0.5)
-    nx_loc = int(ny *0.5)
+    for rel in relAreas:
+        # get list of indices of files that are of correct simulation type and result paramete
+        indSuffix = []
+        for m in range(len(data['files'])):
+            if data['resType'][m] == suffix and data['simType'][m] == simName and data['releaseArea'][m] == rel:
+                indSuffix.append(m)
 
-    # Plot data
-    # Figure 1 shows the result parameter data
-    fig = plt.figure(figsize=(figW*3, figH), dpi=figReso)
-    ax1 = fig.add_subplot(131)
-    cmap = cmapGB
-    im1 = plt.imshow(data1, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
-    fig.colorbar(im1, ax=ax1)
-    ax1.set_aspect('auto')
-    ax1.set_title('%s' % data['names'][indSuffix[0]])
-    ax1.set_xlabel('$x\;[m]$')
-    ax1.set_ylabel('$y\;[m]$')
-    ax2 = fig.add_subplot(132)
-    im2 = plt.imshow(data2, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
-    fig.colorbar(im2, ax=ax2)
-    ax2.set_aspect('auto')
-    ax2.set_xlabel('$x\;[m]$')
-    ax2.set_title('%s' % data['names'][indSuffix[1]])
-    ax3 = fig.add_subplot(133)
-    cmap = cmapdiv
-    im3 = plt.imshow(data1-data2, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
-    fig.colorbar(im3, ax=ax3)
-    ax3.set_aspect('auto')
-    ax3.set_xlabel('$x\;[m]$')
-    ax3.set_title('Difference ref-sim')
-    fig.tight_layout()
-    fig.savefig(os.path.join(outDir, 'refDfa_%s.png' % suffix))
+        # Load data
+        data1 = data['values'][indSuffix[0]]
+        data2 = data['values'][indSuffix[1]]
+        ny = data1.shape[0]
+        nx = data1.shape[1]
+        Ly = ny*cellsize
+        Lx = nx*cellsize
+        log.info('dataset1: %s' % data['files'][indSuffix[0]])
+        log.info('dataset2: %s' % data['files'][indSuffix[1]])
 
-    # Fgiure 2 cross and lonprofile
-    fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH), dpi=figReso)
-    ax[0].plot(data1[:, ny_loc], 'k', linewidth=lw, label='Reference')
-    ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
-    ax[0].set_xlabel('Location across track [nrows]')
-    ax[0].set_ylabel('Result parameter %s' % suffix, fontsize=fs)
-    ax[0].set_title('Cross profile at y =  %d' % ny_loc)
-    ax[1].plot(data1[nx_loc, :], 'k', linewidth=lw, label='Reference')
-    ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
-    ax[1].set_xlabel('Location along track [ncols]')
-    ax[1].set_ylabel('Result parameter %s' % suffix, fontsize=fs )
-    ax[1].set_title('Long profile at x =  %d' % nx_loc)
+        # Location of Profiles
+        ny_loc = int(nx *0.5)
+        nx_loc = int(ny *0.5)
 
-    ax[0].legend()
-    ax[1].legend()
-    fig.tight_layout()
-    fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s.png' % suffix))
+        # Plot data
+        # Figure 1 shows the result parameter data
+        fig = plt.figure(figsize=(figW*3, figH), dpi=figReso)
+        ax1 = fig.add_subplot(131)
+        cmap = cmapGB
+        im1 = plt.imshow(data1, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
+        fig.colorbar(im1, ax=ax1)
+        ax1.set_aspect('auto')
+        ax1.set_title('%s' % data['names'][indSuffix[0]])
+        ax1.set_xlabel('$x\;[m]$')
+        ax1.set_ylabel('$y\;[m]$')
+        ax2 = fig.add_subplot(132)
+        im2 = plt.imshow(data2, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
+        fig.colorbar(im2, ax=ax2)
+        ax2.set_aspect('auto')
+        ax2.set_xlabel('$x\;[m]$')
+        ax2.set_title('%s' % data['names'][indSuffix[1]])
+        ax3 = fig.add_subplot(133)
+        cmap = cmapdiv
+        im3 = plt.imshow(data1-data2, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
+        fig.colorbar(im3, ax=ax3)
+        ax3.set_aspect('auto')
+        ax3.set_xlabel('$x\;[m]$')
+        ax3.set_title('Difference ref-sim')
+        fig.tight_layout()
+        fig.savefig(os.path.join(outDir, 'refDfa_%s_%s.png' % (rel, suffix)))
 
-    log.info('Figures saved to: %s' % outDir)
+        # Fgiure 2 cross and lonprofile
+        fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH), dpi=figReso)
+        ax[0].plot(data1[:, ny_loc], 'k', linewidth=lw, label='Reference')
+        ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
+        ax[0].set_xlabel('Location across track [nrows]')
+        ax[0].set_ylabel('Result parameter %s' % suffix, fontsize=fs)
+        ax[0].set_title('Cross profile at y =  %d' % ny_loc)
+        ax[1].plot(data1[nx_loc, :], 'k', linewidth=lw, label='Reference')
+        ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
+        ax[1].set_xlabel('Location along track [ncols]')
+        ax[1].set_ylabel('Result parameter %s' % suffix, fontsize=fs )
+        ax[1].set_title('Long profile at x =  %d' % nx_loc)
 
-    if cfg['FLAGS'].getboolean('showPlot'):
-        plt.show()
+        ax[0].legend()
+        ax[1].legend()
+        fig.tight_layout()
+        fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s_%s.png' % (rel, suffix)))
+
+        log.info('Figures saved to: %s' % outDir)
+
+        if cfg['FLAGS'].getboolean('showPlot'):
+            plt.show()
