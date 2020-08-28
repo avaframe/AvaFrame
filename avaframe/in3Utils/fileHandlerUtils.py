@@ -65,7 +65,7 @@ def readLogFile(avaDir):
         log.info('Take local (potentially modified) experiment log')
     else:
         logFileLocal = open(os.path.join(inputDir, 'ExpLog.txt'), 'r')
-        log.warning('There is no file local_ExpLog - using all simulations')
+        log.info('There is no file local_ExpLog - using all simulations')
 
     # Read simulation names from local exp Log
     simName = []
