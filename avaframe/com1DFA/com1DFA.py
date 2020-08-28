@@ -13,6 +13,7 @@ import shutil
 import numpy as np
 import logging
 from avaframe.in3Utils import fileHandlerUtils as fU
+from avaframe.in3Utils import ascUtils as aU
 
 
 # create local logger
@@ -142,6 +143,10 @@ def runSamos(cfg, avaDir):
     # Load input data
     dem, rels, res, ent = initialiseRun(avaDir, flagEnt, flagRes, inputf)
 
+    # Get cell size from DEM header
+    demData = aU.readASCheader(dem)
+    cellSize = demData.cellsize
+    
     # Counter for release area loop
     countRel = 0
     # Loop through release areas
@@ -163,7 +168,7 @@ def runSamos(cfg, avaDir):
         copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
         copyReplace(workFile, workFile, '##DHMFILE##', dem)
         copyReplace(workFile, workFile, '##DHMNAME##', demName)
-        copyReplace(workFile, workFile, '##CELLSIZE##', '5')
+        copyReplace(workFile, workFile, '##CELLSIZE##', cellSize)
         copyReplace(workFile, workFile, '##RELFILE##', rel)
         copyReplace(workFile, workFile, '##RESFILE##', ent)
         copyReplace(workFile, workFile, '##ENTFILE##', res)
