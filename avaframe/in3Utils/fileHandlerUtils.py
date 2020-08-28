@@ -21,7 +21,7 @@ def makeADir(dirName, flagRemDir=False):
 
     # If directory already exists - Delete directory first is default
     if os.path.isdir(dirName):
-        if flagRempDir:
+        if flagRemDir:
             log.warning('Be careful directories in %s already existed - but got now deleted' % (dirName))
             shutil.rmtree(dirName, ignore_errors=True)
             os.makedirs(dirName)
