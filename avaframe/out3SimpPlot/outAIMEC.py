@@ -147,8 +147,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     rasterArea = rasterTransfo['rasterArea']
     dataPressure = newRasters['newRasterPressure']
     rasterdataPres = dataPressure[0]  # ana3AIMEC.makeRasterAverage(dataPressure)
-    runout = resAnalysis['runout'] + sBeta
-    runoutMean = resAnalysis['runoutMean'] + sBeta
+    runout = resAnalysis['runout'][0] + sBeta
+    runoutMean = resAnalysis['runoutMean'][0] + sBeta
     pCrossAll = resAnalysis['pCrossAll']
 
     # prepare for plot
@@ -218,6 +218,122 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
 
     plt.close(fig)
 
+def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
+    """
+    Plot and save the Peak Pressure Peak Flow depth and Peak speed
+    fields after coord transfo
+    """
+    # read paths
+    pathResult = cfgPath['pathResult']
+    projectName = cfgPath['dirName']
+    # read data
+    scoord = rasterTransfo['s']
+    lcoord = rasterTransfo['l']
+    indRunoutPoint = rasterTransfo['indRunoutPoint']
+    sBeta = scoord[indRunoutPoint]
+    rasterArea = rasterTransfo['rasterArea']
+    dataPressure = newRasters['newRasterPressure']
+    rasterdataPres = dataPressure[0]  # ana3AIMEC.makeRasterAverage(dataPressure)
+    dataDepth = newRasters['newRasterDepth']
+    rasterdataDepth = dataDepth[0]
+    dataSpeed = newRasters['newRasterSpeed']
+    rasterdataSpeed = dataSpeed[0]
+    runout = resAnalysis['runout'][0] + sBeta
+    runoutMean = resAnalysis['runoutMean'][0] + sBeta
+
+
+
+    fig = plt.figure(figsize=(figW*3, figH), dpi=figReso)
+    ax1 = plt.subplot(131)
+    ax1.title.set_text('Peak Pressure')
+    ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
+                       linestyle='-', label='Beta point')
+    ref2 = ax1.axhline(y=runout[0], color='b', linewidth=lw,
+                       linestyle='-', label='runout')
+    # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
+    isosurf = copy.deepcopy(rasterdataPres)
+    xx, yy = np.meshgrid(lcoord, scoord)
+    maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
+    cmap = cmapViridis
+    cmap.set_bad('w', 1.)
+    im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
+    # im.set_interpolation('bilinear')
+    im.set_data(lcoord, scoord, maskedArray)
+    ref0 = ax1.images.append(im)
+    cbar = ax1.figure.colorbar(im, ax=ax1, use_gridspec=True)
+    cbar.ax.set_ylabel('peak pressure [kPa]')
+    plt.autoscale(False)
+    ax1.set_xlim([xx.min(), xx.max()])
+    ax1.set_ylim([yy.min(), yy.max()])
+    ax1.set_xlabel(r'$l\;[m]$')
+    ax1.set_ylabel(r'$s\;[m]$')
+    ax1.legend(loc=0)
+
+    ax2 = plt.subplot(132)
+    ax2.title.set_text('Peak Flow Depth')
+    ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
+                       linestyle='-', label='Beta point')
+    ref2 = ax2.axhline(y=runout[0], color='b', linewidth=lw,
+                       linestyle='-', label='runout')
+    # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
+    isosurf = copy.deepcopy(rasterdataDepth)
+    xx, yy = np.meshgrid(lcoord, scoord)
+    maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
+    cmap = cmapBlues
+    cmap.set_bad('w', 1.)
+    im = NonUniformImage(ax2, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
+    # im.set_interpolation('bilinear')
+    im.set_data(lcoord, scoord, maskedArray)
+    ref0 = ax2.images.append(im)
+    cbar = ax2.figure.colorbar(im, ax=ax2, use_gridspec=True)
+    cbar.ax.set_ylabel('peak flow depth [m]')
+    plt.autoscale(False)
+    ax2.set_xlim([xx.min(), xx.max()])
+    ax2.set_ylim([yy.min(), yy.max()])
+    ax2.set_xlabel(r'$l\;[m]$')
+    ax2.set_ylabel(r'$s\;[m]$')
+    ax2.legend(loc=0)
+
+    ax3 = plt.subplot(133)
+    ax3.title.set_text('Peak Speed')
+    ref1 = ax3.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
+                       linestyle='-', label='Beta point')
+    ref2 = ax3.axhline(y=runout[0], color='b', linewidth=lw,
+                       linestyle='-', label='runout')
+    # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
+    isosurf = copy.deepcopy(rasterdataSpeed)
+    xx, yy = np.meshgrid(lcoord, scoord)
+    maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
+    cmap = cmapReds
+    cmap.set_bad('w', 1.)
+    im = NonUniformImage(ax3, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
+    # im.set_interpolation('bilinear')
+    im.set_data(lcoord, scoord, maskedArray)
+    ref0 = ax3.images.append(im)
+    cbar = ax3.figure.colorbar(im, ax=ax3, use_gridspec=True)
+    cbar.ax.set_ylabel('peak speed [m/s]')
+    plt.autoscale(False)
+    ax3.set_xlim([xx.min(), xx.max()])
+    ax3.set_ylim([yy.min(), yy.max()])
+    ax3.set_xlabel(r'$l\;[m]$')
+    ax3.set_ylabel(r'$s\;[m]$')
+    ax3.legend(loc=0)
+
+    fig.tight_layout()
+
+    if cfgFlags.getboolean('savePlot'):
+        outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
+                           projectName, '_referenceFields', '.pdf'])
+        if not os.path.exists(os.path.dirname(outname)):
+            os.makedirs(os.path.dirname(outname))
+        fig.savefig(outname, transparent=True)
+
+    if cfgFlags.getboolean('plotFigure'):
+        plt.show()
+    else:
+        plt.ioff()
+
+    plt.close(fig)
 
 def resultWrite(cfgPath, cfgSetup, resAnalysis):
     """
@@ -312,7 +428,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 
     indRunoutPoint = rasterTransfo['indRunoutPoint']
     sBeta = sPath[indRunoutPoint]
-    runout = resAnalysis['runout'] + sBeta
+    runout = resAnalysis['runout'][0] + sBeta
     meanMaxDPP = resAnalysis['AMPP']
     maxMaxDPP = resAnalysis['MMPP']
     GI = resAnalysis['growthIndex']
@@ -369,7 +485,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
                             ' kPa threshold']), color='black', fontsize=2*fs)
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
-        H, xedges, yedges = np.histogram2d(runout[0, :], data, bins=nbins)
+        H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
         dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
@@ -382,19 +498,19 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     plt.xlim([0, xlimProfAxis])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
     if not plotDensity:
-        color = cm.get_cmap('autumn', len(runout[0, :]) + 3)
-        for k in range(len(runout[0, :])):
+        color = cm.get_cmap('autumn', len(runout) + 3)
+        for k in range(len(runout)):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # (float(k), len(runout), colorflag)
             if k == 0:
-                ax1.plot(runout[0, k], data[k], marker='+',
+                ax1.plot(runout[k], data[k], marker='+',
                          markersize=2*mks, color='g', label=topoName)
     #            plt.yticks(np.arange([0,5000,250]))
                 # Make the y-tick labels of first axes match the line color.
                 for tl in ax1.get_yticklabels():
                     tl.set_color('b')
             else:
-                ax1.plot(runout[0, k], data[k], label=topoName, marker=markers[mk],
+                ax1.plot(runout[k], data[k], label=topoName, marker=markers[mk],
                          markersize=mks, color=pfarbe, linewidth=lw)
             mk = mk+1
             if mk == len(markers):
@@ -430,7 +546,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     if not plotDensity:
-        color = cm.get_cmap('autumn', len(runout[0, :]) + 3)
+        color = cm.get_cmap('autumn', len(runout) + 3)
         for k in range(len(rTP)):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # colorvar(float(k), len(rTP), colorflag)
