@@ -57,5 +57,6 @@ cmapDense.set_bad(color='k')
 cmapdiv = matplotlib.cm.RdBu_r #sns.color_palette("RdBu_r")
 
 
-cmap1 = cmapViridis
-cmap2 = cmapViridis
+cmapPres = cmapViridis
+cmapDepth = cmapBlues
+cmapSpeed = cmapReds
