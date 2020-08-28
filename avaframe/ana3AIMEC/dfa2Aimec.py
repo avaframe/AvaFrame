@@ -132,6 +132,8 @@ def mainDfa2Aimec(avaDir, cfgDFA, cfgSetup):
     fU.makeADir(flowDepthDir, flagRemDir=True)
     pressureDir = os.path.join(workDir, 'dfa_pressure')
     fU.makeADir(pressureDir, flagRemDir=True)
+    velocityDir = os.path.join(workDir, 'dfa_velocity')
+    fU.makeADir(velocityDir, flagRemDir=True)
     massDir = os.path.join(workDir, 'dfa_mass_balance')
     fU.makeADir(massDir, flagRemDir=True)
     massDirTemp = os.path.join(workDir, 'dfa_mass_balance_temp')
@@ -139,7 +141,7 @@ def mainDfa2Aimec(avaDir, cfgDFA, cfgSetup):
     log.info('Aimec Work folders created to start postprocessing com1DFA data')
 
     # Setup input from com1DFA
-    suffix = {'type' : ['pfd', 'ppr'], 'directory' : ['dfa_depth', 'dfa_pressure']}
+    suffix = {'type' : ['pfd', 'ppr', 'pv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
     countsuf = 0
     for suf in suffix['type']:
         fU.getDFAData(avaDir, cfgDFA['filesDir'], workDir, suf, suffix['directory'][countsuf])
