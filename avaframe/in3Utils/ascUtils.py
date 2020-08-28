@@ -1,5 +1,8 @@
-""" ASCII file readers and handlers
-TODO: move to proper module """
+"""
+    ASCII file readers and handlers
+
+    This file is part of Avaframe.
+"""
 import os
 from decimal import *
 import numpy as np

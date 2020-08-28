@@ -1,5 +1,7 @@
 """
-Opperations and transformations of rasters and lines
+    Opperations and transformations of rasters and lines
+
+    This file is part of Avaframe.
 """
 
 import math

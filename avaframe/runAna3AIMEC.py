@@ -1,6 +1,6 @@
 #! /usr/bin/python
 """
-    Run AIMEC
+    Run ana3AIMEC
 
     This file is part of Avaframe.
 

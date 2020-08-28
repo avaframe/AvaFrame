@@ -1,3 +1,9 @@
+"""
+    Plot settings for output figures
+
+    This file is part of Avaframe.
+"""
+
 import seaborn as sns
 from matplotlib import cm
 import copy

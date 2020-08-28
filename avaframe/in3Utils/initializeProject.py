@@ -1,4 +1,8 @@
-'''Functions to initialize project, i.e create folder structurec'''
+'''
+    Functions to initialize project, i.e create folder structure
+
+    This file is part of Avaframe.
+'''
 
 import os
 import logging
@@ -58,5 +62,3 @@ def checkMakeDir(base, dirName):
     else:
         log.info('Folder exists: %s, Skipping', pathName)
     return pathName
-
-

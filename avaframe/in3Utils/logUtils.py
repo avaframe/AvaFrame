@@ -1,4 +1,8 @@
-""" Defining a writable object to write the config to the log file"""
+"""
+    Defining a writable object to write the config to the log file
+
+    This file is part of Avaframe.
+"""
 import logging
 import logging.config
 import os
