@@ -134,4 +134,10 @@ def getRefData(avaDir, outputDir, suffix, nameDir=''):
         else:
             shutil.copy2(files, outputDir)
 
-    log.info('Reference files copied from directory: %s' % refDir)
+    # Give status information
+    if os.path.isdir(refDir) == False:
+        log.error('%s does not exist - no files for reference found' % refDir)
+    elif dataRefFiles == []:
+        log.error('No files found in %s' % refDir)
+    else:
+        log.info('Reference files copied from directory: %s' % refDir)
