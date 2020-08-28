@@ -112,7 +112,7 @@ def getDFAData(avaDir, com1DFAOutput, workDir, suffix, nameDir=''):
                     countsuf = countsuf + 1
 
 
-def getRefData(avaDir, outputDir, suffix):
+def getRefData(avaDir, outputDir, suffix, nameDir=''):
     """ Grab reference data and save to outputDir
 
         Inputs:
@@ -129,6 +129,9 @@ def getRefData(avaDir, outputDir, suffix):
 
     # copy these files to desired working directory for outQuickPlot
     for files in dataRefFiles:
-        shutil.copy2(files, outputDir)
+        if nameDir != '':
+            shutil.copy(files, '%s/%s/000000.txt' % (outputDir, nameDir))
+        else:
+            shutil.copy2(files, outputDir)
 
     log.info('Reference files copied from directory: %s' % refDir)
