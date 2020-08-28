@@ -23,14 +23,22 @@ sns.set_style("dark", {'axes.edgecolor': '.8', 'xtick.bottom': True, 'ytick.left
 #  'ytick.left': True})
 
 # hell white/green to dark blue
-cmap2 = sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True)
-cmap2.set_bad(color='k')
+cmapGB = sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True)
+cmapGB.set_bad(color='k')
 # hell pink to dark purple
-cmap1 = sns.cubehelix_palette(8, as_cmap=True)
-cmap1.set_bad(color='k')
+cmapPP = sns.cubehelix_palette(8, as_cmap=True)
+cmapPP.set_bad(color='k')
 
 cmapjet = copy.copy(matplotlib.cm.jet)
 cmapjet.set_bad(color='k')
+cmapPlasma = copy.copy(matplotlib.cm.plasma)
+cmapPlasma.set_bad(color='k')
+cmapViridis = copy.copy(matplotlib.cm.viridis)
+cmapPlasma.set_bad(color='k')
+
 # divergent color map
 cmapdiv = sns.color_palette("RdBu_r")
-# cmapdiv.set_bad(color='k')
+
+
+cmap1 = cmapViridis
+cmap2 = cmapViridis
