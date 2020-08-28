@@ -693,9 +693,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
             ax1.title.set_text('Reference Peak Presseure in the RunOut area')
-            cmap = cmap2
+            cmap = cmapPres
             cmap.set_under(color='w')
-            cmap.set_bad(color='k')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
                                               scoord.min(), scoord.max()], cmap=cmap)
             im.set_clim(vmin=pLim, vmax=np.max((dataPressure[0])[nStart:nTot+1]))

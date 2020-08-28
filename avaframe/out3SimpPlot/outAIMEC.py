@@ -62,7 +62,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     yy = rasterTransfo['y'][indRunoutPoint]
     newRasterdata = rasterdata
     maskedArray = newRasterdata  # np.ma.masked_where(np.isnan(newRasterdata), newRasterdata)
-    cmap = cmap1
+    cmap = cmapPres
     cmap.set_under(color='w')
 
     n, m = np.shape(newRasterdata)
@@ -172,7 +172,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(rasterdataPres)
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap = cmap1
+    cmap = cmapPres
     cmap.set_bad('w', 1.)
     im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
@@ -254,7 +254,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(rasterdataPres)
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap = cmapViridis
+    cmap = cmapPres
     cmap.set_bad('w', 1.)
     im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
@@ -279,7 +279,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(rasterdataDepth)
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap = cmapBlues
+    cmap = cmapDepth
     cmap.set_bad('w', 1.)
     im = NonUniformImage(ax2, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
@@ -304,7 +304,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(rasterdataSpeed)
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap = cmapReds
+    cmap = cmapSpeed
     cmap.set_bad('w', 1.)
     im = NonUniformImage(ax3, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
     # im.set_interpolation('bilinear')
