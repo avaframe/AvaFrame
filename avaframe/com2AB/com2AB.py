@@ -2,7 +2,7 @@
     Main logic for Alpha beta computational module
 
     This file is part of Avaframe.
-""""
+"""
 
 import os
 import glob
