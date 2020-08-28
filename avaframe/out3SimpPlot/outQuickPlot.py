@@ -106,16 +106,18 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
 
     # Plot data
     # Figure 1 shows the result parameter data
-    sns.set()
     fig = plt.figure(figsize=(figW*3, figH), dpi=figReso)
     ax1 = fig.add_subplot(131)
     ax2 = fig.add_subplot(132)
     ax3 = fig.add_subplot(133)
     cmap = cmapGB
-    sns.heatmap(data1, cmap=cmap, ax=ax1)
-    sns.heatmap(data2, cmap=cmap, ax=ax2)
-    sns.heatmap(data1-data2, cmap=cmapdiv, ax=ax3)
+    sns.heatmap(data1, cmap=cmap, ax=ax1, xticklabels=False, yticklabels=False)
+    sns.heatmap(data2, cmap=cmap, ax=ax2, xticklabels=False, yticklabels=False)
+    sns.heatmap(data1-data2, cmap=cmapdiv, ax=ax3, xticklabels=False, yticklabels=False)
     ax1.set_title('%s' % data['names'][indSuffix[0]])
+    ax1.invert_yaxis()
+    ax2.invert_yaxis()
+    ax3.invert_yaxis()
     ax2.set_title('%s' % data['names'][indSuffix[1]])
     ax3.set_title('Difference ref-sim')
     fig.savefig(os.path.join(outDir, 'refDfa_%s.png' % suffix))

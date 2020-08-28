@@ -178,7 +178,7 @@ def plotProfile(DGM, eqOutput, save_file, flags):
     name = eqOutput['Name']
     # Plot the whole profile with beta, alpha ... points and lines
     # plt.close("all")
-    fig_prof = plt.figure(figsize=(figW, figH), dpi=figReso)
+    fig_prof = plt.figure(figsize=(1.5*figW, 1*figH), dpi=figReso)
     titleText = name
     plt.title(titleText)
 
