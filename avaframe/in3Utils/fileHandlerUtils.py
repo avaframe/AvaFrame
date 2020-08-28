@@ -16,17 +16,17 @@ import shutil
 log = logging.getLogger(__name__)
 
 
-def makeADir(dirName, flagKeepDir=False):
+def makeADir(dirName, flagRemDir=False):
     """ Make directories """
 
     # If directory already exists - Delete directory first is default
     if os.path.isdir(dirName):
-        if flagKeepDir:
-            log.warning('Be careful directory %s already existed - data saved on top of it' % (dirName))
-        else:
+        if flagRempDir:
             log.warning('Be careful directories in %s already existed - but got now deleted' % (dirName))
             shutil.rmtree(dirName, ignore_errors=True)
             os.makedirs(dirName)
+        else:
+            log.warning('Be careful directory %s already existed - data saved on top of it' % (dirName))
     else:
         os.makedirs(dirName)
     log.info('Directory: %s created' % dirName)

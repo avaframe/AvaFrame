@@ -53,9 +53,9 @@ def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
     # Set directories for inputs, outputs and current work
     inputDir = os.path.join(avaDir, 'Inputs')
     outputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
-    fU.makeADir(outputDir)
+    fU.makeADir(outputDir, FlagRemDir=True)
     workDir = os.path.join(avaDir, 'Work', 'com1DFA')
-    fU.makeADir(workDir)
+    fU.makeADir(workDir, FlagRemDir=True)
 
     # Initialise release areas, default is to look for shapefiles
     if inputf == 'nxyz':
