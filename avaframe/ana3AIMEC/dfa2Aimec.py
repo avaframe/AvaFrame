@@ -132,7 +132,7 @@ def mainDfa2Aimec(avaDir, cfgDFA, cfgSetup):
     fU.makeADir(flowDepthDir, flagRemDir=True)
     pressureDir = os.path.join(workDir, 'dfa_pressure')
     fU.makeADir(pressureDir, flagRemDir=True)
-    velocityDir = os.path.join(workDir, 'dfa_velocity')
+    speedDir = os.path.join(workDir, 'dfa_speed')
     fU.makeADir(velocityDir, flagRemDir=True)
     massDir = os.path.join(workDir, 'dfa_mass_balance')
     fU.makeADir(massDir, flagRemDir=True)
