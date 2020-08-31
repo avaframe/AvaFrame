@@ -122,7 +122,7 @@ def extractMBInfo(avaDir):
     shutil.rmtree(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp'))
 
 
-def mainDfa2Aimec(avaDir, cfgDFA, cfgSetup):
+def mainDfa2Aimec(avaDir, cfgSetup):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # Create required directories
@@ -140,11 +140,11 @@ def mainDfa2Aimec(avaDir, cfgDFA, cfgSetup):
     fU.makeADir(massDirTemp, flagRemDir=True)
     log.info('Aimec Work folders created to start postprocessing com1DFA data')
 
-    # Setup input from com1DFA
+    # Setup input from com1DFA and export to Work ana3AIMEC 
     suffix = {'type' : ['pfd', 'ppr', 'pv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
     countsuf = 0
     for suf in suffix['type']:
-        fU.getDFAData(avaDir, cfgDFA['filesDir'], workDir, suf, suffix['directory'][countsuf])
+        fU.getDFAData(avaDir, workDir, suf, suffix['directory'][countsuf])
         countsuf = countsuf + 1
 
     # Write the paths to this files to a file

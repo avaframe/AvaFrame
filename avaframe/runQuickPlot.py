@@ -24,7 +24,6 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # REQUIRED+++++++++++++++++++
-com1DFAOutput = 'FullOutput_mu_'
 outputVariable = ['pfd', 'ppr']
 simName = 'entres'
 #++++++++++++++++++++++++++++
@@ -32,4 +31,4 @@ simName = 'entres'
 # Plot data comparison for all output variables defined in suffix
 for var in outputVariable:
     # Run Standalone DFA
-    outQuickPlot.quickPlot(avalancheDir, var, cfgMain, com1DFAOutput, simName)
+    outQuickPlot.quickPlot(avalancheDir, var, cfgMain, simName)

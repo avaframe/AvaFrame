@@ -15,7 +15,6 @@ import logging
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import ascUtils as aU
 
-
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
@@ -63,7 +62,7 @@ def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
         relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.nxyz')
     else:
         relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.shp')
-        log.info('rel files are: %s' % relFiles)
+        log.info('Release area files are: %s' % relFiles)
 
     # Initialise resistance areas
     if flagRes:
@@ -89,7 +88,7 @@ def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
     demFile = glob.glob(inputDir+os.sep+'*.asc')
 
     # Initialise full experiment log file
-    with open(os.path.join(outputDir, 'ExpLog.txt'), 'w') as logFile:
+    with open(os.path.join(workDir, 'ExpLog.txt'), 'w') as logFile:
         logFile.write("NoOfSimulation,SimulationRunName,Mu\n")
 
     # return DEM, first item of release, entrainment and resistance areas
@@ -130,7 +129,7 @@ def runSamos(cfg, avaDir):
     inputf = cfgGen['inputf']
     fullOut = cfgGen.getboolean('flagOut')
     cfgAimec = cfg['AIMEC']
-    resDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
+    resDir = os.path.join(avaDir, 'Work', 'com1DFA')
     # Get path of module
     modPath = os.path.dirname(__file__)
 
@@ -138,7 +137,7 @@ def runSamos(cfg, avaDir):
     log.info('The chosen settings: entrainment - %s , resistance - %s ' % (flagEnt, flagRes))
 
     # Log current avalanche directory
-    log.info('your current avalanche test name: %s' % avaDir)
+    log.info('Your current avalanche test name: %s' % avaDir)
 
     # Load input data
     dem, rels, res, ent = initialiseRun(avaDir, flagEnt, flagRes, inputf)
@@ -146,9 +145,10 @@ def runSamos(cfg, avaDir):
     # Get cell size from DEM header
     demData = aU.readASCheader(dem)
     cellSize = demData.cellsize
-    
+
     # Counter for release area loop
     countRel = 0
+
     # Loop through release areas
     for rel in rels:
 
@@ -210,3 +210,16 @@ def runSamos(cfg, avaDir):
             countRel = countRel + 2
 
         execSamos(samosAT, workFile, avaDir, fullOut, relName)
+
+    log.info('Avalanche Simulations performed')
+
+    # Setup input from com1DFA and exort to Outputs/com1DFA
+    suffix = {'type' : ['pfd', 'ppr', 'pv']}
+    outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+    os.makedirs(outDir)
+    countsuf = 0
+    for suf in suffix['type']:
+        fU.getDFAData(avaDir, outDir, suf, muVal=True)
+        countsuf = countsuf + 1
+
+    log.info('Exported results to Outputs/com1DFA')
