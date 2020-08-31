@@ -228,3 +228,25 @@ def test_helix():
 
     # Test
     assert (testRes == True)
+
+
+def test_bowl():
+    """ Test helix generation """
+
+    # Initialise input in correct format
+    cfg = configparser.ConfigParser()
+    cfg['TOPO'] = {'rBowl' : 2500, 'fLens' : 0, 'dx': 5, 'xEnd': 5000.,
+                  'yEnd': 5000.}
+
+    # Call function to be tested
+    x, y, z = gT.bowl(cfg)
+
+    # Load reference Solution
+    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaBowl',
+                      'Inputs', 'myDEM_BL_Topo.asc'), skiprows=6)
+
+    # Compare result to reference solution
+    testRes = np.allclose(z, zSol, atol=1.e-6)
+
+    # Test
+    assert (testRes == True)
