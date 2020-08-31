@@ -9,6 +9,7 @@ from matplotlib import cm
 import copy
 import matplotlib
 import cmocean
+import copy
 
 # define figure dimentions
 figW = 6
