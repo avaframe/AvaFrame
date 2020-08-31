@@ -106,16 +106,16 @@ def inclinedplane(cfg):
         # if location within horizontal extent of channel,
         # make half sphere shaped channel with radius given by channel horizontal extent
         mask = np.zeros(np.shape(yv))
-        mask[np.where(abs(yv) < cRadius)] = 1
+        mask[np.where(abs(yv) < c_extent)] = 1
         if cfg['TOPO'].getboolean('topoconst'):
             zv = zv - np.multiply(np.multiply(np.multiply(c_extent, c_0),
                                               np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2))))), mask)
         else:
-            zv = zv - np.multiply(np.multiply(np.multiply(c_extent, c_0),
+            zv = zv + np.multiply(np.multiply(np.multiply(c_extent, c_0),
                                               1. - np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2))))), mask)
         if not cfg['TOPO'].getboolean('topoconst'):
             mask = np.zeros(np.shape(yv))
-            mask[np.where(abs(yv) >= cRadius)] = 1
+            mask[np.where(abs(yv) >= c_extent)] = 1
             zv = zv + np.multiply(np.multiply(c_extent, c_0), mask)
 
     # Log info here
@@ -204,12 +204,12 @@ def hockeysmooth(cfg):
             zv = zv - np.multiply(np.multiply(np.multiply(c_extent, c_0),
                                               np.sqrt(np.abs(1. - (np.square(y) / (np.square(c_extent)))))), mask)
         else:
-            zv = zv - np.multiply(np.multiply(np.multiply(c_extent, c_0),
+            zv = zv + np.multiply(np.multiply(np.multiply(c_extent, c_0),
                                               1. - np.sqrt(np.abs(1. - (np.square(y) / (np.square(c_extent)))))), mask)
         if not cfg['TOPO'].getboolean('topoconst'):
             # outside of the channel, add layer of channel depth
             mask = np.zeros(np.shape(y))
-            mask[np.where(abs(y) >= cRadius)] = 1
+            mask[np.where(abs(y) >= c_extent)] = 1
             zv = zv + np.multiply(np.multiply(c_extent, c_0), mask)
 
     # Log info here
@@ -277,7 +277,7 @@ def hockey(cfg):
             zv = zv - np.multiply(np.multiply(np.multiply(c_extent, c_0),
                                           np.sqrt(np.abs(1. - (np.square(y) / np.square(c_extent))))), mask)
         else:
-            zv = zv - np.multiply(np.multiply(np.multiply(c_extent, c_0),
+            zv = zv + np.multiply(np.multiply(np.multiply(c_extent, c_0),
                                           1. - np.sqrt(np.abs(1. - (np.square(y) / np.square(c_extent))))), mask)
         if not cfg['TOPO'].getboolean('topoconst'):
             # outside of the channel, add layer of channel depth
@@ -309,13 +309,11 @@ def bowl(cfg):
     x, y = np.meshgrid(xv, yv)
 
     # Set surface elevation
-    for m in range(nCols):
-        for k in range(nRows):
-            radius = np.sqrt(xv[m]**2 + yv[k]**2)
-            if radius <= rBwol:
-                zv[k, m] = rBwol - rBwol * np.sqrt(1 - (radius / rBwol)**2)
-            else:
-                zv[k, m] = rBwol
+    zv = rBwol*np.ones((nRows, nCols))
+    radius = np.sqrt(x**2 + y**2)
+    mask = np.zeros(np.shape(x))
+    mask[np.where(radius <= rBwol)] = 1
+    zv = zv - np.multiply(rBwol * np.sqrt(np.abs(1 - (radius / rBwol)**2)), mask)
 
     # Log info here
     log.info('Bowl coordinates computed')
@@ -361,10 +359,13 @@ def helix(cfg):
 
     # If channel is introduced to topography
     if cfg['TOPO'].getboolean('channel'):
-        c_0 = norm.cdf(theta * rHelix, c_muend * fLen, c_ff)
+        c_0 = np.zeros(np.shape(x))
+        mask = np.zeros(np.shape(x))
+        mask[np.where((theta * rHelix) < (0.5 * (c_mustart + c_muend) * fLen))] = 1
+        c_0 = c_0 + np.multiply(norm.cdf(theta * rHelix, c_mustart * fLen, c_ff), mask)
         mask = np.zeros(np.shape(x))
         mask[np.where((theta * rHelix) >= (0.5 * (c_mustart + c_muend) * fLen))] = 1
-        c_0 = c_0 + np.multiply(1 - 2*c_0, mask)
+        c_0 = c_0 + np.multiply(1. - norm.cdf(theta * rHelix, c_muend * fLen, c_ff), mask)
         # c_0 = np.ones(np.shape(zv))
         # If channel of constant width or becoming narrower in the middle
         if cfg['TOPO'].getboolean('narrowing'):
