@@ -193,6 +193,14 @@ Returns a ``resAnalysis`` dictionary with the analysis results.
 Plot and save results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Plots and saves the desired figures. Writes results in ``resAnalysis`` to a text file.
+By default, Aimec saves five plots plus as many plots as numerical simulations to
+compare to the reference. The first five ones are :
+  * "domTransfo" shows the real domain on the left and new domain on the right
+  * "referenceFields" shows the peak pressure, flow depth and speed in the new domain
+  * "slComparisom" shows the difference the statistics in terms of the peak pressure along the avalanche of all the simulations
+  * "ROC" shows the normalized area difference between reference and other simulations.
+  * "rmmp" shows the relative difference in maximum peak pressure between reference and other simulation function of run-out length
+The last plots "_i_compToRef" where "i" gives the number of the simulation plots the 2D difference with the reference.
 
 Configuration parameters
 ---------------------------------
