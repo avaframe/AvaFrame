@@ -12,6 +12,7 @@ from avaframe.in3Utils import generateTopo as gT
 import pytest
 import configparser
 
+
 def test_getParabolaParams():
     """ Test if parabola parameters are computed correctly """
 
@@ -89,7 +90,7 @@ def test_computeCoordGrid():
     xv, yv, zv, x, y, nRows, nCols = gT.computeCoordGrid(1., 5., 3.)
 
     # Define correct results
-    xvTest = np.array([0, 1, 2, 3 , 4, 5])
+    xvTest = np.array([0, 1, 2, 3, 4, 5])
     yvTest = np.array([-1.5, -0.5, 0.5, 1.5])
 
     # Test
@@ -124,15 +125,15 @@ def test_inclinedplane():
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'dx': 5, 'xEnd': 5000., 'yEnd': 2000., 'z0': 2200.,
-               'meanAlpha': 34., 'channel': 'False', 'topoconst': 'True'}
-    cfg['CHANNELS'] ={'c_ff': 250, 'c_radius': 100}
+                   'meanAlpha': 34., 'channel': 'False', 'topoconst': 'True'}
+    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100}
 
     # Call function to be tested
     x, y, z = gT.inclinedplane(cfg)
 
     # Load reference solution
     zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaInclinedPlane',
-                      'Inputs', 'myDEM_IP_Topo.asc'), skiprows=6)
+                                   'Inputs', 'myDEM_IP_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
@@ -143,15 +144,15 @@ def test_inclinedplane():
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'dx': 5, 'xEnd': 5000., 'yEnd': 1500., 'z0': 2200.,
-               'meanAlpha': 34., 'channel': 'True', 'topoconst': 'True'}
-    cfg['CHANNELS'] ={'c_ff': 250, 'c_radius': 100}
+                   'meanAlpha': 34., 'channel': 'True', 'topoconst': 'True'}
+    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100}
 
     # Call function to be tested
     x, y, z = gT.inclinedplane(cfg)
 
     # Load reference solution
     zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'tests',
-                        'myDEM_IP_Topo.asc'), skiprows=6)
+                                   'myDEM_IP_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
@@ -166,16 +167,17 @@ def test_hockeysmooth():
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'dx': 5, 'xEnd': 5000., 'yEnd': 2000., 'rCirc': 200.,
-               'z0' : 2200., 'meanAlpha': 34., 'channel': 'True',
-               'narrowing' : 'True', 'topoconst': 'True'}
-    cfg['CHANNELS'] ={'c_ff': 250, 'c_radius': 100, 'c_init' : 250, 'c_mustart' : 0.2, 'c_muendFP' : 0.86}
+                   'z0': 2200., 'meanAlpha': 34., 'channel': 'True',
+                   'narrowing': 'True', 'topoconst': 'True'}
+    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
+                       'c_init': 250, 'c_mustart': 0.2, 'c_muendFP': 0.86}
 
     # Call function to be tested
     x, y, z = gT.hockeysmooth(cfg)
 
     # Load reference Solution
     zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaHockeySmoothChannel',
-                      'Inputs', 'myDEM_HS2_Topo.asc'), skiprows=6)
+                                   'Inputs', 'myDEM_HS2_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=5.e-6)
@@ -189,16 +191,17 @@ def test_hockey():
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
-    cfg['TOPO'] = {'C' : 2200, 'meanAlpha' : 34, 'fLens' : 0, 'dx': 5, 'xEnd': 5000.,
-                  'yEnd': 2000., 'channel': 'False', 'topoconst': 'True'}
-    cfg['CHANNELS'] ={'c_ff': 250, 'c_radius': 100, 'c_mustart' : 0.2, 'c_muend' : 0.6, 'c_init' : 250}
+    cfg['TOPO'] = {'C': 2200, 'meanAlpha': 34, 'fLens': 0, 'dx': 5, 'xEnd': 5000.,
+                   'yEnd': 2000., 'channel': 'False', 'topoconst': 'True'}
+    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
+                       'c_mustart': 0.2, 'c_muend': 0.6, 'c_init': 250}
 
     # Call function to be tested
     x, y, z = gT.hockey(cfg)
 
     # Load reference Solution
     zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaHockey',
-                      'Inputs', 'myDEM_HS_Topo.asc'), skiprows=6)
+                                   'Inputs', 'myDEM_HS_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
@@ -212,16 +215,17 @@ def test_helix():
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
-    cfg['TOPO'] = {'C' : 1000, 'meanAlpha' : 34, 'rHelix' : 1250, 'fLens' : 0, 'dx': 5, 'xEnd': 5000.,
-                  'yEnd': 2000.,  'channel': 'True', 'narrowing' : 'True', 'topoconst': 'True'}
-    cfg['CHANNELS'] ={'c_ff': 250, 'c_radius': 100, 'c_mustart' : 0.2, 'c_muend' : 0.6, 'c_init' : 250}
+    cfg['TOPO'] = {'C': 1000, 'meanAlpha': 34, 'rHelix': 1250, 'fLens': 0, 'dx': 5, 'xEnd': 5000.,
+                   'yEnd': 2000.,  'channel': 'True', 'narrowing': 'True', 'topoconst': 'True'}
+    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
+                       'c_mustart': 0.2, 'c_muend': 0.6, 'c_init': 250}
 
     # Call function to be tested
     x, y, z = gT.helix(cfg)
 
     # Load reference Solution
     zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaHelixChannel',
-                      'Inputs', 'myDEM_HX_Topo.asc'), skiprows=6)
+                                   'Inputs', 'myDEM_HX_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
@@ -235,15 +239,15 @@ def test_bowl():
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
-    cfg['TOPO'] = {'rBowl' : 2500, 'fLens' : 0, 'dx': 5, 'xEnd': 5000.,
-                  'yEnd': 5000.}
+    cfg['TOPO'] = {'rBowl': 2500, 'fLens': 0, 'dx': 5, 'xEnd': 5000.,
+                   'yEnd': 5000.}
 
     # Call function to be tested
     x, y, z = gT.bowl(cfg)
 
     # Load reference Solution
     zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaBowl',
-                      'Inputs', 'myDEM_BL_Topo.asc'), skiprows=6)
+                                   'Inputs', 'myDEM_BL_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
