@@ -6,6 +6,7 @@
 
 import seaborn as sns
 from matplotlib import cm
+import copy
 import matplotlib
 import cmocean
 
@@ -29,32 +30,32 @@ sns.set_style("dark", {'axes.edgecolor': '.8', 'xtick.bottom': True, 'ytick.left
 #  'ytick.left': True})
 
 # hell white/green to dark blue
-cmapGB = sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True)
+cmapGB = copy.copy(sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True))
 cmapGB.set_bad(color='k')
 # hell pink to dark purple
-cmapPP = sns.cubehelix_palette(8, as_cmap=True)
+cmapPP = copy.copy(sns.cubehelix_palette(8, as_cmap=True))
 cmapPP.set_bad(color='k')
 
-cmapReds = matplotlib.cm.Reds
+cmapReds = copy.copy(matplotlib.cm.Reds)
 cmapReds.set_bad(color='k')
-cmapBlues = matplotlib.cm.Blues
+cmapBlues = copy.copy(matplotlib.cm.Blues)
 cmapBlues.set_bad(color='k')
 
-cmapjet = matplotlib.cm.jet
+cmapjet = copy.copy(matplotlib.cm.jet)
 cmapjet.set_bad(color='k')
-cmapPlasma = matplotlib.cm.plasma
+cmapPlasma = copy.copy(matplotlib.cm.plasma)
 cmapPlasma.set_bad(color='k')
-cmapViridis = matplotlib.cm.viridis
+cmapViridis = copy.copy(matplotlib.cm.viridis)
 cmapViridis.set_bad(color='k')
 
-cmapIce = cmocean.cm.ice
+cmapIce = copy.copy(cmocean.cm.ice)
 cmapIce.set_bad(color='k')
 
-cmapDense = cmocean.cm.dense
+cmapDense = copy.copy(cmocean.cm.dense)
 cmapDense.set_bad(color='k')
 
 # divergent color map
-cmapdiv = matplotlib.cm.RdBu_r #sns.color_palette("RdBu_r")
+cmapdiv = copy.copy(matplotlib.cm.RdBu_r) #sns.color_palette("RdBu_r")
 
 
 cmapPres = cmapViridis
