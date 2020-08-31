@@ -140,6 +140,25 @@ def test_inclinedplane():
     # Test
     assert (testRes == True)
 
+    # Initialise input in correct format
+    cfg = configparser.ConfigParser()
+    cfg['TOPO'] = {'dx': 5, 'xEnd': 5000., 'yEnd': 1500., 'z0': 2200.,
+               'meanAlpha': 34., 'channel': 'True', 'topoconst': 'True'}
+    cfg['CHANNELS'] ={'c_ff': 250, 'c_radius': 100}
+
+    # Call function to be tested
+    x, y, z = gT.inclinedplane(cfg)
+
+    # Load reference solution
+    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'tests',
+                        'myDEM_IP_Topo.asc'), skiprows=6)
+
+    # Compare result to reference solution
+    testRes = np.allclose(z, zSol, atol=1.e-6)
+
+    # Test
+    assert (testRes == True)
+
 
 def test_hockeysmooth():
     """ Test hockey smooth generation """
