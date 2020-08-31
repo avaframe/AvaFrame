@@ -116,7 +116,6 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ax2.set_ylabel(r'$s\;[m]$')
     ax2.legend()
 
-
     fig.tight_layout()
     if cfgFlags.getboolean('plotFigure'):
         plt.show()
@@ -155,7 +154,6 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     pMean = np.mean(pCrossAll, axis=0)
     pMedian = np.median(pCrossAll, axis=0)
     pPercentile = sp.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
-
 
     fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
     ax1 = plt.subplot(121)
@@ -218,6 +216,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
 
     plt.close(fig)
 
+
 def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     """
     Plot and save the Peak Pressure Peak Flow depth and Peak speed
@@ -240,8 +239,6 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     rasterdataSpeed = dataSpeed[0]
     runout = resAnalysis['runout'][0] + sBeta
     runoutMean = resAnalysis['runoutMean'][0] + sBeta
-
-
 
     fig = plt.figure(figsize=(figW*3, figH), dpi=figReso)
     ax1 = plt.subplot(131)
@@ -334,6 +331,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         plt.ioff()
 
     plt.close(fig)
+
 
 def resultWrite(cfgPath, cfgSetup, resAnalysis):
     """
@@ -432,7 +430,6 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     meanMaxDPP = resAnalysis['AMPP']
     maxMaxDPP = resAnalysis['MMPP']
     GI = resAnalysis['growthIndex']
-
 
     # includes flag for y axis -
     # 1 = mean pressure data
@@ -554,11 +551,11 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # colorvar(float(k), len(rTP), colorflag)
             if k == 0:
-                ax1.plot(rFP[k], rTP[k],color='g', label='Reference', marker='+',
-                     markersize=ms, linewidth=lw)
+                ax1.plot(rFP[k], rTP[k], color='g', label='Reference', marker='+',
+                         markersize=ms, linewidth=lw)
             else:
                 ax1.plot(rFP[k], rTP[k], marker=markers[mk],
-                     markersize=ms, color=pfarbe, linewidth=lw)
+                         markersize=ms, color=pfarbe, linewidth=lw)
             mk = mk+1
             if mk == len(markers):
                 mk = 0

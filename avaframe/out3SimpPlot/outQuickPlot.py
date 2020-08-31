@@ -42,11 +42,11 @@ def prepareData(avaDir, inputDir):
     datafiles = glob.glob(inputDir+os.sep + '*.asc')
 
     # Make dictionary of input data info
-    data = {'files' : [], 'values' : [], 'names' : [], 'resType' : [],
-            'simType' : [], 'releaseArea' : []}
+    data = {'files': [], 'values': [], 'names': [], 'resType': [],
+            'simType': [], 'releaseArea': []}
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
-        data['values'].append( np.loadtxt(datafiles[m], skiprows=6))
+        data['values'].append(np.loadtxt(datafiles[m], skiprows=6))
         name = os.path.splitext(os.path.basename(datafiles[m]))[0]
         data['names'].append(name)
         data['simType'].append(name.split('_')[1])
@@ -56,6 +56,7 @@ def prepareData(avaDir, inputDir):
         data['cellsize'] = header.cellsize
 
     return data
+
 
 def quickPlot(avaDir, suffix, cfg, simName):
     """ Plot two raster datasets of identical dimension:
@@ -112,29 +113,30 @@ def quickPlot(avaDir, suffix, cfg, simName):
         log.info('dataset2: %s' % data['files'][indSuffix[1]])
 
         # Location of Profiles
-        ny_loc = int(nx *0.5)
-        nx_loc = int(ny *0.5)
+        ny_loc = int(nx * 0.5)
+        nx_loc = int(ny * 0.5)
 
         # Plot data
         # Figure 1 shows the result parameter data
         fig = plt.figure(figsize=(figW*3, figH), dpi=figReso)
         ax1 = fig.add_subplot(131)
         cmap = cmapGB
-        im1 = plt.imshow(data1, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
+        im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         fig.colorbar(im1, ax=ax1)
         ax1.set_aspect('auto')
         ax1.set_title('%s' % data['names'][indSuffix[0]])
         ax1.set_xlabel('$x\;[m]$')
         ax1.set_ylabel('$y\;[m]$')
         ax2 = fig.add_subplot(132)
-        im2 = plt.imshow(data2, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
+        im2 = plt.imshow(data2, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         fig.colorbar(im2, ax=ax2)
         ax2.set_aspect('auto')
         ax2.set_xlabel('$x\;[m]$')
         ax2.set_title('%s' % data['names'][indSuffix[1]])
         ax3 = fig.add_subplot(133)
         cmap = cmapdiv
-        im3 = plt.imshow(data1-data2, cmap=cmap, extent=[0,Lx,0,Ly], origin='lower', aspect=nx/ny)
+        im3 = plt.imshow(data1-data2, cmap=cmap,
+                         extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         fig.colorbar(im3, ax=ax3)
         ax3.set_aspect('auto')
         ax3.set_xlabel('$x\;[m]$')
@@ -152,7 +154,7 @@ def quickPlot(avaDir, suffix, cfg, simName):
         ax[1].plot(data1[nx_loc, :], 'k', linewidth=lw, label='Reference')
         ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
         ax[1].set_xlabel('Location along track [ncols]')
-        ax[1].set_ylabel('Result parameter %s' % suffix, fontsize=fs )
+        ax[1].set_ylabel('Result parameter %s' % suffix, fontsize=fs)
         ax[1].set_title('Long profile at x =  %d' % nx_loc)
 
         ax[0].legend()

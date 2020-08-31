@@ -686,7 +686,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         newRasterData[np.where(np.nan_to_num(newRasterData) < pLim)] = 0
         newRasterData[np.where(np.nan_to_num(newRasterData) >= pLim)] = 1
 
-        if cfgFlags.getboolean('savePlot') and i>0:
+        if cfgFlags.getboolean('savePlot') and i > 0:
             # read paths
             pathResult = cfgPath['pathResult']
             projectName = cfgPath['dirName']
@@ -695,7 +695,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             if not os.path.exists(os.path.dirname(outname)):
                 os.makedirs(os.path.dirname(outname))
             fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
-            y_lim = scoord[indRunoutPoint+20]+resAnalysis['runout'][0,0]
+            y_lim = scoord[indRunoutPoint+20]+resAnalysis['runout'][0, 0]
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
             ax1.title.set_text('Reference Peak Presseure in the RunOut area')
@@ -732,7 +732,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             ax2.set_ylim([scoord[indRunoutPoint-20], y_lim])
             ax2.set_xlabel(r'$l\;[m]$')
             ax2.set_ylabel(r'$s\;[m]$')
-            plt.subplots_adjust(wspace = 0.3)
+            plt.subplots_adjust(wspace=0.3)
             # fig.tight_layout()
             # plt.show()
 

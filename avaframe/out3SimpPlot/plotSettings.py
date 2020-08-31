@@ -24,7 +24,7 @@ markers = ['+', 'o', 'x', '*', 's', 'd', '^', 'v', '>', '<', 'p', 'h', '.',
 fs = 12
 
 # define seaborn style and color maps
-sns.set(font_scale = 1)
+sns.set(font_scale=1)
 sns.set_style("dark", {'axes.edgecolor': '.8', 'xtick.bottom': True, 'ytick.left': True})
 # sns.set_style("dark", {'xtick.bottom': True,
 #  'ytick.left': True})
