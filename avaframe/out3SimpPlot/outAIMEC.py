@@ -494,6 +494,8 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         cbar.ax.set_ylabel('Counts')
     ax2 = ax1.twinx()
     ax2.set_ylabel('z [m]', color='g', fontsize=2*fs)
+    ax2.spines['right'].set_color('g')
+    ax2.tick_params(axis='y', colors='g')
     ax2.plot(sPath, zPath, color='green', label='path', linestyle='--', linewidth=lw)
     plt.xlim([0, xlimProfAxis])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
