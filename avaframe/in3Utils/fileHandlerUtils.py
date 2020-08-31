@@ -38,7 +38,7 @@ def readLogFile(avaDir):
     """
 
     # Initialise directories
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
+    inputDir = os.path.join(avaDir, 'Work', 'com1DFA')
     workDirMain = os.path.join(avaDir, 'Work', 'ana3AIMEC')
 
     logFile = open(os.path.join(inputDir, 'ExpLog.txt'), 'r')
@@ -65,7 +65,6 @@ def readLogFile(avaDir):
         log.info('Take local (potentially modified) experiment log')
     else:
         logFileLocal = open(os.path.join(inputDir, 'ExpLog.txt'), 'r')
-        log.info('There is no file local_ExpLog - using all simulations')
 
     # Read simulation names from local exp Log
     simName = []
@@ -81,11 +80,21 @@ def readLogFile(avaDir):
     return logDict, indSims
 
 
-def getDFAData(avaDir, com1DFAOutput, workDir, suffix, nameDir=''):
-    """ Export the required input data from com1DFA output to desired location and option for renaming """
+def getDFAData(avaDir, workDir, suffix, nameDir='', muVal=False):
+    """ Export the required input data from com1DFA output to desired location and option for renaming
+
+
+        Inputs:     avaDir:     name of avalanche
+                    workDir:    directory where data shall be exported to
+                    suffix:     abbreviation of result parameter
+                    nameDir:    subdirectory to workDir and at the same time flag to rename file to %06d.txt
+                    muVal:      if True add Mu value to file name and also export Explog to workDir
+
+        Outputs:    simulation result files saved to work
+    """
 
     # Initialise directories
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
+    inputDir = os.path.join(avaDir, 'Work', 'com1DFA')
 
     # Read log file information
     [logDict, indSims] = readLogFile(avaDir)
@@ -95,7 +104,7 @@ def getDFAData(avaDir, com1DFAOutput, workDir, suffix, nameDir=''):
     sufNo = len(logDict['suffix'])
 
     # Path to com1DFA results
-    resPath = os.path.join(inputDir, com1DFAOutput)
+    resPath = os.path.join(inputDir, 'FullOutput_mu_')
 
     countsuf = 0
     for m in range(sufNo):
@@ -106,10 +115,17 @@ def getDFAData(avaDir, com1DFAOutput, workDir, suffix, nameDir=''):
                         shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
                                     logDict['simName'][k], logDict['suffix'][m]),
                                     '%s/%s/%06d.txt' % (workDir, nameDir, countsuf+1))
+                    elif muVal:
+                        shutil.copy('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
+                                    logDict['simName'][k], logDict['suffix'][m]),
+                                    '%s/%s_%s_%s.asc' % (workDir, logDict['simName'][k],
+                                    logDict['Mu'][k], logDict['suffix'][m]))
                     else:
                         shutil.copy2('%s%.03f/%s/raster/%s_%s.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
                                     logDict['simName'][k], logDict['suffix'][m]), workDir)
                     countsuf = countsuf + 1
+    if muVal:
+        shutil.copy2('%s/ExpLog.txt' % inputDir, workDir)
 
 
 def getRefData(avaDir, outputDir, suffix, nameDir=''):

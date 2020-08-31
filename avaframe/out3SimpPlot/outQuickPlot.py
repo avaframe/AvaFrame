@@ -57,7 +57,7 @@ def prepareData(avaDir, inputDir):
 
     return data
 
-def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
+def quickPlot(avaDir, suffix, cfg, simName):
     """ Plot two raster datasets of identical dimension:
 
         Inputs:
@@ -82,7 +82,7 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
     fU.makeADir(outDir, flagRemDir=False)
 
     # Setup input from com1DFA
-    fU.getDFAData(avaDir, com1DFAOutput, workDir, suffix)
+    fU.getDFAData(avaDir, workDir, suffix)
 
     # Get data from reference run
     fU.getRefData(avaDir, workDir, suffix)
@@ -93,7 +93,6 @@ def quickPlot(avaDir, suffix, cfg, com1DFAOutput, simName):
 
     # Count the number of release areas
     relAreas = set(data['releaseArea'])
-    print(relAreas)
 
     for rel in relAreas:
         # get list of indices of files that are of correct simulation type and result paramete

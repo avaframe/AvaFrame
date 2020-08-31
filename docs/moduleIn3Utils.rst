@@ -36,7 +36,7 @@ Outputs
 To run
 ------
 
-* copy ``generateTopoCfg.ini`` to ``local_generateTopoCfg.ini`` (and set desired parameter values, if not, the default values are used)
+* copy ``generateTopoCfg.ini`` to ``local_generateTopoCfg.ini`` and set desired parameter values (if not, the default values are used)
 * in ``Avaframe/`` run::
 
 	python3 runGenerateTopo.py
@@ -85,6 +85,60 @@ Configuration parameters
 :c_ff: standard deviation sigma
 :c_mustart: mean mu - represents upper part of the channel
 :c_muend: mean mu - represents lower part of the channel
+
+
+Get Release Area
+===================
+
+Generate a release area for a topography created with ``generateTopo`` , this function is available for the following topographies:
+
+* flat plane (FP)
+* inclined plane (IP)
+* hockey stick (HS)
+* hockey stick smooth (HS2)
+
+The release areas are defined as rectangular features build by four corner points, which are based on the following conditions:
+
+* prescribed vertical stretch of 200 m (difference in altitude)
+* prescribed volume of the release area
+* lower margin is located where the slope angle falls below 30°
+* if slope does not fall below 30 °, upper margin is located xStart away from upper margin of the DEM
+
+Input
+-----
+
+* in ``getReleaseAreaCfg.ini`` and ``generateTopoCfg.ini`` all required input parameters are listed (does include default values for all parameters)
+
+Output
+------
+
+* release area as shapefile, .nxyz and .txt file
+* if showplot flag is True, plot of release area on domain extent
+
+To run
+------
+
+Following this steps, you can generate an avalanche test case including a DEM and a simple realease area.
+
+* copy ``generateTopoCfg`` and  ``getReleaseAreaCfg`` to ``local_generateTopoCfg.ini``
+  and ``local_getReleaseAreaCfg.ini`` and set desired parameter values (if not, the default values are used)
+* in ``avaframe`` run::
+
+	python3 runGenProjTopoRelease.py
+
+**Parameters:**
+
+:hr: release area vertical stretch [m]
+:vol: volume of snow in release area [m3]
+:dh: release snow thickness [m]
+:xStart: upper margin of release area distance in x from origin [m]
+:lenP: number of release area polygon points
+:showPlot: True - show plot of release area
+:outputtxt: True - copy the output to txt file
+:xExtent: horizontal extent of release area for flat plane
+:alphaStop: slope angle that defines lower margin of release area
+:relNo: number of release area for name
+:relName: name of release area feature in shapefile
 
 
 Read / Write / Compare raster from or to ASCII files

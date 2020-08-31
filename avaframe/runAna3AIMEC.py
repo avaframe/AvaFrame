@@ -40,7 +40,7 @@ cfgDFA = cfg['DFA']
 logUtils.writeCfg2Log(cfg, 'ana3AIMEC')
 
 # Setup input from com1DFA
-dfa2Aimec.mainDfa2Aimec(avalancheDir, cfgDFA, cfgSetup)
+dfa2Aimec.mainDfa2Aimec(avalancheDir, cfgSetup)
 
 saveOutPath = avalancheDir + '/Outputs'
 # Extract input file locations
