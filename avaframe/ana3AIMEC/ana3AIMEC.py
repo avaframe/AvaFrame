@@ -33,7 +33,6 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 # Aimec read inputs tools
 # -----------------------------------------------------------
-debugPlotFlag = False
 
 
 def readAIMECinputs(avalancheDir, dirName='com1DFA'):
@@ -248,7 +247,7 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    runoutAngle = 20
+    runoutAngle = 10
     log.info('Measuring run-out length from the %s ° point' % runoutAngle)
     rasterTransfo['runoutAngle'] = runoutAngle
     _, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle, rasterTransfo)
@@ -475,7 +474,7 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
 
     resAnalysis = analyzeFields(rasterTransfo, pLim, newRasters, cfgPath)
 
-    resAnalysis = analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath)
+    resAnalysis = analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
 
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
@@ -635,7 +634,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     return resAnalysis
 
 
-def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
+def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     """
     Compare results to reference.
     Compute True positive, False negative... areas.
@@ -687,7 +686,14 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
         newRasterData[np.where(np.nan_to_num(newRasterData) < pLim)] = 0
         newRasterData[np.where(np.nan_to_num(newRasterData) >= pLim)] = 1
 
-        if debugPlotFlag and i > 0:
+        if cfgFlags.getboolean('savePlot') and i>0:
+            # read paths
+            pathResult = cfgPath['pathResult']
+            projectName = cfgPath['dirName']
+            outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
+                               projectName, '_', str(i), '_compToRef', '.pdf'])
+            if not os.path.exists(os.path.dirname(outname)):
+                os.makedirs(os.path.dirname(outname))
             fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
             y_lim = scoord[indRunoutPoint+20]+resAnalysis['runout'][0,0]
         #    for figure: referenz-simulation bei pLim=1
@@ -728,7 +734,9 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath):
             ax2.set_ylabel(r'$s\;[m]$')
             plt.subplots_adjust(wspace = 0.3)
             # fig.tight_layout()
-            plt.show()
+            # plt.show()
+
+            fig.savefig(outname, transparent=True)
 
         tpInd = np.where((newMask[nStart:nTot+1] == True) &
                          (newRasterData[nStart:nTot+1] == True))

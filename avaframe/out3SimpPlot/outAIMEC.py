@@ -434,7 +434,6 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     GI = resAnalysis['growthIndex']
 
 
-    mks = 10
     # includes flag for y axis -
     # 1 = mean pressure data
     # 2 = groth index
@@ -446,20 +445,23 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         plotDensity = 0
 
     if flag == 1:
-        log.info('Visualizing mean pressure data')
+        title = 'Visualizing mean peak pressure data'
+        log.info(title)
         tipo = 'rapp'
         data = meanMaxDPP / meanMaxDPP[0]
         yaxis_label = 'rAPP [-]'
         ytick_increment = 0.25
         ymax = 3
     elif flag == 2:
-        log.info('Visualizing EGU growth index data')
+        title = 'Visualizing EGU growth index data'
+        log.info(title)
         tipo = 'GI'
         data = GI
         yaxis_label = 'growth index [GI]'
         ytick_increment = 2
     elif flag == 3:
-        log.info('Visualizing max pressure data')
+        title = 'Visualizing max peak pressure data'
+        log.info(title)
         tipo = 'rmpp'
         data = maxMaxDPP / maxMaxDPP[0]
         yaxis_label = 'rMPP [-]'
@@ -474,10 +476,8 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 
     # Final result diagram - z_profile+data
     fig = plt.figure(figsize=(figW*2, figH), dpi=300)
-
-
+    fig.suptitle(title, fontsize=2*fs)
     mk = 0
-
 #    show flow path
     ax1 = fig.add_subplot(111)
     ax1.set_ylabel(yaxis_label, color='b', fontsize=2*fs)
@@ -506,17 +506,18 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
             pfarbe = color(k)  # (float(k), len(runout), colorflag)
             if k == 0:
                 ax1.plot(runout[k], data[k], marker='+',
-                         markersize=2*mks, color='g', label=topoName)
+                         markersize=2*ms, color='g', label='Reference')
     #            plt.yticks(np.arange([0,5000,250]))
                 # Make the y-tick labels of first axes match the line color.
                 for tl in ax1.get_yticklabels():
                     tl.set_color('b')
             else:
-                ax1.plot(runout[k], data[k], label=topoName, marker=markers[mk],
-                         markersize=mks, color=pfarbe, linewidth=lw)
+                ax1.plot(runout[k], data[k], marker=markers[mk],
+                         markersize=ms, color=pfarbe, linewidth=lw)
             mk = mk+1
             if mk == len(markers):
                 mk = 1
+        ax1.legend()
     plt.grid('on')
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
                            str(int(plim)), '_', tipo, '.pdf'])
@@ -533,7 +534,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     rFP = resAnalysis['FN'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
 
     fig = plt.figure(figsize=(figW, figH), dpi=figReso)
-
+    fig.suptitle('Normalized difference compared to reference', fontsize=fs)
     mk = 0
     ax1 = fig.add_subplot(111)
     ax1.set_ylabel('True positive rate', fontsize=fs)
@@ -552,13 +553,18 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         for k in range(len(rTP)):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # colorvar(float(k), len(rTP), colorflag)
-            ax1.plot(rFP[k], rTP[k], label=topoName, marker=markers[mk],
-                     markersize=mks, color=pfarbe, linewidth=lw)
+            if k == 0:
+                ax1.plot(rFP[k], rTP[k],color='g', label='Reference', marker='+',
+                     markersize=ms, linewidth=lw)
+            else:
+                ax1.plot(rFP[k], rTP[k], marker=markers[mk],
+                     markersize=ms, color=pfarbe, linewidth=lw)
             mk = mk+1
             if mk == len(markers):
                 mk = 0
-    plt.xlim([0, max(1, max(rFP))])
-    plt.ylim([0, 1])
+        ax1.legend()
+    plt.xlim([-0.01, max(1, max(rFP))])
+    plt.ylim([0, 1.01])
     plt.grid('on')
 
     outFileName = ''.join([cfgPath['dirName'], '_dptr', str(int(plim)), '_ROC.pdf'])
