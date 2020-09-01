@@ -53,9 +53,9 @@ def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
     # Set directories for inputs, outputs and current work
     inputDir = os.path.join(avaDir, 'Inputs')
     outputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
-    fU.makeADir(outputDir, flagRemDir=True)
+    fU.makeADir(outputDir)
     workDir = os.path.join(avaDir, 'Work', 'com1DFA')
-    fU.makeADir(workDir, flagRemDir=True)
+    fU.makeADir(workDir)
 
     # Initialise release areas, default is to look for shapefiles
     if inputf == 'nxyz':
@@ -214,12 +214,7 @@ def runSamos(cfg, avaDir):
     log.info('Avalanche Simulations performed')
 
     # Setup input from com1DFA and exort to Outputs/com1DFA
-    suffix = {'type' : ['pfd', 'ppr', 'pv']}
-    outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
-    os.makedirs(outDir)
-    countsuf = 0
-    for suf in suffix['type']:
-        fU.getDFAData(avaDir, outDir, suf, muVal=True)
-        countsuf = countsuf + 1
+    fU.exportcom1DFAOutput(avaDir)
+
 
     log.info('Exported results to Outputs/com1DFA')
