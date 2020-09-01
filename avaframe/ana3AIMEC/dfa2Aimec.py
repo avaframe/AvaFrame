@@ -9,7 +9,6 @@ import os
 import glob
 import logging
 import numpy as np
-import shutil
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
@@ -54,15 +53,9 @@ def writeAimecPathsFile(cfgSetup, avaDir):
 def extractMBInfo(avaDir):
     """ Extract the mass balance info from the log file """
 
-    # Get release area names
-    inputDir = os.path.join(avaDir, 'Inputs')
-    relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.shp')
-    relNames = []
-    for rels in relFiles:
-        relNames.append(os.path.splitext(os.path.basename(rels))[0])
-
-    # Get logFile
-    [logDictExp, indSims] = fU.readLogFile(avaDir)
+    # Get info from ExpLog
+    logName = os.path.join(avaDir, 'Outputs', 'com1DFA', 'ExpLog.txt')
+    logDictExp = fU.readLogFile(logName)
     simName = []
     for name in logDictExp['simName']:
         simName.append(name.split('_')[0])
@@ -101,25 +94,12 @@ def extractMBInfo(avaDir):
 
         # Write mass balance info files
         for k in range(len(indRun)-1):
-            with open(os.path.join(os.getcwd(), avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', '%06d.txt' % (countFile + 1)), 'w') as MBFile:
+            with open(os.path.join(os.getcwd(), avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile + 1)), 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
                     MBFile.write('%.02f,    %.06f,    %.06f\n' %
                                  (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
             countFile = countFile + 1
-
-    # Delete the files that are not in the local Exp Log
-    countSims = 0
-    for l in range(len(logDictExp['simName'])):
-        if l in indSims:
-            fname = ('%06d.txt' % (l+1))
-            fnameNew = ('%06d.txt' % (countSims+1))
-            shutil.copyfile(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp', fname),
-                            os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', fnameNew))
-            countSims = countSims + 1
-            log.info('NEW files: %s new is %s' % (fname, fnameNew))
-
-    shutil.rmtree(os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance_temp'))
 
 
 def mainDfa2Aimec(avaDir, cfgSetup):
@@ -127,20 +107,18 @@ def mainDfa2Aimec(avaDir, cfgSetup):
 
     # Create required directories
     workDir = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA')
-    fU.makeADir(workDir, flagRemDir=True)
+    fU.makeADir(workDir)
     flowDepthDir = os.path.join(workDir, 'dfa_depth')
-    fU.makeADir(flowDepthDir, flagRemDir=True)
+    fU.makeADir(flowDepthDir)
     pressureDir = os.path.join(workDir, 'dfa_pressure')
-    fU.makeADir(pressureDir, flagRemDir=True)
+    fU.makeADir(pressureDir)
     speedDir = os.path.join(workDir, 'dfa_speed')
-    fU.makeADir(speedDir, flagRemDir=True)
+    fU.makeADir(speedDir)
     massDir = os.path.join(workDir, 'dfa_mass_balance')
-    fU.makeADir(massDir, flagRemDir=True)
-    massDirTemp = os.path.join(workDir, 'dfa_mass_balance_temp')
-    fU.makeADir(massDirTemp, flagRemDir=True)
+    fU.makeADir(massDir)
     log.info('Aimec Work folders created to start postprocessing com1DFA data')
 
-    # Setup input from com1DFA and export to Work ana3AIMEC 
+    # Setup input from com1DFA and export to Work ana3AIMEC
     suffix = {'type' : ['pfd', 'ppr', 'pv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
     countsuf = 0
     for suf in suffix['type']:
