@@ -19,8 +19,7 @@ figReso = 150
 # define lines and marker properties
 lw = 2
 ms = 5
-markers = ['+', 'o', 'x', '*', 's', 'd', '^', 'v', '>', '<', 'p', 'h', '.',
-           '^', 'v', '>', '<', 'p', 'h', '.']
+markers = 'o'
 # font size
 fs = 12
 
