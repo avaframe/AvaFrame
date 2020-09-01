@@ -31,7 +31,11 @@ def test_writeCfg2Log(capfd):
     logFileNameRef = os.path.join(avalancheDir, 'data', 'testCFGRef.tog')
     f = open(logFileName).readlines()
     firstLine = f.pop(0)
+    firstLine = f.pop(0)
+    firstLine = f.pop(0)
     fref = open(logFileNameRef).readlines()
+    firstLine = fref.pop(0)
+    firstLine = fref.pop(0)
     firstLine = fref.pop(0)
     assert f==fref
     os.remove(logFileName)
