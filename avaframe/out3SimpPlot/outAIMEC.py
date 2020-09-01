@@ -504,15 +504,14 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # (float(k), len(runout), colorflag)
             if k == 0:
-                ax1.plot(runout[k], data[k], marker='+',
+                ax1.plot(runout[k], data[k], marker='+', linestyle='None',
                          markersize=2*ms, color='g', label='Reference')
-    #            plt.yticks(np.arange([0,5000,250]))
-                # Make the y-tick labels of first axes match the line color.
-                for tl in ax1.get_yticklabels():
-                    tl.set_color('b')
+            elif k == 1:
+                ax1.plot(runout[k], data[k], marker=markers, label='sims',
+                         markersize=ms, color=pfarbe, linestyle='None')
             else:
-                ax1.plot(runout[k], data[k], marker=markers[mk],
-                         markersize=ms, color=pfarbe, linewidth=lw)
+                ax1.plot(runout[k], data[k], marker=markers,
+                         markersize=ms, color=pfarbe, linestyle='None')
             mk = mk+1
             if mk == len(markers):
                 mk = 1
@@ -554,10 +553,13 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
             pfarbe = color(k)  # colorvar(float(k), len(rTP), colorflag)
             if k == 0:
                 ax1.plot(rFP[k], rTP[k], color='g', label='Reference', marker='+',
-                         markersize=ms, linewidth=lw)
+                         markersize=2*ms, linestyle='None')
+            elif k == 1:
+                ax1.plot(rFP[k], rTP[k], marker=markers, label='sims',
+                         markersize=ms, color=pfarbe, linestyle='None')
             else:
-                ax1.plot(rFP[k], rTP[k], marker=markers[mk],
-                         markersize=ms, color=pfarbe, linewidth=lw)
+                ax1.plot(rFP[k], rTP[k], marker=markers,
+                         markersize=ms, color=pfarbe, linestyle='None')
             mk = mk+1
             if mk == len(markers):
                 mk = 0
