@@ -535,64 +535,16 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         rasterdataSpeed = dataSpeed[i]
         rasterArea = rasterTransfo['rasterArea']
         rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
-        # get mean max for each cross section for pressure
-        presCrossMean = np.nansum(rasterdataPres*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
-        presCrossMean1 = np.nanmean(rasterdataPres, axis=1)
-        presCrossMax = np.nanmax(rasterdataPres, 1)
-        # also get the Area corresponding to those cells
-        indPresCrossMax = np.nanargmax(rasterdataPres, 1)
-        ind1 = np.arange(np.shape(rasterdataPres)[0])
-        AreapresCrossMax = rasterArea[ind1, indPresCrossMax]
-        # get mean max for each cross section for depth
-        dCrossMean = np.nansum(rasterdataDepth*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
-        # dCrossMean = np.nanmean(rasterdataDepth, axis=1)
-        dCrossMax = np.nanmax(rasterdataDepth, 1)
-        # also get the Area corresponding to those cells
-        indDCrossMax = np.nanargmax(rasterdataDepth, 1)
-        ind1 = np.arange(np.shape(rasterdataDepth)[0])
-        AreadCrossMax = rasterArea[ind1, indDCrossMax]
-        # get mean max for each cross section for speed
-        sCrossMean = np.nansum(rasterdataSpeed*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
-        # dCrossMean = np.nanmean(rasterdataDepth, axis=1)
-        sCrossMax = np.nanmax(rasterdataSpeed, 1)
-        # also get the Area corresponding to those cells
-        indSCrossMax = np.nanargmax(rasterdataSpeed, 1)
-        ind1 = np.arange(np.shape(rasterdataSpeed)[0])
-        AreasCrossMax = rasterArea[ind1, indSCrossMax]
 
-        pCrossAll[i] = presCrossMax
-        #   Determine runout according to maximum and averaged values
-        # search in max values
-        lindex = np.nonzero(presCrossMax > pLim)[0]
-        if lindex.any():
-            cupper = min(lindex)
-            clower = max(lindex)
-        else:
-            log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % pLim)
-            cupper = 0
-            clower = 0
-        # search in mean values
-        lindex = np.nonzero(presCrossMean > pLim)[0]
-        if lindex.any():
-            cupperm = min(lindex)
-            clowerm = max(lindex)
-        else:
-            log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % pLim)
-            cupperm = 0
-            clowerm = 0
-        # Mean max dpp of Cross-Section
-        ampp[i] = np.nansum((presCrossMax*AreapresCrossMax)[cupper:clower+1]) / \
-            np.nansum(AreapresCrossMax[cupper:clower+1])
-        mmpp[i] = max(presCrossMax[cupper:clower+1])
-
-        amd[i] = np.nansum((dCrossMax*AreadCrossMax)[cupper:clower+1]) / \
-            np.nansum(AreadCrossMax[cupper:clower+1])
-        mmd[i] = max(dCrossMax[cupper:clower+1])
-
-        ams[i] = np.nansum((sCrossMax*AreasCrossMax)[cupper:clower+1]) / \
-            np.nansum(AreasCrossMax[cupper:clower+1])
-        mms[i] = max(sCrossMax[cupper:clower+1])
-    #    Runout
+        # Mean max in each Cross-Section for each field
+        ampp[i], mmpp[i], cInd, pCrossAll[i] = getMaxMeanValues(rasterdataPres, rasterArea, pLim, cInd=None)
+        amd[i], mmd[i], cInd, _ = getMaxMeanValues(rasterdataDepth, rasterArea, pLim, cInd=cInd)
+        ams[i], mms[i], cInd, _ = getMaxMeanValues(rasterdataSpeed, rasterArea, pLim, cInd=cInd)
+        #    Runout
+        cupper = cInd['cupper']
+        clower = cInd['clower']
+        cupperm = cInd['cupperm']
+        clowerm = cInd['clowerm']
         runout[0, i] = scoord[clower] - sBeta
         runout[1, i] = x[clower]
         runout[2, i] = y[clower]
@@ -608,7 +560,6 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         if not (releaseMass[i] == releaseMass[0]):
             log.warning('Release masses differs between simulations!')
 
-        # log.info('%s\t%10.4f\t%10.4f\t%10.4f' % (i+1, runout[i], ampp[i], amd[i]))
         log.info('{: <10} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f}'.format(
             *[i+1, runout[0, i], ampp[i], mmpp[i], amd[i], mmd[i], grIndex[i], grGrad[i]]))
 
@@ -796,3 +747,52 @@ def readWrite(fname_ent):
     growthIndex = totMassResults[1]/totMassResults[0]
     growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])
     return relMass, entMass, growthIndex, growthGrad
+
+
+def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):
+    # get mean max for each cross section for A field
+    aCrossMean = np.nansum(rasterdataA*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+    # aCrossMean = np.nanmean(rasterdataA, axis=1)
+    aCrossMax = np.nanmax(rasterdataA, 1)
+    # also get the Area corresponding to those cells
+    indACrossMax = np.nanargmax(rasterdataA, 1)
+    ind1 = np.arange(np.shape(rasterdataA)[0])
+    AreaACrossMax = rasterArea[ind1, indACrossMax]
+
+    #   Determine runout according to maximum and averaged values
+    # search in max values
+    if not cInd:
+        lindex = np.nonzero(aCrossMax > pLim)[0]
+        if lindex.any():
+            cupper = min(lindex)
+            clower = max(lindex)
+        else:
+            log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % pLim)
+            cupper = 0
+            clower = 0
+            # search in mean values
+            lindex = np.nonzero(aCrossMean > pLim)[0]
+        if lindex.any():
+            cupperm = min(lindex)
+            clowerm = max(lindex)
+        else:
+            log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % pLim)
+            cupperm = 0
+            clowerm = 0
+        cInd = {}
+        cInd['cupper'] = cupper
+        cInd['clower'] = clower
+        cInd['cupperm'] = cupperm
+        cInd['clowerm'] = clowerm
+    else:
+        cupper = cInd['cupper']
+        clower = cInd['clower']
+        cupperm = cInd['cupperm']
+        clowerm = cInd['clowerm']
+
+    # Mean max of of a in each Cross-Section
+    ama = np.nansum((aCrossMax*AreaACrossMax)[cupper:clower+1]) / \
+        np.nansum(AreaACrossMax[cupper:clower+1])
+    mma = max(aCrossMax[cupper:clower+1])
+
+    return ama, mma, cInd, aCrossMax
