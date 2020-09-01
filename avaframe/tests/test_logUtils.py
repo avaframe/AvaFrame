@@ -28,7 +28,7 @@ def test_writeCfg2Log(capfd):
     logUtils.writeCfg2Log(cfg,'test config')
 
     logFileName = os.path.join(avalancheDir, 'testCFG.log')
-    logFileNameRef = os.path.join(avalancheDir, 'data', 'testCFGRef.log')
+    logFileNameRef = os.path.join(avalancheDir, 'data', 'testCFGRef.tog')
     f = open(logFileName).readlines()
     firstLine = f.pop(0)
     fref = open(logFileNameRef).readlines()
