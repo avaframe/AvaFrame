@@ -10,11 +10,11 @@ from datetime import datetime
 
 
 def writeCfg2Log(cfg, cfgName='Unspecified'):
-    '''Dumps a configparser object to log file'''
+    '''write a configparser object to log file'''
 
     log = logging.getLogger('root')
 
-    log.info('Dumping cfg for: %s', cfgName)
+    log.info('Writing cfg for: %s', cfgName)
     for section in cfg.sections():
         log.info('\t%s', section)
         for key in dict(cfg[section]):
