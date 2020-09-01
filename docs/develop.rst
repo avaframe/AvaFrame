@@ -35,7 +35,7 @@ and you should see something like::
 
   ===========================test session starts ======================
   platform linux -- Python 3.8.3, pytest-5.4.3, py-1.9.0, pluggy-0.13.1
-  collected 1 item                                                                                                             
+  collected 1 item
   tests/test_tmp1Ex.py .                                       [100%]
 
   ==========================1 passed in 0.02s =========================
@@ -68,14 +68,15 @@ Use python provided logging module. See most simple example in runTmp1Ex.py and 
 
 Basically: in your main script call::
 
-  import logging
-  import sys
+  # log file name; leave empty to use default runLog.log
+  logName = 'runTmp1Ex'
+  avalancheDir = './'
+  # ---------------------------------------------
+  # Start logging
+  log = logUtils.initiateLogger(avalancheDir, logName)
 
-  # create logger, set to logging.DEBUG to see all messages
-  logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format='%(module)s:%(levelname)s - %(message)s')
-
-And in your modules/subscripts add::
+This will configure the logging (it sets the console output as well as the log file).
+In your modules/subscripts add::
 
   import logging
   log = logging.getLogger(__name__)
@@ -83,24 +84,17 @@ And in your modules/subscripts add::
 So you can use::
 
   log.debug('Should be here')
-  log.info('DEM is %s',variable)
+  log.info('DEM : %s',variable)
 
-To get output that looks like::
+To get output that looks like this in your console::
 
-  tmp1Ex:DEBUG - Should be here 
+  tmp1Ex:DEBUG - Should be here
+  tmp1Ex:DEBUG - DEM : /path/to/DEM
 
-From this configuration you can extend e.g. to also log to a file at the same
-time (internet search is your friend...)::
-
-  logging.basicConfig(
-      level=logging.DEBUG,
-      format="%(module)s [%(levelname)s] %(message)s",
-      handlers=[
-          logging.FileHandler("debug.log", "w"),
-          logging.StreamHandler()
-      ]
-  )
-  
+And something similar in the .log file which is saved in ``./runTmp1Ex.log`` in this example.
+The logging configuration is set in ``Avaframe/avaframe/in3Utils/logging.conf``.
+You can modify this ``logging.conf`` file to modify the levels or format of the messages to display
+(`python doc will help you <https://docs.python.org/3/library/logging.config.html>`_).
 
 Our suggested git workflow
 --------------------------
@@ -123,7 +117,7 @@ branches and switch in between them using the git checkout command.
 Work on it and from time to time commit your changes using following commands as
 necessary::
 
-  git add 
+  git add
   git commit
 
 To update this branch, you need to retrieve the changes from the master branch::
@@ -154,4 +148,3 @@ repository/origin will be handled by the pull request)::
 
   git checkout master
   git branch -d myAwesomeFeature
-
