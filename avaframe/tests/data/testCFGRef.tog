@@ -1,0 +1,12 @@
+logUtils - INFO -  Started logging at: 01.09.2020 11:47:57
+logUtils - INFO -  Also logging to: /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/testCFG.log
+cfgUtils - INFO -  Reading config from: /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/test_logUtilsCfg.ini
+logUtils - INFO -  Writing cfg for: test config
+logUtils - INFO -  	DICT1
+logUtils - INFO -  		parameter1 : 600
+logUtils - INFO -  		parameter2 : None
+logUtils - INFO -  		parameter3 : True
+logUtils - INFO -  	DICT2
+logUtils - INFO -  		parameter3 : 0.02
+logUtils - INFO -  		parameter4 : aString
+logUtils - INFO -  		parameter5 : False
