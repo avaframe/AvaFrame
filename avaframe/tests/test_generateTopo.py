@@ -151,7 +151,7 @@ def test_inclinedplane():
     x, y, z = gT.inclinedplane(cfg)
 
     # Load reference solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'tests',
+    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'tests', 'data',
                                    'myDEM_IP_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
