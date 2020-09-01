@@ -478,6 +478,8 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 #    show flow path
     ax1 = fig.add_subplot(111)
     ax1.set_ylabel(yaxis_label, color='b', fontsize=2*fs)
+    ax1.spines['left'].set_color('b')
+    ax1.tick_params(axis='y', colors='b')
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(plim),
                             ' kPa threshold']), color='black', fontsize=2*fs)
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
@@ -514,7 +516,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
             mk = mk+1
             if mk == len(markers):
                 mk = 1
-        ax1.legend()
+        ax1.legend(loc='lower left')
     plt.grid('on')
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
                            str(int(plim)), '_', tipo, '.pdf'])
@@ -528,7 +530,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 
     # Final result diagram - roc-plots
     rTP = resAnalysis['TP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
-    rFP = resAnalysis['FN'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
+    rFP = resAnalysis['FP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
 
     fig = plt.figure(figsize=(figW, figH), dpi=figReso)
     fig.suptitle('Normalized difference compared to reference', fontsize=fs)
@@ -559,7 +561,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
             mk = mk+1
             if mk == len(markers):
                 mk = 0
-        ax1.legend()
+        ax1.legend(loc='lower left')
     plt.xlim([-0.01, max(1, max(rFP))])
     plt.ylim([0, 1.01])
     plt.grid('on')

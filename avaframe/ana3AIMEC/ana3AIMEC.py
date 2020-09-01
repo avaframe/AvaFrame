@@ -737,6 +737,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             # plt.show()
 
             fig.savefig(outname, transparent=True)
+            plt.close(fig)
 
         tpInd = np.where((newMask[nStart:nTot+1] == True) &
                          (newRasterData[nStart:nTot+1] == True))
