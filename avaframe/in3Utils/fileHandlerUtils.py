@@ -43,11 +43,13 @@ def readLogFile(logName):
     logDict = {'noSim': [], 'simName': [], 'Mu': [], 'suffix': suffix}
 
     lines = logFile.readlines()[1:]
+    countSims = 1
     for line in lines:
         vals = line.strip().split()
-        logDict['noSim'].append(float(vals[0]))
+        logDict['noSim'].append(countSims)
         logDict['simName'].append(vals[1])
         logDict['Mu'].append(float(vals[2]))
+        countSims = countSims + 1
 
     return logDict
 
@@ -71,20 +73,21 @@ def checkCommonSims(logName, localLogName):
     return indSims
 
 
-def getDFAData(avaDir, workDir, suffix, nameDir):
+def getDFAData(avaDir, workDir, suffix, nameDir=''):
     """ Export the required data from com1DFA output to Aimec Work directory and rename  """
 
-    # Initialise directories
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
-
     # Lead all infos on simulations
-    data = makeSimDict(avaDir)
+    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+    data = makeSimDict(inputDir)
 
     countsuf = 0
     for m in range(len(data['files'])):
         if data['resType'][m] == suffix:
-            shutil.copy(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countsuf+1))
-            print(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countsuf+1))
+            if nameDir == '':
+                shutil.copy(data['files'][m], workDir)
+            else:
+                shutil.copy(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countsuf+1))
+                print(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countsuf+1))
             countsuf = countsuf + 1
 
 
@@ -165,7 +168,7 @@ def exportcom1DFAOutput(avaDir):
     shutil.copy2('%s/ExpLog.txt' % inputDir, outDir)
 
 
-def makeSimDict(avaDir):
+def makeSimDict(inputDir):
     """ Create a dictionary that contains all info on simulations:
 
             files:          full file path
@@ -178,7 +181,6 @@ def makeSimDict(avaDir):
     """
 
     # Load input datasets from input directory
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
     datafiles = glob.glob(inputDir+os.sep + '*.asc')
 
     # Sort datafiles by name
@@ -199,6 +201,5 @@ def makeSimDict(avaDir):
         data['resType'].append(nameParts[4])
         header = IOf.readASCheader(datafiles[m])
         data['cellSize'].append(header.cellsize)
-
 
     return data
