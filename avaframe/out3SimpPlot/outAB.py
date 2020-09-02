@@ -272,43 +272,62 @@ def WriteResults(eqOutput, saveOutPath):
     else:
         log.warning('alphaP1SD point above Beta point')
 
-
-    FileName_ext = saveOutPath + name + '_results_python.txt'
+    FileName_ext = saveOutPath + name + '_AB_results.txt'
     with open(FileName_ext, 'w') as outfile:
         outfile.write('Profile name %s\n' % name)
         outfile.write('Parameter Set %s\n' % parameterSet)
-        outfile.write('x y z s angle\n')
         outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
-        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (
+        outfile.write('{:<10s} {:<10s} {:<10s} {:<10s} {:<10s} \n'.format(
+            'x', 'y', 'z', 's', 'angle'))
+        outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
             x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
-        outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids10Point],
-                                                      y[ids10Point],
-                                                      z[ids10Point],
-                                                      s[ids10Point],
-                                                      beta))
+        outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+            x[ids10Point],
+            y[ids10Point],
+            z[ids10Point],
+            s[ids10Point],
+            beta))
         if ids_alphaM1SD:
-            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_alphaM1SD],
-                                                          y[ids_alphaM1SD],
-                                                          z[ids_alphaM1SD],
-                                                          s[ids_alphaM1SD],
-                                                          alphaSD[1]))
+            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+                x[ids_alphaM1SD],
+                y[ids_alphaM1SD],
+                z[ids_alphaM1SD],
+                s[ids_alphaM1SD],
+                alphaSD[1]))
         else:
-            outfile.write('alphaM1SD point out of profile\n')
+            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+                0,
+                0,
+                0,
+                0,
+                0))
         if ids_alphaM2SD:
-            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_alphaM2SD],
-                                                          y[ids_alphaM2SD],
-                                                          z[ids_alphaM2SD],
-                                                          s[ids_alphaM2SD],
-                                                          alphaSD[2]))
+            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+                x[ids_alphaM2SD],
+                y[ids_alphaM2SD],
+                z[ids_alphaM2SD],
+                s[ids_alphaM2SD],
+                alphaSD[2]))
         else:
-            outfile.write('alphaM2SD point out of profile\n')
+            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+                0,
+                0,
+                0,
+                0,
+                0))
         if ids_alphaP1SD:
-            outfile.write('%.2f %.2f %.2f %.2f %.2f\n' % (x[ids_alphaP1SD],
-                                                          y[ids_alphaP1SD],
-                                                          z[ids_alphaP1SD],
-                                                          s[ids_alphaP1SD],
-                                                          alphaSD[0]))
+            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+                x[ids_alphaP1SD],
+                y[ids_alphaP1SD],
+                z[ids_alphaP1SD],
+                s[ids_alphaP1SD],
+                alphaSD[0]))
         else:
-            outfile.write('alphaP1SD point above Beta point')
+            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+                0,
+                0,
+                0,
+                0,
+                0))
 
     return FileName_ext
