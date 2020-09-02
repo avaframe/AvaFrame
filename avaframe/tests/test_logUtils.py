@@ -4,8 +4,6 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.tests import test_logUtils
 import os
 import filecmp
-# import logging
-# import logging.config
 
 
 def test_initiateLogger(capfd):
@@ -18,6 +16,7 @@ def test_initiateLogger(capfd):
     assert os.path.isfile(logFileName)
     os.remove(logFileName)
 
+
 def test_writeCfg2Log(capfd):
     '''Simple test for module writeCfg2Log'''
     dirname = os.path.dirname(__file__)
@@ -25,7 +24,7 @@ def test_writeCfg2Log(capfd):
     logName = 'testCFG'
     log = logUtils.initiateLogger(avalancheDir, logName)
     cfg = cfgUtils.getModuleConfig(test_logUtils)
-    logUtils.writeCfg2Log(cfg,'test config')
+    logUtils.writeCfg2Log(cfg, 'test config')
 
     logFileName = os.path.join(avalancheDir, 'testCFG.log')
     logFileNameRef = os.path.join(avalancheDir, 'data', 'testCFGRef.tog')
@@ -37,5 +36,5 @@ def test_writeCfg2Log(capfd):
     firstLine = fref.pop(0)
     firstLine = fref.pop(0)
     firstLine = fref.pop(0)
-    assert f==fref
+    assert f == fref
     os.remove(logFileName)
