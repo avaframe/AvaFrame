@@ -27,37 +27,6 @@ from avaframe.out3SimpPlot.plotSettings import *
 log = logging.getLogger(__name__)
 
 
-def prepareData(avaDir, inputDir):
-    """ Read all files in input directory and generate a dictionary
-        with info on:
-
-            files:      full file path
-            values:     actual data (e.g. raster of peak pressure)
-            names:      file name
-            simType:    entres or null (e.g. entres is simulation with entrainment and resistance)
-            resType:    which result parameter (e.g. 'ppr' is peak pressure)
-    """
-
-    # Load input datasets from input directory
-    datafiles = glob.glob(inputDir+os.sep + '*.asc')
-
-    # Make dictionary of input data info
-    data = {'files': [], 'values': [], 'names': [], 'resType': [],
-            'simType': [], 'releaseArea': []}
-    for m in range(len(datafiles)):
-        data['files'].append(datafiles[m])
-        data['values'].append(np.loadtxt(datafiles[m], skiprows=6))
-        name = os.path.splitext(os.path.basename(datafiles[m]))[0]
-        data['names'].append(name)
-        data['simType'].append(name.split('_')[1])
-        data['resType'].append(name.split('_')[3])
-        data['releaseArea'].append(name.split('_')[0])
-        header = IOf.readASCheader(datafiles[m])
-        data['cellsize'] = header.cellsize
-
-    return data
-
-
 def quickPlot(avaDir, suffix, cfg, simName):
     """ Plot two raster datasets of identical dimension:
 
@@ -78,9 +47,9 @@ def quickPlot(avaDir, suffix, cfg, simName):
 
     # Create required directories
     workDir = os.path.join(avaDir, 'Work', 'out3SimplPlot')
-    fU.makeADir(workDir, flagRemDir=False)
+    fU.makeADir(workDir)
     outDir = os.path.join(avaDir, 'Outputs', 'out3SimplPlot')
-    fU.makeADir(outDir, flagRemDir=False)
+    fU.makeADir(outDir)
 
     # Setup input from com1DFA
     fU.getDFAData(avaDir, workDir, suffix)
@@ -89,8 +58,9 @@ def quickPlot(avaDir, suffix, cfg, simName):
     fU.getRefData(avaDir, workDir, suffix)
 
     # prepare data
-    data = prepareData(avaDir, workDir)
-    cellsize = data['cellsize']
+    data = fU.makeSimDict(workDir)
+    cellSize = data['cellSize'][0]
+    print(data['files'])
 
     # Count the number of release areas
     relAreas = set(data['releaseArea'])
@@ -103,12 +73,12 @@ def quickPlot(avaDir, suffix, cfg, simName):
                 indSuffix.append(m)
 
         # Load data
-        data1 = data['values'][indSuffix[0]]
-        data2 = data['values'][indSuffix[1]]
+        data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
+        data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
         ny = data1.shape[0]
         nx = data1.shape[1]
-        Ly = ny*cellsize
-        Lx = nx*cellsize
+        Ly = ny*cellSize
+        Lx = nx*cellSize
         log.info('dataset1: %s' % data['files'][indSuffix[0]])
         log.info('dataset2: %s' % data['files'][indSuffix[1]])
 

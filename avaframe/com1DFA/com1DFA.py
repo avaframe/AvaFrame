@@ -187,8 +187,9 @@ def runSamos(cfg, avaDir):
         if flagVarMu:
             varFile = os.path.join(avaDir, 'Work' ,'com1DFA', simName+'_VarMu.txt')
             varF = open(varFile, 'w')
-            varF.write('0.155\n')
+            # Important write Mu in correct sequence from small to big
             varF.write('0.055\n')
+            varF.write('0.155\n')
             varF.close()
             templateFile = os.path.join(modPath, 'varyMuRunExport.cint')
             workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'varyMuRunExport.cint')
