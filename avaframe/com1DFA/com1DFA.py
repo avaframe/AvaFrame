@@ -116,6 +116,26 @@ def copyReplace(origFile, workFile, searchString, replString):
     with open(workFile, 'w') as file:
         file.write(fileData)
 
+def writeParFile(avaDir, cfgPar, simName):
+    """ Write text file to read parameters if parameter variation is used """
+
+    # Values of parameter variations in config file as string
+    varPar = cfgPar['varParValues']
+    varParList = []
+    items = varPar.split('_')
+    for item in items:
+        varParList.append(float(item))
+
+    # Write parameter values to text file
+    varFile = os.path.join(avaDir, 'Work' ,'com1DFA', simName+'_VarPar.txt')
+    varF = open(varFile, 'w')
+    for vals in varParList:
+        # Important write Par in correct sequence from small to big
+        varF.write('%.3f\n' % vals)
+    varF.close()
+
+    log.info('Parameter variation input file written')
+
 
 def runSamos(cfg, avaDir):
     """ Run main model"""
@@ -125,7 +145,6 @@ def runSamos(cfg, avaDir):
     samosAT = cfgGen['samosAT']
     flagEnt = cfgGen.getboolean('flagEnt')
     flagRes = cfgGen.getboolean('flagRes')
-    flagVarMu = cfgGen.getboolean('flagVarMu')
     inputf = cfgGen['inputf']
     fullOut = cfgGen.getboolean('flagOut')
     cfgAimec = cfg['AIMEC']
@@ -184,15 +203,12 @@ def runSamos(cfg, avaDir):
         execSamos(samosAT, workFile, avaDir, fullOut)
 
         # If mu shall be varied
-        if flagVarMu:
-            varFile = os.path.join(avaDir, 'Work' ,'com1DFA', simName+'_VarMu.txt')
-            varF = open(varFile, 'w')
-            # Important write Mu in correct sequence from small to big
-            varF.write('0.055\n')
-            varF.write('0.155\n')
-            varF.close()
-            templateFile = os.path.join(modPath, 'varyMuRunExport.cint')
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'varyMuRunExport.cint')
+        if cfgGen.getboolean('flagVarPar'):
+            cfgPar = cfg['PARAMATERVAR']
+            log.info('Parameter variation used, varying: %s' % cfgPar['varPar'])
+            writeParFile(avaDir, cfgPar, simName)
+            templateFile = os.path.join(modPath, '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
+            workFile = os.path.join(avaDir, 'Work', 'com1DFA', '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
             copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
             copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
             copyReplace(workFile, workFile, '##RESDIR##', resDir)
