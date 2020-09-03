@@ -160,7 +160,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
       // set(Sim, "DeltaOut", "20");
 
       // Open Mu file
-      sprintf(ParFilePath, "%s_VarMu.txt", ProjDir);
+      sprintf(ParFilePath, "%s_VarPar.txt", ProjDir);
       ParameterFile=fopen(ParFilePath,"r");
       if(NULL == ParameterFile) {
         printf("[BatchSamos ERROR] File '%s not found!\n",ParFilePath);

@@ -87,7 +87,6 @@ def getDFAData(avaDir, workDir, suffix, nameDir=''):
                 shutil.copy(data['files'][m], workDir)
             else:
                 shutil.copy(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countsuf+1))
-                print(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countsuf+1))
             countsuf = countsuf + 1
 
 
