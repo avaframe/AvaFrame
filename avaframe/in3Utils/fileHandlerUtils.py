@@ -31,16 +31,22 @@ def makeADir(dirName):
     log.info('Directory: %s created' % dirName)
 
 
-def readLogFile(logName):
+def readLogFile(logName, cfg=''):
     """ Read experiment log file and make dictionary that contains all simulations """
 
     # Read log file
     logFile = open(logName, 'r')
     log.info('Take com1DFA full experiment log')
 
+    # Parameter variation
+    if cfg != '':
+        varPar = cfg['varPar']
+    else:
+        varPar = 'Mu'
+
     # Save info to dictionary, add all result parameters that are saved in com1DFA Outputs
     suffix = ['pfd', 'ppr', 'pv', 'fd']
-    logDict = {'noSim': [], 'simName': [], 'Mu': [], 'suffix': suffix}
+    logDict = {'noSim': [], 'simName': [], varPar: [], 'suffix': suffix}
 
     lines = logFile.readlines()[1:]
     countSims = 1
@@ -48,7 +54,7 @@ def readLogFile(logName):
         vals = line.strip().split()
         logDict['noSim'].append(countSims)
         logDict['simName'].append(vals[1])
-        logDict['Mu'].append(float(vals[2]))
+        logDict[varPar].append(float(vals[2]))
         countSims = countSims + 1
 
     return logDict
@@ -121,7 +127,7 @@ def getRefData(avaDir, outputDir, suffix, nameDir=''):
         log.info('Reference files copied from directory: %s' % refDir)
 
 
-def exportcom1DFAOutput(avaDir):
+def exportcom1DFAOutput(avaDir, cfg=''):
     """ Export the simulation results from com1DFA output to desired location
 
         Inputs:     avaDir:     name of avalanche
@@ -141,33 +147,38 @@ def exportcom1DFAOutput(avaDir):
 
     # Read log file information
     logName = os.path.join(inputDir, 'ExpLog.txt')
-    logDict = readLogFile(logName)
+    if cfg != '':
+        logDict = readLogFile(logName, cfg)
+        varPar = cfg['varPar']
+    else:
+        logDict = readLogFile(logName)
+        varPar = 'Mu'
 
     # Get number of values
     sNo = len(logDict['noSim'])
 
     # Path to com1DFA results
-    resPath = os.path.join(inputDir, 'FullOutput_mu_')
+    resPath = os.path.join(inputDir, 'FullOutput_%s_' % varPar)
 
     # Export peak files and reports
     for k in range(sNo):
-        shutil.copy('%s%.03f/%s/raster/%s_pfd.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
+        shutil.copy('%s%.03f/%s/raster/%s_pfd.asc' % (resPath, logDict[varPar][k], logDict['simName'][k],
                     logDict['simName'][k]),
-                    '%s/%s_%s_pfd.asc' % (outDirPF, logDict['simName'][k], logDict['Mu'][k]))
-        shutil.copy('%s%.03f/%s/raster/%s_ppr.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
+                    '%s/%s_%s_pfd.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
+        shutil.copy('%s%.03f/%s/raster/%s_ppr.asc' % (resPath, logDict[varPar][k], logDict['simName'][k],
                     logDict['simName'][k]),
-                    '%s/%s_%s_ppr.asc' % (outDirPF, logDict['simName'][k], logDict['Mu'][k]))
-        shutil.copy('%s%.03f/%s/raster/%s_pv.asc' % (resPath, logDict['Mu'][k], logDict['simName'][k],
+                    '%s/%s_%s_ppr.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
+        shutil.copy('%s%.03f/%s/raster/%s_pv.asc' % (resPath, logDict[varPar][k], logDict['simName'][k],
                     logDict['simName'][k]),
-                    '%s/%s_%s_pv.asc' % (outDirPF, logDict['simName'][k], logDict['Mu'][k]))
-        shutil.copy('%s%.03f/%s.html' % (resPath, logDict['Mu'][k], logDict['simName'][k]),
-                    '%s/%s_%s.html' % (outDirRep, logDict['simName'][k], logDict['Mu'][k]))
+                    '%s/%s_%s_pv.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
+        shutil.copy('%s%.03f/%s.html' % (resPath, logDict[varPar][k], logDict['simName'][k]),
+                    '%s/%s_%s.html' % (outDirRep, logDict['simName'][k], logDict[varPar][k]))
 
     # Export ExpLog to Outputs/com1DFA
     shutil.copy2('%s/ExpLog.txt' % inputDir, outDir)
 
 
-def makeSimDict(inputDir):
+def makeSimDict(inputDir, cfg=''):
     """ Create a dictionary that contains all info on simulations:
 
             files:          full file path
@@ -185,9 +196,15 @@ def makeSimDict(inputDir):
     # Sort datafiles by name
     datafiles = sorted(datafiles)
 
+    # Check if parameter variation other than Mu
+    if cfg != '':
+        varPar = cfg['varPar']
+    else:
+        varPar = 'Mu'
+
     # Make dictionary of input data info
     data = {'files': [], 'names': [], 'resType': [], 'simType': [],
-            'releaseArea': [], 'cellSize' : [], 'Mu' : []}
+            'releaseArea': [], 'cellSize' : [], varPar : []}
 
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
@@ -196,7 +213,7 @@ def makeSimDict(inputDir):
         nameParts = name.split('_')
         data['releaseArea'].append(nameParts[0])
         data['simType'].append(nameParts[1])
-        data['Mu'].append(nameParts[3])
+        data[varPar].append(nameParts[3])
         data['resType'].append(nameParts[4])
         header = IOf.readASCheader(datafiles[m])
         data['cellSize'].append(header.cellsize)

@@ -47,7 +47,7 @@ def execSamos(samosAT, cintFile, avaDir, fullOut=False, simName=''):
     reVal = proc.wait()
 
 
-def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
+def initialiseRun(avaDir, flagEnt, flagRes, cfgGen, cfgPar, inputf='shp'):
     """ Initialise Simulation Run with input data """
 
     # Set directories for inputs, outputs and current work
@@ -87,9 +87,16 @@ def initialiseRun(avaDir, flagEnt, flagRes, inputf='shp'):
     # Initialise DEM
     demFile = glob.glob(inputDir+os.sep+'*.asc')
 
+    # Parameter variation
+    if cfgPar.getboolean('flagVarPar'):
+        varPar = cfgPar['varPar']
+        print('flag set varpar', varPar)
+    else:
+        varPar = 'Mu'
+
     # Initialise full experiment log file
     with open(os.path.join(workDir, 'ExpLog.txt'), 'w') as logFile:
-        logFile.write("NoOfSimulation,SimulationRunName,Mu\n")
+            logFile.write("NoOfSimulation,SimulationRunName,%s\n" % varPar)
 
     # return DEM, first item of release, entrainment and resistance areas
     return demFile[0], relFiles, entFiles[0], resFiles[0]
@@ -148,6 +155,7 @@ def runSamos(cfg, avaDir):
     inputf = cfgGen['inputf']
     fullOut = cfgGen.getboolean('flagOut')
     cfgAimec = cfg['AIMEC']
+    cfgPar = cfg['PARAMATERVAR']
     resDir = os.path.join(avaDir, 'Work', 'com1DFA')
     # Get path of module
     modPath = os.path.dirname(__file__)
@@ -159,7 +167,7 @@ def runSamos(cfg, avaDir):
     log.info('Your current avalanche test name: %s' % avaDir)
 
     # Load input data
-    dem, rels, res, ent = initialiseRun(avaDir, flagEnt, flagRes, inputf)
+    dem, rels, res, ent = initialiseRun(avaDir, flagEnt, flagRes, cfgGen, cfgPar, inputf)
 
     # Get cell size from DEM header
     demData = aU.readASCheader(dem)
@@ -203,8 +211,7 @@ def runSamos(cfg, avaDir):
         execSamos(samosAT, workFile, avaDir, fullOut)
 
         # If mu shall be varied
-        if cfgGen.getboolean('flagVarPar'):
-            cfgPar = cfg['PARAMATERVAR']
+        if cfgPar.getboolean('flagVarPar'):
             log.info('Parameter variation used, varying: %s' % cfgPar['varPar'])
             writeParFile(avaDir, cfgPar, simName)
             templateFile = os.path.join(modPath, '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
@@ -231,7 +238,9 @@ def runSamos(cfg, avaDir):
     log.info('Avalanche Simulations performed')
 
     # Setup input from com1DFA and exort to Outputs/com1DFA
-    fU.exportcom1DFAOutput(avaDir)
-
+    if cfgPar.getboolean('flagVarPar'):
+        fU.exportcom1DFAOutput(avaDir, cfgPar)
+    else:
+        fU.exportcom1DFAOutput(avaDir)
 
     log.info('Exported results to Outputs/com1DFA')
