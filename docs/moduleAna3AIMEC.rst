@@ -37,8 +37,7 @@ Theory
 -----------
 
 The simulation results (two dimensional fields of e.g. peak pressure or flow depth) are processed in a way
-that it is possible to compare characteristic values such as for example, run-out, maximum peak pressure or
-flow depth, maximum peak velocity or speed for different simulations.
+that it is possible to compare characteristic values that are directly linked to the flow variables such as maximum peak flow depth, maximum peak velocity or deduced quantities, for example maximum peak pressure, pressure based run-out (including direct comparison to possible references tp, fp, ..) for different simulations.
 
 
 AIMEC (Automated Indicator based Model Evaluation and Comparison, [Fischer2013]_) was developed
@@ -110,6 +109,8 @@ When comparing the run-out area (corresponding to a given pressure threshold) of
 it is possible to distinguish four different zones. For example, if the first simulation (sim1) is taken as reference and if True corresponds
 to the assertion that the avalanche covered this zone and False there was no avalanche in this zone, those four zones are:
 
+[[JT COMMENT - here we should somehow make clear that this is also based on peak pressure fields - respectively to areas where P(s/x,l/y) > P_lim ]]
+
     * TP (true positive) zone: green zone on :numref:`fig-aimec-comp-new` , sim1 = True  sim2 = True
     * FP (false positive) zone: blue zone on :numref:`fig-aimec-comp-new` , sim1 = False  sim2 = True
     * FN (false negative) zone: red zone on :numref:`fig-aimec-comp-new` , sim1 = True  sim2 = False
@@ -140,7 +141,7 @@ Procedure
 
 This section describes how the theory is implemented in the ``ana3AIMEC`` module.
 
-Make Domain transformation
+Perform path-domain transformation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 First, the transformation from (x,y) coordinate system (where the original rasters lie in) to (s,l) coordinate system is applied
 given a new domain width. A new grid corresponding to the new domain (following the avalanche path) is built.
@@ -163,7 +164,7 @@ The transformation information are stored in a ``rasterTransfo`` dictionary:
 
 Assign data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The simulation results (for example peak pressure or flow depth) are projected on the new grid using the
+The simulation results (for example peak velocities / pressure or flow depth) are projected on the new grid using the
 transformation information. The projected results are stored in the ``newRasters`` dictionary.
 
 .. _analyze-results:
