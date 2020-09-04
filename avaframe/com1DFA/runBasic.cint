@@ -58,7 +58,7 @@ void postprocessing(char ResultDir[], char SimName[], float Mu){
 
     // Generate a full report
     sprintf(MuString,"%.3f",Mu);
-    sprintf(ResultDir_rep,"%s/FullOutput_mu_%s",ResultDir,MuString);
+    sprintf(ResultDir_rep,"%s/FullOutput_Mu_%s",ResultDir,MuString);
     if(make_directory(ResultDir_rep)){ set_error("cannot create report directory"); return;}
     printf("\n[BatchSamos] Report is saved to %s \n",ResultDir_rep);
     sprintf(name,"Project/Simulations/%s",SimName);
