@@ -180,6 +180,7 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     DefaultName = cfgPath['projectName']
 
     w = float(cfgSetup['domainWidth'])
+    runoutAngle = float(cfgSetup['runoutAngle'])
     interpMethod = cfgSetup['interpMethod']
 
     log.info('Data-file %s analysed' % rasterSource)
@@ -247,7 +248,6 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    runoutAngle = 10
     log.info('Measuring run-out length from the %s ° point' % runoutAngle)
     rasterTransfo['runoutAngle'] = runoutAngle
     _, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle, rasterTransfo)
