@@ -60,7 +60,6 @@ def quickPlot(avaDir, suffix, cfg, simName, Mu):
     # prepare data
     data = fU.makeSimDict(workDir)
     cellSize = data['cellSize'][0]
-    print(data['files'])
 
     # Count the number of release areas
     relAreas = set(data['releaseArea'])
@@ -71,7 +70,7 @@ def quickPlot(avaDir, suffix, cfg, simName, Mu):
         for m in range(len(data['files'])):
             if data['resType'][m] == suffix and data['simType'][m] == simName and data['releaseArea'][m] == rel and float(data['Mu'][m]) == Mu:
                 indSuffix.append(m)
-        print(indSuffix)
+
         # Load data
         data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
         data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
