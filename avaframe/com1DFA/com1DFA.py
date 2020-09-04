@@ -47,7 +47,7 @@ def execSamos(samosAT, cintFile, avaDir, fullOut=False, simName=''):
     reVal = proc.wait()
 
 
-def initialiseRun(avaDir, flagEnt, flagRes, cfgGen, cfgPar, inputf='shp'):
+def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
     """ Initialise Simulation Run with input data """
 
     # Set directories for inputs, outputs and current work
@@ -167,7 +167,7 @@ def runSamos(cfg, avaDir):
     log.info('Your current avalanche test name: %s' % avaDir)
 
     # Load input data
-    dem, rels, res, ent = initialiseRun(avaDir, flagEnt, flagRes, cfgGen, cfgPar, inputf)
+    dem, rels, res, ent = initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf)
 
     # Get cell size from DEM header
     demData = aU.readASCheader(dem)
