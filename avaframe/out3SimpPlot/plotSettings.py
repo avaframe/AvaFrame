@@ -41,6 +41,8 @@ cmapReds.set_bad(color='k')
 cmapBlues = copy.copy(matplotlib.cm.Blues)
 cmapBlues.set_bad(color='k')
 
+cmapGreys = copy.copy(matplotlib.cm.get_cmap("Greys"))
+
 cmapjet = copy.copy(matplotlib.cm.jet)
 cmapjet.set_bad(color='k')
 cmapPlasma = copy.copy(matplotlib.cm.plasma)
@@ -61,3 +63,4 @@ cmapdiv = copy.copy(matplotlib.cm.RdBu_r) #sns.color_palette("RdBu_r")
 cmapPres = cmapViridis
 cmapDepth = cmapBlues
 cmapSpeed = cmapReds
+cmapDEM = cmapGreys
