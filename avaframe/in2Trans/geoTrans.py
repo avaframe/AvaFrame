@@ -290,7 +290,7 @@ def prepareAngleProfile(beta, AvaProfile):
     # (i.e. last value above 10 deg)
     # tmp = x[(angle < 10.0) & (angle > 0.0) & (x > 450)]
 
-    tmp = np.where((angle < beta) & (angle > 0.0) & (s > CuSplit))
+    tmp = np.where((angle < beta) & (angle >= 0.0) & (s > CuSplit))
     return angle, tmp, deltaInd
 
 
