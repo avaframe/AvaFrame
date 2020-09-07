@@ -36,10 +36,10 @@ To run
 Theory
 -----------
 
-The simulation results (two dimensional fields of e.g. peak pressure or flow depth) are processed in a way
-that it is possible to compare characteristic values such as for example, run-out, maximum peak pressure or
-flow depth, maximum peak velocity or speed for different simulations.
-
+The simulation results (two dimensional fields of e.g. peak velocities / pressure or flow depth) are processed in a way
+that it is possible to compare characteristic values that are directly linked to the flow variables such as 
+maximum peak flow depth, maximum peak velocity or deduced quantities, for example maximum peak pressure, 
+pressure based run-out (including direct comparison to possible references, see :ref:`area-indicators`) for different simulations.
 
 AIMEC (Automated Indicator based Model Evaluation and Comparison, [Fischer2013]_) was developed
 to analyze and compare avalanche simulations. The computational module presented here is inspired from the original AIMEC code.
@@ -71,7 +71,7 @@ The following figure illustrates the process.
 
 Mean and max values along path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-All two dimensional field results (for example peak pressure or flow depth) can be projected into the curvilinear system using
+All two dimensional field results (for example peak velocities / pressure or flow depth) can be projected into the curvilinear system using
 the previously described method. The maximum and average values of those fields are computed in each cross-section (l direction).
 For example the maximum :math:`A_{cross}^{max}(s)` and average :math:`\bar{A}_{cross}(s)` of the two
 dimensional distribution :math:`A(s,l)` is:
@@ -104,9 +104,11 @@ the global maximum (MMA) and average maximum (AMA) values of the two dimensional
     AMA = \frac{1}{s_{runout}-s_{start}}\int_{s_{start}}^{s_{runout}} A_{cross}^{max}(s)ds
 
 
+.. _area-indicators:
+
 Area indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-When comparing the run-out area (corresponding to a given pressure threshold) of two simulations,
+When comparing the run-out area (corresponding to a given pressure threshold :math:`P_{cross}^{max}(s)>P_{Lim}`) of two simulations,
 it is possible to distinguish four different zones. For example, if the first simulation (sim1) is taken as reference and if True corresponds
 to the assertion that the avalanche covered this zone and False there was no avalanche in this zone, those four zones are:
 
@@ -140,7 +142,7 @@ Procedure
 
 This section describes how the theory is implemented in the ``ana3AIMEC`` module.
 
-Make Domain transformation
+Perform path-domain transformation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 First, the transformation from (x,y) coordinate system (where the original rasters lie in) to (s,l) coordinate system is applied
 given a new domain width. A new grid corresponding to the new domain (following the avalanche path) is built.
@@ -163,7 +165,7 @@ The transformation information are stored in a ``rasterTransfo`` dictionary:
 
 Assign data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The simulation results (for example peak pressure or flow depth) are projected on the new grid using the
+The simulation results (for example peak velocities / pressure or flow depth) are projected on the new grid using the
 transformation information. The projected results are stored in the ``newRasters`` dictionary.
 
 .. _analyze-results:
