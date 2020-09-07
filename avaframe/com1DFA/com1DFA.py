@@ -60,7 +60,7 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
         log.error('Work directory %s already exists - delete first!' % (workDir))
     else:
         os.makedirs(workDir)
-    log.info('Directory: %s created' % dirName)
+    log.info('Directory: %s created' % workDir)
 
     # Initialise release areas, default is to look for shapefiles
     if inputf == 'nxyz':
