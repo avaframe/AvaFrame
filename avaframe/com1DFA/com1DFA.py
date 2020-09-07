@@ -55,7 +55,12 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
     outputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
     fU.makeADir(outputDir)
     workDir = os.path.join(avaDir, 'Work', 'com1DFA')
-    fU.makeADir(workDir)
+    # If Work directory already exists - error
+    if os.path.isdir(workDir):
+        log.error('Work directory %s already exists - delete first!' % (workDir))
+    else:
+        os.makedirs(workDir)
+    log.info('Directory: %s created' % dirName)
 
     # Initialise release areas, default is to look for shapefiles
     if inputf == 'nxyz':
@@ -154,7 +159,6 @@ def runSamos(cfg, avaDir):
     flagRes = cfgGen.getboolean('flagRes')
     inputf = cfgGen['inputf']
     fullOut = cfgGen.getboolean('flagOut')
-    cfgAimec = cfg['AIMEC']
     cfgPar = cfg['PARAMATERVAR']
     resDir = os.path.join(avaDir, 'Work', 'com1DFA')
     # Get path of module
