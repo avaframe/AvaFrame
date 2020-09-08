@@ -164,15 +164,15 @@ def exportcom1DFAOutput(avaDir, cfg=''):
     for k in range(sNo):
         shutil.copy('%s%.03f/%s/raster/%s_pfd.asc' % (resPath, logDict[varPar][k], logDict['simName'][k],
                     logDict['simName'][k]),
-                    '%s/%s_%s_pfd.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
+                    '%s/%s_%.03f_pfd.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
         shutil.copy('%s%.03f/%s/raster/%s_ppr.asc' % (resPath, logDict[varPar][k], logDict['simName'][k],
                     logDict['simName'][k]),
-                    '%s/%s_%s_ppr.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
+                    '%s/%s_%.03f_ppr.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
         shutil.copy('%s%.03f/%s/raster/%s_pv.asc' % (resPath, logDict[varPar][k], logDict['simName'][k],
                     logDict['simName'][k]),
-                    '%s/%s_%s_pv.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
+                    '%s/%s_%.03f_pv.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
         shutil.copy('%s%.03f/%s.html' % (resPath, logDict[varPar][k], logDict['simName'][k]),
-                    '%s/%s_%s.html' % (outDirRep, logDict['simName'][k], logDict[varPar][k]))
+                    '%s/%s_%.03f.html' % (outDirRep, logDict['simName'][k], logDict[varPar][k]))
 
     # Export ExpLog to Outputs/com1DFA
     shutil.copy2('%s/ExpLog.txt' % inputDir, outDir)
