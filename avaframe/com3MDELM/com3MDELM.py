@@ -115,19 +115,53 @@ def com3MDELMMain(cfgPath, cfgSetup):
         xp = x[1, 1]
         yp = y[1, 1]
         zp = z[1, 1]
+        if iter<2:
+            xpm2 = xPath[-1]
+            ypm2 = yPath[-1]
+            zpm2 = zPath[-1]
+            v2pm2 = V2Path[-1]
+        else:
+            xpm2 = xPath[-2]
+            ypm2 = yPath[-2]
+            zpm2 = zPath[-2]
+            v2pm2 = V2Path[-2]
         DeltaL = np.sqrt(np.square(x-xp)+np.square(y-yp)+np.square(z-zp))
+        DeltaLm2 = np.sqrt(np.square(x-xpm2)+np.square(y-ypm2)+np.square(z-zpm2))
         DeltaS = np.sqrt(np.square(x-xp)+np.square(y-yp))
         bx = (z[1, 2]-zp)/(x[1, 2]-xp)
         bx2 = bx*bx
         by = (z[2, 1]-zp)/(y[2, 1]-yp)
         by2 = by*by
         c = np.sqrt(1+bx2+by2)
-        V2next = v2p - 2*g*((z-zp) + mu*DeltaL/c) - d
+        print('deltaL')
+        print(DeltaL)
+        V2next = v2p - 2*g*((z-zp) + mu*DeltaL/c)
+        V2nextm2 = v2pm2 - 2*g*((z-zpm2) + mu*DeltaLm2/c)
         V2nextJT = v2p - 2*g*((z-zp) + mu*DeltaS)
-        # find index of max..
-        Ind = np.where(V2next == np.nanmax(V2next))
-        maxIndCol = Ind[0][0]
-        maxIndRow = Ind[1][0]
+
+        ekin = 0.5*m0*V2next
+        epot = m0*g*z
+        etot = ekin + epot
+        deltaEtot = (etot - etot[1][1])/DeltaL
+        # find index of max.. of quantity
+        toMaximize = V2next - d
+        toMaximize = np.where(V2next<0, np.nan, toMaximize)
+
+        print('V2next')
+        print(V2next)
+        print('etot')
+        print(etot)
+        print('deltaEtot')
+        print(deltaEtot)
+        print('V2nextm2')
+        print(V2nextm2)
+        Ind = np.where(toMaximize == np.nanmax(toMaximize))
+        try:
+            maxIndCol = Ind[0][0]
+            maxIndRow = Ind[1][0]
+        except IndexError:
+            maxIndCol = 1
+            maxIndRow = 1
         if np.shape(Ind)[1]>1:
             maxIndCol = Ind[0][1]
             maxIndRow = Ind[1][1]
@@ -136,7 +170,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
 
         newInd = np.array([indyn, indxn]).reshape(1, 2)
         xyIndList = np.append(xyIndList, newInd, axis=0)
-        if np.nanmax(V2next) <= 0:
+        if np.nanmax(V2next-d) <= 0:
             iterate = False
             v2n = 0
             v2p = v2n
@@ -151,14 +185,12 @@ def com3MDELMMain(cfgPath, cfgSetup):
             V2Path = np.append(V2Path, v2n)
 
             # update energy
-            ekin = 0.5*m0*v2n
-            epot = m0*g*z[maxIndCol, maxIndRow]
-            Ekin[indyn, indxn] = ekin
-            Epot[indyn, indxn] = epot
-            EkinPath = np.append(EkinPath, ekin)
-            EpotPath = np.append(EpotPath, ekin)
+            Ekin[indyn, indxn] = ekin[maxIndCol, maxIndRow]
+            Epot[indyn, indxn] = epot[maxIndCol, maxIndRow]
+            EkinPath = np.append(EkinPath, ekin[maxIndCol, maxIndRow])
+            EpotPath = np.append(EpotPath, ekin[maxIndCol, maxIndRow])
             log.info("conservation properties iteration nb %03.0f : s= %3.2f m, v2= %3.2f (m/s)^2, m= %3.2f kg, ekin=  %3.2f J ",
-                      iter, sPath[-1], v2n, m0, ekin)
+                      iter, sPath[-1], v2n, m0, ekin[maxIndCol, maxIndRow])
 
 
 
@@ -169,7 +201,8 @@ def com3MDELMMain(cfgPath, cfgSetup):
     avapath['y'] = np.array([yy0, 0])
     dem = IOf.readRaster(cfgPath['demSource'])
     AvaProfile, projPoint = geoTrans.prepareLine(dem, avapath, distance=10, Point=None)
-
+    # plt.close(fig)
+    # plt.close(fig1)
     fig = plt.figure(figsize=(2*figW, figH), dpi=figReso)
     ax1 = plt.subplot(121)
     cmap = cmapPlasma
@@ -213,7 +246,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
     ax1 = plt.subplot(111)
     cmap = cmapPlasma
     ax1.plot(sPath, zPath, 'k-', linewidth=lw/2, label='Avalanche profile')
-    ax1.plot(AvaProfile['s'], AvaProfile['z'], 'r-', linewidth=lw/2, label='Avalanche profile')
+    # ax1.plot(AvaProfile['s'], AvaProfile['z'], 'r-', linewidth=lw/2, label='Avalanche profile')
     f = zPath[0] - mu * sPath
     ax1.plot(sPath, f, '-', color='b', linewidth=lw/2, label='AlphaLine')
     Zene = zPath + V2Path/(2*g)
