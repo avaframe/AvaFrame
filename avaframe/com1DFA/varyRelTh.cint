@@ -131,10 +131,10 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
     // If simulation with entrainment and resistance then run
     if (istrstr(CuSim,"null")>0){
 
-      // Set standard values for null simulation 
+      // Set standard values for null simulation
       Mu = 0.155;
       relHST = 1.0;
-      printf("\n[BatchSamos] Computing %s with standard Mu=%f\n",CuSim,Mu);
+      printf("\n[BatchSamos] Computing %s with standard Mu=%f and standard RelTh=%f\n",CuSim,Mu,relHST);
 
       // Update log
       fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,relHST);
@@ -167,7 +167,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
       // set(Sim, "EndTime", "40");
       // set(Sim, "DeltaOut", "20");
 
-      // Open Mu file
+      // Open elH file
       sprintf(ParFilePath, "%s_VarPar.txt", ProjDir);
       ParameterFile=fopen(ParFilePath,"r");
       if(NULL == ParameterFile) {
@@ -181,7 +181,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
 
         // Read Mu from file
         fscanf(ParameterFile,"%f\n",relH);
-        printf("[BatchSamos] Computing %s with MrelH=%f\n",CuSim,relH);
+        printf("[BatchSamos] Computing %s with relH=%f\n",CuSim,relH);
 
         // Set release thickness
         sprintf(RelAr,"%s/ReleaseAreas",Sim);
