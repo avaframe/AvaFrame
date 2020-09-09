@@ -129,8 +129,9 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
     printf("\n[BatchSamos] Current Sim %s\n",Sim);
 
     // If simulation with entrainment and resistance then run
-    if (istrstr(CuSim,"entres")>0){
+    if (istrstr(CuSim,"null")>0){
 
+      // Set standard values for null simulation 
       Mu = 0.155;
       relHST = 1.0;
       printf("\n[BatchSamos] Computing %s with standard Mu=%f\n",CuSim,Mu);
@@ -158,6 +159,9 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
 
         // TEST IF DIFFERENCE
       set(Sim, "FrictionType", "samosAT_Standard");
+
+      // Set standard Mu - here used only for prints
+      Mu = 0.155;
 
       //------------Set time stepping---------------------
       // set(Sim, "EndTime", "40");

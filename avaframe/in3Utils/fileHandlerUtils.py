@@ -109,19 +109,22 @@ def getRefData(avaDir, outputDir, suffix, nameDir=''):
     ava = avaDir.split(os.sep)[1]
     refDir = os.path.join('..', 'benchmarks', ava)
 
-    dataRefFiles = glob.glob(refDir+os.sep + '*%s.asc' % suffix)
+    # Create simulations dictionary
+    data = makeSimDict(refDir)
 
     # copy these files to desired working directory for outQuickPlot
-    for files in dataRefFiles:
-        if nameDir != '':
-            shutil.copy(files, '%s/%s/000000.txt' % (outputDir, nameDir))
-        else:
-            shutil.copy2(files, outputDir)
+    for m in range(len(data['files'])):
+        print(data['files'][m])
+        if data['resType'][m] == suffix:
+            if nameDir != '':
+                shutil.copy(data['files'][m], '%s/%s/000000.txt' % (outputDir, nameDir))
+            else:
+                shutil.copy2(data['files'][m], outputDir)
 
     # Give status information
     if os.path.isdir(refDir) == False:
         log.error('%s does not exist - no files for reference found' % refDir)
-    elif dataRefFiles == []:
+    elif data['files'] == []:
         log.error('No files found in %s' % refDir)
     else:
         log.info('Reference files copied from directory: %s' % refDir)
