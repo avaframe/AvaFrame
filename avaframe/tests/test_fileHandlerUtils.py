@@ -29,3 +29,20 @@ def test_readLogFile():
     assert logDictMu['noSim'][4] == 5
     assert logDictMu['simName'][2] == 'release1HS2_null_dfa'
     assert logDictMu['Mu'][2] == 4.0
+
+
+def test_makeSimDict():
+    """ Test if simulation dictionary is generated correctly """
+
+    # Test function
+    inputDir = os.path.join(os.getcwd(), 'avaframe', 'tests', 'data', 'testSim')
+    cfg = configparser.ConfigParser()
+    cfg = {'varPar' : 'test'}
+    data = fU.makeSimDict(inputDir, cfg)
+
+    assert data['names'][0] == 'releaseTest1_entres_dfa_0.888_ppr'
+    assert data['releaseArea'][0] == 'releaseTest1'
+    assert data['simType'][0] == 'entres'
+    assert data['resType'][0] == 'ppr'
+    assert data['cellSize'][0] == 5.0
+    assert data['test'][0] == '0.888'
