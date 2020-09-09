@@ -167,7 +167,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
       // set(Sim, "EndTime", "40");
       // set(Sim, "DeltaOut", "20");
 
-      // Open elH file
+      // Open <relH file
       sprintf(ParFilePath, "%s_VarPar.txt", ProjDir);
       ParameterFile=fopen(ParFilePath,"r");
       if(NULL == ParameterFile) {
