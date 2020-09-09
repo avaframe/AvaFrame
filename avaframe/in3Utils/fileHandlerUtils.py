@@ -114,7 +114,6 @@ def getRefData(avaDir, outputDir, suffix, nameDir=''):
 
     # copy these files to desired working directory for outQuickPlot
     for m in range(len(data['files'])):
-        print(data['files'][m])
         if data['resType'][m] == suffix:
             if nameDir != '':
                 shutil.copy(data['files'][m], '%s/%s/000000.txt' % (outputDir, nameDir))

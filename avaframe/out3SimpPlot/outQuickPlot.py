@@ -46,9 +46,9 @@ def quickPlot(avaDir, suffix, cfg, simName):
     """
 
     # Create required directories
-    workDir = os.path.join(avaDir, 'Work', 'out3SimplPlot')
+    workDir = os.path.join(avaDir, 'Work', 'out3SimpPlot')
     fU.makeADir(workDir)
-    outDir = os.path.join(avaDir, 'Outputs', 'out3SimplPlot')
+    outDir = os.path.join(avaDir, 'Outputs', 'out3SimpPlot')
     fU.makeADir(outDir)
 
     # Setup input from com1DFA
