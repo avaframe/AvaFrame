@@ -34,7 +34,6 @@ log.info('Current avalanche: %s', avalancheDir)
 cfg = cfgUtils.getModuleConfig(ana3AIMEC)
 
 cfgSetup = cfg['AIMECSETUP']
-cfgDFA = cfg['DFA']
 
 # write config to log file
 logUtils.writeCfg2Log(cfg, 'ana3AIMEC')
