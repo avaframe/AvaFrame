@@ -150,7 +150,6 @@ def com3MDELMMain(cfgPath, cfgSetup):
                 log.info("\n +++ Approaching border of computational domain - computation abborted +++ \n")
                 iterate = False
                 break
-
             indgrid = np.ix_(indN+indy, indN+indx)
             x = X[indgrid]
             y = Y[indgrid]
@@ -172,15 +171,24 @@ def com3MDELMMain(cfgPath, cfgSetup):
             sloc = slocp + DeltaSLoc
             lloc = llocp + DeltaLLoc
 
-            Sstep[indgrid] = np.nanmin (Sstep[indgrid], sloc);
-            Lstep[indgrid] = np.nanmin (Sstep[indgrid], lloc);
+            Sstep[indgrid] = np.nanmin (Sstep[indgrid], sloc)
+            Lstep[indgrid] = np.nanmin (Sstep[indgrid], lloc)
 
         if iterate == False
             log.info("\n +++ Approaching border of computational domain - computation abborted +++ \n")
             break
+
         for id in range(nd):
             indx = xyDonIndListP[id, 1]
             indy = xyDonIndListP[id, 0]
+            indgrid = np.ix_(indN+indy, indN+indx)
+            x = X[indgrid]
+            y = Y[indgrid]
+            z = Z[indgrid]
+            d = D[indgrid]
+
+            sloc = Sstep[indgrid]
+            lloc = Lstep[indgrid]
 
             bx = (z[1, 2]-zp)/(x[1, 2]-xp)
             bx2 = bx*bx
@@ -188,16 +196,20 @@ def com3MDELMMain(cfgPath, cfgSetup):
             by2 = by*by
             c = np.sqrt(1+bx2+by2)
 
-            V2next = v2p - 2*g*((z-zp) + mu*DeltaL/c)
-            V2nextJT = v2p - 2*g*((z-zp) + mu*DeltaS)
+            v2rest = v2p - 2*g*((z-zp) + mu*(lloc-lloc[1, 1])/c)
+            V2nextJT = v2p - 2*g*((z-zp) + mu*(sloc-sloc[1, 1]))
 
-            ekin = 0.5*m0*V2next
+            V2step[indgrid] = v2rest
+            #JEDER DONOR HAT SEINE EIGENE VD KORREKTUR which has to be added over the receivers
+            v2r_sum = np.nansum(v2r_est)
+
+            ekin = 0.5*m0*v2rest
             epot = m0*g*z
             etot = ekin + epot
             deltaEtot = (etot - etot[1][1])/DeltaL
             # find index of max.. of quantity
-            toMaximize = V2next - d
-            toMaximize = np.where(V2next<0, np.nan, toMaximize)
+            toMaximize = v2rest - d
+            toMaximize = np.where(v2rest<0, np.nan, toMaximize)
 
             print('V2next')
             print(V2next)
@@ -220,12 +232,12 @@ def com3MDELMMain(cfgPath, cfgSetup):
 
             newInd = np.array([indyn, indxn]).reshape(1, 2)
             xyIndList = np.append(xyIndList, newInd, axis=0)
-            if np.nanmax(V2next-d) <= 0:
+            if np.nanmax(v2rest-d) <= 0:
                 iterate = False
                 v2n = 0
                 v2p = v2n
             else:
-                v2n = V2next[maxIndCol, maxIndRow]
+                v2n = v2rest[maxIndCol, maxIndRow]
                 v2p = v2n
                 # append x, y and update distance
                 xPath = np.append(xPath, x[maxIndCol, maxIndRow])
