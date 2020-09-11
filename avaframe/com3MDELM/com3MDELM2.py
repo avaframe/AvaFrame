@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 debugPlot = False
 
 
-def com3MDELMMain(cfgPath, cfgSetup):
+def com3MDELMMain2(cfgPath, cfgSetup):
     """
     """
     log.info("Running com3MDELMMain model on DEM \n \t %s \n",
@@ -174,7 +174,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
             Sstep[indgrid] = np.nanmin (Sstep[indgrid], sloc)
             Lstep[indgrid] = np.nanmin (Sstep[indgrid], lloc)
 
-        if iterate == False
+        if iterate == False:
             log.info("\n +++ Approaching border of computational domain - computation abborted +++ \n")
             break
 
@@ -197,6 +197,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
             c = np.sqrt(1+bx2+by2)
 
             v2rest = v2p - 2*g*((z-zp) + mu*(lloc-lloc[1, 1])/c)
+            v2rest = np.where(np.isnan(d), np.nan, v2rest)
             V2nextJT = v2p - 2*g*((z-zp) + mu*(sloc-sloc[1, 1]))
 
             V2step[indgrid] = v2rest
@@ -211,8 +212,8 @@ def com3MDELMMain(cfgPath, cfgSetup):
             toMaximize = v2rest - d
             toMaximize = np.where(v2rest<0, np.nan, toMaximize)
 
-            print('V2next')
-            print(V2next)
+            print('v2rest')
+            print(v2rest)
             print('etot')
             print(etot)
             print('deltaEtot')
