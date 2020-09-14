@@ -32,4 +32,4 @@ cfgFlags = cfg['FLAGS']
 logUtils.writeCfg2Log(cfg,'com3MDELM')
 
 # Calculate MDELM
-com3MDELM.com3MDELMMain2(cfgPath, cfgSetup)
+com3MDELM.com3MDELMMain(cfgPath, cfgSetup)
