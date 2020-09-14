@@ -60,6 +60,8 @@ def readLogFile(logName, cfg=''):
     return logDict
 
 #
+
+
 def checkCommonSims(logName, localLogName):
     """ Check which files are common between local and full ExpLog """
 
@@ -166,13 +168,13 @@ def exportcom1DFAOutput(avaDir, cfg=''):
     # Export peak files and reports
     for k in range(sNo):
         shutil.copy('%s%.03f/%s/raster/%s_pfd.asc' % (resPath, logDict[varPar][k], logDict['simName'][k],
-                    logDict['simName'][k]),
+                                                      logDict['simName'][k]),
                     '%s/%s_%.03f_pfd.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
         shutil.copy('%s%.03f/%s/raster/%s_ppr.asc' % (resPath, logDict[varPar][k], logDict['simName'][k],
-                    logDict['simName'][k]),
+                                                      logDict['simName'][k]),
                     '%s/%s_%.03f_ppr.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
         shutil.copy('%s%.03f/%s/raster/%s_pv.asc' % (resPath, logDict[varPar][k], logDict['simName'][k],
-                    logDict['simName'][k]),
+                                                     logDict['simName'][k]),
                     '%s/%s_%.03f_pv.asc' % (outDirPF, logDict['simName'][k], logDict[varPar][k]))
         shutil.copy('%s%.03f/%s.html' % (resPath, logDict[varPar][k], logDict['simName'][k]),
                     '%s/%s_%.03f.html' % (outDirRep, logDict['simName'][k], logDict[varPar][k]))
@@ -207,7 +209,7 @@ def makeSimDict(inputDir, cfg=''):
 
     # Make dictionary of input data info
     data = {'files': [], 'names': [], 'resType': [], 'simType': [],
-            'releaseArea': [], 'cellSize' : [], varPar : []}
+            'releaseArea': [], 'cellSize': [], varPar: []}
 
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
