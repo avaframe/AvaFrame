@@ -75,7 +75,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ref1 = ax1.images.append(im0)
     # cbar = ax1.figure.colorbar(im0, ax=ax1, use_gridspec=True)
     plt.autoscale(False)
-    ref0 = plt.plot(xx, yy, 'ro', markersize=ms, label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
+    ref0 = plt.plot(xx, yy, 'ro', markersize=ms, label='Beta point : %.1f °' %
+                    rasterTransfo['runoutAngle'])
     ref2 = plt.plot(xPath, yPath,
                     'b-', linewidth=lw, label='flow path')
     ref3 = plt.plot(DBXl, DBYl,
@@ -368,7 +369,7 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'elevRel', 'deltaH', 'AMPP',
               'MMPP', 'relMass', 'entMass', 'GI', 'GR', 'AMD', 'MMD', 'TP ', 'FN ', 'FP ', 'TN']
     resfile = [runout[1], runout[2], runout[0],
-               elevRel, deltaH, AMPP, MMPP, relMass, entMass, GI, GR, AMD, MMD, TP/areaSum ,FN/areaSum ,FP/areaSum ,TN/areaSum]
+               elevRel, deltaH, AMPP, MMPP, relMass, entMass, GI, GR, AMD, MMD, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
 
     header = ''.join(['projectName: ',  projectName, '\n',
                       'path: ', pathName, '\n',
