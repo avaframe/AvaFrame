@@ -609,17 +609,22 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     newMask = copy.deepcopy(dataPressure[0])
     # prepare mask for area resAnalysis
     newMask[0:indRunoutPoint] = 0
-    newMask[np.where(np.nan_to_num(newMask) < pLim)] = 0
-    newMask[np.where(np.nan_to_num(newMask) >= pLim)] = 1
-
+    # newMask[np.where(np.nan_to_num(newMask) < pLim)] = 0
+    # newMask[np.where(np.nan_to_num(newMask) >= pLim)] = 1
+    newMask = np.where(np.isnan(newMask), 0, newMask)
+    newMask = np.where(newMask< pLim, 0, newMask)
+    newMask = np.where(newMask>= pLim, 1, newMask)
     # comparison rasterdata with mask
     log.info('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
         'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
     # rasterinfo
-    nStart, m_start = np.nonzero(np.nan_to_num(newMask))
-    nStart = min(nStart)
+    nStart, m_start = np.nonzero(newMask)
+    nStart = np.min(nStart)
 
     nTot = len(scoord)
+
+    print(pLim)
+    print(np.nanmax((dataPressure[0])[nStart:nTot+1]))
 
     for i in range(nTopo):
         rasterdata = dataPressure[i]
@@ -634,8 +639,11 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         # for each pressure-file pLim is introduced (1/3/.. kPa), where the avalanche has stopped
         newRasterData = copy.deepcopy(rasterdata)
         newRasterData[0:indRunoutPoint] = 0
-        newRasterData[np.where(np.nan_to_num(newRasterData) < pLim)] = 0
-        newRasterData[np.where(np.nan_to_num(newRasterData) >= pLim)] = 1
+        # newRasterData[np.where(np.nan_to_num(newRasterData) < pLim)] = 0
+        # newRasterData[np.where(np.nan_to_num(newRasterData) >= pLim)] = 1
+        newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
+        newRasterData = np.where(newRasterData<pLim, 0, newRasterData)
+        newRasterData = np.where(newRasterData>=pLim, 1, newRasterData)
 
         if cfgFlags.getboolean('savePlot') and i > 0:
             # read paths
@@ -646,15 +654,15 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             if not os.path.exists(os.path.dirname(outname)):
                 os.makedirs(os.path.dirname(outname))
             fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
-            y_lim = scoord[indRunoutPoint+20]+resAnalysis['runout'][0, 0]
+            y_lim = scoord[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
-            ax1.title.set_text('Reference Peak Presseure in the RunOut area')
+            ax1.title.set_text('Reference Peak Presseure in the RunOut area\n  Pressure threshold: %.1f kPa' % pLim)
             cmap = cmapPres
             cmap.set_under(color='w')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
                                               scoord.min(), scoord.max()], cmap=cmap)
-            im.set_clim(vmin=pLim, vmax=np.max((dataPressure[0])[nStart:nTot+1]))
+            im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:nTot+1]))
             im.set_data(lcoord, scoord, dataPressure[0])
             ref0 = ax1.images.append(im)
             cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, use_gridspec=True)
@@ -690,26 +698,20 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             fig.savefig(outname, transparent=True)
             plt.close(fig)
 
-        tpInd = np.where((newMask[nStart:nTot+1] == True) &
-                         (newRasterData[nStart:nTot+1] == True))
-        fpInd = np.where((newMask[nStart:nTot+1] == False) &
-                         (newRasterData[nStart:nTot+1] == True))
-        fnInd = np.where((newMask[nStart:nTot+1] == True) &
-                         (newRasterData[nStart:nTot+1] == False))
-        tnInd = np.where((newMask[nStart:nTot+1] == False) &
-                         (newRasterData[nStart:nTot+1] == False))
-
-        # Teilrasterpunkte
-        tpCount = len(tpInd[0])
-        fpCount = len(fpInd[0])
-        fnCount = len(fnInd[0])
-        tnCount = len(tnInd[0])
+        tpInd = np.where((newMask[nStart:nTot+1] == 1) &
+                         (newRasterData[nStart:nTot+1] == 1))
+        fpInd = np.where((newMask[nStart:nTot+1] == 0) &
+                         (newRasterData[nStart:nTot+1] == 1))
+        fnInd = np.where((newMask[nStart:nTot+1] == 1) &
+                         (newRasterData[nStart:nTot+1] == 0))
+        tnInd = np.where((newMask[nStart:nTot+1] == 0) &
+                         (newRasterData[nStart:nTot+1] == 0))
 
         # subareas
-        tp = sum(cellarea[tpInd[0] + nStart, tpInd[1]])
-        fp = sum(cellarea[fpInd[0] + nStart, fpInd[1]])
-        fn = sum(cellarea[fnInd[0] + nStart, fnInd[1]])
-        tn = sum(cellarea[tnInd[0] + nStart, tnInd[1]])
+        tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
+        fp = np.nansum(cellarea[fpInd[0] + nStart, fpInd[1]])
+        fn = np.nansum(cellarea[fnInd[0] + nStart, fnInd[1]])
+        tn = np.nansum(cellarea[tnInd[0] + nStart, tnInd[1]])
 
         # take reference (first simulation) as normalizing area
         areaSum = tp + fn
@@ -740,9 +742,8 @@ def readWrite(fname_ent):
     massTime = np.loadtxt(fname_ent, delimiter=',', skiprows=1)
     timeResults = [massTime[0, 0], massTime[-1, 0]]
     totMassResults = [massTime[0, 1], massTime[-1, 1]]
-    entMassResults = [massTime[0, 2], massTime[-1, 2]]
     relMass = totMassResults[0]
-    entMass = entMassResults[1]
+    entMass = totMassResults[1]- relMass
 #   growth results
     growthIndex = totMassResults[1]/totMassResults[0]
     growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])
