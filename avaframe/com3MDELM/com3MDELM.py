@@ -259,6 +259,8 @@ def com3MDELMMain(cfgPath, cfgSetup):
             lloc = ld + DLLoc
             # find the shortest path to the cell
             Sstep[indgrid] = np.fmin(Sstep[indgrid], sloc)
+            Sstep[indgrid] = np.where(np.isnan(d), np.nan, Sstep[indgrid])
+            Sstep[indgrid] = np.where(Sglob[indgrid]<Sglob[indy, indx], np.nan, Sstep[indgrid])
             Lstep[indgrid] = np.fmin(Lstep[indgrid], lloc)
             # previous donors forbiden
             Sstep[indgrid] = np.where(np.isnan(d), np.nan, Sstep[indgrid])
