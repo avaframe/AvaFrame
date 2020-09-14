@@ -86,6 +86,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], int count
   char relHString[512];
   char relHSTString[512];
   int Status;
+  char relHSTString[512];
   int NSims;
   int NRelAreas;
   int i, j;

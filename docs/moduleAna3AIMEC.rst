@@ -37,8 +37,8 @@ Theory
 -----------
 
 The simulation results (two dimensional fields of e.g. peak velocities / pressure or flow depth) are processed in a way
-that it is possible to compare characteristic values that are directly linked to the flow variables such as 
-maximum peak flow depth, maximum peak velocity or deduced quantities, for example maximum peak pressure, 
+that it is possible to compare characteristic values that are directly linked to the flow variables such as
+maximum peak flow depth, maximum peak velocity or deduced quantities, for example maximum peak pressure,
 pressure based run-out (including direct comparison to possible references, see :ref:`area-indicators`) for different simulations.
 
 AIMEC (Automated Indicator based Model Evaluation and Comparison, [Fischer2013]_) was developed
@@ -208,7 +208,9 @@ Configuration parameters
 ---------------------------------
 
 :domainWidth: width of the domain around the avalanche path in [m]
+:runoutAngle: angle of the slope at the start of the run-out zone [°]
 :pressureLimit: pressure limit value for evaluation of runout in [kPa]
+:interpMethod: interpolation method used to project the a point on the input raster (chose between 'nearest' and 'bilinear')
 :distance: re-sampling distance. The given avalanche path is re-sampled with a 10m (default) step.
 :plotFigure: plot figures; default False
 :savePlot: Save figures; default True

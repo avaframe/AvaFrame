@@ -75,7 +75,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ref1 = ax1.images.append(im0)
     # cbar = ax1.figure.colorbar(im0, ax=ax1, use_gridspec=True)
     plt.autoscale(False)
-    ref0 = plt.plot(xx, yy, 'ro', markersize=ms, label='Beta point')
+    ref0 = plt.plot(xx, yy, 'ro', markersize=ms, label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
     ref2 = plt.plot(xPath, yPath,
                     'b-', linewidth=lw, label='flow path')
     ref3 = plt.plot(DBXl, DBYl,
@@ -86,7 +86,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
                     'g-', linewidth=lw, label='domain')
     refs = [ref0[0], ref2[0], ref3[0]]
 
-    labels = ['Beta point', 'flow path', 'domain']
+    labels = ['Beta point : %.1f °' % rasterTransfo['runoutAngle'], 'flow path', 'domain']
     ax1.title.set_text('XY Domain')
     ax1.legend(refs, labels, loc=0)
     ax1.set_xlim([x.min(), x.max()])
@@ -100,7 +100,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     lcoord = rasterTransfo['l']
     scoord = rasterTransfo['s']
     ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='r', linewidth=lw,
-                       linestyle='-', label='Beta point')
+                       linestyle='-', label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
     maskedArray = isosurf  # np.ma.array(isosurf,mask=np.isnan(isosurf))
     im = NonUniformImage(ax2, extent=[lcoord.min(), lcoord.max(),
                                       scoord.min(), scoord.max()], cmap=cmap)
@@ -159,7 +159,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ax1 = plt.subplot(121)
     ax1.title.set_text('Peak Pressure 2D plot for the reference')
     ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
-                       linestyle='-', label='Beta point')
+                       linestyle='-', label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
     ref1 = ax1.axhline(y=np.max(runout), color='r', linewidth=lw,
                        linestyle='-', label='runout max')
     ref2 = ax1.axhline(y=np.average(runout), color='y', linewidth=lw,
@@ -244,7 +244,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     ax1 = plt.subplot(131)
     ax1.title.set_text('Peak Pressure')
     ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
-                       linestyle='-', label='Beta point')
+                       linestyle='-', label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
     ref2 = ax1.axhline(y=runout[0], color='b', linewidth=lw,
                        linestyle='-', label='runout')
     # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
@@ -269,7 +269,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     ax2 = plt.subplot(132)
     ax2.title.set_text('Peak Flow Depth')
     ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
-                       linestyle='-', label='Beta point')
+                       linestyle='-', label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
     ref2 = ax2.axhline(y=runout[0], color='b', linewidth=lw,
                        linestyle='-', label='runout')
     # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
@@ -294,7 +294,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     ax3 = plt.subplot(133)
     ax3.title.set_text('Peak Speed')
     ref1 = ax3.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
-                       linestyle='-', label='Beta point')
+                       linestyle='-', label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
     ref2 = ax3.axhline(y=runout[0], color='b', linewidth=lw,
                        linestyle='-', label='runout')
     # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
@@ -359,18 +359,22 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     entMass = resAnalysis['entMass']
     GI = resAnalysis['growthIndex']
     GR = resAnalysis['growthGrad']
+    TP = resAnalysis['TP']
+    FN = resAnalysis['FN']
+    FP = resAnalysis['FP']
+    TN = resAnalysis['TN']
+    areaSum = TP + FN
 
     legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'elevRel', 'deltaH', 'AMPP',
-              'MMPP', 'entMass', 'GI', 'GR', 'AMD', 'MMD']
-    resfile = [runout[1, :], runout[2, :], runout[0, :],
-               elevRel, deltaH, AMPP, MMPP, entMass, GI, GR, AMD, MMD]
+              'MMPP', 'relMass', 'entMass', 'GI', 'GR', 'AMD', 'MMD', 'TP ', 'FN ', 'FP ', 'TN']
+    resfile = [runout[1], runout[2], runout[0],
+               elevRel, deltaH, AMPP, MMPP, relMass, entMass, GI, GR, AMD, MMD, TP/areaSum ,FN/areaSum ,FP/areaSum ,TN/areaSum]
 
     header = ''.join(['projectName: ',  projectName, '\n',
                       'path: ', pathName, '\n',
                       'dhm: ', demName, '\n',
                       'domain_width: ', str(domainWidth), ' m\n',
                       'pressure_limit: ', str(pressureLimit), ' kPa\n',
-                      'release_mass: ', str(relMass[0]), ' kg\n'
                       'start of runout area Angle: ', str(runoutAngle), ' °\n'])
 
     outname = ''.join([cfgPath['pathResult'], os.path.sep,
@@ -388,18 +392,18 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     fid.write(header)
     # write table legend
     for j in range(len(legend)):
-        fid.write('{:<12s}'.format(legend[j]))
+        fid.write('{:<20s}'.format(legend[j]))
     fid.write('\n')
     # write table values
     for i in range(np.shape(output)[1]):
         tmp = os.path.basename(dataName[i])
         name = os.path.splitext(tmp)[0]
-        fid.write('{:<12s}'.format(name))
+        fid.write('{:<20s}'.format(name))
         for j in range(np.shape(output)[0]):
             try:
-                fid.write('{:<12.3f}'.format(output[j][i]))
+                fid.write('{:<20.3f}'.format(output[j][i]))
             except:
-                fid.write('{:<12}'.format('NaN'))
+                fid.write('{:<20}'.format('NaN'))
         fid.write('\n')
     fid.close()
 
