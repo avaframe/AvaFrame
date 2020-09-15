@@ -608,9 +608,6 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     # take first simulation as reference
     newMask = copy.deepcopy(dataPressure[0])
     # prepare mask for area resAnalysis
-    newMask[0:indRunoutPoint] = 0
-    # newMask[np.where(np.nan_to_num(newMask) < pLim)] = 0
-    # newMask[np.where(np.nan_to_num(newMask) >= pLim)] = 1
     newMask = np.where(np.isnan(newMask), 0, newMask)
     newMask = np.where(newMask< pLim, 0, newMask)
     newMask = np.where(newMask>= pLim, 1, newMask)
@@ -618,13 +615,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     log.info('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
         'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
     # rasterinfo
-    nStart, m_start = np.nonzero(newMask)
-    nStart = np.min(nStart)
-
-    nTot = len(scoord)
-
-    print(pLim)
-    print(np.nanmax((dataPressure[0])[nStart:nTot+1]))
+    nStart = indRunoutPoint
 
     for i in range(nTopo):
         rasterdata = dataPressure[i]
@@ -638,9 +629,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         """
         # for each pressure-file pLim is introduced (1/3/.. kPa), where the avalanche has stopped
         newRasterData = copy.deepcopy(rasterdata)
-        newRasterData[0:indRunoutPoint] = 0
-        # newRasterData[np.where(np.nan_to_num(newRasterData) < pLim)] = 0
-        # newRasterData[np.where(np.nan_to_num(newRasterData) >= pLim)] = 1
+        # prepare mask for area resAnalysis
         newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
         newRasterData = np.where(newRasterData<pLim, 0, newRasterData)
         newRasterData = np.where(newRasterData>=pLim, 1, newRasterData)
@@ -662,7 +651,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             cmap.set_under(color='w')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
                                               scoord.min(), scoord.max()], cmap=cmap)
-            im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:nTot+1]))
+            im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
             im.set_data(lcoord, scoord, dataPressure[0])
             ref0 = ax1.images.append(im)
             cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, use_gridspec=True)
@@ -698,14 +687,14 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             fig.savefig(outname, transparent=True)
             plt.close(fig)
 
-        tpInd = np.where((newMask[nStart:nTot+1] == 1) &
-                         (newRasterData[nStart:nTot+1] == 1))
-        fpInd = np.where((newMask[nStart:nTot+1] == 0) &
-                         (newRasterData[nStart:nTot+1] == 1))
-        fnInd = np.where((newMask[nStart:nTot+1] == 1) &
-                         (newRasterData[nStart:nTot+1] == 0))
-        tnInd = np.where((newMask[nStart:nTot+1] == 0) &
-                         (newRasterData[nStart:nTot+1] == 0))
+        tpInd = np.where((newMask[nStart:] == 1) &
+                         (newRasterData[nStart:] == 1))
+        fpInd = np.where((newMask[nStart:] == 0) &
+                         (newRasterData[nStart:] == 1))
+        fnInd = np.where((newMask[nStart:] == 1) &
+                         (newRasterData[nStart:] == 0))
+        tnInd = np.where((newMask[nStart:] == 0) &
+                         (newRasterData[nStart:] == 0))
 
         # subareas
         tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
