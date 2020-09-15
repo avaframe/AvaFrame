@@ -14,7 +14,7 @@ import copy
 # define figure dimentions
 figW = 6
 figH = 6
-# define figure resolution
+# define figure resolution (dpi)
 figReso = 150
 # define lines and marker properties
 lw = 2
@@ -24,7 +24,7 @@ markers = 'o'
 fs = 12
 
 # set output extension {png, ps, pdf, svg}
-matplotlib.rcParams["savefig.format"] = 'png'
+matplotlib.rcParams["savefig.format"] = 'svg'
 
 # define seaborn style and color maps
 sns.set(font_scale=1)
