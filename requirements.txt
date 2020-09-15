@@ -3,3 +3,4 @@ matplotlib
 pyshp
 scipy
 cmocean
+seaborn
