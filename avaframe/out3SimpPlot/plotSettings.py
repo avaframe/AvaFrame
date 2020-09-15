@@ -24,7 +24,7 @@ markers = 'o'
 fs = 12
 
 # set output extension {png, ps, pdf, svg}
-matplotlib.rcParams["savefig.format"] = 'svg'
+matplotlib.rcParams["savefig.format"] = 'png'
 
 # define seaborn style and color maps
 sns.set(font_scale=1)
