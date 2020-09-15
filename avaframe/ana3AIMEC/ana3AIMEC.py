@@ -700,7 +700,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             pathResult = cfgPath['pathResult']
             projectName = cfgPath['dirName']
             outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
-                               projectName, '_', str(i), '_compToRef', '.pdf'])
+                               projectName, '_', str(i), '_compToRef'])
             if not os.path.exists(os.path.dirname(outname)):
                 os.makedirs(os.path.dirname(outname))
             fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
@@ -745,7 +745,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             # fig.tight_layout()
             # plt.show()
 
-            fig.savefig(outname, transparent=True)
+            fig.savefig(outname)
             plt.close(fig)
 
         tpInd = np.where((newMask[nStart:] == 1) &

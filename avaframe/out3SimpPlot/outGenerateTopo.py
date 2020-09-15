@@ -44,7 +44,7 @@ def plotDEM(z, name_ext, cfg, outDir):
     ax.set_zlabel('surface elevation [m]')
 
     # Save figure to file
-    plt.savefig(os.path.join(outDir, '%s_%s_plot.png' % (dem_name, name_ext)))
+    plt.savefig(os.path.join(outDir, '%s_%s_plot' % (dem_name, name_ext)))
 
     # If flag is set, plot figure
     if cfgDEM.getboolean('showplot'):

@@ -124,10 +124,10 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
         plt.ioff()
     if cfgFlags.getboolean('savePlot'):
         outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
-                           projectName, '_domTransfo', '.pdf'])
+                           projectName, '_domTransfo'])
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
-        fig.savefig(outname, transparent=True)
+        fig.savefig(outname)
 
     plt.close(fig)
 
@@ -205,10 +205,10 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     if cfgFlags.getboolean('savePlot'):
         outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
                            projectName, '_dptr', str(int(pLim)),
-                           '_slComparison', '.pdf'])
+                           '_slComparison'])
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
-        fig.savefig(outname, transparent=True)
+        fig.savefig(outname)
 
     if cfgFlags.getboolean('plotFigure'):
         plt.show()
@@ -321,10 +321,10 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
 
     if cfgFlags.getboolean('savePlot'):
         outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
-                           projectName, '_referenceFields', '.pdf'])
+                           projectName, '_referenceFields'])
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
-        fig.savefig(outname, transparent=True)
+        fig.savefig(outname)
 
     if cfgFlags.getboolean('plotFigure'):
         plt.show()
@@ -527,12 +527,12 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         ax1.legend(loc='lower left')
     plt.grid('on')
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
-                           str(int(plim)), '_', tipo, '.pdf'])
+                           str(int(plim)), '_', tipo])
     outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
 
     if not os.path.exists(os.path.dirname(outname)):
         os.makedirs(os.path.dirname(outname))
-    fig.savefig(outname, transparent=True)
+    fig.savefig(outname)
 
     plt.close(fig)
 
@@ -577,12 +577,12 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     plt.ylim([0, 1.01])
     plt.grid('on')
 
-    outFileName = ''.join([cfgPath['dirName'], '_dptr', str(int(plim)), '_ROC.pdf'])
+    outFileName = ''.join([cfgPath['dirName'], '_dptr', str(int(plim)), '_ROC'])
     outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
 
     if not os.path.exists(os.path.dirname(outname)):
         os.makedirs(os.path.dirname(outname))
-    fig.savefig(outname, transparent=True)
+    fig.savefig(outname)
 
     plt.close(fig)
 
