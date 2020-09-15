@@ -129,7 +129,7 @@ def quickPlot(avaDir, suffix, cfg, simName):
         ax[0].legend()
         ax[1].legend()
         fig.tight_layout()
-        fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s_%s.png' % (rel, suffix)))
+        fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s_%s' % (rel, suffix)))
 
         log.info('Figures saved to: %s' % outDir)
 

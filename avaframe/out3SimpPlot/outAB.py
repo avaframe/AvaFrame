@@ -115,7 +115,7 @@ def writeABpostOut(DGM, Avapath, SplitPoint, saveOutPath, flags):
         eqParams, eqOut = readABresults(saveOutPath, name, flags)
         eqPost = processABresults(eqParams, eqOut)
         # Plot the whole profile with beta, alpha ... points and lines
-        savename = name + '_AlphaBeta.pdf'
+        savename = name + '_AlphaBeta'
         save_file = os.path.join(saveOutPath, savename)
         plotPath(DGM, SplitPoint, eqPost, flags)
         FileNamePlot_ext[i] = plotProfile(DGM, eqPost, save_file, flags)

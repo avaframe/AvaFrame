@@ -23,6 +23,9 @@ markers = 'o'
 # font size
 fs = 12
 
+# set output extension {png, ps, pdf, svg}
+matplotlib.rcParams["savefig.format"] = 'png'
+
 # define seaborn style and color maps
 sns.set(font_scale=1)
 sns.set_style("dark", {'axes.edgecolor': '.8', 'xtick.bottom': True, 'ytick.left': True})
