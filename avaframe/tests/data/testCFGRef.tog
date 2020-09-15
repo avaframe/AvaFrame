@@ -10,3 +10,8 @@ logUtils - INFO -  	DICT2
 logUtils - INFO -  		parameter3 : 0.02
 logUtils - INFO -  		parameter4 : aString
 logUtils - INFO -  		parameter5 : False
+logUtils - INFO -  	FLAGS
+logUtils - INFO -  		plotfigure : False
+logUtils - INFO -  		saveplot : False
+logUtils - INFO -  		writeres : True
+logUtils - INFO -  		fullout : False
