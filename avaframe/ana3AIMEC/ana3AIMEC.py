@@ -803,23 +803,23 @@ def readWrite(fname_ent):
     entMass = np.sum(massTime[:, 2])
     finalMass = totMassResults[1]
     # check mass balance
-    log.info('Mass difference between first and last time step in sim %s is: %.1f kg' %
+    log.info('Total mass change between first and last time step in sim %s is: %.1f kg' %
              (int(os.path.splitext(os.path.basename(fname_ent))[0]), totMassResults[1]- relMass))
-    log.info('Entrained mass in sim %s is: %.1f kg' % (int(os.path.splitext(os.path.basename(fname_ent))[0]), entMass))
+    log.info('Total entrained mass in sim %s is: %.1f kg' % (int(os.path.splitext(os.path.basename(fname_ent))[0]), entMass))
     if (totMassResults[1]- relMass)==0:
         diff = np.abs((totMassResults[1]- relMass) - entMass)
         if diff>0:
             log.warning('Conservation of mass is not satisfied')
-            log.warning('Mass difference and entrained mass differ from %.4f kg' % (diff))
+            log.warning('Total mass change and total entrained mass differ from %.4f kg' % (diff))
         else:
-            log.info('Mass difference and entrained mass differ from %.4f kg' % (diff))
+            log.info('Total mass change and total entrained mass differ from %.4f kg' % (diff))
     else:
         diff = np.abs((totMassResults[1]- relMass) - entMass)/(totMassResults[1]- relMass)
         if diff*100>0.05:
             log.warning('Conservation of mass is not satisfied' )
-            log.warning('Mass difference and entrained mass differ from %.4f %%' % (diff*100))
+            log.warning('Total mass change and total entrained mass differ from %.4f %%' % (diff*100))
         else:
-            log.info('Mass difference and entrained mass differ from %.4f %%' % (diff*100))
+            log.info('Total mass change and total entrained mass differ from %.4f %%' % (diff*100))
 #   growth results
     growthIndex = totMassResults[1]/totMassResults[0]
     growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])

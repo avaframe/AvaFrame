@@ -168,17 +168,17 @@ def exportcom1DFAOutput(avaDir, cfg=''):
     # Export peak files and reports
     for k in range(sNo):
         pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
-                                '%s' % logDict['simName'][k], 'raster',
+                                logDict['simName'][k], 'raster',
                                 '%s_pfd.asc' % logDict['simName'][k])
         pathTo = os.path.join(outDirPF, '%s_%.03f_pfd.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom,pathTo)
         pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
-                                '%s' % logDict['simName'][k], 'raster',
+                                logDict['simName'][k], 'raster',
                                 '%s_ppr.asc' % logDict['simName'][k])
         pathTo = os.path.join(outDirPF, '%s_%.03f_ppr.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom,pathTo)
         pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
-                                '%s' % logDict['simName'][k], 'raster',
+                                logDict['simName'][k], 'raster',
                                 '%s_pv.asc' % logDict['simName'][k])
         pathTo = os.path.join(outDirPF, '%s_%.03f_pv.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom,pathTo)
