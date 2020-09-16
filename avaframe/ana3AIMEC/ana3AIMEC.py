@@ -794,18 +794,22 @@ def readWrite(fname_ent):
     relMass = totMassResults[0]
     entMass = np.sum(massTime[:, 2])
     # check mass balance
+    log.info('Mass difference between first and last time step is: %.1f kg' % (totMassResults[1]- relMass))
+    log.info('Entrained mass is: %.1f kg' % (entMass))
     if (totMassResults[1]- relMass)==0:
         diff = np.abs((totMassResults[1]- relMass) - entMass)
         if diff>0:
             log.warning('Conservation of mass is not satisfied.')
-            log.warning('Mass difference between first and last time step is: %.1f' % (totMassResults[1]- relMass))
-            log.warning('whereas entrained mass is: %.1f. They differ from %.4f kg' % (entMass, diff))
+            log.warning('Mass difference and entrained mass differ from %.4f kg' % (diff))
+        else:
+            log.info('Mass difference and entrained mass differ from %.4f kg' % (diff))
     else:
         diff = np.abs((totMassResults[1]- relMass) - entMass)/(totMassResults[1]- relMass)
         if diff*100>0.05:
             log.warning('Conservation of mass is not satisfied.')
-            log.warning('Mass difference between first and last time step is: %.1f' % (totMassResults[1]- relMass))
-            log.warning('whereas entrained mass is: %.1f. They differ from %.4f %%' % (entMass, diff*100))
+            log.warning('Mass difference and entrained mass differ from %.4f %%' % (diff*100))
+        else:
+            log.info('Mass difference and entrained mass differ from %.4f %%' % (diff*100))
 #   growth results
     growthIndex = totMassResults[1]/totMassResults[0]
     growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])
