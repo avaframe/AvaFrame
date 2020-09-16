@@ -123,8 +123,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     else:
         plt.ioff()
     if cfgFlags.getboolean('savePlot'):
-        outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
-                           projectName, '_domTransfo'])
+        outFileName = projectName + '_domTransfo'
+        outname = os.path.join(pathResult, 'pics', outFileName)
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
         fig.savefig(outname)
@@ -203,9 +203,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     fig.tight_layout()
 
     if cfgFlags.getboolean('savePlot'):
-        outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
-                           projectName, '_dptr', str(int(pLim)),
-                           '_slComparison'])
+        outFileName = projectName + '_dptr' + str(int(pLim)) + '_slComparison'
+        outname = os.path.join(pathResult, 'pics', outFileName)
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
         fig.savefig(outname)
@@ -320,8 +319,8 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     fig.tight_layout()
 
     if cfgFlags.getboolean('savePlot'):
-        outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
-                           projectName, '_referenceFields'])
+        outFileName = projectName + '_referenceFields'
+        outname = os.path.join(pathResult, 'pics', outFileName)
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
         fig.savefig(outname)
@@ -341,6 +340,7 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     """
 
     projectName = cfgPath['projectName']
+    pathResult = cfgPath['pathResult']
     pathName = cfgPath['pathName']
     demName = os.path.basename(cfgPath['demSource'])
     dataName = [os.path.basename(name) for name in cfgPath['pressurefileList']]
@@ -382,9 +382,8 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
                       'pressure_limit: ', str(pressureLimit), ' kPa\n',
                       'start of runout area Angle: ', str(runoutAngle), ' °\n'])
 
-    outname = ''.join([cfgPath['pathResult'], os.path.sep,
-                       'Results_pl', str(pressureLimit),
-                       '_w', str(domainWidth), '.txt'])
+    outFileName = 'Results_pl' + str(pressureLimit) + '_w' + str(domainWidth) + '.txt'
+    outname = os.path.join(pathResult, outFileName)
 
 
 #    chekc if folder exists / create
