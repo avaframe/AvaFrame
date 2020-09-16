@@ -12,7 +12,7 @@ from avaframe.tests import test_logUtils
 
 def test_analyzeArea(capfd):
     '''Simple test for module analyzeArea'''
-
+    # get input data
     dirname = os.path.dirname(__file__)
     dataRef = os.path.join(dirname, 'data', 'refTestAimecTopo.asc')
     dataSim = os.path.join(dirname, 'data', 'simTestAimecTopo.asc')
@@ -51,12 +51,14 @@ def test_analyzeArea(capfd):
     resAnalysis = {}
     runout = np.array([100])
     resAnalysis['runout'] = runout
+
+    # testing analyzeFields function
     resAnalysis = ana3AIMEC.analyzeFields(rasterTransfo, pLim, newRasters, cfgPath)
 
     assert (resAnalysis['runout'][0][0] == 49) and (resAnalysis['runout'][1][1] == 419) and (
     resAnalysis['runout'][2][0] == 50) and (resAnalysis['MMPP'][1] == 1)
 
-
+    # testing analyzeArea function
     resAnalysis = ana3AIMEC.analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
     assert (resAnalysis['TP'][1] == 800) and (resAnalysis['FN'][1] == 1700) and (
