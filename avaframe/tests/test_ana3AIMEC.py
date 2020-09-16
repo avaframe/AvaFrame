@@ -16,10 +16,11 @@ def test_analyzeArea(capfd):
     dirname = os.path.dirname(__file__)
     dataRef = os.path.join(dirname, 'data', 'refTestAimecTopo.asc')
     dataSim = os.path.join(dirname, 'data', 'simTestAimecTopo.asc')
-    dataMass = os.path.join(dirname, 'data', 'refmassTestAimecTopo.txt')
+    dataMass = os.path.join(dirname, 'data', '000000.txt')
+    dataMass1 = os.path.join(dirname, 'data', '000001.txt')
     cfgPath = {}
     cfgPath['pressurefileList'] = [dataRef, dataSim]
-    cfgPath['massfileList'] = [dataMass, dataMass]
+    cfgPath['massfileList'] = [dataMass, dataMass1]
     pathResult = os.path.join(dirname, 'data')
     cfgPath['pathResult'] = pathResult
     cfgPath['dirName'] = 'testAIMEC'
