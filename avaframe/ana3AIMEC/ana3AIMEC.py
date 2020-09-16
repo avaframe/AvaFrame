@@ -98,7 +98,7 @@ def mainAIMEC(cfgPath, cfg):
     Main logic for AIMEC postprocessing
     """
 
-    # Extract input parameters
+    # Extract input config parameters
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
     pressureLimit = float(cfgSetup['pressureLimit'])
@@ -109,24 +109,21 @@ def mainAIMEC(cfgPath, cfg):
     log.info("Creating new deskewed raster and preparing new raster assignment function")
     rasterTransfo = makeDomainTransfo(cfgPath, cfgSetup, cfgFlags)
 
-    # transform pressure_data and depth_data in new raster
+    # transform pressure_data, depth_data and speed_data in new raster
     newRasters = {}
     # assign pressure data
     log.info("Assigning pressure data to deskewed raster")
-    newRasterPressure = assignData(cfgPath['pressurefileList'], rasterTransfo,
+    newRasters['newRasterPressure'] = assignData(cfgPath['pressurefileList'], rasterTransfo,
                                    interpMethod)
-    newRasters['newRasterPressure'] = newRasterPressure
     # assign depth data
     log.info("Assigning depth data to deskewed raster")
-    newRasterDepth = assignData(cfgPath['depthfileList'], rasterTransfo,
+    newRasters['newRasterDepth'] = assignData(cfgPath['depthfileList'], rasterTransfo,
                                 interpMethod)
-    newRasters['newRasterDepth'] = newRasterDepth
     # assign speed data
     if cfgPath['speedfileList']:
         log.info("Assigning speed data to deskewed raster")
-        newRasterSpeed = assignData(cfgPath['speedfileList'], rasterTransfo,
+        newRasters['newRasterSpeed'] = assignData(cfgPath['speedfileList'], rasterTransfo,
                                     interpMethod)
-        newRasters['newRasterSpeed'] = newRasterSpeed
 
     # assign dem data
     log.info("Assigning dem data to deskewed raster")
@@ -159,17 +156,20 @@ def mainAIMEC(cfgPath, cfg):
 def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     """
     Make domain transformation :
-    This function returns the information about this domain transformation
+    This function returns the information about the domain transformation
     Data given on a regular grid is projected on a nonuniform grid following
     a polyline
 
     input: cfgPath, cfgSetup, cfgFlags
     ouput: rasterTransfo as a dictionary
-            -(gridx,gridy) coordinates of the points of the new raster
-            -(s,l) new coordinate System
-            -(x,y) coordinates of the resampled polyline
-            -rasterArea, real area of the cells of the new raster
-            -indRunoutPoint start of the runout area
+            -gridx: x coord of the new raster points in old coord system (as 2D array)
+            -gridy: y coord of the new raster points in old coord system (as 2D array)
+            -s: new coord system in the polyline direction (as 1D array)
+            -l: new coord system in the cross direction (as 1D array)
+            -x: coord of the resampled polyline in old coord system (as 1D array)
+            -y: coord of the resampled polyline in old coord system (as 1D array)
+            -rasterArea: real area of the cells of the new raster (as 2D array)
+            -indRunoutPoint: index for start of the runout area (in s)
 
     """
     # Read input parameters
@@ -271,12 +271,12 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
 
 def split_section(DB, i):
     """
-    Splits the ith segment of domain DB in the s direction
+    Splits the ith segment of domain boundary DB in the s direction
     (direction of the path)
     input: - DB domain Boundary dictionary
            - i number of the segment of DB to split
     ouput: - (x,y) coordinates of the ith left and right splited Boundaries
-            (bxl, byl, bxr, byr)
+            (bxl, byl, bxr, byr). each is a 1D array of size m
             - m number of ellements on the new segments
     """
     # left edge
@@ -315,10 +315,18 @@ def makeTransfoMat(rasterTransfo):
     """ Make transformation matrix.
         Takes a Domain Boundary and finds the (x,y) coordinates of the new
         raster point (the one following the path)
-        input: - rasterTransfo dictionary (containing the domain Boundary cell
-                    size and domain width information) to fill in output
-        ouput: rasterTransfo dictionary updated with the (gridx,gridy)
-                coordinates of the new raster points and the l coordinate
+        input: rasterTransfo dictionary containing:
+                -domainWidth
+                -cellsize
+                -DBXl: x coord of the left boundary
+                -DBXr: x coord of the right boundary
+                -DBYl: y coord of the left boundary
+                -DBYr: y coord of the right boundary
+
+        ouput: rasterTransfo dictionary updated with
+                -gridx: x coord of the new raster points in old coord system (as 2D array)
+                -gridy: y coord of the new raster points in old coord system (as 2D array)
+                -l: new coord system in the cross direction (as 1D array)
     """
     w = rasterTransfo['domainWidth']
     cellsize = rasterTransfo['cellsize']
@@ -371,9 +379,13 @@ def getSArea(rasterTransfo):
     """
     Find the scoord corresponding to the transformation and the Area of
     the cells of the new raster
-    input: - rasterTransfo dictionary to fill in output
-    ouput: rasterTransfo dictionary updated with the scoord
-            coordinate and the area of the cells of the new raster
+    input: rasterTransfo dictionary to fill in output
+            -gridx: x coord of the new raster points in old coord system (as 2D array)
+            -gridy: y coord of the new raster points in old coord system (as 2D array)
+
+    ouput: rasterTransfo dictionary updated with
+            -s: new coord system in the polyline direction (as 1D array)
+            -rasterArea: real area of the cells of the new raster (as 2D array)
     """
     xcoord = rasterTransfo['gridx']
     ycoord = rasterTransfo['gridy']
@@ -485,9 +497,39 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
 
 def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     """
-    Analyse pressure speed and depth.
-    Calculate runout, Max Peak Pressure, Average PP... same for depth
+    Analyse pressure depth and speed.
+    Calculate runout, Max Peak Pressure, Average PP...
     Get mass and entrainement
+    input:
+            -rasterTransfo = transformation info
+            -pressure threshold value
+            -newRasters dictionnary with the data in the new coord system
+            -cfgPath
+    output: resAnalysis dictionnary containing all results
+            -runout: 2D array containing for each simulation analyzed the x and y coord
+                     of the runout point as well as the runout distance measured from
+                     the begining of the run-out area. run-out calculated with the MAX pressure in each cross section
+            -runoutMean: 2D array containing for each simulation analyzed the x and y coord
+                     of the runout point as well as the runout distance measured from
+                     the begining of the run-out area. run-out calculated with the MEAN pressure in each cross section
+            -AMPP: 1D array containing for each simulation analyzed the average max peak pressure
+            -MMPP: 1D array containing for each simulation analyzed the max max peak pressure
+            -AMD: 1D array containing for each simulation analyzed the average max peak flow depth
+            -MMD: 1D array containing for each simulation analyzed the max max peak flow depth
+            -AMS: 1D array containing for each simulation analyzed the average max peak speed
+            -MMS: 1D array containing for each simulation analyzed the max max peak speed
+            -elevRel: 1D array containing for each simulation analyzed the elevation of
+                      the release area (based on first point with peak pressure > pLim)
+            -deltaH: 1D array containing for each simulation analyzed the elevation fall
+                    difference between elevRel and altitude of run-out point
+            -relMass: 1D array containing for each simulation analyzed the release mass
+            -entMass: 1D array containing for each simulation analyzed the entrained mass
+            -growthIndex: 1D array containing for each simulation analyzed the growth index
+            -growthGrad: 1D array containing for each simulation analyzed the growth gradient
+            -pCrossAll: 2D array containing for each simulation analyzed the max peak pressure in each cross section
+            -pressureLimit: pressure threshold pLim
+            -runoutAngle: angle of the slope at the beginning of the run-out area (given in input)
+
     """
     # read inputs
     fname = cfgPath['pressurefileList']
@@ -589,6 +631,17 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     """
     Compare results to reference.
     Compute True positive, False negative... areas.
+    input:
+            -rasterTransfo:transformation info
+            -pLim: pressure threshold value
+            -newRasters dictionnary with the data in the new coord system
+            -cfgPath
+            -cfgFlags
+    output: resAnalysis dictionnary completed with area information
+            -TP: ref = True sim2 = True
+            -FN: ref = False sim2 = True
+            -FP: ref = True sim2 = False
+            -TN: ref = False sim2 = False
     """
     fname = cfgPath['pressurefileList']
 
@@ -724,7 +777,14 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 def readWrite(fname_ent):
     """
     Read mass balance files to get mass properties of the simulation
-    (total mass, entrained mass...)
+    (total mass, entrained mass...). Checks for mass conservation
+    input:
+            -fname_ent: list of mass balance files
+    output:
+            -relMass: release mass
+            -entMass: entrained mass
+            -growthIndex
+            -growthGrad
     """
     #    load data
     #    time, total mass, entrained mass
@@ -753,6 +813,19 @@ def readWrite(fname_ent):
 
 
 def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):
+    """
+    Compute average and max of in each cross section for a given input raster
+    input:
+            -rasterdataA: raster data
+            -rasterArea: raster area corresponding to rasterdataA
+            -pLim: pressure threshold
+            -cInd: index of bounds of the avalanche (from release to run-out)
+    output:
+            -ama: average maximum of rasterdataA
+            -mma: maximum maximum of rasterdataA
+            -cInd: index of bounds of the avalanche (from release to run-out)
+            -aCrossMax: 1D Aarray containing max of rasterdataA in each cross section
+    """
     # get mean max for each cross section for A field
     aCrossMean = np.nansum(rasterdataA*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
     # aCrossMean = np.nanmean(rasterdataA, axis=1)
