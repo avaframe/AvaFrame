@@ -699,8 +699,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             # read paths
             pathResult = cfgPath['pathResult']
             projectName = cfgPath['dirName']
-            outname = ''.join([pathResult, os.path.sep, 'pics', os.path.sep,
-                               projectName, '_', str(i), '_compToRef'])
+            outFileName = projectName + '_' +  str(i) +  '_compToRef'
+            outname = os.path.join(pathResult, 'pics', outFileName)
             if not os.path.exists(os.path.dirname(outname)):
                 os.makedirs(os.path.dirname(outname))
             fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
