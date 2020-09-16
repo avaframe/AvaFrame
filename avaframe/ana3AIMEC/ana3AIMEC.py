@@ -524,6 +524,8 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
                     difference between elevRel and altitude of run-out point
             -relMass: 1D array containing for each simulation analyzed the release mass
             -entMass: 1D array containing for each simulation analyzed the entrained mass
+            -finalMass: 1D array containing for each simulation analyzed the final mass
+            -relativMassDiff: 1D array containing for each simulation analyzed the final mass diff with ref (in %)
             -growthIndex: 1D array containing for each simulation analyzed the growth index
             -growthGrad: 1D array containing for each simulation analyzed the growth gradient
             -pCrossAll: 2D array containing for each simulation analyzed the max peak pressure in each cross section
@@ -551,6 +553,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
 
     # initialize Arrays
     nTopo = len(fname)
+    massDiffers = False
     runout = np.empty((3, nTopo))
     runoutMean = np.empty((3, nTopo))
     ampp = np.empty((nTopo))
@@ -565,11 +568,11 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     grGrad = np.empty((nTopo))
     releaseMass = np.empty((nTopo))
     entrainedMass = np.empty((nTopo))
+    finalMass = np.empty((nTopo))
+    relativMassDiff = np.empty((nTopo))
 
     n = np.shape(lcoord)[0]
     pCrossAll = np.zeros((nTopo, len(scoord)))
-    log.info('{: <10} {: <10} {: <10} {: <10} {: <10} {: <10} {: <10} {: <10}'.format(
-        'Sim number ', 'Runout ', 'ampp ', 'mmpp ', 'amd ', 'mmd ', 'GI ', 'GR '))
     # For each data set
     for i in range(nTopo):
         rasterdataPres = dataPressure[i]
@@ -598,13 +601,16 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
 
         # analyze mass
-        releaseMass[i], entrainedMass[i], grIndex[i], grGrad[i] = readWrite(fnameMass[i])
+        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i] = readWrite(fnameMass[i])
+        relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
         if not (releaseMass[i] == releaseMass[0]):
-            log.warning('Release masses differs between simulations!')
-
+            massDiffers = True
+        log.info('{: <10} {: <10} {: <10} {: <10} {: <10} {: <10} {: <10} {: <10}'.format(
+            'Sim number ', 'Runout ', 'ampp ', 'mmpp ', 'amd ', 'mmd ', 'GI ', 'GR '))
         log.info('{: <10} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f}'.format(
             *[i+1, runout[0, i], ampp[i], mmpp[i], amd[i], mmd[i], grIndex[i], grGrad[i]]))
-
+    if massDiffers:
+        log.warning('Release masses differs between simulations!')
     # affect values to output dictionary
     resAnalysis['runout'] = runout
     resAnalysis['runoutMean'] = runoutMean
@@ -618,6 +624,8 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis['deltaH'] = deltaH
     resAnalysis['relMass'] = releaseMass
     resAnalysis['entMass'] = entrainedMass
+    resAnalysis['finalMass'] = finalMass
+    resAnalysis['relativMassDiff'] = relativMassDiff
     resAnalysis['growthIndex'] = grIndex
     resAnalysis['growthGrad'] = grGrad
     resAnalysis['pCrossAll'] = pCrossAll
@@ -793,27 +801,29 @@ def readWrite(fname_ent):
     totMassResults = [massTime[0, 1], massTime[-1, 1]]
     relMass = totMassResults[0]
     entMass = np.sum(massTime[:, 2])
+    finalMass = totMassResults[1]
     # check mass balance
-    log.info('Mass difference between first and last time step is: %.1f kg' % (totMassResults[1]- relMass))
-    log.info('Entrained mass is: %.1f kg' % (entMass))
+    log.info('Mass difference between first and last time step in sim %s is: %.1f kg' %
+             (int(os.path.splitext(os.path.basename(fname_ent))[0]), totMassResults[1]- relMass))
+    log.info('Entrained mass in sim %s is: %.1f kg' % (int(os.path.splitext(os.path.basename(fname_ent))[0]), entMass))
     if (totMassResults[1]- relMass)==0:
         diff = np.abs((totMassResults[1]- relMass) - entMass)
         if diff>0:
-            log.warning('Conservation of mass is not satisfied.')
+            log.warning('Conservation of mass is not satisfied')
             log.warning('Mass difference and entrained mass differ from %.4f kg' % (diff))
         else:
             log.info('Mass difference and entrained mass differ from %.4f kg' % (diff))
     else:
         diff = np.abs((totMassResults[1]- relMass) - entMass)/(totMassResults[1]- relMass)
         if diff*100>0.05:
-            log.warning('Conservation of mass is not satisfied.')
+            log.warning('Conservation of mass is not satisfied' )
             log.warning('Mass difference and entrained mass differ from %.4f %%' % (diff*100))
         else:
             log.info('Mass difference and entrained mass differ from %.4f %%' % (diff*100))
 #   growth results
     growthIndex = totMassResults[1]/totMassResults[0]
     growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])
-    return relMass, entMass, growthIndex, growthGrad
+    return relMass, entMass, finalMass, growthIndex, growthGrad
 
 
 def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):

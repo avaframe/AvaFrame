@@ -354,10 +354,14 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     MMPP = resAnalysis['MMPP']
     AMD = resAnalysis['AMD']
     MMD = resAnalysis['MMD']
+    AMS = resAnalysis['AMS']
+    MMS = resAnalysis['MMS']
     deltaH = resAnalysis['deltaH']
     elevRel = resAnalysis['elevRel']
     relMass = resAnalysis['relMass']
     entMass = resAnalysis['entMass']
+    relativMassDiff = resAnalysis['relativMassDiff']
+    finalMass = resAnalysis['finalMass']
     GI = resAnalysis['growthIndex']
     GR = resAnalysis['growthGrad']
     TP = resAnalysis['TP']
@@ -367,9 +371,9 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     areaSum = TP + FN
 
     legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'elevRel', 'deltaH', 'AMPP',
-              'MMPP', 'relMass', 'entMass', 'GI', 'GR', 'AMD', 'MMD', 'TP ', 'FN ', 'FP ', 'TN']
+              'MMPP', 'AMD', 'MMD', 'AMS', 'MMS', 'relMass', 'entMass', 'finalMass', 'rMassDif', 'GI', 'GR', 'TP ', 'FN ', 'FP ', 'TN']
     resfile = [runout[1], runout[2], runout[0],
-               elevRel, deltaH, AMPP, MMPP, relMass, entMass, GI, GR, AMD, MMD, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
+               elevRel, deltaH, AMPP, MMPP, AMD, MMD, AMS, MMS, relMass, entMass, finalMass, relativMassDiff, GI, GR, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
 
     header = ''.join(['projectName: ',  projectName, '\n',
                       'path: ', pathName, '\n',
@@ -393,18 +397,18 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     fid.write(header)
     # write table legend
     for j in range(len(legend)):
-        fid.write('{:<20s}'.format(legend[j]))
+        fid.write('{:<15s}'.format(legend[j]))
     fid.write('\n')
     # write table values
     for i in range(np.shape(output)[1]):
         tmp = os.path.basename(dataName[i])
         name = os.path.splitext(tmp)[0]
-        fid.write('{:<20s}'.format(name))
+        fid.write('{:<15s}'.format(name))
         for j in range(np.shape(output)[0]):
             try:
-                fid.write('{:<20.3f}'.format(output[j][i]))
+                fid.write('{:<15.3f}'.format(output[j][i]))
             except:
-                fid.write('{:<20}'.format('NaN'))
+                fid.write('{:<15}'.format('NaN'))
         fid.write('\n')
     fid.close()
 
