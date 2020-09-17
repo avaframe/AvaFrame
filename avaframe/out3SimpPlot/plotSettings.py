@@ -11,27 +11,38 @@ import matplotlib
 import cmocean
 import copy
 
-# define figure dimentions
-figW = 6
-figH = 6
-# define figure resolution (dpi)
-figReso = 150
-# define lines and marker properties
-lw = 2
-ms = 5
-markers = 'o'
-# font size
-fs = 12
-
-# set output extension {png, ps, pdf, svg}
-matplotlib.rcParams["savefig.format"] = 'png'
 
 # define seaborn style and color maps
 sns.set(font_scale=1)
-sns.set_style("dark", {'axes.edgecolor': '.8', 'xtick.bottom': True, 'ytick.left': True})
-# sns.set_style("dark", {'xtick.bottom': True,
-#  'ytick.left': True})
+sns.set_style("ticks", {'axes.linewidth': 1, 'axes.edgecolor':'black',  'font.family': ['serif']})
+# print(sns.axes_style())
 
+
+# define figure dimentions
+figW = 6
+figH = 6
+# define lines and marker properties
+lw = 1.5
+ms = 5
+markers = 'o'
+matplotlib.rcParams['lines.linewidth'] = lw
+matplotlib.rcParams['lines.markersize'] = ms
+# font size
+fs = 12
+matplotlib.rcParams['figure.titlesize'] = 'xx-large'
+matplotlib.rcParams['axes.labelsize'] = 'x-large'
+# set output extension {png, ps, pdf, svg}
+matplotlib.rcParams["savefig.format"] = 'png'
+# define figure resolution (dpi)
+matplotlib.rcParams['figure.dpi'] = 150
+
+matplotlib.rcParams['text.usetex'] = True
+matplotlib.rcParams['figure.autolayout'] = True
+
+
+############################
+###### Color maps ##########
+############################
 # hell white/green to dark blue
 cmapGB = copy.copy(sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True))
 cmapGB.set_bad(color='k')
