@@ -248,12 +248,18 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    log.info('Measuring run-out length from the %s ° point' % runoutAngle)
-    rasterTransfo['runoutAngle'] = runoutAngle
-    _, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle, rasterTransfo)
+    angle, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle, rasterTransfo)
     # find the runout point: first point under runoutAngle
     indRunoutPoint = geoTrans.findAngleProfile(tmp, delta_ind)
-    rasterTransfo['indRunoutPoint'] = indRunoutPoint
+    if runoutAngle<angle[indRunoutPoint] and runoutAngle>angle[indRunoutPoint+1]:
+        rasterTransfo['indRunoutPoint'] = indRunoutPoint
+        rasterTransfo['runoutAngle'] = runoutAngle
+        log.info('Measuring run-out length from the %s ° point' % runoutAngle)
+    else:
+        log.warning('No %s ° point found. Check splitPoint position or runoutAngle value.'% runoutAngle)
+        rasterTransfo['indRunoutPoint'] = indRunoutPoint
+        rasterTransfo['runoutAngle'] = (angle[indRunoutPoint] + angle[indRunoutPoint+1])/2
+        log.info('Measuring run-out length from the %s ° point' % rasterTransfo['runoutAngle'])
 
     avalData = transform(rasterSource, rasterTransfo, interpMethod)
 
@@ -703,11 +709,11 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             outname = os.path.join(pathResult, 'pics', outFileName)
             if not os.path.exists(os.path.dirname(outname)):
                 os.makedirs(os.path.dirname(outname))
-            fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
+            fig = plt.figure(figsize=(figW*2, figH))
             y_lim = scoord[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
-            ax1.title.set_text('Reference Peak Presseure in the RunOut area\n  Pressure threshold: %.1f kPa' % pLim)
+            ax1.set_title('Reference Peak Presseure in the RunOut area' + '\n' +  'Pressure threshold: %.1f kPa' % pLim)
             cmap = cmapPres
             cmap.set_under(color='w')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
@@ -719,12 +725,12 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             cbar.ax.set_ylabel('peak pressure [kPa]')
             ax1.set_xlim([lcoord.min(), lcoord.max()])
             ax1.set_ylim([scoord[indRunoutPoint-20], y_lim])
-            ax1.set_xlabel(r'$l\;[m]$')
-            ax1.set_ylabel(r'$s\;[m]$')
+            ax1.set_xlabel('l [m]')
+            ax1.set_ylabel('s [m]')
 
             ax2 = plt.subplot(122)
-            ax2.title.set_text(
-                'Difference between current and reference in the RunOut area\n  Blue = FN, Red = FP')
+            ax2.set_title(
+                'Difference between current and reference in the RunOut area' + '\n' +  'Blue = FN, Red = FP')
             colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
             cmap = matplotlib.colors.ListedColormap(colorsList)
             cmap.set_under(color='b')
@@ -739,10 +745,9 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             # cbar.ax.set_ylabel('peak pressure [kPa]')
             ax2.set_xlim([lcoord.min(), lcoord.max()])
             ax2.set_ylim([scoord[indRunoutPoint-20], y_lim])
-            ax2.set_xlabel(r'$l\;[m]$')
-            ax2.set_ylabel(r'$s\;[m]$')
+            ax2.set_xlabel('l [m]')
+            ax2.set_ylabel('s [m]')
             plt.subplots_adjust(wspace=0.3)
-            # fig.tight_layout()
             # plt.show()
 
             fig.savefig(outname)

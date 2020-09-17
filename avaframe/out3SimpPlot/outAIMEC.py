@@ -53,7 +53,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     DBYl = rasterTransfo['DBYl']*cellsize+yllc
     DBYr = rasterTransfo['DBYr']*cellsize+yllc
 
-    fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
+    fig = plt.figure(figsize=(figW*2, figH))
 
 #    for figure: referenz-simulation bei pLim=1
     ax1 = plt.subplot(121)
@@ -75,33 +75,29 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ref1 = ax1.images.append(im0)
     # cbar = ax1.figure.colorbar(im0, ax=ax1, use_gridspec=True)
     plt.autoscale(False)
-    ref0 = plt.plot(xx, yy, 'ro', markersize=ms, label='Beta point : %.1f °' %
+    ref0 = plt.plot(xx, yy, 'ro', label='Beta point : %.1f °' %
                     rasterTransfo['runoutAngle'])
-    ref2 = plt.plot(xPath, yPath,
-                    'b-', linewidth=lw, label='flow path')
-    ref3 = plt.plot(DBXl, DBYl,
-                    'g-', linewidth=lw, label='domain')
-    ref3 = plt.plot(DBXr, DBYr,
-                    'g-', linewidth=lw, label='domain')
-    ref3 = plt.plot([DBXl, DBXr], [DBYl, DBYr],
-                    'g-', linewidth=lw, label='domain')
+    ref2 = plt.plot(xPath, yPath, 'b-', label='flow path')
+    ref3 = plt.plot(DBXl, DBYl, 'g-', label='domain')
+    ref3 = plt.plot(DBXr, DBYr, 'g-', label='domain')
+    ref3 = plt.plot([DBXl, DBXr], [DBYl, DBYr], 'g-', label='domain')
     refs = [ref0[0], ref2[0], ref3[0]]
 
     labels = ['Beta point : %.1f °' % rasterTransfo['runoutAngle'], 'flow path', 'domain']
-    ax1.title.set_text('XY Domain')
+    ax1.set_title('XY Domain')
     ax1.legend(refs, labels, loc=0)
     ax1.set_xlim([x.min(), x.max()])
     ax1.set_ylim([y.min(), y.max()])
-    ax1.set_xlabel(r'$x\;[m]$')
-    ax1.set_ylabel(r'$y\;[m]$')
+    ax1.set_xlabel('x [m]')
+    ax1.set_ylabel('y [m]')
 
     ax2 = plt.subplot(122)
-    ax2.title.set_text('sl Domain \n Black = out of raster')
+    ax2.set_title('sl Domain' + '\n' +  'Black = out of raster')
     isosurf = copy.deepcopy(inputData['avalData'])
     lcoord = rasterTransfo['l']
     scoord = rasterTransfo['s']
-    ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='r', linewidth=lw,
-                       linestyle='-', label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
+    ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='r',
+                        label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
     maskedArray = isosurf  # np.ma.array(isosurf,mask=np.isnan(isosurf))
     im = NonUniformImage(ax2, extent=[lcoord.min(), lcoord.max(),
                                       scoord.min(), scoord.max()], cmap=cmap)
@@ -113,11 +109,10 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     cbar.ax.set_ylabel('peak pressure [kPa]')
     ax2.set_xlim([lcoord.min(), lcoord.max()])
     ax2.set_ylim([scoord.min(), scoord.max()])
-    ax2.set_xlabel(r'$l\;[m]$')
-    ax2.set_ylabel(r'$s\;[m]$')
+    ax2.set_xlabel('l [m]')
+    ax2.set_ylabel('s [m]')
     ax2.legend()
 
-    fig.tight_layout()
     if cfgFlags.getboolean('plotFigure'):
         plt.show()
     else:
@@ -156,17 +151,14 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     pMedian = np.median(pCrossAll, axis=0)
     pPercentile = sp.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
 
-    fig = plt.figure(figsize=(figW*2, figH), dpi=figReso)
+    fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
-    ax1.title.set_text('Peak Pressure 2D plot for the reference')
-    ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
-                       linestyle='-', label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-    ref1 = ax1.axhline(y=np.max(runout), color='r', linewidth=lw,
-                       linestyle='-', label='runout max')
-    ref2 = ax1.axhline(y=np.average(runout), color='y', linewidth=lw,
-                       linestyle='-', label='runout mean')
-    ref3 = ax1.axhline(y=np.min(runout), color='g', linewidth=lw,
-                       linestyle='-', label='runout min')
+    ax1.set_title('Peak Pressure 2D plot for the reference')
+    ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k',
+                       label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
+    ref1 = ax1.axhline(y=np.max(runout), color='r', label='runout max')
+    ref2 = ax1.axhline(y=np.average(runout), color='y', label='runout mean')
+    ref3 = ax1.axhline(y=np.min(runout), color='g', label='runout min')
     # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
     isosurf = copy.deepcopy(rasterdataPres)
     xx, yy = np.meshgrid(lcoord, scoord)
@@ -182,25 +174,23 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     plt.autoscale(False)
     ax1.set_xlim([xx.min(), xx.max()])
     ax1.set_ylim([yy.min(), yy.max()])
-    ax1.set_xlabel(r'$l\;[m]$')
-    ax1.set_ylabel(r'$s\;[m]$')
+    ax1.set_xlabel('l [m]')
+    ax1.set_ylabel('s [m]')
     ax1.legend(loc=0)
 
     ax2 = plt.subplot(122)
-    ax2.title.set_text('Peak Pressure distribution along the path between runs')
+    ax2.set_title('Peak Pressure distribution along the path between runs')
     ax2.fill_betweenx(scoord, pPercentile[2], pPercentile[0],
                       facecolor=[.8, .8, .8], alpha=0.5, label='quantiles')
     ref1 = mpatches.Patch(alpha=0.5, color=[.8, .8, .8])
-    ref2 = ax2.plot(pMedian, scoord, color='r', linewidth=2*lw, label='median')
-    ref3 = ax2.plot(pMean, scoord, color='b', linewidth=lw, label='mean')
+    ref2 = ax2.plot(pMedian, scoord, color='r', label='median')
+    ref3 = ax2.plot(pMean, scoord, color='b', label='mean')
     # ref3 = mlines.Line2D([], [], color='b', linewidth=2)
-    ax2.set_ylabel(r'$l\;[m]$')
+    ax2.set_ylabel('l [m]')
     ax2.set_ylim([yy.min(), yy.max()])
     ax2.set_xlim(auto=True)
-    ax2.set_xlabel(r'$P_max(s)\;[kPa]$')
+    ax2.set_xlabel('$P_{max}(s)$ [kPa]')
     ax2.legend(loc=0)
-
-    fig.tight_layout()
 
     if cfgFlags.getboolean('savePlot'):
         outFileName = projectName + '_dptr' + str(int(pLim)) + '_slComparison'
@@ -240,13 +230,12 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     runout = resAnalysis['runout'][0] + sBeta
     runoutMean = resAnalysis['runoutMean'][0] + sBeta
 
-    fig = plt.figure(figsize=(figW*3, figH), dpi=figReso)
+    fig = plt.figure(figsize=(figW*3, figH))
     ax1 = plt.subplot(131)
-    ax1.title.set_text('Peak Pressure')
-    ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
-                       linestyle='-', label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-    ref2 = ax1.axhline(y=runout[0], color='b', linewidth=lw,
-                       linestyle='-', label='runout')
+    ax1.set_title('Peak Pressure')
+    ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k',
+                       label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
+    ref2 = ax1.axhline(y=runout[0], color='b', label='runout')
     # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
     isosurf = copy.deepcopy(rasterdataPres)
     xx, yy = np.meshgrid(lcoord, scoord)
@@ -262,16 +251,15 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     plt.autoscale(False)
     ax1.set_xlim([xx.min(), xx.max()])
     ax1.set_ylim([yy.min(), yy.max()])
-    ax1.set_xlabel(r'$l\;[m]$')
-    ax1.set_ylabel(r'$s\;[m]$')
+    ax1.set_xlabel('l [m]')
+    ax1.set_ylabel('s [m]')
     ax1.legend(loc=0)
 
     ax2 = plt.subplot(132)
-    ax2.title.set_text('Peak Flow Depth')
-    ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
-                       linestyle='-', label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-    ref2 = ax2.axhline(y=runout[0], color='b', linewidth=lw,
-                       linestyle='-', label='runout')
+    ax2.set_title('Peak Flow Depth')
+    ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='k',
+                       label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
+    ref2 = ax2.axhline(y=runout[0], color='b', label='runout')
     # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
     isosurf = copy.deepcopy(rasterdataDepth)
     xx, yy = np.meshgrid(lcoord, scoord)
@@ -283,20 +271,19 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     im.set_data(lcoord, scoord, maskedArray)
     ref0 = ax2.images.append(im)
     cbar = ax2.figure.colorbar(im, ax=ax2, use_gridspec=True)
-    cbar.ax.set_ylabel('peak flow depth [m]')
+    cbar.ax.set_ylabel('peak flow depth $[m]$')
     plt.autoscale(False)
     ax2.set_xlim([xx.min(), xx.max()])
     ax2.set_ylim([yy.min(), yy.max()])
-    ax2.set_xlabel(r'$l\;[m]$')
-    ax2.set_ylabel(r'$s\;[m]$')
+    ax2.set_xlabel('l [m]')
+    ax2.set_ylabel('s [m]')
     ax2.legend(loc=0)
 
     ax3 = plt.subplot(133)
-    ax3.title.set_text('Peak Speed')
-    ref1 = ax3.axhline(y=scoord[indRunoutPoint], color='k', linewidth=lw,
-                       linestyle='-', label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-    ref2 = ax3.axhline(y=runout[0], color='b', linewidth=lw,
-                       linestyle='-', label='runout')
+    ax3.set_title('Peak Speed')
+    ref1 = ax3.axhline(y=scoord[indRunoutPoint], color='k',
+                       label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
+    ref2 = ax3.axhline(y=runout[0], color='b', label='runout')
     # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
     isosurf = copy.deepcopy(rasterdataSpeed)
     xx, yy = np.meshgrid(lcoord, scoord)
@@ -312,11 +299,10 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     plt.autoscale(False)
     ax3.set_xlim([xx.min(), xx.max()])
     ax3.set_ylim([yy.min(), yy.max()])
-    ax3.set_xlabel(r'$l\;[m]$')
-    ax3.set_ylabel(r'$s\;[m]$')
+    ax3.set_xlabel('l [m]')
+    ax3.set_ylabel('s [m]')
     ax3.legend(loc=0)
 
-    fig.tight_layout()
 
     if cfgFlags.getboolean('savePlot'):
         outFileName = projectName + '_referenceFields'
@@ -380,7 +366,7 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
                       'dhm: ', demName, '\n',
                       'domain_width: ', str(domainWidth), ' m\n',
                       'pressure_limit: ', str(pressureLimit), ' kPa\n',
-                      'start of runout area Angle: ', str(runoutAngle), ' °\n'])
+                      'start of runout area Angle: ', str(round(runoutAngle,2)), ' °\n'])
 
     outFileName = 'Results_pl' + str(pressureLimit) + '_w' + str(domainWidth) + '.txt'
     outname = os.path.join(pathResult, outFileName)
@@ -478,18 +464,19 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         return None
 
     xlimProfAxis = max(sPath) + 50
-
+    color = cm.get_cmap('autumn', len(runout) + 3)
     # Final result diagram - z_profile+data
-    fig = plt.figure(figsize=(figW*2, figH), dpi=300)
-    fig.suptitle(title, fontsize=2*fs)
+    fig = plt.figure(figsize=(figW*2, figH))
+    # fig.suptitle(title)
     mk = 0
 #    show flow path
     ax1 = fig.add_subplot(111)
-    ax1.set_ylabel(yaxis_label, color='b', fontsize=2*fs)
-    ax1.spines['left'].set_color('b')
-    ax1.tick_params(axis='y', colors='b')
+    ax1.set_title(title)
+    ax1.set_ylabel(yaxis_label, color=color(0))
+    ax1.spines['left'].set_color(color(0))
+    ax1.tick_params(axis='y', colors=color(0))
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(plim),
-                            ' kPa threshold']), color='black', fontsize=2*fs)
+                            ' kPa threshold']), color='black')
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
@@ -500,14 +487,14 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('Counts')
     ax2 = ax1.twinx()
-    ax2.set_ylabel('z [m]', color='g', fontsize=2*fs)
-    ax2.spines['right'].set_color('g')
-    ax2.tick_params(axis='y', colors='g')
-    ax2.plot(sPath, zPath, color='green', label='path', linestyle='--', linewidth=lw)
+    ax2.set_ylabel('z [m]', color='k')
+    ax2.spines['right'].set_color('k')
+    ax2.spines['left'].set_color('r')
+    ax2.tick_params(axis='y', colors='k')
+    ax2.plot(sPath, zPath, color='k', label='path', linestyle='--')
     plt.xlim([0, xlimProfAxis])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
     if not plotDensity:
-        color = cm.get_cmap('autumn', len(runout) + 3)
         for k in range(len(runout)):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # (float(k), len(runout), colorflag)
@@ -516,10 +503,10 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
                          markersize=2*ms, color='g', label='Reference')
             elif k == 1:
                 ax1.plot(runout[k], data[k], marker=markers, label='sims',
-                         markersize=ms, color=pfarbe, linestyle='None')
+                         color=pfarbe, linestyle='None')
             else:
-                ax1.plot(runout[k], data[k], marker=markers,
-                         markersize=ms, color=pfarbe, linestyle='None')
+                ax1.plot(runout[k], data[k], marker=markers, color=pfarbe,
+                         linestyle='None')
             mk = mk+1
             if mk == len(markers):
                 mk = 1
@@ -539,12 +526,13 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     rTP = resAnalysis['TP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
     rFP = resAnalysis['FP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
 
-    fig = plt.figure(figsize=(figW, figH), dpi=figReso)
-    fig.suptitle('Normalized difference compared to reference', fontsize=fs)
+    fig = plt.figure(figsize=(figW, figH))
+    # fig.suptitle('Normalized difference compared to reference')
     mk = 0
     ax1 = fig.add_subplot(111)
-    ax1.set_ylabel('True positive rate', fontsize=fs)
-    ax1.set_xlabel('False positive rate', fontsize=fs)
+    ax1.set_title('Normalized difference compared to reference')
+    ax1.set_ylabel('True positive rate')
+    ax1.set_xlabel('False positive rate')
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)
@@ -555,7 +543,6 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     if not plotDensity:
-        color = cm.get_cmap('autumn', len(runout) + 3)
         for k in range(len(rTP)):
             topoName = cfgPath['projectName']
             pfarbe = color(k)  # colorvar(float(k), len(rTP), colorflag)
@@ -564,10 +551,10 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
                          markersize=2*ms, linestyle='None')
             elif k == 1:
                 ax1.plot(rFP[k], rTP[k], marker=markers, label='sims',
-                         markersize=ms, color=pfarbe, linestyle='None')
+                         color=pfarbe, linestyle='None')
             else:
                 ax1.plot(rFP[k], rTP[k], marker=markers,
-                         markersize=ms, color=pfarbe, linestyle='None')
+                         color=pfarbe, linestyle='None')
             mk = mk+1
             if mk == len(markers):
                 mk = 0

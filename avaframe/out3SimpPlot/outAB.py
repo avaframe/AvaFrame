@@ -138,7 +138,7 @@ def plotPath(DGM, splitPoint, eqOutput, flags):
 
     if flags.getboolean('PlotPath'):
         # Plot raster and path
-        fig1, ax1 = plt.subplots(figsize=(figW, figH), dpi=figReso)
+        fig1, ax1 = plt.subplots(figsize=(figW, figH))
         titleText = name
         plt.title(titleText)
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
@@ -178,7 +178,7 @@ def plotProfile(DGM, eqOutput, save_file, flags):
     name = eqOutput['Name']
     # Plot the whole profile with beta, alpha ... points and lines
     # plt.close("all")
-    fig_prof = plt.figure(figsize=(1.5*figW, 1*figH), dpi=figReso)
+    fig_prof = plt.figure(figsize=(1.5*figW, 1*figH))
     titleText = name
     plt.title(titleText)
 
