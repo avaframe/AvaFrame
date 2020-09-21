@@ -42,3 +42,15 @@ Modules
    moduleAna3AIMEC.rst
    moduleIn3Utils.rst
    moduleIn2Trans.rst
+
+Appendix
+==========
+
+* :doc:`appendixCom1DFA`
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+   :caption: Appendix
+
+   appendixCom1DFA.rst
