@@ -75,3 +75,5 @@ html_static_path = ['_static']
 
 # -- Options for referencing -------------------------------------------
 numfig = True
+math_numfig = True
+math_eqref_format = "Eq.{number}"
