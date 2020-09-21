@@ -11,6 +11,8 @@ import matplotlib
 import cmocean
 import copy
 
+from avaframe.out3SimpPlot.makePalette import *
+
 
 # define seaborn style and color maps
 sns.set(font_scale=1)
@@ -74,7 +76,12 @@ cmapDense.set_bad(color='k')
 cmapdiv = copy.copy(matplotlib.cm.RdBu_r) #sns.color_palette("RdBu_r")
 
 
-cmapPres = cmapViridis
+cmapPres =  cmapViridis
 cmapDepth = cmapBlues
 cmapSpeed = cmapReds
 cmapDEM = cmapGreys
+
+
+colors = makeColorMap()
+cmapPres = get_continuous_cmap(colors)
+cmapPres.set_bad(color='k')
