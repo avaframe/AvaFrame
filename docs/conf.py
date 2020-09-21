@@ -78,3 +78,7 @@ html_static_path = ['_static']
 numfig = True
 math_numfig = True
 math_eqref_format = "Eq.{number}"
+
+#
+# def setup(app):
+#     app.add_css_file('css/custom.css')
