@@ -125,22 +125,35 @@ the flow-depth,
     \overline{u}_i = \frac{1}{V(t)}\int\limits_{V(t)} u_i(\mathbf{x})\,\mathrm{d}V
     :label: hmean-umean
 
-The snow entrainment rate at the front can be expressed function of the
+The snow entrainment is either due to plowing at the front of the avalanche or to erosion
+at the bottom. The entrainment rate at the front :math:`q_{\text{plo}}` can be expressed function of the
 properties of the entrained snow (density :math:`\rho_{\text{ent}}` and
 snow depth :math:`h_{\text{ent}}`), the velocity of the avalanche at the
-front and length :math:`w_f` of the front cell (measured perpendicularly
-to the flow velocity :math:`\overline{\mathbf{u}}`):
+front :math:`\overline{\mathbf{u}}` and length :math:`w_f` of the front cell (measured perpendicularly
+to the flow velocity :math:`\overline{\mathbf{u}}`). It obviously only happens on the front cells of
+the avalanche (meaning that :math:`w_f` is zero for inner parts of the avalanche):
 
 .. math::
-   \oint\limits_{\partial V(t)} q_{\text{ent}}\,\mathrm{d}A = \int\limits_{l_{\text{front}}}\int_b^s q_{\text{ent}}\,
-   \mathrm{d}{l}\,\mathrm{d}{z} =\rho_{\text{ent}}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
-   :label: entrained-mass
+   \oint\limits_{\partial V(t)} q_{\text{plo}}\,\mathrm{d}A = \int\limits_{l_{\text{front}}}\int_b^s q_{\text{plo}}\,
+   \mathrm{d}{l}\,\mathrm{d}{z} =  \rho_{\text{ent}}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+   :label: ploughing
+
+The entrainment rate at the bottom :math:`q_{\text{ero}}` can be expressed function of the
+bottom area :math:`A_b` of the control volume, the velocity of the avalanche :math:`\overline{\mathbf{u}}`,
+the bottom shear stress :math:`\tau^{(b)}` and the specific erosion energy :math:`e_b`):
+
+.. math::
+    \oint\limits_{\partial V(t)} q_{\text{ero}}\,\mathrm{d}A = \int\limits_{A_b} q_{\text{ero}}\,
+    \mathrm{d}A = A_b\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+    :label: erosion
+
 
 This leads in the mass balance :eq:`mass-balance1` to :
 
 .. math::
    \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}(A_b\overline{h})}{\mathrm{d}t}
-   = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+   = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert +
+   A_b\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    :label: mass-balance2
 
 The force :math:`F_i^{\text{ent}}` required to break the entrained snow
@@ -150,7 +163,7 @@ breaking energy per fracture surface unit :math:`e_s`
 :math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow depth
 [Sa2007]_ [SaFeFr2008]_ [FiFrGaSo2013]_:
 
-.. math:: F_i^{\text{ent}} = -w_f\,(e_s+\rho_{\text{ent}}\,h_{\text{ent}}\,e_d)
+.. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q_{\text{ent}}\,e_d)
 
 The force :math:`F_i^{\text{res}}` due to obstacles is expressed
 function of the characteristic diameter :math:`\overline{d}` and height
@@ -170,31 +183,25 @@ coefficient :math:`c_w` (see :numref:`f-res`):
 
         Resistance force due to obstacles (from [FiKo2013]_)
 
-The momentum equation :eq:`momentum-balance3` now reads:
-
-.. math::
-   \rho_0 V \frac{d\overline{u}_i}{dt} = \oint\limits_{\partial V(t)} \sigma_{ij}n_j \,
-   \mathrm{d}A + \rho_0 V g_i  + F_i^{\text{ent}} + F_i^{\text{res}} -
-   \overline{u}_i\rho_{\text{ent}}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert, \quad i=(1,2,3)
-   :label: momentum-balance4
-
 The surface integral is split in three terms, an integral over
 :math:`A_b` the bottom :math:`x_3 = b(x_1,x_2)`, :math:`A_s` the top
 :math:`x_3 = s(x_1,x_2,t)` and :math:`A_h` the lateral surface.
 Introducing the boundary conditions :eq:`boundary-conditions` leads to:
 
-.. _fig-infinitesimales_element:
+.. math::
+   \begin{aligned}
+   \oint\limits_{\partial{V(t)}}\sigma_{ij}n_j\,\mathrm{d}A & =
+   \int\limits_{A_b}\underbrace{\sigma_{ij}\,n_j^{(b)}}_{-\sigma_{i3}}\,\mathrm{d}A +  \int\limits_{A_s}\underbrace{\sigma_{ij}\,n_j^{(s)}}_{0}\,\mathrm{d}A + \int\limits_{A_h}\sigma_{ij}\,n_j\,\mathrm{d}A\\
+   &= -A_b\overline{\sigma}_{i3}^{(b)} + \oint\limits_{\partial A_b}\left(\int_b^s\sigma_{ij}\,n_j\,\mathrm{d}x_3\right)\,\mathrm{d}l
+   \end{aligned}
+   :label: surface forces
 
-.. figure:: _static/infinitesimales_element.png
-
-        Infinitesimal volume element and acting forces on it (from [FiKo2013]_)
-
-Which simplifies the momentum balance :eq:`momentum-balance4` to:
+Which simplifies the momentum balance :eq:`momentum-balance3` to:
 
 .. math::
    \rho_0 V \frac{d\overline{u}_i}{dt} = \oint\limits_{\partial A_b}\left(\int_b^s\sigma_{ij}\,n_j\,
    \mathrm{d}x_3\right)\,\mathrm{d}l -A_b\overline{\sigma}_{i3}^{(b)} + \rho_0 V g_i  + F_i^{\text{ent}} +
-   F_i^{\text{res}} - \overline{u}_i\rho_{\text{ent}}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert, \quad i=(1,2,3)
+   F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q_{\text{ent}} \,\mathrm{d}A, \quad i=(1,2,3)
    :label: momentum-balance5
 
 The momentum balance in direction :math:`x_3` (normal to the slope) is
@@ -284,22 +291,41 @@ stress can be expressed as:
      \overline{\sigma}^{(b)}_{33} = \rho\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)\,\overline{h}
      :label: sigmab
 
-.. math:: \tau_{ij} = \eta\left(\frac{\partial{u_i}}{\partial{x_j}}+\frac{\partial{u_j}}{\partial{x_i}}\right), ~ i\neq j
+Calculating the surface integral in equation :eq:`momentum-balance5` requires to
+express the other components of the stress tensor. Here again a
+magnitude consideration between the shear stresses :math:`\sigma_{12} = \sigma_{21}` and :math:`\sigma_{13}`.
+The shear stresses are based on a generalized Newtonian law of materials,
+which controls the influence of normal stresse and the rate of deformation through the viscosity.
 
-.. math:: O\left(\frac{\sigma_{12}}{\sigma_{13}}\right) = \frac{H}{L} \ll 1
+.. math::
+    \tau_{ij} = \eta\left(\frac{\partial{u_i}}{\partial{x_j}}+\frac{\partial{u_j}}{\partial{x_i}}\right), ~ i\neq j
 
-.. math:: \sigma_{ii} = K_{(i)}\,\sigma_{33}
+Because :math:`\partial x_1` and :math:`\partial x_2` are of the order of :math:`L`, whereas :math:`\partial x_3`
+is of the order of :math:`H`, it follows that:
 
-[Zw2000]_ [Sa2004]_.
+.. math::
+    O\left(\frac{\sigma_{12}}{\sigma_{13}}\right) = \frac{H}{L} = \varepsilon \ll 1
+
+and thus :math:`\sigma_{12} = \sigma_{21}` is negligible compared to :math:`\sigma_{13}`.
+:math:`\sigma_{13}` is exressed using the bottom friction law
+:math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\overline{\rho},t,\mathbf{x})`
+introduced in :eq:`boundary-conditions`.
+
+
+In addition, a relation linking the horizontal normal stresses,
+:math:`\sigma_{ii}`, :math:`i = (1,2)`, to the vertical pressure distribution given
+by :eq:`sigmab` is introduced. In complete analogy to the arguments used by
+Savage and Hutter [SaHu1989]_ the horizontal normal stresses are given as:
+
+.. math::
+    \sigma_{ii} = K_{(i)}\,\sigma_{33}
+
+Where :math:`K_{(i)}` are the earth pressure coefficients (cf. [ZwKlSa2003]_ [Sa2004]_):
 
 .. math::
    \begin{aligned}
     \sigma_{11} &= K_{x~akt/pass}\,\sigma_{33}\\
     \sigma_{22} &= K_{y~akt/pass}^{(x~akt/pass)}\,\sigma_{33}\end{aligned}
-
-[Sa2004]_ [Zw2000]_.
-
-.. math:: \tau^{(b)} = \tan{\delta}\,\left\Vert \sigma\right\Vert
 
 With the above specifications, the integral of the stresses over the
 flow height is simplified in equation :eq:`momentum-balance5` to:
@@ -338,8 +364,17 @@ stress :math:`\tau^{(b)}` remains unknown, and and a closure equation
 has to be introduced in order to completely solve the equations.
 
 
+Friction Model
+~~~~~~~~~~~~~~~~~
+
 Numerics
 -----------
+
+.. _fig-infinitesimales_element:
+
+.. figure:: _static/infinitesimales_element.png
+
+        Infinitesimal volume element and acting forces on it (from [FiKo2013]_)
 
 
 References
@@ -371,3 +406,7 @@ References
 
 .. [FiKo2013] J. T. Fischer and A. Kofler. (2013)
     SamosAT CoSiCa. Concepts for enhanced Simulation and multivariate Calibration. BFW
+
+
+.. [SaHu1989] S.Savage and K. Hutter. (1989).
+    The motion of a finite mass of granular material down a rough incline. Journal of Fluid Mechanics, 199, 177-215.
