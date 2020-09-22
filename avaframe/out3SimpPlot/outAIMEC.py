@@ -464,7 +464,8 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         return None
 
     xlimProfAxis = max(sPath) + 50
-    color = cm.get_cmap('autumn', len(runout) + 3)
+    # color = cm.get_cmap('autumn', len(runout) + 3)
+    color = cmapAimec(np.linspace(1, 0, len(runout)+ 3, dtype = float))
     # Final result diagram - z_profile+data
     fig = plt.figure(figsize=(figW*2, figH))
     # fig.suptitle(title)
@@ -472,9 +473,9 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 #    show flow path
     ax1 = fig.add_subplot(111)
     ax1.set_title(title)
-    ax1.set_ylabel(yaxis_label, color=color(0))
-    ax1.spines['left'].set_color(color(0))
-    ax1.tick_params(axis='y', colors=color(0))
+    ax1.set_ylabel(yaxis_label, color=color[-3])
+    ax1.spines['left'].set_color(color[-3])
+    ax1.tick_params(axis='y', colors=color[-3])
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(plim),
                             ' kPa threshold']), color='black')
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
@@ -489,7 +490,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     ax2 = ax1.twinx()
     ax2.set_ylabel('z [m]', color='k')
     ax2.spines['right'].set_color('k')
-    ax2.spines['left'].set_color('r')
+    ax2.spines['left'].set_color(color[-3])
     ax2.tick_params(axis='y', colors='k')
     ax2.plot(sPath, zPath, color='k', label='path', linestyle='--')
     plt.xlim([0, xlimProfAxis])
@@ -497,7 +498,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     if not plotDensity:
         for k in range(len(runout)):
             topoName = cfgPath['projectName']
-            pfarbe = color(k)  # (float(k), len(runout), colorflag)
+            pfarbe = color[k]  # (float(k), len(runout), colorflag)
             if k == 0:
                 ax1.plot(runout[k], data[k], marker='+', linestyle='None',
                          markersize=2*ms, color='g', label='Reference')
@@ -545,7 +546,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     if not plotDensity:
         for k in range(len(rTP)):
             topoName = cfgPath['projectName']
-            pfarbe = color(k)  # colorvar(float(k), len(rTP), colorflag)
+            pfarbe = color[k]  # colorvar(float(k), len(rTP), colorflag)
             if k == 0:
                 ax1.plot(rFP[k], rTP[k], color='g', label='Reference', marker='+',
                          markersize=2*ms, linestyle='None')

@@ -76,12 +76,18 @@ cmapDense.set_bad(color='k')
 cmapdiv = copy.copy(matplotlib.cm.RdBu_r) #sns.color_palette("RdBu_r")
 
 
+
+colorAvaframe = ['#0EF8EA', '#12E4E6', '#28D0DF', '#3CBCD5', '#4AA8C9', '#5595B9', '#5C82A8', '#5F6F95', '#5E5E81', '#5A4D6C', '#523E58', '#483045']
+cmapAvaframe = get_continuous_cmap(colorAvaframe)
+cmapAvaframe.set_bad(color='k')
+cmapAimec = cmapAvaframe
+
 cmapPres =  cmapViridis
 cmapDepth = cmapBlues
 cmapSpeed = cmapReds
 cmapDEM = cmapGreys
 
 
-colors = makeColorMap()
-cmapPres = get_continuous_cmap(colors)
+cmapPres, colors  = makeColorMap()
+cmapPres = cmapAvaframe
 cmapPres.set_bad(color='k')

@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import matplotlib.colors as mcolors
+from matplotlib.image import NonUniformImage
 
 from colorspace.colorlib import HCL
 from colorspace.CVD import CVD
@@ -52,104 +53,171 @@ def get_continuous_cmap(hex_list, float_list=None):
     return cmp
 
 
-def makeColorMap():
+def makeColorMap(plotFlag=False):
     ## Define choosen color palette first
     lev  = [0., 0.01, 0.1, 0.25, 0.50, 0.75, 1.0, 1.25, 1.50, 1.75, 2.0,
                 2.5, 3.0, 4.0, 5.0, 7.0, 10.0, 15.0, 20.0, 60.0]
-    lev = 20*np.power(np.linspace(0, 1, 40, dtype = float), 1)
+    lev = np.power(np.linspace(0, 1, 20, dtype = float), 1)
 
 
     H = np.repeat(180, len(lev))
-    # H[np.where(np.asarray(lev) >= 1.)] = 180 # Blueish above 2.0 inches
-    H[np.where(np.asarray(lev) >= 5.)] = 250   # Reddish above 5.0 inches
-    H[np.where(np.asarray(lev) >= 10.)] = 310   # Reddish above 5.0 inches
+    H[np.where(np.asarray(lev) >= 0.2)] = 250   # Reddish above 5.0 inches
+    H[np.where(np.asarray(lev) >= 0.5)] = 310   # Reddish above 5.0 inches
     C = np.power(np.linspace(0, 1, len(lev), dtype = float), 1) * 90
     L = 90 - np.power(np.linspace(0, 1, len(lev), dtype = float), 1) * 75
     # Create a HCL color object
     cols = HCL(H, C, L)
     # Load colors
     colors  = cols.colors()
-    colors = sequential_hcl(h = [180, 310], c = [0, 90, 0], l = [95, 30], power = [1.5,1.5])(len(lev))
+    cmap = get_continuous_cmap(colors)
+
+    return cmap, colors
+
+def testColormap(colors, type='hex'):
+    if type=='hex':
+        pass
+    elif type=='cmap':
+        cmap = colors
+        colors = []
+        for i in range(cmap.N):
+            rgb = cmap(i)[:3] # will return rgba, we take only first 3 so we get rgb
+            colors.append(str(mcolors.rgb2hex(rgb)))
+
 
     colorsDeut = CVD(colors, "deutan").colors()
     colorsProt = CVD(colors, "protan").colors()
     colorsTrit = CVD(colors, "tritan").colors()
     colorsDesat = desaturate(colors)
 
-    # # make up some randomly distributed data
-    # x, y = np.mgrid[0:20:0.05, 0:20:0.05]
-    # z = 20-np.sqrt(x**2+y**2)
-    # z[np.where(z < 0)] = 0
-    #
-    #
-    # fig = plt.figure(figsize=(10, 10))
-    #
-    # ax1 = plt.subplot(111)
-    # CS = ax1.contour(x,y,z,len(colors)-1,linewidths=0.5,colors='k')
-    # im1 = ax1.contourf(x,y,z,len(colors)-1,colors=colors,
-    # vmax=abs(z).max(), vmin=-abs(z).max())
-    # cbar = ax1.figure.colorbar(im1, ax=ax1, use_gridspec=True)
-    # # cbar.ax.set_ylabel('peak pressure [kPa]')
-    # ax1.set_xlim(0,20)
-    # ax1.set_ylim(0,20)
-    # ax1.set_title('Normal vision')
-    #
-    # fig2 = plt.figure(figsize=(10, 10))
-    # ax2 = plt.subplot(221)
+    # make up some randomly distributed data
+    x, y = np.mgrid[0:1:0.01, 0:1:0.01]
+    z = x #np.sqrt(x**2+y**2)
+    z[np.where(z < 0)] = 0
+
+
+    fig = plt.figure(figsize=(10, 10))
+
+    ax1 = plt.subplot(111)
+    im1 = ax1.contourf(x,y,z,len(colors)-1,colors=colors,vmax=abs(z).max(), vmin=-abs(z).max())
+    # im1 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
+    # im.set_interpolation('bilinear')
+    # im1.set_clim(vmin=0.000000001)
+    # im1.set_data(x[:,0], y[0,:], z)
+    # ref0 = ax1.images.append(im1)
+    cbar = ax1.figure.colorbar(im1, ax=ax1, use_gridspec=True)
+    # cbar.ax.set_ylabel('peak pressure [kPa]')
+    ax1.set_xlim(0,1)
+    ax1.set_ylim(0,1)
+    ax1.set_title('Normal vision')
+
+    fig2 = plt.figure(figsize=(10, 10))
+    ax2 = plt.subplot(221)
     # CS = ax2.contour(x,y,z,len(colors)-1,linewidths=0.5,colors='k')
-    # im2 = ax2.contourf(x,y,z,len(colors)-1,colors=colorsDesat,
-    # vmax=abs(z).max(), vmin=-abs(z).max())
-    # cbar = ax2.figure.colorbar(im2, ax=ax2, use_gridspec=True)
-    # # cbar.ax.set_ylabel('peak pressure [kPa]')
-    # ax2.set_xlim(0,20)
-    # ax2.set_ylim(0,20)
-    # ax2.set_title('Desaturated version')
-    #
-    # ax3 = plt.subplot(222)
+    im2 = ax2.contourf(x,y,z,len(colors)-1,colors=colorsDesat,
+    vmax=abs(z).max(), vmin=-abs(z).max())
+    cbar = ax2.figure.colorbar(im2, ax=ax2, use_gridspec=True)
+    # cbar.ax.set_ylabel('peak pressure [kPa]')
+    ax2.set_xlim(0,1)
+    ax2.set_ylim(0,1)
+    ax2.set_title('Desaturated version')
+
+    ax3 = plt.subplot(222)
     # CS = ax3.contour(x,y,z,len(colors)-1,linewidths=0.5,colors='k')
-    # im3 = ax3.contourf(x,y,z,len(colors)-1,colors=colorsDeut,
-    # vmax=abs(z).max(), vmin=-abs(z).max())
-    # cbar = ax3.figure.colorbar(im3, ax=ax3, use_gridspec=True)
-    # # cbar.ax.set_ylabel('peak pressure [kPa]')
-    # ax3.set_xlim(0,20)
-    # ax3.set_ylim(0,20)
-    # ax3.set_title('Deuteranope vision')
-    #
-    # ax4 = plt.subplot(223)
+    im3 = ax3.contourf(x,y,z,len(colors)-1,colors=colorsDeut,
+    vmax=abs(z).max(), vmin=-abs(z).max())
+    cbar = ax3.figure.colorbar(im3, ax=ax3, use_gridspec=True)
+    # cbar.ax.set_ylabel('peak pressure [kPa]')
+    ax3.set_xlim(0,1)
+    ax3.set_ylim(0,1)
+    ax3.set_title('Deuteranope vision')
+
+    ax4 = plt.subplot(223)
     # CS = ax4.contour(x,y,z,len(colors)-1,linewidths=0.5,colors='k')
-    # im4 = ax4.contourf(x,y,z,len(colors)-1,colors=colorsProt,
-    # vmax=abs(z).max(), vmin=-abs(z).max())
-    # cbar = ax4.figure.colorbar(im4, ax=ax4, use_gridspec=True)
-    # # cbar.ax.set_ylabel('peak pressure [kPa]')
-    # ax4.set_xlim(0,20)
-    # ax4.set_ylim(0,20)
-    # ax4.set_title('Proteranope vision')
-    #
-    # ax5 = plt.subplot(224)
+    im4 = ax4.contourf(x,y,z,len(colors)-1,colors=colorsProt,
+    vmax=abs(z).max(), vmin=-abs(z).max())
+    cbar = ax4.figure.colorbar(im4, ax=ax4, use_gridspec=True)
+    # cbar.ax.set_ylabel('peak pressure [kPa]')
+    ax4.set_xlim(0,1)
+    ax4.set_ylim(0,1)
+    ax4.set_title('Proteranope vision')
+
+    ax5 = plt.subplot(224)
     # CS = ax5.contour(x,y,z,len(colors)-1,linewidths=0.5,colors='k')
-    # im5 = ax5.contourf(x,y,z,len(colors)-1,colors=colorsTrit,
-    # vmax=abs(z).max(), vmin=-abs(z).max())
-    # cbar = ax5.figure.colorbar(im5, ax=ax5, use_gridspec=True)
-    # # cbar.ax.set_ylabel('peak pressure [kPa]')
-    # ax5.set_xlim(0,20)
-    # ax5.set_ylim(0,20)
-    # ax5.set_title('Triteranope vision')
-    # plt.show()
-    return colors
+    im5 = ax5.contourf(x,y,z,len(colors)-1,colors=colorsTrit,
+    vmax=abs(z).max(), vmin=-abs(z).max())
+    cbar = ax5.figure.colorbar(im5, ax=ax5, use_gridspec=True)
+    # cbar.ax.set_ylabel('peak pressure [kPa]')
+    ax5.set_xlim(0,1)
+    ax5.set_ylim(0,1)
+    ax5.set_title('Triteranope vision')
+    plt.show()
 
 
 
 
 
 if __name__ == "__main__":
-    colors = makeColorMap()
-    x, y = np.mgrid[0:20:0.05, 0:20:0.05]
-    z = 20-np.sqrt(x**2+y**2)
+    pow = 2
+    lev = np.linspace(0, 1, 30, dtype = float)
+    # lev[np.where(lev <= 1)] = np.power(lev[np.where(lev <= 1)], pow)
+    # lev[np.where(lev > 1)] = pow*lev[np.where(lev > 1)]-1
+    # lev = 10*lev
+    # lev  = [0., 0.25, 0.50, 0.75, 1.0, 1.50, 2.0,
+    #         2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0,
+    #         12.0, 14.0, 16.0, 20.0, 25.0, 30.0, 35.0, 40.0, 50.0]
+    print(lev)
+
+    # fig = plt.figure(figsize=(10, 10))
+    #
+    # ax1 = plt.subplot(111)
+    # ax1.plot(np.linspace(0, 1, len(lev), dtype = float), lev)
+    # plt.show()
+
+
+    # cmap = sequential_hcl(h = [180, 310], c = [0, 90, 0], l = [95, 30], power = [1.5,1.5])
+    # colors = cmap(len(lev))
+    #
+    # testColormap(colors, type='hex')
+    #
+    # cmap = sequential_hcl(h = [180, 310], c = [0, 90, 0], l = [95, 30], power = [1.5,1.5])
+    # colors = cmap(len(lev))
+    #
+    # testColormap(colors, type='hex')
+
+    H = np.repeat(140, len(lev))
+    H[np.where(np.asarray(lev) >= 0.2)] = 180   # Reddish above 5.0 inches
+    H[np.where(np.asarray(lev) >= 0.4)] = 250   # Reddish above 5.0 inches
+    H[np.where(np.asarray(lev) >= 0.6)] = 300
+    H[np.where(np.asarray(lev) >= 0.8)] = 350
+    C = np.power(np.linspace(0, 1, len(lev), dtype = float), 1) * 70 + 10
+    L = 80 - np.power(np.linspace(0, 1, len(lev), dtype = float), 1) * 70
+    # Create a HCL color object
+    cols = HCL(H, C, L)
+    # Load colors
+    colors  = cols.colors()
+    cmap = get_continuous_cmap(colors)
+
+    # testColormap(colors, type='hex')
+
+
+    # make up some randomly distributed data
+    x, y = np.mgrid[0:10:0.01, 0:10:0.01]
+    z = x #np.sqrt(x**2+y**2)
     z[np.where(z < 0)] = 0
-    hex_list = colors #['#E2E2E2', '#DADEDD', '#D1D9D8', '#C8D5D3', '#BFD0CE', '#B6CCC9', '#ADC8C4', '#A4C3BF', '#9BBFBA', '#92BAB5', '#A1AEC7', '#9BA9C4', '#94A3C1', '#8E9EBE', '#8799BC', '#8094B9', '#7A8FB6', '#738BB3', '#6C86B1', '#6581AE', '#A2669F', '#9F609C', '#9C5999', '#995396', '#964C93', '#934590', '#913D8D', '#8E358B', '#8C2B88', '#8A2086', '#880F84', '#860082', '#850081', '#840080', '#84007F', '#840080', '#870082', '#8B0086', '#950090', '#AA00A3']
-    fig, ax = plt.subplots(1,1)
-    im = ax.imshow(z, cmap=get_continuous_cmap(hex_list))
-    fig.colorbar(im)
-    ax.yaxis.set_major_locator(plt.NullLocator()) # remove y axis ticks
-    ax.xaxis.set_major_locator(plt.NullLocator()) # remove x axis ticks
+
+
+    fig = plt.figure(figsize=(10, 10))
+
+    ax1 = plt.subplot(111)
+    im1 = ax1.contourf(x,y,z,len(colors)-1,colors=colors,vmax=abs(z).max(), vmin=-abs(z).max())
+    # im1 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
+    # im.set_interpolation('bilinear')
+    # im1.set_clim(vmin=0.000000001)
+    # im1.set_data(x[:,0], y[0,:], z)
+    # ref0 = ax1.images.append(im1)
+    cbar = ax1.figure.colorbar(im1, ax=ax1, use_gridspec=True)
+    # cbar.ax.set_ylabel('peak pressure [kPa]')
+    ax1.set_xlim(0,10)
+    ax1.set_ylim(0,10)
+    ax1.set_title('Normal vision')
     plt.show()
