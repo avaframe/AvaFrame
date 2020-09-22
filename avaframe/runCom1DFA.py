@@ -10,7 +10,7 @@ import os
 from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-
+import time
 
 # log file name; leave empty to use default runLog.log
 logName = 'runCom1DFA'
@@ -27,5 +27,10 @@ log.info('Current avalanche: %s', avalancheDir)
 # Load input parameters from configuration file
 cfg = cfgUtils.getModuleConfig(com1DFA)
 
+startTime = time.time()
 # Run Standalone DFA
 com1DFA.runSamos(cfg, avalancheDir)
+
+endTime = time.time()
+
+log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
