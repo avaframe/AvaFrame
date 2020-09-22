@@ -62,6 +62,9 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
         os.makedirs(workDir)
     log.info('Directory: %s created' % workDir)
 
+    # Set flag if there is an entrainment or resistance area
+    flagEntRes = False
+
     # Initialise release areas, default is to look for shapefiles
     if inputf == 'nxyz':
         relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.nxyz')
@@ -75,6 +78,8 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
         if len(resFiles) < 1:
             log.warning('No resistance file')
             resFiles.append('')  # Kept this for future enhancements
+        else:
+            flagEntRes = True
     else:
         resFiles = []
         resFiles.append('')
@@ -85,6 +90,8 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
         if len(entFiles) < 1:
             log.warning('No entrainment file')
             entFiles.append('')  # Kept this for future enhancements
+        else:
+            flagEntRes = True
     else:
         entFiles = []
         entFiles.append('')
@@ -103,8 +110,13 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
     with open(os.path.join(workDir, 'ExpLog.txt'), 'w') as logFile:
             logFile.write("NoOfSimulation,SimulationRunName,%s\n" % varPar)
 
+    if flagEntRes:
+        log.info('Simulations are performed using entrainment and resistance')
+    else:
+        log.info('Standard simulation is performed without entrainment and resistance')
+
     # return DEM, first item of release, entrainment and resistance areas
-    return demFile[0], relFiles, entFiles[0], resFiles[0]
+    return demFile[0], relFiles, entFiles[0], resFiles[0], flagEntRes
 
 
 def copyReplace(origFile, workFile, searchString, replString):
@@ -128,26 +140,6 @@ def copyReplace(origFile, workFile, searchString, replString):
     with open(workFile, 'w') as file:
         file.write(fileData)
 
-def writeParFile(avaDir, cfgPar, simName):
-    """ Write text file to read parameters if parameter variation is used """
-
-    # Values of parameter variations in config file as string
-    varPar = cfgPar['varParValues']
-    varParList = []
-    items = varPar.split('_')
-    for item in items:
-        varParList.append(float(item))
-
-    # Write parameter values to text file
-    varFile = os.path.join(avaDir, 'Work' ,'com1DFA', simName+'_VarPar.txt')
-    varF = open(varFile, 'w')
-    for vals in varParList:
-        # Important write Par in correct sequence from small to big
-        varF.write('%.3f\n' % vals)
-    varF.close()
-
-    log.info('Parameter variation input file written')
-
 
 def runSamos(cfg, avaDir):
     """ Run main model"""
@@ -163,6 +155,8 @@ def runSamos(cfg, avaDir):
     resDir = os.path.join(avaDir, 'Work', 'com1DFA')
     # Get path of module
     modPath = os.path.dirname(__file__)
+    # Standard values for parameters that can be varied
+    defValues = {'Mu' : '0.155', 'RelTh' : '1.000'}
 
     # Log chosen settings
     log.info('The chosen settings: entrainment - %s , resistance - %s ' % (flagEnt, flagRes))
@@ -171,7 +165,7 @@ def runSamos(cfg, avaDir):
     log.info('Your current avalanche test name: %s' % avaDir)
 
     # Load input data
-    dem, rels, res, ent = initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf)
+    dem, rels, res, ent, flagEntRes = initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf)
 
     # Get cell size from DEM header
     demData = aU.readASCheader(dem)
@@ -206,9 +200,20 @@ def runSamos(cfg, avaDir):
         # Setup Project
         execSamos(samosAT, workFile, avaDir, fullOut)
 
-        # Initialise CreateSimulations cint file and set parameters
-        templateFile = os.path.join(modPath, 'CreateSimulations.cint')
-        workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateSimulations.cint')
+        if flagEntRes:
+            # Initialise CreateSimulations cint file and set parameters
+            templateFile = os.path.join(modPath, 'CreateSimulations.cint')
+            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateSimulations.cint')
+            cuSim = [simName + '_entres_dfa', simName + '_null_dfa']
+            print('cusim', cuSim, len(cuSim))
+        else:
+            # Initialise CreateSimulations cint file and set parameters
+            templateFile = os.path.join(modPath, 'CreateBasicSimulation.cint')
+            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateBasicSimulation.cint')
+            cuSim = [simName + '_null_dfa']
+            print('cusim', cuSim, len(cuSim))
+
+        # Write required info to cint file
         copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
         copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
         copyReplace(workFile, workFile, '##BASESIMNAME##', simName)
@@ -216,28 +221,64 @@ def runSamos(cfg, avaDir):
 
         # If mu shall be varied
         if cfgPar.getboolean('flagVarPar'):
-            log.info('Parameter variation used, varying: %s' % cfgPar['varPar'])
-            writeParFile(avaDir, cfgPar, simName)
-            templateFile = os.path.join(modPath, '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
+
+            # Also perform one standard simulation
+            simST = simName + '_null_dfa'
+            logName = simST + '_' + defValues[cfgPar['varPar']]
+            log.info('Also perform one standard simulation: %s' % simST)
+            templateFile = os.path.join(modPath, 'runBasicST.cint')
+            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBasicST.cint')
+            # Write required info to cint file
             copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
             copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
             copyReplace(workFile, workFile, '##RESDIR##', resDir)
+            copyReplace(workFile, workFile, '##NAME##', simST)
             copyReplace(workFile, workFile, '##COUNTREL##', countRel)
-            # Count total number of simulations
-            countRel = countRel + 3
+            copyReplace(workFile, workFile, '##VARPAR##', cfgPar['varPar'])
+            copyReplace(workFile, workFile, '##VALUE##', defValues[cfgPar['varPar']])
+            execSamos(samosAT, workFile, avaDir, fullOut, logName)
+            countRel = countRel + 1
+
+            if cfgPar.getboolean('flagVarEnt') and (simName + '_entres_dfa') in cuSim:
+                sim = simName + '_entres_dfa'
+            else:
+                sim = simName + '_null_dfa'
+
+            log.info('Parameter variation used, varying: %s' % cfgPar['varPar'])
+
+            # Values of parameter variations in config file as string
+            varPar = cfgPar['varParValues']
+            items = varPar.split('_')
+
+            for item in items:
+                logName = sim + '_' + item
+                log.info('Perform simulation with %s = %s: logName = %s' % (cfgPar['varPar'], item, logName))
+                templateFile = os.path.join(modPath, '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
+                workFile = os.path.join(avaDir, 'Work', 'com1DFA', '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
+                copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
+                copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
+                copyReplace(workFile, workFile, '##RESDIR##', resDir)
+                copyReplace(workFile, workFile, '##NAME##', sim)
+                copyReplace(workFile, workFile, '##COUNTREL##', countRel)
+                copyReplace(workFile, workFile, '##VALUE##', item)
+                execSamos(samosAT, workFile, avaDir, fullOut, logName)
+                # Count total number of simulations
+                countRel = countRel + 1
 
         else:
-            templateFile = os.path.join(modPath, '%s.cint' % (cfgGen['RunCint']))
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', '%s.cint' % (cfgGen['RunCint']))
-            copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
-            copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
-            copyReplace(workFile, workFile, '##RESDIR##', resDir)
-            copyReplace(workFile, workFile, '##COUNTREL##', countRel)
-            # Count total number of simulations
-            countRel = countRel + 2
+            for sim in cuSim:
+                templateFile = os.path.join(modPath, 'runBasic1.cint')
+                workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBaisc1.cint')
+                # Write required info to cint file
+                copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
+                copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
+                copyReplace(workFile, workFile, '##RESDIR##', resDir)
+                copyReplace(workFile, workFile, '##NAME##', sim)
+                copyReplace(workFile, workFile, '##COUNTREL##', countRel)
+                execSamos(samosAT, workFile, avaDir, fullOut, sim)
 
-        execSamos(samosAT, workFile, avaDir, fullOut, relName)
+                # Count total number of simulations
+                countRel = countRel + 1
 
     log.info('Avalanche Simulations performed')
 
