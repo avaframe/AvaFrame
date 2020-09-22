@@ -158,7 +158,7 @@ def testColormap(colors, type='hex'):
 
 if __name__ == "__main__":
     pow = 2
-    lev = np.linspace(0, 1, 30, dtype = float)
+    lev = np.linspace(0, 1, 21, dtype = float)
     # lev[np.where(lev <= 1)] = np.power(lev[np.where(lev <= 1)], pow)
     # lev[np.where(lev > 1)] = pow*lev[np.where(lev > 1)]-1
     # lev = 10*lev
@@ -172,9 +172,9 @@ if __name__ == "__main__":
     # ax1 = plt.subplot(111)
     # ax1.plot(np.linspace(0, 1, len(lev), dtype = float), lev)
     # plt.show()
-
-
-    # cmap = sequential_hcl(h = [180, 310], c = [0, 90, 0], l = [95, 30], power = [1.5,1.5])
+    #
+    #
+    # cmap = hex = sequential_hcl(h = [-220,20], c = [0, 90, 0], l = [95, 30], power = [1.5,1.5])
     # colors = cmap(len(lev))
     #
     # testColormap(colors, type='hex')
@@ -196,25 +196,25 @@ if __name__ == "__main__":
     # Load colors
     colors  = cols.colors()
     cmap = get_continuous_cmap(colors)
-
+    norm = mcolors.BoundaryNorm(10*lev, cmap.N)
     # testColormap(colors, type='hex')
 
 
     # make up some randomly distributed data
     x, y = np.mgrid[0:10:0.01, 0:10:0.01]
-    z = x #np.sqrt(x**2+y**2)
+    z = np.sqrt(x**2+y**2)
     z[np.where(z < 0)] = 0
 
 
     fig = plt.figure(figsize=(10, 10))
 
     ax1 = plt.subplot(111)
-    im1 = ax1.contourf(x,y,z,len(colors)-1,colors=colors,vmax=abs(z).max(), vmin=-abs(z).max())
-    # im1 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
+    # im1 = ax1.contourf(x,y,z,len(colors)-1,colors=colors,vmax=abs(z).max(), vmin=-abs(z).max())
+    im1 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=None, origin='lower')
     # im.set_interpolation('bilinear')
     # im1.set_clim(vmin=0.000000001)
-    # im1.set_data(x[:,0], y[0,:], z)
-    # ref0 = ax1.images.append(im1)
+    im1.set_data(x[:,0], y[0,:], z)
+    ref0 = ax1.images.append(im1)
     cbar = ax1.figure.colorbar(im1, ax=ax1, use_gridspec=True)
     # cbar.ax.set_ylabel('peak pressure [kPa]')
     ax1.set_xlim(0,10)
