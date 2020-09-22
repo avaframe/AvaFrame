@@ -205,13 +205,11 @@ def runSamos(cfg, avaDir):
             templateFile = os.path.join(modPath, 'CreateSimulations.cint')
             workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateSimulations.cint')
             cuSim = [simName + '_entres_dfa', simName + '_null_dfa']
-            log.info('List of simulation types', cuSim, len(cuSim))
         else:
             # Initialise CreateSimulations cint file and set parameters
             templateFile = os.path.join(modPath, 'CreateBasicSimulation.cint')
             workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateBasicSimulation.cint')
             cuSim = [simName + '_null_dfa']
-            log.info('List of simulation types', cuSim, len(cuSim))
 
         # Write required info to cint file
         copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
@@ -219,7 +217,8 @@ def runSamos(cfg, avaDir):
         copyReplace(workFile, workFile, '##BASESIMNAME##', simName)
         execSamos(samosAT, workFile, avaDir, fullOut)
 
-        # If mu shall be varied
+
+        # If parameter shall be varied
         if cfgPar.getboolean('flagVarPar'):
 
             # Also perform one standard simulation
