@@ -205,13 +205,13 @@ def runSamos(cfg, avaDir):
             templateFile = os.path.join(modPath, 'CreateSimulations.cint')
             workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateSimulations.cint')
             cuSim = [simName + '_entres_dfa', simName + '_null_dfa']
-            print('cusim', cuSim, len(cuSim))
+            log.info('List of simulation types', cuSim, len(cuSim))
         else:
             # Initialise CreateSimulations cint file and set parameters
             templateFile = os.path.join(modPath, 'CreateBasicSimulation.cint')
             workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateBasicSimulation.cint')
             cuSim = [simName + '_null_dfa']
-            print('cusim', cuSim, len(cuSim))
+            log.info('List of simulation types', cuSim, len(cuSim))
 
         # Write required info to cint file
         copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
