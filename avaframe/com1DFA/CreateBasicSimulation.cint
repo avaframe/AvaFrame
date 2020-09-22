@@ -1,0 +1,69 @@
+int MAXSTRLEN = 512;
+
+void CreateSimulations(char BasePath[], char SamosProjectDir[],
+                       char BaseName[])
+{
+  char ProjDir[512];
+  char s[1000*MAXSTRLEN];
+  char x[512];
+  char CuSimName[1000*MAXSTRLEN];
+  char Rel[512];
+  char Sim[512];
+  char Text[512];
+  int NRelAreas;
+  int i;
+  FILE *SimLog;
+  char FPath[512];
+
+
+
+  // Load project
+  set("", "Close", "");
+  sprintf(ProjDir, "%s/%s", BasePath, SamosProjectDir);
+  // sprintf(ProjDir, "%s", SamosProjectDir);
+  set("", "LoadProject", ProjDir);
+
+
+  // Start simulation log
+  sprintf(FPath, "%s_SimLog.txt", ProjDir);
+  SimLog = fopen(FPath,"w");
+  fprintf(SimLog, "SimName;Type\n");
+
+  // Add standard simulation
+  sprintf(CuSimName, "%s_null_dfa", BaseName);
+  printf("[BatchSamos] Current Sim: %s \n",CuSimName);
+  set("Project/Simulations", "CreateSimulation", CuSimName);
+
+  sprintf(Sim,"Project/Simulations/%s/ReleaseAreas/",CuSimName);
+  set(Sim, "AppendAllObjectsOfType", "");
+  fprintf(SimLog, "%s;%s\n",CuSimName,"null");
+
+  fclose(SimLog);
+  set("", "SaveProject", "");
+  set("", "Close", "");
+
+}
+
+// ################################# main #####################################
+int main()
+{
+  char BasePath[512];
+  char SamosProjectDir[512];
+  char BaseSimName[512];
+
+
+  // --- Setup
+  strcpy(BasePath, "##BASEPATH##");
+  strcpy(SamosProjectDir, "##PROJECTDIR##");
+  // Base name for simulations
+  strcpy(BaseSimName, "##BASESIMNAME##");
+
+
+  // --- Calls
+  CreateSimulations(BasePath, SamosProjectDir, BaseSimName);
+
+
+  printf("[BatchSamos] Project %s now with reference simulations\n", SamosProjectDir);
+  return 0;
+
+}
