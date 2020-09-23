@@ -56,15 +56,12 @@ def extractMBInfo(avaDir):
     # Get info from ExpLog
     logName = os.path.join(avaDir, 'Outputs', 'com1DFA', 'ExpLog.txt')
     logDictExp = fU.readLogFile(logName)
-    simName = []
-    for name in logDictExp['simName']:
-        simName.append(name.split('_')[0])
-    relNames = set(simName)
+    simNames = logDictExp['fullName']
 
     # Read mass data from log and save to file for each simulation run
     countFile = 0
-    for relName in relNames:
-        log.info('These are the release areas: %s ' % (relName))
+    for simName in simNames:
+        log.info('These are the sim Names areas: %s ' % (simName))
 
         # Initialise fields
         time = []
@@ -75,7 +72,7 @@ def extractMBInfo(avaDir):
         flagStop = 0
 
         # Read log file
-        with open(os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (relName)), 'r') as file:
+        with open(os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName)), 'r') as file:
             for line in file:
                 if "computing time step" in line:
                     ltime = line.split()[3]
