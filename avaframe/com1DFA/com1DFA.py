@@ -245,9 +245,11 @@ def runSamos(cfg, avaDir):
             log.info('Parameter variation used, varying: %s' % cfgPar['varPar'])
 
             # Values of parameter variations in config file as string
-            varPar = cfgPar['varParValues']
-            items = varPar.split('_')
-
+            varParValues = cfgPar['varParValues']
+            itemsRaw = varParValues.split('_')
+            items = []
+            for itemR in itemsRaw:
+                items.append('%.3f' % float(itemR))
             for item in items:
                 logName = sim + '_' + item
                 log.info('Perform simulation with %s = %s: logName = %s' % (cfgPar['varPar'], item, logName))
