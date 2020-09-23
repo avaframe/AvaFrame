@@ -102,7 +102,6 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
     # Parameter variation
     if cfgPar.getboolean('flagVarPar'):
         varPar = cfgPar['varPar']
-        print('flag set varpar', varPar)
     else:
         varPar = 'Mu'
 
