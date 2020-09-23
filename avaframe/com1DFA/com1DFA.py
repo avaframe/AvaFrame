@@ -265,15 +265,18 @@ def runSamos(cfg, avaDir):
 
         else:
             for sim in cuSim:
-                templateFile = os.path.join(modPath, 'runBasic1.cint')
-                workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBaisc1.cint')
+                templateFile = os.path.join(modPath, 'runBasicST.cint')
+                workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBaiscST.cint')
+                logName = sim + '_' + defValues['Mu']
                 # Write required info to cint file
                 copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
                 copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
                 copyReplace(workFile, workFile, '##RESDIR##', resDir)
                 copyReplace(workFile, workFile, '##NAME##', sim)
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
-                execSamos(samosAT, workFile, avaDir, fullOut, sim)
+                copyReplace(workFile, workFile, '##VARPAR##', 'Mu')
+                copyReplace(workFile, workFile, '##VALUE##', defValues['Mu'])
+                execSamos(samosAT, workFile, avaDir, fullOut, logName)
 
                 # Count total number of simulations
                 countRel = countRel + 1
