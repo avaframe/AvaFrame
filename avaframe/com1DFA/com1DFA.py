@@ -150,12 +150,12 @@ def runSamos(cfg, avaDir):
     flagRes = cfgGen.getboolean('flagRes')
     inputf = cfgGen['inputf']
     fullOut = cfgGen.getboolean('flagOut')
-    cfgPar = cfg['PARAMATERVAR']
+    cfgPar = cfg['PARAMETERVAR']
     resDir = os.path.join(avaDir, 'Work', 'com1DFA')
     # Get path of module
     modPath = os.path.dirname(__file__)
     # Standard values for parameters that can be varied
-    defValues = {'Mu' : '0.155', 'RelTh' : '1.000'}
+    defValues = cfg['DEFVALUES']
 
     # Log chosen settings
     log.info('The chosen settings: entrainment - %s , resistance - %s ' % (flagEnt, flagRes))
