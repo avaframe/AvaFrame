@@ -12,7 +12,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 # log file name; leave empty to use default runLog.log
-logName = 'runQuickPlot'
+logName = 'runQuickPlotSimple'
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
