@@ -180,6 +180,7 @@ coefficient :math:`c_w` (see :numref:`f-res`):
 .. _f-res:
 
 .. figure:: _static/f_res.png
+        :width: 90%
 
         Resistance force due to obstacles (from [FiKo2013]_)
 
@@ -230,6 +231,7 @@ Non-dimensional Equations
 .. _fig-charakterisitsche_groessen:
 
 .. figure:: _static/charakterisitsche_groessen.png
+        :width: 90%
 
         Characteristic size of the avalanche along its path (from [Zw2000]_)
 
@@ -353,6 +355,7 @@ remains unchanged:
 .. math::
    \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}(A_b\overline{h})}{\mathrm{d}t}
    = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+   + A_b\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    :label: mass-balance3
 
 The unknown :math:`\overline{u}_1`, :math:`\overline{u}_2` and
@@ -367,18 +370,240 @@ has to be introduced in order to completely solve the equations.
 Friction Model
 ~~~~~~~~~~~~~~~~~
 
+The problem can be solved by introducing a constitutive equation which
+describes the basal shear stress tensor :math:`\tau^{(b)}` as a function
+of the flow state of the avalanche.
+
+.. math::
+    \tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})
+
+With
+
+.. math::
+   \begin{aligned}
+   \quad &\sigma^{(b)} \qquad \text{normal component of the stress tensor}\\
+   \quad &\overline{u} \qquad\quad \text{average velocity}\\
+   \quad &\overline{h} \qquad\quad \text{average flow depth}\\
+   \quad &\rho_0 \qquad\quad \text{density}\\
+   \quad &t \qquad\quad\, \text{time}\\
+   \quad &\mathbf{x} \qquad\quad \text{position vector}
+   \end{aligned}
+
+Several friction models already implemented in the simulation tool are
+described here.
+
+SamosAT Model
+~~~~~~~~~~~~~
+
+SamosAT friction model is a modification of some more clasical models
+such as Voellmy model. The basal shear stress tensor :math:`\tau^{(b)}`
+is expressed as [Sa2007]_:
+
+.. math::
+   \tau^{(b)} = \tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}
+    + \frac{\rho_0\,\overline{u}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}
+
+With
+
+.. math::
+   \begin{aligned}
+   \quad \tau_0 \qquad &\text{minimum shear stress}\\
+   \quad R_s \qquad &\text{relation between friction and normal pressure (fluidization factor)}\\
+   \quad R_s^0 \qquad &\text{empirical  constant}\\
+   \quad B \qquad &\text{empirical  constant}\\
+   \quad \kappa \qquad &\text{empirical  constant}\end{aligned}
+
+The minimum shear stress :math:`\tau_0` defines a lower limit below
+which no flow takes place with the condition
+:math:`\rho_0\,\overline{h}\,g\,\sin{\alpha} > \tau_0`. :math:`\alpha`
+being the slope. :math:`\tau_0` is independent of the flow depth, which
+leeds to a strong avalanche deceleration, especially for avalanches with
+low flow heights. :math:`R_s` is expressed as
+:math:`R_s = \frac{\rho_0\,\overline{u}^2}{\sigma^{(b)}}`). Together
+with the empirical parameter :math:`R_s^0` the term
+:math:`\frac{R_s^0}{R_s^0+R_s}` defines the Coulomb basal friction.
+Therefore lower avalanche speeds lead to a higher bed friction, making
+avalanche flow stop already at steeper slopes :math:`\alpha`, than
+without this effect. This effect is intended to avoid lateral creep of
+the avalanche mass [SaGr2009]_
+
+
 Numerics
------------
+========
+
+Mass :eq:`mass-balance3` and momentum
+:eq:`momentum-balance6` balance
+equations as well as basal normal stress :eq:`sigmab`
+are solved numerically using a SPH method (**S**\ moothed **P**\ article
+**H**\ ydrodynamis) [Mo1992]_ for the three variables
+:math:`\overline{\mathbf{u}}=(\overline{u}_1, \overline{u}_2)` and
+:math:`\overline{h}` by discretization of the released avalanche volume
+in a large number of mass elements. SPH in general, is a mesh-less
+numerical method for solving partial differential equations. The SPH
+algorithm discretizes the numerical problem within a domain using
+particles [Sa2007]_ [SaGr2009]_, which interact
+with each-other in a defined zone of influence. Some of the advantages
+of the SPH method are that free surface flows, material boundaries and
+moving boundary conditions are considered implicitly. In addition, large
+deformations can be modeled due to the fact that the method is not based
+on a mesh. From a numerical point of view, the SPH method itself is
+relatively robust. Each particle has a mass :math:`m_{p,j}`. Those
+particles are projected on a raster and the mass distributed on each
+node of the raster (see :numref:`raster`). This leads to the
+following expression for the mass :math:`m_{v,i}` of each node on the
+raster grid: :math:`m_{v,i} = \sum\limits_j^{n_i}{m_{p,j}}`
+
+.. _raster:
+
+.. figure:: _static/raster.png
+        :width: 70%
+
+        Particles in raster grid (from [FiKo2013]_)
+
+Each grid node is also affected with a velocity
+:math:`\overline{\mathbf{u}}_{v,i}` expressed as the sum of the momentum
+of each raster cell divided by the mass of the same cell:
+
+.. math::
+    \overline{\mathbf{u}}_{v,i} = \frac{\sum\limits_j^{n_i}{m_{p,j}}\mathbf{u}_j}{\sum\limits_j^{n_i}{m_{p,j}}}
+
+The flow depth :math:`\overline{h}_{v,i}` can be deduced from the mass
+and area of the raster cell:
+
+.. math::
+    \overline{h}_{v,i} = \frac{m_{v,i}}{\rho_0\,A_{v,i}}
+
+The bottom area paired to each particle is related to the mass and flow
+depth of this one:
+
+.. math::
+    A_{p,i} = \frac{m_{p,i}}{\rho_0\,\overline{h}_{p,i}}
+
+The SPH method is introduced when expressing the flow depth of each mass
+particle as a weighted sum of its neighbours
+[LiLi2010]_ [Sa2007]_:
+
+.. math::
+    \overline{h}_{p,j} = \frac{1}{\rho_0}\,\sum\limits_j^{n_i}{m_{p,j}}\,W_{ij}
+
+Where :math:`W` represents the SPH-Kernel function and reads:
+
+.. math::
+   W_{ij} = W(\mathbf{r_{ij}},r_0) = \frac{10}{\pi h^5}\left\{
+   \begin{aligned}
+   & (r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert), \quad &0\leq \left\Vert \mathbf{r_{ij}}\right\Vert \leq  r_0\\
+   & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
+   \end{aligned}
+   \right.
+   :label: kernel function
+
+:math:`\left\Vert \mathbf{r_{ij}}\right\Vert= \left\Vert \mathbf{x_j}-\mathbf{x_i}\right\Vert`
+represents the distance between particle :math:`i` and :math:`j` and
+:math:`r_0` the smoothing length. Now the lateral pressure forces on
+each particle have to be determined. These are calculated from the
+compression forces on the boundary of the particle. The boundary is
+approximated as a square with the base side length
+:math:`\Delta s = \sqrt{A_p}` and the respective flow height. This leads
+to:
+
+.. math::
+    F_i = K_{(i)}\oint\limits_{\partial{A_p}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_i\,\mathrm{d}x_3\right)\mathrm{d}l
+
+From equation :eq:`momentum-balance6`
+
+.. math::
+    F_i = K_{(i)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p,i}-
+    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p,i}+\frac{\Delta{s}}{2}}\right)
+
+The basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}` from
+equation :eq:`sigmab` is determined analogously to the
+flow thicknesses :math:`\overline{h}_{p,i}`:
+
+.. math::
+   {\overline{\sigma}^{(b)}_{33}}_{p,i} = \sum\limits_j^{n_i}{{\overline{\sigma}^{(b)}_{33}}_{p,i}}\,A_{p,j}\,W_{ij}
+     = \frac{1}{\rho_0}\,\sum\limits_j^{n_i}{{\overline{\sigma}^{(b)}_{33}}_{p,i}}\,\frac{m_{p,j}}{\overline{h}_{p,j}}\,W_{ij}
+
+The mass of entrained snow for each particle :math:`p` between :math:`t`
+and :math:`t+\Delta{t}` depends on the type of entrainment involved
+(ploughing or erosion) and reads:
+
+.. math::
+    \Delta{m_p} = A_\text{ent}\,q_{\text{ent}}\,\Delta{t}
+
+with
+
+.. math::
+   \begin{aligned}
+    A_{\text{plo}} &= w_f\,h_{\text{ent}}= \sqrt{\frac{m_{p}}{\overline{\rho}\,\overline{h}_{p}}}\,h_{\text{ent}}
+    \quad &\mbox{and} \quad &q_{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+    \quad &\mbox{for ploughing}\\
+    A_{\text{ero}} &= A_p = \frac{m_{p}}{\overline{\rho}\,\overline{h}_{p}}
+    \quad &\mbox{and} \quad &q_{\text{ero}} = \frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+    \quad &\mbox{for erosion}
+    \end{aligned}
+
+Descretizing the momentum balance
+:eq:`momentum-balance6` in time enables
+to write the the velocity of the particle at the next time step:
+
+.. math::
+   u_i^{k+1} = \frac{u_i^k + \Delta{t}\,\left(g_i+\frac{F_i+F_i^\text{ent}}{m_p}\right)}
+    {1 + \Delta{t}\left(\frac{\tau^{(b)}}{\bar\rho\,\overline{h}\,\|\overline{u}\|^k}+C_\text{res}\,\|\overline{u}\|^k\right)}
+    -u_i^k\,\frac{m_p}{m_p+\Delta{m}_p}
+
+With
+
+.. math::
+   \begin{aligned}
+   \quad k \qquad &\text{current time step,}\\
+   \quad k+1 \qquad &\text{next time step,}\\
+   \quad \Delta{t} \qquad &\text{time step size.}
+   \end{aligned}
+
+The new position of the particle (in the next time step :math:`k+1`)
+reads:
+
+.. math::
+    X_i^{k+1} = X_i^k + \frac{\Delta{t}}{2}(u_i^k + u_i^{k+1})
+
 
 .. _fig-infinitesimales_element:
 
 .. figure:: _static/infinitesimales_element.png
+        :width: 90%
 
         Infinitesimal volume element and acting forces on it (from [FiKo2013]_)
 
 
 References
 ----------
+
+.. [FiFrGaSo2013] J. T. Fischer and R. Fromm and P. Gauer and B. Sovilla. (2013)
+  Evaluation of probabilistic snow avalanche simulation ensembles with Doppler radar observations. Cold Regions Science and Technology.
+
+.. [FiKo2013] J. T. Fischer and A. Kofler. (2013)
+    SamosAT CoSiCa. Concepts for enhanced Simulation and multivariate Calibration. BFW
+
+.. [LiLi2010] M.B. Liu and G.R. Liu. (2010).
+    Smoothed Particle Hydrodynamics (SPH): an Overview and Recent Developments. Arch Computat Methods Eng 17, 25--76.
+
+.. [Mo1992] J.J. Monaghan. (1992).
+      Smoothed particle hydrodynamics. Annual review of astronomy and astrophysics. Vol 30. 543--574.
+
+.. [Sa2004] B. Salm. (2004).
+    A short and personal history of snow avalanche dynamics. Cold Regions Science and Technology. Vol. 39. 83--92.
+
+.. [Sa2007] P. Sampl. (2007).
+    SamosAT Modelltheorie und Numerik. AVL List GMBH.
+
+.. [SaFeFr2008] R. Sailer and W. Fellin and R. Fromm and P. J{\"o}rg and L. Rammer and P. Sampl and A. Schaffhauser. (2008).
+    Snow avalanche mass-balance calculation and simulation-model verification. Annals of Glaciology. Vol. 48, 183--192.
+
+.. [SaGr2009] P. Sampl and M. Granig. (2009).
+    Avalanche simulation with SAMOS-AT. Proceedings of the International Snow Science Workshop, Davos.
+
+.. [SaHu1989] S.Savage and K. Hutter. (1989).
+    The motion of a finite mass of granular material down a rough incline. Journal of Fluid Mechanics, 199, 177-215.
 
 .. [Zw2000] T. Zwinger. (2000).
     Dynamik einer Trockenschneelawine auf beliebig geformten Berghangen, Technischen Universitaet Wien.
@@ -387,28 +612,3 @@ References
     Numerical simulation of dry-snow avalanche flow over natural terrain.
     In: Hutter K., Kirchner N. (eds) Dynamic Response of Granular and Porous Materials under Large and Catastrophic Deformations.
     Lecture Notes in Applied and Computational Mechanics, vol 11. Springer, Berlin, Heidelberg.
-
-.. [Sa2007] P. Sampl. (2007).
-    SamosAT Modelltheorie und Numerik. AVL List GMBH.
-
-.. [SaFeFr2008] R. Sailer and W. Fellin and R. Fromm and P. J{\"o}rg and L. Rammer and P. Sampl and A. Schaffhauser. (2008).
-    Snow avalanche mass-balance calculation and simulation-model verification. Annals of Glaciology. Vol. 48, 183--192.
-
-.. [Sa2004] B. Salm. (2004).
-    A short and personal history of snow avalanche dynamics. Cold Regions Science and Technology. Vol. 39. 83--92.
-
-.. [FiFrGaSo2013] J. T. Fischer and R. Fromm and P. Gauer and B. Sovilla. (2013)
-  Evaluation of probabilistic snow avalanche simulation ensembles with Doppler radar observations. Cold Regions Science and Technology.
-
-
-.. [SaZw1999] P. Sampl and T. Zwinger. (1999).
-    A simulation model for dry snow avalanches. Proc. XXVIII IAHR Congress. 22--27.
-
-.. [FiKo2013] J. T. Fischer and A. Kofler. (2013)
-    SamosAT CoSiCa. Concepts for enhanced Simulation and multivariate Calibration. BFW
-.. [LiLi2010] M.B. Liu and G.R. Liu. (2010).
-    Smoothed Particle Hydrodynamics (SPH): an Overview and Recent Developments. Arch Computat Methods Eng 17, 25--76.
-
-
-.. [SaHu1989] S.Savage and K. Hutter. (1989).
-    The motion of a finite mass of granular material down a rough incline. Journal of Fluid Mechanics, 199, 177-215.
