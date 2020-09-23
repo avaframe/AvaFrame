@@ -56,7 +56,8 @@ def extractMBInfo(avaDir):
     # Get info from ExpLog
     logName = os.path.join(avaDir, 'Outputs', 'com1DFA', 'ExpLog.txt')
     logDictExp = fU.readLogFile(logName)
-    simNames = logDictExp['fullName']
+    names = logDictExp['fullName']
+    simNames = sorted(set(names), key=lambda s: s.split("_")[3])
 
     # Read mass data from log and save to file for each simulation run
     countFile = 0
