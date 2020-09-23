@@ -360,7 +360,7 @@ The unknown :math:`\overline{u}_1`, :math:`\overline{u}_2` and
 :eq:`momentum-balance6` and
 :eq:`mass-balance3`. In equation
 :eq:`momentum-balance6` the ground shear
-stress :math:`\tau^{(b)}` remains unknown, and and a closure equation
+stress :math:`\tau^{(b)}` remains unknown, and and a constitutive equation
 has to be introduced in order to completely solve the equations.
 
 
@@ -406,6 +406,8 @@ References
 
 .. [FiKo2013] J. T. Fischer and A. Kofler. (2013)
     SamosAT CoSiCa. Concepts for enhanced Simulation and multivariate Calibration. BFW
+.. [LiLi2010] M.B. Liu and G.R. Liu. (2010).
+    Smoothed Particle Hydrodynamics (SPH): an Overview and Recent Developments. Arch Computat Methods Eng 17, 25--76.
 
 
 .. [SaHu1989] S.Savage and K. Hutter. (1989).
