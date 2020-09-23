@@ -62,7 +62,7 @@ def extractMBInfo(avaDir):
     # Read mass data from log and save to file for each simulation run
     countFile = 0
     for simName in simNames:
-        log.info('These are the sim Names areas: %s ' % (simName))
+        log.info('This is the simulation name: %s ' % (simName))
 
         # Initialise fields
         time = []
@@ -73,7 +73,8 @@ def extractMBInfo(avaDir):
         flagStop = 0
 
         # Read log file
-        with open(os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName)), 'r') as file:
+        fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName))
+        with open(fileName, 'r') as file:
             for line in file:
                 if "computing time step" in line:
                     ltime = line.split()[3]

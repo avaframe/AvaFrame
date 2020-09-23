@@ -20,7 +20,6 @@ void CreateSimulations(char BasePath[], char SamosProjectDir[],
   // Load project
   set("", "Close", "");
   sprintf(ProjDir, "%s/%s", BasePath, SamosProjectDir);
-  // sprintf(ProjDir, "%s", SamosProjectDir);
   set("", "LoadProject", ProjDir);
 
 
