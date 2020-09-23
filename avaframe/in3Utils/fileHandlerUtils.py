@@ -46,7 +46,7 @@ def readLogFile(logName, cfg=''):
 
     # Save info to dictionary, add all result parameters that are saved in com1DFA Outputs
     suffix = ['pfd', 'ppr', 'pv', 'fd']
-    logDict = {'noSim': [], 'simName': [], varPar: [], 'suffix': suffix}
+    logDict = {'noSim': [], 'simName': [], varPar: [], 'fullName' : [], 'suffix': suffix}
 
     lines = logFile.readlines()[1:]
     countSims = 1
@@ -55,11 +55,10 @@ def readLogFile(logName, cfg=''):
         logDict['noSim'].append(countSims)
         logDict['simName'].append(vals[1])
         logDict[varPar].append(float(vals[2]))
+        logDict['fullName'].append(vals[1] + '_' + '%.3f' % float(vals[2]))
         countSims = countSims + 1
 
     return logDict
-
-#
 
 
 def checkCommonSims(logName, localLogName):
