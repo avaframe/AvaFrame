@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
 import matplotlib.colors as mcolors
 from matplotlib.image import NonUniformImage
 
@@ -8,6 +7,7 @@ from colorspace.colorlib import HCL
 from colorspace.CVD import CVD
 from colorspace.CVD import desaturate
 from colorspace import specplot, sequential_hcl
+
 
 def hex_to_rgb(value):
     '''
@@ -53,7 +53,7 @@ def get_continuous_cmap(hex_list, float_list=None):
     cmp = mcolors.ListedColormap(rgb_list)
     return cmp
 
-def createColorMap(lev, threshold, h, c=[10, 80], l=[10, 80], power=[1, 1], test=False):
+def createColorMap(ticks, lev, threshold, h, c=[10, 80], l=[10, 80], power=[1, 1], test=False):
     """
     Create a listed colormap from hlc info
     Inputs:
@@ -81,7 +81,7 @@ def createColorMap(lev, threshold, h, c=[10, 80], l=[10, 80], power=[1, 1], test
     cmap = get_continuous_cmap(colors)
     norm = mcolors.BoundaryNorm(lev, cmap.N)
     if test:
-        testColormap(colors, lev, norm, type='hex')
+        testColormap(colors, lev, norm, ticks,type='hex')
 
     return colors, cmap, norm
 
@@ -108,7 +108,7 @@ def makeColorMap(colors, lev, levMin, levMax):
 
     return newCmap, newColors, newLev, newNorm
 
-def testColormap(colors, lev, norm, type='hex'):
+def testColormap(colors, lev, norm, ticks, type='hex'):
     """ Function that plots a given color map for normal vision, greyscale
         and alterated vision
     """
@@ -141,57 +141,74 @@ def testColormap(colors, lev, norm, type='hex'):
     z = np.sqrt(x**2+y**2)
 
     fig = plt.figure(figsize=(10, 10))
-
     ax1 = plt.subplot(111)
     im1 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm, origin='lower')
     im1.set_clim(vmin=levMin,vmax=levMax)
     im1.set_data(x[0,:], y[:,0], z)
     ref1 = ax1.images.append(im1)
-    cbar = ax1.figure.colorbar(im1, extend='both',ax=ax1)
+    cbar = ax1.figure.colorbar(im1, extend='both',ax=ax1, ticks=ticks)
     ax1.set_xlim(levMin,levMax)
     ax1.set_ylim(levMin,levMax)
     ax1.set_title('Normal vision')
 
-    fig2 = plt.figure(figsize=(10, 10))
-    ax2 = plt.subplot(221)
-    im2 = NonUniformImage(ax2, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmapDesat, norm=norm, origin='lower')
-    im2.set_clim(vmin=levMin,vmax=levMax)
-    im2.set_data(x[0,:], y[:,0], z)
-    ref2 = ax2.images.append(im2)
-    cbar = ax2.figure.colorbar(im2, ax=ax2)
-    ax2.set_xlim(levMin,levMax)
-    ax2.set_ylim(levMin,levMax)
-    ax2.set_title('Desaturated version')
 
-    ax3 = plt.subplot(222)
-    im3 = NonUniformImage(ax3, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmapDeut, norm=norm, origin='lower')
-    im3.set_clim(vmin=levMin,vmax=levMax)
-    im3.set_data(x[0,:], y[:,0], z)
-    ref3 = ax3.images.append(im3)
-    cbar = ax3.figure.colorbar(im3, ax=ax3)
-    ax3.set_xlim(levMin,levMax)
-    ax3.set_ylim(levMin,levMax)
-    ax3.set_title('Deuteranope vision')
+    Cmaps = [cmapDesat, cmapDeut, cmapProt, cmapTrit]
+    Title = ['Desaturated version', 'Deuteranope vision', 'Proteranope vision', 'Triteranope vision']
 
-    ax4 = plt.subplot(223)
-    im4 = NonUniformImage(ax4, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmapProt, norm=norm, origin='lower')
-    im4.set_clim(vmin=levMin,vmax=levMax)
-    im4.set_data(x[0,:], y[:,0], z)
-    ref4 = ax4.images.append(im4)
-    cbar = ax4.figure.colorbar(im4, ax=ax4)
-    ax4.set_xlim(levMin,levMax)
-    ax4.set_ylim(levMin,levMax)
-    ax4.set_title('Proteranope vision')
+    fig2, axes = plt.subplots(nrows=2, ncols=2)
+    fig2.subplots_adjust(hspace=0.2)
+    fig2.suptitle('global View')
 
-    ax5 = plt.subplot(224)
-    im5 = NonUniformImage(ax5, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmapTrit, norm=norm, origin='lower')
-    im5.set_clim(vmin=levMin,vmax=levMax)
-    im5.set_data(x[0,:], y[:,0], z)
-    ref5 = ax5.images.append(im5)
-    cbar = ax5.figure.colorbar(im5, ax=ax5)
-    ax5.set_xlim(levMin,levMax)
-    ax5.set_ylim(levMin,levMax)
-    ax5.set_title('Triteranope vision')
+    for ax, cmap, title in zip(axes.flatten(), Cmaps, Title):
+        im = NonUniformImage(ax, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm, origin='lower')
+        im.set_clim(vmin=levMin,vmax=levMax)
+        im.set_data(x[0,:], y[:,0], z)
+        ref = ax.images.append(im)
+        cbar = ax.figure.colorbar(im, ax=ax, ticks=ticks)
+        ax.set_xlim(levMin,levMax)
+        ax.set_ylim(levMin,levMax)
+        ax.set_title(title)
+
+
+    cmap, colors, lev, norm = makeColorMap(colors, lev, levMin/10, levMax/10)
+
+    fig3 = plt.figure(figsize=(10, 10))
+    ax1 = plt.subplot(111)
+    im1 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm, origin='lower')
+    im1.set_clim(vmin=levMin/10,vmax=levMax/10)
+    im1.set_data(x[0,:], y[:,0], z)
+    ref1 = ax1.images.append(im1)
+    cbar = ax1.figure.colorbar(im1, extend='both',ax=ax1, ticks=ticks)
+    ax1.set_xlim(levMin/10,levMax/10)
+    ax1.set_ylim(levMin/10,levMax/10)
+    ax1.set_title('Normal vision')
+
+
+    colorsDeut = CVD(colors, "deutan").colors()
+    cmapDeut = get_continuous_cmap(colorsDeut)
+    colorsProt = CVD(colors, "protan").colors()
+    cmapProt = get_continuous_cmap(colorsProt)
+    colorsTrit = CVD(colors, "tritan").colors()
+    cmapTrit = get_continuous_cmap(colorsTrit)
+    colorsDesat = desaturate(colors)
+    cmapDesat = get_continuous_cmap(colorsDesat)
+
+    Cmaps = [cmapDesat, cmapDeut, cmapProt, cmapTrit]
+    fig4, axes = plt.subplots(nrows=2, ncols=2)
+    fig4.subplots_adjust(hspace=0.2)
+    fig4.suptitle('zoom View')
+    for ax, cmap, title in zip(axes.flatten(), Cmaps, Title):
+        im = NonUniformImage(ax, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm, origin='lower')
+        im.set_clim(vmin=levMin/10,vmax=levMax/10)
+        im.set_data(x[0,:], y[:,0], z)
+        ref = ax.images.append(im)
+        cbar = ax.figure.colorbar(im, ax=ax, ticks=ticks)
+        ax.set_xlim(levMin/10,levMax/10)
+        ax.set_ylim(levMin/10,levMax/10)
+        ax.set_title(title)
+
+
+
     plt.show()
 
 
@@ -211,23 +228,4 @@ if __name__ == "__main__":
     ticksP=[0, 1, 3, 5, 10, 20, 40, 60, 100, 150, 200]
     threshold = [1, 3, 5, 10]
     h = [140, 180, 250, 300, 350]
-    colorsP, cmapP, normP = createColorMap(lev, threshold, h, c=[10, 80], l=[10, 80], power=[1, 1], test=True)
-
-    cmap, newColors, newLev, norm = makeColorMap(colorsP, levP, 0.0, 15.0)
-
-
-
-    # make up some randomly distributed data
-    x, y = np.mgrid[0:10:0.01, 0:10:0.01]
-    z = x
-    fig = plt.figure(figsize=(10, 10))
-    ax1 = plt.subplot(111)
-    im1 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm, origin='lower')
-    im1.set_clim(vmin=0,vmax=10)
-    im1.set_data(x[:,0], y[0,:], z)
-    ref0 = ax1.images.append(im1)
-    cbar = ax1.figure.colorbar(im1, extend='both',ax=ax1, ticks=[0, 1, 3, 5, 10, 20, 30, 50, 70, 100])
-    ax1.set_xlim(0,10)
-    ax1.set_ylim(0,10)
-    ax1.set_title('Normal vision')
-    plt.show()
+    colorsP, cmapP, normP = createColorMap(ticksP, levP, threshold, h, c=[10, 80], l=[10, 80], power=[1, 1], test=True)

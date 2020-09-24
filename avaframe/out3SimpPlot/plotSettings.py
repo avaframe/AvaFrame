@@ -87,7 +87,7 @@ levP  = [0., 0.25, 0.50, 0.75, 1.0, 1.25, 1.50, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 4
 ticksP=[0, 1, 3, 5, 10, 20, 40, 60, 100, 150, 200]
 threshold = [1, 3, 5, 10]
 h = [140, 180, 250, 300, 350]
-colorsP, cmapP, normP = createColorMap(lev, threshold, h, c=[10, 80], l=[10, 80], power=[1, 1], test=True)
+colorsP, cmapP, normP = createColorMap(ticksP, levP, threshold, h, c=[10, 80], l=[10, 80], power=[1, 1], test=False)
 
 
 ###############################################
