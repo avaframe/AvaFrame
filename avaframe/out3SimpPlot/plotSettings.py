@@ -16,7 +16,7 @@ from avaframe.out3SimpPlot.makePalette import *
 
 # define seaborn style and color maps
 sns.set(font_scale=1)
-sns.set_style("ticks", {'axes.linewidth': 1, 'axes.edgecolor': 'black',  'font.family': ['serif']})
+sns.set_style("ticks", {'axes.linewidth': 1, 'axes.edgecolor': 'black',  'font.family': ['sans-serif']})
 # print(sns.axes_style())
 
 
