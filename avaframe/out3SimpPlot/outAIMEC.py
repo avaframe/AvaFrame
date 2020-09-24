@@ -94,12 +94,12 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ax1.set_ylabel('y [m]')
 
     ax2 = plt.subplot(122)
-    ax2.set_title('sl Domain' + '\n' +  'Black = out of raster')
+    ax2.set_title('sl Domain' + '\n' + 'Black = out of raster')
     isosurf = copy.deepcopy(inputData['avalData'])
     lcoord = rasterTransfo['l']
     scoord = rasterTransfo['s']
     ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='r',
-                        label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
+                       label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
     maskedArray = isosurf  # np.ma.array(isosurf,mask=np.isnan(isosurf))
     im = NonUniformImage(ax2, extent=[lcoord.min(), lcoord.max(),
                                       scoord.min(), scoord.max()], cmap=cmap, norm=norm)
@@ -311,7 +311,6 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     ax3.set_ylabel('s [m]')
     ax3.legend(loc=0)
 
-
     if cfgFlags.getboolean('savePlot'):
         outFileName = projectName + '_referenceFields'
         outname = os.path.join(pathResult, 'pics', outFileName)
@@ -374,7 +373,7 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
                       'dhm: ', demName, '\n',
                       'domain_width: ', str(domainWidth), ' m\n',
                       'pressure_limit: ', str(pressureLimit), ' kPa\n',
-                      'start of runout area Angle: ', str(round(runoutAngle,2)), ' °\n'])
+                      'start of runout area Angle: ', str(round(runoutAngle, 2)), ' °\n'])
 
     outFileName = 'Results_pl' + str(pressureLimit) + '_w' + str(domainWidth) + '.txt'
     outname = os.path.join(pathResult, outFileName)
@@ -473,7 +472,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 
     xlimProfAxis = max(sPath) + 50
     # color = cm.get_cmap('autumn', len(runout) + 3)
-    color = cmapAimec(np.linspace(1, 0, len(runout)+ 3, dtype = float))
+    color = cmapAimec(np.linspace(1, 0, len(runout) + 3, dtype=float))
     # Final result diagram - z_profile+data
     fig = plt.figure(figsize=(figW*2, figH))
     # fig.suptitle(title)
