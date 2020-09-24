@@ -4,4 +4,3 @@ pyshp
 scipy
 cmocean
 seaborn
-git+https://github.com/retostauffer/python-colorspace
