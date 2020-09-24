@@ -714,7 +714,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             y_lim = scoord[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
-            ax1.set_title('Reference Peak Presseure in the RunOut area' +
+            ax1.set_title('Reference Peak Pressure in the RunOut area' +
                           '\n' + 'Pressure threshold: %.1f kPa' % pLim)
             # get color map
             ticks = ticksPres
