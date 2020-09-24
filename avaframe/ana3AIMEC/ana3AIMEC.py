@@ -714,14 +714,16 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
             ax1.set_title('Reference Peak Presseure in the RunOut area' + '\n' +  'Pressure threshold: %.1f kPa' % pLim)
-            cmap = cmapPres
+            # get color map
+            ticks = ticksPres
+            cmap, _, _, norm = makeColorMap(colorsPres, levPres, pLim, np.nanmax((dataPressure[0])[nStart:]))
             cmap.set_under(color='w')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
-                                              scoord.min(), scoord.max()], cmap=cmap)
+                                              scoord.min(), scoord.max()], cmap=cmap, norm=norm)
             im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
             im.set_data(lcoord, scoord, dataPressure[0])
             ref0 = ax1.images.append(im)
-            cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, use_gridspec=True)
+            cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, ticks=ticks)
             cbar.ax.set_ylabel('peak pressure [kPa]')
             ax1.set_xlim([lcoord.min(), lcoord.max()])
             ax1.set_ylim([scoord[indRunoutPoint-20], y_lim])
