@@ -82,15 +82,25 @@ cmapAvaframe.set_bad(color='k')
 
 
 # multi sequential colormap for pressure
-levP = [0., 0.25, 0.50, 0.75, 1.0, 1.25, 1.50, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5,
-        5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 20.0, 25.0, 30.0, 35.0,
-        40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 125.0, 150.0, 175.0, 200.0]
-ticksP = [0, 1, 3, 5, 10, 20, 40, 60, 100, 150, 200]
-threshold = [1, 3, 5, 10]
-h = [140, 180, 250, 300, 350]
-colorsP, cmapP, normP = createColorMap(ticksP, levP, threshold, h, c=[10, 80], l=[
-                                       10, 80], power=[1, 1], test=False)
+levP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 200.0, 1000.0]
+ticksP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 200.0]
+# colorsP = ['#E1F88F', '#D7C410', '#D58B15', '#CE5F1E', '#C51F2E', '#A30A54', '#232D5F']
+colorsP = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#BC3334', '#A70753', '#5B2967', '#102D5B']
+#C84618 or #CE5F1E
+cmapP  = get_continuous_cmap(colorsP)
 
+# multi sequential colormap for flow depth
+levD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 100.0]
+ticksD = [0., 0.5, 1.0, 2.0, 3.0, 5.0]
+colorsD  = ['#E1F88F', '#D7C410', '#D58B15', '#C51F2E', '#A30A54', '#232D5F']
+cmapD  = get_continuous_cmap(colorsD)
+
+# multi sequential colormap for speed
+levS = [0., 1, 5, 10, 15, 20, 25, 30, 35, 100]
+ticksS = [0., 1, 5, 10, 15, 20, 25, 30, 35]
+colorsS  = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#BC3334', '#A70753', '#5B2967', '#102D5B']
+# '#851D62' or '#A70753' and '#5B2967'
+cmapS  = get_continuous_cmap(colorsS)
 
 ###############################################
 ############ Set colormaps to use #############
@@ -102,7 +112,16 @@ levPres = levP
 ticksPres = ticksP
 
 
-cmapDepth = cmapBlues
-cmapSpeed = cmapReds
+cmapDepth = cmapdiv
+colorsDepth = colorsD
+levDepth = levD
+ticksDepth = ticksD
+
+cmapSpeed = cmapS
+colorsSpeed = colorsS
+levSpeed = levS
+ticksSpeed = ticksS
+
+
 cmapDEM = cmapGreys
 cmapAimec = cmapAvaframe
