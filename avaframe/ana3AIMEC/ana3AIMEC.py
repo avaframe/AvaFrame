@@ -114,16 +114,16 @@ def mainAIMEC(cfgPath, cfg):
     # assign pressure data
     log.info("Assigning pressure data to deskewed raster")
     newRasters['newRasterPressure'] = assignData(cfgPath['pressurefileList'], rasterTransfo,
-                                   interpMethod)
+                                                 interpMethod)
     # assign depth data
     log.info("Assigning depth data to deskewed raster")
     newRasters['newRasterDepth'] = assignData(cfgPath['depthfileList'], rasterTransfo,
-                                interpMethod)
+                                              interpMethod)
     # assign speed data
     if cfgPath['speedfileList']:
         log.info("Assigning speed data to deskewed raster")
         newRasters['newRasterSpeed'] = assignData(cfgPath['speedfileList'], rasterTransfo,
-                                    interpMethod)
+                                                  interpMethod)
 
     # assign dem data
     log.info("Assigning dem data to deskewed raster")
@@ -251,12 +251,12 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     angle, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle, rasterTransfo)
     # find the runout point: first point under runoutAngle
     indRunoutPoint = geoTrans.findAngleProfile(tmp, delta_ind)
-    if runoutAngle<angle[indRunoutPoint] and runoutAngle>angle[indRunoutPoint+1]:
+    if runoutAngle < angle[indRunoutPoint] and runoutAngle > angle[indRunoutPoint+1]:
         rasterTransfo['indRunoutPoint'] = indRunoutPoint
         rasterTransfo['runoutAngle'] = runoutAngle
         log.info('Measuring run-out length from the %s ° point' % runoutAngle)
     else:
-        log.warning('No %s ° point found. Check splitPoint position or runoutAngle value.'% runoutAngle)
+        log.warning('No %s ° point found. Check splitPoint position or runoutAngle value.' % runoutAngle)
         rasterTransfo['indRunoutPoint'] = indRunoutPoint
         rasterTransfo['runoutAngle'] = (angle[indRunoutPoint] + angle[indRunoutPoint+1])/2
         log.info('Measuring run-out length from the %s ° point' % rasterTransfo['runoutAngle'])
@@ -494,7 +494,6 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
 
     resAnalysis = analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
-
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
     outAimec.visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
@@ -588,7 +587,8 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
 
         # Mean max in each Cross-Section for each field
-        ampp[i], mmpp[i], cInd, pCrossAll[i] = getMaxMeanValues(rasterdataPres, rasterArea, pLim, cInd=None)
+        ampp[i], mmpp[i], cInd, pCrossAll[i] = getMaxMeanValues(
+            rasterdataPres, rasterArea, pLim, cInd=None)
         amd[i], mmd[i], cInd, _ = getMaxMeanValues(rasterdataDepth, rasterArea, pLim, cInd=cInd)
         ams[i], mms[i], cInd, _ = getMaxMeanValues(rasterdataSpeed, rasterArea, pLim, cInd=cInd)
         #    Runout
@@ -607,7 +607,8 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
 
         # analyze mass
-        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i] = readWrite(fnameMass[i])
+        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i] = readWrite(
+            fnameMass[i])
         relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
         if not (releaseMass[i] == releaseMass[0]):
             massDiffers = True
@@ -676,8 +677,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     newMask = copy.deepcopy(dataPressure[0])
     # prepare mask for area resAnalysis
     newMask = np.where(np.isnan(newMask), 0, newMask)
-    newMask = np.where(newMask< pLim, 0, newMask)
-    newMask = np.where(newMask>= pLim, 1, newMask)
+    newMask = np.where(newMask < pLim, 0, newMask)
+    newMask = np.where(newMask >= pLim, 1, newMask)
     # comparison rasterdata with mask
     log.info('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
         'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
@@ -698,14 +699,14 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         newRasterData = copy.deepcopy(rasterdata)
         # prepare mask for area resAnalysis
         newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
-        newRasterData = np.where(newRasterData<pLim, 0, newRasterData)
-        newRasterData = np.where(newRasterData>=pLim, 1, newRasterData)
+        newRasterData = np.where(newRasterData < pLim, 0, newRasterData)
+        newRasterData = np.where(newRasterData >= pLim, 1, newRasterData)
 
         if cfgFlags.getboolean('savePlot') and i > 0:
             # read paths
             pathResult = cfgPath['pathResult']
             projectName = cfgPath['dirName']
-            outFileName = projectName + '_' +  str(i) +  '_compToRef'
+            outFileName = projectName + '_' + str(i) + '_compToRef'
             outname = os.path.join(pathResult, 'pics', outFileName)
             if not os.path.exists(os.path.dirname(outname)):
                 os.makedirs(os.path.dirname(outname))
@@ -713,10 +714,12 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             y_lim = scoord[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
         #    for figure: referenz-simulation bei pLim=1
             ax1 = plt.subplot(121)
-            ax1.set_title('Reference Peak Presseure in the RunOut area' + '\n' +  'Pressure threshold: %.1f kPa' % pLim)
+            ax1.set_title('Reference Peak Presseure in the RunOut area' +
+                          '\n' + 'Pressure threshold: %.1f kPa' % pLim)
             # get color map
             ticks = ticksPres
-            cmap, _, _, norm = makeColorMap(colorsPres, levPres, pLim, np.nanmax((dataPressure[0])[nStart:]))
+            cmap, _, _, norm = makeColorMap(
+                colorsPres, levPres, pLim, np.nanmax((dataPressure[0])[nStart:]))
             cmap.set_under(color='w')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
                                               scoord.min(), scoord.max()], cmap=cmap, norm=norm)
@@ -732,7 +735,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
             ax2 = plt.subplot(122)
             ax2.set_title(
-                'Difference between current and reference in the RunOut area' + '\n' +  'Blue = FN, Red = FP')
+                'Difference between current and reference in the RunOut area' + '\n' + 'Blue = FN, Red = FP')
             colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
             cmap = matplotlib.colors.ListedColormap(colorsList)
             cmap.set_under(color='b')
@@ -811,19 +814,20 @@ def readWrite(fname_ent):
     finalMass = totMassResults[1]
     # check mass balance
     log.info('Total mass change between first and last time step in sim %s is: %.1f kg' %
-             (int(os.path.splitext(os.path.basename(fname_ent))[0]), totMassResults[1]- relMass))
-    log.info('Total entrained mass in sim %s is: %.1f kg' % (int(os.path.splitext(os.path.basename(fname_ent))[0]), entMass))
-    if (totMassResults[1]- relMass)==0:
-        diff = np.abs((totMassResults[1]- relMass) - entMass)
-        if diff>0:
+             (int(os.path.splitext(os.path.basename(fname_ent))[0]), totMassResults[1] - relMass))
+    log.info('Total entrained mass in sim %s is: %.1f kg' %
+             (int(os.path.splitext(os.path.basename(fname_ent))[0]), entMass))
+    if (totMassResults[1] - relMass) == 0:
+        diff = np.abs((totMassResults[1] - relMass) - entMass)
+        if diff > 0:
             log.warning('Conservation of mass is not satisfied')
             log.warning('Total mass change and total entrained mass differ from %.4f kg' % (diff))
         else:
             log.info('Total mass change and total entrained mass differ from %.4f kg' % (diff))
     else:
-        diff = np.abs((totMassResults[1]- relMass) - entMass)/(totMassResults[1]- relMass)
-        if diff*100>0.05:
-            log.warning('Conservation of mass is not satisfied' )
+        diff = np.abs((totMassResults[1] - relMass) - entMass)/(totMassResults[1] - relMass)
+        if diff*100 > 0.05:
+            log.warning('Conservation of mass is not satisfied')
             log.warning('Total mass change and total entrained mass differ from %.4f %%' % (diff*100))
         else:
             log.info('Total mass change and total entrained mass differ from %.4f %%' % (diff*100))
