@@ -48,21 +48,18 @@ matplotlib.rcParams['figure.autolayout'] = True
 # hell white/green to dark blue
 cmapGB = copy.copy(sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True))
 cmapGB.set_bad(color='k')
-# hell pink to dark purple
-cmapPP = copy.copy(sns.cubehelix_palette(8, as_cmap=True))
-cmapPP.set_bad(color='k')
 
 cmapReds = copy.copy(matplotlib.cm.Reds)
 cmapReds.set_bad(color='k')
+
 cmapBlues = copy.copy(matplotlib.cm.Blues)
 cmapBlues.set_bad(color='k')
 
 cmapGreys = copy.copy(matplotlib.cm.get_cmap("Greys"))
 
-cmapjet = copy.copy(matplotlib.cm.jet)
-cmapjet.set_bad(color='k')
 cmapPlasma = copy.copy(matplotlib.cm.plasma)
 cmapPlasma.set_bad(color='k')
+
 cmapViridis = copy.copy(matplotlib.cm.viridis)
 cmapViridis.set_bad(color='k')
 
@@ -76,18 +73,34 @@ cmapDense.set_bad(color='k')
 cmapdiv = copy.copy(matplotlib.cm.RdBu_r) #sns.color_palette("RdBu_r")
 
 
-
+# custom colomaps
+# cmap based on avaframe logo colors
 colorAvaframe = ['#0EF8EA', '#12E4E6', '#28D0DF', '#3CBCD5', '#4AA8C9', '#5595B9', '#5C82A8', '#5F6F95', '#5E5E81', '#5A4D6C', '#523E58', '#483045']
 cmapAvaframe = get_continuous_cmap(colorAvaframe)
 cmapAvaframe.set_bad(color='k')
-cmapAimec = cmapAvaframe
 
-cmapPres =  cmapViridis
+
+# multi sequential colormap for pressure
+levP  = [0., 0.25, 0.50, 0.75, 1.0, 1.25, 1.50, 1.75, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5,
+        5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.0, 14.0, 16.0, 20.0, 25.0, 30.0, 35.0,
+        40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 125.0, 150.0, 175.0, 200.0]
+ticksP=[0, 1, 3, 5, 10, 20, 40, 60, 100, 150, 200]
+threshold = [1, 3, 5, 10]
+h = [140, 180, 250, 300, 350]
+colorsP, cmapP, normP = createColorMap(lev, threshold, h, c=[10, 80], l=[10, 80], power=[1, 1], test=True)
+
+
+###############################################
+############ Set colormaps to use #############
+###############################################
+# for pressure
+cmapPres =  cmapP
+colorsPres = colorsP
+levPres = levP
+ticksPres = ticksP
+
+
 cmapDepth = cmapBlues
 cmapSpeed = cmapReds
 cmapDEM = cmapGreys
-
-
-cmapPres, colors  = makeColorMap()
-cmapPres = cmapAvaframe
-cmapPres.set_bad(color='k')
+cmapAimec = cmapAvaframe

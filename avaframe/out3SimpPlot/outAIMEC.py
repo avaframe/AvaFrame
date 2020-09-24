@@ -61,14 +61,16 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     xx = rasterTransfo['x'][indRunoutPoint]
     yy = rasterTransfo['y'][indRunoutPoint]
     newRasterdata = rasterdata
-    maskedArray = newRasterdata  # np.ma.masked_where(np.isnan(newRasterdata), newRasterdata)
-    cmap = cmapPres
+    maskedArray = newRasterdata
+    # get color map
+    ticks = ticksPres
+    cmap, _, _, norm = makeColorMap(colorsPres, levPres, 0.0, np.nanmax(maskedArray))
     cmap.set_under(color='w')
 
     n, m = np.shape(newRasterdata)
     x = np.arange(m)*cellsize+xllc
     y = np.arange(n)*cellsize+yllc
-    im0 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
+    im0 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm)
     # im.set_interpolation('bilinear')
     im0.set_clim(vmin=0.000000001)
     im0.set_data(x, y, maskedArray)
@@ -100,12 +102,12 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
                         label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
     maskedArray = isosurf  # np.ma.array(isosurf,mask=np.isnan(isosurf))
     im = NonUniformImage(ax2, extent=[lcoord.min(), lcoord.max(),
-                                      scoord.min(), scoord.max()], cmap=cmap)
+                                      scoord.min(), scoord.max()], cmap=cmap, norm=norm)
     # im.set_interpolation('bilinear')
     im.set_clim(vmin=0.000000001)
     im.set_data(lcoord, scoord, maskedArray)
     ref0 = ax2.images.append(im)
-    cbar = ax2.figure.colorbar(im, ax=ax2, use_gridspec=True)
+    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
     cbar.ax.set_ylabel('peak pressure [kPa]')
     ax2.set_xlim([lcoord.min(), lcoord.max()])
     ax2.set_ylim([scoord.min(), scoord.max()])
@@ -163,13 +165,16 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(rasterdataPres)
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap = cmapPres
+    # get color map
+    ticks = ticksPres
+    cmap, _, _, norm = makeColorMap(colorsPres, levPres, 0.0, np.nanmax(maskedArray))
     cmap.set_bad('w', 1.)
-    im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
+    im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
     # im.set_interpolation('bilinear')
+    im.set_clim(vmin=maskedArray.min(), vmax=maskedArray.max())
     im.set_data(lcoord, scoord, maskedArray)
     ref0 = ax1.images.append(im)
-    cbar = ax1.figure.colorbar(im, ax=ax1, use_gridspec=True)
+    cbar = ax1.figure.colorbar(im, ax=ax1, ticks=ticks)
     cbar.ax.set_ylabel('peak pressure [kPa]')
     plt.autoscale(False)
     ax1.set_xlim([xx.min(), xx.max()])
@@ -240,13 +245,16 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(rasterdataPres)
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap = cmapPres
+    # get color map
+    ticks = ticksPres
+    cmap, _, _, norm = makeColorMap(colorsPres, levPres, 0.0, np.nanmax(maskedArray))
     cmap.set_bad('w', 1.)
-    im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap)
+    im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
     # im.set_interpolation('bilinear')
+    im.set_clim(vmin=maskedArray.min(), vmax=maskedArray.max())
     im.set_data(lcoord, scoord, maskedArray)
     ref0 = ax1.images.append(im)
-    cbar = ax1.figure.colorbar(im, ax=ax1, use_gridspec=True)
+    cbar = ax1.figure.colorbar(im, ax=ax1, ticks=ticks)
     cbar.ax.set_ylabel('peak pressure [kPa]')
     plt.autoscale(False)
     ax1.set_xlim([xx.min(), xx.max()])
