@@ -85,6 +85,16 @@ def quickPlot(avaDir, suffix, cfg, simName):
         ny_loc = int(nx * 0.5)
         nx_loc = int(ny * 0.5)
 
+        # Difference between datasets
+        dataDiff = data1 - data2
+        diffMax = np.amax(dataDiff)
+        diffMin = np.amin(dataDiff)
+        diffMean = np.mean(dataDiff)
+        
+        # Location of box
+        nybox = int(nx * 0.2)
+        nxbox = int(ny * 0.2)
+
         # Plot data
         # Figure 1 shows the result parameter data
         fig = plt.figure(figsize=(figW*3, figH))
@@ -109,9 +119,11 @@ def quickPlot(avaDir, suffix, cfg, simName):
         ax2.set_title(title)
         ax3 = fig.add_subplot(133)
         cmap = cmapdiv
-        im3 = plt.imshow(data1-data2, cmap=cmap,
+        im3 = plt.imshow(dataDiff, cmap=cmap,
                          extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         fig.colorbar(im3, ax=ax3)
+        ax3.text(nybox, nxbox, 'Mean: %.2f\n Max: %.2f\n Min: %.2f' % (diffMean, diffMax, diffMin), bbox=dict(boxstyle="square", ec='white', fc='white'),
+        horizontalalignment='left', verticalalignment='bottom')
         ax3.set_aspect('auto')
         ax3.set_xlabel('x [m]')
         ax3.set_title('Difference ref-sim')
