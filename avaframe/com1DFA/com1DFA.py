@@ -164,7 +164,10 @@ def runSamos(cfg, avaDir):
     log.info('Your current avalanche test name: %s' % avaDir)
 
     # Load input data
-    dem, rels, res, ent, flagEntRes = initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf)
+    dem, rels, ent, res, flagEntRes = initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf)
+    if flagEntRes:
+        entrainmentArea = os.path.splitext(os.path.basename(ent))[0]
+        resistanceArea = os.path.splitext(os.path.basename(res))[0]
 
     # Get cell size from DEM header
     demData = aU.readASCheader(dem)
@@ -180,6 +183,8 @@ def runSamos(cfg, avaDir):
         relName = os.path.splitext(os.path.basename(rel))[0]
         simName = relName
         log.info('Release area: %s - perform simulations' % (relName))
+        if flagEntRes:
+            log.info('Entrainment area: %s and resistance area: %s' % (entrainmentArea, resistanceArea))
 
         # Initialise CreateProject cint file
         templateFile = os.path.join(modPath, 'CreateProject.cint')
