@@ -31,10 +31,7 @@ def quickPlotSimple(avaDir, inputDir):
         Inputs:
 
         avaDir          avalanche directory
-        suffix          result parameter abbreviation (e.g. 'ppr')
-        com1DFAOutput   folder where results to be plotted are located
-        simName         entres or null for simulation type
-        cfgR            configuration for plots
+        inputDir        where input data can be found
 
         Outputs:
 
@@ -48,6 +45,7 @@ def quickPlotSimple(avaDir, inputDir):
 
     # Load input datasets from input directory
     datafiles = glob.glob(inputDir+os.sep + '*.asc')
+    datafiles.extend(glob.glob(inputDir+os.sep + '*.txt'))
 
     name1 = os.path.basename(datafiles[0])
     name2 = os.path.basename(datafiles[1])
@@ -78,11 +76,15 @@ def quickPlotSimple(avaDir, inputDir):
     ax1.set_aspect('auto')
     title = str('%s' % name1)
     title = title.replace('_', '\_')
+    ax1.set_title(title)
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
     ax2 = fig.add_subplot(132)
     im2 = plt.imshow(data2, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     fig.colorbar(im2, ax=ax2)
+    title2 = str('%s' % name2)
+    title2 = title2.replace('_', '\_')
+    ax2.set_title(title2)
     ax2.set_aspect('auto')
     ax2.set_xlabel('x [m]')
     title = str('%s' % name2)
