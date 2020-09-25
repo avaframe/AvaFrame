@@ -82,45 +82,52 @@ cmapAvaframe.set_bad(color='k')
 
 
 # multi sequential colormap for pressure
-levP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 200.0, 1000.0]
-ticksP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 200.0]
+levP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0, 1000.0]
+ticksP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0]
 # colorsP = ['#E1F88F', '#D7C410', '#D58B15', '#CE5F1E', '#C51F2E', '#A30A54', '#232D5F']
 colorsP = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#BC3334', '#A70753', '#5B2967', '#102D5B']
 #C84618 or #CE5F1E
-cmapP  = get_continuous_cmap(colorsP)
+cmapP  = get_continuous_cmap(colorsP, continuous=True)
 
 # multi sequential colormap for flow depth
-levD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 100.0]
+levD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 50.0]
 ticksD = [0., 0.5, 1.0, 2.0, 3.0, 5.0]
 colorsD  = ['#E1F88F', '#D7C410', '#D58B15', '#C51F2E', '#A30A54', '#232D5F']
-cmapD  = get_continuous_cmap(colorsD)
+cmapD  = get_continuous_cmap(colorsD, continuous=True)
 
 # multi sequential colormap for speed
 levS = [0., 1, 5, 10, 15, 20, 25, 30, 35, 100]
 ticksS = [0., 1, 5, 10, 15, 20, 25, 30, 35]
 colorsS  = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#BC3334', '#A70753', '#5B2967', '#102D5B']
 # '#851D62' or '#A70753' and '#5B2967'
-cmapS  = get_continuous_cmap(colorsS)
+cmapS  = get_continuous_cmap(colorsS, continuous=True)
 
 ###############################################
 ############ Set colormaps to use #############
 ###############################################
+# ploting with a descrete or continuous colormap?
+# if continuous, only the cmap argument in the cmapDictionnary maters
+# replace it with the wanted colormap
+contCmap = True
 # for pressure
-cmapPres = cmapP
-colorsPres = colorsP
-levPres = levP
-ticksPres = ticksP
+cmapPres = {}
+cmapPres['cmap'] = cmapP
+cmapPres['colors'] = colorsP
+cmapPres['lev'] = levP
+cmapPres['ticks'] = ticksP
 
 
-cmapDepth = cmapdiv
-colorsDepth = colorsD
-levDepth = levD
-ticksDepth = ticksD
+cmapDepth = {}
+cmapDepth['cmap'] = cmapD
+cmapDepth['colors'] = colorsD
+cmapDepth['lev'] = levD
+cmapDepth['ticks'] = ticksD
 
-cmapSpeed = cmapS
-colorsSpeed = colorsS
-levSpeed = levS
-ticksSpeed = ticksS
+cmapSpeed = {}
+cmapSpeed['cmap'] = cmapS
+cmapSpeed['colors'] = colorsS
+cmapSpeed['lev'] = levS
+cmapSpeed['ticks'] = ticksS
 
 
 cmapDEM = cmapGreys
