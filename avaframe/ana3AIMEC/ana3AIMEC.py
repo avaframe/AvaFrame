@@ -717,9 +717,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             ax1.set_title('Reference Peak Pressure in the RunOut area' +
                           '\n' + 'Pressure threshold: %.1f kPa' % pLim)
             # get color map
-            ticks = ticksPres
-            cmap, _, _, norm = makeColorMap(
-                colorsPres, levPres, pLim, np.nanmax((dataPressure[0])[nStart:]))
+            cmap, _, _, norm, ticks = makeColorMap(
+                cmapPres, pLim, np.nanmax((dataPressure[0])[nStart:]), continuous=contCmap)
             cmap.set_under(color='w')
             im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
                                               scoord.min(), scoord.max()], cmap=cmap, norm=norm)

@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.colors as mcolors
-
+from matplotlib import cm
 
 def hex_to_rgb(value):
     '''
@@ -20,7 +20,7 @@ def rgb_to_dec(value):
     return [v/256 for v in value]
 
 
-def get_continuous_cmap(hex_list, float_list=None):
+def get_continuous_cmap(hex_list, continuous=False, float_list=None):
     ''' creates and returns a listed color map.
         If float_list is not provided, colour map graduates linearly between each color in hex_list.
         If float_list is provided, each color in hex_list is mapped to the respective location in float_list.
@@ -38,18 +38,20 @@ def get_continuous_cmap(hex_list, float_list=None):
         pass
     else:
         float_list = list(np.linspace(0, 1, len(rgb_list)))
+    if continuous:
+        cdict = dict()
+        for num, col in enumerate(['red', 'green', 'blue']):
+            col_list = [[float_list[i], rgb_list[i][num], rgb_list[i][num]]
+                        for i in range(len(float_list))]
+            cdict[col] = col_list
 
-    cdict = dict()
-    for num, col in enumerate(['red', 'green', 'blue']):
-        col_list = [[float_list[i], rgb_list[i][num], rgb_list[i][num]]
-                    for i in range(len(float_list))]
-        cdict[col] = col_list
-    cmp = mcolors.LinearSegmentedColormap('my_cmp', segmentdata=cdict, N=256)
-    cmp = mcolors.ListedColormap(rgb_list)
+        cmp = mcolors.LinearSegmentedColormap('my_cmp', segmentdata=cdict, N=256)
+    else:
+        cmp = mcolors.ListedColormap(rgb_list)
     return cmp
 
 
-def makeColorMap(colors, lev, levMin, levMax):
+def makeColorMap(colormap, levMin, levMax, continuous=False):
     """
     Extract part of a listed colormap
     Inputs:
@@ -63,11 +65,47 @@ def makeColorMap(colors, lev, levMin, levMax):
             -newLev: new levels list
             -newNorm: new norm for plotting
     """
-    indStart = np.where(np.asarray(lev) <= levMin)[0][-1]
-    indEnd = np.where(np.asarray(lev) > levMax)[0][0]
-    newLev = lev[indStart:indEnd+1]
-    newColors = colors[indStart:indEnd]
-    newCmap = get_continuous_cmap(newColors)
-    newNorm = mcolors.BoundaryNorm(newLev, newCmap.N)
+    N = 30
+    colors = colormap['colors']
+    cmap = colormap['cmap']
+    lev = colormap['lev']
+    ticks = colormap['ticks']
+    if continuous:
+        ############# option one##############
+        # stick to the same colors for the same thresholds
+        # a bit more time consiuming to calculate and non linear scale
+        #############################################
+        # indStart = np.where(np.asarray(lev) <= levMin)[0][-1]
+        # indEnd = np.where(np.asarray(lev) > levMax)[0][0]
+        # lev = lev[indStart:indEnd+1]
+        # colors = colors[indStart:indEnd]
+        # newLev = []
+        # newColors =  np.empty((0, 4))
+        # for i in range(len(lev)-2):
+        #     interColors = [colors[i], colors[i+1]]
+        #     interCmap = get_continuous_cmap(interColors, continuous=True)
+        #     extractLev = list(np.linspace(lev[i],lev[i+1],N))
+        #     extractlevcol = np.linspace(0,1,N)
+        #     extractcol = interCmap(extractlevcol)
+        #     newColors = np.vstack((newColors, extractcol))
+        #     newLev = newLev+extractLev
+        # newCmap = mcolors.ListedColormap(newColors)
+        # newNorm = mcolors.BoundaryNorm(newLev, newCmap.N)
+        ########### option two #############
+        # use any colormap
+        # does not match the predefined thresholds / color pairs from the discrete map
+        #########################################
+        newNorm = None
+        newCmap = get_continuous_cmap(colors, continuous=True)
+        ticks = None
 
-    return newCmap, newColors, newLev, newNorm
+    else:
+        indStart = np.where(np.asarray(lev) <= levMin)[0][-1]
+        indEnd = np.where(np.asarray(lev) > levMax)[0][0]
+        newLev = lev[indStart:indEnd+1]
+        newColors = colors[indStart:indEnd]
+        newCmap = get_continuous_cmap(newColors, continuous=False)
+        newNorm = mcolors.BoundaryNorm(newLev, newCmap.N)
+
+
+    return newCmap, newColors, newLev, newNorm, ticks

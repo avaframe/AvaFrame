@@ -63,8 +63,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     newRasterdata = rasterdata
     maskedArray = newRasterdata
     # get color map
-    ticks = ticksPres
-    cmap, _, _, norm = makeColorMap(colorsPres, levPres, 0.0, np.nanmax(maskedArray))
+    cmap, _, _, norm, ticks = makeColorMap(
+        cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_under(color='w')
 
     n, m = np.shape(newRasterdata)
@@ -166,8 +166,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
     # get color map
-    ticks = ticksPres
-    cmap, _, _, norm = makeColorMap(colorsPres, levPres, 0.0, np.nanmax(maskedArray))
+    cmap, _, _, norm, ticks = makeColorMap(
+        cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_bad('w', 1.)
     im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
     # im.set_interpolation('bilinear')
@@ -246,8 +246,8 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
     # get color map
-    ticks = ticksPres
-    cmap, _, _, norm = makeColorMap(colorsPres, levPres, 0.0, np.nanmax(maskedArray))
+    cmap, _, _, norm, ticks = makeColorMap(
+        cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_bad('w', 1.)
     im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
     # im.set_interpolation('bilinear')
@@ -272,8 +272,8 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(rasterdataDepth)
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    ticks = ticksDepth
-    cmap, _, _, norm = makeColorMap(colorsDepth, levDepth, 0.0, np.nanmax(maskedArray))
+    cmap, _, _, norm, ticks = makeColorMap(
+        cmapDepth, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_bad('w', 1.)
     im = NonUniformImage(ax2, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
     # im.set_interpolation('bilinear')
@@ -297,8 +297,8 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     isosurf = copy.deepcopy(rasterdataSpeed)
     xx, yy = np.meshgrid(lcoord, scoord)
     maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    ticks = ticksSpeed
-    cmap, _, _, norm = makeColorMap(colorsSpeed, levSpeed, 0.0, np.nanmax(maskedArray))
+    cmap, _, _, norm, ticks = makeColorMap(
+        cmapSpeed, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_bad('w', 1.)
     im = NonUniformImage(ax3, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
     # im.set_interpolation('bilinear')
@@ -482,9 +482,9 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
 #    show flow path
     ax1 = fig.add_subplot(111)
     ax1.set_title(title)
-    ax1.set_ylabel(yaxis_label, color=color[1])
-    ax1.spines['left'].set_color(color[1])
-    ax1.tick_params(axis='y', colors=color[1])
+    ax1.set_ylabel(yaxis_label, color=color[-3])
+    ax1.spines['left'].set_color(color[-3])
+    ax1.tick_params(axis='y', colors=color[-3])
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(plim),
                             ' kPa threshold']), color='black')
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
@@ -499,7 +499,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     ax2 = ax1.twinx()
     ax2.set_ylabel('z [m]', color='k')
     ax2.spines['right'].set_color('k')
-    ax2.spines['left'].set_color(color[1])
+    ax2.spines['left'].set_color(color[-3])
     ax2.tick_params(axis='y', colors='k')
     ax2.plot(sPath, zPath, color='k', label='path', linestyle='--')
     plt.xlim([0, xlimProfAxis])
@@ -521,7 +521,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
             if mk == len(markers):
                 mk = 1
         ax1.legend(loc='lower left')
-    plt.grid('on')
+    ax1.grid('on')
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
                            str(int(plim)), '_', tipo])
     outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
