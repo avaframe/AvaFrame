@@ -57,8 +57,7 @@ def extractMBInfo(avaDir):
     logName = os.path.join(avaDir, 'Outputs', 'com1DFA', 'ExpLog.txt')
     logDictExp = fU.readLogFile(logName)
     names = logDictExp['fullName']
-    simNames = sorted(set(names), key=lambda s: s.split("_")[3])
-
+    simNames = sorted(set(names), key=lambda s: (s.split("_")[0], s.split("_")[1], s.split("_")[3]))
     # Read mass data from log and save to file for each simulation run
     countFile = 0
     for simName in simNames:
@@ -93,11 +92,13 @@ def extractMBInfo(avaDir):
 
         # Write mass balance info files
         for k in range(len(indRun)-1):
-            with open(os.path.join(os.getcwd(), avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile + 1)), 'w') as MBFile:
+            savename = os.path.join(os.getcwd(), avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile + 1))
+            with open(savename, 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
                     MBFile.write('%.02f,    %.06f,    %.06f\n' %
                                  (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
+            log.info('Saved to dfa_mass_balance/%s ' % (os.path.basename(savename)))
             countFile = countFile + 1
 
 
@@ -119,10 +120,8 @@ def mainDfa2Aimec(avaDir, cfgSetup):
 
     # Setup input from com1DFA and export to Work ana3AIMEC
     suffix = {'type' : ['pfd', 'ppr', 'pv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
-    countsuf = 0
-    for suf in suffix['type']:
-        fU.getDFAData(avaDir, workDir, suf, suffix['directory'][countsuf])
-        countsuf = countsuf + 1
+    for suf, dir in zip(suffix['type'], suffix['directory']):
+        fU.getDFAData(avaDir, workDir, suf, dir)
 
     # Write the paths to this files to a file
     writeAimecPathsFile(cfgSetup, avaDir)

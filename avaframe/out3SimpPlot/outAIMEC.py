@@ -64,6 +64,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     l = rasterTransfo['l']
     s = rasterTransfo['s']
 
+    maskedArray = np.ma.masked_where(xyRaster == 0, xyRaster)
     cmap, _, _, norm, ticks = makeColorMap(
         cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_under(color='w')
@@ -72,7 +73,6 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     # Figure: Raster transformation
     fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
-    maskedArray = np.ma.masked_where(xyRaster == 0, xyRaster)
     ref0, im = myNonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
                        extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm)
     ref1 = plt.plot(xx, yy, 'ro', label='Beta point : %.1f °' %
@@ -138,6 +138,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     pPercentile = sp.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
 
 
+    maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
     cmap, _, _, norm, ticks = makeColorMap(
         cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_bad('w', 1.)
@@ -152,7 +153,6 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ref1 = ax1.axhline(y=np.max(runout), color='r', label='runout max')
     ref2 = ax1.axhline(y=np.average(runout), color='y', label='runout mean')
     ref3 = ax1.axhline(y=np.min(runout), color='g', label='runout min')
-    maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
     ref5, im = myNonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     cbar = ax1.figure.colorbar(im, ax=ax1, ticks=ticks)
@@ -229,13 +229,13 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
     for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
         ax.set_title(title)
+        maskedArray = np.ma.masked_where(data == 0, data)
         cmap, _, _, norm, ticks = makeColorMap(
-            cmapSpeed, 0.0, np.nanmax(maskedArray), continuous=contCmap)
+            cmap, 0.0, np.nanmax(maskedArray), continuous=contCmap)
         cmap.set_bad('w', 1.)
         ref1 = ax.axhline(y=s[indRunoutPoint], color='k',
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
         ref2 = ax.axhline(y=runout[0], color='b', label='runout')
-        maskedArray = np.ma.masked_where(data == 0, data)
         ref3, im = myNonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
         cbar = ax.figure.colorbar(im, ax=ax)

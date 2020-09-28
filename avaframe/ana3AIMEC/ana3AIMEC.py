@@ -702,7 +702,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         newRasterData = np.where(newRasterData < pLim, 0, newRasterData)
         newRasterData = np.where(newRasterData >= pLim, 1, newRasterData)
 
-        if cfgFlags.getboolean('savePlot') and i > 0:
+        if cfgFlags.getboolean('savePlot'):
             # read paths
             pathResult = cfgPath['pathResult']
             projectName = cfgPath['dirName']
@@ -721,7 +721,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             cmap, _, _, norm, ticks = makeColorMap(
                 cmapPres, pLim, np.nanmax((dataPressure[0])[nStart:]), continuous=contCmap)
             cmap.set_under(color='w')
-            
+
             ref0, im= myNonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
                                    extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
             im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
