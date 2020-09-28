@@ -261,13 +261,13 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
         rasterTransfo['runoutAngle'] = (angle[indRunoutPoint] + angle[indRunoutPoint+1])/2
         log.info('Measuring run-out length from the %s ° point' % rasterTransfo['runoutAngle'])
 
-    avalData = transform(rasterSource, rasterTransfo, interpMethod)
+    slRaster = transform(rasterSource, rasterTransfo, interpMethod)
 
     ###########################################################################
     # visualisation
     inputData = {}
-    inputData['avalData'] = avalData
-    inputData['sourceData'] = sourceData
+    inputData['slRaster'] = slRaster
+    inputData['xyRaster'] = rasterdata
     inputData['Avapath'] = Avapath
 
     outAimec.visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags)
@@ -661,8 +661,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     fname = cfgPath['pressurefileList']
 
     dataPressure = newRasters['newRasterPressure']
-    scoord = rasterTransfo['s']
-    lcoord = rasterTransfo['l']
+    s = rasterTransfo['s']
+    l = rasterTransfo['l']
     cellarea = rasterTransfo['rasterArea']
     indRunoutPoint = rasterTransfo['indRunoutPoint']
 
@@ -710,9 +710,10 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             outname = os.path.join(pathResult, 'pics', outFileName)
             if not os.path.exists(os.path.dirname(outname)):
                 os.makedirs(os.path.dirname(outname))
+            ############################################
+            # Figure: Raster comparison
             fig = plt.figure(figsize=(figW*2, figH))
-            y_lim = scoord[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
-        #    for figure: referenz-simulation bei pLim=1
+            y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
             ax1 = plt.subplot(121)
             ax1.set_title('Reference Peak Pressure in the RunOut area' +
                           '\n' + 'Pressure threshold: %.1f kPa' % pLim)
@@ -720,17 +721,13 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             cmap, _, _, norm, ticks = makeColorMap(
                 cmapPres, pLim, np.nanmax((dataPressure[0])[nStart:]), continuous=contCmap)
             cmap.set_under(color='w')
-            im = NonUniformImage(ax1, extent=[lcoord.min(), lcoord.max(),
-                                              scoord.min(), scoord.max()], cmap=cmap, norm=norm)
+            
+            ref0, im= myNonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
+                                   extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
             im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
-            im.set_data(lcoord, scoord, dataPressure[0])
-            ref0 = ax1.images.append(im)
             cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, ticks=ticks)
             cbar.ax.set_ylabel('peak pressure [kPa]')
-            ax1.set_xlim([lcoord.min(), lcoord.max()])
-            ax1.set_ylim([scoord[indRunoutPoint-20], y_lim])
-            ax1.set_xlabel('l [m]')
-            ax1.set_ylabel('s [m]')
+            ax1.set_ylim([s[indRunoutPoint-20], y_lim])
 
             ax2 = plt.subplot(122)
             ax2.set_title(
@@ -740,19 +737,11 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             cmap.set_under(color='b')
             cmap.set_over(color='r')
             cmap.set_bad(color='k')
-            im = NonUniformImage(ax2, extent=[lcoord.min(), lcoord.max(),
-                                              scoord.min(), scoord.max()], cmap=cmap)
+            ref0, im = myNonUnifIm(ax2, l, s, newRasterData-newMask, 'l [m]', 's [m]',
+                                   extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
             im.set_clim(vmin=-0.000000001, vmax=0.000000001)
-            im.set_data(lcoord, scoord, newRasterData-newMask)
-            ref0 = ax2.images.append(im)
-            # cbar = ax2.figure.colorbar(im, ax=ax2, extend='both', use_gridspec=True)
-            # cbar.ax.set_ylabel('peak pressure [kPa]')
-            ax2.set_xlim([lcoord.min(), lcoord.max()])
-            ax2.set_ylim([scoord[indRunoutPoint-20], y_lim])
-            ax2.set_xlabel('l [m]')
-            ax2.set_ylabel('s [m]')
+            ax2.set_ylim([s[indRunoutPoint-20], y_lim])
             plt.subplots_adjust(wspace=0.3)
-            # plt.show()
 
             fig.savefig(outname)
             plt.close(fig)

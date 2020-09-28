@@ -13,8 +13,6 @@ import scipy as sp
 import copy
 from matplotlib import pyplot as plt
 import matplotlib
-import matplotlib.lines as mlines
-import matplotlib.patches as mpatches
 from matplotlib import cm
 from matplotlib.image import NonUniformImage
 
@@ -33,86 +31,69 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     """
     Plot and save the domain transformation figure
     """
+    ####################################
+    # Get input data
     # read paths
     pathResult = cfgPath['pathResult']
     projectName = cfgPath['dirName']
     # read rasterdata
-    sourceData = inputData['sourceData']
-    header = sourceData['header']
-    xllc = rasterTransfo['xllc']
-    yllc = rasterTransfo['yllc']
-    cellsize = rasterTransfo['cellsize']
-    rasterdata = sourceData['rasterData']
+    slRaster = inputData['slRaster']
+    xyRaster = inputData['xyRaster']
     # read avaPath with scale
     Avapath = inputData['Avapath']
     xPath = Avapath['x']
     yPath = Avapath['y']
     # read domain boundarries with scale
+    xllc = rasterTransfo['xllc']
+    yllc = rasterTransfo['yllc']
+    cellsize = rasterTransfo['cellsize']
     DBXl = rasterTransfo['DBXl']*cellsize+xllc
     DBXr = rasterTransfo['DBXr']*cellsize+xllc
     DBYl = rasterTransfo['DBYl']*cellsize+yllc
     DBYr = rasterTransfo['DBYr']*cellsize+yllc
 
-    fig = plt.figure(figsize=(figW*2, figH))
-
-#    for figure: referenz-simulation bei pLim=1
-    ax1 = plt.subplot(121)
+    ############################################
+    # prepare for plot
+    n, m = np.shape(xyRaster)
+    x = np.arange(m)*cellsize+xllc
+    y = np.arange(n)*cellsize+yllc
     indRunoutPoint = rasterTransfo['indRunoutPoint']
     xx = rasterTransfo['x'][indRunoutPoint]
     yy = rasterTransfo['y'][indRunoutPoint]
-    newRasterdata = rasterdata
-    maskedArray = newRasterdata
-    # get color map
+
+    l = rasterTransfo['l']
+    s = rasterTransfo['s']
+
     cmap, _, _, norm, ticks = makeColorMap(
         cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_under(color='w')
 
-    n, m = np.shape(newRasterdata)
-    x = np.arange(m)*cellsize+xllc
-    y = np.arange(n)*cellsize+yllc
-    im0 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm)
-    # im.set_interpolation('bilinear')
-    im0.set_clim(vmin=0.000000001)
-    im0.set_data(x, y, maskedArray)
-    ref1 = ax1.images.append(im0)
-    # cbar = ax1.figure.colorbar(im0, ax=ax1, use_gridspec=True)
-    plt.autoscale(False)
-    ref0 = plt.plot(xx, yy, 'ro', label='Beta point : %.1f °' %
+    ############################################
+    # Figure: Raster transformation
+    fig = plt.figure(figsize=(figW*2, figH))
+    ax1 = plt.subplot(121)
+    maskedArray = np.ma.masked_where(xyRaster == 0, xyRaster)
+    ref0, im = myNonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
+                       extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm)
+    ref1 = plt.plot(xx, yy, 'ro', label='Beta point : %.1f °' %
+
                     rasterTransfo['runoutAngle'])
     ref2 = plt.plot(xPath, yPath, 'b-', label='flow path')
     ref3 = plt.plot(DBXl, DBYl, 'g-', label='domain')
-    ref3 = plt.plot(DBXr, DBYr, 'g-', label='domain')
-    ref3 = plt.plot([DBXl, DBXr], [DBYl, DBYr], 'g-', label='domain')
-    refs = [ref0[0], ref2[0], ref3[0]]
-
-    labels = ['Beta point : %.1f °' % rasterTransfo['runoutAngle'], 'flow path', 'domain']
+    ref3 = plt.plot(DBXr, DBYr, 'g-')
+    ref3 = plt.plot([DBXl, DBXr], [DBYl, DBYr], 'g-')
     ax1.set_title('XY Domain')
-    ax1.legend(refs, labels, loc=0)
-    ax1.set_xlim([x.min(), x.max()])
-    ax1.set_ylim([y.min(), y.max()])
-    ax1.set_xlabel('x [m]')
-    ax1.set_ylabel('y [m]')
+    ax1.legend()
 
     ax2 = plt.subplot(122)
-    ax2.set_title('sl Domain' + '\n' + 'Black = out of raster')
-    isosurf = copy.deepcopy(inputData['avalData'])
-    lcoord = rasterTransfo['l']
-    scoord = rasterTransfo['s']
-    ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='r',
-                       label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
-    maskedArray = isosurf  # np.ma.array(isosurf,mask=np.isnan(isosurf))
-    im = NonUniformImage(ax2, extent=[lcoord.min(), lcoord.max(),
-                                      scoord.min(), scoord.max()], cmap=cmap, norm=norm)
-    # im.set_interpolation('bilinear')
-    im.set_clim(vmin=0.000000001)
-    im.set_data(lcoord, scoord, maskedArray)
-    ref0 = ax2.images.append(im)
+    ax2.set_title('sl Domain' + '\n' +  'Black = out of raster')
+    maskedArray = np.ma.masked_where(slRaster == 0, slRaster)
+    ref1 = ax2.axhline(y=s[indRunoutPoint], color='r',
+                        label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
+    ref0, im = myNonUnifIm(ax2, l, s, maskedArray, 'l [m]', 's [m]',
+                           extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
     cbar.ax.set_ylabel('peak pressure [kPa]')
-    ax2.set_xlim([lcoord.min(), lcoord.max()])
-    ax2.set_ylim([scoord.min(), scoord.max()])
-    ax2.set_xlabel('l [m]')
-    ax2.set_ylabel('s [m]')
     ax2.legend()
 
     if cfgFlags.getboolean('plotFigure'):
@@ -133,14 +114,16 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     """
     Plot and save the Peak Pressure  distribution after coord transfo
     """
+    ####################################
+    # Get input data
     # read paths
     pathResult = cfgPath['pathResult']
     projectName = cfgPath['dirName']
     # read data
-    scoord = rasterTransfo['s']
-    lcoord = rasterTransfo['l']
+    s = rasterTransfo['s']
+    l = rasterTransfo['l']
     indRunoutPoint = rasterTransfo['indRunoutPoint']
-    sBeta = scoord[indRunoutPoint]
+    sBeta = s[indRunoutPoint]
     rasterArea = rasterTransfo['rasterArea']
     dataPressure = newRasters['newRasterPressure']
     rasterdataPres = dataPressure[0]  # ana3AIMEC.makeRasterAverage(dataPressure)
@@ -148,51 +131,43 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     runoutMean = resAnalysis['runoutMean'][0] + sBeta
     pCrossAll = resAnalysis['pCrossAll']
 
+    ############################################
     # prepare for plot
     pMean = np.mean(pCrossAll, axis=0)
     pMedian = np.median(pCrossAll, axis=0)
     pPercentile = sp.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
 
+
+    cmap, _, _, norm, ticks = makeColorMap(
+        cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
+    cmap.set_bad('w', 1.)
+
+    ############################################
+    # Figure: Analysis runout
     fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
     ax1.set_title('Peak Pressure 2D plot for the reference')
-    ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k',
+    ref0 = ax1.axhline(y=s[indRunoutPoint], color='k',
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
     ref1 = ax1.axhline(y=np.max(runout), color='r', label='runout max')
     ref2 = ax1.axhline(y=np.average(runout), color='y', label='runout mean')
     ref3 = ax1.axhline(y=np.min(runout), color='g', label='runout min')
-    # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
-    isosurf = copy.deepcopy(rasterdataPres)
-    xx, yy = np.meshgrid(lcoord, scoord)
-    maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    # get color map
-    cmap, _, _, norm, ticks = makeColorMap(
-        cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
-    cmap.set_bad('w', 1.)
-    im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
-    # im.set_interpolation('bilinear')
-    im.set_clim(vmin=maskedArray.min(), vmax=maskedArray.max())
-    im.set_data(lcoord, scoord, maskedArray)
-    ref0 = ax1.images.append(im)
+    maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
+    ref5, im = myNonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
+                           extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     cbar = ax1.figure.colorbar(im, ax=ax1, ticks=ticks)
     cbar.ax.set_ylabel('peak pressure [kPa]')
-    plt.autoscale(False)
-    ax1.set_xlim([xx.min(), xx.max()])
-    ax1.set_ylim([yy.min(), yy.max()])
-    ax1.set_xlabel('l [m]')
-    ax1.set_ylabel('s [m]')
-    ax1.legend(loc=0)
+    ax1.legend()
 
     ax2 = plt.subplot(122)
     ax2.set_title('Peak Pressure distribution along the path between runs')
-    ax2.fill_betweenx(scoord, pPercentile[2], pPercentile[0],
+    ax2.fill_betweenx(s, pPercentile[2], pPercentile[0],
                       facecolor=[.8, .8, .8], alpha=0.5, label='quantiles')
-    ref1 = mpatches.Patch(alpha=0.5, color=[.8, .8, .8])
-    ref2 = ax2.plot(pMedian, scoord, color='r', label='median')
-    ref3 = ax2.plot(pMean, scoord, color='b', label='mean')
-    # ref3 = mlines.Line2D([], [], color='b', linewidth=2)
+    ref1 = matplotlib.patches.Patch(alpha=0.5, color=[.8, .8, .8])
+    ref2 = ax2.plot(pMedian, s, color='r', label='median')
+    ref3 = ax2.plot(pMean, s, color='b', label='mean')
     ax2.set_ylabel('l [m]')
-    ax2.set_ylim([yy.min(), yy.max()])
+    ax2.set_ylim([s.min(), s.max()])
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
     ax2.legend(loc=0)
@@ -217,14 +192,16 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     Plot and save the Peak Pressure Peak Flow depth and Peak speed
     fields after coord transfo
     """
+    ####################################
+    # Get input data
     # read paths
     pathResult = cfgPath['pathResult']
     projectName = cfgPath['dirName']
     # read data
-    scoord = rasterTransfo['s']
-    lcoord = rasterTransfo['l']
+    s = rasterTransfo['s']
+    l = rasterTransfo['l']
     indRunoutPoint = rasterTransfo['indRunoutPoint']
-    sBeta = scoord[indRunoutPoint]
+    sBeta = s[indRunoutPoint]
     rasterArea = rasterTransfo['rasterArea']
     dataPressure = newRasters['newRasterPressure']
     rasterdataPres = dataPressure[0]  # ana3AIMEC.makeRasterAverage(dataPressure)
@@ -235,83 +212,35 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     runout = resAnalysis['runout'][0] + sBeta
     runoutMean = resAnalysis['runoutMean'][0] + sBeta
 
-    fig = plt.figure(figsize=(figW*3, figH))
-    ax1 = plt.subplot(131)
-    ax1.set_title('Peak Pressure')
-    ref1 = ax1.axhline(y=scoord[indRunoutPoint], color='k',
-                       label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-    ref2 = ax1.axhline(y=runout[0], color='b', label='runout')
-    # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
-    isosurf = copy.deepcopy(rasterdataPres)
-    xx, yy = np.meshgrid(lcoord, scoord)
-    maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    # get color map
-    cmap, _, _, norm, ticks = makeColorMap(
-        cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
-    cmap.set_bad('w', 1.)
-    im = NonUniformImage(ax1, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
-    # im.set_interpolation('bilinear')
-    im.set_clim(vmin=maskedArray.min(), vmax=maskedArray.max())
-    im.set_data(lcoord, scoord, maskedArray)
-    ref0 = ax1.images.append(im)
-    cbar = ax1.figure.colorbar(im, ax=ax1, ticks=ticks)
-    cbar.ax.set_ylabel('peak pressure [kPa]')
-    plt.autoscale(False)
-    ax1.set_xlim([xx.min(), xx.max()])
-    ax1.set_ylim([yy.min(), yy.max()])
-    ax1.set_xlabel('l [m]')
-    ax1.set_ylabel('s [m]')
-    ax1.legend(loc=0)
+    ############################################
+    # prepare for plot
+    Cmap = [cmapPres, cmapDepth, cmapSpeed]
+    Title = ['Peak Pressure', 'Peak Flow Depth', 'Peak Speed']
+    Unit = [' [kPa]', ' [m]', ' [m/s]']
+    Data =  np.array(([None] * 3))
+    Data[0] =  rasterdataPres
+    Data[1] =  rasterdataDepth
+    Data[2] =  rasterdataSpeed
 
-    ax2 = plt.subplot(132)
-    ax2.set_title('Peak Flow Depth')
-    ref1 = ax2.axhline(y=scoord[indRunoutPoint], color='k',
-                       label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-    ref2 = ax2.axhline(y=runout[0], color='b', label='runout')
-    # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
-    isosurf = copy.deepcopy(rasterdataDepth)
-    xx, yy = np.meshgrid(lcoord, scoord)
-    maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap, _, _, norm, ticks = makeColorMap(
-        cmapDepth, 0.0, np.nanmax(maskedArray), continuous=contCmap)
-    cmap.set_bad('w', 1.)
-    im = NonUniformImage(ax2, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
-    # im.set_interpolation('bilinear')
-    im.set_data(lcoord, scoord, maskedArray)
-    ref0 = ax2.images.append(im)
-    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
-    cbar.ax.set_ylabel('peak flow depth $[m]$')
-    plt.autoscale(False)
-    ax2.set_xlim([xx.min(), xx.max()])
-    ax2.set_ylim([yy.min(), yy.max()])
-    ax2.set_xlabel('l [m]')
-    ax2.set_ylabel('s [m]')
-    ax2.legend(loc=0)
+    ############################################
+    # Figure: Pressure depth speed
 
-    ax3 = plt.subplot(133)
-    ax3.set_title('Peak Speed')
-    ref1 = ax3.axhline(y=scoord[indRunoutPoint], color='k',
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(figW*3, figH))
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
+    for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
+        ax.set_title(title)
+        cmap, _, _, norm, ticks = makeColorMap(
+            cmapSpeed, 0.0, np.nanmax(maskedArray), continuous=contCmap)
+        cmap.set_bad('w', 1.)
+        ref1 = ax.axhline(y=s[indRunoutPoint], color='k',
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-    ref2 = ax3.axhline(y=runout[0], color='b', label='runout')
-    # ref3 = ax1.plot(np.zeros(np.shape(scoord)), scoord,'.r', linewidth=0.1)
-    isosurf = copy.deepcopy(rasterdataSpeed)
-    xx, yy = np.meshgrid(lcoord, scoord)
-    maskedArray = np.ma.masked_where(isosurf == 0, isosurf)
-    cmap, _, _, norm, ticks = makeColorMap(
-        cmapSpeed, 0.0, np.nanmax(maskedArray), continuous=contCmap)
-    cmap.set_bad('w', 1.)
-    im = NonUniformImage(ax3, extent=[xx.min(), xx.max(), yy.min(), yy.max()], cmap=cmap, norm=norm)
-    # im.set_interpolation('bilinear')
-    im.set_data(lcoord, scoord, maskedArray)
-    ref0 = ax3.images.append(im)
-    cbar = ax3.figure.colorbar(im, ax=ax3, ticks=ticks)
-    cbar.ax.set_ylabel('peak speed [m/s]')
-    plt.autoscale(False)
-    ax3.set_xlim([xx.min(), xx.max()])
-    ax3.set_ylim([yy.min(), yy.max()])
-    ax3.set_xlabel('l [m]')
-    ax3.set_ylabel('s [m]')
-    ax3.legend(loc=0)
+        ref2 = ax.axhline(y=runout[0], color='b', label='runout')
+        maskedArray = np.ma.masked_where(data == 0, data)
+        ref3, im = myNonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
+                           extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
+        cbar = ax.figure.colorbar(im, ax=ax)
+        cbar.ax.set_ylabel(title + unit)
+        ax.legend()
 
     if cfgFlags.getboolean('savePlot'):
         outFileName = projectName + '_referenceFields'
@@ -333,7 +262,8 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     This function writes the main Aimec results to a file (outputFile)
     in cfgPath
     """
-
+    ####################################
+    # Get input data
     projectName = cfgPath['projectName']
     pathResult = cfgPath['pathResult']
     pathName = cfgPath['pathName']
@@ -365,10 +295,14 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     TN = resAnalysis['TN']
     areaSum = TP + FN
 
-    legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'elevRel', 'deltaH', 'AMPP',
-              'MMPP', 'AMD', 'MMD', 'AMS', 'MMS', 'relMass', 'entMass', 'finalMass', 'rMassDif', 'GI', 'GR', 'TP ', 'FN ', 'FP ', 'TN']
-    resfile = [runout[1], runout[2], runout[0],
-               elevRel, deltaH, AMPP, MMPP, AMD, MMD, AMS, MMS, relMass, entMass, finalMass, relativMassDiff, GI, GR, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
+    ############################################
+    # prepare for writing
+    legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'elevRel', 'deltaH',
+              'AMPP', 'MMPP', 'AMD', 'MMD', 'AMS', 'MMS', 'relMass', 'entMass',
+              'finalMass', 'rMassDif', 'GI', 'GR', 'TP ', 'FN ', 'FP ', 'TN']
+    resfile = [runout[1], runout[2], runout[0], elevRel, deltaH, AMPP, MMPP,
+               AMD, MMD, AMS, MMS, relMass, entMass, finalMass, relativMassDiff,
+               GI, GR, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
 
     header = ''.join(['projectName: ',  projectName, '\n',
                       'path: ', pathName, '\n',
@@ -380,11 +314,12 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     outFileName = 'Results_pl' + str(pressureLimit) + '_w' + str(domainWidth) + '.txt'
     outname = os.path.join(pathResult, outFileName)
 
-
-#    chekc if folder exists / create
+    # check if folder exists / create
     if not os.path.exists(os.path.dirname(outname)):
         os.makedirs(os.path.dirname(outname))
 
+    ############################################
+    # write results to file
     output = resfile
     log.info('write output file: %s' % outname)
     fid = open(outname, 'w')
@@ -415,7 +350,8 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     Jan-Thomas Fischer BFW 2010-2012
     AK BFW 2014-2015
     """
-
+    ####################################
+    # Get input data
     fnames = cfgPath['pressurefileList']
     rasterSource = cfgPath['demSource']
     ProfileLayer = cfgPath['profileLayer']
@@ -434,6 +370,9 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     maxMaxDPP = resAnalysis['MMPP']
     GI = resAnalysis['growthIndex']
 
+    ############################################
+    # prepare for plot
+
     # includes flag for y axis -
     # 1 = mean pressure data
     # 2 = groth index
@@ -450,24 +389,18 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         tipo = 'rapp'
         data = meanMaxDPP / meanMaxDPP[0]
         yaxis_label = 'rAPP [-]'
-        ytick_increment = 0.25
-        ymax = 3
     elif flag == 2:
         title = 'Visualizing EGU growth index data'
         log.info(title)
         tipo = 'GI'
         data = GI
         yaxis_label = 'growth index [GI]'
-        ytick_increment = 2
     elif flag == 3:
         title = 'Visualizing max peak pressure data'
         log.info(title)
         tipo = 'rmpp'
         data = maxMaxDPP / maxMaxDPP[0]
         yaxis_label = 'rMPP [-]'
-        ytick_increment = 0.1
-        ymax = max(data[:])+(max(data[:])-min(data[:]))*0.1
-        ymin = min(data[:])-(max(data[:])-min(data[:]))*0.1
     else:
         log.error('Wrong flag')
         return None
@@ -479,7 +412,7 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     fig = plt.figure(figsize=(figW*2, figH))
     # fig.suptitle(title)
     mk = 0
-#    show flow path
+    # show flow path
     ax1 = fig.add_subplot(111)
     ax1.set_title(title)
     ax1.set_ylabel(yaxis_label, color=color[-3])
@@ -493,7 +426,6 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
         dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
-#        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.cool)
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('Counts')
     ax2 = ax1.twinx()
@@ -548,7 +480,6 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
-#        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
         dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.cool)
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
