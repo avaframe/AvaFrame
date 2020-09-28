@@ -27,7 +27,7 @@ from avaframe.out3SimpPlot.plotSettings import *
 log = logging.getLogger(__name__)
 
 
-def quickPlot(avaDir, suffix, cfg, simName):
+def quickPlot(avaDir, suffix, val, varPar, cfg):
     """ Plot two raster datasets of identical dimension:
 
         Inputs:
@@ -68,7 +68,7 @@ def quickPlot(avaDir, suffix, cfg, simName):
         # get list of indices of files that are of correct simulation type and result paramete
         indSuffix = []
         for m in range(len(data['files'])):
-            if data['resType'][m] == suffix and data['simType'][m] == simName and data['releaseArea'][m] == rel:
+            if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[varPar][m] == val:
                 indSuffix.append(m)
 
         # Load data
@@ -90,7 +90,7 @@ def quickPlot(avaDir, suffix, cfg, simName):
         diffMax = np.amax(dataDiff)
         diffMin = np.amin(dataDiff)
         diffMean = np.mean(dataDiff)
-        
+
         # Location of box
         nybox = int(nx * 0.2)
         nxbox = int(ny * 0.2)
@@ -127,7 +127,7 @@ def quickPlot(avaDir, suffix, cfg, simName):
         ax3.set_aspect('auto')
         ax3.set_xlabel('x [m]')
         ax3.set_title('Difference ref-sim')
-        fig.savefig(os.path.join(outDir, 'refDfa_%s_%s' % (rel, suffix)))#, bbox_extra_artists=(suptitle,), bbox_inches="tight")
+        fig.savefig(os.path.join(outDir, 'refDfa_%s_%s_%s.png' % (rel, val, suffix)))#, bbox_extra_artists=(suptitle,), bbox_inches="tight")
 
         # Fgiure 2 cross and lonprofile
         fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH))
@@ -144,7 +144,7 @@ def quickPlot(avaDir, suffix, cfg, simName):
 
         ax[0].legend()
         ax[1].legend()
-        fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s_%s' % (rel, suffix)))
+        fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s_%s_%s.png' % (rel, val, suffix)))
 
         log.info('Figures saved to: %s' % outDir)
 
