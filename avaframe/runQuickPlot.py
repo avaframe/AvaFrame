@@ -23,15 +23,21 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
+
+# Load input parameters from configuration file
+cfg = cfgUtils.getModuleConfig(outQuickPlot)
+
+
 # REQUIRED+++++++++++++++++++
 # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or varPar = 'Mu', values = ['0.055', '0.155']
  # values need to be given as list, also if only one value
-outputVariable = ['pfd', 'ppr']
-values = ['null']
-varPar = 'simType'
+outputVariable = [cfg['PLOT']['outputVariable']]
+values = cfg['PLOT']['values'].split('_')
+parameter = cfg['PLOT']['parameter']
+print(outputVariable, values, parameter)
 #++++++++++++++++++++++++++++
 
 # Plot data comparison for all output variables defined in suffix
 for val in values:
     for var in outputVariable:
-        outQuickPlot.quickPlot(avalancheDir, var, val, varPar, cfgMain)
+        outQuickPlot.quickPlot(avalancheDir, var, val, parameter, cfgMain)
