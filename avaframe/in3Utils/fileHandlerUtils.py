@@ -216,7 +216,7 @@ def makeSimDict(inputDir, cfg=''):
 
     # Make dictionary of input data info
     data = {'files': [], 'names': [], 'resType': [], 'simType': [],
-            'releaseArea': [], 'cellSize': [], varPar: []}
+            'modelType' : [], 'releaseArea': [], 'cellSize': [], varPar: []}
 
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
@@ -225,6 +225,7 @@ def makeSimDict(inputDir, cfg=''):
         nameParts = name.split('_')
         data['releaseArea'].append(nameParts[0])
         data['simType'].append(nameParts[1])
+        data['modelType'].append(nameParts[2])
         data[varPar].append(nameParts[3])
         data['resType'].append(nameParts[4])
         header = IOf.readASCheader(datafiles[m])

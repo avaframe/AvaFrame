@@ -67,10 +67,13 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
 
     for rel in relAreas:
         # get list of indices of files that are of correct simulation type and result paramete
-        indSuffix = []
+        indSuffix = [-9999, -9999]
         for m in range(len(data['files'])):
             if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[parameter][m] == val:
-                indSuffix.append(m)
+                if data['modelType'][m] == 'dfa':
+                    indSuffix[0] = m
+                elif data['modelType'][m] == cfgPlot['PLOT']['refModel']:
+                    indSuffix[1] = m
 
         # Load data
         data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
