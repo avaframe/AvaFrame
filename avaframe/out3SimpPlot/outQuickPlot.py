@@ -58,7 +58,11 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
     fU.getRefData(avaDir, workDir, suffix)
 
     # prepare data
-    data = fU.makeSimDict(workDir)
+    if parameter == 'Mu' or parameter == 'RelTh':
+        data = fU.makeSimDict(workDir, parameter)
+    else:
+        data = fU.makeSimDict(workDir)
+
     cellSize = data['cellSize'][0]
     unit = cfgPlot['PLOT']['unit%s' % suffix]
 
