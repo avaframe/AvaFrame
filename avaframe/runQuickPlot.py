@@ -24,11 +24,14 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # REQUIRED+++++++++++++++++++
+# Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or varPar = 'Mu', values = ['0.055', '0.155']
+ # values need to be given as list, also if only one value
 outputVariable = ['pfd', 'ppr']
-simName = 'entres'
+values = ['null']
+varPar = 'simType'
 #++++++++++++++++++++++++++++
 
 # Plot data comparison for all output variables defined in suffix
-for var in outputVariable:
-    # Run Standalone DFA
-    outQuickPlot.quickPlot(avalancheDir, var, cfgMain, simName)
+for val in values:
+    for var in outputVariable:
+        outQuickPlot.quickPlot(avalancheDir, var, val, varPar, cfgMain)
