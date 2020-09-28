@@ -127,7 +127,7 @@ def quickPlot(avaDir, suffix, val, varPar, cfg):
         ax3.set_aspect('auto')
         ax3.set_xlabel('x [m]')
         ax3.set_title('Difference ref-sim')
-        fig.savefig(os.path.join(outDir, 'refDfa_%s_%s_%s.png' % (rel, val, suffix)))#, bbox_extra_artists=(suptitle,), bbox_inches="tight")
+        fig.savefig(os.path.join(outDir, 'refDfa_%s_%s_%s.%s' % (rel, val, suffix, outputFormat)))#, bbox_extra_artists=(suptitle,), bbox_inches="tight")
 
         # Fgiure 2 cross and lonprofile
         fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH))
@@ -144,7 +144,7 @@ def quickPlot(avaDir, suffix, val, varPar, cfg):
 
         ax[0].legend()
         ax[1].legend()
-        fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s_%s_%s.png' % (rel, val, suffix)))
+        fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s_%s_%s.%s' % (rel, val, suffix, outputFormat)))
 
         log.info('Figures saved to: %s' % outDir)
 
