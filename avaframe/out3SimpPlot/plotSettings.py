@@ -12,8 +12,11 @@ from matplotlib.image import NonUniformImage
 import cmocean
 import copy
 
+from avaframe.in3Utils import cfgUtils
 from avaframe.out3SimpPlot.makePalette import *
 
+cfgMain = cfgUtils.getGeneralConfig()
+continuousCmap = cfgMain['MAIN'].getboolean('continuousCmap')
 
 # define seaborn style and color maps
 sns.set(font_scale=1)
@@ -104,10 +107,11 @@ cmapS  = get_continuous_cmap(colorsS, continuous=True)
 ###############################################
 ############ Set colormaps to use #############
 ###############################################
-# ploting with a descrete (contCmap = False) or continuous colormap (contCmap = True)?
+# ploting with a descrete (contCmap = continuousCmap = False) or continuous colormap (contCmap = True)?
+# continuousCmap is read from the avaframeCfg.ini at the begining of this file.
 # if continuous, only the cmap argument in the cmapDictionnary maters
 # replace it with the wanted colormap
-contCmap = False
+contCmap = continuousCmap
 # for pressure
 cmapPres = {}
 cmapPres['cmap'] = cmapP
