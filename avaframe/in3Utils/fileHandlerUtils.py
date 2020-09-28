@@ -190,7 +190,7 @@ def exportcom1DFAOutput(avaDir, cfg=''):
     shutil.copy2(os.path.join('%s' % inputDir, 'ExpLog.txt'), outDir)
 
 
-def makeSimDict(inputDir, cfg=''):
+def makeSimDict(inputDir, varPar=''):
     """ Create a dictionary that contains all info on simulations:
 
             files:          full file path
@@ -209,9 +209,7 @@ def makeSimDict(inputDir, cfg=''):
     datafiles = sorted(datafiles)
 
     # Check if parameter variation other than Mu
-    if cfg != '':
-        varPar = cfg['varPar']
-    else:
+    if varPar == '':
         varPar = 'Mu'
 
     # Make dictionary of input data info
