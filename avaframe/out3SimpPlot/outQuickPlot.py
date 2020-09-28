@@ -27,7 +27,7 @@ from avaframe.out3SimpPlot.plotSettings import *
 log = logging.getLogger(__name__)
 
 
-def quickPlot(avaDir, suffix, val, parameter, cfg):
+def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
     """ Plot two raster datasets of identical dimension:
 
         Inputs:
@@ -60,6 +60,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg):
     # prepare data
     data = fU.makeSimDict(workDir)
     cellSize = data['cellSize'][0]
+    unit = cfgPlot['PLOT']['unit%s' % suffix]
 
     # Count the number of release areas
     relAreas = set(data['releaseArea'])
@@ -122,7 +123,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg):
         im3 = plt.imshow(dataDiff, cmap=cmap,
                          extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         fig.colorbar(im3, ax=ax3)
-        ax3.text(nybox, nxbox, 'Mean: %.2f\n Max: %.2f\n Min: %.2f' % (diffMean, diffMax, diffMin), bbox=dict(boxstyle="square", ec='white', fc='white'),
+        ax3.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' % (diffMean, unit, diffMax, unit, diffMin, unit), bbox=dict(boxstyle="square", ec='white', fc='white'),
         horizontalalignment='left', verticalalignment='bottom')
         ax3.set_aspect('auto')
         ax3.set_xlabel('x [m]')
