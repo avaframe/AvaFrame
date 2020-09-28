@@ -91,6 +91,8 @@ def makeColorMap(colormap, levMin, levMax, continuous=False):
         #     newLev = newLev+extractLev
         # newCmap = mcolors.ListedColormap(newColors)
         # newNorm = mcolors.BoundaryNorm(newLev, newCmap.N)
+
+        
         ########### option two #############
         # use any colormap
         # does not match the predefined thresholds / color pairs from the discrete map
@@ -98,7 +100,7 @@ def makeColorMap(colormap, levMin, levMax, continuous=False):
         newNorm = None
         newLev = None
         newColors = None
-        newCmap = get_continuous_cmap(colors, continuous=True)
+        newCmap = cmap
         ticks = None
 
     else:
