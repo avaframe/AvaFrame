@@ -8,6 +8,7 @@ import seaborn as sns
 from matplotlib import cm
 import copy
 import matplotlib
+from matplotlib.image import NonUniformImage
 import cmocean
 import copy
 
@@ -38,7 +39,7 @@ outputFormat = 'pdf'
 matplotlib.rcParams["savefig.format"] = outputFormat
 # define figure resolution (dpi)
 matplotlib.rcParams['figure.dpi'] = 150
-
+matplotlib.rcParams["legend.edgecolor"] = 'None'
 matplotlib.rcParams['text.usetex'] = True
 matplotlib.rcParams['figure.autolayout'] = True
 
@@ -132,4 +133,16 @@ cmapSpeed['ticks'] = ticksS
 
 
 cmapDEM = cmapGreys
+
 cmapAimec = cmapAvaframe
+###################################
+# plot functions
+def myNonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
+    im = NonUniformImage(ax, **kwargs)
+    im.set_data(x, y, z)
+    ref = ax.images.append(im)
+    ax.set_xlim([x.min(), x.max()])
+    ax.set_ylim([y.min(), y.max()])
+    ax.set_xlabel(xlab)
+    ax.set_ylabel(ylab)
+    return ref, im
