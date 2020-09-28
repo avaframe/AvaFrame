@@ -34,7 +34,8 @@ fs = 12
 matplotlib.rcParams['figure.titlesize'] = 'xx-large'
 matplotlib.rcParams['axes.labelsize'] = 'x-large'
 # set output extension {png, ps, pdf, svg}
-matplotlib.rcParams["savefig.format"] = 'png'
+outputFormat = 'pdf'
+matplotlib.rcParams["savefig.format"] = outputFormat
 # define figure resolution (dpi)
 matplotlib.rcParams['figure.dpi'] = 150
 
