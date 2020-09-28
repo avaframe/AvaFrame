@@ -27,7 +27,7 @@ from avaframe.out3SimpPlot.plotSettings import *
 log = logging.getLogger(__name__)
 
 
-def quickPlot(avaDir, suffix, val, varPar, cfg):
+def quickPlot(avaDir, suffix, val, parameter, cfg):
     """ Plot two raster datasets of identical dimension:
 
         Inputs:
@@ -68,7 +68,7 @@ def quickPlot(avaDir, suffix, val, varPar, cfg):
         # get list of indices of files that are of correct simulation type and result paramete
         indSuffix = []
         for m in range(len(data['files'])):
-            if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[varPar][m] == val:
+            if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[parameter][m] == val:
                 indSuffix.append(m)
 
         # Load data
