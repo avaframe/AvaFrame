@@ -108,7 +108,7 @@ cmapS  = get_continuous_cmap(colorsS, continuous=True)
 # ploting with a descrete or continuous colormap?
 # if continuous, only the cmap argument in the cmapDictionnary maters
 # replace it with the wanted colormap
-contCmap = True
+contCmap = False
 # for pressure
 cmapPres = {}
 cmapPres['cmap'] = cmapP

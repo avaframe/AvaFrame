@@ -96,6 +96,8 @@ def makeColorMap(colormap, levMin, levMax, continuous=False):
         # does not match the predefined thresholds / color pairs from the discrete map
         #########################################
         newNorm = None
+        newLev = None
+        newColors = None
         newCmap = get_continuous_cmap(colors, continuous=True)
         ticks = None
 
