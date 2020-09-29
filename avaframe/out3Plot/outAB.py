@@ -16,7 +16,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
 
 # Local imports
-from avaframe.out3SimpPlot.plotSettings import *
+from avaframe.out3Plot.plotUtils import *
 
 # create local logger
 log = logging.getLogger(__name__)

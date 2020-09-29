@@ -14,8 +14,8 @@ import copy
 import logging
 
 from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import makePalette
-from avaframe.in3Utils import plotUtils
+from avaframe.out3Plot import makePalette
+from avaframe.out3Plot import plotUtils
 
 
 # create local logger
