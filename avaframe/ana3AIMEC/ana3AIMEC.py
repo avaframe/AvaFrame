@@ -24,9 +24,9 @@ import seaborn as sns
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in3Utils.ascUtils as IOf
-import avaframe.out3SimpPlot.outAIMEC as outAimec
-from avaframe.in3Utils.plotUtils import *
-import avaframe.in3Utils.makePalette as makePalette
+import avaframe.out3Plot.outAIMEC as outAimec
+from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.makePalette as makePalette
 
 # create local logger
 log = logging.getLogger(__name__)

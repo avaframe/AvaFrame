@@ -3,7 +3,7 @@
 
 # Local imports
 from avaframe.com2AB import com2AB
-from avaframe.out3SimpPlot import outAB
+from avaframe.out3Plot import outAB
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils

@@ -21,8 +21,8 @@ from matplotlib.image import NonUniformImage
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in3Utils.ascUtils as IOf
-from avaframe.in3Utils.plotUtils import *
-import avaframe.in3Utils.makePalette as makePalette
+from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.makePalette as makePalette
 
 # create local logger
 log = logging.getLogger(__name__)
