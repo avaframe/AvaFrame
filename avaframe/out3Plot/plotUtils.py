@@ -42,15 +42,33 @@ matplotlib.rcParams['lines.markersize'] = ms
 # font size
 fs = float(cfg['fontSize'])
 matplotlib.rcParams['figure.titlesize'] = cfg['titleSize']
+matplotlib.rcParams['figure.dpi'] = float(cfg['figResolution'])
+matplotlib.rcParams['figure.autolayout'] = True
+
 matplotlib.rcParams['axes.labelsize'] = cfg['labelSize']
+matplotlib.rcParams['axes.linewidth'] = 1.0
+matplotlib.rcParams['axes.edgecolor'] = 'lightgrey'
+matplotlib.rcParams['axes.labelcolor'] = 'grey'
+matplotlib.rcParams['xtick.color'] = 'grey'
+matplotlib.rcParams['xtick.major.width'] = 1.0
+matplotlib.rcParams['xtick.major.size'] = 3
+matplotlib.rcParams['xtick.labelsize'] = cfg['tickLabelSize']
+matplotlib.rcParams['ytick.color'] = 'grey'
+matplotlib.rcParams['ytick.major.width'] = 1.0
+matplotlib.rcParams['ytick.major.size'] = 3
+matplotlib.rcParams['ytick.labelsize'] = cfg['tickLabelSize']
+
+
 # set output extension {png, ps, pdf, svg}
 outputFormat = cfg['savefigFormat']
-matplotlib.rcParams["savefig.format"] = outputFormat
-# define figure resolution (dpi)
-matplotlib.rcParams['figure.dpi'] = float(cfg['figResolution'])
-matplotlib.rcParams["legend.edgecolor"] = 'None'
+matplotlib.rcParams['savefig.format'] = outputFormat
+
+matplotlib.rcParams['legend.edgecolor'] = 'None'
 matplotlib.rcParams['text.usetex'] = cfg.getboolean('usetex')
-matplotlib.rcParams['figure.autolayout'] = True
+
+matplotlib.rcParams['grid.color'] = 'whitesmoke'
+matplotlib.rcParams['grid.linestyle'] = ':'
+matplotlib.rcParams['grid.linewidth'] = 0.3
 
 
 ############################
