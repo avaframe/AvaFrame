@@ -79,7 +79,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ax1 = plt.subplot(121)
 
     ref0, im = NonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
-                       extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm)
+                         extent=[x.min(), x.max(), y.min(), y.max()],
+                         cmap=cmap, norm=norm)
     ref1 = plt.plot(xx, yy, 'k+', label='Beta point : %.1f °' %
                     rasterTransfo['runoutAngle'])
     ref2 = plt.plot(xPath, yPath, 'k--', label='flow path')
@@ -93,9 +94,10 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ax2 = plt.subplot(122)
 
     ref0, im = NonUnifIm(ax2, l, s, maskedArraySL, 'l [m]', 's [m]',
-                           extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
+                         extent=[l.min(), l.max(), s.min(), s.max()],
+                         cmap=cmap, norm=norm)
     ref1 = ax2.axhline(y=s[indRunoutPoint], color ='k', linestyle='--',
-                        label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
+                       label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
 
     ax2.set_title('sl Domain' + '\n' +  'Black = out of raster')
     ax2.legend()
@@ -148,7 +150,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ref0 = ax1.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
     ref5, im = NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
-                           extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
+                         extent=[l.min(), l.max(), s.min(), s.max()],
+                         cmap=cmap, norm=norm)
 
     ax1.set_title('Peak Pressure 2D plot for the reference')
     ax1.legend()
@@ -205,10 +208,10 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     Cmap = [cmapPres, cmapDepth, cmapSpeed]
     Title = ['Peak Pressure', 'Peak Flow Depth', 'Peak Speed']
     Unit = [' [kPa]', ' [m]', ' [m/s]']
-    Data =  np.array(([None] * 3))
-    Data[0] =  rasterdataPres
-    Data[1] =  rasterdataDepth
-    Data[2] =  rasterdataSpeed
+    Data = np.array(([None] * 3))
+    Data[0] = rasterdataPres
+    Data[1] = rasterdataDepth
+    Data[2] = rasterdataSpeed
 
     ############################################
     # Figure: Pressure depth speed
@@ -223,9 +226,10 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         cmap.set_bad('w', 1.)
         ref2 = ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
         ref1 = ax.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
-                       label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
+                          label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
         ref3, im = NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
-                           extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
+                             extent=[l.min(), l.max(), s.min(), s.max()],
+                             cmap=cmap, norm=norm)
 
         ax.set_title(title)
         ax.legend()
@@ -268,11 +272,12 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     cmap.set_under(color='w')
 
     ref0, im= NonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
-            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
+                        extent=[l.min(), l.max(), s.min(), s.max()],
+                        cmap=cmap, norm=norm)
     im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
 
     ax1.set_title('Reference Peak Pressure in the RunOut area' +
-        '\n' + 'Pressure threshold: %.1f kPa' % pLim)
+                  '\n' + 'Pressure threshold: %.1f kPa' % pLim)
     _addColorBar(im, ax1, ticks, 'kPa')
 
     y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
@@ -285,14 +290,13 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     cmap.set_over(color='r')
     cmap.set_bad(color='k')
     ref0, im = NonUnifIm(ax2, l, s, newRasterMask-refRasterMask, 'l [m]', 's [m]',
-    extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
+                         extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
 
     ax2.set_title(
         'Difference between current and reference in the RunOut area' + '\n' + 'Blue = FN, Red = FP')
     im.set_clim(vmin=-0.000000001, vmax=0.000000001)
     ax2.set_ylim([s[indRunoutPoint-20], y_lim])
     plt.subplots_adjust(wspace=0.3)
-
 
     outFileName = projectName + '_' + str(i) + '_comparisonToReference'
 
@@ -346,7 +350,7 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
                AMD, MMD, AMS, MMS, relMass, entMass, finalMass, relativMassDiff,
                GI, GR, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
 
-    header = ''.join(['projectName: ',  projectName, '\n',
+    header = ''.join(['projectName: ', projectName, '\n',
                       'path: ', pathName, '\n',
                       'dhm: ', demName, '\n',
                       'domain_width: ', str(domainWidth), ' m\n',
@@ -448,7 +452,6 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     if (len(fnames) > 100):
         plotDensity = 1
 
-
     color = cmapAimec(np.linspace(1, 0, len(runout) + 3, dtype=float))
     mk = 0
 
@@ -488,16 +491,16 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     if not plotDensity:
         for k in range(len(runout)):
             topoName = cfgPath['projectName']
-            pfarbe = color[k+1]  
+            pfarbe = color[k+1]
             if k == 0:
                 ax1.plot(runout[k], data[k], marker='+', linestyle='None',
-                        markersize=2*ms, color='g', label='Reference')
+                         markersize=2*ms, color='g', label='Reference')
             elif k == 1:
                 ax1.plot(runout[k], data[k], marker=markers, label='sims',
-                        color=pfarbe, linestyle='None')
+                         color=pfarbe, linestyle='None')
             else:
                 ax1.plot(runout[k], data[k], marker=markers, color=pfarbe,
-                        linestyle='None')
+                         linestyle='None')
             mk = mk+1
             if mk == len(markers):
                 mk = 1
@@ -505,7 +508,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
 
     ax1.grid('on')
 
-    #TODO: see comment above
+    # TODO: see comment above
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
                            str(int(plim)), '_', tipo])
 
@@ -581,7 +584,8 @@ def _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
 
     return
 
-def _addColorBar(im,ax2,ticks,myUnit):
+
+def _addColorBar(im, ax2, ticks, myUnit):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''

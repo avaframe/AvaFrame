@@ -28,7 +28,8 @@ cfg = cfg['MAIN']
 
 # define seaborn style and color maps
 sns.set(font_scale=1)
-sns.set_style("ticks", {'axes.linewidth': 1, 'axes.edgecolor': 'black',  'font.family': [cfg['fontFamily']]})
+sns.set_style("ticks", {'axes.linewidth': 1, 'axes.edgecolor': 'black',
+                        'font.family': [cfg['fontFamily']]})
 
 
 # define figure dimentions
@@ -72,7 +73,7 @@ matplotlib.rcParams['grid.linewidth'] = 0.3
 
 
 ############################
-###### Color maps ##########
+# Color maps 
 ############################
 # hell white/green to dark blue
 cmapGB = copy.copy(sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True))
@@ -113,23 +114,24 @@ cmapAvaframe.set_bad(color='k')
 # multi sequential colormap for pressure
 levP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0, 1000.0]
 ticksP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0]
-colorsP = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#C51F2E', '#A30A54', '#232D5F', '#102D5B'] #'#BC3334', '#A70753', '#5B2967'
+colorsP = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E',
+           '#C51F2E', '#A30A54', '#232D5F', '#102D5B']
 cmapP  = makePalette.get_continuous_cmap(colorsP, continuous=True)
 # multi sequential colormap for flow depth
 levD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 50.0]
 ticksD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 10.0]
-colorsD  = ['#E1F88F', '#D7C410', '#D58B15', '#C51F2E', '#A30A54', '#232D5F', '#232D5F']
-cmapD  = makePalette.get_continuous_cmap(colorsD, continuous=True)
+colorsD = ['#E1F88F', '#D7C410', '#D58B15', '#C51F2E', '#A30A54', '#232D5F', '#232D5F']
+cmapD = makePalette.get_continuous_cmap(colorsD, continuous=True)
 
 # multi sequential colormap for speed
 levS = [0., 1, 5, 10, 15, 20, 25, 30, 35, 100]
 ticksS = [0., 1, 5, 10, 15, 20, 25, 30, 35]
-colorsS  = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#BC3334', '#A70753', '#5B2967', '#102D5B']
+colorsS = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#BC3334', '#A70753', '#5B2967', '#102D5B']
 # '#851D62' or '#A70753' and '#5B2967'
-cmapS  = makePalette.get_continuous_cmap(colorsS, continuous=True)
+cmapS = makePalette.get_continuous_cmap(colorsS, continuous=True)
 
 ###############################################
-############ Set colormaps to use #############
+# Set colormaps to use 
 ###############################################
 # ploting with a descrete (contCmap = continuousCmap = False) or continuous colormap (contCmap = True)?
 # if continuous, only the cmap argument in the cmapDictionnary maters
@@ -159,7 +161,6 @@ cmapSpeed['ticks'] = ticksS
 cmapDEM = cmapGreys
 
 cmapAimec = cmapAvaframe
-
 
 
 ###################################
