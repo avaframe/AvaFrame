@@ -97,18 +97,9 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     cbar.ax.set_title('[kPa]')
     ax2.legend()
 
-    if cfgFlags.getboolean('plotFigure'):
-        plt.show()
-    else:
-        plt.ioff()
-    if cfgFlags.getboolean('savePlot'):
-        outFileName = projectName + '_domTransfo'
-        outname = os.path.join(pathResult, 'pics', outFileName)
-        if not os.path.exists(os.path.dirname(outname)):
-            os.makedirs(os.path.dirname(outname))
-        fig.savefig(outname)
+    outFileName = projectName + '_domTransfo'
 
-    plt.close(fig)
+    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
 def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
@@ -174,19 +165,9 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
     ax2.legend(loc=0)
 
-    if cfgFlags.getboolean('savePlot'):
-        outFileName = projectName + '_dptr' + str(int(pLim)) + '_slComparison'
-        outname = os.path.join(pathResult, 'pics', outFileName)
-        if not os.path.exists(os.path.dirname(outname)):
-            os.makedirs(os.path.dirname(outname))
-        fig.savefig(outname)
+    outFileName = projectName + '_dptr' + str(int(pLim)) + '_slComparison'
 
-    if cfgFlags.getboolean('plotFigure'):
-        plt.show()
-    else:
-        plt.ioff()
-
-    plt.close(fig)
+    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
 def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
@@ -245,19 +226,8 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         cbar.outline.set_visible(colorbarOutline)
         ax.legend()
 
-    if cfgFlags.getboolean('savePlot'):
-        outFileName = projectName + '_referenceFields'
-        outname = os.path.join(pathResult, 'pics', outFileName)
-        if not os.path.exists(os.path.dirname(outname)):
-            os.makedirs(os.path.dirname(outname))
-        fig.savefig(outname)
-
-    if cfgFlags.getboolean('plotFigure'):
-        plt.show()
-    else:
-        plt.ioff()
-
-    plt.close(fig)
+    outFileName = projectName + '_referenceFields'
+    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
 def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
@@ -314,19 +284,11 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ax2.set_ylim([s[indRunoutPoint-20], y_lim])
     plt.subplots_adjust(wspace=0.3)
 
-    if cfgFlags.getboolean('savePlot'):
-        outFileName = projectName + '_' + str(i) + '_compToRef'
-        outname = os.path.join(pathResult, 'pics', outFileName)
-        if not os.path.exists(os.path.dirname(outname)):
-            os.makedirs(os.path.dirname(outname))
-        fig.savefig(outname)
 
-    if cfgFlags.getboolean('plotFigure'):
-        plt.show()
-    else:
-        plt.ioff()
+    outFileName = projectName + '_' + str(i) + '_compToRef'
 
-    plt.close(fig)
+    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+
 
 def resultWrite(cfgPath, cfgSetup, resAnalysis):
     """
@@ -415,11 +377,9 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     log.info('File written: %s' % outname)
 
 
-def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
+def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     """
     Visualize results in a nice way
-    Jan-Thomas Fischer BFW 2010-2012
-    AK BFW 2014-2015
     """
     ####################################
     # Get input data
@@ -441,18 +401,14 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
     maxMaxDPP = resAnalysis['MMPP']
     GI = resAnalysis['growthIndex']
 
-    ############################################
     # prepare for plot
 
+    # TODO: move flag to .ini file
     # includes flag for y axis -
     # 1 = mean pressure data
     # 2 = groth index
     # 3 = max pressure data
     flag = 3
-    if (len(fnames) > 100):
-        plotDensity = 1
-    else:
-        plotDensity = 0
 
     if flag == 1:
         title = 'Visualizing mean peak pressure data'
@@ -476,21 +432,30 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         log.error('Wrong flag')
         return None
 
-    xlimProfAxis = max(sPath) + 50
-    # color = cm.get_cmap('autumn', len(runout) + 3)
+    # If more than 100 files are provided, add a density plot
+    plotDensity = 0
+    if (len(fnames) > 100):
+        plotDensity = 1
+
+
     color = cmapAimec(np.linspace(1, 0, len(runout) + 3, dtype=float))
-    # Final result diagram - z_profile+data
-    fig = plt.figure(figsize=(figW*2, figH))
-    # fig.suptitle(title)
     mk = 0
+
+    #######################################
+    # Final result diagram - z_profile+data
+
+    fig = plt.figure(figsize=(figW*2, figH))
+
     # show flow path
     ax1 = fig.add_subplot(111)
     ax1.set_title(title)
     ax1.set_ylabel(yaxis_label, color=color[-3])
     ax1.spines['left'].set_color(color[-3])
     ax1.tick_params(axis='y', colors=color[-3])
+
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(plim),
                             ' kPa threshold']), color='black')
+
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
@@ -499,48 +464,48 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
         dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('Counts')
+
     ax2 = ax1.twinx()
     ax2.set_ylabel('z [m]', color='k')
-    ax2.spines['right'].set_color('k')
     ax2.spines['left'].set_color(color[-3])
     ax2.tick_params(axis='y', colors='k')
+
     ax2.plot(sPath, zPath, color='k', label='path', linestyle='--')
-    plt.xlim([0, xlimProfAxis])
+    plt.xlim([0, max(sPath) + 50])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
+
     if not plotDensity:
         for k in range(len(runout)):
             topoName = cfgPath['projectName']
-            pfarbe = color[k+1]  # (float(k), len(runout), colorflag)
+            pfarbe = color[k+1]  
             if k == 0:
                 ax1.plot(runout[k], data[k], marker='+', linestyle='None',
-                         markersize=2*ms, color='g', label='Reference')
+                        markersize=2*ms, color='g', label='Reference')
             elif k == 1:
                 ax1.plot(runout[k], data[k], marker=markers, label='sims',
-                         color=pfarbe, linestyle='None')
+                        color=pfarbe, linestyle='None')
             else:
                 ax1.plot(runout[k], data[k], marker=markers, color=pfarbe,
-                         linestyle='None')
+                        linestyle='None')
             mk = mk+1
             if mk == len(markers):
                 mk = 1
         ax1.legend(loc='lower left')
+
     ax1.grid('on')
+
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
                            str(int(plim)), '_', tipo])
-    outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
 
-    if not os.path.exists(os.path.dirname(outname)):
-        os.makedirs(os.path.dirname(outname))
-    fig.savefig(outname)
+    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
-    plt.close(fig)
-
+    ############################################
     # Final result diagram - roc-plots
+
     rTP = resAnalysis['TP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
     rFP = resAnalysis['FP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
 
     fig = plt.figure(figsize=(figW, figH))
-    # fig.suptitle('Normalized difference compared to reference')
     mk = 0
     ax1 = fig.add_subplot(111)
     ax1.set_title('Normalized difference compared to reference')
@@ -571,17 +536,35 @@ def resultVisu(cfgPath, rasterTransfo, resAnalysis, plim):
             if mk == len(markers):
                 mk = 0
         ax1.legend(loc='lower left')
+
     plt.xlim([-0.01, max(1, max(rFP))])
     plt.ylim([0, 1.01])
     plt.grid('on')
 
     outFileName = ''.join([cfgPath['dirName'], '_dptr', str(int(plim)), '_ROC'])
-    outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
 
-    if not os.path.exists(os.path.dirname(outname)):
-        os.makedirs(os.path.dirname(outname))
-    fig.savefig(outname)
+    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+
+    return
+
+
+def _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
+    """
+    Receive a plot handle and config and check whether to save and or plot
+    """
+
+    if cfgFlags.getboolean('savePlot'):
+        outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
+        if not os.path.exists(os.path.dirname(outname)):
+            os.makedirs(os.path.dirname(outname))
+        fig.savefig(outname)
+
+    if cfgFlags.getboolean('plotFigure'):
+        plt.show()
+    else:
+        plt.ioff()
 
     plt.close(fig)
 
     return
+

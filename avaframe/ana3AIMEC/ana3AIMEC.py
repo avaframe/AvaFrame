@@ -140,7 +140,7 @@ def mainAIMEC(cfgPath, cfg):
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of results')
-    outAimec.resultVisu(cfgPath, rasterTransfo, resAnalysis, pressureLimit)
+    outAimec.resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, pressureLimit)
 
     # -----------------------------------------------------------
     # write results to file
