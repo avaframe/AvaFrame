@@ -7,7 +7,7 @@
 import os
 
 # Local imports
-from avaframe.out3SimpPlot import outQuickPlotSimple
+from avaframe.out3Plot import outQuickPlotSimple
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 

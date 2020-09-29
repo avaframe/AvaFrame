@@ -258,6 +258,73 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     plt.close(fig)
 
 
+def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
+    """
+    Plot and save the comparison between current simulation and Reference
+    in the run-out area
+    """
+    ####################################
+    # Get input data
+    # read paths
+    pathResult = cfgPath['pathResult']
+    projectName = cfgPath['dirName']
+    # read data
+    s = rasterTransfo['s']
+    l = rasterTransfo['l']
+    indRunoutPoint = rasterTransfo['indRunoutPoint']
+    pLim = resAnalysis['pressureLimit']
+    dataPressure = inputs['dataPressure']
+    refRasterMask = inputs['refRasterMask']
+    newRasterMask = inputs['newRasterMask']
+    nStart = inputs['nStart']
+    i = inputs['i']
+    ############################################
+    # Figure: Raster comparison
+    fig = plt.figure(figsize=(figW*2, figH))
+    y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
+    ax1 = plt.subplot(121)
+    ax1.set_title('Reference Peak Pressure in the RunOut area' +
+        '\n' + 'Pressure threshold: %.1f kPa' % pLim)
+    # get color map
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapPres, pLim,
+                            np.nanmax((dataPressure[0])[nStart:]), continuous=contCmap)
+    cmap.set_under(color='w')
+
+    ref0, im= NonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
+            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
+    im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
+    cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, ticks=ticks)
+    cbar.ax.set_ylabel('peak pressure [kPa]')
+    ax1.set_ylim([s[indRunoutPoint-20], y_lim])
+
+    ax2 = plt.subplot(122)
+    ax2.set_title(
+        'Difference between current and reference in the RunOut area' + '\n' + 'Blue = FN, Red = FP')
+    colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
+    cmap = matplotlib.colors.ListedColormap(colorsList)
+    cmap.set_under(color='b')
+    cmap.set_over(color='r')
+    cmap.set_bad(color='k')
+    ref0, im = NonUnifIm(ax2, l, s, newRasterMask-refRasterMask, 'l [m]', 's [m]',
+    extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
+    im.set_clim(vmin=-0.000000001, vmax=0.000000001)
+    ax2.set_ylim([s[indRunoutPoint-20], y_lim])
+    plt.subplots_adjust(wspace=0.3)
+
+    if cfgFlags.getboolean('savePlot'):
+        outFileName = projectName + '_' + str(i) + '_compToRef'
+        outname = os.path.join(pathResult, 'pics', outFileName)
+        if not os.path.exists(os.path.dirname(outname)):
+            os.makedirs(os.path.dirname(outname))
+        fig.savefig(outname)
+
+    if cfgFlags.getboolean('plotFigure'):
+        plt.show()
+    else:
+        plt.ioff()
+
+    plt.close(fig)
+
 def resultWrite(cfgPath, cfgSetup, resAnalysis):
     """
     This function writes the main Aimec results to a file (outputFile)

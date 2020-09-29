@@ -20,7 +20,7 @@ import glob
 
 # Local imports
 import avaframe.in3Utils.ascUtils as IOf
-from avaframe.out3SimpPlot.plotSettings import *
+from avaframe.out3Plot.plotUtils import *
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages

@@ -44,7 +44,7 @@ fs = float(cfg['fontSize'])
 matplotlib.rcParams['figure.titlesize'] = cfg['titleSize']
 matplotlib.rcParams['axes.labelsize'] = cfg['labelSize']
 # set output extension {png, ps, pdf, svg}
-outputFormat = 'pdf'
+outputFormat = cfg['savefigFormat']
 matplotlib.rcParams["savefig.format"] = outputFormat
 # define figure resolution (dpi)
 matplotlib.rcParams['figure.dpi'] = float(cfg['figResolution'])
