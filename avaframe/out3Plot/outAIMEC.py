@@ -76,25 +76,25 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ax1 = plt.subplot(121)
     ref0, im = NonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
                        extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm)
-    ref1 = plt.plot(xx, yy, 'ro', label='Beta point : %.1f °' %
-
+    ref1 = plt.plot(xx, yy, 'k+', label='Beta point : %.1f °' %
                     rasterTransfo['runoutAngle'])
-    ref2 = plt.plot(xPath, yPath, 'b-', label='flow path')
-    ref3 = plt.plot(DBXl, DBYl, 'g-', label='domain')
-    ref3 = plt.plot(DBXr, DBYr, 'g-')
-    ref3 = plt.plot([DBXl, DBXr], [DBYl, DBYr], 'g-')
+    ref2 = plt.plot(xPath, yPath, 'k--', label='flow path')
+    ref3 = plt.plot(DBXl, DBYl, 'k-', label='domain')
+    ref3 = plt.plot(DBXr, DBYr, 'k-')
+    ref3 = plt.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
     ax1.set_title('XY Domain')
     ax1.legend()
 
     ax2 = plt.subplot(122)
     ax2.set_title('sl Domain' + '\n' +  'Black = out of raster')
     maskedArray = np.ma.masked_where(slRaster == 0, slRaster)
-    ref1 = ax2.axhline(y=s[indRunoutPoint], color='r',
+    ref1 = ax2.axhline(y=s[indRunoutPoint], color ='k', linestyle='--',
                         label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
     ref0, im = NonUnifIm(ax2, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
-    cbar.ax.set_ylabel('peak pressure [kPa]')
+    cbar.outline.set_visible(colorbarOutline)
+    cbar.ax.set_title('[kPa]')
     ax2.legend()
 
     if cfgFlags.getboolean('plotFigure'):
@@ -149,15 +149,16 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
     ax1.set_title('Peak Pressure 2D plot for the reference')
-    ref0 = ax1.axhline(y=s[indRunoutPoint], color='k',
+    ref1 = ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
+    ref2 = ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean')
+    ref3 = ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
+    ref0 = ax1.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-    ref1 = ax1.axhline(y=np.max(runout), color='r', label='runout max')
-    ref2 = ax1.axhline(y=np.average(runout), color='y', label='runout mean')
-    ref3 = ax1.axhline(y=np.min(runout), color='g', label='runout min')
     ref5, im = NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     cbar = ax1.figure.colorbar(im, ax=ax1, ticks=ticks)
-    cbar.ax.set_ylabel('peak pressure [kPa]')
+    cbar.ax.set_title('[kPa]')
+    cbar.outline.set_visible(colorbarOutline)
     ax1.legend()
 
     ax2 = plt.subplot(122)
@@ -234,13 +235,14 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             cmap, 0.0, np.nanmax(maskedArray), continuous=contCmap)
         cmap.set_bad('w', 1.)
-        ref1 = ax.axhline(y=s[indRunoutPoint], color='k',
+        ref2 = ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
+        ref1 = ax.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-        ref2 = ax.axhline(y=runout[0], color='b', label='runout')
         ref3, im = NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
         cbar = ax.figure.colorbar(im, ax=ax)
-        cbar.ax.set_ylabel(title + unit)
+        cbar.ax.set_title(unit)
+        cbar.outline.set_visible(colorbarOutline)
         ax.legend()
 
     if cfgFlags.getboolean('savePlot'):
@@ -294,7 +296,8 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
             extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
     cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, ticks=ticks)
-    cbar.ax.set_ylabel('peak pressure [kPa]')
+    cbar.ax.set_title('[kPa]')
+    cbar.outline.set_visible(colorbarOutline)
     ax1.set_ylim([s[indRunoutPoint-20], y_lim])
 
     ax2 = plt.subplot(122)
