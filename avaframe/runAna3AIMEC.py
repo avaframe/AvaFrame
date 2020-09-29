@@ -43,7 +43,7 @@ dfa2Aimec.mainDfa2Aimec(avalancheDir, cfgSetup)
 
 saveOutPath = avalancheDir + '/Outputs'
 # Extract input file locations
-cfgPath = ana3AIMEC.readAIMECinputs(avalancheDir, dirName = 'com1DFA')
+cfgPath = ana3AIMEC.readAIMECinputs(avalancheDir, dirName='com1DFA')
 
 startTime = time.time()
 

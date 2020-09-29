@@ -465,7 +465,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ax1.tick_params(axis='y', colors=color[-3])
 
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(plim),
-                            ' kPa threshold']), color='black')
+                            ' kPa threshold']))
 
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
@@ -477,7 +477,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
         cbar.ax.set_ylabel('Counts')
 
     ax2 = ax1.twinx()
-    ax2.set_ylabel('z [m]', color='k')
+    ax2.set_ylabel('z [m]')
     ax2.spines['left'].set_color(color[-3])
     ax2.tick_params(axis='y', colors='k')
 
