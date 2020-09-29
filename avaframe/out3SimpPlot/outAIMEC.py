@@ -21,7 +21,8 @@ from matplotlib.image import NonUniformImage
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in3Utils.ascUtils as IOf
-from avaframe.out3SimpPlot.plotSettings import *
+from avaframe.in3Utils.plotUtils import *
+import avaframe.in3Utils.makePalette as makePalette
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     s = rasterTransfo['s']
 
     maskedArray = np.ma.masked_where(xyRaster == 0, xyRaster)
-    cmap, _, _, norm, ticks = makeColorMap(
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(
         cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_under(color='w')
 
@@ -73,7 +74,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     # Figure: Raster transformation
     fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
-    ref0, im = myNonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
+    ref0, im = NonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
                        extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm)
     ref1 = plt.plot(xx, yy, 'ro', label='Beta point : %.1f °' %
 
@@ -90,7 +91,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     maskedArray = np.ma.masked_where(slRaster == 0, slRaster)
     ref1 = ax2.axhline(y=s[indRunoutPoint], color='r',
                         label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
-    ref0, im = myNonUnifIm(ax2, l, s, maskedArray, 'l [m]', 's [m]',
+    ref0, im = NonUnifIm(ax2, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
     cbar.ax.set_ylabel('peak pressure [kPa]')
@@ -139,7 +140,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
 
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
-    cmap, _, _, norm, ticks = makeColorMap(
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(
         cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_bad('w', 1.)
 
@@ -153,7 +154,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ref1 = ax1.axhline(y=np.max(runout), color='r', label='runout max')
     ref2 = ax1.axhline(y=np.average(runout), color='y', label='runout mean')
     ref3 = ax1.axhline(y=np.min(runout), color='g', label='runout min')
-    ref5, im = myNonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
+    ref5, im = NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     cbar = ax1.figure.colorbar(im, ax=ax1, ticks=ticks)
     cbar.ax.set_ylabel('peak pressure [kPa]')
@@ -230,13 +231,13 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
         ax.set_title(title)
         maskedArray = np.ma.masked_where(data == 0, data)
-        cmap, _, _, norm, ticks = makeColorMap(
+        cmap, _, _, norm, ticks = makePalette.makeColorMap(
             cmap, 0.0, np.nanmax(maskedArray), continuous=contCmap)
         cmap.set_bad('w', 1.)
         ref1 = ax.axhline(y=s[indRunoutPoint], color='k',
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
         ref2 = ax.axhline(y=runout[0], color='b', label='runout')
-        ref3, im = myNonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
+        ref3, im = NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
         cbar = ax.figure.colorbar(im, ax=ax)
         cbar.ax.set_ylabel(title + unit)

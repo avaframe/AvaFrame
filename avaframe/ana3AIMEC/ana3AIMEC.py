@@ -25,7 +25,8 @@ import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in3Utils.ascUtils as IOf
 import avaframe.out3SimpPlot.outAIMEC as outAimec
-from avaframe.out3SimpPlot.plotSettings import *
+from avaframe.in3Utils.plotUtils import *
+import avaframe.in3Utils.makePalette as makePalette
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -718,11 +719,11 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             ax1.set_title('Reference Peak Pressure in the RunOut area' +
                           '\n' + 'Pressure threshold: %.1f kPa' % pLim)
             # get color map
-            cmap, _, _, norm, ticks = makeColorMap(
+            cmap, _, _, norm, ticks = makePalette.makeColorMap(
                 cmapPres, pLim, np.nanmax((dataPressure[0])[nStart:]), continuous=contCmap)
             cmap.set_under(color='w')
 
-            ref0, im= myNonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
+            ref0, im= NonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
                                    extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
             im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
             cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, ticks=ticks)
@@ -737,7 +738,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             cmap.set_under(color='b')
             cmap.set_over(color='r')
             cmap.set_bad(color='k')
-            ref0, im = myNonUnifIm(ax2, l, s, newRasterData-newMask, 'l [m]', 's [m]',
+            ref0, im = NonUnifIm(ax2, l, s, newRasterData-newMask, 'l [m]', 's [m]',
                                    extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
             im.set_clim(vmin=-0.000000001, vmax=0.000000001)
             ax2.set_ylim([s[indRunoutPoint-20], y_lim])

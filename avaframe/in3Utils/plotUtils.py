@@ -11,39 +11,45 @@ import matplotlib
 from matplotlib.image import NonUniformImage
 import cmocean
 import copy
+import logging
 
 from avaframe.in3Utils import cfgUtils
-from avaframe.out3SimpPlot.makePalette import *
+from avaframe.in3Utils import makePalette
+from avaframe.in3Utils import plotUtils
 
-cfgMain = cfgUtils.getGeneralConfig()
-continuousCmap = cfgMain['MAIN'].getboolean('continuousCmap')
+
+# create local logger
+log = logging.getLogger(__name__)
+
+# Load all input Parameters from config file
+# get the configuration of an already imported module
+cfg = cfgUtils.getModuleConfig(plotUtils)
+cfg = cfg['MAIN']
 
 # define seaborn style and color maps
 sns.set(font_scale=1)
-sns.set_style("ticks", {'axes.linewidth': 1, 'axes.edgecolor': 'black',  'font.family': ['sans-serif']})
-# print(sns.axes_style())
+sns.set_style("ticks", {'axes.linewidth': 1, 'axes.edgecolor': 'black',  'font.family': [cfg['fontFamily']]})
 
 
 # define figure dimentions
-figW = 6
-figH = 6
+figW = float(cfg['figW'])
+figH = float(cfg['figH'])
 # define lines and marker properties
-lw = 1.5
-ms = 5
-markers = 'o'
-matplotlib.rcParams['lines.linewidth'] = lw
+markers = cfg['markerStyle']
+ms = float(cfg['markerSize'])
+matplotlib.rcParams['lines.linewidth'] = float(cfg['lineWidth'])
 matplotlib.rcParams['lines.markersize'] = ms
 # font size
-fs = 12
-matplotlib.rcParams['figure.titlesize'] = 'xx-large'
-matplotlib.rcParams['axes.labelsize'] = 'x-large'
+fs = float(cfg['fontSize'])
+matplotlib.rcParams['figure.titlesize'] = cfg['titleSize']
+matplotlib.rcParams['axes.labelsize'] = cfg['labelSize']
 # set output extension {png, ps, pdf, svg}
 outputFormat = 'pdf'
 matplotlib.rcParams["savefig.format"] = outputFormat
 # define figure resolution (dpi)
-matplotlib.rcParams['figure.dpi'] = 150
+matplotlib.rcParams['figure.dpi'] = float(cfg['figResolution'])
 matplotlib.rcParams["legend.edgecolor"] = 'None'
-matplotlib.rcParams['text.usetex'] = True
+matplotlib.rcParams['text.usetex'] = cfg.getboolean('usetex')
 matplotlib.rcParams['figure.autolayout'] = True
 
 
@@ -82,7 +88,7 @@ cmapdiv = copy.copy(matplotlib.cm.RdBu_r)  # sns.color_palette("RdBu_r")
 # cmap based on avaframe logo colors
 colorAvaframe = ['#0EF8EA', '#12E4E6', '#28D0DF', '#3CBCD5', '#4AA8C9',
                  '#5595B9', '#5C82A8', '#5F6F95', '#5E5E81', '#5A4D6C', '#523E58', '#483045']
-cmapAvaframe = get_continuous_cmap(colorAvaframe)
+cmapAvaframe = makePalette.get_continuous_cmap(colorAvaframe)
 cmapAvaframe.set_bad(color='k')
 
 
@@ -90,28 +96,27 @@ cmapAvaframe.set_bad(color='k')
 levP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0, 1000.0]
 ticksP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0]
 colorsP = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#C51F2E', '#A30A54', '#232D5F', '#102D5B'] #'#BC3334', '#A70753', '#5B2967'
-cmapP  = get_continuous_cmap(colorsP, continuous=True)
+cmapP  = makePalette.get_continuous_cmap(colorsP, continuous=True)
 # multi sequential colormap for flow depth
 levD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 50.0]
 ticksD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 10.0]
 colorsD  = ['#E1F88F', '#D7C410', '#D58B15', '#C51F2E', '#A30A54', '#232D5F', '#232D5F']
-cmapD  = get_continuous_cmap(colorsD, continuous=True)
+cmapD  = makePalette.get_continuous_cmap(colorsD, continuous=True)
 
 # multi sequential colormap for speed
 levS = [0., 1, 5, 10, 15, 20, 25, 30, 35, 100]
 ticksS = [0., 1, 5, 10, 15, 20, 25, 30, 35]
 colorsS  = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#BC3334', '#A70753', '#5B2967', '#102D5B']
 # '#851D62' or '#A70753' and '#5B2967'
-cmapS  = get_continuous_cmap(colorsS, continuous=True)
+cmapS  = makePalette.get_continuous_cmap(colorsS, continuous=True)
 
 ###############################################
 ############ Set colormaps to use #############
 ###############################################
 # ploting with a descrete (contCmap = continuousCmap = False) or continuous colormap (contCmap = True)?
-# continuousCmap is read from the avaframeCfg.ini at the begining of this file.
 # if continuous, only the cmap argument in the cmapDictionnary maters
 # replace it with the wanted colormap
-contCmap = continuousCmap
+contCmap = cfg.getboolean('contCmap')
 # for pressure
 cmapPres = {}
 cmapPres['cmap'] = cmapP
@@ -142,7 +147,7 @@ cmapAimec = cmapAvaframe
 ###################################
 # shortcut plot functions
 ###################################
-def myNonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
+def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
     im = NonUniformImage(ax, **kwargs)
     im.set_data(x, y, z)
     ref = ax.images.append(im)
