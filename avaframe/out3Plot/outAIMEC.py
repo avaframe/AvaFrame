@@ -75,9 +75,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ############################################
     # Figure: Raster transformation
     fig = plt.figure(figsize=(figW*2, figH))
+
     ax1 = plt.subplot(121)
-    ax1.set_title('XY Domain')
-    ax1.legend()
 
     ref0, im = NonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
                        extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm)
@@ -88,20 +87,21 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ref3 = plt.plot(DBXr, DBYr, 'k-')
     ref3 = plt.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
 
+    ax1.set_title('XY Domain')
+    ax1.legend()
 
     ax2 = plt.subplot(122)
-    ax2.set_title('sl Domain' + '\n' +  'Black = out of raster')
-    ax2.legend()
 
     ref0, im = NonUnifIm(ax2, l, s, maskedArraySL, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     ref1 = ax2.axhline(y=s[indRunoutPoint], color ='k', linestyle='--',
                         label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
 
+    ax2.set_title('sl Domain' + '\n' +  'Black = out of raster')
+    ax2.legend()
     _addColorBar(im, ax2, ticks, 'kPa')
 
     outFileName = projectName + '_DomainTransformation'
-
     _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
@@ -131,8 +131,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     pMedian = np.median(pCrossAll, axis=0)
     pPercentile = sp.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
 
-
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
+
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
         cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_bad('w', 1.)
@@ -141,8 +141,6 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     # Figure: Analysis runout
     fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
-    ax1.set_title('Peak Pressure 2D plot for the reference')
-    ax1.legend()
 
     ref1 = ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
     ref2 = ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean')
@@ -152,21 +150,26 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ref5, im = NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
 
+    ax1.set_title('Peak Pressure 2D plot for the reference')
+    ax1.legend()
     _addColorBar(im, ax1, ticks, 'kPa')
 
     ax2 = plt.subplot(122)
-    ax2.set_title('Peak Pressure distribution along the path between runs')
+
     ax2.fill_betweenx(s, pPercentile[2], pPercentile[0],
                       facecolor=[.8, .8, .8], alpha=0.5, label='quantiles')
     ref1 = matplotlib.patches.Patch(alpha=0.5, color=[.8, .8, .8])
     ref2 = ax2.plot(pMedian, s, color='r', label='median')
     ref3 = ax2.plot(pMean, s, color='b', label='mean')
+
+    ax2.set_title('Peak Pressure distribution along the path between runs')
+    ax2.legend(loc=0)
     ax2.set_ylabel('l [m]')
     ax2.set_ylim([s.min(), s.max()])
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
-    ax2.legend(loc=0)
 
+    # TODO: what does dptr mean?
     outFileName = projectName + '_dptr' + str(int(pLim)) + '_slComparison'
 
     _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
@@ -212,8 +215,8 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
 
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(figW*3, figH))
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
+
     for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
-        ax.set_title(title)
         maskedArray = np.ma.masked_where(data == 0, data)
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             cmap, 0.0, np.nanmax(maskedArray), continuous=contCmap)
@@ -224,9 +227,9 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         ref3, im = NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
 
-        _addColorBar(im, ax, ticks, unit)
-
+        ax.set_title(title)
         ax.legend()
+        _addColorBar(im, ax, ticks, unit)
 
     outFileName = projectName + '_referenceFields'
 
@@ -253,12 +256,12 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     newRasterMask = inputs['newRasterMask']
     nStart = inputs['nStart']
     i = inputs['i']
+
     ############################################
     # Figure: Raster comparison
     fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
-    ax1.set_title('Reference Peak Pressure in the RunOut area' +
-        '\n' + 'Pressure threshold: %.1f kPa' % pLim)
+
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapPres, pLim,
                             np.nanmax((dataPressure[0])[nStart:]), continuous=contCmap)
@@ -268,14 +271,14 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
             extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
 
+    ax1.set_title('Reference Peak Pressure in the RunOut area' +
+        '\n' + 'Pressure threshold: %.1f kPa' % pLim)
     _addColorBar(im, ax1, ticks, 'kPa')
 
     y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
     ax1.set_ylim([s[indRunoutPoint-20], y_lim])
 
     ax2 = plt.subplot(122)
-    ax2.set_title(
-        'Difference between current and reference in the RunOut area' + '\n' + 'Blue = FN, Red = FP')
     colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
     cmap = matplotlib.colors.ListedColormap(colorsList)
     cmap.set_under(color='b')
@@ -283,12 +286,15 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     cmap.set_bad(color='k')
     ref0, im = NonUnifIm(ax2, l, s, newRasterMask-refRasterMask, 'l [m]', 's [m]',
     extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
+
+    ax2.set_title(
+        'Difference between current and reference in the RunOut area' + '\n' + 'Blue = FN, Red = FP')
     im.set_clim(vmin=-0.000000001, vmax=0.000000001)
     ax2.set_ylim([s[indRunoutPoint-20], y_lim])
     plt.subplots_adjust(wspace=0.3)
 
 
-    outFileName = projectName + '_' + str(i) + '_compToRef'
+    outFileName = projectName + '_' + str(i) + '_comparisonToReference'
 
     _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -415,25 +421,27 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
 
     if flag == 1:
         title = 'Visualizing mean peak pressure data'
-        log.info(title)
-        tipo = 'rapp'
+        tipo = 'relMeanPeakPres'
         data = meanMaxDPP / meanMaxDPP[0]
-        yaxis_label = 'rAPP [-]'
+        yaxis_label = 'relative mean peak pressure [-]'
+
     elif flag == 2:
         title = 'Visualizing EGU growth index data'
-        log.info(title)
-        tipo = 'GI'
+        tipo = 'growthInd'
         data = GI
         yaxis_label = 'growth index [GI]'
+
     elif flag == 3:
         title = 'Visualizing max peak pressure data'
-        log.info(title)
-        tipo = 'rmpp'
+        tipo = 'relMaxPeakPres'
         data = maxMaxDPP / maxMaxDPP[0]
-        yaxis_label = 'rMPP [-]'
+        yaxis_label = 'relative max peak pressure [-]'
+
     else:
         log.error('Wrong flag')
         return None
+
+    log.info(title)
 
     # If more than 100 files are provided, add a density plot
     plotDensity = 0
@@ -497,6 +505,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
 
     ax1.grid('on')
 
+    #TODO: see comment above
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
                            str(int(plim)), '_', tipo])
 
@@ -514,6 +523,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ax1.set_title('Normalized difference compared to reference')
     ax1.set_ylabel('True positive rate')
     ax1.set_xlabel('False positive rate')
+
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)
@@ -522,7 +532,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
         dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.cool)
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
-    if not plotDensity:
+    else:
         for k in range(len(rTP)):
             topoName = cfgPath['projectName']
             pfarbe = color[k+1]  # colorvar(float(k), len(rTP), colorflag)
