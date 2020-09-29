@@ -9,7 +9,7 @@ import logging
 # Local imports
 from avaframe.in3Utils import generateTopo as gT
 from avaframe.in3Utils import cfgUtils, logUtils
-from avaframe.out3SimpPlot import outGenerateTopo as oT
+from avaframe.out3Plot import outGenerateTopo as oT
 
 
 # log file name; leave empty to use default runLog.log
