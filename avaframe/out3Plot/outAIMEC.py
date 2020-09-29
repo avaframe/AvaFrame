@@ -66,6 +66,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     s = rasterTransfo['s']
 
     maskedArray = np.ma.masked_where(xyRaster == 0, xyRaster)
+    maskedArraySL = np.ma.masked_where(slRaster == 0, slRaster)
+
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
         cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
     cmap.set_under(color='w')
@@ -74,6 +76,9 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     # Figure: Raster transformation
     fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
+    ax1.set_title('XY Domain')
+    ax1.legend()
+
     ref0, im = NonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
                        extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap, norm=norm)
     ref1 = plt.plot(xx, yy, 'k+', label='Beta point : %.1f °' %
@@ -82,25 +87,22 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ref3 = plt.plot(DBXl, DBYl, 'k-', label='domain')
     ref3 = plt.plot(DBXr, DBYr, 'k-')
     ref3 = plt.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
-    ax1.set_title('XY Domain')
-    ax1.legend()
+
 
     ax2 = plt.subplot(122)
     ax2.set_title('sl Domain' + '\n' +  'Black = out of raster')
-    maskedArray = np.ma.masked_where(slRaster == 0, slRaster)
-    ref1 = ax2.axhline(y=s[indRunoutPoint], color ='k', linestyle='--',
-                        label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
-    ref0, im = NonUnifIm(ax2, l, s, maskedArray, 'l [m]', 's [m]',
-                           extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
-    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
-    cbar.outline.set_visible(colorbarOutline)
-    cbar.ax.set_title('[kPa]')
     ax2.legend()
 
-    outFileName = projectName + '_domTransfo'
+    ref0, im = NonUnifIm(ax2, l, s, maskedArraySL, 'l [m]', 's [m]',
+                           extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
+    ref1 = ax2.axhline(y=s[indRunoutPoint], color ='k', linestyle='--',
+                        label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
+
+    _addColorBar(im, ax2, ticks, 'kPa')
+
+    outFileName = projectName + '_DomainTransformation'
 
     _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
-
 
 def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     """
@@ -140,6 +142,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
     ax1.set_title('Peak Pressure 2D plot for the reference')
+    ax1.legend()
+
     ref1 = ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
     ref2 = ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean')
     ref3 = ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
@@ -147,10 +151,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
     ref5, im = NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
-    cbar = ax1.figure.colorbar(im, ax=ax1, ticks=ticks)
-    cbar.ax.set_title('[kPa]')
-    cbar.outline.set_visible(colorbarOutline)
-    ax1.legend()
+
+    _addColorBar(im, ax1, ticks, 'kPa')
 
     ax2 = plt.subplot(122)
     ax2.set_title('Peak Pressure distribution along the path between runs')
@@ -221,12 +223,13 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
         ref3, im = NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                            extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
-        cbar = ax.figure.colorbar(im, ax=ax)
-        cbar.ax.set_title(unit)
-        cbar.outline.set_visible(colorbarOutline)
+
+        _addColorBar(im, ax, ticks, unit)
+
         ax.legend()
 
     outFileName = projectName + '_referenceFields'
+
     _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
@@ -253,7 +256,6 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ############################################
     # Figure: Raster comparison
     fig = plt.figure(figsize=(figW*2, figH))
-    y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
     ax1 = plt.subplot(121)
     ax1.set_title('Reference Peak Pressure in the RunOut area' +
         '\n' + 'Pressure threshold: %.1f kPa' % pLim)
@@ -265,9 +267,10 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ref0, im= NonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
             extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap, norm=norm)
     im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
-    cbar = ax1.figure.colorbar(im, extend='both', ax=ax1, ticks=ticks)
-    cbar.ax.set_title('[kPa]')
-    cbar.outline.set_visible(colorbarOutline)
+
+    _addColorBar(im, ax1, ticks, 'kPa')
+
+    y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
     ax1.set_ylim([s[indRunoutPoint-20], y_lim])
 
     ax2 = plt.subplot(122)
@@ -568,3 +571,10 @@ def _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
 
     return
 
+def _addColorBar(im,ax2,ticks,myUnit):
+    '''
+    Adds, styles and labels a colorbar to the given image and axes
+    '''
+    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
+    cbar.outline.set_visible(False)
+    cbar.ax.set_title(myUnit)
