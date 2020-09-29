@@ -39,7 +39,6 @@ markers = cfg['markerStyle']
 ms = float(cfg['markerSize'])
 matplotlib.rcParams['lines.linewidth'] = float(cfg['lineWidth'])
 matplotlib.rcParams['lines.markersize'] = ms
-colorbarOutline = False
 # font size
 fs = float(cfg['fontSize'])
 matplotlib.rcParams['figure.titlesize'] = cfg['titleSize']
