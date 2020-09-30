@@ -319,7 +319,7 @@ def runSamos(cfg, avaDir):
 
                 # Create dictionary
                 dictST = {}
-                dicST = {'headerLine' : 'com1DFA simulation', 'simName' : logName, 'simParameters' : {'release area' : relName, 'entrainment area' : entrainmentArea, 'resistance area' : resistanceArea,
+                dictST = {'headerLine' : 'com1DFA simulation', 'simName' : logName, 'simParameters' : {'release area' : relName, 'entrainment area' : entrainmentArea, 'resistance area' : resistanceArea,
                             'parameter variation on' :'', 'parameter value' : '', 'Mu' : defValues['Mu'], 'release thickness [m]' : defValues['RelTh']}, 'releaseArea' : {'release area scenario' : relName},
                            'entrainmentArea' : {'entrainment area scenario' : entrainmentArea}, 'resistanceArea' : {'resistance area scenario' : resistanceArea}}
 
