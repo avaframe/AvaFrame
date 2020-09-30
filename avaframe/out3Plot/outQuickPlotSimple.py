@@ -102,12 +102,12 @@ def quickPlotSimple(avaDir, inputDir):
 
     # Fgiure 2 cross and lonprofile
     fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH))
-    ax[0].plot(data1[:, ny_loc], 'k', linewidth=lw, label='data1')
+    ax[0].plot(data1[:, ny_loc], 'k', label='data1')
     ax[0].plot(data2[:, ny_loc], 'b--', label='data2')
     ax[0].set_xlabel('Location across track [nrows]')
     ax[0].set_ylabel('Result parameter', fontsize=fs)
     ax[0].set_title('Cross profile at y =  %d' % ny_loc)
-    ax[1].plot(data1[nx_loc, :], 'k', linewidth=lw, label='data1')
+    ax[1].plot(data1[nx_loc, :], 'k', label='data1')
     ax[1].plot(data2[nx_loc, :], 'b--', label='data2')
     ax[1].set_xlabel('Location along track [ncols]')
     ax[1].set_ylabel('Result parameter',  fontsize=fs)

@@ -35,7 +35,7 @@ def writeReport(avaDir, reportDict):
             pfile.write('| %s | %s | \n' % (value, parameterD[value]))
         pfile.write(' \n')
 
-        if reportDict['releaseArea'] != '':
+        if parameterD['release area'] != '':
             releaseD = reportDict['releaseArea']
             pfile.write('### Release areas \n')
             for value in releaseD:
@@ -81,5 +81,14 @@ def writeReport(avaDir, reportDict):
 
         if 'images' in reportDict:
             imageD = reportDict['images']
+            pfile.write('### Images \n')
             for value in imageD:
+                pfile.write('##### Figure:   %s \n'  % value)
                 pfile.write('![%s](%s) \n' % (value, imageD[value]))
+
+        if 'text' in reportDict:
+            textD = reportDict['text']
+            pfile.write('### Additional Info \n')
+            for value in textD:
+                pfile.write('##### Topic:   %s \n'  % value)
+                pfile.write('%s \n' % (textD[value]))
