@@ -17,10 +17,10 @@ Mass balance:
 
 .. math::
     \frac{d}{dt} \int\limits_{V(t)} \rho_0 \,\mathrm{d}V = \rho_0 \frac{dV(t)}{dt} =
-    \oint\limits_{\partial V(t)} q_{\text{ent}} \,\mathrm{d}A
+    \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A
     :label: mass-balance1
 
-Where :math:`q_{\text{ent}}` represents the snow entrainment rate.
+Where :math:`q^{\text{ent}}` represents the snow entrainment rate.
 
 Momentum balance:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -61,7 +61,7 @@ Using the mass balance equation :eq:`mass-balance1`, we get:
 
 .. math::
    \rho_0 V \frac{d\overline{u}_i}{dt} = \oint\limits_{\partial V(t)} \sigma_{ij}n_j \,\mathrm{d}A
-   + \rho_0 V g_i  + F_i^{\text{ent}} + F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q_{\text{ent}} \,\mathrm{d}A, \quad i=(1,2,3)
+   + \rho_0 V g_i  + F_i^{\text{ent}} + F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A, \quad i=(1,2,3)
    :label: momentum-balance3
 
 Boundary conditions:
@@ -82,7 +82,7 @@ The boundary conditions at the free surface and bottom of the flow read:
    &\frac{dF_s}{dt} = \frac{\partial F_s}{\partial t} +  u_i\frac{\partial F_s}{\partial x_i} =0 \quad & \mbox{at  }F_s(\mathbf{x},t) =0 \quad & \mbox{Kinematic BC (Material boundary)}\\
    &\sigma_{ij}n_j = 0 \quad & \mbox{at  }F_s(\mathbf{x},t) =0 \quad & \mbox{Dynamic BC (Traction free surface)}\\
    &u_in_i = 0 \quad & \mbox{at  }F_b(\mathbf{x},t) =0 \quad & \mbox{Kinematic BC (No detachment)}\\
-   &\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\overline{\rho},t,\mathbf{x})\quad & \mbox{at  }F_b(\mathbf{x},t) =0\quad & \mbox{Dynamic BC (Chosen friction law)}
+   &\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})\quad & \mbox{at  }F_b(\mathbf{x},t) =0\quad & \mbox{Dynamic BC (Chosen friction law)}
    \end{aligned}
    \right.
    :label: boundary-conditions
@@ -130,7 +130,7 @@ the flow-depth,
     :label: hmean-umean
 
 The snow entrainment is either due to plowing at the front of the avalanche or to erosion
-at the bottom. The entrainment rate at the front :math:`q_{\text{plo}}` can be expressed function of the
+at the bottom. The entrainment rate at the front :math:`q^{\text{plo}}` can be expressed function of the
 properties of the entrained snow (density :math:`\rho_{\text{ent}}` and
 snow depth :math:`h_{\text{ent}}`), the velocity of the avalanche at the
 front :math:`\overline{\mathbf{u}}` and length :math:`w_f` of the front cell (measured perpendicularly
@@ -138,16 +138,16 @@ to the flow velocity :math:`\overline{\mathbf{u}}`). It obviously only happens o
 the avalanche (meaning that :math:`w_f` is zero for inner parts of the avalanche):
 
 .. math::
-   \oint\limits_{\partial V(t)} q_{\text{plo}}\,\mathrm{d}A = \int\limits_{l_{\text{front}}}\int_b^s q_{\text{plo}}\,
+   \oint\limits_{\partial V(t)} q^{\text{plo}}\,\mathrm{d}A = \int\limits_{l_{\text{front}}}\int_b^s q^{\text{plo}}\,
    \mathrm{d}{l}\,\mathrm{d}{z} =  \rho_{\text{ent}}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    :label: ploughing
 
-The entrainment rate at the bottom :math:`q_{\text{ero}}` can be expressed function of the
+The entrainment rate at the bottom :math:`q^{\text{ero}}` can be expressed function of the
 bottom area :math:`A_b` of the control volume, the velocity of the avalanche :math:`\overline{\mathbf{u}}`,
 the bottom shear stress :math:`\tau^{(b)}` and the specific erosion energy :math:`e_b`):
 
 .. math::
-    \oint\limits_{\partial V(t)} q_{\text{ero}}\,\mathrm{d}A = \int\limits_{A_b} q_{\text{ero}}\,
+    \oint\limits_{\partial V(t)} q^{\text{ero}}\,\mathrm{d}A = \int\limits_{A_b} q^{\text{ero}}\,
     \mathrm{d}A = A_b\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
     :label: erosion
 
@@ -167,17 +167,18 @@ breaking energy per fracture surface unit :math:`e_s`
 :math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow depth
 [Sa2007]_ [SaFeFr2008]_ [FiFrGaSo2013]_:
 
-.. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q_{\text{ent}}\,e_d)
+.. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d)
 
 The force :math:`F_i^{\text{res}}` due to obstacles is expressed
 function of the characteristic diameter :math:`\overline{d}` and height
 :math:`h_{\text{res}}` of the obstacles, the spacing
 :math:`s_{\text{res}}` between the obstacles and an empirical
-coefficient :math:`c_w` (see :numref:`f-res`):
+coefficient :math:`c_w` (see :numref:`f-res`). The effective height :math:`h^{\text{eff}}`
+is deffined as :math:`\min\left\lbrace\begin{array}{l} \overline{h}\\h_{res}\end{array}\right\rbrace`:
 
 .. math::
-   F_i^{\text{res}} = -(\frac{1}{2}\,\overline{d}\,c_w/s^2_{\text{res}})\,\overline{\rho}\,A\,
-    \min\left\lbrace\begin{array}{l} \overline{h}\\h_{res}\end{array}\right\rbrace\,\overline{u}^2\,
+   F_i^{\text{res}} = -(\frac{1}{2}\,\overline{d}\,c_w/s^2_{\text{res}})\,\rho_0\,A\,
+    h^{\text{eff}}\,\overline{u}^2\,
     \frac{\overline{u}_i}{\|\overline{u}\|}
 
 
@@ -206,7 +207,7 @@ Which simplifies the momentum balance :eq:`momentum-balance3` to:
 .. math::
    \rho_0 V \frac{d\overline{u}_i}{dt} = \oint\limits_{\partial A_b}\left(\int_b^s\sigma_{ij}\,n_j\,
    \mathrm{d}x_3\right)\,\mathrm{d}l -A_b\overline{\sigma}_{i3}^{(b)} + \rho_0 V g_i  + F_i^{\text{ent}} +
-   F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q_{\text{ent}} \,\mathrm{d}A, \quad i=(1,2,3)
+   F_i^{\text{res}} - \overline{u}_i \oint\limits_{\partial V(t)} q^{\text{ent}} \,\mathrm{d}A, \quad i=(1,2,3)
    :label: momentum-balance5
 
 The momentum balance in direction :math:`x_3` (normal to the slope) is
@@ -252,7 +253,7 @@ describe the flow:
 -  Curvature:  :math:`\qquad\lambda = L / R\qquad`
 
 The different properties involved are then expressed in terms of
-characteristic quantities :math:`L`, :math:`H`, :math:`g` and :math:`R`
+characteristic quantities :math:`L`, :math:`H`, :math:`g`, :math:`\rho_0` and :math:`R`
 (see :numref:`fig-charakterisitsche_groessen`):
 
 .. math::
@@ -268,7 +269,7 @@ characteristic quantities :math:`L`, :math:`H`, :math:`g` and :math:`R`
 The normal part of the stress tensor is directly related to the
 hydro-static pressure:
 
-.. math:: \sigma_{ii} = \rho\,\text{g}\,H\,\sigma_{ii}^*
+.. math:: \sigma_{ii} = \rho_0\,\text{g}\,H\,\sigma_{ii}^*
 
 The dimensionless properties are indicated by a superscripted asterisk.
 Introducing those properties in :eq:`sigma33`, leads to
@@ -286,7 +287,7 @@ in :eq:`sigma33star` which leads to (after reinserting
 the dimensions):
 
 .. math::
-    \overline{\sigma}_{33}(x_3) = \rho\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)
+    \overline{\sigma}_{33}(x_3) = \rho_0\,\underbrace{\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)}_{g_\text{eff}}
     \left[\overline{h}-x_3\right]
     :label: sigma33dim
 
@@ -294,7 +295,7 @@ And at the bottom of the avalanche, with :math:`x_3 = 0`, the normal
 stress can be expressed as:
 
 .. math::
-     \overline{\sigma}^{(b)}_{33} = \rho\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)\,\overline{h}
+     \overline{\sigma}^{(b)}_{33} = \rho_0\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)\,\overline{h}
      :label: sigmab
 
 Calculating the surface integral in equation :eq:`momentum-balance5` requires to
@@ -314,7 +315,7 @@ is of the order of :math:`H`, it follows that:
 
 and thus :math:`\sigma_{12} = \sigma_{21}` is negligible compared to :math:`\sigma_{13}`.
 :math:`\sigma_{13}` is exressed using the bottom friction law
-:math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\overline{\rho},t,\mathbf{x})`
+:math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})`
 introduced in :eq:`boundary-conditions`.
 
 
@@ -329,9 +330,8 @@ Savage and Hutter [SaHu1989]_ the horizontal normal stresses are given as:
 Where :math:`K_{(i)}` are the earth pressure coefficients (cf. [ZwKlSa2003]_ [Sa2004]_):
 
 .. math::
-   \begin{aligned}
     \sigma_{11} &= K_{x~akt/pass}\,\sigma_{33}\\
-    \sigma_{22} &= K_{y~akt/pass}^{(x~akt/pass)}\,\sigma_{33}\end{aligned}
+    \sigma_{22} &= K_{y~akt/pass}^{(x~akt/pass)}\,\sigma_{33}
 
 With the above specifications, the integral of the stresses over the
 flow height is simplified in equation :eq:`momentum-balance5` to:
@@ -343,10 +343,12 @@ flow height is simplified in equation :eq:`momentum-balance5` to:
 and the momentum balance can be written:
 
 .. math::
-    \frac{\,\mathrm{d}\overline{u}_i}{\,\mathrm{d}t} =
-    g_i + \frac{K_{(i)}}{\overline{\rho}\,A\,\overline{h}}\,\oint\limits_{\partial{A}}\left(\frac{\overline{h}\,\sigma^{(b)}}{2}\right)n_i\,\mathrm{d}l
-    -\delta_{i1}\frac{\tau^{(b)}}{\overline{\rho}\,\overline{h}} - C_{\text{res}}\,\overline{\mathbf{u}}^2\,\frac{\overline{u_i}}{\|\overline{\mathbf{u}}\|}
-    -\frac{\overline{u_i}}{A\,\overline{h}}\frac{\,\mathrm{d}(A\,\overline{h})}{\,\mathrm{d}t} + \frac{F_i^{\text{ent}}}{\overline{\rho}\,A\,\overline{h}}
+    \rho_0\,A\,\overline{h}\,\frac{\,\mathrm{d}\overline{u}_i}{\,\mathrm{d}t} =
+    \rho_0\,A\,\overline{h}\,g_i + \underbrace{K_{(i)}\,\oint\limits_{\partial{A}}\left(\frac{\overline{h}\,\sigma^{(b)}}{2}\right)n_i\,\mathrm{d}l}_{F_i^{\text{lat}}}
+    \underbrace{-\delta_{i1}\,A\,\tau^{(b)}}_{F_i^{\text{bot}}}
+    \underbrace{- \rho_0\,A\,h_{\text{eff}}\,C_{\text{res}}\,\overline{\mathbf{u}}^2\,\frac{\overline{u_i}}{\|\overline{\mathbf{u}}\|}}_{F_i^{\text{res}}}
+    - \overline{u_i}\,\rho_0\,\frac{\mathrm{d}\left(A\,\overline{h}\right)}{\mathrm{d}t}
+    + F_i^{\text{ent}}
     :label: momentum-balance6
 
 with
@@ -357,7 +359,7 @@ The mass balance :eq:`mass-balance2`
 remains unchanged:
 
 .. math::
-   \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}(A_b\overline{h})}{\mathrm{d}t}
+   \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}\left(A_b\overline{h}\right)}{\mathrm{d}t}
    = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    + A_b\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    :label: mass-balance3
@@ -384,14 +386,12 @@ of the flow state of the avalanche.
 With
 
 .. math::
-   \begin{aligned}
-   \quad &\sigma^{(b)} \qquad \text{normal component of the stress tensor}\\
-   \quad &\overline{u} \qquad\quad \text{average velocity}\\
-   \quad &\overline{h} \qquad\quad \text{average flow depth}\\
-   \quad &\rho_0 \qquad\quad \text{density}\\
-   \quad &t \qquad\quad\, \text{time}\\
-   \quad &\mathbf{x} \qquad\quad \text{position vector}
-   \end{aligned}
+   &\sigma^{(b)} \qquad &\text{normal component of the stress tensor}\\
+   &\overline{u} \qquad &\text{average velocity}\\
+   &\overline{h} \qquad &\text{average flow depth}\\
+   &\rho_0 \qquad &\text{density}\\
+   &t \qquad &\text{time}\\
+   &\mathbf{x} \qquad &\text{position vector}
 
 Several friction models already implemented in the simulation tool are
 described here.
@@ -410,12 +410,12 @@ is expressed as [Sa2007]_:
 With
 
 .. math::
-   \begin{aligned}
-   \quad \tau_0 \qquad &\text{minimum shear stress}\\
-   \quad R_s \qquad &\text{relation between friction and normal pressure (fluidization factor)}\\
-   \quad R_s^0 \qquad &\text{empirical  constant}\\
-   \quad B \qquad &\text{empirical  constant}\\
-   \quad \kappa \qquad &\text{empirical  constant}\end{aligned}
+   &\tau_0 \qquad &\text{minimum shear stress}\\
+   &R_s \qquad &\text{relation between friction and normal pressure (fluidization factor)}\\
+   &R \qquad &\text{empirical  constant}\\
+   &R_s^0 \qquad &\text{empirical  constant}\\
+   &B \qquad &\text{empirical  constant}\\
+   &\kappa \qquad &\text{empirical  constant}
 
 The minimum shear stress :math:`\tau_0` defines a lower limit below
 which no flow takes place with the condition
@@ -423,7 +423,7 @@ which no flow takes place with the condition
 being the slope. :math:`\tau_0` is independent of the flow depth, which
 leeds to a strong avalanche deceleration, especially for avalanches with
 low flow heights. :math:`R_s` is expressed as
-:math:`R_s = \frac{\rho_0\,\overline{u}^2}{\sigma^{(b)}}`). Together
+:math:`R_s = \frac{\rho_0\,\overline{u}^2}{\sigma^{(b)}}`. Together
 with the empirical parameter :math:`R_s^0` the term
 :math:`\frac{R_s^0}{R_s^0+R_s}` defines the Coulomb basal friction.
 Therefore lower avalanche speeds lead to a higher bed friction, making
@@ -433,7 +433,10 @@ the avalanche mass [SaGr2009]_
 
 
 Numerics
-========
+---------
+
+Principle
+~~~~~~~~~~~
 
 Mass :eq:`mass-balance3` and momentum
 :eq:`momentum-balance6` balance
@@ -451,11 +454,21 @@ of the SPH method are that free surface flows, material boundaries and
 moving boundary conditions are considered implicitly. In addition, large
 deformations can be modeled due to the fact that the method is not based
 on a mesh. From a numerical point of view, the SPH method itself is
-relatively robust. Each particle has a mass :math:`m_{p,j}`. Those
-particles are projected on a raster and the mass distributed on each
+relatively robust.
+
+Method and discretization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Space discretization
+"""""""""""""""""""""""
+
+The domain is discretized in particles. Each particle :math:`p_j` is affected with the following properties:
+a mass :math:`m_{p_j}`, a depth :math:`\overline{h}_{p_j}`, a density :math:`\rho_{p_j}=\rho_0` and
+a velocity :math:`\mathbf{\overline{u}_{p_j}}=(\overline{u}_{p_j,1}, \overline{u}_{p_j,2})`. Those
+particles are also projected on a regular grid (raster) and the mass distributed on each
 node of the raster (see :numref:`raster`). This leads to the
-following expression for the mass :math:`m_{v,i}` of each node on the
-raster grid: :math:`m_{v,i} = \sum\limits_j^{n_i}{m_{p,j}}`
+following expression for the mass :math:`m_{v_i}` of each node on the
+raster grid :math:`m_{v_i} = \sum\limits_j{m_{p_j}}`.
 
 .. _raster:
 
@@ -465,86 +478,147 @@ raster grid: :math:`m_{v,i} = \sum\limits_j^{n_i}{m_{p,j}}`
         Particles in raster grid (from [FiKo2013]_)
 
 Each grid node is also affected with a velocity
-:math:`\overline{\mathbf{u}}_{v,i}` expressed as the sum of the momentum
+:math:`\overline{\mathbf{u}}_{v_i}` expressed as the sum of the momentum
 of each raster cell divided by the mass of the same cell:
 
 .. math::
-    \overline{\mathbf{u}}_{v,i} = \frac{\sum\limits_j^{n_i}{m_{p,j}}\mathbf{u}_j}{\sum\limits_j^{n_i}{m_{p,j}}}
+    \overline{\mathbf{u}}_{v_i} = \frac{\sum\limits_j{m_{p_j}}\overline{\mathbf{u}_j}}{\sum\limits_j{m_{p_j}}}
 
-The flow depth :math:`\overline{h}_{v,i}` can be deduced from the mass
+The flow depth :math:`\overline{h}_{v_i}` can be deduced from the mass
 and area of the raster cell:
 
 .. math::
-    \overline{h}_{v,i} = \frac{m_{v,i}}{\rho_0\,A_{v,i}}
+    \overline{h}_{v_i} = \frac{m_{v_i}}{\rho_0\,A_{v_i}}
 
-The bottom area paired to each particle is related to the mass and flow
+Back to the particles properties, the bottom area paired to each particle is related to the mass and flow
 depth of this one:
 
 .. math::
-    A_{p,i} = \frac{m_{p,i}}{\rho_0\,\overline{h}_{p,i}}
+    A_{p_i} = \frac{m_{p_i}}{\rho_0\,\overline{h}_{p_i}}
 
-The SPH method is introduced when expressing the flow depth of each mass
+
+Method
+"""""""
+
+
+The SPH method is introduced when expressing the flow depth and its gradient for each
 particle as a weighted sum of its neighbours
 [LiLi2010]_ [Sa2007]_:
 
 .. math::
-    \overline{h}_{p,j} = \frac{1}{\rho_0}\,\sum\limits_j^{n_i}{m_{p,j}}\,W_{ij}
+    \overline{h}_{p_j} &= \frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,W_{p_jp_l}\\
+    \mathbf{\nabla}\overline{h}_{p_j} &= -\frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,\mathbf{\nabla}W_{p_jp_l}
+    :label: sph formulation
 
 Where :math:`W` represents the SPH-Kernel function and reads:
 
 .. math::
-   W_{ij} = W(\mathbf{r_{ij}},r_0) = \frac{10}{\pi h^5}\left\{
+   W_{p_jp_l} = W(\mathbf{r_{p_jp_l}},r_0) = \frac{10}{\pi h^5}\left\{
    \begin{aligned}
-   & (r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert), \quad &0\leq \left\Vert \mathbf{r_{ij}}\right\Vert \leq  r_0\\
-   & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
+   & (r_0 - \left\Vert \mathbf{r_{p_jp_l}}\right\Vert)^3, \quad &0\leq \left\Vert \mathbf{r_{p_jp_l}}\right\Vert \leq  r_0\\
+   & 0 , & r_0 <\left\Vert \mathbf{r_{p_jp_l}}\right\Vert
    \end{aligned}
    \right.
    :label: kernel function
 
-:math:`\left\Vert \mathbf{r_{ij}}\right\Vert= \left\Vert \mathbf{x_j}-\mathbf{x_i}\right\Vert`
-represents the distance between particle :math:`i` and :math:`j` and
-:math:`r_0` the smoothing length. Now the lateral pressure forces on
-each particle have to be determined. These are calculated from the
-compression forces on the boundary of the particle. The boundary is
-approximated as a square with the base side length
-:math:`\Delta s = \sqrt{A_p}` and the respective flow height. This leads
-to:
+:math:`\left\Vert \mathbf{r_{p_jp_l}}\right\Vert= \left\Vert \mathbf{x_{p_l}}-\mathbf{x_{p_j}}\right\Vert`
+represents the distance between particle :math:`j` and :math:`l` and
+:math:`r_0` the smoothing length.
+
+The lateral pressure forces on each particle are calculated from the compression
+forces on the boundary of the particle.
+The boundary is approximated as a square with the base side length
+:math:`\Delta s = \sqrt{A_p}` and the respective flow height. This leads to:
 
 .. math::
-    F_i = K_{(i)}\oint\limits_{\partial{A_p}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_i\,\mathrm{d}x_3\right)\mathrm{d}l
+    F_{p_j,i}^{\text{lat}} = K_{(i)}\oint\limits_{\partial{A_{p_j}}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_i\,\mathrm{d}x_3\right)\mathrm{d}l
 
 From equation :eq:`momentum-balance6`
 
 .. math::
-    F_i = K_{(i)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p,i}-
-    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p,i}+\frac{\Delta{s}}{2}}\right)
+    F_{p_j,i}^{\text{lat}} = K_{(i)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p_i}-
+    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p_i}+\frac{\Delta{s}}{2}}\right)
+    = \frac{K_{(i)}}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_i}\right\rvert_{p_j}
 
-The basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}` from
-equation :eq:`sigmab` is determined analogously to the
-flow thicknesses :math:`\overline{h}_{p,i}`:
+The product of the average flow depth :math:`\overline{h}` and the basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}`
+reads (using equation :eq:`sigmab` and dropping the curvature acceleration term):
 
 .. math::
-   {\overline{\sigma}^{(b)}_{33}}_{p,i} = \sum\limits_j^{n_i}{{\overline{\sigma}^{(b)}_{33}}_{p,i}}\,A_{p,j}\,W_{ij}
-     = \frac{1}{\rho_0}\,\sum\limits_j^{n_i}{{\overline{\sigma}^{(b)}_{33}}_{p,i}}\,\frac{m_{p,j}}{\overline{h}_{p,j}}\,W_{ij}
+   \overline{h}\,\overline{\sigma}^{(b)} = \overline{h}^2\,\rho_0\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)
+   \approx \overline{h}^2\,\rho_0\,g_3
 
-The mass of entrained snow for each particle :math:`p` between :math:`t`
-and :math:`t+\Delta{t}` depends on the type of entrainment involved
+Which leads to, using the relation :eq:`sph formulation`:
+
+.. math::
+    F_{p_j,i}^{\text{lat}} = K_{(i)}\,\rho_0\,g_3\,\overline{h}_{p_j}\,.\,\left.\frac{d\,\overline{h}}{d\,x_i}\right\rvert_{p_j}
+    = -K_{(i)}\,\frac{m_{p_j}}{A_{p_j}}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,\left.\frac{d\,W_{p_jp_l}}{d\,x_i}\right\rvert_{p_l}
+
+
+The bottom friction forces on each particle depend on the chose friction model and reads for the SamosAT friction model
+(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{p_j}`):
+
+.. math::
+    F_{p_j,i}^{\text{bot}} = -\delta_{i1}\,A_{p_j}\,\tau^{(b)}_{p_j}
+    = -\delta_{i1}\,A_{p_j}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{p_j}
+     + \frac{\rho_0\,\mathbf{\overline{u}}_{p_j}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
+
+
+The resistance force on each particle reads (where :math:`h^{\text{eff}}_{p_j}`
+is a function of the average flow depth :math:`\overline{h}_{p_j}`):
+
+.. math::
+    F_{p_j,i}^{\text{res}}
+    = - \rho_0\,A_{p_j}\,h^{\text{eff}}_{p_j}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{p_j}\|\,\overline{u}_{p_j,i}
+
+
+The term related to the entrained mass and mass balance
+:math:`- \overline{u_i}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
+now reads:
+
+.. math::
+    - \overline{u}_{p_j,i}\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{p_j}\,\overline{h}_{p_j}\right)
+    = - \overline{u}_{p_j,i}\,A^{\text{ent}}_{p_j}\,q^{\text{ent}}_{p_j}
+
+
+The mass of entrained snow for each particle :math:`p` depends on the type of entrainment involved
 (ploughing or erosion) and reads:
 
 .. math::
-    \Delta{m_p} = A_\text{ent}\,q_{\text{ent}}\,\Delta{t}
+    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{p_j}\,\overline{h}_{p_j}\right)
+    = \frac{\mathrm{d}\,m_{p_j}}{\mathrm{d}t}
+    = A_{p_j}^\text{ent}\,q_{p_j}^{\text{ent}}
 
 with
 
 .. math::
-   \begin{aligned}
-    A_{\text{plo}} &= w_f\,h_{\text{ent}}= \sqrt{\frac{m_{p}}{\overline{\rho}\,\overline{h}_{p}}}\,h_{\text{ent}}
-    \quad &\mbox{and} \quad &q_{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+    A_{p_j}^{\text{plo}} &= w_f\,h_{p_j}^{\text{ent}}= \sqrt{\frac{m_{p_j}}{\rho_0\,\overline{h}_{p_j}}}\,h_{p_j}^{\text{ent}}
+    \quad &\mbox{and} \quad &q_{p_j}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{p_j}\right\Vert
     \quad &\mbox{for ploughing}\\
-    A_{\text{ero}} &= A_p = \frac{m_{p}}{\overline{\rho}\,\overline{h}_{p}}
-    \quad &\mbox{and} \quad &q_{\text{ero}} = \frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+    A_{p_j}^{\text{ero}} &= A_{p_j} = \frac{m_{p_j}}{\rho_0\,\overline{h}_{p_j}}
+    \quad &\mbox{and} \quad &q_{p_j}^{\text{ero}} = \frac{\tau_{p_j}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{p_j}\right\Vert
     \quad &\mbox{for erosion}
-    \end{aligned}
+
+Finaly, the entrainment force reads:
+
+.. math::
+    F_{p_j,i}^{\text{ent}} = -w_f\,(e_s+\,q_{p_j}^{\text{ent}}\,e_d)
+
+
+
+Time discretization
+"""""""""""""""""""""""
+
+The different particle properties are also discretized in time (using a constant time step :math:`\Delta \,t`).
+The supscript :math:`k` decribes which time step is considered (for the quantity :math:`a`, :math:`a(t_k)=a(k\Delta \,t)`
+is refered as :math:`a^k`). This leads, for the velocity, flow depth and mass to :
+
+.. math::
+   &\overline{u}_{p_j,i}(t_k) = \overline{u}_{p_j,i}^k \quad &\text{current time step,}\\
+   &\overline{u}_{p_j,i}(t_{k+1}) = \overline{u}_{p_j,i}^{k+1} \quad &\text{next time step,} \\
+   &\overline{h}_{p_j}(t_k) = \overline{h}_{p_j}^k = \overline{h}_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
+   &m_{p_j}(t_k) = m_{p_j}^k = m_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
+   &m_{p_j}(t_{k+1}) = m_{p_j}^{k+1} = m_{p_j} + \Delta m_{p_j} \quad &\text{next time step.}\\
+
 
 Descretizing the momentum balance
 :eq:`momentum-balance6` in time enables
@@ -552,19 +626,19 @@ to write the the velocity of the particle at the next time step:
 
 .. math::
    u_i^{k+1} = \frac{u_i^k + \Delta{t}\,\left(g_i+\frac{F_i+F_i^\text{ent}}{m_p}\right)}
-    {1 + \Delta{t}\left(\frac{\tau^{(b)}}{\bar\rho\,\overline{h}\,\|\overline{u}\|^k}+C_\text{res}\,\|\overline{u}\|^k\right)}
+    {1 + \Delta{t}\left(\frac{\tau^{(b)}}{\rho_0\,\overline{h}\,\|\overline{u}\|^k}+C_\text{res}\,\|\overline{u}\|^k\right)}
     -u_i^k\,\frac{m_p}{m_p+\Delta{m}_p}
 
 With
 
 .. math::
    \begin{aligned}
-   \quad k \qquad &\text{current time step,}\\
-   \quad k+1 \qquad &\text{next time step,}\\
-   \quad \Delta{t} \qquad &\text{time step size.}
+   k \qquad &\text{current time step,}\\
+   k+1 \qquad &\text{next time step,}\\
+   \Delta{t} \qquad &\text{time step size.}
    \end{aligned}
 
-The new position of the particle (in the next time step :math:`k+1`)
+The new position of the particle (in the next time step :math:`k+1` using "central" velocity)
 reads:
 
 .. math::
@@ -580,7 +654,7 @@ reads:
 
 
 References
-----------
+=============
 
 .. [FiFrGaSo2013] J. T. Fischer and R. Fromm and P. Gauer and B. Sovilla. (2013)
   Evaluation of probabilistic snow avalanche simulation ensembles with Doppler radar observations. Cold Regions Science and Technology.
