@@ -10,6 +10,7 @@ import os
 from avaframe.com1DFA import com1DFA
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import fileHandlerUtils as fU
+from avaframe.out3SimpPlot import outReportPlot as oP
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import time
@@ -48,9 +49,15 @@ for simDict in reportDictList:
     simDict['entrainmentArea'].update([('entrainment density [kgm-3]', float(cfg['REP']['rhoEntrainment'])),
                                ('entrainment thickness [m]', float(cfg['REP']['entH']))])
 
-    # example to include figures
-    # imagePath = os.path.join(os.getcwd(), avalancheDir, 'Work', 'log2Report', 'pfd.png')
-    # simDict['images'] = {'peak flow depth fields' : imagePath}
+    # set which parameters shall be plotted
+    resultParams = cfg['REP']['plotFields']
+    resPar = resultParams.split('_')
+    simDict['images'] = {}
+    for var in resPar:
+        fileName = oP.plotPeakField(avalancheDir, simDict['simName'], var)
+        # example to include figures
+        imagePath = os.path.join(os.getcwd(), fileName)
+        simDict['images'].update({'peak field: %s' % var : imagePath})
 
     # example to add addtional information
     # simDict['text'] = {'Images' : 'the images have been produced with', 'Simulations' : 'the simulations have been produced with'}
