@@ -140,7 +140,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean')
     ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
     ax1.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
-                       label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
+                label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
     ref5, im = NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
@@ -164,7 +164,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
 
-    outFileName = projectName +  str(int(pLim)) + '_slComparison'
+    outFileName = projectName + str(int(pLim)) + '_slComparison'
 
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -214,7 +214,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         cmap.set_bad('w', 1.)
         ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
         ax.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
-                          label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
+                   label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
         ref3, im = NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                              extent=[l.min(), l.max(), s.min(), s.max()],
                              cmap=cmap, norm=norm)
@@ -255,12 +255,13 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
 
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapPres, pLim,
-                            np.nanmax((dataPressure[0])[nStart:]), continuous=contCmap)
+                                                       np.nanmax((dataPressure[0])[nStart:]),
+                                                       continuous=contCmap)
     cmap.set_under(color='w')
 
-    ref0, im= NonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
-                        extent=[l.min(), l.max(), s.min(), s.max()],
-                        cmap=cmap, norm=norm)
+    ref0, im = NonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
+                         extent=[l.min(), l.max(), s.min(), s.max()],
+                         cmap=cmap, norm=norm)
     im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
 
     ax1.set_title('Reference Peak Pressure in the RunOut area' +
@@ -511,7 +512,6 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
         cbar.ax.set_ylabel('hit rate density')
     else:
         for k in range(len(rTP)):
-            topoName = cfgPath['projectName']
             pfarbe = color[k+1]  # colorvar(float(k), len(rTP), colorflag)
             if k == 0:
                 ax1.plot(rFP[k], rTP[k], color='g', label='Reference', marker='+',
