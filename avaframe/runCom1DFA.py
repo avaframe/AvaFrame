@@ -39,7 +39,7 @@ log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
 
 # Generate markdown reports for each simulation
 for simDict in reportDictList:
-    
+
     # add parameters collected from logFile
     simDict['simParameters'].update(fU.extractParameterInfo(avalancheDir, simDict['simName']))
 
@@ -47,6 +47,13 @@ for simDict in reportDictList:
     simDict['releaseArea'].update([('release densitiy [kgm-3]', float(cfg['REP']['rhoRelease']))])
     simDict['entrainmentArea'].update([('entrainment density [kgm-3]', float(cfg['REP']['rhoEntrainment'])),
                                ('entrainment thickness [m]', float(cfg['REP']['entH']))])
+
+    # example to include figures
+    # imagePath = os.path.join(os.getcwd(), avalancheDir, 'Work', 'log2Report', 'pfd.png')
+    # simDict['images'] = {'peak flow depth fields' : imagePath}
+
+    # example to add addtional information
+    # simDict['text'] = {'Images' : 'the images have been produced with', 'Simulations' : 'the simulations have been produced with'}
 
     # write report
     gR.writeReport(avalancheDir, simDict)
