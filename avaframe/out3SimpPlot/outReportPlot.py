@@ -14,7 +14,7 @@ import seaborn as sns
 import avaframe.in3Utils.ascUtils as IOf
 from avaframe.out3Plot.plotUtils import *
 from avaframe.in3Utils import fileHandlerUtils as fU
-
+import avaframe.out3Plot.makePalette as makePalette
 
 def plotPeakField(avaDir, simName, resType, unit):
     """ Plot peak field """
@@ -43,17 +43,17 @@ def plotPeakField(avaDir, simName, resType, unit):
 
     # Figure 1 shows the result parameter data
     fig = plt.figure(figsize=(figW, figH))
-
+    fig, ax1 = plt.subplots()
     # choose colormap
     cmapDict = {'ppr' : cmapPres, 'pfd' : cmapDepth, 'pv' : cmapSpeed}
     cmap = cmapDict[resType]['cmap']
-    im1 = plt.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-    fig.colorbar(im1)
-    # addColorBar(im1, ticks, unit)
+    ticks = cmapPres['ticks']
+    im1 = ax1.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+    addColorBar(im1, ax1, ticks, unit)
     title = str('%s' % fullName)
-    plt.title(title)
-    plt.xlabel('x [m]')
-    plt.ylabel('y [m]')
+    ax1.set_title(title)
+    ax1.set_xlabel('x [m]')
+    ax1.set_ylabel('y [m]')
     plotName = os.path.join(outDir, '%s.%s' % (name, outputFormat))
     fig.savefig(plotName)
 
