@@ -61,6 +61,48 @@ def readLogFile(logName, cfg=''):
     return logDict
 
 
+def extractParameterInfo(avaDir, simName):
+    """ Extract info about simulation parameters from the log file """
+
+    # Get info from ExpLog
+    logName = os.path.join(avaDir, 'Outputs', 'com1DFA', 'ExpLog.txt')
+    logDictExp = readLogFile(logName)
+    names = logDictExp['fullName']
+    simNames = sorted(set(names), key=lambda s: s.split("_")[3])
+
+    # Initialise parameter dictionary
+    parameterDict = { }
+
+    # Initialise fields
+    time = []
+    mass = []
+    entrMass = []
+    flagNoStop = True
+    # Read log file
+    fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName))
+    with open(fileName, 'r') as file:
+        for line in file:
+            if "computing time step" in line:
+                ltime = line.split()[3]
+                timeNum = ltime.split('...')[0]
+                time.append(float(timeNum))
+            elif "entrained DFA mass" in line:
+                entrMass.append(float(line.split()[3]))
+            elif "total DFA mass" in line:
+                mass.append(float(line.split()[3]))
+
+    # Save to dictionary
+    logDict = {'time': np.asarray(time), 'mass': np.asarray(mass),
+               'entrMass': np.asarray(entrMass)}
+
+    # Set values in dictionary
+    parameterDict['release mass [kg]'] = logDict['mass'][0]
+    parameterDict['final time step [s]'] = logDict['time'][-1]
+    parameterDict['current mass [kg]'] = logDict['mass'][-1]
+
+    return parameterDict
+
+
 def checkCommonSims(logName, localLogName):
     """ Check which files are common between local and full ExpLog """
 
