@@ -4,23 +4,17 @@
     This file is part of Avaframe.
 """
 
-import sys
 import os
 import logging
 import math
 import numpy as np
 import scipy as sp
-import copy
 from matplotlib import pyplot as plt
 import matplotlib
 from matplotlib import cm
-from matplotlib.image import NonUniformImage
 
 
 # Local imports
-import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in2Trans.geoTrans as geoTrans
-import avaframe.in3Utils.ascUtils as IOf
 from avaframe.out3Plot.plotUtils import *
 import avaframe.out3Plot.makePalette as makePalette
 
@@ -35,7 +29,6 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ####################################
     # Get input data
     # read paths
-    pathResult = cfgPath['pathResult']
     projectName = cfgPath['dirName']
     # read rasterdata
     slRaster = inputData['slRaster']
@@ -81,12 +74,12 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ref0, im = NonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
                          extent=[x.min(), x.max(), y.min(), y.max()],
                          cmap=cmap, norm=norm)
-    ref1 = plt.plot(xx, yy, 'k+', label='Beta point : %.1f °' %
-                    rasterTransfo['runoutAngle'])
-    ref2 = plt.plot(xPath, yPath, 'k--', label='flow path')
-    ref3 = plt.plot(DBXl, DBYl, 'k-', label='domain')
-    ref3 = plt.plot(DBXr, DBYr, 'k-')
-    ref3 = plt.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
+    plt.plot(xx, yy, 'k+', label='Beta point : %.1f °' %
+             rasterTransfo['runoutAngle'])
+    plt.plot(xPath, yPath, 'k--', label='flow path')
+    plt.plot(DBXl, DBYl, 'k-', label='domain')
+    plt.plot(DBXr, DBYr, 'k-')
+    plt.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
 
     ax1.set_title('XY Domain')
     ax1.legend()
@@ -96,15 +89,16 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ref0, im = NonUnifIm(ax2, l, s, maskedArraySL, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
-    ref1 = ax2.axhline(y=s[indRunoutPoint], color ='k', linestyle='--',
-                       label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
+    ax2.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
+                label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
 
-    ax2.set_title('sl Domain' + '\n' +  'Black = out of raster')
+    ax2.set_title('sl Domain' + '\n' + 'Black = out of raster')
     ax2.legend()
-    _addColorBar(im, ax2, ticks, 'kPa')
+    addColorBar(im, ax2, ticks, 'kPa')
 
     outFileName = projectName + '_DomainTransformation'
-    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+    saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+
 
 def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     """
@@ -113,18 +107,15 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ####################################
     # Get input data
     # read paths
-    pathResult = cfgPath['pathResult']
     projectName = cfgPath['dirName']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indRunoutPoint = rasterTransfo['indRunoutPoint']
     sBeta = s[indRunoutPoint]
-    rasterArea = rasterTransfo['rasterArea']
     dataPressure = newRasters['newRasterPressure']
-    rasterdataPres = dataPressure[0]  # ana3AIMEC.makeRasterAverage(dataPressure)
+    rasterdataPres = dataPressure[0]
     runout = resAnalysis['runout'][0] + sBeta
-    runoutMean = resAnalysis['runoutMean'][0] + sBeta
     pCrossAll = resAnalysis['pCrossAll']
 
     ############################################
@@ -135,8 +126,9 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
 
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapPres, 0.0,
+                                                       np.nanmax(maskedArray),
+                                                       continuous=contCmap)
     cmap.set_bad('w', 1.)
 
     ############################################
@@ -144,10 +136,10 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     fig = plt.figure(figsize=(figW*2, figH))
     ax1 = plt.subplot(121)
 
-    ref1 = ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
-    ref2 = ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean')
-    ref3 = ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
-    ref0 = ax1.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
+    ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
+    ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean')
+    ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
+    ax1.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
                        label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
     ref5, im = NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
@@ -155,15 +147,15 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
 
     ax1.set_title('Peak Pressure 2D plot for the reference')
     ax1.legend()
-    _addColorBar(im, ax1, ticks, 'kPa')
+    addColorBar(im, ax1, ticks, 'kPa')
 
     ax2 = plt.subplot(122)
 
     ax2.fill_betweenx(s, pPercentile[2], pPercentile[0],
                       facecolor=[.8, .8, .8], alpha=0.5, label='quantiles')
-    ref1 = matplotlib.patches.Patch(alpha=0.5, color=[.8, .8, .8])
-    ref2 = ax2.plot(pMedian, s, color='r', label='median')
-    ref3 = ax2.plot(pMean, s, color='b', label='mean')
+    matplotlib.patches.Patch(alpha=0.5, color=[.8, .8, .8])
+    ax2.plot(pMedian, s, color='r', label='median')
+    ax2.plot(pMean, s, color='b', label='mean')
 
     ax2.set_title('Peak Pressure distribution along the path between runs')
     ax2.legend(loc=0)
@@ -175,7 +167,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     # TODO: what does dptr mean?
     outFileName = projectName + '_dptr' + str(int(pLim)) + '_slComparison'
 
-    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+    saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
 def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
@@ -186,22 +178,19 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     ####################################
     # Get input data
     # read paths
-    pathResult = cfgPath['pathResult']
     projectName = cfgPath['dirName']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indRunoutPoint = rasterTransfo['indRunoutPoint']
     sBeta = s[indRunoutPoint]
-    rasterArea = rasterTransfo['rasterArea']
     dataPressure = newRasters['newRasterPressure']
-    rasterdataPres = dataPressure[0]  # ana3AIMEC.makeRasterAverage(dataPressure)
+    rasterdataPres = dataPressure[0]
     dataDepth = newRasters['newRasterDepth']
     rasterdataDepth = dataDepth[0]
     dataSpeed = newRasters['newRasterSpeed']
     rasterdataSpeed = dataSpeed[0]
     runout = resAnalysis['runout'][0] + sBeta
-    runoutMean = resAnalysis['runoutMean'][0] + sBeta
 
     ############################################
     # prepare for plot
@@ -224,8 +213,8 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             cmap, 0.0, np.nanmax(maskedArray), continuous=contCmap)
         cmap.set_bad('w', 1.)
-        ref2 = ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
-        ref1 = ax.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
+        ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
+        ax.axhline(y=s[indRunoutPoint], color='k', linestyle='--',
                           label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
         ref3, im = NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                              extent=[l.min(), l.max(), s.min(), s.max()],
@@ -233,11 +222,11 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
 
         ax.set_title(title)
         ax.legend()
-        _addColorBar(im, ax, ticks, unit)
+        addColorBar(im, ax, ticks, unit)
 
     outFileName = projectName + '_referenceFields'
 
-    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+    saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
 def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
@@ -248,7 +237,6 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ####################################
     # Get input data
     # read paths
-    pathResult = cfgPath['pathResult']
     projectName = cfgPath['dirName']
     # read data
     s = rasterTransfo['s']
@@ -278,7 +266,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
 
     ax1.set_title('Reference Peak Pressure in the RunOut area' +
                   '\n' + 'Pressure threshold: %.1f kPa' % pLim)
-    _addColorBar(im, ax1, ticks, 'kPa')
+    addColorBar(im, ax1, ticks, 'kPa')
 
     y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
     ax1.set_ylim([s[indRunoutPoint-20], y_lim])
@@ -300,7 +288,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
 
     outFileName = projectName + '_' + str(i) + '_comparisonToReference'
 
-    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+    saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
 def resultWrite(cfgPath, cfgSetup, resAnalysis):
@@ -397,13 +385,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ####################################
     # Get input data
     fnames = cfgPath['pressurefileList']
-    rasterSource = cfgPath['demSource']
-    ProfileLayer = cfgPath['profileLayer']
-    outpath = cfgPath['pathResult']
-    DefaultName = cfgPath['projectName']
 
-    xPath = rasterTransfo['x']
-    yPath = rasterTransfo['y']
     zPath = rasterTransfo['z']
     sPath = rasterTransfo['s']
 
@@ -512,7 +494,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     outFileName = ''.join([cfgPath['dirName'], '_dptr',
                            str(int(plim)), '_', tipo])
 
-    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+    saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     ############################################
     # Final result diagram - roc-plots
@@ -559,36 +541,6 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
 
     outFileName = ''.join([cfgPath['dirName'], '_dptr', str(int(plim)), '_ROC'])
 
-    _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+    saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     return
-
-
-def _saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
-    """
-    Receive a plot handle and config and check whether to save and or plot
-    """
-
-    if cfgFlags.getboolean('savePlot'):
-        outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
-        if not os.path.exists(os.path.dirname(outname)):
-            os.makedirs(os.path.dirname(outname))
-        fig.savefig(outname)
-
-    if cfgFlags.getboolean('plotFigure'):
-        plt.show()
-    else:
-        plt.ioff()
-
-    plt.close(fig)
-
-    return
-
-
-def _addColorBar(im, ax2, ticks, myUnit):
-    '''
-    Adds, styles and labels a colorbar to the given image and axes
-    '''
-    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
-    cbar.outline.set_visible(False)
-    cbar.ax.set_title(myUnit)

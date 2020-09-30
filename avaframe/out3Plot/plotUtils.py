@@ -4,13 +4,13 @@
     This file is part of Avaframe.
 """
 
+import os
 import seaborn as sns
-from matplotlib import cm
 import copy
 import matplotlib
 from matplotlib.image import NonUniformImage
+from matplotlib import pyplot as plt
 import cmocean
-import copy
 import logging
 
 from avaframe.in3Utils import cfgUtils
@@ -73,7 +73,7 @@ matplotlib.rcParams['grid.linewidth'] = 0.3
 
 
 ############################
-# Color maps 
+# Color maps
 ############################
 # hell white/green to dark blue
 cmapGB = copy.copy(sns.cubehelix_palette(8, start=.5, rot=-.75, as_cmap=True))
@@ -116,7 +116,7 @@ levP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0, 1000.0]
 ticksP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0]
 colorsP = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E',
            '#C51F2E', '#A30A54', '#232D5F', '#102D5B']
-cmapP  = makePalette.get_continuous_cmap(colorsP, continuous=True)
+cmapP = makePalette.get_continuous_cmap(colorsP, continuous=True)
 # multi sequential colormap for flow depth
 levD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 50.0]
 ticksD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 10.0]
@@ -131,7 +131,7 @@ colorsS = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#BC3334', '#A
 cmapS = makePalette.get_continuous_cmap(colorsS, continuous=True)
 
 ###############################################
-# Set colormaps to use 
+# Set colormaps to use
 ###############################################
 # ploting with a descrete (contCmap = continuousCmap = False) or continuous colormap (contCmap = True)?
 # if continuous, only the cmap argument in the cmapDictionnary maters
@@ -175,3 +175,33 @@ def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
     ax.set_xlabel(xlab)
     ax.set_ylabel(ylab)
     return ref, im
+
+
+def saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
+    """
+    Receive a plot handle and config and check whether to save and or plot
+    """
+
+    if cfgFlags.getboolean('savePlot'):
+        outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
+        if not os.path.exists(os.path.dirname(outname)):
+            os.makedirs(os.path.dirname(outname))
+        fig.savefig(outname)
+
+    if cfgFlags.getboolean('plotFigure'):
+        plt.show()
+    else:
+        plt.ioff()
+
+    plt.close(fig)
+
+    return
+
+
+def addColorBar(im, ax2, ticks, myUnit):
+    '''
+    Adds, styles and labels a colorbar to the given image and axes
+    '''
+    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
+    cbar.outline.set_visible(False)
+    cbar.ax.set_title(myUnit)
