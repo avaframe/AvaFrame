@@ -16,7 +16,7 @@ from avaframe.out3Plot.plotUtils import *
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 
-def plotPeakField(avaDir, simName, resType):
+def plotPeakField(avaDir, simName, resType, unit):
     """ Plot peak field """
 
     # input dir where peak files are located
@@ -43,9 +43,13 @@ def plotPeakField(avaDir, simName, resType):
 
     # Figure 1 shows the result parameter data
     fig = plt.figure(figsize=(figW, figH))
-    cmap = cmapGB
+
+    # choose colormap
+    cmapDict = {'ppr' : cmapPres, 'pfd' : cmapDepth, 'pv' : cmapSpeed}
+    cmap = cmapDict[resType]['cmap']
     im1 = plt.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     fig.colorbar(im1)
+    # addColorBar(im1, ticks, unit)
     title = str('%s' % fullName)
     plt.title(title)
     plt.xlabel('x [m]')

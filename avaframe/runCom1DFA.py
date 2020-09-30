@@ -57,7 +57,8 @@ for simDict in reportDictList:
     resPar = resultParams.split('_')
     simDict['images'] = {}
     for var in resPar:
-        fileName = oP.plotPeakField(avalancheDir, simDict['simName'], var)
+        unit = cfg['REP']['unit%s' % var]
+        fileName = oP.plotPeakField(avalancheDir, simDict['simName'], var, unit)
         # example to include figures
         imagePath = os.path.join(os.getcwd(), fileName)
         simDict['images'].update({'peak field: %s' % var : imagePath})
