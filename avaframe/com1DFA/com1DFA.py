@@ -168,13 +168,18 @@ def runSamos(cfg, avaDir):
     if flagEntRes:
         entrainmentArea = os.path.splitext(os.path.basename(ent))[0]
         resistanceArea = os.path.splitext(os.path.basename(res))[0]
-
+    else:
+        entrainmentArea = ''
+        resistanceArea = ''
     # Get cell size from DEM header
     demData = aU.readASCheader(dem)
     cellSize = demData.cellsize
 
     # Counter for release area loop
     countRel = 0
+
+    # Setup simulation dictionaries for report genereation
+    reportDictList = []
 
     # Loop through release areas
     for rel in rels:
@@ -240,6 +245,17 @@ def runSamos(cfg, avaDir):
             copyReplace(workFile, workFile, '##VARPAR##', cfgPar['varPar'])
             copyReplace(workFile, workFile, '##VALUE##', defValues[cfgPar['varPar']])
             execSamos(samosAT, workFile, avaDir, fullOut, logName)
+
+            # Create dictionary
+            dictNull = {}
+            dictNull = {'headerLine' : 'com1DFA simulation', 'simName' : logName, 'simParameters' : {'release area' : relName, 'entrainment area' : entrainmentArea, 'resistance area' : resistanceArea,
+                        'parameter variation on' :'', 'parameter value' : '', 'Mu' : defValues['Mu'], 'release thickness [m]' : defValues['RelTh']}, 'releaseArea' : {'release area scenario' : relName},
+                       'entrainmentArea' : {'entrainment area scenario' : entrainmentArea}, 'resistanceArea' : {'resistance area scenario' : resistanceArea}}
+
+            # Add to report dictionary list
+            reportDictList.append(dictNull)
+
+            # Count total number of simulations
             countRel = countRel + 1
 
             if cfgPar.getboolean('flagVarEnt') and (simName + '_entres_dfa') in cuSim:
@@ -267,6 +283,22 @@ def runSamos(cfg, avaDir):
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VALUE##', item)
                 execSamos(samosAT, workFile, avaDir, fullOut, logName)
+
+                # Create dictionary
+                dictVar = {}
+                dictVar = {'headerLine' : 'com1DFA simulation', 'simName' : logName, 'simParameters' : {'release area' : relName, 'entrainment area' : entrainmentArea, 'resistance area' : resistanceArea,
+                            'parameter variation on' : cfgPar['varPar'], 'parameter value' : item}, 'releaseArea' : {'release area scenario' : relName},
+                           'entrainmentArea' : {'entrainment area scenario' : entrainmentArea}, 'resistanceArea' : {'resistance area scenario' : resistanceArea}}
+                if cfgPar['varPar'] == 'RelTh':
+                    dictVar['simParameters'].update({'Mu': defValues['Mu']})
+                    dictVar['simParameters'].update({'release thickness [m]' : item})
+                elif cfgPar['varPar'] == 'Mu':
+                    dictVar['simParameters'].update({'release thickness [m]' : defValues['RelTh']})
+                    dictVar['simParameters'].update({'Mu' : item})
+
+                # Add to report dictionary list
+                reportDictList.append(dictVar)
+
                 # Count total number of simulations
                 countRel = countRel + 1
 
@@ -285,8 +317,19 @@ def runSamos(cfg, avaDir):
                 copyReplace(workFile, workFile, '##VALUE##', defValues['Mu'])
                 execSamos(samosAT, workFile, avaDir, fullOut, logName)
 
+                # Create dictionary
+                dictST = {}
+                dicST = {'headerLine' : 'com1DFA simulation', 'simName' : logName, 'simParameters' : {'release area' : relName, 'entrainment area' : entrainmentArea, 'resistance area' : resistanceArea,
+                            'parameter variation on' :'', 'parameter value' : '', 'Mu' : defValues['Mu'], 'release thickness [m]' : defValues['RelTh']}, 'releaseArea' : {'release area scenario' : relName},
+                           'entrainmentArea' : {'entrainment area scenario' : entrainmentArea}, 'resistanceArea' : {'resistance area scenario' : resistanceArea}}
+
+                # Add to report dictionary list
+                reportDictList.append(dictST)
+
+
                 # Count total number of simulations
                 countRel = countRel + 1
+
 
     log.info('Avalanche Simulations performed')
 
@@ -297,3 +340,5 @@ def runSamos(cfg, avaDir):
         fU.exportcom1DFAOutput(avaDir)
 
     log.info('Exported results to Outputs/com1DFA')
+
+    return reportDictList

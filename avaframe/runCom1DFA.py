@@ -8,6 +8,8 @@ import os
 
 # Local imports
 from avaframe.com1DFA import com1DFA
+from avaframe.log2Report import generateReport as gR
+from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import time
@@ -29,8 +31,22 @@ cfg = cfgUtils.getModuleConfig(com1DFA)
 
 startTime = time.time()
 # Run Standalone DFA
-com1DFA.runSamos(cfg, avalancheDir)
+reportDictList = com1DFA.runSamos(cfg, avalancheDir)
 
+# Print time needed
 endTime = time.time()
-
 log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
+
+# Generate markdown reports for each simulation
+for simDict in reportDictList:
+    
+    # add parameters collected from logFile
+    simDict['simParameters'].update(fU.extractParameterInfo(avalancheDir, simDict['simName']))
+
+    # add genereal simulation parameters from .ini file
+    simDict['releaseArea'].update([('release densitiy [kgm-3]', float(cfg['REP']['rhoRelease']))])
+    simDict['entrainmentArea'].update([('entrainment density [kgm-3]', float(cfg['REP']['rhoEntrainment'])),
+                               ('entrainment thickness [m]', float(cfg['REP']['entH']))])
+
+    # write report
+    gR.writeReport(avalancheDir, simDict)
