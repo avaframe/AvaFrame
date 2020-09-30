@@ -164,8 +164,7 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
 
-    # TODO: what does dptr mean?
-    outFileName = projectName + '_dptr' + str(int(pLim)) + '_slComparison'
+    outFileName = projectName +  str(int(pLim)) + '_slComparison'
 
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -386,6 +385,8 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     # Get input data
     fnames = cfgPath['pressurefileList']
 
+    flag = cfgFlags['typeFlag']
+
     zPath = rasterTransfo['z']
     sPath = rasterTransfo['s']
 
@@ -397,14 +398,6 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     GI = resAnalysis['growthIndex']
 
     # prepare for plot
-
-    # TODO: move flag to .ini file
-    # includes flag for y axis -
-    # 1 = mean pressure data
-    # 2 = groth index
-    # 3 = max pressure data
-    flag = 3
-
     if flag == 1:
         title = 'Visualizing mean peak pressure data'
         tipo = 'relMeanPeakPres'
@@ -490,8 +483,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
 
     ax1.grid('on')
 
-    # TODO: see comment above
-    outFileName = ''.join([cfgPath['dirName'], '_dptr',
+    outFileName = ''.join([cfgPath['dirName'],
                            str(int(plim)), '_', tipo])
 
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
@@ -539,7 +531,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     plt.ylim([0, 1.01])
     plt.grid('on')
 
-    outFileName = ''.join([cfgPath['dirName'], '_dptr', str(int(plim)), '_ROC'])
+    outFileName = ''.join([cfgPath['dirName'], str(int(plim)), '_ROC'])
 
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
