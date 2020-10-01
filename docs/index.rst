@@ -55,8 +55,9 @@ Appendix
 
    appendixCom1DFA.rst
 
-References
-==========
+.. only:: html
+    References
+    ==========
 
 * :doc:`zreferences`
 
