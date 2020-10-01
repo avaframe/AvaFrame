@@ -1,7 +1,5 @@
 .. only:: html
 
-   .. rubric:: References
-
     References
     =============
 
