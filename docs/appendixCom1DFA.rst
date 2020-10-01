@@ -234,7 +234,7 @@ Non-dimensional Equations
 
 .. _fig-charakterisitsche_groessen:
 
-.. figure:: _static/charakterisitsche_groessen.png
+.. figure:: _static/characteristic_size.png
         :width: 90%
 
         Characteristic size of the avalanche along its path (from [Zw2000]_)

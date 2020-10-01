@@ -14,7 +14,7 @@ Overview
 * :doc:`develop`
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
    :hidden:
    :caption: Overview
 
@@ -32,7 +32,7 @@ Modules
 * :doc:`moduleIn2Trans`
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
    :hidden:
    :caption: Modules
 
@@ -49,7 +49,7 @@ Appendix
 * :doc:`appendixCom1DFA`
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 3
    :hidden:
    :caption: Appendix
 
