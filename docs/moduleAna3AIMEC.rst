@@ -41,7 +41,7 @@ that it is possible to compare characteristic values that are directly linked to
 maximum peak flow depth, maximum peak velocity or deduced quantities, for example maximum peak pressure,
 pressure based run-out (including direct comparison to possible references, see :ref:`area-indicators`) for different simulations.
 
-AIMEC (Automated Indicator based Model Evaluation and Comparison, [Fischer2013]_) was developed
+AIMEC (Automated Indicator based Model Evaluation and Comparison, :cite:`Fi2013`) was developed
 to analyze and compare avalanche simulations. The computational module presented here is inspired from the original AIMEC code.
 The simulations are analyzed and compared by projecting the results along a chosen poly-line (same line for all the simulations
 that are compared) called avalanche path.
@@ -71,6 +71,7 @@ The following figure illustrates the process.
 
 Mean and max values along path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 All two dimensional field results (for example peak velocities / pressure or flow depth) can be projected into the curvilinear system using
 the previously described method. The maximum and average values of those fields are computed in each cross-section (l direction).
 For example the maximum :math:`A_{cross}^{max}(s)` and average :math:`\bar{A}_{cross}(s)` of the two
@@ -82,6 +83,7 @@ dimensional distribution :math:`A(s,l)` is:
 
 Run-out point
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The run-out point corresponding to a given pressure threshold :math:`P_{lim}>0kPa` is the first point :math:`s=s_{runout}`
 where the maximum peak pressure falls below the pressure limit (:math:`P_{cross}^{max}(s)<P_{Lim}`). This :math:`s=s_{runout}` is related
 to a :math:`(x_{runout},y_{runout})` in the original coordinate system. It is very important to note that the position of this
@@ -90,12 +92,14 @@ point depends on the chosen pressure limit value. It would also be possible to u
 
 Run-out length
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 This length depends on what is considered the beginning of the avalanche :math:`s=s_{start}`. It can be related to the release area,
 to the transition point (first point where the slope angle is below :math:`30^{\circ}`) or to the run-out area point
 (first point where the slope angle is below :math:`10^{\circ}`). The run-out length is then defined as :math:`L=s_{runout}-s_{start}`.
 
 Mean and max indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 From the maximum values along path of the distribution :math:`A(s,l)` calculated in :ref:`mean-max-path`, it is possible to calculate
 the global maximum (MMA) and average maximum (AMA) values of the two dimensional distribution :math:`A(s,l)`:
 
@@ -108,6 +112,7 @@ the global maximum (MMA) and average maximum (AMA) values of the two dimensional
 
 Area indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 When comparing the run-out area (corresponding to a given pressure threshold :math:`P_{cross}^{max}(s)>P_{Lim}`) of two simulations,
 it is possible to distinguish four different zones. For example, if the first simulation (sim1) is taken as reference and if True corresponds
 to the assertion that the avalanche covered this zone and False there was no avalanche in this zone, those four zones are:
@@ -130,6 +135,7 @@ Identical simulations (in the run-out zone) lead to :math:`\alpha_{TP} = 1` , :m
 
 Mass indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 From the analysis of the release mass (:math:`m_r` at the beginning, i.e :math:`t = t_{ini}`), total mass
 (:math:`m_t` at the end, i.e :math:`t = t_{end}`) and entrained mass (:math:`m_e` at the end, i.e :math:`t = t_{end}`)
 it is possible to calculate the growth index :math:`GI` and growth gradient :math:`GG` of the avalanche:
@@ -144,6 +150,7 @@ This section describes how the theory is implemented in the ``ana3AIMEC`` module
 
 Perform path-domain transformation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 First, the transformation from (x,y) coordinate system (where the original rasters lie in) to (s,l) coordinate system is applied
 given a new domain width. A new grid corresponding to the new domain (following the avalanche path) is built.
 The transformation information are stored in a ``rasterTransfo`` dictionary:
@@ -165,6 +172,7 @@ The transformation information are stored in a ``rasterTransfo`` dictionary:
 
 Assign data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 The simulation results (for example peak velocities / pressure or flow depth) are projected on the new grid using the
 transformation information. The projected results are stored in the ``newRasters`` dictionary.
 
@@ -172,6 +180,7 @@ transformation information. The projected results are stored in the ``newRasters
 
 Analyze results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Calculates the different indicators described in the :ref:`Theory` section for a given pressure threshold.
 Returns a ``resAnalysis`` dictionary with the analysis results.
 
@@ -194,6 +203,7 @@ Returns a ``resAnalysis`` dictionary with the analysis results.
 
 Plot and save results
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 Plots and saves the desired figures. Writes results in ``resAnalysis`` to a text file.
 By default, Aimec saves five plots plus as many plots as numerical simulations to
 compare to the reference. The first five ones are :
@@ -217,10 +227,3 @@ Configuration parameters
 :plotFigure: plot figures; default False
 :savePlot: Save figures; default True
 :WriteRes: Write result to file: default True
-
-
-References
-----------
-
-.. [Fischer2013] Fischer, Jan-Thomas. (2013).
-    A novel approach to evaluate and compare computational snow avalanche simulation. Natural Hazards and Earth System Sciences. 13. 1655-. 10.5194/nhess-13-1655-2013.

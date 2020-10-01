@@ -22,11 +22,11 @@ On top of these topographies, channels can be introduced (then set flag_channel=
 There is the option to introduce these channels by either cutting them into the original topography (flag_topoconst=True) or by adding a 'channel layer' (max thickness=channel depth) on top of the topography.
 
 Input
------
+------
 
 * in ``generateTopoCfg.ini`` all required input parameters are listed (does include default values for all parameters)
 
-Outputs
+Output
 -------
 
 * 3D surface plot of generated topography as .png file and possibly shown to screen (see flags)
@@ -105,7 +105,7 @@ The release areas are defined as rectangular features build by four corner point
 * if slope does not fall below 30 °, upper margin is located xStart away from upper margin of the DEM
 
 Input
------
+------
 
 * in ``getReleaseAreaCfg.ini`` and ``generateTopoCfg.ini`` all required input parameters are listed (does include default values for all parameters)
 
@@ -149,7 +149,7 @@ to read ASCII files, either just the header or also the raster matrix and write 
 compare raster file headers as well as to write a raster to an ASCII file given a header and data.
 
 Functions
-------------------------
+------------
 
 **Header Class:**
 

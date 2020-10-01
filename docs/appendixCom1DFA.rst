@@ -9,8 +9,7 @@ Governing Equations for the Dense Flow Avalanche
 ------------------------------------------------------
 
 The governing equations of the dense flow avalanche are derived from the
-incompressible mass and momentum balance on a Lagrange control volume
-([Zw2000]_ [ZwKlSa2003]_).
+incompressible mass and momentum balance on a Lagrange control volume (:cite:`Zw2000,ZwKlSa2003`).
 
 Mass balance:
 ~~~~~~~~~~~~~~~
@@ -165,7 +164,7 @@ from the ground and to compress it is expressed function of the required
 breaking energy per fracture surface unit :math:`e_s`
 (:math:`J.m^{-2}`), the deformation energy per entrained mass element
 :math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow depth
-[Sa2007]_ [SaFeFr2008]_ [FiFrGaSo2013]_:
+(:cite:`Sa2007,SaFeFr2008,FiFrGaSo2013`):
 
 .. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d)
 
@@ -212,12 +211,12 @@ Which simplifies the momentum balance :eq:`momentum-balance3` to:
 
 The momentum balance in direction :math:`x_3` (normal to the slope) is
 used to obtain a relation for the vertical distribution of the stress
-tensor [Sa2007]_. Due to the choice of
+tensor (:cite:`Sa2007`). Due to the choice of
 coordinate system and because of the kinematic boundary condition at the
 bottom, the left side of :eq:`momentum-balance5` can be
 expressed function of the velocity :math:`\overline{u}_1` in direction
 :math:`x_1` and the curvature of the terrain in this same direction
-:math:`\frac{\partial^2{b}}{\partial{x_1^2}}` [Zw2000]_:
+:math:`\frac{\partial^2{b}}{\partial{x_1^2}}` (:cite:`Zw2000`):
 
 .. math::
    \rho\,A_b\,\overline{h}\,\frac{\,\mathrm{d}\overline{u}_3}{\,\mathrm{d}t} =
@@ -322,12 +321,12 @@ introduced in :eq:`boundary-conditions`.
 In addition, a relation linking the horizontal normal stresses,
 :math:`\sigma_{ii}`, :math:`i = (1,2)`, to the vertical pressure distribution given
 by :eq:`sigmab` is introduced. In complete analogy to the arguments used by
-Savage and Hutter [SaHu1989]_ the horizontal normal stresses are given as:
+Savage and Hutter (:cite:`SaHu1989`) the horizontal normal stresses are given as:
 
 .. math::
     \sigma_{ii} = K_{(i)}\,\sigma_{33}
 
-Where :math:`K_{(i)}` are the earth pressure coefficients (cf. [ZwKlSa2003]_ [Sa2004]_):
+Where :math:`K_{(i)}` are the earth pressure coefficients (cf. :cite:`ZwKlSa2003,Sa2004`):
 
 .. math::
     \sigma_{11} &= K_{x~akt/pass}\,\sigma_{33}\\
@@ -401,7 +400,7 @@ SamosAT Model
 
 SamosAT friction model is a modification of some more clasical models
 such as Voellmy model. The basal shear stress tensor :math:`\tau^{(b)}`
-is expressed as [Sa2007]_:
+is expressed as (:cite:`Sa2007`):
 
 .. math::
    \tau^{(b)} = \tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}
@@ -429,7 +428,7 @@ with the empirical parameter :math:`R_s^0` the term
 Therefore lower avalanche speeds lead to a higher bed friction, making
 avalanche flow stop already at steeper slopes :math:`\alpha`, than
 without this effect. This effect is intended to avoid lateral creep of
-the avalanche mass [SaGr2009]_
+the avalanche mass (:cite:`SaGr2009`)
 
 
 Numerics
@@ -442,13 +441,13 @@ Mass :eq:`mass-balance3` and momentum
 :eq:`momentum-balance6` balance
 equations as well as basal normal stress :eq:`sigmab`
 are solved numerically using a SPH method (**S**\ moothed **P**\ article
-**H**\ ydrodynamis) [Mo1992]_ for the three variables
+**H**\ ydrodynamis) (:cite:`Mo1992`) for the three variables
 :math:`\overline{\mathbf{u}}=(\overline{u}_1, \overline{u}_2)` and
 :math:`\overline{h}` by discretization of the released avalanche volume
 in a large number of mass elements. SPH in general, is a mesh-less
 numerical method for solving partial differential equations. The SPH
 algorithm discretizes the numerical problem within a domain using
-particles [Sa2007]_ [SaGr2009]_, which interact
+particles (:cite:`Sa2007,SaGr2009`), which interact
 with each-other in a defined zone of influence. Some of the advantages
 of the SPH method are that free surface flows, material boundaries and
 moving boundary conditions are considered implicitly. In addition, large
@@ -503,7 +502,7 @@ Method
 
 The SPH method is introduced when expressing the flow depth and its gradient for each
 particle as a weighted sum of its neighbours
-[LiLi2010]_ [Sa2007]_:
+(:cite:`LiLi2010,Sa2007`):
 
 .. math::
     \overline{h}_{p_j} &= \frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,W_{p_jp_l}\\
@@ -651,42 +650,3 @@ reads:
         :width: 90%
 
         Infinitesimal volume element and acting forces on it (from [FiKo2013]_)
-
-
-References
-=============
-
-.. [FiFrGaSo2013] J. T. Fischer and R. Fromm and P. Gauer and B. Sovilla. (2013)
-  Evaluation of probabilistic snow avalanche simulation ensembles with Doppler radar observations. Cold Regions Science and Technology.
-
-.. [FiKo2013] J. T. Fischer and A. Kofler. (2013)
-    SamosAT CoSiCa. Concepts for enhanced Simulation and multivariate Calibration. BFW
-
-.. [LiLi2010] M.B. Liu and G.R. Liu. (2010).
-    Smoothed Particle Hydrodynamics (SPH): an Overview and Recent Developments. Arch Computat Methods Eng 17, 25--76.
-
-.. [Mo1992] J.J. Monaghan. (1992).
-      Smoothed particle hydrodynamics. Annual review of astronomy and astrophysics. Vol 30. 543--574.
-
-.. [Sa2004] B. Salm. (2004).
-    A short and personal history of snow avalanche dynamics. Cold Regions Science and Technology. Vol. 39. 83--92.
-
-.. [Sa2007] P. Sampl. (2007).
-    SamosAT Modelltheorie und Numerik. AVL List GMBH.
-
-.. [SaFeFr2008] R. Sailer and W. Fellin and R. Fromm and P. J{\"o}rg and L. Rammer and P. Sampl and A. Schaffhauser. (2008).
-    Snow avalanche mass-balance calculation and simulation-model verification. Annals of Glaciology. Vol. 48, 183--192.
-
-.. [SaGr2009] P. Sampl and M. Granig. (2009).
-    Avalanche simulation with SAMOS-AT. Proceedings of the International Snow Science Workshop, Davos.
-
-.. [SaHu1989] S.Savage and K. Hutter. (1989).
-    The motion of a finite mass of granular material down a rough incline. Journal of Fluid Mechanics, 199, 177-215.
-
-.. [Zw2000] T. Zwinger. (2000).
-    Dynamik einer Trockenschneelawine auf beliebig geformten Berghangen, Technischen Universitaet Wien.
-
-.. [ZwKlSa2003] T. Zwinger and A. Kluwick and P. Sampl. (2003).
-    Numerical simulation of dry-snow avalanche flow over natural terrain.
-    In: Hutter K., Kirchner N. (eds) Dynamic Response of Granular and Porous Materials under Large and Catastrophic Deformations.
-    Lecture Notes in Applied and Computational Mechanics, vol 11. Springer, Berlin, Heidelberg.

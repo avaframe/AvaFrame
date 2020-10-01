@@ -37,7 +37,7 @@ Theory
 
 
 The snow avalanche run-out distance is calculated using a statistical model based on data collected for real
-avalanches ([Lied_1980]_, [Bakkehøi_1983]_ and [Wagner]_). An equation of the following type is fitted to the data:
+avalanches (:cite:`LiBa1980,BaDoLi1983,Wa2016`). An equation of the following type is fitted to the data:
 
 .. math::
     \alpha_j = k_1 \beta + k_2 y'' + k_3 H_0 + k_4 + j SD
@@ -98,16 +98,3 @@ Optional configuration parameters
 :PlotProfile: Plot profile; default False
 :SaveProfile: Save profile to file; default True
 :WriteRes: Write result to file: default True
-
-
-References
-----------
-
-.. [Lied_1980] Lied, K. und Bakkehøi, S. (1980)
-    Empirical calculations of snow-avalanche run-out distance based on topographic parameters. In: Journal of Glaciology, Band 26: 165–177.
-
-.. [Bakkehøi_1983] Bakkehøi, S., Domaas, U. und Lied, K. (1983).
-    Calculation of snow avalanche runout distance. In: Annals of Glaciology, Band 4: 24–29.
-
-.. [Wagner] Peter Wagne (2016).
-    Masterarbet : Kalibrierung des α-β-Modells für das Ermitteln der Auslauflänge von kleinen und mittleren Lawinen

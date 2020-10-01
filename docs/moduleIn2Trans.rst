@@ -9,7 +9,7 @@ geoTrans
 The ``geoTrans.py`` module gathers useful functions to operate transformations on raster, lines, points...
 
 Functions
-------------------------
+-----------
 
 **Projection on Raster:**
 
@@ -86,7 +86,7 @@ Reading shape files
 to read shape files to numpy arrays, either lines or points
 
 Functions
-------------------------
+-------------
 
 **Read shape file:**
 
