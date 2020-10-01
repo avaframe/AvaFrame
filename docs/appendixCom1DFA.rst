@@ -1,7 +1,3 @@
-====================================================
-This document has not been reviewed yet...
-====================================================
-
 Appendix: Module DFA-Kernel
 ============================
 
@@ -232,12 +228,12 @@ rearranging the terms in the momentum equation leads to:
 Non-dimensional Equations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. _fig-charakterisitsche_groessen:
+.. _fig-characteristic_size:
 
 .. figure:: _static/characteristic_size.png
         :width: 90%
 
-        Characteristic size of the avalanche along its path (from [Zw2000]_)
+        Characteristic size of the avalanche along its path (from [Zw2000]_, modified)
 
 The previous equations :eq:`momentum-balance5` and :eq:`sigma33` are can be further simplified by
 introducing a scaling based on the characteristic values of the physical
@@ -253,7 +249,7 @@ describe the flow:
 
 The different properties involved are then expressed in terms of
 characteristic quantities :math:`L`, :math:`H`, :math:`g`, :math:`\rho_0` and :math:`R`
-(see :numref:`fig-charakterisitsche_groessen`):
+(see :numref:`fig-characteristic_size`):
 
 .. math::
    \begin{aligned}
