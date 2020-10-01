@@ -54,3 +54,15 @@ Appendix
    :caption: Appendix
 
    appendixCom1DFA.rst
+
+References
+==========
+
+* :doc:`zreferences`
+
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+    :caption: References
+
+    zreferences.rst
