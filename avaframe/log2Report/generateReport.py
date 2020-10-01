@@ -71,7 +71,7 @@ def writeReportFile(reportD, pfile):
                 pfile.write('%s \n' % (reportD['text'][value]))
 
 
-def writeReport(avaDir, reportDictList, plotDict, reportOneFile=True):
+def writeReport(avaDir, reportDictList, plotDict='', reportOneFile=True):
     """ Write a report for simulation """
 
     outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
@@ -86,12 +86,12 @@ def writeReport(avaDir, reportDictList, plotDict, reportOneFile=True):
                 # extract additional info from log file
                 reportD['simParameters'].update(fU.extractParameterInfo(avaDir, reportD['simName']))
 
-                # add plot info to general report Dict
-                reportD['images'] = plotDict[reportD['simName']]
+                if plotDict != '':
+                    # add plot info to general report Dict
+                    reportD['images'] = plotDict[reportD['simName']]
 
                 # Write report file
                 writeReportFile(reportD, pfile)
-
 
     else:
 
@@ -101,8 +101,9 @@ def writeReport(avaDir, reportDictList, plotDict, reportOneFile=True):
             # extract additional info from log file
             reportD['simParameters'].update(fU.extractParameterInfo(avaDir, reportD['simName']))
 
-            # add plot info to general report Dict
-            reportD['images'] = plotDict[reportD['simName']]
+            if plotDict != '':
+                # add plot info to general report Dict
+                reportD['images'] = plotDict[reportD['simName']]
 
             # Start writing markdown style report
             with open(os.path.join(outDir, '%s.md' % reportD['simName']), 'w') as pfile:
