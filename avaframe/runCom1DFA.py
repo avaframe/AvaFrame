@@ -10,7 +10,7 @@ import os
 from avaframe.com1DFA import com1DFA
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.out3SimpPlot import outReportPlot as oP
+from avaframe.out3SimpPlot import outPlotAllPeak as oP
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import time
@@ -38,30 +38,8 @@ reportDictList = com1DFA.runSamos(cfg, avalancheDir)
 endTime = time.time()
 log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
 
-# Generate markdown reports for each simulation
-for simDict in reportDictList:
+# Generata plots for all peakFiles
+plotDict = oP.plotAllPeakFields(avalancheDir, cfg)
 
-    # add parameters collected from logFile
-    simDict['simParameters'].update(fU.extractParameterInfo(avalancheDir, simDict['simName']))
-
-    # add genereal simulation parameters from .ini file
-    simDict['releaseArea'].update([('release densitiy [kgm-3]', float(cfg['REP']['rhoRelease']))])
-    simDict['entrainmentArea'].update([('entrainment density [kgm-3]', float(cfg['REP']['rhoEntrainment'])),
-                               ('entrainment thickness [m]', float(cfg['REP']['entH']))])
-
-    # set which parameters shall be plotted
-    resultParams = cfg['REP']['plotFields']
-    resPar = resultParams.split('_')
-    simDict['images'] = {}
-    for var in resPar:
-        unit = cfg['REP']['unit%s' % var]
-        fileName = oP.plotPeakField(avalancheDir, simDict['simName'], var, unit)
-        # example to include figures
-        imagePath = os.path.join(os.getcwd(), fileName)
-        simDict['images'].update({'peak field: %s' % var : imagePath})
-
-    # example to add addtional information
-    # simDict['text'] = {'Images' : 'the images have been produced with', 'Simulations' : 'the simulations have been produced with'}
-
-    # write report
-    gR.writeReport(avalancheDir, simDict)
+# write report
+gR.writeReport(avalancheDir, reportDictList, plotDict)

@@ -46,8 +46,10 @@ def plotPeakField(avaDir, simName, resType, unit):
     fig, ax1 = plt.subplots()
     # choose colormap
     cmapDict = {'ppr' : cmapPres, 'pfd' : cmapDepth, 'pv' : cmapSpeed}
-    cmap = cmapDict[resType]['cmap']
-    ticks = cmapPres['ticks']
+    maskedArray = np.ma.masked_where(data == 0, data)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(
+        cmapPres, 0.0, np.nanmax(maskedArray), continuous=contCmap)
+
     im1 = ax1.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     addColorBar(im1, ax1, ticks, unit)
     title = str('%s' % fullName)

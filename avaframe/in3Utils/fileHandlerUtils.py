@@ -255,12 +255,13 @@ def makeSimDict(inputDir, varPar=''):
         varPar = 'Mu'
 
     # Make dictionary of input data info
-    data = {'files': [], 'names': [], 'resType': [], 'simType': [],
+    data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'simName' : [],
             'modelType' : [], 'releaseArea': [], 'cellSize': [], varPar: []}
 
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
         name = os.path.splitext(os.path.basename(datafiles[m]))[0]
+        data['simName']
         data['names'].append(name)
         nameParts = name.split('_')
         data['releaseArea'].append(nameParts[0])
@@ -268,6 +269,7 @@ def makeSimDict(inputDir, varPar=''):
         data['modelType'].append(nameParts[2])
         data[varPar].append(nameParts[3])
         data['resType'].append(nameParts[4])
+        data['simName'].append(nameParts[0] + '_' + nameParts[1] + '_' + nameParts[2] + '_' + nameParts[3])
         header = IOf.readASCheader(datafiles[m])
         data['cellSize'].append(header.cellsize)
 
