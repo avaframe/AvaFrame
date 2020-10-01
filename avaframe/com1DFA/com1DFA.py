@@ -249,8 +249,8 @@ def runSamos(cfg, avaDir):
             # Create dictionary
             dictNull = {}
             dictNull = {'headerLine' : 'com1DFA simulation', 'simName' : logName, 'simParameters' : {'release area' : relName, 'entrainment area' : entrainmentArea, 'resistance area' : resistanceArea,
-                        'parameter variation on' :'', 'parameter value' : '', 'Mu' : defValues['Mu'], 'release thickness [m]' : defValues['RelTh']}, 'releaseArea' : {'release area scenario' : relName},
-                       'entrainmentArea' : {'entrainment area scenario' : entrainmentArea}, 'resistanceArea' : {'resistance area scenario' : resistanceArea}}
+                        'parameter variation on' :'', 'parameter value' : '', 'Mu' : defValues['Mu'], 'release thickness [m]' : defValues['RelTh']}, 'Release area' : {'release area scenario' : relName},
+                       'Entrainment area' : {'entrainment area scenario' : entrainmentArea}, 'Resistance area' : {'resistance area scenario' : resistanceArea}}
 
             # Add to report dictionary list
             reportDictList.append(dictNull)
@@ -287,8 +287,8 @@ def runSamos(cfg, avaDir):
                 # Create dictionary
                 dictVar = {}
                 dictVar = {'headerLine' : 'com1DFA simulation', 'simName' : logName, 'simParameters' : {'release area' : relName, 'entrainment area' : entrainmentArea, 'resistance area' : resistanceArea,
-                            'parameter variation on' : cfgPar['varPar'], 'parameter value' : item}, 'releaseArea' : {'release area scenario' : relName},
-                           'entrainmentArea' : {'entrainment area scenario' : entrainmentArea}, 'resistanceArea' : {'resistance area scenario' : resistanceArea}}
+                            'parameter variation on' : cfgPar['varPar'], 'parameter value' : item}, 'Release area' : {'release area scenario' : relName},
+                           'Entrainment area' : {'entrainment area scenario' : entrainmentArea}, 'Resistance area' : {'resistance area scenario' : resistanceArea}}
                 if cfgPar['varPar'] == 'RelTh':
                     dictVar['simParameters'].update({'Mu': defValues['Mu']})
                     dictVar['simParameters'].update({'release thickness [m]' : item})
@@ -320,8 +320,8 @@ def runSamos(cfg, avaDir):
                 # Create dictionary
                 dictST = {}
                 dictST = {'headerLine' : 'com1DFA simulation', 'simName' : logName, 'simParameters' : {'release area' : relName, 'entrainment area' : entrainmentArea, 'resistance area' : resistanceArea,
-                            'parameter variation on' :'', 'parameter value' : '', 'Mu' : defValues['Mu'], 'release thickness [m]' : defValues['RelTh']}, 'releaseArea' : {'release area scenario' : relName},
-                           'entrainmentArea' : {'entrainment area scenario' : entrainmentArea}, 'resistanceArea' : {'resistance area scenario' : resistanceArea}}
+                            'parameter variation on' :'', 'parameter value' : '', 'Mu' : defValues['Mu'], 'release thickness [m]' : defValues['RelTh']}, 'Release area' : {'release area scenario' : relName},
+                           'Entrainment area' : {'entrainment area scenario' : entrainmentArea}, 'Resistance area' : {'resistance area scenario' : resistanceArea}}
 
                 # Add to report dictionary list
                 reportDictList.append(dictST)
@@ -330,6 +330,11 @@ def runSamos(cfg, avaDir):
                 # Count total number of simulations
                 countRel = countRel + 1
 
+
+    for dict in reportDictList:
+        dict['Release area'].update([('release densitiy [kgm-3]', float(cfg['REP']['rhoRelease']))])
+        dict['Entrainment area'].update([('entrainment density [kgm-3]', float(cfg['REP']['rhoEntrainment'])),
+                                   ('entrainment thickness [m]', float(cfg['REP']['entH']))])
 
     log.info('Avalanche Simulations performed')
 
