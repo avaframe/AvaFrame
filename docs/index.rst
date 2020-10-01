@@ -10,8 +10,10 @@ The Open Avalanche Framework
 Overview
 ========
 
-* :doc:`introduction`
-* :doc:`develop`
+.. only:: html
+
+    * :doc:`introduction`
+    * :doc:`develop`
 
 .. toctree::
    :maxdepth: 3
@@ -24,12 +26,14 @@ Overview
 Modules
 =======
 
-* :doc:`moduleOverview`
-* :doc:`moduleCom1DFA`
-* :doc:`moduleCom2AB`
-* :doc:`moduleAna3AIMEC`
-* :doc:`moduleIn3Utils`
-* :doc:`moduleIn2Trans`
+.. only:: html
+
+    * :doc:`moduleOverview`
+    * :doc:`moduleCom1DFA`
+    * :doc:`moduleCom2AB`
+    * :doc:`moduleAna3AIMEC`
+    * :doc:`moduleIn3Utils`
+    * :doc:`moduleIn2Trans`
 
 .. toctree::
    :maxdepth: 3
@@ -46,7 +50,9 @@ Modules
 Appendix
 ==========
 
-* :doc:`appendixCom1DFA`
+.. only:: html
+
+    * :doc:`appendixCom1DFA`
 
 .. toctree::
    :maxdepth: 3
@@ -55,13 +61,16 @@ Appendix
 
    appendixCom1DFA.rst
 
-References
-==========
 
-* :doc:`zreferences`
+.. only:: html
+
+    References
+    ==========
+
+    * :doc:`zreferences`
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 0
     :hidden:
     :caption: References
 
