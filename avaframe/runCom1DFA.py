@@ -45,4 +45,4 @@ log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
 plotDict = oP.plotAllPeakFields(avalancheDir, cfg)
 
 # write report
-gR.writeReport(avalancheDir, reportDictList, plotDict)
+gR.writeReport(avalancheDir, reportDictList, plotDict, reportOneFile=True)
