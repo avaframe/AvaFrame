@@ -4,3 +4,4 @@ pyshp
 scipy
 cmocean
 seaborn
+sphinxcontrib-bibtex
