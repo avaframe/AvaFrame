@@ -55,16 +55,14 @@ Appendix
 
    appendixCom1DFA.rst
 
-.. only:: html
+References
+==========
 
-    References
-    ==========
+* :doc:`zreferences`
 
-    * :doc:`zreferences`
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+    :caption: References
 
-    .. toctree::
-      :maxdepth: 1
-      :hidden:
-      :caption: References
-
-zreferences.rst
+    zreferences.rst
