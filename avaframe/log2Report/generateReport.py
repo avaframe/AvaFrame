@@ -75,11 +75,10 @@ def writeReport(avaDir, reportDictList, plotDict, reportOneFile=True):
     """ Write a report for simulation """
 
     outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
-    runName = 'sim1'
 
     if reportOneFile:
         # Start writing markdown style report
-        with open(os.path.join(outDir, '%s.md' % runName), 'w') as pfile:
+        with open(os.path.join(outDir, 'fullSimulationReport.md'), 'w') as pfile:
 
             # Loop through all simulations
             for reportD in reportDictList:
