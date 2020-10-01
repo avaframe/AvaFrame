@@ -386,7 +386,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     # Get input data
     fnames = cfgPath['pressurefileList']
 
-    flag = cfgFlags['typeFlag']
+    flag = float(cfgFlags['typeFlag'])
 
     zPath = rasterTransfo['z']
     sPath = rasterTransfo['s']
