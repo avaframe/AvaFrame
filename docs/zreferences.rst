@@ -1,6 +1,4 @@
-.. only:: html
-
-    References
-    =============
+References
+=============
 
 .. bibliography:: references_all.bib
