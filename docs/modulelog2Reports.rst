@@ -14,38 +14,38 @@ Currently, the report is structured as follows:
 * Title
 * Simulation name
 * List of parameters and respective values
-* if key: *releaseArea* is provided - table with columns for each parameter
-* if key: *entrainmentArea* is provided - table with columns for each parameter
-* if key: *resistanceArea* is provided - table with columns for each parameter
+* if key: *Release area* is provided - table with columns for each parameter
+* if key: *Entrainment area* is provided - table with columns for each parameter
+* if key: *Resistance area* is provided - table with columns for each parameter
 * if key: *images* is provided - images are plotted
+* if key: *text* is provided - text is plotted under Additional info
 
 Input
 -----
 
-As input, a path variable and a python dictionary is required.
-For the dictionary, the following keys are required:
+As input, a path variable and a python inputDictionary is required, optionally you can provide a plotDictionary,
+including with title and absolute paths to the images you want to be included.
+For the inputDictionary, the following options for keys are turned into blocks:
 
 * 'headerLine' - title of the report
 * 'simName' - name of the simulation
-
-The following keys are optional:
-
 * 'simParameters' - parameters of the simulation
-* 'releaseArea' - all data regarding the release area scenario
-* 'entrainmentArea' - all data regarding the entrainment area scenario
-* 'resistanceArea' - all data regarding the resistance area scenario
-* 'images' - paths to figures
+* 'Release area' - all data regarding the release area scenario
+* 'Entrainment area' - all data regarding the entrainment area scenario
+* 'Resistance area' - all data regarding the resistance area scenario
+* 'images' - title and paths to figures
+* 'text' - topic and text
 
 
 Outputs
 -------
 
-A report in markdown format, called:
+A report in markdown format, default all info is plotted consecutively into one file, called *fullSimulationReport.md*.
+If reportOneFile is set to False when calling generateReport, one report file is created for each simulation, called *simName.md*.
 
-* simName.md
 
 
 To run
 ------
 
-* call generateReport(avalancheDir, inputDictionary) in the run script of your computational module
+* call generateReport(avalancheDir, inputDictionary, plotDict) in the run script of your computational module
