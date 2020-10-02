@@ -40,7 +40,7 @@ def quickPlotSimple(avaDir, inputDir):
         -plots are saved to Outputs/out3SimpPlot
     """
 
-    outDir = os.path.join(avaDir, 'Outputs', 'out3SimpPlot')
+    outDir = os.path.join(avaDir, 'Outputs', 'out3Plot')
     fU.makeADir(outDir)
 
     # Load input datasets from input directory
