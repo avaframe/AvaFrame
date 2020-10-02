@@ -42,7 +42,7 @@ endTime = time.time()
 log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
 
 # Generata plots for all peakFiles
-plotDict = oP.plotAllPeakFields(avalancheDir, cfg, flagReport=True)
+plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], flagReport=True)
 
 # write report
 gR.writeReport(avalancheDir, reportDictList, plotDict, reportOneFile=True)

@@ -16,7 +16,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.out3Plot.makePalette as makePalette
 
 
-def plotAllPeakFields(avaDir, cfg, flagReport=False):
+def plotAllPeakFields(avaDir, cfg, cfgFLAGS, flagReport=False):
     """ Plot all peak fields and return dictionary with paths to plots """
 
     # Load all infos on simulations
@@ -69,7 +69,7 @@ def plotAllPeakFields(avaDir, cfg, flagReport=False):
         ax1.set_xlabel('x [m]')
         ax1.set_ylabel('y [m]')
         plotName = os.path.join(outDir, '%s.%s' % (name, outputFormat))
-        #saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+        #saveAndOrPlot(cfgPath, cfgFLAGS, outFileName, fig)
         fig.savefig(plotName)
         plotPath = os.path.join(os.getcwd(), plotName)
         plotDict[peakFiles['simName'][m]].update({peakFiles['resType'][m] : plotPath})
