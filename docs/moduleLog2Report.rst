@@ -14,18 +14,18 @@ Currently, the report is structured as follows:
 * Title
 * Simulation name
 * List of parameters and respective values
-* if key: *Release area* is provided - table with columns for each parameter
-* if key: *Entrainment area* is provided - table with columns for each parameter
-* if key: *Resistance area* is provided - table with columns for each parameter
-* if key: *images* is provided - images are plotted
-* if key: *text* is provided - text is plotted under Additional info
+* *Release area* - table with columns for each parameter
+* *Entrainment area*  - table with columns for each parameter
+* *Resistance area* - table with columns for each parameter
+* *images* - images with title
+* *text* - text is plotted under Additional info
 
 Input
 -----
 
 As input, a path variable and a python inputDictionary is required, optionally you can provide a plotDictionary,
-including with title and absolute paths to the images you want to be included.
-For the inputDictionary, the following options for keys are turned into blocks:
+including title and the absolute paths to the image you want to be included.
+For the inputDictionary, there are the following options for keys to be turned into blocks:
 
 * 'headerLine' - title of the report
 * 'simName' - name of the simulation
@@ -36,16 +36,19 @@ For the inputDictionary, the following options for keys are turned into blocks:
 * 'images' - title and paths to figures
 * 'text' - topic and text
 
+The plotDictionary has to be structured as follows:
 
-Outputs
+* 'simName' with 'title' : 'path'
+
+
+Output
 -------
 
-A report in markdown format, default all info is plotted consecutively into one file, called *fullSimulationReport.md*.
-If reportOneFile is set to False when calling generateReport, one report file is created for each simulation, called *simName.md*.
-
+The default setting is to produce one report file, *fullSimulationReport.md*, however if one wants to receive on report for each *simName*,
+set the flag *reportOneFile = False*.
 
 
 To run
 ------
 
-* call generateReport(avalancheDir, inputDictionary, plotDict) in the run script of your computational module
+* call generateReport(avalancheDir, inputDictionary, plotDict, reportOneFile=True) in the run script of your computational module

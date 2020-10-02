@@ -23,7 +23,7 @@ def plotAllPeakFields(avaDir, cfg):
     peakFiles = fU.makeSimDict(inputDir)
 
     # Output directory
-    outDir = os.path.join(avaDir, 'Work', 'log2Report')
+    outDir = os.path.join(avaDir, 'Outputs', 'out3SimpPlot')
     fU.makeADir(outDir)
 
     # Initialise plot dictionary with simulation names
@@ -55,7 +55,6 @@ def plotAllPeakFields(avaDir, cfg):
         fig, ax1 = plt.subplots()
         # choose colormap
         # cmapDict = {'ppr' : cmapPres, 'pfd' : cmapDepth, 'pv' : cmapSpeed}
-        maskedArray = np.ma.masked_where(data == 0, data)
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             cmapPres, np.amin(data), np.amax(data), continuous=contCmap)
         im1 = ax1.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)

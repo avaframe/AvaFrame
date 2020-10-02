@@ -34,6 +34,9 @@ Modules
     * :doc:`moduleAna3AIMEC`
     * :doc:`moduleIn3Utils`
     * :doc:`moduleIn2Trans`
+    * :doc:`moduleOut3Plot`
+    * :doc:`moduleOut3SimpPlot`
+    * :doc:`moduleLog2Report`
 
 .. toctree::
    :maxdepth: 3
@@ -46,6 +49,9 @@ Modules
    moduleAna3AIMEC.rst
    moduleIn3Utils.rst
    moduleIn2Trans.rst
+   moduleOut3Plot.rst
+   moduleOut3SimpPlot.rst
+   moduleLog2Report.rst
 
 Appendix
 ==========
