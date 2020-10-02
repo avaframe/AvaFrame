@@ -169,7 +169,7 @@ function of the characteristic diameter :math:`\overline{d}` and height
 :math:`h_{\text{res}}` of the obstacles, the spacing
 :math:`s_{\text{res}}` between the obstacles and an empirical
 coefficient :math:`c_w` (see :numref:`f-res`). The effective height :math:`h^{\text{eff}}`
-is deffined as :math:`\min\left\lbrace\begin{array}{l} \overline{h}\\h_{res}\end{array}\right\rbrace`:
+is defined as :math:`\min\left\lbrace\begin{array}{l} \overline{h}\\h_{res}\end{array}\right\rbrace`:
 
 .. math::
    F_i^{\text{res}} = -(\frac{1}{2}\,\overline{d}\,c_w/s^2_{\text{res}})\,\rho_0\,A\,
@@ -463,7 +463,7 @@ a velocity :math:`\mathbf{\overline{u}_{p_j}}=(\overline{u}_{p_j,1}, \overline{u
 particles are also projected on a regular grid (raster) and the mass distributed on each
 node of the raster (see :numref:`raster`). This leads to the
 following expression for the mass :math:`m_{v_i}` of each node on the
-raster grid :math:`m_{v_i} = \sum\limits_j{m_{p_j}}`.
+raster grid :math:`m_{v_i} = \sum\limits_{p_j}{m_{p_j}}`.
 
 .. _raster:
 
@@ -477,7 +477,7 @@ Each grid node is also affected with a velocity
 of each raster cell divided by the mass of the same cell:
 
 .. math::
-    \overline{\mathbf{u}}_{v_i} = \frac{\sum\limits_j{m_{p_j}}\overline{\mathbf{u}_j}}{\sum\limits_j{m_{p_j}}}
+    \overline{\mathbf{u}}_{v_i} = \frac{\sum\limits_{p_j}{m_{p_j}}\overline{\mathbf{u}_j}}{\sum\limits_{p_j}{m_{p_j}}}
 
 The flow depth :math:`\overline{h}_{v_i}` can be deduced from the mass
 and area of the raster cell:

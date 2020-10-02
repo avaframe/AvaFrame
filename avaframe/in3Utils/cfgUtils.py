@@ -50,9 +50,6 @@ def getModuleConfig(module, fileOverride=''):
     - pytest
     '''
 
-    # initialize a configparser object
-    cfg = configparser.ConfigParser()
-
     # get path of module
     modPath = os.path.dirname(module.__file__)
 
@@ -70,19 +67,78 @@ def getModuleConfig(module, fileOverride=''):
     if fileOverride:
         if os.path.isfile(fileOverride):
             iniFile = fileOverride
+            compare = False
         else:
             raise FileNotFoundError('Provided fileOverride does not exist')
 
     elif os.path.isfile(localFile):
-        iniFile = localFile
+        iniFile = [defaultFile, localFile]
+        compare = True
     elif os.path.isfile(defaultFile):
         iniFile = defaultFile
+        compare = False
     else:
         raise FileNotFoundError('None of the provided cfg files exist ')
 
-    log.info('Reading config from: %s', iniFile)
 
     # Finally read it
-    cfg.read(iniFile)
+    cfg = compareConfig(iniFile, compare)
+
+    return cfg
+
+def compareConfig(iniFile, compare):
+
+    if compare:
+        log.info('Reading config from: %s and %s'% (iniFile[0], iniFile[1]))
+        # initialize our final configparser object
+        cfg = configparser.ConfigParser()
+        # initialize configparser object to read
+        defCfg = configparser.ConfigParser()
+        locCfg = configparser.ConfigParser()
+        # read default and local parser files
+        defCfg.read(iniFile[0])
+        locCfg.read(iniFile[1])
+        # loop through all sections of the localCfg
+        for section in locCfg.sections():
+            # check if section is also in the default cfg
+            if defCfg.has_section(section):
+                # if yes add this section to the cfg that will be returned
+                cfg.add_section(section)
+                for key in locCfg.items(section):
+                    # check if key is also in the default cfg
+                    if defCfg.has_option(section, key[0]):
+                        # if yes add this key to the cfg that will be returned
+                        cfg.set(section, key[0], locCfg.get(section, key[0]))
+                        # remove the key from the default cfg
+                        defCfg.remove_option(section, key[0])
+                    else :
+                        # if not warn the user that this key no longer exists
+                        log.warning('Key [\'%s\'] in section [\'%s\'] in config file %s no longer exists.' % (key[0], section, iniFile[1]))
+                # remove the section from the default cfg if it is empty
+                if not defCfg.items(section):
+                    defCfg.remove_section(section)
+            else :
+                # if not warn the user that this section no longer exists
+                log.warning('Section [\'%s\'] in config file %s no longer exists.' % (section, iniFile[1]))
+
+        # Now check if there are some sections/ keys left in the default cfg and add them to the Cfg
+        # loop through all sections of the defaultCfg
+        for section in defCfg.sections():
+            # check if section is already in the cfg
+            if not cfg.has_section(section):
+                # if no add this section to the cfg that will be returned and warn the user
+                cfg.add_section(section)
+                log.warning('Section [\'%s\'] added because it is not present in the config file %s but should be.' % (section, iniFile[1]))
+            # loop on key in defaultCfg
+            for key in defCfg.items(section):
+                # add this key to the cfg that will be returned and warn the user
+                cfg.set(section, key[0], defCfg.get(section, key[0]))
+                log.warning('Key [\'%s\'] in section [\'%s\'] added because it is not present in the config file %s but should be.' % (key[0], section, iniFile[1]))
+
+    else:
+        log.info('Reading config from: %s', iniFile)
+        cfg = configparser.ConfigParser()
+        # Finally read it
+        cfg.read(iniFile)
 
     return cfg
