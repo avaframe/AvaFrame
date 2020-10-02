@@ -19,10 +19,10 @@ The module requires an avalanche directory, that follows a specified folder stru
 This avalanche directory can be created by running: runInitializeProject.py.
 In the directory Inputs, the following files are required:
 
-* digital elevation model
+* digital elevation model as .asc file
 * release area as shapefile (in Inputs/REL)
 
-the following files are optional:
+and the following files are optional:
 
 * entrainment area as shapefile (in Inputs/ENT)
 * resistance area as shapefile (in Inputs/RES)
@@ -34,12 +34,13 @@ The simulation settings area defined in the configuration file *com1DFACfg.ini*:
 * flagRes - include resistance areas
 * flagVarPar - perform parameter variation
 * flagVarEnt - perform parameter variation with entrainment and resistance
+* varPar - parameter to be varied
 * varParValues - values for parameter variation
 
 
 Output
 ---------
-The simulation results are saved to: *Outputs/com1DFA*:
+The simulation results are saved to: *Outputs/com1DFA* and include:
 
 * raster files of the peak values for pressure, flow depth and speed (*Outputs/com1DFA/peakFiles*)
 * reports of all simulations (*Outputs/com1DFA/reports*)
