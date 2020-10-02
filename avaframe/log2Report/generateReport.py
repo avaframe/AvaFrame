@@ -16,6 +16,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
+
 def writeColumns(dict, key, pfile):
     """ Create block with columns for each key and value pair of dict """
 
@@ -42,7 +43,7 @@ def writeReportFile(reportD, pfile):
         if key == 'headerLine':
             pfile.write('# %s \n' % reportD['headerLine'])
         if key == 'simName':
-            pfile.write('### Simulation name: *%s* \n'  % reportD['simName'])
+            pfile.write('### Simulation name: *%s* \n' % reportD['simName'])
 
         # SIMULATION BLOCK
         if key == 'simParameters':
@@ -60,14 +61,14 @@ def writeReportFile(reportD, pfile):
         if key == 'images':
             pfile.write('### Images \n')
             for value in reportD['images']:
-                pfile.write('##### Figure:   %s \n'  % value)
+                pfile.write('##### Figure:   %s \n' % value)
                 pfile.write('![%s](%s) \n' % (value, reportD['images'][value]))
 
         # TEXT BLOCK
         if key == 'text':
             pfile.write('### Additional Info \n')
             for value in reportD['text']:
-                pfile.write('##### Topic:   %s \n'  % value)
+                pfile.write('##### Topic:   %s \n' % value)
                 pfile.write('%s \n' % (reportD['text'][value]))
 
 

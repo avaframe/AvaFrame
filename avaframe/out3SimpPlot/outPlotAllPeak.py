@@ -15,7 +15,8 @@ from avaframe.out3Plot.plotUtils import *
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.out3Plot.makePalette as makePalette
 
-def plotAllPeakFields(avaDir, cfg):
+
+def plotAllPeakFields(avaDir, cfg, flagReport=False):
     """ Plot all peak fields and return dictionary with paths to plots """
 
     # Load all infos on simulations
@@ -23,8 +24,12 @@ def plotAllPeakFields(avaDir, cfg):
     peakFiles = fU.makeSimDict(inputDir)
 
     # Output directory
-    outDir = os.path.join(avaDir, 'Outputs', 'out3SimpPlot')
-    fU.makeADir(outDir)
+    if flagReport:
+        outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
+        fU.makeADir(outDir)
+    else:
+        outDir = os.path.join(avaDir, 'Outputs', 'out3SimpPlot')
+        fU.makeADir(outDir)
 
     # Initialise plot dictionary with simulation names
     plotDict = {}
@@ -41,7 +46,7 @@ def plotAllPeakFields(avaDir, cfg):
 
         # Load data
         data = np.loadtxt(fileName, skiprows=6)
-        unit = cfg['REP']['unit%s' % peakFiles['resType'][m]]
+        unit = cfg['REPORT']['unit%s' % peakFiles['resType'][m]]
 
         # Set extent of peak file
         cellSize = peakFiles['cellSize'][m]
@@ -64,6 +69,7 @@ def plotAllPeakFields(avaDir, cfg):
         ax1.set_xlabel('x [m]')
         ax1.set_ylabel('y [m]')
         plotName = os.path.join(outDir, '%s.%s' % (name, outputFormat))
+        #saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
         fig.savefig(plotName)
         plotPath = os.path.join(os.getcwd(), plotName)
         plotDict[peakFiles['simName'][m]].update({peakFiles['resType'][m] : plotPath})
