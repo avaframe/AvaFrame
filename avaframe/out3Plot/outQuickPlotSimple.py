@@ -75,7 +75,6 @@ def quickPlotSimple(avaDir, inputDir):
     fig.colorbar(im1, ax=ax1)
     ax1.set_aspect('auto')
     title = str('%s' % name1)
-    title = title.replace('_', '\_')
     ax1.set_title(title)
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
@@ -83,12 +82,10 @@ def quickPlotSimple(avaDir, inputDir):
     im2 = plt.imshow(data2, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     fig.colorbar(im2, ax=ax2)
     title2 = str('%s' % name2)
-    title2 = title2.replace('_', '\_')
     ax2.set_title(title2)
     ax2.set_aspect('auto')
     ax2.set_xlabel('x [m]')
     title = str('%s' % name2)
-    title = title.replace('_', '\_')
     ax3 = fig.add_subplot(133)
     cmap = cmapdiv
     im3 = plt.imshow(data1-data2, cmap=cmap,
@@ -110,7 +107,7 @@ def quickPlotSimple(avaDir, inputDir):
     ax[1].plot(data1[nx_loc, :], 'k', label='data1')
     ax[1].plot(data2[nx_loc, :], 'b--', label='data2')
     ax[1].set_xlabel('Location along track [ncols]')
-    ax[1].set_ylabel('Result parameter',  fontsize=fs)
+    ax[1].set_ylabel('Result parameter', fontsize=fs)
     ax[1].set_title('Long profile at x =  %d' % nx_loc)
 
     ax[0].legend()

@@ -113,7 +113,6 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
         fig.colorbar(im1, ax=ax1)
         ax1.set_aspect('auto')
         title = str('%s' % data['names'][indSuffix[0]])
-        title = title.replace('_', '\_')
         ax1.set_title(title)
         ax1.set_xlabel('x [m]')
         ax1.set_ylabel('y [m]')
@@ -123,15 +122,15 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
         ax2.set_aspect('auto')
         ax2.set_xlabel('x [m]')
         title = str('%s' % data['names'][indSuffix[1]])
-        title = title.replace('_', '\_')
         ax2.set_title(title)
         ax3 = fig.add_subplot(133)
         cmap = cmapdiv
         im3 = plt.imshow(dataDiff, cmap=cmap,
                          extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         fig.colorbar(im3, ax=ax3)
-        ax3.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' % (diffMean, unit, diffMax, unit, diffMin, unit), bbox=dict(boxstyle="square", ec='white', fc='white'),
-        horizontalalignment='left', verticalalignment='bottom')
+        ax3.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' %
+                (diffMean, unit, diffMax, unit, diffMin, unit), bbox=dict(boxstyle="square", ec='white', fc='white'),
+                horizontalalignment='left', verticalalignment='bottom')
         ax3.set_aspect('auto')
         ax3.set_xlabel('x [m]')
         ax3.set_title('Difference ref-sim')

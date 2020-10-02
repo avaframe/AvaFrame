@@ -46,7 +46,7 @@ def readLogFile(logName, cfg=''):
 
     # Save info to dictionary, add all result parameters that are saved in com1DFA Outputs
     suffix = ['pfd', 'ppr', 'pv', 'fd']
-    logDict = {'noSim': [], 'simName': [], varPar: [], 'fullName' : [], 'suffix': suffix}
+    logDict = {'noSim' : [], 'simName' : [], varPar: [], 'fullName' : [], 'suffix ': suffix}
 
     lines = logFile.readlines()[1:]
     countSims = 1
@@ -71,7 +71,7 @@ def extractParameterInfo(avaDir, simName):
     simNames = sorted(set(names), key=lambda s: s.split("_")[3])
 
     # Initialise parameter dictionary
-    parameterDict = { }
+    parameterDict = {}
 
     # Initialise fields
     time = []
@@ -91,14 +91,10 @@ def extractParameterInfo(avaDir, simName):
             elif "total DFA mass" in line:
                 mass.append(float(line.split()[3]))
 
-    # Save to dictionary
-    logDict = {'time': np.asarray(time), 'mass': np.asarray(mass),
-               'entrMass': np.asarray(entrMass)}
-
     # Set values in dictionary
-    parameterDict['release mass [kg]'] = logDict['mass'][0]
-    parameterDict['final time step [s]'] = logDict['time'][-1]
-    parameterDict['current mass [kg]'] = logDict['mass'][-1]
+    parameterDict['release mass [kg]'] = np.asarray(mass)[0]
+    parameterDict['final time step [s]'] = np.asarray(time)[-1]
+    parameterDict['current mass [kg]'] = np.asarray(mass)[-1]
 
     return parameterDict
 
@@ -212,21 +208,21 @@ def exportcom1DFAOutput(avaDir, cfg=''):
                                 logDict['simName'][k], 'raster',
                                 '%s_pfd.asc' % logDict['simName'][k])
         pathTo = os.path.join(outDirPF, '%s_%.03f_pfd.asc' % (logDict['simName'][k], logDict[varPar][k]))
-        shutil.copy(pathFrom,pathTo)
+        shutil.copy(pathFrom, pathTo)
         pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_ppr.asc' % logDict['simName'][k])
         pathTo = os.path.join(outDirPF, '%s_%.03f_ppr.asc' % (logDict['simName'][k], logDict[varPar][k]))
-        shutil.copy(pathFrom,pathTo)
+        shutil.copy(pathFrom, pathTo)
         pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_pv.asc' % logDict['simName'][k])
         pathTo = os.path.join(outDirPF, '%s_%.03f_pv.asc' % (logDict['simName'][k], logDict[varPar][k]))
-        shutil.copy(pathFrom,pathTo)
+        shutil.copy(pathFrom, pathTo)
         pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
                                 '%s.html' % logDict['simName'][k])
         pathTo = os.path.join(outDirRep, '%s_%.03f.html' % (logDict['simName'][k], logDict[varPar][k]))
-        shutil.copy(pathFrom,pathTo)
+        shutil.copy(pathFrom, pathTo)
 
     # Export ExpLog to Outputs/com1DFA
     shutil.copy2(os.path.join('%s' % inputDir, 'ExpLog.txt'), outDir)
@@ -269,7 +265,7 @@ def makeSimDict(inputDir, varPar=''):
         data['modelType'].append(nameParts[2])
         data[varPar].append(nameParts[3])
         data['resType'].append(nameParts[4])
-        data['simName'].append(nameParts[0] + '_' + nameParts[1] + '_' + nameParts[2] + '_' + nameParts[3])
+        data['simName'].append('_'.join(nameParts[0:4]))
         header = IOf.readASCheader(datafiles[m])
         data['cellSize'].append(header.cellsize)
 
