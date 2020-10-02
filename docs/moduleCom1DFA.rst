@@ -7,14 +7,53 @@ in cooperation with the company AVL List GmbH in Graz.
 The calculation of the DFA is based on the depth integrated governing equations and
 solved numerically using the smoothed particle hydrodynamic (sph) method.
 
+Dense flow avalanche simulations can be performed for different release area scenarios, with or without
+entrainment and/or resistance areas.
+There is the option to vary the internal friction parameter or the release snow thickness.
+
+
 Input
 ---------
 
+The module requires an avalanche directory, that follows a specified folder structure.
+This avalanche directory can be created by running: runInitializeProject.py.
+In the directory Inputs, the following files are required:
+
+* digital elevation model
+* release area as shapefile (in Inputs/REL)
+
+the following files are optional:
+
+* entrainment area as shapefile (in Inputs/ENT)
+* resistance area as shapefile (in Inputs/RES)
+
+The simulation settings area defined in the configuration file *com1DFACfg.ini*:
+
+* flagOut - print full model output
+* flagEnt - include entrainment areas
+* flagRes - include resistance areas
+* flagVarPar - perform parameter variation
+* flagVarEnt - perform parameter variation with entrainment and resistance
+* varParValues - values for parameter variation
+
+
 Output
 ---------
+The simulation results are saved to: *Outputs/com1DFA*:
+
+* raster files of the peak values for pressure, flow depth and speed (*Outputs/com1DFA/peakFiles*)
+* reports of all simulations (*Outputs/com1DFA/reports*)
+* log files of all simulations
+* experiment log that lists all simulations
+
 
 To run
 --------
+
+* create an avalanche directory with required input files
+* copy com1DFACfg.ini to local_com1DFACfg.ini and set your desired settings
+* run runCom1DFA.py
+
 
 Theory
 --------
