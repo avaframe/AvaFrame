@@ -16,7 +16,9 @@ Input
 
 * avalanche directory
 * configuration settings of com1DFA
+* cfgFlags
 
+where cfgFlags is a configparser object that contains the global flags, whether a plot shall be saved and/or printed to screen
 
 Outputs
 -------
