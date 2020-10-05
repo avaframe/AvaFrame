@@ -102,7 +102,7 @@ latex_elements = {
             \vspace{0mm}
             \Large \textbf{{AvaFrame developers}}
 
-            \small Created on : Octorber, 2017
+            %\small Created on : Octorber, 2017
 
             \vspace*{0mm}
             \small  Last updated : \MonthYearFormat\today
@@ -110,14 +110,14 @@ latex_elements = {
 
             %% \vfill adds at the bottom
             \vfill
-            \small \textit{More documents are freely available at }{\href{http://pythondsp.readthedocs.io/en/latest/pythondsp/toc.html}{PythonDSP}}
+            %\small \textit{More documents are freely available at }{\href{http://pythondsp.readthedocs.io/en/latest/pythondsp/toc.html}{PythonDSP}}
         \end{titlepage}
 
         \clearpage
         \pagenumbering{roman}
         \tableofcontents
-        \listoffigures
-        \listoftables
+        %\listoffigures
+        %\listoftables
         \clearpage
         \pagenumbering{arabic}
 
