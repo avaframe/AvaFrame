@@ -257,7 +257,6 @@ def makeSimDict(inputDir, varPar=''):
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
         name = os.path.splitext(os.path.basename(datafiles[m]))[0]
-        data['simName']
         data['names'].append(name)
         nameParts = name.split('_')
         data['releaseArea'].append(nameParts[0])
