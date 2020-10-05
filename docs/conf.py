@@ -127,7 +127,6 @@ latex_elements = {
         \setcounter{footnote}{0}%
         \let\thanks\relax\let\maketitle\relax
         %\gdef\@thanks{}\gdef\@author{}\gdef\@title{}
-        }
         \pagenumbering{roman}
         \tableofcontents
         %\listoffigures
