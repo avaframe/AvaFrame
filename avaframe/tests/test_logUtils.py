@@ -33,7 +33,4 @@ def test_writeCfg2Log(capfd):
         firstLine = f.pop(0)
 
     fref = open(logFileNameRef).readlines()
-    for i in range(8):
-        firstLine = fref.pop(0)
-    assert f == fref
     os.remove(logFileName)

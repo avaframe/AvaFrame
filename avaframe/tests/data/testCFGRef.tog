@@ -1,11 +1,3 @@
-logUtils - INFO -  Started logging at: 05.10.2020 09:47:36
-logUtils - INFO -  Also logging to: /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/testCFG.log
-cfgUtils - INFO -  Reading config from: /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/test_logUtilsCfg.ini and /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/local_test_logUtilsCfg.ini
-cfgUtils - WARNING -  Key ['badkey1'] in section ['GOODSECTION1'] in config file /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/local_test_logUtilsCfg.ini no longer exists.
-cfgUtils - WARNING -  Section ['BADSECTION1'] in config file /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/local_test_logUtilsCfg.ini no longer exists.
-cfgUtils - WARNING -  Section ['GOODSECTION2'] added because it is not present in the config file /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/local_test_logUtilsCfg.ini but should be.
-cfgUtils - WARNING -  Key ['goodkey3'] in section ['GOODSECTION2'] added because it is not present in the config file /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/local_test_logUtilsCfg.ini but should be.
-cfgUtils - WARNING -  Key ['goodkey4'] in section ['GOODSECTION2'] added because it is not present in the config file /home/matthiastonnel/Documents/github/AvaFrame/avaframe/tests/local_test_logUtilsCfg.ini but should be.
 logUtils - INFO -  Writing cfg for: test config
 logUtils - INFO -  	GENERAL
 logUtils - INFO -  		inputdir : path/to/avalanche

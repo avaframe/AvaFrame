@@ -11,5 +11,4 @@ def test_tmp1ExMain(capfd):
 
     tmp1Ex.tmp1ExMain(cfg)
     out, err = capfd.readouterr()
-    print(out)
     assert out == 'In tmp1Example\n'
