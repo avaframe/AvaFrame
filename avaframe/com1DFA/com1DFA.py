@@ -190,7 +190,7 @@ def runSamos(cfg, avaDir):
         log.info('Release area: %s - perform simulations' % (relName))
         if flagEntRes:
             log.info('Entrainment area: %s and resistance area: %s' % (entrainmentArea, resistanceArea))
-
+        
         # Initialise CreateProject cint file
         templateFile = os.path.join(modPath, 'CreateProject.cint')
         workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateProject.cint')
@@ -204,8 +204,8 @@ def runSamos(cfg, avaDir):
         copyReplace(workFile, workFile, '##DHMNAME##', demName)
         copyReplace(workFile, workFile, '##CELLSIZE##', cellSize)
         copyReplace(workFile, workFile, '##RELFILE##', rel)
-        copyReplace(workFile, workFile, '##RESFILE##', ent)
-        copyReplace(workFile, workFile, '##ENTFILE##', res)
+        copyReplace(workFile, workFile, '##ENTFILE##', ent)
+        copyReplace(workFile, workFile, '##RESFILE##', res)
         # Setup Project
         execSamos(samosAT, workFile, avaDir, fullOut)
 
