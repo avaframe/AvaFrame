@@ -82,3 +82,13 @@ This leads, after some calculation steps described in details in Appendix
 
 .. math::
     \overline{\sigma}^{(b)}_{33} = \rho\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)\,\overline{h}
+
+Numerics
+---------
+
+Those equations are solved numerically using a **SPH** method (:cite:`LiLi2010,Sa2007`).
+**SPH**  is a mesh free method where the basic idea is to divide the avalanche into
+small mass particles. The particles interact with each other according to the
+equation of motion described in :ref:`moduleCom1DFA:Theory` and the chosen kernel function.
+This kernel function describes the domain of influence of a particle (through the smoothing length parameter).
+See appendix :ref:`appendixCom1DFA:Governing Equations for the Dense Flow Avalanche` for further details.
