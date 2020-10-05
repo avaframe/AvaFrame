@@ -74,9 +74,63 @@ html_favicon = '_static/favicon.png'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# -- Options for LaTeX output ---------------------------------------------
+latex_engine = 'pdflatex'
+latex_elements = {
+    # The paper size ('letterpaper' or 'a4paper').
+    #
+    'papersize': 'a4paper',
+    'figure_align':'htbp',
+    # The font size ('10pt', '11pt' or '12pt').
+    #
+    'pointsize': '10pt',
+    'maketitle': r'''
+        \pagenumbering{Roman} %%% to avoid page 1 conflict with actual page 1
+
+        \begin{titlepage}
+            \centering
+
+            \vspace*{40mm} %%% * is used to give space from top
+            \textbf{\Huge {AvaFrame}}
+
+            \vspace{0mm}
+            \begin{figure}[!h]
+                \centering
+                \includegraphics[scale=0.3]{logo.png}
+            \end{figure}
+
+            \vspace{0mm}
+            \Large \textbf{{AvaFrame developers}}
+
+            \small Created on : Octorber, 2017
+
+            \vspace*{0mm}
+            \small  Last updated : \MonthYearFormat\today
+
+
+            %% \vfill adds at the bottom
+            \vfill
+            \small \textit{More documents are freely available at }{\href{http://pythondsp.readthedocs.io/en/latest/pythondsp/toc.html}{PythonDSP}}
+        \end{titlepage}
+
+        \clearpage
+        \pagenumbering{roman}
+        \tableofcontents
+        \listoffigures
+        \listoftables
+        \clearpage
+        \pagenumbering{arabic}
+
+        ''',
+}
+
+
 # -- Options for referencing -------------------------------------------
 numfig = True
 math_numfig = True
 math_eqref_format = "Eq.{number}"
 # make referencing unique if twice the same section heading apear
 autosectionlabel_prefix_document = True
+
+def setup(app):
+    app.add_stylesheet('css/custom.css')

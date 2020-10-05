@@ -30,14 +30,14 @@ We introduce the volume average of a quantity :math:`P(\mathbf{x},t)`:
 
 .. math::
     \overline{P}(\mathbf{x},t) =  \frac{1}{V(t)} \int\limits_{V(t)} P(\mathbf{x},t) \,\mathrm{d}V
-    :label: volume-average
+..    :label: volume-average
 
 and split the area integral into :
 
 .. math::
    \oint\limits_{\partial V(t)} \sigma^{\text{tot}}_{ij}n_j \,\mathrm{d}A =
    \oint\limits_{\partial V(t)} \sigma_{ij}n_j \,\mathrm{d}A + F_i^{\text{ent}} + F_i^{\text{res}}, \quad i=(1,2,3)
-   :label: area-integral
+..   :label: area-integral
 
 :math:`F_i^{\text{ent}}` represents the force required to break the
 entrained snow from the ground and to compress it (since the dense-flow
@@ -50,7 +50,7 @@ Which leads to in :eq:`momentum-balance1`:
    \rho_0 \frac{dV(t) \overline{u}_i}{dt} = \rho_0 V \frac{d\overline{u}_i}{dt} +
    \rho_0 \overline{u}_i \frac{dV}{dt} = \oint\limits_{\partial V(t)} \sigma_{ij}n_j
    \,\mathrm{d}A + \rho_0 V g_i + F_i^{\text{ent}} + F_i^{\text{res}}, \quad i=(1,2,3)
-   :label: momentum-balance2
+..   :label: momentum-balance2
 
 Using the mass balance equation :eq:`mass-balance1`, we get:
 
@@ -90,7 +90,7 @@ The normals at the free surface (:math:`n_i^{(s)}`) and bottom surface (:math:`n
 .. math::
    n_i^{(s,b)} = \frac{\partial F_{s,b}}{\partial x_i}\left(\frac{\partial F_{s,b}}{\partial x_j}
    \frac{\partial F_{s,b}}{\partial x_j}\right)^{-1/2}
-   :label: surface-normals
+..   :label: surface-normals
 
 Choice of the coordinate system:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -104,7 +104,7 @@ and :math:`\mathbf{e_3}` with the normal to the slope, i.e.:
 .. math::
    \mathbf{e_1} = \frac{\mathbf{u}}{\left\Vert \mathbf{u}\right\Vert},\quad \mathbf{e_2} = \mathbf{e_3}\wedge\mathbf{e_1},
    \quad \mathbf{e_3} = \mathbf{n^{(b)}}
-   :label: natural-coordinate-system
+..   :label: natural-coordinate-system
 
 The origin :math:`B` of the NCS is attached to the slope. This choice
 leads to:
@@ -112,7 +112,7 @@ leads to:
 .. math::
    n^{(b)}_i = \delta_{i3}, \quad \left.\frac{\partial b}{\partial x_i}\right\rvert_{\mathbf{0}} = 0\quad
    \mbox{for} \quad i=(1,2),\quad \mbox{and} \quad u^{(b)}_2 = u^{(b)}_3 = 0
-   :label: NCS-consequence
+..   :label: NCS-consequence
 
 In this NCS and considering a prism-like Control volume, the volume
 content :math:`V(t) = A_b(t)\overline{h}` is obtained by multiplication
@@ -195,7 +195,7 @@ Introducing the boundary conditions :eq:`boundary-conditions` leads to:
    \int\limits_{A_b}\underbrace{\sigma_{ij}\,n_j^{(b)}}_{-\sigma_{i3}}\,\mathrm{d}A +  \int\limits_{A_s}\underbrace{\sigma_{ij}\,n_j^{(s)}}_{0}\,\mathrm{d}A + \int\limits_{A_h}\sigma_{ij}\,n_j\,\mathrm{d}A\\
    &= -A_b\overline{\sigma}_{i3}^{(b)} + \oint\limits_{\partial A_b}\left(\int_b^s\sigma_{ij}\,n_j\,\mathrm{d}x_3\right)\,\mathrm{d}l
    \end{aligned}
-   :label: surface forces
+..   :label: surface forces
 
 Which simplifies the momentum balance :eq:`momentum-balance3` to:
 
@@ -273,7 +273,7 @@ Introducing those properties in :eq:`sigma33`, leads to
 .. math::
    \overline{\sigma^*}_{33} = \left(g^*_3-\lambda\frac{\partial^2{b^*}}{\partial{x_1^{*2}}}\,\overline{u}_1^{*2}\right)
    (s^*-x^*_3) + \underbrace{\varepsilon\oint\limits_{\partial A_b^*}\left(\int\limits_{x^*_3}^{s^*}\sigma^*_{31}\,\mathrm{d}x^*_3\right)\,\mathrm{d}l^*}_{O(\varepsilon)}.
-   :label: sigma33star
+..   :label: sigma33star
 
 The height, H of dense flow avalanches is assumed to me small compared
 to its length, L. Meaning that the equations are examined in the limit
@@ -377,7 +377,8 @@ of the flow state of the avalanche.
 
 .. math::
     \tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})
-
+    :label: samosAT friction model
+    
 With
 
 .. math::
@@ -549,7 +550,7 @@ Which leads to, using the relation :eq:`sph formulation`:
 .. math::
     F_{p_j,i}^{\text{lat}} = K_{(i)}\,\rho_0\,g_3\,\overline{h}_{p_j}\,.\,\left.\frac{d\,\overline{h}}{d\,x_i}\right\rvert_{p_j}
     = -K_{(i)}\,\frac{m_{p_j}}{A_{p_j}}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,\left.\frac{d\,W_{p_jp_l}}{d\,x_i}\right\rvert_{p_l}
-
+    :label: lateral force
 
 The bottom friction forces on each particle depend on the chose friction model and reads for the SamosAT friction model
 (using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{p_j}`):
@@ -558,7 +559,7 @@ The bottom friction forces on each particle depend on the chose friction model a
     F_{p_j,i}^{\text{bot}} = -\delta_{i1}\,A_{p_j}\,\tau^{(b)}_{p_j}
     = -\delta_{i1}\,A_{p_j}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{p_j}
      + \frac{\rho_0\,\mathbf{\overline{u}}_{p_j}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
-
+    :label: bottom force
 
 The resistance force on each particle reads (where :math:`h^{\text{eff}}_{p_j}`
 is a function of the average flow depth :math:`\overline{h}_{p_j}`):
@@ -566,7 +567,7 @@ is a function of the average flow depth :math:`\overline{h}_{p_j}`):
 .. math::
     F_{p_j,i}^{\text{res}}
     = - \rho_0\,A_{p_j}\,h^{\text{eff}}_{p_j}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{p_j}\|\,\overline{u}_{p_j,i}
-
+    :label: resistance force
 
 The term related to the entrained mass and mass balance
 :math:`- \overline{u_i}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
@@ -611,13 +612,15 @@ The supscript :math:`k` decribes which time step is considered (for the quantity
 is refered as :math:`a^k`). This leads, for the velocity, flow depth and mass to :
 
 .. math::
-   \begin{aligned}
-   &\overline{u}_{p_j,i}(t_k) = \overline{u}_{p_j,i}^k \quad &\text{current time step,}\\
-   &\overline{u}_{p_j,i}(t_{k+1}) = \overline{u}_{p_j,i}^{k+1} \quad &\text{next time step,} \\
-   &\overline{h}_{p_j}(t_k) = \overline{h}_{p_j}^k = \overline{h}_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
-   &m_{p_j}(t_k) = m_{p_j}^k = m_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
-   &m_{p_j}(t_{k+1}) = m_{p_j}^{k+1} = m_{p_j} + \Delta m_{p_j} \quad &\text{next time step.}\end{aligned}
+    :nowrap:
 
+    \begin{align}
+    &\overline{u}_{p_j,i}(t_k) = \overline{u}_{p_j,i}^k \quad &\text{current time step,}\\
+    &\overline{u}_{p_j,i}(t_{k+1}) = \overline{u}_{p_j,i}^{k+1} \quad &\text{next time step,} \\
+    &\overline{h}_{p_j}(t_k) = \overline{h}_{p_j}^k = \overline{h}_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
+    &m_{p_j}(t_k) = m_{p_j}^k = m_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
+    &m_{p_j}(t_{k+1}) = m_{p_j}^{k+1} = m_{p_j} + \Delta m_{p_j} \quad &\text{next time step.}
+    \end{align}
 
 Descretizing the momentum balance
 :eq:`momentum-balance6` in time enables
