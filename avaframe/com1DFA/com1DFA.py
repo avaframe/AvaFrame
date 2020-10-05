@@ -190,7 +190,7 @@ def runSamos(cfg, avaDir):
         log.info('Release area: %s - perform simulations' % (relName))
         if flagEntRes:
             log.info('Entrainment area: %s and resistance area: %s' % (entrainmentArea, resistanceArea))
-        
+
         # Initialise CreateProject cint file
         templateFile = os.path.join(modPath, 'CreateProject.cint')
         workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateProject.cint')
@@ -251,15 +251,13 @@ def runSamos(cfg, avaDir):
             'simName' : logName,
                 'simParameters' : {
                     'release area' : relName,
-                    'entrainment area' : entrainmentArea,
-                    'resistance area' : resistanceArea,
+                    'entrainment area' : '',
+                    'resistance area' : '',
                     'parameter variation on' : '',
                     'parameter value' : '',
                     'Mu' : defValues['Mu'],
                     'release thickness [m]' : defValues['RelTh']},
-                'Release area' : {'release area scenario' : relName},
-                'Entrainment area' : {'entrainment area scenario' : entrainmentArea},
-                'Resistance area' : {'resistance area scenario' : resistanceArea}}
+                'Release area' : {'release area scenario' : relName}}
 
             # Add to report dictionary list
             reportDictList.append(dictNull)
@@ -341,19 +339,22 @@ def runSamos(cfg, avaDir):
                 'simName' : logName,
                     'simParameters' : {
                         'release area' : relName,
-                        'entrainment area' : entrainmentArea,
-                        'resistance area' : resistanceArea,
+                        'entrainment area' : '',
+                        'resistance area' : '',
                         'parameter variation on' : '',
                         'parameter value' : '',
                         'Mu' : defValues['Mu'],
                         'release thickness [m]' : defValues['RelTh']},
-                    'Release area' : {'release area scenario' : relName},
-                    'Entrainment area' : {'entrainment area scenario' : entrainmentArea},
-                    'Resistance area' : {'resistance area scenario' : resistanceArea}}
+                    'Release area' : {'release area scenario' : relName}}
+
+                if 'entres' in sim:
+                    dictST['simParameters'].update({'entrainment area' : entrainmentArea})
+                    dictST['simParameters'].update({'resistance area' : resistanceArea})
+                    dictST.update({'Entrainment area' : {'entrainment area scenario' : entrainmentArea}})
+                    dictST.update({'Resistance area' : {'resistance area scenario' : resistanceArea}})
 
                 # Add to report dictionary list
                 reportDictList.append(dictST)
-
 
                 # Count total number of simulations
                 countRel = countRel + 1
