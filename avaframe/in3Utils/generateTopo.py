@@ -403,8 +403,8 @@ def writeDEM(cfg, z, outDir):
     nCols = z.shape[1]
 
     # Read lower left corner coordinates, cellsize and noDATA value
-    xllcorner = float(cfg['DEMDATA']['xl'])
-    yllcorner = float(cfg['DEMDATA']['yl'])
+    xllcenter = float(cfg['DEMDATA']['xl'])
+    yllcenter = float(cfg['DEMDATA']['yl'])
     cellsize = float(cfg['TOPO']['dx'])
     noDATA = float(cfg['DEMDATA']['nodata_value'])
     dem_name = cfg['DEMDATA']['dem_name']
@@ -414,8 +414,8 @@ def writeDEM(cfg, z, outDir):
     with open(os.path.join(outDir, '%s_%s_Topo.asc' % (dem_name, nameExt)), 'w') as f:
         f.write('nCols  %d\n' % (nCols))
         f.write('nRows  %d\n' % (nRows))
-        f.write('xllcorner  %.02f\n' % (xllcorner))
-        f.write('yllcorner %.02f\n' % (yllcorner))
+        f.write('xllcenter  %.02f\n' % (xllcenter))
+        f.write('yllcenter %.02f\n' % (yllcenter))
         f.write('cellsize  %d\n' % (cellsize))
         f.write('nodata_value %.02f\n' % (noDATA))
         for line in z_mat:
