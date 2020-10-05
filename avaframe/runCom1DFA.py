@@ -27,6 +27,9 @@ log.info('Current avalanche: %s', avalancheDir)
 # Load input parameters from configuration file
 cfg = cfgUtils.getModuleConfig(com1DFA)
 
+# write config to log file
+logUtils.writeCfg2Log(cfg, 'com1DFA')
+
 startTime = time.time()
 # Run Standalone DFA
 com1DFA.runSamos(cfg, avalancheDir)

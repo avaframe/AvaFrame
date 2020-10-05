@@ -169,7 +169,7 @@ function of the characteristic diameter :math:`\overline{d}` and height
 :math:`h_{\text{res}}` of the obstacles, the spacing
 :math:`s_{\text{res}}` between the obstacles and an empirical
 coefficient :math:`c_w` (see :numref:`f-res`). The effective height :math:`h^{\text{eff}}`
-is deffined as :math:`\min\left\lbrace\begin{array}{l} \overline{h}\\h_{res}\end{array}\right\rbrace`:
+is defined as :math:`\min\left\lbrace\begin{array}{l} \overline{h}\\h_{res}\end{array}\right\rbrace`:
 
 .. math::
    F_i^{\text{res}} = -(\frac{1}{2}\,\overline{d}\,c_w/s^2_{\text{res}})\,\rho_0\,A\,
@@ -381,12 +381,13 @@ of the flow state of the avalanche.
 With
 
 .. math::
+   \begin{aligned}
    &\sigma^{(b)} \qquad &\text{normal component of the stress tensor}\\
    &\overline{u} \qquad &\text{average velocity}\\
    &\overline{h} \qquad &\text{average flow depth}\\
    &\rho_0 \qquad &\text{density}\\
    &t \qquad &\text{time}\\
-   &\mathbf{x} \qquad &\text{position vector}
+   &\mathbf{x} \qquad &\text{position vector}\end{aligned}
 
 Several friction models already implemented in the simulation tool are
 described here.
@@ -405,12 +406,13 @@ is expressed as (:cite:`Sa2007`):
 With
 
 .. math::
+   \begin{aligned}
    &\tau_0 \qquad &\text{minimum shear stress}\\
    &R_s \qquad &\text{relation between friction and normal pressure (fluidization factor)}\\
    &R \qquad &\text{empirical  constant}\\
    &R_s^0 \qquad &\text{empirical  constant}\\
    &B \qquad &\text{empirical  constant}\\
-   &\kappa \qquad &\text{empirical  constant}
+   &\kappa \qquad &\text{empirical  constant}\end{aligned}
 
 The minimum shear stress :math:`\tau_0` defines a lower limit below
 which no flow takes place with the condition
@@ -463,7 +465,7 @@ a velocity :math:`\mathbf{\overline{u}_{p_j}}=(\overline{u}_{p_j,1}, \overline{u
 particles are also projected on a regular grid (raster) and the mass distributed on each
 node of the raster (see :numref:`raster`). This leads to the
 following expression for the mass :math:`m_{v_i}` of each node on the
-raster grid :math:`m_{v_i} = \sum\limits_j{m_{p_j}}`.
+raster grid :math:`m_{v_i} = \sum\limits_{p_j}{m_{p_j}}`.
 
 .. _raster:
 
@@ -477,7 +479,7 @@ Each grid node is also affected with a velocity
 of each raster cell divided by the mass of the same cell:
 
 .. math::
-    \overline{\mathbf{u}}_{v_i} = \frac{\sum\limits_j{m_{p_j}}\overline{\mathbf{u}_j}}{\sum\limits_j{m_{p_j}}}
+    \overline{\mathbf{u}}_{v_i} = \frac{\sum\limits_{p_j}{m_{p_j}}\overline{\mathbf{u}_j}}{\sum\limits_j{m_{p_j}}}
 
 The flow depth :math:`\overline{h}_{v_i}` can be deduced from the mass
 and area of the raster cell:
@@ -586,12 +588,13 @@ The mass of entrained snow for each particle :math:`p` depends on the type of en
 with
 
 .. math::
+    \begin{aligned}
     A_{p_j}^{\text{plo}} &= w_f\,h_{p_j}^{\text{ent}}= \sqrt{\frac{m_{p_j}}{\rho_0\,\overline{h}_{p_j}}}\,h_{p_j}^{\text{ent}}
     \quad &\mbox{and} \quad &q_{p_j}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{p_j}\right\Vert
     \quad &\mbox{for ploughing}\\
     A_{p_j}^{\text{ero}} &= A_{p_j} = \frac{m_{p_j}}{\rho_0\,\overline{h}_{p_j}}
     \quad &\mbox{and} \quad &q_{p_j}^{\text{ero}} = \frac{\tau_{p_j}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{p_j}\right\Vert
-    \quad &\mbox{for erosion}
+    \quad &\mbox{for erosion}\end{aligned}
 
 Finaly, the entrainment force reads:
 
@@ -608,11 +611,12 @@ The supscript :math:`k` decribes which time step is considered (for the quantity
 is refered as :math:`a^k`). This leads, for the velocity, flow depth and mass to :
 
 .. math::
+   \begin{aligned}
    &\overline{u}_{p_j,i}(t_k) = \overline{u}_{p_j,i}^k \quad &\text{current time step,}\\
    &\overline{u}_{p_j,i}(t_{k+1}) = \overline{u}_{p_j,i}^{k+1} \quad &\text{next time step,} \\
    &\overline{h}_{p_j}(t_k) = \overline{h}_{p_j}^k = \overline{h}_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
    &m_{p_j}(t_k) = m_{p_j}^k = m_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
-   &m_{p_j}(t_{k+1}) = m_{p_j}^{k+1} = m_{p_j} + \Delta m_{p_j} \quad &\text{next time step.}\\
+   &m_{p_j}(t_{k+1}) = m_{p_j}^{k+1} = m_{p_j} + \Delta m_{p_j} \quad &\text{next time step.}\end{aligned}
 
 
 Descretizing the momentum balance
