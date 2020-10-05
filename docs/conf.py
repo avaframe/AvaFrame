@@ -87,31 +87,29 @@ latex_elements = {
     'maketitle': r'''
         \pagenumbering{Roman} %%% to avoid page 1 conflict with actual page 1
 
-        \begin{titlepage}
-            \centering
-
-            \vspace*{40mm} %%% * is used to give space from top
-            \textbf{\Huge {AvaFrame}}
-
-            \vspace{0mm}
-            \begin{figure}[!h]
-                \centering
-                \includegraphics[scale=0.3]{logo.png}
-            \end{figure}
-
-            \vspace{0mm}
-            \Large \textbf{{AvaFrame developers}}
-
-            %\small Created on : Octorber, 2017
-
-            \vspace*{0mm}
-            \small  Last updated : \MonthYearFormat\today
-
-
-            %% \vfill adds at the bottom
-            \vfill
-            %\small \textit{More documents are freely available at }{\href{http://pythondsp.readthedocs.io/en/latest/pythondsp/toc.html}{PythonDSP}}
-        \end{titlepage}
+        \noindent\rule{\textwidth}{1pt}\par
+        \begingroup % for PDF information dictionary
+        \def\endgraf{ }\def\and{\& }%
+        \pdfstringdefDisableCommands{\def\\{, }}% overwrite hyperref setup
+        \hypersetup{pdfauthor={\@author}, pdftitle={\@title}}%
+        \endgroup
+        \begin{flushright}
+        \sphinxlogo
+        \py@HeaderFamily
+        {\Huge \@title }\par
+        {\itshape\large \py@release \releaseinfo}\par
+        \vspace{25pt}
+        {\Large
+        \begin{tabular}[t]{c}
+            \@author
+        \end{tabular}}\par
+        \vspace{25pt}
+        \@date \par
+        \py@authoraddress \par
+        \end{flushright}
+        \@thanks
+        \setcounter{footnote}{0}
+        \let\thanks\relax\let\maketitle\relax
 
         \clearpage
         \pagenumbering{roman}
