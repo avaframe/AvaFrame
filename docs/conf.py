@@ -75,65 +75,55 @@ html_favicon = '_static/favicon.png'
 html_static_path = ['_static']
 
 # -- Options for LaTeX output ---------------------------------------------
-latex_engine = 'pdflatex'
+latex_maketitle = r'''
+\begin{titlepage}%
+    \let\footnotesize\small
+    \let\footnoterule\relax
+    \rule{\textwidth}{1pt}%
+    \ifsphinxpdfoutput
+        \begingroup
+        % These \defs are required to deal with multi-line authors; it
+        % changes \\ to ', ' (comma-space), making it pass muster for
+        % generating document info in the PDF file.
+        \def\\{, }
+        \def\and{and }
+        \pdfinfo{
+            /Author (\@author)
+            /Title (\@title)
+            }
+        \endgroup
+    \fi
+    \begin{flushright}%
+        \sphinxlogo%
+        {\rm\Huge\py@HeaderFamily \@title \par}%
+        {\em\LARGE\py@HeaderFamily \py@release\releaseinfo \par}
+        \vfill
+        {\LARGE\py@HeaderFamily
+        \begin{tabular}[t]{c}
+            \@author
+        \end{tabular}
+        \par}
+        \vfill\vfill
+        {\large
+        \@date \par
+        \vfill
+        \py@authoraddress \par
+        }%
+    \end{flushright}%\par
+    \@thanks
+\end{titlepage}%
+\cleardoublepage%
+\setcounter{footnote}{0}%
+\let\thanks\relax\let\maketitle\relax
+%\gdef\@thanks{}\gdef\@author{}\gdef\@title{}
+\pagenumbering{roman}
+\tableofcontents
+'''
+
 latex_elements = {
-    # The paper size ('letterpaper' or 'a4paper').
-    #
-    'papersize': 'a4paper',
-    'figure_align':'htbp',
-    # The font size ('10pt', '11pt' or '12pt').
-    #
-    'pointsize': '10pt',
-    'maketitle': r'''
-        \pagenumbering{Roman} %%% to avoid page 1 conflict with actual page 1
-
-        \begin{titlepage}%
-            \let\footnotesize\small
-            \let\footnoterule\relax
-            \rule{\textwidth}{1pt}%
-            \ifsphinxpdfoutput
-                \begingroup
-                % These \defs are required to deal with multi-line authors; it
-                % changes \\ to ', ' (comma-space), making it pass muster for
-                % generating document info in the PDF file.
-                \def\\{, }
-                \def\and{and }
-                \pdfinfo{
-                    /Author (\@author)
-                    /Title (\@title)
-                    }
-                \endgroup
-            \fi
-            \begin{flushright}%
-                \sphinxlogo%
-                {\rm\Huge\py@HeaderFamily \@title \par}%
-                {\em\LARGE\py@HeaderFamily \py@release\releaseinfo \par}
-                \vfill
-                {\LARGE\py@HeaderFamily
-                \begin{tabular}[t]{c}
-                    \@author
-                \end{tabular}
-                \par}
-                \vfill\vfill
-                {\large
-                \@date \par
-                \vfill
-                \py@authoraddress \par
-                }%
-            \end{flushright}%\par
-            \@thanks
-        \end{titlepage}%
-        \cleardoublepage%
-        \setcounter{footnote}{0}%
-        \let\thanks\relax\let\maketitle\relax
-        %\gdef\@thanks{}\gdef\@author{}\gdef\@title{}
-        \pagenumbering{roman}
-        \tableofcontents
-        %\listoffigures
-        %\listoftables
-        \pagenumbering{arabic}
-
-        ''',
+    'sphinxsetup': '',
+    'passoptionstopackages': r'\PassOptionsToPackage{table}{xcolor}',
+    'maketitle': latex_maketitle,
 }
 
 
