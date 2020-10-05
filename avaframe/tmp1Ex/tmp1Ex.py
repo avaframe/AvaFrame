@@ -12,4 +12,4 @@ def tmp1ExMain(cfg):
     """ Main function for module tmp1Example"""
 
     print('In tmp1Example')
-    log.info('Input directory %s', cfg['INPUTCFG']['inputDir'])
+    log.info('Input directory %s', cfg['GENERAL']['inputDir'])
