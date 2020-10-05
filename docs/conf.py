@@ -89,23 +89,23 @@ latex_elements = {
 
         \noindent\rule{\textwidth}{1pt}\par
         \begingroup % for PDF information dictionary
-        \def\endgraf{ }\def\and{\& }%
-        \pdfstringdefDisableCommands{\def\\{, }}% overwrite hyperref setup
-        \hypersetup{pdfauthor={\@author}, pdftitle={\@title}}%
+            \def\endgraf{ }\def\and{\& }%
+            \pdfstringdefDisableCommands{\def\\{, }}% overwrite hyperref setup
+            \hypersetup{pdfauthor={\@author}, pdftitle={\@title}}%
         \endgroup
         \begin{flushright}
-        \sphinxlogo
-        \py@HeaderFamily
-        {\Huge \@title }\par
-        {\itshape\large \py@release \releaseinfo}\par
-        \vspace{25pt}
-        {\Large
-        \begin{tabular}[t]{c}
-            \@author
-        \end{tabular}}\par
-        \vspace{25pt}
-        \@date \par
-        \py@authoraddress \par
+            \sphinxlogo
+            \py@HeaderFamily
+            {\Huge \@title }\par
+            {\itshape\large \py@release \releaseinfo}\par
+            \vspace{25pt}
+            {\Large
+            \begin{tabular}[t]{c}
+                \@author
+            \end{tabular}}\par
+            \vspace{25pt}
+            \@date \par
+            \py@authoraddress \par
         \end{flushright}
         \@thanks
         \setcounter{footnote}{0}
