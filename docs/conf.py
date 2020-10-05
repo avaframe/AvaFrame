@@ -75,7 +75,7 @@ html_favicon = '_static/favicon.png'
 html_static_path = ['_static']
 
 # -- Options for LaTeX output ---------------------------------------------
-
+latex_logo = '_static/logo.png'
 
 # -- Options for referencing -------------------------------------------
 numfig = True
