@@ -281,7 +281,7 @@ def prepareAngleProfile(beta, AvaProfile):
         log.warning('No split Point given!')
         CuSplit = 0
     ds = np.abs(s - np.roll(s, 1))
-    dz = (np.roll(z, 1) - z)
+    dz = np.roll(z, 1) - z
     ds[0] = 0.0
     dz[0] = 0.0
     angle = np.rad2deg(np.arctan2(dz, ds))
