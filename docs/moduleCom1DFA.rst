@@ -16,7 +16,7 @@ Input
 ---------
 
 The module requires an avalanche directory, that follows a specified folder structure.
-This avalanche directory can be created by running: runInitializeProject.py.
+This avalanche directory can be created by running: ``runInitializeProject.py``.
 In the directory Inputs, the following files are required:
 
 * digital elevation model as .asc file
@@ -27,7 +27,7 @@ and the following files are optional:
 * entrainment area as shapefile (in Inputs/ENT)
 * resistance area as shapefile (in Inputs/RES)
 
-The simulation settings area defined in the configuration file *com1DFACfg.ini*:
+The simulation settings area defined in the configuration file ``com1DFACfg.ini``:
 
 * flagOut - print full model output
 * flagEnt - include entrainment areas
@@ -51,9 +51,12 @@ The simulation results are saved to: *Outputs/com1DFA* and include:
 To run
 --------
 
-* create an avalanche directory with required input files - for this task you can use runInitializeProject.py
-* copy com1DFACfg.ini to local_com1DFACfg.ini and set your desired settings
-* run runCom1DFA.py
+* create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
+* copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name 
+* copy ``com1DFACfg.ini`` to ``local_com1DFACfg.ini`` and set your desired settings
+* in ``avaframe/`` run:
+
+    python3 runCom1DFA.py
 
 
 Theory
