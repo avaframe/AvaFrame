@@ -194,3 +194,32 @@ header information as well as the raster data in a numpy array in a dictionary.
 
 ``writeResultToAsc(header, resultArray, outType=None):`` takes a header and numpy array as inputs and writes the
 corresponding raster ASCII file.
+
+Initialize Project
+=====================
+
+This function creates the folder structure required to perform avalanche simulations:
+::
+	NameOfAvalanche/
+		Inputs/
+			REL/		- release area scenario
+			RES/		- resistance areas
+			ENT/		- entrainment areas
+			POINTS/		- split points
+			LINES/		- avalanche paths
+			.asc		- DEM
+		Outputs/
+		Work/
+
+
+Input
+-------
+
+* path to NameOfAvalanche
+
+This path is specified in the configuration file *avaframeCfg.ini* by setting the parameter *avalancheDir*.
+
+Output
+-------
+
+* NameOfAvalanche directory
