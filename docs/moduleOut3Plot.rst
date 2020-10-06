@@ -55,8 +55,11 @@ Input
 Outputs
 -------
 
-One plot with three panels showing the specified peak field, the reference peak field, and their difference and
-one plot of a cross- and a longprofile of the two datasets, both saved in *Outputs/out3Plot*.
+* plot with three panels showing the specified peak field, the reference peak field, and their difference including a text box with absolute Mean, Max and Min of the difference
+* plot of a cross- and a longprofile of the two datasets
+
+Both plots are saved in *Outputs/out3Plot*.
+
 
 
 To run
@@ -64,7 +67,7 @@ To run
 
 * runQuickPlot.py
 
-In this run script, one can specify the result parameter and a second parameter, like e.g. 'Mu' to specifiy the datasets to be plotted.
+In this run script, one can specify the result parameter and a second parameter, like e.g. 'Mu' or 'simType' to specify the datasets to be plotted.
 
 
 Quick plot simple
@@ -84,7 +87,10 @@ Input
 Outputs
 -------
 
-The plots are saved in *Outputs/out3Plot*.
+* plot with three panels showing dataset 1, dataset 2, and their difference including a text box with absolute Mean, Max and Min of the difference
+* plot of a cross- and a longprofile of the two datasets
+
+Both plots are saved in *Outputs/out3Plot*.
 
 
 To run

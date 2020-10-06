@@ -51,7 +51,7 @@ The simulation results are saved to: *Outputs/com1DFA* and include:
 To run
 --------
 
-* create an avalanche directory with required input files
+* create an avalanche directory with required input files - for this task you can use runInitializeProject.py
 * copy com1DFACfg.ini to local_com1DFACfg.ini and set your desired settings
 * run runCom1DFA.py
 
