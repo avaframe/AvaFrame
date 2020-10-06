@@ -200,16 +200,17 @@ Initialize Project
 
 This function creates the folder structure required to perform avalanche simulations:
 ::
-	NameOfAvalanche/
-		Inputs/
-			REL/		- release area scenario
-			RES/		- resistance areas
-			ENT/		- entrainment areas
-			POINTS/		- split points
-			LINES/		- avalanche paths
-			.asc		- DEM
-		Outputs/
-		Work/
+
+		NameOfAvalanche/
+			Inputs/
+				REL/		- release area scenario
+				RES/		- resistance areas
+				ENT/		- entrainment areas
+				POINTS/		- split points
+				LINES/		- avalanche paths
+				.asc		- DEM
+			Outputs/
+			Work/
 
 
 Input
@@ -217,9 +218,18 @@ Input
 
 * path to NameOfAvalanche
 
-This path is specified in the configuration file *avaframeCfg.ini* by setting the parameter *avalancheDir*.
+This path is specified in the configuration file ``avaframeCfg.ini`` with the parameter *avalancheDir*.
 
 Output
 -------
 
 * NameOfAvalanche directory
+
+
+To run
+-------
+
+*  copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
+* in ``avaframe`` run:
+
+			python3 runInitializeProject.py
