@@ -1,6 +1,10 @@
 Appendix: Module DFA-Kernel
 ============================
 
+.. warning::
+
+   This appendix has not been fully reviewed yet. Read its content with hindsight and keep a critical mind.
+
 Governing Equations for the Dense Flow Avalanche
 ------------------------------------------------------
 
@@ -18,7 +22,7 @@ Mass balance:
 Where :math:`q^{\text{ent}}` represents the snow entrainment rate.
 
 Momentum balance:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
 .. math::
     \rho_0 \frac{d}{dt} \int\limits_{V(t)} u_i \,\mathrm{d}V = \oint\limits_{\partial V(t)}
@@ -378,7 +382,7 @@ of the flow state of the avalanche.
 .. math::
     \tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})
     :label: samosAT friction model
-    
+
 With
 
 .. math::
