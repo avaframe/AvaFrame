@@ -74,9 +74,15 @@ html_favicon = '_static/favicon.png'
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# -- Options for LaTeX output ---------------------------------------------
+latex_logo = '_static/logo.png'
+
 # -- Options for referencing -------------------------------------------
 numfig = True
 math_numfig = True
 math_eqref_format = "Eq.{number}"
 # make referencing unique if twice the same section heading apear
 autosectionlabel_prefix_document = True
+
+def setup(app):
+    app.add_stylesheet('css/custom.css')
