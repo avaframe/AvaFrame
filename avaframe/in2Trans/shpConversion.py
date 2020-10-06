@@ -107,10 +107,12 @@ def SHP2Array(infile, defname=None):
     SHPdata['z'] = Coordz
     return SHPdata
 
-def readLine(fname, defname, header):
+def readLine(fname, defname, dem):
     """ Read avalanche path from  .shp"""
 
     log.debug('Reading avalanche path : %s ', fname)
+    header = dem['header']
+    rasterDEM = dem['rasterData']
     Line = SHP2Array(fname, defname)
     coordx = Line['x']
     coordy = Line['y']
@@ -121,13 +123,17 @@ def readLine(fname, defname, header):
                           header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
             raise ValueError('Avalanche path exceeds dem extend')
+        elif np.isnan(rasterDEM[Ly, Lx]):
+            raise ValueError('Avalanche path exceeds dem extend')
     return Line
 
 
-def readPoints(fname, header):
+def readPoints(fname, dem):
     """ Read split point path from .shp"""
 
     log.debug('Reading split point : %s ', fname)
+    header = dem['header']
+    rasterDEM = dem['rasterData']
     defname = 'SHP'
     Points = SHP2Array(fname, defname)
     Pointx = Points['x']
@@ -138,5 +144,7 @@ def readPoints(fname, header):
         Ly = int(np.floor((Pointy[i] - header.yllcorner) /
                           header.cellsize))
         if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
+            raise ValueError('Split point is not on the dem')
+        elif np.isnan(rasterDEM[Ly, Lx]):
             raise ValueError('Split point is not on the dem')
     return Points
