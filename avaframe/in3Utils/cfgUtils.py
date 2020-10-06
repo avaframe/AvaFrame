@@ -8,6 +8,10 @@
 import configparser
 import os
 import logging
+# Local imports
+from avaframe.in3Utils import logUtils
+
+
 log = logging.getLogger(__name__)
 
 
@@ -139,5 +143,7 @@ def compareConfig(iniFile, modName, compare):
         cfg = configparser.ConfigParser()
         # Finally read it
         cfg.read(iniFile)
+        # Write config to log file
+        logUtils.writeCfg2Log(cfg, modName)
 
     return cfg
