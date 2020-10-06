@@ -80,11 +80,11 @@ def getModuleConfig(module, fileOverride=''):
         raise FileNotFoundError('None of the provided cfg files exist ')
 
     # Finally read it
-    cfg = compareConfig(iniFile, compare)
+    cfg = compareConfig(iniFile, modName, compare)
 
     return cfg
 
-def compareConfig(iniFile, compare):
+def compareConfig(iniFile, modName, compare):
     ''' Compare configuration files (if a local and default are both provided)
     and inform user of the eventuel differences. Take the default as reference.
 
@@ -104,42 +104,35 @@ def compareConfig(iniFile, compare):
         # read default and local parser files
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
-        # loop through all sections of the localCfg
-        for section in locCfg.sections():
-            # check if section is also in the default cfg
-            if defCfg.has_section(section):
-                # if yes add this section to the cfg that will be returned
-                cfg.add_section(section)
-                for key in locCfg.items(section):
-                    # check if key is also in the default cfg
-                    if defCfg.has_option(section, key[0]):
-                        # if yes add this key to the cfg that will be returned
-                        cfg.set(section, key[0], locCfg.get(section, key[0]))
-                        # remove the key from the default cfg
-                        defCfg.remove_option(section, key[0])
-                    else :
-                        # if not warn the user that this key no longer exists
-                        log.warning('Key [\'%s\'] in section [\'%s\'] in config file %s no longer exists.' % (key[0], section, iniFile[1]))
-                # remove the section from the default cfg if it is empty
-                if not defCfg.items(section):
-                    defCfg.remove_section(section)
-            else :
-                # if not warn the user that this section no longer exists
-                log.warning('Section [\'%s\'] in config file %s no longer exists.' % (section, iniFile[1]))
-
-        # Now check if there are some sections/ keys left in the default cfg and add them to the Cfg
-        # loop through all sections of the defaultCfg
+        # loop through all sections of the defCfg
+        log.info('Writing cfg for: %s', modName)
         for section in defCfg.sections():
-            # check if section is already in the cfg
-            if not cfg.has_section(section):
-                # if no add this section to the cfg that will be returned and warn the user
-                cfg.add_section(section)
-                log.warning('Section [\'%s\'] added because it is not present in the config file %s but should be.' % (section, iniFile[1]))
-            # loop on key in defaultCfg
+            cfg.add_section(section)
+            log.info('\t%s', section)
             for key in defCfg.items(section):
-                # add this key to the cfg that will be returned and warn the user
-                cfg.set(section, key[0], defCfg.get(section, key[0]))
-                log.warning('Key [\'%s\'] in section [\'%s\'] added because it is not present in the config file %s but should be.' % (key[0], section, iniFile[1]))
+                defValue = key[1]
+                # check if key is also in the localCfg
+                if locCfg.has_option(section, key[0]):
+                    locValue = locCfg.get(section, key[0])
+                    if locValue!=defValue:
+                        # if yes and if this value is different add this key to the cfg that will be returned
+                        locValue = locCfg.get(section, key[0])
+                        cfg.set(section, key[0], locValue)
+                        log.info('\t\t%s : %s \t(default value was : %s)', key[0], locValue, defValue)
+                    else:
+                        cfg.set(section, key[0], defValue)
+                        log.info('\t\t%s : %s', key[0], defValue)
+
+                    # remove the key from the localCfg
+                    locCfg.remove_option(section, key[0])
+                else:
+                    cfg.set(section, key[0], defValue)
+                    log.info('\t\t%s : %s', key[0], defValue)
+
+        # Now check if there are some sections/ keys left in the local cfg and that are not used
+        for section in locCfg.sections():
+            for key in locCfg.items(section):
+                log.warning('Key [\'%s\'] in section [\'%s\'] in the localCfg file is not needed.' % (key[0], section))
 
     else:
         log.info('Reading config from: %s', iniFile)
