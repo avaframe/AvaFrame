@@ -31,12 +31,10 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # Load all input Parameters from config file
 # get the configuration of an already imported module
+# write config to log file
 cfg = cfgUtils.getModuleConfig(ana3AIMEC)
 
 cfgSetup = cfg['AIMECSETUP']
-
-# write config to log file
-logUtils.writeCfg2Log(cfg, 'ana3AIMEC')
 
 # Setup input from com1DFA
 dfa2Aimec.mainDfa2Aimec(avalancheDir, cfgSetup)

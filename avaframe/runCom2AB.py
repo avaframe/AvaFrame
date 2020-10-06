@@ -24,13 +24,11 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # Load all input Parameters from config file
 # get the configuration of an already imported module
+# write config to log file
 cfg = cfgUtils.getModuleConfig(com2AB)
 
 cfgSetup = cfg['ABSETUP']
 cfgFlags = cfg['FLAGS']
-
-# Dump config to log file
-logUtils.writeCfg2Log(cfg,'com2AB')
 
 # Extract input file locations
 cfgPath = com2AB.readABinputs(avalancheDir)
