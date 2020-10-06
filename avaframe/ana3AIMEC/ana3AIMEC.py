@@ -202,9 +202,9 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     rasterTransfo['cellsize'] = cellsize
 
     # read avaPath
-    Avapath = shpConv.readLine(ProfileLayer, DefaultName, sourceData['header'])
+    Avapath = shpConv.readLine(ProfileLayer, DefaultName, sourceData)
     # read split point
-    splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], sourceData['header'])
+    splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], sourceData)
     # add 'z' coordinate to the avaPath
     Avapath = geoTrans.projectOnRaster(dem, Avapath)
     # reverse avaPath if necessary

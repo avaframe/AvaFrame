@@ -38,8 +38,8 @@ log.info("Running com2ABMain model on DEM \n \t %s \n \t with profile \n \t %s "
 
 # Read input data for ALPHABETA
 dem = IOf.readRaster(cfgPath['demSource'])
-avaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'], dem['header'])
-splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], dem['header'])
+avaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'], dem)
+splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], dem)
 
 # Calculate ALPHABETA
 com2AB.com2ABMain(dem, avaPath, splitPoint, cfgPath['saveOutPath'],
