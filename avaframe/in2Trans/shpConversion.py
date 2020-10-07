@@ -117,14 +117,12 @@ def readLine(fname, defname, dem):
     coordx = Line['x']
     coordy = Line['y']
     for i in range(len(coordx)):
-        Lx = int(np.floor((coordx[i] - header.xllcorner) /
-                          header.cellsize))
-        Ly = int(np.floor((coordy[i] - header.yllcorner) /
-                          header.cellsize))
-        if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
-            raise ValueError('Avalanche path exceeds dem extend')
-        elif np.isnan(rasterDEM[Ly, Lx]):
-            raise ValueError('Avalanche path exceeds dem extend')
+        Lx = (coordx[i] - header.xllcenter) / header.cellsize
+        Ly = (coordy[i] - header.yllcenter) / header.cellsize
+        if (Ly < 0 or Ly > header.nrows-1 or Lx < 0 or Lx > header.ncols-1):
+            raise ValueError('The avalanche path exceeds dem extend. Try with another path')
+        elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
+            raise ValueError('The avalanche path exceeds dem extend. Try with another path')
     return Line
 
 
@@ -139,12 +137,10 @@ def readPoints(fname, dem):
     Pointx = Points['x']
     Pointy = Points['y']
     for i in range(len(Pointx)):
-        Lx = int(np.floor((Pointx[i] - header.xllcorner) /
-                          header.cellsize))
-        Ly = int(np.floor((Pointy[i] - header.yllcorner) /
-                          header.cellsize))
-        if (Ly < 0 or Ly > header.nrows or Lx < 0 or Lx > header.ncols):
-            raise ValueError('Split point is not on the dem')
-        elif np.isnan(rasterDEM[Ly, Lx]):
-            raise ValueError('Split point is not on the dem')
+        Lx = (Pointx[i] - header.xllcenter) / header.cellsize
+        Ly = (Pointy[i] - header.yllcenter) / header.cellsize
+        if (Ly < 0 or Ly > header.nrows-1 or Lx < 0 or Lx > header.ncols-1):
+            raise ValueError('The split point is not on the dem. Try with another split point')
+        elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
+            raise ValueError('The split point is not on the dem. Try with another split point')
     return Points

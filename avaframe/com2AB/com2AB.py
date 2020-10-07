@@ -116,6 +116,9 @@ def com2AB(dem, avapath, splitPoint, OutPath,
     AvaProfile, projSplitPoint = geoTrans.prepareLine(
         dem, avapath, distance, splitPoint)
 
+    if np.isnan(np.sum(AvaProfile['z'])):
+        raise ValueError('The resampled avalanche path exceeds the dem extend. Try with another path')
+
     # Sanity check if first element of AvaProfile[3,:]
     # (i.e z component) is highest:
     # if not, flip all arrays
@@ -137,22 +140,34 @@ def com2AB(dem, avapath, splitPoint, OutPath,
 def readABinputs(cfgAva):
 
     cfgPath = {}
-
+    # read avalanche paths for AB
     profileLayer = glob.glob(cfgAva + '/Inputs/LINES/*AB*.shp')
+    try:
+        assert len(profileLayer) == 1, 'There should be exactly one pathAB.shp file + \
+                containing the avalanche paths in ' +  cfgAva + '/Inputs/LINES/'
+    except AssertionError:
+        raise
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
+    # read DEM
     demSource = glob.glob(cfgAva + '/Inputs/*.asc')
     try:
         assert len(demSource) == 1, 'There should be exactly one topography .asc file in ' + \
             cfgAva + '/Inputs/'
     except AssertionError:
         raise
-
     cfgPath['demSource'] = ''.join(demSource)
 
+    # read split points
     splitPointSource = glob.glob(cfgAva + '/Inputs/POINTS/*.shp')
+    try:
+        assert len(splitPointSource) == 1, 'There should be exactly one .shp file + \
+                containing the split points in ' +  cfgAva + '/Inputs/POINTS/'
+    except AssertionError:
+        raise
     cfgPath['splitPointSource'] = ''.join(splitPointSource)
 
+    # make output path
     saveOutPath = os.path.join(cfgAva, 'Outputs/com2AB/')
     if not os.path.exists(saveOutPath):
         # log.info('Creating output folder %s', saveOutPath)
@@ -192,6 +207,11 @@ def calcAB(AvaProfile, eqParameters):
         plt.plot(s[ids10Point], angle[ids10Point], 'or')
         plt.axhline(y=10, color='0.8',
                     linewidth=1, linestyle='-.', label='10^\circ line')
+
+        plt.figure(figsize=(10, 6))
+        plt.plot(s, z)
+        plt.axvline(x=s[ids10Point], color='0.8',
+                    linewidth=1, linestyle='-.')
         plt.show()
 
     # Do a quadtratic fit and get the polynom for 2nd derivative later
