@@ -37,45 +37,69 @@ def writeColumns(dict, key, pfile):
 def writeReportFile(reportD, pfile):
     """ Write text to file """
 
+    # Loop through keys and perform action according to value found in type
     for key in reportD:
+        for subKey in reportD[key]:
 
-        # HEADER BLOCK
-        if key == 'headerLine':
-            pfile.write('# %s \n' % reportD['headerLine'])
-        if key == 'simName':
-            pfile.write('### Simulation name: *%s* \n' % reportD['simName'])
+            # HEADER BLOCK
+            # Title
+            if reportD[key][subKey] == 'title':
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('# %s \n' % reportD[key][value])
+                        break
+            # Simulation name
+            if reportD[key][subKey] == 'simName':
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('### Simulation name: *%s* \n' % reportD[key][value])
 
-        # SIMULATION BLOCK
-        if key == 'simParameters':
-            pfile.write('| Parameters | Values | \n')
-            pfile.write('| ---------- | ------ | \n')
-            for value in reportD[key]:
-                pfile.write('| %s | %s | \n' % (value, reportD[key][value]))
-            pfile.write(' \n')
+            # PARAMETER BLOCK
+            # Table listing all the key : value pairs in rows
+            if reportD[key][subKey] == 'list':
+                pfile.write('### %s \n' % key)
+                pfile.write('| Parameters | Values | \n')
+                pfile.write('| ---------- | ------ | \n')
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('| %s | %s | \n' % (value, reportD[key][value]))
+                pfile.write(' \n')
+            # Table listing the key : value pairs in columns
+            if reportD[key][subKey] == 'columns':
+                pfile.write('### %s \n' % key)
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('| %s ' % value)
+                pfile.write('| \n')
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('| ----------')
+                pfile.write('| \n')
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('| %s ' % reportD[key][value])
+                pfile.write('| \n')
+                pfile.write(' \n')
 
-        # INPUTS BLOCK
-        if key == 'Release area' or key == 'Entrainment area' or key == 'Resistance area':
-            writeColumns(reportD[key], key, pfile)
+            # IMAGE BLOCK
+            if reportD[key][subKey] == 'image':
+                pfile.write('### %s \n' % key)
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('##### Figure:   %s \n' % value)
+                        pfile.write('![%s](%s) \n' % (value, reportD[key][value]))
 
-        # IMAGE BLOCK
-        if key == 'images':
-            pfile.write('### Images \n')
-            for value in reportD['images']:
-                pfile.write('##### Figure:   %s \n' % value)
-                pfile.write('![%s](%s) \n' % (value, reportD['images'][value]))
-
-        # TEXT BLOCK
-        if key == 'text':
-            pfile.write('### Additional Info \n')
-            for value in reportD['text']:
-                pfile.write('##### Topic:   %s \n' % value)
-                pfile.write('%s \n' % (reportD['text'][value]))
+            # TEXT BLOCK
+            if reportD[key][subKey] == 'text':
+                pfile.write('### %s \n' % key)
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('##### Topic:  %s \n' % value)
+                        pfile.write('%s \n' % (reportD[key][value]))
 
 
-def writeReport(avaDir, reportDictList, plotDict='', reportOneFile=True):
+def writeReport(outDir, reportDictList, plotDict='', reportOneFile=True):
     """ Write a report for simulation """
-
-    outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
 
     if reportOneFile:
         # Start writing markdown style report
@@ -85,12 +109,12 @@ def writeReport(avaDir, reportDictList, plotDict='', reportOneFile=True):
             for reportD in reportDictList:
 
                 # extract additional info from log file
-                reportD['simParameters'].update(fU.extractParameterInfo(avaDir, reportD['simName']))
+                #reportD['simParameters'].update(fU.extractParameterInfo(avaDir, reportD['simName']))
 
                 if plotDict != '':
                     # add plot info to general report Dict
-                    reportD['images'] = plotDict[reportD['simName']]
-
+                    reportD['Simulation Results'] = plotDict[reportD['simName']['name']]
+                    reportD['Simulation Results'].update({'type' : 'image'})
                 # Write report file
                 writeReportFile(reportD, pfile)
 
@@ -100,7 +124,7 @@ def writeReport(avaDir, reportDictList, plotDict='', reportOneFile=True):
         for reportD in reportDictList:
 
             # extract additional info from log file
-            reportD['simParameters'].update(fU.extractParameterInfo(avaDir, reportD['simName']))
+            #reportD['simParameters'].update(fU.extractParameterInfo(avaDir, reportD['simName']))
 
             if plotDict != '':
                 # add plot info to general report Dict

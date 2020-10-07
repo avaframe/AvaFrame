@@ -247,17 +247,18 @@ def runSamos(cfg, avaDir):
 
             # Create dictionary
             dictNull = {}
-            dictNull = {'headerLine' : 'com1DFA simulation',
-            'simName' : logName,
-                'simParameters' : {
-                    'release area' : relName,
-                    'entrainment area' : '',
-                    'resistance area' : '',
-                    'parameter variation on' : '',
-                    'parameter value' : '',
+            dictNull = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
+            'simName' : {'type' : 'simName', 'name' : logName},
+                'Simulation Parameters' : {
+                    'type' : 'list',
+                    'Release Area' : relName,
+                    'Entrainment Area' : '',
+                    'Resistance Area' : '',
+                    'Parameter variation on' : '',
+                    'Parameter value' : '',
                     'Mu' : defValues['Mu'],
-                    'release thickness [m]' : defValues['RelTh']},
-                'Release area' : {'release area scenario' : relName}}
+                    'Release thickness [m]' : defValues['RelTh']},
+                'Release area' : {'Release area scenario' : relName}}
 
             # Add to report dictionary list
             reportDictList.append(dictNull)
@@ -293,24 +294,25 @@ def runSamos(cfg, avaDir):
 
                 # Create dictionary
                 dictVar = {}
-                dictVar = {'headerLine' : 'com1DFA simulation',
-                'simName' : logName,
-                    'simParameters' : {
-                        'release area' : relName,
-                        'entrainment area' : entrainmentArea,
-                        'resistance area' : resistanceArea,
-                        'parameter variation on' : cfgPar['varPar'],
-                        'parameter value' : item},
-                    'Release area' : {'release area scenario' : relName},
-                    'Entrainment area' : {'entrainment area scenario' : entrainmentArea},
-                    'Resistance area' : {'resistance area scenario' : resistanceArea}}
+                dictVar = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
+                'simName' : {'type' : 'simName', 'name' : logName},
+                    'Simulation Parameters' : {
+                        'type' : 'list',
+                        'Release Area' : relName,
+                        'Entrainment Area' : entrainmentArea,
+                        'Resistance Area' : resistanceArea,
+                        'Parameter variation on' : cfgPar['varPar'],
+                        'Parameter value' : item},
+                    'Release area' : {'type' : 'columns', 'Release area scenario' : relName},
+                    'Entrainment area' : {'type' : 'columns', 'Entrainment area scenario' : entrainmentArea},
+                    'Resistance area' : {'type' : 'columns', 'Resistance area scenario' : resistanceArea}}
 
                 if cfgPar['varPar'] == 'RelTh':
-                    dictVar['simParameters'].update({'Mu': defValues['Mu']})
-                    dictVar['simParameters'].update({'release thickness [m]' : item})
+                    dictVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
+                    dictVar['Simulation Parameters'].update({'Release thickness [m]' : item})
                 elif cfgPar['varPar'] == 'Mu':
-                    dictVar['simParameters'].update({'release thickness [m]' : defValues['RelTh']})
-                    dictVar['simParameters'].update({'Mu' : item})
+                    dictVar['Simulation Parameters'].update({'Release thickness [m]' : defValues['RelTh']})
+                    dictVar['Simulation Parameters'].update({'Mu' : item})
 
                 # Add to report dictionary list
                 reportDictList.append(dictVar)
@@ -335,23 +337,25 @@ def runSamos(cfg, avaDir):
 
                 # Create dictionary
                 dictST = {}
-                dictST = {'headerLine' : 'com1DFA simulation',
-                'simName' : logName,
-                    'simParameters' : {
-                        'release area' : relName,
-                        'entrainment area' : '',
-                        'resistance area' : '',
-                        'parameter variation on' : '',
-                        'parameter value' : '',
+                dictST = {}
+                dictST = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
+                'simName' : {'type' : 'simName', 'name' : logName},
+                    'Simulation Parameters' : {
+                        'type' : 'list',
+                        'Release Area' : relName,
+                        'Entrainment Area' : '',
+                        'Resistance Area' : '',
+                        'Parameter variation on' : '',
+                        'Parameter value' : '',
                         'Mu' : defValues['Mu'],
-                        'release thickness [m]' : defValues['RelTh']},
-                    'Release area' : {'release area scenario' : relName}}
+                        'Release thickness [m]' : defValues['RelTh']},
+                    'Release Area' : {'type' : 'columns', 'Release area scenario' : relName}}
 
                 if 'entres' in sim:
-                    dictST['simParameters'].update({'entrainment area' : entrainmentArea})
-                    dictST['simParameters'].update({'resistance area' : resistanceArea})
-                    dictST.update({'Entrainment area' : {'entrainment area scenario' : entrainmentArea}})
-                    dictST.update({'Resistance area' : {'resistance area scenario' : resistanceArea}})
+                    dictST['Simulation Parameters'].update({'Entrainment Area' : entrainmentArea})
+                    dictST['Simulation Parameters'].update({'Resistance Area' : resistanceArea})
+                    dictST.update({'Entrainment area' : {'type' : 'columns', 'Entrainment area scenario' : entrainmentArea}})
+                    dictST.update({'Resistance area' : {'type' : 'columns', 'Resistance area scenario' : resistanceArea}})
 
                 # Add to report dictionary list
                 reportDictList.append(dictST)
