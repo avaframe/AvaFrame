@@ -43,5 +43,7 @@ log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
 # Generata plots for all peakFiles
 plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], flagReport=True)
 
+# Set directory for report
+reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFA', 'reports')
 # write report
-gR.writeReport(avalancheDir, reportDictList, plotDict, reportOneFile=True)
+gR.writeReport(reportDir, reportDictList, plotDict, reportOneFile=True)
