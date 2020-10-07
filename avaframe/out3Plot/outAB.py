@@ -244,35 +244,32 @@ def WriteResults(eqOutput, saveOutPath):
     name = eqOutput['Name']
 
     log.info('Profile: %s with %s parameter set',  name, parameterSet)
+    log.info(('{:<13s}'*6).format(
+        ' ', 'x [m]', 'y [m]', 'z [m]', 's [m]', 'angle [°]'))
     if ids_alpha:
-        log.info('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
-                ' angle in [°] : %.2f' % (x[ids_alpha], y[ids_alpha],
-                                        z[ids_alpha], s[ids_alpha], alpha))
+        log.info(('{:<13s}'+'{:<13.2f}'*5).format('Alpha', x[ids_alpha],
+                y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
     else:
         log.warning('alpha point out of profile')
 
-    log.info('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
-             ' angle in [°] : %.2f' % (x[ids10Point], y[ids10Point],
-                                       z[ids10Point], s[ids10Point], beta))
+    log.info(('{:<13s}'+'{:<13.2f}'*5).format('Beta', x[ids10Point],
+                y[ids10Point], z[ids10Point], s[ids10Point], beta))
     if ids_alphaM1SD:
-        log.info('alphaM1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
-                 ' angle in [°] : %.2f' % (x[ids_alphaM1SD], y[ids_alphaM1SD],
-                                           z[ids_alphaM1SD], s[ids_alphaM1SD],
-                                           alphaSD[1]))
+        log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaM1SD',
+                x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD],
+                s[ids_alphaM1SD], alphaSD[1]))
     else:
         log.warning('alphaM1SD point out of profile')
     if ids_alphaM2SD:
-        log.info('alphaM2SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
-                 ' angle in [°] : %.2f' % (x[ids_alphaM2SD], y[ids_alphaM2SD],
-                                           z[ids_alphaM2SD], s[ids_alphaM2SD],
-                                           alphaSD[2]))
+        log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaM2SD',
+                x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD],
+                s[ids_alphaM2SD], alphaSD[2]))
     else:
         log.warning('alphaM2SD point out of profile')
     if ids_alphaP1SD:
-        log.info('alphaP1SD point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
-                 ' angle  in [°] : %.2f' % (x[ids_alphaP1SD], y[ids_alphaP1SD],
-                                            z[ids_alphaP1SD], s[ids_alphaP1SD],
-                                            alphaSD[0]))
+        log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaP1SD',
+                x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD],
+                s[ids_alphaP1SD], alphaSD[0]))
     else:
         log.warning('alphaP1SD point above Beta point')
 
@@ -281,61 +278,61 @@ def WriteResults(eqOutput, saveOutPath):
         outfile.write('Profile name %s\n' % name)
         outfile.write('Parameter Set %s\n' % parameterSet)
         outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
-        outfile.write('{:<10s} {:<10s} {:<10s} {:<10s} {:<10s} \n'.format(
+        outfile.write(('{:<13s}'*5 + '\n').format(
             'x', 'y', 'z', 's', 'angle'))
         if ids_alpha:
-            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+            outfile.write(('{:<13.2f}'*5 + '\n').format(
                 x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
         else:
-            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+            outfile.write(('{:<13.2f}'*5 + '\n').format(
                 0,
                 0,
                 0,
                 0,
                 0))
-        outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+        outfile.write(('{:<13.2f}'*5 + '\n').format(
             x[ids10Point],
             y[ids10Point],
             z[ids10Point],
             s[ids10Point],
             beta))
         if ids_alphaM1SD:
-            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+            outfile.write(('{:<13.2f}'*5 + '\n').format(
                 x[ids_alphaM1SD],
                 y[ids_alphaM1SD],
                 z[ids_alphaM1SD],
                 s[ids_alphaM1SD],
                 alphaSD[1]))
         else:
-            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+            outfile.write(('{:<13.2f}'*5 + '\n').format(
                 0,
                 0,
                 0,
                 0,
                 0))
         if ids_alphaM2SD:
-            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+            outfile.write(('{:<13.2f}'*5 + '\n').format(
                 x[ids_alphaM2SD],
                 y[ids_alphaM2SD],
                 z[ids_alphaM2SD],
                 s[ids_alphaM2SD],
                 alphaSD[2]))
         else:
-            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+            outfile.write(('{:<13.2f}'*5 + '\n').format(
                 0,
                 0,
                 0,
                 0,
                 0))
         if ids_alphaP1SD:
-            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+            outfile.write(('{:<13.2f}'*5 + '\n').format(
                 x[ids_alphaP1SD],
                 y[ids_alphaP1SD],
                 z[ids_alphaP1SD],
                 s[ids_alphaP1SD],
                 alphaSD[0]))
         else:
-            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+            outfile.write(('{:<13.2f}'*5 + '\n').format(
                 0,
                 0,
                 0,
