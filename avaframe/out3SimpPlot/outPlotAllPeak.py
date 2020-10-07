@@ -58,6 +58,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, flagReport=False):
         # Figure  shows the result parameter data
         fig = plt.figure(figsize=(figW, figH))
         fig, ax = plt.subplots()
+
         # choose colormap
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             cmapPres, np.amin(data), np.amax(data), continuous=contCmap)
