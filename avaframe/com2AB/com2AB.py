@@ -117,7 +117,8 @@ def com2AB(dem, avapath, splitPoint, OutPath,
         dem, avapath, distance, splitPoint)
 
     if np.isnan(np.sum(AvaProfile['z'])):
-        raise ValueError('The resampled avalanche path exceeds the dem extend. Try with another path')
+        raise ValueError('The resampled avalanche path exceeds the dem extent. Try with another path')
+
 
     # Sanity check if first element of AvaProfile[3,:]
     # (i.e z component) is highest:
