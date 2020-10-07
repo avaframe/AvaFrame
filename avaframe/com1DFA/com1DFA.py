@@ -246,8 +246,8 @@ def runSamos(cfg, avaDir):
             execSamos(samosAT, workFile, avaDir, fullOut, logName)
 
             # Create dictionary
-            dictNull = {}
-            dictNull = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
+            reportNull = {}
+            reportNull = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
             'simName' : {'type' : 'simName', 'name' : logName},
                 'Simulation Parameters' : {
                     'type' : 'list',
@@ -261,7 +261,7 @@ def runSamos(cfg, avaDir):
                 'Release area' : {'Release area scenario' : relName}}
 
             # Add to report dictionary list
-            reportDictList.append(dictNull)
+            reportDictList.append(reportNull)
 
             # Count total number of simulations
             countRel = countRel + 1
@@ -293,8 +293,8 @@ def runSamos(cfg, avaDir):
                 execSamos(samosAT, workFile, avaDir, fullOut, logName)
 
                 # Create dictionary
-                dictVar = {}
-                dictVar = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
+                reportVar = {}
+                reportVar = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
                 'simName' : {'type' : 'simName', 'name' : logName},
                     'Simulation Parameters' : {
                         'type' : 'list',
@@ -308,14 +308,14 @@ def runSamos(cfg, avaDir):
                     'Resistance area' : {'type' : 'columns', 'Resistance area scenario' : resistanceArea}}
 
                 if cfgPar['varPar'] == 'RelTh':
-                    dictVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
-                    dictVar['Simulation Parameters'].update({'Release thickness [m]' : item})
+                    reportVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
+                    reportVar['Simulation Parameters'].update({'Release thickness [m]' : item})
                 elif cfgPar['varPar'] == 'Mu':
-                    dictVar['Simulation Parameters'].update({'Release thickness [m]' : defValues['RelTh']})
-                    dictVar['Simulation Parameters'].update({'Mu' : item})
+                    reportVar['Simulation Parameters'].update({'Release thickness [m]' : defValues['RelTh']})
+                    reportVar['Simulation Parameters'].update({'Mu' : item})
 
                 # Add to report dictionary list
-                reportDictList.append(dictVar)
+                reportDictList.append(reportVar)
 
                 # Count total number of simulations
                 countRel = countRel + 1
@@ -336,9 +336,9 @@ def runSamos(cfg, avaDir):
                 execSamos(samosAT, workFile, avaDir, fullOut, logName)
 
                 # Create dictionary
-                dictST = {}
-                dictST = {}
-                dictST = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
+                reportST = {}
+                reportST = {}
+                reportST = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
                 'simName' : {'type' : 'simName', 'name' : logName},
                     'Simulation Parameters' : {
                         'type' : 'list',
@@ -352,13 +352,13 @@ def runSamos(cfg, avaDir):
                     'Release Area' : {'type' : 'columns', 'Release area scenario' : relName}}
 
                 if 'entres' in sim:
-                    dictST['Simulation Parameters'].update({'Entrainment Area' : entrainmentArea})
-                    dictST['Simulation Parameters'].update({'Resistance Area' : resistanceArea})
-                    dictST.update({'Entrainment area' : {'type' : 'columns', 'Entrainment area scenario' : entrainmentArea}})
-                    dictST.update({'Resistance area' : {'type' : 'columns', 'Resistance area scenario' : resistanceArea}})
+                    reportST['Simulation Parameters'].update({'Entrainment Area' : entrainmentArea})
+                    reportST['Simulation Parameters'].update({'Resistance Area' : resistanceArea})
+                    reportST.update({'Entrainment area' : {'type' : 'columns', 'Entrainment area scenario' : entrainmentArea}})
+                    reportST.update({'Resistance area' : {'type' : 'columns', 'Resistance area scenario' : resistanceArea}})
 
                 # Add to report dictionary list
-                reportDictList.append(dictST)
+                reportDictList.append(reportST)
 
                 # Count total number of simulations
                 countRel = countRel + 1
