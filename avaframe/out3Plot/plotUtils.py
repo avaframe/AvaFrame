@@ -8,6 +8,8 @@ import os
 import seaborn as sns
 import copy
 import matplotlib
+import datetime
+import pathlib
 from matplotlib.image import NonUniformImage
 from matplotlib import pyplot as plt
 import cmocean
@@ -205,3 +207,16 @@ def addColorBar(im, ax2, ticks, myUnit):
     cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
     cbar.outline.set_visible(False)
     cbar.ax.set_title(myUnit)
+
+def putAvaNameOnPlot(ax,avaDir):
+    '''
+    Puts the date and avalanche name in the lower left corner of the given
+    matplotlib axes
+    '''
+    avaName = pathlib.PurePath(avaDir).name
+
+    infoText = datetime.datetime.now().strftime("%d.%m.%y") + \
+            '; ' +  str(avaName)
+    plt.text(0, 0, infoText, fontsize=8, verticalalignment='bottom',
+             horizontalalignment='left', transform=ax.transAxes,
+             color='0.6')
