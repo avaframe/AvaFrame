@@ -12,8 +12,8 @@ def test_projectOnRaster(capfd):
     dem = {}
     Points = {}
     header = IOf.cASCheader()
-    header.xllcorner = -5
-    header.yllcorner = 2
+    header.xllcenter = -5
+    header.yllcenter = 2
     header.cellsize = 5
 
     rasterdata = np.array(([0, 1, 2], [2, 0.5, 5]))
@@ -40,8 +40,8 @@ def test_projectOnRasterVect(capfd):
     dem = {}
     Points = {}
     header = IOf.cASCheader()
-    header.xllcorner = 1
-    header.yllcorner = 2
+    header.xllcenter = 1
+    header.yllcenter = 2
     header.cellsize = 1
     header.ncols = 4
     header.nrows = 3
