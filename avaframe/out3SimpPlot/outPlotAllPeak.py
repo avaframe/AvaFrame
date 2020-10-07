@@ -8,9 +8,8 @@ This file is part of Avaframe.
 
 import os
 import numpy as np
-import copy
 from matplotlib import pyplot as plt
-import seaborn as sns
+
 from avaframe.out3Plot.plotUtils import *
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.out3Plot.makePalette as makePalette
@@ -30,6 +29,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, flagReport=False):
     else:
         outDir = os.path.join(avaDir, 'Outputs', 'out3SimpPlot')
         fU.makeADir(outDir)
+
 
     # Initialise plot dictionary with simulation names
     plotDict = {}
@@ -57,19 +57,23 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, flagReport=False):
 
         # Figure  shows the result parameter data
         fig = plt.figure(figsize=(figW, figH))
-        fig, ax1 = plt.subplots()
+        fig, ax = plt.subplots()
         # choose colormap
-        # cmapDict = {'ppr' : cmapPres, 'pfd' : cmapDepth, 'pv' : cmapSpeed}
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             cmapPres, np.amin(data), np.amax(data), continuous=contCmap)
-        im1 = ax1.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-        addColorBar(im1, ax1, ticks, unit)
+
+        im1 = ax.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+        addColorBar(im1, ax, ticks, unit)
+
         title = str('%s' % name)
-        ax1.set_title(title)
-        ax1.set_xlabel('x [m]')
-        ax1.set_ylabel('y [m]')
+        ax.set_title(title)
+        ax.set_xlabel('x [m]')
+        ax.set_ylabel('y [m]')
+
         plotName = os.path.join(outDir, '%s.%s' % (name, outputFormat))
-        #saveAndOrPlot(cfgPath, cfgFLAGS, outFileName, fig)
+
+        plotUtils.putAvaNameOnPlot(ax,avaDir)
+
         fig.savefig(plotName)
         plotPath = os.path.join(os.getcwd(), plotName)
         plotDict[peakFiles['simName'][m]].update({peakFiles['resType'][m] : plotPath})
