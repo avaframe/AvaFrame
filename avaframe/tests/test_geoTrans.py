@@ -160,7 +160,6 @@ def test_path2domain(capfd):
     rasterTransfo['domainWidth'] = w
 
     DB = geoTrans.path2domain(xyPath, rasterTransfo)
-    print(DB)
 
     atol = 1e-8
     # Compare result to reference solution
