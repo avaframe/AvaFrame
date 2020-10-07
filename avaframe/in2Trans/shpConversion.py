@@ -120,7 +120,7 @@ def readLine(fname, defname, dem):
         Lx = (coordx[i] - header.xllcenter) / header.cellsize
         Ly = (coordy[i] - header.yllcenter) / header.cellsize
         if (Ly < 0 or Ly > header.nrows-1 or Lx < 0 or Lx > header.ncols-1):
-            raise ValueError('The avalanche path exceeds dem extend. Try with another path')
+            raise ValueError('The avalanche path exceeds dem extent. Try with another path')
         elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
             raise ValueError('The avalanche path exceeds dem extend. Try with another path')
     return Line
