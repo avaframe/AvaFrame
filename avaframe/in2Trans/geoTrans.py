@@ -26,15 +26,15 @@ def projectOnRaster(dem, Points):
     """
     header = dem['header']
     rasterdata = dem['rasterData']
-    xllcorner = header.xllcorner
-    yllcorner = header.yllcorner
+    xllc = header.xllcenter
+    yllc = header.yllcenter
     cellsize = header.cellsize
     xcoor = Points['x']
     ycoor = Points['y']
     zcoor = np.array([])
     for i in range(np.shape(xcoor)[0]):
-        Lx = (xcoor[i] - xllcorner) / cellsize
-        Ly = (ycoor[i] - yllcorner) / cellsize
+        Lx = (xcoor[i] - xllc) / cellsize
+        Ly = (ycoor[i] - yllc) / cellsize
         Lx0 = int(np.floor(Lx))
         try:
             Ly0 = int(np.floor(Ly))
@@ -76,8 +76,8 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
     rasterdata = dem['rasterData']
     ncol = header.ncols
     nrow = header.nrows
-    xllcorner = header.xllcorner
-    yllcorner = header.yllcorner
+    xllc = header.xllcenter
+    yllc = header.yllcenter
     cellsize = header.cellsize
     xcoor = Points['x']
     ycoor = Points['y']
@@ -93,8 +93,8 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
     f22 = np.ones((np.shape(xcoor)))*np.NaN
 
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-    Lxx = (xcoor - xllcorner) / cellsize
-    Lyy = (ycoor - yllcorner) / cellsize
+    Lxx = (xcoor - xllc) / cellsize
+    Lyy = (ycoor - yllc) / cellsize
     Lx = copy.deepcopy(Lxx)
     Ly = copy.deepcopy(Lyy)
 
@@ -247,19 +247,26 @@ def findAngleProfile(tmp, deltaInd):
     Find the beta point: first point under the beta value given in
     prepareFind10Point. Make sure that the delta_ind next indexes are also
     under the beta value otherwise keep looking
-     """
+    """
+    noBetaFoundMessage = 'No Beta point found. Check your pathAB.shp and splitPoint.shp.'
     i = 0
-    while True:
+    condition = True
+    if np.size(tmp)==0:
+        raise IndexError(noBetaFoundMessage)
+    while (i<=np.size(tmp) and condition):
         ind = tmp[0][i]
-        condition = True
         for j in range(deltaInd):
-            condition = condition and (tmp[0][i+j+1] == ind+j+1)
+            try:
+                condition = condition and (tmp[0][i+j+1] == ind+j+1)
+            except IndexError:
+                raise IndexError(noBetaFoundMessage)
             if not condition:
                 i = i + j + 1
                 break
         if condition:
             idsAnglePoint = ind - 1
             break
+        condition = True
     return idsAnglePoint
 
 

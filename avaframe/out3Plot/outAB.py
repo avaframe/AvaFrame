@@ -244,9 +244,13 @@ def WriteResults(eqOutput, saveOutPath):
     name = eqOutput['Name']
 
     log.info('Profile: %s with %s parameter set',  name, parameterSet)
-    log.info('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
-             ' angle in [°] : %.2f' % (x[ids_alpha], y[ids_alpha],
-                                       z[ids_alpha], s[ids_alpha], alpha))
+    if ids_alpha:
+        log.info('Alpha point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
+                ' angle in [°] : %.2f' % (x[ids_alpha], y[ids_alpha],
+                                        z[ids_alpha], s[ids_alpha], alpha))
+    else:
+        log.warning('alpha point out of profile')
+
     log.info('Beta point (x,y,z,s) in [m]:(%.2f,%.2f,%.2f,%.2f) and'
              ' angle in [°] : %.2f' % (x[ids10Point], y[ids10Point],
                                        z[ids10Point], s[ids10Point], beta))
@@ -279,8 +283,16 @@ def WriteResults(eqOutput, saveOutPath):
         outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
         outfile.write('{:<10s} {:<10s} {:<10s} {:<10s} {:<10s} \n'.format(
             'x', 'y', 'z', 's', 'angle'))
-        outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
-            x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
+        if ids_alpha:
+            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+                x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
+        else:
+            outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
+                0,
+                0,
+                0,
+                0,
+                0))
         outfile.write('{:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} {:<10.2f} \n'.format(
             x[ids10Point],
             y[ids10Point],
