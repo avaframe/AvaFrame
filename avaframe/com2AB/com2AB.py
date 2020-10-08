@@ -117,13 +117,14 @@ def com2AB(dem, avapath, splitPoint, OutPath,
         dem, avapath, distance, splitPoint)
 
     if np.isnan(np.sum(AvaProfile['z'])):
-        raise ValueError('The resampled avalanche path exceeds the dem extent. Try with another path')
-
+        raise ValueError('The resampled avalanche path exceeds the dem extent.'
+                         + 'Try with another path')
 
     # Sanity check if first element of AvaProfile[3,:]
     # (i.e z component) is highest:
     # if not, flip all arrays
-    projSplitPoint, AvaProfile = geoTrans.checkProfile(AvaProfile, projSplitPoint)
+    projSplitPoint, AvaProfile = geoTrans.checkProfile(AvaProfile,
+                                                       projSplitPoint)
 
     AvaProfile['indSplit'] = projSplitPoint['indSplit']  # index of split point
 
@@ -144,8 +145,8 @@ def readABinputs(cfgAva):
     # read avalanche paths for AB
     profileLayer = glob.glob(cfgAva + '/Inputs/LINES/*AB*.shp')
     try:
-        assert len(profileLayer) == 1, 'There should be exactly one pathAB.shp file + \
-                containing the avalanche paths in ' +  cfgAva + '/Inputs/LINES/'
+        message = 'There should be exactly one pathAB.shp file containing the avalanche paths in ' + cfgAva + '/Inputs/LINES/'
+        assert len(profileLayer) == 1, message
     except AssertionError:
         raise
     cfgPath['profileLayer'] = ''.join(profileLayer)
@@ -162,8 +163,8 @@ def readABinputs(cfgAva):
     # read split points
     splitPointSource = glob.glob(cfgAva + '/Inputs/POINTS/*.shp')
     try:
-        assert len(splitPointSource) == 1, 'There should be exactly one .shp file + \
-                containing the split points in ' +  cfgAva + '/Inputs/POINTS/'
+        message = 'There should be exactly one .shp file containing the split points in ' + cfgAva + '/Inputs/POINTS/'
+        assert len(splitPointSource) == 1, message
     except AssertionError:
         raise
     cfgPath['splitPointSource'] = ''.join(splitPointSource)

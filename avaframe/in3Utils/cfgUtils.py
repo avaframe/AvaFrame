@@ -88,6 +88,7 @@ def getModuleConfig(module, fileOverride=''):
 
     return cfg
 
+
 def compareConfig(iniFile, modName, compare):
     ''' Compare configuration files (if a local and default are both provided)
     and inform user of the eventuel differences. Take the default as reference.
@@ -99,7 +100,7 @@ def compareConfig(iniFile, modName, compare):
     Output: ConfigParser object
     '''
     if compare:
-        log.info('Reading config from: %s and %s'% (iniFile[0], iniFile[1]))
+        log.info('Reading config from: %s and %s' % (iniFile[0], iniFile[1]))
         # initialize our final configparser object
         cfg = configparser.ConfigParser()
         # initialize configparser object to read
@@ -118,11 +119,13 @@ def compareConfig(iniFile, modName, compare):
                 # check if key is also in the localCfg
                 if locCfg.has_option(section, key[0]):
                     locValue = locCfg.get(section, key[0])
-                    if locValue!=defValue:
-                        # if yes and if this value is different add this key to the cfg that will be returned
+                    if locValue != defValue:
+                        # if yes and if this value is different add this key to
+                        # the cfg that will be returned
                         locValue = locCfg.get(section, key[0])
                         cfg.set(section, key[0], locValue)
-                        log.info('\t\t%s : %s \t(default value was : %s)', key[0], locValue, defValue)
+                        log.info('\t\t%s : %s \t(default value was : %s)',
+                                 key[0], locValue, defValue)
                     else:
                         cfg.set(section, key[0], defValue)
                         log.info('\t\t%s : %s', key[0], defValue)
@@ -133,7 +136,8 @@ def compareConfig(iniFile, modName, compare):
                     cfg.set(section, key[0], defValue)
                     log.info('\t\t%s : %s', key[0], defValue)
 
-        # Now check if there are some sections/ keys left in the local cfg and that are not used
+        # Now check if there are some sections/ keys left in the local cfg and
+        # that are not used
         for section in locCfg.sections():
             for key in locCfg.items(section):
                 log.warning('Key [\'%s\'] in section [\'%s\'] in the localCfg file is not needed.' % (key[0], section))

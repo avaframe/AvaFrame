@@ -3,7 +3,6 @@ import avaframe.in3Utils.logUtils as logUtils
 from avaframe.in3Utils import cfgUtils
 from avaframe.tests import test_logUtils
 import os
-import filecmp
 
 
 def test_initiateLogger(capfd):
@@ -11,7 +10,7 @@ def test_initiateLogger(capfd):
     dirname = os.path.dirname(__file__)
     avalancheDir = dirname
     logName = 'testCFG'
-    log = logUtils.initiateLogger(avalancheDir, logName)
+    logUtils.initiateLogger(avalancheDir, logName)
     logFileName = os.path.join(avalancheDir, 'testCFG.log')
     assert os.path.isfile(logFileName)
     os.remove(logFileName)
@@ -22,7 +21,7 @@ def test_writeCfg2Log(capfd):
     dirname = os.path.dirname(__file__)
     avalancheDir = dirname
     logName = 'testCFG'
-    log = logUtils.initiateLogger(avalancheDir, logName)
+    logUtils.initiateLogger(avalancheDir, logName)
     cfg = cfgUtils.getModuleConfig(test_logUtils)
     logUtils.writeCfg2Log(cfg, 'test config')
 

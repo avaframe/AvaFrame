@@ -38,7 +38,8 @@ log.info("Running com2ABMain model on DEM \n \t %s \n \t with profile \n \t %s "
 
 # Read input data for ALPHABETA
 dem = IOf.readRaster(cfgPath['demSource'])
-avaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'], dem)
+avaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'],
+                           dem)
 splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], dem)
 
 # Calculate ALPHABETA
