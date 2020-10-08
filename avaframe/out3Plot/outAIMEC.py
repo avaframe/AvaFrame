@@ -537,8 +537,8 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
                 mk = 0
         ax1.legend(loc=4)
 
-    plt.xlim([-0.01, max(1, max(rFP))])
-    plt.ylim([-0.01, 1.01])
+    plt.xlim([-0.03, max(1, max(rFP)+0.03)])
+    plt.ylim([-0.03, 1.03])
     plt.grid('on')
 
     outFileName = '_'.join([cfgPath['projectName'], cfgPath['dirName'],
