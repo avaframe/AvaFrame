@@ -126,41 +126,42 @@ def test_calcAB(capfd):
 def test_com2ABMain(capfd):
     '''Simple test for function com2ABMain'''
     # load and prepare Inputs
+    listNames = ['avaHockeySmoothSmall', 'avaHockeySmoothChannel',
+                 'avaBowl', 'avaHelix']
     dirname = os.path.dirname(__file__)
-    avalancheDir = os.path.join(dirname, '..', 'data',
-                                'avaHockeySmoothChannel')
-    saveOutPath = os.path.join(dirname, 'data')
-    saveOutPathRef = os.path.join(dirname, '..', '..', 'benchmarks',
-                                  'avaHockeySmoothChannel')
-    cfg = cfgUtils.getModuleConfig(com2AB)
-    cfgSetup = cfg['ABSETUP']
-    flags = cfg['FLAGS']
+    for name in listNames:
+        avalancheDir = os.path.join(dirname, '..', 'data', name)
+        saveOutPath = os.path.join(dirname, 'data')
+        saveOutPathRef = os.path.join(dirname, '..', '..', 'benchmarks', name)
+        cfg = cfgUtils.getModuleConfig(com2AB)
+        cfgSetup = cfg['ABSETUP']
+        flags = cfg['FLAGS']
 
-    # Extract input file locations
-    cfgPath = com2AB.readABinputs(avalancheDir)
+        # Extract input file locations
+        cfgPath = com2AB.readABinputs(avalancheDir)
 
-    # Read input data for ALPHABETA
-    dem = IOf.readRaster(cfgPath['demSource'])
-    avaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'],
-                               dem)
-    splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], dem)
-    # run main routine
-    com2AB.com2ABMain(dem, avaPath, splitPoint,
-                      saveOutPath, cfgSetup)
-    eqParams, eqOut = outAB.readABresults(saveOutPath, avaPath['Name'][0],
-                                          flags)
-    # open ref data
-    flags['fullOut'] = 'True'
-    eqParamsRef, eqOutRef = outAB.readABresults(saveOutPathRef,
-                                                avaPath['Name'][0], flags)
+        # Read input data for ALPHABETA
+        dem = IOf.readRaster(cfgPath['demSource'])
+        avaPath = shpConv.readLine(cfgPath['profileLayer'],
+                                   cfgPath['defaultName'], dem)
+        splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], dem)
+        # run main routine
+        com2AB.com2ABMain(dem, avaPath, splitPoint, saveOutPath, cfgSetup)
+        eqParams, eqOut = outAB.readABresults(saveOutPath, avaPath['Name'][0],
+                                              flags)
+        # open ref data
+        flags['fullOut'] = 'True'
+        eqParamsRef, eqOutRef = outAB.readABresults(saveOutPathRef,
+                                                    avaPath['Name'][0], flags)
 
-    for key in eqParamsRef.keys():
-        assert eqParamsRef[key] == eqParams[key]
+        for key in eqParamsRef.keys():
+            assert eqParamsRef[key] == eqParams[key]
 
-    atol = 1e-10
-    assert (np.allclose(eqOutRef['x'], eqOutRef['x'], atol=atol)) and (
-            np.allclose(eqOutRef['y'], eqOutRef['y'], atol=atol)) and (
-            np.allclose(eqOutRef['z'], eqOutRef['z'], atol=atol)) and (
-            np.allclose(eqOutRef['s'], eqOutRef['s'], atol=atol)) and (
-            np.allclose(eqOutRef['alpha'], eqOutRef['alpha'], atol=atol)) and (
-            np.allclose(eqOutRef['alphaSD'], eqOutRef['alphaSD'], atol=atol))
+        atol = 1e-10
+        assert (np.allclose(eqOutRef['x'], eqOutRef['x'], atol=atol)) and (
+                np.allclose(eqOutRef['y'], eqOutRef['y'], atol=atol)) and (
+                np.allclose(eqOutRef['z'], eqOutRef['z'], atol=atol)) and (
+                np.allclose(eqOutRef['s'], eqOutRef['s'], atol=atol)) and (
+                np.allclose(eqOutRef['alpha'], eqOutRef['alpha'], atol=atol)
+                ) and (np.allclose(eqOutRef['alphaSD'], eqOutRef['alphaSD'],
+                       atol=atol))
