@@ -64,7 +64,7 @@ def generatePlot(dataDict, avaName, outDir, cfg):
     # Plot data
     # Figure 1 shows the result parameter data
     fig = plt.figure(figsize=(figW*3, figH))
-    suptitle = fig.suptitle(avaName, fontsize=14, color ='0.5')
+    suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(131)
     cmap = cmapGB
     im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
@@ -74,6 +74,7 @@ def generatePlot(dataDict, avaName, outDir, cfg):
     ax1.set_title(title)
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
+
     ax2 = fig.add_subplot(132)
     im2 = plt.imshow(data2, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     fig.colorbar(im2, ax=ax2)
@@ -81,23 +82,24 @@ def generatePlot(dataDict, avaName, outDir, cfg):
     ax2.set_xlabel('x [m]')
     title = str('%s' % name2)
     ax2.set_title(title)
+
     ax3 = fig.add_subplot(133)
     cmap = cmapdiv
     im3 = plt.imshow(dataDiff, cmap=cmap,
                      extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     fig.colorbar(im3, ax=ax3)
     ax3.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' %
-            (diffMean, unit, diffMax, unit, diffMin, unit), bbox=dict(boxstyle="square", ec='white', fc='white'),
-            horizontalalignment='left', verticalalignment='bottom')
+            (diffMean, unit, diffMax, unit, diffMin, unit),
+             bbox=dict(boxstyle="square", ec='white', fc='white'),
+             horizontalalignment='left', verticalalignment='bottom')
     ax3.set_aspect('auto')
     ax3.set_xlabel('x [m]')
     ax3.set_title('Difference ref-sim')
-    fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, outputFormat)))#, bbox_extra_artists=(suptitle,), bbox_inches="tight")
-
+    fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, outputFormat)))
 
     # Fgiure 2 cross and lonprofile
     fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH))
-    suptitle = fig.suptitle(avaName, fontsize=14, color ='0.5')
+    suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax[0].plot(data1[:, ny_loc], 'k', label='Reference')
     ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
     ax[0].set_xlabel('Location across track [nrows]')

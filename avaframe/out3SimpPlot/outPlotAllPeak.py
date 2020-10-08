@@ -59,10 +59,6 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, flagReport=False):
         # Figure  shows the result parameter data
         fig = plt.figure(figsize=(figW, figH))
         fig, ax = plt.subplots()
-<<<<<<< HEAD
-
-=======
->>>>>>> Add function to add date and filename to given axes
         # choose colormap
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             cmapPres, np.amin(data), np.amax(data), continuous=contCmap)

@@ -277,5 +277,4 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
         if avaDir != '':
             data['avaName'].append(avaName)
 
-
     return data
