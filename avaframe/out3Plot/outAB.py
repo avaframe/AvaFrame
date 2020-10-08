@@ -138,27 +138,28 @@ def plotPath(DGM, splitPoint, eqOutput, flags):
 
     if flags.getboolean('PlotPath'):
         # Plot raster and path
-        fig1, ax1 = plt.subplots(figsize=(figW, figH))
+        fig, ax = plt.subplots(figsize=(figW, figH))
         titleText = name
         plt.title(titleText)
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
         cmap.set_bad(color='white')
-        im1 = plt.imshow(rasterdata, cmap, origin='lower')
-        divider = make_axes_locatable(ax1)
+        im = plt.imshow(rasterdata, cmap, origin='lower')
+        divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
-        fig1.colorbar(im1, cax=cax)
+        fig.colorbar(im, cax=cax)
         # path1 = ax1.plot((x-header.xllcorner)/header.cellsize,
         #                  (y-header.yllcorner)/header.cellsize)
-        ax1.plot((x-header.xllcorner)/header.cellsize,
+        ax.plot((x-header.xllcorner)/header.cellsize,
                  (y-header.yllcorner)/header.cellsize, 'k',
                  label='avapath')
-        ax1.plot((splitPoint['x']-header.xllcorner)/header.cellsize,
+        ax.plot((splitPoint['x']-header.xllcorner)/header.cellsize,
                  (splitPoint['y']-header.yllcorner)/header.cellsize, '.',
                  color='0.3', label='Split points')
-        ax1.plot((x[indSplit]-header.xllcorner)/header.cellsize,
+        ax.plot((x[indSplit]-header.xllcorner)/header.cellsize,
                  (y[indSplit]-header.yllcorner)/header.cellsize, '.',
                  color='0.6', label='Projection of Split Point on ava path')
-        fig1.legend(frameon=False, loc='lower center')
+        fig.legend(frameon=False, loc='lower center')
+        plotUtils.putAvaNameOnPlot(ax,name)
         plt.show(block=False)
 
 
@@ -207,7 +208,7 @@ def plotProfile(DGM, eqOutput, save_file, flags):
     fig_prof.tight_layout()
     versionText = datetime.datetime.now().strftime("%d.%m.%y") + \
         '; ' + 'AlphaBeta ' + ParameterSet
-    plt.text(0, 0, versionText, fontsize=8, verticalalignment='bottom',
+    plt.text(00, 0, versionText, fontsize=8, verticalalignment='bottom',
              horizontalalignment='left', transform=ax.transAxes,
              color='0.5')
     # plt.text(-0.2, 0, 'matplotlib -2', \
