@@ -59,9 +59,9 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
 
     # prepare data
     if parameter == 'Mu' or parameter == 'RelTh':
-        data = fU.makeSimDict(workDir, parameter)
+        data = fU.makeSimDict(workDir, parameter, avaDir)
     else:
-        data = fU.makeSimDict(workDir)
+        data = fU.makeSimDict(workDir, '', avaDir)
 
     cellSize = data['cellSize'][0]
     unit = cfgPlot['PLOT']['unit%s' % suffix]
@@ -89,6 +89,9 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
         log.info('dataset1: %s' % data['files'][indSuffix[0]])
         log.info('dataset2: %s' % data['files'][indSuffix[1]])
 
+        # Get name of Avalanche
+        avaName = data['avaName'][indSuffix[0]]
+
         # Location of Profiles
         ny_loc = int(nx * 0.5)
         nx_loc = int(ny * 0.5)
@@ -106,7 +109,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
         # Plot data
         # Figure 1 shows the result parameter data
         fig = plt.figure(figsize=(figW*3, figH))
-        # suptitle = fig.suptitle(suffix, y=1.05)
+        suptitle = fig.suptitle('%s' % avaName)
         ax1 = fig.add_subplot(131)
         cmap = cmapGB
         im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
@@ -134,10 +137,11 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
         ax3.set_aspect('auto')
         ax3.set_xlabel('x [m]')
         ax3.set_title('Difference ref-sim')
-        fig.savefig(os.path.join(outDir, 'refDfa_%s_%s_%s.%s' % (rel, val, suffix, outputFormat)))#, bbox_extra_artists=(suptitle,), bbox_inches="tight")
+        fig.savefig(os.path.join(outDir, 'refDfa_%s_%s_%s_%s.%s' % (avaName, rel, val, suffix, outputFormat)))#, bbox_extra_artists=(suptitle,), bbox_inches="tight")
 
         # Fgiure 2 cross and lonprofile
         fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH))
+        suptitle = fig.suptitle('%s' % avaName)
         ax[0].plot(data1[:, ny_loc], 'k', label='Reference')
         ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
         ax[0].set_xlabel('Location across track [nrows]')
@@ -151,7 +155,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
 
         ax[0].legend()
         ax[1].legend()
-        fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s_%s_%s.%s' % (rel, val, suffix, outputFormat)))
+        fig.savefig(os.path.join(outDir, 'refDfaProfiles_%s_%s_%s_%s.%s' % (avaName, rel, val, suffix, outputFormat)))
 
         log.info('Figures saved to: %s' % outDir)
 

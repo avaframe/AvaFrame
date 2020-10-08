@@ -1,5 +1,5 @@
 """
-    Pytest for getReleaseArea
+    Pytest for generate Report
 
     This file is part of Avaframe.
 

@@ -43,6 +43,9 @@ def quickPlotSimple(avaDir, inputDir):
     outDir = os.path.join(avaDir, 'Outputs', 'out3Plot')
     fU.makeADir(outDir)
 
+    # Get name of Avalanche
+    avaName = os.path.basename(avaDir)
+
     # Load input datasets from input directory
     datafiles = glob.glob(inputDir+os.sep + '*.asc')
     datafiles.extend(glob.glob(inputDir+os.sep + '*.txt'))
@@ -79,6 +82,7 @@ def quickPlotSimple(avaDir, inputDir):
     # Plot data
     # Figure 1 shows the result parameter data
     fig = plt.figure(figsize=(figW*3, figH))
+    suptitle = fig.suptitle('%s' % avaName)
     ax1 = fig.add_subplot(131)
     cmap = cmapGB
     im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
@@ -108,10 +112,11 @@ def quickPlotSimple(avaDir, inputDir):
     ax3.set_xlabel('x [m]')
     ax3.set_title('Difference ref-sim')
     fig.tight_layout()
-    fig.savefig(os.path.join(outDir, 'Diff'))
+    fig.savefig(os.path.join(outDir, 'Diff_%s' % avaName))
 
     # Fgiure 2 cross and lonprofile
     fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH))
+    suptitle = fig.suptitle('%s' % avaName)
     ax[0].plot(data1[:, ny_loc], 'k', label='data1')
     ax[0].plot(data2[:, ny_loc], 'b--', label='data2')
     ax[0].set_xlabel('Location across track [nrows]')
@@ -126,6 +131,6 @@ def quickPlotSimple(avaDir, inputDir):
     ax[0].legend()
     ax[1].legend()
     fig.tight_layout()
-    fig.savefig(os.path.join(outDir, 'Profiles'))
+    fig.savefig(os.path.join(outDir, 'Profiles_%s' % avaName))
 
     log.info('Figures saved to: %s' % outDir)
