@@ -111,7 +111,7 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
                 if plotDict != '':
                     # add plot info to general report Dict
                     reportD['Simulation Results'] = plotDict[reportD['simName']['name']]
-                    reportD['Simulation Results'].update({'type' : 'image'})
+                    reportD['Simulation Results'].update({'type': 'image'})
                 # Write report file
                 writeReportFile(reportD, pfile)
 
@@ -123,7 +123,7 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
             if plotDict != '':
                 # add plot info to general report Dict
                 reportD['Simulation Results'] = plotDict[reportD['simName']['name']]
-                reportD['Simulation Results'].update({'type' : 'image'})
+                reportD['Simulation Results'].update({'type': 'image'})
 
             # Start writing markdown style report
             with open(os.path.join(outDir, '%s.md' % reportD['simName']), 'w') as pfile:
