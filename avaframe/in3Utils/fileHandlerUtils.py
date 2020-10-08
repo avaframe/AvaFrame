@@ -228,7 +228,7 @@ def exportcom1DFAOutput(avaDir, cfg=''):
     shutil.copy2(os.path.join('%s' % inputDir, 'ExpLog.txt'), outDir)
 
 
-def makeSimDict(inputDir, varPar=''):
+def makeSimDict(inputDir, varPar='', avaDir=''):
     """ Create a dictionary that contains all info on simulations:
 
             files:          full file path
@@ -250,9 +250,15 @@ def makeSimDict(inputDir, varPar=''):
     if varPar == '':
         varPar = 'Mu'
 
+    # Set name of avalanche if avaDir is given
     # Make dictionary of input data info
     data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'simName' : [],
             'modelType' : [], 'releaseArea': [], 'cellSize': [], varPar: []}
+
+    # Set name of avalanche if avaDir is given
+    if avaDir != '':
+        avaName = os.path.basename(avaDir)
+        data.update({'avaName' : []})
 
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
@@ -267,5 +273,9 @@ def makeSimDict(inputDir, varPar=''):
         data['simName'].append('_'.join(nameParts[0:4]))
         header = IOf.readASCheader(datafiles[m])
         data['cellSize'].append(header.cellsize)
+        # Set name of avalanche if avaDir is given
+        if avaDir != '':
+            data['avaName'].append(avaName)
+
 
     return data

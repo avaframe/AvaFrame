@@ -20,7 +20,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, flagReport=False):
 
     # Load all infos on simulations
     inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
-    peakFiles = fU.makeSimDict(inputDir)
+    peakFiles = fU.makeSimDict(inputDir, '', avaDir)
 
     # Output directory
     if flagReport:
@@ -42,6 +42,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, flagReport=False):
         # Load names and paths of peakFiles
         name = peakFiles['names'][m]
         fileName = peakFiles['files'][m]
+        avaName = peakFiles['avaName'][m]
         log.info('now plot %s:' % (fileName))
 
         # Load data
