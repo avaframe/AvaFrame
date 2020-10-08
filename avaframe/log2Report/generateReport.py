@@ -98,10 +98,10 @@ def writeReportFile(reportD, pfile):
                         pfile.write('%s \n' % (reportD[key][value]))
 
 
-def writeReport(outDir, reportDictList, plotDict='', reportOneFile=True):
+def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
     """ Write a report for simulation """
 
-    if reportOneFile:
+    if cfgFLAGS.getboolean('reportOneFile'):
         # Start writing markdown style report
         with open(os.path.join(outDir, 'fullSimulationReport.md'), 'w') as pfile:
 
@@ -128,7 +128,8 @@ def writeReport(outDir, reportDictList, plotDict='', reportOneFile=True):
 
             if plotDict != '':
                 # add plot info to general report Dict
-                reportD['images'] = plotDict[reportD['simName']]
+                reportD['Simulation Results'] = plotDict[reportD['simName']['name']]
+                reportD['Simulation Results'].update({'type' : 'image'})
 
             # Start writing markdown style report
             with open(os.path.join(outDir, '%s.md' % reportD['simName']), 'w') as pfile:

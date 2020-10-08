@@ -24,15 +24,18 @@ def execSamos(samosAT, cintFile, avaDir, fullOut=False, simName=''):
     """ Execute compiled SamosAT file using cintFile to set configuration
         and run options """
 
+    # define command line
     runCommand = samosAT + ' -offscreen ' + cintFile
-
-    proc = subprocess.Popen(runCommand, shell=True, stdout=subprocess.PIPE,
-                            universal_newlines=True)
 
     # initialise log file to save stoudt
     if simName != '':
         f_log = open(os.path.join(avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName)), 'w')
-    # FSO--- loop through output
+
+    # Call command
+    proc = subprocess.Popen(runCommand, shell=True, stdout=subprocess.PIPE,
+                            universal_newlines=True)
+
+    # loop through output and save to logFile if file provided
     for line in proc.stdout:
         if simName != '':
             f_log.write(line)
@@ -258,7 +261,7 @@ def runSamos(cfg, avaDir):
                     'Parameter value' : '',
                     'Mu' : defValues['Mu'],
                     'Release thickness [m]' : defValues['RelTh']},
-                'Release area' : {'Release area scenario' : relName}}
+                'Release area' : {'type' : 'columns', 'Release area scenario' : relName}}
 
             # Add to report dictionary list
             reportDictList.append(reportNull)
