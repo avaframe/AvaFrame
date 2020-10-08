@@ -29,7 +29,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ####################################
     # Get input data
     # read paths
-    projectName = cfgPath['dirName']
+    projectName = cfgPath['projectName']
+    dirName = cfgPath['dirName']
     # read rasterdata
     slRaster = inputData['slRaster']
     xyRaster = inputData['xyRaster']
@@ -82,7 +83,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     plt.plot([DBXl, DBXr], [DBYl, DBYr], 'k-')
 
     ax1.set_title('XY Domain')
-    ax1.legend()
+    ax1.legend(loc=4)
+    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
 
     ax2 = plt.subplot(122)
 
@@ -93,21 +95,22 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
                 label='Beta point : %.1f °' % rasterTransfo['runoutAngle'])
 
     ax2.set_title('sl Domain' + '\n' + 'Black = out of raster')
-    ax2.legend()
+    ax2.legend(loc=4)
     addColorBar(im, ax2, ticks, 'kPa')
 
-    outFileName = projectName + '_DomainTransformation'
+    outFileName = '_'.join([projectName, dirName, 'DomainTransformation'])
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
-def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
+def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     """
     Plot and save the Peak Pressure  distribution after coord transfo
     """
     ####################################
     # Get input data
     # read paths
-    projectName = cfgPath['dirName']
+    projectName = cfgPath['projectName']
+    dirName = cfgPath['dirName']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
@@ -146,7 +149,8 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
                          cmap=cmap, norm=norm)
 
     ax1.set_title('Peak Pressure 2D plot for the reference')
-    ax1.legend()
+    ax1.legend(loc=4)
+    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     addColorBar(im, ax1, ticks, 'kPa')
 
     ax2 = plt.subplot(122)
@@ -158,13 +162,14 @@ def visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
     ax2.plot(pMean, s, color='b', label='mean')
 
     ax2.set_title('Peak Pressure distribution along the path between runs')
-    ax2.legend(loc=0)
+    ax2.legend(loc=4)
     ax2.set_ylabel('l [m]')
     ax2.set_ylim([s.min(), s.max()])
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
 
-    outFileName = projectName + str(int(pLim)) + '_slComparison'
+    outFileName = '_'.join([projectName, dirName, 'plim',
+                            str(int(plim)), 'slComparison'])
 
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -177,8 +182,10 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     ####################################
     # Get input data
     # read paths
-    projectName = cfgPath['dirName']
+    projectName = cfgPath['projectName']
+    dirName = cfgPath['dirName']
     # read data
+    plim = resAnalysis['pressureLimit']
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indRunoutPoint = rasterTransfo['indRunoutPoint']
@@ -220,10 +227,12 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
                              cmap=cmap, norm=norm)
 
         ax.set_title(title)
-        ax.legend()
+        ax.legend(loc=4)
         addColorBar(im, ax, ticks, unit)
+        plotUtils.putAvaNameOnPlot(ax, cfgPath['projectName'])
 
-    outFileName = projectName + '_referenceFields'
+    outFileName = '_'.join([projectName, dirName,'plim',
+                            str(int(plim)), 'referenceFields'])
 
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -236,12 +245,13 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ####################################
     # Get input data
     # read paths
-    projectName = cfgPath['dirName']
+    projectName = cfgPath['projectName']
+    dirName = cfgPath['dirName']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indRunoutPoint = rasterTransfo['indRunoutPoint']
-    pLim = resAnalysis['pressureLimit']
+    plim = resAnalysis['pressureLimit']
     dataPressure = inputs['dataPressure']
     refRasterMask = inputs['refRasterMask']
     newRasterMask = inputs['newRasterMask']
@@ -254,7 +264,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ax1 = plt.subplot(121)
 
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapPres, pLim,
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapPres, plim,
                                                        np.nanmax((dataPressure[0])[nStart:]),
                                                        continuous=contCmap)
     cmap.set_under(color='w')
@@ -262,15 +272,15 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ref0, im = NonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
-    im.set_clim(vmin=pLim, vmax=np.nanmax((dataPressure[0])[nStart:]))
+    im.set_clim(vmin=plim, vmax=np.nanmax((dataPressure[0])[nStart:]))
 
     ax1.set_title('Reference Peak Pressure in the RunOut area' +
-                  '\n' + 'Pressure threshold: %.1f kPa' % pLim)
+                  '\n' + 'Pressure threshold: %.1f kPa' % plim)
     addColorBar(im, ax1, ticks, 'kPa')
 
     y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
     ax1.set_ylim([s[indRunoutPoint-20], y_lim])
-
+    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     ax2 = plt.subplot(122)
     colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
     cmap = matplotlib.colors.ListedColormap(colorsList)
@@ -286,7 +296,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ax2.set_ylim([s[indRunoutPoint-20], y_lim])
     plt.subplots_adjust(wspace=0.3)
 
-    outFileName = projectName + '_' + str(i) + '_comparisonToReference'
+    outFileName = '_'.join([projectName, dirName, 'plim', str(int(plim)),  str(i), 'comparisonToReference'])
 
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -299,6 +309,7 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     ####################################
     # Get input data
     projectName = cfgPath['projectName']
+    dirName = cfgPath['dirName']
     pathResult = cfgPath['pathResult']
     pathName = cfgPath['pathName']
     demName = os.path.basename(cfgPath['demSource'])
@@ -345,7 +356,8 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
                       'pressure_limit: ', str(pressureLimit), ' kPa\n',
                       'start of runout area Angle: ', str(round(runoutAngle, 2)), ' °\n'])
 
-    outFileName = 'Results_pl' + str(pressureLimit) + '_w' + str(domainWidth) + '.txt'
+    outFileName = '_'.join(['Results', projectName, '', dirName, '', 'plim',
+                            str(pressureLimit), 'w', str(domainWidth)]) + '.txt'
     outname = os.path.join(pathResult, outFileName)
 
     # check if folder exists / create
@@ -442,10 +454,9 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ax1.set_ylabel(yaxis_label, color=color[-3])
     ax1.spines['left'].set_color(color[-3])
     ax1.tick_params(axis='y', colors=color[-3])
-
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(plim),
                             ' kPa threshold']))
-
+    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
@@ -459,7 +470,6 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ax2.set_ylabel('z [m]')
     ax2.spines['left'].set_color(color[-3])
     ax2.tick_params(axis='y', colors='k')
-
     ax2.plot(sPath, zPath, color='k', label='path', linestyle='--')
     plt.xlim([0, max(sPath) + 50])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
@@ -480,12 +490,12 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
             mk = mk+1
             if mk == len(markers):
                 mk = 1
-        ax1.legend(loc='lower left')
+        ax1.legend(loc=4)
 
     ax1.grid('on')
 
-    outFileName = ''.join([cfgPath['dirName'],
-                           str(int(plim)), '_', tipo])
+    outFileName = '_'.join([cfgPath['projectName'], cfgPath['dirName'],
+                        'plim', str(int(plim)), tipo])
 
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -501,7 +511,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ax1.set_title('Normalized difference compared to reference')
     ax1.set_ylabel('True positive rate')
     ax1.set_xlabel('False positive rate')
-
+    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)
@@ -525,13 +535,14 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
             mk = mk+1
             if mk == len(markers):
                 mk = 0
-        ax1.legend(loc='lower left')
+        ax1.legend(loc=4)
 
     plt.xlim([-0.01, max(1, max(rFP))])
     plt.ylim([0, 1.01])
     plt.grid('on')
 
-    outFileName = ''.join([cfgPath['dirName'], str(int(plim)), '_ROC'])
+    outFileName = '_'.join([cfgPath['projectName'], cfgPath['dirName'],
+                        'plim', str(int(plim)), 'ROC'])
 
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
