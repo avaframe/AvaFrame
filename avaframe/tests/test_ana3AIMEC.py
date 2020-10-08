@@ -19,6 +19,7 @@ def test_analyzeArea(capfd):
     dataMass = os.path.join(dirname, 'data', '000000.txt')
     dataMass1 = os.path.join(dirname, 'data', '000001.txt')
     cfgPath = {}
+    cfgPath['projectName'] = 'NameOfAvalanche'
     cfgPath['pressurefileList'] = [dataRef, dataSim]
     cfgPath['massfileList'] = [dataMass, dataMass1]
     pathResult = os.path.join(dirname, 'data')
