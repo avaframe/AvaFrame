@@ -1,38 +1,44 @@
 """Tests for module com2AB"""
 import numpy as np
 import pytest
+import os
 
 # Local imports
 import avaframe.com2AB.com2AB as com2AB
-import avaframe.in2Trans.geoTrans as geoTrans
+from avaframe.out3Plot import outAB
+import avaframe.in2Trans.shpConversion as shpConv
+import avaframe.in3Utils.ascUtils as IOf
+from avaframe.in3Utils import cfgUtils
 
 
 def test_setEqParameters(capfd):
     '''Simple test for module setEqParameters'''
     # small avalanche
-    eqParameters = {}
-    eqParameters['ParameterSet'] = 'Small avalanches'
-    eqParameters['k1'] = 0.933
-    eqParameters['k2'] = 0.0
-    eqParameters['k3'] = 0.0088
-    eqParameters['k4'] = -5.02
-    eqParameters['SD'] = 2.36
+    eqParamRef = {}
+    eqParamRef['ParameterSet'] = 'Small avalanches'
+    eqParamRef['k1'] = 0.933
+    eqParamRef['k2'] = 0.0
+    eqParamRef['k3'] = 0.0088
+    eqParamRef['k4'] = -5.02
+    eqParamRef['SD'] = 2.36
 
     eqParams = com2AB.setEqParameters(smallAva=True, customParam=None)
-    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (
-        eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
+    assertDictEqual(eqParamRef, eqParams)
+    assert(eqParams['k1'] == pytest.approx(eqParamRef['k1'])) and (
+        eqParams['ParameterSet'] == (eqParamRef['ParameterSet']))
 
-    eqParameters = {}
-    eqParameters['ParameterSet'] = 'Standard'
-    eqParameters['k1'] = 1.05
-    eqParameters['k2'] = -3130.0
-    eqParameters['k3'] = 0.0
-    eqParameters['k4'] = -2.38
-    eqParameters['SD'] = 1.25
+    eqParamRef = {}
+    eqParamRef['ParameterSet'] = 'Standard'
+    eqParamRef['k1'] = 1.05
+    eqParamRef['k2'] = -3130.0
+    eqParamRef['k3'] = 0.0
+    eqParamRef['k4'] = -2.38
+    eqParamRef['SD'] = 1.25
 
     eqParams = com2AB.setEqParameters(smallAva=False, customParam=None)
-    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (
-        eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
+    assertDictEqual(eqParamRef, eqParams)
+    assert(eqParams['k1'] == pytest.approx(eqParamRef['k1'])) and (
+        eqParams['ParameterSet'] == (eqParamRef['ParameterSet']))
 
     customParam = {}
     customParam['k1'] = 1
@@ -41,17 +47,18 @@ def test_setEqParameters(capfd):
     customParam['k4'] = 4
     customParam['SD'] = 5
 
-    eqParameters = {}
-    eqParameters['ParameterSet'] = 'Custom'
-    eqParameters['k1'] = customParam['k1']
-    eqParameters['k2'] = customParam['k2']
-    eqParameters['k3'] = customParam['k3']
-    eqParameters['k4'] = customParam['k4']
-    eqParameters['SD'] = customParam['SD']
+    eqParamRef = {}
+    eqParamRef['ParameterSet'] = 'Custom'
+    eqParamRef['k1'] = customParam['k1']
+    eqParamRef['k2'] = customParam['k2']
+    eqParamRef['k3'] = customParam['k3']
+    eqParamRef['k4'] = customParam['k4']
+    eqParamRef['SD'] = customParam['SD']
 
     eqParams = com2AB.setEqParameters(smallAva=False, customParam=customParam)
-    assert(eqParams['k1'] == pytest.approx(eqParameters['k1'])) and (
-        eqParams['ParameterSet'] == (eqParameters['ParameterSet']))
+    assertDictEqual(eqParamRef, eqParams)
+    assert(eqParams['k1'] == pytest.approx(eqParamRef['k1'])) and (
+        eqParams['ParameterSet'] == (eqParamRef['ParameterSet']))
 
 # def test_prepareLine(capfd):
 #     '''Simple test for function prepareLine'''
@@ -112,5 +119,54 @@ def test_calcAB(capfd):
 
     # compare results with a relative tolerance of tol
     tol = 0.001  # here 0.1% relative diff
-    assert (alpha == pytest.approx(alpharef, rel=tol)) and (alphaSD[0] == pytest.approx(alphaSDref[0], rel=tol)) and (
-        alphaSD[1] == pytest.approx(alphaSDref[1], rel=tol)) and (alphaSD[2] == pytest.approx(alphaSDref[2], rel=tol))
+    assert (alpha == pytest.approx(alpharef, rel=tol)) and (
+            alphaSD[0] == pytest.approx(alphaSDref[0], rel=tol)) and (
+            alphaSD[1] == pytest.approx(alphaSDref[1], rel=tol)) and (
+            alphaSD[2] == pytest.approx(alphaSDref[2], rel=tol))
+
+
+# test complete routine
+def test_com2ABMain(capfd):
+    '''Simple test for function com2ABMain'''
+    # load and prepare Inputs
+    dirname = os.path.dirname(__file__)
+    avalancheDir = os.path.join(dirname, '..', 'data',
+                                'avaHockeySmoothChannel')
+    saveOutPath = os.path.join(dirname, 'data')
+    saveOutPathRef = os.path.join(dirname, '..', '..', 'benchmarks',
+                                  'avaHockeySmoothChannel')
+    cfg = cfgUtils.getModuleConfig(com2AB)
+    cfgSetup = cfg['ABSETUP']
+    flags = cfg['FLAGS']
+
+    # Extract input file locations
+    cfgPath = com2AB.readABinputs(avalancheDir)
+
+    # Read input data for ALPHABETA
+    dem = IOf.readRaster(cfgPath['demSource'])
+    avaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'],
+                               dem)
+    splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], dem)
+    # run main routine
+    com2AB.com2ABMain(dem, avaPath, splitPoint,
+                      saveOutPath, cfgSetup)
+    eqParams, eqOut = outAB.readABresults(saveOutPath, avaPath['Name'][0],
+                                          flags)
+    # open ref data
+    flags['fullOut'] = 'True'
+    eqParamsRef, eqOutRef = outAB.readABresults(saveOutPathRef,
+                                                avaPath['Name'][0], flags)
+
+    assertDictEqual(eqParamsRef, eqParams)
+    assertDictEqual(eqOutRef, eqOut)
+
+
+def assertDictEqual(dict1, dict2):
+    atol = 1e-10
+    for key in dict1.keys():
+        print(dict1[key])
+        try:
+            assert dict1[key] == dict2[key]
+        except ValueError:
+            testRes = np.allclose(dict1[key], dict2[key], atol=atol)
+            assert testRes

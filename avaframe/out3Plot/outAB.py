@@ -13,7 +13,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import seaborn as sns
 
 # Local imports
 from avaframe.out3Plot.plotUtils import *
@@ -150,16 +149,16 @@ def plotPath(DGM, splitPoint, eqOutput, flags):
         # path1 = ax1.plot((x-header.xllcorner)/header.cellsize,
         #                  (y-header.yllcorner)/header.cellsize)
         ax.plot((x-header.xllcorner)/header.cellsize,
-                 (y-header.yllcorner)/header.cellsize, 'k',
-                 label='avapath')
+                (y-header.yllcorner)/header.cellsize, 'k',
+                label='avapath')
         ax.plot((splitPoint['x']-header.xllcorner)/header.cellsize,
-                 (splitPoint['y']-header.yllcorner)/header.cellsize, '.',
-                 color='0.3', label='Split points')
+                (splitPoint['y']-header.yllcorner)/header.cellsize, '.',
+                color='0.3', label='Split points')
         ax.plot((x[indSplit]-header.xllcorner)/header.cellsize,
-                 (y[indSplit]-header.yllcorner)/header.cellsize, '.',
-                 color='0.6', label='Projection of Split Point on ava path')
+                (y[indSplit]-header.yllcorner)/header.cellsize, '.',
+                color='0.6', label='Projection of Split Point on ava path')
         fig.legend(frameon=False, loc='lower center')
-        plotUtils.putAvaNameOnPlot(ax,name)
+        plotUtils.putAvaNameOnPlot(ax, name)
         plt.show(block=False)
 
 
@@ -249,28 +248,28 @@ def WriteResults(eqOutput, saveOutPath):
         ' ', 'x [m]', 'y [m]', 'z [m]', 's [m]', 'angle [°]'))
     if ids_alpha:
         log.info(('{:<13s}'+'{:<13.2f}'*5).format('Alpha', x[ids_alpha],
-                y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
+                 y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
     else:
         log.warning('alpha point out of profile')
 
     log.info(('{:<13s}'+'{:<13.2f}'*5).format('Beta', x[ids10Point],
-                y[ids10Point], z[ids10Point], s[ids10Point], beta))
+             y[ids10Point], z[ids10Point], s[ids10Point], beta))
     if ids_alphaM1SD:
         log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaM1SD',
-                x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD],
-                s[ids_alphaM1SD], alphaSD[1]))
+                 x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD],
+                 s[ids_alphaM1SD], alphaSD[1]))
     else:
         log.warning('alphaM1SD point out of profile')
     if ids_alphaM2SD:
         log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaM2SD',
-                x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD],
-                s[ids_alphaM2SD], alphaSD[2]))
+                 x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD],
+                 s[ids_alphaM2SD], alphaSD[2]))
     else:
         log.warning('alphaM2SD point out of profile')
     if ids_alphaP1SD:
         log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaP1SD',
-                x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD],
-                s[ids_alphaP1SD], alphaSD[0]))
+                 x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD],
+                 s[ids_alphaP1SD], alphaSD[0]))
     else:
         log.warning('alphaP1SD point above Beta point')
 
