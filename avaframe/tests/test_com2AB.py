@@ -23,9 +23,8 @@ def test_setEqParameters(capfd):
     eqParamRef['SD'] = 2.36
 
     eqParams = com2AB.setEqParameters(smallAva=True, customParam=None)
-    assertDictEqual(eqParamRef, eqParams)
-    assert(eqParams['k1'] == pytest.approx(eqParamRef['k1'])) and (
-        eqParams['ParameterSet'] == (eqParamRef['ParameterSet']))
+    for key in eqParamRef.keys():
+        assert eqParamRef[key] == eqParams[key]
 
     eqParamRef = {}
     eqParamRef['ParameterSet'] = 'Standard'
@@ -36,9 +35,8 @@ def test_setEqParameters(capfd):
     eqParamRef['SD'] = 1.25
 
     eqParams = com2AB.setEqParameters(smallAva=False, customParam=None)
-    assertDictEqual(eqParamRef, eqParams)
-    assert(eqParams['k1'] == pytest.approx(eqParamRef['k1'])) and (
-        eqParams['ParameterSet'] == (eqParamRef['ParameterSet']))
+    for key in eqParamRef.keys():
+        assert eqParamRef[key] == eqParams[key]
 
     customParam = {}
     customParam['k1'] = 1
@@ -56,9 +54,8 @@ def test_setEqParameters(capfd):
     eqParamRef['SD'] = customParam['SD']
 
     eqParams = com2AB.setEqParameters(smallAva=False, customParam=customParam)
-    assertDictEqual(eqParamRef, eqParams)
-    assert(eqParams['k1'] == pytest.approx(eqParamRef['k1'])) and (
-        eqParams['ParameterSet'] == (eqParamRef['ParameterSet']))
+    for key in eqParamRef.keys():
+        assert eqParamRef[key] == eqParams[key]
 
 # def test_prepareLine(capfd):
 #     '''Simple test for function prepareLine'''
@@ -157,16 +154,13 @@ def test_com2ABMain(capfd):
     eqParamsRef, eqOutRef = outAB.readABresults(saveOutPathRef,
                                                 avaPath['Name'][0], flags)
 
-    assertDictEqual(eqParamsRef, eqParams)
-    assertDictEqual(eqOutRef, eqOut)
+    for key in eqParamsRef.keys():
+        assert eqParamsRef[key] == eqParams[key]
 
-
-def assertDictEqual(dict1, dict2):
     atol = 1e-10
-    for key in dict1.keys():
-        print(dict1[key])
-        try:
-            assert dict1[key] == dict2[key]
-        except ValueError:
-            testRes = np.allclose(dict1[key], dict2[key], atol=atol)
-            assert testRes
+    assert (np.allclose(eqOutRef['x'], eqOutRef['x'], atol=atol)) and (
+            np.allclose(eqOutRef['y'], eqOutRef['y'], atol=atol)) and (
+            np.allclose(eqOutRef['z'], eqOutRef['z'], atol=atol)) and (
+            np.allclose(eqOutRef['s'], eqOutRef['s'], atol=atol)) and (
+            np.allclose(eqOutRef['alpha'], eqOutRef['alpha'], atol=atol)) and (
+            np.allclose(eqOutRef['alphaSD'], eqOutRef['alphaSD'], atol=atol))
