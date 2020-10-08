@@ -63,13 +63,8 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS):
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             cmapPres, np.amin(data), np.amax(data), continuous=contCmap)
 
-<<<<<<< HEAD
         im1 = ax.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         addColorBar(im1, ax, ticks, unit)
-=======
-        im1 = ax1.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-        addColorBar(im1, ax1, ticks, unit)
->>>>>>> Add changes
 
         title = str('%s' % name)
         ax.set_title(title)
@@ -79,11 +74,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS):
         plotName = os.path.join(outDir, '%s.%s' % (name, outputFormat))
 
         plotUtils.putAvaNameOnPlot(ax,avaDir)
-<<<<<<< HEAD
 
-=======
-        
->>>>>>> Add changes
         fig.savefig(plotName)
         plotPath = os.path.join(os.getcwd(), plotName)
         plotDict[peakFiles['simName'][m]].update({peakFiles['resType'][m] : plotPath})
