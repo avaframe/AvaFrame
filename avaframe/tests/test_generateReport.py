@@ -30,9 +30,13 @@ def test_writeReport():
     # make a list of input dictionaries
     reportDictList = [testDict]
 
+    # initialise cfg object and test directory
+    cfg = configparser.ConfigParser()
+    cfg['FLAGS'] = {'reportOneFile': True}
     testDir = os.path.join(os.getcwd(), 'avaframe', 'tests')
+
     # Call function to be tested
-    gR.writeReport(testDir, reportDictList, reportOneFile=True)
+    gR.writeReport(testDir, reportDictList, cfg['FLAGS'])
 
     # Load simulation report
     reportFile = open(os.path.join(testDir, 'fullSimulationReport.md'), 'r')
