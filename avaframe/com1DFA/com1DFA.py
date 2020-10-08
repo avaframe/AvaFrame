@@ -250,18 +250,18 @@ def runSamos(cfg, avaDir):
 
             # Create dictionary
             reportNull = {}
-            reportNull = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
-            'simName' : {'type' : 'simName', 'name' : logName},
-                'Simulation Parameters' : {
-                    'type' : 'list',
-                    'Release Area' : relName,
-                    'Entrainment Area' : '',
-                    'Resistance Area' : '',
-                    'Parameter variation on' : '',
-                    'Parameter value' : '',
-                    'Mu' : defValues['Mu'],
-                    'Release thickness [m]' : defValues['RelTh']},
-                'Release area' : {'type' : 'columns', 'Release area scenario' : relName}}
+            reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+            'simName': {'type': 'simName', 'name': logName},
+                'Simulation Parameters': {
+                    'type': 'list',
+                    'Release Area': relName,
+                    'Entrainment Area': '',
+                    'Resistance Area': '',
+                    'Parameter variation on': '',
+                    'Parameter value': '',
+                    'Mu': defValues['Mu'],
+                    'Release thickness [m]': defValues['RelTh']},
+                'Release area': {'type': 'columns', 'Release area scenario': relName}}
 
             # Add to report dictionary list
             reportDictList.append(reportNull)
@@ -286,7 +286,8 @@ def runSamos(cfg, avaDir):
                 logName = sim + '_' + item
                 log.info('Perform simulation with %s = %s: logName = %s' % (cfgPar['varPar'], item, logName))
                 templateFile = os.path.join(modPath, '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
-                workFile = os.path.join(avaDir, 'Work', 'com1DFA', '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
+                workFile = os.path.join(avaDir, 'Work', 'com1DFA',
+                                        '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
                 copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
                 copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
                 copyReplace(workFile, workFile, '##RESDIR##', resDir)
@@ -297,25 +298,25 @@ def runSamos(cfg, avaDir):
 
                 # Create dictionary
                 reportVar = {}
-                reportVar = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
-                'simName' : {'type' : 'simName', 'name' : logName},
-                    'Simulation Parameters' : {
-                        'type' : 'list',
-                        'Release Area' : relName,
-                        'Entrainment Area' : entrainmentArea,
-                        'Resistance Area' : resistanceArea,
-                        'Parameter variation on' : cfgPar['varPar'],
-                        'Parameter value' : item},
-                    'Release area' : {'type' : 'columns', 'Release area scenario' : relName},
-                    'Entrainment area' : {'type' : 'columns', 'Entrainment area scenario' : entrainmentArea},
-                    'Resistance area' : {'type' : 'columns', 'Resistance area scenario' : resistanceArea}}
+                reportVar = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+                'simName' : {'type': 'simName', 'name': logName},
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area': relName,
+                        'Entrainment Area': entrainmentArea,
+                        'Resistance Area': resistanceArea,
+                        'Parameter variation on': cfgPar['varPar'],
+                        'Parameter value': item},
+                    'Release area': {'type': 'columns', 'Release area scenario': relName},
+                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea},
+                    'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}}
 
                 if cfgPar['varPar'] == 'RelTh':
                     reportVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
-                    reportVar['Simulation Parameters'].update({'Release thickness [m]' : item})
+                    reportVar['Simulation Parameters'].update({'Release thickness [m]': item})
                 elif cfgPar['varPar'] == 'Mu':
-                    reportVar['Simulation Parameters'].update({'Release thickness [m]' : defValues['RelTh']})
-                    reportVar['Simulation Parameters'].update({'Mu' : item})
+                    reportVar['Simulation Parameters'].update({'Release thickness [m]': defValues['RelTh']})
+                    reportVar['Simulation Parameters'].update({'Mu': item})
 
                 # Add to report dictionary list
                 reportDictList.append(reportVar)
@@ -341,31 +342,30 @@ def runSamos(cfg, avaDir):
                 # Create dictionary
                 reportST = {}
                 reportST = {}
-                reportST = {'headerLine' : {'type' : 'title', 'title' : 'com1DFA Simulation'},
-                'simName' : {'type' : 'simName', 'name' : logName},
-                    'Simulation Parameters' : {
-                        'type' : 'list',
-                        'Release Area' : relName,
-                        'Entrainment Area' : '',
-                        'Resistance Area' : '',
-                        'Parameter variation on' : '',
-                        'Parameter value' : '',
-                        'Mu' : defValues['Mu'],
-                        'Release thickness [m]' : defValues['RelTh']},
-                    'Release Area' : {'type' : 'columns', 'Release area scenario' : relName}}
+                reportST = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+                'simName': {'type': 'simName', 'name': logName},
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area': relName,
+                        'Entrainment Area': '',
+                        'Resistance Area': '',
+                        'Parameter variation on': '',
+                        'Parameter value': '',
+                        'Mu': defValues['Mu'],
+                        'Release thickness [m]': defValues['RelTh']},
+                    'Release Area': {'type': 'columns', 'Release area scenario': relName}}
 
                 if 'entres' in sim:
-                    reportST['Simulation Parameters'].update({'Entrainment Area' : entrainmentArea})
-                    reportST['Simulation Parameters'].update({'Resistance Area' : resistanceArea})
-                    reportST.update({'Entrainment area' : {'type' : 'columns', 'Entrainment area scenario' : entrainmentArea}})
-                    reportST.update({'Resistance area' : {'type' : 'columns', 'Resistance area scenario' : resistanceArea}})
+                    reportST['Simulation Parameters'].update({'Entrainment Area': entrainmentArea})
+                    reportST['Simulation Parameters'].update({'Resistance Area': resistanceArea})
+                    reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea}})
+                    reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
 
                 # Add to report dictionary list
                 reportDictList.append(reportST)
 
                 # Count total number of simulations
                 countRel = countRel + 1
-
 
     log.info('Avalanche Simulations performed')
 

@@ -108,9 +108,6 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
             # Loop through all simulations
             for reportD in reportDictList:
 
-                # extract additional info from log file
-                #reportD['simParameters'].update(fU.extractParameterInfo(avaDir, reportD['simName']))
-
                 if plotDict != '':
                     # add plot info to general report Dict
                     reportD['Simulation Results'] = plotDict[reportD['simName']['name']]
@@ -122,9 +119,6 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
 
         # Loop through all simulations
         for reportD in reportDictList:
-
-            # extract additional info from log file
-            #reportD['simParameters'].update(fU.extractParameterInfo(avaDir, reportD['simName']))
 
             if plotDict != '':
                 # add plot info to general report Dict
