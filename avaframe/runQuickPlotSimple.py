@@ -7,7 +7,7 @@
 import os
 
 # Local imports
-from avaframe.out3Plot import outQuickPlotSimple
+from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
@@ -25,4 +25,4 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # Set directory where input files is located
 inputDir = os.path.join(avalancheDir, 'Work', 'simplePlot')
-outQuickPlotSimple.quickPlotSimple(avalancheDir, inputDir)
+outQuickPlot.quickPlotSimple(avalancheDir, inputDir, cfgMain)
