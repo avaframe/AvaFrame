@@ -48,7 +48,7 @@ startTime = time.time()
 log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
          cfgPath['demSource'], cfgPath['profileLayer'])
 # Run AIMEC postprocessing
-ana3AIMEC.mainAIMEC(cfgPath, cfg)
+_, _, _ = ana3AIMEC.mainAIMEC(cfgPath, cfg)
 
 endTime = time.time()
 
