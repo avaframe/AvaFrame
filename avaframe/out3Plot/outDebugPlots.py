@@ -73,10 +73,10 @@ def plotPartIni(particles, dem):
     plt.show()
 
 
-def plotAreaDebug(dem, avapath, Raster):
-    ncols = dem['header']['ncols']
-    nrows = dem['header']['nrows']
-    cellsize = dem['header']['cellsize']
+def plotAreaDebug(header, avapath, Raster):
+    ncols = header['ncols']
+    nrows = header['nrows']
+    cellsize = header['cellsize']
     x = np.arange(ncols) * cellsize
     y = np.arange(nrows) * cellsize
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))

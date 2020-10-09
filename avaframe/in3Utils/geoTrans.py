@@ -1011,6 +1011,248 @@ def areaPoly(X, Y):
     return area
 
 
+def prepareArea(line, header, radius, thList='', combine=True, checkOverlap=True):
+    """ convert shape file polygon to raster
+
+    Parameters
+    ----------
+    line: dict
+        line dictionary
+    header : dict
+        dem header dictionary
+    radius : float
+        include all cells which center is in the polygon or close enough
+    thList: list
+        thickness values for all features in the line dictionary
+    combine : Boolean
+        if True sum up the rasters in the area list to return only 1 raster
+        if False return the list of distinct area rasters
+        this option works only if thList is not empty
+    checkOverlap : Boolean
+        if True check if features are overlaping and return an error if it is the case
+        if False check if features are overlaping and average the value for overlaping areas
+
+    Returns
+    -------
+    updates the line dictionary with the rasterData: Either
+        Raster : 2D numpy array
+            raster of the area (returned if relRHlist is empty OR if combine is set
+            to True)
+        or
+        RasterList : list
+            list of 2D numpy array rasters (returned if relRHlist is not empty AND
+            if combine is set to True)
+    """
+    NameRel = line['Name']
+    StartRel = line['Start']
+    LengthRel = line['Length']
+    RasterList = []
+
+    for i in range(len(NameRel)):
+        name = NameRel[i]
+        start = StartRel[i]
+        end = start + LengthRel[i]
+        avapath = {}
+        avapath['x'] = line['x'][int(start):int(end)]
+        avapath['y'] = line['y'][int(start):int(end)]
+        avapath['Name'] = name
+        # if relTh is given - set relTh
+        if thList != '':
+            log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i],
+                     line['thicknessSource'][i]))
+            Raster = polygon2Raster(header, avapath, radius, th=thList[i])
+        else:
+            Raster = polygon2Raster(header, avapath, radius)
+        RasterList.append(Raster)
+
+    # if RasterList not empty check for overlap between features
+    Raster = np.zeros((header['nrows'], header['ncols']))
+    for rast in RasterList:
+        ind1 = Raster > 0
+        ind2 = rast > 0
+        indMatch = np.logical_and(ind1, ind2)
+        if indMatch.any():
+            # if there is an overlap, raise error
+            if checkOverlap:
+                message = 'Features are overlaping - this is not allowed'
+                log.error(message)
+                raise AssertionError(message)
+            else:
+                # if there is an overlap, take average of values for the overlapping cells
+                Raster = np.where(((Raster > 0) & (rast > 0)), (Raster + rast)/2, Raster + rast)
+        else:
+            Raster = Raster + rast
+    if debugPlot:
+        debPlot.plotAreaDebug(header, avapath, Raster)
+    if combine:
+        line['rasterData'] = Raster
+        return line
+    else:
+        line['rasterData'] = RasterList
+        return line
+
+
+def polygon2Raster(demHeader, Line, radius, th=''):
+    """ convert line to raster
+
+    Parameters
+    ----------
+    demHeader: dict
+        dem header dictionary
+    Line : dict
+        line dictionary
+    radius : float
+        include all cells which center is in the polygon or close enough
+    th: float
+        thickness value ot the line feature
+
+    Returns
+    -------
+    Mask : 2D numpy array
+        updated raster
+    """
+    # adim and center dem and polygon
+    ncols = demHeader['ncols']
+    nrows = demHeader['nrows']
+    xllc = demHeader['xllcenter']
+    yllc = demHeader['yllcenter']
+    csz = demHeader['cellsize']
+    xCoord0 = (Line['x'] - xllc) / csz
+    yCoord0 = (Line['y'] - yllc) / csz
+    if (xCoord0[0] == xCoord0[-1]) and (yCoord0[0] == yCoord0[-1]):
+        xCoord = np.delete(xCoord0, -1)
+        yCoord = np.delete(yCoord0, -1)
+    else:
+        xCoord = copy.deepcopy(xCoord0)
+        yCoord = copy.deepcopy(yCoord0)
+        xCoord0 = np.append(xCoord0, xCoord0[0])
+        yCoord0 = np.append(yCoord0, yCoord0[0])
+
+    # get the raster corresponding to the polygon
+    polygon = np.stack((xCoord, yCoord), axis=-1)
+    path = mpltPath.Path(polygon)
+    # add a tolerance to include cells for which the center is on the lines
+    # for this we need to know if the path is clockwise or counter clockwise
+    # to decide if the radius should be positif or negatif in contains_points
+    is_ccw = isCounterClockWise(path)
+    r = (radius*is_ccw - radius*(1-is_ccw))
+    x = np.linspace(0, ncols-1, ncols)
+    y = np.linspace(0, nrows-1, nrows)
+    X, Y = np.meshgrid(x, y)
+    X = X.flatten()
+    Y = Y.flatten()
+    points = np.stack((X, Y), axis=-1)
+    mask = path.contains_points(points, radius=r)
+    Mask = mask.reshape((nrows, ncols)).astype(int)
+    # thickness field is provided, then return array with ones
+    if th != '':
+        log.debug('REL set from dict, %.2f' % th)
+        Mask = np.where(Mask > 0, th, 0.)
+    else:
+        Mask = np.where(Mask > 0, 1., 0.)
+
+    if debugPlot:
+        debPlot.plotRemovePart(xCoord0, yCoord0, demHeader, X, Y, Mask, mask)
+
+    return Mask
+
+
+def checkParticlesInRelease(particles, line, radius):
+    """ remove particles laying outside the polygon
+
+    Parameters
+    ----------
+    particles : dict
+        particles dictionary
+    line: dict
+        line dictionary
+    radius: float
+        threshold val that decides if a point is in the polygon, on the line or
+        very close but outside
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary where particles outside of the polygon have been removed
+    """
+    NameRel = line['Name']
+    StartRel = line['Start']
+    LengthRel = line['Length']
+    Mask = np.full(np.size(particles['x']), False)
+    for i in range(len(NameRel)):
+        name = NameRel[i]
+        start = StartRel[i]
+        end = start + LengthRel[i]
+        avapath = {}
+        avapath['x'] = line['x'][int(start):int(end)]
+        avapath['y'] = line['y'][int(start):int(end)]
+        avapath['Name'] = name
+        mask = pointInPolygon(line['header'], particles, avapath, radius)
+        Mask = np.logical_or(Mask, mask)
+
+    # also remove particles with negative mass
+    mask = np.where(particles['m'] <= 0, False, True)
+    Mask = np.logical_and(Mask, mask)
+    nRemove = len(Mask)-np.sum(Mask)
+    if nRemove > 0:
+        particles = particleTools.removePart(particles, Mask, nRemove,
+            'because they are not within the release polygon')
+        log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
+
+    return particles
+
+
+def pointInPolygon(demHeader, points, Line, radius):
+    """ find particles within a polygon
+
+    Parameters
+    ----------
+    demHeader: dict
+        dem header dictionary
+    points: dict
+        points to check
+    Line : dict
+        line dictionary
+    radius: float
+        threshold val that decides if a point is in the polygon, on the line or
+        very close but outside
+
+    Returns
+    -------
+    Mask : 1D numpy array
+        Mask of particles to keep
+    """
+    xllc = demHeader['xllcenter']
+    yllc = demHeader['yllcenter']
+    xCoord0 = (Line['x'] - xllc)
+    yCoord0 = (Line['y'] - yllc)
+    if (xCoord0[0] == xCoord0[-1]) and (yCoord0[0] == yCoord0[-1]):
+        xCoord = np.delete(xCoord0, -1)
+        yCoord = np.delete(yCoord0, -1)
+    else:
+        xCoord = copy.deepcopy(xCoord0)
+        yCoord = copy.deepcopy(yCoord0)
+        xCoord0 = np.append(xCoord0, xCoord0[0])
+        yCoord0 = np.append(yCoord0, yCoord0[0])
+
+    # get the raster corresponding to the polygon
+    polygon = np.stack((xCoord, yCoord), axis=-1)
+    path = mpltPath.Path(polygon)
+    # add a tolerance to include cells for which the center is on the lines
+    # for this we need to know if the path is clockwise or counter clockwise
+    # to decide if the radius should be positif or negatif in contains_points
+    is_ccw = isCounterClockWise(path)
+    r = (radius*is_ccw - radius*(1-is_ccw))
+    points2Check = np.stack((points['x'], points['y']), axis=-1)
+    mask = path.contains_points(points2Check, radius=r)
+    mask = np.where(mask > 0, True, False)
+
+    if debugPlot:
+        debPlot.plotPartAfterRemove(points, xCoord0, yCoord0, mask)
+
+    return mask
+
+
 def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
     """Check if two rasters overlap
 
