@@ -21,7 +21,6 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.com1DFA import com1DFA
 from avaframe.out3Plot import in1DataPlots
 
-
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)

@@ -37,15 +37,8 @@ def getGeneralConfig(nameFile=''):
         optional full path to file, if empty use avaframeCfg from folder one level up
     '''
 
-    # get path of module
-    modPath = pathlib.Path(avaf.__file__).resolve().parent
-
-    if isinstance(nameFile, pathlib.Path):
-        localFile = nameFile.parents[0] / ('local_' + nameFile.name)
-        defaultFile = nameFile
-    else:
-        localFile = modPath / 'local_avaframeCfg.ini'
-        defaultFile = modPath / 'avaframeCfg.ini'
+    # get path to config files
+    defaultFile, localFile, modName = getConfigPath(avaf, mainCfg=True)
 
     if localFile.is_file():
         iniFile = localFile
@@ -87,23 +80,8 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
     fileOverride -> local_MODULECfg.ini -> MODULECfg.ini
 
     '''
-
-    if isinstance(onlyDefault, bool) == False:
-        message = 'OnlyDefault parameter is not a boolean but %s' % type(onlyDefault)
-        log.error(message)
-        raise TypeError(message)
-
-    # get path of module
-    modPath = pathlib.Path(module.__file__).resolve().parent
-
-    # get filename of module
-    modName = str(pathlib.Path(module.__file__).stem)
-
-    localFile = modPath / ('local_'+modName+'Cfg.ini')
-    defaultFile = modPath / (modName+'Cfg.ini')
-
-    log.debug('localFile: %s', localFile)
-    log.debug('defaultFile: %s', defaultFile)
+    # get path to config files
+    defaultFile, localFile, modName = getConfigPath(module)
 
     # Decide which one to take
     if fileOverride:
@@ -132,6 +110,45 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDe
         return cfg, modDict
 
     return cfg
+
+
+def getConfigPath(module, mainCfg=False):
+    ''' Returns the configuration file path for a given module
+
+    Parameters
+    -----------
+    module: object
+        module : the calling function provides the already imported
+        module eg.:
+        from avaframe.com2AB import com2AB
+        leads to getModuleConfig(com2AB)
+        whereas
+        from avaframe.com2AB import com2AB as c2
+        leads to getModuleConfig(c2)
+    Returns
+    --------
+    defaultFile: pathLib path
+        path to default configuration file
+    localFile: pathLib path
+        path to local configuration file
+    modName: str
+        module name
+    '''
+
+    # get path of module
+    modPath = pathlib.Path(module.__file__).resolve().parent
+
+    # get filename of module
+    if mainCfg:
+        modName = 'avaframe'
+    else:
+        modName = str(pathlib.Path(module.__file__).stem)
+
+    localFile = modPath / ('local_'+modName+'Cfg.ini')
+    defaultFile = modPath / (modName+'Cfg.ini')
+    log.debug('localFile: %s', localFile)
+    log.debug('defaultFile: %s', defaultFile)
+    return defaultFile, localFile, modName
 
 
 def getDefaultModuleConfig(module, toPrint=True):
