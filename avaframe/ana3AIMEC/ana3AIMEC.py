@@ -4,20 +4,11 @@
     This file is part of Avaframe.
 """
 
-import sys
 import os
-import time
 import logging
 import glob
-import math
 import numpy as np
-import scipy as sp
 import copy
-import matplotlib.pyplot as plt
-import matplotlib
-from matplotlib.image import NonUniformImage
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-import seaborn as sns
 
 
 # Local imports
@@ -25,8 +16,6 @@ import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in3Utils.ascUtils as IOf
 import avaframe.out3Plot.outAIMEC as outAimec
-from avaframe.out3Plot.plotUtils import *
-import avaframe.out3Plot.makePalette as makePalette
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -42,18 +31,24 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     given an avalanche directory
     """
     cfgPath = {}
-    pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_pressure')
-    pathFlowHeight = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_depth')
-    pathMassBalance = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_mass_balance')
-    pathSpeed = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName, 'dfa_speed')
+    pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,
+                                'dfa_pressure')
+    pathFlowHeight = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,
+                                  'dfa_depth')
+    pathMassBalance = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,
+                                   'dfa_mass_balance')
+    pathSpeed = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,
+                             'dfa_speed')
 
     if not os.path.exists(pathMassBalance):
         os.makedirs(pathMassBalance)
 
-    profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES', '*aimec*.shp'))
+    profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES',
+                                          '*aimec*.shp'))
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
-    splitPointLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'POINTS', '*.shp'))
+    splitPointLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'POINTS',
+                                             '*.shp'))
     cfgPath['splitPointSource'] = ''.join(splitPointLayer)
 
     demSource = glob.glob(os.path.join(avalancheDir, 'Inputs', '*.asc'))
@@ -86,7 +81,8 @@ def getFileList(path2Folder):
     fileList = [path2Folder +
                 os.path.sep +
                 str(name) for name in
-                sorted(os.listdir(path2Folder)) if os.path.isfile(os.path.join(path2Folder, name))]
+                sorted(os.listdir(path2Folder))
+                if os.path.isfile(os.path.join(path2Folder, name))]
     return fileList
 
 # -----------------------------------------------------------
@@ -114,17 +110,17 @@ def mainAIMEC(cfgPath, cfg):
     newRasters = {}
     # assign pressure data
     log.info("Assigning pressure data to deskewed raster")
-    newRasters['newRasterPressure'] = assignData(cfgPath['pressurefileList'], rasterTransfo,
-                                                 interpMethod)
+    newRasters['newRasterPressure'] = assignData(cfgPath['pressurefileList'],
+                                                 rasterTransfo, interpMethod)
     # assign depth data
     log.info("Assigning depth data to deskewed raster")
-    newRasters['newRasterDepth'] = assignData(cfgPath['depthfileList'], rasterTransfo,
-                                              interpMethod)
+    newRasters['newRasterDepth'] = assignData(cfgPath['depthfileList'],
+                                              rasterTransfo, interpMethod)
     # assign speed data
     if cfgPath['speedfileList']:
         log.info("Assigning speed data to deskewed raster")
-        newRasters['newRasterSpeed'] = assignData(cfgPath['speedfileList'], rasterTransfo,
-                                                  interpMethod)
+        newRasters['newRasterSpeed'] = assignData(cfgPath['speedfileList'],
+                                                  rasterTransfo, interpMethod)
 
     # assign dem data
     log.info("Assigning dem data to deskewed raster")
@@ -134,13 +130,15 @@ def mainAIMEC(cfgPath, cfg):
 
     # Analyze data
     log.info('Analyzing data in path coordinate system')
-    resAnalysis = analyzeData(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
+    resAnalysis = analyzeData(rasterTransfo, pressureLimit, newRasters,
+                              cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of results')
-    outAimec.resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, pressureLimit)
+    outAimec.resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis,
+                        pressureLimit)
 
     # -----------------------------------------------------------
     # write results to file
@@ -148,6 +146,8 @@ def mainAIMEC(cfgPath, cfg):
     log.info('Writing results to file')
 
     outAimec.resultWrite(cfgPath, cfgSetup, resAnalysis)
+
+    return rasterTransfo, newRasters, resAnalysis
 
 # -----------------------------------------------------------
 # Aimec processing tools
@@ -163,12 +163,16 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
 
     input: cfgPath, cfgSetup, cfgFlags
     ouput: rasterTransfo as a dictionary
-            -gridx: x coord of the new raster points in old coord system (as 2D array)
-            -gridy: y coord of the new raster points in old coord system (as 2D array)
+            -gridx: x coord of the new raster points in old coord system
+            (as 2D array)
+            -gridy: y coord of the new raster points in old coord system
+            (as 2D array)
             -s: new coord system in the polyline direction (as 1D array)
             -l: new coord system in the cross direction (as 1D array)
-            -x: coord of the resampled polyline in old coord system (as 1D array)
-            -y: coord of the resampled polyline in old coord system (as 1D array)
+            -x: coord of the resampled polyline in old coord system
+            (as 1D array)
+            -y: coord of the resampled polyline in old coord system
+            (as 1D array)
             -rasterArea: real area of the cells of the new raster (as 2D array)
             -indRunoutPoint: index for start of the runout area (in s)
 
@@ -177,7 +181,6 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     rasterSource = cfgPath['pressurefileList'][0]
     demSource = cfgPath['demSource']
     ProfileLayer = cfgPath['profileLayer']
-    outpath = cfgPath['pathResult']
     DefaultName = cfgPath['projectName']
 
     w = float(cfgSetup['domainWidth'])
@@ -190,8 +193,8 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     sourceData = IOf.readRaster(rasterSource)
     dem = IOf.readRaster(demSource)
     header = sourceData['header']
-    xllc = header.xllcorner
-    yllc = header.yllcorner
+    xllc = header.xllcenter
+    yllc = header.yllcenter
     cellsize = header.cellsize
     rasterdata = sourceData['rasterData']
     # Initialize transformation dictionary
@@ -225,7 +228,8 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
 
     log.info('Size of rasterdata- old: %d x %d - new: %d x %d' % (
         np.size(rasterdata, 0), np.size(rasterdata, 1),
-        np.size(rasterTransfo['gridx'], 0), np.size(rasterTransfo['gridx'], 1)))
+        np.size(rasterTransfo['gridx'], 0),
+        np.size(rasterTransfo['gridx'], 1)))
 
     ##########################################################################
     # affect values
@@ -249,17 +253,20 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    angle, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle, rasterTransfo)
+    angle, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle,
+                                                         rasterTransfo)
     # find the runout point: first point under runoutAngle
     indRunoutPoint = geoTrans.findAngleProfile(tmp, delta_ind)
-    if runoutAngle < angle[indRunoutPoint] and runoutAngle > angle[indRunoutPoint+1]:
+    if (runoutAngle <= angle[indRunoutPoint] and
+            runoutAngle >= angle[indRunoutPoint+1]):
         rasterTransfo['indRunoutPoint'] = indRunoutPoint
         rasterTransfo['runoutAngle'] = runoutAngle
         log.info('Measuring run-out length from the %s ° point' % runoutAngle)
     else:
         log.warning('No %s ° point found. Check splitPoint position or runoutAngle value.' % runoutAngle)
         rasterTransfo['indRunoutPoint'] = indRunoutPoint
-        rasterTransfo['runoutAngle'] = (angle[indRunoutPoint] + angle[indRunoutPoint+1])/2
+        rasterTransfo['runoutAngle'] = (angle[indRunoutPoint] +
+                                        angle[indRunoutPoint+1])/2
         log.info('Measuring run-out length from the %s ° point' % rasterTransfo['runoutAngle'])
 
     slRaster = transform(rasterSource, rasterTransfo, interpMethod)
@@ -331,15 +338,18 @@ def makeTransfoMat(rasterTransfo):
                 -DBYr: y coord of the right boundary
 
         ouput: rasterTransfo dictionary updated with
-                -gridx: x coord of the new raster points in old coord system (as 2D array)
-                -gridy: y coord of the new raster points in old coord system (as 2D array)
+                -gridx: x coord of the new raster points in old coord system
+                (as 2D array)
+                -gridy: y coord of the new raster points in old coord system
+                (as 2D array)
                 -l: new coord system in the cross direction (as 1D array)
     """
     w = rasterTransfo['domainWidth']
     cellsize = rasterTransfo['cellsize']
     # number of points describing the avaPath
     n_pnt = np.shape(rasterTransfo['DBXr'])[0]
-    # Working with no dimentions (the cellsize scaling will be readded at the end)
+    # Working with no dimentions
+    # (the cellsize scaling will be readded at the end)
     # lcoord is the distance from the polyline (cross section)
     # maximum step should be smaller then the cellsize
     nTot = np.ceil(w/cellsize)
@@ -366,8 +376,10 @@ def makeTransfoMat(rasterTransfo):
                 newGridRasterX = x.reshape(1, nTot)
                 newGridRasterY = y.reshape(1, nTot)
             else:
-                newGridRasterX = np.append(newGridRasterX, x.reshape(1, nTot), axis=0)
-                newGridRasterY = np.append(newGridRasterY, y.reshape(1, nTot), axis=0)
+                newGridRasterX = np.append(newGridRasterX, x.reshape(1, nTot),
+                                           axis=0)
+                newGridRasterY = np.append(newGridRasterY, y.reshape(1, nTot),
+                                           axis=0)
 
     # add last column
     x = np.linspace(bxl[m-1], bxr[m-1], nTot)  # line coordinates x
@@ -387,8 +399,10 @@ def getSArea(rasterTransfo):
     Find the scoord corresponding to the transformation and the Area of
     the cells of the new raster
     input: rasterTransfo dictionary to fill in output
-            -gridx: x coord of the new raster points in old coord system (as 2D array)
-            -gridy: y coord of the new raster points in old coord system (as 2D array)
+            -gridx: x coord of the new raster points in old coord system
+            (as 2D array)
+            -gridy: y coord of the new raster points in old coord system
+            (as 2D array)
 
     ouput: rasterTransfo dictionary updated with
             -s: new coord system in the polyline direction (as 1D array)
@@ -438,7 +452,8 @@ def transform(fname, rasterTransfo, interpMethod):
             -rasterTransfo = transformation info
             -interpolation method to chose between 'nearest' and 'bilinear'
     ouput:
-            -new_data = z, pressure or depth... corresponding to fname on the new raster
+            -new_data = z, pressure or depth... corresponding to fname on
+            the new raster
     """
     name = os.path.basename(fname)
     data = IOf.readRaster(fname)
@@ -453,7 +468,8 @@ def transform(fname, rasterTransfo, interpMethod):
     Points = {}
     Points['x'] = xx.flatten()
     Points['y'] = yy.flatten()
-    Points, iib, ioob = geoTrans.projectOnRasterVect(data, Points, interp=interpMethod)
+    Points, iib, ioob = geoTrans.projectOnRasterVect(data, Points,
+                                                     interp=interpMethod)
     newData = Points['z'].reshape(n, m)
     log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
              (name, iib-ioob, ioob))
@@ -468,7 +484,8 @@ def assignData(fnames, rasterTransfo, interpMethod):
             -fnames = list of names of rasterfiles to transform
             -rasterTransfo = transformation info
             -interpolation method to chose between 'nearest' and 'bilinear'
-    ouput: avalData = z, pressure or depth... corresponding to fnames on the new rasters
+    ouput: avalData = z, pressure or depth... corresponding to fnames on the
+            new rasters
     """
 
     maxtopo = len(fnames)
@@ -512,37 +529,55 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
             -newRasters dictionnary with the data in the new coord system
             -cfgPath
     output: resAnalysis dictionnary containing all results
-            -runout: 2D array containing for each simulation analyzed the x and y coord
-                     of the runout point as well as the runout distance measured from
-                     the begining of the run-out area. run-out calculated with the MAX pressure in each cross section
-            -runoutMean: 2D array containing for each simulation analyzed the x and y coord
-                     of the runout point as well as the runout distance measured from
-                     the begining of the run-out area. run-out calculated with the MEAN pressure in each cross section
-            -AMPP: 1D array containing for each simulation analyzed the average max peak pressure
-            -MMPP: 1D array containing for each simulation analyzed the max max peak pressure
-            -AMD: 1D array containing for each simulation analyzed the average max peak flow depth
-            -MMD: 1D array containing for each simulation analyzed the max max peak flow depth
-            -AMS: 1D array containing for each simulation analyzed the average max peak speed
-            -MMS: 1D array containing for each simulation analyzed the max max peak speed
-            -elevRel: 1D array containing for each simulation analyzed the elevation of
-                      the release area (based on first point with peak pressure > pLim)
-            -deltaH: 1D array containing for each simulation analyzed the elevation fall
-                    difference between elevRel and altitude of run-out point
-            -relMass: 1D array containing for each simulation analyzed the release mass
-            -entMass: 1D array containing for each simulation analyzed the entrained mass
-            -finalMass: 1D array containing for each simulation analyzed the final mass
-            -relativMassDiff: 1D array containing for each simulation analyzed the final mass diff with ref (in %)
-            -growthIndex: 1D array containing for each simulation analyzed the growth index
-            -growthGrad: 1D array containing for each simulation analyzed the growth gradient
-            -pCrossAll: 2D array containing for each simulation analyzed the max peak pressure in each cross section
+            -runout: 2D array containing for each simulation analyzed the x and
+                     y coord of the runout point as well as the runout distance
+                     measured from the begining of the run-out area. run-out
+                     calculated with the MAX pressure in each cross section
+            -runoutMean: 2D array containing for each simulation analyzed the x
+                     and y coord of the runout point as well as the runout
+                     distance measured from the begining of the run-out area.
+                     run-out calculated with the MEAN pressure in each cross
+                     section
+            -AMPP: 1D array containing for each simulation analyzed the average
+                    max peak pressure
+            -MMPP: 1D array containing for each simulation analyzed the max max
+                    peak pressure
+            -AMD: 1D array containing for each simulation analyzed the average
+                    max peak flow depth
+            -MMD: 1D array containing for each simulation analyzed the max max
+                    peak flow depth
+            -AMS: 1D array containing for each simulation analyzed the average
+                    max peak speed
+            -MMS: 1D array containing for each simulation analyzed the max max
+                    peak speed
+            -elevRel: 1D array containing for each simulation analyzed the
+                    elevation of the release area (based on first point with
+                    peak pressure > pLim)
+            -deltaH: 1D array containing for each simulation analyzed the
+                    elevation fall difference between elevRel and altitude of
+                    run-out point
+            -relMass: 1D array containing for each simulation analyzed the
+                    release mass
+            -entMass: 1D array containing for each simulation analyzed the
+                    entrained mass
+            -finalMass: 1D array containing for each simulation analyzed the
+                    final mass
+            -relativMassDiff: 1D array containing for each simulation analyzed
+                    the final mass diff with ref (in %)
+            -growthIndex: 1D array containing for each simulation analyzed the
+                    growth index
+            -growthGrad: 1D array containing for each simulation analyzed the
+                    growth gradient
+            -pCrossAll: 2D array containing for each simulation analyzed the
+                    max peak pressure in each cross section
             -pressureLimit: pressure threshold pLim
-            -runoutAngle: angle of the slope at the beginning of the run-out area (given in input)
+            -runoutAngle: angle of the slope at the beginning of the run-out
+                    area (given in input)
 
     """
     # read inputs
     fname = cfgPath['pressurefileList']
     fnameMass = cfgPath['massfileList']
-    outpath = cfgPath['pathResult']
 
     dataPressure = newRasters['newRasterPressure']
     dataDepth = newRasters['newRasterDepth']
@@ -590,12 +625,13 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         # Mean max in each Cross-Section for each field
         ampp[i], mmpp[i], cInd, pCrossAll[i] = getMaxMeanValues(
             rasterdataPres, rasterArea, pLim, cInd=None)
-        amd[i], mmd[i], cInd, _ = getMaxMeanValues(rasterdataDepth, rasterArea, pLim, cInd=cInd)
-        ams[i], mms[i], cInd, _ = getMaxMeanValues(rasterdataSpeed, rasterArea, pLim, cInd=cInd)
+        amd[i], mmd[i], cInd, _ = getMaxMeanValues(rasterdataDepth, rasterArea,
+                                                   pLim, cInd=cInd)
+        ams[i], mms[i], cInd, _ = getMaxMeanValues(rasterdataSpeed, rasterArea,
+                                                   pLim, cInd=cInd)
         #    Runout
         cupper = cInd['cupper']
         clower = cInd['clower']
-        cupperm = cInd['cupperm']
         clowerm = cInd['clowerm']
         runout[0, i] = scoord[clower] - sBeta
         runout[1, i] = x[clower]
@@ -662,8 +698,6 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     fname = cfgPath['pressurefileList']
 
     dataPressure = newRasters['newRasterPressure']
-    s = rasterTransfo['s']
-    l = rasterTransfo['l']
     cellarea = rasterTransfo['rasterArea']
     indRunoutPoint = rasterTransfo['indRunoutPoint']
 
@@ -696,7 +730,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         # false positive: reality(mask)=0, model(rasterdata)=1
         # true negative: reality(mask)=0, model(rasterdata)=0
         """
-        # for each pressure-file pLim is introduced (1/3/.. kPa), where the avalanche has stopped
+        # for each pressure-file pLim is introduced (1/3/.. kPa),
+        # where the avalanche has stopped
         newRasterData = copy.deepcopy(rasterdata)
         # prepare mask for area resAnalysis
         newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
@@ -711,7 +746,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         inputs['nStart'] = nStart
         inputs['i'] = i
 
-        outAimec.visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags)
+        outAimec.visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath,
+                                cfgFlags)
 
         tpInd = np.where((newMask[nStart:] == 1) &
                          (newRasterData[nStart:] == 1))

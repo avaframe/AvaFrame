@@ -8,7 +8,6 @@ import os
 import logging
 import math
 import numpy as np
-import scipy as sp
 from matplotlib import pyplot as plt
 import matplotlib
 from matplotlib import cm
@@ -125,7 +124,7 @@ def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     # prepare for plot
     pMean = np.mean(pCrossAll, axis=0)
     pMedian = np.median(pCrossAll, axis=0)
-    pPercentile = sp.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
+    pPercentile = np.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
 
@@ -293,7 +292,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ax2.set_title(
         'Difference between current and reference in the RunOut area' + '\n' + 'Blue = FN, Red = FP')
     im.set_clim(vmin=-0.000000001, vmax=0.000000001)
-    ax2.set_ylim([s[indRunoutPoint-20], y_lim])
+    ax2.set_ylim([s[indRunoutPoint], y_lim])
     plt.subplots_adjust(wspace=0.3)
 
     outFileName = '_'.join([projectName, dirName, 'plim', str(int(plim)),  str(i), 'comparisonToReference'])
