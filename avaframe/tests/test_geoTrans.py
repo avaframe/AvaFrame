@@ -277,6 +277,214 @@ def test_areaPoly():
     assert area == pytest.approx(A, rel=tol)
 
 
+def test_prepareArea():
+    """ test converting a polygon from a shape file to a raster """
+
+    # setup required input
+    releaseLine = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
+                   'Length': np.asarray([5, 5]), 'type': 'Release',
+                   'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+                   'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
+    demHeader = {}
+    demHeader['xllcenter'] = 0.0
+    demHeader['yllcenter'] = 0.0
+    demHeader['cellsize'] = 5.0
+    demHeader['noDataValue'] = -9999
+    demHeader['nrows'] = 7
+    demHeader['ncols'] = 7
+    dem = {'header': demHeader}
+    dem['rasterData'] = np.ones((demHeader['nrows'], demHeader['ncols']))
+    radius = 0.01
+    thList = [1.234, 7.8]
+    combine = True
+    checkOverlap = True
+    dem['originalHeader'] = dem['header']
+    dem['header']['xllcenter'] = 0.0
+    dem['header']['yllcenter'] = 0.0
+    # call function to be tested
+    # test 1
+    line = geoTrans.prepareArea(releaseLine, dem['originalHeader'], radius, thList='',
+                               combine=True, checkOverlap=True)
+
+    # test 2
+    releaseLine2 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
+                    'Length': np.asarray([5, 5]), 'thicknessSource': ['ini file', 'ini file'],
+                    'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+                    'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Release'}
+    line2 = geoTrans.prepareArea(
+        releaseLine2, dem['originalHeader'], 0.6, thList=thList, combine=True, checkOverlap=True)
+
+    # test 3
+    releaseLine3 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
+                    'Length': np.asarray([5, 5]), 'thicknessSource': ['ini file', 'ini file'],
+                    'x': np.asarray([0, 10., 10.0, 0., 0., 5, 15., 15., 5., 5]),
+                    'y': np.asarray([0., 0., 10.0, 10., 0.0, 5, 5, 15., 15., 5.]), 'type': 'Release'}
+
+    with pytest.raises(AssertionError) as e:
+        assert geoTrans.prepareArea(
+            releaseLine3, dem['originalHeader'], 0.6, thList=thList, combine=True, checkOverlap=True)
+    assert str(e.value) == "Features are overlaping - this is not allowed"
+
+    line5 = geoTrans.prepareArea(
+        releaseLine3, dem['originalHeader'], 0.6, thList=thList, combine=True, checkOverlap=False)
+
+    print('line5', line5)
+
+    # test 4
+    releaseLine4 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]), 'Length': np.asarray([5, 5]),
+                    'thicknessSource': ['ini file', 'ini file'], 'type': 'Release',
+                    'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+                    'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
+    line4 = geoTrans.prepareArea(
+        releaseLine4, dem['originalHeader'], 0.6, thList=thList, combine=False, checkOverlap=True)
+
+    # test results
+    testRaster = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster[0:3, 0:3] = 1.0
+    testRaster[5, 4:6] = 1.0
+    testRaster2 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster2[0:3, 0:3] = 1.234
+    testRaster2[4, 4:6] = 7.8
+    testRaster2[5, 4:6] = 7.8
+    testRaster4 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster5 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster4[0:3, 0:3] = 1.234
+    testRaster5[4, 4:6] = 7.8
+    testRaster5[5, 4:6] = 7.8
+    testList = [testRaster4, testRaster5]
+    testRaster6 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster6[0:3, 0] = 1.234
+    testRaster6[0, 0:3] = 1.234
+    testRaster6[1:3, 1:3] = (1.234 + 7.8) / 2.
+    testRaster6[3, 1:4] = 7.8
+    testRaster6[1:4, 3] = 7.8
+
+    print('line Raster', line['rasterData'])
+    print('testRaster', testRaster)
+    print('line Raster', line2['rasterData'])
+    print('testRaster', testRaster2)
+    print('test 4 line Raster', line4['rasterData'])
+    print('testRaster', testList)
+    print('test raster 6', testRaster6)
+
+    assert np.array_equal(line['rasterData'], testRaster)
+    assert np.array_equal(line2['rasterData'], testRaster2)
+    assert np.array_equal(line4['rasterData'], testList)
+    assert np.array_equal(line5['rasterData'], testRaster6)
+
+
+def test_pointInPolygon():
+    """ test if a point is inside polygon   """
+
+    # setup required input
+    demHeader = {}
+    demHeader['xllcenter'] = 0.0
+    demHeader['yllcenter'] = 0.0
+    radius = np.sqrt(2)
+    line = {'x': np.asarray([0, 10., 10., 0., 0.]),
+            'y': np.asarray([0., 0., 10., 10., 0.0])}
+    points = {'x': np.asarray([2.4, 9.7, -0.04, 10.09, 0.0]),
+              'y': np.asarray([2.4, 9.7, -0.11, 10.8, 0.0])}
+
+    # call function to be tested
+    mask = geoTrans.pointInPolygon(demHeader, points, line, radius)
+    # call function to be tested
+    mask2 = geoTrans.pointInPolygon(demHeader, points, line, 0.01)
+
+    # test mask
+    testMask = np.asarray([True, True, True, False, True])
+    testMask2 = np.asarray([True, True, False, False, True])
+
+    assert np.array_equal(mask, testMask)
+    assert np.array_equal(mask2, testMask2)
+
+    # call function to be tested
+    line = {'x': np.asarray([0, 10., 10., 0.]),
+            'y': np.asarray([0., 0., 10., 10.])}
+    mask3 = geoTrans.pointInPolygon(demHeader, points, line, 0.01)
+    testMask3 = np.asarray([True, True, False, False, True])
+
+    assert np.array_equal(mask3, testMask3)
+
+
+def test_polygon2Raster():
+    """ test if polygon is converted to raster properly """
+
+    # setup required inputs
+    demHeader = {}
+    demHeader['cellsize'] = 1
+    demHeader['ncols'] = 10
+    demHeader['nrows'] = 10
+    demHeader['xllcenter'] = 0
+    demHeader['yllcenter'] = 0
+
+    Line = {'x': np.asarray([0, 1., 0.989, 0., 0.]),
+            'y': np.asarray([0., 0., 0.989, 1., 0.0])}
+    radius = 0.0001
+    th = 1.2
+
+    # call function to be tested
+    Mask = geoTrans.polygon2Raster(demHeader, Line, radius, th=th)
+
+    # setup test output
+    maskTest = np.zeros((10, 10))
+    maskTest[0, 0:2] = 1.2
+    maskTest[1, 0] = 1.2
+
+    # call function to be tested
+    Mask2 = geoTrans.polygon2Raster(demHeader, Line, 0.1, th=th)
+    maskTest2 = maskTest.copy()
+    maskTest2[1, 1] = 1.2
+
+    assert np.array_equal(maskTest, Mask)
+    assert np.array_equal(maskTest2, Mask2)
+
+    # call function to be tested
+    Line = {'x': np.asarray([0, 1., 0.989, 0.]),
+            'y': np.asarray([0., 0., 0.989, 1.])}
+    Mask3 = geoTrans.polygon2Raster(demHeader, Line, 0.1, th=th)
+    maskTest3 = maskTest.copy()
+    maskTest3[1, 1] = 1.2
+
+    assert np.array_equal(maskTest3, Mask3)
+
+
+def test_checkParticlesInRelease():
+    """ test if particles are within release polygon and removed if not """
+
+    # setup required input
+    releaseLine = {'Name': ['testRel'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]), 'type': 'Release',
+                   'x': np.asarray([0, 10., 10.0, 0., 0.]), 'y': np.asarray([0., 0., 10.0, 10., 0.0])}
+    demHeader = {}
+    demHeader['xllcenter'] = 0.0
+    demHeader['yllcenter'] = 0.0
+    demHeader['cellsize'] = 1.0
+    demHeader['noDataValue'] = -9999
+    demHeader['nrows'] = 5
+    demHeader['ncols'] = 5
+    releaseLine['header'] = demHeader
+    particles = {'x': np.asarray([2.4, 9.7, 10.02, 11.5]), 'y': np.asarray([2.4, 9.7, 10.2, 11.5]),
+                 'nPart': 4, 'm': np.asarray([1.4, 1.7, 1.4, 1.8])}
+    radius = np.sqrt(2)
+
+    # call function to be tested
+    particles = geoTrans.checkParticlesInRelease(particles, releaseLine, radius)
+    # call function to be tested
+    particles2 = {'x': np.asarray([2.4, 9.7, 9.997, 10.09, 0.0]), 'y': np.asarray([2.4, 9.7, 9.994, 10.8, 0.0]),
+                  'nPart': 5, 'm': np.asarray([1.4, 1.7, 1.4, 1.8, 1.1])}
+    particles2 = geoTrans.checkParticlesInRelease(particles2, releaseLine, 0.01)
+
+    print('particles', particles, particles2)
+    assert np.array_equal(particles['x'], np.asarray([2.4, 9.7, 10.02]))
+    assert np.array_equal(particles['y'], np.asarray([2.4, 9.7, 10.2]))
+    assert particles['mTot'] == (1.4+1.7+1.4)
+    assert particles['nPart'] == 3
+    assert np.array_equal(particles2['x'], np.asarray([2.4, 9.7, 9.997, 0.0]))
+    assert np.array_equal(particles2['y'], np.asarray([2.4, 9.7, 9.994, 0.0]))
+    assert particles2['mTot'] == (1.4+1.7+1.4+1.1)
+    assert particles2['nPart'] == 4
+
+
 def test_remeshData(tmp_path):
     """test shape of interpolated data onto new mesh"""
 

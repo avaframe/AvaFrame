@@ -867,48 +867,6 @@ def test_initializeMesh():
     assert dem['headerNeighbourGrid']['yllcenter'] == demTest['headerNeighbourGrid']['yllcenter']
 
 
-def test_polygon2Raster():
-    """ test if polygon is converted to raster properly """
-
-    # setup required inputs
-    demHeader = {}
-    demHeader['cellsize'] = 1
-    demHeader['ncols'] = 10
-    demHeader['nrows'] = 10
-    demHeader['xllcenter'] = 0
-    demHeader['yllcenter'] = 0
-
-    Line = {'x': np.asarray([0, 1., 0.989, 0., 0.]),
-            'y': np.asarray([0., 0., 0.989, 1., 0.0])}
-    radius = 0.0001
-    th = 1.2
-
-    # call function to be tested
-    Mask = com1DFA.polygon2Raster(demHeader, Line, radius, th=th)
-
-    # setup test output
-    maskTest = np.zeros((10, 10))
-    maskTest[0, 0:2] = 1.2
-    maskTest[1, 0] = 1.2
-
-    # call function to be tested
-    Mask2 = com1DFA.polygon2Raster(demHeader, Line, 0.1, th=th)
-    maskTest2 = maskTest.copy()
-    maskTest2[1, 1] = 1.2
-
-    assert np.array_equal(maskTest, Mask)
-    assert np.array_equal(maskTest2, Mask2)
-
-    # call function to be tested
-    Line = {'x': np.asarray([0, 1., 0.989, 0.]),
-            'y': np.asarray([0., 0., 0.989, 1.])}
-    Mask3 = com1DFA.polygon2Raster(demHeader, Line, 0.1, th=th)
-    maskTest3 = maskTest.copy()
-    maskTest3[1, 1] = 1.2
-
-    assert np.array_equal(maskTest3, Mask3)
-
-
 def test_getSimTypeList():
     """ test create list of simTypes """
 
