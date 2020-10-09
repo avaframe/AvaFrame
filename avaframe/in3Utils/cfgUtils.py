@@ -20,15 +20,23 @@ def getGeneralConfig():
     returns a configParser object
     '''
 
-    # initialize a configparser object
-    cfg = configparser.ConfigParser()
-
     # get path of module
     modPath = os.path.dirname('avaframeCfg.ini')
     iniFile = os.path.join(modPath, 'avaframeCfg.ini')
+    localFile = os.path.join(modPath, 'local_avaframeCfg.ini')
+    defaultFile = os.path.join(modPath, 'avaframeCfg.ini')
+    if os.path.isfile(localFile):
+        iniFile = localFile
+        iniFile = [defaultFile, localFile]
+        compare = True
+    elif os.path.isfile(defaultFile):
+        iniFile = defaultFile
+        compare = False
+    else:
+        raise FileNotFoundError('None of the provided cfg files exist ')
 
     # Finally read it
-    cfg.read(iniFile)
+    cfg = compareConfig(iniFile, 'General', compare)
 
     return cfg
 
