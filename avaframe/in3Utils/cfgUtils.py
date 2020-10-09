@@ -22,7 +22,6 @@ def getGeneralConfig():
 
     # get path of module
     modPath = os.path.dirname('avaframeCfg.ini')
-    iniFile = os.path.join(modPath, 'avaframeCfg.ini')
     localFile = os.path.join(modPath, 'local_avaframeCfg.ini')
     defaultFile = os.path.join(modPath, 'avaframeCfg.ini')
     if os.path.isfile(localFile):
