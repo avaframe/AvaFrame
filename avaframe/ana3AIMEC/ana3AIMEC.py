@@ -242,9 +242,10 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*cellsize*cellsize
     # (x,y) coordinates of the resamples avapth (centerline where l = 0)
     n = np.shape(rasterTransfo['l'])[0]
-    indCenter = int(np.floor(n/2)+1)
+    indCenter = int(np.floor(n/2))
     rasterTransfo['x'] = rasterTransfo['gridx'][:, indCenter]
     rasterTransfo['y'] = rasterTransfo['gridy'][:, indCenter]
+
 
     #################################################################
     # add 'z' coordinate to the centerline

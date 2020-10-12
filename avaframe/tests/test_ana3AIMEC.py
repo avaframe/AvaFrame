@@ -1,7 +1,7 @@
 ''' Tests for module ana3AIMEC '''
 import numpy as np
-import pytest
 import os
+import glob
 
 # Local imports
 import avaframe.ana3AIMEC.ana3AIMEC as ana3AIMEC
@@ -70,3 +70,68 @@ def test_analyzeArea(capfd):
     assert (resAnalysis['TP'][1] == 800) and (
             resAnalysis['FN'][1] == 1700) and (
             resAnalysis['FP'][1] == 200) and (resAnalysis['TN'][1] == 7300)
+
+
+def test_makeDomainTransfo(capfd):
+    '''Simple test for module makeDomainTransfo'''
+    # Extract input file locations
+    cfgPath = {}
+    dirname = os.path.dirname(__file__)
+    pathData = os.path.join(dirname, 'data', 'testAimec', 'data')
+
+    profileLayer = glob.glob(os.path.join(dirname, 'data', 'testAimec', 'LINES', '*aimec*.shp'))
+    cfgPath['profileLayer'] = ''.join(profileLayer)
+
+    splitPointLayer = glob.glob(os.path.join(dirname, 'data', 'testAimec', 'POINTS', '*.shp'))
+    cfgPath['splitPointSource'] = ''.join(splitPointLayer)
+
+    demSource = glob.glob(os.path.join(dirname, 'data', 'testAimec', '*.asc'))
+    cfgPath['demSource'] = ''.join(demSource)
+
+    cfgPath['pressurefileList'] = ana3AIMEC.getFileList(pathData)
+    cfgPath['depthfileList'] = ana3AIMEC.getFileList(pathData)
+    cfgPath['speedfileList'] = ana3AIMEC.getFileList(pathData)
+
+    cfgPath['massfileList'] = [os.path.join(dirname, 'data', 'testAimec', '000001.txt')]*10
+
+    pathResult = os.path.join(dirname, 'data', 'testAimec', 'results')
+    cfgPath['pathResult'] = pathResult
+
+    cfgPath['projectName'] = 'testAimec'
+    pathName = os.path.basename(profileLayer[0])
+    cfgPath['pathName'] = pathName
+    cfgPath['dirName'] = 'com1DFA'
+
+    cfg = cfgUtils.getModuleConfig(ana3AIMEC)
+    cfgSetup = cfg['AIMECSETUP']
+    cfgFlags = cfg['FLAGS']
+    cfgSetup['runoutAngle'] = '0'
+    cfgSetup['domainWidth'] = '200'
+    cfgSetup['pressureLimit'] = '1'
+
+    rasterTransfo = ana3AIMEC.makeDomainTransfo(cfgPath, cfgSetup, cfgFlags)
+    assert rasterTransfo['gridx'][-1, 0] == 40
+    assert rasterTransfo['gridx'][-1, -1] == 240
+    assert rasterTransfo['gridy'][0, 0] == 200
+    assert rasterTransfo['gridy'][0, -1] == 0
+    assert rasterTransfo['gridy'][-1, -1] == 258
+
+    # transform pressure_data, depth_data and speed_data in new raster
+    newRasters = {}
+    # assign pressure data
+    interpMethod = cfgSetup['interpMethod']
+    newRasters['newRasterPressure'] = ana3AIMEC.assignData(cfgPath['pressurefileList'], rasterTransfo, interpMethod)
+    newRasters['newRasterDepth'] = newRasters['newRasterPressure']
+    newRasters['newRasterSpeed'] = newRasters['newRasterPressure']
+    newRasterDEM = ana3AIMEC.assignData([cfgPath['demSource']], rasterTransfo, interpMethod)
+    newRasters['newRasterDEM'] = newRasterDEM[0]
+
+    # Analyze data
+    pressureLimit = float(cfgSetup['pressureLimit'])
+    resAnalysis = ana3AIMEC.analyzeData(rasterTransfo, pressureLimit, newRasters,
+                              cfgPath, cfgFlags)
+    print(resAnalysis['TP'])
+    print(resAnalysis['FP'])
+
+
+    assert 1==2

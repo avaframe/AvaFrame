@@ -278,7 +278,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     addColorBar(im, ax1, ticks, 'kPa')
 
     y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
-    ax1.set_ylim([s[indRunoutPoint-20], y_lim])
+    ax1.set_ylim([s[indRunoutPoint], y_lim])
     plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     ax2 = plt.subplot(122)
     colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
