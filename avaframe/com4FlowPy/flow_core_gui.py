@@ -106,7 +106,7 @@ def split_release(release, header_release, pieces):
         release[release < 0] = 0
     release[release > 1] = 1
     summ = np.sum(release) # Count number of release pixels
-    log.info("Number of release pixels: ", summ)
+    log.info("Number of release pixels: %s", summ)
     sum_per_split = summ/pieces  # Divide the number by avaiable Cores
     release_list = []
     breakpoint_x = 0
@@ -353,5 +353,5 @@ def calculation_effect(args):
 
         startcell_idx += 1
     end = datetime.now().replace(microsecond=0)
-    log.info('\n Time needed: ' + str(end - start))
+    log.info('Time needed: ' + str(end - start))
     return z_delta_array, susc_array, count_array, z_delta_sum, backcalc, fp_travelangle_array, sl_travelangle_array
