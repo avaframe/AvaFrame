@@ -25,7 +25,7 @@ from avaframe.out3Plot.plotUtils import *
 log = logging.getLogger(__name__)
 
 
-def generatePlot(dataDict, avaName, outDir, cfg):
+def generatePlot(dataDict, avaName, outDir, cfg, plotList):
     """ Create plots of two ascii datasets that shall be compared  """
 
     # Extract info for plotting
@@ -119,6 +119,9 @@ def generatePlot(dataDict, avaName, outDir, cfg):
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
 
+    plotList.append(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, outputFormat)))
+
+    return plotList
 
 def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
     """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension):
@@ -144,6 +147,9 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
     fU.makeADir(workDir)
     outDir = os.path.join(avaDir, 'Outputs', 'out3Plot')
     fU.makeADir(outDir)
+
+    # Initialise plotList
+    plotList = []
 
     # Setup input from com1DFA
     fU.getDFAData(avaDir, workDir, suffix)
@@ -188,7 +194,9 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
                     'simName' : data['simName'][indSuffix[0]], 'suffix' : suffix, 'cellSize' : cellSize,'unit' : unit}
 
         # Create Plots
-        generatePlot(dataDict, avaName, outDir, cfg)
+        plotList = generatePlot(dataDict, avaName, outDir, cfg, plotList)
+
+        return plotList
 
 
 def quickPlotSimple(avaDir, inputDir, cfg):

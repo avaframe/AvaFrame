@@ -9,8 +9,9 @@ import os
 # Local imports
 from avaframe.com1DFA import com1DFA
 from avaframe.log2Report import generateReport as gR
-from avaframe.log2Report import generateCompareReport as gCR
+from avaframe.log2Report import generateCompareReport
 from avaframe.out3SimpPlot import outPlotAllPeak as oP
+from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
@@ -22,14 +23,14 @@ logName = 'runStandardTests'
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 #
-# standardNames = ['data/avaBowl', 'data/avaFlatPlane', 'data/avaHelix', 'data/avaHelixChannel', 'data/avaHockey',
-#                  'data/avaHockeySmoothChannel', 'data/avaHockeySmoothSmall', 'data/avaInclinedPlane']
-standardNames = ['data/avaBowl', 'data/avaHelixChannel']
+standardNames = ['data/avaBowl', 'data/avaFlatPlane', 'data/avaHelix', 'data/avaHelixChannel', 'data/avaHockey',
+                 'data/avaHockeySmoothChannel', 'data/avaHockeySmoothSmall', 'data/avaInclinedPlane']
+# standardNames = ['data/avaBowl', 'data/avaHelixChannel']
 
-# Set directory for report
+# Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'reports')
 
-# Start writing markdown style report
+# Start writing markdown style report for standard tests
 with open(os.path.join(outDir, 'fullSimulationReport.md'), 'w') as pfile:
 
     # Write header
@@ -67,24 +68,48 @@ for avaDir in standardNames:
 
     #-----------Compare to benchmark results
     # Fetch simulation info from benchmark results
-    benchDict = gCR.fetchBenchParameters(avaDir)
+    benchDict = generateCompareReport.fetchBenchParameters(avaDir)
     benchSimName = benchDict['simName']
     # Check if simulation with entrainment and/or resistance or standard simulation
-    flagEntRes = False
+    simType = 'null'
     if 'entres' in benchSimName:
-        flagEntRes = True
+        simType = 'entres'
 
     # Fetch correct reportDict according to flagEntRes
     for dict in reportDictList:
-        if flagEntRes:
-            if 'entres' in dict['simName']['name']:
-                reportD = dict
-        else:
-            if 'null' in dict['simName']['name']:
+        if simType in dict['simName']['name']:
                 reportD = dict
 
     # Add info on run time
     reportD['runTime'] = timeNeeded
 
+    # Create plots for report
+    # Load input parameters from configuration file
+    cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
+
+    # REQUIRED+++++++++++++++++++
+    # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or varPar = 'Mu', values = ['0.055', '0.155']
+     # values need to be given as list, also if only one value
+    outputVariable = ['ppr', 'pfd', 'pv']
+    values = simType
+    parameter = 'simType'
+    plotListRep = {}
+    #++++++++++++++++++++++++++++
+    # Plot data comparison for all output variables defined in suffix
+    for var in outputVariable:
+        plotList = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep)
+        for plot in plotList:
+            plotListRep.update({var: plot})
+
+    # copy files to report directory
+    avaName = os.path.basename(avaDir)
+    plotPaths = generateCompareReport.copyPlots(avaName, outDir, plotListRep)
+
+    print('plotPaths', plotPaths)
+    # add plot info to general report Dict
+    reportD['Simulation Results'] = plotPaths
+
+    print('reportD', reportD['Simulation Results'])
+
     # write report
-    gCR.writeCompareReport(outDir, reportD, benchDict)
+    generateCompareReport.writeCompareReport(outDir, reportD, benchDict)
