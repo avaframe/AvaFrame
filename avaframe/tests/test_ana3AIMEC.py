@@ -76,7 +76,8 @@ def test_makeDomainTransfo(capfd):
     '''Simple test for module makeDomainTransfo'''
     # Extract input file locations
     cfgPath = {}
-    dirname = os.path.join(os.path.dirname(__file__), 'data', 'testAna3Aimec')
+    dir = os.path.dirname(__file__)
+    dirname = os.path.join(dir, 'data', 'testAna3Aimec')
     pathData = os.path.join(dirname, 'data')
 
     profileLayer = glob.glob(os.path.join(dirname, 'LINES', '*aimec*.shp'))
