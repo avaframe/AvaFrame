@@ -36,7 +36,8 @@ def fetchBenchParameters(avaDir):
                         'Release thickness [m]': '1.000',
                         'Release Mass [kg]': '20196.2',
                         'Final Mass [kg]': '20196.2'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1BL'}}
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1BL'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test uses a bowl-shaped geometry.'}}
 
     elif avaDictName == 'avaFlatPlaneDict':
         avaDictName = {'simName': 'release1FP_null_dfa_0.155',
@@ -49,7 +50,8 @@ def fetchBenchParameters(avaDir):
                         'Release thickness [m]': '1.000',
                         'Release Mass [kg]': '20000.',
                         'Final Mass [kg]': '20000.'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1FP'}}
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1FP'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs on a flat plane geometry.'}}
 
     elif avaDictName == 'avaHelixDict':
         avaDictName = {'simName': 'release1HX_null_dfa_0.155',
@@ -62,7 +64,8 @@ def fetchBenchParameters(avaDir):
                         'Release thickness [m]': '1.000',
                         'Release Mass [kg]': '20522.4',
                         'Final Mass [kg]': '20522.4'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'}}
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
+                    'Test Info': {'type': 'text','Test Info': 'This test uses a helix-shaped geometry.'}}
 
     elif avaDictName == 'avaHelixChannelDict':
 
@@ -78,7 +81,8 @@ def fetchBenchParameters(avaDir):
                         'Final Mass [kg]': '23117.6'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HX'},
-                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''}}
+                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
 
     elif avaDictName == 'avaHockeyDict':
 
@@ -90,14 +94,15 @@ def fetchBenchParameters(avaDir):
                         'Release thickness [m]': '1.000',
                         'Release Mass [kg]': '20657.1',
                         'Final Mass [kg]': '20657.1'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'}}
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
 
     elif avaDictName == 'avaHockeySmoothChannelDict':
 
         avaDictName = {'simName': 'release1HS2_entres_dfa_0.155',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area': 'release1HX',
+                        'Release Area': 'release1HS2',
                         'Entrainment Area': 'entrainment1HS2',
                         'Resistance Area': '',
                         'Mu': '0.155',
@@ -106,7 +111,9 @@ def fetchBenchParameters(avaDir):
                         'Final Mass [kg]': '21306.'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS2'},
-                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''}}
+                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
+                     where a linearly sloping surface transitions smoothly into a flat foreland.'}}
 
     elif avaDictName == 'avaHockeySmoothSmallDict':
         avaDictName = {'simName': 'release1HS2_null_dfa_0.155',
@@ -119,7 +126,9 @@ def fetchBenchParameters(avaDir):
                         'Release thickness [m]': '1.000',
                         'Release Mass [kg]': '10000.',
                         'Final Mass [kg]': '10000.'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'}}
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
+                     where a linearly sloping surface transitions smoothly into a flat foreland. This geometry also includes a channel.'}}
 
     elif avaDictName == 'avaInclinedPlaneDict':
         avaDictName = {'simName': 'release1IP_entres_dfa_0.155',
@@ -134,9 +143,21 @@ def fetchBenchParameters(avaDir):
                         'Final Mass [kg]': '21735.1'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1IP'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1IP'},
-                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''}}
+                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs on a linearly sloping surface.'}}
 
     return avaDictName
+
+def copyPlots(avaName, outDir, plotListRep):
+    """ copy the quick plots to report directory """
+
+    plotPaths = {}
+    for key in plotListRep:
+        shutil.copy2(plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key)))
+        print('Copied: ',  plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key)))
+        plotPaths[key] =  os.path.join(outDir, '%s_%s.png' % (avaName, key))
+
+    return plotPaths
 
 
 def makeLists(simDict, benchDict):
@@ -148,7 +169,7 @@ def makeLists(simDict, benchDict):
     for key in simDict:
         if key != 'type':
             if simDict[key] == '' and benchDict.get(key) is None:
-                log.info('this parameter is not used: %s' % simDict[key])
+                log.info('this parameter is not used: %s' % key)
             else:
                 parameterList.append(key)
                 valuesSim.append(simDict[key])
@@ -173,6 +194,15 @@ def writeCompareReport(outDir, reportD, benchD):
         if benchD['simName'] != simName:
             textString = '<span style="color:red"> Reference simulation name is different: %s  </span>' % benchD['simName']
             pfile.write('#### %s \n' % textString)
+        pfile.write(' \n')
+
+        # TEST Info
+        pfile.write('#### Test Info \n')
+        pfile.write(' \n')
+        for value in benchD['Test Info']:
+            if value != 'type':
+                #pfile.write('##### Topic:  %s \n' % value)
+                pfile.write('%s \n' % (benchD['Test Info'][value]))
 
         # Create lists to write tables
         parameterList, valuesSim, valuesBench = makeLists(reportD['Simulation Parameters'], benchD['Simulation Parameters'])
@@ -196,5 +226,16 @@ def writeCompareReport(outDir, reportD, benchD):
 
         # Add time needed for simulation to table
         pfile.write('| Run time [s] |  | %.2f | \n' % (reportD['runTime']))
+        pfile.write(' \n')
+
+        # IMAGE BLOCK
+        pfile.write('#### Comparison Plots \n')
+        for value in reportD['Simulation Results']:
+            if value != 'type':
+                pfile.write('##### Figure:   %s \n' % value)
+                pfile.write('![%s](%s) \n' % (value, reportD['Simulation Results'][value]))
+
+        pfile.write(' \n')
+        pfile.write('------------------------------------------------------------------------- \n')
         pfile.write(' \n')
         pfile.write(' \n')
