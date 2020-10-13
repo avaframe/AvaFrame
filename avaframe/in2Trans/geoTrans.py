@@ -504,3 +504,17 @@ def inpolygon(X, Y, xv, yv):
         IN[yv[i]][xv[i]] = 1
 
     return IN
+
+
+def areaPoly(X, Y):
+    ''' Gauss's area formula to calculate polygon area
+    Inputs : - X coord of the vertices
+             - Y coord of the vertices
+    Output : Area of the polygon
+    '''
+    X = np.append(X, X[0])
+    Y = np.append(Y, Y[0])
+    sum = 0
+    for i in range(np.size(X)-1):
+        sum = sum + (X[i]*Y[i+1]-Y[i]*X[i+1])/2
+    return sum

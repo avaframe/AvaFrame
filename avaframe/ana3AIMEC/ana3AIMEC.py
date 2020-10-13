@@ -433,10 +433,18 @@ def getSArea(rasterTransfo):
     Vs2 = (dxs*dxs + dys*dys)
     Vs = np.sqrt(Vs2)
 
-    # calculate area of each cell
-    newAreaRaster = np.abs(dxl*dys - dxs*dyl)
-    rasterTransfo['rasterArea'] = newAreaRaster
-
+    ####################################
+    # using Gauss's area formula
+    d1 = xcoord[0:n-1, 0:m-1]*ycoord[1:n, 0:m-1]-ycoord[0:n-1, 0:m-1]*xcoord[1:n, 0:m-1]
+    d2 = xcoord[1:n, 0:m-1]*ycoord[1:n, 1:m]-ycoord[1:n, 0:m-1]*xcoord[1:n, 1:m]
+    d3 = xcoord[1:n, 1:m]*ycoord[0:n-1, 1:m]-ycoord[1:n, 1:m]*xcoord[0:n-1, 1:m]
+    d4 = xcoord[0:n-1, 1:m]*ycoord[0:n-1, 0:m-1]-ycoord[0:n-1, 1:m]*xcoord[0:n-1, 0:m-1]
+    Area = np.abs(d1 + d2 + d3 + d4)/2
+    ######################################
+    # calculate area of each cell assuming they are parallelogramms
+    # (which is wrong)
+    # newAreaRaster = np.abs(dxl*dys - dxs*dyl)
+    rasterTransfo['rasterArea'] = Area
     # get scoord
     ds = Vs[:, int(np.floor(m/2))-1]
     scoord = np.cumsum(ds)-ds[0]
@@ -621,7 +629,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         rasterdataDepth = dataDepth[i]
         rasterdataSpeed = dataSpeed[i]
         rasterArea = rasterTransfo['rasterArea']
-        rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
+        # rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
 
         # Mean max in each Cross-Section for each field
         ampp[i], mmpp[i], cInd, pCrossAll[i] = getMaxMeanValues(
@@ -844,7 +852,10 @@ def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):
             -aCrossMax: 1D Aarray containing max of rasterdataA in each cross section
     """
     # get mean max for each cross section for A field
-    aCrossMean = np.nansum(rasterdataA*rasterArea, axis=1)/np.nansum(rasterArea, axis=1)
+    rasterArea = np.where(np.where(np.isnan(rasterdataA), 0, rasterdataA) > 0, rasterArea, 0)
+    AreaSum = np.nansum(rasterArea, axis=1)
+    AreaSum = np.where(AreaSum > 0, AreaSum, 1)
+    aCrossMean = np.nansum(rasterdataA*rasterArea, axis=1)/AreaSum
     # aCrossMean = np.nanmean(rasterdataA, axis=1)
     aCrossMax = np.nanmax(rasterdataA, 1)
     # also get the Area corresponding to those cells
@@ -860,16 +871,16 @@ def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):
             cupper = min(lindex)
             clower = max(lindex)
         else:
-            log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % pLim)
+            log.error('No average pressure values > threshold found. threshold = %4.2f, too high?' % pLim)
             cupper = 0
             clower = 0
-            # search in mean values
-            lindex = np.nonzero(aCrossMean > pLim)[0]
+        # search in mean values
+        lindex = np.nonzero(aCrossMean > pLim)[0]
         if lindex.any():
             cupperm = min(lindex)
             clowerm = max(lindex)
         else:
-            log.error('No average pressure values > threshold found. threshold = %10.4f, too high?' % pLim)
+            log.error('No average pressure values > threshold found. threshold = %4.2f, too high?' % pLim)
             cupperm = 0
             clowerm = 0
         cInd = {}

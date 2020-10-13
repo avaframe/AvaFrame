@@ -92,7 +92,7 @@ def test_makeDomainTransfo(capfd):
     cfgPath['depthfileList'] = ana3AIMEC.getFileList(pathData)
     cfgPath['speedfileList'] = ana3AIMEC.getFileList(pathData)
 
-    cfgPath['massfileList'] = [os.path.join(dirname, 'data', 'testAimec', '000001.txt')]*10
+    cfgPath['massfileList'] = [os.path.join(dirname, 'data', 'testAimec', '000001.txt')]*5
 
     pathResult = os.path.join(dirname, 'data', 'testAimec', 'results')
     cfgPath['pathResult'] = pathResult
@@ -105,15 +105,17 @@ def test_makeDomainTransfo(capfd):
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
+    cfgFlags['savePlot'] = 'False'
     cfgSetup['runoutAngle'] = '0'
-    cfgSetup['domainWidth'] = '200'
-    cfgSetup['pressureLimit'] = '1'
+    cfgSetup['domainWidth'] = '160'
+    cfgSetup['pressureLimit'] = '0.9'
 
     rasterTransfo = ana3AIMEC.makeDomainTransfo(cfgPath, cfgSetup, cfgFlags)
-    assert rasterTransfo['gridx'][-1, 0] == 40
-    assert rasterTransfo['gridx'][-1, -1] == 240
-    assert rasterTransfo['gridy'][0, 0] == 200
-    assert rasterTransfo['gridy'][0, -1] == 0
+
+    assert rasterTransfo['gridx'][-1, 0] == 60
+    assert rasterTransfo['gridx'][-1, -1] == 220
+    assert rasterTransfo['gridy'][0, 0] == 180
+    assert rasterTransfo['gridy'][0, -1] == 20
     assert rasterTransfo['gridy'][-1, -1] == 258
 
     # transform pressure_data, depth_data and speed_data in new raster
@@ -123,15 +125,20 @@ def test_makeDomainTransfo(capfd):
     newRasters['newRasterPressure'] = ana3AIMEC.assignData(cfgPath['pressurefileList'], rasterTransfo, interpMethod)
     newRasters['newRasterDepth'] = newRasters['newRasterPressure']
     newRasters['newRasterSpeed'] = newRasters['newRasterPressure']
-    newRasterDEM = ana3AIMEC.assignData([cfgPath['demSource']], rasterTransfo, interpMethod)
+    newRasterDEM = ana3AIMEC.assignData([cfgPath['demSource']], rasterTransfo,
+                                        interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
     pressureLimit = float(cfgSetup['pressureLimit'])
     resAnalysis = ana3AIMEC.analyzeData(rasterTransfo, pressureLimit, newRasters,
-                              cfgPath, cfgFlags)
-    print(resAnalysis['TP'])
-    print(resAnalysis['FP'])
+                                        cfgPath, cfgFlags)
 
-
-    assert 1==2
+    for i in range(5):
+        rasterSource = cfgPath['pressurefileList'][i]
+        sourceData = IOf.readRaster(rasterSource)
+        rasterdata = sourceData['rasterData']
+        error = (resAnalysis['TP'][i]+resAnalysis['FP'][i]-np.nansum(rasterdata))/(
+                np.nansum(rasterdata)*100)
+        assert error < 0.4
+        assert np.abs(resAnalysis['runout'][0, i] - (240 + 10*(i+1))) < 5
