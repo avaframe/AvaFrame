@@ -154,7 +154,7 @@ def copyPlots(avaName, outDir, plotListRep):
     plotPaths = {}
     for key in plotListRep:
         shutil.copy2(plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key)))
-        print('Copied: ',  plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key)))
+        log.info('Copied: %s to %s' %  (plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key))))
         plotPaths[key] =  os.path.join(outDir, '%s_%s.png' % (avaName, key))
 
     return plotPaths
@@ -181,7 +181,7 @@ def makeLists(simDict, benchDict):
     return parameterList, valuesSim, valuesBench
 
 
-def writeCompareReport(outDir, reportD, benchD):
+def writeCompareReport(outDir, reportD, benchD, avaName):
     """ Write a report for simulation """
 
     # Start writing markdown style report
@@ -189,6 +189,7 @@ def writeCompareReport(outDir, reportD, benchD):
 
         # HEADER BLOCK
         # Simulation name
+        pfile.write('## *%s* \n' % avaName)
         simName = reportD['simName']['name']
         pfile.write('### Simulation name: *%s* \n' % reportD['simName']['name'])
         if benchD['simName'] != simName:

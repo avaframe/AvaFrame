@@ -28,7 +28,8 @@ standardNames = ['data/avaBowl', 'data/avaFlatPlane', 'data/avaHelix', 'data/ava
 # standardNames = ['data/avaBowl', 'data/avaHelixChannel']
 
 # Set directory for full standard test report
-outDir = os.path.join(os.getcwd(), 'reports')
+outDir = os.path.join(os.getcwd(), 'tests', 'reports')
+fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
 with open(os.path.join(outDir, 'fullSimulationReport.md'), 'w') as pfile:
@@ -105,11 +106,8 @@ for avaDir in standardNames:
     avaName = os.path.basename(avaDir)
     plotPaths = generateCompareReport.copyPlots(avaName, outDir, plotListRep)
 
-    print('plotPaths', plotPaths)
     # add plot info to general report Dict
     reportD['Simulation Results'] = plotPaths
 
-    print('reportD', reportD['Simulation Results'])
-
     # write report
-    generateCompareReport.writeCompareReport(outDir, reportD, benchDict)
+    generateCompareReport.writeCompareReport(outDir, reportD, benchDict, avaName)
