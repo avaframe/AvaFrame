@@ -76,28 +76,28 @@ def test_makeDomainTransfo(capfd):
     '''Simple test for module makeDomainTransfo'''
     # Extract input file locations
     cfgPath = {}
-    dirname = os.path.dirname(__file__)
-    pathData = os.path.join(dirname, 'data', 'testAimec', 'data')
+    dirname = os.path.join(os.path.dirname(__file__), 'data', 'testAna3Aimec')
+    pathData = os.path.join(dirname, 'data')
 
-    profileLayer = glob.glob(os.path.join(dirname, 'data', 'testAimec', 'LINES', '*aimec*.shp'))
+    profileLayer = glob.glob(os.path.join(dirname, 'LINES', '*aimec*.shp'))
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
-    splitPointLayer = glob.glob(os.path.join(dirname, 'data', 'testAimec', 'POINTS', '*.shp'))
+    splitPointLayer = glob.glob(os.path.join(dirname, 'POINTS', '*.shp'))
     cfgPath['splitPointSource'] = ''.join(splitPointLayer)
 
-    demSource = glob.glob(os.path.join(dirname, 'data', 'testAimec', '*.asc'))
+    demSource = glob.glob(os.path.join(dirname, '*.asc'))
     cfgPath['demSource'] = ''.join(demSource)
 
     cfgPath['pressurefileList'] = ana3AIMEC.getFileList(pathData)
     cfgPath['depthfileList'] = ana3AIMEC.getFileList(pathData)
     cfgPath['speedfileList'] = ana3AIMEC.getFileList(pathData)
 
-    cfgPath['massfileList'] = [os.path.join(dirname, 'data', 'testAimec', '000001.txt')]*5
+    cfgPath['massfileList'] = [os.path.join(dirname, '000001.txt')]*5
 
-    pathResult = os.path.join(dirname, 'data', 'testAimec', 'results')
+    pathResult = os.path.join(dirname, 'results')
     cfgPath['pathResult'] = pathResult
 
-    cfgPath['projectName'] = 'testAimec'
+    cfgPath['projectName'] = 'testAna3Aimec'
     pathName = os.path.basename(profileLayer[0])
     cfgPath['pathName'] = pathName
     cfgPath['dirName'] = 'com1DFA'
