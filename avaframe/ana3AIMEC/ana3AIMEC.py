@@ -433,17 +433,30 @@ def getSArea(rasterTransfo):
     Vs2 = (dxs*dxs + dys*dys)
     Vs = np.sqrt(Vs2)
 
-    ####################################
-    # using Gauss's area formula
-    d1 = xcoord[0:n-1, 0:m-1]*ycoord[1:n, 0:m-1]-ycoord[0:n-1, 0:m-1]*xcoord[1:n, 0:m-1]
-    d2 = xcoord[1:n, 0:m-1]*ycoord[1:n, 1:m]-ycoord[1:n, 0:m-1]*xcoord[1:n, 1:m]
-    d3 = xcoord[1:n, 1:m]*ycoord[0:n-1, 1:m]-ycoord[1:n, 1:m]*xcoord[0:n-1, 1:m]
-    d4 = xcoord[0:n-1, 1:m]*ycoord[0:n-1, 0:m-1]-ycoord[0:n-1, 1:m]*xcoord[0:n-1, 0:m-1]
-    Area = np.abs(d1 + d2 + d3 + d4)/2
-    ######################################
+    # Method 1
+    # calculate area of each cell using Gauss's area formula
+    # sum_i{x_(i)*y_(i+1) + y_(i)*x_(i+1)}
+    # i = 1 : top left in the matrix : [0:n-1, 0:m-1]
+    x1 = xcoord[0:n-1, 0:m-1]
+    y1 = ycoord[0:n-1, 0:m-1]
+    # i = 2 : top right in the matrix : [1:n, 0:m-1]
+    x2 = xcoord[1:n, 0:m-1]
+    y2 = ycoord[1:n, 0:m-1]
+    # i = 3 : bottom right in the matrix : [1:n, 1:m]
+    x3 = xcoord[1:n, 1:m]
+    y3 = ycoord[1:n, 1:m]
+    # i = 4 : bottom left in the matrix : [0:n-1, 1:m]
+    x4 = xcoord[0:n-1, 1:m]
+    y4 = ycoord[0:n-1, 1:m]
+
+    Area = np.abs(x1*y2-y1*x2 + x2*y3-y2*x3 + x3*y4-y3*x4 + x4*y1-y4*x1)/2
+
+    # Method 2
     # calculate area of each cell assuming they are parallelogramms
     # (which is wrong)
     # newAreaRaster = np.abs(dxl*dys - dxs*dyl)
+
+    # save Area matrix
     rasterTransfo['rasterArea'] = Area
     # get scoord
     ds = Vs[:, int(np.floor(m/2))-1]
