@@ -190,9 +190,9 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
         avaName = data['avaName'][indSuffix[0]]
 
         # Create dataDict to be passed to generatePlot
-        dataDict = {'data1': data1,' data2': data2, 'name1': data['names'][indSuffix[0]],
+        dataDict = {'data1': data1, ' data2': data2, 'name1': data['names'][indSuffix[0]],
                     'name2': data['names'][indSuffix[1]], 'compareType': 'compToRef',
-                    'simName': data['simName'][indSuffix[0]], 'suffix': suffix, 'cellSize': cellSize,'unit': unit}
+                    'simName': data['simName'][indSuffix[0]], 'suffix': suffix, 'cellSize': cellSize, 'unit': unit}
 
         # Create Plots
         plotList = generatePlot(dataDict, avaName, outDir, cfg, plotList)
@@ -237,8 +237,8 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     cellSize = header.cellsize
 
     # Create dataDict to be passed to generatePlot
-    dataDict = {'data1' : data1, 'data2' : data2, 'name1' : name1,
-                'name2' : name2, 'compareType' : '', 'cellSize' : cellSize}
+    dataDict = {'data1': data1, 'data2': data2, 'name1': name1,
+                'name2': name2, 'compareType': '', 'cellSize': cellSize}
 
     # Create Plots
     generatePlot(dataDict, avaName, outDir, cfg)
