@@ -54,3 +54,70 @@ To run
 ------
 
 * call generateReport(outDirectory, inputDictionary, plotDict, reportOneFile=True) in the run script of your computational module
+
+
+
+Generate Compare Report
+=========================
+
+This function creates a markdown style report where the simulation results are compared to benchmark results.
+The report is structured as follows:
+
+  * name of avalanche
+  * simulation name
+  * text block with info on test
+  * table listing simulation parameter name, value (reference) and value (simulation)
+    -> if value of simulation run differs of reference value, it is highlighted in red
+  * block with plots including a header with plot title
+
+For this purpose, python dictionaries are used to read the required input data. In order to produce the structure described above,
+the dictionaries require a certain structure too, for example:
+
+::
+
+    dictionary = {
+                  '*simName*': 'name of simulation',
+                  '*Simulation Parameters*': {
+                  '*type*': '*list*',
+                  'name of parameter': 'value of parameter'
+                  ...
+                                              },
+                  '*Test Info*': {
+                  '*type*': '*text*',
+                  'Title of text box': 'text, text',
+                  ...
+                                  },
+                  '*Simulation Results*': {
+                  'desired plot title': '*file path*',
+                  ...
+                                          }
+                                  },
+
+where the required **keys** are indicated by the asterisk sign.
+
+
+Input
+------
+
+* output directory
+* simulation dictionary
+* benchmark dictionary
+* name of avalanche
+
+
+Output
+-------
+
+* markdown style report
+
+
+To run
+-------
+
+* call::
+
+  ``generateCompareReport(outputDir, simulationDictionary, benchmarkDictionary, avalancheName)``
+
+An example of creating a comparison report can be found in ``runStandardTests.py``. There, the standard tests: *avaBowl*, *avaFlatPlane*, *avaHelix*,
+*avaHelixChannel*, *avaHockey*, *avaHockeySmoothChannel*, *avaHockeySmoothSmall*, are run subsequentially and a report is created where the com1DFA simulation results
+and the benchmark results are compared.
