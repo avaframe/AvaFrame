@@ -29,12 +29,12 @@ cfg = cfgUtils.getModuleConfig(outQuickPlot)
 
 
 # REQUIRED+++++++++++++++++++
-# Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or varPar = 'Mu', values = ['0.055', '0.155']
- # values need to be given as list, also if only one value
+# Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
+# varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
 outputVariable = cfg['PLOT']['outputVariable'].split('_')
 values = cfg['PLOT']['values'].split('_')
 parameter = cfg['PLOT']['parameter']
-#++++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++++
 
 # Plot data comparison for all output variables defined in suffix
 for val in values:

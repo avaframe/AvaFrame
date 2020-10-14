@@ -65,7 +65,7 @@ def fetchBenchParameters(avaDir):
                         'Release Mass [kg]': '20522.4',
                         'Final Mass [kg]': '20522.4'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
-                    'Test Info': {'type': 'text','Test Info': 'This test uses a helix-shaped geometry.'}}
+                    'Test Info': {'type': 'text', 'Test Info': 'This test uses a helix-shaped geometry.'}}
 
     elif avaDictName == 'avaHelixChannelDict':
 
@@ -82,7 +82,8 @@ def fetchBenchParameters(avaDir):
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HX'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
-                    'Test Info': {'type': 'text', 'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
+                    'Test Info': {'type': 'text',
+                    'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
 
     elif avaDictName == 'avaHockeyDict':
 
@@ -95,7 +96,8 @@ def fetchBenchParameters(avaDir):
                         'Release Mass [kg]': '20657.1',
                         'Final Mass [kg]': '20657.1'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
-                    'Test Info': {'type': 'text', 'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
+                    'Test Info': {'type': 'text',
+                    'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
 
     elif avaDictName == 'avaHockeySmoothChannelDict':
 
@@ -128,7 +130,8 @@ def fetchBenchParameters(avaDir):
                         'Final Mass [kg]': '10000.'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
-                     where a linearly sloping surface transitions smoothly into a flat foreland. This geometry also includes a channel.'}}
+                     where a linearly sloping surface transitions smoothly into a flat foreland. \
+                     This geometry also includes a channel.'}}
 
     elif avaDictName == 'avaInclinedPlaneDict':
         avaDictName = {'simName': 'release1IP_entres_dfa_0.155',
@@ -148,14 +151,15 @@ def fetchBenchParameters(avaDir):
 
     return avaDictName
 
+
 def copyPlots(avaName, outDir, plotListRep):
     """ copy the quick plots to report directory """
 
     plotPaths = {}
     for key in plotListRep:
         shutil.copy2(plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key)))
-        log.info('Copied: %s to %s' %  (plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key))))
-        plotPaths[key] =  os.path.join(outDir, '%s_%s.png' % (avaName, key))
+        log.info('Copied: %s to %s' % (plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key))))
+        plotPaths[key] = os.path.join(outDir, '%s_%s.png' % (avaName, key))
 
     return plotPaths
 
@@ -193,7 +197,8 @@ def writeCompareReport(outDir, reportD, benchD, avaName):
         simName = reportD['simName']['name']
         pfile.write('### Simulation name: *%s* \n' % reportD['simName']['name'])
         if benchD['simName'] != simName:
-            textString = '<span style="color:red"> Reference simulation name is different: %s  </span>' % benchD['simName']
+            textString = '<span style="color:red"> Reference simulation name is different: \
+                         %s  </span>' % benchD['simName']
             pfile.write('#### %s \n' % textString)
         pfile.write(' \n')
 
@@ -202,7 +207,7 @@ def writeCompareReport(outDir, reportD, benchD, avaName):
         pfile.write(' \n')
         for value in benchD['Test Info']:
             if value != 'type':
-                #pfile.write('##### Topic:  %s \n' % value)
+                # pfile.write('##### Topic:  %s \n' % value)
                 pfile.write('%s \n' % (benchD['Test Info'][value]))
 
         # Create lists to write tables

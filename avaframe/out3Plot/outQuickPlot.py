@@ -123,6 +123,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotList):
 
     return plotList
 
+
 def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
     """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension):
 
@@ -189,9 +190,9 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
         avaName = data['avaName'][indSuffix[0]]
 
         # Create dataDict to be passed to generatePlot
-        dataDict = {'data1' : data1,'data2' : data2, 'name1' : data['names'][indSuffix[0]],
-                    'name2' : data['names'][indSuffix[1]], 'compareType' : 'compToRef',
-                    'simName' : data['simName'][indSuffix[0]], 'suffix' : suffix, 'cellSize' : cellSize,'unit' : unit}
+        dataDict = {'data1': data1,' data2': data2, 'name1': data['names'][indSuffix[0]],
+                    'name2': data['names'][indSuffix[1]], 'compareType': 'compToRef',
+                    'simName': data['simName'][indSuffix[0]], 'suffix': suffix, 'cellSize': cellSize,'unit': unit}
 
         # Create Plots
         plotList = generatePlot(dataDict, avaName, outDir, cfg, plotList)
