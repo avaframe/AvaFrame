@@ -39,6 +39,7 @@ one plot showing a cross- and a longprofile of the two datasets.
 According to the characteristics of a simulation, as for example provided by the simulation dictionary created with *fileHandlerUtils.makeSimDict*,
 the required input parameters can be defined in order to choose the first dataset.
 The second dataset is fetched from the benchmark results using the same filtering characteristics.
+The function returns a list with the file paths of the generated plots.
 
 
 Input
@@ -57,6 +58,7 @@ Outputs
 
 * plot with three panels showing the specified peak field, the reference peak field, and their difference including a text box with absolute Mean, Max and Min of the difference
 * plot of a cross- and a longprofile of the two datasets
+* list with full file paths of the generated plots
 
 Both plots are saved in *Outputs/out3Plot*.
 
@@ -76,6 +78,7 @@ Quick plot simple
 This function creates two plots of any two raster datasets (with identical dimensions).
 The first plot has three panels, showing the first dataset, the second dataset and the absolute difference of the two datasets and
 the second plot shows a cross- and a longprofile of the two datasets.
+The function returns a list with the file paths of the generated plots.
 
 
 Input
@@ -89,6 +92,7 @@ Outputs
 
 * plot with three panels showing dataset 1, dataset 2, and their difference including a text box with absolute Mean, Max and Min of the difference
 * plot of a cross- and a longprofile of the two datasets
+* list with full file paths of the generated plots
 
 Both plots are saved in *Outputs/out3Plot*.
 
