@@ -67,7 +67,7 @@ for avaDir in standardNames:
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
-    #-----------Compare to benchmark results
+    # -----------Compare to benchmark results
     # Fetch simulation info from benchmark results
     benchDict = generateCompareReport.fetchBenchParameters(avaDir)
     benchSimName = benchDict['simName']
@@ -79,7 +79,7 @@ for avaDir in standardNames:
     # Fetch correct reportDict according to flagEntRes
     for dict in reportDictList:
         if simType in dict['simName']['name']:
-                reportD = dict
+            reportD = dict
 
     # Add info on run time
     reportD['runTime'] = timeNeeded
@@ -89,13 +89,14 @@ for avaDir in standardNames:
     cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
 
     # REQUIRED+++++++++++++++++++
-    # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or varPar = 'Mu', values = ['0.055', '0.155']
-     # values need to be given as list, also if only one value
+    # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
+    # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
     outputVariable = ['ppr', 'pfd', 'pv']
     values = simType
     parameter = 'simType'
     plotListRep = {}
-    #++++++++++++++++++++++++++++
+    # ++++++++++++++++++++++++++++
+    
     # Plot data comparison for all output variables defined in suffix
     for var in outputVariable:
         plotList = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep)
