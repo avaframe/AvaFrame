@@ -50,8 +50,11 @@ def makeLists(simDict, benchDict):
     return parameterList, valuesSim, valuesBench
 
 
-def writeCompareReport(reportFile, reportD, benchD, avaName):
+def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
     """ Write a report for simulation """
+
+    # Set limit to produce warning for differences in peak fields
+    diffLim = float(cfgRep['GENERAL']['diffLim'])
 
     # Start writing markdown style report
     with open(reportFile, 'a') as pfile:
@@ -98,17 +101,18 @@ def writeCompareReport(reportFile, reportD, benchD, avaName):
         # Add time needed for simulation to table
         pfile.write('| Run time [s] |  | %.2f | \n' % (reportD['runTime']))
         pfile.write(' \n')
+        pfile.write(' \n')
 
         # IMAGE BLOCK
         pfile.write('#### Comparison Plots \n')
         for value in reportD['Simulation Results']:
             if value != 'type':
                 pfile.write('##### Figure:   %s \n' % value)
-                if reportD['Simulation Difference'][value] != 1.0:
+                if float(reportD['Simulation Difference'][value][2]) < -1.0*abs(diffLim) or float(reportD['Simulation Difference'][value][2]) > abs(diffLim):
                     textString = '<span style="color:red"> Warning difference in %s is Max: %0.2f, \
                                  Mean %.02f and Min %.02f </span>' % (value, reportD['Simulation Difference'][value][0],
                                  reportD['Simulation Difference'][value][1], reportD['Simulation Difference'][value][2])
-                    pfile.write('#### %s \n' % textString)
+                    pfile.write(' %s \n' % textString)
                 pfile.write('![%s](%s) \n' % (value, reportD['Simulation Results'][value]))
 
         pfile.write(' \n')
