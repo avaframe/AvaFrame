@@ -23,16 +23,22 @@ logName = 'runStandardTests'
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 #
-standardNames = ['data/avaBowl', 'data/avaFlatPlane', 'data/avaHelix', 'data/avaHelixChannel', 'data/avaHockey',
-                 'data/avaHockeySmoothChannel', 'data/avaHockeySmoothSmall', 'data/avaInclinedPlane']
-# standardNames = ['data/avaBowl', 'data/avaHelixChannel']
+standardNames = ['data/avaBowl',
+                                'data/avaFlatPlane',
+                                'data/avaHelix',
+                                'data/avaHelixChannel',
+                                'data/avaHockey',
+                                'data/avaHockeySmoothChannel',
+                                'data/avaHockeySmoothSmall',
+                                'data/avaInclinedPlane']
 
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reports')
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
-with open(os.path.join(outDir, 'fullSimulationReport.md'), 'w') as pfile:
+reportFile = os.path.join(outDir, 'standardTestsReport.md')
+with open(reportFile, 'w') as pfile:
 
     # Write header
     pfile.write('# Standard Tests Report \n')
@@ -96,7 +102,7 @@ for avaDir in standardNames:
     parameter = 'simType'
     plotListRep = {}
     # ++++++++++++++++++++++++++++
-    
+
     # Plot data comparison for all output variables defined in suffix
     for var in outputVariable:
         plotList = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep)
@@ -111,4 +117,4 @@ for avaDir in standardNames:
     reportD['Simulation Results'] = plotPaths
 
     # write report
-    generateCompareReport.writeCompareReport(outDir, reportD, benchDict, avaName)
+    generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName)
