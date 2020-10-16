@@ -21,9 +21,10 @@ import time
 # log file name; leave empty to use default runLog.log
 logName = 'runStandardTests'
 
-# Load avalanche directory from general configuration file
+# Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
-#
+
+# Define avalanche directories for standard tests
 standardNames = ['data/avaBowl',
                                 'data/avaFlatPlane',
                                 'data/avaHelix',
@@ -104,7 +105,6 @@ for avaDir in standardNames:
     parameter = 'simType'
     plotListRep = {}
     reportD['Simulation Difference'] = {}
-    diffVariable = ['Max', 'Mean', 'Min']
     # ++++++++++++++++++++++++++++
 
     # Plot data comparison for all output variables defined in suffix
@@ -121,8 +121,5 @@ for avaDir in standardNames:
     # add plot info to general report Dict
     reportD['Simulation Results'] = plotPaths
 
-    print('Simulation Difference', reportD['Simulation Difference'])
-    print('Simulation Difference', reportD)
-
     # write report
-    generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName)
+    generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)

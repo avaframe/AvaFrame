@@ -21,7 +21,7 @@ def fetchBenchParameters(avaDir):
         avaDictName = {'simName': 'release1BL_null_dfa_0.155',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area': 'releasehh1BL',
+                        'Release Area': 'release1BL',
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.155',
