@@ -29,7 +29,7 @@ def fetchBenchParameters(avaDir):
         avaDictName = {'simName': 'release1BL_null_dfa_0.155',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area': 'releasehh1BL',
+                        'Release Area': 'release1BL',
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.155',
@@ -185,11 +185,11 @@ def makeLists(simDict, benchDict):
     return parameterList, valuesSim, valuesBench
 
 
-def writeCompareReport(outDir, reportD, benchD, avaName):
+def writeCompareReport(reportFile, reportD, benchD, avaName):
     """ Write a report for simulation """
 
     # Start writing markdown style report
-    with open(os.path.join(outDir, 'fullSimulationReport.md'), 'a') as pfile:
+    with open(reportFile, 'a') as pfile:
 
         # HEADER BLOCK
         # Simulation name
@@ -245,3 +245,5 @@ def writeCompareReport(outDir, reportD, benchD, avaName):
         pfile.write('------------------------------------------------------------------------- \n')
         pfile.write(' \n')
         pfile.write(' \n')
+
+    log.info('standard tests performed - Report saved to: %s ' % reportFile)
