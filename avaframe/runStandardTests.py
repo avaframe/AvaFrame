@@ -15,6 +15,7 @@ from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+from benchmarks import simParameters
 import time
 
 # log file name; leave empty to use default runLog.log
@@ -52,9 +53,10 @@ for avaDir in standardNames:
     log.info('MAIN SCRIPT')
     log.info('Current avalanche: %s', avaDir)
 
-    # Load input parameters from configuration file
+    # Load input parameters from configuration file for standard tests
     # write config to log file
-    cfg = cfgUtils.getModuleConfig(com1DFA)
+    standardCfg = os.path.join('com1DFA', 'standardTests_com1DFACfg.ini')
+    cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
 
     # set timing
     startTime = time.time()
@@ -75,7 +77,7 @@ for avaDir in standardNames:
 
     # -----------Compare to benchmark results
     # Fetch simulation info from benchmark results
-    benchDict = generateCompareReport.fetchBenchParameters(avaDir)
+    benchDict = simParameters.fetchBenchParameters(avaDir)
     benchSimName = benchDict['simName']
     # Check if simulation with entrainment and/or resistance or standard simulation
     simType = 'null'
@@ -101,13 +103,16 @@ for avaDir in standardNames:
     values = simType
     parameter = 'simType'
     plotListRep = {}
+    reportD['Simulation Difference'] = {}
+    diffVariable = ['Max', 'Mean', 'Min']
     # ++++++++++++++++++++++++++++
 
     # Plot data comparison for all output variables defined in suffix
     for var in outputVariable:
-        plotList = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep)
-        for plot in plotList:
+        plotDict = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep)
+        for plot in plotDict['plots']:
             plotListRep.update({var: plot})
+            reportD['Simulation Difference'].update({var: plotDict['difference']})
 
     # copy files to report directory
     avaName = os.path.basename(avaDir)
@@ -115,6 +120,9 @@ for avaDir in standardNames:
 
     # add plot info to general report Dict
     reportD['Simulation Results'] = plotPaths
+
+    print('Simulation Difference', reportD['Simulation Difference'])
+    print('Simulation Difference', reportD)
 
     # write report
     generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName)

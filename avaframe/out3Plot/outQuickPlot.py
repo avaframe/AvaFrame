@@ -25,7 +25,7 @@ from avaframe.out3Plot.plotUtils import *
 log = logging.getLogger(__name__)
 
 
-def generatePlot(dataDict, avaName, outDir, cfg, plotList):
+def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     """ Create plots of two ascii datasets that shall be compared  """
 
     # Extract info for plotting
@@ -119,9 +119,12 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotList):
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
 
-    plotList.append(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, outputFormat)))
+    plotDict['plots'].append(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, outputFormat)))
+    plotDict['difference'].append(diffMax)
+    plotDict['difference'].append(diffMean)
+    plotDict['difference'].append(diffMax)
 
-    return plotList
+    return plotDict
 
 
 def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
@@ -150,7 +153,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
     fU.makeADir(outDir)
 
     # Initialise plotList
-    plotList = []
+    plotDict = {'plots': [], 'difference': []}
 
     # Setup input from com1DFA
     fU.getDFAData(avaDir, workDir, suffix)
@@ -195,9 +198,9 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
                     'simName': data['simName'][indSuffix[0]], 'suffix': suffix, 'cellSize': cellSize, 'unit': unit}
 
         # Create Plots
-        plotList = generatePlot(dataDict, avaName, outDir, cfg, plotList)
+        plotList = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
 
-        return plotList
+        return plotDict
 
 
 def quickPlotSimple(avaDir, inputDir, cfg):

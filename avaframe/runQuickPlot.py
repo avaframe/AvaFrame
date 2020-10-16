@@ -39,4 +39,4 @@ parameter = cfg['PLOT']['parameter']
 # Plot data comparison for all output variables defined in suffix
 for val in values:
     for var in outputVariable:
-        plotList = outQuickPlot.quickPlot(avalancheDir, var, val, parameter, cfgMain, cfg)
+        plotDict = outQuickPlot.quickPlot(avalancheDir, var, val, parameter, cfgMain, cfg)
