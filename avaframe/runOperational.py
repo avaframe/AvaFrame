@@ -6,6 +6,7 @@
 # Load modules
 import os
 import time
+import logging
 
 # Local imports
 from avaframe.com1DFA import com1DFA
@@ -13,6 +14,7 @@ from avaframe.log2Report import generateReport as gR
 from avaframe.out3SimpPlot import outPlotAllPeak as oP
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+from avaframe.in3Utils import initializeProject as initProj
 
 # Time the whole shebang
 startTime = time.time()
@@ -31,11 +33,14 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
+log.setLevel(logging.DEBUG)
+
 # ----------------
 # Load input parameters from configuration files
 
 # ----------------
 # Clean input directory(ies) of old work and output files
+initProj.cleanSingleAvaDir(avalancheDir)
 
 # ----------------
 # Run dense flow
@@ -49,7 +54,7 @@ log.info('Current avalanche: %s', avalancheDir)
 # ----------------
 # Collect results/plots/report  to a single directory
 # make simple plots (com1DFA, com2AB)
-# peak file plot 
+# peak file plot
 
 # Generata plots for all peakFiles
 # plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
@@ -61,7 +66,7 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # Print time needed
 endTime = time.time()
-log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
+log.info('Took %s seconds to calculate.' % (endTime - startTime))
 
 
 
