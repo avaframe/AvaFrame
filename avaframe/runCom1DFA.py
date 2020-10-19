@@ -5,6 +5,7 @@
 
 # Load modules
 import os
+import time
 
 # Local imports
 from avaframe.com1DFA import com1DFA
@@ -12,7 +13,6 @@ from avaframe.log2Report import generateReport as gR
 from avaframe.out3SimpPlot import outPlotAllPeak as oP
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-import time
 
 # log file name; leave empty to use default runLog.log
 logName = 'runCom1DFA'
@@ -33,7 +33,7 @@ cfg = cfgUtils.getModuleConfig(com1DFA)
 
 startTime = time.time()
 # Run Standalone DFA
-reportDictList = com1DFA.runSamos(cfg, avalancheDir)
+reportDictList = com1DFA.runCom1DFA(cfg, avalancheDir)
 
 # Print time needed
 endTime = time.time()
