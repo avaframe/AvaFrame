@@ -69,6 +69,7 @@ The report is structured as follows:
   * table listing simulation parameter name, value (reference) and value (simulation)
     -> if value of simulation run differs of reference value, it is highlighted in red
   * block with plots including a header with plot title
+    -> if differences exceed threshold a Warning is printed for each plot
 
 For this purpose, python dictionaries are used to read the required input data. In order to produce the structure described above,
 the dictionaries require a certain structure too, for example:
