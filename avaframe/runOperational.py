@@ -40,7 +40,7 @@ log.info('Current avalanche: %s', avalancheDir)
 # ----------------
 # Run dense flow
 # cfg = cfgUtils.getModuleConfig(com1DFA)
-# reportDictList = com1DFA.runSamos(cfg, avalancheDir)
+# reportDictList = com1DFA.runCom1DFA(cfg, avalancheDir)
 
 # ----------------
 # Run Alpha Beta
