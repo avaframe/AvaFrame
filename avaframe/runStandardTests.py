@@ -5,6 +5,7 @@
 
 # Load modules
 import os
+import time
 
 # Local imports
 from avaframe.com1DFA import com1DFA
@@ -16,7 +17,6 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from benchmarks import simParameters
-import time
 
 # log file name; leave empty to use default runLog.log
 logName = 'runStandardTests'
@@ -50,8 +50,8 @@ with open(reportFile, 'w') as pfile:
 for avaDir in standardNames:
 
     # get path to executable
-    cfgSamosAT = cfgUtils.getModuleConfig(com1DFA)
-    samosAT = cfgSamosAT['GENERAL']['samosAT']
+    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
+    com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
 
     # Start logging
     log = logUtils.initiateLogger(avaDir, logName)
@@ -63,7 +63,7 @@ for avaDir in standardNames:
     avaName = os.path.basename(avaDir)
     standardCfg = os.path.join('..', 'benchmarks', avaName, '%s_com1DFACfg.ini' % avaName)
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
-    cfg['GENERAL']['samosAT'] = samosAT
+    cfg['GENERAL']['com1Exe'] = com1Exe
 
 
     # set timing
