@@ -108,7 +108,9 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
         for value in reportD['Simulation Results']:
             if value != 'type':
                 pfile.write('##### Figure:   %s \n' % value)
-                if float(reportD['Simulation Difference'][value][2]) < -1.0*abs(diffLim) or float(reportD['Simulation Difference'][value][2]) > abs(diffLim):
+                minDiff = float(reportD['Simulation Difference'][value][2])
+                maxVal = float(reportD['Simulation Stats'][value][0])
+                if minDiff < (-1.0*diffLim*maxVal) or minDiff > (diffLim*maxVal):
                     textString = '<span style="color:red"> Warning difference in %s is Max: %0.2f, \
                                  Mean %.02f and Min %.02f </span>' % (value, reportD['Simulation Difference'][value][0],
                                  reportD['Simulation Difference'][value][1], reportD['Simulation Difference'][value][2])

@@ -49,6 +49,10 @@ with open(reportFile, 'w') as pfile:
 # run Standard Tests sequentially
 for avaDir in standardNames:
 
+    # get path to executable
+    cfgSamosAT = cfgUtils.getModuleConfig(com1DFA)
+    samosAT = cfgSamosAT['GENERAL']['samosAT']
+
     # Start logging
     log = logUtils.initiateLogger(avaDir, logName)
     log.info('MAIN SCRIPT')
@@ -56,8 +60,11 @@ for avaDir in standardNames:
 
     # Load input parameters from configuration file for standard tests
     # write config to log file
-    standardCfg = os.path.join('com1DFA', 'standardTests_com1DFACfg.ini')
+    avaName = os.path.basename(avaDir)
+    standardCfg = os.path.join('..', 'benchmarks', avaName, '%s_com1DFACfg.ini' % avaName)
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
+    cfg['GENERAL']['samosAT'] = samosAT
+
 
     # set timing
     startTime = time.time()
@@ -105,6 +112,7 @@ for avaDir in standardNames:
     parameter = 'simType'
     plotListRep = {}
     reportD['Simulation Difference'] = {}
+    reportD['Simulation Stats'] = {}
     # ++++++++++++++++++++++++++++
 
     # Plot data comparison for all output variables defined in suffix
@@ -113,9 +121,9 @@ for avaDir in standardNames:
         for plot in plotDict['plots']:
             plotListRep.update({var: plot})
             reportD['Simulation Difference'].update({var: plotDict['difference']})
+            reportD['Simulation Stats'].update({var: plotDict['stats']})
 
     # copy files to report directory
-    avaName = os.path.basename(avaDir)
     plotPaths = generateCompareReport.copyPlots(avaName, outDir, plotListRep)
 
     # add plot info to general report Dict

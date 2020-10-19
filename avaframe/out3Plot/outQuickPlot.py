@@ -130,6 +130,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     plotDict['difference'].append(diffMax)
     plotDict['difference'].append(diffMean)
     plotDict['difference'].append(diffMax)
+    plotDict['stats'].append(np.amax(data2))
+    plotDict['stats'].append(np.amin(data2))
 
     return plotDict
 
@@ -160,7 +162,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
     fU.makeADir(outDir)
 
     # Initialise plotList
-    plotDict = {'plots': [], 'difference': []}
+    plotDict = {'plots': [], 'difference': [], 'stats': []}
 
     # Setup input from com1DFA
     fU.getDFAData(avaDir, workDir, suffix)
