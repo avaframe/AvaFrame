@@ -66,9 +66,12 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     fig = plt.figure(figsize=(figW*3, figH))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(131)
-    cmap = cmapGB
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(
+        cmapPres, np.amin(data1), np.amax(data1), continuous=contCmap)
+
     im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-    fig.colorbar(im1, ax=ax1)
+    addColorBar(im1, ax1, ticks, unit)
+
     ax1.set_aspect('auto')
     title = str('%s' % name1)
     ax1.set_title(title)
@@ -76,8 +79,12 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax1.set_ylabel('y [m]')
 
     ax2 = fig.add_subplot(132)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(
+        cmapPres, np.amin(data2), np.amax(data2), continuous=contCmap)
+
     im2 = plt.imshow(data2, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-    fig.colorbar(im2, ax=ax2)
+    addColorBar(im2, ax2, ticks, unit)
+
     ax2.set_aspect('auto')
     ax2.set_xlabel('x [m]')
     title = str('%s' % name2)
