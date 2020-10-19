@@ -4,23 +4,21 @@
     This file is part of Avaframe.
 """
 
-import os
-import glob
-import pickle
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.image import NonUniformImage
-from matplotlib.collections import LineCollection
+import math
 
 # Local imports
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in3Utils.ascUtils as IOf
-from avaframe.out3SimpPlot.plotSettings import *
+from avaframe.out3Plot.plotUtils import *
 
 # create local logger
 log = logging.getLogger(__name__)
 debugPlot = False
+
 
 def prepareDEM(demSource, resampleResolution):
     # Read input data for MDELM
@@ -37,17 +35,15 @@ def prepareDEM(demSource, resampleResolution):
     csz = cellsize*resampleResolution
     log.info("Using new celle size: %s m", csz)
     xgrid = np.linspace(header.xllcorner, header.xllcorner+(n-1)*csz, n)
-    print(np.min(xgrid), np.max(xgrid), header.xllcorner, header.xllcorner+(ncols-1)*cellsize)
     ygrid = np.linspace(header.yllcorner, header.yllcorner+(m-1)*csz, m)
-    print(np.min(ygrid), np.max(ygrid), header.yllcorner, header.yllcorner+(nrows-1)*cellsize)
     PointsX, PointsY = np.meshgrid(xgrid, ygrid)
     Points = {}
     Points['x'] = PointsX
     Points['y'] = PointsY
 
-    Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points, interp='nearest')
-
-    fig = plt.figure(figsize=(figW, figH), dpi=figReso)
+    Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points,
+                                                      interp='nearest')
+    fig = plt.figure(figsize=(figW, figH))
     ax1 = plt.subplot(111)
     cmap = cmapDEM
     im0 = NonUniformImage(ax1, extent=[xgrid.min(), xgrid.max(),
@@ -66,6 +62,7 @@ def prepareDEM(demSource, resampleResolution):
     # plt.show()
 
     return Points, csz
+
 
 def com3MDELMMain(cfgPath, cfgSetup):
     """
@@ -104,20 +101,17 @@ def com3MDELMMain(cfgPath, cfgSetup):
     xyDonIndList = np.array([indy0, indx0])
     xyDonIndList = xyDonIndList.reshape(2, 1)
 
-
     # Donor cellsize
     D = np.zeros((ny, nx))
-    R = np.zeros((ny, nx))
 
     # velocity squared
     V2 = np.zeros((ny, nx))
     # mass
-    M = np.zeros((ny, nx))
+    MFlow = np.zeros((ny, nx))
     Mstep = np.zeros((ny, nx))
-    Marrest = np.zeros((ny, nx))
+    Matrest = np.zeros((ny, nx))
     # distance measurement
     S = np.zeros((ny, nx))
-    Sloc = np.zeros((ny, nx))
     Sglob = np.zeros((ny, nx))
 
     Lloc = np.zeros((ny, nx))
@@ -127,8 +121,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
     Epot = np.zeros((ny, nx))
 
     # INITIAL CONDITIONS
-    M[indy0, indx0] = m0
-    MFlow = M;
+    MFlow[indy0, indx0] = m0
     V2[indy0, indx0] = v20
     D[indy0, indx0] = np.nan
     # get initial conditions
@@ -143,7 +136,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
     log.info("conservation properties iteration nb %03.0f : s= %3.2f m, v2= %3.2f (m/s)^2, m= %3.2f kg, ekin=  %3.2f J ",
              0, sPath[-1], v20, m0, ekin)
 
-    #global estimate of shortest distances
+    # global estimate of shortest distances
     Sglob = np.sqrt(np.square(X-x0)+np.square(Y-y0))
     Lglob = np.sqrt(np.square(X-x0)+np.square(Y-y0)+np.square(Z-z0))
 
@@ -166,20 +159,21 @@ def com3MDELMMain(cfgPath, cfgSetup):
     iter = 0
     iterate = True
     while iterate:
-        #initialize step Fields: S, V2, M and Ekin
+        # initialize step Fields: S, V2, M and Ekin
         Sstep = np.ones((ny, nx))*np.nan
         Lstep = np.ones((ny, nx))*np.nan
         V2step = np.zeros((ny, nx))
-        Mpstep = Mstep;
+        Mpstep = Mstep
         Mstep = np.zeros((ny, nx))
         Ekinstep = np.zeros((ny, nx))
         R = np.zeros((ny, nx))
         xyDonIndListP = xyDonIndList
         nd = np.shape(xyDonIndListP)[1]
-        #delete list of future donors
+        # delete list of future donors
         xyDonIndList = np.empty((2, 0), int)
 
         iter = iter + 1
+
         ####################
         # Measuring distance
         ####################
@@ -206,23 +200,25 @@ def com3MDELMMain(cfgPath, cfgSetup):
             llocp = Lloc[indy, indx]
             slocp = S[indy, indx]
 
+            # estimate local distance
             DeltaLLoc = np.sqrt(np.square(x-xd)+np.square(y-yd)+np.square(z-zd))
             DeltaSLoc = np.sqrt(np.square(x-xd)+np.square(y-yd))
 
             sloc = slocp + DeltaSLoc
-            sglob = Sglob[indgrid]
             lloc = llocp + DeltaLLoc
 
-            # Sstep[indgrid] = np.fmin(Sstep[indgrid], sloc)
+            # find the shortest path to the cell
             Sstep[indgrid] = np.fmin(Sstep[indgrid], sloc)
-            Sstep[indgrid] = np.where(np.isnan(d), np.nan, Sstep[indgrid])
-            Sstep[indgrid] = np.where(Sglob[indgrid]<Sglob[indy, indx], np.nan, Sstep[indgrid])
             Lstep[indgrid] = np.fmin(Lstep[indgrid], lloc)
+            # previous donors forbiden
+            Sstep[indgrid] = np.where(np.isnan(d), np.nan, Sstep[indgrid])
+            Lstep[indgrid] = np.where(np.isnan(d), np.nan, Lstep[indgrid])
+            # Sstep[indgrid] = np.where(Sglob[indgrid] < Sglob[indy, indx],
+            #                           np.nan, Sstep[indgrid])
 
         if iterate == False:
             log.info("\n +++ Approaching border of computational domain - computation abborted +++ \n")
             break
-        # Sstep = np.where(np.isnan(Sstep), 0, Sstep)
 
         #####################################
         # Estimate possible velocity and mass
@@ -236,58 +232,85 @@ def com3MDELMMain(cfgPath, cfgSetup):
             y = Y[indgrid]
             z = Z[indgrid]
             d = D[indgrid]
-            sn =Sstep[indgrid]
+            sn = Sstep[indgrid]
             # at step p (previous one, iter-1)
-            md = M[indy, indx]
+            md = MFlow[indy, indx]
             v2d = V2[indy, indx]
             xd = X[indy, indx]
             yd = Y[indy, indx]
             zd = Z[indy, indx]
-            sd =S[indy, indx]
+            sd = S[indy, indx]
 
+            # estimate local distance
             DeltaLLoc = np.sqrt(np.square(x-xd)+np.square(y-yd)+np.square(z-zd))
             DeltaSLoc = np.sqrt(np.square(x-xd)+np.square(y-yd))
 
+            # compute slope angle
             bx = (z[1, 2]-zd)/(x[1, 2]-xd)
             bx2 = bx*bx
             by = (z[2, 1]-zd)/(y[2, 1]-yd)
             by2 = by*by
             c = np.sqrt(1+bx2+by2)
 
-            # v2rest = v2d - 2*g*((z-zd) + mu*(DeltaSLoc))
+            # JT's formulation
             # v2rest = v2d - 2*g*((z-zd) + mu*((sn-sd)))
+            # Matthias formulation
+            # calculate V2 in the reciver cells
             v2rest = v2d - 2*g*((z-zd) + mu*DeltaLLoc/c)
+            # calculate GradV2 in the reciver cells
+            DeltaSLoc[1, 1] = 1
+            gradV2 = -2*g*((z-zd) + mu*DeltaLLoc/c)/DeltaSLoc
+            # update GradV2 with forbiden cells
+            # if cell is donor
+            gradV2 = np.where(np.isnan(d), np.nan, gradV2)
+            # if cell has nan V2
+            gradV2 = np.where(np.isnan(v2rest), np.nan, gradV2)
+            # if cell has negative velocity2
+            gradV2 = np.where(v2rest < 0, np.nan, gradV2)
+            # update V2 with forbiden cells
+            # if cell is donor
             v2rest = np.where(np.isnan(d), 0.0, v2rest)
+            # if cell has nan V2
             v2rest = np.where(np.isnan(v2rest), 0.0, v2rest)
-            v2rest = np.where(v2rest<0, 0.0, v2rest)
-            v2rest = np.where(Sglob[indgrid]<Sglob[indy, indx], 0.0, v2rest)
-
+            # if cell has negative velocity2
+            v2rest = np.where(v2rest < 0, 0.0, v2rest)
+            # update velocity
             V2step[indgrid] = v2rest
-            # print('velocity, donor', id)
-            # print(V2step[indgrid])
-            v2rsum = np.nansum(v2rest)
+
+            # print('new gradvelocity, donor', id)
+            # print(gradV2)
+            # print('new velocity, donor', id)
+            # print(v2rest)
+
+            # create weights for mass spreading calculation
+            ind = np.where(np.isnan(gradV2))
+            weight = np.arctan(gradV2) + math.pi/2
+            weight[ind] = 0
+            sumWeight = np.nansum(weight)
+            # print(weight)
+            # print(sumWeight)
             # if there are some options to move
-            if v2rsum>0:
-                mn = V2step/v2rsum*md
-            else:
-                mn = np.zeros((ny, nx))
+            # estimate the mass transfer
+            if sumWeight > 0:
+                mn = weight/sumWeight*md
+                Mstep[indgrid] = Mstep[indgrid] + mn
+                Mstep[indy, indx] = Mstep[indy, indx] - md
 
-            Mstep[indgrid] = Mstep[indgrid] + mn[indgrid]
-            Mstep[indy, indx] = Mstep[indy, indx] - md
-            R[indgrid] = np.where(mn[indgrid]>0, np.nan, R[indgrid])
-
-        for id in range(nd):
-            indx = xyDonIndListP[1, id]
-            indy = xyDonIndListP[0, id]
-            indgrid = np.ix_(indN+indy, indN+indx)
-            # print('mass recevers estimate for donor', id)
-            # print(Mstep[indgrid])
+        # for id in range(nd):
+        #     indx = xyDonIndListP[1, id]
+        #     indy = xyDonIndListP[0, id]
+        #     indgrid = np.ix_(indN+indy, indN+indx)
+        #     print('mass recevers estimate for donor', id)
+        #     print(Mstep[indgrid])
+        #     print('new velocity, donor', id)
+        #     print(V2step[indgrid])
+        #     print('new gradvelocity, donor', id)
+        #     print(gradV2)
 
         ######################
         # Mass correction loop
         ######################
         log.info("Mass correction loop")
-        Rpot = R
         R = np.zeros((ny, nx))
         Smes = np.zeros((ny, nx))
         Msteppot = Mstep
@@ -295,7 +318,8 @@ def com3MDELMMain(cfgPath, cfgSetup):
         V2step = np.zeros((ny, nx))
         MV2step = np.zeros((ny, nx))
         Mstep = np.zeros((ny, nx))
-        xyDonIndList = np.empty((2, 0), int) # delete list because it will get shorter
+        # delete list because it will get shorter
+        xyDonIndList = np.empty((2, 0), int)
         for id in range(nd):
             indx = xyDonIndListP[1, id]
             indy = xyDonIndListP[0, id]
@@ -304,114 +328,148 @@ def com3MDELMMain(cfgPath, cfgSetup):
             y = Y[indgrid]
             z = Z[indgrid]
             d = D[indgrid]
-            sn =Sstep[indgrid]
+            sn = Sstep[indgrid]
+            Rtmp = np.zeros((ny, nx))
+
             # at step p (previous one, iter-1)
-            md = M[indy, indx]
+            md = MFlow[indy, indx]
             v2d = V2[indy, indx]
             xd = X[indy, indx]
             yd = Y[indy, indx]
             zd = Z[indy, indx]
-            sd =S[indy, indx]
-            Rtmp = np.zeros((ny, nx))
-            slocp = S[indy, indx]
+            sd = S[indy, indx]
+
+            # estimate local distance
             DeltaLLoc = np.sqrt(np.square(x-xd)+np.square(y-yd)+np.square(z-zd))
             DeltaSLoc = np.sqrt(np.square(x-xd)+np.square(y-yd))
 
-            slocp = S[indy, indx]
-            sloc = slocp + DeltaSLoc
+            sloc = sd + DeltaSLoc
 
+            # compute slope angle
             bx = (z[1, 2]-zd)/(x[1, 2]-xd)
             bx2 = bx*bx
             by = (z[2, 1]-zd)/(y[2, 1]-yd)
             by2 = by*by
             c = np.sqrt(1+bx2+by2)
 
-            # v2rest = v2d - 2*g*((z-zd) + mu*(DeltaSLoc))
+            # JT's formulation
             # v2rest = v2d - 2*g*((z-zd) + mu*((sn-sd)))
+            # Matthias formulation
+            # calculate V2 in the reciver cells
             v2rest = v2d - 2*g*((z-zd) + mu*DeltaLLoc/c)
+            # calculate GradV2 in the reciver cells
+            DeltaSLoc[1, 1] = 1
+            gradV2 = -2*g*((z-zd) + mu*DeltaLLoc/c)/DeltaSLoc
+            # update GradV2 with forbiden cells
+            # if cell is donor
+            gradV2 = np.where(np.isnan(d), np.nan, gradV2)
+            # if cell has nan V2
+            gradV2 = np.where(np.isnan(v2rest), np.nan, gradV2)
+            # if cell has negative velocity2
+            gradV2 = np.where(v2rest < 0, np.nan, gradV2)
+            # update V2 with forbiden cells
+            # if cell is donor
             v2rest = np.where(np.isnan(d), 0.0, v2rest)
+            # if cell has nan V2
             v2rest = np.where(np.isnan(v2rest), 0.0, v2rest)
-            v2rest = np.where(v2rest<0, 0.0, v2rest)
-            v2rest = np.where(Sglob[indgrid]<Sglob[indy, indx], 0.0, v2rest)
+            # if cell has negative velocity2
+            v2rest = np.where(v2rest < 0, 0.0, v2rest)
 
             V2step[indgrid] = v2rest
-
-            V2step[indgrid] = np.where(Msteppot[indgrid]<=mmin, 0.0, V2step[indgrid])
+            gradV2Inter = gradV2
+            gradV2 = np.where(Msteppot[indgrid] <= mmin, np.nan, gradV2)
+            V2step[indgrid] = np.where(Msteppot[indgrid] <= mmin, 0.0, V2step[indgrid])
             v2rsum = np.sum(V2step[indgrid])
 
+            # print(v2rest)
+            # print(gradV2)
+            # print(gradV2Inter)
             # print('mass estimation, donor', id)
             # print(Msteppot[indgrid])
             # print('new velocity, donor', id)
             # print(V2step[indgrid])
             # Redistribute the mass
-            if v2rsum>0.0:
-                mn = V2step/v2rsum*md
-                Mstep[indgrid] = Mstep[indgrid] + mn[indgrid]
+
+            # create weights for mass spreading calculation
+            ind = np.where(np.isnan(gradV2))
+            weight = np.arctan(gradV2) + math.pi/2
+            weight[ind] = 0
+            sumWeight = np.nansum(weight)
+            # print(weight)
+            # print(sumWeight)
+            if sumWeight > 0.0:
+                # spreading
+                mn = weight/sumWeight*md
+                Mstep[indgrid] = Mstep[indgrid] + mn
                 Mstep[indy, indx] = Mstep[indy, indx] - md
-                MV2step[indgrid] = MV2step[indgrid] + mn[indgrid]*V2step[indgrid]
-                Rtmp[indgrid] = np.where((Mstep[indgrid]>0) & (R[indgrid]==0), 1, Rtmp[indgrid])
-                R[indgrid] = np.where(Mstep[indgrid]>0, np.nan, R[indgrid])
+                MV2step[indgrid] = MV2step[indgrid] + mn*V2step[indgrid]
+                Rtmp[indgrid] = np.where(((Mstep[indgrid] > 0) &
+                                         (R[indgrid] == 0)), 1, Rtmp[indgrid])
+                R[indgrid] = np.where(Mstep[indgrid] > 0, np.nan, R[indgrid])
                 newD = np.where(Rtmp[indgrid] == 1)
-                newDInd = np.array([indgrid[0].reshape(1,3)[0][newD[0]],(indgrid[1])[0][newD[1]]])
+                newDInd = np.array([indgrid[0].reshape(1, 3)[0][newD[0]], (indgrid[1])[0][newD[1]]])
                 xyDonIndList = np.append(xyDonIndList, newDInd, axis=1)
-                Smes[indgrid] = Smes[indgrid] + sloc*mn[indgrid]
+                Smes[indgrid] = Smes[indgrid] + sloc*mn*V2step[indgrid]
             else:
+                # point motion
                 # find index of max.. of quantity
-                v2rest = V2steppot[indgrid]
-                toMaximize = v2rest
-                # toMaximize = np.where(toMaximize<=0.0, np.nan, toMaximize)
+                ind = np.where(np.isnan(gradV2Inter))
+                toMaximize = np.arctan(gradV2Inter) + math.pi/2
+                toMaximize[ind] = 0
                 log.info("no spreading for this donor:%d", id)
-                if np.nanmax(toMaximize)>0:
+                if np.nanmax(toMaximize) > 0:
                     Ind = np.where(toMaximize == np.nanmax(toMaximize))
                     maxIndCol = Ind[0][0]
                     maxIndRow = Ind[1][0]
                     log.info("point motion for this donor:%d", id)
-                    if np.shape(Ind)[1]>1:
+                    if np.shape(Ind)[1] > 1:
                         test = Sglob[indgrid]
                         Indmax = np.where(test[Ind] == np.nanmax(test[Ind]))
-                        print(Ind)
-                        print(Indmax)
-                        print(test)
-                        print(toMaximize)
-                        print(v2rest)
                         maxIndCol = Ind[0][Indmax[0][0]]
                         maxIndRow = Ind[1][Indmax[0][0]]
                     indxn = indx + (maxIndRow - 1)
                     indyn = indy + (maxIndCol - 1)
 
-                    newInd = np.array([indyn, indxn]).reshape(2,1)
+                    newInd = np.array([indyn, indxn]).reshape(2, 1)
                     xyDonIndList = np.append(xyDonIndList, newInd, axis=1)
                     V2step[indyn, indxn] = V2steppot[indyn, indxn]
                     Mstep[indyn, indxn] = Mstep[indyn, indxn] + md
-                    MV2step[indyn, indxn] = MV2step[indyn, indxn] + md*V2step[indyn, indxn]
+                    Mstep[indy, indx] = Mstep[indy, indx] - md
+                    MV2step[indyn, indxn] = MV2step[indyn, indxn] + md*v2rest[maxIndCol, maxIndRow]
+                    # print(md*v2rest[maxIndCol, maxIndRow])
                     R[indyn, indxn] = np.nan
-                    Smes[indyn, indxn] = Smes[indyn, indxn] + sloc[maxIndCol, maxIndRow]*md
+                    Smes[indyn, indxn] = Smes[indyn, indxn] + sloc[maxIndCol, maxIndRow]*md*v2rest[maxIndCol, maxIndRow]
+                    # print(sloc[maxIndCol, maxIndRow]*md*v2rest[maxIndCol, maxIndRow])
+                    # print(sloc[maxIndCol, maxIndRow])
+                    # print(Mstep[indgrid])
                 else:
                     log.info("no motion for this donor:%d", id)
                     V2step[indy, indx] = 0
-                    Mstep[indy, indx] = Mstep[indy, indx] + md
+                    Matrest[indy, indx] = Matrest[indy, indx] + md
+                    Mstep[indy, indx] = Mstep[indy, indx] - md
                     R[indy, indx] = np.nan
-                    Smes[indy, indx] = Smes[indy, indx] + sloc[1, 1]*md
 
         if np.shape(xyDonIndList)[1]>0:
-            M = M + Mstep
-            MM = np.where(np.isnan(M), 0.0, M)
-            V2 = np.divide(MV2step,MM)
+            MFlow = MFlow + Mstep
+            MM = np.where(np.isnan(MFlow), 0.0, MFlow)
+            IndNull = np.where(MM > 0.0)
+            V2[IndNull] = np.divide(MV2step[IndNull], MM[IndNull])
             V2 = np.where(np.isnan(V2), 0.0, V2)
             for id in range(nd):
                 indx = xyDonIndListP[1, id]
                 indy = xyDonIndListP[0, id]
                 indgrid = np.ix_(indN+indy, indN+indx)
                 # print('mass recevers final for donor', id)
-                # print(M[indgrid])
+                # print(Mstep[indgrid])
                 # print('velocity recevers final for donor', id)
                 # print(V2[indgrid])
 
-            Smes = np.divide(Smes,M)
+            IndNull = np.where(MV2step > 0.0)
+            Smes[IndNull] = np.divide(Smes[IndNull], MV2step[IndNull])
             # M = M + Mstep
-            S = np.where(M>0.0, Sstep, S) #  + np.where(M<=0.0, S, S)
-            Ekinstep = 0.5*M*V2
-            Epotstep = M*g*Z
+            S = np.where(MFlow > 0.0, Sstep, S)  # + np.where(M<=0.0, S, S)
+            Ekinstep = 0.5*MV2step
+            Epotstep = MFlow*g*Z
             Etotstep = Ekinstep + Epotstep
             Ekin = Ekin + Ekinstep
             Epot = Epot + Epotstep
@@ -423,14 +481,13 @@ def com3MDELMMain(cfgPath, cfgSetup):
 
             pond = Ekinstep
             pondSum = EkinSumCoE
-
-            zcoE = np.sum(pond*Z)/pondSum
+            zcoE = np.nansum(pond*Z)/pondSum
             # calculate XY locations of computation step
             xcoE = np.sum(pond*X)/pondSum
             ycoE = np.sum(pond*Y)/pondSum
             # calculate global distance of coE coordinates
-            scoE   = np.nansum(pond*Sstep)/pondSum
-            v2coE  = np.sum(pond*V2)/pondSum
+            scoE = np.sum(pond*Smes)/pondSum
+            v2coE = np.sum(pond*V2)/pondSum
 
             # append x, y and update distance
             xPath = np.append(xPath, xcoE)
@@ -444,12 +501,12 @@ def com3MDELMMain(cfgPath, cfgSetup):
             EpotPath = np.append(EpotPath, EpotSumCoE)
 
             log.info("conservation properties iteration nb %03.0f : s= %3.2f m, v2= %3.2f (m/s)^2, m= %3.2f kg, ekin=  %3.2f J ",
-            iter, scoE, v2coE, np.sum(M), EkinSumCoE)
+            iter, scoE, v2coE, np.sum(MFlow + Matrest), EkinSumCoE)
         else:
             iterate = False
 
-        # if iter>60:
-        #     fig = plt.figure(figsize=(2*figW, figH), dpi=figReso)
+        # if iter>0:
+        #     fig = plt.figure(figsize=(2*figW, figH))
         #     ax1 = plt.subplot(311)
         #     cmap = cmapPlasma
         #     cmap.set_under(color='w')
@@ -458,13 +515,13 @@ def com3MDELMMain(cfgPath, cfgSetup):
         #     im0 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
         #     im0.set_clim(vmin=0.000000001)
         #     # im.set_interpolation('bilinear')
-        #     im0.set_data(x, y, M)
+        #     im0.set_data(x, y, MFlow)
         #     ref1 = ax1.images.append(im0)
         #     cbar = ax1.figure.colorbar(im0, ax=ax1, use_gridspec=True)
         #     cbar.ax.set_ylabel('Kinetic Energy [J]')
         #     ax1.title.set_text('Energy')
         #
-        #     ax1.plot(xPath, yPath, 'k--', linewidth=lw/2, label='avapath')
+        #     ax1.plot(xPath, yPath, 'k--', label='avapath')
         #     ax1.set_xlim([x.min(), x.max()])
         #     ax1.set_ylim([y.min(), y.max()])
         #     ax1.set_xlabel(r'$x\;[m]$')
@@ -474,14 +531,15 @@ def com3MDELMMain(cfgPath, cfgSetup):
         #     ax2 = plt.subplot(312)
         #     im = NonUniformImage(ax2, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
         #     im.set_clim(vmin=0.000000001)
+        #     cmap.set_under(color='w')
         #     # im.set_interpolation('bilinear')
-        #     im.set_data(x, y, Sstep)
+        #     im.set_data(x, y, Ekin)
         #     ref1 = ax2.images.append(im)
         #     cbar = ax2.figure.colorbar(im, ax=ax2, use_gridspec=True)
         #     cbar.ax.set_ylabel('distance [m]')
         #     ax2.title.set_text('S')
         #
-        #     ax2.plot(xPath, yPath, 'k--', linewidth=lw/2, label='avapath')
+        #     ax2.plot(xPath, yPath, 'k--', label='avapath')
         #     ax2.set_xlim([x.min(), x.max()])
         #     ax2.set_ylim([y.min(), y.max()])
         #     ax2.set_xlabel(r'$x\;[m]$')
@@ -492,7 +550,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
         #     im = NonUniformImage(ax3, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
         #     im.set_clim(vmin=0.000000001)
         #     # im.set_interpolation('bilinear')
-        #     im.set_data(x, y, S)
+        #     im.set_data(x, y, D)
         #     ref1 = ax3.images.append(im)
         #     cbar = ax3.figure.colorbar(im, ax=ax3, use_gridspec=True)
         #     cbar.ax.set_ylabel('distance [m]')
@@ -502,9 +560,8 @@ def com3MDELMMain(cfgPath, cfgSetup):
         #
         #     plt.show()
         #
-        #     input("Press Enter to continue...")
+        # input("Press Enter to continue...")
 
-    #------------------------------------------------------#
     # plotting
     avapath = {}
     avapath['x'] = np.array([xx0, 4000])
@@ -513,7 +570,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
     AvaProfile, projPoint = geoTrans.prepareLine(dem, avapath, distance=10, Point=None)
     # plt.close(fig)
     # plt.close(fig1)
-    fig = plt.figure(figsize=(2*figW, figH), dpi=figReso)
+    fig = plt.figure(figsize=(2*figW, figH))
     ax1 = plt.subplot(211)
     cmap = cmapPlasma
     cmap.set_under(color='w')
@@ -527,9 +584,9 @@ def com3MDELMMain(cfgPath, cfgSetup):
     cbar = ax1.figure.colorbar(im0, ax=ax1, use_gridspec=True)
     cbar.ax.set_ylabel('Kinetic Energy [J]')
     ax1.title.set_text('Energy')
-    Cp = ax1.contour(X, Y, Z, levels=10, colors='k', linewidths=(lw/2,))
+    Cp = ax1.contour(X, Y, Z, levels=10, colors='k')
     # ax1.clabel(Cp, colors='k', inline=1, fontsize=5)
-    ax1.plot(xPath, yPath, 'k--', linewidth=lw/2, label='avapath')
+    ax1.plot(xPath, yPath, 'k--', label='avapath')
     ax1.set_xlim([x.min(), x.max()])
     ax1.set_ylim([y.min(), y.max()])
     ax1.set_xlabel(r'$x\;[m]$')
@@ -554,10 +611,10 @@ def com3MDELMMain(cfgPath, cfgSetup):
     # ax2.set_ylabel(r'$y\;[m]$')
     # ax2.legend()
 
-    ax2.plot(sPath, zPath, 'k-', linewidth=lw/2, label='Avalanche profile')
+    ax2.plot(sPath, zPath, 'k-', label='Avalanche profile')
     # ax2.plot(AvaProfile['s'], AvaProfile['z'], 'r-', linewidth=lw/2, label='Avalanche profile')
     f = zPath[0] - mu * sPath
-    ax2.plot(sPath, f, '-', color='b', linewidth=lw/2, label='AlphaLine')
+    ax2.plot(sPath, f, '-', color='b', label='AlphaLine')
     Zene = zPath + V2Path/(2*g)
     scat = ax2.scatter(sPath, Zene, marker='s', cmap=cmap, s=2*ms, c= EkinPath, label='Total energy height')
     cbar2 = ax2.figure.colorbar(scat, ax=ax2, use_gridspec=True)
