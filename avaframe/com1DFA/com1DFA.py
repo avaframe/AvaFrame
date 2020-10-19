@@ -1,5 +1,5 @@
 """
-    This is a python wrapper to execute a compiled SamosAT file
+    This is a python wrapper to execute a compiled com1Exe file
 
     This file is part of Avaframe.
 """
@@ -20,12 +20,12 @@ from avaframe.in3Utils import ascUtils as aU
 log = logging.getLogger(__name__)
 
 
-def execSamos(samosAT, cintFile, avaDir, fullOut=False, simName=''):
-    """ Execute compiled SamosAT file using cintFile to set configuration
+def execCom1Exe(com1Exe, cintFile, avaDir, fullOut=False, simName=''):
+    """ Execute compiled com1Exe file using cintFile to set configuration
         and run options """
 
     # define command line
-    runCommand = samosAT + ' -offscreen ' + cintFile
+    runCommand = com1Exe + ' -offscreen ' + cintFile
 
     # initialise log file to save stoudt
     if simName != '':
@@ -148,7 +148,7 @@ def runCom1DFA(cfg, avaDir):
 
     # Setup configuration
     cfgGen = cfg['GENERAL']
-    samosAT = cfgGen['samosAT']
+    com1Exe = cfgGen['com1Exe']
     flagEnt = cfgGen.getboolean('flagEnt')
     flagRes = cfgGen.getboolean('flagRes')
     inputf = cfgGen['inputf']
@@ -210,7 +210,7 @@ def runCom1DFA(cfg, avaDir):
         copyReplace(workFile, workFile, '##ENTFILE##', ent)
         copyReplace(workFile, workFile, '##RESFILE##', res)
         # Setup Project
-        execSamos(samosAT, workFile, avaDir, fullOut)
+        execCom1Exe(com1Exe, workFile, avaDir, fullOut)
 
         if flagEntRes:
             # Initialise CreateSimulations cint file and set parameters
@@ -227,7 +227,7 @@ def runCom1DFA(cfg, avaDir):
         copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
         copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
         copyReplace(workFile, workFile, '##BASESIMNAME##', simName)
-        execSamos(samosAT, workFile, avaDir, fullOut)
+        execCom1Exe(com1Exe, workFile, avaDir, fullOut)
 
         # If parameter shall be varied
         if cfgPar.getboolean('flagVarPar'):
@@ -246,7 +246,7 @@ def runCom1DFA(cfg, avaDir):
             copyReplace(workFile, workFile, '##COUNTREL##', countRel)
             copyReplace(workFile, workFile, '##VARPAR##', cfgPar['varPar'])
             copyReplace(workFile, workFile, '##VALUE##', defValues[cfgPar['varPar']])
-            execSamos(samosAT, workFile, avaDir, fullOut, logName)
+            execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
             # Create dictionary
             reportNull = {}
@@ -294,7 +294,7 @@ def runCom1DFA(cfg, avaDir):
                 copyReplace(workFile, workFile, '##NAME##', sim)
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VALUE##', item)
-                execSamos(samosAT, workFile, avaDir, fullOut, logName)
+                execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
                 # Create dictionary
                 reportVar = {}
@@ -337,7 +337,7 @@ def runCom1DFA(cfg, avaDir):
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VARPAR##', 'Mu')
                 copyReplace(workFile, workFile, '##VALUE##', defValues['Mu'])
-                execSamos(samosAT, workFile, avaDir, fullOut, logName)
+                execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
                 # Create dictionary
                 reportST = {}
