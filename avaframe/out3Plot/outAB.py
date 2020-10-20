@@ -114,10 +114,11 @@ def writeABpostOut(resAB, cfg, reportDictList):
         # Plot the whole profile with beta, alpha ... points and lines
         savename = name + '_AlphaBeta'
         save_file = os.path.join(saveOutPath, savename)
+        plotPath = os.path.join(os.getcwd(), save_file)
         plotPath(resAB, name, flags)
         FileNamePlot_ext[i] = plotProfile(resAB, name, save_file, flags)
         reportAB, FileNameWrite_ext[i] = WriteResults(resAB, name, flags)
-        reportAB['AlphaBeta plots'][name] = '.'.join((save_file, outputFormat))
+        reportAB['AlphaBeta plots'][name] = '.'.join((plotPath, outputFormat))
         # Add to report dictionary list
         reportDictList.append(reportAB)
     if flags.getboolean('PlotPath') or flags.getboolean('PlotProfile'):

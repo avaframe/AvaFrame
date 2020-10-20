@@ -30,7 +30,6 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS):
         outDir = os.path.join(avaDir, 'Outputs', 'out3SimpPlot')
         fU.makeADir(outDir)
 
-
     # Initialise plot dictionary with simulation names
     plotDict = {}
     for sName in peakFiles['simName']:
@@ -73,10 +72,10 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS):
 
         plotName = os.path.join(outDir, '%s.%s' % (name, outputFormat))
 
-        plotUtils.putAvaNameOnPlot(ax,avaDir)
+        plotUtils.putAvaNameOnPlot(ax, avaDir)
 
         fig.savefig(plotName)
         plotPath = os.path.join(os.getcwd(), plotName)
-        plotDict[peakFiles['simName'][m]].update({peakFiles['resType'][m] : plotPath})
+        plotDict[peakFiles['simName'][m]].update({peakFiles['resType'][m]: plotPath})
 
     return plotDict

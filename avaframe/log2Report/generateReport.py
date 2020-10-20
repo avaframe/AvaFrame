@@ -108,7 +108,7 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
             # Loop through all simulations
             for reportD in reportDictList:
 
-                if plotDict != '':
+                if plotDict != '' and ('simName' in reportD):
                     # add plot info to general report Dict
                     reportD['Simulation Results'] = plotDict[reportD['simName']['name']]
                     reportD['Simulation Results'].update({'type': 'image'})
