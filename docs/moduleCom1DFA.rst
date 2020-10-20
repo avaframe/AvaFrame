@@ -62,7 +62,7 @@ To run
 * copy ``com1DFACfg.ini`` to ``local_com1DFACfg.ini`` and set your desired settings. Make sure you update properly
   the path to com1DFA C++ executable and attribute files (the one you just cloned).
 
-  .. Attention:: Make sure you update properly the path to samos-AT C++ executable
+  .. Attention:: Make sure you update the path to com1DFA C++ executable
                  and attribute files (the one you just cloned). We suggest you to use the full path.
 
 * in ``avaframe/`` run:
