@@ -60,7 +60,7 @@ To run
 * create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
 * copy ``com1DFACfg.ini`` to ``local_com1DFACfg.ini`` and set your desired settings. Make sure you update properly
-  the path to samos-AT C++ executable and attribute files (the one you just cloned).
+  the path to com1DFA C++ executable and attribute files (the one you just cloned).
 
   .. Attention:: Make sure you update properly the path to samos-AT C++ executable
                  and attribute files (the one you just cloned). We suggest you to use the full path.
