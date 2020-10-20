@@ -182,7 +182,7 @@ def plotProfile(resAB, name, save_file, flags):
     titleText = name
     plt.title(titleText)
     xlabelText = 'Distance [m]\nBeta: ' + str(round(beta, 1)) + \
-        '$^\circ$' + '  Alpha: ' + str(round(alpha, 1)) + '$^\circ$'
+        '°' + '  Alpha: ' + str(round(alpha, 1)) + '°'
     plt.xlabel(xlabelText, multialignment='center')
     plt.ylabel('Height [m]')
     plt.plot(s, z, '-', label='DEM')
