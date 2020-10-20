@@ -26,7 +26,6 @@ def setEqParameters(smallAva, customParam):
     - standard (default)
     - small avalanche
     - custom
-    TODO: test
     """
 
     eqParameters = {}
@@ -132,8 +131,6 @@ def com2AB(avapath, resAB, distance):
     splitPoint = resAB['splitPoint']
     name = avapath['Name']
     eqParams = resAB['eqParams']
-
-    # TODO: make rest work with dict
 
     # read inputs, ressample ava path
     # make pofile and project split point on path
