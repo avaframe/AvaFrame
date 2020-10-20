@@ -13,7 +13,31 @@ Clone repository::
 
   git clone https://github.com/avaframe/AvaFrame.git
 
-Change directory::
+
+Avaframe relies on the following python library:
+
+* numpy
+* matplotlib
+* pyshp
+* scipy
+* cmocean
+* seaborn
+* pytest
+
+We suggest to work with conda and create a specific avaframe
+`_environment <https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`::
+
+    conda create --name avaframe_env
+
+Don't forget to activate it before going on::
+
+    source activate avaframe_env
+
+Then install the different modules::
+
+    conda install --name avaframe_env --file avaframe_env_spec.txt
+
+Finally change directory::
 
   cd AvaFrame
 
@@ -23,6 +47,7 @@ And install avaframe::
 
 This installs avaframe in editable mode, so everytime you import avaframe the
 current (local) version will be used.
+
 
 How to test
 -----------
