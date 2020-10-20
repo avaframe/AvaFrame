@@ -69,7 +69,7 @@ for avaDir in standardNames:
     # set timing
     startTime = time.time()
     # Run Standalone DFA
-    reportDictList = com1DFA.runCom1DFA(cfg, avaDir)
+    reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
     # Print time needed
     endTime = time.time()
     timeNeeded = endTime - startTime

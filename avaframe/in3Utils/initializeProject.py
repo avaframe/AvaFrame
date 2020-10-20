@@ -26,13 +26,13 @@ def cleanSingleAvaDir(avaDir):
 
     # check for empty avaDir name, abort if empty
     if not avaDir:
-        log.warning("AvaDir variable is undefined, getting the f*** out of here")
+        log.warning("AvaDir variable is undefined, returning. ")
         return('AvaDir is empty')
 
     # make sure avaDir is a string
     isString = isinstance(avaDir, str)
     if not isString:
-        log.warning("AvaDir is not a string, getting the f*** out of here")
+        log.warning("AvaDir is not a string, returning")
         return('AvaDir is NOT a string')
 
     # Info to user
