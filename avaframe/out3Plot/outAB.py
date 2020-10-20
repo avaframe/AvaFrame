@@ -42,14 +42,13 @@ def readABresults(saveOutPath, name, flags):
     return eqParams, eqOut
 
 
-def processABresults(eqParams, eqOut):
+def processABresults(resAB, name):
     """ prepare AlphaBeta results for plotting and writing results """
-
-    s = eqOut['s']
-    z = eqOut['z']
-    CuSplit = eqOut['CuSplit']
-    alpha = eqOut['alpha']
-    alphaSD = eqOut['alphaSD']
+    s = resAB[name]['s']
+    z = resAB[name]['z']
+    CuSplit = resAB[name]['CuSplit']
+    alpha = resAB[name]['alpha']
+    alphaSD = resAB[name]['alphaSD']
 
     # Line down to alpha
     f = z[0] + np.tan(np.deg2rad(-alpha)) * s
@@ -90,50 +89,51 @@ def processABresults(eqParams, eqOut):
         log.warning('-2 SD out of profile')
         ids_alphaM2SD = None
 
-    eqOut['f'] = f
-    eqOut['ids_alpha'] = ids_alpha
-    eqOut['ids_alphaP1SD'] = ids_alphaP1SD
-    eqOut['ids_alphaM1SD'] = ids_alphaM1SD
-    eqOut['ids_alphaM2SD'] = ids_alphaM2SD
+    resAB[name]['f'] = f
+    resAB[name]['ids_alpha'] = ids_alpha
+    resAB[name]['ids_alphaP1SD'] = ids_alphaP1SD
+    resAB[name]['ids_alphaM1SD'] = ids_alphaM1SD
+    resAB[name]['ids_alphaM2SD'] = ids_alphaM2SD
 
-    ParameterSet = eqParams['ParameterSet']
-    eqOut['ParameterSet'] = ParameterSet
-
-    return eqOut
+    return resAB
 
 
-def writeABpostOut(DGM, Avapath, SplitPoint, saveOutPath, flags):
+def writeABpostOut(resAB, cfg, reportDictList):
     """ Loops on the given Avapath, runs AlpahBeta Postprocessing
     plots Results and Write Results
     """
-    NameAva = Avapath['Name']
+    saveOutPath = resAB['saveOutPath']
+    flags = cfg['FLAGS']
+    AvaPath = resAB['AvaPath']
+    NameAva = AvaPath['Name']
     FileNamePlot_ext = [None] * len(NameAva)
     FileNameWrite_ext = [None] * len(NameAva)
     for i in range(len(NameAva)):
         name = NameAva[i]
-        eqParams, eqOut = readABresults(saveOutPath, name, flags)
-        eqPost = processABresults(eqParams, eqOut)
+        resAB = processABresults(resAB, name)
         # Plot the whole profile with beta, alpha ... points and lines
         savename = name + '_AlphaBeta'
         save_file = os.path.join(saveOutPath, savename)
-        plotPath(DGM, SplitPoint, eqPost, flags)
-        FileNamePlot_ext[i] = plotProfile(DGM, eqPost, save_file, flags)
-        if flags.getboolean('WriteRes'):
-            FileNameWrite_ext[i] = WriteResults(eqPost, saveOutPath)
+        plotPath(resAB, name, flags)
+        FileNamePlot_ext[i] = plotProfile(resAB, name, save_file, flags)
+        reportAB, FileNameWrite_ext[i] = WriteResults(resAB, name, flags)
+        reportAB['AlphaBeta plots'][name] = '.'.join((save_file, outputFormat))
+        # Add to report dictionary list
+        reportDictList.append(reportAB)
     if flags.getboolean('PlotPath') or flags.getboolean('PlotProfile'):
         plt.pause(0.001)
         input("Press [enter] to continue.")
-    return FileNamePlot_ext, FileNameWrite_ext
+    return reportDictList, FileNamePlot_ext, FileNameWrite_ext
 
 
-def plotPath(DGM, splitPoint, eqOutput, flags):
+def plotPath(resAB, name, flags):
     """ Plot and save results depending on flags options"""
-    header = DGM['header']
-    rasterdata = DGM['rasterData']
-    x = eqOutput['x']
-    y = eqOutput['y']
-    indSplit = eqOutput['indSplit']
-    name = eqOutput['Name']
+    splitPoint = resAB['splitPoint']
+    header = resAB['dem']['header']
+    rasterdata = resAB['dem']['rasterData']
+    x = resAB[name]['x']
+    y = resAB[name]['y']
+    indSplit = resAB[name]['indSplit']
 
     if flags.getboolean('PlotPath'):
         # Plot raster and path
@@ -162,20 +162,19 @@ def plotPath(DGM, splitPoint, eqOutput, flags):
         plt.show(block=False)
 
 
-def plotProfile(DGM, eqOutput, save_file, flags):
+def plotProfile(resAB, name, save_file, flags):
     """ Plot and save results depending on flags options"""
-    s = eqOutput['s']
-    z = eqOutput['z']
-    ids10Point = eqOutput['ids10Point']
-    poly = eqOutput['poly']
-    beta = eqOutput['beta']
-    alpha = eqOutput['alpha']
-    f = eqOutput['f']
-    ids_alphaM1SD = eqOutput['ids_alphaM1SD']
-    ids_alphaM2SD = eqOutput['ids_alphaM2SD']
-    indSplit = eqOutput['indSplit']
-    ParameterSet = eqOutput['ParameterSet']
-    name = eqOutput['Name']
+    s = resAB[name]['s']
+    z = resAB[name]['z']
+    ids10Point = resAB[name]['ids10Point']
+    poly = resAB[name]['poly']
+    beta = resAB[name]['beta']
+    alpha = resAB[name]['alpha']
+    f = resAB[name]['f']
+    ids_alphaM1SD = resAB[name]['ids_alphaM1SD']
+    ids_alphaM2SD = resAB[name]['ids_alphaM2SD']
+    indSplit = resAB[name]['indSplit']
+    ParameterSet = resAB['eqParams']['ParameterSet']
     # Plot the whole profile with beta, alpha ... points and lines
     # plt.close("all")
     fig_prof = plt.figure(figsize=(1.5*figW, 1*figH))
@@ -226,117 +225,122 @@ def plotProfile(DGM, eqOutput, save_file, flags):
     return save_file
 
 
-def WriteResults(eqOutput, saveOutPath):
+def WriteResults(resAB, name, flags):
     """ Write AB results to file """
-    s = eqOutput['s']
-    x = eqOutput['x']
-    y = eqOutput['y']
-    z = eqOutput['z']
-    ids10Point = eqOutput['ids10Point']
-    beta = eqOutput['beta']
-    alpha = eqOutput['alpha']
-    alphaSD = eqOutput['alphaSD']
-    ids_alpha = eqOutput['ids_alpha']
-    ids_alphaP1SD = eqOutput['ids_alphaP1SD']
-    ids_alphaM1SD = eqOutput['ids_alphaM1SD']
-    ids_alphaM2SD = eqOutput['ids_alphaM2SD']
-    parameterSet = eqOutput['ParameterSet']
-    name = eqOutput['Name']
+    saveOutPath = resAB['saveOutPath']
+    s = resAB[name]['s']
+    x = resAB[name]['x']
+    y = resAB[name]['y']
+    z = resAB[name]['z']
+    ids10Point = resAB[name]['ids10Point']
+    beta = resAB[name]['beta']
+    alpha = resAB[name]['alpha']
+    alphaSD = resAB[name]['alphaSD']
+    ids_alpha = resAB[name]['ids_alpha']
+    ids_alphaP1SD = resAB[name]['ids_alphaP1SD']
+    ids_alphaM1SD = resAB[name]['ids_alphaM1SD']
+    ids_alphaM2SD = resAB[name]['ids_alphaM2SD']
+    eqParameters = resAB['eqParams']
+    ParameterSet = eqParameters['ParameterSet']
+    # prepare report dictionary
+    # Create dictionary
+    reportAB = {}
+    reportAB = {'headerLine': {'type': 'title', 'title': 'com1AB Simulation'},
+                'avaPath': {'type': 'simName', 'name': name},
+                ParameterSet + 'setup': {'type': 'list',
+                                         'k1': eqParameters['k1'],
+                                         'k2': eqParameters['k2'],
+                                         'k3': eqParameters['k3'],
+                                         'k4': eqParameters['k4'],
+                                         'SD': eqParameters['SD']},
+                'AlphaBeta results': {'type': 'list',
+                                      'beta': '',
+                                      'alpha': '',
+                                      'alphaM1SD': '',
+                                      'alphaM2SD': '',
+                                      'alphaP1SD': ''},
+                'AlphaBeta plots': {'type': 'image'}}
 
-    log.info('Profile: %s with %s parameter set',  name, parameterSet)
+    log.info('Profile: %s with %s parameter set',  name, ParameterSet)
     log.info(('{:<13s}'*6).format(
         ' ', 'x [m]', 'y [m]', 'z [m]', 's [m]', 'angle [°]'))
+    IND = [ids_alpha, ids10Point, ids_alphaM1SD, ids_alphaM2SD,
+           ids_alphaP1SD]
+    ANGLE = [alpha, beta, alphaSD[1], alphaSD[2], alphaSD[0]]
+    LABEL = ['alpha', 'beta', 'alphaM1SD', 'alphaM2SD', 'alphaP1SD']
     if ids_alpha:
         log.info(('{:<13s}'+'{:<13.2f}'*5).format('Alpha', x[ids_alpha],
                  y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
+        strAlpha = ('{:.2f}' + '{:s}').format(alpha, '°')
     else:
-        log.warning('alpha point out of profile')
+        strAlpha = 'alpha point out of profile'
+        log.warning(strAlpha)
+
+    reportAB['AlphaBeta results'].update({'alpha': strAlpha})
 
     log.info(('{:<13s}'+'{:<13.2f}'*5).format('Beta', x[ids10Point],
              y[ids10Point], z[ids10Point], s[ids10Point], beta))
+    strBeta = ('{:.2f}' + '{:s}').format(beta, '°')
+    reportAB['AlphaBeta results'].update({'beta': strBeta})
     if ids_alphaM1SD:
         log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaM1SD',
                  x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD],
                  s[ids_alphaM1SD], alphaSD[1]))
+        strAlphaM1SD = ('{:.2f}' + '{:s}').format(alphaSD[1], '°')
     else:
-        log.warning('alphaM1SD point out of profile')
+        strAlphaM1SD = 'alphaM1SD point out of profile'
+        log.warning(strAlphaM1SD)
+    reportAB['AlphaBeta results'].update({'alphaM1SD': strAlphaM1SD})
     if ids_alphaM2SD:
         log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaM2SD',
                  x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD],
                  s[ids_alphaM2SD], alphaSD[2]))
+        strAlphaM2SD = ('{:.2f}' + '{:s}').format(alphaSD[2], '°')
     else:
-        log.warning('alphaM2SD point out of profile')
+        strAlphaM2SD = 'alphaM2SD point out of profile'
+        log.warning(strAlphaM2SD)
+    reportAB['AlphaBeta results'].update({'alphaM2SD': strAlphaM2SD})
     if ids_alphaP1SD:
         log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaP1SD',
                  x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD],
                  s[ids_alphaP1SD], alphaSD[0]))
+        strAlphaP1SD = ('{:.2f}' + '{:s}').format(alphaSD[2], '°')
     else:
-        log.warning('alphaP1SD point above Beta point')
+        strAlphaP1SD = 'alphaP1SD point above Beta point'
+        log.warning(strAlphaP1SD)
+    reportAB['AlphaBeta results'].update({'alphaP1SD': strAlphaP1SD})
 
-    FileName_ext = saveOutPath + name + '_AB_results.txt'
-    with open(FileName_ext, 'w') as outfile:
-        outfile.write('Profile name %s\n' % name)
-        outfile.write('Parameter Set %s\n' % parameterSet)
-        outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
-        outfile.write(('{:<13s}'*5 + '\n').format(
-            'x', 'y', 'z', 's', 'angle'))
-        if ids_alpha:
-            outfile.write(('{:<13.2f}'*5 + '\n').format(
-                x[ids_alpha], y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
-        else:
-            outfile.write(('{:<13.2f}'*5 + '\n').format(
-                0,
-                0,
-                0,
-                0,
-                0))
+    # write results to txt file
+    if flags.getboolean('WriteRes'):
+        FileName_ext = saveOutPath + name + '_AB_results.txt'
+        with open(FileName_ext, 'w') as outfile:
+            outfile.write('Profile name %s\n' % name)
+            outfile.write('Parameter Set %s\n' % ParameterSet)
+            outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
+            outfile.write(('{:<13s}'*5 + '\n').format(
+                'x', 'y', 'z', 's', 'angle'))
+            for ind, angle in zip(IND, ANGLE):
+                writeLine(ind, outfile, x, y, z, s, angle)
+
+    return reportAB, FileName_ext
+
+
+def writeLine(ind, outfile, x, y, z, s, angle):
+    if ind:
         outfile.write(('{:<13.2f}'*5 + '\n').format(
-            x[ids10Point],
-            y[ids10Point],
-            z[ids10Point],
-            s[ids10Point],
-            beta))
-        if ids_alphaM1SD:
-            outfile.write(('{:<13.2f}'*5 + '\n').format(
-                x[ids_alphaM1SD],
-                y[ids_alphaM1SD],
-                z[ids_alphaM1SD],
-                s[ids_alphaM1SD],
-                alphaSD[1]))
-        else:
-            outfile.write(('{:<13.2f}'*5 + '\n').format(
-                0,
-                0,
-                0,
-                0,
-                0))
-        if ids_alphaM2SD:
-            outfile.write(('{:<13.2f}'*5 + '\n').format(
-                x[ids_alphaM2SD],
-                y[ids_alphaM2SD],
-                z[ids_alphaM2SD],
-                s[ids_alphaM2SD],
-                alphaSD[2]))
-        else:
-            outfile.write(('{:<13.2f}'*5 + '\n').format(
-                0,
-                0,
-                0,
-                0,
-                0))
-        if ids_alphaP1SD:
-            outfile.write(('{:<13.2f}'*5 + '\n').format(
-                x[ids_alphaP1SD],
-                y[ids_alphaP1SD],
-                z[ids_alphaP1SD],
-                s[ids_alphaP1SD],
-                alphaSD[0]))
-        else:
-            outfile.write(('{:<13.2f}'*5 + '\n').format(
-                0,
-                0,
-                0,
-                0,
-                0))
+            x[ind], y[ind], z[ind], s[ind], angle))
+    else:
+        outfile.write(('{:<13.2f}'*5 + '\n').format(0, 0, 0, 0, 0))
 
-    return FileName_ext
+
+def addLine2Report(ind, reportAB, x, y, z, s, name, angle):
+    if ind:
+        log.info(('{:<13s}'+'{:<13.2f}'*5).format(name, x[ind], y[ind],
+                                                  z[ind], s[ind], angle))
+        strAlpha = ('{:.2f}' + '{:s}').format(angle, '°')
+    else:
+        strAlpha = name + 'point out of profile'
+        log.warning(strAlpha)
+    reportAB['AlphaBeta results'].update({name: strAlpha})
+
+    return reportAB

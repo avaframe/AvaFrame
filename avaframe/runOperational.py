@@ -10,8 +10,10 @@ import logging
 
 # Local imports
 from avaframe.com1DFA import com1DFA
+from avaframe.com2AB import com2AB
 from avaframe.log2Report import generateReport as gR
 from avaframe.out3SimpPlot import outPlotAllPeak as oP
+from avaframe.out3Plot import outAB
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import initializeProject as initProj
@@ -47,7 +49,8 @@ initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 
 # ----------------
 # Run Alpha Beta
-# reportDictList = com2AB.runAlphaBeta(cfg, avalancheDir)
+cfgAB = cfgUtils.getModuleConfig(com2AB)
+resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
 
 # ----------------
 # Collect results/plots/report  to a single directory
@@ -55,12 +58,15 @@ initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 # peak file plot
 
 # Generata plots for all peakFiles
+reportDictList = []
+plotDict = ''
 # plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
+reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
 
 # Set directory for report
-# reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFA', 'reports')
+reportDir = os.path.join(avalancheDir, 'Outputs')
 # write report
-# gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
 # Print time needed
 endTime = time.time()

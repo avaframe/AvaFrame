@@ -27,31 +27,12 @@ log.info('Current avalanche: %s', avalancheDir)
 # write config to log file
 cfg = cfgUtils.getModuleConfig(com2AB)
 
-cfgSetup = cfg['ABSETUP']
-cfgFlags = cfg['FLAGS']
-
-# Extract input file locations
-cfgPath = com2AB.readABinputs(avalancheDir)
-
-log.info("Running com2ABMain model on DEM \n \t %s \n \t with profile \n \t %s ",
-         cfgPath['demSource'], cfgPath['profileLayer'])
-
-# Read input data for ALPHABETA
-dem = IOf.readRaster(cfgPath['demSource'])
-avaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'],
-                           dem)
-splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], dem)
-
 # Calculate ALPHABETA
-com2AB.com2ABMain(dem, avaPath, splitPoint, cfgPath['saveOutPath'],
-                  cfgSetup)
-
+resAB = com2AB.com2ABMain(cfg, avalancheDir)
 
 # Analyse/ plot/ write results #
-plotFile, writeFile = outAB.writeABpostOut(dem,
-                                           avaPath, splitPoint,
-                                           cfgPath['saveOutPath'],
-                                           cfgFlags)
+reportDictList = []
+_, plotFile, writeFile = outAB.writeABpostOut(resAB, cfg, reportDictList)
 
 log.info('Plotted to: %s', plotFile)
 log.info('Data written: %s', writeFile)

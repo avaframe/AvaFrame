@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 
 # Local imports
 import avaframe.in2Trans.geoTrans as geoTrans
+import avaframe.in2Trans.shpConversion as shpConv
+import avaframe.in3Utils.ascUtils as IOf
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -62,38 +64,60 @@ def setEqParameters(smallAva, customParam):
     return eqParameters
 
 
-def com2ABMain(dem, Avapath, splitPoint, saveOutPath, cfgsetup):
-    """ Loops on the given Avapath and runs com2AB to compute AlpahBeta model
+def com2ABMain(cfg, avalancheDir):
+    """ Run main model
+    Loops on the given AvaPath and runs com2AB to compute AlpahBeta model
     Inputs : dem header and rater (as np array),
-            Avapath and Split points .shp file,
+            AvaPath and Split points .shp file,
             optional output save path,
             avalanche type,
-            reamplind lenght for the Avapath
+            reamplind lenght for the AvaPath
     Outputs : writes raw results to saveOutPath
     """
+    abVersion = '4.1'
+    cfgsetup = cfg['ABSETUP']
     smallAva = cfgsetup.getboolean('smallAva')
     customParam = cfgsetup.getboolean('customParam')
-    # customParam = str(customParam or None)
     distance = float(cfgsetup['distance'])
+    resAB = {}
+    # Extract input file locations
+    cfgPath = readABinputs(avalancheDir)
 
-    NameAva = Avapath['Name']
-    StartAva = Avapath['Start']
-    LengthAva = Avapath['Length']
+    log.info("Running com2ABMain model on DEM \n \t %s \n \t with profile \n \t %s ",
+             cfgPath['demSource'], cfgPath['profileLayer'])
+
+    resAB['saveOutPath'] = cfgPath['saveOutPath']
+    # Read input data for ALPHABETA
+    dem = IOf.readRaster(cfgPath['demSource'])
+    resAB['dem'] = dem
+    AvaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'],
+                               dem)
+    resAB['AvaPath'] = AvaPath
+    resAB['splitPoint'] = shpConv.readPoints(cfgPath['splitPointSource'], dem)
+
+    # Read input setup
+    eqParams = setEqParameters(smallAva, customParam)
+    resAB['eqParams'] = eqParams
+
+    NameAva = AvaPath['Name']
+    StartAva = AvaPath['Start']
+    LengthAva = AvaPath['Length']
 
     for i in range(len(NameAva)):
         name = NameAva[i]
         start = StartAva[i]
         end = start + LengthAva[i]
         avapath = {}
-        avapath['x'] = Avapath['x'][int(start):int(end)]
-        avapath['y'] = Avapath['y'][int(start):int(end)]
+        avapath['x'] = AvaPath['x'][int(start):int(end)]
+        avapath['y'] = AvaPath['y'][int(start):int(end)]
         avapath['Name'] = name
-        com2AB(dem, avapath, splitPoint, saveOutPath,
-               smallAva, customParam, distance)
+        log.info('Running Alpha Beta %s on: %s ', abVersion, name)
+        resAB = com2AB(avapath, resAB, distance)
+
+    return resAB
 
 
-def com2AB(dem, avapath, splitPoint, OutPath,
-           smallAva, customParam, distance):
+def com2AB(avapath, resAB, distance):
     """ Computes the AlphaBeta model given an input raster (of the dem),
     an avalanche path and split points
     Inputs : dem header and rater (as np array),
@@ -104,10 +128,10 @@ def com2AB(dem, avapath, splitPoint, OutPath,
             resamplind lenght for the Avapath
     Outputs : writes raw results to OutPath
     """
+    dem = resAB['dem']
+    splitPoint = resAB['splitPoint']
     name = avapath['Name']
-    abVersion = '4.1'
-    log.info('Running Alpha Beta %s on: %s ', abVersion, name)
-    eqParams = setEqParameters(smallAva, customParam)
+    eqParams = resAB['eqParams']
 
     # TODO: make rest work with dict
 
@@ -129,14 +153,17 @@ def com2AB(dem, avapath, splitPoint, OutPath,
     AvaProfile['indSplit'] = projSplitPoint['indSplit']  # index of split point
 
     eqOut = calcAB(AvaProfile, eqParams)
-    savename = name + '_com2AB_eqparam.pickle'
-    saveFile = os.path.join(OutPath, savename)
-    with open(saveFile, 'wb') as handle:
-        pickle.dump(eqParams, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    savename = name + '_com2AB_eqout.pickle'
-    saveFile = os.path.join(OutPath, savename)
-    with open(saveFile, 'wb') as handle:
-        pickle.dump(eqOut, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    resAB[name] = eqOut
+    # savename = name + '_com2AB_eqparam.pickle'
+    # saveFile = os.path.join(OutPath, savename)
+    # with open(saveFile, 'wb') as handle:
+    #     pickle.dump(eqParams, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    # savename = name + '_com2AB_eqout.pickle'
+    # saveFile = os.path.join(OutPath, savename)
+    # with open(saveFile, 'wb') as handle:
+    #     pickle.dump(eqOut, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    return resAB
 
 
 def readABinputs(cfgAva):
