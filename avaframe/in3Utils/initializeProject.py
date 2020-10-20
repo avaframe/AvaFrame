@@ -20,12 +20,13 @@ def _checkForFolderAndDelete(baseDir, folderName):
         log.debug("No %s folder found.", folderName)
 
 
-def cleanSingleAvaDir(avaDir, keep=None):
+def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     '''
     Clean a single avalanche directory of the work and output directories
     Expects a avalanche directory name as string
     and optional:
-    a log name to exclude from deletion
+    a log name to keep (and not delete)
+    Boolean to be able to avoid deletion of Outputs
     '''
 
     # check for empty avaDir name, abort if empty
@@ -44,7 +45,8 @@ def cleanSingleAvaDir(avaDir, keep=None):
 
     # Try to remove OUTPUTS folder, only pass FileNotFoundError, i.e. folder
     # does not exist
-    _checkForFolderAndDelete(avaDir, 'Outputs')
+    if deleteOutput:
+        _checkForFolderAndDelete(avaDir, 'Outputs')
 
     # Try to remove Work folder, only pass FileNotFoundError, i.e. folder
     # does not exist
@@ -54,7 +56,7 @@ def cleanSingleAvaDir(avaDir, keep=None):
     allFiles = os.listdir(avaDir)
     logFiles = [fi for fi in allFiles if fi.endswith(".log")]
 
-    # keep the log file specified in excl
+    # keep the log file specified in keep
     if keep:
         logFiles = [item for item in logFiles if keep not in item]
 
