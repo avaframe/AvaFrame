@@ -65,26 +65,3 @@ initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 # Print time needed
 endTime = time.time()
 log.info('Took %s seconds to calculate.' % (endTime - startTime))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
