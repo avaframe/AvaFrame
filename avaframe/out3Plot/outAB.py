@@ -114,11 +114,11 @@ def writeABpostOut(resAB, cfg, reportDictList):
         # Plot the whole profile with beta, alpha ... points and lines
         savename = name + '_AlphaBeta'
         save_file = os.path.join(saveOutPath, savename)
-        plotPath = os.path.join(os.getcwd(), save_file)
+        savePath = os.path.join(os.getcwd(), save_file)
         plotPath(resAB, name, flags)
         FileNamePlot_ext[i] = plotProfile(resAB, name, save_file, flags)
         reportAB, FileNameWrite_ext[i] = WriteResults(resAB, name, flags)
-        reportAB['AlphaBeta plots'][name] = '.'.join((plotPath, outputFormat))
+        reportAB['AlphaBeta plots'][name] = '.'.join((savePath, outputFormat))
         # Add to report dictionary list
         reportDictList.append(reportAB)
     if flags.getboolean('PlotPath') or flags.getboolean('PlotProfile'):
@@ -181,20 +181,16 @@ def plotProfile(resAB, name, save_file, flags):
     fig_prof = plt.figure(figsize=(1.5*figW, 1*figH))
     titleText = name
     plt.title(titleText)
-
     xlabelText = 'Distance [m]\nBeta: ' + str(round(beta, 1)) + \
         '$^\circ$' + '  Alpha: ' + str(round(alpha, 1)) + '$^\circ$'
     plt.xlabel(xlabelText, multialignment='center')
-
     plt.ylabel('Height [m]')
-
     plt.plot(s, z, '-', label='DEM')
     plt.plot(s, poly(s), ':', label='QuadFit')
     plt.axvline(x=s[indSplit], color='0.7',
                 linewidth=1, linestyle='--', label='Split point')
     plt.axvline(x=s[ids10Point], color='0.8',
                 linewidth=1, linestyle='-.', label='Beta')
-
     plt.plot(s, f, '-', label='AlphaLine')
     if ids_alphaM1SD:
         plt.plot(s[ids_alphaM1SD], z[ids_alphaM1SD], 'x', markersize=8,
@@ -262,54 +258,17 @@ def WriteResults(resAB, name, flags):
                                       'alphaP1SD': ''},
                 'AlphaBeta plots': {'type': 'image'}}
 
-    log.info('Profile: %s with %s parameter set',  name, ParameterSet)
-    log.info(('{:<13s}'*6).format(
-        ' ', 'x [m]', 'y [m]', 'z [m]', 's [m]', 'angle [°]'))
     IND = [ids_alpha, ids10Point, ids_alphaM1SD, ids_alphaM2SD,
            ids_alphaP1SD]
     ANGLE = [alpha, beta, alphaSD[1], alphaSD[2], alphaSD[0]]
     LABEL = ['alpha', 'beta', 'alphaM1SD', 'alphaM2SD', 'alphaP1SD']
-    if ids_alpha:
-        log.info(('{:<13s}'+'{:<13.2f}'*5).format('Alpha', x[ids_alpha],
-                 y[ids_alpha], z[ids_alpha], s[ids_alpha], alpha))
-        strAlpha = ('{:.2f}' + '{:s}').format(alpha, '°')
-    else:
-        strAlpha = 'alpha point out of profile'
-        log.warning(strAlpha)
 
-    reportAB['AlphaBeta results'].update({'alpha': strAlpha})
-
-    log.info(('{:<13s}'+'{:<13.2f}'*5).format('Beta', x[ids10Point],
-             y[ids10Point], z[ids10Point], s[ids10Point], beta))
-    strBeta = ('{:.2f}' + '{:s}').format(beta, '°')
-    reportAB['AlphaBeta results'].update({'beta': strBeta})
-    if ids_alphaM1SD:
-        log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaM1SD',
-                 x[ids_alphaM1SD], y[ids_alphaM1SD], z[ids_alphaM1SD],
-                 s[ids_alphaM1SD], alphaSD[1]))
-        strAlphaM1SD = ('{:.2f}' + '{:s}').format(alphaSD[1], '°')
-    else:
-        strAlphaM1SD = 'alphaM1SD point out of profile'
-        log.warning(strAlphaM1SD)
-    reportAB['AlphaBeta results'].update({'alphaM1SD': strAlphaM1SD})
-    if ids_alphaM2SD:
-        log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaM2SD',
-                 x[ids_alphaM2SD], y[ids_alphaM2SD], z[ids_alphaM2SD],
-                 s[ids_alphaM2SD], alphaSD[2]))
-        strAlphaM2SD = ('{:.2f}' + '{:s}').format(alphaSD[2], '°')
-    else:
-        strAlphaM2SD = 'alphaM2SD point out of profile'
-        log.warning(strAlphaM2SD)
-    reportAB['AlphaBeta results'].update({'alphaM2SD': strAlphaM2SD})
-    if ids_alphaP1SD:
-        log.info(('{:<13s}'+'{:<13.2f}'*5).format('alphaP1SD',
-                 x[ids_alphaP1SD], y[ids_alphaP1SD], z[ids_alphaP1SD],
-                 s[ids_alphaP1SD], alphaSD[0]))
-        strAlphaP1SD = ('{:.2f}' + '{:s}').format(alphaSD[2], '°')
-    else:
-        strAlphaP1SD = 'alphaP1SD point above Beta point'
-        log.warning(strAlphaP1SD)
-    reportAB['AlphaBeta results'].update({'alphaP1SD': strAlphaP1SD})
+    # write report and log
+    log.info('Profile: %s with %s parameter set',  name, ParameterSet)
+    log.info(('{:<13s}'*6).format(
+        ' ', 'x [m]', 'y [m]', 'z [m]', 's [m]', 'angle [°]'))
+    for ind, label, angle in zip(IND, LABEL, ANGLE):
+        reportAB = addLine2Report(ind, reportAB, x, y, z, s, label, angle)
 
     # write results to txt file
     if flags.getboolean('WriteRes'):
@@ -334,14 +293,14 @@ def writeLine(ind, outfile, x, y, z, s, angle):
         outfile.write(('{:<13.2f}'*5 + '\n').format(0, 0, 0, 0, 0))
 
 
-def addLine2Report(ind, reportAB, x, y, z, s, name, angle):
+def addLine2Report(ind, reportAB, x, y, z, s, label, angle):
     if ind:
-        log.info(('{:<13s}'+'{:<13.2f}'*5).format(name, x[ind], y[ind],
+        log.info(('{:<13s}'+'{:<13.2f}'*5).format(label, x[ind], y[ind],
                                                   z[ind], s[ind], angle))
         strAlpha = ('{:.2f}' + '{:s}').format(angle, '°')
     else:
-        strAlpha = name + 'point out of profile'
+        strAlpha = label + 'point out of profile'
         log.warning(strAlpha)
-    reportAB['AlphaBeta results'].update({name: strAlpha})
+    reportAB['AlphaBeta results'].update({label: strAlpha})
 
     return reportAB

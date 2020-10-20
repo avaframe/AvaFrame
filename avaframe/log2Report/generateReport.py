@@ -6,11 +6,7 @@
 
 # Load modules
 import os
-import glob
 import logging
-import numpy as np
-import shutil
-from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
