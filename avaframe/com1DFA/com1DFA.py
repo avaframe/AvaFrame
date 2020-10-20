@@ -6,12 +6,12 @@
 
 # Load modules
 import os
-import sys
 import glob
 import subprocess
 import shutil
-import numpy as np
 import logging
+
+# Local imports
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import ascUtils as aU
 
@@ -299,7 +299,7 @@ def com1DFAMain(cfg, avaDir):
                 # Create dictionary
                 reportVar = {}
                 reportVar = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
-                'simName' : {'type': 'simName', 'name': logName},
+                'simName': {'type': 'simName', 'name': logName},
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': relName,

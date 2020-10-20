@@ -26,13 +26,13 @@ cfgMain = cfgUtils.getGeneralConfig()
 
 # Define avalanche directories for standard tests
 standardNames = ['data/avaBowl',
-                                'data/avaFlatPlane',
-                                'data/avaHelix',
-                                'data/avaHelixChannel',
-                                'data/avaHockey',
-                                'data/avaHockeySmoothChannel',
-                                'data/avaHockeySmoothSmall',
-                                'data/avaInclinedPlane']
+                 'data/avaFlatPlane',
+                 'data/avaHelix',
+                 'data/avaHelixChannel',
+                 'data/avaHockey',
+                 'data/avaHockeySmoothChannel',
+                 'data/avaHockeySmoothSmall',
+                 'data/avaInclinedPlane']
 
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reports')
@@ -64,7 +64,6 @@ for avaDir in standardNames:
     standardCfg = os.path.join('..', 'benchmarks', avaName, '%s_com1DFACfg.ini' % avaName)
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
-
 
     # set timing
     startTime = time.time()

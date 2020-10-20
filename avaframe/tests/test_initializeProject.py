@@ -1,4 +1,8 @@
+'''
+Tests for initialize and clean project routines
+'''
 from avaframe.in3Utils import initializeProject as initProj
+
 
 def test_cleanSingleAvaDir():
 
