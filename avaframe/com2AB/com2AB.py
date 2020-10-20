@@ -154,14 +154,6 @@ def com2AB(avapath, resAB, distance):
 
     eqOut = calcAB(AvaProfile, eqParams)
     resAB[name] = eqOut
-    # savename = name + '_com2AB_eqparam.pickle'
-    # saveFile = os.path.join(OutPath, savename)
-    # with open(saveFile, 'wb') as handle:
-    #     pickle.dump(eqParams, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    # savename = name + '_com2AB_eqout.pickle'
-    # saveFile = os.path.join(OutPath, savename)
-    # with open(saveFile, 'wb') as handle:
-    #     pickle.dump(eqOut, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     return resAB
 
