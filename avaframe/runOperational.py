@@ -33,14 +33,12 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
-log.setLevel(logging.DEBUG)
-
 # ----------------
 # Load input parameters from configuration files
 
 # ----------------
 # Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avalancheDir)
+initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 
 # ----------------
 # Run dense flow

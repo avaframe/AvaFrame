@@ -10,6 +10,7 @@ import shutil
 
 log = logging.getLogger(__name__)
 
+
 def _checkForFolderAndDelete(baseDir, folderName):
     '''Helper function ONLY USE WITH CHECKED INPUT'''
     fPath = os.path.join(baseDir, folderName)
@@ -17,23 +18,26 @@ def _checkForFolderAndDelete(baseDir, folderName):
         shutil.rmtree(fPath)
     except FileNotFoundError:
         log.debug("No %s folder found.", folderName)
-        pass
 
-def cleanSingleAvaDir(avaDir):
+
+def cleanSingleAvaDir(avaDir, keep=None):
     '''
     Clean a single avalanche directory of the work and output directories
+    Expects a avalanche directory name as string
+    and optional:
+    a log name to exclude from deletion
     '''
 
     # check for empty avaDir name, abort if empty
     if not avaDir:
         log.warning("AvaDir variable is undefined, returning. ")
-        return('AvaDir is empty')
+        return 'AvaDir is empty'
 
     # make sure avaDir is a string
     isString = isinstance(avaDir, str)
     if not isString:
         log.warning("AvaDir is not a string, returning")
-        return('AvaDir is NOT a string')
+        return 'AvaDir is NOT a string'
 
     # Info to user
     log.info("Cleaning folder: %s ", avaDir)
@@ -49,13 +53,17 @@ def cleanSingleAvaDir(avaDir):
     # check for *.log files, go to remove only if exists
     allFiles = os.listdir(avaDir)
     logFiles = [fi for fi in allFiles if fi.endswith(".log")]
+
+    # keep the log file specified in excl
+    if keep:
+        logFiles = [item for item in logFiles if keep not in item]
+
     for fi in logFiles:
         filePath = os.path.join(avaDir, fi)
         os.remove(filePath)
 
-    log.debug("Holy smokes, you are clean")
-
-
+    log.debug("Directory is squeaky clean")
+    return 'Cleaned directory'
 
 
 def initializeFolderStruct(pathAvaName):
