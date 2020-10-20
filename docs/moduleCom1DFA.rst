@@ -52,7 +52,7 @@ To run
 --------
 
 * the computation of the com1DFA module relies on a com1DFA C++ executable.
-  The executable (for now only the linux one is available but a win64 will be soon added) and attribute files are
+  The executable (for now only a 64bit linux one is available) and needed files are
   available in this `git repository <https://github.com/avaframe/com1DFA_Exe>`_.
 
   .. Hint:: Simply clone the `com1DFA_Exe <https://github.com/avaframe/com1DFA_Exe>`_ git repository.
