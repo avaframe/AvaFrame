@@ -44,8 +44,8 @@ initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 
 # ----------------
 # Run dense flow
-# cfg = cfgUtils.getModuleConfig(com1DFA)
-# reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
+cfg = cfgUtils.getModuleConfig(com1DFA)
+reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
 
 # ----------------
 # Run Alpha Beta
@@ -58,9 +58,7 @@ resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
 # peak file plot
 
 # Generata plots for all peakFiles
-reportDictList = []
-plotDict = ''
-# plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
+plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
 reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
 
 # Set directory for report
