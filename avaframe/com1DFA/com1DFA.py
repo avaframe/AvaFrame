@@ -143,7 +143,7 @@ def copyReplace(origFile, workFile, searchString, replString):
         file.write(fileData)
 
 
-def runCom1DFA(cfg, avaDir):
+def com1DFAMain(cfg, avaDir):
     """ Run main model"""
 
     # Setup configuration

@@ -45,7 +45,7 @@ initProj.cleanSingleAvaDir(avalancheDir)
 # ----------------
 # Run dense flow
 # cfg = cfgUtils.getModuleConfig(com1DFA)
-# reportDictList = com1DFA.runCom1DFA(cfg, avalancheDir)
+# reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
 
 # ----------------
 # Run Alpha Beta

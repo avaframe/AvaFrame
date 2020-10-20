@@ -33,7 +33,7 @@ cfg = cfgUtils.getModuleConfig(com1DFA)
 
 startTime = time.time()
 # Run Standalone DFA
-reportDictList = com1DFA.runCom1DFA(cfg, avalancheDir)
+reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
 
 # Print time needed
 endTime = time.time()
