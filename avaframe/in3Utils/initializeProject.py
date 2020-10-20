@@ -26,7 +26,7 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     Expects a avalanche directory name as string
     and optional:
     a log name to keep (and not delete)
-    Boolean to be able to avoid deletion of Outputs
+    Boolean to be able to avoid deletion of Outputs (true by default)
     '''
 
     # check for empty avaDir name, abort if empty
