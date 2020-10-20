@@ -46,18 +46,18 @@ def test_initialiseRun():
     assert lineVals[0][2] == 'RelTh\n'
 
 
-def test_execSamos():
-    """ test call to samosAT executable """
+def test_execCom1Exe():
+    """ test call to com1DFA executable without performing simulation but check log generation """
 
     # Initialise inputs
-    samosAT = 'testPath'
+    com1Exe = 'testPath'
     cintFile = os.path.join('avaframe', 'tests', 'data', 'runBasicST.cint')
     avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
     simName = 'release1IP'
     fullOut = False
 
     # Call function
-    com1DFA.execSamos(samosAT, cintFile, avaDir, fullOut, simName)
+    com1DFA.execCom1Exe(com1Exe, cintFile, avaDir, fullOut, simName)
 
     # reference log File name
     logName = 'startrelease1IP.log'
@@ -69,3 +69,17 @@ def test_execSamos():
 
     # Test
     assert flagFile == True
+
+
+def test_com1DFAMain():
+    """ test call to com1DFA module """
+
+    # get path to executable
+    cfg = cfgUtils.getModuleConfig(com1DFA)
+
+    # get configuration
+    avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
+    avaName = os.path.basename(avaDir)
+    testCfg = os.path.join(avaDir, '%s_com1DFACfg.ini' % avaName)
+    cfg = cfgUtils.getModuleConfig(com1DFA, testCfg)
+    cfg['GENERAL']['com1Exe'] = com1Exe
