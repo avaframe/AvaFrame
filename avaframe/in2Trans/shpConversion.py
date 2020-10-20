@@ -107,6 +107,7 @@ def SHP2Array(infile, defname=None):
     SHPdata['z'] = Coordz
     return SHPdata
 
+
 def readLine(fname, defname, dem):
     """ Read avalanche path from  .shp"""
 
