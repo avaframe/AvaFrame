@@ -14,6 +14,7 @@ Overview
 
     * :doc:`introduction`
     * :doc:`develop`
+    * :doc:`getStarted`
 
 .. toctree::
    :maxdepth: 3
@@ -22,6 +23,7 @@ Overview
 
    introduction.rst
    develop.rst
+   getStarted.rst
 
 Modules
 =======
