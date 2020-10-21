@@ -14,6 +14,7 @@ from avaframe.log2Report import generateCompareReport
 from avaframe.out3SimpPlot import outPlotAllPeak as oP
 from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import fileHandlerUtils as fU
+from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from benchmarks import simParameters
@@ -33,7 +34,7 @@ standardNames = ['data/avaBowl',
                  'data/avaHockeySmoothChannel',
                  'data/avaHockeySmoothSmall',
                  'data/avaInclinedPlane']
-                 
+
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reports')
 fU.makeADir(outDir)
@@ -65,7 +66,10 @@ for avaDir in standardNames:
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
-    # set timing
+    # Clean input directory(ies) of old work and output files
+    initProj.cleanSingleAvaDir(avaDir,  keep=logName)
+
+    # Set timing
     startTime = time.time()
     # Run Standalone DFA
     reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
