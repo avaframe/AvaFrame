@@ -9,6 +9,7 @@ import configparser
 import os
 import logging
 # Local imports
+import avaframe as avaf
 from avaframe.in3Utils import logUtils
 
 
@@ -21,7 +22,7 @@ def getGeneralConfig():
     '''
 
     # get path of module
-    modPath = os.path.dirname('avaframeCfg.ini')
+    modPath = os.path.dirname(avaf.__file__)
     localFile = os.path.join(modPath, 'local_avaframeCfg.ini')
     defaultFile = os.path.join(modPath, 'avaframeCfg.ini')
     if os.path.isfile(localFile):
