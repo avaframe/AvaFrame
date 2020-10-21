@@ -85,6 +85,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   // Load project
   sprintf(ProjDir, "%s", Com1DFAProjectDir);
+>>>>>>> Rename executable
   set("", "ProjectDir", ProjDir);
   set("", "LoadProject", ProjDir);
 

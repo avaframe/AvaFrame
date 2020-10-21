@@ -19,12 +19,7 @@ void CreateSimulations(char Com1DFAProjectDir[],
 
   // Load project
   set("", "Close", "");
-<<<<<<< HEAD
   sprintf(ProjDir, "%s", Com1DFAProjectDir);
-=======
-  // sprintf(ProjDir, "%s/%s", BasePath, SamosProjectDir);
-  sprintf(ProjDir, "%s", SamosProjectDir);
->>>>>>> Change path in cint files
   set("", "LoadProject", ProjDir);
 
 
