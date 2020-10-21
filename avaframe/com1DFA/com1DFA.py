@@ -341,7 +341,7 @@ def com1DFAMain(cfg, avaDir):
         else:
             for sim in cuSim:
                 templateFile = os.path.join(modPath, 'runBasicST.cint')
-                workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBaiscST.cint')
+                workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBasicST.cint')
                 logName = sim + '_' + defValues['Mu']
                 # Write required info to cint file
                 copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())

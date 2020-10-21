@@ -20,7 +20,8 @@ import configparser
 def test_initialiseRun():
     """ test check for input data """
 
-    avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
+    dirPath = os.path.dirname(__file__)
+    avaDir  = os.path.join(dirPath, 'data', 'avaTest')
     flagEnt = True
     flagRes = True
 
@@ -55,8 +56,9 @@ def test_execCom1Exe():
 
     # Initialise inputs
     com1Exe = 'testPath'
-    cintFile = os.path.join('avaframe', 'tests', 'data', 'runBasicST.cint')
-    avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
+    dirPath = os.path.dirname(__file__)
+    avaDir  = os.path.join(dirPath, 'data', 'avaTest')
+    cintFile = os.path.join(dirPath, 'data', 'runBasicST.cint')
     logName = 'release1HS2_entres_dfa_0.155'
     fullOut = False
 
@@ -89,7 +91,10 @@ def test_execCom1Exe():
 #     com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
 #
 #     # get configuration
-#     avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
+#     dirPath = os.path.dirname(__file__)
+#     avaDir  = os.path.join(dirPath, 'data', 'avaTest')
+#
+#     #avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
 #     avaName = os.path.basename(avaDir)
 #     testCfg = os.path.join(avaDir, '%s_com1DFACfg.ini' % avaName)
 #     cfg = cfgUtils.getModuleConfig(com1DFA, testCfg)

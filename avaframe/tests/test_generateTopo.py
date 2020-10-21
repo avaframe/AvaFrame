@@ -132,7 +132,8 @@ def test_inclinedplane():
     x, y, z = gT.inclinedplane(cfg)
 
     # Load reference solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaInclinedPlane',
+    dirPath = os.path.dirname(__file__)
+    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaInclinedPlane',
                                    'Inputs', 'myDEM_IP_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
@@ -151,7 +152,8 @@ def test_inclinedplane():
     x, y, z = gT.inclinedplane(cfg)
 
     # Load reference solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'tests', 'data',
+    dirPath = os.path.dirname(__file__)
+    zSol = np.loadtxt(os.path.join(dirPath, 'data',
                                    'myDEM_IP_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
@@ -176,7 +178,8 @@ def test_hockeysmooth():
     x, y, z = gT.hockeysmooth(cfg)
 
     # Load reference Solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaHockeySmoothChannel',
+    dirPath = os.path.dirname(__file__)
+    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaHockeySmoothChannel',
                                    'Inputs', 'myDEM_HS2_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
@@ -200,7 +203,8 @@ def test_hockey():
     x, y, z = gT.hockey(cfg)
 
     # Load reference Solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaHockey',
+    dirPath = os.path.dirname(__file__)
+    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaHockey',
                                    'Inputs', 'myDEM_HS_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
@@ -224,7 +228,8 @@ def test_helix():
     x, y, z = gT.helix(cfg)
 
     # Load reference Solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaHelixChannel',
+    dirPath = os.path.dirname(__file__)
+    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaHelixChannel',
                                    'Inputs', 'myDEM_HX_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
@@ -246,7 +251,8 @@ def test_bowl():
     x, y, z = gT.bowl(cfg)
 
     # Load reference Solution
-    zSol = np.loadtxt(os.path.join(os.getcwd(), 'avaframe', 'data', 'avaBowl',
+    dirPath = os.path.dirname(__file__)
+    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaBowl',
                                    'Inputs', 'myDEM_BL_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
