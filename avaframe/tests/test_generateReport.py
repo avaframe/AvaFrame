@@ -33,7 +33,8 @@ def test_writeReport():
     # initialise cfg object and test directory
     cfg = configparser.ConfigParser()
     cfg['FLAGS'] = {'reportOneFile': True}
-    testDir = os.path.join(os.getcwd(), 'avaframe', 'tests')
+    testDir = os.path.dirname(__file__)
+    testDir = os.path.join(testDir, 'data')
 
     # Call function to be tested
     gR.writeReport(testDir, reportDictList, cfg['FLAGS'])

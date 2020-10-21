@@ -17,7 +17,8 @@ def test_readLogFile():
     """ Test if logDict is generated correctly """
 
     # Test function
-    logName = os.path.join(os.getcwd(), 'avaframe', 'tests', 'data', 'testExpLog.txt')
+    dirPath = os.path.dirname(__file__)
+    logName = os.path.join(dirPath, 'data', 'testExpLog.txt')
     cfg = configparser.ConfigParser()
     cfg = {'varPar' : 'RelTh'}
     logDict = fU.readLogFile(logName, cfg)
@@ -35,7 +36,8 @@ def test_makeSimDict():
     """ Test if simulation dictionary is generated correctly """
 
     # Test function
-    inputDir = os.path.join(os.getcwd(), 'avaframe', 'tests', 'data', 'testSim')
+    dirPath = os.path.dirname(__file__)
+    inputDir = os.path.join(dirPath, 'data', 'testSim')
     cfg = configparser.ConfigParser()
     cfg = {'varPar' : 'test'}
     data = fU.makeSimDict(inputDir, cfg['varPar'])
