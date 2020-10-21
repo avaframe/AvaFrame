@@ -22,6 +22,11 @@ def test_initialiseRun():
 
     dirPath = os.path.dirname(__file__)
     avaDir  = os.path.join(dirPath, 'data', 'avaTest')
+
+    # Clean input directory(ies) of old work and output files
+    initProj.cleanSingleAvaDir(avaDir)
+
+    # flags for entrainment and resistance
     flagEnt = True
     flagRes = True
 
@@ -80,8 +85,8 @@ def test_execCom1Exe():
 
     # Test
     assert flagFile == True
-
-# Uncomment if required files ready
+#
+# # Uncomment if required files ready
 
 # def test_com1DFAMain():
 #     """ test call to com1DFA module """
