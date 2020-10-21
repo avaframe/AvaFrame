@@ -12,6 +12,7 @@ from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.out3SimpPlot import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
+from avaframe.in3Utils import initializeProject as initProj
 import pytest
 import configparser
 
@@ -49,55 +50,61 @@ def test_initialiseRun():
     assert lineVals[0][2] == 'RelTh\n'
 
 
-def test_execSamos():
+def test_execCom1Exe():
     """ test call to com1DFA executable without performing simulation but check log generation """
 
     # Initialise inputs
     com1Exe = 'testPath'
     cintFile = os.path.join('avaframe', 'tests', 'data', 'runBasicST.cint')
     avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
-    simName = 'release1BL'
+    logName = 'release1HS2_entres_dfa_0.155'
     fullOut = False
 
+    # Clean input directory(ies) of old work and output files
+    initProj.cleanSingleAvaDir(avaDir)
+    # create required Output folder
+    os.makedirs(os.path.join(avaDir, 'Outputs', 'com1DFA'))
+
     # Call function
-    com1DFA.execSamos(com1Exe, cintFile, avaDir, fullOut, simName)
+    com1DFA.execCom1Exe(com1Exe, cintFile, avaDir, fullOut, logName)
 
     # reference log File name
-    logName = 'startrelease1BL.log'
+    logFile = 'startrelease1HS2_entres_dfa_0.155.log'
 
     # check if log file has been created with correct name
     flagFile = False
-    if os.path.isfile(os.path.join(avaDir, 'Outputs', 'com1DFA', logName)):
+    if os.path.isfile(os.path.join(avaDir, 'Outputs', 'com1DFA', logFile)):
         flagFile = True
 
     # Test
     assert flagFile == True
 
+# Uncomment if required files ready
 
-def test_com1DFAMain():
-    """ test call to com1DFA module """
-
-    # get path to executable
-    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
-    samosAT = cfgCom1DFA['GENERAL']['samosAT']
-
-    # get configuration
-    avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
-    avaName = os.path.basename(avaDir)
-    testCfg = os.path.join(avaDir, '%s_com1DFACfg.ini' % avaName)
-    cfg = cfgUtils.getModuleConfig(com1DFA, testCfg)
-    cfg['GENERAL']['samosAT'] = samosAT
-
-    # Run Standalone DFA
-    reportDictList = com1DFA.runSamos(cfg, avaDir)
-
-    # Generata plots for all peakFiles
-    # Initialise input in correct format
-    cfgMain = configparser.ConfigParser()
-    cfgMain['FLAGS'] = {'ReportDir': 'True'}
-    plotDict = oP.plotAllPeakFields(avaDir, cfg, cfgMain['FLAGS'])
-
-    # Set directory for report
-    reportDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
-    # write report
-    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+# def test_com1DFAMain():
+#     """ test call to com1DFA module """
+#
+#     # get path to executable
+#     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
+#     com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
+#
+#     # get configuration
+#     avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
+#     avaName = os.path.basename(avaDir)
+#     testCfg = os.path.join(avaDir, '%s_com1DFACfg.ini' % avaName)
+#     cfg = cfgUtils.getModuleConfig(com1DFA, testCfg)
+#     cfg['GENERAL']['com1Exe'] = com1Exe
+#
+#     # Clean input directory(ies) of old work and output files
+#     initProj.cleanSingleAvaDir(avaDir)
+#
+#     # Run Standalone DFA
+#     reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
+#
+#     reportD = reportDictList[0]
+#
+#     # Test module
+#     assert reportD['simName']['name'] == 'release1HS2_null_dfa_0.155'
+#     assert reportD['Simulation Parameters']['Entrainment Area'] == ''
+#     assert reportD['Simulation Parameters']['Mu'] == '0.155'
+#     assert reportD['Simulation Parameters']['Parameter value'] == ''
