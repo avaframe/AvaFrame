@@ -87,32 +87,32 @@ def test_execCom1Exe():
     assert flagFile == True
 
 
-# Uncomment if required files ready
-# def test_com1DFAMain():
-#     """ test call to com1DFA module """
-#
-#     # get path to executable
-#     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
-#     com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
-#
-#     # get configuration
-#     dirPath = os.path.dirname(__file__)
-#     avaDir  = os.path.join(dirPath, 'data', 'avaTest')
-#     avaName = os.path.basename(avaDir)
-#     testCfg = os.path.join(avaDir, '%s_com1DFACfg.ini' % avaName)
-#     cfg = cfgUtils.getModuleConfig(com1DFA, testCfg)
-#     cfg['GENERAL']['com1Exe'] = com1Exe
-#
-#     # Clean input directory(ies) of old work and output files
-#     initProj.cleanSingleAvaDir(avaDir)
-#
-#     # Run Standalone DFA
-#     reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
-#
-#     reportD = reportDictList[0]
-#
-#     # Test module
-#     assert reportD['simName']['name'] == 'release1HS2_null_dfa_0.155'
-#     assert reportD['Simulation Parameters']['Entrainment Area'] == ''
-#     assert reportD['Simulation Parameters']['Mu'] == '0.155'
-#     assert reportD['Simulation Parameters']['Parameter value'] == ''
+@pytest.mark.skip(reason="com1DFA exe is missing, no way of testing this")
+def test_com1DFAMain():
+    """ test call to com1DFA module """
+
+    # get path to executable
+    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
+    com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
+
+    # get configuration
+    dirPath = os.path.dirname(__file__)
+    avaDir  = os.path.join(dirPath, 'data', 'avaTest')
+    avaName = os.path.basename(avaDir)
+    testCfg = os.path.join(avaDir, '%s_com1DFACfg.ini' % avaName)
+    cfg = cfgUtils.getModuleConfig(com1DFA, testCfg)
+    cfg['GENERAL']['com1Exe'] = com1Exe
+
+    # Clean input directory(ies) of old work and output files
+    initProj.cleanSingleAvaDir(avaDir)
+
+    # Run Standalone DFA
+    reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
+
+    reportD = reportDictList[0]
+
+    # Test module
+    assert reportD['simName']['name'] == 'release1HS2_null_dfa_0.155'
+    assert reportD['Simulation Parameters']['Entrainment Area'] == ''
+    assert reportD['Simulation Parameters']['Mu'] == '0.155'
+    assert reportD['Simulation Parameters']['Parameter value'] == ''
