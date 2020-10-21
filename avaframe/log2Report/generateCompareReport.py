@@ -108,13 +108,15 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
         for value in reportD['Simulation Results']:
             if value != 'type':
                 pfile.write('##### Figure:   %s \n' % value)
-                minDiff = float(reportD['Simulation Difference'][value][2])
+                maxDiff = max(abs(float(reportD['Simulation Difference'][value][2])),
+                                 abs(float(reportD['Simulation Difference'][value][0])))
                 maxVal = float(reportD['Simulation Stats'][value][0])
-                if minDiff < (-1.0*diffLim*maxVal) or minDiff > (diffLim*maxVal):
-                    textString = '<span style="color:red"> Warning difference in %s is Max: %0.2f, \
-                                 Mean %.02f and Min %.02f </span>' % (value, reportD['Simulation Difference'][value][0],
+                if maxDiff < (-1.0*diffLim*maxVal) or maxDiff > (diffLim*maxVal):
+                    textString1 = '<span style="color:red"> Warning absolute difference exceeds the tolerance of %.0f percent of %s-max value (%.2f) </span>' % (100.*diffLim, value, maxVal)
+                    textString2 = '<span style="color:red"> Difference is: Max = %0.2f, Mean = %.02f and Min = %.02f </span>' % (reportD['Simulation Difference'][value][0],
                                  reportD['Simulation Difference'][value][1], reportD['Simulation Difference'][value][2])
-                    pfile.write(' %s \n' % textString)
+                    pfile.write(' %s \n' % textString1)
+                    pfile.write(' %s \n' % textString2)
                 pfile.write('![%s](%s) \n' % (value, reportD['Simulation Results'][value]))
 
         pfile.write(' \n')
