@@ -85,9 +85,9 @@ def test_execCom1Exe():
 
     # Test
     assert flagFile == True
-#
-# # Uncomment if required files ready
 
+
+# Uncomment if required files ready
 # def test_com1DFAMain():
 #     """ test call to com1DFA module """
 #
@@ -98,8 +98,6 @@ def test_execCom1Exe():
 #     # get configuration
 #     dirPath = os.path.dirname(__file__)
 #     avaDir  = os.path.join(dirPath, 'data', 'avaTest')
-#
-#     #avaDir  = os.path.join('avaframe', 'tests', 'data', 'avaTest')
 #     avaName = os.path.basename(avaDir)
 #     testCfg = os.path.join(avaDir, '%s_com1DFACfg.ini' % avaName)
 #     cfg = cfgUtils.getModuleConfig(com1DFA, testCfg)

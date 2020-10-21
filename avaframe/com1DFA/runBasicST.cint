@@ -84,7 +84,7 @@ void RunExport(char BasePath[], char Com1DFAProjectDir[], char ResDir[], char Cu
   FILE *ExpLog2;
 
   // Load project
-  sprintf(ProjDir, "%s/%s", BasePath, Com1DFAProjectDir);
+  sprintf(ProjDir, "%s", Com1DFAProjectDir);
   set("", "ProjectDir", ProjDir);
   set("", "LoadProject", ProjDir);
 
