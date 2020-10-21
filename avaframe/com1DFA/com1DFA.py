@@ -41,7 +41,7 @@ def execCom1Exe(com1Exe, cintFile, avaDir, fullOut=False, simName=''):
             f_log.write(line)
         if fullOut:
             log.info((line.rstrip()))
-        elif 'BatchSamos' in line:
+        elif 'BatchCom1DFA' in line:
             log.info(line.rstrip())
         elif 'error' in line:
             log.info(line.rstrip())

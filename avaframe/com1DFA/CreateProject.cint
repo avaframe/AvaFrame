@@ -2,7 +2,7 @@ int MAXSTRLEN = 512;
 // testing
 // the
 // header
-void CreateProject(char BasePath[], char SamosProjectDir[], char DhmFile[],
+void CreateProject(char BasePath[], char Com1DFAProjectDir[], char DhmFile[],
                    char DhmName[], char RelFile[][512],
                    char EntFile[][512],
                    char ResFile[][512],
@@ -26,8 +26,8 @@ void CreateProject(char BasePath[], char SamosProjectDir[], char DhmFile[],
   set("", "Close", "");
 
   // if not exist:
-  // sprintf(ProjDir, "%s/%s", BasePath, SamosProjectDir);
-  sprintf(ProjDir, "%s", SamosProjectDir);
+  // sprintf(ProjDir, "%s/%s", BasePath, Com1DFAProjectDir);
+  sprintf(ProjDir, "%s", Com1DFAProjectDir);
   set("", "SaveProjectAs", ProjDir);
 
   // choose DHM
@@ -95,7 +95,7 @@ void CreateProject(char BasePath[], char SamosProjectDir[], char DhmFile[],
 int main()
 {
   char BasePath[512];
-  char SamosProjectDir[512];
+  char Com1DFAProjectDir[512];
   char DhmPath[512], DhmName[512], DhmFile[512];
   char SimName[512];
   char ReleaseFile[512];
@@ -109,7 +109,7 @@ int main()
 
   // --- Setup
   strcpy(BasePath, "##BASEPATH##");
-  strcpy(SamosProjectDir, "##PROJECTDIR##");
+  strcpy(Com1DFAProjectDir, "##PROJECTDIR##");
   strcpy(DhmFile,  "##DHMFILE##");
   strcpy(DhmName,  "##DHMNAME##");
   strcpy(CellSize,  "##CELLSIZE##");
@@ -118,9 +118,9 @@ int main()
   strcpy(ResFiles,"##RESFILE##");
 
   // --- Calls
-  CreateProject(BasePath, SamosProjectDir, DhmFile,
+  CreateProject(BasePath, Com1DFAProjectDir, DhmFile,
                 DhmName, RelFiles, EntFiles,  ResFiles, CellSize);
 
-  printf("[BatchSamos] Project %s created!\n", SamosProjectDir);
+  printf("[BatchCom1DFA] Project %s created!\n", Com1DFAProjectDir);
   return 0;
 }
