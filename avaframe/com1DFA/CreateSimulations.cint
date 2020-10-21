@@ -19,8 +19,7 @@ void CreateSimulations(char BasePath[], char Com1DFAProjectDir[],
 
   // Load project
   set("", "Close", "");
-  sprintf(ProjDir, "%s/%s", BasePath, Com1DFAProjectDir);
-  // sprintf(ProjDir, "%s", Com1DFAProjectDir);
+  sprintf(ProjDir, "%s", Com1DFAProjectDir);
   set("", "LoadProject", ProjDir);
 
 
