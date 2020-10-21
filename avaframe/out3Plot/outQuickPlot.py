@@ -129,7 +129,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     plotDict['plots'].append(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, outputFormat)))
     plotDict['difference'].append(diffMax)
     plotDict['difference'].append(diffMean)
-    plotDict['difference'].append(diffMax)
+    plotDict['difference'].append(diffMin)
     plotDict['stats'].append(np.amax(data2))
     plotDict['stats'].append(np.amin(data2))
 
