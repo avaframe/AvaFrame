@@ -33,7 +33,7 @@ standardNames = ['data/avaBowl',
                  'data/avaHockeySmoothChannel',
                  'data/avaHockeySmoothSmall',
                  'data/avaInclinedPlane']
-
+                 
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reports')
 fU.makeADir(outDir)

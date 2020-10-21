@@ -59,7 +59,7 @@ void postprocessing(char ResultDir[], char SimName[], float Mu){
     sprintf(MuString,"%.3f",Mu);
     sprintf(ResultDir_rep,"%s/FullOutput_Mu_%s",ResultDir,MuString);
     if(make_directory(ResultDir_rep)){ set_error("cannot create report directory"); return;}
-    printf("\n[BatchSamos] Report is saved to %s \n",ResultDir_rep);
+    printf("\n[BatchCom1DFA] Report is saved to %s \n",ResultDir_rep);
     sprintf(name,"Project/Simulations/%s",SimName);
     set(name, "set_report_directory", ResultDir_rep);
     set(name, "generate_report", "");
@@ -70,7 +70,7 @@ void postprocessing(char ResultDir[], char SimName[], float Mu){
 ///////////////////////////////////////////////////////////////////////////////
 // Run calls for simulations
 
-void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], char CuSim[], int countRel, float Mu)
+void RunExport(char BasePath[], char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countRel, float Mu)
 {
   char ProjDir[512];
   char Sim[512];
@@ -86,27 +86,27 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], char CuSi
   FILE *ExpLog2;
 
   // Load project
-  sprintf(ProjDir, "%s/%s", BasePath, SamosProjectDir);
+  sprintf(ProjDir, "%s/%s", BasePath, Com1DFAProjectDir);
   set("", "ProjectDir", ProjDir);
   set("", "LoadProject", ProjDir);
 
   // Open experiment log file
   sprintf(FPath, "%s_ExpLog.txt", ProjDir);
   ExpLog = fopen(FPath,"w");
-  printf("\n[BatchSamos] ExpLog %s\n",FPath);
+  printf("\n[BatchCom1DFA] ExpLog %s\n",FPath);
   fprintf(ExpLog, "N;SimName;mu\n");
   // Open second experiment log file for postprocessing
   sprintf(F2Path, "%s/ExpLog.txt", ResDir);
   ExpLog2 = fopen(F2Path,"a");
-  printf("\n[BatchSamos] Full ExpLog %s\n",F2Path);
+  printf("\n[BatchCom1DFA] Full ExpLog %s\n",F2Path);
 
 
   // Count Simulation runs
   ExpCount = countRel;
 
   sprintf(Sim,"Project/Simulations/%s",CuSim);
-  printf("\n[BatchSamos] -------------------------\n");
-  printf("\n[BatchSamos] Current Sim %s\n",Sim);
+  printf("\n[BatchCom1DFA] -------------------------\n");
+  printf("\n[BatchCom1DFA] Current Sim %s\n",Sim);
 
 
 
@@ -125,7 +125,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], char CuSi
   sprintf(Parameter,"tau0=0.0 mue=%f Rs0=0.222 kappa=0.43 R=0.05 B=4.13",Mu);
   set(Sim, "FormulaParameters", Parameter);
   get(Sim, "FormulaParameters", Parameter);
-  printf("[BatchSamos] Computing %s with Mu=%f\n",CuSim,Mu);
+  printf("[BatchCom1DFA] Computing %s with Mu=%f\n",CuSim,Mu);
 
   // Set Expcount and update log
   ExpCount++;
@@ -135,7 +135,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], char CuSi
 
   //------------- start processing
   set("", "SaveProject", "");
-  printf("[BatchSamos] Computing %s; Sim # %d. ; Mu %f \n",CuSim,ExpCount,Mu);
+  printf("[BatchCom1DFA] Computing %s; Sim # %d. ; Mu %f \n",CuSim,ExpCount,Mu);
   set(Sim, "DeactivateLoadingPsaResults", "");
   set(Sim, "LoadProject", "");
   set(Sim, "Run", "");
@@ -156,7 +156,7 @@ void RunExport(char BasePath[], char SamosProjectDir[], char ResDir[], char CuSi
 int main()
 {
   char BasePath[512];
-  char SamosProjectDir[512];
+  char Com1DFAProjectDir[512];
   char CuSim[512];
   char ResDir[512];
   char countRelStr[512];
@@ -166,7 +166,7 @@ int main()
 
   // --- Setup
   strcpy(BasePath, "##BASEPATH##");
-  strcpy(SamosProjectDir, "##PROJECTDIR##");
+  strcpy(Com1DFAProjectDir, "##PROJECTDIR##");
   strcpy(ResDir, "##RESDIR##");
   strcpy(CuSim, "##NAME##");
   strcpy(countRelStr, "##COUNTREL##");
@@ -179,13 +179,13 @@ int main()
   // Setup total number of simulations for file naming
   countRel = atoi(countRelStr);
 
-  printf("[BatchSamos] Number of total sims now %d \n",countRel);
+  printf("[BatchCom1DFA] Number of total sims now %d \n",countRel);
 
   // --- Calls
-  RunExport(BasePath, SamosProjectDir, ResDir, CuSim, countRel, Mu);
+  RunExport(BasePath, Com1DFAProjectDir, ResDir, CuSim, countRel, Mu);
 
 
-  printf("[BatchSamos] Project %s done\n", SamosProjectDir);
+  printf("[BatchCom1DFA] Project %s done\n", Com1DFAProjectDir);
   return 0;
 
 }

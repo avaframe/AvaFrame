@@ -11,6 +11,7 @@ import time
 from avaframe.com1DFA import com1DFA
 from avaframe.log2Report import generateReport as gR
 from avaframe.out3SimpPlot import outPlotAllPeak as oP
+from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
@@ -30,8 +31,11 @@ log.info('Current avalanche: %s', avalancheDir)
 # write config to log file
 cfg = cfgUtils.getModuleConfig(com1DFA)
 
-
 startTime = time.time()
+
+# Clean input directory(ies) of old work and output files
+initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
+
 # Run Standalone DFA
 reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
 
