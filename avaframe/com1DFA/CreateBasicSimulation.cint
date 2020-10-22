@@ -1,6 +1,6 @@
 int MAXSTRLEN = 512;
 
-void CreateSimulations(char BasePath[], char Com1DFAProjectDir[],
+void CreateSimulations(char Com1DFAProjectDir[],
                        char BaseName[])
 {
   char ProjDir[512];
@@ -46,20 +46,18 @@ void CreateSimulations(char BasePath[], char Com1DFAProjectDir[],
 // ################################# main #####################################
 int main()
 {
-  char BasePath[512];
   char Com1DFAProjectDir[512];
   char BaseSimName[512];
 
 
   // --- Setup
-  strcpy(BasePath, "##BASEPATH##");
   strcpy(Com1DFAProjectDir, "##PROJECTDIR##");
   // Base name for simulations
   strcpy(BaseSimName, "##BASESIMNAME##");
 
 
   // --- Calls
-  CreateSimulations(BasePath, Com1DFAProjectDir, BaseSimName);
+  CreateSimulations(Com1DFAProjectDir, BaseSimName);
 
 
   printf("[BatchCom1DFA] Project %s now with reference simulations\n", Com1DFAProjectDir);

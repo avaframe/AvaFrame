@@ -70,7 +70,7 @@ void postprocessing(char ResultDir[], char SimName[], float Mu){
 ///////////////////////////////////////////////////////////////////////////////
 // Run calls for simulations
 
-void RunExport(char BasePath[], char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countRel, float Mu)
+void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countRel, float Mu)
 {
   char ProjDir[512];
   char Sim[512];
@@ -155,7 +155,6 @@ void RunExport(char BasePath[], char Com1DFAProjectDir[], char ResDir[], char Cu
 // ################################# main #####################################
 int main()
 {
-  char BasePath[512];
   char Com1DFAProjectDir[512];
   char CuSim[512];
   char ResDir[512];
@@ -165,7 +164,6 @@ int main()
   float Mu;
 
   // --- Setup
-  strcpy(BasePath, "##BASEPATH##");
   strcpy(Com1DFAProjectDir, "##PROJECTDIR##");
   strcpy(ResDir, "##RESDIR##");
   strcpy(CuSim, "##NAME##");
@@ -182,10 +180,10 @@ int main()
   printf("[BatchCom1DFA] Number of total sims now %d \n",countRel);
 
   // --- Calls
-  RunExport(BasePath, Com1DFAProjectDir, ResDir, CuSim, countRel, Mu);
+  RunExport(Com1DFAProjectDir, ResDir, CuSim, countRel, Mu);
 
-
-  printf("[BatchCom1DFA] Project %s done\n", Com1DFAProjectDir);
+  countRel++;
+  printf("[BatchCom1DFA] Simulation #%d done\n", countRel);
   return 0;
 
 }
