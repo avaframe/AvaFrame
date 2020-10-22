@@ -82,6 +82,11 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
             log.warning('No resistance file')
             resFiles.append('')  # Kept this for future enhancements
         else:
+            try:
+                message = 'There shouldn\'t be more than one resistance .shp file in ' + inputDir + '/RES/'
+                assert len(resFiles) < 2, message
+            except AssertionError:
+                raise
             flagEntRes = True
     else:
         resFiles = []
@@ -94,6 +99,11 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
             log.warning('No entrainment file')
             entFiles.append('')  # Kept this for future enhancements
         else:
+            try:
+                message = 'There shouldn\'t be more than one entrainment .shp file in ' + inputDir + '/ENT/'
+                assert len(entFiles) < 2, message
+            except AssertionError:
+                raise
             flagEntRes = True
     else:
         entFiles = []
@@ -101,6 +111,10 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
 
     # Initialise DEM
     demFile = glob.glob(inputDir+os.sep+'*.asc')
+    try:
+        assert len(demFile) == 1, 'There should be exactly one topography .asc file in ' + inputDir
+    except AssertionError:
+        raise
 
     # Parameter variation
     if cfgPar.getboolean('flagVarPar'):
