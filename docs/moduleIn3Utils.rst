@@ -233,3 +233,8 @@ To run
 * in ``avaframe`` run:
 
 			python3 runInitializeProject.py
+
+Configuration
+==============
+
+Parameters are written in a ``moduleCfg.ini`` file
