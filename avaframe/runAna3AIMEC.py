@@ -39,7 +39,6 @@ cfgSetup = cfg['AIMECSETUP']
 # Setup input from com1DFA
 dfa2Aimec.mainDfa2Aimec(avalancheDir, cfgSetup)
 
-saveOutPath = avalancheDir + '/Outputs'
 # Extract input file locations
 cfgPath = ana3AIMEC.readAIMECinputs(avalancheDir, dirName='com1DFA')
 

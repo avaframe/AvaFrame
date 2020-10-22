@@ -18,7 +18,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import initializeProject as initProj
 
-# Time the whole shebang
+# Time the whole routine
 startTime = time.time()
 
 # log file name; leave empty to use default runLog.log
