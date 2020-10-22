@@ -161,7 +161,7 @@ def readABinputs(cfgAva):
     # read avalanche paths for AB
     profileLayer = glob.glob(cfgAva + '/Inputs/LINES/*AB*.shp')
     try:
-        message = 'There should be exactly one pathAB.shp file containing the avalanche paths in ' + cfgAva + '/Inputs/LINES/'
+        message = 'There should be exactly one pathAB.shp file containing (multiple) avalanche paths in ' + cfgAva + '/Inputs/LINES/'
         assert len(profileLayer) == 1, message
     except AssertionError:
         raise
