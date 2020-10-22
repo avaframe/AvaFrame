@@ -45,10 +45,20 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
 
     profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES',
                                           '*aimec*.shp'))
+    try:
+        message = 'There should be exactly one path_aimec.shp file containing the avalanche paths in ' + avalancheDir + '/Inputs/LINES/'
+        assert len(profileLayer) == 1, message
+    except AssertionError:
+        raise
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
     splitPointLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'POINTS',
                                              '*.shp'))
+    try:
+        message = 'There should be exactly one .shp file containing the split points in ' + avalancheDir + '/Inputs/POINTS/'
+        assert len(splitPointLayer) == 1, message
+    except AssertionError:
+        raise
     cfgPath['splitPointSource'] = ''.join(splitPointLayer)
 
     demSource = glob.glob(os.path.join(avalancheDir, 'Inputs', '*.asc'))
