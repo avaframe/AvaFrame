@@ -1,13 +1,16 @@
-logUtils - INFO -  Writing cfg for: test config
-logUtils - INFO -  	GENERAL
-logUtils - INFO -  		inputdir : path/to/avalanche
-logUtils - INFO -  		fulllog : True
-logUtils - INFO -  	FLAGS
-logUtils - INFO -  		plotfigure : False
-logUtils - INFO -  		saveplot : False
-logUtils - INFO -  	GOODSECTION1
-logUtils - INFO -  		goodkey1 : 1
-logUtils - INFO -  		goodkey2 : False
-logUtils - INFO -  	GOODSECTION2
-logUtils - INFO -  		goodkey3 : 0
-logUtils - INFO -  		goodkey4 : False
+cfgUtils - INFO -  Writing cfg for: test_logUtils
+cfgUtils - INFO -  	GENERAL
+cfgUtils - INFO -  		inputdir : path/to/avalanche
+cfgUtils - INFO -  		fulllog : True
+cfgUtils - INFO -  	FLAGS
+cfgUtils - INFO -  		plotfigure : False
+cfgUtils - INFO -  		saveplot : False
+cfgUtils - INFO -  	GOODSECTION1
+cfgUtils - INFO -  		goodkey1 : 1
+cfgUtils - INFO -  		goodkey2 : False 	(default value was : True)
+cfgUtils - INFO -  	GOODSECTION2
+cfgUtils - INFO -  		goodkey3 : 0
+cfgUtils - INFO -  		goodkey4 : False
+cfgUtils - WARNING -  Key ['badkey1'] in section ['GOODSECTION1'] in the localCfg file is not needed.
+cfgUtils - WARNING -  Key ['badkey2'] in section ['BADSECTION1'] in the localCfg file is not needed.
+cfgUtils - WARNING -  Key ['badkey3'] in section ['BADSECTION1'] in the localCfg file is not needed.
