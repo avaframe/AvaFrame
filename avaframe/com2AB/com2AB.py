@@ -224,7 +224,7 @@ def calcAB(AvaProfile, eqParameters):
         plt.plot(s, angle)
         plt.plot(s[ids10Point], angle[ids10Point], 'or')
         plt.axhline(y=10, color='0.8',
-                    linewidth=1, linestyle='-.', label='10^\circ line')
+                    linewidth=1, linestyle='-.', label='10° line')
 
         plt.figure(figsize=(10, 6))
         plt.plot(s, z)

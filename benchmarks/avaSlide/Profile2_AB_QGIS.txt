@@ -1,0 +1,9 @@
+Profile name Profile2
+Parameter Set Standard
+Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD
+x         y      z  s       angle
+1397.36, 450.23, 0, 1320.00, 27.76
+1230.42, 479.64, 0, 1150.00, 30.67
+1464.59, 430.75, 0, 1390.00, 26.51
+1541.43, 408.49, 0, 1470.00, 25.26
+1329.69, 467.59, 0, 1250.00, 29.01
