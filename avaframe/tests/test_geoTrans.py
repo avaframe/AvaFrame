@@ -17,14 +17,14 @@ def test_projectOnRaster(capfd):
     header.cellsize = 5
 
     rasterdata = np.array(([0, 1, 2], [2, 0.5, 5]))
-    Points['x'] = np.array((-5, -0.000000001, -5, 2, 0, -2.5, -2, 2))
-    Points['y'] = np.array((2, 6.99999999999, 6.999999999999, 6, 10, 4.5,
+    Points['x'] = np.array((-5, -0.00000000001, -5, 2, 0, -2.5, -2, 2))
+    Points['y'] = np.array((2, 6.9999999999, 6.9999999999, 6, 10, 4.5,
                            np.nan, 8))
 
     dem['header'] = header
     dem['rasterData'] = rasterdata
 
-    Points = geoTrans.projectOnRaster(dem, Points)
+    Points = geoTrans.projectOnRaster(dem, Points, interp='bilinear')
     tol = 1e-8
     assert (Points['z'][0] == pytest.approx(0, abs=tol))
     assert (Points['z'][1] == pytest.approx(0.5, abs=tol))
@@ -60,10 +60,10 @@ def test_projectOnRasterVect(capfd):
                                                       interp='bilinear')
     atol = 1e-8
     # Compare result to reference solution
-    zSol = np.array([[4.99600361e-13, 4.00000000e+00],
-                     [np.nan, 4.07000000e+00],
-                     [8.60000000e+00,            np.nan],
-                     [np.nan,            np.nan]])
+    zSol = np.array([[0, 4],
+                     [np.nan, 4.07],
+                     [8.6, np.nan],
+                     [np.nan, np.nan]])
 
     zSolnan = np.isnan(zSol)
     testRes = np.allclose(np.isnan(Points['z']), zSolnan, atol=atol)
