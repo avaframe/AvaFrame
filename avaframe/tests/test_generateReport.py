@@ -14,7 +14,7 @@ import pytest
 import configparser
 
 
-def test_writeReport():
+def test_writeReport(tmp_path):
     """ Test generation markdown report file """
 
     # Initialise input dictionary
@@ -33,14 +33,12 @@ def test_writeReport():
     # initialise cfg object and test directory
     cfg = configparser.ConfigParser()
     cfg['FLAGS'] = {'reportOneFile': True}
-    testDir = os.path.dirname(__file__)
-    testDir = os.path.join(testDir, 'data')
 
     # Call function to be tested
-    gR.writeReport(testDir, reportDictList, cfg['FLAGS'])
+    gR.writeReport(tmp_path, reportDictList, cfg['FLAGS'])
 
     # Load simulation report
-    reportFile = open(os.path.join(testDir, 'fullSimulationReport.md'), 'r')
+    reportFile = open(os.path.join(tmp_path, 'fullSimulationReport.md'), 'r')
     lines = reportFile.readlines()
     lineVals = []
     for line in lines:
