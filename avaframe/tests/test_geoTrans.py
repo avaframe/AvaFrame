@@ -18,7 +18,8 @@ def test_projectOnRaster(capfd):
 
     rasterdata = np.array(([0, 1, 2], [2, 0.5, 5]))
     Points['x'] = np.array((-5, -0.000000001, -5, 2, 0, -2.5, -2, 2))
-    Points['y'] = np.array((2, 6.99999999999, 6.999999999999, 6, 10, 4.5, np.nan, 8))
+    Points['y'] = np.array((2, 6.99999999999, 6.999999999999, 6, 10, 4.5,
+                           np.nan, 8))
 
     dem['header'] = header
     dem['rasterData'] = rasterdata
@@ -49,12 +50,14 @@ def test_projectOnRasterVect(capfd):
     rasterdata = np.array(([0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]))
     Points['x'] = np.array(([1.0000000000001, 1.00000000001],
                             [-4, 2.67], [3.9999999999, 3], [9, 2]))
-    Points['y'] = np.array(([2.0000000000001, 3], [4, 2.6], [3.4, 7], [3.6, 7]))
+    Points['y'] = np.array(([2.0000000000001, 3], [4, 2.6], [3.4, 7],
+                           [3.6, 7]))
 
     dem['header'] = header
     dem['rasterData'] = rasterdata
 
-    Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points, interp='bilinear')
+    Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points,
+                                                      interp='bilinear')
     atol = 1e-8
     # Compare result to reference solution
     zSol = np.array([[4.99600361e-13, 4.00000000e+00],
@@ -69,7 +72,8 @@ def test_projectOnRasterVect(capfd):
     testRes = np.allclose(Points['z'][~np.isnan(Points['z'])], zSol, atol=atol)
     assert (testRes == True)
 
-    Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points, interp='nearest')
+    Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points,
+                                                      interp='nearest')
     atol = 1e-8
     # Compare result to reference solution
     zSol = np.array([[0.,  4.], [np.nan,  6.], [7., np.nan], [np.nan, np.nan]])
@@ -163,15 +167,19 @@ def test_path2domain(capfd):
 
     atol = 1e-8
     # Compare result to reference solution
-    zSol = np.array([-2.26776695,  2.73223305,  7.73223305, 12.73223305, 17.73223305])
+    zSol = np.array([-2.26776695,  2.73223305,  7.73223305, 12.73223305,
+                    17.73223305])
     testRes = np.allclose(DB['DBXl'], zSol, atol=atol)
     assert (testRes == True)
-    zSol = np.array([ 1.26776695,  6.26776695, 11.26776695, 16.26776695, 21.26776695])
+    zSol = np.array([1.26776695,  6.26776695, 11.26776695, 16.26776695,
+                    21.26776695])
     testRes = np.allclose(DB['DBXr'], zSol, atol=atol)
     assert (testRes == True)
-    zSol = np.array([ 5.76776695, 10.76776695, 15.76776695, 20.76776695, 25.76776695])
+    zSol = np.array([5.76776695, 10.76776695, 15.76776695, 20.76776695,
+                    25.76776695])
     testRes = np.allclose(DB['DBYl'], zSol, atol=atol)
     assert (testRes == True)
-    zSol = np.array([ 2.23223305,  7.23223305, 12.23223305, 17.23223305, 22.23223305])
+    zSol = np.array([2.23223305,  7.23223305, 12.23223305, 17.23223305,
+                    22.23223305])
     testRes = np.allclose(DB['DBYr'], zSol, atol=atol)
     assert (testRes == True)

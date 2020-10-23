@@ -6,8 +6,6 @@ import os
 # Local imports
 import avaframe.com2AB.com2AB as com2AB
 from avaframe.out3Plot import outAB
-import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in3Utils.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 
 
