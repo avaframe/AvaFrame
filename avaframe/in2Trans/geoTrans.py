@@ -502,7 +502,7 @@ def inpolygon(X, Y, xv, yv):
         for ii in range(lx):
             for jj in range(ly):
                 if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (
-                   yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and ()
+                   yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and (
                    0 < distance[ii][jj]*deltayv)):
                     if IN[ii][jj] == 0:
                         IN[ii][jj] = 1
