@@ -14,9 +14,9 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def projectOnRaster(dem, Points):
-    """ Projects the points Points on Raster using a bilinear interpolation
-    and returns the z coord
+def projectOnRaster(dem, Points, interp='bilinear'):
+    """ Projects the points Points on Raster using a bilinear or nearest
+    interpolation and returns the z coord
     Input :
     Points: list of points (x,y) 2 rows as many columns as Points
     Output:
@@ -40,8 +40,13 @@ def projectOnRaster(dem, Points):
             Ly0 = int(np.floor(Ly))
             Lx1 = int(np.floor(Lx)) + 1
             Ly1 = int(np.floor(Ly)) + 1
-            dx = Lx - Lx0
-            dy = Ly - Ly0
+            # prepare for bilinear interpolation(do not take out of bound into account)
+            if interp == 'nearest':
+                dx = np.round(Lx - Lx0)
+                dy = np.round(Ly - Ly0)
+            elif interp == 'bilinear':
+                dx = Lx - Lx0
+                dy = Ly - Ly0
             try:
                 f11 = rasterdata[Ly0][Lx0]
                 f12 = rasterdata[Ly1][Lx0]
@@ -64,8 +69,8 @@ def projectOnRaster(dem, Points):
 def projectOnRasterVect(dem, Points, interp='bilinear'):
     """
     Vectorized version of projectOnRaster
-    Projects the points Points on Raster using a bilinear interpolation
-    and returns the z coord
+    Projects the points Points on Raster using a bilinear or nearest
+    interpolation and returns the z coord
     Input :
     Points: list of points (x,y) 2 rows as many columns as Points
     Output:
