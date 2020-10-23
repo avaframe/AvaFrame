@@ -48,10 +48,11 @@ def projectOnRaster(dem, Points):
                 f21 = rasterdata[Ly0][Lx1]
                 f22 = rasterdata[Ly1][Lx1]
                 # using bilinear interpolation on the cell
-                value = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
+                value = (f11*(1-dx)*(1-dy) + f21*dx*(1-dy) +
+                         f12*(1-dx)*dy + f22*dx*dy)
             except IndexError:
                 value = np.NaN
-        except ValueError :
+        except ValueError:
             value = np.NaN
 
         zcoor = np.append(zcoor, value)
@@ -120,7 +121,7 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
     Ly0 = np.floor(Ly).astype('int')
     Lx1 = Lx0 + 1
     Ly1 = Ly0 + 1
-    # prepare for bilinear interpolation (do not take out of bound into account)
+    # prepare for bilinear interpolation(do not take out of bound into account)
     if interp == 'nearest':
         dx[mask] = np.round(Lx[mask] - Lx0[mask])
         dy[mask] = np.round(Ly[mask] - Ly0[mask])
@@ -251,9 +252,9 @@ def findAngleProfile(tmp, deltaInd):
     noBetaFoundMessage = 'No Beta point found. Check your pathAB.shp and splitPoint.shp.'
     i = 0
     condition = True
-    if np.size(tmp)==0:
+    if np.size(tmp) == 0:
         raise IndexError(noBetaFoundMessage)
-    while (i<=np.size(tmp) and condition):
+    while (i <= np.size(tmp) and condition):
         ind = tmp[0][i]
         for j in range(deltaInd):
             try:
@@ -303,7 +304,8 @@ def prepareAngleProfile(beta, AvaProfile):
 def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
     """
     bresenham algorithmus - JT 2011
-    Find all the cells of a raster (defined by its cellsize) that a line (defines by two points P0 and P1) crosses.
+    Find all the cells of a raster (defined by its cellsize) that a line
+    (defines by two points P0 and P1) crosses.
     input: x0, y0, x1, y1,cellsize
     output: array of x y coodinates of cells hit inbetween
 
@@ -354,8 +356,8 @@ def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
 def path2domain(xyPath, rasterTransfo):
     """
     path2domain
-    Creates a domain (irregular raster) along a path, given the path polyline, a domain width
-    and a raster cellsize
+    Creates a domain (irregular raster) along a path, given the path polyline,
+    a domain width and a raster cellsize
     Usage:
         [rasterTransfo] = path2domain(xyPath, rasterTransfo)
        Input:
@@ -371,8 +373,10 @@ def path2domain(xyPath, rasterTransfo):
             -rasterTransfo['DBYr']: y coord of the right boundary
 
     [Fischer2013] Fischer, Jan-Thomas. (2013).
-    A novel approach to evaluate and compare computational snow avalanche simulation.
-    Natural Hazards and Earth System Sciences. 13. 1655-. 10.5194/nhess-13-1655-2013.
+    A novel approach to evaluate and compare computational snow avalanche
+    simulation.
+    Natural Hazards and Earth System Sciences.
+    13. 1655-. 10.5194/nhess-13-1655-2013.
     Uwe Schlifkowitz/ BFW, June 2011
     """
     xllc = rasterTransfo['xllc']
@@ -436,17 +440,20 @@ def poly2maskSimple(ydep, xdep, ncols, nrows):
 
     """
     mask = np.zeros((nrows, ncols))
-    xyframe = findCellsCrossedByLineBresenham(xdep[0], ydep[0], xdep[1], ydep[1], 1)
+    xyframe = findCellsCrossedByLineBresenham(xdep[0], ydep[0], xdep[1],
+                                              ydep[1], 1)
     xyframe = np.delete(xyframe, -1, 0)
     xyframe = np.transpose(xyframe)
     for i in range(1, len(xdep)-1):
-        xyline = findCellsCrossedByLineBresenham(xdep[i], ydep[i], xdep[i+1], ydep[i+1], 1)
+        xyline = findCellsCrossedByLineBresenham(xdep[i], ydep[i], xdep[i+1],
+                                                 ydep[i+1], 1)
         # last point is first point of the next line
         xyline = np.delete(xyline, -1, 0)
         xyline = np.transpose(xyline)
         xyframe = np.hstack((xyframe, xyline))
 
-    xyline = findCellsCrossedByLineBresenham(xdep[-1], ydep[-1], xdep[0], ydep[0], 1)
+    xyline = findCellsCrossedByLineBresenham(xdep[-1], ydep[-1], xdep[0],
+                                             ydep[0], 1)
     xyline = np.delete(xyline, -1, 0)
     xyline = np.transpose(xyline)
     xyframe = np.hstack((xyframe, xyline))
@@ -494,7 +501,9 @@ def inpolygon(X, Y, xv, yv):
         # AND (X,Y) on the left of the edge ?
         for ii in range(lx):
             for jj in range(ly):
-                if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and 0 < distance[ii][jj]*deltayv):
+                if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (
+                   yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and ()
+                   0 < distance[ii][jj]*deltayv)):
                     if IN[ii][jj] == 0:
                         IN[ii][jj] = 1
                     else:

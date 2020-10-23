@@ -6,7 +6,6 @@
 
 import os
 import glob
-import pickle
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
