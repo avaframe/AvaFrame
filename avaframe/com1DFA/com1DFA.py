@@ -215,8 +215,7 @@ def com1DFAMain(cfg, avaDir):
         demName = os.path.splitext(os.path.basename(dem))[0]
 
         # Set Parameters in cint file
-        copyReplace(templateFile, workFile, '##BASEPATH##', avaDir)
-        copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
+        copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
         copyReplace(workFile, workFile, '##DHMFILE##', dem)
         copyReplace(workFile, workFile, '##DHMNAME##', demName)
         copyReplace(workFile, workFile, '##CELLSIZE##', cellSize)
@@ -253,8 +252,7 @@ def com1DFAMain(cfg, avaDir):
             templateFile = os.path.join(modPath, 'runBasicST.cint')
             workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBasicST.cint')
             # Write required info to cint file
-            copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
-            copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
+            copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
             copyReplace(workFile, workFile, '##RESDIR##', resDir)
             copyReplace(workFile, workFile, '##NAME##', simST)
             copyReplace(workFile, workFile, '##COUNTREL##', countRel)
@@ -302,8 +300,7 @@ def com1DFAMain(cfg, avaDir):
                 templateFile = os.path.join(modPath, '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
                 workFile = os.path.join(avaDir, 'Work', 'com1DFA',
                                         '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
-                copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
-                copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
+                copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
                 copyReplace(workFile, workFile, '##RESDIR##', resDir)
                 copyReplace(workFile, workFile, '##NAME##', sim)
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
@@ -344,8 +341,7 @@ def com1DFAMain(cfg, avaDir):
                 workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBasicST.cint')
                 logName = sim + '_' + defValues['Mu']
                 # Write required info to cint file
-                copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
-                copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
+                copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
                 copyReplace(workFile, workFile, '##RESDIR##', resDir)
                 copyReplace(workFile, workFile, '##NAME##', sim)
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
