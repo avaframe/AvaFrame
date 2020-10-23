@@ -124,11 +124,11 @@ def test_findAngleProfile(capfd):
     tmp = np.where((angle < 10.0) & (angle > 0.0))
     deltaInd = 3
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
-    assert ids10Point == 30
+    assert ids10Point == 31
 
     deltaInd = 1
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
-    assert ids10Point == 30
+    assert ids10Point == 31
 
     angle[10] = 8
     angle[11] = 8
@@ -136,12 +136,12 @@ def test_findAngleProfile(capfd):
     tmp = np.where((angle < 10.0) & (angle > 0.0))
     deltaInd = 3
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
-    assert ids10Point == 30
+    assert ids10Point == 31
 
     angle[13] = 8
     tmp = np.where((angle < 10.0) & (angle > 0.0))
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
-    assert ids10Point == 9
+    assert ids10Point == 10
 
 
 def test_path2domain(capfd):

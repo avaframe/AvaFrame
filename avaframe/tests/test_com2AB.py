@@ -57,20 +57,6 @@ def test_setEqParameters(capfd):
     for key in eqParamRef.keys():
         assert eqParamRef[key] == eqParams[key]
 
-# def test_prepareLine(capfd):
-#     '''Simple test for function prepareLine'''
-#     header
-#     header.xllcorner = 10
-#     header.yllcorner = -15
-#     header.cellsize = 5
-#     header.ncols = 200
-#     header.nrows = 100
-#     x = np.linspace(header.xllcorner)
-#     rasterdata
-#     avapath = np.array([[], []])
-#     AvaProfile, SplitPoint, indSplit = prepareLine(
-#         header, rasterdata, avapath, splitPoint, distance=10)
-
 
 def test_calcAB(capfd):
     '''Simple test for function calcAB'''
@@ -115,7 +101,7 @@ def test_calcAB(capfd):
     alphaSD = eqOut['alphaSD']
 
     # compare results with a relative tolerance of tol
-    tol = 0.001  # here 0.1% relative diff
+    tol = 0.002  # here 0.1% relative diff
     assert (alpha == pytest.approx(alpharef, rel=tol)) and (
             alphaSD[0] == pytest.approx(alphaSDref[0], rel=tol)) and (
             alphaSD[1] == pytest.approx(alphaSDref[1], rel=tol)) and (
@@ -149,7 +135,51 @@ def test_com2ABMain(capfd):
         assert (np.allclose(eqOutRef['x'], eqOut['x'], atol=atol)) and (
                 np.allclose(eqOutRef['y'], eqOut['y'], atol=atol)) and (
                 np.allclose(eqOutRef['z'], eqOut['z'], atol=atol)) and (
-                np.allclose(eqOutRef['s'], eqOut['s'], atol=atol)) and (
-                np.allclose(eqOutRef['alpha'], eqOut['alpha'], atol=atol)
+                np.allclose(eqOutRef['s'], eqOut['s'], atol=atol))
+        assert (np.allclose(eqOutRef['alpha'], eqOut['alpha'], atol=atol)
                 ) and (np.allclose(eqOutRef['alphaSD'], eqOut['alphaSD'],
                        atol=atol))
+
+
+# Compare to QGIS AB routine
+def test_QGISAB(capfd):
+    '''Compare com2ABMain results to QGIS AB results for avaSlide'''
+    # load and prepare Inputs
+    avaName = 'avaSlide'
+    dirname = os.path.dirname(__file__)
+    avalancheDir = os.path.join(dirname, '..', 'data', avaName)
+    cfg = cfgUtils.getModuleConfig(com2AB)
+    # run main routine
+    resAB = com2AB.com2ABMain(cfg, avalancheDir)
+    # process data to get results
+    AvaPath = resAB['AvaPath']
+    NameAva = AvaPath['Name']
+    for i in range(len(NameAva)):
+        name = NameAva[i]
+        resAB = outAB.processABresults(resAB, name)
+        beta = resAB[name]['beta']
+        alpha = resAB[name]['alpha']
+        alphaSD = resAB[name]['alphaSD']
+        s = resAB[name]['s']
+        ids_alpha = resAB[name]['ids_alpha']
+        ids10Point = resAB[name]['ids10Point']
+        ids_alphaP1SD = resAB[name]['ids_alphaP1SD']
+        ids_alphaM1SD = resAB[name]['ids_alphaM1SD']
+        ids_alphaM2SD = resAB[name]['ids_alphaM2SD']
+        # get ref results
+        nameRef = name + '_AB_QGIS.txt'
+        nameRefpath = os.path.join(dirname, '..', '..', 'benchmarks', avaName,
+                                   nameRef)
+        data = np.loadtxt(nameRefpath, skiprows=4, delimiter=',')
+        tolDist = 10
+        tolAngle = 0.12
+        assert (alpha == pytest.approx(data[0, 4], abs=tolAngle)) and (
+                beta == pytest.approx(data[1, 4], rel=tolAngle)) and (
+                alphaSD[1] == pytest.approx(data[2, 4], rel=tolAngle)) and (
+                alphaSD[2] == pytest.approx(data[3, 4], rel=tolAngle)) and (
+                alphaSD[0] == pytest.approx(data[4, 4], rel=tolAngle))
+        assert (s[ids_alpha] == pytest.approx(data[0, 3], abs=tolDist)) and (
+                s[ids10Point] == pytest.approx(data[1, 3], rel=tolDist)) and (
+                s[ids_alphaM1SD] == pytest.approx(data[2, 3], rel=tolDist)) and (
+                s[ids_alphaM2SD] == pytest.approx(data[3, 3], rel=tolDist)) and (
+                s[ids_alphaP1SD] == pytest.approx(data[4, 3], rel=tolDist))

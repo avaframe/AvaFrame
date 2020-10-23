@@ -264,7 +264,7 @@ def findAngleProfile(tmp, deltaInd):
                 i = i + j + 1
                 break
         if condition:
-            idsAnglePoint = ind - 1
+            idsAnglePoint = ind
             break
         condition = True
     return idsAnglePoint
