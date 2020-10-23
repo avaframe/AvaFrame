@@ -13,6 +13,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.out3SimpPlot import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import initializeProject as initProj
+from benchmarks import simParameters
 import pytest
 import configparser
 import shutil
@@ -93,7 +94,9 @@ def test_execCom1Exe(tmp_path):
 
 
 @pytest.mark.skip(reason="com1DFA exe is missing, no way of testing this")
-def test_com1DFAMain(tmp_path):
+@pytest.mark.parametrize("avaName", ["avaBowl", "avaFlatPlane", "avaHelix", "avaHelixChannel",
+                          "avaHockey", "avaHockeySmoothChannel", "avaHockeySmoothSmall", "avaInclinedPlane"])
+def test_com1DFAMain(tmp_path, avaName):
     """ test call to com1DFA module """
 
     # get path to executable
@@ -102,7 +105,6 @@ def test_com1DFAMain(tmp_path):
 
     # get input data
     dirPath = os.path.dirname(__file__)
-    avaName = 'avaHockeySmoothChannel'
     avaDir  = os.path.join(tmp_path, avaName)
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
@@ -116,9 +118,24 @@ def test_com1DFAMain(tmp_path):
     # Run Standalone DFA
     reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
     reportD = reportDictList[0]
+    pprCom1DFA = np.loadtxt(os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles',
+                                         reportD['simName']['name'] + '_ppr.asc'), skiprows=6)
+
+    # Fetch simulation info from benchmark results
+    benchDict = simParameters.fetchBenchParameters(avaDir)
+    simBench = benchDict['simName'].replace('dfa', 'ref')
+    pprBench = np.loadtxt(os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
+                                       simBench + '_ppr.asc'), skiprows=6)
+
+    # Compare result to reference solution
+    testRes = np.allclose(pprCom1DFA, pprBench, atol=1.e-12)
 
     # Test module
-    assert reportD['simName']['name'] == 'release1HS2_null_dfa_0.155'
-    assert reportD['Simulation Parameters']['Entrainment Area'] == ''
-    assert reportD['Simulation Parameters']['Mu'] == '0.155'
+    assert reportD['simName']['name'] == benchDict['simName']
+    assert reportD['Simulation Parameters']['Release Area'] == benchDict['Simulation Parameters']['Release Area']
+    assert reportD['Simulation Parameters']['Entrainment Area'] == benchDict['Simulation Parameters']['Entrainment Area']
+    assert reportD['Simulation Parameters']['Resistance Area'] == benchDict['Simulation Parameters']['Resistance Area']
+    assert reportD['Simulation Parameters']['Mu'] == benchDict['Simulation Parameters']['Mu']
     assert reportD['Simulation Parameters']['Parameter value'] == ''
+    assert reportD['Simulation Parameters']['Release thickness [m]'] == benchDict['Simulation Parameters']['Release thickness [m]']
+    assert testRes == True

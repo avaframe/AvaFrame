@@ -83,6 +83,8 @@ def fetchBenchParameters(avaDir):
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1HS',
+                        'Entrainment Area': '',
+                        'Resistance Area': '',
                         'Mu': '0.155',
                         'Release thickness [m]': '1.000',
                         'Release Mass [kg]': '20657.1',
