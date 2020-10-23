@@ -15,16 +15,19 @@ from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import initializeProject as initProj
 import pytest
 import configparser
+import shutil
 
 
-def test_initialiseRun():
+def test_initialiseRun(tmp_path):
     """ test check for input data """
 
+    # get input data
     dirPath = os.path.dirname(__file__)
-    avaDir  = os.path.join(dirPath, 'data', 'avaTest')
-
-    # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir)
+    avaName = 'avaHockeySmoothChannel'
+    avaDir  = os.path.join(tmp_path, avaName)
+    avaInputs = os.path.join(avaDir, 'Inputs')
+    avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
+    shutil.copytree(avaData, avaInputs)
 
     # flags for entrainment and resistance
     flagEnt = True
@@ -40,7 +43,7 @@ def test_initialiseRun():
 
     # open ExpLog
     # Load simulation report
-    testDir = os.path.join(os.getcwd(), avaDir, 'Work', 'com1DFA')
+    testDir = os.path.join(avaDir, 'Work', 'com1DFA')
     logFile = open(os.path.join(testDir, 'ExpLog.txt'), 'r')
     lines = logFile.readlines()
     lineVals = []
@@ -56,19 +59,21 @@ def test_initialiseRun():
     assert lineVals[0][2] == 'RelTh\n'
 
 
-def test_execCom1Exe():
+def test_execCom1Exe(tmp_path):
     """ test call to com1DFA executable without performing simulation but check log generation """
 
     # Initialise inputs
     com1Exe = 'testPath'
     dirPath = os.path.dirname(__file__)
-    avaDir  = os.path.join(dirPath, 'data', 'avaTest')
+    avaName = 'avaHockey'
+    avaDir  = os.path.join(tmp_path, avaName)
+    avaInputs = os.path.join(avaDir, 'Inputs')
+    avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
+    shutil.copytree(avaData, avaInputs)
     cintFile = os.path.join(dirPath, 'data', 'runBasicST.cint')
     logName = 'release1HS2_entres_dfa_0.155'
     fullOut = False
 
-    # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir)
     # create required Output folder
     os.makedirs(os.path.join(avaDir, 'Outputs', 'com1DFA'))
 
@@ -88,27 +93,28 @@ def test_execCom1Exe():
 
 
 @pytest.mark.skip(reason="com1DFA exe is missing, no way of testing this")
-def test_com1DFAMain():
+def test_com1DFAMain(tmp_path):
     """ test call to com1DFA module """
 
     # get path to executable
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
     com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
 
-    # get configuration
+    # get input data
     dirPath = os.path.dirname(__file__)
-    avaDir  = os.path.join(dirPath, 'data', 'avaTest')
-    avaName = os.path.basename(avaDir)
-    testCfg = os.path.join(avaDir, '%s_com1DFACfg.ini' % avaName)
+    avaName = 'avaHockeySmoothChannel'
+    avaDir  = os.path.join(tmp_path, avaName)
+    avaInputs = os.path.join(avaDir, 'Inputs')
+    avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
+    testCfg = os.path.join(dirPath, 'data', '%s_com1DFACfg.ini' % avaName)
+    shutil.copytree(avaData, avaInputs)
+
+    # get configuration
     cfg = cfgUtils.getModuleConfig(com1DFA, testCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
-    # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir)
-
     # Run Standalone DFA
     reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
-
     reportD = reportDictList[0]
 
     # Test module
