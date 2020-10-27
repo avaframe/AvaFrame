@@ -108,7 +108,7 @@ def test_com1DFAMain(tmp_path, avaName):
     avaDir  = os.path.join(tmp_path, avaName)
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
-    testCfg = os.path.join(dirPath, 'data', '%s_com1DFACfg.ini' % avaName)
+    testCfg = os.path.join(dirPath, '..', '..', 'benchmarks', avaName, '%s_com1DFACfg.ini' % avaName)
     shutil.copytree(avaData, avaInputs)
 
     # get configuration
