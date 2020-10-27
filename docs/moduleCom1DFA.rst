@@ -21,6 +21,7 @@ In the directory Inputs, the following files are required:
 
 * digital elevation model as .asc file
 * release area as shapefile (in Inputs/REL)
+  -> the release area name must not contain an underline
 
 and the following files are optional:
 
