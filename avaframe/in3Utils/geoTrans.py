@@ -493,8 +493,10 @@ def inpolygon(X, Y, xv, yv):
     Octave Implementation [IN, ON] = inpolygon (X, Y, xv, yv)
     """
     npol = len(xv)
-    lx = np.shape(X)[0]
-    ly = np.shape(Y)[1]
+    maxXv = np.max(xv)
+    minXv = np.min(xv)
+    maxYv = np.max(yv)
+    minYv = np.min(yv)
     IN = np.zeros(np.shape(X))
     j = npol-1
     for i in range(npol-1):
@@ -504,16 +506,63 @@ def inpolygon(X, Y, xv, yv):
         distance = deltaxv*(Y-yv[i]) - (X-xv[i])*deltayv
         # is Y between the y-values of edge i,j
         # AND (X,Y) on the left of the edge ?
-        for ii in range(lx):
-            for jj in range(ly):
-                if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (
-                   yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and (
-                   0 < distance[ii][jj]*deltayv)):
+        for ii in range(minYv-1, maxYv+1, 1):
+            for jj in range(minXv-1, maxXv+1, 1):
+                if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and (0 < distance[ii][jj]*deltayv)):
                     if IN[ii][jj] == 0:
                         IN[ii][jj] = 1
                     else:
                         IN[ii][jj] = 0
         j = i
+    for i in range(npol-1):
+        IN[yv[i]][xv[i]] = 1
+
+    return IN
+
+
+def inpolygon2(X, Y, xv, yv):
+    """
+    inpolygon
+    For a polygon defined by vertex points (xv, yv),
+    returns a np array of size X with ones if the points (X, Y)
+    are inside (or on the boundary) of the polygon;
+    Otherwise, returns zeros.
+    Usage:
+        mask = inpolygon(X, Y, xv, yv)
+       Input:
+           X, Y:      Set of points to check
+           xv, yv:    polygon vertex points
+       Output:
+           mask:      np array of zeros and ones
+
+    Octave Implementation [IN, ON] = inpolygon (X, Y, xv, yv)
+    """
+    npol = len(xv)
+    maxXv = np.max(xv)
+    minXv = np.min(xv)
+    maxYv = np.max(yv)
+    minYv = np.min(yv)
+    IN = np.zeros(np.shape(X))
+    for ii in range(minYv-1, maxYv+1, 1):
+        for jj in range(minXv-1, maxXv+1, 1):
+            inside = False
+            x = X[ii][jj]
+            y = Y[ii][jj]
+            p1x = xv[npol-1]
+            p1y = yv[npol-1]
+            for i in range(npol-1):
+                p2x = xv[i]
+                p2y = yv[i]
+                if y > min(p1y, p2y):
+                    if y <= max(p1y, p2y):
+                        if x <= max(p1x, p2x):
+                            if p1y != p2y:
+                                xinters = (y-p1y)*(p2x-p1x)/(p2y-p1y)+p1x
+                            if p1x == p2x or x <= xinters:
+                                inside = not inside
+                p1x, p1y = p2x, p2y
+            IN[ii][jj] = int(inside)
+
     for i in range(npol-1):
         IN[yv[i]][xv[i]] = 1
 
