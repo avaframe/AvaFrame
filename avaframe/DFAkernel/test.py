@@ -1,7 +1,6 @@
 import os
 import glob
 import logging
-from scipy import sparse
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -33,15 +32,8 @@ if __name__ == "__main__":
     demFile = glob.glob(inputDir+os.sep+'*.asc')
     dem = IOf.readRaster(demFile[0])
     releaseLine = shpConv.readLine(relFiles[0], 'release1', dem)
-    print(releaseLine['Name'])
-    print(releaseLine['x'])
-    print(releaseLine['Start'])
-    print(releaseLine['y'])
-    print(dem['header'])
     relRaster = tools.getRelease(dem, releaseLine)
     relTh = 1
     relRasterD = relRaster * relTh
-    relRasterDSparse = sparse.csr_matrix(relRaster)
-    indX, indY = np.nonzero(relRaster)
-    print(indX, indY)
-    print(relRasterDSparse)
+
+    particles = tools.initializeRelease(relRaster, dem)
