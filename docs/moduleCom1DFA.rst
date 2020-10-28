@@ -20,6 +20,7 @@ This avalanche directory can be created by running: ``runInitializeProject.py``.
 In the directory Inputs, the following files are required:
 
 * digital elevation model as .asc file
+  -> use xllcenter and yllcenter 
 * release area as shapefile (in Inputs/REL)
   -> the release area name must not contain an underline
 
