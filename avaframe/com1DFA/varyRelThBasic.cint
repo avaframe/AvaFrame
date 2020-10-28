@@ -52,9 +52,6 @@ void postprocessing(char ResultDir[], char SimName[], float relH){
     char relHString[512];
     char ResultDir_rep[512];
 
-    // Prepare for postprocessing
-    sprintf(name,"Project/Simulations/%s",SimName);
-
     // Generate a full report
     sprintf(relHString,"%.3f",relH);
     sprintf(ResultDir_rep,"%s/FullOutput_RelTh_%s",ResultDir,relHString);

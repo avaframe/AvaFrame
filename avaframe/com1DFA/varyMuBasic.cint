@@ -52,9 +52,6 @@ void postprocessing(char ResultDir[], char SimName[], float Mu){
     char MuString[512];
     char ResultDir_rep[512];
 
-    // Prepare for postprocessing
-    sprintf(name,"Project/Simulations/%s",SimName);
-
     // Generate a full report
     sprintf(MuString,"%.3f",Mu);
     sprintf(ResultDir_rep,"%s/FullOutput_Mu_%s",ResultDir,MuString);
