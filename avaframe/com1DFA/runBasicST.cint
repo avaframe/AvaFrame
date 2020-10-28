@@ -51,9 +51,6 @@ void postprocessing(char ResultDir[], char SimName[], char varPar[], char varVal
     char name[512];
     char ResultDir_rep[512];
 
-    // Prepare for postprocessing
-    sprintf(name,"Project/Simulations/%s",SimName);
-
 
     // Generate a full report
     sprintf(ResultDir_rep,"%s/FullOutput_%s_%s",ResultDir,varPar,varVal);
