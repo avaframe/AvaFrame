@@ -3,7 +3,7 @@
 Develop AvaFrame
 ================
 
-Notes on design principles and how to contribute to AvaFrame
+Notes on design principles how to use and how to contribute to AvaFrame
 
 
 How to install
@@ -31,17 +31,19 @@ We suggest to work with conda and create a specific avaframe
 
 Don't forget to activate it before going on::
 
-    source activate avaframe_env
+    conda activate avaframe_env
 
-Then install the different modules::
+Move to ``Avaframe/`` repository and install the different modules::
 
     conda install --name avaframe_env --file avaframe_env_spec.txt
 
-Finally change directory::
+Or the equivalent pip commands.
 
-  cd AvaFrame
+Finally install avaframe::
 
-And install avaframe::
+  conda develop .
+
+Or if you are using pip ::
 
   pip install -e .
 
@@ -69,17 +71,21 @@ and you should see something like::
 Local documentation
 -------------------
 
-For local documentation install sphinx with::
+For local documentation install sphinx (already included if you used the
+conda commands) with::
 
   pip install sphinx
 
-(or equivalent conda command)
-
-We use the ReadTheDocs theme, which you need to install with::
+We use the ReadTheDocs theme (also included in the conda environment),
+which you need to install with::
 
   pip install sphinx-rtd-theme
 
-Goto docs directory and e.g.::
+We use ``sphinxcontrib-bibtex`` for references. Install it with ::
+
+  pip install sphinxcontrib-bibtex
+
+Go to now go to ``docs\`` directory and e.g.::
 
   make html
 
@@ -97,6 +103,7 @@ Basically: in your main script call::
   from avaframe.in3Utils import logUtils
   # log file name; leave empty to use default runLog.log
   logName = 'runTmp1Ex'
+  # specify the working directory
   avalancheDir = './'
   # ---------------------------------------------
   # Start logging
@@ -118,7 +125,7 @@ To get output that looks like this in your console::
   tmp1Ex:DEBUG - Should be here
   tmp1Ex:INFO - DEM : /path/to/DEM
 
-And something similar in the .log file which is saved in ``./runTmp1Ex.log`` in this example.
+And something similar in the ``.log`` file which is saved in ``./runTmp1Ex.log`` in this example.
 The logging configuration is set in ``Avaframe/avaframe/in3Utils/logging.conf``.
 You can modify this ``logging.conf`` file to modify the levels or format of the messages to display
 (`python doc will help you <https://docs.python.org/3/library/logging.config.html>`_).
@@ -143,8 +150,11 @@ In the second step the specific settings to a given module are imported::
   # Write config to log file
   cfg = cfgUtils.getModuleConfig(tmp1Ex)
 
-The ``getModuleConfig`` function also writes the setting just read to the log file.
-It is possible to modify those parameters by creating a copy
+The ``getModuleConfig`` function reads the configuration file (``tmpEx.ini``
+in our example) and writes the setting just read to the log file.
+It is possible to modify those parameters by creating a copy of the configuration
+file (``local_`` followed by the name of the original configuration file). In
+this case, the ``getModuleConfig`` function overwrites the original settings.
 
 
 

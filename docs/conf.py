@@ -56,7 +56,7 @@ html_theme = "sphinx_rtd_theme"
 # documentation.
 html_theme_options = {
     'logo_only': True,
-    'style_nav_header_background': '#343131'
+    'style_nav_header_background': '#343131',
     # 'display_version': False,
 }
 
@@ -83,6 +83,7 @@ math_numfig = True
 math_eqref_format = "Eq.{number}"
 # make referencing unique if twice the same section heading apear
 autosectionlabel_prefix_document = True
+
 
 def setup(app):
     app.add_stylesheet('css/custom.css')
