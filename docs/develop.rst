@@ -157,8 +157,6 @@ file (``local_`` followed by the name of the original configuration file). In
 this case, the ``getModuleConfig`` function overwrites the original settings.
 
 
-
-
 Our suggested git workflow
 --------------------------
 
