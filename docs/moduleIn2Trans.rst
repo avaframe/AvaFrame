@@ -2,84 +2,62 @@
 in2Trans: Module Project Utilities
 ##################################
 
+Working with ASCII files
+=========================================================
 
-
-geoTrans
-===================
-The ``geoTrans.py`` module gathers useful functions to operate transformations on raster, lines, points...
+``ascUtilis.py`` is a module created to handle raster ASCII files. It contains different functions
+to read ASCII files, either just the header or also the raster matrix and write the data to a numpy array or to
+compare raster file headers as well as to write a raster to an ASCII file given a header and data.
 
 Functions
------------
+------------
 
-**Projection on Raster:**
+**Header Class:**
 
-``Points = projectOnRaster(dem, Points)`` takes a "dem" dictionary and "Points" dictionary
-(wich can be a single point or a line...) in input and returns the "Points" dictionary with
-an extra "z" argument representing the "z" coordinate of the (x,y) point on the dem.
+Header information are read and stored as object from ``class cASCheader``:
+::
 
+		header = cASCheader()
+		header.nrows = None
+		header.ncols = None
+		header.cellsize = None
+		header.xllcorner = None
+		header.xllcenter = None
+		header.yllcorner = None
+		header.yllcenter = None
+		header.noDataValue = None
 
-``Points = projectOnRasterVect(dem, Points, interp = 'bilinear')`` Does the same as the previous
-function but also operates on 2D arrays. All the calculation are vectorized to avoid loops.
-Two interpolation methods are available, 'nearest' or 'bilinear'
+**Read ASCII header:**
 
+``header = readASCheader(fname)`` takes a .asc file name as input and returns the header information.
 
-**Prepare Line:**
+**Compare headers:**
 
-``AvaProfile, projSplitPoint = prepareLine(dem, AvaPath, distance=10, Point=None)`` takes a "dem" dictionary,
-a "AvaPath" dictionary (x, y coordinates), a re-sampling distance and a "Point" dictionary in input and returns
-the "AvaProfile" dictionary corresponding to the "AvaPath" dictionary. That is to say the "line" dictionary re-sampled
-according to distance with the corresponding "z" argument representing the "z" coordinate of the re-sampled (x,y)
-point on the dem and the curvilinear coordinate "s" along the line (the first point of the line has a s=0).
-It also returns the projection of the Point on the AvaProfile if this one was supplied in input.
+``isEqualASCheader(headerA, headerB)`` takes two headers as input and checks if they are equal.
 
-**Project on Profile:**
+**Read ASCII file to numpy array:**
 
-``projSplitPoint = findSplitPoint(AvaProfile, splitPoint)`` takes a "AvaProfile" dictionary
-and a "splitPoint" dictionary in input and returns the "projSplitPoint" dictionary which is the projection of
-"splitPoint" on the "AvaProfile".
-
-
-**Check Profile:**
-
-``projSplitPoint, AvaProfile = checkProfile(AvaProfile, projSplitPoint=None)`` takes a "AvaProfile" dictionary
-and a "projSplitPoint" dictionary in input and check if the Profile goes from top to bottom,
-reverts it if necessary and returns the correct "projSplitPoint" and "AvaProfile" dictionaries.
-
-**Prepare inputs for find angle in profile:**
-
-``angle, tmp, deltaInd =prepareAngleProfile(beta, AvaProfile)`` takes a angle value in degres and
-an Avalanche profile in input, computes the angle of the profile and returns this ``angle``, the list
-of indexes ``tmp`` where the angle is under the input angle value and ``deltaInd`` the number of consecutive
-indexes required.
-
-**Find angle in profile:**
-
-``idsAnglePoint =findAngleProfile(tmp, deltaInd)`` takes the outputs of ``prepareAngleProfile`` as inputs
-and returns the index of the desired angle as output.
-
-**Bresenham Algorithm:**
-
-``z = bresenfindCellsCrossedByLineBresenhamham(x0, y0, x1, y1, cs)`` takes a two (x,y) points and a cell size in input and returns
-the z = (x,y) list of the cells hit by the line between the two input points.
+``header, data = readASCdata2numpyArray(fName, headerFile=None):`` takes a .asc file name as input and returns the
+raster data in a numpy array.
 
 
-**Path to domain:**
+**Read ASCII file to dictionary:**
 
-``rasterTransfo = path2domain(xyPath, rasterTransfo)`` takes the (x,y) coordinates of a polyline,
-a domain width and a cell size (in rasterTransfo) in input and returns the domain of width w along the polyline.
+``rasterHeaderData = readRaster(fname):`` takes a .asc file name as input uses readASCdata2numpyArray and returns the
+header information as well as the raster data in a numpy array in a dictionary.
+::
 
-**Polygon to mask:**
-
-``mask = poly2mask_simple(ydep, xdep, ncols, nrows)`` takes the (x,y) coordinates
-of a polygon and a rater size in input and returns the raster mask corresponding to the polygon.
-
-**In polygon:**
-
-``IN = inpolygon(X, Y, xv, yv)`` takes the (X, Y) coordinates of points and xv, yv foot print of a
-polygon on a raster in input and returns the raster mask corresponding to the polygon.
+		rasterHeaderData['header'] = header
+		rasterHeaderData['rasterData'] = rasterData
 
 
-Reading shape files
+**Write ASCII file:**
+
+``writeResultToAsc(header, resultArray, outType=None):`` takes a header and numpy array as inputs and writes the
+corresponding raster ASCII file.
+
+
+Working with shape files
 =============================
 
 ``shpConversion.py`` is a module created to handle shape files. It contains different functions

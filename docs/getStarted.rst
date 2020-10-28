@@ -14,7 +14,7 @@ output results will be saved. To do so, specify the full path to the folder
 you want to create in the ``local_avaframeCfg.ini`` (which is a copy of
 ``avaframeCfg.ini`` that you need to create). Then run ::
 
-  ``python path/to/runInitializeProject.py``
+  python path/to/runInitializeProject.py
 
 This will create a new directory with the avaframe input structured as discribed
 in :ref:`moduleIn3Utils:Initialize Project`. You are now ready to start.
@@ -35,6 +35,10 @@ Building your run script
 In this section, we give an example of workflow to run the avaframe routine.
 You can then create your own workflow taking the ``runOperational.py`` script as
 example. Start by creating a python file (``myAvaframeRunScript.py`` for example).
+
+Imports
+~~~~~~~
+
 The file starts with some python modules import ::
 
   # Load python modules
@@ -60,6 +64,9 @@ computational modules documentation to know which imports are required::
   from avaframe.com2AB import com2AB
   from avaframe.out3Plot import outAB
 
+General configuration
+~~~~~~~~~~~~~~~~~~~~~
+
 The next step is to get the general settings::
 
   # Load avalanche directory from general configuration file
@@ -67,6 +74,10 @@ The next step is to get the general settings::
   # v0.2 -> if given dir contains more than one avalancheDir -> run loop
   cfgMain = cfgUtils.getGeneralConfig()
   avalancheDir = cfgMain['MAIN']['avalancheDir']
+
+
+Logging
+~~~~~~~
 
 Then you need to prepare for logging::
 
@@ -82,6 +93,9 @@ already did some calculations you might want to clean it::
 
   # Clean input directory(ies) of old work and output files
   initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
+
+Computation Modules
+~~~~~~~~~~~~~~~~~~~
 
 Now starts the real calls to the computation modules.
 You can if necessary time the different routines::
@@ -113,6 +127,10 @@ If you want to run the Com2AB routine, you would want to do::
   resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
   # Collect results/plots/report  to a single directory
   reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
+
+
+Report
+~~~~~~
 
 It is also possible to generate a report file (:ref:`moduleLog2Report:Generate Report`)
 in addition to the ``.log`` file::

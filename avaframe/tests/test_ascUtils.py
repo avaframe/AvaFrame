@@ -1,5 +1,5 @@
 """Tests for module com2AB"""
-import avaframe.in3Utils.ascUtils as IOf
+import avaframe.in2Trans.ascUtils as IOf
 import os
 
 

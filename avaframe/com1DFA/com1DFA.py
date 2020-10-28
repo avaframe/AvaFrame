@@ -13,7 +13,7 @@ import logging
 
 # Local imports
 from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.in3Utils import ascUtils as aU
+from avaframe.in2Trans import ascUtils as aU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages

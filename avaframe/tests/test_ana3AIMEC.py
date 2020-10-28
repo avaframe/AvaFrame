@@ -5,7 +5,7 @@ import glob
 
 # Local imports
 import avaframe.ana3AIMEC.ana3AIMEC as ana3AIMEC
-import avaframe.in3Utils.ascUtils as IOf
+import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.tests import test_logUtils
 
