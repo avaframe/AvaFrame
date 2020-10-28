@@ -32,7 +32,7 @@ if __name__ == "__main__":
     demFile = glob.glob(inputDir+os.sep+'*.asc')
     dem = IOf.readRaster(demFile[0])
     releaseLine = shpConv.readLine(relFiles[0], 'release1', dem)
-    relRaster = tools.getRelease(dem, releaseLine)
+    relRaster = tools.getRelease(dem['header'], releaseLine)
     relTh = 1
     relRasterD = relRaster * relTh
 

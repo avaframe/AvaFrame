@@ -40,8 +40,9 @@ def getRelease(demHeader, releaseLine):
     return relRaster
 
 
-def initializeRelease(relRaster, demHeader):
-    csz = demHeader.cellsize
+def initializeRelease(relRaster, dem):
+    header = dem['header']
+    csz = header.cellsize
     S = csz * csz
     # initialize
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
@@ -78,7 +79,7 @@ def initializeRelease(relRaster, demHeader):
     particles['x'] = Xpart
     particles['y'] = Ypart
     # adding z component
-    particles = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+    particles, _, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
     particles['m'] = Mpart
     particles['d'] = Dpart
     particles['InCell'] = InCell
