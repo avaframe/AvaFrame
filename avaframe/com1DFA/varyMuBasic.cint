@@ -109,10 +109,6 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   printf("\n[BatchCom1DFA] Current Sim %s\n",Sim);
 
 
-
-  // TEST IF DIFFERENCE
-  set(Sim, "FrictionType", "samosAT_Standard");
-
   //------------Set time stepping---------------------
   // set(Sim, "EndTime", "40");
   // set(Sim, "DeltaOut", "20");
