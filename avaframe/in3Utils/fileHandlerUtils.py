@@ -12,7 +12,7 @@ import numpy as np
 import shutil
 
 # Local imports
-import avaframe.in3Utils.ascUtils as IOf
+import avaframe.in2Trans.ascUtils as IOf
 
 
 # create local logger

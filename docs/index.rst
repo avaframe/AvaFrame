@@ -24,7 +24,7 @@ Overview
    introduction.rst
    develop.rst
    getStarted.rst
-   
+
 
 Modules
 =======
@@ -35,10 +35,10 @@ Modules
     * :doc:`moduleCom1DFA`
     * :doc:`moduleCom2AB`
     * :doc:`moduleAna3AIMEC`
-    * :doc:`moduleIn3Utils`
     * :doc:`moduleIn2Trans`
-    * :doc:`moduleOut3Plot`
+    * :doc:`moduleIn3Utils`
     * :doc:`moduleOut3SimpPlot`
+    * :doc:`moduleOut3Plot`
     * :doc:`moduleLog2Report`
 
 .. toctree::
@@ -50,10 +50,10 @@ Modules
    moduleCom1DFA.rst
    moduleCom2AB.rst
    moduleAna3AIMEC.rst
-   moduleIn3Utils.rst
    moduleIn2Trans.rst
-   moduleOut3Plot.rst
+   moduleIn3Utils.rst
    moduleOut3SimpPlot.rst
+   moduleOut3Plot.rst
    moduleLog2Report.rst
 
 Appendix

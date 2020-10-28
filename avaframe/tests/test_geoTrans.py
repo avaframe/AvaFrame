@@ -3,8 +3,8 @@ import numpy as np
 import pytest
 
 # Local imports
-import avaframe.in2Trans.geoTrans as geoTrans
-import avaframe.in3Utils.ascUtils as IOf
+import avaframe.in3Utils.geoTrans as geoTrans
+import avaframe.in2Trans.ascUtils as IOf
 
 
 def test_projectOnRaster(capfd):

@@ -13,8 +13,8 @@ import copy
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in2Trans.geoTrans as geoTrans
-import avaframe.in3Utils.ascUtils as IOf
+import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.outAIMEC as outAimec
 
 # create local logger

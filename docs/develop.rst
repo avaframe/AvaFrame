@@ -1,5 +1,3 @@
-.. _develop:
-
 Develop AvaFrame
 ================
 
@@ -95,67 +93,13 @@ to generate html documentation within the _build directory.
 Logging
 -------
 
-Use python provided `logging <https://docs.python.org/3/library/logging.config.html>`_ module.
-See most simple example in runTmp1Ex.py and tmp1Ex.py
+.. include:: moduleLogging.rst
 
-Basically: in your main script call::
-
-  from avaframe.in3Utils import logUtils
-  # log file name; leave empty to use default runLog.log
-  logName = 'runTmp1Ex'
-  # specify the working directory
-  avalancheDir = './'
-  # ---------------------------------------------
-  # Start logging
-  log = logUtils.initiateLogger(avalancheDir, logName)
-
-This will configure the logging (it sets the console output as well as the log file).
-In your modules/subscripts add::
-
-  import logging
-  log = logging.getLogger(__name__)
-
-So you can use::
-
-  log.debug('Should be here')
-  log.info('DEM : %s',variable)
-
-To get output that looks like this in your console::
-
-  tmp1Ex:DEBUG - Should be here
-  tmp1Ex:INFO - DEM : /path/to/DEM
-
-And something similar in the ``.log`` file which is saved in ``./runTmp1Ex.log`` in this example.
-The logging configuration is set in ``Avaframe/avaframe/in3Utils/logging.conf``.
-You can modify this ``logging.conf`` file to modify the levels or format of the messages to display
-(`python doc will help you <https://docs.python.org/3/library/logging.config.html>`_).
 
 Configuration
 --------------
-The different settings and parameters are provided to the routines using python
-`configparser <https://docs.python.org/3/library/configparser.html>`_ module
-(see section :ref:`moduleIn3Utils:Configuration` for more details).
-This is done in two steps. The first step fetches the main settings::
 
-  from avaframe.in3Utils import cfgUtils
-  # Load avalanche directory from general configuration file
-  cfgMain = cfgUtils.getGeneralConfig()
-  avalancheDir = cfgMain['MAIN']['avalancheDir']
-
-In the second step the specific settings to a given module are imported::
-
-  from avaframe.tmp1Ex import tmp1Ex
-  # Load all input Parameters from config file
-  # get the configuration of an already imported module
-  # Write config to log file
-  cfg = cfgUtils.getModuleConfig(tmp1Ex)
-
-The ``getModuleConfig`` function reads the configuration file (``tmpEx.ini``
-in our example) and writes the setting just read to the log file.
-It is possible to modify those parameters by creating a copy of the configuration
-file (``local_`` followed by the name of the original configuration file). In
-this case, the ``getModuleConfig`` function overwrites the original settings.
-
+.. include:: moduleConfiguration.rst
 
 Our suggested git workflow
 --------------------------
