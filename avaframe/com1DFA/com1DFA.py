@@ -237,8 +237,7 @@ def com1DFAMain(cfg, avaDir):
             cuSim = [simName + '_null_dfa']
 
         # Write required info to cint file
-        copyReplace(templateFile, workFile, '##BASEPATH##', os.getcwd())
-        copyReplace(workFile, workFile, '##PROJECTDIR##', projDir)
+        copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
         copyReplace(workFile, workFile, '##BASESIMNAME##', simName)
         execCom1Exe(com1Exe, workFile, avaDir, fullOut)
 
