@@ -15,29 +15,29 @@ from avaframe.DFAkernel.setParam import *
 debugPlot = False
 
 
-def getRelease(demHeader, releaseLine):
-    # adim and center dem and release line
+def polygon2Raster(demHeader, Line):
+    # adim and center dem and polygon
     ncols = demHeader.ncols
     nrows = demHeader.nrows
     xllc = demHeader.xllcenter
     yllc = demHeader.yllcenter
     csz = demHeader.cellsize
-    xCoord = (releaseLine['x'] - xllc) / csz
-    yCoord = (releaseLine['y'] - yllc) / csz
-    # get the raster corresponding to the release polygon
-    relRaster = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
+    xCoord = (Line['x'] - xllc) / csz
+    yCoord = (Line['y'] - yllc) / csz
+    # get the raster corresponding to the polygon
+    mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
 
     if debugPlot:
         fig, ax = plt.subplots(figsize=(figW, figH))
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        im = plt.imshow(relRaster, cmap, origin='lower')
+        im = plt.imshow(mask, cmap, origin='lower')
         ax.plot(xCoord, yCoord, 'k')
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
         fig.colorbar(im, cax=cax)
         plt.show()
 
-    return relRaster
+    return mask
 
 
 def initializeRelease(relRaster, dem):
@@ -106,7 +106,7 @@ def initializeRelease(relRaster, dem):
     return particles
 
 
-def computeBodyForce():
+def computeBodyForce(particles, mesh):
     1
 
 

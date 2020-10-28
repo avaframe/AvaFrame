@@ -25,45 +25,61 @@ def projectOnRaster(dem, Points, interp='bilinear'):
     TODO: test
     """
     header = dem['header']
-    rasterdata = dem['rasterData']
+    Z = dem['rasterData']
     xllc = header.xllcenter
     yllc = header.yllcenter
-    cellsize = header.cellsize
+    csz = header.cellsize
     xcoor = Points['x']
     ycoor = Points['y']
     zcoor = np.array([])
     for i in range(np.shape(xcoor)[0]):
-        Lx = (xcoor[i] - xllc) / cellsize
-        Ly = (ycoor[i] - yllc) / cellsize
-        Lx0 = int(np.floor(Lx))
-        try:
-            Ly0 = int(np.floor(Ly))
-            Lx1 = int(np.floor(Lx)) + 1
-            Ly1 = int(np.floor(Ly)) + 1
-            # prepare for bilinear interpolation(do not take out of bound into account)
-            if interp == 'nearest':
-                dx = np.round(Lx - Lx0)
-                dy = np.round(Ly - Ly0)
-            elif interp == 'bilinear':
-                dx = Lx - Lx0
-                dy = Ly - Ly0
-            try:
-                f11 = rasterdata[Ly0][Lx0]
-                f12 = rasterdata[Ly1][Lx0]
-                f21 = rasterdata[Ly0][Lx1]
-                f22 = rasterdata[Ly1][Lx1]
-                # using bilinear interpolation on the cell
-                value = (f11*(1-dx)*(1-dy) + f21*dx*(1-dy) +
-                         f12*(1-dx)*dy + f22*dx*dy)
-            except IndexError:
-                value = np.NaN
-        except ValueError:
-            value = np.NaN
-
+        value = projectOnRasterRoot(xcoor[i], ycoor[i], Z, csz=csz, xllc=xllc,
+                                    yllc=yllc, interp='bilinear')
         zcoor = np.append(zcoor, value)
 
     Points['z'] = zcoor
     return Points
+
+
+def projectOnRasterRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
+    """ Projects the points Points on Raster using a bilinear or nearest
+    interpolation and returns the z coord
+    Input :
+    Points: list of points (x,y) 2 rows as many columns as Points
+    Output:
+    PointsZ: list of points (x,y,z) 3 rows as many columns as Points
+
+    TODO: test
+    """
+
+    Lx = (x - xllc) / csz
+    Ly = (y - yllc) / csz
+    Lx0 = int(np.floor(Lx))
+    Ly0 = int(np.floor(Ly))
+    Lx1 = int(np.floor(Lx)) + 1
+    Ly1 = int(np.floor(Ly)) + 1
+    try:
+        # prepare for bilinear interpolation(do not take out of bound into account)
+        if interp == 'nearest':
+            dx = np.round(Lx - Lx0)
+            dy = np.round(Ly - Ly0)
+        elif interp == 'bilinear':
+            dx = Lx - Lx0
+            dy = Ly - Ly0
+        try:
+            f11 = Z[Ly0][Lx0]
+            f12 = Z[Ly1][Lx0]
+            f21 = Z[Ly0][Lx1]
+            f22 = Z[Ly1][Lx1]
+            # using bilinear interpolation on the cell
+            value = (f11*(1-dx)*(1-dy) + f21*dx*(1-dy) +
+                     f12*(1-dx)*dy + f22*dx*dy)
+        except IndexError:
+            value = np.NaN
+    except ValueError:
+        value = np.NaN
+
+    return value
 
 
 def projectOnRasterVect(dem, Points, interp='bilinear'):
