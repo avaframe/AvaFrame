@@ -5,5 +5,15 @@ rho = 200
 # mass per particle [kg]
 massPerPart = 1000
 
+velMagMin = 1.0e-6
+depMin = 1.0e-6
+
 # time step [s]
 dt = 0.1
+
+# SamosAt friction model
+mu = 0.155
+Rs0 = 0.222
+kappa = 0.43
+R = 0.05
+B = 4.13

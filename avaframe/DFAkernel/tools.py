@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+import math
 import copy
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -40,7 +41,7 @@ def polygon2Raster(demHeader, Line):
     return mask
 
 
-def initializeRelease(relRaster, dem):
+def initializeSimulation(relRaster, dem):
     header = dem['header']
     csz = header.cellsize
     S = csz * csz
@@ -50,15 +51,15 @@ def initializeRelease(relRaster, dem):
     Xpart = np.empty(0)
     Ypart = np.empty(0)
     Mpart = np.empty(0)
-    Dpart = np.empty(0)
+    Hpart = np.empty(0)
     InCell = np.empty((0, 2), int)
     # find all non empty cells
     indY, indX = np.nonzero(relRaster)
     # loop on non empty cells
     for indx, indy in zip(indX, indY):
         # number of particles for this cell
-        depth = relRaster[indy][indx]
-        V = S * depth
+        h = relRaster[indy][indx]
+        V = S * h
         mass = V * rho
         nPart = np.ceil(mass / massPerPart).astype('int')
         Npart += nPart
@@ -69,7 +70,7 @@ def initializeRelease(relRaster, dem):
         Xpart = np.append(Xpart, xpart)
         Ypart = np.append(Ypart, ypart)
         Mpart = np.append(Mpart, mPart * np.ones(nPart))
-        Dpart = np.append(Dpart, depth * np.ones(nPart))
+        Hpart = np.append(Hpart, h * np.ones(nPart))
         InCell = np.append(InCell, np.tile(np.array([indx, indy]), (nPart, 1)), axis=0)
 
     # create dictionnary to store particles properties
@@ -81,7 +82,7 @@ def initializeRelease(relRaster, dem):
     # adding z component
     particles, _, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
     particles['m'] = Mpart
-    particles['d'] = Dpart
+    particles['h'] = Hpart
     particles['InCell'] = InCell
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
@@ -108,6 +109,14 @@ def initializeRelease(relRaster, dem):
 
 def computeBodyForce(particles, mesh):
     1
+
+
+def getNormal(x, y, Nx, Ny, Nz, csz):
+    nx = geoTrans.projectOnRasterRoot(x, y, Nx, csz=csz)
+    ny = geoTrans.projectOnRasterRoot(x, y, Ny, csz=csz)
+    nz = geoTrans.projectOnRasterRoot(x, y, Nz, csz=csz)
+    nx, ny, nz = normalize(nx, ny, nz)
+    return nx, ny, nz
 
 
 def getNormalVect(z, csz):
@@ -140,9 +149,28 @@ def getNormalVect(z, csz):
     return Nx, Ny, Nz
 
 
+def norm(x, y, z):
+    norme = np.sqrt(x*x + y*y + z*z)
+    return norme
+
+
 def normalize(x, y, z):
-    norm = np.sqrt(x*x + y*y + z*z)
-    xn = x / norm
-    yn = y / norm
-    zn = z / norm
+    norme = norm(x, y, z)
+    print(norme)
+    print(x)
+    print(y)
+    print(z)
+    xn = x / norme
+    yn = y / norme
+    zn = z / norme
     return xn, yn, zn
+
+
+def SamosATfric(v, p, h):
+    Rs = rho * v * v / (p + 0.001)
+    div = h / R;
+    if(div < 1.0):
+        div = 1.0
+    div = math.log(div) / kappa + B
+    tau = p * mu * (1.0 + Rs0 / (Rs0 + Rs)) + rho * v * v / (div * div)
+    return tau
