@@ -1,48 +1,8 @@
 Develop AvaFrame
 ================
 
-Notes on design principles how to use and how to contribute to AvaFrame
+Here you can find notes on design principles and how to contribute to AvaFrame.
 
-
-How to test
------------
-
-To run some simple tests just run::
-
-  pytest
-
-and you should see something like::
-
-  ===========================test session starts ======================
-  platform linux -- Python 3.8.3, pytest-5.4.3, py-1.9.0, pluggy-0.13.1
-  collected 1 item
-  tests/test_tmp1Ex.py .                                       [100%]
-
-  ==========================1 passed in 0.02s =========================
-
-
-Local documentation
--------------------
-
-For local documentation install sphinx (already included if you used the
-conda commands) with::
-
-  pip install sphinx
-
-We use the ReadTheDocs theme (also included in the conda environment),
-which you need to install with::
-
-  pip install sphinx-rtd-theme
-
-We use ``sphinxcontrib-bibtex`` for references. Install it with (already included in the conda environment)::
-
-  pip install sphinxcontrib-bibtex
-
-Go to now go to ``docs\`` directory and e.g.::
-
-  make html
-
-to generate html documentation within the _build directory.
 
 Our suggested git workflow
 --------------------------
@@ -96,3 +56,21 @@ repository/origin will be handled by the pull request)::
 
   git checkout master
   git branch -d myAwesomeFeature
+
+
+How to test code
+-----------------
+
+Avaframe uses pytest to test code. If you add new code, consider including a
+pytest for it in `Avaframe/avaframe/tests/``. In order to perform the pytests, just run::
+
+  pytest
+
+and you should see something like::
+
+  ===========================test session starts ======================
+  platform linux -- Python 3.8.3, pytest-5.4.3, py-1.9.0, pluggy-0.13.1
+  collected 1 item
+  tests/test_tmp1Ex.py .                                       [100%]
+
+  ==========================1 passed in 0.02s =========================

@@ -1,7 +1,8 @@
-Use python provided `logging <https://docs.python.org/3/library/logging.config.html>`_ module.
-See most simple example in runTmp1Ex.py and tmp1Ex.py.
 
-Basically: in your main script call::
+Let's have a look at the simple example in runTmp1Ex.py and tmp1Ex.py on how
+this is used within Avaframe.
+
+Basically, in your main script call::
 
   from avaframe.in3Utils import logUtils
   # log file name; leave empty to use default runLog.log
