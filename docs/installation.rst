@@ -20,7 +20,7 @@ Avaframe relies on the following python libraries:
 * seaborn
 * pytest
 
-If you are working on Linux, we suggest to work with conda (which you can install following `these instructions <https://docs.anaconda.com/anaconda/install/linux/>`_)
+If you are working on Linux, we suggest to work with anaconda (which you can install following `these instructions <https://docs.anaconda.com/anaconda/install/linux/>`_)
 and work in a specific avaframe environment. Find out more about conda environments `here <https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`.
 
 First, create a new environment for avaframe::
@@ -60,7 +60,11 @@ theme, and the *sphinxcontrib-bibtex*, which we use to include references, by ru
   pip install sphinx-rtd-theme
   pip install sphinxcontrib-bibtex
 
-In order to build the documentation go to the ``docs\`` directory and run::
+In order to build the documentation you need to install make ::
+
+  sudo apt install make
+
+Then go to the ``docs\`` directory and run::
 
   make html
 
