@@ -2,13 +2,30 @@ Getting started
 ================
 
 Even-though most of the routines in Avaframe are automatized, running them still
-requires a minimum amount of python scripting. The following example should make
+requires a minimum amount of python scripting.
+
+
+Logging
+-------
+
+.. include:: moduleLogging.rst
+
+
+Configuration
+--------------
+
+.. include:: moduleConfiguration.rst
+
+
+An example
+------------
+The following example should make
 it easier for you to find your way in Avaframe.
 Before starting, make sure you have installed Avaframe and the required
-dependencies as explained in :ref:`develop:How to install`.
+dependencies as explained in :ref:`installation: How to install`.
 
 Initialize project
--------------------
+~~~~~~~~~~~~~~~~~~
 The next step is to create the folder where the input data lies and where the
 output results will be saved. To do so, specify the full path to the folder
 you want to create in the ``local_avaframeCfg.ini`` (which is a copy of
@@ -20,7 +37,7 @@ This will create a new directory with the avaframe input structured as discribed
 in :ref:`moduleIn3Utils:Initialize Project`. You are now ready to start.
 
 Input data
------------
+~~~~~~~~~~~~
 
 Check the input data required by the different modules you want to use and fill
 the ``input/`` folder accordingly. For example for the com1DFA module you nee to
@@ -30,14 +47,14 @@ look at the default setting for the module you want to use (for example
 ``local_`` copy of the ``.ini`` file.
 
 Building your run script
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In this section, we give an example of workflow to run the avaframe routine.
 You can then create your own workflow taking the ``runOperational.py`` script as
 example. Start by creating a python file (``myAvaframeRunScript.py`` for example).
 
 Imports
-~~~~~~~
+~~~~~~~~
 
 The file starts with some python modules import ::
 
