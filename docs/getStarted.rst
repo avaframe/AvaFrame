@@ -3,26 +3,33 @@ Getting started
 
 Even-though most of the routines in Avaframe are automatized, running them still
 requires a minimum amount of python scripting.
+Here we provide an example on how to perform simulations with Avaframe,
+but first some information on the prerequisites.
 
 
-Logging
--------
+Prerequisites
+---------------
+
+When running Avaframe, the python module `logging <https://docs.python.org/3/library/logging.config.html>`_ is used.
 
 .. include:: moduleLogging.rst
 
 
-Configuration
---------------
+In order to set the configurations required by all the modules within Avaframe, the python module
+`configparser <https://docs.python.org/3/library/configparser.html>`_.
+
 
 .. include:: moduleConfiguration.rst
 
 
-An example
-------------
+How to run - an example
+------------------------
+
+
 The following example should make
 it easier for you to find your way in Avaframe.
 Before starting, make sure you have installed Avaframe and the required
-dependencies as explained in :ref:`installation: How to install`.
+dependencies as explained in :ref:`installation:Installation`.
 
 Initialize project
 ~~~~~~~~~~~~~~~~~~
@@ -33,14 +40,14 @@ you want to create in the ``local_avaframeCfg.ini`` (which is a copy of
 
   python path/to/runInitializeProject.py
 
-This will create a new directory with the avaframe input structured as discribed
+This will create a new directory with the input required by Avaframe structured as described
 in :ref:`moduleIn3Utils:Initialize Project`. You are now ready to start.
 
 Input data
 ~~~~~~~~~~~~
 
 Check the input data required by the different modules you want to use and fill
-the ``input/`` folder accordingly. For example for the com1DFA module you nee to
+the ``Inputs/`` folder accordingly. For example for the com1DFA module you nee to
 supply the inputs described in :ref:`moduleCom1DFA:Input`. You can also have a
 look at the default setting for the module you want to use (for example
 ``com1DFACfg.ini`` for module com1DFA). You can change those settings in a
@@ -49,14 +56,14 @@ look at the default setting for the module you want to use (for example
 Building your run script
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In this section, we give an example of workflow to run the avaframe routine.
+In this section, we give an example of the workflow to run Avaframe.
 You can then create your own workflow taking the ``runOperational.py`` script as
-example. Start by creating a python file (``myAvaframeRunScript.py`` for example).
+template. Start by creating a python file (``myAvaframeRunScript.py`` for example).
 
 Imports
 ~~~~~~~~
 
-The file starts with some python modules import ::
+The run script starts with importing python modules ::
 
   # Load python modules
   import os
