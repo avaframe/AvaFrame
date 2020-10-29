@@ -9,6 +9,7 @@ import matplotlib as mpl
 import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.DFAkernel.tools as tools
+from avaframe.DFAkernel.setParam import *
 # import avaframe.DFAkernel.test as test
 import avaframe.in3Utils.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
@@ -27,6 +28,7 @@ if __name__ == "__main__":
     log.info('MAIN SCRIPT')
     log.info('Current avalanche: %s', avalancheDir)
 
+    # ------------------------
     # fetch input data
     inputDir = os.path.join(avalancheDir, 'Inputs')
     relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.shp')
@@ -34,13 +36,16 @@ if __name__ == "__main__":
     dem = IOf.readRaster(demFile[0])
     releaseLine = shpConv.readLine(relFiles[0], 'release1', dem)
 
+    # ------------------------
     # process release to get it as a raster
     relRaster = tools.polygon2Raster(dem['header'], releaseLine)
     relTh = 1
+    # could do something more advanced if we want varying release depth
     relRasterD = relRaster * relTh
 
+    # ------------------------
     # initialize simulation : create particles
-    particles = tools.initializeRelease(relRaster, dem)
+    particles = tools.initializeSimulation(relRaster, dem)
 
     # get normal vector of the grid mesh
     Nx, Ny, Nz = tools.getNormalVect(dem['rasterData'], dem['header'].cellsize)
@@ -50,40 +55,72 @@ if __name__ == "__main__":
     mesh['Ny'] = Ny
     mesh['Nz'] = Nz
 
+    # ------------------------
+    # Start time step computation
     Npart = particles['Npart']
     csz = dem['header'].cellsize
+    # initialize
+    Fnormal = np.zeros(Npart)
+    forceX = np.zeros(Npart)
+    forceY = np.zeros(Npart)
+    forceZ = np.zeros(Npart)
     # loop on particles
     for i in range(Npart):
-        m = particles['m'][i]
+        mass = particles['m'][i]
         x = particles['x'][i]
         y = particles['y'][i]
         z = particles['z'][i]
-        d = particles['d'][i]
+        h = particles['h'][i]
         ux = particles['ux'][i]
         uy = particles['uy'][i]
         uz = particles['uz'][i]
+        # deduce area
+        A = mass / (h * rho)
+        # get velocity verctor direction
+        uxDir, uyDir, uzDir = tools.normalize(ux, uy, uz)
         # get normal at the particle location
-        Point = {}
-        Point['x'] = x
-        Point['y'] = y
-
-        nx = geoTrans.projectOnRasterRoot(x, y, Nx, csz=csz)
-        ny = geoTrans.projectOnRasterRoot(x, y, Ny, csz=csz)
-        nz = geoTrans.projectOnRasterRoot(x, y, Nz, csz=csz)
-        nx, ny, nz = tools.normalize(nx, ny, nz)
+        nx, ny, nz = tools.getNormal(x, y, Nx, Ny, Nz, csz)
 
         xEnd = x + dt * ux
         yEnd = y + dt * uy
-        nxEnd = geoTrans.projectOnRasterRoot(xEnd, yEnd, Nx, csz=csz)
-        nyEnd = geoTrans.projectOnRasterRoot(xEnd, yEnd, Ny, csz=csz)
-        nzEnd = geoTrans.projectOnRasterRoot(xEnd, yEnd, Nz, csz=csz)
-        nxEnd, nyEnd, nzEnd = tools.normalize(nxEnd, nyEnd, nzEnd)
+        nxEnd, nyEnd, nzEnd = tools.getNormal(xEnd, yEnd, Nx, Ny, Nz, csz)
 
         nxAvg = nx + nxEnd
         nyAvg = ny + nyEnd
         nzAvg = nz + nzEnd
         nxAvg, nyAvg, nzAvg = tools.normalize(nxAvg, nyAvg, nzAvg)
 
-        accxNormCurv = - ux * (nxEnd-nx) / dt
-        accyNormCurv = - uy * (nyEnd-ny) / dt
-        acczNormCurv = - uz * (nzEnd-nz) / dt
+        # acceleration due to curvature
+        accNormCurv = -(ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz))/dt
+
+        gravAccNorm = - gravAcc * nzAvg
+        effAccNorm = gravAccNorm + accNormCurv
+        if(effAccNorm > 0.0):
+            Fnormal[i] = mass * effAccNorm
+
+        # body forces
+        gravAccTangX =         + gravAccNorm * nxAvg
+        gravAccTangY =         + gravAccNorm * nyAvg
+        gravAccTangZ = gravAcc + gravAccNorm * nzAvg
+        # adding gravity force contribution
+        forceX[i] = forceX[i] + gravAccTangX * mass
+        forceY[i] = forceY[i] + gravAccTangY * mass
+        forceZ[i] = forceZ[i] + gravAccTangZ * mass
+
+        uMag = tools.norm(ux, uy, uz)
+
+        # Calculating bottom sheer and normal stress
+        if(effAccNorm < 0.0):
+            # if fluid detatched
+            tau = 0.0
+        else:
+            # bottom normal stress sigmaB
+            sigmaB = effAccNorm * rho * h
+            # SamosAT friction type (bottom shear stress)
+            tau = tools.SamosATfric(uMag, sigmaB, h)
+
+        # adding bottom shear resistance contribution
+        forceBotTang = -A * tau
+        forceX[i] = forceX[i] + forceBotTang * uxDir
+        forceY[i] = forceY[i] + forceBotTang * uyDir
+        forceZ[i] = forceZ[i] + forceBotTang * uzDir
