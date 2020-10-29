@@ -13,6 +13,8 @@ import avaframe.in3Utils.ascUtils as IOf
 from avaframe.out3Plot.plotUtils import *
 from avaframe.DFAkernel.setParam import *
 
+# create local logger
+log = logging.getLogger(__name__)
 debugPlot = False
 
 
@@ -43,6 +45,8 @@ def polygon2Raster(demHeader, Line):
 
 def initializeSimulation(relRaster, dem):
     header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
     csz = header.cellsize
     S = csz * csz
     # initialize
@@ -88,9 +92,10 @@ def initializeSimulation(relRaster, dem):
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
 
+    Cres = np.zeros(np.shape(dem['rasterData']))
+    Ment = np.zeros(np.shape(dem['rasterData']))
+
     if debugPlot:
-        ncols = header.ncols
-        nrows = header.nrows
         x = np.arange(ncols) * csz
         y = np.arange(nrows) * csz
         fig, ax = plt.subplots(figsize=(figW, figH))
@@ -104,7 +109,7 @@ def initializeSimulation(relRaster, dem):
         fig.colorbar(im, cax=cax)
         plt.show()
 
-    return particles
+    return particles, Cres, Ment
 
 
 def computeBodyForce(particles, mesh):
@@ -156,10 +161,6 @@ def norm(x, y, z):
 
 def normalize(x, y, z):
     norme = norm(x, y, z)
-    print(norme)
-    print(x)
-    print(y)
-    print(z)
     xn = x / norme
     yn = y / norme
     zn = z / norme

@@ -2,6 +2,7 @@ import os
 import glob
 import logging
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
@@ -44,16 +45,12 @@ if __name__ == "__main__":
     relRasterD = relRaster * relTh
 
     # ------------------------
-    # initialize simulation : create particles
-    particles = tools.initializeSimulation(relRaster, dem)
+    # initialize simulation : create particles, create resistance and
+    # entrqinment matrix
+    particles, Cres, Ment = tools.initializeSimulation(relRaster, dem)
 
     # get normal vector of the grid mesh
     Nx, Ny, Nz = tools.getNormalVect(dem['rasterData'], dem['header'].cellsize)
-    mesh = {}
-    # mesh['header'] = dem['header']
-    mesh['Nx'] = Nx
-    mesh['Ny'] = Ny
-    mesh['Nz'] = Nz
 
     # ------------------------
     # Start time step computation
@@ -74,6 +71,7 @@ if __name__ == "__main__":
         ux = particles['ux'][i]
         uy = particles['uy'][i]
         uz = particles['uz'][i]
+        indCellX, indCellY = particles['InCell'][i]
         # deduce area
         A = mass / (h * rho)
         # get velocity verctor direction
@@ -124,3 +122,41 @@ if __name__ == "__main__":
         forceX[i] = forceX[i] + forceBotTang * uxDir
         forceY[i] = forceY[i] + forceBotTang * uyDir
         forceZ[i] = forceZ[i] + forceBotTang * uzDir
+
+        # compute entrained mass
+        dm = 0
+        if Ment[indCellY][indCellX] > 0:
+            # either erosion or ploughing but not both
+            # width of the particle
+            width = math.sqrt(A)
+            # bottom area covered by the particle during dt
+            ABotSwiped = width * uMag * dt
+            if(entEroEnergy > 0):
+                # erosion: erode according to shear and erosion energy
+                dm = A * tau * uMag * dt / entEroEnergy
+                Aent = A
+            else:
+                # ploughing in at avalanche front: erode full area weight
+                # mass available in the cell [kg/m²]
+                rhoHent = Ment[indCellY][indCellX]
+                dm = rhoHent * ABotSwiped
+                Aent = rhoHent / rhoEnt
+            # adding mass balance contribution
+            forceX[i] = forceX[i] - dm / dt * ux
+            forceY[i] = forceY[i] - dm / dt * uy
+            forceZ[i] = forceZ[i] - dm / dt * uz
+
+            # adding force du to entrained mass
+            Fent = width * (entShearResistance + dm / Aent * entDefResistance)
+            forceX[i] = forceX[i] + Fent * uxDir
+            forceY[i] = forceY[i] + Fent * uyDir
+            forceZ[i] = forceZ[i] + Fent * uzDir
+
+        # adding resistance force du to obstacles
+        if Cres[indCellY][indCellX] > 0:
+            if(h < hRes):
+                hResEff = h
+            cres = - rho * A * hResEff * Cres * uMag
+            forceX[i] = forceX[i] + cres * ux
+            forceY[i] = forceY[i] + cres * uy
+            forceZ[i] = forceZ[i] + cres * uz
