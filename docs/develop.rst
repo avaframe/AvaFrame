@@ -4,51 +4,6 @@ Develop AvaFrame
 Notes on design principles how to use and how to contribute to AvaFrame
 
 
-How to install
---------------
-
-Clone repository::
-
-  git clone https://github.com/avaframe/AvaFrame.git
-
-
-Avaframe relies on the following python library:
-
-* numpy
-* matplotlib
-* pyshp
-* scipy
-* cmocean
-* seaborn
-* pytest
-
-We suggest to work with conda and create a specific avaframe
-`environment <https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_ ::
-
-    conda create --name avaframe_env
-
-Don't forget to activate it before going on::
-
-    conda activate avaframe_env
-
-Move to ``Avaframe/`` repository and install the different modules::
-
-    conda install --name avaframe_env --file avaframe_env_spec.txt
-
-Or the equivalent pip commands.
-
-Finally install avaframe::
-
-  conda develop .
-
-Or if you are using pip ::
-
-  pip install -e .
-
-This installs avaframe in editable mode, so everytime you import avaframe the
-current (local) version will be used.
-
-
 How to test
 -----------
 
@@ -79,7 +34,7 @@ which you need to install with::
 
   pip install sphinx-rtd-theme
 
-We use ``sphinxcontrib-bibtex`` for references. Install it with ::
+We use ``sphinxcontrib-bibtex`` for references. Install it with (already included in the conda environment)::
 
   pip install sphinxcontrib-bibtex
 
@@ -88,18 +43,6 @@ Go to now go to ``docs\`` directory and e.g.::
   make html
 
 to generate html documentation within the _build directory.
-
-
-Logging
--------
-
-.. include:: moduleLogging.rst
-
-
-Configuration
---------------
-
-.. include:: moduleConfiguration.rst
 
 Our suggested git workflow
 --------------------------

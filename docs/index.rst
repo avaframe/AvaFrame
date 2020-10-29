@@ -13,8 +13,9 @@ Overview
 .. only:: html
 
     * :doc:`introduction`
-    * :doc:`develop`
+    * :doc:`installation`
     * :doc:`getStarted`
+    * :doc:`develop`
 
 .. toctree::
    :maxdepth: 3
@@ -22,8 +23,9 @@ Overview
    :caption: Overview
 
    introduction.rst
-   develop.rst
+   installation.rst
    getStarted.rst
+   develop.rst
 
 
 Modules
