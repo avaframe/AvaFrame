@@ -1,4 +1,3 @@
-
 Let's have a look at the simple example in runTmp1Ex.py and tmp1Ex.py on how
 this is used within Avaframe.
 

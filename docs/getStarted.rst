@@ -4,19 +4,19 @@ Getting started
 Even-though most of the routines in Avaframe are automatized, running them still
 requires a minimum amount of python scripting.
 Here we provide an example on how to perform simulations with Avaframe,
-but first some information on the prerequisites.
+but let's start with some information on the utilities to create logs and set the desired configurations.
+
+Utilities
+----------
 
 
-Prerequisites
----------------
-
-When running Avaframe, the python module `logging <https://docs.python.org/3/library/logging.config.html>`_ is used.
+In order to generate simulation logs and to control what is prompted to the terminal, we use the python module `logging <https://docs.python.org/3/library/logging.config.html>`_.
 
 .. include:: moduleLogging.rst
 
 
 In order to set the configurations required by all the modules within Avaframe, the python module
-`configparser <https://docs.python.org/3/library/configparser.html>`_.
+`configparser <https://docs.python.org/3/library/configparser.html>`_ is used.
 
 
 .. include:: moduleConfiguration.rst
