@@ -2,7 +2,7 @@ Installation
 ================
 This is a quick guide on how to install AvaFrame and the required dependencies on your machine.
 
-First make sure `git <https://github.com/git-guides/install-git>`_ is installed on your machine.
+First make sure `git <https://github.com/git-guides/install-git>`_ is installed.
 Then clone the Avaframe repository::
 
   git clone https://github.com/avaframe/AvaFrame.git
@@ -21,9 +21,9 @@ Avaframe relies on the following python libraries:
 * pytest
 
 If you are working on Linux, we suggest to work with anaconda (which you can install following `these instructions <https://docs.anaconda.com/anaconda/install/linux/>`_)
-and work in a specific avaframe environment. Find out more about conda environments `here <https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`.
+and create a specific environment to work with Avaframe. Find out more about conda environments `here <https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_.
 
-First, create a new environment for avaframe::
+First, create a new environment for Avaframe::
 
     conda create --name avaframe_env
 
