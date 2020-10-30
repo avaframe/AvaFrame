@@ -540,7 +540,7 @@ From equation :eq:`momentum-balance6`
 .. math::
     F_{p_j,i}^{\text{lat}} = K_{(i)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p_i}-
     \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p_i}+\frac{\Delta{s}}{2}}\right)
-    = \frac{K_{(i)}}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_i}\right\rvert_{p_j}
+    = K_{(i)}\frac{\Delta{s}^2}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_i}\right\rvert_{p_j}
 
 The product of the average flow depth :math:`\overline{h}` and the basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}`
 reads (using equation :eq:`sigmab` and dropping the curvature acceleration term):
@@ -552,8 +552,8 @@ reads (using equation :eq:`sigmab` and dropping the curvature acceleration term)
 Which leads to, using the relation :eq:`sph formulation`:
 
 .. math::
-    F_{p_j,i}^{\text{lat}} = K_{(i)}\,\rho_0\,g_3\,\overline{h}_{p_j}\,.\,\left.\frac{d\,\overline{h}}{d\,x_i}\right\rvert_{p_j}
-    = -K_{(i)}\,\frac{m_{p_j}}{A_{p_j}}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,\left.\frac{d\,W_{p_jp_l}}{d\,x_i}\right\rvert_{p_l}
+    F_{p_j,i}^{\text{lat}} = K_{(i)}\,\rho_0\,g_3\,A_{p_j}\,\overline{h}_{p_j}\,.\,\left.\frac{d\,\overline{h}}{d\,x_i}\right\rvert_{p_j}
+    = -K_{(i)}\,m_{p_j}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,\left.\frac{d\,W_{p_jp_l}}{d\,x_i}\right\rvert_{p_l}
     :label: lateral force
 
 The bottom friction forces on each particle depend on the chose friction model and reads for the SamosAT friction model
