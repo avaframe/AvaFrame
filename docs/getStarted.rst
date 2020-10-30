@@ -50,15 +50,16 @@ Check the input data required by the different modules you want to use and fill
 the ``Inputs/`` folder accordingly. For example for the com1DFA module you nee to
 supply the inputs described in :ref:`moduleCom1DFA:Input`. You can also have a
 look at the default setting for the module you want to use (for example
-``com1DFACfg.ini`` for module com1DFA). You can change those settings in a
-``local_`` copy of the ``.ini`` file.
+``com1DFACfg.ini`` for module com1DFA). If you want to use different settings, create a
+``local_`` copy of the ``.ini`` file and modify the desired parameters.
 
 Building your run script
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In this section, we give an example of the workflow to run Avaframe.
 You can then create your own workflow taking the ``runOperational.py`` script as
-template. Start by creating a python file (``myAvaframeRunScript.py`` for example).
+template. Start by creating a python file (``myAvaframeRunScript.py`` for example)
+and add the required elements listed below.
 
 Imports
 ~~~~~~~~
@@ -121,7 +122,7 @@ already did some calculations you might want to clean it::
 Computation Modules
 ~~~~~~~~~~~~~~~~~~~
 
-Now starts the real calls to the computation modules.
+Now the computation modules are called.
 You can if necessary time the different routines::
 
   # Time the routine
@@ -161,5 +162,16 @@ in addition to the ``.log`` file::
 
   # Set directory for report
   reportDir = os.path.join(avalancheDir, 'Outputs')
+  # write report
+  gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'])
+
+In the case of the Com1DFA routine, you could just add plots of the peak fields within the report
+by first creating the plots::
+
+  # Generate plots for all peakFiles
+  plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
+
+and inlcude this plots in the report by passing the plotDict::
+
   # write report
   gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)

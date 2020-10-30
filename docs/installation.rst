@@ -2,7 +2,7 @@ Installation
 ================
 This is a quick guide on how to install AvaFrame and the required dependencies on your machine.
 
-First make sure `git <https://github.com/git-guides/install-git>`_ is installed.
+First make sure that `git <https://github.com/git-guides/install-git>`_ is installed.
 Then clone the Avaframe repository::
 
   git clone https://github.com/avaframe/AvaFrame.git
