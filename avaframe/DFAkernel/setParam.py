@@ -4,13 +4,17 @@ gravAcc = 9.81
 rho = 200
 rhoEnt = 200
 # mass per particle [kg]
-massPerPart = 1000
+massPerPart = 5000
 
 velMagMin = 1.0e-6
 depMin = 1.0e-6
 
 # time step [s]
 dt = 0.1
+# save every [s]
+dtSave = 1
+# End time
+Tend = 45
 
 # SamosAt friction model
 mu = 0.155
