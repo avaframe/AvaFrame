@@ -16,13 +16,11 @@ log = logging.getLogger(__name__)
 
 def projectOnRaster(dem, Points, interp='bilinear'):
     """ Projects the points Points on Raster using a bilinear or nearest
-    interpolation and returns the z coord
+    interpolation and returns the z coord (for loop on points)
     Input :
     Points: list of points (x,y) 2 rows as many columns as Points
     Output:
     PointsZ: list of points (x,y,z) 3 rows as many columns as Points
-
-    TODO: test
     """
     header = dem['header']
     Z = dem['rasterData']
@@ -42,23 +40,20 @@ def projectOnRaster(dem, Points, interp='bilinear'):
 
 
 def projectOnRasterRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
-    """ Projects the points Points on Raster using a bilinear or nearest
+    """ Projects one point on Raster using a bilinear or nearest
     interpolation and returns the z coord
     Input :
-    Points: list of points (x,y) 2 rows as many columns as Points
+    Points: (x,y) coord of the point
     Output:
-    PointsZ: list of points (x,y,z) 3 rows as many columns as Points
-
-    TODO: test
+    PointsZ: z coord of the point
     """
-
-    Lx = (x - xllc) / csz
-    Ly = (y - yllc) / csz
-    Lx0 = int(np.floor(Lx))
-    Ly0 = int(np.floor(Ly))
-    Lx1 = int(np.floor(Lx)) + 1
-    Ly1 = int(np.floor(Ly)) + 1
     try:
+        Lx = (x - xllc) / csz
+        Ly = (y - yllc) / csz
+        Lx0 = int(np.floor(Lx))
+        Ly0 = int(np.floor(Ly))
+        Lx1 = int(np.floor(Lx)) + 1
+        Ly1 = int(np.floor(Ly)) + 1
         # prepare for bilinear interpolation(do not take out of bound into account)
         if interp == 'nearest':
             dx = np.round(Lx - Lx0)
@@ -86,18 +81,15 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
     """
     Vectorized version of projectOnRaster
     Projects the points Points on Raster using a bilinear or nearest
-    interpolation and returns the z coord
+    interpolation and returns the z coord (no for loop)
     Input :
     Points: list of points (x,y) 2 rows as many columns as Points
     Output:
     PointsZ: list of points (x,y,z) 3 rows as many columns as Points
 
-    TODO: test
     """
     header = dem['header']
     rasterdata = dem['rasterData']
-    ncol = header.ncols
-    nrow = header.nrows
     xllc = header.xllcenter
     yllc = header.yllcenter
     cellsize = header.cellsize
@@ -105,18 +97,37 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
     ycoor = Points['y']
     zcoor = np.array([])
 
+    zcoor, ioob = projectOnRasterVectRoot(xcoor, ycoor, rasterdata,
+                                                csz=cellsize, xllc=xllc,
+                                                yllc=yllc, interp=interp)
+    Points['z'] = zcoor
+    return Points, ioob
+
+
+def projectOnRasterVectRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
+    """
+    Vectorized version of projectOnRaster
+    Projects the points Points on Raster using a bilinear or nearest
+    interpolation and returns the z coord
+    Input :
+    Points: (x, y) coord of the pointsi
+    Output:
+    PointsZ: z coord of the points
+             ioob number of out of bounds indexes
+    """
+    nrow, ncol = np.shape(Z)
     # initialize outputs
-    zcoor = np.ones((np.shape(xcoor)))*np.NaN
-    dx = np.ones((np.shape(xcoor)))*np.NaN
-    dy = np.ones((np.shape(xcoor)))*np.NaN
-    f11 = np.ones((np.shape(xcoor)))*np.NaN
-    f12 = np.ones((np.shape(xcoor)))*np.NaN
-    f21 = np.ones((np.shape(xcoor)))*np.NaN
-    f22 = np.ones((np.shape(xcoor)))*np.NaN
+    z = np.ones((np.shape(x)))*np.NaN
+    dx = np.ones((np.shape(x)))*np.NaN
+    dy = np.ones((np.shape(x)))*np.NaN
+    f11 = np.ones((np.shape(x)))*np.NaN
+    f12 = np.ones((np.shape(x)))*np.NaN
+    f21 = np.ones((np.shape(x)))*np.NaN
+    f22 = np.ones((np.shape(x)))*np.NaN
 
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-    Lxx = (xcoor - xllc) / cellsize
-    Lyy = (ycoor - yllc) / cellsize
+    Lxx = (x - xllc) / csz
+    Lyy = (y - yllc) / csz
     Lx = copy.deepcopy(Lxx)
     Ly = copy.deepcopy(Lyy)
 
@@ -150,15 +161,14 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
         dx[mask] = Lx[mask] - Lx0[mask]
         dy[mask] = Ly[mask] - Ly0[mask]
 
-    f11[mask] = rasterdata[Ly0[mask], Lx0[mask]]
-    f12[mask] = rasterdata[Ly1[mask], Lx0[mask]]
-    f21[mask] = rasterdata[Ly0[mask], Lx1[mask]]
-    f22[mask] = rasterdata[Ly1[mask], Lx1[mask]]
+    f11[mask] = Z[Ly0[mask], Lx0[mask]]
+    f12[mask] = Z[Ly1[mask], Lx0[mask]]
+    f21[mask] = Z[Ly0[mask], Lx1[mask]]
+    f22[mask] = Z[Ly1[mask], Lx1[mask]]
     # using bilinear interpolation on the cell
-    zcoor = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
+    z = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
 
-    Points['z'] = zcoor
-    return Points, itot, ioob
+    return z, ioob
 
 
 def prepareLine(dem, avapath, distance=10, Point=None):

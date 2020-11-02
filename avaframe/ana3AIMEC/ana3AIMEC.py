@@ -500,7 +500,8 @@ def transform(fname, rasterTransfo, interpMethod):
     Points = {}
     Points['x'] = xx.flatten()
     Points['y'] = yy.flatten()
-    Points, iib, ioob = geoTrans.projectOnRasterVect(data, Points,
+    iib = len(Points['x'])
+    Points, ioob = geoTrans.projectOnRasterVect(data, Points,
                                                      interp=interpMethod)
     newData = Points['z'].reshape(n, m)
     log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %

@@ -1,3 +1,4 @@
+import math
 # acceleration of gravity [m/s²]
 gravAcc = 9.81
 # density of snow [kg/m³]
@@ -14,7 +15,7 @@ dt = 0.1
 # save every [s]
 dtSave = 1
 # End time
-Tend = 45
+Tend = 30
 
 # SamosAt friction model
 mu = 0.155
@@ -29,3 +30,10 @@ hRes = 1
 entEroEnergy = 0
 entShearResistance = 0
 entDefResistance = 0
+
+# SPH kernel
+# use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
+rKernel = 5
+facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
+dfacKernel = -3.0 * facKernel
+d2facKernel = -2.0 * dfacKernel
