@@ -56,7 +56,7 @@ def test_projectOnRasterVect(capfd):
     dem['header'] = header
     dem['rasterData'] = rasterdata
 
-    Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points,
+    Points, ioob = geoTrans.projectOnRasterVect(dem, Points,
                                                       interp='bilinear')
     atol = 1e-8
     # Compare result to reference solution
@@ -72,7 +72,7 @@ def test_projectOnRasterVect(capfd):
     testRes = np.allclose(Points['z'][~np.isnan(Points['z'])], zSol, atol=atol)
     assert (testRes == True)
 
-    Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points,
+    Points, ioob = geoTrans.projectOnRasterVect(dem, Points,
                                                       interp='nearest')
     atol = 1e-8
     # Compare result to reference solution

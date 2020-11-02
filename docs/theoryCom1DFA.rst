@@ -525,7 +525,16 @@ Where :math:`W` represents the SPH-Kernel function and reads:
 
 :math:`\left\Vert \mathbf{r_{p_jp_l}}\right\Vert= \left\Vert \mathbf{x_{p_l}}-\mathbf{x_{p_j}}\right\Vert`
 represents the distance between particle :math:`j` and :math:`l` and
-:math:`r_0` the smoothing length.
+:math:`r_0` the smoothing length. And its first derivative reads:
+
+.. math::
+   \mathbf{\nabla}W_{p_jp_l} = -3.\frac{10}{\pi h^5}\left\{
+   \begin{aligned}
+   & (r_0 - \left\Vert \mathbf{r_{p_jp_l}}\right\Vert)^2\,\frac{\mathbf{r_{p_jp_l}}}{r_{p_jp_l}}, \quad &0\leq \left\Vert \mathbf{r_{p_jp_l}}\right\Vert \leq  r_0\\
+   & 0 , & r_0 <\left\Vert \mathbf{r_{p_jp_l}}\right\Vert
+   \end{aligned}
+   \right.
+   :label: kernel function gradient
 
 The lateral pressure forces on each particle are calculated from the compression
 forces on the boundary of the particle.
