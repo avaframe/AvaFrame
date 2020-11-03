@@ -1,4 +1,5 @@
 import logging
+import time
 import numpy as np
 from scipy.interpolate import griddata
 import math
@@ -12,7 +13,7 @@ import avaframe.in2Trans.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.ascUtils as IOf
 from avaframe.out3Plot.plotUtils import *
-from avaframe.DFAkernel.setParam import *
+# from avaframe.DFAkernel.setParam import *
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -44,7 +45,9 @@ def polygon2Raster(demHeader, Line):
     return mask
 
 
-def initializeSimulation(relRaster, dem):
+def initializeSimulation(cfg, relRaster, dem):
+    rho = cfg.getfloat('rho')
+    massPerPart = cfg.getfloat('massPerPart')
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
@@ -128,7 +131,16 @@ def initializeSimulation(relRaster, dem):
     return particles, fields, Cres, Ment
 
 
-def computeForce(particles, dem, Ment, Cres):
+def computeForce(cfg, particles, dem, Ment, Cres):
+    rho = cfg.getfloat('rho')
+    gravAcc = cfg.getfloat('gravAcc')
+    dt = cfg.getfloat('dt')
+    mu = cfg.getfloat('mu')
+    entEroEnergy = cfg.getfloat('entEroEnergy')
+    rhoEnt = cfg.getfloat('rhoEnt')
+    entShearResistance = cfg.getfloat('entShearResistance')
+    entDefResistance = cfg.getfloat('entDefResistance')
+    hRes = cfg.getfloat('hRes')
     Npart = particles['Npart']
     csz = dem['header'].cellsize
     ncols = dem['header'].ncols
@@ -142,6 +154,7 @@ def computeForce(particles, dem, Ment, Cres):
     forceZ = np.zeros(Npart)
     dM = np.zeros(Npart)
     # loop on particles
+    TcpuSPH = 0
     for j in range(Npart):
         mass = particles['m'][j]
         x = particles['x'][j]
@@ -186,7 +199,7 @@ def computeForce(particles, dem, Ment, Cres):
         forceY[j] = forceY[j] + gravAccTangY * mass
         forceZ[j] = forceZ[j] + gravAccTangZ * mass
 
-        # Calculating bottom sheer and normal stress
+        # Calculating bottom shear and normal stress
         if(effAccNorm > 0.0):
             # if fluid detatched
             log.info('fluid detatched for particle %s', j)
@@ -195,7 +208,7 @@ def computeForce(particles, dem, Ment, Cres):
             # bottom normal stress sigmaB
             sigmaB = - effAccNorm * rho * h
             # SamosAT friction type (bottom shear stress)
-            tau = SamosATfric(uMag, sigmaB, h)
+            tau = SamosATfric(cfg, uMag, sigmaB, h)
             # coulomb friction type (bottom shear stress)
             tau = mu * sigmaB
 
@@ -245,11 +258,15 @@ def computeForce(particles, dem, Ment, Cres):
             forceZ[j] = forceZ[j] + cres * uz
 
         # adding lateral force (SPH component)
+        startTime = time.time()
         gradhX, gradhY,  gradhZ = calcGradHSPH(particles, j, ncols)
+        tcpuSPH = time.time() - startTime
+        TcpuSPH = TcpuSPH + tcpuSPH
         forceX[j] = forceX[j] - gradhX * mass * gravAcc / rho
         forceY[j] = forceY[j] - gradhY * mass * gravAcc / rho
         forceZ[j] = forceZ[j] - gradhZ * mass * gravAcc / rho
 
+    log.info(('cpu time SPH = %s s' % (TcpuSPH)))
     force = {}
     force['dM'] = dM
     force['forceX'] = forceX
@@ -259,7 +276,8 @@ def computeForce(particles, dem, Ment, Cres):
     return force
 
 
-def updatePosition(particles, dem, force):
+def updatePosition(cfg, particles, dem, force):
+    dt = cfg.getfloat('dt')
     csz = dem['header'].cellsize
     Nx = dem['Nx']
     Ny = dem['Ny']
@@ -307,7 +325,8 @@ def updatePosition(particles, dem, force):
     return particles
 
 
-def updateFields(particles, dem, fields):
+def updateFields(cfg, particles, dem, fields):
+    rho = cfg.getfloat('rho')
     header = dem['header']
     csz = dem['header'].cellsize
     S = csz * csz
@@ -315,6 +334,8 @@ def updateFields(particles, dem, fields):
     nrows = header.nrows
     Npart = particles['Npart']
     m = particles['m']
+    x = particles['x']
+    y = particles['y']
     ux = particles['ux']
     uy = particles['uy']
     uz = particles['uz']
@@ -325,13 +346,46 @@ def updateFields(particles, dem, fields):
     MomX = np.zeros((nrows, ncols))
     MomY = np.zeros((nrows, ncols))
     MomZ = np.zeros((nrows, ncols))
-    # loop on particles
-    for j in range(Npart):
-        indx, indy, ic = particles['InCell'][j]
-        Mass[indy, indx] = Mass[indy, indx] + m[j]
-        MomX[indy, indx] = MomX[indy, indx] + m[j] * ux[j]
-        MomY[indy, indx] = MomY[indy, indx] + m[j] * uy[j]
-        MomZ[indy, indx] = MomZ[indy, indx] + m[j] * uz[j]
+    # startTime = time.time()
+    # Mass2 = geoTrans.pointsToRaster(x, y, m, Mass, csz=csz, interp='bilinear')
+    # MomX2 = geoTrans.pointsToRaster(x, y, m * ux, MomX, csz=csz, interp='bilinear')
+    # MomY2 = geoTrans.pointsToRaster(x, y, m * uy, MomY, csz=csz, interp='bilinear')
+    # MomZ2 = geoTrans.pointsToRaster(x, y, m * uz, MomZ, csz=csz, interp='bilinear')
+    # endTime = time.time()
+    # log.info(('time = %s s' % (endTime - startTime)))
+
+    # startTime = time.time()
+    iC = particles['InCell'][:, 2]
+    Mass = Mass.flatten()
+    np.add.at(Mass, iC, m)
+    MomX = MomX.flatten()
+    np.add.at(MomX, iC, m * ux)
+    MomY = MomY.flatten()
+    np.add.at(MomY, iC, m * uy)
+    MomZ = MomZ.flatten()
+    np.add.at(MomZ, iC, m * uz)
+    Mass = np.reshape(Mass, (nrows, ncols))
+    MomX = np.reshape(MomX, (nrows, ncols))
+    MomY = np.reshape(MomY, (nrows, ncols))
+    MomZ = np.reshape(MomZ, (nrows, ncols))
+
+    # same with a loop
+    # # loop on particles
+    # for j in range(Npart):
+    #     indx, indy, ic = particles['InCell'][j]
+    #
+    #     Mass[indy, indx] = Mass[indy, indx] + m[j]
+    #     MomX[indy, indx] = MomX[indy, indx] + m[j] * ux[j]
+    #     MomY[indy, indx] = MomY[indy, indx] + m[j] * uy[j]
+    #     MomZ[indy, indx] = MomZ[indy, indx] + m[j] * uz[j]
+
+    # endTime = time.time()
+    # log.info(('time = %s s' % (endTime - startTime)))
+
+    # print(np.sum(Mass))
+    # print(np.sum(Mass2))
+    # plotPosition(particles, dem, Mass)
+    # plotPosition(particles, dem, Mass2)
 
     VX = np.where(Mass > 0, MomX/Mass, MomX)
     VY = np.where(Mass > 0, MomY/Mass, MomY)
@@ -346,11 +400,14 @@ def updateFields(particles, dem, fields):
     fields['V'] = V
     fields['P'] = P
     fields['FD'] = FD
+    fields['PV'] = PV
+    fields['PP'] = PP
+    fields['PFD'] = PFD
 
     return fields
 
 
-def plotPosition(particles, dem, data, fig, ax):
+def plotPosition(particles, dem, data):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
@@ -359,7 +416,7 @@ def plotPosition(particles, dem, data, fig, ax):
     y = particles['y']
     xx = np.arange(ncols) * csz
     yy = np.arange(nrows) * csz
-    ax.clear()
+    fig, ax = plt.subplots(figsize=(figW, figH))
     ax.set_title('Particles on dem at t=%.2f s' % particles['t'])
     cmap = copy.copy(mpl.cm.get_cmap("Greys"))
     ref0, im = NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
@@ -369,10 +426,10 @@ def plotPosition(particles, dem, data, fig, ax):
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)
     fig.colorbar(im, cax=cax)
+    plt.pause(1)
+    # plt.close(fig)
     # ax.set_ylim([510, 530])
     # ax.set_xlim([260, 300])
-
-    return fig, ax
 
 
 def getNeighbours(particles, dem):
@@ -430,6 +487,12 @@ def getNeighbours(particles, dem):
 
 
 def calcGradHSPH(particles, j, ncols):
+    # SPH kernel
+    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
+    rKernel = 5
+    facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
+    dfacKernel = -3.0 * facKernel
+
     indx, indy, _ = particles['InCell'][j]
     indPartInCell = particles['indPartInCell']
     partInCell = particles['partInCell']
@@ -531,7 +594,13 @@ def normalize(x, y, z):
     return xn, yn, zn
 
 
-def SamosATfric(v, p, h):
+def SamosATfric(cfg, v, p, h):
+    rho = cfg.getfloat('rho')
+    Rs0 = cfg.getfloat('Rs0')
+    mu = cfg.getfloat('mu')
+    kappa = cfg.getfloat('kappa')
+    B = cfg.getfloat('B')
+    R = cfg.getfloat('R')
     Rs = rho * v * v / (p + 0.001)
     div = h / R
     if(div < 1.0):

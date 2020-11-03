@@ -171,6 +171,63 @@ def projectOnRasterVectRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     return z, ioob
 
 
+def pointsToRaster(x, y, z, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
+    """
+    Vectorized version of projectOnRaster
+    Projects the points Points on Raster using a bilinear or nearest
+    interpolation and returns the z coord
+    Input :
+    Points: (x, y) coord of the pointsi
+    Output:
+    PointsZ: z coord of the points
+             ioob number of out of bounds indexes
+    """
+    nrow, ncol = np.shape(Z)
+
+    # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+    Lx = (x - xllc) / csz
+    Ly = (y - yllc) / csz
+
+    # find coordinates of the 4 nearest cornes on the raster
+    Lx0 = np.floor(Lx).astype('int')
+    Ly0 = np.floor(Ly).astype('int')
+    Lx1 = Lx0 + 1
+    Ly1 = Ly0 + 1
+    # prepare for bilinear interpolation(do not take out of bound into account)
+    if interp == 'nearest':
+        dx = np.round(Lx - Lx0)
+        dy = np.round(Ly - Ly0)
+    elif interp == 'bilinear':
+        dx = Lx - Lx0
+        dy = Ly - Ly0
+
+    Z = Z.flatten()
+    f11 = z*(1-dx)*(1-dy)
+    f11 = f11.flatten()
+    ic = Lx0 + ncol * Ly0
+    # ic = Ly0 + ncol * Lx0
+    np.add.at(Z, ic, f11)
+    f21 = z*dx*(1-dy)
+    f21 = f21.flatten()
+    ic = Lx0 + ncol * Ly1
+    # ic = Ly1 + ncol * Lx0
+    np.add.at(Z, ic, f21)
+    f12 = z*(1-dx)*dy
+    f12 = f12.flatten()
+    ic = Lx1 + ncol * Ly0
+    # ic = Ly0 + ncol * Lx1
+    np.add.at(Z, ic, f12)
+    f22 = z*dx*dy
+    f22 = f22.flatten()
+    ic = Lx1 + ncol * Ly1
+    # ic = Ly1 + ncol * Lx1
+    np.add.at(Z, ic, f22)
+
+    Z = np.reshape(Z, (nrow, ncol))
+
+    return Z
+
+
 def prepareLine(dem, avapath, distance=10, Point=None):
     """ 1- Resample the avapath line with a max intervall of distance=10m
     between points (projected distance on the horizontal plane).
