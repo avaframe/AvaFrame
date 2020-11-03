@@ -424,6 +424,7 @@ def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
     sx = np.sign(x1-x0)  # step in x direction
     sy = np.sign(y1-y0)  # step in y direction
     err = dx-dy
+    errprev = dx-dy
 
     z = []
     while True:
@@ -434,9 +435,64 @@ def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
         if (e2 > -dy):
             err -= dy
             x0 += sx
+            # if (err + errprev < -dy):
+            #     z.append([x0*cs, (y0+sy)*cs])
+            # elif (err + errprev < dx):
+            #     z.append([x0*cs, y0*cs])
+            # else:
+            #     z.append([x0*cs, (y0+sy)*cs])
+            #     z.append([(x0+sx)*cs, y0*cs])
         if (e2 < dx):
             err += dx
             y0 += sy
+            # if (err + errprev < -dy):
+            #     z.append([x0*cs, (y0+sy)*cs])
+            # elif (err + errprev > dx):
+            #     z.append([(x0+sx)*cs, y0*cs])
+            # else:
+            #     z.append([x0*cs, (y0+sy)*cs])
+            #     z.append([(x0+sx)*cs, y0*cs])
+
+    return z
+
+
+def findCellsCrossedByLineBresenham2(x0, y0, x1, y1, cs):
+    # normalize Cellsize cs to 1
+    x0 = round(x0/cs)
+    x1 = round(x1/cs)
+    y0 = round(y0/cs)
+    y1 = round(y1/cs)
+
+    dx = abs(x1-x0)
+    dy = abs(y1-y0)
+    sx = np.sign(x1-x0)  # step in x direction
+    sy = np.sign(y1-y0)  # step in y direction
+
+    x = x0
+    y = y0
+    n = dx + dy
+    err = dx - dy
+
+    dx = 2 * dx
+    dy = 2 * dy
+
+    z = []
+    while n > 0:
+        z.append([x*cs, y*cs])
+        if (err > 0):
+            x += sx
+            err -= dy
+        elif (err < 0):
+            y += sy
+            err += dx
+        else:  # If err == 0 the algorithm is on a corner
+            z.append([x*cs, (y + sy)*cs])
+            z.append([(x + sy)*cs, y*cs])
+            x += sy
+            y += sy
+            err = err + dx - dy
+            n = n - 1
+        n = n - 1
 
     return z
 
@@ -553,8 +609,8 @@ def poly2maskSimple(ydep, xdep, ncols, nrows):
     j = xyframe[1]
     mv, nv = np.meshgrid(np.linspace(0, nrows-1, nrows),
                          np.linspace(0, ncols-1, ncols))  # create index space
-    mask = inpolygon(mv, nv, i, j)
-    mask = np.transpose(mask)
+    # mask = inpolygon(mv, nv, i, j)
+    # mask = np.transpose(mask)
     return mask
 
 
