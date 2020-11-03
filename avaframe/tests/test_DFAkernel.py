@@ -3,8 +3,25 @@ import numpy as np
 import pytest
 
 # Local imports
-import avaframe.DFAkernel.DFAtools as tools
+import avaframe.DFAkernel.DFAtools as DFAtools
 import avaframe.in3Utils.ascUtils as IOf
+
+
+def test_polygon2Raster(capfd):
+    demHeader = IOf.cASCheader()
+    demHeader.ncols = 6
+    demHeader.nrows = 4
+    demHeader.xllcenter = 0
+    demHeader.yllcenter = 0
+    demHeader.cellsize = 1
+    x = np.array([1.4, 2.9])
+    y = np.array([0.4, 2.4])
+    Line = {}
+    Line['x'] = x
+    Line['y'] = y
+    mask = DFAtools.polygon2Raster(demHeader, Line)
+    print(mask)
+    # assert 1 == 2
 
 
 def test_normalize(capfd):
@@ -12,7 +29,7 @@ def test_normalize(capfd):
     x = np.array([1.])
     y = np.array([1.])
     z = np.array([1.])
-    xn, yn, zn = tools.normalize(x, y, z)
+    xn, yn, zn = DFAtools.normalize(x, y, z)
     atol = 1e-10
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1., rel=atol)
     assert xn == 1/np.sqrt(3.)
@@ -22,13 +39,13 @@ def test_normalize(capfd):
     x = np.array([1.])
     y = np.array([2.])
     z = np.array([3.])
-    xn, yn, zn = tools.normalize(x, y, z)
+    xn, yn, zn = DFAtools.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1., rel=atol)
 
     x = np.array([1.])
     y = np.array([0.])
     z = np.array([1.])
-    xn, yn, zn = tools.normalize(x, y, z)
+    xn, yn, zn = DFAtools.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1, rel=atol)
     assert xn == pytest.approx(1/np.sqrt(2.), rel=atol)
     assert yn == pytest.approx(0, rel=atol)
@@ -47,7 +64,7 @@ def test_getNormalVect(capfd):
     y = np.linspace(0, nrows-1, nrows)
     X, Y = np.meshgrid(x, y)
     Z = a * X * X
-    Nx, Ny, Nz = tools.getNormalVect(Z, cellsize)
+    Nx, Ny, Nz = DFAtools.getNormalVect(Z, cellsize)
 
     atol = 1e-10
     TestNX = np.allclose(Nx[1:nrows-1, 1:ncols-1], -2*a*X[1:nrows-1, 1:ncols-1]/np.sqrt(1+4*a*a*X[1:nrows-1, 1:ncols-1]*X[1:nrows-1, 1:ncols-1]), atol=atol)
@@ -58,7 +75,7 @@ def test_getNormalVect(capfd):
     assert TestNZ
 
     Z = a * Y
-    Nx, Ny, Nz = tools.getNormalVect(Z, cellsize)
+    Nx, Ny, Nz = DFAtools.getNormalVect(Z, cellsize)
 
     atol = 1e-10
     TestNY = np.allclose(Ny[1:nrows-1, 1:ncols-1], -a/np.sqrt(1+a*a*np.ones(np.shape(Y[1:nrows-1, 1:ncols-1]))), atol=atol)
@@ -95,7 +112,7 @@ def test_getNeighbours(capfd):
                                2.4, 1.8,
                                3.4,
                                3.4])
-    particles = tools.getNeighbours(particles, dem)
+    particles = DFAtools.getNeighbours(particles, dem)
     print(particles['InCell'])
     print(particles['indPartInCell'])
     print(particles['partInCell'])
