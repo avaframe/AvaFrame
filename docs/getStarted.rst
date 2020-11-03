@@ -1,11 +1,10 @@
 Getting started
 ================
 
-Even-though most of the routines in AvaFrame are automatized, running them still
-requires a minimum amount of python scripting.
 Here we provide an example on how to setup and run simulations with AvaFrame including some information
-on the utilities to create logs and set the desired configurations. But let's start with a quick
-guide on how to start your first simulation with AvaFrame!
+on the utilities to create logs and set the desired configurations.
+
+Let's start with a quick guide on how to start your first simulation with AvaFrame
 
 
 In 5 minutes
@@ -13,13 +12,27 @@ In 5 minutes
 
 Follow these steps to run your first simulation:
 
-* install AvaFrame and the required dependencies (see :ref:`installation:Installation`)
-* go to ``AvaFrame/avaframe/com1DFA`` and copy ``com1DFACfg.ini`` to ``local_com1DFACfg.ini``
-* in this file, set the path to ``com1Exe`` (during installation you also cloned the com1DFA_Exe repository, there your com1Exe is located)
-* go back to ``AvaFrame/avaframe`` and simply run:
+* go to :ref:`installation:Installation` and follow the instructions to install
+  *AvaFrame* and the necessary *com1DFA* executable.
+* change into your ``AvaFrame`` directory (replace [YOURDIR]
+  with your path from the first step)::
+
+    cd [YOURDIR]/AvaFrame/avaframe
+
+* run:
   ::
 
     python runCom1DFA.py
+
+* a similar output should show up:
+  ::
+
+    logUtils - INFO -  Started logging at: 03.11.2020 22:42:04
+    logUtils - INFO -  Also logging to: data/avaHelix/runCom1DFA.log
+    runCom1DFA - INFO -  MAIN SCRIPT
+    runCom1DFA - INFO -  Current avalanche: data/avaHelix
+    ...
+
 
 This will perform a dense flow avalanche simulation using the ``com1DFA`` module.
 The results are saved to ``data/avaHockeySmoothSmall/Outputs/com1DFA``. For a first

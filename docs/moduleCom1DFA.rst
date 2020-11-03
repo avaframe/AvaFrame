@@ -1,4 +1,4 @@
-com1DFA: Module DFA-Kernel
+com1DFA: DFA-Kernel
 ===========================
 
 This module is a simulation tool for dense flow (snow) avalanches (DFA). It is based on the
@@ -53,21 +53,13 @@ The simulation results are saved to: *Outputs/com1DFA* and include:
 To run
 --------
 
-* the computation of the com1DFA module relies on a com1DFA C++ executable.
-  The executable (for now only a 64bit linux one is available) and needed files are
-  available in this `git repository <https://github.com/avaframe/com1DFA_Exe>`_.
-
-  .. Hint:: Simply clone the `com1DFA_Exe <https://github.com/avaframe/com1DFA_Exe>`_ git repository.
+.. Attention:: Please refer to the instructions in :ref:`Installation:Com1DFA Executable` on how to get the
+               necessary C++ executable and setup the correct paths. 
 
 * create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
-* copy ``com1DFACfg.ini`` to ``local_com1DFACfg.ini`` and set your desired settings. Make sure you update properly
-  the path to com1DFA C++ executable and attribute files (the one you just cloned).
-
-  .. Attention:: Make sure you update the path to com1DFA C++ executable
-                 and attribute files (the one you just cloned). We suggest you to use the full path.
-
 * in ``avaframe/`` run:
+  ::
 
     python3 runCom1DFA.py
 
