@@ -1,16 +1,17 @@
 Installation
 ================
 This is a quick guide on how to install AvaFrame and the required dependencies on your machine.
+AvaFrame is `tested  <https://codecov.io/gh/avaframe/AvaFrame>`_ with Python version 3.8 on Linux.
 
 First make sure that `git <https://github.com/git-guides/install-git>`_ is installed.
-Then clone the Avaframe repository::
+Then clone the AvaFrame repository::
 
   git clone https://github.com/avaframe/AvaFrame.git
 
-Now that you have the Avaframe code, you need to check that you have installed all the required dependencies.
+Now that you have the AvaFrame code, you need to check that you have installed all the required dependencies.
 
 
-Avaframe relies on the following python libraries:
+AvaFrame relies on the following python libraries:
 
 * numpy
 * matplotlib
@@ -21,9 +22,9 @@ Avaframe relies on the following python libraries:
 * pytest
 
 If you are working on Linux, we suggest to work with anaconda (which you can install following `these instructions <https://docs.anaconda.com/anaconda/install/linux/>`_)
-and create a specific environment to work with Avaframe. Find out more about conda environments `here <https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_.
+and create a specific environment to work with AvaFrame. Find out more about conda environments `here <https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_.
 
-First, create a new environment for Avaframe::
+First, create a new environment for AvaFrame::
 
     conda create --name avaframe_env
 
@@ -31,7 +32,7 @@ Don't forget to activate it before going on::
 
     conda activate avaframe_env
 
-Move to ``Avaframe/`` repository and install the different modules by using the provided installation setup file::
+Move to ``AvaFrame/`` repository and install the different modules by using the provided installation setup file::
 
     conda install --name avaframe_env --file avaframe_env_spec.txt
 
@@ -47,25 +48,3 @@ Or if you are using pip ::
 
 This installs avaframe in editable mode, so every time you import avaframe the
 current (local) version will be used.
-
-
-Build the documentation
-------------------------
-
-If you want to work on the documentation you need to install *Sphinx*. If you have followed the conda installation using
-``avaframe_env_spec.txt``, you can omit the following steps. If not, you can install Sphinx, the *ReadTheDocs*
-theme, and the *sphinxcontrib-bibtex*, which we use to include references, by running::
-
-  pip install sphinx
-  pip install sphinx-rtd-theme
-  pip install sphinxcontrib-bibtex
-
-In order to build the documentation you need to install make ::
-
-  sudo apt install make
-
-Then go to the ``docs\`` directory and run::
-
-  make html
-
-Html files of the documentation can be found in the _build directory.

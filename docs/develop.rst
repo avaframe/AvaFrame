@@ -58,10 +58,32 @@ repository/origin will be handled by the pull request)::
   git branch -d myAwesomeFeature
 
 
+Build the documentation
+------------------------
+
+If you want to work on the documentation you need to install *Sphinx*. If you have followed the conda installation using
+``avaframe_env_spec.txt``, you can omit the following steps. If not, you can install Sphinx, the *ReadTheDocs*
+theme, and the *sphinxcontrib-bibtex*, which we use to include references, by running::
+
+  pip install sphinx
+  pip install sphinx-rtd-theme
+  pip install sphinxcontrib-bibtex
+
+In order to build the documentation you need to install make ::
+
+  sudo apt install make
+
+Then go to the ``docs\`` directory and run::
+
+  make html
+
+Html files of the documentation can be found in the _build directory.
+
+
 How to test code
 -----------------
 
-Avaframe uses pytest to test code. If you add new code, consider including a
+AvaFrame uses pytest to test code. If you add new code, consider including a
 pytest for it in `Avaframe/avaframe/tests/``. In order to perform the pytests, just run::
 
   pytest
