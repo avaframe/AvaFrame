@@ -34,15 +34,11 @@ Don't forget to activate it before going on::
 
 Move to ``AvaFrame/`` repository and install the different modules by using the provided installation setup file::
 
-    conda install --name avaframe_env --file avaframe_env_spec.txt
+    pip install -r requirements.txt
 
-If you are not using conda, you can perform the installation with the equivalent pip commands.
+If you are not using conda, this should also install the required modules on your machine.
 
 Finally install avaframe::
-
-  conda develop .
-
-Or if you are using pip ::
 
   pip install -e .
 
