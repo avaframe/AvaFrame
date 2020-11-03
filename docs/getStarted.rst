@@ -1,34 +1,38 @@
 Getting started
 ================
 
-Even-though most of the routines in Avaframe are automatized, running them still
+Even-though most of the routines in AvaFrame are automatized, running them still
 requires a minimum amount of python scripting.
-Here we provide an example on how to perform simulations with Avaframe,
-but let's start with some information on the utilities to create logs and set the desired configurations.
-
-Utilities
-----------
+Here we provide an example on how to setup and run simulations with AvaFrame including some information
+on the utilities to create logs and set the desired configurations. But let's start with a quick
+guide on how to start your first simulation with AvaFrame!
 
 
-In order to generate simulation logs and to control what is prompted to the terminal, we use the python module `logging <https://docs.python.org/3/library/logging.config.html>`_.
+In 5 minutes
+-------------
 
-.. include:: moduleLogging.rst
+Follow these steps to run your first simulation:
+
+* install AvaFrame and the required dependencies (see :ref:`installation:Installation`)
+* go to ``AvaFrame/avaframe/com1DFA`` and copy ``com1DFACfg.ini`` to ``local_com1DFACfg.ini``
+* in this file, set the path to ``com1Exe`` (during installation you also cloned the com1DFA_Exe repository, there your com1Exe is located)
+* go back to ``AvaFrame/avaframe`` and simply run:
+  ::
+
+    python runCom1DFA.py
+
+This will perform a dense flow avalanche simulation using the ``com1DFA`` module.
+The results are saved to ``data/avaHockeySmoothSmall/Outputs/com1DFA``. For a first
+look at the results, got to the folder ``reports``, there you can find
+a markdown report of the simulations performed including some plots of the results.
 
 
-In order to set the configurations required by all the modules within Avaframe, the python module
-`configparser <https://docs.python.org/3/library/configparser.html>`_ is used.
-
-
-.. include:: moduleConfiguration.rst
-
-
-How to run - an example
-------------------------
-
+AvaFrame workflow - an example
+--------------------------------
 
 The following example should make
-it easier for you to find your way in Avaframe.
-Before starting, make sure you have installed Avaframe and the required
+it easier for you to find your way in AvaFrame and setup your own AvaFrame workflow.
+Before starting, make sure you have installed AvaFrame and the required
 dependencies as explained in :ref:`installation:Installation`.
 
 Initialize project
@@ -40,7 +44,7 @@ you want to create in the ``local_avaframeCfg.ini`` (which is a copy of
 
   python path/to/runInitializeProject.py
 
-This will create a new directory with the input required by Avaframe structured as described
+This will create a new directory with the input required by AvaFrame structured as described
 in :ref:`moduleIn3Utils:Initialize Project`. You are now ready to start.
 
 Input data
@@ -56,7 +60,7 @@ look at the default setting for the module you want to use (for example
 Building your run script
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In this section, we give an example of the workflow to run Avaframe.
+In this section, we give an example of the workflow to run AvaFrame.
 You can then create your own workflow taking the ``runOperational.py`` script as
 template. Start by creating a python file (``myAvaframeRunScript.py`` for example)
 and add the required elements listed below.
@@ -175,3 +179,20 @@ and inlcude this plots in the report by passing the plotDict::
 
   # write report
   gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+
+
+
+Utilities
+~~~~~~~~~~~~
+
+
+In order to generate simulation logs and to control what is prompted to the terminal, we use the python module `logging <https://docs.python.org/3/library/logging.config.html>`_.
+
+.. include:: moduleLogging.rst
+
+
+In order to set the configurations required by all the modules within Avaframe, the python module
+`configparser <https://docs.python.org/3/library/configparser.html>`_ is used.
+
+
+.. include:: moduleConfiguration.rst
