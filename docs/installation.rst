@@ -1,46 +1,50 @@
 Installation
 ================
 This is a quick guide on how to install AvaFrame and the required dependencies on your machine.
-AvaFrame is `tested  <https://codecov.io/gh/avaframe/AvaFrame>`_ with Python version 3.8 on Linux.
+AvaFrame is developed on **Linux machines** (Ubuntu/Manjaro/Arch) with recent
+Python versions 3.8/3.9. Instructions for Windows/MacOS will follow at a later
+stage. These instructions assume you are familiar with working in a terminal. 
 
-First make sure that `git <https://github.com/git-guides/install-git>`_ is installed.
-Then clone the AvaFrame repository::
+Install `git <https://github.com/git-guides/install-git>`_ and python, we 
+suggest to work with miniconda/anaconda. For installation see `miniconda
+<https://docs.conda.io/en/latest/miniconda.html>`_ or
+`anaconda <https://docs.anaconda.com/anaconda/install/linux/>`_.
+
+Create a new `conda environment
+<https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_
+for AvaFrame and activate it::
+
+  conda create --name avaframe_env
+  conda activate avaframe_env
+
+Clone the AvaFrame repository and change into it::
 
   git clone https://github.com/avaframe/AvaFrame.git
+  cd AvaFrame
 
-Now that you have the AvaFrame code, you need to check that you have installed all the required dependencies.
+AvaFrame needs following requirements as specified in the requirements.txt:
 
+.. include:: ../requirements.txt
+   :literal: 
 
-AvaFrame relies on the following python libraries:
+Install these with (conda-forge is needed for cmocean)::
+ 
+  conda install -c conda-forge --file requirements.txt
 
-* numpy
-* matplotlib
-* pyshp
-* scipy
-* cmocean
-* seaborn
-* pytest
+or alternatively::
 
-If you are working on Linux, we suggest to work with anaconda (which you can install following `these instructions <https://docs.anaconda.com/anaconda/install/linux/>`_)
-and create a specific environment to work with AvaFrame. Find out more about conda environments `here <https://conda.io/projects/conda/en/latest/user-guide/concepts/environments.html>`_.
+  pip install -r requirements.txt
 
-First, create a new environment for AvaFrame::
+Finally install avaframe either with conda (might require a ``conda install conda-build``)::
 
-    conda create --name avaframe_env
+  conda develop .
 
-Don't forget to activate it before going on::
-
-    conda activate avaframe_env
-
-Move to ``AvaFrame/`` repository and install the different modules by using the provided installation setup file::
-
-    pip install -r requirements.txt
-
-If you are not using conda, this should also install the required modules on your machine.
-
-Finally install avaframe::
+or by using pip::
 
   pip install -e .
 
 This installs avaframe in editable mode, so every time you import avaframe the
 current (local) version will be used.
+
+Test it by starting ``python`` and do an ``import avaframe``. If no error comes
+up, you are good to go. 
