@@ -13,12 +13,13 @@ In the second step the specific settings to a given module are imported::
   # Write config to log file
   cfg = cfgUtils.getModuleConfig(tmp1Ex)
 
-The ``getModuleConfig`` function reads the settings from the configuration file (``tmpEx.ini``
+The ``getModuleConfig`` function reads the settings from a configuration file (``tmpEx.ini``
 in our example) and writes these settings to the log file. The default settings can be found in the
 configuration file provided within each module.
-It is possible to modify these settings by creating a copy of the configuration
-file (``local_`` followed by the name of the original configuration file) and set the
-desired values of the individual parameters. If there is a configuration file with the
-prefix ``local_``, the ``getModuleConfig`` function reads the settings from this file.
-Another option is to read the settings from a different configuration file, therefore the path to this file
-has to be passed to the ``getModuleConfig`` function directly. 
+It is possible to modify these settings, there are two options: 1) provide the path to your
+own configuration file when calling ``cfgUtils.getModuleConfig(moduleName, path to config file)``
+and 2) create a copy of the module configuration file called ``local_`` followed by the name of the original configuration file
+and set the desired values of the individual parameters.
+So the order is as follows, if there is a path provided, configuration is read from this file.
+If there is no path provided, the ``local_...`` configuration file is read and if there is no ``local_...``,
+the ``getModuleConfig`` function reads the settings from configuration file with the default settings.
