@@ -136,7 +136,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     return plotDict
 
 
-def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
+def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, simType='null'):
     """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension):
 
         Inputs:
@@ -181,12 +181,14 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot):
 
     # Count the number of release areas
     relAreas = set(data['releaseArea'])
+    if parameter == 'simType':
+        simType = val
 
     for rel in relAreas:
         # get list of indices of files that are of correct simulation type and result paramete
         indSuffix = [-9999, -9999]
         for m in range(len(data['files'])):
-            if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[parameter][m] == val:
+            if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[parameter][m] == val and data['simType'][m] == simType:
                 if data['modelType'][m] == 'dfa':
                     indSuffix[0] = m
                 elif data['modelType'][m] == cfgPlot['PLOT']['refModel']:

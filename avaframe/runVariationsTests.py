@@ -1,5 +1,5 @@
 """
-    Run script for running Standalone DFA for the standard tests
+    Run script for running Standalone DFA for the standard tests but with variations of parameters
     This file is part of Avaframe.
 """
 
@@ -17,7 +17,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-from benchmarks import simParameters
+from benchmarks import simParametersVar
 
 # log file name; leave empty to use default runLog.log
 logName = 'runStandardTests'
@@ -26,25 +26,20 @@ logName = 'runStandardTests'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # Define avalanche directories for standard tests
-standardNames = ['data/avaBowl',
-                 'data/avaFlatPlane',
-                 'data/avaHelix',
+standardNames = ['data/avaFlatPlane',
                  'data/avaHelixChannel',
-                 'data/avaHockey',
-                 'data/avaHockeySmoothChannel',
-                 'data/avaHockeySmoothSmall',
-                 'data/avaInclinedPlane']
+                 'data/avaHockey']
 
 # Set directory for full standard test report
-outDir = os.path.join(os.getcwd(), 'tests', 'reports')
+outDir = os.path.join(os.getcwd(), 'tests', 'reportsVariations')
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
-reportFile = os.path.join(outDir, 'standardTestsReport.md')
+reportFile = os.path.join(outDir, 'variationsTestsReport.md')
 with open(reportFile, 'w') as pfile:
 
     # Write header
-    pfile.write('# Standard Tests Report \n')
+    pfile.write('# Variations Tests Report \n')
     pfile.write('## Compare com1DFA simulations to benchmark results \n')
 
 # run Standard Tests sequentially
@@ -62,7 +57,7 @@ for avaDir in standardNames:
     # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', avaName, '%s_com1DFACfg.ini' % avaName)
+    standardCfg = os.path.join('..', 'benchmarks', avaName, '%sVarPar_com1DFACfg.ini' % avaName)
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
@@ -88,12 +83,13 @@ for avaDir in standardNames:
 
     # -----------Compare to benchmark results
     # Fetch simulation info from benchmark results
-    benchDict = simParameters.fetchBenchParameters(avaDir)
+    benchDict = simParametersVar.fetchBenchParameters(avaDir)
     benchSimName = benchDict['simName']
     # Check if simulation with entrainment and/or resistance or standard simulation
     simType = 'null'
     if 'entres' in benchSimName:
         simType = 'entres'
+
 
     # Fetch correct reportDict according to flagEntRes
     for dict in reportDictList:
@@ -111,11 +107,12 @@ for avaDir in standardNames:
     # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
     # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
     outputVariable = ['ppr', 'pfd', 'pv']
-    values = simType
-    parameter = 'simType'
+    values = cfg['PARAMETERVAR']['varParValues']
+    parameter = cfg['PARAMETERVAR']['varPar']
     plotListRep = {}
     reportD['Simulation Difference'] = {}
     reportD['Simulation Stats'] = {}
+    cfgRep['PLOT'].update({'refModel': 'refVAR'})
     # ++++++++++++++++++++++++++++
 
     # Plot data comparison for all output variables defined in suffix
