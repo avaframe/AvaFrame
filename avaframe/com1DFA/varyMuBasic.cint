@@ -110,7 +110,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   // set(Sim, "EndTime", "40");
   // set(Sim, "DeltaOut", "20");
 
-  // TEST IF DIFFERENCE
+  // Friction type 
   set(Sim, "FrictionType", "samosAT_Standard");
 
 

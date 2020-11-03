@@ -106,6 +106,9 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   printf("\n[BatchCom1DFA] Computing %s\n",CuSim);
 
+  // Friction type
+  set(Sim, "FrictionType", "samosAT_Standard");
+
   val = atof(varVal);
   // Update log
   fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,val);

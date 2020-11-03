@@ -108,7 +108,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   printf("\n[BatchCom1DFA] Current Sim %s\n",Sim);
 
 
-    // TEST IF DIFFERENCE
+    // Friction Type
   set(Sim, "FrictionType", "samosAT_Standard");
 
   // Set standard Mu - here used only for prints
