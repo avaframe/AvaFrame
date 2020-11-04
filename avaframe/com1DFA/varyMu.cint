@@ -90,7 +90,6 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   // Open experiment log file
   sprintf(FPath, "%s_ExpLog.txt", ProjDir);
   ExpLog = fopen(FPath,"w");
-  printf("\n[BatchCom1DFA] ExpLog %s\n",FPath);
   fprintf(ExpLog, "N;SimName;mu\n");
   // Open second experiment log file for postprocessing
   sprintf(F2Path, "%s/ExpLog.txt", ResDir);
@@ -110,7 +109,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   // set(Sim, "EndTime", "40");
   // set(Sim, "DeltaOut", "20");
 
-  // Friction type 
+  // Friction type
   set(Sim, "FrictionType", "samosAT_Standard");
 
 
