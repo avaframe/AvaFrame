@@ -1,4 +1,4 @@
-ana3AIMEC: Module Aimec
+ana3AIMEC: Aimec
 ==========================
 
 Aimec is a post-processing module to analyze and compare results from avalanche simulations.
