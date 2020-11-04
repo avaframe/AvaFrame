@@ -50,22 +50,6 @@ void CreateSimulations(char Com1DFAProjectDir[],
   set(Sim, "AppendAllObjectsOfType", "");
   fprintf(SimLog, "%s;%s\n",CuSimName,"entres");
 
-  // // Get ReleaseAreas
-  // get("Project/ReleaseAreas", "GetComponentList", s);
-  // NRelAreas = list_size(s);
-  // printf("\n[BatchCom1DFA] Number of ReleaseAreas %d\n",NRelAreas);
-  // for(i = 0; i < NRelAreas; i++) {
-  //   get_list_element(s, i, x);
-
-  //   // FSO--- add ReleaseAreas
-  //   sprintf(Sim,"Project/Simulations/%s/ReleaseAreas/",CuSimName);
-  //   sprintf(Rel,"Project/ReleaseAreas/%s/",x);
-  //   set(Sim, "AppendObject", Rel);
-
-  //   fprintf(SimLog, "%s;%s\n",CuSimName,x);
-
-  // }
-
   fclose(SimLog);
   set("", "SaveProject", "");
   set("", "Close", "");

@@ -227,13 +227,13 @@ def com1DFAMain(cfg, avaDir):
 
         if flagEntRes:
             # Initialise CreateSimulations cint file and set parameters
-            templateFile = os.path.join(modPath, 'CreateSimulations.cint')
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateSimulations.cint')
+            templateFile = os.path.join(modPath, 'CreateEntResSimulations.cint')
+            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateEntResSimulations.cint')
             cuSim = [simName + '_entres_dfa', simName + '_null_dfa']
         else:
             # Initialise CreateSimulations cint file and set parameters
-            templateFile = os.path.join(modPath, 'CreateBasicSimulation.cint')
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateBasicSimulation.cint')
+            templateFile = os.path.join(modPath, 'CreateNullSimulation.cint')
+            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateNullSimulation.cint')
             cuSim = [simName + '_null_dfa']
 
         # Write required info to cint file
@@ -248,8 +248,8 @@ def com1DFAMain(cfg, avaDir):
             simST = simName + '_null_dfa'
             logName = simST + '_' + defValues[cfgPar['varPar']]
             log.info('Also perform one standard simulation: %s' % simST)
-            templateFile = os.path.join(modPath, 'runBasicST.cint')
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBasicST.cint')
+            templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
+            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
             # Write required info to cint file
             copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
             copyReplace(workFile, workFile, '##RESDIR##', resDir)
@@ -296,7 +296,7 @@ def com1DFAMain(cfg, avaDir):
             for item in items:
                 logName = sim + '_' + item
                 log.info('Perform simulation with %s = %s: logName = %s' % (cfgPar['varPar'], item, logName))
-                templateFile = os.path.join(modPath, '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
+                templateFile = os.path.join(modPath, '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
                 workFile = os.path.join(avaDir, 'Work', 'com1DFA',
                                         '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
                 copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
@@ -336,8 +336,8 @@ def com1DFAMain(cfg, avaDir):
 
         else:
             for sim in cuSim:
-                templateFile = os.path.join(modPath, 'runBasicST.cint')
-                workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runBasicST.cint')
+                templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
+                workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
                 logName = sim + '_' + defValues['Mu']
                 # Write required info to cint file
                 copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
