@@ -256,12 +256,13 @@ To run
 			python3 runInitializeProject.py
 
 
-Logging
-========
+..
+   Logging
+   ========
 
-.. include:: moduleLogging.rst
+   .. include:: moduleLogging.rst
 
-Configuration
-==============
+   Configuration
+   ==============
 
-.. include:: moduleConfiguration.rst
+   .. include:: moduleConfiguration.rst

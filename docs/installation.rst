@@ -84,14 +84,14 @@ executable::
 
   cd [YOURDIR]
   cd com1DFA_Exe
-  ./com1DFALinux.exe -files files/AK_Attributes/
+  ./com1DFA_x86_64.exe -files files/AK_Attributes/
 
 The output should start like this::
 
   Setting config files directory: files/AK_Attributes/	(src/SW_Workspace.cpp:3435)
   ./com1DFALinux.exe -files files/AK_Attributes/ 	(src/SW_Workspace.cpp:3453)
   =================================================================
-  ./com1DFALinux.exe
+  ./com1DFA_x86_64.exe
   Compiled Oct 19 2020 21:34:15
   ...
 

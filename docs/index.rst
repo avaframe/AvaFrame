@@ -15,16 +15,22 @@ Overview
     * :doc:`introduction`
     * :doc:`installation`
     * :doc:`getStarted`
+    * :doc:`workflowExample`
+    * :doc:`configuration`
+    * :doc:`logging`
     * :doc:`develop`
 
 .. toctree::
    :maxdepth: 3
    :hidden:
-   :caption: Overview
+   :caption: General
 
    introduction.rst
    installation.rst
    getStarted.rst
+   workflowExample.rst
+   configuration.rst
+   logging.rst
    develop.rst
 
 

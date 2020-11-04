@@ -1,7 +1,14 @@
+Logging
+========
+
+In order to generate simulation logs and to control what is prompted to the
+terminal, we use the python module `logging
+<https://docs.python.org/3/library/logging.config.html>`_.
+
 Let's have a look at the simple example in runTmp1Ex.py and tmp1Ex.py on how
 this is used within AvaFrame.
 
-Basically, in your main script call::
+In your main script call::
 
   from avaframe.in3Utils import logUtils
   # log file name; leave empty to use default runLog.log
@@ -30,5 +37,6 @@ To get output that looks like this in your console::
 
 And something similar in the ``.log`` file which is saved in ``./runTmp1Ex.log`` in this example.
 The logging configuration is set in ``AvaFrame/avaframe/in3Utils/logging.conf``.
+
 You can modify this ``logging.conf`` file to modify the levels or format of the messages to display
 (`python doc will help you <https://docs.python.org/3/library/logging.config.html>`_).
