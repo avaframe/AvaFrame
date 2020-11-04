@@ -254,5 +254,8 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     dataDict = {'data1': data1, 'data2': data2, 'name1': name1,
                 'name2': name2, 'compareType': '', 'cellSize': cellSize}
 
+    # Initialise plotList
+    plotDict = {'plots': [], 'difference': [], 'stats': []}
+
     # Create Plots
-    generatePlot(dataDict, avaName, outDir, cfg)
+    plotList = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
