@@ -1,5 +1,5 @@
 ##################################
-log2Reports: Module Create Reports
+log2Reports: Create Reports
 ##################################
 
 

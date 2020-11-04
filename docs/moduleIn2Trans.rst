@@ -1,5 +1,5 @@
 ##################################
-in2Trans: Module Project Utilities
+in2Trans: Transformation Utilities
 ##################################
 
 Working with ASCII files

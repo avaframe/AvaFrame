@@ -1,4 +1,4 @@
-com2AB: Module AlphaBeta
+com2AB: Alpha Beta
 ==========================
 
 Calculates the run-out of an avalanche for a given DEM, avalanche path and split point according to the alphabeta model

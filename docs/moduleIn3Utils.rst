@@ -1,5 +1,5 @@
 ##################################
-in3Utils: Module Project Utilities
+in3Utils: Geo Transformation Utilities
 ##################################
 
 
