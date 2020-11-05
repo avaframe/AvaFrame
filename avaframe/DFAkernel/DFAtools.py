@@ -1,7 +1,6 @@
 import logging
 import time
 import numpy as np
-from scipy.interpolate import griddata
 import math
 import copy
 import matplotlib.pyplot as plt
@@ -10,9 +9,9 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Local imports
 import avaframe.in2Trans.geoTrans as geoTrans
-import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.in3Utils.ascUtils as IOf
 from avaframe.out3Plot.plotUtils import *
+# import avaframe.in2Trans.shpConversion as shpConv
+# import avaframe.in3Utils.ascUtils as IOf
 # from avaframe.DFAkernel.setParam import *
 
 # create local logger
@@ -20,33 +19,9 @@ log = logging.getLogger(__name__)
 debugPlot = False
 
 
-def polygon2Raster(demHeader, Line):
-    # adim and center dem and polygon
-    ncols = demHeader.ncols
-    nrows = demHeader.nrows
-    xllc = demHeader.xllcenter
-    yllc = demHeader.yllcenter
-    csz = demHeader.cellsize
-    xCoord = (Line['x'] - xllc) / csz
-    yCoord = (Line['y'] - yllc) / csz
-    # get the raster corresponding to the polygon
-    mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
-
-    if debugPlot:
-        fig, ax = plt.subplots(figsize=(figW, figH))
-        cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        im = plt.imshow(mask, cmap, origin='lower')
-        ax.plot(xCoord, yCoord, 'k')
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.1)
-        fig.colorbar(im, cax=cax)
-        plt.show()
-
-    return mask
-
-
 def initializeSimulation(cfg, relRaster, dem):
     rho = cfg.getfloat('rho')
+    gravAcc = cfg.getfloat('gravAcc')
     massPerPart = cfg.getfloat('massPerPart')
     header = dem['header']
     ncols = header.ncols
@@ -91,6 +66,7 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['mTot'] = np.sum(Mpart)
     particles['x'] = Xpart
     particles['y'] = Ypart
+    particles['s'] = np.zeros(np.shape(Xpart))
     # adding z component
     particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
 
@@ -100,6 +76,9 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
+    particles['stoppCriteria'] = False
+    particles['kineticEne'] = np.sum(0.5 * Mpart * norm(particles['ux'], particles['uy'], particles['uz']))
+    particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
 
     Cres = np.zeros(np.shape(dem['rasterData']))
     Ment = np.zeros(np.shape(dem['rasterData']))
@@ -113,6 +92,18 @@ def initializeSimulation(cfg, relRaster, dem):
     fields['V'] = PV
     fields['P'] = PP
     fields['FD'] = PFD
+
+    # get particles location (neighbours for sph)
+    particles = getNeighbours(particles, dem)
+    # update fields (compute grid values)
+    t = 0
+    particles['t'] = t
+    fields = updateFields(cfg, particles, dem, fields)
+    # get normal vector of the grid mesh
+    Nx, Ny, Nz = getNormalVect(dem['rasterData'], dem['header'].cellsize)
+    dem['Nx'] = Nx
+    dem['Ny'] = Ny
+    dem['Nz'] = Nz
 
     if debugPlot:
         x = np.arange(ncols) * csz
@@ -128,7 +119,92 @@ def initializeSimulation(cfg, relRaster, dem):
         fig.colorbar(im, cax=cax)
         plt.show()
 
-    return particles, fields, Cres, Ment
+    return dem, particles, fields, Cres, Ment
+
+
+def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
+    Tend = cfg.getfloat('Tend')
+    dtSave = cfg.getfloat('dtSave')
+    dt = cfg.getfloat('dt')
+
+    Particles = [particles.copy()]
+    Fields = [fields.copy()]
+    nSave = 1
+    niter = 0
+    iterate = True
+    t = particles['t']
+    # Start time step computation
+    while t < Tend and iterate:
+        t = t + dt
+        niter = niter + 1
+        log.debug('Computing time step t = %f s', t)
+        particles['t'] = t
+
+        particles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu)
+        iterate = not(particles['stoppCriteria'])
+        if t >= nSave * dtSave:
+            log.info('Saving results for time step t = %f s', t)
+            Particles.append(particles.copy())
+            Fields.append(fields.copy())
+            nSave = nSave + 1
+
+    Tcpu['niter'] = niter
+
+    return Particles, Fields, Tcpu
+
+
+def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
+    # get forces
+    startTime = time.time()
+    force = computeForce(cfg, particles, dem, Ment, Cres)
+    tcpuForce = time.time() - startTime
+    Tcpu['Force'] = Tcpu['Force'] + tcpuForce
+    # get forces sph
+    # forceSPH = tools.computeForceSPH(particles, dem)
+    # update velocity and particle position
+    startTime = time.time()
+    particles = updatePosition(cfg, particles, dem, force)
+    tcpuPos = time.time() - startTime
+    Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
+    # get particles location (neighbours for sph)
+    startTime = time.time()
+    particles = getNeighbours(particles, dem)
+    tcpuNeigh = time.time() - startTime
+    Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
+    # update fields (compute grid values)
+    startTime = time.time()
+    fields = updateFields(cfg, particles, dem, fields)
+    tcpuField = time.time() - startTime
+    Tcpu['Field'] = Tcpu['Field'] + tcpuField
+
+    return particles, fields, Tcpu
+
+
+def polygon2Raster(demHeader, Line):
+    # adim and center dem and polygon
+    ncols = demHeader.ncols
+    nrows = demHeader.nrows
+    xllc = demHeader.xllcenter
+    yllc = demHeader.yllcenter
+    csz = demHeader.cellsize
+    xCoord = (Line['x'] - xllc) / csz
+    xCoord0 = np.delete(xCoord, -1)
+    yCoord = (Line['y'] - yllc) / csz
+    yCoord0 = np.delete(yCoord, -1)
+    # get the raster corresponding to the polygon
+    mask = geoTrans.poly2maskSimple(xCoord0, yCoord0, ncols, nrows)
+
+    if debugPlot:
+        fig, ax = plt.subplots(figsize=(figW, figH))
+        cmap = copy.copy(mpl.cm.get_cmap("Greys"))
+        im = plt.imshow(mask, cmap, origin='lower')
+        ax.plot(xCoord, yCoord, 'k')
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        fig.colorbar(im, cax=cax)
+        plt.show()
+
+    return mask
 
 
 def computeForce(cfg, particles, dem, Ment, Cres):
@@ -210,7 +286,7 @@ def computeForce(cfg, particles, dem, Ment, Cres):
             # SamosAT friction type (bottom shear stress)
             tau = SamosATfric(cfg, uMag, sigmaB, h)
             # coulomb friction type (bottom shear stress)
-            tau = mu * sigmaB
+            # tau = mu * sigmaB
 
         # adding bottom shear resistance contribution
         forceBotTang = - A * tau
@@ -262,11 +338,11 @@ def computeForce(cfg, particles, dem, Ment, Cres):
         gradhX, gradhY,  gradhZ = calcGradHSPH(particles, j, ncols)
         tcpuSPH = time.time() - startTime
         TcpuSPH = TcpuSPH + tcpuSPH
-        forceX[j] = forceX[j] - gradhX * mass * gravAcc / rho
-        forceY[j] = forceY[j] - gradhY * mass * gravAcc / rho
-        forceZ[j] = forceZ[j] - gradhZ * mass * gravAcc / rho
+        forceY[j] = forceY[j] - gradhY * mass * (-gravAcc) / rho
+        forceX[j] = forceX[j] - gradhX * mass * (-gravAcc) / rho
+        forceZ[j] = forceZ[j] - gradhZ * mass * (-gravAcc) / rho
 
-    log.info(('cpu time SPH = %s s' % (TcpuSPH)))
+    # log.info(('cpu time SPH = %s s' % (TcpuSPH)))
     force = {}
     force['dM'] = dM
     force['forceX'] = forceX
@@ -278,6 +354,7 @@ def computeForce(cfg, particles, dem, Ment, Cres):
 
 def updatePosition(cfg, particles, dem, force):
     dt = cfg.getfloat('dt')
+    gravAcc = cfg.getfloat('gravAcc')
     csz = dem['header'].cellsize
     Nx = dem['Nx']
     Ny = dem['Ny']
@@ -294,7 +371,9 @@ def updatePosition(cfg, particles, dem, force):
     ux = particles['ux']
     uy = particles['uy']
     uz = particles['uz']
-
+    kinEne = particles['kineticEne']
+    potEne = particles['potentialEne']
+    totEne = kinEne + potEne
     # procede to time integration
     # update velocity
     uxNew = ux + forceX * dt / mass
@@ -310,6 +389,7 @@ def updatePosition(cfg, particles, dem, force):
     particles['mTot'] = np.sum(massNew)
     particles['x'] = xNew
     particles['y'] = yNew
+    particles['s'] = particles['s'] + np.sqrt((xNew-x)*(xNew-x) + (yNew-y)*(yNew-y))
     # make sure particle is on the mesh (recompute the z component)
     particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
 
@@ -317,11 +397,24 @@ def updatePosition(cfg, particles, dem, force):
     particles['m'] = massNew
     # normal component of the velocity
     uN = uxNew*nx + uyNew*ny + uzNew*nz
+    # print(nx, ny, nz)
     # print(norm(ux, uy, uz), uN)
     # remove normal component of the velocity
     particles['ux'] = uxNew - uN * nx
     particles['uy'] = uyNew - uN * ny
     particles['uz'] = uzNew - uN * nz
+    # uN = particles['ux']*nx + particles['uy']*ny + particles['uz']*nz
+    # print(norm(particles['ux'], particles['uy'], particles['uz']), uN)
+    kinEneNew = np.sum(0.5 * massNew * norm(particles['ux'], particles['uy'], particles['uz']))
+    potEneNew = np.sum(gravAcc * massNew * particles['z'])
+    totEneNew = kinEneNew + potEneNew
+    # log.info('total energy variation: %f' % ((totEneNew - totEne) / totEneNew))
+    # log.info('kinetic energy variation: %f' % ((kinEneNew - kinEne) / kinEneNew))
+    # if (abs(totEneNew - totEne) / totEneNew < 0.01) and (abs(kinEneNew - kinEne) / kinEneNew < 0.01):
+    #     log.info('Reached stopping creteria : total energy varied fom less than 1 %')
+    #     particles['stoppCriteria'] = True
+    particles['kineticEne'] = kinEneNew
+    particles['potentialEne'] = potEneNew
     return particles
 
 
@@ -347,10 +440,10 @@ def updateFields(cfg, particles, dem, fields):
     MomY = np.zeros((nrows, ncols))
     MomZ = np.zeros((nrows, ncols))
     # startTime = time.time()
-    # Mass2 = geoTrans.pointsToRaster(x, y, m, Mass, csz=csz, interp='bilinear')
-    # MomX2 = geoTrans.pointsToRaster(x, y, m * ux, MomX, csz=csz, interp='bilinear')
-    # MomY2 = geoTrans.pointsToRaster(x, y, m * uy, MomY, csz=csz, interp='bilinear')
-    # MomZ2 = geoTrans.pointsToRaster(x, y, m * uz, MomZ, csz=csz, interp='bilinear')
+    # Mass = geoTrans.pointsToRaster(x, y, m, Mass, csz=csz, interp='bilinear')
+    # MomX = geoTrans.pointsToRaster(x, y, m * ux, MomX, csz=csz, interp='bilinear')
+    # MomY = geoTrans.pointsToRaster(x, y, m * uy, MomY, csz=csz, interp='bilinear')
+    # MomZ = geoTrans.pointsToRaster(x, y, m * uz, MomZ, csz=csz, interp='bilinear')
     # endTime = time.time()
     # log.info(('time = %s s' % (endTime - startTime)))
 
@@ -394,8 +487,8 @@ def updateFields(cfg, particles, dem, fields):
     FD = Mass / (S * rho)
     P = V * V * rho
     PV = np.where(V > PV, V, PV)
-    PP = np.where(V > PP, P, PP)
-    PFD = np.where(V > PFD, FD, PFD)
+    PP = np.where(P > PP, P, PP)
+    PFD = np.where(FD > PFD, FD, PFD)
 
     fields['V'] = V
     fields['P'] = P
@@ -407,29 +500,41 @@ def updateFields(cfg, particles, dem, fields):
     return fields
 
 
-def plotPosition(particles, dem, data):
+def plotPosition(particles, dem, data, Cmap, fig, ax):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
+    xllc = header.xllcenter
+    yllc = header.yllcenter
     csz = header.cellsize
-    x = particles['x']
-    y = particles['y']
-    xx = np.arange(ncols) * csz
-    yy = np.arange(nrows) * csz
-    fig, ax = plt.subplots(figsize=(figW, figH))
+    xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+    ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+    PointsX, PointsY = np.meshgrid(xgrid, ygrid)
+    X = PointsX[0, :]
+    Y = PointsY[:, 0]
+    Z = dem['rasterData']
+    x = particles['x'] + xllc
+    y = particles['y'] + yllc
+    xx = np.arange(ncols) * csz + xllc
+    yy = np.arange(nrows) * csz + yllc
+    ax.clear()
     ax.set_title('Particles on dem at t=%.2f s' % particles['t'])
-    cmap = copy.copy(mpl.cm.get_cmap("Greys"))
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(
+        Cmap, 0.0, np.nanmax(data), continuous=contCmap)
+    cmap.set_under(color='w')
     ref0, im = NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
                          extent=[x.min(), x.max(), y.min(), y.max()],
-                         cmap=cmap, norm=None)
+                         cmap=cmap, norm=norm)
     ax.plot(x, y, 'or', linestyle='None')
+    Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)
     fig.colorbar(im, cax=cax)
-    plt.pause(1)
+    plt.pause(0.1)
     # plt.close(fig)
     # ax.set_ylim([510, 530])
     # ax.set_xlim([260, 300])
+    return fig, ax
 
 
 def getNeighbours(particles, dem):
@@ -502,30 +607,58 @@ def calcGradHSPH(particles, j, ncols):
     gradhX = 0
     gradhY = 0
     gradhZ = 0
+    # gradhX1 = 0
+    # gradhY1 = 0
+    # gradhZ1 = 0
+    index = np.empty((0), dtype=int)
     # find all the neighbour boxes
     for n in range(-1, 2):
         ic = (indx - 1) + ncols * (indy + n)
         iPstart = int(indPartInCell[ic-1])
         iPend = int(indPartInCell[ic+2])
-        # loop on all particles in neighbour boxes
-        for p in range(iPstart, iPend):
-            # index of particle in neighbour box
-            l = int(partInCell[p])
-            if j != l:
-                dx = particles['x'][l] - x
-                dy = particles['y'][l] - y
-                dz = particles['z'][l] - z
-                r = norm(dx, dy, dz)
-                if r < 0.001 * rKernel:
-                    # impose a minimum distance between particles
-                    r = 0.001 * rKernel
-                if r < rKernel:
-                    hr = rKernel - r
-                    dwdr = dfacKernel * hr * hr
-                    massl = particles['m'][l]
-                    gradhX = gradhX + massl * dwdr * dx / r
-                    gradhY = gradhY + massl * dwdr * dy / r
-                    gradhZ = gradhZ + massl * dwdr * dz / r
+        ind = np.arange(iPstart, iPend, 1)
+        index = np.append(index, ind)
+        # # loop on all particles in neighbour boxes
+        # for p in range(iPstart, iPend):
+        #     # index of particle in neighbour box
+        #     l = int(partInCell[p])
+        #     if j != l:
+        #         dx = particles['x'][l] - x
+        #         dy = particles['y'][l] - y
+        #         dz = particles['z'][l] - z
+        #         r = norm(dx, dy, dz)
+        #         if r < 0.001 * rKernel:
+        #             # impose a minimum distance between particles
+        #             r = 0.001 * rKernel
+        #         if r < rKernel:
+        #             hr = rKernel - r
+        #             dwdr = dfacKernel * hr * hr
+        #             massl = particles['m'][l]
+        #             gradhX1 = gradhX1 + massl * dwdr * dx / r
+        #             gradhY1 = gradhY1 + massl * dwdr * dy / r
+        #             gradhZ1 = gradhZ1 + massl * dwdr * dz / r
+    # no loop option
+    L = partInCell[index].astype('int')
+    dx = particles['x'][L] - x
+    dy = particles['y'][L] - y
+    dz = particles['z'][L] - z
+    r = norm(dx, dy, dz)
+    r = np.where(r < 0.001 * rKernel, 0.001 * rKernel, r)
+    hr = rKernel - r
+    dwdr = dfacKernel * hr * hr
+    massl = particles['m'][L]
+    GX = massl * dwdr * dx / r
+    GX = np.where(r < rKernel, GX, 0)
+    GY = massl * dwdr * dy / r
+    GY = np.where(r < rKernel, GY, 0)
+    GZ = massl * dwdr * dz / r
+    GZ = np.where(r < rKernel, GZ, 0)
+    gradhX = gradhX + np.sum(GX)
+    gradhY = gradhY + np.sum(GY)
+    gradhZ = gradhZ + np.sum(GZ)
+    # print(gradhX, gradhX1)
+    # print(gradhY, gradhY1)
+    # print(gradhZ, gradhZ1)
 
     return gradhX, gradhY,  gradhZ
 

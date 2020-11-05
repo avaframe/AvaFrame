@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.colors as mcolors
 from matplotlib import cm
 
+
 def hex_to_rgb(value):
     '''
     Converts hex to rgb colours
@@ -92,7 +93,6 @@ def makeColorMap(colormap, levMin, levMax, continuous=False):
         # newCmap = mcolors.ListedColormap(newColors)
         # newNorm = mcolors.BoundaryNorm(newLev, newCmap.N)
 
-        
         ########### option two #############
         # use any colormap
         # does not match the predefined thresholds / color pairs from the discrete map
@@ -110,6 +110,5 @@ def makeColorMap(colormap, levMin, levMax, continuous=False):
         newColors = colors[indStart:indEnd]
         newCmap = get_continuous_cmap(newColors, continuous=False)
         newNorm = mcolors.BoundaryNorm(newLev, newCmap.N)
-
 
     return newCmap, newColors, newLev, newNorm, ticks
