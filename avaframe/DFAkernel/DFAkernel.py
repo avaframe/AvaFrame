@@ -10,12 +10,12 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 # Local imports
-import avaframe.in2Trans.geoTrans as geoTrans
+import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.DFAkernel.DFAtools as DFAtools
 # from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
-import avaframe.in3Utils.ascUtils as IOf
+import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
