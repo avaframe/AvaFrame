@@ -53,7 +53,7 @@ def test_initialiseRun(tmp_path):
 
     # Test
     assert dem == os.path.join(avaDir, 'Inputs', 'myDEM_HS2_Topo.asc')
-    assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp')]
+    assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS2.shp')]
     assert res == ''
     assert ent == os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS2.shp')
     assert flagEntRes == True
@@ -122,7 +122,8 @@ def test_com1DFAMain(tmp_path, avaName):
                                          reportD['simName']['name'] + '_ppr.asc'), skiprows=6)
 
     # Fetch simulation info from benchmark results
-    benchDict = simParameters.fetchBenchParameters(avaDir)
+    benchDictList = simParameters.fetchBenchParameters(avaDir)
+    benchDict = benchDictList[0]
     simBench = benchDict['simName'].replace('dfa', 'ref')
     pprBench = np.loadtxt(os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
                                        simBench + '_ppr.asc'), skiprows=6)

@@ -161,8 +161,8 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
     outDir = os.path.join(avaDir, 'Outputs', 'out3Plot')
     fU.makeADir(outDir)
 
-    # Initialise plotList
-    plotDict = {'relArea' : rel, 'plots': [], 'difference': [], 'stats': []}
+    # Initialise plotDictList
+    plotList = []
 
     # Setup input from com1DFA
     fU.getDFAData(avaDir, workDir, suffix)
@@ -179,37 +179,47 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
     cellSize = data['cellSize'][0]
     unit = cfgPlot['PLOT']['unit%s' % suffix]
 
-    # if no release Area and simType area provided take first release area and Null simualtion
-    if rel == '':
-        rel = data['releaseArea']
+    # check if release Area and simType area provided
+    if rel != '':
+        relAreas = [rel]
+    else:
+        # Count the number of release areas
+        relAreas = set(data['releaseArea'])
     if parameter == 'simType':
         simType = val
 
-    # get list of indices of files that are of correct simulation type and result paramete
-    indSuffix = [-9999, -9999]
-    for m in range(len(data['files'])):
-        if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[parameter][m] == val and data['simType'][m] == simType:
-            if data['modelType'][m] == 'dfa':
-                indSuffix[0] = m
-            elif data['modelType'][m] == cfgPlot['PLOT']['refModel']:
-                indSuffix[1] = m
 
-    # Load data
-    data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
-    data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
-    log.info('dataset1: %s' % data['files'][indSuffix[0]])
-    log.info('dataset2: %s' % data['files'][indSuffix[1]])
+    for rel in relAreas:
 
-    # Get name of Avalanche
-    avaName = data['avaName'][indSuffix[0]]
+        # Initialise plotList
+        plotDict = {'relArea' : rel, 'plots': [], 'difference': [], 'stats': []}
 
-    # Create dataDict to be passed to generatePlot
-    dataDict = {'data1': data1, 'data2': data2, 'name1': data['names'][indSuffix[0]],
-                'name2': data['names'][indSuffix[1]], 'compareType': 'compToRef',
-                'simName': data['simName'][indSuffix[0]], 'suffix': suffix, 'cellSize': cellSize, 'unit': unit}
+        # get list of indices of files that are of correct simulation type and result paramete
+        indSuffix = [-9999, -9999]
+        for m in range(len(data['files'])):
+            if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[parameter][m] == val and data['simType'][m] == simType:
+                if data['modelType'][m] == 'dfa':
+                    indSuffix[0] = m
+                elif data['modelType'][m] == cfgPlot['PLOT']['refModel']:
+                    indSuffix[1] = m
 
-    # Create Plots
-    plotList = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
+        # Load data
+        data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
+        data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
+        log.info('dataset1: %s' % data['files'][indSuffix[0]])
+        log.info('dataset2: %s' % data['files'][indSuffix[1]])
+
+        # Get name of Avalanche
+        avaName = data['avaName'][indSuffix[0]]
+
+        # Create dataDict to be passed to generatePlot
+        dataDict = {'data1': data1, 'data2': data2, 'name1': data['names'][indSuffix[0]],
+                    'name2': data['names'][indSuffix[1]], 'compareType': 'compToRef',
+                    'simName': data['simName'][indSuffix[0]], 'suffix': suffix, 'cellSize': cellSize, 'unit': unit}
+
+        # Create Plots
+        plotDictNew = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
+        plotList.append(plotDictNew)
 
     return plotList
 
