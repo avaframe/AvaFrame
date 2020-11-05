@@ -8,10 +8,10 @@ import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Local imports
-import avaframe.in2Trans.geoTrans as geoTrans
+import avaframe.in3Utils.geoTrans as geoTrans
 from avaframe.out3Plot.plotUtils import *
 # import avaframe.in2Trans.shpConversion as shpConv
-# import avaframe.in3Utils.ascUtils as IOf
+# import avaframe.in2Trans.ascUtils as IOf
 # from avaframe.DFAkernel.setParam import *
 
 # create local logger
