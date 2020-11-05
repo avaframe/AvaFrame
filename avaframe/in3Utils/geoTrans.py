@@ -389,7 +389,7 @@ def prepareAngleProfile(beta, AvaProfile):
     return angle, tmp, deltaInd
 
 
-def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
+def findCellsCrossedByLineBresenham2(x0, y0, x1, y1, cs):
     """
     bresenham algorithmus - JT 2011
     Find all the cells of a raster (defined by its cellsize) that a line
@@ -424,7 +424,6 @@ def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
     sx = np.sign(x1-x0)  # step in x direction
     sy = np.sign(y1-y0)  # step in y direction
     err = dx-dy
-    errprev = dx-dy
 
     z = []
     while True:
@@ -435,28 +434,14 @@ def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
         if (e2 > -dy):
             err -= dy
             x0 += sx
-            # if (err + errprev < -dy):
-            #     z.append([x0*cs, (y0+sy)*cs])
-            # elif (err + errprev < dx):
-            #     z.append([x0*cs, y0*cs])
-            # else:
-            #     z.append([x0*cs, (y0+sy)*cs])
-            #     z.append([(x0+sx)*cs, y0*cs])
         if (e2 < dx):
             err += dx
             y0 += sy
-            # if (err + errprev < -dy):
-            #     z.append([x0*cs, (y0+sy)*cs])
-            # elif (err + errprev > dx):
-            #     z.append([(x0+sx)*cs, y0*cs])
-            # else:
-            #     z.append([x0*cs, (y0+sy)*cs])
-            #     z.append([(x0+sx)*cs, y0*cs])
 
     return z
 
 
-def findCellsCrossedByLineBresenham2(x0, y0, x1, y1, cs):
+def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
     # normalize Cellsize cs to 1
     x0 = round(x0/cs)
     x1 = round(x1/cs)
@@ -471,28 +456,49 @@ def findCellsCrossedByLineBresenham2(x0, y0, x1, y1, cs):
     x = x0
     y = y0
     n = dx + dy
-    err = dx - dy
 
-    dx = 2 * dx
-    dy = 2 * dy
+    ddx = 2 * dx
+    ddy = 2 * dy
+    if ddx >= ddy:
+        err = dx
+        N = dx
+    else:
+        err = dy
+        N = dy
 
     z = []
-    while n > 0:
+    n = 0
+    while n < N:
+        errprev = err
         z.append([x*cs, y*cs])
-        if (err > 0):
+        if ddx >= ddy:
             x += sx
-            err -= dy
-        elif (err < 0):
+            err += ddy
+            if err > ddx:
+                y += sy
+                err -= ddx
+                if (err + errprev) < ddx:
+                    z.append([x*cs, (y-sy)*cs])
+                elif (err + errprev) > ddx:
+                    z.append([(x-sx)*cs, y*cs])
+                # else:
+                #     z.append([x*cs, (y-sy)*cs])
+                #     z.append([(x-sx)*cs, y*cs])
+        else:
             y += sy
-            err += dx
-        else:  # If err == 0 the algorithm is on a corner
-            z.append([x*cs, (y + sy)*cs])
-            z.append([(x + sy)*cs, y*cs])
-            x += sy
-            y += sy
-            err = err + dx - dy
-            n = n - 1
-        n = n - 1
+            err += ddx
+            if err > ddy:
+                x += sx
+                err -= ddy
+                if (err + errprev) < ddy:
+                    z.append([(x-sx)*cs, y*cs])
+                elif (err + errprev) > ddy:
+                    z.append([x*cs, (y-sy)*cs])
+                # else:
+                #     z.append([x*cs, (y-sy)*cs])
+                #     z.append([(x-sx)*cs, y*cs])
+        n = n + 1
+    z.append([x*cs, y*cs])
 
     return z
 
@@ -570,7 +576,7 @@ def path2domain(xyPath, rasterTransfo):
     return rasterTransfo
 
 
-def poly2maskSimple(ydep, xdep, ncols, nrows):
+def poly2maskSimple(xdep, ydep, ncols, nrows):
     """
     poly2maskSimple
     Create a mask from a polyline
@@ -601,16 +607,16 @@ def poly2maskSimple(ydep, xdep, ncols, nrows):
     xyline = np.delete(xyline, -1, 0)
     xyline = np.transpose(xyline)
     xyframe = np.hstack((xyframe, xyline))
+
     for i in range(0, len(xyframe[0, :])):
-        mask[xyframe[0, i], xyframe[1, i]] = 1
+        mask[xyframe[1, i], xyframe[0, i]] = 1
 
     # filling the inside of the polygon with ones
     i = xyframe[0]
     j = xyframe[1]
-    mv, nv = np.meshgrid(np.linspace(0, nrows-1, nrows),
-                         np.linspace(0, ncols-1, ncols))  # create index space
-    # mask = inpolygon(mv, nv, i, j)
-    # mask = np.transpose(mask)
+    mv, nv = np.meshgrid(np.linspace(0, ncols-1, ncols),
+                         np.linspace(0, nrows-1, nrows))  # create index space
+    mask = inpolygon(mv, nv, i, j)
     return mask
 
 
@@ -645,8 +651,8 @@ def inpolygon(X, Y, xv, yv):
         distance = deltaxv*(Y-yv[i]) - (X-xv[i])*deltayv
         # is Y between the y-values of edge i,j
         # AND (X,Y) on the left of the edge ?
-        for ii in range(minYv-1, maxYv+1, 1):
-            for jj in range(minXv-1, maxXv+1, 1):
+        for ii in range(minYv, maxYv+1, 1):
+            for jj in range(minXv, maxXv+1, 1):
                 if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and (0 < distance[ii][jj]*deltayv)):
                     if IN[ii][jj] == 0:
                         IN[ii][jj] = 1

@@ -14,14 +14,14 @@ def test_polygon2Raster(capfd):
     demHeader.xllcenter = 0
     demHeader.yllcenter = 0
     demHeader.cellsize = 1
-    x = np.array([1.4, 2.9])
-    y = np.array([0.4, 2.4])
+    x = np.array([0.4, 5, 0.4])
+    y = np.array([0.3, 3, 0.3])
     Line = {}
     Line['x'] = x
     Line['y'] = y
     mask = DFAtools.polygon2Raster(demHeader, Line)
     print(mask)
-    # assert 1 == 2
+    assert 1 == 2
 
 
 def test_normalize(capfd):
