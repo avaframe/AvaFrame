@@ -15,6 +15,7 @@ def fetchBenchParameters(avaDir):
     # get name of avalanche
     avaName = os.path.basename(avaDir)
     avaDictName = avaName + 'Dict'
+    avaDictList = []
 
     # set desired benchmark simulation info dictionary
     if avaDictName == 'avaBowlDict':
@@ -31,6 +32,8 @@ def fetchBenchParameters(avaDir):
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1BL'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a bowl-shaped geometry.'}}
 
+        avaDictList.append(avaDictName)
+
     elif avaDictName == 'avaFlatPlaneDict':
         avaDictName = {'simName': 'release1FP_null_dfa_0.155',
                     'Simulation Parameters': {
@@ -45,6 +48,8 @@ def fetchBenchParameters(avaDir):
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1FP'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs on a flat plane geometry.'}}
 
+        avaDictList.append(avaDictName)
+
     elif avaDictName == 'avaHelixDict':
         avaDictName = {'simName': 'release1HX_null_dfa_0.155',
                     'Simulation Parameters': {
@@ -58,6 +63,8 @@ def fetchBenchParameters(avaDir):
                         'Final Mass [kg]': '20522.4'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a helix-shaped geometry.'}}
+
+        avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaHelixChannelDict':
 
@@ -77,6 +84,8 @@ def fetchBenchParameters(avaDir):
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
 
+        avaDictList.append(avaDictName)
+
     elif avaDictName == 'avaHockeyDict':
 
         avaDictName = {'simName': 'release1HS_null_dfa_0.155',
@@ -92,6 +101,8 @@ def fetchBenchParameters(avaDir):
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
+
+        avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaHockeySmoothChannelDict':
 
@@ -111,6 +122,26 @@ def fetchBenchParameters(avaDir):
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
                      where a linearly sloping surface transitions smoothly into a flat foreland.'}}
 
+        avaDictList.append(avaDictName)
+
+        avaDictName = {'simName': 'release2HS2_entres_dfa_0.155',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area': 'release2HS2',
+                        'Entrainment Area': 'entrainment1HS2',
+                        'Resistance Area': '',
+                        'Mu': '0.155',
+                        'Release thickness [m]': '1.000',
+                        'Release Mass [kg]': '26627.4',
+                        'Final Mass [kg]': '26627.4'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
+                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS2'},
+                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
+                     where a linearly sloping surface transitions smoothly into a flat foreland.'}}
+
+        avaDictList.append(avaDictName)
+
     elif avaDictName == 'avaHockeySmoothSmallDict':
         avaDictName = {'simName': 'release1HS2_null_dfa_0.155',
                     'Simulation Parameters': {
@@ -126,6 +157,8 @@ def fetchBenchParameters(avaDir):
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
                      where a linearly sloping surface transitions smoothly into a flat foreland. \
                      This geometry also includes a channel.'}}
+
+        avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaInclinedPlaneDict':
         avaDictName = {'simName': 'release1IP_entres_dfa_0.155',
@@ -143,4 +176,6 @@ def fetchBenchParameters(avaDir):
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs on a linearly sloping surface.'}}
 
-    return avaDictName
+        avaDictList.append(avaDictName)
+
+    return avaDictList

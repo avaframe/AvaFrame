@@ -33,8 +33,8 @@ standardNames = ['data/avaBowl',
                  'data/avaHockey',
                  'data/avaHockeySmoothChannel',
                  'data/avaHockeySmoothSmall',
-                 'data/avaInclinedPlane']
-
+                  'data/avaInclinedPlane']
+                 
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reports')
 fU.makeADir(outDir)
@@ -86,51 +86,64 @@ for avaDir in standardNames:
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
-    # -----------Compare to benchmark results
-    # Fetch simulation info from benchmark results
-    benchDict = simParameters.fetchBenchParameters(avaDir)
-    benchSimName = benchDict['simName']
-    # Check if simulation with entrainment and/or resistance or standard simulation
-    simType = 'null'
-    if 'entres' in benchSimName:
-        simType = 'entres'
-
-    # Fetch correct reportDict according to flagEntRes
+    # get release area scenarios
+    relArea = []
     for dict in reportDictList:
-        if simType in dict['simName']['name']:
-            reportD = dict
+        relArea.append(dict['Simulation Parameters']['Release Area'])
 
-    # Add info on run time
-    reportD['runTime'] = timeNeeded
+    relAreaSet = sorted(set(relArea))
 
-    # Create plots for report
-    # Load input parameters from configuration file
-    cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
+    for rel in relAreaSet:
 
-    # REQUIRED+++++++++++++++++++
-    # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
-    # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
-    outputVariable = ['ppr', 'pfd', 'pv']
-    values = simType
-    parameter = 'simType'
-    plotListRep = {}
-    reportD['Simulation Difference'] = {}
-    reportD['Simulation Stats'] = {}
-    # ++++++++++++++++++++++++++++
+        # -----------Compare to benchmark results
+        # Fetch simulation info from benchmark results
+        benchDictList = simParameters.fetchBenchParameters(avaDir)
+        benchDict = ''
+        for bDict in benchDictList:
+            if rel in bDict['Simulation Parameters']['Release Area']:
+                benchDict = bDict
+        benchSimName = benchDict['simName']
+        # Check if simulation with entrainment and/or resistance or standard simulation
+        simType = 'null'
+        if 'entres' in benchSimName:
+            simType = 'entres'
 
-    # Plot data comparison for all output variables defined in suffix
-    for var in outputVariable:
-        plotDict = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep, simType)
-        for plot in plotDict['plots']:
-            plotListRep.update({var: plot})
-            reportD['Simulation Difference'].update({var: plotDict['difference']})
-            reportD['Simulation Stats'].update({var: plotDict['stats']})
+        # Fetch correct reportDict according to flagEntRes
+        for dict in reportDictList:
+            if simType in dict['simName']['name'] and dict['Simulation Parameters']['Release Area'] == rel:
+                reportD = dict
 
-    # copy files to report directory
-    plotPaths = generateCompareReport.copyPlots(avaName, outDir, plotListRep)
+        # Add info on run time
+        reportD['runTime'] = timeNeeded
 
-    # add plot info to general report Dict
-    reportD['Simulation Results'] = plotPaths
+        # Create plots for report
+        # Load input parameters from configuration file
+        cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
 
-    # write report
-    generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)
+        # REQUIRED+++++++++++++++++++
+        # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
+        # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
+        outputVariable = ['ppr', 'pfd', 'pv']
+        values = simType
+        parameter = 'simType'
+        plotListRep = {}
+        reportD['Simulation Difference'] = {}
+        reportD['Simulation Stats'] = {}
+        # ++++++++++++++++++++++++++++
+
+        # Plot data comparison for all output variables defined in suffix
+        for var in outputVariable:
+            plotDict = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep, rel, simType)
+            for plot in plotDict['plots']:
+                plotListRep.update({var: plot})
+                reportD['Simulation Difference'].update({var: plotDict['difference']})
+                reportD['Simulation Stats'].update({var: plotDict['stats']})
+
+        # copy files to report directory
+        plotPaths = generateCompareReport.copyPlots(avaName, outDir, plotListRep, rel)
+
+        # add plot info to general report Dict
+        reportD['Simulation Results'] = plotPaths
+
+        # write report
+        generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)
