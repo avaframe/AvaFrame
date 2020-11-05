@@ -105,6 +105,8 @@ def initializeSimulation(cfg, relRaster, dem):
     dem['Ny'] = Ny
     dem['Nz'] = Nz
 
+    log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells' % (particles['mTot'], particles['Npart'], np.size(indY)))
+
     if debugPlot:
         x = np.arange(ncols) * csz
         y = np.arange(nrows) * csz
@@ -127,8 +129,8 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     dtSave = cfg.getfloat('dtSave')
     dt = cfg.getfloat('dt')
 
-    Particles = [particles.copy()]
-    Fields = [fields.copy()]
+    Particles = [copy.deepcopy(particles)]
+    Fields = [copy.deepcopy(fields)]
     nSave = 1
     niter = 0
     iterate = True
@@ -144,8 +146,9 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         iterate = not(particles['stoppCriteria'])
         if t >= nSave * dtSave:
             log.info('Saving results for time step t = %f s', t)
-            Particles.append(particles.copy())
-            Fields.append(fields.copy())
+            log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+            Particles.append(copy.deepcopy(particles))
+            Fields.append(copy.deepcopy(fields))
             nSave = nSave + 1
 
     Tcpu['niter'] = niter
@@ -562,7 +565,7 @@ def getNeighbours(particles, dem):
     ##################################
     indPartInCell = np.cumsum(indPartInCell)
     # make the list of which particles are in which cell
-    indPartInCell2 = np.copy(indPartInCell)
+    indPartInCell2 = copy.deepcopy(indPartInCell)
     indPartInCell[-1] = 0
     for j in range(Npart):
         indx = int((x[j] + csz/2) / csz)

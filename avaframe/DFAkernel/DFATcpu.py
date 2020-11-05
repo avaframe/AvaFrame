@@ -1,16 +1,12 @@
 import os
 import glob
-import time
 import copy
 import logging
 import numpy as np
-import math
 import scipy.stats as stats
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 
 # Local imports
-import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.DFAkernel.DFAtools as DFAtools
 # from avaframe.DFAkernel.setParam import *
