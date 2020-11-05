@@ -33,8 +33,8 @@ standardNames = ['data/avaBowl',
                  'data/avaHockey',
                  'data/avaHockeySmoothChannel',
                  'data/avaHockeySmoothSmall',
-                  'data/avaInclinedPlane']
-                 
+                 'data/avaInclinedPlane']                 
+
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reports')
 fU.makeADir(outDir)
@@ -73,6 +73,7 @@ for avaDir in standardNames:
     startTime = time.time()
     # Run Standalone DFA
     reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
+
     # Print time needed
     endTime = time.time()
     timeNeeded = endTime - startTime
@@ -90,7 +91,6 @@ for avaDir in standardNames:
     relArea = []
     for dict in reportDictList:
         relArea.append(dict['Simulation Parameters']['Release Area'])
-
     relAreaSet = sorted(set(relArea))
 
     for rel in relAreaSet:
@@ -133,7 +133,10 @@ for avaDir in standardNames:
 
         # Plot data comparison for all output variables defined in suffix
         for var in outputVariable:
-            plotDict = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep, rel, simType)
+            plotList = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep, rel, simType=simType)
+            for pDict in plotList:
+                if rel in pDict['relArea']:
+                    plotDict = pDict
             for plot in plotDict['plots']:
                 plotListRep.update({var: plot})
                 reportD['Simulation Difference'].update({var: plotDict['difference']})
