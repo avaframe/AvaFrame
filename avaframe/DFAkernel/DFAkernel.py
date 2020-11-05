@@ -59,7 +59,6 @@ cfg['massPerPart'] = str(massPart)
 # initialize simulation : create particles, create resistance and
 # entrainment matrix, initialize fields, get normals and neighbours
 dem, particles, fields, Cres, Ment = DFAtools.initializeSimulation(cfg, relRaster, dem)
-log.info('Initializted simulation. M = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
 
 # ------------------------
 #  Start time step computation
