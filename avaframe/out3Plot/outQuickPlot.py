@@ -17,7 +17,7 @@ import shutil
 import glob
 
 # Local imports
-import avaframe.in3Utils.ascUtils as IOf
+import avaframe.in2Trans.ascUtils as IOf
 from avaframe.out3Plot.plotUtils import *
 
 # create local logger
@@ -136,7 +136,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     return plotDict
 
 
-def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, simType='null'):
+def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='null'):
     """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension):
 
         Inputs:
@@ -162,7 +162,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, simType='null'):
     fU.makeADir(outDir)
 
     # Initialise plotList
-    plotDict = {'plots': [], 'difference': [], 'stats': []}
+    plotDict = {'relArea' : rel, 'plots': [], 'difference': [], 'stats': []}
 
     # Setup input from com1DFA
     fU.getDFAData(avaDir, workDir, suffix)
@@ -179,39 +179,39 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, simType='null'):
     cellSize = data['cellSize'][0]
     unit = cfgPlot['PLOT']['unit%s' % suffix]
 
-    # Count the number of release areas
-    relAreas = set(data['releaseArea'])
+    # if no release Area and simType area provided take first release area and Null simualtion
+    if rel == '':
+        rel = data['releaseArea']
     if parameter == 'simType':
         simType = val
 
-    for rel in relAreas:
-        # get list of indices of files that are of correct simulation type and result paramete
-        indSuffix = [-9999, -9999]
-        for m in range(len(data['files'])):
-            if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[parameter][m] == val and data['simType'][m] == simType:
-                if data['modelType'][m] == 'dfa':
-                    indSuffix[0] = m
-                elif data['modelType'][m] == cfgPlot['PLOT']['refModel']:
-                    indSuffix[1] = m
+    # get list of indices of files that are of correct simulation type and result paramete
+    indSuffix = [-9999, -9999]
+    for m in range(len(data['files'])):
+        if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[parameter][m] == val and data['simType'][m] == simType:
+            if data['modelType'][m] == 'dfa':
+                indSuffix[0] = m
+            elif data['modelType'][m] == cfgPlot['PLOT']['refModel']:
+                indSuffix[1] = m
 
-        # Load data
-        data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
-        data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
-        log.info('dataset1: %s' % data['files'][indSuffix[0]])
-        log.info('dataset2: %s' % data['files'][indSuffix[1]])
+    # Load data
+    data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
+    data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
+    log.info('dataset1: %s' % data['files'][indSuffix[0]])
+    log.info('dataset2: %s' % data['files'][indSuffix[1]])
 
-        # Get name of Avalanche
-        avaName = data['avaName'][indSuffix[0]]
+    # Get name of Avalanche
+    avaName = data['avaName'][indSuffix[0]]
 
-        # Create dataDict to be passed to generatePlot
-        dataDict = {'data1': data1, 'data2': data2, 'name1': data['names'][indSuffix[0]],
-                    'name2': data['names'][indSuffix[1]], 'compareType': 'compToRef',
-                    'simName': data['simName'][indSuffix[0]], 'suffix': suffix, 'cellSize': cellSize, 'unit': unit}
+    # Create dataDict to be passed to generatePlot
+    dataDict = {'data1': data1, 'data2': data2, 'name1': data['names'][indSuffix[0]],
+                'name2': data['names'][indSuffix[1]], 'compareType': 'compToRef',
+                'simName': data['simName'][indSuffix[0]], 'suffix': suffix, 'cellSize': cellSize, 'unit': unit}
 
-        # Create Plots
-        plotList = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
+    # Create Plots
+    plotList = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
 
-        return plotDict
+    return plotList
 
 
 def quickPlotSimple(avaDir, inputDir, cfg):
