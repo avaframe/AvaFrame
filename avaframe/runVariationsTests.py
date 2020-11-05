@@ -20,7 +20,7 @@ from avaframe.in3Utils import logUtils
 from benchmarks import simParametersVar
 
 # log file name; leave empty to use default runLog.log
-logName = 'runStandardTests'
+logName = 'runVariationsTests'
 
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
@@ -90,10 +90,10 @@ for avaDir in standardNames:
     if 'entres' in benchSimName:
         simType = 'entres'
 
-
-    # Fetch correct reportDict according to flagEntRes
+    # Fetch correct reportDict according to flagEntRes and varPar
     for dict in reportDictList:
-        if simType in dict['simName']['name']:
+        if simType in dict['simName']['name'] and dict['Simulation Parameters']['Parameter variation on'] == cfg['PARAMETERVAR']['varPar'] and \
+           dict['Simulation Parameters']['Parameter value'] == cfg['PARAMETERVAR']['varParValues']:
             reportD = dict
 
     # Add info on run time
