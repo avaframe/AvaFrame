@@ -1,4 +1,4 @@
-Appendix: Module DFA-Kernel
+com1DFA DFA-Kernel theory
 ============================
 
 .. warning::

@@ -7,8 +7,8 @@ The Open Avalanche Framework
 ============================
 
 
-Overview
-========
+General
+=======
 
 .. only:: html
 
@@ -16,9 +16,11 @@ Overview
     * :doc:`installation`
     * :doc:`getStarted`
     * :doc:`workflowExample`
+    * :doc:`moduleOverview`
     * :doc:`configuration`
     * :doc:`logging`
     * :doc:`develop`
+    * :doc:`releaseNotes`
 
 .. toctree::
    :maxdepth: 3
@@ -29,22 +31,51 @@ Overview
    installation.rst
    getStarted.rst
    workflowExample.rst
+   moduleOverview.rst
    configuration.rst
    logging.rst
    develop.rst
+   releaseNotes.rst
 
 
-Modules
-=======
+Computational modules
+=====================
 
 .. only:: html
 
-    * :doc:`moduleOverview`
     * :doc:`moduleCom1DFA`
     * :doc:`moduleCom2AB`
-    * :doc:`moduleAna3AIMEC`
+
+.. toctree::
+   :maxdepth: 3
+   :hidden:
+   :caption: Computatonal modules
+
+   moduleCom1DFA.rst
+   moduleCom2AB.rst
+
+Input/transformation modules
+============================
+
+.. only:: html
+
     * :doc:`moduleIn2Trans`
     * :doc:`moduleIn3Utils`
+
+.. toctree::
+   :maxdepth: 3
+   :hidden:
+   :caption: Input/transformation modules
+
+   moduleIn2Trans.rst
+   moduleIn3Utils.rst
+
+Analysis/helper modules
+=======================
+
+.. only:: html
+
+    * :doc:`moduleAna3AIMEC`
     * :doc:`moduleOut3SimpPlot`
     * :doc:`moduleOut3Plot`
     * :doc:`moduleLog2Report`
@@ -52,20 +83,15 @@ Modules
 .. toctree::
    :maxdepth: 3
    :hidden:
-   :caption: Modules
+   :caption: Analysis/helper Modules
 
-   moduleOverview.rst
-   moduleCom1DFA.rst
-   moduleCom2AB.rst
    moduleAna3AIMEC.rst
-   moduleIn2Trans.rst
-   moduleIn3Utils.rst
    moduleOut3SimpPlot.rst
    moduleOut3Plot.rst
    moduleLog2Report.rst
 
-Appendix
-==========
+Theory
+======
 
 .. only:: html
 
@@ -74,7 +100,7 @@ Appendix
 .. toctree::
    :maxdepth: 3
    :hidden:
-   :caption: Appendix
+   :caption: Theory
 
    appendixCom1DFA.rst
 
