@@ -33,6 +33,7 @@ log.info('Current avalanche: %s', avalancheDir)
 
 cfg = cfgUtils.getModuleConfig(DFAtools)['GENERAL']
 
+startTime = time.time()
 # ------------------------
 # fetch input data
 inputDir = os.path.join(avalancheDir, 'Inputs')
@@ -48,12 +49,12 @@ dem['header'].yllcorner = 0
 
 # ------------------------
 # process release to get it as a raster
-relRaster = DFAtools.polygon2Raster(demOri['header'], releaseLine)
+relRaster = DFAtools.prepareArea(releaseLine, demOri)
 relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
 
-massPart = 200  # [200, 100, 50, 25, 10, 7.5, 5]
+massPart = 1250  # [200, 100, 50, 25, 10, 7.5, 5]
 cfg['massPerPart'] = str(massPart)
 # ------------------------
 # initialize simulation : create particles, create resistance and
@@ -64,6 +65,7 @@ dem, particles, fields, Cres, Ment = DFAtools.initializeSimulation(cfg, relRaste
 #  Start time step computation
 Tcpu = {}
 Tcpu['Force'] = 0.
+Tcpu['ForceVect'] = 0.
 Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
@@ -71,10 +73,13 @@ Tcpu['Field'] = 0.
 Particles, Fields, Tcpu = DFAtools.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['niter'])))
+log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['niter'])))
 log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / Tcpu['niter'])))
 log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / Tcpu['niter'])))
 log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / Tcpu['niter'])))
 
+tcpuDFA = time.time() - startTime
+log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 # -------------------------------
 # Analyse resutls
 # tools.plotPosition(particles, dem)
@@ -106,14 +111,14 @@ for part, field in zip(Particles, Fields):
     # exact solution with friction
     # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
     #
-    fig, ax = DFAtools.plotPosition(part, demOri, field['PFD'], cmapPres, fig, ax)
+    fig, ax = DFAtools.plotPosition(part, demOri, field['PFD'], cmapPres, fig, ax, plotPart=True)
     # fig1, ax1 = DFAtools.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
 plt.show()
 fieldRef = Fields[-1]
 fig1, ax1 = plt.subplots(figsize=(figW, figH))
 fig2, ax2 = plt.subplots(figsize=(figW, figH))
-fig2, ax2 = DFAtools.plotPosition(particles, demOri, fields['FD'], cmapPres, fig2, ax2)
-fig1, ax1 = DFAtools.plotPosition(particles, demOri, fields['PFD'], cmapPres, fig1, ax1)
+fig2, ax2 = DFAtools.plotPosition(particles, demOri, fields['FD'], cmapPres, fig2, ax2, plotPart=False)
+fig1, ax1 = DFAtools.plotPosition(particles, demOri, fields['PFD'], cmapPres, fig1, ax1, plotPart=False)
 plt.show()
 
 

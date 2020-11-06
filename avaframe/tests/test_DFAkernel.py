@@ -4,24 +4,32 @@ import pytest
 
 # Local imports
 import avaframe.DFAkernel.DFAtools as DFAtools
-import avaframe.in3Utils.ascUtils as IOf
+import avaframe.in2Trans.ascUtils as IOf
 
 
 def test_polygon2Raster(capfd):
     demHeader = IOf.cASCheader()
-    demHeader.ncols = 6
-    demHeader.nrows = 4
+    demHeader.ncols = 15
+    demHeader.nrows = 8
     demHeader.xllcenter = 0
     demHeader.yllcenter = 0
     demHeader.cellsize = 1
-    x = np.array([0.4, 5, 0.4])
-    y = np.array([0.3, 3, 0.3])
+    x = np.array([0, 2, 4, 6, 8, 10, 12, 14, 2, 0])
+    y = np.array([1, 3, 2, 3, 0, 3, 1, 6, 6, 1])
     Line = {}
     Line['x'] = x
     Line['y'] = y
-    mask = DFAtools.polygon2Raster(demHeader, Line)
-    print(mask)
-    assert 1 == 2
+    mask = np.zeros((demHeader.nrows, demHeader.ncols))
+    mask = DFAtools.polygon2Raster(demHeader, Line, mask)
+    Mask = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+                     [1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
+                     [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+                     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                     [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    assert np.allclose(Mask, mask,  atol=1e-10)
 
 
 def test_normalize(capfd):

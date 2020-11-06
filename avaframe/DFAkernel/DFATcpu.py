@@ -44,12 +44,13 @@ dem['header'].yllcorner = 0
 
 # ------------------------
 # process release to get it as a raster
-relRaster = DFAtools.polygon2Raster(demOri['header'], releaseLine)
+relRaster = DFAtools.prepareArea(releaseLine, demOri)
 relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
 
 TForce = []
+TForceVect = []
 TPos = []
 TNeigh = []
 TField = []
@@ -70,6 +71,7 @@ for massPart in MassPart:
     #  Start time step computation
     Tcpu = {}
     Tcpu['Force'] = 0.
+    Tcpu['ForceVect'] = 0.
     Tcpu['Pos'] = 0.
     Tcpu['Neigh'] = 0.
     Tcpu['Field'] = 0.
@@ -78,6 +80,8 @@ for massPart in MassPart:
 
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['niter'])))
     TForce.append(Tcpu['Force'])
+    log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['niter'])))
+    TForceVect.append(Tcpu['ForceVect'])
     log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / Tcpu['niter'])))
     TPos.append(Tcpu['Pos'])
     log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / Tcpu['niter'])))
@@ -91,6 +95,12 @@ m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForce))
 cm1lab = "TForce : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
 ax.plot(np.log(NP), m*np.log(NP)+c, 'b--', linewidth=2, label=cm1lab)
 ax.plot(np.log(NP), np.log(TForce), 'ok', linestyle='-', label='Tcpu Force')
+# ---------------------------------
+m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForceVect))
+cm1lab = "TForceVect : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
+ax.plot(np.log(NP), m*np.log(NP)+c, 'b-.', linewidth=2, label=cm1lab)
+ax.plot(np.log(NP), np.log(TForceVect), '*k', linestyle='-', label='Tcpu Force Vect')
+# -----------------------------------
 m, c, r, p, se1 = stats.linregress(np.log(NP[2:]), np.log(TPos[2:]))
 cm1lab = "TPos : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
 ax.plot(np.log(NP), m*np.log(NP)+c, 'g--', linewidth=2, label=cm1lab)
@@ -111,6 +121,7 @@ fig1, ax1 = plt.subplots(figsize=(figW, figH))
 # cm1lab = "TForce : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
 # ax1.loglog(NP, m*np.log(NP)+c, 'b--', linewidth=2, label=cm1lab)
 ax1.loglog(NP, TForce, 'ok', linestyle='-', label='Tcpu Force')
+ax1.plot(NP, TForceVect, '*k', linestyle='-', label='Tcpu Force Vect')
 ax1.loglog(NP, TPos, 'sk', linestyle='-', label='Tcpu Position')
 # m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TNeigh))
 # cm1lab = "TNeigh : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
