@@ -608,15 +608,15 @@ def poly2maskSimple(xdep, ydep, ncols, nrows):
     xyline = np.transpose(xyline)
     xyframe = np.hstack((xyframe, xyline))
 
-    for i in range(0, len(xyframe[0, :])):
-        mask[xyframe[1, i], xyframe[0, i]] = 1
-
     # filling the inside of the polygon with ones
-    i = xyframe[0]
-    j = xyframe[1]
+    # i = xyframe[0]
+    # j = xyframe[1]
     mv, nv = np.meshgrid(np.linspace(0, ncols-1, ncols),
                          np.linspace(0, nrows-1, nrows))  # create index space
-    mask = inpolygon(mv, nv, i, j)
+    # mask = inpolygon(mv, nv, i, j)
+    mask = inpolygon(mv, nv, np.append(xdep, xdep[-1]), np.append(ydep, ydep[-1]))
+    for i in range(0, len(xyframe[0, :])):
+        mask[xyframe[1, i], xyframe[0, i]] = 1
     return mask
 
 
@@ -638,10 +638,12 @@ def inpolygon(X, Y, xv, yv):
     Octave Implementation [IN, ON] = inpolygon (X, Y, xv, yv)
     """
     npol = len(xv)
-    maxXv = np.max(xv)
-    minXv = np.min(xv)
-    maxYv = np.max(yv)
-    minYv = np.min(yv)
+    xv = np.floor(xv+0.5).astype('int')
+    yv = np.floor(yv+0.5).astype('int')
+    maxXv = np.ceil(np.max(xv)).astype('int') + 1
+    minXv = np.floor(np.min(xv)).astype('int')
+    maxYv = np.ceil(np.max(yv)).astype('int') + 1
+    minYv = np.floor(np.min(yv)).astype('int')
     IN = np.zeros(np.shape(X))
     j = npol-1
     for i in range(npol-1):
@@ -651,16 +653,16 @@ def inpolygon(X, Y, xv, yv):
         distance = deltaxv*(Y-yv[i]) - (X-xv[i])*deltayv
         # is Y between the y-values of edge i,j
         # AND (X,Y) on the left of the edge ?
-        for ii in range(minYv, maxYv+1, 1):
-            for jj in range(minXv, maxXv+1, 1):
+        for ii in range(minYv, maxYv, 1):
+            for jj in range(minXv, maxXv, 1):
                 if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and (0 < distance[ii][jj]*deltayv)):
                     if IN[ii][jj] == 0:
                         IN[ii][jj] = 1
                     else:
                         IN[ii][jj] = 0
         j = i
-    for i in range(npol-1):
-        IN[yv[i]][xv[i]] = 1
+    # for i in range(npol-1):
+    #     IN[yv[i]][xv[i]] = 1
 
     return IN
 

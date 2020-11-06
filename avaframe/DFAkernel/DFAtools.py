@@ -159,11 +159,18 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # get forces
     startTime = time.time()
-    force = computeForce(cfg, particles, dem, Ment, Cres)
+    # force = computeForce(cfg, particles, dem, Ment, Cres)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
-    # get forces sph
-    # forceSPH = tools.computeForceSPH(particles, dem)
+    startTime = time.time()
+    force = computeForceVect(cfg, particles, dem, Ment, Cres)
+    tcpuForceVect = time.time() - startTime
+    Tcpu['ForceVect'] = Tcpu['ForceVect'] + tcpuForceVect
+    # print(np.max(np.abs(force['forceX']-forceVect['forceX'])))
+    # print(np.max(np.abs(force['forceY']-forceVect['forceY'])))
+    # print(np.max(np.abs(force['forceZ']-forceVect['forceZ'])))
+    # print(np.allclose(force['forceX'], forceVect['forceX'], atol=0.00001))
+
     # update velocity and particle position
     startTime = time.time()
     particles = updatePosition(cfg, particles, dem, force)
@@ -183,31 +190,55 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     return particles, fields, Tcpu
 
 
-def polygon2Raster(demHeader, Line):
+def prepareArea(releaseLine, dem):
+    NameRel = releaseLine['Name']
+    StartRel = releaseLine['Start']
+    LengthRel = releaseLine['Length']
+    relRaster = np.zeros(np.shape(dem['rasterData']))
+
+    for i in range(len(NameRel)):
+        name = NameRel[i]
+        start = StartRel[i]
+        end = start + LengthRel[i]
+        avapath = {}
+        avapath['x'] = releaseLine['x'][int(start):int(end)]
+        avapath['y'] = releaseLine['y'][int(start):int(end)]
+        avapath['Name'] = name
+        relRaster = polygon2Raster(dem['header'], avapath, relRaster)
+    return relRaster
+
+
+def polygon2Raster(demHeader, Line, Mask):
     # adim and center dem and polygon
     ncols = demHeader.ncols
     nrows = demHeader.nrows
     xllc = demHeader.xllcenter
     yllc = demHeader.yllcenter
     csz = demHeader.cellsize
-    xCoord = (Line['x'] - xllc) / csz
-    xCoord0 = np.delete(xCoord, -1)
-    yCoord = (Line['y'] - yllc) / csz
-    yCoord0 = np.delete(yCoord, -1)
+    xCoord0 = (Line['x'] - xllc) / csz
+    yCoord0 = (Line['y'] - yllc) / csz
+    if (xCoord0[0] == xCoord0[-1]) and (yCoord0[0] == yCoord0[-1]):
+        xCoord = np.delete(xCoord0, -1)
+        yCoord = np.delete(yCoord0, -1)
+    else:
+        xCoord = xCoord0
+        yCoord = yCoord0
     # get the raster corresponding to the polygon
-    mask = geoTrans.poly2maskSimple(xCoord0, yCoord0, ncols, nrows)
+    mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
+    Mask = Mask + mask
+    Mask = np.where(Mask > 0, 1, 0)
 
     if debugPlot:
         fig, ax = plt.subplots(figsize=(figW, figH))
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        im = plt.imshow(mask, cmap, origin='lower')
-        ax.plot(xCoord, yCoord, 'k')
+        im = plt.imshow(Mask, cmap, origin='lower')
+        ax.plot(xCoord0, yCoord0, 'k')
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
         fig.colorbar(im, cax=cax)
         plt.show()
 
-    return mask
+    return Mask
 
 
 def computeForce(cfg, particles, dem, Ment, Cres):
@@ -297,44 +328,183 @@ def computeForce(cfg, particles, dem, Ment, Cres):
         forceY[j] = forceY[j] + forceBotTang * uyDir
         forceZ[j] = forceZ[j] + forceBotTang * uzDir
 
-        # compute entrained mass
-        dm = 0
-        if Ment[indCellY][indCellX] > 0:
-            # either erosion or ploughing but not both
-            # width of the particle
-            width = math.sqrt(A)
-            # bottom area covered by the particle during dt
-            ABotSwiped = width * uMag * dt
-            if(entEroEnergy > 0):
-                # erosion: erode according to shear and erosion energy
-                dm = A * tau * uMag * dt / entEroEnergy
-                Aent = A
-            else:
-                # ploughing in at avalanche front: erode full area weight
-                # mass available in the cell [kg/m²]
-                rhoHent = Ment[indCellY][indCellX]
-                dm = rhoHent * ABotSwiped
-                Aent = rhoHent / rhoEnt
-            dM[j] = dm
-            # adding mass balance contribution
-            forceX[j] = forceX[j] - dm / dt * ux
-            forceY[j] = forceY[j] - dm / dt * uy
-            forceZ[j] = forceZ[j] - dm / dt * uz
+        # # compute entrained mass
+        # dm = 0
+        # if Ment[indCellY][indCellX] > 0:
+        #     # either erosion or ploughing but not both
+        #     # width of the particle
+        #     width = math.sqrt(A)
+        #     # bottom area covered by the particle during dt
+        #     ABotSwiped = width * uMag * dt
+        #     if(entEroEnergy > 0):
+        #         # erosion: erode according to shear and erosion energy
+        #         dm = A * tau * uMag * dt / entEroEnergy
+        #         Aent = A
+        #     else:
+        #         # ploughing in at avalanche front: erode full area weight
+        #         # mass available in the cell [kg/m²]
+        #         rhoHent = Ment[indCellY][indCellX]
+        #         dm = rhoHent * ABotSwiped
+        #         Aent = rhoHent / rhoEnt
+        #     dM[j] = dm
+        #     # adding mass balance contribution
+        #     forceX[j] = forceX[j] - dm / dt * ux
+        #     forceY[j] = forceY[j] - dm / dt * uy
+        #     forceZ[j] = forceZ[j] - dm / dt * uz
+        #
+        #     # adding force du to entrained mass
+        #     Fent = width * (entShearResistance + dm / Aent * entDefResistance)
+        #     forceX[j] = forceX[j] + Fent * uxDir
+        #     forceY[j] = forceY[j] + Fent * uyDir
+        #     forceZ[j] = forceZ[j] + Fent * uzDir
+        #
+        # # adding resistance force du to obstacles
+        # if Cres[indCellY][indCellX] > 0:
+        #     if(h < hRes):
+        #         hResEff = h
+        #     cres = - rho * A * hResEff * Cres * uMag
+        #     forceX[j] = forceX[j] + cres * ux
+        #     forceY[j] = forceY[j] + cres * uy
+        #     forceZ[j] = forceZ[j] + cres * uz
 
-            # adding force du to entrained mass
-            Fent = width * (entShearResistance + dm / Aent * entDefResistance)
-            forceX[j] = forceX[j] + Fent * uxDir
-            forceY[j] = forceY[j] + Fent * uyDir
-            forceZ[j] = forceZ[j] + Fent * uzDir
+        # adding lateral force (SPH component)
+        startTime = time.time()
+        gradhX, gradhY,  gradhZ = calcGradHSPH(particles, j, ncols)
+        tcpuSPH = time.time() - startTime
+        TcpuSPH = TcpuSPH + tcpuSPH
+        forceY[j] = forceY[j] - gradhY * mass * (-gravAcc) / rho
+        forceX[j] = forceX[j] - gradhX * mass * (-gravAcc) / rho
+        forceZ[j] = forceZ[j] - gradhZ * mass * (-gravAcc) / rho
 
-        # adding resistance force du to obstacles
-        if Cres[indCellY][indCellX] > 0:
-            if(h < hRes):
-                hResEff = h
-            cres = - rho * A * hResEff * Cres * uMag
-            forceX[j] = forceX[j] + cres * ux
-            forceY[j] = forceY[j] + cres * uy
-            forceZ[j] = forceZ[j] + cres * uz
+    # log.info(('cpu time SPH = %s s' % (TcpuSPH)))
+    force = {}
+    force['dM'] = dM
+    force['forceX'] = forceX
+    force['forceY'] = forceY
+    force['forceZ'] = forceZ
+
+    return force
+
+
+def computeForceVect(cfg, particles, dem, Ment, Cres):
+    rho = cfg.getfloat('rho')
+    gravAcc = cfg.getfloat('gravAcc')
+    dt = cfg.getfloat('dt')
+    mu = cfg.getfloat('mu')
+    entEroEnergy = cfg.getfloat('entEroEnergy')
+    rhoEnt = cfg.getfloat('rhoEnt')
+    entShearResistance = cfg.getfloat('entShearResistance')
+    entDefResistance = cfg.getfloat('entDefResistance')
+    hRes = cfg.getfloat('hRes')
+    Npart = particles['Npart']
+    csz = dem['header'].cellsize
+    ncols = dem['header'].ncols
+    Nx = dem['Nx']
+    Ny = dem['Ny']
+    Nz = dem['Nz']
+    # initialize
+    Fnormal = np.zeros(Npart)
+    forceX = np.zeros(Npart)
+    forceY = np.zeros(Npart)
+    forceZ = np.zeros(Npart)
+    dM = np.zeros(Npart)
+    # loop on particles
+    TcpuSPH = 0
+    mass = particles['m']
+    x = particles['x']
+    y = particles['y']
+    h = particles['h']
+    ux = particles['ux']
+    uy = particles['uy']
+    uz = particles['uz']
+    # deduce area
+    A = mass / (h * rho)
+    # get velocity magnitude and direction
+    uMag = norm(ux, uy, uz)
+    uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+    # get normal at the particle location
+    nx, ny, nz = getNormalArray(x, y, Nx, Ny, Nz, csz)
+    # get normal at the particle estimated end location
+    xEnd = x + dt * ux
+    yEnd = y + dt * uy
+    nxEnd, nyEnd, nzEnd = getNormalArray(xEnd, yEnd, Nx, Ny, Nz, csz)
+    # get average of those normals
+    nxAvg = nx + nxEnd
+    nyAvg = ny + nyEnd
+    nzAvg = nz + nzEnd
+    nxAvg, nyAvg, nzAvg = normalize(nxAvg, nyAvg, nzAvg)
+
+    # acceleration due to curvature
+    accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
+    # normal component of the acceleration of gravity
+    gravAccNorm = - gravAcc * nzAvg
+    effAccNorm = gravAccNorm + accNormCurv
+    Fnormal = np.where(effAccNorm < 0.0, mass * effAccNorm, 0)
+
+    # body forces (tangential component of acceleration of gravity)
+    gravAccTangX =          - gravAccNorm * nxAvg
+    gravAccTangY =          - gravAccNorm * nyAvg
+    gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
+    # adding gravity force contribution
+    forceX = forceX + gravAccTangX * mass
+    forceY = forceY + gravAccTangY * mass
+    forceZ = forceZ + gravAccTangZ * mass
+
+    # Calculating bottom shear and normal stress
+    # bottom normal stress sigmaB
+    sigmaB = - effAccNorm * rho * h
+    # SamosAT friction type (bottom shear stress)
+    tau = SamosATfric(cfg, uMag, sigmaB, h)
+    # coulomb friction type (bottom shear stress)
+    # tau = mu * sigmaB
+    tau = np.where(effAccNorm > 0.0, 0, tau)
+
+    # adding bottom shear resistance contribution
+    forceBotTang = - A * tau
+    forceX = forceX + forceBotTang * uxDir
+    forceY = forceY + forceBotTang * uyDir
+    forceZ = forceZ + forceBotTang * uzDir
+    for j in range(Npart):
+        mass = particles['m'][j]
+
+        # # compute entrained mass
+        # dm = 0
+        # if Ment[indCellY][indCellX] > 0:
+        #     # either erosion or ploughing but not both
+        #     # width of the particle
+        #     width = math.sqrt(A)
+        #     # bottom area covered by the particle during dt
+        #     ABotSwiped = width * uMag * dt
+        #     if(entEroEnergy > 0):
+        #         # erosion: erode according to shear and erosion energy
+        #         dm = A * tau * uMag * dt / entEroEnergy
+        #         Aent = A
+        #     else:
+        #         # ploughing in at avalanche front: erode full area weight
+        #         # mass available in the cell [kg/m²]
+        #         rhoHent = Ment[indCellY][indCellX]
+        #         dm = rhoHent * ABotSwiped
+        #         Aent = rhoHent / rhoEnt
+        #     dM[j] = dm
+        #     # adding mass balance contribution
+        #     forceX[j] = forceX[j] - dm / dt * ux
+        #     forceY[j] = forceY[j] - dm / dt * uy
+        #     forceZ[j] = forceZ[j] - dm / dt * uz
+        #
+        #     # adding force du to entrained mass
+        #     Fent = width * (entShearResistance + dm / Aent * entDefResistance)
+        #     forceX[j] = forceX[j] + Fent * uxDir
+        #     forceY[j] = forceY[j] + Fent * uyDir
+        #     forceZ[j] = forceZ[j] + Fent * uzDir
+        #
+        # # adding resistance force du to obstacles
+        # if Cres[indCellY][indCellX] > 0:
+        #     if(h < hRes):
+        #         hResEff = h
+        #     cres = - rho * A * hResEff * Cres * uMag
+        #     forceX[j] = forceX[j] + cres * ux
+        #     forceY[j] = forceY[j] + cres * uy
+        #     forceZ[j] = forceZ[j] + cres * uz
 
         # adding lateral force (SPH component)
         startTime = time.time()
@@ -411,8 +581,8 @@ def updatePosition(cfg, particles, dem, force):
     kinEneNew = np.sum(0.5 * massNew * norm(particles['ux'], particles['uy'], particles['uz']))
     potEneNew = np.sum(gravAcc * massNew * particles['z'])
     totEneNew = kinEneNew + potEneNew
-    # log.info('total energy variation: %f' % ((totEneNew - totEne) / totEneNew))
-    # log.info('kinetic energy variation: %f' % ((kinEneNew - kinEne) / kinEneNew))
+    log.info('total energy variation: %f' % ((totEneNew - totEne) / totEneNew))
+    log.info('kinetic energy variation: %f' % ((kinEneNew - kinEne) / kinEneNew))
     # if (abs(totEneNew - totEne) / totEneNew < 0.01) and (abs(kinEneNew - kinEne) / kinEneNew < 0.01):
     #     log.info('Reached stopping creteria : total energy varied fom less than 1 %')
     #     particles['stoppCriteria'] = True
@@ -503,7 +673,7 @@ def updateFields(cfg, particles, dem, fields):
     return fields
 
 
-def plotPosition(particles, dem, data, Cmap, fig, ax):
+def plotPosition(particles, dem, data, Cmap, fig, ax, plotPart=False):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
@@ -528,7 +698,8 @@ def plotPosition(particles, dem, data, Cmap, fig, ax):
     ref0, im = NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
                          extent=[x.min(), x.max(), y.min(), y.max()],
                          cmap=cmap, norm=norm)
-    ax.plot(x, y, 'or', linestyle='None')
+    if plotPart:
+        ax.plot(x, y, 'ok', linestyle='None', markersize=1)
     Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)
@@ -739,8 +910,9 @@ def SamosATfric(cfg, v, p, h):
     R = cfg.getfloat('R')
     Rs = rho * v * v / (p + 0.001)
     div = h / R
-    if(div < 1.0):
-        div = 1.0
-    div = math.log(div) / kappa + B
+    div = np.where(div < 1.0, 1, div)
+    # if(div < 1.0):
+    #     div = 1.0
+    div = np.log(div) / kappa + B
     tau = p * mu * (1.0 + Rs0 / (Rs0 + Rs)) + rho * v * v / (div * div)
     return tau
