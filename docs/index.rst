@@ -95,14 +95,14 @@ Theory
 
 .. only:: html
 
-    * :doc:`appendixCom1DFA`
+    * :doc:`theoryCom1DFA`
 
 .. toctree::
    :maxdepth: 3
    :hidden:
    :caption: Theory
 
-   appendixCom1DFA.rst
+   theoryCom1DFA.rst
 
 
 .. only:: html
