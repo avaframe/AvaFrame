@@ -85,27 +85,27 @@
 \draw [>=stealth',thick, ->] (0,0) --  (0,2.5) node[left] {$z$};
 \draw[>=stealth',thick, ->]  (0,0) --  (4,0) node[right] {$s$};
 % Draw functions and areas
-\tkzFct[name plot=para,thick,color=black,domain=0:3]{\a*x*x+\b*x+\c+0.02*sin(5*3.1415*x/3)*sin(5*3.1415*x/3)}
-\tkzFct[name plot=flat,thick,color=black,domain=3:4]{\c-\b*\b/(4*\a)+0.02*sin(5*3.1415*x/3)*sin(5*3.1415*x/3)}
+\tkzFct[name plot=para,thick,color=AFLight,domain=0:3]{\a*x*x+\b*x+\c+0.02*sin(5*3.1415*x/3)*sin(5*3.1415*x/3)}
+\tkzFct[name plot=flat,thick,color=AFLight,domain=3:4]{\c-\b*\b/(4*\a)+0.02*sin(5*3.1415*x/3)*sin(5*3.1415*x/3)}
 
-\tkzFct[name plot=fit,thick, dashed,color=black,domain=0:4]{\aa*x*x+\bb*x+\cc}
+\tkzFct[name plot=fit,thick, dashed,color=AFLight,domain=0:4]{\aa*x*x+\bb*x+\cc}
 
 
 \tkzDefPoints{0/\c/H, \xb/0.8/B, \xb/\yb/BB, \xa/0.8/A, \xa/\ya/AA, \xai/\yai/AI, \xao/\yao/AO, \xbi/\ybi/BI, \xbo/\ybo/BO, \xs/0.8/S, \xs/\ys/SS, \xf/\yf/F, \xp/\yp/P, 4/\yhh/H0, 4/\yh/HH, 0/\yhh/HHH, \xh/\yh/HHHH, \xaa/0.8/A1, \xaa/\yaa/AA1, \xaai/\yaai/AI1, \xaao/\yaao/AO1}
 \draw [thick,dotted, black] (BB) -- (B) node [below] {$x_{\beta}$};
 \draw [thick,dotted, black] (AA) -- (A) node [below] {$x_{\alpha}$};
 \draw [thick,dotted, black] (SS) -- (S) node [below] {$x_{split}$};
-\draw [thick, blue] (BB) -- (H);
-\draw [thick, red] (AA) -- (H);
-\draw [thick,dotted, red] (AI) -- (AO);
-\pic[draw,red,angle radius=0.8cm,"$\alpha$" ,pic text options={shift={(18pt,-5pt)}}]{angle=AA--AI--AO};
+\draw [thick, AFMiddle] (BB) -- (H);
+\draw [thick, AFDark] (AA) -- (H);
+\draw [thick,dotted, AFDark] (AI) -- (AO);
+\pic[draw,AFDark,angle radius=0.8cm,"$\alpha$" ,pic text options={shift={(18pt,-5pt)}}]{angle=AA--AI--AO};
 \draw [thick,dotted, black] (AA1) -- (A1) node [below] {$x_{\alpha_{-1}}$};
-\draw [thick,dashed, red] (AA1) -- (H);
-\draw [thick,dotted, red] (AI1) -- (AO1);
-\pic[draw,red,angle radius=0.8cm,"$\alpha_{-1}$" ,pic text options={shift={(22pt,-5pt)}}]{angle=AA1--AI1--AO1};
+\draw [thick,dashed, AFDark] (AA1) -- (H);
+\draw [thick,dotted, AFDark] (AI1) -- (AO1);
+\pic[draw,AFDark,angle radius=0.8cm,"$\alpha_{-1}$" ,pic text options={shift={(22pt,-5pt)}}]{angle=AA1--AI1--AO1};
 
-\draw [thick,dotted, blue] (BI) -- (BO);
-\pic[draw,blue,angle radius=0.8cm,"$\beta$" ,pic text options={shift={(18pt,-5pt)}}]{angle=BB--BI--BO};
+\draw [thick,dotted, AFMiddle] (BI) -- (BO);
+\pic[draw,AFMiddle,angle radius=0.8cm,"$\beta$" ,pic text options={shift={(18pt,-5pt)}}]{angle=BB--BI--BO};
 
 \node[text width=2.5cm, fill=none,below,black] at (1,0.45) {$y=ax^2+bx+c$\\$y'=2ax+b$\\$y''=2a$};
 \draw [>=stealth',thick,dotted, ->] (1,0.45) -- (F);
@@ -113,7 +113,7 @@
 \draw [>=stealth',thick, ->] (1,2) -- (P);
 \draw [thick,dotted, black] (H0) -- (HHH);
 \draw [thick,dotted, black] (HH) -- (HHHH);
-\draw [>=stealth',thick, <->] (HH) -- (H0) node [midway,right] {$H_0$};
+\draw [>=stealth',thick, <->] (HH) -- (H0) node [midway,right,black] {$H_0$};
 
 \node[text width=2.5cm, fill=none,below,black] at (2.2,-0.2) {$10^\circ\mbox{point}$};
 \draw [>=stealth',thick, ->] (2.2,-0.2) -- (BB);
