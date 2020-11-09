@@ -30,6 +30,7 @@ def initializeSimulation(cfg, relRaster, dem):
     S = csz * csz
     # initialize
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
+    FD = np.zeros(np.shape(dem['rasterData']))
     Npart = 0
     Xpart = np.empty(0)
     Ypart = np.empty(0)
@@ -42,8 +43,8 @@ def initializeSimulation(cfg, relRaster, dem):
     for indx, indy in zip(indX, indY):
         # number of particles for this cell
         h = relRaster[indy][indx]
-        V = S * h
-        mass = V * rho
+        Vol = S * h
+        mass = Vol * rho
         nPart = np.ceil(mass / massPerPart).astype('int')
         Npart = Npart + nPart
         partPerCell[indy][indx] = nPart
@@ -53,6 +54,7 @@ def initializeSimulation(cfg, relRaster, dem):
         # if one particle in center of cell
         # xpart = csz * indx
         # ypart = csz * indy
+        FD[indY, indX] = h
         Xpart = np.append(Xpart, xpart)
         Ypart = np.append(Ypart, ypart)
         Mpart = np.append(Mpart, mPart * np.ones(nPart))
@@ -77,28 +79,26 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
     particles['stoppCriteria'] = False
-    particles['kineticEne'] = np.sum(0.5 * Mpart * norm(particles['ux'], particles['uy'], particles['uz']))
+    particles['kineticEne'] = np.sum(0.5 * Mpart * norm2(particles['ux'], particles['uy'], particles['uz']))
     particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
 
     Cres = np.zeros(np.shape(dem['rasterData']))
     Ment = np.zeros(np.shape(dem['rasterData']))
     PV = np.zeros(np.shape(dem['rasterData']))
     PP = np.zeros(np.shape(dem['rasterData']))
-    PFD = np.zeros(np.shape(dem['rasterData']))
     fields = {}
     fields['PV'] = PV
     fields['PP'] = PP
-    fields['PFD'] = PFD
+    fields['PFD'] = FD
     fields['V'] = PV
     fields['P'] = PP
-    fields['FD'] = PFD
+    fields['FD'] = FD
 
     # get particles location (neighbours for sph)
     particles = getNeighbours(particles, dem)
     # update fields (compute grid values)
     t = 0
     particles['t'] = t
-    fields = updateFields(cfg, particles, dem, fields)
     # get normal vector of the grid mesh
     Nx, Ny, Nz = getNormalVect(dem['rasterData'], dem['header'].cellsize)
     dem['Nx'] = Nx
@@ -131,6 +131,10 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 
     Particles = [copy.deepcopy(particles)]
     Fields = [copy.deepcopy(fields)]
+    Z = np.empty((0, 0))
+    S = np.empty((0, 0))
+    U = np.empty((0, 0))
+    T = np.empty((0, 0))
     nSave = 1
     niter = 0
     iterate = True
@@ -140,9 +144,13 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         t = t + dt
         niter = niter + 1
         log.debug('Computing time step t = %f s', t)
+        T = np.append(T, t)
         particles['t'] = t
 
         particles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu)
+        U = np.append(U, norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
+        Z = np.append(Z, particles['z'][0])
+        S = np.append(S, particles['s'][0])
         iterate = not(particles['stoppCriteria'])
         if t >= nSave * dtSave:
             log.info('Saving results for time step t = %f s', t)
@@ -153,13 +161,13 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 
     Tcpu['niter'] = niter
 
-    return Particles, Fields, Tcpu
+    return T, U, Z, S, Particles, Fields, Tcpu
 
 
 def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # get forces
     startTime = time.time()
-    # force = computeForce(cfg, particles, dem, Ment, Cres)
+    forceLoop = computeForce(cfg, particles, dem, Ment, Cres)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
     startTime = time.time()
@@ -170,6 +178,10 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # print(np.max(np.abs(force['forceY']-forceVect['forceY'])))
     # print(np.max(np.abs(force['forceZ']-forceVect['forceZ'])))
     # print(np.allclose(force['forceX'], forceVect['forceX'], atol=0.00001))
+    startTime = time.time()
+    force = computeForceSPH(cfg, particles, force, dem)
+    tcpuForceSPH = time.time() - startTime
+    Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
     # update velocity and particle position
     startTime = time.time()
@@ -262,9 +274,12 @@ def computeForce(cfg, particles, dem, Ment, Cres):
     forceX = np.zeros(Npart)
     forceY = np.zeros(Npart)
     forceZ = np.zeros(Npart)
+    forceSPHX = np.zeros(Npart)
+    forceSPHY = np.zeros(Npart)
+    forceSPHZ = np.zeros(Npart)
     dM = np.zeros(Npart)
+    force = {}
     # loop on particles
-    TcpuSPH = 0
     for j in range(Npart):
         mass = particles['m'][j]
         x = particles['x'][j]
@@ -367,21 +382,13 @@ def computeForce(cfg, particles, dem, Ment, Cres):
         #     forceY[j] = forceY[j] + cres * uy
         #     forceZ[j] = forceZ[j] + cres * uz
 
-        # adding lateral force (SPH component)
-        startTime = time.time()
-        gradhX, gradhY,  gradhZ = calcGradHSPH(particles, j, ncols)
-        tcpuSPH = time.time() - startTime
-        TcpuSPH = TcpuSPH + tcpuSPH
-        forceY[j] = forceY[j] - gradhY * mass * (-gravAcc) / rho
-        forceX[j] = forceX[j] - gradhX * mass * (-gravAcc) / rho
-        forceZ[j] = forceZ[j] - gradhZ * mass * (-gravAcc) / rho
-
-    # log.info(('cpu time SPH = %s s' % (TcpuSPH)))
-    force = {}
     force['dM'] = dM
     force['forceX'] = forceX
     force['forceY'] = forceY
     force['forceZ'] = forceZ
+    force['forceSPHX'] = forceSPHX
+    force['forceSPHY'] = forceSPHY
+    force['forceSPHZ'] = forceSPHZ
 
     return force
 
@@ -407,9 +414,15 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
     forceX = np.zeros(Npart)
     forceY = np.zeros(Npart)
     forceZ = np.zeros(Npart)
+    forceSPHX = np.zeros(Npart)
+    forceSPHY = np.zeros(Npart)
+    forceSPHZ = np.zeros(Npart)
     dM = np.zeros(Npart)
+    force = {}
+    force['forceSPHX'] = forceSPHX
+    force['forceSPHY'] = forceSPHY
+    force['forceSPHZ'] = forceSPHZ
     # loop on particles
-    TcpuSPH = 0
     mass = particles['m']
     x = particles['x']
     y = particles['y']
@@ -464,63 +477,95 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
     forceX = forceX + forceBotTang * uxDir
     forceY = forceY + forceBotTang * uyDir
     forceZ = forceZ + forceBotTang * uzDir
-    for j in range(Npart):
-        mass = particles['m'][j]
+    # for j in range(Npart):
+    #     mass = particles['m'][j]
+    #
+    #     # compute entrained mass
+    #     dm = 0
+    #     if Ment[indCellY][indCellX] > 0:
+    #         # either erosion or ploughing but not both
+    #         # width of the particle
+    #         width = math.sqrt(A)
+    #         # bottom area covered by the particle during dt
+    #         ABotSwiped = width * uMag * dt
+    #         if(entEroEnergy > 0):
+    #             # erosion: erode according to shear and erosion energy
+    #             dm = A * tau * uMag * dt / entEroEnergy
+    #             Aent = A
+    #         else:
+    #             # ploughing in at avalanche front: erode full area weight
+    #             # mass available in the cell [kg/m²]
+    #             rhoHent = Ment[indCellY][indCellX]
+    #             dm = rhoHent * ABotSwiped
+    #             Aent = rhoHent / rhoEnt
+    #         dM[j] = dm
+    #         # adding mass balance contribution
+    #         forceX[j] = forceX[j] - dm / dt * ux
+    #         forceY[j] = forceY[j] - dm / dt * uy
+    #         forceZ[j] = forceZ[j] - dm / dt * uz
+    #
+    #         # adding force du to entrained mass
+    #         Fent = width * (entShearResistance + dm / Aent * entDefResistance)
+    #         forceX[j] = forceX[j] + Fent * uxDir
+    #         forceY[j] = forceY[j] + Fent * uyDir
+    #         forceZ[j] = forceZ[j] + Fent * uzDir
+    #
+    #     # adding resistance force du to obstacles
+    #     if Cres[indCellY][indCellX] > 0:
+    #         if(h < hRes):
+    #             hResEff = h
+    #         cres = - rho * A * hResEff * Cres * uMag
+    #         forceX[j] = forceX[j] + cres * ux
+    #         forceY[j] = forceY[j] + cres * uy
+    #         forceZ[j] = forceZ[j] + cres * uz
 
-        # # compute entrained mass
-        # dm = 0
-        # if Ment[indCellY][indCellX] > 0:
-        #     # either erosion or ploughing but not both
-        #     # width of the particle
-        #     width = math.sqrt(A)
-        #     # bottom area covered by the particle during dt
-        #     ABotSwiped = width * uMag * dt
-        #     if(entEroEnergy > 0):
-        #         # erosion: erode according to shear and erosion energy
-        #         dm = A * tau * uMag * dt / entEroEnergy
-        #         Aent = A
-        #     else:
-        #         # ploughing in at avalanche front: erode full area weight
-        #         # mass available in the cell [kg/m²]
-        #         rhoHent = Ment[indCellY][indCellX]
-        #         dm = rhoHent * ABotSwiped
-        #         Aent = rhoHent / rhoEnt
-        #     dM[j] = dm
-        #     # adding mass balance contribution
-        #     forceX[j] = forceX[j] - dm / dt * ux
-        #     forceY[j] = forceY[j] - dm / dt * uy
-        #     forceZ[j] = forceZ[j] - dm / dt * uz
-        #
-        #     # adding force du to entrained mass
-        #     Fent = width * (entShearResistance + dm / Aent * entDefResistance)
-        #     forceX[j] = forceX[j] + Fent * uxDir
-        #     forceY[j] = forceY[j] + Fent * uyDir
-        #     forceZ[j] = forceZ[j] + Fent * uzDir
-        #
-        # # adding resistance force du to obstacles
-        # if Cres[indCellY][indCellX] > 0:
-        #     if(h < hRes):
-        #         hResEff = h
-        #     cres = - rho * A * hResEff * Cres * uMag
-        #     forceX[j] = forceX[j] + cres * ux
-        #     forceY[j] = forceY[j] + cres * uy
-        #     forceZ[j] = forceZ[j] + cres * uz
-
-        # adding lateral force (SPH component)
-        startTime = time.time()
-        gradhX, gradhY,  gradhZ = calcGradHSPH(particles, j, ncols)
-        tcpuSPH = time.time() - startTime
-        TcpuSPH = TcpuSPH + tcpuSPH
-        forceY[j] = forceY[j] - gradhY * mass * (-gravAcc) / rho
-        forceX[j] = forceX[j] - gradhX * mass * (-gravAcc) / rho
-        forceZ[j] = forceZ[j] - gradhZ * mass * (-gravAcc) / rho
-
-    # log.info(('cpu time SPH = %s s' % (TcpuSPH)))
-    force = {}
     force['dM'] = dM
     force['forceX'] = forceX
     force['forceY'] = forceY
     force['forceZ'] = forceZ
+
+    return force
+
+
+def computeForceSPH(cfg, particles, force, dem):
+    rho = cfg.getfloat('rho')
+    gravAcc = cfg.getfloat('gravAcc')
+    dt = cfg.getfloat('dt')
+    mu = cfg.getfloat('mu')
+    entEroEnergy = cfg.getfloat('entEroEnergy')
+    rhoEnt = cfg.getfloat('rhoEnt')
+    entShearResistance = cfg.getfloat('entShearResistance')
+    entDefResistance = cfg.getfloat('entDefResistance')
+    hRes = cfg.getfloat('hRes')
+    Npart = particles['Npart']
+    csz = dem['header'].cellsize
+    ncols = dem['header'].ncols
+    # initialize
+    forceSPHX = force['forceSPHX']
+    forceSPHY = force['forceSPHY']
+    forceSPHZ = force['forceSPHZ']
+    # loop on particles
+    # TcpuSPH = 0
+    # Tcpuadd = 0
+    for j in range(Npart):
+        mass = particles['m'][j]
+        # adding lateral force (SPH component)
+        # startTime = time.time()
+        gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols)
+        # tcpuSPH = time.time() - startTime
+        # TcpuSPH = TcpuSPH + tcpuSPH
+        # startTime = time.time()
+        forceSPHX[j] = forceSPHX[j] - gradhX * mass * (-gravAcc) / rho
+        forceSPHY[j] = forceSPHY[j] - gradhY * mass * (-gravAcc) / rho
+        forceSPHZ[j] = forceSPHZ[j] - gradhZ * mass * (-gravAcc) / rho
+        # tcpuadd = time.time() - startTime
+        # Tcpuadd = Tcpuadd + tcpuadd
+
+    # log.info(('cpu time SPH = %s s' % (TcpuSPH / Npart)))
+    # log.info(('cpu time SPH add = %s s' % (Tcpuadd / Npart)))
+    force['forceSPHX'] = forceSPHX
+    force['forceSPHY'] = forceSPHY
+    force['forceSPHZ'] = forceSPHZ
 
     return force
 
@@ -536,6 +581,9 @@ def updatePosition(cfg, particles, dem, force):
     forceX = force['forceX']
     forceY = force['forceY']
     forceZ = force['forceZ']
+    forceSPHX = force['forceSPHX']
+    forceSPHY = force['forceSPHY']
+    forceSPHZ = force['forceSPHZ']
     mass = particles['m']
     x = particles['x']
     y = particles['y']
@@ -549,9 +597,9 @@ def updatePosition(cfg, particles, dem, force):
     totEne = kinEne + potEne
     # procede to time integration
     # update velocity
-    uxNew = ux + forceX * dt / mass
-    uyNew = uy + forceY * dt / mass
-    uzNew = uz + forceZ * dt / mass
+    uxNew = ux + (forceX + forceSPHX) * dt / mass
+    uyNew = uy + (forceY + forceSPHY) * dt / mass
+    uzNew = uz + (forceZ + forceSPHZ) * dt / mass
     # update mass
     massNew = mass + dM
     # update position
@@ -578,11 +626,11 @@ def updatePosition(cfg, particles, dem, force):
     particles['uz'] = uzNew - uN * nz
     # uN = particles['ux']*nx + particles['uy']*ny + particles['uz']*nz
     # print(norm(particles['ux'], particles['uy'], particles['uz']), uN)
-    kinEneNew = np.sum(0.5 * massNew * norm(particles['ux'], particles['uy'], particles['uz']))
+    kinEneNew = np.sum(0.5 * massNew * norm2(particles['ux'], particles['uy'], particles['uz']))
     potEneNew = np.sum(gravAcc * massNew * particles['z'])
     totEneNew = kinEneNew + potEneNew
-    log.info('total energy variation: %f' % ((totEneNew - totEne) / totEneNew))
-    log.info('kinetic energy variation: %f' % ((kinEneNew - kinEne) / kinEneNew))
+    # log.info('total energy variation: %f' % ((totEneNew - totEne) / totEneNew))
+    # log.info('kinetic energy variation: %f' % ((kinEneNew - kinEne) / kinEneNew))
     # if (abs(totEneNew - totEne) / totEneNew < 0.01) and (abs(kinEneNew - kinEne) / kinEneNew < 0.01):
     #     log.info('Reached stopping creteria : total energy varied fom less than 1 %')
     #     particles['stoppCriteria'] = True
@@ -720,14 +768,14 @@ def getNeighbours(particles, dem):
     x = particles['x']
     y = particles['y']
     check = np.zeros((nrows, ncols))
-    indPartInCell = np.zeros(ncols*nrows + 1)
-    partInCell = np.zeros(Npart)
-    InCell = np.empty((0, 3), int)
+    indPartInCell = np.zeros(ncols*nrows + 1).astype(int)
+    partInCell = np.zeros(Npart).astype(int)
     # Count number of particles in each cell
     indx = ((x + csz/2) / csz).astype(int)
     indy = ((y + csz/2) / csz).astype(int)
     check[indy, indx] = check[indy, indx] + 1
     ic = indx + ncols * indy
+    # partInCell2[0:-2] = indSorted
     ##################################
     # TODO: test speed between add.at and bincount
     # indPartInCell = np.bincount(ic, minlength=len(indPartInCell))
@@ -735,20 +783,32 @@ def getNeighbours(particles, dem):
     np.add.at(indPartInCell, ic, 1)
     ##################################
     indPartInCell = np.cumsum(indPartInCell)
-    # make the list of which particles are in which cell
-    indPartInCell2 = copy.deepcopy(indPartInCell)
+    ##################################
+    # ------------------------
+    # no loop
+    partInCell = np.argsort(ic, kind='mergesort')
+    InCell = np.vstack((indx, indy))
+    InCell = np.vstack((InCell, ic))
+    InCell = InCell.T
     indPartInCell[-1] = 0
-    for j in range(Npart):
-        indx = int((x[j] + csz/2) / csz)
-        indy = int((y[j] + csz/2) / csz)
-        ic = indx + ncols * indy
-        partInCell[int(indPartInCell2[ic])-1] = j
-        indPartInCell2[ic] = indPartInCell2[ic] - 1
-        InCell = np.append(InCell, np.tile(np.array([indx, indy, ic]), (1, 1)), axis=0)
+    # or
+    # ------------------------------------------------
+    # make the list of which particles are in which cell
+    # InCell = np.empty((0, 3), int).astype(int)
+    # indPartInCell2 = copy.deepcopy(indPartInCell)
+    # indPartInCell[-1] = 0
+    # for j in range(Npart):
+    #     indx = int((x[j] + csz/2) / csz)
+    #     indy = int((y[j] + csz/2) / csz)
+    #     ic = indx + ncols * indy
+    #     partInCell[int(indPartInCell2[ic])-1] = j
+    #     indPartInCell2[ic] = indPartInCell2[ic] - 1
+    #     InCell = np.append(InCell, np.tile(np.array([indx, indy, ic]), (1, 1)), axis=0)
+
+    ##################################
     particles['InCell'] = InCell
     particles['indPartInCell'] = indPartInCell
     particles['partInCell'] = partInCell
-
     # xx = np.arange(ncols) * csz
     # yy = np.arange(nrows) * csz
     # fig, ax = plt.subplots(figsize=(figW, figH))
@@ -781,38 +841,69 @@ def calcGradHSPH(particles, j, ncols):
     gradhX = 0
     gradhY = 0
     gradhZ = 0
+    ####################################
+    # With loop
+
     # gradhX1 = 0
     # gradhY1 = 0
     # gradhZ1 = 0
-    index = np.empty((0), dtype=int)
-    # find all the neighbour boxes
-    for n in range(-1, 2):
-        ic = (indx - 1) + ncols * (indy + n)
-        iPstart = int(indPartInCell[ic-1])
-        iPend = int(indPartInCell[ic+2])
-        ind = np.arange(iPstart, iPend, 1)
-        index = np.append(index, ind)
-        # # loop on all particles in neighbour boxes
-        # for p in range(iPstart, iPend):
-        #     # index of particle in neighbour box
-        #     l = int(partInCell[p])
-        #     if j != l:
-        #         dx = particles['x'][l] - x
-        #         dy = particles['y'][l] - y
-        #         dz = particles['z'][l] - z
-        #         r = norm(dx, dy, dz)
-        #         if r < 0.001 * rKernel:
-        #             # impose a minimum distance between particles
-        #             r = 0.001 * rKernel
-        #         if r < rKernel:
-        #             hr = rKernel - r
-        #             dwdr = dfacKernel * hr * hr
-        #             massl = particles['m'][l]
-        #             gradhX1 = gradhX1 + massl * dwdr * dx / r
-        #             gradhY1 = gradhY1 + massl * dwdr * dy / r
-        #             gradhZ1 = gradhZ1 + massl * dwdr * dz / r
+    # startTime = time.time()
+    # index = np.empty((0), dtype=int)
+    # for n in range(-1, 2):
+    #     ic = (indx - 1) + ncols * (indy + n)
+    #     iPstart = indPartInCell[ic-1]
+    #     iPend = indPartInCell[ic+2]
+    #     print('ic = ', ic)
+    #     # ind = np.arange(iPstart, iPend, 1)
+    #     # index = np.append(index, ind)
+    #     # loop on all particles in neighbour boxes
+    #     for p in range(iPstart, iPend):
+    #         # index of particle in neighbour box
+    #         l = int(partInCell[p])
+    #         print(l)
+    #         if j != l:
+    #             dx = particles['x'][l] - x
+    #             dy = particles['y'][l] - y
+    #             dz = particles['z'][l] - z
+    #             r = norm(dx, dy, dz)
+    #             if r < 0.001 * rKernel:
+    #                 # impose a minimum distance between particles
+    #                 r = 0.001 * rKernel
+    #             if r < rKernel:
+    #                 hr = rKernel - r
+    #                 dwdr = dfacKernel * hr * hr
+    #                 massl = particles['m'][l]
+    #                 gradhX1 = gradhX1 + massl * dwdr * dx / r
+    #                 gradhY1 = gradhY1 + massl * dwdr * dy / r
+    #                 gradhZ1 = gradhZ1 + massl * dwdr * dz / r
+    # print((time.time() - startTime)/1)
+
+    # or
+
     # no loop option
-    L = partInCell[index].astype('int')
+
+    # startTime = time.time()
+    # find all the neighbour boxes
+    # index of the left box
+    ic = (indx - 1) + ncols * (indy + np.arange(-1, 2, 1))
+    # print('particle : %s in cell (%s,%s)' % (j, indx, indy))
+    # print(ic)
+    # go throught all index from left middle and right box and get the
+    # particles in those boxes
+    iPstart = indPartInCell[ic-1]
+    iPend = indPartInCell[ic+2]
+    # print(iPstart)
+    # print(iPend)
+    # print(np.concatenate([np.arange(x, y) for x, y in zip(iPstart, iPend)]))
+
+    # gather all the particles
+    index = np.concatenate([np.arange(x, y) for x, y in zip(iPstart, iPend)])
+    # make sure to remove the j particle
+    indJ = np.where(index == j)
+    index = np.delete(index, indJ)
+
+    # compute SPH gradient
+    L = partInCell[index]
     dx = particles['x'][L] - x
     dy = particles['y'][L] - y
     dz = particles['z'][L] - z
@@ -821,20 +912,32 @@ def calcGradHSPH(particles, j, ncols):
     hr = rKernel - r
     dwdr = dfacKernel * hr * hr
     massl = particles['m'][L]
-    GX = massl * dwdr * dx / r
-    GX = np.where(r < rKernel, GX, 0)
-    GY = massl * dwdr * dy / r
-    GY = np.where(r < rKernel, GY, 0)
-    GZ = massl * dwdr * dz / r
-    GZ = np.where(r < rKernel, GZ, 0)
+    # GX = massl * dwdr * dx / r
+    # GX = np.where(r < rKernel, GX, 0)
+    # GY = massl * dwdr * dy / r
+    # GY = np.where(r < rKernel, GY, 0)
+    # GZ = massl * dwdr * dz / r
+    # GZ = np.where(r < rKernel, GZ, 0)
+    # ------------------------------
+    indOut = np.where(r >= rKernel)
+    mdwdrr = massl * dwdr / r
+    mdwdrr[indOut] = 0
+    GX = mdwdrr * dx
+    GY = mdwdrr * dy
+    GZ = mdwdrr * dz
+    # -----------------------------
     gradhX = gradhX + np.sum(GX)
     gradhY = gradhY + np.sum(GY)
     gradhZ = gradhZ + np.sum(GZ)
+    # leInd = len(index)
+    # print((time.time() - startTime)/leInd)
+    # print(index)
+    #########################################
+
     # print(gradhX, gradhX1)
     # print(gradhY, gradhY1)
     # print(gradhZ, gradhZ1)
-
-    return gradhX, gradhY,  gradhZ
+    return gradhX, gradhY,  gradhZ, index
 
 
 def getNormal(x, y, Nx, Ny, Nz, csz):
@@ -887,6 +990,11 @@ def getNormalVect(z, csz):
 def norm(x, y, z):
     norme = np.sqrt(x*x + y*y + z*z)
     return norme
+
+
+def norm2(x, y, z):
+    norme2 = (x*x + y*y + z*z)
+    return norme2
 
 
 def normalize(x, y, z):
