@@ -10,7 +10,7 @@ import time
 # Local imports
 from avaframe.com1DFA import com1DFA
 from avaframe.log2Report import generateReport as gR
-from avaframe.out3SimpPlot import outPlotAllPeak as oP
+from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils

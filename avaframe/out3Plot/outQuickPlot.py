@@ -236,7 +236,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
 
         figure 1: plot raster data for dataset1, dataset2 and their difference
         figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
-        -plots are saved to Outputs/out3SimpPlot
+        -plots are saved to Outputs/out1Peak
     """
 
     outDir = os.path.join(avaDir, 'Outputs', 'out3Plot')

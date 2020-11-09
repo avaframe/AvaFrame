@@ -22,7 +22,7 @@ Input
 Outputs
 -------
 
-* plot of peak field, called like the peak file (in *Outputs/out3SimpPlot*)
+* plot of peak field, called like the peak file (in *Outputs/out1Peak*)
 * dictionary with name of plot and full path to plot
 
 To run

@@ -27,7 +27,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS):
         outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
         fU.makeADir(outDir)
     else:
-        outDir = os.path.join(avaDir, 'Outputs', 'out3SimpPlot')
+        outDir = os.path.join(avaDir, 'Outputs', 'out1Peak')
         fU.makeADir(outDir)
 
     # Initialise plot dictionary with simulation names

@@ -11,7 +11,7 @@ import time
 from avaframe.com1DFA import com1DFA
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
-from avaframe.out3SimpPlot import outPlotAllPeak as oP
+from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
