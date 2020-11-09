@@ -101,9 +101,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   sprintf(Sim,"Project/Simulations/%s",CuSim);
   printf("\n[BatchCom1DFA] -------------------------\n");
-  printf("\n[BatchCom1DFA] Current Sim %s\n",Sim);
-
-  printf("\n[BatchCom1DFA] Computing %s\n",CuSim);
+  printf("\n[BatchCom1DFA] Computing Simulation: %s\n",Sim);
 
   // Friction type
   set(Sim, "FrictionType", "samosAT_Standard");

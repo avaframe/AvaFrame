@@ -23,7 +23,7 @@ def copyPlots(avaName, outDir, plotListRep, rel):
     plotPaths = {}
     for key in plotListRep:
         shutil.copy2(plotListRep[key], os.path.join(outDir, '%s_%s_%s.png' % (avaName, rel, key)))
-        log.info('Copied: %s to %s' % (plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key))))
+        log.debug('Copied: %s to %s' % (plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key))))
         plotPaths[key] = os.path.join(outDir, '%s_%s_%s.png' % (avaName, rel, key))
 
     return plotPaths
@@ -124,4 +124,4 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
         pfile.write(' \n')
         pfile.write(' \n')
 
-    log.info('standard tests performed - Report saved to: %s ' % reportFile)
+    log.info('Standard tests performed - Report saved to: %s ' % reportFile)

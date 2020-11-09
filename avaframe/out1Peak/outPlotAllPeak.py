@@ -42,7 +42,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS):
         name = peakFiles['names'][m]
         fileName = peakFiles['files'][m]
         avaName = peakFiles['avaName'][m]
-        log.info('now plot %s:' % (fileName))
+        log.debug('now plot %s:' % (fileName))
 
         # Load data
         data = np.loadtxt(fileName, skiprows=6)

@@ -121,7 +121,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax[1].legend()
     fig.savefig(os.path.join(outDir, 'Profiles_%s_%s.%s' % (avaName, simName, outputFormat)))
 
-    log.info('Figures saved to: %s' % outDir)
+    log.debug('Figures saved to: %s' % outDir)
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
@@ -206,8 +206,8 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
         # Load data
         data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
         data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
-        log.info('dataset1: %s' % data['files'][indSuffix[0]])
-        log.info('dataset2: %s' % data['files'][indSuffix[1]])
+        log.debug('dataset1: %s' % data['files'][indSuffix[0]])
+        log.debug('dataset2: %s' % data['files'][indSuffix[1]])
 
         # Get name of Avalanche
         avaName = data['avaName'][indSuffix[0]]

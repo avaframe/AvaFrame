@@ -104,10 +104,10 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   // Perform simulations
   sprintf(Sim,"Project/Simulations/%s",CuSim);
   printf("\n[BatchCom1DFA] -------------------------\n");
-  printf("\n[BatchCom1DFA] Current Sim %s\n",Sim);
+  // printf("\n[BatchCom1DFA] Current Sim %s\n",Sim);
 
 
-    // Friction Type
+  // Friction Type
   set(Sim, "FrictionType", "samosAT_Standard");
 
   // Set standard Mu - here used only for prints
@@ -117,15 +117,12 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   // set(Sim, "EndTime", "40");
   // set(Sim, "DeltaOut", "20");
 
-  printf("[BatchCom1DFA] Computing %s with relh=%f\n",CuSim,relh);
 
   // Set release thickness
   sprintf(RelAr,"%s/ReleaseAreas",Sim);
   sprintf(relHString,"%.3f",relh);
   printf("\n[BatchCom1DFA] Setting in %s rel depth to %s m \n",RelAr,relHString);
   set(RelAr, "set_depth", relHString);
-
-  printf("[BatchCom1DFA] Computing %s with Mu=%f\n",CuSim,Mu);
 
   // Set Expcount and update log
   ExpCount++;
@@ -135,7 +132,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   //------------- start processing
   set("", "SaveProject", "");
-  printf("[BatchCom1DFA] Computing %s; Sim # %d. ; Mu %f \n",CuSim,ExpCount,Mu);
+  printf("[BatchCom1DFA] Computing Simulation: %s with Mu=%f and RelTh%s\n",CuSim,Mu,relHString);
   set(Sim, "DeactivateLoadingPsaResults", "");
   set(Sim, "LoadProject", "");
   set(Sim, "Run", "");
