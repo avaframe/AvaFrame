@@ -30,3 +30,10 @@ This will perform a dense flow avalanche simulation using the ``com1DFA`` module
 The results are saved to ``data/avaHockeySmoothSmall/Outputs/com1DFA``. For a first
 look at the results, got to the folder ``reports``, there you can find
 a markdown report of the simulations performed including some plots of the results.
+
+To display markdown files in a nice way use a markdown viewer of your choice.
+Some other options are:
+
+* Use the Atom editor with a markdown plugin
+* If you have *pandoc* installed use this to convert it to pdf/html
+* Some browsers have markdown extensions you can install easily
