@@ -30,7 +30,7 @@ void CreateSimulations(char Com1DFAProjectDir[],
 
   // Add standard simulation
   sprintf(CuSimName, "%s_null_dfa", BaseName);
-  printf("[BatchCom1DFA] Current Sim: %s \n",CuSimName);
+  // printf("[BatchCom1DFA] Current Sim: %s \n",CuSimName);
   set("Project/Simulations", "CreateSimulation", CuSimName);
 
   sprintf(Sim,"Project/Simulations/%s/ReleaseAreas/",CuSimName);
@@ -60,7 +60,7 @@ int main()
   CreateSimulations(Com1DFAProjectDir, BaseSimName);
 
 
-  printf("[BatchCom1DFA] Project %s now with reference simulations\n", Com1DFAProjectDir);
+  // printf("[BatchCom1DFA] Project %s now with reference simulations\n", Com1DFAProjectDir);
   return 0;
 
 }

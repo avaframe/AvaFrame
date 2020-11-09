@@ -63,7 +63,7 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
         log.error('Work directory %s already exists - delete first!' % (workDir))
     else:
         os.makedirs(workDir)
-    log.info('Directory: %s created' % workDir)
+    log.debug('Directory: %s created' % workDir)
 
     # Set flag if there is an entrainment or resistance area
     flagEntRes = False
@@ -125,11 +125,6 @@ def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
     # Initialise full experiment log file
     with open(os.path.join(workDir, 'ExpLog.txt'), 'w') as logFile:
         logFile.write("NoOfSimulation,SimulationRunName,%s\n" % varPar)
-
-    if flagEntRes:
-        log.info('Simulations are performed using entrainment and resistance')
-    else:
-        log.info('Standard simulation is performed without entrainment and resistance')
 
     # return DEM, first item of release, entrainment and resistance areas
     return demFile[0], relFiles, entFiles[0], resFiles[0], flagEntRes
@@ -204,7 +199,7 @@ def com1DFAMain(cfg, avaDir):
         # Set release areas and simulation name
         relName = os.path.splitext(os.path.basename(rel))[0]
         simName = relName
-        log.info('Release area: %s - perform simulations' % (relName))
+        log.info('Release area scenario: %s - perform simulations' % (relName))
         if flagEntRes:
             log.info('Entrainment area: %s and resistance area: %s' % (entrainmentArea, resistanceArea))
 
@@ -282,10 +277,10 @@ def com1DFAMain(cfg, avaDir):
 
             if cfgPar.getboolean('flagVarEnt') and (simName + '_entres_dfa') in cuSim:
                 sim = simName + '_entres_dfa'
+                log.info('Parameter variation used including entrainment and resistance, varying: %s' % cfgPar['varPar'])
             else:
                 sim = simName + '_null_dfa'
-
-            log.info('Parameter variation used, varying: %s' % cfgPar['varPar'])
+                log.info('Parameter variation used not including entrainment and resistance, varying: %s' % cfgPar['varPar'])
 
             # Values of parameter variations in config file as string
             varParValues = cfgPar['varParValues']
@@ -336,6 +331,11 @@ def com1DFAMain(cfg, avaDir):
 
         else:
             for sim in cuSim:
+                if flagEntRes:
+                    log.debug('One simulation is performed using entrainment and \
+                               one standard simulation without')
+                else:
+                    log.debug('Standard simulation is performed without entrainment and resistance')
                 templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
                 workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
                 logName = sim + '_' + defValues['Mu']

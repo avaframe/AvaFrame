@@ -25,10 +25,10 @@ def makeADir(dirName):
 
     # If directory already exists - Delete directory first is default
     if os.path.isdir(dirName):
-        log.warning('Be careful directory %s already existed - data saved on top of it' % (dirName))
+        log.debug('Be careful directory %s already existed - data saved on top of it' % (dirName))
     else:
         os.makedirs(dirName)
-    log.info('Directory: %s created' % dirName)
+    log.debug('Directory: %s created' % dirName)
 
 
 def readLogFile(logName, cfg=''):

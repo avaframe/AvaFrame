@@ -102,8 +102,6 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   sprintf(Sim,"Project/Simulations/%s",CuSim);
   printf("\n[BatchCom1DFA] -------------------------\n");
-  printf("\n[BatchCom1DFA] Current Sim %s\n",Sim);
-
 
   //------------Set time stepping---------------------
   // set(Sim, "EndTime", "40");
@@ -117,7 +115,6 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   sprintf(Parameter,"tau0=0.0 mue=%f Rs0=0.222 kappa=0.43 R=0.05 B=4.13",Mu);
   set(Sim, "FormulaParameters", Parameter);
   get(Sim, "FormulaParameters", Parameter);
-  printf("[BatchCom1DFA] Computing %s with Mu=%f\n",CuSim,Mu);
 
   // Set Expcount and update log
   ExpCount++;
@@ -127,7 +124,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   //------------- start processing
   set("", "SaveProject", "");
-  printf("[BatchCom1DFA] Computing %s; Sim # %d. ; Mu %f \n",CuSim,ExpCount,Mu);
+  printf("[BatchCom1DFA] Computing Simulation: %s with Mu %f \n",CuSim,Mu);
   set(Sim, "DeactivateLoadingPsaResults", "");
   set(Sim, "LoadProject", "");
   set(Sim, "Run", "");

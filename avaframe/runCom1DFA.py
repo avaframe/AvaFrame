@@ -24,8 +24,8 @@ avalancheDir = cfgMain['MAIN']['avalancheDir']
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
-log.info('MAIN SCRIPT')
-log.info('Current avalanche: %s', avalancheDir)
+log.debug('MAIN SCRIPT')
+log.debug('Current avalanche: %s', avalancheDir)
 
 # Load input parameters from configuration file
 # write config to log file
