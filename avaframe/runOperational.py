@@ -12,7 +12,7 @@ import logging
 from avaframe.com1DFA import com1DFA
 from avaframe.com2AB import com2AB
 from avaframe.log2Report import generateReport as gR
-from avaframe.out3SimpPlot import outPlotAllPeak as oP
+from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.out3Plot import outAB
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils

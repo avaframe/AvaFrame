@@ -76,7 +76,7 @@ Analysis/helper modules
 .. only:: html
 
     * :doc:`moduleAna3AIMEC`
-    * :doc:`moduleOut3SimpPlot`
+    * :doc:`moduleOut1Peak`
     * :doc:`moduleOut3Plot`
     * :doc:`moduleLog2Report`
 
@@ -86,7 +86,7 @@ Analysis/helper modules
    :caption: Analysis/helper Modules
 
    moduleAna3AIMEC.rst
-   moduleOut3SimpPlot.rst
+   moduleOut1Peak.rst
    moduleOut3Plot.rst
    moduleLog2Report.rst
 

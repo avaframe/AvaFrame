@@ -1,5 +1,5 @@
 ##################################
-out3SimpPlot: Module simple plots
+out1Peak: Peak plots
 ##################################
 
 
@@ -23,7 +23,7 @@ where cfgFlags is a configparser object that contains the global flags, whether 
 Outputs
 -------
 
-* one plot of each peak field, called like the peak file (in *Outputs/out3SimpPlot*)
+* one plot of each peak field, called like the peak file (in *Outputs/out1Peak*)
 * dictionary with name of plot and full path to plot
 
 To run

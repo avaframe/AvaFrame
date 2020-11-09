@@ -79,7 +79,7 @@ computational modules documentation to know which imports are required::
 
   # for the Com1DFA module
   from avaframe.com1DFA import com1DFA
-  from avaframe.out3SimpPlot import outPlotAllPeak as oP
+  from avaframe.out1Peak import outPlotAllPeak as oP
 
   # for the Alpha Beta module
   from avaframe.com2AB import com2AB
