@@ -36,20 +36,30 @@ Theory
         Topographical variables for the calculation of :math:`\alpha`
 
 
-The snow avalanche run-out distance is calculated using a statistical model based on data collected for real
-avalanches (:cite:`LiBa1980,BaDoLi1983,Wa2016`). An equation of the following type is fitted to the data:
+The snow avalanche run-out distance is calculated using a statistical model
+based on data collected for real avalanches
+(:cite:`LiBa1980,BaDoLi1983,Wa2016`). An equation of the following type is
+fitted to the data:
 
 .. math::
     \alpha_j = k_1 \beta + k_2 y'' + k_3 H_0 + k_4 + j SD
 
-where :math:`H_0` is the elevation loss of the quadratic fit of the avalanche profile. :math:`y''=\gamma` is the curvature of this same quadratic fit.
-:math:`\beta` is the angle of the line between the :math:`10^\circ` point (first point where the avalanche profiles slope is under :math:`10^\circ`)
-and the starting point. The coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard deviation :math:`SD` are calculated during the fitting process.
-Index :math:`j=\{-1,-2,0,1\}` and :math:`\alpha_j= \alpha + j SD`. These coefficients obviously depend on the initial set of chosen data. :math:`\alpha_0= \alpha`
-is the angle between the stopping and the starting point of the avalanche. :math:`\alpha_j= \alpha + j SD` takes into account the variability of the process.
-The values of the SD used are based on normal distribution. It is important to note that a bigger run-out angle leads to a shorter run-out distance. This means
-that :math:`\alpha_{-1}= \alpha - SD` leads to a longer run-out. In other words, the probability of the run-out being shorter
-than :math:`x_{\alpha_{-1}}` corresponding to :math:`\alpha_{-1}` is approximately 83%.
+where :math:`H_0` is the elevation loss of the quadratic fit of the avalanche
+profile. :math:`y''` is the curvature of this same quadratic fit. :math:`\beta`
+is the angle of the line between the :math:`10^\circ` point (first point where
+the avalanche profiles slope is under :math:`10^\circ`) and the starting point.
+The coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard deviation
+:math:`SD` are calculated during the fitting process. Index
+:math:`j=\{-1,-2,0,1\}` and :math:`\alpha_j= \alpha + j SD`. These coefficients
+obviously depend on the initial set of chosen data. :math:`\alpha_0= \alpha` is
+the angle between the stopping and the starting point of the avalanche.
+:math:`\alpha_j= \alpha + j SD` takes into account the variability of the
+process. The values of the SD used are based on normal distribution. It is
+important to note that a bigger run-out angle leads to a shorter run-out
+distance. This means that :math:`\alpha_{-1}= \alpha - SD` leads to a longer
+run-out. In other words, the probability of the run-out being shorter than
+:math:`x_{\alpha_{-1}}` corresponding to :math:`\alpha_{-1}` is approximately
+83%.
 
 
 In this module, the coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard deviation :math:`SD` are already known, they are simply used in the :math:`\alpha`
