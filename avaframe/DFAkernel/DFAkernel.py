@@ -66,14 +66,16 @@ dem, particles, fields, Cres, Ment = DFAtools.initializeSimulation(cfg, relRaste
 Tcpu = {}
 Tcpu['Force'] = 0.
 Tcpu['ForceVect'] = 0.
+Tcpu['ForceSPH'] = 0.
 Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-Particles, Fields, Tcpu = DFAtools.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
+T, U, Z, S, Particles, Fields, Tcpu = DFAtools.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['niter'])))
 log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['niter'])))
+log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / Tcpu['niter'])))
 log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / Tcpu['niter'])))
 log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / Tcpu['niter'])))
 log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / Tcpu['niter'])))
@@ -88,32 +90,37 @@ Z0 = partRef['z'][0]
 rho = cfg.getfloat('rho')
 gravAcc = cfg.getfloat('gravAcc')
 mu = cfg.getfloat('mu')
+repeat = True
+while repeat == True:
+    fig, ax = plt.subplots(figsize=(figW, figH))
+    T = np.array([0])
+    Z = np.array([0])
+    U = np.array([0])
+    S = np.array([0])
+    for part, field in zip(Particles, Fields):
+        T = np.append(T, part['t'])
+        S = np.append(S, part['s'][0])
+        Z = np.append(Z, part['z'][0])
+        U = np.append(U, DFAtools.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
+        # print(part['t'])
+        # print(DFAtools.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
+        # exact solution for inclined plane with no friction
+        # print(gravAcc * math.sin(34*math.pi/180) * part['t'])
+        # exact solution with no friction
+        # print(math.sqrt(2 * gravAcc * abs(partRef['z'][0] - part['z'][0])))
 
-fig, ax = plt.subplots(figsize=(figW, figH))
-T = np.array([0])
-Z = np.array([0])
-U = np.array([0])
-S = np.array([0])
-for part, field in zip(Particles, Fields):
-    T = np.append(T, part['t'])
-    S = np.append(S, part['s'][0])
-    Z = np.append(Z, part['z'][0])
-    U = np.append(U, DFAtools.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
-    # print(part['t'])
-    # print(DFAtools.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
-    # exact solution for inclined plane with no friction
-    # print(gravAcc * math.sin(34*math.pi/180) * part['t'])
-    # exact solution with no friction
-    # print(math.sqrt(2 * gravAcc * abs(partRef['z'][0] - part['z'][0])))
-
-    # exact solution for inclined plane with friction
-    # print(gravAcc * math.cos(34*math.pi/180) * (math.tan(34*math.pi/180) - mu) * part['t'])
-    # exact solution with friction
-    # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
-    #
-    fig, ax = DFAtools.plotPosition(part, demOri, field['PFD'], cmapPres, fig, ax, plotPart=True)
-    # fig1, ax1 = DFAtools.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
-plt.show()
+        # exact solution for inclined plane with friction
+        # print(gravAcc * math.cos(34*math.pi/180) * (math.tan(34*math.pi/180) - mu) * part['t'])
+        # exact solution with friction
+        # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
+        #
+        fig, ax = DFAtools.plotPosition(part, demOri, field['PFD'], cmapPres, fig, ax, plotPart=True)
+        # fig1, ax1 = DFAtools.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
+    # plt.show()
+    # repeat = False
+    value = input("[y] to repeat:\n")
+    if value != 'y':
+        repeat = False
 fieldRef = Fields[-1]
 fig1, ax1 = plt.subplots(figsize=(figW, figH))
 fig2, ax2 = plt.subplots(figsize=(figW, figH))
@@ -123,8 +130,8 @@ plt.show()
 
 
 # fig, ax = plt.subplots(figsize=(figW, figH))
-# ax.plot(T, U, 'k', linestyle='-')
+# ax.plot(T, U, 'k', linestyle='-', linewidth=2)
 # ax.plot(T, Z, 'b', linestyle='-')
-# ax.plot(T, np.sqrt(2 * gravAcc * ((Z0-Z) - mu * S)), 'r', linestyle='-')
-# # ax.plot(T, np.sqrt(2 * gravAcc * ((Z0-Z))), 'r', linestyle='-')
+# ax.plot(T, np.sqrt(2 * gravAcc * ((Z0-Z) - mu * S)), 'r', linestyle='-', linewidth=1)
+# # ax.plot(T, np.sqrt(2 * gravAcc * ((Z0-Z))), 'r', linestyle='-', linewidth=1)
 # plt.show()
