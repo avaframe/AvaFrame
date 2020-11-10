@@ -80,10 +80,10 @@
 \pgfmathsetmacro\yhh{\cc}
 \pgfmathsetmacro\yh{\aa*\xh*\xh+\bb*\xh+\cc}
     
-\tkzInit[xmin=0,xmax=4,ymin=0.8,ymax=4,ystep=1]
+\tkzInit[xmin=0,xmax=4,ymin=0.8,ymax=3.5,ystep=1]
 % Draw coordinates
-\draw [>=stealth',thick, ->] (0,0) --  (0,2.5) node[left] {$z$};
-\draw[>=stealth',thick, ->]  (0,0) --  (4,0) node[right] {$s$};
+\draw [>={Triangle[open]},thin, ->] (0,0) --  (0,2.5) node[left] {$z$};
+\draw[>={Triangle[open]},thin, ->]  (0,0) --  (4,0) node[right] {$s$};
 % Draw functions and areas
 \tkzFct[name plot=para,thick,color=AFLight,domain=0:3]{\a*x*x+\b*x+\c+0.02*sin(5*3.1415*x/3)*sin(5*3.1415*x/3)}
 \tkzFct[name plot=flat,thick,color=AFLight,domain=3:4]{\c-\b*\b/(4*\a)+0.02*sin(5*3.1415*x/3)*sin(5*3.1415*x/3)}
@@ -108,20 +108,20 @@
 \pic[draw,AFMiddle,angle radius=0.8cm,"$\beta$" ,pic text options={shift={(18pt,-5pt)}}]{angle=BB--BI--BO};
 
 \node[text width=2.5cm, fill=none,below,black] at (1,0.45) {$y=ax^2+bx+c$\\$y'=2ax+b$\\$y''=2a$};
-\draw [>=stealth',thick,dotted, ->] (1,0.45) -- (F);
+\draw [>={Triangle},thick,dotted, ->] (1,0.45) -- (F);
 \node[text width=2.5cm, fill=none,above,black] at (1,2) {$\mbox{Avalanche profile}$};
-\draw [>=stealth',thick, ->] (1,2) -- (P);
+\draw [>={Triangle},thick, ->] (1,2) -- (P);
 \draw [thick,dotted, black] (H0) -- (HHH);
 \draw [thick,dotted, black] (HH) -- (HHHH);
-\draw [>=stealth',thick, <->] (HH) -- (H0) node [midway,right,black] {$H_0$};
+\draw [>={Triangle[open]},thin, <->] (HH) -- (H0) node [midway,right,black] {$H_0$};
 
 \node[text width=2.5cm, fill=none,below,black] at (2.2,-0.2) {$10^\circ\mbox{point}$};
-\draw [>=stealth',thick, ->] (2.2,-0.2) -- (BB);
+\draw [>={Triangle},thick, ->] (2.2,-0.2) -- (BB);
 
 \node[text width=2.5cm, fill=none,below,black] at (3.3,-0.2) {$\mbox{run-out point}$};
-\draw [>=stealth',thick, ->] (3.3,-0.2) -- (AA);
+\draw [>={Triangle},thick, ->] (3.3,-0.2) -- (AA);
 \node[text width=2.5cm, fill=none,right,black] at (0.5,2.5) {$\mbox{release point}$};
-\draw [>=stealth',thick, ->] (0.5,2.5) -- (H);
+\draw [>={Triangle},thick, ->] (0.5,2.5) -- (H);
 %\node[text width=2.5cm, fill=none,above,black] at (2,3) {$\mbox{Avalanche profile}$};
 \end{tikzpicture}
 
