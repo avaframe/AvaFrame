@@ -31,7 +31,6 @@ Theory
 ------
 
 .. figure:: _static/AlphaBeta_theory.png
-        :width: 90%
 
         Topographical variables for the calculation of :math:`\alpha`
 
