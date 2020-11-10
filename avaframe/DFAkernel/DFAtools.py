@@ -167,7 +167,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # get forces
     startTime = time.time()
-    forceLoop = computeForce(cfg, particles, dem, Ment, Cres)
+    # forceLoop = computeForce(cfg, particles, dem, Ment, Cres)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
     startTime = time.time()

@@ -124,8 +124,10 @@ while repeat == True:
 fieldRef = Fields[-1]
 fig1, ax1 = plt.subplots(figsize=(figW, figH))
 fig2, ax2 = plt.subplots(figsize=(figW, figH))
+fig3, ax3 = plt.subplots(figsize=(figW, figH))
 fig2, ax2 = DFAtools.plotPosition(particles, demOri, fields['FD'], cmapPres, fig2, ax2, plotPart=False)
 fig1, ax1 = DFAtools.plotPosition(particles, demOri, fields['PFD'], cmapPres, fig1, ax1, plotPart=False)
+fig3, ax3 = DFAtools.plotPosition(particles, demOri, fields['PP'], cmapPres, fig3, ax3, plotPart=False)
 plt.show()
 
 
