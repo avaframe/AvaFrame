@@ -125,7 +125,8 @@ def test_getNeighbours(capfd):
     print(particles['indPartInCell'])
     print(particles['partInCell'])
     atol = 1e-10
-    indPCell = np.array([2.,  # found 2 particles
+    indPCell = np.array([0.,  # always an extra zero at the begining
+                         2.,  # found 2 particles
                          2., 2., 2., 2.,  # nothing happens
                          5.,  # found 3 particles
                          5., 5.,  # nothing happens
@@ -137,8 +138,7 @@ def test_getNeighbours(capfd):
                          11., 11.,  # nothing happens
                          12.,  # found 1 particles
                          12., 12., 12., 12.,  # nothing happens
-                         13.,  # found 1 particles
-                         0.])  # always an extra zero at the end
+                         13.])  # found 1 particles
     assert np.allclose(particles['indPartInCell'], indPCell, atol=atol)
     # pInC = np.array([1., 0.,
     #                  4., 3., 2.,
@@ -161,37 +161,52 @@ def test_getNeighbours(capfd):
 
 def test_calcGradHSPH(capfd):
     header = IOf.cASCheader()
-    header.ncols = 5
-    header.nrows = 6
+    header.ncols = 3
+    header.nrows = 4
     header.cellsize = 1
     dem = {}
     dem['header'] = header
     particles = {}
-    particles['Npart'] = 13
+    particles['Npart'] = 14
     # 2 part in cell 0, 3 in 5, 2 in 8, 1 in 9, 1 in 14, 2 in 15, 1 in 18, 1 in 23
-    particles['x'] = np.array([-0,
+    particles['x'] = np.array([1,
+                               0,
                                1,
-                               1.9, 2.1,
-                               -0.1, 0.1,
-                               0.9, 1, 1.1,
+                               2,
+                               1,
                                2,
                                0,
                                1,
-                               2]) + 1
-    particles['y'] = np.array([0,
                                0,
-                               -0.1, 0.1,
-                               0.9, 1.1,
-                               0.9, 1, 1.1,
+                               2,
+                               0,
+                               2,
                                1,
+                               2])
+    particles['y'] = np.array([2,
+                               1,
+                               0,
+                               1,
+                               3,
+                               3,
+                               2,
+                               1,
+                               0,
+                               0,
+                               3,
                                2,
                                2,
-                               2]) + 1
+                               1])
     particles['z'] = np.array([0,
                                0,
-                               0, 0,
-                               0, 0,
-                               0, 0, 0,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0,
+                               0,
                                0,
                                0,
                                0,
@@ -201,41 +216,32 @@ def test_calcGradHSPH(capfd):
     print(particles['InCell'])
     print(particles['indPartInCell'])
     print(particles['partInCell'])
-    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 0, header.ncols)
+    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 0, header.ncols, header.nrows)
     print(index)
     atol = 1e-10
-    IndexTh = np.array([1,
-                        4, 5,
-                        6, 7, 8])
+    IndexTh = np.array([1, 7, 3, 13, 6, 12, 11, 10, 4, 5])
     assert np.allclose(index, IndexTh, atol=atol)
-    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 6, header.ncols)
+    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 7, header.ncols, header.nrows)
     print(index)
-    IndexTh = np.array([0,
-                        1,
-                        2, 3,
-                        4, 5,
-                        7, 8,
-                        9,
-                        10,
-                        11,
-                        12])
+    IndexTh = np.array([8, 2, 9, 1, 3, 13, 6, 0, 12, 11])
     assert np.allclose(index, IndexTh, atol=atol)
-    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 2, header.ncols)
+    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 8, header.ncols, header.nrows)
     print(index)
-    IndexTh = np.array([1,
-                        3,
-                        6, 7, 8,
-                        9])
+    IndexTh = np.array([2, 1, 7])
     assert np.allclose(index, IndexTh, atol=atol)
-    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 12, header.ncols)
+    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 9, header.ncols, header.nrows)
     print(index)
-    IndexTh = np.array([6, 7, 8,
-                        9,
-                        11])
+    IndexTh = np.array([2, 7, 3, 13])
     assert np.allclose(index, IndexTh, atol=atol)
-    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 10, header.ncols)
+    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 11, header.ncols, header.nrows)
     print(index)
-    IndexTh = np.array([4, 5,
-                        6, 7, 8,
-                        11])
+    IndexTh = np.array([7, 3, 13, 0, 12, 4, 5])
+    assert np.allclose(index, IndexTh, atol=atol)
+    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 6, header.ncols, header.nrows)
+    print(index)
+    IndexTh = np.array([1, 7, 0, 12, 10, 4])
+    assert np.allclose(index, IndexTh, atol=atol)
+    gradhX, gradhY,  gradhZ, index = DFAtools.calcGradHSPH(particles, 5, header.ncols, header.nrows)
+    print(index)
+    IndexTh = np.array([0, 12, 11, 4])
     assert np.allclose(index, IndexTh, atol=atol)
