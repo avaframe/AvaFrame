@@ -121,7 +121,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax[1].legend()
     fig.savefig(os.path.join(outDir, 'Profiles_%s_%s.%s' % (avaName, simName, outputFormat)))
 
-    log.debug('Figures saved to: %s' % outDir)
+    log.info('Figures saved to: %s' % outDir)
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
