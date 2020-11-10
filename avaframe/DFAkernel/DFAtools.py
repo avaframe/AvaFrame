@@ -179,7 +179,7 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # print(np.max(np.abs(force['forceZ']-forceVect['forceZ'])))
     # print(np.allclose(force['forceX'], forceVect['forceX'], atol=0.00001))
     startTime = time.time()
-    # force = computeForceSPH(cfg, particles, force, dem)
+    force = computeForceSPH(cfg, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
@@ -190,12 +190,12 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
     # get particles location (neighbours for sph)
     startTime = time.time()
-    # particles = getNeighbours(particles, dem)
+    particles = getNeighbours(particles, dem)
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
     # update fields (compute grid values)
     startTime = time.time()
-    # fields = updateFields(cfg, particles, dem, fields)
+    fields = updateFields(cfg, particles, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
@@ -451,7 +451,7 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
     accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
     # normal component of the acceleration of gravity
     gravAccNorm = - gravAcc * nzAvg
-    effAccNorm = gravAccNorm + 0 * accNormCurv
+    effAccNorm = gravAccNorm + accNormCurv
     Fnormal = np.where(effAccNorm < 0.0, mass * effAccNorm, 0)
 
     # body forces (tangential component of acceleration of gravity)
@@ -469,7 +469,7 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
     # SamosAT friction type (bottom shear stress)
     tau = SamosATfric(cfg, uMag, sigmaB, h)
     # coulomb friction type (bottom shear stress)
-    tau = mu * sigmaB
+    # tau = mu * sigmaB
     tau = np.where(effAccNorm > 0.0, 0, tau)
 
     # adding bottom shear resistance contribution
@@ -722,7 +722,7 @@ def updateFields(cfg, particles, dem, fields):
     return fields
 
 
-def plotPosition(particles, dem, data, Cmap, fig, ax, plotPart=False):
+def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
@@ -739,6 +739,14 @@ def plotPosition(particles, dem, data, Cmap, fig, ax, plotPart=False):
     y = particles['y'] + yllc
     xx = np.arange(ncols) * csz + xllc
     yy = np.arange(nrows) * csz + yllc
+    try:
+        # Get the images on an axis
+        cb = ax.images[-1].colorbar
+        if cb:
+            cb.remove()
+    except IndexError:
+        pass
+
     ax.clear()
     ax.set_title('Particles on dem at t=%.2f s' % particles['t'])
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
@@ -750,9 +758,7 @@ def plotPosition(particles, dem, data, Cmap, fig, ax, plotPart=False):
     if plotPart:
         ax.plot(x, y, 'ok', linestyle='None', markersize=1)
     Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.1)
-    fig.colorbar(im, cax=cax)
+    addColorBar(im, ax, ticks, unit)
     plt.pause(0.1)
     # plt.close(fig)
     # ax.set_ylim([510, 530])
@@ -900,7 +906,7 @@ def calcGradHSPH(particles, j, ncols, nrows):
     # go throught all index from left middle and right box and get the
     # particles in those boxes
     # make sure not to take particles from the other edge
-    iPstart = indPartInCell[np.maximum(ic, ncols * (indy + np.arange(lInd, rInd, 1)) + 1)]
+    iPstart = indPartInCell[np.maximum(ic, ncols * (indy + np.arange(lInd, rInd, 1)))]
     iPend = indPartInCell[np.minimum(ic + 3, ncols * (indy + np.arange(lInd, rInd, 1) + 1))]
     # print(iPstart)
     # print(iPend)
@@ -908,13 +914,12 @@ def calcGradHSPH(particles, j, ncols, nrows):
 
     # gather all the particles
     index = np.concatenate([np.arange(x, y) for x, y in zip(iPstart, iPend)])
-    partInd = partInCell[index]
-    # make sure to remove the j particle
-    indJ = np.where(partInd == j)
-    partInd = np.delete(partInd, indJ)
 
     # compute SPH gradient
-    L = partInCell[partInd]
+    L = partInCell[index]
+    # make sure to remove the j particle
+    indJ = np.where(L == j)
+    L = np.delete(L, indJ)
     dx = particles['x'][L] - x
     dy = particles['y'][L] - y
     dz = particles['z'][L] - z
@@ -948,7 +953,7 @@ def calcGradHSPH(particles, j, ncols, nrows):
     # print(gradhX, gradhX1)
     # print(gradhY, gradhY1)
     # print(gradhZ, gradhZ1)
-    return gradhX, gradhY,  gradhZ, partInd
+    return gradhX, gradhY,  gradhZ, L
 
 
 def getNormal(x, y, Nx, Ny, Nz, csz):
@@ -968,30 +973,36 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
     return nx, ny, nz
 
 
-def getNormalVect(z, csz):
+def getNormalVect(z, csz, num=4):
     n, m = np.shape(z)
     # first and last row, first and last column are inacurate
-    # normal calculation with 4 triangles
-    Nx = np.ones((n, m))
-    # (Zl - Zr) * csz
-    Nx[1:n-1, 1:m-1] = (z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) / csz
-    Ny = np.ones((n, m))
-    # (Zd - Zu) * csz
-    Ny[1:n-1, 1:m-1] = (z[0:n-2, 1:m-1] - z[2:n, 1:m-1]) / csz
-    Nz = 2 * np.ones((n, m))
+    if num == 4:
+        # normal calculation with 4 triangles
+        Nx = np.ones((n, m))
+        # (Zl - Zr) * csz
+        Nx[1:n-1, 1:m-1] = (z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) / csz
+        Ny = np.ones((n, m))
+        # (Zd - Zu) * csz
+        Ny[1:n-1, 1:m-1] = (z[0:n-2, 1:m-1] - z[2:n, 1:m-1]) / csz
+        Nz = 2 * np.ones((n, m))
 
-    # # normal calculation with 6 triangles
-    # Nx = np.ones((n, m))
-    # # (2*(Zl - Zr) - Zur + Zdl + Zu - Zd) * csz
-    # Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
-    #                     - z[2:n, 2:m] + z[0:n-2, 0:m-2]
-    #                     + z[2:n, 1:m-1] - z[0:n-2, 1:m-1]) / csz
-    # Ny = np.ones((n, m))
-    # # (2*(Zd - Zu) + Zur + Zdl - Zu - Zl) * csz
-    # Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1])
-    #                     + z[2:n, 2:m] + z[0:n-2, 0:m-2]
-    #                     - z[2:n, 1:m-1] - z[1:n-1, 0:m-2]) / csz
-    # Nz = 6 * np.ones((n, m))
+    if num == 6:
+        # normal calculation with 6 triangles
+        Nx = np.ones((n, m))
+        # (2*(Zl - Zr) - Zur + Zdl + Zu - Zd) * csz
+        Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
+                            - z[2:n, 2:m] + z[0:n-2, 0:m-2]
+                            + z[2:n, 1:m-1] - z[0:n-2, 1:m-1]) / csz
+        Ny = np.ones((n, m))
+        # # (2*(Zd - Zl) + Zur + Zdl - Zu - Zl) * csz
+        # Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1])
+        #                     + z[2:n, 2:m] + z[0:n-2, 0:m-2]
+        #                     - z[2:n, 1:m-1] - z[1:n-1, 0:m-2]) / csz
+        # (2*(Zu - Zd) + Zur - Zdl + Zl - Zr) * csz
+        Ny[1:n-1, 1:m-1] = -(2 * (z[2:n, 1:m-1] - z[0:n-2, 1:m-1])
+                            + z[2:n, 2:m] - z[0:n-2, 0:m-2]
+                            + z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) / csz
+        Nz = 6 * np.ones((n, m))
 
     Nx, Ny, Nz = normalize(Nx, Ny, Nz)
 
