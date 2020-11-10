@@ -179,7 +179,7 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # print(np.max(np.abs(force['forceZ']-forceVect['forceZ'])))
     # print(np.allclose(force['forceX'], forceVect['forceX'], atol=0.00001))
     startTime = time.time()
-    force = computeForceSPH(cfg, particles, force, dem)
+    # force = computeForceSPH(cfg, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
@@ -190,12 +190,12 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
     # get particles location (neighbours for sph)
     startTime = time.time()
-    particles = getNeighbours(particles, dem)
+    # particles = getNeighbours(particles, dem)
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
     # update fields (compute grid values)
     startTime = time.time()
-    fields = updateFields(cfg, particles, dem, fields)
+    # fields = updateFields(cfg, particles, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
@@ -451,7 +451,7 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
     accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
     # normal component of the acceleration of gravity
     gravAccNorm = - gravAcc * nzAvg
-    effAccNorm = gravAccNorm + accNormCurv
+    effAccNorm = gravAccNorm + 0 * accNormCurv
     Fnormal = np.where(effAccNorm < 0.0, mass * effAccNorm, 0)
 
     # body forces (tangential component of acceleration of gravity)
@@ -469,7 +469,7 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
     # SamosAT friction type (bottom shear stress)
     tau = SamosATfric(cfg, uMag, sigmaB, h)
     # coulomb friction type (bottom shear stress)
-    # tau = mu * sigmaB
+    tau = mu * sigmaB
     tau = np.where(effAccNorm > 0.0, 0, tau)
 
     # adding bottom shear resistance contribution
@@ -540,6 +540,7 @@ def computeForceSPH(cfg, particles, force, dem):
     Npart = particles['Npart']
     csz = dem['header'].cellsize
     ncols = dem['header'].ncols
+    nrows = dem['header'].nrows
     # initialize
     forceSPHX = force['forceSPHX']
     forceSPHY = force['forceSPHY']
@@ -551,7 +552,7 @@ def computeForceSPH(cfg, particles, force, dem):
         mass = particles['m'][j]
         # adding lateral force (SPH component)
         # startTime = time.time()
-        gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols)
+        gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows)
         # tcpuSPH = time.time() - startTime
         # TcpuSPH = TcpuSPH + tcpuSPH
         # startTime = time.time()
@@ -780,7 +781,7 @@ def getNeighbours(particles, dem):
     # TODO: test speed between add.at and bincount
     # indPartInCell = np.bincount(ic, minlength=len(indPartInCell))
     # or
-    np.add.at(indPartInCell, ic, 1)
+    np.add.at(indPartInCell, ic + 1, 1)
     ##################################
     indPartInCell = np.cumsum(indPartInCell)
     ##################################
@@ -790,7 +791,7 @@ def getNeighbours(particles, dem):
     InCell = np.vstack((indx, indy))
     InCell = np.vstack((InCell, ic))
     InCell = InCell.T
-    indPartInCell[-1] = 0
+    # indPartInCell[-1] = 0
     # or
     # ------------------------------------------------
     # make the list of which particles are in which cell
@@ -825,7 +826,7 @@ def getNeighbours(particles, dem):
     return particles
 
 
-def calcGradHSPH(particles, j, ncols):
+def calcGradHSPH(particles, j, ncols, nrows):
     # SPH kernel
     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
     rKernel = 5
@@ -885,25 +886,35 @@ def calcGradHSPH(particles, j, ncols):
     # startTime = time.time()
     # find all the neighbour boxes
     # index of the left box
-    ic = (indx - 1) + ncols * (indy + np.arange(-1, 2, 1))
+    # check if we are on the bottom ot top row!!!
+    lInd = -1
+    rInd = 2
+    if indy == 0:
+        lInd = 0
+    if indy == nrows - 1:
+        rInd = 1
+    ic = (indx - 1) + ncols * (indy + np.arange(lInd, rInd, 1))
     # print('particle : %s in cell (%s,%s)' % (j, indx, indy))
     # print(ic)
+    # print(np.minimum(ic + 3, ncols * (indy + np.arange(lInd, rInd, 1) + 1)))
     # go throught all index from left middle and right box and get the
     # particles in those boxes
-    iPstart = indPartInCell[ic-1]
-    iPend = indPartInCell[ic+2]
+    # make sure not to take particles from the other edge
+    iPstart = indPartInCell[np.maximum(ic, ncols * (indy + np.arange(lInd, rInd, 1)) + 1)]
+    iPend = indPartInCell[np.minimum(ic + 3, ncols * (indy + np.arange(lInd, rInd, 1) + 1))]
     # print(iPstart)
     # print(iPend)
     # print(np.concatenate([np.arange(x, y) for x, y in zip(iPstart, iPend)]))
 
     # gather all the particles
     index = np.concatenate([np.arange(x, y) for x, y in zip(iPstart, iPend)])
+    partInd = partInCell[index]
     # make sure to remove the j particle
-    indJ = np.where(index == j)
-    index = np.delete(index, indJ)
+    indJ = np.where(partInd == j)
+    partInd = np.delete(partInd, indJ)
 
     # compute SPH gradient
-    L = partInCell[index]
+    L = partInCell[partInd]
     dx = particles['x'][L] - x
     dy = particles['y'][L] - y
     dz = particles['z'][L] - z
@@ -931,13 +942,13 @@ def calcGradHSPH(particles, j, ncols):
     gradhZ = gradhZ + np.sum(GZ)
     # leInd = len(index)
     # print((time.time() - startTime)/leInd)
-    # print(index)
+    # print(partInd)
     #########################################
 
     # print(gradhX, gradhX1)
     # print(gradhY, gradhY1)
     # print(gradhZ, gradhZ1)
-    return gradhX, gradhY,  gradhZ, index
+    return gradhX, gradhY,  gradhZ, partInd
 
 
 def getNormal(x, y, Nx, Ny, Nz, csz):
