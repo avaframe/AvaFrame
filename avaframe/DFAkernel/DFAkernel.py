@@ -54,7 +54,7 @@ relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
 
-massPart = 5000  # [200, 100, 50, 25, 10, 7.5, 5]
+massPart = 1250  # [200, 100, 50, 25, 10, 7.5, 5]
 cfg['massPerPart'] = str(massPart)
 # ------------------------
 # initialize simulation : create particles, create resistance and
@@ -90,7 +90,7 @@ Z0 = partRef['z'][0]
 rho = cfg.getfloat('rho')
 gravAcc = cfg.getfloat('gravAcc')
 mu = cfg.getfloat('mu')
-repeat = False
+repeat = True
 while repeat == True:
     fig, ax = plt.subplots(figsize=(figW, figH))
     T = np.array([0])
@@ -114,26 +114,26 @@ while repeat == True:
         # exact solution with friction
         # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
         #
-        fig, ax = DFAtools.plotPosition(part, demOri, field['PFD'], cmapPres, fig, ax, plotPart=True)
+        fig, ax = DFAtools.plotPosition(part, demOri, field['PFD'], cmapPres, 'm', fig, ax, plotPart=True)
         # fig1, ax1 = DFAtools.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
     # plt.show()
     # repeat = False
     value = input("[y] to repeat:\n")
     if value != 'y':
         repeat = False
-# fieldRef = Fields[-1]
-# fig1, ax1 = plt.subplots(figsize=(figW, figH))
-# fig2, ax2 = plt.subplots(figsize=(figW, figH))
-# fig3, ax3 = plt.subplots(figsize=(figW, figH))
-# fig2, ax2 = DFAtools.plotPosition(particles, demOri, fields['FD'], cmapPres, fig2, ax2, plotPart=False)
-# fig1, ax1 = DFAtools.plotPosition(particles, demOri, fields['PFD'], cmapPres, fig1, ax1, plotPart=False)
-# fig3, ax3 = DFAtools.plotPosition(particles, demOri, fields['PP'], cmapPres, fig3, ax3, plotPart=False)
-# plt.show()
-
-
-fig, ax = plt.subplots(figsize=(figW, figH))
-ax.plot(T, U, 'k', linestyle='-', linewidth=2)
-ax.plot(T, Z, 'b', linestyle='-')
-ax.plot(T, np.sqrt(2 * gravAcc * ((Z0-Z) - mu * S)), 'r', linestyle='-', linewidth=1)
-# ax.plot(T, np.sqrt(2 * gravAcc * ((Z0-Z))), 'r', linestyle='-', linewidth=1)
+fieldRef = Fields[-1]
+fig1, ax1 = plt.subplots(figsize=(figW, figH))
+fig2, ax2 = plt.subplots(figsize=(figW, figH))
+fig3, ax3 = plt.subplots(figsize=(figW, figH))
+fig1, ax1 = DFAtools.plotPosition(particles, demOri, fields['PFD'], cmapPres, 'm', fig1, ax1, plotPart=False)
+fig2, ax2 = DFAtools.plotPosition(particles, demOri, fields['PV'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
+fig3, ax3 = DFAtools.plotPosition(particles, demOri, fields['PP']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
 plt.show()
+
+
+# fig, ax = plt.subplots(figsize=(figW, figH))
+# ax.plot(T, U, 'k', linestyle='-', linewidth=2)
+# ax.plot(T, Z, 'b', linestyle='-')
+# ax.plot(T, np.sqrt(2 * gravAcc * ((Z0-Z) - mu * S)), 'r', linestyle='-', linewidth=1)
+# # ax.plot(T, np.sqrt(2 * gravAcc * ((Z0-Z))), 'r', linestyle='-', linewidth=1)
+# plt.show()
