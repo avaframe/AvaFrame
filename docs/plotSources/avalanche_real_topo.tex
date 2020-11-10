@@ -1,0 +1,187 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+% Compile with
+% pdflatex --shell-escape -synctex=1 -interaction=nonstopmode FILENAME.tex
+% to convert it to png use:
+% convert -density 300 -transparent white FILENAME.pdf FILENAME.png
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+\documentclass{standalone}
+
+\input{GeneralPlotHeader.tex}
+
+\begin{document}
+
+\begin{tikzpicture}[
+    scale=0.5,
+    every node/.style={scale=1.3},
+    >=stealth,
+    point/.style = {draw, circle,  fill = black, inner sep = 1pt},
+    dot/.style   = {draw, circle,  fill = black, inner sep = .2pt},
+  ]
+% defining coordinates
+% reference
+\coordinate (RR1) at (0,25);
+\coordinate (RR2) at (0.5,28);
+\coordinate (RR3) at (3,30);
+\coordinate (RR4) at (5,28);
+\coordinate (RR5) at (2,24);
+
+\coordinate (R1) at (2,17);
+\coordinate (R2) at (4,15);
+\coordinate (R3) at (6,12);
+\coordinate (R4) at (7,8);
+\coordinate (R5) at (5,5);
+\coordinate (R6) at (0,3);
+\coordinate (R7) at (-1,1);
+\coordinate (R8) at (2,-1);
+\coordinate (R9) at (8,-1);
+\coordinate (R10) at (12,2);
+\coordinate (R11) at (10,8);
+\coordinate (R12) at (8,15);
+\coordinate (R13) at (6,18);
+
+
+% simulation
+\coordinate (RS1) at (6,26);
+\coordinate (RS2) at (5.5,29);
+\coordinate (RS3) at (8,32);
+\coordinate (RS4) at (10,29);
+\coordinate (RS5) at (8,25);
+
+\coordinate (S1) at (6,17);
+\coordinate (S2) at (6,15);
+\coordinate (S3) at (6.5,12);
+\coordinate (S4) at (7,8);
+\coordinate (S5) at (5.5,5);
+\coordinate (S6) at (1,3);
+\coordinate (S7) at (1,1);
+\coordinate (S8) at (3,-1);
+\coordinate (S9) at (10,-2);
+\coordinate (S10) at (15,2);
+\coordinate (S11) at (9,10);
+\coordinate (S12) at (9,15);
+\coordinate (S13) at (9,18);
+
+% avaPath
+\coordinate (O1) at (2,33);
+\coordinate (O2) at (3.5,22);
+\coordinate (O3) at (4,20);
+\coordinate (O4) at (6,15);
+\coordinate (O5) at (8.5,9);
+\coordinate (O6) at (7,0);
+\coordinate (O7) at (5,-4);
+\coordinate (O8) at (11,-4);
+\coordinate (O9) at (0,-4);
+
+\path (O1) +(-9,-1) coordinate (OL1);
+\path (O2) +(-9,-1) coordinate (OL2);
+\path (O3) +(-9,-1) coordinate (OL3);
+\path (O4) +(-9,-1) coordinate (OL4);
+\path (O5) +(-9,-1) coordinate (OL5);
+\path (O6) +(-9,-1) coordinate (OL6);
+\path (O7) +(-9,-1) coordinate (OL7);
+
+\path (O1) +(9,1) coordinate (OR1);
+\path (O2) +(9,1) coordinate (OR2);
+\path (O3) +(9,1) coordinate (OR3);
+\path (O4) +(9,1) coordinate (OR4);
+\path (O5) +(9,1) coordinate (OR5);
+\path (O6) +(9,1) coordinate (OR6);
+\path (O7) +(9,1) coordinate (OR7);
+
+
+\def\RefAvaRel{
+     (RR1) -- (RR2) -- (RR3) -- (RR4) -- (RR5) -- cycle
+    }
+\def\RefAva{
+      plot [smooth] coordinates {(RR1) (R1) (R2) (R3) (R4) (R5) (R6) (R7)  (R8) (R9) (R10) (R11)  (R12) (R13) (RR4)} -- (RR5) -- cycle
+    }
+
+\def\SimAva{
+     plot [smooth] coordinates {(RS1) (S1) (S2) (S3) (S4) (S5) (S6) (S7)  (S8) (S9) (S10) (S11)  (S12) (S13) (RS4)} -- (RS5) -- cycle
+    }
+\def\SimAvaRel{
+     (RS1) -- (RS2) -- (RS3) -- (RS4) -- (RS5) -- cycle
+    }
+    
+
+\def\AvaPath{
+     (O1) -- (O2) -- (O3) -- (O4) -- (O5) -- (O6) -- (O7)
+    }
+\def\AvaPathL{
+     (OL1) -- (OL2) -- (OL3) -- (OL4) -- (OL5) -- (OL6) -- (OL7)
+    }
+\def\AvaPathR{
+     (OR1) -- (OR2) -- (OR3) -- (OR4) -- (OR5) -- (OR6) -- (OR7)
+    }
+
+
+% bottom rectangle -> TN background
+\begin{scope}
+      \fill[black!5] (-10,-6) rectangle (26,9);
+\end{scope}
+%\draw[black] (-9,-5) rectangle (23,35);
+\begin{scope}
+      \clip (-5,-5) rectangle (20,9);
+      \fill[AFMiddle!30] \RefAva;
+\end{scope}
+\begin{scope}
+      \clip (-5,-5) rectangle (20,9);
+      \fill[AFLight!30] \SimAva;
+\end{scope}
+\begin{scope}
+      \clip \RefAva;
+      \clip (-5,-5) rectangle (20,9);
+      \fill[AFDark!30] \SimAva;
+\end{scope}
+
+% Release areas
+\draw [thick, AFMiddle, fill=AFMiddle!60] \RefAvaRel;
+\draw [thick, AFMiddle, name path=ref ava] \RefAva ;
+
+\draw [thick, AFLight, fill=AFLight!70] \SimAvaRel;
+\draw [thick, AFLight, name path=sim ava] \SimAva;
+
+% Avalanche path
+\draw [thick, black, dashed, ->, name path=ava path] \AvaPath;
+\node [label=-90:$s$] at (O7) {};
+\draw [thick, dotted,black] \AvaPathL;
+\draw [thick, dotted,black] \AvaPathR;
+\path [name path=ava path1] (O5) -- (O9);
+\path [name path=ava path2] (O6) -- (O8);
+
+
+
+\foreach \i in {1,...,7}
+    \draw [thick, dotted, black, ->] (OL\i) -- (OR\i) node[right] {$l$};
+
+\draw [thick, black, ->] (-5,10) -- (-3,10) node[right] {$x$};
+\draw [thick, black, ->] (-5,10) -- (-5,12) node[above] {$y$};
+
+
+\node (origin) at (O1) [point, label = {above:$\mbox{Avapath Origin}$}]{};
+\draw[->] (O3) +(-5,0) node[above left,fill=white] {$\mbox{Avapath}$} -- (O3);
+\draw[->] (O2) +(7,0) node[above right,fill=white] {$\mbox{Transition Point }(<30^\circ)$} -- (O2);
+\draw[->] (O5) +(5,+3) node[above right,fill=white] {$\mbox{Run-out area Point }(<10^\circ)$} -- (O5);
+
+
+\draw[->, AFMiddle] (RR1) +(-5,1) node[above,fill=white] {$\mbox{Release area sim 1 (ref)}$} -- (RR1);
+\draw[->, AFLight] (RS4) +(3,1) node[above right,fill=white] {$\mbox{Release area sim 2 (other sim)}$} -- (RS4);
+
+\draw[AFMiddle] (R7) node[right] {$\mbox{FN}$};
+\draw[AFLight] (S10) node[left] {$\mbox{FP}$};
+\draw[AFDark] (5,1) node[left] {$\mbox{TP}$};
+\draw[black] (-3,2) node[left] {$\mbox{TN}$};
+
+
+\path [name intersections={of=ref ava and ava path1,by=RR}];
+\node [fill=AFMiddle,inner sep=1pt] at (RR) {};
+\draw[->, AFMiddle] (RR) +(-4,-2) node[below] {$\mbox{Run-out point sim 1 (ref)}$} -- (RR);
+
+\path [name intersections={of=sim ava and ava path2,by=RS}];
+\node [fill=AFLight,inner sep=1pt] at (RS) {};
+\draw[->, AFLight] (RS) +(4,-1) node[below] {$\mbox{Run-out point sim 2 (other sim)}$} -- (RS);
+
+\end{tikzpicture}
+
+\end{document}
