@@ -68,7 +68,7 @@ def test_normalize(capfd):
 def test_getNormalVect(capfd):
     '''projectOnRasterVect'''
     a = 1
-    b = 2
+    b = 1
     xllcenter = 0
     yllcenter = 0
     cellsize = 1
@@ -90,7 +90,7 @@ def test_getNormalVect(capfd):
         assert TestNZ
 
         Nx, Ny, Nz = DFAtools.getNormalVect(Z1, cellsize, num=num)
-        atol = 1e-5
+        atol = 1e-10
         TestNX = np.allclose(Nx[1:nrows-1, 1:ncols-1], -2*a*X[1:nrows-1, 1:ncols-1] / np.sqrt(1 + 4*a*a*X[1:nrows-1, 1:ncols-1]*X[1:nrows-1, 1:ncols-1] + 4*b*b*Y[1:nrows-1, 1:ncols-1]*Y[1:nrows-1, 1:ncols-1]), atol=atol)
         assert TestNX
         TestNY = np.allclose(Ny[1:nrows-1, 1:ncols-1], -2*b*Y[1:nrows-1, 1:ncols-1] / np.sqrt(1 + 4*a*a*X[1:nrows-1, 1:ncols-1]*X[1:nrows-1, 1:ncols-1] + 4*b*b*Y[1:nrows-1, 1:ncols-1]*Y[1:nrows-1, 1:ncols-1]), atol=atol)
