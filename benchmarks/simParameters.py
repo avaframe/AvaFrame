@@ -88,12 +88,12 @@ def fetchBenchParameters(avaDir):
 
     elif avaDictName == 'avaHockeyDict':
 
-        avaDictName = {'simName': 'release1HS_null_dfa_0.155',
+        avaDictName = {'simName': 'release1HS_entres_dfa_0.155',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1HS',
                         'Entrainment Area': '',
-                        'Resistance Area': '',
+                        'Resistance Area': 'resistance1HS',
                         'Mu': '0.155',
                         'Release thickness [m]': '1.000',
                         'Release Mass [kg]': '20657.1',
@@ -103,6 +103,7 @@ def fetchBenchParameters(avaDir):
                     'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
 
         avaDictList.append(avaDictName)
+
 
     elif avaDictName == 'avaHockeySmoothChannelDict':
 
@@ -166,7 +167,7 @@ def fetchBenchParameters(avaDir):
                         'type': 'list',
                         'Release Area': 'release1IP',
                         'Entrainment Area': 'entrainment1IP',
-                        'Resistance Area': '',
+                        'Resistance Area': 'resistance1IP',
                         'Mu': '0.155',
                         'Release thickness [m]': '1.000',
                         'Release Mass [kg]': '20000.',
