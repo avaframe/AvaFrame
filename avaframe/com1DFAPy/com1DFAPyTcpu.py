@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.DFAkernel.DFAtools as DFAtools
+import avaframe.com1DFAPy.com1DFAPytools as DFAtools
 # from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
 import avaframe.in2Trans.ascUtils as IOf
@@ -80,17 +80,17 @@ for massPart in MassPart:
 
     T, U, Z, S, Particles, Fields, Tcpu = DFAtools.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
 
-    log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['niter'])))
+    log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
     TForce.append(Tcpu['Force'])
-    log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['niter'])))
+    log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))
     TForceVect.append(Tcpu['ForceVect'])
-    log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / Tcpu['niter'])))
+    log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / Tcpu['nIter'])))
     TForceSPH.append(Tcpu['ForceSPH'])
-    log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / Tcpu['niter'])))
+    log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / Tcpu['nIter'])))
     TPos.append(Tcpu['Pos'])
-    log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / Tcpu['niter'])))
+    log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / Tcpu['nIter'])))
     TNeigh.append(Tcpu['Neigh'])
-    log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / Tcpu['niter'])))
+    log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / Tcpu['nIter'])))
     TField.append(Tcpu['Field'])
 
 # -------------------------------

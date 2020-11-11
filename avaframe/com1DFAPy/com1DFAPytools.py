@@ -16,28 +16,30 @@ from avaframe.out3Plot.plotUtils import *
 
 # create local logger
 log = logging.getLogger(__name__)
-debugPlot = False
+debugPlot = True
 
 
 def initializeSimulation(cfg, relRaster, dem):
+    # get simulation parameters
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
     massPerPart = cfg.getfloat('massPerPart')
+    # read dem header
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
     csz = header.cellsize
     S = csz * csz
-    # initialize
+    # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
-    FD = np.zeros(np.shape(dem['rasterData']))
+    FD = np.zeros((nrows, ncols))
     Npart = 0
     Xpart = np.empty(0)
     Ypart = np.empty(0)
     Mpart = np.empty(0)
     Hpart = np.empty(0)
     InCell = np.empty((0, 3), int)
-    # find all non empty cells
+    # find all non empty cells (meaning release area)
     indY, indX = np.nonzero(relRaster)
     # loop on non empty cells
     for indx, indy in zip(indX, indY):
@@ -49,12 +51,20 @@ def initializeSimulation(cfg, relRaster, dem):
         Npart = Npart + nPart
         partPerCell[indy][indx] = nPart
         mPart = mass / nPart
+        # TODO make this an independent function
+        #######################
+        # start ###############
+        # place particles randomly in the cell
         xpart = csz * (np.random.rand(nPart) - 0.5 + indx)
         ypart = csz * (np.random.rand(nPart) - 0.5 + indy)
         # if one particle in center of cell
         # xpart = csz * indx
         # ypart = csz * indy
+        # end #################
+        #######################
+        # initialize field Flow depth
         FD[indY, indX] = h
+        # initialize particles position mass height...
         Xpart = np.append(Xpart, xpart)
         Ypart = np.append(Ypart, ypart)
         Mpart = np.append(Mpart, mPart * np.ones(nPart))
@@ -82,10 +92,12 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['kineticEne'] = np.sum(0.5 * Mpart * norm2(particles['ux'], particles['uy'], particles['uz']))
     particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
 
-    Cres = np.zeros(np.shape(dem['rasterData']))
-    Ment = np.zeros(np.shape(dem['rasterData']))
-    PV = np.zeros(np.shape(dem['rasterData']))
-    PP = np.zeros(np.shape(dem['rasterData']))
+    # initialize entrainment and resistance
+    Ment = intializeMassEnt(dem)
+    Cres = intializeResistance(dem)
+
+    PV = np.zeros((nrows, ncols))
+    PP = np.zeros((nrows, ncols))
     fields = {}
     fields['PV'] = PV
     fields['PP'] = PP
@@ -95,12 +107,14 @@ def initializeSimulation(cfg, relRaster, dem):
     fields['FD'] = FD
 
     # get particles location (neighbours for sph)
-    particles = getNeighbours(particles, dem)
-    # update fields (compute grid values)
+    # particles = getNeighbours(particles, dem)
+    particles = getNeighboursVect(particles, dem)
+    # initialize time
     t = 0
     particles['t'] = t
+
     # get normal vector of the grid mesh
-    Nx, Ny, Nz = getNormalVect(dem['rasterData'], dem['header'].cellsize)
+    Nx, Ny, Nz = getNormalVect(dem['rasterData'], csz)
     dem['Nx'] = Nx
     dem['Ny'] = Ny
     dem['Nz'] = Nz
@@ -124,6 +138,24 @@ def initializeSimulation(cfg, relRaster, dem):
     return dem, particles, fields, Cres, Ment
 
 
+def intializeMassEnt(dem):
+    # read dem header
+    header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
+    Ment = np.zeros((nrows, ncols))
+    return Ment
+
+
+def intializeResistance(dem):
+    # read dem header
+    header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
+    Cres = np.zeros((nrows, ncols))
+    return Cres
+
+
 def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     Tend = cfg.getfloat('Tend')
     dtSave = cfg.getfloat('dtSave')
@@ -131,18 +163,20 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 
     Particles = [copy.deepcopy(particles)]
     Fields = [copy.deepcopy(fields)]
+    # save Z, S, U, T at each time step for developping purpouses
     Z = np.empty((0, 0))
     S = np.empty((0, 0))
     U = np.empty((0, 0))
     T = np.empty((0, 0))
+    # initialize time and counters
     nSave = 1
-    niter = 0
+    nIter = 0
     iterate = True
     t = particles['t']
     # Start time step computation
     while t < Tend and iterate:
         t = t + dt
-        niter = niter + 1
+        nIter = nIter + 1
         log.debug('Computing time step t = %f s', t)
         T = np.append(T, t)
         particles['t'] = t
@@ -159,25 +193,32 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
             Fields.append(copy.deepcopy(fields))
             nSave = nSave + 1
 
-    Tcpu['niter'] = niter
+    Tcpu['nIter'] = nIter
 
     return T, U, Z, S, Particles, Fields, Tcpu
 
 
 def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # get forces
+    # loop version of the compute force
     startTime = time.time()
     # forceLoop = computeForce(cfg, particles, dem, Ment, Cres)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
+    # vectorized version of the compute force
     startTime = time.time()
     force = computeForceVect(cfg, particles, dem, Ment, Cres)
     tcpuForceVect = time.time() - startTime
     Tcpu['ForceVect'] = Tcpu['ForceVect'] + tcpuForceVect
+    # compare output from compute force loop and vectorized
+    #########################################################
     # print(np.max(np.abs(force['forceX']-forceVect['forceX'])))
     # print(np.max(np.abs(force['forceY']-forceVect['forceY'])))
     # print(np.max(np.abs(force['forceZ']-forceVect['forceZ'])))
     # print(np.allclose(force['forceX'], forceVect['forceX'], atol=0.00001))
+    ##########################################################
+
+    # compute lateral force (SPH component of the calculation)
     startTime = time.time()
     force = computeForceSPH(cfg, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
@@ -188,11 +229,14 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     particles = updatePosition(cfg, particles, dem, force)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
+
     # get particles location (neighbours for sph)
     startTime = time.time()
-    particles = getNeighbours(particles, dem)
+    # particles = getNeighbours(particles, dem)
+    particles = getNeighboursVect(particles, dem)
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
+
     # update fields (compute grid values)
     startTime = time.time()
     fields = updateFields(cfg, particles, dem, fields)
@@ -233,8 +277,11 @@ def polygon2Raster(demHeader, Line, Mask):
         xCoord = np.delete(xCoord0, -1)
         yCoord = np.delete(yCoord0, -1)
     else:
-        xCoord = xCoord0
-        yCoord = yCoord0
+        xCoord = copy.deepcopy(xCoord0)
+        yCoord = copy.deepcopy(yCoord0)
+        xCoord0 = np.append(xCoord0, xCoord0[0])
+        yCoord0 = np.append(yCoord0, yCoord0[0])
+
     # get the raster corresponding to the polygon
     mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
     Mask = Mask + mask
@@ -242,9 +289,11 @@ def polygon2Raster(demHeader, Line, Mask):
 
     if debugPlot:
         fig, ax = plt.subplots(figsize=(figW, figH))
+        ax.set_title('Release area')
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
         im = plt.imshow(Mask, cmap, origin='lower')
-        ax.plot(xCoord0, yCoord0, 'k')
+        ax.plot(xCoord0, yCoord0, 'r', label='release polyline')
+        plt.legend()
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
         fig.colorbar(im, cax=cax)
@@ -258,14 +307,8 @@ def computeForce(cfg, particles, dem, Ment, Cres):
     gravAcc = cfg.getfloat('gravAcc')
     dt = cfg.getfloat('dt')
     mu = cfg.getfloat('mu')
-    entEroEnergy = cfg.getfloat('entEroEnergy')
-    rhoEnt = cfg.getfloat('rhoEnt')
-    entShearResistance = cfg.getfloat('entShearResistance')
-    entDefResistance = cfg.getfloat('entDefResistance')
-    hRes = cfg.getfloat('hRes')
     Npart = particles['Npart']
     csz = dem['header'].cellsize
-    ncols = dem['header'].ncols
     Nx = dem['Nx']
     Ny = dem['Ny']
     Nz = dem['Nz']
@@ -284,7 +327,6 @@ def computeForce(cfg, particles, dem, Ment, Cres):
         mass = particles['m'][j]
         x = particles['x'][j]
         y = particles['y'][j]
-        z = particles['z'][j]
         h = particles['h'][j]
         ux = particles['ux'][j]
         uy = particles['uy'][j]
@@ -343,45 +385,24 @@ def computeForce(cfg, particles, dem, Ment, Cres):
         forceY[j] = forceY[j] + forceBotTang * uyDir
         forceZ[j] = forceZ[j] + forceBotTang * uzDir
 
-        # # compute entrained mass
-        # dm = 0
-        # if Ment[indCellY][indCellX] > 0:
-        #     # either erosion or ploughing but not both
-        #     # width of the particle
-        #     width = math.sqrt(A)
-        #     # bottom area covered by the particle during dt
-        #     ABotSwiped = width * uMag * dt
-        #     if(entEroEnergy > 0):
-        #         # erosion: erode according to shear and erosion energy
-        #         dm = A * tau * uMag * dt / entEroEnergy
-        #         Aent = A
-        #     else:
-        #         # ploughing in at avalanche front: erode full area weight
-        #         # mass available in the cell [kg/m²]
-        #         rhoHent = Ment[indCellY][indCellX]
-        #         dm = rhoHent * ABotSwiped
-        #         Aent = rhoHent / rhoEnt
-        #     dM[j] = dm
-        #     # adding mass balance contribution
-        #     forceX[j] = forceX[j] - dm / dt * ux
-        #     forceY[j] = forceY[j] - dm / dt * uy
-        #     forceZ[j] = forceZ[j] - dm / dt * uz
-        #
-        #     # adding force du to entrained mass
-        #     Fent = width * (entShearResistance + dm / Aent * entDefResistance)
-        #     forceX[j] = forceX[j] + Fent * uxDir
-        #     forceY[j] = forceY[j] + Fent * uyDir
-        #     forceZ[j] = forceZ[j] + Fent * uzDir
-        #
-        # # adding resistance force du to obstacles
-        # if Cres[indCellY][indCellX] > 0:
-        #     if(h < hRes):
-        #         hResEff = h
-        #     cres = - rho * A * hResEff * Cres * uMag
-        #     forceX[j] = forceX[j] + cres * ux
-        #     forceY[j] = forceY[j] + cres * uy
-        #     forceZ[j] = forceZ[j] + cres * uz
+        # compute entrained mass
+        ment = Ment[indCellY][indCellX]
+        if ment > 0:
+            dm, fEntX, fEntY, fEntZ = computeEntMassAndForce(cfg, ment, A, uMag, ux, uy, uz, uxDir, uyDir, uzDir, tau)
+            dM[j] = dm
+            forceX[j] = forceX[j] + fEntX
+            forceY[j] = forceY[j] + fEntY
+            forceZ[j] = forceZ[j] + fEntZ
 
+        # adding resistance force du to obstacles
+        cres = Cres[indCellY][indCellX]
+        if cres > 0:
+            fEntX, fEntY, fEntZ = computeResForce(cfg, h, A, rho, cres, uMag, ux, uy, uz)
+            forceX[j] = forceX[j] + fEntX
+            forceY[j] = forceY[j] + fEntY
+            forceZ[j] = forceZ[j] + fEntZ
+
+    # save results
     force['dM'] = dM
     force['forceX'] = forceX
     force['forceY'] = forceY
@@ -389,8 +410,55 @@ def computeForce(cfg, particles, dem, Ment, Cres):
     force['forceSPHX'] = forceSPHX
     force['forceSPHY'] = forceSPHY
     force['forceSPHZ'] = forceSPHZ
-
     return force
+
+
+def computeEntMassAndForce(cfg, ment, A, uMag, ux, uy, uz, uxDir, uyDir, uzDir, tau):
+    dt = cfg.getfloat('dt')
+    entEroEnergy = cfg.getfloat('entEroEnergy')
+    rhoEnt = cfg.getfloat('rhoEnt')
+    entShearResistance = cfg.getfloat('entShearResistance')
+    entDefResistance = cfg.getfloat('entDefResistance')
+    # compute entrained mass
+    dm = 0
+    fEntX, fEntY, fEntZ = 0, 0, 0
+    if ment > 0:
+        # either erosion or ploughing but not both
+        # width of the particle
+        width = math.sqrt(A)
+        # bottom area covered by the particle during dt
+        ABotSwiped = width * uMag * dt
+        if(entEroEnergy > 0):
+            # erosion: erode according to shear and erosion energy
+            dm = A * tau * uMag * dt / entEroEnergy
+            Aent = A
+        else:
+            # ploughing in at avalanche front: erode full area weight
+            # mass available in the cell [kg/m²]
+            rhoHent = ment
+            dm = rhoHent * ABotSwiped
+            Aent = rhoHent / rhoEnt
+        # adding mass balance contribution
+        fEntX = fEntX - dm / dt * ux
+        fEntY = fEntY - dm / dt * uy
+        fEntZ = fEntZ - dm / dt * uz
+
+        # adding force du to entrained mass
+        Fent = width * (entShearResistance + dm / Aent * entDefResistance)
+        fEntX = fEntX + Fent * uxDir
+        fEntY = fEntY + Fent * uyDir
+        fEntZ = fEntZ + Fent * uzDir
+
+    return dm, fEntX, fEntY, fEntZ
+
+
+def computeResForce(cfg, h, A, rho, cres, uMag, ux, uy, uz):
+    hRes = cfg.getfloat('hRes')
+    if(h < hRes):
+        hResEff = h
+    cres = - rho * A * hResEff * cres * uMag
+    fResX, fResY, fResZ = cres*ux, cres*uy, cres*uz
+    return fResX, fResY, fResZ
 
 
 def computeForceVect(cfg, particles, dem, Ment, Cres):
@@ -398,14 +466,8 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
     gravAcc = cfg.getfloat('gravAcc')
     dt = cfg.getfloat('dt')
     mu = cfg.getfloat('mu')
-    entEroEnergy = cfg.getfloat('entEroEnergy')
-    rhoEnt = cfg.getfloat('rhoEnt')
-    entShearResistance = cfg.getfloat('entShearResistance')
-    entDefResistance = cfg.getfloat('entDefResistance')
-    hRes = cfg.getfloat('hRes')
     Npart = particles['Npart']
     csz = dem['header'].cellsize
-    ncols = dem['header'].ncols
     Nx = dem['Nx']
     Ny = dem['Ny']
     Nz = dem['Nz']
@@ -477,47 +539,6 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
     forceX = forceX + forceBotTang * uxDir
     forceY = forceY + forceBotTang * uyDir
     forceZ = forceZ + forceBotTang * uzDir
-    # for j in range(Npart):
-    #     mass = particles['m'][j]
-    #
-    #     # compute entrained mass
-    #     dm = 0
-    #     if Ment[indCellY][indCellX] > 0:
-    #         # either erosion or ploughing but not both
-    #         # width of the particle
-    #         width = math.sqrt(A)
-    #         # bottom area covered by the particle during dt
-    #         ABotSwiped = width * uMag * dt
-    #         if(entEroEnergy > 0):
-    #             # erosion: erode according to shear and erosion energy
-    #             dm = A * tau * uMag * dt / entEroEnergy
-    #             Aent = A
-    #         else:
-    #             # ploughing in at avalanche front: erode full area weight
-    #             # mass available in the cell [kg/m²]
-    #             rhoHent = Ment[indCellY][indCellX]
-    #             dm = rhoHent * ABotSwiped
-    #             Aent = rhoHent / rhoEnt
-    #         dM[j] = dm
-    #         # adding mass balance contribution
-    #         forceX[j] = forceX[j] - dm / dt * ux
-    #         forceY[j] = forceY[j] - dm / dt * uy
-    #         forceZ[j] = forceZ[j] - dm / dt * uz
-    #
-    #         # adding force du to entrained mass
-    #         Fent = width * (entShearResistance + dm / Aent * entDefResistance)
-    #         forceX[j] = forceX[j] + Fent * uxDir
-    #         forceY[j] = forceY[j] + Fent * uyDir
-    #         forceZ[j] = forceZ[j] + Fent * uzDir
-    #
-    #     # adding resistance force du to obstacles
-    #     if Cres[indCellY][indCellX] > 0:
-    #         if(h < hRes):
-    #             hResEff = h
-    #         cres = - rho * A * hResEff * Cres * uMag
-    #         forceX[j] = forceX[j] + cres * ux
-    #         forceY[j] = forceY[j] + cres * uy
-    #         forceZ[j] = forceZ[j] + cres * uz
 
     force['dM'] = dM
     force['forceX'] = forceX
@@ -530,15 +551,7 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
 def computeForceSPH(cfg, particles, force, dem):
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
-    dt = cfg.getfloat('dt')
-    mu = cfg.getfloat('mu')
-    entEroEnergy = cfg.getfloat('entEroEnergy')
-    rhoEnt = cfg.getfloat('rhoEnt')
-    entShearResistance = cfg.getfloat('entShearResistance')
-    entDefResistance = cfg.getfloat('entDefResistance')
-    hRes = cfg.getfloat('hRes')
     Npart = particles['Npart']
-    csz = dem['header'].cellsize
     ncols = dem['header'].ncols
     nrows = dem['header'].nrows
     # initialize
@@ -552,7 +565,8 @@ def computeForceSPH(cfg, particles, force, dem):
         mass = particles['m'][j]
         # adding lateral force (SPH component)
         # startTime = time.time()
-        gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows)
+        # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows)
+        gradhX, gradhY,  gradhZ, _ = calcGradHSPHVect(particles, j, ncols, nrows)
         # tcpuSPH = time.time() - startTime
         # TcpuSPH = TcpuSPH + tcpuSPH
         # startTime = time.time()
@@ -782,52 +796,69 @@ def getNeighbours(particles, dem):
     indy = ((y + csz/2) / csz).astype(int)
     check[indy, indx] = check[indy, indx] + 1
     ic = indx + ncols * indy
-    # partInCell2[0:-2] = indSorted
     ##################################
+    # start ########################
     # TODO: test speed between add.at and bincount
-    # indPartInCell = np.bincount(ic, minlength=len(indPartInCell))
+    # indPartInCell = np.bincount(ic + 1, minlength=len(indPartInCell))
     # or
     np.add.at(indPartInCell, ic + 1, 1)
+    # end ##############################
     ##################################
     indPartInCell = np.cumsum(indPartInCell)
+
+    # make the list of which particles are in which cell
+    InCell = np.empty((0, 3), int).astype(int)
+    indPartInCell2 = copy.deepcopy(indPartInCell)
+    for j in range(Npart):
+        indx = int((x[j] + csz/2) / csz)
+        indy = int((y[j] + csz/2) / csz)
+        ic = indx + ncols * indy
+        partInCell[int(indPartInCell2[ic])] = j
+        indPartInCell2[ic] = indPartInCell2[ic] + 1
+        InCell = np.append(InCell, np.tile(np.array([indx, indy, ic]), (1, 1)), axis=0)
+
+    particles['InCell'] = InCell
+    particles['indPartInCell'] = indPartInCell
+    particles['partInCell'] = partInCell
+
+    return particles
+
+
+def getNeighboursVect(particles, dem):
+    header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
+    csz = header.cellsize
+    Npart = particles['Npart']
+    x = particles['x']
+    y = particles['y']
+    check = np.zeros((nrows, ncols))
+    indPartInCell = np.zeros(ncols*nrows + 1).astype(int)
+    partInCell = np.zeros(Npart).astype(int)
+    # Count number of particles in each cell
+    indx = ((x + csz/2) / csz).astype(int)
+    indy = ((y + csz/2) / csz).astype(int)
+    check[indy, indx] = check[indy, indx] + 1
+    ic = indx + ncols * indy
     ##################################
-    # ------------------------
+    # start ########################
+    # TODO: test speed between add.at and bincount
+    # indPartInCell = np.bincount(ic + 1, minlength=len(indPartInCell))
+    # or
+    np.add.at(indPartInCell, ic + 1, 1)
+    # end ##############################
+    ##################################
+    indPartInCell = np.cumsum(indPartInCell)
+
     # no loop
     partInCell = np.argsort(ic, kind='mergesort')
     InCell = np.vstack((indx, indy))
     InCell = np.vstack((InCell, ic))
     InCell = InCell.T
-    # indPartInCell[-1] = 0
-    # or
-    # ------------------------------------------------
-    # make the list of which particles are in which cell
-    # InCell = np.empty((0, 3), int).astype(int)
-    # indPartInCell2 = copy.deepcopy(indPartInCell)
-    # indPartInCell[-1] = 0
-    # for j in range(Npart):
-    #     indx = int((x[j] + csz/2) / csz)
-    #     indy = int((y[j] + csz/2) / csz)
-    #     ic = indx + ncols * indy
-    #     partInCell[int(indPartInCell2[ic])-1] = j
-    #     indPartInCell2[ic] = indPartInCell2[ic] - 1
-    #     InCell = np.append(InCell, np.tile(np.array([indx, indy, ic]), (1, 1)), axis=0)
 
-    ##################################
     particles['InCell'] = InCell
     particles['indPartInCell'] = indPartInCell
     particles['partInCell'] = partInCell
-    # xx = np.arange(ncols) * csz
-    # yy = np.arange(nrows) * csz
-    # fig, ax = plt.subplots(figsize=(figW, figH))
-    # cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-    # ref0, im = NonUnifIm(ax, xx, yy, check, 'x [m]', 'y [m]',
-    #                      extent=[x.min(), x.max(), y.min(), y.max()],
-    #                      cmap=cmap, norm=None)
-    # ax.plot(x, y, 'or', linestyle='None')
-    # divider = make_axes_locatable(ax)
-    # cax = divider.append_axes("right", size="5%", pad=0.1)
-    # fig.colorbar(im, cax=cax)
-    # plt.show()
 
     return particles
 
@@ -845,48 +876,65 @@ def calcGradHSPH(particles, j, ncols, nrows):
     x = particles['x'][j]
     y = particles['y'][j]
     z = particles['z'][j]
+    # With loop
     gradhX = 0
     gradhY = 0
     gradhZ = 0
-    ####################################
-    # With loop
-
-    # gradhX1 = 0
-    # gradhY1 = 0
-    # gradhZ1 = 0
     # startTime = time.time()
-    # index = np.empty((0), dtype=int)
-    # for n in range(-1, 2):
-    #     ic = (indx - 1) + ncols * (indy + n)
-    #     iPstart = indPartInCell[ic-1]
-    #     iPend = indPartInCell[ic+2]
-    #     print('ic = ', ic)
-    #     # ind = np.arange(iPstart, iPend, 1)
-    #     # index = np.append(index, ind)
-    #     # loop on all particles in neighbour boxes
-    #     for p in range(iPstart, iPend):
-    #         # index of particle in neighbour box
-    #         l = int(partInCell[p])
-    #         print(l)
-    #         if j != l:
-    #             dx = particles['x'][l] - x
-    #             dy = particles['y'][l] - y
-    #             dz = particles['z'][l] - z
-    #             r = norm(dx, dy, dz)
-    #             if r < 0.001 * rKernel:
-    #                 # impose a minimum distance between particles
-    #                 r = 0.001 * rKernel
-    #             if r < rKernel:
-    #                 hr = rKernel - r
-    #                 dwdr = dfacKernel * hr * hr
-    #                 massl = particles['m'][l]
-    #                 gradhX1 = gradhX1 + massl * dwdr * dx / r
-    #                 gradhY1 = gradhY1 + massl * dwdr * dy / r
-    #                 gradhZ1 = gradhZ1 + massl * dwdr * dz / r
+    L = np.empty((0), dtype=int)
+    # check if we are on the bottom ot top row!!!
+    lInd = -1
+    rInd = 2
+    if indy == 0:
+        lInd = 0
+    if indy == nrows - 1:
+        rInd = 1
+    for n in range(lInd, rInd):
+        ic = (indx - 1) + ncols * (indy + n)
+        # make sure not to take particles from the other edge
+        iPstart = indPartInCell[max(ic, ncols * (indy + n))]
+        iPend = indPartInCell[min(ic+3, ncols * (indy + n + 1))]
+        # loop on all particles in neighbour boxes
+        for p in range(iPstart, iPend):
+            # index of particle in neighbour box
+            l = int(partInCell[p])
+            if j != l:
+                L = np.append(L, l)
+                dx = particles['x'][l] - x
+                dy = particles['y'][l] - y
+                dz = particles['z'][l] - z
+                r = norm(dx, dy, dz)
+                if r < 0.001 * rKernel:
+                    # impose a minimum distance between particles
+                    r = 0.001 * rKernel
+                if r < rKernel:
+                    hr = rKernel - r
+                    dwdr = dfacKernel * hr * hr
+                    massl = particles['m'][l]
+                    gradhX = gradhX + massl * dwdr * dx / r
+                    gradhY = gradhY + massl * dwdr * dy / r
+                    gradhZ = gradhZ + massl * dwdr * dz / r
     # print((time.time() - startTime)/1)
 
-    # or
+    return gradhX, gradhY,  gradhZ, L
 
+
+def calcGradHSPHVect(particles, j, ncols, nrows):
+    # SPH kernel
+    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
+    rKernel = 5
+    facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
+    dfacKernel = -3.0 * facKernel
+
+    indx, indy, _ = particles['InCell'][j]
+    indPartInCell = particles['indPartInCell']
+    partInCell = particles['partInCell']
+    x = particles['x'][j]
+    y = particles['y'][j]
+    z = particles['z'][j]
+    gradhX = 0
+    gradhY = 0
+    gradhZ = 0
     # no loop option
 
     # startTime = time.time()
@@ -900,17 +948,11 @@ def calcGradHSPH(particles, j, ncols, nrows):
     if indy == nrows - 1:
         rInd = 1
     ic = (indx - 1) + ncols * (indy + np.arange(lInd, rInd, 1))
-    # print('particle : %s in cell (%s,%s)' % (j, indx, indy))
-    # print(ic)
-    # print(np.minimum(ic + 3, ncols * (indy + np.arange(lInd, rInd, 1) + 1)))
     # go throught all index from left middle and right box and get the
     # particles in those boxes
     # make sure not to take particles from the other edge
     iPstart = indPartInCell[np.maximum(ic, ncols * (indy + np.arange(lInd, rInd, 1)))]
     iPend = indPartInCell[np.minimum(ic + 3, ncols * (indy + np.arange(lInd, rInd, 1) + 1))]
-    # print(iPstart)
-    # print(iPend)
-    # print(np.concatenate([np.arange(x, y) for x, y in zip(iPstart, iPend)]))
 
     # gather all the particles
     index = np.concatenate([np.arange(x, y) for x, y in zip(iPstart, iPend)])
@@ -924,6 +966,7 @@ def calcGradHSPH(particles, j, ncols, nrows):
     dy = particles['y'][L] - y
     dz = particles['z'][L] - z
     r = norm(dx, dy, dz)
+    # impose a minimum distance between particles
     r = np.where(r < 0.001 * rKernel, 0.001 * rKernel, r)
     hr = rKernel - r
     dwdr = dfacKernel * hr * hr
@@ -947,16 +990,12 @@ def calcGradHSPH(particles, j, ncols, nrows):
     gradhZ = gradhZ + np.sum(GZ)
     # leInd = len(index)
     # print((time.time() - startTime)/leInd)
-    # print(partInd)
-    #########################################
 
-    # print(gradhX, gradhX1)
-    # print(gradhY, gradhY1)
-    # print(gradhZ, gradhZ1)
     return gradhX, gradhY,  gradhZ, L
 
 
 def getNormal(x, y, Nx, Ny, Nz, csz):
+    # by default bilinear interpolation of the Nx, Ny, Nz of the grid
     nx = geoTrans.projectOnRasterRoot(x, y, Nx, csz=csz)
     ny = geoTrans.projectOnRasterRoot(x, y, Ny, csz=csz)
     nz = geoTrans.projectOnRasterRoot(x, y, Nz, csz=csz)
@@ -966,6 +1005,7 @@ def getNormal(x, y, Nx, Ny, Nz, csz):
 
 def getNormalArray(x, y, Nx, Ny, Nz, csz):
     nrow, ncol = np.shape(Nx)
+    # by default bilinear interpolation of the Nx, Ny, Nz of the grid
     nx, _ = geoTrans.projectOnRasterVectRoot(x, y, Nx, csz=csz)
     ny, _ = geoTrans.projectOnRasterVectRoot(x, y, Ny, csz=csz)
     nz, _ = geoTrans.projectOnRasterVectRoot(x, y, Nz, csz=csz)
@@ -975,34 +1015,40 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
 
 def getNormalVect(z, csz, num=4):
     n, m = np.shape(z)
+    Nx = np.ones((n, m))
+    Ny = np.ones((n, m))
+    Nz = np.ones((n, m))
     # first and last row, first and last column are inacurate
     if num == 4:
         # normal calculation with 4 triangles
-        Nx = np.ones((n, m))
         # (Zl - Zr) * csz
         Nx[1:n-1, 1:m-1] = (z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) / csz
-        Ny = np.ones((n, m))
         # (Zd - Zu) * csz
         Ny[1:n-1, 1:m-1] = (z[0:n-2, 1:m-1] - z[2:n, 1:m-1]) / csz
-        Nz = 2 * np.ones((n, m))
+        Nz = 2 * Nz
 
     if num == 6:
         # normal calculation with 6 triangles
-        Nx = np.ones((n, m))
         # (2*(Zl - Zr) - Zur + Zdl + Zu - Zd) * csz
         Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
                             - z[2:n, 2:m] + z[0:n-2, 0:m-2]
                             + z[2:n, 1:m-1] - z[0:n-2, 1:m-1]) / csz
-        Ny = np.ones((n, m))
-        # # (2*(Zd - Zl) + Zur + Zdl - Zu - Zl) * csz
-        # Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1])
-        #                     + z[2:n, 2:m] + z[0:n-2, 0:m-2]
-        #                     - z[2:n, 1:m-1] - z[1:n-1, 0:m-2]) / csz
         # (2*(Zu - Zd) + Zur - Zdl + Zl - Zr) * csz
         Ny[1:n-1, 1:m-1] = -(2 * (z[2:n, 1:m-1] - z[0:n-2, 1:m-1])
-                            + z[2:n, 2:m] - z[0:n-2, 0:m-2]
-                            + z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) / csz
-        Nz = 6 * np.ones((n, m))
+                             + z[2:n, 2:m] - z[0:n-2, 0:m-2]
+                             + z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) / csz
+        Nz = 6 * Nz
+    if num == 8:
+        # normal calculation with 8 triangles
+        # (2*(Zl - Zr) + Zul - Zur + Zdl - Zdr) * csz
+        Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
+                            + z[2:n, 0:m-2] - z[2:n, 2:m]
+                            + z[0:n-2, 0:m-2] - z[0:n-2, 2:m]) / csz
+        # (2*(Zu - Zd) + Zul + Zur - Zdl - Zdr) * csz
+        Ny[1:n-1, 1:m-1] = -(2 * (z[2:n, 1:m-1] - z[0:n-2, 1:m-1])
+                             + z[2:n, 0:m-2] + z[2:n, 2:m]
+                             - z[0:n-2, 0:m-2] - z[0:n-2, 2:m]) / csz
+        Nz = 8 * Nz
 
     Nx, Ny, Nz = normalize(Nx, Ny, Nz)
 
@@ -1020,6 +1066,8 @@ def norm2(x, y, z):
 
 
 def normalize(x, y, z):
+    # TODO : avoid error message when input vector is zero and make sure
+    # to return zero
     norme = norm(x, y, z)
     xn = x / norme
     xn = np.where(np.isnan(xn), 0, xn)
