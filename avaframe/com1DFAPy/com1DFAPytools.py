@@ -16,7 +16,7 @@ from avaframe.out3Plot.plotUtils import *
 
 # create local logger
 log = logging.getLogger(__name__)
-debugPlot = True
+debugPlot = False
 
 
 def initializeSimulation(cfg, relRaster, dem):
@@ -1033,10 +1033,10 @@ def getNormalVect(z, csz, num=4):
         Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
                             - z[2:n, 2:m] + z[0:n-2, 0:m-2]
                             + z[2:n, 1:m-1] - z[0:n-2, 1:m-1]) / csz
-        # (2*(Zu - Zd) + Zur - Zdl + Zl - Zr) * csz
-        Ny[1:n-1, 1:m-1] = -(2 * (z[2:n, 1:m-1] - z[0:n-2, 1:m-1])
-                             + z[2:n, 2:m] - z[0:n-2, 0:m-2]
-                             + z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) / csz
+        # (2*(Zd - Zu) - Zur + Zdl - Zl + Zr) * csz
+        Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1])
+                            - z[2:n, 2:m] + z[0:n-2, 0:m-2]
+                            - z[1:n-1, 0:m-2] + z[1:n-1, 2:m]) / csz
         Nz = 6 * Nz
     if num == 8:
         # normal calculation with 8 triangles
@@ -1044,10 +1044,10 @@ def getNormalVect(z, csz, num=4):
         Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
                             + z[2:n, 0:m-2] - z[2:n, 2:m]
                             + z[0:n-2, 0:m-2] - z[0:n-2, 2:m]) / csz
-        # (2*(Zu - Zd) + Zul + Zur - Zdl - Zdr) * csz
-        Ny[1:n-1, 1:m-1] = -(2 * (z[2:n, 1:m-1] - z[0:n-2, 1:m-1])
-                             + z[2:n, 0:m-2] + z[2:n, 2:m]
-                             - z[0:n-2, 0:m-2] - z[0:n-2, 2:m]) / csz
+        # (2*(Zd - Zu) - Zul - Zur + Zdl + Zdr) * csz
+        Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1])
+                            - z[2:n, 0:m-2] - z[2:n, 2:m]
+                            + z[0:n-2, 0:m-2] + z[0:n-2, 2:m]) / csz
         Nz = 8 * Nz
 
     Nx, Ny, Nz = normalize(Nx, Ny, Nz)
