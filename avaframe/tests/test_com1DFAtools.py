@@ -4,7 +4,7 @@ import pytest
 import copy
 
 # Local imports
-import avaframe.com1DFAPy.com1DFAPytools as DFAtools
+import avaframe.com1DFAPy.com1DFAtools as DFAtls
 import avaframe.in2Trans.ascUtils as IOf
 
 
@@ -21,7 +21,7 @@ def test_polygon2Raster(capfd):
     Line['x'] = x
     Line['y'] = y
     mask = np.zeros((demHeader.nrows, demHeader.ncols))
-    mask = DFAtools.polygon2Raster(demHeader, Line, mask)
+    mask = DFAtls.polygon2Raster(demHeader, Line, mask)
     Mask = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                      [1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
                      [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
@@ -38,9 +38,9 @@ def test_normalize(capfd):
     x = np.array([1.])
     y = np.array([1.])
     z = np.array([1.])
-    norme = DFAtools.norm(x, y, z)
-    norme2 = DFAtools.norm2(x, y, z)
-    xn, yn, zn = DFAtools.normalize(x, y, z)
+    norme = DFAtls.norm(x, y, z)
+    norme2 = DFAtls.norm2(x, y, z)
+    xn, yn, zn = DFAtls.normalize(x, y, z)
     atol = 1e-10
     assert norme == np.sqrt(3.)
     assert norme2 == 3.
@@ -52,13 +52,13 @@ def test_normalize(capfd):
     x = np.array([1.])
     y = np.array([2.])
     z = np.array([3.])
-    xn, yn, zn = DFAtools.normalize(x, y, z)
+    xn, yn, zn = DFAtls.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1., rel=atol)
 
     x = np.array([1.])
     y = np.array([0.])
     z = np.array([1.])
-    xn, yn, zn = DFAtools.normalize(x, y, z)
+    xn, yn, zn = DFAtls.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1, rel=atol)
     assert xn == pytest.approx(1/np.sqrt(2.), rel=atol)
     assert yn == pytest.approx(0, rel=atol)
@@ -80,7 +80,7 @@ def test_getNormalVect(capfd):
     Z = a * X + b * Y
     Z1 = a * X * X + b * Y * Y
     for num in [4, 6, 8]:
-        Nx, Ny, Nz = DFAtools.getNormalVect(Z, cellsize, num=num)
+        Nx, Ny, Nz = DFAtls.getNormalVect(Z, cellsize, num=num)
         atol = 1e-10
         TestNX = np.allclose(Nx[1:nrows-1, 1:ncols-1], -a * np.ones(np.shape(Y[1:nrows-1, 1:ncols-1])) / np.sqrt(1 + a * a + b * b), atol=atol)
         assert TestNX
@@ -89,7 +89,7 @@ def test_getNormalVect(capfd):
         TestNZ = np.allclose(Nz[1:nrows-1, 1:ncols-1], np.ones(np.shape(Y[1:nrows-1, 1:ncols-1])) / np.sqrt(1 + a * a + b * b), atol=atol)
         assert TestNZ
 
-        Nx, Ny, Nz = DFAtools.getNormalVect(Z1, cellsize, num=num)
+        Nx, Ny, Nz = DFAtls.getNormalVect(Z1, cellsize, num=num)
         atol = 1e-10
         TestNX = np.allclose(Nx[1:nrows-1, 1:ncols-1], -2*a*X[1:nrows-1, 1:ncols-1] / np.sqrt(1 + 4*a*a*X[1:nrows-1, 1:ncols-1]*X[1:nrows-1, 1:ncols-1] + 4*b*b*Y[1:nrows-1, 1:ncols-1]*Y[1:nrows-1, 1:ncols-1]), atol=atol)
         assert TestNX
@@ -147,13 +147,13 @@ def test_getNeighbours(capfd):
                      5,
                      15])
 
-    particles = DFAtools.getNeighbours(particles, dem)
+    particles = DFAtls.getNeighbours(particles, dem)
     print(particles['InCell'])
     print(particles['indPartInCell'])
     print(particles['partInCell'])
     assert np.allclose(particles['indPartInCell'], indPCell, atol=atol)
     assert np.allclose(particles['partInCell'], pInC, atol=atol)
-    particlesVect = DFAtools.getNeighboursVect(particlesVect, dem)
+    particlesVect = DFAtls.getNeighboursVect(particlesVect, dem)
     print(particlesVect['InCell'])
     print(particlesVect['indPartInCell'])
     print(particlesVect['partInCell'])
@@ -176,55 +176,55 @@ def test_calcGradHSPH(capfd):
     particles['y'] = np.array([2, 1, 0, 1, 3, 3, 2, 1, 0, 0, 3, 2, 2, 1, 1, 4])
     particles['z'] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     particles['m'] = particles['z']
-    particles = DFAtools.getNeighboursVect(particles, dem)
+    particles = DFAtls.getNeighboursVect(particles, dem)
     print(particles['InCell'])
     print(particles['indPartInCell'])
     print(particles['partInCell'])
-    _, _, _, index = DFAtools.calcGradHSPH(particles, 0, ncols, nrows)
-    _, _, _, indexVect = DFAtools.calcGradHSPHVect(particles, 0, ncols, nrows)
+    _, _, _, index = DFAtls.calcGradHSPH(particles, 0, ncols, nrows)
+    _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 0, ncols, nrows)
     print(index)
     atol = 1e-10
     IndexTh = np.array([1, 7, 3, 13, 6, 12, 11, 10, 4, 5])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtools.calcGradHSPH(particles, 7, ncols, nrows)
-    _, _, _, indexVect = DFAtools.calcGradHSPHVect(particles, 7, ncols, nrows)
+    _, _, _, index = DFAtls.calcGradHSPH(particles, 7, ncols, nrows)
+    _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 7, ncols, nrows)
     print(index)
     IndexTh = np.array([8, 2, 9, 1, 3, 13, 6, 0, 12, 11])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtools.calcGradHSPH(particles, 8, ncols, nrows)
-    _, _, _, indexVect = DFAtools.calcGradHSPHVect(particles, 8, ncols, nrows)
+    _, _, _, index = DFAtls.calcGradHSPH(particles, 8, ncols, nrows)
+    _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 8, ncols, nrows)
     print(index)
     IndexTh = np.array([2, 1, 7])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtools.calcGradHSPH(particles, 9, ncols, nrows)
-    _, _, _, indexVect = DFAtools.calcGradHSPHVect(particles, 9, ncols, nrows)
+    _, _, _, index = DFAtls.calcGradHSPH(particles, 9, ncols, nrows)
+    _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 9, ncols, nrows)
     print(index)
     IndexTh = np.array([2, 7, 3, 13, 14])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtools.calcGradHSPH(particles, 11, ncols, nrows)
-    _, _, _, indexVect = DFAtools.calcGradHSPHVect(particles, 11, ncols, nrows)
+    _, _, _, index = DFAtls.calcGradHSPH(particles, 11, ncols, nrows)
+    _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 11, ncols, nrows)
     print(index)
     IndexTh = np.array([7, 3, 13, 14, 0, 12, 4, 5])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtools.calcGradHSPH(particles, 6, ncols, nrows)
-    _, _, _, indexVect = DFAtools.calcGradHSPHVect(particles, 6, ncols, nrows)
+    _, _, _, index = DFAtls.calcGradHSPH(particles, 6, ncols, nrows)
+    _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 6, ncols, nrows)
     print(index)
     IndexTh = np.array([1, 7, 0, 12, 10, 4])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtools.calcGradHSPH(particles, 5, ncols, nrows)
-    _, _, _, indexVect = DFAtools.calcGradHSPHVect(particles, 5, ncols, nrows)
+    _, _, _, index = DFAtls.calcGradHSPH(particles, 5, ncols, nrows)
+    _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 5, ncols, nrows)
     print(index)
     IndexTh = np.array([0, 12, 11, 4, 15])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtools.calcGradHSPH(particles, 15, ncols, nrows)
-    _, _, _, indexVect = DFAtools.calcGradHSPHVect(particles, 15, ncols, nrows)
+    _, _, _, index = DFAtls.calcGradHSPH(particles, 15, ncols, nrows)
+    _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 15, ncols, nrows)
     print(index)
     IndexTh = np.array([5])
     assert np.allclose(index, IndexTh, atol=atol)

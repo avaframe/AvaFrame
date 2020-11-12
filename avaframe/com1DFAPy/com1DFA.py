@@ -12,7 +12,7 @@ import matplotlib as mpl
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.com1DFAPy.com1DFAPytools as DFAtools
+import avaframe.com1DFAPy.com1DFAtools as DFAtls
 # from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
 import avaframe.in2Trans.ascUtils as IOf
@@ -31,7 +31,7 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
-cfg = cfgUtils.getModuleConfig(DFAtools)['GENERAL']
+cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
 
 startTime = time.time()
 # ------------------------
@@ -49,7 +49,7 @@ dem['header'].yllcorner = 0
 
 # ------------------------
 # process release to get it as a raster
-relRaster = DFAtools.prepareArea(releaseLine, demOri)
+relRaster = DFAtls.prepareArea(releaseLine, demOri)
 relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
@@ -59,7 +59,7 @@ cfg['massPerPart'] = str(massPart)
 # ------------------------
 # initialize simulation : create particles, create resistance and
 # entrainment matrix, initialize fields, get normals and neighbours
-dem, particles, fields, Cres, Ment = DFAtools.initializeSimulation(cfg, relRaster, dem)
+dem, particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfg, relRaster, dem)
 
 # ------------------------
 #  Start time step computation
@@ -71,7 +71,7 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-T, U, Z, S, Particles, Fields, Tcpu = DFAtools.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
+T, U, Z, S, Particles, Fields, Tcpu = DFAtls.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
 log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))
@@ -101,9 +101,9 @@ while repeat == True:
         T = np.append(T, part['t'])
         S = np.append(S, part['s'][0])
         Z = np.append(Z, part['z'][0])
-        U = np.append(U, DFAtools.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
+        U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
         # print(part['t'])
-        # print(DFAtools.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
+        # print(DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
         # exact solution for inclined plane with no friction
         # print(gravAcc * math.sin(34*math.pi/180) * part['t'])
         # exact solution with no friction
@@ -114,8 +114,8 @@ while repeat == True:
         # exact solution with friction
         # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
         #
-        fig, ax = DFAtools.plotPosition(part, demOri, field['PFD'], cmapPres, 'm', fig, ax, plotPart=True)
-        # fig1, ax1 = DFAtools.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
+        fig, ax = DFAtls.plotPosition(part, demOri, field['PFD'], cmapPres, 'm', fig, ax, plotPart=True)
+        # fig1, ax1 = DFAtls.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
     # plt.show()
     # repeat = False
     value = input("[y] to repeat:\n")
@@ -125,9 +125,9 @@ fieldRef = Fields[-1]
 fig1, ax1 = plt.subplots(figsize=(figW, figH))
 fig2, ax2 = plt.subplots(figsize=(figW, figH))
 fig3, ax3 = plt.subplots(figsize=(figW, figH))
-fig1, ax1 = DFAtools.plotPosition(particles, demOri, fields['PFD'], cmapPres, 'm', fig1, ax1, plotPart=False)
-fig2, ax2 = DFAtools.plotPosition(particles, demOri, fields['PV'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
-fig3, ax3 = DFAtools.plotPosition(particles, demOri, fields['PP']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
+fig1, ax1 = DFAtls.plotPosition(particles, demOri, fields['PFD'], cmapPres, 'm', fig1, ax1, plotPart=False)
+fig2, ax2 = DFAtls.plotPosition(particles, demOri, fields['PV'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
+fig3, ax3 = DFAtls.plotPosition(particles, demOri, fields['PP']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
 plt.show()
 
 
