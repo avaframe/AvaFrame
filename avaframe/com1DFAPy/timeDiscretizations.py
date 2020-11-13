@@ -48,19 +48,3 @@ def getTimeStep(particles, dem, cfg):
 
     # return stable time step
     return dtStable
-
-
-# def functionName(input1, ..):
-#     """ Info
-#
-#     Input:
-#
-#
-#     Output:
-#
-#     """
-#
-#
-#
-#     #
-#     return
