@@ -14,6 +14,8 @@ import logging
 # Local imports
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in2Trans import ascUtils as aU
+from avaframe.in3Utils import initialiseDirs as iD
+from avaframe.in1Data import getInput as gI
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -50,86 +52,6 @@ def execCom1Exe(com1Exe, cintFile, avaDir, fullOut=False, simName=''):
     reVal = proc.wait()
 
 
-def initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf='shp'):
-    """ Initialise Simulation Run with input data """
-
-    # Set directories for inputs, outputs and current work
-    inputDir = os.path.join(avaDir, 'Inputs')
-    outputDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
-    fU.makeADir(outputDir)
-    workDir = os.path.join(avaDir, 'Work', 'com1DFA')
-    # If Work directory already exists - error
-    if os.path.isdir(workDir):
-        log.error('Work directory %s already exists - delete first!' % (workDir))
-    else:
-        os.makedirs(workDir)
-    log.debug('Directory: %s created' % workDir)
-
-    # Set flag if there is an entrainment or resistance area
-    flagEntRes = False
-
-    # Initialise release areas, default is to look for shapefiles
-    if inputf == 'nxyz':
-        relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.nxyz')
-    else:
-        relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.shp')
-        log.info('Release area files are: %s' % relFiles)
-
-    # Initialise resistance areas
-    if flagRes:
-        resFiles = glob.glob(inputDir+os.sep + 'RES' + os.sep+'*.shp')
-        if len(resFiles) < 1:
-            log.warning('No resistance file')
-            resFiles.append('')  # Kept this for future enhancements
-        else:
-            try:
-                message = 'There shouldn\'t be more than one resistance .shp file in ' + inputDir + '/RES/'
-                assert len(resFiles) < 2, message
-            except AssertionError:
-                raise
-            flagEntRes = True
-    else:
-        resFiles = []
-        resFiles.append('')
-
-    # Initialise entrainment areas
-    if flagEnt:
-        entFiles = glob.glob(inputDir+os.sep + 'ENT' + os.sep+'*.shp')
-        if len(entFiles) < 1:
-            log.warning('No entrainment file')
-            entFiles.append('')  # Kept this for future enhancements
-        else:
-            try:
-                message = 'There shouldn\'t be more than one entrainment .shp file in ' + inputDir + '/ENT/'
-                assert len(entFiles) < 2, message
-            except AssertionError:
-                raise
-            flagEntRes = True
-    else:
-        entFiles = []
-        entFiles.append('')
-
-    # Initialise DEM
-    demFile = glob.glob(inputDir+os.sep+'*.asc')
-    try:
-        assert len(demFile) == 1, 'There should be exactly one topography .asc file in ' + inputDir
-    except AssertionError:
-        raise
-
-    # Parameter variation
-    if cfgPar.getboolean('flagVarPar'):
-        varPar = cfgPar['varPar']
-    else:
-        varPar = 'Mu'
-
-    # Initialise full experiment log file
-    with open(os.path.join(workDir, 'ExpLog.txt'), 'w') as logFile:
-        logFile.write("NoOfSimulation,SimulationRunName,%s\n" % varPar)
-
-    # return DEM, first item of release, entrainment and resistance areas
-    return demFile[0], relFiles, entFiles[0], resFiles[0], flagEntRes
-
-
 def copyReplace(origFile, workFile, searchString, replString):
     """ Modifiy cintFiles to be used to set simulation configuration"""
 
@@ -158,9 +80,9 @@ def com1DFAMain(cfg, avaDir):
     # Setup configuration
     cfgGen = cfg['GENERAL']
     com1Exe = cfgGen['com1Exe']
+    modName = 'com1DFA'
     flagEnt = cfgGen.getboolean('flagEnt')
     flagRes = cfgGen.getboolean('flagRes')
-    inputf = cfgGen['inputf']
     fullOut = cfgGen.getboolean('flagOut')
     cfgPar = cfg['PARAMETERVAR']
     resDir = os.path.join(avaDir, 'Work', 'com1DFA')
@@ -175,8 +97,11 @@ def com1DFAMain(cfg, avaDir):
     # Log current avalanche directory
     log.info('Your current avalanche test name: %s' % avaDir)
 
+    # Create output and work directories
+    workDir, outDir = iD.initialiseRunDirs(avaDir, modName)
+
     # Load input data
-    dem, rels, ent, res, flagEntRes = initialiseRun(avaDir, flagEnt, flagRes, cfgPar, inputf)
+    dem, rels, ent, res, flagEntRes = gI.getInputData(avaDir, cfgGen)
     entrainmentArea = ''
     resistanceArea = ''
     if flagEntRes:
@@ -186,6 +111,16 @@ def com1DFAMain(cfg, avaDir):
     # Get cell size from DEM header
     demData = aU.readASCheader(dem)
     cellSize = demData.cellsize
+
+     # Parameter variation
+    if cfgPar.getboolean('flagVarPar'):
+        varPar = cfgPar['varPar']
+    else:
+        varPar = 'Mu'
+
+    # Initialise full experiment log file
+    with open(os.path.join(workDir, 'ExpLog.txt'), 'w') as logFile:
+        logFile.write("NoOfSimulation,SimulationRunName,%s\n" % varPar)
 
     # Counter for release area loop
     countRel = 0

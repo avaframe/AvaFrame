@@ -18,7 +18,7 @@ import matplotlib as mpl
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
-import avaframe.com1DFAPy.utilities as uT
+from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFAtools as DFAtls
 
 # from avaframe.DFAkernel.setParam import *
@@ -40,12 +40,12 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
-cfgFull = cfgUtils.getModuleConfig(DFAtls)
+cfgFlags = cfgUtils.getModuleConfig(DFAtls)['FLAGS']
 
 startTime = time.time()
 # ------------------------
 # fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = uT.getInputData(avalancheDir, cfgFull)
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFlags, flagDev=True)
 demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
