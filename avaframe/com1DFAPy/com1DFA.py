@@ -40,6 +40,7 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
+cfgFull = cfgUtils.getModuleConfig(DFAtls)
 
 startTime = time.time()
 # ------------------------
