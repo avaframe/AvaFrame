@@ -10,6 +10,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 from avaframe.out3Plot.plotUtils import *
+import avaframe.com1DFAPy.timeDiscretizations as tD
 # import avaframe.in2Trans.shpConversion as shpConv
 # import avaframe.in2Trans.ascUtils as IOf
 # from avaframe.DFAkernel.setParam import *
@@ -229,6 +230,9 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     particles = updatePosition(cfg, particles, dem, force)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
+
+    # CALL TIME STEP:
+    dtStable = tD.getTimeStep(particles, dem, cfg)
 
     # get particles location (neighbours for sph)
     startTime = time.time()
