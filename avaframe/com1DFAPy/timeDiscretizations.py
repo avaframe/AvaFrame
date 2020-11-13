@@ -1,5 +1,5 @@
 """
-    time discretization functions for com1DFA
+    function regarding time discretization and time stepping for com1DFA
 
     This file is part of Avaframe.
 """
@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 
 
 def getTimeStep(particles, dem, cfg):
-    """ Compute stable time step  """
+    """ Compute cfl time step  """
 
     # determine max velocity of particles
     vmagnitude = np.sqrt(particles['ux']**2 + particles['uy']**2 + particles['uz']**2)
