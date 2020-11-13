@@ -19,47 +19,6 @@ import configparser
 import shutil
 
 
-def test_initialiseRun(tmp_path):
-    """ test check for input data """
-
-    # get input data
-    dirPath = os.path.dirname(__file__)
-    avaName = 'avaHockeySmoothChannel'
-    avaDir  = os.path.join(tmp_path, avaName)
-    avaInputs = os.path.join(avaDir, 'Inputs')
-    avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
-    shutil.copytree(avaData, avaInputs)
-
-    # flags for entrainment and resistance
-    flagEnt = True
-    flagRes = True
-
-    # Initialise input in correct format
-    cfg = configparser.ConfigParser()
-    cfg['PARAMETERVAR'] = {'flagVarPar': 'True', 'varPar': 'RelTh'}
-    cfgPar = cfg['PARAMETERVAR']
-
-    # call function to be tested
-    dem, rels, ent, res, flagEntRes = com1DFA.initialiseRun(avaDir, flagEnt, flagRes, cfgPar)
-
-    # open ExpLog
-    # Load simulation report
-    testDir = os.path.join(avaDir, 'Work', 'com1DFA')
-    logFile = open(os.path.join(testDir, 'ExpLog.txt'), 'r')
-    lines = logFile.readlines()
-    lineVals = []
-    for line in lines:
-        lineVals.append(line.split(','))
-
-    # Test
-    assert dem == os.path.join(avaDir, 'Inputs', 'myDEM_HS2_Topo.asc')
-    assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS2.shp')]
-    assert res == ''
-    assert ent == os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS2.shp')
-    assert flagEntRes == True
-    assert lineVals[0][2] == 'RelTh\n'
-
-
 def test_execCom1Exe(tmp_path):
     """ test call to com1DFA executable without performing simulation but check log generation """
 
