@@ -1,3 +1,9 @@
+"""
+
+    This file is part of Avaframe.
+"""
+
+
 import os
 import glob
 import time
@@ -12,7 +18,9 @@ import matplotlib as mpl
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
+import avaframe.com1DFAPy.utilities as uT
 import avaframe.com1DFAPy.com1DFAtools as DFAtls
+
 # from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
 import avaframe.in2Trans.ascUtils as IOf
@@ -32,14 +40,14 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
+cfgFull =cfgUtils.getModuleConfig(DFAtls)
 
+print(cfgFull)
 startTime = time.time()
 # ------------------------
 # fetch input data
-inputDir = os.path.join(avalancheDir, 'Inputs')
-relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.shp')
-demFile = glob.glob(inputDir+os.sep+'*.asc')
-demOri = IOf.readRaster(demFile[0])
+demFile, relFiles, entFiles, resFile, flagEntRes = uT.getInputData(avalancheDir, cfgFull)
+demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
 dem['header'].xllcenter = 0
