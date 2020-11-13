@@ -231,8 +231,12 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
+    #++++++++++++++++if you want to use cfl time step+++++++++++++++++++
     # CALL TIME STEP:
-    dtStable = tD.getTimeStep(particles, dem, cfg)
+    # to play around with the courant number
+    # cfg['cMax'] = 0.5
+    # dtStable = tD.getTimeStep(particles, dem, cfg)
+    #++++++++++++++++++++++++++++++++++++++++++++++
 
     # get particles location (neighbours for sph)
     startTime = time.time()
@@ -591,6 +595,7 @@ def computeForceSPH(cfg, particles, force, dem):
 
 def updatePosition(cfg, particles, dem, force):
     dt = cfg.getfloat('dt')
+    log.info('dt used now is %f' % dt)
     gravAcc = cfg.getfloat('gravAcc')
     csz = dem['header'].cellsize
     Nx = dem['Nx']
