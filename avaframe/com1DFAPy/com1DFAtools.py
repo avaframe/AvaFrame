@@ -85,6 +85,7 @@ def initializeSimulation(cfg, relRaster, dem):
 
     particles['m'] = Mpart
     particles['h'] = Hpart
+    particles['h2'] = Hpart
     particles['InCell'] = InCell
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
@@ -173,6 +174,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     nSave = 1
     nIter = 0
     iterate = True
+    particles['iterate'] = iterate
     t = particles['t']
     # Start time step computation
     while t < Tend and iterate:
@@ -186,7 +188,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         U = np.append(U, norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
         Z = np.append(Z, particles['z'][0])
         S = np.append(S, particles['s'][0])
-        iterate = not(particles['stoppCriteria'])
+        iterate = particles['iterate']
         if t >= nSave * dtSave:
             log.info('Saving results for time step t = %f s', t)
             log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
@@ -221,9 +223,33 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
-    force = computeForceSPH(cfg, particles, force, dem)
+    particles, force = computeForceSPH(cfg, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
+
+    if debugPlot:
+        hh = copy.deepcopy(particles['h'])
+        hSPH = copy.deepcopy(particles['hSPH'])
+        h2 = copy.deepcopy(particles['h2'])
+        indexSort = np.argsort(hh)
+        print(np.mean(hSPH))
+        fig, ax = plt.subplots(figsize=(figW, figH))
+        ax.set_title('flow depth per particle')
+        ax.plot(hSPH[indexSort], 'b', label='h from SPH')
+        ax.plot(h2[indexSort], 'g', label='h from SPH')
+        ax.plot(hh[indexSort], 'r', label='h from mesh')
+        plt.legend()
+        plt.show()#block=False)
+        # plt.pause(1)
+        # plt.close()
+        # fig2 = plt.figure()
+        # ax2 = fig2.add_subplot(111, projection='3d')
+        # ax2.scatter(particles['x'], particles['y'], hh)
+        #
+        # fig1 = plt.figure()
+        # ax1 = fig1.add_subplot(111, projection='3d')
+        # ax1.scatter(particles['x'], particles['y'], hSPH)
+        # plt.show()
 
     # update velocity and particle position
     startTime = time.time()
@@ -247,7 +273,7 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 
     # update fields (compute grid values)
     startTime = time.time()
-    fields = updateFields(cfg, particles, dem, fields)
+    particles, fields = updateFields(cfg, particles, force, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
@@ -544,6 +570,8 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
 
     # adding bottom shear resistance contribution
     forceBotTang = - A * tau
+    # print(np.min(np.abs(forceBotTang)))
+    # print(np.max(np.abs(forceBotTang)))
     forceX = forceX + forceBotTang * uxDir
     forceY = forceY + forceBotTang * uyDir
     forceZ = forceZ + forceBotTang * uzDir
@@ -560,12 +588,14 @@ def computeForceSPH(cfg, particles, force, dem):
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
     Npart = particles['Npart']
-    ncols = dem['header'].ncols
     nrows = dem['header'].nrows
+    ncols = dem['header'].ncols
+    csz = dem['header'].cellsize
     # initialize
     forceSPHX = force['forceSPHX']
     forceSPHY = force['forceSPHY']
     forceSPHZ = force['forceSPHZ']
+    H = np.zeros(np.shape(particles['h']))
     # loop on particles
     # TcpuSPH = 0
     # Tcpuadd = 0
@@ -573,8 +603,9 @@ def computeForceSPH(cfg, particles, force, dem):
         mass = particles['m'][j]
         # adding lateral force (SPH component)
         # startTime = time.time()
-        # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows)
-        gradhX, gradhY,  gradhZ, _ = calcGradHSPHVect(particles, j, ncols, nrows)
+        # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows, csz)
+        h, gradhX, gradhY,  gradhZ, _ = calcGradHSPHVect(particles, j, ncols, nrows, csz)
+        H[j] = h / rho
         # tcpuSPH = time.time() - startTime
         # TcpuSPH = TcpuSPH + tcpuSPH
         # startTime = time.time()
@@ -586,11 +617,15 @@ def computeForceSPH(cfg, particles, force, dem):
 
     # log.info(('cpu time SPH = %s s' % (TcpuSPH / Npart)))
     # log.info(('cpu time SPH add = %s s' % (Tcpuadd / Npart)))
+
+    # print(np.min(np.abs(forceSPHX)))
+    # print(np.max(np.abs(forceSPHX)))
     force['forceSPHX'] = forceSPHX
     force['forceSPHY'] = forceSPHY
     force['forceSPHZ'] = forceSPHZ
+    particles['hSPH'] = H
 
-    return force
+    return particles, force
 
 
 def updatePosition(cfg, particles, dem, force):
@@ -624,6 +659,20 @@ def updatePosition(cfg, particles, dem, force):
     uxNew = ux + (forceX + forceSPHX) * dt / mass
     uyNew = uy + (forceY + forceSPHY) * dt / mass
     uzNew = uz + (forceZ + forceSPHZ) * dt / mass
+    if (np.max(forceX / mass)) > 200 or (np.max(forceY / mass)) > 200 or (np.max(forceZ / mass)) > 200:
+        if (np.max(forceX / mass)) > (np.max(forceY / mass)) and (np.max(forceX / mass)) > (np.max(forceZ / mass)):
+            ind = np.argmax(forceX / mass)
+        elif (np.max(forceY / mass)) > (np.max(forceX / mass)) and (np.max(forceY / mass)) > (np.max(forceZ / mass)):
+            ind = np.argmax(forceY / mass)
+        else:
+            ind = np.argmax(forceZ / mass)
+
+        A = mass[ind] / (h[ind] * rho)
+        print('particle index : ', ind)
+        print((forceX / mass)[ind])
+        print((forceY / mass)[ind])
+        print((forceZ / mass)[ind])
+        print(A)
     # update mass
     massNew = mass + dM
     # update position
@@ -648,30 +697,36 @@ def updatePosition(cfg, particles, dem, force):
     particles['ux'] = uxNew - uN * nx
     particles['uy'] = uyNew - uN * ny
     particles['uz'] = uzNew - uN * nz
+
+    # remove particles that are not located on the mesh any more
+    particles = removeOutPart(cfg, particles, dem)
     # uN = particles['ux']*nx + particles['uy']*ny + particles['uz']*nz
     # print(norm(particles['ux'], particles['uy'], particles['uz']), uN)
-    kinEneNew = np.sum(0.5 * massNew * norm2(particles['ux'], particles['uy'], particles['uz']))
-    potEneNew = np.sum(gravAcc * massNew * particles['z'])
-    totEneNew = kinEneNew + potEneNew
+    # kinEneNew = np.sum(0.5 * massNew * norm2(particles['ux'], particles['uy'], particles['uz']))
+    # potEneNew = np.sum(gravAcc * massNew * particles['z'])
+    # totEneNew = kinEneNew + potEneNew
     # log.info('total energy variation: %f' % ((totEneNew - totEne) / totEneNew))
     # log.info('kinetic energy variation: %f' % ((kinEneNew - kinEne) / kinEneNew))
     # if (abs(totEneNew - totEne) / totEneNew < 0.01) and (abs(kinEneNew - kinEne) / kinEneNew < 0.01):
     #     log.info('Reached stopping creteria : total energy varied fom less than 1 %')
     #     particles['stoppCriteria'] = True
-    particles['kineticEne'] = kinEneNew
-    particles['potentialEne'] = potEneNew
+    # particles['kineticEne'] = kinEneNew
+    # particles['potentialEne'] = potEneNew
     return particles
 
 
-def updateFields(cfg, particles, dem, fields):
+def updateFields(cfg, particles, force, dem, fields):
     rho = cfg.getfloat('rho')
+    depMin = cfg.getfloat('depMin')
     header = dem['header']
+    Z = dem['rasterData']
     csz = dem['header'].cellsize
     S = csz * csz
     ncols = header.ncols
     nrows = header.nrows
     Npart = particles['Npart']
     m = particles['m']
+    dM = force['dM']
     x = particles['x']
     y = particles['y']
     ux = particles['ux']
@@ -680,17 +735,49 @@ def updateFields(cfg, particles, dem, fields):
     PV = fields['PV']
     PP = fields['PP']
     PFD = fields['PFD']
+
+    # Mass1 = np.zeros((nrows, ncols))
+    # VX = np.zeros((nrows, ncols))
+    # VY = np.zeros((nrows, ncols))
+    # VZ = np.zeros((nrows, ncols))
+    # Mass1 = pointsToRasterSPH(particles, rho, Z, m, Mass1, csz=csz)
+    # VX = pointsToRasterSPH(particles, rho, Z, ux, VX, csz=csz)
+    # VY = pointsToRasterSPH(particles, rho, Z, uy, VY, csz=csz)
+    # VZ = pointsToRasterSPH(particles, rho, Z, uz, VZ, csz=csz)
+    # V = norm(VX, VY, VZ)
+    # FD = Mass / (S * rho)
+    # P = V * V * rho
+    # PV = np.where(V > PV, V, PV)
+    # PP = np.where(P > PP, P, PP)
+    # PFD = np.where(FD > PFD, FD, PFD)
+
+    Mass2 = np.zeros((nrows, ncols))
+    MomX = np.zeros((nrows, ncols))
+    MomY = np.zeros((nrows, ncols))
+    MomZ = np.zeros((nrows, ncols))
+    #
+    # # startTime = time.time()
+    Mass2 = geoTrans.pointsToRaster(x, y, m, Mass2, csz=csz, interp='bilinear')
+    MomX = geoTrans.pointsToRaster(x, y, m * ux, MomX, csz=csz, interp='bilinear')
+    MomY = geoTrans.pointsToRaster(x, y, m * uy, MomY, csz=csz, interp='bilinear')
+    MomZ = geoTrans.pointsToRaster(x, y, m * uz, MomZ, csz=csz, interp='bilinear')
+
+    # VX = np.where(Mass2 > 0, MomX/Mass2, MomX)
+    # VY = np.where(Mass2 > 0, MomY/Mass2, MomY)
+    # VZ = np.where(Mass2 > 0, MomZ/Mass2, MomZ)
+    # V = norm(VX, VY, VZ)
+    # FD = Mass2 / (S * rho)
+    # P = V * V * rho
+    # PV = np.where(V > PV, V, PV)
+    # PP = np.where(P > PP, P, PP)
+    # PFD = np.where(FD > PFD, FD, PFD)
+    # # endTime = time.time()
+    # # log.info(('time = %s s' % (endTime - startTime)))
+
     Mass = np.zeros((nrows, ncols))
     MomX = np.zeros((nrows, ncols))
     MomY = np.zeros((nrows, ncols))
     MomZ = np.zeros((nrows, ncols))
-    # startTime = time.time()
-    # Mass = geoTrans.pointsToRaster(x, y, m, Mass, csz=csz, interp='bilinear')
-    # MomX = geoTrans.pointsToRaster(x, y, m * ux, MomX, csz=csz, interp='bilinear')
-    # MomY = geoTrans.pointsToRaster(x, y, m * uy, MomY, csz=csz, interp='bilinear')
-    # MomZ = geoTrans.pointsToRaster(x, y, m * uz, MomZ, csz=csz, interp='bilinear')
-    # endTime = time.time()
-    # log.info(('time = %s s' % (endTime - startTime)))
 
     # startTime = time.time()
     iC = particles['InCell'][:, 2]
@@ -706,6 +793,15 @@ def updateFields(cfg, particles, dem, fields):
     MomX = np.reshape(MomX, (nrows, ncols))
     MomY = np.reshape(MomY, (nrows, ncols))
     MomZ = np.reshape(MomZ, (nrows, ncols))
+    VX = np.where(Mass > 0, MomX/Mass, MomX)
+    VY = np.where(Mass > 0, MomY/Mass, MomY)
+    VZ = np.where(Mass > 0, MomZ/Mass, MomZ)
+    V = norm(VX, VY, VZ)
+    FD = Mass / (S * rho)
+    P = V * V * rho
+    PV = np.where(V > PV, V, PV)
+    PP = np.where(P > PP, P, PP)
+    PFD = np.where(FD > PFD, FD, PFD)
 
     # same with a loop
     # # loop on particles
@@ -721,19 +817,11 @@ def updateFields(cfg, particles, dem, fields):
     # log.info(('time = %s s' % (endTime - startTime)))
 
     # print(np.sum(Mass))
+    # print(np.sum(Mass1))
     # print(np.sum(Mass2))
     # plotPosition(particles, dem, Mass)
     # plotPosition(particles, dem, Mass2)
-
-    VX = np.where(Mass > 0, MomX/Mass, MomX)
-    VY = np.where(Mass > 0, MomY/Mass, MomY)
-    VZ = np.where(Mass > 0, MomZ/Mass, MomZ)
-    V = norm(VX, VY, VZ)
-    FD = Mass / (S * rho)
-    P = V * V * rho
-    PV = np.where(V > PV, V, PV)
-    PP = np.where(P > PP, P, PP)
-    PFD = np.where(FD > PFD, FD, PFD)
+    #
 
     fields['V'] = V
     fields['P'] = P
@@ -742,7 +830,19 @@ def updateFields(cfg, particles, dem, fields):
     fields['PP'] = PP
     fields['PFD'] = PFD
 
-    return fields
+    h, _ = geoTrans.projectOnRasterVectRoot(x, y, FD, csz=csz, interp='nearest')
+    particles['h'] = h  # np.where(h < depMin, depMin, h)
+    h2, _ = geoTrans.projectOnRasterVectRoot(x, y, FD, csz=csz, interp='bilinear')
+    particles['h2'] = h2  # np.where(h2 < depMin, depMin, h2)
+
+    # print('minimum h = ', np.min(particles['h']))
+    # print('maximum h = ', np.max(particles['h']))
+    # print('minimum h2 = ', np.min(particles['h2']))
+    # print('maximum h2 = ', np.max(particles['h2']))
+    # remove particles that have a too small height
+    # particles = removeSmallPart(hmin, particles, dem)
+
+    return particles, fields
 
 
 def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False):
@@ -787,6 +887,73 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False):
     # ax.set_ylim([510, 530])
     # ax.set_xlim([260, 300])
     return fig, ax
+
+
+def removeOutPart(cfg, particles, dem):
+    header = dem['header']
+    nrows = header.nrows
+    ncols = header.ncols
+    xllc = header.xllcenter
+    yllc = header.yllcenter
+    csz = header.cellsize
+
+    x = particles['x']
+    y = particles['y']
+
+    # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+    Lx = (x - xllc) / csz
+    Ly = (y - yllc) / csz
+    mask = np.ones(len(x), dtype=bool)
+    indOut = np.where(Lx <= -0.5)
+    mask[indOut] = False
+    indOut = np.where(Ly <= -0.5)
+    mask[indOut] = False
+    indOut = np.where(Lx >= ncols-0.5)
+    mask[indOut] = False
+    indOut = np.where(Ly >= nrows-0.5)
+    mask[indOut] = False
+
+    nRemove = len(mask)-np.sum(mask)
+    if nRemove > 0:
+        particles = removePart(particles, mask, nRemove)
+        log.info('removed %s particles because they exited the domain' % (nRemove))
+
+    return particles
+
+
+def removeSmallPart(hmin, particles, dem):
+
+    h = particles['h']
+
+    indOut = np.where(h < hmin)
+    mask = np.ones(len(h), dtype=bool)
+    mask[indOut] = False
+
+    nRemove = len(mask)-np.sum(mask)
+    if nRemove > 0:
+        particles = removePart(particles, mask, nRemove)
+        log.info('removed %s particles because they were too thin' % (nRemove))
+        particles = getNeighboursVect(particles, dem)
+
+    return particles
+
+
+def removePart(particles, mask, nRemove):
+
+    particles['Npart'] = particles['Npart'] - nRemove
+    particles['x'] = particles['x'][mask]
+    particles['y'] = particles['y'][mask]
+    particles['z'] = particles['z'][mask]
+    particles['s'] = particles['s'][mask]
+    particles['ux'] = particles['ux'][mask]
+    particles['uy'] = particles['uy'][mask]
+    particles['uz'] = particles['uz'][mask]
+    particles['m'] = particles['m'][mask]
+    particles['h'] = particles['h'][mask]
+    particles['InCell'] = particles['InCell'][mask, :]
+    particles['partInCell'] = particles['partInCell'][mask]
+
+    return particles
 
 
 def getNeighbours(particles, dem):
@@ -872,10 +1039,10 @@ def getNeighboursVect(particles, dem):
     return particles
 
 
-def calcGradHSPH(particles, j, ncols, nrows):
+def calcGradHSPH(particles, j, ncols, nrows, csz):
     # SPH kernel
     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
-    rKernel = 5
+    rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
     dfacKernel = -3.0 * facKernel
 
@@ -928,10 +1095,10 @@ def calcGradHSPH(particles, j, ncols, nrows):
     return gradhX, gradhY,  gradhZ, L
 
 
-def calcGradHSPHVect(particles, j, ncols, nrows):
+def calcGradHSPHVect(particles, j, ncols, nrows, csz):
     # SPH kernel
     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
-    rKernel = 5
+    rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
     dfacKernel = -3.0 * facKernel
 
@@ -944,6 +1111,7 @@ def calcGradHSPHVect(particles, j, ncols, nrows):
     gradhX = 0
     gradhY = 0
     gradhZ = 0
+    h = 0
     # no loop option
 
     # startTime = time.time()
@@ -973,11 +1141,12 @@ def calcGradHSPHVect(particles, j, ncols, nrows):
     L = np.delete(L, indJ)
     dx = particles['x'][L] - x
     dy = particles['y'][L] - y
-    dz = particles['z'][L] - z
+    dz = 0 * (particles['z'][L] - z)
     r = norm(dx, dy, dz)
     # impose a minimum distance between particles
     r = np.where(r < 0.001 * rKernel, 0.001 * rKernel, r)
     hr = rKernel - r
+    w = facKernel * hr * hr * hr
     dwdr = dfacKernel * hr * hr
     massl = particles['m'][L]
     # GX = massl * dwdr * dx / r
@@ -988,8 +1157,9 @@ def calcGradHSPHVect(particles, j, ncols, nrows):
     # GZ = np.where(r < rKernel, GZ, 0)
     # ------------------------------
     indOut = np.where(r >= rKernel)
+    massl[indOut] = 0
     mdwdrr = massl * dwdr / r
-    mdwdrr[indOut] = 0
+    H = massl * w
     GX = mdwdrr * dx
     GY = mdwdrr * dy
     GZ = mdwdrr * dz
@@ -997,10 +1167,106 @@ def calcGradHSPHVect(particles, j, ncols, nrows):
     gradhX = gradhX + np.sum(GX)
     gradhY = gradhY + np.sum(GY)
     gradhZ = gradhZ + np.sum(GZ)
+    h = h + np.sum(H)
     # leInd = len(index)
     # print((time.time() - startTime)/leInd)
 
-    return gradhX, gradhY,  gradhZ, L
+    return h, gradhX, gradhY,  gradhZ, L
+
+
+def pointsToRasterSPH(particles, rho, Z, f, F, csz=1, xllc=0, yllc=0):
+    """
+    Vectorized version of projectOnRaster
+    Projects the points Points on Raster using a bilinear or nearest
+    interpolation and returns the z coord
+    Input :
+    Points: (x, y) coord of the pointsi
+    Output:
+    PointsZ: z coord of the points
+             ioob number of out of bounds indexes
+    """
+    # SPH kernel
+    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
+    rKernel = csz
+    facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
+
+    x = particles['x']
+    y = particles['y']
+    z = particles['z']
+    m = particles['m']
+
+    nrow, ncol = np.shape(F)
+
+    # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+    Lx = (x - xllc) / csz
+    Ly = (y - yllc) / csz
+
+    # find coordinates of the 4 nearest cornes on the raster
+    Lx0 = np.floor(Lx).astype('int')
+    Ly0 = np.floor(Ly).astype('int')
+    Lx1 = Lx0 + 1
+    Ly1 = Ly0 + 1
+
+    dx = (Lx - Lx0) * csz
+    dy = (Ly - Ly0) * csz
+
+    dz = z - Z[Lx1, Ly0]
+    R10 = norm(csz-dx, dy, dz)
+    dz = z - Z[Lx0, Ly1]
+    R01 = norm(dx, csz-dy, dz)
+    dz = z - Z[Lx1, Ly1]
+    R11 = norm(csz-dx, csz-dy, dz)
+
+    F = F.flatten()
+    Z = Z.flatten()
+
+    # add sph contribution to bottom left grid cell
+    ic00 = Lx0 + ncol * Ly0
+    dz = z - Z[ic00]
+    R00 = norm(dx, dy, dz)
+    indOut = np.where(R00 >= rKernel)
+    R00[indOut] = 0
+    hr00 = rKernel - R00
+    W00 = facKernel * hr00 * hr00 * hr00
+    f00 = f * m * W00 / rho
+    np.add.at(F, ic00, f00)
+
+    # add sph contribution to bottom right grid cell
+    ic10 = Lx1 + ncol * Ly0
+    dz = z - Z[ic10]
+    R10 = norm(dx, dy, dz)
+    indOut = np.where(R10 >= rKernel)
+    R10[indOut] = 0
+    hr10 = rKernel - R10
+    W10 = facKernel * hr10 * hr10 * hr10
+    f10 = f * m * W10 / rho
+    np.add.at(F, ic10, f10)
+
+    # add sph contribution to top left grid cell
+    ic01 = Lx0 + ncol * Ly1
+    dz = z - Z[ic01]
+    R01 = norm(dx, dy, dz)
+    indOut = np.where(R01 >= rKernel)
+    R01[indOut] = 0
+    hr01 = rKernel - R01
+    W01 = facKernel * hr01 * hr01 * hr01
+    f01 = f * m * W01 / rho
+    np.add.at(F, ic01, f01)
+
+    # add sph contribution to top right grid cell
+    ic11 = Lx1 + ncol * Ly1
+    dz = z - Z[ic11]
+    R11 = norm(dx, dy, dz)
+    indOut = np.where(R11 >= rKernel)
+    R11[indOut] = 0
+    hr11 = rKernel - R10
+    W11 = facKernel * hr11 * hr11 * hr11
+    f11 = f * m * W11 / rho
+    np.add.at(F, ic11, f11)
+
+    F = np.reshape(F, (nrow, ncol))
+
+    return F
 
 
 def getNormal(x, y, Nx, Ny, Nz, csz):
