@@ -17,12 +17,15 @@ import matplotlib as mpl
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
+import avaframe.in3Utils.initialiseDirs as inDirs
+import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFAtools as DFAtls
 
 # from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
+from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
@@ -33,6 +36,7 @@ logName = 'testKernel'
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
+modName = 'com1DFAPy'
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
@@ -40,12 +44,12 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
-cfgFlags = cfgUtils.getModuleConfig(DFAtls)['FLAGS']
+cfgFull = cfgUtils.getModuleConfig(DFAtls)
 
 startTime = time.time()
 # ------------------------
 # fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFlags, flagDev=True)
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'], flagDev=True)
 demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
@@ -64,7 +68,9 @@ relRasterD = relRaster * relTh
 massPart = 1250  # [200, 100, 50, 25, 10, 7.5, 5]
 cfg['massPerPart'] = str(massPart)
 # ------------------------
-# initialize simulation : create particles, create resistance and
+# initialize simulation : create directories
+workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
+# create particles, create resistance and
 # entrainment matrix, initialize fields, get normals and neighbours
 dem, particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfg, relRaster, dem)
 
@@ -121,7 +127,7 @@ while repeat == True:
         # exact solution with friction
         # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
         #
-        fig, ax = DFAtls.plotPosition(part, demOri, field['PFD'], cmapPres, 'm', fig, ax, plotPart=True)
+        fig, ax = DFAtls.plotPosition(part, demOri, field['pfd'], cmapPres, 'm', fig, ax, plotPart=True)
         # fig1, ax1 = DFAtls.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
     # plt.show()
     # repeat = False
@@ -132,10 +138,25 @@ fieldRef = Fields[-1]
 fig1, ax1 = plt.subplots(figsize=(figW, figH))
 fig2, ax2 = plt.subplots(figsize=(figW, figH))
 fig3, ax3 = plt.subplots(figsize=(figW, figH))
-fig1, ax1 = DFAtls.plotPosition(particles, demOri, fields['PFD'], cmapPres, 'm', fig1, ax1, plotPart=False)
-fig2, ax2 = DFAtls.plotPosition(particles, demOri, fields['PV'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
-fig3, ax3 = DFAtls.plotPosition(particles, demOri, fields['PP']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
+fig1, ax1 = DFAtls.plotPosition(particles, demOri, fields['pfd'], cmapPres, 'm', fig1, ax1, plotPart=False)
+fig2, ax2 = DFAtls.plotPosition(particles, demOri, fields['pv'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
+fig3, ax3 = DFAtls.plotPosition(particles, demOri, fields['ppr']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
 plt.show()
+
+
+# Result parameters to be exported
+resTypesString = cfg['resType']
+resTypes = resTypesString.split('_')
+finalFields = Fields[-1]
+for resType in resTypes:
+    resField = finalFields[resType]
+    relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
+    dataName = relName + '_' + 'null' + '_'  + 'dfa' + '_'  + '0.155' + '_'  + resType
+    fU.writePeakResult(outDir, resField, demOri['header'], dataName)
+    log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
+
+# Generata plots for all peakFiles
+plotDict = oP.plotAllPeakFields(avalancheDir, cfgFull, cfgMain['FLAGS'], modName)
 
 
 # fig, ax = plt.subplots(figsize=(figW, figH))

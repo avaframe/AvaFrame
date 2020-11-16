@@ -104,9 +104,9 @@ def initializeSimulation(cfg, relRaster, dem):
     PV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
     fields = {}
-    fields['PV'] = PV
-    fields['PP'] = PP
-    fields['PFD'] = FD
+    fields['pv'] = PV
+    fields['ppr'] = PP
+    fields['pfd'] = FD
     fields['V'] = PV
     fields['P'] = PP
     fields['FD'] = FD
@@ -750,9 +750,9 @@ def updateFields(cfg, particles, force, dem, fields):
     ux = particles['ux']
     uy = particles['uy']
     uz = particles['uz']
-    PV = fields['PV']
-    PP = fields['PP']
-    PFD = fields['PFD']
+    PV = fields['pv']
+    PP = fields['ppr']
+    PFD = fields['pfd']
 
     #########################################
     # Update fields using a SPH approach
@@ -842,9 +842,9 @@ def updateFields(cfg, particles, force, dem, fields):
     fields['V'] = VNearest
     fields['P'] = PNearest
     fields['FD'] = FDNearest
-    fields['PV'] = PV
-    fields['PP'] = PP
-    fields['PFD'] = PFD
+    fields['pv'] = PV
+    fields['ppr'] = PP
+    fields['pfd'] = PFD
 
     hNN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='nearest')
     particles['hNearestNearest'] = hNN  # np.where(h < depMin, depMin, h)
