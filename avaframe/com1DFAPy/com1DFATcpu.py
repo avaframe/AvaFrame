@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
+from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFAtools as DFAtls
 # from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
@@ -31,10 +32,8 @@ cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
 
 # ------------------------
 # fetch input data
-inputDir = os.path.join(avalancheDir, 'Inputs')
-relFiles = glob.glob(inputDir+os.sep + 'REL'+os.sep + '*.shp')
-demFile = glob.glob(inputDir+os.sep+'*.asc')
-demOri = IOf.readRaster(demFile[0])
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFlags, flagDev=False)
+demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
 dem['header'].xllcenter = 0
@@ -42,6 +41,9 @@ dem['header'].yllcenter = 0
 dem['header'].xllcorner = 0
 dem['header'].yllcorner = 0
 
+# -----------------------
+# Initialize mesh
+dem = DFAtls.initializeMesh(dem)
 # ------------------------
 # process release to get it as a raster
 relRaster = DFAtls.prepareArea(releaseLine, demOri)
@@ -64,7 +66,7 @@ for massPart in MassPart:
     # ------------------------
     # initialize simulation : create particles, create resistance and
     # entrainment matrix, initialize fields, get normals and neighbours
-    dem, particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfg, relRaster, dem)
+    particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfg, relRaster, dem)
     NP.append(particles['Npart'])
     log.info('Initializted simulation. M = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
 

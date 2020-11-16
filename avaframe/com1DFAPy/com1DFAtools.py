@@ -29,6 +29,25 @@ debugPlot = False
 featLF = True
 
 
+def initializeMesh(dem):
+    # read dem header
+    header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
+    csz = header.cellsize
+    # get normal vector of the grid mesh
+    Nx, Ny, Nz = getNormalMesh(dem['rasterData'], csz)
+    dem['Nx'] = Nx
+    dem['Ny'] = Ny
+    dem['Nz'] = Nz
+
+    # get real Area
+    Area = getAreaMesh(Nx, Ny, Nz, csz)
+    dem['Area'] = Area
+
+    return dem
+
+
 def initializeSimulation(cfg, relRaster, dem):
     # get simulation parameters
     rho = cfg.getfloat('rho')
@@ -39,7 +58,7 @@ def initializeSimulation(cfg, relRaster, dem):
     ncols = header.ncols
     nrows = header.nrows
     csz = header.cellsize
-    S = csz * csz
+    A = dem['Area']
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     FD = np.zeros((nrows, ncols))
@@ -54,12 +73,12 @@ def initializeSimulation(cfg, relRaster, dem):
     # loop on non empty cells
     for indx, indy in zip(indX, indY):
         # number of particles for this cell
-        h = relRaster[indy][indx]
-        Vol = S * h
+        h = relRaster[indy, indx]
+        Vol = A[indy, indx] * h
         mass = Vol * rho
         nPart = np.ceil(mass / massPerPart).astype('int')
         Npart = Npart + nPart
-        partPerCell[indy][indx] = nPart
+        partPerCell[indy, indx] = nPart
         mPart = mass / nPart
         # TODO make this an independent function
         #######################
@@ -127,12 +146,6 @@ def initializeSimulation(cfg, relRaster, dem):
     t = 0
     particles['t'] = t
 
-    # get normal vector of the grid mesh
-    Nx, Ny, Nz = getNormalVect(dem['rasterData'], csz)
-    dem['Nx'] = Nx
-    dem['Ny'] = Ny
-    dem['Nz'] = Nz
-
     log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells' % (particles['mTot'], particles['Npart'], np.size(indY)))
 
     if debugPlot:
@@ -149,7 +162,7 @@ def initializeSimulation(cfg, relRaster, dem):
         fig.colorbar(im, cax=cax)
         plt.show()
 
-    return dem, particles, fields, Cres, Ment
+    return particles, fields, Cres, Ment
 
 
 def intializeMassEnt(dem):
@@ -1445,7 +1458,7 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
     return nx, ny, nz
 
 
-def getNormalVect(z, csz, num=4):
+def getNormalMesh(z, csz, num=4):
     n, m = np.shape(z)
     Nx = np.ones((n, m))
     Ny = np.ones((n, m))
@@ -1485,6 +1498,11 @@ def getNormalVect(z, csz, num=4):
     Nx, Ny, Nz = normalize(Nx, Ny, Nz)
 
     return Nx, Ny, Nz
+
+
+def getAreaMesh(Nx, Ny, Nz, csz):
+    A = 1/(Nz*Nz) * np.sqrt((Nz*Nz + Nx*Nx) * (Nz*Nz + Ny*Ny)) * csz*csz
+    return A
 
 
 def norm(x, y, z):

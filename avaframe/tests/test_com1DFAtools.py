@@ -65,10 +65,10 @@ def test_normalize(capfd):
     assert zn == pytest.approx(1/np.sqrt(2.), rel=atol)
 
 
-def test_getNormalVect(capfd):
+def test_getNormalMesh(capfd):
     '''projectOnRasterVect'''
     a = 1
-    b = 1
+    b = 2
     xllcenter = 0
     yllcenter = 0
     cellsize = 1
@@ -80,7 +80,7 @@ def test_getNormalVect(capfd):
     Z = a * X + b * Y
     Z1 = a * X * X + b * Y * Y
     for num in [4, 6, 8]:
-        Nx, Ny, Nz = DFAtls.getNormalVect(Z, cellsize, num=num)
+        Nx, Ny, Nz = DFAtls.getNormalMesh(Z, cellsize, num=num)
         atol = 1e-10
         TestNX = np.allclose(Nx[1:nrows-1, 1:ncols-1], -a * np.ones(np.shape(Y[1:nrows-1, 1:ncols-1])) / np.sqrt(1 + a * a + b * b), atol=atol)
         assert TestNX
@@ -89,7 +89,7 @@ def test_getNormalVect(capfd):
         TestNZ = np.allclose(Nz[1:nrows-1, 1:ncols-1], np.ones(np.shape(Y[1:nrows-1, 1:ncols-1])) / np.sqrt(1 + a * a + b * b), atol=atol)
         assert TestNZ
 
-        Nx, Ny, Nz = DFAtls.getNormalVect(Z1, cellsize, num=num)
+        Nx, Ny, Nz = DFAtls.getNormalMesh(Z1, cellsize, num=num)
         atol = 1e-10
         TestNX = np.allclose(Nx[1:nrows-1, 1:ncols-1], -2*a*X[1:nrows-1, 1:ncols-1] / np.sqrt(1 + 4*a*a*X[1:nrows-1, 1:ncols-1]*X[1:nrows-1, 1:ncols-1] + 4*b*b*Y[1:nrows-1, 1:ncols-1]*Y[1:nrows-1, 1:ncols-1]), atol=atol)
         assert TestNX
@@ -97,6 +97,28 @@ def test_getNormalVect(capfd):
         assert TestNY
         TestNZ = np.allclose(Nz[1:nrows-1, 1:ncols-1], 1 / np.sqrt(1 + 4*a*a*X[1:nrows-1, 1:ncols-1]*X[1:nrows-1, 1:ncols-1] + 4*b*b*Y[1:nrows-1, 1:ncols-1]*Y[1:nrows-1, 1:ncols-1]), atol=atol)
         assert TestNZ
+
+
+def test_getAreaMesh(capfd):
+    '''projectOnRasterVect'''
+    a = 1
+    b = 2
+    xllcenter = 0
+    yllcenter = 0
+    csz = 1
+    ncols = 15
+    nrows = 10
+    x = np.linspace(0, ncols-1, ncols)
+    y = np.linspace(0, nrows-1, nrows)
+    X, Y = np.meshgrid(x, y)
+    Z = a * X + b * Y
+    Nx, Ny, Nz = DFAtls.getNormalMesh(Z, csz, num=4)
+    Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
+    print(np.sqrt((1+a*a)*(1+b*b)))
+    print(Area)
+    atol = 1e-10
+    TestArea = np.allclose(Area[1:nrows-1, 1:ncols-1], np.sqrt((1+a*a)*(1+b*b)) * np.ones(np.shape(Y[1:nrows-1, 1:ncols-1])), atol=atol)
+    assert TestArea
 
 
 def test_getNeighbours(capfd):
