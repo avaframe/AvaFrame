@@ -70,6 +70,11 @@ dem['header'].xllcenter = 0
 dem['header'].yllcenter = 0
 dem['header'].xllcorner = 0
 dem['header'].yllcorner = 0
+
+
+# -----------------------
+# Initialize mesh
+dem = DFAtls.initializeMesh(dem)
 # ------------------------
 # process release info to get it as a raster
 relRaster = DFAtls.prepareArea(releaseLine, demOri)
@@ -86,8 +91,7 @@ cfgGen['massPerPart'] = str(massPart)
 workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 # create particles, create resistance and
 # entrainment matrix, initialize fields, get normals and neighbours
-dem, particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfgGen, relRaster, dem)
-
+particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfg, relRaster, dem)
 
 #+++++++++PERFORM SIMULAITON++++++++++++++++++++++
 # ------------------------
