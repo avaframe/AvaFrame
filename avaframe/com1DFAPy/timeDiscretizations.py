@@ -22,7 +22,7 @@ from avaframe.in3Utils import logUtils
 log = logging.getLogger(__name__)
 
 
-def getTimeStep(particles, dem, cfg):
+def getcflTimeStep(particles, dem, cfg):
     """ Compute cfl time step  """
 
     # determine max velocity of particles
