@@ -18,6 +18,7 @@ import matplotlib as mpl
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.initialiseDirs as inDirs
+import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
@@ -37,6 +38,9 @@ logName = 'testKernel'
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 modName = 'com1DFAPy'
+
+# Clean input directory(ies) of old work and output files
+initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
@@ -150,6 +154,8 @@ resTypes = resTypesString.split('_')
 finalFields = Fields[-1]
 for resType in resTypes:
     resField = finalFields[resType]
+    if resType == 'ppr':
+        resField = resField * 0.001
     relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
     dataName = relName + '_' + 'null' + '_'  + 'dfa' + '_'  + '0.155' + '_'  + resType
     fU.writePeakResult(outDir, resField, demOri['header'], dataName)
