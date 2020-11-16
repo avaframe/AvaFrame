@@ -52,6 +52,25 @@ def initializeMesh(dem):
     return dem
 
 
+def initializeMesh(dem):
+    # read dem header
+    header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
+    csz = header.cellsize
+    # get normal vector of the grid mesh
+    Nx, Ny, Nz = getNormalMesh(dem['rasterData'], csz)
+    dem['Nx'] = Nx
+    dem['Ny'] = Ny
+    dem['Nz'] = Nz
+
+    # get real Area
+    Area = getAreaMesh(Nx, Ny, Nz, csz)
+    dem['Area'] = Area
+
+    return dem
+
+
 def initializeSimulation(cfg, relRaster, dem):
     # get simulation parameters
     rho = cfg.getfloat('rho')
