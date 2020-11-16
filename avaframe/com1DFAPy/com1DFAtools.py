@@ -85,7 +85,10 @@ def initializeSimulation(cfg, relRaster, dem):
 
     particles['m'] = Mpart
     particles['h'] = Hpart
-    particles['h2'] = Hpart
+    particles['hNearestNearest'] = Hpart
+    particles['hNearestBilinear'] = Hpart
+    particles['hBilinearNearest'] = Hpart
+    particles['hBilinearBilinear'] = Hpart
     particles['InCell'] = InCell
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
@@ -183,6 +186,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         log.debug('Computing time step t = %f s', t)
         T = np.append(T, t)
         particles['t'] = t
+        Tcpu['nSave'] = nSave
 
         particles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu)
         U = np.append(U, norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
@@ -227,29 +231,43 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
-    if debugPlot:
-        hh = copy.deepcopy(particles['h'])
+    # plot depth computed with different interpolation methods
+    nSave = Tcpu['nSave']
+    dtSave = cfg.getfloat('dtSave')
+    if debugPlot and particles['t'] >= nSave * dtSave:
+        hNN = copy.deepcopy(particles['hNearestNearest'])
+        hNB = copy.deepcopy(particles['hNearestBilinear'])
         hSPH = copy.deepcopy(particles['hSPH'])
-        h2 = copy.deepcopy(particles['h2'])
-        indexSort = np.argsort(hh)
-        print(np.mean(hSPH))
-        fig, ax = plt.subplots(figsize=(figW, figH))
-        ax.set_title('flow depth per particle')
-        ax.plot(hSPH[indexSort], 'b', label='h from SPH')
-        ax.plot(h2[indexSort], 'g', label='h from SPH')
-        ax.plot(hh[indexSort], 'r', label='h from mesh')
-        plt.legend()
-        plt.show()#block=False)
+        hBN = copy.deepcopy(particles['hBilinearNearest'])
+        hBB = copy.deepcopy(particles['hBilinearBilinear'])
+        indexSort = np.argsort(hNN)
+        indexSortBB = np.argsort(hBB)
+
+        # print(np.mean(hSPH))
+        # fig, ax = plt.subplots(figsize=(2*figW, figH))
+        # ax.set_title('flow depth per particle')
+        # # ax.plot(hSPH[indexSort], 'b', linewidth=0.5, label='h from SPH')
+        # ax.plot(hBB[indexSort], 'y', linewidth=0.5, label='h from bilinear bilinear')
+        # # ax.plot(hBN[indexSort], 'g', linewidth=0.5, label='h from bilinear nearest')
+        # ax.plot(hNB[indexSort], 'r', linewidth=0.5, label='h from nearest bilinear')
+        # ax.plot(hNN[indexSort], 'k', linewidth=0.5, label='h from nearest nearest')
+        # plt.legend()
+        # plt.show()#block=False)
         # plt.pause(1)
         # plt.close()
+        ind = np.where(((particles['y']>905) & (particles['y']<1005)))
         # fig2 = plt.figure()
         # ax2 = fig2.add_subplot(111, projection='3d')
-        # ax2.scatter(particles['x'], particles['y'], hh)
-        #
-        # fig1 = plt.figure()
-        # ax1 = fig1.add_subplot(111, projection='3d')
-        # ax1.scatter(particles['x'], particles['y'], hSPH)
-        # plt.show()
+        # ax2.scatter(particles['x'][ind], particles['y'][ind], hNN[ind], 'k')
+        # ax2.scatter(particles['x'][ind], particles['y'][ind], hBB[ind], 'b')
+        # ax2.set_xlim3d(0, 1000)
+        # ax2.set_ylim3d(950,1050)
+        # ax2.set_zlim3d(0,1000)
+
+        fig1, ax1 = plt.subplots(figsize=(2*figW, figH))
+        ax1.plot(particles['x'][ind], hNN[ind], color='k', marker='.', linestyle = 'None')
+        ax1.plot(particles['x'][ind], hBB[ind], color='b', marker='.', linestyle = 'None')
+        plt.show()
 
     # update velocity and particle position
     startTime = time.time()
@@ -659,19 +677,16 @@ def updatePosition(cfg, particles, dem, force):
     uxNew = ux + (forceX + forceSPHX) * dt / mass
     uyNew = uy + (forceY + forceSPHY) * dt / mass
     uzNew = uz + (forceZ + forceSPHZ) * dt / mass
-    if (np.max(forceX / mass)) > 200 or (np.max(forceY / mass)) > 200 or (np.max(forceZ / mass)) > 200:
-        if (np.max(forceX / mass)) > (np.max(forceY / mass)) and (np.max(forceX / mass)) > (np.max(forceZ / mass)):
-            ind = np.argmax(forceX / mass)
-        elif (np.max(forceY / mass)) > (np.max(forceX / mass)) and (np.max(forceY / mass)) > (np.max(forceZ / mass)):
-            ind = np.argmax(forceY / mass)
-        else:
-            ind = np.argmax(forceZ / mass)
-
+    # print anormally big values
+    uNew = norm(uxNew, uyNew, uzNew)
+    if np.max(uNew) > 100:
+        ind = np.argmax(uNew)
         A = mass[ind] / (h[ind] * rho)
         print('particle index : ', ind)
         print((forceX / mass)[ind])
         print((forceY / mass)[ind])
         print((forceZ / mass)[ind])
+        print(uNew[ind])
         print(A)
     # update mass
     massNew = mass + dM
@@ -698,6 +713,9 @@ def updatePosition(cfg, particles, dem, force):
     particles['uy'] = uyNew - uN * ny
     particles['uz'] = uzNew - uN * nz
 
+    #################################################################
+    # this is dangerous!!!!!!!!!!!!!!
+    ###############################################################
     # remove particles that are not located on the mesh any more
     particles = removeOutPart(cfg, particles, dem)
     # uN = particles['ux']*nx + particles['uy']*ny + particles['uz']*nz
@@ -736,109 +754,110 @@ def updateFields(cfg, particles, force, dem, fields):
     PP = fields['PP']
     PFD = fields['PFD']
 
-    # Mass1 = np.zeros((nrows, ncols))
-    # VX = np.zeros((nrows, ncols))
-    # VY = np.zeros((nrows, ncols))
-    # VZ = np.zeros((nrows, ncols))
-    # Mass1 = pointsToRasterSPH(particles, rho, Z, m, Mass1, csz=csz)
-    # VX = pointsToRasterSPH(particles, rho, Z, ux, VX, csz=csz)
-    # VY = pointsToRasterSPH(particles, rho, Z, uy, VY, csz=csz)
-    # VZ = pointsToRasterSPH(particles, rho, Z, uz, VZ, csz=csz)
-    # V = norm(VX, VY, VZ)
-    # FD = Mass / (S * rho)
-    # P = V * V * rho
-    # PV = np.where(V > PV, V, PV)
-    # PP = np.where(P > PP, P, PP)
-    # PFD = np.where(FD > PFD, FD, PFD)
+    #########################################
+    # Update fields using a SPH approach
+    MassSPH = np.zeros((nrows, ncols))
+    hSPH = np.ones((nrows, ncols))
+    VXSPH = np.zeros((nrows, ncols))
+    VYSPH = np.zeros((nrows, ncols))
+    VZSPH = np.zeros((nrows, ncols))
+    MassSPH = pointsToRasterSPH(particles, rho, Z, m, MassSPH, csz=csz)
+    hSPH = pointsToRasterSPH(particles, rho, Z, m, hSPH, csz=csz)
+    VXSPH = pointsToRasterSPH(particles, rho, Z, ux, VXSPH, csz=csz)
+    VYSPH = pointsToRasterSPH(particles, rho, Z, uy, VYSPH, csz=csz)
+    VZSPH = pointsToRasterSPH(particles, rho, Z, uz, VZSPH, csz=csz)
+    VSPH = norm(VXSPH, VYSPH, VZSPH)
+    FDSPH = hSPH
+    # FDSPH = MassSPH / (S * rho)
+    PSPH = VSPH * VSPH * rho
+    # PV = np.where(VSPH > PV, VSPH, PV)
+    # PP = np.where(PSPH > PP, PSPH, PP)
+    # PFD = np.where(FDSPH > PFD, FDSPH, PFD)
 
-    Mass2 = np.zeros((nrows, ncols))
-    MomX = np.zeros((nrows, ncols))
-    MomY = np.zeros((nrows, ncols))
-    MomZ = np.zeros((nrows, ncols))
+    #########################################
+    # Update fields using a bilinear interpolation
+    MassBilinear = np.zeros((nrows, ncols))
+    MomBilinearX = np.zeros((nrows, ncols))
+    MomBilinearY = np.zeros((nrows, ncols))
+    MomBilinearZ = np.zeros((nrows, ncols))
     #
     # # startTime = time.time()
-    Mass2 = geoTrans.pointsToRaster(x, y, m, Mass2, csz=csz, interp='bilinear')
-    MomX = geoTrans.pointsToRaster(x, y, m * ux, MomX, csz=csz, interp='bilinear')
-    MomY = geoTrans.pointsToRaster(x, y, m * uy, MomY, csz=csz, interp='bilinear')
-    MomZ = geoTrans.pointsToRaster(x, y, m * uz, MomZ, csz=csz, interp='bilinear')
+    MassBilinear = geoTrans.pointsToRaster(x, y, m, MassBilinear, csz=csz, interp='bilinear')
+    MomBilinearX = geoTrans.pointsToRaster(x, y, m * ux, MomBilinearX, csz=csz, interp='bilinear')
+    MomBilinearY = geoTrans.pointsToRaster(x, y, m * uy, MomBilinearY, csz=csz, interp='bilinear')
+    MomBilinearZ = geoTrans.pointsToRaster(x, y, m * uz, MomBilinearZ, csz=csz, interp='bilinear')
 
-    # VX = np.where(Mass2 > 0, MomX/Mass2, MomX)
-    # VY = np.where(Mass2 > 0, MomY/Mass2, MomY)
-    # VZ = np.where(Mass2 > 0, MomZ/Mass2, MomZ)
-    # V = norm(VX, VY, VZ)
-    # FD = Mass2 / (S * rho)
-    # P = V * V * rho
-    # PV = np.where(V > PV, V, PV)
-    # PP = np.where(P > PP, P, PP)
-    # PFD = np.where(FD > PFD, FD, PFD)
+    # VXBilinear = np.where(MassBilinear > 0, MomBilinearX/MassBilinear, MomBilinearX)
+    # VYBilinear = np.where(MassBilinear > 0, MomBilinearY/MassBilinear, MomBilinearY)
+    # VZBilinear = np.where(MassBilinear > 0, MomBilinearZ/MassBilinear, MomBilinearZ)
+    # VBilinear = norm(VXBilinear, VYBilinear, VZBilinear)
+    FDBilinear = MassBilinear / (S * rho)
+    # PBilinear = VBilinear * VBilinear * rho
+    # PV = np.where(VBilinear > PV, VBilinear, PV)
+    # PP = np.where(PBilinear > PP, PBilinear, PP)
+    # PFD = np.where(FDBilinear > PFD, FDBilinear, PFD)
     # # endTime = time.time()
     # # log.info(('time = %s s' % (endTime - startTime)))
 
-    Mass = np.zeros((nrows, ncols))
-    MomX = np.zeros((nrows, ncols))
-    MomY = np.zeros((nrows, ncols))
-    MomZ = np.zeros((nrows, ncols))
+    #########################################
+    # Update fields using a nearest interpolation
+    MassNearest = np.zeros((nrows, ncols))
+    MomNearestX = np.zeros((nrows, ncols))
+    MomNearestY = np.zeros((nrows, ncols))
+    MomNearestZ = np.zeros((nrows, ncols))
 
     # startTime = time.time()
     iC = particles['InCell'][:, 2]
-    Mass = Mass.flatten()
-    np.add.at(Mass, iC, m)
-    MomX = MomX.flatten()
-    np.add.at(MomX, iC, m * ux)
-    MomY = MomY.flatten()
-    np.add.at(MomY, iC, m * uy)
-    MomZ = MomZ.flatten()
-    np.add.at(MomZ, iC, m * uz)
-    Mass = np.reshape(Mass, (nrows, ncols))
-    MomX = np.reshape(MomX, (nrows, ncols))
-    MomY = np.reshape(MomY, (nrows, ncols))
-    MomZ = np.reshape(MomZ, (nrows, ncols))
-    VX = np.where(Mass > 0, MomX/Mass, MomX)
-    VY = np.where(Mass > 0, MomY/Mass, MomY)
-    VZ = np.where(Mass > 0, MomZ/Mass, MomZ)
-    V = norm(VX, VY, VZ)
-    FD = Mass / (S * rho)
-    P = V * V * rho
-    PV = np.where(V > PV, V, PV)
-    PP = np.where(P > PP, P, PP)
-    PFD = np.where(FD > PFD, FD, PFD)
-
-    # same with a loop
-    # # loop on particles
-    # for j in range(Npart):
-    #     indx, indy, ic = particles['InCell'][j]
-    #
-    #     Mass[indy, indx] = Mass[indy, indx] + m[j]
-    #     MomX[indy, indx] = MomX[indy, indx] + m[j] * ux[j]
-    #     MomY[indy, indx] = MomY[indy, indx] + m[j] * uy[j]
-    #     MomZ[indy, indx] = MomZ[indy, indx] + m[j] * uz[j]
+    MassNearest = MassNearest.flatten()
+    np.add.at(MassNearest, iC, m)
+    MomNearestX = MomNearestX.flatten()
+    np.add.at(MomNearestX, iC, m * ux)
+    MomNearestY = MomNearestY.flatten()
+    np.add.at(MomNearestY, iC, m * uy)
+    MomNearestZ = MomNearestZ.flatten()
+    np.add.at(MomNearestZ, iC, m * uz)
+    MassNearest = np.reshape(MassNearest, (nrows, ncols))
+    MomNearestX = np.reshape(MomNearestX, (nrows, ncols))
+    MomNearestY = np.reshape(MomNearestY, (nrows, ncols))
+    MomNearestZ = np.reshape(MomNearestZ, (nrows, ncols))
+    VXNearest = np.where(MassNearest > 0, MomNearestX/MassNearest, MomNearestX)
+    VYNearest = np.where(MassNearest > 0, MomNearestY/MassNearest, MomNearestY)
+    VZNearest = np.where(MassNearest > 0, MomNearestZ/MassNearest, MomNearestZ)
+    VNearest = norm(VXNearest, VYNearest, VZNearest)
+    FDNearest = MassNearest / (S * rho)
+    PNearest = VNearest * VNearest * rho
+    PV = np.where(VNearest > PV, VNearest, PV)
+    PP = np.where(PNearest > PP, PNearest, PP)
+    PFD = np.where(FDNearest > PFD, FDNearest, PFD)
 
     # endTime = time.time()
     # log.info(('time = %s s' % (endTime - startTime)))
 
-    # print(np.sum(Mass))
-    # print(np.sum(Mass1))
-    # print(np.sum(Mass2))
-    # plotPosition(particles, dem, Mass)
-    # plotPosition(particles, dem, Mass2)
-    #
+    #######################################
+    print(np.sum(MassNearest))
+    print(np.sum(MassBilinear))
+    print(np.sum(MassSPH))
 
-    fields['V'] = V
-    fields['P'] = P
-    fields['FD'] = FD
+    ###################################
+    fields['V'] = VNearest
+    fields['P'] = PNearest
+    fields['FD'] = FDNearest
     fields['PV'] = PV
     fields['PP'] = PP
     fields['PFD'] = PFD
 
-    h, _ = geoTrans.projectOnRasterVectRoot(x, y, FD, csz=csz, interp='nearest')
-    particles['h'] = h  # np.where(h < depMin, depMin, h)
-    h2, _ = geoTrans.projectOnRasterVectRoot(x, y, FD, csz=csz, interp='bilinear')
-    particles['h2'] = h2  # np.where(h2 < depMin, depMin, h2)
+    hNN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='nearest')
+    particles['hNearestNearest'] = hNN  # np.where(h < depMin, depMin, h)
+    hNB, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='bilinear')
+    particles['hNearestBilinear'] = hNB  # np.where(h < depMin, depMin, h)
+    hBN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='nearest')
+    particles['hBilinearNearest'] = hBN  # np.where(h2 < depMin, depMin, h2)
+    hBB, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='bilinear')
+    particles['hBilinearBilinear'] = hBB  # np.where(h2 < depMin, depMin, h2)
 
-    # print('minimum h = ', np.min(particles['h']))
-    # print('maximum h = ', np.max(particles['h']))
-    # print('minimum h2 = ', np.min(particles['h2']))
-    # print('maximum h2 = ', np.max(particles['h2']))
+    # choose the interpolation method
+    particles['h'] = hNN
+
     # remove particles that have a too small height
     # particles = removeSmallPart(hmin, particles, dem)
 
