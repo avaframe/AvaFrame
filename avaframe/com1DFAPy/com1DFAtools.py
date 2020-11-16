@@ -890,7 +890,7 @@ def updateFields(cfg, particles, force, dem, fields):
     header = dem['header']
     Z = dem['rasterData']
     csz = dem['header'].cellsize
-    S = csz * csz
+    A = dem['Area']
     ncols = header.ncols
     nrows = header.nrows
     Npart = particles['Npart']
@@ -919,7 +919,7 @@ def updateFields(cfg, particles, force, dem, fields):
     VZSPH = pointsToRasterSPH(particles, rho, Z, uz, VZSPH, csz=csz)
     VSPH = norm(VXSPH, VYSPH, VZSPH)
     FDSPH = hSPH
-    # FDSPH = MassSPH / (S * rho)
+    # FDSPH = MassSPH / (A * rho)
     PSPH = VSPH * VSPH * rho
     # PV = np.where(VSPH > PV, VSPH, PV)
     # PP = np.where(PSPH > PP, PSPH, PP)
@@ -942,7 +942,7 @@ def updateFields(cfg, particles, force, dem, fields):
     # VYBilinear = np.where(MassBilinear > 0, MomBilinearY/MassBilinear, MomBilinearY)
     # VZBilinear = np.where(MassBilinear > 0, MomBilinearZ/MassBilinear, MomBilinearZ)
     # VBilinear = norm(VXBilinear, VYBilinear, VZBilinear)
-    FDBilinear = MassBilinear / (S * rho)
+    FDBilinear = MassBilinear / (A * rho)
     # PBilinear = VBilinear * VBilinear * rho
     # PV = np.where(VBilinear > PV, VBilinear, PV)
     # PP = np.where(PBilinear > PP, PBilinear, PP)
@@ -975,7 +975,7 @@ def updateFields(cfg, particles, force, dem, fields):
     VYNearest = np.where(MassNearest > 0, MomNearestY/MassNearest, MomNearestY)
     VZNearest = np.where(MassNearest > 0, MomNearestZ/MassNearest, MomNearestZ)
     VNearest = norm(VXNearest, VYNearest, VZNearest)
-    FDNearest = MassNearest / (S * rho)
+    FDNearest = MassNearest / (A * rho)
     PNearest = VNearest * VNearest * rho
     PV = np.where(VNearest > PV, VNearest, PV)
     PP = np.where(PNearest > PP, PNearest, PP)
