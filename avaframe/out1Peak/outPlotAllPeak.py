@@ -15,16 +15,16 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.out3Plot.makePalette as makePalette
 
 
-def plotAllPeakFields(avaDir, cfg, cfgFLAGS):
+def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
     """ Plot all peak fields and return dictionary with paths to plots """
 
     # Load all infos on simulations
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+    inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
     peakFiles = fU.makeSimDict(inputDir, '', avaDir)
 
     # Output directory
     if cfgFLAGS.getboolean('ReportDir'):
-        outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
+        outDir = os.path.join(avaDir, 'Outputs', modName, 'reports')
         fU.makeADir(outDir)
     else:
         outDir = os.path.join(avaDir, 'Outputs', 'out1Peak')
