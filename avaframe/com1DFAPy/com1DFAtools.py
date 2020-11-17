@@ -209,8 +209,9 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         Tcpu['nSave'] = nSave
 
         # Perform computations
+        # choose which time stepping
         # particles, fields, Tcpu, dt = computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
-        pyarticles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+        particles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
         # Save desired parameters and export to Lists for saving interval
         U = np.append(U, norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
         Z = np.append(Z, particles['z'][0])
