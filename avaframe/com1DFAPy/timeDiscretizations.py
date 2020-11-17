@@ -15,6 +15,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+import avaframe.com1DFAPy.com1DFAtools as DFAtls
 
 
 # create local logger
@@ -26,7 +27,7 @@ def getcflTimeStep(particles, dem, cfg):
     """ Compute cfl time step  """
 
     # determine max velocity of particles
-    vmagnitude = np.sqrt(particles['ux']**2 + particles['uy']**2 + particles['uz']**2)
+    vmagnitude = DFAtls.norm(particles['ux'], particles['uy'], particles['uz'])
     vmax = np.amax(vmagnitude)
 
     # get cell size
@@ -43,6 +44,10 @@ def getcflTimeStep(particles, dem, cfg):
         dtStable = float(cfg['maxdT'])
     else:
         dtStable = (cMax * csz) / vmax
+        if dtStable < 0.05:
+            dtStable = 0.05
+        elif dtStable > 1:
+            dtStable = 1
 
     # 'overwrite' dt that is read from cfg ini file
     cfg['dt'] = str(dtStable)
