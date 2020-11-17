@@ -67,6 +67,9 @@ def initializeMesh(dem):
     # get real Area
     Area = getAreaMesh(Nx, Ny, Nz, csz)
     dem['Area'] = Area
+    log.info('Largest cell area: %f m²' % (np.amax(Area)))
+    # print('Projected Area :', ncols * nrows * csz * csz)
+    # print('Total Area :', np.sum(Area))
 
     return dem
 
