@@ -44,6 +44,9 @@ def initializeMesh(dem):
     # get real Area
     Area = getAreaMesh(Nx, Ny, Nz, csz)
     dem['Area'] = Area
+    log.info('Largest cell area: %f m²' % (np.amax(Area)))
+    # print('Projected Area :', ncols * nrows * csz * csz)
+    # print('Total Area :', np.sum(Area))
 
     return dem
 
@@ -76,21 +79,9 @@ def initializeSimulation(cfg, relRaster, dem):
         h = relRaster[indy, indx]
         Vol = A[indy, indx] * h
         mass = Vol * rho
-        nPart = np.ceil(mass / massPerPart).astype('int')
+        xpart, ypart, mPart, nPart = placeParticles(mass, indx, indy, csz, massPerPart)
         Npart = Npart + nPart
         partPerCell[indy, indx] = nPart
-        mPart = mass / nPart
-        # TODO make this an independent function
-        #######################
-        # start ###############
-        # place particles randomly in the cell
-        xpart = csz * (np.random.rand(nPart) - 0.5 + indx)
-        ypart = csz * (np.random.rand(nPart) - 0.5 + indy)
-        # if one particle in center of cell
-        # xpart = csz * indx
-        # ypart = csz * indy
-        # end #################
-        #######################
         # initialize field Flow depth
         FD[indY, indX] = h
         # initialize particles position mass height...
@@ -153,16 +144,40 @@ def initializeSimulation(cfg, relRaster, dem):
         y = np.arange(nrows) * csz
         fig, ax = plt.subplots(figsize=(figW, figH))
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        ref0, im = NonUnifIm(ax, x, y, relRaster, 'x [m]', 'y [m]',
+        ref0, im = NonUnifIm(ax, x, y, A, 'x [m]', 'y [m]',
                              extent=[x.min(), x.max(), y.min(), y.max()],
                              cmap=cmap, norm=None)
         ax.plot(Xpart, Ypart, 'or', linestyle='None')
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.1)
-        fig.colorbar(im, cax=cax)
+        addColorBar(im, ax, None, 'm²')
         plt.show()
 
     return particles, fields, Cres, Ment
+
+
+def placeParticles(mass, indx, indy, csz, massPerPart):
+    n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
+    nPart = n*n
+    mPart = mass / nPart
+    d = csz/n
+    pos = np.linspace(0, csz-d, n) + d/2
+    x, y = np.meshgrid(pos, pos)
+    x.flatten()
+    y.flatten()
+    # TODO make this an independent function
+    #######################
+    # start ###############
+    # place particles equaly distributed
+    xpart = csz * (- 0.5 + indx) + x
+    ypart = csz * (- 0.5 + indy) + y
+    # place particles randomly in the cell
+    # xpart = csz * (np.random.rand(nPart) - 0.5 + indx)
+    # ypart = csz * (np.random.rand(nPart) - 0.5 + indy)
+    # if one particle in center of cell
+    # xpart = csz * indx
+    # ypart = csz * indy
+    # end #################
+    #######################
+    return xpart, ypart, mPart, nPart
 
 
 def intializeMassEnt(dem):
@@ -220,7 +235,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         dt = cfg.getfloat('dt')
         t = t + dt
         nIter = nIter + 1
-        log.debug('Computing time step t = %f s', t)
+        log.info('Computing time step t = %f s', t)
         T = np.append(T, t)
         particles['t'] = t
         Tcpu['nSave'] = nSave
@@ -488,11 +503,15 @@ def polygon2Raster(demHeader, Line, Mask):
     Mask = np.where(Mask > 0, 1, 0)
 
     if debugPlot:
+        x = np.arange(ncols) * csz
+        y = np.arange(nrows) * csz
         fig, ax = plt.subplots(figsize=(figW, figH))
         ax.set_title('Release area')
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        im = plt.imshow(Mask, cmap, origin='lower')
-        ax.plot(xCoord0, yCoord0, 'r', label='release polyline')
+        ref0, im = NonUnifIm(ax, x, y, Mask, 'x [m]', 'y [m]',
+                             extent=[x.min(), x.max(), y.min(), y.max()],
+                             cmap=cmap, norm=None)
+        ax.plot(xCoord0 * csz, yCoord0 * csz, 'r', label='release polyline')
         plt.legend()
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
@@ -799,8 +818,9 @@ def computeForceSPH(cfg, particles, force, dem):
 
 def updatePosition(cfg, particles, dem, force):
     dt = cfg.getfloat('dt')
-    log.info('dt used now is %f' % dt)
+    log.debug('dt used now is %f' % dt)
     gravAcc = cfg.getfloat('gravAcc')
+    rho = cfg.getfloat('rho')
     csz = dem['header'].cellsize
     Nx = dem['Nx']
     Ny = dem['Ny']
@@ -907,23 +927,23 @@ def updateFields(cfg, particles, force, dem, fields):
 
     #########################################
     # Update fields using a SPH approach
-    MassSPH = np.zeros((nrows, ncols))
-    hSPH = np.ones((nrows, ncols))
-    VXSPH = np.zeros((nrows, ncols))
-    VYSPH = np.zeros((nrows, ncols))
-    VZSPH = np.zeros((nrows, ncols))
-    MassSPH = pointsToRasterSPH(particles, rho, Z, m, MassSPH, csz=csz)
-    hSPH = pointsToRasterSPH(particles, rho, Z, m, hSPH, csz=csz)
-    VXSPH = pointsToRasterSPH(particles, rho, Z, ux, VXSPH, csz=csz)
-    VYSPH = pointsToRasterSPH(particles, rho, Z, uy, VYSPH, csz=csz)
-    VZSPH = pointsToRasterSPH(particles, rho, Z, uz, VZSPH, csz=csz)
-    VSPH = norm(VXSPH, VYSPH, VZSPH)
-    FDSPH = hSPH
-    # FDSPH = MassSPH / (A * rho)
-    PSPH = VSPH * VSPH * rho
-    # PV = np.where(VSPH > PV, VSPH, PV)
-    # PP = np.where(PSPH > PP, PSPH, PP)
-    # PFD = np.where(FDSPH > PFD, FDSPH, PFD)
+    # MassSPH = np.zeros((nrows, ncols))
+    # hSPH = np.ones((nrows, ncols))
+    # VXSPH = np.zeros((nrows, ncols))
+    # VYSPH = np.zeros((nrows, ncols))
+    # VZSPH = np.zeros((nrows, ncols))
+    # MassSPH = pointsToRasterSPH(particles, rho, Z, m, MassSPH, csz=csz)
+    # hSPH = pointsToRasterSPH(particles, rho, Z, m, hSPH, csz=csz)
+    # VXSPH = pointsToRasterSPH(particles, rho, Z, ux, VXSPH, csz=csz)
+    # VYSPH = pointsToRasterSPH(particles, rho, Z, uy, VYSPH, csz=csz)
+    # VZSPH = pointsToRasterSPH(particles, rho, Z, uz, VZSPH, csz=csz)
+    # VSPH = norm(VXSPH, VYSPH, VZSPH)
+    # FDSPH = hSPH
+    # # FDSPH = MassSPH / (A * rho)
+    # PSPH = VSPH * VSPH * rho
+    # # PV = np.where(VSPH > PV, VSPH, PV)
+    # # PP = np.where(PSPH > PP, PSPH, PP)
+    # # PFD = np.where(FDSPH > PFD, FDSPH, PFD)
 
     #########################################
     # Update fields using a bilinear interpolation
@@ -985,9 +1005,9 @@ def updateFields(cfg, particles, force, dem, fields):
     # log.info(('time = %s s' % (endTime - startTime)))
 
     #######################################
-    print(np.sum(MassNearest))
-    print(np.sum(MassBilinear))
-    print(np.sum(MassSPH))
+    # print(np.sum(MassNearest))
+    # print(np.sum(MassBilinear))
+    # print(np.sum(MassSPH))
 
     ###################################
     fields['V'] = VNearest
@@ -1004,10 +1024,12 @@ def updateFields(cfg, particles, force, dem, fields):
     hBN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='nearest')
     particles['hBilinearNearest'] = hBN  # np.where(h2 < depMin, depMin, h2)
     hBB, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='bilinear')
-    particles['hBilinearBilinear'] = hBB  # np.where(h2 < depMin, depMin, h2)
+
 
     # choose the interpolation method
-    particles['h'] = hNN
+    hBB = np.where(hBB < 0.1, 0.1, hBB)
+    particles['hBilinearBilinear'] = hBB  # np.where(h2 < depMin, depMin, h2)
+    particles['h'] = hBB
 
     # remove particles that have a too small height
     # particles = removeSmallPart(hmin, particles, dem)
@@ -1465,35 +1487,146 @@ def getNormalMesh(z, csz, num=4):
     Nz = np.ones((n, m))
     # first and last row, first and last column are inacurate
     if num == 4:
+        # filling the inside of the matrix
         # normal calculation with 4 triangles
-        # (Zl - Zr) * csz
+        # (Zl - Zr) / csz
         Nx[1:n-1, 1:m-1] = (z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) / csz
         # (Zd - Zu) * csz
         Ny[1:n-1, 1:m-1] = (z[0:n-2, 1:m-1] - z[2:n, 1:m-1]) / csz
         Nz = 2 * Nz
+        # filling the first col of the matrix
+        # -2*(Zr - Zp) / csz
+        Nx[1:n-1, 0] = - 2*(z[1:n-1, 1] - z[1:n-1, 0]) / csz
+        # (Zd - Zu) / csz
+        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0]) / csz
+        # filling the last col of the matrix
+        # 2*(Zl - Zp) / csz
+        Nx[1:n-1, m-1] = 2*(z[1:n-1, m-2] - z[1:n-1, m-1]) / csz
+        # (Zd - Zu) / csz
+        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1]) / csz
+        # filling the first row of the matrix
+        # (Zl - Zr) / csz
+        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m]) / csz
+        # -2*(Zu - Zp) / csz
+        Ny[0, 1:m-1] = - 2*(z[1, 1:m-1] - z[0, 1:m-1]) / csz
+        # filling the last row of the matrix
+        # (Zl - Zr) / csz
+        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m]) / csz
+        # 2*(Zd - Zp) / csz
+        Ny[n-1, 1:m-1] = 2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) / csz
+        # filling the corners of the matrix
+        Nx[0, 0] = -(z[0, 1] - z[0, 0]) / csz
+        Ny[0, 0] = -(z[1, 0] - z[0, 0]) / csz
+        Nz[0, 0] = 1
+        Nx[n-1, 0] = -(z[n-1, 1] - z[n-1, 0]) / csz
+        Ny[n-1, 0] = (z[n-2, 0] - z[n-1, 0]) / csz
+        Nz[n-1, 0] = 1
+        Nx[0, m-1] = (z[0, m-2] - z[0, m-1]) / csz
+        Ny[0, m-1] = -(z[1, m-1] - z[0, m-1]) / csz
+        Nz[0, m-1] = 1
+        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1]) / csz
+        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1]) / csz
+        Nz[n-1, m-1] = 1
 
     if num == 6:
+        # filling the inside of the matrix
         # normal calculation with 6 triangles
-        # (2*(Zl - Zr) - Zur + Zdl + Zu - Zd) * csz
+        # (2*(Zl - Zr) - Zur + Zdl + Zu - Zd) / csz
         Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
                             - z[2:n, 2:m] + z[0:n-2, 0:m-2]
                             + z[2:n, 1:m-1] - z[0:n-2, 1:m-1]) / csz
-        # (2*(Zd - Zu) - Zur + Zdl - Zl + Zr) * csz
+        # (2*(Zd - Zu) - Zur + Zdl - Zl + Zr) / csz
         Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1])
                             - z[2:n, 2:m] + z[0:n-2, 0:m-2]
                             - z[1:n-1, 0:m-2] + z[1:n-1, 2:m]) / csz
         Nz = 6 * Nz
+        # filling the first col of the matrix
+        # (- 2*(Zr - Zp) + Zu - Zur ) / csz
+        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0]) + z[2:n, 0] - z[2:n, 1]) / csz
+        # (Zd - Zu + Zr - Zur) / csz
+        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0] + z[1:n-1, 1] - z[2:n, 1]) / csz
+        Nz[1:n-1, 0] = 3
+        # filling the last col of the matrix
+        # (2*(Zl - Zp) + Zdl - Zd) / csz
+        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2, m-2] - z[0:n-2, m-1]) / csz
+        # (Zd - Zu + Zdl - Zl) / csz
+        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1] + z[0:n-2, m-2] - z[1:n-1, m-2]) / csz
+        Nz[1:n-1, m-1] = 3
+        # filling the first row of the matrix
+        # (Zl - Zr + Zu - Zur) / csz
+        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m] + z[1, 1:m-1] - z[1, 2:m]) / csz
+        # (-2*(Zu - Zp) + Zr - Zur) / csz
+        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m] - z[1, 2:m]) / csz
+        Nz[0, 1:m-1] = 3
+        # filling the last row of the matrix
+        # (Zl - Zr + Zdl - Zd) / csz
+        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m] + z[n-2, 0:m-2] - z[n-2, 1:m-1]) / csz
+        # (2*(Zd - Zp) + Zdl - Zl) / csz
+        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2] - z[n-1, 0:m-2]) / csz
+        Nz[n-1, 1:m-1] = 3
+        # filling the corners of the matrix
+        Nx[0, 0] = (z[1, 0] - z[1, 1] - (z[0, 1] - z[0, 0])) / csz
+        Ny[0, 0] = (z[0, 1] - z[1, 1] - (z[1, 0] - z[0, 0])) / csz
+        Nz[0, 0] = 2
+        Nx[n-1, 0] = -(z[n-1, 1] - z[n-1, 0]) / csz
+        Ny[n-1, 0] = (z[n-2, 0] - z[n-1, 0]) / csz
+        Nz[n-1, 0] = 1
+        Nx[0, m-1] = (z[0, m-2] - z[0, m-1]) / csz
+        Ny[0, m-1] = -(z[1, m-1] - z[0, m-1]) / csz
+        Nz[0, m-1] = 1
+        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1] + z[n-2, m-2] - z[n-2, m-1]) / csz
+        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1] + z[n-2, m-2] - z[n-1, m-2]) / csz
+        Nz[n-1, m-1] = 2
+
     if num == 8:
+        # filling the inside of the matrix
         # normal calculation with 8 triangles
-        # (2*(Zl - Zr) + Zul - Zur + Zdl - Zdr) * csz
+        # (2*(Zl - Zr) + Zul - Zur + Zdl - Zdr) / csz
         Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
                             + z[2:n, 0:m-2] - z[2:n, 2:m]
                             + z[0:n-2, 0:m-2] - z[0:n-2, 2:m]) / csz
-        # (2*(Zd - Zu) - Zul - Zur + Zdl + Zdr) * csz
+        # (2*(Zd - Zu) - Zul - Zur + Zdl + Zdr) / csz
         Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1])
                             - z[2:n, 0:m-2] - z[2:n, 2:m]
                             + z[0:n-2, 0:m-2] + z[0:n-2, 2:m]) / csz
         Nz = 8 * Nz
+        # filling the first col of the matrix
+        # (- 2*(Zr - Zp) + Zu - Zur + Zd - Zdr) / csz
+        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0]) + z[2:n, 0] - z[2:n, 1] + z[0:n-2, 0] - z[0:n-2, 1]) / csz
+        # (Zd - Zu + Zdr - Zur) / csz
+        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0] + z[0:n-2, 1] - z[2:n, 1]) / csz
+        Nz[1:n-1, 0] = 4
+        # filling the last col of the matrix
+        # (2*(Zl - Zp) + Zdl - Zd + Zul - Zu) / csz
+        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2, m-2] - z[0:n-2, m-1] + z[2:n, m-2] - z[2:n, m-1]) / csz
+        # (Zd - Zu + Zdl - Zul) / csz
+        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1] + z[0:n-2, m-2] - z[2:n, m-2]) / csz
+        Nz[1:n-1, m-1] = 4
+        # filling the first row of the matrix
+        # (Zl - Zr + Zul - Zur) / csz
+        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m] + z[1, 0:m-2] - z[1, 2:m]) / csz
+        # (-2*(Zu - Zp) + Zr - Zur + Zl - Zul) / csz
+        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m] - z[1, 2:m] + z[0, 0:m-2] - z[1, 0:m-2]) / csz
+        Nz[0, 1:m-1] = 4
+        # filling the last row of the matrix
+        # (Zl - Zr + Zdl - Zdr) / csz
+        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m] + z[n-2, 0:m-2] - z[n-2, 2:m]) / csz
+        # (2*(Zd - Zp) + Zdl - Zl + Zdr - Zr) / csz
+        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2] - z[n-1, 0:m-2] + z[n-2, 2:m] - z[n-1, 2:m]) / csz
+        Nz[n-1, 1:m-1] = 4
+        # filling the corners of the matrix
+        Nx[0, 0] = (z[1, 0] - z[1, 1] - (z[0, 1] - z[0, 0])) / csz
+        Ny[0, 0] = (z[0, 1] - z[1, 1] - (z[1, 0] - z[0, 0])) / csz
+        Nz[0, 0] = 2
+        Nx[n-1, 0] = (-(z[n-1, 1] - z[n-1, 0]) + z[n-2, 0] - z[n-2, 1]) / csz
+        Ny[n-1, 0] = (z[n-2, 1] - z[n-1, 1] + z[n-2, 0] - z[n-1, 0]) / csz
+        Nz[n-1, 0] = 2
+        Nx[0, m-1] = (z[1, m-2] - z[1, m-1] + z[0, m-2] - z[0, m-1]) / csz
+        Ny[0, m-1] = (-(z[1, m-1] - z[0, m-1]) + z[0, m-2] - z[1, m-2]) / csz
+        Nz[0, m-1] = 2
+        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1] + z[n-2, m-2] - z[n-2, m-1]) / csz
+        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1] + z[n-2, m-2] - z[n-1, m-2]) / csz
+        Nz[n-1, m-1] = 2
 
     Nx, Ny, Nz = normalize(Nx, Ny, Nz)
 
@@ -1502,6 +1635,7 @@ def getNormalMesh(z, csz, num=4):
 
 def getAreaMesh(Nx, Ny, Nz, csz):
     A = 1/(Nz*Nz) * np.sqrt((Nz*Nz + Nx*Nx) * (Nz*Nz + Ny*Ny)) * csz*csz
+    A = np.where(A > 3*csz*csz, 3*csz*csz, A)
     return A
 
 
