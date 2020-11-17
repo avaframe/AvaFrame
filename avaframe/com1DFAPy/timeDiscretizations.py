@@ -31,6 +31,8 @@ def getcflTimeStep(particles, dem, cfg):
 
     # get cell size
     csz = dem['header'].cellsize
+    # use the smoothing length of the kernel instead, for now
+    # rKernel = csz
 
     # courant number
     cMax = float(cfg['cMax'])

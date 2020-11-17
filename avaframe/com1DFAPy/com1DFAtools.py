@@ -1,3 +1,9 @@
+"""
+
+    This file is part of Avaframe.
+
+"""
+
 import logging
 import time
 import numpy as np
@@ -162,10 +168,13 @@ def intializeResistance(dem):
 
 
 def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
+    """ Perform computations and save results for desired interval """
+
+    # Load configuration settings
     Tend = cfg.getfloat('Tend')
     dtSave = cfg.getfloat('dtSave')
-    dt = cfg.getfloat('dt')
 
+    # Initialise Lists to save fields
     Particles = [copy.deepcopy(particles)]
     Fields = [copy.deepcopy(fields)]
     # save Z, S, U, T at each time step for developping purpouses
@@ -173,7 +182,8 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     S = np.empty((0, 0))
     U = np.empty((0, 0))
     T = np.empty((0, 0))
-    # initialize time and counters
+
+    # Initialize time and counters
     nSave = 1
     nIter = 0
     iterate = True
@@ -181,6 +191,16 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     t = particles['t']
     # Start time step computation
     while t < Tend and iterate:
+
+        #++++++++++++++++if you want to use cfl time step+++++++++++++++++++
+        # CALL TIME STEP:
+        # to play around with the courant number
+        cfg['cMax'] = '0.5'
+        # dtStable = tD.getcflTimeStep(particles, dem, cfg)
+        # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
+        #++++++++++++++++++++++++++++++++++++++++++++++
+        # get time step
+        dt = cfg.getfloat('dt')
         t = t + dt
         nIter = nIter + 1
         log.debug('Computing time step t = %f s', t)
@@ -188,7 +208,10 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         particles['t'] = t
         Tcpu['nSave'] = nSave
 
-        particles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu)
+        # Perform computations
+        # particles, fields, Tcpu, dt = computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+        pyarticles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+        # Save desired parameters and export to Lists for saving interval
         U = np.append(U, norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
         Z = np.append(Z, particles['z'][0])
         S = np.append(S, particles['s'][0])
@@ -205,7 +228,8 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     return T, U, Z, S, Particles, Fields, Tcpu
 
 
-def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
+def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
+    log.info('Use standard time stepping')
     # get forces
     # loop version of the compute force
     startTime = time.time()
@@ -214,7 +238,7 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
     # vectorized version of the compute force
     startTime = time.time()
-    force = computeForceVect(cfg, particles, dem, Ment, Cres)
+    force = computeForceVect(cfg, particles, dem, Ment, Cres, dt)
     tcpuForceVect = time.time() - startTime
     Tcpu['ForceVect'] = Tcpu['ForceVect'] + tcpuForceVect
     # compare output from compute force loop and vectorized
@@ -296,6 +320,160 @@ def computeTimeStep(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
     return particles, fields, Tcpu
+
+
+def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
+    """ perform all computations that belong to one time step """
+
+    log.info('Use LeapFrog time stepping')
+    # start timing
+    startTime = time.time()
+    tcpuForce = time.time() - startTime
+    Tcpu['Force'] = Tcpu['Force'] + tcpuForce
+
+    # dtK5 is half time step
+    dtK5 = 0.5 * dt
+    log.info('dt used now is %f' % dt)
+
+    # load required DEM and mesh info
+    csz = dem['header'].cellsize
+    Nx = dem['Nx']
+    Ny = dem['Ny']
+    Nz = dem['Nz']
+
+    # particle properties
+    mass = particles['m']
+    xK = particles['x']
+    yK = particles['y']
+    zK = particles['z']
+    uxK = particles['ux']
+    uyK = particles['uy']
+    uzK = particles['uz']
+
+    #+++++++++++++Time integration using leapfrog 'Drift-Kick-Drif' scheme+++++
+    # first predict position at time t_(k+0.5)
+    # 'DRIFT'
+    xK5 = xK + dt * 0.5 * uxK
+    yK5 = yK + dt * 0.5 * uyK
+    zK5 = zK + dt * 0.5 * uzK
+    # update position from particles
+    particles['x'] = xK5
+    particles['y'] = yK5
+    # For now z-position is taken from DEM - no detachment enforces...
+    particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+    # TODO: do we need to update also h from particles?? I think yes! also mass, ent, res
+    ##particles['h'] = ?
+
+    # 'KICK'
+    # compute velocity at t_(k+0.5)
+    # first compute force at t_(k+0.5)
+    force = computeForceVect(cfg, particles, dem, Ment, Cres, dtK5)
+    particles, force = computeForceSPH(cfg, particles, force, dem)
+    mass = particles['m']
+    uxNew = uxK + (force['forceX'] + force['forceSPHX']) * dt / mass
+    uyNew = uyK + (force['forceY'] + force['forceSPHY']) * dt  / mass
+    uzNew = uzK + (force['forceZ'] + force['forceSPHZ']) * dt / mass
+
+    # 'DRIF'
+    # now update position at t_(k+ 1)
+    xNew = xK5 + dtK5 * uxNew
+    yNew = yK5 + dtK5 * uyNew
+    zNew = zK5 + dtK5 * uzNew
+
+    # Compute magnitude of velocity
+    # print anormally big values
+    uNew = norm(uxNew, uyNew, uzNew)
+    if np.max(uNew) > 100:
+        ind = np.argmax(uNew)
+        A = mass[ind] / (h[ind] * rho)
+        print('Normal component of velocity: particle index : ', ind)
+        print((forceX / mass)[ind])
+        print((forceY / mass)[ind])
+        print((forceZ / mass)[ind])
+        print(uNew[ind])
+        print(A)
+
+
+    #++++++++++++++UPDATE Particle Properties
+    # update mass required if entrainment
+    massNew = mass + force['dM']
+    particles['mTot'] = np.sum(massNew)
+    particles['x'] = xNew
+    particles['y'] = yNew
+    particles['s'] = particles['s'] + np.sqrt((xNew-xK)*(xNew-xK) + (yNew-yK)*(yNew-yK))
+    # make sure particle is on the mesh (recompute the z component)
+    particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+
+    nx, ny, nz = getNormalArray(xNew, yNew, Nx, Ny, Nz, csz)
+    particles['m'] = massNew
+    # normal component of the velocity
+    uN = uxNew*nx + uyNew*ny + uzNew*nz
+    # print(nx, ny, nz)
+    # print(norm(ux, uy, uz), uN)
+    # remove normal component of the velocity
+    particles['ux'] = uxNew - uN * nx
+    particles['uy'] = uyNew - uN * ny
+    particles['uz'] = uzNew - uN * nz
+
+    #################################################################
+    # this is dangerous!!!!!!!!!!!!!!
+    ###############################################################
+    # remove particles that are not located on the mesh any more
+    particles = removeOutPart(cfg, particles, dem)
+
+
+    #+++++++++++++++++++++COMPUTE FLOW DEPTH
+    # plot flow depth computed with different interpolation methods
+    nSave = Tcpu['nSave']
+    dtSave = cfg.getfloat('dtSave')
+    if debugPlot and particles['t'] >= nSave * dtSave:
+        hNN = copy.deepcopy(particles['hNearestNearest'])
+        hNB = copy.deepcopy(particles['hNearestBilinear'])
+        hSPH = copy.deepcopy(particles['hSPH'])
+        hBN = copy.deepcopy(particles['hBilinearNearest'])
+        hBB = copy.deepcopy(particles['hBilinearBilinear'])
+        indexSort = np.argsort(hNN)
+        indexSortBB = np.argsort(hBB)
+
+        # print(np.mean(hSPH))
+        # fig, ax = plt.subplots(figsize=(2*figW, figH))
+        # ax.set_title('flow depth per particle')
+        # # ax.plot(hSPH[indexSort], 'b', linewidth=0.5, label='h from SPH')
+        # ax.plot(hBB[indexSort], 'y', linewidth=0.5, label='h from bilinear bilinear')
+        # # ax.plot(hBN[indexSort], 'g', linewidth=0.5, label='h from bilinear nearest')
+        # ax.plot(hNB[indexSort], 'r', linewidth=0.5, label='h from nearest bilinear')
+        # ax.plot(hNN[indexSort], 'k', linewidth=0.5, label='h from nearest nearest')
+        # plt.legend()
+        # plt.show()#block=False)
+        # plt.pause(1)
+        # plt.close()
+        ind = np.where(((particles['y']>905) & (particles['y']<1005)))
+        # fig2 = plt.figure()
+        # ax2 = fig2.add_subplot(111, projection='3d')
+        # ax2.scatter(particles['x'][ind], particles['y'][ind], hNN[ind], 'k')
+        # ax2.scatter(particles['x'][ind], particles['y'][ind], hBB[ind], 'b')
+        # ax2.set_xlim3d(0, 1000)
+        # ax2.set_ylim3d(950,1050)
+        # ax2.set_zlim3d(0,1000)
+
+        fig1, ax1 = plt.subplots(figsize=(2*figW, figH))
+        ax1.plot(particles['x'][ind], hNN[ind], color='k', marker='.', linestyle = 'None')
+        ax1.plot(particles['x'][ind], hBB[ind], color='b', marker='.', linestyle = 'None')
+        plt.show()
+
+    #++++++++++++++GET particles location (neighbours for sph)
+    startTime = time.time()
+    particles = getNeighboursVect(particles, dem)
+    tcpuNeigh = time.time() - startTime
+    Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
+
+    #++++++++++++++UPDATE FIELDS (compute grid values)
+    startTime = time.time()
+    particles, fields = updateFields(cfg, particles, force, dem, fields)
+    tcpuField = time.time() - startTime
+    Tcpu['Field'] = Tcpu['Field'] + tcpuField
+
+    return particles, fields, Tcpu, dt
 
 
 def prepareArea(releaseLine, dem):
@@ -513,29 +691,27 @@ def computeResForce(cfg, h, A, rho, cres, uMag, ux, uy, uz):
     return fResX, fResY, fResZ
 
 
-def computeForceVect(cfg, particles, dem, Ment, Cres):
+def computeForceVect(cfg, particles, dem, Ment, Cres, dt):
+    """ Compute forces """
+
+    # Load required parameters
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
-    dt = cfg.getfloat('dt')
     mu = cfg.getfloat('mu')
     Npart = particles['Npart']
     csz = dem['header'].cellsize
     Nx = dem['Nx']
     Ny = dem['Ny']
     Nz = dem['Nz']
+
     # initialize
     Fnormal = np.zeros(Npart)
     forceX = np.zeros(Npart)
     forceY = np.zeros(Npart)
     forceZ = np.zeros(Npart)
-    forceSPHX = np.zeros(Npart)
-    forceSPHY = np.zeros(Npart)
-    forceSPHZ = np.zeros(Npart)
     dM = np.zeros(Npart)
     force = {}
-    force['forceSPHX'] = forceSPHX
-    force['forceSPHY'] = forceSPHY
-    force['forceSPHZ'] = forceSPHZ
+
     # loop on particles
     mass = particles['m']
     x = particles['x']
@@ -603,16 +779,21 @@ def computeForceVect(cfg, particles, dem, Ment, Cres):
 
 
 def computeForceSPH(cfg, particles, force, dem):
+    """ Compute SPH """
+
+    # Load required parameters
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
     Npart = particles['Npart']
     nrows = dem['header'].nrows
     ncols = dem['header'].ncols
     csz = dem['header'].cellsize
-    # initialize
-    forceSPHX = force['forceSPHX']
-    forceSPHY = force['forceSPHY']
-    forceSPHZ = force['forceSPHZ']
+
+    # initialize fields for force
+    forceSPHX = np.zeros(Npart)
+    forceSPHY = np.zeros(Npart)
+    forceSPHZ = np.zeros(Npart)
+
     H = np.zeros(np.shape(particles['h']))
     # loop on particles
     # TcpuSPH = 0
