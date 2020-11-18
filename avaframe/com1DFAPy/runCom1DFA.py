@@ -1,31 +1,42 @@
-import logging
+"""
+
+    This file is part of Avaframe.
+"""
+
+
+import os
+import glob
 import time
+import copy
+import logging
 import numpy as np
 import math
-import copy
+import scipy.stats as stats
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
+import avaframe.in3Utils.initialiseDirs as inDirs
+import avaframe.in3Utils.initializeProject as initProj
+import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.in2Trans.shpConversion as shpConv
+from avaframe.in1Data import getInput as gI
+import avaframe.com1DFAPy.com1DFAtools as DFAtls
+
+# from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
 from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
-
-#+++++++++SETUP CONFIGURATION++++++++++++++++++++++++
 # log file name; leave empty to use default runLog.log
 logName = 'testKernel'
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
-# set module name, reqiured as long we are in dev phase
-# - because need to create e.g. Output folder for com1DFAPy to distinguish from
-# current com1DFA
 modName = 'com1DFAPy'
 
 # Clean input directory(ies) of old work and output files
@@ -36,21 +47,14 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
-# Load configuration
-cfg = cfgUtils.getModuleConfig(DFAtls)
-cfgGen = cfg['GENERAL']
-flagDev = cfg['FLAGS'].getboolean('flagDev')
+cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
+cfgFull = cfgUtils.getModuleConfig(DFAtls)
 
-# for timing the sims
 startTime = time.time()
-
-
-#+++++++++Inputs++++++++++++++++++++++++
 # ------------------------
-# fetch input data - dem, release-, entrainment- and resistance areas
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfg['FLAGS'], flagDev)
+# fetch input data
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'], flagDev=True)
 demOri = IOf.readRaster(demFile)
-# derive line from release area polygon
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
 dem['header'].xllcenter = 0
@@ -63,23 +67,21 @@ dem['header'].yllcorner = 0
 # Initialize mesh
 dem = DFAtls.initializeMesh(dem)
 # ------------------------
-# process release info to get it as a raster
+# process release to get it as a raster
 relRaster = DFAtls.prepareArea(releaseLine, demOri)
 relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
 
-
-massPart = 2000  # [200, 100, 50, 25, 10, 7.5, 5]
-cfgGen['massPerPart'] = str(massPart)
+massPart = 1000  # [200, 100, 50, 25, 10, 7.5, 5]
+cfg['massPerPart'] = str(massPart)
 # ------------------------
 # initialize simulation : create directories
 workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 # create particles, create resistance and
 # entrainment matrix, initialize fields, get normals and neighbours
-particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfgGen, relRaster, dem)
+particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfg, relRaster, dem)
 
-#+++++++++PERFORM SIMULAITON++++++++++++++++++++++
 # ------------------------
 #  Start time step computation
 Tcpu = {}
@@ -90,7 +92,7 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-T, U, Z, S, Particles, Fields, Tcpu = DFAtls.DFAIterate(cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
+T, U, Z, S, Particles, Fields, Tcpu = DFAtls.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
 log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))
@@ -101,17 +103,14 @@ log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / Tcpu['nIter'])))
 
 tcpuDFA = time.time() - startTime
 log.info(('cpu time DFA = %s s' % (tcpuDFA)))
-
-
-#+++++++++POSTPROCESS++++++++++++++++++++++++
 # -------------------------------
 # Analyse resutls
 # tools.plotPosition(particles, dem)
 partRef = Particles[0]
 Z0 = partRef['z'][0]
-rho = cfgGen.getfloat('rho')
-gravAcc = cfgGen.getfloat('gravAcc')
-mu = cfgGen.getfloat('mu')
+rho = cfg.getfloat('rho')
+gravAcc = cfg.getfloat('gravAcc')
+mu = cfg.getfloat('mu')
 repeat = True
 while repeat == True:
     fig, ax = plt.subplots(figsize=(figW, figH))
@@ -153,9 +152,8 @@ fig3, ax3 = DFAtls.plotPosition(particles, demOri, fields['ppr']/1000, cmapPres,
 plt.show()
 
 
-#+++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
 # Result parameters to be exported
-resTypesString = cfgGen['resType']
+resTypesString = cfg['resType']
 resTypes = resTypesString.split('_')
 finalFields = Fields[-1]
 for resType in resTypes:
@@ -168,7 +166,7 @@ for resType in resTypes:
     log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
 
 # Generata plots for all peakFiles
-plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
+plotDict = oP.plotAllPeakFields(avalancheDir, cfgFull, cfgMain['FLAGS'], modName)
 
 
 # fig, ax = plt.subplots(figsize=(figW, figH))
