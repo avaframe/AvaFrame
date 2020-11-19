@@ -31,7 +31,7 @@ def test_getInputData(tmp_path):
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'flagEnt': 'True', 'flagRes': 'True'}
+    cfg['GENERAL'] = {'flagEnt': 'True', 'flagRes': 'True', 'flagDev': 'False'}
     cfgGen = cfg['GENERAL']
 
     # call function to be tested
