@@ -95,15 +95,7 @@ def test_getNormalMesh(capfd):
         assert TestNZ
 
         Nx, Ny, Nz = DFAtls.getNormalMesh(Z1, cellsize, num=num)
-        # print(Nx)
-        # print(-2*a*X / np.sqrt(1 + 4*a*a*X*X + b*b*Y*Y))
-        # fig = plt.figure()
-        # ax = fig.gca(projection='3d')
-        # surf = ax.plot_surface(X, Y, Z1, cmap=cm.coolwarm,
-        #                        linewidth=0, antialiased=False)
-        # ax.quiver(X, Y, Z1, Nx, Ny, Nz, color='k', length=1, normalize=True)
-        # ax.quiver(X, Y, Z1, -2*a*X / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y), -2*b*Y / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y), 1 / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y), color='r', length=1, normalize=True)
-        # plt.show()
+
         atol = 1e-10
         TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-2*a*X / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNX
@@ -111,41 +103,6 @@ def test_getNormalMesh(capfd):
         assert TestNY
         TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (1 / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNZ
-
-    # R = 8
-    # R1 = 8
-    # R2 = 10
-    # xllcenter = 0
-    # yllcenter = 0
-    # cellsize = 1
-    # m = 21
-    # n = 21
-    # x = np.linspace(0, m-1, m)
-    # y = np.linspace(0, n-1, n)
-    # X, Y = np.meshgrid(x, y)
-    # Z = a * X + b * Y
-    # Z1 = a * X * X + b * Y * Y
-    # Z2 = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, -math.sqrt(R*R-R1*R1), -np.sqrt(R*R - (X-R2) * (X-R2) - (Y-R2) * (Y-R2)))
-    # Nx, Ny, Nz = DFAtls.getNormalMesh(Z2, cellsize, num=8)
-    # Area = DFAtls.getAreaMesh(Nx, Ny, Nz, cellsize)
-    # print(np.sum(Area))
-    # print(n*m-math.pi*R1*R1+2*math.pi*R*(R-math.sqrt(R*R-R1*R1)))
-    # # just the bowl
-    # print(2*math.pi*R*(R-math.sqrt(R*R-R1*R1)))
-    # Area = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, 0, Area)
-    # print(np.sum(Area))
-
-    # atol = 1e-10
-    # print(Nx)
-    # NxTh = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, 0, -(X-R2)/R)
-    # print(NxTh)
-    # print(Ny)
-    # NyTh = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, 0, -(Y-R2)/R)
-    # print(NyTh)
-    # print(Nz)
-    # NzTh = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, 1, -Z2/R)
-    # print(NzTh)
-    # assert 1 == 2
 
 
 def test_getAreaMesh(capfd):
@@ -169,14 +126,6 @@ def test_getAreaMesh(capfd):
     atol = 1e-10
     TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a)*(1+b*b)) * np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
     assert TestArea
-
-    # Nx, Ny, Nz = DFAtls.getNormalMesh(Z1, csz, num=4)
-    # Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
-    # print(np.sqrt((1+4*a*a*X*X)*(1+4*b*b*Y*Y)))
-    # print(Area)
-    # atol = 1e-10
-    # TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+4*a*a*X*X)*(1+4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
-    # assert TestArea
 
 
 def test_getNeighbours(capfd):

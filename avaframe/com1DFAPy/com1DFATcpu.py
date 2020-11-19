@@ -29,10 +29,11 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
+cfgFull = cfgUtils.getModuleConfig(DFAtls)
 
 # ------------------------
 # fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFlags, flagDev=False)
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'])
 demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)

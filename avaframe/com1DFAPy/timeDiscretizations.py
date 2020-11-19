@@ -44,10 +44,10 @@ def getcflTimeStep(particles, dem, cfg):
         dtStable = float(cfg['maxdT'])
     else:
         dtStable = (cMax * csz) / vmax
-        if dtStable < 0.05:
-            dtStable = 0.05
-        elif dtStable > 1:
-            dtStable = 1
+        if dtStable < float(cfg['mindT']):
+            dtStable = float(cfg['mindT'])
+        elif dtStable > float(cfg['maxdT']):
+            dtStable = float(cfg['maxdT'])
 
     # 'overwrite' dt that is read from cfg ini file
     cfg['dt'] = str(dtStable)
