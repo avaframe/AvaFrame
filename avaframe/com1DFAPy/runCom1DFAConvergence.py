@@ -40,13 +40,15 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
-cfg = cfgUtils.getModuleConfig(com1DFA)['GENERAL']
-cfgFull = cfgUtils.getModuleConfig(com1DFA)
+# Load configuration
+cfg = cfgUtils.getModuleConfig(com1DFA)
+cfgGen = cfg['GENERAL']
+flagDev = cfg['FLAGS'].getboolean('flagDev')
 
 startTime = time.time()
 # ------------------------
 # fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'])
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfg['FLAGS'], flagDev=False)
 demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
@@ -73,15 +75,15 @@ TPos = []
 TNeigh = []
 TField = []
 MassPart = [1000, 500, 250] #, 200]
-cfg['dt'] = str(0.1)
-cfg['Tend'] = str(10)
+cfgGen['dt'] = str(0.1)
+cfgGen['Tend'] = str(10)
 NP = []
 for massPart in MassPart:
-    cfg['massPerPart'] = str(massPart)
+    cfgGen['massPerPart'] = str(massPart)
     # ------------------------
     # initialize simulation : create particles, create resistance and
     # entrainment matrix, initialize fields, get normals and neighbours
-    particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfg, relRaster, dem)
+    particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGen, relRaster, dem)
     NP.append(particles['Npart'])
     log.info('Initializted simulation. M = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
 
@@ -95,7 +97,7 @@ for massPart in MassPart:
     Tcpu['Neigh'] = 0.
     Tcpu['Field'] = 0.
 
-    T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
+    T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
 
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
     TForce.append(Tcpu['Force'] / Tcpu['nIter'])
