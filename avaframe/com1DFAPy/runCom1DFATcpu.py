@@ -9,7 +9,8 @@ import matplotlib.pyplot as plt
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
-import avaframe.com1DFAPy.com1DFAtools as DFAtls
+import avaframe.com1DFAPy.DFAtools as DFAtls
+import avaframe.com1DFAPy.com1DFA as com1DFA
 # from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
 import avaframe.in2Trans.ascUtils as IOf
@@ -28,8 +29,8 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
-cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
-cfgFull = cfgUtils.getModuleConfig(DFAtls)
+cfg = cfgUtils.getModuleConfig(com1DFA)['GENERAL']
+cfgFull = cfgUtils.getModuleConfig(com1DFA)
 
 # ------------------------
 # fetch input data
@@ -44,10 +45,10 @@ dem['header'].yllcorner = 0
 
 # -----------------------
 # Initialize mesh
-dem = DFAtls.initializeMesh(dem)
+dem = com1DFA.initializeMesh(dem)
 # ------------------------
 # process release to get it as a raster
-relRaster = DFAtls.prepareArea(releaseLine, demOri)
+relRaster = com1DFA.prepareArea(releaseLine, demOri)
 relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
@@ -67,7 +68,7 @@ for massPart in MassPart:
     # ------------------------
     # initialize simulation : create particles, create resistance and
     # entrainment matrix, initialize fields, get normals and neighbours
-    particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfg, relRaster, dem)
+    particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfg, relRaster, dem)
     NP.append(particles['Npart'])
     log.info('Initializted simulation. M = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
 
@@ -81,7 +82,7 @@ for massPart in MassPart:
     Tcpu['Neigh'] = 0.
     Tcpu['Field'] = 0.
 
-    T, U, Z, S, Particles, Fields, Tcpu = DFAtls.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
+    T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
 
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
     TForce.append(Tcpu['Force'])

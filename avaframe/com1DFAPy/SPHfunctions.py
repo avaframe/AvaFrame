@@ -203,7 +203,7 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz):
     L = np.delete(L, indJ)
     dx = particles['x'][L] - x
     dy = particles['y'][L] - y
-    dz = 0 * (particles['z'][L] - z)
+    dz = (particles['z'][L] - z)
     r = DFAtls.norm(dx, dy, dz)
     # impose a minimum distance between particles
     dx = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dx, dx)
@@ -213,12 +213,6 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz):
     hr = rKernel - r
     dwdr = dfacKernel * hr * hr
     massl = particles['m'][L]
-    # GX = massl * dwdr * dx / r
-    # GX = np.where(r < rKernel, GX, 0)
-    # GY = massl * dwdr * dy / r
-    # GY = np.where(r < rKernel, GY, 0)
-    # GZ = massl * dwdr * dz / r
-    # GZ = np.where(r < rKernel, GZ, 0)
     # ------------------------------
     indOut = np.where(r >= rKernel)
     massl[indOut] = 0
@@ -231,7 +225,7 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz):
     gradhY = gradhY + np.sum(GY)
     gradhZ = gradhZ + np.sum(GZ)
     # leInd = len(index)
-    # print((time.time() - startTime)/leInd)
+    # print((time.time() - startTime))
 
     return gradhX, gradhY,  gradhZ, L
 

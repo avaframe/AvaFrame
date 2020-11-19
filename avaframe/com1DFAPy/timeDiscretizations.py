@@ -1,14 +1,19 @@
 """
     function regarding time discretization and time stepping for com1DFA
-
     This file is part of Avaframe.
 """
 
 # Load modules
+import os
+import glob
 import logging
 import numpy as np
 
 # Local imports
+import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.in2Trans.ascUtils as IOf
+from avaframe.in3Utils import cfgUtils
+from avaframe.in3Utils import logUtils
 import avaframe.com1DFAPy.DFAtools as DFAtls
 
 

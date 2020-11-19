@@ -46,7 +46,7 @@ cfgFull = cfgUtils.getModuleConfig(com1DFA)
 startTime = time.time()
 # ------------------------
 # fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'], flagDev=True)
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'])
 demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
@@ -72,9 +72,9 @@ TForceSPH = []
 TPos = []
 TNeigh = []
 TField = []
-MassPart = [100]
+MassPart = [1000, 500, 250] #, 200]
 cfg['dt'] = str(0.1)
-cfg['Tend'] = str(20)
+cfg['Tend'] = str(10)
 NP = []
 for massPart in MassPart:
     cfg['massPerPart'] = str(massPart)
@@ -167,54 +167,52 @@ with open(FileName_ext, 'w') as outfile:
         'Time Neigh [s] ', *[tf for tf in TNeigh]))
     outfile.write(('{: <17}' + '{:<10.4f}'*int(np.size(NP)) + '\n').format(
         'Time Fields [s] ', *[tf for tf in TField]))
-# log.info('{: <10} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f}'.format(
-#     *[i+1, runout[0, i], ampp[i], mmpp[i], amd[i], mmd[i], grIndex[i], grGrad[i]]))
-fig, ax = plt.subplots(figsize=(figW, figH))
-# -------------------------------
-m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForce))
-cm1lab = "TForce : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
-ax.plot(np.log(NP), m*np.log(NP)+c, 'b--', linewidth=2, label=cm1lab)
-ax.plot(np.log(NP), np.log(TForce), 'ok', linestyle='-', label='Tcpu Force')
-# ---------------------------------
-m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForceVect))
-cm1lab = "TForceVect : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
-ax.plot(np.log(NP), m*np.log(NP)+c, 'b-.', linewidth=2, label=cm1lab)
-ax.plot(np.log(NP), np.log(TForceVect), '*k', linestyle='-', label='Tcpu Force Vect')
-# ---------------------------------
-m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForceSPH))
-cm1lab = "TForceSPH : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
-ax.plot(np.log(NP), m*np.log(NP)+c, 'g--', linewidth=2, label=cm1lab)
-ax.plot(np.log(NP), np.log(TForceSPH), '^k', linestyle='-', label='Tcpu Force SPH')
-# -----------------------------------
-# m, c, r, p, se1 = stats.linregress(np.log(NP[2:]), np.log(TPos[2:]))
-# cm1lab = "TPos : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
-# ax.plot(np.log(NP), m*np.log(NP)+c, 'g--', linewidth=2, label=cm1lab)
-ax.plot(np.log(NP), np.log(TPos), 'sk', linestyle='-', label='Tcpu Position')
-# -----------------------------------
-m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TNeigh))
-cm1lab = "TNeigh : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
-ax.plot(np.log(NP), m*np.log(NP)+c, 'r--', linewidth=2, label=cm1lab)
-# m, c, r, p, se1 = stats.linregress(np.log(NP[4:]), np.log(TNeigh[4:]))
-# cm1lab = "TNeigh : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
-# ax.plot(np.log(NP), m*np.log(NP)+c, 'r-.', linewidth=2, label=cm1lab)
-ax.plot(np.log(NP), np.log(TNeigh), 'dk', linestyle='-', label='Tcpu Neighbours')
-# -----------------------------------
-ax.plot(np.log(NP), np.log(TField), '+k', linestyle='-', label='Tcpu Fields')
-plt.legend(loc='upper left')
-# plt.show()
-
-fig1, ax1 = plt.subplots(figsize=(figW, figH))
+# fig, ax = plt.subplots(figsize=(figW, figH))
+# # -------------------------------
 # m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForce))
 # cm1lab = "TForce : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
-# ax1.loglog(NP, m*np.log(NP)+c, 'b--', linewidth=2, label=cm1lab)
-ax1.loglog(NP, TForce, 'ok', linestyle='-', label='Tcpu Force')
-ax1.plot(NP, TForceVect, '*k', linestyle='-', label='Tcpu Force Vect')
-ax1.plot(NP, TForceSPH, '^k', linestyle='-', label='Tcpu Force SPH')
-ax1.loglog(NP, TPos, 'sk', linestyle='-', label='Tcpu Position')
+# ax.plot(np.log(NP), m*np.log(NP)+c, 'b--', linewidth=2, label=cm1lab)
+# ax.plot(np.log(NP), np.log(TForce), 'ok', linestyle='-', label='Tcpu Force')
+# # ---------------------------------
+# m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForceVect))
+# cm1lab = "TForceVect : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
+# ax.plot(np.log(NP), m*np.log(NP)+c, 'b-.', linewidth=2, label=cm1lab)
+# ax.plot(np.log(NP), np.log(TForceVect), '*k', linestyle='-', label='Tcpu Force Vect')
+# # ---------------------------------
+# m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForceSPH))
+# cm1lab = "TForceSPH : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
+# ax.plot(np.log(NP), m*np.log(NP)+c, 'g--', linewidth=2, label=cm1lab)
+# ax.plot(np.log(NP), np.log(TForceSPH), '^k', linestyle='-', label='Tcpu Force SPH')
+# # -----------------------------------
+# # m, c, r, p, se1 = stats.linregress(np.log(NP[2:]), np.log(TPos[2:]))
+# # cm1lab = "TPos : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
+# # ax.plot(np.log(NP), m*np.log(NP)+c, 'g--', linewidth=2, label=cm1lab)
+# ax.plot(np.log(NP), np.log(TPos), 'sk', linestyle='-', label='Tcpu Position')
+# # -----------------------------------
 # m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TNeigh))
 # cm1lab = "TNeigh : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
-# ax1.loglog(NP, m*np.log(NP)+c, 'r--', linewidth=2, label=cm1lab)
-ax1.loglog(NP, TNeigh, 'dk', linestyle='-', label='Tcpu Neighbours')
-ax1.loglog(NP, TField, '+k', linestyle='-', label='Tcpu Fields')
-plt.legend(loc='upper left')
-plt.show()
+# ax.plot(np.log(NP), m*np.log(NP)+c, 'r--', linewidth=2, label=cm1lab)
+# # m, c, r, p, se1 = stats.linregress(np.log(NP[4:]), np.log(TNeigh[4:]))
+# # cm1lab = "TNeigh : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
+# # ax.plot(np.log(NP), m*np.log(NP)+c, 'r-.', linewidth=2, label=cm1lab)
+# ax.plot(np.log(NP), np.log(TNeigh), 'dk', linestyle='-', label='Tcpu Neighbours')
+# # -----------------------------------
+# ax.plot(np.log(NP), np.log(TField), '+k', linestyle='-', label='Tcpu Fields')
+# plt.legend(loc='upper left')
+# # plt.show()
+#
+# fig1, ax1 = plt.subplots(figsize=(figW, figH))
+# # m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForce))
+# # cm1lab = "TForce : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
+# # ax1.loglog(NP, m*np.log(NP)+c, 'b--', linewidth=2, label=cm1lab)
+# ax1.loglog(NP, TForce, 'ok', linestyle='-', label='Tcpu Force')
+# ax1.plot(NP, TForceVect, '*k', linestyle='-', label='Tcpu Force Vect')
+# ax1.plot(NP, TForceSPH, '^k', linestyle='-', label='Tcpu Force SPH')
+# ax1.loglog(NP, TPos, 'sk', linestyle='-', label='Tcpu Position')
+# # m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TNeigh))
+# # cm1lab = "TNeigh : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
+# # ax1.loglog(NP, m*np.log(NP)+c, 'r--', linewidth=2, label=cm1lab)
+# ax1.loglog(NP, TNeigh, 'dk', linestyle='-', label='Tcpu Neighbours')
+# ax1.loglog(NP, TField, '+k', linestyle='-', label='Tcpu Fields')
+# plt.legend(loc='upper left')
+# plt.show()
