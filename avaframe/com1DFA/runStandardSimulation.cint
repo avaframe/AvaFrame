@@ -46,14 +46,16 @@ int running(char project_dir[],char sim_name[]) {
 ///////////////////////////////////////////////////////////////////////////////
 // postprocessing of simulation runs
 
-void postprocessing(char ResultDir[], char SimName[], char varPar[], char varVal[]){
+void postprocessing(char ResultDir[], char SimName[], char varPar[], float val){
 
     char name[512];
     char ResultDir_rep[512];
+    char ValString[512];
 
 
     // Generate a full report
-    sprintf(ResultDir_rep,"%s/FullOutput_%s_%s",ResultDir,varPar,varVal);
+    sprintf(ValString,"%.5f",val);
+    sprintf(ResultDir_rep,"%s/FullOutput_%s_%s",ResultDir,varPar,ValString);
     if(make_directory(ResultDir_rep)){ set_error("cannot create report directory"); return;}
     printf("\n[BatchCom1DFA] Report is saved to %s \n",ResultDir_rep);
     sprintf(name,"Project/Simulations/%s",SimName);
@@ -123,7 +125,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   set(Sim, "Run", "");
 
   // Postprocessing
-  postprocessing(ResDir,CuSim,varPar,varVal);
+  postprocessing(ResDir,CuSim,varPar,val);
 
 
   fclose(ExpLog);

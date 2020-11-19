@@ -53,7 +53,7 @@ void postprocessing(char ResultDir[], char SimName[], float relH){
     char ResultDir_rep[512];
 
     // Generate a full report
-    sprintf(relHString,"%.3f",relH);
+    sprintf(relHString,"%.5f",relH);
     sprintf(ResultDir_rep,"%s/FullOutput_RelTh_%s",ResultDir,relHString);
     if(make_directory(ResultDir_rep)){ set_error("cannot create report directory"); return;}
     printf("\n[BatchCom1DFA] Report is saved to %s \n",ResultDir_rep);
@@ -120,7 +120,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   // Set release thickness
   sprintf(RelAr,"%s/ReleaseAreas",Sim);
-  sprintf(relHString,"%.3f",relh);
+  sprintf(relHString,"%.5f",relh);
   printf("\n[BatchCom1DFA] Setting in %s rel depth to %s m \n",RelAr,relHString);
   set(RelAr, "set_depth", relHString);
 

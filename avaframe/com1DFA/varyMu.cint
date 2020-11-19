@@ -53,7 +53,7 @@ void postprocessing(char ResultDir[], char SimName[], float Mu){
     char ResultDir_rep[512];
 
     // Generate a full report
-    sprintf(MuString,"%.3f",Mu);
+    sprintf(MuString,"%.5f",Mu);
     sprintf(ResultDir_rep,"%s/FullOutput_Mu_%s",ResultDir,MuString);
     if(make_directory(ResultDir_rep)){ set_error("cannot create report directory"); return;}
     printf("\n[BatchCom1DFA] Report is saved to %s \n",ResultDir_rep);
