@@ -22,7 +22,8 @@ import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
-import avaframe.com1DFAPy.com1DFAtools as DFAtls
+import avaframe.com1DFAPy.com1DFA as com1DFA
+import avaframe.com1DFAPy.DFAtools as DFAtls
 
 # from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
@@ -47,13 +48,13 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
-cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
-cfgFull = cfgUtils.getModuleConfig(DFAtls)
+cfg = cfgUtils.getModuleConfig(com1DFA)['GENERAL']
+cfgFull = cfgUtils.getModuleConfig(com1DFA)
 
 startTime = time.time()
 # ------------------------
 # fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'], flagDev=True)
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'])
 demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
@@ -65,10 +66,10 @@ dem['header'].yllcorner = 0
 
 # -----------------------
 # Initialize mesh
-dem = DFAtls.initializeMesh(dem)
+dem = com1DFA.initializeMesh(dem)
 # ------------------------
 # process release to get it as a raster
-relRaster = DFAtls.prepareArea(releaseLine, demOri)
+relRaster = com1DFA.prepareArea(releaseLine, demOri)
 relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
@@ -80,7 +81,7 @@ cfg['massPerPart'] = str(massPart)
 workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 # create particles, create resistance and
 # entrainment matrix, initialize fields, get normals and neighbours
-particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfg, relRaster, dem)
+particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfg, relRaster, dem)
 
 # ------------------------
 #  Start time step computation
@@ -92,7 +93,7 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-T, U, Z, S, Particles, Fields, Tcpu = DFAtls.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
+T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
 log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))
@@ -135,8 +136,8 @@ while repeat == True:
         # exact solution with friction
         # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
         #
-        fig, ax = DFAtls.plotPosition(part, demOri, field['pfd'], cmapPres, 'm', fig, ax, plotPart=True)
-        # fig1, ax1 = DFAtls.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
+        fig, ax = com1DFA.plotPosition(part, demOri, field['pfd'], cmapPres, 'm', fig, ax, plotPart=True)
+        # fig1, ax1 = com1DFA.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
     # plt.show()
     # repeat = False
     value = input("[y] to repeat:\n")
@@ -146,9 +147,9 @@ fieldRef = Fields[-1]
 fig1, ax1 = plt.subplots(figsize=(figW, figH))
 fig2, ax2 = plt.subplots(figsize=(figW, figH))
 fig3, ax3 = plt.subplots(figsize=(figW, figH))
-fig1, ax1 = DFAtls.plotPosition(particles, demOri, fields['pfd'], cmapPres, 'm', fig1, ax1, plotPart=False)
-fig2, ax2 = DFAtls.plotPosition(particles, demOri, fields['pv'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
-fig3, ax3 = DFAtls.plotPosition(particles, demOri, fields['ppr']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
+fig1, ax1 = com1DFA.plotPosition(particles, demOri, fields['pfd'], cmapPres, 'm', fig1, ax1, plotPart=False)
+fig2, ax2 = com1DFA.plotPosition(particles, demOri, fields['pv'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
+fig3, ax3 = com1DFA.plotPosition(particles, demOri, fields['ppr']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
 plt.show()
 
 
