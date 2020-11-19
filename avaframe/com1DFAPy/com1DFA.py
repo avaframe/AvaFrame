@@ -51,8 +51,8 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # Load configuration
-cfg = cfgUtils.getModuleConfig(DFAtls)
-cfgGen = cfg['GENERAL']
+cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
+cfgFull = cfgUtils.getModuleConfig(DFAtls)
 
 # for timing the sims
 startTime = time.time()
@@ -102,7 +102,7 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-T, U, Z, S, Particles, Fields, Tcpu = DFAtls.DFAIterate(cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
+T, U, Z, S, Particles, Fields, Tcpu = DFAtls.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
 log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))
