@@ -9,7 +9,9 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 
 # Local imports
-import avaframe.com1DFAPy.com1DFAtools as DFAtls
+import avaframe.com1DFAPy.DFAtools as DFAtls
+import avaframe.com1DFAPy.com1DFA as com1DFA
+import avaframe.com1DFAPy.SPHfunctions as SPH
 import avaframe.in2Trans.ascUtils as IOf
 
 
@@ -26,7 +28,7 @@ def test_polygon2Raster(capfd):
     Line['x'] = x
     Line['y'] = y
     mask = np.zeros((demHeader.nrows, demHeader.ncols))
-    mask = DFAtls.polygon2Raster(demHeader, Line, mask)
+    mask = com1DFA.polygon2Raster(demHeader, Line, mask)
     Mask = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                      [1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0],
                      [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
@@ -104,41 +106,6 @@ def test_getNormalMesh(capfd):
         TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (1 / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNZ
 
-    # R = 8
-    # R1 = 8
-    # R2 = 10
-    # xllcenter = 0
-    # yllcenter = 0
-    # cellsize = 1
-    # m = 21
-    # n = 21
-    # x = np.linspace(0, m-1, m)
-    # y = np.linspace(0, n-1, n)
-    # X, Y = np.meshgrid(x, y)
-    # Z = a * X + b * Y
-    # Z1 = a * X * X + b * Y * Y
-    # Z2 = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, -math.sqrt(R*R-R1*R1), -np.sqrt(R*R - (X-R2) * (X-R2) - (Y-R2) * (Y-R2)))
-    # Nx, Ny, Nz = DFAtls.getNormalMesh(Z2, cellsize, num=8)
-    # Area = DFAtls.getAreaMesh(Nx, Ny, Nz, cellsize)
-    # print(np.sum(Area))
-    # print(n*m-math.pi*R1*R1+2*math.pi*R*(R-math.sqrt(R*R-R1*R1)))
-    # # just the bowl
-    # print(2*math.pi*R*(R-math.sqrt(R*R-R1*R1)))
-    # Area = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, 0, Area)
-    # print(np.sum(Area))
-
-    # atol = 1e-10
-    # print(Nx)
-    # NxTh = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, 0, -(X-R2)/R)
-    # print(NxTh)
-    # print(Ny)
-    # NyTh = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, 0, -(Y-R2)/R)
-    # print(NyTh)
-    # print(Nz)
-    # NzTh = np.where((X-R2) * (X-R2) + (Y-R2) * (Y-R2) > R1*R1, 1, -Z2/R)
-    # print(NzTh)
-    # assert 1 == 2
-
 
 def test_getAreaMesh(capfd):
     '''projectOnRasterVect'''
@@ -211,13 +178,13 @@ def test_getNeighbours(capfd):
                      5,
                      15])
 
-    particles = DFAtls.getNeighbours(particles, dem)
+    particles = SPH.getNeighbours(particles, dem)
     print(particles['InCell'])
     print(particles['indPartInCell'])
     print(particles['partInCell'])
     assert np.allclose(particles['indPartInCell'], indPCell, atol=atol)
     assert np.allclose(particles['partInCell'], pInC, atol=atol)
-    particlesVect = DFAtls.getNeighboursVect(particlesVect, dem)
+    particlesVect = SPH.getNeighboursVect(particlesVect, dem)
     print(particlesVect['InCell'])
     print(particlesVect['indPartInCell'])
     print(particlesVect['partInCell'])
@@ -241,55 +208,55 @@ def test_calcGradHSPH(capfd):
     particles['y'] = np.array([2, 1, 0, 1, 3, 3, 2, 1, 0, 0, 3, 2, 2, 1, 1, 4])
     particles['z'] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     particles['m'] = particles['z']
-    particles = DFAtls.getNeighboursVect(particles, dem)
+    particles = SPH.getNeighboursVect(particles, dem)
     print(particles['InCell'])
     print(particles['indPartInCell'])
     print(particles['partInCell'])
-    _, _, _, index = DFAtls.calcGradHSPH(particles, 0, ncols, nrows, csz)
-    _, _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 0, ncols, nrows, csz)
+    _, _, _, index = SPH.calcGradHSPH(particles, 0, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 0, ncols, nrows, csz)
     print(index)
     atol = 1e-10
     IndexTh = np.array([1, 7, 3, 13, 6, 12, 11, 10, 4, 5])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtls.calcGradHSPH(particles, 7, ncols, nrows, csz)
-    _, _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 7, ncols, nrows, csz)
+    _, _, _, index = SPH.calcGradHSPH(particles, 7, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 7, ncols, nrows, csz)
     print(index)
     IndexTh = np.array([8, 2, 9, 1, 3, 13, 6, 0, 12, 11])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtls.calcGradHSPH(particles, 8, ncols, nrows, csz)
-    _, _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 8, ncols, nrows, csz)
+    _, _, _, index = SPH.calcGradHSPH(particles, 8, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 8, ncols, nrows, csz)
     print(index)
     IndexTh = np.array([2, 1, 7])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtls.calcGradHSPH(particles, 9, ncols, nrows, csz)
-    _, _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 9, ncols, nrows, csz)
+    _, _, _, index = SPH.calcGradHSPH(particles, 9, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 9, ncols, nrows, csz)
     print(index)
     IndexTh = np.array([2, 7, 3, 13, 14])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtls.calcGradHSPH(particles, 11, ncols, nrows, csz)
-    _, _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 11, ncols, nrows, csz)
+    _, _, _, index = SPH.calcGradHSPH(particles, 11, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 11, ncols, nrows, csz)
     print(index)
     IndexTh = np.array([7, 3, 13, 14, 0, 12, 4, 5])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtls.calcGradHSPH(particles, 6, ncols, nrows, csz)
-    _, _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 6, ncols, nrows, csz)
+    _, _, _, index = SPH.calcGradHSPH(particles, 6, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 6, ncols, nrows, csz)
     print(index)
     IndexTh = np.array([1, 7, 0, 12, 10, 4])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtls.calcGradHSPH(particles, 5, ncols, nrows, csz)
-    _, _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 5, ncols, nrows, csz)
+    _, _, _, index = SPH.calcGradHSPH(particles, 5, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 5, ncols, nrows, csz)
     print(index)
     IndexTh = np.array([0, 12, 11, 4, 15])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
-    _, _, _, index = DFAtls.calcGradHSPH(particles, 15, ncols, nrows, csz)
-    _, _, _, _, indexVect = DFAtls.calcGradHSPHVect(particles, 15, ncols, nrows, csz)
+    _, _, _, index = SPH.calcGradHSPH(particles, 15, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 15, ncols, nrows, csz)
     print(index)
     IndexTh = np.array([5])
     assert np.allclose(index, IndexTh, atol=atol)
