@@ -44,6 +44,36 @@ def getcflTimeStep(particles, dem, cfg):
         dtStable = float(cfg['maxdT'])
     else:
         dtStable = (cMax * csz) / vmax
+
+    # 'overwrite' dt that is read from cfg ini file
+    cfg['dt'] = str(dtStable)
+    log.info('dtStable is with cMAX=%.1f is: %.4f with vmax:%.2f' % (cMax, dtStable, vmax))
+
+    # return stable time step
+    return dtStable
+
+
+def getcfldTwithConstraints(particles, dem, cfg):
+    """ Compute cfl time step  """
+
+    # determine max velocity of particles
+    vmagnitude = DFAtls.norm(particles['ux'], particles['uy'], particles['uz'])
+    vmax = np.amax(vmagnitude)
+
+    # get cell size
+    csz = dem['header'].cellsize
+    # use the smoothing length of the kernel instead, for now
+    # rKernel = csz
+
+    # courant number
+    cMax = float(cfg['cMax'])
+
+    # compute stable time step
+    # if velocity is zero - divided by zero error so to avoid:
+    if vmax == 0.0:
+        dtStable = float(cfg['maxdT'])
+    else:
+        dtStable = (cMax * csz) / vmax
         if dtStable < float(cfg['mindT']):
             dtStable = float(cfg['mindT'])
         elif dtStable > float(cfg['maxdT']):

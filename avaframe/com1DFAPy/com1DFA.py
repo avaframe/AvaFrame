@@ -30,6 +30,8 @@ from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+
+
 #+++++++++SETUP CONFIGURATION++++++++++++++++++++++++
 # log file name; leave empty to use default runLog.log
 logName = 'testKernel'
@@ -51,8 +53,9 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # Load configuration
-cfg = cfgUtils.getModuleConfig(DFAtls)['GENERAL']
-cfgFull = cfgUtils.getModuleConfig(DFAtls)
+cfg = cfgUtils.getModuleConfig(DFAtls)
+cfgGen = cfg['GENERAL']
+flagDev = cfg['FLAGS'].getboolean('flagDev')
 
 # for timing the sims
 startTime = time.time()
@@ -60,8 +63,8 @@ startTime = time.time()
 
 #+++++++++Inputs++++++++++++++++++++++++
 # ------------------------
-# fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'])
+# fetch input data - dem, release-, entrainment- and resistance areas
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfg['FLAGS'], flagDev)
 demOri = IOf.readRaster(demFile)
 # derive line from release area polygon
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
@@ -82,14 +85,15 @@ relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
 
+
 massPart = 2000  # [200, 100, 50, 25, 10, 7.5, 5]
-cfg['massPerPart'] = str(massPart)
+cfgGen['massPerPart'] = str(massPart)
 # ------------------------
 # initialize simulation : create directories
 workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 # create particles, create resistance and
 # entrainment matrix, initialize fields, get normals and neighbours
-particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfg, relRaster, dem)
+particles, fields, Cres, Ment = DFAtls.initializeSimulation(cfgGen, relRaster, dem)
 
 #+++++++++PERFORM SIMULAITON++++++++++++++++++++++
 # ------------------------
@@ -102,7 +106,7 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-T, U, Z, S, Particles, Fields, Tcpu = DFAtls.DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu)
+T, U, Z, S, Particles, Fields, Tcpu = DFAtls.DFAIterate(cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
 log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))

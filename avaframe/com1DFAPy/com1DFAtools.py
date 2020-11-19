@@ -26,7 +26,8 @@ log = logging.getLogger(__name__)
 debugPlot = False
 
 # set feature leapfrog time stepping
-featLF = True
+featLF = False
+cMax = '0.5'    # courant number
 
 
 def initializeMesh(dem):
@@ -227,7 +228,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         # CALL TIME STEP:
         # to play around with the courant number
         if featLF:
-            cfg['cMax'] = '0.5'
+            cfg['cMax'] = cMax
             dtStable = tD.getcflTimeStep(particles, dem, cfg)
         # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
         #++++++++++++++++++++++++++++++++++++++++++++++
