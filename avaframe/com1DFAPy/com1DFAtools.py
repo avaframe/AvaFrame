@@ -198,8 +198,9 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         #++++++++++++++++if you want to use cfl time step+++++++++++++++++++
         # CALL TIME STEP:
         # to play around with the courant number
-        cfg['cMax'] = '0.5'
-        # dtStable = tD.getcflTimeStep(particles, dem, cfg)
+        if featLF:
+            cfg['cMax'] = '0.5'
+            dtStable = tD.getcflTimeStep(particles, dem, cfg)
         # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
         #++++++++++++++++++++++++++++++++++++++++++++++
         # get time step
