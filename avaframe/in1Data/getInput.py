@@ -22,7 +22,7 @@ from avaframe.in3Utils import logUtils
 log = logging.getLogger(__name__)
 
 
-def getInputData(avaDir, cfg, flagDev="False"):
+def getInputData(avaDir, cfg):
     """ Fetch input datasets required for simulation
 
     Input:  avalanche directory
@@ -32,7 +32,7 @@ def getInputData(avaDir, cfg, flagDev="False"):
             entrainment area file
             resistance area file
     """
-
+    flagDev = cfg['flagDev']
     # Set directories for inputs, outputs and current work
     inputDir = os.path.join(avaDir, 'Inputs')
 

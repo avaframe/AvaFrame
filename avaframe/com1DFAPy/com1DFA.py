@@ -43,7 +43,7 @@ avalancheDir = cfgMain['MAIN']['avalancheDir']
 modName = 'com1DFAPy'
 
 # Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=True)
+initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
@@ -61,7 +61,7 @@ startTime = time.time()
 #+++++++++Inputs++++++++++++++++++++++++
 # ------------------------
 # fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'], flagDev=False)
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfgFull['FLAGS'])
 demOri = IOf.readRaster(demFile)
 # derive line from release area polygon
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
@@ -82,15 +82,8 @@ relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
 
-<<<<<<< HEAD
-
-#+++++++++INITIALIZE SIMULAITON++++++++++++++++++++++++
-massPart = 1250  # [200, 100, 50, 25, 10, 7.5, 5]
-cfgGen['massPerPart'] = str(massPart)
-=======
 massPart = 2000  # [200, 100, 50, 25, 10, 7.5, 5]
 cfg['massPerPart'] = str(massPart)
->>>>>>> compute normal and area of the grid, add tests
 # ------------------------
 # initialize simulation : create directories
 workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
