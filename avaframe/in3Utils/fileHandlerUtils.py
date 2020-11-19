@@ -87,7 +87,7 @@ def readLogFile(logName, cfg=''):
         logDict['noSim'].append(countSims)
         logDict['simName'].append(vals[1])
         logDict[varPar].append(float(vals[2]))
-        logDict['fullName'].append(vals[1] + '_' + '%.3f' % float(vals[2]))
+        logDict['fullName'].append(vals[1] + '_' + '%.5f' % float(vals[2]))
         countSims = countSims + 1
 
     return logDict
@@ -236,24 +236,24 @@ def exportcom1DFAOutput(avaDir, cfg=''):
 
     # Export peak files and reports
     for k in range(sNo):
-        pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
+        pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_pfd.asc' % logDict['simName'][k])
-        pathTo = os.path.join(outDirPF, '%s_%.03f_pfd.asc' % (logDict['simName'][k], logDict[varPar][k]))
+        pathTo = os.path.join(outDirPF, '%s_%.05f_pfd.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
-        pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
+        pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_ppr.asc' % logDict['simName'][k])
-        pathTo = os.path.join(outDirPF, '%s_%.03f_ppr.asc' % (logDict['simName'][k], logDict[varPar][k]))
+        pathTo = os.path.join(outDirPF, '%s_%.05f_ppr.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
-        pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
+        pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_pv.asc' % logDict['simName'][k])
-        pathTo = os.path.join(outDirPF, '%s_%.03f_pv.asc' % (logDict['simName'][k], logDict[varPar][k]))
+        pathTo = os.path.join(outDirPF, '%s_%.05f_pv.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
-        pathFrom = os.path.join('%s%.03f' % (resPath, logDict[varPar][k]),
+        pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                 '%s.html' % logDict['simName'][k])
-        pathTo = os.path.join(outDirRep, '%s_%.03f.html' % (logDict['simName'][k], logDict[varPar][k]))
+        pathTo = os.path.join(outDirRep, '%s_%.05f.html' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
 
     # Export ExpLog to Outputs/com1DFA

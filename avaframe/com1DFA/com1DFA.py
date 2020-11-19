@@ -222,7 +222,7 @@ def com1DFAMain(cfg, avaDir):
             itemsRaw = varParValues.split('_')
             items = []
             for itemR in itemsRaw:
-                items.append('%.3f' % float(itemR))
+                items.append('%.5f' % float(itemR))
             for item in items:
                 logName = sim + '_' + item
                 log.info('Perform simulation with %s = %s: logName = %s' % (cfgPar['varPar'], item, logName))
