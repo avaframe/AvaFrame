@@ -25,6 +25,9 @@ import avaframe.com1DFAPy.timeDiscretizations as tD
 log = logging.getLogger(__name__)
 debugPlot = False
 
+# set feature leapfrog time stepping
+featLF = True
+
 
 def initializeSimulation(cfg, relRaster, dem):
     # get simulation parameters
@@ -209,9 +212,10 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         Tcpu['nSave'] = nSave
 
         # Perform computations
-        # choose which time stepping
-        # particles, fields, Tcpu, dt = computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
-        particles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+        if featLF:
+            particles, fields, Tcpu, dt = computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+        else:
+            particles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
         # Save desired parameters and export to Lists for saving interval
         U = np.append(U, norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
         Z = np.append(Z, particles['z'][0])
@@ -299,13 +303,6 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     particles = updatePosition(cfg, particles, dem, force)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
-
-    #++++++++++++++++if you want to use cfl time step+++++++++++++++++++
-    # CALL TIME STEP:
-    # to play around with the courant number
-    # cfg['cMax'] = 0.5
-    # dtStable = tD.getTimeStep(particles, dem, cfg)
-    #++++++++++++++++++++++++++++++++++++++++++++++
 
     # get particles location (neighbours for sph)
     startTime = time.time()
@@ -409,8 +406,6 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     particles['m'] = massNew
     # normal component of the velocity
     uN = uxNew*nx + uyNew*ny + uzNew*nz
-    # print(nx, ny, nz)
-    # print(norm(ux, uy, uz), uN)
     # remove normal component of the velocity
     particles['ux'] = uxNew - uN * nx
     particles['uy'] = uyNew - uN * ny
@@ -421,46 +416,6 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     ###############################################################
     # remove particles that are not located on the mesh any more
     particles = removeOutPart(cfg, particles, dem)
-
-
-    #+++++++++++++++++++++COMPUTE FLOW DEPTH
-    # plot flow depth computed with different interpolation methods
-    nSave = Tcpu['nSave']
-    dtSave = cfg.getfloat('dtSave')
-    if debugPlot and particles['t'] >= nSave * dtSave:
-        hNN = copy.deepcopy(particles['hNearestNearest'])
-        hNB = copy.deepcopy(particles['hNearestBilinear'])
-        hSPH = copy.deepcopy(particles['hSPH'])
-        hBN = copy.deepcopy(particles['hBilinearNearest'])
-        hBB = copy.deepcopy(particles['hBilinearBilinear'])
-        indexSort = np.argsort(hNN)
-        indexSortBB = np.argsort(hBB)
-
-        # print(np.mean(hSPH))
-        # fig, ax = plt.subplots(figsize=(2*figW, figH))
-        # ax.set_title('flow depth per particle')
-        # # ax.plot(hSPH[indexSort], 'b', linewidth=0.5, label='h from SPH')
-        # ax.plot(hBB[indexSort], 'y', linewidth=0.5, label='h from bilinear bilinear')
-        # # ax.plot(hBN[indexSort], 'g', linewidth=0.5, label='h from bilinear nearest')
-        # ax.plot(hNB[indexSort], 'r', linewidth=0.5, label='h from nearest bilinear')
-        # ax.plot(hNN[indexSort], 'k', linewidth=0.5, label='h from nearest nearest')
-        # plt.legend()
-        # plt.show()#block=False)
-        # plt.pause(1)
-        # plt.close()
-        ind = np.where(((particles['y']>905) & (particles['y']<1005)))
-        # fig2 = plt.figure()
-        # ax2 = fig2.add_subplot(111, projection='3d')
-        # ax2.scatter(particles['x'][ind], particles['y'][ind], hNN[ind], 'k')
-        # ax2.scatter(particles['x'][ind], particles['y'][ind], hBB[ind], 'b')
-        # ax2.set_xlim3d(0, 1000)
-        # ax2.set_ylim3d(950,1050)
-        # ax2.set_zlim3d(0,1000)
-
-        fig1, ax1 = plt.subplots(figsize=(2*figW, figH))
-        ax1.plot(particles['x'][ind], hNN[ind], color='k', marker='.', linestyle = 'None')
-        ax1.plot(particles['x'][ind], hBB[ind], color='b', marker='.', linestyle = 'None')
-        plt.show()
 
     #++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()
