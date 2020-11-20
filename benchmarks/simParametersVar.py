@@ -58,7 +58,7 @@ def fetchBenchParameters(avaDir):
                         'type': 'list',
                         'Release Area': 'release1HS',
                         'Entrainment Area': '',
-                        'Resistance Area': '',
+                        'Resistance Area': 'resistance1HS',
                         'Parameter variation on': 'RelTh',
                         'Parameter value': '0.50000',
                         'Mu': '0.15500',
