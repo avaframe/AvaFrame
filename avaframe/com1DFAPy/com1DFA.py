@@ -767,6 +767,9 @@ def computeForceSPH(cfg, particles, force, dem):
     nrows = dem['header'].nrows
     ncols = dem['header'].ncols
     csz = dem['header'].cellsize
+    Nx = dem['Nx']
+    Ny = dem['Ny']
+    Nz = dem['Nz']
 
     # initialize fields for force
     forceSPHX = np.zeros(Npart)
@@ -781,7 +784,10 @@ def computeForceSPH(cfg, particles, force, dem):
         # adding lateral force (SPH component)
         # startTime = time.time()
         # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows, csz)
-        gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(particles, j, ncols, nrows, csz)
+        x = particles['x'][j]
+        y = particles['y'][j]
+        nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
+        gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz)
         # tcpuSPH = time.time() - startTime
         # TcpuSPH = TcpuSPH + tcpuSPH
         # startTime = time.time()
