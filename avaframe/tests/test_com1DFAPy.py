@@ -74,8 +74,8 @@ def test_normalize(capfd):
 
 def test_getNormalMesh(capfd):
     '''projectOnRasterVect'''
-    a = 1
-    b = 2
+    a = 2
+    b = 1
     xllcenter = 0
     yllcenter = 0
     cellsize = 1
@@ -86,7 +86,7 @@ def test_getNormalMesh(capfd):
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
     Z1 = a * X * X + b * Y * Y
-    for num in [4, 6, 8]:
+    for num in [1, 4, 6, 8]:
         Nx, Ny, Nz = DFAtls.getNormalMesh(Z, cellsize, num=num)
         atol = 1e-10
         TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-a*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
@@ -98,6 +98,12 @@ def test_getNormalMesh(capfd):
 
         Nx, Ny, Nz = DFAtls.getNormalMesh(Z1, cellsize, num=num)
 
+        print(Nx)
+        print((-2*a*X / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
+        print(Ny)
+        print((-2*b*Y / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
+        print(Nz)
+        print((1 / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
         atol = 1e-10
         TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-2*a*X / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNX
@@ -123,10 +129,10 @@ def test_getAreaMesh(capfd):
     Z1 = a * X * X + b * Y * Y
     Nx, Ny, Nz = DFAtls.getNormalMesh(Z, csz, num=4)
     Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
-    print(np.sqrt((1+a*a)*(1+b*b)))
+    print(np.sqrt((1+a*a+b*b)))
     print(Area)
     atol = 1e-10
-    TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a)*(1+b*b)) * np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
+    TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a+b*b)) * np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
     assert TestArea
 
 
