@@ -19,14 +19,14 @@ def fetchBenchParameters(avaDir):
 
     # set desired benchmark simulation info dictionary
     if avaDictName == 'avaBowlDict':
-        avaDictName = {'simName': 'release1BL_null_dfa_0.155',
+        avaDictName = {'simName': 'release1BL_null_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1BL',
                         'Entrainment Area': '',
                         'Resistance Area': '',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '1.000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '20196.2',
                         'Final Mass [kg]': '20196.2'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1BL'},
@@ -35,14 +35,14 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaFlatPlaneDict':
-        avaDictName = {'simName': 'release1FP_null_dfa_0.155',
+        avaDictName = {'simName': 'release1FP_null_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1FP',
                         'Entrainment Area': '',
                         'Resistance Area': '',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '1.000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '20000.',
                         'Final Mass [kg]': '20000.'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1FP'},
@@ -51,14 +51,14 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaHelixDict':
-        avaDictName = {'simName': 'release1HX_null_dfa_0.155',
+        avaDictName = {'simName': 'release1HX_null_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1HX',
                         'Entrainment Area': '',
                         'Resistance Area': '',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '1.000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '20522.4',
                         'Final Mass [kg]': '20522.4'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
@@ -68,14 +68,14 @@ def fetchBenchParameters(avaDir):
 
     elif avaDictName == 'avaHelixChannelDict':
 
-        avaDictName = {'simName': 'release1HX_entres_dfa_0.155',
+        avaDictName = {'simName': 'release1HX_entres_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1HX',
                         'Entrainment Area': 'entrainment1HX',
                         'Resistance Area': '',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '1.000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '22398.8',
                         'Final Mass [kg]': '23117.6'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
@@ -88,14 +88,14 @@ def fetchBenchParameters(avaDir):
 
     elif avaDictName == 'avaHockeyDict':
 
-        avaDictName = {'simName': 'release1HS_entres_dfa_0.155',
+        avaDictName = {'simName': 'release1HS_entres_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1HS',
                         'Entrainment Area': '',
                         'Resistance Area': 'resistance1HS',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '1.000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '20657.1',
                         'Final Mass [kg]': '20657.1'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
@@ -107,14 +107,14 @@ def fetchBenchParameters(avaDir):
 
     elif avaDictName == 'avaHockeySmoothChannelDict':
 
-        avaDictName = {'simName': 'release1HS2_entres_dfa_0.155',
+        avaDictName = {'simName': 'release1HS2_entres_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1HS2',
                         'Entrainment Area': 'entrainment1HS2',
                         'Resistance Area': '',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '1.000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '20967.3',
                         'Final Mass [kg]': '21306.'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
@@ -125,14 +125,14 @@ def fetchBenchParameters(avaDir):
 
         avaDictList.append(avaDictName)
 
-        avaDictName = {'simName': 'release2HS2_entres_dfa_0.155',
+        avaDictName = {'simName': 'release2HS2_entres_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release2HS2',
                         'Entrainment Area': 'entrainment1HS2',
                         'Resistance Area': '',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '1.000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '26627.4',
                         'Final Mass [kg]': '26627.4'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
@@ -144,14 +144,14 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaHockeySmoothSmallDict':
-        avaDictName = {'simName': 'release1HS2_null_dfa_0.155',
+        avaDictName = {'simName': 'release1HS2_null_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1HS2',
                         'Entrainment Area': '',
                         'Resistance Area': '',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '1.000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '10000.',
                         'Final Mass [kg]': '10000.'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
@@ -162,14 +162,14 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaInclinedPlaneDict':
-        avaDictName = {'simName': 'release1IP_entres_dfa_0.155',
+        avaDictName = {'simName': 'release1IP_entres_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1IP',
                         'Entrainment Area': 'entrainment1IP',
                         'Resistance Area': 'resistance1IP',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '1.000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '20000.',
                         'Final Mass [kg]': '21735.1'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1IP'},

@@ -18,32 +18,32 @@ def fetchBenchParameters(avaDir):
 
     # set desired benchmark simulation info dictionary
     if avaDictName == 'avaFlatPlaneDict':
-        avaDictName = {'simName': 'release1FP_null_dfa_2.000',
+        avaDictName = {'simName': 'release1FP_null_dfa_2.00000',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1FP',
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Parameter variation on': 'RelTh',
-                        'Parameter value': '2.000',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '2.000',
+                        'Parameter value': '2.00000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '2.00000',
                         'Release Mass [kg]': '40000.',
                         'Final Mass [kg]': '40000.'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1FP'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs on a flat plane geometry.'}}
 
     elif avaDictName == 'avaHelixChannelDict':
-        avaDictName = {'simName': 'release1HX_entres_dfa_0.055',
+        avaDictName = {'simName': 'release1HX_entres_dfa_0.05500',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1HX',
                         'Entrainment Area': 'entrainment1HX',
                         'Resistance Area': '',
                         'Parameter variation on': 'Mu',
-                        'Parameter value': '0.055',
-                        'Mu': '0.055',
-                        'Release thickness [m]': '1.000',
+                        'Parameter value': '0.05500',
+                        'Mu': '0.05500',
+                        'Release thickness [m]': '1.00000',
                         'Release Mass [kg]': '36865.6',
                         'Final Mass [kg]': '37584.5'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
@@ -53,16 +53,16 @@ def fetchBenchParameters(avaDir):
                     'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
 
     elif avaDictName == 'avaHockeyDict':
-        avaDictName = {'simName': 'release1HS_null_dfa_0.500',
+        avaDictName = {'simName': 'release1HS_entres_dfa_0.50000',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area': 'release1HS',
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Parameter variation on': 'RelTh',
-                        'Parameter value': '0.500',
-                        'Mu': '0.155',
-                        'Release thickness [m]': '0.500',
+                        'Parameter value': '0.50000',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '0.50000',
                         'Release Mass [kg]': '10328.6',
                         'Final Mass [kg]': '10328.6'},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
