@@ -182,13 +182,28 @@ def getNormalMesh(z, csz, num=4):
         Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1] + z[n-2, m-2] - z[n-1, m-2]) / csz
         Nz[n-1, m-1] = 2
 
+    if num == 1:
+        z1 = np.append(z, z[:, -2].reshape(n, 1), axis=1)
+        n1, m1 = np.shape(z1)
+        z2 = np.append(z1, z1[-2, :].reshape(1, m1), axis=0)
+        n2, m2 = np.shape(z2)
+        Nx = - (z2[0:n2-1, 1:m2] - z2[0:n2-1, 0:m2-1]) / csz
+        Ny = - (z2[1:n2, 0:m2-1] - z2[0:n2-1, 0:m2-1]) / csz
+        Ny[n-1, 0:m-1] = -Ny[n-1, 0:m-1]
+        Nx[0:n-1, m-1] = -Nx[0:n-1, m-1]
+        Ny[n-1, m-1] = -Ny[n-1, m-1]
+        Nx[n-1, m-1] = -Nx[n-1, m-1]
+
+        # Nx[0:n-1, 0:m-1] = - (z[0:n-1, 1:m] - z[0:n-1, 0:m-1]) / csz
+        # Ny[0:n-1, 0:m-1] = - (z[1:n, 0:m-1] - z[0:n-1, 0:m-1]) / csz
+
     Nx, Ny, Nz = normalize(Nx, Ny, Nz)
 
     return Nx, Ny, Nz
 
 
 def getAreaMesh(Nx, Ny, Nz, csz):
-    A = 1/(Nz*Nz) * np.sqrt((Nz*Nz + Nx*Nx) * (Nz*Nz + Ny*Ny)) * csz*csz
+    A = csz * csz / Nz
     A = np.where(A > 3*csz*csz, 3*csz*csz, A)
     return A
 

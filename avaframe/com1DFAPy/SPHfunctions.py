@@ -158,7 +158,7 @@ def calcGradHSPH(particles, j, ncols, nrows, csz):
     return gradhX, gradhY,  gradhZ, L
 
 
-def calcGradHSPHVect(particles, j, ncols, nrows, csz):
+def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     # SPH kernel
     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
     rKernel = csz
@@ -204,6 +204,10 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz):
     dx = particles['x'][L] - x
     dy = particles['y'][L] - y
     dz = (particles['z'][L] - z)
+    dn = nx*dx + ny*dy + nz*dz
+    dx = dx - dn*nx
+    dy = dy - dn*ny
+    dz = dz - dn*nz
     r = DFAtls.norm(dx, dy, dz)
     # impose a minimum distance between particles
     dx = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dx, dx)
@@ -331,6 +335,9 @@ def computeFD(cfg, particles, dem):
     nrows = dem['header'].nrows
     ncols = dem['header'].ncols
     csz = dem['header'].cellsize
+    Nx = dem['Nx']
+    Ny = dem['Ny']
+    Nz = dem['Nz']
     # initialize
     H = np.zeros(np.shape(particles['h']))
     # loop on particles
@@ -340,7 +347,13 @@ def computeFD(cfg, particles, dem):
         # adding lateral force (SPH component)
         # startTime = time.time()
         # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows, csz)
-        h, _ = calcHSPHVect(particles, j, ncols, nrows, csz)
+
+        # get normal at the particle location
+        x = particles['x'][j]
+        y = particles['y'][j]
+        nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
+
+        h, _ = calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz)
         H[j] = h / rho
 
     particles['hSPH'] = H
@@ -348,7 +361,7 @@ def computeFD(cfg, particles, dem):
     return particles
 
 
-def calcHSPHVect(particles, j, ncols, nrows, csz):
+def calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     # SPH kernel
     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
     rKernel = csz
@@ -391,6 +404,10 @@ def calcHSPHVect(particles, j, ncols, nrows, csz):
     dx = particles['x'][L] - x
     dy = particles['y'][L] - y
     dz = (particles['z'][L] - z)
+    dn = nx*dx + ny*dy + nz*dz
+    dx = dx - dn*nx
+    dy = dy - dn*ny
+    dz = dz - dn*nz
     r = DFAtls.norm(dx, dy, dz)
     # impose a minimum distance between particles
     r = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel, r)

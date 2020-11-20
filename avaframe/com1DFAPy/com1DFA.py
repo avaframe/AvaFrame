@@ -40,14 +40,14 @@ featCFL = False
 featCFLConstrain = True
 
 
-def initializeMesh(dem):
+def initializeMesh(dem, num=4):
     # read dem header
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
     csz = header.cellsize
     # get normal vector of the grid mesh
-    Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz)
+    Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num=num)
     dem['Nx'] = Nx
     dem['Ny'] = Ny
     dem['Nz'] = Nz
