@@ -21,9 +21,11 @@ cfg = cfgUtils.getModuleConfig(com1DFA)['GENERAL']
 cfgFull = cfgUtils.getModuleConfig(com1DFA)
 
 ########################################################################
-## CHOOSE YOUR SETUP
+# CHOOSE YOUR SETUP
 ##########################################################################
 # Choose the snow depth you want to use (h function)
+
+
 def Hfunction(x, y, z):
     h = np.ones(np.shape(x))
     GHx = np.zeros(np.shape(x))
@@ -62,7 +64,7 @@ NPartPerD = [2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
 coef = 0.5
 rho = 200
 ##############################################################################
-## END CHOOSE SETUP
+# END CHOOSE SETUP
 ###############################################################################
 
 
@@ -161,7 +163,6 @@ for DX in NDX:
         indPartInCell = particles['indPartInCell']
         partInCell = particles['partInCell']
 
-
         Nx = dem['Nx']
         Ny = dem['Ny']
         Nz = dem['Nz']
@@ -180,7 +181,7 @@ for DX in NDX:
             # plt.show()
 
         # Compute sph FD
-        particles = SPH.computeFD(cfg, particles, dem)
+        particles = SPH.computeFlowDepth(cfg, particles, dem)
 
         # Compute SPH gradient
 
@@ -222,16 +223,20 @@ for DX in NDX:
         np.add.at(MassNearest, iC, Mpart)
         MassNearest = np.reshape(MassNearest, (NY, NX))
         FDNearest = MassNearest / (Area * rho)
-        hNN, _ = geoTrans.projectOnRasterVectRoot(Xpart, Ypart, FDNearest, csz=csz, interp='nearest')
-        hNB, _ = geoTrans.projectOnRasterVectRoot(Xpart, Ypart, FDNearest, csz=csz, interp='bilinear')
+        hNN, _ = geoTrans.projectOnRasterVectRoot(
+            Xpart, Ypart, FDNearest, csz=csz, interp='nearest')
+        hNB, _ = geoTrans.projectOnRasterVectRoot(
+            Xpart, Ypart, FDNearest, csz=csz, interp='bilinear')
 
         # Update fields using a bilinear interpolation
         MassBilinear = np.zeros((NY, NX))
         #
         # # startTime = time.time()
-        MassBilinear = geoTrans.pointsToRaster(Xpart, Ypart, Mpart, MassBilinear, csz=csz, interp='bilinear')
+        MassBilinear = geoTrans.pointsToRaster(
+            Xpart, Ypart, Mpart, MassBilinear, csz=csz, interp='bilinear')
         FDBilinear = MassBilinear / (Area * rho)
-        hBB, _ = geoTrans.projectOnRasterVectRoot(Xpart, Ypart, FDBilinear, csz=csz, interp='bilinear')
+        hBB, _ = geoTrans.projectOnRasterVectRoot(
+            Xpart, Ypart, FDBilinear, csz=csz, interp='bilinear')
 
         # fig2 = plt.figure()
         # ax2 = fig2.add_subplot(111, projection='3d')
@@ -248,42 +253,51 @@ for DX in NDX:
         count = count + 1
         col = color[2*count]
         mark = markers[count-1]
-        ind = np.where(((particles['y']>Ly/2-dy) & (particles['y']<Ly/2+dy)))
+        ind = np.where(((particles['y'] > Ly/2-dy) & (particles['y'] < Ly/2+dy)))
         if count == 1:
-            ax1.plot(particles['x'][ind], hBB[ind], color='r', marker=mark, linestyle = 'None', label='HBB flow depth')
-            ax1.plot(particles['x'][ind], hNN[ind], color='y', marker=mark, linestyle = 'None', label='HNN flow depth')
-            ax1.plot(particles['x'][ind], hNB[ind], color='g', marker=mark, linestyle = 'None', label='HNB flow depth')
+            ax1.plot(particles['x'][ind], hBB[ind], color='r',
+                     marker=mark, linestyle='None', label='HBB flow depth')
+            ax1.plot(particles['x'][ind], hNN[ind], color='y',
+                     marker=mark, linestyle='None', label='HNN flow depth')
+            ax1.plot(particles['x'][ind], hNB[ind], color='g',
+                     marker=mark, linestyle='None', label='HNB flow depth')
         else:
-            ax1.plot(particles['x'][ind], hBB[ind], color='r', marker=mark, linestyle = 'None')
-            ax1.plot(particles['x'][ind], hNN[ind], color='y', marker=mark, linestyle = 'None')
-            ax1.plot(particles['x'][ind], hNB[ind], color='g', marker=mark, linestyle = 'None')
+            ax1.plot(particles['x'][ind], hBB[ind], color='r', marker=mark, linestyle='None')
+            ax1.plot(particles['x'][ind], hNN[ind], color='y', marker=mark, linestyle='None')
+            ax1.plot(particles['x'][ind], hNB[ind], color='g', marker=mark, linestyle='None')
 
+        # , label='real flow depth')
+        ax1.plot(particles['x'][ind], h[ind], color='b', marker='None')
+        ax1.plot(particles['x'][ind], particles['hSPH'][ind], color=col,
+                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
 
-        ax1.plot(particles['x'][ind], h[ind], color='b', marker='None')#, label='real flow depth')
-        ax1.plot(particles['x'][ind], particles['hSPH'][ind], color=col, marker=mark, linestyle = 'None', label='SPH N=' + str(nPartPerD))
-
-        ind = np.where(((particles['x']>Lx/2-dx) & (particles['x']<Lx/2+dx)))
+        ind = np.where(((particles['x'] > Lx/2-dx) & (particles['x'] < Lx/2+dx)))
         if count == 1:
-            ax2.plot(particles['y'][ind], hBB[ind], color='r', marker=mark, linestyle = 'None', label='HBB flow depth')
-            ax2.plot(particles['y'][ind], hNN[ind], color='y', marker=mark, linestyle = 'None', label='HNN flow depth')
-            ax2.plot(particles['y'][ind], hNB[ind], color='g', marker=mark, linestyle = 'None', label='HNB flow depth')
+            ax2.plot(particles['y'][ind], hBB[ind], color='r',
+                     marker=mark, linestyle='None', label='HBB flow depth')
+            ax2.plot(particles['y'][ind], hNN[ind], color='y',
+                     marker=mark, linestyle='None', label='HNN flow depth')
+            ax2.plot(particles['y'][ind], hNB[ind], color='g',
+                     marker=mark, linestyle='None', label='HNB flow depth')
         else:
-            ax2.plot(particles['y'][ind], hBB[ind], color='r', marker=mark, linestyle = 'None')
-            ax2.plot(particles['y'][ind], hNN[ind], color='y', marker=mark, linestyle = 'None')
-            ax2.plot(particles['y'][ind], hNB[ind], color='g', marker=mark, linestyle = 'None')
+            ax2.plot(particles['y'][ind], hBB[ind], color='r', marker=mark, linestyle='None')
+            ax2.plot(particles['y'][ind], hNN[ind], color='y', marker=mark, linestyle='None')
+            ax2.plot(particles['y'][ind], hNB[ind], color='g', marker=mark, linestyle='None')
 
+        # , label='real flow depth')
+        ax2.plot(particles['y'][ind], h[ind], color='r', marker='None')
+        ax2.plot(particles['y'][ind], particles['hSPH'][ind], color=col,
+                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
 
-        ax2.plot(particles['y'][ind], h[ind], color='r', marker='None')#, label='real flow depth')
-        ax2.plot(particles['y'][ind], particles['hSPH'][ind], color=col, marker=mark, linestyle = 'None', label='SPH N=' + str(nPartPerD))
+        ind = np.where(((particles['y'] > Ly/2-dy) & (particles['y'] < Ly/2+dy)))
+        ax3.plot(particles['x'][ind], Ghx[ind], color='r', marker='None')  # , label='real gradH')
+        ax3.plot(particles['x'][ind], GHX[ind], color=col, marker=mark,
+                 linestyle='None', label='SPH N=' + str(nPartPerD))
 
-        ind = np.where(((particles['y']>Ly/2-dy) & (particles['y']<Ly/2+dy)))
-        ax3.plot(particles['x'][ind], Ghx[ind], color='r', marker='None')#, label='real gradH')
-        ax3.plot(particles['x'][ind], GHX[ind], color=col, marker=mark, linestyle = 'None', label='SPH N=' + str(nPartPerD))
-
-
-        ind = np.where(((particles['x']>Lx/2-dx) & (particles['x']<Lx/2+dx)))
-        ax4.plot(particles['y'][ind], Ghy[ind], color='r', marker='None')#, label='real gradH')
-        ax4.plot(particles['y'][ind], GHY[ind], color=col, marker=mark, linestyle = 'None', label='SPH N=' + str(nPartPerD))
+        ind = np.where(((particles['x'] > Lx/2-dx) & (particles['x'] < Lx/2+dx)))
+        ax4.plot(particles['y'][ind], Ghy[ind], color='r', marker='None')  # , label='real gradH')
+        ax4.plot(particles['y'][ind], GHY[ind], color=col, marker=mark,
+                 linestyle='None', label='SPH N=' + str(nPartPerD))
         plt.show(block=False)
         # plt.draw()
         # plt.pause(2)

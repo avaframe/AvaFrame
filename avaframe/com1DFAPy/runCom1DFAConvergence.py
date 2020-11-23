@@ -48,7 +48,8 @@ flagDev = cfg['FLAGS'].getboolean('flagDev')
 startTime = time.time()
 # ------------------------
 # fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfg['FLAGS'], flagDev=False)
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(
+    avalancheDir, cfg['FLAGS'], flagDev=False)
 demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
@@ -74,7 +75,7 @@ TForceSPH = []
 TPos = []
 TNeigh = []
 TField = []
-MassPart = [1000, 500, 250] #, 200]
+MassPart = [1000, 500, 250]  # , 200]
 cfgGen['dt'] = str(0.1)
 cfgGen['Tend'] = str(10)
 NP = []
@@ -85,7 +86,8 @@ for massPart in MassPart:
     # entrainment matrix, initialize fields, get normals and neighbours
     particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGen, relRaster, dem)
     NP.append(particles['Npart'])
-    log.info('Initializted simulation. M = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+    log.info('Initializted simulation. M = %f kg, %s particles' %
+             (particles['mTot'], particles['Npart']))
 
     # ------------------------
     #  Start time step computation
@@ -97,7 +99,8 @@ for massPart in MassPart:
     Tcpu['Neigh'] = 0.
     Tcpu['Field'] = 0.
 
-    T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
+    T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
+        cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
 
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
     TForce.append(Tcpu['Force'] / Tcpu['nIter'])
@@ -121,7 +124,8 @@ for massPart in MassPart:
         if resType == 'ppr':
             resField = resField * 0.001
         relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
-        dataName = relName + '_' + 'null' + '_'  + 'dfa' + '_'  + '0.155' + '_'  + resType + '_' + 'massPart' + '_'  + str(massPart) + '_'  + 'CFL' + '_'  + cfg['cMax']
+        dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType + \
+            '_' + 'massPart' + '_' + str(massPart) + '_' + 'CFL' + '_' + cfg['cMax']
         # dataName = relName + '_' + 'massPart' + '_'  + str(massPart) + '_'  + 'CFL' + '_'  + cfg['cMax']
         fU.writePeakResult(outDir, resField, demOri['header'], dataName)
         log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)

@@ -19,6 +19,7 @@ from avaframe.out3Plot.plotUtils import *
 import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.SPHfunctions as SPH
+import avaframe.com1DFAPy.frictionLaws as fricLaws
 # import avaframe.in2Trans.shpConversion as shpConv
 # import avaframe.in2Trans.ascUtils as IOf
 # from avaframe.DFAkernel.setParam import *
@@ -125,7 +126,8 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
     particles['stoppCriteria'] = False
-    particles['kineticEne'] = np.sum(0.5 * Mpart * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
+    particles['kineticEne'] = np.sum(
+        0.5 * Mpart * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
     particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
 
     # initialize entrainment and resistance
@@ -149,7 +151,8 @@ def initializeSimulation(cfg, relRaster, dem):
     t = 0
     particles['t'] = t
 
-    log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells' % (particles['mTot'], particles['Npart'], np.size(indY)))
+    log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells' %
+             (particles['mTot'], particles['Npart'], np.size(indY)))
 
     if debugPlot:
         x = np.arange(ncols) * csz
@@ -227,6 +230,10 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     U = np.empty((0, 0))
     T = np.empty((0, 0))
 
+    if featLF:
+        log.info('Use LeapFrog time stepping')
+    else:
+        log.info('Use standard time stepping')
     # Initialize time and counters
     nSave = 0
     nIter = 0
@@ -236,7 +243,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # Start time step computation
     while t < Tend and iterate:
 
-        #++++++++++++++++if you want to use cfl time step+++++++++++++++++++
+        # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
         # CALL TIME STEP:
         # to play around with the courant number
         if featCFL:
@@ -245,21 +252,23 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
             dtStable = tD.getcfldTwithConstraints(particles, dem, cfg)
 
         # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
-        #++++++++++++++++++++++++++++++++++++++++++++++
+        # ++++++++++++++++++++++++++++++++++++++++++++++
         # get time step
         dt = cfg.getfloat('dt')
         t = t + dt
         nIter = nIter + 1
-        log.info('Computing time step t = %f s', t)
+        log.debug('Computing time step t = %f s', t)
         T = np.append(T, t)
         particles['t'] = t
         Tcpu['nSave'] = nSave
 
         # Perform computations
         if featLF:
-            particles, fields, Tcpu, dt = computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+            particles, fields, Tcpu, dt = computeLeapFrogTimeStep(
+                cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
         else:
-            particles, fields, Tcpu = computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+            particles, fields, Tcpu = computeTimeStep(
+                cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
         # Save desired parameters and export to Lists for saving interval
         U = np.append(U, DFAtls.norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
         Z = np.append(Z, particles['z'][0])
@@ -278,7 +287,6 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 
 
 def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
-    log.info('Use standard time stepping')
     # get forces
     # loop version of the compute force
     startTime = time.time()
@@ -290,14 +298,6 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     force = computeForceVect(cfg, particles, dem, Ment, Cres, dt)
     tcpuForceVect = time.time() - startTime
     Tcpu['ForceVect'] = Tcpu['ForceVect'] + tcpuForceVect
-    # compare output from compute force loop and vectorized
-    #########################################################
-    # print(np.max(np.abs(force['forceX']-forceVect['forceX'])))
-    # print(np.max(np.abs(force['forceY']-forceVect['forceY'])))
-    # print(np.max(np.abs(force['forceZ']-forceVect['forceZ'])))
-    # print(np.allclose(force['forceX'], forceVect['forceX'], atol=0.00001))
-    ##########################################################
-
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
     particles, force = computeForceSPH(cfg, particles, force, dem)
@@ -319,7 +319,7 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     if flagFDSPH:
         # get SPH flow depth
-        particles = SPH.computeFD(cfg, particles, dem)
+        particles = SPH.computeFlowDepth(cfg, particles, dem)
 
     # update fields (compute grid values)
     startTime = time.time()
@@ -337,7 +337,7 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         hBN = copy.deepcopy(particles['hBilinearNearest'])
         hBB = copy.deepcopy(particles['hBilinearBilinear'])
 
-        ind = np.where(((particles['y']>995) & (particles['y']<1005)))
+        ind = np.where(((particles['y'] > 995) & (particles['y'] < 1005)))
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(111, projection='3d')
         ax2.scatter(particles['x'], particles['y'], hNN, 'g', marker='.')
@@ -345,9 +345,9 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         ax2.scatter(particles['x'], particles['y'], hSPH, 'r', marker='.')
 
         fig1, ax1 = plt.subplots(figsize=(2*figW, figH))
-        ax1.plot(particles['x'][ind], hNN[ind], color='k', marker='.', linestyle = 'None')
-        ax1.plot(particles['x'][ind], hBB[ind], color='b', marker='.', linestyle = 'None')
-        ax1.plot(particles['x'][ind], hSPH[ind], color='r', marker='.', linestyle = 'None')
+        ax1.plot(particles['x'][ind], hNN[ind], color='k', marker='.', linestyle='None')
+        ax1.plot(particles['x'][ind], hBB[ind], color='b', marker='.', linestyle='None')
+        ax1.plot(particles['x'][ind], hSPH[ind], color='r', marker='.', linestyle='None')
         plt.show()
 
     return particles, fields, Tcpu
@@ -356,7 +356,6 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     """ perform all computations that belong to one time step """
 
-    log.info('Use LeapFrog time stepping')
     # start timing
     startTime = time.time()
     tcpuForce = time.time() - startTime
@@ -381,7 +380,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     uyK = particles['uy']
     uzK = particles['uz']
 
-    #+++++++++++++Time integration using leapfrog 'Drift-Kick-Drif' scheme+++++
+    # +++++++++++++Time integration using leapfrog 'Drift-Kick-Drif' scheme+++++
     # first predict position at time t_(k+0.5)
     # 'DRIFT'
     xK5 = xK + dt * 0.5 * uxK
@@ -393,7 +392,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # For now z-position is taken from DEM - no detachment enforces...
     particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
     # TODO: do we need to update also h from particles?? I think yes! also mass, ent, res
-    ##particles['h'] = ?
+    # particles['h'] = ?
 
     # 'KICK'
     # compute velocity at t_(k+0.5)
@@ -402,7 +401,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     particles, force = computeForceSPH(cfg, particles, force, dem)
     mass = particles['m']
     uxNew = uxK + (force['forceX'] + force['forceSPHX']) * dt / mass
-    uyNew = uyK + (force['forceY'] + force['forceSPHY']) * dt  / mass
+    uyNew = uyK + (force['forceY'] + force['forceSPHY']) * dt / mass
     uzNew = uzK + (force['forceZ'] + force['forceSPHZ']) * dt / mass
 
     # 'DRIF'
@@ -411,7 +410,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     yNew = yK5 + dtK5 * uyNew
     zNew = zK5 + dtK5 * uzNew
 
-    #++++++++++++++UPDATE Particle Properties
+    # ++++++++++++++UPDATE Particle Properties
     # update mass required if entrainment
     massNew = mass + force['dM']
     particles['mTot'] = np.sum(massNew)
@@ -436,13 +435,13 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # remove particles that are not located on the mesh any more
     particles = removeOutPart(cfg, particles, dem)
 
-    #++++++++++++++GET particles location (neighbours for sph)
+    # ++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()
     particles = SPH.getNeighboursVect(particles, dem)
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
 
-    #++++++++++++++UPDATE FIELDS (compute grid values)
+    # ++++++++++++++UPDATE FIELDS (compute grid values)
     startTime = time.time()
     particles, fields = updateFields(cfg, particles, force, dem, fields)
     tcpuField = time.time() - startTime
@@ -567,8 +566,8 @@ def computeForce(cfg, particles, dem, Ment, Cres):
             Fnormal[j] = mass * effAccNorm
 
         # body forces (tangential component of acceleration of gravity)
-        gravAccTangX =          - gravAccNorm * nxAvg
-        gravAccTangY =          - gravAccNorm * nyAvg
+        gravAccTangX = - gravAccNorm * nxAvg
+        gravAccTangY = - gravAccNorm * nyAvg
         gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
         # adding gravity force contribution
         forceX[j] = forceX[j] + gravAccTangX * mass
@@ -584,7 +583,7 @@ def computeForce(cfg, particles, dem, Ment, Cres):
             # bottom normal stress sigmaB
             sigmaB = - effAccNorm * rho * h
             # SamosAT friction type (bottom shear stress)
-            tau = SamosATfric(cfg, uMag, sigmaB, h)
+            tau = fricLaws.SamosATfric(cfg, uMag, sigmaB, h)
             # coulomb friction type (bottom shear stress)
             # tau = mu * sigmaB
 
@@ -597,7 +596,8 @@ def computeForce(cfg, particles, dem, Ment, Cres):
         # compute entrained mass
         ment = Ment[indCellY][indCellX]
         if ment > 0:
-            dm, fEntX, fEntY, fEntZ = computeEntMassAndForce(cfg, ment, A, uMag, ux, uy, uz, uxDir, uyDir, uzDir, tau)
+            dm, fEntX, fEntY, fEntZ = computeEntMassAndForce(
+                cfg, ment, A, uMag, ux, uy, uz, uxDir, uyDir, uzDir, tau)
             dM[j] = dm
             forceX[j] = forceX[j] + fEntX
             forceY[j] = forceY[j] + fEntY
@@ -724,8 +724,8 @@ def computeForceVect(cfg, particles, dem, Ment, Cres, dt):
     Fnormal = np.where(effAccNorm < 0.0, mass * effAccNorm, 0)
 
     # body forces (tangential component of acceleration of gravity)
-    gravAccTangX =          - gravAccNorm * nxAvg
-    gravAccTangY =          - gravAccNorm * nyAvg
+    gravAccTangX = - gravAccNorm * nxAvg
+    gravAccTangY = - gravAccNorm * nyAvg
     gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
     # adding gravity force contribution
     forceX = forceX + gravAccTangX * mass
@@ -736,7 +736,7 @@ def computeForceVect(cfg, particles, dem, Ment, Cres, dt):
     # bottom normal stress sigmaB
     sigmaB = - effAccNorm * rho * h
     # SamosAT friction type (bottom shear stress)
-    tau = SamosATfric(cfg, uMag, sigmaB, h)
+    tau = fricLaws.SamosATfric(cfg, uMag, sigmaB, h)
     # coulomb friction type (bottom shear stress)
     # tau = mu * sigmaB
     tau = np.where(effAccNorm > 0.0, 0, tau)
@@ -787,7 +787,8 @@ def computeForceSPH(cfg, particles, force, dem):
         x = particles['x'][j]
         y = particles['y'][j]
         nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
-        gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz)
+        gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(
+            particles, j, ncols, nrows, csz, nx, ny, nz)
         # tcpuSPH = time.time() - startTime
         # TcpuSPH = TcpuSPH + tcpuSPH
         # startTime = time.time()
@@ -839,17 +840,7 @@ def updatePosition(cfg, particles, dem, force):
     uxNew = ux + (forceX + forceSPHX) * dt / mass
     uyNew = uy + (forceY + forceSPHY) * dt / mass
     uzNew = uz + (forceZ + forceSPHZ) * dt / mass
-    # print anormally big values
-    uNew = DFAtls.norm(uxNew, uyNew, uzNew)
-    if np.max(uNew) > 100:
-        ind = np.argmax(uNew)
-        A = mass[ind] / (h[ind] * rho)
-        print('particle index : ', ind)
-        print((forceX / mass)[ind])
-        print((forceY / mass)[ind])
-        print((forceZ / mass)[ind])
-        print(uNew[ind])
-        print(A)
+
     # update mass
     massNew = mass + dM
     # update position
@@ -880,18 +871,6 @@ def updatePosition(cfg, particles, dem, force):
     ###############################################################
     # remove particles that are not located on the mesh any more
     particles = removeOutPart(cfg, particles, dem)
-    # uN = particles['ux']*nx + particles['uy']*ny + particles['uz']*nz
-    # print(norm(particles['ux'], particles['uy'], particles['uz']), uN)
-    # kinEneNew = np.sum(0.5 * massNew * norm2(particles['ux'], particles['uy'], particles['uz']))
-    # potEneNew = np.sum(gravAcc * massNew * particles['z'])
-    # totEneNew = kinEneNew + potEneNew
-    # log.info('total energy variation: %f' % ((totEneNew - totEne) / totEneNew))
-    # log.info('kinetic energy variation: %f' % ((kinEneNew - kinEne) / kinEneNew))
-    # if (abs(totEneNew - totEne) / totEneNew < 0.01) and (abs(kinEneNew - kinEne) / kinEneNew < 0.01):
-    #     log.info('Reached stopping creteria : total energy varied fom less than 1 %')
-    #     particles['stoppCriteria'] = True
-    # particles['kineticEne'] = kinEneNew
-    # particles['potentialEne'] = potEneNew
     return particles
 
 
@@ -939,27 +918,25 @@ def updateFields(cfg, particles, force, dem, fields):
     #########################################
     # Update fields using a bilinear interpolation
     MassBilinear = np.zeros((nrows, ncols))
-    MomBilinearX = np.zeros((nrows, ncols))
-    MomBilinearY = np.zeros((nrows, ncols))
-    MomBilinearZ = np.zeros((nrows, ncols))
-    #
-    # # startTime = time.time()
     MassBilinear = geoTrans.pointsToRaster(x, y, m, MassBilinear, csz=csz, interp='bilinear')
-    MomBilinearX = geoTrans.pointsToRaster(x, y, m * ux, MomBilinearX, csz=csz, interp='bilinear')
-    MomBilinearY = geoTrans.pointsToRaster(x, y, m * uy, MomBilinearY, csz=csz, interp='bilinear')
-    MomBilinearZ = geoTrans.pointsToRaster(x, y, m * uz, MomBilinearZ, csz=csz, interp='bilinear')
+    FDBilinear = MassBilinear / (A * rho)
 
+    # MomBilinearX = np.zeros((nrows, ncols))
+    # MomBilinearY = np.zeros((nrows, ncols))
+    # MomBilinearZ = np.zeros((nrows, ncols))
+    #
+    # MomBilinearX = geoTrans.pointsToRaster(x, y, m * ux, MomBilinearX, csz=csz, interp='bilinear')
+    # MomBilinearY = geoTrans.pointsToRaster(x, y, m * uy, MomBilinearY, csz=csz, interp='bilinear')
+    # MomBilinearZ = geoTrans.pointsToRaster(x, y, m * uz, MomBilinearZ, csz=csz, interp='bilinear')
+    #
     # VXBilinear = np.where(MassBilinear > 0, MomBilinearX/MassBilinear, MomBilinearX)
     # VYBilinear = np.where(MassBilinear > 0, MomBilinearY/MassBilinear, MomBilinearY)
     # VZBilinear = np.where(MassBilinear > 0, MomBilinearZ/MassBilinear, MomBilinearZ)
-    # VBilinear = norm(VXBilinear, VYBilinear, VZBilinear)
-    FDBilinear = MassBilinear / (A * rho)
+    # VBilinear = DFAtls.norm(VXBilinear, VYBilinear, VZBilinear)
     # PBilinear = VBilinear * VBilinear * rho
     # PV = np.where(VBilinear > PV, VBilinear, PV)
     # PP = np.where(PBilinear > PP, PBilinear, PP)
     # PFD = np.where(FDBilinear > PFD, FDBilinear, PFD)
-    # # endTime = time.time()
-    # # log.info(('time = %s s' % (endTime - startTime)))
 
     #########################################
     # Update fields using a nearest interpolation
@@ -995,12 +972,6 @@ def updateFields(cfg, particles, force, dem, fields):
     # endTime = time.time()
     # log.info(('time = %s s' % (endTime - startTime)))
 
-    #######################################
-    # print(np.sum(MassNearest))
-    # print(np.sum(MassBilinear))
-    # print(np.sum(MassSPH))
-
-    ###################################
     fields['V'] = VNearest
     fields['P'] = PNearest
     fields['FD'] = FDNearest
@@ -1145,20 +1116,3 @@ def removePart(particles, mask, nRemove):
     particles['partInCell'] = particles['partInCell'][mask]
 
     return particles
-
-
-def SamosATfric(cfg, v, p, h):
-    rho = cfg.getfloat('rho')
-    Rs0 = cfg.getfloat('Rs0')
-    mu = cfg.getfloat('mu')
-    kappa = cfg.getfloat('kappa')
-    B = cfg.getfloat('B')
-    R = cfg.getfloat('R')
-    Rs = rho * v * v / (p + 0.001)
-    div = h / R
-    div = np.where(div < 1.0, 1, div)
-    # if(div < 1.0):
-    #     div = 1.0
-    div = np.log(div) / kappa + B
-    tau = p * mu * (1.0 + Rs0 / (Rs0 + Rs)) + rho * v * v / (div * div)
-    return tau
