@@ -107,10 +107,11 @@ Theory
 
 .. only:: html
 
-    References
-    ==========
+References
+==========
 
     * :doc:`zreferences`
+    * :doc:`dataSources`
 
 .. toctree::
     :maxdepth: 0
@@ -118,3 +119,6 @@ Theory
     :caption: References
 
     zreferences.rst
+    dataSources.rst
+
+
