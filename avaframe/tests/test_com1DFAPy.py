@@ -86,14 +86,17 @@ def test_getNormalMesh(capfd):
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
     Z1 = a * X * X + b * Y * Y
-    for num in [1, 4, 6, 8]:
+    for num in [4, 6, 8]:
         Nx, Ny, Nz = DFAtls.getNormalMesh(Z, cellsize, num=num)
         atol = 1e-10
-        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-a*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
+        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-a*np.ones(np.shape(Y)) /
+                                                np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
         assert TestNX
-        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-b*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
+        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-b*np.ones(np.shape(Y)) /
+                                                np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
         assert TestNY
-        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
+        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (np.ones(np.shape(Y)) /
+                                                np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
         assert TestNZ
 
         Nx, Ny, Nz = DFAtls.getNormalMesh(Z1, cellsize, num=num)
@@ -105,11 +108,14 @@ def test_getNormalMesh(capfd):
         print(Nz)
         print((1 / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
         atol = 1e-10
-        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-2*a*X / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
+        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-2*a*X / np.sqrt(1 + 4*a *
+                                                                 a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNX
-        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-2*b*Y / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
+        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-2*b*Y / np.sqrt(1 + 4*a *
+                                                                 a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNY
-        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (1 / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
+        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (1 / np.sqrt(1 + 4*a*a *
+                                                            X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNZ
 
 
@@ -132,7 +138,8 @@ def test_getAreaMesh(capfd):
     print(np.sqrt((1+a*a+b*b)))
     print(Area)
     atol = 1e-10
-    TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a+b*b)) * np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
+    TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a+b*b)) *
+                           np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
     assert TestArea
 
 
@@ -208,6 +215,9 @@ def test_calcGradHSPH(capfd):
     csz = header.cellsize
     dem = {}
     dem['header'] = header
+    nx = 1
+    ny = 1
+    nz = 1
     particles = {}
     particles['Npart'] = 16
     particles['x'] = np.array([1, 0, 1, 2, 1, 2, 0, 1, 0, 2, 0, 2, 1, 2, 3, 3])
@@ -219,50 +229,50 @@ def test_calcGradHSPH(capfd):
     print(particles['indPartInCell'])
     print(particles['partInCell'])
     _, _, _, index = SPH.calcGradHSPH(particles, 0, ncols, nrows, csz)
-    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 0, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 0, ncols, nrows, csz, nx, ny, nz)
     print(index)
     atol = 1e-10
     IndexTh = np.array([1, 7, 3, 13, 6, 12, 11, 10, 4, 5])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
     _, _, _, index = SPH.calcGradHSPH(particles, 7, ncols, nrows, csz)
-    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 7, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 7, ncols, nrows, csz, nx, ny, nz)
     print(index)
     IndexTh = np.array([8, 2, 9, 1, 3, 13, 6, 0, 12, 11])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
     _, _, _, index = SPH.calcGradHSPH(particles, 8, ncols, nrows, csz)
-    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 8, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 8, ncols, nrows, csz, nx, ny, nz)
     print(index)
     IndexTh = np.array([2, 1, 7])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
     _, _, _, index = SPH.calcGradHSPH(particles, 9, ncols, nrows, csz)
-    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 9, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 9, ncols, nrows, csz, nx, ny, nz)
     print(index)
     IndexTh = np.array([2, 7, 3, 13, 14])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
     _, _, _, index = SPH.calcGradHSPH(particles, 11, ncols, nrows, csz)
-    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 11, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 11, ncols, nrows, csz, nx, ny, nz)
     print(index)
     IndexTh = np.array([7, 3, 13, 14, 0, 12, 4, 5])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
     _, _, _, index = SPH.calcGradHSPH(particles, 6, ncols, nrows, csz)
-    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 6, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 6, ncols, nrows, csz, nx, ny, nz)
     print(index)
     IndexTh = np.array([1, 7, 0, 12, 10, 4])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
     _, _, _, index = SPH.calcGradHSPH(particles, 5, ncols, nrows, csz)
-    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 5, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 5, ncols, nrows, csz, nx, ny, nz)
     print(index)
     IndexTh = np.array([0, 12, 11, 4, 15])
     assert np.allclose(index, IndexTh, atol=atol)
     assert np.allclose(indexVect, IndexTh, atol=atol)
     _, _, _, index = SPH.calcGradHSPH(particles, 15, ncols, nrows, csz)
-    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 15, ncols, nrows, csz)
+    _, _, _, indexVect = SPH.calcGradHSPHVect(particles, 15, ncols, nrows, csz, nx, ny, nz)
     print(index)
     IndexTh = np.array([5])
     assert np.allclose(index, IndexTh, atol=atol)

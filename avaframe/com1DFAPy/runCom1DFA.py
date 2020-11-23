@@ -31,7 +31,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 
-#+++++++++SETUP CONFIGURATION++++++++++++++++++++++++
+# +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
 # log file name; leave empty to use default runLog.log
 logName = 'testKernel'
 
@@ -60,10 +60,11 @@ flagDev = cfg['FLAGS'].getboolean('flagDev')
 startTime = time.time()
 
 
-#+++++++++Inputs++++++++++++++++++++++++
+# +++++++++Inputs++++++++++++++++++++++++
 # ------------------------
 # fetch input data - dem, release-, entrainment- and resistance areas
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfg['FLAGS'], flagDev)
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(
+    avalancheDir, cfg['FLAGS'], flagDev)
 demOri = IOf.readRaster(demFile)
 # derive line from release area polygon
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
@@ -94,7 +95,7 @@ workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 # entrainment matrix, initialize fields, get normals and neighbours
 particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGen, relRaster, dem)
 
-#+++++++++PERFORM SIMULAITON++++++++++++++++++++++
+# +++++++++PERFORM SIMULAITON++++++++++++++++++++++
 # ------------------------
 #  Start time step computation
 Tcpu = {}
@@ -105,7 +106,8 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
+T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
+    cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
 log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))
@@ -118,7 +120,7 @@ tcpuDFA = time.time() - startTime
 log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
 
-#+++++++++POSTPROCESS++++++++++++++++++++++++
+# +++++++++POSTPROCESS++++++++++++++++++++++++
 # -------------------------------
 # Analyse resutls
 # tools.plotPosition(particles, dem)
@@ -151,7 +153,8 @@ while repeat == True:
         # exact solution with friction
         # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
         #
-        fig, ax = com1DFA.plotPosition(part, demOri, field['pfd'], cmapPres, 'm', fig, ax, plotPart=True)
+        fig, ax = com1DFA.plotPosition(
+            part, demOri, field['pfd'], cmapPres, 'm', fig, ax, plotPart=True)
         # fig1, ax1 = DFAtls.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
     # plt.show()
     # repeat = False
@@ -162,13 +165,16 @@ fieldRef = Fields[-1]
 fig1, ax1 = plt.subplots(figsize=(figW, figH))
 fig2, ax2 = plt.subplots(figsize=(figW, figH))
 fig3, ax3 = plt.subplots(figsize=(figW, figH))
-fig1, ax1 = com1DFA.plotPosition(particles, demOri, fields['pfd'], cmapPres, 'm', fig1, ax1, plotPart=False)
-fig2, ax2 = com1DFA.plotPosition(particles, demOri, fields['pv'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
-fig3, ax3 = com1DFA.plotPosition(particles, demOri, fields['ppr']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
+fig1, ax1 = com1DFA.plotPosition(
+    particles, demOri, fields['pfd'], cmapPres, 'm', fig1, ax1, plotPart=False)
+fig2, ax2 = com1DFA.plotPosition(
+    particles, demOri, fields['pv'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
+fig3, ax3 = com1DFA.plotPosition(
+    particles, demOri, fields['ppr']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
 plt.show()
 
 
-#+++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+# +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
 # Result parameters to be exported
 resTypesString = cfgGen['resType']
 resTypes = resTypesString.split('_')
@@ -178,7 +184,7 @@ for resType in resTypes:
     if resType == 'ppr':
         resField = resField * 0.001
     relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
-    dataName = relName + '_' + 'null' + '_'  + 'dfa' + '_'  + '0.155' + '_'  + resType
+    dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType
     fU.writePeakResult(outDir, resField, demOri['header'], dataName)
     log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
 

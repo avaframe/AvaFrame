@@ -329,7 +329,7 @@ def pointsToRasterSPH(particles, rho, Z, f, F, csz=1, xllc=0, yllc=0):
     return F
 
 
-def computeFD(cfg, particles, dem):
+def computeFlowDepth(cfg, particles, dem):
     rho = cfg.getfloat('rho')
     Npart = particles['Npart']
     nrows = dem['header'].nrows

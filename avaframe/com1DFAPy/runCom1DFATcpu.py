@@ -36,7 +36,8 @@ flagDev = cfg['FLAGS'].getboolean('flagDev')
 
 # ------------------------
 # fetch input data
-demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfg['FLAGS'], flagDev=False)
+demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(
+    avalancheDir, cfg['FLAGS'], flagDev=False)
 demOri = IOf.readRaster(demFile)
 releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
 dem = copy.deepcopy(demOri)
@@ -72,7 +73,8 @@ for massPart in MassPart:
     # entrainment matrix, initialize fields, get normals and neighbours
     particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGen, relRaster, dem)
     NP.append(particles['Npart'])
-    log.info('Initializted simulation. M = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+    log.info('Initializted simulation. M = %f kg, %s particles' %
+             (particles['mTot'], particles['Npart']))
 
     # ------------------------
     #  Start time step computation
@@ -84,7 +86,8 @@ for massPart in MassPart:
     Tcpu['Neigh'] = 0.
     Tcpu['Field'] = 0.
 
-    T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
+    T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
+        cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
 
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
     TForce.append(Tcpu['Force'])
