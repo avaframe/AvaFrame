@@ -9,9 +9,11 @@ This file is part of Avaframe.
 import os
 import numpy as np
 from matplotlib import pyplot as plt
+import glob
 
 from avaframe.out3Plot.plotUtils import *
 from avaframe.in3Utils import fileHandlerUtils as fU
+import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.makePalette as makePalette
 
 
@@ -79,3 +81,52 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
         plotDict[peakFiles['simName'][m]].update({peakFiles['resType'][m]: plotPath})
 
     return plotDict
+
+
+def plotAllFields(avaDir, inputDir, outDir, cfg=''):
+    """ Plot all fields within given directory and save to outDir"""
+
+    # Load all infos on simulations
+    peakFiles = glob.glob(inputDir+os.sep + '*.asc')
+
+    # create out dir if not allready existing
+    fU.makeADir(outDir)
+
+    # Loop through peakFiles and generate plot
+    for m in range(len(peakFiles)):
+
+        # Load data
+        data = np.loadtxt(peakFiles[m], skiprows=6)
+        name = os.path.splitext(os.path.basename(peakFiles[m]))[0]
+
+        # get header info for file writing
+        header = IOf.readASCheader(peakFiles[m])
+        cellSize = header.cellsize
+
+        # Set extent of peak file
+        ny = data.shape[0]
+        nx = data.shape[1]
+        Ly = ny*cellSize
+        Lx = nx*cellSize
+        unit = cfg['unit']
+
+        # Figure  shows the result parameter data
+        fig = plt.figure(figsize=(figW, figH))
+        fig, ax = plt.subplots()
+        # choose colormap
+        cmap, _, _, norm, ticks = makePalette.makeColorMap(
+            cmapPres, np.amin(data), np.amax(data), continuous=contCmap)
+
+        im1 = ax.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+        addColorBar(im1, ax, ticks, unit)
+
+        title = str('%s' % name)
+        ax.set_title(title)
+        ax.set_xlabel('x [m]')
+        ax.set_ylabel('y [m]')
+
+        plotName = os.path.join(outDir, '%s.%s' % (name, outputFormat))
+
+        plotUtils.putAvaNameOnPlot(ax, avaDir)
+
+        fig.savefig(plotName)
