@@ -77,6 +77,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
             if value != 'type':
                 # pfile.write('##### Topic:  %s \n' % value)
                 pfile.write('%s \n' % (benchD['Test Info'][value]))
+                pfile.write(' \n')
 
         # Create lists to write tables
         parameterList, valuesSim, valuesBench = makeLists(reportD['Simulation Parameters'], benchD['Simulation Parameters'])
@@ -84,6 +85,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
         # PARAMETER BLOCK
         # Table listing all the simulation parameters
         pfile.write('#### Simulation Parameters \n')
+        pfile.write(' \n')
         pfile.write('| Parameter | Reference | Simulation | \n')
         pfile.write('| --------- | --------- | ---------- | \n')
         countValue = 0
@@ -105,9 +107,11 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
 
         # IMAGE BLOCK
         pfile.write('#### Comparison Plots \n')
+        pfile.write(' \n')
         for value in reportD['Simulation Results']:
             if value != 'type':
                 pfile.write('##### Figure:   %s \n' % value)
+                pfile.write(' \n')
                 maxDiff = max(abs(float(reportD['Simulation Difference'][value][2])),
                                  abs(float(reportD['Simulation Difference'][value][0])))
                 maxVal = float(reportD['Simulation Stats'][value][0])
@@ -117,7 +121,10 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
                                  reportD['Simulation Difference'][value][1], reportD['Simulation Difference'][value][2])
                     pfile.write(' %s \n' % textString1)
                     pfile.write(' %s \n' % textString2)
+                    pfile.write(' \n')
                 pfile.write('![%s](%s) \n' % (value, reportD['Simulation Results'][value]))
+                pfile.write('\ \n')
+                pfile.write(' \n')
 
         pfile.write(' \n')
         pfile.write('------------------------------------------------------------------------- \n')
