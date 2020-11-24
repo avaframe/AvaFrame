@@ -177,7 +177,6 @@ def plotProfile(resAB, name, save_file, flags):
     indSplit = resAB[name]['indSplit']
     ParameterSet = resAB['eqParams']['ParameterSet']
     # Plot the whole profile with beta, alpha ... points and lines
-    # plt.close("all")
     fig_prof = plt.figure(figsize=(1.5*figW, 1*figH))
     titleText = name
     plt.title(titleText)
@@ -218,6 +217,8 @@ def plotProfile(resAB, name, save_file, flags):
     if flags.getboolean('SaveProfile'):
         log.debug('Saving profile figure to: %s', save_file)
         fig_prof.savefig(save_file)
+
+    plt.close("all")
 
     return save_file
 
