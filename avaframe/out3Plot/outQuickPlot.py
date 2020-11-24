@@ -133,7 +133,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     plotDict['stats'].append(np.amax(data2))
     plotDict['stats'].append(np.amin(data2))
 
-    fig.close('all')
+    plt.close('all')
 
     return plotDict
 

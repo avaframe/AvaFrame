@@ -28,6 +28,7 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
     if inputDir == '':
         inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
         outDir = os.path.join(avaDir, 'Outputs', 'ana4Prob')
+        fU.makeADir(outDir)
 
     # Load all infos on simulations
     peakFiles = fU.makeSimDict(inputDir, cfgMain['PARAMETERVAR']['varPar'], avaDir)

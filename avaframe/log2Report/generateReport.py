@@ -43,17 +43,20 @@ def writeReportFile(reportD, pfile):
                 for value in reportD[key]:
                     if value != 'type':
                         pfile.write('# %s \n' % reportD[key][value])
+                        pfile.write(' \n')
                         break
             # Simulation name
             if reportD[key][subKey] == 'simName':
                 for value in reportD[key]:
                     if value != 'type':
                         pfile.write('### Simulation name: *%s* \n' % reportD[key][value])
+                        pfile.write(' \n')
 
             # PARAMETER BLOCK
             # Table listing all the key : value pairs in rows
             if reportD[key][subKey] == 'list':
                 pfile.write('### %s \n' % key)
+                pfile.write(' \n')
                 pfile.write('| Parameters | Values | \n')
                 pfile.write('| ---------- | ------ | \n')
                 for value in reportD[key]:
@@ -80,18 +83,25 @@ def writeReportFile(reportD, pfile):
             # IMAGE BLOCK
             if reportD[key][subKey] == 'image':
                 pfile.write('### %s \n' % key)
+                pfile.write(' \n')
                 for value in reportD[key]:
                     if value != 'type':
                         pfile.write('##### Figure:   %s \n' % value)
+                        pfile.write(' \n')
                         pfile.write('![%s](%s) \n' % (value, reportD[key][value]))
+                        pfile.write('\ \n')
+                        pfile.write(' \n')
 
             # TEXT BLOCK
             if reportD[key][subKey] == 'text':
                 pfile.write('### %s \n' % key)
+                pfile.write(' \n')
                 for value in reportD[key]:
                     if value != 'type':
                         pfile.write('##### Topic:  %s \n' % value)
+                        pfile.write(' \n')
                         pfile.write('%s \n' % (reportD[key][value]))
+                        pfile.write(' \n')
 
 
 def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
