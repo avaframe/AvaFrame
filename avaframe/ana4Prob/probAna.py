@@ -21,11 +21,15 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def probAnalysis(avaDir, cfg, cfgMain):
+def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
     """ perform analysis """
 
+    # Set input and output directory
+    if inputDir == '':
+        inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+        outDir = os.path.join(avaDir, 'Outputs', 'ana4Prob')
+
     # Load all infos on simulations
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
     peakFiles = fU.makeSimDict(inputDir, cfgMain['PARAMETERVAR']['varPar'], avaDir)
 
     # get header info from peak files
@@ -68,8 +72,6 @@ def probAnalysis(avaDir, cfg, cfgMain):
 
     # Save to .asc file
     probMap = np.matrix(probMap)
-    outDir = os.path.join(avaDir, 'Outputs', 'ana4Prob')
-    fU.makeADir(outDir)
     avaName = os.path.basename(avaDir)
     with open(os.path.join(outDir, '%s_probMap.asc' % avaName), 'w') as f:
         f.write('nCols  %d\n' % (nCols))

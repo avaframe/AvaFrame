@@ -79,7 +79,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
         fig.savefig(plotName)
         plotPath = os.path.join(os.getcwd(), plotName)
         plotDict[peakFiles['simName'][m]].update({peakFiles['resType'][m]: plotPath})
-        plt.close(fig)
+        plt.close('all')
 
     return plotDict
 
@@ -131,4 +131,4 @@ def plotAllFields(avaDir, inputDir, outDir, cfg=''):
         plotUtils.putAvaNameOnPlot(ax, avaDir)
 
         fig.savefig(plotName)
-        plt.close(fig)
+        plt.close('all')
