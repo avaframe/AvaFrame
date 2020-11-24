@@ -50,6 +50,8 @@ def plotDEM(z, name_ext, cfg, outDir):
     if cfgDEM.getboolean('showplot'):
         plt.show()
 
+    plt.close('all')
+
 
 def plotReleasePoints(xv, yv, xyPoints, DEM_type):
 
