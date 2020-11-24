@@ -182,6 +182,7 @@ def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
 def saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
     """
     Receive a plot handle and config and check whether to save and or plot
+    closes it afterwards
     """
 
     if cfgFlags.getboolean('savePlot'):
