@@ -46,8 +46,8 @@ def test_writeReport(tmp_path):
 
     # Test
     assert lineVals[0] == '# This is my report title \n'
-    assert lineVals[4] == '| ---------- | ------ | \n'
-    assert lineVals[5] == '| release area | release1HS2 | \n'
-    assert lineVals[14] == '| Additional snow-covered area | \n'
-    assert lineVals[15] == '| ----------| \n'
-    assert lineVals[-1] == '![Peak Pressure Field of my test](release1HS2_entres_dfa_0.750_pfd.png) \n'
+    assert lineVals[7] == '| ---------- | ------ | \n'
+    assert lineVals[8] == '| release area | release1HS2 | \n'
+    assert lineVals[19] == '| Additional snow-covered area | \n'
+    assert lineVals[20] == '| ----------| \n'
+    assert lineVals[-3] == '![Peak Pressure Field of my test](release1HS2_entres_dfa_0.750_pfd.png) \n'

@@ -66,6 +66,7 @@ def writeReportFile(reportD, pfile):
             # Table listing the key : value pairs in columns
             if reportD[key][subKey] == 'columns':
                 pfile.write('### %s \n' % key)
+                pfile.write(' \n')
                 for value in reportD[key]:
                     if value != 'type':
                         pfile.write('| %s ' % value)
