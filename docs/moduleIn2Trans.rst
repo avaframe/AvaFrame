@@ -9,6 +9,8 @@ Working with ASCII files
 to read ASCII files, either just the header or also the raster matrix and write the data to a numpy array or to
 compare raster file headers as well as to write a raster to an ASCII file given a header and data.
 
+.. _ascii:
+
 Functions
 ------------
 
@@ -62,6 +64,9 @@ Working with shape files
 
 ``shpConversion.py`` is a module created to handle shape files. It contains different functions
 to read shape files to numpy arrays, either lines or points
+
+
+.. _shape:
 
 Functions
 -------------

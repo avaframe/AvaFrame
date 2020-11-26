@@ -21,6 +21,7 @@ General
     * :doc:`logging`
     * :doc:`develop`
     * :doc:`releaseNotes`
+    * :doc:`source/modules`
 
 .. toctree::
    :maxdepth: 3
@@ -36,6 +37,7 @@ General
    logging.rst
    develop.rst
    releaseNotes.rst
+   source/modules.rst
 
 
 Computational modules

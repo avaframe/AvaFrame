@@ -41,6 +41,7 @@ extensions = [
 autosummary_generate = True
 
 autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
