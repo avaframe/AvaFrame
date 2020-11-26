@@ -1,5 +1,5 @@
-API References
-==============
+avaframe
+========
 
 .. toctree::
    :maxdepth: 4
