@@ -36,10 +36,10 @@ avaframe.tests.test\_com1DFA module
    :undoc-members:
    :show-inheritance:
 
-avaframe.tests.test\_com1DFAtools module
-----------------------------------------
+avaframe.tests.test\_com1DFAPy module
+-------------------------------------
 
-.. automodule:: avaframe.tests.test_com1DFAtools
+.. automodule:: avaframe.tests.test_com1DFAPy
    :members:
    :undoc-members:
    :show-inheritance:

@@ -13,7 +13,8 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../avaframe/'))
 import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
@@ -33,7 +34,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinxcontrib.bibtex',
     'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
+    # 'sphinx.ext.autosummary',
     'sphinx.ext.napoleon'
 
 ]
