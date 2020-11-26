@@ -5,7 +5,7 @@ out1Peak: Peak plots
 
 
 Plot all peak fields
-===================
+====================
 
 This function generates one plot for each peak field in *Outputs/com1DFA/peakFiles*.
 These peak fields represent the peak values of the simulation result parameters (*dynamic peak pressure*, *peak flow depth*, *peak velocity*).
