@@ -12,6 +12,7 @@
 #
 import os
 import sys
+import avaframe
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../avaframe/'))
@@ -30,19 +31,26 @@ author = 'AvaFrame developers'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.intersphinx',
     'sphinx_rtd_theme',
     'sphinx.ext.autosectionlabel',
+    'sphinx.ext.extlinks',
     'sphinxcontrib.bibtex',
-    'sphinx.ext.autodoc',
-    # 'sphinx.ext.autosummary',
-    'sphinx.ext.napoleon'
-
+    'numpydoc',
+    # 'sphinx.ext.napoleon'
 ]
 
 autosummary_generate = True
 
+numpydoc_class_members_toctree = True
+numpydoc_show_class_members = False
+
+# make referencing unique if twice the same section heading apear
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -91,8 +99,6 @@ latex_logo = '_static/logo.png'
 numfig = True
 math_numfig = True
 math_eqref_format = "Eq.{number}"
-# make referencing unique if twice the same section heading apear
-autosectionlabel_prefix_document = True
 
 
 def setup(app):
