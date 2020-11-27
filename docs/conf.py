@@ -38,7 +38,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.extlinks',
     'sphinxcontrib.bibtex',
-    'numpydoc',
+    # 'numpydoc',
     # 'sphinx.ext.napoleon'
 ]
 
