@@ -75,7 +75,17 @@ def copyReplace(origFile, workFile, searchString, replString):
 
 
 def com1DFAMain(cfg, avaDir):
-    """ Run main model"""
+    """ Run main model
+
+    This will compute a dense flow avalanche
+
+    Parameters
+    ----------
+    cfg : dict
+        configuration read from ini file
+    avaDir : str
+        path to avalanche directory
+    """
 
     # Setup configuration
     cfgGen = cfg['GENERAL']
