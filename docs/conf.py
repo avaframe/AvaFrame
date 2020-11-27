@@ -15,7 +15,7 @@ import sys
 import avaframe
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('../avaframe/'))
+# sys.path.insert(0, os.path.abspath('../avaframe/'))
 import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
