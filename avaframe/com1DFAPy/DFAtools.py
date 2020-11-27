@@ -1,4 +1,7 @@
 """
+    Here are some basic tools for getting grid normals, area and working with
+    vectors.
+
     This file is part of Avaframe.
 """
 
@@ -16,6 +19,15 @@ log = logging.getLogger(__name__)
 
 
 def getNormal(x, y, Nx, Ny, Nz, csz):
+    """ Get normal vector at location (x,y) given the normal vector field on
+    the grid. Grid has its origin in (0,0). Can be used to interpolate any
+    vector field.
+    Inputs:
+            - (x, y): coordinate of the desired location (only one point)
+            - Nx, Ny, Nz: vector field on grid points (3 2D np arrays)
+            - csz: cell size
+    Outputs: nx, ny, nz normal vector at location (x, y)
+    """
     # by default bilinear interpolation of the Nx, Ny, Nz of the grid
     nx = geoTrans.projectOnRasterRoot(x, y, Nx, csz=csz)
     ny = geoTrans.projectOnRasterRoot(x, y, Ny, csz=csz)
@@ -25,6 +37,15 @@ def getNormal(x, y, Nx, Ny, Nz, csz):
 
 
 def getNormalArray(x, y, Nx, Ny, Nz, csz):
+    """ Get normal vector at locations (x,y) given the normal vector field on
+    the grid. Grid has its origin in (0,0). Can be used to interpolate any
+    vector field.
+    Inputs:
+            - (x, y): coordinates of the desired location (2 1D np arrays)
+            - Nx, Ny, Nz: vector field on grid points (3 2D np arrays)
+            - csz: cell size
+    Outputs: nx, ny, nz normal vectors at locations (x, y) (3 1D np arrays)
+    """
     nrow, ncol = np.shape(Nx)
     # by default bilinear interpolation of the Nx, Ny, Nz of the grid
     nx, _ = geoTrans.projectOnRasterVectRoot(x, y, Nx, csz=csz)
@@ -35,6 +56,18 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
 
 
 def getNormalMesh(z, csz, num=4):
+    """ Get the normal vectors to the surface defined by a DEM.
+    Either by adding the normal vectors of the adjacent triangles for each
+    points (using 4, 6 or 8 adjacent triangles). Or use the next point in
+    x direction and the next in y direction to define two vectore and then
+    compute the cross product to get the normal vector
+    Inputs:
+            - z: elevation at grid points (2D np arrays)
+            - csz: cell size
+            - num: chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
+                   1 to use the simple cross product method
+    Outputs: Nx, Ny, Nz: normal vector field on grid points (3 2D np arrays)
+    """
     n, m = np.shape(z)
     Nx = np.ones((n, m))
     Ny = np.ones((n, m))
@@ -183,6 +216,7 @@ def getNormalMesh(z, csz, num=4):
         Nz[n-1, m-1] = 2
 
     if num == 1:
+        # using the simple cross product
         z1 = np.append(z, z[:, -2].reshape(n, 1), axis=1)
         n1, m1 = np.shape(z1)
         z2 = np.append(z1, z1[-2, :].reshape(1, m1), axis=0)
@@ -194,31 +228,44 @@ def getNormalMesh(z, csz, num=4):
         Ny[n-1, m-1] = -Ny[n-1, m-1]
         Nx[n-1, m-1] = -Nx[n-1, m-1]
 
-        # Nx[0:n-1, 0:m-1] = - (z[0:n-1, 1:m] - z[0:n-1, 0:m-1]) / csz
-        # Ny[0:n-1, 0:m-1] = - (z[1:n, 0:m-1] - z[0:n-1, 0:m-1]) / csz
-
+    # normalize the result
     Nx, Ny, Nz = normalize(Nx, Ny, Nz)
 
     return Nx, Ny, Nz
 
 
 def getAreaMesh(Nx, Ny, Nz, csz):
+    """ Get area of grid cells.
+    Inputs:
+            - Nx, Ny, Nz: vector field on grid points (3 2D np arrays)
+            - csz: cell size
+    Outputs: A area of grid cells (2D np arrays)
+    """
+    # see documentation and issue 202
     A = csz * csz / Nz
+    # limit maximum area (for very steeps cells)
     A = np.where(A > 3*csz*csz, 3*csz*csz, A)
     return A
 
 
 def norm(x, y, z):
+    """ Return the Euclidean norm of the vector (x, y, z).
+    (x, y, z) can be np arrays"""
     norme = np.sqrt(x*x + y*y + z*z)
     return norme
 
 
 def norm2(x, y, z):
+    """ Return the square of the Euclidean norm of the vector (x, y, z).
+    (x, y, z) can be np arrays."""
     norme2 = (x*x + y*y + z*z)
     return norme2
 
 
 def normalize(x, y, z):
+    """ Normalize vector (x, y, z) for the Euclidean norm.
+    (x, y, z) can be np arrays.
+    Returns the normalize vector components xn, yn, zn"""
     # TODO : avoid error message when input vector is zero and make sure
     # to return zero
     norme = norm(x, y, z)
@@ -230,3 +277,17 @@ def normalize(x, y, z):
     zn = np.where(np.isnan(zn), 0, zn)
 
     return xn, yn, zn
+
+
+def croosProd(ux, uy, uz, vx, vy, vz):
+    wx = uy*vz - uz*vy
+    wy = uz*vx - ux*vz
+    wz = ux*vy - uy*vx
+
+    return wx, wy, wz
+
+
+def scalProd(ux, uy, uz, vx, vy, vz):
+    scal = ux*vx + uy*vy + uz*vz
+
+    return scal
