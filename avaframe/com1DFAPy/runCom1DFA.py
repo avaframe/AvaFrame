@@ -1,8 +1,6 @@
 """
     This file is part of Avaframe.
 """
-
-
 import os
 import glob
 import time
