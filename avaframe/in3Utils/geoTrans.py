@@ -735,6 +735,7 @@ def areaPoly(X, Y):
     ''' Gauss's area formula to calculate polygon area
     Inputs : - X coord of the vertices
              - Y coord of the vertices
+             (Without repeating the first vertex!!!)
     Output : Area of the polygon
     '''
     X = np.append(X, X[0])

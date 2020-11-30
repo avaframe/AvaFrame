@@ -2,10 +2,14 @@
 import numpy as np
 import math
 import pytest
+import logging
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.ascUtils as IOf
+
+
+log = logging.getLogger(__name__)
 
 
 def test_projectOnRaster(capfd):
@@ -110,7 +114,7 @@ def test_findAngleProfile(capfd):
     '''findAngleProfile'''
     s = np.linspace(0, 400, 41)
     angle = np.linspace(40, 0, 41)
-    tmp = np.where((angle < 10.0) & (angle > 0.0))
+    tmp = np.where((angle < 10.0) & (angle >= 0.0))
     deltaInd = 3
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
     assert ids10Point == 31
@@ -122,7 +126,7 @@ def test_findAngleProfile(capfd):
     angle[10] = 8
     angle[11] = 8
     angle[12] = 8
-    tmp = np.where((angle < 10.0) & (angle > 0.0))
+    tmp = np.where((angle < 10.0) & (angle >= 0.0))
     deltaInd = 3
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
     assert ids10Point == 31
@@ -132,16 +136,33 @@ def test_findAngleProfile(capfd):
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
     assert ids10Point == 10
 
+    tmp = np.where((angle < 0.0) & (angle >= 0.0))
+    deltaInd = 1
+    # do we react properly when the input line exceeds the dem?
+    with pytest.raises(Exception) as e:
+        assert geoTrans.findAngleProfile(tmp, deltaInd)
+    assert str(e.value) == "No Beta point found. Check your pathAB.shp and splitPoint.shp."
 
-def test_prepareAngleProfile(capfd):
+    tmp = np.where((angle < 4.0) & (angle >= 0.0))
+    deltaInd = 4
+    # do we react properly when the input line exceeds the dem?
+    with pytest.raises(Exception) as e:
+        assert geoTrans.findAngleProfile(tmp, deltaInd)
+    assert str(e.value) == "No Beta point found. Check your pathAB.shp and splitPoint.shp."
+
+
+def test_prepareAngleProfile(caplog):
     '''prepareAngleProfile'''
     AvaProfile = {}
     s = np.linspace(0, 400, 41)
     AvaProfile['s'] = s
     AvaProfile['z'] = s*s/400 - 2*s + 400
     theta = -np.arctan(2*s/400 - 2)*180/math.pi
-    AvaProfile['indSplit'] = 12
     beta = 10
+    with caplog.at_level(logging.WARNING):
+        angle, tmp, deltaInd = geoTrans.prepareAngleProfile(beta, AvaProfile)
+    assert 'No split Point given!' in caplog.text
+    AvaProfile['indSplit'] = 12
     angle, tmp, deltaInd = geoTrans.prepareAngleProfile(beta, AvaProfile)
     print(theta)
     print(angle)
@@ -231,3 +252,17 @@ def test_path2domain(capfd):
                     22.23223305])
     testRes = np.allclose(DB['DBYr'], zSol, atol=atol)
     assert (testRes == True)
+
+
+def test_areaPoly(capfd):
+    '''test_areaPoly'''
+    a = 1
+    R = a/(2*math.sin(math.pi/5))
+    A = 5*a*a/4*math.sqrt(1+2/math.sqrt(5))
+    theta = 2*math.pi/5*np.arange(5)
+    x = R*np.cos(theta)
+    y = R*np.sin(theta)
+
+    area = geoTrans.areaPoly(x, y)
+    tol = 1e-14
+    assert area == pytest.approx(A, rel=tol)
