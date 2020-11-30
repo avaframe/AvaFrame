@@ -129,6 +129,7 @@ def readASCdata2numpyArray(fName, headerFile=None):
 
     return (data)
 
+
 def readRaster(fname):
     """ Read raster file (.asc)"""
 

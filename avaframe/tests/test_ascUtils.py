@@ -12,6 +12,16 @@ def test_readASCheader(capfd):
            (header.cellsize == 5))
 
 
+def test_isEqualASCheader(capfd):
+    '''Simple test for module readASCheader'''
+    dirname = os.path.dirname(__file__)
+    DGMSource = os.path.join(dirname, '../data/avaSlide/Inputs/slideTopo.asc')
+    headerA = IOf.readASCheader(DGMSource)
+    headerB = IOf.readASCheader(DGMSource)
+    equal = IOf.isEqualASCheader(headerA, headerB)
+    assert equal
+
+
 def test_readASCdata2numpyArray(capfd):
     '''Simple test for module readASCheader'''
     dirname = os.path.dirname(__file__)
