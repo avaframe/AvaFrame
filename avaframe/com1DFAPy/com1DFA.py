@@ -34,7 +34,7 @@ flagSemiRand = True
 flagRand = False
 # set feature flag for flow deth calculation
 # use SPH to get the particles flow depth
-flagFDSPH = False
+flagFDSPH = True
 # set feature leapfrog time stepping
 featLF = False
 featCFL = False
@@ -121,6 +121,9 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['hBilinearNearest'] = Hpart
     particles['hBilinearBilinear'] = Hpart
     particles['hSPH'] = Hpart
+    particles['GHX'] = np.zeros(np.shape(Xpart))
+    particles['GHY'] = np.zeros(np.shape(Xpart))
+    particles['GHZ'] = np.zeros(np.shape(Xpart))
     particles['InCell'] = InCell
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
@@ -183,8 +186,8 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
     # start ###############
     if flagSemiRand:
         # place particles equaly distributed with a small variation
-        xpart = csz * (- 0.5 + indx) + x + (np.random.rand(nPart) - 0.5) * d/2
-        ypart = csz * (- 0.5 + indy) + y + (np.random.rand(nPart) - 0.5) * d/2
+        xpart = csz * (- 0.5 + indx) + x + (np.random.rand(nPart) - 0.5) * d
+        ypart = csz * (- 0.5 + indy) + y + (np.random.rand(nPart) - 0.5) * d
     elif flagRand:
         # place particles randomly in the cell
         xpart = csz * (np.random.rand(nPart) - 0.5 + indx)
@@ -336,18 +339,26 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         hSPH = copy.deepcopy(particles['hSPH'])
         hBN = copy.deepcopy(particles['hBilinearNearest'])
         hBB = copy.deepcopy(particles['hBilinearBilinear'])
+        GHX = particles['GHX']
+        GHY = particles['GHY']
+        GHZ = particles['GHZ']
 
         ind = np.where(((particles['y'] > 995) & (particles['y'] < 1005)))
-        fig2 = plt.figure()
-        ax2 = fig2.add_subplot(111, projection='3d')
-        ax2.scatter(particles['x'], particles['y'], hNN, 'g', marker='.')
-        ax2.scatter(particles['x'], particles['y'], hBB, 'b', marker='.')
-        ax2.scatter(particles['x'], particles['y'], hSPH, 'r', marker='.')
+        # fig2 = plt.figure()
+        # ax2 = fig2.add_subplot(111, projection='3d')
+        # ax2.scatter(particles['x'], particles['y'], hNN, 'g', marker='.')
+        # ax2.scatter(particles['x'], particles['y'], hBB, 'b', marker='.')
+        # ax2.scatter(particles['x'], particles['y'], hSPH, 'r', marker='.')
 
         fig1, ax1 = plt.subplots(figsize=(2*figW, figH))
         ax1.plot(particles['x'][ind], hNN[ind], color='k', marker='.', linestyle='None')
         ax1.plot(particles['x'][ind], hBB[ind], color='b', marker='.', linestyle='None')
         ax1.plot(particles['x'][ind], hSPH[ind], color='r', marker='.', linestyle='None')
+
+        fig3, ax3 = plt.subplots(figsize=(2*figW, figH))
+        ax3.plot(particles['x'][ind], GHX[ind], color='k', marker='.', linestyle='None')
+        ax3.plot(particles['x'][ind], GHY[ind], color='r', marker='.', linestyle='None')
+        ax3.plot(particles['x'][ind], GHZ[ind], color='b', marker='.', linestyle='None')
         plt.show()
 
     return particles, fields, Tcpu
@@ -775,6 +786,9 @@ def computeForceSPH(cfg, particles, force, dem):
     forceSPHX = np.zeros(Npart)
     forceSPHY = np.zeros(Npart)
     forceSPHZ = np.zeros(Npart)
+    GHX = np.zeros(Npart)
+    GHY = np.zeros(Npart)
+    GHZ = np.zeros(Npart)
 
     # loop on particles
     # TcpuSPH = 0
@@ -795,6 +809,9 @@ def computeForceSPH(cfg, particles, force, dem):
         forceSPHX[j] = forceSPHX[j] - gradhX * mass * (-gravAcc) / rho
         forceSPHY[j] = forceSPHY[j] - gradhY * mass * (-gravAcc) / rho
         forceSPHZ[j] = forceSPHZ[j] - gradhZ * mass * (-gravAcc) / rho
+        GHX[j] = GHX[j] - gradhX / rho
+        GHY[j] = GHY[j] - gradhY / rho
+        GHZ[j] = GHZ[j] - gradhZ / rho
         # tcpuadd = time.time() - startTime
         # Tcpuadd = Tcpuadd + tcpuadd
 
@@ -804,6 +821,9 @@ def computeForceSPH(cfg, particles, force, dem):
     force['forceSPHX'] = forceSPHX
     force['forceSPHY'] = forceSPHY
     force['forceSPHZ'] = forceSPHZ
+    particles['GHX'] = GHX
+    particles['GHY'] = GHY
+    particles['GHZ'] = GHZ
 
     return particles, force
 
@@ -997,7 +1017,7 @@ def updateFields(cfg, particles, force, dem, fields):
     if flagFDSPH:
         hSPH = particles['hSPH']
         hSPH = np.where(hSPH < hLim, hLim, hSPH)
-        particles['h'] = hSPH
+        particles['h'] = hBB
     else:
         particles['h'] = hBB
 

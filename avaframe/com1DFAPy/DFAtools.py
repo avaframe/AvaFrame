@@ -280,6 +280,8 @@ def normalize(x, y, z):
 
 
 def croosProd(ux, uy, uz, vx, vy, vz):
+    """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
+    """
     wx = uy*vz - uz*vy
     wy = uz*vx - ux*vz
     wz = ux*vy - uy*vx
@@ -288,6 +290,8 @@ def croosProd(ux, uy, uz, vx, vy, vz):
 
 
 def scalProd(ux, uy, uz, vx, vy, vz):
+    """ Compute scalar product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
+    """
     scal = ux*vx + uy*vy + uz*vz
 
     return scal
