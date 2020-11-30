@@ -15,7 +15,7 @@ import sys
 # import avaframe
 # sys.path.insert(0, os.path.abspath('.'))
 # sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('../avaframe/'))
+sys.path.insert(0, os.path.abspath('../avaframe'))
 import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
@@ -32,20 +32,20 @@ author = 'AvaFrame developers'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
     'sphinx_rtd_theme',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.extlinks',
     'sphinxcontrib.bibtex',
     # 'numpydoc',
-    # 'sphinx.ext.napoleon'
 ]
 
 autosummary_generate = True
 
-numpydoc_class_members_toctree = True
-numpydoc_show_class_members = False
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+
 
 # make referencing unique if twice the same section heading apear
 autosectionlabel_prefix_document = True
