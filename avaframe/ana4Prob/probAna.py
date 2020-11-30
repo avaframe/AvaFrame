@@ -59,6 +59,8 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
             data = np.loadtxt(fileName, skiprows=6)
             dataLim = np.zeros((nRows, nCols))
 
+            log.info('File name is %s' % fileName)
+
             # Check if peak values exceed desired threshold
             dataLim[data>float(cfg['GENERAL']['peakLim'])] = 1.0
             probSum = probSum + dataLim
@@ -72,14 +74,14 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
 
 
     # Save to .asc file
-    probMap = np.matrix(probMap)
     avaName = os.path.basename(avaDir)
-    with open(os.path.join(outDir, '%s_probMap.asc' % avaName), 'w') as f:
+    with open(os.path.join(outDir, '%s_probMap%s.asc' % (avaName, cfg['GENERAL']['peakLim'])), 'w') as f:
         f.write('nCols  %d\n' % (nCols))
         f.write('nRows  %d\n' % (nRows))
         f.write('xllcenter  %.02f\n' % (xllcenter))
         f.write('yllcenter %.02f\n' % (yllcenter))
         f.write('cellsize  %d\n' % (cellSize))
         f.write('nodata_value %.02f\n' % (noDataValue))
-        for line in probMap:
+        for m in range(probMap.shape[0]):
+            line = np.array([probMap[m,:]])
             np.savetxt(f, line, fmt='%f')
