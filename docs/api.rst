@@ -21,4 +21,5 @@ Tools to set-up and run AvaFrame.
     :recursive:
 
     tmp1Ex.tmp1Ex
+    com1DFA.com1DFA
 
