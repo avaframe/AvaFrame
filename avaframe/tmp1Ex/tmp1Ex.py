@@ -9,7 +9,30 @@ log = logging.getLogger(__name__)
 
 
 def tmp1ExMain(cfg):
-    """ Main function for module tmp1Example"""
+  """Main function for module tmp1Example
 
-    print('In tmp1Example')
-    log.info('Input directory %s', cfg['GENERAL']['inputDir'])
+  Args:
+    foo (int): The foo to bar
+    bar (str): Bar to use on foo
+    baz (float): Baz to frobnicate
+
+  Returns:
+    float: The frobnicated baz
+  """
+
+  print('In tmp1Example')
+  log.info('Input directory %s', cfg['GENERAL']['inputDir'])
+
+def some_func(foo, bar, baz):
+  """Does some stuff
+
+  Args:
+    foo (int): The foo to bar
+    bar (str): Bar to use on foo
+    baz (float): Baz to frobnicate
+
+  Returns:
+    float: The frobnicated baz
+  """
+  print('Hello')
+
