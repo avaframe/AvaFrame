@@ -32,12 +32,12 @@ def test_SHP2Array(capfd):
     testRes = np.allclose(Length, Sol, atol=atol)
     assert testRes
     # check line x coord
-    Sol = np.array([9.89017536, 28.11881745, 110.48527428, 13.77220099,
+    Sol = np.array([15.7390148, 28.11881745, 110.48527428, 32.27956687,
                     55.29299685, 173.27281924])
     testRes = np.allclose(Coordx, Sol, atol=atol)
     assert testRes
     # check line y coord
-    Sol = np.array([20.6161196, 51.67232464, 65.17502248, 102.47622527,
+    Sol = np.array([44.12575919, 51.67232464, 65.17502248, 29.69676696,
                     84.07879946, 69.05704811])
     testRes = np.allclose(Coordy, Sol, atol=atol)
     assert testRes
@@ -53,7 +53,12 @@ def test_readLine(capfd):
     demFileName = os.path.join(dirname, 'data', 'testShpConv', 'testShpConv.asc')
     dem = ascUtils.readRaster(demFileName)
     shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLine.shp')
+    # do we react properly when the input line exceeds the dem?
+    with pytest.raises(Exception) as e:
+        assert shpConv.readLine(shpFileName, '', dem)
+    assert str(e.value) == "Nan Value encountered. Try with another path"
 
+    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLineOut.shp')
     # do we react properly when the input line exceeds the dem?
     with pytest.raises(Exception) as e:
         assert shpConv.readLine(shpFileName, '', dem)
@@ -93,7 +98,13 @@ def test_readPoints(capfd):
     demFileName = os.path.join(dirname, 'data', 'testShpConv', 'testShpConv.asc')
     dem = ascUtils.readRaster(demFileName)
     shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLine.shp')
-
+    # do we react properly when the input line exceeds the dem?
     with pytest.raises(Exception) as e:
         assert shpConv.readPoints(shpFileName, dem)
-    assert str(e.value) == "The split point is not on the dem. Try with another split point"
+    assert str(e.value) == 'Nan Value encountered. Try with another split point'
+
+    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLineOut.shp')
+    # do we react properly when the input line exceeds the dem?
+    with pytest.raises(Exception) as e:
+        assert shpConv.readPoints(shpFileName, dem)
+    assert str(e.value) == 'The split point is not on the dem. Try with another split point'

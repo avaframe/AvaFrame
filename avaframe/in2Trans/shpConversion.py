@@ -120,10 +120,10 @@ def readLine(fname, defname, dem):
     for i in range(len(coordx)):
         Lx = (coordx[i] - header.xllcenter) / header.cellsize
         Ly = (coordy[i] - header.yllcenter) / header.cellsize
-        if (Ly < 0 or Ly > header.nrows-1 or Lx < 0 or Lx > header.ncols-1):
+        if ((Ly < 0) or (Ly > header.nrows-1) or (Lx < 0) or (Lx > header.ncols-1)):
             raise ValueError('The avalanche path exceeds dem extent. Try with another path')
         elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
-            raise ValueError('The avalanche path exceeds dem extent. Try with another path')
+            raise ValueError('Nan Value encountered. Try with another path')
     return Line
 
 
@@ -143,5 +143,5 @@ def readPoints(fname, dem):
         if (Ly < 0 or Ly > header.nrows-1 or Lx < 0 or Lx > header.ncols-1):
             raise ValueError('The split point is not on the dem. Try with another split point')
         elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
-            raise ValueError('The split point is not on the dem. Try with another split point')
+            raise ValueError('Nan Value encountered. Try with another split point')
     return Points

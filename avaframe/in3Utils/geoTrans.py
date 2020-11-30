@@ -32,7 +32,7 @@ def projectOnRaster(dem, Points, interp='bilinear'):
     zcoor = np.array([])
     for i in range(np.shape(xcoor)[0]):
         value = projectOnRasterRoot(xcoor[i], ycoor[i], Z, csz=csz, xllc=xllc,
-                                    yllc=yllc, interp='bilinear')
+                                    yllc=yllc, interp=interp)
         zcoor = np.append(zcoor, value)
 
     Points['z'] = zcoor
@@ -47,6 +47,7 @@ def projectOnRasterRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     Output:
     PointsZ: z coord of the point
     """
+    nrows, ncols = np.shape(Z)
     try:
         Lx = (x - xllc) / csz
         Ly = (y - yllc) / csz
@@ -58,19 +59,25 @@ def projectOnRasterRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
         if interp == 'nearest':
             dx = np.round(Lx - Lx0)
             dy = np.round(Ly - Ly0)
+            Lx = int(Lx0 + dx)
+            Ly = int(Ly0 + dy)
+            if ((Ly < 0) or (Ly > nrows-1) or (Lx < 0) or (Lx > ncols-1)):
+                value = np.NaN
+            else:
+                value = Z[Ly][Lx]
         elif interp == 'bilinear':
             dx = Lx - Lx0
             dy = Ly - Ly0
-        try:
-            f11 = Z[Ly0][Lx0]
-            f12 = Z[Ly1][Lx0]
-            f21 = Z[Ly0][Lx1]
-            f22 = Z[Ly1][Lx1]
-            # using bilinear interpolation on the cell
-            value = (f11*(1-dx)*(1-dy) + f21*dx*(1-dy) +
+            if ((Ly0 < 0) or (Ly > nrows-1) or (Lx0 < 0) or (Lx > ncols-1)):
+                value = np.NaN
+            else:
+                f11 = Z[Ly0][Lx0]
+                f12 = Z[Ly1][Lx0]
+                f21 = Z[Ly0][Lx1]
+                f22 = Z[Ly1][Lx1]
+                # using bilinear interpolation on the cell
+                value = (f11*(1-dx)*(1-dy) + f21*dx*(1-dy) +
                      f12*(1-dx)*dy + f22*dx*dy)
-        except IndexError:
-            value = np.NaN
     except ValueError:
         value = np.NaN
 
@@ -106,11 +113,11 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
 
 def projectOnRasterVectRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     """
-    Vectorized version of projectOnRaster
+    Vectorized version of projectOnRasterRoot
     Projects the points Points on Raster using a bilinear or nearest
     interpolation and returns the z coord
     Input :
-    Points: (x, y) coord of the pointsi
+    Points: (x, y) coord of the points
     Output:
     PointsZ: z coord of the points
              ioob number of out of bounds indexes
@@ -132,14 +139,24 @@ def projectOnRasterVectRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     Ly = copy.deepcopy(Lyy)
 
     # find out of bound indexes
-    Lx[np.where((Lxx < 0))] = np.NaN
-    Ly[np.where((Lxx < 0))] = np.NaN
-    Lx[np.where(Lxx >= (ncol-1))] = np.NaN
-    Ly[np.where(Lxx >= (ncol-1))] = np.NaN
-    Lx[np.where(Lyy < 0)] = np.NaN
-    Ly[np.where(Lyy < 0)] = np.NaN
-    Lx[np.where(Lyy >= (nrow-1))] = np.NaN
-    Ly[np.where(Lyy >= (nrow-1))] = np.NaN
+    if interp == 'nearest':
+        Lx[np.where((Lxx <= -0.5))] = np.NaN
+        Ly[np.where((Lxx <= -0.5))] = np.NaN
+        Lx[np.where(Lxx >= (ncol-0.5))] = np.NaN
+        Ly[np.where(Lxx >= (ncol-0.5))] = np.NaN
+        Lx[np.where(Lyy <= -0.5)] = np.NaN
+        Ly[np.where(Lyy <= -0.5)] = np.NaN
+        Lx[np.where(Lyy >= (nrow-0.5))] = np.NaN
+        Ly[np.where(Lyy >= (nrow-0.5))] = np.NaN
+    elif interp == 'bilinear':
+        Lx[np.where((Lxx < 0))] = np.NaN
+        Ly[np.where((Lxx < 0))] = np.NaN
+        Lx[np.where(Lxx >= (ncol-1))] = np.NaN
+        Ly[np.where(Lxx >= (ncol-1))] = np.NaN
+        Lx[np.where(Lyy < 0)] = np.NaN
+        Ly[np.where(Lyy < 0)] = np.NaN
+        Lx[np.where(Lyy >= (nrow-1))] = np.NaN
+        Ly[np.where(Lyy >= (nrow-1))] = np.NaN
 
     # find index of index of not nan value
     mask = ~np.isnan(Lx+Ly)
@@ -155,32 +172,31 @@ def projectOnRasterVectRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     Ly1 = Ly0 + 1
     # prepare for bilinear interpolation(do not take out of bound into account)
     if interp == 'nearest':
-        dx[mask] = np.round(Lx[mask] - Lx0[mask])
-        dy[mask] = np.round(Ly[mask] - Ly0[mask])
+        dx[mask] = np.round(Lx[mask])
+        dy[mask] = np.round(Ly[mask])
+        z[mask] = Z[dy[mask].astype('int'), dx[mask].astype('int')]
     elif interp == 'bilinear':
         dx[mask] = Lx[mask] - Lx0[mask]
         dy[mask] = Ly[mask] - Ly0[mask]
-
-    f11[mask] = Z[Ly0[mask], Lx0[mask]]
-    f12[mask] = Z[Ly1[mask], Lx0[mask]]
-    f21[mask] = Z[Ly0[mask], Lx1[mask]]
-    f22[mask] = Z[Ly1[mask], Lx1[mask]]
-    # using bilinear interpolation on the cell
-    z = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
+        f11[mask] = Z[Ly0[mask], Lx0[mask]]
+        f12[mask] = Z[Ly1[mask], Lx0[mask]]
+        f21[mask] = Z[Ly0[mask], Lx1[mask]]
+        f22[mask] = Z[Ly1[mask], Lx1[mask]]
+        # using bilinear interpolation on the cell
+        z = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
 
     return z, ioob
 
 
 def pointsToRaster(x, y, z, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     """
-    Vectorized version of projectOnRaster
-    Projects the points Points on Raster using a bilinear or nearest
-    interpolation and returns the z coord
+    Interpolate unstructured points on a structured grid (nearest or bilinear
+    interpolation possible)
+    The (x, y) points have to be on the extend of the DEM!!
     Input :
-    Points: (x, y) coord of the pointsi
+    Points: (x, y) coord of the points
     Output:
     PointsZ: z coord of the points
-             ioob number of out of bounds indexes
     """
     nrow, ncol = np.shape(Z)
 
@@ -193,35 +209,34 @@ def pointsToRaster(x, y, z, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     Ly0 = np.floor(Ly).astype('int')
     Lx1 = Lx0 + 1
     Ly1 = Ly0 + 1
-    # prepare for bilinear interpolation(do not take out of bound into account)
+    # prepare for bilinear interpolation
     if interp == 'nearest':
-        dx = np.round(Lx - Lx0)
-        dy = np.round(Ly - Ly0)
+        Lx = np.round(Lx)
+        Ly = np.round(Ly)
+        Z = Z.flatten()
+        ic = (Lx + ncol * Ly).astype('int')
+        np.add.at(Z, ic, z)
     elif interp == 'bilinear':
         dx = Lx - Lx0
         dy = Ly - Ly0
 
-    Z = Z.flatten()
-    f11 = z*(1-dx)*(1-dy)
-    f11 = f11.flatten()
-    ic = Lx0 + ncol * Ly0
-    # ic = Ly0 + ncol * Lx0
-    np.add.at(Z, ic, f11)
-    f21 = z*dx*(1-dy)
-    f21 = f21.flatten()
-    ic = Lx0 + ncol * Ly1
-    # ic = Ly1 + ncol * Lx0
-    np.add.at(Z, ic, f21)
-    f12 = z*(1-dx)*dy
-    f12 = f12.flatten()
-    ic = Lx1 + ncol * Ly0
-    # ic = Ly0 + ncol * Lx1
-    np.add.at(Z, ic, f12)
-    f22 = z*dx*dy
-    f22 = f22.flatten()
-    ic = Lx1 + ncol * Ly1
-    # ic = Ly1 + ncol * Lx1
-    np.add.at(Z, ic, f22)
+        Z = Z.flatten()
+        f11 = z*(1-dx)*(1-dy)
+        f11 = f11.flatten()
+        ic = Lx0 + ncol * Ly0
+        np.add.at(Z, ic, f11)
+        f21 = z*dx*(1-dy)
+        f21 = f21.flatten()
+        ic = Lx1 + ncol * Ly0
+        np.add.at(Z, ic, f21)
+        f12 = z*(1-dx)*dy
+        f12 = f12.flatten()
+        ic = Lx0 + ncol * Ly1
+        np.add.at(Z, ic, f12)
+        f22 = z*dx*dy
+        f22 = f22.flatten()
+        ic = Lx1 + ncol * Ly1
+        np.add.at(Z, ic, f22)
 
     Z = np.reshape(Z, (nrow, ncol))
 
