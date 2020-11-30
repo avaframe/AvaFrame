@@ -20,6 +20,6 @@ Tools to set-up and run AvaFrame.
     :toctree: generated/
     :recursive:
 
+    out1Peak.outPlotAllPeak
     tmp1Ex.tmp1Ex
-    com1DFA.com1DFA
 
