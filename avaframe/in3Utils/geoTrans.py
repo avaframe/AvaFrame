@@ -404,58 +404,6 @@ def prepareAngleProfile(beta, AvaProfile):
     return angle, tmp, deltaInd
 
 
-def findCellsCrossedByLineBresenham2(x0, y0, x1, y1, cs):
-    """
-    bresenham algorithmus - JT 2011
-    Find all the cells of a raster (defined by its cellsize) that a line
-    (defines by two points P0 and P1) crosses.
-    input: x0, y0, x1, y1,cellsize
-    output: array of x y coodinates of cells hit inbetween
-
-    C IMPLEMENTIERUNG von http://de.wikipedia.org/wiki/Bresenham-Algorithmus
-    void line(int x0, int y0, int x1, int y1)
-     {
-       int dx =  abs(x1-x0), sx = x0<x1 ? 1 : -1;
-       int dy = -abs(y1-y0), sy = y0<y1 ? 1 : -1;
-       int err = dx+dy, e2; /* error value e_xy */
-
-       for(;;){  /* loop */
-         setPixel(x0,y0);
-         if (x0==x1 && y0==y1) break;
-         e2 = 2*err;
-         if (e2 > dy) { err += dy; x0 += sx; } /* e_xy+e_x > 0 */
-         if (e2 < dx) { err += dx; y0 += sy; } /* e_xy+e_y < 0 */
-       }
-     }
-    """
-    # normalize Cellsize cs to 1
-    x0 = round(x0/cs)
-    x1 = round(x1/cs)
-    y0 = round(y0/cs)
-    y1 = round(y1/cs)
-
-    dx = abs(x1-x0)
-    dy = abs(y1-y0)
-    sx = np.sign(x1-x0)  # step in x direction
-    sy = np.sign(y1-y0)  # step in y direction
-    err = dx-dy
-
-    z = []
-    while True:
-        z.append([x0*cs, y0*cs])
-        if x0 == x1 and y0 == y1:  # if no step exists we are already there
-            break
-        e2 = 2*err
-        if (e2 > -dy):
-            err -= dy
-            x0 += sx
-        if (e2 < dx):
-            err += dx
-            y0 += sy
-
-    return z
-
-
 def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
     # normalize Cellsize cs to 1
     x0 = round(x0/cs)
@@ -678,55 +626,6 @@ def inpolygon(X, Y, xv, yv):
         j = i
     # for i in range(npol-1):
     #     IN[yv[i]][xv[i]] = 1
-
-    return IN
-
-
-def inpolygon2(X, Y, xv, yv):
-    """
-    inpolygon
-    For a polygon defined by vertex points (xv, yv),
-    returns a np array of size X with ones if the points (X, Y)
-    are inside (or on the boundary) of the polygon;
-    Otherwise, returns zeros.
-    Usage:
-        mask = inpolygon(X, Y, xv, yv)
-       Input:
-           X, Y:      Set of points to check
-           xv, yv:    polygon vertex points
-       Output:
-           mask:      np array of zeros and ones
-
-    Octave Implementation [IN, ON] = inpolygon (X, Y, xv, yv)
-    """
-    npol = len(xv)
-    maxXv = np.max(xv)
-    minXv = np.min(xv)
-    maxYv = np.max(yv)
-    minYv = np.min(yv)
-    IN = np.zeros(np.shape(X))
-    for ii in range(minYv-1, maxYv+1, 1):
-        for jj in range(minXv-1, maxXv+1, 1):
-            inside = False
-            x = X[ii][jj]
-            y = Y[ii][jj]
-            p1x = xv[npol-1]
-            p1y = yv[npol-1]
-            for i in range(npol-1):
-                p2x = xv[i]
-                p2y = yv[i]
-                if y > min(p1y, p2y):
-                    if y <= max(p1y, p2y):
-                        if x <= max(p1x, p2x):
-                            if p1y != p2y:
-                                xinters = (y-p1y)*(p2x-p1x)/(p2y-p1y)+p1x
-                            if p1x == p2x or x <= xinters:
-                                inside = not inside
-                p1x, p1y = p2x, p2y
-            IN[ii][jj] = int(inside)
-
-    for i in range(npol-1):
-        IN[yv[i]][xv[i]] = 1
 
     return IN
 

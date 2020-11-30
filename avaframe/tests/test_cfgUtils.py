@@ -2,7 +2,6 @@
 from avaframe.in3Utils import cfgUtils
 from avaframe.tests import test_logUtils
 import os
-import configparser
 
 
 def test_getModuleConfig(capfd):
