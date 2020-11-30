@@ -85,7 +85,7 @@ relTh = 1
 relRasterD = relRaster * relTh
 
 
-massPart = 2000  # [200, 100, 50, 25, 10, 7.5, 5]
+massPart = 100  # [200, 100, 50, 25, 10, 7.5, 5]
 cfgGen['massPerPart'] = str(massPart)
 # ------------------------
 # initialize simulation : create directories

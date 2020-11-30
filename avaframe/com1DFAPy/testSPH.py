@@ -48,10 +48,10 @@ def Sfunction(x, y, Lx, Ly):
     # area = 1
 
     # plane
-    Z = x*np.tan(slopeAnglex) + 0*y*np.tan(slopeAngley)
+    Z = x*np.tan(slopeAnglex) + y*np.tan(slopeAngley)
     sx = np.tan(slopeAnglex)*np.ones(np.shape(x))
-    sy = 0*np.tan(slopeAngley)*np.ones(np.shape(x))
-    area = np.sqrt(1 + (np.tan(slopeAnglex))*(np.tan(slopeAnglex)) + 0*(np.tan(slopeAngley))*(np.tan(slopeAngley)))*np.ones(np.shape(x))
+    sy = np.tan(slopeAngley)*np.ones(np.shape(x))
+    area = np.sqrt(1 + (np.tan(slopeAnglex))*(np.tan(slopeAnglex)) + (np.tan(slopeAngley))*(np.tan(slopeAngley)))*np.ones(np.shape(x))
     # quadratic surface
     # Z = 1/(Lx*Lx) * x*x + 2/(Ly*Ly) * y*y
     # area = np.sqrt(1 + (2/(Lx*Lx)*x)*(2/(Lx*Lx)*x) + (2*2/(Ly*Ly)*y)*(2*2/(Ly*Ly)*y))
