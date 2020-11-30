@@ -142,34 +142,35 @@ def readRaster(fname):
     return dem
 
 
-def writeResultToAsc(header, resultArray, outType=None):
+def writeResultToAsc(header, resultArray, outFileName, outType=None):
     # print "choose output file location and name"
 
-    if outType is not None:
-        outfile = asksaveasfile(mode='w',
-                                defaultextension='.asc',
-                                title='Save Output File %s' % (outType),
-                                filetypes=[('ASCII', '*.asc')],
-                                initialfile='path.asc',
-                                initialdir=os.getcwd())
-    else:
-        outfile = asksaveasfile(mode='w',
-                                defaultextension='.asc',
-                                title='Save Output File',
-                                filetypes=[('ASCII', '*.asc')],
-                                initialfile='path.asc',
-                                initialdir=os.getcwd())
+    # elif outType is not None:
+    #     outfile = asksaveasfile(mode='w',
+    #                             defaultextension='.asc',
+    #                             title='Save Output File %s' % (outType),
+    #                             filetypes=[('ASCII', '*.asc')],
+    #                             initialfile='path.asc',
+    #                             initialdir=os.getcwd())
+    # else:
+    #     outfile = asksaveasfile(mode='w',
+    #                             defaultextension='.asc',
+    #                             title='Save Output File',
+    #                             filetypes=[('ASCII', '*.asc')],
+    #                             initialfile='path.asc',
+    #                             initialdir=os.getcwd())
 
-    outfile.write("ncols %d\n" % header.ncols)
-    outfile.write("nrows %d\n" % header.nrows)
-    outfile.write("xllcorner %.2f\n" % header.xllcorner)
-    outfile.write("yllcorner %.2f\n" % header.yllcorner)
-    outfile.write("cellsize %.2f\n" % header.cellsize)
-    outfile.write("nodata_value %.2f\n" % header.noDataValue)
+    with open(outFileName, 'w') as outFile:
 
-    for i in range(resultArray.shape[0]):
-        for j in range(resultArray.shape[1]):
-            outfile.write("%f " % resultArray[i][j])
-        outfile.write("\n")
+        outFile.write("ncols %d\n" % header.ncols)
+        outFile.write("nrows %d\n" % header.nrows)
+        outFile.write("xllcorner %.2f\n" % header.xllcenter)
+        outFile.write("yllcorner %.2f\n" % header.yllcenter)
+        outFile.write("cellsize %.2f\n" % header.cellsize)
+        outFile.write("nodata_value %.2f\n" % header.noDataValue)
 
-    outfile.close()
+        for m in range(resultArray.shape[0]):
+            line = np.array([resultArray[m,:]])
+            np.savetxt(outFile, line, fmt='%f')
+
+        outFile.close()

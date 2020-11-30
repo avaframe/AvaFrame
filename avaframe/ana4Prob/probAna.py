@@ -73,15 +73,8 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
     log.info('%s peak fields added to analysis' % count)
 
 
-    # Save to .asc file
+    # # Save to .asc file
     avaName = os.path.basename(avaDir)
-    with open(os.path.join(outDir, '%s_probMap%s.asc' % (avaName, cfg['GENERAL']['peakLim'])), 'w') as f:
-        f.write('nCols  %d\n' % (nCols))
-        f.write('nRows  %d\n' % (nRows))
-        f.write('xllcenter  %.02f\n' % (xllcenter))
-        f.write('yllcenter %.02f\n' % (yllcenter))
-        f.write('cellsize  %d\n' % (cellSize))
-        f.write('nodata_value %.02f\n' % (noDataValue))
-        for m in range(probMap.shape[0]):
-            line = np.array([probMap[m,:]])
-            np.savetxt(f, line, fmt='%f')
+    outFile = os.path.join(outDir, '%s_probMap%s.asc' % (avaName, cfg['GENERAL']['peakLim']))
+    IOf.writeResultToAsc(header, probMap, outFile)
+    
