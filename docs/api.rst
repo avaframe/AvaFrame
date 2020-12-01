@@ -2,11 +2,30 @@
 API Reference
 #############
 
-Modules
-========
+Computational Modules
+=====================
 
-Tools to set-up and run AvaFrame.
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-module-template.rst
+   :recursive:
 
+   com1DFA.com1DFA
+
+Input/Transformation Modules
+============================
+
+.. autosummary::
+   :toctree: _autosummary
+   :template: custom-module-template.rst
+   :recursive:
+
+   in2Trans
+   in3Utils   
+
+
+Output Modules
+==============
 
 .. autosummary::
    :toctree: _autosummary

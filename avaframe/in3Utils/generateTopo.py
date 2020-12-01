@@ -1,17 +1,13 @@
 """
   Create generic/idealised topographies
-
-  This file is part of Avaframe.
-
 """
 
 
 # load modules
+import logging
 import numpy as np
 from scipy.stats import norm
 import os
-import configparser
-import logging
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages

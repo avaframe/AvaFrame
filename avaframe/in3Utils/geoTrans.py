@@ -1,13 +1,10 @@
-"""
-    Opperations and transformations of rasters and lines
-
-    This file is part of Avaframe.
+""" Opperations and transformations of rasters and lines
 """
 
+import logging
 import math
 import numpy as np
 import copy
-import logging
 
 
 # create local logger
@@ -249,21 +246,27 @@ def pointsToRaster(x, y, z, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
 
 
 def prepareLine(dem, avapath, distance=10, Point=None):
-    """ 1- Resample the avapath line with a max intervall of distance=10m
+    """
+    1- Resample the avapath line with a max intervall of distance=10m
     between points (projected distance on the horizontal plane).
     2- Make avalanche profile out of the path (affect a z value using the dem)
     3- Get projection of points on the profil (closest point)
-    Inputs : - a dem dictionary
-             - a avapath line dictionary
-             - a resampling Distance
-             - a point dictionary (optional, can contain several point)
-    Outputs : - the resampled avaprofile
-              - the projection of the point on the profile (if several points
-              were give in input, only the closest point to the profile
-              is projected)
 
-    TODO: test
+    Parameters
+    ----------
+      - a dem dictionary
+      - a avapath line dictionary
+      - a resampling Distance
+      - a point dictionary (optional, can contain several point)
+
+    Returns
+    -------
+      - the resampled avaprofile
+      - the projection of the point on the profile (if several points
+        were give in input, only the closest point to the profile
+        is projected)
     """
+
     xcoor = avapath['x']
     ycoor = avapath['y']
     xcoornew = np.array([xcoor[0]])
@@ -636,12 +639,18 @@ def inpolygon(X, Y, xv, yv):
 
 
 def areaPoly(X, Y):
-    ''' Gauss's area formula to calculate polygon area
-    Inputs : - X coord of the vertices
-             - Y coord of the vertices
-             (Without repeating the first vertex!!!)
-    Output : Area of the polygon
-    '''
+    """Gauss's area formula to calculate polygon area
+
+    Parameters
+    ----------
+        - X coord of the vertices
+        - Y coord of the vertices
+        (Without repeating the first vertex!!!)
+    Returns
+    -------
+    Area of the polygon
+    """
+
     X = np.append(X, X[0])
     Y = np.append(Y, Y[0])
     sum = 0
