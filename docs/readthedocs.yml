@@ -1,6 +1,0 @@
-python:
-   version: 3.8
-   install:
-      - requirements: requirements.txt
-   system_packages: true
-   setup_py_install: true
