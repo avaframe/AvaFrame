@@ -15,30 +15,17 @@
    name plot/.style={every path/.style={name path global=#1}}
 }
 
-\pgfmathdeclarefunction{poly2}{0}{%
-      \pgfmathparse{7-0.005*x}%
-    }
-
-% Extract coordinates for point X
-\makeatletter
-\newcommand{\gettikzxy}[3]{%
-  \tikz@scan@one@point\pgfutil@firstofone#1\relax
-  \edef#2{\the\pgf@x}%
-  \edef#3{\the\pgf@y}%
-}
-\makeatother
-
 
 \begin{tikzpicture}[scale=3.1]
 
 
 \def\a{0.2222222222}
 \def\b{-1.3333}
-\def\c{3}  
+\def\c{3}
 
 \def\aa{0.215}
 \def\bb{-1.38}
-\def\cc{3.15} 
+\def\cc{3.15}
 \def\bet{-10}
 
 \pgfmathsetmacro\xb{(tan(\bet)-\b)/(2*\a)}
@@ -79,7 +66,7 @@
 \pgfmathsetmacro\xh{-\bb/2/\aa}
 \pgfmathsetmacro\yhh{\cc}
 \pgfmathsetmacro\yh{\aa*\xh*\xh+\bb*\xh+\cc}
-    
+
 \tkzInit[xmin=0,xmax=4,ymin=0.8,ymax=3.5,ystep=1]
 % Draw coordinates
 \draw [>={Triangle[open]},thin, ->] (0,0) --  (0,2.5) node[left] {$z$};
