@@ -143,25 +143,12 @@ def readRaster(fname):
 
 
 def writeResultToAsc(header, resultArray, outFileName, outType=None):
-    # print "choose output file location and name"
+    """ Write 2D array to an ascii file with header """
 
-    # elif outType is not None:
-    #     outfile = asksaveasfile(mode='w',
-    #                             defaultextension='.asc',
-    #                             title='Save Output File %s' % (outType),
-    #                             filetypes=[('ASCII', '*.asc')],
-    #                             initialfile='path.asc',
-    #                             initialdir=os.getcwd())
-    # else:
-    #     outfile = asksaveasfile(mode='w',
-    #                             defaultextension='.asc',
-    #                             title='Save Output File',
-    #                             filetypes=[('ASCII', '*.asc')],
-    #                             initialfile='path.asc',
-    #                             initialdir=os.getcwd())
-
+    # Open outfile
     with open(outFileName, 'w') as outFile:
 
+        # write the header and array values to file
         outFile.write("ncols %d\n" % header.ncols)
         outFile.write("nrows %d\n" % header.nrows)
         outFile.write("xllcorner %.2f\n" % header.xllcenter)
