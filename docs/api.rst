@@ -2,14 +2,6 @@
 API Reference
 #############
 
-
-
-..
-   .. automodule:: avaframe
-      :members:
-
-.. currentmodule:: avaframe
-
 Modules
 ========
 
@@ -17,9 +9,10 @@ Tools to set-up and run AvaFrame.
 
 
 .. autosummary::
-    :toctree: generated/
-    :recursive:
+   :toctree: _autosummary
+   :template: custom-module-template.rst
+   :recursive:
 
-    out1Peak.outPlotAllPeak
-    tmp1Ex.tmp1Ex
+   out1Peak.outPlotAllPeak
+   tmp1Ex.tmp1Ex
 

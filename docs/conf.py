@@ -14,7 +14,7 @@ import os
 import sys
 # import avaframe
 # sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('../avaframe'))
 # sys.path.insert(0, os.path.abspath('../avaframe'))
 import sphinx_rtd_theme
 
@@ -34,20 +34,29 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
     'sphinx.ext.autosummary',
+    'sphinx.ext.viewcode',
     'sphinx_rtd_theme',
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.extlinks',
     'sphinxcontrib.bibtex',
-    # 'numpydoc',
 ]
 
+autosummary_mock_imports = [
+    'avaframe',
+    'numpy',
+    'matplotlib',
+    'glob',
+]
 autosummary_generate = True
 
-napoleon_google_docstring = True
-napoleon_numpy_docstring = False
+napoleon_google_docstring = False
+napoleon_use_param = False
+napoleon_use_ivar = True
 
+# Turn off prepending module names
+add_module_names = False
 
-# make referencing unique if twice the same section heading apear
+# make referencing unique if the same section heading exists doubly
 autosectionlabel_prefix_document = True
 autosectionlabel_maxdepth = 2
 
@@ -57,7 +66,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '*run*']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'run*']
 
 # Set the master document name for readthedocs builds
 master_doc = 'index'

@@ -1,9 +1,7 @@
 """
-
 This is a simple function for a quick plot of all peak files at once
 
 This file is part of Avaframe.
-
 """
 
 import os

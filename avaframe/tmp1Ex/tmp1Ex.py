@@ -3,6 +3,8 @@ This is the template for new modules, with the bare minimal required files
 """
 
 import logging
+import avaframe
+from avaframe.out3Plot.plotUtils import *
 
 # create local logger
 log = logging.getLogger(__name__)
