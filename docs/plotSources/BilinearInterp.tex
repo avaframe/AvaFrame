@@ -1,0 +1,55 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Compile with
+% pdflatex --shell-escape -synctex=1 -interaction=nonstopmode BilinearInterp.tex
+% to convert it to png use:
+% convert -density 300 -transparent white "\image.pdf" "\image.png"},
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{standalone}
+
+\input{GeneralPlotHeader.tex}
+
+\begin{document}
+
+\tikzset{
+   name plot/.style={every path/.style={name path global=#1}},
+   cross/.style={cross out, draw=black, minimum size=2*(#1-\pgflinewidth), inner sep=0pt, outer sep=0pt},
+    %default radius will be 1pt.
+    cross/.default={2pt}
+}
+
+\begin{tikzpicture}[
+    scale=6,
+    every node/.style={scale=1.3},
+    >=stealth,
+    dot/.style   = {draw, circle,  fill = AFLight, inner sep = 1pt},
+    pin distance=0.1mm
+ ]
+
+\def\u{0.6}
+\def\v{0.6}
+
+\node[pin={[pin={[pin edge={white}, color={AFLight}]160:(u,v)}]}, pin={[pin={[pin edge={white}, color={AFLight}]30:$f_{uv}$}]}, dot] at (\u,\v) {};
+\node[pin={[pin={[pin edge={white}, color={AFDark}]250:(0,0)}]}, pin={[pin={[pin edge={white}, color={AFDark}]30:$f_{00}$}]}, cross] at (0,0) {};
+\node[pin={[pin={[pin edge={white}, color={AFDark}]160:(1,0)}]}, pin={[pin={[pin edge={white}, color={AFDark}]290:$f_{10}$}]}, cross] at (1,0) {};
+\node[pin={[pin={[pin edge={white}, color={AFDark}]160:(0,1)}]}, pin={[pin={[pin edge={white}, color={AFDark}]30:$f_{01}$}]}, cross] at (0,1) {};
+\node[pin={[pin={[pin edge={white}, color={AFDark}]160:(1,1)}]}, pin={[pin={[pin edge={white}, color={AFDark}]30:$f_{11}$}]}, cross] at (1,1) {};
+\node[pin={[pin={[pin edge={white}, color={AFMiddle}]3:(0,v)}]}, pin={[pin={[pin edge={white}, color={AFMiddle}]290:$f_{0v}$}]}, cross, AFMiddle] at (0,\v) {};
+\node[pin={[pin={[pin edge={white}, color={AFMiddle}]3:(1,v)}]}, pin={[pin={[pin edge={white}, color={AFMiddle}]290:$f_{1v}$}]}, cross, AFMiddle] at (1,\v) {};
+
+
+\draw[dashed] (-0.3,0) -- (1.3, 0);
+\draw[dashed] (-0.3,1) -- (1.3, 1);
+\draw[dashed] (0,-0.3) -- (0, 1.3);
+\draw[dashed] (1,-0.3) -- (1, 1.3);
+\draw[dotted] (\u,-0.3) -- (\u, 1.3);
+\draw[dotted] (-0.3,\v) -- (1.3, \v);
+
+\draw [>=stealth', <->] (-0.15,0) -- (-0.15, \v) node [midway,left] {$v$};
+\draw [>=stealth', <->] (-0.15,\v) -- (-0.15, 1) node [midway,left] {$(1-v)$};
+\draw [>=stealth', <->] (0,-0.2) -- (\u,-0.2) node [midway,below] {$u$};
+\draw [>=stealth', <->] (\u,-0.2) -- (1,-0.2) node [midway,below] {$(1-u)$};
+
+\end{tikzpicture}
+
+\end{document}
