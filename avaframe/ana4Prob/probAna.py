@@ -59,7 +59,7 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
             data = np.loadtxt(fileName, skiprows=6)
             dataLim = np.zeros((nRows, nCols))
 
-            log.info('File name is %s' % fileName)
+            log.debug('File name is %s' % fileName)
 
             # Check if peak values exceed desired threshold
             dataLim[data>float(cfg['GENERAL']['peakLim'])] = 1.0
@@ -77,4 +77,3 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
     avaName = os.path.basename(avaDir)
     outFile = os.path.join(outDir, '%s_probMap%s.asc' % (avaName, cfg['GENERAL']['peakLim']))
     IOf.writeResultToAsc(header, probMap, outFile)
-    

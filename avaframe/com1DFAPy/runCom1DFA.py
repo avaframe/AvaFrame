@@ -22,6 +22,7 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFA as com1DFA
+import avaframe.com1DFAPy.DFAtools as DFAtls
 
 # from avaframe.DFAkernel.setParam import *
 from avaframe.out3Plot.plotUtils import *
@@ -140,7 +141,7 @@ while repeat == True:
         T = np.append(T, part['t'])
         S = np.append(S, part['s'][0])
         Z = np.append(Z, part['z'][0])
-        U = np.append(U, com1DFA.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
+        U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
         # print(part['t'])
         # print(DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
         # exact solution for inclined plane with no friction
@@ -184,8 +185,12 @@ for resType in resTypes:
     if resType == 'ppr':
         resField = resField * 0.001
     relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
-    dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType
-    fU.writePeakResult(outDir, resField, demOri['header'], dataName)
+    dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType +'.asc'
+    # create directory
+    outDirPeak = os.path.join(outDir, 'peakFiles')
+    fU.makeADir(outDirPeak)
+    outFile = os.path.join(outDirPeak, dataName)
+    IOf.writeResultToAsc(demOri['header'], resField, outFile)
     log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
 
 # Generata plots for all peakFiles

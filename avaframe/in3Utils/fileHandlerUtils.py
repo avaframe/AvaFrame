@@ -29,39 +29,7 @@ def makeADir(dirName):
     else:
         os.makedirs(dirName)
     log.debug('Directory: %s created' % dirName)
-
-
-def writePeakResult(outputDir, data, header, dataName):
-    """ Write peak field values to asc file """
-
-    # create directory
-    outDir = os.path.join(outputDir, 'peakFiles')
-    makeADir(outDir)
-
-    nRows = data.shape[0]
-    nCols = data.shape[1]
-
-    # Read lower left corner coordinates, cellsize and noDATA value
-    xllcenter = header.xllcenter
-    yllcenter = header.yllcenter
-    cellsize = header.cellsize
-    noDATA = header.noDataValue
-
-    # Save elevation data to .asc file and add header lines
-    dataMat = np.matrix(data)
-    with open(os.path.join(outDir, '%s.asc' % (dataName)), 'w') as f:
-        f.write('nCols  %d\n' % (nCols))
-        f.write('nRows  %d\n' % (nRows))
-        f.write('xllcenter  %.02f\n' % (xllcenter))
-        f.write('yllcenter %.02f\n' % (yllcenter))
-        f.write('cellsize  %d\n' % (cellsize))
-        f.write('nodata_value %.02f\n' % (noDATA))
-        for line in dataMat:
-            np.savetxt(f, line, fmt='%f')
-
-    # Log info here
-    log.info('peak field written to: %s/%s.asc' % (outDir, dataName))
-
+    
 
 def readLogFile(logName, cfg=''):
     """ Read experiment log file and make dictionary that contains all simulations """
