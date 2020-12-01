@@ -194,21 +194,29 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     z = particles['z'][j]
 
     # get velocity magnitude and direction
-    # ux = particles['ux'][j]
-    # uy = particles['uy'][j]
-    # uz = particles['uz'][j]
-    # uMag = DFAtls.norm(ux, uy, uz)
-    # if uMag < 0.1:
-    #     uxDir = 1
-    #     uyDir = 0
-    #     uzDir = -nx/nz
-    #     uxDir, uyDir, uzDir = DFAtls.normalize(uxDir, uyDir, uzDir)
-    # else:
-    #     # TODO check if direction is non zero, if it is define another u1 direction
-    #     uxDir, uyDir, uzDir = DFAtls.normalize(ux, uy, uz)
-    #
-    # uxOrtho, uyOrtho, uzOrtho = DFAtls.croosProd(uxDir, uyDir, uzDir, nx, ny, nz)
-    # uxOrtho, uyOrtho, uzOrtho = DFAtls.normalize(uxOrtho, uyOrtho, uzOrtho)
+    ux = particles['ux'][j]
+    uy = particles['uy'][j]
+    uz = particles['uz'][j]
+    uMag = DFAtls.norm(ux, uy, uz)
+    if uMag < 0.1:
+        uxDir = 1
+        uyDir = 0
+        uzDir = -nx/nz
+        uxDir, uyDir, uzDir = DFAtls.normalize(uxDir, uyDir, uzDir)
+    else:
+        # TODO check if direction is non zero, if it is define another u1 direction
+        uxDir, uyDir, uzDir = DFAtls.normalize(ux, uy, uz)
+
+    uxOrtho, uyOrtho, uzOrtho = DFAtls.croosProd(nx, ny, nz, uxDir, uyDir, uzDir)
+    uxOrtho, uyOrtho, uzOrtho = DFAtls.normalize(uxOrtho, uyOrtho, uzOrtho)
+
+    v1 = np.array([[uxDir, uyDir, uzDir]])
+    v2 = np.array([[uxOrtho, uyOrtho, uzOrtho]])
+    v3 = np.array([[nx, ny, nz]])
+    M = np.concatenate((v1.T, v2.T), axis=1)
+    M = np.concatenate((M, v3.T), axis=1)
+
+    MM1 = np.linalg.inv(M)
 
     # startTime = time.time()
     # find all the neighbour boxes
@@ -263,9 +271,9 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     dz = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dz, dz)
     r = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel, r)
 
-    # r1 = DFAtls.scalProd(dx, dy, dz, uxDir, uyDir, uzDir)
-    # r2 = DFAtls.scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
-    # r3 = DFAtls.scalProd(dx, dy, dz, nx, ny, nz)
+    r1 = DFAtls.scalProd(dx, dy, dz, uxDir, uyDir, uzDir)
+    r2 = DFAtls.scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+    r3 = DFAtls.scalProd(dx, dy, dz, nx, ny, nz)
 
     hr = rKernel - r
     dwdr = dfacKernel * hr * hr
@@ -281,11 +289,17 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     # GY = mdwdrr * dy
     # GZ = mdwdrr * dz
     # same but expressing dr in the local coord system u1, u2, u3 (possible to add the earthe pressure coefficients)
-    # K1, K2 = 1, 1
-    # GX = mdwdrr * (K1*r1*uxDir + K2*r2*uxOrtho)
-    # GY = mdwdrr * (K1*r1*uyDir + K2*r2*uyOrtho)
-    # GZ = mdwdrr * (K1*r1*uzDir + K2*r2*uzOrtho)
+    K1, K2 = 1, 1
+    G1 = mdwdrr * K1*r1
+    G2 = mdwdrr * K2*r2
+    G3 = 0
+    GX1 = M[0, 0]*G1 + M[0, 1]*G2
+    GY1 = M[1, 0]*G1 + M[1, 1]*G2
+    GZ1 = M[2, 0]*G1 + M[2, 1]*G2
 
+    GX1 = np.sum(GX1)
+    GY1 = np.sum(GY1)
+    GZ1 = np.sum(GZ1)
     # projecting onto the tengent plane and taking the change of coordinates into account
     GX = mdwdrr * (g11*dx + g12*dy)
     GY = mdwdrr * (g22*dy + g12*dx)
@@ -296,6 +310,8 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     GX = np.sum(GX)
     GY = np.sum(GY)
     GZ = np.sum(GZ)
+    print(GX, GY, GZ)
+    print(GX1, GY1, GZ1)
 
     gradhX = GX
     gradhY = GY
