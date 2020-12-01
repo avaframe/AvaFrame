@@ -1,7 +1,5 @@
 """
     Conversion functions to read/ write Shape files or xyz profiles
-
-    This file is part of Avaframe.
 """
 
 

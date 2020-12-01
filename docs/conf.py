@@ -41,9 +41,13 @@ extensions = [
     'sphinxcontrib.bibtex',
 ]
 
+# alternative: use base requirements.txt in readthedocs.yml files to install
+# missing modules on rtd
 autosummary_mock_imports = [
     'avaframe',
     'numpy',
+    'shapefile',
+    'scipy',
     'matplotlib',
     'glob',
 ]
