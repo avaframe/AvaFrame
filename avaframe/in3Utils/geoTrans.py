@@ -77,7 +77,7 @@ def projectOnRasterRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
                 f22 = Z[Ly1][Lx1]
                 # using bilinear interpolation on the cell
                 value = (f11*(1-dx)*(1-dy) + f21*dx*(1-dy) +
-                     f12*(1-dx)*dy + f22*dx*dy)
+                         f12*(1-dx)*dy + f22*dx*dy)
     except ValueError:
         value = np.NaN
 
@@ -221,18 +221,23 @@ def pointsToRaster(x, y, z, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
         dy = Ly - Ly0
 
         Z = Z.flatten()
+        # add the component of the points value to the 4 neighbour grid points
+        # start with the lower left
         f11 = z*(1-dx)*(1-dy)
         f11 = f11.flatten()
         ic = Lx0 + ncol * Ly0
         np.add.at(Z, ic, f11)
+        # lower right
         f21 = z*dx*(1-dy)
         f21 = f21.flatten()
         ic = Lx1 + ncol * Ly0
         np.add.at(Z, ic, f21)
+        # uper left
         f12 = z*(1-dx)*dy
         f12 = f12.flatten()
         ic = Lx0 + ncol * Ly1
         np.add.at(Z, ic, f12)
+        # and uper right
         f22 = z*dx*dy
         f22 = f22.flatten()
         ic = Lx1 + ncol * Ly1
