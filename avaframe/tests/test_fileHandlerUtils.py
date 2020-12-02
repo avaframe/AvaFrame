@@ -9,7 +9,9 @@
 import numpy as np
 import os
 from avaframe.in3Utils import fileHandlerUtils as fU
+from avaframe.in3Utils import initializeProject as initProj
 import pytest
+import shutil
 import configparser
 
 
@@ -48,3 +50,69 @@ def test_makeSimDict():
     assert data['resType'][0] == 'ppr'
     assert data['cellSize'][0] == 5.0
     assert data['test'][0] == '0.888'
+
+
+def test_exportcom1DFAOutput(tmp_path):
+    """ Test if export of result files works """
+
+    # Create input directoy structure
+    dirPath = os.path.dirname(__file__)
+    avaName = 'avaHockey'
+    avaDir  = os.path.join(tmp_path, avaName)
+    outDir = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000', 'release1HS_entres_dfa', 'raster')
+    os.makedirs(avaDir)
+    os.makedirs(outDir)
+
+    # copy inut data from benchmarks folder to tmp_path and rename correctly
+    resType = ['ppr', 'pfd', 'pv']
+    for m in resType:
+        avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
+                           'ana4Prob', 'release1HS_entres_dfa_1.25000_%s.asc' % m)
+        input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
+                                 'release1HS_entres_dfa', 'raster', 'release1HS_entres_dfa_%s.asc' % m)
+        shutil.copy(avaData, input)
+    avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
+                           'ana4Prob', 'ExpLog.txt')
+    input = os.path.join(avaDir, 'Work', 'com1DFA', 'ExpLog.txt')
+    shutil.copy(avaData, input)
+    avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
+                           'ana4Prob', 'test.html')
+    input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
+                             'release1HS_entres_dfa.html')
+    shutil.copy(avaData, input)
+
+    # Set cfg
+    cfg = configparser.ConfigParser()
+    cfg = {'varPar' : 'RelTh'}
+
+    # Call function to test
+    fU.exportcom1DFAOutput(avaDir, cfg)
+    # load exported file
+    pprTest = np.loadtxt(os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles',
+                                         'release1HS_entres_dfa_1.25000_ppr.asc'), skiprows=6)
+
+    # load initial file
+    pprBench = np.loadtxt(os.path.join(dirPath, '..', '..', 'benchmarks', avaName, 'ana4Prob',
+                                       'release1HS_entres_dfa_1.25000_ppr.asc'), skiprows=6)
+    # Compare result to reference solution
+    testRes = np.allclose(pprTest, pprBench, atol=1.e-12)
+
+    assert testRes == True
+
+
+def test_getDFAData(tmp_path):
+    """ Test export of result files to be used in aimec """
+
+    # Create input directoy structure
+    dirPath = os.path.dirname(__file__)
+    avaName = 'avaHockey'
+    avaDir  = os.path.join(tmp_path, avaName)
+    outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+    os.makedirs(avaDir)
+    os.makedirs(outDir)
+
+    # copy inut data from benchmarks folder to tmp_path and rename correctly
+    avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
+                           'ana4Prob', 'release1HS_entres_dfa_1.25000_ppr.asc')
+    input = os.path.join(outDir, 'release1HS_entres_dfa_1.25000_ppr.asc')
+    shutil.copy(avaData, input)
