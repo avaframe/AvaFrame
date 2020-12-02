@@ -29,8 +29,20 @@ SPHoption = 2
 
 
 def getNeighbours(particles, dem):
-    """ Ĺocate each particle in a grid cell and build the indPartInCell and
-    partInCell arrays. See issue 200 and documentation for details
+    """ Locate particles in cell for SPH computation (for loop implementation)
+
+    Ĺocate each particle in a grid cell and build the indPartInCell and
+    partInCell arrays. See issue #200 and documentation for details
+
+    Parameters
+    ----------
+    particles : dict
+    dem : dict
+
+    Returns
+    -------
+    particles : dict
+      updated particles dictionary with indPartInCell and partInCell arrays
     """
     # get grid information
     header = dem['header']
@@ -81,9 +93,21 @@ def getNeighbours(particles, dem):
 
 
 def getNeighboursVect(particles, dem):
-    """ Ĺocate each particle in a grid cell and build the indPartInCell and
-    partInCell arrays. See issue 200 and documentation for details.
+    """ Locate particles in cell for SPH computation (no loop implementation)
+
+    Ĺocate each particle in a grid cell and build the indPartInCell and
+    partInCell arrays. See issue #200 and documentation for details.
     Without using loops.
+
+    Parameters
+    ----------
+    particles : dict
+    dem : dict
+
+    Returns
+    -------
+    particles : dict
+      updated particles dictionary with indPartInCell and partInCell arrays
     """
     # get grid information
     header = dem['header']
@@ -129,6 +153,31 @@ def getNeighboursVect(particles, dem):
 
 
 def calcGradHSPH(particles, j, ncols, nrows, csz):
+    """ Compute gradient of Flow Depth using SPH (for loop implementation)
+
+    Parameters
+    ----------
+    particles : dict
+    j: int
+        index of particle under consideration
+    ncols: int
+        number of columns of the DEM
+    nrows: int
+        number of rows of the DEM
+    csz  : float
+        cellsize of the DEM
+
+    Returns
+    -------
+    gradhX: float
+        x coordinate of the gradient of the flow depth at particle j location
+    gradhY: float
+        x coordinate of the gradient of the flow depth at particle j location
+    gradhZ: float
+        x coordinate of the gradient of the flow depth at particle j location
+    L: 1D numpy array
+        index of particles within the kernel function radius
+    """
     # SPH kernel
     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
     rKernel = csz
@@ -185,8 +234,33 @@ def calcGradHSPH(particles, j, ncols, nrows, csz):
 
 
 def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
-    """ Compute the gradient of the flow depth at the location of patricle j
-    using SPH.
+    """ Compute gradient of Flow Depth using SPH (no loop implementation)
+
+    Compute the gradient of the flow depth at the location of patricle j
+    using SPH method.
+
+    Parameters
+    ----------
+    particles : dict
+    j: int
+        index of particle under consideration
+    ncols: int
+        number of columns of the DEM
+    nrows: int
+        number of rows of the DEM
+    csz  : float
+        cellsize of the DEM
+
+    Returns
+    -------
+    gradhX: float
+        x coordinate of the gradient of the flow depth at particle j location
+    gradhY: float
+        x coordinate of the gradient of the flow depth at particle j location
+    gradhZ: float
+        x coordinate of the gradient of the flow depth at particle j location
+    L: 1D numpy array
+        index of particles within the kernel function radius
     """
     # Define SPH kernel
     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
@@ -382,19 +456,27 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     return gradhX, gradhY,  gradhZ, L
 
 
-def pointsToRasterSPH(particles, dem, rho, f, F):
+def pointsToRasterSPH(particles, dem, rho, f):
+    """ SPH interpolation from particles (unstructured grid) to grid
+
+    Interpolates the scalar field f associated to the particles in particles
+    (equivalent of unstructured grid) on a structured grid (associated to
+    the dem). Values of f on the structured grid are called F
+
+    Parameters
+    ----------
+    particles : dict
+    dem : dict
+    rho: float
+        fluid density
+    f: 1D numpy array
+        values of scalar field at particle location
+
+    Returns
+    -------
+    F: 2d numpy array
+    values of scalar field at grid point location
     """
-    SPH interpolation from particles (unstructured grid) to grid
-    Input :
-    Points: (x, y) coord of the pointsi
-    Output:
-    PointsZ: z coord of the points
-             ioob number of out of bounds indexes
-    """
-    # Define SPH kernel
-    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
-    rKernel = csz
-    facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
 
     # get mesh information
     Z = dem['rasterData']
@@ -411,7 +493,13 @@ def pointsToRasterSPH(particles, dem, rho, f, F):
     z = particles['z']
     m = particles['m']
 
-    nrow, ncol = np.shape(F)
+    # Define SPH kernel
+    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
+    rKernel = csz
+    facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
+
+    nrows, ncols = np.shape(Nx)
+    F = np.zeros((nrows, ncols))
 
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     Lx = (x - xllc) / csz
@@ -442,14 +530,14 @@ def pointsToRasterSPH(particles, dem, rho, f, F):
     for lx, ly in zip([Lx0, Lx0, Lx1, Lx1], [Ly0, Ly1, Ly0, Ly1]):
         dx = (lx - Lx) * csz
         dy = (ly - Ly) * csz
-        ic00 = lx + ncol * ly
+        ic00 = lx + ncols * ly
         dz = z - Z[ic00]
         # remove the normal part (make sure that r = xj - xl lies in the plane
         # defined by the normal at xj)
-        dn = Nx*dx + Ny*dy + nz*dz
-        dx = dx - dn*nx
-        dy = dy - dn*ny
-        dz = dz - dn*nz
+        dn = Nx*dx + Ny*dy + Nz*dz
+        dx = dx - dn*Nx
+        dy = dy - dn*Ny
+        dz = dz - dn*Nz
         # add sph contribution to grid cell (lx, ly)
         R00 = DFAtls.norm(dx, dy, dz)
         indOut = np.where(R00 >= rKernel)
@@ -460,7 +548,7 @@ def pointsToRasterSPH(particles, dem, rho, f, F):
         np.add.at(F, ic00, f00)
 
     # add sph contribution to bottom left grid cell
-    ic00 = Lx0 + ncol * Ly0
+    ic00 = Lx0 + ncols * Ly0
     dz = z - Z[ic00]
     R00 = DFAtls.norm(dx, dy, dz)
     indOut = np.where(R00 >= rKernel)
@@ -471,7 +559,7 @@ def pointsToRasterSPH(particles, dem, rho, f, F):
     np.add.at(F, ic00, f00)
 
     # add sph contribution to bottom right grid cell
-    ic10 = Lx1 + ncol * Ly0
+    ic10 = Lx1 + ncols * Ly0
     dz = z - Z[ic10]
     R10 = DFAtls.norm(dx, dy, dz)
     indOut = np.where(R10 >= rKernel)
@@ -482,7 +570,7 @@ def pointsToRasterSPH(particles, dem, rho, f, F):
     np.add.at(F, ic10, f10)
 
     # add sph contribution to top left grid cell
-    ic01 = Lx0 + ncol * Ly1
+    ic01 = Lx0 + ncols * Ly1
     dz = z - Z[ic01]
     R01 = DFAtls.norm(dx, dy, dz)
     indOut = np.where(R01 >= rKernel)
@@ -493,7 +581,7 @@ def pointsToRasterSPH(particles, dem, rho, f, F):
     np.add.at(F, ic01, f01)
 
     # add sph contribution to top right grid cell
-    ic11 = Lx1 + ncol * Ly1
+    ic11 = Lx1 + ncols * Ly1
     dz = z - Z[ic11]
     R11 = DFAtls.norm(dx, dy, dz)
     indOut = np.where(R11 >= rKernel)
@@ -503,12 +591,28 @@ def pointsToRasterSPH(particles, dem, rho, f, F):
     f11 = f * m * W11 / rho
     np.add.at(F, ic11, f11)
 
-    F = np.reshape(F, (nrow, ncol))
+    F = np.reshape(F, (nrows, ncols))
 
     return F
 
 
 def computeFlowDepth(cfg, particles, dem):
+    """ Compute Flow Depth using SPH (no loop implementation)
+
+    Compute the flow depth at the location of patricle j
+    using SPH method.
+
+    Parameters
+    ----------
+    cfg: configParser
+    paricles: dict
+    dem: dict
+
+    Returns
+    -------
+    paricles: dict
+        particles dictionnary updated with the SPH flow depth (hSPH)
+    """
     rho = cfg.getfloat('rho')
     Npart = particles['Npart']
     nrows = dem['header'].nrows
@@ -541,6 +645,36 @@ def computeFlowDepth(cfg, particles, dem):
 
 
 def calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
+    """ Compute Flow Depth using SPH (no loop implementation)
+
+    Compute the flow depth at the location of patricle j
+    using SPH method.
+
+    Parameters
+    ----------
+    particles : dict
+    j: int
+        index of particle under consideration
+    ncols: int
+        number of columns of the DEM
+    nrows: int
+        number of rows of the DEM
+    csz  : float
+        cellsize of the DEM
+    nx  : float
+        x component of the surface normal at particle j position
+    ny  : float
+        y component of the surface normal at particle j position
+    nz  : float
+        z component of the surface normal at particle j position
+
+    Returns
+    -------
+    h: float
+        flow depth at particle j location
+    L: 1D numpy array
+        index of particles within the kernel function radius
+    """
     # SPH kernel
     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
     rKernel = csz
