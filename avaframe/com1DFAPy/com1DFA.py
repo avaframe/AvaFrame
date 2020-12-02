@@ -917,16 +917,11 @@ def updateFields(cfg, particles, force, dem, fields):
 
     #########################################
     # Update fields using a SPH approach
-    # MassSPH = np.zeros((nrows, ncols))
-    # hSPH = np.ones((nrows, ncols))
-    # VXSPH = np.zeros((nrows, ncols))
-    # VYSPH = np.zeros((nrows, ncols))
-    # VZSPH = np.zeros((nrows, ncols))
-    # MassSPH = pointsToRasterSPH(particles, rho, Z, m, MassSPH, csz=csz)
-    # hSPH = pointsToRasterSPH(particles, rho, Z, m, hSPH, csz=csz)
-    # VXSPH = pointsToRasterSPH(particles, rho, Z, ux, VXSPH, csz=csz)
-    # VYSPH = pointsToRasterSPH(particles, rho, Z, uy, VYSPH, csz=csz)
-    # VZSPH = pointsToRasterSPH(particles, rho, Z, uz, VZSPH, csz=csz)
+    # MassSPH = pointsToRasterSPH(particles, rho, Z, m, csz=csz)
+    # hSPH = pointsToRasterSPH(particles, rho, Z, m, csz=csz)
+    # VXSPH = pointsToRasterSPH(particles, rho, Z, ux, csz=csz)
+    # VYSPH = pointsToRasterSPH(particles, rho, Z, uy, csz=csz)
+    # VZSPH = pointsToRasterSPH(particles, rho, Z, uz, csz=csz)
     # VSPH = norm(VXSPH, VYSPH, VZSPH)
     # FDSPH = hSPH
     # # FDSPH = MassSPH / (A * rho)
