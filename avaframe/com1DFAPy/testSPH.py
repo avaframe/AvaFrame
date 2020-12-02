@@ -172,17 +172,17 @@ for DX in NDX:
         particles = SPH.getNeighboursVect(particles, dem)
 
         # ------------------------------------------
-        # indOut = np.where(DFAtls.norm(Xpart-Lx/2, Ypart-Ly/2, Zpart) >6* Lx/2)
-        # mask = np.ones(len(Xpart), dtype=bool)
-        # mask[indOut] = False
-        #
-        # nRemove = len(mask)-np.sum(mask)
-        # if nRemove > 0:
-        #     particles = com1DFA.removePart(particles, mask, nRemove)
-        #     print('removed %s particles' % (nRemove))
-        #
-        # # find neighbours
-        # particles = SPH.getNeighboursVect(particles, dem)
+        indOut = np.where(DFAtls.norm(Xpart-Lx/2, Ypart-Ly/2, Zpart) >6*Lx/2)
+        mask = np.ones(len(Xpart), dtype=bool)
+        mask[indOut] = False
+
+        nRemove = len(mask)-np.sum(mask)
+        if nRemove > 0:
+            particles = com1DFA.removePart(particles, mask, nRemove)
+            print('removed %s particles' % (nRemove))
+
+        # find neighbours
+        particles = SPH.getNeighboursVect(particles, dem)
 
         Xpart = particles['x']
         Ypart = particles['y']

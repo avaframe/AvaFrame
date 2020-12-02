@@ -199,9 +199,11 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     uz = particles['uz'][j]
     uMag = DFAtls.norm(ux, uy, uz)
     if uMag < 0.1:
-        uxDir = 1
-        uyDir = 0
-        uzDir = -nx/nz
+        ax = 1
+        ay = 0
+        uxDir = ax
+        uyDir = ay
+        uzDir = -(ax*nx + ay*ny) / nz
         uxDir, uyDir, uzDir = DFAtls.normalize(uxDir, uyDir, uzDir)
     else:
         # TODO check if direction is non zero, if it is define another u1 direction
@@ -213,11 +215,21 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     v1 = np.array([[uxDir, uyDir, uzDir]])
     v2 = np.array([[uxOrtho, uyOrtho, uzOrtho]])
     v3 = np.array([[nx, ny, nz]])
+    # build the transformation matrix from (e1, e2, e3) to (ex, ey, ez)
     M = np.concatenate((v1.T, v2.T), axis=1)
     M = np.concatenate((M, v3.T), axis=1)
+    # compute the transformation matrix from (ex, ey, ez) to (e1, e2, e3)
+    MM1 = M.T  # because M is orthogonal, it inverse is its transpose !!! np.linalg.inv(M).T
 
-    MM1 = np.linalg.inv(M)
+    # now take into accout the fact that we are on the surface so the r3 or x3
+    # component is not independent from the 2 other ones!!
+    MM1[0, 0] = MM1[0, 0] - M[2, 0]*M[0, 2]/M[2, 2]
+    MM1[0, 1] = MM1[0, 1] - M[2, 0]*M[1, 2]/M[2, 2]
+    MM1[1, 0] = MM1[1, 0] - M[2, 1]*M[0, 2]/M[2, 2]
+    MM1[1, 1] = MM1[1, 1] - M[2, 1]*M[1, 2]/M[2, 2]
 
+    # buil the matrix that transforms the gradient in (r1, r2, r3) to the one in (x1, x2, x3)
+    MMGrad = MM1.T
     # startTime = time.time()
     # find all the neighbour boxes
     # index of the left box
@@ -288,19 +300,24 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     # GX = mdwdrr * dx
     # GY = mdwdrr * dy
     # GZ = mdwdrr * dz
-    # same but expressing dr in the local coord system u1, u2, u3 (possible to add the earthe pressure coefficients)
+    # projecting onto the tengent plane and taking the change of coordinates into account
+    # the coord sysem used is the orthogonal coord system related to the flow
+    # (e1, e2, n=e3)
+    # this way it is possible to include the earth pressure coeficients
     K1, K2 = 1, 1
     G1 = mdwdrr * K1*r1
     G2 = mdwdrr * K2*r2
     G3 = 0
-    GX1 = M[0, 0]*G1 + M[0, 1]*G2
-    GY1 = M[1, 0]*G1 + M[1, 1]*G2
-    GZ1 = M[2, 0]*G1 + M[2, 1]*G2
+    GX1 = MMGrad[0, 0]*G1 + MMGrad[0, 1]*G2
+    GY1 = MMGrad[1, 0]*G1 + MMGrad[1, 1]*G2
+    GZ1 = (- g1*GX1 - g2*GY1)
 
     GX1 = np.sum(GX1)
     GY1 = np.sum(GY1)
     GZ1 = np.sum(GZ1)
     # projecting onto the tengent plane and taking the change of coordinates into account
+    # the coord sysem used is the non orthogonal coord system related to the surface
+    # (Tau1, Tau2, n)
     GX = mdwdrr * (g11*dx + g12*dy)
     GY = mdwdrr * (g22*dy + g12*dx)
     # the gradient hat to be tangent to the plane...
@@ -310,12 +327,12 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     GX = np.sum(GX)
     GY = np.sum(GY)
     GZ = np.sum(GZ)
-    print(GX, GY, GZ)
-    print(GX1, GY1, GZ1)
+    # print(GX, GY, GZ)
+    # print(GX1, GY1, GZ1)
 
-    gradhX = GX
-    gradhY = GY
-    gradhZ = GZ
+    gradhX = GX1
+    gradhY = GY1
+    gradhZ = GZ1
 
     # leInd = len(index)
     # print((time.time() - startTime))
