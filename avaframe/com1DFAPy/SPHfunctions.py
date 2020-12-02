@@ -18,6 +18,15 @@ import avaframe.com1DFAPy.DFAtools as DFAtls
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
+# how to compute SPH gradient:
+# 1) like in SAMOS AT just project on the plane
+# 2) project on the plane, compute the gradient in the local coord sys related
+# to the local plane and flow direction (orthogonal coord sys)
+# enables to choose earth pressure coefficients
+# 3) project on the plane, compute the gradient in the local coord sys related
+# to the local plane (tau1, tau2, n) non orthogonal coord sys
+SPHoption = 2
+
 
 def getNeighbours(particles, dem):
     """ Ĺocate each particle in a grid cell and build the indPartInCell and
@@ -193,43 +202,6 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     y = particles['y'][j]
     z = particles['z'][j]
 
-    # get velocity magnitude and direction
-    ux = particles['ux'][j]
-    uy = particles['uy'][j]
-    uz = particles['uz'][j]
-    uMag = DFAtls.norm(ux, uy, uz)
-    if uMag < 0.1:
-        ax = 1
-        ay = 0
-        uxDir = ax
-        uyDir = ay
-        uzDir = -(ax*nx + ay*ny) / nz
-        uxDir, uyDir, uzDir = DFAtls.normalize(uxDir, uyDir, uzDir)
-    else:
-        # TODO check if direction is non zero, if it is define another u1 direction
-        uxDir, uyDir, uzDir = DFAtls.normalize(ux, uy, uz)
-
-    uxOrtho, uyOrtho, uzOrtho = DFAtls.croosProd(nx, ny, nz, uxDir, uyDir, uzDir)
-    uxOrtho, uyOrtho, uzOrtho = DFAtls.normalize(uxOrtho, uyOrtho, uzOrtho)
-
-    v1 = np.array([[uxDir, uyDir, uzDir]])
-    v2 = np.array([[uxOrtho, uyOrtho, uzOrtho]])
-    v3 = np.array([[nx, ny, nz]])
-    # build the transformation matrix from (e1, e2, e3) to (ex, ey, ez)
-    M = np.concatenate((v1.T, v2.T), axis=1)
-    M = np.concatenate((M, v3.T), axis=1)
-    # compute the transformation matrix from (ex, ey, ez) to (e1, e2, e3)
-    MM1 = M.T  # because M is orthogonal, it inverse is its transpose !!! np.linalg.inv(M).T
-
-    # now take into accout the fact that we are on the surface so the r3 or x3
-    # component is not independent from the 2 other ones!!
-    MM1[0, 0] = MM1[0, 0] - M[2, 0]*M[0, 2]/M[2, 2]
-    MM1[0, 1] = MM1[0, 1] - M[2, 0]*M[1, 2]/M[2, 2]
-    MM1[1, 0] = MM1[1, 0] - M[2, 1]*M[0, 2]/M[2, 2]
-    MM1[1, 1] = MM1[1, 1] - M[2, 1]*M[1, 2]/M[2, 2]
-
-    # buil the matrix that transforms the gradient in (r1, r2, r3) to the one in (x1, x2, x3)
-    MMGrad = MM1.T
     # startTime = time.time()
     # find all the neighbour boxes
     # index of the left box
@@ -262,31 +234,80 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     dx = particles['x'][L] - x
     dy = particles['y'][L] - y
     dz = (particles['z'][L] - z)
-    # remove the normal part (make sure that r = xj - xl lies in the plane
-    # defined by the normal at xj)
-    dn = nx*dx + ny*dy + nz*dz
-    g1 = nx/(nz)
-    g2 = ny/(nz)
-    g12 = g1*g2
-    # g33 = (1 + g1*g1 + g2*g2)
-    g11 = 1 + g1*g1
-    g22 = 1 + g2*g2
-    dx = dx - dn*nx
-    dy = dy - dn*ny
-    dz = dz - dn*nz
 
-    # get norm of r = xj - xl
-    r = DFAtls.norm(dx, dy, dz)
-    # impose a minimum distance between particles
-    dx = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dx, dx)
-    dy = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dy, dy)
-    dz = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dz, dz)
-    r = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel, r)
+    if SPHoption == 1 or SPHoption == 3:
+        # remove the normal part (make sure that r = xj - xl lies in the plane
+        # defined by the normal at xj)
+        dn = nx*dx + ny*dy + nz*dz
+        dx = dx - dn*nx
+        dy = dy - dn*ny
+        dz = dz - dn*nz
 
-    r1 = DFAtls.scalProd(dx, dy, dz, uxDir, uyDir, uzDir)
-    r2 = DFAtls.scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
-    r3 = DFAtls.scalProd(dx, dy, dz, nx, ny, nz)
+        # get norm of r = xj - xl
+        r = DFAtls.norm(dx, dy, dz)
+        # impose a minimum distance between particles
+        dx = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dx, dx)
+        dy = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dy, dy)
+        dz = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dz, dz)
+        r = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel, r)
 
+    elif SPHoption == 2:
+        # Option 2
+        # projecting onto the tengent plane and taking the change of coordinates into account
+        # the coord sysem used is the orthogonal coord system related to the flow
+        # (e1, e2, n=e3)
+        # this way it is possible to include the earth pressure coeficients
+
+        # get velocity magnitude and direction
+        ux = particles['ux'][j]
+        uy = particles['uy'][j]
+        uz = particles['uz'][j]
+        uMag = DFAtls.norm(ux, uy, uz)
+        if uMag < 0.1:
+            ax = 1
+            ay = 0
+            uxDir = ax
+            uyDir = ay
+            uzDir = -(ax*nx + ay*ny) / nz
+            uxDir, uyDir, uzDir = DFAtls.normalize(uxDir, uyDir, uzDir)
+        else:
+            # TODO check if direction is non zero, if it is define another u1 direction
+            uxDir, uyDir, uzDir = DFAtls.normalize(ux, uy, uz)
+
+        uxOrtho, uyOrtho, uzOrtho = DFAtls.croosProd(nx, ny, nz, uxDir, uyDir, uzDir)
+        uxOrtho, uyOrtho, uzOrtho = DFAtls.normalize(uxOrtho, uyOrtho, uzOrtho)
+
+        v1 = np.array([[uxDir, uyDir, uzDir]])
+        v2 = np.array([[uxOrtho, uyOrtho, uzOrtho]])
+        v3 = np.array([[nx, ny, nz]])
+        # build the transformation matrix from (e1, e2, e3) to (ex, ey, ez)
+        M = np.concatenate((v1.T, v2.T), axis=1)
+        M = np.concatenate((M, v3.T), axis=1)
+        # compute the transformation matrix from (ex, ey, ez) to (e1, e2, e3)
+        MM1 = M.T  # because M is orthogonal, it inverse is its transpose !!! np.linalg.inv(M).T
+
+        # now take into accout the fact that we are on the surface so the r3 or x3
+        # component is not independent from the 2 other ones!!
+        MM1[0, 0] = MM1[0, 0] - M[2, 0]*M[0, 2]/M[2, 2]
+        MM1[0, 1] = MM1[0, 1] - M[2, 0]*M[1, 2]/M[2, 2]
+        MM1[1, 0] = MM1[1, 0] - M[2, 1]*M[0, 2]/M[2, 2]
+        MM1[1, 1] = MM1[1, 1] - M[2, 1]*M[1, 2]/M[2, 2]
+
+        # buil the matrix that transforms the gradient in (r1, r2, r3) to the one in (x1, x2, x3)
+        MMGrad = MM1.T
+
+        # get coordinates in local coord system
+        r1 = DFAtls.scalProd(dx, dy, dz, uxDir, uyDir, uzDir)
+        r2 = DFAtls.scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+        # impse r3=0 even if the particle is not exactly on the tengent plane
+        # get norm of r = xj - xl
+        r = DFAtls.norm(r1, r2, 0)
+        # impose a minimum distance between particles
+        r1 = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * r1, r1)
+        r2 = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * r2, r2)
+        r = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel, r)
+
+    # compute derivative of kernel function
     hr = rKernel - r
     dwdr = dfacKernel * hr * hr
     massl = particles['m'][L]
@@ -296,43 +317,64 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     mdwdrr = massl * dwdr / r
 
     # ----------------------------------------
-    # only projecting dr on the tangent plane
-    # GX = mdwdrr * dx
-    # GY = mdwdrr * dy
-    # GZ = mdwdrr * dz
-    # projecting onto the tengent plane and taking the change of coordinates into account
-    # the coord sysem used is the orthogonal coord system related to the flow
-    # (e1, e2, n=e3)
-    # this way it is possible to include the earth pressure coeficients
-    K1, K2 = 1, 1
-    G1 = mdwdrr * K1*r1
-    G2 = mdwdrr * K2*r2
-    G3 = 0
-    GX1 = MMGrad[0, 0]*G1 + MMGrad[0, 1]*G2
-    GY1 = MMGrad[1, 0]*G1 + MMGrad[1, 1]*G2
-    GZ1 = (- g1*GX1 - g2*GY1)
+    if SPHoption == 1:
+        # Option 1
+        # only projecting dr on the tangent plane
+        GX = mdwdrr * dx
+        GY = mdwdrr * dy
+        GZ = mdwdrr * dz
+        GX = np.sum(GX)
+        GY = np.sum(GY)
+        GZ = np.sum(GZ)
 
-    GX1 = np.sum(GX1)
-    GY1 = np.sum(GY1)
-    GZ1 = np.sum(GZ1)
-    # projecting onto the tengent plane and taking the change of coordinates into account
-    # the coord sysem used is the non orthogonal coord system related to the surface
-    # (Tau1, Tau2, n)
-    GX = mdwdrr * (g11*dx + g12*dy)
-    GY = mdwdrr * (g22*dy + g12*dx)
-    # the gradient hat to be tangent to the plane...
-    GZ = (- g1*GX - g2*GY)
+    elif SPHoption == 2:
+        # Option 2
+        # projecting onto the tengent plane and taking the change of coordinates into account
+        # the coord sysem used is the orthogonal coord system related to the flow
+        # (e1, e2, n=e3)
+        # this way it is possible to include the earth pressure coeficients
+        K1, K2 = 1, 1
+        G1 = mdwdrr * K1*r1
+        G2 = mdwdrr * K2*r2
+        G3 = 0
+
+        g1 = nx/(nz)
+        g2 = ny/(nz)
+
+        GX1 = MMGrad[0, 0]*G1 + MMGrad[0, 1]*G2
+        GY1 = MMGrad[1, 0]*G1 + MMGrad[1, 1]*G2
+        GZ1 = (- g1*GX1 - g2*GY1)
+
+        GX = np.sum(GX1)
+        GY = np.sum(GY1)
+        GZ = np.sum(GZ1)
+
+    elif SPHoption == 3:
+        # Option 3
+        # No proof yet....
+        # projecting onto the tengent plane and taking the change of coordinates into account
+        # the coord sysem used is the non orthogonal coord system related to the surface
+        # (Tau1, Tau2, n)
+        g1 = nx/(nz)
+        g2 = ny/(nz)
+        g12 = g1*g2
+        # g33 = (1 + g1*g1 + g2*g2)
+        g11 = 1 + g1*g1
+        g22 = 1 + g2*g2
+
+        GX = mdwdrr * (g11*dx + g12*dy)
+        GY = mdwdrr * (g22*dy + g12*dx)
+        # the gradient hat to be tangent to the plane...
+        GZ = (- g1*GX - g2*GY)
+
+        GX = np.sum(GX)
+        GY = np.sum(GY)
+        GZ = np.sum(GZ)
 
     # -----------------------------
-    GX = np.sum(GX)
-    GY = np.sum(GY)
-    GZ = np.sum(GZ)
-    # print(GX, GY, GZ)
-    # print(GX1, GY1, GZ1)
-
-    gradhX = GX1
-    gradhY = GY1
-    gradhZ = GZ1
+    gradhX = GX
+    gradhY = GY
+    gradhZ = GZ
 
     # leInd = len(index)
     # print((time.time() - startTime))
