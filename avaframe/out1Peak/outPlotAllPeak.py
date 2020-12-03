@@ -107,7 +107,7 @@ def plotAllFields(avaDir, inputDir, outDir, cfg=''):
         nx = data.shape[1]
         Ly = ny*cellSize
         Lx = nx*cellSize
-        unit = cfgPlotUtils['unit%s' % peakFiles['resType'][m]]
+        unit = cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
 
         # Figure  shows the result parameter data
         fig = plt.figure(figsize=(figW, figH))
