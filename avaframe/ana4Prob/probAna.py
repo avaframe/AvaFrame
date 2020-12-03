@@ -2,8 +2,6 @@
 
 This is a simple function for computing a mask of all peak files of one parameter that exceed a particular threshold
 
-This file is part of Avaframe.
-
 """
 
 import os
@@ -13,7 +11,6 @@ from matplotlib import pyplot as plt
 
 from avaframe.out3Plot.plotUtils import *
 from avaframe.in3Utils import fileHandlerUtils as fU
-import avaframe.out3Plot.makePalette as makePalette
 import avaframe.in2Trans.ascUtils as IOf
 
 # create local logger
@@ -22,7 +19,21 @@ log = logging.getLogger(__name__)
 
 
 def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
-    """ perform analysis """
+    """ Compute propability map of a given set of simulation result exceeding a particular threshold
+
+        Parameters
+        ----------
+        avaDir: str
+            path to avalanche directory
+        cfg : dict
+            configuration read from probAnaCfg.ini file
+        cfgMain : dict
+            configuration read from ini file that has been used for the com1DFA simulation
+        inputDir : str
+            optional - path to directory where data that should be analysed can be found
+        outDir : str
+            optional - path to directory where results shall be saved to
+    """
 
     # Set input and output directory
     if inputDir == '':
@@ -68,7 +79,7 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
 
     # Create probability map ranging from 0-1
     probMap = probSum / count
-    unit = cfgMain['REPORT']['unit%s' % cfg['GENERAL']['peakVar']]
+    unit = cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
     log.info('probability analysis performed for peak parameter: %s and a peak value threshold of: %s %s' % (cfg['GENERAL']['peakVar'], cfg['GENERAL']['peakLim'], unit))
     log.info('%s peak fields added to analysis' % count)
 

@@ -1,7 +1,5 @@
 """
-    get input data
-
-    This file is part of Avaframe.
+    Fetch input data for avalanche simulations
 """
 
 # Load modules
@@ -25,12 +23,27 @@ log = logging.getLogger(__name__)
 def getInputData(avaDir, cfg, flagDev=False):
     """ Fetch input datasets required for simulation
 
-    Input:  avalanche directory
+    Parameters
+    ----------
+    avaDir : str
+        path to avalanche directory
+    cfg : dict
+        configuration read from com1DFA simulation ini file
+    flagDev : bool
+        optional - if True: use for devREL folder to get release area scenarios
 
-    Output:
-            release area file
-            entrainment area file
-            resistance area file
+    Returns
+    -------
+    demFile[0] : str (first element of list)
+        list of full path to DEM .asc file
+    relFiles : list
+        list of full path to release area scenario .shp files
+    entFiles[0] : str (fist element of list)
+        list of full path to entrainment area .shp files
+    resFiles[0] : str (first element of list)
+        list of full path to resistance area .shp files
+    flagEntRes : bool
+        flag if True entrainment and/or resistance areas found and used for simulation
     """
 
     # Set directories for inputs, outputs and current work

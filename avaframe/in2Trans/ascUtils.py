@@ -143,8 +143,19 @@ def readRaster(fname):
     return dem
 
 
-def writeResultToAsc(header, resultArray, outFileName, outType=None):
-    """ Write 2D array to an ascii file with header """
+def writeResultToAsc(header, resultArray, outFileName):
+    """ Write 2D array to an ascii file with header
+
+        Parameters
+        ----------
+        header : class
+            class with functions that give cellsize, nrows, ncols, xllcenter
+            yllcenter, noDataValue
+        resultArray : numpy.ndarray
+            2D numpy array of values that shall be written to file
+        outFileName : str
+            path incl. name of file to be written
+        """
 
     # Open outfile
     with open(outFileName, 'w') as outFile:

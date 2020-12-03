@@ -1,6 +1,5 @@
 """
-    Run script for running Standalone DFA
-    This file is part of Avaframe.
+    Run script for performing an avalanche simulation with parameter variation and performing a probability analysis with the simulation results
 """
 
 # Load modules
