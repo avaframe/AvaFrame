@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 def makeADir(dirName):
-    """ Make directories """
+    """ Create a directory and print warning if it already existed """
 
     # If directory already exists - Delete directory first is default
     if os.path.isdir(dirName):
@@ -29,10 +29,24 @@ def makeADir(dirName):
     else:
         os.makedirs(dirName)
     log.debug('Directory: %s created' % dirName)
-    
+
 
 def readLogFile(logName, cfg=''):
-    """ Read experiment log file and make dictionary that contains all simulations """
+    """ Read experiment log file and make dictionary that contains all simulations
+
+        Parameters
+        ----------
+        logName : str
+            path to logFile
+        cfg : dict
+            optional - configuration read from com1DFA simulation
+
+        Returns
+        -------
+        logDct : dict
+            dictionary with number of simulation (noSim), name of simulation (simName),
+            parameter variation, full name
+    """
 
     # Read log file
     logFile = open(logName, 'r')
@@ -172,10 +186,12 @@ def getRefData(avaDir, outputDir, suffix, nameDir=''):
 def exportcom1DFAOutput(avaDir, cfg=''):
     """ Export the simulation results from com1DFA output to desired location
 
-        Inputs:     avaDir:     name of avalanche
-                    workDir:    directory where data shall be exported to
-
-        Outputs:    simulation result files saved to Outputs/com1DFA
+        Parameters
+        ----------
+        avaDir: str
+            path to avalanche directory
+        cfg : dict
+            configuration read from ini file that has been used for the com1DFA simulation
     """
 
     # Initialise directories
@@ -229,15 +245,26 @@ def exportcom1DFAOutput(avaDir, cfg=''):
 
 
 def makeSimDict(inputDir, varPar='', avaDir=''):
-    """ Create a dictionary that contains all info on simulations:
+    """ Create a dictionary that contains all info on simulations
 
-            files:          full file path
-            names:          file name
-            simType:        entres or null (e.g. entres is simulation with entrainment and resistance)
-            resType:        which result parameter (e.g. 'ppr' is peak pressure)
-            releaseArea:    release area
-            Mu:             value of Mu parameter
-            cellSize:       cell size of raster file
+        Parameters
+        ----------
+
+        inputDir : str
+            path to directory of simulation results
+        varPar : str
+            optional - parameter that has been used in parameter variation
+        avaDir : str
+            optional - path to avalanche directory
+
+
+        Returns
+        -------
+
+        data : dict
+            dictionary with full file path, file name, release area scenario, simulation type (null/entres),
+            model type (dfa, ref, etc.), parameter variation, result type (ppr, pfd, etc.), simulation name,
+            cell size and optional name of avalanche 
     """
 
     # Load input datasets from input directory
