@@ -1,7 +1,5 @@
 """
     function related to SPH calculations in com1DFA
-
-    This file is part of Avaframe.
 """
 
 # Load modules
