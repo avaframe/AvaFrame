@@ -1,8 +1,6 @@
 """
     Here are some basic tools for getting grid normals, area and working with
     vectors.
-
-    This file is part of Avaframe.
 """
 
 # Load modules
@@ -19,14 +17,36 @@ log = logging.getLogger(__name__)
 
 
 def getNormal(x, y, Nx, Ny, Nz, csz):
-    """ Get normal vector at location (x,y) given the normal vector field on
-    the grid. Grid has its origin in (0,0). Can be used to interpolate any
-    vector field.
-    Inputs:
-            - (x, y): coordinate of the desired location (only one point)
-            - Nx, Ny, Nz: vector field on grid points (3 2D np arrays)
-            - csz: cell size
-    Outputs: nx, ny, nz normal vector at location (x, y)
+    """ Interpolate vector field from grid to single point location
+
+    Originaly created to get the normal vector at location (x,y) given the
+    normal vector field on the grid. Grid has its origin in (0,0).
+    Can be used to interpolate any vector field.
+    Interpolation using a bilinear interpolation
+
+    Parameters
+    ----------
+        x: float
+            location in the x location of desiered interpolation
+        y: float
+            location in the y location of desiered interpolation
+        Nx: 2D numpy array
+            x component of the vector field at the grid nodes
+        Ny: 2D numpy array
+            y component of the vector field at the grid nodes
+        Nz: 2D numpy array
+            z component of the vector field at the grid nodes
+        csz: float
+            cellsize of the grid
+
+    Returns
+    -------
+        nx: float
+            x component of the interpolated vector field at position (x, y)
+        ny: float
+            y component of the interpolated vector field at position (x, y)
+        nz: float
+            z component of the interpolated vector field at position (x, y)
     """
     # by default bilinear interpolation of the Nx, Ny, Nz of the grid
     nx = geoTrans.projectOnRasterRoot(x, y, Nx, csz=csz)
@@ -37,14 +57,37 @@ def getNormal(x, y, Nx, Ny, Nz, csz):
 
 
 def getNormalArray(x, y, Nx, Ny, Nz, csz):
-    """ Get normal vector at locations (x,y) given the normal vector field on
-    the grid. Grid has its origin in (0,0). Can be used to interpolate any
-    vector field.
-    Inputs:
-            - (x, y): coordinates of the desired location (2 1D np arrays)
-            - Nx, Ny, Nz: vector field on grid points (3 2D np arrays)
-            - csz: cell size
-    Outputs: nx, ny, nz normal vectors at locations (x, y) (3 1D np arrays)
+    """ Interpolate vector field from grid to unstructures points
+
+        Same function as getNormal but works for array inputs.
+        Originaly created to get the normal vector at location (x,y) given the
+        normal vector field on the grid. Grid has its origin in (0,0).
+        Can be used to interpolate any vector field.
+        Interpolation using a bilinear interpolation
+
+        Parameters
+        ----------
+            x: numpy array
+                location in the x location of desiered interpolation
+            y: numpy array
+                location in the y location of desiered interpolation
+            Nx: 2D numpy array
+                x component of the vector field at the grid nodes
+            Ny: 2D numpy array
+                y component of the vector field at the grid nodes
+            Nz: 2D numpy array
+                z component of the vector field at the grid nodes
+            csz: float
+                cellsize of the grid
+
+        Returns
+        -------
+            nx: numpy array
+                x component of the interpolated vector field at position (x, y)
+            ny: numpy array
+                y component of the interpolated vector field at position (x, y)
+            nz: numpy array
+                z component of the interpolated vector field at position (x, y)
     """
     nrow, ncol = np.shape(Nx)
     # by default bilinear interpolation of the Nx, Ny, Nz of the grid
@@ -56,17 +99,32 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
 
 
 def getNormalMesh(z, csz, num=4):
-    """ Get the normal vectors to the surface defined by a DEM.
-    Either by adding the normal vectors of the adjacent triangles for each
-    points (using 4, 6 or 8 adjacent triangles). Or use the next point in
-    x direction and the next in y direction to define two vectore and then
-    compute the cross product to get the normal vector
-    Inputs:
-            - z: elevation at grid points (2D np arrays)
-            - csz: cell size
-            - num: chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
-                   1 to use the simple cross product method
-    Outputs: Nx, Ny, Nz: normal vector field on grid points (3 2D np arrays)
+    """ Compute normal to surface at grid points
+
+        Get the normal vectors to the surface defined by a DEM.
+        Either by adding the normal vectors of the adjacent triangles for each
+        points (using 4, 6 or 8 adjacent triangles). Or use the next point in
+        x direction and the next in y direction to define two vectore and then
+        compute the cross product to get the normal vector
+
+        Parameters
+        ----------
+            z: 2D numpy array
+                elevation at grid points
+            csz: float
+                cellsize of the grid
+            num: int
+                chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
+                       1 to use the simple cross product method
+
+        Returns
+        -------
+            Nx: 2D numpy array
+                x component of the normal vector field on grid points
+            Ny: 2D numpy array
+                y component of the normal vector field on grid points
+            Nz: 2D numpy array
+                z component of the normal vector field on grid points
     """
     n, m = np.shape(z)
     Nx = np.ones((n, m))
@@ -236,10 +294,22 @@ def getNormalMesh(z, csz, num=4):
 
 def getAreaMesh(Nx, Ny, Nz, csz):
     """ Get area of grid cells.
-    Inputs:
-            - Nx, Ny, Nz: vector field on grid points (3 2D np arrays)
-            - csz: cell size
-    Outputs: A area of grid cells (2D np arrays)
+
+        Parameters
+        ----------
+            Nx: 2D numpy array
+                x component of the normal vector field on grid points
+            Ny: 2D numpy array
+                y component of the normal vector field on grid points
+            Nz: 2D numpy array
+                z component of the normal vector field on grid points
+            csz: float
+                cellsize of the grid
+
+        Returns
+        -------
+            A: 2D numpy array
+                Area of grid cells
     """
     # see documentation and issue 202
     A = csz * csz / Nz
@@ -249,23 +319,74 @@ def getAreaMesh(Nx, Ny, Nz, csz):
 
 
 def norm(x, y, z):
-    """ Return the Euclidean norm of the vector (x, y, z).
-    (x, y, z) can be np arrays"""
+    """ Compute the Euclidean norm of the vector (x, y, z).
+
+    (x, y, z) can be numpy arrays.
+
+    Parameters
+    ----------
+        x: numpy array
+            x component of the vector
+        y: numpy array
+            y component of the vector
+        z: numpy array
+            z component of the vector
+
+    Returns
+    -------
+        norme: numpy array
+            norm of the vector
+    """
     norme = np.sqrt(x*x + y*y + z*z)
     return norme
 
 
 def norm2(x, y, z):
-    """ Return the square of the Euclidean norm of the vector (x, y, z).
-    (x, y, z) can be np arrays."""
+    """ Compute the square of the Euclidean norm of the vector (x, y, z).
+
+    (x, y, z) can be numpy arrays.
+
+    Parameters
+    ----------
+        x: numpy array
+            x component of the vector
+        y: numpy array
+            y component of the vector
+        z: numpy array
+            z component of the vector
+
+    Returns
+    -------
+        norme2: numpy array
+            square of the norm of the vector
+    """
     norme2 = (x*x + y*y + z*z)
     return norme2
 
 
 def normalize(x, y, z):
     """ Normalize vector (x, y, z) for the Euclidean norm.
+
     (x, y, z) can be np arrays.
-    Returns the normalize vector components xn, yn, zn"""
+
+    Parameters
+    ----------
+        x: numpy array
+            x component of the vector
+        y: numpy array
+            y component of the vector
+        z: numpy array
+            z component of the vector
+
+    Returns
+    -------
+        xn: numpy array
+            x component of the normalized vector
+        yn: numpy array
+            y component of the normalized vector
+        zn: numpy array
+            z component of the normalized vector
+    """
     # TODO : avoid error message when input vector is zero and make sure
     # to return zero
     norme = norm(x, y, z)
