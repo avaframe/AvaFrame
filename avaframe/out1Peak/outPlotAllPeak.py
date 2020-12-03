@@ -46,7 +46,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
 
         # Load data
         data = np.loadtxt(fileName, skiprows=6)
-        unit = cfg['REPORT']['unit%s' % peakFiles['resType'][m]]
+        unit = cfgPlotUtils['unit%s' % peakFiles['resType'][m]]
 
         # Set extent of peak file
         cellSize = peakFiles['cellSize'][m]
@@ -107,7 +107,7 @@ def plotAllFields(avaDir, inputDir, outDir, cfg=''):
         nx = data.shape[1]
         Ly = ny*cellSize
         Lx = nx*cellSize
-        unit = cfg['GENERAL']['unit']
+        unit = cfgPlotUtils['unit%s' % peakFiles['resType'][m]]
 
         # Figure  shows the result parameter data
         fig = plt.figure(figsize=(figW, figH))
