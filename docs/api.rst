@@ -10,7 +10,7 @@ Computational Modules
    :template: custom-module-template.rst
    :recursive:
 
-   com1DFA.com1DFA
+   com1DFA
    com1DFAPy
 
 Input/Transformation Modules
