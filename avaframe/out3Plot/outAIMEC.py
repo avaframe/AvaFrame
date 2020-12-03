@@ -83,7 +83,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
 
     ax1.set_title('XY Domain')
     ax1.legend(loc=4)
-    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
+    putAvaNameOnPlot(ax1, cfgPath['projectName'])
 
     ax2 = plt.subplot(122)
 
@@ -95,7 +95,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
 
     ax2.set_title('sl Domain' + '\n' + 'Black = out of raster')
     ax2.legend(loc=4)
-    addColorBar(im, ax2, ticks, 'kPa')
+    addColorBar(im, ax2, ticks, cfgPlotUtils['unitppr'])
 
     outFileName = '_'.join([projectName, dirName, 'DomainTransformation'])
     saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
@@ -149,8 +149,8 @@ def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
 
     ax1.set_title('Peak Pressure 2D plot for the reference')
     ax1.legend(loc=4)
-    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
-    addColorBar(im, ax1, ticks, 'kPa')
+    putAvaNameOnPlot(ax1, cfgPath['projectName'])
+    addColorBar(im, ax1, ticks, cfgPlotUtils['unitppr'])
 
     ax2 = plt.subplot(122)
 
@@ -201,7 +201,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     # prepare for plot
     Cmap = [cmapPres, cmapDepth, cmapSpeed]
     Title = ['Peak Pressure', 'Peak Flow Depth', 'Peak Speed']
-    Unit = [' [kPa]', ' [m]', ' [m/s]']
+    Unit = [cfgPlotUtils['unitppr'], cfgPlotUtils['unitpfd'], cfgPlotUtils['unitpv']]
     Data = np.array(([None] * 3))
     Data[0] = rasterdataPres
     Data[1] = rasterdataDepth
@@ -228,7 +228,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         ax.set_title(title)
         ax.legend(loc=4)
         addColorBar(im, ax, ticks, unit)
-        plotUtils.putAvaNameOnPlot(ax, cfgPath['projectName'])
+        putAvaNameOnPlot(ax, cfgPath['projectName'])
 
     outFileName = '_'.join([projectName, dirName,'plim',
                             str(int(plim)), 'referenceFields'])
@@ -275,11 +275,11 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
 
     ax1.set_title('Reference Peak Pressure in the RunOut area' +
                   '\n' + 'Pressure threshold: %.1f kPa' % plim)
-    addColorBar(im, ax1, ticks, 'kPa')
+    addColorBar(im, ax1, ticks, cfgPlotUtils['unitppr'])
 
     y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
     ax1.set_ylim([s[indRunoutPoint], y_lim])
-    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
+    putAvaNameOnPlot(ax1, cfgPath['projectName'])
     ax2 = plt.subplot(122)
     colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
     cmap = matplotlib.colors.ListedColormap(colorsList)
@@ -455,7 +455,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ax1.tick_params(axis='y', colors=color[-3])
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(plim),
                             ' kPa threshold']))
-    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
+    putAvaNameOnPlot(ax1, cfgPath['projectName'])
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
@@ -510,7 +510,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ax1.set_title('Normalized difference compared to reference')
     ax1.set_ylabel('True positive rate')
     ax1.set_xlabel('False positive rate')
-    plotUtils.putAvaNameOnPlot(ax1, cfgPath['projectName'])
+    putAvaNameOnPlot(ax1, cfgPath['projectName'])
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 100
         H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)

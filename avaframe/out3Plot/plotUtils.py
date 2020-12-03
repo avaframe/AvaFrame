@@ -26,6 +26,7 @@ log = logging.getLogger(__name__)
 # Load all input Parameters from config file
 # get the configuration of an already imported module
 cfg = cfgUtils.getModuleConfig(plotUtils)
+cfgPlotUtils = cfg['UNITS']
 cfg = cfg['MAIN']
 
 # define seaborn style and color maps
@@ -207,7 +208,7 @@ def addColorBar(im, ax2, ticks, myUnit):
     '''
     cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
     cbar.outline.set_visible(False)
-    cbar.ax.set_title(myUnit)
+    cbar.ax.set_title('[$' + myUnit + '$]')
 
 
 def putAvaNameOnPlot(ax, avaDir):

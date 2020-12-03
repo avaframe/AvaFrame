@@ -179,7 +179,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
         data = fU.makeSimDict(workDir, '', avaDir)
 
     cellSize = data['cellSize'][0]
-    unit = cfgPlot['PLOT']['unit%s' % suffix]
+    unit = cfgPlotUtils['unit%s' % suffix]
 
     # check if release Area and simType area provided
     if rel != '':
@@ -189,7 +189,6 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
         relAreas = set(data['releaseArea'])
     if parameter == 'simType':
         simType = val
-
 
     for rel in relAreas:
 
