@@ -41,7 +41,7 @@ def Hfunction(x, y, z):
     return h, GHx, GHy, GHz
 
 
-# Choose the snow depth you want to use (h function)
+# Choose the surface shape you want to use
 def Sfunction(x, y, Lx, Ly):
     # horizontal plane
     # Z = np.ones(np.shape(x))
@@ -77,7 +77,7 @@ NPartPerD = [3, 5, 9, 15, 39] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
-coef = 0
+coef = 0.5
 rho = 200
 ##############################################################################
 # END CHOOSE SETUP
@@ -120,11 +120,11 @@ for DX in NDX:
 
         # ------------------------------------------
         # define particles
-        nx = np.int(Lx/dx)
-        ny = np.int(Ly/dy)
+        nx = np.int(Lx/dx)-1
+        ny = np.int(Ly/dy)-1
         Npart = nx*ny
-        x = np.linspace(0, Lx-dx, nx)
-        y = np.linspace(0, Ly-dy, ny)
+        x = np.linspace(dx, Lx-dx, nx)
+        y = np.linspace(dy, Ly-dy, ny)
         xx, yy = np.meshgrid(x, y)
         xx = xx.flatten()
         yy = yy.flatten()
