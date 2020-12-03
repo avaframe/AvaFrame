@@ -50,6 +50,15 @@ autosummary_mock_imports = [
     'scipy',
     'matplotlib',
     'glob',
+    'subprocess',
+    'shutil',
+    'math',
+    'copy',
+    'os',
+    'logging',
+    'time',
+    'mpl_toolkits',
+    'make_axes_locatable',
 ]
 autosummary_generate = True
 
@@ -70,7 +79,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'run*']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'run*', '*run*','run']
 
 # Set the master document name for readthedocs builds
 master_doc = 'index'
