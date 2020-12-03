@@ -1,7 +1,5 @@
 """
-    This is a python wrapper to execute a compiled com1Exe file
-
-    This file is part of Avaframe.
+    This is a python wrapper to execute the compiled com1Exe file and set desired simulation options
 """
 
 # Load modules
