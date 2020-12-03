@@ -223,6 +223,9 @@ def test_calcGradHSPH(capfd):
     particles['x'] = np.array([1, 0, 1, 2, 1, 2, 0, 1, 0, 2, 0, 2, 1, 2, 3, 3])
     particles['y'] = np.array([2, 1, 0, 1, 3, 3, 2, 1, 0, 0, 3, 2, 2, 1, 1, 4])
     particles['z'] = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    particles['ux'] = particles['z']
+    particles['uy'] = particles['z']
+    particles['uz'] = particles['z']
     particles['m'] = particles['z']
     particles = SPH.getNeighboursVect(particles, dem)
     print(particles['InCell'])
