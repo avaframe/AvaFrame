@@ -98,21 +98,3 @@ def test_exportcom1DFAOutput(tmp_path):
     testRes = np.allclose(pprTest, pprBench, atol=1.e-12)
 
     assert testRes == True
-
-
-def test_getDFAData(tmp_path):
-    """ Test export of result files to be used in aimec """
-
-    # Create input directoy structure
-    dirPath = os.path.dirname(__file__)
-    avaName = 'avaHockey'
-    avaDir  = os.path.join(tmp_path, avaName)
-    outDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
-    os.makedirs(avaDir)
-    os.makedirs(outDir)
-
-    # copy inut data from benchmarks folder to tmp_path and rename correctly
-    avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
-                           'ana4Prob', 'release1HS_entres_dfa_1.25000_ppr.asc')
-    input = os.path.join(outDir, 'release1HS_entres_dfa_1.25000_ppr.asc')
-    shutil.copy(avaData, input)
