@@ -267,17 +267,7 @@ for DX in NDX:
         hBB, _ = geoTrans.projectOnRasterVectRoot(
             Xpart, Ypart, FDBilinear, csz=csz, interp='bilinear')
 
-        # fig2 = plt.figure()
-        # ax2 = fig2.add_subplot(111, projection='3d')
-        # ax2.scatter(particles['x'], particles['y'], GHX, 'r')
-        # ax2.scatter(particles['x'], particles['y'], np.ones(np.shape(particles['x']))/Lx, 'b')
-        #
-        # fig3 = plt.figure()
-        # ax3 = fig3.add_subplot(111, projection='3d')
-        # ax3.scatter(particles['x'], particles['y'], hBB, 'k')
-        # ax3.scatter(particles['x'], particles['y'], particles['hSPH'], 'r')
         h, Ghx, Ghy, Ghz = Hfunction(particles['x'], particles['y'], particles['z'])
-        # ax3.scatter(particles['x'], particles['y'], h, 'b')
 
         count = count + 1
         col = color[2*count]

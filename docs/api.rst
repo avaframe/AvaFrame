@@ -11,6 +11,7 @@ Computational Modules
    :recursive:
 
    com1DFA.com1DFA
+   com1DFAPy
 
 Input/Transformation Modules
 ============================
@@ -21,7 +22,7 @@ Input/Transformation Modules
    :recursive:
 
    in2Trans
-   in3Utils   
+   in3Utils
 
 
 Output Modules
@@ -34,4 +35,3 @@ Output Modules
 
    out1Peak.outPlotAllPeak
    tmp1Ex.tmp1Ex
-
