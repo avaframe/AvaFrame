@@ -1,5 +1,5 @@
 """
-    Here are some basic tools for getting grid normals, area and working with
+    Basic tools for getting grid normals, area and working with
     vectors.
 """
 
