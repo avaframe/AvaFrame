@@ -26,7 +26,26 @@ log = logging.getLogger(__name__)
 
 
 def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
-    """ Create plots of two ascii datasets that shall be compared  """
+    """ Create plots of two ascii datasets that shall be compared
+
+        Parameters
+        ----------
+        dataDict : dict
+            dictionary with info on both datasets to be plotted
+        avaName : str
+            name of avalanche
+        outDir : str
+            path to dictionary where plots shall be saved to
+        cfg : dict
+            main configuration settings
+        plotDict : dict
+            dictionary with information about plots, for example release area
+
+        Returns
+        -------
+        plotDict : dict
+            updated plot dictionary with info about e.g. min, mean, max of difference between datasets
+    """
 
     # Extract info for plotting
     data1 = dataDict['data1']
@@ -139,22 +158,38 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
 
 def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='null'):
-    """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension):
-
-        Inputs:
-
-        avaDir          avalanche directory
-        suffix          result parameter abbreviation (e.g. 'ppr')
-        com1DFAOutput   folder where results to be plotted are located
-        simName         entres or null for simulation type
-        cfgPlot         configuration settings for plots
-        cfg             global configuration settings
-
-        Outputs:
+    """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension) and save to
+        Outputs/out3Plot within avalanche directoy
 
         figure 1: plot raster data for dataset1, dataset2 and their difference
         figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
         -plots are saved to Outputs/out3Plot
+
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche directory
+        suffix : str
+            result parameter abbreviation (e.g. 'ppr')
+        val : str
+            value of parameter
+        parameter : str
+            parameter that is used to filter simulation results within folder, for example, symType, parameter variation, etc.
+        cfg : dict
+            global configuration settings
+        cfgPlot : dict
+            configuration settings for plots, required for flag if plots shall be shown or only saved
+        rel : str
+            optional - name of release area scenarios
+        simType : str
+            optional - simulation type null or entres
+
+        Returns
+        -------
+        plotList : list
+            list of plot dictionaries (path to plots, min, mean and max difference
+            between plotted datasets, max and mean value of reference dataset )
+
     """
 
     # Create required directories
@@ -226,18 +261,19 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
 
 
 def quickPlotSimple(avaDir, inputDir, cfg):
-    """ Plot two raster datasets of identical dimension:
-
-        Inputs:
-
-        avaDir          avalanche directory
-        inputDir        where input data can be found
-
-        Outputs:
+    """ Plot two raster datasets of identical dimension and difference between two datasets
 
         figure 1: plot raster data for dataset1, dataset2 and their difference
         figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
-        -plots are saved to Outputs/out1Peak
+        -plots are saved to Outputs/out3Plot
+
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche directory
+        inputDir : str
+            path to directory of input data (only 2 raster files allowed)
+
     """
 
     outDir = os.path.join(avaDir, 'Outputs', 'out3Plot')

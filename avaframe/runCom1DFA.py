@@ -1,6 +1,5 @@
 """
     Run script for running Standalone DFA
-    This file is part of Avaframe.
 """
 
 # Load modules

@@ -144,12 +144,12 @@ def readRaster(fname):
 
 
 def writeResultToAsc(header, resultArray, outFileName):
-    """ Write 2D array to an ascii file with header
+    """ Write 2D array to an ascii file with header and save to location of outFileName
 
         Parameters
         ----------
         header : class
-            class with functions that give cellsize, nrows, ncols, xllcenter
+            class with methods that give cellsize, nrows, ncols, xllcenter
             yllcenter, noDataValue
         resultArray : numpy.ndarray
             2D numpy array of values that shall be written to file

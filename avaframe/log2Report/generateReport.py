@@ -31,7 +31,16 @@ def writeColumns(dict, key, pfile):
 
 
 def writeReportFile(reportD, pfile):
-    """ Write text to file """
+    """ Write text to file
+
+        Parameters
+        ----------
+        reportD : dict
+            report dictionary
+        pfile : file object
+            file where markdown format report is written to
+
+    """
 
     # Loop through keys and perform action according to value found in type
     for key in reportD:
@@ -106,7 +115,20 @@ def writeReportFile(reportD, pfile):
 
 
 def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
-    """ Write a report for simulation """
+    """ Write a report in markdown format for simulations, saved to outDir 
+
+        Parameters
+        ----------
+        outDir : str
+            path to output directory
+        reportDictList : list
+            list of report dictionaries from simulations
+        cfgFLAGS : dict
+            configuration dictionary
+        plotDict : dict
+            optional dictionary with info on plots that shall be included in report
+
+    """
 
     if cfgFLAGS.getboolean('reportOneFile'):
         # Start writing markdown style report

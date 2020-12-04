@@ -10,8 +10,8 @@ from datetime import datetime
 
 
 def writeCfg2Log(cfg, cfgName='Unspecified'):
-    '''write a configparser object to log file'''
-
+    """ write a configparser object to log file"""
+    
     log = logging.getLogger('root')
 
     log.info('Writing cfg for: %s', cfgName)
@@ -22,15 +22,20 @@ def writeCfg2Log(cfg, cfgName='Unspecified'):
 
 
 def initiateLogger(targetDir, logName='runLog'):
-    '''Initiates logger object based on setup in logging.conf
+    """ Initiates logger object based on setup in logging.conf
 
-    Input:
-    str: targetDir: folder to save log file to
-    str: logName: filename of log file; optional; defaults to runLog.log
+        Parameters
+        ----------
+        targetDir: str
+            folder to save log file to
+        logName : str
+            filename of log file; optional; defaults to runLog.log
 
-    Returns a logging object
+        Returns
+        -------
+        log : logging object
 
-    '''
+    """
 
     logFileName = os.path.join(targetDir, logName+'.log')
 

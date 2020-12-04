@@ -1,7 +1,5 @@
 """
     Directory and file handling helper functions
-
-    This file is part of Avaframe.
 """
 
 # Load modules
@@ -21,7 +19,13 @@ log = logging.getLogger(__name__)
 
 
 def makeADir(dirName):
-    """ Create a directory and print warning if it already existed """
+    """ Create a directory and print warning if it already existed
+
+        Parameters
+        ----------
+        dirName : str
+            path of directory that should be made
+        """
 
     # If directory already exists - Delete directory first is default
     if os.path.isdir(dirName):
@@ -32,18 +36,18 @@ def makeADir(dirName):
 
 
 def readLogFile(logName, cfg=''):
-    """ Read experiment log file and make dictionary that contains all simulations
+    """ Read experiment log file and make dictionary that contains general info on all simulations
 
         Parameters
         ----------
         logName : str
-            path to logFile
+            path to log file
         cfg : dict
             optional - configuration read from com1DFA simulation
 
         Returns
         -------
-        logDct : dict
+        logDict : dict
             dictionary with number of simulation (noSim), name of simulation (simName),
             parameter variation, full name
     """
@@ -76,7 +80,20 @@ def readLogFile(logName, cfg=''):
 
 
 def extractParameterInfo(avaDir, simName):
-    """ Extract info about simulation parameters from the log file """
+    """ Extract info about simulation parameters from the log file
+
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche
+        simName : str
+            name of the simulation
+
+        Returns
+        -------
+        parameterDict : dict
+            dictionary listing name of parameter and value; release mass, final time step and current mast
+        """
 
     # Get info from ExpLog
     logName = os.path.join(avaDir, 'Outputs', 'com1DFA', 'ExpLog.txt')
@@ -133,7 +150,21 @@ def checkCommonSims(logName, localLogName):
 
 
 def getDFAData(avaDir, workDir, suffix, nameDir=''):
-    """ Export the required data from com1DFA output to Aimec Work directory and rename  """
+    """ Export the required data from com1DFA output to Aimec Work directory and rename,
+        if nameDir='', data from com1DFA output copied to workDir without renaming
+
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche directory
+        workDir : str
+            path to directory that data should be copied to
+        suffix : str
+            result parameter abbreviation (e.g. 'ppr')
+        nameDir : str
+            optional - name of subdirectory of workDir where data shall be copied to and
+            in this case data files get renamed to 0000xx.txt xx is the number of the file
+      """
 
     # Lead all infos on simulations
     inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
@@ -153,10 +184,14 @@ def getDFAData(avaDir, workDir, suffix, nameDir=''):
 def getRefData(avaDir, outputDir, suffix, nameDir=''):
     """ Grab reference data and save to outputDir
 
-        Inputs:
-        avaDir          avalanche directory
-        suffix          result parameter abbreviation (e.g. 'ppr')
-        outputDir       folder where files should be copied to
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche directory
+        suffix : str
+            result parameter abbreviation (e.g. 'ppr')
+        outputDir: str
+            path to directoy that files should be copied to
     """
 
     # Input directory and load input datasets
@@ -245,26 +280,23 @@ def exportcom1DFAOutput(avaDir, cfg=''):
 
 
 def makeSimDict(inputDir, varPar='', avaDir=''):
-    """ Create a dictionary that contains all info on simulations
+    """ Create a dictionary that contains all info on simulations that can then be used to filter simulations for example
 
         Parameters
         ----------
-
         inputDir : str
             path to directory of simulation results
         varPar : str
-            optional - parameter that has been used in parameter variation
+            optional - parameter that has been used in parameter variation - reqiured if parameter variation has been used
         avaDir : str
             optional - path to avalanche directory
 
-
         Returns
         -------
-
         data : dict
             dictionary with full file path, file name, release area scenario, simulation type (null/entres),
             model type (dfa, ref, etc.), parameter variation, result type (ppr, pfd, etc.), simulation name,
-            cell size and optional name of avalanche 
+            cell size and optional name of avalanche
     """
 
     # Load input datasets from input directory

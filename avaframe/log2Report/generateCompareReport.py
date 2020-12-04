@@ -1,7 +1,5 @@
 """
     Generate a markdown report for data provided in dictionary with format to compare two simulations
-
-    This file is part of Avaframe.
 """
 
 # Load modules
@@ -51,7 +49,23 @@ def makeLists(simDict, benchDict):
 
 
 def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
-    """ Write a report for simulation """
+    """ Write a report in markdown format of the comparison of simulations to reference simulation results;
+        report is saved to location of reportFile
+
+
+        Parameters
+        ----------
+        reportFile : str
+            path to report file
+        reportD : dict
+            report dictionary with simulation info
+        benchD : str
+            dictionary with simulation info of refernce simulation
+        avaName : str
+            name of avalanche
+        cfgRep : dict
+            dictionary with configuration info
+    """
 
     # Set limit to produce warning for differences in peak fields
     diffLim = float(cfgRep['GENERAL']['diffLim'])
@@ -123,7 +137,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
                     pfile.write(' %s \n' % textString2)
                     pfile.write(' \n')
                 pfile.write('![%s](%s) \n' % (value, reportD['Simulation Results'][value]))
-                pfile.write('\ \n')
+                pfile.write(' \n')
                 pfile.write(' \n')
 
         pfile.write(' \n')
