@@ -677,7 +677,7 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
 
     Returns
     -------
-    Plots the desiered figures and saves results as txt files
+    Plots the desired figures and saves results as txt files
     resAnalysis: dict
         resAnalysis dictionnary containing all results
     """
