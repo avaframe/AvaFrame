@@ -893,7 +893,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     rasterTransfo: dict
         transformation information
     resAnalysis: dict
-        resAnalysis dictionnary containing all results to update
+        resAnalysis dictionary containing all results to update
     pLim: float
         numerical value of the pressure limit to use
     newRasters: dict
