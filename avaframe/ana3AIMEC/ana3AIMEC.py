@@ -484,7 +484,7 @@ def makeTransfoMat(rasterTransfo):
 
 
 def getSArea(rasterTransfo):
-    """ Get the s curvilinear coorsinate and Area on the new raster
+    """ Get the s curvilinear coordinate and area on the new raster
 
     Find the scoord corresponding to the transformation and the Area of
     the cells of the new raster
