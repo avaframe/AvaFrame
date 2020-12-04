@@ -13,6 +13,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
+
 def writeAimecPathsFile(cfgSetup, avaDir):
     """ Write a pathFile to inform Aimec where its input data is located """
 

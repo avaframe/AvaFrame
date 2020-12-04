@@ -216,18 +216,22 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     -------
     rasterTransfo: dict
         domain transformation information:
-            -gridx: x coord of the new raster points in old coord system
-            (as 2D array)
-            -gridy: y coord of the new raster points in old coord system
-            (as 2D array)
-            -s: new coord system in the polyline direction (as 1D array)
-            -l: new coord system in the cross direction (as 1D array)
-            -x: coord of the resampled polyline in old coord system
-            (as 1D array)
-            -y: coord of the resampled polyline in old coord system
-            (as 1D array)
-            -rasterArea: real area of the cells of the new raster (as 2D array)
-            -indRunoutPoint: index for start of the runout area (in s)
+            gridx: 2D numpy array
+                x coord of the new raster points in old coord system
+            gridy: 2D numpy array
+                y coord of the new raster points in old coord system
+            s: 1D numpy array
+                new coord system in the polyline direction
+            l: 1D numpy array
+                new coord system in the cross direction
+            x: 1D numpy array
+                coord of the resampled polyline in old coord system
+            y: 1D numpy array
+                coord of the resampled polyline in old coord system
+            rasterArea: 2D numpy array
+                real area of the cells of the new raster
+            indRunoutPoint: int
+                index for start of the runout area (in s)
     """
     # Read input parameters
     rasterSource = cfgPath['pressurefileList'][0]
@@ -344,7 +348,14 @@ def splitSection(DB, i):
     ----------
     DB: dict
         domain Boundary dictionary:
-        (x,y) coordinates of the left and right Boundaries
+            DBXl: 1D numpy array
+                x coord of the left boundary
+            DBXr: 1D numpy array
+                x coord of the right boundary
+            DBYl: 1D numpy array
+                y coord of the left boundary
+            DBYr: 1D numpy array
+                y coord of the right boundary
     i: int
         index of the segment of DB to split
 
@@ -400,22 +411,27 @@ def makeTransfoMat(rasterTransfo):
     ----------
     rasterTransfo: dict
         dictionary containing:
-            -domainWidth
-            -cellsize
-            -DBXl: x coord of the left boundary
-            -DBXr: x coord of the right boundary
-            -DBYl: y coord of the left boundary
-            -DBYr: y coord of the right boundary
+            domainWidth: float
+            cellsize: float
+            DBXl: 1D numpy array
+                x coord of the left boundary
+            DBXr: 1D numpy array
+                x coord of the right boundary
+            DBYl: 1D numpy array
+                y coord of the left boundary
+            DBYr: 1D numpy array
+                y coord of the right boundary
 
     Returns
     -------
     rasterTransfo: dict
         rasterTransfo dictionary updated with
-            -gridx: x coord of the new raster points in old coord system
-            (as 2D array)
-            -gridy: y coord of the new raster points in old coord system
-            (as 2D array)
-            -l: new coord system in the cross direction (as 1D array)
+            gridx: 2D numpy array
+                x coord of the new raster points in old coord system
+            gridy: 2D numpy array
+                y coord of the new raster points in old coord system
+            l: 1D numpy array
+                new coord system in the cross direction
     """
     w = rasterTransfo['domainWidth']
     cellsize = rasterTransfo['cellsize']
@@ -477,23 +493,29 @@ def getSArea(rasterTransfo):
     ----------
     rasterTransfo: dict
         dictionary containing:
-            -domainWidth
-            -cellsize
-            -DBXl: x coord of the left boundary
-            -DBXr: x coord of the right boundary
-            -DBYl: y coord of the left boundary
-            -DBYr: y coord of the right boundary
-            -gridx: x coord of the new raster points in old coord system
-            (as 2D array)
-            -gridy: y coord of the new raster points in old coord system
-            (as 2D array)
+            domainWidth: float
+            cellsize: float
+            DBXl: 1D numpy array
+                x coord of the left boundary
+            DBXr: 1D numpy array
+                x coord of the right boundary
+            DBYl: 1D numpy array
+                y coord of the left boundary
+            DBYr: 1D numpy array
+                y coord of the right boundary
+            gridx: 2D numpy array
+                x coord of the new raster points in old coord system
+            gridy: 2D numpy array
+                y coord of the new raster points in old coord system
 
     Returns
     -------
     rasterTransfo: dict
         rasterTransfo dictionary updated with
-            -s: new coord system in the polyline direction (as 1D array)
-            -rasterArea: real area of the cells of the new raster (as 2D array)
+            s: 1D numpy array
+                new coord system in the polyline direction
+            rasterArea: 2D numpy array
+                real area of the cells of the new raster
     """
     xcoord = rasterTransfo['gridx']
     ycoord = rasterTransfo['gridy']
@@ -693,49 +715,68 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     -------
     resAnalysis: dict
         resAnalysis dictionnary containing all results:
-            -runout: 2D array containing for each simulation analyzed the x and
-                     y coord of the runout point as well as the runout distance
-                     measured from the begining of the run-out area. run-out
-                     calculated with the MAX pressure in each cross section
-            -runoutMean: 2D array containing for each simulation analyzed the x
-                     and y coord of the runout point as well as the runout
-                     distance measured from the begining of the run-out area.
-                     run-out calculated with the MEAN pressure in each cross
-                     section
-            -AMPP: 1D array containing for each simulation analyzed the average
+            -runout: 2D numpy array
+                    containing for each simulation analyzed the x and
+                    y coord of the runout point as well as the runout distance
+                    measured from the begining of the run-out area. run-out
+                    calculated with the MAX pressure in each cross section
+            -runoutMean: 2D numpy array
+                    containing for each simulation analyzed the x
+                    and y coord of the runout point as well as the runout
+                    distance measured from the begining of the run-out area.
+                    run-out calculated with the MEAN pressure in each cross
+                    section
+            -AMPP: 1D numpy array
+                    containing for each simulation analyzed the average
                     max peak pressure
-            -MMPP: 1D array containing for each simulation analyzed the max max
+            -MMPP: 1D numpy array
+                    containing for each simulation analyzed the max max
                     peak pressure
-            -AMD: 1D array containing for each simulation analyzed the average
+            -AMD: 1D numpy array
+                    containing for each simulation analyzed the average
                     max peak flow depth
-            -MMD: 1D array containing for each simulation analyzed the max max
+            -MMD: 1D numpy array
+                    containing for each simulation analyzed the max max
                     peak flow depth
-            -AMS: 1D array containing for each simulation analyzed the average
+            -AMS: 1D numpy array
+                    containing for each simulation analyzed the average
                     max peak speed
-            -MMS: 1D array containing for each simulation analyzed the max max
+            -MMS: 1D numpy array
+                    containing for each simulation analyzed the max max
                     peak speed
-            -elevRel: 1D array containing for each simulation analyzed the
+            -elevRel: 1D numpy array
+                    containing for each simulation analyzed the
                     elevation of the release area (based on first point with
                     peak pressure > pLim)
-            -deltaH: 1D array containing for each simulation analyzed the
+            -deltaH: 1D numpy array
+                    containing for each simulation analyzed the
                     elevation fall difference between elevRel and altitude of
                     run-out point
-            -relMass: 1D array containing for each simulation analyzed the
+            -relMass: 1D numpy array
+                    containing for each simulation analyzed the
                     release mass
-            -entMass: 1D array containing for each simulation analyzed the
+            -entMass: 1D numpy array
+                    containing for each simulation analyzed the
                     entrained mass
-            -finalMass: 1D array containing for each simulation analyzed the
+            -finalMass: 1D numpy array
+                    containing for each simulation analyzed the
                     final mass
-            -relativMassDiff: 1D array containing for each simulation analyzed
+            -relativMassDiff: 1D numpy array
+                    containing for each simulation analyzed
                     the final mass diff with ref (in %)
-            -growthIndex: 1D array containing for each simulation analyzed the
+            -growthIndex: 1D numpy array
+                    containing for each simulation analyzed the
                     growth index
-            -growthGrad: 1D array containing for each simulation analyzed the
+            -growthGrad: 1D numpy array
+                    containing for each simulation analyzed the
                     growth gradient
-            -pCrossAll: 2D array containing for each simulation analyzed the
+            -pCrossAll: 2D numpy array
+                    containing for each simulation analyzed the
                     max peak pressure in each cross section
-            -pressureLimit: pressure threshold pLim
-            -runoutAngle: angle of the slope at the beginning of the run-out
+            -pressureLimit: float
+                    pressure threshold
+            -runoutAngle: float
+                    angle of the slope at the beginning of the run-out
                     area (given in input)
     """
     # read inputs
@@ -867,10 +908,14 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     -------
     resAnalysis: dict
         updated resAnalysis dictionnary:
-            -TP: ref = True sim2 = True
-            -FN: ref = False sim2 = True
-            -FP: ref = True sim2 = False
-            -TN: ref = False sim2 = False
+            -TP: float
+                ref = True sim2 = True
+            -FN: float
+                ref = False sim2 = True
+            -FP: float
+                ref = True sim2 = False
+            -TN: float
+                ref = False sim2 = False
     """
     fname = cfgPath['pressurefileList']
 
@@ -980,7 +1025,7 @@ def readWrite(fname_ent):
     finalMass: float
         final mass
     growthIndex: float
-    growthGrad float
+    growthGrad: float
     """
     #    load data
     #    time, total mass, entrained mass
