@@ -22,7 +22,21 @@ log = logging.getLogger(__name__)
 
 def execCom1Exe(com1Exe, cintFile, avaDir, fullOut=False, simName=''):
     """ Execute compiled com1Exe file using cintFile to set configuration
-        and run options """
+        and run options
+
+        Parameters
+        ----------
+        com1Exe : str
+            path to com1Exe
+        cintFile : str
+            path to cint file
+        avaDir : str
+            path to avalanche directoy
+        fullOut : bool
+            flag if True print full output from com1Exe to terminal and log, default False
+        simName : str
+            optional - name of simulation, will be used to create a log 
+    """
 
     # define command line
     runCommand = com1Exe + ' -offscreen ' + cintFile
@@ -83,6 +97,11 @@ def com1DFAMain(cfg, avaDir):
         configuration read from ini file
     avaDir : str
         path to avalanche directory
+
+    Returns
+    -------
+    reportDictList : list
+        list of dictionaries that contain information on simulations that can be used for report generation
     """
 
     # Setup configuration

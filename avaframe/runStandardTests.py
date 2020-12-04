@@ -1,6 +1,5 @@
 """
     Run script for running Standalone DFA for the standard tests
-    This file is part of Avaframe.
 """
 
 # Load modules
@@ -33,7 +32,7 @@ standardNames = ['data/avaBowl',
                  'data/avaHockey',
                  'data/avaHockeySmoothChannel',
                  'data/avaHockeySmoothSmall',
-                 'data/avaInclinedPlane']                 
+                 'data/avaInclinedPlane']
 
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reports')

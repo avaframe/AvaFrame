@@ -16,7 +16,24 @@ import avaframe.out3Plot.makePalette as makePalette
 
 
 def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
-    """ Plot all peak fields and return dictionary with paths to plots """
+    """ Plot all peak fields and return dictionary with paths to plots
+
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche directoy
+        cfg : dict
+            configuration used to perform simulations
+        cfgFLAGS : str
+            general configuration, required to define if plots saved to reports directoy
+        modName : str
+            name of module that has been used to produce data to be plotted - default com1DFA
+
+        Returns
+        -------
+        plotDict : dict
+            dictionary with info on plots, like path to plot
+        """
 
     # Load all infos on simulations
     inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
@@ -82,8 +99,21 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
     return plotDict
 
 
-def plotAllFields(avaDir, inputDir, outDir, cfg=''):
-    """ Plot all fields within given directory and save to outDir"""
+def plotAllFields(avaDir, inputDir, outDir, cfg):
+    """ Plot all fields within given directory and save to outDir
+
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche directoy
+        inputDir : str
+            path to input directoy
+        outDir : str
+            path to directoy where plots shall be saved to
+        cfg : dict
+            configuration settings
+
+        """
 
     # Load all infos on simulations
     peakFiles = glob.glob(inputDir+os.sep + '*.asc')

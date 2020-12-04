@@ -19,18 +19,18 @@ log = logging.getLogger(__name__)
 
 
 def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
-    """ Compute propability map of a given set of simulation result exceeding a particular threshold
+    """ Compute propability map of a given set of simulation result exceeding a particular threshold and save to outDir
 
         Parameters
         ----------
         avaDir: str
             path to avalanche directory
         cfg : dict
-            configuration read from probAnaCfg.ini file
+            configuration read from ini file of probAna function
         cfgMain : dict
             configuration read from ini file that has been used for the com1DFA simulation
         inputDir : str
-            optional - path to directory where data that should be analysed can be found
+            optional - path to directory where data that should be analysed can be found, required if not in com1DFA results
         outDir : str
             optional - path to directory where results shall be saved to
     """

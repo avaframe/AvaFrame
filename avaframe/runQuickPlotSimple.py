@@ -1,6 +1,5 @@
 """
     Run script for plotting two matrix datasets
-    This file is part of Avaframe.
 """
 
 # Load modules

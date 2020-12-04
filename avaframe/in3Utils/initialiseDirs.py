@@ -21,7 +21,22 @@ log = logging.getLogger(__name__)
 
 
 def initialiseRunDirs(avaDir, modName):
-    """ Initialise Simulation Run with input data """
+    """ Initialise Simulation Run with input data
+
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche directoy
+        modName : str
+            name of module
+
+        Returns
+        -------
+        workDir : str
+            path to Work directory
+        outputDir : str
+            path to Outputs directory
+    """
 
     # Set directories outputs and current work
     outputDir = os.path.join(avaDir, 'Outputs', modName)
