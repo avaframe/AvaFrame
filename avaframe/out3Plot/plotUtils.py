@@ -208,7 +208,7 @@ def addColorBar(im, ax2, ticks, myUnit):
     '''
     cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
     cbar.outline.set_visible(False)
-    cbar.ax.set_title('[$' + myUnit + '$]')
+    cbar.ax.set_title('[myUnit]')
 
 
 def putAvaNameOnPlot(ax, avaDir):
