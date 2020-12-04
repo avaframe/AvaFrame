@@ -1,6 +1,5 @@
 """
-    Basic tools for getting grid normals, area and working with
-    vectors.
+    Basic tools for getting grid normals, area and working with vectors.
 """
 
 # Load modules

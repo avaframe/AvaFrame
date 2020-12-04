@@ -1,7 +1,5 @@
 """
     Main logic for AIMEC post processing
-
-    This file is part of Avaframe.
 """
 
 import os
@@ -26,9 +24,22 @@ log = logging.getLogger(__name__)
 
 
 def readAIMECinputs(avalancheDir, dirName='com1DFA'):
-    """
+    """ Read inputs for AIMEC postprocessing
+
     Reads the requiered files location for AIMEC postpocessing
     given an avalanche directory
+
+    Parameters
+    ----------
+    avalancheDir : str
+        path to directory of avalanche to analyze
+    dirName : str
+        optional string with name of the module results to analyze
+
+    Returns
+    -------
+    cfgPath : dict
+        dictionary with path to data to analyze
     """
     cfgPath = {}
     pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,
@@ -87,7 +98,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
 
 
 def getFileList(path2Folder):
-    """ Get sorted list of all files in folder """
+    """ Get sorted list of all files in folder path2Folder"""
     fileList = [path2Folder +
                 os.path.sep +
                 str(name) for name in
@@ -101,8 +112,26 @@ def getFileList(path2Folder):
 
 
 def mainAIMEC(cfgPath, cfg):
-    """
-    Main logic for AIMEC postprocessing
+    """ Main logic for AIMEC postprocessing
+
+    Reads the requiered files location for ana3AIMEC postpocessing
+    given an avalanche directory
+
+    Parameters
+    ----------
+    cfgPath : dict
+        dictionary with path to data to analyze
+    cfg : configparser
+        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
+
+    Returns
+    -------
+    rasterTransfo: dict
+        domain transformation information
+    newRasters: dict
+        raster data expressed in the new coordinates
+    resAnalysis: dict
+        results of ana3AIMEC analysis
     """
 
     # Extract input config parameters
@@ -165,14 +194,28 @@ def mainAIMEC(cfgPath, cfg):
 
 
 def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
-    """
-    Make domain transformation :
+    """ Make domain transformation
+
     This function returns the information about the domain transformation
     Data given on a regular grid is projected on a nonuniform grid following
-    a polyline
+    a polyline to end up with "straightend raster"
 
-    input: cfgPath, cfgSetup, cfgFlags
-    ouput: rasterTransfo as a dictionary
+    Parameters
+    ----------
+    cfgPath : dict
+        dictionary with path to data to analyze
+    cfgSetup : configparser
+        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
+        regarding domain transformation (domain width w, runOutAngle or
+        interpolation method)
+    cfgFlags : configparser
+        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
+        regarding plotting and writing results flags
+
+    Returns
+    -------
+    rasterTransfo: dict
+        domain transformation information:
             -gridx: x coord of the new raster points in old coord system
             (as 2D array)
             -gridy: y coord of the new raster points in old coord system
@@ -185,7 +228,6 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
             (as 1D array)
             -rasterArea: real area of the cells of the new raster (as 2D array)
             -indRunoutPoint: index for start of the runout area (in s)
-
     """
     # Read input parameters
     rasterSource = cfgPath['pressurefileList'][0]
@@ -294,15 +336,27 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     return rasterTransfo
 
 
-def split_section(DB, i):
-    """
-    Splits the ith segment of domain boundary DB in the s direction
+def splitSection(DB, i):
+    """ Splits the ith segment of domain boundary DB in the s direction
     (direction of the path)
-    input: - DB domain Boundary dictionary
-           - i number of the segment of DB to split
-    ouput: - (x,y) coordinates of the ith left and right splited Boundaries
-            (bxl, byl, bxr, byr). each is a 1D array of size m
-            - m number of ellements on the new segments
+
+    Parameters
+    ----------
+    DB: dict
+        domain Boundary dictionary:
+        (x,y) coordinates of the left and right Boundaries
+    i: int
+        index of the segment of DB to split
+
+    Returns
+    -------
+    (x,y) coordinates of the ith left and right splited Boundaries
+    bxl: 1D numpy array
+    byl: 1D numpy array
+    bxr: 1D numpy array
+    byr: 1D numpy array
+    m: int
+        number of elements on the new segments
     """
     # left edge
     xl0 = DB['DBXl'][i]
@@ -338,22 +392,30 @@ def split_section(DB, i):
 
 def makeTransfoMat(rasterTransfo):
     """ Make transformation matrix.
-        Takes a Domain Boundary and finds the (x,y) coordinates of the new
-        raster point (the one following the path)
-        input: rasterTransfo dictionary containing:
-                -domainWidth
-                -cellsize
-                -DBXl: x coord of the left boundary
-                -DBXr: x coord of the right boundary
-                -DBYl: y coord of the left boundary
-                -DBYr: y coord of the right boundary
 
-        ouput: rasterTransfo dictionary updated with
-                -gridx: x coord of the new raster points in old coord system
-                (as 2D array)
-                -gridy: y coord of the new raster points in old coord system
-                (as 2D array)
-                -l: new coord system in the cross direction (as 1D array)
+    Takes a Domain Boundary and finds the (x,y) coordinates of the new
+    raster point (the one following the path)
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        dictionary containing:
+            -domainWidth
+            -cellsize
+            -DBXl: x coord of the left boundary
+            -DBXr: x coord of the right boundary
+            -DBYl: y coord of the left boundary
+            -DBYr: y coord of the right boundary
+
+    Returns
+    -------
+    rasterTransfo: dict
+        rasterTransfo dictionary updated with
+            -gridx: x coord of the new raster points in old coord system
+            (as 2D array)
+            -gridy: y coord of the new raster points in old coord system
+            (as 2D array)
+            -l: new coord system in the cross direction (as 1D array)
     """
     w = rasterTransfo['domainWidth']
     cellsize = rasterTransfo['cellsize']
@@ -375,7 +437,7 @@ def makeTransfoMat(rasterTransfo):
     # loop on each section of the path
     for i in range(n_pnt-1):
         # split edges in segments
-        bxl, byl, bxr, byr, m = split_section(rasterTransfo, i)
+        bxl, byl, bxr, byr, m = splitSection(rasterTransfo, i)
         # bxl, byl, bxr, byr reprensent the s direction (olong path)
         # loop on segments of section
         for j in range(m-1):
@@ -406,16 +468,30 @@ def makeTransfoMat(rasterTransfo):
 
 
 def getSArea(rasterTransfo):
-    """
+    """ Get the s curvilinear coorsinate and Area on the new raster
+
     Find the scoord corresponding to the transformation and the Area of
     the cells of the new raster
-    input: rasterTransfo dictionary to fill in output
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        dictionary containing:
+            -domainWidth
+            -cellsize
+            -DBXl: x coord of the left boundary
+            -DBXr: x coord of the right boundary
+            -DBYl: y coord of the left boundary
+            -DBYr: y coord of the right boundary
             -gridx: x coord of the new raster points in old coord system
             (as 2D array)
             -gridy: y coord of the new raster points in old coord system
             (as 2D array)
 
-    ouput: rasterTransfo dictionary updated with
+    Returns
+    -------
+    rasterTransfo: dict
+        rasterTransfo dictionary updated with
             -s: new coord system in the polyline direction (as 1D array)
             -rasterArea: real area of the cells of the new raster (as 2D array)
     """
@@ -477,15 +553,24 @@ def getSArea(rasterTransfo):
 
 
 def transform(fname, rasterTransfo, interpMethod):
-    """
+    """ Transfer data from old raster to new raster
+
     Affect value to the points of the new raster (after domain transormation)
-    input:
-            -fname = name of rasterfile to transform
-            -rasterTransfo = transformation info
-            -interpolation method to chose between 'nearest' and 'bilinear'
-    ouput:
-            -new_data = z, pressure or depth... corresponding to fname on
-            the new raster
+
+    Parameters
+    ----------
+    fname: str
+        path to rasterfile to transform
+    rasterTransfo: dict
+        transformation information
+    interpMethod: str
+        interpolation method to chose between 'nearest' and 'bilinear'
+
+    Returns
+    -------
+    newData: 2D numpy array
+        new_data = z, pressure or depth... corresponding to fname on
+        the new raster
     """
     name = os.path.basename(fname)
     data = IOf.readRaster(fname)
@@ -511,14 +596,26 @@ def transform(fname, rasterTransfo, interpMethod):
 
 
 def assignData(fnames, rasterTransfo, interpMethod):
-    """
-    Affect value to the points of the new raster (after domain transormation)
-    input:
-            -fnames = list of names of rasterfiles to transform
-            -rasterTransfo = transformation info
-            -interpolation method to chose between 'nearest' and 'bilinear'
-    ouput: avalData = z, pressure or depth... corresponding to fnames on the
-            new rasters
+    """ Transfer data from old raster to new raster
+
+    Loops through paths in fnames and calls transfom
+    Transform affects values to the points of the new raster
+    (after domain transormation)
+
+    Parameters
+    ----------
+    fname: list of str
+        list of path to rasterfile to transform
+    rasterTransfo: dict
+        transformation information
+    interpMethod: str
+        interpolation method to chose between 'nearest' and 'bilinear'
+
+    Returns
+    -------
+    newData: 2D numpy array
+        new_data = z, pressure or depth... corresponding to fname on
+        the new raster
     """
 
     maxtopo = len(fnames)
@@ -537,8 +634,30 @@ def assignData(fnames, rasterTransfo, interpMethod):
 # -----------------------------------------------------------
 
 def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
-    """
-    Analyse pressure and depth deskewed data
+    """ Analyse pressure and depth transformed data
+
+    Main function for result analysis
+    Plots the desiered figures and saves results as txt files
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        transformation information
+    pLim: float
+        numerical value of the pressure limit to use
+    newRasters: dict
+        dictionary containing pressure, velocity and flow depth rasters after
+        transformation
+    cfgPath: dict
+        path to data to analyse
+    cfgFlags: configparser
+        configparser with plot and write flags
+
+    Returns
+    -------
+    Plots the desiered figures and saves results as txt files
+    resAnalysis: dict
+        resAnalysis dictionnary containing all results
     """
 
     resAnalysis = analyzeFields(rasterTransfo, pLim, newRasters, cfgPath)
@@ -552,16 +671,28 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
 
 
 def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
-    """
+    """ Analyse pressure and depth transformed data
+
     Analyse pressure depth and speed.
     Calculate runout, Max Peak Pressure, Average PP...
     Get mass and entrainement
-    input:
-            -rasterTransfo = transformation info
-            -pressure threshold value
-            -newRasters dictionnary with the data in the new coord system
-            -cfgPath
-    output: resAnalysis dictionnary containing all results
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        transformation information
+    pLim: float
+        numerical value of the pressure limit to use
+    newRasters: dict
+        dictionary containing pressure, velocity and flow depth rasters after
+        transformation
+    cfgPath: dict
+        path to data to analyse
+
+    Returns
+    -------
+    resAnalysis: dict
+        resAnalysis dictionnary containing all results:
             -runout: 2D array containing for each simulation analyzed the x and
                      y coord of the runout point as well as the runout distance
                      measured from the begining of the run-out area. run-out
@@ -606,7 +737,6 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
             -pressureLimit: pressure threshold pLim
             -runoutAngle: angle of the slope at the beginning of the run-out
                     area (given in input)
-
     """
     # read inputs
     fname = cfgPath['pressurefileList']
@@ -713,16 +843,30 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
 
 
 def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
-    """
-    Compare results to reference.
+    """Compare results to reference.
+
     Compute True positive, False negative... areas.
-    input:
-            -rasterTransfo:transformation info
-            -pLim: pressure threshold value
-            -newRasters dictionnary with the data in the new coord system
-            -cfgPath
-            -cfgFlags
-    output: resAnalysis dictionnary completed with area information
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        transformation information
+    resAnalysis: dict
+        resAnalysis dictionnary containing all results to update
+    pLim: float
+        numerical value of the pressure limit to use
+    newRasters: dict
+        dictionary containing pressure, velocity and flow depth rasters after
+        transformation
+    cfgPath: dict
+        path to data to analyse
+    cfgFlags: configparser
+        configparser with plot and write flags
+
+    Returns
+    -------
+    resAnalysis: dict
+        updated resAnalysis dictionnary:
             -TP: ref = True sim2 = True
             -FN: ref = False sim2 = True
             -FP: ref = True sim2 = False
@@ -817,16 +961,26 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
 
 def readWrite(fname_ent):
-    """
+    """Get mass balance information
+
     Read mass balance files to get mass properties of the simulation
     (total mass, entrained mass...). Checks for mass conservation
-    input:
-            -fname_ent: list of mass balance files
-    output:
-            -relMass: release mass
-            -entMass: entrained mass
-            -growthIndex
-            -growthGrad
+
+    Parameters
+    ----------
+    fname_ent: list of str
+        list of pah to mass balance files
+
+    Returns
+    -------
+    relMass: float
+        release mass
+    entMass: float
+        entrained mass
+    finalMass: float
+        final mass
+    growthIndex: float
+    growthGrad float
     """
     #    load data
     #    time, total mass, entrained mass
@@ -862,18 +1016,32 @@ def readWrite(fname_ent):
 
 
 def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):
-    """
-    Compute average and max of in each cross section for a given input raster
-    input:
-            -rasterdataA: raster data
-            -rasterArea: raster area corresponding to rasterdataA
-            -pLim: pressure threshold
-            -cInd: index of bounds of the avalanche (from release to run-out)
-    output:
-            -ama: average maximum of rasterdataA
-            -mma: maximum maximum of rasterdataA
-            -cInd: index of bounds of the avalanche (from release to run-out)
-            -aCrossMax: 1D Aarray containing max of rasterdataA in each cross section
+    """Compute average, max values in each cross section for a given input raster
+
+    Read mass balance files to get mass properties of the simulation
+    (total mass, entrained mass...). Checks for mass conservation
+
+    Parameters
+    ----------
+    rasterdataA: 2D numpy array
+        raster data
+    rasterArea: 2D numpy array
+        raster area corresponding to rasterdataA
+    pLim: float
+        pressure threshold
+    cInd: dict
+        indexes of bounds of the avalanche (from release to run-out)
+
+    Returns
+    -------
+    ama: float
+        average maximum of rasterdataA
+    mma: float
+        maximum maximum of rasterdataA
+    cInd: dict
+        indexes of bounds of the avalanche (from release to run-out)
+    aCrossMax: 1D numpy array
+        max of rasterdataA in each cross section
     """
     # get mean max for each cross section for A field
     rasterArea = np.where(np.where(np.isnan(rasterdataA), 0, rasterdataA) > 0, rasterArea, 0)

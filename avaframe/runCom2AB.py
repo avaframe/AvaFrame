@@ -1,4 +1,5 @@
-"""Run script for module com2AB
+"""
+    Run script for module com2AB
 """
 
 # Local imports
