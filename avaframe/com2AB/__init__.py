@@ -1,1 +1,1 @@
-"""AlphaBeta module kernel code"""
+"""AlphaBeta kernel"""
