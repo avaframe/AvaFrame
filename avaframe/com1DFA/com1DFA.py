@@ -1,5 +1,5 @@
 """
-    This is a python wrapper to execute the compiled com1Exe file and set desired simulation options
+    Python wrapper to execute the compiled com1Exe file and set desired simulation options
 """
 
 # Load modules
@@ -35,7 +35,7 @@ def execCom1Exe(com1Exe, cintFile, avaDir, fullOut=False, simName=''):
         fullOut : bool
             flag if True print full output from com1Exe to terminal and log, default False
         simName : str
-            optional - name of simulation, will be used to create a log 
+            optional - name of simulation, will be used to create a log
     """
 
     # define command line

@@ -1,7 +1,5 @@
 """
     Setup required directory structures by computational modules
-
-    This file is part of Avaframe.
 """
 
 # Load modules
@@ -21,7 +19,7 @@ log = logging.getLogger(__name__)
 
 
 def initialiseRunDirs(avaDir, modName):
-    """ Initialise Simulation Run with input data
+    """ Initialise Simulation run with input data
 
         Parameters
         ----------
