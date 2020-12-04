@@ -1,7 +1,5 @@
 """
     Main logic for Alpha beta computational module
-
-    This file is part of Avaframe.
 """
 
 import os
@@ -21,10 +19,25 @@ debugPlot = False
 
 
 def setEqParameters(smallAva, customParam):
-    """Set alpha beta equation parameters to
+    """ Set alpha beta equation parameters
+
+    Set alpha beta equation parameters to
     - standard (default)
-    - small avalanche
-    - custom
+    - small avalanche (if smallAva==True)
+    - custom (if customParam dictionary is provided)
+
+    Parameters
+    ----------
+    smallAva : boolean
+        True if the small avallanche AlphaBeta equation parameters should be used
+    customParam : dict
+        If provided, the parameters in customParam dictionary are used in the
+        AlphaBeta equation. (provide all 5 k1, k2, k3, k4 and SD values)
+
+    Returns
+    -------
+    eqParameters : dict
+        k1, k2, k3, k4 and SD values to be used in the AlphaBeta equation
     """
 
     eqParameters = {}
@@ -63,14 +76,21 @@ def setEqParameters(smallAva, customParam):
 
 
 def com2ABMain(cfg, avalancheDir):
-    """ Run main model
-    Loops on the given AvaPath and runs com2AB to compute AlpahBeta model
-    Inputs : dem header and rater (as np array),
-            AvaPath and Split points .shp file,
-            optional output save path,
-            avalanche type,
-            reamplind lenght for the AvaPath
-    Outputs : writes raw results to saveOutPath
+    """ Main AlphaBeta model function
+
+    Loops on the given AvaPaths and runs com2AB to compute AlpahBeta model
+
+    Parameters
+    ----------
+    cfg : configparser
+        configparser with all requiered fields in com2ABCfg.ini
+    avalancheDir : str
+        path to directory of avalanche to analyze
+
+    Returns
+    -------
+    resAB : dict
+        dictionary with AlphaBeta model results
     """
     abVersion = '4.1'
     cfgsetup = cfg['ABSETUP']
@@ -110,21 +130,30 @@ def com2ABMain(cfg, avalancheDir):
         avapath['y'] = AvaPath['y'][int(start):int(end)]
         avapath['Name'] = name
         log.info('Running Alpha Beta %s on: %s ', abVersion, name)
-        resAB = com2AB(avapath, resAB, distance)
+        resAB = com2ABKern(avapath, resAB, distance)
 
     return resAB
 
 
-def com2AB(avapath, resAB, distance):
-    """ Computes the AlphaBeta model given an input raster (of the dem),
+def com2ABKern(avapath, resAB, distance):
+    """ Compute AlpahBeta model for a given avapath
+
+    Computes the AlphaBeta model given an input raster (of the dem),
     an avalanche path and split points
-    Inputs : dem header and rater (as np array),
-            single avapath as np array,
-            Split points as np array,
-            output save path,
-            avalanche type,
-            resamplind lenght for the Avapath
-    Outputs : writes raw results to OutPath
+
+    Parameters
+    ----------
+    avapath : dict
+        dictionary with the name of the avapath, the x and y coordinates of the
+        path
+    resAB : dict
+        dictionary with AlphaBeta model intput parameters as well as the
+        results of already computed avapath.
+
+    Returns
+    -------
+    resAB : dict
+        dictionary with AlphaBeta model results
     """
     dem = resAB['dem']
     splitPoint = resAB['splitPoint']
@@ -154,52 +183,80 @@ def com2AB(avapath, resAB, distance):
     return resAB
 
 
-def readABinputs(cfgAva):
+def readABinputs(avalancheDir):
+    """ Compute AlpahBeta model for a given avapath
 
+    Computes the AlphaBeta model given an input raster (of the dem),
+    an avalanche path and split points
+
+    Parameters
+    ----------
+    avalancheDir : str
+        path to directory of avalanche to analyze
+
+    Returns
+    -------
+    cfgPath : dict
+        dictionary with path to AlphaBeta inputs (dem, avaPath, splitPoint)
+    """
     cfgPath = {}
     # read avalanche paths for AB
-    profileLayer = glob.glob(cfgAva + '/Inputs/LINES/*AB*.shp')
+    profileLayer = glob.glob(avalancheDir + '/Inputs/LINES/*AB*.shp')
     try:
-        message = 'There should be exactly one pathAB.shp file containing (multiple) avalanche paths in ' + cfgAva + '/Inputs/LINES/'
+        message = 'There should be exactly one pathAB.shp file containing (multiple) avalanche paths in ' + avalancheDir + '/Inputs/LINES/'
         assert len(profileLayer) == 1, message
     except AssertionError:
         raise
     cfgPath['profileLayer'] = ''.join(profileLayer)
 
     # read DEM
-    demSource = glob.glob(cfgAva + '/Inputs/*.asc')
+    demSource = glob.glob(avalancheDir + '/Inputs/*.asc')
     try:
         assert len(demSource) == 1, 'There should be exactly one topography .asc file in ' + \
-            cfgAva + '/Inputs/'
+            avalancheDir + '/Inputs/'
     except AssertionError:
         raise
     cfgPath['demSource'] = ''.join(demSource)
 
     # read split points
-    splitPointSource = glob.glob(cfgAva + '/Inputs/POINTS/*.shp')
+    splitPointSource = glob.glob(avalancheDir + '/Inputs/POINTS/*.shp')
     try:
-        message = 'There should be exactly one .shp file containing the split points in ' + cfgAva + '/Inputs/POINTS/'
+        message = 'There should be exactly one .shp file containing the split points in ' + avalancheDir + '/Inputs/POINTS/'
         assert len(splitPointSource) == 1, message
     except AssertionError:
         raise
     cfgPath['splitPointSource'] = ''.join(splitPointSource)
 
     # make output path
-    saveOutPath = os.path.join(cfgAva, 'Outputs/com2AB/')
+    saveOutPath = os.path.join(avalancheDir, 'Outputs/com2AB/')
     if not os.path.exists(saveOutPath):
         # log.info('Creating output folder %s', saveOutPath)
         os.makedirs(saveOutPath)
     cfgPath['saveOutPath'] = saveOutPath
 
-    defaultName = str(cfgAva).split('/')[-1]
+    defaultName = str(avalancheDir).split('/')[-1]
     cfgPath['defaultName'] = defaultName
 
     return cfgPath
 
 
 def calcAB(AvaProfile, eqParameters):
-    """
-    Calculate Alpha Beta for data in eqInput according to chosen eqParameters
+    """ Compute AlpahBeta model for a given AvaProfile and chosen eqParameters
+
+    Kernel function that computes the AlphaBeta model for a given AvaProfile
+    and eqParameters
+
+    Parameters
+    ----------
+    AvaProfile : dict
+        dictionary with the name of the avapath, the x, y and z coordinates of
+        the path
+
+    Returns
+    -------
+    AvaProfile : dict
+        updated AvaProfile with alpha, beta and other values resulting from the
+        AlphaBeta model computation
     """
     log.debug("Calculating alpha beta")
     k1 = eqParameters['k1']

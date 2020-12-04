@@ -1,7 +1,5 @@
 """
-    This is a helper function to export required data from com1DFA to be used by Aimec.
-
-    This file is part of Avaframe.
+    Helper function to export required data from com1DFA to be used by Aimec.
 """
 
 # Load modules
