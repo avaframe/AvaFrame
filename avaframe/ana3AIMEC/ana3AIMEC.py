@@ -114,7 +114,7 @@ def getFileList(path2Folder):
 def mainAIMEC(cfgPath, cfg):
     """ Main logic for AIMEC postprocessing
 
-    Reads the requiered files location for ana3AIMEC postpocessing
+    Reads the required files location for ana3AIMEC postpocessing
     given an avalanche directory
 
     Parameters
