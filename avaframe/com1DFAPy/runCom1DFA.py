@@ -84,9 +84,6 @@ relTh = 1
 # could do something more advanced if we want varying release depth
 relRasterD = relRaster * relTh
 
-
-massPart = 100  # [200, 100, 50, 25, 10, 7.5, 5]
-cfgGen['massPerPart'] = str(massPart)
 # ------------------------
 # initialize simulation : create directories
 workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
