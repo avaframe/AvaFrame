@@ -1,5 +1,6 @@
 """
-    Main logic for Alpha beta computational module
+    Main module for Alpha beta
+
 """
 
 import os
