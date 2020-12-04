@@ -659,7 +659,7 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     """ Analyse pressure and depth transformed data
 
     Main function for result analysis
-    Plots the desiered figures and saves results as txt files
+    Plots the desired figures and saves results as txt files
 
     Parameters
     ----------
