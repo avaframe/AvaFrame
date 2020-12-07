@@ -88,6 +88,25 @@ def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow):
     plt.close('all')
 
 
+def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow):
+    """ make a comparison plot of desired CDF and empirical CDF of sample """
+
+    x = np.linspace(float(cfg['a']), float(cfg['c']), len(PDF))
+    fig = plt.figure()
+    plt.title('Desired PDF vs. sample histogram')
+    bins = int(int(cfg['sampleSize'])*0.25)
+    plt.hist(sampleVect, bins, density=True, label='sample')
+    plt.plot(x, PDF, 'k--', label='Desired PDF')
+    plt.xlabel('sample values')
+    plt.legend()
+
+    if flagShow:
+        plt.show()
+
+    # save fig
+    fig.savefig(os.path.join(workingDir, 'PDFcompare_%s.png' % (cfg['name'])))
+    plt.close('all')
+
 
 def plotECDF(workingDir, CDF, sample, cfg, methodAbbr, flagShow):
     """ make a comparison plot of desired CDF and empirical CDF of sample """
