@@ -222,7 +222,12 @@ for DX in NDX:
         y = particles['y']
         z = particles['z']
         startTime = time.time()
-        GHX, GHY, GHZ = coputeGradcython(Npart, m, x, y, z, Nx, Ny, Nz, particles, NX, NY)
+
+        indPartInCell = (particles['indPartInCell']).astype('int')
+        partInCell = (particles['partInCell']).astype('int')
+        indX = (particles['InCell'][:, 0]).astype('int')
+        indY = (particles['InCell'][:, 1]).astype('int')
+        GHX, GHY, GHZ = coputeGradcython(Npart, m, x, y, z, Nx, Ny, Nz, indPartInCell, partInCell, indX, indY, NX, NY)
         GHX = np.asarray(GHX)
         GHY = np.asarray(GHY)
         GHZ = np.asarray(GHZ)
