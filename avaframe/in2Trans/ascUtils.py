@@ -163,8 +163,8 @@ def writeResultToAsc(header, resultArray, outFileName):
         # write the header and array values to file
         outFile.write("ncols %d\n" % header.ncols)
         outFile.write("nrows %d\n" % header.nrows)
-        outFile.write("xllcorner %.2f\n" % header.xllcenter)
-        outFile.write("yllcorner %.2f\n" % header.yllcenter)
+        outFile.write("xllcenter %.2f\n" % header.xllcenter)
+        outFile.write("yllcenter %.2f\n" % header.yllcenter)
         outFile.write("cellsize %.2f\n" % header.cellsize)
         outFile.write("nodata_value %.2f\n" % header.noDataValue)
 
