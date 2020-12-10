@@ -1,5 +1,8 @@
+import pyximport
+pyximport.install()
 import numpy as np
 import math
+import time
 import copy
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -17,6 +20,7 @@ import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.com1DFAPy.SPHfunctions as SPH
 from avaframe.in3Utils import cfgUtils
+from SPHfunctionsCython import *
 cfg = cfgUtils.getModuleConfig(com1DFA)['GENERAL']
 cfgFull = cfgUtils.getModuleConfig(com1DFA)
 
@@ -213,35 +217,21 @@ for DX in NDX:
         particles = SPH.computeFlowDepth(cfg, particles, dem)
 
         # Compute SPH gradient
-
-        Npart = particles['Npart']
-        # initialize
-        GHX = np.zeros(Npart)
-        GHY = np.zeros(Npart)
-        GHZ = np.zeros(Npart)
-        # loop on particles
-        # TcpuSPH = 0
-        # Tcpuadd = 0
-        for j in range(Npart):
-            mass = particles['m'][j]
-            # adding lateral force (SPH component)
-            # startTime = time.time()
-
-            x = particles['x'][j]
-            y = particles['y'][j]
-            nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
-            gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(particles, j, NX, NY, csz, nx, ny, nz)
-            # tcpuSPH = time.time() - startTime
-            # TcpuSPH = TcpuSPH + tcpuSPH
-            # startTime = time.time()
-            GHX[j] = GHX[j] - gradhX / rho
-            GHY[j] = GHY[j] - gradhY / rho
-            GHZ[j] = GHZ[j] - gradhZ / rho
-            # tcpuadd = time.time() - startTime
-            # Tcpuadd = Tcpuadd + tcpuadd
-
-        # log.info(('cpu time SPH = %s s' % (TcpuSPH / Npart)))
-        # log.info(('cpu time SPH add = %s s' % (Tcpuadd / Npart)))
+        m = particles['m']
+        x = particles['x']
+        y = particles['y']
+        z = particles['z']
+        startTime = time.time()
+        GHX, GHY, GHZ = coputeGradcython(Npart, m, x, y, z, Nx, Ny, Nz, particles, NX, NY)
+        GHX = np.asarray(GHX)
+        GHY = np.asarray(GHY)
+        GHZ = np.asarray(GHZ)
+        tottime = time.time() - startTime
+        print(tottime)
+        startTime = time.time()
+        GHX1, GHY1, GHZ1 = coputeGrad(Npart, particles, Nx, Ny, Nz, NX, NY)
+        tottime = time.time() - startTime
+        print(tottime)
 
         Area = dem['Area']
         # Update fields using a nearest interpolation
