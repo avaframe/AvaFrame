@@ -364,7 +364,6 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
         MM1[0, 1] = MM1[0, 1] - M[2, 0]*M[1, 2]/M[2, 2]
         MM1[1, 0] = MM1[1, 0] - M[2, 1]*M[0, 2]/M[2, 2]
         MM1[1, 1] = MM1[1, 1] - M[2, 1]*M[1, 2]/M[2, 2]
-        # print(M)
 
         # buil the matrix that transforms the gradient in (r1, r2, r3) to the one in (x1, x2, x3)
         MMGrad = MM1.T
@@ -413,7 +412,7 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
 
         g1 = nx/(nz)
         g2 = ny/(nz)
-
+        
         GX1 = MMGrad[0, 0]*G1 + MMGrad[0, 1]*G2
         GY1 = MMGrad[1, 0]*G1 + MMGrad[1, 1]*G2
         GZ1 = (- g1*GX1 - g2*GY1)
