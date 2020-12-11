@@ -195,16 +195,25 @@ for Lx, Ly in zip(LX, LY):
 fig, ax = plt.subplots(figsize=(figW, figH))
 fig1, ax1 = plt.subplots(figsize=(figW, figH))
 for ncell in range(Ncsz):
+<<<<<<< HEAD
 # ncell = 0
     nl = 0
 # for nl in range(Nl):
     # -------------------------------
     ax.plot(np.log(NP[:, ncell, nl]), np.log(TForceC[:, ncell, nl]), '+k', linestyle='-', label='Tcpu Force C loop')
+=======
+    # -------------------------------
+
+>>>>>>> test efficiency
     # ---------------------------------
     # m, c, r, p, se1 = stats.linregress(np.log(NP[2:]), np.log(TForceVect[2:]))
     # cm1lab = "TForceVect : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
     # ax.plot(np.log(NP), m*np.log(NP)+c, 'b-.', linewidth=2, label=cm1lab)
+<<<<<<< HEAD
     ax.plot(np.log(NP[:, ncell, nl]), np.log(TForceVect[:, ncell, nl]), '*k', linestyle='-', label='Tcpu Force Vect')
+=======
+    ax.plot(np.log(NP[:, ncell]), np.log(TForceVect[:, ncell]), '*k', linestyle='-', label='Tcpu Force Vect')
+>>>>>>> test efficiency
     # ---------------------------------
     # m, c, r, p, se1 = stats.linregress(np.log(NP[2:]), np.log(TForceSPH[2:]))
     # cm1lab = "TForceSPH : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"

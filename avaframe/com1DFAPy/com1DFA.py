@@ -831,48 +831,35 @@ def computeForceSPH(cfg, particles, force, dem):
     forceSPHX = np.zeros(Npart)
     forceSPHY = np.zeros(Npart)
     forceSPHZ = np.zeros(Npart)
-    # forceSPHX1 = np.zeros(Npart)
-    # forceSPHY1 = np.zeros(Npart)
-    # forceSPHZ1 = np.zeros(Npart)
-    # GHX = np.zeros(Npart)
-    # GHY = np.zeros(Npart)
-    # GHZ = np.zeros(Npart)
-    #
-    # # loop on particles
-    # # TcpuSPH = 0
-    # # Tcpuadd = 0
-    # for j in range(Npart):
-    #     mass = particles['m'][j]
-    #     # adding lateral force (SPH component)
-    #     # startTime = time.time()
-    #     # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows, csz)
-    #     x = particles['x'][j]
-    #     y = particles['y'][j]
-    #     nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
-    #     gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(
-    #         particles, j, ncols, nrows, csz, nx, ny, nz)
-    #     # tcpuSPH = time.time() - startTime
-    #     # TcpuSPH = TcpuSPH + tcpuSPH
-    #     # startTime = time.time()
-    #     forceSPHX1[j] = forceSPHX1[j] - gradhX * mass * (-gravAcc) / rho
-    #     forceSPHY1[j] = forceSPHY1[j] - gradhY * mass * (-gravAcc) / rho
-    #     forceSPHZ1[j] = forceSPHZ1[j] - gradhZ * mass * (-gravAcc) / rho
-    #     GHX[j] = GHX[j] - gradhX / rho
-    #     GHY[j] = GHY[j] - gradhY / rho
-    #     GHZ[j] = GHZ[j] - gradhZ / rho
-    #     # tcpuadd = time.time() - startTime
-    #     # Tcpuadd = Tcpuadd + tcpuadd
+    GHX = np.zeros(Npart)
+    GHY = np.zeros(Npart)
+    GHZ = np.zeros(Npart)
 
-    indX = (particles['InCell'][:, 0]).astype('int')
-    indY = (particles['InCell'][:, 1]).astype('int')
-    nx, ny, nz = DFAtls.getNormalArray(particles['x'], particles['y'], Nx, Ny, Nz, csz)
-    forceSPHX, forceSPHY, forceSPHZ = computeGradcython(particles, header, nx, ny, nz, indX, indY)
-    forceSPHX = np.asarray(forceSPHX)
-    forceSPHY = np.asarray(forceSPHY)
-    forceSPHZ = np.asarray(forceSPHZ)
-    # print(np.max((forceSPHX-forceSPHX1)/forceSPHX1))
-    # print(np.max((forceSPHY-forceSPHY1)/forceSPHY1))
-    # print(np.max((forceSPHZ-forceSPHZ1)/forceSPHZ1))
+    # loop on particles
+    # TcpuSPH = 0
+    # Tcpuadd = 0
+    for j in range(Npart):
+        mass = particles['m'][j]
+        # adding lateral force (SPH component)
+        # startTime = time.time()
+        # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows, csz)
+        x = particles['x'][j]
+        y = particles['y'][j]
+        nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
+        gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(
+            particles, j, ncols, nrows, csz, nx, ny, nz)
+        # tcpuSPH = time.time() - startTime
+        # TcpuSPH = TcpuSPH + tcpuSPH
+        # startTime = time.time()
+        forceSPHX[j] = forceSPHX[j] - gradhX * mass * (-gravAcc) / rho
+        forceSPHY[j] = forceSPHY[j] - gradhY * mass * (-gravAcc) / rho
+        forceSPHZ[j] = forceSPHZ[j] - gradhZ * mass * (-gravAcc) / rho
+        GHX[j] = GHX[j] - gradhX / rho
+        GHY[j] = GHY[j] - gradhY / rho
+        GHZ[j] = GHZ[j] - gradhZ / rho
+        # tcpuadd = time.time() - startTime
+        # Tcpuadd = Tcpuadd + tcpuadd
+
     # log.info(('cpu time SPH = %s s' % (TcpuSPH / Npart)))
     # log.info(('cpu time SPH add = %s s' % (Tcpuadd / Npart)))
 
