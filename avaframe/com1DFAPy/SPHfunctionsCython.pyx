@@ -193,93 +193,118 @@ def computeGradcython(particles, header, double[:] Nx, double[:] Ny, double[:] N
       # tcpuSPH = time.time() - startTime
       # TcpuSPH = TcpuSPH + tcpuSPH
       # startTime = time.time()
+      # GHX[j] = GHX[j] - gradhX / rho
+      # GHY[j] = GHY[j] - gradhY / rho
+      # GHZ[j] = GHZ[j] - gradhZ / rho
+
       GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
       GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc
       GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc
       # tcpuadd = time.time() - startTime
       # Tcpuadd = Tcpuadd + tcpuadd
     return GHX, GHY, GHZ
-#
-#
-# def calcGradHSPH(double[:] X, double[:] Y, double[:] Z, double[:] M, long[:] indPartInCell, long[:] partInCell, int indx, int indy, int j, int ncols, int nrows, double csz):
-#     """ Compute gradient of Flow Depth using SPH (for loop implementation)
-#
-#     Parameters
-#     ----------
-#     particles : dict
-#     j: int
-#         index of particle under consideration
-#     ncols: int
-#         number of columns of the DEM
-#     nrows: int
-#         number of rows of the DEM
-#     csz  : float
-#         cellsize of the DEM
-#
-#     Returns
-#     -------
-#     gradhX: float
-#         x coordinate of the gradient of the flow depth at particle j location
-#     gradhY: float
-#         x coordinate of the gradient of the flow depth at particle j location
-#     gradhZ: float
-#         x coordinate of the gradient of the flow depth at particle j location
-#     L: 1D numpy array
-#         index of particles within the kernel function radius
-#     """
-#     # SPH kernel
-#     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
-#     cdef double rKernel = csz
-#     cdef double facKernel = 10.0 / (3.1415 * rKernel*rKernel*rKernel*rKernel*rKernel)
-#     cdef double dfacKernel = -3.0 * facKernel
-#     cdef double x = X[j]
-#     cdef double y = Y[j]
-#     cdef double z = Z[j]
-#     cdef double dx, dy, dz, r, hr, dwdr, massl
-#     # With loop
-#     cdef double gradhX = 0
-#     cdef double gradhY = 0
-#     cdef double gradhZ = 0
-#     # startTime = time.time()
-#     L = np.empty((0), dtype=int)
-#     # check if we are on the bottom ot top row!!!
-#     cdef int lInd = -1
-#     cdef int rInd = 2
-#     cdef int ic, n, p, l, imax, imin, iPstart, iPend
-#     if indy == 0:
-#         lInd = 0
-#     if indy == nrows - 1:
-#         rInd = 1
-#     for n in range(lInd, rInd):
-#         ic = (indx - 1) + ncols * (indy + n)
-#         # make sure not to take particles from the other edge
-#         imax = max(ic, ncols * (indy + n))
-#         imin = min(ic+3, ncols * (indy + n + 1))
-#         iPstart = int(indPartInCell[imax])
-#         iPend = int(indPartInCell[imin])
-#         # loop on all particles in neighbour boxes
-#         for p in range(iPstart, iPend):
-#             # index of particle in neighbour box
-#             l = int(partInCell[p])
-#             if j != l:
-#                 L = np.append(L, l)
-#                 dx = X[l] - x
-#                 dy = Y[l] - y
-#                 dz = Z[l] - z
-#                 r = norm(dx, dy, dz)
-#                 if r < 0.001 * rKernel:
-#                     # impose a minimum distance between particles
-#                     r = 0.001 * rKernel
-#                 if r < rKernel:
-#                     hr = rKernel - r
-#                     dwdr = dfacKernel * hr * hr
-#                     massl = M[l]
-#                     gradhX = gradhX + massl * dwdr * dx / r
-#                     gradhY = gradhY + massl * dwdr * dy / r
-#                     gradhZ = gradhZ + massl * dwdr * dz / r
-#     # print((time.time() - startTime)/1)
-#
-#     return gradhX, gradhY,  gradhZ, L
+
+
+def computeFDcython(particles, header, double[:] Nx, double[:] Ny, double[:] Nz, long[:] indX, long[:] indY):
+  cdef double[:] mass = particles['m']
+  cdef double[:] X = particles['x']
+  cdef double[:] Y = particles['y']
+  cdef double[:] Z = particles['z']
+  cdef double[:] UX = particles['ux']
+  cdef double[:] UY = particles['uy']
+  cdef double[:] UZ = particles['uz']
+  cdef long[:] indPartInCell = particles['indPartInCell']
+  cdef long[:] partInCell = particles['partInCell']
+  cdef int N = X.shape[0]
+  cdef int nrows = header.nrows
+  cdef int ncols = header.ncols
+  cdef double rKernel = csz
+  cdef double facKernel = 10.0 / (3.1415 * rKernel*rKernel*rKernel*rKernel*rKernel)
+  cdef double[:] H = np.zeros(N)
+  cdef double dn, h, nx, ny, nz
+  cdef int j
+  cdef double xx, yy, zz
+  cdef double dx, dy, dz, r, hr, dwdr, massl
+  cdef int lInd = -1
+  cdef int rInd = 2
+  cdef long indx
+  cdef long indy
+  cdef int ic, n, p, l, imax, imin, iPstart, iPend
+  # With loop
+  # loop on particles
+  # TcpuSPH = 0
+  # Tcpuadd = 0
+  for j in range(N):
+    xx = X[j]
+    yy = Y[j]
+    zz = Z[j]
+    h = 0
+    indx = indX[j]
+    indy = indY[j]
+    nx = Nx[j]
+    ny = Ny[j]
+    nz = Nz[j]
+
+    # SPH kernel
+    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
+    # startTime = time.time()
+    # L = np.empty((0), dtype=int)
+    # check if we are on the bottom ot top row!!!
+    lInd = -1
+    rInd = 2
+    if indy == 0:
+        lInd = 0
+    if indy == nrows - 1:
+        rInd = 1
+    for n in range(lInd, rInd):
+        ic = (indx - 1) + ncols * (indy + n)
+        # make sure not to take particles from the other edge
+        imax = max(ic, ncols * (indy + n))
+        imin = min(ic+3, ncols * (indy + n + 1))
+        iPstart = indPartInCell[imax]
+        iPend = indPartInCell[imin]
+        # loop on all particles in neighbour boxes
+        for p in range(iPstart, iPend):
+            # index of particle in neighbour box
+            l = partInCell[p]
+            if j != l:
+                # L = np.append(L, l)
+                dx = X[l] - xx
+                dy = Y[l] - yy
+                dz = Z[l] - zz
+                # get coordinates in local coord system
+                dn = nx*dx + ny*dy + nz*dz
+                dx = dx - dn*nx
+                dy = dy - dn*ny
+                dz = dz - dn*nz
+                # impse r3=0 even if the particle is not exactly on the tengent plane
+                # get norm of r = xj - xl
+                r = norm(dx, dy, dz)
+                # r = norm(dx, dy, dz)
+                if r < 0.0001 * rKernel:
+                    # impose a minimum distance between particles
+                    dx = 0.0001 * rKernel * dx
+                    dy = 0.0001 * rKernel * dy
+                    dz = 0.0001 * rKernel * dz
+                    r = 0.0001 * rKernel
+                if r < rKernel:
+                    hr = rKernel - r
+                    w = facKernel * hr * hr * hr
+                    massl = mass[l]
+                    dh = massl * w
+                    h = h + dh
+
+                    # gradhX = gradhX + mdwdrr * dx
+                    # gradhY = gradhY + mdwdrr * dy
+                    # gradhZ = gradhZ + mdwdrr * dz
+    # tcpuSPH = time.time() - startTime
+    # TcpuSPH = TcpuSPH + tcpuSPH
+    # startTime = time.time()
+    H[j] = H[j] + h / rho
+    # tcpuadd = time.time() - startTime
+    # Tcpuadd = Tcpuadd + tcpuadd
+  return H
+
 
 cdef double norm(double x, double y, double z):
   """ Compute the Euclidean norm of the vector (x, y, z).

@@ -327,8 +327,17 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     if flagFDSPH:
         # get SPH flow depth
-        particles = SPH.computeFlowDepth(cfg, particles, dem)
-
+        # particles = SPH.computeFlowDepth(cfg, particles, dem)
+        header = dem['header']
+        Nx = dem['Nx']
+        Ny = dem['Ny']
+        Nz = dem['Nz']
+        indX = (particles['InCell'][:, 0]).astype('int')
+        indY = (particles['InCell'][:, 1]).astype('int')
+        nx, ny, nz = DFAtls.getNormalArray(particles['x'], particles['y'], Nx, Ny, Nz, csz)
+        H = computeFDcython(particles, header, nx, ny, nz, indX, indY)
+        H = np.asarray(H)
+        particles['hSPH'] = H
     # update fields (compute grid values)
     startTime = time.time()
     particles, fields = updateFields(cfg, particles, force, dem, fields)

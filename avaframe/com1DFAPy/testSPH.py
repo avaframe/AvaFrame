@@ -213,8 +213,6 @@ for DX in NDX:
             plt.close()
             # plt.show()
 
-        # Compute sph FD
-        particles = SPH.computeFlowDepth(cfg, particles, dem)
 
         # Compute SPH gradient
         m = particles['m']
@@ -237,10 +235,14 @@ for DX in NDX:
         GHZ = np.asarray(GHZ)
         tottime = time.time() - startTime
         print(tottime)
-        # startTime = time.time()
-        # GHX1, GHY1, GHZ1 = computeGrad(Npart, particles, Nx, Ny, Nz, NX, NY)
-        # tottime = time.time() - startTime
-        # print(tottime)
+        startTime = time.time()
+        # Compute sph FD
+        H = computeFDcython(particles, header, nx, ny, nz, indX, indY)
+        H = np.asarray(H)
+        print(np.shape(H))
+        particles['hSPH'] = H
+        tottime = time.time() - startTime
+        print(tottime)
 
         Area = dem['Area']
         # Update fields using a nearest interpolation
