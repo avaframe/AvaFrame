@@ -77,11 +77,11 @@ NDX = [5]
 # choose the number of particles per DX and DY
 # if you choose 3, you will have 3*3 = 9 particles per grid cell
 # NPartPerD = [40]
-NPartPerD = [3, 5, 9, 15, 39] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
+NPartPerD = [2, 3, 5, 9, 15, 39] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
-coef = 0.5
+coef = 0.
 rho = 200
 ##############################################################################
 # END CHOOSE SETUP
@@ -221,22 +221,26 @@ for DX in NDX:
         x = particles['x']
         y = particles['y']
         z = particles['z']
+        ux = particles['ux']
+        uy = particles['uy']
+        uz = particles['uz']
         startTime = time.time()
 
         indPartInCell = (particles['indPartInCell']).astype('int')
         partInCell = (particles['partInCell']).astype('int')
         indX = (particles['InCell'][:, 0]).astype('int')
         indY = (particles['InCell'][:, 1]).astype('int')
-        GHX, GHY, GHZ = coputeGradcython(Npart, m, x, y, z, Nx, Ny, Nz, indPartInCell, partInCell, indX, indY, NX, NY)
+        nx, ny, nz = DFAtls.getNormalArray(x, y, Nx, Ny, Nz, csz)
+        GHX, GHY, GHZ = computeGradcython(particles, header, nx, ny, nz, indX, indY)
         GHX = np.asarray(GHX)
         GHY = np.asarray(GHY)
         GHZ = np.asarray(GHZ)
         tottime = time.time() - startTime
         print(tottime)
-        startTime = time.time()
-        GHX1, GHY1, GHZ1 = coputeGrad(Npart, particles, Nx, Ny, Nz, NX, NY)
-        tottime = time.time() - startTime
-        print(tottime)
+        # startTime = time.time()
+        # GHX1, GHY1, GHZ1 = computeGrad(Npart, particles, Nx, Ny, Nz, NX, NY)
+        # tottime = time.time() - startTime
+        # print(tottime)
 
         Area = dem['Area']
         # Update fields using a nearest interpolation
