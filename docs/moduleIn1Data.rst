@@ -1,10 +1,7 @@
 in1Data: computeFromDistribution
 ==========================
 
-This function allows to retrieve a sample of values that are distributed following a uniform, or Pert distribution.
-The sample ranges from the provided minimum to maximum value for which the PDF (probability density function) equals zero.
-If the those should be excluded as their probability to occur is zero, set flagMinMax to False.
-
+This function allows to retrieve a sample of values that are distributed following a uniform or Pert distribution.
 
 Inputs
 -------
