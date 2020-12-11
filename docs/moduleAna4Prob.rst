@@ -4,9 +4,7 @@ ana4Prob: probAna
 probAna can be used to derive simple probability maps for the point-wise probability that
 an avalanche will exceed a threshold of a result parameter for a given set of
 avalanche simulations. For example, a map of the probability that an avalanche will exceed a
-peak pressure of 1kPa can be created. This point-wise probability is expressed by the relative
-frequency of avalanche pressure exceeding 1kPa for a set of deterministic avalanche simulations
-derived from a range of input parameters (see :cite:`HyBeBu2019`).
+peak pressure of 1kPa can be created. 
 
 In order to generate this map, a set of multiple avalanche simulations is required. This can be generated with com1DFA
 using parameter variation, different release-, entrainment- or resistance scenarios.
@@ -45,3 +43,6 @@ To run
 
 Theory
 -----------
+This point-wise probability is expressed by the relative
+frequency of avalanche pressure exceeding 1kPa for a set of deterministic avalanche simulations
+derived from a range of input parameters (see :cite:`HyBeBu2019`).
