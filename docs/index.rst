@@ -61,6 +61,7 @@ Input/transformation modules
 
 .. only:: html
 
+    * :doc:`moduleIn1Data`
     * :doc:`moduleIn2Trans`
     * :doc:`moduleIn3Utils`
 
@@ -69,6 +70,7 @@ Input/transformation modules
    :hidden:
    :caption: Input/transformation modules
 
+   moduleIn1Data.rst
    moduleIn2Trans.rst
    moduleIn3Utils.rst
 
@@ -78,6 +80,7 @@ Analysis/helper modules
 .. only:: html
 
     * :doc:`moduleAna3AIMEC`
+    * :doc:`moduleAna4Prob`
     * :doc:`moduleOut1Peak`
     * :doc:`moduleOut3Plot`
     * :doc:`moduleLog2Report`
@@ -88,6 +91,7 @@ Analysis/helper modules
    :caption: Analysis/helper Modules
 
    moduleAna3AIMEC.rst
+   moduleAna4Prob.rst
    moduleOut1Peak.rst
    moduleOut3Plot.rst
    moduleLog2Report.rst
@@ -122,5 +126,3 @@ References
 
     zreferences.rst
     dataSources.rst
-
-
