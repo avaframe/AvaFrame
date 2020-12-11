@@ -29,8 +29,9 @@ cdef int SPHoption = 2
 
 cdef double rho = 200
 cdef double csz = 5
+cdef double gravAcc = 9.81
 
-def coputeGrad(Npart, particles, Nx, Ny, Nz, NX, NY):
+def computeGrad(Npart, particles, Nx, Ny, Nz, NX, NY):
     Npart = particles['Npart']
     # initialize
     GHX = np.zeros(Npart)
@@ -59,18 +60,30 @@ def coputeGrad(Npart, particles, Nx, Ny, Nz, NX, NY):
 
     return GHX, GHY, GHZ
 
-def coputeGradcython(int Npart, double[:] m, double[:] X, double[:] Y, double[:] Z, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, long[:] indPartInCell, long[:] partInCell, long[:] indX, long[:] indY, int ncols, int nrows):
+def computeGradcython(particles, header, double[:] Nx, double[:] Ny, double[:] Nz, long[:] indX, long[:] indY):
+    cdef double[:] mass = particles['m']
+    cdef double[:] X = particles['x']
+    cdef double[:] Y = particles['y']
+    cdef double[:] Z = particles['z']
+    cdef double[:] UX = particles['ux']
+    cdef double[:] UY = particles['uy']
+    cdef double[:] UZ = particles['uz']
+    cdef long[:] indPartInCell = particles['indPartInCell']
+    cdef long[:] partInCell = particles['partInCell']
     cdef int N = X.shape[0]
+    cdef int nrows = header.nrows
+    cdef int ncols = header.ncols
     cdef double rKernel = csz
     cdef double facKernel = 10.0 / (3.1415 * rKernel*rKernel*rKernel*rKernel*rKernel)
     cdef double dfacKernel = -3.0 * facKernel
     cdef double[:] GHX = np.zeros(N)
     cdef double[:] GHY = np.zeros(N)
     cdef double[:] GHZ = np.zeros(N)
-    cdef double[:] mass = m
-    cdef double gradhX, gradhY, gradhZ, uMag
+    cdef double K1 = 1
+    cdef double K2 = 1
+    cdef double gradhX, gradhY, gradhZ, uMag, g1, g2, nx, ny, nz, G1, G2, G3
     cdef int j
-    cdef double xx, yy, zz, ux, uy, uz, uxOrtho, uyOrtho, uzOrtho
+    cdef double xx, yy, zz, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
     cdef double dx, dy, dz, r, hr, dwdr, massl
     cdef int lInd = -1
     cdef int rInd = 2
@@ -93,6 +106,9 @@ def coputeGradcython(int Npart, double[:] m, double[:] X, double[:] Y, double[:]
       ux = UX[j]
       uy = UY[j]
       uz = UZ[j]
+      nx = Nx[j]
+      ny = Ny[j]
+      nz = Nz[j]
       uMag = norm(ux, uy, uz)
       if uMag < 0.1:
           # ax = 1
@@ -109,31 +125,20 @@ def coputeGradcython(int Npart, double[:] m, double[:] X, double[:] Y, double[:]
       uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
       uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
 
-      v1 = np.array([[ux, uy, uz]])
-      v2 = np.array([[uxOrtho, uyOrtho, uzOrtho]])
-      v3 = np.array([[nx, ny, nz]])
-      # build the transformation matrix from (e1, e2, e3) to (ex, ey, ez)
-      M = np.concatenate((v1.T, v2.T), axis=1)
-      M = np.concatenate((M, v3.T), axis=1)
-      # compute the transformation matrix from (ex, ey, ez) to (e1, e2, e3)
-      MM1 = M.T  # because M is orthogonal, it inverse is its transpose !!! np.linalg.inv(M).T
-
       # now take into accout the fact that we are on the surface so the r3 or x3
       # component is not independent from the 2 other ones!!
-      ux = ux - nx*uz/nz
-      uy = uy - nx*uzOrtho/nz
-      uxOrtho = uxOrtho - ny*uz/nz
-      uyOrtho = uyOrtho - ny*uzOrtho/nz
-      # print(M)
-
-      # buil the matrix that transforms the gradient in (r1, r2, r3) to the one in (x1, x2, x3)
-      MMGrad = MM1.T
+      vx = ux - nx*uz/nz
+      vy = uy - ny*uz/nz
+      wx = uxOrtho - nx*uzOrtho/nz
+      wy = uyOrtho - ny*uzOrtho/nz
 
       # SPH kernel
       # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
       # startTime = time.time()
       # L = np.empty((0), dtype=int)
       # check if we are on the bottom ot top row!!!
+      lInd = -1
+      rInd = 2
       if indy == 0:
           lInd = 0
       if indy == nrows - 1:
@@ -148,7 +153,7 @@ def coputeGradcython(int Npart, double[:] m, double[:] X, double[:] Y, double[:]
           # loop on all particles in neighbour boxes
           for p in range(iPstart, iPend):
               # index of particle in neighbour box
-              l = int(partInCell[p])
+              l = partInCell[p]
               if j != l:
                   # L = np.append(L, l)
                   dx = X[l] - xx
@@ -160,7 +165,8 @@ def coputeGradcython(int Npart, double[:] m, double[:] X, double[:] Y, double[:]
                   # impse r3=0 even if the particle is not exactly on the tengent plane
                   # get norm of r = xj - xl
                   r = norm(r1, r2, 0)
-                  if r < 0.001 * rKernel:
+                  # r = norm(dx, dy, dz)
+                  if r < 0.0001 * rKernel:
                       # impose a minimum distance between particles
                       r1 = 0.0001 * rKernel * r1
                       r2 = 0.0001 * rKernel * r2
@@ -170,10 +176,6 @@ def coputeGradcython(int Npart, double[:] m, double[:] X, double[:] Y, double[:]
                       dwdr = dfacKernel * hr * hr
                       massl = mass[l]
                       mdwdrr = massl * dwdr / r
-                      gradhX = gradhX + massl * dwdr * dx / r
-                      gradhY = gradhY + massl * dwdr * dy / r
-                      gradhZ = gradhZ + massl * dwdr * dz / r
-                      K1, K2 = 1, 1
                       G1 = mdwdrr * K1*r1
                       G2 = mdwdrr * K2*r2
                       G3 = 0
@@ -181,19 +183,19 @@ def coputeGradcython(int Npart, double[:] m, double[:] X, double[:] Y, double[:]
                       g1 = nx/(nz)
                       g2 = ny/(nz)
 
-                      GX1 = MMGrad[0, 0]*G1 + MMGrad[0, 1]*G2
-                      GY1 = MMGrad[1, 0]*G1 + MMGrad[1, 1]*G2
-                      GZ1 = (- g1*GX1 - g2*GY1)
+                      gradhX = gradhX + vx*G1 + wx*G2
+                      gradhY = gradhY + vy*G1 + wy*G2
+                      gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
 
-                      GX = np.sum(GX1)
-                      GY = np.sum(GY1)
-                      GZ = np.sum(GZ1)
+                      # gradhX = gradhX + mdwdrr * dx
+                      # gradhY = gradhY + mdwdrr * dy
+                      # gradhZ = gradhZ + mdwdrr * dz
       # tcpuSPH = time.time() - startTime
       # TcpuSPH = TcpuSPH + tcpuSPH
       # startTime = time.time()
-      GHX[j] = GHX[j] - gradhX / rho
-      GHY[j] = GHY[j] - gradhY / rho
-      GHZ[j] = GHZ[j] - gradhZ / rho
+      GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
+      GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc
+      GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc
       # tcpuadd = time.time() - startTime
       # Tcpuadd = Tcpuadd + tcpuadd
     return GHX, GHY, GHZ
@@ -300,53 +302,53 @@ cdef double norm(double x, double y, double z):
   """
   return sqrt(x*x + y*y + z*z)
 
-  cdef normalize(double x, double y, double z):
-      """ Normalize vector (x, y, z) for the Euclidean norm.
+cpdef normalize(double x, double y, double z):
+  """ Normalize vector (x, y, z) for the Euclidean norm.
 
-      (x, y, z) can be np arrays.
+  (x, y, z) can be np arrays.
 
-      Parameters
-      ----------
-          x: numpy array
-              x component of the vector
-          y: numpy array
-              y component of the vector
-          z: numpy array
-              z component of the vector
+  Parameters
+  ----------
+      x: numpy array
+          x component of the vector
+      y: numpy array
+          y component of the vector
+      z: numpy array
+          z component of the vector
 
-      Returns
-      -------
-          xn: numpy array
-              x component of the normalized vector
-          yn: numpy array
-              y component of the normalized vector
-          zn: numpy array
-              z component of the normalized vector
-      """
-      # TODO : avoid error message when input vector is zero and make sure
-      # to return zero
-      double norme = norm(x, y, z)
-      double xn = x / norme
-      # xn = np.where(np.isnan(xn), 0, xn)
-      double yn = y / norme
-      # yn = np.where(np.isnan(yn), 0, yn)
-      double zn = z / norme
-      # zn = np.where(np.isnan(zn), 0, zn)
-
-      return xn, yn, zn
-
-
-  cdef croosProd(double ux, double uy, double uz, double vx, double vy, double vz):
-      """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
-      """
-      double wx = uy*vz - uz*vy
-      double wy = uz*vx - ux*vz
-      double wz = ux*vy - uy*vx
-
-      return wx, wy, wz
+  Returns
+  -------
+      xn: numpy array
+          x component of the normalized vector
+      yn: numpy array
+          y component of the normalized vector
+      zn: numpy array
+          z component of the normalized vector
+  """
+  # TODO : avoid error message when input vector is zero and make sure
+  # to return zero
+  cdef double norme
+  norme = norm(x, y, z)
+  cdef double xn = x / norme
+  # xn = np.where(np.isnan(xn), 0, xn)
+  cdef double yn = y / norme
+  # yn = np.where(np.isnan(yn), 0, yn)
+  cdef double zn = z / norme
+  # zn = np.where(np.isnan(zn), 0, zn)
+  return xn, yn, zn
 
 
-  cdef double scalProd(double ux, double uy, double uz, double vx, double vy, double vz):
-      """ Compute scalar product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
-      """
-      return ux*vx + uy*vy + uz*vz
+cpdef croosProd(double ux, double uy, double uz, double vx, double vy, double vz):
+  """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
+  """
+  cdef double wx = uy*vz - uz*vy
+  cdef double wy = uz*vx - ux*vz
+  cdef double wz = ux*vy - uy*vx
+
+  return wx, wy, wz
+
+
+cdef double scalProd(double ux, double uy, double uz, double vx, double vy, double vz):
+  """ Compute scalar product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
+  """
+  return ux*vx + uy*vy + uz*vz
