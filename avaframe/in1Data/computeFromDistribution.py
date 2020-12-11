@@ -1,8 +1,5 @@
 """
     Extract sample of values to fit a beta-pert distribution
-
-    This file is part of Avaframe.
-
 """
 
 # load python modules
@@ -53,8 +50,13 @@ def extractFromCDF(CDF, CDFint, x, cfg):
 
     # extract number of samples using function generated using scipy.interpolate
     # more robust regarding septs vs CDFinterval
-    ySampling = np.linspace(0.0, 1.0, int(cfg['sampleSize'])+1)
-    sampleVect = CDFint(ySampling)
+    if cfg.getboolean('flagMinMax'):
+        ySampling = np.linspace(0.0, 1.0, int(cfg['sampleSize']))
+        sampleVect = CDFint(ySampling)
+    else:
+        ySampling = np.linspace(0.0, 1.0, int(cfg['sampleSize'])+2)
+        sampleVect = CDFint(ySampling)
+        sampleVect = sampleVect[1:-1]
 
     return sampleVect
 
@@ -65,15 +67,25 @@ def extractUniform(a, c, x, cfg):
     # load parameters
     sampleSize = int(cfg['sampleSize'])
 
+    if cfg.getboolean('flagMinMax'):
+        sampleSize = sampleSize
+    else:
+        sampleSize = sampleSize + 2
+
     # compute interval
-    fullInterval = 100000.0 * ((c - a) / sampleSize)
+    fullInterval = 100000.0 * ((c - a) / (sampleSize-1))
     interval = np.around(fullInterval) * 0.00001
 
     # Compute sample
-    sampleVect = np.zeros(sampleSize+1)
+    sampleVect = np.zeros(sampleSize)
     sampleVect[0] = a
-    for m in range(1,sampleSize+1):
+    for m in range(1,sampleSize):
         sampleVect[m] = sampleVect[m-1] + interval
+
+    if cfg.getboolean('flagMinMax'):
+        sampleSize = sampleSize
+    else:
+        sampleVect = sampleVect[1:-1]
 
     CDF = np.linspace(0, 1, int(cfg['support']))
     CDFInt = interp1d(x, CDF)
