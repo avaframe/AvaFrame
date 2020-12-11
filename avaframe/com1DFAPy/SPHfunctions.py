@@ -423,7 +423,7 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
 
         g1 = nx/(nz)
         g2 = ny/(nz)
-
+        
         GX1 = MMGrad[0, 0]*G1 + MMGrad[0, 1]*G2
         GY1 = MMGrad[1, 0]*G1 + MMGrad[1, 1]*G2
         GZ1 = (- g1*GX1 - g2*GY1)
