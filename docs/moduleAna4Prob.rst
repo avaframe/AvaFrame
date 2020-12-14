@@ -6,11 +6,11 @@ an avalanche result parameter exceeding a threshold for a given set of
 avalanche simulations. For example, a probability map of an avalanche exceeding a
 peak pressure of 1kPa can be created. 
 
-In order to generate this map, a set of multiple avalanche simulations is required. This can be generated with com1DFA
+A set of multiple avalanche simulations is required to generate these maps. This can be generated with com1DFA
 using parameter variation, different release-, entrainment- or resistance scenarios.
-An example is given in runProbAna.py where for the hockey topography, avalanche simulations
-are performed with varying release thickness and then a probability map is generated that
-ranges from 0-1, which corresponds to a probability of 0-100 %.
+See runProbAna.py for an example: avalanche simulations for the hockey topography 
+are performed with varying release thickness and a probability map is generated
+ranging from 0-1, which corresponds to a probability of 0-100 %.
 
 
 Inputs
