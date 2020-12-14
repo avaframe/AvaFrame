@@ -1,9 +1,9 @@
 ana4Prob: probAna
 ==========================
 
-probAna can be used to derive simple probability maps for the point-wise probability that
-an avalanche will exceed a threshold of a result parameter for a given set of
-avalanche simulations. For example, a map of the probability that an avalanche will exceed a
+probAna is used to derive simple probability maps for the point-wise probability of
+an avalanche result parameter exceeding a threshold for a given set of
+avalanche simulations. For example, a probability map of an avalanche exceeding a
 peak pressure of 1kPa can be created. 
 
 In order to generate this map, a set of multiple avalanche simulations is required. This can be generated with com1DFA
