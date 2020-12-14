@@ -117,7 +117,7 @@ as a next step, you need to add the benchmark results:
 
 .. Note::  The names of the peak files have to be identical to the names of the simulation results, just use `ref` instead of `dfa`.
 
-Now, you are ready to go! Just move to ``AvaFrame/avaframe`` and run: ::
+Now, you are ready to go! Move to ``AvaFrame/avaframe`` and run: ::
 
   python runStandardTests.py
 
