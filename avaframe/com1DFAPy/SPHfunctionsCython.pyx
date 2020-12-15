@@ -246,14 +246,20 @@ def computeGradC(particles, header, np.ndarray[dtypef_t, ndim=1] Nx,
         uy = 0
         uz = -(1*nx + 0*ny) / nz
         # uz = -(ax*nx + ay*ny) / nz
-        ux, uy, uz = normalize(ux, uy, uz)
+        normalize(ux, uy, uz)
+        # ux, uy, uz = normalize(ux, uy, uz)
     else:
         # TODO check if direction is non zero, if it is define another u1 direction
         ux, uy, uz = normalize(ux, uy, uz)
 
     # uxOrtho, uyOrtho, uzOrtho = 0., 0., 0.
     uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
-    uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+    # uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+    normalize(uxOrtho, uyOrtho, uzOrtho)
+    print('norme')
+    print(norm(ux, uy, uz))
+    print(norm(nx, ny, nz))
+    print(norm(uxOrtho, uyOrtho, uzOrtho))
 
     # now take into accout the fact that we are on the surface so the r3 or x3
     # component is not independent from the 2 other ones!!
@@ -487,7 +493,7 @@ def norm2py(x, y, z): # <-- small wrapper to expose norm2() to Python
 
 
 # @cython.cdivision(True)
-cpdef normalize(double x, double y, double z):
+cdef normalize(double* x, double* y, double* z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
 
   (x, y, z) can be np arrays.
@@ -520,11 +526,14 @@ cpdef normalize(double x, double y, double z):
   # yn = np.where(np.isnan(yn), 0, yn)
   z = z / norme
   # zn = np.where(np.isnan(zn), 0, zn)
-  return x, y, z
+  # return x, y, z
 
 
 def normalizepy(x, y, z): # <-- small wrapper to expose normalize() to Python
-    return normalize(x, y, z)
+    cdef double xx = x
+    cdef double yy = y
+    cdef double zz = z
+    return normalize(xx, yy, zz)
 
 
 cpdef croosProd(double ux, double uy, double uz, double vx, double vy, double vz):
