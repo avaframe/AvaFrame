@@ -80,7 +80,7 @@ def getcfldTwithConstraints(particles, dem, cfg):
 
     # 'overwrite' dt that is read from cfg ini file
     cfg['dt'] = str(dtStable)
-    log.info('dtStable is with cMAX=%.1f is: %.4f with vmax:%.2f' % (cMax, dtStable, vmax))
+    log.debug('dtStable is with cMAX=%.1f is: %.4f with vmax:%.2f' % (cMax, dtStable, vmax))
 
     # return stable time step
     return dtStable

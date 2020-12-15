@@ -3,8 +3,6 @@
     This file is part of Avaframe.
 
 """
-import pyximport
-pyximport.install()
 
 import logging
 import time
@@ -24,7 +22,10 @@ import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.SPHfunctions as SPH
 import avaframe.com1DFAPy.frictionLaws as fricLaws
 
-from SPHfunctionsCython import *
+# import pyximport
+# pyximport.install()
+
+import avaframe.com1DFAPy.SPHfunctionsCython as SPHC
 # import avaframe.in2Trans.shpConversion as shpConv
 # import avaframe.in2Trans.ascUtils as IOf
 # from avaframe.DFAkernel.setParam import *
@@ -44,6 +45,8 @@ flagFDSPH = False
 featLF = False
 featCFL = False
 featCFLConstrain = True
+# use cython functions
+flagCython = False
 
 
 def initializeMesh(dem, num=4):
@@ -87,7 +90,9 @@ def initializeSimulation(cfg, relRaster, dem):
     Ypart = np.empty(0)
     Mpart = np.empty(0)
     Hpart = np.empty(0)
-    InCell = np.empty((0, 3), int)
+    InCell = np.empty((0), int)
+    IndX = np.empty((0), int)
+    IndY = np.empty((0), int)
     # find all non empty cells (meaning release area)
     indY, indX = np.nonzero(relRaster)
     # loop on non empty cells
@@ -100,14 +105,16 @@ def initializeSimulation(cfg, relRaster, dem):
         Npart = Npart + nPart
         partPerCell[indy, indx] = nPart
         # initialize field Flow depth
-        FD[indY, indX] = h
+        FD[indy, indx] = h
         # initialize particles position mass height...
         Xpart = np.append(Xpart, xpart)
         Ypart = np.append(Ypart, ypart)
         Mpart = np.append(Mpart, mPart * np.ones(nPart))
         Hpart = np.append(Hpart, h * np.ones(nPart))
         ic = indx + ncols * indy
-        InCell = np.append(InCell, np.tile(np.array([indx, indy, ic]), (nPart, 1)), axis=0)
+        IndX = np.append(IndX, np.ones(nPart)*indx)
+        IndY = np.append(IndY, np.ones(nPart)*indy)
+        InCell = np.append(InCell, np.ones(nPart)*ic)
 
     # create dictionnary to store particles properties
     particles = {}
@@ -130,6 +137,8 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['GHY'] = np.zeros(np.shape(Xpart))
     particles['GHZ'] = np.zeros(np.shape(Xpart))
     particles['InCell'] = InCell
+    particles['indX'] = IndX
+    particles['indY'] = IndY
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
@@ -154,8 +163,10 @@ def initializeSimulation(cfg, relRaster, dem):
 
     # get particles location (neighbours for sph)
     # particles = getNeighbours(particles, dem)
-    particles = SPH.getNeighboursVect(particles, dem)
-    # particles = getNeighboursC(particles, dem)
+    if flagCython:
+        particles = SPHC.getNeighboursC(particles, dem)
+    else:
+        particles = SPH.getNeighboursVect(particles, dem)
     # initialize time
     t = 0
     particles['t'] = t
@@ -246,6 +257,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # Initialize time and counters
     nSave = 0
     nIter = 0
+    nIter0 = 0
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
@@ -266,6 +278,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         dt = cfg.getfloat('dt')
         t = t + dt
         nIter = nIter + 1
+        nIter0 = nIter0 + 1
         log.debug('Computing time step t = %f s', t)
         T = np.append(T, t)
         particles['t'] = t
@@ -286,6 +299,19 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         if t >= nSave * dtSave:
             log.info('Saving results for time step t = %f s', t)
             log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+            log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
+            log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
+            log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
+            log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
+            log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
+            log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
+            # nIter0 = 0
+            # Tcpu['Force'] = 0.
+            # Tcpu['ForceVect'] = 0.
+            # Tcpu['ForceSPH'] = 0.
+            # Tcpu['Pos'] = 0.
+            # Tcpu['Neigh'] = 0.
+            # Tcpu['Field'] = 0.
             Particles.append(copy.deepcopy(particles))
             Fields.append(copy.deepcopy(fields))
             nSave = nSave + 1
@@ -309,7 +335,10 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     Tcpu['ForceVect'] = Tcpu['ForceVect'] + tcpuForceVect
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
-    particles, force = computeForceSPH(cfg, particles, force, dem)
+    if flagCython:
+        particles, force = SPHC.computeForceSPHC(cfg, particles, force, dem)
+    else:
+        particles, force = computeForceSPH(cfg, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
@@ -321,9 +350,12 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # get particles location (neighbours for sph)
     startTime = time.time()
-    # particles = getNeighbours(particles, dem)
-    particles = SPH.getNeighboursVect(particles, dem)
-    # particles = getNeighboursC(particles, dem)
+    if flagCython:
+        particles = SPHC.getNeighboursC(particles, dem)
+    else:
+        # particles = getNeighbours(particles, dem)
+        particles = SPH.getNeighboursVect(particles, dem)
+
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
 
@@ -334,8 +366,8 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         Nx = dem['Nx']
         Ny = dem['Ny']
         Nz = dem['Nz']
-        indX = (particles['InCell'][:, 0]).astype('int')
-        indY = (particles['InCell'][:, 1]).astype('int')
+        indX = (particles['indX']).astype('int')
+        indY = (particles['indY']).astype('int')
         nx, ny, nz = DFAtls.getNormalArray(particles['x'], particles['y'], Nx, Ny, Nz, csz)
         H = computeFDcython(particles, header, nx, ny, nz, indX, indY)
         H = np.asarray(H)
@@ -464,8 +496,10 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # ++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()
-    particles = SPH.getNeighboursVect(particles, dem)
-    # particles = getNeighboursC(particles, dem)
+    if flagCython:
+        particles = SPHC.getNeighboursC(particles, dem)
+    else:
+        particles = SPH.getNeighboursVect(particles, dem)
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
 
@@ -567,7 +601,9 @@ def computeForce(cfg, particles, dem, Ment, Cres):
         ux = particles['ux'][j]
         uy = particles['uy'][j]
         uz = particles['uz'][j]
-        indCellX, indCellY, Cell = particles['InCell'][j]
+        indCellX = particles['indX'][j]
+        indCellY = particles['indY'][j]
+        InCell = particles['InCell'][j]
         # deduce area
         A = mass / (h * rho)
         # get velocity magnitude and direction
@@ -979,7 +1015,7 @@ def updateFields(cfg, particles, force, dem, fields):
     MomNearestZ = np.zeros((nrows, ncols))
 
     # startTime = time.time()
-    iC = particles['InCell'][:, 2]
+    iC = particles['InCell']
     MassNearest = MassNearest.flatten()
     np.add.at(MassNearest, iC, m)
     MomNearestX = MomNearestX.flatten()
@@ -1012,17 +1048,17 @@ def updateFields(cfg, particles, force, dem, fields):
     fields['ppr'] = PP
     fields['pfd'] = PFD
 
-    hNN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='nearest')
-    particles['hNearestNearest'] = hNN  # np.where(h < depMin, depMin, h)
-    hNB, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='bilinear')
-    particles['hNearestBilinear'] = hNB  # np.where(h < depMin, depMin, h)
-    hBN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='nearest')
-    particles['hBilinearNearest'] = hBN  # np.where(h2 < depMin, depMin, h2)
+    # hNN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='nearest')
+    # particles['hNearestNearest'] = hNN  # np.where(h < depMin, depMin, h)
+    # hNB, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='bilinear')
+    # particles['hNearestBilinear'] = hNB  # np.where(h < depMin, depMin, h)
+    # hBN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='nearest')
+    # particles['hBilinearNearest'] = hBN  # np.where(h2 < depMin, depMin, h2)
     hBB, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='bilinear')
 
     # choose the interpolation method
-    indx = particles['InCell'][:, 0]
-    indy = particles['InCell'][:, 1]
+    indx = particles['indX']
+    indy = particles['indY']
     aPart = A[indy, indx]
     hLim = particles['m']/(rho*aPart)
     hBB = np.where(hBB < hLim, hLim, hBB)
@@ -1128,8 +1164,10 @@ def removeSmallPart(hmin, particles, dem):
     if nRemove > 0:
         particles = removePart(particles, mask, nRemove)
         log.info('removed %s particles because they were too thin' % (nRemove))
-        particles = SPH.getNeighboursVect(particles, dem)
-        # particles = getNeighboursC(particles, dem)
+        if flagCython:
+            particles = SPHC.getNeighboursC(particles, dem)
+        else:
+            particles = SPH.getNeighboursVect(particles, dem)
 
     return particles
 
@@ -1146,7 +1184,9 @@ def removePart(particles, mask, nRemove):
     particles['uz'] = particles['uz'][mask]
     particles['m'] = particles['m'][mask]
     particles['h'] = particles['h'][mask]
-    particles['InCell'] = particles['InCell'][mask, :]
+    particles['InCell'] = particles['InCell'][mask]
+    particles['indX'] = particles['indX'][mask]
+    particles['indY'] = particles['indY'][mask]
     particles['partInCell'] = particles['partInCell'][mask]
 
     return particles

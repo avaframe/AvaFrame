@@ -33,7 +33,7 @@ cfg = cfgUtils.getModuleConfig(com1DFA)
 startTime = time.time()
 
 # Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
+initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
 # Run Standalone DFA
 reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
