@@ -51,18 +51,18 @@ def createDEM(Lx, Ly, csz):
     return dem
 
 
-def createParticles(dem, lam, rho):
+def createParticles(dem, lam, rho, Lx, Ly):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
     csz = header.cellsize
-    Lx = ncols*csz-1
-    Ly = nrows*csz-1
-    dx = 1/lam
-    dy = 1/lam
+    # Lx = ncols*csz-1
+    # Ly = nrows*csz-1
+    dx = Lx / lam
+    dy = Ly / lam
     # define particles
-    nx = np.int(Lx * lam)
-    ny = np.int(Ly * lam)
+    nx = lam
+    ny = lam
     Npart = nx*ny
     x = np.linspace(2*csz, Lx-2*csz, nx+1, endpoint=False)[1:]
     y = np.linspace(2*csz, Ly-2*csz, ny+1, endpoint=False)[1:]
