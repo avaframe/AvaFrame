@@ -3,8 +3,6 @@
     This file is part of Avaframe.
 
 """
-import pyximport
-pyximport.install()
 
 import logging
 import time
@@ -259,6 +257,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # Initialize time and counters
     nSave = 0
     nIter = 0
+    nIter0 = 0
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
@@ -279,6 +278,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         dt = cfg.getfloat('dt')
         t = t + dt
         nIter = nIter + 1
+        nIter0 = nIter0 + 1
         log.debug('Computing time step t = %f s', t)
         T = np.append(T, t)
         particles['t'] = t
