@@ -179,4 +179,22 @@ def fetchBenchParameters(avaDir):
 
         avaDictList.append(avaDictName)
 
+    elif avaDictName == 'avaAlrDict':
+        avaDictName = {'simName': 'relAlr_null_dfa_0.15500',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area': 'relAlr',
+                        'Entrainment Area': '',
+                        'Resistance Area': '',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000',
+                        'Release Mass [kg]': '	10586.3',
+                        'Final Mass [kg]': '10586.3'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'relAlr'},
+                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': ''},
+                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs on a Alr DEM.'}}
+
+        avaDictList.append(avaDictName)
+
     return avaDictList
