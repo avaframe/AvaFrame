@@ -73,7 +73,9 @@ def getNeighbours(particles, dem):
     indPartInCell = np.cumsum(indPartInCell)
 
     # make the list of which particles are in which cell
-    InCell = np.empty((0, 3), int).astype(int)
+    indX = np.empty((0), int).astype(int)
+    indY = np.empty((0), int).astype(int)
+    InCell = np.empty((0), int).astype(int)
     indPartInCell2 = copy.deepcopy(indPartInCell)
     for j in range(Npart):
         indx = int((x[j] + csz/2) / csz)
@@ -81,8 +83,13 @@ def getNeighbours(particles, dem):
         ic = indx + ncols * indy
         partInCell[int(indPartInCell2[ic])] = j
         indPartInCell2[ic] = indPartInCell2[ic] + 1
-        InCell = np.append(InCell, np.tile(np.array([indx, indy, ic]), (1, 1)), axis=0)
+        indX = np.append(indX, indx)
+        indY = np.append(indY, indy)
+        InCell = np.append(InCell, ic)
+        # InCell = np.append(InCell, np.tile(np.array([indx, indy, ic]), (1, 1)), axis=0)
 
+    particles['indX'] = indX
+    particles['indY'] = indY
     particles['InCell'] = InCell
     particles['indPartInCell'] = indPartInCell
     particles['partInCell'] = partInCell
@@ -139,11 +146,13 @@ def getNeighboursVect(particles, dem):
 
     # make the list of which particles are in which cell
     partInCell = np.argsort(ic, kind='mergesort')
-    InCell = np.vstack((indx, indy))
-    InCell = np.vstack((InCell, ic))
-    InCell = InCell.T
+    # InCell = np.vstack((indx, indy))
+    # InCell = np.vstack((InCell, ic))
+    # InCell = InCell.T
 
-    particles['InCell'] = InCell
+    particles['indX'] = indx
+    particles['indY'] = indy
+    particles['InCell'] = ic
     particles['indPartInCell'] = indPartInCell
     particles['partInCell'] = partInCell
 
@@ -182,7 +191,8 @@ def calcGradHSPH(particles, j, ncols, nrows, csz):
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
     dfacKernel = -3.0 * facKernel
 
-    indx, indy, _ = particles['InCell'][j]
+    indx = particles['indX'][j]
+    indy = particles['indY'][j]
     indPartInCell = particles['indPartInCell']
     partInCell = particles['partInCell']
     x = particles['x'][j]
@@ -267,7 +277,8 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     dfacKernel = -3.0 * facKernel
 
     # get particle j information
-    indx, indy, _ = particles['InCell'][j]
+    indx = particles['indX'][j]
+    indy = particles['indY'][j]
     indPartInCell = particles['indPartInCell']
     partInCell = particles['partInCell']
     x = particles['x'][j]
@@ -678,7 +689,8 @@ def calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
 
-    indx, indy, _ = particles['InCell'][j]
+    indx = particles['indX'][j]
+    indy = particles['indY'][j]
     indPartInCell = particles['indPartInCell']
     partInCell = particles['partInCell']
     x = particles['x'][j]
