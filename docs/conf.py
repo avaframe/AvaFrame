@@ -41,6 +41,8 @@ extensions = [
     'sphinxcontrib.bibtex',
 ]
 
+bibtex_bibfiles = ['references_all.bib']
+
 # alternative: use base requirements.txt in readthedocs.yml files to install
 # missing modules on rtd
 autosummary_mock_imports = [
