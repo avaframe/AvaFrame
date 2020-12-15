@@ -114,6 +114,8 @@ as a next step, you need to add the benchmark results:
 
   * go to ``AvaFrame/benchmarks`` and add the subdirectory ``NameOfAvalanche``
   * add benchmark data (peak values of result parameters as acii files); this data will be used as reference for the new test!
+  * add the configuration file as ``NameOfAvalanche_Com1DFACfg.ini``
+  * go to ``AvaFrame/benchmarks/simParameters.py`` and add a simulation directory that contains all the info on the new benchmark 
 
 .. Note::  The names of the peak files have to be identical to the names of the simulation results, just use `ref` instead of `dfa`.
 
