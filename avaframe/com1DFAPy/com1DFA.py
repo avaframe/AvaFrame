@@ -46,7 +46,7 @@ featLF = False
 featCFL = False
 featCFLConstrain = True
 # use cython functions
-flagCython = False
+flagCython = True
 
 
 def initializeMesh(dem, num=4):
