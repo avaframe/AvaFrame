@@ -603,7 +603,6 @@ def computeForce(cfg, particles, dem, Ment, Cres):
         uz = particles['uz'][j]
         indCellX = particles['indX'][j]
         indCellY = particles['indY'][j]
-        InCell = particles['InCell'][j]
         # deduce area
         A = mass / (h * rho)
         # get velocity magnitude and direction
@@ -950,16 +949,12 @@ def updatePosition(cfg, particles, dem, force):
 
 def updateFields(cfg, particles, force, dem, fields):
     rho = cfg.getfloat('rho')
-    depMin = cfg.getfloat('depMin')
     header = dem['header']
-    Z = dem['rasterData']
     csz = dem['header'].cellsize
     A = dem['Area']
     ncols = header.ncols
     nrows = header.nrows
-    Npart = particles['Npart']
     m = particles['m']
-    dM = force['dM']
     x = particles['x']
     y = particles['y']
     ux = particles['ux']
@@ -987,66 +982,78 @@ def updateFields(cfg, particles, force, dem, fields):
     #########################################
     # Update fields using a bilinear interpolation
     MassBilinear = np.zeros((nrows, ncols))
-    MassBilinear = geoTrans.pointsToRaster(x, y, m, MassBilinear, csz=csz, interp='bilinear')
+    # MassBilinear = geoTrans.pointsToRaster(x, y, m, MassBilinear, csz=csz, interp='bilinear')
+    MassBilinear = SPHC.pointsToRasterC(x, y, m, MassBilinear, csz=csz)
     FDBilinear = MassBilinear / (A * rho)
 
-    # MomBilinearX = np.zeros((nrows, ncols))
-    # MomBilinearY = np.zeros((nrows, ncols))
-    # MomBilinearZ = np.zeros((nrows, ncols))
-    #
-    # MomBilinearX = geoTrans.pointsToRaster(x, y, m * ux, MomBilinearX, csz=csz, interp='bilinear')
-    # MomBilinearY = geoTrans.pointsToRaster(x, y, m * uy, MomBilinearY, csz=csz, interp='bilinear')
-    # MomBilinearZ = geoTrans.pointsToRaster(x, y, m * uz, MomBilinearZ, csz=csz, interp='bilinear')
-    #
-    # VXBilinear = np.where(MassBilinear > 0, MomBilinearX/MassBilinear, MomBilinearX)
-    # VYBilinear = np.where(MassBilinear > 0, MomBilinearY/MassBilinear, MomBilinearY)
-    # VZBilinear = np.where(MassBilinear > 0, MomBilinearZ/MassBilinear, MomBilinearZ)
-    # VBilinear = DFAtls.norm(VXBilinear, VYBilinear, VZBilinear)
-    # PBilinear = VBilinear * VBilinear * rho
-    # PV = np.where(VBilinear > PV, VBilinear, PV)
-    # PP = np.where(PBilinear > PP, PBilinear, PP)
-    # PFD = np.where(FDBilinear > PFD, FDBilinear, PFD)
+    MomBilinearX = np.zeros((nrows, ncols))
+    MomBilinearY = np.zeros((nrows, ncols))
+    MomBilinearZ = np.zeros((nrows, ncols))
+    VXBilinear = np.zeros((nrows, ncols))
+    VYBilinear = np.zeros((nrows, ncols))
+    VZBilinear = np.zeros((nrows, ncols))
 
-    #########################################
-    # Update fields using a nearest interpolation
-    MassNearest = np.zeros((nrows, ncols))
-    MomNearestX = np.zeros((nrows, ncols))
-    MomNearestY = np.zeros((nrows, ncols))
-    MomNearestZ = np.zeros((nrows, ncols))
+    MomBilinearX = SPHC.pointsToRasterC(x, y, m * ux, MomBilinearX, csz=csz)
+    MomBilinearY = SPHC.pointsToRasterC(x, y, m * uy, MomBilinearY, csz=csz)
+    MomBilinearZ = SPHC.pointsToRasterC(x, y, m * uz, MomBilinearZ, csz=csz)
 
-    # startTime = time.time()
-    iC = particles['InCell']
-    MassNearest = MassNearest.flatten()
-    np.add.at(MassNearest, iC, m)
-    MomNearestX = MomNearestX.flatten()
-    np.add.at(MomNearestX, iC, m * ux)
-    MomNearestY = MomNearestY.flatten()
-    np.add.at(MomNearestY, iC, m * uy)
-    MomNearestZ = MomNearestZ.flatten()
-    np.add.at(MomNearestZ, iC, m * uz)
-    MassNearest = np.reshape(MassNearest, (nrows, ncols))
-    MomNearestX = np.reshape(MomNearestX, (nrows, ncols))
-    MomNearestY = np.reshape(MomNearestY, (nrows, ncols))
-    MomNearestZ = np.reshape(MomNearestZ, (nrows, ncols))
-    VXNearest = np.where(MassNearest > 0, MomNearestX/MassNearest, MomNearestX)
-    VYNearest = np.where(MassNearest > 0, MomNearestY/MassNearest, MomNearestY)
-    VZNearest = np.where(MassNearest > 0, MomNearestZ/MassNearest, MomNearestZ)
-    VNearest = DFAtls.norm(VXNearest, VYNearest, VZNearest)
-    FDNearest = MassNearest / (A * rho)
-    PNearest = VNearest * VNearest * rho
-    PV = np.where(VNearest > PV, VNearest, PV)
-    PP = np.where(PNearest > PP, PNearest, PP)
-    PFD = np.where(FDNearest > PFD, FDNearest, PFD)
+    indMass = np.where(MassBilinear > 0)
+    VXBilinear[indMass] = MomBilinearX[indMass]/MassBilinear[indMass]
+    VYBilinear[indMass] = MomBilinearY[indMass]/MassBilinear[indMass]
+    VZBilinear[indMass] = MomBilinearZ[indMass]/MassBilinear[indMass]
+    VBilinear = DFAtls.norm(VXBilinear, VYBilinear, VZBilinear)
+    PBilinear = VBilinear * VBilinear * rho
+    PV = np.where(VBilinear > PV, VBilinear, PV)
+    PP = np.where(PBilinear > PP, PBilinear, PP)
+    PFD = np.where(FDBilinear > PFD, FDBilinear, PFD)
 
-    # endTime = time.time()
-    # log.info(('time = %s s' % (endTime - startTime)))
-
-    fields['V'] = VNearest
-    fields['P'] = PNearest
-    fields['FD'] = FDNearest
+    fields['V'] = VBilinear
+    fields['P'] = PBilinear
+    fields['FD'] = FDBilinear
     fields['pv'] = PV
     fields['ppr'] = PP
     fields['pfd'] = PFD
+
+    # #########################################
+    # # Update fields using a nearest interpolation
+    # MassNearest = np.zeros((nrows, ncols))
+    # MomNearestX = np.zeros((nrows, ncols))
+    # MomNearestY = np.zeros((nrows, ncols))
+    # MomNearestZ = np.zeros((nrows, ncols))
+    #
+    # # startTime = time.time()
+    # iC = particles['InCell']
+    # MassNearest = MassNearest.flatten()
+    # np.add.at(MassNearest, iC, m)
+    # MomNearestX = MomNearestX.flatten()
+    # np.add.at(MomNearestX, iC, m * ux)
+    # MomNearestY = MomNearestY.flatten()
+    # np.add.at(MomNearestY, iC, m * uy)
+    # MomNearestZ = MomNearestZ.flatten()
+    # np.add.at(MomNearestZ, iC, m * uz)
+    # MassNearest = np.reshape(MassNearest, (nrows, ncols))
+    # MomNearestX = np.reshape(MomNearestX, (nrows, ncols))
+    # MomNearestY = np.reshape(MomNearestY, (nrows, ncols))
+    # MomNearestZ = np.reshape(MomNearestZ, (nrows, ncols))
+    # VXNearest = np.where(MassNearest > 0, MomNearestX/MassNearest, MomNearestX)
+    # VYNearest = np.where(MassNearest > 0, MomNearestY/MassNearest, MomNearestY)
+    # VZNearest = np.where(MassNearest > 0, MomNearestZ/MassNearest, MomNearestZ)
+    # VNearest = DFAtls.norm(VXNearest, VYNearest, VZNearest)
+    # FDNearest = MassNearest / (A * rho)
+    # PNearest = VNearest * VNearest * rho
+    # PV = np.where(VNearest > PV, VNearest, PV)
+    # PP = np.where(PNearest > PP, PNearest, PP)
+    # PFD = np.where(FDNearest > PFD, FDNearest, PFD)
+    #
+    # # endTime = time.time()
+    # # log.info(('time = %s s' % (endTime - startTime)))
+    #
+    # fields['V'] = VNearest
+    # fields['P'] = PNearest
+    # fields['FD'] = FDNearest
+    # fields['pv'] = PV
+    # fields['ppr'] = PP
+    # fields['pfd'] = PFD
 
     # hNN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='nearest')
     # particles['hNearestNearest'] = hNN  # np.where(h < depMin, depMin, h)
@@ -1063,12 +1070,13 @@ def updateFields(cfg, particles, force, dem, fields):
     hLim = particles['m']/(rho*aPart)
     hBB = np.where(hBB < hLim, hLim, hBB)
     particles['hBilinearBilinear'] = hBB
-    if flagFDSPH:
-        hSPH = particles['hSPH']
-        hSPH = np.where(hSPH < hLim, hLim, hSPH)
-        particles['h'] = hBB
-    else:
-        particles['h'] = hBB
+    particles['h'] = hBB
+    # if flagFDSPH:
+    #     hSPH = particles['hSPH']
+    #     hSPH = np.where(hSPH < hLim, hLim, hSPH)
+    #     particles['h'] = hBB
+    # else:
+    #     particles['h'] = hBB
 
     # remove particles that have a too small height
     # particles = removeSmallPart(hmin, particles, dem)
