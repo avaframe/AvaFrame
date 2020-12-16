@@ -112,6 +112,8 @@ colorAvaframe = ['#0EF8EA', '#12E4E6', '#28D0DF', '#3CBCD5', '#4AA8C9',
                  '#5595B9', '#5C82A8', '#5F6F95', '#5E5E81', '#5A4D6C', '#523E58', '#483045']
 cmapAvaframe = makePalette.get_continuous_cmap(colorAvaframe)
 cmapAvaframe.set_bad(color='k')
+# add a continuous version
+cmapAvaframeCont = makePalette.get_continuous_cmap(colorAvaframe, continuous=True)
 
 
 # multi sequential colormap for pressure
@@ -165,6 +167,11 @@ cmapDEM = cmapGreys
 
 cmapAimec = cmapAvaframe
 
+cmapVar = {}
+cmapVar['cmap'] = cmapAvaframeCont
+cmapVar['colors'] = colorAvaframe
+cmapVar['lev'] = None
+cmapVar['ticks'] = None
 
 ###################################
 # shortcut plot functions
@@ -208,7 +215,7 @@ def addColorBar(im, ax2, ticks, myUnit):
     '''
     cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
     cbar.outline.set_visible(False)
-    cbar.ax.set_title('[myUnit]')
+    cbar.ax.set_title('[' + myUnit + ']')
 
 
 def putAvaNameOnPlot(ax, avaDir):

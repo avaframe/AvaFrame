@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 import glob
 
 
+# flagLim if x axis limited
+flagLim = False
+
 def plotDist(workingDir, CDF, a, b, c, cfg, flagShow):
     """ plot the CDF """
 
@@ -127,51 +130,4 @@ def plotECDF(workingDir, CDF, sample, cfg, methodAbbr, flagShow):
 
     # save fig
     fig.savefig(os.path.join(workingDir, 'CDFcompare%s_%s.png' % (methodAbbr, cfg['name'])))
-    plt.close('all')
-
-
-def plotHistRunout(outDir, Lrun, ECDF, xSample, cfg, pLim, distType, flagShow):
-    """ plot a histogram of a sample and the empirical CDF, works for one or more samples """
-
-    # determine x-axis extent
-    start = cfg['start']
-    end = cfg['end']
-    cs = cfg['cs']
-    # compute number of bins
-    step = int((end - start) / cs)
-
-    # make plot
-    fig, ax = plt.subplots()
-    plt.suptitle('Sample histogram')
-    binsEd = np.linspace(start+cs, end, step)
-    alphaval = 1.0
-    if len(Lrun.shape) == 1:
-        ax.hist(Lrun, binsEd, density=True, label='sample')
-    else:
-        for m in range(Lrun.shape[1]):
-            alphaval = 1. / (m+1)
-            ax.hist(Lrun[:,m], binsEd, density=True, alpha=alphaval, label='sample')
-    ax.set_xlim(start, end)
-    tickNames = ax.get_xticks().tolist()
-    for m in range(len(tickNames)):
-        tickNames[m] = tickNames[m] - cfg['start']
-    ax.set_xticklabels(tickNames)
-    ax.set_xlabel('sample values')
-    ax.legend(loc='upper left')
-
-    # add second y axis
-    ax2 = ax.twinx()
-    if len(xSample.shape) == 1:
-        ax2.plot(xSample, ECDF, 'k--', label='ECDF')
-    else:
-        for m in range(xSample.shape[1]):
-            ax2.plot(xSample[:,m], ECDF[:,m], 'k--', label='ECDF')
-    ax2.legend(loc='upper right')
-
-    # shpw plot
-    if flagShow:
-        plt.show()
-
-    # save fig
-    fig.savefig(os.path.join(outDir, 'sampleHistogram_pLim%s_dist%s.png' % (pLim, distType)))
     plt.close('all')
