@@ -67,16 +67,16 @@ def test_exportcom1DFAOutput(tmp_path):
     resType = ['ppr', 'pfd', 'pv']
     for m in resType:
         avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
-                           'ana4Prob', 'release1HS_entres_dfa_1.25000_%s.asc' % m)
+                           'ana4Stats', 'release1HS_entres_dfa_1.25000_%s.asc' % m)
         input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
                                  'release1HS_entres_dfa', 'raster', 'release1HS_entres_dfa_%s.asc' % m)
         shutil.copy(avaData, input)
     avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
-                           'ana4Prob', 'ExpLog.txt')
+                           'ana4Stats', 'ExpLog.txt')
     input = os.path.join(avaDir, 'Work', 'com1DFA', 'ExpLog.txt')
     shutil.copy(avaData, input)
     avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
-                           'ana4Prob', 'test.html')
+                           'ana4Stats', 'test.html')
     input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
                              'release1HS_entres_dfa.html')
     shutil.copy(avaData, input)
@@ -92,7 +92,7 @@ def test_exportcom1DFAOutput(tmp_path):
                                          'release1HS_entres_dfa_1.25000_ppr.asc'), skiprows=6)
 
     # load initial file
-    pprBench = np.loadtxt(os.path.join(dirPath, '..', '..', 'benchmarks', avaName, 'ana4Prob',
+    pprBench = np.loadtxt(os.path.join(dirPath, '..', '..', 'benchmarks', avaName, 'ana4Stats',
                                        'release1HS_entres_dfa_1.25000_ppr.asc'), skiprows=6)
     # Compare result to reference solution
     testRes = np.allclose(pprTest, pprBench, atol=1.e-12)
