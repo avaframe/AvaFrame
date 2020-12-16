@@ -27,7 +27,7 @@ log = logging.getLogger(__name__)
 # enables to choose earth pressure coefficients
 # 3) project on the plane, compute the gradient in the local coord sys related
 # to the local plane (tau1, tau2, n) non orthogonal coord sys
-cdef int SPHoption = 2
+cdef int SPHOption = 2
 
 cdef double rho = 200
 cdef double csz = 5
@@ -35,9 +35,77 @@ cdef double gravAcc = 9.81
 
 ctypedef double dtypef_t
 ctypedef long dtypel_t
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
+    """
+    Interpolate unstructured points on a structured grid (nearest or bilinear
+    interpolation possible)
+    The (x, y) points have to be on the extend of the DEM!!
+    Input :
+    Points: (x, y) coord of the points
+    Output:
+    PointsZ: z coord of the points
+    """
+    n, m = np.shape(Z0)
+    cdef int nrow = int(n)
+    cdef int ncol = int(m)
+    cdef int Lx0, Ly0, Lx1, Ly1
+    cdef double Lx, Ly, xx, yy, zz
+    cdef double xllc0 = xllc
+    cdef double yllc0 = yllc
+    cdef double csz0 = csz
+    cdef double[:] XX = x
+    cdef double[:] YY = y
+    cdef double[:] ZZ = z
+    cdef double[:] Z = Z0.flatten()
+    cdef int Npart = len(x)
+    cdef int j, ic
+
+    for j in range(Npart):
+      xx = XX[j]
+      yy = YY[j]
+      zz = ZZ[j]
+      # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+      Lx = (xx - xllc0) / csz0
+      Ly = (yy - yllc0) / csz0
+
+      # find coordinates of the 4 nearest cornes on the raster
+      Lx0 = <int>Lx
+      Ly0 = <int>Ly
+      Lx1 = Lx0 + 1
+      Ly1 = Ly0 + 1
+      # prepare for bilinear interpolation
+      dx = Lx - Lx0
+      dy = Ly - Ly0
+
+      # add the component of the points value to the 4 neighbour grid points
+      # start with the lower left
+      f11 = zz*(1-dx)*(1-dy)
+      ic = Lx0 + ncol * Ly0
+      Z[ic] = Z[ic] + f11
+      # lower right
+      f21 = zz*dx*(1-dy)
+      ic = Lx1 + ncol * Ly0
+      Z[ic] = Z[ic] + f21
+      # uper left
+      f12 = zz*(1-dx)*dy
+      ic = Lx0 + ncol * Ly1
+      Z[ic] = Z[ic] + f12
+      # and uper right
+      f22 = zz*dx*dy
+      ic = Lx1 + ncol * Ly1
+      Z[ic] = Z[ic] + f22
+
+    Z1 = np.reshape(np.asarray(Z), (np.shape(Z0)))
+
+    return Z1
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def getNeighboursC(particles, dem):
     """ Locate particles in cell for SPH computation (for loop implementation)
 
@@ -104,39 +172,38 @@ def getNeighboursC(particles, dem):
 
     return particles
 
-def computeGrad(Npart, particles, Nx, Ny, Nz, NX, NY):
-    Npart = particles['Npart']
-    # initialize
-    GHX = np.zeros(Npart)
-    GHY = np.zeros(Npart)
-    GHZ = np.zeros(Npart)
-    # loop on particles
-    # TcpuSPH = 0
-    # Tcpuadd = 0
-    for j in range(Npart):
-        mass = particles['m'][j]
-        # adding lateral force (SPH component)
-        # startTime = time.time()
-
-        x = particles['x'][j]
-        y = particles['y'][j]
-        nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
-        gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(particles, j, NX, NY, csz, nx, ny, nz)
-        # tcpuSPH = time.time() - startTime
-        # TcpuSPH = TcpuSPH + tcpuSPH
-        # startTime = time.time()
-        GHX[j] = GHX[j] - gradhX / rho
-        GHY[j] = GHY[j] - gradhY / rho
-        GHZ[j] = GHZ[j] - gradhZ / rho
-        # tcpuadd = time.time() - startTime
-        # Tcpuadd = Tcpuadd + tcpuadd
-
-    return GHX, GHY, GHZ
+# def computeGrad(Npart, particles, Nx, Ny, Nz, NX, NY):
+#     Npart = particles['Npart']
+#     # initialize
+#     GHX = np.zeros(Npart)
+#     GHY = np.zeros(Npart)
+#     GHZ = np.zeros(Npart)
+#     # loop on particles
+#     # TcpuSPH = 0
+#     # Tcpuadd = 0
+#     for j in range(Npart):
+#         mass = particles['m'][j]
+#         # adding lateral force (SPH component)
+#         # startTime = time.time()
+#
+#         x = particles['x'][j]
+#         y = particles['y'][j]
+#         nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
+#         gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(particles, j, NX, NY, csz, nx, ny, nz)
+#         # tcpuSPH = time.time() - startTime
+#         # TcpuSPH = TcpuSPH + tcpuSPH
+#         # startTime = time.time()
+#         GHX[j] = GHX[j] - gradhX / rho
+#         GHY[j] = GHY[j] - gradhY / rho
+#         GHZ[j] = GHZ[j] - gradhZ / rho
+#         # tcpuadd = time.time() - startTime
+#         # Tcpuadd = Tcpuadd + tcpuadd
+#
+#     return GHX, GHY, GHZ
 
 
 def computeForceSPHC(cfg, particles, force, dem):
   """ Compute SPH """
-
   # Load required parameters
   rho = cfg.getfloat('rho')
   gravAcc = cfg.getfloat('gravAcc')
@@ -211,12 +278,13 @@ def computeGradC(particles, header, np.ndarray[dtypef_t, ndim=1] Nx,
   cdef double gradhX, gradhY, gradhZ, uMag, g1, g2, nx, ny, nz, G1, G2, G3
   cdef Py_ssize_t j
   cdef double xx, yy, zz, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
-  cdef double dx, dy, dz, r, hr, dwdr, massl
+  cdef double dx, dy, dz, dn, r, hr, dwdr, massl
   cdef int lInd = -1
   cdef int rInd = 2
   cdef long indx
   cdef long indy
   cdef int ic, n, p, l, imax, imin, iPstart, iPend
+  cdef int SPHoption = SPHOption
   # L = np.empty((0), dtype=int)
   # indL = np.zeros((N+1), dtype=int)
   # With loop
@@ -246,20 +314,14 @@ def computeGradC(particles, header, np.ndarray[dtypef_t, ndim=1] Nx,
         uy = 0
         uz = -(1*nx + 0*ny) / nz
         # uz = -(ax*nx + ay*ny) / nz
-        normalize(ux, uy, uz)
-        # ux, uy, uz = normalize(ux, uy, uz)
+        ux, uy, uz = normalize(ux, uy, uz)
     else:
         # TODO check if direction is non zero, if it is define another u1 direction
         ux, uy, uz = normalize(ux, uy, uz)
 
     # uxOrtho, uyOrtho, uzOrtho = 0., 0., 0.
     uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
-    # uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
-    normalize(uxOrtho, uyOrtho, uzOrtho)
-    print('norme')
-    print(norm(ux, uy, uz))
-    print(norm(nx, ny, nz))
-    print(norm(uxOrtho, uyOrtho, uzOrtho))
+    uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
 
     # now take into accout the fact that we are on the surface so the r3 or x3
     # component is not independent from the 2 other ones!!
@@ -296,33 +358,57 @@ def computeGradC(particles, header, np.ndarray[dtypef_t, ndim=1] Nx,
                 dx = X[l] - xx
                 dy = Y[l] - yy
                 dz = Z[l] - zz
-                # get coordinates in local coord system
-                r1 = scalProd(dx, dy, dz, ux, uy, uz)
-                r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
-                # impse r3=0 even if the particle is not exactly on the tengent plane
-                # get norm of r = xj - xl
-                r = norm(r1, r2, 0)
-                # r = norm(dx, dy, dz)
-                if r < 0.0001 * rKernel:
-                    # impose a minimum distance between particles
-                    r1 = 0.0001 * rKernel * r1
-                    r2 = 0.0001 * rKernel * r2
-                    r = 0.0001 * rKernel
-                if r < rKernel:
-                    hr = rKernel - r
-                    dwdr = dfacKernel * hr * hr
-                    massl = mass[l]
-                    mdwdrr = massl * dwdr / r
-                    G1 = mdwdrr * K1*r1
-                    G2 = mdwdrr * K2*r2
-                    G3 = 0
+                if SPHoption == 1:
+                      # remove the normal part (make sure that r = xj - xl lies in the plane
+                      # defined by the normal at xj)
+                      dn = nx*dx + ny*dy + nz*dz
+                      dx = dx - dn*nx
+                      dy = dy - dn*ny
+                      dz = dz - dn*nz
 
-                    g1 = nx/(nz)
-                    g2 = ny/(nz)
+                      # get norm of r = xj - xl
+                      r = norm(dx, dy, 0)
+                      if r < 0.0001 * rKernel:
+                          # impose a minimum distance between particles
+                          dx = 0.0001 * rKernel * dx
+                          dy = 0.0001 * rKernel * dy
+                          r = 0.0001 * rKernel
+                      if r < rKernel:
+                          hr = rKernel - r
+                          dwdr = dfacKernel * hr * hr
+                          massl = mass[l]
+                          mdwdrr = massl * dwdr / r
+                          gradhX = gradhX + mdwdrr*dx
+                          gradhY = gradhY + mdwdrr*dy
 
-                    gradhX = gradhX + vx*G1 + wx*G2
-                    gradhY = gradhY + vy*G1 + wy*G2
-                    gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
+                if SPHoption == 2:
+                  # get coordinates in local coord system
+                  r1 = scalProd(dx, dy, dz, ux, uy, uz)
+                  r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+                  # impse r3=0 even if the particle is not exactly on the tengent plane
+                  # get norm of r = xj - xl
+                  r = norm(r1, r2, 0)
+                  # r = norm(dx, dy, dz)
+                  if r < 0.0001 * rKernel:
+                      # impose a minimum distance between particles
+                      r1 = 0.0001 * rKernel * r1
+                      r2 = 0.0001 * rKernel * r2
+                      r = 0.0001 * rKernel
+                  if r < rKernel:
+                      hr = rKernel - r
+                      dwdr = dfacKernel * hr * hr
+                      massl = mass[l]
+                      mdwdrr = massl * dwdr / r
+                      G1 = mdwdrr * K1*r1
+                      G2 = mdwdrr * K2*r2
+                      G3 = 0
+
+                      g1 = nx/(nz)
+                      g2 = ny/(nz)
+
+                      gradhX = gradhX + vx*G1 + wx*G2
+                      gradhY = gradhY + vy*G1 + wy*G2
+                      gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
 
                     # gradhX = gradhX + mdwdrr * dx
                     # gradhY = gradhY + mdwdrr * dy
@@ -342,6 +428,9 @@ def computeGradC(particles, header, np.ndarray[dtypef_t, ndim=1] Nx,
   return GHX, GHY, GHZ #, L, indL
 
 
+@cython.boundscheck(False)  # Deactivate bounds checking
+@cython.wraparound(False)   # Deactivate negative indexing.
+@cython.cdivision(True)
 def computeFDC(particles, header, double[:] Nx, double[:] Ny, double[:] Nz, long[:] indX, long[:] indY):
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']
@@ -492,8 +581,8 @@ def norm2py(x, y, z): # <-- small wrapper to expose norm2() to Python
     return norm2(x, y, z)
 
 
-# @cython.cdivision(True)
-cdef normalize(double* x, double* y, double* z):
+@cython.cdivision(True)
+cdef (double, double, double) normalize(double x, double y, double z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
 
   (x, y, z) can be np arrays.
@@ -526,17 +615,18 @@ cdef normalize(double* x, double* y, double* z):
   # yn = np.where(np.isnan(yn), 0, yn)
   z = z / norme
   # zn = np.where(np.isnan(zn), 0, zn)
-  # return x, y, z
+  return x, y, z
 
 
 def normalizepy(x, y, z): # <-- small wrapper to expose normalize() to Python
-    cdef double xx = x
-    cdef double yy = y
-    cdef double zz = z
-    return normalize(xx, yy, zz)
+    # cdef double xx = x
+    # cdef double yy = y
+    # cdef double zz = z
+    return normalize(x, y, z)
 
 
-cpdef croosProd(double ux, double uy, double uz, double vx, double vy, double vz):
+@cython.cdivision(True)
+cdef (double, double, double) croosProd(double ux, double uy, double uz, double vx, double vy, double vz):
   """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
   """
   cdef double wx = uy * vz - uz * vy
