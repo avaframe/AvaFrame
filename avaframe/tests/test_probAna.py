@@ -1,5 +1,5 @@
 """
-    Pytest for module ana4Prob
+    Pytest for module ana4Stats
 
     This file is part of Avaframe.
 
@@ -10,7 +10,7 @@ import numpy as np
 import os
 from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
-from avaframe.ana4Prob import probAna as pA
+from avaframe.ana4Stats import probAna as pA
 import pytest
 import configparser
 import shutil
@@ -23,7 +23,7 @@ def test_probAna(tmp_path):
     avaName = 'avaHockey'
     dirPath = os.path.dirname(__file__)
     avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaName)
-    inputDir = os.path.join(avaDir, 'ana4Prob')
+    inputDir = os.path.join(avaDir, 'ana4Stats')
     outDir = tmp_path
 
     # set configurations
