@@ -104,7 +104,7 @@ def getEmpiricalCDF(sample, CDF, cfg):
     return CDFEmpPlot, binsEd[1:]
 
 
-def getEmpiricalCDFNEW(sample, CDF, cfg):
+def getEmpiricalCDFNEW(sample):
     """ Derive empirical CDF using sorted sample """
 
     # sort sample

@@ -76,7 +76,7 @@ iPlot.plotSample(workingDir, sampleVect, cfgGen, flagShow)
 CDFEmp, xSample = cF.getEmpiricalCDF(sampleVect, CDF, cfgGen)
 iPlot.plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfgGen, 'Hist', flagShow)
 # retrieve approximation of sample using the ECDF function
-ECDF, xSample = cF.getEmpiricalCDFNEW(sampleVect, CDF, cfgGen)
+ECDF, xSample = cF.getEmpiricalCDFNEW(sampleVect)
 iPlot.plotEmpCDF(workingDir, CDF, ECDF, xSample, cfgGen, 'ECDF', flagShow)
 # plot sample histogram and PDF of desired distribution
 iPlot.plotEmpPDF(workingDir, PDF, sampleVect, cfgGen, flagShow)
