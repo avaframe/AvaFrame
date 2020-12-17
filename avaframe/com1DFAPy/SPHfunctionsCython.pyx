@@ -8,12 +8,15 @@ import logging
 import math
 import numpy as np
 cimport numpy as np
-from libc.math cimport sqrt
+from libc cimport math as math
+# from libc.math cimport log as ln
 cimport cython
 
 # Local imports
+import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.SPHfunctions as SPH
+import avaframe.in3Utils.geoTrans as geoTrans
 
 
 # create local logger
@@ -36,9 +39,9 @@ cdef double gravAcc = 9.81
 ctypedef double dtypef_t
 ctypedef long dtypel_t
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
 def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
     """
     Interpolate unstructured points on a structured grid (nearest or bilinear
@@ -103,9 +106,378 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 
     return Z1
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
+def computeForceC(cfg, particles, dem, Ment, Cres):
+    cdef double Rs0 = cfg.getfloat('Rs0')
+    cdef double kappa = cfg.getfloat('kappa')
+    cdef double B = cfg.getfloat('B')
+    cdef double R = cfg.getfloat('R')
+    cdef double rho = cfg.getfloat('rho')
+    cdef double gravAcc = cfg.getfloat('gravAcc')
+    cdef double dt = cfg.getfloat('dt')
+    cdef double mu = cfg.getfloat('mu')
+    cdef int Npart = particles['Npart']
+    cdef double csz = dem['header'].cellsize
+    cdef double[:, :] Nx = dem['Nx']
+    cdef double[:, :] Ny = dem['Ny']
+    cdef double[:, :] Nz = dem['Nz']
+
+    cdef double[:] Fnormal = np.zeros(Npart, dtype=np.float64)
+    cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
+    cdef double[:] forceY = np.zeros(Npart, dtype=np.float64)
+    cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
+    cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
+
+    cdef double[:] mass = particles['m']
+    cdef double[:] H = particles['h']
+    cdef double[:] X = particles['x']
+    cdef double[:] Y = particles['y']
+    cdef double[:] UX = particles['ux']
+    cdef double[:] UY = particles['uy']
+    cdef double[:] UZ = particles['uz']
+    cdef long[:] IndCellX = particles['indX']
+    cdef long[:] IndCellY = particles['indY']
+    cdef long indCellX, indCellY
+    cdef double A, uMag, m, h, x, y, z, ux, uy, uz, nx, ny, nz
+    cdef double uxDir, uyDir, uzDir, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
+    cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
+    cdef int j
+    force = {}
+    # loop on particles
+    for j in range(Npart):
+        m = mass[j]
+        x = X[j]
+        y = Y[j]
+        h = H[j]
+        ux = UX[j]
+        uy = UY[j]
+        uz = UZ[j]
+        indCellX = IndCellX[j]
+        indCellY = IndCellY[j]
+        # deduce area
+        A = m / (h * rho)
+        # get normal at the particle location
+        nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz)
+        nx, ny, nz = normalize(nx, ny, nz)
+        # get velocity magnitude and direction
+        uMag = norm(ux, uy, uz)
+        if uMag>0:
+          uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+        else:
+          ux = 1
+          uy = 0
+          uz = -(1*nx + 0*ny) / nz
+          uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+        # get normal at the particle estimated end location
+        xEnd = x + dt * ux
+        yEnd = y + dt * uy
+        nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz)
+        nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
+        # get average of those normals
+        nxAvg = nx + nxEnd
+        nyAvg = ny + nyEnd
+        nzAvg = nz + nzEnd
+        nxAvg, nyAvg, nzAvg = normalize(nxAvg, nyAvg, nzAvg)
+
+        # acceleration due to curvature
+        accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
+        # normal component of the acceleration of gravity
+        gravAccNorm = - gravAcc * nzAvg
+        effAccNorm = gravAccNorm + accNormCurv
+        if(effAccNorm < 0.0):
+            Fnormal[j] = m * effAccNorm
+
+        # body forces (tangential component of acceleration of gravity)
+        gravAccTangX = - gravAccNorm * nxAvg
+        gravAccTangY = - gravAccNorm * nyAvg
+        gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
+        # adding gravity force contribution
+        forceX[j] = forceX[j] + gravAccTangX * m
+        forceY[j] = forceY[j] + gravAccTangY * m
+        forceZ[j] = forceZ[j] + gravAccTangZ * m
+
+        # Calculating bottom shear and normal stress
+        if(effAccNorm > 0.0):
+            # if fluid detatched
+            # log.info('fluid detatched for particle %s', j)
+            tau = 0.0
+        else:
+            # bottom normal stress sigmaB
+            sigmaB = - effAccNorm * rho * h
+            # SamosAT friction type (bottom shear stress)
+            tau = SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+            # coulomb friction type (bottom shear stress)
+            # tau = mu * sigmaB
+
+        # adding bottom shear resistance contribution
+        forceBotTang = - A * tau
+        forceX[j] = forceX[j] + forceBotTang * uxDir
+        forceY[j] = forceY[j] + forceBotTang * uyDir
+        forceZ[j] = forceZ[j] + forceBotTang * uzDir
+
+
+    # save results
+    force['dM'] = np.asarray(dM)
+    force['forceX'] = np.asarray(forceX)
+    force['forceY'] = np.asarray(forceY)
+    force['forceZ'] = np.asarray(forceZ)
+    return force
+
+
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
+def updatePositionC(cfg, particles, dem, force):
+  DT = cfg.getfloat('dt')
+  cdef double dt = DT
+  log.debug('dt used now is %f' % DT)
+  cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double rho = cfg.getfloat('rho')
+  cdef double csz = dem['header'].cellsize
+  cdef double mu = cfg.getfloat('mu')
+  cdef int Npart = particles['Npart']
+  cdef double[:, :] Nx = dem['Nx']
+  cdef double[:, :] Ny = dem['Ny']
+  cdef double[:, :] Nz = dem['Nz']
+  cdef double[:, :] Z = dem['rasterData']
+  # initializeinter = np.zeros(N, dtype=np.float64)
+  cdef double[:] MNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] XNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] YNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] ZNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] SNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] UXNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] UYNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] UZNew = np.zeros(Npart, dtype=np.float64)
+
+  cdef double[:] mass = particles['m']
+  cdef double[:] H = particles['h']
+  cdef double[:] S = particles['s']
+  cdef double[:] X = particles['x']
+  cdef double[:] Y = particles['y']
+  cdef double[:] UX = particles['ux']
+  cdef double[:] UY = particles['uy']
+  cdef double[:] UZ = particles['uz']
+  cdef double[:] forceX = force['forceX']
+  cdef double[:] forceY = force['forceY']
+  cdef double[:] forceZ = force['forceZ']
+  cdef double[:] forceSPHX = force['forceSPHX']
+  cdef double[:] forceSPHY = force['forceSPHY']
+  cdef double[:] forceSPHZ = force['forceSPHZ']
+  cdef double[:] dM = force['dM']
+  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz
+  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN
+  cdef int j
+  # loop on particles
+  for j in range(Npart):
+    m = mass[j]
+    x = X[j]
+    y = Y[j]
+    h = H[j]
+    ux = UX[j]
+    uy = UY[j]
+    uz = UZ[j]
+    s = S[j]
+    # procede to time integration
+    # update velocity
+    uxNew = ux + (forceX[j] + forceSPHX[j]) * dt / m
+    uyNew = uy + (forceY[j] + forceSPHY[j]) * dt / m
+    uzNew = uz + (forceZ[j] + forceSPHZ[j]) * dt / m
+
+    # update mass
+    mNew = m + dM[j]
+    # update position
+    xNew = x + dt * 0.5 * (ux + uxNew)
+    yNew = y + dt * 0.5 * (uy + uyNew)
+    sNew = s + math.sqrt((xNew-x)*(xNew-x) + (yNew-y)*(yNew-y))
+    # make sure particle is on the mesh (recompute the z component)
+    zNew = getScalar(xNew, yNew, Z, csz)
+    nx, ny, nz = getVector(xNew, yNew, Nx, Ny, Nz, csz)
+    nx, ny, nz = normalize(nx, ny, nz)
+    # normal component of the velocity
+    uN = uxNew*nx + uyNew*ny + uzNew*nz
+    uxNew = uxNew - uN * nx
+    uyNew = uyNew - uN * ny
+    uzNew = uzNew - uN * nz
+    XNew[j] = xNew
+    YNew[j] = yNew
+    ZNew[j] = zNew
+    UXNew[j] = uxNew
+    UYNew[j] = uyNew
+    UZNew[j] = uzNew
+    SNew[j] = sNew
+    MNew[j] = mNew
+    # remove normal component of the velocity
+  particles['ux'] = np.asarray(UXNew)
+  particles['uy'] = np.asarray(UYNew)
+  particles['uz'] = np.asarray(UZNew)
+  particles['s'] = np.asarray(SNew)
+  particles['m'] = np.asarray(MNew)
+  particles['mTot'] = np.sum(particles['m'])
+  particles['x'] = np.asarray(XNew)
+  particles['y'] = np.asarray(YNew)
+  particles['z'] = np.asarray(ZNew)
+
+  # make sure particle is on the mesh (recompute the z component)
+  # particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+  #################################################################
+  # this is dangerous!!!!!!!!!!!!!!
+  ###############################################################
+  # remove particles that are not located on the mesh any more
+  particles = com1DFA.removeOutPart(cfg, particles, dem)
+  return particles
+
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
+def updateFieldsC(cfg, particles, force, dem, fields):
+  cdef double rho = cfg.getfloat('rho')
+  header = dem['header']
+  CSZ = dem['header'].cellsize
+  cdef double[:, :]A = dem['Area']
+  ncols = header.ncols
+  nrows = header.nrows
+  cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] PBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] FDBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] MomBilinearX = np.zeros((nrows, ncols))
+  cdef double[:, :] MomBilinearY = np.zeros((nrows, ncols))
+  cdef double[:, :] MomBilinearZ = np.zeros((nrows, ncols))
+  cdef double[:, :] VXBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] VYBilinear = np.zeros((nrows, ncols))
+  cdef double[:, :] VZBilinear = np.zeros((nrows, ncols))
+
+  cdef double[:] mass = particles['m']
+  cdef double[:] X = particles['x']
+  cdef double[:] Y = particles['y']
+  cdef double[:] UX = particles['ux']
+  cdef double[:] UY = particles['uy']
+  cdef double[:] UZ = particles['uz']
+  cdef double[:, :] PV = fields['pv']
+  cdef double[:, :] PP = fields['ppr']
+  cdef double[:, :] PFD = fields['pfd']
+  cdef long[:] IndX = particles['indX']
+  cdef long[:] IndY = particles['indY']
+  cdef int nrow = int(nrows)
+  cdef int ncol = int(ncols)
+  cdef int Lx0, Ly0, Lx1, Ly1
+  cdef double Lx, Ly, m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, aPart
+  cdef double xllc = 0
+  cdef double yllc = 0
+  cdef double csz = CSZ
+  cdef int Npart = np.size(particles['x'])
+  cdef double[:] hBB = np.zeros((Npart))
+  cdef int j, i
+  cdef long indx, indy
+
+  for j in range(Npart):
+    x = X[j]
+    y = Y[j]
+    ux = UX[j]
+    uy = UY[j]
+    uz = UZ[j]
+    m = mass[j]
+    # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+    Lx = (x - xllc) / csz
+    Ly = (y - yllc) / csz
+
+    # find coordinates of the 4 nearest cornes on the raster
+    Lx0 = <int>Lx
+    Ly0 = <int>Ly
+    Lx1 = Lx0 + 1
+    Ly1 = Ly0 + 1
+    # prepare for bilinear interpolation
+    dx = Lx - Lx0
+    dy = Ly - Ly0
+
+    # add the component of the points value to the 4 neighbour grid points
+    # start with the lower left
+    f11 = (1-dx)*(1-dy)
+    MassBilinear[Ly0, Lx0] = MassBilinear[Ly0, Lx0] + m * f11
+    FDBilinear[Ly0, Lx0] = FDBilinear[Ly0, Lx0] + m / (A[Ly0, Lx0] * rho) * f11
+    MomBilinearX[Ly0, Lx0] = MomBilinearX[Ly0, Lx0] + m * ux * f11
+    MomBilinearY[Ly0, Lx0] = MomBilinearY[Ly0, Lx0] + m * uy * f11
+    MomBilinearZ[Ly0, Lx0] = MomBilinearZ[Ly0, Lx0] + m * uz * f11
+    # lower right
+    f21 = dx*(1-dy)
+    MassBilinear[Ly0, Lx1] = MassBilinear[Ly0, Lx1] + m * f21
+    FDBilinear[Ly0, Lx1] = FDBilinear[Ly0, Lx1] + m / (A[Ly0, Lx1] * rho) * f21
+    MomBilinearX[Ly0, Lx1] = MomBilinearX[Ly0, Lx1] + m * ux * f21
+    MomBilinearY[Ly0, Lx1] = MomBilinearY[Ly0, Lx1] + m * uy * f21
+    MomBilinearZ[Ly0, Lx1] = MomBilinearZ[Ly0, Lx1] + m * uz * f21
+    # uper left
+    f12 = (1-dx)*dy
+    MassBilinear[Ly1, Lx0] = MassBilinear[Ly1, Lx0] + m * f12
+    FDBilinear[Ly1, Lx0] = FDBilinear[Ly1, Lx0] + m / (A[Ly1, Lx0] * rho) * f12
+    MomBilinearX[Ly1, Lx0] = MomBilinearX[Ly1, Lx0] + m * ux * f12
+    MomBilinearY[Ly1, Lx0] = MomBilinearY[Ly1, Lx0] + m * uy * f12
+    MomBilinearZ[Ly1, Lx0] = MomBilinearZ[Ly1, Lx0] + m * uz * f12
+    # and uper right
+    f22 = dx*dy
+    MassBilinear[Ly1, Lx1] = MassBilinear[Ly1, Lx1] + m * f22
+    FDBilinear[Ly1, Lx1] = FDBilinear[Ly1, Lx1] + m / (A[Ly1, Lx1] * rho) * f22
+    MomBilinearX[Ly1, Lx1] = MomBilinearX[Ly1, Lx1] + m * ux * f22
+    MomBilinearY[Ly1, Lx1] = MomBilinearY[Ly1, Lx1] + m * uy * f22
+    MomBilinearZ[Ly1, Lx1] = MomBilinearZ[Ly1, Lx1] + m * uz * f22
+
+  for i in range(ncol):
+    for j in range(nrow):
+      if MassBilinear[j, i] > 0:
+        VXBilinear[j, i] = MomBilinearX[j, i]/MassBilinear[j, i]
+        VYBilinear[j, i] = MomBilinearY[j, i]/MassBilinear[j, i]
+        VZBilinear[j, i] = MomBilinearZ[j, i]/MassBilinear[j, i]
+        VBilinear[j, i] = norm(VXBilinear[j, i], VYBilinear[j, i], VZBilinear[j, i])
+        PBilinear[j, i] = VBilinear[j, i] * VBilinear[j, i] * rho
+      if VBilinear[j, i] > PV[j, i]:
+        PV[j, i] = VBilinear[j, i]
+      if PBilinear[j, i] > PP[j, i]:
+        PP[j, i] = PBilinear[j, i]
+      if FDBilinear[j, i] > PFD[j, i]:
+        PFD[j, i] = FDBilinear[j, i]
+
+
+  fields['V'] = np.asarray(VBilinear)
+  fields['P'] = np.asarray(PBilinear)
+  fields['FD'] = np.asarray(FDBilinear)
+  fields['pv'] = np.asarray(PV)
+  fields['ppr'] = np.asarray(PP)
+  fields['pfd'] = np.asarray(PFD)
+
+  for j in range(Npart):
+    x = X[j]
+    y = Y[j]
+    hbb = getScalar(x, y, FDBilinear, csz)
+    indx = IndX[j]
+    indy = IndY[j]
+    aPart = A[indy, indx]
+    hLim = mass[j]/(rho*aPart)
+    if hbb< hLim:
+      hbb = hLim
+    hBB[j] = hbb
+  # hBB, _ = geoTrans.projectOnRasterVectRoot(particles['x'], particles['y'], fields['FD'], csz=csz, interp='bilinear')
+
+  # choose the interpolation method
+
+  particles['hBilinearBilinear'] = np.asarray(hBB)
+  particles['h'] = np.asarray(hBB)
+  # if flagFDSPH:
+  #     hSPH = particles['hSPH']
+  #     hSPH = np.where(hSPH < hLim, hLim, hSPH)
+  #     particles['h'] = hBB
+  # else:
+  #     particles['h'] = hBB
+
+  # remove particles that have a too small height
+  # particles = removeSmallPart(hmin, particles, dem)
+
+  return particles, fields
+
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
 def getNeighboursC(particles, dem):
     """ Locate particles in cell for SPH computation (for loop implementation)
 
@@ -218,8 +590,7 @@ def computeForceSPHC(cfg, particles, force, dem):
 
   indX = particles['indX'].astype('int')
   indY = particles['indY'].astype('int')
-  nx, ny, nz = DFAtls.getNormalArray(particles['x'], particles['y'], Nx, Ny, Nz, csz)
-  forceSPHX, forceSPHY, forceSPHZ = computeGradC(particles, header, nx, ny, nz, indX, indY)
+  forceSPHX, forceSPHY, forceSPHZ = computeGradC(particles, header, Nx, Ny, Nz, indX, indY)
   forceSPHX = np.asarray(forceSPHX)
   forceSPHY = np.asarray(forceSPHY)
   forceSPHZ = np.asarray(forceSPHZ)
@@ -235,62 +606,41 @@ def computeForceSPHC(cfg, particles, force, dem):
 
   return particles, force
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
-@cython.cdivision(True)
-def computeGradC(particles, header, np.ndarray[dtypef_t, ndim=1] Nx,
-                 np.ndarray[dtypef_t, ndim=1] Ny,
-                 np.ndarray[dtypef_t, ndim=1] Nz,
-                 np.ndarray[dtypel_t, ndim=1] indX,
-                 np.ndarray[dtypel_t, ndim=1] indY):
-  inter = particles['m']
-  cdef double[:] mass = inter
-  inter = particles['x']
-  cdef double[:] X = inter
-  inter = particles['y']
-  cdef double[:] Y = inter
-  inter = particles['z']
-  cdef double[:] Z = inter
-  inter = particles['ux']
-  cdef double[:] UX = inter
-  inter = particles['uy']
-  cdef double[:] UY = inter
-  inter = particles['uz']
-  cdef double[:] UZ = inter
-  inter = particles['indPartInCell']
-  cdef long[:] indPartInCell = inter
-  inter = particles['partInCell']
-  cdef long[:] partInCell = inter
+# @cython.boundscheck(False)  # Deactivate bounds checking
+# @cython.wraparound(False)   # Deactivate negative indexing.
+# @cython.cdivision(True)
+def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
+                 double[:, :] Nz, long[:] indX, long[:] indY):
+  cdef double[:] mass = particles['m']
+  cdef double[:] X = particles['x']
+  cdef double[:] Y = particles['y']
+  cdef double[:] Z = particles['z']
+  cdef double[:] UX = particles['ux']
+  cdef double[:] UY = particles['uy']
+  cdef double[:] UZ = particles['uz']
+  cdef long[:] indPartInCell = particles['indPartInCell']
+  cdef long[:] partInCell = particles['partInCell']
   cdef int N = X.shape[0]
   cdef int nrows = header.nrows
   cdef int ncols = header.ncols
   cdef double rKernel = csz
   cdef double facKernel = 10.0 / (3.1415 * rKernel * rKernel * rKernel * rKernel * rKernel)
   cdef double dfacKernel = - 3.0 * facKernel
-  inter = np.zeros(N, dtype=np.float64)
-  cdef double[:] GHX = inter
-  inter = np.zeros(N, dtype=np.float64)
-  cdef double[:] GHY = inter
-  inter = np.zeros(N, dtype=np.float64)
-  cdef double[:] GHZ = inter
+  cdef double[:] GHX = np.zeros(N, dtype=np.float64)
+  cdef double[:] GHY = np.zeros(N, dtype=np.float64)
+  cdef double[:] GHZ = np.zeros(N, dtype=np.float64)
   cdef double K1 = 1
   cdef double K2 = 1
-  cdef double gradhX, gradhY, gradhZ, uMag, g1, g2, nx, ny, nz, G1, G2, G3
-  cdef Py_ssize_t j
+  cdef double gradhX, gradhY, gradhZ, uMag, g1, g2, nx, ny, nz, G1, G2, mdwdrr
   cdef double xx, yy, zz, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
-  cdef double dx, dy, dz, dn, r, hr, dwdr, massl
-  cdef int lInd = -1
-  cdef int rInd = 2
-  cdef long indx
-  cdef long indy
-  cdef int ic, n, p, l, imax, imin, iPstart, iPend
-  cdef int SPHoption = SPHOption
+  cdef double dx, dy, dz, dn, r, hr, dwdr
+  cdef int lInd, rInd
+  cdef long indx, indy
+  cdef int j, ic, n, p, l, imax, imin, iPstart, iPend
+  # cdef int SPHoption = SPHOption
   # L = np.empty((0), dtype=int)
   # indL = np.zeros((N+1), dtype=int)
-  # With loop
   # loop on particles
-  # TcpuSPH = 0
-  # Tcpuadd = 0
   for j in range(N):
     xx = X[j]
     yy = Y[j]
@@ -303,23 +653,17 @@ def computeGradC(particles, header, np.ndarray[dtypef_t, ndim=1] Nx,
     ux = UX[j]
     uy = UY[j]
     uz = UZ[j]
-    nx = Nx[j]
-    ny = Ny[j]
-    nz = Nz[j]
+    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz)
+    nx, ny, nz = normalize(nx, ny, nz)
     uMag = norm(ux, uy, uz)
     if uMag < 0.1:
-        # ax = 1
-        # ay = 0
         ux = 1
         uy = 0
         uz = -(1*nx + 0*ny) / nz
-        # uz = -(ax*nx + ay*ny) / nz
         ux, uy, uz = normalize(ux, uy, uz)
     else:
-        # TODO check if direction is non zero, if it is define another u1 direction
         ux, uy, uz = normalize(ux, uy, uz)
 
-    # uxOrtho, uyOrtho, uzOrtho = 0., 0., 0.
     uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
     uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
 
@@ -358,64 +702,54 @@ def computeGradC(particles, header, np.ndarray[dtypef_t, ndim=1] Nx,
                 dx = X[l] - xx
                 dy = Y[l] - yy
                 dz = Z[l] - zz
-                if SPHoption == 1:
-                      # remove the normal part (make sure that r = xj - xl lies in the plane
-                      # defined by the normal at xj)
-                      dn = nx*dx + ny*dy + nz*dz
-                      dx = dx - dn*nx
-                      dy = dy - dn*ny
-                      dz = dz - dn*nz
+                # if SPHoption == 1:
+                #       # remove the normal part (make sure that r = xj - xl lies in the plane
+                #       # defined by the normal at xj)
+                #       dn = nx*dx + ny*dy + nz*dz
+                #       dx = dx - dn*nx
+                #       dy = dy - dn*ny
+                #       dz = dz - dn*nz
+                #       # get norm of r = xj - xl
+                #       r = norm(dx, dy, 0)
+                #       if r < 0.001 * rKernel:
+                #           # impose a minimum distance between particles
+                #           dx = 0.001 * rKernel * dx
+                #           dy = 0.001 * rKernel * dy
+                #           r = 0.001 * rKernel
+                #       if r < rKernel:
+                #           hr = rKernel - r
+                #           dwdr = dfacKernel * hr * hr
+                #           mdwdrr = mass[l] * dwdr / r
+                #           gradhX = gradhX + mdwdrr*dx
+                #           gradhY = gradhY + mdwdrr*dy
+                #
+                # if SPHoption == 2:
+                # get coordinates in local coord system
+                r1 = scalProd(dx, dy, dz, ux, uy, uz)
+                r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+                # impse r3=0 even if the particle is not exactly on the tengent plane
+                # get norm of r = xj - xl
+                r = norm(r1, r2, 0)
+                if r < 0.001 * rKernel:
+                    # impose a minimum distance between particles
+                    r1 = 0.001 * rKernel * r1
+                    r2 = 0.001 * rKernel * r2
+                    r = 0.001 * rKernel
+                if r < rKernel:
+                    hr = rKernel - r
+                    dwdr = dfacKernel * hr * hr
+                    mdwdrr = mass[l] * dwdr / r
+                    G1 = mdwdrr * K1*r1
+                    G2 = mdwdrr * K2*r2
 
-                      # get norm of r = xj - xl
-                      r = norm(dx, dy, 0)
-                      if r < 0.0001 * rKernel:
-                          # impose a minimum distance between particles
-                          dx = 0.0001 * rKernel * dx
-                          dy = 0.0001 * rKernel * dy
-                          r = 0.0001 * rKernel
-                      if r < rKernel:
-                          hr = rKernel - r
-                          dwdr = dfacKernel * hr * hr
-                          massl = mass[l]
-                          mdwdrr = massl * dwdr / r
-                          gradhX = gradhX + mdwdrr*dx
-                          gradhY = gradhY + mdwdrr*dy
+                    g1 = nx/(nz)
+                    g2 = ny/(nz)
 
-                if SPHoption == 2:
-                  # get coordinates in local coord system
-                  r1 = scalProd(dx, dy, dz, ux, uy, uz)
-                  r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
-                  # impse r3=0 even if the particle is not exactly on the tengent plane
-                  # get norm of r = xj - xl
-                  r = norm(r1, r2, 0)
-                  # r = norm(dx, dy, dz)
-                  if r < 0.0001 * rKernel:
-                      # impose a minimum distance between particles
-                      r1 = 0.0001 * rKernel * r1
-                      r2 = 0.0001 * rKernel * r2
-                      r = 0.0001 * rKernel
-                  if r < rKernel:
-                      hr = rKernel - r
-                      dwdr = dfacKernel * hr * hr
-                      massl = mass[l]
-                      mdwdrr = massl * dwdr / r
-                      G1 = mdwdrr * K1*r1
-                      G2 = mdwdrr * K2*r2
-                      G3 = 0
+                    gradhX = gradhX + vx*G1 + wx*G2
+                    gradhY = gradhY + vy*G1 + wy*G2
+                    gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
 
-                      g1 = nx/(nz)
-                      g2 = ny/(nz)
 
-                      gradhX = gradhX + vx*G1 + wx*G2
-                      gradhY = gradhY + vy*G1 + wy*G2
-                      gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
-
-                    # gradhX = gradhX + mdwdrr * dx
-                    # gradhY = gradhY + mdwdrr * dy
-                    # gradhZ = gradhZ + mdwdrr * dz
-    # tcpuSPH = time.time() - startTime
-    # TcpuSPH = TcpuSPH + tcpuSPH
-    # startTime = time.time()
     # GHX[j] = GHX[j] - gradhX / rho
     # GHY[j] = GHY[j] - gradhY / rho
     # GHZ[j] = GHZ[j] - gradhZ / rho
@@ -423,15 +757,13 @@ def computeGradC(particles, header, np.ndarray[dtypef_t, ndim=1] Nx,
     GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
     GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc
     GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc
-    # tcpuadd = time.time() - startTime
-    # Tcpuadd = Tcpuadd + tcpuadd
   return GHX, GHY, GHZ #, L, indL
 
 
-@cython.boundscheck(False)  # Deactivate bounds checking
-@cython.wraparound(False)   # Deactivate negative indexing.
-@cython.cdivision(True)
-def computeFDC(particles, header, double[:] Nx, double[:] Ny, double[:] Nz, long[:] indX, long[:] indY):
+# @cython.boundscheck(False)  # Deactivate bounds checking
+# @cython.wraparound(False)   # Deactivate negative indexing.
+# @cython.cdivision(True)
+def computeFDC(particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, long[:] indX, long[:] indY):
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']
   cdef double[:] Y = particles['y']
@@ -467,9 +799,8 @@ def computeFDC(particles, header, double[:] Nx, double[:] Ny, double[:] Nz, long
     h = 0
     indx = indX[j]
     indy = indY[j]
-    nx = Nx[j]
-    ny = Ny[j]
-    nz = Nz[j]
+    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz)
+    nx, ny, nz = normalize(nx, ny, nz)
 
     # SPH kernel
     # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
@@ -507,12 +838,12 @@ def computeFDC(particles, header, double[:] Nx, double[:] Ny, double[:] Nz, long
                 # get norm of r = xj - xl
                 r = norm(dx, dy, dz)
                 # r = norm(dx, dy, dz)
-                if r < 0.0001 * rKernel:
+                if r < 0.001 * rKernel:
                     # impose a minimum distance between particles
-                    dx = 0.0001 * rKernel * dx
-                    dy = 0.0001 * rKernel * dy
-                    dz = 0.0001 * rKernel * dz
-                    r = 0.0001 * rKernel
+                    dx = 0.001 * rKernel * dx
+                    dy = 0.001 * rKernel * dy
+                    dz = 0.001 * rKernel * dz
+                    r = 0.001 * rKernel
                 if r < rKernel:
                     hr = rKernel - r
                     w = facKernel * hr * hr * hr
@@ -551,7 +882,7 @@ cdef double norm(double x, double y, double z):
       norme: numpy array
           norm of the vector
   """
-  return sqrt(x*x + y*y + z*z)
+  return math.sqrt(x*x + y*y + z*z)
 
 def normpy(x, y, z): # <-- small wrapper to expose norm() to Python
     return norm(x, y, z)
@@ -581,7 +912,7 @@ def norm2py(x, y, z): # <-- small wrapper to expose norm2() to Python
     return norm2(x, y, z)
 
 
-@cython.cdivision(True)
+# @cython.cdivision(True)
 cdef (double, double, double) normalize(double x, double y, double z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
 
@@ -609,12 +940,13 @@ cdef (double, double, double) normalize(double x, double y, double z):
   # to return zero
   cdef double norme
   norme = norm(x, y, z)
-  x = x / norme
-  # xn = np.where(np.isnan(xn), 0, xn)
-  y = y / norme
-  # yn = np.where(np.isnan(yn), 0, yn)
-  z = z / norme
-  # zn = np.where(np.isnan(zn), 0, zn)
+  if norme>0:
+    x = x / norme
+    # xn = np.where(np.isnan(xn), 0, xn)
+    y = y / norme
+    # yn = np.where(np.isnan(yn), 0, yn)
+    z = z / norme
+    # zn = np.where(np.isnan(zn), 0, zn)  
   return x, y, z
 
 
@@ -625,7 +957,7 @@ def normalizepy(x, y, z): # <-- small wrapper to expose normalize() to Python
     return normalize(x, y, z)
 
 
-@cython.cdivision(True)
+# @cython.cdivision(True)
 cdef (double, double, double) croosProd(double ux, double uy, double uz, double vx, double vy, double vz):
   """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
   """
@@ -646,3 +978,131 @@ cdef double scalProd(double ux, double uy, double uz, double vx, double vy, doub
 
 def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Python
     return scalProd(x, y, z, u, v, w)
+
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
+cdef double getScalar(double x, double y, double[:, :] V, double csz):
+  """ Interpolate vector field from grid to single point location
+
+  Originaly created to get the normal vector at location (x,y) given the
+  normal vector field on the grid. Grid has its origin in (0,0).
+  Can be used to interpolate any vector field.
+  Interpolation using a bilinear interpolation
+
+  Parameters
+  ----------
+      x: float
+          location in the x location of desiered interpolation
+      y: float
+          location in the y location of desiered interpolation
+      Nx: 2D numpy array
+          x component of the vector field at the grid nodes
+      Ny: 2D numpy array
+          y component of the vector field at the grid nodes
+      Nz: 2D numpy array
+          z component of the vector field at the grid nodes
+      csz: float
+          cellsize of the grid
+
+  Returns
+  -------
+      nx: float
+          x component of the interpolated vector field at position (x, y)
+      ny: float
+          y component of the interpolated vector field at position (x, y)
+      nz: float
+          z component of the interpolated vector field at position (x, y)
+  """
+  cdef int Lx0, Ly0, Lx1, Ly1
+  cdef double Lx, Ly
+  cdef double xllc = 0.
+  cdef double yllc = 0.
+
+  # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+  Lx = (x - xllc) / csz
+  Ly = (y - yllc) / csz
+
+  # find coordinates of the 4 nearest cornes on the raster
+  Lx0 = <int>Lx
+  Ly0 = <int>Ly
+  Lx1 = Lx0 + 1
+  Ly1 = Ly0 + 1
+  # prepare for bilinear interpolation
+  dx = Lx - Lx0
+  dy = Ly - Ly0
+  # using bilinear interpolation on the cell
+
+  cdef double v = V[Ly0, Lx0]*(1-dx)*(1-dy) + V[Ly0, Lx1]*dx*(1-dy) + V[Ly1, Lx0]*(1-dx)*dy + V[Ly1, Lx1]*dx*dy
+
+  return v
+
+
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
+cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, double csz):
+  """ Interpolate vector field from grid to single point location
+
+  Originaly created to get the normal vector at location (x,y) given the
+  normal vector field on the grid. Grid has its origin in (0,0).
+  Can be used to interpolate any vector field.
+  Interpolation using a bilinear interpolation
+
+  Parameters
+  ----------
+      x: float
+          location in the x location of desiered interpolation
+      y: float
+          location in the y location of desiered interpolation
+      Nx: 2D numpy array
+          x component of the vector field at the grid nodes
+      Ny: 2D numpy array
+          y component of the vector field at the grid nodes
+      Nz: 2D numpy array
+          z component of the vector field at the grid nodes
+      csz: float
+          cellsize of the grid
+
+  Returns
+  -------
+      nx: float
+          x component of the interpolated vector field at position (x, y)
+      ny: float
+          y component of the interpolated vector field at position (x, y)
+      nz: float
+          z component of the interpolated vector field at position (x, y)
+  """
+  cdef int Lx0, Ly0, Lx1, Ly1
+  cdef double Lx, Ly
+  cdef double xllc = 0.
+  cdef double yllc = 0.
+
+  # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+  Lx = (x - xllc) / csz
+  Ly = (y - yllc) / csz
+
+  # find coordinates of the 4 nearest cornes on the raster
+  Lx0 = <int>Lx
+  Ly0 = <int>Ly
+  Lx1 = Lx0 + 1
+  Ly1 = Ly0 + 1
+  # prepare for bilinear interpolation
+  dx = Lx - Lx0
+  dy = Ly - Ly0
+  # using bilinear interpolation on the cell
+
+  cdef double nx = Nx[Ly0, Lx0]*(1-dx)*(1-dy) + Nx[Ly0, Lx1]*dx*(1-dy) + Nx[Ly1, Lx0]*(1-dx)*dy + Nx[Ly1, Lx1]*dx*dy
+  cdef double ny = Ny[Ly0, Lx0]*(1-dx)*(1-dy) + Ny[Ly0, Lx1]*dx*(1-dy) + Ny[Ly1, Lx0]*(1-dx)*dy + Ny[Ly1, Lx1]*dx*dy
+  cdef double nz = Nz[Ly0, Lx0]*(1-dx)*(1-dy) + Nz[Ly0, Lx1]*dx*(1-dy) + Nz[Ly1, Lx0]*(1-dx)*dy + Nz[Ly1, Lx1]*dx*dy
+  return nx, ny, nz
+
+# @cython.cdivision(True)
+cdef double SamosATfric(double rho, double Rs0, double mu, double kappa, double B, double R, double v, double p, double h):
+  cdef double Rs = rho * v * v / (p + 0.001)
+  cdef double div = h / R
+  if div < 1.0:
+    div = 1.0
+  div = math.log(div) / kappa + B
+  cdef double tau = p * mu * (1.0 + Rs0 / (Rs0 + Rs)) + rho * v * v / (div * div)
+  return tau

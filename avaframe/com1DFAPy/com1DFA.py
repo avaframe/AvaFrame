@@ -256,7 +256,6 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # Initialize time and counters
     nSave = 0
     nIter = 0
-    nIter0 = 0
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
@@ -277,7 +276,6 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         dt = cfg.getfloat('dt')
         t = t + dt
         nIter = nIter + 1
-        nIter0 = nIter0 + 1
         log.debug('Computing time step t = %f s', t)
         T = np.append(T, t)
         particles['t'] = t
@@ -304,13 +302,6 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
             log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
             log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
             log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
-            # nIter0 = 0
-            # Tcpu['Force'] = 0.
-            # Tcpu['ForceVect'] = 0.
-            # Tcpu['ForceSPH'] = 0.
-            # Tcpu['Pos'] = 0.
-            # Tcpu['Neigh'] = 0.
-            # Tcpu['Field'] = 0.
             Particles.append(copy.deepcopy(particles))
             Fields.append(copy.deepcopy(fields))
             nSave = nSave + 1
@@ -324,14 +315,17 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # get forces
     # loop version of the compute force
     startTime = time.time()
-    # forceLoop = computeForce(cfg, particles, dem, Ment, Cres)
+    force = SPHC.computeForceC(cfg, particles, dem, Ment, Cres)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
     # vectorized version of the compute force
     startTime = time.time()
-    force = computeForceVect(cfg, particles, dem, Ment, Cres, dt)
+    # forceloop = computeForceVect(cfg, particles, dem, Ment, Cres, dt)
     tcpuForceVect = time.time() - startTime
     Tcpu['ForceVect'] = Tcpu['ForceVect'] + tcpuForceVect
+    # print(np.max((forceloop['forceX']-force['forceX'])/force['forceX']))
+    # print(np.max((forceloop['forceY']-force['forceY'])/force['forceY']))
+    # print(np.max((forceloop['forceZ']-force['forceZ'])/force['forceZ']))
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
     if flagCython:
@@ -343,7 +337,8 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # update velocity and particle position
     startTime = time.time()
-    particles = updatePosition(cfg, particles, dem, force)
+    # particles = updatePosition(cfg, particles, dem, force)
+    particles = SPHC.updatePositionC(cfg, particles, dem, force)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
@@ -368,12 +363,13 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         indX = (particles['indX']).astype('int')
         indY = (particles['indY']).astype('int')
         nx, ny, nz = DFAtls.getNormalArray(particles['x'], particles['y'], Nx, Ny, Nz, csz)
-        H = computeFDcython(particles, header, nx, ny, nz, indX, indY)
+        H = SPHC.computeFDcython(particles, header, nx, ny, nz, indX, indY)
         H = np.asarray(H)
         particles['hSPH'] = H
     # update fields (compute grid values)
     startTime = time.time()
-    particles, fields = updateFields(cfg, particles, force, dem, fields)
+    # particles, fields = updateFields(cfg, particles, force, dem, fields)
+    particles, fields = SPHC.updateFieldsC(cfg, particles, force, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
@@ -586,9 +582,6 @@ def computeForce(cfg, particles, dem, Ment, Cres):
     forceX = np.zeros(Npart)
     forceY = np.zeros(Npart)
     forceZ = np.zeros(Npart)
-    forceSPHX = np.zeros(Npart)
-    forceSPHY = np.zeros(Npart)
-    forceSPHZ = np.zeros(Npart)
     dM = np.zeros(Npart)
     force = {}
     # loop on particles
@@ -678,9 +671,6 @@ def computeForce(cfg, particles, dem, Ment, Cres):
     force['forceX'] = forceX
     force['forceY'] = forceY
     force['forceZ'] = forceZ
-    force['forceSPHX'] = forceSPHX
-    force['forceSPHY'] = forceSPHY
-    force['forceSPHZ'] = forceSPHZ
     return force
 
 
@@ -1134,6 +1124,7 @@ def removeOutPart(cfg, particles, dem):
     xllc = header.xllcenter
     yllc = header.yllcenter
     csz = header.cellsize
+    rasterDEM = dem['rasterData']
 
     x = particles['x']
     y = particles['y']
@@ -1150,6 +1141,9 @@ def removeOutPart(cfg, particles, dem):
     mask[indOut] = False
     indOut = np.where(Ly >= nrows-0.5)
     mask[indOut] = False
+    # indOut = np.where(np.isnan(rasterDEM[(np.floor(Ly)).astype('int'), (np.floor(Lx)).astype('int')]))
+    # print(indOut)
+    # mask[indOut] = False
 
     nRemove = len(mask)-np.sum(mask)
     if nRemove > 0:
