@@ -946,7 +946,7 @@ cdef (double, double, double) normalize(double x, double y, double z):
     y = y / norme
     # yn = np.where(np.isnan(yn), 0, yn)
     z = z / norme
-    # zn = np.where(np.isnan(zn), 0, zn)  
+    # zn = np.where(np.isnan(zn), 0, zn)
   return x, y, z
 
 

@@ -256,6 +256,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     # Initialize time and counters
     nSave = 0
     nIter = 0
+    nIter0 = 0
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
@@ -276,6 +277,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         dt = cfg.getfloat('dt')
         t = t + dt
         nIter = nIter + 1
+        nIter0 = nIter0 + 1
         log.debug('Computing time step t = %f s', t)
         T = np.append(T, t)
         particles['t'] = t
@@ -302,6 +304,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
             log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
             log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
             log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
+
             Particles.append(copy.deepcopy(particles))
             Fields.append(copy.deepcopy(fields))
             nSave = nSave + 1
