@@ -366,10 +366,10 @@ def findAngleProfile(tmp, deltaInd):
     if np.size(tmp) == 0:
         raise IndexError(noBetaFoundMessage)
     while (i <= np.size(tmp) and condition):
-        ind = tmp[0][i]
+        ind = tmp[i]
         for j in range(deltaInd):
             try:
-                condition = condition and (tmp[0][i+j+1] == ind+j+1)
+                condition = condition and (tmp[i+j+1] == ind+j+1)
             except IndexError:
                 raise IndexError(noBetaFoundMessage)
             if not condition:
@@ -409,6 +409,7 @@ def prepareAngleProfile(beta, AvaProfile):
     # (i.e. last value above 10 deg)
     # tmp = x[(angle < 10.0) & (angle > 0.0) & (x > 450)]
     tmp = np.where((angle <= beta) & (s > CuSplit))
+    tmp = np.asarray(tmp).flatten()
     return angle, tmp, deltaInd
 
 
