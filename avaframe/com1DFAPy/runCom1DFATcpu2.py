@@ -53,7 +53,7 @@ Nlam = len(Lam)
 CSZ = [5]
 # CSZ = [1, 2.5, 5]
 Ncsz = len(CSZ)
-TForce = np.zeros((Nlam, Ncsz, Nl))
+TForceC = np.zeros((Nlam, Ncsz, Nl))
 TForceVect = np.zeros((Nlam, Ncsz, Nl))
 TForceSPH = np.zeros((Nlam, Ncsz, Nl))
 TForceSPHC = np.zeros((Nlam, Ncsz, Nl))
@@ -88,7 +88,7 @@ for Lx, Ly in zip(LX, LY):
             # ------------------------
             #  Start time step computation
             Tcpu = {}
-            Tcpu['Force'] = 0.
+            Tcpu['ForceC'] = 0.
             Tcpu['ForceVect'] = 0.
             Tcpu['ForceSPH'] = 0.
             Tcpu['ForceSPHC'] = 0.
@@ -103,8 +103,9 @@ for Lx, Ly in zip(LX, LY):
             # loop version of the compute force
             startTime = time.time()
             # forceLoop = computeForce(cfg, particles, dem, Ment, Cres)
+            forceLoop = SPHC.computeForceC(cfgGen, particles, dem, Ment, Cres)
             tcpuForce = time.time() - startTime
-            Tcpu['Force'] = Tcpu['Force'] + tcpuForce
+            Tcpu['ForceC'] = Tcpu['ForceC'] + tcpuForce
             # vectorized version of the compute force
             startTime = time.time()
             force = com1DFA.computeForceVect(cfgGen, particles, dem, Ment, Cres, dt)
@@ -153,8 +154,7 @@ for Lx, Ly in zip(LX, LY):
             Nz = dem['Nz']
             indX = (particles['indX']).astype('int')
             indY = (particles['indY']).astype('int')
-            nx, ny, nz = DFAtls.getNormalArray(particles['x'], particles['y'], Nx, Ny, Nz, csz)
-            H = SPHC.computeFDC(particles, header, nx, ny, nz, indX, indY)
+            H = SPHC.computeFDC(particles, header, Nx, Ny, Nz, indX, indY)
             H = np.asarray(H)
             particles['hSPH'] = H
             tcpuFDC = time.time() - startTime
@@ -167,8 +167,8 @@ for Lx, Ly in zip(LX, LY):
             tcpuField = time.time() - startTime
             Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
-            log.info(('cpu time Force = %s s' % (Tcpu['Force'])))
-            TForce[count2, count1, count0] = Tcpu['Force']
+            log.info(('cpu time Force = %s s' % (Tcpu['ForceC'])))
+            TForceC[count2, count1, count0] = Tcpu['ForceC']
             log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'])))
             TForceVect[count2, count1, count0] = Tcpu['ForceVect']
             log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'])))
@@ -199,7 +199,7 @@ for ncell in range(Ncsz):
     nl = 0
 # for nl in range(Nl):
     # -------------------------------
-
+    ax.plot(np.log(NP[:, ncell, nl]), np.log(TForceC[:, ncell, nl]), '+k', linestyle='-', label='Tcpu Force C loop')
     # ---------------------------------
     # m, c, r, p, se1 = stats.linregress(np.log(NP[2:]), np.log(TForceVect[2:]))
     # cm1lab = "TForceVect : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
@@ -242,6 +242,7 @@ for ncell in range(Ncsz):
     # m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForce))
     # cm1lab = "TForce : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
     # ax1.loglog(NP, m*np.log(NP)+c, 'b--', linewidth=2, label=cm1lab)
+    ax1.plot(NP[:, ncell, nl], TForceC[:, ncell, nl], '+k', linestyle='-', label='Tcpu Force C loop')
     ax1.plot(NP[:, ncell, nl], TForceVect[:, ncell, nl], '*k', linestyle='-', label='Tcpu Force Vect')
     ax1.plot(NP[:, ncell, nl], TForceSPH[:, ncell, nl], '<b', linestyle='-', label='Tcpu Force SPH')
     ax1.plot(NP[:, ncell, nl], TForceSPHC[:, ncell, nl], '>b', linestyle='-', label='Tcpu Force SPH C')
