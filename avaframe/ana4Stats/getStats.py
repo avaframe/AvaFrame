@@ -49,7 +49,7 @@ def readAimecRunout(workingDir, avaName, cfg):
     return Lrun
 
 
-def extractMaxValues(inputDir, cfgMain, avaDir):
+def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
     """ Extract max values of result parameters and save to dictionary
 
         Parameters
@@ -100,5 +100,7 @@ def extractMaxValues(inputDir, cfgMain, avaDir):
             # add statistical measures
             peakValues[simName].update({peakFiles['resType'][m]: max})
             peakValues[simName].update({'varPar': float(peakFiles[varPar][m])})
+            if nameScenario != '':
+                peakValues[simName].update({'scenario': nameScenario})
 
     return peakValues
