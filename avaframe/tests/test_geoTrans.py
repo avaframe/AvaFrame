@@ -115,6 +115,7 @@ def test_findAngleProfile(capfd):
     s = np.linspace(0, 400, 41)
     angle = np.linspace(40, 0, 41)
     tmp = np.where((angle < 10.0) & (angle >= 0.0))
+    tmp = np.asarray(tmp).flatten()
     deltaInd = 3
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
     assert ids10Point == 31
@@ -127,16 +128,19 @@ def test_findAngleProfile(capfd):
     angle[11] = 8
     angle[12] = 8
     tmp = np.where((angle < 10.0) & (angle >= 0.0))
+    tmp = np.asarray(tmp).flatten()
     deltaInd = 3
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
     assert ids10Point == 31
 
     angle[13] = 8
     tmp = np.where((angle < 10.0) & (angle > 0.0))
+    tmp = np.asarray(tmp).flatten()
     ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
     assert ids10Point == 10
 
     tmp = np.where((angle < 0.0) & (angle >= 0.0))
+    tmp = np.asarray(tmp).flatten()
     deltaInd = 1
     # do we react properly when the input line exceeds the dem?
     with pytest.raises(Exception) as e:
@@ -144,6 +148,7 @@ def test_findAngleProfile(capfd):
     assert str(e.value) == "No Beta point found. Check your pathAB.shp and splitPoint.shp."
 
     tmp = np.where((angle < 4.0) & (angle >= 0.0))
+    tmp = np.asarray(tmp).flatten()
     deltaInd = 4
     # do we react properly when the input line exceeds the dem?
     with pytest.raises(Exception) as e:
