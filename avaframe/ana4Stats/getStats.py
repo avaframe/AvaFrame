@@ -50,7 +50,7 @@ def readAimecRunout(workingDir, avaName, cfg):
 
 
 def extractMaxValues(inputDir, cfgMain, avaDir):
-    """ Extract max values of result parameters
+    """ Extract max values of result parameters and save to dictionary
 
         Parameters
         -----------
