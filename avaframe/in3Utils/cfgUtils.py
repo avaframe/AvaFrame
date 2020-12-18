@@ -11,6 +11,7 @@ import logging
 # Local imports
 import avaframe as avaf
 from avaframe.in3Utils import logUtils
+import pickle
 
 
 log = logging.getLogger(__name__)
@@ -159,3 +160,49 @@ def compareConfig(iniFile, modName, compare):
         logUtils.writeCfg2Log(cfg, modName)
 
     return cfg
+
+
+def writeCfgTxt(avaDir, module, cfg):
+    """ Save configuration used to text file in Outputs """
+
+    # convert to type dict
+    cfgDict = {}
+    for key in cfg:
+        cfgDict[key] = {}
+        for subkey in cfg[key]:
+            cfgDict[key].update({subkey: cfg[key][subkey]})
+
+    # write configuration to text file
+    modPath = os.path.dirname(module.__file__)
+    # get filename of module
+    name = os.path.basename(module.__file__)
+    modName = name.split('.')[0]
+    # set outputs
+    outDir = os.path.join(avaDir, 'Outputs')
+
+    # write to text file
+    # with open(os.path.join(outDir, '%s_settings.txt' % modName), 'w') as f:
+    #     print(cfgDict, file=f)
+
+    f = open(os.path.join(outDir, '%s_settings.pkl' % modName),'wb')
+    pickle.dump(cfgDict,f)
+    f.close()
+
+
+
+def readCfgTxt(avaDir, module):
+    """ Save configuration used to text file in Outputs """
+
+    # write configuration to text file
+    modPath = os.path.dirname(module.__file__)
+    # get filename of module
+    name = os.path.basename(module.__file__)
+    modName = name.split('.')[0]
+    # set outputs
+    inFile = os.path.join(avaDir, 'Outputs', '%s_settings.pkl' % modName)
+    data = open(inFile, 'rb')
+
+    # save as dictionary
+    cfgDict = pickle.load(data)
+
+    return cfgDict
