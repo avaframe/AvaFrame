@@ -391,10 +391,13 @@ def normalize(x, y, z):
     norme = norm(x, y, z)
     xn = x / norme
     xn = np.where(np.isnan(xn), x, xn)
+    xn = np.where(np.isnan(x), x, xn)
     yn = y / norme
     yn = np.where(np.isnan(yn), y, yn)
+    yn = np.where(np.isnan(y), y, yn)
     zn = z / norme
     zn = np.where(np.isnan(zn), z, zn)
+    zn = np.where(np.isnan(z), z, zn)
 
     return xn, yn, zn
 

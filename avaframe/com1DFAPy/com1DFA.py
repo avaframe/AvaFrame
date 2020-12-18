@@ -57,9 +57,11 @@ def initializeMesh(dem, num=4):
     csz = header.cellsize
     # get normal vector of the grid mesh
     Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num=num)
-    dem['Nx'] = Nx
-    dem['Ny'] = Ny
+    dem['Nx'] = np.where(np.isnan(Nx), 0, Nx)
+    dem['Ny'] = np.where(np.isnan(Ny), 0, Ny)
     dem['Nz'] = Nz
+    bad = np.where(Nz > 1, np.nan, 1)
+    dem['Bad'] = bad
 
     # get real Area
     Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
@@ -1076,7 +1078,7 @@ def updateFields(cfg, particles, force, dem, fields):
     return particles, fields
 
 
-def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False):
+def plotPosition(particles, dem, data, Cmap, unit, maxVal, fig, ax, plotPart=False):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
@@ -1121,32 +1123,44 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False):
 
 
 def removeOutPart(cfg, particles, dem):
+    dt = cfg.getfloat('dt')
     header = dem['header']
     nrows = header.nrows
     ncols = header.ncols
     xllc = header.xllcenter
     yllc = header.yllcenter
     csz = header.cellsize
-    rasterDEM = dem['rasterData']
+    Bad = dem['Bad']
 
     x = particles['x']
     y = particles['y']
+    ux = particles['ux']
+    uy = particles['uy']
+    indX = particles['indX']
+    indY = particles['indY']
+    x = x + ux*dt
+    y = y + uy*dt
 
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     Lx = (x - xllc) / csz
     Ly = (y - yllc) / csz
     mask = np.ones(len(x), dtype=bool)
-    indOut = np.where(Lx <= -0.5)
+    indOut = np.where(Lx <= 0.5)
     mask[indOut] = False
-    indOut = np.where(Ly <= -0.5)
+    indOut = np.where(Ly <= 0.5)
     mask[indOut] = False
-    indOut = np.where(Lx >= ncols-0.5)
+    indOut = np.where(Lx >= ncols-1.5)
     mask[indOut] = False
-    indOut = np.where(Ly >= nrows-0.5)
+    indOut = np.where(Ly >= nrows-1.5)
     mask[indOut] = False
-    # indOut = np.where(np.isnan(rasterDEM[(np.floor(Ly)).astype('int'), (np.floor(Lx)).astype('int')]))
-    # print(indOut)
-    # mask[indOut] = False
+    indOut = np.where(np.isnan(Bad[indY, indX]), False, True)
+    mask = np.logical_and(mask, indOut)
+    indOut = np.where(np.isnan(Bad[indY+np.sign(uy).astype('int'), indX]), False, True)
+    mask = np.logical_and(mask, indOut)
+    indOut = np.where(np.isnan(Bad[indY, indX+np.sign(ux).astype('int')]), False, True)
+    mask = np.logical_and(mask, indOut)
+    indOut = np.where(np.isnan(Bad[indY+np.sign(uy).astype('int'), indX+np.sign(ux).astype('int')]), False, True)
+    mask = np.logical_and(mask, indOut)
 
     nRemove = len(mask)-np.sum(mask)
     if nRemove > 0:
