@@ -34,6 +34,9 @@ log.info('Current avalanche: %s', avalancheDir)
 # write config to log file
 cfg = cfgUtils.getModuleConfig(ana3AIMEC)
 
+# write configuration to file
+cfgUtils.writeCfgTxt(avalancheDir, ana3AIMEC, cfg)
+
 cfgSetup = cfg['AIMECSETUP']
 
 # Setup input from com1DFA
