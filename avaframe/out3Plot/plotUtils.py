@@ -162,8 +162,13 @@ cmapSpeed['colors'] = colorsS
 cmapSpeed['lev'] = levS
 cmapSpeed['ticks'] = ticksS
 
-
 cmapDEM = cmapGreys
+
+cmapDEM2 = {}
+cmapDEM2['cmap'] = cmapGreys
+cmapDEM2['colors'] = colorsS
+cmapDEM2['lev'] = None
+cmapDEM2['ticks'] = None
 
 cmapAimec = cmapAvaframe
 
@@ -176,9 +181,10 @@ cmapVar['ticks'] = None
 ###################################
 # shortcut plot functions
 ###################################
-def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
+def NonUnifIm(ax, x, y, z, vmin, vmax, xlab, ylab, **kwargs):
     im = NonUniformImage(ax, **kwargs)
     im.set_data(x, y, z)
+    im.set_clim(vmin=vmin, vmax=vmax)
     ref = ax.images.append(im)
     ax.set_xlim([x.min(), x.max()])
     ax.set_ylim([y.min(), y.max()])

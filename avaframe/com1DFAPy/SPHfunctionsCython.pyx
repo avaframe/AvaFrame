@@ -286,6 +286,7 @@ def updatePositionC(cfg, particles, dem, force):
     uyNew = uy + (forceY[j] + forceSPHY[j]) * dt / m
     uzNew = uz + (forceZ[j] + forceSPHZ[j]) * dt / m
 
+
     # update mass
     mNew = m + dM[j]
     # update position
@@ -457,9 +458,15 @@ def updateFieldsC(cfg, particles, force, dem, fields):
     if hbb< hLim:
       hbb = hLim
     hBB[j] = hbb
-  # hBB, _ = geoTrans.projectOnRasterVectRoot(particles['x'], particles['y'], fields['FD'], csz=csz, interp='bilinear')
-
-  # choose the interpolation method
+  # hB, _ = geoTrans.projectOnRasterVectRoot(particles['x'], particles['y'], fields['FD'], csz=csz, interp='bilinear')
+  # indxx = particles['indX']
+  # indyy = particles['indY']
+  # # APart = dem['Area'][indyy, indxx]
+  # hLim = 400*25/cfg.getfloat('rho') #particles['m']/APart/cfg.getfloat('rho')
+  # hB = np.where(hB < hLim, hLim, hB)
+  # particles['hBilinearBilinear'] = hB
+  # particles['h'] = hB
+# choose the interpolation method
 
   particles['hBilinearBilinear'] = np.asarray(hBB)
   particles['h'] = np.asarray(hBB)
