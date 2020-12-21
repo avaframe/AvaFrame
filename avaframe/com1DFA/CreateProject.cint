@@ -5,8 +5,7 @@ int MAXSTRLEN = 512;
 void CreateProject(char Com1DFAProjectDir[], char DhmFile[],
                    char DhmName[], char RelFile[][512],
                    char EntFile[][512],
-                   char ResFile[][512],
-                   char cellsize[]) {
+                   char ResFile[][512]) {
   int i;
   char name[512];
   char Dhm[512];
@@ -31,7 +30,6 @@ void CreateProject(char Com1DFAProjectDir[], char DhmFile[],
 
   // choose DHM
   sprintf(Dhm, "%s", DhmFile);
-  set("Project/DHMs", "SimulationDefaultCellSize", cellsize);
   set("Project/DHMs", "Import", Dhm);
   sprintf(name,"Project/DHMs/%s_simulation",DhmName);
   set(name, "Active", "1");
@@ -97,7 +95,6 @@ int main()
   char DhmPath[512], DhmName[512], DhmFile[512];
   char SimName[512];
   char ReleaseFile[512];
-  char CellSize[128];
   char RelFiles[512];
   char EntFiles[512];
   char ResFiles[512];
@@ -109,14 +106,13 @@ int main()
   strcpy(Com1DFAProjectDir, "##PROJECTDIR##");
   strcpy(DhmFile,  "##DHMFILE##");
   strcpy(DhmName,  "##DHMNAME##");
-  strcpy(CellSize,  "##CELLSIZE##");
   strcpy(RelFiles,"##RELFILE##");
   strcpy(EntFiles,"##ENTFILE##");
   strcpy(ResFiles,"##RESFILE##");
 
   // --- Calls
   CreateProject(Com1DFAProjectDir, DhmFile,
-                DhmName, RelFiles, EntFiles,  ResFiles, CellSize);
+                DhmName, RelFiles, EntFiles,  ResFiles);
 
   printf("[BatchCom1DFA] Project %s created!\n", Com1DFAProjectDir);
   return 0;

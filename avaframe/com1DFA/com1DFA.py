@@ -135,11 +135,7 @@ def com1DFAMain(cfg, avaDir):
         entrainmentArea = os.path.splitext(os.path.basename(ent))[0]
         resistanceArea = os.path.splitext(os.path.basename(res))[0]
 
-    # Get cell size from DEM header
-    demData = aU.readASCheader(dem)
-    cellSize = demData.cellsize
-
-     # Parameter variation
+    # Parameter variation
     if cfgPar.getboolean('flagVarPar'):
         varPar = cfgPar['varPar']
     else:
@@ -175,7 +171,6 @@ def com1DFAMain(cfg, avaDir):
         copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
         copyReplace(workFile, workFile, '##DHMFILE##', dem)
         copyReplace(workFile, workFile, '##DHMNAME##', demName)
-        copyReplace(workFile, workFile, '##CELLSIZE##', cellSize)
         copyReplace(workFile, workFile, '##RELFILE##', rel)
         copyReplace(workFile, workFile, '##ENTFILE##', ent)
         copyReplace(workFile, workFile, '##RESFILE##', res)
