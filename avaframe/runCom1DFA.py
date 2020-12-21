@@ -51,4 +51,4 @@ reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFA', 'reports')
 gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
 # write configuration to file
-cfgUtils.writeCfgTxt(avalancheDir, com1DFA, cfg)
+cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg)

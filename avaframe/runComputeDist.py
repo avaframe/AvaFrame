@@ -24,14 +24,17 @@ avalancheDir = cfgAva['MAIN']['avalancheDir']
 workingDir = os.path.join(avalancheDir, 'Outputs', 'in1Data')
 fU.makeADir(workingDir)
 
-# Start logging
-log = logUtils.initiateLogger(workingDir, logName)
-log.info('MAIN SCRIPT')
-
 # Load input parameters from configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 cfg = cfgUtils.getModuleConfig(cF)
 cfgGen = cfg['GENERAL']
+
+# log file name; leave empty to use default runLog.log
+logName = 'runSampleFromDist%s' % cfgGen['distType']
+
+# Start logging
+log = logUtils.initiateLogger(workingDir, logName)
+log.info('MAIN SCRIPT')
 
 # load parameters required to compute specific distribution
 a = float(cfgGen['a'])
@@ -51,15 +54,19 @@ alpha, beta, mu = cF.computeParameters(a, b, c)
 PDF, CDF, CDFInt = cF.computePert(a, b, c, x, alpha, beta)
 
 # +++++++++++++ Extract samples from distribution ++++++++++
-# extract sample from pert distribution
-sampleVect = cF.extractFromCDF(CDF, CDFInt, x, cfgGen)
-# extract sample from uniform distribution
-# CDF, CDFInt, sampleVect = cF.extractUniform(a, c, x, cfgGen)
+if cfgGen['distType'] == 'Pert':
+    # extract sample from pert distribution
+    sampleVect = cF.extractFromCDF(CDF, CDFInt, x, cfgGen)
+elif cfgGen['distType'] == 'Uni':
+    # extract sample from uniform distribution
+    CDF, CDFInt, sampleVect = cF.extractUniform(a, c, x, cfgGen)
+else:
+    log.error('Distribution type not known')
 
 #++++++++++++++ Print result to log and save results in outFile
 for m in range(len(sampleVect)):
     log.info('%.5f' % (sampleVect[m]))
-outFile = os.path.join(workingDir, 'sampleFromDist.txt')
+outFile = os.path.join(workingDir, 'sampleFromDist%s.txt' % cfgGen['distType'])
 with open(outFile, 'w') as pfile:
     for item in sampleVect:
         pfile.write('%.5f_' % item)
@@ -80,3 +87,6 @@ ECDF, xSample = cF.getEmpiricalCDFNEW(sampleVect)
 iPlot.plotEmpCDF(workingDir, CDF, ECDF, xSample, cfgGen, 'ECDF', flagShow)
 # plot sample histogram and PDF of desired distribution
 iPlot.plotEmpPDF(workingDir, PDF, sampleVect, cfgGen, flagShow)
+
+# write configuration to file
+cfgUtils.writeCfgFile(avalancheDir, cF, cfg, suffix=cfgGen['distType'])
