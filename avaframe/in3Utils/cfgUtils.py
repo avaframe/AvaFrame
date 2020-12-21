@@ -162,17 +162,10 @@ def compareConfig(iniFile, modName, compare):
     return cfg
 
 
-def writeCfgTxt(avaDir, module, cfg):
+def writeCfgFile(avaDir, module, cfg, suffix=''):
     """ Save configuration used to text file in Outputs """
 
-    # convert to type dict
-    cfgDict = {}
-    for key in cfg:
-        cfgDict[key] = {}
-        for subkey in cfg[key]:
-            cfgDict[key].update({subkey: cfg[key][subkey]})
-
-    # write configuration to text file
+    # write configuration to ini file
     modPath = os.path.dirname(module.__file__)
     # get filename of module
     name = os.path.basename(module.__file__)
@@ -180,17 +173,13 @@ def writeCfgTxt(avaDir, module, cfg):
     # set outputs
     outDir = os.path.join(avaDir, 'Outputs')
 
-    # write to text file
-    # with open(os.path.join(outDir, '%s_settings.txt' % modName), 'w') as f:
-    #     print(cfgDict, file=f)
-
-    f = open(os.path.join(outDir, '%s_settings.pkl' % modName),'wb')
-    pickle.dump(cfgDict,f)
-    f.close()
+    # write to file
+    with open(os.path.join(outDir, '%s%s_settings.ini' % (modName, suffix)), 'w') as conf:
+        cfg.write(conf)
 
 
 
-def readCfgTxt(avaDir, module):
+def readCfgFile(avaDir, module, suffix=''):
     """ Save configuration used to text file in Outputs """
 
     # write configuration to text file
@@ -199,10 +188,10 @@ def readCfgTxt(avaDir, module):
     name = os.path.basename(module.__file__)
     modName = name.split('.')[0]
     # set outputs
-    inFile = os.path.join(avaDir, 'Outputs', '%s_settings.pkl' % modName)
-    data = open(inFile, 'rb')
+    inFile = os.path.join(avaDir, 'Outputs', '%s%s_settings.ini' % (modName, suffix))
 
-    # save as dictionary
-    cfgDict = pickle.load(data)
+    # read configParser object
+    cfg = configparser.ConfigParser()
+    cfg.read(inFile)
 
-    return cfgDict
+    return cfg
