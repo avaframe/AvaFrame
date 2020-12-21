@@ -11,7 +11,6 @@ import logging
 # Local imports
 import avaframe as avaf
 from avaframe.in3Utils import logUtils
-import pickle
 
 
 log = logging.getLogger(__name__)
