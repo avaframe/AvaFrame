@@ -212,15 +212,15 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaMalDict':
-        avaDictName = {'simName': 'relMal_null_dfa_0.15500',
+        avaDictName = {'simName': 'relMal1to3_null_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area': 'relMal',
+                        'Release Area': 'relMal1to3',
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': '1.00000'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'relMal'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'relMal1to3'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Mal test.'}}
 
         avaDictList.append(avaDictName)
@@ -238,6 +238,7 @@ def fetchBenchParameters(avaDir):
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Wog test.'}}
 
         avaDictList.append(avaDictName)
+
 
 
     return avaDictList
