@@ -101,26 +101,36 @@ and you should see something like::
 How to add a benchmark test
 ----------------------------
 
-AvaFrame offers an expanding benchmark test suite. At the moment this test suite includes avalanche simulations for various idealised topographies.
-The ``runStandardTests.py`` facilitates running all the available benchmark tests at once. With this script, the avalanche simulations are performed,
-plots and a report of the comparison between simulation results and the benchmark data is generated.
-If you plan to add a new benchmark test case, follow these steps
+AvaFrame offers an expanding benchmark test suite. At the moment this test suite
+includes avalanche simulations for various idealised topographies. The
+``runStandardTests.py`` facilitates running all the available benchmark tests at
+once. With this script, the avalanche simulations are performed, plotted and a
+report of the comparison between simulation results and the benchmark data is
+generated. If you plan to add a new benchmark test case, follow these steps
 
-  * first chose a name, we suggest to start it with ``ava`` (for now let's refer to it as ``NameOfAvalanche``)
-  * add all the required input data in ``data/NameOfAvalanche``; follow the required directory structure which can be generated using: :ref:`moduleIn3Utils:Initialize Project`
-  * add this ``data/NameOfAvalanche`` in the ``standardNames`` list in ``runStandardTests.py``
+  * first chose a name, we suggest to start it with ``ava`` (for now let's refer
+    to it as ``NameOfAvalanche``)
+  * add all the required input data in ``data/NameOfAvalanche``. Follow the
+    required directory structure which can be generated using:
+    :ref:`moduleIn3Utils:Initialize Project`
+  * add this ``data/NameOfAvalanche`` to the ``standardNames`` list in
+    ``runStandardTests.py``
 
 as a next step, you need to add the benchmark results:
 
   * go to ``AvaFrame/benchmarks`` and add the subdirectory ``NameOfAvalanche``
-  * add benchmark data (peak values of result parameters as acii files); this data will be used as reference for the new test!
+  * add benchmark data i.e. peak values of result parameters as ascii files. This
+    data will be used as reference for the new test!
   * add the configuration file as ``NameOfAvalanche_Com1DFACfg.ini``
-  * go to ``AvaFrame/benchmarks/simParameters.py`` and add a simulation directory that contains all the info on the new benchmark
+  * go to ``AvaFrame/benchmarks/simParameters.py`` and add a simulation
+    directory that contains all the info on the new benchmark
 
-.. Note::  The names of the peak files have to be identical to the names of the simulation results, just use `ref` instead of `dfa`.
+.. Note:: The names of the peak files have to be identical to the names of the
+           simulation results, just use `ref` instead of `dfa`.
 
 Now, you are ready to go! Move to ``AvaFrame/avaframe`` and run: ::
 
   python runStandardTests.py
 
-You can check out the markdown-style report of the comparison at: ``tests/reports/standardTestsReport.md``.
+You can check out the markdown-style report of the comparison at:
+``tests/reports/standardTestsReport.md``.

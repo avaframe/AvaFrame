@@ -79,7 +79,8 @@ def getModuleConfig(module, fileOverride=''):
             iniFile = fileOverride
             compare = False
         else:
-            raise FileNotFoundError('Provided fileOverride does not exist')
+            raise FileNotFoundError('Provided fileOverride does not exist: '
+                                    + fileOverride)
 
     elif os.path.isfile(localFile):
         iniFile = localFile
