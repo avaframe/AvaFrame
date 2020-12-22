@@ -25,7 +25,10 @@ logName = 'runStandardTests'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # Define avalanche directories for standard tests
-standardNames = ['data/avaAlr',
+standardNames = [#'data/avaAlr',
+                 'data/avaKot',
+                 'data/avaMal',
+                 'data/avaWog',
                  'data/avaBowl',
                  'data/avaFlatPlane',
                  'data/avaHelix',
