@@ -197,4 +197,47 @@ def fetchBenchParameters(avaDir):
 
         avaDictList.append(avaDictName)
 
+    elif avaDictName == 'avaKotDict':
+        avaDictName = {'simName': 'relKot_null_dfa_0.15500',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area': 'relKot',
+                        'Entrainment Area': '',
+                        'Resistance Area': '',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'relKot'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs the Kot test.'}}
+
+        avaDictList.append(avaDictName)
+
+    elif avaDictName == 'avaMalDict':
+        avaDictName = {'simName': 'relMal_null_dfa_0.15500',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area': 'relMal',
+                        'Entrainment Area': '',
+                        'Resistance Area': '',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'relMal'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs the Mal test.'}}
+
+        avaDictList.append(avaDictName)
+
+    elif avaDictName == 'avaWogDict':
+        avaDictName = {'simName': 'relWog_null_dfa_0.15500',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area': 'relWog',
+                        'Entrainment Area': '',
+                        'Resistance Area': '',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': '1.00000'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'relWog'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs the Wog test.'}}
+
+        avaDictList.append(avaDictName)
+
+
     return avaDictList
