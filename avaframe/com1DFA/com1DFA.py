@@ -159,7 +159,6 @@ def com1DFAMain(cfg, avaDir):
         relName = os.path.splitext(os.path.basename(rel))[0]
         simName = relName
         relDict = sP.SHP2Array(rel)
-        print('relDict', relDict['Name'], relDict['d0'])
         for k in range(len(relDict['d0'])):
             if relDict['d0'][k] == 'None':
                 relDict['d0'][k] = '1.0'
