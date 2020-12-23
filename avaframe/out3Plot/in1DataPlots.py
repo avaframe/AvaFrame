@@ -9,7 +9,11 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import glob
 
+
+# flagLim if x axis limited
+flagLim = False
 
 def plotDist(workingDir, CDF, a, b, c, cfg, flagShow):
     """ plot the CDF """
@@ -19,7 +23,7 @@ def plotDist(workingDir, CDF, a, b, c, cfg, flagShow):
     fig = plt.figure()
     plt.plot(halfLine, 'k--')
     plt.plot(CDF)
-    plt.title('Pert CDF, a=%.2f, b=%.2f, c=%.2f m' % (a,b,c))
+    plt.title('%s CDF, a=%.3f, b=%.3f, c=%.3f m' % (cfg['distType'], a,b,c))
     plt.xlabel('support')
     plt.ylabel('CDF')
     plt.grid()
@@ -28,7 +32,7 @@ def plotDist(workingDir, CDF, a, b, c, cfg, flagShow):
         plt.show()
 
     # save fig
-    fig.savefig(os.path.join(workingDir, 'CDF_%s.png' % cfg['name']))
+    fig.savefig(os.path.join(workingDir, 'CDF_%s_%s.png' % (cfg['name'], cfg['distType'])))
     plt.close('all')
 
 
@@ -45,7 +49,7 @@ def plotSample(workingDir, sample, cfg, flagShow):
         plt.show()
 
     # save fig
-    fig.savefig(os.path.join(workingDir, 'samples_%s.png' % cfg['name']))
+    fig.savefig(os.path.join(workingDir, 'samples_%s_%s.png' % (cfg['name'], cfg['distType'])))
     plt.close('all')
 
 
@@ -65,7 +69,7 @@ def plotSamplePDF(workingDir, sampleVect, kdeDict, PDF, cfg, flagShow):
         plt.show()
 
     # save fig
-    fig.savefig(os.path.join(workingDir, 'PDFcompare_%s.png' % cfg['name']))
+    fig.savefig(os.path.join(workingDir, 'PDFcompare_%s_%s.png' % (cfg['name'], cfg['distType'])))
     plt.close('all')
 
 
@@ -84,7 +88,7 @@ def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow):
         plt.show()
 
     # save fig
-    fig.savefig(os.path.join(workingDir, 'CDFcompare%s_%s.png' % (methodAbbr, cfg['name'])))
+    fig.savefig(os.path.join(workingDir, 'CDFcompare%s_%s_%s.png' % (methodAbbr, cfg['name'], cfg['distType'])))
     plt.close('all')
 
 
@@ -104,7 +108,7 @@ def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow):
         plt.show()
 
     # save fig
-    fig.savefig(os.path.join(workingDir, 'PDFcompare_%s.png' % (cfg['name'])))
+    fig.savefig(os.path.join(workingDir, 'PDFcompare_%s_%s.png' % (cfg['name'], cfg['distType'])))
     plt.close('all')
 
 
@@ -125,5 +129,5 @@ def plotECDF(workingDir, CDF, sample, cfg, methodAbbr, flagShow):
         plt.show()
 
     # save fig
-    fig.savefig(os.path.join(workingDir, 'CDFcompare%s_%s.png' % (methodAbbr, cfg['name'])))
+    fig.savefig(os.path.join(workingDir, 'CDFcompare%s_%s_%s.png' % (methodAbbr, cfg['name'], cfg['distType'])))
     plt.close('all')

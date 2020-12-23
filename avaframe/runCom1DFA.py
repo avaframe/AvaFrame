@@ -49,3 +49,6 @@ plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
 reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFA', 'reports')
 # write report
 gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+
+# write configuration to file
+cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg)

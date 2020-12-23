@@ -160,3 +160,38 @@ def compareConfig(iniFile, modName, compare):
         logUtils.writeCfg2Log(cfg, modName)
 
     return cfg
+
+
+def writeCfgFile(avaDir, module, cfg, suffix=''):
+    """ Save configuration used to text file in Outputs """
+
+    # write configuration to ini file
+    modPath = os.path.dirname(module.__file__)
+    # get filename of module
+    name = os.path.basename(module.__file__)
+    modName = name.split('.')[0]
+    # set outputs
+    outDir = os.path.join(avaDir, 'Outputs')
+
+    # write to file
+    with open(os.path.join(outDir, '%s%s_settings.ini' % (modName, suffix)), 'w') as conf:
+        cfg.write(conf)
+
+
+
+def readCfgFile(avaDir, module, suffix=''):
+    """ Save configuration used to text file in Outputs """
+
+    # write configuration to text file
+    modPath = os.path.dirname(module.__file__)
+    # get filename of module
+    name = os.path.basename(module.__file__)
+    modName = name.split('.')[0]
+    # set outputs
+    inFile = os.path.join(avaDir, 'Outputs', '%s%s_settings.ini' % (modName, suffix))
+
+    # read configParser object
+    cfg = configparser.ConfigParser()
+    cfg.read(inFile)
+
+    return cfg

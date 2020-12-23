@@ -11,7 +11,7 @@ import glob
 from avaframe.com1DFA import com1DFA
 from avaframe.log2Report import generateReport as gR
 from avaframe.out1Peak import outPlotAllPeak as oP
-from avaframe.ana4Prob import probAna
+from avaframe.ana4Stats import probAna
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
@@ -42,7 +42,7 @@ for avaDir in avalancheDirectories:
     # Load input parameters from configuration file
     # write config to log file
     avaName = os.path.basename(avaDir)
-    probSimCfg = os.path.join('..', 'benchmarks', avaName, 'ana4Prob', '%sProbAna_com1DFACfg.ini' % avaName)
+    probSimCfg = os.path.join('..', 'benchmarks', avaName, 'ana4Stats', '%sProbAna_com1DFACfg.ini' % avaName)
     cfg = cfgUtils.getModuleConfig(com1DFA, probSimCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
@@ -73,6 +73,6 @@ for avaDir in avalancheDirectories:
     probAna.probAnalysis(avaDir, cfgProb, cfg)
 
     # make a plot of the map
-    inputDir = os.path.join(avaDir, 'Outputs', 'ana4Prob')
-    outputDir = os.path.join(avaDir, 'Outputs', 'ana4Prob', 'plots')
+    inputDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
+    outputDir = os.path.join(avaDir, 'Outputs', 'ana4Stats', 'plots')
     oP.plotAllFields(avaDir, inputDir, outputDir, cfgProb)
