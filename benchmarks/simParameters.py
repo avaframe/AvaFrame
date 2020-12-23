@@ -1,7 +1,5 @@
 """
     dictionary with simulation info for benchmarks
-
-    This file is part of Avaframe.
 """
 
 # Load modules
@@ -307,5 +305,20 @@ def fetchBenchParameters(avaDir):
 
         avaDictList.append(avaDictName)
 
+
+    elif avaDictName == 'avaHitDict':
+        avaDictName = {'simName': 'relHit_null_dfa_0.15500',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area Scenario': 'relHit',
+                        'Release Area': ['HiT'],
+                        'Entrainment Area': '',
+                        'Resistance Area': '',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': ['1.0']},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'relHit'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs the Hit test.'}}
+
+        avaDictList.append(avaDictName)
 
     return avaDictList
