@@ -26,6 +26,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 
 # Define avalanche directories for standard tests
 standardNames = [#'data/avaAlr',
+                 'data/avaGar',
                  'data/avaKot',
                  'data/avaMal',
                  'data/avaWog',
@@ -93,7 +94,7 @@ for avaDir in standardNames:
     # get release area scenarios
     relArea = []
     for dict in reportDictList:
-        relArea.append(dict['Simulation Parameters']['Release Area'])
+        relArea.append(dict['Simulation Parameters']['Release Area Scenario'])
     relAreaSet = sorted(set(relArea))
 
     for rel in relAreaSet:
@@ -103,7 +104,8 @@ for avaDir in standardNames:
         benchDictList = simParameters.fetchBenchParameters(avaDir)
         benchDict = ''
         for bDict in benchDictList:
-            if rel in bDict['Simulation Parameters']['Release Area']:
+
+            if rel == bDict['Simulation Parameters']['Release Area Scenario']:
                 benchDict = bDict
         benchSimName = benchDict['simName']
         # Check if simulation with entrainment and/or resistance or standard simulation
@@ -113,7 +115,7 @@ for avaDir in standardNames:
 
         # Fetch correct reportDict according to flagEntRes
         for dict in reportDictList:
-            if simType in dict['simName']['name'] and dict['Simulation Parameters']['Release Area'] == rel:
+            if simType in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel:
                 reportD = dict
 
         # Add info on run time

@@ -14,6 +14,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in2Trans import ascUtils as aU
 from avaframe.in3Utils import initialiseDirs as iD
 from avaframe.in1Data import getInput as gI
+from avaframe.in2Trans import shpConversion as sP
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -157,6 +158,11 @@ def com1DFAMain(cfg, avaDir):
         # Set release areas and simulation name
         relName = os.path.splitext(os.path.basename(rel))[0]
         simName = relName
+        relDict = sP.SHP2Array(rel)
+        print('relDict', relDict['Name'], relDict['d0'])
+        for k in range(len(relDict['d0'])):
+            if relDict['d0'][k] == 'None':
+                relDict['d0'][k] = '1.0'
         log.info('Release area scenario: %s - perform simulations' % (relName))
         if flagEntRes:
             log.info('Entrainment area: %s and resistance area: %s' % (entrainmentArea, resistanceArea))
@@ -217,13 +223,14 @@ def com1DFAMain(cfg, avaDir):
             'simName': {'type': 'simName', 'name': logName},
                 'Simulation Parameters': {
                     'type': 'list',
-                    'Release Area': relName,
+                    'Release Area Scenario': relName,
+                    'Release Area': relDict['Name'],
                     'Entrainment Area': '',
                     'Resistance Area': '',
                     'Parameter variation on': '',
                     'Parameter value': '',
                     'Mu': defValues['Mu'],
-                    'Release thickness [m]': defValues['RelTh']},
+                    'Release thickness [m]': relDict['d0']},
                 'Release area': {'type': 'columns', 'Release area scenario': relName}}
 
             # Add to report dictionary list
@@ -264,7 +271,8 @@ def com1DFAMain(cfg, avaDir):
                 'simName': {'type': 'simName', 'name': logName},
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area': relName,
+                        'Release Area Scenario': relName,
+                        'Release Area': relDict['Name'],
                         'Entrainment Area': entrainmentArea,
                         'Resistance Area': resistanceArea,
                         'Parameter variation on': cfgPar['varPar'],
@@ -277,7 +285,7 @@ def com1DFAMain(cfg, avaDir):
                     reportVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
                     reportVar['Simulation Parameters'].update({'Release thickness [m]': item})
                 elif cfgPar['varPar'] == 'Mu':
-                    reportVar['Simulation Parameters'].update({'Release thickness [m]': defValues['RelTh']})
+                    reportVar['Simulation Parameters'].update({'Release thickness [m]': relDict['d0']})
                     reportVar['Simulation Parameters'].update({'Mu': item})
 
                 # Add to report dictionary list
@@ -312,13 +320,14 @@ def com1DFAMain(cfg, avaDir):
                 'simName': {'type': 'simName', 'name': logName},
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area': relName,
+                        'Release Area Scenario': relName,
+                        'Release Area': relDict['Name'],
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Parameter variation on': '',
                         'Parameter value': '',
                         'Mu': defValues['Mu'],
-                        'Release thickness [m]': defValues['RelTh']},
+                        'Release thickness [m]': relDict['d0']},
                     'Release Area': {'type': 'columns', 'Release area scenario': relName}}
 
                 if 'entres' in sim:
