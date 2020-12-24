@@ -119,7 +119,7 @@ def compareConfig(iniFile, modName, compare):
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
         # loop through all sections of the defCfg
-        log.info('Writing cfg for: %s', modName)
+        log.debug('Writing cfg for: %s', modName)
         for section in defCfg.sections():
             cfg.add_section(section)
             log.info('\t%s', section)

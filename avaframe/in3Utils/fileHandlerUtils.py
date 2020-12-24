@@ -54,7 +54,7 @@ def readLogFile(logName, cfg=''):
 
     # Read log file
     logFile = open(logName, 'r')
-    log.info('Take com1DFA full experiment log')
+    log.debug('Take com1DFA full experiment log')
 
     # Parameter variation
     if cfg != '':
@@ -215,7 +215,7 @@ def getRefData(avaDir, outputDir, suffix, nameDir=''):
     elif data['files'] == []:
         log.error('No files found in %s' % refDir)
     else:
-        log.info('Reference files copied from directory: %s' % refDir)
+        log.debug('Reference files copied from directory: %s' % refDir)
 
 
 def exportcom1DFAOutput(avaDir, cfg=''):

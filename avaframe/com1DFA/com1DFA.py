@@ -57,7 +57,10 @@ def execCom1Exe(com1Exe, cintFile, avaDir, fullOut=False, simName=''):
         if fullOut:
             log.info((line.rstrip()))
         elif 'BatchCom1DFA' in line:
-            log.info(line.rstrip())
+            if 'Computing' in line:
+                log.info(line.rstrip())
+            else:
+                log.debug(line.rstrip())
         elif 'error' in line:
             log.info(line.rstrip())
 
@@ -120,10 +123,10 @@ def com1DFAMain(cfg, avaDir):
     defValues = cfg['DEFVALUES']
 
     # Log chosen settings
-    log.info('The chosen settings: entrainment - %s , resistance - %s ' % (flagEnt, flagRes))
+    log.debug('The chosen settings: entrainment - %s , resistance - %s ' % (flagEnt, flagRes))
 
     # Log current avalanche directory
-    log.info('Your current avalanche test name: %s' % avaDir)
+    log.debug('Your current avalanche name: %s' % avaDir)
 
     # Create output and work directories
     workDir, outDir = iD.initialiseRunDirs(avaDir, modName)
@@ -341,7 +344,7 @@ def com1DFAMain(cfg, avaDir):
                 # Count total number of simulations
                 countRel = countRel + 1
 
-    log.info('Avalanche Simulations performed')
+    log.debug('Avalanche Simulations performed')
 
     # Setup input from com1DFA and exort to Outputs/com1DFA
     if cfgPar.getboolean('flagVarPar'):
