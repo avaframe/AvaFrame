@@ -278,20 +278,6 @@ def fetchBenchParameters(avaDir):
 
         avaDictList.append(avaDictName)
 
-        avaDictName = {'simName': 'relGar2345_null_dfa_0.15500',
-                    'Simulation Parameters': {
-                        'type': 'list',
-                        'Release Area Scenario': 'relGar2345',
-                        'Release Area': ['GaR2','GaR5','GaR4','GaR3'],
-                        'Entrainment Area': '',
-                        'Resistance Area': '',
-                        'Mu': '0.15500',
-                        'Release thickness [m]': ['1.5','1.2','1.2','1.35']},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'relGar2345'},
-                    'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
-
-        avaDictList.append(avaDictName)
-
         avaDictName = {'simName': 'relGar6_null_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',

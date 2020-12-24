@@ -25,7 +25,8 @@ logName = 'runStandardTests'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # Define avalanche directories for standard tests
-standardNames = [#'data/avaAlr',
+standardNames = ['data/avaAlr',
+                 'data/avaHit',
                  'data/avaGar',
                  'data/avaKot',
                  'data/avaMal',
@@ -37,7 +38,8 @@ standardNames = [#'data/avaAlr',
                  'data/avaHockey',
                  'data/avaHockeySmoothChannel',
                  'data/avaHockeySmoothSmall',
-                 'data/avaInclinedPlane']
+                 'data/avaInclinedPlane'
+                 ]
 
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reports')
@@ -60,7 +62,6 @@ for avaDir in standardNames:
 
     # Start logging
     log = logUtils.initiateLogger(avaDir, logName)
-    log.info('MAIN SCRIPT')
     log.info('Current avalanche: %s', avaDir)
 
     # Load input parameters from configuration file for standard tests
