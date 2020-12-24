@@ -1,4 +1,3 @@
-cfgUtils - INFO -  Writing cfg for: test_logUtils
 cfgUtils - INFO -  	GENERAL
 cfgUtils - INFO -  		inputdir : path/to/avalanche
 cfgUtils - INFO -  		fulllog : True
