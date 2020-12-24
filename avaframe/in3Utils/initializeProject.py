@@ -41,7 +41,7 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
         return 'AvaDir is NOT a string'
 
     # Info to user
-    log.info("Cleaning folder: %s ", avaDir)
+    log.debug("Cleaning folder: %s ", avaDir)
 
     # Try to remove OUTPUTS folder, only pass FileNotFoundError, i.e. folder
     # does not exist

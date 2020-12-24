@@ -14,7 +14,7 @@ def writeCfg2Log(cfg, cfgName='Unspecified'):
     
     log = logging.getLogger('root')
 
-    log.info('Writing cfg for: %s', cfgName)
+    log.debug('Writing cfg for: %s', cfgName)
     for section in cfg.sections():
         log.info('\t%s', section)
         for key in dict(cfg[section]):

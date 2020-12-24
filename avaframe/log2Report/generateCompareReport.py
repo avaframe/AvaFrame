@@ -36,7 +36,7 @@ def makeLists(simDict, benchDict):
     for key in simDict:
         if key != 'type':
             if simDict[key] == '' and benchDict.get(key) is None:
-                log.info('this parameter is not used: %s' % key)
+                log.debug('this parameter is not used: %s' % key)
             else:
                 parameterList.append(key)
                 valuesSim.append(simDict[key])
