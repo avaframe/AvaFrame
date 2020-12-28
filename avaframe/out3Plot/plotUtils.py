@@ -12,6 +12,7 @@ import datetime
 import pathlib
 from matplotlib.image import NonUniformImage
 from matplotlib import pyplot as plt
+from matplotlib.offsetbox import AnchoredText
 import cmocean
 import logging
 
@@ -220,13 +221,20 @@ def addColorBar(im, ax2, ticks, myUnit):
 
 def putAvaNameOnPlot(ax, avaDir):
     '''
-    Puts the date and avalanche name in the lower left corner of the given
+    Puts the date and avalanche name (or a list of ava names) in the lower left corner of the given
     matplotlib axes
     '''
-    avaName = pathlib.PurePath(avaDir).name
 
-    infoText = datetime.datetime.now().strftime("%d.%m.%y") + \
+    if isinstance(avaDir, str):
+        avaName = pathlib.PurePath(avaDir).name
+        infoText = datetime.datetime.now().strftime("%d.%m.%y") + \
                '; ' + str(avaName)
+    else:
+        infoText = datetime.datetime.now().strftime("%d.%m.%y")
+        for ava in avaDir:
+            avaName = pathlib.PurePath(ava).name
+            infoText = infoText + ';' + str(avaName)
+
     plt.text(0, 0, infoText, fontsize=8, verticalalignment='bottom',
              horizontalalignment='left', transform=ax.transAxes,
              color='0.6')
