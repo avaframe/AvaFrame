@@ -99,7 +99,7 @@ def writeReportFile(reportD, pfile):
                         pfile.write('##### Figure:   %s \n' % value)
                         pfile.write(' \n')
                         pfile.write('![%s](%s) \n' % (value, reportD[key][value]))
-                        pfile.write('\ \n')
+                        pfile.write(' \n')
                         pfile.write(' \n')
 
             # TEXT BLOCK
@@ -115,7 +115,7 @@ def writeReportFile(reportD, pfile):
 
 
 def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
-    """ Write a report in markdown format for simulations, saved to outDir 
+    """ Write a report in markdown format for simulations, saved to outDir
 
         Parameters
         ----------
