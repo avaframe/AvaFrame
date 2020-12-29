@@ -11,7 +11,7 @@ from datetime import datetime
 
 def writeCfg2Log(cfg, cfgName='Unspecified'):
     """ write a configparser object to log file"""
-    
+
     log = logging.getLogger('root')
 
     log.debug('Writing cfg for: %s', cfgName)
@@ -46,7 +46,7 @@ def initiateLogger(targetDir, logName='runLog'):
     logging.config.fileConfig(fname=logConfFile,
                               defaults={'logfilename': logFileName},
                               disable_existing_loggers=False)
-    log = logging.getLogger('root')
+    log = logging.getLogger('avaframe')
 
     # datetime object containing current date and time
     now = datetime.now()

@@ -56,9 +56,21 @@ def getInputData(avaDir, cfg, flagDev=False):
     # Initialise release areas, default is to look for shapefiles
     if flagDev == True:
         releaseDir = 'devREL'
+        relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
+    elif cfg['releaseScenario'] != '':
+        releaseDir = 'REL'
+        relFiles = []
+        releaseFiles = cfg['releaseScenario'].split('_')
+        for rel in releaseFiles:
+            relf = os.path.join(inputDir, releaseDir, '%s.shp' % (rel))
+            if os.path.isfile(relf) == True:
+                relFiles.append(relf)
+            else:
+                log.error('No release scenario called: %s' % (relf))
+        log.info('Release area file is specified to be: %s' % relFiles)
     else:
         releaseDir = 'REL'
-    relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
+        relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
     log.debug('Release area files are: %s' % relFiles)
 
     # Initialise resistance areas
