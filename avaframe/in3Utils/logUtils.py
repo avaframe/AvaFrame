@@ -12,7 +12,7 @@ from datetime import datetime
 def writeCfg2Log(cfg, cfgName='Unspecified'):
     """ write a configparser object to log file"""
 
-    log = logging.getLogger('root')
+    log = logging.getLogger('avaframe')
 
     log.debug('Writing cfg for: %s', cfgName)
     for section in cfg.sections():

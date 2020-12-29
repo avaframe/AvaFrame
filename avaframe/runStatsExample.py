@@ -7,12 +7,14 @@ import os
 import time
 import glob
 import configparser
+import shutil
 import numpy as np
 
 # Local imports
 from avaframe.out3Plot import statsPlots as sPlot
 from avaframe.ana4Stats import getStats
 from avaframe.com1DFA import com1DFA
+from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
@@ -66,9 +68,27 @@ for avaDir in avalancheDirs:
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
+    if cfg.getboolean('flagAimec') == True:
+        # run aimec
+        statsAimecCfg = os.path.join('..', 'benchmarks', avaName, '%sStats_ana3AIMECCfg.ini' % (avaName))
+        cfgAIMEC = cfgUtils.getModuleConfig(ana3AIMEC, statsAimecCfg)
+        cfgAimecSetup = cfgAIMEC['AIMECSETUP']
+
+        # Setup input from com1DFA
+        dfa2Aimec.mainDfa2Aimec(avaDir, cfgAimecSetup)
+        # Extract input file locations
+        cfgPath = ana3AIMEC.readAIMECinputs(avaDir, dirName='com1DFA')
+        # Run AIMEC postprocessing
+        ana3AIMEC.mainAIMEC(cfgPath, cfgAIMEC)
+
+    # copy Outputs to scenario directory
+    dirOutput = os.path.join(avaDir, 'Outputs')
+    outputNew = os.path.join(avaDir, 'Outputs%s' % cfgDFA['GENERAL']['releaseScenario'])
+    shutil.copytree(dirOutput, outputNew, dirs_exist_ok=True)
+
     # ----- determine max values of peak fields
     # set directory of peak files
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+    inputDir = os.path.join(avaDir, 'Outputs%s' % cfgDFA['GENERAL']['releaseScenario'], 'com1DFA', 'peakFiles')
 
     # get max values of peak files
     peakValues = getStats.extractMaxValues(inputDir, cfgDFA, avaDir, nameScenario=cfgDFA['GENERAL']['releaseScenario'])
