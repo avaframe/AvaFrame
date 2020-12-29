@@ -33,7 +33,7 @@ cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
 com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
 
 peakDictList = []
-avalancheDirs = ['data/avaHockeySmoothSmall','data/avaHockeySmoothChannel2']
+avalancheDirs = ['data/avaHockeySmoothChannel','data/avaHockeySmoothChannel']
 cfgFull = cfgUtils.getModuleConfig(getStats)
 cfg = cfgFull['GENERAL']
 outDir = cfg['outDir']
@@ -46,9 +46,9 @@ log = logUtils.initiateLogger(outDir, logName)
 count = 0
 for avaDir in avalancheDirs:
 
-    # #++++++++++++++ Plot max values +++++++++++++++++
+    # --- run Com1DFA -----
     avaName = os.path.basename(avaDir)
-    statsSimCfg = os.path.join('..', 'benchmarks', avaName, '%sStats_com1DFACfg.ini' % avaName)
+    statsSimCfg = os.path.join('..', 'benchmarks', avaName, '%sStats%d_com1DFACfg.ini' % (avaName, count))
     cfgDFA = cfgUtils.getModuleConfig(com1DFA, statsSimCfg)
     cfgDFA['GENERAL']['com1Exe'] = com1Exe
 
@@ -66,11 +66,12 @@ for avaDir in avalancheDirs:
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
+    # ----- determine max values of peak fields
     # set directory of peak files
     inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
 
     # get max values of peak files
-    peakValues = getStats.extractMaxValues(inputDir, cfgDFA, avaDir, nameScenario=avaName)
+    peakValues = getStats.extractMaxValues(inputDir, cfgDFA, avaDir, nameScenario=cfgDFA['GENERAL']['releaseScenario'])
 
     # log to screen
     for key in peakValues:
@@ -79,6 +80,6 @@ for avaDir in avalancheDirs:
     peakDictList.append(peakValues)
     count = count + 1
 
-# make plots
+ #++++++++++++++ Plot max values +++++++++++++++++
 sPlot.plotValuesScatter(peakDictList, 'pfd', 'pv', cfgDFA['PARAMETERVAR']['varPar'], cfg, avalancheDirs, flagShow)
 sPlot.plotValuesScatterHist(peakDictList, 'pfd', 'pv', cfgDFA['PARAMETERVAR']['varPar'], cfg, avalancheDirs, flagShow, flagHue=True)
