@@ -210,13 +210,15 @@ def saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
     return
 
 
-def addColorBar(im, ax2, ticks, myUnit):
+def addColorBar(im, ax2, ticks, myUnit, title=''):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''
     cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
     cbar.outline.set_visible(False)
     cbar.ax.set_title('[' + myUnit + ']')
+    if title != '':
+        cbar.set_label(title)
 
 
 def putAvaNameOnPlot(ax, avaDir):
