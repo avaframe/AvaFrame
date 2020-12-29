@@ -7,8 +7,6 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-import glob
-from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.out3Plot.plotUtils import *
 import avaframe.out3Plot.makePalette as makePalette
 import seaborn as sns
