@@ -31,15 +31,18 @@ def test_getInputData(tmp_path):
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'flagEnt': 'True', 'flagRes': 'True', 'flagDev': 'False'}
+    cfg['GENERAL'] = {'flagEnt': 'True', 'flagRes': 'True', 'flagDev': 'False', 'releaseScenario': ''}
     cfgGen = cfg['GENERAL']
 
     # call function to be tested
     dem, rels, ent, res, flagEntRes = getInput.getInputData(avaDir, cfgGen)
-
+    # second option
+    cfg['GENERAL']['releaseScenario'] = 'release1HS2'
+    dem2, rels2, ent2, res2, flagEntRes2 = getInput.getInputData(avaDir, cfgGen)
     # Test
     assert dem == os.path.join(avaDir, 'Inputs', 'myDEM_HS2_Topo.asc')
     assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS2.shp')]
+    assert rels2 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp')]
     assert res == ''
     assert ent == os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS2.shp')
     assert flagEntRes == True
