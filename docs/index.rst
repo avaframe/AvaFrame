@@ -80,7 +80,7 @@ Analysis/helper modules
 .. only:: html
 
     * :doc:`moduleAna3AIMEC`
-    * :doc:`moduleAna4Prob`
+    * :doc:`moduleAna4Stats`
     * :doc:`moduleOut1Peak`
     * :doc:`moduleOut3Plot`
     * :doc:`moduleLog2Report`
@@ -91,7 +91,7 @@ Analysis/helper modules
    :caption: Analysis/helper Modules
 
    moduleAna3AIMEC.rst
-   moduleAna4Prob.rst
+   moduleAna4Stats.rst
    moduleOut1Peak.rst
    moduleOut3Plot.rst
    moduleLog2Report.rst
