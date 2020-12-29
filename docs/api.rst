@@ -35,6 +35,7 @@ Analysis/Output/Helper Modules
    :recursive:
 
    ana3AIMEC
-   ana4Prob.probAna
+   ana4Stats.probAna
+   ana4Stats.getStats
    out1Peak.outPlotAllPeak
    tmp1Ex.tmp1Ex
