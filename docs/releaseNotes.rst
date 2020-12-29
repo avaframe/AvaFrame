@@ -45,4 +45,4 @@ and the core team:
 - **Anna Wirbel**
 - **Matthias Tonnel**
 - **Felix Oesterle**
-`
+

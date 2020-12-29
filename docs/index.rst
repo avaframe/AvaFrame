@@ -118,6 +118,7 @@ References
 
     * :doc:`zreferences`
     * :doc:`dataSources`
+    * :doc:`glossary`
 
 .. toctree::
     :maxdepth: 0
@@ -126,3 +127,4 @@ References
 
     zreferences.rst
     dataSources.rst
+    glossary.rst
