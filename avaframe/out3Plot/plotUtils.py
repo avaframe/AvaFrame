@@ -12,7 +12,6 @@ import datetime
 import pathlib
 from matplotlib.image import NonUniformImage
 from matplotlib import pyplot as plt
-from matplotlib.offsetbox import AnchoredText
 import cmocean
 import logging
 
