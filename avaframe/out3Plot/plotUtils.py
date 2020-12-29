@@ -226,6 +226,7 @@ def putAvaNameOnPlot(ax, avaDir):
     matplotlib axes
     '''
 
+    # if avaDir is just a single avaDir or a list of avaDirs
     if isinstance(avaDir, str):
         avaName = pathlib.PurePath(avaDir).name
         infoText = datetime.datetime.now().strftime("%d.%m.%y") + \
