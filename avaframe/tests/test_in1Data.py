@@ -41,7 +41,7 @@ def test_getInputData(tmp_path):
     dem2, rels2, ent2, res2, flagEntRes2 = getInput.getInputData(avaDir, cfgGen)
     # Test
     assert dem == os.path.join(avaDir, 'Inputs', 'myDEM_HS2_Topo.asc')
-    assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release3HS2.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS2.shp')]
+    assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS2.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release3HS2.shp')]
     assert rels2 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp')]
     assert res == ''
     assert ent == os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS2.shp')
