@@ -70,8 +70,8 @@ def getInputData(avaDir, cfg, flagDev=False):
         log.info('Release area file is specified to be: %s' % relFiles)
     else:
         releaseDir = 'REL'
-        relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
-    log.debug('Release area files are: %s' % relFiles)
+        relFiles = sorted(glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp'))
+    log.info('Release area files are: %s' % relFiles)
 
     # Initialise resistance areas
     if cfg.getboolean('flagRes'):
