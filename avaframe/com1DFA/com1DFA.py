@@ -4,10 +4,10 @@
 
 # Load modules
 import os
-import glob
 import subprocess
 import shutil
 import logging
+import numpy as np
 
 # Local imports
 from avaframe.in3Utils import fileHandlerUtils as fU
@@ -249,8 +249,13 @@ def com1DFAMain(cfg, avaDir):
                 log.info('Parameter variation used not including entrainment and resistance, varying: %s' % cfgPar['varPar'])
 
             # Values of parameter variations in config file as string
-            varParValues = cfgPar['varParValues']
-            itemsRaw = varParValues.split('_')
+            varParValues = cfg['PARAMETERVAR']['varParValues']
+            if '_' in varParValues:
+                itemsRaw = varParValues.split('_')
+                items = []
+            elif ':' in varParValues:
+                itemsInput = varParValues.split(':')
+                itemsRaw = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
             items = []
             for itemR in itemsRaw:
                 items.append('%.5f' % float(itemR))
