@@ -84,7 +84,7 @@ for avaDir in standardNames:
     # get release area scenarios
     relArea = []
     for dict in reportDictList:
-        relArea.append(dict['Simulation Parameters']['Release Area'])
+        relArea.append(dict['Simulation Parameters']['Release Area Scenario'])
     relAreaSet = sorted(set(relArea))
 
     for rel in relAreaSet:
@@ -102,7 +102,7 @@ for avaDir in standardNames:
         for dict in reportDictList:
             if simType in dict['simName']['name'] and dict['Simulation Parameters']['Parameter variation on'] == cfg['PARAMETERVAR']['varPar'] and \
                dict['Simulation Parameters']['Parameter value'] == cfg['PARAMETERVAR']['varParValues'] \
-               and dict['Simulation Parameters']['Release Area'] == rel:
+               and dict['Simulation Parameters']['Release Area Scenario'] == rel:
                 reportD = dict
 
         # Add info on run time
