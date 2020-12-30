@@ -250,12 +250,12 @@ def com1DFAMain(cfg, avaDir):
 
             # Values of parameter variations in config file as string
             varParValues = cfg['PARAMETERVAR']['varParValues']
-            if '_' in varParValues:
-                itemsRaw = varParValues.split('_')
-                items = []
-            elif ':' in varParValues:
+            if ':' in varParValues:
                 itemsInput = varParValues.split(':')
                 itemsRaw = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
+            else:
+                itemsRaw = varParValues.split('_')
+                items = []
             items = []
             for itemR in itemsRaw:
                 items.append('%.5f' % float(itemR))
