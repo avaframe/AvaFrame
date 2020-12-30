@@ -67,7 +67,7 @@ def getInputData(avaDir, cfg, flagDev=False):
                 relFiles.append(relf)
             else:
                 log.error('No release scenario called: %s' % (relf))
-        log.info('Release area file is specified to be: %s' % relFiles)
+        log.debug('Release area file is specified to be: %s' % relFiles)
     else:
         releaseDir = 'REL'
         relFiles = sorted(glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp'))
