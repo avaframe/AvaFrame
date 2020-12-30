@@ -38,7 +38,9 @@ peakDictList = []
 avalancheDirs = ['data/avaHockeySmoothChannel','data/avaHockeySmoothChannel']
 cfgFull = cfgUtils.getModuleConfig(getStats)
 cfg = cfgFull['GENERAL']
-outDir = cfg['outDir']
+# set output directory, first ava in list
+outDir = os.path.join(avalancheDirs[0], 'Outputs', 'ana4Stats')
+cfg['outDir'] = outDir
 # Specify where you want the results to be stored
 fU.makeADir(outDir)
 
@@ -103,3 +105,5 @@ for avaDir in avalancheDirs:
  #++++++++++++++ Plot max values +++++++++++++++++
 sPlot.plotValuesScatter(peakDictList, 'pfd', 'pv', cfgDFA['PARAMETERVAR']['varPar'], cfg, avalancheDirs, flagShow)
 sPlot.plotValuesScatterHist(peakDictList, 'pfd', 'pv', cfgDFA['PARAMETERVAR']['varPar'], cfg, avalancheDirs, flagShow, flagHue=True)
+
+log.info('Plots have been saved to: %s' % outDir)
