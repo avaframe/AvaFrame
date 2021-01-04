@@ -39,9 +39,9 @@ cdef double gravAcc = 9.81
 ctypedef double dtypef_t
 ctypedef long dtypel_t
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
     """
     Interpolate unstructured points on a structured grid (nearest or bilinear
@@ -106,9 +106,9 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 
     return Z1
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def computeForceC(cfg, particles, dem, Ment, Cres):
     cdef double Rs0 = cfg.getfloat('Rs0')
     cdef double kappa = cfg.getfloat('kappa')
@@ -226,9 +226,9 @@ def computeForceC(cfg, particles, dem, Ment, Cres):
     return force
 
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def updatePositionC(cfg, particles, dem, force):
   DT = cfg.getfloat('dt')
   cdef double dt = DT
@@ -330,9 +330,9 @@ def updatePositionC(cfg, particles, dem, force):
   particles = com1DFA.removeOutPart(cfg, particles, dem)
   return particles
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def updateFieldsC(cfg, particles, force, dem, fields):
   cdef double rho = cfg.getfloat('rho')
   header = dem['header']
@@ -482,9 +482,9 @@ def updateFieldsC(cfg, particles, force, dem, fields):
 
   return particles, fields
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def getNeighboursC(particles, dem):
     """ Locate particles in cell for SPH computation (for loop implementation)
 
@@ -613,9 +613,9 @@ def computeForceSPHC(cfg, particles, force, dem):
 
   return particles, force
 
-# @cython.boundscheck(False)  # Deactivate bounds checking
-# @cython.wraparound(False)   # Deactivate negative indexing.
-# @cython.cdivision(True)
+@cython.boundscheck(False)  # Deactivate bounds checking
+@cython.wraparound(False)   # Deactivate negative indexing.
+@cython.cdivision(True)
 def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
                  double[:, :] Nz, long[:] indX, long[:] indY):
   cdef double[:] mass = particles['m']
@@ -767,9 +767,9 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
   return GHX, GHY, GHZ #, L, indL
 
 
-# @cython.boundscheck(False)  # Deactivate bounds checking
-# @cython.wraparound(False)   # Deactivate negative indexing.
-# @cython.cdivision(True)
+@cython.boundscheck(False)  # Deactivate bounds checking
+@cython.wraparound(False)   # Deactivate negative indexing.
+@cython.cdivision(True)
 def computeFDC(particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, long[:] indX, long[:] indY):
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']
@@ -919,7 +919,7 @@ def norm2py(x, y, z): # <-- small wrapper to expose norm2() to Python
     return norm2(x, y, z)
 
 
-# @cython.cdivision(True)
+@cython.cdivision(True)
 cdef (double, double, double) normalize(double x, double y, double z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
 
@@ -964,7 +964,7 @@ def normalizepy(x, y, z): # <-- small wrapper to expose normalize() to Python
     return normalize(x, y, z)
 
 
-# @cython.cdivision(True)
+@cython.cdivision(True)
 cdef (double, double, double) croosProd(double ux, double uy, double uz, double vx, double vy, double vz):
   """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
   """
@@ -986,9 +986,9 @@ cdef double scalProd(double ux, double uy, double uz, double vx, double vy, doub
 def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Python
     return scalProd(x, y, z, u, v, w)
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 cdef double getScalar(double x, double y, double[:, :] V, double csz):
   """ Interpolate vector field from grid to single point location
 
@@ -1045,9 +1045,9 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz):
   return v
 
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, double csz):
   """ Interpolate vector field from grid to single point location
 
@@ -1104,7 +1104,7 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
   cdef double nz = Nz[Ly0, Lx0]*(1-dx)*(1-dy) + Nz[Ly0, Lx1]*dx*(1-dy) + Nz[Ly1, Lx0]*(1-dx)*dy + Nz[Ly1, Lx1]*dx*dy
   return nx, ny, nz
 
-# @cython.cdivision(True)
+@cython.cdivision(True)
 cdef double SamosATfric(double rho, double Rs0, double mu, double kappa, double B, double R, double v, double p, double h):
   cdef double Rs = rho * v * v / (p + 0.001)
   cdef double div = h / R

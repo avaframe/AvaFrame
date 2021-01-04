@@ -1112,7 +1112,7 @@ def plotPosition(particles, dem, data, Cmap, unit, maxVal, fig, ax, plotPart=Fal
                          extent=[x.min(), x.max(), y.min(), y.max()],
                          cmap=cmap, norm=norm)
     if plotPart:
-        ax.plot(x, y, 'ok', linestyle='None', markersize=1)
+        ax.plot(x, y, 'ob', linestyle='None', markersize=1)
     Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
     pU.addColorBar(im, ax, ticks, unit)
     plt.pause(0.1)
