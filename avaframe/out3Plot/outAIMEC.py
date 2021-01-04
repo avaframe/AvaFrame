@@ -210,7 +210,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     ############################################
     # Figure: Pressure depth speed
 
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(figW*3, figH))
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
@@ -227,7 +227,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
 
         ax.set_title(title)
         ax.legend(loc=4)
-        addColorBar(im, ax, ticks, unit)
+        pU.addColorBar(im, ax, ticks, unit)
         pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
 
     outFileName = '_'.join([projectName, dirName,'plim',
@@ -259,7 +259,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
 
     ############################################
     # Figure: Raster comparison
-    fig = plt.figure(figsize=(figW*2, figH))
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
     ax1 = plt.subplot(121)
 
     # get color map
@@ -479,7 +479,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
             pfarbe = color[k+1]
             if k == 0:
                 ax1.plot(runout[k], data[k], marker='+', linestyle='None',
-                         markersize=2*ms, color='g', label='Reference')
+                         markersize=2*pU.ms, color='g', label='Reference')
             elif k == 1:
                 ax1.plot(runout[k], data[k], marker=pU.markers, label='sims',
                          color=pfarbe, linestyle='None')
@@ -504,7 +504,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     rTP = resAnalysis['TP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
     rFP = resAnalysis['FP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
 
-    fig = plt.figure(figsize=(figW, figH))
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
     mk = 0
     ax1 = fig.add_subplot(111)
     ax1.set_title('Normalized difference compared to reference')
@@ -524,7 +524,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
             pfarbe = color[k+1]  # colorvar(float(k), len(rTP), colorflag)
             if k == 0:
                 ax1.plot(rFP[k], rTP[k], color='g', label='Reference', marker='+',
-                         markersize=2*ms, linestyle='None')
+                         markersize=2*pU.ms, linestyle='None')
             elif k == 1:
                 ax1.plot(rFP[k], rTP[k], marker=pU.markers, label='sims',
                          color=pfarbe, linestyle='None')
