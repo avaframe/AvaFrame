@@ -197,7 +197,7 @@ for DX in NDX:
         for ic in range(1): #range(NX*NY):
             part = partInCell[indPartInCell[ic]: indPartInCell[ic+1]]
             # part = np.where(((particles['x'] > Lx/2-dx) & (particles['x'] < Lx/2+dx)))
-            fig, ax = plt.subplots(figsize=(figW, figH))
+            fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
             ax.plot(Xpart, Ypart, color='r', marker='.', linestyle='None')
             ax.plot(Xpart[part], Ypart[part], color='b', marker='.', linestyle='None')
             ax.plot(XX, YY, color='k', marker='.', linestyle='None')
