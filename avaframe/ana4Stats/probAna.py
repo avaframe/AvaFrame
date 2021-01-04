@@ -9,7 +9,7 @@ import numpy as np
 import logging
 from matplotlib import pyplot as plt
 
-from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 
@@ -79,7 +79,7 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
 
     # Create probability map ranging from 0-1
     probMap = probSum / count
-    unit = cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
+    unit = pU.cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
     log.info('probability analysis performed for peak parameter: %s and a peak value threshold of: %s %s' % (cfg['GENERAL']['peakVar'], cfg['GENERAL']['peakLim'], unit))
     log.info('%s peak fields added to analysis' % count)
 

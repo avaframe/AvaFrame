@@ -6,11 +6,15 @@
 # load python modules
 import os
 import numpy as np
+import logging
 import matplotlib.pyplot as plt
-from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.plotUtils as pU
 import avaframe.out3Plot.makePalette as makePalette
 import seaborn as sns
 import pandas as pd
+
+# create local logger
+log = logging.getLogger(__name__)
 
 
 def plotValuesScatter(peakDictList, resType1, resType2, varPar, cfg, avalancheDir, flagShow=False):
@@ -52,17 +56,17 @@ def plotValuesScatter(peakDictList, resType1, resType2, varPar, cfg, avalancheDi
     log.info('Number of simulations is: %d' % (len(varVal)))
 
     # Get name and units for resTypes and parameter variation to annotate plots
-    name1 = cfgPlotUtils['name%s' % resType1]
-    name2 = cfgPlotUtils['name%s' % resType2]
-    unit1 = cfgPlotUtils['unit%s' % resType1]
-    unit2 = cfgPlotUtils['unit%s' % resType2]
-    nameVar = cfgPlotUtils['name%s' % varPar]
-    unitVar = cfgPlotUtils['unit%s' % varPar]
+    name1 = pU.cfgPlotUtils['name%s' % resType1]
+    name2 = pU.cfgPlotUtils['name%s' % resType2]
+    unit1 = pU.cfgPlotUtils['unit%s' % resType1]
+    unit2 = pU.cfgPlotUtils['unit%s' % resType2]
+    nameVar = pU.cfgPlotUtils['name%s' % varPar]
+    unitVar = pU.cfgPlotUtils['unit%s' % varPar]
     varValV = np.array(varVal)
 
     # load variation colormap
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        cmapVar, np.amin(varValV), np.amax(varValV), continuous=True)
+        pU.cmapVar, np.amin(varValV), np.amax(varValV), continuous=True)
 
     fig, ax = plt.subplots()
     plt.title('%s vs. %s' % (name1, name2))
@@ -71,8 +75,8 @@ def plotValuesScatter(peakDictList, resType1, resType2, varPar, cfg, avalancheDi
     sc = ax.scatter(values1, values2, c=cc, cmap=cmap)
     ax.set_xlabel('%s [%s]' % (name1, unit1))
     ax.set_ylabel('%s [%s]' % (name2, unit2))
-    addColorBar(sc, ax, ticks, unitVar, nameVar)
-    putAvaNameOnPlot(ax, avalancheDir)
+    pU.addColorBar(sc, ax, ticks, unitVar, nameVar)
+    pU.putAvaNameOnPlot(ax, avalancheDir)
 
     # shpw plot
     if flagShow:
@@ -132,12 +136,12 @@ def plotValuesScatterHist(peakDictList, resType1, resType2, varPar, cfg, avalanc
     log.info('Number of simulations is: %d' % (len(varVal)))
 
     # Get name and units for resTypes and parameter variation to annotate plots
-    name1 = cfgPlotUtils['name%s' % resType1]
-    name2 = cfgPlotUtils['name%s' % resType2]
-    unit1 = cfgPlotUtils['unit%s' % resType1]
-    unit2 = cfgPlotUtils['unit%s' % resType2]
-    nameVar = cfgPlotUtils['name%s' % varPar]
-    unitVar = cfgPlotUtils['unit%s' % varPar]
+    name1 = pU.cfgPlotUtils['name%s' % resType1]
+    name2 = pU.cfgPlotUtils['name%s' % resType2]
+    unit1 = pU.cfgPlotUtils['unit%s' % resType1]
+    unit2 = pU.cfgPlotUtils['unit%s' % resType2]
+    nameVar = pU.cfgPlotUtils['name%s' % varPar]
+    unitVar = pU.cfgPlotUtils['unit%s' % varPar]
     varValV = np.array(varVal)
     title1 = name1+' [' + unit1 + ']'
     title2 = name2+' [' + unit2 + ']'
@@ -153,7 +157,7 @@ def plotValuesScatterHist(peakDictList, resType1, resType2, varPar, cfg, avalanc
     # add title and text box
     fig1.ax_joint.set_xlabel(title1)
     fig1.ax_joint.set_ylabel(title2)
-    putAvaNameOnPlot(fig1.ax_joint, avalancheDir)
+    pU.putAvaNameOnPlot(fig1.ax_joint, avalancheDir)
 
     # save fig
     outDir = cfg['outDir']

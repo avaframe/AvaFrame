@@ -15,7 +15,7 @@ import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Local imports
-from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -118,7 +118,7 @@ def writeABpostOut(resAB, cfg, reportDictList):
         plotPath(resAB, name, flags)
         FileNamePlot_ext[i] = plotProfile(resAB, name, save_file, flags)
         reportAB, FileNameWrite_ext[i] = WriteResults(resAB, name, flags)
-        reportAB['AlphaBeta plots'][name] = '.'.join((savePath, outputFormat))
+        reportAB['AlphaBeta plots'][name] = '.'.join((savePath, pU.outputFormat))
         # Add to report dictionary list
         reportDictList.append(reportAB)
     if flags.getboolean('PlotPath') or flags.getboolean('PlotProfile'):
@@ -138,7 +138,7 @@ def plotPath(resAB, name, flags):
 
     if flags.getboolean('PlotPath'):
         # Plot raster and path
-        fig, ax = plt.subplots(figsize=(figW, figH))
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         titleText = name
         plt.title(titleText)
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
@@ -159,7 +159,7 @@ def plotPath(resAB, name, flags):
                 (y[indSplit]-header.yllcorner)/header.cellsize, '.',
                 color='0.6', label='Projection of Split Point on ava path')
         fig.legend(frameon=False, loc='lower center')
-        plotUtils.putAvaNameOnPlot(ax, name)
+        pU.putAvaNameOnPlot(ax, name)
         plt.show(block=False)
 
 
@@ -177,7 +177,7 @@ def plotProfile(resAB, name, save_file, flags):
     indSplit = resAB[name]['indSplit']
     ParameterSet = resAB['eqParams']['ParameterSet']
     # Plot the whole profile with beta, alpha ... points and lines
-    fig_prof = plt.figure(figsize=(1.5*figW, 1*figH))
+    fig_prof = plt.figure(figsize=(1.5*pU.figW, 1*pU.figH))
     titleText = name
     plt.title(titleText)
     xlabelText = 'Distance [m]\nBeta: ' + str(round(beta, 1)) + \
