@@ -23,7 +23,7 @@ import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.com1DFAPy.DFAtools as DFAtls
 
 # from avaframe.DFAkernel.setParam import *
-from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.plotUtils as pU
 from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
@@ -127,7 +127,7 @@ gravAcc = cfgGen.getfloat('gravAcc')
 mu = cfgGen.getfloat('mu')
 repeat = True
 while repeat == True:
-    fig, ax = plt.subplots(figsize=(figW, figH))
+    fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     T = np.array([0])
     Z = np.array([0])
     U = np.array([0])
@@ -158,15 +158,15 @@ while repeat == True:
     if value != 'y':
         repeat = False
 fieldRef = Fields[-1]
-fig1, ax1 = plt.subplots(figsize=(figW, figH))
-fig2, ax2 = plt.subplots(figsize=(figW, figH))
-fig3, ax3 = plt.subplots(figsize=(figW, figH))
+fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
+fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
 fig1, ax1 = com1DFA.plotPosition(
-    particles, demOri, fields['pfd'], cmapPres, 'm', fig1, ax1, plotPart=False)
+    particles, demOri, fields['pfd'], pU.cmapPres, 'm', fig1, ax1, plotPart=False)
 fig2, ax2 = com1DFA.plotPosition(
-    particles, demOri, fields['pv'], cmapPres, 'm/s', fig2, ax2, plotPart=False)
+    particles, demOri, fields['pv'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
 fig3, ax3 = com1DFA.plotPosition(
-    particles, demOri, fields['ppr']/1000, cmapPres, 'kPa', fig3, ax3, plotPart=False)
+    particles, demOri, fields['ppr']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
 plt.show()
 
 

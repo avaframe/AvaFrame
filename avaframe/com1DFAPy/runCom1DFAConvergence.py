@@ -16,7 +16,6 @@ from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFA as com1DFA
 
 # from avaframe.DFAkernel.setParam import *
-from avaframe.out3Plot.plotUtils import *
 from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils

@@ -15,7 +15,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
-from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.plotUtils as pU
 import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.SPHfunctions as SPH
@@ -160,13 +160,13 @@ def initializeSimulation(cfg, relRaster, dem):
     if debugPlot:
         x = np.arange(ncols) * csz
         y = np.arange(nrows) * csz
-        fig, ax = plt.subplots(figsize=(figW, figH))
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        ref0, im = NonUnifIm(ax, x, y, A, 'x [m]', 'y [m]',
-                             extent=[x.min(), x.max(), y.min(), y.max()],
-                             cmap=cmap, norm=None)
+        ref0, im = pU.NonUnifIm(ax, x, y, A, 'x [m]', 'y [m]',
+                                extent=[x.min(), x.max(), y.min(), y.max()],
+                                cmap=cmap, norm=None)
         ax.plot(Xpart, Ypart, 'or', linestyle='None')
-        addColorBar(im, ax, None, 'm²')
+        pU.addColorBar(im, ax, None, 'm²')
         plt.show()
 
     return particles, fields, Cres, Ment
@@ -350,12 +350,12 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         # ax2.scatter(particles['x'], particles['y'], hBB, 'b', marker='.')
         # ax2.scatter(particles['x'], particles['y'], hSPH, 'r', marker='.')
 
-        fig1, ax1 = plt.subplots(figsize=(2*figW, figH))
+        fig1, ax1 = plt.subplots(figsize=(2*pU.figW, pU.figH))
         ax1.plot(particles['x'][ind], hNN[ind], color='k', marker='.', linestyle='None')
         ax1.plot(particles['x'][ind], hBB[ind], color='b', marker='.', linestyle='None')
         ax1.plot(particles['x'][ind], hSPH[ind], color='r', marker='.', linestyle='None')
 
-        fig3, ax3 = plt.subplots(figsize=(2*figW, figH))
+        fig3, ax3 = plt.subplots(figsize=(2*pU.figW, pU.figH))
         ax3.plot(particles['x'][ind], GHX[ind], color='k', marker='.', linestyle='None')
         ax3.plot(particles['x'][ind], GHY[ind], color='r', marker='.', linestyle='None')
         ax3.plot(particles['x'][ind], GHZ[ind], color='b', marker='.', linestyle='None')
@@ -505,12 +505,12 @@ def polygon2Raster(demHeader, Line, Mask):
     if debugPlot:
         x = np.arange(ncols) * csz
         y = np.arange(nrows) * csz
-        fig, ax = plt.subplots(figsize=(figW, figH))
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         ax.set_title('Release area')
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        ref0, im = NonUnifIm(ax, x, y, Mask, 'x [m]', 'y [m]',
-                             extent=[x.min(), x.max(), y.min(), y.max()],
-                             cmap=cmap, norm=None)
+        ref0, im = pU.NonUnifIm(ax, x, y, Mask, 'x [m]', 'y [m]',
+                                extent=[x.min(), x.max(), y.min(), y.max()],
+                                cmap=cmap, norm=None)
         ax.plot(xCoord0 * csz, yCoord0 * csz, 'r', label='release polyline')
         plt.legend()
         divider = make_axes_locatable(ax)

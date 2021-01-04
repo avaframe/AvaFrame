@@ -9,7 +9,7 @@ import numpy as np
 import logging
 from matplotlib import pyplot as plt
 
-from avaframe.out3Plot.plotUtils import *
+
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 

@@ -11,7 +11,7 @@ import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFA as com1DFA
 # from avaframe.DFAkernel.setParam import *
-from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.plotUtils as pU
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
@@ -103,7 +103,7 @@ for massPart in MassPart:
     TField.append(Tcpu['Field'])
 
 # -------------------------------
-fig, ax = plt.subplots(figsize=(figW, figH))
+fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
 # -------------------------------
 m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForce))
 cm1lab = "TForce : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
@@ -137,7 +137,7 @@ ax.plot(np.log(NP), np.log(TField), '+k', linestyle='-', label='Tcpu Fields')
 plt.legend(loc='upper left')
 # plt.show()
 
-fig1, ax1 = plt.subplots(figsize=(figW, figH))
+fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
 # m, c, r, p, se1 = stats.linregress(np.log(NP), np.log(TForce))
 # cm1lab = "TForce : $" + ('y=%2.2fx+%2.2f, r^2=%1.2f' % (m, c, r**2)) + "$"
 # ax1.loglog(NP, m*np.log(NP)+c, 'b--', linewidth=2, label=cm1lab)

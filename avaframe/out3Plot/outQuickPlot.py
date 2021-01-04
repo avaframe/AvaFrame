@@ -18,7 +18,8 @@ import glob
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
-from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.makePalette as makePalette
+import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -82,14 +83,14 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     # Plot data
     # Figure 1 shows the result parameter data
-    fig = plt.figure(figsize=(figW*3, figH))
+    fig = plt.figure(figsize=(pU.figW*3, pU.figH))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(131)
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        cmapPres, np.amin(data1), np.amax(data1), continuous=contCmap)
+        pU.cmapPres, np.amin(data1), np.amax(data1), continuous=pU.contCmap)
 
     im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-    addColorBar(im1, ax1, ticks, unit)
+    pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
     title = str('%s' % name1)
@@ -99,10 +100,10 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     ax2 = fig.add_subplot(132)
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        cmapPres, np.amin(data2), np.amax(data2), continuous=contCmap)
+        pU.cmapPres, np.amin(data2), np.amax(data2), continuous=pU.contCmap)
 
     im2 = plt.imshow(data2, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-    addColorBar(im2, ax2, ticks, unit)
+    pU.addColorBar(im2, ax2, ticks, unit)
 
     ax2.set_aspect('auto')
     ax2.set_xlabel('x [m]')
@@ -110,21 +111,21 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax2.set_title(title)
 
     ax3 = fig.add_subplot(133)
-    cmap = cmapdiv
+    cmap = pU.cmapdiv
     im3 = plt.imshow(dataDiff, cmap=cmap,
                      extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     fig.colorbar(im3, ax=ax3)
     ax3.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' %
-            (diffMean, unit, diffMax, unit, diffMin, unit),
+             (diffMean, unit, diffMax, unit, diffMin, unit),
              bbox=dict(boxstyle="square", ec='white', fc='white'),
              horizontalalignment='left', verticalalignment='bottom')
     ax3.set_aspect('auto')
     ax3.set_xlabel('x [m]')
     ax3.set_title('Difference ref-sim')
-    fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, outputFormat)))
+    fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
 
     # Fgiure 2 cross and lonprofile
-    fig, ax = plt.subplots(ncols=2, figsize=(figW*2, figH))
+    fig, ax = plt.subplots(ncols=2, figsize=(pU.figW*2, pU.figH))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax[0].plot(data1[:, ny_loc], 'k', label='Reference')
     ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
@@ -138,14 +139,14 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax[1].set_title('Long profile at x =  %d' % nx_loc)
     ax[0].legend()
     ax[1].legend()
-    fig.savefig(os.path.join(outDir, 'Profiles_%s_%s.%s' % (avaName, simName, outputFormat)))
+    fig.savefig(os.path.join(outDir, 'Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
 
     log.info('Figures saved to: %s' % outDir)
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
 
-    plotDict['plots'].append(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, outputFormat)))
+    plotDict['plots'].append(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
     plotDict['difference'].append(diffMax)
     plotDict['difference'].append(diffMean)
     plotDict['difference'].append(diffMin)
@@ -214,7 +215,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
         data = fU.makeSimDict(workDir, '', avaDir)
 
     cellSize = data['cellSize'][0]
-    unit = cfgPlotUtils['unit%s' % suffix]
+    unit = pU.cfgPlotUtils['unit%s' % suffix]
 
     # check if release Area and simType area provided
     if rel != '':

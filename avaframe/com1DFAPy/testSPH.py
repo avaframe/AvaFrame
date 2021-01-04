@@ -11,7 +11,7 @@ from matplotlib.ticker import LinearLocator, FormatStrFormatter
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.ascUtils as IOf
-from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.plotUtils as pU
 import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.com1DFA as com1DFA
@@ -84,26 +84,26 @@ rho = 200
 ###############################################################################
 
 
-fig1, ax1 = plt.subplots(figsize=(2*figW, figH))
+fig1, ax1 = plt.subplots(figsize=(2*pU.figW, pU.figH))
 ax1.set_title('h(x)')
 ax1.set_xlabel('x [m]')
 ax1.set_ylabel('h [m]')
-fig2, ax2 = plt.subplots(figsize=(2*figW, figH))
+fig2, ax2 = plt.subplots(figsize=(2*pU.figW, pU.figH))
 ax2.set_title('h(y)')
 ax2.set_xlabel('y [m]')
 ax2.set_ylabel('h [m]')
-fig3, ax3 = plt.subplots(figsize=(2*figW, figH))
+fig3, ax3 = plt.subplots(figsize=(2*pU.figW, pU.figH))
 ax3.set_title('Gradh(x)')
 ax3.set_xlabel('x [m]')
 ax3.set_ylabel('Gradh []')
-fig4, ax4 = plt.subplots(figsize=(2*figW, figH))
+fig4, ax4 = plt.subplots(figsize=(2*pU.figW, pU.figH))
 ax4.set_title('Gradh(y)')
 ax4.set_xlabel('y [m]')
 ax4.set_ylabel('Gradh []')
 
 
 # color = cmapAimec(np.linspace(1, 0, 2*len(NDX) + 3, dtype=float))
-color = cmapAimec(np.linspace(1, 0, 2*len(NPartPerD) + 3, dtype=float))
+color = pU.cmapAimec(np.linspace(1, 0, 2*len(NPartPerD) + 3, dtype=float))
 markers = ['o', 's', 'd', '*', 'p', 'P', '^', '>', '<', 'X', 'h']
 count = 0
 for DX in NDX:

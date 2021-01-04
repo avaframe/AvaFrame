@@ -5,14 +5,18 @@ This file is part of Avaframe.
 """
 
 import os
+import logging
 import numpy as np
 from matplotlib import pyplot as plt
 import glob
 
-from avaframe.out3Plot.plotUtils import *
+import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.makePalette as makePalette
+
+# create local logger
+log = logging.getLogger(__name__)
 
 
 def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
@@ -63,7 +67,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
 
         # Load data
         data = np.loadtxt(fileName, skiprows=6)
-        unit = cfgPlotUtils['unit%s' % peakFiles['resType'][m]]
+        unit = pU.cfgPlotUtils['unit%s' % peakFiles['resType'][m]]
 
         # Set extent of peak file
         cellSize = peakFiles['cellSize'][m]
@@ -73,23 +77,23 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
         Lx = nx*cellSize
 
         # Figure  shows the result parameter data
-        fig = plt.figure(figsize=(figW, figH))
+        fig = plt.figure(figsize=(pU.figW, pU.figH))
         fig, ax = plt.subplots()
         # choose colormap
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
-            cmapPres, np.amin(data), np.amax(data), continuous=contCmap)
+            pU.cmapPres, np.amin(data), np.amax(data), continuous=pU.contCmap)
 
         im1 = ax.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-        addColorBar(im1, ax, ticks, unit)
+        pU.addColorBar(im1, ax, ticks, unit)
 
         title = str('%s' % name)
         ax.set_title(title)
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
 
-        plotName = os.path.join(outDir, '%s.%s' % (name, outputFormat))
+        plotName = os.path.join(outDir, '%s.%s' % (name, pU.outputFormat))
 
-        plotUtils.putAvaNameOnPlot(ax, avaDir)
+        pU.putAvaNameOnPlot(ax, avaDir)
 
         fig.savefig(plotName)
         plotPath = os.path.join(os.getcwd(), plotName)
@@ -137,26 +141,26 @@ def plotAllFields(avaDir, inputDir, outDir, cfg):
         nx = data.shape[1]
         Ly = ny*cellSize
         Lx = nx*cellSize
-        unit = cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
+        unit = pU.cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
 
         # Figure  shows the result parameter data
-        fig = plt.figure(figsize=(figW, figH))
+        fig = plt.figure(figsize=(pU.figW, pU.figH))
         fig, ax = plt.subplots()
         # choose colormap
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
-            cmapPres, np.amin(data), np.amax(data), continuous=contCmap)
+            pU.cmapPres, np.amin(data), np.amax(data), continuous=pU.contCmap)
 
         im1 = ax.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-        addColorBar(im1, ax, ticks, unit)
+        pU.addColorBar(im1, ax, ticks, unit)
 
         title = str('%s' % name)
         ax.set_title(title)
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
 
-        plotName = os.path.join(outDir, '%s.%s' % (name, outputFormat))
+        plotName = os.path.join(outDir, '%s.%s' % (name, pU.outputFormat))
 
-        plotUtils.putAvaNameOnPlot(ax, avaDir)
+        pU.putAvaNameOnPlot(ax, avaDir)
 
         fig.savefig(plotName)
         plt.close('all')
