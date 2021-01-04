@@ -17,6 +17,7 @@ Input
 * avalanche directory
 * configuration settings of com1DFA
 * cfgFlags
+* optional: name of module that has been used to produce data to be plotted
 
 where cfgFlags is a configparser object that contains the global flags, whether a plot shall be saved and/or printed to screen
 
@@ -30,3 +31,30 @@ To run
 ------
 
 * call plotAllPeakFields(avalancheDir, cfg)
+
+
+Plot all fields
+====================
+
+This function generates one plot for each simulation result field provided in the specified input directory.
+
+
+Input
+-----
+
+* avalanche directory
+* input directory
+* output directory where plots shall be saved
+* configuration settings
+
+
+Outputs
+-------
+
+* one plot of each field, called like the input field file
+
+
+To run
+------
+
+* call plotAllFields(avalancheDir, inputDir, outDir, cfg)

@@ -20,8 +20,8 @@ This avalanche directory can be created by running: ``runInitializeProject.py``.
 In the directory Inputs, the following files are required:
 
 * digital elevation model as .asc file
-  -> use xllcenter and yllcenter 
-* release area as shapefile (in Inputs/REL)
+  -> use xllcenter and yllcenter
+* release area scenario as shapefile (in Inputs/REL); multiple are possible
   -> the release area name must not contain an underline
 
 and the following files are optional:
@@ -31,9 +31,11 @@ and the following files are optional:
 
 The simulation settings area defined in the configuration file ``com1DFACfg.ini``:
 
+* com1Exe - path to com1DFA executable
 * flagOut - print full model output
 * flagEnt - include entrainment areas
 * flagRes - include resistance areas
+* releaseScenario - name of release area scenario shapfile (with or without extension -shp, if multiple, separate by '_')
 * flagVarPar - perform parameter variation
 * flagVarEnt - perform parameter variation with entrainment and resistance
 * varPar - parameter to be varied
@@ -54,7 +56,7 @@ To run
 --------
 
 .. Attention:: Please refer to the instructions in :ref:`Installation:Com1DFA Executable` on how to get the
-               necessary C++ executable and setup the correct paths. 
+               necessary C++ executable and setup the correct paths.
 
 * create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
