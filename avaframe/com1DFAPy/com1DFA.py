@@ -16,6 +16,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.out3Plot.makePalette as makePalette
 import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.SPHfunctions as SPH
@@ -1050,15 +1051,15 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False):
     ax.clear()
     ax.set_title('Particles on dem at t=%.2f s' % particles['t'])
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        Cmap, 0.0, np.nanmax(data), continuous=contCmap)
+        Cmap, 0.0, np.nanmax(data), continuous=pU.contCmap)
     cmap.set_under(color='w')
-    ref0, im = NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
+    ref0, im = pU.NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
                          extent=[x.min(), x.max(), y.min(), y.max()],
                          cmap=cmap, norm=norm)
     if plotPart:
         ax.plot(x, y, 'ok', linestyle='None', markersize=1)
     Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
-    addColorBar(im, ax, ticks, unit)
+    pU.addColorBar(im, ax, ticks, unit)
     plt.pause(0.1)
     # plt.close(fig)
     # ax.set_ylim([510, 530])
