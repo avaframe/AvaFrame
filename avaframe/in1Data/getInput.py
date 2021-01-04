@@ -62,7 +62,10 @@ def getInputData(avaDir, cfg, flagDev=False):
         relFiles = []
         releaseFiles = cfg['releaseScenario'].split('_')
         for rel in releaseFiles:
-            relf = os.path.join(inputDir, releaseDir, '%s.shp' % (rel))
+            if '.shp' in rel:
+                relf = os.path.join(inputDir, releaseDir, rel)
+            else:
+                relf = os.path.join(inputDir, releaseDir, '%s.shp' % (rel))
             if os.path.isfile(relf) == True:
                 relFiles.append(relf)
             else:

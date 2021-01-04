@@ -3,35 +3,7 @@ out3Plot: Plots
 ##################################
 
 
-
-Plot peak field
-===================
-
-This function generates a plot for a specific peak field from *Outputs/com1DFA/peakFiles*.
-These peak field represents the peak value of the passed result parameter.
-
-Input
------
-
-* avalanche directory
-* simulation name
-* result parameter (*ppr*, *pfd*, *pv*)
-* unit
-
-
-Outputs
--------
-
-* plot of peak field, called like the peak file (in *Outputs/out1Peak*)
-* dictionary with name of plot and full path to plot
-
-To run
-------
-
-* call plotPeakFields(avalancheDir, simName, resType, unit)
-
-
-Quick plot
+quickPlot
 ===========
 
 This function creates two plots, one plot with three panels, first dataset, second dataset and the absolute difference of the two datasets and
@@ -72,7 +44,7 @@ To run
 In this run script, one can specify the result parameter and a second parameter, like e.g. 'Mu' or 'simType' to specify the datasets to be plotted.
 
 
-Quick plot simple
+quickPlotSimple
 =================
 
 This function creates two plots of any two raster datasets (with identical dimensions).
@@ -102,3 +74,73 @@ To run
 
 * specifiy input directory, default is *Work/simplePlot*
 * runQuickPlotSimple.py
+
+
+
+in1DataPlots
+=================
+
+in1DataPlots can be used to produce plots of a sample and its characteristics derived with ``computeFromDistribution.py``,
+such as: cumulative distribution function (CDF), bar plot of sample values, probability density function (PDF) of the sample,
+comparison plot of empirical- and desired CDF and comparison of empirical- and desired PDF.
+
+
+
+statsPlots
+=================
+
+statsPlots can be used produce scatter plots using a peak dictionary where information on two result parameters of avalanche simulations is saved.
+This peak dictionary or a list of those can be created using the function ``extractMaxValues`` of ``ana4Stats/getStats.py``.
+This can be used to visualize results of avalanche simulations where parameter variation has been used or for e.g. in the case of
+multiple release area scenarios. If parameter variation was used to derive the simulation results, the plots indicate the parameter values in color.
+If the input data includes information about the 'scenario' that was used, the plots use different colors for each scenario.
+There is also the option to add a kde plot for each result paramter as marginal plots.
+
+
+Input
+-----
+
+plotValuesScatter
+~~~~~~~~~~~~~~~~~~
+
+* list of peak info dictionaries (also only one is fine)
+* result parameter type 1
+* result parameter type 2
+* parameter that has been varied to perform avalanche simulations
+* configuration
+* flagShow - if True show plots
+
+
+plotValuesScatterHist
+~~~~~~~~~~~~~~~~~~~~~~
+
+* list of peak info dictionaries (also only one is fine)
+* result parameter type 1
+* result parameter type 2
+* configuration
+* path to avalanche directory
+* flagShow - if True show plots
+* flagHue - if True scenario information is provided and plot uses different colors for each scenario
+
+
+Outputs
+-------
+
+plotValuesScatter
+~~~~~~~~~~~~~~~~~~
+
+* scatter plot of result type 1 vs result type 2 with color indicating values of parameter that has been varied
+
+
+plotValuesScatterHist
+~~~~~~~~~~~~~~~~~~~~~~~
+
+* scatter plot with marginal kde plots of result type 1 vs result type 2 with color indicating different scenarios (optional)
+
+
+To run
+------
+
+runStatsExample includes an example run script to perform avalanche simulations for varying release thickness and for two different
+release area scenarios. The simulation results are visualized using the plotValuesScatter and plotValuesScatterHist and saved to
+``data/avaHockeySmoothChannel``. This script can be used as a template to design your own workflow.
