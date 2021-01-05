@@ -124,7 +124,7 @@ def com1DFAMain(cfg, avaDir):
 
     # Log chosen settings
     if flagNoEnt:
-        log.info('Entrainment is turned off')
+        log.info('Entrainment is forced off')
     if flagNoRes:
         log.info('Resistance is turned off')
 
