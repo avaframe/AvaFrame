@@ -112,8 +112,8 @@ def com1DFAMain(cfg, avaDir):
     cfgGen = cfg['GENERAL']
     com1Exe = cfgGen['com1Exe']
     modName = 'com1DFA'
-    flagEnt = cfgGen.getboolean('flagEnt')
-    flagRes = cfgGen.getboolean('flagRes')
+    flagNoEnt = cfgGen.getboolean('flagNoEnt')
+    flagNoRes = cfgGen.getboolean('flagNoRes')
     fullOut = cfgGen.getboolean('flagOut')
     cfgPar = cfg['PARAMETERVAR']
     resDir = os.path.join(avaDir, 'Work', 'com1DFA')
@@ -123,7 +123,10 @@ def com1DFAMain(cfg, avaDir):
     defValues = cfg['DEFVALUES']
 
     # Log chosen settings
-    log.debug('The chosen settings: entrainment - %s , resistance - %s ' % (flagEnt, flagRes))
+    if flagNoEnt:
+        log.info('Entrainment is turned off')
+    if flagNoRes:
+        log.info('Resistance is turned off')
 
     # Log current avalanche directory
     log.debug('Your current avalanche name: %s' % avaDir)
