@@ -1,5 +1,5 @@
 """
-    This file is part of Avaframe.
+    Run script for running python DFA kernel
 """
 import os
 import glob

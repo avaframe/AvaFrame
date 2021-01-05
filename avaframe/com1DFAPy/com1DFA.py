@@ -1,7 +1,5 @@
 """
-
-    This file is part of Avaframe.
-
+    Main functions for python DFA kernel
 """
 
 import logging
@@ -21,15 +19,11 @@ import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.SPHfunctions as SPH
 import avaframe.com1DFAPy.frictionLaws as fricLaws
-
-# import pyximport
-# pyximport.install()
-
 import avaframe.com1DFAPy.SPHfunctionsCython as SPHC
-# import avaframe.in2Trans.shpConversion as shpConv
-# import avaframe.in2Trans.ascUtils as IOf
-# from avaframe.DFAkernel.setParam import *
 
+#######################################
+# Set flags here
+#######################################
 # create local logger
 log = logging.getLogger(__name__)
 debugPlot = False
@@ -50,6 +44,24 @@ flagCython = True
 
 
 def initializeMesh(dem, num=4):
+    """ Create rectangular mesh
+
+    Reads the DEM information, computes the normal vector field and
+    boundries to the DEM
+
+    Parameters
+    ----------
+    dem : dict
+        dictionary with dem information
+    num : int
+        chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
+        1 to use the simple cross product method
+
+    Returns
+    -------
+    dem : dict
+        dictionary completed with normal field and boundaries
+    """
     # read dem header
     header = dem['header']
     ncols = header.ncols
@@ -59,6 +71,7 @@ def initializeMesh(dem, num=4):
     Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num=num)
     dem['Nx'] = np.where(np.isnan(Nx), 0, Nx)
     dem['Ny'] = np.where(np.isnan(Ny), 0, Ny)
+    # build no data mask (used to find out of dem particles)
     bad = np.where(Nz > 1, np.nan, 1)
     dem['Nz'] = np.where(Nz > 1, 0, Nz)
     dem['Bad'] = bad
@@ -74,6 +87,31 @@ def initializeMesh(dem, num=4):
 
 
 def initializeSimulation(cfg, relRaster, dem):
+    """ Initialize DFA simulation
+
+    Create particles and fields dictionary according to config parameters
+    release raster and dem
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    relRaster: 2D numpy array
+        release depth raster
+    dem : dict
+        dictionary with dem information
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary at initial time step
+    fields : dict
+        fields dictionary at initial time step
+    Cres : 2D numpy array
+        resistance raster
+    Ment : 2D numpy array
+        entrained mass raster
+    """
     # get simulation parameters
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
@@ -99,7 +137,7 @@ def initializeSimulation(cfg, relRaster, dem):
     indY, indX = np.nonzero(relRaster)
     # loop on non empty cells
     for indx, indy in zip(indX, indY):
-        # number of particles for this cell
+        # compute number of particles for this cell
         h = relRaster[indy, indx]
         Vol = A[indy, indx] * h
         mass = Vol * rho
@@ -108,7 +146,7 @@ def initializeSimulation(cfg, relRaster, dem):
         partPerCell[indy, indx] = nPart
         # initialize field Flow depth
         FD[indy, indx] = h
-        # initialize particles position mass height...
+        # initialize particles position, mass, height...
         Xpart = np.append(Xpart, xpart)
         Ypart = np.append(Ypart, ypart)
         Mpart = np.append(Mpart, mPart * np.ones(nPart))
@@ -193,6 +231,36 @@ def initializeSimulation(cfg, relRaster, dem):
 
 
 def placeParticles(mass, indx, indy, csz, massPerPart):
+    """ Create particles in given cell
+
+    Compute number of particles to create in a given cell.
+    Place particles in cell according to the chosen pattern (random semirandom
+    or ordered)
+
+    Parameters
+    ----------
+    mass: float
+        mass of snow in cell
+    indx: int
+        column index of the cell
+    indy: int
+        row index of the cell
+    csz : float
+        cellsize
+    massPerPart : float
+        maximum mass per particle
+
+    Returns
+    -------
+    xpart : 1D numpy array
+        x position of particles
+    ypart : 1D numpy array
+        y position of particles
+    mPart : 1D numpy array
+        mass of particles
+    nPart : int
+        number of particles created
+    """
     n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
     nPart = n*n
     mPart = mass / nPart
@@ -220,6 +288,18 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
 
 
 def intializeMassEnt(dem):
+    """ Intialize mass for entrainment
+
+    Parameters
+    ----------
+    dem: dict
+        dem dictionary
+
+    Returns
+    -------
+    Ment : 2D numpy array
+        raster of available mass for entrainment
+    """
     # read dem header
     header = dem['header']
     ncols = header.ncols
@@ -229,6 +309,18 @@ def intializeMassEnt(dem):
 
 
 def intializeResistance(dem):
+    """ Intialize resistance matrix
+
+    Parameters
+    ----------
+    dem: dict
+        dem dictionary
+
+    Returns
+    -------
+    Cres : 2D numpy array
+        raster of resistance coefficients
+    """
     # read dem header
     header = dem['header']
     ncols = header.ncols
@@ -238,7 +330,36 @@ def intializeResistance(dem):
 
 
 def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
-    """ Perform computations and save results for desired interval """
+    """ Perform time loop for DFA simulation
+
+     Save results at desired intervals
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    particles : dict
+        particles dictionary at initial time step
+    fields : dict
+        fields dictionary at initial time step
+    dem : dict
+        dictionary with dem information
+    Ment : 2D numpy array
+        entrained mass raster
+    Cres : 2D numpy array
+        resistance raster
+    Tcpu : dict
+        computation time dictionary
+
+    Returns
+    -------
+    Particles : list
+        list of particles dictionary
+    Fields : list
+        list of fields dictionary (for each time step saved)
+    Tcpu : dict
+        computation time dictionary
+    """
 
     # Load configuration settings
     Tend = cfg.getfloat('Tend')
@@ -292,7 +413,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
             particles, fields, Tcpu, dt = computeLeapFrogTimeStep(
                 cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
         else:
-            particles, fields, Tcpu = computeTimeStep(
+            particles, fields, Tcpu = computeEulerTimeStep(
                 cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
         # Save desired parameters and export to Lists for saving interval
         U = np.append(U, DFAtls.norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
@@ -314,25 +435,60 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 
     Tcpu['nIter'] = nIter
     log.info('Ending computation at time t = %f s', t)
+    Particles.append(copy.deepcopy(particles))
+    Fields.append(copy.deepcopy(fields))
 
     return T, U, Z, S, Particles, Fields, Tcpu
 
 
-def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
+def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
+    """ compute next time step using an euler forward scheme
+
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    particles : dict
+        particles dictionary at t
+    fields : dict
+        fields dictionary at t
+    dt : float
+        time step
+    dem : dict
+        dictionary with dem information
+    Ment : 2D numpy array
+        entrained mass raster
+    Cres : 2D numpy array
+        resistance raster
+    Tcpu : dict
+        computation time dictionary
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary at t + dt
+    fields : dict
+        fields dictionary at t + dt
+    Tcpu : dict
+        computation time dictionary
+    """
     # get forces
-    # loop version of the compute force
     startTime = time.time()
-    force = SPHC.computeForceC(cfg, particles, dem, Ment, Cres, dt)
-    tcpuForce = time.time() - startTime
-    Tcpu['Force'] = Tcpu['Force'] + tcpuForce
-    # vectorized version of the compute force
-    startTime = time.time()
-    # forceloop = computeForceVect(cfg, particles, dem, Ment, Cres, dt)
-    tcpuForceVect = time.time() - startTime
-    Tcpu['ForceVect'] = Tcpu['ForceVect'] + tcpuForceVect
-    # print(np.max((forceloop['forceX']-force['forceX'])/force['forceX']))
-    # print(np.max((forceloop['forceY']-force['forceY'])/force['forceY']))
-    # print(np.max((forceloop['forceZ']-force['forceZ'])/force['forceZ']))
+    if flagCython:
+        # loop version of the compute force
+        force = SPHC.computeForceC(cfg, particles, dem, Ment, Cres, dt)
+        tcpuForce = time.time() - startTime
+        Tcpu['Force'] = Tcpu['Force'] + tcpuForce
+    else:
+        # vectorized version of the compute force
+        force = computeForceVect(cfg, particles, dem, Ment, Cres, dt)
+        # print(np.max((forceloop['forceX']-force['forceX'])/force['forceX']))
+        # print(np.max((forceloop['forceY']-force['forceY'])/force['forceY']))
+        # print(np.max((forceloop['forceZ']-force['forceZ'])/force['forceZ']))
+        tcpuForceVect = time.time() - startTime
+        Tcpu['ForceVect'] = Tcpu['ForceVect'] + tcpuForceVect
+
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
     if flagCython:
@@ -374,6 +530,7 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         H = SPHC.computeFDcython(particles, header, nx, ny, nz, indX, indY)
         H = np.asarray(H)
         particles['hSPH'] = H
+
     # update fields (compute grid values)
     startTime = time.time()
     # particles, fields = updateFields(cfg, particles, force, dem, fields)
@@ -416,7 +573,39 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
 
 def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
-    """ perform all computations that belong to one time step """
+    """ compute next time step using a Leap Frog scheme
+
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    particles : dict
+        particles dictionary at t
+    fields : dict
+        fields dictionary at t
+    dt : float
+        time step
+    dem : dict
+        dictionary with dem information
+    Ment : 2D numpy array
+        entrained mass raster
+    Cres : 2D numpy array
+        resistance raster
+    Tcpu : dict
+        computation time dictionary
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary at t + dt
+    fields : dict
+        fields dictionary at t + dt
+    Tcpu : dict
+        computation time dictionary
+    dt : float
+        time step
+    """
 
     # start timing
     startTime = time.time()
@@ -530,10 +719,24 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
 
 def prepareArea(releaseLine, dem):
+    """ convert shape file polygon to raster
+
+    Parameters
+    ----------
+    releaseLine: dict
+        line dictionary
+    dem : dict
+        dictionary with dem information
+    Returns
+    -------
+
+    Raster : 2D numpy array
+        raster
+    """
     NameRel = releaseLine['Name']
     StartRel = releaseLine['Start']
     LengthRel = releaseLine['Length']
-    relRaster = np.zeros(np.shape(dem['rasterData']))
+    Raster = np.zeros(np.shape(dem['rasterData']))
 
     for i in range(len(NameRel)):
         name = NameRel[i]
@@ -543,11 +746,27 @@ def prepareArea(releaseLine, dem):
         avapath['x'] = releaseLine['x'][int(start):int(end)]
         avapath['y'] = releaseLine['y'][int(start):int(end)]
         avapath['Name'] = name
-        relRaster = polygon2Raster(dem['header'], avapath, relRaster)
-    return relRaster
+        Raster = polygon2Raster(dem['header'], avapath, Raster)
+    return Raster
 
 
 def polygon2Raster(demHeader, Line, Mask):
+    """ convert line to raster
+
+    Parameters
+    ----------
+    demHeader: dict
+        dem header dictionary
+    Line : dict
+        line dictionary
+    Mask : 2D numpy array
+        raster to update
+    Returns
+    -------
+
+    Mask : 2D numpy array
+        updated raster
+    """
     # adim and center dem and polygon
     ncols = demHeader.ncols
     nrows = demHeader.nrows
@@ -590,6 +809,28 @@ def polygon2Raster(demHeader, Line, Mask):
 
 
 def computeForce(cfg, particles, dem, Ment, Cres):
+    """ compute forces acting on the particles (without the SPH component)
+
+     purely python implementation
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    particles : dict
+        particles dictionary at t
+    dem : dict
+        dictionary with dem information
+    Ment : 2D numpy array
+        entrained mass raster
+    Cres : 2D numpy array
+        resistance raster
+
+    Returns
+    -------
+    force : dict
+        force dictionary
+    """
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
     dt = cfg.getfloat('dt')
@@ -697,6 +938,44 @@ def computeForce(cfg, particles, dem, Ment, Cres):
 
 
 def computeEntMassAndForce(cfg, ment, A, uMag, ux, uy, uz, uxDir, uyDir, uzDir, tau):
+    """ compute force component due to entrained mass
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    ment : float
+        available mass for entrainement
+    A : float
+        particle area
+    uMag : float
+        particle speed (velocity magnitude)
+    ux : float
+        x component of the particle velocity
+    uy : float
+        y component of the particle velocity
+    uz : float
+        z component of the particle velocity
+    uxDir : float
+        x component of the normalized particle velocity
+    uyDir : float
+        y component of the normalized particle velocity
+    uzDir : float
+        z component of the normalized particle velocity
+    tau : float
+        bottom shear stress
+
+    Returns
+    -------
+    dm : float
+        entrained mass
+    fEntX : float
+        x component of the force
+    fEntY : float
+        y component of the force
+    fEntZ : float
+        z component of the force
+    """
     dt = cfg.getfloat('dt')
     entEroEnergy = cfg.getfloat('entEroEnergy')
     rhoEnt = cfg.getfloat('rhoEnt')
@@ -736,6 +1015,38 @@ def computeEntMassAndForce(cfg, ment, A, uMag, ux, uy, uz, uxDir, uyDir, uzDir, 
 
 
 def computeResForce(cfg, h, A, rho, cres, uMag, ux, uy, uz):
+    """ compute force component due to resistance
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    h : float
+        particle flow depth
+    A : float
+        particle area
+    rho : float
+        snow density
+    cres : float
+        resisance coefficient
+    uMag : float
+        particle speed (velocity magnitude)
+    ux : float
+        x component of the particle velocity
+    uy : float
+        y component of the particle velocity
+    uz : float
+        z component of the particle velocity
+
+    Returns
+    -------
+    fResX : float
+        x component of the force
+    fResY : float
+        y component of the force
+    fResZ : float
+        z component of the force
+    """
     hRes = cfg.getfloat('hRes')
     if(h < hRes):
         hResEff = h
@@ -745,7 +1056,30 @@ def computeResForce(cfg, h, A, rho, cres, uMag, ux, uy, uz):
 
 
 def computeForceVect(cfg, particles, dem, Ment, Cres, dt):
-    """ Compute forces """
+    """ compute forces acting on the particles (without the SPH component)
+
+     numpy implementation
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    particles : dict
+        particles dictionary at t
+    dem : dict
+        dictionary with dem information
+    Ment : 2D numpy array
+        entrained mass raster
+    Cres : 2D numpy array
+        resistance raster
+    dt : float
+        time step
+
+    Returns
+    -------
+    force : dict
+        force dictionary
+    """
 
     # Load required parameters
     rho = cfg.getfloat('rho')
@@ -832,7 +1166,27 @@ def computeForceVect(cfg, particles, dem, Ment, Cres, dt):
 
 
 def computeForceSPH(cfg, particles, force, dem):
-    """ Compute SPH """
+    """ compute lateral forces acting on the particles (SPH component)
+
+     numpy implementation
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    particles : dict
+        particles dictionary at t
+    force : dict
+        force dictionary
+    dem : dict
+        dictionary with dem information
+    Returns
+    -------
+    particles : dict
+        particles dictionary at t
+    force : dict
+        force dictionary
+    """
 
     # Load required parameters
     rho = cfg.getfloat('rho')
@@ -893,6 +1247,25 @@ def computeForceSPH(cfg, particles, force, dem):
 
 
 def updatePosition(cfg, particles, dem, force):
+    """ update particle position using euler forward scheme
+
+     numpy implementation
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    particles : dict
+        particles dictionary at t
+    dem : dict
+        dictionary with dem information
+    force : dict
+        force dictionary
+    Returns
+    -------
+    particles : dict
+        particles dictionary at t + dt
+    """
     dt = cfg.getfloat('dt')
     log.debug('dt used now is %f' % dt)
     gravAcc = cfg.getfloat('gravAcc')
@@ -959,6 +1332,30 @@ def updatePosition(cfg, particles, dem, force):
 
 
 def updateFields(cfg, particles, force, dem, fields):
+    """ update fields and particles fow depth
+
+     numpy implementation
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    particles : dict
+        particles dictionary
+    force : dict
+        force dictionary
+    dem : dict
+        dictionary with dem information
+    fields : dict
+        fields dictionary
+    Returns
+    -------
+
+    particles : dict
+        particles dictionary
+    fields : dict
+        fields dictionary
+    """
     rho = cfg.getfloat('rho')
     header = dem['header']
     csz = dem['header'].cellsize
@@ -974,21 +1371,6 @@ def updateFields(cfg, particles, force, dem, fields):
     PV = fields['pv']
     PP = fields['ppr']
     PFD = fields['pfd']
-
-    #########################################
-    # Update fields using a SPH approach
-    # MassSPH = pointsToRasterSPH(particles, rho, Z, m, csz=csz)
-    # hSPH = pointsToRasterSPH(particles, rho, Z, m, csz=csz)
-    # VXSPH = pointsToRasterSPH(particles, rho, Z, ux, csz=csz)
-    # VYSPH = pointsToRasterSPH(particles, rho, Z, uy, csz=csz)
-    # VZSPH = pointsToRasterSPH(particles, rho, Z, uz, csz=csz)
-    # VSPH = norm(VXSPH, VYSPH, VZSPH)
-    # FDSPH = hSPH
-    # # FDSPH = MassSPH / (A * rho)
-    # PSPH = VSPH * VSPH * rho
-    # # PV = np.where(VSPH > PV, VSPH, PV)
-    # # PP = np.where(PSPH > PP, PSPH, PP)
-    # # PFD = np.where(FDSPH > PFD, FDSPH, PFD)
 
     #########################################
     # Update fields using a bilinear interpolation
@@ -1025,51 +1407,6 @@ def updateFields(cfg, particles, force, dem, fields):
     fields['ppr'] = PP
     fields['pfd'] = PFD
 
-    # #########################################
-    # # Update fields using a nearest interpolation
-    # MassNearest = np.zeros((nrows, ncols))
-    # MomNearestX = np.zeros((nrows, ncols))
-    # MomNearestY = np.zeros((nrows, ncols))
-    # MomNearestZ = np.zeros((nrows, ncols))
-    #
-    # # startTime = time.time()
-    # iC = particles['InCell']
-    # MassNearest = MassNearest.flatten()
-    # np.add.at(MassNearest, iC, m)
-    # MomNearestX = MomNearestX.flatten()
-    # np.add.at(MomNearestX, iC, m * ux)
-    # MomNearestY = MomNearestY.flatten()
-    # np.add.at(MomNearestY, iC, m * uy)
-    # MomNearestZ = MomNearestZ.flatten()
-    # np.add.at(MomNearestZ, iC, m * uz)
-    # MassNearest = np.reshape(MassNearest, (nrows, ncols))
-    # MomNearestX = np.reshape(MomNearestX, (nrows, ncols))
-    # MomNearestY = np.reshape(MomNearestY, (nrows, ncols))
-    # MomNearestZ = np.reshape(MomNearestZ, (nrows, ncols))
-    # VXNearest = np.where(MassNearest > 0, MomNearestX/MassNearest, MomNearestX)
-    # VYNearest = np.where(MassNearest > 0, MomNearestY/MassNearest, MomNearestY)
-    # VZNearest = np.where(MassNearest > 0, MomNearestZ/MassNearest, MomNearestZ)
-    # VNearest = DFAtls.norm(VXNearest, VYNearest, VZNearest)
-    # FDNearest = MassNearest / (A * rho)
-    # PNearest = VNearest * VNearest * rho
-    # PV = np.where(VNearest > PV, VNearest, PV)
-    # PP = np.where(PNearest > PP, PNearest, PP)
-    # PFD = np.where(FDNearest > PFD, FDNearest, PFD)
-    #
-    # # endTime = time.time()
-    # # log.info(('time = %s s' % (endTime - startTime)))
-    #
-    # fields['V'] = VNearest
-    # fields['P'] = PNearest
-    # fields['FD'] = FDNearest
-    # fields['pv'] = PV
-    # fields['ppr'] = PP
-    # fields['pfd'] = PFD
-
-    # hNN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='nearest')
-    # particles['hNearestNearest'] = hNN  # np.where(h < depMin, depMin, h)
-    # hNB, _ = geoTrans.projectOnRasterVectRoot(x, y, FDNearest, csz=csz, interp='bilinear')
-    # particles['hNearestBilinear'] = hNB  # np.where(h < depMin, depMin, h)
     # hBN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='nearest')
     # particles['hBilinearNearest'] = hBN  # np.where(h2 < depMin, depMin, h2)
     hBB, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='bilinear')
@@ -1140,6 +1477,22 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, cont
 
 
 def removeOutPart(cfg, particles, dem):
+    """ find and remove out of raster particles
+
+    Parameters
+    ----------
+    cfg : configparser
+        DFA parameters
+    particles : dict
+        particles dictionary
+    dem : dict
+        dem dictionary
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary
+    """
     dt = cfg.getfloat('dt')
     header = dem['header']
     nrows = header.nrows
@@ -1188,7 +1541,22 @@ def removeOutPart(cfg, particles, dem):
 
 
 def removeSmallPart(hmin, particles, dem):
+    """ find and remove too small particles
 
+    Parameters
+    ----------
+    hmin : float
+        minimum depth
+    particles : dict
+        particles dictionary
+    dem : dict
+        dem dictionary
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary
+    """
     h = particles['h']
 
     indOut = np.where(h < hmin)
@@ -1208,7 +1576,22 @@ def removeSmallPart(hmin, particles, dem):
 
 
 def removePart(particles, mask, nRemove):
+    """ remove given particles
 
+    Parameters
+    ----------
+    particles : dict
+        particles dictionary
+    mask : 1D numpy array
+        particles to keep
+    nRemove : int
+        number of particles removed
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary
+    """
     particles['Npart'] = particles['Npart'] - nRemove
     particles['x'] = particles['x'][mask]
     particles['y'] = particles['y'][mask]
