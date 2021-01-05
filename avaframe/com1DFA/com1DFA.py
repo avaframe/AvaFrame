@@ -68,6 +68,19 @@ def execCom1Exe(com1Exe, cintFile, avaDir, fullOut=False, simName=''):
     reVal = proc.wait()
 
 
+def readVarPar(cfg):
+    """ read parameter variation values and return list of values """
+
+    varParValues = cfg['PARAMETERVAR']['varParValues']
+    if ':' in varParValues:
+        itemsInput = varParValues.split(':')
+        itemsRaw = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
+    else:
+        itemsRawS = varParValues.split('_')
+        itemsRaw = np.array(itemsRawS,dtype=float)
+
+    return itemsRaw
+
 def copyReplace(origFile, workFile, searchString, replString):
     """ Modifiy cintFiles to be used to set simulation configuration"""
 
@@ -251,14 +264,8 @@ def com1DFAMain(cfg, avaDir):
                 sim = simName + '_null_dfa'
                 log.info('Parameter variation used not including entrainment and resistance, varying: %s' % cfgPar['varPar'])
 
-            # Values of parameter variations in config file as string
-            varParValues = cfg['PARAMETERVAR']['varParValues']
-            if ':' in varParValues:
-                itemsInput = varParValues.split(':')
-                itemsRaw = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
-            else:
-                itemsRaw = varParValues.split('_')
-                items = []
+            # read values of parameter variation in config file
+            itemsRaw = readVarPar(cfg)
             items = []
             for itemR in itemsRaw:
                 items.append('%.5f' % float(itemR))
