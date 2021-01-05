@@ -80,7 +80,7 @@ To run
 in1DataPlots
 =================
 
-in1DataPlots can be used to produce plots of a sample and its characteristics derived with ``computeFromDistribution.py``,
+in1DataPlots can be used to plot a sample and its characteristics derived with ``computeFromDistribution.py``,
 such as: cumulative distribution function (CDF), bar plot of sample values, probability density function (PDF) of the sample,
 comparison plot of empirical- and desired CDF and comparison of empirical- and desired PDF.
 
