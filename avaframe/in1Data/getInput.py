@@ -77,10 +77,13 @@ def getInputData(avaDir, cfg, flagDev=False):
     log.info('Release area files are: %s' % relFiles)
 
     # Initialise resistance areas
-    if cfg.getboolean('flagRes'):
+    if cfg.getboolean('flagNoRes'):
+        resFiles = []
+        resFiles.append('')
+    else:
         resFiles = glob.glob(inputDir+os.sep + 'RES' + os.sep+'*.shp')
         if len(resFiles) < 1:
-            log.warning('No resistance file')
+            log.debug('No resistance file')
             resFiles.append('')  # Kept this for future enhancements
         else:
             try:
@@ -89,15 +92,15 @@ def getInputData(avaDir, cfg, flagDev=False):
             except AssertionError:
                 raise
             flagEntRes = True
-    else:
-        resFiles = []
-        resFiles.append('')
 
     # Initialise entrainment areas
-    if cfg.getboolean('flagEnt'):
+    if cfg.getboolean('flagNoEnt'):
+        entFiles = []
+        entFiles.append('')
+    else:
         entFiles = glob.glob(inputDir+os.sep + 'ENT' + os.sep+'*.shp')
         if len(entFiles) < 1:
-            log.warning('No entrainment file')
+            log.debug('No entrainment file')
             entFiles.append('')  # Kept this for future enhancements
         else:
             try:
@@ -106,9 +109,6 @@ def getInputData(avaDir, cfg, flagDev=False):
             except AssertionError:
                 raise
             flagEntRes = True
-    else:
-        entFiles = []
-        entFiles.append('')
 
     # Initialise DEM
     demFile = glob.glob(inputDir+os.sep+'*.asc')
