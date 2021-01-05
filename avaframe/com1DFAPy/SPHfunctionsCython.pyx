@@ -109,14 +109,14 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def computeForceC(cfg, particles, dem, Ment, Cres):
+def computeForceC(cfg, particles, dem, Ment, Cres, dT):
     cdef double Rs0 = cfg.getfloat('Rs0')
     cdef double kappa = cfg.getfloat('kappa')
     cdef double B = cfg.getfloat('B')
     cdef double R = cfg.getfloat('R')
     cdef double rho = cfg.getfloat('rho')
     cdef double gravAcc = cfg.getfloat('gravAcc')
-    cdef double dt = cfg.getfloat('dt')
+    cdef double dt = dT
     cdef double mu = cfg.getfloat('mu')
     cdef int Npart = particles['Npart']
     cdef double csz = dem['header'].cellsize
@@ -267,6 +267,11 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double[:] forceSPHY = force['forceSPHY']
   cdef double[:] forceSPHZ = force['forceSPHZ']
   cdef double[:] dM = force['dM']
+  cdef double TotkinEne = particles['kineticEne']
+  cdef double TotpotEne = particles['potentialEne']
+  cdef double peakKinEne = particles['peakKinEne']
+  cdef double TotkinEneNew = 0
+  cdef double TotpotEneNew = 0
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN
   cdef int j
@@ -297,11 +302,17 @@ def updatePositionC(cfg, particles, dem, force):
     zNew = getScalar(xNew, yNew, Z, csz)
     nx, ny, nz = getVector(xNew, yNew, Nx, Ny, Nz, csz)
     nx, ny, nz = normalize(nx, ny, nz)
+    # velocity magnitude
+    uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity
+    # uN = scalProd(uxNew, uyNew, uzNew, nx, ny, nz)
     uN = uxNew*nx + uyNew*ny + uzNew*nz
+    # remove normal component of the velocity
     uxNew = uxNew - uN * nx
     uyNew = uyNew - uN * ny
     uzNew = uzNew - uN * nz
+    TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
+    TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
     XNew[j] = xNew
     YNew[j] = yNew
     ZNew[j] = zNew
@@ -310,7 +321,6 @@ def updatePositionC(cfg, particles, dem, force):
     UZNew[j] = uzNew
     SNew[j] = sNew
     MNew[j] = mNew
-    # remove normal component of the velocity
   particles['ux'] = np.asarray(UXNew)
   particles['uy'] = np.asarray(UYNew)
   particles['uz'] = np.asarray(UZNew)
@@ -320,6 +330,12 @@ def updatePositionC(cfg, particles, dem, force):
   particles['x'] = np.asarray(XNew)
   particles['y'] = np.asarray(YNew)
   particles['z'] = np.asarray(ZNew)
+  particles['kineticEne'] = TotkinEneNew
+  particles['potentialEne'] = TotpotEneNew
+  if peakKinEne < TotkinEneNew:
+    particles['peakKinEne'] = TotkinEneNew
+  if TotkinEneNew < 0.001*peakKinEne:
+    particles['iterate'] = False
 
   # make sure particle is on the mesh (recompute the z component)
   # particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')

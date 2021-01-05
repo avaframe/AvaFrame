@@ -145,9 +145,10 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
     particles['stoppCriteria'] = False
-    particles['kineticEne'] = np.sum(
-        0.5 * Mpart * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
+    kineticEne = np.sum(0.5 * Mpart * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
+    particles['kineticEne'] = kineticEne
     particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
+    particles['peakKinEne'] = kineticEne
 
     # initialize entrainment and resistance
     Ment = intializeMassEnt(dem)
@@ -320,7 +321,7 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # get forces
     # loop version of the compute force
     startTime = time.time()
-    force = SPHC.computeForceC(cfg, particles, dem, Ment, Cres)
+    force = SPHC.computeForceC(cfg, particles, dem, Ment, Cres, dt)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
     # vectorized version of the compute force
@@ -422,6 +423,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # dtK5 is half time step
     dtK5 = 0.5 * dt
+    # cfg['dt'] = str(dtK5)
     log.info('dt used now is %f' % dt)
 
     # load required DEM and mesh info
@@ -456,8 +458,19 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # 'KICK'
     # compute velocity at t_(k+0.5)
     # first compute force at t_(k+0.5)
-    force = computeForceVect(cfg, particles, dem, Ment, Cres, dtK5)
-    particles, force = computeForceSPH(cfg, particles, force, dem)
+    startTime = time.time()
+    force = SPHC.computeForceC(cfg, particles, dem, Ment, Cres, dtK5)
+    tcpuForce = time.time() - startTime
+    Tcpu['Force'] = Tcpu['Force'] + tcpuForce
+    # force = computeForceVect(cfg, particles, dem, Ment, Cres, dtK5)
+    startTime = time.time()
+    if flagCython:
+        particles, force = SPHC.computeForceSPHC(cfg, particles, force, dem)
+    else:
+        particles, force = computeForceSPH(cfg, particles, force, dem)
+    tcpuForceSPH = time.time() - startTime
+    Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
+    # particles, force = computeForceSPH(cfg, particles, force, dem)
     mass = particles['m']
     uxNew = uxK + (force['forceX'] + force['forceSPHX']) * dt / mass
     uyNew = uyK + (force['forceY'] + force['forceSPHY']) * dt / mass
@@ -504,8 +517,10 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
 
     # ++++++++++++++UPDATE FIELDS (compute grid values)
+    # update fields (compute grid values)
     startTime = time.time()
-    particles, fields = updateFields(cfg, particles, force, dem, fields)
+    # particles, fields = updateFields(cfg, particles, force, dem, fields)
+    particles, fields = SPHC.updateFieldsC(cfg, particles, force, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
@@ -1078,7 +1093,7 @@ def updateFields(cfg, particles, force, dem, fields):
     return particles, fields
 
 
-def plotPosition(particles, dem, data, Cmap, unit, maxVal, fig, ax, plotPart=False):
+def plotPosition(particles, dem, data, Cmap, unit, maxVal, fig, ax, plotPart=False, continuous=contCmap):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
