@@ -337,7 +337,7 @@ def updatePositionC(cfg, particles, dem, force):
   particles['potentialEne'] = TotpotEneNew
   if peakKinEne < TotkinEneNew:
     particles['peakKinEne'] = TotkinEneNew
-  if TotkinEneNew < 0.001*peakKinEne:
+  if TotkinEneNew < 0.01*peakKinEne:
     particles['iterate'] = False
 
   # make sure particle is on the mesh (recompute the z component)
@@ -783,7 +783,7 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
     GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
     GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc
     GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc
-  return GHX, GHY, GHZ #, L, indL
+  return GHX, GHY, GHZ# , L, indL
 
 
 @cython.boundscheck(False)  # Deactivate bounds checking

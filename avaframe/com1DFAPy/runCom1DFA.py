@@ -150,7 +150,7 @@ while repeat == True:
         # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
         #
         fig, ax = com1DFA.plotPosition(
-            part, demOri, field['pfd'], pU.cmapPres, 'm', fig, ax, plotPart=True)
+            part, demOri, dem['Nz'], pU.cmapDEM2, '', fig, ax, plotPart=True)
         # fig1, ax1 = DFAtls.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
     # plt.show()
     # repeat = False

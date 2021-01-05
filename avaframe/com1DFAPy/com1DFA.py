@@ -59,8 +59,8 @@ def initializeMesh(dem, num=4):
     Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num=num)
     dem['Nx'] = np.where(np.isnan(Nx), 0, Nx)
     dem['Ny'] = np.where(np.isnan(Ny), 0, Ny)
-    dem['Nz'] = Nz
     bad = np.where(Nz > 1, np.nan, 1)
+    dem['Nz'] = np.where(Nz > 1, 0, Nz)
     dem['Bad'] = bad
 
     # get real Area
@@ -313,6 +313,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
             nSave = nSave + 1
 
     Tcpu['nIter'] = nIter
+    log.info('Ending computation at time t = %f s', t)
 
     return T, U, Z, S, Particles, Fields, Tcpu
 
@@ -363,6 +364,7 @@ def computeTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         # get SPH flow depth
         # particles = SPH.computeFlowDepth(cfg, particles, dem)
         header = dem['header']
+        csz = header.cellsize
         Nx = dem['Nx']
         Ny = dem['Ny']
         Nz = dem['Nz']
@@ -1093,7 +1095,7 @@ def updateFields(cfg, particles, force, dem, fields):
     return particles, fields
 
 
-def plotPosition(particles, dem, data, Cmap, unit, maxVal, fig, ax, plotPart=False, continuous=contCmap):
+def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, continuous=pU.contCmap):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
