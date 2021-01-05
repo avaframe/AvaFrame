@@ -85,7 +85,7 @@ def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
     count = 0
     for simName in peakFiles['simName']:
         if flagValue == False:
-            if peakFiles[varPar]][count] != dVal:
+            if peakFiles[varPar][count] != dVal:
                 peakValues[simName] = {}
         else:
             peakValues[simName] = {}
