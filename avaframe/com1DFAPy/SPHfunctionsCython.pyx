@@ -1,5 +1,8 @@
 """
     function related to SPH calculations in com1DFA
+
+    to build: go to repository containing this file and run:
+    python setup.py build_ext --inplace
 """
 
 # Load modules
