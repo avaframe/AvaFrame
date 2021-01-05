@@ -129,7 +129,7 @@ Outputs
 plotValuesScatter
 ~~~~~~~~~~~~~~~~~~
 
-* scatter plot of result type 1 vs result type 2 with color indicating values of parameter that has been varied
+* scatter plot of result type 1 vs result type 2 with color indicating values of the varied parameter.
 
 
 plotValuesScatterHist
