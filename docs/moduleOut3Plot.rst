@@ -91,7 +91,7 @@ statsPlots
 
 statsPlots can be used produce scatter plots using a peak dictionary where information on two result parameters of avalanche simulations is saved.
 This peak dictionary or a list of those can be created using the function ``extractMaxValues`` of ``ana4Stats/getStats.py``.
-This can be used to visualize results of avalanche simulations where parameter variation has been used or for e.g. in the case of
+This can be used to visualize results of avalanche simulations where parameter variation has been used or for e.g. the case of
 multiple release area scenarios. If parameter variation was used to derive the simulation results, the plots indicate the parameter values in color.
 If the input data includes information about the 'scenario' that was used, the plots use different colors for each scenario.
 There is also the option to add a kde plot for each result paramter as marginal plots.
