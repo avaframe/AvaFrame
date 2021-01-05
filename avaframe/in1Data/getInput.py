@@ -83,7 +83,7 @@ def getInputData(avaDir, cfg, flagDev=False):
     else:
         resFiles = glob.glob(inputDir+os.sep + 'RES' + os.sep+'*.shp')
         if len(resFiles) < 1:
-            log.debug('No resistance file')
+            log.debug('No resistance file found')
             resFiles.append('')  # Kept this for future enhancements
         else:
             try:
