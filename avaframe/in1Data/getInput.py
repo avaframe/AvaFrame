@@ -100,7 +100,7 @@ def getInputData(avaDir, cfg, flagDev=False):
     else:
         entFiles = glob.glob(inputDir+os.sep + 'ENT' + os.sep+'*.shp')
         if len(entFiles) < 1:
-            log.debug('No entrainment file')
+            log.debug('No entrainment file found')
             entFiles.append('')  # Kept this for future enhancements
         else:
             try:
