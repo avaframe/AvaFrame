@@ -181,10 +181,10 @@ cmapVar['ticks'] = None
 ###################################
 # shortcut plot functions
 ###################################
-def NonUnifIm(ax, x, y, z, vmin, vmax, xlab, ylab, **kwargs):
+def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
     im = NonUniformImage(ax, **kwargs)
     im.set_data(x, y, z)
-    im.set_clim(vmin=vmin, vmax=vmax)
+    # im.set_clim(vmin=vmin, vmax=vmax)
     ref = ax.images.append(im)
     ax.set_xlim([x.min(), x.max()])
     ax.set_ylim([y.min(), y.max()])
