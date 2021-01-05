@@ -89,12 +89,12 @@ comparison plot of empirical- and desired CDF and comparison of empirical- and d
 statsPlots
 =================
 
-statsPlots can be used produce scatter plots using a peak dictionary where information on two result parameters of avalanche simulations is saved.
+statsPlots can be used to create scatter plots using a peak dictionary where information on two result parameters of avalanche simulations is saved.
 This peak dictionary or a list of those can be created using the function ``extractMaxValues`` of ``ana4Stats/getStats.py``.
 This can be used to visualize results of avalanche simulations where parameter variation has been used or for e.g. the case of
 multiple release area scenarios. If parameter variation was used to derive the simulation results, the plots indicate the parameter values in color.
 If the input data includes information about the 'scenario' that was used, the plots use different colors for each scenario.
-There is also the option to add a kde plot for each result paramter as marginal plots.
+There is also the option to add a kde (kernel density estimation) plot for each result parameter as marginal plots.
 
 
 Input
