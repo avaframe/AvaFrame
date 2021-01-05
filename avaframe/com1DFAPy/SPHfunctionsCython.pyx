@@ -46,14 +46,33 @@ ctypedef long dtypel_t
 @cython.wraparound(False)
 @cython.cdivision(True)
 def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
-    """
-    Interpolate unstructured points on a structured grid (nearest or bilinear
-    interpolation possible)
+    """ Interpolate from unstructured points to grid
+
+    Interpolate unstructured points on a structured grid using bilinear interpolation
     The (x, y) points have to be on the extend of the DEM!!
-    Input :
-    Points: (x, y) coord of the points
-    Output:
-    PointsZ: z coord of the points
+
+    Parameters
+      ----------
+      x: 1D numpy array
+          x coordinate of the points
+      y: 1D numpy array
+          y coordinate of the points
+      z: 1D numpy array
+          quantity to interpolate associated to (x, y) points
+      Z0: 2D numpy array
+          initial ratser for interpolated result
+      csz : float
+          cellsize
+      xllc : float
+          x coord of the lower left center
+      yllc : float
+          y coord of the lower left center
+
+      Returns
+      -------
+
+      Z1: 2D numpy array
+          interpolated results
     """
     n, m = np.shape(Z0)
     cdef int nrow = int(n)
