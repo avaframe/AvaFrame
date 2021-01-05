@@ -103,7 +103,7 @@ Input
 plotValuesScatter
 ~~~~~~~~~~~~~~~~~~
 
-* list of peak info dictionaries (also only one is fine)
+* list of peak info dictionaries (one or more)
 * result parameter type 1
 * result parameter type 2
 * parameter that has been varied to perform avalanche simulations
