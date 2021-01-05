@@ -126,7 +126,7 @@ def com1DFAMain(cfg, avaDir):
     if flagNoEnt:
         log.info('Entrainment is forced off')
     if flagNoRes:
-        log.info('Resistance is turned off')
+        log.info('Resistance is forced off')
 
     # Log current avalanche directory
     log.debug('Your current avalanche name: %s' % avaDir)
