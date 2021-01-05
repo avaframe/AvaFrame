@@ -73,11 +73,26 @@ def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
     peakFiles = fU.makeSimDict(inputDir, varPar, avaDir)
     nSims = len(peakFiles['simName'])
 
-    # initialize dictionary to save values
+    # load parameter variation values to check if they include default value
+    varParValues = cfgMain['PARAMETERVAR']['varParValues']
+    if ':' in varParValues:
+        itemsInput = varParValues.split(':')
+        itemsRaw = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
+    else:
+        itemsRaw = varParValues.split('_')
+        itemsRaw = np.array(itemsRaw,dtype=float)
+    flagValue = False
+    if float(cfgMain['DEFVALUES'][cfgMain['PARAMETERVAR']['varPar']]) in itemsRaw:
+        flagValue = True
+
+    # initialize dictionary to save values, if default value not in parameter variation, exclude this value
     peakValues = {}
     count = 0
     for simName in peakFiles['simName']:
-        if peakFiles[cfgMain['PARAMETERVAR']['varPar']][count] != cfgMain['DEFVALUES'][cfgMain['PARAMETERVAR']['varPar']]:
+        if flagValue == False:
+            if peakFiles[cfgMain['PARAMETERVAR']['varPar']][count] != cfgMain['DEFVALUES'][cfgMain['PARAMETERVAR']['varPar']]:
+                peakValues[simName] = {}
+        else:
             peakValues[simName] = {}
         count = count + 1
 
@@ -86,7 +101,7 @@ def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
 
         # Load peak fields
         # be aware of the standard simulation - so if default value should not be part of the analysis
-        if peakFiles[cfgMain['PARAMETERVAR']['varPar']][m] != cfgMain['DEFVALUES'][cfgMain['PARAMETERVAR']['varPar']]:
+        if flagValue == True:
             log.debug('Simulation parameter %s= %s' % (cfgMain['PARAMETERVAR']['varPar'], peakFiles[cfgMain['PARAMETERVAR']['varPar']][m]))
 
             # Load data
@@ -102,5 +117,22 @@ def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
             peakValues[simName].update({'varPar': float(peakFiles[varPar][m])})
             if nameScenario != '':
                 peakValues[simName].update({'scenario': nameScenario})
+        else:
+            if peakFiles[cfgMain['PARAMETERVAR']['varPar']][m] != cfgMain['DEFVALUES'][cfgMain['PARAMETERVAR']['varPar']]:
+                log.debug('Simulation parameter %s= %s' % (cfgMain['PARAMETERVAR']['varPar'], peakFiles[cfgMain['PARAMETERVAR']['varPar']][m]))
+
+                # Load data
+                fileName = peakFiles['files'][m]
+                simName = peakFiles['simName'][m]
+                data = np.loadtxt(fileName, skiprows=6)
+
+                # compute max
+                max = np.amax(data)
+
+                # add statistical measures
+                peakValues[simName].update({peakFiles['resType'][m]: max})
+                peakValues[simName].update({'varPar': float(peakFiles[varPar][m])})
+                if nameScenario != '':
+                    peakValues[simName].update({'scenario': nameScenario})
 
     return peakValues
