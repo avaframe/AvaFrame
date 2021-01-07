@@ -149,7 +149,7 @@ def checkCommonSims(logName, localLogName):
     return indSims
 
 
-def readIniValues(cfgValues):
+def splitIniValueToArray(cfgValues):
     """ read values in ini file and return numpy array of values, values can either be separated by _ or |
         or provided in start:end:numberOfSteps format
 
