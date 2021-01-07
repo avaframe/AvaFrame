@@ -103,7 +103,7 @@ for Lx, Ly in zip(LX, LY):
             # loop version of the compute force
             startTime = time.time()
             # forceLoop = computeForce(cfg, particles, dem, Ment, Cres)
-            forceLoop = SPHC.computeForceC(cfgGen, particles, dem, Ment, Cres)
+            forceLoop = SPHC.computeForceC(cfgGen, particles, dem, Ment, Cres, dt)
             tcpuForce = time.time() - startTime
             Tcpu['ForceC'] = Tcpu['ForceC'] + tcpuForce
             # vectorized version of the compute force
