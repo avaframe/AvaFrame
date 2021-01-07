@@ -387,7 +387,6 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     t = particles['t']
     # Start time step computation
     while t < Tend and iterate:
-
         # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
         # CALL TIME STEP:
         # to play around with the courant number

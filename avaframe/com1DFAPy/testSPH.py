@@ -225,10 +225,9 @@ for DX in NDX:
 
         indPartInCell = (particles['indPartInCell']).astype('int')
         partInCell = (particles['partInCell']).astype('int')
-        indX = (particles['InCell'][:, 0]).astype('int')
-        indY = (particles['InCell'][:, 1]).astype('int')
-        nx, ny, nz = DFAtls.getNormalArray(x, y, Nx, Ny, Nz, csz)
-        GHX, GHY, GHZ = computeGradcython(particles, header, nx, ny, nz, indX, indY)
+        indX = particles['indX'].astype('int')
+        indY = particles['indY'].astype('int')
+        GHX, GHY, GHZ = computeGradC(particles, header, Nx, Ny, Nz, indX, indY, gradient=True)
         GHX = np.asarray(GHX)
         GHY = np.asarray(GHY)
         GHZ = np.asarray(GHZ)
@@ -236,7 +235,7 @@ for DX in NDX:
         print(tottime)
         startTime = time.time()
         # Compute sph FD
-        H = computeFDcython(particles, header, nx, ny, nz, indX, indY)
+        H = computeFDC(particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
         print(np.shape(H))
         particles['hSPH'] = H
@@ -247,7 +246,7 @@ for DX in NDX:
         # Update fields using a nearest interpolation
         MassNearest = np.zeros((NY, NX))
         # startTime = time.time()
-        iC = particles['InCell'][:, 2]
+        iC = particles['InCell']
         MassNearest = MassNearest.flatten()
         np.add.at(MassNearest, iC, Mpart)
         MassNearest = np.reshape(MassNearest, (NY, NX))
