@@ -149,6 +149,34 @@ def checkCommonSims(logName, localLogName):
     return indSims
 
 
+def readIniValues(cfgValues):
+    """ read values in ini file and return numpy array of values, values can either be separated by _ or |
+        or provided in start:end:numberOfSteps format
+
+        Parameters
+        ----------
+        cfgValues : str
+            values of parameter to be read from ini file
+
+        Returns
+        --------
+        items : 1D numpy array
+            values as 1D numpy array
+    """
+
+    if ':' in cfgValues:
+        itemsInput = cfgValues.split(':')
+        items = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
+    elif '|' in cfgValues:
+        itemsL = cfgValues.split('|')
+        items = np.array(itemsL,dtype=float)
+    else:
+        itemsS = cfgValues.split('_')
+        items = np.array(itemsS,dtype=float)
+
+    return items
+
+
 def getDFAData(avaDir, workDir, suffix, nameDir=''):
     """ Export the required data from com1DFA output to Aimec Work directory and rename,
         if nameDir='', data from com1DFA output copied to workDir without renaming
