@@ -136,6 +136,7 @@ def com1DFAMain(cfg, avaDir):
 
     # Load input data
     dem, rels, ent, res, flagEntRes = gI.getInputData(avaDir, cfgGen)
+    flagBadName = False
     entrainmentArea = ''
     resistanceArea = ''
     if flagEntRes:
@@ -164,6 +165,11 @@ def com1DFAMain(cfg, avaDir):
         # Set release areas and simulation name
         relName = os.path.splitext(os.path.basename(rel))[0]
         simName = relName
+        if '_' in relName:
+            flagBadName = True
+            log.warning('Release area scenario file name includes an underscore - bad naming \
+            the suffix _AF will be added')
+            simName = relName + '_AF'
         relDict = sP.SHP2Array(rel)
         for k in range(len(relDict['d0'])):
             if relDict['d0'][k] == 'None':
