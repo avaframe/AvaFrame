@@ -35,9 +35,6 @@ log = logging.getLogger(__name__)
 # to the local plane (tau1, tau2, n) non orthogonal coord sys
 cdef int SPHOption = 2
 
-cdef double rho = 200
-cdef double csz = 5
-cdef double gravAcc = 9.81
 
 ctypedef double dtypef_t
 ctypedef long dtypel_t
@@ -665,8 +662,6 @@ def computeForceSPHC(cfg, particles, force, dem):
       force dictionary
   """
   # Load required parameters
-  rho = cfg.getfloat('rho')
-  gravAcc = cfg.getfloat('gravAcc')
   Npart = particles['Npart']
   header = dem['header']
   nrows = dem['header'].nrows
@@ -678,7 +673,7 @@ def computeForceSPHC(cfg, particles, force, dem):
 
   indX = particles['indX'].astype('int')
   indY = particles['indY'].astype('int')
-  forceSPHX, forceSPHY, forceSPHZ = computeGradC(particles, header, Nx, Ny, Nz, indX, indY)
+  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
   forceSPHX = np.asarray(forceSPHX)
   forceSPHY = np.asarray(forceSPHY)
   forceSPHZ = np.asarray(forceSPHZ)
@@ -697,7 +692,7 @@ def computeForceSPHC(cfg, particles, force, dem):
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
+def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                  double[:, :] Nz, long[:] indX, long[:] indY, gradient=0):
   """ compute lateral forces acting on the particles (SPH component)
 
@@ -705,6 +700,8 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
 
   Parameters
   ----------
+  cfg: configparser
+      configuration for DFA simulation
   particles : dict
       particles dictionary at t
   header : dict
@@ -730,6 +727,9 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
   GHZ : 1D numpy array
       z component of the lateral force
   """
+  cdef double rho = cfg.getfloat('rho')
+  cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']
   cdef double[:] Y = particles['y']
@@ -883,13 +883,15 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def computeFDC(particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, long[:] indX, long[:] indY):
+def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, long[:] indX, long[:] indY):
   """ compute flow depth at particle location (SPH flow depth)
 
   Cython implementation
 
   Parameters
   ----------
+  cfg: configparser
+      configuration for DFA simulation
   particles : dict
       particles dictionary at t
   header : dict
@@ -909,6 +911,8 @@ def computeFDC(particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :]
   H : 1D numpy array
       flow depth
   """
+  cdef double rho = cfg.getfloat('rho')
+  cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']
   cdef double[:] Y = particles['y']
