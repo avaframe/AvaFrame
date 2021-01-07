@@ -60,7 +60,8 @@ def getInputData(avaDir, cfg, flagDev=False):
     elif cfg['releaseScenario'] != '':
         releaseDir = 'REL'
         relFiles = []
-        releaseFiles = cfg['releaseScenario'].split('_')
+        releaseFiles = cfg['releaseScenario'].split('|')
+        print('releaseFiles', cfg['releaseScenario'], releaseFiles)
         for rel in releaseFiles:
             if '.shp' in rel:
                 relf = os.path.join(inputDir, releaseDir, rel)

@@ -22,7 +22,7 @@ In the directory Inputs, the following files are required:
 * digital elevation model as .asc file
   -> use xllcenter and yllcenter
 * release area scenario as shapefile (in Inputs/REL); multiple are possible
-  -> the release area name must not contain an underscore
+  -> the release area name should not contain an underscore
 
 and the following files are optional:
 
@@ -35,7 +35,7 @@ The simulation settings area defined in the configuration file ``com1DFACfg.ini`
 * flagOut - print full model output
 * flagEnt - include entrainment areas
 * flagRes - include resistance areas
-* releaseScenario - name of release area scenario shapfile (with or without extension -shp, if multiple, separate by '_')
+* releaseScenario - name of release area scenario shapfile (with or without extension -shp, if multiple, separate by '|')
 * flagVarPar - perform parameter variation
 * flagVarEnt - perform parameter variation with entrainment and resistance
 * varPar - parameter to be varied
