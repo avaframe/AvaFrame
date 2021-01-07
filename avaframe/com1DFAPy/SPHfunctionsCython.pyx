@@ -134,142 +134,142 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 def computeForceC(cfg, particles, dem, Ment, Cres, dT):
   """ compute forces acting on the particles (without the SPH component)
 
-     Cython implementation implementation
+  Cython implementation implementation
 
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    particles : dict
-        particles dictionary at t
-    dem : dict
-        dictionary with dem information
-    Ment : 2D numpy array
-        entrained mass raster
-    Cres : 2D numpy array
-        resistance raster
-    dT : float
-        time step
+  Parameters
+  ----------
+  cfg: configparser
+      configuration for DFA simulation
+  particles : dict
+      particles dictionary at t
+  dem : dict
+      dictionary with dem information
+  Ment : 2D numpy array
+      entrained mass raster
+  Cres : 2D numpy array
+      resistance raster
+  dT : float
+      time step
 
-    Returns
-    -------
-    force : dict
-        force dictionary
-    """
-    cdef double Rs0 = cfg.getfloat('Rs0')
-    cdef double kappa = cfg.getfloat('kappa')
-    cdef double B = cfg.getfloat('B')
-    cdef double R = cfg.getfloat('R')
-    cdef double rho = cfg.getfloat('rho')
-    cdef double gravAcc = cfg.getfloat('gravAcc')
-    cdef double dt = dT
-    cdef double mu = cfg.getfloat('mu')
-    cdef int Npart = particles['Npart']
-    cdef double csz = dem['header'].cellsize
-    cdef double[:, :] Nx = dem['Nx']
-    cdef double[:, :] Ny = dem['Ny']
-    cdef double[:, :] Nz = dem['Nz']
+  Returns
+  -------
+  force : dict
+      force dictionary
+  """
+  cdef double Rs0 = cfg.getfloat('Rs0')
+  cdef double kappa = cfg.getfloat('kappa')
+  cdef double B = cfg.getfloat('B')
+  cdef double R = cfg.getfloat('R')
+  cdef double rho = cfg.getfloat('rho')
+  cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double dt = dT
+  cdef double mu = cfg.getfloat('mu')
+  cdef int Npart = particles['Npart']
+  cdef double csz = dem['header'].cellsize
+  cdef double[:, :] Nx = dem['Nx']
+  cdef double[:, :] Ny = dem['Ny']
+  cdef double[:, :] Nz = dem['Nz']
 
-    cdef double[:] Fnormal = np.zeros(Npart, dtype=np.float64)
-    cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
-    cdef double[:] forceY = np.zeros(Npart, dtype=np.float64)
-    cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
-    cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] Fnormal = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] forceY = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
 
-    cdef double[:] mass = particles['m']
-    cdef double[:] H = particles['h']
-    cdef double[:] X = particles['x']
-    cdef double[:] Y = particles['y']
-    cdef double[:] UX = particles['ux']
-    cdef double[:] UY = particles['uy']
-    cdef double[:] UZ = particles['uz']
-    cdef long[:] IndCellX = particles['indX']
-    cdef long[:] IndCellY = particles['indY']
-    cdef long indCellX, indCellY
-    cdef double A, uMag, m, h, x, y, z, ux, uy, uz, nx, ny, nz
-    cdef double uxDir, uyDir, uzDir, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
-    cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
-    cdef int j
-    force = {}
-    # loop on particles
-    for j in range(Npart):
-        m = mass[j]
-        x = X[j]
-        y = Y[j]
-        h = H[j]
-        ux = UX[j]
-        uy = UY[j]
-        uz = UZ[j]
-        indCellX = IndCellX[j]
-        indCellY = IndCellY[j]
-        # deduce area
-        A = m / (h * rho)
-        # get normal at the particle location
-        nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz)
-        nx, ny, nz = normalize(nx, ny, nz)
-        # get velocity magnitude and direction
-        uMag = norm(ux, uy, uz)
-        if uMag>0:
-          uxDir, uyDir, uzDir = normalize(ux, uy, uz)
-        else:
-          ux = 1
-          uy = 0
-          uz = -(1*nx + 0*ny) / nz
-          uxDir, uyDir, uzDir = normalize(ux, uy, uz)
-        # get normal at the particle estimated end location
-        xEnd = x + dt * ux
-        yEnd = y + dt * uy
-        nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz)
-        nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
-        # get average of those normals
-        nxAvg = nx + nxEnd
-        nyAvg = ny + nyEnd
-        nzAvg = nz + nzEnd
-        nxAvg, nyAvg, nzAvg = normalize(nxAvg, nyAvg, nzAvg)
+  cdef double[:] mass = particles['m']
+  cdef double[:] H = particles['h']
+  cdef double[:] X = particles['x']
+  cdef double[:] Y = particles['y']
+  cdef double[:] UX = particles['ux']
+  cdef double[:] UY = particles['uy']
+  cdef double[:] UZ = particles['uz']
+  cdef long[:] IndCellX = particles['indX']
+  cdef long[:] IndCellY = particles['indY']
+  cdef long indCellX, indCellY
+  cdef double A, uMag, m, h, x, y, z, ux, uy, uz, nx, ny, nz
+  cdef double uxDir, uyDir, uzDir, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
+  cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
+  cdef int j
+  force = {}
+  # loop on particles
+  for j in range(Npart):
+      m = mass[j]
+      x = X[j]
+      y = Y[j]
+      h = H[j]
+      ux = UX[j]
+      uy = UY[j]
+      uz = UZ[j]
+      indCellX = IndCellX[j]
+      indCellY = IndCellY[j]
+      # deduce area
+      A = m / (h * rho)
+      # get normal at the particle location
+      nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz)
+      nx, ny, nz = normalize(nx, ny, nz)
+      # get velocity magnitude and direction
+      uMag = norm(ux, uy, uz)
+      if uMag>0:
+        uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+      else:
+        ux = 1
+        uy = 0
+        uz = -(1*nx + 0*ny) / nz
+        uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+      # get normal at the particle estimated end location
+      xEnd = x + dt * ux
+      yEnd = y + dt * uy
+      nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz)
+      nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
+      # get average of those normals
+      nxAvg = nx + nxEnd
+      nyAvg = ny + nyEnd
+      nzAvg = nz + nzEnd
+      nxAvg, nyAvg, nzAvg = normalize(nxAvg, nyAvg, nzAvg)
 
-        # acceleration due to curvature
-        accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
-        # normal component of the acceleration of gravity
-        gravAccNorm = - gravAcc * nzAvg
-        effAccNorm = gravAccNorm + accNormCurv
-        if(effAccNorm < 0.0):
-            Fnormal[j] = m * effAccNorm
+      # acceleration due to curvature
+      accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
+      # normal component of the acceleration of gravity
+      gravAccNorm = - gravAcc * nzAvg
+      effAccNorm = gravAccNorm + accNormCurv
+      if(effAccNorm < 0.0):
+          Fnormal[j] = m * effAccNorm
 
-        # body forces (tangential component of acceleration of gravity)
-        gravAccTangX = - gravAccNorm * nxAvg
-        gravAccTangY = - gravAccNorm * nyAvg
-        gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
-        # adding gravity force contribution
-        forceX[j] = forceX[j] + gravAccTangX * m
-        forceY[j] = forceY[j] + gravAccTangY * m
-        forceZ[j] = forceZ[j] + gravAccTangZ * m
+      # body forces (tangential component of acceleration of gravity)
+      gravAccTangX = - gravAccNorm * nxAvg
+      gravAccTangY = - gravAccNorm * nyAvg
+      gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
+      # adding gravity force contribution
+      forceX[j] = forceX[j] + gravAccTangX * m
+      forceY[j] = forceY[j] + gravAccTangY * m
+      forceZ[j] = forceZ[j] + gravAccTangZ * m
 
-        # Calculating bottom shear and normal stress
-        if(effAccNorm > 0.0):
-            # if fluid detatched
-            # log.info('fluid detatched for particle %s', j)
-            tau = 0.0
-        else:
-            # bottom normal stress sigmaB
-            sigmaB = - effAccNorm * rho * h
-            # SamosAT friction type (bottom shear stress)
-            tau = SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
-            # coulomb friction type (bottom shear stress)
-            # tau = mu * sigmaB
+      # Calculating bottom shear and normal stress
+      if(effAccNorm > 0.0):
+          # if fluid detatched
+          # log.info('fluid detatched for particle %s', j)
+          tau = 0.0
+      else:
+          # bottom normal stress sigmaB
+          sigmaB = - effAccNorm * rho * h
+          # SamosAT friction type (bottom shear stress)
+          tau = SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+          # coulomb friction type (bottom shear stress)
+          # tau = mu * sigmaB
 
-        # adding bottom shear resistance contribution
-        forceBotTang = - A * tau
-        forceX[j] = forceX[j] + forceBotTang * uxDir
-        forceY[j] = forceY[j] + forceBotTang * uyDir
-        forceZ[j] = forceZ[j] + forceBotTang * uzDir
+      # adding bottom shear resistance contribution
+      forceBotTang = - A * tau
+      forceX[j] = forceX[j] + forceBotTang * uxDir
+      forceY[j] = forceY[j] + forceBotTang * uyDir
+      forceZ[j] = forceZ[j] + forceBotTang * uzDir
 
 
-    # save results
-    force['dM'] = np.asarray(dM)
-    force['forceX'] = np.asarray(forceX)
-    force['forceY'] = np.asarray(forceY)
-    force['forceZ'] = np.asarray(forceZ)
-    return force
+  # save results
+  force['dM'] = np.asarray(dM)
+  force['forceX'] = np.asarray(forceX)
+  force['forceY'] = np.asarray(forceY)
+  force['forceZ'] = np.asarray(forceZ)
+  return force
 
 
 @cython.boundscheck(False)
@@ -712,7 +712,7 @@ def computeForceSPHC(cfg, particles, force, dem):
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
 def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
-                 double[:, :] Nz, long[:] indX, long[:] indY):
+                 double[:, :] Nz, long[:] indX, long[:] indY, gradient=False):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -733,6 +733,8 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
       column index of the location of the particles
   indY : 1D numpy array
       row index of the location of the particles
+  gradient : boolean
+    Return the gradient (if True) or the force associated (if False, default)
   Returns
   -------
   GHX : 1D numpy array
@@ -880,14 +882,14 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
                     gradhY = gradhY + vy*G1 + wy*G2
                     gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
 
-
-    # GHX[j] = GHX[j] - gradhX / rho
-    # GHY[j] = GHY[j] - gradhY / rho
-    # GHZ[j] = GHZ[j] - gradhZ / rho
-
-    GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
-    GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc
-    GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc
+    if gradient:
+      GHX[j] = GHX[j] - gradhX / rho
+      GHY[j] = GHY[j] - gradhY / rho
+      GHZ[j] = GHZ[j] - gradhZ / rho
+    else:
+      GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
+      GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc
+      GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc
   return GHX, GHY, GHZ# , L, indL
 
 
