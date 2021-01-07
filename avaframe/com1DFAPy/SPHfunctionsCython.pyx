@@ -692,7 +692,11 @@ def computeForceSPHC(cfg, particles, force, dem):
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
+<<<<<<< HEAD
 def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
+=======
+def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
+>>>>>>> Revert "Revert "requested changes""
                  double[:, :] Nz, long[:] indX, long[:] indY, gradient=0):
   """ compute lateral forces acting on the particles (SPH component)
 
