@@ -132,6 +132,30 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 @cython.wraparound(False)
 @cython.cdivision(True)
 def computeForceC(cfg, particles, dem, Ment, Cres, dT):
+  """ compute forces acting on the particles (without the SPH component)
+
+     Cython implementation implementation
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    particles : dict
+        particles dictionary at t
+    dem : dict
+        dictionary with dem information
+    Ment : 2D numpy array
+        entrained mass raster
+    Cres : 2D numpy array
+        resistance raster
+    dT : float
+        time step
+
+    Returns
+    -------
+    force : dict
+        force dictionary
+    """
     cdef double Rs0 = cfg.getfloat('Rs0')
     cdef double kappa = cfg.getfloat('kappa')
     cdef double B = cfg.getfloat('B')
@@ -252,6 +276,25 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
 @cython.wraparound(False)
 @cython.cdivision(True)
 def updatePositionC(cfg, particles, dem, force):
+  """ update particle position using euler forward scheme
+
+  Cython implementation
+
+ Parameters
+ ----------
+ cfg: configparser
+     configuration for DFA simulation
+ particles : dict
+     particles dictionary at t
+ dem : dict
+     dictionary with dem information
+ force : dict
+     force dictionary
+ Returns
+ -------
+ particles : dict
+     particles dictionary at t + dt
+ """
   DT = cfg.getfloat('dt')
   cdef double dt = DT
   log.debug('dt used now is %f' % DT)
@@ -372,6 +415,30 @@ def updatePositionC(cfg, particles, dem, force):
 @cython.wraparound(False)
 @cython.cdivision(True)
 def updateFieldsC(cfg, particles, force, dem, fields):
+  """ update fields and particles fow depth
+
+  Cython implementation
+
+ Parameters
+ ----------
+ cfg: configparser
+     configuration for DFA simulation
+ particles : dict
+     particles dictionary
+ force : dict
+     force dictionary
+ dem : dict
+     dictionary with dem information
+ fields : dict
+     fields dictionary
+ Returns
+ -------
+
+ particles : dict
+     particles dictionary
+ fields : dict
+     fields dictionary
+ """
   cdef double rho = cfg.getfloat('rho')
   header = dem['header']
   CSZ = dem['header'].cellsize
@@ -589,38 +656,28 @@ def getNeighboursC(particles, dem):
 
     return particles
 
-# def computeGrad(Npart, particles, Nx, Ny, Nz, NX, NY):
-#     Npart = particles['Npart']
-#     # initialize
-#     GHX = np.zeros(Npart)
-#     GHY = np.zeros(Npart)
-#     GHZ = np.zeros(Npart)
-#     # loop on particles
-#     # TcpuSPH = 0
-#     # Tcpuadd = 0
-#     for j in range(Npart):
-#         mass = particles['m'][j]
-#         # adding lateral force (SPH component)
-#         # startTime = time.time()
-#
-#         x = particles['x'][j]
-#         y = particles['y'][j]
-#         nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
-#         gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(particles, j, NX, NY, csz, nx, ny, nz)
-#         # tcpuSPH = time.time() - startTime
-#         # TcpuSPH = TcpuSPH + tcpuSPH
-#         # startTime = time.time()
-#         GHX[j] = GHX[j] - gradhX / rho
-#         GHY[j] = GHY[j] - gradhY / rho
-#         GHZ[j] = GHZ[j] - gradhZ / rho
-#         # tcpuadd = time.time() - startTime
-#         # Tcpuadd = Tcpuadd + tcpuadd
-#
-#     return GHX, GHY, GHZ
-
 
 def computeForceSPHC(cfg, particles, force, dem):
-  """ Compute SPH """
+  """ Prepare data for C computation of lateral forces (SPH component)
+  acting on the particles (SPH component)
+
+  Parameters
+  ----------
+  cfg: configparser
+      configuration for DFA simulation
+  particles : dict
+      particles dictionary at t
+  force : dict
+      force dictionary
+  dem : dict
+      dictionary with dem information
+  Returns
+  -------
+  particles : dict
+      particles dictionary at t
+  force : dict
+      force dictionary
+  """
   # Load required parameters
   rho = cfg.getfloat('rho')
   gravAcc = cfg.getfloat('gravAcc')
@@ -656,6 +713,35 @@ def computeForceSPHC(cfg, particles, force, dem):
 @cython.cdivision(True)
 def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
                  double[:, :] Nz, long[:] indX, long[:] indY):
+  """ compute lateral forces acting on the particles (SPH component)
+
+  Cython implementation
+
+  Parameters
+  ----------
+  particles : dict
+      particles dictionary at t
+  header : dict
+      header dictionary
+  Nx : 2D numpy array
+      x component of the normal vector of the DEM
+  Ny : 2D numpy array
+      y component of the normal vector of the DEM
+  Nz : 2D numpy array
+      z component of the normal vector of the DEM
+  indX : 1D numpy array
+      column index of the location of the particles
+  indY : 1D numpy array
+      row index of the location of the particles
+  Returns
+  -------
+  GHX : 1D numpy array
+      x component of the lateral force
+  GHY : 1D numpy array
+      y component of the lateral force
+  GHZ : 1D numpy array
+      z component of the lateral force
+  """
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']
   cdef double[:] Y = particles['y']
@@ -809,6 +895,31 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
 def computeFDC(particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, long[:] indX, long[:] indY):
+  """ compute flow depth at particle location (SPH flow depth)
+
+  Cython implementation
+
+  Parameters
+  ----------
+  particles : dict
+      particles dictionary at t
+  header : dict
+      header dictionary
+  Nx : 2D numpy array
+      x component of the normal vector of the DEM
+  Ny : 2D numpy array
+      y component of the normal vector of the DEM
+  Nz : 2D numpy array
+      z component of the normal vector of the DEM
+  indX : 1D numpy array
+      column index of the location of the particles
+  indY : 1D numpy array
+      row index of the location of the particles
+  Returns
+  -------
+  H : 1D numpy array
+      flow depth
+  """
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']
   cdef double[:] Y = particles['y']
