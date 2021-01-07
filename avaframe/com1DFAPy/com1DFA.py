@@ -72,7 +72,7 @@ def initializeMesh(dem, num=4):
     dem['Nx'] = np.where(np.isnan(Nx), 0, Nx)
     dem['Ny'] = np.where(np.isnan(Ny), 0, Ny)
     # build no data mask (used to find out of dem particles)
-    bad = np.where(Nz > 1, True, False)
+    bad = np.where(Nz > 1, np.nan, 1)
     dem['Nz'] = np.where(Nz > 1, 0, Nz)
     dem['Bad'] = bad
 
@@ -1509,8 +1509,6 @@ def removeOutPart(cfg, particles, dem):
     indY = particles['indY']
     x = x + ux*dt
     y = y + uy*dt
-    # indx = int((x + csz/2) / csz)
-    # indy = int((y + csz/2) / csz)
 
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     Lx = (x - xllc) / csz
@@ -1524,22 +1522,13 @@ def removeOutPart(cfg, particles, dem):
     mask[indOut] = False
     indOut = np.where(Ly >= nrows-1.5)
     mask[indOut] = False
-
-    nRemove = len(mask)-np.sum(mask)
-    if nRemove > 0:
-        particles = removePart(particles, mask, nRemove)
-        log.info('removed %s particles because they exited the domain' % (nRemove))
-
-    mask = np.ones(len(x), dtype=bool)
-    indX = particles['indX']
-    indY = particles['indY']
-    indOut = np.where(Bad[indY, indX], False, True)
+    indOut = np.where(np.isnan(Bad[indY, indX]), False, True)
     mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indY+np.sign(uy).astype('int'), indX], False, True)
+    indOut = np.where(np.isnan(Bad[indY+np.sign(uy).astype('int'), indX]), False, True)
     mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indY, indX+np.sign(ux).astype('int')], False, True)
+    indOut = np.where(np.isnan(Bad[indY, indX+np.sign(ux).astype('int')]), False, True)
     mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indY+np.sign(uy).astype('int'), indX+np.sign(ux).astype('int')], False, True)
+    indOut = np.where(np.isnan(Bad[indY+np.sign(uy).astype('int'), indX+np.sign(ux).astype('int')]), False, True)
     mask = np.logical_and(mask, indOut)
 
     nRemove = len(mask)-np.sum(mask)

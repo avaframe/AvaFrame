@@ -115,7 +115,7 @@ for massPart in MassPart:
     TField.append(Tcpu['Field'] / Tcpu['nIter'])
 
     # Result parameters to be exported
-    resTypesString = cfgGen['resType']
+    resTypesString = cfg['resType']
     resTypes = resTypesString.split('_')
     finalFields = Fields[-1]
     for resType in resTypes:
@@ -124,9 +124,9 @@ for massPart in MassPart:
             resField = resField * 0.001
         relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
         dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType + \
-            '_' + 'massPart' + '_' + str(massPart) + '_' + 'CFL' + '_' + cfgGen['cMax']
+            '_' + 'massPart' + '_' + str(massPart) + '_' + 'CFL' + '_' + cfg['cMax']
         # dataName = relName + '_' + 'massPart' + '_'  + str(massPart) + '_'  + 'CFL' + '_'  + cfg['cMax']
-        # fU.writePeakResult(outDir, resField, demOri['header'], dataName)
+        fU.writePeakResult(outDir, resField, demOri['header'], dataName)
         log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
 
     # Generata plots for all peakFiles

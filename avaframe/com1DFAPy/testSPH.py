@@ -80,7 +80,7 @@ NPartPerD = [2, 3, 5, 9, 15, 39] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
-coef = 0.5
+coef = 0.
 rho = 200
 ##############################################################################
 # END CHOOSE SETUP
@@ -114,8 +114,8 @@ for DX in NDX:
     csz = DX
 
     # set the extend of your mesh
-    Lx = 10*DX
-    Ly = 10*DY
+    Lx = 4*DX
+    Ly = 4*DY
 
     for nPartPerD in NPartPerD:
         dx = DX/nPartPerD

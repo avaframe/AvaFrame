@@ -280,24 +280,23 @@ def updatePositionC(cfg, particles, dem, force):
 
   Cython implementation
 
-  Parameters
-  ----------
-  cfg: configparser
-      configuration for DFA simulation
-  particles : dict
-      particles dictionary at t
-  dem : dict
-      dictionary with dem information
-  force : dict
-      force dictionary
-  Returns
-  -------
-  particles : dict
-      particles dictionary at t + dt
-  """
+ Parameters
+ ----------
+ cfg: configparser
+     configuration for DFA simulation
+ particles : dict
+     particles dictionary at t
+ dem : dict
+     dictionary with dem information
+ force : dict
+     force dictionary
+ Returns
+ -------
+ particles : dict
+     particles dictionary at t + dt
+ """
   DT = cfg.getfloat('dt')
   cdef double dt = DT
-  cdef double stopCrit = cfg.getfloat('stopCrit')
   log.debug('dt used now is %f' % DT)
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double rho = cfg.getfloat('rho')
@@ -400,7 +399,7 @@ def updatePositionC(cfg, particles, dem, force):
   particles['potentialEne'] = TotpotEneNew
   if peakKinEne < TotkinEneNew:
     particles['peakKinEne'] = TotkinEneNew
-  if TotkinEneNew < stopCrit*peakKinEne:
+  if TotkinEneNew < 0.01*peakKinEne:
     particles['iterate'] = False
 
   # make sure particle is on the mesh (recompute the z component)
@@ -564,9 +563,24 @@ def updateFieldsC(cfg, particles, force, dem, fields):
     if hbb< hLim:
       hbb = hLim
     hBB[j] = hbb
+  # hB, _ = geoTrans.projectOnRasterVectRoot(particles['x'], particles['y'], fields['FD'], csz=csz, interp='bilinear')
+  # indxx = particles['indX']
+  # indyy = particles['indY']
+  # # APart = dem['Area'][indyy, indxx]
+  # hLim = 400*25/cfg.getfloat('rho') #particles['m']/APart/cfg.getfloat('rho')
+  # hB = np.where(hB < hLim, hLim, hB)
+  # particles['hBilinearBilinear'] = hB
+  # particles['h'] = hB
+# choose the interpolation method
 
   particles['hBilinearBilinear'] = np.asarray(hBB)
   particles['h'] = np.asarray(hBB)
+  # if flagFDSPH:
+  #     hSPH = particles['hSPH']
+  #     hSPH = np.where(hSPH < hLim, hLim, hSPH)
+  #     particles['h'] = hBB
+  # else:
+  #     particles['h'] = hBB
 
   # remove particles that have a too small height
   # particles = removeSmallPart(hmin, particles, dem)
@@ -698,7 +712,7 @@ def computeForceSPHC(cfg, particles, force, dem):
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
 def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
-                 double[:, :] Nz, long[:] indX, long[:] indY, gradient=0):
+                 double[:, :] Nz, long[:] indX, long[:] indY, gradient=False):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -719,8 +733,8 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
       column index of the location of the particles
   indY : 1D numpy array
       row index of the location of the particles
-  gradient : int
-    Return the gradient (if 1) or the force associated (if 0, default)
+  gradient : boolean
+    Return the gradient (if True) or the force associated (if False, default)
   Returns
   -------
   GHX : 1D numpy array
@@ -756,8 +770,7 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef int lInd, rInd
   cdef long indx, indy
   cdef int j, ic, n, p, l, imax, imin, iPstart, iPend
-  cdef int SPHoption = SPHOption
-  cdef int grad = gradient
+  # cdef int SPHoption = SPHOption
   # L = np.empty((0), dtype=int)
   # indL = np.zeros((N+1), dtype=int)
   # loop on particles
@@ -822,54 +835,54 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
                 dx = X[l] - xx
                 dy = Y[l] - yy
                 dz = Z[l] - zz
-                if SPHoption == 1:
-                      # remove the normal part (make sure that r = xj - xl lies in the plane
-                      # defined by the normal at xj)
-                      dn = nx*dx + ny*dy + nz*dz
-                      dx = dx - dn*nx
-                      dy = dy - dn*ny
-                      dz = dz - dn*nz
-                      # get norm of r = xj - xl
-                      r = norm(dx, dy, 0)
-                      if r < 0.001 * rKernel:
-                          # impose a minimum distance between particles
-                          dx = 0.001 * rKernel * dx
-                          dy = 0.001 * rKernel * dy
-                          r = 0.001 * rKernel
-                      if r < rKernel:
-                          hr = rKernel - r
-                          dwdr = dfacKernel * hr * hr
-                          mdwdrr = mass[l] * dwdr / r
-                          gradhX = gradhX + mdwdrr*dx
-                          gradhY = gradhY + mdwdrr*dy
+                # if SPHoption == 1:
+                #       # remove the normal part (make sure that r = xj - xl lies in the plane
+                #       # defined by the normal at xj)
+                #       dn = nx*dx + ny*dy + nz*dz
+                #       dx = dx - dn*nx
+                #       dy = dy - dn*ny
+                #       dz = dz - dn*nz
+                #       # get norm of r = xj - xl
+                #       r = norm(dx, dy, 0)
+                #       if r < 0.001 * rKernel:
+                #           # impose a minimum distance between particles
+                #           dx = 0.001 * rKernel * dx
+                #           dy = 0.001 * rKernel * dy
+                #           r = 0.001 * rKernel
+                #       if r < rKernel:
+                #           hr = rKernel - r
+                #           dwdr = dfacKernel * hr * hr
+                #           mdwdrr = mass[l] * dwdr / r
+                #           gradhX = gradhX + mdwdrr*dx
+                #           gradhY = gradhY + mdwdrr*dy
+                #
+                # if SPHoption == 2:
+                # get coordinates in local coord system
+                r1 = scalProd(dx, dy, dz, ux, uy, uz)
+                r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+                # impse r3=0 even if the particle is not exactly on the tengent plane
+                # get norm of r = xj - xl
+                r = norm(r1, r2, 0)
+                if r < 0.001 * rKernel:
+                    # impose a minimum distance between particles
+                    r1 = 0.001 * rKernel * r1
+                    r2 = 0.001 * rKernel * r2
+                    r = 0.001 * rKernel
+                if r < rKernel:
+                    hr = rKernel - r
+                    dwdr = dfacKernel * hr * hr
+                    mdwdrr = mass[l] * dwdr / r
+                    G1 = mdwdrr * K1*r1
+                    G2 = mdwdrr * K2*r2
 
-                if SPHoption == 2:
-                  # get coordinates in local coord system
-                  r1 = scalProd(dx, dy, dz, ux, uy, uz)
-                  r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
-                  # impse r3=0 even if the particle is not exactly on the tengent plane
-                  # get norm of r = xj - xl
-                  r = norm(r1, r2, 0)
-                  if r < 0.001 * rKernel:
-                      # impose a minimum distance between particles
-                      r1 = 0.001 * rKernel * r1
-                      r2 = 0.001 * rKernel * r2
-                      r = 0.001 * rKernel
-                  if r < rKernel:
-                      hr = rKernel - r
-                      dwdr = dfacKernel * hr * hr
-                      mdwdrr = mass[l] * dwdr / r
-                      G1 = mdwdrr * K1*r1
-                      G2 = mdwdrr * K2*r2
+                    g1 = nx/(nz)
+                    g2 = ny/(nz)
 
-                      g1 = nx/(nz)
-                      g2 = ny/(nz)
+                    gradhX = gradhX + vx*G1 + wx*G2
+                    gradhY = gradhY + vy*G1 + wy*G2
+                    gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
 
-                      gradhX = gradhX + vx*G1 + wx*G2
-                      gradhY = gradhY + vy*G1 + wy*G2
-                      gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
-
-    if grad == 1:
+    if gradient:
       GHX[j] = GHX[j] - gradhX / rho
       GHY[j] = GHY[j] - gradhY / rho
       GHZ[j] = GHZ[j] - gradhZ / rho
@@ -1178,11 +1191,7 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz):
   dy = Ly - Ly0
   # using bilinear interpolation on the cell
 
-  cdef double v
-  v = (V[Ly0, Lx0]*(1-dx)*(1-dy) +
-       V[Ly0, Lx1]*dx*(1-dy) +
-       V[Ly1, Lx0]*(1-dx)*dy +
-       V[Ly1, Lx1]*dx*dy)
+  cdef double v = V[Ly0, Lx0]*(1-dx)*(1-dy) + V[Ly0, Lx1]*dx*(1-dy) + V[Ly1, Lx0]*(1-dx)*dy + V[Ly1, Lx1]*dx*dy
 
   return v
 
@@ -1240,18 +1249,10 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
   dx = Lx - Lx0
   dy = Ly - Ly0
   # using bilinear interpolation on the cell
-  cdef double nx = (Nx[Ly0, Lx0]*(1-dx)*(1-dy) +
-                    Nx[Ly0, Lx1]*dx*(1-dy) +
-                    Nx[Ly1, Lx0]*(1-dx)*dy +
-                    Nx[Ly1, Lx1]*dx*dy)
-  cdef double ny = (Ny[Ly0, Lx0]*(1-dx)*(1-dy) +
-                    Ny[Ly0, Lx1]*dx*(1-dy) +
-                    Ny[Ly1, Lx0]*(1-dx)*dy +
-                    Ny[Ly1, Lx1]*dx*dy)
-  cdef double nz = (Nz[Ly0, Lx0]*(1-dx)*(1-dy) +
-                    Nz[Ly0, Lx1]*dx*(1-dy) +
-                    Nz[Ly1, Lx0]*(1-dx)*dy +
-                    Nz[Ly1, Lx1]*dx*dy)
+
+  cdef double nx = Nx[Ly0, Lx0]*(1-dx)*(1-dy) + Nx[Ly0, Lx1]*dx*(1-dy) + Nx[Ly1, Lx0]*(1-dx)*dy + Nx[Ly1, Lx1]*dx*dy
+  cdef double ny = Ny[Ly0, Lx0]*(1-dx)*(1-dy) + Ny[Ly0, Lx1]*dx*(1-dy) + Ny[Ly1, Lx0]*(1-dx)*dy + Ny[Ly1, Lx1]*dx*dy
+  cdef double nz = Nz[Ly0, Lx0]*(1-dx)*(1-dy) + Nz[Ly0, Lx1]*dx*(1-dy) + Nz[Ly1, Lx0]*(1-dx)*dy + Nz[Ly1, Lx1]*dx*dy
   return nx, ny, nz
 
 @cython.cdivision(True)
