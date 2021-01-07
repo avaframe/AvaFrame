@@ -9,7 +9,6 @@ import numpy as np
 import logging
 from matplotlib import pyplot as plt
 
-import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 
@@ -74,7 +73,7 @@ def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
     nSims = len(peakFiles['simName'])
 
     # load parameter variation values to check if they include default value
-    itemsRaw = com1DFA.readVarPar(cfgMain)
+    itemsRaw = fU.readIniValues(cfgMain['PARAMETERVAR']['varParValues'])
     dVal = float(cfgMain['DEFVALUES'][varPar])
     flagValue = False
     if dVal in itemsRaw:
