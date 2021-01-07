@@ -146,6 +146,9 @@ def getNeighboursVect(particles, dem):
 
     # make the list of which particles are in which cell
     partInCell = np.argsort(ic, kind='mergesort')
+    # InCell = np.vstack((indx, indy))
+    # InCell = np.vstack((InCell, ic))
+    # InCell = InCell.T
 
     particles['indX'] = indx
     particles['indY'] = indy
@@ -183,7 +186,7 @@ def calcGradHSPH(particles, j, ncols, nrows, csz):
         index of particles within the kernel function radius
     """
     # SPH kernel
-    # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
+    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
     rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
     dfacKernel = -3.0 * facKernel
