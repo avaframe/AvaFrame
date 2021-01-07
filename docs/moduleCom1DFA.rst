@@ -22,7 +22,7 @@ In the directory Inputs, the following files are required:
 * digital elevation model as .asc file
   -> use xllcenter and yllcenter
 * release area scenario as shapefile (in Inputs/REL); multiple are possible
-  -> the release area name should not contain an underscore
+  -> the release area name should not contain an underscore, if so '_AF' is added
 
 and the following files are optional:
 
