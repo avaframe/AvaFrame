@@ -167,7 +167,7 @@ def com1DFAMain(cfg, avaDir):
         simName = relName
         if '_' in relName:
             flagBadName = True
-            log.warning('Release area scenario file name includes an underscore - bad naming \
+            log.warning('Release area scenario file name includes an underscore \
             the suffix _AF will be added')
             simName = relName + '_AF'
         relDict = sP.SHP2Array(rel)
