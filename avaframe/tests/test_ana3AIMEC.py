@@ -48,7 +48,7 @@ def test_analyzeArea(capfd):
     rasterTransfo['x'] = rasterTransfo['s']
     rasterTransfo['y'] = 50*np.ones(np.shape(rasterTransfo['s']))
     rasterTransfo['rasterArea'] = np.ones((500, 100))
-    rasterTransfo['indstartOfRunout'] = 400
+    rasterTransfo['indStartOfRunout'] = 400
     rasterTransfo['startOfRunoutAngle'] = 10
     resAnalysis = {}
     runout = np.array([100])
