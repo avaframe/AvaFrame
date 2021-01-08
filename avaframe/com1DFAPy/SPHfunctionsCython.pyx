@@ -732,6 +732,7 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
       z component of the lateral force
   """
   cdef double rho = cfg.getfloat('rho')
+  cdef double minRKern = cfg.getfloat('minRKern')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
@@ -746,6 +747,8 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef int N = X.shape[0]
   cdef int nrows = header.nrows
   cdef int ncols = header.ncols
+  # SPH kernel
+  # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
   cdef double rKernel = csz
   cdef double facKernel = 10.0 / (3.1415 * rKernel * rKernel * rKernel * rKernel * rKernel)
   cdef double dfacKernel = - 3.0 * facKernel
@@ -798,8 +801,6 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
     wx = uxOrtho - nx*uzOrtho/nz
     wy = uyOrtho - ny*uzOrtho/nz
 
-    # SPH kernel
-    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
     # startTime = time.time()
     # L = np.empty((0), dtype=int)
     # check if we are on the bottom ot top row!!!
@@ -835,11 +836,11 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
                       dz = dz - dn*nz
                       # get norm of r = xj - xl
                       r = norm(dx, dy, 0)
-                      if r < 0.001 * rKernel:
+                      if r < minRKern * rKernel:
                           # impose a minimum distance between particles
-                          dx = 0.001 * rKernel * dx
-                          dy = 0.001 * rKernel * dy
-                          r = 0.001 * rKernel
+                          dx = minRKern * rKernel * dx
+                          dy = minRKern * rKernel * dy
+                          r = minRKern * rKernel
                       if r < rKernel:
                           hr = rKernel - r
                           dwdr = dfacKernel * hr * hr
@@ -854,11 +855,11 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
                   # impse r3=0 even if the particle is not exactly on the tengent plane
                   # get norm of r = xj - xl
                   r = norm(r1, r2, 0)
-                  if r < 0.001 * rKernel:
+                  if r < minRKern * rKernel:
                       # impose a minimum distance between particles
-                      r1 = 0.001 * rKernel * r1
-                      r2 = 0.001 * rKernel * r2
-                      r = 0.001 * rKernel
+                      r1 = minRKern * rKernel * r1
+                      r2 = minRKern * rKernel * r2
+                      r = minRKern * rKernel
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
@@ -916,6 +917,7 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
       flow depth
   """
   cdef double rho = cfg.getfloat('rho')
+  cdef double minRKern = cfg.getfloat('minRKern')
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']
@@ -929,6 +931,8 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   cdef int N = X.shape[0]
   cdef int nrows = header.nrows
   cdef int ncols = header.ncols
+  # SPH kernel
+  # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
   cdef double rKernel = csz
   cdef double facKernel = 10.0 / (3.1415 * rKernel*rKernel*rKernel*rKernel*rKernel)
   cdef double[:] H = np.zeros(N)
@@ -955,8 +959,6 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
     nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz)
     nx, ny, nz = normalize(nx, ny, nz)
 
-    # SPH kernel
-    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
     # startTime = time.time()
     # L = np.empty((0), dtype=int)
     # check if we are on the bottom ot top row!!!
@@ -991,12 +993,12 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
                 # get norm of r = xj - xl
                 r = norm(dx, dy, dz)
                 # r = norm(dx, dy, dz)
-                if r < 0.001 * rKernel:
+                if r < minRKern * rKernel:
                     # impose a minimum distance between particles
-                    dx = 0.001 * rKernel * dx
-                    dy = 0.001 * rKernel * dy
-                    dz = 0.001 * rKernel * dz
-                    r = 0.001 * rKernel
+                    dx = minRKern * rKernel * dx
+                    dy = minRKern * rKernel * dy
+                    dz = minRKern * rKernel * dz
+                    r = minRKern * rKernel
                 if r < rKernel:
                     hr = rKernel - r
                     w = facKernel * hr * hr * hr
