@@ -167,8 +167,8 @@ The transformation information are stored in a ``rasterTransfo`` dictionary:
 :y: y coordinate of the centerline (s,l=0) of the new raster (1D numpy arrayof size m)
 :rasterArea: area of the cells of the new raster grid (2D numpy array of size (n,m))
 :indSplit: index of the projected split point on the avalanche path
-:runoutAngle: run-out angle value (in degres)
-:indRunoutPoint: index of the run-out point (first point under the given runoutAngle)
+:startOfRunoutAngle: slope angle defining the start of run-out point (run-out will be measured from this point)
+:indstartOfRunout: index of the start of run-out point (first point under the given startOfRunoutAngle)
 
 Assign data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -220,7 +220,7 @@ Configuration parameters
 ---------------------------------
 
 :domainWidth: width of the domain around the avalanche path in [m]
-:runoutAngle: angle of the slope at the start of the run-out zone [°]
+:startOfRunoutAngle: angle of the slope at the start of the run-out zone [°]
 :pressureLimit: pressure limit value for evaluation of runout in [kPa]
 :interpMethod: interpolation method used to project the a point on the input raster (chose between 'nearest' and 'bilinear')
 :distance: re-sampling distance. The given avalanche path is re-sampled with a 10m (default) step.
