@@ -279,8 +279,8 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
                   '\n' + 'Pressure threshold: %.1f kPa' % plim)
     pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
 
-    y_lim = s[indRunoutPoint+20]+np.nanmax(resAnalysis['runout'][0])
-    ax1.set_ylim([s[indRunoutPoint], y_lim])
+    y_lim = s[indStartOfRunout+20]+np.nanmax(resAnalysis['runout'][0])
+    ax1.set_ylim([s[indStartOfRunout], y_lim])
     pU.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     ax2 = plt.subplot(122)
     colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
