@@ -162,11 +162,11 @@ fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
 fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
 fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
 fig1, ax1 = com1DFA.plotPosition(
-    particles, demOri, fields['pfd'], pU.cmapPres, 'm', fig1, ax1, plotPart=False)
+    particles, demOri, fields['FD'], pU.cmapPres, 'm', fig1, ax1, plotPart=False)
 fig2, ax2 = com1DFA.plotPosition(
     particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
 fig3, ax3 = com1DFA.plotPosition(
-    particles, demOri, fields['ppr']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
+    particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
 plt.show()
 
 
