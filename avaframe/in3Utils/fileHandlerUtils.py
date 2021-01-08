@@ -351,23 +351,23 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
         data['files'].append(datafiles[m])
         name = os.path.splitext(os.path.basename(datafiles[m]))[0]
         data['names'].append(name)
-        if 'AF' in name:
-            nameParts1 = name.split('_AF_')
-            nameParts = nameParts1[1].split('_')
-            data['releaseArea'].append(nameParts1[0] + '_AF')
-            data['simType'].append(nameParts[0])
-            data['modelType'].append(nameParts[1])
-            data[varPar].append(nameParts[2])
-            data['resType'].append(nameParts[3])
-            data['simName'].append(nameParts1[0] + '_AF_' + ('_'.join(nameParts[0:3])))
+        if '_AF_' in name:
+            nameParts = name.split('_AF_')
+            fNamePart = nameParts[0] + '_AF'
+            infoParts = nameParts[1].split('_')
+
         else:
             nameParts = name.split('_')
-            data['releaseArea'].append(nameParts[0])
-            data['simType'].append(nameParts[1])
-            data['modelType'].append(nameParts[2])
-            data[varPar].append(nameParts[3])
-            data['resType'].append(nameParts[4])
-            data['simName'].append('_'.join(nameParts[0:4]))
+            fNamePart = nameParts[0]
+            infoParts = nameParts[1:]
+
+        data['releaseArea'].append(fNamePart)
+        data['simType'].append(infoParts[0])
+        data['modelType'].append(infoParts[1])
+        data[varPar].append(infoParts[2])
+        data['resType'].append(infoParts[3])
+        data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:3])))
+
         header = IOf.readASCheader(datafiles[m])
         data['cellSize'].append(header.cellsize)
         # Set name of avalanche if avaDir is given
