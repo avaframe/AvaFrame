@@ -83,7 +83,7 @@ NPartPerD = [2, 4, 8, 11, 18, 58] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
-coef = 0.5
+coef = 0.
 rho = 200
 ##############################################################################
 # END CHOOSE SETUP
