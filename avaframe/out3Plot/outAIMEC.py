@@ -141,15 +141,10 @@ def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
     ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean')
     ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
-<<<<<<< HEAD
-    ax1.axhline(y=s[indBetaPoint], color='k', linestyle='--',
-                label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-    ref5, im = pU.NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
-=======
+
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                 label='Beta point : %.1f °' % resAnalysis['startOfRunoutAngle'])
-    ref5, im = NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
->>>>>>> changing naming
+    ref5, im = pU.NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
 
@@ -225,15 +220,10 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
             cmap, 0.0, np.nanmax(maskedArray), continuous=pU.contCmap)
         cmap.set_bad('w', 1.)
         ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
-<<<<<<< HEAD
-        ax.axhline(y=s[indBetaPoint], color='k', linestyle='--',
-                   label='Beta point : %.1f °' % resAnalysis['runoutAngle'])
-        ref3, im = pU.NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
-=======
+
         ax.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                    label='Beta point : %.1f °' % resAnalysis['startOfRunoutAngle'])
-        ref3, im = NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
->>>>>>> changing naming
+        ref3, im = pU.NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                              extent=[l.min(), l.max(), s.min(), s.max()],
                              cmap=cmap, norm=norm)
 
