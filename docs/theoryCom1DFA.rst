@@ -515,7 +515,7 @@ particle as a weighted sum of its neighbours
 Where :math:`W` represents the SPH-Kernel function and reads:
 
 .. math::
-   W_{p_jp_l} = W(\mathbf{r_{p_jp_l}},r_0) = \frac{10}{\pi h^5}\left\{
+   W_{p_jp_l} = W(\mathbf{r_{p_jp_l}},r_0) = \frac{10}{\pi r_0^5}\left\{
    \begin{aligned}
    & (r_0 - \left\Vert \mathbf{r_{p_jp_l}}\right\Vert)^3, \quad &0\leq \left\Vert \mathbf{r_{p_jp_l}}\right\Vert \leq  r_0\\
    & 0 , & r_0 <\left\Vert \mathbf{r_{p_jp_l}}\right\Vert
@@ -528,7 +528,7 @@ represents the distance between particle :math:`j` and :math:`l` and
 :math:`r_0` the smoothing length. And its first derivative reads:
 
 .. math::
-   \mathbf{\nabla}W_{p_jp_l} = -3.\frac{10}{\pi h^5}\left\{
+   \mathbf{\nabla}W_{p_jp_l} = -3.\frac{10}{\pi r_0^5}\left\{
    \begin{aligned}
    & (r_0 - \left\Vert \mathbf{r_{p_jp_l}}\right\Vert)^2\,\frac{\mathbf{r_{p_jp_l}}}{r_{p_jp_l}}, \quad &0\leq \left\Vert \mathbf{r_{p_jp_l}}\right\Vert \leq  r_0\\
    & 0 , & r_0 <\left\Vert \mathbf{r_{p_jp_l}}\right\Vert

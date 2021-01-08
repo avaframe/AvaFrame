@@ -76,11 +76,11 @@ NDX = [5]
 # choose the number of particles per DX and DY
 # if you choose 3, you will have 3*3 = 9 particles per grid cell
 # NPartPerD = [40]
-NPartPerD = [2, 3, 5, 9, 15, 39] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
+NPartPerD = [39] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
-coef = 0.5
+coef = 0.
 rho = 200
 ##############################################################################
 # END CHOOSE SETUP
@@ -107,6 +107,7 @@ ax4.set_ylabel('Gradh []')
 
 # color = cmapAimec(np.linspace(1, 0, 2*len(NDX) + 3, dtype=float))
 color = pU.cmapAimec(np.linspace(1, 0, 2*len(NPartPerD) + 3, dtype=float))
+color = pU.cmapAimec(np.linspace(1, 0, 4*len(NPartPerD) + 3, dtype=float))
 markers = ['o', 's', 'd', '*', 'p', 'P', '^', '>', '<', 'X', 'h']
 count = 0
 for DX in NDX:
@@ -114,8 +115,8 @@ for DX in NDX:
     csz = DX
 
     # set the extend of your mesh
-    Lx = 10*DX
-    Ly = 10*DY
+    Lx = 5*DX
+    Ly = 5*DY
 
     for nPartPerD in NPartPerD:
         dx = DX/nPartPerD
@@ -221,26 +222,40 @@ for DX in NDX:
         ux = particles['ux']
         uy = particles['uy']
         uz = particles['uz']
-        startTime = time.time()
 
         indPartInCell = (particles['indPartInCell']).astype('int')
         partInCell = (particles['partInCell']).astype('int')
         indX = particles['indX'].astype('int')
         indY = particles['indY'].astype('int')
-        GHX, GHY, GHZ = computeGradC(particles, header, Nx, Ny, Nz, indX, indY, gradient=True)
+        startTime = time.time()
+        GHX, GHY, GHZ = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=1, gradient=1)
         GHX = np.asarray(GHX)
         GHY = np.asarray(GHY)
         GHZ = np.asarray(GHZ)
         tottime = time.time() - startTime
-        print(tottime)
+        print('Time SPHOption 1: ', tottime)
+        startTime = time.time()
+        GHX2, GHY2, GHZ2 = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=2, gradient=1)
+        GHX2 = np.asarray(GHX2)
+        GHY2 = np.asarray(GHY2)
+        GHZ2 = np.asarray(GHZ2)
+        tottime = time.time() - startTime
+        print('Time SPHOption 2: ', tottime)
+        startTime = time.time()
+        startTime = time.time()
+        GHX3, GHY3, GHZ3 = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=3, gradient=1)
+        GHX3 = np.asarray(GHX3)
+        GHY3 = np.asarray(GHY3)
+        GHZ3 = np.asarray(GHZ3)
+        tottime = time.time() - startTime
+        print('Time SPHOption 3: ', tottime)
         startTime = time.time()
         # Compute sph FD
-        H = computeFDC(particles, header, Nx, Ny, Nz, indX, indY)
+        H = computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
-        print(np.shape(H))
         particles['hSPH'] = H
         tottime = time.time() - startTime
-        print(tottime)
+        print('Time FD: ',tottime)
 
         Area = dem['Area']
         # Update fields using a nearest interpolation
@@ -270,8 +285,10 @@ for DX in NDX:
 
         count = count + 1
         col = color[2*count]
+        col3 = color[-1]
+        col2 = color[round(len(color)/2)]
         mark = markers[count-1]
-        ind = np.where(((particles['y'] > Ly/2-0.8*dy) & (particles['y'] < Ly/2+0.8*dy)))
+        ind = np.where(((particles['y'] > Ly/2-0.5*dy) & (particles['y'] < Ly/2+0.5*dy)))
         # if count == 1:
         #     ax1.plot(particles['x'][ind], hBB[ind], color='r',
         #              marker=mark, linestyle='None', label='HBB flow depth')
@@ -289,7 +306,7 @@ for DX in NDX:
         ax1.plot(particles['x'][ind], particles['hSPH'][ind], color=col,
                  marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
 
-        ind = np.where(((particles['x'] > Lx/2-0.8*dx) & (particles['x'] < Lx/2+0.8*dx)))
+        ind = np.where(((particles['x'] > Lx/2-0.5*dx) & (particles['x'] < Lx/2+0.5*dx)))
         # if count == 1:
         #     ax2.plot(particles['y'][ind], hBB[ind], color='r',
         #              marker=mark, linestyle='None', label='HBB flow depth')
@@ -307,7 +324,7 @@ for DX in NDX:
         ax2.plot(particles['y'][ind], particles['hSPH'][ind], color=col,
                  marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
 
-        ind = np.where(((particles['y'] > Ly/2-0.8*dy) & (particles['y'] < Ly/2+0.8*dy)))
+        ind = np.where(((particles['y'] > Ly/2-0.5*dy) & (particles['y'] < Ly/2+0.5*dy)))
 
         if count == 1:
             ax3.plot(particles['x'][ind], Ghx[ind], color='r', marker='.', linestyle='None' , label='real gradHX')
@@ -318,14 +335,26 @@ for DX in NDX:
             ax3.plot(particles['x'][ind], Ghy[ind], color='g', marker='.', linestyle='None')  # , label='real gradH')
             ax3.plot(particles['x'][ind], sx[ind]*Ghx[ind] + sy[ind]*Ghy[ind], color='k', marker='.', linestyle='None')  # , label='real gradH')
 
-        ax3.plot(particles['x'][ind], GHX[ind], color=col, marker=mark,
-                 linestyle='None', label='SPH N=' + str(nPartPerD))
-        ax3.plot(particles['x'][ind], GHY[ind], color=col, marker=mark,
+        ax3.plot(particles['x'][ind], GHX[ind], color=col, marker=mark, markersize=5,
+                 linestyle='None', label='SPH1 N=' + str(nPartPerD))
+        ax3.plot(particles['x'][ind], GHY[ind], color=col, marker=mark, markersize=5,
                  linestyle='None')
-        ax3.plot(particles['x'][ind], GHZ[ind], color=col, marker=mark,
+        ax3.plot(particles['x'][ind], GHZ[ind], color=col, marker=mark, markersize=5,
+                 linestyle='None')
+        ax3.plot(particles['x'][ind], GHX2[ind], color=col2, marker=mark, markersize=3,
+                 linestyle='None', label='SPH2 N=' + str(nPartPerD))
+        ax3.plot(particles['x'][ind], GHY2[ind], color=col2, marker=mark, markersize=3,
+                 linestyle='None')
+        ax3.plot(particles['x'][ind], GHZ2[ind], color=col2, marker=mark, markersize=3,
+                 linestyle='None')
+        ax3.plot(particles['x'][ind], GHX3[ind], color=col3, marker=mark, markersize=1,
+                 linestyle='None', label='SPH3 N=' + str(nPartPerD))
+        ax3.plot(particles['x'][ind], GHY3[ind], color=col3, marker=mark, markersize=1,
+                 linestyle='None')
+        ax3.plot(particles['x'][ind], GHZ3[ind], color=col3, marker=mark, markersize=1,
                  linestyle='None')
 
-        ind = np.where(((particles['x'] > Lx/2-0.8*dx) & (particles['x'] < Lx/2+0.8*dx)))
+        ind = np.where(((particles['x'] > Lx/2-0.5*dx) & (particles['x'] < Lx/2+0.5*dx)))
         if count == 1:
             ax4.plot(particles['y'][ind], Ghx[ind], color='r', marker='.', linestyle='None' , label='real gradHX')
             ax4.plot(particles['y'][ind], Ghy[ind], color='g', marker='.', linestyle='None' , label='real gradHY')
@@ -334,11 +363,24 @@ for DX in NDX:
             ax4.plot(particles['y'][ind], Ghx[ind], color='r', marker='.', linestyle='None')  # , label='real gradH')
             ax4.plot(particles['y'][ind], Ghy[ind], color='g', marker='.', linestyle='None')  # , label='real gradH')
             ax4.plot(particles['y'][ind], sx[ind]*Ghx[ind] + sy[ind]*Ghy[ind], color='k', marker='.', linestyle='None')  # , label='real gradH')
-        ax4.plot(particles['y'][ind], GHX[ind], color=col, marker=mark,
-                 linestyle='None', label='SPH N=' + str(nPartPerD))
-        ax4.plot(particles['y'][ind], GHY[ind], color=col, marker=mark,
+        ax4.plot(particles['y'][ind], GHX[ind], color=col, marker=mark, markersize=5,
+                 linestyle='None', label='SPH1 N=' + str(nPartPerD))
+        ax4.plot(particles['y'][ind], GHY[ind], color=col, marker=mark, markersize=5,
                  linestyle='None')
-        ax4.plot(particles['y'][ind], GHZ[ind], color=col, marker=mark,
+        ax4.plot(particles['y'][ind], GHZ[ind], color=col, marker=mark, markersize=5,
+                 linestyle='None')
+        ax4.plot(particles['y'][ind], GHX2[ind], color=col2, marker=mark, markersize=3,
+                 linestyle='None', label='SPH2 N=' + str(nPartPerD))
+        ax4.plot(particles['y'][ind], GHY2[ind], color=col2, marker=mark, markersize=3,
+                 linestyle='None')
+        ax4.plot(particles['y'][ind], GHZ2[ind], color=col2, marker=mark, markersize=3,
+                 linestyle='None')
+        plt.show(block=False)
+        ax4.plot(particles['y'][ind], GHX3[ind], color=col3, marker=mark, markersize=1,
+                 linestyle='None', label='SPH3 N=' + str(nPartPerD))
+        ax4.plot(particles['y'][ind], GHY3[ind], color=col3, marker=mark, markersize=1,
+                 linestyle='None')
+        ax4.plot(particles['y'][ind], GHZ3[ind], color=col3, marker=mark, markersize=1,
                  linestyle='None')
         plt.show(block=False)
         # plt.draw()

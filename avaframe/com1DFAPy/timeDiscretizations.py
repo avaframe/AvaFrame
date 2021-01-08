@@ -40,7 +40,7 @@ def getcflTimeStep(particles, dem, cfg):
     # compute stable time step
     # if velocity is zero - divided by zero error so to avoid:
     if vmax == 0.0:
-        dtStable = float(cfg['maxdT'])
+        dtStable = float(cfg['mindT'])
     else:
         dtStable = (cMax * csz) / vmax
 
@@ -70,7 +70,7 @@ def getcfldTwithConstraints(particles, dem, cfg):
     # compute stable time step
     # if velocity is zero - divided by zero error so to avoid:
     if vmax == 0.0:
-        dtStable = float(cfg['maxdT'])
+        dtStable = float(cfg['mindT'])
     else:
         dtStable = (cMax * csz) / vmax
         if dtStable < float(cfg['mindT']):

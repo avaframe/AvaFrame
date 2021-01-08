@@ -33,7 +33,7 @@ log = logging.getLogger(__name__)
 # enables to choose earth pressure coefficients
 # 3) project on the plane, compute the gradient in the local coord sys related
 # to the local plane (tau1, tau2, n) non orthogonal coord sys
-cdef int SPHOption = 2
+cdef int SPHOption = 1
 
 
 ctypedef double dtypef_t
@@ -171,6 +171,9 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
   cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
   cdef double[:] forceY = np.zeros(Npart, dtype=np.float64)
   cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] forceFrict = np.zeros(Npart, dtype=np.float64)
+  # cdef double[:] forceFrictY = np.zeros(Npart, dtype=np.float64)
+  # cdef double[:] forceFrictZ = np.zeros(Npart, dtype=np.float64)
   cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
 
   cdef double[:] mass = particles['m']
@@ -208,11 +211,11 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
       uMag = norm(ux, uy, uz)
       if uMag>0:
         uxDir, uyDir, uzDir = normalize(ux, uy, uz)
-      else:
-        ux = 1
-        uy = 0
-        uz = -(1*nx + 0*ny) / nz
-        uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+      # else:
+      #   ux = 1
+      #   uy = 0
+      #   uz = -(1*nx + 0*ny) / nz
+      #   uxDir, uyDir, uzDir = normalize(ux, uy, uz)
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
       yEnd = y + dt * uy
@@ -256,9 +259,10 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
 
       # adding bottom shear resistance contribution
       forceBotTang = - A * tau
-      forceX[j] = forceX[j] + forceBotTang * uxDir
-      forceY[j] = forceY[j] + forceBotTang * uyDir
-      forceZ[j] = forceZ[j] + forceBotTang * uzDir
+      forceFrict[j] = forceFrict[j] - forceBotTang
+      # forceFrictX[j] = forceFrictX[j] + forceBotTang * uxDir
+      # forceFrictY[j] = forceFrictY[j] + forceBotTang * uyDir
+      # forceFrictZ[j] = forceFrictZ[j] + forceBotTang * uzDir
 
 
   # save results
@@ -266,6 +270,10 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
   force['forceX'] = np.asarray(forceX)
   force['forceY'] = np.asarray(forceY)
   force['forceZ'] = np.asarray(forceZ)
+
+  force['forceFrict'] = np.asarray(forceFrict)
+  # force['forceFrictY'] = np.asarray(forceFrictY)
+  # force['forceFrictZ'] = np.asarray(forceFrictZ)
   return force
 
 
@@ -326,6 +334,7 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double[:] forceX = force['forceX']
   cdef double[:] forceY = force['forceY']
   cdef double[:] forceZ = force['forceZ']
+  cdef double[:] forceFrict = force['forceFrict']
   cdef double[:] forceSPHX = force['forceSPHX']
   cdef double[:] forceSPHY = force['forceSPHY']
   cdef double[:] forceSPHZ = force['forceSPHZ']
@@ -335,7 +344,8 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double peakKinEne = particles['peakKinEne']
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
-  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz
+  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, ForceMag
+  cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN
   cdef int j
   # loop on particles
@@ -349,11 +359,44 @@ def updatePositionC(cfg, particles, dem, force):
     uz = UZ[j]
     s = S[j]
     # procede to time integration
-    # update velocity
-    uxNew = ux + (forceX[j] + forceSPHX[j]) * dt / m
-    uyNew = uy + (forceY[j] + forceSPHY[j]) * dt / m
-    uzNew = uz + (forceZ[j] + forceSPHZ[j]) * dt / m
+    # velocity magnitude
+    uMag = norm(ux, uy, uz)
+    # Force magnitude (without friction)
+    ForceDriveX = forceX[j] + forceSPHX[j]
+    ForceDriveY = forceY[j] + forceSPHY[j]
+    ForceDriveZ = forceZ[j] + forceSPHZ[j]
 
+    ForceMag = norm(ForceDriveX, ForceDriveY, ForceDriveZ)
+    # update velocity
+    if uMag<=0:
+      # particle is at rest at t
+      if ForceMag<=forceFrict[j]:
+        # sum of forces smaller than friction force, no motion
+        uxNew = 0
+        uyNew = 0
+        uzNew = 0
+      else:
+        # sum of forces larger them friction, particle starts moving
+        # add friction force in the opposite direction of the driving force
+        xDir, yDir, zDir = normalize(ForceDriveX, ForceDriveY, ForceDriveZ)
+        uxNew = ux + (ForceDriveX - xDir * forceFrict[j]) * dt / m
+        uyNew = uy + (ForceDriveY - yDir * forceFrict[j]) * dt / m
+        uzNew = uz + (ForceDriveZ - zDir * forceFrict[j]) * dt / m
+    else:
+      # particle is already in motion
+      # add friction force in the opposite direction of the motion
+      xDir, yDir, zDir = normalize(ux, uy, uz)
+      uxNew = ux + (ForceDriveX - xDir * forceFrict[j]) * dt / m
+      uyNew = uy + (ForceDriveY - yDir * forceFrict[j]) * dt / m
+      uzNew = uz + (ForceDriveZ - zDir * forceFrict[j]) * dt / m
+      # now check is the friction force slowed the particle enogh for it to stop
+      zeroCrossing = scalProd(ux, uy, uz, uxNew, uyNew, uzNew)
+      if zeroCrossing<=0:
+          # velocity went from positive value to nigative value in the flow dir
+          # meaning that it stopped
+          uxNew = 0
+          uyNew = 0
+          uzNew = 0
 
     # update mass
     mNew = m + dM[j]
@@ -692,12 +735,8 @@ def computeForceSPHC(cfg, particles, force, dem):
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-<<<<<<< HEAD
 def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
-=======
-def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
->>>>>>> Revert "Revert "requested changes""
-                 double[:, :] Nz, long[:] indX, long[:] indY, gradient=0):
+                 double[:, :] Nz, long[:] indX, long[:] indY, SPHOption=2, gradient=0):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -757,7 +796,8 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef double[:] GHZ = np.zeros(N, dtype=np.float64)
   cdef double K1 = 1
   cdef double K2 = 1
-  cdef double gradhX, gradhY, gradhZ, uMag, g1, g2, nx, ny, nz, G1, G2, mdwdrr
+  cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr
+  cdef double g1, g2, g11, g12, g22
   cdef double xx, yy, zz, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
   cdef double dx, dy, dz, dn, r, hr, dwdr
   cdef int lInd, rInd
@@ -834,6 +874,8 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
                       dx = dx - dn*nx
                       dy = dy - dn*ny
                       dz = dz - dn*nz
+                      g1 = nx/(nz)
+                      g2 = ny/(nz)
                       # get norm of r = xj - xl
                       r = norm(dx, dy, 0)
                       if r < minRKern * rKernel:
@@ -847,6 +889,7 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
                           mdwdrr = mass[l] * dwdr / r
                           gradhX = gradhX + mdwdrr*dx
                           gradhY = gradhY + mdwdrr*dy
+                          gradhZ = gradhZ + (- g1*(mdwdrr*dx) - g2*(mdwdrr*dy))
 
                 if SPHoption == 2:
                   # get coordinates in local coord system
@@ -873,6 +916,42 @@ def computeGradC(particles, header, double[:, :] Nx, double[:, :] Ny,
                       gradhX = gradhX + vx*G1 + wx*G2
                       gradhY = gradhY + vy*G1 + wy*G2
                       gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
+                elif SPHoption == 3:
+                  # Option 3
+                  # No proof yet....
+                  # projecting onto the tengent plane and taking the change of coordinates into account
+                  # the coord sysem used is the non orthogonal coord system related to the surface
+                  # (Tau1, Tau2, n)
+                  # remove the normal part (make sure that r = xj - xl lies in the plane
+                  # defined by the normal at xj)
+                  dn = nx*dx + ny*dy + nz*dz
+                  dx = dx - dn*nx
+                  dy = dy - dn*ny
+                  dz = dz - dn*nz
+                  g1 = nx/(nz)
+                  g2 = ny/(nz)
+                  # get norm of r = xj - xl
+                  r = norm(dx, dy, dz)
+                  if r < minRKern * rKernel:
+                      # impose a minimum distance between particles
+                      dx = minRKern * rKernel * dx
+                      dy = minRKern * rKernel * dy
+                      dz = minRKern * rKernel * dz
+                      r = minRKern * rKernel
+                  if r < rKernel:
+                      hr = rKernel - r
+                      dwdr = dfacKernel * hr * hr
+                      mdwdrr = mass[l] * dwdr / r
+                      g1 = nx/(nz)
+                      g2 = ny/(nz)
+                      g12 = g1*g2
+                      # g33 = (1 + g1*g1 + g2*g2)
+                      g11 = 1 + g1*g1
+                      g22 = 1 + g2*g2
+
+                      gradhX = gradhX + mdwdrr * (g11*dx + g12*dy)
+                      gradhY = gradhY + mdwdrr * (g22*dy + g12*dx)
+                      gradhZ = gradhZ + (- g1*mdwdrr * (g11*dx + g12*dy) - g2*mdwdrr * (g22*dy + g12*dx))
 
     if grad == 1:
       GHX[j] = GHX[j] - gradhX / rho
