@@ -167,8 +167,8 @@ The transformation information are stored in a ``rasterTransfo`` dictionary:
 :y: y coordinate of the centerline (s,l=0) of the new raster (1D numpy arrayof size m)
 :rasterArea: area of the cells of the new raster grid (2D numpy array of size (n,m))
 :indSplit: index of the projected split point on the avalanche path
-:runoutAngle: run-out angle value (in degres)
-:indRunoutPoint: index of the run-out point (first point under the given runoutAngle)
+:startOfRunoutAngle: slope angle defining the start of run-out point (run-out will be measured from this point) in degrees
+:indstartOfRunout: 	index of the start of run-out point (first point under the given startOfRunoutAngle)
 
 Assign data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

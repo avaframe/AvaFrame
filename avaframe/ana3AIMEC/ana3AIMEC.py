@@ -206,7 +206,7 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
         dictionary with path to data to analyze
     cfgSetup : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
-        regarding domain transformation (domain width w, runOutAngle or
+        regarding domain transformation (domain width w, startOfRunoutAngle or
         interpolation method)
     cfgFlags : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
@@ -230,7 +230,7 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
                 coord of the resampled polyline in old coord system
             rasterArea: 2D numpy array
                 real area of the cells of the new raster
-            indBetaPoint: int
+            indStartOfRunout: int
                 index for start of the runout area (in s)
     """
     # Read input parameters
@@ -240,7 +240,7 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     DefaultName = cfgPath['projectName']
 
     w = float(cfgSetup['domainWidth'])
-    runoutAngle = float(cfgSetup['runoutAngle'])
+    startOfRunoutAngle = float(cfgSetup['startOfRunoutAngle'])
     interpMethod = cfgSetup['interpMethod']
 
     log.info('Data-file %s analysed' % rasterSource)
@@ -310,15 +310,15 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    angle, tmp, delta_ind = geoTrans.prepareAngleProfile(runoutAngle,
+    angle, tmp, delta_ind = geoTrans.prepareAngleProfile(startOfRunoutAngle,
                                                          rasterTransfo)
-    # find the runout point: first point under runoutAngle
-    indBetaPoint = geoTrans.findAngleProfile(tmp, delta_ind)
-    rasterTransfo['indBetaPoint'] = indBetaPoint
-    rasterTransfo['xBetaPoint'] = rasterTransfo['x'][indBetaPoint]
-    rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indBetaPoint]
-    rasterTransfo['runoutAngle'] = angle[indBetaPoint]
-    log.info('Measuring run-out length from the %.2f ° point of coordinates (%.2f, %.2f)' % (rasterTransfo['runoutAngle'],rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
+    # find the runout point: first point under startOfRunoutAngle
+    indStartOfRunout = geoTrans.findAngleProfile(tmp, delta_ind)
+    rasterTransfo['indStartOfRunout'] = indStartOfRunout
+    rasterTransfo['xBetaPoint'] = rasterTransfo['x'][indStartOfRunout]
+    rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
+    rasterTransfo['startOfRunoutAngle'] = angle[indStartOfRunout]
+    log.info('Measuring run-out length from the %.2f ° point of coordinates (%.2f, %.2f)' % (rasterTransfo['startOfRunoutAngle'],rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
 
     slRaster = transform(rasterSource, rasterTransfo, interpMethod)
 
@@ -769,7 +769,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
                     max peak pressure in each cross section
             -pressureLimit: float
                     pressure threshold
-            -runoutAngle: float
+            -startOfRunoutAngle: float
                     angle of the slope at the beginning of the run-out
                     area (given in input)
     """
@@ -785,8 +785,8 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     lcoord = rasterTransfo['l']
     x = rasterTransfo['x']
     y = rasterTransfo['y']
-    indBetaPoint = rasterTransfo['indBetaPoint']
-    sBeta = scoord[indBetaPoint]
+    indStartOfRunout = rasterTransfo['indStartOfRunout']
+    sBeta = scoord[indStartOfRunout]
 
     resAnalysis = {}
 
@@ -872,7 +872,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis['growthGrad'] = grGrad
     resAnalysis['pCrossAll'] = pCrossAll
     resAnalysis['pressureLimit'] = pLim
-    resAnalysis['runoutAngle'] = rasterTransfo['runoutAngle']
+    resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
 
     return resAnalysis
 
@@ -915,7 +915,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
     dataPressure = newRasters['newRasterPressure']
     cellarea = rasterTransfo['rasterArea']
-    indBetaPoint = rasterTransfo['indBetaPoint']
+    indStartOfRunout = rasterTransfo['indStartOfRunout']
 
     # initialize Arrays
     nTopo = len(fname)
@@ -934,7 +934,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     log.info('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
         'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
     # rasterinfo
-    nStart = indBetaPoint
+    nStart = indStartOfRunout
 
     for i in range(nTopo):
         rasterdata = dataPressure[i]
