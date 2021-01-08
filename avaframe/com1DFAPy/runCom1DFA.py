@@ -144,44 +144,17 @@ while repeat:
     value = input("[y] to repeat:\n")
     if value != 'y':
         repeat = False
-
-if debugPlot:
-    fieldRef = Fields[-1]
-    fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
-    fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
-    fig1, ax1 = com1DFA.plotPosition(
-        particles, demOri, fields['FD'], pU.cmapPres, 'm', fig1, ax1, plotPart=False, last=True)
-    fig2, ax2 = com1DFA.plotPosition(
-        particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False, last=True)
-    fig3, ax3 = com1DFA.plotPosition(
-        particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False, last=True)
-    # fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
-    # ax4.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols-1), (fields['FD'][101, 1:ncols]-fields['FD'][101, 0:(ncols-1)])/5*math.cos(math.pi*3/180))
-    # force2 = {}
-    # particles = Particles[-1]
-    # particles, force2 = SPHC.computeForceSPHC(cfgGen, particles, force2, dem, SPHOption=2, gradient=1)
-    # grad = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
-    # # grad = DFAtls.norm(force['forceSPHX'], force['forceSPHY'], force['forceSPHZ'])
-    # x = particles['x']
-    # y = particles['y']
-    # m = particles['m']
-    # ind = np.where(((particles['y']+yllc > -2.5) & (particles['y']+yllc < 2.5)))
-    # Grad = np.zeros((nrows, ncols))
-    # MassBilinear = np.zeros((nrows, ncols))
-    # MassBilinear = SPHC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
-    # Grad = SPHC.pointsToRasterC(x, y, m*grad, Grad, csz=5)
-    # indMass = np.where(MassBilinear > 0)
-    # Grad[indMass] = Grad[indMass]/MassBilinear[indMass]
-    # fig5, ax5 = plt.subplots(figsize=(pU.figW, pU.figH))
-    # fig5, ax5 = com1DFA.plotPosition(particles, dem, Grad, pU.cmapPres, '', fig5, ax5, plotPart=False)
-    # fig6, ax6 = plt.subplots(figsize=(pU.figW, pU.figH))
-    # ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), Grad[101,:], 'b')
-    # ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][101,:], 'r')
-    # ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][101,:], 'g')
-    # ax6.plot(particles['x'][ind]+xllc, grad[ind], '.r', linestyle='None')
-    #     plt.show()
-    plt.show()
+fieldRef = Fields[-1]
+fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
+fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
+fig1, ax1 = com1DFA.plotPosition(
+    particles, demOri, fields['FD'], pU.cmapPres, 'm', fig1, ax1, plotPart=False)
+fig2, ax2 = com1DFA.plotPosition(
+    particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
+fig3, ax3 = com1DFA.plotPosition(
+    particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
+plt.show()
 
 
 # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
