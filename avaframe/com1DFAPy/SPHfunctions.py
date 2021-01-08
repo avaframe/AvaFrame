@@ -156,7 +156,7 @@ def getNeighboursVect(particles, dem):
     return particles
 
 
-def calcGradHSPH(particles, j, ncols, nrows, csz):
+def calcGradHSPH(particles, j, ncols, nrows, csz, minRKern):
     """ Compute gradient of Flow Depth using SPH (for loop implementation)
 
     Parameters
@@ -223,9 +223,9 @@ def calcGradHSPH(particles, j, ncols, nrows, csz):
                 dy = particles['y'][l] - y
                 dz = particles['z'][l] - z
                 r = DFAtls.norm(dx, dy, dz)
-                if r < 0.001 * rKernel:
+                if r < minRKern * rKernel:
                     # impose a minimum distance between particles
-                    r = 0.001 * rKernel
+                    r = minRKern * rKernel
                 if r < rKernel:
                     hr = rKernel - r
                     dwdr = dfacKernel * hr * hr
@@ -268,7 +268,7 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
         index of particles within the kernel function radius
     """
     # Define SPH kernel
-    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
+    # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
     rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
     dfacKernel = -3.0 * facKernel
@@ -326,10 +326,10 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
         # get norm of r = xj - xl
         r = DFAtls.norm(dx, dy, dz)
         # impose a minimum distance between particles
-        dx = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dx, dx)
-        dy = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dy, dy)
-        dz = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * dz, dz)
-        r = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel, r)
+        dx = np.where(r < minRKern * rKernel, minRKern * rKernel * dx, dx)
+        dy = np.where(r < minRKern * rKernel, minRKern * rKernel * dy, dy)
+        dz = np.where(r < minRKern * rKernel, minRKern * rKernel * dz, dz)
+        r = np.where(r < minRKern * rKernel, minRKern * rKernel, r)
 
     elif SPHoption == 2:
         # Option 2
@@ -383,9 +383,9 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
         # get norm of r = xj - xl
         r = DFAtls.norm(r1, r2, 0)
         # impose a minimum distance between particles
-        r1 = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * r1, r1)
-        r2 = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel * r2, r2)
-        r = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel, r)
+        r1 = np.where(r < minRKern * rKernel, minRKern * rKernel * r1, r1)
+        r2 = np.where(r < minRKern * rKernel, minRKern * rKernel * r2, r2)
+        r = np.where(r < minRKern * rKernel, minRKern * rKernel, r)
 
     # compute derivative of kernel function
     hr = rKernel - r
@@ -500,7 +500,7 @@ def pointsToRasterSPH(particles, dem, rho, f):
     m = particles['m']
 
     # Define SPH kernel
-    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
+    # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
     rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
 
@@ -620,6 +620,7 @@ def computeFlowDepth(cfg, particles, dem):
         particles dictionnary updated with the SPH flow depth (hSPH)
     """
     rho = cfg.getfloat('rho')
+    minRKern = cfg.getfloat('minRKern')
     Npart = particles['Npart']
     nrows = dem['header'].nrows
     ncols = dem['header'].ncols
@@ -635,14 +636,15 @@ def computeFlowDepth(cfg, particles, dem):
     for j in range(Npart):
         # adding lateral force (SPH component)
         # startTime = time.time()
-        # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows, csz)
+        # minRKern = cfg.getfloat('minRKern')
+        # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows, csz, minRKern)
 
         # get normal at the particle location
         x = particles['x'][j]
         y = particles['y'][j]
         nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
 
-        h, _ = calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz)
+        h, _ = calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz, minRKern)
         H[j] = h / rho
 
     particles['hSPH'] = H
@@ -650,7 +652,7 @@ def computeFlowDepth(cfg, particles, dem):
     return particles
 
 
-def calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
+def calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz, minRKern):
     """ Compute Flow Depth using SPH (no loop implementation)
 
     Compute the flow depth at the location of patricle j
@@ -682,7 +684,7 @@ def calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
         index of particles within the kernel function radius
     """
     # SPH kernel
-    # use "spiky" kernel: w = (h - r)**3 * 10/(pi*h**5)
+    # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
     rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
 
@@ -730,7 +732,7 @@ def calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     dz = dz - dn*nz
     r = DFAtls.norm(dx, dy, dz)
     # impose a minimum distance between particles
-    r = np.where(r < 0.0001 * rKernel, 0.0001 * rKernel, r)
+    r = np.where(r < minRKern * rKernel, minRKern * rKernel, r)
     hr = rKernel - r
     w = facKernel * hr * hr * hr
     massl = particles['m'][L]
