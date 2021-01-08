@@ -150,7 +150,7 @@ def checkCommonSims(logName, localLogName):
 
 
 def splitIniValueToArray(cfgValues):
-    """ read values in ini file and return numpy array of values, values can either be separated by _ or |
+    """ read values in ini file and return numpy array of values, values can either be separated by |
         or provided in start:end:numberOfSteps format
 
         Parameters
@@ -167,12 +167,9 @@ def splitIniValueToArray(cfgValues):
     if ':' in cfgValues:
         itemsInput = cfgValues.split(':')
         items = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
-    elif '|' in cfgValues:
+    else:
         itemsL = cfgValues.split('|')
         items = np.array(itemsL,dtype=float)
-    else:
-        itemsS = cfgValues.split('_')
-        items = np.array(itemsS,dtype=float)
 
     return items
 
