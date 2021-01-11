@@ -102,6 +102,7 @@ Theory
 .. only:: html
 
     * :doc:`theoryCom1DFA`
+    * :doc:`2_5DSPH`
 
 .. toctree::
    :maxdepth: 3
@@ -109,6 +110,7 @@ Theory
    :caption: Theory
 
    theoryCom1DFA.rst
+   2_5DSPH.rst
 
 
 .. only:: html

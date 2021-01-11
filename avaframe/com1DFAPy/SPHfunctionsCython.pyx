@@ -868,28 +868,29 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                 dy = Y[l] - yy
                 dz = Z[l] - zz
                 if SPHoption == 1:
-                      # remove the normal part (make sure that r = xj - xl lies in the plane
-                      # defined by the normal at xj)
-                      dn = nx*dx + ny*dy + nz*dz
-                      dx = dx - dn*nx
-                      dy = dy - dn*ny
-                      dz = dz - dn*nz
-                      g1 = nx/(nz)
-                      g2 = ny/(nz)
-                      # get norm of r = xj - xl
-                      r = norm(dx, dy, 0)
-                      if r < minRKern * rKernel:
-                          # impose a minimum distance between particles
-                          dx = minRKern * rKernel * dx
-                          dy = minRKern * rKernel * dy
-                          r = minRKern * rKernel
-                      if r < rKernel:
-                          hr = rKernel - r
-                          dwdr = dfacKernel * hr * hr
-                          mdwdrr = mass[l] * dwdr / r
-                          gradhX = gradhX + mdwdrr*dx
-                          gradhY = gradhY + mdwdrr*dy
-                          gradhZ = gradhZ + (- g1*(mdwdrr*dx) - g2*(mdwdrr*dy))
+                  # remove the normal part (make sure that r = xj - xl lies in the plane
+                  # defined by the normal at xj)
+                  dn = nx*dx + ny*dy + nz*dz
+                  dx = dx - dn*nx
+                  dy = dy - dn*ny
+                  dz = dz - dn*nz
+                  g1 = nx/(nz)
+                  g2 = ny/(nz)
+                  # get norm of r = xj - xl
+                  r = norm(dx, dy, 0)
+                  if r < minRKern * rKernel:
+                      # impose a minimum distance between particles
+                      dx = minRKern * rKernel * dx
+                      dy = minRKern * rKernel * dy
+                      r = minRKern * rKernel
+                  if r < rKernel:
+                      hr = rKernel - r
+                      dwdr = dfacKernel * hr * hr
+                      mdwdrr = mass[l] * dwdr / r
+                      gradhX = gradhX + mdwdrr*dx
+                      gradhY = gradhY + mdwdrr*dy
+                      # gradhZ = gradhZ + mdwdrr*dz
+                      gradhZ = gradhZ + (- g1*(mdwdrr*dx) - g2*(mdwdrr*dy))
 
                 if SPHoption == 2:
                   # get coordinates in local coord system
