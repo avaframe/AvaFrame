@@ -466,11 +466,12 @@ Space discretization
 
 The domain is discretized in particles. Each particle :math:`p_j` is affected with the following properties:
 a mass :math:`m_{p_j}`, a depth :math:`\overline{h}_{p_j}`, a density :math:`\rho_{p_j}=\rho_0` and
-a velocity :math:`\mathbf{\overline{u}_{p_j}}=(\overline{u}_{p_j,1}, \overline{u}_{p_j,2})`. Those
+a velocity :math:`\mathbf{\overline{u}}_{p_j}=(\overline{u}_{p_j,1}, \overline{u}_{p_j,2})`. Those
 particles are also projected on a regular grid (raster) and the mass distributed on each
 node of the raster (see :numref:`raster`). This leads to the
-following expression for the mass :math:`m_{v_i}` of each node on the
-raster grid :math:`m_{v_i} = \sum\limits_{p_j}{m_{p_j}}`.
+following expression for the mass :math:`m_{c_n}` of each node on the
+raster cell :math:`m_{c_n} = \sum\limits_{p_j}{m_{p_j}}` (cells are indexed
+with :math:`{c_n}`).
 
 .. _raster:
 
@@ -480,23 +481,23 @@ raster grid :math:`m_{v_i} = \sum\limits_{p_j}{m_{p_j}}`.
         Particles in raster grid (from [FiKo2013]_)
 
 Each grid node is also affected with a velocity
-:math:`\overline{\mathbf{u}}_{v_i}` expressed as the sum of the momentum
+:math:`\overline{\mathbf{u}}_{c_n}` expressed as the sum of the momentum
 of each raster cell divided by the mass of the same cell:
 
 .. math::
-    \overline{\mathbf{u}}_{v_i} = \frac{\sum\limits_{p_j}{m_{p_j}}\overline{\mathbf{u}_j}}{\sum\limits_j{m_{p_j}}}
+    \overline{\mathbf{u}}_{c_n} = \frac{\sum\limits_{p_j}{m_{p_j}}\overline{\mathbf{u}}_{p_j}}{\sum\limits_{p_j}{m_{p_j}}}
 
-The flow depth :math:`\overline{h}_{v_i}` can be deduced from the mass
+The flow depth :math:`\overline{h}_{c_n}` can be deduced from the mass
 and area of the raster cell:
 
 .. math::
-    \overline{h}_{v_i} = \frac{m_{v_i}}{\rho_0\,A_{v_i}}
+    \overline{h}_{c_n} = \frac{m_{c_n}}{\rho_0\,A_{c_n}}
 
 Back to the particles properties, the bottom area paired to each particle is related to the mass and flow
 depth of this one:
 
 .. math::
-    A_{p_i} = \frac{m_{p_i}}{\rho_0\,\overline{h}_{p_i}}
+    A_{p_j} = \frac{m_{p_j}}{\rho_0\,\overline{h}_{p_j}}
 
 
 Method
@@ -504,34 +505,35 @@ Method
 
 
 The SPH method is introduced when expressing the flow depth and its gradient for each
-particle as a weighted sum of its neighbours
-(:cite:`LiLi2010,Sa2007`):
+particle as a weighted sum of its neighbors
+(:cite:`LiLi2010,Sa2007`). The :math:`p` in :math:`p_i` is dropped
+(same applies for :math:`p_j`):
 
 .. math::
-    \overline{h}_{p_j} &= \frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,W_{p_jp_l}\\
-    \mathbf{\nabla}\overline{h}_{p_j} &= -\frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,\mathbf{\nabla}W_{p_jp_l}
+    \overline{h}_i &= \frac{1}{\rho_0}\,\sum\limits_j{m_j}\,W_{ij}\\
+    \mathbf{\nabla}\overline{h}_i &= -\frac{1}{\rho_0}\,\sum\limits_{j}{m_j}\,\mathbf{\nabla}W_{ij}
     :label: sph formulation
 
 Where :math:`W` represents the SPH-Kernel function and reads:
 
 .. math::
-   W_{p_jp_l} = W(\mathbf{r_{p_jp_l}},r_0) = \frac{10}{\pi r_0^5}\left\{
+   W_{ij} = W(\mathbf{r_{ij}},r_0) = \frac{10}{\pi r_0^5}\left\{
    \begin{aligned}
-   & (r_0 - \left\Vert \mathbf{r_{p_jp_l}}\right\Vert)^3, \quad &0\leq \left\Vert \mathbf{r_{p_jp_l}}\right\Vert \leq  r_0\\
-   & 0 , & r_0 <\left\Vert \mathbf{r_{p_jp_l}}\right\Vert
+   & (r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert)^3, \quad &0\leq \left\Vert \mathbf{r_{ij}}\right\Vert \leq  r_0\\
+   & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
    \end{aligned}
    \right.
    :label: kernel function
 
-:math:`\left\Vert \mathbf{r_{p_jp_l}}\right\Vert= \left\Vert \mathbf{x_{p_l}}-\mathbf{x_{p_j}}\right\Vert`
-represents the distance between particle :math:`j` and :math:`l` and
+:math:`\left\Vert \mathbf{r_{ij}}\right\Vert= \left\Vert \mathbf{x_i}-\mathbf{x_j}\right\Vert`
+represents the distance between particle :math:`i` and :math:`j` and
 :math:`r_0` the smoothing length. And its first derivative reads:
 
 .. math::
-   \mathbf{\nabla}W_{p_jp_l} = -3.\frac{10}{\pi r_0^5}\left\{
+   \mathbf{\nabla}W_{ij} = -3.\frac{10}{\pi r_0^5}\left\{
    \begin{aligned}
-   & (r_0 - \left\Vert \mathbf{r_{p_jp_l}}\right\Vert)^2\,\frac{\mathbf{r_{p_jp_l}}}{r_{p_jp_l}}, \quad &0\leq \left\Vert \mathbf{r_{p_jp_l}}\right\Vert \leq  r_0\\
-   & 0 , & r_0 <\left\Vert \mathbf{r_{p_jp_l}}\right\Vert
+   & (r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert)^2\,\frac{\mathbf{r_{ij}}}{r_{ij}}, \quad &0\leq \left\Vert \mathbf{r_{jl}}\right\Vert \leq  r_0\\
+   & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
    \end{aligned}
    \right.
    :label: kernel function gradient
@@ -539,17 +541,19 @@ represents the distance between particle :math:`j` and :math:`l` and
 The lateral pressure forces on each particle are calculated from the compression
 forces on the boundary of the particle.
 The boundary is approximated as a square with the base side length
-:math:`\Delta s = \sqrt{A_p}` and the respective flow height. This leads to:
+:math:`\Delta s = \sqrt{A_p}` and the respective flow height. This leads to
+(subscript :math:`|_{,d}` stands for the component in the :math:`d^{th}`
+direction, :math:`d = {1,2}`):
 
 .. math::
-    F_{p_j,i}^{\text{lat}} = K_{(i)}\oint\limits_{\partial{A_{p_j}}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_i\,\mathrm{d}x_3\right)\mathrm{d}l
+    F_{i,d}^{\text{lat}} = K_{(d)}\oint\limits_{\partial{A_{i}}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_d\,\mathrm{d}x_3\right)\mathrm{d}l
 
 From equation :eq:`momentum-balance6`
 
 .. math::
-    F_{p_j,i}^{\text{lat}} = K_{(i)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p_i}-
-    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{p_i}+\frac{\Delta{s}}{2}}\right)
-    = K_{(i)}\frac{\Delta{s}^2}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_i}\right\rvert_{p_j}
+    F_{i,d}^{\text{lat}} = K_{(d)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{d}-
+    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{d}+\frac{\Delta{s}}{2}}\right)
+    = K_{(d)}\frac{\Delta{s}^2}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_d}\right\rvert_{i}
 
 The product of the average flow depth :math:`\overline{h}` and the basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}`
 reads (using equation :eq:`sigmab` and dropping the curvature acceleration term):
@@ -561,59 +565,59 @@ reads (using equation :eq:`sigmab` and dropping the curvature acceleration term)
 Which leads to, using the relation :eq:`sph formulation`:
 
 .. math::
-    F_{p_j,i}^{\text{lat}} = K_{(i)}\,\rho_0\,g_3\,A_{p_j}\,\overline{h}_{p_j}\,.\,\left.\frac{d\,\overline{h}}{d\,x_i}\right\rvert_{p_j}
-    = -K_{(i)}\,m_{p_j}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{p_l}{m_{p_l}}\,\left.\frac{d\,W_{p_jp_l}}{d\,x_i}\right\rvert_{p_l}
+    F_{i,d}^{\text{lat}} = K_{(d)}\,\rho_0\,g_3\,A_{i}\,\overline{h}_{i}\,.\,\left.\frac{d\,\overline{h}}{d\,x_d}\right\rvert_{i}
+    = -K_{(d)}\,m_{i}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{j}{m_{j}}\,\left.\frac{d\,W_{ij}}{d\,x_d}\right\rvert_{j}
     :label: lateral force
 
 The bottom friction forces on each particle depend on the chose friction model and reads for the SamosAT friction model
-(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{p_j}`):
+(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{i}`):
 
 .. math::
-    F_{p_j,i}^{\text{bot}} = -\delta_{i1}\,A_{p_j}\,\tau^{(b)}_{p_j}
-    = -\delta_{i1}\,A_{p_j}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{p_j}
-     + \frac{\rho_0\,\mathbf{\overline{u}}_{p_j}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
+    F_{i,d}^{\text{bot}} = -\delta_{d1}\,A_{i}\,\tau^{(b)}_{i}
+    = -\delta_{d1}\,A_{i}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{i}
+     + \frac{\rho_0\,\mathbf{\overline{u}}_{i}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
     :label: bottom force
 
-The resistance force on each particle reads (where :math:`h^{\text{eff}}_{p_j}`
-is a function of the average flow depth :math:`\overline{h}_{p_j}`):
+The resistance force on each particle reads (where :math:`h^{\text{eff}}_{j}`
+is a function of the average flow depth :math:`\overline{h}_{j}`):
 
 .. math::
-    F_{p_j,i}^{\text{res}}
-    = - \rho_0\,A_{p_j}\,h^{\text{eff}}_{p_j}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{p_j}\|\,\overline{u}_{p_j,i}
+    F_{i,d}^{\text{res}}
+    = - \rho_0\,A_{i}\,h^{\text{eff}}_{i}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{i}\|\,\overline{u}_{i,d}
     :label: resistance force
 
 The term related to the entrained mass and mass balance
-:math:`- \overline{u_i}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
+:math:`- \overline{u_d}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
 now reads:
 
 .. math::
-    - \overline{u}_{p_j,i}\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{p_j}\,\overline{h}_{p_j}\right)
-    = - \overline{u}_{p_j,i}\,A^{\text{ent}}_{p_j}\,q^{\text{ent}}_{p_j}
+    - \overline{u}_{i,d}\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{i}\,\overline{h}_{i}\right)
+    = - \overline{u}_{i,d}\,A^{\text{ent}}_{i}\,q^{\text{ent}}_{i}
 
 
-The mass of entrained snow for each particle :math:`p` depends on the type of entrainment involved
+The mass of entrained snow for each particle depends on the type of entrainment involved
 (ploughing or erosion) and reads:
 
 .. math::
-    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{p_j}\,\overline{h}_{p_j}\right)
-    = \frac{\mathrm{d}\,m_{p_j}}{\mathrm{d}t}
-    = A_{p_j}^\text{ent}\,q_{p_j}^{\text{ent}}
+    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{i}\,\overline{h}_{i}\right)
+    = \frac{\mathrm{d}\,m_{i}}{\mathrm{d}t}
+    = A_{i}^\text{ent}\,q_{i}^{\text{ent}}
 
 with
 
 .. math::
     \begin{aligned}
-    A_{p_j}^{\text{plo}} &= w_f\,h_{p_j}^{\text{ent}}= \sqrt{\frac{m_{p_j}}{\rho_0\,\overline{h}_{p_j}}}\,h_{p_j}^{\text{ent}}
-    \quad &\mbox{and} \quad &q_{p_j}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{p_j}\right\Vert
+    A_{i}^{\text{plo}} &= w_f\,h_{i}^{\text{ent}}= \sqrt{\frac{m_{i}}{\rho_0\,\overline{h}_{i}}}\,h_{i}^{\text{ent}}
+    \quad &\mbox{and} \quad &q_{i}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{i}\right\Vert
     \quad &\mbox{for ploughing}\\
-    A_{p_j}^{\text{ero}} &= A_{p_j} = \frac{m_{p_j}}{\rho_0\,\overline{h}_{p_j}}
-    \quad &\mbox{and} \quad &q_{p_j}^{\text{ero}} = \frac{\tau_{p_j}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{p_j}\right\Vert
+    A_{i}^{\text{ero}} &= A_{i} = \frac{m_{i}}{\rho_0\,\overline{h}_{i}}
+    \quad &\mbox{and} \quad &q_{i}^{\text{ero}} = \frac{\tau_{i}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{i}\right\Vert
     \quad &\mbox{for erosion}\end{aligned}
 
 Finaly, the entrainment force reads:
 
 .. math::
-    F_{p_j,i}^{\text{ent}} = -w_f\,(e_s+\,q_{p_j}^{\text{ent}}\,e_d)
+    F_{i,d}^{\text{ent}} = -w_f\,(e_s+\,q_{i}^{\text{ent}}\,e_d)
 
 
 
@@ -628,11 +632,11 @@ is refered as :math:`a^k`). This leads, for the velocity, flow depth and mass to
     :nowrap:
 
     \begin{align}
-    &\overline{u}_{p_j,i}(t_k) = \overline{u}_{p_j,i}^k \quad &\text{current time step,}\\
-    &\overline{u}_{p_j,i}(t_{k+1}) = \overline{u}_{p_j,i}^{k+1} \quad &\text{next time step,} \\
-    &\overline{h}_{p_j}(t_k) = \overline{h}_{p_j}^k = \overline{h}_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
-    &m_{p_j}(t_k) = m_{p_j}^k = m_{p_j} \quad &\text{current time step (supscript dropped for simplicity),}\\
-    &m_{p_j}(t_{k+1}) = m_{p_j}^{k+1} = m_{p_j} + \Delta m_{p_j} \quad &\text{next time step.}
+    &\overline{u}_{i,d}(t_k) = \overline{u}_{i,d}^k \quad &\text{current time step,}\\
+    &\overline{u}_{i,d}(t_{k+1}) = \overline{u}_{i,d}^{k+1} \quad &\text{next time step,} \\
+    &\overline{h}_{i}(t_k) = \overline{h}_{i}^k = \overline{h}_{i} \quad &\text{current time step (supscript dropped for simplicity),}\\
+    &m_{i}(t_k) = m_{i}^k = m_{i} \quad &\text{current time step (supscript dropped for simplicity),}\\
+    &m_{i}(t_{k+1}) = m_{i}^{k+1} = m_{i} + \Delta m_{i} \quad &\text{next time step.}
     \end{align}
 
 Descretizing the momentum balance
@@ -640,9 +644,9 @@ Descretizing the momentum balance
 to write the the velocity of the particle at the next time step:
 
 .. math::
-   u_i^{k+1} = \frac{u_i^k + \Delta{t}\,\left(g_i+\frac{F_i+F_i^\text{ent}}{m_p}\right)}
+   u_d^{k+1} = \frac{u_d^k + \Delta{t}\,\left(g_d+\frac{F_d+F_d^\text{ent}}{m_p}\right)}
     {1 + \Delta{t}\left(\frac{\tau^{(b)}}{\rho_0\,\overline{h}\,\|\overline{u}\|^k}+C_\text{res}\,\|\overline{u}\|^k\right)}
-    -u_i^k\,\frac{m_p}{m_p+\Delta{m}_p}
+    -u_d^k\,\frac{m_p}{m_p+\Delta{m}_p}
 
 With
 
@@ -657,7 +661,7 @@ The new position of the particle (in the next time step :math:`k+1` using "centr
 reads:
 
 .. math::
-    X_i^{k+1} = X_i^k + \frac{\Delta{t}}{2}(u_i^k + u_i^{k+1})
+    X_d^{k+1} = X_d^k + \frac{\Delta{t}}{2}(u_d^k + u_d^{k+1})
 
 
 .. _fig-infinitesimales_element:
