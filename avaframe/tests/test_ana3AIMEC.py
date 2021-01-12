@@ -58,7 +58,7 @@ def test_analyzeArea(capfd):
     resAnalysis = ana3AIMEC.analyzeFields(rasterTransfo, pLim, newRasters,
                                           cfgPath)
 
-    assert (resAnalysis['runout'][0][0] == 49) and (
+    assert (resAnalysis['runout'][0][0] == 449) and (
             resAnalysis['runout'][1][1] == 419) and (
             resAnalysis['runout'][2][0] == 50) and (
             resAnalysis['MMPP'][1] == 1)
