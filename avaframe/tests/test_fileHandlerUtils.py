@@ -64,7 +64,7 @@ def test_exportcom1DFAOutput(tmp_path):
     os.makedirs(outDir)
 
     # copy inut data from benchmarks folder to tmp_path and rename correctly
-    resType = ['ppr', 'pfd', 'pv']
+    resType = ['ppr', 'pfd', 'pfv']
     for m in resType:
         avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
                            'ana4Stats', 'release1HS_entres_dfa_1.25000_%s.asc' % m)

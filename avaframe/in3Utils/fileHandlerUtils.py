@@ -63,8 +63,7 @@ def readLogFile(logName, cfg=''):
         varPar = 'Mu'
 
     # Save info to dictionary, add all result parameters that are saved in com1DFA Outputs
-    suffix = ['pfd', 'ppr', 'pv', 'fd']
-    logDict = {'noSim' : [], 'simName' : [], varPar: [], 'fullName' : [], 'suffix ': suffix}
+    logDict = {'noSim' : [], 'simName' : [], varPar: [], 'fullName' : []}
 
     lines = logFile.readlines()[1:]
     countSims = 1
@@ -293,7 +292,7 @@ def exportcom1DFAOutput(avaDir, cfg=''):
         pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_pv.asc' % logDict['simName'][k])
-        pathTo = os.path.join(outDirPF, '%s_%.05f_pv.asc' % (logDict['simName'][k], logDict[varPar][k]))
+        pathTo = os.path.join(outDirPF, '%s_%.05f_pfv.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
         pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                 '%s.html' % logDict['simName'][k])

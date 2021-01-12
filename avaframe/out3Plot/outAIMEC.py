@@ -200,7 +200,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     # prepare for plot
     Cmap = [pU.cmapPres, pU.cmapDepth, pU.cmapSpeed]
     Title = ['Peak Pressure', 'Peak Flow Depth', 'Peak Speed']
-    Unit = [pU.cfgPlotUtils['unitppr'], pU.cfgPlotUtils['unitpfd'], pU.cfgPlotUtils['unitpv']]
+    Unit = [pU.cfgPlotUtils['unitppr'], pU.cfgPlotUtils['unitpfd'], pU.cfgPlotUtils['unitpfv']]
     Data = np.array(([None] * 3))
     Data[0] = rasterdataPres
     Data[1] = rasterdataDepth

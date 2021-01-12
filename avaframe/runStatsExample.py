@@ -69,7 +69,7 @@ for avaDir in avalancheDirs:
     reportDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
-
+    
     if cfg.getboolean('flagAimec') == True:
         # run aimec
         statsAimecCfg = os.path.join('..', 'benchmarks', avaName, '%sStats_ana3AIMECCfg.ini' % (avaName))
@@ -103,7 +103,7 @@ for avaDir in avalancheDirs:
     count = count + 1
 
  #++++++++++++++ Plot max values +++++++++++++++++
-sPlot.plotValuesScatter(peakDictList, 'pfd', 'pv', cfgDFA['PARAMETERVAR']['varPar'], cfg, avalancheDirs, flagShow)
-sPlot.plotValuesScatterHist(peakDictList, 'pfd', 'pv', cfgDFA['PARAMETERVAR']['varPar'], cfg, avalancheDirs, flagShow, flagHue=True)
+sPlot.plotValuesScatter(peakDictList, 'pfd', 'pfv', cfgDFA['PARAMETERVAR']['varPar'], cfg, avalancheDirs, flagShow)
+sPlot.plotValuesScatterHist(peakDictList, 'pfd', 'pfv', cfgDFA['PARAMETERVAR']['varPar'], cfg, avalancheDirs, flagShow, flagHue=True)
 
 log.info('Plots have been saved to: %s' % outDir)

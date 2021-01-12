@@ -25,9 +25,9 @@ def plotValuesScatter(peakDictList, resType1, resType2, varPar, cfg, avalancheDi
         peakDictList: list
             list of peakValues dictionaries that contain max values of peak parameters and parameter variation info
         resType1: str
-            result parameter 1, 'ppr', 'pfd', 'pv'
+            result parameter 1, 'ppr', 'pfd', 'pfv'
         resType2: str
-            result parameter 1, 'ppr', 'pfd', 'pv'
+            result parameter 1, 'ppr', 'pfd', 'pfv'
         varPar: str
             parameter that is varied to perfom a set of simulations
         cfg: dict
@@ -96,9 +96,9 @@ def plotValuesScatterHist(peakDictList, resType1, resType2, varPar, cfg, avalanc
         peakDictList: list
             list of peakValues dictionaries that contain max values of peak parameters and parameter variation info
         resType1: str
-            result parameter 1, 'ppr', 'pfd', 'pv'
+            result parameter 1, 'ppr', 'pfd', 'pfv'
         resType2: str
-            result parameter 1, 'ppr', 'pfd', 'pv'
+            result parameter 1, 'ppr', 'pfd', 'pfv'
         varPar: str
             parameter that is varied to perfom a set of simulations
         cfg: dict

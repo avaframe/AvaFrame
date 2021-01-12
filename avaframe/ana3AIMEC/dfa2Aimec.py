@@ -118,7 +118,7 @@ def mainDfa2Aimec(avaDir, cfgSetup):
     log.info('Aimec Work folders created to start postprocessing com1DFA data')
 
     # Setup input from com1DFA and export to Work ana3AIMEC
-    suffix = {'type' : ['pfd', 'ppr', 'pv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
+    suffix = {'type' : ['pfd', 'ppr', 'pfv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
     for suf, dir in zip(suffix['type'], suffix['directory']):
         fU.getDFAData(avaDir, workDir, suf, dir)
 
