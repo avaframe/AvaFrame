@@ -129,7 +129,7 @@ for avaDir in standardNames:
         # REQUIRED+++++++++++++++++++
         # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
         # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
-        outputVariable = ['ppr', 'pfd', 'pv']
+        outputVariable = ['ppr', 'pfd', 'pfv']
         values = simType
         parameter = 'simType'
         plotListRep = {}
