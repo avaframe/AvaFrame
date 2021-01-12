@@ -460,7 +460,7 @@ def updateFieldsC(cfg, particles, force, dem, fields):
   cdef double[:] UX = particles['ux']
   cdef double[:] UY = particles['uy']
   cdef double[:] UZ = particles['uz']
-  cdef double[:, :] PV = fields['pv']
+  cdef double[:, :] PFV = fields['pfv']
   cdef double[:, :] PP = fields['ppr']
   cdef double[:, :] PFD = fields['pfd']
   cdef long[:] IndX = particles['indX']
@@ -535,8 +535,8 @@ def updateFieldsC(cfg, particles, force, dem, fields):
         VZBilinear[j, i] = MomBilinearZ[j, i]/MassBilinear[j, i]
         VBilinear[j, i] = norm(VXBilinear[j, i], VYBilinear[j, i], VZBilinear[j, i])
         PBilinear[j, i] = VBilinear[j, i] * VBilinear[j, i] * rho
-      if VBilinear[j, i] > PV[j, i]:
-        PV[j, i] = VBilinear[j, i]
+      if VBilinear[j, i] > PFV[j, i]:
+        PFV[j, i] = VBilinear[j, i]
       if PBilinear[j, i] > PP[j, i]:
         PP[j, i] = PBilinear[j, i]
       if FDBilinear[j, i] > PFD[j, i]:
@@ -546,7 +546,7 @@ def updateFieldsC(cfg, particles, force, dem, fields):
   fields['V'] = np.asarray(VBilinear)
   fields['P'] = np.asarray(PBilinear)
   fields['FD'] = np.asarray(FDBilinear)
-  fields['pv'] = np.asarray(PV)
+  fields['pfv'] = np.asarray(PFV)
   fields['ppr'] = np.asarray(PP)
   fields['pfd'] = np.asarray(PFD)
 

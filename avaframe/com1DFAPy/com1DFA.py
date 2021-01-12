@@ -192,13 +192,13 @@ def initializeSimulation(cfg, relRaster, dem):
     Ment = intializeMassEnt(dem)
     Cres = intializeResistance(dem)
 
-    PV = np.zeros((nrows, ncols))
+    PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
     fields = {}
-    fields['pv'] = PV
+    fields['pfv'] = PFV
     fields['ppr'] = PP
     fields['pfd'] = FD
-    fields['V'] = PV
+    fields['V'] = PFV
     fields['P'] = PP
     fields['FD'] = FD
 
@@ -1367,7 +1367,7 @@ def updateFields(cfg, particles, force, dem, fields):
     ux = particles['ux']
     uy = particles['uy']
     uz = particles['uz']
-    PV = fields['pv']
+    PFV = fields['pfv']
     PP = fields['ppr']
     PFD = fields['pfd']
 
@@ -1395,14 +1395,14 @@ def updateFields(cfg, particles, force, dem, fields):
     VZBilinear[indMass] = MomBilinearZ[indMass]/MassBilinear[indMass]
     VBilinear = DFAtls.norm(VXBilinear, VYBilinear, VZBilinear)
     PBilinear = VBilinear * VBilinear * rho
-    PV = np.where(VBilinear > PV, VBilinear, PV)
+    PFV = np.where(VBilinear > PFV, VBilinear, PFV)
     PP = np.where(PBilinear > PP, PBilinear, PP)
     PFD = np.where(FDBilinear > PFD, FDBilinear, PFD)
 
     fields['V'] = VBilinear
     fields['P'] = PBilinear
     fields['FD'] = FDBilinear
-    fields['pv'] = PV
+    fields['pfv'] = PFV
     fields['ppr'] = PP
     fields['pfd'] = PFD
 
