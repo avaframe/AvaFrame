@@ -184,7 +184,7 @@ def mainAIMEC(cfgPath, cfg):
     # -----------------------------------------------------------
     log.info('Writing results to file')
 
-    outAimec.resultWrite(cfgPath, cfgSetup, resAnalysis)
+    outAimec.resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis)
 
     return rasterTransfo, newRasters, resAnalysis
 
@@ -712,12 +712,12 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
             -runout: 2D numpy array
                     containing for each simulation analyzed the x and
                     y coord of the runout point as well as the runout distance
-                    measured from the begining of the run-out area. run-out
+                    measured from the begining of the path. run-out
                     calculated with the MAX pressure in each cross section
             -runoutMean: 2D numpy array
                     containing for each simulation analyzed the x
                     and y coord of the runout point as well as the runout
-                    distance measured from the begining of the run-out area.
+                    distance measured from the begining of the path.
                     run-out calculated with the MEAN pressure in each cross
                     section
             -AMPP: 1D numpy array
@@ -831,10 +831,10 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         cupper = cInd['cupper']
         clower = cInd['clower']
         clowerm = cInd['clowerm']
-        runout[0, i] = scoord[clower] - sBeta
+        runout[0, i] = scoord[clower]
         runout[1, i] = x[clower]
         runout[2, i] = y[clower]
-        runoutMean[0, i] = scoord[clowerm] - sBeta
+        runoutMean[0, i] = scoord[clowerm]
         runoutMean[1, i] = x[clower]
         runoutMean[2, i] = y[clower]
 

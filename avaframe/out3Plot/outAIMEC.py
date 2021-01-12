@@ -74,7 +74,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ref0, im = pU.NonUnifIm(ax1, x, y, maskedArray, 'x [m]', 'y [m]',
                          extent=[x.min(), x.max(), y.min(), y.max()],
                          cmap=cmap, norm=norm)
-    plt.plot(xx, yy, 'k+', label='Beta point : %.1f °' %
+    plt.plot(xx, yy, 'k+', label='start of run-out area point : %.1f °' %
              rasterTransfo['startOfRunoutAngle'])
     plt.plot(xPath, yPath, 'k--', label='flow path')
     plt.plot(DBXl, DBYl, 'k-', label='domain')
@@ -91,7 +91,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
     ax2.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                label='Beta point : %.1f °' % rasterTransfo['startOfRunoutAngle'])
+                label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAngle'])
 
     ax2.set_title('sl Domain' + '\n' + 'Black = out of raster')
     ax2.legend(loc=4)
@@ -114,10 +114,9 @@ def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    sBeta = s[indStartOfRunout]
     dataPressure = newRasters['newRasterPressure']
     rasterdataPres = dataPressure[0]
-    runout = resAnalysis['runout'][0] + sBeta
+    runout = resAnalysis['runout'][0]
     pCrossAll = resAnalysis['pCrossAll']
 
     ############################################
@@ -143,7 +142,7 @@ def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
 
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                label='Beta point : %.1f °' % resAnalysis['startOfRunoutAngle'])
+                label='start of run-out area point : %.1f °' % resAnalysis['startOfRunoutAngle'])
     ref5, im = pU.NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
@@ -189,14 +188,13 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    sBeta = s[indStartOfRunout]
     dataPressure = newRasters['newRasterPressure']
     rasterdataPres = dataPressure[0]
     dataDepth = newRasters['newRasterDepth']
     rasterdataDepth = dataDepth[0]
     dataSpeed = newRasters['newRasterSpeed']
     rasterdataSpeed = dataSpeed[0]
-    runout = resAnalysis['runout'][0] + sBeta
+    runout = resAnalysis['runout'][0]
 
     ############################################
     # prepare for plot
@@ -222,7 +220,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
 
         ax.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                   label='Beta point : %.1f °' % resAnalysis['startOfRunoutAngle'])
+                   label='Start or run-out point : %.1f °' % resAnalysis['startOfRunoutAngle'])
         ref3, im = pU.NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                              extent=[l.min(), l.max(), s.min(), s.max()],
                              cmap=cmap, norm=norm)
@@ -252,6 +250,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
+    sBeta = s[indStartOfRunout]
     plim = resAnalysis['pressureLimit']
     dataPressure = inputs['dataPressure']
     refRasterMask = inputs['refRasterMask']
@@ -279,7 +278,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
                   '\n' + 'Pressure threshold: %.1f kPa' % plim)
     pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
 
-    y_lim = s[indStartOfRunout+20]+np.nanmax(resAnalysis['runout'][0])
+    y_lim = s[indStartOfRunout+20]+np.nanmax(resAnalysis['runout'][0]-sBeta)
     ax1.set_ylim([s[indStartOfRunout], y_lim])
     pU.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     ax2 = plt.subplot(122)
@@ -302,7 +301,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
-def resultWrite(cfgPath, cfgSetup, resAnalysis):
+def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     """
     This function writes the main Aimec results to a file (outputFile)
     in cfgPath
@@ -319,7 +318,10 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
     pressureLimit = cfgSetup['pressureLimit']
 
     startOfRunoutAngle = resAnalysis['startOfRunoutAngle']
-
+    indStartOfRunout = rasterTransfo['indStartOfRunout']
+    s = rasterTransfo['s']
+    sBeta = s[indStartOfRunout]
+    runoutFromMid = resAnalysis['runout'][0] - sBeta
     runout = resAnalysis['runout']
     AMPP = resAnalysis['AMPP']
     MMPP = resAnalysis['MMPP']
@@ -343,10 +345,10 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
 
     ############################################
     # prepare for writing
-    legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'elevRel', 'deltaH',
+    legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'runoutFromSROA', 'elevRel', 'deltaH',
               'AMPP', 'MMPP', 'AMD', 'MMD', 'AMS', 'MMS', 'relMass', 'entMass',
               'finalMass', 'rMassDif', 'GI', 'GR', 'TP ', 'FN ', 'FP ', 'TN']
-    resfile = [runout[1], runout[2], runout[0], elevRel, deltaH, AMPP, MMPP,
+    resfile = [runout[1], runout[2], runout[0], runoutFromMid, elevRel, deltaH, AMPP, MMPP,
                AMD, MMD, AMS, MMS, relMass, entMass, finalMass, relativMassDiff,
                GI, GR, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
 
@@ -355,7 +357,7 @@ def resultWrite(cfgPath, cfgSetup, resAnalysis):
                       'dhm: ', demName, '\n',
                       'domain_width: ', str(domainWidth), ' m\n',
                       'pressure_limit: ', str(pressureLimit), ' kPa\n',
-                      'start of runout area Angle: ', str(round(startOfRunoutAngle, 2)), ' °\n'])
+                      'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAngle, 2)), ' °\n'])
 
     outFileName = '_'.join(['Results', projectName, '', dirName, '', 'plim',
                             str(pressureLimit), 'w', str(domainWidth)]) + '.txt'
@@ -406,7 +408,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
 
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     sBeta = sPath[indStartOfRunout]
-    runout = resAnalysis['runout'][0] + sBeta
+    runout = resAnalysis['runout'][0]
     meanMaxDPP = resAnalysis['AMPP']
     maxMaxDPP = resAnalysis['MMPP']
     GI = resAnalysis['growthIndex']
