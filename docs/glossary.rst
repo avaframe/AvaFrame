@@ -34,7 +34,7 @@ Glossary
       the main characteristics of the avalanche best. It is recommended to start
       this path at (or close to) the highest point, then follow the main features
       downslope and extend it far enough in the runout zone to accommodate even
-      the biggest :term:`scenarios`. Once set for a specific avalanche, it
+      the biggest :term:`scenario`. Once set for a specific avalanche, it
       should only be changed for very important reasons, as this path ensures
       the consistency and comparabilty between different investigations or experiments.
 
