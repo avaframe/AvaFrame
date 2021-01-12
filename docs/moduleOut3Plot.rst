@@ -18,7 +18,7 @@ Input
 -----
 
 * avalanche directory
-* result parameter ('ppr', 'pfd', 'pv')
+* result parameter ('ppr', 'pfd', 'pfv')
 * parameter (e.g. 'Mu', 'RelTh', 'simType')
 * values of the parameter (e.g. '0.155', '1.000', 'entres')
 * configuration setting of com1DFA
