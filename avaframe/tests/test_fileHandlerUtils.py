@@ -66,9 +66,15 @@ def test_exportcom1DFAOutput(tmp_path):
     # copy inut data from benchmarks folder to tmp_path and rename correctly
     resType = ['ppr', 'pfd', 'pfv']
     for m in resType:
-        avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
-                           'ana4Stats', 'release1HS_entres_dfa_1.25000_%s.asc' % m)
-        input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
+        if m == 'pfv':
+            avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
+                               'ana4Stats', 'release1HS_entres_dfa_1.25000_pfv.asc')
+            input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
+                                     'release1HS_entres_dfa', 'raster', 'release1HS_entres_dfa_pv.asc')
+        else:
+            avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
+                               'ana4Stats', 'release1HS_entres_dfa_1.25000_%s.asc' % m)
+            input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
                                  'release1HS_entres_dfa', 'raster', 'release1HS_entres_dfa_%s.asc' % m)
         shutil.copy(avaData, input)
     avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
