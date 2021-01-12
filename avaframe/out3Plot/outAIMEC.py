@@ -250,7 +250,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    sBeta = s[indStartOfRunout]
+    sStart = s[indStartOfRunout]
     plim = resAnalysis['pressureLimit']
     dataPressure = inputs['dataPressure']
     refRasterMask = inputs['refRasterMask']
@@ -278,7 +278,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
                   '\n' + 'Pressure threshold: %.1f kPa' % plim)
     pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
 
-    y_lim = s[indStartOfRunout+20]+np.nanmax(resAnalysis['runout'][0]-sBeta)
+    y_lim = s[indStartOfRunout+20]+np.nanmax(resAnalysis['runout'][0]-sStart)
     ax1.set_ylim([s[indStartOfRunout], y_lim])
     pU.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     ax2 = plt.subplot(122)
@@ -320,8 +320,8 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     startOfRunoutAngle = resAnalysis['startOfRunoutAngle']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     s = rasterTransfo['s']
-    sBeta = s[indStartOfRunout]
-    runoutFromMid = resAnalysis['runout'][0] - sBeta
+    sStart = s[indStartOfRunout]
+    runoutFromMid = resAnalysis['runout'][0] - sStart
     runout = resAnalysis['runout']
     AMPP = resAnalysis['AMPP']
     MMPP = resAnalysis['MMPP']
@@ -407,7 +407,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     sPath = rasterTransfo['s']
 
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    sBeta = sPath[indStartOfRunout]
+    sStart = sPath[indStartOfRunout]
     runout = resAnalysis['runout'][0]
     meanMaxDPP = resAnalysis['AMPP']
     maxMaxDPP = resAnalysis['MMPP']

@@ -786,7 +786,6 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     x = rasterTransfo['x']
     y = rasterTransfo['y']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    sBeta = scoord[indStartOfRunout]
 
     resAnalysis = {}
 
