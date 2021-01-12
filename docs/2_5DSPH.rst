@@ -16,8 +16,8 @@ Method
 The SPH method is used to express a quantity (the flow depth in our case) and
 its gradient at a certain particle location as a weighted sum of its neighbors
 properties. The principle of the method is well described in :cite:`LiLi2010`.
-In the case a depth integrated equations (for example SWE), the flow depth and
-its gradient can be expressed as following (when the bed elevation is constant):
+In the case a depth integrated equations (for example SWE), a scalar function
+:math:`f` and its gradient can be expressed as following:
 
 .. math::
     f_{i} &= \sum\limits_{j}f_{j}A_{j}\,W_{ij}\\
@@ -40,10 +40,10 @@ The computation of its gradient depends on the coordinate system used.
 Standard method
 ~~~~~~~~~~~~~~~~~
 
-Let us start with the computation of the gradient of a scalar function :math:`f \colon \mathbb{R}^2 \to \mathbb{R}`
-on a horizontal plane.
+Let us start with the computation of the gradient of a scalar function
+:math:`f \colon \mathbb{R}^2 \to \mathbb{R}` on a horizontal plane.
 Let :math:`P_i=\mathbf{x}_i=(x_{i,1},x_{i,2})` and :math:`Q_j=\mathbf{x}_j=(x_{j,1},x_{j,2})` be two points in :math:`\mathbb{R}^2` defined by
-their coordinates in the Cartesian coordinate system. :math:`\mathbf{r}_{ij}=\mathbf{x}_i-\mathbf{x}_j` is the vector going from
+their coordinates in the Cartesian coordinate system :math:`(P_i,\mathbf{e_1},\mathbf{e_2})`. :math:`\mathbf{r}_{ij}=\mathbf{x}_i-\mathbf{x}_j` is the vector going from
 :math:`Q_j` to :math:`P_i` and :math:`r_{ij} = \left\Vert \mathbf{r}_{ij}\right\Vert` the length of this vector.
 Now consider the kernel function :math:`W`:
 
@@ -115,18 +115,18 @@ The gradient of :math:`f` is then simply:
 
 2.5D SPH method
 ~~~~~~~~~~~~~~~~~
-We now want to express a function :math:`f` and its gradient on a potentially curved surface
-and express this gradient in the 3 dimensional Cartesian coordinate system
-:math:`(P_j,\mathbf{e_1},\mathbf{e_2},\mathbf{e_3})`.
+We now want to express a function :math:`f` and its gradient on a potentially
+curved surface and express this gradient in the 3 dimensional Cartesian
+coordinate system :math:`(P_i,\mathbf{e_1},\mathbf{e_2},\mathbf{e_3})`.
 
-Let us consider a smooth surface :math:`\mathcal{S}`.
-Let :math:`P_i=\mathbf{x}_i=(x_{i,1},x_{i,2},x_{i,3})` and :math:`Q_j=\mathbf{x}_j=(x_{j,1},x_{j,2},x_{j,3})`
-be two points of :math:`\mathcal{S}` and :math:`\mathcal{TP}` the tangent plane
-to :math:`\mathcal{S}` in :math:`P_j`. If :math:`\mathbf{u}_j` is the (none zero)
-velocity of the particle at :math:`P_j`, it is possible to define the local
-orthonormal coordinate system :math:`(P_j,\mathbf{V_1},\mathbf{V_2},\mathbf{n})`
+Let us consider a smooth surface :math:`\mathcal{S}` and two points
+:math:`P_i=\mathbf{x}_i=(x_{i,1},x_{i,2},x_{i,3})` and :math:`Q_j=\mathbf{x}_j=(x_{j,1},x_{j,2},x_{j,3})`
+on :math:`\mathcal{S}`. We can define :math:`\mathcal{TP}` the tangent plane
+to :math:`\mathcal{S}` in :math:`P_i`. If :math:`\mathbf{u}_i` is the (none zero)
+velocity of the particle at :math:`P_i`, it is possible to define the local
+orthonormal coordinate system :math:`(P_i,\mathbf{V_1},\mathbf{V_2},\mathbf{V_3}=\mathbf{n})`
 with :math:`\mathbf{V_1}=\frac{\mathbf{u}_j}{\left\Vert \mathbf{u}_j\right\Vert}`
-and :math:`\mathbf{n}` the norma to :math:`\mathcal{S}` at :math:`P_j`.
+and :math:`\mathbf{n}` the normal to :math:`\mathcal{S}` at :math:`P_i`.
 Locally, :math:`\mathcal{S}` can be assimilated to :math:`\mathcal{TP}` and
 :math:`Q_j` to its projection :math:`Q'_j` on :math:`\mathcal{TP}`.
 The vector :math:`\mathbf{r'}_{ij}=\mathbf{x}_i-\mathbf{x'}_j` going from
@@ -173,7 +173,7 @@ Which leads to:
 .. math::
   \mathbf{\nabla}_\mathcal{TP}W_{ij} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert)^2}{r_{ij}}\left\{
   \begin{aligned}
-  & v_{ij,1}\mathbf{V_1} + v_{ij,2}\mathbf{V_2}, \quad &0\leq \left\Vert \mathbf{r_{lj}}\right\Vert \leq  r_0\\
+  & v_{ij,1}\mathbf{V_1} + v_{ij,2}\mathbf{V_2}, \quad &0\leq \left\Vert \mathbf{r_{ij}}\right\Vert \leq  r_0\\
   & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
   \end{aligned}
   \right.
