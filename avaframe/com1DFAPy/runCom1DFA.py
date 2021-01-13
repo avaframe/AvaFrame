@@ -80,9 +80,9 @@ dem = com1DFA.initializeMesh(dem)
 # ------------------------
 # process release info to get it as a raster
 relRaster = com1DFA.prepareArea(releaseLine, demOri)
-relTh = 1
+relTh = 50
 # could do something more advanced if we want varying release depth
-relRasterD = relRaster * relTh
+relRaster = relRaster * relTh
 
 # ------------------------
 # initialize simulation : create directories
@@ -167,6 +167,8 @@ fig2, ax2 = com1DFA.plotPosition(
     particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
 fig3, ax3 = com1DFA.plotPosition(
     particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
+fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
+ax4.plot(np.linspace(0, 400, 81), fields['FD'][40,:])
 plt.show()
 
 
