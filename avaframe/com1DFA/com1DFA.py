@@ -356,9 +356,9 @@ def com1DFAMain(cfg, avaDir):
 
     # Setup input from com1DFA and exort to Outputs/com1DFA
     if cfgPar.getboolean('flagVarPar'):
-        fU.exportcom1DFAOutput(avaDir, cfgPar)
+        fU.exportcom1DFAOutput(avaDir, cfgPar, cfgGen.getboolean('addTSteps'))
     else:
-        fU.exportcom1DFAOutput(avaDir)
+        fU.exportcom1DFAOutput(avaDir, cfgGen.getboolean('addTSteps'))
 
     log.info('Exported results to Outputs/com1DFA')
 
