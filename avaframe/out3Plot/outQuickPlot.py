@@ -307,3 +307,143 @@ def quickPlotSimple(avaDir, inputDir, cfg):
 
     # Create Plots
     plotList = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
+
+
+def quickPlotOne(inputDir, datafile, cfg, locVal, axis, resType=''):
+    """ Plots one raster dataset and a cross profile
+
+        figure 1: plot raster data for dataset and profile
+        -plot is saved to Outputs/out3Plot
+
+        Parameters
+        ----------
+        inputDir : str
+            path to directory of input data (takes first dataset)
+        datafile : str
+            path to data file
+        cfg : dict
+            configuration including flags for plotting
+        locVal : float
+            location of cross profile
+        resType : str
+            result parameter type e.g. 'pfd' - optional
+
+    """
+
+    outDir = os.path.join(inputDir, 'out3Plot')
+    fU.makeADir(outDir)
+
+    name1 = os.path.basename(datafile)
+    log.info('input dataset #1 is %s' % name1)
+
+    # Load data
+    data1 = np.loadtxt(datafile, skiprows=6)
+    header = IOf.readASCheader(datafile)
+    cellSize = header.cellsize
+
+    # Create dataDict to be passed to generatePlot
+    dataDict = {'data1': data1, 'name1': name1,
+                'cellSize': cellSize}
+
+    # Initialise plotList
+    plotDict = {'plots': [], 'location': locVal, 'resType': resType, 'axis': axis}
+
+    # Create Plots
+    plotList = generateOnePlot(dataDict, outDir, cfg, plotDict)
+
+
+
+def generateOnePlot(dataDict, outDir, cfg, plotDict):
+    """ Create plots of ascii dataset
+
+        Parameters
+        ----------
+        dataDict : dict
+            dictionary with info on both datasets to be plotted
+        avaName : str
+            name of avalanche
+        outDir : str
+            path to dictionary where plots shall be saved to
+        cfg : dict
+            main configuration settings
+        plotDict : dict
+            dictionary with information about plots, for example release area
+
+        Returns
+        -------
+        plotDict : dict
+            updated plot dictionary with info about e.g. min, mean, max of difference between datasets
+    """
+
+    # Extract info for plotting
+    data1 = dataDict['data1']
+    name1 = dataDict['name1']
+    cellSize = dataDict['cellSize']
+    simName = 'Analyse'
+    if plotDict['resType'] != '':
+        unit = pU.cfgPlotUtils['unit%s' % plotDict['resType']]
+        nameRes = pU.cfgPlotUtils['name%s' % plotDict['resType']]
+    else:
+        unit = ''
+        nameRes = 'Result parameter'
+
+    # Set dimensions of plots
+    ny = data1.shape[0]
+    nx = data1.shape[1]
+    print('shape', ny, nx)
+    Ly = ny*cellSize
+    Lx = nx*cellSize
+    axis = plotDict['axis']
+
+    # Location of Profiles
+    location = float(plotDict['location'])
+    if axis == 'x':
+        nx_loc = int(location / cellSize)
+    elif axis == 'y':
+        ny_loc = int(location / cellSize)
+    else:
+        log.error('Not an axis, please provide axis of profile')
+
+    # Plot data
+    # Figure 1 shows the result parameter data
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+    suptitle = fig.suptitle(name1, fontsize=14, color='0.5')
+    ax1 = fig.add_subplot(121)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(
+        pU.cmapPres, np.amin(data1), np.amax(data1), continuous=pU.contCmap)
+
+    im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+    pU.addColorBar(im1, ax1, ticks, unit)
+
+    ax1.set_aspect('auto')
+    title = str('%s' % name1)
+    ax1.set_title(title)
+    ax1.set_xlabel('x [m]')
+    ax1.set_ylabel('y [m]')
+
+    ax3 = fig.add_subplot(122)
+    if axis == 'x':
+        ax3.plot(data1[:, nx_loc], 'k', label='Reference')
+    else:
+        ax3.plot(data1[ny_loc, :], 'k', label='Reference')
+
+    ax3.set_xlabel('Location across track [nrows]')
+    ax3.set_ylabel('%s [%s]' % (nameRes, unit))
+    if axis == 'x':
+        ax3.set_title('Profile at x ~ %d [%s] (%d)' % (location, unit, nx_loc))
+    else:
+        ax3.set_title('Profile at y ~ %d [%s] (%d)' % (location, unit, ny_loc))
+
+    fig.savefig(os.path.join(outDir, 'Profiles_%s.%s' % (name1, pU.outputFormat)))
+
+
+    log.info('Figures saved to: %s' % outDir)
+
+    if cfg['FLAGS'].getboolean('showPlot'):
+        plt.show()
+
+    plotDict['plots'].append(os.path.join(outDir, 'Profiles_%s.%s' % (name1, pU.outputFormat)))
+
+    plt.close('all')
+
+    return plotDict
