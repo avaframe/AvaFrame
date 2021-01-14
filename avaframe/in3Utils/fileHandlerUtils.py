@@ -242,7 +242,7 @@ def getRefData(avaDir, outputDir, suffix, nameDir=''):
         log.debug('Reference files copied from directory: %s' % refDir)
 
 
-def exportcom1DFAOutput(avaDir, cfg=''):
+def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
     """ Export the simulation results from com1DFA output to desired location
 
         Parameters
@@ -251,6 +251,9 @@ def exportcom1DFAOutput(avaDir, cfg=''):
             path to avalanche directory
         cfg : dict
             configuration read from ini file that has been used for the com1DFA simulation
+        addTSteps : bool
+            if True also first and last time step of flow depth are exported
+
     """
 
     # Initialise directories
@@ -298,6 +301,24 @@ def exportcom1DFAOutput(avaDir, cfg=''):
                                 '%s.html' % logDict['simName'][k])
         pathTo = os.path.join(outDirRep, '%s_%.05f.html' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
+
+    if addTSteps == True:
+        timeStepDir = os.path.join(outDirPF, 'timeSteps')
+        makeADir(timeStepDir)
+
+        # Export peak files and reports
+        for k in range(sNo):
+            pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
+                                    '%s_tLast_fd.txt' % logDict['simName'][k])
+            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tLast_fd.asc' % (logDict['simName'][k], logDict[varPar][k]))
+            shutil.copy(pathFrom, pathTo)
+            print('export Last', pathFrom, pathTo)
+            pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
+                                    '%s_tFirst_fd.txt' % logDict['simName'][k])
+            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tFirst_fd.asc' % (logDict['simName'][k], logDict[varPar][k]))
+            shutil.copy(pathFrom, pathTo)
+            print('export First', pathFrom, pathTo)
+
 
     # Export ExpLog to Outputs/com1DFA
     shutil.copy2(os.path.join('%s' % inputDir, 'ExpLog.txt'), outDir)
