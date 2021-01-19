@@ -440,7 +440,7 @@ def updatePositionC(cfg, particles, dem, force):
   particles['potentialEne'] = TotpotEneNew
   if peakKinEne < TotkinEneNew:
     particles['peakKinEne'] = TotkinEneNew
-  if TotkinEneNew < stopCrit*peakKinEne:
+  if TotkinEneNew <= stopCrit*peakKinEne:
     particles['iterate'] = False
 
   # make sure particle is on the mesh (recompute the z component)
@@ -683,7 +683,7 @@ def getNeighboursC(particles, dem):
     return particles
 
 
-def computeForceSPHC(cfg, particles, force, dem):
+def computeForceSPHC(cfg, particles, force, dem, SPHOption=2, gradient=0):
   """ Prepare data for C computation of lateral forces (SPH component)
   acting on the particles (SPH component)
 
@@ -716,7 +716,7 @@ def computeForceSPHC(cfg, particles, force, dem):
 
   indX = particles['indX'].astype('int')
   indY = particles['indY'].astype('int')
-  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption, gradient)
   forceSPHX = np.asarray(forceSPHX)
   forceSPHY = np.asarray(forceSPHY)
   forceSPHZ = np.asarray(forceSPHZ)
@@ -736,7 +736,7 @@ def computeForceSPHC(cfg, particles, force, dem):
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
 def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
-                 double[:, :] Nz, long[:] indX, long[:] indY, SPHOption=2, gradient=0):
+                 double[:, :] Nz, long[:] indX, long[:] indY, SPHOption, gradient):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -797,7 +797,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef double K1 = 1
   cdef double K2 = 1
   cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr
-  cdef double g1, g2, g11, g12, g22
+  cdef double g1, g2, g11, g12, g22, g33
   cdef double xx, yy, zz, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
   cdef double dx, dy, dz, dn, r, hr, dwdr
   cdef int lInd, rInd
@@ -877,7 +877,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                   g1 = nx/(nz)
                   g2 = ny/(nz)
                   # get norm of r = xj - xl
-                  r = norm(dx, dy, 0)
+                  r = norm(dx, dy, dz)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
                       dx = minRKern * rKernel * dx
@@ -914,9 +914,12 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       g1 = nx/(nz)
                       g2 = ny/(nz)
 
-                      gradhX = gradhX + vx*G1 + wx*G2
-                      gradhY = gradhY + vy*G1 + wy*G2
-                      gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
+                      # gradhX = gradhX + vx*G1 + wx*G2
+                      # gradhY = gradhY + vy*G1 + wy*G2
+                      # gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
+                      gradhX = gradhX + ux*G1 + uxOrtho*G2
+                      gradhY = gradhY + uy*G1 + uyOrtho*G2
+                      gradhZ = gradhZ + (- g1*(ux*G1 + uxOrtho*G2) - g2*(uy*G1 + uyOrtho*G2))
                 elif SPHoption == 3:
                   # Option 3
                   # No proof yet....
@@ -946,13 +949,16 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       g1 = nx/(nz)
                       g2 = ny/(nz)
                       g12 = g1*g2
-                      # g33 = (1 + g1*g1 + g2*g2)
+                      g33 = (1 + g1*g1 + g2*g2)
                       g11 = 1 + g1*g1
                       g22 = 1 + g2*g2
 
                       gradhX = gradhX + mdwdrr * (g11*dx + g12*dy)
                       gradhY = gradhY + mdwdrr * (g22*dy + g12*dx)
                       gradhZ = gradhZ + (- g1*mdwdrr * (g11*dx + g12*dy) - g2*mdwdrr * (g22*dy + g12*dx))
+                      # gradhX = gradhX + mdwdrr * (g22*dx - g12*dy) / g33
+                      # gradhY = gradhY + mdwdrr * (g11*dy - g12*dx) / g33
+                      # gradhZ = gradhZ + mdwdrr * (g1*dx + g2*dy) / g33
 
     if grad == 1:
       GHX[j] = GHX[j] - gradhX / rho
