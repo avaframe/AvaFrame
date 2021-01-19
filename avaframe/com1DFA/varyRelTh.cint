@@ -46,6 +46,28 @@ int running(char project_dir[],char sim_name[]) {
 ///////////////////////////////////////////////////////////////////////////////
 // postprocessing of simulation runs
 
+void export_first_time(char SimName[], char ResultDir_rep[]){
+
+		char name2[512];
+    char Sim[512];
+    char Var[512];
+    char OutFile[512];
+
+  	// Prepare for postprocessing of first and last time step of flow depth parameter
+    sprintf(name2,"Project/Simulations/%s",SimName);
+    sprintf(Sim,"Project/Simulations/%s",SimName);
+    set(Sim, "LoadFirstTimeStep", "");
+
+    //export Flow Depth
+    sprintf(Var,"Project/Simulations/%s/FlowDepth",SimName);
+    set(Var, "Active", "1");
+    sprintf(OutFile,"%s/%s_tFirst_fd.txt",ResultDir_rep, SimName);
+
+    // TODO: make sure same resolution as topo is used
+    set(Var, "ExportRasterSize", "5");
+    set(Var, "ExportFieldRasterAscii", OutFile);
+}
+
 void postprocessing(char ResultDir[], char SimName[], float relH){
 
     char name[512];
@@ -65,33 +87,8 @@ void postprocessing(char ResultDir[], char SimName[], float relH){
     set(name, "set_report_directory", ResultDir_rep);
     set(name, "generate_report", "");
 
-    // Prepare for postprocessing of first and last time step of flow depth parameter
-    sprintf(name2,"Project/Simulations/%s",SimName);
-    sprintf(Sim,"Project/Simulations/%s",SimName);
-    set(Sim, "LoadFirstTimeStep", "");
-
-    //export Flow Depth
-    sprintf(Var,"Project/Simulations/%s/FlowDepth",SimName);
-    set(Var, "Active", "1");
-    sprintf(OutFile,"%s/%s_tFirst_fd.txt",ResultDir_rep, SimName);
-
-    // TODO: make sure same resolution as topo is used
-    set(Var, "ExportRasterSize", "5");
-    set(Var, "ExportFieldRasterAscii", OutFile);
-
-    sprintf(Sim,"Project/Simulations/%s",SimName);
-    set(Sim, "LoadLastTimeStep", "");
-
-
-    //export Flow Depth
-    sprintf(Var,"Project/Simulations/%s/FlowDepth",SimName);
-    set(Var, "Active", "1");
-    sprintf(OutFile,"%s/%s_tLast_fd.txt",ResultDir_rep, SimName);
-
-    // TODO: make sure same resolution as topo is used
-    set(Var, "ExportRasterSize", "5");
-    set(Var, "ExportFieldRasterAscii", OutFile);
-
+    // Export first time step flow depth
+    export_first_time(SimName,ResultDir_rep);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
