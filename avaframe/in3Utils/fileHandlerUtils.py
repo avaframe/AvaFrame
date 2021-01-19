@@ -252,7 +252,7 @@ def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
         cfg : dict
             configuration read from ini file that has been used for the com1DFA simulation
         addTSteps : bool
-            if True also first and last time step of flow depth are exported
+            if True: first and last time step of flow depth are exported
 
     """
 
