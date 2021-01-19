@@ -315,7 +315,8 @@ def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
             shutil.copy(pathFrom, pathTo)
             pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                     '%s_tFirst_fd.txt' % logDict['simName'][k])
-            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tFirst_fd.asc' % (logDict['simName'][k], logDict[varPar][k]))
+            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tFirst_fd.asc' 
+                                               % (logDict['simName'][k], logDict[varPar][k]))
             shutil.copy(pathFrom, pathTo)
 
     # Export ExpLog to Outputs/com1DFA
