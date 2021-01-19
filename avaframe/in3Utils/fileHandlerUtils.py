@@ -280,6 +280,10 @@ def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
     # Path to com1DFA results
     resPath = os.path.join(inputDir, 'FullOutput_%s_' % varPar)
 
+    if addTSteps == True:
+        timeStepDir = os.path.join(outDirPF, 'timeSteps')
+        makeADir(timeStepDir)
+
     # Export peak files and reports
     for k in range(sNo):
         pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
@@ -287,6 +291,12 @@ def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
                                 '%s_pfd.asc' % logDict['simName'][k])
         pathTo = os.path.join(outDirPF, '%s_%.05f_pfd.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
+        if addTSteps == True:
+            pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
+                                    logDict['simName'][k], 'raster',
+                                    '%s_fd.asc' % logDict['simName'][k])
+            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tLast_fd.asc' % (logDict['simName'][k], logDict[varPar][k]))
+            shutil.copy(pathFrom, pathTo)
         pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_ppr.asc' % logDict['simName'][k])
@@ -303,19 +313,12 @@ def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
         shutil.copy(pathFrom, pathTo)
 
     if addTSteps == True:
-        timeStepDir = os.path.join(outDirPF, 'timeSteps')
-        makeADir(timeStepDir)
 
         # Export peak files and reports
         for k in range(sNo):
             pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
-                                    '%s_tLast_fd.txt' % logDict['simName'][k])
-            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tLast_fd.asc' 
-                                              % (logDict['simName'][k], logDict[varPar][k]))
-            shutil.copy(pathFrom, pathTo)
-            pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                     '%s_tFirst_fd.txt' % logDict['simName'][k])
-            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tFirst_fd.asc' 
+            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tFirst_fd.asc'
                                                % (logDict['simName'][k], logDict[varPar][k]))
             shutil.copy(pathFrom, pathTo)
 

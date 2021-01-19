@@ -390,7 +390,6 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     # Set dimensions of plots
     ny = data1.shape[0]
     nx = data1.shape[1]
-    print('shape', ny, nx)
     Ly = ny*cellSize
     Lx = nx*cellSize
     axis = plotDict['axis']
