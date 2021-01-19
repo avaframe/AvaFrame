@@ -380,6 +380,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         log.info('Use standard time stepping')
     # Initialize time and counters
     nSave = 0
+    Tcpu['nSave'] = nSave
     nIter = 0
     nIter0 = 0
     iterate = True
@@ -403,9 +404,6 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         nIter = nIter + 1
         nIter0 = nIter0 + 1
         log.debug('Computing time step t = %f s', t)
-        T = np.append(T, t)
-        particles['t'] = t
-        Tcpu['nSave'] = nSave
 
         # Perform computations
         if featLF:
@@ -414,6 +412,11 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         else:
             particles, fields, Tcpu = computeEulerTimeStep(
                 cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+
+
+        T = np.append(T, t)
+        Tcpu['nSave'] = nSave
+        particles['t'] = t
         # Save desired parameters and export to Lists for saving interval
         U = np.append(U, DFAtls.norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
         Z = np.append(Z, particles['z'][0])
@@ -496,6 +499,30 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         particles, force = computeForceSPH(cfg, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
+    # plot depth computed with different interpolation methods
+    nSave = Tcpu['nSave']
+    dtSave = cfg.getfloat('dtSave')
+    # if particles['t'] >= nSave * dtSave:
+    #     force2 = {}
+    #     particles, force2 = SPHC.computeForceSPHC(cfg, particles, force2, dem, SPHOption=2, gradient=1)
+    #     grad = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
+    #     # grad = DFAtls.norm(force['forceSPHX'], force['forceSPHY'], force['forceSPHZ'])
+    #     x = particles['x']
+    #     y = particles['y']
+    #     m = particles['m']
+    #     ind = np.where(((particles['y'] > 250-2.5) & (particles['y'] < 250+2.5)))
+    #     Grad = np.zeros((101, 441))
+    #     MassBilinear = np.zeros((101, 441))
+    #     MassBilinear = SPHC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
+    #     Grad = SPHC.pointsToRasterC(x, y, m*grad, Grad, csz=5)
+    #     indMass = np.where(MassBilinear > 0)
+    #     Grad[indMass] = Grad[indMass]/MassBilinear[indMass]
+    #     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    #     fig1, ax1 = plotPosition(particles, dem, Grad, pU.cmapPres, '', fig1, ax1, plotPart=False)
+    #     fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
+    #     ax4.plot(np.linspace(-200, 2000, 441), Grad[51,:])
+    #     ax4.plot(particles['x'][ind]-200, grad[ind], '.r', linestyle='None')
+    #     plt.show()
 
     # update velocity and particle position
     startTime = time.time()
@@ -537,9 +564,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
-    # plot depth computed with different interpolation methods
-    nSave = Tcpu['nSave']
-    dtSave = cfg.getfloat('dtSave')
+
     if debugPlot and particles['t'] >= nSave * dtSave:
         hNN = copy.deepcopy(particles['hNearestNearest'])
         hNB = copy.deepcopy(particles['hNearestBilinear'])

@@ -21,6 +21,7 @@ import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.com1DFAPy.DFAtools as DFAtls
+import avaframe.com1DFAPy.SPHfunctionsCython as SPHC
 
 # from avaframe.DFAkernel.setParam import *
 import avaframe.out3Plot.plotUtils as pU
@@ -80,8 +81,30 @@ dem = com1DFA.initializeMesh(dem)
 # ------------------------
 # process release info to get it as a raster
 relRaster = com1DFA.prepareArea(releaseLine, demOri)
-relTh = 50
+########## custom release for tests
+# nrows = demOri['header'].nrows
+# ncols = demOri['header'].ncols
+# xllc = demOri['header'].xllcenter
+# yllc = demOri['header'].yllcenter
+# csz = demOri['header'].cellsize
+# x = np.linspace(0, ncols-1, ncols)*csz+xllc
+# y = np.linspace(0, nrows-1, nrows)*csz+yllc
+# X, Y = np.meshgrid(x, y)
+# cos = math.cos(math.pi*35/180)
+# r = np.sqrt((X*X)/(cos*cos)+(Y*Y))
+# H0 = 8
+# relTh = H0 * (1 - (r/80) * (r/80))
+# relTh = np.where(relTh < 0, 0, relTh)
+#
+# x = np.linspace(0, ncols-1, ncols)
+# y = np.linspace(0, nrows-1, nrows)
+# X, Y = np.meshgrid(x, y)
+# relTh1 = -(np.sqrt((X-100)*(X-100)+0*(Y-100)*(Y-100))*5-105)*0.04765
+# relTh2 = -(np.sqrt(0*(X-100)*(X-100)+(Y-100)*(Y-100))*5-105)*0.04
+# relTh = np.minimum(relTh1, relTh2)
 # could do something more advanced if we want varying release depth
+########################
+relTh = 1
 relRaster = relRaster * relTh
 
 # ------------------------
@@ -137,26 +160,12 @@ while repeat == True:
         S = np.append(S, part['s'][0])
         Z = np.append(Z, part['z'][0])
         U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
-        # print(part['t'])
-        # print(DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
-        # exact solution for inclined plane with no friction
-        # print(gravAcc * math.sin(34*math.pi/180) * part['t'])
-        # exact solution with no friction
-        # print(math.sqrt(2 * gravAcc * abs(partRef['z'][0] - part['z'][0])))
-
-        # exact solution for inclined plane with friction
-        # print(gravAcc * math.cos(34*math.pi/180) * (math.tan(34*math.pi/180) - mu) * part['t'])
-        # exact solution with friction
-        # print(math.sqrt(2 * gravAcc * ((partRef['z'][0] - part['z'][0]) - mu * part['s'][0])))
-        #
         fig, ax = com1DFA.plotPosition(
             part, demOri, dem['Nz'], pU.cmapDEM2, '', fig, ax, plotPart=True)
-        # fig1, ax1 = DFAtls.plotPosition(part, dem, dem['rasterData'], fig1, ax1)
-    # plt.show()
-    # repeat = False
     value = input("[y] to repeat:\n")
     if value != 'y':
         repeat = False
+
 fieldRef = Fields[-1]
 fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
 fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
@@ -167,8 +176,31 @@ fig2, ax2 = com1DFA.plotPosition(
     particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
 fig3, ax3 = com1DFA.plotPosition(
     particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
-fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
-ax4.plot(np.linspace(0, 400, 81), fields['FD'][40,:])
+# fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
+# ax4.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols-1), (fields['FD'][101, 1:ncols]-fields['FD'][101, 0:(ncols-1)])/5*math.cos(math.pi*3/180))
+# force2 = {}
+# particles = Particles[-1]
+# particles, force2 = SPHC.computeForceSPHC(cfgGen, particles, force2, dem, SPHOption=2, gradient=1)
+# grad = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
+# # grad = DFAtls.norm(force['forceSPHX'], force['forceSPHY'], force['forceSPHZ'])
+# x = particles['x']
+# y = particles['y']
+# m = particles['m']
+# ind = np.where(((particles['y']+yllc > -2.5) & (particles['y']+yllc < 2.5)))
+# Grad = np.zeros((nrows, ncols))
+# MassBilinear = np.zeros((nrows, ncols))
+# MassBilinear = SPHC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
+# Grad = SPHC.pointsToRasterC(x, y, m*grad, Grad, csz=5)
+# indMass = np.where(MassBilinear > 0)
+# Grad[indMass] = Grad[indMass]/MassBilinear[indMass]
+# fig5, ax5 = plt.subplots(figsize=(pU.figW, pU.figH))
+# fig5, ax5 = com1DFA.plotPosition(particles, dem, Grad, pU.cmapPres, '', fig5, ax5, plotPart=False)
+# fig6, ax6 = plt.subplots(figsize=(pU.figW, pU.figH))
+# ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), Grad[101,:], 'b')
+# ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][101,:], 'r')
+# ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][101,:], 'g')
+# ax6.plot(particles['x'][ind]+xllc, grad[ind], '.r', linestyle='None')
+#     plt.show()
 plt.show()
 
 
