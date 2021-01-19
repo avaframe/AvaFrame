@@ -24,6 +24,7 @@ log = logging.getLogger(__name__)
 # 3) project on the plane, compute the gradient in the local coord sys related
 # to the local plane (tau1, tau2, n) non orthogonal coord sys
 SPHoption = 2
+minRKern = 0.01
 
 
 def getNeighbours(particles, dem):
