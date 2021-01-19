@@ -46,27 +46,14 @@ int running(char project_dir[],char sim_name[]) {
 ///////////////////////////////////////////////////////////////////////////////
 // postprocessing of simulation runs
 
-void postprocessing(char ResultDir[], char SimName[], char varPar[], float val){
+void export_first_time(char SimName[], char ResultDir_rep[]){
 
-    char name[512];
-    char ResultDir_rep[512];
-    char ValString[512];
-    char name2[512];
+		char name2[512];
     char Sim[512];
     char Var[512];
     char OutFile[512];
 
-
-    // Generate a full report
-    sprintf(ValString,"%.5f",val);
-    sprintf(ResultDir_rep,"%s/FullOutput_%s_%s",ResultDir,varPar,ValString);
-    if(make_directory(ResultDir_rep)){ set_error("cannot create report directory"); return;}
-    printf("\n[BatchCom1DFA] Report is saved to %s \n",ResultDir_rep);
-    sprintf(name,"Project/Simulations/%s",SimName);
-    set(name, "set_report_directory", ResultDir_rep);
-    set(name, "generate_report", "");
-
-    // Prepare for postprocessing of first and last time step of flow depth parameter
+  	// Prepare for postprocessing of first and last time step of flow depth parameter
     sprintf(name2,"Project/Simulations/%s",SimName);
     sprintf(Sim,"Project/Simulations/%s",SimName);
     set(Sim, "LoadFirstTimeStep", "");
@@ -79,20 +66,25 @@ void postprocessing(char ResultDir[], char SimName[], char varPar[], float val){
     // TODO: make sure same resolution as topo is used
     set(Var, "ExportRasterSize", "5");
     set(Var, "ExportFieldRasterAscii", OutFile);
+}
 
-    sprintf(Sim,"Project/Simulations/%s",SimName);
-    set(Sim, "LoadLastTimeStep", "");
+void postprocessing(char ResultDir[], char SimName[], char varPar[], float val){
 
+    char name[512];
+    char ResultDir_rep[512];
+    char ValString[512];
 
-    //export Flow Depth
-    sprintf(Var,"Project/Simulations/%s/FlowDepth",SimName);
-    set(Var, "Active", "1");
-    sprintf(OutFile,"%s/%s_tLast_fd.txt",ResultDir_rep, SimName);
+    // Generate a full report
+    sprintf(ValString,"%.5f",val);
+    sprintf(ResultDir_rep,"%s/FullOutput_%s_%s",ResultDir,varPar,ValString);
+    if(make_directory(ResultDir_rep)){ set_error("cannot create report directory"); return;}
+    printf("\n[BatchCom1DFA] Report is saved to %s \n",ResultDir_rep);
+    sprintf(name,"Project/Simulations/%s",SimName);
+    set(name, "set_report_directory", ResultDir_rep);
+    set(name, "generate_report", "");
 
-    // TODO: make sure same resolution as topo is used
-    set(Var, "ExportRasterSize", "5");
-    set(Var, "ExportFieldRasterAscii", OutFile);
-
+    // Export first time step flow depth
+    export_first_time(SimName,ResultDir_rep);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
