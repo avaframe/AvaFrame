@@ -254,7 +254,7 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
           # SamosAT friction type (bottom shear stress)
           tau = SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
           # coulomb friction type (bottom shear stress)
-          # tau = mu * sigmaB
+          tau = mu * sigmaB
 
       # adding bottom shear resistance contribution
       forceBotTang = - A * tau
@@ -913,12 +913,12 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       g1 = nx/(nz)
                       g2 = ny/(nz)
 
-                      # gradhX = gradhX + vx*G1 + wx*G2
-                      # gradhY = gradhY + vy*G1 + wy*G2
-                      # gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
-                      gradhX = gradhX + ux*G1 + uxOrtho*G2
-                      gradhY = gradhY + uy*G1 + uyOrtho*G2
-                      gradhZ = gradhZ + (- g1*(ux*G1 + uxOrtho*G2) - g2*(uy*G1 + uyOrtho*G2))
+                      gradhX = gradhX + vx*G1 + wx*G2
+                      gradhY = gradhY + vy*G1 + wy*G2
+                      gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
+                      # gradhX = gradhX + ux*G1 + uxOrtho*G2
+                      # gradhY = gradhY + uy*G1 + uyOrtho*G2
+                      # gradhZ = gradhZ + (- g1*(ux*G1 + uxOrtho*G2) - g2*(uy*G1 + uyOrtho*G2))
                 elif SPHoption == 3:
                   # Option 3
                   # No proof yet....
