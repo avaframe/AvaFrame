@@ -526,7 +526,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         # get SPH flow depth
         # particles = SPH.computeFlowDepth(cfg, particles, dem)
         header = dem['header']
-        csz = header.cellsize
         Nx = dem['Nx']
         Ny = dem['Ny']
         Nz = dem['Nz']
