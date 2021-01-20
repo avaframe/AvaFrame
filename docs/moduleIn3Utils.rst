@@ -92,6 +92,7 @@ The following topography types can be chosen:
 * hockey stick smooth - using an linearly sloping plane with smoothed transition to the flat foreland (HS2)
 * bowl-shaped topography (BL)
 * helix-shaped topography (HX)
+* pyramid-shaped topography
 
 On top of these topographies, channels can be introduced (then set flag_channel=True), and these channels can also be set to become narrower along the channel and wider at the end of the channel (then set flag_narrowing=True).
 There is the option to introduce these channels by either cutting them into the original topography (flag_topoconst=True) or by adding a 'channel layer' (max thickness=channel depth) on top of the topography.
@@ -126,11 +127,14 @@ Channels are introduced as half-sphere shaped features with smooth transition fr
 Configuration parameters
 ------------------------
 
+In the case of the pyramid-shaped topography, the domain extent is defined by the max elevation (z0 - elevation of the appex point) and the
+slope of the pyramid facets (meanAlpha)
+
 **Domain parameters:**
 
 :dx: DEM spatial resolution [m]
 :xEnd: total horizontal extent of the domain [m]
-:yEnd:	 total horizontal extent of the domain [m]
+:yEnd: total horizontal extent of the domain [m]
 
 
 **Topography parameters:**
@@ -138,12 +142,16 @@ Configuration parameters
 :f_lens: 	distance to point where slope transitions into flat plane [m]
 :mean_alpha: 	slope angle from max. elevation to start flat plane [°] - or slope of inclined plane [°]
 :C: 		total fall height [m]
+:meanAlpha: slope of inclined plane [°]
 :rBowl:	  bowl radius [m]
 :rHelix:	  radius for helix [m]
 :z0: 		max elevation [m]
 :zElev:	  elevation of flat plane [m]
 :rCirc: 	radius of smoothing circle [m]
 :DEM_type: topography types (FP, IP, HS, HS2, BL, HX - explanation given in the introductory description**
+:flatx: extent of flat foreland for pyramid in x
+:flaty: extent of flat foreland for pyramid in y
+:phi: rotation angle for pyramid
 
 
 **Flags for channels and plotting:**
@@ -152,6 +160,8 @@ Configuration parameters
 :narrowing: True - channel is wide at start and end and narrow in the middle part; False - channel is uniform
 :topoconst: True - cut channel into original topography; False - add channel layer
 :showplot: True - show plot of generated DEM
+:flagRot: True - rotate pyramid along z-axis
+
 
 **Channel parameters:**
 
@@ -319,4 +329,4 @@ and renames the peak files to include information on additional parameters such 
 ``data =  makeSimDict(inputDir, varPar='', avaDir='')`` takes all the peak files (avalanche simulation results saved as .asc file)
 and creates a dictionary that contains information for each simulation, such as path to file, file name,
 release area scenario, simulation type, model type, parameter variation, result type, simulation name, cell Size and name of avalanche.
-This dictionary can be used in other functions to load or filter simulation results. 
+This dictionary can be used in other functions to load or filter simulation results.
