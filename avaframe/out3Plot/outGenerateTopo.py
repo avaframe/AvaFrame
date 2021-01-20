@@ -20,19 +20,19 @@ def plotDEM(z, name_ext, cfg, outDir):
 
     # input parameters
     dx = float(cfgTopo['dx'])
-    x_end = float(cfgTopo['xEnd']) + dx
-    y_end = float(cfgTopo['yEnd']) + dx
     xl = float(cfgDEM['xl'])
     yl = float(cfgDEM['yl'])
     dem_name = cfgDEM['dem_name']
+    xEnd = z.shape[1] * dx
+    yEnd = z.shape[0] * dx
 
     # Set coordinate grid with given origin
-    xp = np.arange(xl, xl + x_end, dx)
-    yp = np.arange(yl, yl + y_end, dx)
+    xp = np.arange(xl, xl + xEnd, dx)
+    yp = np.arange(yl, yl + yEnd, dx)
     X, Y = np.meshgrid(xp, yp)
 
     topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'HS': 'Hockeystick',
-                 'HS2': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix'}
+                 'HS2': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix', 'PY': 'Pyramid'}
 
     ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, z, cmap=plt.cm.viridis,
