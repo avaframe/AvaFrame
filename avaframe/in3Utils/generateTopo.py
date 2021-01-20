@@ -7,6 +7,7 @@
 import logging
 import numpy as np
 from scipy.stats import norm
+from scipy.interpolate import griddata
 import os
 
 # create local logger
@@ -392,6 +393,62 @@ def helix(cfg):
     return x, y, zv
 
 
+def pyramid(cfg):
+    """ Generate a pyramid topography - in this case rectangular domain """
+
+    # get parameters from ini
+    meanAlpha = float(cfg['TOPO']['meanAlpha'])
+    z0 = float(cfg['TOPO']['z0'])
+    flatx = float(cfg['TOPO']['flatx'])
+    flaty = float(cfg['TOPO']['flaty'])
+    phi = float(cfg['TOPO']['phi'])
+    dx = float(cfg['TOPO']['dx'])
+
+    # initialise pyramid corners and center point
+    points = np.asarray([[-1., -1., 0], [-1., 1., 0], [1., 1., 0], [1., -1, 0.], [0., 0., 1.]])
+    dxPoints = abs(points[4,0] - points[1,0])
+
+    # compute elevation of the apex point for given angle of pyramid facets
+    zAlpha = dxPoints * np.tan(np.deg2rad(meanAlpha))
+    points[4,2] = zAlpha
+    dcoors = points * z0 /zAlpha
+
+    # if desired rotate pyramid
+    if cfg['TOPO'].getboolean('flagRot') == True:
+        dcoorsRot = np.zeros((len(dcoors),3))
+        for m in range(len(dcoorsRot)):
+            dcoorsRot[m,0] = np.cos(np.deg2rad(phi)) * dcoors[m,0] - np.sin(np.deg2rad(phi)) * dcoors[m,1]
+            dcoorsRot[m,1] = np.sin(np.deg2rad(phi)) * dcoors[m,0] + np.cos(np.deg2rad(phi)) * dcoors[m,1]
+            dcoorsRot[m,2] = dcoors[m,2]
+        dcoorsFin = dcoorsRot
+    else:
+        dcoorsFin = dcoors
+
+    # split into horizontal and vertical coordinate points
+    xyPoints = np.zeros((len(points),2))
+    xyPoints[:,0] = dcoorsFin[:,0]
+    xyPoints[:,1] = dcoorsFin[:,1]
+    zPoints = dcoorsFin[:,2]
+
+    # make meshgrid for final DEM
+    xv = np.arange(-flatx+np.amin(dcoorsFin[:,0]), np.amax(dcoorsFin[:,0])+flatx, dx)
+    yv = np.arange(-flaty+np.amin(dcoorsFin[:,1]), np.amax(dcoorsFin[:,1])+flaty, dx)
+    nRows = len(yv)
+    nCols = len(xv)
+    x, y = np.meshgrid(xv, yv)
+
+    # interpolate appex point information to meshgrid
+    z = griddata(xyPoints, zPoints, (x, y), method='linear')
+    zNan = np.isnan(z)
+    z[zNan] = 0.0
+
+    dX =  np.amax(dcoorsFin[:,0])+flatx - (-flatx+np.amin(dcoorsFin[:,0]))
+    dY =  np.amax(dcoorsFin[:,1])+flaty - (-flaty+np.amin(dcoorsFin[:,1]))
+    log.info('domain extent pyramid- inx: %f, in y: %f' % (dX, dY))
+
+    return x, y, z
+
+
 def writeDEM(cfg, z, outDir):
     """ Write topography information to file """
     nameExt = cfg['TOPO']['DEM_type']
@@ -455,6 +512,9 @@ def generateTopo(cfg, avalancheDir):
 
     elif demType == 'HX':
         [x, y, z] = helix(cfg)
+
+    elif demType == 'PY':
+        [x, y, z] = pyramid(cfg)
 
     # Write DEM to file
     writeDEM(cfg, z, outDir)
