@@ -200,7 +200,22 @@ def initializeSimulation(cfg, relRaster, dem):
 
     # get particles location (neighbours for sph)
     # particles = getNeighbours(particles, dem)
+
     particles = DFAfunC.getNeighboursC(particles, dem)
+
+    Nx = dem['Nx']
+    Ny = dem['Ny']
+    Nz = dem['Nz']
+    indX = (particles['indX']).astype('int')
+    indY = (particles['indY']).astype('int')
+    H, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+    H = np.asarray(H)
+    # particles['h'] = H
+    # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+    # particles['h'] = hh
+    # H = np.asarray(H)
+    W = np.asarray(W)
+    particles['hSPH'] = H/W
     # initialize time
     t = 0
     particles['t'] = t
@@ -533,7 +548,12 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         indY = (particles['indY']).astype('int')
         H = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
-        particles['hSPH'] = H
+        # particles['h'] = H
+        # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        # particles['h'] = hh
+        # H = np.asarray(H)
+        W = np.asarray(W)
+        particles['hSPH'] = H/W
 
     # update fields (compute grid values)
     startTime = time.time()

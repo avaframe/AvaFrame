@@ -196,8 +196,9 @@ while isinstance(value, float):
     m = particles['m']
     ind = np.where(((particles['y']+yllc > -2.5) & (particles['y']+yllc < 2.5)))
     x = particles['x'][ind]+xllc
+    x1 = x/cos
     h = particles['h'][ind]
-    # hsph = particles['hSPH'][ind]
+    hsph = particles['hSPH'][ind]
     ux = particles['ux'][ind]
     uy = particles['uy'][ind]
     uz = particles['uz'][ind]
@@ -209,7 +210,7 @@ while isinstance(value, float):
     ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][50,:], 'k')
     ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][50,:], 'g')
     ax1.plot(x, h, '.k', linestyle='None')
-    # ax1.plot(x, hsph, '*k', linestyle='None')
+    ax1.plot(x, hsph, '*k', linestyle='None')
     # ax1.plot(x, Ux, '.b', linestyle='None')
     # ax1.plot(x, Uy, '.r', linestyle='None')
     ax1.plot(x, v, '.g', linestyle='None')
@@ -227,7 +228,7 @@ while isinstance(value, float):
     x = particles['x'][ind]+xllc
     y = particles['y'][ind]+yllc
     h = particles['h'][ind]
-    # hsph = particles['hSPH'][ind]
+    hsph = particles['hSPH'][ind]
     ux = particles['ux'][ind]
     uy = particles['uy'][ind]
     uz = particles['uz'][ind]
@@ -240,7 +241,7 @@ while isinstance(value, float):
     ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:, indc], 'k')
     ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['V'][:, indc], 'g')
     ax2.plot(y, h, '.k', linestyle='None')
-    # ax2.plot(y, hsph, '*k', linestyle='None')
+    ax2.plot(y, hsph, '*k', linestyle='None')
     # ax2.plot(y, Ux, '.b', linestyle='None')
     # ax2.plot(y, Uy, '.r', linestyle='None')
     ax2.plot(y, v, '.g', linestyle='None')
