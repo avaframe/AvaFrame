@@ -34,6 +34,9 @@ def Hfunction(x, y, z):
     GHx = 2*x*y/5000
     GHy = x*x/5000
     h = x*x*y/5000 + 1
+    r = np.sqrt((x-12.5)*(x-12.5)+(y-12.5)*(y-12.5))
+    H0 = 1
+    h = H0 * (1 - (r/12.5) * (r/12.5))
     # GHx = np.ones(np.shape(x))/10
     # h = np.ones(np.shape(x))
     # GHx = np.zeros(np.shape(x))
@@ -68,19 +71,19 @@ def Sfunction(x, y, Lx, Ly):
     return Z, sx, sy, area
 
 
-slopeAnglex = 40*math.pi/180
-slopeAngley = 20*math.pi/180
+slopeAnglex = 0*math.pi/180
+slopeAngley = 0*math.pi/180
 # set the size of the mesh grid [m]
 NDX = [5]
 # NDX = [7.5, 5, 3, 2, 1]
 # choose the number of particles per DX and DY
 # if you choose 3, you will have 3*3 = 9 particles per grid cell
 # NPartPerD = [40]
-NPartPerD = [39] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
+NPartPerD = [2, 4, 8, 11, 18, 58] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
-coef = 0.
+coef = 0
 rho = 200
 ##############################################################################
 # END CHOOSE SETUP
@@ -149,6 +152,7 @@ for DX in NDX:
         particles['ux'] = np.zeros(np.shape(Ypart))
         particles['uy'] = np.zeros(np.shape(Ypart))
         particles['uz'] = np.zeros(np.shape(Ypart))
+        particles['h'] = np.ones(np.shape(Ypart))
 
         particles['m'] = Mpart
         particles['h'] = Hpart
@@ -251,9 +255,16 @@ for DX in NDX:
         print('Time SPHOption 3: ', tottime)
         startTime = time.time()
         # Compute sph FD
-        H = computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        H, W = computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
+        W = np.asarray(W)
+        particles['h'] = H
         particles['hSPH'] = H
+        H, W = computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        H = np.asarray(H)
+        W = np.asarray(W)
+        particles['W'] = W
+        particles['hSPH'] = H*W
         tottime = time.time() - startTime
         print('Time FD: ',tottime)
 
@@ -305,6 +316,10 @@ for DX in NDX:
         ax1.plot(particles['x'][ind], h[ind], color='r', marker='.', linestyle='None')
         ax1.plot(particles['x'][ind], particles['hSPH'][ind], color=col,
                  marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
+        ax1.plot(particles['x'][ind], particles['h'][ind], color=col,
+                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
+        ax1.plot(particles['x'][ind], particles['W'][ind], color=col,
+                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
 
         ind = np.where(((particles['x'] > Lx/2-0.5*dx) & (particles['x'] < Lx/2+0.5*dx)))
         # if count == 1:
@@ -322,6 +337,10 @@ for DX in NDX:
         # , label='real flow depth')
         ax2.plot(particles['y'][ind], h[ind], color='r', marker='.', linestyle='None')
         ax2.plot(particles['y'][ind], particles['hSPH'][ind], color=col,
+                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
+        ax2.plot(particles['y'][ind], particles['h'][ind], color=col,
+                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
+        ax2.plot(particles['y'][ind], particles['W'][ind], color=col,
                  marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
 
         ind = np.where(((particles['y'] > Ly/2-0.5*dy) & (particles['y'] < Ly/2+0.5*dy)))
