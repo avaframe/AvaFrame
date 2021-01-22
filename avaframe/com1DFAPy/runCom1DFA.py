@@ -187,19 +187,21 @@ if debugPlot:
 # Result parameters to be exported
 resTypesString = cfgGen['resType']
 resTypes = resTypesString.split('_')
-finalFields = Fields[-1]
-for resType in resTypes:
-    resField = finalFields[resType]
-    if resType == 'ppr':
-        resField = resField * 0.001
-    relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
-    dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType +'.asc'
-    # create directory
-    outDirPeak = os.path.join(outDir, 'peakFiles')
-    fU.makeADir(outDirPeak)
-    outFile = os.path.join(outDirPeak, dataName)
-    IOf.writeResultToAsc(demOri['header'], resField, outFile)
-    log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
+tSteps = fU.splitIniValueToArray(cfgGen['tSteps']).astype(int)
+for tStep in tSteps:
+    finalFields = Fields[tStep]
+    for resType in resTypes:
+        resField = finalFields[resType]
+        if resType == 'ppr':
+            resField = resField * 0.001
+        relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
+        dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType + '_'  + 't' + str(tStep) +'.asc'
+        # create directory
+        outDirPeak = os.path.join(outDir, 'peakFiles')
+        fU.makeADir(outDirPeak)
+        outFile = os.path.join(outDirPeak, dataName)
+        IOf.writeResultToAsc(demOri['header'], resField, outFile)
+        log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
 
 # Generata plots for all peakFiles
 plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
