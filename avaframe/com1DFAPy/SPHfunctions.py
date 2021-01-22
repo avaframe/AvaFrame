@@ -239,7 +239,7 @@ def calcGradHSPH(cfg, particles, j, ncols, nrows, csz):
     return gradhX, gradhY,  gradhZ, L
 
 
-def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
+def calcGradHSPHVect(cfg, particles, j, ncols, nrows, csz, nx, ny, nz):
     """ Compute gradient of Flow Depth using SPH (no loop implementation)
 
     Compute the gradient of the flow depth at the location of patricle j
@@ -270,6 +270,7 @@ def calcGradHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz):
     """
     # Define SPH kernel
     # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
+    minRKern = cfg.getfloat('minRKern')
     rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
     dfacKernel = -3.0 * facKernel
