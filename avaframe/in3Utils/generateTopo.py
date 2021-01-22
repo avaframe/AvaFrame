@@ -301,10 +301,15 @@ def bowl(cfg):
 
     # Set surface elevation
     zv = rBwol*np.ones((nRows, nCols))
-    radius = np.sqrt(x**2 + y**2)
+    if cfg['TOPO'].getboolean('curvedSlope') == True:
+        radius = np.sqrt(x**2)
+    else:
+        radius = np.sqrt(x**2 + y**2)
     mask = np.zeros(np.shape(x))
     mask[np.where(radius <= rBwol)] = 1
     zv = zv - (rBwol * np.sqrt(np.abs(1 - (radius / rBwol)**2)))*mask
+    if cfg['TOPO'].getboolean('curvedSlope') == True:
+        zv[x>=0] = 0.
 
     # Log info here
     log.info('Bowl coordinates computed')
