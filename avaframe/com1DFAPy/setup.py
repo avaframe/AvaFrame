@@ -14,16 +14,16 @@ import numpy
 #   cmdclass = {"build_ext": build_ext},
 #   ext_modules = ext_modules)
 
-ext_modules=[Extension("SPHfunctionsCython",
-             ["SPHfunctionsCython.pyx"],
+ext_modules = [Extension("DFAfunctionsCython",
+               ["DFAfunctionsCython.pyx"],
               libraries=["m"],
-              extra_compile_args = ["-ffast-math"],
+              extra_compile_args=["-ffast-math"],
               include_dirs=[numpy.get_include()])]
 
 setup(
-  name = "SPHfunctionsCython",
-  cmdclass = {"build_ext": build_ext},
-  ext_modules = ext_modules)
+  name="DFAfunctionsCython",
+  cmdclass={"build_ext": build_ext},
+  ext_modules=ext_modules)
 
 
 #

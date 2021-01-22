@@ -17,9 +17,7 @@ import avaframe.out3Plot.plotUtils as pU
 import avaframe.out3Plot.makePalette as makePalette
 import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
-import avaframe.com1DFAPy.SPHfunctions as SPH
-import avaframe.com1DFAPy.frictionLaws as fricLaws
-import avaframe.com1DFAPy.SPHfunctionsCython as SPHC
+import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
 
 #######################################
 # Set flags here
@@ -39,8 +37,6 @@ flagFDSPH = False
 featLF = False
 featCFL = False
 featCFLConstrain = True
-# use cython functions
-flagCython = True
 
 
 def initializeMesh(dem, num=4):
@@ -204,10 +200,7 @@ def initializeSimulation(cfg, relRaster, dem):
 
     # get particles location (neighbours for sph)
     # particles = getNeighbours(particles, dem)
-    if flagCython:
-        particles = SPHC.getNeighboursC(particles, dem)
-    else:
-        particles = SPH.getNeighboursVect(particles, dem)
+    particles = DFAfunC.getNeighboursC(particles, dem)
     # initialize time
     t = 0
     particles['t'] = t
@@ -477,26 +470,15 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     """
     # get forces
     startTime = time.time()
-    if flagCython:
-        # loop version of the compute force
-        force = SPHC.computeForceC(cfg, particles, dem, Ment, Cres, dt)
-        tcpuForce = time.time() - startTime
-        Tcpu['Force'] = Tcpu['Force'] + tcpuForce
-    else:
-        # vectorized version of the compute force
-        force = computeForceVect(cfg, particles, dem, Ment, Cres, dt)
-        # print(np.max((forceloop['forceX']-force['forceX'])/force['forceX']))
-        # print(np.max((forceloop['forceY']-force['forceY'])/force['forceY']))
-        # print(np.max((forceloop['forceZ']-force['forceZ'])/force['forceZ']))
-        tcpuForceVect = time.time() - startTime
-        Tcpu['ForceVect'] = Tcpu['ForceVect'] + tcpuForceVect
+    # loop version of the compute force
+    force = DFAfunC.computeForceC(cfg, particles, dem, Ment, Cres, dt)
+    tcpuForce = time.time() - startTime
+    Tcpu['Force'] = Tcpu['Force'] + tcpuForce
+
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
-    if flagCython:
-        particles, force = SPHC.computeForceSPHC(cfg, particles, force, dem)
-    else:
-        particles, force = computeForceSPH(cfg, particles, force, dem)
+    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
     # plot depth computed with different interpolation methods
@@ -504,7 +486,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     dtSave = cfg.getfloat('dtSave')
     # if particles['t'] >= nSave * dtSave:
     #     force2 = {}
-    #     particles, force2 = SPHC.computeForceSPHC(cfg, particles, force2, dem, SPHOption=2, gradient=1)
+    #     particles, force2 = DFAfunC.computeForceSPHC(cfg, particles, force2, dem, SPHOption=2, gradient=1)
     #     grad = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
     #     # grad = DFAtls.norm(force['forceSPHX'], force['forceSPHY'], force['forceSPHZ'])
     #     x = particles['x']
@@ -513,8 +495,8 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     #     ind = np.where(((particles['y'] > 250-2.5) & (particles['y'] < 250+2.5)))
     #     Grad = np.zeros((101, 441))
     #     MassBilinear = np.zeros((101, 441))
-    #     MassBilinear = SPHC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
-    #     Grad = SPHC.pointsToRasterC(x, y, m*grad, Grad, csz=5)
+    #     MassBilinear = DFAfunC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
+    #     Grad = DFAfunC.pointsToRasterC(x, y, m*grad, Grad, csz=5)
     #     indMass = np.where(MassBilinear > 0)
     #     Grad[indMass] = Grad[indMass]/MassBilinear[indMass]
     #     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
@@ -526,21 +508,14 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # update velocity and particle position
     startTime = time.time()
-    if flagCython:
-        particles = SPHC.updatePositionC(cfg, particles, dem, force)
-    else:
-        particles = updatePosition(cfg, particles, dem, force)
-
+    # particles = updatePosition(cfg, particles, dem, force)
+    particles = DFAfunC.updatePositionC(cfg, particles, dem, force)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
     # get particles location (neighbours for sph)
     startTime = time.time()
-    if flagCython:
-        particles = SPHC.getNeighboursC(particles, dem)
-    else:
-        # particles = getNeighbours(particles, dem)
-        particles = SPH.getNeighboursVect(particles, dem)
+    particles = DFAfunC.getNeighboursC(particles, dem)
 
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
@@ -555,46 +530,16 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         Nz = dem['Nz']
         indX = (particles['indX']).astype('int')
         indY = (particles['indY']).astype('int')
-        nx, ny, nz = DFAtls.getNormalArray(particles['x'], particles['y'], Nx, Ny, Nz, csz)
-        H = SPHC.computeFDcython(particles, header, nx, ny, nz, indX, indY)
+        H = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
         particles['hSPH'] = H
 
     # update fields (compute grid values)
     startTime = time.time()
     # particles, fields = updateFields(cfg, particles, force, dem, fields)
-    particles, fields = SPHC.updateFieldsC(cfg, particles, force, dem, fields)
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, force, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
-
-
-    if debugPlot and particles['t'] >= nSave * dtSave:
-        hNN = copy.deepcopy(particles['hNearestNearest'])
-        hNB = copy.deepcopy(particles['hNearestBilinear'])
-        hSPH = copy.deepcopy(particles['hSPH'])
-        hBN = copy.deepcopy(particles['hBilinearNearest'])
-        hBB = copy.deepcopy(particles['hBilinearBilinear'])
-        GHX = particles['GHX']
-        GHY = particles['GHY']
-        GHZ = particles['GHZ']
-
-        ind = np.where(((particles['y'] > 995) & (particles['y'] < 1005)))
-        # fig2 = plt.figure()
-        # ax2 = fig2.add_subplot(111, projection='3d')
-        # ax2.scatter(particles['x'], particles['y'], hNN, 'g', marker='.')
-        # ax2.scatter(particles['x'], particles['y'], hBB, 'b', marker='.')
-        # ax2.scatter(particles['x'], particles['y'], hSPH, 'r', marker='.')
-
-        fig1, ax1 = plt.subplots(figsize=(2*pU.figW, pU.figH))
-        ax1.plot(particles['x'][ind], hNN[ind], color='k', marker='.', linestyle='None')
-        ax1.plot(particles['x'][ind], hBB[ind], color='b', marker='.', linestyle='None')
-        ax1.plot(particles['x'][ind], hSPH[ind], color='r', marker='.', linestyle='None')
-
-        fig3, ax3 = plt.subplots(figsize=(2*pU.figW, pU.figH))
-        ax3.plot(particles['x'][ind], GHX[ind], color='k', marker='.', linestyle='None')
-        ax3.plot(particles['x'][ind], GHY[ind], color='r', marker='.', linestyle='None')
-        ax3.plot(particles['x'][ind], GHZ[ind], color='b', marker='.', linestyle='None')
-        plt.show()
 
     return particles, fields, Tcpu
 
@@ -677,15 +622,12 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # compute velocity at t_(k+0.5)
     # first compute force at t_(k+0.5)
     startTime = time.time()
-    force = SPHC.computeForceC(cfg, particles, dem, Ment, Cres, dtK5)
+    force = DFAfunC.computeForceC(cfg, particles, dem, Ment, Cres, dtK5)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
     # force = computeForceVect(cfg, particles, dem, Ment, Cres, dtK5)
     startTime = time.time()
-    if flagCython:
-        particles, force = SPHC.computeForceSPHC(cfg, particles, force, dem)
-    else:
-        particles, force = computeForceSPH(cfg, particles, force, dem)
+    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
     # particles, force = computeForceSPH(cfg, particles, force, dem)
@@ -727,10 +669,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # ++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()
-    if flagCython:
-        particles = SPHC.getNeighboursC(particles, dem)
-    else:
-        particles = SPH.getNeighboursVect(particles, dem)
+    particles = DFAfunC.getNeighboursC(particles, dem)
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
 
@@ -738,7 +677,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # update fields (compute grid values)
     startTime = time.time()
     # particles, fields = updateFields(cfg, particles, force, dem, fields)
-    particles, fields = SPHC.updateFieldsC(cfg, particles, force, dem, fields)
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, force, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
@@ -833,630 +772,6 @@ def polygon2Raster(demHeader, Line, Mask):
         plt.show()
 
     return Mask
-
-
-def computeForce(cfg, particles, dem, Ment, Cres):
-    """ compute forces acting on the particles (without the SPH component)
-
-     purely python implementation
-
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    particles : dict
-        particles dictionary at t
-    dem : dict
-        dictionary with dem information
-    Ment : 2D numpy array
-        entrained mass raster
-    Cres : 2D numpy array
-        resistance raster
-
-    Returns
-    -------
-    force : dict
-        force dictionary
-    """
-    rho = cfg.getfloat('rho')
-    gravAcc = cfg.getfloat('gravAcc')
-    dt = cfg.getfloat('dt')
-    mu = cfg.getfloat('mu')
-    Npart = particles['Npart']
-    csz = dem['header'].cellsize
-    Nx = dem['Nx']
-    Ny = dem['Ny']
-    Nz = dem['Nz']
-    # initialize
-    Fnormal = np.zeros(Npart)
-    forceX = np.zeros(Npart)
-    forceY = np.zeros(Npart)
-    forceZ = np.zeros(Npart)
-    dM = np.zeros(Npart)
-    force = {}
-    # loop on particles
-    for j in range(Npart):
-        mass = particles['m'][j]
-        x = particles['x'][j]
-        y = particles['y'][j]
-        h = particles['h'][j]
-        ux = particles['ux'][j]
-        uy = particles['uy'][j]
-        uz = particles['uz'][j]
-        indCellX = particles['indX'][j]
-        indCellY = particles['indY'][j]
-        # deduce area
-        A = mass / (h * rho)
-        # get velocity magnitude and direction
-        uMag = DFAtls.norm(ux, uy, uz)
-        uxDir, uyDir, uzDir = DFAtls.normalize(ux, uy, uz)
-        # get normal at the particle location
-        nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
-        # get normal at the particle estimated end location
-        xEnd = x + dt * ux
-        yEnd = y + dt * uy
-        nxEnd, nyEnd, nzEnd = DFAtls.getNormal(xEnd, yEnd, Nx, Ny, Nz, csz)
-        # get average of those normals
-        nxAvg = nx + nxEnd
-        nyAvg = ny + nyEnd
-        nzAvg = nz + nzEnd
-        nxAvg, nyAvg, nzAvg = DFAtls.normalize(nxAvg, nyAvg, nzAvg)
-
-        # acceleration due to curvature
-        accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
-        # normal component of the acceleration of gravity
-        gravAccNorm = - gravAcc * nzAvg
-        effAccNorm = gravAccNorm + accNormCurv
-        if(effAccNorm < 0.0):
-            Fnormal[j] = mass * effAccNorm
-
-        # body forces (tangential component of acceleration of gravity)
-        gravAccTangX = - gravAccNorm * nxAvg
-        gravAccTangY = - gravAccNorm * nyAvg
-        gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
-        # adding gravity force contribution
-        forceX[j] = forceX[j] + gravAccTangX * mass
-        forceY[j] = forceY[j] + gravAccTangY * mass
-        forceZ[j] = forceZ[j] + gravAccTangZ * mass
-
-        # Calculating bottom shear and normal stress
-        if(effAccNorm > 0.0):
-            # if fluid detatched
-            log.info('fluid detatched for particle %s', j)
-            tau = 0.0
-        else:
-            # bottom normal stress sigmaB
-            sigmaB = - effAccNorm * rho * h
-            # SamosAT friction type (bottom shear stress)
-            tau = fricLaws.SamosATfric(cfg, uMag, sigmaB, h)
-            # coulomb friction type (bottom shear stress)
-            # tau = mu * sigmaB
-
-        # adding bottom shear resistance contribution
-        forceBotTang = - A * tau
-        forceX[j] = forceX[j] + forceBotTang * uxDir
-        forceY[j] = forceY[j] + forceBotTang * uyDir
-        forceZ[j] = forceZ[j] + forceBotTang * uzDir
-
-        # compute entrained mass
-        ment = Ment[indCellY][indCellX]
-        if ment > 0:
-            dm, fEntX, fEntY, fEntZ = computeEntMassAndForce(
-                cfg, ment, A, uMag, ux, uy, uz, uxDir, uyDir, uzDir, tau)
-            dM[j] = dm
-            forceX[j] = forceX[j] + fEntX
-            forceY[j] = forceY[j] + fEntY
-            forceZ[j] = forceZ[j] + fEntZ
-
-        # adding resistance force du to obstacles
-        cres = Cres[indCellY][indCellX]
-        if cres > 0:
-            fEntX, fEntY, fEntZ = computeResForce(cfg, h, A, rho, cres, uMag, ux, uy, uz)
-            forceX[j] = forceX[j] + fEntX
-            forceY[j] = forceY[j] + fEntY
-            forceZ[j] = forceZ[j] + fEntZ
-
-    # save results
-    force['dM'] = dM
-    force['forceX'] = forceX
-    force['forceY'] = forceY
-    force['forceZ'] = forceZ
-    return force
-
-
-def computeEntMassAndForce(cfg, ment, A, uMag, ux, uy, uz, uxDir, uyDir, uzDir, tau):
-    """ compute force component due to entrained mass
-
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    ment : float
-        available mass for entrainement
-    A : float
-        particle area
-    uMag : float
-        particle speed (velocity magnitude)
-    ux : float
-        x component of the particle velocity
-    uy : float
-        y component of the particle velocity
-    uz : float
-        z component of the particle velocity
-    uxDir : float
-        x component of the normalized particle velocity
-    uyDir : float
-        y component of the normalized particle velocity
-    uzDir : float
-        z component of the normalized particle velocity
-    tau : float
-        bottom shear stress
-
-    Returns
-    -------
-    dm : float
-        entrained mass
-    fEntX : float
-        x component of the force
-    fEntY : float
-        y component of the force
-    fEntZ : float
-        z component of the force
-    """
-    dt = cfg.getfloat('dt')
-    entEroEnergy = cfg.getfloat('entEroEnergy')
-    rhoEnt = cfg.getfloat('rhoEnt')
-    entShearResistance = cfg.getfloat('entShearResistance')
-    entDefResistance = cfg.getfloat('entDefResistance')
-    # compute entrained mass
-    dm = 0
-    fEntX, fEntY, fEntZ = 0, 0, 0
-    if ment > 0:
-        # either erosion or ploughing but not both
-        # width of the particle
-        width = math.sqrt(A)
-        # bottom area covered by the particle during dt
-        ABotSwiped = width * uMag * dt
-        if(entEroEnergy > 0):
-            # erosion: erode according to shear and erosion energy
-            dm = A * tau * uMag * dt / entEroEnergy
-            Aent = A
-        else:
-            # ploughing in at avalanche front: erode full area weight
-            # mass available in the cell [kg/m²]
-            rhoHent = ment
-            dm = rhoHent * ABotSwiped
-            Aent = rhoHent / rhoEnt
-        # adding mass balance contribution
-        fEntX = fEntX - dm / dt * ux
-        fEntY = fEntY - dm / dt * uy
-        fEntZ = fEntZ - dm / dt * uz
-
-        # adding force du to entrained mass
-        Fent = width * (entShearResistance + dm / Aent * entDefResistance)
-        fEntX = fEntX + Fent * uxDir
-        fEntY = fEntY + Fent * uyDir
-        fEntZ = fEntZ + Fent * uzDir
-
-    return dm, fEntX, fEntY, fEntZ
-
-
-def computeResForce(cfg, h, A, rho, cres, uMag, ux, uy, uz):
-    """ compute force component due to resistance
-
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    h : float
-        particle flow depth
-    A : float
-        particle area
-    rho : float
-        snow density
-    cres : float
-        resisance coefficient
-    uMag : float
-        particle speed (velocity magnitude)
-    ux : float
-        x component of the particle velocity
-    uy : float
-        y component of the particle velocity
-    uz : float
-        z component of the particle velocity
-
-    Returns
-    -------
-    fResX : float
-        x component of the force
-    fResY : float
-        y component of the force
-    fResZ : float
-        z component of the force
-    """
-    hRes = cfg.getfloat('hRes')
-    if(h < hRes):
-        hResEff = h
-    cres = - rho * A * hResEff * cres * uMag
-    fResX, fResY, fResZ = cres*ux, cres*uy, cres*uz
-    return fResX, fResY, fResZ
-
-
-def computeForceVect(cfg, particles, dem, Ment, Cres, dt):
-    """ compute forces acting on the particles (without the SPH component)
-
-     numpy implementation
-
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    particles : dict
-        particles dictionary at t
-    dem : dict
-        dictionary with dem information
-    Ment : 2D numpy array
-        entrained mass raster
-    Cres : 2D numpy array
-        resistance raster
-    dt : float
-        time step
-
-    Returns
-    -------
-    force : dict
-        force dictionary
-    """
-
-    # Load required parameters
-    rho = cfg.getfloat('rho')
-    gravAcc = cfg.getfloat('gravAcc')
-    mu = cfg.getfloat('mu')
-    Npart = particles['Npart']
-    csz = dem['header'].cellsize
-    Nx = dem['Nx']
-    Ny = dem['Ny']
-    Nz = dem['Nz']
-
-    # initialize
-    Fnormal = np.zeros(Npart)
-    forceX = np.zeros(Npart)
-    forceY = np.zeros(Npart)
-    forceZ = np.zeros(Npart)
-    dM = np.zeros(Npart)
-    force = {}
-
-    # loop on particles
-    mass = particles['m']
-    x = particles['x']
-    y = particles['y']
-    h = particles['h']
-    ux = particles['ux']
-    uy = particles['uy']
-    uz = particles['uz']
-    # deduce area
-    A = mass / (h * rho)
-    # get velocity magnitude and direction
-    uMag = DFAtls.norm(ux, uy, uz)
-    uxDir, uyDir, uzDir = DFAtls.normalize(ux, uy, uz)
-    # get normal at the particle location
-    nx, ny, nz = DFAtls.getNormalArray(x, y, Nx, Ny, Nz, csz)
-    # get normal at the particle estimated end location
-    xEnd = x + dt * ux
-    yEnd = y + dt * uy
-    nxEnd, nyEnd, nzEnd = DFAtls.getNormalArray(xEnd, yEnd, Nx, Ny, Nz, csz)
-    # get average of those normals
-    nxAvg = nx + nxEnd
-    nyAvg = ny + nyEnd
-    nzAvg = nz + nzEnd
-    nxAvg, nyAvg, nzAvg = DFAtls.normalize(nxAvg, nyAvg, nzAvg)
-
-    # acceleration due to curvature
-    accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
-    # normal component of the acceleration of gravity
-    gravAccNorm = - gravAcc * nzAvg
-    effAccNorm = gravAccNorm + accNormCurv
-    Fnormal = np.where(effAccNorm < 0.0, mass * effAccNorm, 0)
-
-    # body forces (tangential component of acceleration of gravity)
-    gravAccTangX = - gravAccNorm * nxAvg
-    gravAccTangY = - gravAccNorm * nyAvg
-    gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
-    # adding gravity force contribution
-    forceX = forceX + gravAccTangX * mass
-    forceY = forceY + gravAccTangY * mass
-    forceZ = forceZ + gravAccTangZ * mass
-
-    # Calculating bottom shear and normal stress
-    # bottom normal stress sigmaB
-    sigmaB = - effAccNorm * rho * h
-    # SamosAT friction type (bottom shear stress)
-    tau = fricLaws.SamosATfric(cfg, uMag, sigmaB, h)
-    # coulomb friction type (bottom shear stress)
-    # tau = mu * sigmaB
-    tau = np.where(effAccNorm > 0.0, 0, tau)
-
-    # adding bottom shear resistance contribution
-    forceBotTang = - A * tau
-    # print(np.min(np.abs(forceBotTang)))
-    # print(np.max(np.abs(forceBotTang)))
-    forceX = forceX + forceBotTang * uxDir
-    forceY = forceY + forceBotTang * uyDir
-    forceZ = forceZ + forceBotTang * uzDir
-
-    force['dM'] = dM
-    force['forceX'] = forceX
-    force['forceY'] = forceY
-    force['forceZ'] = forceZ
-
-    return force
-
-
-def computeForceSPH(cfg, particles, force, dem):
-    """ compute lateral forces acting on the particles (SPH component)
-
-     numpy implementation
-
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    particles : dict
-        particles dictionary at t
-    force : dict
-        force dictionary
-    dem : dict
-        dictionary with dem information
-    Returns
-    -------
-    particles : dict
-        particles dictionary at t
-    force : dict
-        force dictionary
-    """
-
-    # Load required parameters
-    rho = cfg.getfloat('rho')
-    gravAcc = cfg.getfloat('gravAcc')
-    Npart = particles['Npart']
-    header = dem['header']
-    nrows = dem['header'].nrows
-    ncols = dem['header'].ncols
-    csz = dem['header'].cellsize
-    Nx = dem['Nx']
-    Ny = dem['Ny']
-    Nz = dem['Nz']
-
-    # initialize fields for force
-    forceSPHX = np.zeros(Npart)
-    forceSPHY = np.zeros(Npart)
-    forceSPHZ = np.zeros(Npart)
-    GHX = np.zeros(Npart)
-    GHY = np.zeros(Npart)
-    GHZ = np.zeros(Npart)
-
-    # loop on particles
-    # TcpuSPH = 0
-    # Tcpuadd = 0
-    for j in range(Npart):
-        mass = particles['m'][j]
-        # adding lateral force (SPH component)
-        # startTime = time.time()
-        # gradhX, gradhY,  gradhZ, _ = calcGradHSPH(particles, j, ncols, nrows, csz)
-        x = particles['x'][j]
-        y = particles['y'][j]
-        nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
-        gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(
-            cfg, particles, j, ncols, nrows, csz, nx, ny, nz)
-        # tcpuSPH = time.time() - startTime
-        # TcpuSPH = TcpuSPH + tcpuSPH
-        # startTime = time.time()
-        forceSPHX[j] = forceSPHX[j] - gradhX * mass * (-gravAcc) / rho
-        forceSPHY[j] = forceSPHY[j] - gradhY * mass * (-gravAcc) / rho
-        forceSPHZ[j] = forceSPHZ[j] - gradhZ * mass * (-gravAcc) / rho
-        GHX[j] = GHX[j] - gradhX / rho
-        GHY[j] = GHY[j] - gradhY / rho
-        GHZ[j] = GHZ[j] - gradhZ / rho
-        # tcpuadd = time.time() - startTime
-        # Tcpuadd = Tcpuadd + tcpuadd
-
-    # log.info(('cpu time SPH = %s s' % (TcpuSPH / Npart)))
-    # log.info(('cpu time SPH add = %s s' % (Tcpuadd / Npart)))
-
-    force['forceSPHX'] = forceSPHX
-    force['forceSPHY'] = forceSPHY
-    force['forceSPHZ'] = forceSPHZ
-    # particles['GHX'] = GHX
-    # particles['GHY'] = GHY
-    # particles['GHZ'] = GHZ
-
-    return particles, force
-
-
-def updatePosition(cfg, particles, dem, force):
-    """ update particle position using euler forward scheme
-
-     numpy implementation
-
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    particles : dict
-        particles dictionary at t
-    dem : dict
-        dictionary with dem information
-    force : dict
-        force dictionary
-    Returns
-    -------
-    particles : dict
-        particles dictionary at t + dt
-    """
-    dt = cfg.getfloat('dt')
-    log.debug('dt used now is %f' % dt)
-    gravAcc = cfg.getfloat('gravAcc')
-    rho = cfg.getfloat('rho')
-    csz = dem['header'].cellsize
-    Nx = dem['Nx']
-    Ny = dem['Ny']
-    Nz = dem['Nz']
-    dM = force['dM']
-    forceX = force['forceX']
-    forceY = force['forceY']
-    forceZ = force['forceZ']
-    forceSPHX = force['forceSPHX']
-    forceSPHY = force['forceSPHY']
-    forceSPHZ = force['forceSPHZ']
-    mass = particles['m']
-    x = particles['x']
-    y = particles['y']
-    z = particles['z']
-    h = particles['h']
-    ux = particles['ux']
-    uy = particles['uy']
-    uz = particles['uz']
-    kinEne = particles['kineticEne']
-    potEne = particles['potentialEne']
-    totEne = kinEne + potEne
-    # procede to time integration
-    # update velocity
-    uxNew = ux + (forceX + forceSPHX) * dt / mass
-    uyNew = uy + (forceY + forceSPHY) * dt / mass
-    uzNew = uz + (forceZ + forceSPHZ) * dt / mass
-
-    # update mass
-    massNew = mass + dM
-    # update position
-    xNew = x + dt * 0.5 * (ux + uxNew)
-    yNew = y + dt * 0.5 * (uy + uyNew)
-    zNew = z + dt * 0.5 * (uz + uzNew)
-
-    particles['mTot'] = np.sum(massNew)
-    particles['x'] = xNew
-    particles['y'] = yNew
-    particles['s'] = particles['s'] + np.sqrt((xNew-x)*(xNew-x) + (yNew-y)*(yNew-y))
-    # make sure particle is on the mesh (recompute the z component)
-    particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
-
-    nx, ny, nz = DFAtls.getNormalArray(xNew, yNew, Nx, Ny, Nz, csz)
-    particles['m'] = massNew
-    # normal component of the velocity
-    uN = uxNew*nx + uyNew*ny + uzNew*nz
-    # print(nx, ny, nz)
-    # print(norm(ux, uy, uz), uN)
-    # remove normal component of the velocity
-    particles['ux'] = uxNew - uN * nx
-    particles['uy'] = uyNew - uN * ny
-    particles['uz'] = uzNew - uN * nz
-
-    #################################################################
-    # this is dangerous!!!!!!!!!!!!!!
-    ###############################################################
-    # remove particles that are not located on the mesh any more
-    particles = removeOutPart(cfg, particles, dem)
-    return particles
-
-
-def updateFields(cfg, particles, force, dem, fields):
-    """ update fields and particles fow depth
-
-     numpy implementation
-
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    particles : dict
-        particles dictionary
-    force : dict
-        force dictionary
-    dem : dict
-        dictionary with dem information
-    fields : dict
-        fields dictionary
-    Returns
-    -------
-
-    particles : dict
-        particles dictionary
-    fields : dict
-        fields dictionary
-    """
-    rho = cfg.getfloat('rho')
-    header = dem['header']
-    csz = dem['header'].cellsize
-    A = dem['Area']
-    ncols = header.ncols
-    nrows = header.nrows
-    m = particles['m']
-    x = particles['x']
-    y = particles['y']
-    ux = particles['ux']
-    uy = particles['uy']
-    uz = particles['uz']
-    PFV = fields['pfv']
-    PP = fields['ppr']
-    PFD = fields['pfd']
-
-    #########################################
-    # Update fields using a bilinear interpolation
-    MassBilinear = np.zeros((nrows, ncols))
-    # MassBilinear = geoTrans.pointsToRaster(x, y, m, MassBilinear, csz=csz, interp='bilinear')
-    MassBilinear = SPHC.pointsToRasterC(x, y, m, MassBilinear, csz=csz)
-    FDBilinear = MassBilinear / (A * rho)
-
-    MomBilinearX = np.zeros((nrows, ncols))
-    MomBilinearY = np.zeros((nrows, ncols))
-    MomBilinearZ = np.zeros((nrows, ncols))
-    VXBilinear = np.zeros((nrows, ncols))
-    VYBilinear = np.zeros((nrows, ncols))
-    VZBilinear = np.zeros((nrows, ncols))
-
-    MomBilinearX = SPHC.pointsToRasterC(x, y, m * ux, MomBilinearX, csz=csz)
-    MomBilinearY = SPHC.pointsToRasterC(x, y, m * uy, MomBilinearY, csz=csz)
-    MomBilinearZ = SPHC.pointsToRasterC(x, y, m * uz, MomBilinearZ, csz=csz)
-
-    indMass = np.where(MassBilinear > 0)
-    VXBilinear[indMass] = MomBilinearX[indMass]/MassBilinear[indMass]
-    VYBilinear[indMass] = MomBilinearY[indMass]/MassBilinear[indMass]
-    VZBilinear[indMass] = MomBilinearZ[indMass]/MassBilinear[indMass]
-    VBilinear = DFAtls.norm(VXBilinear, VYBilinear, VZBilinear)
-    PBilinear = VBilinear * VBilinear * rho
-    PFV = np.where(VBilinear > PFV, VBilinear, PFV)
-    PP = np.where(PBilinear > PP, PBilinear, PP)
-    PFD = np.where(FDBilinear > PFD, FDBilinear, PFD)
-
-    fields['V'] = VBilinear
-    fields['P'] = PBilinear
-    fields['FD'] = FDBilinear
-    fields['pfv'] = PFV
-    fields['ppr'] = PP
-    fields['pfd'] = PFD
-
-    # hBN, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='nearest')
-    # particles['hBilinearNearest'] = hBN  # np.where(h2 < depMin, depMin, h2)
-    hBB, _ = geoTrans.projectOnRasterVectRoot(x, y, FDBilinear, csz=csz, interp='bilinear')
-
-    # choose the interpolation method
-    indx = particles['indX']
-    indy = particles['indY']
-    aPart = A[indy, indx]
-    hLim = particles['m']/(rho*aPart)
-    hBB = np.where(hBB < hLim, hLim, hBB)
-    particles['hBilinearBilinear'] = hBB
-    particles['h'] = hBB
-    # if flagFDSPH:
-    #     hSPH = particles['hSPH']
-    #     hSPH = np.where(hSPH < hLim, hLim, hSPH)
-    #     particles['h'] = hBB
-    # else:
-    #     particles['h'] = hBB
-
-    # remove particles that have a too small height
-    # particles = removeSmallPart(hmin, particles, dem)
-
-    return particles, fields
 
 
 def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, continuous=pU.contCmap):
@@ -1605,10 +920,7 @@ def removeSmallPart(hmin, particles, dem):
     if nRemove > 0:
         particles = removePart(particles, mask, nRemove)
         log.info('removed %s particles because they were too thin' % (nRemove))
-        if flagCython:
-            particles = SPHC.getNeighboursC(particles, dem)
-        else:
-            particles = SPH.getNeighboursVect(particles, dem)
+        particles = DFAfunC.getNeighboursC(particles, dem)
 
     return particles
 

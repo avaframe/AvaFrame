@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 # Local imports
-import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in3Utils.initialiseDirs as inDirs
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -21,7 +20,7 @@ import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.com1DFAPy.DFAtools as DFAtls
-import avaframe.com1DFAPy.SPHfunctionsCython as SPHC
+import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
 
 # from avaframe.DFAkernel.setParam import *
 import avaframe.out3Plot.plotUtils as pU
