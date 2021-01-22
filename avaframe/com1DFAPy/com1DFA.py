@@ -526,8 +526,11 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # update velocity and particle position
     startTime = time.time()
-    # particles = updatePosition(cfg, particles, dem, force)
-    particles = SPHC.updatePositionC(cfg, particles, dem, force)
+    if flagCython:
+        particles = SPHC.updatePositionC(cfg, particles, dem, force)
+    else:
+        particles = updatePosition(cfg, particles, dem, force)
+
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
