@@ -1244,7 +1244,7 @@ def computeForceSPH(cfg, particles, force, dem):
         y = particles['y'][j]
         nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
         gradhX, gradhY,  gradhZ, _ = SPH.calcGradHSPHVect(
-            particles, j, ncols, nrows, csz, nx, ny, nz)
+            cfg, particles, j, ncols, nrows, csz, nx, ny, nz)
         # tcpuSPH = time.time() - startTime
         # TcpuSPH = TcpuSPH + tcpuSPH
         # startTime = time.time()
@@ -1484,7 +1484,7 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, cont
     ax.clear()
     ax.set_title('Particles on dem at t=%.2f s' % particles['t'])
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        Cmap, 0.0, np.nanmax(data), continuous=pU.contCmap)
+        Cmap, 0.0, np.nanmax(data), continuous=True)
     cmap.set_under(color='w')
     ref0, im = pU.NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
                          extent=[x.min(), x.max(), y.min(), y.max()],
