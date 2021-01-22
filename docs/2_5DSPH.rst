@@ -59,12 +59,15 @@ Now consider the kernel function :math:`W`:
 In the case of the spiky kernel, :math:`W` reads (2D case):
 
 .. math::
-   W_{ij} = W(\mathbf{x_i},\mathbf{x_j},r_0) = W(\mathbf{x_i}-\mathbf{x_j},r_0) = W(\mathbf{r_{ij}},r_0) = \frac{10}{\pi r_0^5}\left\{
+   \begin{aligned}
+   W_{ij} = &W(\mathbf{x_i},\mathbf{x_j},r_0) = W(\mathbf{x_i}-\mathbf{x_j},r_0) = W(\mathbf{r_{ij}},r_0)\\
+   =&\frac{10}{\pi r_0^5}\left\{
    \begin{aligned}
    & (r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert)^3, \quad &0\leq \left\Vert \mathbf{r_{lj}}\right\Vert \leq  r_0\\
    & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
    \end{aligned}
    \right.
+   \end{aligned}
    :label: kernel function
 
 

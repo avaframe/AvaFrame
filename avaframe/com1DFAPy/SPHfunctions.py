@@ -24,7 +24,6 @@ log = logging.getLogger(__name__)
 # 3) project on the plane, compute the gradient in the local coord sys related
 # to the local plane (tau1, tau2, n) non orthogonal coord sys
 SPHoption = 2
-minRKern = 0.01
 
 
 def getNeighbours(particles, dem):
@@ -157,7 +156,7 @@ def getNeighboursVect(particles, dem):
     return particles
 
 
-def calcGradHSPH(particles, j, ncols, nrows, csz, minRKern):
+def calcGradHSPH(cfg, particles, j, ncols, nrows, csz):
     """ Compute gradient of Flow Depth using SPH (for loop implementation)
 
     Parameters
@@ -185,6 +184,7 @@ def calcGradHSPH(particles, j, ncols, nrows, csz, minRKern):
     """
     # SPH kernel
     # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
+    minRKern = cfg.getfloat('minRKern')
     rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
     dfacKernel = -3.0 * facKernel
@@ -621,7 +621,6 @@ def computeFlowDepth(cfg, particles, dem):
         particles dictionnary updated with the SPH flow depth (hSPH)
     """
     rho = cfg.getfloat('rho')
-    minRKern = cfg.getfloat('minRKern')
     Npart = particles['Npart']
     nrows = dem['header'].nrows
     ncols = dem['header'].ncols
@@ -645,7 +644,7 @@ def computeFlowDepth(cfg, particles, dem):
         y = particles['y'][j]
         nx, ny, nz = DFAtls.getNormal(x, y, Nx, Ny, Nz, csz)
 
-        h, _ = calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz, minRKern)
+        h, _ = calcHSPHVect(cfg, particles, j, ncols, nrows, csz, nx, ny, nz)
         H[j] = h / rho
 
     particles['hSPH'] = H
@@ -653,7 +652,7 @@ def computeFlowDepth(cfg, particles, dem):
     return particles
 
 
-def calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz, minRKern):
+def calcHSPHVect(cfg, particles, j, ncols, nrows, csz, nx, ny, nz):
     """ Compute Flow Depth using SPH (no loop implementation)
 
     Compute the flow depth at the location of patricle j
@@ -686,6 +685,7 @@ def calcHSPHVect(particles, j, ncols, nrows, csz, nx, ny, nz, minRKern):
     """
     # SPH kernel
     # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
+    minRKern = cfg.getfloat('minRKern')
     rKernel = csz
     facKernel = 10.0 / (math.pi * pow(rKernel, 5.0))
 
