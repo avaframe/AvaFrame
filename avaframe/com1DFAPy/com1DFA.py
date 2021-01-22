@@ -540,6 +540,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, force, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
+    log.info(np.min(particles['h']))
 
     return particles, fields, Tcpu
 
