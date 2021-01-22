@@ -18,7 +18,6 @@ cimport cython
 # Local imports
 import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.com1DFAPy.DFAtools as DFAtls
-import avaframe.com1DFAPy.SPHfunctions as SPH
 import avaframe.in3Utils.geoTrans as geoTrans
 
 
@@ -599,10 +598,10 @@ def updateFieldsC(cfg, particles, force, dem, fields):
     hbb = getScalar(x, y, FDBilinear, csz)
     indx = IndX[j]
     indy = IndY[j]
-    aPart = A[indy, indx]
-    hLim = mass[j]/(rho*aPart)
-    if hbb< hLim:
-      hbb = hLim
+    # aPart = A[indy, indx]
+    # hLim = mass[j]/(rho*aPart)
+    # if hbb< hLim:
+    #   hbb = hLim
     hBB[j] = hbb
 
   particles['hBilinearBilinear'] = np.asarray(hBB)
