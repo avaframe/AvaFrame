@@ -30,6 +30,7 @@ import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
+debugPlot = True
 
 # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
 # log file name; leave empty to use default runLog.log
@@ -81,30 +82,7 @@ dem = com1DFA.initializeMesh(dem)
 # ------------------------
 # process release info to get it as a raster
 relRaster = com1DFA.prepareArea(releaseLine, demOri)
-########## custom release for tests
-# nrows = demOri['header'].nrows
-# ncols = demOri['header'].ncols
-# xllc = demOri['header'].xllcenter
-# yllc = demOri['header'].yllcenter
-# csz = demOri['header'].cellsize
-# x = np.linspace(0, ncols-1, ncols)*csz+xllc
-# y = np.linspace(0, nrows-1, nrows)*csz+yllc
-# X, Y = np.meshgrid(x, y)
-# cos = math.cos(math.pi*35/180)
-# r = np.sqrt((X*X)/(cos*cos)+(Y*Y))
-# H0 = 8
-# relTh = H0 * (1 - (r/80) * (r/80))
-# relTh = np.where(relTh < 0, 0, relTh)
-#
-# x = np.linspace(0, ncols-1, ncols)
-# y = np.linspace(0, nrows-1, nrows)
-# X, Y = np.meshgrid(x, y)
-# relTh1 = -(np.sqrt((X-100)*(X-100)+0*(Y-100)*(Y-100))*5-105)*0.04765
-# relTh2 = -(np.sqrt(0*(X-100)*(X-100)+(Y-100)*(Y-100))*5-105)*0.04
-# relTh = np.minimum(relTh1, relTh2)
-# could do something more advanced if we want varying release depth
-########################
-relTh = 1
+relTh = cfgGen.getfloat('relTh')
 relRaster = relRaster * relTh
 
 # ------------------------
@@ -148,8 +126,8 @@ Z0 = partRef['z'][0]
 rho = cfgGen.getfloat('rho')
 gravAcc = cfgGen.getfloat('gravAcc')
 mu = cfgGen.getfloat('mu')
-repeat = True
-while repeat == True:
+repeat = debugPlot
+while repeat:
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     T = np.array([0])
     Z = np.array([0])
@@ -166,42 +144,43 @@ while repeat == True:
     if value != 'y':
         repeat = False
 
-fieldRef = Fields[-1]
-fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
-fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
-fig1, ax1 = com1DFA.plotPosition(
-    particles, demOri, fields['FD'], pU.cmapPres, 'm', fig1, ax1, plotPart=False)
-fig2, ax2 = com1DFA.plotPosition(
-    particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
-fig3, ax3 = com1DFA.plotPosition(
-    particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
-# fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
-# ax4.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols-1), (fields['FD'][101, 1:ncols]-fields['FD'][101, 0:(ncols-1)])/5*math.cos(math.pi*3/180))
-# force2 = {}
-# particles = Particles[-1]
-# particles, force2 = SPHC.computeForceSPHC(cfgGen, particles, force2, dem, SPHOption=2, gradient=1)
-# grad = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
-# # grad = DFAtls.norm(force['forceSPHX'], force['forceSPHY'], force['forceSPHZ'])
-# x = particles['x']
-# y = particles['y']
-# m = particles['m']
-# ind = np.where(((particles['y']+yllc > -2.5) & (particles['y']+yllc < 2.5)))
-# Grad = np.zeros((nrows, ncols))
-# MassBilinear = np.zeros((nrows, ncols))
-# MassBilinear = SPHC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
-# Grad = SPHC.pointsToRasterC(x, y, m*grad, Grad, csz=5)
-# indMass = np.where(MassBilinear > 0)
-# Grad[indMass] = Grad[indMass]/MassBilinear[indMass]
-# fig5, ax5 = plt.subplots(figsize=(pU.figW, pU.figH))
-# fig5, ax5 = com1DFA.plotPosition(particles, dem, Grad, pU.cmapPres, '', fig5, ax5, plotPart=False)
-# fig6, ax6 = plt.subplots(figsize=(pU.figW, pU.figH))
-# ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), Grad[101,:], 'b')
-# ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][101,:], 'r')
-# ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][101,:], 'g')
-# ax6.plot(particles['x'][ind]+xllc, grad[ind], '.r', linestyle='None')
-#     plt.show()
-plt.show()
+if debugPlot:
+    fieldRef = Fields[-1]
+    fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
+    fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
+    fig1, ax1 = com1DFA.plotPosition(
+        particles, demOri, fields['FD'], pU.cmapPres, 'm', fig1, ax1, plotPart=False)
+    fig2, ax2 = com1DFA.plotPosition(
+        particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
+    fig3, ax3 = com1DFA.plotPosition(
+        particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
+    # fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
+    # ax4.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols-1), (fields['FD'][101, 1:ncols]-fields['FD'][101, 0:(ncols-1)])/5*math.cos(math.pi*3/180))
+    # force2 = {}
+    # particles = Particles[-1]
+    # particles, force2 = SPHC.computeForceSPHC(cfgGen, particles, force2, dem, SPHOption=2, gradient=1)
+    # grad = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
+    # # grad = DFAtls.norm(force['forceSPHX'], force['forceSPHY'], force['forceSPHZ'])
+    # x = particles['x']
+    # y = particles['y']
+    # m = particles['m']
+    # ind = np.where(((particles['y']+yllc > -2.5) & (particles['y']+yllc < 2.5)))
+    # Grad = np.zeros((nrows, ncols))
+    # MassBilinear = np.zeros((nrows, ncols))
+    # MassBilinear = SPHC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
+    # Grad = SPHC.pointsToRasterC(x, y, m*grad, Grad, csz=5)
+    # indMass = np.where(MassBilinear > 0)
+    # Grad[indMass] = Grad[indMass]/MassBilinear[indMass]
+    # fig5, ax5 = plt.subplots(figsize=(pU.figW, pU.figH))
+    # fig5, ax5 = com1DFA.plotPosition(particles, dem, Grad, pU.cmapPres, '', fig5, ax5, plotPart=False)
+    # fig6, ax6 = plt.subplots(figsize=(pU.figW, pU.figH))
+    # ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), Grad[101,:], 'b')
+    # ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][101,:], 'r')
+    # ax6.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][101,:], 'g')
+    # ax6.plot(particles['x'][ind]+xllc, grad[ind], '.r', linestyle='None')
+    #     plt.show()
+    plt.show()
 
 
 # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
