@@ -187,7 +187,10 @@ if debugPlot:
 # Result parameters to be exported
 resTypesString = cfgGen['resType']
 resTypes = resTypesString.split('_')
-tSteps = fU.splitIniValueToArray(cfgGen['tSteps']).astype(int)
+tSteps = fU.splitIniValueToArray(cfgGen['tSteps']) / float(cfgGen['dtSave'])
+tSteps[tSteps == -1./ float(cfgGen['dtSave'])] = -1
+tSteps = tSteps.astype(int)
+print('tSteps is', tSteps)
 for tStep in tSteps:
     finalFields = Fields[tStep]
     for resType in resTypes:
