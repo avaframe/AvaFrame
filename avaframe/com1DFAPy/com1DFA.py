@@ -373,13 +373,14 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     S = np.empty((0, 0))
     U = np.empty((0, 0))
     T = np.empty((0, 0))
+    Tsave = [0]
 
     if featLF:
         log.info('Use LeapFrog time stepping')
     else:
         log.info('Use standard time stepping')
     # Initialize time and counters
-    nSave = 0
+    nSave = 1
     Tcpu['nSave'] = nSave
     nIter = 0
     nIter0 = 0
@@ -423,6 +424,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         S = np.append(S, particles['s'][0])
         iterate = particles['iterate']
         if t >= nSave * dtSave:
+            Tsave.append(t)
             log.info('Saving results for time step t = %f s', t)
             log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
             log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
@@ -440,7 +442,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     Particles.append(copy.deepcopy(particles))
     Fields.append(copy.deepcopy(fields))
 
-    return T, U, Z, S, Particles, Fields, Tcpu
+    return Tsave, T, U, Z, S, Particles, Fields, Tcpu
 
 
 def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
