@@ -21,7 +21,7 @@ import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.com1DFAPy.DFAtools as DFAtls
-import avaframe.com1DFAPy.SPHfunctionsCython as SPHC
+import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
 
 # from avaframe.DFAkernel.setParam import *
 import avaframe.out3Plot.plotUtils as pU
