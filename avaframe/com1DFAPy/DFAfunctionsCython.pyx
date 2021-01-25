@@ -254,7 +254,7 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
           # SamosAT friction type (bottom shear stress)
           tau = SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
           # coulomb friction type (bottom shear stress)
-          # tau = mu * sigmaB
+          tau = mu * sigmaB
 
       # adding bottom shear resistance contribution
       forceBotTang = - A * tau
