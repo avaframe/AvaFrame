@@ -103,7 +103,7 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
+Tsave, T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
     cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
@@ -187,25 +187,25 @@ if debugPlot:
 # Result parameters to be exported
 resTypesString = cfgGen['resType']
 resTypes = resTypesString.split('_')
-tSteps = fU.splitIniValueToArray(cfgGen['tSteps']) / float(cfgGen['dtSave'])
-tSteps[tSteps == -1./ float(cfgGen['dtSave'])] = -1
-tSteps = tSteps.astype(int)
-tIndFinal = len(Fields) - 1
-tStepsOk = tSteps[tSteps <= tIndFinal]
-for tStep in tStepsOk:
+tSteps = fU.getTimeIndex(cfgGen, Fields)
+print(tSteps)
+for tStep in tSteps:
     finalFields = Fields[tStep]
     for resType in resTypes:
         resField = finalFields[resType]
         if resType == 'ppr':
             resField = resField * 0.001
         relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
-        dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType + '_'  + 't' + str(tStep) +'.asc'
+        dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType + '_'  + 't%.2f' % (Tsave[tStep]) +'.asc'
         # create directory
         outDirPeak = os.path.join(outDir, 'peakFiles')
         fU.makeADir(outDirPeak)
         outFile = os.path.join(outDirPeak, dataName)
         IOf.writeResultToAsc(demOri['header'], resField, outFile)
-        log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
+        if tStep == -1:
+            log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType,Tsave[tStep]))
+        else:
+            log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType,Tsave[tStep]))
 
 
 # Generata plots for all peakFiles

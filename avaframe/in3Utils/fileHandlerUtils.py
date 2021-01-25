@@ -173,6 +173,37 @@ def splitIniValueToArray(cfgValues):
     return items
 
 
+def getTimeIndex(cfg, Fields):
+    """ get an index array to address time steps specified in ini file """
+
+    # load list of time steps wanted in seconds
+    tSteps = splitIniValueToArray(cfg['tSteps']) / float(cfg['dtSave'])
+
+    # if -1 is used -last time step shall be within index list too
+    flagTfinal = False
+    Tfinal = np.where(tSteps != -1./ float(cfg['dtSave']))
+    tSteps = tSteps[0:-1]
+    if len(np.where(tSteps == -1./ float(cfg['dtSave']))[0]) > 0:
+        flagTfinal = True
+
+    # convert time steps from seconds to list of indices for dtSave
+    tSteps = np.around(tSteps)
+    tSteps = tSteps.astype(int)
+    tIndFinal = len(Fields) - 1
+
+    # check if chosen time steps are available
+    tStepsOk = tSteps[tSteps <= tIndFinal]
+
+    # remove duplicate indices
+    tStepsOk = list(set(tStepsOk))
+
+    # add final time step if wanted
+    if flagTfinal == True:
+        tStepsOk.append(-1)
+
+    return tStepsOk
+
+
 def getDFAData(avaDir, workDir, suffix, nameDir=''):
     """ Export the required data from com1DFA output to Aimec Work directory and rename,
         if nameDir='', data from com1DFA output copied to workDir without renaming
