@@ -1236,6 +1236,8 @@ def computeForceSPH(cfg, particles, force, dem):
     GHY = np.zeros(Npart)
     GHZ = np.zeros(Npart)
 
+    # FSO: optimize here
+    # scipy KDTree and queryballpoint?
     # loop on particles
     # TcpuSPH = 0
     # Tcpuadd = 0
