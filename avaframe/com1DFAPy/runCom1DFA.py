@@ -30,7 +30,10 @@ import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
-debugPlot = True
+import cProfile, pstats, io
+from pstats import SortKey
+
+debugPlot = False
 
 # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
 # log file name; leave empty to use default runLog.log
@@ -59,7 +62,6 @@ flagDev = cfg['FLAGS'].getboolean('flagDev')
 
 # for timing the sims
 startTime = time.time()
-
 
 # +++++++++Inputs++++++++++++++++++++++++
 # ------------------------
@@ -103,8 +105,15 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
+pr.enable()
+pr = cProfile.Profile()
+
 T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
     cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
+
+pr.disable()
+# pr.print_stats()
+pr.dump_stats('profile.pstats')
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
 log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))
@@ -144,17 +153,18 @@ while repeat:
     if value != 'y':
         repeat = False
 
-if debugPlot:
+# if debugPlot:
+if True:
     fieldRef = Fields[-1]
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
-    fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
+    # fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
+    # fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
     fig1, ax1 = com1DFA.plotPosition(
         particles, demOri, fields['FD'], pU.cmapPres, 'm', fig1, ax1, plotPart=False)
-    fig2, ax2 = com1DFA.plotPosition(
-        particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
-    fig3, ax3 = com1DFA.plotPosition(
-        particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
+    # fig2, ax2 = com1DFA.plotPosition(
+    #     particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
+    # fig3, ax3 = com1DFA.plotPosition(
+    #     particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
     # fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
     # ax4.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols-1), (fields['FD'][101, 1:ncols]-fields['FD'][101, 0:(ncols-1)])/5*math.cos(math.pi*3/180))
     # force2 = {}
@@ -183,26 +193,26 @@ if debugPlot:
     plt.show()
 
 
-# +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
-# Result parameters to be exported
-resTypesString = cfgGen['resType']
-resTypes = resTypesString.split('_')
-finalFields = Fields[-1]
-for resType in resTypes:
-    resField = finalFields[resType]
-    if resType == 'ppr':
-        resField = resField * 0.001
-    relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
-    dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType +'.asc'
-    # create directory
-    outDirPeak = os.path.join(outDir, 'peakFiles')
-    fU.makeADir(outDirPeak)
-    outFile = os.path.join(outDirPeak, dataName)
-    IOf.writeResultToAsc(demOri['header'], resField, outFile)
-    log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
+# # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+# # Result parameters to be exported
+# resTypesString = cfgGen['resType']
+# resTypes = resTypesString.split('_')
+# finalFields = Fields[-1]
+# for resType in resTypes:
+#     resField = finalFields[resType]
+#     if resType == 'ppr':
+#         resField = resField * 0.001
+#     relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
+#     dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType +'.asc'
+#     # create directory
+#     outDirPeak = os.path.join(outDir, 'peakFiles')
+#     fU.makeADir(outDirPeak)
+#     outFile = os.path.join(outDirPeak, dataName)
+#     IOf.writeResultToAsc(demOri['header'], resField, outFile)
+#     log.info('Results parameter: %s has been exported to Outputs/peakFiles' % resType)
 
-# Generata plots for all peakFiles
-plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
+# # Generata plots for all peakFiles
+# plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
 
 
 # fig, ax = plt.subplots(figsize=(figW, figH))

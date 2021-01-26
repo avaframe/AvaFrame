@@ -40,7 +40,8 @@ featLF = False
 featCFL = False
 featCFLConstrain = True
 # use cython functions
-flagCython = True
+# flagCython = True
+flagCython = False
 
 
 def initializeMesh(dem, num=4):
@@ -424,13 +425,13 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         iterate = particles['iterate']
         if t >= nSave * dtSave:
             log.info('Saving results for time step t = %f s', t)
-            log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
-            log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
-            log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
-            log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
-            log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
-            log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
-            log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
+            # log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+            # log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
+            # log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
+            # log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
+            # log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
+            # log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
+            # log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
             Particles.append(copy.deepcopy(particles))
             Fields.append(copy.deepcopy(fields))
             nSave = nSave + 1

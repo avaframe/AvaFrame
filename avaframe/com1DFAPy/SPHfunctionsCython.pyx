@@ -1,9 +1,11 @@
+# cython: profile=True
 """
     function related to SPH calculations in com1DFA
 
     to build: go to repository containing this file and run:
     python setup.py build_ext --inplace
 """
+
 
 # Load modules
 import copy
@@ -455,6 +457,7 @@ def updatePositionC(cfg, particles, dem, force):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+@cython.profile(True)
 def updateFieldsC(cfg, particles, force, dem, fields):
   """ update fields and particles fow depth
 
