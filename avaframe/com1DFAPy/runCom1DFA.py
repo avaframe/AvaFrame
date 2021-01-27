@@ -138,7 +138,9 @@ while repeat:
         Z = np.append(Z, part['z'][0])
         U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
         fig, ax = com1DFA.plotPosition(
-            part, demOri, dem['Nz'], pU.cmapDEM2, '', fig, ax, plotPart=True)
+            part, demOri, dem['Nz'], pU.cmapDEM2, 'm', fig, ax, plotPart=True)
+    fig, ax = com1DFA.plotPosition(
+            part, demOri, dem['Nz'], pU.cmapDEM2, 'm', fig, ax, plotPart=True, last=True)
     value = input("[y] to repeat:\n")
     if value != 'y':
         repeat = False
@@ -149,11 +151,11 @@ if debugPlot:
     fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
     fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
     fig1, ax1 = com1DFA.plotPosition(
-        particles, demOri, fields['FD'], pU.cmapPres, 'm', fig1, ax1, plotPart=False)
+        particles, demOri, fields['FD'], pU.cmapPres, 'm', fig1, ax1, plotPart=False, last=True)
     fig2, ax2 = com1DFA.plotPosition(
-        particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
+        particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False, last=True)
     fig3, ax3 = com1DFA.plotPosition(
-        particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
+        particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False, last=True)
     # fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
     # ax4.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols-1), (fields['FD'][101, 1:ncols]-fields['FD'][101, 0:(ncols-1)])/5*math.cos(math.pi*3/180))
     # force2 = {}

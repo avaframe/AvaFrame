@@ -306,9 +306,11 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
     nPart : int
         number of particles created
     """
-    n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
-    nn = (np.floor(mass / massPerPart)+1).astype('int')
-    nPart = n*n
+    if flagRand:
+        nPart = (np.floor(mass / massPerPart)+1).astype('int')
+    else:
+        n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
+        nPart = n*n
     mPart = mass / nPart
     d = csz/n
     pos = np.linspace(0, csz-d, n) + d/2
@@ -539,6 +541,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # plot depth computed with different interpolation methods
     nSave = Tcpu['nSave']
     dtSave = cfg.getfloat('dtSave')
+    hmin = cfg.getfloat('hmin')
     # if particles['t'] >= nSave * dtSave:
     #     force2 = {}
     #     particles, force2 = DFAfunC.computeForceSPHC(cfg, particles, force2, dem, SPHOption=2, gradient=1)
@@ -592,7 +595,10 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         # H = np.asarray(H)
         W = np.asarray(W)
         particles['hSPH'] = np.where(W > 0, H/W, H)
-        particles['h'] = np.where(W > 0, H/W, H)
+        # H = np.where(W > 0, H/W, H)
+        particles['h'] = np.where(H <= hmin, hmin, H)
+
+        # print(np.min(particles['h']))
 
     # update fields (compute grid values)
     startTime = time.time()
@@ -834,7 +840,7 @@ def polygon2Raster(demHeader, Line, Mask):
     return Mask
 
 
-def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, continuous=pU.contCmap):
+def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, last=False, continuous=pU.contCmap):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
@@ -858,6 +864,10 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, cont
         cb = ax.images[-1].colorbar
         if cb:
             cb.remove()
+        # # Get the images on an axis
+        # cb = fig.axes[-1]
+        # if cb:
+        #     cb.remove()
     except IndexError:
         pass
 
@@ -875,15 +885,18 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, cont
         ax.plot(x[NPPC == 9], y[NPPC == 9], '.r', linestyle='None', markersize=1)
         ax.plot(x[NPPC == 16], y[NPPC == 16], '.m', linestyle='None', markersize=1)
         # load variation colormap
+        # variable = particles['m']
         # cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        #     pU.cmapVar, np.amin(NPPC), np.amax(NPPC), continuous=True)
+        #     pU.cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
         # # set range and steps of colormap
-        # cc = NPPC
-        # sc = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
-        # pU.addColorBar(sc, ax, ticks, 'kg', 'mass')
-        # ax.plot(x[0], y[0], 'or', linestyle='None', markersize=1)
+        # cc = variable
+        # im = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
+        # if last:
+        #     pU.addColorBar(im, ax, ticks, unit, 'Flow Depth')
+    else:
+        pU.addColorBar(im, ax, ticks, unit)
     Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
-    # pU.addColorBar(im, ax, ticks, unit)
+
     plt.pause(0.1)
     # plt.close(fig)
     # ax.set_ylim([510, 530])
