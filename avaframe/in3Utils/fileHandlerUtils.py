@@ -182,9 +182,9 @@ def getTimeIndex(cfg, Fields):
     # if -1 is used -last time step shall be within index list too
     flagTfinal = False
     Tfinal = np.where(tSteps != -1./ float(cfg['dtSave']))
-    tSteps = tSteps[0:-1]
     if len(np.where(tSteps == -1./ float(cfg['dtSave']))[0]) > 0:
         flagTfinal = True
+        tSteps = tSteps[Tfinal[0]]
 
     # convert time steps from seconds to list of indices for dtSave
     tSteps = np.around(tSteps)

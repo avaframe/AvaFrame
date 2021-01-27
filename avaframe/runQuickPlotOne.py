@@ -28,7 +28,10 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # Set directory where input files is located
-inputDir = os.path.join('data', 'avaBowl', 'Outputs', 'com1DFA', 'peakFiles')
+if cfgPlot.getboolean('flagInput') == True:
+    inputDir = cfgPlot['inputDir']
+else:
+    inputDir = os.path.join(avalancheDir, 'Work', 'simplePlot')
 
 # parameters to be set
 location = float(cfgPlot['location'])

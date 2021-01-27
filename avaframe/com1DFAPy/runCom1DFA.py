@@ -187,7 +187,6 @@ if debugPlot:
 resTypesString = cfgGen['resType']
 resTypes = resTypesString.split('_')
 tSteps = fU.getTimeIndex(cfgGen, Fields)
-print(tSteps)
 for tStep in tSteps:
     finalFields = Fields[tStep]
     for resType in resTypes:
