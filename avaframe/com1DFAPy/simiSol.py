@@ -14,9 +14,9 @@ Pi = math.pi
 gravAcc = 9.81
 # Set Parameters
 
-planeinclinationAngle = 35.0 * Pi /180  # plane inclination
-bedFrictionAngle = 30 * Pi /180  # basal angle of friction. 16deg in samosAT
-internalFrictionAngle = 30 * Pi /180  # internal angle of friction phi>delta. 35deg in samosAT
+planeinclinationAngle = 25.0 * Pi /180  # plane inclination
+bedFrictionAngle = 20 * Pi /180  # basal angle of friction. 16deg in samosAT
+internalFrictionAngle = 20 * Pi /180  # internal angle of friction phi>delta. 35deg in samosAT
 # Set Parameters
 zeta = planeinclinationAngle  # plane inclination
 phi = internalFrictionAngle  # basal angle of friction. 16deg in samosAT

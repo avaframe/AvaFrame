@@ -143,7 +143,7 @@ def readRaster(fname):
     return dem
 
 
-def writeResultToAsc(header, resultArray, outFileName):
+def writeResultToAsc(header, resultArray, outFileName, flip=False):
     """ Write 2D array to an ascii file with header and save to location of outFileName
 
         Parameters
@@ -168,8 +168,12 @@ def writeResultToAsc(header, resultArray, outFileName):
         outFile.write("cellsize %.2f\n" % header.cellsize)
         outFile.write("nodata_value %.2f\n" % header.noDataValue)
 
-        for m in range(resultArray.shape[0]):
-            line = np.array([resultArray[m,:]])
+        M = resultArray.shape[0]
+        for m in range(M):
+            if flip:
+                line = np.array([resultArray[M-m-1,:]])
+            else:
+                line = np.array([resultArray[m,:]])
             np.savetxt(outFile, line, fmt='%f')
 
         outFile.close()

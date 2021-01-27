@@ -18,6 +18,7 @@ import avaframe.out3Plot.makePalette as makePalette
 import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
+import avaframe.in2Trans.ascUtils as IOf
 
 #######################################
 # Set flags here
@@ -32,7 +33,7 @@ flagSemiRand = True
 flagRand = False
 # set feature flag for flow deth calculation
 # use SPH to get the particles flow depth
-flagFDSPH = True
+flagFDSPH = False
 # set feature leapfrog time stepping
 featLF = False
 featCFL = False
@@ -71,6 +72,24 @@ def initializeMesh(dem, num=4):
     bad = np.where(Nz > 1, True, False)
     dem['Nz'] = np.where(Nz > 1, 0, Nz)
     dem['Bad'] = bad
+    if debugPlot:
+        x = np.arange(ncols) * csz
+        y = np.arange(nrows) * csz
+        fig = plt.figure(figsize=(pU.figW, pU.figH))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+        ax1.plot(x, dem['Nx'][int(ncols/2+1), :], '--k', label='Nx(x)')
+        ax1.plot(x, dem['Ny'][int(ncols/2+1), :], '--b', label='Ny(x)')
+        ax1.plot(x, dem['Nz'][int(ncols/2+1), :], '--r', label='Nz(x)')
+        ax2.plot(y, dem['Nx'][:, int(nrows/2+1)], ':k', label='Nx(y)')
+        ax2.plot(y, dem['Ny'][:, int(nrows/2+1)], ':b', label='Ny(y)')
+        ax2.plot(y, dem['Nz'][:, int(nrows/2+1)], ':r', label='Nz(y)')
+        ax1.legend()
+        ax2.legend()
+        plt.show()
+        IOf.writeResultToAsc(dem['header'], dem['Nx'], 'Nx.asc')
+        IOf.writeResultToAsc(dem['header'], dem['Ny'], 'Ny.asc')
+        IOf.writeResultToAsc(dem['header'], dem['Nz'], 'Nz.asc')
 
     # get real Area
     Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
@@ -122,6 +141,7 @@ def initializeSimulation(cfg, relRaster, dem):
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     FD = np.zeros((nrows, ncols))
     Npart = 0
+    NPPC = np.empty(0)
     Xpart = np.empty(0)
     Ypart = np.empty(0)
     Mpart = np.empty(0)
@@ -130,31 +150,33 @@ def initializeSimulation(cfg, relRaster, dem):
     IndX = np.empty((0), int)
     IndY = np.empty((0), int)
     # find all non empty cells (meaning release area)
-    indY, indX = np.nonzero(relRaster)
+    indRelY, indRelX = np.nonzero(relRaster)
     # loop on non empty cells
-    for indx, indy in zip(indX, indY):
+    for indRelx, indRely in zip(indRelX, indRelY):
         # compute number of particles for this cell
-        h = relRaster[indy, indx]
-        Vol = A[indy, indx] * h
+        h = relRaster[indRely, indRelx]
+        Vol = A[indRely, indRelx] * h
         mass = Vol * rho
-        xpart, ypart, mPart, nPart = placeParticles(mass, indx, indy, csz, massPerPart)
+        xpart, ypart, mPart, nPart = placeParticles(mass, indRelx, indRely, csz, massPerPart)
         Npart = Npart + nPart
-        partPerCell[indy, indx] = nPart
+        partPerCell[indRely, indRelx] = nPart
         # initialize field Flow depth
-        FD[indy, indx] = h
+        FD[indRely, indRelx] = h
         # initialize particles position, mass, height...
+        NPPC = np.append(NPPC, nPart*np.ones(nPart))
         Xpart = np.append(Xpart, xpart)
         Ypart = np.append(Ypart, ypart)
         Mpart = np.append(Mpart, mPart * np.ones(nPart))
         Hpart = np.append(Hpart, h * np.ones(nPart))
-        ic = indx + ncols * indy
-        IndX = np.append(IndX, np.ones(nPart)*indx)
-        IndY = np.append(IndY, np.ones(nPart)*indy)
+        ic = indRelx + ncols * indRely
+        IndX = np.append(IndX, np.ones(nPart)*indRelx)
+        IndY = np.append(IndY, np.ones(nPart)*indRely)
         InCell = np.append(InCell, np.ones(nPart)*ic)
 
     # create dictionnary to store particles properties
     particles = {}
     particles['Npart'] = Npart
+    particles['NPPC'] = NPPC
     particles['mTot'] = np.sum(Mpart)
     particles['x'] = Xpart
     particles['y'] = Ypart
@@ -221,18 +243,33 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['t'] = t
 
     log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells' %
-             (particles['mTot'], particles['Npart'], np.size(indY)))
+             (particles['mTot'], particles['Npart'], np.size(indRelY)))
 
     if debugPlot:
         x = np.arange(ncols) * csz
         y = np.arange(nrows) * csz
+        # X, Y = np.meshgrid(x, y)
+        # fig = plt.figure()
+        # ax = fig.gca(projection='3d')
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
         ref0, im = pU.NonUnifIm(ax, x, y, A, 'x [m]', 'y [m]',
                                 extent=[x.min(), x.max(), y.min(), y.max()],
                                 cmap=cmap, norm=None)
+
         ax.plot(Xpart, Ypart, 'or', linestyle='None')
         pU.addColorBar(im, ax, None, 'm²')
+
+        # ax.quiver(x, 2500*np.ones(nrows), dem['rasterData'][500, :], Nx[500, :], Ny[500, :], Nz[500, :], length=50, colors='b')
+        # ax.quiver(2500*np.ones(ncols), y, dem['rasterData'][:, 500], Nx[:, 500], Ny[:, 500], Nz[:, 500], length=50, colors='r')
+        # ax.set_xlim([2000, 3000])
+        # ax.set_ylim([2000, 3000])
+        # ax.set_zlim([0, 500])
+        # # Label each axis
+        # ax.set_xlabel('x')
+        # ax.set_ylabel('y')
+        # ax.set_zlabel('z')
+
         plt.show()
 
     return particles, fields, Cres, Ment
@@ -270,6 +307,7 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
         number of particles created
     """
     n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
+    nn = (np.floor(mass / massPerPart)+1).astype('int')
     nPart = n*n
     mPart = mass / nPart
     d = csz/n
@@ -495,7 +533,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
-    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem)
+    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, SPHOption=2)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
     # plot depth computed with different interpolation methods
@@ -553,7 +591,8 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         # particles['h'] = hh
         # H = np.asarray(H)
         W = np.asarray(W)
-        particles['hSPH'] = H/W
+        particles['hSPH'] = np.where(W > 0, H/W, H)
+        particles['h'] = np.where(W > 0, H/W, H)
 
     # update fields (compute grid values)
     startTime = time.time()
@@ -810,6 +849,8 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, cont
     Z = dem['rasterData']
     x = particles['x'] + xllc
     y = particles['y'] + yllc
+    m = particles['m']
+    NPPC = particles['NPPC']
     xx = np.arange(ncols) * csz + xllc
     yy = np.arange(nrows) * csz + yllc
     try:
@@ -829,9 +870,20 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, cont
                          extent=[x.min(), x.max(), y.min(), y.max()],
                          cmap=cmap, norm=norm)
     if plotPart:
-        ax.plot(x, y, 'ob', linestyle='None', markersize=1)
+        ax.plot(x[NPPC == 1], y[NPPC == 1], '.c', linestyle='None', markersize=1)
+        ax.plot(x[NPPC == 4], y[NPPC == 4], '.b', linestyle='None', markersize=1)
+        ax.plot(x[NPPC == 9], y[NPPC == 9], '.r', linestyle='None', markersize=1)
+        ax.plot(x[NPPC == 16], y[NPPC == 16], '.m', linestyle='None', markersize=1)
+        # load variation colormap
+        # cmap, _, _, norm, ticks = makePalette.makeColorMap(
+        #     pU.cmapVar, np.amin(NPPC), np.amax(NPPC), continuous=True)
+        # # set range and steps of colormap
+        # cc = NPPC
+        # sc = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
+        # pU.addColorBar(sc, ax, ticks, 'kg', 'mass')
+        # ax.plot(x[0], y[0], 'or', linestyle='None', markersize=1)
     Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
-    pU.addColorBar(im, ax, ticks, unit)
+    # pU.addColorBar(im, ax, ticks, unit)
     plt.pause(0.1)
     # plt.close(fig)
     # ax.set_ylim([510, 530])
@@ -964,6 +1016,7 @@ def removePart(particles, mask, nRemove):
         particles dictionary
     """
     particles['Npart'] = particles['Npart'] - nRemove
+    particles['NPPC'] = particles['NPPC'][mask]
     particles['x'] = particles['x'][mask]
     particles['y'] = particles['y'][mask]
     particles['z'] = particles['z'][mask]

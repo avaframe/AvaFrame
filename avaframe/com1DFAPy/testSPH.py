@@ -17,9 +17,9 @@ import avaframe.out3Plot.plotUtils as pU
 import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.com1DFA as com1DFA
-import avaframe.com1DFAPy.SPHfunctions as SPH
+# import avaframe.com1DFAPy.SPHfunctions as SPH
 from avaframe.in3Utils import cfgUtils
-from SPHfunctionsCython import *
+from DFAfunctionsCython import *
 cfg = cfgUtils.getModuleConfig(com1DFA)['GENERAL']
 cfgFull = cfgUtils.getModuleConfig(com1DFA)
 
@@ -34,9 +34,9 @@ def Hfunction(x, y, z):
     GHx = 2*x*y/5000
     GHy = x*x/5000
     h = x*x*y/5000 + 1
-    r = np.sqrt((x-12.5)*(x-12.5)+(y-12.5)*(y-12.5))
-    H0 = 1
-    h = H0 * (1 - (r/12.5) * (r/12.5))
+    # r = np.sqrt((x-12.5)*(x-12.5)+(y-12.5)*(y-12.5))
+    # H0 = 1
+    # h = H0 * (1 - (r/12.5) * (r/12.5))
     # GHx = np.ones(np.shape(x))/10
     # h = np.ones(np.shape(x))
     # GHx = np.zeros(np.shape(x))
@@ -83,7 +83,7 @@ NPartPerD = [2, 4, 8, 11, 18, 58] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
-coef = 0
+coef = 0.5
 rho = 200
 ##############################################################################
 # END CHOOSE SETUP
@@ -177,7 +177,7 @@ for DX in NDX:
 
         # ------------------------------------------
         # find neighbours
-        particles = SPH.getNeighboursVect(particles, dem)
+        particles = getNeighboursC(particles, dem)
 
         # ------------------------------------------
         indOut = np.where(DFAtls.norm(Xpart-Lx/2, Ypart-Ly/2, Zpart) >6*Lx/2)
@@ -190,7 +190,7 @@ for DX in NDX:
             print('removed %s particles' % (nRemove))
 
         # find neighbours
-        particles = SPH.getNeighboursVect(particles, dem)
+        particles = getNeighboursC(particles, dem)
 
         Xpart = particles['x']
         Ypart = particles['y']
@@ -264,7 +264,7 @@ for DX in NDX:
         H = np.asarray(H)
         W = np.asarray(W)
         particles['W'] = W
-        particles['hSPH'] = H*W
+        particles['hSPH'] = H/W
         tottime = time.time() - startTime
         print('Time FD: ',tottime)
 
