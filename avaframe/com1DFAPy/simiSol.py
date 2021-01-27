@@ -227,10 +227,10 @@ def xc(solSimi, x1, y1, i):
     return z
 
 
-def write_raster_file(z_mat,FileName_ext):
+def write_raster_file(z_mat, x1, y1,FileName_ext):
     # Define domain characteristics
-    ncols = len(x0)
-    nrows = len(y0)
+    ncols = len(x1)
+    nrows = len(y1)
     xllcorner = 0.0
     yllcorner = 0.0
     cellsize = 5
@@ -249,8 +249,8 @@ def write_raster_file(z_mat,FileName_ext):
 
 def create_raster_file(solSimi, x1, y1, i, FileName):
     # Define domain characteristics
-    ncols = np.shape(x0)[0]
-    nrows = np.shape(x0)[1]
+    ncols = np.shape(x1)[0]
+    nrows = np.shape(y1)[0]
     xllcorner = 0.0
     yllcorner = 0.0
     cellsize = 5
@@ -266,15 +266,15 @@ def create_raster_file(solSimi, x1, y1, i, FileName):
 
     FileName_ext = FileName + '_fd.asc'
     z_mat = np.matrix(zh)
-    write_raster_file(z_mat, FileName_ext)
+    write_raster_file(z_mat, x1, y1, FileName_ext)
 
     FileName_ext = FileName + '_vx.asc'
     z_mat = np.matrix(zu)
-    write_raster_file(z_mat, FileName_ext)
+    write_raster_file(z_mat, x1, y1, FileName_ext)
 
     FileName_ext = FileName + '_vy.asc'
     z_mat = np.matrix(zv)
-    write_raster_file(z_mat, FileName_ext)
+    write_raster_file(z_mat, x1, y1, FileName_ext)
 
 
 def runSimilarity():
