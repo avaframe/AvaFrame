@@ -200,7 +200,7 @@ for tStep in tSteps:
         outDirPeak = os.path.join(outDir, 'peakFiles')
         fU.makeADir(outDirPeak)
         outFile = os.path.join(outDirPeak, dataName)
-        IOf.writeResultToAsc(demOri['header'], resField, outFile)
+        IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
         if tStep == -1:
             log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType,Tsave[tStep]))
         else:

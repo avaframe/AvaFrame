@@ -91,8 +91,8 @@ csz = demOri['header'].cellsize
 x = np.linspace(0, ncols-1, ncols)*csz+xllc
 y = np.linspace(0, nrows-1, nrows)*csz+yllc
 X, Y = np.meshgrid(x, y)
-cos = math.cos(math.pi*35/180)
-sin = math.sin(math.pi*35/180)
+cos = math.cos(math.pi*25/180)
+sin = math.sin(math.pi*25/180)
 X1 = X/cos
 Y1 = Y
 r = np.sqrt((X*X)/(cos*cos)+(Y*Y))
@@ -125,7 +125,7 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
+T, U, Z, S, Particles, Fields, Tcpu, Tsave = com1DFA.DFAIterate(
     cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
@@ -166,7 +166,7 @@ try:
 except ValueError:
     value = 'n'
 while isinstance(value, float):
-    ind_t = np.searchsorted(T, value)
+    ind_t = np.searchsorted(Tsave, value)
     fields = Fields[ind_t]
     particles = Particles[ind_t]
     ind_time = np.searchsorted(solSimi['Time'], value)
