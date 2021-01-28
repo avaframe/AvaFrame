@@ -34,9 +34,9 @@ def Hfunction(x, y, z):
     GHx = 2*x*y/5000
     GHy = x*x/5000
     h = x*x*y/5000 + 1
-    # r = np.sqrt((x-12.5)*(x-12.5)+(y-12.5)*(y-12.5))
-    # H0 = 1
-    # h = H0 * (1 - (r/12.5) * (r/12.5))
+    r = np.sqrt((x-12.5)*(x-12.5)+(y-12.5)*(y-12.5))
+    H0 = 1
+    h = H0 * (1 - (r/12.5) * (r/12.5))
     # GHx = np.ones(np.shape(x))/10
     # h = np.ones(np.shape(x))
     # GHx = np.zeros(np.shape(x))

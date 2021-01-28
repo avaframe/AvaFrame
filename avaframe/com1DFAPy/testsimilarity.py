@@ -10,6 +10,7 @@ import numpy as np
 import math
 import scipy.stats as stats
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as PathEffects
 import matplotlib as mpl
 
 # Local imports
@@ -25,6 +26,7 @@ import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
 
 # from avaframe.DFAkernel.setParam import *
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.out3Plot.makePalette as makePalette
 from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
@@ -91,8 +93,8 @@ csz = demOri['header'].cellsize
 x = np.linspace(0, ncols-1, ncols)*csz+xllc
 y = np.linspace(0, nrows-1, nrows)*csz+yllc
 X, Y = np.meshgrid(x, y)
-cos = math.cos(math.pi*25/180)
-sin = math.sin(math.pi*25/180)
+cos = math.cos(math.pi*35/180)
+sin = math.sin(math.pi*35/180)
 X1 = X/cos
 Y1 = Y
 r = np.sqrt((X*X)/(cos*cos)+(Y*Y))
@@ -154,10 +156,23 @@ repeat = True
 while repeat:
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     for part, field in zip(Particles, Fields):
-        fig, ax = com1DFA.plotPosition(
-            part, demOri, dem['Nz'], pU.cmapDEM2, '', fig, ax, plotPart=True)
-    fig, ax = com1DFA.plotPosition(
-        part, demOri, dem['Nz'], pU.cmapDEM2, 'm', fig, ax, plotPart=True, last=True)
+        t = part['t']
+        ind_time = np.searchsorted(solSimi['Time'], t)
+        hSimi = simiSol.h(solSimi, X1, Y1, ind_time)
+        hSimi = np.where(hSimi <= 0, 0, hSimi)
+        fig, ax, cmap, lev = com1DFA.plotPosition(
+            part, demOri, field['FD'], pU.cmapDepth, '', fig, ax, plotPart=True)
+        CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
+                        linewidths=2, linestyles='dashed')
+        # plt.setp(CS.collections, path_effects=[PathEffects.withStroke(linewidth=2, foreground="k")])
+        plt.pause(1)
+
+    fig, ax, cmap, lev = com1DFA.plotPosition(
+        part, demOri, field['FD'], pU.cmapDepth, 'm', fig, ax, plotPart=True, last=True)
+    CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
+                    linewidths=2, linestyles='dashed')
+    ax.clabel(CS, inline=1, fontsize=8)
+    # plt.setp(CS.collections, path_effects=[PathEffects.withStroke(linewidth=2, foreground="k")])
     value = input("[y] to repeat:\n")
     if value != 'y':
         repeat = False
