@@ -79,7 +79,7 @@ NDX = [5]
 # choose the number of particles per DX and DY
 # if you choose 3, you will have 3*3 = 9 particles per grid cell
 # NPartPerD = [40]
-NPartPerD = [2, 4, 8, 11, 18, 58] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
+NPartPerD = [2, 4, 8, 11, 18] #[2, 3, 4, 5, 6, 8, 10, 15, 20, 30, 40]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
@@ -243,6 +243,9 @@ for DX in NDX:
         GHX2 = np.asarray(GHX2)
         GHY2 = np.asarray(GHY2)
         GHZ2 = np.asarray(GHZ2)
+        particles['gradx'] = GHX2
+        particles['grady'] = GHY2
+        particles['gradz'] = GHZ2
         tottime = time.time() - startTime
         print('Time SPHOption 2: ', tottime)
         startTime = time.time()
@@ -255,18 +258,30 @@ for DX in NDX:
         print('Time SPHOption 3: ', tottime)
         startTime = time.time()
         # Compute sph FD
-        H, W = computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        H, C, W = computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
         W = np.asarray(W)
+        C = np.asarray(C)
         particles['h'] = H
         particles['hSPH'] = H
-        H, W = computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        H, C, W = computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
         W = np.asarray(W)
+        C = np.asarray(C)
         particles['W'] = W
-        particles['hSPH'] = H/W
+        particles['h1'] = H
+        particles['h'] = H/W
+        particles['h2'] = H/W
+        particles['h3'] = (H-C)/W
         tottime = time.time() - startTime
         print('Time FD: ',tottime)
+        startTime = time.time()
+        GHX, GHY, GHZ = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=1, gradient=1)
+        GHX = np.asarray(GHX)
+        GHY = np.asarray(GHY)
+        GHZ = np.asarray(GHZ)
+        tottime = time.time() - startTime
+        print('Time SPHOption 1: ', tottime)
 
         Area = dem['Area']
         # Update fields using a nearest interpolation
@@ -314,12 +329,14 @@ for DX in NDX:
 
         # , label='real flow depth')
         ax1.plot(particles['x'][ind], h[ind], color='r', marker='.', linestyle='None')
-        ax1.plot(particles['x'][ind], particles['hSPH'][ind], color=col,
-                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
-        ax1.plot(particles['x'][ind], particles['h'][ind], color=col,
-                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
-        ax1.plot(particles['x'][ind], particles['W'][ind], color=col,
-                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
+        ax1.plot(particles['x'][ind], particles['h3'][ind], color='b',
+                 marker=mark, linestyle='None', label='full corrected flow depth' + str(nPartPerD))
+        ax1.plot(particles['x'][ind], particles['h1'][ind], color='g',
+                 marker=mark, linestyle='None', label='flow depth')
+        ax1.plot(particles['x'][ind], particles['h2'][ind], color='c',
+                 marker=mark, linestyle='None', label='half corrected flow depth')
+        ax1.plot(particles['x'][ind], particles['W'][ind], color='k',
+                 marker=mark, linestyle='None', label='W sum')
 
         ind = np.where(((particles['x'] > Lx/2-0.5*dx) & (particles['x'] < Lx/2+0.5*dx)))
         # if count == 1:
@@ -336,12 +353,14 @@ for DX in NDX:
 
         # , label='real flow depth')
         ax2.plot(particles['y'][ind], h[ind], color='r', marker='.', linestyle='None')
-        ax2.plot(particles['y'][ind], particles['hSPH'][ind], color=col,
-                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
-        ax2.plot(particles['y'][ind], particles['h'][ind], color=col,
-                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
-        ax2.plot(particles['y'][ind], particles['W'][ind], color=col,
-                 marker=mark, linestyle='None', label='SPH N=' + str(nPartPerD))
+        ax2.plot(particles['y'][ind], particles['h3'][ind], color='b',
+                 marker=mark, linestyle='None', label='full corrected flow depth N=' + str(nPartPerD))
+        ax2.plot(particles['y'][ind], particles['h1'][ind], color='g',
+                 marker=mark, linestyle='None', label='flow depth')
+        ax2.plot(particles['y'][ind], particles['h2'][ind], color='c',
+                 marker=mark, linestyle='None', label='half corrected flow depth')
+        ax2.plot(particles['y'][ind], particles['W'][ind], color='k',
+                 marker=mark, linestyle='None', label='W sum')
 
         ind = np.where(((particles['y'] > Ly/2-0.5*dy) & (particles['y'] < Ly/2+0.5*dy)))
 
