@@ -311,12 +311,12 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
     else:
         n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
         nPart = n*n
+        d = csz/n
+        pos = np.linspace(0, csz-d, n) + d/2
+        x, y = np.meshgrid(pos, pos)
+        x = x.flatten()
+        y = y.flatten()
     mPart = mass / nPart
-    d = csz/n
-    pos = np.linspace(0, csz-d, n) + d/2
-    x, y = np.meshgrid(pos, pos)
-    x = x.flatten()
-    y = y.flatten()
     # TODO make this an independent function
     #######################
     # start ###############
