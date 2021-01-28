@@ -879,23 +879,24 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, last
     ref0, im = pU.NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
                          extent=[x.min(), x.max(), y.min(), y.max()],
                          cmap=cmap, norm=norm)
+
+    Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
     if plotPart:
-        ax.plot(x[NPPC == 1], y[NPPC == 1], '.c', linestyle='None', markersize=1)
-        ax.plot(x[NPPC == 4], y[NPPC == 4], '.b', linestyle='None', markersize=1)
-        ax.plot(x[NPPC == 9], y[NPPC == 9], '.r', linestyle='None', markersize=1)
-        ax.plot(x[NPPC == 16], y[NPPC == 16], '.m', linestyle='None', markersize=1)
+        # ax.plot(x[NPPC == 1], y[NPPC == 1], '.c', linestyle='None', markersize=1)
+        # ax.plot(x[NPPC == 4], y[NPPC == 4], '.b', linestyle='None', markersize=1)
+        # ax.plot(x[NPPC == 9], y[NPPC == 9], '.r', linestyle='None', markersize=1)
+        # ax.plot(x[NPPC == 16], y[NPPC == 16], '.m', linestyle='None', markersize=1)
         # load variation colormap
-        # variable = particles['m']
-        # cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        #     pU.cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
-        # # set range and steps of colormap
-        # cc = variable
-        # im = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
-        # if last:
-        #     pU.addColorBar(im, ax, ticks, unit, 'Flow Depth')
+        variable = particles['h']
+        cmap, _, _, norm, ticks = makePalette.makeColorMap(
+            pU.cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
+        # set range and steps of colormap
+        cc = variable
+        im = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
+        if last:
+            pU.addColorBar(im, ax, ticks, unit, 'Flow Depth')
     else:
         pU.addColorBar(im, ax, ticks, unit)
-    Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
 
     plt.pause(0.1)
     # plt.close(fig)
