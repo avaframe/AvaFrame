@@ -156,6 +156,8 @@ while repeat:
     for part, field in zip(Particles, Fields):
         fig, ax = com1DFA.plotPosition(
             part, demOri, dem['Nz'], pU.cmapDEM2, '', fig, ax, plotPart=True)
+    fig, ax = com1DFA.plotPosition(
+        part, demOri, dem['Nz'], pU.cmapDEM2, 'm', fig, ax, plotPart=True, last=True)
     value = input("[y] to repeat:\n")
     if value != 'y':
         repeat = False
