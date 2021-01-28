@@ -112,9 +112,12 @@ def compareConfig(iniFile, modName, compare):
         log.info('Reading config from: %s and %s' % (iniFile[0], iniFile[1]))
         # initialize our final configparser object
         cfg = configparser.ConfigParser()
+        cfg.optionxform = str
         # initialize configparser object to read
         defCfg = configparser.ConfigParser()
+        defCfg.optionxform = str
         locCfg = configparser.ConfigParser()
+        locCfg.optionxform = str
         # read default and local parser files
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
@@ -154,10 +157,16 @@ def compareConfig(iniFile, modName, compare):
     else:
         log.info('Reading config from: %s', iniFile)
         cfg = configparser.ConfigParser()
+        # this is needed to keep case in conversion and prints
+        cfg.optionxform = str
         # Finally read it
         cfg.read(iniFile)
         # Write config to log file
         logUtils.writeCfg2Log(cfg, modName)
+
+
+    #convert to dict
+    # cfgDict = {s:dict(cfg.items(s)) for s in cfg.sections()}
 
     return cfg
 
@@ -180,7 +189,7 @@ def writeCfgFile(avaDir, module, cfg, suffix=''):
 
 
 def readCfgFile(avaDir, module, suffix=''):
-    """ Save configuration used to text file in Outputs """
+    """ read configuration used to text file in Outputs """
 
     # write configuration to text file
     modPath = os.path.dirname(module.__file__)

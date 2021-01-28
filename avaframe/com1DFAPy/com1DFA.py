@@ -40,8 +40,8 @@ featLF = False
 featCFL = False
 featCFLConstrain = True
 # use cython functions
-# flagCython = True
-flagCython = False
+flagCython = True
+# flagCython = False
 
 
 def initializeMesh(dem, num=4):
@@ -363,8 +363,18 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     """
 
     # Load configuration settings
-    Tend = cfg.getfloat('Tend')
-    dtSave = cfg.getfloat('dtSave')
+    Tend = float(cfg['Tend'])
+    dtSave = float(cfg['dtSave'])
+
+    # cfg['dt'] = float(cfg['dt'])
+    # print(type(cfg['dt']))
+    # cfg['Rs0'] = float(cfg['Rs0'])
+    # cfg['kappa'] = float(cfg['kappa'])
+    # cfg['B'] = float(cfg['B'])
+    # cfg['R'] = float(cfg['R'])
+    # cfg['rho'] = float(cfg['rho'])
+    # cfg['gravAcc'] = float(cfg['gravAcc'])
+    # cfg['mu'] = float(cfg['mu'])
 
     # Initialise Lists to save fields
     Particles = [copy.deepcopy(particles)]
@@ -400,7 +410,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
         # ++++++++++++++++++++++++++++++++++++++++++++++
         # get time step
-        dt = cfg.getfloat('dt')
+        dt = float(cfg['dt'])
         t = t + dt
         nIter = nIter + 1
         nIter0 = nIter0 + 1
@@ -502,7 +512,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
     # plot depth computed with different interpolation methods
     nSave = Tcpu['nSave']
-    dtSave = cfg.getfloat('dtSave')
+    dtSave = float(cfg['dtSave'])
     # if particles['t'] >= nSave * dtSave:
     #     force2 = {}
     #     particles, force2 = SPHC.computeForceSPHC(cfg, particles, force2, dem, SPHOption=2, gradient=1)
@@ -1523,7 +1533,7 @@ def removeOutPart(cfg, particles, dem):
     particles : dict
         particles dictionary
     """
-    dt = cfg.getfloat('dt')
+    dt = float(cfg['dt'])
     header = dem['header']
     nrows = header.nrows
     ncols = header.ncols

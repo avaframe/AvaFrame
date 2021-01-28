@@ -5,6 +5,7 @@
 """
 
 import os
+import ast
 import seaborn as sns
 import copy
 import matplotlib
@@ -68,6 +69,12 @@ outputFormat = cfg['savefigFormat']
 matplotlib.rcParams['savefig.format'] = outputFormat
 
 matplotlib.rcParams['legend.edgecolor'] = 'None'
+# print(type(cfg['usetex']))
+# print(bool(cfg['usetex']))
+# print(ast.literal_eval(cfg['usetex']))
+# print(type(ast.literal_eval(cfg['usetex'])))
+
+# matplotlib.rcParams['text.usetex'] = cfg['usetex']
 matplotlib.rcParams['text.usetex'] = cfg.getboolean('usetex')
 
 matplotlib.rcParams['grid.color'] = 'whitesmoke'

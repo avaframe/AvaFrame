@@ -1,4 +1,4 @@
-# cython: profile=True
+## cython: profile=True
 """
     function related to SPH calculations in com1DFA
 
@@ -155,14 +155,14 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
   force : dict
       force dictionary
   """
-  cdef double Rs0 = cfg.getfloat('Rs0')
-  cdef double kappa = cfg.getfloat('kappa')
-  cdef double B = cfg.getfloat('B')
-  cdef double R = cfg.getfloat('R')
-  cdef double rho = cfg.getfloat('rho')
-  cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double Rs0 = float(cfg['Rs0'])
+  cdef double kappa = float(cfg['kappa'])
+  cdef double B = float(cfg['B'])
+  cdef double R = float(cfg['R'])
+  cdef double rho = float(cfg['rho'])
+  cdef double gravAcc = float(cfg['gravAcc'])
   cdef double dt = dT
-  cdef double mu = cfg.getfloat('mu')
+  cdef double mu = float(cfg['mu'])
   cdef int Npart = particles['Npart']
   cdef double csz = dem['header'].cellsize
   cdef double[:, :] Nx = dem['Nx']
@@ -302,14 +302,14 @@ def updatePositionC(cfg, particles, dem, force):
   particles : dict
       particles dictionary at t + dt
   """
-  DT = cfg.getfloat('dt')
+  DT = float(cfg['dt'])
   cdef double dt = DT
-  cdef double stopCrit = cfg.getfloat('stopCrit')
+  cdef double stopCrit = float(cfg['stopCrit'])
+  cdef double gravAcc = float(cfg['gravAcc'])
+  cdef double rho = float(cfg['rho'])
+  cdef double mu = float(cfg['mu'])
   log.debug('dt used now is %f' % DT)
-  cdef double gravAcc = cfg.getfloat('gravAcc')
-  cdef double rho = cfg.getfloat('rho')
   cdef double csz = dem['header'].cellsize
-  cdef double mu = cfg.getfloat('mu')
   cdef int Npart = particles['Npart']
   cdef double[:, :] Nx = dem['Nx']
   cdef double[:, :] Ny = dem['Ny']
@@ -457,7 +457,7 @@ def updatePositionC(cfg, particles, dem, force):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-@cython.profile(True)
+# @cython.profile(True)
 def updateFieldsC(cfg, particles, force, dem, fields):
   """ update fields and particles fow depth
 
@@ -483,7 +483,7 @@ def updateFieldsC(cfg, particles, force, dem, fields):
  fields : dict
      fields dictionary
  """
-  cdef double rho = cfg.getfloat('rho')
+  cdef double rho = float(cfg['rho'])
   header = dem['header']
   CSZ = dem['header'].cellsize
   cdef double[:, :]A = dem['Area']
@@ -773,9 +773,9 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   GHZ : 1D numpy array
       z component of the lateral force
   """
-  cdef double rho = cfg.getfloat('rho')
-  cdef double minRKern = cfg.getfloat('minRKern')
-  cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double rho = float(cfg['rho'])
+  cdef double minRKern = float(cfg['minRKern'])
+  cdef double gravAcc = float(cfg['gravAcc'])
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']

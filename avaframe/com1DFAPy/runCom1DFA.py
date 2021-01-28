@@ -2,6 +2,7 @@
     Run script for running python DFA kernel
 """
 import os
+import sys
 import glob
 import time
 import copy
@@ -33,7 +34,10 @@ from avaframe.in3Utils import logUtils
 import cProfile, pstats, io
 from pstats import SortKey
 
+import sys
+
 debugPlot = False
+
 
 # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
 # log file name; leave empty to use default runLog.log
@@ -41,7 +45,11 @@ logName = 'testKernel'
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
+
+# cfgMain = {s:dict(cfgMain.items(s)) for s in cfgMain.sections()}
+
 avalancheDir = cfgMain['MAIN']['avalancheDir']
+
 # set module name, reqiured as long we are in dev phase
 # - because need to create e.g. Output folder for com1DFAPy to distinguish from
 # current com1DFA
@@ -57,6 +65,7 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # Load configuration
 cfg = cfgUtils.getModuleConfig(com1DFA)
+# cfg= {s:dict(cfg.items(s)) for s in cfg.sections()}
 cfgGen = cfg['GENERAL']
 flagDev = cfg['FLAGS'].getboolean('flagDev')
 
@@ -105,14 +114,18 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-pr.enable()
+
+cfg= {s:dict(cfg.items(s)) for s in cfg.sections()}
+cfgGen = cfg['GENERAL']
+
 pr = cProfile.Profile()
+pr.enable()
 
 T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
     cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
 
 pr.disable()
-# pr.print_stats()
+pr.print_stats()
 pr.dump_stats('profile.pstats')
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
@@ -125,7 +138,7 @@ log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / Tcpu['nIter'])))
 tcpuDFA = time.time() - startTime
 log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
-
+sys.exit()
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 # -------------------------------
 # Analyse resutls
