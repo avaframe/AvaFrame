@@ -8,6 +8,7 @@ import numpy as np
 import math
 import copy
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as PathEffects
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -28,12 +29,12 @@ log = logging.getLogger(__name__)
 debugPlot = False
 # set feature flag for initial particle distribution
 # particles are homegeneosly distributed with a little random variation
-flagSemiRand = True
+flagSemiRand = False
 # particles are randomly distributed
 flagRand = False
 # set feature flag for flow deth calculation
 # use SPH to get the particles flow depth
-flagFDSPH = True
+flagFDSPH = False
 # set feature leapfrog time stepping
 featLF = False
 featCFL = False
@@ -237,7 +238,7 @@ def initializeSimulation(cfg, relRaster, dem):
     # particles['h'] = hh
     # H = np.asarray(H)
     W = np.asarray(W)
-    particles['hSPH'] = H
+    particles['hSPH'] = H/W
     # initialize time
     t = 0
     particles['t'] = t
@@ -596,7 +597,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         W = np.asarray(W)
         particles['hSPH'] = np.where(W > 0, H/W, H)
         # H = np.where(W > 0, H/W, H)
-        particles['h'] = np.where(H <= hmin, hmin, H)
+        # particles['h'] = np.where(H <= hmin, hmin, H)
 
         # print(np.min(particles['h']))
 
@@ -872,37 +873,46 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, last
         pass
 
     ax.clear()
-    ax.set_title('Particles on dem at t=%.2f s' % particles['t'])
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(
+    ax.set_title('t=%.2f s' % particles['t'])
+    cmap, _, lev, norm, ticks = makePalette.makeColorMap(
         Cmap, 0.0, np.nanmax(data), continuous=True)
     cmap.set_under(color='w')
-    ref0, im = pU.NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
-                         extent=[x.min(), x.max(), y.min(), y.max()],
-                         cmap=cmap, norm=norm)
+    # ref0, im = pU.NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
+    #                      extent=[x.min(), x.max(), y.min(), y.max()],
+    #                      cmap=cmap, norm=norm)
 
-    Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
+    # Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
     if plotPart:
+        # ax.plot(x, y, '.b', linestyle='None', markersize=1)
         # ax.plot(x[NPPC == 1], y[NPPC == 1], '.c', linestyle='None', markersize=1)
         # ax.plot(x[NPPC == 4], y[NPPC == 4], '.b', linestyle='None', markersize=1)
         # ax.plot(x[NPPC == 9], y[NPPC == 9], '.r', linestyle='None', markersize=1)
         # ax.plot(x[NPPC == 16], y[NPPC == 16], '.m', linestyle='None', markersize=1)
         # load variation colormap
-        variable = particles['h']
-        cmap, _, _, norm, ticks = makePalette.makeColorMap(
-            pU.cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
-        # set range and steps of colormap
-        cc = variable
-        im = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
+        # variable = particles['h']
+        # cmap, _, _, norm, ticks = makePalette.makeColorMap(
+        #     pU.cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
+        # # set range and steps of colormap
+        # cc = variable
+        # im = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
+        CS = ax.contour(X, Y, data, levels=8, origin='lower', cmap=cmap,
+                        linewidths=2)
+        lev = CS.levels
+
         if last:
-            pU.addColorBar(im, ax, ticks, unit, 'Flow Depth')
-    else:
-        pU.addColorBar(im, ax, ticks, unit)
+            # pU.addColorBar(im, ax, ticks, unit, 'Flow Depth')
+            CB = fig.colorbar(CS)
+            # CB = fig.colorbar(CS, shrink=0.8, extend='both')
+            # cbar.add_lines(CS)
+            # plt.setp(CS.collections, path_effects=[PathEffects.withStroke(linewidth=2, foreground="k")])
+            ax.clabel(CS, inline=1, fontsize=8)
+    # pU.addColorBar(im, ax, ticks, unit)
 
     plt.pause(0.1)
     # plt.close(fig)
     # ax.set_ylim([510, 530])
     # ax.set_xlim([260, 300])
-    return fig, ax
+    return fig, ax, cmap, lev
 
 
 def removeOutPart(cfg, particles, dem):

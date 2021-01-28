@@ -14,9 +14,9 @@ Pi = math.pi
 gravAcc = 9.81
 # Set Parameters
 
-planeinclinationAngle = 25.0 * Pi /180  # plane inclination
-bedFrictionAngle = 20 * Pi /180  # basal angle of friction. 16deg in samosAT
-internalFrictionAngle = 20 * Pi /180  # internal angle of friction phi>delta. 35deg in samosAT
+planeinclinationAngle = 35.0 * Pi /180  # plane inclination
+bedFrictionAngle = 30 * Pi /180  # basal angle of friction. 16deg in samosAT
+internalFrictionAngle = 30 * Pi /180  # internal angle of friction phi>delta. 35deg in samosAT
 # Set Parameters
 zeta = planeinclinationAngle  # plane inclination
 phi = internalFrictionAngle  # basal angle of friction. 16deg in samosAT
@@ -33,7 +33,7 @@ eps_x = H/L_x
 eps_y = H/L_y
 eps_xy = L_y/L_x
 # Full scale end time
-T_end = 50
+T_end = 55
 # Non dimentional time for similarity sim calculation
 t_1 = 0.1  # start time for ode solvers
 t_end = T_end/T  # end time
@@ -84,6 +84,7 @@ def compute_earth_press_coeff(x, earthPressureCoefficients):
         if f_p >= 0:
             K_y = earthPressureCoefficients[2]
         else:
+            print('ky passive')
             K_y = earthPressureCoefficients[3]
     else:
         print('kx passive')
