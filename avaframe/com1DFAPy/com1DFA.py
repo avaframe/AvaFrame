@@ -33,7 +33,7 @@ flagSemiRand = True
 flagRand = False
 # set feature flag for flow deth calculation
 # use SPH to get the particles flow depth
-flagFDSPH = False
+flagFDSPH = True
 # set feature leapfrog time stepping
 featLF = False
 featCFL = False
@@ -230,7 +230,7 @@ def initializeSimulation(cfg, relRaster, dem):
     Nz = dem['Nz']
     indX = (particles['indX']).astype('int')
     indY = (particles['indY']).astype('int')
-    H, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+    H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
     H = np.asarray(H)
     # particles['h'] = H
     # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
@@ -587,7 +587,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         Nz = dem['Nz']
         indX = (particles['indX']).astype('int')
         indY = (particles['indY']).astype('int')
-        H, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
         # particles['h'] = H
         # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)

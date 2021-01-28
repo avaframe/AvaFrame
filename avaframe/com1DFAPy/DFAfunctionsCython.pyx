@@ -254,7 +254,7 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
           # SamosAT friction type (bottom shear stress)
           tau = SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
           # coulomb friction type (bottom shear stress)
-          # tau = mu * sigmaB
+          tau = mu * sigmaB
 
       # adding bottom shear resistance contribution
       forceBotTang = - A * tau
@@ -774,6 +774,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
+  cdef double[:] h = particles['h']
   cdef double[:] X = particles['x']
   cdef double[:] Y = particles['y']
   cdef double[:] Z = particles['z']
@@ -887,6 +888,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
                       mdwdrr = mass[l] * dwdr / r
+                      # mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
                       gradhX = gradhX + mdwdrr*dx
                       gradhY = gradhY + mdwdrr*dy
                       gradhZ = gradhZ + mdwdrr*dz
@@ -907,6 +909,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
+                      # mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
                       mdwdrr = mass[l] * dwdr / r
                       G1 = mdwdrr * K1*r1
                       G2 = mdwdrr * K2*r2
@@ -1013,6 +1016,9 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   cdef double[:] UX = particles['ux']
   cdef double[:] UY = particles['uy']
   cdef double[:] UZ = particles['uz']
+  # cdef double[:] gradx = particles['gradx']
+  # cdef double[:] grady = particles['grady']
+  # cdef double[:] gradz = particles['gradz']
   cdef long[:] indPartInCell = particles['indPartInCell']
   cdef long[:] partInCell = particles['partInCell']
   cdef int N = X.shape[0]
@@ -1024,7 +1030,8 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   cdef double facKernel = 10.0 / (3.1415 * rKernel*rKernel*rKernel*rKernel*rKernel)
   cdef double[:] H = np.zeros(N)
   cdef double[:] W = np.zeros(N)
-  cdef double dn, h, nx, ny, nz
+  cdef double[:] C = np.zeros(N)
+  cdef double dn, h, nx, ny, nz, gx, gy, gz
   cdef int j
   cdef double xx, yy, zz
   cdef double dx, dy, dz, r, hr, dwdr, massl, hl, ww
@@ -1043,6 +1050,9 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
     zz = Z[j]
     h = 0
     ww = 0
+    gx = 0
+    gy = 0
+    gz = 0
     indx = indX[j]
     indy = indY[j]
     nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz)
@@ -1094,6 +1104,9 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
                     massl = mass[l]
                     hl = H1[l]
                     dh = massl * w
+                    # gx = gx + massl * w / hl * dx
+                    # gy = gy + massl * w / hl * dy
+                    # gz = gz + massl * w / hl * dz
                     ww = ww + massl * w / hl
                     h = h + dh
 
@@ -1104,12 +1117,13 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
     # TcpuSPH = TcpuSPH + tcpuSPH
     # startTime = time.time()
     H[j] = H[j] + h / rho
+    # C[j] = C[j] + (gx*gradx[l] + gy*grady[l] + gz*gradz[l]) / rho
     W[j] = W[j] + ww / rho
     # if H[j]>0:
     #   H[j] = H[j]/ww
     # tcpuadd = time.time() - startTime
     # Tcpuadd = Tcpuadd + tcpuadd
-  return H, W
+  return H, C, W
 
 
 cdef double norm(double x, double y, double z):

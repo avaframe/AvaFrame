@@ -125,7 +125,7 @@ Tcpu['Pos'] = 0.
 Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
-T, U, Z, S, Particles, Fields, Tcpu, Tsave = com1DFA.DFAIterate(
+Tsave, T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
     cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
@@ -150,7 +150,7 @@ Z0 = partRef['z'][0]
 rho = cfgGen.getfloat('rho')
 gravAcc = cfgGen.getfloat('gravAcc')
 mu = cfgGen.getfloat('mu')
-repeat = False
+repeat = True
 while repeat:
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     for part, field in zip(Particles, Fields):
@@ -206,7 +206,7 @@ while isinstance(value, float):
     Uy = DFAtls.scalProd(ux, uy, uz, 0, 1, 0)
     v = np.sqrt(ux*ux + uy*uy + uz*uz)
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    ax1.set_title('X cut of the solution at t=%.2f, %.2f s' % (T[ind_t], solSimi['Time'][ind_time]))
+    ax1.set_title('X cut of the solution at t=%.2f, %.2f s' % (Tsave[ind_t], solSimi['Time'][ind_time]))
     ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][50,:], 'k')
     ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][50,:], 'g')
     ax1.plot(x, h, '.k', linestyle='None')
