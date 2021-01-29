@@ -158,6 +158,7 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
   cdef double R = cfg.getfloat('R')
   cdef double rho = cfg.getfloat('rho')
   cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef int frictType = cfg.getint('frictType')
   cdef double dt = dT
   cdef double mu = cfg.getfloat('mu')
   cdef int Npart = particles['Npart']
@@ -251,10 +252,12 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
       else:
           # bottom normal stress sigmaB
           sigmaB = - effAccNorm * rho * h
-          # SamosAT friction type (bottom shear stress)
-          tau = SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
-          # coulomb friction type (bottom shear stress)
-          tau = mu * sigmaB
+          if frictType == 1:
+            # SamosAT friction type (bottom shear stress)
+            tau = SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+          elif frictType == 2:
+            # coulomb friction type (bottom shear stress)
+            tau = mu * sigmaB
 
       # adding bottom shear resistance contribution
       forceBotTang = - A * tau
