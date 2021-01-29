@@ -29,12 +29,12 @@ log = logging.getLogger(__name__)
 debugPlot = False
 # set feature flag for initial particle distribution
 # particles are homegeneosly distributed with a little random variation
-flagSemiRand = False
+flagSemiRand = True
 # particles are randomly distributed
 flagRand = False
 # set feature flag for flow deth calculation
 # use SPH to get the particles flow depth
-flagFDSPH = False
+flagFDSPH = True
 # set feature leapfrog time stepping
 featLF = False
 featCFL = False
@@ -579,6 +579,13 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
 
+    # update fields (compute grid values)
+    startTime = time.time()
+    # particles, fields = updateFields(cfg, particles, force, dem, fields)
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, force, dem, fields)
+    tcpuField = time.time() - startTime
+    Tcpu['Field'] = Tcpu['Field'] + tcpuField
+
     if flagFDSPH:
         # get SPH flow depth
         # particles = SPH.computeFlowDepth(cfg, particles, dem)
@@ -595,18 +602,11 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         # particles['h'] = hh
         # H = np.asarray(H)
         W = np.asarray(W)
-        particles['hSPH'] = np.where(W > 0, H/W, H)
-        # H = np.where(W > 0, H/W, H)
-        # particles['h'] = np.where(H <= hmin, hmin, H)
+        H = np.where(W > 0, H/W, H)
+        particles['h'] = np.where(H <= hmin, hmin, H)
+        particles['hSPH'] = np.where(H <= hmin, hmin, H)
 
         # print(np.min(particles['h']))
-
-    # update fields (compute grid values)
-    startTime = time.time()
-    # particles, fields = updateFields(cfg, particles, force, dem, fields)
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, force, dem, fields)
-    tcpuField = time.time() - startTime
-    Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
     return particles, fields, Tcpu
 
@@ -841,7 +841,7 @@ def polygon2Raster(demHeader, Line, Mask):
     return Mask
 
 
-def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, last=False, continuous=pU.contCmap):
+def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last=False):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
@@ -856,8 +856,6 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, last
     Z = dem['rasterData']
     x = particles['x'] + xllc
     y = particles['y'] + yllc
-    m = particles['m']
-    NPPC = particles['NPPC']
     xx = np.arange(ncols) * csz + xllc
     yy = np.arange(nrows) * csz + yllc
     try:
@@ -865,10 +863,6 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, last
         cb = ax.images[-1].colorbar
         if cb:
             cb.remove()
-        # # Get the images on an axis
-        # cb = fig.axes[-1]
-        # if cb:
-        #     cb.remove()
     except IndexError:
         pass
 
@@ -877,11 +871,12 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, last
     cmap, _, lev, norm, ticks = makePalette.makeColorMap(
         Cmap, 0.0, np.nanmax(data), continuous=True)
     cmap.set_under(color='w')
-    # ref0, im = pU.NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
-    #                      extent=[x.min(), x.max(), y.min(), y.max()],
-    #                      cmap=cmap, norm=norm)
+    ref0, im = pU.NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
+                         extent=[x.min(), x.max(), y.min(), y.max()],
+                         cmap=cmap, norm=norm)
 
-    # Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
+    Cp1 = ax.contour(X, Y, Z, levels=10, colors='k')
+    pU.addColorBar(im, ax, ticks, unit)
     if plotPart:
         # ax.plot(x, y, '.b', linestyle='None', markersize=1)
         # ax.plot(x[NPPC == 1], y[NPPC == 1], '.c', linestyle='None', markersize=1)
@@ -889,29 +884,57 @@ def plotPosition(particles, dem, data, Cmap, unit, fig, ax, plotPart=False, last
         # ax.plot(x[NPPC == 9], y[NPPC == 9], '.r', linestyle='None', markersize=1)
         # ax.plot(x[NPPC == 16], y[NPPC == 16], '.m', linestyle='None', markersize=1)
         # load variation colormap
-        # variable = particles['h']
-        # cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        #     pU.cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
-        # # set range and steps of colormap
-        # cc = variable
-        # im = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
-        CS = ax.contour(X, Y, data, levels=8, origin='lower', cmap=cmap,
-                        linewidths=2)
-        lev = CS.levels
+        variable = particles['h']
+        cmap, _, _, norm, ticks = makePalette.makeColorMap(
+            pU.cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
+        # set range and steps of colormap
+        cc = variable
+        sc = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
 
         if last:
-            # pU.addColorBar(im, ax, ticks, unit, 'Flow Depth')
-            CB = fig.colorbar(CS)
-            # CB = fig.colorbar(CS, shrink=0.8, extend='both')
-            # cbar.add_lines(CS)
-            # plt.setp(CS.collections, path_effects=[PathEffects.withStroke(linewidth=2, foreground="k")])
-            ax.clabel(CS, inline=1, fontsize=8)
-    # pU.addColorBar(im, ax, ticks, unit)
+            pU.addColorBar(sc, ax, ticks, 'm', 'Flow Depth')
 
     plt.pause(0.1)
-    # plt.close(fig)
-    # ax.set_ylim([510, 530])
-    # ax.set_xlim([260, 300])
+    return fig, ax
+
+
+def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
+    header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
+    xllc = header.xllcenter
+    yllc = header.yllcenter
+    csz = header.cellsize
+    xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+    ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+    PointsX, PointsY = np.meshgrid(xgrid, ygrid)
+    X = PointsX[0, :]
+    Y = PointsY[:, 0]
+    Z = dem['rasterData']
+    try:
+        # Get the images on an axis
+        cb = ax.images[-1].colorbar
+        if cb:
+            cb.remove()
+    except IndexError:
+        pass
+
+    ax.clear()
+    ax.set_title('t=%.2f s' % particles['t'])
+    cmap, _, lev, norm, ticks = makePalette.makeColorMap(
+        Cmap, 0.0, np.nanmax(data), continuous=True)
+    cmap.set_under(color='w')
+
+    CS = ax.contour(X, Y, data, levels=8, origin='lower', cmap=cmap,
+                    linewidths=2)
+    lev = CS.levels
+
+    if last:
+        # pU.addColorBar(im, ax, ticks, unit, 'Flow Depth')
+        CB = fig.colorbar(CS)
+        ax.clabel(CS, inline=1, fontsize=8)
+
+    plt.pause(0.1)
     return fig, ax, cmap, lev
 
 

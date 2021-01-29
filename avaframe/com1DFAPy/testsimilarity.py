@@ -10,7 +10,6 @@ import numpy as np
 import math
 import scipy.stats as stats
 import matplotlib.pyplot as plt
-import matplotlib.patheffects as PathEffects
 import matplotlib as mpl
 
 # Local imports
@@ -160,19 +159,17 @@ while repeat:
         ind_time = np.searchsorted(solSimi['Time'], t)
         hSimi = simiSol.h(solSimi, X1, Y1, ind_time)
         hSimi = np.where(hSimi <= 0, 0, hSimi)
-        fig, ax, cmap, lev = com1DFA.plotPosition(
-            part, demOri, field['FD'], pU.cmapDepth, '', fig, ax, plotPart=True)
+        fig, ax, cmap, lev = com1DFA.plotContours(
+            fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm')
         CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                         linewidths=2, linestyles='dashed')
-        # plt.setp(CS.collections, path_effects=[PathEffects.withStroke(linewidth=2, foreground="k")])
         plt.pause(1)
 
-    fig, ax, cmap, lev = com1DFA.plotPosition(
-        part, demOri, field['FD'], pU.cmapDepth, 'm', fig, ax, plotPart=True, last=True)
+    fig, ax, cmap, lev = com1DFA.plotContours(
+        fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm', last=True)
     CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                     linewidths=2, linestyles='dashed')
     ax.clabel(CS, inline=1, fontsize=8)
-    # plt.setp(CS.collections, path_effects=[PathEffects.withStroke(linewidth=2, foreground="k")])
     value = input("[y] to repeat:\n")
     if value != 'y':
         repeat = False
@@ -197,17 +194,6 @@ while isinstance(value, float):
     uySimi = np.where(hSimi <= 0, 0, uySimi)
     vSimi = np.sqrt(uxSimi*uxSimi + uySimi*uySimi)
     xCenter = simiSol.xc(solSimi, X1, Y1, ind_time)*cos
-    # fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    # fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
-    # fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
-    # fig1, ax1 = com1DFA.plotPosition(
-    #     particles, demOri, fields['FD'], pU.cmapPres, 'm', fig1, ax1, plotPart=False)
-    # fig2, ax2 = com1DFA.plotPosition(
-    #     particles, demOri, fields['V'], pU.cmapPres, 'm/s', fig2, ax2, plotPart=False)
-    # fig3, ax3 = com1DFA.plotPosition(
-    #     particles, demOri, fields['P']/1000, pU.cmapPres, 'kPa', fig3, ax3, plotPart=False)
-    # fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
-    # ax4.plot(np.linspace(-200, 2000, 440), (fields['FD'][51, 1:ncols]-fields['FD'][51, 0:(ncols-1)])/5*math.cos(math.pi*3/180))
     x = particles['x']
     y = particles['y']
     m = particles['m']
