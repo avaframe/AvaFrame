@@ -231,7 +231,7 @@ def initializeSimulation(cfgDict, relRaster, dem):
     Nz = dem['Nz']
     indX = (particles['indX']).astype('int')
     indY = (particles['indY']).astype('int')
-    H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+    H, C, W = DFAfunC.computeFDC(cfgDict, particles, header, Nx, Ny, Nz, indX, indY)
     H = np.asarray(H)
     # particles['h'] = H
     # H, W = SPHC.computeFDC(cfgDict, particles, header, Nx, Ny, Nz, indX, indY)
@@ -582,7 +582,7 @@ def computeEulerTimeStep(cfgDict, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # update fields (compute grid values)
     startTime = time.time()
     # particles, fields = updateFields(cfg, particles, force, dem, fields)
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, force, dem, fields)
+    particles, fields = DFAfunC.updateFieldsC(cfgDict, particles, force, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
@@ -595,7 +595,7 @@ def computeEulerTimeStep(cfgDict, particles, fields, dt, dem, Ment, Cres, Tcpu):
         Nz = dem['Nz']
         indX = (particles['indX']).astype('int')
         indY = (particles['indY']).astype('int')
-        H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        H, C, W = DFAfunC.computeFDC(cfgDict, particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
         # particles['h'] = H
         # H, W = SPHC.computeFDC(cfgDict, particles, header, Nx, Ny, Nz, indX, indY)
@@ -938,7 +938,7 @@ def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
     return fig, ax, cmap, lev
 
 
-def removeOutPart(cfg, particles, dem):
+def removeOutPart(cfgDict, particles, dem):
     """ find and remove out of raster particles
 
     Parameters

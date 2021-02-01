@@ -160,6 +160,7 @@ def computeForceC(cfgDict, particles, dem, Ment, Cres, dT):
   cdef double gravAcc = float(cfgDict['gravAcc'])
   cdef double dt = dT
   cdef double mu = float(cfgDict['mu'])
+  cdef double frictType = float(cfgDict['frictType'])
   cdef int Npart = particles['Npart']
   cdef double csz = dem['header'].cellsize
   cdef double[:, :] Nx = dem['Nx']
