@@ -227,25 +227,32 @@ while isinstance(value, float):
     Ux = DFAtls.scalProd(ux, uy, uz, cos, 0, -sin)
     Uy = DFAtls.scalProd(ux, uy, uz, 0, 1, 0)
     v = np.sqrt(ux*ux + uy*uy + uz*uz)
+    indy = int(nrows *0.5) -1
+    log.info('indy %d' % indy)
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    ax1.set_title('X cut of the solution at t=%.2f, %.2f s' % (Tsave[ind_t], solSimi['Time'][ind_time]))
-    ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][50,:], 'k', label='Field flow depth')
-    ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][50,:], 'g', label='Field flow velocity')
+    ax1.set_title('Profile along flow at t=%.2f (com1DFAPy), %.2f s (simiSol)' % (Tsave[ind_t], solSimi['Time'][ind_time]))
+    ax2 = ax1.twinx()
+    ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][indy,:], 'k', label='Field flow depth')
+    ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][indy,:], 'g', label='Field flow velocity')
     ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
-    ax1.plot(x, hsph, '*k', linestyle='None', label='Part flow depth SPH')
+    # ax1.plot(x, hsph, '*k', linestyle='None', label='Part flow depth SPH')
     # ax1.plot(x, Ux, '.b', linestyle='None')
     # ax1.plot(x, Uy, '.r', linestyle='None')
-    ax1.plot(x, v, '.g', linestyle='None', label='Part flow velocity')
-    ax1.plot(X[51,:], hSimi[50,:], '--k', label='SimiSol flow depth')
+    ax2.plot(x, v, '.g', linestyle='None', label='Part flow velocity')
+    ax1.plot(X[indy,:], hSimi[indy,:], '--k', label='SimiSol flow depth')
     # ax1.plot(X[51,:], uxSimi[51,:], '--b')
     # ax1.plot(X[51,:], uySimi[51,:], '--r')
-    ax1.plot(X[51,:], vSimi[50,:], '--g', label='SimiSol flow velocity')
+    ax2.plot(X[indy,:], vSimi[indy,:], '--g', label='SimiSol flow velocity')
     ax1.axvline(x=xCenter, linestyle=':')
     # ax1.set_xlim([x.min(), x.max()])
     # ax1.set_ylim([y.min(), y.max()])
     ax1.set_xlabel('x in [m]')
-    # ax1.set_ylabel('x in [m]')
-    plt.legend()
+    ax1.set_ylabel('flow depth [m]')
+    color = 'tab:green'
+    ax2.tick_params(axis='y', labelcolor=color)
+    ax2.set_ylabel('flow velocity [ms-1]', color=color)
+    ax2.legend(loc='upper right')
+    ax1.legend(loc='upper left')
 
     ind = np.where(((particles['x']+xllc > xCenter-2.5) & (particles['x']+xllc < xCenter+2.5)))
     x = particles['x'][ind]+xllc
@@ -259,24 +266,30 @@ while isinstance(value, float):
     Uy = DFAtls.scalProd(ux, uy, uz, 0, 1, 0)
     v = np.sqrt(ux*ux + uy*uy + uz*uz)
     indc = int(np.floor((xCenter - xllc)/csz))
+    log.info('indc %d' % indc)
     fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
-    ax2.set_title('Y cut of the solution at t=%.2f, %.2f s' % (Tsave[ind_t], solSimi['Time'][ind_time]))
+    ax3 = ax2.twinx()
+    ax2.set_title('Profile accross flow at t=%.2f (com1DFAPy), %.2f (simiSol) s' % (Tsave[ind_t], solSimi['Time'][ind_time]))
     ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:, indc], 'k', label='Field flow depth')
-    ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['V'][:, indc], 'g', label='Field flow velocity')
+    ax3.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['V'][:, indc], 'g', label='Field flow velocity')
     ax2.plot(y, h, '.k', linestyle='None', label='Part flow depth')
-    ax2.plot(y, hsph, '*k', linestyle='None', label='Part flow depth SPH')
+    # ax2.plot(y, hsph, '*k', linestyle='None', label='Part flow depth SPH')
     # ax2.plot(y, Ux, '.b', linestyle='None')
     # ax2.plot(y, Uy, '.r', linestyle='None')
-    ax2.plot(y, v, '.g', linestyle='None')
+    ax3.plot(y, v, '.g', linestyle='None',  label='Part flow velocity')
     ax2.plot(Y[:, indc], hSimi[:, indc], '--k', label='SimiSol flow depth')
     # ax2.plot(Y[:, indc], uxSimi[:, indc], '--b')
     # ax2.plot(Y[:, indc], uySimi[:, indc], '--r')
-    ax2.plot(Y[:, indc], vSimi[:, indc], '--g', label='SimiSol flow depth')
+    ax3.plot(Y[:, indc], vSimi[:, indc], '--g', label='SimiSol flow velocity')
     # ax2.set_xlim([x.min(), x.max()])
     # ax2.set_ylim([y.min(), y.max()])
     ax2.set_xlabel('y in [m]')
-    # ax2.set_ylabel('x in [m]')
-    plt.legend()
+    ax2.set_ylabel('flow depth [m]')
+    color = 'tab:green'
+    ax3.tick_params(axis='y', labelcolor=color)
+    ax3.set_ylabel('flow velocity [ms-1]', color=color)
+    ax3.legend(loc='upper right')
+    ax2.legend(loc='upper left')
 
     if cfgMain['FLAGS'].getboolean('showPlot'):
         plt.show()
@@ -293,3 +306,30 @@ while isinstance(value, float):
             value = 'n'
     else:
         value = 'n'
+
+# +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+# Result parameters to be exported
+resTypesString = cfgGen['resType']
+resTypes = resTypesString.split('_')
+tSteps = fU.getTimeIndex(cfgGen, Fields)
+for tStep in tSteps:
+    finalFields = Fields[tStep]
+    for resType in resTypes:
+        resField = finalFields[resType]
+        if resType == 'ppr':
+            resField = resField * 0.001
+        relName = os.path.splitext(os.path.basename(relFiles[0]))[0]
+        dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType + '_'  + 't%.2f' % (Tsave[tStep]) +'.asc'
+        # create directory
+        outDirPeak = os.path.join(outDir, 'peakFiles')
+        fU.makeADir(outDirPeak)
+        outFile = os.path.join(outDirPeak, dataName)
+        IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
+        if tStep == -1:
+            log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType,Tsave[tStep]))
+        else:
+            log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType,Tsave[tStep]))
+
+
+# Generata plots for all peakFiles
+plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
