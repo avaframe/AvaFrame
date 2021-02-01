@@ -240,7 +240,7 @@ while isinstance(value, float):
     v = np.sqrt(ux*ux + uy*uy + uz*uz)
     indc = int(np.floor((xCenter - xllc)/csz))
     fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
-    ax2.set_title('Y cut of the solution at t=%.2f, %.2f s' % (T[ind_t], solSimi['Time'][ind_time]))
+    ax2.set_title('Y cut of the solution at t=%.2f, %.2f s' % (Tsave[ind_t], solSimi['Time'][ind_time]))
     ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:, indc], 'k')
     ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['V'][:, indc], 'g')
     ax2.plot(y, h, '.k', linestyle='None')
