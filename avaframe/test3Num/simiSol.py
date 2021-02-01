@@ -301,8 +301,6 @@ def create_raster_file(solSimi, x1, y1, i, FileName):
 def runSimilarity():
     """ Run main model"""
 
-    print('parameters', bedFrictionAngleDeg, planeinclinationAngleDeg, internalFrictionAngleDeg, L_x, L_y, H)
-
     earthPressureCoefficients = define_earth_press_coeff()
     # Early time solution
     t_early = np.arange(0, t_1, dt_early)
