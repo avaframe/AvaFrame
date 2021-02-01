@@ -55,7 +55,7 @@ log.info('Current avalanche: %s', avalancheDir)
 cfg = cfgUtils.getModuleConfig(com1DFA)
 cfgGen = cfg['GENERAL']
 flagDev = cfg['FLAGS'].getboolean('flagDev')
-
+cfgGenDict = cfgUtils.parser2dict(cfgGen)
 # for timing the sims
 startTime = time.time()
 
@@ -89,7 +89,7 @@ relRaster = relRaster * relTh
 workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 # create particles, create resistance and
 # entrainment matrix, initialize fields, get normals and neighbours
-particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGen, relRaster, dem)
+particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGenDict, relRaster, dem)
 
 # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
 # ------------------------
@@ -103,7 +103,7 @@ Tcpu['Neigh'] = 0.
 Tcpu['Field'] = 0.
 
 Tsave, T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
-    cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
+    cfgGenDict, particles, fields, dem, Ment, Cres, Tcpu)
 
 log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
 log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))

@@ -102,7 +102,7 @@ def initializeMesh(dem, num=4):
     return dem
 
 
-def initializeSimulation(cfg, relRaster, dem):
+def initializeSimulation(cfgDict, relRaster, dem):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -110,7 +110,7 @@ def initializeSimulation(cfg, relRaster, dem):
 
     Parameters
     ----------
-    cfg: configparser
+    cfgDict: configparser
         configuration for DFA simulation
     relRaster: 2D numpy array
         release depth raster
@@ -129,9 +129,9 @@ def initializeSimulation(cfg, relRaster, dem):
         entrained mass raster
     """
     # get simulation parameters
-    rho = cfg.getfloat('rho')
-    gravAcc = cfg.getfloat('gravAcc')
-    massPerPart = cfg.getfloat('massPerPart')
+    rho = float(cfgDict['rho'])
+    gravAcc = float(cfgDict['gravAcc'])
+    massPerPart = float(cfgDict['massPerPart'])
     # read dem header
     header = dem['header']
     ncols = header.ncols
@@ -234,7 +234,7 @@ def initializeSimulation(cfg, relRaster, dem):
     H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
     H = np.asarray(H)
     # particles['h'] = H
-    # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+    # H, W = SPHC.computeFDC(cfgDict, particles, header, Nx, Ny, Nz, indX, indY)
     # particles['h'] = hh
     # H = np.asarray(H)
     W = np.asarray(W)
@@ -378,14 +378,14 @@ def intializeResistance(dem):
     return Cres
 
 
-def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
+def DFAIterate(cfgDict, particles, fields, dem, Ment, Cres, Tcpu):
     """ Perform time loop for DFA simulation
 
      Save results at desired intervals
 
     Parameters
     ----------
-    cfg: configparser
+    cfgDict: configparser
         configuration for DFA simulation
     particles : dict
         particles dictionary at initial time step
@@ -411,8 +411,8 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     """
 
     # Load configuration settings
-    Tend = cfg.getfloat('Tend')
-    dtSave = cfg.getfloat('dtSave')
+    Tend = float(cfgDict['Tend'])
+    dtSave = float(cfgDict['dtSave'])
 
     # Initialise Lists to save fields
     Particles = [copy.deepcopy(particles)]
@@ -442,14 +442,14 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         # CALL TIME STEP:
         # to play around with the courant number
         if featCFL:
-            dtStable = tD.getcflTimeStep(particles, dem, cfg)
+            dtStable = tD.getcflTimeStep(particles, dem, cfgDict)
         elif featCFLConstrain:
-            dtStable = tD.getcfldTwithConstraints(particles, dem, cfg)
+            dtStable = tD.getcfldTwithConstraints(particles, dem, cfgDict)
 
         # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
         # ++++++++++++++++++++++++++++++++++++++++++++++
         # get time step
-        dt = cfg.getfloat('dt')
+        dt = float(cfgDict['dt'])
         t = t + dt
         nIter = nIter + 1
         nIter0 = nIter0 + 1
@@ -458,10 +458,10 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
         # Perform computations
         if featLF:
             particles, fields, Tcpu, dt = computeLeapFrogTimeStep(
-                cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+                cfgDict, particles, fields, dt, dem, Ment, Cres, Tcpu)
         else:
             particles, fields, Tcpu = computeEulerTimeStep(
-                cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+                cfgDict, particles, fields, dt, dem, Ment, Cres, Tcpu)
 
 
         T = np.append(T, t)
@@ -494,13 +494,13 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     return Tsave, T, U, Z, S, Particles, Fields, Tcpu
 
 
-def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
+def computeEulerTimeStep(cfgDict, particles, fields, dt, dem, Ment, Cres, Tcpu):
     """ compute next time step using an euler forward scheme
 
 
     Parameters
     ----------
-    cfg: configparser
+    cfgDict: configparser
         configuration for DFA simulation
     particles : dict
         particles dictionary at t
@@ -529,20 +529,20 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # get forces
     startTime = time.time()
     # loop version of the compute force
-    force = DFAfunC.computeForceC(cfg, particles, dem, Ment, Cres, dt)
+    force = DFAfunC.computeForceC(cfgDict, particles, dem, Ment, Cres, dt)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
 
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
-    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, SPHOption=2)
+    particles, force = DFAfunC.computeForceSPHC(cfgDict, particles, force, dem, SPHOption=2)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
     # plot depth computed with different interpolation methods
     nSave = Tcpu['nSave']
-    dtSave = cfg.getfloat('dtSave')
-    hmin = cfg.getfloat('hmin')
+    dtSave = float(cfgDict['dtSave'])
+    hmin = float(cfgDict['hmin'])
     # if particles['t'] >= nSave * dtSave:
     #     force2 = {}
     #     particles, force2 = DFAfunC.computeForceSPHC(cfg, particles, force2, dem, SPHOption=2, gradient=1)
@@ -568,7 +568,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # update velocity and particle position
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
-    particles = DFAfunC.updatePositionC(cfg, particles, dem, force)
+    particles = DFAfunC.updatePositionC(cfgDict, particles, dem, force)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
@@ -598,7 +598,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
         H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
         H = np.asarray(H)
         # particles['h'] = H
-        # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        # H, W = SPHC.computeFDC(cfgDict, particles, header, Nx, Ny, Nz, indX, indY)
         # particles['h'] = hh
         # H = np.asarray(H)
         W = np.asarray(W)
@@ -611,13 +611,13 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     return particles, fields, Tcpu
 
 
-def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
+def computeLeapFrogTimeStep(cfgDict, particles, fields, dt, dem, Ment, Cres, Tcpu):
     """ compute next time step using a Leap Frog scheme
 
 
     Parameters
     ----------
-    cfg: configparser
+    cfgDict: configparser
         configuration for DFA simulation
     particles : dict
         particles dictionary at t
@@ -653,7 +653,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # dtK5 is half time step
     dtK5 = 0.5 * dt
-    # cfg['dt'] = str(dtK5)
+    # cfgDict['dt'] = str(dtK5)
     log.info('dt used now is %f' % dt)
 
     # load required DEM and mesh info
@@ -689,15 +689,15 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # compute velocity at t_(k+0.5)
     # first compute force at t_(k+0.5)
     startTime = time.time()
-    force = DFAfunC.computeForceC(cfg, particles, dem, Ment, Cres, dtK5)
+    force = DFAfunC.computeForceC(cfgDict, particles, dem, Ment, Cres, dtK5)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
-    # force = computeForceVect(cfg, particles, dem, Ment, Cres, dtK5)
+    # force = computeForceVect(cfgDict, particles, dem, Ment, Cres, dtK5)
     startTime = time.time()
-    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem)
+    particles, force = DFAfunC.computeForceSPHC(cfgDict, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
-    # particles, force = computeForceSPH(cfg, particles, force, dem)
+    # particles, force = computeForceSPH(cfgDict, particles, force, dem)
     mass = particles['m']
     uxNew = uxK + (force['forceX'] + force['forceSPHX']) * dt / mass
     uyNew = uyK + (force['forceY'] + force['forceSPHY']) * dt / mass
@@ -732,7 +732,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # this is dangerous!!!!!!!!!!!!!!
     ###############################################################
     # remove particles that are not located on the mesh any more
-    particles = removeOutPart(cfg, particles, dem)
+    particles = removeOutPart(cfgDict, particles, dem)
 
     # ++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()
@@ -743,8 +743,8 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # ++++++++++++++UPDATE FIELDS (compute grid values)
     # update fields (compute grid values)
     startTime = time.time()
-    # particles, fields = updateFields(cfg, particles, force, dem, fields)
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, force, dem, fields)
+    # particles, fields = updateFields(cfgDict, particles, force, dem, fields)
+    particles, fields = DFAfunC.updateFieldsC(cfgDict, particles, force, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
@@ -943,7 +943,7 @@ def removeOutPart(cfg, particles, dem):
 
     Parameters
     ----------
-    cfg : configparser
+    cfgDict : configparser
         DFA parameters
     particles : dict
         particles dictionary
@@ -955,7 +955,7 @@ def removeOutPart(cfg, particles, dem):
     particles : dict
         particles dictionary
     """
-    dt = cfg.getfloat('dt')
+    dt = float(cfgDict['dt'])
     header = dem['header']
     nrows = header.nrows
     ncols = header.ncols

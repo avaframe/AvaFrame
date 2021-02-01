@@ -127,14 +127,14 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def computeForceC(cfg, particles, dem, Ment, Cres, dT):
+def computeForceC(cfgDict, particles, dem, Ment, Cres, dT):
   """ compute forces acting on the particles (without the SPH component)
 
   Cython implementation implementation
 
   Parameters
   ----------
-  cfg: configparser
+  cfgDict: configparser
       configuration for DFA simulation
   particles : dict
       particles dictionary at t
@@ -152,15 +152,14 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
   force : dict
       force dictionary
   """
-  cdef double Rs0 = cfg.getfloat('Rs0')
-  cdef double kappa = cfg.getfloat('kappa')
-  cdef double B = cfg.getfloat('B')
-  cdef double R = cfg.getfloat('R')
-  cdef double rho = cfg.getfloat('rho')
-  cdef double gravAcc = cfg.getfloat('gravAcc')
-  cdef int frictType = cfg.getint('frictType')
+  cdef double Rs0 = float(cfgDict['Rs0'])
+  cdef double kappa = float(cfgDict['kappa'])
+  cdef double B = float(cfgDict['B'])
+  cdef double R = float(cfgDict['R'])
+  cdef double rho = float(cfgDict['rho'])
+  cdef double gravAcc = float(cfgDict['gravAcc'])
   cdef double dt = dT
-  cdef double mu = cfg.getfloat('mu')
+  cdef double mu = float(cfgDict['mu'])
   cdef int Npart = particles['Npart']
   cdef double csz = dem['header'].cellsize
   cdef double[:, :] Nx = dem['Nx']
@@ -282,14 +281,14 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def updatePositionC(cfg, particles, dem, force):
+def updatePositionC(cfgDict, particles, dem, force):
   """ update particle position using euler forward scheme
 
   Cython implementation
 
   Parameters
   ----------
-  cfg: configparser
+  cfgDict: configparser
       configuration for DFA simulation
   particles : dict
       particles dictionary at t
@@ -302,14 +301,14 @@ def updatePositionC(cfg, particles, dem, force):
   particles : dict
       particles dictionary at t + dt
   """
-  DT = cfg.getfloat('dt')
+  DT = float(cfgDict['dt'])
   cdef double dt = DT
-  cdef double stopCrit = cfg.getfloat('stopCrit')
+  cdef double stopCrit = float(cfgDict['stopCrit'])
   log.debug('dt used now is %f' % DT)
-  cdef double gravAcc = cfg.getfloat('gravAcc')
-  cdef double rho = cfg.getfloat('rho')
+  cdef double gravAcc = float(cfgDict['gravAcc'])
+  cdef double rho = float(cfgDict['rho'])
   cdef double csz = dem['header'].cellsize
-  cdef double mu = cfg.getfloat('mu')
+  cdef double mu = float(cfgDict['mu'])
   cdef int Npart = particles['Npart']
   cdef double[:, :] Nx = dem['Nx']
   cdef double[:, :] Ny = dem['Ny']
@@ -451,20 +450,20 @@ def updatePositionC(cfg, particles, dem, force):
   # this is dangerous!!!!!!!!!!!!!!
   ###############################################################
   # remove particles that are not located on the mesh any more
-  particles = com1DFA.removeOutPart(cfg, particles, dem)
+  particles = com1DFA.removeOutPart(cfgDict, particles, dem)
   return particles
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def updateFieldsC(cfg, particles, force, dem, fields):
+def updateFieldsC(cfgDict, particles, force, dem, fields):
   """ update fields and particles fow depth
 
   Cython implementation
 
  Parameters
  ----------
- cfg: configparser
+ cfgDict: configparser
      configuration for DFA simulation
  particles : dict
      particles dictionary
@@ -482,7 +481,7 @@ def updateFieldsC(cfg, particles, force, dem, fields):
  fields : dict
      fields dictionary
  """
-  cdef double rho = cfg.getfloat('rho')
+  cdef double rho = float(cfgDict['rho'])
   header = dem['header']
   CSZ = dem['header'].cellsize
   cdef double[:, :]A = dem['Area']
@@ -685,13 +684,13 @@ def getNeighboursC(particles, dem):
     return particles
 
 
-def computeForceSPHC(cfg, particles, force, dem, SPHOption=2, gradient=0):
+def computeForceSPHC(cfgDict, particles, force, dem, SPHOption=2, gradient=0):
   """ Prepare data for C computation of lateral forces (SPH component)
   acting on the particles (SPH component)
 
   Parameters
   ----------
-  cfg: configparser
+  cfgDict: configparser
       configuration for DFA simulation
   particles : dict
       particles dictionary at t
@@ -718,7 +717,7 @@ def computeForceSPHC(cfg, particles, force, dem, SPHOption=2, gradient=0):
 
   indX = particles['indX'].astype('int')
   indY = particles['indY'].astype('int')
-  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption, gradient)
+  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfgDict, particles, header, Nx, Ny, Nz, indX, indY, SPHOption, gradient)
   forceSPHX = np.asarray(forceSPHX)
   forceSPHY = np.asarray(forceSPHY)
   forceSPHZ = np.asarray(forceSPHZ)
@@ -737,7 +736,7 @@ def computeForceSPHC(cfg, particles, force, dem, SPHOption=2, gradient=0):
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
+def computeGradC(cfgDict, particles, header, double[:, :] Nx, double[:, :] Ny,
                  double[:, :] Nz, long[:] indX, long[:] indY, SPHOption, gradient):
   """ compute lateral forces acting on the particles (SPH component)
 
@@ -745,7 +744,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
 
   Parameters
   ----------
-  cfg: configparser
+  cfgDict: configparser
       configuration for DFA simulation
   particles : dict
       particles dictionary at t
@@ -772,9 +771,9 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   GHZ : 1D numpy array
       z component of the lateral force
   """
-  cdef double rho = cfg.getfloat('rho')
-  cdef double minRKern = cfg.getfloat('minRKern')
-  cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double rho = float(cfgDict['rho'])
+  cdef double minRKern = float(cfgDict['minRKern'])
+  cdef double gravAcc = float(cfgDict['gravAcc'])
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
   cdef double[:] h = particles['h']
@@ -980,14 +979,14 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, long[:] indX, long[:] indY):
+def computeFDC(cfgDict, particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, long[:] indX, long[:] indY):
   """ compute flow depth at particle location (SPH flow depth)
 
   Cython implementation
 
   Parameters
   ----------
-  cfg: configparser
+  cfgDict: configparser
       configuration for DFA simulation
   particles : dict
       particles dictionary at t
@@ -1008,8 +1007,8 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   H : 1D numpy array
       flow depth
   """
-  cdef double rho = cfg.getfloat('rho')
-  cdef double minRKern = cfg.getfloat('minRKern')
+  cdef double rho = float(cfgDict['rho'])
+  cdef double minRKern = float(cfgDict['minRKern'])
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']

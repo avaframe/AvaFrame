@@ -112,9 +112,12 @@ def compareConfig(iniFile, modName, compare):
         log.info('Reading config from: %s and %s' % (iniFile[0], iniFile[1]))
         # initialize our final configparser object
         cfg = configparser.ConfigParser()
+        cfg.optionxform = lambda option: option
         # initialize configparser object to read
         defCfg = configparser.ConfigParser()
+        defCfg.optionxform = lambda option: option
         locCfg = configparser.ConfigParser()
+        locCfg.optionxform = lambda option: option
         # read default and local parser files
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
@@ -178,7 +181,6 @@ def writeCfgFile(avaDir, module, cfg, suffix=''):
         cfg.write(conf)
 
 
-
 def readCfgFile(avaDir, module, suffix=''):
     """ Save configuration used to text file in Outputs """
 
@@ -192,6 +194,23 @@ def readCfgFile(avaDir, module, suffix=''):
 
     # read configParser object
     cfg = configparser.ConfigParser()
+    cfg.optionxform = lambda option: option
     cfg.read(inFile)
 
     return cfg
+
+
+def parser2dict(config):
+    """
+    Converts a ConfigParser object into a dictionary.
+
+    The resulting dictionary has sections as keys which point to a dict of the
+    sections options as key => value pairs.
+    """
+    the_dict = {}
+    # for section in config.sections():
+    #     print(section)
+    #     the_dict[section] = {}
+    for key, val in config.items():
+        the_dict[key] = val
+    return the_dict

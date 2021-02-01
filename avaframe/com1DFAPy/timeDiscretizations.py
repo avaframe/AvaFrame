@@ -22,7 +22,7 @@ import avaframe.com1DFAPy.DFAtools as DFAtls
 log = logging.getLogger(__name__)
 
 
-def getcflTimeStep(particles, dem, cfg):
+def getcflTimeStep(particles, dem, cfgDict):
     """ Compute cfl time step  """
 
     # determine max velocity of particles
@@ -35,24 +35,24 @@ def getcflTimeStep(particles, dem, cfg):
     # rKernel = csz
 
     # courant number
-    cMax = float(cfg['cMax'])
+    cMax = float(cfgDict['cMax'])
 
     # compute stable time step
     # if velocity is zero - divided by zero error so to avoid:
     if vmax == 0.0:
-        dtStable = float(cfg['mindT'])
+        dtStable = float(cfgDict['mindT'])
     else:
         dtStable = (cMax * csz) / vmax
 
     # 'overwrite' dt that is read from cfg ini file
-    cfg['dt'] = str(dtStable)
+    cfgDict['dt'] = str(dtStable)
     log.info('dtStable is with cMAX=%.1f is: %.4f with vmax:%.2f' % (cMax, dtStable, vmax))
 
     # return stable time step
     return dtStable
 
 
-def getcfldTwithConstraints(particles, dem, cfg):
+def getcfldTwithConstraints(particles, dem, cfgDict):
     """ Compute cfl time step  """
 
     # determine max velocity of particles
@@ -65,21 +65,21 @@ def getcfldTwithConstraints(particles, dem, cfg):
     # rKernel = csz
 
     # courant number
-    cMax = float(cfg['cMax'])
+    cMax = float(cfgDict['cMax'])
 
     # compute stable time step
     # if velocity is zero - divided by zero error so to avoid:
     if vmax == 0.0:
-        dtStable = float(cfg['mindT'])
+        dtStable = float(cfgDict['mindT'])
     else:
         dtStable = (cMax * csz) / vmax
-        if dtStable < float(cfg['mindT']):
-            dtStable = float(cfg['mindT'])
-        elif dtStable > float(cfg['maxdT']):
-            dtStable = float(cfg['maxdT'])
+        if dtStable < float(cfgDict['mindT']):
+            dtStable = float(cfgDict['mindT'])
+        elif dtStable > float(cfgDict['maxdT']):
+            dtStable = float(cfgDict['maxdT'])
 
     # 'overwrite' dt that is read from cfg ini file
-    cfg['dt'] = str(dtStable)
+    cfgDict['dt'] = str(dtStable)
     log.debug('dtStable is with cMAX=%.1f is: %.4f with vmax:%.2f' % (cMax, dtStable, vmax))
 
     # return stable time step
