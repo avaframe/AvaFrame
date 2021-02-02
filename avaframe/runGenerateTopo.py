@@ -1,15 +1,13 @@
 """
     Run script for generateTopo in module in3Utils
-    This file is part of Avaframe.
 """
 
-import sys
 import logging
 
 # Local imports
 from avaframe.in3Utils import generateTopo as gT
 from avaframe.in3Utils import cfgUtils, logUtils
-from avaframe.out3Plot import outGenerateTopo as oT
+from avaframe.out3Plot import outTopo as oT
 
 
 # log file name; leave empty to use default runLog.log

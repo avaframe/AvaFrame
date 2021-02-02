@@ -12,7 +12,7 @@ from avaframe.in3Utils import initializeProject
 from avaframe.in3Utils import getReleaseArea as gR
 from avaframe.in3Utils import generateTopo as gT
 from avaframe.in3Utils import cfgUtils, logUtils
-from avaframe.out3Plot import outGenerateTopo as oT
+from avaframe.out3Plot import outTopo as oT
 
 
 # log file name; leave empty to use default runLog.log
