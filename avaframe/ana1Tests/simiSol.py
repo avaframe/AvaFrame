@@ -15,7 +15,7 @@ import os
 # local imports
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFAPy.com1DFA as com1DFA
-import avaframe.test3Num.simiSol as simiSol
+import avaframe.ana1Tests.simiSol as simiSol
 
 # Load configuration
 simiSolCfg = os.path.join('test3Num', 'simiSol_com1DFACfg.ini')
