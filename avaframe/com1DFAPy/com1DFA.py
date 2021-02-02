@@ -488,6 +488,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 
     Tcpu['nIter'] = nIter
     log.info('Ending computation at time t = %f s', t)
+    Tsave.append(t)
     Particles.append(copy.deepcopy(particles))
     Fields.append(copy.deepcopy(fields))
 
