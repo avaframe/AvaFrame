@@ -3,7 +3,6 @@
     This file is part of Avaframe.
 """
 
-import sys
 import os
 import logging
 import shutil
@@ -50,7 +49,7 @@ cfgR = cfgUtils.getModuleConfig(gR)
 [z, name_ext, outDir] = gT.generateTopo(cfgT, avalancheDir)
 
 # Plot new topogrpahy
-oT.plotDEM(z, name_ext, cfgT, outDir)
+oT.plotGeneratedDEM(z, name_ext, cfgT, outDir)
 
 # Initialise DEM_type
 DEM_type = cfgT['TOPO']['DEM_type']
