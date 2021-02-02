@@ -456,7 +456,7 @@ def pyramid(cfg):
 
 def writeDEM(cfg, z, outDir):
     """ Write topography information to file """
-    nameExt = cfg['TOPO']['DEM_type']
+    nameExt = cfg['TOPO']['demType']
     nRows = z.shape[0]
     nCols = z.shape[1]
 
@@ -487,7 +487,7 @@ def generateTopo(cfg, avalancheDir):
     """ Compute coordinates of desired topography with given inputs """
 
     # Which DEM type
-    demType = cfg['TOPO']['DEM_type']
+    demType = cfg['TOPO']['demType']
 
     log.info('DEM type is set to: %s' % demType)
 
