@@ -13,7 +13,7 @@ import logging
 # create local logger
 log = logging.getLogger(__name__)
 
-def plotGeneratedDEM(z, name_ext, cfg, outDir):
+def plotGeneratedDEM(z, nameExt, cfg, outDir):
     """ Plot DEM with given information on the origin of the DEM """
 
     cfgTopo = cfg['TOPO']
@@ -23,7 +23,7 @@ def plotGeneratedDEM(z, name_ext, cfg, outDir):
     dx = float(cfgTopo['dx'])
     xl = float(cfgDEM['xl'])
     yl = float(cfgDEM['yl'])
-    dem_name = cfgDEM['dem_name']
+    demName = cfgDEM['demName']
     xEnd = z.shape[1] * dx
     yEnd = z.shape[0] * dx
 
@@ -39,13 +39,13 @@ def plotGeneratedDEM(z, name_ext, cfg, outDir):
     ax.plot_surface(X, Y, z, cmap=plt.cm.viridis,
                     linewidth=0, antialiased=False)
 
-    ax.set_title('Generated DEM: %s' % (topoNames[name_ext]))
+    ax.set_title('Generated DEM: %s' % (topoNames[nameExt]))
     ax.set_xlabel('along valley distance [m]')
     ax.set_ylabel('across valley distance [m]')
     ax.set_zlabel('surface elevation [m]')
 
     # Save figure to file
-    outName = os.path.join(outDir, '%s_%s_plot' % (dem_name, name_ext))
+    outName = os.path.join(outDir, '%s_%s_plot' % (demName, nameExt))
 
     log.info('Saving plot to: %s', outName)
 
@@ -58,7 +58,7 @@ def plotGeneratedDEM(z, name_ext, cfg, outDir):
     plt.close('all')
 
 
-def plotReleasePoints(xv, yv, xyPoints, DEM_type):
+def plotReleasePoints(xv, yv, xyPoints, demType):
 
     plt.figure()
     plt.plot(xv, np.zeros(len(xv))+yv[0], 'k-')
@@ -66,7 +66,7 @@ def plotReleasePoints(xv, yv, xyPoints, DEM_type):
     plt.plot(np.zeros(len(yv))+xv[0], yv, 'k-')
     plt.plot(np.zeros(len(yv))+xv[-1], yv, 'k-')
     plt.plot(xyPoints[:, 0], xyPoints[:, 1], 'r*')
-    plt.title('Domain and release area of %s - projected' % DEM_type)
+    plt.title('Domain and release area of %s - projected' % demType)
     plt.xlabel('along valley [m]')
     plt.ylabel('across valley [m]')
 

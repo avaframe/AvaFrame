@@ -51,10 +51,10 @@ cfgR = cfgUtils.getModuleConfig(gR)
 # Plot new topogrpahy
 oT.plotGeneratedDEM(z, name_ext, cfgT, outDir)
 
-# Initialise DEM_type
-DEM_type = cfgT['TOPO']['DEM_type']
+# Initialise demType
+demType = cfgT['TOPO']['demType']
 
-if DEM_type == 'HX' or DEM_type == 'BL':
+if demType == 'HX' or demType == 'BL':
     log.warning('There is no release area available for this DEM type')
 else:
     # Make release area
@@ -62,4 +62,4 @@ else:
 
     # Plot Release Area
     if cfgR.getboolean('GENERAL', 'showplot'):
-        oT.plotReleasePoints(xv, yv, xyPoints, DEM_type)
+        oT.plotReleasePoints(xv, yv, xyPoints, demType)

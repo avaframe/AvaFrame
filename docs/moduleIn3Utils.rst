@@ -148,7 +148,7 @@ slope of the pyramid facets (meanAlpha)
 :z0: 		max elevation [m]
 :zElev:	  elevation of flat plane [m]
 :rCirc: 	radius of smoothing circle [m]
-:DEM_type: topography types (FP, IP, HS, HS2, BL, HX - explanation given in the introductory description**
+:demType: topography types (FP, IP, HS, HS2, BL, HX - explanation given in the introductory description**
 :flatx: extent of flat foreland for pyramid in x
 :flaty: extent of flat foreland for pyramid in y
 :phi: rotation angle for pyramid

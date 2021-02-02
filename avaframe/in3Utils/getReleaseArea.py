@@ -133,7 +133,7 @@ def correctOrigin(xyPoints, cfgT):
     return xv, yv, xyPoints
 
 
-def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
+def writeReleaseArea(xyPoints, demType, cfgR, outDir):
     """ Write topography information to file """
 
     lenp = len(xyPoints)
@@ -146,7 +146,7 @@ def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
     p_mat = np.matrix(np.append(xyPoints, z, axis=1))
 
     # Save elevation data to .asc file and add header lines
-    with open(os.path.join(outDir, 'release%d%s.nxyz' % (relNo, DEM_type)), 'w') as f:
+    with open(os.path.join(outDir, 'release%d%s.nxyz' % (relNo, demType)), 'w') as f:
         f.write('name=%s\n' % (relName))
         f.write('d0=%.2f\n' % (relH))
         f.write('rho=None\n')
@@ -155,10 +155,10 @@ def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
             np.savetxt(f, line, fmt='%f')
 
     # Log info here
-    log.info('Release Area written to: %s/release_%d%s as .nxyz and .shp' % (outDir, relNo, DEM_type))
+    log.info('Release Area written to: %s/release_%d%s as .nxyz and .shp' % (outDir, relNo, demType))
     if cfgR.getboolean('GENERAL','outputtxt'):
-        shutil.copyfile(os.path.join(outDir, 'release%d%s.nxyz' % (relNo, DEM_type)),
-                        os.path.join(outDir, 'release%d%s.txt' % (relNo, DEM_type)))
+        shutil.copyfile(os.path.join(outDir, 'release%d%s.nxyz' % (relNo, demType)),
+                        os.path.join(outDir, 'release%d%s.txt' % (relNo, demType)))
 
     # Make list of Points
     xy = []
@@ -166,7 +166,7 @@ def writeReleaseArea(xyPoints, DEM_type, cfgR, outDir):
         xy.append([xyPoints[m,0], xyPoints[m,1]])
 
     # Wr
-    w = shapefile.Writer(os.path.join(outDir, 'release%d%s' % (relNo, DEM_type)))
+    w = shapefile.Writer(os.path.join(outDir, 'release%d%s' % (relNo, demType)))
     w.poly([[xy[3], xy[2], xy[1], xy[0]]])
     w.field('ID', 'C', '40')
     w.field('Name', 'C', '40')
@@ -178,9 +178,9 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
     """ Main function to compute release areas """
 
     # Which DEM type
-    DEM_type = cfgT['TOPO']['DEM_type']
+    demType = cfgT['TOPO']['demType']
 
-    log.info('DEM type is set to: %s' % DEM_type)
+    log.info('DEM type is set to: %s' % demType)
 
     # Set Output directory
     outDir = os.path.join(avalancheDir, 'Inputs', 'REL')
@@ -193,27 +193,27 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
 
     flagCont = False
     # Get release area
-    if DEM_type == 'FP':
+    if demType == 'FP':
         xyPoints = getCornersFP(cfgR)
         flagCont = True
 
-    elif DEM_type == 'IP':
+    elif demType == 'IP':
         xyPoints = getCornersIP(cfgR, cfgT)
         flagCont = True
 
-    elif DEM_type == 'HS':
+    elif demType == 'HS':
         xyPoints = getCornersHS(cfgR, cfgT)
         flagCont = True
 
-    elif DEM_type == 'HS2':
+    elif demType == 'HS2':
         xyPoints = getCornersIP(cfgR, cfgT)
         flagCont = True
 
-    elif DEM_type == 'HX':
-        log.info('no release area available for DEM_type: %s' % (DEM_type))
+    elif demType == 'HX':
+        log.info('no release area available for demType: %s' % (demType))
 
-    elif DEM_type == 'BL':
-        log.warning('no release area available for DEM_type: %s' % (DEM_type))
+    elif demType == 'BL':
+        log.warning('no release area available for demType: %s' % (demType))
 
     if flagCont:
 
@@ -221,6 +221,6 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
         [xv, yv, xyPoints] = correctOrigin(xyPoints, cfgT)
 
         # Write release area
-        writeReleaseArea(xyPoints, DEM_type, cfgR, outDir)
+        writeReleaseArea(xyPoints, demType, cfgR, outDir)
 
     return xv, yv, xyPoints
