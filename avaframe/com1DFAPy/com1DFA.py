@@ -36,7 +36,7 @@ flagSemiRand = True
 flagRand = False
 # set feature flag for flow deth calculation
 # use SPH to get the particles flow depth
-flagFDSPH = False
+flagFDSPH = True
 # set feature leapfrog time stepping
 featLF = False
 featCFL = False
