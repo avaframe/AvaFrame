@@ -18,7 +18,7 @@ import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.ana1Tests.simiSol as simiSol
 
 # Load configuration
-simiSolCfg = os.path.join('test3Num', 'simiSol_com1DFACfg.ini')
+simiSolCfg = os.path.join('ana1Tests', 'simiSol_com1DFACfg.ini')
 cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
 cfgGen = cfg['GENERAL']
 cfgSimi = cfg['SIMISOL']
