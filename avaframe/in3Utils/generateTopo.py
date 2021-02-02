@@ -465,11 +465,11 @@ def writeDEM(cfg, z, outDir):
     yllcenter = float(cfg['DEMDATA']['yl'])
     cellsize = float(cfg['TOPO']['dx'])
     noDATA = float(cfg['DEMDATA']['nodata_value'])
-    dem_name = cfg['DEMDATA']['dem_name']
+    demName = cfg['DEMDATA']['demName']
 
     # Save elevation data to .asc file and add header lines
     z_mat = np.matrix(z)
-    with open(os.path.join(outDir, '%s_%s_Topo.asc' % (dem_name, nameExt)), 'w') as f:
+    with open(os.path.join(outDir, '%s_%s_Topo.asc' % (demName, nameExt)), 'w') as f:
         f.write('nCols  %d\n' % (nCols))
         f.write('nRows  %d\n' % (nRows))
         f.write('xllcenter  %.02f\n' % (xllcenter))
@@ -480,7 +480,7 @@ def writeDEM(cfg, z, outDir):
             np.savetxt(f, line, fmt='%f')
 
     # Log info here
-    log.info('DEM written to: %s/%s_%s_Topo.asc' % (outDir, dem_name, nameExt))
+    log.info('DEM written to: %s/%s_%s_Topo.asc' % (outDir, demName, nameExt))
 
 
 def generateTopo(cfg, avalancheDir):

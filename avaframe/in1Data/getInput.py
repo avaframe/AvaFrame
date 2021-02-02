@@ -6,18 +6,62 @@
 import os
 import glob
 import logging
-import numpy as np
 
 # Local imports
-import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import logUtils
 
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
+
+def readDEM(avaDir):
+    """ read the ascii DEM file from a provided avalanche directory
+
+    Parameters
+    ----------
+    avaDir : str
+        path to avalanche directory
+
+    Returns
+    -------
+    dem : dict
+        dict with header and raster data
+    """
+
+    # get dem file name
+    demSource = getDEMPath(avaDir)
+
+    log.debug('Read DEM: %s' % demSource)
+
+    dem = IOf.readRaster(demSource)
+
+    return(dem)
+
+
+def getDEMPath(avaDir):
+    """ get the DEM file path from a provided avalanche directory
+
+    Parameters
+    ----------
+    avaDir : str
+        path to avalanche directory
+
+    Returns
+    -------
+    demFile : str (first element of list)
+        full path to DEM .asc file
+    """
+
+    demFile = glob.glob(os.path.join(avaDir, 'Inputs', '*.asc'))
+    try:
+        assert len(demFile) == 1, 'There should be exactly one topography .asc file in ' + \
+            avaDir + '/Inputs/'
+    except AssertionError:
+        raise
+
+    return demFile[0]
 
 
 def getInputData(avaDir, cfg, flagDev=False):
@@ -111,11 +155,7 @@ def getInputData(avaDir, cfg, flagDev=False):
             flagEntRes = True
 
     # Initialise DEM
-    demFile = glob.glob(inputDir+os.sep+'*.asc')
-    try:
-        assert len(demFile) == 1, 'There should be exactly one topography .asc file in ' + inputDir
-    except AssertionError:
-        raise
+    demFile = getDEMPath(avaDir)
 
     # return DEM, first item of release, entrainment and resistance areas
-    return demFile[0], relFiles, entFiles[0], resFiles[0], flagEntRes
+    return demFile, relFiles, entFiles[0], resFiles[0], flagEntRes

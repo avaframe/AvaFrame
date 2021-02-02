@@ -54,6 +54,8 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     if not os.path.exists(pathMassBalance):
         os.makedirs(pathMassBalance)
 
+    # TODO: get all this info with functions in in2Input.getInput.py
+
     profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES',
                                           '*aimec*.shp'))
     try:
