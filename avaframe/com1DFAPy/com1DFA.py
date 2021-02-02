@@ -4,6 +4,7 @@
 
 import logging
 import time
+import os
 import numpy as np
 import math
 import copy
@@ -20,6 +21,7 @@ import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 #######################################
 # Set flags here
@@ -378,7 +380,7 @@ def intializeResistance(dem):
     return Cres
 
 
-def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
+def DFAIterate(cfg, particles, fields, dem, Ment, Cres):
     """ Perform time loop for DFA simulation
 
      Save results at desired intervals
@@ -409,6 +411,15 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
     Tcpu : dict
         computation time dictionary
     """
+
+    # Initialise cpu timing
+    Tcpu = {}
+    Tcpu['Force'] = 0.
+    Tcpu['ForceVect'] = 0.
+    Tcpu['ForceSPH'] = 0.
+    Tcpu['Pos'] = 0.
+    Tcpu['Neigh'] = 0.
+    Tcpu['Field'] = 0.
 
     # Load configuration settings
     Tend = cfg.getfloat('Tend')
@@ -488,6 +499,14 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres, Tcpu):
 
     Tcpu['nIter'] = nIter
     log.info('Ending computation at time t = %f s', t)
+    log.info('Saving results for time step t = %f s', t)
+    log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+    log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
+    log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
+    log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
+    log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
+    log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
+    log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     Tsave.append(t)
     Particles.append(copy.deepcopy(particles))
     Fields.append(copy.deepcopy(fields))
@@ -1080,3 +1099,91 @@ def removePart(particles, mask, nRemove):
     particles['partInCell'] = particles['partInCell'][mask]
 
     return particles
+
+def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir):
+    """ export result fields to Outputs directory according to result parameters and time step
+        that can be specified in the configuration file
+
+        Parameters
+        -----------
+        cfgGen: dict
+            configurations
+        Tsave: list
+            list of time step that corresponds to each dict in Fields
+        Fields: list
+            list of Fields for each dtSave
+        relFile: str
+            path to release area shapefile
+        outDir: str
+            outputs Directory
+
+
+        Returns
+        --------
+        exported peak fields are saved in Outputs/com1DFAPy/peakFiles
+
+    """
+
+    resTypesString = cfgGen['resType']
+    resTypes = resTypesString.split('_')
+    tSteps = fU.getTimeIndex(cfgGen, Fields)
+    for tStep in tSteps:
+        finalFields = Fields[tStep]
+        for resType in resTypes:
+            resField = finalFields[resType]
+            if resType == 'ppr':
+                resField = resField * 0.001
+            relName = os.path.splitext(os.path.basename(relFile))[0]
+            dataName = relName + '_' + 'null' + '_' + 'dfa' + '_' + '0.155' + '_' + resType + '_'  + 't%.2f' % (Tsave[tStep]) +'.asc'
+            # create directory
+            outDirPeak = os.path.join(outDir, 'peakFiles')
+            fU.makeADir(outDirPeak)
+            outFile = os.path.join(outDirPeak, dataName)
+            IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
+            if tStep == -1:
+                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType,Tsave[tStep]))
+            else:
+                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType,Tsave[tStep]))
+
+
+def analysisPlots(Particles, Fields, cfg, demOri, dem):
+    """ create analysis plots during simulation run """
+
+    cfgGen = cfg['GENERAL']
+    partRef = Particles[0]
+    Z0 = partRef['z'][0]
+    rho = cfgGen.getfloat('rho')
+    gravAcc = cfgGen.getfloat('gravAcc')
+    mu = cfgGen.getfloat('mu')
+    repeat = cfg['DEVFLAGS'].getboolean('debugPlot')
+    while repeat:
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        T = np.array([0])
+        Z = np.array([0])
+        U = np.array([0])
+        S = np.array([0])
+        for part, field in zip(Particles, Fields):
+            T = np.append(T, part['t'])
+            S = np.append(S, part['s'][0])
+            Z = np.append(Z, part['z'][0])
+            U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
+            fig, ax = plotPosition(
+                fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True)
+        fig, ax = plotPosition(
+                fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True, last=True)
+        value = input("[y] to repeat:\n")
+        if value != 'y':
+            repeat = False
+
+    fieldEnd = Fields[-1]
+    partEnd = Particles[-1]
+    fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
+    fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
+    fig1, ax1 = plotPosition(
+        fig1, ax1, partEnd, demOri, fieldEnd['FD'], pU.cmapPres, 'm', plotPart=False)
+    fig2, ax2 = plotPosition(
+        fig2, ax2, partEnd, demOri, fieldEnd['V'], pU.cmapPres, 'm/s', plotPart=False)
+    fig3, ax3 = plotPosition(
+        fig3, ax3, partEnd, demOri, fieldEnd['P']/1000, pU.cmapPres, 'kPa', plotPart=False)
+    plt.show()
