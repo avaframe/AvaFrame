@@ -4,15 +4,16 @@
     This file is part of Avaframe.
 """
 
-
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import os
 import numpy as np
-import configparser
+import logging
 
+# create local logger
+log = logging.getLogger(__name__)
 
-def plotDEM(z, name_ext, cfg, outDir):
+def plotGeneratedDEM(z, name_ext, cfg, outDir):
     """ Plot DEM with given information on the origin of the DEM """
 
     cfgTopo = cfg['TOPO']
@@ -44,7 +45,11 @@ def plotDEM(z, name_ext, cfg, outDir):
     ax.set_zlabel('surface elevation [m]')
 
     # Save figure to file
-    plt.savefig(os.path.join(outDir, '%s_%s_plot' % (dem_name, name_ext)))
+    outName = os.path.join(outDir, '%s_%s_plot' % (dem_name, name_ext))
+
+    log.info('Saving plot to: %s', outName)
+
+    plt.savefig(outName)
 
     # If flag is set, plot figure
     if cfgDEM.getboolean('showplot'):

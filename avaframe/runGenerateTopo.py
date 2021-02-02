@@ -30,4 +30,4 @@ cfg = cfgUtils.getModuleConfig(gT)
 [z, name_ext, outDir] = gT.generateTopo(cfg, avalancheDir)
 
 # Plot new topogrpahy
-oT.plotDEM(z, name_ext, cfg, outDir)
+oT.plotGeneratedDEM(z, name_ext, cfg, outDir)
