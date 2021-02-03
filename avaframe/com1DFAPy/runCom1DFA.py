@@ -42,7 +42,7 @@ def setDEMorigin(demOri):
     return dem
 
 
-def runCom1DFAPy():
+def runCom1DFAPy(avaDir='', cfgFile='', relThFunc='', flagAnalysis=True):
     """ run com1DFAPy module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -51,7 +51,10 @@ def runCom1DFAPy():
 
     # Load avalanche directory from general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
-    avalancheDir = cfgMain['MAIN']['avalancheDir']
+    if avaDir != '':
+        avalancheDir = avaDir
+    else:
+        avalancheDir = cfgMain['MAIN']['avalancheDir']
     # set module name, reqiured as long we are in dev phase
     # - because need to create e.g. Output folder for com1DFAPy to distinguish from
     # current com1DFA
@@ -66,7 +69,10 @@ def runCom1DFAPy():
     log.info('Current avalanche: %s', avalancheDir)
 
     # Load configuration
-    cfg = cfgUtils.getModuleConfig(com1DFA)
+    if cfgFile !='':
+        cfg = cfgUtils.getModuleConfig(com1DFA, cfgFile)
+    else:
+        cfg = cfgUtils.getModuleConfig(com1DFA)
     cfgGen = cfg['GENERAL']
     flagDev = cfg['FLAGS'].getboolean('flagDev')
 
@@ -90,8 +96,11 @@ def runCom1DFAPy():
     # ------------------------
     # process release info to get it as a raster
     relRaster = com1DFA.prepareArea(releaseLine, demOri)
-    relTh = cfgGen.getfloat('relTh')
-    relRaster = relRaster * relTh
+    if len(relThFunc) != 0:
+        relRaster = relRaster * relThFunc
+    else:
+        relTh = cfgGen.getfloat('relTh')
+        relRaster = relRaster * relTh
 
     # ------------------------
     # initialize simulation : create directories
@@ -110,16 +119,19 @@ def runCom1DFAPy():
     log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
 
-    # +++++++++POSTPROCESS++++++++++++++++++++++++
-    # -------------------------------
-    # Analyse resutls
-    com1DFA.analysisPlots(Particles, Fields, cfg, demOri, dem)
+    if flagAnalysis:
+        # +++++++++POSTPROCESS++++++++++++++++++++++++
+        # -------------------------------
+        # Analyse resutls
+        com1DFA.analysisPlots(Particles, Fields, cfg, demOri, dem)
 
-    # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
-    # Result parameters to be exported
-    com1DFA.exportFields(cfgGen, Tsave, Fields, relFiles[0], demOri, outDir)
+        # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+        # Result parameters to be exported
+        com1DFA.exportFields(cfgGen, Tsave, Fields, relFiles[0], demOri, outDir)
 
-    # Generate plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
+        # Generate plots for all peakFiles
+        plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
 
-runCom1DFAPy()
+    return Particles, Fields, Tsave
+
+Particles, Fields, Tsave = runCom1DFAPy()
