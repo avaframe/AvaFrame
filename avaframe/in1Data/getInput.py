@@ -16,6 +16,7 @@ from avaframe.in3Utils import cfgUtils
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
+
 def readDEM(avaDir):
     """ read the ascii DEM file from a provided avalanche directory
 
@@ -93,12 +94,11 @@ def getInputData(avaDir, cfg, flagDev=False):
     # Set directories for inputs, outputs and current work
     inputDir = os.path.join(avaDir, 'Inputs')
 
-
     # Set flag if there is an entrainment or resistance area
     flagEntRes = False
 
     # Initialise release areas, default is to look for shapefiles
-    if flagDev == True:
+    if flagDev is True:
         releaseDir = 'devREL'
         relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
     elif cfg['releaseScenario'] != '':
@@ -110,7 +110,7 @@ def getInputData(avaDir, cfg, flagDev=False):
                 relf = os.path.join(inputDir, releaseDir, rel)
             else:
                 relf = os.path.join(inputDir, releaseDir, '%s.shp' % (rel))
-            if os.path.isfile(relf) == True:
+            if os.path.isfile(relf) is True:
                 relFiles.append(relf)
             else:
                 log.error('No release scenario called: %s' % (relf))

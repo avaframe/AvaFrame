@@ -15,10 +15,11 @@ from avaframe.in1Data import getInput
 # create local logger
 log = logging.getLogger(__name__)
 
+
 def _generateDEMPlot(X, Y, z, title):
     """Generates 3d DEM plot, use this to style the plot"""
 
-    plt.figure(figsize=(10,10))
+    plt.figure(figsize=(10, 10))
     ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, z, cmap=plt.cm.viridis,
                     linewidth=0, antialiased=False)
@@ -29,6 +30,7 @@ def _generateDEMPlot(X, Y, z, title):
     ax.set_zlabel('elevation (m)')
 
     return ax
+
 
 def plotDEM3D(cfg):
     """Plots the DEM from the avalancheDir in cfg alongside it
@@ -65,16 +67,17 @@ def plotDEM3D(cfg):
     z[np.isnan(z)] = np.nanmin(z)
 
     # Set coordinate grid with given origin
-    X,Y = _setCoordinateGrid(xl,yl,dx,z)
+    X, Y = _setCoordinateGrid(xl, yl, dx, z)
 
     ax = _generateDEMPlot(X, Y, z, avaName)
 
     # Save figure to file
-    outName= os.path.splitext(demPath)[0] + '_plot.png'
+    outName = os.path.splitext(demPath)[0] + '_plot.png'
     log.info('Saving plot to: %s', outName)
     plt.savefig(outName)
 
     plt.close('all')
+
 
 def plotGeneratedDEM(z, nameExt, cfg, outDir):
     """ Plot DEM with given information on the origin of the DEM """
@@ -89,7 +92,7 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir):
     demName = cfgDEM['demName']
 
     # Set coordinate grid with given origin
-    X,Y = _setCoordinateGrid(xl,yl,dx,z)
+    X, Y = _setCoordinateGrid(xl ,yl ,dx, z)
 
     topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'HS': 'Hockeystick',
                  'HS2': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix', 'PY': 'Pyramid'}
@@ -112,7 +115,6 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir):
 
 def plotReleasePoints(xv, yv, xyPoints, demType):
 
-
     plt.figure()
     plt.plot(xv, np.zeros(len(xv))+yv[0], 'k-')
     plt.plot(xv, np.zeros(len(xv))+yv[-1], 'k-')
@@ -126,7 +128,7 @@ def plotReleasePoints(xv, yv, xyPoints, demType):
     plt.show()
 
 
-def _setCoordinateGrid(xl,yl,dx,z):
+def _setCoordinateGrid(xl, yl, dx, z):
     """get a Coordinate Grid for plotting"""
 
     xEnd = z.shape[1] * dx
@@ -136,4 +138,4 @@ def _setCoordinateGrid(xl,yl,dx,z):
     yp = np.linspace(yl, yl + yEnd, z.shape[0])
 
     X, Y = np.meshgrid(xp, yp)
-    return(X,Y)
+    return(X, Y)
