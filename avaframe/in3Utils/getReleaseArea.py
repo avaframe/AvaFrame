@@ -123,8 +123,8 @@ def correctOrigin(xyPoints, cfgT):
     xv = xv + xl
     yv = yv + yl + 0.5 * yEnd
 
-    xyPoints[:,0] = xyPoints[:,0] + xl
-    xyPoints[:,1] = xyPoints[:,1] + yl + 0.5 * yEnd
+    xyPoints[:, 0] = xyPoints[:, 0] + xl
+    xyPoints[:, 1] = xyPoints[:, 1] + yl + 0.5 * yEnd
 
     # list all points
     for m in range(len(xyPoints)):
@@ -156,14 +156,14 @@ def writeReleaseArea(xyPoints, demType, cfgR, outDir):
 
     # Log info here
     log.info('Release Area written to: %s/release_%d%s as .nxyz and .shp' % (outDir, relNo, demType))
-    if cfgR.getboolean('GENERAL','outputtxt'):
+    if cfgR.getboolean('GENERAL', 'outputtxt'):
         shutil.copyfile(os.path.join(outDir, 'release%d%s.nxyz' % (relNo, demType)),
                         os.path.join(outDir, 'release%d%s.txt' % (relNo, demType)))
 
     # Make list of Points
     xy = []
     for m in range(len(xyPoints)):
-        xy.append([xyPoints[m,0], xyPoints[m,1]])
+        xy.append([xyPoints[m, 0], xyPoints[m, 1]])
 
     # Wr
     w = shapefile.Writer(os.path.join(outDir, 'release%d%s' % (relNo, demType)))
@@ -189,7 +189,6 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
     else:
         log.error('Required folder structure: NameOfAvalanche/Inputs missing! \
                     Run runInitializeProject first!')
-
 
     flagCont = False
     # Get release area

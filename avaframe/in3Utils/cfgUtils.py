@@ -182,7 +182,6 @@ def writeCfgFile(avaDir, module, cfg, suffix=''):
         cfg.write(conf)
 
 
-
 def readCfgFile(avaDir, module, suffix=''):
     """ Save configuration used to text file in Outputs """
 
