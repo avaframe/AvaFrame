@@ -1,29 +1,16 @@
 """
     Run script for running python DFA kernel
 """
-import os
-import glob
+
 import time
 import copy
-import logging
-import numpy as np
-import math
-import scipy.stats as stats
-import matplotlib.pyplot as plt
-import matplotlib as mpl
 
 # Local imports
 import avaframe.in3Utils.initialiseDirs as inDirs
 import avaframe.in3Utils.initializeProject as initProj
-import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFA as com1DFA
-import avaframe.com1DFAPy.DFAtools as DFAtls
-import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
-
-# from avaframe.DFAkernel.setParam import *
-import avaframe.out3Plot.plotUtils as pU
 from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils

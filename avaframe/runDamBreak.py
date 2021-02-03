@@ -10,13 +10,10 @@ import glob
 
 
 # Local imports
-from avaframe.com1DFA import com1DFA
 import avaframe.com1DFAPy.com1DFA as com1DFAPy
 from avaframe.com1DFAPy import runCom1DFA
-from avaframe.out3Plot import outQuickPlot
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.in3Utils import initializeProject as initProj
 from avaframe.ana1Tests import damBreak
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import cfgUtils
