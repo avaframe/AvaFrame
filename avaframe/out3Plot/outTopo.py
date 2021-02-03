@@ -8,18 +8,26 @@ import os
 import numpy as np
 import logging
 
+from scipy.interpolate import griddata
 # local imports
 from avaframe.in1Data import getInput
 
 # create local logger
 log = logging.getLogger(__name__)
 
-def _generateDEMPlot(X, Y, z,):
+def _generateDEMPlot(X, Y, z, title):
     """Generates 3d DEM plot, use this to style the plot"""
 
+    plt.figure(figsize=(10,10))
     ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, z, cmap=plt.cm.viridis,
                     linewidth=0, antialiased=False)
+
+    ax.set_title('DEM: %s' % title)
+    ax.set_xlabel('x [m]')
+    ax.set_ylabel('y [m]')
+    ax.set_zlabel('elevation (m)')
+
     return ax
 
 def plotDEM3D(cfg):
@@ -53,15 +61,13 @@ def plotDEM3D(cfg):
     dx = header.cellsize
     z = dem['rasterData']
 
+    # this line is needed for plot_surface to be able to handle the nans
+    z[np.isnan(z)] = np.nanmin(z)
+
     # Set coordinate grid with given origin
     X,Y = _setCoordinateGrid(xl,yl,dx,z)
 
-    ax = _generateDEMPlot(X, Y, z)
-
-    ax.set_title('DEM: %s' % avaName)
-    ax.set_xlabel('x [m]')
-    ax.set_ylabel('y [m]')
-    ax.set_zlabel('surface elevation [m]')
+    ax = _generateDEMPlot(X, Y, z, avaName)
 
     # Save figure to file
     outName= os.path.splitext(demPath)[0] + '_plot.png'
@@ -88,12 +94,7 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir):
     topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'HS': 'Hockeystick',
                  'HS2': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix', 'PY': 'Pyramid'}
 
-    ax = _generateDEMPlot(X, Y, z)
-
-    ax.set_title('Generated DEM: %s' % (topoNames[nameExt]))
-    ax.set_xlabel('along valley distance [m]')
-    ax.set_ylabel('across valley distance [m]')
-    ax.set_zlabel('surface elevation [m]')
+    ax = _generateDEMPlot(X, Y, z, topoNames[nameExt])
 
     # Save figure to file
     outName = os.path.join(outDir, '%s_%s_plot' % (demName, nameExt))
@@ -130,7 +131,8 @@ def _setCoordinateGrid(xl,yl,dx,z):
     xEnd = z.shape[1] * dx
     yEnd = z.shape[0] * dx
 
-    xp = np.arange(xl, xl + xEnd, dx)
-    yp = np.arange(yl, yl + yEnd, dx)
+    xp = np.linspace(xl, xl + xEnd, z.shape[1])
+    yp = np.linspace(yl, yl + yEnd, z.shape[0])
+
     X, Y = np.meshgrid(xp, yp)
     return(X,Y)
