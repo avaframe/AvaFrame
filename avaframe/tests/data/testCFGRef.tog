@@ -1,15 +1,15 @@
 cfgUtils - INFO -  	GENERAL
-cfgUtils - INFO -  		inputdir : path/to/avalanche
-cfgUtils - INFO -  		fulllog : True
+cfgUtils - INFO -  		inputDir : path/to/avalanche
+cfgUtils - INFO -  		fullLog : True
 cfgUtils - INFO -  	FLAGS
-cfgUtils - INFO -  		plotfigure : False
-cfgUtils - INFO -  		saveplot : False
+cfgUtils - INFO -  		plotFigure : False
+cfgUtils - INFO -  		savePlot : False
 cfgUtils - INFO -  	GOODSECTION1
-cfgUtils - INFO -  		goodkey1 : 1
-cfgUtils - INFO -  		goodkey2 : False 	(default value was : True)
+cfgUtils - INFO -  		goodKey1 : 1
+cfgUtils - INFO -  		goodKey2 : False 	(default value was : True)
 cfgUtils - INFO -  	GOODSECTION2
-cfgUtils - INFO -  		goodkey3 : 0
-cfgUtils - INFO -  		goodkey4 : False
-cfgUtils - WARNING -  Key ['badkey1'] in section ['GOODSECTION1'] in the localCfg file is not needed.
-cfgUtils - WARNING -  Key ['badkey2'] in section ['BADSECTION1'] in the localCfg file is not needed.
-cfgUtils - WARNING -  Key ['badkey3'] in section ['BADSECTION1'] in the localCfg file is not needed.
+cfgUtils - INFO -  		goodKey3 : 0
+cfgUtils - INFO -  		goodKey4 : False
+cfgUtils - WARNING -  Key ['badKey1'] in section ['GOODSECTION1'] in the localCfg file is not needed.
+cfgUtils - WARNING -  Key ['badKey2'] in section ['BADSECTION1'] in the localCfg file is not needed.
+cfgUtils - WARNING -  Key ['badKey3'] in section ['BADSECTION1'] in the localCfg file is not needed.
