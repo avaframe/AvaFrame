@@ -16,12 +16,13 @@ log = logging.getLogger(__name__)
 
 def _generateDEMPlot(X, Y, z,):
     """Generates 3d DEM plot, use this to style the plot"""
+
     ax = plt.axes(projection='3d')
     ax.plot_surface(X, Y, z, cmap=plt.cm.viridis,
                     linewidth=0, antialiased=False)
     return ax
 
-def plotDEM(cfg):
+def plotDEM3D(cfg):
     """Plots the DEM from the avalancheDir in cfg alongside it
 
     Parameters
@@ -37,10 +38,14 @@ def plotDEM(cfg):
 
     # get avalanche dir
     avalancheDir = cfg['MAIN']['avalancheDir']
+    avaName = os.path.basename(avalancheDir)
     log.info('Plotting DEM in : %s', avalancheDir)
 
     # read DEM
     dem = getInput.readDEM(avalancheDir)
+
+    # get DEM Path
+    demPath = getInput.getDEMPath(avalancheDir)
 
     header = dem['header']
     xl = header.xllcenter
@@ -50,6 +55,20 @@ def plotDEM(cfg):
 
     # Set coordinate grid with given origin
     X,Y = _setCoordinateGrid(xl,yl,dx,z)
+
+    ax = _generateDEMPlot(X, Y, z)
+
+    ax.set_title('DEM: %s' % avaName)
+    ax.set_xlabel('x [m]')
+    ax.set_ylabel('y [m]')
+    ax.set_zlabel('surface elevation [m]')
+
+    # Save figure to file
+    outName= os.path.splitext(demPath)[0] + '_plot.png'
+    log.info('Saving plot to: %s', outName)
+    plt.savefig(outName)
+
+    plt.close('all')
 
 def plotGeneratedDEM(z, nameExt, cfg, outDir):
     """ Plot DEM with given information on the origin of the DEM """
