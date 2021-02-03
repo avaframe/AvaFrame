@@ -112,9 +112,12 @@ def compareConfig(iniFile, modName, compare):
         log.info('Reading config from: %s and %s' % (iniFile[0], iniFile[1]))
         # initialize our final configparser object
         cfg = configparser.ConfigParser()
+        cfg.optionxform = str
         # initialize configparser object to read
         defCfg = configparser.ConfigParser()
+        defCfg.optionxform = str
         locCfg = configparser.ConfigParser()
+        locCfg.optionxform = str
         # read default and local parser files
         defCfg.read(iniFile[0])
         locCfg.read(iniFile[1])
@@ -154,6 +157,7 @@ def compareConfig(iniFile, modName, compare):
     else:
         log.info('Reading config from: %s', iniFile)
         cfg = configparser.ConfigParser()
+        cfg.optionxform = str
         # Finally read it
         cfg.read(iniFile)
         # Write config to log file
