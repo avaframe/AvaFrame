@@ -602,7 +602,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # update fields (compute grid values)
     startTime = time.time()
     # particles, fields = updateFields(cfg, particles, force, dem, fields)
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, force, dem, fields)
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
@@ -764,7 +764,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # update fields (compute grid values)
     startTime = time.time()
     # particles, fields = updateFields(cfg, particles, force, dem, fields)
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, force, dem, fields)
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
