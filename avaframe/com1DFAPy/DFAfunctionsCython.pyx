@@ -457,7 +457,7 @@ def updatePositionC(cfg, particles, dem, force):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def updateFieldsC(cfg, particles, force, dem, fields):
+def updateFieldsC(cfg, particles, dem, fields):
   """ update fields and particles fow depth
 
   Cython implementation
@@ -468,8 +468,6 @@ def updateFieldsC(cfg, particles, force, dem, fields):
      configuration for DFA simulation
  particles : dict
      particles dictionary
- force : dict
-     force dictionary
  dem : dict
      dictionary with dem information
  fields : dict
@@ -801,6 +799,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef double K2 = 1
   cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr
   cdef double g1, g2, g11, g12, g22, g33
+  cdef double m11, m12, m22, GG1, GG2
   cdef double xx, yy, zz, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
   cdef double dx, dy, dz, dn, r, hr, dwdr
   cdef int lInd, rInd
@@ -818,6 +817,11 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     gradhX = 0
     gradhY = 0
     gradhZ = 0
+    G1 = 0
+    G2 = 0
+    m11 = 0
+    m12 = 0
+    m22 = 0
     indx = indX[j]
     indy = indY[j]
     ux = UX[j]
@@ -843,6 +847,9 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     vy = uy - ny*uz/nz
     wx = uxOrtho - nx*uzOrtho/nz
     wy = uyOrtho - ny*uzOrtho/nz
+
+    g1 = nx/(nz)
+    g2 = ny/(nz)
 
     # startTime = time.time()
     # L = np.empty((0), dtype=int)
@@ -878,8 +885,6 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                   dy = dy - dn*ny
                   dz = dz - dn*nz
                   dz = 0
-                  g1 = nx/(nz)
-                  g2 = ny/(nz)
                   # get norm of r = xj - xl
                   r = norm(dx, dy, dz)
                   if r < minRKern * rKernel:
@@ -917,15 +922,36 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       G1 = mdwdrr * K1*r1
                       G2 = mdwdrr * K2*r2
 
-                      g1 = nx/(nz)
-                      g2 = ny/(nz)
-
                       # gradhX = gradhX + vx*G1 + wx*G2
                       # gradhY = gradhY + vy*G1 + wy*G2
                       # gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
                       gradhX = gradhX + ux*G1 + uxOrtho*G2
                       gradhY = gradhY + uy*G1 + uyOrtho*G2
                       gradhZ = gradhZ + (- g1*(ux*G1 + uxOrtho*G2) - g2*(uy*G1 + uyOrtho*G2))
+
+                if SPHoption == 4:
+                        # get coordinates in local coord system
+                        r1 = scalProd(dx, dy, dz, ux, uy, uz)
+                        r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+                        # impse r3=0 even if the particle is not exactly on the tengent plane
+                        # get norm of r = xj - xl
+                        r = norm(r1, r2, 0)
+                        if r < minRKern * rKernel:
+                            # impose a minimum distance between particles
+                            r1 = minRKern * rKernel * r1
+                            r2 = minRKern * rKernel * r2
+                            r = minRKern * rKernel
+                        if r < rKernel:
+                            hr = rKernel - r
+                            dwdr = dfacKernel * hr * hr
+                            mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
+                            # mdwdrr = mass[l] * dwdr / r
+                            m11 = m11 + mass[l] / h[l] * dwdr / r * r1 * r1
+                            m12 = m12 + mass[l] / h[l] * dwdr / r * r1 * r2
+                            m22 = m22 + mass[l] / h[l] * dwdr / r * r2 * r2
+                            G1 = G1 + mdwdrr * K1*r1
+                            G2 = G2 + mdwdrr * K2*r2
+
                 elif SPHoption == 3:
                   # Option 3
                   # No proof yet....
@@ -938,8 +964,6 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                   dx = dx - dn*nx
                   dy = dy - dn*ny
                   dz = dz - dn*nz
-                  g1 = nx/(nz)
-                  g2 = ny/(nz)
                   # get norm of r = xj - xl
                   r = norm(dx, dy, dz)
                   if r < minRKern * rKernel:
@@ -952,8 +976,6 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
                       mdwdrr = mass[l] * dwdr / r
-                      g1 = nx/(nz)
-                      g2 = ny/(nz)
                       g12 = g1*g2
                       g33 = (1 + g1*g1 + g2*g2)
                       g11 = 1 + g1*g1
@@ -967,13 +989,33 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       # gradhZ = gradhZ + mdwdrr * (g1*dx + g2*dy) / g33
 
     if grad == 1:
-      GHX[j] = GHX[j] - gradhX / rho
-      GHY[j] = GHY[j] - gradhY / rho
-      GHZ[j] = GHZ[j] - gradhZ / rho
+      if SPHoption == 4:
+        GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
+        GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)
+        gradhX = ux*GG1 + uxOrtho*GG2
+        gradhY = uy*GG1 + uyOrtho*GG2
+        gradhZ = (- g1*(ux*GG1 + uxOrtho*GG2) - g2*(uy*GG1 + uyOrtho*GG2))
+        GHX[j] = GHX[j] + gradhX
+        GHY[j] = GHY[j] + gradhY
+        GHZ[j] = GHZ[j] + gradhZ
+      else:
+        GHX[j] = GHX[j] - gradhX / rho
+        GHY[j] = GHY[j] - gradhY / rho
+        GHZ[j] = GHZ[j] - gradhZ / rho
     else:
-      GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
-      GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc
-      GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc
+      if SPHoption == 4:
+        GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
+        GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)
+        gradhX = ux*GG1 + uxOrtho*GG2
+        gradhY = uy*GG1 + uyOrtho*GG2
+        gradhZ = (- g1*(ux*GG1 + uxOrtho*GG2) - g2*(uy*GG1 + uyOrtho*GG2))
+        GHX[j] = GHX[j] - gradhX * mass[j] * gravAcc
+        GHY[j] = GHY[j] - gradhY * mass[j] * gravAcc
+        GHZ[j] = GHZ[j] - gradhZ * mass[j] * gravAcc
+      else:
+        GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
+        GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc
+        GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc
   return GHX, GHY, GHZ# , L, indL
 
 
