@@ -42,7 +42,7 @@ def setDEMorigin(demOri):
     return dem
 
 
-def runCom1DFAPy(avaDir='', cfgFile='', relThFunc='', flagAnalysis=True):
+def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
     """ run com1DFAPy module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -96,11 +96,10 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThFunc='', flagAnalysis=True):
     # ------------------------
     # process release info to get it as a raster
     relRaster = com1DFA.prepareArea(releaseLine, demOri)
-    if len(relThFunc) != 0:
-        relRaster = relRaster * relThFunc
-    else:
+    if len(relTh) == 0:
         relTh = cfgGen.getfloat('relTh')
-        relRaster = relRaster * relTh
+
+    relRaster = relRaster * relTh
 
     # ------------------------
     # initialize simulation : create directories
@@ -134,4 +133,6 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThFunc='', flagAnalysis=True):
 
     return Particles, Fields, Tsave
 
-Particles, Fields, Tsave = runCom1DFAPy()
+
+if __name__ == "__main__":
+    runCom1DFAPy()
