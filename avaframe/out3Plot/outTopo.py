@@ -112,6 +112,7 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir):
 
 def plotReleasePoints(xv, yv, xyPoints, demType):
 
+
     plt.figure()
     plt.plot(xv, np.zeros(len(xv))+yv[0], 'k-')
     plt.plot(xv, np.zeros(len(xv))+yv[-1], 'k-')
