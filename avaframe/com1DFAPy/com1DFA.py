@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 debugPlot = False
 # set feature flag for initial particle distribution
 # particles are homegeneosly distributed with a little random variation
-flagSemiRand = True
+flagSemiRand = False
 # particles are randomly distributed
 flagRand = False
 # set feature flag for flow deth calculation
@@ -145,10 +145,11 @@ def initializeSimulation(cfg, relRaster, dem):
     FD = np.zeros((nrows, ncols))
     Npart = 0
     NPPC = np.empty(0)
+    Apart = np.empty(0)
     Xpart = np.empty(0)
     Ypart = np.empty(0)
-    Mpart = np.empty(0)
-    Hpart = np.empty(0)
+    # Mpart = np.empty(0)
+    # Hpart = np.empty(0)
     InCell = np.empty((0), int)
     IndX = np.empty((0), int)
     IndY = np.empty((0), int)
@@ -167,15 +168,18 @@ def initializeSimulation(cfg, relRaster, dem):
         FD[indRely, indRelx] = h
         # initialize particles position, mass, height...
         NPPC = np.append(NPPC, nPart*np.ones(nPart))
+        Apart = np.append(Apart, A[indRely, indRelx]*np.ones(nPart)/nPart)
         Xpart = np.append(Xpart, xpart)
         Ypart = np.append(Ypart, ypart)
-        Mpart = np.append(Mpart, mPart * np.ones(nPart))
-        Hpart = np.append(Hpart, h * np.ones(nPart))
+        # Mpart = np.append(Mpart, mPart * np.ones(nPart))
+        # Hpart = np.append(Hpart, h * np.ones(nPart))
         ic = indRelx + ncols * indRely
         IndX = np.append(IndX, np.ones(nPart)*indRelx)
         IndY = np.append(IndY, np.ones(nPart)*indRely)
         InCell = np.append(InCell, np.ones(nPart)*ic)
 
+    Hpart, _ = geoTrans.projectOnRasterVectRoot(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
+    Mpart = rho * Hpart * Apart
     # create dictionnary to store particles properties
     particles = {}
     particles['Npart'] = Npart
@@ -212,7 +216,6 @@ def initializeSimulation(cfg, relRaster, dem):
     # initialize entrainment and resistance
     Ment = intializeMassEnt(dem)
     Cres = intializeResistance(dem)
-
     PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
     fields = {}
@@ -546,6 +549,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     Tcpu : dict
         computation time dictionary
     """
+    sphOption = cfg.getint('sphOption')
     # get forces
     startTime = time.time()
     # loop version of the compute force
@@ -556,9 +560,25 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
-    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, SPHOption=1 )
+    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, SPHOption=sphOption, gradient=0)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
+    # gradNorm = DFAtls.norm(force['forceSPHX'], force['forceSPHY'], force['forceSPHZ'])
+    # gravForce = DFAtls.norm(force['forceX'], force['forceY'], force['forceZ'])
+    # fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+    # x = particles['x']-500.00
+    # y = particles['y']-500.00
+    # h = particles['h']
+    # m = particles['m']
+    # r = np.sqrt(x*x + y*y)
+    # ax.plot(r, gradNorm, color='k', marker='.', linestyle='None')
+    # ax.plot(r, gravForce, color='b', marker='.', linestyle='None')
+    # ax.plot(r, force['forceFrict'], color='r', marker='.', linestyle='None')
+    #
+    # fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    # ax1.plot(np.linspace(-500.00, -500.00 + 200*5, 201), fields['FD'][100,:], 'b')
+    # ax1.plot(r, h, color='b', marker='.', linestyle='None')
+    # plt.show()
     # plot depth computed with different interpolation methods
     nSave = Tcpu['nSave']
     dtSave = cfg.getfloat('dtSave')
@@ -605,26 +625,33 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
+    # x = particles['x']-500.00
+    # y = particles['y']-500.00
+    # h = particles['h']
+    # fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    # ax1.plot(np.linspace(-500.00, -500.00 + 200*5, 201), fields['FD'][100,:], 'b')
+    # ax1.plot(r, h, color='b', marker='.', linestyle='None')
+    # plt.show()
 
+    # get SPH flow depth
+    # particles = SPH.computeFlowDepth(cfg, particles, dem)
+    header = dem['header']
+    Nx = dem['Nx']
+    Ny = dem['Ny']
+    Nz = dem['Nz']
+    indX = (particles['indX']).astype('int')
+    indY = (particles['indY']).astype('int')
+    H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+    H = np.asarray(H)
+    # particles['h'] = H
+    # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+    # particles['h'] = hh
+    # H = np.asarray(H)
+    W = np.asarray(W)
+    H = np.where(W > 0, H/W, H)
+    particles['hSPH'] = np.where(H <= hmin, hmin, H)
     if flagFDSPH:
-        # get SPH flow depth
-        # particles = SPH.computeFlowDepth(cfg, particles, dem)
-        header = dem['header']
-        Nx = dem['Nx']
-        Ny = dem['Ny']
-        Nz = dem['Nz']
-        indX = (particles['indX']).astype('int')
-        indY = (particles['indY']).astype('int')
-        H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
-        H = np.asarray(H)
-        # particles['h'] = H
-        # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
-        # particles['h'] = hh
-        # H = np.asarray(H)
-        W = np.asarray(W)
-        H = np.where(W > 0, H/W, H)
-        particles['h'] = np.where(H <= hmin, hmin, H)
-        particles['hSPH'] = np.where(H <= hmin, hmin, H)
+        particles['h'] = particles['hSPH']
 
         # print(np.min(particles['h']))
 
@@ -914,7 +941,7 @@ def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last
         if last:
             pU.addColorBar(sc, ax, ticks, 'm', 'Flow Depth')
 
-    plt.pause(0.1)
+    plt.pause(5)
     return fig, ax
 
 
