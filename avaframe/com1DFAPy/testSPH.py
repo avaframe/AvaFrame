@@ -1,6 +1,7 @@
 
 import numpy as np
 import time
+import os
 import math
 import matplotlib.pyplot as plt
 
@@ -12,6 +13,7 @@ import avaframe.com1DFAPy.com1DFA as com1DFA
 # import avaframe.com1DFAPy.SPHfunctions as SPH
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
+
 cfg = cfgUtils.getModuleConfig(com1DFA)['GENERAL']
 cfgFull = cfgUtils.getModuleConfig(com1DFA)
 
@@ -23,9 +25,12 @@ cfgFull = cfgUtils.getModuleConfig(com1DFA)
 
 def Hfunction(x, y, z):
     # h = x*x/1000 + 1
-    GHx = 2*x*y/10000
-    GHy = x*x/10000
-    h = x*x*y/10000 + 1
+    # GHx = 2*x*y/10000
+    # GHy = x*x/10000
+    # h = x*x*y/10000 + 1
+    GHx = -4/(Lx*Lx)*(2*x-Lx)*np.sin(math.pi*y/Lx)
+    GHy = -4/(Lx*Lx)*(x-Lx)*x*np.cos(math.pi*y/Lx)*math.pi/Lx
+    h = -4/(Lx*Lx)*(x-Lx)*x*np.sin(math.pi*y/Lx)
     # r = np.sqrt((x-12.5)*(x-12.5)+(y-12.5)*(y-12.5))
     # H0 = 1
     # h = H0 * (1 - (r/12.5) * (r/12.5))
@@ -84,8 +89,8 @@ def definePart(dx, dy, Lx, Ly):
     particles['y'] = Ypart
     particles['z'] = Zpart
     particles['s'] = np.zeros(np.shape(Ypart))
-    particles['ux'] = np.zeros(np.shape(Ypart))
-    particles['uy'] = np.zeros(np.shape(Ypart))
+    particles['ux'] = 2*np.ones(np.shape(Ypart))
+    particles['uy'] = np.ones(np.shape(Ypart))
     particles['uz'] = np.zeros(np.shape(Ypart))
     particles['m'] = Mpart
     particles['h'] = Hpart
@@ -125,7 +130,7 @@ def plotFD(ax, x, xx, h, particles, ind, mark, count):
     if count == 1:
         ax.plot(xx, h, color='r', linestyle='-', label='real flow depth')
     ax.plot(particles[x][ind], particles['h2'][ind], color='b',
-             marker=mark, linestyle='None', label='corrected flow depth' + str(nPartPerD))
+             marker=mark, linestyle='None', label='corrected flow depth N = ' + str(nPartPerD*nPartPerD))
     ax.plot(particles[x][ind], particles['h1'][ind], color='g',
              marker=mark, linestyle='None', label='flow depth')
     # ax.plot(particles[x][ind], particles['h2'][ind], color='c',
@@ -142,19 +147,19 @@ def plotGrad(ax, x, xx, particles, ind, mark, count):
         ax.plot(xx, gz, color='k', linestyle='-', label='real gradHZ')
 
     ax.plot(particles[x][ind], GHX[ind], color='m', marker=mark, markersize=5,
-             linestyle='None', label='SPH N=' + str(nPartPerD))
+             linestyle='None', label='SPH N = ' + str(nPartPerD*nPartPerD))
     ax.plot(particles[x][ind], GHY[ind], color='m', marker=mark, markersize=5,
              linestyle='None')
     ax.plot(particles[x][ind], GHZ[ind], color='m', marker=mark, markersize=5,
              linestyle='None')
     ax.plot(particles[x][ind], GHX2[ind], color='c', marker=mark, markersize=5,
-             linestyle='None', label='Corrected SPH N=' + str(nPartPerD))
+             linestyle='None', label='Corrected 1 SPH N = ' + str(nPartPerD*nPartPerD))
     ax.plot(particles[x][ind], GHY2[ind], color='c', marker=mark, markersize=5,
              linestyle='None')
     ax.plot(particles[x][ind], GHZ2[ind], color='c', marker=mark, markersize=5,
              linestyle='None')
     ax.plot(particles[x][ind], GHX4[ind], color='y', marker=mark, markersize=5,
-             linestyle='None', label='Corrected full SPH N=' + str(nPartPerD))
+             linestyle='None', label='Corrected 2 SPH N = ' + str(nPartPerD*nPartPerD))
     ax.plot(particles[x][ind], GHY4[ind], color='y', marker=mark, markersize=5,
              linestyle='None')
     ax.plot(particles[x][ind], GHZ4[ind], color='y', marker=mark, markersize=5,
@@ -174,16 +179,20 @@ fig3, ax3 = plt.subplots(figsize=(2*pU.figW, pU.figH))
 ax3.set_title('Gradh(x)')
 ax3.set_xlabel('x [m]')
 ax3.set_ylabel('Gradh []')
+ax3.set_ylim([-0.02, 0.02])
+# ax3.set_ylim([-0.016, 0.016])
 fig4, ax4 = plt.subplots(figsize=(2*pU.figW, pU.figH))
 ax4.set_title('Gradh(y)')
 ax4.set_xlabel('y [m]')
 ax4.set_ylabel('Gradh []')
+# ax4.set_ylim([-0.02, 0.02])
+ax4.set_ylim([-0.016, 0.016])
 
 markers = ['o', 's', 'd', '*', 'p', 'P', '^', '>', '<', 'X', 'h']
 count = 0
 
 csz = NDX
-nCells = 10
+nCells = 30
 
 # set the extend of your mesh
 Lx = nCells*csz
@@ -204,7 +213,7 @@ for nPartPerD in NPartPerD:
     # ------------------------------------------
     # find neighbours
     particles = DFAfunC.getNeighboursC(particles, dem)
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
+    # particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
 
     # ------------------------------------------
     # Compute SPH gradient
@@ -212,6 +221,21 @@ for nPartPerD in NPartPerD:
     Nx = dem['Nx']
     Ny = dem['Ny']
     Nz = dem['Nz']
+    m = particles['m']
+    x = particles['x']
+    y = particles['y']
+    ux = particles['x']
+    uy = particles['y']
+    uz = particles['z']
+    nx, ny, nz = DFAtls.getNormalArray(x, y, Nx, Ny, Nz, csz)
+    # normal component of the velocity
+    uN = ux*nx + uy*ny + uz*nz
+    # print(nx, ny, nz)
+    # print(norm(ux, uy, uz), uN)
+    # remove normal component of the velocity
+    particles['ux'] = ux - uN * nx
+    particles['uy'] = uy - uN * ny
+    particles['uz'] = uz - uN * nz
     indPartInCell = (particles['indPartInCell']).astype('int')
     partInCell = (particles['partInCell']).astype('int')
     indX = particles['indX'].astype('int')
@@ -270,17 +294,17 @@ for nPartPerD in NPartPerD:
 
     count = count + 1
     mark = markers[count-1]
-    ind = np.where(((y > Ly/2-0.5*dy) & (y < Ly/2+0.5*dy)))
+    ind = np.where(((y > Ly/4-0.5*dy) & (y < Ly/4+0.5*dy)))
     xx = np.linspace(0, Lx, 100)
-    yy = Ly/2*np.ones(100)
+    yy = Ly/4*np.ones(100)
     zz = np.zeros(100)
     h, gx, gy, gz = Hfunction(xx, yy, zz)
     ax1 = plotFD(ax1, 'x', xx, h, particles, ind, mark, count)
     ax3 = plotGrad(ax3, 'x', xx, particles, ind, mark, count)
 
-    ind = np.where(((x > Lx/2-0.5*dx) & (x < Lx/2+0.5*dx)))
+    ind = np.where(((x > Lx/4-0.5*dx) & (x < Lx/4+0.5*dx)))
     yy = np.linspace(0, Ly, 100)
-    xx = Lx/2*np.ones(100)
+    xx = Lx/4*np.ones(100)
     zz = np.zeros(100)
     h, gx, gy, gz = Hfunction(xx, yy, zz)
     ax2 = plotFD(ax2, 'y', yy, h, particles, ind, mark, count)
@@ -290,4 +314,10 @@ fig1.legend()
 fig2.legend()
 fig3.legend()
 fig4.legend()
-plt.show()
+# Save figure to file
+saveName = '_exact_semirand'
+fig1.savefig(('FD_x' + saveName))
+fig2.savefig(('FD_y' + saveName))
+fig3.savefig(('Grad_x' + saveName))
+fig4.savefig(('Grad_y' + saveName))
+# plt.show()
