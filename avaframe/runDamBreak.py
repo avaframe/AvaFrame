@@ -47,7 +47,6 @@ unitV = pU.cfgPlotUtils['unit%s' % resTypeV]
 nameV = pU.cfgPlotUtils['name%s' % resTypeV]
 dt2 = cfg['DAMBREAK'].getfloat('dtStep')
 
-print(dt2, int(dt2))
 # Load flow depth from analytical solution
 hL, hR, uR, phi = damBreak.damBreakSol(avaDir, cfgMain, cfg)
 xR = np.linspace(-200, 200, 1000)*np.cos(phi)  # projected on the horizontal plane
