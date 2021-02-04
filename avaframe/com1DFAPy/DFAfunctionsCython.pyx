@@ -348,7 +348,7 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double TotpotEneNew = 0
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, ForceMag
   cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
-  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN
+  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN, uMag
   cdef int j
   # loop on particles
   for j in range(Npart):
@@ -773,6 +773,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef double rho = cfg.getfloat('rho')
   cdef double minRKern = cfg.getfloat('minRKern')
   cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double gravAcc3
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
   cdef double[:] h = particles['h']
@@ -829,6 +830,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     uz = UZ[j]
     nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz)
     nx, ny, nz = normalize(nx, ny, nz)
+    gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
     uMag = norm(ux, uy, uz)
     if uMag < 0.1:
         ux = 1
@@ -1018,13 +1020,13 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
         gradhX = ux*GG1 + uxOrtho*GG2
         gradhY = uy*GG1 + uyOrtho*GG2
         gradhZ = (- g1*(ux*GG1 + uxOrtho*GG2) - g2*(uy*GG1 + uyOrtho*GG2))
-        GHX[j] = GHX[j] - gradhX / rho * mass[j] * gravAcc
-        GHY[j] = GHY[j] - gradhY / rho * mass[j] * gravAcc
-        GHZ[j] = GHZ[j] - gradhZ / rho * mass[j] * gravAcc
+        GHX[j] = GHX[j] - gradhX / rho * mass[j] * gravAcc3
+        GHY[j] = GHY[j] - gradhY / rho * mass[j] * gravAcc3
+        GHZ[j] = GHZ[j] - gradhZ / rho * mass[j] * gravAcc3
       else:
-        GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
-        GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc
-        GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc
+        GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc3
+        GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc3
+        GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc3
   return GHX, GHY, GHZ# , L, indL
 
 
