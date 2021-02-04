@@ -884,7 +884,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                   dx = dx - dn*nx
                   dy = dy - dn*ny
                   dz = dz - dn*nz
-                  dz = 0
+                  # dz = 0
                   # get norm of r = xj - xl
                   r = norm(dx, dy, dz)
                   if r < minRKern * rKernel:
@@ -946,9 +946,9 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                             dwdr = dfacKernel * hr * hr
                             mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
                             # mdwdrr = mass[l] * dwdr / r
-                            m11 = m11 + mass[l] / h[l] * dwdr / r * r1 * r1
-                            m12 = m12 + mass[l] / h[l] * dwdr / r * r1 * r2
-                            m22 = m22 + mass[l] / h[l] * dwdr / r * r2 * r2
+                            m11 = m11 + mass[l] / h[l] * dwdr / r * r1 * r1 / rho
+                            m12 = m12 + mass[l] / h[l] * dwdr / r * r1 * r2 / rho
+                            m22 = m22 + mass[l] / h[l] * dwdr / r * r2 * r2 / rho
                             G1 = G1 + mdwdrr * K1*r1
                             G2 = G2 + mdwdrr * K2*r2
 
@@ -988,30 +988,39 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       # gradhY = gradhY + mdwdrr * (g11*dy - g12*dx) / g33
                       # gradhZ = gradhZ + mdwdrr * (g1*dx + g2*dy) / g33
 
+
     if grad == 1:
       if SPHoption == 4:
-        GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
-        GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)
+        if (m11*m22-m12*m12)>0:
+          GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
+          GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)
+        else:
+          GG1 = G1
+          GG2 = G2
         gradhX = ux*GG1 + uxOrtho*GG2
         gradhY = uy*GG1 + uyOrtho*GG2
         gradhZ = (- g1*(ux*GG1 + uxOrtho*GG2) - g2*(uy*GG1 + uyOrtho*GG2))
-        GHX[j] = GHX[j] + gradhX
-        GHY[j] = GHY[j] + gradhY
-        GHZ[j] = GHZ[j] + gradhZ
+        GHX[j] = GHX[j] + gradhX / rho
+        GHY[j] = GHY[j] + gradhY / rho
+        GHZ[j] = GHZ[j] + gradhZ / rho
       else:
         GHX[j] = GHX[j] - gradhX / rho
         GHY[j] = GHY[j] - gradhY / rho
         GHZ[j] = GHZ[j] - gradhZ / rho
     else:
       if SPHoption == 4:
-        GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
-        GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)
+        if (m11*m22-m12*m12)>0:
+          GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
+          GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)
+        else:
+          GG1 = G1
+          GG2 = G2
         gradhX = ux*GG1 + uxOrtho*GG2
         gradhY = uy*GG1 + uyOrtho*GG2
         gradhZ = (- g1*(ux*GG1 + uxOrtho*GG2) - g2*(uy*GG1 + uyOrtho*GG2))
-        GHX[j] = GHX[j] - gradhX * mass[j] * gravAcc
-        GHY[j] = GHY[j] - gradhY * mass[j] * gravAcc
-        GHZ[j] = GHZ[j] - gradhZ * mass[j] * gravAcc
+        GHX[j] = GHX[j] - gradhX / rho * mass[j] * gravAcc
+        GHY[j] = GHY[j] - gradhY / rho * mass[j] * gravAcc
+        GHZ[j] = GHZ[j] - gradhZ / rho * mass[j] * gravAcc
       else:
         GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc
         GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc

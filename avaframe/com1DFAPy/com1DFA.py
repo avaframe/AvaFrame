@@ -36,7 +36,7 @@ flagSemiRand = True
 flagRand = False
 # set feature flag for flow deth calculation
 # use SPH to get the particles flow depth
-flagFDSPH = True
+flagFDSPH = False
 # set feature leapfrog time stepping
 featLF = False
 featCFL = False
@@ -556,7 +556,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
-    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, SPHOption=2)
+    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, SPHOption=1 )
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
     # plot depth computed with different interpolation methods
