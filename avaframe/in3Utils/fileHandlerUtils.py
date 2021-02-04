@@ -390,7 +390,7 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
     # Set name of avalanche if avaDir is given
     # Make dictionary of input data info
     data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'simName' : [],
-            'modelType' : [], 'releaseArea': [], 'cellSize': [], varPar: []}
+            'modelType' : [], 'releaseArea': [], 'cellSize': [], varPar: [], 'timeStep': []}
 
     # Set name of avalanche if avaDir is given
     if avaDir != '':
@@ -420,6 +420,9 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
 
         header = IOf.readASCheader(datafiles[m])
         data['cellSize'].append(header.cellsize)
+        if len(infoParts) == 5:
+            data['timeStep'].append(infoParts[4])
+
         # Set name of avalanche if avaDir is given
         if avaDir != '':
             data['avaName'].append(avaName)
