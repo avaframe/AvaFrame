@@ -12,13 +12,18 @@ depth-avaeraged mass and momentum conservation equations and a Coulomb-tpye fric
 
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn
 import matplotlib.animation as animation
 import os
+import logging
 
 # local imports
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.in2Trans.ascUtils as IOf
+
+# create local logger
+# change log level in calling module to DEBUG to see log messages
+log = logging.getLogger(__name__)
 
 
 def plotResults(x, h, u, dtStep, cfg):
@@ -73,6 +78,103 @@ def plotResults(x, h, u, dtStep, cfg):
             plt.legend()
 
         anim = animation.FuncAnimation(fig, make_step, interval=0.1, frames=1000)
+        plt.show()
+
+
+def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
+    """ Generate plots that compare the simulation results to the analytical solution
+
+        Parameters
+        -----------
+
+        dataComsol: dict
+            dictionary of simulation results (including name, file path, result type, etc.)
+        hL: float
+            initial release thickness
+        xR: numpy array
+            x extent of domain
+        hR: numpy array
+            flow depth of analytical solution
+        uR: numpy array
+            flow velocity of analytical solution
+        dtAnalysis: float
+            time step of analaysis
+        cfgMain: dict
+            main configuration for AvaFrame
+
+    """
+
+    # load results
+    for m in range(len(dataComSol['files'])):
+        if dataComSol['resType'][m] == 'FD' and 't5.' in dataComSol['timeStep'][m]:
+            data1FD = dataComSol['files'][m]
+            name1FD = dataComSol['names'][m]
+        elif dataComSol['resType'][m] == 'V' and 't5.' in dataComSol['timeStep'][m]:
+            data1V = dataComSol['files'][m]
+            name1V = dataComSol['names'][m]
+        elif dataComSol['resType'][m] == 'FD' and 't0.0' in dataComSol['timeStep'][m]:
+            data2FD = dataComSol['files'][m]
+        elif dataComSol['resType'][m] == 'V' and 't0.0' in dataComSol['timeStep'][m]:
+            data2V = dataComSol['files'][m]
+
+
+    # Load data
+    dataIniFD = np.loadtxt(data2FD, skiprows=6)
+    dataAnaFD = np.loadtxt(data1FD, skiprows=6)
+    dataIniV = np.loadtxt(data2V, skiprows=6)
+    dataAnaV = np.loadtxt(data1V, skiprows=6)
+
+    log.info('File for flow depth: %s' % name1FD)
+    log.info('File for flow velocity: %s' % name1V)
+
+    # Location of Profiles
+    header = IOf.readASCheader(data1FD)
+    cellSize = header.cellsize
+    ny = dataAnaFD.shape[0]
+    nx = dataAnaFD.shape[1]
+    xllc = header.xllcenter
+    yllc = header.yllcenter
+    nx_loc = int(ny *0.5)
+
+    # set x Vector
+    x = np.arange(xllc, xllc + nx*cellSize, cellSize)
+    y = np.zeros(len(x))
+    y[x<0] = hL
+    y[x>=0] = 0.0
+
+    # setup index for time of analyitcal solution
+    tR = int(dtAnalysis * 100.0)
+
+    # setup output directory
+    outDir = os.path.join(cfgMain['MAIN']['avalancheDir'], 'Outputs', 'ana1Tests')
+    fU.makeADir(outDir)
+
+    fig1, ax = plt.subplots(nrows=1, sharex=True)
+    ax.plot(x, y, 'grey', linestyle='--')
+    ax.plot(x, dataIniFD[nx_loc, :], 'k--', label='init')
+    ax.plot(x, dataAnaFD[nx_loc, :], 'b', label='com1DFAPy')
+    ax.plot(xR, hR[:,tR], 'r-', label='analyt')
+    ax.set_xlabel('Along track [ncols]')
+    ax.set_ylabel('Flow depth [m]')
+    plt.legend()
+    ax.set_title('Flow depth at time step %.02f s' % (dtAnalysis))
+
+    fig1.savefig(os.path.join(outDir, 'CompareDamBreakH.%s' % (pU.outputFormat)))
+
+    y = np.zeros(len(x))
+    fig2, ax = plt.subplots(nrows=1, sharex=True)
+    ax.plot(x, y, 'grey', linestyle='--')
+    ax.plot(x, dataIniV[nx_loc, :], 'k--', label='init')
+    ax.plot(x, dataAnaV[nx_loc, :], 'b', label='com1DFAPy')
+    ax.plot(xR, uR[:,tR], 'r-', label='analyt')
+    ax.set_xlabel('Along track [ncols]')
+    ax.set_ylabel('Flow velocity [ms-1]')
+    plt.legend()
+    ax.set_title('Flow velocity at time step %.02f s' % (dtAnalysis))
+
+    fig2.savefig(os.path.join(outDir, 'CompareDamBreakVel.%s' % (pU.outputFormat)))
+
+    if cfgMain['FLAGS'].getboolean('showPlot'):
         plt.show()
 
 
