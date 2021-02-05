@@ -346,9 +346,9 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double peakKinEne = particles['peakKinEne']
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
-  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, ForceMag
+  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, dtStop
   cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
-  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN, uMag
+  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN, uMag, uMagNew
   cdef int j
   # loop on particles
   for j in range(Npart):
@@ -360,51 +360,45 @@ def updatePositionC(cfg, particles, dem, force):
     uy = UY[j]
     uz = UZ[j]
     s = S[j]
-    # procede to time integration
-    # velocity magnitude
-    uMag = norm(ux, uy, uz)
+
     # Force magnitude (without friction)
     ForceDriveX = forceX[j] + forceSPHX[j]
     ForceDriveY = forceY[j] + forceSPHY[j]
     ForceDriveZ = forceZ[j] + forceSPHZ[j]
+    # velocity magnitude
+    uMag = norm(ux, uy, uz)
 
-    ForceMag = norm(ForceDriveX, ForceDriveY, ForceDriveZ)
-    # update velocity
-    if uMag<=0:
-      # particle is at rest at t
-      if ForceMag<=forceFrict[j]:
-        # sum of forces smaller than friction force, no motion
-        uxNew = 0
-        uyNew = 0
-        uzNew = 0
+    # procede to time integration
+    # operator splitting
+    # estimate new velocity due to driving force
+    uxNew = ux + ForceDriveX * dt / m
+    uyNew = uy + ForceDriveY * dt / m
+    uzNew = uz + ForceDriveZ * dt / m
+    uMagNew = norm(uxNew, uyNew, uzNew)
+    # will friction force stop the particle
+    if uMagNew<dt*forceFrict[j]/m:
+      # stop the particle
+      uxNew = 0
+      uyNew = 0
+      uzNew = 0
+      # particle stops after
+      if uMag<=0:
+        dtStop = 0
       else:
-        # sum of forces larger them friction, particle starts moving
-        # add friction force in the opposite direction of the driving force
-        xDir, yDir, zDir = normalize(ForceDriveX, ForceDriveY, ForceDriveZ)
-        uxNew = ux + (ForceDriveX - xDir * forceFrict[j]) * dt / m
-        uyNew = uy + (ForceDriveY - yDir * forceFrict[j]) * dt / m
-        uzNew = uz + (ForceDriveZ - zDir * forceFrict[j]) * dt / m
+        dtStop = m * uMagNew / (dt * forceFrict[j])
     else:
-      # particle is already in motion
       # add friction force in the opposite direction of the motion
-      xDir, yDir, zDir = normalize(ux, uy, uz)
-      uxNew = ux + (ForceDriveX - xDir * forceFrict[j]) * dt / m
-      uyNew = uy + (ForceDriveY - yDir * forceFrict[j]) * dt / m
-      uzNew = uz + (ForceDriveZ - zDir * forceFrict[j]) * dt / m
-      # now check is the friction force slowed the particle enogh for it to stop
-      zeroCrossing = scalProd(ux, uy, uz, uxNew, uyNew, uzNew)
-      if zeroCrossing<=0:
-          # velocity went from positive value to nigative value in the flow dir
-          # meaning that it stopped
-          uxNew = 0
-          uyNew = 0
-          uzNew = 0
+      xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
+      uxNew = uxNew - xDir * forceFrict[j] * dt / m
+      uyNew = uyNew - yDir * forceFrict[j] * dt / m
+      uzNew = uzNew - zDir * forceFrict[j] * dt / m
+      dtStop = dt
 
     # update mass
     mNew = m + dM[j]
     # update position
-    xNew = x + dt * 0.5 * (ux + uxNew)
-    yNew = y + dt * 0.5 * (uy + uyNew)
+    xNew = x + dtStop * 0.5 * (ux + uxNew)
+    yNew = y + dtStop * 0.5 * (uy + uyNew)
     sNew = s + math.sqrt((xNew-x)*(xNew-x) + (yNew-y)*(yNew-y))
     # make sure particle is on the mesh (recompute the z component)
     zNew = getScalar(xNew, yNew, Z, csz)

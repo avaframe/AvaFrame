@@ -122,24 +122,8 @@ particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGen, relRaster, 
 # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
 # ------------------------
 #  Start time step computation
-Tcpu = {}
-Tcpu['Force'] = 0.
-Tcpu['ForceVect'] = 0.
-Tcpu['ForceSPH'] = 0.
-Tcpu['Pos'] = 0.
-Tcpu['Neigh'] = 0.
-Tcpu['Field'] = 0.
-
 Tsave, T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
-    cfgGen, particles, fields, dem, Ment, Cres, Tcpu)
-
-log.info(('cpu time Force = %s s' % (Tcpu['Force'] / Tcpu['nIter'])))
-log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / Tcpu['nIter'])))
-log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / Tcpu['nIter'])))
-log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / Tcpu['nIter'])))
-log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / Tcpu['nIter'])))
-log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / Tcpu['nIter'])))
-
+    cfgGen, particles, fields, dem, Ment, Cres)
 tcpuDFA = time.time() - startTime
 log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
