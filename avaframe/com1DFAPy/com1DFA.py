@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 debugPlot = False
 # set feature flag for initial particle distribution
 # particles are homegeneosly distributed with a little random variation
-flagSemiRand = False
+flagSemiRand = True
 # particles are randomly distributed
 flagRand = False
 # set feature flag for flow deth calculation
@@ -941,7 +941,7 @@ def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last
         if last:
             pU.addColorBar(sc, ax, ticks, 'm', 'Flow Depth')
 
-    plt.pause(5)
+    plt.pause(0.1)
     return fig, ax
 
 
