@@ -11,11 +11,23 @@ import numpy as np
 from scipy.integrate import ode
 import math
 import os
+import logging
+import math
+import matplotlib.pyplot as plt
 
 # local imports
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFAPy.com1DFA as com1DFA
+import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.ana1Tests.simiSol as simiSol
+import avaframe.in2Trans.ascUtils as IOf
+import avaframe.out3Plot.plotUtils as pU
+
+
+
+# create local logger
+# change log level in calling module to DEBUG to see log messages
+log = logging.getLogger(__name__)
 
 
 def define_earth_press_coeff(phi, delta):
@@ -68,15 +80,15 @@ def compute_earth_press_coeff(x, earthPressureCoefficients):
         if f_p >= 0:
             K_y = earthPressureCoefficients[2]
         else:
-            print('ky passive')
+            log.info('ky passive')
             K_y = earthPressureCoefficients[3]
     else:
-        print('kx passive')
+        log.info('kx passive')
         K_x = earthPressureCoefficients[1]
         if f_p >= 0:
             K_y = earthPressureCoefficients[4]
         else:
-            print('ky passive')
+            log.info('ky passive')
             K_y = earthPressureCoefficients[5]
 
     return [K_x, K_y]
@@ -233,57 +245,6 @@ def xc(solSimi, x1, y1, i, L_x):
     return z
 
 
-# def write_raster_file(z_mat, x1, y1, FileName_ext):
-#     # Define domain characteristics
-#     ncols = len(x1)
-#     nrows = len(y1)
-#     xllcorner = 0.0
-#     yllcorner = 0.0
-#     cellsize = 5
-#     noDATA = -9999
-#
-#     with open(FileName_ext,'w') as f:
-#         f.write('ncols  %d\n' % (ncols))
-#         f.write('nrows  %d\n' % (nrows))
-#         f.write('xllcorner  %.02f\n' % (xllcorner))
-#         f.write('yllcorner %.02f\n' % (yllcorner))
-#         f.write('cellsize  %d\n' % (cellsize))
-#         f.write('NODATA_value %d\n' % (noDATA))
-#         for line in z_mat:
-#             np.savetxt(f, line, fmt='%.2f')
-#
-#
-# def create_raster_file(solSimi, x1, y1, i, FileName, L_x, L_y, U, V):
-#
-#     # Define domain characteristics
-#     ncols = np.shape(x1)[0]
-#     nrows = np.shape(y1)[0]
-#     xllcorner = 0.0
-#     yllcorner = 0.0
-#     cellsize = 5
-#     noDATA = -9999.00
-#
-#     zh = h(solSimi, x1, y1, i, L_y, L_x, H)
-#     zu = u(solSimi, x1, y1, i, L_x, U)
-#     zu = np.where(zh > 0.0, zu, 0)
-#     zv = v(solSimi, x1, y1, i, L_y, V)
-#     zv = np.where(zh > 0.0, zv, 0)
-#     zh = np.where(zh > 0.0, zh, 0)
-#     # Save elevation data to .asc file and add header lines
-#
-#     FileName_ext = FileName + '_fd.asc'
-#     z_mat = np.matrix(zh)
-#     write_raster_file(z_mat, x1, y1, FileName_ext)
-#
-#     FileName_ext = FileName + '_vx.asc'
-#     z_mat = np.matrix(zu)
-#     write_raster_file(z_mat, x1, y1, FileName_ext)
-#
-#     FileName_ext = FileName + '_vy.asc'
-#     z_mat = np.matrix(zv)
-#     write_raster_file(z_mat, x1, y1, FileName_ext)
-
-
 def runSimilarity():
     """ Run main model"""
 
@@ -322,10 +283,10 @@ def runSimilarity():
     T_end = cfgGen.getfloat('Tend') + cfgGen.getfloat('maxdT')
 
     # Non dimentional time for similarity sim calculation
-    t_1 = 0.1  # start time for ode solvers
-    t_end = T_end/T  # end time
-    dt_early = 0.01  # time step for early sol
-    dt = 0.01  # time step for early sol
+    t_1 = 0.1           # start time for ode solvers
+    t_end = T_end/T     # end time
+    dt_early = 0.01     # time step for early sol
+    dt = 0.01           # time step for early sol
 
     # Initial conditions [g0 g_p0 f0 f_p0]
     x_0 = [1.0, 0.0, 1.0, 0.0]  # here a circle as start point
@@ -359,3 +320,220 @@ def runSimilarity():
     solSimi['Time'] = Time
 
     return solSimi
+
+
+def getReleaseThickness(avaDir, cfg, demFile):
+    """ define release thickness for similarity solution test """
+
+    # Read dem
+    demOri = IOf.readRaster(demFile)
+    nrows = demOri['header'].nrows
+    ncols = demOri['header'].ncols
+    xllc = demOri['header'].xllcenter
+    yllc = demOri['header'].yllcenter
+    csz = demOri['header'].cellsize
+
+    # define release thickness distribution
+    cfgSimi = cfg['SIMISOL']
+    L_x = cfgSimi.getfloat('L_x')
+    L_y = cfgSimi.getfloat('L_y')
+    Hini = cfg['GENERAL'].getfloat('relTh')
+    planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
+    x = np.linspace(0, ncols-1, ncols)*csz+xllc
+    y = np.linspace(0, nrows-1, nrows)*csz+yllc
+    X, Y = np.meshgrid(x, y)
+    cos = math.cos(math.pi*planeinclinationAngleDeg/180)
+    sin = math.sin(math.pi*planeinclinationAngleDeg/180)
+    X1 = X/cos
+    Y1 = Y
+    r = np.sqrt((X*X)/(cos*cos)+(Y*Y))
+    H0 = Hini
+    relTh = H0 * (1 - (r/L_x) * (r/L_y))
+    relTh = np.where(relTh < 0, 0, relTh)
+
+    relDict = {'relTh': relTh, 'X1': X1, 'Y1': Y1, 'demOri': demOri, 'X': X, 'Y': Y,
+               'cos': cos, 'sin': sin}
+
+    return relDict
+
+
+def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg):
+    """ Make a contour plot of flow depth for analytical solution and simulation result """
+
+    # load parameters
+    cfgSimi = cfg['SIMISOL']
+    L_x = cfgSimi.getfloat('L_x')
+    L_y = cfgSimi.getfloat('L_y')
+    Hini = cfg['GENERAL'].getfloat('relTh')
+    X1 = relDict['X1']
+    Y1 = relDict['Y1']
+    X = relDict['X']
+    Y = relDict['Y']
+    demOri = relDict['demOri']
+
+    # make plot
+    fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+    for part, field in zip(Particles, Fields):
+        t = part['t']
+        ind_time = np.searchsorted(solSimi['Time'], t)
+        hSimi = simiSol.h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
+        hSimi = np.where(hSimi <= 0, 0, hSimi)
+        fig, ax, cmap, lev = com1DFA.plotContours(
+            fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm')
+        CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
+                        linewidths=2, linestyles='dashed')
+        plt.pause(1)
+
+    fig, ax, cmap, lev = com1DFA.plotContours(
+        fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm', last=True)
+    CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
+                    linewidths=2, linestyles='dashed')
+    ax.clabel(CS, inline=1, fontsize=8)
+
+    # option for user interaction
+    if cfgSimi.getboolean('flagInteraction'):
+        value = input("[y] to repeat:\n")
+        if value != 'y':
+            repeat = False
+    else:
+        repeat = False
+
+
+def prepareParticlesFields(Fields, Particles, ind_t, relDict, simiDict, axis):
+    """ get fields and particles dictionaries for given time step """
+
+    fields = Fields[ind_t]
+    particles = Particles[ind_t]
+
+    demOri = relDict['demOri']
+    cos = relDict['cos']
+    sin = relDict['sin']
+    xCenter = simiDict['xCenter']
+
+
+    nrows = demOri['header'].nrows
+    xllc = demOri['header'].xllcenter
+    yllc = demOri['header'].yllcenter
+    csz = demOri['header'].cellsize
+
+    if axis == 'xaxis':
+        ind = np.where(((particles['y']+yllc > -2.5) & (particles['y']+yllc < 2.5)))
+        indFinal = int(nrows *0.5) -1
+    elif axis == 'yaxis':
+         ind = np.where(((particles['x']+xllc > xCenter-2.5) & (particles['x']+xllc < xCenter+2.5)))
+         indFinal = int(np.floor((xCenter - xllc)/csz))
+
+    x = particles['x'][ind]+xllc
+    y = particles['y'][ind]+yllc
+    x1 = x/cos
+    h = particles['h'][ind]
+    hsph = particles['hSPH'][ind]
+    ux = particles['ux'][ind]
+    uy = particles['uy'][ind]
+    uz = particles['uz'][ind]
+    Ux = DFAtls.scalProd(ux, uy, uz, cos, 0, -sin)
+    Uy = DFAtls.scalProd(ux, uy, uz, 0, 1, 0)
+    v = np.sqrt(ux*ux + uy*uy + uz*uz)
+
+    com1DFAPySol = {'x': x, 'y': y, 'h': h, 'v': v, 'indFinal': indFinal, 'fields': fields}
+
+    return com1DFAPySol
+
+
+def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
+    """ get parameters """
+
+    cfgSimi = cfg['SIMISOL']
+    L_x = cfgSimi.getfloat('L_x')
+    L_y = cfgSimi.getfloat('L_y')
+    Hini = cfg['GENERAL'].getfloat('relTh')
+    gravAcc = cfg['GENERAL'].getfloat('gravAcc')
+    cos = relDict['cos']
+    X1 = relDict['X1']
+    Y1 = relDict['Y1']
+
+    # Dimensioning parameters
+    U = np.sqrt(gravAcc*L_x)
+    V = np.sqrt(gravAcc*L_y)
+    T = np.sqrt(L_x/gravAcc)
+
+
+    # get simi sol
+    hSimi = simiSol.h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
+    hSimi = np.where(hSimi <= 0, 0, hSimi)
+    uxSimi = simiSol.u(solSimi, X1, Y1, ind_time, L_x, U)
+    uxSimi = np.where(hSimi <= 0, 0, uxSimi)
+    uySimi = simiSol.v(solSimi, X1, Y1, ind_time, L_y, V)
+    uySimi = np.where(hSimi <= 0, 0, uySimi)
+    vSimi = np.sqrt(uxSimi*uxSimi + uySimi*uySimi)
+    xCenter = simiSol.xc(solSimi, X1, Y1, ind_time, L_x)*cos
+
+    simiDict = {'hSimi': hSimi, 'vSimi': vSimi, 'xCenter': xCenter}
+
+    return simiDict
+
+
+def plotProfilesSimiSol(ind_time, relDict, com1DFAPySol, simiDict, solSimi, axis):
+    """ Plot flow depth and velocity for similarity solution and simulation results """
+
+    # get info from dem
+    demOri = relDict['demOri']
+    ncols = demOri['header'].ncols
+    nrows = demOri['header'].nrows
+    xllc = demOri['header'].xllcenter
+    yllc = demOri['header'].yllcenter
+    csz = demOri['header'].cellsize
+
+    # com1DFAPy results
+    fields = com1DFAPySol['fields']
+    x = com1DFAPySol['x']
+    y = com1DFAPySol['y']
+    h = com1DFAPySol['h']
+    v = com1DFAPySol['v']
+    outDirTest = com1DFAPySol['outDirTest']
+    indFinal = com1DFAPySol['indFinal']
+    showPlot = com1DFAPySol['showPlot']
+    Tsave = com1DFAPySol['Tsave']
+
+    # similarity solution results
+    vSimi = simiDict['vSimi']
+    hSimi = simiDict['hSimi']
+    xCenter = simiDict['xCenter']
+    X = relDict['X']
+    Y = relDict['Y']
+
+
+    fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    ax2 = ax1.twinx()
+    ax1.axvline(x=xCenter, linestyle=':')
+
+    if axis == 'xaxis':
+        ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][indFinal,:], 'k', label='Field flow depth')
+        ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][indFinal,:], 'g', label='Field flow velocity')
+        ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
+        ax2.plot(x, v, '.g', linestyle='None', label='Part flow velocity')
+        ax1.plot(X[indFinal,:], hSimi[indFinal,:], '--k', label='SimiSol flow depth')
+        ax2.plot(X[indFinal,:], vSimi[indFinal,:], '--g', label='SimiSol flow velocity')
+        ax1.set_title('Profile along flow at t=%.2f (com1DFAPy), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
+        ax1.set_xlabel('x in [m]')
+    elif axis == 'yaxis':
+        ax1.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:,indFinal], 'k', label='Field flow depth')
+        ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['V'][:,indFinal], 'g', label='Field flow velocity')
+        ax1.plot(y, h, '.k', linestyle='None', label='Part flow depth')
+        ax2.plot(y, v, '.g', linestyle='None', label='Part flow velocity')
+        ax1.plot(Y[:,indFinal], hSimi[:,indFinal], '--k', label='SimiSol flow depth')
+        ax2.plot(Y[:,indFinal], vSimi[:,indFinal], '--g', label='SimiSol flow velocity')
+        ax1.set_title('Profile across flow at t=%.2f (com1DFAPy), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
+        ax1.set_xlabel('y in [m]')
+
+    ax1.set_ylabel('flow depth [m]')
+    color = 'tab:green'
+    ax2.tick_params(axis='y', labelcolor=color)
+    ax2.set_ylabel('flow velocity [ms-1]', color=color)
+    ax2.legend(loc='upper right')
+    ax1.legend(loc='upper left')
+
+    if com1DFAPySol['showPlot']:
+        plt.show()
+
+    fig1.savefig(os.path.join(outDirTest, '%sCutSol.%s' % (axis, pU.outputFormat)))
