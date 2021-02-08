@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 debugPlot = False
 # set feature flag for initial particle distribution
 # particles are homegeneosly distributed with a little random variation
-flagSemiRand = True
+flagSemiRand = False
 # particles are randomly distributed
 flagRand = False
 # set feature flag for flow deth calculation
@@ -148,8 +148,8 @@ def initializeSimulation(cfg, relRaster, dem):
     Apart = np.empty(0)
     Xpart = np.empty(0)
     Ypart = np.empty(0)
-    # Mpart = np.empty(0)
-    # Hpart = np.empty(0)
+    Mpart = np.empty(0)
+    Hpart = np.empty(0)
     InCell = np.empty((0), int)
     IndX = np.empty((0), int)
     IndY = np.empty((0), int)
@@ -171,8 +171,8 @@ def initializeSimulation(cfg, relRaster, dem):
         Apart = np.append(Apart, A[indRely, indRelx]*np.ones(nPart)/nPart)
         Xpart = np.append(Xpart, xpart)
         Ypart = np.append(Ypart, ypart)
-        # Mpart = np.append(Mpart, mPart * np.ones(nPart))
-        # Hpart = np.append(Hpart, h * np.ones(nPart))
+        Mpart = np.append(Mpart, mPart * np.ones(nPart))
+        Hpart = np.append(Hpart, h * np.ones(nPart))
         ic = indRelx + ncols * indRely
         IndX = np.append(IndX, np.ones(nPart)*indRelx)
         IndY = np.append(IndY, np.ones(nPart)*indRely)
@@ -230,6 +230,7 @@ def initializeSimulation(cfg, relRaster, dem):
     # particles = getNeighbours(particles, dem)
 
     particles = DFAfunC.getNeighboursC(particles, dem)
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
 
     Nx = dem['Nx']
     Ny = dem['Ny']
@@ -634,23 +635,24 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # plt.show()
 
     # get SPH flow depth
-    # particles = SPH.computeFlowDepth(cfg, particles, dem)
-    header = dem['header']
-    Nx = dem['Nx']
-    Ny = dem['Ny']
-    Nz = dem['Nz']
-    indX = (particles['indX']).astype('int')
-    indY = (particles['indY']).astype('int')
-    H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
-    H = np.asarray(H)
-    # particles['h'] = H
-    # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
-    # particles['h'] = hh
-    # H = np.asarray(H)
-    W = np.asarray(W)
-    H = np.where(W > 0, H/W, H)
-    particles['hSPH'] = np.where(H <= hmin, hmin, H)
+
     if flagFDSPH:
+        # particles = SPH.computeFlowDepth(cfg, particles, dem)
+        header = dem['header']
+        Nx = dem['Nx']
+        Ny = dem['Ny']
+        Nz = dem['Nz']
+        indX = (particles['indX']).astype('int')
+        indY = (particles['indY']).astype('int')
+        H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        H = np.asarray(H)
+        # particles['h'] = H
+        # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        # particles['h'] = hh
+        # H = np.asarray(H)
+        W = np.asarray(W)
+        H = np.where(W > 0, H/W, H)
+        particles['hSPH'] = np.where(H <= hmin, hmin, H)
         particles['h'] = particles['hSPH']
 
         # print(np.min(particles['h']))

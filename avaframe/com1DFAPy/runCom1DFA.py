@@ -118,7 +118,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
         # Generate plots for all peakFiles
         plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
 
-    return Particles, Fields, Tsave
+    return Particles, Fields, Tsave, dem
 
 
 if __name__ == "__main__":

@@ -831,6 +831,8 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
         uy = 0
         uz = -(1*nx + 0*ny) / nz
         ux, uy, uz = normalize(ux, uy, uz)
+        K1 = 1
+        K2 = 1
     else:
         ux, uy, uz = normalize(ux, uy, uz)
 

@@ -74,9 +74,9 @@ def computeEarthPressCoeff(x, earthPressureCoefficients):
     g_p = x[1]
     f_p = x[3]
     if g_p >= 0:
-        K_x = earthPressureCoefficients[0]
+        K_x = 1#earthPressureCoefficients[0]
         if f_p >= 0:
-            K_y = earthPressureCoefficients[2]
+            K_y = 1#earthPressureCoefficients[2]
         else:
             log.info('ky passive')
             K_y = earthPressureCoefficients[3]
