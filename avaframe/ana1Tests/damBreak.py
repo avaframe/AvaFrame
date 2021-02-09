@@ -133,7 +133,6 @@ def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
     ny = dataAnaFD.shape[0]
     nx = dataAnaFD.shape[1]
     xllc = header.xllcenter
-    yllc = header.yllcenter
     nx_loc = int(ny *0.5)
 
     # set x Vector
