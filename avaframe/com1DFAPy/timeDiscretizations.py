@@ -46,7 +46,7 @@ def getcflTimeStep(particles, dem, cfg):
 
     # 'overwrite' dt that is read from cfg ini file
     cfg['dt'] = str(dtStable)
-    log.info('dtStable is with cMAX=%.1f is: %.4f with vmax:%.2f' % (cMax, dtStable, vmax))
+    log.debug('dtStable is with cMAX=%.1f is: %.4f with vmax:%.2f' % (cMax, dtStable, vmax))
 
     # return stable time step
     return dtStable
@@ -69,8 +69,8 @@ def getcfldTwithConstraints(particles, dem, cfg):
 
     # compute stable time step
     # if velocity is zero - divided by zero error so to avoid:
-    if vmax == 0.0:
-        dtStable = float(cfg['mindT'])
+    if vmax <= (cMax * csz)/float(cfg['maxdT']):
+        dtStable = float(cfg['maxdT'])
     else:
         dtStable = (cMax * csz) / vmax
         if dtStable < float(cfg['mindT']):

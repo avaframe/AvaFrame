@@ -1043,7 +1043,11 @@ def removeOutPart(cfg, particles, dem):
         particles = removePart(particles, mask, nRemove)
         log.info('removed %s particles because they exited the domain' % (nRemove))
 
+    x = particles['x']
     mask = np.ones(len(x), dtype=bool)
+    y = particles['y']
+    ux = particles['ux']
+    uy = particles['uy']
     indX = particles['indX']
     indY = particles['indY']
     indOut = np.where(Bad[indY, indX], False, True)
@@ -1129,6 +1133,7 @@ def removePart(particles, mask, nRemove):
     particles['partInCell'] = particles['partInCell'][mask]
 
     return particles
+
 
 def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir):
     """ export result fields to Outputs directory according to result parameters and time step
