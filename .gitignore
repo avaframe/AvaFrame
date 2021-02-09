@@ -7,6 +7,14 @@ _build
 
 *.log
 
+Work
+
+*_cache
+
+build
+
+_autosummary
+
 avaframe/**/*.png
 
 avaframe/**/*.shp.nxyz
@@ -15,3 +23,6 @@ avaframe/**/*.xml
 
 avaframe/**/**/Outputs
 
+avaframe/com1DFAPy/*.c
+
+avaframe/com1DFAPy/*.so
