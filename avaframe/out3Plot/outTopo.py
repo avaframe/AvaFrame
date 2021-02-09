@@ -32,18 +32,16 @@ def _generateDEMPlot(X, Y, z, title):
     return ax
 
 
-def plotDEM3D(cfg):
+def plotDEM3D(cfg, showPlot = False):
     """Plots the DEM from the avalancheDir in cfg alongside it
 
     Parameters
     ----------
     cfg : configparser object
       the main configuration
+    showPlot : boolean
+      If true shows the matplotlib plot
 
-    Returns
-    -------
-    plt : matplotlib object
-      plot object in case displaying is needed
     """
 
     # get avalanche dir
@@ -75,6 +73,10 @@ def plotDEM3D(cfg):
     outName = os.path.splitext(demPath)[0] + '_plot.png'
     log.info('Saving plot to: %s', outName)
     plt.savefig(outName)
+
+    # If flag is set, plot figure
+    if showPlot:
+        plt.show()
 
     plt.close('all')
 
