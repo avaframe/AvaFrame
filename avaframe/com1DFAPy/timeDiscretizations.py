@@ -39,8 +39,8 @@ def getcflTimeStep(particles, dem, cfg):
 
     # compute stable time step
     # if velocity is zero - divided by zero error so to avoid:
-    if vmax == 0.0:
-        dtStable = float(cfg['mindT'])
+    if vmax <= (cMax * csz)/float(cfg['maxdT']):
+        dtStable = float(cfg['maxdT'])
     else:
         dtStable = (cMax * csz) / vmax
 

@@ -58,7 +58,7 @@ NPartPerD = [2, 3, 4, 5, 6]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
-coef = 0.5
+coef = 0.1
 rho = 200
 ##############################################################################
 # END CHOOSE SETUP
@@ -164,6 +164,12 @@ def plotGrad(ax, x, xx, particles, ind, mark, count):
              linestyle='None')
     ax.plot(particles[x][ind], GHZ4[ind], color='y', marker=mark, markersize=5,
              linestyle='None')
+    ax.plot(particles[x][ind], GHX5[ind], color='b', marker=mark, markersize=5,
+             linestyle='None', label='Corrected 3 SPH N = ' + str(nPartPerD*nPartPerD))
+    ax.plot(particles[x][ind], GHY5[ind], color='b', marker=mark, markersize=5,
+             linestyle='None')
+    ax.plot(particles[x][ind], GHZ5[ind], color='b', marker=mark, markersize=5,
+             linestyle='None')
     return ax
 
 
@@ -213,7 +219,7 @@ for nPartPerD in NPartPerD:
     # ------------------------------------------
     # find neighbours
     particles = DFAfunC.getNeighboursC(particles, dem)
-    # particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
+    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
 
     # ------------------------------------------
     # Compute SPH gradient
@@ -242,6 +248,20 @@ for nPartPerD in NPartPerD:
     indY = particles['indY'].astype('int')
 
     startTime = time.time()
+    # Compute sph FD
+    H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+    H = np.asarray(H)
+    W = np.asarray(W)
+    C = np.asarray(C)
+    particles['hSPH'] = (H-C)/W
+    particles['W'] = W
+    particles['h1'] = H
+    particles['h2'] = H/W
+    particles['h3'] = (H-C)/W
+    tottime = time.time() - startTime
+    print('Time FD: ', tottime)
+
+    startTime = time.time()
     GHX, GHY, GHZ = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=1, gradient=1)
     GHX = np.asarray(GHX)
     GHY = np.asarray(GHY)
@@ -261,7 +281,6 @@ for nPartPerD in NPartPerD:
     print('Time SPHOption 2: ', tottime)
 
     startTime = time.time()
-    startTime = time.time()
     GHX4, GHY4, GHZ4 = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=4, gradient=1)
     GHX4 = np.asarray(GHX4)
     GHY4 = np.asarray(GHY4)
@@ -270,18 +289,13 @@ for nPartPerD in NPartPerD:
     print('Time SPHOption 4: ', tottime)
 
     startTime = time.time()
-    # Compute sph FD
-    H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
-    H = np.asarray(H)
-    W = np.asarray(W)
-    C = np.asarray(C)
-    particles['hSPH'] = H
-    particles['W'] = W
-    particles['h1'] = H
-    particles['h2'] = H/W
-    # particles['h3'] = (H-C)/W
+    GHX5, GHY5, GHZ5 = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=5, gradient=1)
+    GHX5 = np.asarray(GHX5)
+    GHY5 = np.asarray(GHY5)
+    GHZ5 = np.asarray(GHZ5)
     tottime = time.time() - startTime
-    print('Time FD: ', tottime)
+    print('Time SPHOption 5: ', tottime)
+
 
     # ------------------------------------------------------
     # Post processing
@@ -320,4 +334,4 @@ fig1.savefig(('FD_x' + saveName))
 fig2.savefig(('FD_y' + saveName))
 fig3.savefig(('Grad_x' + saveName))
 fig4.savefig(('Grad_y' + saveName))
-# plt.show()
+plt.show()

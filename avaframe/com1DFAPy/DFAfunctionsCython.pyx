@@ -839,13 +839,6 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
     uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
 
-    # now take into accout the fact that we are on the surface so the r3 or x3
-    # component is not independent from the 2 other ones!!
-    vx = ux - nx*uz/nz
-    vy = uy - ny*uz/nz
-    wx = uxOrtho - nx*uzOrtho/nz
-    wy = uyOrtho - ny*uzOrtho/nz
-
     g1 = nx/(nz)
     g2 = ny/(nz)
 
@@ -894,11 +887,9 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
                       mdwdrr = mass[l] * dwdr / r
-                      # mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
                       gradhX = gradhX + mdwdrr*dx
                       gradhY = gradhY + mdwdrr*dy
                       gradhZ = gradhZ + mdwdrr*dz
-                      # gradhZ = gradhZ + (- g1*(mdwdrr*dx) - g2*(mdwdrr*dy))
 
                 if SPHoption == 2:
                   # get coordinates in local coord system
@@ -915,80 +906,86 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
-                      mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
-                      # mdwdrr = mass[l] * dwdr / r
+                      mdwdrr = mass[l] * dwdr / r
                       G1 = mdwdrr * K1*r1
                       G2 = mdwdrr * K2*r2
 
-                      # gradhX = gradhX + vx*G1 + wx*G2
-                      # gradhY = gradhY + vy*G1 + wy*G2
-                      # gradhZ = gradhZ + (- g1*(vx*G1 + wx*G2) - g2*(vy*G1 + wy*G2))
+                      gradhX = gradhX + ux*G1 + uxOrtho*G2
+                      gradhY = gradhY + uy*G1 + uyOrtho*G2
+                      gradhZ = gradhZ + (- g1*(ux*G1 + uxOrtho*G2) - g2*(uy*G1 + uyOrtho*G2))
+
+                elif SPHoption == 3:
+                  # constant exact gradient correction
+                  # get coordinates in local coord system
+                  r1 = scalProd(dx, dy, dz, ux, uy, uz)
+                  r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+                  # impse r3=0 even if the particle is not exactly on the tengent plane
+                  # get norm of r = xj - xl
+                  r = norm(r1, r2, 0)
+                  if r < minRKern * rKernel:
+                      # impose a minimum distance between particles
+                      r1 = minRKern * rKernel * r1
+                      r2 = minRKern * rKernel * r2
+                      r = minRKern * rKernel
+                  if r < rKernel:
+                      hr = rKernel - r
+                      dwdr = dfacKernel * hr * hr
+                      mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
+                      G1 = mdwdrr * K1*r1
+                      G2 = mdwdrr * K2*r2
+
                       gradhX = gradhX + ux*G1 + uxOrtho*G2
                       gradhY = gradhY + uy*G1 + uyOrtho*G2
                       gradhZ = gradhZ + (- g1*(ux*G1 + uxOrtho*G2) - g2*(uy*G1 + uyOrtho*G2))
 
                 if SPHoption == 4:
-                        # get coordinates in local coord system
-                        r1 = scalProd(dx, dy, dz, ux, uy, uz)
-                        r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
-                        # impse r3=0 even if the particle is not exactly on the tengent plane
-                        # get norm of r = xj - xl
-                        r = norm(r1, r2, 0)
-                        if r < minRKern * rKernel:
-                            # impose a minimum distance between particles
-                            r1 = minRKern * rKernel * r1
-                            r2 = minRKern * rKernel * r2
-                            r = minRKern * rKernel
-                        if r < rKernel:
-                            hr = rKernel - r
-                            dwdr = dfacKernel * hr * hr
-                            mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
-                            # mdwdrr = mass[l] * dwdr / r
-                            m11 = m11 + mass[l] / h[l] * dwdr / r * r1 * r1 / rho
-                            m12 = m12 + mass[l] / h[l] * dwdr / r * r1 * r2 / rho
-                            m22 = m22 + mass[l] / h[l] * dwdr / r * r2 * r2 / rho
-                            G1 = G1 + mdwdrr * K1*r1
-                            G2 = G2 + mdwdrr * K2*r2
-
-                elif SPHoption == 3:
-                  # Option 3
-                  # No proof yet....
-                  # projecting onto the tengent plane and taking the change of coordinates into account
-                  # the coord sysem used is the non orthogonal coord system related to the surface
-                  # (Tau1, Tau2, n)
-                  # remove the normal part (make sure that r = xj - xl lies in the plane
-                  # defined by the normal at xj)
-                  dn = nx*dx + ny*dy + nz*dz
-                  dx = dx - dn*nx
-                  dy = dy - dn*ny
-                  dz = dz - dn*nz
+                  # linear exact gradient correction
+                  # get coordinates in local coord system
+                  r1 = scalProd(dx, dy, dz, ux, uy, uz)
+                  r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+                  # impse r3=0 even if the particle is not exactly on the tengent plane
                   # get norm of r = xj - xl
-                  r = norm(dx, dy, dz)
+                  r = norm(r1, r2, 0)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
-                      dx = minRKern * rKernel * dx
-                      dy = minRKern * rKernel * dy
-                      dz = minRKern * rKernel * dz
+                      r1 = minRKern * rKernel * r1
+                      r2 = minRKern * rKernel * r2
                       r = minRKern * rKernel
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
-                      mdwdrr = mass[l] * dwdr / r
-                      g12 = g1*g2
-                      g33 = (1 + g1*g1 + g2*g2)
-                      g11 = 1 + g1*g1
-                      g22 = 1 + g2*g2
+                      mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
+                      m11 = m11 + mass[l] / h[l] * dwdr / r * r1 * r1 / rho
+                      m12 = m12 + mass[l] / h[l] * dwdr / r * r1 * r2 / rho
+                      m22 = m22 + mass[l] / h[l] * dwdr / r * r2 * r2 / rho
+                      G1 = G1 + mdwdrr * K1*r1
+                      G2 = G2 + mdwdrr * K2*r2
 
-                      gradhX = gradhX + mdwdrr * (g11*dx + g12*dy)
-                      gradhY = gradhY + mdwdrr * (g22*dy + g12*dx)
-                      gradhZ = gradhZ + (- g1*mdwdrr * (g11*dx + g12*dy) - g2*mdwdrr * (g22*dy + g12*dx))
-                      # gradhX = gradhX + mdwdrr * (g22*dx - g12*dy) / g33
-                      # gradhY = gradhY + mdwdrr * (g11*dy - g12*dx) / g33
-                      # gradhZ = gradhZ + mdwdrr * (g1*dx + g2*dy) / g33
-
+                if SPHoption == 5:
+                  # integral method
+                  # get coordinates in local coord system
+                  r1 = scalProd(dx, dy, dz, ux, uy, uz)
+                  r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
+                  # impse r3=0 even if the particle is not exactly on the tengent plane
+                  # get norm of r = xj - xl
+                  r = norm(r1, r2, 0)
+                  if r < minRKern * rKernel:
+                      # impose a minimum distance between particles
+                      r1 = minRKern * rKernel * r1
+                      r2 = minRKern * rKernel * r2
+                      r = minRKern * rKernel
+                  if r < rKernel:
+                      hr = rKernel - r
+                      w = facKernel * hr * hr * hr
+                      m11 = m11 + mass[l] / h[l] * w * r1 * r1 / rho
+                      m12 = m12 + mass[l] / h[l] * w * r1 * r2 / rho
+                      m22 = m22 + mass[l] / h[l] * w * r2 * r2 / rho
+                      G1 = G1 + mass[l] * (1 - h[j]/h[l]) * w * K1*r1
+                      G2 = G2 + mass[l] * (1 - h[j]/h[l]) * w * K2*r2
 
     if grad == 1:
-      if SPHoption == 4:
+      if SPHoption >= 4:
+        # check that M is invertible
         if (m11*m22-m12*m12)>0:
           GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
           GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)
@@ -1006,7 +1003,8 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
         GHY[j] = GHY[j] - gradhY / rho
         GHZ[j] = GHZ[j] - gradhZ / rho
     else:
-      if SPHoption == 4:
+      if SPHoption >= 4:
+          # check that M is invertible
         if (m11*m22-m12*m12)>0:
           GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
           GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)

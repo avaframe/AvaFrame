@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 debugPlot = False
 # set feature flag for initial particle distribution
 # particles are homegeneosly distributed with a little random variation
-flagSemiRand = False
+flagSemiRand = True
 # particles are randomly distributed
 flagRand = False
 # set feature flag for flow deth calculation
@@ -39,8 +39,8 @@ flagRand = False
 flagFDSPH = False
 # set feature leapfrog time stepping
 featLF = False
-featCFL = False
-featCFLConstrain = True
+featCFL = True
+featCFLConstrain = False
 
 
 def initializeMesh(dem, num=4):
@@ -323,6 +323,7 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
         x, y = np.meshgrid(pos, pos)
         x = x.flatten()
         y = y.flatten()
+
     mPart = mass / nPart
     # TODO make this an independent function
     #######################
@@ -703,7 +704,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # dtK5 is half time step
     dtK5 = 0.5 * dt
     # cfg['dt'] = str(dtK5)
-    log.info('dt used now is %f' % dt)
+    # log.info('dt used now is %f' % dt)
 
     # load required DEM and mesh info
     csz = dem['header'].cellsize
@@ -1028,9 +1029,9 @@ def removeOutPart(cfg, particles, dem):
     Lx = (x - xllc) / csz
     Ly = (y - yllc) / csz
     mask = np.ones(len(x), dtype=bool)
-    indOut = np.where(Lx <= 0.5)
+    indOut = np.where(Lx <= 1.5)
     mask[indOut] = False
-    indOut = np.where(Ly <= 0.5)
+    indOut = np.where(Ly <= 1.5)
     mask[indOut] = False
     indOut = np.where(Lx >= ncols-1.5)
     mask[indOut] = False
