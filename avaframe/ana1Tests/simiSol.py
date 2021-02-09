@@ -12,7 +12,6 @@ from scipy.integrate import ode
 import math
 import os
 import logging
-import math
 import matplotlib.pyplot as plt
 
 # local imports
@@ -22,7 +21,6 @@ import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.ana1Tests.simiSol as simiSol
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
-
 
 
 # create local logger
@@ -268,7 +266,6 @@ def runSimilarity():
     delta = bedFrictionAngleDeg * Pi /180           # basal angle of friction
     phi = internalFrictionAngleDeg * Pi /180        # internal angle of friction phi>delta
 
-
     # Dimentioning parameters
     U = np.sqrt(gravAcc*L_x)
     V = np.sqrt(gravAcc*L_y)
@@ -314,7 +311,6 @@ def runSimilarity():
     solver.set_f_params(earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y)
     solver.set_initial_value(x_1, t_start)
     solSimi = ode_solver(solver, dt, t_end, solSimi)
-
 
     Time = solSimi['time']*T
     solSimi['Time'] = Time
@@ -390,14 +386,6 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg):
                     linewidths=2, linestyles='dashed')
     ax.clabel(CS, inline=1, fontsize=8)
 
-    # option for user interaction
-    if cfgSimi.getboolean('flagInteraction'):
-        value = input("[y] to repeat:\n")
-        if value != 'y':
-            repeat = False
-    else:
-        repeat = False
-
 
 def prepareParticlesFields(Fields, Particles, ind_t, relDict, simiDict, axis):
     """ get fields and particles dictionaries for given time step """
@@ -425,14 +413,10 @@ def prepareParticlesFields(Fields, Particles, ind_t, relDict, simiDict, axis):
 
     x = particles['x'][ind]+xllc
     y = particles['y'][ind]+yllc
-    x1 = x/cos
     h = particles['h'][ind]
-    hsph = particles['hSPH'][ind]
     ux = particles['ux'][ind]
     uy = particles['uy'][ind]
     uz = particles['uz'][ind]
-    Ux = DFAtls.scalProd(ux, uy, uz, cos, 0, -sin)
-    Uy = DFAtls.scalProd(ux, uy, uz, 0, 1, 0)
     v = np.sqrt(ux*ux + uy*uy + uz*uz)
 
     com1DFAPySol = {'x': x, 'y': y, 'h': h, 'v': v, 'indFinal': indFinal, 'fields': fields}
@@ -455,8 +439,6 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
     # Dimensioning parameters
     U = np.sqrt(gravAcc*L_x)
     V = np.sqrt(gravAcc*L_y)
-    T = np.sqrt(L_x/gravAcc)
-
 
     # get simi sol
     hSimi = simiSol.h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
@@ -533,7 +515,7 @@ def plotProfilesSimiSol(ind_time, relDict, com1DFAPySol, simiDict, solSimi, axis
     ax2.legend(loc='upper right')
     ax1.legend(loc='upper left')
 
-    if com1DFAPySol['showPlot']:
+    if showPlot:
         plt.show()
 
     fig1.savefig(os.path.join(outDirTest, '%sCutSol.%s' % (axis, pU.outputFormat)))

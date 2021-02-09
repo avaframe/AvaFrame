@@ -5,9 +5,6 @@
 # Load modules
 import os
 import numpy as np
-import matplotlib.pyplot as plt
-import glob
-
 
 # Local imports
 import avaframe.com1DFAPy.com1DFA as com1DFAPy
@@ -15,7 +12,6 @@ from avaframe.com1DFAPy import runCom1DFA
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.ana1Tests import damBreak
 import avaframe.in3Utils.initializeProject as initProj
-import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
