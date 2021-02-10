@@ -63,9 +63,10 @@ solSimi = simiSol.runSimilarity()
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 # -------------------------------
 if cfgMain['FLAGS'].getboolean('showPlot'):
-    simiSol.plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg)
+    simiSol.plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest)
 
 
+# TODO here is still user interaction
 # option for user interaction
 if cfg['SIMISOL'].getboolean('flagInteraction'):
     value = input("give time step to plot (float in s):\n")
@@ -85,23 +86,23 @@ while isinstance(value, float):
     simiDict = simiSol.getSimiSolParameters(solSimi, relDict, ind_time, cfg)
 
     # get particle parameters
-    com1DFAPySol = simiSol.prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, 'xaxis')
-    com1DFAPySol['outDirTest'] = outDirTest
-    com1DFAPySol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
-    com1DFAPySol['Tsave'] = Tsave[ind_t]
+    comSol = simiSol.prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, 'xaxis')
+    comSol['outDirTest'] = outDirTest
+    comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
+    comSol['Tsave'] = Tsave[ind_t]
 
     # make plot
-    simiSol.plotProfilesSimiSol(ind_time, relDict, com1DFAPySol, simiDict, solSimi, 'xaxis')
+    simiSol.plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, 'xaxis')
 
     # get particle parameters
-    com1DFAPySol = {}
-    com1DFAPySol = simiSol.prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, 'yaxis')
-    com1DFAPySol['outDirTest'] = outDirTest
-    com1DFAPySol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
-    com1DFAPySol['Tsave'] = Tsave[ind_t]
+    comSol = {}
+    comSol = simiSol.prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, 'yaxis')
+    comSol['outDirTest'] = outDirTest
+    comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
+    comSol['Tsave'] = Tsave[ind_t]
 
     # make plot
-    simiSol.plotProfilesSimiSol(ind_time, relDict, com1DFAPySol, simiDict, solSimi, 'yaxis')
+    simiSol.plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, 'yaxis')
 
     # # option for user interaction
     if cfg['SIMISOL'].getboolean('flagInteraction'):
