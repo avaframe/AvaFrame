@@ -81,7 +81,7 @@ def plotDEM3D(cfg, showPlot = False):
     plt.close('all')
 
 
-def plotGeneratedDEM(z, nameExt, cfg, outDir):
+def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
     """ Plot DEM with given information on the origin of the DEM """
 
     cfgTopo = cfg['TOPO']
@@ -109,7 +109,7 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir):
     plt.savefig(outName)
 
     # If flag is set, plot figure
-    if cfgDEM.getboolean('showplot'):
+    if cfgMain['FLAGS'].getboolean('showPlot'):
         plt.show()
 
     plt.close('all')
