@@ -980,8 +980,6 @@ def removeOutPart(cfg, particles, dem):
     indY = particles['indY']
     x = x + ux*dt
     y = y + uy*dt
-    # indx = int((x + csz/2) / csz)
-    # indy = int((y + csz/2) / csz)
 
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     Lx = (x - xllc) / csz
@@ -1002,6 +1000,9 @@ def removeOutPart(cfg, particles, dem):
         log.info('removed %s particles because they exited the domain' % (nRemove))
 
     x = particles['x']
+    y = particles['y']
+    ux = particles['ux']
+    uy = particles['uy']
     mask = np.ones(len(x), dtype=bool)
     y = particles['y']
     ux = particles['ux']
