@@ -83,6 +83,7 @@ while isinstance(value, float):
     ind_t = np.searchsorted(Tsave, value)
     ind_time = np.searchsorted(solSimi['Time'], value)
 
+    # get similartiy solution h, u at reuired time step
     simiDict = simiSol.getSimiSolParameters(solSimi, relDict, ind_time, cfg)
 
     # get particle parameters

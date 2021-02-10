@@ -319,7 +319,23 @@ def runSimilarity():
 
 
 def getReleaseThickness(avaDir, cfg, demFile):
-    """ define release thickness for similarity solution test """
+    """ define release thickness for similarity solution test
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        cfg: dict
+            confguration settings
+        demFile: str
+            path to DEM file
+
+        Returns
+        --------
+        relDict: dict
+            dictionary with info on release thickness distribution
+
+    """
 
     # Read dem
     demOri = IOf.readRaster(demFile)
@@ -389,8 +405,34 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest):
 
 
 def prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, axis):
-    """ get fields and particles dictionaries for given time step """
+    """ get fields and particles dictionaries for given time step, for com1DFAPy domain origin is set to 0,0
+        for particles - so info on domain is required
 
+        Parameters
+        -----------
+
+        Fields: list
+            list of fields (dictionary) for saved time steps
+        Particles: list
+            list of particles (dictionary) for saved time steps
+        ind_t: int
+            index of required time step in Tsave
+        relDict: dict
+            dictionary with info on release area
+        simiDict: dict
+            dictionary with center location in x for similarity solution
+        axis: str
+            axis (x or y) for profile
+
+        Returns
+        --------
+        com1DFAPySol: dict
+            dictionary with location of particles, flow depth, flow velocity,
+            fields, and index for x or y cut of domain at the required time step
+
+    """
+
+    # load fields and particles of required time step described by ind_t
     fields = Fields[ind_t]
     particles = Particles[ind_t]
 
@@ -399,7 +441,7 @@ def prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict,
     sin = relDict['sin']
     xCenter = simiDict['xCenter']
 
-
+    # get info on DEM extent
     nrows = demOri['header'].nrows
     xllc = demOri['header'].xllcenter
     yllc = demOri['header'].yllcenter
@@ -426,7 +468,26 @@ def prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict,
 
 
 def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
-    """ get parameters """
+    """ get flow depth, flow velocity and center location of flow mass of similarity solution
+        for required time step
+
+        Parameters
+        -----------
+        solSimi: dict
+            similarity solution
+        relDict: dict
+            dictionary with info of release
+        ind_time: int
+            index for required time step in similarity solution
+        cfg: dict
+            configuration
+
+        Returns
+        --------
+        simiDict: dict
+            dictionary of similiarty solution with flow depth, flow velocity,
+            and center location in x for required time step
+        """
 
     cfgSimi = cfg['SIMISOL']
     L_x = cfgSimi.getfloat('L_x')
@@ -468,7 +529,7 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
         comSol: dict
             dictionary of simulation results and info (particles, fields, indices, time step)
         simiDict: dict
-            dictionary with similiarty solution
+            dictionary with similiarty solution for h, u, and xCenter at required time step 
         solSimi: dict
             dictionary with similiarty solution
         axis: str
