@@ -38,8 +38,8 @@ cfg = cfgUtils.getModuleConfig(com1DFAPy, damBreakCfg)
 cfgGen = cfg['GENERAL']
 
 # Load flow depth from analytical solution
-hL, hR, uR, phi = damBreak.damBreakSol(avaDir, cfgMain, cfg)
-xR = np.linspace(-200, 200, 1000)*np.cos(phi)  # projected on the horizontal plane
+hL, hR, uR, phi, xR = damBreak.damBreakSol(avaDir, cfgMain, cfg)
+xR = xR * np.cos(phi)  # projected on the horizontal plane
 dtAnalysis = cfg['DAMBREAK'].getfloat('dtStep')
 
 # call com1DFAPy to perform simulation - provide configuration file and release thickness function
