@@ -26,6 +26,19 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
+def _plotVariable(var, x, dtInd, dtStep, label):
+
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
+    plt.title('Dry-Bed, $\delta=21, \phi$=22')
+    plt.plot(x, var[:,0], 'k--', label='t_init')
+    plt.plot(x, var[:,dtInd], label='t = %.1fs' % dtStep)
+    plt.xlabel('x-coordinate [m]')
+    plt.ylabel(label)
+    plt.legend()
+
+    return fig
+
+
 def plotResults(x, h, u, dtStep, cfg):
     """ Create plots of the analytical solution for the given settings,
         including an animation
@@ -38,29 +51,14 @@ def plotResults(x, h, u, dtStep, cfg):
     outDir = os.path.join(avaDir, 'Outputs', 'ana1Tests')
     fU.makeADir(outDir)
 
-    fig = plt.figure(figsize=(pU.figW, pU.figH))
-    plt.title('Dry-Bed, $\delta=21, \phi$=22')
-    plt.plot(x, h[:,0], 'k--', label='t_init')
-    plt.plot(x, h[:,dtInd], label='t = %.1fs' % dtStep)
-    plt.xlabel('x-coordinate [m]')
-    plt.ylabel('Flow depth [m]')
-    plt.legend()
-
+    fig = _plotVariable(h, x, dtInd, dtStep, 'Flow depth [m]')
     fig.savefig(os.path.join(outDir, 'damBreakFlowDepth.%s' % (pU.outputFormat)))
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
 
-    fig = plt.figure(figsize=(pU.figW, pU.figH))
-    plt.title('Dry-Bed, $\delta=21, \phi$=22')
-    plt.plot(x, u[:,0], 'k--', label='t_init')
-    plt.plot(x, u[:,dtInd], label='t = %.1fs' % dtStep)
-    plt.xlabel('x-coordinate [m]')
-    plt.ylabel('velocity [ms-1]')
-    plt.legend()
-
-    fig.savefig(os.path.join(outDir, 'damBreakVelocity.%s' % (pU.outputFormat)))
-
+    fig = _plotVariable(u, x, dtInd, dtStep, 'Flow velocity [ms-1]')
+    fig.savefig(os.path.join(outDir, 'damBreakFlowVelocity.%s' % (pU.outputFormat)))
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
@@ -79,6 +77,22 @@ def plotResults(x, h, u, dtStep, cfg):
 
         anim = animation.FuncAnimation(fig, make_step, interval=0.1, frames=1000)
         plt.show()
+
+
+def _plotMultVariables(x, y, nx_loc, dtAnalysis, data1, data2, xR, dataR, tR, label, unit):
+    """ generate plots """
+
+    fig, ax = plt.subplots(nrows=1, sharex=True)
+    ax.plot(x, y, 'grey', linestyle='--')
+    ax.plot(x, data1[nx_loc, :], 'k--', label='init')
+    ax.plot(x, data2[nx_loc, :], 'b', label='com1DFAPy')
+    ax.plot(xR, dataR[:,tR], 'r-', label='analyt')
+    ax.set_xlabel('Along track [ncols]')
+    ax.set_ylabel('%s [%s]' % (label, unit))
+    plt.legend()
+    ax.set_title('%s at time step %.02f s' % (label, dtAnalysis))
+
+    return fig
 
 
 def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
@@ -148,30 +162,12 @@ def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
     outDir = os.path.join(cfgMain['MAIN']['avalancheDir'], 'Outputs', 'ana1Tests')
     fU.makeADir(outDir)
 
-    fig1, ax = plt.subplots(nrows=1, sharex=True)
-    ax.plot(x, y, 'grey', linestyle='--')
-    ax.plot(x, dataIniFD[nx_loc, :], 'k--', label='init')
-    ax.plot(x, dataAnaFD[nx_loc, :], 'b', label='com1DFAPy')
-    ax.plot(xR, hR[:,tR], 'r-', label='analyt')
-    ax.set_xlabel('Along track [ncols]')
-    ax.set_ylabel('Flow depth [m]')
-    plt.legend()
-    ax.set_title('Flow depth at time step %.02f s' % (dtAnalysis))
-
-    fig1.savefig(os.path.join(outDir, 'CompareDamBreakH.%s' % (pU.outputFormat)))
+    fig = _plotMultVariables(x, y, nx_loc, dtAnalysis, dataIniFD, dataAnaFD, xR, hR, tR, 'Flow depth', 'm')
+    fig.savefig(os.path.join(outDir, 'CompareDamBreakH.%s' % (pU.outputFormat)))
 
     y = np.zeros(len(x))
-    fig2, ax = plt.subplots(nrows=1, sharex=True)
-    ax.plot(x, y, 'grey', linestyle='--')
-    ax.plot(x, dataIniV[nx_loc, :], 'k--', label='init')
-    ax.plot(x, dataAnaV[nx_loc, :], 'b', label='com1DFAPy')
-    ax.plot(xR, uR[:,tR], 'r-', label='analyt')
-    ax.set_xlabel('Along track [ncols]')
-    ax.set_ylabel('Flow velocity [ms-1]')
-    plt.legend()
-    ax.set_title('Flow velocity at time step %.02f s' % (dtAnalysis))
-
-    fig2.savefig(os.path.join(outDir, 'CompareDamBreakVel.%s' % (pU.outputFormat)))
+    fig = _plotMultVariables(x, y, nx_loc, dtAnalysis, dataIniV, dataAnaV, xR, uR, tR, 'Flow velocity', 'm')
+    fig.savefig(os.path.join(outDir, 'CompareDamBreakVel.%s' % (pU.outputFormat)))
 
     if cfgMain['FLAGS'].getboolean('showPlot'):
         plt.show()
@@ -193,7 +189,7 @@ def damBreakSol(avaDir, cfg, cfgC):
     dtStep = cfgC['DAMBREAK'].getfloat('dtStep')
 
     # Define time [0-1] seconds and space [-2,2] meters domains multiplied times 100
-    t = np.linspace(0, 20, 2000)
+    t = np.linspace(0, 10, 1000)
     x = np.linspace(-200, 200, 1000)
     y = np.linspace(0, 1, 1000)
     nt = len(t)
@@ -228,4 +224,4 @@ def damBreakSol(avaDir, cfg, cfgC):
     # Reproduce figure 6, case 1.2.1 - Test 2
     plotResults(x, h, u, dtStep, cfg)
 
-    return hL, h, u, phi
+    return hL, h, u, phi, x

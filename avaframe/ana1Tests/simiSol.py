@@ -28,7 +28,7 @@ import avaframe.out3Plot.plotUtils as pU
 log = logging.getLogger(__name__)
 
 
-def define_earth_press_coeff(phi, delta):
+def defineEarthPressCoeff(phi, delta):
     """ Define earth pressure coefficients
 
         Parameters
@@ -66,7 +66,7 @@ def define_earth_press_coeff(phi, delta):
     return earthPressureCoefficients
 
 
-def compute_earth_press_coeff(x, earthPressureCoefficients):
+def computeEarthPressCoeff(x, earthPressureCoefficients):
     """ Compute earth pressure coefficients function of sng of f and g
         i.e depending on if we are in the active or passive case
     """
@@ -92,7 +92,7 @@ def compute_earth_press_coeff(x, earthPressureCoefficients):
     return [K_x, K_y]
 
 
-def compute_F_coeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
+def computeFCoeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
     """ Compute coefficients for function F
         coefficients for the simplified mode, eq 3.1
     """
@@ -111,15 +111,15 @@ def compute_F_coeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
     return [A, B, C, D, E]
 
 
-def calc_early_sol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y):
+def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y):
     """ Compute the early solution for 0<t<t_1 to avoid singularity in the
         Runge-Kutta integration process
     """
 
     # early solution exists only if first derivative of f at t=0 is zero
     assert x_0[3] == 0, "f'(t=0)=f_p0 must be equal to 0"
-    [K_x, K_y] = compute_earth_press_coeff(x_0, earthPressureCoefficients)
-    [A, B, C, D, E] = compute_F_coeff(x_0, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
+    [K_x, K_y] = computeEarthPressCoeff(x_0, earthPressureCoefficients)
+    [A, B, C, D, E] = computeFCoeff(x_0, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
     g0 = x_0[0]
     g_p0 = x_0[1]
     f0 = x_0[2]
@@ -140,7 +140,7 @@ def calc_early_sol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy
     return solSimi
 
 
-def F_function(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y):
+def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y):
     """ Calculate right hand side of the differential equation :
         dx/dt = F(x,t) F is discribed in Hutter 1993.
 
@@ -157,8 +157,8 @@ def F_function(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_
     """
 
     global A, C
-    [K_x, K_y] = compute_earth_press_coeff(x, earthPressureCoefficients)
-    [A, B, C, D, E] = compute_F_coeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
+    [K_x, K_y] = computeEarthPressCoeff(x, earthPressureCoefficients)
+    [A, B, C, D, E] = computeFCoeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
     u_c = (A - C)*t
     g = x[0]
     g_p = x[1]
@@ -177,7 +177,7 @@ def F_function(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_
     return F
 
 
-def ode_solver(solver, dt, t_end, solSimi):
+def odeSolver(solver, dt, t_end, solSimi):
 
     time = solSimi['time']
     g_sol = solSimi['g_sol']
@@ -289,11 +289,11 @@ def runSimilarity():
     x_0 = [1.0, 0.0, 1.0, 0.0]  # here a circle as start point
 
     # compute earth pressure coefficients
-    earthPressureCoefficients = define_earth_press_coeff(phi, delta)
+    earthPressureCoefficients = defineEarthPressCoeff(phi, delta)
 
     # Early time solution
     t_early = np.arange(0, t_1, dt_early)
-    solSimi = calc_early_sol(t_early, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y)
+    solSimi = calcEarlySol(t_early, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y)
 
     # Runge-Kutta integration away from the singularity
     # initial conditions
@@ -306,11 +306,11 @@ def runSimilarity():
 
     # Create an `ode` instance to solve the system of differential
     # equations defined by `fun`, and set the solver method to'dopri5' 'dop853'.
-    solver = ode(F_function)
+    solver = ode(Ffunction)
     solver.set_integrator('dopri5')
     solver.set_f_params(earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y)
     solver.set_initial_value(x_1, t_start)
-    solSimi = ode_solver(solver, dt, t_end, solSimi)
+    solSimi = odeSolver(solver, dt, t_end, solSimi)
 
     Time = solSimi['time']*T
     solSimi['Time'] = Time
@@ -343,8 +343,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     X1 = X/cos
     Y1 = Y
     r = np.sqrt((X*X)/(cos*cos)+(Y*Y))
-    H0 = Hini
-    relTh = H0 * (1 - (r/L_x) * (r/L_y))
+    relTh = Hini * (1 - (r/L_x) * (r/L_y))
     relTh = np.where(relTh < 0, 0, relTh)
 
     relDict = {'relTh': relTh, 'X1': X1, 'Y1': Y1, 'demOri': demOri, 'X': X, 'Y': Y,
@@ -387,7 +386,7 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg):
     ax.clabel(CS, inline=1, fontsize=8)
 
 
-def prepareParticlesFields(Fields, Particles, ind_t, relDict, simiDict, axis):
+def prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, axis):
     """ get fields and particles dictionaries for given time step """
 
     fields = Fields[ind_t]

@@ -62,15 +62,6 @@ solSimi = simiSol.runSimilarity()
 
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 # -------------------------------
-# Analyse resutls
-# partRef = Particles[0]
-# Z0 = partRef['z'][0]
-# gravAcc = cfg['GENERAL'].getfloat('gravAcc')
-# # Dimentioning parameters
-# U = np.sqrt(gravAcc*L_x)
-# V = np.sqrt(gravAcc*L_y)
-# mu = cfgGen.getfloat('mu')
-
 if cfgMain['FLAGS'].getboolean('showPlot'):
     simiSol.plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg)
 
@@ -94,7 +85,7 @@ while isinstance(value, float):
     simiDict = simiSol.getSimiSolParameters(solSimi, relDict, ind_time, cfg)
 
     # get particle parameters
-    com1DFAPySol = simiSol.prepareParticlesFields(Fields, Particles, ind_t, relDict, simiDict, 'xaxis')
+    com1DFAPySol = simiSol.prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, 'xaxis')
     com1DFAPySol['outDirTest'] = outDirTest
     com1DFAPySol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
     com1DFAPySol['Tsave'] = Tsave[ind_t]
@@ -104,7 +95,7 @@ while isinstance(value, float):
 
     # get particle parameters
     com1DFAPySol = {}
-    com1DFAPySol = simiSol.prepareParticlesFields(Fields, Particles, ind_t, relDict, simiDict, 'yaxis')
+    com1DFAPySol = simiSol.prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, 'yaxis')
     com1DFAPySol['outDirTest'] = outDirTest
     com1DFAPySol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
     com1DFAPySol['Tsave'] = Tsave[ind_t]
