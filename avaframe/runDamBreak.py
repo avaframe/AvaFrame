@@ -22,6 +22,7 @@ logName = 'runDamBreakProblem'
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avaDir = 'data/avaDamBreak'
+cfgMain['MAIN']['avalancheDir'] = avaDir
 
 # Clean input directory(ies) of old work and output files
 initProj.cleanSingleAvaDir(avaDir, keep=logName)

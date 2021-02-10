@@ -352,7 +352,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     return relDict
 
 
-def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg):
+def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest):
     """ Make a contour plot of flow depth for analytical solution and simulation result """
 
     # load parameters
@@ -378,12 +378,14 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg):
         CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                         linewidths=2, linestyles='dashed')
         plt.pause(1)
+        fig.savefig(os.path.join(outDirTest, 'ContourSimiSol%f.%s' % (t, pU.outputFormat)))
 
     fig, ax, cmap, lev = com1DFA.plotContours(
         fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm', last=True)
     CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                     linewidths=2, linestyles='dashed')
     ax.clabel(CS, inline=1, fontsize=8)
+    fig.savefig(os.path.join(outDirTest, 'ContourSimiSolFinal.%s' % (pU.outputFormat)))
 
 
 def prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, axis):
@@ -454,8 +456,24 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
     return simiDict
 
 
-def plotProfilesSimiSol(ind_time, relDict, com1DFAPySol, simiDict, solSimi, axis):
-    """ Plot flow depth and velocity for similarity solution and simulation results """
+def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
+    """ Plot flow depth and velocity for similarity solution and simulation results
+
+        Parameters
+        -----------
+        ind_time: int
+            time index for simiSol
+        relDict: dict
+            dictionary of release area info
+        comSol: dict
+            dictionary of simulation results and info (particles, fields, indices, time step)
+        simiDict: dict
+            dictionary with similiarty solution
+        solSimi: dict
+            dictionary with similiarty solution
+        axis: str
+
+    """
 
     # get info from dem
     demOri = relDict['demOri']
@@ -466,15 +484,15 @@ def plotProfilesSimiSol(ind_time, relDict, com1DFAPySol, simiDict, solSimi, axis
     csz = demOri['header'].cellsize
 
     # com1DFAPy results
-    fields = com1DFAPySol['fields']
-    x = com1DFAPySol['x']
-    y = com1DFAPySol['y']
-    h = com1DFAPySol['h']
-    v = com1DFAPySol['v']
-    outDirTest = com1DFAPySol['outDirTest']
-    indFinal = com1DFAPySol['indFinal']
-    showPlot = com1DFAPySol['showPlot']
-    Tsave = com1DFAPySol['Tsave']
+    fields = comSol['fields']
+    x = comSol['x']
+    y = comSol['y']
+    h = comSol['h']
+    v = comSol['v']
+    outDirTest = comSol['outDirTest']
+    indFinal = comSol['indFinal']
+    showPlot = comSol['showPlot']
+    Tsave = comSol['Tsave']
 
     # similarity solution results
     vSimi = simiDict['vSimi']
