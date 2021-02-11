@@ -56,9 +56,15 @@ def plotResults(x, h, u, dtStep, cfg):
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
+    else:
+        plt.close(fig)
 
     fig = _plotVariable(u, x, dtInd, dtStep, 'Flow velocity [ms-1]')
     fig.savefig(os.path.join(outDir, 'damBreakFlowVelocity.%s' % (pU.outputFormat)))
+    if cfg['FLAGS'].getboolean('showPlot'):
+        plt.show()
+    else:
+        plt.close(fig)
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
@@ -171,6 +177,8 @@ def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
 
     if cfgMain['FLAGS'].getboolean('showPlot'):
         plt.show()
+    else:
+        plt.close(fig)
 
 
 def damBreakSol(avaDir, cfg, cfgC):

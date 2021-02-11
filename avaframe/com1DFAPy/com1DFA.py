@@ -429,6 +429,8 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres):
     # Load configuration settings
     Tend = cfg.getfloat('Tend')
     dtSave = cfg.getfloat('dtSave')
+    sphOption = cfg.getint('sphOption')
+    log.info('using sphOption %s:' % sphOption)
 
     # Initialise Lists to save fields
     Particles = [copy.deepcopy(particles)]
@@ -565,47 +567,10 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, SPHOption=sphOption, gradient=0)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
-    # gradNorm = DFAtls.norm(force['forceSPHX'], force['forceSPHY'], force['forceSPHZ'])
-    # gravForce = DFAtls.norm(force['forceX'], force['forceY'], force['forceZ'])
-    # fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-    # x = particles['x']-500.00
-    # y = particles['y']-500.00
-    # h = particles['h']
-    # m = particles['m']
-    # r = np.sqrt(x*x + y*y)
-    # ax.plot(r, gradNorm, color='k', marker='.', linestyle='None')
-    # ax.plot(r, gravForce, color='b', marker='.', linestyle='None')
-    # ax.plot(r, force['forceFrict'], color='r', marker='.', linestyle='None')
-    #
-    # fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    # ax1.plot(np.linspace(-500.00, -500.00 + 200*5, 201), fields['FD'][100,:], 'b')
-    # ax1.plot(r, h, color='b', marker='.', linestyle='None')
-    # plt.show()
-    # plot depth computed with different interpolation methods
+
     nSave = Tcpu['nSave']
     dtSave = cfg.getfloat('dtSave')
     hmin = cfg.getfloat('hmin')
-    # if particles['t'] >= nSave * dtSave:
-    #     force2 = {}
-    #     particles, force2 = DFAfunC.computeForceSPHC(cfg, particles, force2, dem, SPHOption=2, gradient=1)
-    #     grad = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
-    #     # grad = DFAtls.norm(force['forceSPHX'], force['forceSPHY'], force['forceSPHZ'])
-    #     x = particles['x']
-    #     y = particles['y']
-    #     m = particles['m']
-    #     ind = np.where(((particles['y'] > 250-2.5) & (particles['y'] < 250+2.5)))
-    #     Grad = np.zeros((101, 441))
-    #     MassBilinear = np.zeros((101, 441))
-    #     MassBilinear = DFAfunC.pointsToRasterC(x, y, m, MassBilinear, csz=5)
-    #     Grad = DFAfunC.pointsToRasterC(x, y, m*grad, Grad, csz=5)
-    #     indMass = np.where(MassBilinear > 0)
-    #     Grad[indMass] = Grad[indMass]/MassBilinear[indMass]
-    #     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    #     fig1, ax1 = plotPosition(particles, dem, Grad, pU.cmapPres, '', fig1, ax1, plotPart=False)
-    #     fig4, ax4 = plt.subplots(figsize=(pU.figW, pU.figH))
-    #     ax4.plot(np.linspace(-200, 2000, 441), Grad[51,:])
-    #     ax4.plot(particles['x'][ind]-200, grad[ind], '.r', linestyle='None')
-    #     plt.show()
 
     # update velocity and particle position
     startTime = time.time()
@@ -627,13 +592,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
-    # x = particles['x']-500.00
-    # y = particles['y']-500.00
-    # h = particles['h']
-    # fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    # ax1.plot(np.linspace(-500.00, -500.00 + 200*5, 201), fields['FD'][100,:], 'b')
-    # ax1.plot(r, h, color='b', marker='.', linestyle='None')
-    # plt.show()
 
     # get SPH flow depth
 
@@ -704,7 +662,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # dtK5 is half time step
     dtK5 = 0.5 * dt
     # cfg['dt'] = str(dtK5)
-    # log.info('dt used now is %f' % dt)
+    log.debug('dt used now is %f' % dt)
 
     # load required DEM and mesh info
     csz = dem['header'].cellsize
