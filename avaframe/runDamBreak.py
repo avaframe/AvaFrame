@@ -40,11 +40,11 @@ cfgGen = cfg['GENERAL']
 
 # Load flow depth from analytical solution
 hL, hR, uR, phi, xR = damBreak.damBreakSol(avaDir, cfgMain, cfg)
-xR = xR * np.cos(phi)  # projected on the horizontal plane
+xR = xR #* np.cos(phi)  # projected on the horizontal plane
 dtAnalysis = cfg['DAMBREAK'].getfloat('dtStep')
 
 # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=damBreakCfg, flagAnalysis=True)
+Particles, Fields, Tsave, dem = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=damBreakCfg, flagAnalysis=True)
 
 # create simDict of results
 inputDir = 'data/avaDamBreak/Outputs/com1DFAPy/peakFiles/'
