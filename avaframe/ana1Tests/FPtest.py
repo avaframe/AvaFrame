@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 
 def getReleaseThickness(avaDir, cfg, demFile):
-    """ define release thickness for similarity solution test """
+    """ define release thickness for Flat Plane solution test """
 
     # Read dem
     demOri = IOf.readRaster(demFile)
@@ -45,7 +45,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     return relDict
 
 
-def prepareParticlesFieldscom1DFAPy(cfgGen, Particles, Fields, ind_t, relDict):
+def postProcessFPcom1DFAPy(cfgGen, Particles, Fields, ind_t, relDict):
     """ get fields and particles dictionaries for given time step """
 
     fields = Fields[ind_t]
@@ -94,21 +94,17 @@ def prepareParticlesFieldscom1DFAPy(cfgGen, Particles, Fields, ind_t, relDict):
 
 
 def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
-    """ Plot flow depth and velocity for similarity solution and simulation results
+    """ Plot flow depth and gradient for FlatPlane simulation results
 
         Parameters
         -----------
+        cfg: configparser
         ind_time: int
             time index for simiSol
         relDict: dict
             dictionary of release area info
         comSol: dict
             dictionary of simulation results and info (particles, fields, indices, time step)
-        simiDict: dict
-            dictionary with similiarty solution
-        solSimi: dict
-            dictionary with similiarty solution
-        axis: str
 
     """
     cfgGen = cfg['GENERAL']
@@ -145,29 +141,6 @@ def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
     ax1 = fig.add_subplot(121)
     ax2 = fig.add_subplot(122)
 
-    # Theta = [0, 30, 45, 60]
-    # Col = ['k', 'b', 'r', 'g']
-    # d = 2.5
-    # for theta, col in zip(Theta, Col):
-    #     theta = theta*math.pi/180
-    #     cos = math.cos(theta)
-    #     sin = math.sin(theta)
-    #     tan = math.tan(theta)
-    #     xx = r*cos
-    #     yy = r*sin
-    #     ind = np.where(((y > tan*x-d/cos) & (y < tan*x+d/cos)))
-    #     r = np.sqrt(x*x + y*y)
-    #     r = r[ind]
-    #     h = particles['h'][ind]
-    #     hsph = particles['hSPH'][ind]
-    #     ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][100,:], 'k')
-    #     ax1.plot(r, h, color=col, marker='.', linestyle='None')
-    #     # ax1.plot(r, hsph, color=col, marker='*', linestyle='None')
-    #
-    #     ax2.plot(r, grad[ind], color=col, marker='*', linestyle='None')
-    #     ax2.plot(r, v[ind], color=col, marker='o', linestyle='None')
-    #     # ax2.plot(r, gradNorm[ind], color=col, marker='s', linestyle='None')
-
     ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][100,:], '--b', label='field flow depth')
     ax1.plot(r, h, color='b', marker='.', linestyle='None', label='particle flow depth')
     # ax1.plot(r, hsph, color=col, marker='*', linestyle='None')
@@ -188,7 +161,9 @@ def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
     ax1.legend()
     ax2.legend()
 
+    fig.savefig(os.path.join(outDirTest, 'radialCutSol.%s' % (pU.outputFormat)))
+
     if showPlot:
         plt.show()
-
-    fig.savefig(os.path.join(outDirTest, 'radialCutSol.%s' % (pU.outputFormat)))
+    else:
+        plt.close(fig)

@@ -48,7 +48,7 @@ def defineEarthPressCoeff(phi, delta):
     cos2delta = np.cos(delta)**2
     tan2delta = np.tan(delta)**2
     root1 = np.sqrt(1.0 - cos2phi / cos2delta)
-    earthPressureCoefficients = np.empty((6, 1))
+    earthPressureCoefficients = np.zeros((6, 1))
     # kx active / passive
     earthPressureCoefficients[0] = 2 / cos2phi * (1.0 - root1) - 1.0
     earthPressureCoefficients[1] = 2 / cos2phi * (1.0 + root1) - 1.0
@@ -74,9 +74,9 @@ def computeEarthPressCoeff(x, earthPressureCoefficients):
     g_p = x[1]
     f_p = x[3]
     if g_p >= 0:
-        K_x = 1#earthPressureCoefficients[0]
+        K_x = earthPressureCoefficients[0]
         if f_p >= 0:
-            K_y = 1#earthPressureCoefficients[2]
+            K_y = earthPressureCoefficients[2]
         else:
             log.info('ky passive')
             K_y = earthPressureCoefficients[3]
@@ -289,7 +289,12 @@ def runSimilarity():
     x_0 = [1.0, 0.0, 1.0, 0.0]  # here a circle as start point
 
     # compute earth pressure coefficients
-    earthPressureCoefficients = defineEarthPressCoeff(phi, delta)
+    flagEarth = cfgSimi.getboolean('flagEarth')
+    if flagEarth:
+        earthPressureCoefficients = defineEarthPressCoeff(phi, delta)
+    else:
+        earthPressureCoefficients = np.ones((6, 1))
+
 
     # Early time solution
     t_early = np.arange(0, t_1, dt_early)
@@ -532,7 +537,9 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
     ax2.legend(loc='upper right')
     ax1.legend(loc='upper left')
 
-    if showPlot:
-        plt.show()
 
     fig1.savefig(os.path.join(outDirTest, '%sCutSol.%s' % (axis, pU.outputFormat)))
+    if showPlot:
+        plt.show()
+    else:
+        plt.close(fig1)
