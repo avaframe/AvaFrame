@@ -49,7 +49,7 @@ cfgR = cfgUtils.getModuleConfig(gR)
 [z, name_ext, outDir] = gT.generateTopo(cfgT, avalancheDir)
 
 # Plot new topogrpahy
-oT.plotGeneratedDEM(z, name_ext, cfgT, outDir)
+oT.plotGeneratedDEM(z, name_ext, cfgT, outDir, cfgMain)
 
 # Initialise demType
 demType = cfgT['TOPO']['demType']
@@ -60,6 +60,6 @@ else:
     # Make release area
     [xv, yv, xyPoints] = gR.getReleaseArea(cfgT, cfgR, avalancheDir)
 
-    # Plot Release Area
-    if cfgR.getboolean('GENERAL', 'showplot'):
-        oT.plotReleasePoints(xv, yv, xyPoints, demType)
+# Plot Release Area
+if cfgMain['FLAGS'].getboolean('showPlot'):
+    oT.plotReleasePoints(xv, yv, xyPoints, demType)
