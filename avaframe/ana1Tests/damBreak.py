@@ -129,12 +129,12 @@ def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
         if dataComSol['resType'][m] == 'FD' and 't5.' in dataComSol['timeStep'][m]:
             data1FD = dataComSol['files'][m]
             name1FD = dataComSol['names'][m]
-        elif dataComSol['resType'][m] == 'V' and 't5.' in dataComSol['timeStep'][m]:
+        elif dataComSol['resType'][m] == 'FV' and 't5.' in dataComSol['timeStep'][m]:
             data1V = dataComSol['files'][m]
             name1V = dataComSol['names'][m]
         elif dataComSol['resType'][m] == 'FD' and 't0.0' in dataComSol['timeStep'][m]:
             data2FD = dataComSol['files'][m]
-        elif dataComSol['resType'][m] == 'V' and 't0.0' in dataComSol['timeStep'][m]:
+        elif dataComSol['resType'][m] == 'FV' and 't0.0' in dataComSol['timeStep'][m]:
             data2V = dataComSol['files'][m]
 
 

@@ -580,7 +580,7 @@ def updateFieldsC(cfg, particles, dem, fields):
         PFD[j, i] = FDBilinear[j, i]
 
 
-  fields['V'] = np.asarray(VBilinear)
+  fields['FV'] = np.asarray(VBilinear)
   fields['P'] = np.asarray(PBilinear)
   fields['FD'] = np.asarray(FDBilinear)
   fields['pfv'] = np.asarray(PFV)

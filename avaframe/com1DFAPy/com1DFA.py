@@ -22,13 +22,17 @@ import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
+from avaframe.in3Utils import cfgUtils
 
 #######################################
 # Set flags here
 #######################################
 # create local logger
 log = logging.getLogger(__name__)
-debugPlot = False
+cfgAVA = cfgUtils.getGeneralConfig()
+print('cfgAVA', cfgAVA)
+debugPlot = cfgAVA['FLAGS']['debugPlot']
+
 # set feature flag for initial particle distribution
 # particles are homegeneosly distributed with a little random variation
 flagSemiRand = True
@@ -222,7 +226,7 @@ def initializeSimulation(cfg, relRaster, dem):
     fields['pfv'] = PFV
     fields['ppr'] = PP
     fields['pfd'] = FD
-    fields['V'] = PFV
+    fields['FV'] = PFV
     fields['P'] = PP
     fields['FD'] = FD
 
@@ -1140,7 +1144,7 @@ def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir):
                 log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType,Tsave[tStep]))
 
 
-def analysisPlots(Particles, Fields, cfg, demOri, dem):
+def analysisPlots(Particles, Fields, cfg, demOri, dem, outDir):
     """ create analysis plots during simulation run """
 
     cfgGen = cfg['GENERAL']
@@ -1149,7 +1153,7 @@ def analysisPlots(Particles, Fields, cfg, demOri, dem):
     rho = cfgGen.getfloat('rho')
     gravAcc = cfgGen.getfloat('gravAcc')
     mu = cfgGen.getfloat('mu')
-    repeat = cfg['DEVFLAGS'].getboolean('debugPlot')
+    repeat = True
     while repeat:
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         T = np.array([0])
@@ -1163,8 +1167,12 @@ def analysisPlots(Particles, Fields, cfg, demOri, dem):
             U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
             fig, ax = plotPosition(
                 fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True)
+            fig.savefig(os.path.join(outDir, 'particlest%f.%s' % (part['t'], pU.outputFormat)))
+            print('outdir plots')
+
         fig, ax = plotPosition(
                 fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True, last=True)
+        fig.savefig(os.path.join(outDir, 'particlesFinal.%s' % (pU.outputFormat)))
         value = input("[y] to repeat:\n")
         if value != 'y':
             repeat = False
@@ -1177,7 +1185,7 @@ def analysisPlots(Particles, Fields, cfg, demOri, dem):
     fig1, ax1 = plotPosition(
         fig1, ax1, partEnd, demOri, fieldEnd['FD'], pU.cmapPres, 'm', plotPart=False)
     fig2, ax2 = plotPosition(
-        fig2, ax2, partEnd, demOri, fieldEnd['V'], pU.cmapPres, 'm/s', plotPart=False)
+        fig2, ax2, partEnd, demOri, fieldEnd['FV'], pU.cmapPres, 'm/s', plotPart=False)
     fig3, ax3 = plotPosition(
         fig3, ax3, partEnd, demOri, fieldEnd['P']/1000, pU.cmapPres, 'kPa', plotPart=False)
     plt.show()
