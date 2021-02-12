@@ -30,7 +30,7 @@ from avaframe.in3Utils import cfgUtils
 # create local logger
 log = logging.getLogger(__name__)
 cfgAVA = cfgUtils.getGeneralConfig()
-debugPlot = cfgAVA['FLAGS']['debugPlot']
+debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 # set feature flag for initial particle distribution
 # particles are homegeneosly distributed with a little random variation
 flagSemiRand = True
