@@ -534,7 +534,7 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
         comSol: dict
             dictionary of simulation results and info (particles, fields, indices, time step)
         simiDict: dict
-            dictionary with similiarty solution for h, u, and xCenter at required time step 
+            dictionary with similiarty solution for h, u, and xCenter at required time step
         solSimi: dict
             dictionary with similiarty solution
         axis: str
@@ -574,7 +574,7 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
 
     if axis == 'xaxis':
         ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][indFinal,:], 'k', label='Field flow depth')
-        ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['V'][indFinal,:], 'g', label='Field flow velocity')
+        ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FV'][indFinal,:], 'g', label='Field flow velocity')
         ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
         ax2.plot(x, v, '.g', linestyle='None', label='Part flow velocity')
         ax1.plot(X[indFinal,:], hSimi[indFinal,:], '--k', label='SimiSol flow depth')
@@ -583,7 +583,7 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
         ax1.set_xlabel('x in [m]')
     elif axis == 'yaxis':
         ax1.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:,indFinal], 'k', label='Field flow depth')
-        ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['V'][:,indFinal], 'g', label='Field flow velocity')
+        ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FV'][:,indFinal], 'g', label='Field flow velocity')
         ax1.plot(y, h, '.k', linestyle='None', label='Part flow depth')
         ax2.plot(y, v, '.g', linestyle='None', label='Part flow velocity')
         ax1.plot(Y[:,indFinal], hSimi[:,indFinal], '--k', label='SimiSol flow depth')

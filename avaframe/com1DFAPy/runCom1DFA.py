@@ -4,6 +4,7 @@
 
 import time
 import copy
+import os
 
 # Local imports
 import avaframe.in3Utils.initialiseDirs as inDirs
@@ -109,7 +110,9 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
         # Analyse resutls
-        com1DFA.analysisPlots(Particles, Fields, cfg, demOri, dem)
+        outDirPlots = os.path.join(outDir, 'reports')
+        print('outdirplots', outDirPlots)
+        com1DFA.analysisPlots(Particles, Fields, cfg, demOri, dem, outDirPlots)
 
         # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
         # Result parameters to be exported
