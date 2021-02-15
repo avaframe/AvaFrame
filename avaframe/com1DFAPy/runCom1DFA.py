@@ -13,6 +13,7 @@ import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFA as com1DFA
 from avaframe.out1Peak import outPlotAllPeak as oP
+import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
@@ -111,7 +112,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
         # -------------------------------
         # Analyse resutls
         outDirPlots = os.path.join(outDir, 'reports')
-        print('outdirplots', outDirPlots)
+        fU.makeADir(outDirPlots)
         com1DFA.analysisPlots(Particles, Fields, cfg, demOri, dem, outDirPlots)
 
         # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
