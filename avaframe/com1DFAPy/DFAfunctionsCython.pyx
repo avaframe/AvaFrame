@@ -127,7 +127,7 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def computeForceC(cfg, particles, dem, Ment, Cres, dT):
+def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
   """ compute forces acting on the particles (without the SPH component)
 
   Cython implementation implementation
@@ -159,6 +159,7 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
   cdef double rho = cfg.getfloat('rho')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef int frictType = cfg.getint('frictType')
+  cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef double dt = dT
   cdef double mu = cfg.getfloat('mu')
   cdef int Npart = particles['Npart']
@@ -183,10 +184,14 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
   cdef double[:] UX = particles['ux']
   cdef double[:] UY = particles['uy']
   cdef double[:] UZ = particles['uz']
+  cdef double[:, :] VX = fields['Vx']
+  cdef double[:, :] VY = fields['Vy']
+  cdef double[:, :] VZ = fields['Vz']
   cdef long[:] IndCellX = particles['indX']
   cdef long[:] IndCellY = particles['indY']
   cdef long indCellX, indCellY
   cdef double A, uMag, m, h, x, y, z, ux, uy, uz, nx, ny, nz
+  cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
   cdef double uxDir, uyDir, uzDir, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
   cdef int j
@@ -216,6 +221,20 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
       #   uy = 0
       #   uz = -(1*nx + 0*ny) / nz
       #   uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+
+      # add artificial viscosity
+      vMeanx, vMeany, vMeanz = getVector(x, y, VX, VY, VZ, csz)
+      vMeanNorm = norm(vMeanx, vMeany, vMeanz)
+      vMeanx = vMeanx - vMeanNorm * nx
+      vMeany = vMeany - vMeanNorm * ny
+      vMeanz = vMeanz - vMeanNorm * nz
+      dvX = vMeanx - ux
+      dvY = vMeany - uy
+      dvZ = vMeanz - uz
+      dvMag = norm(dvX, dvY, dvZ)
+      Alat = 2.0 * np.sqrt((m * h) / rho)
+      fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
+
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
       yEnd = y + dt * uy
@@ -266,6 +285,16 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
       # forceFrictY[j] = forceFrictY[j] + forceBotTang * uyDir
       # forceFrictZ[j] = forceFrictZ[j] + forceBotTang * uzDir
 
+      # update velocity with artificial viscosity - implicit method
+      ux = ux + fDrag * vMeanx
+      uy = uy + fDrag * vMeany
+      uz = uz + fDrag * vMeanz
+      ux = ux / (1.0 + fDrag)
+      uy = uy / (1.0 + fDrag)
+      uz = uz / (1.0 + fDrag)
+      UX[j] = ux
+      UY[j] = uy
+      UZ[j] = uz
 
   # save results
   force['dM'] = np.asarray(dM)
@@ -274,9 +303,13 @@ def computeForceC(cfg, particles, dem, Ment, Cres, dT):
   force['forceZ'] = np.asarray(forceZ)
 
   force['forceFrict'] = np.asarray(forceFrict)
+  particles['ux'] = np.asarray(UX)
+  particles['uy'] = np.asarray(UY)
+  particles['uz'] = np.asarray(UZ)
+
   # force['forceFrictY'] = np.asarray(forceFrictY)
   # force['forceFrictZ'] = np.asarray(forceFrictZ)
-  return force
+  return particles, force
 
 
 @cython.boundscheck(False)
@@ -365,6 +398,7 @@ def updatePositionC(cfg, particles, dem, force):
     ForceDriveX = forceX[j] + forceSPHX[j]
     ForceDriveY = forceY[j] + forceSPHY[j]
     ForceDriveZ = forceZ[j] + forceSPHZ[j]
+
     # velocity magnitude
     uMag = norm(ux, uy, uz)
 
@@ -581,11 +615,15 @@ def updateFieldsC(cfg, particles, dem, fields):
 
 
   fields['FV'] = np.asarray(VBilinear)
+  fields['Vx'] = np.asarray(VXBilinear)
+  fields['Vy'] = np.asarray(VYBilinear)
+  fields['Vz'] = np.asarray(VZBilinear)
   fields['P'] = np.asarray(PBilinear)
   fields['FD'] = np.asarray(FDBilinear)
   fields['pfv'] = np.asarray(PFV)
   fields['ppr'] = np.asarray(PP)
   fields['pfd'] = np.asarray(PFD)
+
 
   for j in range(Npart):
     x = X[j]
