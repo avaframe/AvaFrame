@@ -1100,10 +1100,21 @@ def removePart(particles, mask, nRemove):
 
 
 def savePartToPickle(dictList, outDir):
-    """ Save dictionary to pickle """
+    """ Save each dictionary from a list to a pickle in outDir; works also for one dictionary instead of list
 
-    for dict in dictList:
-        pickle.dump(dict, open(os.path.join(outDir, "particles%f.p" % dict['t']), "wb"))
+        Parameters
+        ---------
+        dictList: list or dict
+            list of dictionaries or single dictionary
+        outDir: str
+            path to output directory
+    """
+    if len(dictList) > 1:
+        for dict in dictList:
+            pickle.dump(dict, open(os.path.join(outDir, "particles%f.p" % dict['t']), "wb"))
+    else:
+        pickle.dump(dictList, open(os.path.join(outDir, "particles.p"), "wb"))
+
 
 def readPartFromPickle(inDir, flagAvaDir=False):
     """ Read pickles within a directory and return List of dicionaries read from pickle """
@@ -1116,10 +1127,13 @@ def readPartFromPickle(inDir, flagAvaDir=False):
 
     # initialise list of particle dictionaries
     Particles = []
+    TimeStepInfo = []
     for particles in PartDicts:
-        Particles.append(pickle.load(open(particles, "rb")))
+        particles = pickle.load(open(particles, "rb"))
+        Particles.append(particles)
+        TimeStepInfo.append(particles['t'])
 
-    return Particles
+    return Particles, TimeStepInfo
 
 
 def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir):
