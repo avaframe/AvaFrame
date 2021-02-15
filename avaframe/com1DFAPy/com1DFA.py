@@ -6,6 +6,7 @@ import logging
 import time
 import os
 import numpy as np
+import glob
 import math
 import copy
 import pickle
@@ -1103,6 +1104,22 @@ def savePartToPickle(dictList, outDir):
 
     for dict in dictList:
         pickle.dump(dict, open(os.path.join(outDir, "particles%f.p" % dict['t']), "wb"))
+
+def readPartFromPickle(inDir, flagAvaDir=False):
+    """ Read pickles within a directory and return List of dicionaries read from pickle """
+
+    if flagAvaDir:
+        inDir = os.path.join(inDir, 'Outputs', 'com1DFAPy', 'particles')
+
+    # search for all pickles within directory
+    PartDicts = glob.glob(os.path.join(inDir, '*.p'))
+
+    # initialise list of particle dictionaries
+    Particles = []
+    for particles in PartDicts:
+        Particles.append(pickle.load(open(particles, "rb")))
+
+    return Particles
 
 
 def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir):
