@@ -33,9 +33,9 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 # set feature flag for initial particle distribution
 # particles are homegeneosly distributed with a little random variation
-flagSemiRand = True
+flagSemiRand = False
 # particles are randomly distributed
-flagRand = False
+flagRand = True
 # set feature flag for flow deth calculation
 # use SPH to get the particles flow depth
 flagFDSPH = False
@@ -142,6 +142,7 @@ def initializeSimulation(cfg, relRaster, dem):
     nrows = header.nrows
     csz = header.cellsize
     A = dem['Area']
+    Mraster = A*relRaster*rho
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     FD = np.zeros((nrows, ncols))
@@ -186,14 +187,15 @@ def initializeSimulation(cfg, relRaster, dem):
     particles = {}
     particles['Npart'] = Npart
     particles['NPPC'] = NPPC
-    particles['mTot'] = np.sum(Mpart)
+    mTot = np.sum(Mpart)
+    particles['mTot'] = mTot
     particles['x'] = Xpart
     particles['y'] = Ypart
     particles['s'] = np.zeros(np.shape(Xpart))
     # adding z component
     particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
-
-    particles['m'] = Mpart
+    # readjust mass
+    particles['m'] = Mpart*Mraster/mTot
     particles['h'] = Hpart
     particles['hNearestNearest'] = Hpart
     particles['hNearestBilinear'] = Hpart
@@ -316,7 +318,9 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
         number of particles created
     """
     if flagRand:
-        nPart = (np.floor(mass / massPerPart)+1).astype('int')
+        nPart = (np.round(mass / massPerPart)).astype('int')
+        # enshure that there is at last one particle
+        nPart = np.max(nPart, 1)
     else:
         n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
         nPart = n*n
