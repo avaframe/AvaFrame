@@ -144,7 +144,7 @@ def initializeSimulation(cfg, relRaster, dem):
     nrows = header.nrows
     csz = header.cellsize
     A = dem['Area']
-    Mraster = A*relRaster*rho
+    Mraster = np.sum(A*relRaster*rho)
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     FD = np.zeros((nrows, ncols))
@@ -189,15 +189,15 @@ def initializeSimulation(cfg, relRaster, dem):
     particles = {}
     particles['Npart'] = Npart
     particles['NPPC'] = NPPC
-    mTot = np.sum(Mpart)
-    particles['mTot'] = mTot
     particles['x'] = Xpart
     particles['y'] = Ypart
     particles['s'] = np.zeros(np.shape(Xpart))
     # adding z component
     particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
     # readjust mass
+    mTot = np.sum(Mpart)
     particles['m'] = Mpart*Mraster/mTot
+    particles['mTot'] = np.sum(particles['m'])
     particles['h'] = Hpart
     particles['hNearestNearest'] = Hpart
     particles['hNearestBilinear'] = Hpart
@@ -231,6 +231,9 @@ def initializeSimulation(cfg, relRaster, dem):
     fields['FV'] = PFV
     fields['P'] = PP
     fields['FD'] = FD
+    fields['Vx'] = PFV
+    fields['Vy'] = PFV
+    fields['Vz'] = PFV
 
     # get particles location (neighbours for sph)
     # particles = getNeighbours(particles, dem)
@@ -255,8 +258,9 @@ def initializeSimulation(cfg, relRaster, dem):
     t = 0
     particles['t'] = t
 
-    log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells' %
-             (particles['mTot'], particles['Npart'], np.size(indRelY)))
+    log.info('Expeced mass. Mexpected = %f kg.' % (Mraster))
+    log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells. %f kg per particle' %
+             (particles['mTot'], particles['Npart'], np.size(indRelY), particles['mTot']/particles['Npart']))
 
     if debugPlot:
         x = np.arange(ncols) * csz
@@ -320,9 +324,9 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
         number of particles created
     """
     if flagRand:
-        nPart = (np.round(mass / massPerPart)).astype('int')
+        nPart = (np.round(mass / massPerPart) + round(np.random.rand())).astype('int')
         # enshure that there is at last one particle
-        nPart = np.max(nPart, 1)
+        nPart = np.maximum(nPart, 1)
     else:
         n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
         nPart = n*n
