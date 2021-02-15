@@ -256,9 +256,13 @@ def initializeSimulation(cfg, relRaster, dem):
     t = 0
     particles['t'] = t
 
+    relCells = np.size(indRelY)
+    partPerCell = particles['Npart']/relCells
     log.info('Expeced mass. Mexpected = %f kg.' % (Mraster))
-    log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells. %f kg per particle' %
-             (particles['mTot'], particles['Npart'], np.size(indRelY), particles['mTot']/particles['Npart']))
+    log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells.' %
+             (particles['mTot'], particles['Npart'], relCells))
+    log.info('Mass per particle = %f kg and particles per cell = %f.' %
+             (particles['mTot']/particles['Npart'], partPerCell))
 
     if debugPlot:
         x = np.arange(ncols) * csz
@@ -322,7 +326,12 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
         number of particles created
     """
     if flagRand:
-        nPart = (np.round(mass / massPerPart) + round(np.random.rand())).astype('int')
+        # number of particles needed (floating number)
+        nFloat = mass / massPerPart
+        nFloor = np.floor(nFloat)
+        # adding 1 with a probability of the residual proba
+        proba = nFloat - nFloor
+        nPart = (nFloor + np.random.binomial(1, proba)).astype('int')
         # enshure that there is at last one particle
         nPart = np.maximum(nPart, 1)
     else:
