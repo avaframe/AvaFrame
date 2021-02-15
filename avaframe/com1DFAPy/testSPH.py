@@ -24,9 +24,9 @@ cfgFull = cfgUtils.getModuleConfig(com1DFA)
 
 
 def Hfunction(x, y, z):
-    # h = x*x/1000 + 1
-    # GHx = 2*x*y/10000
-    # GHy = x*x/10000
+    h = np.ones(np.shape(x))
+    GHx = np.zeros(np.shape(x))
+    GHy = np.zeros(np.shape(x))
     # h = x*x*y/10000 + 1
     GHx = -4/(Lx*Lx)*(2*x-Lx)*np.sin(math.pi*y/Lx)
     GHy = -4/(Lx*Lx)*(x-Lx)*x*np.cos(math.pi*y/Lx)*math.pi/Lx
@@ -44,21 +44,27 @@ def Sfunction(x, y, Lx, Ly):
     Z = x*np.tan(slopeAnglex) + y*np.tan(slopeAngley)
     sx = np.tan(slopeAnglex)*np.ones(np.shape(x))
     sy = np.tan(slopeAngley)*np.ones(np.shape(x))
-    area = np.sqrt(1 + (np.tan(slopeAnglex))*(np.tan(slopeAnglex)) + (np.tan(slopeAngley))*(np.tan(slopeAngley)))*np.ones(np.shape(x))
+    area = np.sqrt(1 + (sx*sx) + (sy*sy))
+
+    # plane
+    # Z = 200-np.sqrt(200*200-x*x)
+    # sx = -200*x/np.sqrt(200*200-x*x)
+    # sy = np.zeros(np.shape(x))
+    # area = np.sqrt(1 + (sx*sx) + (sy*sy))
     return Z, sx, sy, area
 
 
-slopeAnglex = 0*math.pi/180
-slopeAngley = 0*math.pi/180
+slopeAnglex = 20*math.pi/180
+slopeAngley = 30*math.pi/180
 # set the size of the mesh grid [m]
 NDX = 5
 # choose the number of particles per DX and DY
 # if you choose 3, you will have 3*3 = 9 particles per grid cell
-NPartPerD = [2, 3, 4, 5, 6]
+NPartPerD = [16]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
-coef = 0.1
+coef = 0.
 rho = 200
 ##############################################################################
 # END CHOOSE SETUP
@@ -75,12 +81,16 @@ def definePart(dx, dy, Lx, Ly):
     xx, yy = np.meshgrid(x, y)
     xx = xx.flatten()
     yy = yy.flatten()
+    # Xpart = np.array([50., 54.])
+    # Ypart = np.array([51., 53.])
+    # Npart = 2
     Xpart = xx + (np.random.rand(Npart) - 0.5) * dx * coef
     Ypart = yy + (np.random.rand(Npart) - 0.5) * dy * coef
     # adding z component
     Zpart, sx, sy, area = Sfunction(Xpart, Ypart, Lx, Ly)
     Hpart, _, _, _ = Hfunction(Xpart, Ypart, Zpart)
     Mpart = Hpart * dx * dy * area * rho
+    # Mpart = np.array([2000., 3000.])
     # create dictionnary to store particles properties
     particles = {}
     particles['Npart'] = Npart
@@ -141,10 +151,10 @@ def plotFD(ax, x, xx, h, particles, ind, mark, count):
 
 
 def plotGrad(ax, x, xx, particles, ind, mark, count):
-    if count == 1:
-        ax.plot(xx, gx, color='r', linestyle='-', label='real gradHX')
-        ax.plot(xx, gy, color='g', linestyle='-', label='real gradHY')
-        ax.plot(xx, gz, color='k', linestyle='-', label='real gradHZ')
+    # if count == 1:
+    #     ax.plot(xx, gx, color='r', linestyle='-', label='real gradHX')
+    #     ax.plot(xx, gy, color='g', linestyle='-', label='real gradHY')
+    #     ax.plot(xx, gz, color='k', linestyle='-', label='real gradHZ')
 
     ax.plot(particles[x][ind], GHX[ind], color='m', marker=mark, markersize=5,
              linestyle='None', label='SPH N = ' + str(nPartPerD*nPartPerD))
@@ -158,18 +168,18 @@ def plotGrad(ax, x, xx, particles, ind, mark, count):
              linestyle='None')
     ax.plot(particles[x][ind], GHZ2[ind], color='c', marker=mark, markersize=5,
              linestyle='None')
-    ax.plot(particles[x][ind], GHX4[ind], color='y', marker=mark, markersize=5,
-             linestyle='None', label='Corrected 2 SPH N = ' + str(nPartPerD*nPartPerD))
-    ax.plot(particles[x][ind], GHY4[ind], color='y', marker=mark, markersize=5,
-             linestyle='None')
-    ax.plot(particles[x][ind], GHZ4[ind], color='y', marker=mark, markersize=5,
-             linestyle='None')
-    ax.plot(particles[x][ind], GHX5[ind], color='b', marker=mark, markersize=5,
-             linestyle='None', label='Corrected 3 SPH N = ' + str(nPartPerD*nPartPerD))
-    ax.plot(particles[x][ind], GHY5[ind], color='b', marker=mark, markersize=5,
-             linestyle='None')
-    ax.plot(particles[x][ind], GHZ5[ind], color='b', marker=mark, markersize=5,
-             linestyle='None')
+    # ax.plot(particles[x][ind], GHX4[ind], color='y', marker=mark, markersize=5,
+    #          linestyle='None', label='Corrected 2 SPH N = ' + str(nPartPerD*nPartPerD))
+    # ax.plot(particles[x][ind], GHY4[ind], color='y', marker=mark, markersize=5,
+    #          linestyle='None')
+    # ax.plot(particles[x][ind], GHZ4[ind], color='y', marker=mark, markersize=5,
+    #          linestyle='None')
+    # ax.plot(particles[x][ind], GHX5[ind], color='b', marker=mark, markersize=5,
+    #          linestyle='None', label='Corrected 3 SPH N = ' + str(nPartPerD*nPartPerD))
+    # ax.plot(particles[x][ind], GHY5[ind], color='b', marker=mark, markersize=5,
+    #          linestyle='None')
+    # ax.plot(particles[x][ind], GHZ5[ind], color='b', marker=mark, markersize=5,
+    #          linestyle='None')
     return ax
 
 
@@ -262,15 +272,16 @@ for nPartPerD in NPartPerD:
     print('Time FD: ', tottime)
 
     startTime = time.time()
-    GHX, GHY, GHZ = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=1, gradient=1)
+    GHX, GHY, GHZ = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=1, gradient=0)
     GHX = np.asarray(GHX)
     GHY = np.asarray(GHY)
     GHZ = np.asarray(GHZ)
     tottime = time.time() - startTime
+    print(GHX, GHY, GHZ)
     print('Time SPHOption 1: ', tottime)
 
     startTime = time.time()
-    GHX2, GHY2, GHZ2 = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=2, gradient=1)
+    GHX2, GHY2, GHZ2 = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=2, gradient=0)
     GHX2 = np.asarray(GHX2)
     GHY2 = np.asarray(GHY2)
     GHZ2 = np.asarray(GHZ2)
@@ -278,23 +289,24 @@ for nPartPerD in NPartPerD:
     particles['grady'] = GHY2
     particles['gradz'] = GHZ2
     tottime = time.time() - startTime
+    print(GHX2, GHY2, GHZ2)
     print('Time SPHOption 2: ', tottime)
 
-    startTime = time.time()
-    GHX4, GHY4, GHZ4 = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=4, gradient=1)
-    GHX4 = np.asarray(GHX4)
-    GHY4 = np.asarray(GHY4)
-    GHZ4 = np.asarray(GHZ4)
-    tottime = time.time() - startTime
-    print('Time SPHOption 4: ', tottime)
-
-    startTime = time.time()
-    GHX5, GHY5, GHZ5 = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=5, gradient=1)
-    GHX5 = np.asarray(GHX5)
-    GHY5 = np.asarray(GHY5)
-    GHZ5 = np.asarray(GHZ5)
-    tottime = time.time() - startTime
-    print('Time SPHOption 5: ', tottime)
+    # startTime = time.time()
+    # GHX4, GHY4, GHZ4 = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=4, gradient=1)
+    # GHX4 = np.asarray(GHX4)
+    # GHY4 = np.asarray(GHY4)
+    # GHZ4 = np.asarray(GHZ4)
+    # tottime = time.time() - startTime
+    # print('Time SPHOption 4: ', tottime)
+    #
+    # startTime = time.time()
+    # GHX5, GHY5, GHZ5 = DFAfunC.computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption=5, gradient=1)
+    # GHX5 = np.asarray(GHX5)
+    # GHY5 = np.asarray(GHY5)
+    # GHZ5 = np.asarray(GHZ5)
+    # tottime = time.time() - startTime
+    # print('Time SPHOption 5: ', tottime)
 
 
     # ------------------------------------------------------

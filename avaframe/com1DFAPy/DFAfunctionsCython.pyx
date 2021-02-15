@@ -908,19 +908,13 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                 dy = Y[l] - yy
                 dz = Z[l] - zz
                 if SPHoption == 1:
-                  # remove the normal part (make sure that r = xj - xl lies in the plane
-                  # defined by the normal at xj)
-                  dn = nx*dx + ny*dy + nz*dz
-                  dx = dx - dn*nx
-                  dy = dy - dn*ny
-                  dz = dz - dn*nz
-                  # dz = 0
+                  dz = 0
                   # get norm of r = xj - xl
                   r = norm(dx, dy, dz)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
-                      dx = minRKern * rKernel * dx
-                      dy = minRKern * rKernel * dy
+                      # dx = minRKern * rKernel * dx
+                      # dy = minRKern * rKernel * dy
                       r = minRKern * rKernel
                   if r < rKernel:
                       hr = rKernel - r
@@ -929,6 +923,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
                       gradhX = gradhX + mdwdrr*dx
                       gradhY = gradhY + mdwdrr*dy
                       gradhZ = gradhZ + mdwdrr*dz
+                      gravAcc3 = gravAcc
 
                 if SPHoption == 2:
                   # get coordinates in local coord system
