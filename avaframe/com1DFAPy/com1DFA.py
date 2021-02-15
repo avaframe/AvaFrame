@@ -1166,7 +1166,6 @@ def analysisPlots(Particles, Fields, cfg, demOri, dem, outDir):
             fig, ax = plotPosition(
                 fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True)
             fig.savefig(os.path.join(outDir, 'particlest%f.%s' % (part['t'], pU.outputFormat)))
-            print('outdir plots')
 
         fig, ax = plotPosition(
                 fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True, last=True)
