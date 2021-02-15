@@ -559,7 +559,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # get forces
     startTime = time.time()
     # loop version of the compute force
-    force = DFAfunC.computeForceC(cfg, particles, dem, Ment, Cres, dt)
+    particles, force = DFAfunC.computeForceC(cfg, particles, fields, dem, Ment, Cres, dt)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
 
@@ -699,7 +699,8 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # compute velocity at t_(k+0.5)
     # first compute force at t_(k+0.5)
     startTime = time.time()
-    force = DFAfunC.computeForceC(cfg, particles, dem, Ment, Cres, dtK5)
+    # TODO check  effect of artificial viscosity - update of velocity works here too
+    particles, force = DFAfunC.computeForceC(cfg, particles, fields, dem, Ment, Cres, dtK5)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
     # force = computeForceVect(cfg, particles, dem, Ment, Cres, dtK5)
