@@ -106,6 +106,10 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
     tcpuDFA = time.time() - startTime
     log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
+    # export particles dictionaries of saving time steps
+    outDirData = os.path.join(outDir, 'particles')
+    fU.makeADir(outDirData)
+    com1DFA.savePartToPickle(Particles, outDirData)
 
     if flagAnalysis:
         # +++++++++POSTPROCESS++++++++++++++++++++++++

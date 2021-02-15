@@ -8,6 +8,7 @@ import os
 import numpy as np
 import math
 import copy
+import pickle
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects
 import matplotlib as mpl
@@ -1095,6 +1096,13 @@ def removePart(particles, mask, nRemove):
     particles['partInCell'] = particles['partInCell'][mask]
 
     return particles
+
+
+def savePartToPickle(dictList, outDir):
+    """ Save dictionary to pickle """
+
+    for dict in dictList:
+        pickle.dump(dict, open(os.path.join(outDir, "particles%f.p" % dict['t']), "wb"))
 
 
 def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir):
