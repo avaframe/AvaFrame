@@ -224,7 +224,8 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
 
       # add artificial viscosity
       vMeanx, vMeany, vMeanz = getVector(x, y, VX, VY, VZ, csz)
-      vMeanNorm = norm(vMeanx, vMeany, vMeanz)
+      # normal component of the velocity
+      vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
       vMeanx = vMeanx - vMeanNorm * nx
       vMeany = vMeany - vMeanNorm * ny
       vMeanz = vMeanz - vMeanNorm * nz

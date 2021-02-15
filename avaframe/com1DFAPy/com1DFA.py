@@ -42,7 +42,7 @@ flagFDSPH = False
 # set feature leapfrog time stepping
 featLF = False
 featCFL = False
-featCFLConstrain = True
+featCFLConstrain = False
 
 
 def initializeMesh(dem, num=4):
