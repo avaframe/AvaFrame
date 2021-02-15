@@ -587,8 +587,8 @@ def poly2maskSimple(xdep, ydep, ncols, nrows):
                          np.linspace(0, nrows-1, nrows))  # create index space
     # mask = inpolygon(mv, nv, i, j)
     mask = inpolygon(mv, nv, np.append(xdep, xdep[-1]), np.append(ydep, ydep[-1]))
-    for i in range(0, len(xyframe[0, :])):
-        mask[xyframe[1, i], xyframe[0, i]] = 1
+    # for i in range(0, len(xyframe[0, :])):
+    #     mask[xyframe[1, i], xyframe[0, i]] = 1
     return mask
 
 
@@ -634,7 +634,7 @@ def inpolygon(X, Y, xv, yv):
                         IN[ii][jj] = 0
         j = i
     # for i in range(npol-1):
-    #     IN[yv[i]][xv[i]] = 1
+    #     IN[yv[i]][xv[i]] = 0
 
     return IN
 

@@ -233,7 +233,7 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
       dvY = vMeany - uy
       dvZ = vMeanz - uz
       dvMag = norm(dvX, dvY, dvZ)
-      Alat = 2.0 * np.sqrt((m * h) / rho)
+      Alat = 2.0 * math.sqrt((m * h) / rho)
       fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
 
       # get normal at the particle estimated end location
