@@ -45,6 +45,7 @@ flagFDSPH = False
 featLF = False
 featCFL = False
 featCFLConstrain = False
+np.random.seed(942)
 
 
 def initializeMesh(dem, num=4):
@@ -1128,9 +1129,9 @@ def savePartToPickle(dictList, outDir):
     """
     if len(dictList) > 1:
         for dict in dictList:
-            pickle.dump(dict, open(os.path.join(outDir, "particles%f.p" % dict['t']), "wb"))
+            pickle.dump(dict, open(os.path.join(outDir, "particles%04.4f.p" % dict['t']), "wb"))
     else:
-        pickle.dump(dictList, open(os.path.join(outDir, "particles%f.p" % dictList['t']), "wb"))
+        pickle.dump(dictList, open(os.path.join(outDir, "particles%04.4f.p" % dictList['t']), "wb"))
 
 
 def readPartFromPickle(inDir, flagAvaDir=False):
@@ -1142,14 +1143,14 @@ def readPartFromPickle(inDir, flagAvaDir=False):
             path to input directory
         flagAvaDir: bool
             if True inDir corresponds to an avalanche directory and pickles are
-            read from avaDir/Outputs/com1DFAPy/particles 
+            read from avaDir/Outputs/com1DFAPy/particles
     """
 
     if flagAvaDir:
         inDir = os.path.join(inDir, 'Outputs', 'com1DFAPy', 'particles')
 
     # search for all pickles within directory
-    PartDicts = glob.glob(os.path.join(inDir, '*.p'))
+    PartDicts = sorted(glob.glob(os.path.join(inDir, '*.p')))
 
     # initialise list of particle dictionaries
     Particles = []
