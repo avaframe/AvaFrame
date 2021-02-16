@@ -45,8 +45,10 @@ flagFDSPH = False
 featLF = False
 featCFL = False
 featCFLConstrain = False
-np.random.seed(942)
 
+# initiate random generator
+seed = 12345
+rng = np.random.default_rng(seed)
 
 def initializeMesh(dem, num=4):
     """ Create rectangular mesh
@@ -331,11 +333,13 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
     if flagRand:
         # number of particles needed (floating number)
         nFloat = mass / massPerPart
-        nFloor = np.floor(nFloat)
+        nPart = int(np.floor(nFloat))
         # adding 1 with a probability of the residual proba
-        proba = nFloat - nFloor
-        nPart = (nFloor + np.random.binomial(1, proba)).astype('int')
-        # enshure that there is at last one particle
+        proba = nFloat - nPart
+        if rng.random(1) < proba:
+            nPart = nPart + 1
+        #nPart = (nFloor + rng.binomial(1, proba)).astype('int')
+        # TODO: ensure that there is at last one particle
         nPart = np.maximum(nPart, 1)
     else:
         n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
@@ -352,12 +356,12 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
     # start ###############
     if flagSemiRand:
         # place particles equaly distributed with a small variation
-        xpart = csz * (- 0.5 + indx) + x + (np.random.rand(nPart) - 0.5) * d
-        ypart = csz * (- 0.5 + indy) + y + (np.random.rand(nPart) - 0.5) * d
+        xpart = csz * (- 0.5 + indx) + x + (rng.random(nPart) - 0.5) * d
+        ypart = csz * (- 0.5 + indy) + y + (rng.random(nPart) - 0.5) * d
     elif flagRand:
         # place particles randomly in the cell
-        xpart = csz * (np.random.rand(nPart) - 0.5 + indx)
-        ypart = csz * (np.random.rand(nPart) - 0.5 + indy)
+        xpart = csz * (rng.random(nPart) - 0.5 + indx)
+        ypart = csz * (rng.random(nPart) - 0.5 + indy)
     else:
         # place particles equaly distributed
         xpart = csz * (- 0.5 + indx) + x
@@ -1129,9 +1133,9 @@ def savePartToPickle(dictList, outDir):
     """
     if len(dictList) > 1:
         for dict in dictList:
-            pickle.dump(dict, open(os.path.join(outDir, "particles%04.4f.p" % dict['t']), "wb"))
+            pickle.dump(dict, open(os.path.join(outDir, "particles%09.4f.p" % (dict['t'])), "wb"))
     else:
-        pickle.dump(dictList, open(os.path.join(outDir, "particles%04.4f.p" % dictList['t']), "wb"))
+        pickle.dump(dictList, open(os.path.join(outDir, "particles%09.4f.p" % (dictList['t'])), "wb"))
 
 
 def readPartFromPickle(inDir, flagAvaDir=False):
