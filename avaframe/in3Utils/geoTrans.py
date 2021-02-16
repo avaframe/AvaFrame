@@ -587,6 +587,7 @@ def poly2maskSimple(xdep, ydep, ncols, nrows):
                          np.linspace(0, nrows-1, nrows))  # create index space
     # mask = inpolygon(mv, nv, i, j)
     mask = inpolygon(mv, nv, np.append(xdep, xdep[-1]), np.append(ydep, ydep[-1]))
+    # TODO: decide if we add the margin or not.
     # for i in range(0, len(xyframe[0, :])):
     #     mask[xyframe[1, i], xyframe[0, i]] = 1
     return mask
