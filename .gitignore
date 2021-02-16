@@ -23,6 +23,6 @@ avaframe/**/*.xml
 
 avaframe/**/**/Outputs
 
-# avaframe/com1DFAPy/*.c
+avaframe/com1DFAPy/*.c
 
-# avaframe/com1DFAPy/*.so
+avaframe/com1DFAPy/*.so
