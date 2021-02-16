@@ -761,7 +761,7 @@ def computeForceSPHC(cfg, particles, force, dem, SPHOption=2, gradient=0):
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
 def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
-                 double[:, :] Nz, long[:] indX, long[:] indY, SPHOption, gradient):
+                 double[:, :] Nz, long[:] indX, long[:] indY, SPHOption, gradient, Pytest=0):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -834,10 +834,14 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef int j, ic, n, p, l, imax, imin, iPstart, iPend
   cdef int SPHoption = SPHOption
   cdef int grad = gradient
-  # L = np.empty((0), dtype=int)
-  # indL = np.zeros((N+1), dtype=int)
+  cdef int pytest = Pytest
+  cdef int[:] L = np.zeros((100), dtype=np.int32)
+  cdef int[:] indL = np.zeros((N+1), dtype=np.int32)
+  cdef int sum = 0
   # loop on particles
   for j in range(N):
+    if pytest == 1:
+      sum = sum + indL[j]
     xx = X[j]
     yy = Y[j]
     zz = Z[j]
@@ -875,7 +879,6 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     g2 = ny/(nz)
 
     # startTime = time.time()
-    # L = np.empty((0), dtype=int)
     # check if we are on the bottom ot top row!!!
     lInd = -1
     rInd = 2
@@ -895,8 +898,9 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
             # index of particle in neighbour box
             l = partInCell[p]
             if j != l:
-                # indL[j+1] = indL[j+1] + 1
-                # L = np.append(L, l)
+                if pytest == 1:
+                  L[sum + indL[j+1]] = l
+                  indL[j+1] = indL[j+1] + 1
                 dx = X[l] - xx
                 dy = Y[l] - yy
                 dz = Z[l] - zz
@@ -1048,7 +1052,11 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
         GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc3
         GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc3
         GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc3
-  return GHX, GHY, GHZ# , L, indL
+
+  if pytest == 1:
+    return GHX, GHY, GHZ, L, indL
+  else:
+      return GHX, GHY, GHZ
 
 
 @cython.boundscheck(False)  # Deactivate bounds checking
