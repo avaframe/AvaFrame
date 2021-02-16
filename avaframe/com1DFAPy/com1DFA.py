@@ -1125,7 +1125,7 @@ def readPartFromPickle(inDir, flagAvaDir=False):
             path to input directory
         flagAvaDir: bool
             if True inDir corresponds to an avalanche directory and pickles are
-            saved to avaDir/Outputs/com1DFAPy/particles 
+            read from avaDir/Outputs/com1DFAPy/particles 
     """
 
     if flagAvaDir:
