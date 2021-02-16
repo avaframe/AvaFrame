@@ -1372,28 +1372,18 @@ cdef (int, int, int, int, double, double, double, double) getWeights(double x, d
   if interpOption == 0:
     dx = 1.*math.round(dx)
     dy = 1.*math.round(dy)
-    # lower left
-    f00 = (1-dx)*(1-dy)
-    # lower right
-    f10 = dx*(1-dy)
-    # uper left
-    f01 = (1-dx)*dy
-    # and uper right
-    f11 = dx*dy
   elif interpOption == 1:
-    f00 = 1./4.
-    f10 = 1./4.
-    f01 = 1./4.
-    f11 = 1./4.
-  elif interpOption == 2:
-    # lower left
-    f00 = (1-dx)*(1-dy)
-    # lower right
-    f10 = dx*(1-dy)
-    # uper left
-    f01 = (1-dx)*dy
-    # and uper right
-    f11 = dx*dy
+    dx = 1./2.
+    dy = 1./2.
+    
+  # lower left
+  f00 = (1-dx)*(1-dy)
+  # lower right
+  f10 = dx*(1-dy)
+  # uper left
+  f01 = (1-dx)*dy
+  # and uper right
+  f11 = dx*dy
 
   return Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11
   # return Lxy, w
