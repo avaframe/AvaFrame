@@ -1,43 +1,15 @@
 from distutils.core import setup
 from distutils.extension import Extension
-from Cython.Distutils import build_ext
+from Cython.Build import cythonize
 import numpy
 
-# ext_modules=[Extension("cytest",
-#              ["cytest.pyx"],
+# ext_modules = [Extension("DFAfunctionsCython",
+#                ["avaframe/com1DFAPy/DFAfunctionsCython.pyx"],
 #               libraries=["m"],
-#               extra_compile_args = ["-ffast-math"],
+#               extra_compile_args=["-ffast-math"],
 #               include_dirs=[numpy.get_include()])]
-#
-# setup(
-#   name = "cytest",
-#   cmdclass = {"build_ext": build_ext},
-#   ext_modules = ext_modules)
-
-ext_modules = [Extension("DFAfunctionsCython",
-               ["DFAfunctionsCython.pyx"],
-              libraries=["m"],
-              extra_compile_args=["-ffast-math"],
-              include_dirs=[numpy.get_include()])]
 
 setup(
-  name="DFAfunctionsCython",
-  cmdclass={"build_ext": build_ext},
-  ext_modules=ext_modules)
-
-
-#
-# setup(
-#     ext_modules=[
-#         Extension("my_module", ["my_module.c"],
-#                   include_dirs=[numpy.get_include()]),
-#     ],
-# )
-#
-# # Or, if you use cythonize() to make the ext_modules list,
-# # include_dirs can be passed to setup()
-#
-# setup(
-#     ext_modules=cythonize("my_module.pyx"),
-#     include_dirs=[numpy.get_include()]
-# )
+    ext_modules=cythonize("avaframe/com1DFAPy/DFAfunctionsCython.pyx"),
+    include_dirs=[numpy.get_include()]
+)
