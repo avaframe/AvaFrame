@@ -1113,11 +1113,20 @@ def savePartToPickle(dictList, outDir):
         for dict in dictList:
             pickle.dump(dict, open(os.path.join(outDir, "particles%f.p" % dict['t']), "wb"))
     else:
-        pickle.dump(dictList, open(os.path.join(outDir, "particles.p"), "wb"))
+        pickle.dump(dictList, open(os.path.join(outDir, "particles%f.p" % dictList['t']), "wb"))
 
 
 def readPartFromPickle(inDir, flagAvaDir=False):
-    """ Read pickles within a directory and return List of dicionaries read from pickle """
+    """ Read pickles within a directory and return List of dicionaries read from pickle
+
+        Parameters
+        -----------
+        inDir: str
+            path to input directory
+        flagAvaDir: bool
+            if True inDir corresponds to an avalanche directory and pickles are
+            saved to avaDir/Outputs/com1DFAPy/particles 
+    """
 
     if flagAvaDir:
         inDir = os.path.join(inDir, 'Outputs', 'com1DFAPy', 'particles')
