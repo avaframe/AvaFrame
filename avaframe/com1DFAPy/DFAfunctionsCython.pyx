@@ -159,6 +159,7 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
   cdef double rho = cfg.getfloat('rho')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef int frictType = cfg.getint('frictType')
+  cdef int interpOption = cfg.getint('interpOption')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef double dt = dT
   cdef double mu = cfg.getfloat('mu')
@@ -210,7 +211,7 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
       # deduce area
       A = m / (h * rho)
       # get normal at the particle location
-      nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz)
+      nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
       nx, ny, nz = normalize(nx, ny, nz)
       # get velocity magnitude and direction
       uMag = norm(ux, uy, uz)
@@ -223,7 +224,7 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
       #   uxDir, uyDir, uzDir = normalize(ux, uy, uz)
 
       # add artificial viscosity
-      vMeanx, vMeany, vMeanz = getVector(x, y, VX, VY, VZ, csz)
+      vMeanx, vMeany, vMeanz = getVector(x, y, VX, VY, VZ, csz, interpOption)
       # normal component of the velocity
       vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
       vMeanx = vMeanx - vMeanNorm * nx
@@ -239,7 +240,7 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
       yEnd = y + dt * uy
-      nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz)
+      nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz, interpOption)
       nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
       # get average of those normals
       nxAvg = nx + nxEnd
@@ -342,6 +343,7 @@ def updatePositionC(cfg, particles, dem, force):
   log.debug('dt used now is %f' % DT)
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double rho = cfg.getfloat('rho')
+  cdef int interpOption = cfg.getint('interpOption')
   cdef double csz = dem['header'].cellsize
   cdef double mu = cfg.getfloat('mu')
   cdef int Npart = particles['Npart']
@@ -436,8 +438,8 @@ def updatePositionC(cfg, particles, dem, force):
     yNew = y + dtStop * 0.5 * (uy + uyNew)
     sNew = s + math.sqrt((xNew-x)*(xNew-x) + (yNew-y)*(yNew-y))
     # make sure particle is on the mesh (recompute the z component)
-    zNew = getScalar(xNew, yNew, Z, csz)
-    nx, ny, nz = getVector(xNew, yNew, Nx, Ny, Nz, csz)
+    zNew = getScalar(xNew, yNew, Z, csz, interpOption)
+    nx, ny, nz = getVector(xNew, yNew, Nx, Ny, Nz, csz, interpOption)
     nx, ny, nz = normalize(nx, ny, nz)
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
@@ -510,6 +512,7 @@ def updateFieldsC(cfg, particles, dem, fields):
      fields dictionary
  """
   cdef double rho = cfg.getfloat('rho')
+  cdef int interpOption = cfg.getint('interpOption')
   header = dem['header']
   CSZ = dem['header'].cellsize
   cdef double[:, :]A = dem['Area']
@@ -540,7 +543,8 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef int nrow = int(nrows)
   cdef int ncol = int(ncols)
   cdef int Lx0, Ly0, Lx1, Ly1
-  cdef double Lx, Ly, m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, aPart
+  cdef double f00, f01, f10, f11
+  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, aPart
   cdef double xllc = 0
   cdef double yllc = 0
   cdef double csz = CSZ
@@ -557,47 +561,35 @@ def updateFieldsC(cfg, particles, dem, fields):
     uz = UZ[j]
     m = mass[j]
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-    Lx = (x - xllc) / csz
-    Ly = (y - yllc) / csz
-
     # find coordinates of the 4 nearest cornes on the raster
-    Lx0 = <int>Lx
-    Ly0 = <int>Ly
-    Lx1 = Lx0 + 1
-    Ly1 = Ly0 + 1
     # prepare for bilinear interpolation
-    dx = Lx - Lx0
-    dy = Ly - Ly0
+    Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
 
     # add the component of the points value to the 4 neighbour grid points
     # start with the lower left
-    f11 = (1-dx)*(1-dy)
-    MassBilinear[Ly0, Lx0] = MassBilinear[Ly0, Lx0] + m * f11
-    FDBilinear[Ly0, Lx0] = FDBilinear[Ly0, Lx0] + m / (A[Ly0, Lx0] * rho) * f11
-    MomBilinearX[Ly0, Lx0] = MomBilinearX[Ly0, Lx0] + m * ux * f11
-    MomBilinearY[Ly0, Lx0] = MomBilinearY[Ly0, Lx0] + m * uy * f11
-    MomBilinearZ[Ly0, Lx0] = MomBilinearZ[Ly0, Lx0] + m * uz * f11
+    MassBilinear[Ly0, Lx0] = MassBilinear[Ly0, Lx0] + m * f00
+    FDBilinear[Ly0, Lx0] = FDBilinear[Ly0, Lx0] + m / (A[Ly0, Lx0] * rho) * f00
+    MomBilinearX[Ly0, Lx0] = MomBilinearX[Ly0, Lx0] + m * ux * f00
+    MomBilinearY[Ly0, Lx0] = MomBilinearY[Ly0, Lx0] + m * uy * f00
+    MomBilinearZ[Ly0, Lx0] = MomBilinearZ[Ly0, Lx0] + m * uz * f00
     # lower right
-    f21 = dx*(1-dy)
-    MassBilinear[Ly0, Lx1] = MassBilinear[Ly0, Lx1] + m * f21
-    FDBilinear[Ly0, Lx1] = FDBilinear[Ly0, Lx1] + m / (A[Ly0, Lx1] * rho) * f21
-    MomBilinearX[Ly0, Lx1] = MomBilinearX[Ly0, Lx1] + m * ux * f21
-    MomBilinearY[Ly0, Lx1] = MomBilinearY[Ly0, Lx1] + m * uy * f21
-    MomBilinearZ[Ly0, Lx1] = MomBilinearZ[Ly0, Lx1] + m * uz * f21
+    MassBilinear[Ly0, Lx1] = MassBilinear[Ly0, Lx1] + m * f10
+    FDBilinear[Ly0, Lx1] = FDBilinear[Ly0, Lx1] + m / (A[Ly0, Lx1] * rho) * f10
+    MomBilinearX[Ly0, Lx1] = MomBilinearX[Ly0, Lx1] + m * ux * f10
+    MomBilinearY[Ly0, Lx1] = MomBilinearY[Ly0, Lx1] + m * uy * f10
+    MomBilinearZ[Ly0, Lx1] = MomBilinearZ[Ly0, Lx1] + m * uz * f10
     # uper left
-    f12 = (1-dx)*dy
-    MassBilinear[Ly1, Lx0] = MassBilinear[Ly1, Lx0] + m * f12
-    FDBilinear[Ly1, Lx0] = FDBilinear[Ly1, Lx0] + m / (A[Ly1, Lx0] * rho) * f12
-    MomBilinearX[Ly1, Lx0] = MomBilinearX[Ly1, Lx0] + m * ux * f12
-    MomBilinearY[Ly1, Lx0] = MomBilinearY[Ly1, Lx0] + m * uy * f12
-    MomBilinearZ[Ly1, Lx0] = MomBilinearZ[Ly1, Lx0] + m * uz * f12
+    MassBilinear[Ly1, Lx0] = MassBilinear[Ly1, Lx0] + m * f01
+    FDBilinear[Ly1, Lx0] = FDBilinear[Ly1, Lx0] + m / (A[Ly1, Lx0] * rho) * f01
+    MomBilinearX[Ly1, Lx0] = MomBilinearX[Ly1, Lx0] + m * ux * f01
+    MomBilinearY[Ly1, Lx0] = MomBilinearY[Ly1, Lx0] + m * uy * f01
+    MomBilinearZ[Ly1, Lx0] = MomBilinearZ[Ly1, Lx0] + m * uz * f01
     # and uper right
-    f22 = dx*dy
-    MassBilinear[Ly1, Lx1] = MassBilinear[Ly1, Lx1] + m * f22
-    FDBilinear[Ly1, Lx1] = FDBilinear[Ly1, Lx1] + m / (A[Ly1, Lx1] * rho) * f22
-    MomBilinearX[Ly1, Lx1] = MomBilinearX[Ly1, Lx1] + m * ux * f22
-    MomBilinearY[Ly1, Lx1] = MomBilinearY[Ly1, Lx1] + m * uy * f22
-    MomBilinearZ[Ly1, Lx1] = MomBilinearZ[Ly1, Lx1] + m * uz * f22
+    MassBilinear[Ly1, Lx1] = MassBilinear[Ly1, Lx1] + m * f11
+    FDBilinear[Ly1, Lx1] = FDBilinear[Ly1, Lx1] + m / (A[Ly1, Lx1] * rho) * f11
+    MomBilinearX[Ly1, Lx1] = MomBilinearX[Ly1, Lx1] + m * ux * f11
+    MomBilinearY[Ly1, Lx1] = MomBilinearY[Ly1, Lx1] + m * uy * f11
+    MomBilinearZ[Ly1, Lx1] = MomBilinearZ[Ly1, Lx1] + m * uz * f11
 
   for i in range(ncol):
     for j in range(nrow):
@@ -629,7 +621,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   for j in range(Npart):
     x = X[j]
     y = Y[j]
-    hbb = getScalar(x, y, FDBilinear, csz)
+    hbb = getScalar(x, y, FDBilinear, csz, interpOption)
     indx = IndX[j]
     indy = IndY[j]
     # aPart = A[indy, indx]
@@ -806,6 +798,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef double rho = cfg.getfloat('rho')
   cdef double minRKern = cfg.getfloat('minRKern')
   cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef int interpOption = cfg.getint('interpOption')
   cdef double gravAcc3
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
@@ -861,7 +854,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     ux = UX[j]
     uy = UY[j]
     uz = UZ[j]
-    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz)
+    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz, interpOption)
     nx, ny, nz = normalize(nx, ny, nz)
     gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
     uMag = norm(ux, uy, uz)
@@ -1091,6 +1084,7 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   """
   cdef double rho = cfg.getfloat('rho')
   cdef double minRKern = cfg.getfloat('minRKern')
+  cdef int interpOption = cfg.getint('interpOption')
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
   cdef double[:] X = particles['x']
@@ -1139,7 +1133,7 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
     gz = 0
     indx = indX[j]
     indy = indY[j]
-    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz)
+    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz, interpOption)
     nx, ny, nz = normalize(nx, ny, nz)
 
     # startTime = time.time()
@@ -1326,10 +1320,89 @@ cdef double scalProd(double ux, double uy, double uz, double vx, double vy, doub
 def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Python
     return scalProd(x, y, z, u, v, w)
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef double getScalar(double x, double y, double[:, :] V, double csz):
+cdef (int, int, int, int, double, double, double, double) getWeights(double x, double y, double csz, int interpOption):
+  """ Prepare weight for interpolation from grid to single point location
+
+  3 Options available : -0: nearest neighbour interpolation
+                        -1: equal weights interpolation
+                        -2: bilinear interpolation
+
+  Parameters
+  ----------
+      x: float
+          location in the x location of desiered interpolation
+      y: float
+          location in the y location of desiered interpolation
+      csz: float
+          cellsize of the grid
+      interpOption: int
+          -0: nearest neighbour interpolation
+          -1: equal weights interpolation
+          -2: bilinear interpolation
+
+  Returns
+  -------
+      Lx0, Ly0, Lx1, Ly1: int
+          colomn and row indices for interpolation
+      f00, f10, f01, f11: float
+          corresponding weights
+  """
+  cdef int Lx0, Ly0, Lx1, Ly1
+  cdef double f00, f10, f01, f11
+  cdef double Lx, Ly
+  cdef double xllc = 0.
+  cdef double yllc = 0.
+
+  # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+  Lx = (x - xllc) / csz
+  Ly = (y - yllc) / csz
+  # find coordinates of the 4 nearest cornes on the raster
+  Lx0 = <int>Lx
+  Ly0 = <int>Ly
+  Lx1 = Lx0 + 1
+  Ly1 = Ly0 + 1
+  # prepare for bilinear interpolation
+  dx = Lx - Lx0
+  dy = Ly - Ly0
+
+  if interpOption == 0:
+    dx = 1.*math.round(dx)
+    dy = 1.*math.round(dy)
+    # lower left
+    f00 = (1-dx)*(1-dy)
+    # lower right
+    f10 = dx*(1-dy)
+    # uper left
+    f01 = (1-dx)*dy
+    # and uper right
+    f11 = dx*dy
+  elif interpOption == 1:
+    f00 = 1./4.
+    f10 = 1./4.
+    f01 = 1./4.
+    f11 = 1./4.
+  elif interpOption == 2:
+    # lower left
+    f00 = (1-dx)*(1-dy)
+    # lower right
+    f10 = dx*(1-dy)
+    # uper left
+    f01 = (1-dx)*dy
+    # and uper right
+    f11 = dx*dy
+
+  return Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11
+  # return Lxy, w
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef double getScalar(double x, double y, double[:, :] V, double csz, int interpOption):
   """ Interpolate vector field from grid to single point location
 
   Originaly created to get the normal vector at location (x,y) given the
@@ -1343,48 +1416,28 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz):
           location in the x location of desiered interpolation
       y: float
           location in the y location of desiered interpolation
-      Nx: 2D numpy array
-          x component of the vector field at the grid nodes
-      Ny: 2D numpy array
-          y component of the vector field at the grid nodes
-      Nz: 2D numpy array
-          z component of the vector field at the grid nodes
+      V: 2D numpy array
+          scalar field at the grid nodes
       csz: float
           cellsize of the grid
+      interpOption: int
+          -0: nearest neighbour interpolation
+          -1: equal weights interpolation
+          -2: bilinear interpolation
 
   Returns
   -------
-      nx: float
-          x component of the interpolated vector field at position (x, y)
-      ny: float
-          y component of the interpolated vector field at position (x, y)
-      nz: float
-          z component of the interpolated vector field at position (x, y)
+      v: float
+          interpolated scalar at position (x, y)
   """
   cdef int Lx0, Ly0, Lx1, Ly1
-  cdef double Lx, Ly
-  cdef double xllc = 0.
-  cdef double yllc = 0.
+  cdef double f00, f01, f10, f11
+  Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
+  cdef double v = (V[Ly0, Lx0]*f00 +
+                   V[Ly0, Lx1]*f10 +
+                   V[Ly1, Lx0]*f01 +
+                   V[Ly1, Lx1]*f11)
 
-  # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-  Lx = (x - xllc) / csz
-  Ly = (y - yllc) / csz
-
-  # find coordinates of the 4 nearest cornes on the raster
-  Lx0 = <int>Lx
-  Ly0 = <int>Ly
-  Lx1 = Lx0 + 1
-  Ly1 = Ly0 + 1
-  # prepare for bilinear interpolation
-  dx = Lx - Lx0
-  dy = Ly - Ly0
-  # using bilinear interpolation on the cell
-
-  cdef double v
-  v = (V[Ly0, Lx0]*(1-dx)*(1-dy) +
-       V[Ly0, Lx1]*dx*(1-dy) +
-       V[Ly1, Lx0]*(1-dx)*dy +
-       V[Ly1, Lx1]*dx*dy)
 
   return v
 
@@ -1392,7 +1445,7 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, double csz):
+cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, double csz, int interpOption):
   """ Interpolate vector field from grid to single point location
 
   Originaly created to get the normal vector at location (x,y) given the
@@ -1414,6 +1467,10 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
           z component of the vector field at the grid nodes
       csz: float
           cellsize of the grid
+      interpOption: int
+          -0: nearest neighbour interpolation
+          -1: equal weights interpolation
+          -2: bilinear interpolation
 
   Returns
   -------
@@ -1425,35 +1482,20 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
           z component of the interpolated vector field at position (x, y)
   """
   cdef int Lx0, Ly0, Lx1, Ly1
-  cdef double Lx, Ly
-  cdef double xllc = 0.
-  cdef double yllc = 0.
-
-  # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-  Lx = (x - xllc) / csz
-  Ly = (y - yllc) / csz
-
-  # find coordinates of the 4 nearest cornes on the raster
-  Lx0 = <int>Lx
-  Ly0 = <int>Ly
-  Lx1 = Lx0 + 1
-  Ly1 = Ly0 + 1
-  # prepare for bilinear interpolation
-  dx = Lx - Lx0
-  dy = Ly - Ly0
-  # using bilinear interpolation on the cell
-  cdef double nx = (Nx[Ly0, Lx0]*(1-dx)*(1-dy) +
-                    Nx[Ly0, Lx1]*dx*(1-dy) +
-                    Nx[Ly1, Lx0]*(1-dx)*dy +
-                    Nx[Ly1, Lx1]*dx*dy)
-  cdef double ny = (Ny[Ly0, Lx0]*(1-dx)*(1-dy) +
-                    Ny[Ly0, Lx1]*dx*(1-dy) +
-                    Ny[Ly1, Lx0]*(1-dx)*dy +
-                    Ny[Ly1, Lx1]*dx*dy)
-  cdef double nz = (Nz[Ly0, Lx0]*(1-dx)*(1-dy) +
-                    Nz[Ly0, Lx1]*dx*(1-dy) +
-                    Nz[Ly1, Lx0]*(1-dx)*dy +
-                    Nz[Ly1, Lx1]*dx*dy)
+  cdef double f00, f01, f10, f11
+  Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
+  cdef double nx = (Nx[Ly0, Lx0]*f00 +
+                    Nx[Ly0, Lx1]*f10 +
+                    Nx[Ly1, Lx0]*f01 +
+                    Nx[Ly1, Lx1]*f11)
+  cdef double ny = (Ny[Ly0, Lx0]*f00 +
+                    Ny[Ly0, Lx1]*f10 +
+                    Ny[Ly1, Lx0]*f01 +
+                    Ny[Ly1, Lx1]*f11)
+  cdef double nz = (Nz[Ly0, Lx0]*f00 +
+                    Nz[Ly0, Lx1]*f10 +
+                    Nz[Ly1, Lx0]*f01 +
+                    Nz[Ly1, Lx1]*f11)
   return nx, ny, nz
 
 @cython.cdivision(True)
