@@ -18,6 +18,7 @@ import glob
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.makePalette as makePalette
 import avaframe.out3Plot.plotUtils as pU
 
@@ -72,7 +73,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     nx_loc = int(ny * 0.5)
 
     # Difference between datasets
-    dataDiff = data1[:ny, :nx] - data2
+    dataDiff = np.nan_to_num(data1 - data2)
     diffMax = np.amax(dataDiff)
     diffMin = np.amin(dataDiff)
     diffMean = np.mean(dataDiff)
@@ -241,8 +242,11 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
                     indSuffix[1] = m
 
         # Load data
-        data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
-        data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
+        raster = IOf.readRaster(data['files'][indSuffix[0]])
+        rasterRef = IOf.readRaster(data['files'][indSuffix[1]])
+        data1, data2 = geoTrans.resizeData(raster, rasterRef)
+        # data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
+        # data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
         log.debug('dataset1: %s' % data['files'][indSuffix[0]])
         log.debug('dataset2: %s' % data['files'][indSuffix[1]])
 

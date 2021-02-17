@@ -6,6 +6,8 @@ import math
 import numpy as np
 import copy
 
+# Local imports
+import avaframe.in2Trans.ascUtils as IOf
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -243,6 +245,25 @@ def pointsToRaster(x, y, z, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     Z = np.reshape(Z, (nrow, ncol))
 
     return Z
+
+
+def resizeData(raster, rasterRef):
+    if IOf.isEqualASCheader(raster['header'], rasterRef['header']):
+        return raster['rasterData'], rasterRef['rasterData']
+    else:
+        headerRef = rasterRef['header']
+        ncols = headerRef.ncols
+        nrows = headerRef.nrows
+        csz = headerRef.cellsize
+        xllc = headerRef.xllcenter
+        yllc = headerRef.yllcenter
+        xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+        ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+        X, Y = np.meshgrid(xgrid, ygrid)
+        Points = {'x': X, 'y': Y}
+        Points, _ = projectOnRasterVect(raster, Points, interp='bilinear')
+        raster['rasterData'] = Points['z']
+        return raster['rasterData'], rasterRef['rasterData']
 
 
 def prepareLine(dem, avapath, distance=10, Point=None):
