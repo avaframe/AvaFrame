@@ -125,8 +125,28 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
 
         # Generate plots for all peakFiles
         plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
+        # Setup simulation dictionaries for report genereation
+        reportDictList = []
+        # Create dictionary
+        reportNull = {}
+        reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+        'simName': {'type': 'simName', 'name': logName},
+            'Simulation Parameters': {
+                'type': 'list',
+                'Release Area Scenario': os.path.splitext(os.path.basename(relFiles[0]))[0],
+                'Release Area': releaseLine['Name'],
+                'Entrainment Area': '',
+                'Resistance Area': '',
+                'Parameter variation on': '',
+                'Parameter value': '',
+                'Mu': cfgGen['Mu'],
+                'Release thickness [m]': releaseLine['d0']},
+            'Release area': {'type': 'columns', 'Release area scenario': os.path.splitext(os.path.basename(relFiles[0]))[0]}}
 
-    return Particles, Fields, Tsave, dem
+        # Add to report dictionary list
+        reportDictList.append(reportNull)
+
+    return Particles, Fields, Tsave, dem, plotDict, reportDictList
 
 
 if __name__ == "__main__":
