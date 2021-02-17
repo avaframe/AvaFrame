@@ -1,7 +1,6 @@
 """Tests for module com1DFAtools"""
 import numpy as np
 import pytest
-import copy
 import configparser
 
 # Local imports
@@ -20,9 +19,6 @@ def test_normalizeC(capfd):
     norme2 = DFAfunC.norm2py(x, y, z)
     norme2 = np.asarray(norme2)
     xn, yn, zn = DFAfunC.normalizepy(x, y, z)
-    xn = np.asarray(xn)
-    yn = np.asarray(yn)
-    zn = np.asarray(zn)
     atol = 1e-10
     assert norme == np.sqrt(3.)
     assert norme2 == 3.
@@ -35,30 +31,80 @@ def test_normalizeC(capfd):
     y = np.array([2.])
     z = np.array([3.])
     xn, yn, zn = DFAfunC.normalizepy(x, y, z)
-    xn = np.asarray(xn)
-    yn = np.asarray(yn)
-    zn = np.asarray(zn)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1., rel=atol)
 
     x = np.array([1.])
     y = np.array([0.])
     z = np.array([1.])
     xn, yn, zn = DFAfunC.normalizepy(x, y, z)
-    xn = np.asarray(xn)
-    yn = np.asarray(yn)
-    zn = np.asarray(zn)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1, rel=atol)
     assert xn == pytest.approx(1/np.sqrt(2.), rel=atol)
     assert yn == pytest.approx(0, rel=atol)
     assert zn == pytest.approx(1/np.sqrt(2.), rel=atol)
+
+    x = np.array([1.])
+    y = np.array([2.])
+    z = np.array([3.])
+    x1 = np.array([4.])
+    y1 = np.array([5.])
+    z1 = np.array([6.])
+    xn, yn, zn = DFAfunC.crossProdpy(x, y, z, x1, y1, z1)
+    assert xn == -3
+    assert yn == 6
+    assert zn == -3
+
+    x = np.array([1.])
+    y = np.array([2.])
+    z = np.array([3.])
+    x1 = np.array([4.])
+    y1 = np.array([5.])
+    z1 = np.array([6.])
+    scal = DFAfunC.scalProdpy(x, y, z, x1, y1, z1)
+    assert scal == 32
+
+
+def test_getWeightsC(capfd):
+    '''getWeights getScalar and getVector'''
+    X = np.array([0., 1, 2.5, 4., 4., 4.9])
+    Y = np.array([0., 0., 2.5, 2.5, 3., 4.9])
+    F00 = np.array([[1., 1., 0., 0., 0., 0.],
+                    [1./4, 1./4, 1./4, 1./4, 1./4, 1./4],
+                    [1., 0.8, 1./4, 0.09999999999999998, 0.07999999999999999, 0.0003999999999999963]])
+    F10 = np.array([[0., 0., 0., 0., 0., 0.],
+                    [1./4, 1./4, 1./4, 1./4, 1./4, 1./4],
+                    [0., 0.2, 1./4, 0.4, 0.32, 0.01959999999999991]])
+    F01 = np.array([[0., 0., 0., 0., 0., 0.],
+                    [1./4, 1./4, 1./4, 1./4, 1./4, 1./4],
+                    [0., 0., 1./4, 0.09999999999999998, 0.11999999999999997, 0.01959999999999991]])
+    F11 = np.array([[0., 0., 1., 1., 1., 1.],
+                    [1./4, 1./4, 1./4, 1./4, 1./4, 1./4],
+                    [0., 0., 1./4, 0.4, 0.48, 0.9604000000000001]])
+    csz = 5.
+    atol = 1e-10
+    # option 0: nearest, 1, unifom, 2 bilinear
+    for interpOption in range(3):
+        FF00 = F00[interpOption]
+        FF10 = F10[interpOption]
+        FF01 = F01[interpOption]
+        FF11 = F11[interpOption]
+        for x, y, ff00, ff10, ff01, ff11 in zip(X, Y, FF00, FF10, FF01, FF11):
+            Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = DFAfunC.getWeightspy(x, y, csz, interpOption)
+            print(Lx0, Lx1, Ly0, Ly1)
+            print(f00, f10, f01, f11)
+            assert Lx0 == 0.
+            assert Ly0 == 0.
+            assert Lx1 == 1.
+            assert Ly1 == 1.
+            assert ff00 == pytest.approx(f00, rel=atol)
+            assert ff10 == pytest.approx(f10, rel=atol)
+            assert ff01 == pytest.approx(f01, rel=atol)
+            assert ff11 == pytest.approx(f11, rel=atol)
 
 
 def test_getNormalMesh(capfd):
     '''projectOnRasterVect'''
     a = 2
     b = 1
-    xllcenter = 0
-    yllcenter = 0
     cellsize = 1
     m = 10
     n = 15
@@ -104,8 +150,6 @@ def test_getAreaMesh(capfd):
     '''projectOnRasterVect'''
     a = 0.1
     b = 0.2
-    xllcenter = 0
-    yllcenter = 0
     csz = 1
     m = 15
     n = 10
@@ -137,7 +181,6 @@ def test_getNeighboursC(capfd):
     particles['y'] = np.array([2., 1., 0., 1., 3., 3., 2., 1., 0., 0., 3., 2., 2., 1., 1., 4.])
     particles['z'] = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
     particles['m'] = particles['z']
-    particlesVect = copy.deepcopy(particles)
     atol = 1e-10
     indPCell = np.array([0.,  # always an extra zero at the begining
                          1,  # found 1 particle
@@ -187,7 +230,6 @@ def test_calcGradHSPHC(capfd):
     header.nrows = 5
     nrows = header.nrows
     header.cellsize = 1
-    csz = header.cellsize
     dem = {}
     dem['header'] = header
     cfg = configparser.ConfigParser()
@@ -196,6 +238,7 @@ def test_calcGradHSPHC(capfd):
     cfg.set('GENERAL', 'rho', '200')
     cfg.set('GENERAL', 'minRKern', '0.001')
     cfg.set('GENERAL', 'gravAcc', '9.81')
+    cfg.set('GENERAL', 'interpOption', '2')
     cfg = cfg['GENERAL']
     particles = {}
     particles['Npart'] = 16
