@@ -708,7 +708,7 @@ def getNeighboursC(particles, dem):
     return particles
 
 
-def computeForceSPHC(cfg, particles, force, dem, SPHOption=2, gradient=0):
+def computeForceSPHC(cfg, particles, force, dem, gradient=0):
   """ Prepare data for C computation of lateral forces (SPH component)
   acting on the particles (SPH component)
 
@@ -741,19 +741,14 @@ def computeForceSPHC(cfg, particles, force, dem, SPHOption=2, gradient=0):
 
   indX = particles['indX'].astype('int')
   indY = particles['indY'].astype('int')
-  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, SPHOption, gradient)
+  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, gradient)
   forceSPHX = np.asarray(forceSPHX)
   forceSPHY = np.asarray(forceSPHY)
   forceSPHZ = np.asarray(forceSPHZ)
-  # log.info(('cpu time SPH = %s s' % (TcpuSPH / Npart)))
-  # log.info(('cpu time SPH add = %s s' % (Tcpuadd / Npart)))
 
   force['forceSPHX'] = forceSPHX
   force['forceSPHY'] = forceSPHY
   force['forceSPHZ'] = forceSPHZ
-  # particles['GHX'] = GHX
-  # particles['GHY'] = GHY
-  # particles['GHZ'] = GHZ
 
   return particles, force
 
@@ -761,7 +756,7 @@ def computeForceSPHC(cfg, particles, force, dem, SPHOption=2, gradient=0):
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
 def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
-                 double[:, :] Nz, long[:] indX, long[:] indY, SPHOption, gradient, Pytest=0):
+                 double[:, :] Nz, long[:] indX, long[:] indY, gradient):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -797,8 +792,10 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   """
   cdef double rho = cfg.getfloat('rho')
   cdef double minRKern = cfg.getfloat('minRKern')
+  cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef int interpOption = cfg.getint('interpOption')
+  cdef int SPHoption = cfg.getint('sphOption')
   cdef double gravAcc3
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
@@ -832,16 +829,15 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef int lInd, rInd
   cdef long indx, indy
   cdef int j, ic, n, p, l, imax, imin, iPstart, iPend
-  cdef int SPHoption = SPHOption
   cdef int grad = gradient
-  cdef int pytest = Pytest
-  cdef int[:] L = np.zeros((100), dtype=np.int32)
-  cdef int[:] indL = np.zeros((N+1), dtype=np.int32)
-  cdef int sum = 0
+  # cdef int pytest = Pytest
+  # cdef int[:] L = np.zeros((100), dtype=np.int32)
+  # cdef int[:] indL = np.zeros((N+1), dtype=np.int32)
+  # cdef int sum = 0
   # loop on particles
   for j in range(N):
-    if pytest == 1:
-      sum = sum + indL[j]
+    # if pytest == 1:
+    #   sum = sum + indL[j]
     xx = X[j]
     yy = Y[j]
     zz = Z[j]
@@ -862,7 +858,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     nx, ny, nz = normalize(nx, ny, nz)
     gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
     uMag = norm(ux, uy, uz)
-    if uMag < 0.1:
+    if uMag < velMagMin:
         ux = 1
         uy = 0
         uz = -(1*nx + 0*ny) / nz
@@ -898,9 +894,9 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
             # index of particle in neighbour box
             l = partInCell[p]
             if j != l:
-                if pytest == 1:
-                  L[sum + indL[j+1]] = l
-                  indL[j+1] = indL[j+1] + 1
+                # if pytest == 1:
+                #   L[sum + indL[j+1]] = l
+                #   indL[j+1] = indL[j+1] + 1
                 dx = X[l] - xx
                 dy = Y[l] - yy
                 dz = Z[l] - zz
@@ -1053,10 +1049,10 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
         GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc3
         GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc3
 
-  if pytest == 1:
-    return GHX, GHY, GHZ, L, indL
-  else:
-      return GHX, GHY, GHZ
+  # if pytest == 1:
+  #   return GHX, GHY, GHZ, L, indL
+  # else:
+  return GHX, GHY, GHZ
 
 
 @cython.boundscheck(False)  # Deactivate bounds checking

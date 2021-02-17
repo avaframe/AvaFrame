@@ -579,7 +579,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     Tcpu : dict
         computation time dictionary
     """
-    sphOption = cfg.getint('sphOption')
     # get forces
     startTime = time.time()
     # loop version of the compute force
@@ -590,7 +589,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
-    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, SPHOption=sphOption, gradient=0)
+    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, gradient=0)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
