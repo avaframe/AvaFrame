@@ -130,7 +130,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
         # Create dictionary
         reportNull = {}
         reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
-        'simName': {'type': 'simName', 'name': logName},
+        'simName': {'type': 'simName', 'name': 'null'},
             'Simulation Parameters': {
                 'type': 'list',
                 'Release Area Scenario': os.path.splitext(os.path.basename(relFiles[0]))[0],
@@ -139,7 +139,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
                 'Resistance Area': '',
                 'Parameter variation on': '',
                 'Parameter value': '',
-                'Mu': cfgGen['Mu'],
+                'Mu': cfgGen['mu'],
                 'Release thickness [m]': releaseLine['d0']},
             'Release area': {'type': 'columns', 'Release area scenario': os.path.splitext(os.path.basename(relFiles[0]))[0]}}
 
