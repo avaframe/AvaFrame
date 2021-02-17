@@ -1234,7 +1234,7 @@ cdef double norm(double x, double y, double z):
   return math.sqrt(x*x + y*y + z*z)
 
 def normpy(x, y, z): # <-- small wrapper to expose norm() to Python
-    return norm(x, y, z)
+    return np.asarray(norm(x, y, z))
 
 cdef double norm2(double x, double y, double z):
   """ Compute the Euclidean norm of the vector (x, y, z).
@@ -1258,7 +1258,7 @@ cdef double norm2(double x, double y, double z):
   return x*x + y*y + z*z
 
 def norm2py(x, y, z): # <-- small wrapper to expose norm2() to Python
-    return norm2(x, y, z)
+    return np.asarray(norm2(x, y, z))
 
 
 @cython.cdivision(True)
@@ -1300,10 +1300,8 @@ cdef (double, double, double) normalize(double x, double y, double z):
 
 
 def normalizepy(x, y, z): # <-- small wrapper to expose normalize() to Python
-    # cdef double xx = x
-    # cdef double yy = y
-    # cdef double zz = z
-    return normalize(x, y, z)
+  x, y, z = normalize(x, y, z)
+  return np.asarray(x), np.asarray(y), np.asarray(z)
 
 
 @cython.cdivision(True)
@@ -1316,8 +1314,9 @@ cdef (double, double, double) croosProd(double ux, double uy, double uz, double 
   return wx, wy, wz
 
 
-def croosProdpy(x, y, z, u, v, w): # <-- small wrapper to expose croosProd() to Python
-    return croosProd(x, y, z, u, v, w)
+def crossProdpy(x, y, z, u, v, w): # <-- small wrapper to expose croosProd() to Python
+  wx, wy, wz = croosProd(x, y, z, u, v, w)
+  return np.asarray(wx), np.asarray(wy), np.asarray(wz)
 
 
 cdef double scalProd(double ux, double uy, double uz, double vx, double vy, double vz):
@@ -1326,7 +1325,8 @@ cdef double scalProd(double ux, double uy, double uz, double vx, double vy, doub
   return ux*vx + uy*vy + uz*vz
 
 def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Python
-    return scalProd(x, y, z, u, v, w)
+  s = scalProd(x, y, z, u, v, w)
+  return np.asarray(s)
 
 
 @cython.boundscheck(False)
@@ -1383,7 +1383,7 @@ cdef (int, int, int, int, double, double, double, double) getWeights(double x, d
   elif interpOption == 1:
     dx = 1./2.
     dy = 1./2.
-    
+
   # lower left
   f00 = (1-dx)*(1-dy)
   # lower right
@@ -1396,6 +1396,10 @@ cdef (int, int, int, int, double, double, double, double) getWeights(double x, d
   return Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11
   # return Lxy, w
 
+
+def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeightspy() to Python
+  Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
+  return np.asarray(Lx0), np.asarray(Lx1), np.asarray(Ly0), np.asarray(Ly1), np.asarray(f00), np.asarray(f10), np.asarray(f01), np.asarray(f11)
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
