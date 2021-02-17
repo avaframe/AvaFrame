@@ -3,13 +3,9 @@ from distutils.extension import Extension
 from Cython.Build import cythonize
 import numpy
 
-# ext_modules = [Extension("DFAfunctionsCython",
-#                ["avaframe/com1DFAPy/DFAfunctionsCython.pyx"],
-#               libraries=["m"],
-#               extra_compile_args=["-ffast-math"],
-#               include_dirs=[numpy.get_include()])]
-
 setup(
-    ext_modules=cythonize("avaframe/com1DFAPy/DFAfunctionsCython.pyx"),
+    ext_modules=cythonize("avaframe/com1DFAPy/DFAfunctionsCython.pyx",
+                          compiler_directives={'linetrace': True},
+                          language_level=3),
     include_dirs=[numpy.get_include()]
 )
