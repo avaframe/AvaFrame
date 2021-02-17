@@ -50,7 +50,6 @@ def postProcessFPcom1DFAPy(cfgGen, Particles, Fields, ind_t, relDict):
 
     fields = Fields[ind_t]
     particles = Particles[ind_t]
-    sphOption = cfgGen.getint('sphOption')
 
     demOri = relDict['demOri']
     nrows = demOri['header'].nrows
@@ -68,11 +67,8 @@ def postProcessFPcom1DFAPy(cfgGen, Particles, Fields, ind_t, relDict):
     h = particles['h']
     hsph = particles['hSPH']
     force2 = {}
-    particles, force2 = DFAfunC.computeForceSPHC(cfgGen, particles, force2, dem, SPHOption=sphOption, gradient=1)
-    force3 = {}
-    particles, force3 = DFAfunC.computeForceSPHC(cfgGen, particles, force3, dem, SPHOption=4, gradient=1)
+    particles, force2 = DFAfunC.computeForceSPHC(cfgGen, particles, force2, dem, gradient=1)
     gradNorm = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
-    gradNorm1 = DFAtls.norm(force3['forceSPHX'], force3['forceSPHY'], force3['forceSPHZ'])
     x1, y1, z1, = DFAtls.normalize(x+xllc, y+yllc, 0)
     uMag = DFAtls.norm(ux, uy, 0)
     v = DFAtls.scalProd(ux, uy, 0, x1, y1, z1)
@@ -87,7 +83,7 @@ def postProcessFPcom1DFAPy(cfgGen, Particles, Fields, ind_t, relDict):
     y = particles['y']+yllc
     r = np.sqrt(x*x + y*y)
     com1DFAPySol = {'x': x, 'y': y, 'r': r, 'h': h, 'hsph': hsph, 'v': v,
-                    'gradNorm': gradNorm, 'gradNorm1': gradNorm1,
+                    'gradNorm': gradNorm,
                     'grad': grad, 'Grad': Grad, 'uMag': uMag, 'fields': fields}
 
     return com1DFAPySol
@@ -131,7 +127,6 @@ def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
     h = comSol['h']
     v = comSol['v']
     gradNorm = comSol['gradNorm']
-    gradNorm1 = comSol['gradNorm1']
     v = comSol['v']
     outDirTest = comSol['outDirTest']
     showPlot = comSol['showPlot']
@@ -147,7 +142,6 @@ def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
 
     # ax2.plot(r, grad, color='b', marker='.', linestyle='None')
     ax2.plot(r, gradNorm, color='k', marker='o', linestyle='None', label='SPH gradient used')
-    ax2.plot(r, gradNorm1, color='r', marker='.', linestyle='None', label='SPH accurate gradient')
     # ax2.plot(r, v, color='b', marker='.', linestyle='None')
 
     ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), relTh[100, :], '--k')

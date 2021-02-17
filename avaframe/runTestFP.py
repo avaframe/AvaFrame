@@ -61,7 +61,10 @@ Particles, Fields, Tsave, dem = runCom1DFA.runCom1DFAPy(avaDir=avalancheDir, cfg
 relDict['dem'] = dem
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 if cfgMain['FLAGS'].getboolean('showPlot'):
-    com1DFA.analysisPlots(Particles, Fields, cfg, relDict['demOri'], dem)
+    # Analyse resutls
+    outDirPlots = os.path.join(outDirTest, 'FPtest')
+    fU.makeADir(outDirPlots)
+    com1DFA.analysisPlots(Particles, Fields, cfg, relDict['demOri'], dem, outDirPlots)
 
 
 # option for user interaction
