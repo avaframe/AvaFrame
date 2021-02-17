@@ -255,14 +255,14 @@ def resizeData(raster, rasterRef):
     raster : dict
         raster dictionary
     rasterRef : dict
-        refference raster dictionary
+        reference raster dictionary
 
     Returns
     -------
     data : 2D numpy array
         reprojected data
     dataRef : 2D numpy array
-        refference data
+        reference data
     """
     if IOf.isEqualASCheader(raster['header'], rasterRef['header']):
         return raster['rasterData'], rasterRef['rasterData']
