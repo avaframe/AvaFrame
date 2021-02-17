@@ -204,7 +204,7 @@ def getTimeIndex(cfg, Fields):
     return tStepsOk
 
 
-def getDFAData(avaDir, workDir, suffix, nameDir=''):
+def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir=''):
     """ Export the required data from com1DFA output to Aimec Work directory and rename,
         if nameDir='', data from com1DFA output copied to workDir without renaming
 
@@ -216,13 +216,15 @@ def getDFAData(avaDir, workDir, suffix, nameDir=''):
             path to directory that data should be copied to
         suffix : str
             result parameter abbreviation (e.g. 'ppr')
+        comModule : str
+            optional - name of computational module (default is com1DFA)
         nameDir : str
             optional - name of subdirectory of workDir where data shall be copied to and
             in this case data files get renamed to 0000xx.txt xx is the number of the file
       """
 
     # Lead all infos on simulations
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+    inputDir = os.path.join(avaDir, 'Outputs', comModule, 'peakFiles')
     data = makeSimDict(inputDir)
 
     countsuf = 0

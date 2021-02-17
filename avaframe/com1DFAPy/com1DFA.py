@@ -1221,7 +1221,7 @@ def analysisPlots(Particles, Fields, cfg, demOri, dem, outDir):
     rho = cfgGen.getfloat('rho')
     gravAcc = cfgGen.getfloat('gravAcc')
     mu = cfgGen.getfloat('mu')
-    repeat = True
+    repeat = False
     while repeat:
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         T = np.array([0])

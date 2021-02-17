@@ -62,8 +62,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
         unit = ''
 
     # Set dimensions of plots
-    ny = data1.shape[0]
-    nx = data1.shape[1]
+    ny = data2.shape[0]
+    nx = data2.shape[1]
     Ly = ny*cellSize
     Lx = nx*cellSize
 
@@ -72,7 +72,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     nx_loc = int(ny * 0.5)
 
     # Difference between datasets
-    dataDiff = data1 - data2
+    dataDiff = data1[:ny, :nx] - data2
     diffMax = np.amax(dataDiff)
     diffMin = np.amin(dataDiff)
     diffMean = np.mean(dataDiff)
@@ -158,7 +158,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     return plotDict
 
 
-def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='null'):
+def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='null', comModule='com1DFA'):
     """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension) and save to
         Outputs/out3Plot within avalanche directoy
 
@@ -203,7 +203,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
     plotList = []
 
     # Setup input from com1DFA
-    fU.getDFAData(avaDir, workDir, suffix)
+    fU.getDFAData(avaDir, workDir, suffix, comModule=comModule)
 
     # Get data from reference run
     fU.getRefData(avaDir, workDir, suffix)
