@@ -110,6 +110,53 @@ def test_pointsToRaster(capfd):
     assert (testRes)
 
 
+def test_resizeData(capfd):
+    '''resizeData'''
+    a = 2
+    b = 1
+    m = 10
+    n = 15
+    csz1 = 5
+    x = np.linspace(0, m-1, m) * csz1
+    y = np.linspace(0, n-1, n) * csz1
+    X, Y = np.meshgrid(x, y)
+    Z = a * X + b * Y
+    raster1 = {}
+    header1 = IOf.cASCheader()
+    header1.ncols = m
+    header1.nrows = n
+    header1.xllcenter = 0
+    header1.yllcenter = 0
+    header1.cellsize = csz1
+    raster1['header'] = header1
+    raster1['rasterData'] = Z
+
+    m = 13
+    n = 18
+    csz2 = 4
+    x = np.linspace(0, m-1, m) * csz2 + 0.8
+    y = np.linspace(0, n-1, n) * csz2 + 0.8
+    X, Y = np.meshgrid(x, y)
+    Z = a * X + b * Y
+    raster2 = {}
+    header2 = IOf.cASCheader()
+    header2.ncols = m
+    header2.nrows = n
+    header2.xllcenter = 0.8
+    header2.yllcenter = 0.8
+    header2.cellsize = csz2
+    raster2['header'] = header2
+    raster2['rasterData'] = Z
+
+    data1, data2 = geoTrans.resizeData(raster1, raster2)
+    zSol = np.zeros(np.shape(data2))
+    print(data1)
+    print(data2)
+    tol = 1e-10
+    testRes = np.allclose(np.nan_to_num(data1-data2), zSol, atol=tol)
+    assert (testRes)
+
+
 def test_findAngleProfile(capfd):
     '''findAngleProfile'''
     s = np.linspace(0, 400, 41)
