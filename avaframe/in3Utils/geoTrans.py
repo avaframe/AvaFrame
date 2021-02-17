@@ -248,6 +248,22 @@ def pointsToRaster(x, y, z, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
 
 
 def resizeData(raster, rasterRef):
+    """
+    Reproject raster on a grid of shape rasterRef
+    Parameters
+    ----------
+    raster : dict
+        raster dictionary
+    rasterRef : dict
+        refference raster dictionary
+
+    Returns
+    -------
+    data : 2D numpy array
+        reprojected data
+    dataRef : 2D numpy array
+        refference data
+    """
     if IOf.isEqualASCheader(raster['header'], rasterRef['header']):
         return raster['rasterData'], rasterRef['rasterData']
     else:
