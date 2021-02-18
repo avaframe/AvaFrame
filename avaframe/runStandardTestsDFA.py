@@ -53,13 +53,16 @@ with open(reportFile, 'w') as pfile:
 # run Standard Tests sequentially
 for avaDir in standardNames:
 
-    # get path to executable
-    cfg = cfgUtils.getModuleConfig(com1DFA)
-
     # Start logging
     log = logUtils.initiateLogger(avaDir, logName)
     log.info('Current avalanche: %s', avaDir)
+
+    # Load input parameters from configuration file for standard tests
+    # write config to log file
     avaName = os.path.basename(avaDir)
+    standardCfg = os.path.join('..', 'benchmarks', avaName, '%s_com1DFACfgPy.ini' % avaName)
+    avaName = os.path.basename(avaDir)
+
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir,  keep=logName)
 
@@ -67,7 +70,7 @@ for avaDir in standardNames:
     startTime = time.time()
     # Run Standalone DFA
     # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-    Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile='', relTh='', flagAnalysis=True)
+    Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relTh='', flagAnalysis=True)
 
 
     # Print time needed
