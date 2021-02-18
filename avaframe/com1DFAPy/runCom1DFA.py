@@ -140,13 +140,17 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
                 'Parameter variation on': '',
                 'Parameter value': '',
                 'Mu': cfgGen['mu'],
-                'Release thickness [m]': releaseLine['d0']},
+                'Release thickness [m]': cfgGen.getfloat('relTh')},
             'Release area': {'type': 'columns', 'Release area scenario': os.path.splitext(os.path.basename(relFiles[0]))[0]}}
 
+        if relTh is not float:
+            reportNull['Release thickness [m]'] = 'release function'
         # Add to report dictionary list
         reportDictList.append(reportNull)
 
-    return Particles, Fields, Tsave, dem, plotDict, reportDictList
+        return Particles, Fields, Tsave, dem, plotDict, reportDictList
+    else:
+        return Particles, Fields, Tsave, dem
 
 
 if __name__ == "__main__":

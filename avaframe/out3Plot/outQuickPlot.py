@@ -245,8 +245,6 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
         raster = IOf.readRaster(data['files'][indSuffix[0]])
         rasterRef = IOf.readRaster(data['files'][indSuffix[1]])
         data1, data2 = geoTrans.resizeData(raster, rasterRef)
-        # data1 = np.loadtxt(data['files'][indSuffix[0]], skiprows=6)
-        # data2 = np.loadtxt(data['files'][indSuffix[1]], skiprows=6)
         log.debug('dataset1: %s' % data['files'][indSuffix[0]])
         log.debug('dataset2: %s' % data['files'][indSuffix[1]])
 
