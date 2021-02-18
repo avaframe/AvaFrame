@@ -15,50 +15,9 @@ import avaframe.in3Utils.geoTrans as geoTrans
 log = logging.getLogger(__name__)
 
 
-def getNormal(x, y, Nx, Ny, Nz, csz):
-    """ Interpolate vector field from grid to single point location
-
-    Originaly created to get the normal vector at location (x,y) given the
-    normal vector field on the grid. Grid has its origin in (0,0).
-    Can be used to interpolate any vector field.
-    Interpolation using a bilinear interpolation
-
-    Parameters
-    ----------
-        x: float
-            location in the x location of desiered interpolation
-        y: float
-            location in the y location of desiered interpolation
-        Nx: 2D numpy array
-            x component of the vector field at the grid nodes
-        Ny: 2D numpy array
-            y component of the vector field at the grid nodes
-        Nz: 2D numpy array
-            z component of the vector field at the grid nodes
-        csz: float
-            cellsize of the grid
-
-    Returns
-    -------
-        nx: float
-            x component of the interpolated vector field at position (x, y)
-        ny: float
-            y component of the interpolated vector field at position (x, y)
-        nz: float
-            z component of the interpolated vector field at position (x, y)
-    """
-    # by default bilinear interpolation of the Nx, Ny, Nz of the grid
-    nx = geoTrans.projectOnRasterRoot(x, y, Nx, csz=csz)
-    ny = geoTrans.projectOnRasterRoot(x, y, Ny, csz=csz)
-    nz = geoTrans.projectOnRasterRoot(x, y, Nz, csz=csz)
-    nx, ny, nz = normalize(nx, ny, nz)
-    return nx, ny, nz
-
-
 def getNormalArray(x, y, Nx, Ny, Nz, csz):
     """ Interpolate vector field from grid to unstructures points
 
-        Same function as getNormal but works for array inputs.
         Originaly created to get the normal vector at location (x,y) given the
         normal vector field on the grid. Grid has its origin in (0,0).
         Can be used to interpolate any vector field.

@@ -267,7 +267,7 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     # read split point
     splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], sourceData)
     # add 'z' coordinate to the avaPath
-    Avapath = geoTrans.projectOnRaster(dem, Avapath)
+    Avapath, _ = geoTrans.projectOnRasterVect(dem, Avapath)
     # reverse avaPath if necessary
     _, Avapath = geoTrans.checkProfile(Avapath, projSplitPoint=None)
 
@@ -307,7 +307,7 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
 
     #################################################################
     # add 'z' coordinate to the centerline
-    rasterTransfo = geoTrans.projectOnRaster(dem, rasterTransfo)
+    rasterTransfo, _ = geoTrans.projectOnRasterVect(dem, rasterTransfo)
     # find projection of split point on the centerline centerline
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']

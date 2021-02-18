@@ -12,43 +12,6 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def test_projectOnRaster(capfd):
-    '''projectOnRaster'''
-    dem = {}
-    Points = {}
-    header = IOf.cASCheader()
-    header.xllcenter = 0
-    header.yllcenter = 0
-    header.cellsize = 1
-
-    rasterdata = np.array(([0, 1, 2, 3], [1, 2, 3, 4], [2, 3, 4, 5]))
-    Points['x'] = np.array((0.4, 0, 0.5, 1.6, 2.4, 3.4, 2.4, -1, 4, 0))
-    Points['y'] = np.array((0, 1.4, 0.5, 0.6, -0.4, 1.4, 2.4, -1, 3, np.nan))
-
-    dem['header'] = header
-    dem['rasterData'] = rasterdata
-    Points = geoTrans.projectOnRaster(dem, Points, interp='nearest')
-    zSol = np.array([0, 1, 0, 3, 2, 4, 4, np.nan, np.nan, np.nan])
-    print(Points['z'])
-    tol = 1e-8
-    zSolnan = np.isnan(zSol)
-    testRes = np.allclose(np.isnan(Points['z']), zSolnan, atol=tol)
-    assert (testRes)
-    zSol = zSol[~np.isnan(zSol)]
-    testRes = np.allclose(Points['z'][~np.isnan(Points['z'])], zSol, atol=tol)
-    assert (testRes)
-
-    Points = geoTrans.projectOnRaster(dem, Points, interp='bilinear')
-    zSol = np.array([0.4, 1.4, 1, 2.2, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan])
-    print(Points['z'])
-    zSolnan = np.isnan(zSol)
-    testRes = np.allclose(np.isnan(Points['z']), zSolnan, atol=tol)
-    assert (testRes)
-    zSol = zSol[~np.isnan(zSol)]
-    testRes = np.allclose(Points['z'][~np.isnan(Points['z'])], zSol, atol=tol)
-    assert (testRes)
-
-
 def test_projectOnRasterVect(capfd):
     '''projectOnRasterVect'''
     dem = {}
