@@ -1400,6 +1400,29 @@ def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeig
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+def projOnRaster(X, Y, V, csz, interp):
+  """ Interpolate vector field from grid to points
+  """
+  cdef int N = X.shape[0]
+  cdef int interpOption = interp
+  cdef double[:] XX = X
+  cdef double[:] YY = Y
+  cdef double[:, :] VV = V
+  cdef double CSZ = csz
+  cdef double x, y
+  cdef int j
+  cdef double[:] v = np.zeros(N)
+  for j in range(N):
+    x = XX[j]
+    y = YY[j]
+    v[j] = getScalar(x, y, VV, CSZ, interpOption)
+
+  return np.asarray(v)
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 cdef double getScalar(double x, double y, double[:, :] V, double csz, int interpOption):
   """ Interpolate vector field from grid to single point location
 
