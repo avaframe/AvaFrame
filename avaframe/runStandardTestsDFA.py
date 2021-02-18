@@ -27,19 +27,15 @@ cfgMain = cfgUtils.getGeneralConfig()
 
 # Define avalanche directories for standard tests
 standardNames = ['data/avaAlr',
-                 # 'data/avaHit',
-                 # 'data/avaGar',
-                 # 'data/avaKot',
-                 # 'data/avaMal',
-                 # 'data/avaWog',
-                 # 'data/avaBowl',
-                 # 'data/avaFlatPlane',
-                 # 'data/avaHelix',
-                 # 'data/avaHelixChannel',
-                 # 'data/avaHockey',
-                 # 'data/avaHockeySmoothChannel',
-                 # 'data/avaHockeySmoothSmall',
-                 # 'data/avaInclinedPlane'
+                 'data/avaHit',
+                 'data/avaGar',
+                 'data/avaKot',
+                 'data/avaMal',
+                 'data/avaWog',
+                 'data/avaBowl',
+                 'data/avaFlatPlane',
+                 'data/avaHelix'
+                 'data/avaHockeySmoothSmall'
                  ]
 
 # Set directory for full standard test report
