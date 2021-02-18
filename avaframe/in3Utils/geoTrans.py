@@ -13,79 +13,8 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def projectOnRaster(dem, Points, interp='bilinear'):
-    """ Projects the points Points on Raster using a bilinear or nearest
-    interpolation and returns the z coord (for loop on points)
-    Input :
-    Points: list of points (x,y) 2 rows as many columns as Points
-    Output:
-    PointsZ: list of points (x,y,z) 3 rows as many columns as Points
-    """
-    header = dem['header']
-    Z = dem['rasterData']
-    xllc = header.xllcenter
-    yllc = header.yllcenter
-    csz = header.cellsize
-    xcoor = Points['x']
-    ycoor = Points['y']
-    zcoor = np.array([])
-    for i in range(np.shape(xcoor)[0]):
-        value = projectOnRasterRoot(xcoor[i], ycoor[i], Z, csz=csz, xllc=xllc,
-                                    yllc=yllc, interp=interp)
-        zcoor = np.append(zcoor, value)
-
-    Points['z'] = zcoor
-    return Points
-
-
-def projectOnRasterRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
-    """ Projects one point on Raster using a bilinear or nearest
-    interpolation and returns the z coord
-    Input :
-    Points: (x,y) coord of the point
-    Output:
-    PointsZ: z coord of the point
-    """
-    nrows, ncols = np.shape(Z)
-    try:
-        Lx = (x - xllc) / csz
-        Ly = (y - yllc) / csz
-        Lx0 = int(np.floor(Lx))
-        Ly0 = int(np.floor(Ly))
-        Lx1 = int(np.floor(Lx)) + 1
-        Ly1 = int(np.floor(Ly)) + 1
-        # prepare for bilinear interpolation(do not take out of bound into account)
-        if interp == 'nearest':
-            dx = np.round(Lx - Lx0)
-            dy = np.round(Ly - Ly0)
-            Lx = int(Lx0 + dx)
-            Ly = int(Ly0 + dy)
-            if ((Ly < 0) or (Ly > nrows-1) or (Lx < 0) or (Lx > ncols-1)):
-                value = np.NaN
-            else:
-                value = Z[Ly][Lx]
-        elif interp == 'bilinear':
-            dx = Lx - Lx0
-            dy = Ly - Ly0
-            if ((Ly0 < 0) or (Ly > nrows-1) or (Lx0 < 0) or (Lx > ncols-1)):
-                value = np.NaN
-            else:
-                f11 = Z[Ly0][Lx0]
-                f12 = Z[Ly1][Lx0]
-                f21 = Z[Ly0][Lx1]
-                f22 = Z[Ly1][Lx1]
-                # using bilinear interpolation on the cell
-                value = (f11*(1-dx)*(1-dy) + f21*dx*(1-dy) +
-                         f12*(1-dx)*dy + f22*dx*dy)
-    except ValueError:
-        value = np.NaN
-
-    return value
-
-
 def projectOnRasterVect(dem, Points, interp='bilinear'):
     """
-    Vectorized version of projectOnRaster
     Projects the points Points on Raster using a bilinear or nearest
     interpolation and returns the z coord (no for loop)
     Input :
@@ -112,7 +41,6 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
 
 def projectOnRasterVectRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     """
-    Vectorized version of projectOnRasterRoot
     Projects the points Points on Raster using a bilinear or nearest
     interpolation and returns the z coord
     Input :
@@ -327,7 +255,7 @@ def prepareLine(dem, avapath, distance=10, Point=None):
     ResampAvaPath = avapath
     ResampAvaPath['x'] = xcoornew
     ResampAvaPath['y'] = ycoornew
-    ResampAvaPath = projectOnRaster(dem, ResampAvaPath)
+    ResampAvaPath, _ = projectOnRasterVect(dem, ResampAvaPath)
     ResampAvaPath['s'] = s
     AvaProfile = ResampAvaPath
     # find split point by computing the distance to the line
