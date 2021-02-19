@@ -102,7 +102,7 @@ def test_getWeightsC(capfd):
 
 
 def test_getNormalMesh(capfd):
-    '''projectOnRasterVect'''
+    '''projectOnRaster'''
     a = 2
     b = 1
     cellsize = 1
@@ -147,7 +147,7 @@ def test_getNormalMesh(capfd):
 
 
 def test_getAreaMesh(capfd):
-    '''projectOnRasterVect'''
+    '''projectOnRaster'''
     a = 0.1
     b = 0.2
     csz = 1

@@ -12,8 +12,8 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def test_projectOnRasterVect(capfd):
-    '''projectOnRasterVect'''
+def test_projectOnRaster(capfd):
+    '''projectOnRaster'''
     dem = {}
     Points = {}
     header = IOf.cASCheader()
@@ -28,7 +28,7 @@ def test_projectOnRasterVect(capfd):
     dem['header'] = header
     dem['rasterData'] = rasterdata
 
-    Points, _ = geoTrans.projectOnRasterVect(dem, Points, interp='nearest')
+    Points, _ = geoTrans.projectOnRaster(dem, Points, interp='nearest')
     zSol = np.array([[0, 1], [0, 3], [2, 4], [4, np.nan], [np.nan, np.nan]])
     print(Points['z'])
     tol = 1e-8
@@ -39,7 +39,7 @@ def test_projectOnRasterVect(capfd):
     testRes = np.allclose(Points['z'][~np.isnan(Points['z'])], zSol, atol=tol)
     assert (testRes)
 
-    Points, _ = geoTrans.projectOnRasterVect(dem, Points, interp='bilinear')
+    Points, _ = geoTrans.projectOnRaster(dem, Points, interp='bilinear')
     zSol = np.array([[0.4, 1.4], [1, 2.2], [np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]])
     print(Points['z'])
     zSolnan = np.isnan(zSol)

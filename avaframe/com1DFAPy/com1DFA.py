@@ -186,7 +186,7 @@ def initializeSimulation(cfg, relRaster, dem):
         IndY = np.append(IndY, np.ones(nPart)*indRely)
         InCell = np.append(InCell, np.ones(nPart)*ic)
 
-    Hpart, _ = geoTrans.projectOnRasterVectRoot(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
+    Hpart, _ = geoTrans.projectOnRasterRoot(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
     Mpart = rho * Hpart * Apart
     # create dictionnary to store particles properties
     particles = {}
@@ -196,7 +196,7 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['y'] = Ypart
     particles['s'] = np.zeros(np.shape(Xpart))
     # adding z component
-    particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+    particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
     # readjust mass
     mTot = np.sum(Mpart)
     particles['m'] = Mpart*Mraster/mTot
@@ -714,7 +714,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     particles['x'] = xK5
     particles['y'] = yK5
     # For now z-position is taken from DEM - no detachment enforces...
-    particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+    particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
     # TODO: do we need to update also h from particles?? I think yes! also mass, ent, res
     # particles['h'] = ?
 
@@ -751,7 +751,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     particles['y'] = yNew
     particles['s'] = particles['s'] + np.sqrt((xNew-xK)*(xNew-xK) + (yNew-yK)*(yNew-yK))
     # make sure particle is on the mesh (recompute the z component)
-    particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+    particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
 
     nx, ny, nz = DFAtls.getNormalArray(xNew, yNew, Nx, Ny, Nz, csz)
     particles['m'] = massNew

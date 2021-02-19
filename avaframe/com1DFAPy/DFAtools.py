@@ -49,9 +49,9 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
     """
     nrow, ncol = np.shape(Nx)
     # by default bilinear interpolation of the Nx, Ny, Nz of the grid
-    nx, _ = geoTrans.projectOnRasterVectRoot(x, y, Nx, csz=csz)
-    ny, _ = geoTrans.projectOnRasterVectRoot(x, y, Ny, csz=csz)
-    nz, _ = geoTrans.projectOnRasterVectRoot(x, y, Nz, csz=csz)
+    nx, _ = geoTrans.projectOnRasterRoot(x, y, Nx, csz=csz)
+    ny, _ = geoTrans.projectOnRasterRoot(x, y, Ny, csz=csz)
+    nz, _ = geoTrans.projectOnRasterRoot(x, y, Nz, csz=csz)
     nx, ny, nz = normalize(nx, ny, nz)
     return nx, ny, nz
 
