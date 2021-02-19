@@ -111,7 +111,7 @@ def initializeMesh(dem, num=4):
     return dem
 
 
-def initializeSimulation(cfg, relRaster, dem):
+def initializeSimulation(cfg, relRaster, dem, avaDir):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -151,55 +151,81 @@ def initializeSimulation(cfg, relRaster, dem):
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     FD = np.zeros((nrows, ncols))
-    Npart = 0
-    NPPC = np.empty(0)
-    Apart = np.empty(0)
-    Xpart = np.empty(0)
-    Ypart = np.empty(0)
-    Mpart = np.empty(0)
-    Hpart = np.empty(0)
-    InCell = np.empty((0), int)
-    IndX = np.empty((0), int)
-    IndY = np.empty((0), int)
     # find all non empty cells (meaning release area)
     indRelY, indRelX = np.nonzero(relRaster)
-    # loop on non empty cells
-    for indRelx, indRely in zip(indRelX, indRelY):
-        # compute number of particles for this cell
-        h = relRaster[indRely, indRelx]
-        Vol = A[indRely, indRelx] * h
-        mass = Vol * rho
-        xpart, ypart, mPart, nPart = placeParticles(mass, indRelx, indRely, csz, massPerPart)
-        Npart = Npart + nPart
-        partPerCell[indRely, indRelx] = nPart
-        # initialize field Flow depth
-        FD[indRely, indRelx] = h
-        # initialize particles position, mass, height...
-        NPPC = np.append(NPPC, nPart*np.ones(nPart))
-        Apart = np.append(Apart, A[indRely, indRelx]*np.ones(nPart)/nPart)
-        Xpart = np.append(Xpart, xpart)
-        Ypart = np.append(Ypart, ypart)
-        Mpart = np.append(Mpart, mPart * np.ones(nPart))
-        Hpart = np.append(Hpart, h * np.ones(nPart))
-        ic = indRelx + ncols * indRely
-        IndX = np.append(IndX, np.ones(nPart)*indRelx)
-        IndY = np.append(IndY, np.ones(nPart)*indRely)
-        InCell = np.append(InCell, np.ones(nPart)*ic)
 
-    Hpart, _ = geoTrans.projectOnGrid(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
-    Mpart = rho * Hpart * Apart
-    # create dictionnary to store particles properties
-    particles = {}
-    particles['Npart'] = Npart
-    particles['NPPC'] = NPPC
-    particles['x'] = Xpart
-    particles['y'] = Ypart
-    particles['s'] = np.zeros(np.shape(Xpart))
-    # adding z component
-    particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
-    # readjust mass
-    mTot = np.sum(Mpart)
-    particles['m'] = Mpart*Mraster/mTot
+    # make option available to read initial particle distribution from file
+    if cfg.getboolean('flagInitializeFF'):
+        log.info('Initial particle distribution read from file!!')
+        inDirPart = os.path.join(avaDir, 'Inputs', 'particles')
+        Particles, TimeStepInfo = readPartFromPickle(inDirPart)
+        particles = Particles[0]
+        Xpart = particles['x']
+        Mpart = particles['m']
+        Hpart = np.ones(len(Xpart))
+        particles['Npart'] = len(Xpart)
+        particles = DFAfunC.getNeighboursC(particles, dem)
+        particles['s'] = np.zeros(np.shape(Xpart))
+        # # adding z component
+        zSamos = copy.deepcopy(particles['z'])
+        particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+        plt.plot(particles['y'], zSamos, 'bo')
+        plt.plot(particles['y'], particles['z'], 'k+')
+        plt.show()
+    else:
+
+
+        Npart = 0
+        NPPC = np.empty(0)
+        Apart = np.empty(0)
+        Xpart = np.empty(0)
+        Ypart = np.empty(0)
+        Mpart = np.empty(0)
+        Hpart = np.empty(0)
+        InCell = np.empty((0), int)
+        IndX = np.empty((0), int)
+        IndY = np.empty((0), int)
+        # loop on non empty cells
+        for indRelx, indRely in zip(indRelX, indRelY):
+            # compute number of particles for this cell
+            h = relRaster[indRely, indRelx]
+            Vol = A[indRely, indRelx] * h
+            mass = Vol * rho
+            xpart, ypart, mPart, nPart = placeParticles(mass, indRelx, indRely, csz, massPerPart)
+            Npart = Npart + nPart
+            partPerCell[indRely, indRelx] = nPart
+            # initialize field Flow depth
+            FD[indRely, indRelx] = h
+            # initialize particles position, mass, height...
+            NPPC = np.append(NPPC, nPart*np.ones(nPart))
+            Apart = np.append(Apart, A[indRely, indRelx]*np.ones(nPart)/nPart)
+            Xpart = np.append(Xpart, xpart)
+            Ypart = np.append(Ypart, ypart)
+            Mpart = np.append(Mpart, mPart * np.ones(nPart))
+            Hpart = np.append(Hpart, h * np.ones(nPart))
+            ic = indRelx + ncols * indRely
+            IndX = np.append(IndX, np.ones(nPart)*indRelx)
+            IndY = np.append(IndY, np.ones(nPart)*indRely)
+            InCell = np.append(InCell, np.ones(nPart)*ic)
+
+        Hpart, _ = geoTrans.projectOnRasterVectRoot(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
+        Mpart = rho * Hpart * Apart
+        # create dictionnary to store particles properties
+        particles = {}
+        particles['Npart'] = Npart
+        particles['NPPC'] = NPPC
+        particles['x'] = Xpart
+        particles['y'] = Ypart
+        particles['s'] = np.zeros(np.shape(Xpart))
+        # adding z component
+        particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+        # readjust mass
+        mTot = np.sum(Mpart)
+        particles['m'] = Mpart*Mraster/mTot
+        particles['InCell'] = InCell
+        particles['indX'] = IndX
+        particles['indY'] = IndY
+
     particles['mTot'] = np.sum(particles['m'])
     particles['h'] = Hpart
     particles['hNearestNearest'] = Hpart
@@ -210,9 +236,6 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['GHX'] = np.zeros(np.shape(Xpart))
     particles['GHY'] = np.zeros(np.shape(Xpart))
     particles['GHZ'] = np.zeros(np.shape(Xpart))
-    particles['InCell'] = InCell
-    particles['indX'] = IndX
-    particles['indY'] = IndY
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
@@ -237,9 +260,6 @@ def initializeSimulation(cfg, relRaster, dem):
     fields['Vx'] = PFV
     fields['Vy'] = PFV
     fields['Vz'] = PFV
-
-    # get particles location (neighbours for sph)
-    # particles = getNeighbours(particles, dem)
 
     particles = DFAfunC.getNeighboursC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
@@ -1130,7 +1150,8 @@ def savePartToPickle(dictList, outDir):
         outDir: str
             path to output directory
     """
-    if len(dictList) > 1:
+
+    if isinstance(dictList, list):
         for dict in dictList:
             pickle.dump(dict, open(os.path.join(outDir, "particles%09.4f.p" % (dict['t'])), "wb"))
     else:

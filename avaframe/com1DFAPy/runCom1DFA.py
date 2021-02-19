@@ -95,7 +95,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
     # create particles, create resistance and
     # entrainment matrix, initialize fields, get normals and neighbours
-    particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGen, relRaster, dem)
+    particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGen, relRaster, dem, avalancheDir)
 
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # ------------------------

@@ -132,12 +132,12 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
     ax[0].set_xlabel('Location across track [nrows]')
     ax[0].set_ylabel('Result parameter')
-    ax[0].set_title('Cross profile at y =  %d' % ny_loc)
+    ax[0].set_title('Cross profile at x =  %d' % ny_loc)
     ax[1].plot(data1[nx_loc, :], 'k', label='Reference')
     ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
     ax[1].set_xlabel('Location along track [ncols]')
     ax[1].set_ylabel('Result parameter')
-    ax[1].set_title('Long profile at x =  %d' % nx_loc)
+    ax[1].set_title('Long profile at y =  %d' % nx_loc)
     ax[0].legend()
     ax[1].legend()
     fig.savefig(os.path.join(outDir, 'Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
@@ -295,8 +295,9 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     log.info('input dataset #2 is %s' % name2)
 
     # Load data
-    data1 = np.loadtxt(datafiles[0], skiprows=6)
-    data2 = np.loadtxt(datafiles[1], skiprows=6)
+    raster = IOf.readRaster(datafiles[1])
+    rasterRef = IOf.readRaster(datafiles[0])
+    data1, data2 = geoTrans.resizeData(raster, rasterRef)
     header = IOf.readASCheader(datafiles[0])
     cellSize = header.cellsize
 

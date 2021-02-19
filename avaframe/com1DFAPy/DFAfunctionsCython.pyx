@@ -158,6 +158,7 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
   cdef double R = cfg.getfloat('R')
   cdef double rho = cfg.getfloat('rho')
   cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef int frictType = cfg.getint('frictType')
   cdef int interpOption = cfg.getint('interpOption')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
@@ -174,8 +175,6 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
   cdef double[:] forceY = np.zeros(Npart, dtype=np.float64)
   cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
   cdef double[:] forceFrict = np.zeros(Npart, dtype=np.float64)
-  # cdef double[:] forceFrictY = np.zeros(Npart, dtype=np.float64)
-  # cdef double[:] forceFrictZ = np.zeros(Npart, dtype=np.float64)
   cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
 
   cdef double[:] mass = particles['m']
@@ -213,15 +212,7 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
       # get normal at the particle location
       nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
       nx, ny, nz = normalize(nx, ny, nz)
-      # get velocity magnitude and direction
-      uMag = norm(ux, uy, uz)
-      if uMag>0:
-        uxDir, uyDir, uzDir = normalize(ux, uy, uz)
-      # else:
-      #   ux = 1
-      #   uy = 0
-      #   uz = -(1*nx + 0*ny) / nz
-      #   uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+
 
       # add artificial viscosity
       vMeanx, vMeany, vMeanz = getVector(x, y, VX, VY, VZ, csz, interpOption)
@@ -237,6 +228,25 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
       Alat = 2.0 * math.sqrt((m * h) / rho)
       fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
 
+      # update velocity with artificial viscosity - implicit method
+      ux = ux + fDrag * vMeanx
+      uy = uy + fDrag * vMeany
+      uz = uz + fDrag * vMeanz
+      ux = ux / (1.0 + fDrag)
+      uy = uy / (1.0 + fDrag)
+      uz = uz / (1.0 + fDrag)
+
+      # get velocity magnitude and direction
+      uMag = norm(ux, uy, uz)
+      if uMag>velMagMin:
+        uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+      else:
+        uMag = velMagMin
+      #   ux = 1
+      #   uy = 0
+      #   uz = -(1*nx + 0*ny) / nz
+      #   uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+      
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
       yEnd = y + dt * uy
@@ -282,18 +292,12 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
 
       # adding bottom shear resistance contribution
       forceBotTang = - A * tau
-      forceFrict[j] = forceFrict[j] - forceBotTang
+
+      forceFrict[j] =  forceFrict[j] - forceBotTang / uMag
       # forceFrictX[j] = forceFrictX[j] + forceBotTang * uxDir
       # forceFrictY[j] = forceFrictY[j] + forceBotTang * uyDir
       # forceFrictZ[j] = forceFrictZ[j] + forceBotTang * uzDir
 
-      # update velocity with artificial viscosity - implicit method
-      ux = ux + fDrag * vMeanx
-      uy = uy + fDrag * vMeany
-      uz = uz + fDrag * vMeanz
-      ux = ux / (1.0 + fDrag)
-      uy = uy / (1.0 + fDrag)
-      uz = uz / (1.0 + fDrag)
       UX[j] = ux
       UY[j] = uy
       UZ[j] = uz
@@ -309,8 +313,6 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
   particles['uy'] = np.asarray(UY)
   particles['uz'] = np.asarray(UZ)
 
-  # force['forceFrictY'] = np.asarray(forceFrictY)
-  # force['forceFrictZ'] = np.asarray(forceFrictZ)
   return particles, force
 
 
@@ -342,6 +344,7 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double stopCrit = cfg.getfloat('stopCrit')
   log.debug('dt used now is %f' % DT)
   cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double rho = cfg.getfloat('rho')
   cdef int interpOption = cfg.getint('interpOption')
   cdef double csz = dem['header'].cellsize
@@ -412,24 +415,27 @@ def updatePositionC(cfg, particles, dem, force):
     uyNew = uy + ForceDriveY * dt / m
     uzNew = uz + ForceDriveZ * dt / m
     uMagNew = norm(uxNew, uyNew, uzNew)
-    # will friction force stop the particle
-    if uMagNew<dt*forceFrict[j]/m:
-      # stop the particle
-      uxNew = 0
-      uyNew = 0
-      uzNew = 0
-      # particle stops after
-      if uMag<=0:
-        dtStop = 0
-      else:
-        dtStop = m * uMagNew / (dt * forceFrict[j])
-    else:
+
+    # # will friction force stop the particle
+    # if uMagNew<dt*forceFrict[j]*uMagNew/m:
+    #   # stop the particle
+    #   uxNew = 0
+    #   uyNew = 0
+    #   uzNew = 0
+    #   # particle stops after
+    #   if uMag<=0:
+    #     dtStop = 0
+    #   else:
+    #     dtStop = m * uMagNew / (dt * forceFrict[j])
+    # else:
       # add friction force in the opposite direction of the motion
-      xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
-      uxNew = uxNew - xDir * forceFrict[j] * dt / m
-      uyNew = uyNew - yDir * forceFrict[j] * dt / m
-      uzNew = uzNew - zDir * forceFrict[j] * dt / m
-      dtStop = dt
+    xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
+    uxNew = uxNew / (1.0 + dt * forceFrict[j] / m)
+    uyNew = uyNew / (1.0 + dt * forceFrict[j] / m)
+    uzNew = uzNew / (1.0 + dt * forceFrict[j] / m)
+
+    # print('uMagNew', uMagNew, forceFrictX[j], forceFrictY[j], forceFrictZ[j])
+    dtStop = dt
 
     # update mass
     mNew = m + dM[j]
@@ -450,7 +456,18 @@ def updatePositionC(cfg, particles, dem, force):
     uxNew = uxNew - uN * nx
     uyNew = uyNew - uN * ny
     uzNew = uzNew - uN * nz
+
+    # velocity magnitude new
+    uMagNew = norm(uxNew, uyNew, uzNew)
+
+    if uMag > 0.0:
+      # ensure that velocitity magnitude stays the same also after reprojection onto terrain
+      uxNew = uxNew * uMag / (uMagNew + velMagMin)
+      uyNew = uyNew * uMag / (uMagNew + velMagMin)
+      uzNew = uzNew * uMag / (uMagNew + velMagMin)
+
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
+    # print('totkinet', TotkinEneNew, uMag)
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
     XNew[j] = xNew
     YNew[j] = yNew
