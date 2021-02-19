@@ -94,8 +94,8 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
       Ly = (yy - yllc0) / csz0
 
       # find coordinates of the 4 nearest cornes on the raster
-      Lx0 = <int>Lx
-      Ly0 = <int>Ly
+      Lx0 = <int>math.floor(Lx)
+      Ly0 = <int>math.floor(Ly)
       Lx1 = Lx0 + 1
       Ly1 = Ly0 + 1
       # prepare for bilinear interpolation
@@ -1365,8 +1365,8 @@ cdef (int, int, int, int, double, double, double, double) getWeights(double x, d
   Lx = (x - xllc) / csz
   Ly = (y - yllc) / csz
   # find coordinates of the 4 nearest cornes on the raster
-  Lx0 = <int>Lx
-  Ly0 = <int>Ly
+  Lx0 = <int>math.floor(Lx)
+  Ly0 = <int>math.floor(Ly)
   Lx1 = Lx0 + 1
   Ly1 = Ly0 + 1
   # prepare for bilinear interpolation
