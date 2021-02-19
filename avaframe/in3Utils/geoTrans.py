@@ -204,7 +204,7 @@ def resizeData(raster, rasterRef):
         ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
         X, Y = np.meshgrid(xgrid, ygrid)
         Points = {'x': X, 'y': Y}
-        Points, _ = projectOnRasterVect(raster, Points, interp='bilinear')
+        Points, _ = projectOnRaster(raster, Points, interp='bilinear')
         raster['rasterData'] = Points['z']
         return raster['rasterData'], rasterRef['rasterData']
 
