@@ -186,7 +186,7 @@ def initializeSimulation(cfg, relRaster, dem):
         IndY = np.append(IndY, np.ones(nPart)*indRely)
         InCell = np.append(InCell, np.ones(nPart)*ic)
 
-    Hpart, _ = geoTrans.projectOnRasterRoot(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
+    Hpart, _ = geoTrans.projectOnGrid(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
     Mpart = rho * Hpart * Apart
     # create dictionnary to store particles properties
     particles = {}

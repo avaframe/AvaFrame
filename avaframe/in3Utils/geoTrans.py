@@ -31,14 +31,14 @@ def projectOnRaster(dem, Points, interp='bilinear'):
     xcoor = Points['x']
     ycoor = Points['y']
 
-    zcoor, ioob = projectOnRasterRoot(xcoor, ycoor, rasterdata,
+    zcoor, ioob = projectOnGrid(xcoor, ycoor, rasterdata,
                                                 csz=cellsize, xllc=xllc,
                                                 yllc=yllc, interp=interp)
     Points['z'] = zcoor
     return Points, ioob
 
 
-def projectOnRasterRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
+def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     """
     Projects the points Points on Raster using a bilinear or nearest
     interpolation and returns the z coord
@@ -112,66 +112,6 @@ def projectOnRasterRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
         z = f11*(1-dx)*(1-dy) + f21*dx*(1-dy) + f12*(1-dx)*dy + f22*dx*dy
 
     return z, ioob
-
-
-def pointsToRaster(x, y, z, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
-    """
-    Interpolate unstructured points on a structured grid (nearest or bilinear
-    interpolation possible)
-    The (x, y) points have to be on the extend of the DEM!!
-    Input :
-    Points: (x, y) coord of the points
-    Output:
-    PointsZ: z coord of the points
-    """
-    nrow, ncol = np.shape(Z)
-
-    # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-    Lx = (x - xllc) / csz
-    Ly = (y - yllc) / csz
-
-    # find coordinates of the 4 nearest cornes on the raster
-    Lx0 = np.floor(Lx).astype('int')
-    Ly0 = np.floor(Ly).astype('int')
-    Lx1 = Lx0 + 1
-    Ly1 = Ly0 + 1
-    # prepare for bilinear interpolation
-    if interp == 'nearest':
-        Lx = np.round(Lx)
-        Ly = np.round(Ly)
-        Z = Z.flatten()
-        ic = (Lx + ncol * Ly).astype('int')
-        np.add.at(Z, ic, z)
-    elif interp == 'bilinear':
-        dx = Lx - Lx0
-        dy = Ly - Ly0
-
-        Z = Z.flatten()
-        # add the component of the points value to the 4 neighbour grid points
-        # start with the lower left
-        f11 = z*(1-dx)*(1-dy)
-        f11 = f11.flatten()
-        ic = Lx0 + ncol * Ly0
-        np.add.at(Z, ic, f11)
-        # lower right
-        f21 = z*dx*(1-dy)
-        f21 = f21.flatten()
-        ic = Lx1 + ncol * Ly0
-        np.add.at(Z, ic, f21)
-        # uper left
-        f12 = z*(1-dx)*dy
-        f12 = f12.flatten()
-        ic = Lx0 + ncol * Ly1
-        np.add.at(Z, ic, f12)
-        # and uper right
-        f22 = z*dx*dy
-        f22 = f22.flatten()
-        ic = Lx1 + ncol * Ly1
-        np.add.at(Z, ic, f22)
-
-    Z = np.reshape(Z, (nrow, ncol))
-
-    return Z
 
 
 def resizeData(raster, rasterRef):

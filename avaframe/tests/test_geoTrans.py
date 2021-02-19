@@ -50,29 +50,6 @@ def test_projectOnRaster(capfd):
     assert (testRes)
 
 
-def test_pointsToRaster(capfd):
-    '''pointsToRaster'''
-
-    rasterdata = np.array(([0., 0., 0., 0.], [0., 0., 0., 0.], [0., 0., 0., 0.]))
-    x = np.array((0.4, 0, 0.5, 1.6, 2.4, 2.4, 1.4))
-    y = np.array((0, 1.4, 0.5, 0.6, 0.4, 1.4, 1.4))
-    z = np.array((1., 1., 1., 1., 1., 1., 1.))
-
-    Z = geoTrans.pointsToRaster(x, y, z, rasterdata, csz=1, xllc=0, yllc=0, interp='bilinear')
-    zSol = np.array(([0.85, 0.81, 0.6, 0.24], [0.85, 0.85, 1.2, 0.4], [0.4, 0.24, 0.4, 0.16]))
-    print(Z)
-    tol = 1e-8
-    testRes = np.allclose(Z, zSol, atol=tol)
-    assert (testRes)
-
-    Z = geoTrans.pointsToRaster(x, y, z, rasterdata, csz=1, xllc=0, yllc=0, interp='nearest')
-    zSol = np.array(([2, 0, 1, 0], [1, 1, 2, 0], [0, 0, 0, 0]))
-    print(Z)
-    tol = 1e-8
-    testRes = np.allclose(Z, zSol, atol=tol)
-    assert (testRes)
-
-
 def test_resizeData(capfd):
     '''resizeData'''
     a = 2
