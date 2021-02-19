@@ -30,7 +30,6 @@ def projectOnRaster(dem, Points, interp='bilinear'):
     cellsize = header.cellsize
     xcoor = Points['x']
     ycoor = Points['y']
-    zcoor = np.array([])
 
     zcoor, ioob = projectOnRasterRoot(xcoor, ycoor, rasterdata,
                                                 csz=cellsize, xllc=xllc,

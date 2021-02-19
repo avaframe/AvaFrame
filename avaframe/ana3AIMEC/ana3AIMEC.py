@@ -604,8 +604,7 @@ def transform(fname, rasterTransfo, interpMethod):
     Points['x'] = xx.flatten()
     Points['y'] = yy.flatten()
     iib = len(Points['x'])
-    Points, ioob = geoTrans.projectOnRaster(data, Points,
-                                                     interp=interpMethod)
+    Points, ioob = geoTrans.projectOnRaster(data, Points, interp=interpMethod)
     newData = Points['z'].reshape(n, m)
     log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
              (name, iib-ioob, ioob))
