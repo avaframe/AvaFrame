@@ -477,7 +477,7 @@ def updatePositionC(cfg, particles, dem, force):
     particles['iterate'] = False
 
   # make sure particle is on the mesh (recompute the z component)
-  # particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+  # particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
   #################################################################
   # this is dangerous!!!!!!!!!!!!!!
   ###############################################################

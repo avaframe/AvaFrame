@@ -13,7 +13,7 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def projectOnRasterVect(dem, Points, interp='bilinear'):
+def projectOnRaster(dem, Points, interp='bilinear'):
     """
     Projects the points Points on Raster using a bilinear or nearest
     interpolation and returns the z coord (no for loop)
@@ -32,14 +32,14 @@ def projectOnRasterVect(dem, Points, interp='bilinear'):
     ycoor = Points['y']
     zcoor = np.array([])
 
-    zcoor, ioob = projectOnRasterVectRoot(xcoor, ycoor, rasterdata,
+    zcoor, ioob = projectOnRasterRoot(xcoor, ycoor, rasterdata,
                                                 csz=cellsize, xllc=xllc,
                                                 yllc=yllc, interp=interp)
     Points['z'] = zcoor
     return Points, ioob
 
 
-def projectOnRasterVectRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
+def projectOnRasterRoot(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
     """
     Projects the points Points on Raster using a bilinear or nearest
     interpolation and returns the z coord
@@ -255,7 +255,7 @@ def prepareLine(dem, avapath, distance=10, Point=None):
     ResampAvaPath = avapath
     ResampAvaPath['x'] = xcoornew
     ResampAvaPath['y'] = ycoornew
-    ResampAvaPath, _ = projectOnRasterVect(dem, ResampAvaPath)
+    ResampAvaPath, _ = projectOnRaster(dem, ResampAvaPath)
     ResampAvaPath['s'] = s
     AvaProfile = ResampAvaPath
     # find split point by computing the distance to the line
