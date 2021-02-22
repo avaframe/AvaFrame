@@ -112,7 +112,7 @@ def initializeMesh(dem, num=4):
     return dem
 
 
-def initializeSimulation(cfg, relRaster, dem):
+def initializeSimulation(cfg, relRaster, dem, Ment, Cres):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -140,6 +140,7 @@ def initializeSimulation(cfg, relRaster, dem):
     """
     # get simulation parameters
     rho = cfg.getfloat('rho')
+    rhoEnt = cfg.getfloat('rhoEnt')
     gravAcc = cfg.getfloat('gravAcc')
     massPerPart = cfg.getfloat('massPerPart')
     avaDir = cfg['avalancheDir']
@@ -245,9 +246,6 @@ def initializeSimulation(cfg, relRaster, dem):
     particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
     particles['peakKinEne'] = kineticEne
 
-    # initialize entrainment and resistance
-    Ment = intializeMassEnt(dem)
-    Cres = intializeResistance(dem)
     PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
     fields = {}
@@ -260,6 +258,8 @@ def initializeSimulation(cfg, relRaster, dem):
     fields['Vx'] = PFV
     fields['Vy'] = PFV
     fields['Vz'] = PFV
+    fields['Ment'] = Ment*rhoEnt*A
+    fields['Cres'] = Cres
 
     particles = DFAfunC.getNeighboursC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
@@ -302,7 +302,7 @@ def initializeSimulation(cfg, relRaster, dem):
         pU.addColorBar(im, ax, None, 'm²')
         plt.show()
 
-    return particles, fields, Cres, Ment
+    return particles, fields
 
 
 def placeParticles(mass, indx, indy, csz, massPerPart):
@@ -375,7 +375,7 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
     return xpart, ypart, mPart, nPart
 
 
-def intializeMassEnt(dem):
+def intializeMassEnt(dem, flagEntRes, entLine):
     """ Intialize mass for entrainment
 
     Parameters
@@ -392,11 +392,17 @@ def intializeMassEnt(dem):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    Ment = np.zeros((nrows, ncols))
+    if flagEntRes and entLine:
+        # entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
+        entrainmentArea = entLine['Name']
+        log.info('Entrainment area: %s' % (entrainmentArea))
+        Ment = prepareArea(entLine, dem)
+    else:
+        Ment = np.zeros((nrows, ncols))
     return Ment
 
 
-def intializeResistance(dem):
+def intializeResistance(cfg, dem, flagEntRes, resLine):
     """ Intialize resistance matrix
 
     Parameters
@@ -409,15 +415,25 @@ def intializeResistance(dem):
     Cres : 2D numpy array
         raster of resistance coefficients
     """
+    d = cfg.getfloat('dRes')
+    cw = cfg.getfloat('cw')
+    sres = cfg.getfloat('sres')
     # read dem header
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    Cres = np.zeros((nrows, ncols))
+    if flagEntRes and resLine:
+        # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
+        resistanceArea = resLine['Name']
+        log.info('Resistance area: %s' % (resistanceArea))
+        Cres = prepareArea(resLine, dem)
+        Cres = 0.5 * d * cw / (sres*sres) * Cres
+    else:
+        Cres = np.zeros((nrows, ncols))
     return Cres
 
 
-def DFAIterate(cfg, particles, fields, dem, Ment, Cres):
+def DFAIterate(cfg, particles, fields, dem):
     """ Perform time loop for DFA simulation
 
      Save results at desired intervals
@@ -432,10 +448,6 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres):
         fields dictionary at initial time step
     dem : dict
         dictionary with dem information
-    Ment : 2D numpy array
-        entrained mass raster
-    Cres : 2D numpy array
-        resistance raster
     Tcpu : dict
         computation time dictionary
 
@@ -508,10 +520,10 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres):
         # Perform computations
         if featLF:
             particles, fields, Tcpu, dt = computeLeapFrogTimeStep(
-                cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+                cfg, particles, fields, dt, dem, Tcpu)
         else:
             particles, fields, Tcpu = computeEulerTimeStep(
-                cfg, particles, fields, dt, dem, Ment, Cres, Tcpu)
+                cfg, particles, fields, dt, dem, Tcpu)
 
 
         T = np.append(T, t)
@@ -553,7 +565,7 @@ def DFAIterate(cfg, particles, fields, dem, Ment, Cres):
     return Tsave, T, U, Z, S, Particles, Fields, Tcpu
 
 
-def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
+def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     """ compute next time step using an euler forward scheme
 
 
@@ -588,7 +600,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     # get forces
     startTime = time.time()
     # loop version of the compute force
-    particles, force = DFAfunC.computeForceC(cfg, particles, fields, dem, Ment, Cres, dt)
+    particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, dt)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
 
@@ -650,7 +662,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
     return particles, fields, Tcpu
 
 
-def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Ment, Cres, Tcpu):
+def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     """ compute next time step using a Leap Frog scheme
 
 
@@ -1126,6 +1138,37 @@ def removePart(particles, mask, nRemove):
     return particles
 
 
+def splitPart(cfg, particles, dem):
+    massPerPart = cfg.getfloat('massPerPart')
+    m = particles['m']
+    nSplit = np.round(m/massPerPart)
+    Ind = np.where(nSplit > 1)[0]
+    if np.size(Ind) > 0:
+        for ind in Ind:
+            mNew = m[ind] / nSplit[ind]
+            nAdd = (nSplit[ind]-1).astype('int')
+            log.info('Spliting particle %s in %s' % (ind, nAdd+1))
+
+            particles['Npart'] = particles['Npart'] + nAdd
+            particles['NPPC'] = np.append(particles['NPPC'], particles['NPPC'][ind]*np.ones((nAdd)))
+            particles['x'] = np.append(particles['x'], particles['x'][ind]*np.ones((nAdd)))
+            particles['y'] = np.append(particles['y'], particles['y'][ind]*np.ones((nAdd)))
+            particles['z'] = np.append(particles['z'], particles['z'][ind]*np.ones((nAdd)))
+            particles['s'] = np.append(particles['s'], particles['s'][ind]*np.ones((nAdd)))
+            particles['ux'] = np.append(particles['ux'], particles['ux'][ind]*np.ones((nAdd)))
+            particles['uy'] = np.append(particles['uy'], particles['uy'][ind]*np.ones((nAdd)))
+            particles['uz'] = np.append(particles['uz'], particles['uz'][ind]*np.ones((nAdd)))
+            particles['m'] = np.append(particles['m'], mNew*np.ones((nAdd)))
+            particles['m'][ind] = mNew
+            particles['h'] = np.append(particles['h'], particles['h'][ind]*np.ones((nAdd)))
+            particles['InCell'] = np.append(particles['InCell'], particles['InCell'][ind]*np.ones((nAdd)))
+            particles['indX'] = np.append(particles['indX'], particles['indX'][ind]*np.ones((nAdd)))
+            particles['indY'] = np.append(particles['indY'], particles['indY'][ind]*np.ones((nAdd)))
+            particles['partInCell'] = np.append(particles['partInCell'], particles['partInCell'][ind]*np.ones((nAdd)))
+
+    return particles
+
+
 def savePartToPickle(dictList, outDir):
     """ Save each dictionary from a list to a pickle in outDir; works also for one dictionary instead of list
 
@@ -1228,7 +1271,7 @@ def analysisPlots(Particles, Fields, cfg, demOri, dem, outDir):
     rho = cfgGen.getfloat('rho')
     gravAcc = cfgGen.getfloat('gravAcc')
     mu = cfgGen.getfloat('mu')
-    repeat = False
+    repeat = True
     while repeat:
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         T = np.array([0])

@@ -78,6 +78,18 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
     demOri = IOf.readRaster(demFile)
     # derive line from release area polygon
     releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
+    # derive line from entrainement area polygon
+    if entFiles:
+        entLine = shpConv.readLine(entFiles, '', demOri)
+        entLine['Name'] = [os.path.splitext(os.path.basename(entFiles))[0]]
+    else:
+        entLine = None
+    # derive line from resistance area polygon
+    if resFile:
+        resLine = shpConv.readLine(resFile, '', demOri)
+        resLine['Name'] = [os.path.splitext(os.path.basename(resLine))[0]]
+    else:
+        resLine = None
     dem = setDEMorigin(demOri)
 
     # -----------------------
@@ -91,18 +103,21 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
 
     relRaster = relRaster * relTh
 
+    # initialize entrainment and resistance
+    Ment = com1DFA.intializeMassEnt(demOri, flagEntRes, entLine)
+    Cres = com1DFA.intializeResistance(cfgGen, demOri, flagEntRes, resLine)
     # ------------------------
     # initialize simulation : create directories
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
     # create particles, create resistance and
     # entrainment matrix, initialize fields, get normals and neighbours
-    particles, fields, Cres, Ment = com1DFA.initializeSimulation(cfgGen, relRaster, dem)
+    particles, fields = com1DFA.initializeSimulation(cfgGen, relRaster, dem, Ment, Cres)
 
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # ------------------------
     #  Start time step computation
     Tsave, T, U, Z, S, Particles, Fields, Tcpu = com1DFA.DFAIterate(
-        cfgGen, particles, fields, dem, Ment, Cres)
+        cfgGen, particles, fields, dem)
 
     tcpuDFA = time.time() - startTime
     log.info(('cpu time DFA = %s s' % (tcpuDFA)))
