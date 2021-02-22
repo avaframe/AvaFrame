@@ -87,7 +87,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
     # derive line from resistance area polygon
     if resFile:
         resLine = shpConv.readLine(resFile, '', demOri)
-        resLine['Name'] = [os.path.splitext(os.path.basename(resLine))[0]]
+        resLine['Name'] = [os.path.splitext(os.path.basename(resFile))[0]]
     else:
         resLine = None
     dem = setDEMorigin(demOri)
@@ -111,7 +111,10 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
     # create particles, create resistance and
     # entrainment matrix, initialize fields, get normals and neighbours
-    particles, fields = com1DFA.initializeSimulation(cfgGen, relRaster, dem, Ment, Cres)
+    partDirName = ''
+    if cfgGen.getboolean('initialiseParticlesFromFile'):
+        partDirName = os.path.splitext(os.path.basename(relFiles[0]))[0] + '_null_dfa_' + cfgGen['mu']
+    particles, fields = com1DFA.initializeSimulation(cfgGen, relRaster, dem, Ment, Cres, partDirName=partDirName)
 
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # ------------------------

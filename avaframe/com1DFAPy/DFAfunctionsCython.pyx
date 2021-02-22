@@ -124,9 +124,9 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 
     return Z1
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
-# @cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def computeForceC(cfg, particles, fields, dem, dT):
   """ compute forces acting on the particles (without the SPH component)
 
@@ -290,6 +290,8 @@ def computeForceC(cfg, particles, fields, dem, dT):
           elif frictType == 2:
             # coulomb friction type (bottom shear stress)
             tau = mu * sigmaB
+          else:
+            tau = 0.0
 
       # adding bottom shear resistance contribution
       forceBotTang = - A * tau
@@ -333,8 +335,6 @@ def computeForceC(cfg, particles, fields, dem, dT):
 
   fields['Ment'] = np.asarray(Ment)
 
-  # force['forceFrictY'] = np.asarray(forceFrictY)
-  # force['forceFrictZ'] = np.asarray(forceFrictZ)
   return particles, force, fields
 
 
@@ -418,7 +418,8 @@ cdef double computeResForce(double hRes, double h, double A, double rho, double 
   Cres : float
       resistance component
   """
-  cdef double hResEff, Cres
+  cdef double hResEff = hRes
+  cdef double Cres
   if(h < hRes):
       hResEff = h
   Cres = - rho * A * hResEff * cres * uMag
@@ -498,6 +499,7 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, dtStop
   cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN, uMag, uMagNew
+  cdef double Ment = 0
   cdef int j
   # loop on particles
   for j in range(Npart):
@@ -524,36 +526,16 @@ def updatePositionC(cfg, particles, dem, force):
     uxNew = ux + ForceDriveX * dt / m
     uyNew = uy + ForceDriveY * dt / m
     uzNew = uz + ForceDriveZ * dt / m
-    # uMagNew = norm(uxNew, uyNew, uzNew)
-    # # will friction force stop the particle
-    # if uMagNew<dt*forceFrict[j]/m:
-    #   # stop the particle
-    #   uxNew = 0
-    #   uyNew = 0
-    #   uzNew = 0
-    #   # particle stops after
-    #   if uMag<=0:
-    #     dtStop = 0
-    #   else:
-    #     dtStop = m * uMagNew / (dt * forceFrict[j])
-    # else:
-    #   # add friction force in the opposite direction of the motion
-    #   xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
-    #   uxNew = uxNew - xDir * forceFrict[j] * dt / m
-    #   uyNew = uyNew - yDir * forceFrict[j] * dt / m
-    #   uzNew = uzNew - zDir * forceFrict[j] * dt / m
-    #   dtStop = dt
 
     xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
     uxNew = uxNew / (1.0 + dt * forceFrict[j] / m)
     uyNew = uyNew / (1.0 + dt * forceFrict[j] / m)
     uzNew = uzNew / (1.0 + dt * forceFrict[j] / m)
-    uMagNew = norm(uxNew, uyNew, uzNew)
-    # print('uMagNew', uMagNew, forceFrictX[j], forceFrictY[j], forceFrictZ[j])
     dtStop = dt
 
-    # update mass
+    # update mass (already done un computeForceC)
     mNew = m
+    Ment = Ment + dM[j]
     # update position
     xNew = x + dtStop * 0.5 * (ux + uxNew)
     yNew = y + dtStop * 0.5 * (uy + uyNew)
@@ -601,6 +583,7 @@ def updatePositionC(cfg, particles, dem, force):
   particles['x'] = np.asarray(XNew)
   particles['y'] = np.asarray(YNew)
   particles['z'] = np.asarray(ZNew)
+  log.debug('Entrained DFA mass: %s kg', np.asarray(Ment))
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew
   if peakKinEne < TotkinEneNew:

@@ -112,7 +112,7 @@ def initializeMesh(dem, num=4):
     return dem
 
 
-def initializeSimulation(cfg, relRaster, dem, Ment, Cres):
+def initializeSimulation(cfg, relRaster, dem, Ment, Cres, partDirName=''):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -160,12 +160,13 @@ def initializeSimulation(cfg, relRaster, dem, Ment, Cres):
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
         log.info('Initial particle distribution read from file!!')
-        inDirPart = os.path.join(avaDir, 'Inputs', 'particles')
+        inDirPart = os.path.join(avaDir, 'Inputs', 'particles', partDirName)
         Particles, TimeStepInfo = readPartFromPickle(inDirPart)
         particles = Particles[0]
         Xpart = particles['x']
         Mpart = particles['m']
         Hpart = np.ones(len(Xpart))
+        NPPC = np.ones(len(Xpart))
         particles['Npart'] = len(Xpart)
         particles = DFAfunC.getNeighboursC(particles, dem)
         particles['s'] = np.zeros(np.shape(Xpart))
@@ -214,7 +215,6 @@ def initializeSimulation(cfg, relRaster, dem, Ment, Cres):
         # create dictionnary to store particles properties
         particles = {}
         particles['Npart'] = Npart
-        particles['NPPC'] = NPPC
         particles['x'] = Xpart
         particles['y'] = Ypart
         particles['s'] = np.zeros(np.shape(Xpart))
@@ -229,6 +229,7 @@ def initializeSimulation(cfg, relRaster, dem, Ment, Cres):
 
     particles['mTot'] = np.sum(particles['m'])
     particles['h'] = Hpart
+    particles['NPPC'] = NPPC
     particles['hNearestNearest'] = Hpart
     particles['hNearestBilinear'] = Hpart
     particles['hBilinearNearest'] = Hpart
