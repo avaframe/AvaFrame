@@ -15,6 +15,8 @@ from avaframe.in2Trans import ascUtils as aU
 from avaframe.in3Utils import initialiseDirs as iD
 from avaframe.in1Data import getInput as gI
 from avaframe.in2Trans import shpConversion as sP
+import avaframe.com1DFAPy.com1DFA as com1DFAPy
+import avaframe.in2Trans.ascUtils as IOf
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -227,7 +229,6 @@ def com1DFAMain(cfg, avaDir):
             copyReplace(workFile, workFile, '##VARPAR##', cfgPar['varPar'])
             copyReplace(workFile, workFile, '##VALUE##', defValues[cfgPar['varPar']])
             execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
-
             # Create dictionary
             reportNull = {}
             reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
@@ -322,6 +323,8 @@ def com1DFAMain(cfg, avaDir):
                 copyReplace(workFile, workFile, '##VARPAR##', 'Mu')
                 copyReplace(workFile, workFile, '##VALUE##', defValues['Mu'])
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
+                # save initial particle distribution
+                saveInitialParticleDistribution(avaDir, logName, dem)
 
                 # Create dictionary
                 reportST = {}
@@ -364,3 +367,31 @@ def com1DFAMain(cfg, avaDir):
     log.info('Exported results to Outputs/com1DFA')
 
     return reportDictList
+
+
+def saveInitialParticleDistribution(avaDir, simName, dem):
+    x = np.empty(0)
+    y = np.empty(0)
+    z = np.empty(0)
+    m = np.empty(0)
+    DEM = IOf.readRaster(dem)
+    header = DEM['header']
+    # Read log file
+    fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName))
+    with open(fileName, 'r') as file:
+        for line in file:
+            if "IPD" in line:
+                ltime = line.split(', ')
+                x = np.append(x, float(ltime[1]))
+                y = np.append(y, float(ltime[2]))
+                z = np.append(z, float(ltime[3]))
+                m = np.append(m, float(ltime[4]))
+
+    x = x - header.xllcenter
+    y = y - header.yllcenter
+    particles = {'t': 0.0, 'x': x, 'y': y, 'z': z, 'm': m}
+
+    partDit = os.path.join(os.getcwd(), avaDir, 'Inputs', 'particles', simName)
+    fU.makeADir(partDit)
+    # partFileName = os.path.join(partDit, '%s' % (simName))
+    com1DFAPy.savePartToPickle(particles, partDit)
