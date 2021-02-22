@@ -238,15 +238,9 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
 
       # get velocity magnitude and direction
       uMag = norm(ux, uy, uz)
-      if uMag>velMagMin:
-        uxDir, uyDir, uzDir = normalize(ux, uy, uz)
-      else:
+      if uMag<velMagMin:
         uMag = velMagMin
-      #   ux = 1
-      #   uy = 0
-      #   uz = -(1*nx + 0*ny) / nz
-      #   uxDir, uyDir, uzDir = normalize(ux, uy, uz)
-      
+
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
       yEnd = y + dt * uy
@@ -294,9 +288,6 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
       forceBotTang = - A * tau
 
       forceFrict[j] =  forceFrict[j] - forceBotTang / uMag
-      # forceFrictX[j] = forceFrictX[j] + forceBotTang * uxDir
-      # forceFrictY[j] = forceFrictY[j] + forceBotTang * uyDir
-      # forceFrictZ[j] = forceFrictZ[j] + forceBotTang * uzDir
 
       UX[j] = ux
       UY[j] = uy
@@ -416,19 +407,7 @@ def updatePositionC(cfg, particles, dem, force):
     uzNew = uz + ForceDriveZ * dt / m
     uMagNew = norm(uxNew, uyNew, uzNew)
 
-    # # will friction force stop the particle
-    # if uMagNew<dt*forceFrict[j]*uMagNew/m:
-    #   # stop the particle
-    #   uxNew = 0
-    #   uyNew = 0
-    #   uzNew = 0
-    #   # particle stops after
-    #   if uMag<=0:
-    #     dtStop = 0
-    #   else:
-    #     dtStop = m * uMagNew / (dt * forceFrict[j])
-    # else:
-      # add friction force in the opposite direction of the motion
+    # add friction force in the opposite direction of the motion
     xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
     uxNew = uxNew / (1.0 + dt * forceFrict[j] / m)
     uyNew = uyNew / (1.0 + dt * forceFrict[j] / m)
