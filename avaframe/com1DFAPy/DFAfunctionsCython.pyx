@@ -124,10 +124,10 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 
     return Z1
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
+def computeForceC(cfg, particles, fields, dem, dT):
   """ compute forces acting on the particles (without the SPH component)
 
   Cython implementation implementation
@@ -156,7 +156,10 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
   cdef double kappa = cfg.getfloat('kappa')
   cdef double B = cfg.getfloat('B')
   cdef double R = cfg.getfloat('R')
+  cdef double entEroEnergy = cfg.getfloat('entEroEnergy')
   cdef double rho = cfg.getfloat('rho')
+  cdef double rhoEnt = cfg.getfloat('rhoEnt')
+  cdef double hRes = cfg.getfloat('hRes')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef int frictType = cfg.getint('frictType')
@@ -176,6 +179,7 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
   cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
   cdef double[:] forceFrict = np.zeros(Npart, dtype=np.float64)
   cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] M = np.zeros(Npart, dtype=np.float64)
 
   cdef double[:] mass = particles['m']
   cdef double[:] H = particles['h']
@@ -187,12 +191,15 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
   cdef double[:, :] VZ = fields['Vz']
+  cdef double[:, :] Ment = fields['Ment']
+  cdef double[:, :] Cres = fields['Cres']
   cdef long[:] IndCellX = particles['indX']
   cdef long[:] IndCellY = particles['indY']
   cdef long indCellX, indCellY
-  cdef double A, uMag, m, h, x, y, z, ux, uy, uz, nx, ny, nz
+  cdef double A, Aent, cres, uMag, m, dm, h, ment
   cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
-  cdef double uxDir, uyDir, uzDir, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
+  cdef double x, y, z, ux, uy, uz, uxDir, uyDir, uzDir
+  cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
   cdef int j
   force = {}
@@ -286,8 +293,28 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
 
       # adding bottom shear resistance contribution
       forceBotTang = - A * tau
+      forceFrict[j] = forceFrict[j] - forceBotTang/uMag
 
-      forceFrict[j] =  forceFrict[j] - forceBotTang / uMag
+      # compute entrained mass
+      ment = Ment[indCellY, indCellX]
+      dm, Aent = computeEntMassAndForce(dt, ment, A, uMag, tau, entEroEnergy, rhoEnt)
+      dM[j] = dm
+      # update velocity
+      ux = ux * m / (m + dm)
+      uy = uy * m / (m + dm)
+      uz = uz * m / (m + dm)
+      # update mass
+      m = m + dm
+      M[j] = m
+      ment = ment - dm
+      if ment < 0:
+        ment = 0
+      Ment[indCellY, indCellX] = ment
+
+      # adding resistance force du to obstacles
+      cres = Cres[indCellY][indCellX]
+      cres = computeResForce(hRes, h, A, rho, cres, uMag)
+      forceFrict[j] = forceFrict[j] + cres
 
       UX[j] = ux
       UY[j] = uy
@@ -298,13 +325,105 @@ def computeForceC(cfg, particles, fields, dem, Ment, Cres, dT):
   force['forceX'] = np.asarray(forceX)
   force['forceY'] = np.asarray(forceY)
   force['forceZ'] = np.asarray(forceZ)
-
   force['forceFrict'] = np.asarray(forceFrict)
   particles['ux'] = np.asarray(UX)
   particles['uy'] = np.asarray(UY)
   particles['uz'] = np.asarray(UZ)
+  particles['m'] = np.asarray(M)
 
-  return particles, force
+  fields['Ment'] = np.asarray(Ment)
+
+  # force['forceFrictY'] = np.asarray(forceFrictY)
+  # force['forceFrictZ'] = np.asarray(forceFrictZ)
+  return particles, force, fields
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef (double, double) computeEntMassAndForce(double dt, double ment, double A, double uMag, double tau, double entEroEnergy, double rhoEnt):
+  """ compute force component due to entrained mass
+
+  Parameters
+  ----------
+  ment : float
+      available mass for entrainement
+  A : float
+      particle area
+  uMag : float
+      particle speed (velocity magnitude)
+  tau : float
+      bottom shear stress
+
+  Returns
+  -------
+  dm : float
+      entrained mass
+  Aent : float
+      Area for entrainement energy loss computation
+  """
+  cdef double width, ABotSwiped, Aent
+  # compute entrained mass
+  cdef double dm = 0
+  if ment > 0:
+      # either erosion or ploughing but not both
+      # width of the particle
+      width = math.sqrt(A)
+      # bottom area covered by the particle during dt
+      ABotSwiped = width * uMag * dt
+      if(entEroEnergy > 0):
+          # erosion: erode according to shear and erosion energy
+          dm = A * tau * uMag * dt / entEroEnergy
+          Aent = A
+      else:
+          # ploughing in at avalanche front: erode full area weight
+          # mass available in the cell [kg/m²]
+          rhoHent = ment
+          dm = rhoHent * ABotSwiped
+          Aent = rhoHent / rhoEnt
+      # adding mass balance contribution
+
+      # adding force du to entrained mass
+      # Fent = width * (entShearResistance + dm / Aent * entDefResistance)
+      # fEntX = fEntX + Fent * uxDir
+      # fEntY = fEntY + Fent * uyDir
+      # fEntZ = fEntZ + Fent * uzDir
+
+  return dm, Aent
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef double computeResForce(double hRes, double h, double A, double rho, double cres, double uMag):
+  """ compute force component due to resistance
+
+  Parameters
+  ----------
+  hRes: float
+      resistance height
+  h : float
+      particle flow depth
+  A : float
+      particle area
+  rho : float
+      snow density
+  cres : float
+      resisance coefficient
+  uMag : float
+      particle speed (velocity magnitude)
+
+  Returns
+  -------
+  Cres : float
+      resistance component
+  """
+  cdef double hResEff, Cres
+  if(h < hRes):
+      hResEff = h
+  Cres = - rho * A * hResEff * cres * uMag
+  return Cres
+
 
 
 @cython.boundscheck(False)
@@ -405,19 +524,36 @@ def updatePositionC(cfg, particles, dem, force):
     uxNew = ux + ForceDriveX * dt / m
     uyNew = uy + ForceDriveY * dt / m
     uzNew = uz + ForceDriveZ * dt / m
-    uMagNew = norm(uxNew, uyNew, uzNew)
+    # uMagNew = norm(uxNew, uyNew, uzNew)
+    # # will friction force stop the particle
+    # if uMagNew<dt*forceFrict[j]/m:
+    #   # stop the particle
+    #   uxNew = 0
+    #   uyNew = 0
+    #   uzNew = 0
+    #   # particle stops after
+    #   if uMag<=0:
+    #     dtStop = 0
+    #   else:
+    #     dtStop = m * uMagNew / (dt * forceFrict[j])
+    # else:
+    #   # add friction force in the opposite direction of the motion
+    #   xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
+    #   uxNew = uxNew - xDir * forceFrict[j] * dt / m
+    #   uyNew = uyNew - yDir * forceFrict[j] * dt / m
+    #   uzNew = uzNew - zDir * forceFrict[j] * dt / m
+    #   dtStop = dt
 
-    # add friction force in the opposite direction of the motion
     xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
     uxNew = uxNew / (1.0 + dt * forceFrict[j] / m)
     uyNew = uyNew / (1.0 + dt * forceFrict[j] / m)
     uzNew = uzNew / (1.0 + dt * forceFrict[j] / m)
-
+    uMagNew = norm(uxNew, uyNew, uzNew)
     # print('uMagNew', uMagNew, forceFrictX[j], forceFrictY[j], forceFrictZ[j])
     dtStop = dt
 
     # update mass
-    mNew = m + dM[j]
+    mNew = m
     # update position
     xNew = x + dtStop * 0.5 * (ux + uxNew)
     yNew = y + dtStop * 0.5 * (uy + uyNew)
@@ -471,6 +607,7 @@ def updatePositionC(cfg, particles, dem, force):
     particles['peakKinEne'] = TotkinEneNew
   if TotkinEneNew <= stopCrit*peakKinEne:
     particles['iterate'] = False
+    log.info('stopping because of energy stopCriterion')
 
   # make sure particle is on the mesh (recompute the z component)
   # particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
@@ -479,6 +616,9 @@ def updatePositionC(cfg, particles, dem, force):
   ###############################################################
   # remove particles that are not located on the mesh any more
   particles = com1DFA.removeOutPart(cfg, particles, dem)
+
+  # split particles with too much mass
+  particles = com1DFA.splitPart(cfg, particles, dem)
   return particles
 
 @cython.boundscheck(False)
