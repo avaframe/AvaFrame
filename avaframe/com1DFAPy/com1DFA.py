@@ -50,6 +50,7 @@ featCFLConstrain = False
 seed = 12345
 rng = np.random.default_rng(seed)
 
+
 def initializeMesh(dem, num=4):
     """ Create rectangular mesh
 
@@ -111,7 +112,7 @@ def initializeMesh(dem, num=4):
     return dem
 
 
-def initializeSimulation(cfg, relRaster, dem, avaDir):
+def initializeSimulation(cfg, relRaster, dem):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -141,6 +142,7 @@ def initializeSimulation(cfg, relRaster, dem, avaDir):
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
     massPerPart = cfg.getfloat('massPerPart')
+    avaDir = cfg['avalancheDir']
     # read dem header
     header = dem['header']
     ncols = header.ncols
@@ -155,7 +157,7 @@ def initializeSimulation(cfg, relRaster, dem, avaDir):
     indRelY, indRelX = np.nonzero(relRaster)
 
     # make option available to read initial particle distribution from file
-    if cfg.getboolean('flagInitializeFF'):
+    if cfg.getboolean('initialiseParticlesFromFile'):
         log.info('Initial particle distribution read from file!!')
         inDirPart = os.path.join(avaDir, 'Inputs', 'particles')
         Particles, TimeStepInfo = readPartFromPickle(inDirPart)
@@ -168,13 +170,11 @@ def initializeSimulation(cfg, relRaster, dem, avaDir):
         particles['s'] = np.zeros(np.shape(Xpart))
         # # adding z component
         zSamos = copy.deepcopy(particles['z'])
-        particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+        particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         plt.plot(particles['y'], zSamos, 'bo')
         plt.plot(particles['y'], particles['z'], 'k+')
         plt.show()
     else:
-
-
         Npart = 0
         NPPC = np.empty(0)
         Apart = np.empty(0)
@@ -208,7 +208,7 @@ def initializeSimulation(cfg, relRaster, dem, avaDir):
             IndY = np.append(IndY, np.ones(nPart)*indRely)
             InCell = np.append(InCell, np.ones(nPart)*ic)
 
-        Hpart, _ = geoTrans.projectOnRasterVectRoot(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
+        Hpart, _ = geoTrans.projectOnGrid(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
         Mpart = rho * Hpart * Apart
         # create dictionnary to store particles properties
         particles = {}
@@ -218,7 +218,7 @@ def initializeSimulation(cfg, relRaster, dem, avaDir):
         particles['y'] = Ypart
         particles['s'] = np.zeros(np.shape(Xpart))
         # adding z component
-        particles, _ = geoTrans.projectOnRasterVect(dem, particles, interp='bilinear')
+        particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         # readjust mass
         mTot = np.sum(Mpart)
         particles['m'] = Mpart*Mraster/mTot
@@ -292,9 +292,6 @@ def initializeSimulation(cfg, relRaster, dem, avaDir):
     if debugPlot:
         x = np.arange(ncols) * csz
         y = np.arange(nrows) * csz
-        # X, Y = np.meshgrid(x, y)
-        # fig = plt.figure()
-        # ax = fig.gca(projection='3d')
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
         ref0, im = pU.NonUnifIm(ax, x, y, A, 'x [m]', 'y [m]',
@@ -303,17 +300,6 @@ def initializeSimulation(cfg, relRaster, dem, avaDir):
 
         ax.plot(Xpart, Ypart, 'or', linestyle='None')
         pU.addColorBar(im, ax, None, 'm²')
-
-        # ax.quiver(x, 2500*np.ones(nrows), dem['rasterData'][500, :], Nx[500, :], Ny[500, :], Nz[500, :], length=50, colors='b')
-        # ax.quiver(2500*np.ones(ncols), y, dem['rasterData'][:, 500], Nx[:, 500], Ny[:, 500], Nz[:, 500], length=50, colors='r')
-        # ax.set_xlim([2000, 3000])
-        # ax.set_ylim([2000, 3000])
-        # ax.set_zlim([0, 500])
-        # # Label each axis
-        # ax.set_xlabel('x')
-        # ax.set_ylabel('y')
-        # ax.set_zlabel('z')
-
         plt.show()
 
     return particles, fields, Cres, Ment
