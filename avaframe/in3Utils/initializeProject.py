@@ -19,16 +19,8 @@ def _checkForFolderAndDelete(baseDir, folderName):
     except FileNotFoundError:
         log.debug("No %s folder found.", folderName)
 
-
-def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
-    '''
-    Clean a single avalanche directory of the work and output directories
-    Expects a avalanche directory name as string
-    and optional:
-    a log name to keep (and not delete)
-    Boolean to be able to avoid deletion of Outputs (true by default)
-    '''
-
+def _checkAvaDirVariable(avaDir):
+    '''Check for empty or nonString avaDir variable'''
     # check for empty avaDir name, abort if empty
     if not avaDir:
         log.warning("AvaDir variable is undefined, returning. ")
@@ -39,6 +31,60 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     if not isString:
         log.warning("AvaDir is not a string, returning")
         return 'AvaDir is NOT a string'
+
+    return 'SUCCESS'
+
+def cleanModuleFiles(avaDir, module):
+    '''Cleans all generated files from the provided module in the outputs
+    folder. Also deletes the complete work folder
+
+    Parameters
+    ----------
+    avaDir : path/string
+        Avalanche directory path
+    module : module object
+        The module do delete.
+        e.g. from avaframe.com2AB import com2AB
+        leads to cleanModuleFiles(com2AB)
+        whereas
+        from avaframe.com2AB import com2AB as c2
+        leads to cleanModuleFiles(c2)
+    '''
+
+    # check for empty or non string variable
+    result = _checkAvaDirVariable(avaDir)
+    if not 'SUCCESS' in result:
+        return result
+
+    # get filename of module
+    modName = os.path.basename(module.__file__)
+    modName = os.path.splitext(modName)[0]
+
+    # output dir
+    outDir =  os.path.join(avaDir, 'Outputs')
+
+    log.info("Cleaning module %s in folder: %s ", modName, outDir)
+    _checkForFolderAndDelete(outDir, modName)
+
+    # Try to remove Work folder, only pass FileNotFoundError, i.e. folder
+    # does not exist
+    _checkForFolderAndDelete(avaDir, 'Work')
+
+    return 'SUCCESS'
+
+def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
+    '''
+    Clean a single avalanche directory of the work and output directories
+    Expects a avalanche directory name as string
+    and optional:
+    a log name to keep (and not delete)
+    Boolean to be able to avoid deletion of Outputs (true by default)
+    '''
+
+    # check for empty or non string variable
+    result = _checkAvaDirVariable(avaDir)
+    if not 'Success' in result:
+        return result
 
     # Info to user
     log.debug("Cleaning folder: %s ", avaDir)
