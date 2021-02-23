@@ -174,11 +174,12 @@ def initializeSimulation(cfg, relTh):
 
     # initialize entrainment and resistance
     rhoEnt = cfgGen.getfloat('rhoEnt')
+    hEnt = cfgGen.getfloat('hEnt')
     A = dem['Area']
-    flagEntRes = False
+    # flagEntRes = False
     Ment = intializeMassEnt(demOri, flagEntRes, entLine)
     Cres = intializeResistance(cfgGen, demOri, flagEntRes, resLine)
-    fields['Ment'] = Ment*rhoEnt*A
+    fields['Ment'] = Ment*rhoEnt*A*hEnt
     fields['Cres'] = Cres
 
     return particles, fields, demOri, dem, releaseLine
