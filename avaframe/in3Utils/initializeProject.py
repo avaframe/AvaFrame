@@ -20,7 +20,7 @@ def _checkForFolderAndDelete(baseDir, folderName):
         log.debug("No %s folder found.", folderName)
 
 
-def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True, onlyModule=''):
+def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     '''
     Clean a single avalanche directory of the work and output directories
     Expects a avalanche directory name as string
@@ -46,11 +46,7 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True, onlyModule=''):
     # Try to remove OUTPUTS folder, only pass FileNotFoundError, i.e. folder
     # does not exist
     if deleteOutput:
-        if onlyModule:
-            fPath = os.path.join(avaDir, 'Outputs')
-            _checkForFolderAndDelete(fPath, onlyModule)
-        else:
-            _checkForFolderAndDelete(avaDir, 'Outputs')
+        _checkForFolderAndDelete(avaDir, 'Outputs')
 
     # Try to remove Work folder, only pass FileNotFoundError, i.e. folder
     # does not exist

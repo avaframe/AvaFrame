@@ -140,10 +140,6 @@ def computeForceC(cfg, particles, fields, dem, dT):
       particles dictionary at t
   dem : dict
       dictionary with dem information
-  Ment : 2D numpy array
-      entrained mass raster
-  Cres : 2D numpy array
-      resistance raster
   dT : float
       time step
 
@@ -174,6 +170,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double[:, :] Nx = dem['Nx']
   cdef double[:, :] Ny = dem['Ny']
   cdef double[:, :] Nz = dem['Nz']
+  cdef double[:, :] ACell = dem['Area']
 
   cdef double[:] Fnormal = np.zeros(Npart, dtype=np.float64)
   cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
@@ -193,12 +190,12 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
   cdef double[:, :] VZ = fields['Vz']
-  cdef double[:, :] Ment = fields['Ment']
-  cdef double[:, :] Cres = fields['Cres']
+  cdef double[:, :] MENT = fields['Ment']
+  cdef double[:, :] CRES = fields['Cres']
   cdef long[:] IndCellX = particles['indX']
   cdef long[:] IndCellY = particles['indY']
   cdef long indCellX, indCellY
-  cdef double A, Aent, cres, uMag, m, dm, h, ment, dEnt, dis
+  cdef double A, aCell, aEnt, cRes, uMag, m, dm, h, mEnt, dEnt, dis
   cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
   cdef double x, y, z, ux, uy, uz, uxDir, uyDir, uzDir
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
@@ -216,6 +213,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
       uz = UZ[j]
       indCellX = IndCellX[j]
       indCellY = IndCellY[j]
+      aCell = ACell[indCellY, indCellX]
       # deduce area
       A = m / (h * rho)
       # get normal at the particle location
@@ -300,8 +298,8 @@ def computeForceC(cfg, particles, fields, dem, dT):
       forceFrict[j] = forceFrict[j] - forceBotTang/uMag
 
       # compute entrained mass
-      ment = Ment[indCellY, indCellX]
-      dm, Aent = computeEntMassAndForce(dt, ment, A, uMag, tau, entEroEnergy, rhoEnt)
+      mEnt = MENT[indCellY, indCellX]
+      dm, aEnt = computeEntMassAndForce(dt, mEnt, A, uMag, tau, entEroEnergy, rhoEnt)
       # update velocity
       ux = ux * m / (m + dm)
       uy = uy * m / (m + dm)
@@ -309,13 +307,15 @@ def computeForceC(cfg, particles, fields, dem, dT):
       # update mass
       m = m + dm
       M[j] = m
-      ment = ment - dm
-      if ment < 0:
-        ment = 0
+      # update surfacic entrainment mass available
+      mEnt = mEnt - dm/aCell
+      if mEnt < 0:
+        mEnt = 0
+
+      MENT[indCellY, indCellX] = mEnt
 
       # speed loss due to energy loss
-      Ment[indCellY, indCellX] = ment
-      dEent = Aent * entShearResistance + dm * entDefResistance
+      dEent = aEnt * entShearResistance + dm * entDefResistance
       dis = 1.0 - dEent / (0.5 * m * (uMag*uMag + velMagMin))
       if dis < 0.0:
         dis = 0.0
@@ -325,9 +325,9 @@ def computeForceC(cfg, particles, fields, dem, dT):
       uz = uz * dis
 
       # adding resistance force du to obstacles
-      cres = Cres[indCellY][indCellX]
-      cres = computeResForce(hRes, h, A, rho, cres, uMag)
-      forceFrict[j] = forceFrict[j] + cres
+      cRes = CRES[indCellY][indCellX]
+      cRes = computeResForce(hRes, h, A, rho, cRes, uMag)
+      forceFrict[j] = forceFrict[j] + cRes
 
       UX[j] = ux
       UY[j] = uy
@@ -344,7 +344,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
   particles['uz'] = np.asarray(UZ)
   particles['m'] = np.asarray(M)
 
-  fields['Ment'] = np.asarray(Ment)
+  fields['Ment'] = np.asarray(MENT)
 
   return particles, force, fields
 
@@ -370,10 +370,10 @@ cdef (double, double) computeEntMassAndForce(double dt, double ment, double A, d
   -------
   dm : float
       entrained mass
-  Aent : float
+  aEnt : float
       Area for entrainement energy loss computation
   """
-  cdef double width, ABotSwiped, Aent
+  cdef double width, ABotSwiped, aEnt
   # compute entrained mass
   cdef double dm = 0
   if ment > 0:
@@ -382,7 +382,7 @@ cdef (double, double) computeEntMassAndForce(double dt, double ment, double A, d
       if(entEroEnergy > 0):
           # erosion: erode according to shear and erosion energy
           dm = A * tau * uMag * dt / entEroEnergy
-          Aent = A
+          aEnt = A
       else:
           # ploughing in at avalanche front: erode full area weight
           # mass available in the cell [kg/m²]
@@ -391,21 +391,21 @@ cdef (double, double) computeEntMassAndForce(double dt, double ment, double A, d
           # bottom area covered by the particle during dt
           ABotSwiped = width * uMag * dt
           dm = ment * ABotSwiped
-          Aent = ment / rhoEnt
+          aEnt = ment / rhoEnt
 
       # adding force du to entrained mass
-      # Fent = width * (entShearResistance + dm / Aent * entDefResistance)
+      # Fent = width * (entShearResistance + dm / aEnt * entDefResistance)
       # fEntX = fEntX + Fent * uxDir
       # fEntY = fEntY + Fent * uyDir
       # fEntZ = fEntZ + Fent * uzDir
 
-  return dm, Aent
+  return dm, aEnt
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef double computeResForce(double hRes, double h, double A, double rho, double cres, double uMag):
+cdef double computeResForce(double hRes, double h, double A, double rho, double cRes, double uMag):
   """ compute force component due to resistance
 
   Parameters
@@ -418,22 +418,21 @@ cdef double computeResForce(double hRes, double h, double A, double rho, double 
       particle area
   rho : float
       snow density
-  cres : float
+  cRes : float
       resisance coefficient
   uMag : float
       particle speed (velocity magnitude)
 
   Returns
   -------
-  Cres : float
+  cRes : float
       resistance component
   """
   cdef double hResEff = hRes
-  cdef double Cres
   if(h < hRes):
       hResEff = h
-  Cres = - rho * A * hResEff * cres * uMag
-  return Cres
+  cRes = - rho * A * hResEff * cRes * uMag
+  return cRes
 
 
 
