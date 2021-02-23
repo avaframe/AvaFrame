@@ -83,7 +83,7 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
 
     # check for empty or non string variable
     result = _checkAvaDirVariable(avaDir)
-    if not 'Success' in result:
+    if not 'SUCCESS' in result:
         return result
 
     # Info to user

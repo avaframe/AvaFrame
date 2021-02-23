@@ -1,4 +1,5 @@
 [run]
+source = avaframe
 plugins = Cython.Coverage
 omit = */tests/*
        *run*.py
