@@ -9,3 +9,6 @@ coverage:
     patch:
       default:
         informational: true
+
+ignore:
+  - "**/run*.py"
