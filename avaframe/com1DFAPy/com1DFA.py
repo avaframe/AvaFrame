@@ -811,7 +811,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     # first compute force at t_(k+0.5)
     startTime = time.time()
     # TODO check  effect of artificial viscosity - update of velocity works here too
-    particles, force = DFAfunC.computeForceC(cfg, particles, fields, dem, Ment, Cres, dtK5)
+    particles, force = DFAfunC.computeForceC(cfg, particles, fields, dem, dtK5)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
     # force = computeForceVect(cfg, particles, dem, Ment, Cres, dtK5)
