@@ -62,13 +62,11 @@ def cleanModuleFiles(avaDir, module):
 
     # output dir
     outDir =  os.path.join(avaDir, 'Outputs')
+    workDir =  os.path.join(avaDir, 'Work')
 
     log.info("Cleaning module %s in folder: %s ", modName, outDir)
     _checkForFolderAndDelete(outDir, modName)
-
-    # Try to remove Work folder, only pass FileNotFoundError, i.e. folder
-    # does not exist
-    _checkForFolderAndDelete(avaDir, 'Work')
+    _checkForFolderAndDelete(workDir, modName)
 
     return 'SUCCESS'
 
@@ -153,6 +151,8 @@ def createFolderStruct(pathAvaName):
         checkMakeDir(Inputs, cuDir)
 
     checkMakeDir(pathAvaName, 'Outputs')
+
+    checkMakeDir(pathAvaName, 'Work')
 
 
 def checkMakeDir(base, dirName):
