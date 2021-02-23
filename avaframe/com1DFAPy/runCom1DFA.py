@@ -9,26 +9,11 @@ import os
 # Local imports
 import avaframe.in3Utils.initialiseDirs as inDirs
 import avaframe.in3Utils.initializeProject as initProj
-import avaframe.in2Trans.shpConversion as shpConv
-from avaframe.in1Data import getInput as gI
 import avaframe.com1DFAPy.com1DFA as com1DFA
 from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in3Utils.fileHandlerUtils as fU
-import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-
-
-def setDEMorigin(demOri):
-    """ set origin of DEM to 0,0 """
-
-    dem = copy.deepcopy(demOri)
-    dem['header'].xllcenter = 0
-    dem['header'].yllcenter = 0
-    dem['header'].xllcorner = 0
-    dem['header'].yllcorner = 0
-
-    return dem
 
 
 def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
@@ -50,7 +35,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
     modName = 'com1DFAPy'
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False, onlyModule=modName)
 
     # Start logging
     log = logUtils.initiateLogger(avalancheDir, logName)
@@ -58,64 +43,22 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
     log.info('Current avalanche: %s', avalancheDir)
 
     # Load configuration
-    if cfgFile !='':
+    if cfgFile != '':
         cfg = cfgUtils.getModuleConfig(com1DFA, cfgFile)
     else:
         cfg = cfgUtils.getModuleConfig(com1DFA)
     cfgGen = cfg['GENERAL']
     cfgGen['avalancheDir'] = avalancheDir
-    flagDev = cfg['FLAGS'].getboolean('flagDev')
 
     # for timing the sims
     startTime = time.time()
 
-
     # +++++++++Inputs++++++++++++++++++++++++
     # ------------------------
-    # fetch input data - dem, release-, entrainment- and resistance areas
-    demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(
-        avalancheDir, cfg['FLAGS'], flagDev)
-    demOri = IOf.readRaster(demFile)
-    # derive line from release area polygon
-    releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
-    # derive line from entrainement area polygon
-    if entFiles:
-        entLine = shpConv.readLine(entFiles, '', demOri)
-        entLine['Name'] = [os.path.splitext(os.path.basename(entFiles))[0]]
-    else:
-        entLine = None
-    # derive line from resistance area polygon
-    if resFile:
-        resLine = shpConv.readLine(resFile, '', demOri)
-        resLine['Name'] = [os.path.splitext(os.path.basename(resFile))[0]]
-    else:
-        resLine = None
-    dem = setDEMorigin(demOri)
-
-    # -----------------------
-    # Initialize mesh
-    dem = com1DFA.initializeMesh(dem)
-    # ------------------------
-    # process release info to get it as a raster
-    relRaster = com1DFA.prepareArea(releaseLine, demOri)
-    if len(relTh) == 0:
-        relTh = cfgGen.getfloat('relTh')
-
-    relRaster = relRaster * relTh
-
-    # initialize entrainment and resistance
-    Ment = com1DFA.intializeMassEnt(demOri, flagEntRes, entLine)
-    Cres = com1DFA.intializeResistance(cfgGen, demOri, flagEntRes, resLine)
-    # ------------------------
-    # initialize simulation : create directories
+    # create directories
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
-    # create particles, create resistance and
-    # entrainment matrix, initialize fields, get normals and neighbours
-    partDirName = ''
-    if cfgGen.getboolean('initialiseParticlesFromFile'):
-        partDirName = os.path.splitext(os.path.basename(relFiles[0]))[0] + '_null_dfa_' + cfgGen['mu']
-    particles, fields = com1DFA.initializeSimulation(cfgGen, relRaster, dem, Ment, Cres, partDirName=partDirName)
-
+    particles, fields, demOri, dem, releaseLine = com1DFA.initializeSimulation(cfg, relTh)
+    relFiles = releaseLine['file']
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # ------------------------
     #  Start time step computation

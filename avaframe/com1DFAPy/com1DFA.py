@@ -16,6 +16,9 @@ import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Local imports
+import avaframe.in3Utils.initialiseDirs as inDirs
+import avaframe.in2Trans.shpConversion as shpConv
+from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.out3Plot.makePalette as makePalette
@@ -112,7 +115,76 @@ def initializeMesh(dem, num=4):
     return dem
 
 
-def initializeSimulation(cfg, relRaster, dem, Ment, Cres, partDirName=''):
+def setDEMorigin(demOri):
+    """ set origin of DEM to 0,0 """
+
+    dem = copy.deepcopy(demOri)
+    dem['header'].xllcenter = 0
+    dem['header'].yllcenter = 0
+    dem['header'].xllcorner = 0
+    dem['header'].yllcorner = 0
+
+    return dem
+
+
+def initializeSimulation(cfg, relTh):
+    flagDev = cfg['FLAGS'].getboolean('flagDev')
+    cfgGen = cfg['GENERAL']
+    avalancheDir = cfgGen['avalancheDir']
+    # fetch input data - dem, release-, entrainment- and resistance areas
+    demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(
+        avalancheDir, cfg['FLAGS'], flagDev)
+    demOri = IOf.readRaster(demFile)
+    # derive line from release area polygon
+    releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
+    releaseLine['file'] = relFiles
+    # derive line from entrainement area polygon
+    if entFiles:
+        entLine = shpConv.readLine(entFiles, '', demOri)
+        entLine['Name'] = [os.path.splitext(os.path.basename(entFiles))[0]]
+    else:
+        entLine = None
+    # derive line from resistance area polygon
+    if resFile:
+        resLine = shpConv.readLine(resFile, '', demOri)
+        resLine['Name'] = [os.path.splitext(os.path.basename(resFile))[0]]
+    else:
+        resLine = None
+    dem = setDEMorigin(demOri)
+
+    # -----------------------
+    # Initialize mesh
+    dem = initializeMesh(dem)
+    # ------------------------
+    # process release info to get it as a raster
+    relRaster = prepareArea(releaseLine, demOri)
+    if len(relTh) == 0:
+        relTh = cfgGen.getfloat('relTh')
+
+    relRaster = relRaster * relTh
+    # ------------------------
+    # initialize simulation
+
+    # create particles, create resistance and
+    # entrainment matrix, initialize fields, get normals and neighbours
+    partDirName = ''
+    if cfgGen.getboolean('initialiseParticlesFromFile'):
+        partDirName = os.path.splitext(os.path.basename(relFiles[0]))[0] + '_null_dfa_' + cfgGen['mu']
+    particles, fields = initializeParticles(cfgGen, relRaster, dem, partDirName=partDirName)
+
+    # initialize entrainment and resistance
+    rhoEnt = cfgGen.getfloat('rhoEnt')
+    A = dem['Area']
+    flagEntRes = False
+    Ment = intializeMassEnt(demOri, flagEntRes, entLine)
+    Cres = intializeResistance(cfgGen, demOri, flagEntRes, resLine)
+    fields['Ment'] = Ment*rhoEnt*A
+    fields['Cres'] = Cres
+
+    return particles, fields, demOri, dem, releaseLine
+
+
+def initializeParticles(cfg, relRaster, dem, partDirName=''):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -140,7 +212,6 @@ def initializeSimulation(cfg, relRaster, dem, Ment, Cres, partDirName=''):
     """
     # get simulation parameters
     rho = cfg.getfloat('rho')
-    rhoEnt = cfg.getfloat('rhoEnt')
     gravAcc = cfg.getfloat('gravAcc')
     massPerPart = cfg.getfloat('massPerPart')
     avaDir = cfg['avalancheDir']
@@ -160,7 +231,7 @@ def initializeSimulation(cfg, relRaster, dem, Ment, Cres, partDirName=''):
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
         log.info('Initial particle distribution read from file!!')
-        inDirPart = os.path.join(avaDir, 'Inputs', 'particles', partDirName)
+        inDirPart = os.path.join(avaDir, 'Outputs', 'com1DFA', 'particles', partDirName)
         Particles, TimeStepInfo = readPartFromPickle(inDirPart)
         particles = Particles[0]
         Xpart = particles['x']
@@ -259,8 +330,6 @@ def initializeSimulation(cfg, relRaster, dem, Ment, Cres, partDirName=''):
     fields['Vx'] = PFV
     fields['Vy'] = PFV
     fields['Vz'] = PFV
-    fields['Ment'] = Ment*rhoEnt*A
-    fields['Cres'] = Cres
 
     particles = DFAfunC.getNeighboursC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)

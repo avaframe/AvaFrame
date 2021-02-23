@@ -157,6 +157,8 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double B = cfg.getfloat('B')
   cdef double R = cfg.getfloat('R')
   cdef double entEroEnergy = cfg.getfloat('entEroEnergy')
+  cdef double entShearResistance = cfg.getfloat('entShearResistance')
+  cdef double entDefResistance = cfg.getfloat('entDefResistance')
   cdef double rho = cfg.getfloat('rho')
   cdef double rhoEnt = cfg.getfloat('rhoEnt')
   cdef double hRes = cfg.getfloat('hRes')
@@ -196,7 +198,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef long[:] IndCellX = particles['indX']
   cdef long[:] IndCellY = particles['indY']
   cdef long indCellX, indCellY
-  cdef double A, Aent, cres, uMag, m, dm, h, ment
+  cdef double A, Aent, cres, uMag, m, dm, h, ment, dEnt, dis
   cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
   cdef double x, y, z, ux, uy, uz, uxDir, uyDir, uzDir
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
@@ -300,7 +302,6 @@ def computeForceC(cfg, particles, fields, dem, dT):
       # compute entrained mass
       ment = Ment[indCellY, indCellX]
       dm, Aent = computeEntMassAndForce(dt, ment, A, uMag, tau, entEroEnergy, rhoEnt)
-      dM[j] = dm
       # update velocity
       ux = ux * m / (m + dm)
       uy = uy * m / (m + dm)
@@ -311,7 +312,17 @@ def computeForceC(cfg, particles, fields, dem, dT):
       ment = ment - dm
       if ment < 0:
         ment = 0
+
+      # speed loss due to energy loss
       Ment[indCellY, indCellX] = ment
+      dEent = Aent * entShearResistance + dm * entDefResistance
+      dis = 1.0 - dEent / (0.5 * m * (uMag*uMag + velMagMin))
+      if dis < 0.0:
+        dis = 0.0
+      # update velocity
+      ux = ux * dis
+      uy = uy * dis
+      uz = uz * dis
 
       # adding resistance force du to obstacles
       cres = Cres[indCellY][indCellX]
@@ -367,10 +378,7 @@ cdef (double, double) computeEntMassAndForce(double dt, double ment, double A, d
   cdef double dm = 0
   if ment > 0:
       # either erosion or ploughing but not both
-      # width of the particle
-      width = math.sqrt(A)
-      # bottom area covered by the particle during dt
-      ABotSwiped = width * uMag * dt
+
       if(entEroEnergy > 0):
           # erosion: erode according to shear and erosion energy
           dm = A * tau * uMag * dt / entEroEnergy
@@ -378,10 +386,12 @@ cdef (double, double) computeEntMassAndForce(double dt, double ment, double A, d
       else:
           # ploughing in at avalanche front: erode full area weight
           # mass available in the cell [kg/m²]
-          rhoHent = ment
-          dm = rhoHent * ABotSwiped
-          Aent = rhoHent / rhoEnt
-      # adding mass balance contribution
+          # width of the particle
+          width = math.sqrt(A)
+          # bottom area covered by the particle during dt
+          ABotSwiped = width * uMag * dt
+          dm = ment * ABotSwiped
+          Aent = ment / rhoEnt
 
       # adding force du to entrained mass
       # Fent = width * (entShearResistance + dm / Aent * entDefResistance)
