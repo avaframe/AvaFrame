@@ -12,6 +12,7 @@ import copy
 import pickle
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects
+import matplotlib.path as mpltPath
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -175,11 +176,12 @@ def initializeSimulation(cfg, relTh):
     # initialize entrainment and resistance
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    A = dem['Area']
     # flagEntRes = False
     Ment = intializeMassEnt(demOri, flagEntRes, entLine)
     Cres = intializeResistance(cfgGen, demOri, flagEntRes, resLine)
-    fields['Ment'] = Ment*rhoEnt*A*hEnt
+    # surfacic entrainment mass available (unit kg/m²)
+    fields['Ment'] = Ment*rhoEnt*hEnt
+    print(np.sum(fields['Ment']*dem['Area']))
     fields['Cres'] = Cres
 
     return particles, fields, demOri, dem, releaseLine
@@ -941,7 +943,17 @@ def polygon2Raster(demHeader, Line, Mask):
         yCoord0 = np.append(yCoord0, yCoord0[0])
 
     # get the raster corresponding to the polygon
-    mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
+    polygon = np.stack((xCoord, yCoord), axis=-1)
+    path = mpltPath.Path(polygon)
+    x = np.linspace(0, ncols-1, ncols)
+    y = np.linspace(0, nrows-1, nrows)
+    X, Y = np.meshgrid(x, y)
+    X = X.flatten()
+    Y = Y.flatten()
+    points = np.stack((X, Y), axis=-1)
+    mask = path.contains_points(points)
+    mask = mask.reshape((nrows, ncols)).astype(int)
+    # mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
     Mask = Mask + mask
     Mask = np.where(Mask > 0, 1, 0)
 

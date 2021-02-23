@@ -35,7 +35,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=True):
     modName = 'com1DFAPy'
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False, onlyModule=modName)
+    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
     # Start logging
     log = logUtils.initiateLogger(avalancheDir, logName)
