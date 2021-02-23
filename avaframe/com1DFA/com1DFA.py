@@ -391,7 +391,7 @@ def saveInitialParticleDistribution(avaDir, simName, dem):
     y = y - header.yllcenter
     particles = {'t': 0.0, 'x': x, 'y': y, 'z': z, 'm': m}
 
-    partDit = os.path.join(os.getcwd(), avaDir, 'Inputs', 'particles', simName)
+    partDit = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'particles', simName)
     fU.makeADir(partDit)
     # partFileName = os.path.join(partDit, '%s' % (simName))
     com1DFAPy.savePartToPickle(particles, partDit)
