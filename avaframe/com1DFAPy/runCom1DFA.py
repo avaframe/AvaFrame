@@ -16,7 +16,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 
-def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=False, flagBenchmarks='False'):
+def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=False, flagBenchmarks=False):
     """ run com1DFAPy module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -50,7 +50,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=False, flagBenchm
         cfg = cfgUtils.getModuleConfig(com1DFA)
     cfgGen = cfg['GENERAL']
     cfgGen['avalancheDir'] = avalancheDir
-    cfg['GENERAL']['benchmarks'] = flagBenchmarks
+    cfg['GENERAL']['benchmarks'] = str(flagBenchmarks)
     flagOnlyEntrRes = False
     if cfg.has_option('FLAGS', 'flagOnlyEntrRes'):
         flagOnlyEntrRes = cfg.getboolean('FLAGS', 'flagOnlyEntrRes')
