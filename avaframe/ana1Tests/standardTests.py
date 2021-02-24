@@ -23,10 +23,10 @@ log = logging.getLogger(__name__)
 def createDesDictTemplate():
     """ create a json file with all required test info """
 
-    desDict = {'TAGS': '',
+    desDict = {'TAGS': [],
                 'DESCRIPTION': '',
                 'TYPE': '',
-                'FILES': ''}
+                'FILES': []}
 
     return desDict
 
