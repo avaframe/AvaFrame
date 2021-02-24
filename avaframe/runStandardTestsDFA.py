@@ -26,16 +26,20 @@ logName = 'runStandardTestsPy'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # Define avalanche directories for standard tests
-standardNames = ['data/avaAlr',
-                 'data/avaHit',
-                 'data/avaGar',
-                 'data/avaKot',
-                 'data/avaMal',
-                 'data/avaWog',
-                 'data/avaBowl',
-                 'data/avaFlatPlane',
-                 'data/avaHelix'
-                 'data/avaHockeySmoothSmall'
+standardNames = [#'data/avaAlr',
+                 # 'data/avaHit',
+                 # 'data/avaGar',
+                 # 'data/avaKot',
+                 # 'data/avaMal',
+                 # 'data/avaWog',
+                 # 'data/avaBowl',
+                 # 'data/avaFlatPlane',
+                 # 'data/avaHelix',
+                 # 'data/avaHelixChannel',
+                 'data/avaHockey',
+                 # 'data/avaHockeySmoothChannel',
+                 # 'data/avaHockeySmoothSmall',
+                 # 'data/avaInclinedPlane'
                  ]
 
 # Set directory for full standard test report
@@ -64,14 +68,13 @@ for avaDir in standardNames:
     avaName = os.path.basename(avaDir)
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir,  keep=logName)
+    initProj.cleanSingleAvaDir(avaDir,  keep=logName, deleteOutput=False)
 
     # Set timing
     startTime = time.time()
     # Run Standalone DFA
     # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-    Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relTh='', flagAnalysis=True)
-
+    _, _, _, _, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relTh='', flagAnalysis=False)
 
     # Print time needed
     endTime = time.time()
@@ -97,6 +100,8 @@ for avaDir in standardNames:
         benchSimName = benchDict['simName']
         # Check if simulation with entrainment and/or resistance or standard simulation
         simType = 'null'
+        if 'entres' in benchSimName:
+            simType = 'entres'
 
         # Fetch correct reportDict according to flagEntRes
         for dict in reportDictList:
