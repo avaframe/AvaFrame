@@ -326,7 +326,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
       # adding resistance force du to obstacles
       cResCell = cResRaster[indCellY][indCellX]
       cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag)
-      forceFrict[j] = forceFrict[j] + cResPart
+      forceFrict[j] = forceFrict[j] - cResPart
 
       UX[j] = ux
       UY[j] = uy
