@@ -36,7 +36,7 @@ def _checkAvaDirVariable(avaDir):
 
 def cleanModuleFiles(avaDir, module):
     '''Cleans all generated files from the provided module in the outputs
-    folder. Also deletes the complete work folder
+    folder and work folder
 
     Parameters
     ----------
