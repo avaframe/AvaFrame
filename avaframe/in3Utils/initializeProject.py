@@ -34,7 +34,7 @@ def _checkAvaDirVariable(avaDir):
 
     return 'SUCCESS'
 
-def cleanModuleFiles(avaDir, module):
+def cleanModuleFiles(avaDir, module, alternativeName=''):
     '''Cleans all generated files from the provided module in the outputs
     folder and work folder
 
@@ -57,8 +57,12 @@ def cleanModuleFiles(avaDir, module):
         return result
 
     # get filename of module
-    modName = os.path.basename(module.__file__)
-    modName = os.path.splitext(modName)[0]
+    # TODO: remove this option when com1DFAPy replaces com1DFA
+    if alternativeName:
+        modName = alternativeName
+    else:
+        modName = os.path.basename(module.__file__)
+        modName = os.path.splitext(modName)[0]
 
     # output dir
     outDir =  os.path.join(avaDir, 'Outputs')

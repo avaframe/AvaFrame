@@ -26,7 +26,7 @@ logName = 'runStandardTestsPy'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # Define avalanche directories for standard tests
-standardNames = [#'data/avaAlr',
+standardNames = ['data/avaAlr',
                  # 'data/avaHit',
                  # 'data/avaGar',
                  # 'data/avaKot',
@@ -36,7 +36,7 @@ standardNames = [#'data/avaAlr',
                  # 'data/avaFlatPlane',
                  # 'data/avaHelix',
                  # 'data/avaHelixChannel',
-                 'data/avaHockey',
+                 # 'data/avaHockey',
                  # 'data/avaHockeySmoothChannel',
                  # 'data/avaHockeySmoothSmall',
                  # 'data/avaInclinedPlane'
@@ -67,14 +67,11 @@ for avaDir in standardNames:
     standardCfg = os.path.join('..', 'benchmarks', avaName, '%s_com1DFACfgPy.ini' % avaName)
     avaName = os.path.basename(avaDir)
 
-    # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir,  keep=logName, deleteOutput=False)
-
     # Set timing
     startTime = time.time()
     # Run Standalone DFA
     # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-    _, _, _, _, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relTh='', flagAnalysis=False)
+    _, _, _, _, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relTh='', flagAnalysis=False, flagBenchmarks='True')
 
     # Print time needed
     endTime = time.time()
