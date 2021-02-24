@@ -54,7 +54,7 @@ relDict = simiSol.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
 # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave, dem = runCom1DFA.runCom1DFAPy(avaDir=avalancheDir, cfgFile=simiSolCfg, relTh=relTh, flagAnalysis=False)
+Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avalancheDir, cfgFile=simiSolCfg, relTh=relTh, flagAnalysis=False)
 
 # compute similartiy solution
 log.info('Computing similarity solution')
