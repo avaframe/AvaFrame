@@ -16,7 +16,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 
-def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=False):
+def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=False, flagBenchmarks='False'):
     """ run com1DFAPy module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -35,7 +35,8 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=False):
     modName = 'com1DFAPy'
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+    # initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
+    initProj.cleanModuleFiles(avalancheDir, com1DFA, modName)
 
     # Start logging
     log = logUtils.initiateLogger(avalancheDir, logName)
@@ -49,8 +50,10 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=False):
         cfg = cfgUtils.getModuleConfig(com1DFA)
     cfgGen = cfg['GENERAL']
     cfgGen['avalancheDir'] = avalancheDir
-    if cfg['FLAGS']['flagOnlyEntrRes']:
-        flagOnlyEntrRes = True
+    cfg['GENERAL']['benchmarks'] = flagBenchmarks
+    flagOnlyEntrRes = False
+    if cfg.has_option('FLAGS', 'flagOnlyEntrRes'):
+        flagOnlyEntrRes = cfg.getboolean('FLAGS', 'flagOnlyEntrRes')
 
     # +++++++++++++++++++++++++++++++++
     # ------------------------

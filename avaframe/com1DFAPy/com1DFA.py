@@ -155,6 +155,14 @@ def com1DFAMain(cfg, avaDir, relTh, flagAnalysis, flagOnlyEntrRes=False):
             else:
                 log.debug('Standard simulation is performed without entrainment and resistance')
             logName = sim + '_' + cfgGen['mu']
+            inDirPart = ''
+            if cfgGen.getboolean('initialiseParticlesFromFile'):
+                partDirName = logName
+                inDirPart = os.path.join(cfgGen['avalancheDir'], 'Outputs', 'com1DFA', 'particles', partDirName)
+            if cfgGen.getboolean('benchmarks'):
+                avaName = os.path.basename(cfgGen['avalancheDir'])
+                inDirPart = os.path.join('..', 'benchmarks', avaName, 'particles', partDirName)
+            cfg['GENERAL']['inDirPart'] = inDirPart
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
@@ -311,10 +319,8 @@ def initializeSimulation(cfg, demOri, releaseLine, flagEntRes, entLine, resLine,
 
     # create particles, create resistance and
     # entrainment matrix, initialize fields, get normals and neighbours
-    partDirName = ''
-    if cfgGen.getboolean('initialiseParticlesFromFile'):
-        partDirName = logName
-    particles, fields = initializeParticles(cfgGen, relRaster, dem, partDirName=partDirName)
+    inDirPart = cfgGen['inDirPart']
+    particles, fields = initializeParticles(cfgGen, relRaster, dem, inDirPart=inDirPart)
 
     # initialize entrainment and resistance
     rhoEnt = cfgGen.getfloat('rhoEnt')
@@ -330,7 +336,7 @@ def initializeSimulation(cfg, demOri, releaseLine, flagEntRes, entLine, resLine,
     return particles, fields, demOri, dem, releaseLine
 
 
-def initializeParticles(cfg, relRaster, dem, partDirName=''):
+def initializeParticles(cfg, relRaster, dem, inDirPart=''):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -372,7 +378,6 @@ def initializeParticles(cfg, relRaster, dem, partDirName=''):
 
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
-        inDirPart = os.path.join(avaDir, 'Outputs', 'com1DFA', 'particles', partDirName)
         log.info('Initial particle distribution read from file!! %s' % (inDirPart))
         Particles, TimeStepInfo = readPartFromPickle(inDirPart)
         particles = Particles[0]
