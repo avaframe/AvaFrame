@@ -170,7 +170,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double[:, :] Nx = dem['Nx']
   cdef double[:, :] Ny = dem['Ny']
   cdef double[:, :] Nz = dem['Nz']
-  cdef double[:, :] ACell = dem['Area']
+  cdef double[:, :] areaRatser = dem['areaRaster']
 
   cdef double[:] Fnormal = np.zeros(Npart, dtype=np.float64)
   cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
@@ -178,7 +178,6 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
   cdef double[:] forceFrict = np.zeros(Npart, dtype=np.float64)
   cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] M = np.zeros(Npart, dtype=np.float64)
 
   cdef double[:] mass = particles['m']
   cdef double[:] H = particles['h']
@@ -190,12 +189,12 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
   cdef double[:, :] VZ = fields['Vz']
-  cdef double[:, :] MENT = fields['Ment']
-  cdef double[:, :] CRES = fields['Cres']
+  cdef double[:, :] entrMassRaster = fields['entrMassRaster']
+  cdef double[:, :] cResRaster = fields['cResRaster']
   cdef long[:] IndCellX = particles['indX']
   cdef long[:] IndCellY = particles['indY']
   cdef long indCellX, indCellY
-  cdef double A, aCell, aEnt, cRes, uMag, m, dm, h, mEnt, dEnt, dis
+  cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
   cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
   cdef double x, y, z, ux, uy, uz, uxDir, uyDir, uzDir
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
@@ -213,9 +212,9 @@ def computeForceC(cfg, particles, fields, dem, dT):
       uz = UZ[j]
       indCellX = IndCellX[j]
       indCellY = IndCellY[j]
-      aCell = ACell[indCellY, indCellX]
+      areaCell = areaRatser[indCellY, indCellX]
       # deduce area
-      A = m / (h * rho)
+      areaPart = m / (h * rho)
       # get normal at the particle location
       nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
       nx, ny, nz = normalize(nx, ny, nz)
@@ -294,29 +293,29 @@ def computeForceC(cfg, particles, fields, dem, dT):
             tau = 0.0
 
       # adding bottom shear resistance contribution
-      forceBotTang = - A * tau
+      forceBotTang = - areaPart * tau
       forceFrict[j] = forceFrict[j] - forceBotTang/uMag
 
       # compute entrained mass
-      mEnt = MENT[indCellY, indCellX]
-      dm, aEnt = computeEntMassAndForce(dt, mEnt, A, uMag, tau, entEroEnergy, rhoEnt)
+      entrMassCell = entrMassRaster[indCellY, indCellX]
+      dm, areaEntrPart = computeEntMassAndForce(dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
       # update velocity
       ux = ux * m / (m + dm)
       uy = uy * m / (m + dm)
       uz = uz * m / (m + dm)
       # update mass
       m = m + dm
-      M[j] = m
+      mass[j] = m
       # update surfacic entrainment mass available
-      mEnt = mEnt - dm/aCell
-      if mEnt < 0:
-        mEnt = 0
+      entrMassCell = entrMassCell - dm/areaCell
+      if entrMassCell < 0:
+        entrMassCell = 0
 
-      MENT[indCellY, indCellX] = mEnt
+      entrMassRaster[indCellY, indCellX] = entrMassCell
 
       # speed loss due to energy loss
-      dEent = aEnt * entShearResistance + dm * entDefResistance
-      dis = 1.0 - dEent / (0.5 * m * (uMag*uMag + velMagMin))
+      dEnergyEntr = areaEntrPart * entShearResistance + dm * entDefResistance
+      dis = 1.0 - dEnergyEntr / (0.5 * m * (uMag*uMag + velMagMin))
       if dis < 0.0:
         dis = 0.0
       # update velocity
@@ -325,9 +324,9 @@ def computeForceC(cfg, particles, fields, dem, dT):
       uz = uz * dis
 
       # adding resistance force du to obstacles
-      cRes = CRES[indCellY][indCellX]
-      cRes = computeResForce(hRes, h, A, rho, cRes, uMag)
-      forceFrict[j] = forceFrict[j] + cRes
+      cResCell = cResRaster[indCellY][indCellX]
+      cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag)
+      forceFrict[j] = forceFrict[j] + cResPart
 
       UX[j] = ux
       UY[j] = uy
@@ -342,9 +341,9 @@ def computeForceC(cfg, particles, fields, dem, dT):
   particles['ux'] = np.asarray(UX)
   particles['uy'] = np.asarray(UY)
   particles['uz'] = np.asarray(UZ)
-  particles['m'] = np.asarray(M)
+  particles['m'] = np.asarray(mass)
 
-  fields['Ment'] = np.asarray(MENT)
+  fields['entrMassRaster'] = np.asarray(entrMassRaster)
 
   return particles, force, fields
 
@@ -352,14 +351,14 @@ def computeForceC(cfg, particles, fields, dem, dT):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (double, double) computeEntMassAndForce(double dt, double ment, double A, double uMag, double tau, double entEroEnergy, double rhoEnt):
+cdef (double, double) computeEntMassAndForce(double dt, double entrMassCell, double areaPart, double uMag, double tau, double entEroEnergy, double rhoEnt):
   """ compute force component due to entrained mass
 
   Parameters
   ----------
-  ment : float
+  entrMassCell : float
       available mass for entrainement
-  A : float
+  areaPart : float
       particle area
   uMag : float
       particle speed (velocity magnitude)
@@ -370,28 +369,28 @@ cdef (double, double) computeEntMassAndForce(double dt, double ment, double A, d
   -------
   dm : float
       entrained mass
-  aEnt : float
+  areaEntrPart : float
       Area for entrainement energy loss computation
   """
-  cdef double width, ABotSwiped, aEnt
+  cdef double width, ABotSwiped, areaEntrPart
   # compute entrained mass
   cdef double dm = 0
-  if ment > 0:
+  if entrMassCell > 0:
       # either erosion or ploughing but not both
 
       if(entEroEnergy > 0):
           # erosion: erode according to shear and erosion energy
-          dm = A * tau * uMag * dt / entEroEnergy
-          aEnt = A
+          dm = areaPart * tau * uMag * dt / entEroEnergy
+          areaEntrPart = areaPart
       else:
           # ploughing in at avalanche front: erode full area weight
           # mass available in the cell [kg/m²]
           # width of the particle
-          width = math.sqrt(A)
+          width = math.sqrt(areaPart)
           # bottom area covered by the particle during dt
           ABotSwiped = width * uMag * dt
-          dm = ment * ABotSwiped
-          aEnt = ment / rhoEnt
+          dm = entrMassCell * ABotSwiped
+          areaEntrPart = entrMassCell / rhoEnt
 
       # adding force du to entrained mass
       # Fent = width * (entShearResistance + dm / aEnt * entDefResistance)
@@ -399,13 +398,13 @@ cdef (double, double) computeEntMassAndForce(double dt, double ment, double A, d
       # fEntY = fEntY + Fent * uyDir
       # fEntZ = fEntZ + Fent * uzDir
 
-  return dm, aEnt
+  return dm, areaEntrPart
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef double computeResForce(double hRes, double h, double A, double rho, double cRes, double uMag):
+cdef double computeResForce(double hRes, double h, double areaPart, double rho, double cResCell, double uMag):
   """ compute force component due to resistance
 
   Parameters
@@ -414,25 +413,26 @@ cdef double computeResForce(double hRes, double h, double A, double rho, double 
       resistance height
   h : float
       particle flow depth
-  A : float
+  areaPart : float
       particle area
   rho : float
       snow density
-  cRes : float
-      resisance coefficient
+  cResCell : float
+      resisance coefficient of cell
   uMag : float
       particle speed (velocity magnitude)
 
   Returns
   -------
-  cRes : float
-      resistance component
+  cResPart : float
+      resistance component for particle
   """
   cdef double hResEff = hRes
+  cdef double cRecResPart
   if(h < hRes):
       hResEff = h
-  cRes = - rho * A * hResEff * cRes * uMag
-  return cRes
+  cRecResPart = - rho * areaPart * hResEff * cResCell * uMag
+  return cRecResPart
 
 
 
@@ -508,7 +508,7 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, dtStop
   cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN, uMag, uMagNew
-  cdef double Ment = 0
+  cdef double massEntrained = 0
   cdef int j
   # loop on particles
   for j in range(Npart):
@@ -544,7 +544,7 @@ def updatePositionC(cfg, particles, dem, force):
 
     # update mass (already done un computeForceC)
     mNew = m
-    Ment = Ment + dM[j]
+    massEntrained = massEntrained + dM[j]
     # update position
     xNew = x + dtStop * 0.5 * (ux + uxNew)
     yNew = y + dtStop * 0.5 * (uy + uyNew)
@@ -592,7 +592,7 @@ def updatePositionC(cfg, particles, dem, force):
   particles['x'] = np.asarray(XNew)
   particles['y'] = np.asarray(YNew)
   particles['z'] = np.asarray(ZNew)
-  log.debug('Entrained DFA mass: %s kg', np.asarray(Ment))
+  log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew
   if peakKinEne < TotkinEneNew:
@@ -643,7 +643,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef int interpOption = cfg.getint('interpOption')
   header = dem['header']
   CSZ = dem['header'].cellsize
-  cdef double[:, :]A = dem['Area']
+  cdef double[:, :] areaRaster = dem['areaRaster']
   ncols = header.ncols
   nrows = header.nrows
   cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
@@ -672,7 +672,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef int ncol = int(ncols)
   cdef int Lx0, Ly0, Lx1, Ly1
   cdef double f00, f01, f10, f11
-  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, aPart
+  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart
   cdef double xllc = 0
   cdef double yllc = 0
   cdef double csz = CSZ
@@ -696,25 +696,25 @@ def updateFieldsC(cfg, particles, dem, fields):
     # add the component of the points value to the 4 neighbour grid points
     # start with the lower left
     MassBilinear[Ly0, Lx0] = MassBilinear[Ly0, Lx0] + m * f00
-    FDBilinear[Ly0, Lx0] = FDBilinear[Ly0, Lx0] + m / (A[Ly0, Lx0] * rho) * f00
+    FDBilinear[Ly0, Lx0] = FDBilinear[Ly0, Lx0] + m / (areaRaster[Ly0, Lx0] * rho) * f00
     MomBilinearX[Ly0, Lx0] = MomBilinearX[Ly0, Lx0] + m * ux * f00
     MomBilinearY[Ly0, Lx0] = MomBilinearY[Ly0, Lx0] + m * uy * f00
     MomBilinearZ[Ly0, Lx0] = MomBilinearZ[Ly0, Lx0] + m * uz * f00
     # lower right
     MassBilinear[Ly0, Lx1] = MassBilinear[Ly0, Lx1] + m * f10
-    FDBilinear[Ly0, Lx1] = FDBilinear[Ly0, Lx1] + m / (A[Ly0, Lx1] * rho) * f10
+    FDBilinear[Ly0, Lx1] = FDBilinear[Ly0, Lx1] + m / (areaRaster[Ly0, Lx1] * rho) * f10
     MomBilinearX[Ly0, Lx1] = MomBilinearX[Ly0, Lx1] + m * ux * f10
     MomBilinearY[Ly0, Lx1] = MomBilinearY[Ly0, Lx1] + m * uy * f10
     MomBilinearZ[Ly0, Lx1] = MomBilinearZ[Ly0, Lx1] + m * uz * f10
     # uper left
     MassBilinear[Ly1, Lx0] = MassBilinear[Ly1, Lx0] + m * f01
-    FDBilinear[Ly1, Lx0] = FDBilinear[Ly1, Lx0] + m / (A[Ly1, Lx0] * rho) * f01
+    FDBilinear[Ly1, Lx0] = FDBilinear[Ly1, Lx0] + m / (areaRaster[Ly1, Lx0] * rho) * f01
     MomBilinearX[Ly1, Lx0] = MomBilinearX[Ly1, Lx0] + m * ux * f01
     MomBilinearY[Ly1, Lx0] = MomBilinearY[Ly1, Lx0] + m * uy * f01
     MomBilinearZ[Ly1, Lx0] = MomBilinearZ[Ly1, Lx0] + m * uz * f01
     # and uper right
     MassBilinear[Ly1, Lx1] = MassBilinear[Ly1, Lx1] + m * f11
-    FDBilinear[Ly1, Lx1] = FDBilinear[Ly1, Lx1] + m / (A[Ly1, Lx1] * rho) * f11
+    FDBilinear[Ly1, Lx1] = FDBilinear[Ly1, Lx1] + m / (areaRaster[Ly1, Lx1] * rho) * f11
     MomBilinearX[Ly1, Lx1] = MomBilinearX[Ly1, Lx1] + m * ux * f11
     MomBilinearY[Ly1, Lx1] = MomBilinearY[Ly1, Lx1] + m * uy * f11
     MomBilinearZ[Ly1, Lx1] = MomBilinearZ[Ly1, Lx1] + m * uz * f11
@@ -752,7 +752,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     hbb = getScalar(x, y, FDBilinear, csz, interpOption)
     indx = IndX[j]
     indy = IndY[j]
-    # aPart = A[indy, indx]
+    # areaPart = areaRaster[indy, indx]
     # hLim = mass[j]/(rho*aPart)
     # if hbb< hLim:
     #   hbb = hLim

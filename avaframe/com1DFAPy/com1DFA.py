@@ -107,16 +107,16 @@ def initializeMesh(dem, num=4):
         IOf.writeResultToAsc(dem['header'], dem['Nz'], 'Nz.asc')
 
     # get real Area
-    Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
-    dem['Area'] = Area
-    log.info('Largest cell area: %f m²' % (np.amax(Area)))
-    log.debug('Projected Area :', ncols * nrows * csz * csz)
-    log.debug('Total Area :', np.sum(Area))
+    areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
+    dem['areaRaster'] = areaRaster
+    log.info('Largest cell area: %.2f m²' % (np.amax(areaRaster)))
+    log.debug('Projected Area : %.2f' % (ncols * nrows * csz * csz))
+    log.debug('Total Area : %.2f' % (np.sum(areaRaster)))
 
     return dem
 
 
-def setDEMorigin(demOri):
+def setDEMoriginToZero(demOri):
     """ set origin of DEM to 0,0 """
 
     dem = copy.deepcopy(demOri)
@@ -151,7 +151,7 @@ def initializeSimulation(cfg, relTh):
         resLine['Name'] = [os.path.splitext(os.path.basename(resFile))[0]]
     else:
         resLine = None
-    dem = setDEMorigin(demOri)
+    dem = setDEMoriginToZero(demOri)
 
     # -----------------------
     # Initialize mesh
@@ -177,12 +177,13 @@ def initializeSimulation(cfg, relTh):
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
     # flagEntRes = False
-    Ment = intializeMassEnt(demOri, flagEntRes, entLine)
-    Cres = intializeResistance(cfgGen, demOri, flagEntRes, resLine)
+    entrMassRaster = initializeMassEnt(demOri, flagEntRes, entLine)
+    cResRaster = initializeResistance(cfgGen, demOri, flagEntRes, resLine)
     # surfacic entrainment mass available (unit kg/m²)
-    fields['Ment'] = Ment*rhoEnt*hEnt
-    print(np.sum(fields['Ment']*dem['Area']))
-    fields['Cres'] = Cres
+    fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
+    entreainableMass = np.sum(fields['entrMassRaster']*dem['areaRaster'])
+    log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
+    fields['cResRaster'] = cResRaster
 
     return particles, fields, demOri, dem, releaseLine
 
@@ -208,10 +209,6 @@ def initializeParticles(cfg, relRaster, dem, partDirName=''):
         particles dictionary at initial time step
     fields : dict
         fields dictionary at initial time step
-    Cres : 2D numpy array
-        resistance raster
-    Ment : 2D numpy array
-        entrained mass raster
     """
     # get simulation parameters
     rho = cfg.getfloat('rho')
@@ -223,8 +220,8 @@ def initializeParticles(cfg, relRaster, dem, partDirName=''):
     ncols = header.ncols
     nrows = header.nrows
     csz = header.cellsize
-    A = dem['Area']
-    Mraster = np.sum(A*relRaster*rho)
+    areaRaster = dem['areaRaster']
+    totalMassRaster = np.sum(areaRaster*relRaster*rho)
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     FD = np.zeros((nrows, ncols))
@@ -247,9 +244,9 @@ def initializeParticles(cfg, relRaster, dem, partDirName=''):
         # # adding z component
         zSamos = copy.deepcopy(particles['z'])
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
-        plt.plot(particles['y'], zSamos, 'bo')
-        plt.plot(particles['y'], particles['z'], 'k+')
-        plt.show()
+        # plt.plot(particles['y'], zSamos, 'bo')
+        # plt.plot(particles['y'], particles['z'], 'k+')
+        # plt.show()
     else:
         Npart = 0
         NPPC = np.empty(0)
@@ -264,21 +261,21 @@ def initializeParticles(cfg, relRaster, dem, partDirName=''):
         # loop on non empty cells
         for indRelx, indRely in zip(indRelX, indRelY):
             # compute number of particles for this cell
-            h = relRaster[indRely, indRelx]
-            Vol = A[indRely, indRelx] * h
-            mass = Vol * rho
-            xpart, ypart, mPart, nPart = placeParticles(mass, indRelx, indRely, csz, massPerPart)
+            hCell = relRaster[indRely, indRelx]
+            volCell = areaRaster[indRely, indRelx] * hCell
+            massCell = volCell * rho
+            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart)
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
             # initialize field Flow depth
-            FD[indRely, indRelx] = h
+            FD[indRely, indRelx] = hCell
             # initialize particles position, mass, height...
             NPPC = np.append(NPPC, nPart*np.ones(nPart))
-            Apart = np.append(Apart, A[indRely, indRelx]*np.ones(nPart)/nPart)
+            Apart = np.append(Apart, areaRaster[indRely, indRelx]*np.ones(nPart)/nPart)
             Xpart = np.append(Xpart, xpart)
             Ypart = np.append(Ypart, ypart)
             Mpart = np.append(Mpart, mPart * np.ones(nPart))
-            Hpart = np.append(Hpart, h * np.ones(nPart))
+            Hpart = np.append(Hpart, hCell * np.ones(nPart))
             ic = indRelx + ncols * indRely
             IndX = np.append(IndX, np.ones(nPart)*indRelx)
             IndY = np.append(IndY, np.ones(nPart)*indRely)
@@ -296,7 +293,7 @@ def initializeParticles(cfg, relRaster, dem, partDirName=''):
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         # readjust mass
         mTot = np.sum(Mpart)
-        particles['m'] = Mpart*Mraster/mTot
+        particles['m'] = Mpart*totalMassRaster/mTot
         particles['InCell'] = InCell
         particles['indX'] = IndX
         particles['indY'] = IndY
@@ -356,10 +353,10 @@ def initializeParticles(cfg, relRaster, dem, partDirName=''):
 
     relCells = np.size(indRelY)
     partPerCell = particles['Npart']/relCells
-    log.info('Expeced mass. Mexpected = %f kg.' % (Mraster))
-    log.info('Initializted simulation. MTot = %f kg, %s particles in %s cells.' %
+    log.info('Expeced mass. Mexpected = %.2f kg.' % (totalMassRaster))
+    log.info('Initializted simulation. MTot = %.2f kg, %s particles in %.2f cells.' %
              (particles['mTot'], particles['Npart'], relCells))
-    log.info('Mass per particle = %f kg and particles per cell = %f.' %
+    log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
              (particles['mTot']/particles['Npart'], partPerCell))
 
     if debugPlot:
@@ -367,7 +364,7 @@ def initializeParticles(cfg, relRaster, dem, partDirName=''):
         y = np.arange(nrows) * csz
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        ref0, im = pU.NonUnifIm(ax, x, y, A, 'x [m]', 'y [m]',
+        ref0, im = pU.NonUnifIm(ax, x, y, areaRaster, 'x [m]', 'y [m]',
                                 extent=[x.min(), x.max(), y.min(), y.max()],
                                 cmap=cmap, norm=None)
 
@@ -378,7 +375,7 @@ def initializeParticles(cfg, relRaster, dem, partDirName=''):
     return particles, fields
 
 
-def placeParticles(mass, indx, indy, csz, massPerPart):
+def placeParticles(massCell, indx, indy, csz, massPerPart):
     """ Create particles in given cell
 
     Compute number of particles to create in a given cell.
@@ -387,7 +384,7 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
 
     Parameters
     ----------
-    mass: float
+    massCell: float
         mass of snow in cell
     indx: int
         column index of the cell
@@ -411,7 +408,7 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
     """
     if flagRand:
         # number of particles needed (floating number)
-        nFloat = mass / massPerPart
+        nFloat = massCell / massPerPart
         nPart = int(np.floor(nFloat))
         # adding 1 with a probability of the residual proba
         proba = nFloat - nPart
@@ -421,7 +418,7 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
         # TODO: ensure that there is at last one particle
         nPart = np.maximum(nPart, 1)
     else:
-        n = (np.floor(np.sqrt(mass / massPerPart)) + 1).astype('int')
+        n = (np.floor(np.sqrt(massCell / massPerPart)) + 1).astype('int')
         nPart = n*n
         d = csz/n
         pos = np.linspace(0, csz-d, n) + d/2
@@ -429,7 +426,7 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
         x = x.flatten()
         y = y.flatten()
 
-    mPart = mass / nPart
+    mPart = massCell / nPart
     # TODO make this an independent function
     #######################
     # start ###############
@@ -448,8 +445,8 @@ def placeParticles(mass, indx, indy, csz, massPerPart):
     return xpart, ypart, mPart, nPart
 
 
-def intializeMassEnt(dem, flagEntRes, entLine):
-    """ Intialize mass for entrainment
+def initializeMassEnt(dem, flagEntRes, entLine):
+    """ Initialize mass for entrainment
 
     Parameters
     ----------
@@ -458,7 +455,7 @@ def intializeMassEnt(dem, flagEntRes, entLine):
 
     Returns
     -------
-    Ment : 2D numpy array
+    entrMassRaster : 2D numpy array
         raster of available mass for entrainment
     """
     # read dem header
@@ -469,14 +466,14 @@ def intializeMassEnt(dem, flagEntRes, entLine):
         # entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
-        Ment = prepareArea(entLine, dem)
+        entrMassRaster = prepareArea(entLine, dem)
     else:
-        Ment = np.zeros((nrows, ncols))
-    return Ment
+        entrMassRaster = np.zeros((nrows, ncols))
+    return entrMassRaster
 
 
-def intializeResistance(cfg, dem, flagEntRes, resLine):
-    """ Intialize resistance matrix
+def initializeResistance(cfg, dem, flagEntRes, resLine):
+    """ Initialize resistance matrix
 
     Parameters
     ----------
@@ -485,7 +482,7 @@ def intializeResistance(cfg, dem, flagEntRes, resLine):
 
     Returns
     -------
-    Cres : 2D numpy array
+    cResRaster : 2D numpy array
         raster of resistance coefficients
     """
     d = cfg.getfloat('dRes')
@@ -499,11 +496,11 @@ def intializeResistance(cfg, dem, flagEntRes, resLine):
         # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
         resistanceArea = resLine['Name']
         log.info('Resistance area: %s' % (resistanceArea))
-        Cres = prepareArea(resLine, dem)
-        Cres = 0.5 * d * cw / (sres*sres) * Cres
+        mask = prepareArea(resLine, dem)
+        cResRaster = 0.5 * d * cw / (sres*sres) * mask
     else:
-        Cres = np.zeros((nrows, ncols))
-    return Cres
+        cResRaster = np.zeros((nrows, ncols))
+    return cResRaster
 
 
 def DFAIterate(cfg, particles, fields, dem):
@@ -1230,8 +1227,7 @@ def splitPart(cfg, particles, dem):
         for ind in Ind:
             mNew = m[ind] / nSplit[ind]
             nAdd = (nSplit[ind]-1).astype('int')
-            log.info('Spliting particle %s in %s' % (ind, nAdd+1))
-
+            log.debug('Spliting particle %s in %s' % (ind, nAdd+1))
             particles['Npart'] = particles['Npart'] + nAdd
             particles['NPPC'] = np.append(particles['NPPC'], particles['NPPC'][ind]*np.ones((nAdd)))
             particles['x'] = np.append(particles['x'], particles['x'][ind]*np.ones((nAdd)))
