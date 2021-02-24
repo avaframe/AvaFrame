@@ -122,8 +122,8 @@ def setDEMoriginToZero(demOri):
     dem = copy.deepcopy(demOri)
     dem['header'].xllcenter = 0
     dem['header'].yllcenter = 0
-    dem['header'].xllcorner = 0
-    dem['header'].yllcorner = 0
+    dem['header'].xllcorner = -dem['header'].cellsize/2
+    dem['header'].yllcorner = -dem['header'].cellsize/2
 
     return dem
 
