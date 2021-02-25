@@ -104,11 +104,11 @@ def inclinedplane(cfg):
         # make half sphere shaped channel with radius given by channel horizontal extent
         mask = np.zeros(np.shape(yv))
         mask[np.where(abs(yv) < c_extent)] = 1
-        if cfg['TOPO'].getboolean('topoconst'):
-            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2))))*mask
-        else:
+        if cfg['TOPO'].getboolean('topoadd'):
             zv = zv + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2)))))*mask
-        if not cfg['TOPO'].getboolean('topoconst'):
+        else:
+            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2))))*mask            
+        if cfg['TOPO'].getboolean('topoadd'):
             mask = np.zeros(np.shape(yv))
             mask[np.where(abs(yv) >= c_extent)] = 1
             zv = zv + c_extent*c_0*mask
@@ -119,7 +119,7 @@ def inclinedplane(cfg):
     return x, y, zv
 
 
-def hockeysmooth(cfg):
+def hockey(cfg):
     """
         Compute coordinates of an inclined plane with a flat foreland  defined by
         total fall height z0, angle to flat foreland (meanAlpha) and a radius (rCirc) to
@@ -195,11 +195,11 @@ def hockeysmooth(cfg):
         mask = np.zeros(np.shape(y))
         mask[np.where(abs(y) < c_extent)] = 1
         # Add surface elevation modification introduced by channel
-        if cfg['TOPO'].getboolean('topoconst'):
-            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
-        else:
+        if cfg['TOPO'].getboolean('topoadd'):
             zv = zv + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask
-        if not cfg['TOPO'].getboolean('topoconst'):
+        else:
+            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask            
+        if cfg['TOPO'].getboolean('topoadd'):
             # outside of the channel, add layer of channel depth
             mask = np.zeros(np.shape(y))
             mask[np.where(abs(y) >= c_extent)] = 1
@@ -211,7 +211,7 @@ def hockeysmooth(cfg):
     return x, y, zv
 
 
-def hockey(cfg):
+def parabola(cfg):
     """
         Compute coordinates of a parabolically-shaped slope with a flat foreland
         defined by total fall height C, angle (meanAlpha) or distance (fLen) to flat foreland
@@ -235,6 +235,10 @@ def hockey(cfg):
 
     # Set surface elevation
     zv = np.ones((nRows, nCols))
+    # initialize superimposed channel
+    superChannel = np.zeros(np.shape(xv))
+    superDam = np.zeros(np.shape(xv))
+    
     zv = zv * ((-B**2) / (4. * A) + C)
     mask = np.zeros(np.shape(xv))
     mask[np.where(xv < fLen)] = 1
@@ -266,18 +270,35 @@ def hockey(cfg):
         # Add surface elevation modification introduced by channel
         mask = np.zeros(np.shape(y))
         mask[np.where(abs(y) < c_extent)] = 1
-        if cfg['TOPO'].getboolean('topoconst'):
-            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
+        if cfg['TOPO'].getboolean('topoadd'):
+            #zv = zv + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask  
+            superChannel = superChannel + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask  
         else:
-            zv = zv + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask
-        if not cfg['TOPO'].getboolean('topoconst'):
+            #zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
+            superChannel = superChannel - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
+        if cfg['TOPO'].getboolean('topoadd'):
             # outside of the channel, add layer of channel depth
             mask = np.zeros(np.shape(y))
             mask[np.where(abs(y) >= c_extent)] = 1
-            zv = zv + c_extent*c_0*mask
+            #zv = zv + c_extent*c_0*mask
+            superChannel = superChannel + c_extent*c_0*mask
+            
+    if cfg['TOPO'].getboolean('dam'):
+        #damPos = float(cfg['DAMS']['damPos'])
+        damPos = cfg['DAMS'].getfloat('damPos')
+        damheight = cfg['DAMS'].getfloat('damheight')
+        damwidth = cfg['DAMS'].getfloat('damwidth')
+
+        mask = np.zeros(np.shape(xv))
+        mask[np.where(xv < fLen)] = 1
+        superDam = norm.pdf(xv, damPos * (-B/2/A) , damwidth)
+        superDam = superDam / np.max(superDam) * damheight
+  
+        
+    zv = zv + np.maximum( superDam , superChannel)
 
     # Log info here
-    log.info('Hockeystick coordinates computed')
+    log.info('Parabola with flat outrun coordinates computed')
 
     return x, y, zv
 
@@ -369,7 +390,7 @@ def helix(cfg):
         else:
             c_extent = c_radius
 
-        if not cfg['TOPO'].getboolean('topoconst'):
+        if not cfg['TOPO'].getboolean('topoadd'):
             zv = zv + c_0 * c_extent
 
         # Inner and outer boundaries of the channel
@@ -506,11 +527,11 @@ def generateTopo(cfg, avalancheDir):
     elif demType == 'IP':
         [x, y, z] = inclinedplane(cfg)
 
+    elif demType == 'PF':
+        [x, y, z] = parabola(cfg)
+
     elif demType == 'HS':
         [x, y, z] = hockey(cfg)
-
-    elif demType == 'HS2':
-        [x, y, z] = hockeysmooth(cfg)
 
     elif demType == 'BL':
         [x, y, z] = bowl(cfg)
