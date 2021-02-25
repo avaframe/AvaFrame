@@ -96,8 +96,8 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
     # Set coordinate grid with given origin
     X, Y = _setCoordinateGrid(xl ,yl ,dx, z)
 
-    topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'HS': 'Hockeystick',
-                 'HS2': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix', 'PY': 'Pyramid'}
+    topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'PF': 'parabola flat',
+                 'HS': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix', 'PY': 'Pyramid'}
 
     ax = _generateDEMPlot(X, Y, z, topoNames[nameExt])
 

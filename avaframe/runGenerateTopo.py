@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
     Run script for generateTopo in module in3Utils
 """
