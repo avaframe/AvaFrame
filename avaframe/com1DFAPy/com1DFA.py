@@ -53,61 +53,6 @@ seed = 12345
 rng = np.random.default_rng(seed)
 
 
-def getSimulation(cfgFlags, rel):
-    EntRes = cfgFlags.getboolean('EntRes')
-    OnlyEntrRes = cfgFlags.getboolean('OnlyEntrRes')
-    # Set release areas and simulation name
-    relName = os.path.splitext(os.path.basename(rel))[0]
-    simName = relName
-    BadName = False
-    if '_' in relName:
-        BadName = True
-        log.warning('Release area scenario file name includes an underscore \
-        the suffix _AF will be added')
-        simName = relName + '_AF'
-    relDict = shpConv.SHP2Array(rel)
-    for k in range(len(relDict['d0'])):
-        if relDict['d0'][k] == 'None':
-            relDict['d0'][k] = '1.0'
-    log.info('Release area scenario: %s - perform simulations' % (relName))
-    if EntRes:
-        # Possibility to run only entrainment resistance or also with null
-        if OnlyEntrRes:
-            cuSim = [simName + '_entres_dfa']
-        else:
-            cuSim = [simName + '_null_dfa', simName + '_entres_dfa']
-    else:
-        # Initialise CreateSimulations cint file and set parameters
-        cuSim = [simName + '_null_dfa']
-    return relName, cuSim, relDict, BadName
-
-
-def prepareInputData(demFile, relFiles, entFiles, resFile):
-    # get dem information
-    demOri = IOf.readRaster(demFile)
-    # get line from release area polygon
-    releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
-    releaseLine['file'] = relFiles
-    # get line from entrainement area polygon
-    if entFiles:
-        entLine = shpConv.readLine(entFiles, '', demOri)
-        entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
-        entLine['Name'] = [entrainmentArea]
-    else:
-        entLine = None
-        entrainmentArea = ''
-    # get line from resistance area polygon
-    if resFile:
-        resLine = shpConv.readLine(resFile, '', demOri)
-        resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
-        resLine['Name'] = [resistanceArea]
-    else:
-        resLine = None
-        resistanceArea = ''
-
-    return demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea
-
-
 def com1DFAMain(cfg, avaDir, relTh):
     """ Run main model
 
@@ -195,28 +140,7 @@ def com1DFAMain(cfg, avaDir, relTh):
             # Result parameters to be exported
             exportFields(cfgGen, Tsave, Fields, rel, demOri, outDir, logName)
 
-            # Create dictionary
-            reportST = {}
-            reportST = {}
-            reportST = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
-            'simName': {'type': 'simName', 'name': logName},
-                'Simulation Parameters': {
-                    'type': 'list',
-                    'Release Area Scenario': relName,
-                    'Release Area': relDict['Name'],
-                    'Entrainment Area': '',
-                    'Resistance Area': '',
-                    'Parameter variation on': '',
-                    'Parameter value': '',
-                    'Mu': cfgGen['mu'],
-                    'Release thickness [m]': relDict['d0']},
-                'Release Area': {'type': 'columns', 'Release area scenario': relName}}
-
-            if 'entres' in sim:
-                reportST['Simulation Parameters'].update({'Entrainment Area': entrainmentArea})
-                reportST['Simulation Parameters'].update({'Resistance Area': resistanceArea})
-                reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea}})
-                reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
+            reportST = createReportDict(logName, relName, relDict, cfgGen, sim, entrainmentArea, resistanceArea)
 
             # Add to report dictionary list
             reportDictList.append(reportST)
@@ -226,6 +150,88 @@ def com1DFAMain(cfg, avaDir, relTh):
     log.debug('Avalanche Simulations performed')
 
     return Particles, Fields, Tsave, dem, reportDictList
+
+
+def getSimulation(cfgFlags, rel):
+    EntRes = cfgFlags.getboolean('EntRes')
+    OnlyEntrRes = cfgFlags.getboolean('OnlyEntrRes')
+    # Set release areas and simulation name
+    relName = os.path.splitext(os.path.basename(rel))[0]
+    simName = relName
+    BadName = False
+    if '_' in relName:
+        BadName = True
+        log.warning('Release area scenario file name includes an underscore \
+        the suffix _AF will be added')
+        simName = relName + '_AF'
+    relDict = shpConv.SHP2Array(rel)
+    for k in range(len(relDict['d0'])):
+        if relDict['d0'][k] == 'None':
+            relDict['d0'][k] = '1.0'
+    log.info('Release area scenario: %s - perform simulations' % (relName))
+    if EntRes:
+        # Possibility to run only entrainment resistance or also with null
+        if OnlyEntrRes:
+            cuSim = [simName + '_entres_dfa']
+        else:
+            cuSim = [simName + '_null_dfa', simName + '_entres_dfa']
+    else:
+        # Initialise CreateSimulations cint file and set parameters
+        cuSim = [simName + '_null_dfa']
+    return relName, cuSim, relDict, BadName
+
+
+def prepareInputData(demFile, relFiles, entFiles, resFile):
+    # get dem information
+    demOri = IOf.readRaster(demFile)
+    # get line from release area polygon
+    releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
+    releaseLine['file'] = relFiles
+    # get line from entrainement area polygon
+    if entFiles:
+        entLine = shpConv.readLine(entFiles, '', demOri)
+        entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
+        entLine['Name'] = [entrainmentArea]
+    else:
+        entLine = None
+        entrainmentArea = ''
+    # get line from resistance area polygon
+    if resFile:
+        resLine = shpConv.readLine(resFile, '', demOri)
+        resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
+        resLine['Name'] = [resistanceArea]
+    else:
+        resLine = None
+        resistanceArea = ''
+
+    return demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea
+
+
+def createReportDict(logName, relName, relDict, cfgGen, sim, entrainmentArea, resistanceArea):
+    # Create dictionary
+    reportST = {}
+    reportST = {}
+    reportST = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+                'simName': {'type': 'simName', 'name': logName},
+                'Simulation Parameters': {
+                'type': 'list',
+                'Release Area Scenario': relName,
+                'Release Area': relDict['Name'],
+                'Entrainment Area': '',
+                'Resistance Area': '',
+                'Parameter variation on': '',
+                'Parameter value': '',
+                'Mu': cfgGen['mu'],
+                'Release thickness [m]': relDict['d0']},
+                'Release Area': {'type': 'columns', 'Release area scenario': relName}}
+
+    if 'entres' in sim:
+        reportST['Simulation Parameters'].update({'Entrainment Area': entrainmentArea})
+        reportST['Simulation Parameters'].update({'Resistance Area': resistanceArea})
+        reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea}})
+        reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
+
+    return reportST
 
 
 def initializeMesh(dem, num=4):
