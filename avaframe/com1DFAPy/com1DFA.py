@@ -90,6 +90,7 @@ def com1DFAMain(cfg, avaDir, relTh, flagAnalysis, flagOnlyEntrRes=False):
     # fetch input data - dem, release-, entrainment- and resistance areas
     demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(
         avalancheDir, cfg['FLAGS'], flagDev)
+    cfg['FLAGS']['flagEntRes'] = str(flagEntRes)
     demOri = IOf.readRaster(demFile)
     # derive line from release area polygon
     releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
@@ -122,7 +123,6 @@ def com1DFAMain(cfg, avaDir, relTh, flagAnalysis, flagOnlyEntrRes=False):
 
     # Loop through release areas
     for rel in relFiles:
-
         # Set release areas and simulation name
         relName = os.path.splitext(os.path.basename(rel))[0]
         simName = relName
@@ -138,8 +138,6 @@ def com1DFAMain(cfg, avaDir, relTh, flagAnalysis, flagOnlyEntrRes=False):
         log.info('Release area scenario: %s - perform simulations' % (relName))
         if flagEntRes:
             log.info('Entrainment area: %s and resistance area: %s' % (entrainmentArea, resistanceArea))
-
-        if flagEntRes:
             # Initialise CreateSimulations cint file and set parameters
             cuSim = [simName + '_null_dfa', simName + '_entres_dfa']
         else:
@@ -155,18 +153,21 @@ def com1DFAMain(cfg, avaDir, relTh, flagAnalysis, flagOnlyEntrRes=False):
             else:
                 log.debug('Standard simulation is performed without entrainment and resistance')
             logName = sim + '_' + cfgGen['mu']
+
+            # If initialisation from file
             inDirPart = ''
             if cfgGen.getboolean('initialiseParticlesFromFile'):
-                partDirName = logName
-                inDirPart = os.path.join(cfgGen['avalancheDir'], 'Outputs', 'com1DFA', 'particles', partDirName)
-            if cfgGen.getboolean('benchmarks'):
-                avaName = os.path.basename(cfgGen['avalancheDir'])
-                inDirPart = os.path.join('..', 'benchmarks', avaName, 'particles', partDirName)
+                if cfgGen['particleFile']:
+                    inDirPart = cfgGen['particleFile']
+                else:
+                    partDirName = logName
+                    inDirPart = os.path.join(cfgGen['avalancheDir'], 'Outputs', 'com1DFA', 'particles', partDirName)
             cfg['GENERAL']['inDirPart'] = inDirPart
+
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, fields, demOri, dem, releaseLine = initializeSimulation(cfg, demOri, releaseLine, flagEntRes, entLine, resLine, logName, relTh)
+            particles, fields, demOri, dem, releaseLine = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relTh)
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
@@ -299,8 +300,9 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, releaseLine, flagEntRes, entLine, resLine, logName, relTh):
+def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relTh):
     cfgGen = cfg['GENERAL']
+    flagEntRes = cfg.getboolean('FLAGS', 'flagEntRes')
 
     dem = setDEMoriginToZero(demOri)
 
