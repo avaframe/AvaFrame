@@ -12,11 +12,12 @@ import avaframe.in3Utils.initializeProject as initProj
 import avaframe.com1DFAPy.com1DFA as com1DFA
 from avaframe.out1Peak import outPlotAllPeak as oP
 import avaframe.in3Utils.fileHandlerUtils as fU
+from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 
-def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=False, flagBenchmarks=False):
+def runCom1DFAPy(avaDir='', cfgFile='', relTh=''):
     """ run com1DFAPy module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -50,18 +51,19 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh='', flagAnalysis=False, flagBenchm
         cfg = cfgUtils.getModuleConfig(com1DFA)
     cfgGen = cfg['GENERAL']
     cfgGen['avalancheDir'] = avalancheDir
-    cfg['GENERAL']['benchmarks'] = str(flagBenchmarks)
-    flagOnlyEntrRes = False
-    if cfg.has_option('FLAGS', 'flagOnlyEntrRes'):
-        flagOnlyEntrRes = cfg.getboolean('FLAGS', 'flagOnlyEntrRes')
 
     # +++++++++++++++++++++++++++++++++
     # ------------------------
-    Particles, Fields, Tsave, dem, reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir, relTh, flagAnalysis, flagOnlyEntrRes=flagOnlyEntrRes)
+    Particles, Fields, Tsave, dem, reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir, relTh)
 
     # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
     # Generate plots for all peakFiles
     plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
+
+    # Set directory for report
+    reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAPy', 'reports')
+    # write report
+    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
     return Particles, Fields, Tsave, dem, plotDict, reportDictList
 

@@ -45,7 +45,6 @@ def writeReportFile(reportD, pfile):
     # Loop through keys and perform action according to value found in type
     for key in reportD:
         for subKey in reportD[key]:
-
             # HEADER BLOCK
             # Title
             if reportD[key][subKey] == 'title':
