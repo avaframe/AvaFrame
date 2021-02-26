@@ -9,6 +9,7 @@ import time
 
 # Local imports
 from avaframe.com1DFA import com1DFA
+from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
 from avaframe.out1Peak import outPlotAllPeak as oP
@@ -25,11 +26,14 @@ logName = 'runVariationsTests'
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 
-# Define avalanche directories for standard tests
-standardNames = ['data/avaFlatPlane',
-                 'data/avaHelixChannel',
-                 'data/avaHockey']
-
+# load all benchmark info as dictionaries from description files
+testDictList = tU.readAllBenchmarkDesDicts(info=False)
+# filter benchmarks for tag standardTest
+type = 'TAGS'
+valuesList = ['varParTest']
+testList = tU.filterBenchmarks(testDictList, type, valuesList)
+for test in testList:
+    print(test['NAME'])
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reportsVariations')
 fU.makeADir(outDir)
@@ -43,7 +47,10 @@ with open(reportFile, 'w') as pfile:
     pfile.write('## Compare com1DFA simulations to benchmark results \n')
 
 # run Standard Tests sequentially
-for avaDir in standardNames:
+for teat in testList:
+
+    # avalanche directory
+    avaDir = 'data' + os.sep + test['AVANAME']
 
     # get path to executable
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
@@ -57,7 +64,7 @@ for avaDir in standardNames:
     # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', avaName, '%sVarPar_com1DFACfg.ini' % avaName)
+    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%sVarPar_com1DFACfg.ini' % avaName)
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
@@ -126,7 +133,7 @@ for avaDir in standardNames:
 
         # Plot data comparison for all output variables defined in suffix
         for var in outputVariable:
-            plotList = outQuickPlot.quickPlot(avaDir, var, values, parameter, cfgMain, cfgRep, rel, simType)
+            plotList = outQuickPlot.quickPlot(avaDir, test['NAME'], var, values, parameter, cfgMain, cfgRep, rel, simType)
             for pDict in plotList:
                 if rel in pDict['relArea']:
                     plotDict = pDict
