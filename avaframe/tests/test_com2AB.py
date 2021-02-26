@@ -166,8 +166,8 @@ def test_QGISAB(capfd):
         ids_alphaM2SD = resAB[name]['ids_alphaM2SD']
         # get ref results
         nameRef = name + '_AB_QGIS.txt'
-        nameRefpath = os.path.join(dirname, '..', '..', 'benchmarks', avaName,
-                                   nameRef + 'ABPytest')
+        nameRefpath = os.path.join(dirname, '..', '..', 'benchmarks', avaName + 'ABPytest',
+                                   nameRef)
         data = np.loadtxt(nameRefpath, skiprows=4, delimiter=',')
         tolDist = 10
         tolAngle = 0.12
