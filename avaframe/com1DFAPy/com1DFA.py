@@ -468,6 +468,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
 
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
+        # TODO: this is for development purpouses, change or remove in the future
         # If initialisation from file
         if cfg['particleFile']:
             inDirPart = cfg['particleFile']
