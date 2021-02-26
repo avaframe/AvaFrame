@@ -85,10 +85,10 @@ def com1DFAMain(cfg, avaDir, relTh):
     flagDev = cfg['FLAGS'].getboolean('flagDev')
     avalancheDir = cfgGen['avalancheDir']
     # fetch input data - dem, release-, entrainment- and resistance areas
-    demFile, relFiles, entFiles, resFile, EntRes = gI.getInputData(
+    demFile, relFiles, entFiles, resFile, entRes = gI.getInputData(
         avalancheDir, cfg['FLAGS'], flagDev)
     # save flags
-    cfg['FLAGS']['EntRes'] = str(EntRes)
+    cfg['FLAGS']['entRes'] = str(entRes)
     demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, relFiles, entFiles, resFile)
 
     # Counter for release area loop
@@ -100,31 +100,14 @@ def com1DFAMain(cfg, avaDir, relTh):
     # Loop through release areas
     for rel in relFiles:
         # find out which simulations to perform
-        relName, cuSim, relDict, BadName = getSimulation(cfg['FLAGS'], rel)
+        relName, cuSim, relDict, badName = getSimulation(cfg['FLAGS'], rel)
         for sim in cuSim:
-            if '_entres_' in sim:
-                if entLine:
-                    log.info('Simulation is performed using entrainment: %s' % (entLine['Name']))
-                if resLine:
-                    log.info('Simulation is performed using resistance: %s' % (resLine['Name']))
-            else:
-                log.info('Standard simulation is performed without entrainment and resistance')
             logName = sim + '_' + cfgGen['mu']
-
-            # If initialisation from file
-            inDirPart = ''
-            if cfgGen.getboolean('initialiseParticlesFromFile'):
-                if cfgGen['particleFile']:
-                    inDirPart = cfgGen['particleFile']
-                else:
-                    partDirName = logName
-                    inDirPart = os.path.join(cfgGen['avalancheDir'], 'Outputs', 'com1DFA', 'particles', partDirName)
-            cfg['GENERAL']['inDirPart'] = inDirPart
 
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, fields, demOri, dem, releaseLine = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relTh)
+            particles, fields, dem = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relTh)
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
@@ -140,7 +123,7 @@ def com1DFAMain(cfg, avaDir, relTh):
             # Result parameters to be exported
             exportFields(cfgGen, Tsave, Fields, rel, demOri, outDir, logName)
 
-            reportST = createReportDict(logName, relName, relDict, cfgGen, sim, entrainmentArea, resistanceArea)
+            reportST = createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea)
 
             # Add to report dictionary list
             reportDictList.append(reportST)
@@ -153,14 +136,35 @@ def com1DFAMain(cfg, avaDir, relTh):
 
 
 def getSimulation(cfgFlags, rel):
-    EntRes = cfgFlags.getboolean('EntRes')
-    OnlyEntrRes = cfgFlags.getboolean('OnlyEntrRes')
+    """ get Simulation to run for a given release
+
+
+    Parameters
+    ----------
+    cfgFlags : dict
+        Flags configuration parameters
+    rel : str
+        path to release file
+
+    Returns
+    -------
+    relName : str
+        release name
+    cuSim : list
+        list of simulations to run
+    relDict : list
+        release dictionary
+    badName : boolean
+        changed release name
+    """
+    entRes = cfgFlags.getboolean('entRes')
+    onlyEntrRes = cfgFlags.getboolean('onlyEntrRes')
     # Set release areas and simulation name
     relName = os.path.splitext(os.path.basename(rel))[0]
     simName = relName
-    BadName = False
+    badName = False
     if '_' in relName:
-        BadName = True
+        badName = True
         log.warning('Release area scenario file name includes an underscore \
         the suffix _AF will be added')
         simName = relName + '_AF'
@@ -169,19 +173,47 @@ def getSimulation(cfgFlags, rel):
         if relDict['d0'][k] == 'None':
             relDict['d0'][k] = '1.0'
     log.info('Release area scenario: %s - perform simulations' % (relName))
-    if EntRes:
+    if entRes:
         # Possibility to run only entrainment resistance or also with null
-        if OnlyEntrRes:
+        if onlyEntrRes:
             cuSim = [simName + '_entres_dfa']
         else:
             cuSim = [simName + '_null_dfa', simName + '_entres_dfa']
     else:
         # Initialise CreateSimulations cint file and set parameters
         cuSim = [simName + '_null_dfa']
-    return relName, cuSim, relDict, BadName
+    return relName, cuSim, relDict, badName
 
 
 def prepareInputData(demFile, relFiles, entFiles, resFile):
+    """ Fetch input data
+
+    Parameters
+    ----------
+    demFile : str
+        path to dem file
+    relFiles : str
+        path to release file
+    entFiles : str
+        path to entrainment file
+    resFile : str
+        path to resistance file
+
+    Returns
+    -------
+    demOri : dict
+        dictionary with original dem
+    releaseLine : dict
+        release line dictionary
+    entLine : dict
+        entrainment line dictionary
+    resLine : dict
+        resistance line dictionary
+    entrainmentArea : str
+        entrainment file name
+    resistanceArea : str
+        resistance file name
+    """
     # get dem information
     demOri = IOf.readRaster(demFile)
     # get line from release area polygon
@@ -207,7 +239,29 @@ def prepareInputData(demFile, relFiles, entFiles, resFile):
     return demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea
 
 
-def createReportDict(logName, relName, relDict, cfgGen, sim, entrainmentArea, resistanceArea):
+def createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea):
+    """ create simulaton report dictionary
+
+    Parameters
+    ----------
+    logName : str
+        simulation scenario name
+    relName : str
+        release name
+    relDict : dict
+        release dictionary
+    cfgGen : configparser
+        general configuration file
+    entrainmentArea : str
+        entrainment file name
+    resistanceArea : str
+        resistance file name
+
+    Returns
+    -------
+    reportST : dict
+        simulation scenario dictionary
+    """
     # Create dictionary
     reportST = {}
     reportST = {}
@@ -225,7 +279,7 @@ def createReportDict(logName, relName, relDict, cfgGen, sim, entrainmentArea, re
                 'Release thickness [m]': relDict['d0']},
                 'Release Area': {'type': 'columns', 'Release area scenario': relName}}
 
-    if 'entres' in sim:
+    if 'entres' in logName:
         reportST['Simulation Parameters'].update({'Entrainment Area': entrainmentArea})
         reportST['Simulation Parameters'].update({'Resistance Area': resistanceArea})
         reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea}})
@@ -308,8 +362,36 @@ def setDEMoriginToZero(demOri):
 
 
 def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relTh):
+    """ create simulaton report dictionary
+
+    Parameters
+    ----------
+    cfg : str
+        simulation scenario name
+    demOri : dict
+        dictionary with original dem
+    releaseLine : dict
+        release line dictionary
+    entLine : dict
+        entrainment line dictionary
+    resLine : dict
+        resistance line dictionary
+    logName : str
+        simulation scenario name
+    relTh : 2D numpy array
+        inhomogeneous release thickness if wanted (relTh='' by default)
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary at initial time step
+    fields : dict
+        fields dictionary at initial time step
+    dem : dict
+        dictionary with new dem (lower left center at origin)
+    """
     cfgGen = cfg['GENERAL']
-    EntRes = cfg.getboolean('FLAGS', 'EntRes')
+    entRes = cfg.getboolean('FLAGS', 'entRes')
 
     dem = setDEMoriginToZero(demOri)
 
@@ -328,24 +410,23 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
 
     # create particles, create resistance and
     # entrainment matrix, initialize fields, get normals and neighbours
-    inDirPart = cfgGen['inDirPart']
-    particles, fields = initializeParticles(cfgGen, relRaster, dem, inDirPart=inDirPart)
+    particles, fields = initializeParticles(cfgGen, relRaster, dem, logName=logName)
 
     # initialize entrainment and resistance
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster = initializeMassEnt(demOri, EntRes, entLine)
-    cResRaster = initializeResistance(cfgGen, demOri, EntRes, resLine)
+    entrMassRaster = initializeMassEnt(demOri, entRes, entLine)
+    cResRaster = initializeResistance(cfgGen, demOri, entRes, resLine)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
     entreainableMass = np.sum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
     fields['cResRaster'] = cResRaster
 
-    return particles, fields, demOri, dem, releaseLine
+    return particles, fields, dem
 
 
-def initializeParticles(cfg, relRaster, dem, inDirPart=''):
+def initializeParticles(cfg, relRaster, dem, logName=''):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -387,6 +468,12 @@ def initializeParticles(cfg, relRaster, dem, inDirPart=''):
 
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
+        # If initialisation from file
+        if cfg['particleFile']:
+            inDirPart = cfg['particleFile']
+        else:
+            partDirName = logName
+            inDirPart = os.path.join(avaDir, 'Outputs', 'com1DFA', 'particles', partDirName)
         log.info('Initial particle distribution read from file!! %s' % (inDirPart))
         Particles, TimeStepInfo = readPartFromPickle(inDirPart)
         particles = Particles[0]
@@ -601,7 +688,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart):
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, EntRes, entLine):
+def initializeMassEnt(dem, entRes, entLine):
     """ Initialize mass for entrainment
 
     Parameters
@@ -618,17 +705,17 @@ def initializeMassEnt(dem, EntRes, entLine):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if EntRes and entLine:
+    if entRes and entLine:
         # entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
         entrainmentArea = entLine['Name']
-        log.debug('Entrainment area: %s' % (entrainmentArea))
+        log.info('Entrainment area: %s' % (entrainmentArea))
         entrMassRaster = prepareArea(entLine, dem)
     else:
         entrMassRaster = np.zeros((nrows, ncols))
     return entrMassRaster
 
 
-def initializeResistance(cfg, dem, EntRes, resLine):
+def initializeResistance(cfg, dem, entRes, resLine):
     """ Initialize resistance matrix
 
     Parameters
@@ -648,10 +735,10 @@ def initializeResistance(cfg, dem, EntRes, resLine):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if EntRes and resLine:
+    if entRes and resLine:
         # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
         resistanceArea = resLine['Name']
-        log.debug('Resistance area: %s' % (resistanceArea))
+        log.info('Resistance area: %s' % (resistanceArea))
         mask = prepareArea(resLine, dem)
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
     else:
@@ -697,7 +784,7 @@ def DFAIterate(cfg, particles, fields, dem):
     Tcpu['Field'] = 0.
 
     # Load configuration settings
-    Tend = cfg.getfloat('Tend')
+    tEnd = cfg.getfloat('tEnd')
     dtSave = cfg.getfloat('dtSave')
     sphOption = cfg.getint('sphOption')
     log.info('using sphOption %s:' % sphOption)
@@ -725,7 +812,7 @@ def DFAIterate(cfg, particles, fields, dem):
     particles['iterate'] = iterate
     t = particles['t']
     # Start time step computation
-    while t < Tend and iterate:
+    while t < tEnd and iterate:
         # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
         # CALL TIME STEP:
         # to play around with the courant number
