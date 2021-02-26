@@ -114,7 +114,7 @@ def test_com2ABMain(capfd):
     dirname = os.path.dirname(__file__)
     for name in listNames:
         avalancheDir = os.path.join(dirname, '..', 'data', name)
-        saveOutPathRef = os.path.join(dirname, '..', '..', 'benchmarks', name)
+        saveOutPathRef = os.path.join(dirname, '..', '..', 'benchmarks', name + 'ABPytest')
         cfg = cfgUtils.getModuleConfig(com2AB)
         flags = cfg['FLAGS']
         # run main routine
@@ -167,7 +167,7 @@ def test_QGISAB(capfd):
         # get ref results
         nameRef = name + '_AB_QGIS.txt'
         nameRefpath = os.path.join(dirname, '..', '..', 'benchmarks', avaName,
-                                   nameRef)
+                                   nameRef + 'ABPytest')
         data = np.loadtxt(nameRefpath, skiprows=4, delimiter=',')
         tolDist = 10
         tolAngle = 0.12
