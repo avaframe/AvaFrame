@@ -10,34 +10,36 @@ import glob
 # Local imports
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.ana1Tests import standardTests as sT
+from avaframe.ana1Tests import testUtilities as tU
 
 # log file name; leave empty to use default runLog.log
 logName = 'runDescriptionDict'
 
-# set directory of benchmarks
-avaTest = 'avaMyTest'
-testName = 'nullTest'
-inDir = os.path.join('..', 'benchmarks', avaTest)
+# set directory of benchmark test and if not yet done, this directory is created
+testName = 'avaMyTest'
+inDir = os.path.join('..', 'benchmarks', testName)
 fU.makeADir(inDir)
 
 # Start logging
 log = logUtils.initiateLogger(inDir, logName)
 
 # create empty description dictionary template
-desDict = sT.createDesDictTemplate()
+desDict = tU.createDesDictTemplate()
 
 # fill this empty dictionary with test info
-desDict['TAGS'] = ['null']
-desDict['DESCRIPTION'] = " this is my test"
-desDict['TYPE'] = "rasterFile"
-desDict['FILES'] = ["release1HS_entres_ref_0.15500_pfv.asc", "release1HS_entres_ref_0.15500_ppr.asc"]
+desDict['TAGS'] = ['null']                              # in which category does this test fall
+desDict['DESCRIPTION'] = " this is my null test"        # what is this test about
+desDict['TYPE'] = ["2DPeak"]                            # what type of benchmark data does the test provide
+desDict['FILES'] = ["mytest1.asc", "mytest2.asc"]       # which files does the test provide
+desDict['AVANAME'] = 'avaInclinedPlane'                 # which avalanache does the test refer to
 
 # write dictionary to json file
-fileName = sT.writeDesDicttoJson(desDict, testName, inDir)
+fileName = tU.writeDesDicttoJson(desDict, testName, inDir)
 
-# read dictionary from json file
-testDict = sT.readDesDictFromJson(fileName)
 
-for key in testDict:
-    log.info('%s: %s' % (key, testDict[key]))
+# read all the benchmark info
+testDictsList = tU.readAllBenchmarkDesDicts(info=False)
+
+# list all the tests and the respective tags
+for key in testDictsList:
+    log.info('Test: %s Tag: %s ' % (key['NAME'], key['TAGS']))
