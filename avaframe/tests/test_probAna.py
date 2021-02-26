@@ -21,8 +21,10 @@ def test_probAna(tmp_path):
 
     # set input directory
     avaName = 'avaHockey'
+    avaTestDir = 'avaHockeyStatsTest'
     dirPath = os.path.dirname(__file__)
-    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaName)
+    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
+    avaDir2 = os.path.join(dirPath, '..', '..', 'benchmarks', avaName)
     inputDir = os.path.join(avaDir, 'ana4Stats')
     outDir = tmp_path
 
@@ -35,7 +37,7 @@ def test_probAna(tmp_path):
     cfg['GENERAL'] = {'peakLim': 10.0, 'peakVar': 'ppr'}
 
     # call function to test
-    pA.probAnalysis(avaDir, cfg, cfgMain, inputDir, outDir)
+    pA.probAnalysis(avaDir2, cfg, cfgMain, inputDir, outDir)
     probTest = np.loadtxt(os.path.join(tmp_path, 'avaHockey_probMap10.0.asc'), skiprows=6)
 
     # Load reference solution
