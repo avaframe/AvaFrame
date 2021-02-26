@@ -42,7 +42,7 @@ for avaDir in avalancheDirectories:
     # Load input parameters from configuration file
     # write config to log file
     avaName = os.path.basename(avaDir)
-    probSimCfg = os.path.join('..', 'benchmarks', avaName, 'ana4Stats', '%sProbAna_com1DFACfg.ini' % avaName)
+    probSimCfg = os.path.join('..', 'benchmarks', 'avaHockeyStatsTest', '%sProbAna_com1DFACfg.ini' % avaName)
     cfg = cfgUtils.getModuleConfig(com1DFA, probSimCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 

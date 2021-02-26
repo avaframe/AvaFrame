@@ -5,3 +5,4 @@ scipy
 cmocean
 seaborn
 cython
+json
