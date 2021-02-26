@@ -159,7 +159,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     return plotDict
 
 
-def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='null', comModule='com1DFA'):
+def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='null', comModule='com1DFA'):
     """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension) and save to
         Outputs/out3Plot within avalanche directoy
 
@@ -207,7 +207,7 @@ def quickPlot(avaDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='nul
     fU.getDFAData(avaDir, workDir, suffix, comModule=comModule)
 
     # Get data from reference run
-    fU.getRefData(avaDir, workDir, suffix)
+    fU.getRefData(testDir, workDir, suffix)
 
     # prepare data
     if parameter == 'Mu' or parameter == 'RelTh':

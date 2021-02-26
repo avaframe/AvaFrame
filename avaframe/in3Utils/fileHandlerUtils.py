@@ -238,7 +238,7 @@ def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir=''):
             countsuf = countsuf + 1
 
 
-def getRefData(avaDir, outputDir, suffix, nameDir=''):
+def getRefData(testDir, outputDir, suffix, nameDir=''):
     """ Grab reference data and save to outputDir
 
         Parameters
@@ -252,8 +252,7 @@ def getRefData(avaDir, outputDir, suffix, nameDir=''):
     """
 
     # Input directory and load input datasets
-    ava = avaDir.split(os.sep)[1]
-    refDir = os.path.join('..', 'benchmarks', ava)
+    refDir = os.path.join('..', 'benchmarks', testDir)
 
     # Create simulations dictionary
     data = makeSimDict(refDir)
