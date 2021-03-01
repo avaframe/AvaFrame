@@ -104,14 +104,13 @@ def inclinedplane(cfg):
         # make half sphere shaped channel with radius given by channel horizontal extent
         mask = np.zeros(np.shape(yv))
         mask[np.where(abs(yv) < c_extent)] = 1
-        if cfg['TOPO'].getboolean('topoadd'):
+        if cfg['TOPO'].getboolean('topoAdd'):
             zv = zv + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2)))))*mask
-        else:
-            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2))))*mask            
-        if cfg['TOPO'].getboolean('topoadd'):
             mask = np.zeros(np.shape(yv))
             mask[np.where(abs(yv) >= c_extent)] = 1
             zv = zv + c_extent*c_0*mask
+        else:
+            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2))))*mask
 
     # Log info here
     log.info('Inclined plane coordinates computed')
@@ -195,15 +194,14 @@ def hockey(cfg):
         mask = np.zeros(np.shape(y))
         mask[np.where(abs(y) < c_extent)] = 1
         # Add surface elevation modification introduced by channel
-        if cfg['TOPO'].getboolean('topoadd'):
+        if cfg['TOPO'].getboolean('topoAdd'):
             zv = zv + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask
-        else:
-            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask            
-        if cfg['TOPO'].getboolean('topoadd'):
             # outside of the channel, add layer of channel depth
             mask = np.zeros(np.shape(y))
             mask[np.where(abs(y) >= c_extent)] = 1
             zv = zv + c_extent*c_0*mask
+        else:
+            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
 
     # Log info here
     log.info('Hockeystick smooth coordinates computed')
@@ -238,7 +236,7 @@ def parabola(cfg):
     # initialize superimposed channel
     superChannel = np.zeros(np.shape(xv))
     superDam = np.zeros(np.shape(xv))
-    
+
     zv = zv * ((-B**2) / (4. * A) + C)
     mask = np.zeros(np.shape(xv))
     mask[np.where(xv < fLen)] = 1
@@ -270,31 +268,27 @@ def parabola(cfg):
         # Add surface elevation modification introduced by channel
         mask = np.zeros(np.shape(y))
         mask[np.where(abs(y) < c_extent)] = 1
-        if cfg['TOPO'].getboolean('topoadd'):
-            #zv = zv + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask  
-            superChannel = superChannel + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask  
-        else:
-            #zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
-            superChannel = superChannel - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
-        if cfg['TOPO'].getboolean('topoadd'):
+        if cfg['TOPO'].getboolean('topoAdd'):
+            superChannel = superChannel + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask
             # outside of the channel, add layer of channel depth
             mask = np.zeros(np.shape(y))
             mask[np.where(abs(y) >= c_extent)] = 1
-            #zv = zv + c_extent*c_0*mask
             superChannel = superChannel + c_extent*c_0*mask
-            
+        else:
+            superChannel = superChannel - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
+
+
     if cfg['TOPO'].getboolean('dam'):
         #damPos = float(cfg['DAMS']['damPos'])
         damPos = cfg['DAMS'].getfloat('damPos')
-        damheight = cfg['DAMS'].getfloat('damheight')
-        damwidth = cfg['DAMS'].getfloat('damwidth')
+        damHeight = cfg['DAMS'].getfloat('damHeight')
+        damWidth = cfg['DAMS'].getfloat('damWidth')
+        superDam = norm.pdf(xv, damPos * (-B/2/A) , damWidth)
+        superDam = superDam / np.max(superDam) * damHeight
+        if not cfg['TOPO'].getboolean('topoAdd'):
+            superDam = superDam -  c_extent*c_0
 
-        mask = np.zeros(np.shape(xv))
-        mask[np.where(xv < fLen)] = 1
-        superDam = norm.pdf(xv, damPos * (-B/2/A) , damwidth)
-        superDam = superDam / np.max(superDam) * damheight
-  
-        
+    # add channel and dam
     zv = zv + np.maximum( superDam , superChannel)
 
     # Log info here
@@ -390,7 +384,7 @@ def helix(cfg):
         else:
             c_extent = c_radius
 
-        if not cfg['TOPO'].getboolean('topoadd'):
+        if not cfg['TOPO'].getboolean('topoAdd'):
             zv = zv + c_0 * c_extent
 
         # Inner and outer boundaries of the channel
