@@ -19,7 +19,7 @@ def test_getInputData(tmp_path):
 
     # get input data
     dirPath = os.path.dirname(__file__)
-    avaName = 'avaHockeySmoothChannel'
+    avaName = 'avaHockeyChannel'
     avaDir  = os.path.join(tmp_path, avaName)
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
@@ -37,12 +37,12 @@ def test_getInputData(tmp_path):
     # call function to be tested
     dem, rels, ent, res, flagEntRes = getInput.getInputData(avaDir, cfgGen)
     # second option
-    cfg['GENERAL']['releaseScenario'] = 'release1HS2'
+    cfg['GENERAL']['releaseScenario'] = 'release1HS'
     dem2, rels2, ent2, res2, flagEntRes2 = getInput.getInputData(avaDir, cfgGen)
     # Test
-    assert dem == os.path.join(avaDir, 'Inputs', 'myDEM_HS2_Topo.asc')
-    assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS2.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release3HS2.shp')]
-    assert rels2 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS2.shp')]
+    assert dem == os.path.join(avaDir, 'Inputs', 'DEM_HS_Topo.asc')
+    assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release3HS.shp')]
+    assert rels2 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
     assert res == ''
-    assert ent == os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS2.shp')
+    assert ent == os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp')
     assert flagEntRes == True

@@ -170,7 +170,7 @@ def test_hockey():
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'dx': 5, 'xEnd': 5000., 'yEnd': 2000., 'rCirc': 200.,
                    'z0': 2200., 'meanAlpha': 34., 'channel': 'True',
-                   'narrowing': 'True', 'topoAdd': 'False'}
+                   'narrowing': 'True', 'topoAdd': 'True'}
     cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
                        'c_init': 250, 'c_mustart': 0.2, 'c_muendFP': 0.86}
 
@@ -179,8 +179,8 @@ def test_hockey():
 
     # Load reference Solution
     dirPath = os.path.dirname(__file__)
-    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaHockeySmoothChannel',
-                                   'Inputs', 'myDEM_HS2_Topo.asc'), skiprows=6)
+    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaHockeyChannel',
+                                   'Inputs', 'DEM_HS_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=5.e-6)
@@ -204,8 +204,8 @@ def test_parabola():
 
     # Load reference Solution
     dirPath = os.path.dirname(__file__)
-    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaHockey',
-                                   'Inputs', 'DEM_HS_Topo.asc'), skiprows=6)
+    zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaParabola',
+                                   'Inputs', 'DEM_PF_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
@@ -220,7 +220,7 @@ def test_helix():
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'C': 1000, 'meanAlpha': 34, 'rHelix': 1250, 'fLens': 0, 'dx': 5, 'xEnd': 5000.,
-                   'yEnd': 2000.,  'channel': 'True', 'narrowing': 'True', 'topoAdd': 'False'}
+                   'yEnd': 2000.,  'channel': 'True', 'narrowing': 'True', 'topoAdd': 'True'}
     cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
                        'c_mustart': 0.2, 'c_muend': 0.6, 'c_init': 250}
 
@@ -230,7 +230,7 @@ def test_helix():
     # Load reference Solution
     dirPath = os.path.dirname(__file__)
     zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaHelixChannel',
-                                   'Inputs', 'myDEM_HX_Topo.asc'), skiprows=6)
+                                   'Inputs', 'DEM_HX_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)

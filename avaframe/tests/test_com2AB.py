@@ -110,7 +110,7 @@ def test_calcAB(capfd):
 def test_com2ABMain(capfd):
     '''Simple test for function com2ABMain'''
     # load and prepare Inputs
-    listNames = ['avaHockeySmoothSmall', 'avaHockeySmoothChannel', 'avaBowl']
+    listNames = ['avaHockeySmall', 'avaHockeyChannel', 'avaBowl']
     dirname = os.path.dirname(__file__)
     for name in listNames:
         avalancheDir = os.path.join(dirname, '..', 'data', name)
