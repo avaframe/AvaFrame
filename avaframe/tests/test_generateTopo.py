@@ -163,19 +163,19 @@ def test_inclinedplane():
     assert (testRes == True)
 
 
-def test_hockeysmooth():
-    """ Test hockey smooth generation """
+def test_hockey():
+    """ Test hockey generation """
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'dx': 5, 'xEnd': 5000., 'yEnd': 2000., 'rCirc': 200.,
                    'z0': 2200., 'meanAlpha': 34., 'channel': 'True',
-                   'narrowing': 'True', 'topoconst': 'True'}
+                   'narrowing': 'True', 'topoAdd': 'False'}
     cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
                        'c_init': 250, 'c_mustart': 0.2, 'c_muendFP': 0.86}
 
     # Call function to be tested
-    x, y, z = gT.hockeysmooth(cfg)
+    x, y, z = gT.hockey(cfg)
 
     # Load reference Solution
     dirPath = os.path.dirname(__file__)
@@ -189,18 +189,18 @@ def test_hockeysmooth():
     assert (testRes == True)
 
 
-def test_hockey():
-    """ Test hockey generation """
+def test_parabola():
+    """ Test parabola generation """
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'C': 2200, 'meanAlpha': 34, 'fLens': 0, 'dx': 5, 'xEnd': 5000.,
-                   'yEnd': 2000., 'channel': 'False', 'topoconst': 'True'}
+                   'yEnd': 2000., 'channel': 'False', 'topoAdd': 'False', 'dam': 'False'}
     cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
                        'c_mustart': 0.2, 'c_muend': 0.6, 'c_init': 250}
 
     # Call function to be tested
-    x, y, z = gT.hockey(cfg)
+    x, y, z = gT.parabola(cfg)
 
     # Load reference Solution
     dirPath = os.path.dirname(__file__)
@@ -220,7 +220,7 @@ def test_helix():
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'C': 1000, 'meanAlpha': 34, 'rHelix': 1250, 'fLens': 0, 'dx': 5, 'xEnd': 5000.,
-                   'yEnd': 2000.,  'channel': 'True', 'narrowing': 'True', 'topoconst': 'True'}
+                   'yEnd': 2000.,  'channel': 'True', 'narrowing': 'True', 'topoAdd': 'False'}
     cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
                        'c_mustart': 0.2, 'c_muend': 0.6, 'c_init': 250}
 
