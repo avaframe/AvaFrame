@@ -20,8 +20,8 @@ def test_probAna(tmp_path):
     """ test probAna function to compute mask for parameter exceeding threshold """
 
     # set input directory
-    avaName = 'avaHockey'
-    avaTestDir = 'avaHockeyStatsTest'
+    avaName = 'avaParabola'
+    avaTestDir = 'avaParabolaStatsTest'
     dirPath = os.path.dirname(__file__)
     avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
     avaDir2 = os.path.join(dirPath, '..', '..', 'benchmarks', avaName)
@@ -38,10 +38,10 @@ def test_probAna(tmp_path):
 
     # call function to test
     pA.probAnalysis(avaDir2, cfg, cfgMain, inputDir, outDir)
-    probTest = np.loadtxt(os.path.join(tmp_path, 'avaHockey_probMap10.0.asc'), skiprows=6)
+    probTest = np.loadtxt(os.path.join(tmp_path, 'avaParabola_probMap10.0.asc'), skiprows=6)
 
     # Load reference solution
-    probSol = np.loadtxt(os.path.join(inputDir, 'avaHockey_probMap10.0.txt'), skiprows=6)
+    probSol = np.loadtxt(os.path.join(inputDir, 'avaParabola_probMap10.0.txt'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(probTest, probSol, atol=1.e-6)

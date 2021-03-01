@@ -25,13 +25,13 @@ def test_execCom1Exe(tmp_path):
     # Initialise inputs
     com1Exe = 'testPath'
     dirPath = os.path.dirname(__file__)
-    avaName = 'avaHockey'
+    avaName = 'avaParabola'
     avaDir  = os.path.join(tmp_path, avaName)
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
     shutil.copytree(avaData, avaInputs)
     cintFile = os.path.join(dirPath, 'data', 'runBasicST.cint')
-    logName = 'release1HS2_entres_dfa_0.155'
+    logName = 'release1HS_entres_dfa_0.155'
     fullOut = False
 
     # create required Output folder
@@ -41,7 +41,7 @@ def test_execCom1Exe(tmp_path):
     com1DFA.execCom1Exe(com1Exe, cintFile, avaDir, fullOut, logName)
 
     # reference log File name
-    logFile = 'startrelease1HS2_entres_dfa_0.155.log'
+    logFile = 'startrelease1HS_entres_dfa_0.155.log'
 
     # check if log file has been created with correct name
     flagFile = False
