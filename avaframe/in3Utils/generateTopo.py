@@ -204,7 +204,7 @@ def hockey(cfg):
             zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
 
     # Log info here
-    log.info('Hockeystick smooth coordinates computed')
+    log.info('Hockeystick coordinates computed')
 
     return x, y, zv
 
@@ -384,7 +384,7 @@ def helix(cfg):
         else:
             c_extent = c_radius
 
-        if not cfg['TOPO'].getboolean('topoAdd'):
+        if cfg['TOPO'].getboolean('topoAdd'):
             zv = zv + c_0 * c_extent
 
         # Inner and outer boundaries of the channel
