@@ -392,12 +392,13 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     """
     cfgGen = cfg['GENERAL']
     entRes = cfg.getboolean('FLAGS', 'entRes')
+    methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
 
     dem = setDEMoriginToZero(demOri)
 
     # -----------------------
     # Initialize mesh
-    dem = initializeMesh(dem)
+    dem = initializeMesh(dem, num=methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
     relRaster = prepareArea(releaseLine, demOri)
@@ -473,8 +474,10 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         if cfg['particleFile']:
             inDirPart = cfg['particleFile']
         else:
-            partDirName = logName
-            inDirPart = os.path.join(avaDir, 'Outputs', 'com1DFA', 'particles', partDirName)
+            inDirPart = os.path.join(avaDir, 'Outputs', 'com1DFA')
+
+        partDirName = logName
+        inDirPart = os.path.join(inDirPart, 'particles', partDirName)
         log.info('Initial particle distribution read from file!! %s' % (inDirPart))
         Particles, TimeStepInfo = readPartFromPickle(inDirPart)
         particles = Particles[0]

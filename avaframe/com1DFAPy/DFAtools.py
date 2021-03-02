@@ -62,7 +62,7 @@ def getNormalMesh(z, csz, num=4):
         Get the normal vectors to the surface defined by a DEM.
         Either by adding the normal vectors of the adjacent triangles for each
         points (using 4, 6 or 8 adjacent triangles). Or use the next point in
-        x direction and the next in y direction to define two vectore and then
+        x direction and the next in y direction to define two vectors and then
         compute the cross product to get the normal vector
 
         Parameters
@@ -73,7 +73,7 @@ def getNormalMesh(z, csz, num=4):
                 cellsize of the grid
             num: int
                 chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
-                       1 to use the simple cross product method
+                       1 to use the simple cross product method (with the diagonals)
 
         Returns
         -------
@@ -237,8 +237,15 @@ def getNormalMesh(z, csz, num=4):
         n1, m1 = np.shape(z1)
         z2 = np.append(z1, z1[-2, :].reshape(1, m1), axis=0)
         n2, m2 = np.shape(z2)
-        Nx = - (z2[0:n2-1, 1:m2] - z2[0:n2-1, 0:m2-1]) / csz
-        Ny = - (z2[1:n2, 0:m2-1] - z2[0:n2-1, 0:m2-1]) / csz
+
+        Nx = - ((z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1]) +
+                (z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])) / csz
+        Ny = - ((z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1]) -
+                (z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])) / csz
+        Nz = 2 * Nz
+
+        # Nx = - (z2[0:n2-1, 1:m2] - z2[0:n2-1, 0:m2-1]) / csz
+        # Ny = - (z2[1:n2, 0:m2-1] - z2[0:n2-1, 0:m2-1]) / csz
         Ny[n-1, 0:m-1] = -Ny[n-1, 0:m-1]
         Nx[0:n-1, m-1] = -Nx[0:n-1, m-1]
         Ny[n-1, m-1] = -Ny[n-1, m-1]
