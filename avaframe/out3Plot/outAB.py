@@ -272,7 +272,8 @@ def WriteResults(resAB, name, flags):
         reportAB = addLine2Report(ind, reportAB, x, y, z, s, label, angle)
 
     # write results to txt file
-    if flags.getboolean('WriteRes'):
+    FileName_ext = ''
+    if flags.getboolean('writeRes'):
         FileName_ext = saveOutPath + name + '_AB_results.txt'
         with open(FileName_ext, 'w') as outfile:
             outfile.write('Profile name %s\n' % name)
