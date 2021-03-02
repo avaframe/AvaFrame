@@ -85,8 +85,8 @@ def inclinedplane(cfg):
     z0 = float(cfg['TOPO']['z0'])
     meanAlpha = float(cfg['TOPO']['meanAlpha'])
 
-    cFf = float(cfg['CHANNELS']['c_ff'])
-    cRadius = float(cfg['CHANNELS']['c_radius'])
+    cFf = float(cfg['CHANNELS']['cff'])
+    cRadius = float(cfg['CHANNELS']['cRadius'])
 
     xv, yv, zv, x, y, nRows, nCols = computeCoordGrid(dx, xEnd, yEnd)
 
@@ -96,21 +96,21 @@ def inclinedplane(cfg):
     # If a channel shall be introduced
     if cfg['TOPO'].getboolean('channel'):
         # Compute cumulative distribution function and set horizontal extent of channel
-        c_0 = norm.cdf(xv, 0, cFf)
-        c_extent = cRadius
+        c0 = norm.cdf(xv, 0, cFf)
+        cExtent = cRadius
         yv = np.reshape(yv, (nRows , 1))
 
         # if location within horizontal extent of channel,
         # make half sphere shaped channel with radius given by channel horizontal extent
         mask = np.zeros(np.shape(yv))
-        mask[np.where(abs(yv) < c_extent)] = 1
+        mask[np.where(abs(yv) < cExtent)] = 1
         if cfg['TOPO'].getboolean('topoAdd'):
-            zv = zv + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2)))))*mask
+            zv = zv + cExtent*c0*(1. - np.sqrt(np.abs(1. - (np.square(yv) / (cExtent**2)))))*mask
             mask = np.zeros(np.shape(yv))
-            mask[np.where(abs(yv) >= c_extent)] = 1
-            zv = zv + c_extent*c_0*mask
+            mask[np.where(abs(yv) >= cExtent)] = 1
+            zv = zv + cExtent*c0*mask
         else:
-            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(yv) / (c_extent**2))))*mask
+            zv = zv - cExtent*c0*np.sqrt(np.abs(1. - (np.square(yv) / (cExtent**2))))*mask
 
     # Log info here
     log.info('Inclined plane coordinates computed')
@@ -130,11 +130,11 @@ def hockey(cfg):
     meanAlpha = float(cfg['TOPO']['meanAlpha'])
     z0 = float(cfg['TOPO']['z0'])
 
-    c_ff = float(cfg['CHANNELS']['c_ff'])
-    c_radius = float(cfg['CHANNELS']['c_radius'])
-    c_init = float(cfg['CHANNELS']['c_init'])
-    c_mustart = float(cfg['CHANNELS']['c_mustart'])
-    c_muendFP = float(cfg['CHANNELS']['c_muendFP'])
+    cff = float(cfg['CHANNELS']['cff'])
+    cRadius = float(cfg['CHANNELS']['cRadius'])
+    cInit = float(cfg['CHANNELS']['cInit'])
+    cMustart = float(cfg['CHANNELS']['cMustart'])
+    cMuendFP = float(cfg['CHANNELS']['cMuendFP'])
 
     dx, xEnd, yEnd = getGridDefs(cfg)
 
@@ -152,7 +152,7 @@ def hockey(cfg):
     beta = (0.5 * (180. - (meanAlpha)))
     xc = rCirc / np.tan(np.radians(beta))
     yc = xc * np.cos(np.radians(meanAlpha))
-    x_circ = x1 + xc
+    xCirc = x1 + xc
     # for plotting
     d1 = np.tan(np.radians(beta)) * x1
 
@@ -164,44 +164,44 @@ def hockey(cfg):
 
     mask = np.zeros(np.shape(x))
     mask[np.where(((x1 - yc) <= x) & (x <= (x1 + xc)))] = 1
-    # rCirc + np.sqrt(rCirc**2 - (xv[m] - x_circ)**2)
-    zv = zv + (rCirc - np.sqrt(np.abs(rCirc**2 - (x_circ - x)**2)))*mask
+    # rCirc + np.sqrt(rCirc**2 - (xv[m] - xCirc)**2)
+    zv = zv + (rCirc - np.sqrt(np.abs(rCirc**2 - (xCirc - x)**2)))*mask
 
     # If a channel shall be introduced
     if cfg['TOPO'].getboolean('channel'):
-        # Compute cumulative distribution function - c_1 for upper part (start)
-        # of channel and c_2 for lower part (end) of channel
-        c_1 = norm.cdf(xv, c_mustart * (x1), c_ff)
-        c_2 = 1. - norm.cdf(xv, c_muendFP * (x1), c_ff)
+        # Compute cumulative distribution function - c1 for upper part (start)
+        # of channel and c2 for lower part (end) of channel
+        c1 = norm.cdf(xv, cMustart * (x1), cff)
+        c2 = 1. - norm.cdf(xv, cMuendFP * (x1), cff)
 
         # combine both into one function separated at the the middle of
         #  the channel longprofile location
         mask = np.zeros(np.shape(xv))
-        mask[np.where(xv < (x1 * (0.5 * (c_mustart + c_muendFP))))] = 1
-        c_0 = c_1 * mask
+        mask[np.where(xv < (x1 * (0.5 * (cMustart + cMuendFP))))] = 1
+        c0 = c1 * mask
 
         mask = np.zeros(np.shape(xv))
-        mask[np.where(xv >= (x1 * (0.5 * (c_mustart + c_muendFP))))] = 1
-        c_0 = c_0 + c_2 * mask
+        mask[np.where(xv >= (x1 * (0.5 * (cMustart + cMuendFP))))] = 1
+        c0 = c0 + c2 * mask
 
         # Is the channel of constant width or narrowing
         if cfg['TOPO'].getboolean('narrowing'):
-            c_extent = c_init * (1 - c_0[:]) + (c_0[:] * c_radius)
+            cExtent = cInit * (1 - c0[:]) + (c0[:] * cRadius)
         else:
-            c_extent = np.zeros(np.shape(xv)) + c_radius
+            cExtent = np.zeros(np.shape(xv)) + cRadius
 
         # Set surface elevation
         mask = np.zeros(np.shape(y))
-        mask[np.where(abs(y) < c_extent)] = 1
+        mask[np.where(abs(y) < cExtent)] = 1
         # Add surface elevation modification introduced by channel
         if cfg['TOPO'].getboolean('topoAdd'):
-            zv = zv + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask
+            zv = zv + cExtent*c0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (cExtent**2)))))*mask
             # outside of the channel, add layer of channel depth
             mask = np.zeros(np.shape(y))
-            mask[np.where(abs(y) >= c_extent)] = 1
-            zv = zv + c_extent*c_0*mask
+            mask[np.where(abs(y) >= cExtent)] = 1
+            zv = zv + cExtent*c0*mask
         else:
-            zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
+            zv = zv - cExtent*c0*np.sqrt(np.abs(1. - (np.square(y) / (cExtent**2))))*mask
 
     # Log info here
     log.info('Hockeystick coordinates computed')
@@ -216,11 +216,11 @@ def parabola(cfg):
     """
 
     C = float(cfg['TOPO']['C'])
-    c_ff = float(cfg['CHANNELS']['c_ff'])
-    c_radius = float(cfg['CHANNELS']['c_radius'])
-    c_init = float(cfg['CHANNELS']['c_init'])
-    c_mustart = float(cfg['CHANNELS']['c_mustart'])
-    c_muend = float(cfg['CHANNELS']['c_muend'])
+    cff = float(cfg['CHANNELS']['cff'])
+    cRadius = float(cfg['CHANNELS']['cRadius'])
+    cInit = float(cfg['CHANNELS']['cInit'])
+    cMustart = float(cfg['CHANNELS']['cMustart'])
+    cMuend = float(cfg['CHANNELS']['cMuend'])
 
     # Get grid definitons
     dx, xEnd, yEnd = getGridDefs(cfg)
@@ -245,37 +245,37 @@ def parabola(cfg):
 
     # If a channel shall be introduced
     if cfg['TOPO'].getboolean('channel'):
-        c_1 = norm.cdf(xv, c_mustart * fLen, c_ff)
-        c_2 = 1. - norm.cdf(xv, c_muend * fLen, c_ff)
+        c1 = norm.cdf(xv, cMustart * fLen, cff)
+        c2 = 1. - norm.cdf(xv, cMuend * fLen, cff)
 
         # combine both into one function separated at the the middle of
         #  the channel longprofile location
         mask = np.zeros(np.shape(xv))
-        mask[np.where(xv < (fLen * (0.5 * (c_mustart + c_muend))))] = 1
-        c_0 = c_1 * mask
+        mask[np.where(xv < (fLen * (0.5 * (cMustart + cMuend))))] = 1
+        c0 = c1 * mask
 
         mask = np.zeros(np.shape(xv))
-        mask[np.where(xv >= (fLen * (0.5 * (c_mustart + c_muend))))] = 1
-        c_0 = c_0 + c_2 * mask
+        mask[np.where(xv >= (fLen * (0.5 * (cMustart + cMuend))))] = 1
+        c0 = c0 + c2 * mask
 
         # Is the channel of constant width or narrowing
         if cfg['TOPO'].getboolean('narrowing'):
-            c_extent = c_init * (1 - c_0[:]) + (c_0[:] * c_radius)
+            cExtent = cInit * (1 - c0[:]) + (c0[:] * cRadius)
         else:
-            c_extent = np.zeros(nCols) + c_radius
+            cExtent = np.zeros(nCols) + cRadius
 
 
         # Add surface elevation modification introduced by channel
         mask = np.zeros(np.shape(y))
-        mask[np.where(abs(y) < c_extent)] = 1
+        mask[np.where(abs(y) < cExtent)] = 1
         if cfg['TOPO'].getboolean('topoAdd'):
-            superChannel = superChannel + c_extent*c_0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2)))))*mask
+            superChannel = superChannel + cExtent*c0*(1. - np.sqrt(np.abs(1. - (np.square(y) / (cExtent**2)))))*mask
             # outside of the channel, add layer of channel depth
             mask = np.zeros(np.shape(y))
-            mask[np.where(abs(y) >= c_extent)] = 1
-            superChannel = superChannel + c_extent*c_0*mask
+            mask[np.where(abs(y) >= cExtent)] = 1
+            superChannel = superChannel + cExtent*c0*mask
         else:
-            superChannel = superChannel - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(y) / (c_extent**2))))*mask
+            superChannel = superChannel - cExtent*c0*np.sqrt(np.abs(1. - (np.square(y) / (cExtent**2))))*mask
 
 
     if cfg['TOPO'].getboolean('dam'):
@@ -286,7 +286,7 @@ def parabola(cfg):
         superDam = norm.pdf(xv, damPos * (-B/2/A) , damWidth)
         superDam = superDam / np.max(superDam) * damHeight
         if not cfg['TOPO'].getboolean('topoAdd'):
-            superDam = superDam -  c_extent*c_0
+            superDam = superDam -  cExtent*c0
 
     # add channel and dam
     zv = zv + np.maximum( superDam , superChannel)
@@ -338,11 +338,11 @@ def helix(cfg):
     # input parameters
     rHelix = float(cfg['TOPO']['rHelix'])
     C = float(cfg['TOPO']['C'])
-    c_ff = float(cfg['CHANNELS']['c_ff'])
-    c_radius = float(cfg['CHANNELS']['c_radius'])
-    c_init = float(cfg['CHANNELS']['c_init'])
-    c_mustart = float(cfg['CHANNELS']['c_mustart'])
-    c_muend = float(cfg['CHANNELS']['c_muend'])
+    cff = float(cfg['CHANNELS']['cff'])
+    cRadius = float(cfg['CHANNELS']['cRadius'])
+    cInit = float(cfg['CHANNELS']['cInit'])
+    cMustart = float(cfg['CHANNELS']['cMustart'])
+    cMuend = float(cfg['CHANNELS']['cMuend'])
 
     # Get grid definitions
     dx, xEnd, yEnd = getGridDefs(cfg)
@@ -370,37 +370,37 @@ def helix(cfg):
 
     # If channel is introduced to topography
     if cfg['TOPO'].getboolean('channel'):
-        c_0 = np.zeros(np.shape(x))
+        c0 = np.zeros(np.shape(x))
         mask = np.zeros(np.shape(x))
-        mask[np.where((theta * rHelix) < (0.5 * (c_mustart + c_muend) * fLen))] = 1
-        c_0 = c_0 + norm.cdf(theta * rHelix, c_mustart * fLen, c_ff)*mask
+        mask[np.where((theta * rHelix) < (0.5 * (cMustart + cMuend) * fLen))] = 1
+        c0 = c0 + norm.cdf(theta * rHelix, cMustart * fLen, cff)*mask
         mask = np.zeros(np.shape(x))
-        mask[np.where((theta * rHelix) >= (0.5 * (c_mustart + c_muend) * fLen))] = 1
-        c_0 = c_0 + (1. - norm.cdf(theta * rHelix, c_muend * fLen, c_ff))*mask
-        # c_0 = np.ones(np.shape(zv))
+        mask[np.where((theta * rHelix) >= (0.5 * (cMustart + cMuend) * fLen))] = 1
+        c0 = c0 + (1. - norm.cdf(theta * rHelix, cMuend * fLen, cff))*mask
+        # c0 = np.ones(np.shape(zv))
         # If channel of constant width or becoming narrower in the middle
         if cfg['TOPO'].getboolean('narrowing'):
-            c_extent = c_init * (1. - c_0) + c_0 * c_radius
+            cExtent = cInit * (1. - c0) + c0 * cRadius
         else:
-            c_extent = c_radius
+            cExtent = cRadius
 
         if cfg['TOPO'].getboolean('topoAdd'):
-            zv = zv + c_0 * c_extent
+            zv = zv + c0 * cExtent
 
         # Inner and outer boundaries of the channel
-        bound_in = rHelix - c_extent
-        bound_ext = rHelix + c_extent
+        boundIn = rHelix - cExtent
+        boundExt = rHelix + cExtent
 
         # Set channel
         mask = np.zeros(np.shape(x))
-        mask[np.where((radius >= rHelix) & (radius < bound_ext))] = 1
+        mask[np.where((radius >= rHelix) & (radius < boundExt))] = 1
         radius1 = radius - rHelix
-        zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(radius1) / np.square(c_extent))))*mask
+        zv = zv - cExtent*c0*np.sqrt(np.abs(1. - (np.square(radius1) / np.square(cExtent))))*mask
 
         mask = np.zeros(np.shape(x))
-        mask[np.where((radius < rHelix) & (radius > bound_in))] = 1
+        mask[np.where((radius < rHelix) & (radius > boundIn))] = 1
         radius2 = rHelix - radius
-        zv = zv - c_extent*c_0*np.sqrt(np.abs(1. - (np.square(radius1) / np.square(c_extent))))*mask
+        zv = zv - cExtent*c0*np.sqrt(np.abs(1. - (np.square(radius1) / np.square(cExtent))))*mask
 
 
     # set last row at Center to fall height
