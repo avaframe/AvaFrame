@@ -392,7 +392,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     """
     cfgGen = cfg['GENERAL']
     entRes = cfg.getboolean('FLAGS', 'entRes')
-    methodMeshNormal = cfg.getboolean('GENERAL', 'methodMeshNormal')
+    methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
 
     dem = setDEMoriginToZero(demOri)
 
