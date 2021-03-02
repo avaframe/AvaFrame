@@ -200,11 +200,11 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
         xyPoints = getCornersIP(cfgR, cfgT)
         flagCont = True
 
-    elif demType == 'HS':
+    elif demType == 'PF':
         xyPoints = getCornersHS(cfgR, cfgT)
         flagCont = True
 
-    elif demType == 'HS2':
+    elif demType == 'HS':
         xyPoints = getCornersIP(cfgR, cfgT)
         flagCont = True
 
