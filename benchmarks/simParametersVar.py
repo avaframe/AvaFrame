@@ -45,30 +45,26 @@ def fetchBenchParameters(avaDir):
                         'Parameter variation on': 'Mu',
                         'Parameter value': '0.05500',
                         'Mu': '0.05500',
-                        'Release thickness [m]': ['1', '1'],
-                        'Release Mass [kg]': '36865.6',
-                        'Final Mass [kg]': '37584.5'},
+                        'Release thickness [m]': ['1', '1']},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HX'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
 
-    elif avaDictName == 'avaHockeyDict':
-        avaDictName = {'simName': 'release1HS_entres_dfa_0.50000',
+    elif avaDictName == 'avaParabolaDict':
+        avaDictName = {'simName': 'release1PF_entres_dfa_0.50000',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area Scenario': 'release1HS',
+                        'Release Area Scenario': 'release1PF',
                         'Release Area': ['Rel_Example'],
                         'Entrainment Area': '',
-                        'Resistance Area': 'resistance1HS',
+                        'Resistance Area': 'resistance1PF',
                         'Parameter variation on': 'RelTh',
                         'Parameter value': '0.50000',
                         'Mu': '0.15500',
-                        'Release thickness [m]': '0.50000',
-                        'Release Mass [kg]': '10328.6',
-                        'Final Mass [kg]': '10328.6'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
+                        'Release thickness [m]': '0.50000'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1PF'},
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
 

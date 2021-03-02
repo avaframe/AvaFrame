@@ -32,8 +32,7 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 type = 'TAGS'
 valuesList = ['varParTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList)
-for test in testList:
-    print(test['NAME'])
+
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reportsVariations')
 fU.makeADir(outDir)
@@ -47,7 +46,7 @@ with open(reportFile, 'w') as pfile:
     pfile.write('## Compare com1DFA simulations to benchmark results \n')
 
 # run Standard Tests sequentially
-for teat in testList:
+for test in testList:
 
     # avalanche directory
     avaDir = 'data' + os.sep + test['AVANAME']

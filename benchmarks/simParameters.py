@@ -77,9 +77,7 @@ def fetchBenchParameters(avaDir):
                         'Entrainment Area': 'entrainment1HX',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1', '1'],
-                        'Release Mass [kg]': '22398.8',
-                        'Final Mass [kg]': '23117.6'},
+                        'Release thickness [m]': ['1', '1']},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HX'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
@@ -88,78 +86,74 @@ def fetchBenchParameters(avaDir):
 
         avaDictList.append(avaDictName)
 
-    elif avaDictName == 'avaHockeyDict':
+    elif avaDictName == 'avaParabolaDict':
 
-        avaDictName = {'simName': 'release1HS_entres_dfa_0.15500',
+        avaDictName = {'simName': 'release1PF_entres_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area Scenario': 'release1HS',
+                        'Release Area Scenario': 'release1PF',
                         'Release Area': ['Rel_Example'],
                         'Entrainment Area': '',
-                        'Resistance Area': 'resistance1HS',
+                        'Resistance Area': 'resistance1PF',
                         'Mu': '0.15500',
                         'Release thickness [m]': ['1.0'],
                         'Release Mass [kg]': '20657.1',
                         'Final Mass [kg]': '20657.1'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1PF'},
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
 
         avaDictList.append(avaDictName)
 
 
-    elif avaDictName == 'avaHockeySmoothChannelDict':
+    elif avaDictName == 'avaHockeyChannelDict':
 
-        avaDictName = {'simName': 'release1HS2_entres_dfa_0.15500',
+        avaDictName = {'simName': 'release1HS_entres_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area Scenario': 'release1HS2',
+                        'Release Area Scenario': 'release1HS',
                         'Release Area': ['Rel_Example'],
-                        'Entrainment Area': 'entrainment1HS2',
+                        'Entrainment Area': 'entrainment1HS',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
-                        'Release Mass [kg]': '20967.3',
-                        'Final Mass [kg]': '21306.'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
-                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS2'},
+                        'Release thickness [m]': ['1.0']},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
+                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
                      where a linearly sloping surface transitions smoothly into a flat foreland.'}}
 
         avaDictList.append(avaDictName)
 
-        avaDictName = {'simName': 'release2HS2_entres_dfa_0.15500',
+        avaDictName = {'simName': 'release2HS_entres_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area Scenario': 'release2HS2',
+                        'Release Area Scenario': 'release2HS',
                         'Release Area': ['Rel_one', 'Rel_two'],
-                        'Entrainment Area': 'entrainment1HS2',
+                        'Entrainment Area': 'entrainment1HS',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0', '1.0'],
-                        'Release Mass [kg]': '26627.4',
-                        'Final Mass [kg]': '26627.4'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
-                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS2'},
+                        'Release thickness [m]': ['1.0', '1.0']},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
+                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
                      where a linearly sloping surface transitions smoothly into a flat foreland.'}}
 
         avaDictList.append(avaDictName)
 
-    elif avaDictName == 'avaHockeySmoothSmallDict':
-        avaDictName = {'simName': 'release1HS2_null_dfa_0.15500',
+    elif avaDictName == 'avaHockeySmallDict':
+        avaDictName = {'simName': 'release1HS_null_dfa_0.15500',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area Scenario': 'release1HS2',
+                        'Release Area Scenario': 'release1HS',
                         'Release Area': ['Rel_Example'],
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': ['1.0'],
                         'Final Mass [kg]': '10000.'},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS2'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
                      where a linearly sloping surface transitions smoothly into a flat foreland. \
                      This geometry also includes a channel.'}}

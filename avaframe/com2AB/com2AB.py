@@ -8,6 +8,7 @@ import glob
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
@@ -132,6 +133,17 @@ def com2ABMain(cfg, avalancheDir):
         avapath['Name'] = name
         log.info('Running Alpha Beta %s on: %s ', abVersion, name)
         resAB = com2ABKern(avapath, resAB, distance)
+
+        if cfg.getboolean('FLAGS', 'fullOut'):
+            # saving results to pickle saveABResults(resAB, name)
+            savename = name + '_com2AB_eqparam.pickle'
+            save_file = os.path.join(cfgPath['saveOutPath'], savename)
+            pickle.dump(resAB['eqParams'], open(save_file, "wb"))
+            log.info('Saving intermediate results to: %s'% (save_file))
+            savename = name + '_com2AB_eqout.pickle'
+            save_file = os.path.join(cfgPath['saveOutPath'], savename)
+            pickle.dump(resAB[name], open(save_file, "wb"))
+            log.info('Saving intermediate results to: %s'% (save_file))
 
     return resAB
 
