@@ -32,7 +32,7 @@ valuesList = ['standardTest', 'null']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
-outDir = os.path.join(os.getcwd(), 'tests', 'reports')
+outDir = os.path.join(os.getcwd(), 'tests', 'reportsPy')
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
