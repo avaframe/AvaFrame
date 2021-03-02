@@ -134,7 +134,7 @@ def test_inclinedplane():
     # Load reference solution
     dirPath = os.path.dirname(__file__)
     zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaInclinedPlane',
-                                   'Inputs', 'myDEM_IP_Topo.asc'), skiprows=6)
+                                   'Inputs', 'DEM_IP_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
@@ -154,7 +154,7 @@ def test_inclinedplane():
     # Load reference solution
     dirPath = os.path.dirname(__file__)
     zSol = np.loadtxt(os.path.join(dirPath, 'data',
-                                   'myDEM_IP_Topo.asc'), skiprows=6)
+                                   'DEM_IP_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
@@ -253,7 +253,7 @@ def test_bowl():
     # Load reference Solution
     dirPath = os.path.dirname(__file__)
     zSol = np.loadtxt(os.path.join(dirPath, '..', 'data', 'avaBowl',
-                                   'Inputs', 'myDEM_BL_Topo.asc'), skiprows=6)
+                                   'Inputs', 'DEM_BL_Topo.asc'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(z, zSol, atol=1.e-6)
