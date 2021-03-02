@@ -33,9 +33,9 @@ The simulation settings area defined in the configuration file ``com1DFACfg.ini`
 
 * com1Exe - path to com1DFA executable
 * flagOut - print full model output
-* flagEnt - include entrainment areas
-* flagRes - include resistance areas
-* releaseScenario - name of release area scenario shapfile (with or without extension -shp, if multiple, separate by '|')
+* flagNoEnt - NOT include entrainment areas
+* flagNoRes - NOT include resistance areas
+* releaseScenario - name of release area scenario shapefile (with or without extension -shp, if multiple, separate by '|')
 * flagVarPar - perform parameter variation
 * flagVarEnt - perform parameter variation with entrainment and resistance
 * varPar - parameter to be varied
@@ -46,7 +46,7 @@ Output
 ---------
 The simulation results are saved to: *Outputs/com1DFA* and include:
 
-* raster files of the peak values for pressure, flow depth and speed (*Outputs/com1DFA/peakFiles*)
+* raster files of the peak values for pressure, flow depth and flow velocity (*Outputs/com1DFA/peakFiles*)
 * reports of all simulations (*Outputs/com1DFA/reports*)
 * log files of all simulations
 * experiment log that lists all simulations
