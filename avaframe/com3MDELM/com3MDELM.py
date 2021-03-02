@@ -11,8 +11,8 @@ from matplotlib.image import NonUniformImage
 import math
 
 # Local imports
-import avaframe.in2Trans.geoTrans as geoTrans
-import avaframe.in3Utils.ascUtils as IOf
+import avaframe.in3Utils.geoTrans as geoTrans
+import avaframe.in2Trans.ascUtils as IOf
 from avaframe.out3Plot.plotUtils import *
 
 # create local logger
@@ -41,7 +41,7 @@ def prepareDEM(demSource, resampleResolution):
     Points['x'] = PointsX
     Points['y'] = PointsY
 
-    Points, itot, ioob = geoTrans.projectOnRasterVect(dem, Points,
+    Points, _ = geoTrans.projectOnRaster(dem, Points,
                                                       interp='nearest')
     fig = plt.figure(figsize=(figW, figH))
     ax1 = plt.subplot(111)
@@ -58,8 +58,8 @@ def prepareDEM(demSource, resampleResolution):
     ax1.set_ylim([ygrid.min(), ygrid.max()])
     ax1.set_xlabel(r'$x\;[m]$')
     ax1.set_ylabel(r'$y\;[m]$')
-    plt.close(fig)
     # plt.show()
+    plt.close(fig)
 
     return Points, csz
 
