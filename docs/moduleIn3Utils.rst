@@ -88,14 +88,15 @@ The following topography types can be chosen:
 
 * flat plane (FP)
 * inclined plane of constant slope (IP)
-* hockey stick - using a parabola to describe the sloping plane that then transitions into a flat foreland (HS)
-* hockey stick smooth - using an linearly sloping plane with smoothed transition to the flat foreland (HS2)
+* parabola - using a parabola to describe the sloping plane that then transitions into a flat foreland (PF)
+* hockey stick - using an linearly sloping plane with smoothed transition to the flat foreland (HS)
 * bowl-shaped topography (BL)
 * helix-shaped topography (HX)
-* pyramid-shaped topography
+* pyramid-shaped topography (PY)
 
-On top of these topographies, channels can be introduced (then set flag_channel=True), and these channels can also be set to become narrower along the channel and wider at the end of the channel (then set flag_narrowing=True).
-There is the option to introduce these channels by either cutting them into the original topography (flag_topoconst=True) or by adding a 'channel layer' (max thickness=channel depth) on top of the topography.
+On top of these topographies, channels can be introduced (then set channel=True), and these channels can also be set to become narrower along the channel and wider at the end of the channel (then set narrowing=True).
+There is the option to introduce these channels by either adding a 'channel layer' (max thickness=channel depth) on top of the topography (topoAdd=True) or by cutting them into the original topography (topoAdd=False).
+In case of the parabola topography also a Dam can be added by setting dam=True.
 
 Input
 ------
@@ -139,16 +140,15 @@ slope of the pyramid facets (meanAlpha)
 
 **Topography parameters:**
 
-:f_lens: 	distance to point where slope transitions into flat plane [m]
-:mean_alpha: 	slope angle from max. elevation to start flat plane [°] - or slope of inclined plane [°]
+:flens: 	distance to point where slope transitions into flat plane [m]
+:meanAlpha: 	slope angle from max. elevation to start flat plane [°] - or slope of inclined plane [°]
 :C: 		total fall height [m]
-:meanAlpha: slope of inclined plane [°]
 :rBowl:	  bowl radius [m]
 :rHelix:	  radius for helix [m]
 :z0: 		max elevation [m]
 :zElev:	  elevation of flat plane [m]
 :rCirc: 	radius of smoothing circle [m]
-:demType: topography types (FP, IP, HS, HS2, BL, HX - explanation given in the introductory description**
+:demType: topography types (FP, IP, PF, HS, BL, HX, PY - explanation given in the introductory description**
 :flatx: extent of flat foreland for pyramid in x
 :flaty: extent of flat foreland for pyramid in y
 :phi: rotation angle for pyramid
@@ -158,18 +158,17 @@ slope of the pyramid facets (meanAlpha)
 
 :channel: True - introduce channel; False - no channel
 :narrowing: True - channel is wide at start and end and narrow in the middle part; False - channel is uniform
-:topoconst: True - cut channel into original topography; False - add channel layer
-:showplot: True - show plot of generated DEM
+:topoAdd: True - add channel layer; False: cut channel into original topography;
 :flagRot: True - rotate pyramid along z-axis
 
 
 **Channel parameters:**
 
-:c_radius:  standard channel radius
-:c_init: start and end half width of channel that is narrower in the middle part
-:c_ff: standard deviation sigma
-:c_mustart: mean mu - represents upper part of the channel
-:c_muend: mean mu - represents lower part of the channel
+:cRadius:  standard channel radius
+:cInit: start and end half width of channel that is narrower in the middle part
+:cff: standard deviation sigma
+:cMustart: mean mu - represents upper part of the channel
+:cMuend: mean mu - represents lower part of the channel
 
 
 Get Release Area
@@ -179,8 +178,8 @@ Generate a release area for a topography created with ``generateTopo`` , this fu
 
 * flat plane (FP)
 * inclined plane (IP)
+* parabola (PF)
 * hockey stick (HS)
-* hockey stick smooth (HS2)
 
 The release areas are defined as rectangular features build by four corner points, which are based on the following conditions:
 
