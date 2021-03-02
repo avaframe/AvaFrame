@@ -126,7 +126,7 @@ def test_inclinedplane():
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'dx': 5, 'xEnd': 5000., 'yEnd': 2000., 'z0': 2200.,
                    'meanAlpha': 34., 'channel': 'False', 'topoconst': 'True'}
-    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100}
+    cfg['CHANNELS'] = {'cff': 250, 'cRadius': 100}
 
     # Call function to be tested
     x, y, z = gT.inclinedplane(cfg)
@@ -146,7 +146,7 @@ def test_inclinedplane():
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'dx': 5, 'xEnd': 5000., 'yEnd': 1500., 'z0': 2200.,
                    'meanAlpha': 34., 'channel': 'True', 'topoconst': 'True'}
-    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100}
+    cfg['CHANNELS'] = {'cff': 250, 'cRadius': 100}
 
     # Call function to be tested
     x, y, z = gT.inclinedplane(cfg)
@@ -171,8 +171,8 @@ def test_hockey():
     cfg['TOPO'] = {'dx': 5, 'xEnd': 5000., 'yEnd': 2000., 'rCirc': 200.,
                    'z0': 2200., 'meanAlpha': 34., 'channel': 'True',
                    'narrowing': 'True', 'topoAdd': 'True'}
-    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
-                       'c_init': 250, 'c_mustart': 0.2, 'c_muendFP': 0.86}
+    cfg['CHANNELS'] = {'cff': 250, 'cRadius': 100,
+                       'cInit': 250, 'cMustart': 0.2, 'cMuendFP': 0.86}
 
     # Call function to be tested
     x, y, z = gT.hockey(cfg)
@@ -196,8 +196,8 @@ def test_parabola():
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'C': 2200, 'meanAlpha': 34, 'fLens': 0, 'dx': 5, 'xEnd': 5000.,
                    'yEnd': 2000., 'channel': 'False', 'topoAdd': 'False', 'dam': 'False'}
-    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
-                       'c_mustart': 0.2, 'c_muend': 0.6, 'c_init': 250}
+    cfg['CHANNELS'] = {'cff': 250, 'cRadius': 100,
+                       'cMustart': 0.2, 'cMuend': 0.6, 'cInit': 250}
 
     # Call function to be tested
     x, y, z = gT.parabola(cfg)
@@ -221,8 +221,8 @@ def test_helix():
     cfg = configparser.ConfigParser()
     cfg['TOPO'] = {'C': 1000, 'meanAlpha': 34, 'rHelix': 1250, 'fLens': 0, 'dx': 5, 'xEnd': 5000.,
                    'yEnd': 2000.,  'channel': 'True', 'narrowing': 'True', 'topoAdd': 'True'}
-    cfg['CHANNELS'] = {'c_ff': 250, 'c_radius': 100,
-                       'c_mustart': 0.2, 'c_muend': 0.6, 'c_init': 250}
+    cfg['CHANNELS'] = {'cff': 250, 'cRadius': 100,
+                       'cMustart': 0.2, 'cMuend': 0.6, 'cInit': 250}
 
     # Call function to be tested
     x, y, z = gT.helix(cfg)
