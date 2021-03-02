@@ -392,12 +392,13 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     """
     cfgGen = cfg['GENERAL']
     entRes = cfg.getboolean('FLAGS', 'entRes')
+    methodMeshNormal = cfg.getboolean('GENERAL', 'methodMeshNormal')
 
     dem = setDEMoriginToZero(demOri)
 
     # -----------------------
     # Initialize mesh
-    dem = initializeMesh(dem, num=8)
+    dem = initializeMesh(dem, num=methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
     relRaster = prepareArea(releaseLine, demOri)
