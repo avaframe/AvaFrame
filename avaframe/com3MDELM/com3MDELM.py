@@ -129,6 +129,8 @@ def com3MDELMMain(cfgPath, cfgSetup):
     log.info("Reading and preparing DEM")
     Points, csz = prepareDEM(cfgPath['demSource'], resampleResolution)
 
+    # ++++++++++++++++++++++++++++++++++++++++++++++
+    # Initialization: Locate mass on grid
     # determine start indices
     X = Points['x']
     Y = Points['y']
@@ -149,6 +151,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
     xyDonIndList = np.array([indy0, indx0])
     xyDonIndList = xyDonIndList.reshape(2, 1)
 
+    # Initialize arrays
     # Donor cellsize
     D = np.zeros((ny, nx))
 
