@@ -263,7 +263,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
             # Sstep[indgrid] = np.where(Sglob[indgrid] < Sglob[indy, indx],
             #                           np.nan, Sstep[indgrid])
 
-            # update velocity
+            # update velocity (may ovewrite previous values)
             V2step[indgrid] = v2rest
 
             # create weights for mass spreading calculation
