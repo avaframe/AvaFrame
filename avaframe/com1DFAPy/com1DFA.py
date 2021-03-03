@@ -111,7 +111,7 @@ def com1DFAMain(cfg, avaDir, relTh):
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
-            Tsave, T, U, Z, S, Particles, Fields, Tcpu = DFAIterate(cfgGen, particles, fields, dem)
+            Tsave, T, U, Z, S, Particles, Fields, Tcpu = DFAIterate(cfgGen, particles, fields, dem, avalancheDir, logName)
 
             tcpuDFA = time.time() - startTime
             log.info(('cpu time DFA = %s s' % (tcpuDFA)))
@@ -750,7 +750,7 @@ def initializeResistance(cfg, dem, entRes, resLine):
     return cResRaster
 
 
-def DFAIterate(cfg, particles, fields, dem):
+def DFAIterate(cfg, particles, fields, dem, avalancheDir, logName):
     """ Perform time loop for DFA simulation
 
      Save results at desired intervals
@@ -815,6 +815,11 @@ def DFAIterate(cfg, particles, fields, dem):
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
+    # write mass balance info to log file
+    massDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAPy')
+    fU.makeADir(massDir)
+    with open(os.path.join(massDir, 'mass_%s.txt' % logName), 'w') as mFile:
+        mFile.write('time, current, entrained\n')
     # Start time step computation
     while t < tEnd and iterate:
         # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
@@ -851,6 +856,11 @@ def DFAIterate(cfg, particles, fields, dem):
         Z = np.append(Z, particles['z'][0])
         S = np.append(S, particles['s'][0])
         iterate = particles['iterate']
+
+        # write mass balance info to log file
+        with open(os.path.join(massDir, 'mass_%s.txt' % logName), 'a') as mFile:
+            mFile.write('%.02f,    %.06f,    %.06f\n' %
+                         (t, particles['mTot'], particles['massEntrained']))
         if t >= nSave * dtSave:
             Tsave.append(t)
             log.info('Saving results for time step t = %f s', t)
@@ -1569,6 +1579,9 @@ def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
     resTypesString = cfgGen['resType']
     resTypes = resTypesString.split('_')
     tSteps = fU.getTimeIndex(cfgGen, Fields)
+    if -1 not in tSteps:
+        tSteps.append(-1)
+        log.info('-1 added to tStep')
     for tStep in tSteps:
         finalFields = Fields[tStep]
         for resType in resTypes:
@@ -1577,12 +1590,18 @@ def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
                 resField = resField * 0.001
             dataName = logName + '_' + resType + '_'  + 't%.2f' % (Tsave[tStep]) +'.asc'
             # create directory
-            outDirPeak = os.path.join(outDir, 'peakFiles')
+            outDirPeak = os.path.join(outDir, 'peakFiles', 'timeSteps')
             fU.makeADir(outDirPeak)
             outFile = os.path.join(outDirPeak, dataName)
             IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             if tStep == -1:
                 log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType,Tsave[tStep]))
+                dataName = logName + '_' + resType + '_' +'.asc'
+                # create directory
+                outDirPeakAll = os.path.join(outDir, 'peakFiles')
+                fU.makeADir(outDirPeakAll)
+                outFile = os.path.join(outDirPeakAll, dataName)
+                IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             else:
                 log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType,Tsave[tStep]))
 

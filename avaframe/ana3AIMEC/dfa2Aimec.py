@@ -7,6 +7,9 @@ import os
 import glob
 import logging
 import numpy as np
+import shutil
+
+# local modules
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
@@ -49,7 +52,7 @@ def writeAimecPathsFile(cfgSetup, avaDir):
         pfile.write('pathResult=%s,\n' % (os.path.join(workDir, 'AimecResults')))
 
 
-def extractMBInfo(avaDir):
+def extractMBInfo(avaDir, countStart=0):
     """ Extract the mass balance info from the log file """
 
     # Get info from ExpLog
@@ -57,8 +60,9 @@ def extractMBInfo(avaDir):
     logDictExp = fU.readLogFile(logName)
     names = logDictExp['fullName']
     simNames = sorted(set(names), key=lambda s: (s.split("_")[0], s.split("_")[1], s.split("_")[3]))
+
     # Read mass data from log and save to file for each simulation run
-    countFile = 0
+    countFile = countStart
     for simName in simNames:
         log.info('This is the simulation name: %s ' % (simName))
 
@@ -100,6 +104,24 @@ def extractMBInfo(avaDir):
             log.info('Saved to dfa_mass_balance/%s ' % (os.path.basename(savename)))
             countFile = countFile + 1
 
+    return countFile
+
+def getMBInfo(avaDir, countStart=0):
+    """ Get MB info """
+
+    # Get info from ExpLog
+    mbFiles = glob.glob(os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'mass*.txt'))
+    mbNames = sorted(set(mbFiles), key=lambda s: (s.split("_")[1], s.split("_")[2], s.split("_")[4]))
+
+    countFile = countStart
+    for mFile in mbNames:
+        savename = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile + 1))
+        shutil.copy(mFile, savename)
+        log.info('%s copied to %s' % (mFile, savename))
+        countFile = countFile + 1
+
+    return countFile
+
 
 def mainDfa2Aimec(avaDir, cfgSetup):
     """ Exports the required data from com1DFA to be used by Aimec """
@@ -117,13 +139,22 @@ def mainDfa2Aimec(avaDir, cfgSetup):
     fU.makeADir(massDir)
     log.info('Aimec Work folders created to start postprocessing com1DFA data')
 
-    # Setup input from com1DFA and export to Work ana3AIMEC
-    suffix = {'type' : ['pfd', 'ppr', 'pfv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
-    for suf, dir in zip(suffix['type'], suffix['directory']):
-        fU.getDFAData(avaDir, workDir, suf, dir)
-
     # Write the paths to this files to a file
     writeAimecPathsFile(cfgSetup, avaDir)
 
-    # Extract the MB info
-    extractMBInfo(avaDir)
+    comModules = cfgSetup['comModules'].split('|')
+    countStart = 0
+    countFile = 0
+    for comMod in comModules:
+
+        # Setup input from com1DFA and export to Work ana3AIMEC
+        suffix = {'type' : ['pfd', 'ppr', 'pfv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
+        for suf, dir in zip(suffix['type'], suffix['directory']):
+            nFiles = fU.getDFAData(avaDir, workDir, suf, comModule=comMod, nameDir=dir, countStart=countStart)
+        countStart = nFiles / len(suffix['type'])
+
+        # Extract the MB info
+        if comMod == 'com1DFA':
+            countFile = extractMBInfo(avaDir, countStart=countFile)
+        elif comMod == 'com1DFAPy':
+            countFile = getMBInfo(avaDir, countStart=countFile)
