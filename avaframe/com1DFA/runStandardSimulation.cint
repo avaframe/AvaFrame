@@ -90,16 +90,19 @@ void postprocessing(char ResultDir[], char SimName[], char varPar[], float val){
 ///////////////////////////////////////////////////////////////////////////////
 // Run calls for simulations
 
-void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countRel, char varPar[], char varVal)
+void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countRel, char varPar[], char varVal, char entH)
 {
   char ProjDir[512];
   char Sim[512];
   char Parameter[512];
   char FPath[512];
   char F2Path[512];
+  char EntAr[512];
   char ResultDir[512];
+  char entHString[512];
   int Status;
   float val;
+  float entth;
   int ExpCount;
   FILE *ExpLog;
   FILE *ExpLog2;
@@ -135,6 +138,13 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,val);
   fprintf(ExpLog2, "%d  %s  %f\n",ExpCount,CuSim,val);
 
+  // Set entrainment thickness
+  entth = atof(entH);
+  sprintf(EntAr,"%s/EntrainmentAreas",Sim);
+  sprintf(entHString,"%.5f",entth);
+  printf("\n[BatchCom1DFA] Setting in %s ent depth to %s m \n",EntAr,entHString);
+  set(EntAr, "set_depth", entHString);
+
 
   //------------Set time stepping--------------------
   // set(Sim, "EndTime", "150");
@@ -168,6 +178,7 @@ int main()
   char countRelStr[512];
   char varPar[512];
   char varVal[512];
+  char entH[512];
   int countRel;
 
   // --- Setup
@@ -177,6 +188,7 @@ int main()
   strcpy(countRelStr, "##COUNTREL##");
   strcpy(varPar, "##VARPAR##");
   strcpy(varVal, "##VALUE##");
+  strcpy(entH, "##ENTH##");
 
   // Setup total number of simulations for file naming
   countRel = atoi(countRelStr);
@@ -184,7 +196,7 @@ int main()
   printf("[BatchCom1DFA] Number of total sims now %d \n",countRel);
 
   // --- Calls
-  RunExport(Com1DFAProjectDir, ResDir, CuSim, countRel, varPar, varVal);
+  RunExport(Com1DFAProjectDir, ResDir, CuSim, countRel, varPar, varVal, entH);
 
   countRel++;
   printf("[BatchCom1DFA] Simulation #%d done\n", countRel);

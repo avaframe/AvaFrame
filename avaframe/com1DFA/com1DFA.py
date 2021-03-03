@@ -143,6 +143,8 @@ def com1DFAMain(cfg, avaDir):
     if flagEntRes:
         entrainmentArea = os.path.splitext(os.path.basename(ent))[0]
         resistanceArea = os.path.splitext(os.path.basename(res))[0]
+        if cfgGen.getfloat('entH') != 0.3:
+            log.info('Entrainment thickness is set to %f' % cfgGen.getfloat('entH') )
 
     # Parameter variation
     if cfgPar.getboolean('parameterVar'):
@@ -273,6 +275,7 @@ def com1DFAMain(cfg, avaDir):
                 copyReplace(workFile, workFile, '##NAME##', sim)
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VALUE##', item)
+                copyReplace(workFile, workFile, '##ENTH##', cfgGen['entH'])
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
                 # Create dictionary
@@ -311,6 +314,7 @@ def com1DFAMain(cfg, avaDir):
                                one standard simulation without')
                 else:
                     log.debug('Standard simulation is performed without entrainment and resistance')
+
                 templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
                 workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
                 logName = sim + '_' + defValues['Mu']
@@ -321,6 +325,7 @@ def com1DFAMain(cfg, avaDir):
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VARPAR##', 'Mu')
                 copyReplace(workFile, workFile, '##VALUE##', defValues['Mu'])
+                copyReplace(workFile, workFile, '##ENTH##', cfgGen['entH'])
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
                 # save initial particle distribution
                 saveInitialParticleDistribution(avaDir, logName, dem)
