@@ -306,6 +306,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
       # update mass
       m = m + dm
       mass[j] = m
+      dM[j] = dm
       # update surfacic entrainment mass available
       entrMassCell = entrMassCell - dm/areaCell
       if entrMassCell < 0:
@@ -592,6 +593,7 @@ def updatePositionC(cfg, particles, dem, force):
   particles['x'] = np.asarray(XNew)
   particles['y'] = np.asarray(YNew)
   particles['z'] = np.asarray(ZNew)
+  particles['massEntrained'] = np.asarray(massEntrained)
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew
