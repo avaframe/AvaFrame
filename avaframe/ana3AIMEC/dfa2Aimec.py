@@ -52,7 +52,7 @@ def writeAimecPathsFile(cfgSetup, avaDir, dirName='com1DFA'):
         pfile.write('pathResult=%s,\n' % (os.path.join(workDir, 'AimecResults')))
 
 
-def extractMBInfo(avaDir, countStart=0, simName=''):
+def extractMBInfo(avaDir, simName=''):
     """ Extract the mass balance info from the log file """
 
     if simName != '':
@@ -67,7 +67,7 @@ def extractMBInfo(avaDir, countStart=0, simName=''):
         simNames = sorted(set(names), key=lambda s: (s.split("_")[0], s.split("_")[1], s.split("_")[3]))
 
     # Read mass data from log and save to file for each simulation run
-    countFile = countStart
+    countFile = 0
     for simName in simNames:
         log.info('This is the simulation name %s for mod com1DFA ' % (simName))
 
@@ -109,9 +109,8 @@ def extractMBInfo(avaDir, countStart=0, simName=''):
             log.info('Saved to dfa_mass_balance/%s ' % (os.path.basename(saveName)))
             countFile = countFile + 1
 
-    return countFile
 
-def getMBInfo(avaDir, countStart=0, simName=''):
+def getMBInfo(avaDir, simName=''):
     """ Get MB info """
 
     # Get info from ExpLog
@@ -126,7 +125,7 @@ def getMBInfo(avaDir, countStart=0, simName=''):
         mbFiles = glob.glob(os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'mass*.txt'))
         mbNames = sorted(set(mbFiles), key=lambda s: (s.split("_")[1], s.split("_")[2], s.split("_")[4]))
 
-        countFile = countStart
+        countFile = 0
         for mFile in mbNames:
             saveName = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile + 1))
             shutil.copy(mFile, saveName)
@@ -192,8 +191,8 @@ def dfaComp2Aimec(avaDir, cfgSetup):
                         shutil.copy(compData['files'][countComp], '%s/%s/%06d.txt' % (workDir, dir, 2))
                         log.info('%s   : %s/%s/%06d.txt' % (compData['files'][countComp], workDir, dir, 2))
                         if countM == 0:
-                            extractMBInfo(avaDir, countStart=0, simName=simNameRef)
-                            getMBInfo(avaDir, countStart=0, simName=simNameRef)
+                            extractMBInfo(avaDir, simName=simNameRef)
+                            getMBInfo(avaDir, simName=simNameRef)
                             countM = countM + 1
 
     allSims = sorted(set(allSims))
@@ -206,22 +205,10 @@ def mainDfa2Aimec(avaDir, cfgSetup):
     # Create required directories
     workDir, flowDepthDir, pressureDir, speedDir, massDir= creatAimecDirs(avaDir, cfgSetup)
 
-    if cfgSetup['comModules'] == '':
-        comModules = ['com1DFA']
-    else:
-        comModules = cfgSetup['comModules'].split('|')
-    countStart = 0
-    countFile = 0
-    for comMod in comModules:
+    # Setup input from com1DFA and export to Work ana3AIMEC
+    suffix = {'type' : ['pfd', 'ppr', 'pfv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
+    for suf, dir in zip(suffix['type'], suffix['directory']):
+        fU.getDFAData(avaDir, workDir, suf, nameDir=dir)
 
-        # Setup input from com1DFA and export to Work ana3AIMEC
-        suffix = {'type' : ['pfd', 'ppr', 'pfv'], 'directory' : ['dfa_depth', 'dfa_pressure', 'dfa_speed']}
-        for suf, dir in zip(suffix['type'], suffix['directory']):
-            nFiles = fU.getDFAData(avaDir, workDir, suf, comModule=comMod, nameDir=dir, countStart=countStart)
-        countStart = nFiles / len(suffix['type'])
-
-        # Extract the MB info
-        if comMod == 'com1DFA':
-            countFile = extractMBInfo(avaDir, countStart=countFile)
-        elif comMod == 'com1DFAPy':
-            countFile = getMBInfo(avaDir, countStart=countFile)
+    # Extract mb info
+    extractMBInfo(avaDir)

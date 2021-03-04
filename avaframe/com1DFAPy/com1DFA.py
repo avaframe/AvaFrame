@@ -111,7 +111,10 @@ def com1DFAMain(cfg, avaDir, relTh):
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
-            Tsave, T, U, Z, S, Particles, Fields, Tcpu = DFAIterate(cfgGen, particles, fields, dem, avalancheDir, logName)
+            Tsave, T, U, Z, S, Particles, Fields, infoDict = DFAIterate(cfgGen, particles, fields, dem)
+
+            # write mass balance to File
+            writeMBFile(infoDict, avaDir, logName)
 
             tcpuDFA = time.time() - startTime
             log.info(('cpu time DFA = %s s' % (tcpuDFA)))
@@ -750,7 +753,7 @@ def initializeResistance(cfg, dem, entRes, resLine):
     return cResRaster
 
 
-def DFAIterate(cfg, particles, fields, dem, avalancheDir, logName):
+def DFAIterate(cfg, particles, fields, dem):
     """ Perform time loop for DFA simulation
 
      Save results at desired intervals
@@ -815,11 +818,10 @@ def DFAIterate(cfg, particles, fields, dem, avalancheDir, logName):
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
-    # write mass balance info to log file
-    massDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAPy')
-    fU.makeADir(massDir)
-    with open(os.path.join(massDir, 'mass_%s.txt' % logName), 'w') as mFile:
-        mFile.write('time, current, entrained\n')
+    timeM = []
+    massEntrained = []
+    massTotal = []
+
     # Start time step computation
     while t < tEnd and iterate:
         # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
@@ -857,10 +859,11 @@ def DFAIterate(cfg, particles, fields, dem, avalancheDir, logName):
         S = np.append(S, particles['s'][0])
         iterate = particles['iterate']
 
-        # write mass balance info to log file
-        with open(os.path.join(massDir, 'mass_%s.txt' % logName), 'a') as mFile:
-            mFile.write('%.02f,    %.06f,    %.06f\n' %
-                         (t, particles['mTot'], particles['massEntrained']))
+        # write mass balance info
+        massEntrained.append(particles['massEntrained'])
+        massTotal.append(particles['mTot'])
+        timeM.append(t)
+
         if t >= nSave * dtSave:
             Tsave.append(t)
             log.info('Saving results for time step t = %f s', t)
@@ -889,7 +892,26 @@ def DFAIterate(cfg, particles, fields, dem, avalancheDir, logName):
     Particles.append(copy.deepcopy(particles))
     Fields.append(copy.deepcopy(fields))
 
-    return Tsave, T, U, Z, S, Particles, Fields, Tcpu
+    infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu}
+
+    return Tsave, T, U, Z, S, Particles, Fields, infoDict
+
+
+def writeMBFile(infoDict, avaDir, logName):
+    """ write mass balance info to file """
+
+    t = infoDict['timeStep']
+    massEntrained = infoDict['massEntrained']
+    massTotal = infoDict['massTotal']
+
+    # write mass balance info to log file
+    massDir = os.path.join(avaDir, 'Outputs', 'com1DFAPy')
+    fU.makeADir(massDir)
+    with open(os.path.join(massDir, 'mass_%s.txt' % logName), 'w') as mFile:
+        mFile.write('time, current, entrained\n')
+        for m in range(len(t)):
+            mFile.write('%.02f,    %.06f,    %.06f\n' %
+                    (t[m], massTotal[m], massEntrained[m]))
 
 
 def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
