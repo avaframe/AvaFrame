@@ -685,8 +685,10 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
     if cfgPath['numSim']==2:
         outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
+        outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
     else:
         outAimec.visuRunoutStat(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
+
 
     return resAnalysis
 
@@ -781,6 +783,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     # read inputs
     fname = cfgPath['pressurefileList']
     fnameMass = cfgPath['massfileList']
+    numSim  = cfgPath['numSim']
 
     dataPressure = newRasters['newRasterPressure']
     dataDepth = newRasters['newRasterDepth']
@@ -795,34 +798,34 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis = {}
 
     # initialize Arrays
-    nTopo = len(fname)
     massDiffers = False
-    runout = np.empty((3, nTopo))
-    runoutMean = np.empty((3, nTopo))
-    ampp = np.empty((nTopo))
-    mmpp = np.empty((nTopo))
-    amd = np.empty((nTopo))
-    mmd = np.empty((nTopo))
-    ams = np.empty((nTopo))
-    mms = np.empty((nTopo))
-    elevRel = np.empty((nTopo))
-    deltaH = np.empty((nTopo))
-    grIndex = np.empty((nTopo))
-    grGrad = np.empty((nTopo))
-    releaseMass = np.empty((nTopo))
-    entrainedMass = np.empty((nTopo))
-    finalMass = np.empty((nTopo))
-    relativMassDiff = np.empty((nTopo))
+    runout = np.empty((3, numSim))
+    runoutMean = np.empty((3, numSim))
+    ampp = np.empty((numSim))
+    mmpp = np.empty((numSim))
+    amd = np.empty((numSim))
+    mmd = np.empty((numSim))
+    ams = np.empty((numSim))
+    mms = np.empty((numSim))
+    elevRel = np.empty((numSim))
+    deltaH = np.empty((numSim))
+    grIndex = np.empty((numSim))
+    grGrad = np.empty((numSim))
+    releaseMass = np.empty((numSim))
+    entrainedMass = np.empty((numSim))
+    finalMass = np.empty((numSim))
+    relativMassDiff = np.empty((numSim))
 
     n = np.shape(lcoord)[0]
-    pCrossMaxAll = np.zeros((nTopo, len(scoord)))
-    pCrossMeanAll = np.zeros((nTopo, len(scoord)))
-    fdCrossMaxAll = np.zeros((nTopo, len(scoord)))
-    fdCrossMeanAll = np.zeros((nTopo, len(scoord)))
-    fvCrossMaxAll = np.zeros((nTopo, len(scoord)))
-    fvCrossMeanAll = np.zeros((nTopo, len(scoord)))
+    pCrossMaxAll = np.zeros((numSim, len(scoord)))
+    pCrossMeanAll = np.zeros((numSim, len(scoord)))
+    fdCrossMaxAll = np.zeros((numSim, len(scoord)))
+    fdCrossMeanAll = np.zeros((numSim, len(scoord)))
+    fvCrossMaxAll = np.zeros((numSim, len(scoord)))
+    fvCrossMeanAll = np.zeros((numSim, len(scoord)))
+    entMassArray = np.zeros((numSim, 400))
     # For each data set
-    for i in range(nTopo):
+    for i in range(numSim):
         rasterdataPres = dataPressure[i]
         rasterdataDepth = dataDepth[i]
         rasterdataSpeed = dataSpeed[i]
@@ -851,7 +854,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
 
         # analyze mass
-        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i] = readWrite(
+        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i], entMassArray[i] = readWrite(
             fnameMass[i])
         relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
         if not (releaseMass[i] == releaseMass[0]):
@@ -885,6 +888,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis['fdCrossMeanAll'] = fdCrossMeanAll
     resAnalysis['fvCrossMaxAll'] = fvCrossMaxAll
     resAnalysis['fvCrossMeanAll'] = fvCrossMeanAll
+    resAnalysis['entMassArray'] = entMassArray
     resAnalysis['pressureLimit'] = pLim
     resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
 
@@ -925,18 +929,17 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
             -TN: float
                 ref = False sim2 = False
     """
-    fname = cfgPath['pressurefileList']
 
     dataPressure = newRasters['newRasterPressure']
     cellarea = rasterTransfo['rasterArea']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
 
     # initialize Arrays
-    nTopo = len(fname)
-    TP = np.empty((nTopo))
-    FN = np.empty((nTopo))
-    FP = np.empty((nTopo))
-    TN = np.empty((nTopo))
+    numSim = cfgPath['numSim']
+    TP = np.empty((numSim))
+    FN = np.empty((numSim))
+    FP = np.empty((numSim))
+    TN = np.empty((numSim))
 
     # take first simulation as reference
     newMask = copy.deepcopy(dataPressure[0])
@@ -950,7 +953,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     # rasterinfo
     nStart = indStartOfRunout
 
-    for i in range(nTopo):
+    for i in range(numSim):
         rasterdata = dataPressure[i]
 
         """
@@ -1041,6 +1044,8 @@ def readWrite(fname_ent):
     timeResults = [massTime[0, 0], massTime[-1, 0]]
     totMassResults = [massTime[0, 1], massTime[-1, 1]]
     relMass = totMassResults[0]
+    time = np.linspace(0, 400, 400)
+    entMassArray = np.interp(time, massTime[:, 0], massTime[:, 2])
     entMass = np.sum(massTime[:, 2])
     finalMass = totMassResults[1]
     # check mass balance
@@ -1065,7 +1070,7 @@ def readWrite(fname_ent):
 #   growth results
     growthIndex = totMassResults[1]/totMassResults[0]
     growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])
-    return relMass, entMass, finalMass, growthIndex, growthGrad
+    return relMass, entMass, finalMass, growthIndex, growthGrad, entMassArray.transpose()
 
 
 def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):

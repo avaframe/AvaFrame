@@ -125,16 +125,6 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     fvCrossMeanAll = resAnalysis['fvCrossMeanAll']
 
     ############################################
-    # prepare for plot
-
-    maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
-
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, 0.0,
-                                                       np.nanmax(maskedArray),
-                                                       continuous=pU.contCmap)
-    cmap.set_bad('w', 1.)
-
-    ############################################
     # Figure: Analysis runout
     fig = plt.figure(figsize=(pU.figW*2, pU.figH))
     ax1 = plt.subplot(131)
@@ -390,6 +380,37 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
+def visuMass(resAnalysis, cfgPath, cfgFlags):
+    """
+    Plot and save the comparison between current simulation and Reference
+    in the run-out area
+    """
+    ####################################
+    # Get input data
+    # read paths
+    projectName = cfgPath['projectName']
+    dirName = cfgPath['dirName']
+    # read data
+    entMassArray = resAnalysis['entMassArray']
+    time = np.linspace(0, 400, 400)
+    ############################################
+    # Figure: Analysis runout
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+    ax1 = plt.subplot(111)
+
+    ax1.plot(time, entMassArray[0, :], '-k', label='Reference')
+    ax1.plot(time, entMassArray[1, :], '-b', label='Simulation')
+
+    ax1.set_title('Entrained mass function of time')
+    ax1.legend(loc=4)
+    ax1.set_xlabel('t [s]')
+    ax1.set_ylabel('$m(t)$ [kg]')
+
+    outFileName = '_'.join([projectName, dirName, 'massAnalysis'])
+
+    pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+
+
 def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     """
     This function writes the main Aimec results to a file (outputFile)
@@ -488,7 +509,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     """
     ####################################
     # Get input data
-    fnames = cfgPath['pressurefileList']
+    numSim = cfgPath['numSim']
 
     flag = float(cfgFlags['typeFlag'])
 
@@ -529,7 +550,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
 
     # If more than 100 files are provided, add a density plot
     plotDensity = 0
-    if (len(fnames) > 100):
+    if (numSim > 100):
         plotDensity = 1
 
     color = pU.cmapAimec(np.linspace(1, 0, len(runout) + 3, dtype=float))
