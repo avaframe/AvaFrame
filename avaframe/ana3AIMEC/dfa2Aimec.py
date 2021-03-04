@@ -95,13 +95,13 @@ def extractMBInfo(avaDir, countStart=0):
 
         # Write mass balance info files
         for k in range(len(indRun)-1):
-            savename = os.path.join(os.getcwd(), avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile + 1))
-            with open(savename, 'w') as MBFile:
+            saveName = os.path.join(os.getcwd(), avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile + 1))
+            with open(saveName, 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
                     MBFile.write('%.02f,    %.06f,    %.06f\n' %
                                  (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
-            log.info('Saved to dfa_mass_balance/%s ' % (os.path.basename(savename)))
+            log.info('Saved to dfa_mass_balance/%s ' % (os.path.basename(saveName)))
             countFile = countFile + 1
 
     return countFile
@@ -115,9 +115,9 @@ def getMBInfo(avaDir, countStart=0):
 
     countFile = countStart
     for mFile in mbNames:
-        savename = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile + 1))
-        shutil.copy(mFile, savename)
-        log.info('%s copied to %s' % (mFile, savename))
+        saveName = os.path.join(avaDir, 'Work', 'ana3AIMEC', 'com1DFA', 'dfa_mass_balance', '%06d.txt' % (countFile + 1))
+        shutil.copy(mFile, saveName)
+        log.info('%s copied to %s' % (mFile, saveName))
         countFile = countFile + 1
 
     return countFile

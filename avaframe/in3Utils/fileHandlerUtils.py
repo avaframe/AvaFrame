@@ -227,15 +227,15 @@ def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir='', countSt
     inputDir = os.path.join(avaDir, 'Outputs', comModule, 'peakFiles')
     data = makeSimDict(inputDir)
     nFiles = len(data['files'])
-    countsuf = countStart
+    countSuf = countStart
     for m in range(len(data['files'])):
         if data['resType'][m] == suffix:
             if nameDir == '':
                 shutil.copy(data['files'][m], workDir)
             else:
-                shutil.copy(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countsuf+1))
-                log.info('%s   : %s/%s/%06d.txt' % (data['files'][m], workDir, nameDir, countsuf+1))
-            countsuf = countsuf + 1
+                shutil.copy(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countSuf+1))
+                log.info('%s   : %s/%s/%06d.txt' % (data['files'][m], workDir, nameDir, countSuf+1))
+            countSuf = countSuf + 1
 
     return nFiles
 
