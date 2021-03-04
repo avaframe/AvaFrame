@@ -295,8 +295,8 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     log.info('input dataset #2 is %s' % name2)
 
     # Load data
-    raster = IOf.readRaster(datafiles[1])
-    rasterRef = IOf.readRaster(datafiles[0])
+    raster = IOf.readRaster(datafiles[0])
+    rasterRef = IOf.readRaster(datafiles[1])
     data1, data2 = geoTrans.resizeData(raster, rasterRef)
     header = IOf.readASCheader(datafiles[0])
     cellSize = header.cellsize

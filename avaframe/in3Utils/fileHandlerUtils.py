@@ -204,7 +204,7 @@ def getTimeIndex(cfg, Fields):
     return tStepsOk
 
 
-def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir='', countStart=0):
+def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir=''):
     """ Export the required data from com1DFA output to Aimec Work directory and rename,
         if nameDir='', data from com1DFA output copied to workDir without renaming
 
@@ -226,8 +226,7 @@ def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir='', countSt
     # Lead all infos on simulations
     inputDir = os.path.join(avaDir, 'Outputs', comModule, 'peakFiles')
     data = makeSimDict(inputDir)
-    nFiles = len(data['files'])
-    countSuf = countStart
+    countSuf = 0
     for m in range(len(data['files'])):
         if data['resType'][m] == suffix:
             if nameDir == '':
@@ -236,8 +235,7 @@ def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir='', countSt
                 shutil.copy(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countSuf+1))
                 log.info('%s   : %s/%s/%06d.txt' % (data['files'][m], workDir, nameDir, countSuf+1))
             countSuf = countSuf + 1
-
-    return nFiles
+            
 
 def getRefData(testDir, outputDir, suffix, nameDir=''):
     """ Grab reference data and save to outputDir
