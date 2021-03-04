@@ -101,7 +101,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
-def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
+def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     """
     Plot and save the Peak Pressure  distribution after coord transfo
     """
@@ -117,13 +117,102 @@ def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     dataPressure = newRasters['newRasterPressure']
     rasterdataPres = dataPressure[0]
     runout = resAnalysis['runout'][0]
-    pCrossAll = resAnalysis['pCrossAll']
+    pCrossMaxAll = resAnalysis['pCrossMaxAll']
+    pCrossMeanAll = resAnalysis['pCrossMeanAll']
+    fdCrossMaxAll = resAnalysis['fdCrossMaxAll']
+    fdCrossMeanAll = resAnalysis['fdCrossMeanAll']
+    fvCrossMaxAll = resAnalysis['fvCrossMaxAll']
+    fvCrossMeanAll = resAnalysis['fvCrossMeanAll']
 
     ############################################
     # prepare for plot
-    pMean = np.mean(pCrossAll, axis=0)
-    pMedian = np.median(pCrossAll, axis=0)
-    pPercentile = np.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
+
+    maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
+
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, 0.0,
+                                                       np.nanmax(maskedArray),
+                                                       continuous=pU.contCmap)
+    cmap.set_bad('w', 1.)
+
+    ############################################
+    # Figure: Analysis runout
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+    ax1 = plt.subplot(131)
+
+    ax1.plot(pCrossMaxAll[0, :], s, '--k', label='Max Reference')
+    ax1.plot(pCrossMeanAll[0, :], s, '-k', label='Mean Reference')
+    ax1.plot(pCrossMaxAll[1, :], s, '--b', label='Max Simulation')
+    ax1.plot(pCrossMeanAll[1, :], s, '-b', label='Mean Simulation')
+
+    ax1.set_title('Pressure distribution along the path')
+    ax1.legend(loc=4)
+    ax1.set_ylabel('l [m]')
+    ax1.set_ylim([s.min(), s.max()])
+    ax1.set_xlim(auto=True)
+    ax1.set_xlabel('$P(s)$ [kPa]')
+
+    ax2 = plt.subplot(132)
+
+    ax2.plot(fdCrossMaxAll[0, :], s, '--k', label='Max Reference')
+    ax2.plot(fdCrossMeanAll[0, :], s, '-k', label='Mean Reference')
+    ax2.plot(fdCrossMaxAll[1, :], s, '--b', label='Max Simulation')
+    ax2.plot(fdCrossMeanAll[1, :], s, '-b', label='Mean Simulation')
+
+    ax2.set_title('Flow Depth distribution along the path')
+    ax2.legend(loc=4)
+    ax2.set_ylabel('l [m]')
+    ax2.set_ylim([s.min(), s.max()])
+    ax2.set_xlim(auto=True)
+    ax2.set_xlabel('$h(s)$ [m]')
+
+    ax3 = plt.subplot(133)
+
+    ax3.plot(fvCrossMaxAll[0, :], s, '--k', label='Max Reference')
+    ax3.plot(fvCrossMeanAll[0, :], s, '-k', label='Mean Reference')
+    ax3.plot(fvCrossMaxAll[1, :], s, '--b', label='Max Simulation')
+    ax3.plot(fvCrossMeanAll[1, :], s, '-b', label='Mean Simulation')
+
+    ax3.set_title('Flow velocity distribution along the path')
+    ax3.legend(loc=4)
+    ax3.set_ylabel('l [m]')
+    ax3.set_ylim([s.min(), s.max()])
+    ax3.set_xlim(auto=True)
+    ax3.set_xlabel('$v(s) [m.s^{-1}]$')
+
+    outFileName = '_'.join([projectName, dirName, 'plim',
+                            str(int(plim)), 'slComparison'])
+
+    pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+
+
+def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
+    """
+    Plot and save the Peak Pressure  distribution after coord transfo
+    """
+    ####################################
+    # Get input data
+    # read paths
+    projectName = cfgPath['projectName']
+    dirName = cfgPath['dirName']
+    # read data
+    s = rasterTransfo['s']
+    l = rasterTransfo['l']
+    indStartOfRunout = rasterTransfo['indStartOfRunout']
+    dataPressure = newRasters['newRasterPressure']
+    rasterdataPres = dataPressure[0]
+    runout = resAnalysis['runout'][0]
+    pCrossMaxAll = resAnalysis['pCrossMaxAll']
+    pCrossMeanAll = resAnalysis['pCrossMeanAll']
+    fdCrossMaxAll = resAnalysis['fdCrossMaxAll']
+    fdCrossMeanAll = resAnalysis['fdCrossMeanAll']
+    fvCrossMaxAll = resAnalysis['fvCrossMaxAll']
+    fvCrossMeanAll = resAnalysis['fvCrossMeanAll']
+
+    ############################################
+    # prepare for plot
+    pMean = np.mean(pCrossMaxAll, axis=0)
+    pMedian = np.median(pCrossMaxAll, axis=0)
+    pPercentile = np.percentile(pCrossMaxAll, [2.5, 50, 97.5], axis=0)
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
 
@@ -168,7 +257,7 @@ def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
 
     outFileName = '_'.join([projectName, dirName, 'plim',
-                            str(int(plim)), 'slComparison'])
+                            str(int(plim)), 'slComparisonStat'])
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 

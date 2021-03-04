@@ -86,6 +86,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     cfgPath['depthfileList'] = getFileList(pathFlowHeight)
     cfgPath['massfileList'] = getFileList(pathMassBalance)
     cfgPath['speedfileList'] = getFileList(pathSpeed)
+    cfgPath['numSim'] = len(cfgPath['pressurefileList'])
 
     pathResult = os.path.join(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
     cfgPath['pathResult'] = pathResult
@@ -682,7 +683,10 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis = analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
-    outAimec.visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
+    if cfgPath['numSim']==2:
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
+    else:
+        outAimec.visuRunoutStat(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
     return resAnalysis
 
@@ -811,7 +815,12 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     relativMassDiff = np.empty((nTopo))
 
     n = np.shape(lcoord)[0]
-    pCrossAll = np.zeros((nTopo, len(scoord)))
+    pCrossMaxAll = np.zeros((nTopo, len(scoord)))
+    pCrossMeanAll = np.zeros((nTopo, len(scoord)))
+    fdCrossMaxAll = np.zeros((nTopo, len(scoord)))
+    fdCrossMeanAll = np.zeros((nTopo, len(scoord)))
+    fvCrossMaxAll = np.zeros((nTopo, len(scoord)))
+    fvCrossMeanAll = np.zeros((nTopo, len(scoord)))
     # For each data set
     for i in range(nTopo):
         rasterdataPres = dataPressure[i]
@@ -821,11 +830,11 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         # rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
 
         # Mean max in each Cross-Section for each field
-        ampp[i], mmpp[i], cInd, pCrossAll[i] = getMaxMeanValues(
+        ampp[i], mmpp[i], cInd, pCrossMaxAll[i], pCrossMeanAll[i] = getMaxMeanValues(
             rasterdataPres, rasterArea, pLim, cInd=None)
-        amd[i], mmd[i], cInd, _ = getMaxMeanValues(rasterdataDepth, rasterArea,
+        amd[i], mmd[i], cInd, fdCrossMaxAll[i], fdCrossMeanAll[i] = getMaxMeanValues(rasterdataDepth, rasterArea,
                                                    pLim, cInd=cInd)
-        ams[i], mms[i], cInd, _ = getMaxMeanValues(rasterdataSpeed, rasterArea,
+        ams[i], mms[i], cInd, fvCrossMaxAll[i], fvCrossMeanAll[i] = getMaxMeanValues(rasterdataSpeed, rasterArea,
                                                    pLim, cInd=cInd)
         #    Runout
         cupper = cInd['cupper']
@@ -870,7 +879,12 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis['relativMassDiff'] = relativMassDiff
     resAnalysis['growthIndex'] = grIndex
     resAnalysis['growthGrad'] = grGrad
-    resAnalysis['pCrossAll'] = pCrossAll
+    resAnalysis['pCrossMaxAll'] = pCrossMaxAll
+    resAnalysis['pCrossMeanAll'] = pCrossMeanAll
+    resAnalysis['fdCrossMaxAll'] = fdCrossMaxAll
+    resAnalysis['fdCrossMeanAll'] = fdCrossMeanAll
+    resAnalysis['fvCrossMaxAll'] = fvCrossMaxAll
+    resAnalysis['fvCrossMeanAll'] = fvCrossMeanAll
     resAnalysis['pressureLimit'] = pLim
     resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
 
@@ -1130,4 +1144,4 @@ def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):
         np.nansum(AreaACrossMax[cupper:clower+1])
     mma = max(aCrossMax[cupper:clower+1])
 
-    return ama, mma, cInd, aCrossMax
+    return ama, mma, cInd, aCrossMax, aCrossMean

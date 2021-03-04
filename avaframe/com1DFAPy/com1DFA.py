@@ -394,7 +394,6 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
         dictionary with new dem (lower left center at origin)
     """
     cfgGen = cfg['GENERAL']
-    entRes = cfg.getboolean('FLAGS', 'entRes')
     methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
 
     dem = setDEMoriginToZero(demOri)
@@ -419,8 +418,8 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     # initialize entrainment and resistance
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster = initializeMassEnt(demOri, entRes, entLine)
-    cResRaster = initializeResistance(cfgGen, demOri, entRes, resLine)
+    entrMassRaster = initializeMassEnt(demOri, logName, entLine)
+    cResRaster = initializeResistance(cfgGen, demOri, logName, resLine)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
     entreainableMass = np.sum(fields['entrMassRaster']*dem['areaRaster'])
@@ -695,7 +694,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart):
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, entRes, entLine):
+def initializeMassEnt(dem, logName, entLine):
     """ Initialize mass for entrainment
 
     Parameters
@@ -712,7 +711,7 @@ def initializeMassEnt(dem, entRes, entLine):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if entRes and entLine:
+    if ('entres' in logName) and entLine:
         # entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
@@ -722,7 +721,7 @@ def initializeMassEnt(dem, entRes, entLine):
     return entrMassRaster
 
 
-def initializeResistance(cfg, dem, entRes, resLine):
+def initializeResistance(cfg, dem, logName, resLine):
     """ Initialize resistance matrix
 
     Parameters
@@ -742,7 +741,7 @@ def initializeResistance(cfg, dem, entRes, resLine):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if entRes and resLine:
+    if ('entres' in logName) and resLine:
         # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
         resistanceArea = resLine['Name']
         log.info('Resistance area: %s' % (resistanceArea))
