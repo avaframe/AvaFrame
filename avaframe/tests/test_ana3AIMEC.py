@@ -92,7 +92,7 @@ def test_makeDomainTransfo(capfd):
     cfgPath['pressurefileList'] = ana3AIMEC.getFileList(pathData)
     cfgPath['depthfileList'] = ana3AIMEC.getFileList(pathData)
     cfgPath['speedfileList'] = ana3AIMEC.getFileList(pathData)
-
+    cfgPath['numSim'] = 1
     cfgPath['massfileList'] = [os.path.join(dirname, '000001.txt')]*5
 
     pathResult = os.path.join(dirname, 'results')
