@@ -146,7 +146,7 @@ def com1DFAMain(cfg, avaDir):
         resistanceArea = os.path.splitext(os.path.basename(res))[0]
 
     # Parameter variation
-    if cfgPar.getboolean('flagVarPar'):
+    if cfgPar.getboolean('parameterVar'):
         varPar = cfgPar['varPar']
     else:
         varPar = 'Mu'
@@ -213,7 +213,7 @@ def com1DFAMain(cfg, avaDir):
         execCom1Exe(com1Exe, workFile, avaDir, fullOut)
 
         # If parameter shall be varied
-        if cfgPar.getboolean('flagVarPar'):
+        if cfgPar.getboolean('parameterVar'):
 
             # Also perform one standard simulation
             simST = simName + '_null_dfa'
@@ -251,7 +251,7 @@ def com1DFAMain(cfg, avaDir):
             # Count total number of simulations
             countRel = countRel + 1
 
-            if cfgPar.getboolean('flagVarEnt') and (simName + '_entres_dfa') in cuSim:
+            if cfgPar.getboolean('VarEnt') and (simName + '_entres_dfa') in cuSim:
                 sim = simName + '_entres_dfa'
                 log.info('Parameter variation used including entrainment and resistance, varying: %s' % cfgPar['varPar'])
             else:
@@ -358,7 +358,7 @@ def com1DFAMain(cfg, avaDir):
     log.debug('Avalanche Simulations performed')
 
     # Setup input from com1DFA and exort to Outputs/com1DFA
-    if cfgPar.getboolean('flagVarPar'):
+    if cfgPar.getboolean('parameterVar'):
         fU.exportcom1DFAOutput(avaDir, cfgPar, cfgGen.getboolean('addTSteps'))
     else:
         cfgParHere = ''
