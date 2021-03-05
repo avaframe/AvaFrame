@@ -113,10 +113,6 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
-    indStartOfRunout = rasterTransfo['indStartOfRunout']
-    dataPressure = newRasters['newRasterPressure']
-    rasterdataPres = dataPressure[0]
-    runout = resAnalysis['runout'][0]
     pCrossMaxAll = resAnalysis['pCrossMaxAll']
     pCrossMeanAll = resAnalysis['pCrossMeanAll']
     fdCrossMaxAll = resAnalysis['fdCrossMaxAll']
@@ -125,50 +121,38 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     fvCrossMeanAll = resAnalysis['fvCrossMeanAll']
 
     ############################################
-    # Figure: Analysis runout
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-    ax1 = plt.subplot(131)
+    # prepare for plot
+    Title = ['Pressure', 'Flow Depth', 'Flow Velocity']
+    Unit = ['$P(s)$ [kPa]', '$fd(s)$ [m]', '$v(s) [m.s^{-1}]$']
+    DataMax = np.array(([None] * 3))
+    DataMax[0] = pCrossMaxAll
+    DataMax[1] = fdCrossMaxAll
+    DataMax[2] = fvCrossMaxAll
 
-    ax1.plot(pCrossMaxAll[0, :], s, '--k', label='Max Reference')
-    ax1.plot(pCrossMeanAll[0, :], s, '-k', label='Mean Reference')
-    ax1.plot(pCrossMaxAll[1, :], s, '--b', label='Max Simulation')
-    ax1.plot(pCrossMeanAll[1, :], s, '-b', label='Mean Simulation')
+    DataMean = np.array(([None] * 3))
+    DataMean[0] = pCrossMeanAll
+    DataMean[1] = fdCrossMeanAll
+    DataMean[2] = fvCrossMeanAll
 
-    ax1.set_title('Pressure distribution along the path')
-    ax1.legend(loc=4)
-    ax1.set_ylabel('l [m]')
-    ax1.set_ylim([s.min(), s.max()])
-    ax1.set_xlim(auto=True)
-    ax1.set_xlabel('$P(s)$ [kPa]')
+    ############################################
+    # Figure: Pressure depth speed
 
-    ax2 = plt.subplot(132)
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
-    ax2.plot(fdCrossMaxAll[0, :], s, '--k', label='Max Reference')
-    ax2.plot(fdCrossMeanAll[0, :], s, '-k', label='Mean Reference')
-    ax2.plot(fdCrossMaxAll[1, :], s, '--b', label='Max Simulation')
-    ax2.plot(fdCrossMeanAll[1, :], s, '-b', label='Mean Simulation')
+    for ax, dataMax, dataMean, title, unit in zip(axes.flatten(), DataMax, DataMean, Title, Unit):
+        ax.plot(dataMax[0, :], s, '--k', label='Max Reference')
+        ax.plot(dataMean[0, :], s, '-k', label='Mean Reference')
+        ax.plot(dataMax[1, :], s, '--b', label='Max Simulation')
+        ax.plot(dataMean[1, :], s, '-b', label='Mean Simulation')
 
-    ax2.set_title('Flow Depth distribution along the path')
-    ax2.legend(loc=4)
-    ax2.set_ylabel('l [m]')
-    ax2.set_ylim([s.min(), s.max()])
-    ax2.set_xlim(auto=True)
-    ax2.set_xlabel('$h(s)$ [m]')
-
-    ax3 = plt.subplot(133)
-
-    ax3.plot(fvCrossMaxAll[0, :], s, '--k', label='Max Reference')
-    ax3.plot(fvCrossMeanAll[0, :], s, '-k', label='Mean Reference')
-    ax3.plot(fvCrossMaxAll[1, :], s, '--b', label='Max Simulation')
-    ax3.plot(fvCrossMeanAll[1, :], s, '-b', label='Mean Simulation')
-
-    ax3.set_title('Flow velocity distribution along the path')
-    ax3.legend(loc=4)
-    ax3.set_ylabel('l [m]')
-    ax3.set_ylim([s.min(), s.max()])
-    ax3.set_xlim(auto=True)
-    ax3.set_xlabel('$v(s) [m.s^{-1}]$')
-
+        ax.set_title(title + 'distribution along the path')
+        ax.legend(loc=4)
+        ax.set_ylabel('s [m]')
+        ax.set_ylim([s.min(), s.max()])
+        ax.set_xlim(auto=True)
+        ax.set_xlabel(unit)
+    pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
     outFileName = '_'.join([projectName, dirName, 'plim',
                             str(int(plim)), 'slComparison'])
 
@@ -192,11 +176,6 @@ def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     rasterdataPres = dataPressure[0]
     runout = resAnalysis['runout'][0]
     pCrossMaxAll = resAnalysis['pCrossMaxAll']
-    pCrossMeanAll = resAnalysis['pCrossMeanAll']
-    fdCrossMaxAll = resAnalysis['fdCrossMaxAll']
-    fdCrossMeanAll = resAnalysis['fdCrossMeanAll']
-    fvCrossMaxAll = resAnalysis['fvCrossMaxAll']
-    fvCrossMeanAll = resAnalysis['fvCrossMeanAll']
 
     ############################################
     # prepare for plot
@@ -241,7 +220,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
 
     ax2.set_title('Peak Pressure distribution along the path between runs')
     ax2.legend(loc=4)
-    ax2.set_ylabel('l [m]')
+    ax2.set_ylabel('s [m]')
     ax2.set_ylim([s.min(), s.max()])
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
@@ -307,7 +286,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         ax.set_title(title)
         ax.legend(loc=4)
         pU.addColorBar(im, ax, ticks, unit)
-        pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
+    pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
 
     outFileName = '_'.join([projectName, dirName,'plim',
                             str(int(plim)), 'referenceFields'])
@@ -392,19 +371,31 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
     dirName = cfgPath['dirName']
     # read data
     entMassArray = resAnalysis['entMassArray']
-    time = np.linspace(0, 400, 400)
+    totalMassArray = resAnalysis['totalMassArray']
+    time = resAnalysis['time']
+
     ############################################
-    # Figure: Analysis runout
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-    ax1 = plt.subplot(111)
+    # prepare for plot
+    Title = ['Entrained', 'Total']
+    Unit = ['Entrained Mass', 'Total Mass']
+    DataMass = np.array(([None] * 2))
+    DataMass[0] = entMassArray
+    DataMass[1] = totalMassArray
 
-    ax1.plot(time, entMassArray[0, :], '-k', label='Reference')
-    ax1.plot(time, entMassArray[1, :], '-b', label='Simulation')
+    ############################################
+    # Figure: Pressure depth speed
 
-    ax1.set_title('Entrained mass function of time')
-    ax1.legend(loc=4)
-    ax1.set_xlabel('t [s]')
-    ax1.set_ylabel('$m(t)$ [kg]')
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(pU.figW*2, pU.figH))
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
+
+    for ax, dataMass, title, unit in zip(axes.flatten(), DataMass, Title, Unit):
+        ax.plot(time, dataMass[0, :], '-k', label='Reference')
+        ax.plot(time, dataMass[1, :], '-b', label='Simulation')
+
+        ax.set_title(title + 'mass function of time')
+        ax.legend(loc=4)
+        ax.set_xlabel('t [s]')
+        ax.set_ylabel(unit + '[kg]')
 
     outFileName = '_'.join([projectName, dirName, 'massAnalysis'])
 

@@ -823,7 +823,7 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     fdCrossMeanAll = np.zeros((numSim, len(scoord)))
     fvCrossMaxAll = np.zeros((numSim, len(scoord)))
     fvCrossMeanAll = np.zeros((numSim, len(scoord)))
-    entMassArray = np.zeros((numSim, 400))
+    time = 0
     # For each data set
     for i in range(numSim):
         rasterdataPres = dataPressure[i]
@@ -854,8 +854,14 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
 
         # analyze mass
-        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i], entMassArray[i] = readWrite(
-            fnameMass[i])
+        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i], entMass, totalMass, time = readWrite(
+            fnameMass[i], time)
+        if i == 0:
+            entMassArray = np.zeros((numSim, np.size(time)))
+            totalMassArray = np.zeros((numSim, np.size(time)))
+        entMassArray[i] = entMass
+        totalMassArray[i] = totalMass
+
         relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
         if not (releaseMass[i] == releaseMass[0]):
             massDiffers = True
@@ -889,6 +895,8 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis['fvCrossMaxAll'] = fvCrossMaxAll
     resAnalysis['fvCrossMeanAll'] = fvCrossMeanAll
     resAnalysis['entMassArray'] = entMassArray
+    resAnalysis['totalMassArray'] = totalMassArray
+    resAnalysis['time'] = time
     resAnalysis['pressureLimit'] = pLim
     resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
 
@@ -1016,7 +1024,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     return resAnalysis
 
 
-def readWrite(fname_ent):
+def readWrite(fname_ent, time):
     """Get mass balance information
 
     Read mass balance files to get mass properties of the simulation
@@ -1044,24 +1052,26 @@ def readWrite(fname_ent):
     timeResults = [massTime[0, 0], massTime[-1, 0]]
     totMassResults = [massTime[0, 1], massTime[-1, 1]]
     relMass = totMassResults[0]
-    time = np.linspace(0, 400, 400)
-    entMassArray = np.interp(time, massTime[:, 0], massTime[:, 2])
-    entMass = np.sum(massTime[:, 2])
+    if np.size(time) == 1:
+        time = np.arange(0, int(timeResults[1]), 0.1)
+    entMass = np.interp(time, massTime[:, 0], massTime[:, 2])
+    totalMass = np.interp(time, massTime[:, 0], massTime[:, 1])
+    entrainedMass = np.sum(massTime[:, 2])
     finalMass = totMassResults[1]
     # check mass balance
     log.info('Total mass change between first and last time step in sim %s is: %.1f kg' %
              (int(os.path.splitext(os.path.basename(fname_ent))[0]), totMassResults[1] - relMass))
     log.info('Total entrained mass in sim %s is: %.1f kg' %
-             (int(os.path.splitext(os.path.basename(fname_ent))[0]), entMass))
+             (int(os.path.splitext(os.path.basename(fname_ent))[0]), entrainedMass))
     if (totMassResults[1] - relMass) == 0:
-        diff = np.abs((totMassResults[1] - relMass) - entMass)
+        diff = np.abs((totMassResults[1] - relMass) - entrainedMass)
         if diff > 0:
             log.warning('Conservation of mass is not satisfied')
             log.warning('Total mass change and total entrained mass differ from %.4f kg' % (diff))
         else:
             log.info('Total mass change and total entrained mass differ from %.4f kg' % (diff))
     else:
-        diff = np.abs((totMassResults[1] - relMass) - entMass)/(totMassResults[1] - relMass)
+        diff = np.abs((totMassResults[1] - relMass) - entrainedMass)/(totMassResults[1] - relMass)
         if diff*100 > 0.05:
             log.warning('Conservation of mass is not satisfied')
             log.warning('Total mass change and total entrained mass differ from %.4f %%' % (diff*100))
@@ -1070,7 +1080,7 @@ def readWrite(fname_ent):
 #   growth results
     growthIndex = totMassResults[1]/totMassResults[0]
     growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])
-    return relMass, entMass, finalMass, growthIndex, growthGrad, entMassArray.transpose()
+    return relMass, entrainedMass, finalMass, growthIndex, growthGrad, entMass, totalMass, time
 
 
 def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):

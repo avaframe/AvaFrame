@@ -317,11 +317,25 @@ def initializeMesh(dem, num=4):
     csz = header.cellsize
     # get normal vector of the grid mesh
     Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num=num)
+    # TODO, Try to replicate samosAT notmal computation
+    # if num == 1:
+    # num = 1 is the method used in samos but the resulting normal is for
+    # Peter at the center of his cell which is for us the vertex
+    # Create vertex grid
+    # x = np.linspace(-csz/2, (ncols-1)*csz - csz/2, ncols)
+    # y = np.linspace(-csz/2, (nrows-1)*csz - csz/2, nrows)
+    # X, Y = np.meshgrid(x, y)
+    # # interpolate the normal at our vertex to the normal at our centers
+    # Nx, Ny, NzCenter = DFAtls.getNormalArray(X, Y, Nx, Ny, Nz, csz)
+    # NzCenter = np.where(np.isnan(Nx), Nz, NzCenter)
+    # Nz = NzCenter
+
     dem['Nx'] = np.where(np.isnan(Nx), 0, Nx)
     dem['Ny'] = np.where(np.isnan(Ny), 0, Ny)
     # build no data mask (used to find out of dem particles)
-    bad = np.where(Nz > 1, True, False)
-    dem['Nz'] = np.where(Nz > 1, 0, Nz)
+    bad = np.where(np.isnan(Nx), True, False)
+    # dem['Nz'] = np.where(Nz > 1, 0, Nz)
+    dem['Nz'] = np.where(np.isnan(Nx), 0, Nz)
     dem['Bad'] = bad
     if debugPlot:
         x = np.arange(ncols) * csz
@@ -462,7 +476,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     nrows = header.nrows
     csz = header.cellsize
     areaRaster = dem['areaRaster']
-    totalMassRaster = np.sum(areaRaster*relRaster*rho)
+    totalMassRaster = np.nansum(areaRaster*relRaster*rho)
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     FD = np.zeros((nrows, ncols))
@@ -493,9 +507,10 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         # # adding z component
         zSamos = copy.deepcopy(particles['z'])
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
-        # plt.plot(particles['y'], zSamos, 'bo')
-        # plt.plot(particles['y'], particles['z'], 'k+')
+        # plt.plot(particles['x'], zSamos, 'bo')
+        # plt.plot(particles['x'], particles['z'], 'k+')
         # plt.show()
+        # print(particles['x'][0], particles['y'][0], particles['z'][0], particles['m'][0])
     else:
         Npart = 0
         NPPC = np.empty(0)
