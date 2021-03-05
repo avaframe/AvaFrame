@@ -121,7 +121,7 @@ def getInputData(avaDir, cfg, flagDev=False):
     log.info('Release area files are: %s' % relFiles)
 
     # Initialise resistance areas
-    if cfg.getboolean('flagNoRes'):
+    if cfg.getboolean('noResistance'):
         resFiles = []
         resFiles.append('')
     else:
@@ -138,7 +138,7 @@ def getInputData(avaDir, cfg, flagDev=False):
             flagEntRes = True
 
     # Initialise entrainment areas
-    if cfg.getboolean('flagNoEnt'):
+    if cfg.getboolean('noEntrainment'):
         entFiles = []
         entFiles.append('')
     else:
