@@ -116,7 +116,7 @@ def com1DFAMain(cfg, avaDir):
     modName = 'com1DFA'
     flagNoEnt = cfgGen.getboolean('flagNoEnt')
     flagNoRes = cfgGen.getboolean('flagNoRes')
-    fullOut = cfgGen.getboolean('flagOut')
+    fullOut = cfgGen.getboolean('fullOut')
     cfgPar = cfg['PARAMETERVAR']
     resDir = os.path.join(avaDir, 'Work', 'com1DFA')
     # Get path of module

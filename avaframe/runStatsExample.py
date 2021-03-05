@@ -69,8 +69,8 @@ for avaDir in avalancheDirs:
     reportDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
-    
-    if cfg.getboolean('flagAimec') == True:
+
+    if cfg.getboolean('Aimec') == True:
         # run aimec
         statsAimecCfg = os.path.join('..', 'benchmarks', avaName, '%sStats_ana3AIMECCfg.ini' % (avaName))
         cfgAIMEC = cfgUtils.getModuleConfig(ana3AIMEC, statsAimecCfg)
