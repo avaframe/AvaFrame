@@ -111,7 +111,7 @@ def com1DFAMain(cfg, avaDir, relTh):
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
-            Tsave, T, U, Z, S, Particles, Fields, infoDict = DFAIterate(cfgGen, particles, fields, dem)
+            Tsave, Particles, Fields, infoDict = DFAIterate(cfgGen, particles, fields, dem)
 
             # write mass balance to File
             writeMBFile(infoDict, avaDir, logName)
@@ -799,11 +799,6 @@ def DFAIterate(cfg, particles, fields, dem):
     # Initialise Lists to save fields
     Particles = [copy.deepcopy(particles)]
     Fields = [copy.deepcopy(fields)]
-    # save Z, S, U, T at each time step for developping purpouses
-    Z = np.empty((0, 0))
-    S = np.empty((0, 0))
-    U = np.empty((0, 0))
-    T = np.empty((0, 0))
     Tsave = [0]
 
     if featLF:
@@ -849,14 +844,8 @@ def DFAIterate(cfg, particles, fields, dem):
             particles, fields, Tcpu = computeEulerTimeStep(
                 cfg, particles, fields, dt, dem, Tcpu)
 
-
-        T = np.append(T, t)
         Tcpu['nSave'] = nSave
         particles['t'] = t
-        # Save desired parameters and export to Lists for saving interval
-        U = np.append(U, DFAtls.norm(particles['ux'][0], particles['uy'][0], particles['uz'][0]))
-        Z = np.append(Z, particles['z'][0])
-        S = np.append(S, particles['s'][0])
         iterate = particles['iterate']
 
         # write mass balance info
@@ -894,7 +883,7 @@ def DFAIterate(cfg, particles, fields, dem):
 
     infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu}
 
-    return Tsave, T, U, Z, S, Particles, Fields, infoDict
+    return Tsave, Particles, Fields, infoDict
 
 
 def writeMBFile(infoDict, avaDir, logName):
