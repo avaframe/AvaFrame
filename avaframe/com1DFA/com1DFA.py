@@ -114,8 +114,8 @@ def com1DFAMain(cfg, avaDir):
     cfgGen = cfg['GENERAL']
     com1Exe = cfgGen['com1Exe']
     modName = 'com1DFA'
-    flagNoEnt = cfgGen.getboolean('flagNoEnt')
-    flagNoRes = cfgGen.getboolean('flagNoRes')
+    flagNoEnt = cfgGen.getboolean('noEntrainment')
+    flagNoRes = cfgGen.getboolean('noResistance')
     fullOut = cfgGen.getboolean('fullOut')
     cfgPar = cfg['PARAMETERVAR']
     resDir = os.path.join(avaDir, 'Work', 'com1DFA')
