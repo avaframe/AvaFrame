@@ -102,14 +102,18 @@ def filterBenchmarks(testDictList, type, valuesList, condition='or'):
     testList = []
     flag = False
     for testDict in testDictList:
-        if condition == 'or':
-            if any(values in testDict[type] for values in valuesList):
+        if type == 'AVANAME':
+            if testDict['AVANAME'] == valuesList:
                 testList.append(testDict)
-        elif condition == 'and':
-             if all(values in testDict[type] for values in valuesList):
-                 testList.append(testDict)
         else:
-            flag = True
+            if condition == 'or':
+                if any(values in testDict[type] for values in valuesList):
+                    testList.append(testDict)
+            elif condition == 'and':
+                 if all(values in testDict[type] for values in valuesList):
+                     testList.append(testDict)
+            else:
+                flag = True
 
     if flag:
         log.warning('Not a valid condition - please chose and or or as condition')
