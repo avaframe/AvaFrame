@@ -53,6 +53,7 @@ def test_analyzeArea(capfd):
     resAnalysis = {}
     runout = np.array([100])
     resAnalysis['runout'] = runout
+    cfgPath['numSim'] = 2
 
     # testing analyzeFields function
     resAnalysis = ana3AIMEC.analyzeFields(rasterTransfo, pLim, newRasters,
@@ -92,7 +93,7 @@ def test_makeDomainTransfo(capfd):
     cfgPath['pressurefileList'] = ana3AIMEC.getFileList(pathData)
     cfgPath['depthfileList'] = ana3AIMEC.getFileList(pathData)
     cfgPath['speedfileList'] = ana3AIMEC.getFileList(pathData)
-    cfgPath['numSim'] = 1
+    cfgPath['numSim'] = 5
     cfgPath['massfileList'] = [os.path.join(dirname, '000001.txt')]*5
 
     pathResult = os.path.join(dirname, 'results')
