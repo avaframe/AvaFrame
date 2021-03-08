@@ -2,7 +2,7 @@
     function related to SPH calculations in com1DFA
 
     to build: go to repository containing this file and run:
-    python setup.py build_ext --inplace
+    python avaframe/com1DFAPy/setup.py build_ext --force --inplace --define CYTHON_TRACE
 """
 
 # Load modules

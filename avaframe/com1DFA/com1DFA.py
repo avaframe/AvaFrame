@@ -4,6 +4,7 @@
 
 # Load modules
 import os
+import pickle
 import subprocess
 import shutil
 import logging
@@ -15,7 +16,6 @@ from avaframe.in2Trans import ascUtils as aU
 from avaframe.in3Utils import initialiseDirs as iD
 from avaframe.in1Data import getInput as gI
 from avaframe.in2Trans import shpConversion as sP
-import avaframe.com1DFAPy.com1DFA as com1DFAPy
 import avaframe.in2Trans.ascUtils as IOf
 
 # create local logger
@@ -393,4 +393,22 @@ def saveInitialParticleDistribution(avaDir, simName, dem):
 
     partDit = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'particles', simName)
     fU.makeADir(partDit)
-    com1DFAPy.savePartToPickle(particles, partDit)
+    savePartToPickle(particles, partDit)
+
+
+def savePartToPickle(dictList, outDir):
+    """ Save each dictionary from a list to a pickle in outDir; works also for one dictionary instead of list
+
+        Parameters
+        ---------
+        dictList: list or dict
+            list of dictionaries or single dictionary
+        outDir: str
+            path to output directory
+    """
+
+    if isinstance(dictList, list):
+        for dict in dictList:
+            pickle.dump(dict, open(os.path.join(outDir, "particles%09.4f.p" % (dict['t'])), "wb"))
+    else:
+        pickle.dump(dictList, open(os.path.join(outDir, "particles%09.4f.p" % (dictList['t'])), "wb"))
