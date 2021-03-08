@@ -62,6 +62,7 @@ for avaDir in avalancheDirs:
 
     # Run Standalone DFA
     reportDictList = com1DFA.com1DFAMain(cfgDFA, avaDir)
+    fU.makeADir(outDir)
 
     # Generata plots for all peakFiles
     plotDict = oP.plotAllPeakFields(avaDir, cfgDFA, cfgMain['FLAGS'])
