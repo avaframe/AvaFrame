@@ -56,7 +56,7 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
     return nx, ny, nz
 
 
-def getNormalMesh(z, csz, num=4):
+def getNormalMesh(z, csz, num):
     """ Compute normal to surface at grid points
 
         Get the normal vectors to the surface defined by a DEM.
@@ -257,7 +257,7 @@ def getNormalMesh(z, csz, num=4):
     return 0.5*Nx, 0.5*Ny, 0.5*Nz
 
 
-def getAreaMesh(Nx, Ny, Nz, csz):
+def getAreaMesh(Nx, Ny, Nz, csz, num):
     """ Get area of grid cells.
 
         Parameters
@@ -277,9 +277,11 @@ def getAreaMesh(Nx, Ny, Nz, csz):
                 Area of grid cells
     """
     # see documentation and issue 202
-    _, _, NzNormed = normalize(Nx, Ny, Nz)
-    A = csz * csz / NzNormed
-    # A = norm(Nx, Ny, Nz)
+    if num == 1:
+        A = norm(Nx, Ny, Nz)
+    else:
+        _, _, NzNormed = normalize(Nx, Ny, Nz)
+        A = csz * csz / NzNormed
     # limit maximum area (for very steeps cells)
     A = np.where(A > 3*csz*csz, 3*csz*csz, A)
     return A

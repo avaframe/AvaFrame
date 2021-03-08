@@ -291,7 +291,7 @@ def createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resista
     return reportST
 
 
-def initializeMesh(dem, num=4):
+def initializeMesh(dem, num):
     """ Create rectangular mesh
 
     Reads the DEM information, computes the normal vector field and
@@ -316,7 +316,7 @@ def initializeMesh(dem, num=4):
     nrows = header.nrows
     csz = header.cellsize
     # get normal vector of the grid mesh
-    Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num=num)
+    Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num)
     # TODO, Try to replicate samosAT notmal computation
     # if num == 1:
     # num = 1 is the method used in samos but the resulting normal is for
@@ -357,7 +357,7 @@ def initializeMesh(dem, num=4):
         IOf.writeResultToAsc(dem['header'], dem['Nz'], 'Nz.asc')
 
     # get real Area
-    areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
+    areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, csz, num)
     dem['areaRaster'] = areaRaster
     log.info('Largest cell area: %.2f m²' % (np.amax(areaRaster)))
     log.debug('Projected Area : %.2f' % (ncols * nrows * csz * csz))
@@ -414,7 +414,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
 
     # -----------------------
     # Initialize mesh
-    dem = initializeMesh(dem, num=methodMeshNormal)
+    dem = initializeMesh(dem, methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
     relRaster = prepareArea(releaseLine, demOri)

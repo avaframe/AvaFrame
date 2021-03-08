@@ -115,6 +115,7 @@ def test_getNormalMesh(capfd):
     Z1 = a * X * X + b * Y * Y
     for num in [4, 6, 8]:
         Nx, Ny, Nz = DFAtls.getNormalMesh(Z, cellsize, num=num)
+        Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
         print(Nx)
         print((-a*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
         print(Ny)
@@ -134,6 +135,7 @@ def test_getNormalMesh(capfd):
         assert TestNZ
 
         Nx, Ny, Nz = DFAtls.getNormalMesh(Z1, cellsize, num=num)
+        Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
 
         print(Nx)
         print((-2*a*X / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
