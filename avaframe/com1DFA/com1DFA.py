@@ -251,7 +251,7 @@ def com1DFAMain(cfg, avaDir):
             # Count total number of simulations
             countRel = countRel + 1
 
-            if cfgPar.getboolean('VarEnt') and (simName + '_entres_dfa') in cuSim:
+            if cfgPar.getboolean('varEnt') and (simName + '_entres_dfa') in cuSim:
                 sim = simName + '_entres_dfa'
                 log.info('Parameter variation used including entrainment and resistance, varying: %s' % cfgPar['varPar'])
             else:
