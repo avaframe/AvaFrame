@@ -10,6 +10,7 @@ import numpy as np
 import os
 from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
+from avaframe.ana1Tests import testUtilities as tU
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import initializeProject as initProj
@@ -54,7 +55,7 @@ def test_execCom1Exe(tmp_path):
 
 @pytest.mark.skip(reason="com1DFA exe is missing, no way of testing this")
 @pytest.mark.parametrize("avaName", ["avaBowl", "avaFlatPlane", "avaHelix", "avaHelixChannel",
-                          "avaHockey", "avaHockeySmoothChannel", "avaHockeySmoothSmall", "avaInclinedPlane"])
+                          "avaParabola", "avaHockeyChannel", "avaHockeySmall", "avaInclinedPlane"])
 def test_com1DFAMain(tmp_path, avaName):
     """ test call to com1DFA module """
 
@@ -67,7 +68,18 @@ def test_com1DFAMain(tmp_path, avaName):
     avaDir  = os.path.join(tmp_path, avaName)
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
-    testCfg = os.path.join(dirPath, '..', '..', 'benchmarks', avaName, '%s_com1DFACfg.ini' % avaName)
+    # load all benchmark info as dictionaries from description files
+    testDictList = tU.readAllBenchmarkDesDicts(info=False)
+    type = 'TAGS'
+    valuesList = ['standardTest']
+    testList = tU.filterBenchmarks(testDictList, type, valuesList)
+    type = 'AVANAME'
+    valuesList = avaName
+    testList = tU.filterBenchmarks(testList, type, valuesList)
+    avaTestName = testList[0]['NAME']
+    print('avaTEstNAme', avaTestName)
+
+    testCfg = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestName, '%s_com1DFACfg.ini' % avaName)
     shutil.copytree(avaData, avaInputs)
 
     # get configuration
@@ -84,7 +96,7 @@ def test_com1DFAMain(tmp_path, avaName):
     benchDictList = simParameters.fetchBenchParameters(avaDir)
     benchDict = benchDictList[0]
     simBench = benchDict['simName'].replace('dfa', 'ref')
-    pprBench = np.loadtxt(os.path.join(dirPath, '..', '..', 'benchmarks', avaName,
+    pprBench = np.loadtxt(os.path.join(dirPath, '..', '..', 'benchmarks', avaTestName,
                                        simBench + '_ppr.asc'), skiprows=6)
 
     # Compare result to reference solution
