@@ -35,7 +35,7 @@ cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
 com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
 
 peakDictList = []
-avalancheDirs = ['data/avaHockeySmoothChannel','data/avaHockeySmoothChannel']
+avalancheDirs = ['data/avaHockeyChannel','data/avaHockeyChannel']
 cfgFull = cfgUtils.getModuleConfig(getStats)
 cfg = cfgFull['GENERAL']
 # set output directory, first ava in list
@@ -52,7 +52,8 @@ for avaDir in avalancheDirs:
 
     # --- run Com1DFA -----
     avaName = os.path.basename(avaDir)
-    statsSimCfg = os.path.join('..', 'benchmarks', avaName, '%sStats%d_com1DFACfg.ini' % (avaName, count))
+    avaNameTest = avaName + 'StatsTest'
+    statsSimCfg = os.path.join('..', 'benchmarks', avaNameTest, '%sStats%d_com1DFACfg.ini' % (avaName, count))
     cfgDFA = cfgUtils.getModuleConfig(com1DFA, statsSimCfg)
     cfgDFA['GENERAL']['com1Exe'] = com1Exe
 
@@ -70,9 +71,9 @@ for avaDir in avalancheDirs:
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
-    if cfg.getboolean('Aimec') == True:
+    if cfg.getboolean('aimec') == True:
         # run aimec
-        statsAimecCfg = os.path.join('..', 'benchmarks', avaName, '%sStats_ana3AIMECCfg.ini' % (avaName))
+        statsAimecCfg = os.path.join('..', 'benchmarks', avaNameTest, '%sStats_ana3AIMECCfg.ini' % (avaName))
         cfgAIMEC = cfgUtils.getModuleConfig(ana3AIMEC, statsAimecCfg)
         cfgAimecSetup = cfgAIMEC['AIMECSETUP']
 
