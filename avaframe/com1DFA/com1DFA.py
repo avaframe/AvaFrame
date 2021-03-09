@@ -146,7 +146,7 @@ def com1DFAMain(cfg, avaDir):
         entrainmentArea = os.path.splitext(os.path.basename(ent))[0]
         resistanceArea = os.path.splitext(os.path.basename(res))[0]
         if cfg['ENTRAINMENT'].getboolean('setEntDepth'):
-            entrainmentTH = cfg['ENTRAINMENT'].getfloat('entH')
+            entrainmentTH = cfg['ENTRAINMENT']['entH']
             log.info('Entrainment thickness is changed! set to %f' % entrainmentTH)
 
     # Parameter variation
@@ -248,7 +248,7 @@ def com1DFAMain(cfg, avaDir):
                     'Parameter value': '',
                     'Mu': defValues['Mu'],
                     'Release thickness [m]': relDict['d0'],
-                    'Entrainment thickness [m]': entrainmentTH},
+                    'Entrainment thickness [m]': float(entrainmentTH)},
                 'Release area': {'type': 'columns', 'Release area scenario': relName}}
 
             # Add to report dictionary list
@@ -280,7 +280,7 @@ def com1DFAMain(cfg, avaDir):
                 copyReplace(workFile, workFile, '##NAME##', sim)
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VALUE##', item)
-                copyReplace(workFile, workFile, '##ENTH##', entrainmentTH)
+                copyReplace(workFile, workFile, '##ENTH##', float(entrainmentTH))
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
                 # Create dictionary
@@ -302,11 +302,11 @@ def com1DFAMain(cfg, avaDir):
                 if cfgPar['varPar'] == 'RelTh':
                     reportVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
                     reportVar['Simulation Parameters'].update({'Release thickness [m]': item})
-                    reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': entrainmentTH})
+                    reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
                 elif cfgPar['varPar'] == 'Mu':
                     reportVar['Simulation Parameters'].update({'Release thickness [m]': relDict['d0']})
                     reportVar['Simulation Parameters'].update({'Mu': item})
-                    reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': entrainmentTH})
+                    reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
 
                 # Add to report dictionary list
                 reportDictList.append(reportVar)
@@ -352,7 +352,7 @@ def com1DFAMain(cfg, avaDir):
                         'Parameter value': '',
                         'Mu': defValues['Mu'],
                         'Release thickness [m]': relDict['d0'],
-                        'Entrainment thickness [m]': entrainmentTH},
+                        'Entrainment thickness [m]': float(entrainmentTH)},
                     'Release Area': {'type': 'columns', 'Release area scenario': relName}}
 
                 if 'entres' in sim:
