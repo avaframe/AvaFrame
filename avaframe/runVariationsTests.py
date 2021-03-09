@@ -31,7 +31,7 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 # filter benchmarks for tag standardTest
 type = 'TAGS'
 valuesList = ['varParTest']
-testList = tU.filterBenchmarks(testDictList, type, valuesList)
+testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reportsVariations')
@@ -97,7 +97,10 @@ for test in testList:
 
         # -----------Compare to benchmark results
         # Fetch simulation info from benchmark results
-        benchDict = simParametersVar.fetchBenchParameters(avaDir)
+        benchDictList = simParametersVar.fetchBenchParameters(avaDir)
+        for bDict in benchDictList:
+            if test['NAME'] == bDict['testName']:
+                benchDict = bDict
         benchSimName = benchDict['simName']
         # Check if simulation with entrainment and/or resistance or standard simulation
         simType = 'null'
@@ -142,7 +145,7 @@ for test in testList:
                 reportD['Simulation Stats'].update({var: plotDict['stats']})
 
         # copy files to report directory
-        plotPaths = generateCompareReport.copyPlots(avaName, outDir, plotListRep, rel)
+        plotPaths = generateCompareReport.copyPlots(avaName, test['NAME'], outDir, plotListRep, rel)
 
         # add plot info to general report Dict
         reportD['Simulation Results'] = plotPaths

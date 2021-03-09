@@ -122,6 +122,7 @@ def com1DFAMain(cfg, avaDir):
     modPath = os.path.dirname(__file__)
     # Standard values for parameters that can be varied
     defValues = cfg['DEFVALUES']
+    entrainmentTH = defValues['entH']
 
     # Log chosen settings
     if flagNoEnt:
@@ -143,8 +144,9 @@ def com1DFAMain(cfg, avaDir):
     if flagEntRes:
         entrainmentArea = os.path.splitext(os.path.basename(ent))[0]
         resistanceArea = os.path.splitext(os.path.basename(res))[0]
-        if cfgGen.getfloat('entH') != 0.3:
-            log.info('Entrainment thickness is set to %f' % cfgGen.getfloat('entH') )
+        if cfg['ENTRAINMENT'].getboolean('setEntDepth'):
+            entrainmentTH = cfg['ENTRAINMENT'].getfloat('entH')
+            log.info('Entrainment thickness is changed! set to %f' % entrainmentTH)
 
     # Parameter variation
     if cfgPar.getboolean('parameterVar'):
@@ -229,6 +231,7 @@ def com1DFAMain(cfg, avaDir):
             copyReplace(workFile, workFile, '##COUNTREL##', countRel)
             copyReplace(workFile, workFile, '##VARPAR##', cfgPar['varPar'])
             copyReplace(workFile, workFile, '##VALUE##', defValues[cfgPar['varPar']])
+            copyReplace(workFile, workFile, '##ENTH##', entrainmentTH)
             execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
             # Create dictionary
             reportNull = {}
@@ -243,7 +246,8 @@ def com1DFAMain(cfg, avaDir):
                     'Parameter variation on': '',
                     'Parameter value': '',
                     'Mu': defValues['Mu'],
-                    'Release thickness [m]': relDict['d0']},
+                    'Release thickness [m]': relDict['d0'],
+                    'Entrainment thickness [m]': entrainmentTH},
                 'Release area': {'type': 'columns', 'Release area scenario': relName}}
 
             # Add to report dictionary list
@@ -275,7 +279,7 @@ def com1DFAMain(cfg, avaDir):
                 copyReplace(workFile, workFile, '##NAME##', sim)
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VALUE##', item)
-                copyReplace(workFile, workFile, '##ENTH##', cfgGen['entH'])
+                copyReplace(workFile, workFile, '##ENTH##', entrainmentTH)
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
                 # Create dictionary
@@ -297,9 +301,11 @@ def com1DFAMain(cfg, avaDir):
                 if cfgPar['varPar'] == 'RelTh':
                     reportVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
                     reportVar['Simulation Parameters'].update({'Release thickness [m]': item})
+                    reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': entrainmentTH})
                 elif cfgPar['varPar'] == 'Mu':
                     reportVar['Simulation Parameters'].update({'Release thickness [m]': relDict['d0']})
                     reportVar['Simulation Parameters'].update({'Mu': item})
+                    reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': entrainmentTH})
 
                 # Add to report dictionary list
                 reportDictList.append(reportVar)
@@ -325,7 +331,7 @@ def com1DFAMain(cfg, avaDir):
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VARPAR##', 'Mu')
                 copyReplace(workFile, workFile, '##VALUE##', defValues['Mu'])
-                copyReplace(workFile, workFile, '##ENTH##', cfgGen['entH'])
+                copyReplace(workFile, workFile, '##ENTH##', entrainmentTH)
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
                 # save initial particle distribution
                 saveInitialParticleDistribution(avaDir, logName, dem)
@@ -344,7 +350,8 @@ def com1DFAMain(cfg, avaDir):
                         'Parameter variation on': '',
                         'Parameter value': '',
                         'Mu': defValues['Mu'],
-                        'Release thickness [m]': relDict['d0']},
+                        'Release thickness [m]': relDict['d0'],
+                        'Entrainment thickness [m]': entrainmentTH},
                     'Release Area': {'type': 'columns', 'Release area scenario': relName}}
 
                 if 'entres' in sim:

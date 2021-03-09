@@ -15,14 +15,15 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def copyPlots(avaName, outDir, plotListRep, rel):
+def copyPlots(avaName, testName, outDir, plotListRep, rel):
     """ copy the quick plots to report directory """
 
     plotPaths = {}
     for key in plotListRep:
-        shutil.copy2(plotListRep[key], os.path.join(outDir, '%s_%s_%s.png' % (avaName, rel, key)))
-        log.debug('Copied: %s to %s' % (plotListRep[key], os.path.join(outDir, '%s_%s.png' % (avaName, key))))
-        plotPaths[key] = os.path.join(outDir, '%s_%s_%s.png' % (avaName, rel, key))
+        plotName =  os.path.join(outDir, '%s_%s_%s.png' % (testName, rel, key))
+        shutil.copy2(plotListRep[key], plotName)
+        log.debug('Copied: %s to %s' % (plotListRep[key], plotName))
+        plotPaths[key] = plotName
 
     return plotPaths
 
