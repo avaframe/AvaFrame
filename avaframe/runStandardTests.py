@@ -30,7 +30,7 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 # filter benchmarks for tag standardTest
 type = 'TAGS'
 valuesList = ['standardTest']
-testList = tU.filterBenchmarks(testDictList, type, valuesList)
+testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reports')
@@ -143,7 +143,7 @@ for test in testList:
                 reportD['Simulation Stats'].update({var: plotDict['stats']})
 
         # copy files to report directory
-        plotPaths = generateCompareReport.copyPlots(avaName, outDir, plotListRep, rel)
+        plotPaths = generateCompareReport.copyPlots(avaName, test['NAME'], outDir, plotListRep, rel)
 
         # add plot info to general report Dict
         reportD['Simulation Results'] = plotPaths
