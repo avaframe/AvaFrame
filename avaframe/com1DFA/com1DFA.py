@@ -146,7 +146,7 @@ def com1DFAMain(cfg, avaDir):
         resistanceArea = os.path.splitext(os.path.basename(res))[0]
         if cfg['ENTRAINMENT'].getboolean('setEntDepth'):
             entrainmentTH = cfg['ENTRAINMENT']['entH']
-            log.info('Entrainment thickness is changed! set to %f' % entrainmentTH)
+            log.info('Entrainment thickness is changed! set to %s' % entrainmentTH)
 
     # Parameter variation
     if cfgPar.getboolean('parameterVar'):
