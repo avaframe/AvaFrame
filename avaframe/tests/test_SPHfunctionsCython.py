@@ -114,7 +114,8 @@ def test_getNormalMesh(capfd):
     Z = a * X + b * Y
     Z1 = a * X * X + b * Y * Y
     for num in [4, 6, 8]:
-        Nx, Ny, Nz = DFAtls.getNormalMesh(Z, cellsize, num=num)
+        Nx, Ny, Nz = DFAtls.getNormalMesh(Z, cellsize, num)
+        Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
         print(Nx)
         print((-a*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
         print(Ny)
@@ -133,7 +134,8 @@ def test_getNormalMesh(capfd):
                                                 np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
         assert TestNZ
 
-        Nx, Ny, Nz = DFAtls.getNormalMesh(Z1, cellsize, num=num)
+        Nx, Ny, Nz = DFAtls.getNormalMesh(Z1, cellsize, num)
+        Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
 
         print(Nx)
         print((-2*a*X / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
@@ -165,8 +167,9 @@ def test_getAreaMesh(capfd):
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
     Z1 = a * X * X + b * Y * Y
-    Nx, Ny, Nz = DFAtls.getNormalMesh(Z, csz, num=4)
-    Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
+    Nx, Ny, Nz = DFAtls.getNormalMesh(Z, csz, 4)
+    Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
+    Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz, 4)
     print(np.sqrt((1+a*a+b*b)))
     print(Area)
     atol = 1e-10
