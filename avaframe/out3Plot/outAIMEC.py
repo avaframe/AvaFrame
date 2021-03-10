@@ -34,9 +34,8 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     slRaster = inputData['slRaster']
     xyRaster = inputData['xyRaster']
     # read avaPath with scale
-    Avapath = inputData['Avapath']
-    xPath = Avapath['x']
-    yPath = Avapath['y']
+    xPath = rasterTransfo['x']
+    yPath = rasterTransfo['y']
     # read domain boundarries with scale
     xllc = rasterTransfo['xllc']
     yllc = rasterTransfo['yllc']
@@ -101,7 +100,65 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
-def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
+def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
+    """
+    Plot and save the Peak Pressure  distribution after coord transfo
+    """
+    ####################################
+    # Get input data
+    # read paths
+    projectName = cfgPath['projectName']
+    dirName = cfgPath['dirName']
+    # read data
+    s = rasterTransfo['s']
+    l = rasterTransfo['l']
+    PPRCrossMax = resAnalysis['PPRCrossMax']
+    PPRCrossMean = resAnalysis['PPRCrossMean']
+    PFDCrossMax = resAnalysis['PFDCrossMax']
+    PFDCrossMean = resAnalysis['PFDCrossMean']
+    PFVCrossMax = resAnalysis['PFVCrossMax']
+    PFVCrossMean = resAnalysis['PFVCrossMean']
+
+    ############################################
+    # prepare for plot
+    Title = ['Pressure', 'Flow Depth', 'Flow Velocity']
+    Unit = ['$P(s)$ [kPa]', '$fd(s)$ [m]', '$v(s) [m.s^{-1}]$']
+    DataMax = np.array(([None] * 3))
+    DataMax[0] = PPRCrossMax
+    DataMax[1] = PFDCrossMax
+    DataMax[2] = PFVCrossMax
+
+    DataMean = np.array(([None] * 3))
+    DataMean[0] = PPRCrossMean
+    DataMean[1] = PFDCrossMean
+    DataMean[2] = PFVCrossMean
+
+    ############################################
+    # Figure: Pressure depth speed
+
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
+
+    for ax, dataMax, dataMean, title, unit in zip(axes.flatten(), DataMax, DataMean, Title, Unit):
+        ax.plot(dataMax[0, :], s, '--k', label='Max Reference')
+        ax.plot(dataMean[0, :], s, '-k', label='Mean Reference')
+        ax.plot(dataMax[1, :], s, '--b', label='Max Simulation')
+        ax.plot(dataMean[1, :], s, '-b', label='Mean Simulation')
+
+        ax.set_title(title + 'distribution along the path')
+        ax.legend(loc=4)
+        ax.set_ylabel('s [m]')
+        ax.set_ylim([s.min(), s.max()])
+        ax.set_xlim(auto=True)
+        ax.set_xlabel(unit)
+    pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
+    outFileName = '_'.join([projectName, dirName, 'plim',
+                            str(int(plim)), 'slComparison'])
+
+    pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+
+
+def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     """
     Plot and save the Peak Pressure  distribution after coord transfo
     """
@@ -117,13 +174,13 @@ def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     dataPressure = newRasters['newRasterPressure']
     rasterdataPres = dataPressure[0]
     runout = resAnalysis['runout'][0]
-    pCrossAll = resAnalysis['pCrossAll']
+    PPRCrossMax = resAnalysis['PPRCrossMax']
 
     ############################################
     # prepare for plot
-    pMean = np.mean(pCrossAll, axis=0)
-    pMedian = np.median(pCrossAll, axis=0)
-    pPercentile = np.percentile(pCrossAll, [2.5, 50, 97.5], axis=0)
+    pMean = np.mean(PPRCrossMax, axis=0)
+    pMedian = np.median(PPRCrossMax, axis=0)
+    pPercentile = np.percentile(PPRCrossMax, [2.5, 50, 97.5], axis=0)
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
 
@@ -162,13 +219,56 @@ def visuRunout(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
 
     ax2.set_title('Peak Pressure distribution along the path between runs')
     ax2.legend(loc=4)
-    ax2.set_ylabel('l [m]')
+    ax2.set_ylabel('s [m]')
     ax2.set_ylim([s.min(), s.max()])
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
 
     outFileName = '_'.join([projectName, dirName, 'plim',
-                            str(int(plim)), 'slComparison'])
+                            str(int(plim)), 'slComparisonStat'])
+
+    pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+
+
+def visuMass(resAnalysis, cfgPath, cfgFlags):
+    """
+    Plot and save the comparison between current simulation and Reference
+    in the run-out area
+    """
+    ####################################
+    # Get input data
+    # read paths
+    projectName = cfgPath['projectName']
+    dirName = cfgPath['dirName']
+    # read data
+    entMassArray = resAnalysis['entMassArray']
+    totalMassArray = resAnalysis['totalMassArray']
+    time = resAnalysis['time']
+
+    ############################################
+    # prepare for plot
+    Title = ['Entrained', 'Total']
+    Unit = ['Entrained Mass', 'Total Mass']
+    DataMass = np.array(([None] * 2))
+    DataMass[0] = entMassArray
+    DataMass[1] = totalMassArray
+
+    ############################################
+    # Figure: Pressure depth speed
+
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(pU.figW*2, pU.figH))
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
+
+    for ax, dataMass, title, unit in zip(axes.flatten(), DataMass, Title, Unit):
+        ax.plot(time, dataMass[0, :], '-k', label='Reference')
+        ax.plot(time, dataMass[1, :], '-b', label='Simulation')
+
+        ax.set_title(title + 'mass function of time')
+        ax.legend(loc=4)
+        ax.set_xlabel('t [s]')
+        ax.set_ylabel(unit + '[kg]')
+
+    outFileName = '_'.join([projectName, dirName, 'massAnalysis'])
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -323,12 +423,9 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     sStart = s[indStartOfRunout]
     runoutFromMid = resAnalysis['runout'][0] - sStart
     runout = resAnalysis['runout']
-    AMPP = resAnalysis['AMPP']
-    MMPP = resAnalysis['MMPP']
-    AMD = resAnalysis['AMD']
-    MMD = resAnalysis['MMD']
-    AMS = resAnalysis['AMS']
-    MMS = resAnalysis['MMS']
+    MMPPR = resAnalysis['MMPPR']
+    MMPFD = resAnalysis['MMPFD']
+    MMPFV = resAnalysis['MMPFV']
     deltaH = resAnalysis['deltaH']
     elevRel = resAnalysis['elevRel']
     relMass = resAnalysis['relMass']
@@ -346,10 +443,10 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     ############################################
     # prepare for writing
     legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'runoutFromSROA', 'elevRel', 'deltaH',
-              'AMPP', 'MMPP', 'AMD', 'MMD', 'AMS', 'MMS', 'relMass', 'entMass',
+              'MMPPR', 'MMPFD', 'MMPFV', 'relMass', 'entMass',
               'finalMass', 'rMassDif', 'GI', 'GR', 'TP ', 'FN ', 'FP ', 'TN']
-    resfile = [runout[1], runout[2], runout[0], runoutFromMid, elevRel, deltaH, AMPP, MMPP,
-               AMD, MMD, AMS, MMS, relMass, entMass, finalMass, relativMassDiff,
+    resfile = [runout[1], runout[2], runout[0], runoutFromMid, elevRel, deltaH, MMPPR,
+               MMPFD, MMPFV, relMass, entMass, finalMass, relativMassDiff,
                GI, GR, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
 
     header = ''.join(['projectName: ', projectName, '\n',
@@ -409,18 +506,11 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     sStart = sPath[indStartOfRunout]
     runout = resAnalysis['runout'][0]
-    meanMaxDPP = resAnalysis['AMPP']
-    maxMaxDPP = resAnalysis['MMPP']
+    maxMaxDPPR = resAnalysis['MMPPR']
     GI = resAnalysis['growthIndex']
 
     # prepare for plot
-    if flag == 1:
-        title = 'Visualizing mean peak pressure data'
-        tipo = 'relMeanPeakPres'
-        data = meanMaxDPP / meanMaxDPP[0]
-        yaxis_label = 'relative mean peak pressure [-]'
-
-    elif flag == 2:
+    if flag == 2:
         title = 'Visualizing EGU growth index data'
         tipo = 'growthInd'
         data = GI
@@ -429,7 +519,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     elif flag == 3:
         title = 'Visualizing max peak pressure data'
         tipo = 'relMaxPeakPres'
-        data = maxMaxDPP / maxMaxDPP[0]
+        data = maxMaxDPPR / maxMaxDPPR[0]
         yaxis_label = 'relative max peak pressure [-]'
 
     else:
