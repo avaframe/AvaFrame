@@ -178,6 +178,7 @@ cmapVar['colors'] = colorAvaframe
 cmapVar['lev'] = None
 cmapVar['ticks'] = None
 
+
 ###################################
 # shortcut plot functions
 ###################################

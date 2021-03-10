@@ -52,11 +52,10 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
     nx, _ = geoTrans.projectOnGrid(x, y, Nx, csz=csz)
     ny, _ = geoTrans.projectOnGrid(x, y, Ny, csz=csz)
     nz, _ = geoTrans.projectOnGrid(x, y, Nz, csz=csz)
-    nx, ny, nz = normalize(nx, ny, nz)
     return nx, ny, nz
 
 
-def getNormalMesh(z, csz, num=4):
+def getNormalMesh(z, csz, num):
     """ Compute normal to surface at grid points
 
         Get the normal vectors to the surface defined by a DEM.
@@ -239,10 +238,10 @@ def getNormalMesh(z, csz, num=4):
         n2, m2 = np.shape(z2)
 
         Nx = - ((z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1]) +
-                (z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])) / csz
+                (z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])) * csz
         Ny = - ((z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1]) -
-                (z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])) / csz
-        Nz = 2 * Nz
+                (z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])) * csz
+        Nz = 2 * Nz * csz * csz
 
         # Nx = - (z2[0:n2-1, 1:m2] - z2[0:n2-1, 0:m2-1]) / csz
         # Ny = - (z2[1:n2, 0:m2-1] - z2[0:n2-1, 0:m2-1]) / csz
@@ -251,13 +250,10 @@ def getNormalMesh(z, csz, num=4):
         Ny[n-1, m-1] = -Ny[n-1, m-1]
         Nx[n-1, m-1] = -Nx[n-1, m-1]
 
-    # normalize the result
-    Nx, Ny, Nz = normalize(Nx, Ny, Nz)
-
-    return Nx, Ny, Nz
+    return 0.5*Nx, 0.5*Ny, 0.5*Nz
 
 
-def getAreaMesh(Nx, Ny, Nz, csz):
+def getAreaMesh(Nx, Ny, Nz, csz, num):
     """ Get area of grid cells.
 
         Parameters
@@ -277,7 +273,11 @@ def getAreaMesh(Nx, Ny, Nz, csz):
                 Area of grid cells
     """
     # see documentation and issue 202
-    A = csz * csz / Nz
+    if num == 1:
+        A = norm(Nx, Ny, Nz)
+    else:
+        _, _, NzNormed = normalize(Nx, Ny, Nz)
+        A = csz * csz / NzNormed
     # limit maximum area (for very steeps cells)
     A = np.where(A > 3*csz*csz, 3*csz*csz, A)
     return A
