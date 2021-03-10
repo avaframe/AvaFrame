@@ -86,6 +86,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     cfgPath['depthfileList'] = getFileList(pathFlowHeight)
     cfgPath['massfileList'] = getFileList(pathMassBalance)
     cfgPath['speedfileList'] = getFileList(pathSpeed)
+    cfgPath['numSim'] = len(cfgPath['pressurefileList'])
 
     pathResult = os.path.join(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
     cfgPath['pathResult'] = pathResult
@@ -145,7 +146,21 @@ def mainAIMEC(cfgPath, cfg):
     log.info('Prepare data for post-ptocessing')
     # Make domain transformation
     log.info("Creating new deskewed raster and preparing new raster assignment function")
-    rasterTransfo = makeDomainTransfo(cfgPath, cfgSetup, cfgFlags)
+    rasterTransfo = makeDomainTransfo(cfgPath, cfgSetup)
+
+    ###########################################################################
+    # visualisation
+    # TODO: needs to be moved somewhere else
+    # read first pressure file
+    rasterSource = cfgPath['pressurefileList'][0]
+
+    pressureRaster = IOf.readRaster(rasterSource)
+    slRaster = transform(rasterSource, rasterTransfo, interpMethod)
+    inputData = {}
+    inputData['slRaster'] = slRaster
+    inputData['xyRaster'] = pressureRaster['rasterData']
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags)
+    #################################################################
 
     # transform pressure_data, depth_data and speed_data in new raster
     newRasters = {}
@@ -195,7 +210,7 @@ def mainAIMEC(cfgPath, cfg):
 # -----------------------------------------------------------
 
 
-def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
+def makeDomainTransfo(cfgPath, cfgSetup):
     """ Make domain transformation
 
     This function returns the information about the domain transformation
@@ -236,36 +251,34 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
                 index for start of the runout area (in s)
     """
     # Read input parameters
-    rasterSource = cfgPath['pressurefileList'][0]
     demSource = cfgPath['demSource']
     ProfileLayer = cfgPath['profileLayer']
+    splitPointSource = cfgPath['splitPointSource']
     DefaultName = cfgPath['projectName']
 
     w = float(cfgSetup['domainWidth'])
     startOfRunoutAngle = float(cfgSetup['startOfRunoutAngle'])
-    interpMethod = cfgSetup['interpMethod']
 
-    log.info('Data-file %s analysed' % rasterSource)
+    log.info('Data-file %s analysed' % demSource)
     # read data
-    # read raster data
-    sourceData = IOf.readRaster(rasterSource)
+    # read dem data
     dem = IOf.readRaster(demSource)
-    header = sourceData['header']
+    header = dem['header']
     xllc = header.xllcenter
     yllc = header.yllcenter
-    cellsize = header.cellsize
-    rasterdata = sourceData['rasterData']
+    csz = header.cellsize
+    rasterdata = dem['rasterData']
     # Initialize transformation dictionary
     rasterTransfo = {}
     rasterTransfo['domainWidth'] = w
     rasterTransfo['xllc'] = xllc
     rasterTransfo['yllc'] = yllc
-    rasterTransfo['cellsize'] = cellsize
+    rasterTransfo['cellsize'] = csz
 
     # read avaPath
-    Avapath = shpConv.readLine(ProfileLayer, DefaultName, sourceData)
+    Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem)
     # read split point
-    splitPoint = shpConv.readPoints(cfgPath['splitPointSource'], sourceData)
+    splitPoint = shpConv.readPoints(splitPointSource, dem)
     # add 'z' coordinate to the avaPath
     Avapath, _ = geoTrans.projectOnRaster(dem, Avapath)
     # reverse avaPath if necessary
@@ -293,17 +306,16 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     # affect values
     rasterTransfo['header'] = header
     # put back scale and origin
-    rasterTransfo['s'] = rasterTransfo['s']*cellsize
-    rasterTransfo['l'] = rasterTransfo['l']*cellsize
-    rasterTransfo['gridx'] = rasterTransfo['gridx']*cellsize + xllc
-    rasterTransfo['gridy'] = rasterTransfo['gridy']*cellsize + yllc
-    rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*cellsize*cellsize
+    rasterTransfo['s'] = rasterTransfo['s']*csz
+    rasterTransfo['l'] = rasterTransfo['l']*csz
+    rasterTransfo['gridx'] = rasterTransfo['gridx']*csz + xllc
+    rasterTransfo['gridy'] = rasterTransfo['gridy']*csz + yllc
+    rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*csz*csz
     # (x,y) coordinates of the resamples avapth (centerline where l = 0)
     n = np.shape(rasterTransfo['l'])[0]
     indCenter = int(np.floor(n/2))
     rasterTransfo['x'] = rasterTransfo['gridx'][:, indCenter]
     rasterTransfo['y'] = rasterTransfo['gridy'][:, indCenter]
-
 
     #################################################################
     # add 'z' coordinate to the centerline
@@ -321,17 +333,6 @@ def makeDomainTransfo(cfgPath, cfgSetup, cfgFlags):
     rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
     rasterTransfo['startOfRunoutAngle'] = angle[indStartOfRunout]
     log.info('Measuring run-out length from the %.2f ° point of coordinates (%.2f, %.2f)' % (rasterTransfo['startOfRunoutAngle'],rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
-
-    slRaster = transform(rasterSource, rasterTransfo, interpMethod)
-
-    ###########################################################################
-    # visualisation
-    inputData = {}
-    inputData['slRaster'] = slRaster
-    inputData['xyRaster'] = rasterdata
-    inputData['Avapath'] = Avapath
-
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags)
 
     return rasterTransfo
 
@@ -408,7 +409,7 @@ def makeTransfoMat(rasterTransfo):
     rasterTransfo: dict
         dictionary containing:
             domainWidth: float
-            cellsize: float
+            csz: float
             DBXl: 1D numpy array
                 x coord of the left boundary
             DBXr: 1D numpy array
@@ -430,14 +431,14 @@ def makeTransfoMat(rasterTransfo):
                 new coord system in the cross direction
     """
     w = rasterTransfo['domainWidth']
-    cellsize = rasterTransfo['cellsize']
+    csz = rasterTransfo['cellsize']
     # number of points describing the avaPath
     n_pnt = np.shape(rasterTransfo['DBXr'])[0]
     # Working with no dimentions
     # (the cellsize scaling will be readded at the end)
     # lcoord is the distance from the polyline (cross section)
     # maximum step should be smaller then the cellsize
-    nTot = np.ceil(w/cellsize)
+    nTot = np.ceil(w/csz)
     # take the next odd integer. This ensures that the lcoord = 0 exists
     nTot = int(nTot+1) if ((nTot % 2) == 0) else int(nTot)
     n2Tot = int(np.floor(nTot/2))
@@ -490,15 +491,7 @@ def getSArea(rasterTransfo):
     rasterTransfo: dict
         dictionary containing:
             domainWidth: float
-            cellsize: float
-            DBXl: 1D numpy array
-                x coord of the left boundary
-            DBXr: 1D numpy array
-                x coord of the right boundary
-            DBYl: 1D numpy array
-                y coord of the left boundary
-            DBYr: 1D numpy array
-                y coord of the right boundary
+            csz: float
             gridx: 2D numpy array
                 x coord of the new raster points in old coord system
             gridy: 2D numpy array
@@ -682,7 +675,11 @@ def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis = analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
-    outAimec.visuRunout(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
+    if cfgPath['numSim']==2:
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
+        outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
+    else:
+        outAimec.visuRunoutStat(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
     return resAnalysis
 
@@ -721,24 +718,15 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
                     distance measured from the begining of the path.
                     run-out calculated with the MEAN pressure in each cross
                     section
-            -AMPP: 1D numpy array
-                    containing for each simulation analyzed the average
-                    max peak pressure
-            -MMPP: 1D numpy array
+            -MMPPR: 1D numpy array
                     containing for each simulation analyzed the max max
                     peak pressure
-            -AMD: 1D numpy array
-                    containing for each simulation analyzed the average
-                    max peak flow depth
-            -MMD: 1D numpy array
+            -MMPFD: 1D numpy array
                     containing for each simulation analyzed the max max
                     peak flow depth
-            -AMS: 1D numpy array
-                    containing for each simulation analyzed the average
-                    max peak speed
-            -MMS: 1D numpy array
+            -MMPFV: 1D numpy array
                     containing for each simulation analyzed the max max
-                    peak speed
+                    peak flow velocity
             -elevRel: 1D numpy array
                     containing for each simulation analyzed the
                     elevation of the release area (based on first point with
@@ -765,9 +753,24 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
             -growthGrad: 1D numpy array
                     containing for each simulation analyzed the
                     growth gradient
-            -pCrossAll: 2D numpy array
+            -PPRCrossMax: 2D numpy array
                     containing for each simulation analyzed the
                     max peak pressure in each cross section
+            -PPRCrossMean: 2D numpy array
+                    containing for each simulation analyzed the
+                    mean peak pressure in each cross section
+            -PFDCrossMax: 2D numpy array
+                    containing for each simulation analyzed the
+                    max peak flow depth in each cross section
+            -PFDCrossMean: 2D numpy array
+                    containing for each simulation analyzed the
+                    mean peak flow depth in each cross section
+            -PFVCrossMax: 2D numpy array
+                    containing for each simulation analyzed the
+                    max peak flow velocity in each cross section
+            -PFVCrossMean: 2D numpy array
+                    containing for each simulation analyzed the
+                    mean peak flow velocity in each cross section
             -pressureLimit: float
                     pressure threshold
             -startOfRunoutAngle: float
@@ -775,58 +778,190 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
                     area (given in input)
     """
     # read inputs
-    fname = cfgPath['pressurefileList']
     fnameMass = cfgPath['massfileList']
-
     dataPressure = newRasters['newRasterPressure']
     dataDepth = newRasters['newRasterDepth']
     dataSpeed = newRasters['newRasterSpeed']
-    dataDEM = newRasters['newRasterDEM']
-    scoord = rasterTransfo['s']
-    lcoord = rasterTransfo['l']
-    x = rasterTransfo['x']
-    y = rasterTransfo['y']
-    indStartOfRunout = rasterTransfo['indStartOfRunout']
+    transformedDEMRasters = newRasters['newRasterDEM']
 
+    maxPPRCrossMax, PPRCrossMax, PPRCrossMean = analyzeField(rasterTransfo, dataPressure, 'ppr')
+    maxPFDCrossMax, PFDCrossMax, PFDCrossMean = analyzeField(rasterTransfo, dataDepth, 'pfd')
+    maxPFVCrossMax, PFVCrossMax, PFVCrossMean = analyzeField(rasterTransfo, dataSpeed, 'pfv')
+
+    runout, runoutMean, elevRel, deltaH = computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEMRasters)
+
+    releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = analyzeMass(fnameMass)
+
+    # affect values to output dictionary
     resAnalysis = {}
+    resAnalysis['runout'] = runout
+    resAnalysis['runoutMean'] = runoutMean
+    resAnalysis['MMPPR'] = maxPPRCrossMax
+    resAnalysis['MMPFD'] = maxPFDCrossMax
+    resAnalysis['MMPFV'] = maxPFVCrossMax
+    resAnalysis['elevRel'] = elevRel
+    resAnalysis['deltaH'] = deltaH
+    resAnalysis['relMass'] = releaseMass
+    resAnalysis['entMass'] = entrainedMass
+    resAnalysis['entMassArray'] = entMassArray
+    resAnalysis['totalMassArray'] = totalMassArray
+    resAnalysis['time'] = time
+    resAnalysis['finalMass'] = finalMass
+    resAnalysis['relativMassDiff'] = relativMassDiff
+    resAnalysis['growthIndex'] = grIndex
+    resAnalysis['growthGrad'] = grGrad
+    resAnalysis['PPRCrossMax'] = PPRCrossMax
+    resAnalysis['PPRCrossMean'] = PPRCrossMean
+    resAnalysis['PFDCrossMax'] = PFDCrossMax
+    resAnalysis['PFDCrossMean'] = PFDCrossMean
+    resAnalysis['PFVCrossMax'] = PFVCrossMax
+    resAnalysis['PFVCrossMean'] = PFVCrossMean
+    resAnalysis['pressureLimit'] = pLim
+    resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
 
+    return resAnalysis
+
+
+def analyzeMass(fnameMass):
+    """ Analyse Mass data
+
+    Parameters
+    ----------
+    fnameMass: list
+        list of path to mass data to analyse
+
+    Returns
+    -------
+    relMass: 1D numpy array
+        containing for each simulation analyzed the
+        release mass
+    entMass: 1D numpy array
+        containing for each simulation analyzed the
+        entrained mass
+    finalMass: 1D numpy array
+        containing for each simulation analyzed the
+        final mass
+    relativMassDiff: 1D numpy array
+        containing for each simulation analyzed
+        the final mass diff with ref (in %)
+    growthIndex: 1D numpy array
+        containing for each simulation analyzed the
+        growth index
+    growthGrad: 1D numpy array
+        containing for each simulation analyzed the
+        growth gradient
+    """
     # initialize Arrays
-    nTopo = len(fname)
+    nTopo = len(fnameMass)
     massDiffers = False
-    runout = np.empty((3, nTopo))
-    runoutMean = np.empty((3, nTopo))
-    ampp = np.empty((nTopo))
-    mmpp = np.empty((nTopo))
-    amd = np.empty((nTopo))
-    mmd = np.empty((nTopo))
-    ams = np.empty((nTopo))
-    mms = np.empty((nTopo))
-    elevRel = np.empty((nTopo))
-    deltaH = np.empty((nTopo))
     grIndex = np.empty((nTopo))
     grGrad = np.empty((nTopo))
     releaseMass = np.empty((nTopo))
     entrainedMass = np.empty((nTopo))
     finalMass = np.empty((nTopo))
     relativMassDiff = np.empty((nTopo))
+    time = 0
 
-    n = np.shape(lcoord)[0]
-    pCrossAll = np.zeros((nTopo, len(scoord)))
+    log.info('Analyzing mass')
+    log.info('{: <10} {: <10} {: <10}'.format('Sim number ', 'GI ', 'GR '))
     # For each data set
     for i in range(nTopo):
-        rasterdataPres = dataPressure[i]
-        rasterdataDepth = dataDepth[i]
-        rasterdataSpeed = dataSpeed[i]
-        rasterArea = rasterTransfo['rasterArea']
-        # rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
+        # analyze mass
+        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i], entMass, totalMass, time = readWrite(
+            fnameMass[i], time)
+        if i == 0:
+            entMassArray = np.zeros((nTopo, np.size(time)))
+            totalMassArray = np.zeros((nTopo, np.size(time)))
+        entMassArray[i] = entMass
+        totalMassArray[i] = totalMass
+        relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
+        if not (releaseMass[i] == releaseMass[0]):
+            massDiffers = True
+        log.info('{: <10} {:<10.4f} {:<10.4f}'.format(*[i+1, grIndex[i], grGrad[i]]))
+    if massDiffers:
+        log.warning('Release masses differs between simulations!')
 
-        # Mean max in each Cross-Section for each field
-        ampp[i], mmpp[i], cInd, pCrossAll[i] = getMaxMeanValues(
-            rasterdataPres, rasterArea, pLim, cInd=None)
-        amd[i], mmd[i], cInd, _ = getMaxMeanValues(rasterdataDepth, rasterArea,
-                                                   pLim, cInd=cInd)
-        ams[i], mms[i], cInd, _ = getMaxMeanValues(rasterdataSpeed, rasterArea,
-                                                   pLim, cInd=cInd)
+    return releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time
+
+
+def computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEMRasters):
+    """ Compute runout based on peak pressure results
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        transformation information
+    pLim: float
+        numerical value of the pressure limit to use
+    PPRCrossMax: 2D numpy array
+        containing for each simulation analyzed the
+        max of the peak pressure in each cross section
+    PPRCrossMean: 2D numpy array
+        containing for each simulation analyzed the
+        mean of the peak pressure in each cross section
+
+    Returns
+    -------
+    runout: 2D numpy array
+        containing for each simulation analyzed the x and
+        y coord of the runout point as well as the runout distance
+        measured from the begining of the path. run-out
+        calculated with the MAX pressure in each cross section
+    runoutMean: 2D numpy array
+        containing for each simulation analyzed the x
+        and y coord of the runout point as well as the runout
+        distance measured from the begining of the path.
+        run-out calculated with the MEAN pressure in each cross
+        section
+    elevRel: 1D numpy array
+        containing for each simulation analyzed the
+        elevation of the release area (based on first point with
+        peak pressure > pLim)
+    deltaH: 1D numpy array
+        containing for each simulation analyzed the
+        elevation fall difference between elevRel and altitude of
+        run-out point
+    """
+    # read inputs
+    scoord = rasterTransfo['s']
+    lcoord = rasterTransfo['l']
+    n = np.shape(lcoord)[0]
+    n = int(np.floor(n/2)+1)
+    x = rasterTransfo['x']
+    y = rasterTransfo['y']
+
+    # initialize Arrays
+    nTopo = len(PPRCrossMax)
+    runout = np.empty((3, nTopo))
+    runoutMean = np.empty((3, nTopo))
+    elevRel = np.empty((nTopo))
+    deltaH = np.empty((nTopo))
+
+    log.info('Computig Run-Out')
+    # For each data set
+    for i in range(nTopo):
+        lindex = np.nonzero(PPRCrossMax[i] > pLim)[0]
+        if lindex.any():
+            cupper = min(lindex)
+            clower = max(lindex)
+        else:
+            log.error('No average pressure values > threshold found. threshold = %4.2f, too high?' % pLim)
+            cupper = 0
+            clower = 0
+        # search in mean values
+        lindex = np.nonzero(PPRCrossMean[i] > pLim)[0]
+        if lindex.any():
+            cupperm = min(lindex)
+            clowerm = max(lindex)
+        else:
+            log.error('No average pressure values > threshold found. threshold = %4.2f, too high?' % pLim)
+            cupperm = 0
+            clowerm = 0
+        cInd = {}
+        cInd['cupper'] = cupper
+        cInd['clower'] = clower
+        cInd['cupperm'] = cupperm
+        cInd['clowerm'] = clowerm
         #    Runout
         cupper = cInd['cupper']
         clower = cInd['clower']
@@ -837,44 +972,59 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
         runoutMean[0, i] = scoord[clowerm]
         runoutMean[1, i] = x[clower]
         runoutMean[2, i] = y[clower]
+        elevRel[i] = transformedDEMRasters[cupper, n]
+        deltaH[i] = transformedDEMRasters[cupper, n] - transformedDEMRasters[clower, n]
 
-        elevRel[i] = dataDEM[cupper, int(np.floor(n/2)+1)]
-        deltaH[i] = dataDEM[cupper, int(np.floor(n/2)+1)] - dataDEM[clower, int(np.floor(n/2)+1)]
+    return runout, runoutMean, elevRel, deltaH
 
-        # analyze mass
-        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i] = readWrite(
-            fnameMass[i])
-        relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
-        if not (releaseMass[i] == releaseMass[0]):
-            massDiffers = True
-        log.info('{: <10} {: <10} {: <10} {: <10} {: <10} {: <10} {: <10} {: <10}'.format(
-            'Sim number ', 'Runout ', 'ampp ', 'mmpp ', 'amd ', 'mmd ', 'GI ', 'GR '))
-        log.info('{: <10} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f} {:<10.4f}'.format(
-            *[i+1, runout[0, i], ampp[i], mmpp[i], amd[i], mmd[i], grIndex[i], grGrad[i]]))
-    if massDiffers:
-        log.warning('Release masses differs between simulations!')
-    # affect values to output dictionary
-    resAnalysis['runout'] = runout
-    resAnalysis['runoutMean'] = runoutMean
-    resAnalysis['AMPP'] = ampp
-    resAnalysis['MMPP'] = mmpp
-    resAnalysis['AMD'] = amd
-    resAnalysis['MMD'] = mmd
-    resAnalysis['AMS'] = ams
-    resAnalysis['MMS'] = mms
-    resAnalysis['elevRel'] = elevRel
-    resAnalysis['deltaH'] = deltaH
-    resAnalysis['relMass'] = releaseMass
-    resAnalysis['entMass'] = entrainedMass
-    resAnalysis['finalMass'] = finalMass
-    resAnalysis['relativMassDiff'] = relativMassDiff
-    resAnalysis['growthIndex'] = grIndex
-    resAnalysis['growthGrad'] = grGrad
-    resAnalysis['pCrossAll'] = pCrossAll
-    resAnalysis['pressureLimit'] = pLim
-    resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
 
-    return resAnalysis
+def analyzeField(rasterTransfo, transformedRasters, dataType):
+    """ Analyse tranformed field A
+
+    Analyse transformed rasters
+    Max Mean values in cross sections, overall maximum
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        transformation information
+    transformedRasters: list
+        list containing rasters after transformation
+    dataType: str
+        type of the data to analyze ('ppr', 'pfd' or 'pfv')
+
+    Returns
+    -------
+    maxACrossMax: 1D numpy array
+        containing for each simulation analyzed the overall maximum
+    ACrossMax: 2D numpy array
+        containing for each simulation analyzed the
+        max of the field in each cross section
+    ACrossMean: 2D numpy array
+        containing for each simulation analyzed the
+        mean of the field in each cross section
+    """
+    # read inputs
+    scoord = rasterTransfo['s']
+    rasterArea = rasterTransfo['rasterArea']
+
+    # initialize Arrays
+    nTopo = len(transformedRasters)
+    maxACrossMax = np.empty((nTopo))
+    ACrossMax = np.zeros((nTopo, len(scoord)))
+    ACrossMean = np.zeros((nTopo, len(scoord)))
+    log.info('Analyzing %s' % (dataType))
+    log.info('{: <10} {: <10}'.format('Sim number ', 'maxCrossMax '))
+    # For each data set
+    for i in range(nTopo):
+        rasterData = transformedRasters[i]
+        # rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
+
+        # Max Mean in each Cross-Section for each field
+        maxACrossMax[i], ACrossMax[i], ACrossMean[i] = getMaxMeanValues(rasterData, rasterArea)
+        log.info('{: <10} {:<10.4f}'.format(*[i+1, maxACrossMax[i]]))
+
+    return maxACrossMax, ACrossMax, ACrossMean
 
 
 def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
@@ -999,17 +1149,14 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
     return resAnalysis
 
 
-def readWrite(fname_ent):
+def readWrite(fname_ent, time):
     """Get mass balance information
-
     Read mass balance files to get mass properties of the simulation
     (total mass, entrained mass...). Checks for mass conservation
-
     Parameters
     ----------
     fname_ent: list of str
         list of pah to mass balance files
-
     Returns
     -------
     relMass: float
@@ -1027,22 +1174,26 @@ def readWrite(fname_ent):
     timeResults = [massTime[0, 0], massTime[-1, 0]]
     totMassResults = [massTime[0, 1], massTime[-1, 1]]
     relMass = totMassResults[0]
-    entMass = np.sum(massTime[:, 2])
+    if np.size(time) == 1:
+        time = np.arange(0, int(timeResults[1]), 0.1)
+    entMass = np.interp(time, massTime[:, 0], massTime[:, 2])
+    totalMass = np.interp(time, massTime[:, 0], massTime[:, 1])
+    entrainedMass = np.sum(massTime[:, 2])
     finalMass = totMassResults[1]
     # check mass balance
     log.info('Total mass change between first and last time step in sim %s is: %.1f kg' %
              (int(os.path.splitext(os.path.basename(fname_ent))[0]), totMassResults[1] - relMass))
     log.info('Total entrained mass in sim %s is: %.1f kg' %
-             (int(os.path.splitext(os.path.basename(fname_ent))[0]), entMass))
+             (int(os.path.splitext(os.path.basename(fname_ent))[0]), entrainedMass))
     if (totMassResults[1] - relMass) == 0:
-        diff = np.abs((totMassResults[1] - relMass) - entMass)
+        diff = np.abs((totMassResults[1] - relMass) - entrainedMass)
         if diff > 0:
             log.warning('Conservation of mass is not satisfied')
             log.warning('Total mass change and total entrained mass differ from %.4f kg' % (diff))
         else:
             log.info('Total mass change and total entrained mass differ from %.4f kg' % (diff))
     else:
-        diff = np.abs((totMassResults[1] - relMass) - entMass)/(totMassResults[1] - relMass)
+        diff = np.abs((totMassResults[1] - relMass) - entrainedMass)/(totMassResults[1] - relMass)
         if diff*100 > 0.05:
             log.warning('Conservation of mass is not satisfied')
             log.warning('Total mass change and total entrained mass differ from %.4f %%' % (diff*100))
@@ -1051,10 +1202,10 @@ def readWrite(fname_ent):
 #   growth results
     growthIndex = totMassResults[1]/totMassResults[0]
     growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])
-    return relMass, entMass, finalMass, growthIndex, growthGrad
+    return relMass, entrainedMass, finalMass, growthIndex, growthGrad, entMass, totalMass, time
 
 
-def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):
+def getMaxMeanValues(rasterdataA, rasterArea):
     """Compute average, max values in each cross section for a given input raster
 
     Read mass balance files to get mass properties of the simulation
@@ -1066,68 +1217,24 @@ def getMaxMeanValues(rasterdataA, rasterArea, pLim, cInd=None):
         raster data
     rasterArea: 2D numpy array
         raster area corresponding to rasterdataA
-    pLim: float
-        pressure threshold
-    cInd: dict
-        indexes of bounds of the avalanche (from release to run-out)
 
     Returns
     -------
-    ama: float
-        average maximum of rasterdataA
     mma: float
         maximum maximum of rasterdataA
-    cInd: dict
-        indexes of bounds of the avalanche (from release to run-out)
     aCrossMax: 1D numpy array
         max of rasterdataA in each cross section
+    aCrossMean: 1D numpy array
+        mean of rasterdataA in each cross section (area weighted)
     """
     # get mean max for each cross section for A field
     rasterArea = np.where(np.where(np.isnan(rasterdataA), 0, rasterdataA) > 0, rasterArea, 0)
     AreaSum = np.nansum(rasterArea, axis=1)
     AreaSum = np.where(AreaSum > 0, AreaSum, 1)
-    aCrossMean = np.nansum(rasterdataA*rasterArea, axis=1)/AreaSum
+    ACrossMean = np.nansum(rasterdataA*rasterArea, axis=1)/AreaSum
     # aCrossMean = np.nanmean(rasterdataA, axis=1)
-    aCrossMax = np.nanmax(rasterdataA, 1)
-    # also get the Area corresponding to those cells
-    indACrossMax = np.nanargmax(rasterdataA, 1)
-    ind1 = np.arange(np.shape(rasterdataA)[0])
-    AreaACrossMax = rasterArea[ind1, indACrossMax]
+    ACrossMax = np.nanmax(rasterdataA, 1)
+    # maximum of field a
+    maxACrossMax = np.nanmax(ACrossMax)
 
-    #   Determine runout according to maximum and averaged values
-    # search in max values
-    if not cInd:
-        lindex = np.nonzero(aCrossMax > pLim)[0]
-        if lindex.any():
-            cupper = min(lindex)
-            clower = max(lindex)
-        else:
-            log.error('No average pressure values > threshold found. threshold = %4.2f, too high?' % pLim)
-            cupper = 0
-            clower = 0
-        # search in mean values
-        lindex = np.nonzero(aCrossMean > pLim)[0]
-        if lindex.any():
-            cupperm = min(lindex)
-            clowerm = max(lindex)
-        else:
-            log.error('No average pressure values > threshold found. threshold = %4.2f, too high?' % pLim)
-            cupperm = 0
-            clowerm = 0
-        cInd = {}
-        cInd['cupper'] = cupper
-        cInd['clower'] = clower
-        cInd['cupperm'] = cupperm
-        cInd['clowerm'] = clowerm
-    else:
-        cupper = cInd['cupper']
-        clower = cInd['clower']
-        cupperm = cInd['cupperm']
-        clowerm = cInd['clowerm']
-
-    # Mean max of of a in each Cross-Section
-    ama = np.nansum((aCrossMax*AreaACrossMax)[cupper:clower+1]) / \
-        np.nansum(AreaACrossMax[cupper:clower+1])
-    mma = max(aCrossMax[cupper:clower+1])
-
-    return ama, mma, cInd, aCrossMax
+    return maxACrossMax, ACrossMax, ACrossMean
