@@ -8,13 +8,10 @@ This file is part of Avaframe.
 """
 
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from avaframe.in3Utils import fileHandlerUtils as fU
 import numpy as np
 import os
 import logging
-import shutil
 import glob
 
 # Local imports
