@@ -99,8 +99,8 @@ for test in testList:
         # Fetch simulation info from benchmark results
         benchDictList = simParametersVar.fetchBenchParameters(avaDir)
         for bDict in benchDictList:
-            if test['NAME'] == bDict['testName']:
-                benchDict = bDict
+            if test['NAME'] == bDict['testName'] and rel == bDict['Simulation Parameters']['Release Area Scenario']:
+                    benchDict = bDict
         benchSimName = benchDict['simName']
         # Check if simulation with entrainment and/or resistance or standard simulation
         simType = 'null'
