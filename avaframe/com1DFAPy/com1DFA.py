@@ -318,14 +318,14 @@ def initializeMesh(dem, num):
     # get normal vector of the grid mesh
     Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num)
     # TODO, Try to replicate samosAT notmal computation
-    # if method num=1 is used, the normals are computed at Peters cell center
+    # if method num=1 is used, the normals are computed at com1DFA (original) cell center
     # this corresponds to our cell vertex
     if num == 1:
-        # Create Peters vertex grid
+        # Create com1DFA (original) vertex grid
         x = np.linspace(-csz/2, (ncols-1)*csz - csz/2, ncols)
         y = np.linspace(-csz/2, (nrows-1)*csz - csz/2, nrows)
         X, Y = np.meshgrid(x, y)
-        # interpolate the normal from Peters center to his vertex
+        # interpolate the normal from com1DFA (original) center to his vertex
         # this means from our vertex to our centers
         Nx, Ny, NzCenter = DFAtls.getNormalArray(X, Y, Nx, Ny, Nz, csz)
         # this is for tracking mesh cell with actual data
