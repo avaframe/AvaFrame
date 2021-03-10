@@ -8,6 +8,7 @@ This file is part of Avaframe.
 """
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from avaframe.in3Utils import fileHandlerUtils as fU
 import numpy as np
@@ -113,7 +114,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     ax3 = fig.add_subplot(133)
     cmap = pU.cmapdiv
-    im3 = plt.imshow(dataDiff, cmap=cmap,
+    elev_max = np.max(np.abs(dataDiff))
+    im3 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
                      extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     fig.colorbar(im3, ax=ax3)
     ax3.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' %

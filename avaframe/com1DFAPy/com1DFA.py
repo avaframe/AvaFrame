@@ -291,7 +291,7 @@ def createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resista
     return reportST
 
 
-def initializeMesh(dem, num=4):
+def initializeMesh(dem, num):
     """ Create rectangular mesh
 
     Reads the DEM information, computes the normal vector field and
@@ -316,12 +316,26 @@ def initializeMesh(dem, num=4):
     nrows = header.nrows
     csz = header.cellsize
     # get normal vector of the grid mesh
-    Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num=num)
+    Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num)
+    # TODO, Try to replicate samosAT notmal computation
+    # if method num=1 is used, the normals are computed at Peters cell center
+    # this corresponds to our cell vertex
+    if num == 1:
+        # Create Peters vertex grid
+        x = np.linspace(-csz/2, (ncols-1)*csz - csz/2, ncols)
+        y = np.linspace(-csz/2, (nrows-1)*csz - csz/2, nrows)
+        X, Y = np.meshgrid(x, y)
+        # interpolate the normal from Peters center to his vertex
+        # this means from our vertex to our centers
+        Nx, Ny, NzCenter = DFAtls.getNormalArray(X, Y, Nx, Ny, Nz, csz)
+        # this is for tracking mesh cell with actual data
+        NzCenter = np.where(np.isnan(Nx), Nz, NzCenter)
+        Nz = NzCenter
     dem['Nx'] = np.where(np.isnan(Nx), 0, Nx)
     dem['Ny'] = np.where(np.isnan(Ny), 0, Ny)
     # build no data mask (used to find out of dem particles)
-    bad = np.where(Nz > 1, True, False)
-    dem['Nz'] = np.where(Nz > 1, 0, Nz)
+    bad = np.where(np.isnan(Nx), True, False)
+    dem['Nz'] = Nz
     dem['Bad'] = bad
     if debugPlot:
         x = np.arange(ncols) * csz
@@ -343,11 +357,11 @@ def initializeMesh(dem, num=4):
         IOf.writeResultToAsc(dem['header'], dem['Nz'], 'Nz.asc')
 
     # get real Area
-    areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, csz)
+    areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, csz, num)
     dem['areaRaster'] = areaRaster
-    log.info('Largest cell area: %.2f m²' % (np.amax(areaRaster)))
+    log.info('Largest cell area: %.2f m²' % (np.nanmax(areaRaster)))
     log.debug('Projected Area : %.2f' % (ncols * nrows * csz * csz))
-    log.debug('Total Area : %.2f' % (np.sum(areaRaster)))
+    log.debug('Total Area : %.2f' % (np.nansum(areaRaster)))
 
     return dem
 
@@ -401,7 +415,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
 
     # -----------------------
     # Initialize mesh
-    dem = initializeMesh(dem, num=methodMeshNormal)
+    dem = initializeMesh(dem, methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
     relRaster = prepareArea(releaseLine, demOri)
@@ -419,11 +433,11 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     # initialize entrainment and resistance
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster = initializeMassEnt(demOri, entRes, entLine)
-    cResRaster = initializeResistance(cfgGen, demOri, entRes, resLine)
+    entrMassRaster = initializeMassEnt(demOri, logName, entLine)
+    cResRaster = initializeResistance(cfgGen, demOri, logName, resLine)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
-    entreainableMass = np.sum(fields['entrMassRaster']*dem['areaRaster'])
+    entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
     fields['cResRaster'] = cResRaster
 
@@ -463,7 +477,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     nrows = header.nrows
     csz = header.cellsize
     areaRaster = dem['areaRaster']
-    totalMassRaster = np.sum(areaRaster*relRaster*rho)
+    totalMassRaster = np.nansum(areaRaster*relRaster*rho)
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     FD = np.zeros((nrows, ncols))
@@ -492,8 +506,8 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         particles = DFAfunC.getNeighboursC(particles, dem)
         particles['s'] = np.zeros(np.shape(Xpart))
         # # adding z component
-        zSamos = copy.deepcopy(particles['z'])
-        particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
+        # zSamos = copy.deepcopy(particles['z'])
+        # particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         # plt.plot(particles['y'], zSamos, 'bo')
         # plt.plot(particles['y'], particles['z'], 'k+')
         # plt.show()
@@ -695,7 +709,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart):
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, entRes, entLine):
+def initializeMassEnt(dem, logName, entLine):
     """ Initialize mass for entrainment
 
     Parameters
@@ -712,7 +726,7 @@ def initializeMassEnt(dem, entRes, entLine):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if entRes and entLine:
+    if ('entres' in logName) and entLine:
         # entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
@@ -722,7 +736,7 @@ def initializeMassEnt(dem, entRes, entLine):
     return entrMassRaster
 
 
-def initializeResistance(cfg, dem, entRes, resLine):
+def initializeResistance(cfg, dem, logName, resLine):
     """ Initialize resistance matrix
 
     Parameters
@@ -742,7 +756,7 @@ def initializeResistance(cfg, dem, entRes, resLine):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if entRes and resLine:
+    if ('entres' in logName) and resLine:
         # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
         resistanceArea = resLine['Name']
         log.info('Resistance area: %s' % (resistanceArea))
@@ -1110,6 +1124,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
 
     nx, ny, nz = DFAtls.getNormalArray(xNew, yNew, Nx, Ny, Nz, csz)
+    nx, ny, nz = DFAtls.normalize(nx, ny, nz)
     particles['m'] = massNew
     # normal component of the velocity
     uN = uxNew*nx + uyNew*ny + uzNew*nz
