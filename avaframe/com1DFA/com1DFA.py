@@ -280,7 +280,7 @@ def com1DFAMain(cfg, avaDir):
                 copyReplace(workFile, workFile, '##NAME##', sim)
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VALUE##', item)
-                copyReplace(workFile, workFile, '##ENTH##', float(entrainmentTH))
+                copyReplace(workFile, workFile, '##ENTH##', entrainmentTH)
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
                 # Create dictionary
