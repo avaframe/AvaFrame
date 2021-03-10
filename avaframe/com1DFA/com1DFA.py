@@ -122,7 +122,7 @@ def com1DFAMain(cfg, avaDir):
     modPath = os.path.dirname(__file__)
     # Standard values for parameters that can be varied
     defValues = cfg['DEFVALUES']
-    entrainmentTH = defValues['entH']
+    entrainmentTH = defValues['defaultEntH']
 
     # Log chosen settings
     if flagNoEnt:

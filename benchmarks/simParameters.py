@@ -76,7 +76,7 @@ def fetchBenchParameters(avaDir):
     elif avaDictName == 'avaHelixChannelDict':
 
         avaDictName = {'simName': 'release1HX_entres_dfa_0.15500',
-        		'testName': 'avaHelichChannelEntTest',
+        		'testName': 'avaHelixChannelEntTest',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': 'release1HX',
@@ -95,7 +95,7 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
         avaDictName = {'simName': 'release1HX_entres_dfa_0.15500',
-        		'testName': 'avaHelichChannelEnt1mTest',
+        		'testName': 'avaHelixChannelEnt1mTest',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': 'release1HX',
@@ -157,7 +157,7 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
         avaDictName = {'simName': 'release2HS_entres_dfa_0.15500',
-        		'testName': 'avaHelixChannelEntTest',
+        		'testName': 'avaHockeyChannelEntTest',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': 'release2HS',
