@@ -235,7 +235,33 @@ def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir=''):
                 shutil.copy(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countSuf+1))
                 log.info('%s   : %s/%s/%06d.txt' % (data['files'][m], workDir, nameDir, countSuf+1))
             countSuf = countSuf + 1
-            
+
+def getDFADataPaths(avaDir, pathDict, suffix, comModule='com1DFA'):
+    """ Determine the paths of the required data from comModule output for Aimec
+
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche directory
+        pathDict: dict
+            dictionary with paths to simulation results
+        suffix : str
+            result parameter abbreviation (e.g. 'ppr')
+        comModule : str
+            optional - name of computational module (default is com1DFA)
+      """
+
+    # Lead all infos on simulations
+    inputDir = os.path.join(avaDir, 'Outputs', comModule, 'peakFiles')
+    data = makeSimDict(inputDir)
+
+    for m in range(len(data['files'])):
+        if data['resType'][m] == suffix:
+            pathDict[suffix].append(data['files'][m])
+            log.info('Added to pathDict: %s' % (data['files'][m]))
+
+    return pathDict
+
 
 def getRefData(testDir, outputDir, suffix, nameDir='', testDirFP=''):
     """ Grab reference data and save to outputDir
