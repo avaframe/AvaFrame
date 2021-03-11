@@ -96,6 +96,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     pathName = os.path.basename(profileLayer[0])
     cfgPath['pathName'] = pathName
     cfgPath['dirName'] = 'com1DFA'
+    cfgPath['referenceFile'] = 1
 
     return cfgPath
 
@@ -152,7 +153,8 @@ def mainAIMEC(cfgPath, cfg):
     # visualisation
     # TODO: needs to be moved somewhere else
     # read first pressure file
-    rasterSource = cfgPath['pressurefileList'][0]
+    nRef = cfgPath['referenceFile']
+    rasterSource = cfgPath['pressurefileList'][nRef]
 
     pressureRaster = IOf.readRaster(rasterSource)
     slRaster = transform(rasterSource, rasterTransfo, interpMethod)
@@ -186,13 +188,18 @@ def mainAIMEC(cfgPath, cfg):
 
     # Analyze data
     log.info('Analyzing data in path coordinate system')
-    resAnalysis = analyzeData(rasterTransfo, pressureLimit, newRasters,
-                              cfgPath, cfgFlags)
+    resAnalysis = postProcessAIMEC(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of results')
+    outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
+    if cfgPath['numSim']==2:
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
+        outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
+    else:
+        outAimec.visuRunoutStat(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
     outAimec.resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis,
                         pressureLimit)
 
@@ -642,49 +649,7 @@ def assignData(fnames, rasterTransfo, interpMethod):
 # -----------------------------------------------------------
 # Aimec analysis tools
 # -----------------------------------------------------------
-
-def analyzeData(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
-    """ Analyse pressure and depth transformed data
-
-    Main function for result analysis
-    Plots the desired figures and saves results as txt files
-
-    Parameters
-    ----------
-    rasterTransfo: dict
-        transformation information
-    pLim: float
-        numerical value of the pressure limit to use
-    newRasters: dict
-        dictionary containing pressure, velocity and flow depth rasters after
-        transformation
-    cfgPath: dict
-        path to data to analyse
-    cfgFlags: configparser
-        configparser with plot and write flags
-
-    Returns
-    -------
-    Plots the desired figures and saves results as txt files
-    resAnalysis: dict
-        resAnalysis dictionnary containing all results
-    """
-
-    resAnalysis = analyzeFields(rasterTransfo, pLim, newRasters, cfgPath)
-
-    resAnalysis = analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
-
-    outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
-    if cfgPath['numSim']==2:
-        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
-        outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
-    else:
-        outAimec.visuRunoutStat(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
-
-    return resAnalysis
-
-
-def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
+def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     """ Analyse pressure and depth transformed data
 
     Analyse pressure depth and speed.
@@ -776,6 +741,14 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
             -startOfRunoutAngle: float
                     angle of the slope at the beginning of the run-out
                     area (given in input)
+            -TP: float
+                    ref = True sim2 = True
+            -FN: float
+                    ref = False sim2 = True
+            -FP: float
+                    ref = True sim2 = False
+            -TN: float
+                    ref = False sim2 = False
     """
     # read inputs
     fnameMass = cfgPath['massfileList']
@@ -791,6 +764,9 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     runout, runoutMean, elevRel, deltaH = computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEMRasters)
 
     releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = analyzeMass(fnameMass)
+
+    runoutLength = runout[0]
+    TP, FN, FP, TN = analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}
@@ -818,6 +794,10 @@ def analyzeFields(rasterTransfo, pLim, newRasters, cfgPath):
     resAnalysis['PFVCrossMean'] = PFVCrossMean
     resAnalysis['pressureLimit'] = pLim
     resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
+    resAnalysis['TP'] = TP
+    resAnalysis['FN'] = FN
+    resAnalysis['FP'] = FP
+    resAnalysis['TN'] = TN
 
     return resAnalysis
 
@@ -1027,7 +1007,7 @@ def analyzeField(rasterTransfo, transformedRasters, dataType):
     return maxACrossMax, ACrossMax, ACrossMean
 
 
-def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags):
+def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags):
     """Compare results to reference.
 
     Compute True positive, False negative... areas.
@@ -1040,9 +1020,8 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         resAnalysis dictionary containing all results to update
     pLim: float
         numerical value of the pressure limit to use
-    newRasters: dict
-        dictionary containing pressure, velocity and flow depth rasters after
-        transformation
+    dataPressure: list
+        list of transformed pressure rasters
     cfgPath: dict
         path to data to analyse
     cfgFlags: configparser
@@ -1050,41 +1029,44 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
 
     Returns
     -------
-    resAnalysis: dict
-        updated resAnalysis dictionnary:
-            -TP: float
-                ref = True sim2 = True
-            -FN: float
-                ref = False sim2 = True
-            -FP: float
-                ref = True sim2 = False
-            -TN: float
-                ref = False sim2 = False
+    TP: float
+        ref = True sim2 = True
+    FN: float
+        ref = False sim2 = True
+    FP: float
+        ref = True sim2 = False
+    TN: float
+        ref = False sim2 = False
     """
-    fname = cfgPath['pressurefileList']
-
-    dataPressure = newRasters['newRasterPressure']
+    nRef = cfgPath['referenceFile']
     cellarea = rasterTransfo['rasterArea']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
 
     # initialize Arrays
-    nTopo = len(fname)
+    nTopo = len(dataPressure)
     TP = np.empty((nTopo))
     FN = np.empty((nTopo))
     FP = np.empty((nTopo))
     TN = np.empty((nTopo))
 
     # take first simulation as reference
-    newMask = copy.deepcopy(dataPressure[0])
+    refMask = copy.deepcopy(dataPressure[nRef])
     # prepare mask for area resAnalysis
-    newMask = np.where(np.isnan(newMask), 0, newMask)
-    newMask = np.where(newMask < pLim, 0, newMask)
-    newMask = np.where(newMask >= pLim, 1, newMask)
+    refMask = np.where(np.isnan(refMask), 0, refMask)
+    refMask = np.where(refMask < pLim, 0, refMask)
+    refMask = np.where(refMask >= pLim, 1, refMask)
     # comparison rasterdata with mask
     log.info('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
         'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
     # rasterinfo
     nStart = indStartOfRunout
+    # inputs for plot
+    inputs = {}
+    inputs['runoutLength'] = runoutLength
+    inputs['pressureLimit'] = pLim
+    inputs['refDataPressure'] = dataPressure[nRef]
+    inputs['refRasterMask'] = refMask
+    inputs['nStart'] = nStart
 
     for i in range(nTopo):
         rasterdata = dataPressure[i]
@@ -1105,23 +1087,19 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         newRasterData = np.where(newRasterData >= pLim, 1, newRasterData)
 
         # inputs for plot
-        inputs = {}
-        inputs['dataPressure'] = dataPressure
-        inputs['refRasterMask'] = newMask
         inputs['newRasterMask'] = newRasterData
-        inputs['nStart'] = nStart
         inputs['i'] = i
 
-        outAimec.visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath,
+        outAimec.visuComparison(rasterTransfo, inputs, cfgPath,
                                 cfgFlags)
 
-        tpInd = np.where((newMask[nStart:] == 1) &
+        tpInd = np.where((refMask[nStart:] == 1) &
                          (newRasterData[nStart:] == 1))
-        fpInd = np.where((newMask[nStart:] == 0) &
+        fpInd = np.where((refMask[nStart:] == 0) &
                          (newRasterData[nStart:] == 1))
-        fnInd = np.where((newMask[nStart:] == 1) &
+        fnInd = np.where((refMask[nStart:] == 1) &
                          (newRasterData[nStart:] == 0))
-        tnInd = np.where((newMask[nStart:] == 0) &
+        tnInd = np.where((refMask[nStart:] == 0) &
                          (newRasterData[nStart:] == 0))
 
         # subareas
@@ -1141,12 +1119,7 @@ def analyzeArea(rasterTransfo, resAnalysis, pLim, newRasters, cfgPath, cfgFlags)
         log.info('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
             *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
 
-    resAnalysis['TP'] = TP
-    resAnalysis['FN'] = FN
-    resAnalysis['FP'] = FP
-    resAnalysis['TN'] = TN
-
-    return resAnalysis
+    return TP, FN, FP, TN
 
 
 def readWrite(fname_ent, time):
