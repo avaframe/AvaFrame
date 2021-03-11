@@ -43,7 +43,7 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 cfgSetup = cfg['AIMECSETUP']
 
 # Setup input from com1DFA
-simNames = dfa2Aimec.dfaComp2Aimec(avalancheDir, cfgSetup)
+pathDict = dfa2Aimec.dfaComp2Aimec(avalancheDir, cfgSetup)
 
 for sim in simNames:
 
