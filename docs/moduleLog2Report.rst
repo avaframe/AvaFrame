@@ -120,6 +120,6 @@ To run
   ``generateCompareReport(outputDir, simulationDictionary, benchmarkDictionary, avalancheName)``
 
 An example of creating a comparison report can be found in ``runStandardTests.py``. There, the standard tests: *avaAlr*, *avaHit*, *avaGar*, *avaJot*, *avaMal*, *avaWog*,
-*avaBowl*, *avaFlatPlane*, *avaHelix*, *avaHelixChannel*, *avaHockey*, *avaHockeySmoothChannel*,
+*avaBowl*, *avaFlatPlane*, *avaHelix*, *avaHelixChannel*, *avaHockey*, *avaParabola*,
 *avaHockeySmoothSmall*, are run sequentially and a report is created where the com1DFA simulation results
 and the benchmark results are compared.
