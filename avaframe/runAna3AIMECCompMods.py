@@ -45,10 +45,23 @@ cfgSetup = cfg['AIMECSETUP']
 # Setup input from com1DFA
 pathDict = dfa2Aimec.dfaComp2Aimec(avalancheDir, cfgSetup)
 
-for sim in simNames:
+for simN in pathDict:
+
+    pDict = pathDict[simN]
+    
+    # TODO rename these
+    cfgPath = {}
+    cfgPath['pressurefileList'] = pathDict['ppr']
+    cfgPath['depthfileList'] = pathDict['pfd']
+    cfgPath['massfileList'] = pathDict['mb']
+    cfgPath['speedfileList'] = pathDict['pfv']
+    cfgPath['numSim'] = len(cfgPath['pressurefileList'])
+
+    # TODO define referenceFile
+    cfgPath['referenceFile'] = 0
 
     # Extract input file locations
-    cfgPath = ana3AIMEC.readAIMECinputs(avalancheDir, dirName=sim)
+    cfgPath = ana3AIMEC.readAIMECinputs(avalancheDir, cfgPath, dirName=simN)
 
     startTime = time.time()
 
