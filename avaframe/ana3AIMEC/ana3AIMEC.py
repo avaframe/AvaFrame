@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 
 
-def readAIMECinputs(avalancheDir, dirName='com1DFA'):
+def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
     """ Read inputs for AIMEC postprocessing
 
     Reads the requiered files location for AIMEC postpocessing
@@ -41,20 +41,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     cfgPath : dict
         dictionary with path to data to analyze
     """
-    cfgPath = {}
-    pathPressure = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,
-                                'dfa_pressure')
-    pathFlowHeight = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,
-                                  'dfa_depth')
-    pathMassBalance = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,
-                                   'dfa_mass_balance')
-    pathSpeed = os.path.join(avalancheDir, 'Work', 'ana3AIMEC', dirName,
-                             'dfa_speed')
 
-    if not os.path.exists(pathMassBalance):
-        os.makedirs(pathMassBalance)
-
-    # TODO: get all this info with functions in in2Input.getInput.py
 
     profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES',
                                           '*aimec*.shp'))
@@ -82,12 +69,6 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
         raise
     cfgPath['demSource'] = ''.join(demSource)
 
-    cfgPath['pressurefileList'] = getFileList(pathPressure)
-    cfgPath['depthfileList'] = getFileList(pathFlowHeight)
-    cfgPath['massfileList'] = getFileList(pathMassBalance)
-    cfgPath['speedfileList'] = getFileList(pathSpeed)
-    cfgPath['numSim'] = len(cfgPath['pressurefileList'])
-
     pathResult = os.path.join(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
     cfgPath['pathResult'] = pathResult
 
@@ -96,7 +77,7 @@ def readAIMECinputs(avalancheDir, dirName='com1DFA'):
     pathName = os.path.basename(profileLayer[0])
     cfgPath['pathName'] = pathName
     cfgPath['dirName'] = 'com1DFA'
-    cfgPath['referenceFile'] = 1
+
 
     return cfgPath
 
@@ -1155,9 +1136,9 @@ def readWrite(fname_ent, time):
     finalMass = totMassResults[1]
     # check mass balance
     log.info('Total mass change between first and last time step in sim %s is: %.1f kg' %
-             (int(os.path.splitext(os.path.basename(fname_ent))[0]), totMassResults[1] - relMass))
+             (os.path.splitext(os.path.basename(fname_ent)), totMassResults[1] - relMass))
     log.info('Total entrained mass in sim %s is: %.1f kg' %
-             (int(os.path.splitext(os.path.basename(fname_ent))[0]), entrainedMass))
+             (os.path.splitext(os.path.basename(fname_ent)), entrainedMass))
     if (totMassResults[1] - relMass) == 0:
         diff = np.abs((totMassResults[1] - relMass) - entrainedMass)
         if diff > 0:

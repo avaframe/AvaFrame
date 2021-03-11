@@ -35,7 +35,7 @@ def extractMBInfo(avaDir, pathDict, simNameInput=''):
     # Read mass data from log and save to file for each simulation run
     countFile = 0
     for simName in simNames:
-        log.info('This is the simulation name %s for mod com1DFA ' % (simName))
+        log.debug('This is the simulation name %s for mod com1DFA ' % (simName))
 
         # Initialise fields
         time = []
@@ -77,8 +77,8 @@ def extractMBInfo(avaDir, pathDict, simNameInput=''):
                 pathDict[simName]['mb'].append(saveName)
             else:
                 pathDict['mb'].append(saveName)
-            log.info('Mass file saved to %s ' % (saveName))
-            log.info('Added to pathDict[mb] %s ' % (saveName))
+            log.debug('Mass file saved to %s ' % (saveName))
+            log.debug('Added to pathDict[mb] %s ' % (saveName))
             countFile = countFile + 1
 
     return pathDict
@@ -99,7 +99,7 @@ def getMBInfo(avaDir, pathDict, simName=''):
 
         for mFile in mbNames:
             pathDict['mb'].append(mFile)
-            log.info('Added to pathDict[mb] %s' % (mFile))
+            log.debug('Added to pathDict[mb] %s' % (mFile))
 
     return pathDict
 
@@ -142,7 +142,7 @@ def dfaComp2Aimec(avaDir, cfgSetup):
                         pathDict[simNameRef][suf].append(compData['files'][countComp])
                         log.debug('Added to pathDict[%s] %s' % (suf, compData['files'][countComp]))
                         if simNamesMatch[simNameRef] == False:
-                            pathDict = extractMBInfo(avaDir, pathDict, simName=simNameRef)
+                            pathDict = extractMBInfo(avaDir, pathDict, simNameInput=simNameRef)
                             pathDict = getMBInfo(avaDir, pathDict, simName=simNameRef)
                 simNamesMatch[simNameRef] = True
     for key in simNamesMatch:
