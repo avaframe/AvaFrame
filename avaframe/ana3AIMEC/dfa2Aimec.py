@@ -17,12 +17,12 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def extractMBInfo(avaDir, pathDict, simName=''):
+def extractMBInfo(avaDir, pathDict, simNameInput=''):
     """ Extract the mass balance info from the log file """
 
-    if simName != '':
-        simNames = [simName]
-        nameDir = simName
+    if simNameInput != '':
+        simNames = [simNameInput]
+        nameDir = simNameInput
     else:
         # Get info from ExpLog
         nameDir = 'com1DFA'
@@ -73,7 +73,10 @@ def extractMBInfo(avaDir, pathDict, simName=''):
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
                     MBFile.write('%.02f,    %.06f,    %.06f\n' %
                                  (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
-            pathDict['mb'].append(saveName)
+            if simNameInput != '':
+                pathDict[simName]['mb'].append(saveName)
+            else:
+                pathDict['mb'].append(saveName)
             log.info('Mass file saved to %s ' % (saveName))
             log.info('Added to pathDict[mb] %s ' % (saveName))
             countFile = countFile + 1
@@ -87,7 +90,7 @@ def getMBInfo(avaDir, pathDict, simName=''):
     # Get info from ExpLog
     if simName != '':
         mbFile = os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'mass_%s.txt' % simName)
-        pathDict['mb'].append(mbFile)
+        pathDict[simName]['mb'].append(mbFile)
         log.info('Added to pathDict[mb] %s' % (mbFile))
 
     else:
@@ -119,25 +122,33 @@ def dfaComp2Aimec(avaDir, cfgSetup):
     inputDirComp = os.path.join(avaDir, 'Outputs', compModule, 'peakFiles')
     compData = fU.makeSimDict(inputDirComp)
 
-    # path dictionary for Aimec
-    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}
+    pathDict = {}
+    simNamesMatch = {}
+    count = 0
+
+    # initialise path dicionary with subdictionary for each simulation
+    for simNameRef in refData['simName']:
+        pathDict.update({simNameRef: {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}})
+        simNamesMatch[simNameRef] = False
 
     for countRef, simNameRef in enumerate(refData['simName']):
         for countComp, simNameComp in enumerate(compData['simName']):
             if simNameRef == simNameComp:
-                # Create required directories
                 suffix = ['pfd', 'ppr', 'pfv']
-                countM = 0
                 for suf in suffix:
                     if refData['resType'][countRef] == suf and compData['resType'][countComp] == suf:
-                        pathDict[suf].append(refData['files'][countRef])
-                        log.info('Added to pathDict[%s] %s ' % (suf, refData['files'][countRef]))
-                        pathDict[suf].append(compData['files'][countComp])
-                        log.info('Added to pathDict[%s] %s' % (suf, compData['files'][countComp]))
-                        if countM == 0:
+                        pathDict[simNameRef][suf].append(refData['files'][countRef])
+                        log.debug('Added to pathDict[%s] %s ' % (suf, refData['files'][countRef]))
+                        pathDict[simNameRef][suf].append(compData['files'][countComp])
+                        log.debug('Added to pathDict[%s] %s' % (suf, compData['files'][countComp]))
+                        if simNamesMatch[simNameRef] == False:
                             pathDict = extractMBInfo(avaDir, pathDict, simName=simNameRef)
                             pathDict = getMBInfo(avaDir, pathDict, simName=simNameRef)
-                            countM = countM + 1
+                simNamesMatch[simNameRef] = True
+    for key in simNamesMatch:
+        if simNamesMatch[key] == False:
+            log.info('no matching files found for simulation: %s' % key)
+            del pathDict[key]
 
     return pathDict
 
