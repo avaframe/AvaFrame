@@ -27,7 +27,7 @@ Follow these steps to run your first simulation:
 
 
 This will perform a dense flow avalanche simulation using the ``com1DFA`` module.
-The results are saved to ``data/avaHockeySmoothSmall/Outputs/com1DFA``. For a first
+The results are saved to ``data/avaParabola/Outputs/com1DFA``. For a first
 look at the results, got to the folder ``reports``, there you can find
 a markdown report of the simulations performed including some plots of the results.
 
