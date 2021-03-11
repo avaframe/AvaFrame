@@ -121,7 +121,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
 
     ############################################
     # prepare for plot
-    Title = ['Pressure', 'Flow Depth', 'Flow Velocity']
+    Title = ['Pressure ', 'Flow Depth ', 'Flow Velocity ']
     Unit = ['$P(s)$ [kPa]', '$fd(s)$ [m]', '$v(s) [m.s^{-1}]$']
     DataMax = np.array(([None] * 3))
     DataMax[0] = PPRCrossMax
@@ -167,12 +167,13 @@ def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     # read paths
     projectName = cfgPath['projectName']
     dirName = cfgPath['dirName']
+    nRef = cfgPath['referenceFile']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     dataPressure = newRasters['newRasterPressure']
-    rasterdataPres = dataPressure[0]
+    rasterdataPres = dataPressure[nRef]
     runout = resAnalysis['runout'][0]
     PPRCrossMax = resAnalysis['PPRCrossMax']
 
@@ -247,8 +248,8 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
 
     ############################################
     # prepare for plot
-    Title = ['Entrained', 'Total']
-    Unit = ['Entrained Mass', 'Total Mass']
+    Title = ['Entrained ', 'Total ']
+    Unit = ['Entrained Mass ', 'Total Mass ']
     DataMass = np.array(([None] * 2))
     DataMass[0] = entMassArray
     DataMass[1] = totalMassArray
@@ -283,17 +284,18 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     # read paths
     projectName = cfgPath['projectName']
     dirName = cfgPath['dirName']
+    nRef = cfgPath['referenceFile']
     # read data
     plim = resAnalysis['pressureLimit']
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     dataPressure = newRasters['newRasterPressure']
-    rasterdataPres = dataPressure[0]
+    rasterdataPres = dataPressure[nRef]
     dataDepth = newRasters['newRasterDepth']
-    rasterdataDepth = dataDepth[0]
+    rasterdataDepth = dataDepth[nRef]
     dataSpeed = newRasters['newRasterSpeed']
-    rasterdataSpeed = dataSpeed[0]
+    rasterdataSpeed = dataSpeed[nRef]
     runout = resAnalysis['runout'][0]
 
     ############################################
@@ -336,7 +338,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
-def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
+def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     """
     Plot and save the comparison between current simulation and Reference
     in the run-out area
@@ -351,8 +353,9 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     sStart = s[indStartOfRunout]
-    plim = resAnalysis['pressureLimit']
-    dataPressure = inputs['dataPressure']
+    pLim = inputs['pressureLimit']
+    runoutLength = inputs['runoutLength']
+    refDataPressure = inputs['refDataPressure']
     refRasterMask = inputs['refRasterMask']
     newRasterMask = inputs['newRasterMask']
     nStart = inputs['nStart']
@@ -364,23 +367,23 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ax1 = plt.subplot(121)
 
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, plim,
-                                                       np.nanmax((dataPressure[0])[nStart:]),
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, pLim,
+                                                       np.nanmax((refDataPressure)[nStart:]),
                                                        continuous=pU.contCmap)
     cmap.set_under(color='w')
 
-    ref0, im = pU.NonUnifIm(ax1, l, s, dataPressure[0], 'l [m]', 's [m]',
+    ref0, im = pU.NonUnifIm(ax1, l, s, refDataPressure, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
-    im.set_clim(vmin=plim, vmax=np.nanmax((dataPressure[0])[nStart:]))
+    im.set_clim(vmin=pLim, vmax=np.nanmax((refDataPressure)[nStart:]))
 
     ax1.set_title('Reference Peak Pressure in the RunOut area' +
-                  '\n' + 'Pressure threshold: %.1f kPa' % plim)
+                  '\n' + 'Pressure threshold: %.1f kPa' % pLim)
     pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
 
-    y_lim = s[indStartOfRunout+20]+np.nanmax(resAnalysis['runout'][0]-sStart)
+    y_lim = s[indStartOfRunout+20]+np.nanmax(runoutLength-sStart)
     ax1.set_ylim([s[indStartOfRunout], y_lim])
-    pU.putAvaNameOnPlot(ax1, cfgPath['projectName'])
+    pU.putAvaNameOnPlot(ax1, projectName)
     ax2 = plt.subplot(122)
     colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
     cmap = matplotlib.colors.ListedColormap(colorsList)
@@ -396,7 +399,7 @@ def visuComparison(rasterTransfo, resAnalysis, inputs, cfgPath, cfgFlags):
     ax2.set_ylim([s[indStartOfRunout], y_lim])
     plt.subplots_adjust(wspace=0.3)
 
-    outFileName = '_'.join([projectName, dirName, 'plim', str(int(plim)),  str(i), 'comparisonToReference'])
+    outFileName = '_'.join([projectName, dirName, 'plim', str(int(pLim)),  str(i), 'comparisonToReference'])
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -497,6 +500,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ####################################
     # Get input data
     fnames = cfgPath['pressurefileList']
+    nRef = cfgPath['referenceFile']
 
     flag = float(cfgFlags['typeFlag'])
 
@@ -519,7 +523,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     elif flag == 3:
         title = 'Visualizing max peak pressure data'
         tipo = 'relMaxPeakPres'
-        data = maxMaxDPPR / maxMaxDPPR[0]
+        data = maxMaxDPPR / maxMaxDPPR[nRef]
         yaxis_label = 'relative max peak pressure [-]'
 
     else:
@@ -595,8 +599,8 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     ############################################
     # Final result diagram - roc-plots
 
-    rTP = resAnalysis['TP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
-    rFP = resAnalysis['FP'] / (resAnalysis['TP'][0] + resAnalysis['FN'][0])
+    rTP = resAnalysis['TP'] / (resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef])
+    rFP = resAnalysis['FP'] / (resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef])
 
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     mk = 0
