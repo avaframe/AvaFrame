@@ -26,20 +26,22 @@ log = logging.getLogger(__name__)
 def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
     """ Read inputs for AIMEC postprocessing
 
-    Reads the requiered files location for AIMEC postpocessing
-    given an avalanche directory
+    Reads the requiered geometry files location for AIMEC postpocessing
+    given an avalanche directory; avalanche path, split point and DEM
 
     Parameters
     ----------
     avalancheDir : str
         path to directory of avalanche to analyze
-    dirName : str
-        optional string with name of the module results to analyze
+    cfgPath: dict
+        dictionary with paths to simulation results that shall be analaysed
+    dirName: str
+        name of results directory (e.g. comModule, simName, ...)
 
     Returns
     -------
     cfgPath : dict
-        dictionary with path to data to analyze
+        updated dictionary with path to geometry input data
     """
 
 
@@ -76,7 +78,7 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
     cfgPath['projectName'] = projectName
     pathName = os.path.basename(profileLayer[0])
     cfgPath['pathName'] = pathName
-    cfgPath['dirName'] = dirName
+    #cfgPath['dirName'] = dirName
 
 
     return cfgPath
@@ -105,7 +107,7 @@ def mainAIMEC(cfgPath, cfg):
     Parameters
     ----------
     cfgPath : dict
-        dictionary with path to data to analyze
+        dictionary with paths to data to analyze
     cfg : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
 
