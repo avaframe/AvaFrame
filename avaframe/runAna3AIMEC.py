@@ -44,28 +44,19 @@ cfgSetup = cfg['AIMECSETUP']
 
 # Setup input from com1DFA
 pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, cfgSetup)
-for key in pathDict:
-    print(key, pathDict[key])
 
-# TODO rename these
-cfgPath = {}
-cfgPath['pressurefileList'] = pathDict['ppr']
-cfgPath['depthfileList'] = pathDict['pfd']
-cfgPath['massfileList'] = pathDict['mb']
-cfgPath['speedfileList'] = pathDict['pfv']
-cfgPath['numSim'] = len(cfgPath['pressurefileList'])
+# TODO: define referenceFile
+pathDict['numSim'] = len(pathDict['ppr'])
+pathDict['referenceFile'] = 0
 
-# TODO define referenceFile
-cfgPath['referenceFile'] = 0
-
-cfgPath = ana3AIMEC.readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA')
+pathDict = ana3AIMEC.readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA')
 
 startTime = time.time()
 
 log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
-         cfgPath['demSource'], cfgPath['profileLayer'])
+         pathDict['demSource'], pathDict['profileLayer'])
 # Run AIMEC postprocessing
-ana3AIMEC.mainAIMEC(cfgPath, cfg)
+ana3AIMEC.mainAIMEC(pathDict, cfg)
 
 endTime = time.time()
 
