@@ -6,6 +6,7 @@
 import logging
 import logging.config
 import os
+from pathlib import Path, PureWindowsPath
 from datetime import datetime
 
 
@@ -36,8 +37,12 @@ def initiateLogger(targetDir, logName='runLog'):
         log : logging object
 
     """
+    # logFileName = os.path.join(targetDir, logName+'.log')
+    # logFileName = os.path.join('data', 'avaParabola', logName+'.log')
+    logFileName = os.path.join(logName+'.log')
 
-    logFileName = os.path.join(targetDir, logName+'.log')
+    print(logFileName)
+    print(type(logFileName))
 
     # get path of module and generate logging.conf file path
     logConfPath = os.path.dirname(__file__)
