@@ -145,6 +145,7 @@ def dfaComp2Aimec(avaDir, cfgSetup):
                             pathDict = extractMBInfo(avaDir, pathDict, simNameInput=simNameRef)
                             pathDict = getMBInfo(avaDir, pathDict, simName=simNameRef)
                 simNamesMatch[simNameRef] = True
+
     for key in simNamesMatch:
         if simNamesMatch[key] == False:
             log.info('no matching files found for simulation: %s' % key)

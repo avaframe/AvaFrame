@@ -76,20 +76,20 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
     cfgPath['projectName'] = projectName
     pathName = os.path.basename(profileLayer[0])
     cfgPath['pathName'] = pathName
-    cfgPath['dirName'] = 'com1DFA'
+    cfgPath['dirName'] = dirName
 
 
     return cfgPath
 
 
-def getFileList(path2Folder):
-    """ Get sorted list of all files in folder path2Folder"""
-    fileList = [path2Folder +
-                os.path.sep +
-                str(name) for name in
-                sorted(os.listdir(path2Folder))
-                if os.path.isfile(os.path.join(path2Folder, name))]
-    return fileList
+# def getFileList(path2Folder):
+#     """ Get sorted list of all files in folder path2Folder"""
+#     fileList = [path2Folder +
+#                 os.path.sep +
+#                 str(name) for name in
+#                 sorted(os.listdir(path2Folder))
+#                 if os.path.isfile(os.path.join(path2Folder, name))]
+#     return fileList
 
 # -----------------------------------------------------------
 # Aimec main
@@ -133,9 +133,9 @@ def mainAIMEC(cfgPath, cfg):
     ###########################################################################
     # visualisation
     # TODO: needs to be moved somewhere else
-    # read first pressure file
+    # read reference file
     nRef = cfgPath['referenceFile']
-    rasterSource = cfgPath['pressurefileList'][nRef]
+    rasterSource = cfgPath['ppr'][nRef]
 
     pressureRaster = IOf.readRaster(rasterSource)
     slRaster = transform(rasterSource, rasterTransfo, interpMethod)
@@ -149,16 +149,16 @@ def mainAIMEC(cfgPath, cfg):
     newRasters = {}
     # assign pressure data
     log.info("Assigning pressure data to deskewed raster")
-    newRasters['newRasterPressure'] = assignData(cfgPath['pressurefileList'],
+    newRasters['newRasterPressure'] = assignData(cfgPath['ppr'],
                                                  rasterTransfo, interpMethod)
     # assign depth data
     log.info("Assigning depth data to deskewed raster")
-    newRasters['newRasterDepth'] = assignData(cfgPath['depthfileList'],
+    newRasters['newRasterDepth'] = assignData(cfgPath['pfd'],
                                               rasterTransfo, interpMethod)
     # assign speed data
-    if cfgPath['speedfileList']:
+    if cfgPath['pfv']:
         log.info("Assigning speed data to deskewed raster")
-        newRasters['newRasterSpeed'] = assignData(cfgPath['speedfileList'],
+        newRasters['newRasterSpeed'] = assignData(cfgPath['pfv'],
                                                   rasterTransfo, interpMethod)
 
     # assign dem data
@@ -732,7 +732,7 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
                     ref = False sim2 = False
     """
     # read inputs
-    fnameMass = cfgPath['massfileList']
+    fnameMass = cfgPath['mb']
     dataPressure = newRasters['newRasterPressure']
     dataDepth = newRasters['newRasterDepth']
     dataSpeed = newRasters['newRasterSpeed']

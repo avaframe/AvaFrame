@@ -258,7 +258,7 @@ def getDFADataPaths(avaDir, pathDict, suffix, comModule='com1DFA'):
     for m in range(len(data['files'])):
         if data['resType'][m] == suffix:
             pathDict[suffix].append(data['files'][m])
-            log.info('Added to pathDict: %s' % (data['files'][m]))
+            log.debug('Added to pathDict: %s' % (data['files'][m]))
 
     return pathDict
 
