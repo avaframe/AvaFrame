@@ -112,7 +112,7 @@ def test_makeDomainTransfo(capfd):
     cfgFlags['savePlot'] = 'False'
     cfgSetup['startOfRunoutAngle'] = '0'
     cfgSetup['domainWidth'] = '160'
-    cfgSetup['ppr'] = '0.9'
+    cfgSetup['pressureLimit'] = '0.9'
 
     rasterTransfo = ana3AIMEC.makeDomainTransfo(cfgPath, cfgSetup)
 
