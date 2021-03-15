@@ -148,6 +148,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
   force : dict
       force dictionary
   """
+  # read input parameters
   cdef double Rs0 = cfg.getfloat('Rs0')
   cdef double kappa = cfg.getfloat('kappa')
   cdef double B = cfg.getfloat('B')
@@ -171,14 +172,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double[:, :] Ny = dem['Ny']
   cdef double[:, :] Nz = dem['Nz']
   cdef double[:, :] areaRatser = dem['areaRaster']
-
-  cdef double[:] Fnormal = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] forceY = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] forceFrict = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
-
+  # read particles and fields
   cdef double[:] mass = particles['m']
   cdef double[:] H = particles['h']
   cdef double[:] X = particles['x']
@@ -193,6 +187,14 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double[:, :] cResRaster = fields['cResRaster']
   cdef long[:] IndCellX = particles['indX']
   cdef long[:] IndCellY = particles['indY']
+  # initialize outputs
+  cdef double[:] Fnormal = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] forceY = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] forceFrict = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
+  # declare intermediate step variables
   cdef long indCellX, indCellY
   cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
   cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
@@ -222,11 +224,13 @@ def computeForceC(cfg, particles, fields, dem, dT):
 
       # add artificial viscosity
       vMeanx, vMeany, vMeanz = getVector(x, y, VX, VY, VZ, csz, interpOption)
-      # normal component of the velocity
+      # compute normal component of the velocity
       vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
+      # remove normal component (make sure vMean is in the tangent plane)
       vMeanx = vMeanx - vMeanNorm * nx
       vMeany = vMeany - vMeanNorm * ny
       vMeanz = vMeanz - vMeanNorm * nz
+      # compute particle to field velocity difference
       dvX = vMeanx - ux
       dvY = vMeany - uy
       dvZ = vMeanz - uz
@@ -241,11 +245,6 @@ def computeForceC(cfg, particles, fields, dem, dT):
       ux = ux / (1.0 + fDrag)
       uy = uy / (1.0 + fDrag)
       uz = uz / (1.0 + fDrag)
-
-      # get velocity magnitude and direction
-      uMag = norm(ux, uy, uz)
-      if uMag<velMagMin:
-        uMag = velMagMin
 
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
@@ -276,6 +275,9 @@ def computeForceC(cfg, particles, fields, dem, dT):
       forceZ[j] = forceZ[j] + gravAccTangZ * m
 
       # Calculating bottom shear and normal stress
+      # get new velocity magnitude (leave 0 if uMag is 0)
+      # this is important because uMag is first used to compute tau
+      uMag = norm(ux, uy, uz)
       if(effAccNorm > 0.0):
           # if fluid detatched
           # log.info('fluid detatched for particle %s', j)
@@ -293,6 +295,9 @@ def computeForceC(cfg, particles, fields, dem, dT):
             tau = 0.0
 
       # adding bottom shear resistance contribution
+      # make sure uMag is not 0
+      if uMag<velMagMin:
+        uMag = velMagMin
       forceBotTang = - areaPart * tau
       forceFrict[j] = forceFrict[j] - forceBotTang/uMag
 
@@ -672,8 +677,10 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef long[:] IndY = particles['indY']
   cdef int nrow = int(nrows)
   cdef int ncol = int(ncols)
-  cdef int Lx0, Ly0, Lx1, Ly1
-  cdef double f00, f01, f10, f11
+  # cdef int Lx0, Ly0, Lx1, Ly1
+  # cdef double f00, f01, f10, f11
+  cdef int Lxy[4]
+  cdef double w[4]
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart
   cdef double xllc = 0
   cdef double yllc = 0
@@ -690,36 +697,66 @@ def updateFieldsC(cfg, particles, dem, fields):
     uy = UY[j]
     uz = UZ[j]
     m = mass[j]
+    # # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+    # # find coordinates of the 4 nearest cornes on the raster
+    # # prepare for bilinear interpolation
+    # Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
+    #
+    # # add the component of the points value to the 4 neighbour grid points
+    # # start with the lower left
+    # MassBilinear[Ly0, Lx0] = MassBilinear[Ly0, Lx0] + m * f00
+    # FDBilinear[Ly0, Lx0] = FDBilinear[Ly0, Lx0] + m / (areaRaster[Ly0, Lx0] * rho) * f00
+    # MomBilinearX[Ly0, Lx0] = MomBilinearX[Ly0, Lx0] + m * ux * f00
+    # MomBilinearY[Ly0, Lx0] = MomBilinearY[Ly0, Lx0] + m * uy * f00
+    # MomBilinearZ[Ly0, Lx0] = MomBilinearZ[Ly0, Lx0] + m * uz * f00
+    # # lower right
+    # MassBilinear[Ly0, Lx1] = MassBilinear[Ly0, Lx1] + m * f10
+    # FDBilinear[Ly0, Lx1] = FDBilinear[Ly0, Lx1] + m / (areaRaster[Ly0, Lx1] * rho) * f10
+    # MomBilinearX[Ly0, Lx1] = MomBilinearX[Ly0, Lx1] + m * ux * f10
+    # MomBilinearY[Ly0, Lx1] = MomBilinearY[Ly0, Lx1] + m * uy * f10
+    # MomBilinearZ[Ly0, Lx1] = MomBilinearZ[Ly0, Lx1] + m * uz * f10
+    # # uper left
+    # MassBilinear[Ly1, Lx0] = MassBilinear[Ly1, Lx0] + m * f01
+    # FDBilinear[Ly1, Lx0] = FDBilinear[Ly1, Lx0] + m / (areaRaster[Ly1, Lx0] * rho) * f01
+    # MomBilinearX[Ly1, Lx0] = MomBilinearX[Ly1, Lx0] + m * ux * f01
+    # MomBilinearY[Ly1, Lx0] = MomBilinearY[Ly1, Lx0] + m * uy * f01
+    # MomBilinearZ[Ly1, Lx0] = MomBilinearZ[Ly1, Lx0] + m * uz * f01
+    # # and uper right
+    # MassBilinear[Ly1, Lx1] = MassBilinear[Ly1, Lx1] + m * f11
+    # FDBilinear[Ly1, Lx1] = FDBilinear[Ly1, Lx1] + m / (areaRaster[Ly1, Lx1] * rho) * f11
+    # MomBilinearX[Ly1, Lx1] = MomBilinearX[Ly1, Lx1] + m * ux * f11
+    # MomBilinearY[Ly1, Lx1] = MomBilinearY[Ly1, Lx1] + m * uy * f11
+    # MomBilinearZ[Ly1, Lx1] = MomBilinearZ[Ly1, Lx1] + m * uz * f11
+
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
-    Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
-
+    Lxy, w = getWeights(x, y, csz, interpOption)
     # add the component of the points value to the 4 neighbour grid points
     # start with the lower left
-    MassBilinear[Ly0, Lx0] = MassBilinear[Ly0, Lx0] + m * f00
-    FDBilinear[Ly0, Lx0] = FDBilinear[Ly0, Lx0] + m / (areaRaster[Ly0, Lx0] * rho) * f00
-    MomBilinearX[Ly0, Lx0] = MomBilinearX[Ly0, Lx0] + m * ux * f00
-    MomBilinearY[Ly0, Lx0] = MomBilinearY[Ly0, Lx0] + m * uy * f00
-    MomBilinearZ[Ly0, Lx0] = MomBilinearZ[Ly0, Lx0] + m * uz * f00
+    MassBilinear[Lxy[2], Lxy[0]] = MassBilinear[Lxy[2], Lxy[0]] + m * w[0]
+    FDBilinear[Lxy[2], Lxy[0]] = FDBilinear[Lxy[2], Lxy[0]] + m / (areaRaster[Lxy[2], Lxy[0]] * rho) * w[0]
+    MomBilinearX[Lxy[2], Lxy[0]] = MomBilinearX[Lxy[2], Lxy[0]] + m * ux * w[0]
+    MomBilinearY[Lxy[2], Lxy[0]] = MomBilinearY[Lxy[2], Lxy[0]] + m * uy * w[0]
+    MomBilinearZ[Lxy[2], Lxy[0]] = MomBilinearZ[Lxy[2], Lxy[0]] + m * uz * w[0]
     # lower right
-    MassBilinear[Ly0, Lx1] = MassBilinear[Ly0, Lx1] + m * f10
-    FDBilinear[Ly0, Lx1] = FDBilinear[Ly0, Lx1] + m / (areaRaster[Ly0, Lx1] * rho) * f10
-    MomBilinearX[Ly0, Lx1] = MomBilinearX[Ly0, Lx1] + m * ux * f10
-    MomBilinearY[Ly0, Lx1] = MomBilinearY[Ly0, Lx1] + m * uy * f10
-    MomBilinearZ[Ly0, Lx1] = MomBilinearZ[Ly0, Lx1] + m * uz * f10
+    MassBilinear[Lxy[2], Lxy[1]] = MassBilinear[Lxy[2], Lxy[1]] + m * w[1]
+    FDBilinear[Lxy[2], Lxy[1]] = FDBilinear[Lxy[2], Lxy[1]] + m / (areaRaster[Lxy[2], Lxy[1]] * rho) * w[1]
+    MomBilinearX[Lxy[2], Lxy[1]] = MomBilinearX[Lxy[2], Lxy[1]] + m * ux * w[1]
+    MomBilinearY[Lxy[2], Lxy[1]] = MomBilinearY[Lxy[2], Lxy[1]] + m * uy * w[1]
+    MomBilinearZ[Lxy[2], Lxy[1]] = MomBilinearZ[Lxy[2], Lxy[1]] + m * uz * w[1]
     # uper left
-    MassBilinear[Ly1, Lx0] = MassBilinear[Ly1, Lx0] + m * f01
-    FDBilinear[Ly1, Lx0] = FDBilinear[Ly1, Lx0] + m / (areaRaster[Ly1, Lx0] * rho) * f01
-    MomBilinearX[Ly1, Lx0] = MomBilinearX[Ly1, Lx0] + m * ux * f01
-    MomBilinearY[Ly1, Lx0] = MomBilinearY[Ly1, Lx0] + m * uy * f01
-    MomBilinearZ[Ly1, Lx0] = MomBilinearZ[Ly1, Lx0] + m * uz * f01
+    MassBilinear[Lxy[3], Lxy[0]] = MassBilinear[Lxy[3], Lxy[0]] + m * w[2]
+    FDBilinear[Lxy[3], Lxy[0]] = FDBilinear[Lxy[3], Lxy[0]] + m / (areaRaster[Lxy[3], Lxy[0]] * rho) * w[2]
+    MomBilinearX[Lxy[3], Lxy[0]] = MomBilinearX[Lxy[3], Lxy[0]] + m * ux * w[2]
+    MomBilinearY[Lxy[3], Lxy[0]] = MomBilinearY[Lxy[3], Lxy[0]] + m * uy * w[2]
+    MomBilinearZ[Lxy[3], Lxy[0]] = MomBilinearZ[Lxy[3], Lxy[0]] + m * uz * w[2]
     # and uper right
-    MassBilinear[Ly1, Lx1] = MassBilinear[Ly1, Lx1] + m * f11
-    FDBilinear[Ly1, Lx1] = FDBilinear[Ly1, Lx1] + m / (areaRaster[Ly1, Lx1] * rho) * f11
-    MomBilinearX[Ly1, Lx1] = MomBilinearX[Ly1, Lx1] + m * ux * f11
-    MomBilinearY[Ly1, Lx1] = MomBilinearY[Ly1, Lx1] + m * uy * f11
-    MomBilinearZ[Ly1, Lx1] = MomBilinearZ[Ly1, Lx1] + m * uz * f11
+    MassBilinear[Lxy[3], Lxy[1]] = MassBilinear[Lxy[3], Lxy[1]] + m * w[3]
+    FDBilinear[Lxy[3], Lxy[1]] = FDBilinear[Lxy[3], Lxy[1]] + m / (areaRaster[Lxy[3], Lxy[1]] * rho) * w[3]
+    MomBilinearX[Lxy[3], Lxy[1]] = MomBilinearX[Lxy[3], Lxy[1]] + m * ux * w[3]
+    MomBilinearY[Lxy[3], Lxy[1]] = MomBilinearY[Lxy[3], Lxy[1]] + m * uy * w[3]
+    MomBilinearZ[Lxy[3], Lxy[1]] = MomBilinearZ[Lxy[3], Lxy[1]] + m * uz * w[3]
 
   for i in range(ncol):
     for j in range(nrow):
@@ -1458,7 +1495,8 @@ def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Py
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (int, int, int, int, double, double, double, double) getWeights(double x, double y, double csz, int interpOption):
+cdef (int [4], double [4]) getWeights(double x, double y, double csz, int interpOption):
+# cdef (int, int, int, int, double, double, double, double) getWeights(double x, double y, double csz, int interpOption):
   """ Prepare weight for interpolation from grid to single point location
 
   3 Options available : -0: nearest neighbour interpolation
@@ -1485,8 +1523,10 @@ cdef (int, int, int, int, double, double, double, double) getWeights(double x, d
       f00, f10, f01, f11: float
           corresponding weights
   """
-  cdef int Lx0, Ly0, Lx1, Ly1
-  cdef double f00, f10, f01, f11
+  cdef int Lxy[4]
+  cdef double w[4]
+  # cdef int Lx0, Ly0, Lx1, Ly1
+  # cdef double f00, f10, f01, f11
   cdef double Lx, Ly
   cdef double xllc = 0.
   cdef double yllc = 0.
@@ -1495,13 +1535,17 @@ cdef (int, int, int, int, double, double, double, double) getWeights(double x, d
   Lx = (x - xllc) / csz
   Ly = (y - yllc) / csz
   # find coordinates of the 4 nearest cornes on the raster
-  Lx0 = <int>math.floor(Lx)
-  Ly0 = <int>math.floor(Ly)
-  Lx1 = Lx0 + 1
-  Ly1 = Ly0 + 1
+  # Lx0 = <int>math.floor(Lx)
+  # Ly0 = <int>math.floor(Ly)
+  # Lx1 = Lx0 + 1
+  # Ly1 = Ly0 + 1
+  Lxy[0] = <int>math.floor(Lx)
+  Lxy[2] = <int>math.floor(Ly)
+  Lxy[1] = Lxy[0] + 1
+  Lxy[3] = Lxy[2] + 1
   # prepare for bilinear interpolation
-  dx = Lx - Lx0
-  dy = Ly - Ly0
+  dx = Lx - Lxy[0]
+  dy = Ly - Lxy[2]
 
   if interpOption == 0:
     dx = 1.*math.round(dx)
@@ -1511,21 +1555,27 @@ cdef (int, int, int, int, double, double, double, double) getWeights(double x, d
     dy = 1./2.
 
   # lower left
-  f00 = (1-dx)*(1-dy)
+  # f00 = (1-dx)*(1-dy)
+  w[0] = (1-dx)*(1-dy)
   # lower right
-  f10 = dx*(1-dy)
+  # f10 = dx*(1-dy)
+  w[1] = dx*(1-dy)
   # uper left
-  f01 = (1-dx)*dy
+  # f01 = (1-dx)*dy
+  w[2] = (1-dx)*dy
   # and uper right
-  f11 = dx*dy
+  # f11 = dx*dy
+  w[3] = dx*dy
 
-  return Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11
-  # return Lxy, w
+  # return Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11
+  return Lxy, w
 
 
 def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeightspy() to Python
-  Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
-  return np.asarray(Lx0), np.asarray(Lx1), np.asarray(Ly0), np.asarray(Ly1), np.asarray(f00), np.asarray(f10), np.asarray(f01), np.asarray(f11)
+  # Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
+  # return np.asarray(Lx0), np.asarray(Lx1), np.asarray(Ly0), np.asarray(Ly1), np.asarray(f00), np.asarray(f10), np.asarray(f01), np.asarray(f11)
+  Lxy, w = getWeights(x, y, csz, interpOption)
+  return np.asarray(Lxy[0]), np.asarray(Lxy[1]), np.asarray(Lxy[2]), np.asarray(Lxy[3]), np.asarray(w[0]), np.asarray(w[1]), np.asarray(w[2]), np.asarray(w[3])
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -1581,13 +1631,20 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz, int interp
       v: float
           interpolated scalar at position (x, y)
   """
-  cdef int Lx0, Ly0, Lx1, Ly1
-  cdef double f00, f01, f10, f11
-  Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
-  cdef double v = (V[Ly0, Lx0]*f00 +
-                   V[Ly0, Lx1]*f10 +
-                   V[Ly1, Lx0]*f01 +
-                   V[Ly1, Lx1]*f11)
+  # cdef int Lx0, Ly0, Lx1, Ly1
+  # cdef double f00, f01, f10, f11
+  # Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
+  # cdef double v = (V[Ly0, Lx0]*f00 +
+  # V[Ly0, Lx1]*f10 +
+  # V[Ly1, Lx0]*f01 +
+  # V[Ly1, Lx1]*f11)
+  cdef int Lxy[4]
+  cdef double w[4]
+  Lxy, w = getWeights(x, y, csz, interpOption)
+  cdef double v = (V[Lxy[2], Lxy[0]]*w[0] +
+                   V[Lxy[2], Lxy[1]]*w[1] +
+                   V[Lxy[3], Lxy[0]]*w[2] +
+                   V[Lxy[3], Lxy[1]]*w[3])
 
 
   return v
@@ -1632,21 +1689,37 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
       nz: float
           z component of the interpolated vector field at position (x, y)
   """
-  cdef int Lx0, Ly0, Lx1, Ly1
-  cdef double f00, f01, f10, f11
-  Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
-  cdef double nx = (Nx[Ly0, Lx0]*f00 +
-                    Nx[Ly0, Lx1]*f10 +
-                    Nx[Ly1, Lx0]*f01 +
-                    Nx[Ly1, Lx1]*f11)
-  cdef double ny = (Ny[Ly0, Lx0]*f00 +
-                    Ny[Ly0, Lx1]*f10 +
-                    Ny[Ly1, Lx0]*f01 +
-                    Ny[Ly1, Lx1]*f11)
-  cdef double nz = (Nz[Ly0, Lx0]*f00 +
-                    Nz[Ly0, Lx1]*f10 +
-                    Nz[Ly1, Lx0]*f01 +
-                    Nz[Ly1, Lx1]*f11)
+  # cdef int Lx0, Ly0, Lx1, Ly1
+  # cdef double f00, f01, f10, f11
+  # Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
+  # cdef double nx = (Nx[Ly0, Lx0]*f00 +
+  #                   Nx[Ly0, Lx1]*f10 +
+  #                   Nx[Ly1, Lx0]*f01 +
+  #                   Nx[Ly1, Lx1]*f11)
+  # cdef double ny = (Ny[Ly0, Lx0]*f00 +
+  #                   Ny[Ly0, Lx1]*f10 +
+  #                   Ny[Ly1, Lx0]*f01 +
+  #                   Ny[Ly1, Lx1]*f11)
+  # cdef double nz = (Nz[Ly0, Lx0]*f00 +
+  #                   Nz[Ly0, Lx1]*f10 +
+  #                   Nz[Ly1, Lx0]*f01 +
+  #                   Nz[Ly1, Lx1]*f11)
+
+  cdef int Lxy[4]
+  cdef double w[4]
+  Lxy, w = getWeights(x, y, csz, interpOption)
+  cdef double nx = (Nx[Lxy[2], Lxy[0]]*w[0] +
+                   Nx[Lxy[2], Lxy[1]]*w[1] +
+                   Nx[Lxy[3], Lxy[0]]*w[2] +
+                   Nx[Lxy[3], Lxy[1]]*w[3])
+  cdef double ny = (Ny[Lxy[2], Lxy[0]]*w[0] +
+                   Ny[Lxy[2], Lxy[1]]*w[1] +
+                   Ny[Lxy[3], Lxy[0]]*w[2] +
+                   Ny[Lxy[3], Lxy[1]]*w[3])
+  cdef double nz = (Nz[Lxy[2], Lxy[0]]*w[0] +
+                   Nz[Lxy[2], Lxy[1]]*w[1] +
+                   Nz[Lxy[3], Lxy[0]]*w[2] +
+                   Nz[Lxy[3], Lxy[1]]*w[3])
   return nx, ny, nz
 
 @cython.cdivision(True)

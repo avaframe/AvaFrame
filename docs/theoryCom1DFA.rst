@@ -280,7 +280,7 @@ Introducing those properties in :eq:`sigma33`, leads to
 .. math::
    \overline{\sigma^*}_{33} = \left(g^*_3-\lambda\frac{\partial^2{b^*}}{\partial{x_1^{*2}}}\,\overline{u}_1^{*2}\right)
    (s^*-x^*_3) + \underbrace{\varepsilon\oint\limits_{\partial A_b^*}\left(\int\limits_{x^*_3}^{s^*}\sigma^*_{31}\,\mathrm{d}x^*_3\right)\,\mathrm{d}l^*}_{O(\varepsilon)}.
-..   :label: sigma33star
+   :label: sigma33star
 
 The height, H of dense flow avalanches is assumed to me small compared
 to its length, L. Meaning that the equations are examined in the limit
