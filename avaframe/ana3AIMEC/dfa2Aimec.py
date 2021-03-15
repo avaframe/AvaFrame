@@ -154,7 +154,7 @@ def dfaComp2Aimec(avaDir, cfgSetup):
     return pathDict
 
 
-def mainDfa2Aimec(avaDir, cfgSetup, comModule='com1DFA'):
+def mainDfa2Aimec(avaDir, comModule='com1DFA'):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec

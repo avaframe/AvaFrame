@@ -20,8 +20,8 @@ def test_analyzeArea(capfd):
     dataMass1 = os.path.join(dirname, 'data', '000001.txt')
     cfgPath = {}
     cfgPath['projectName'] = 'NameOfAvalanche'
-    cfgPath['pressurefileList'] = [dataRef, dataSim]
-    cfgPath['massfileList'] = [dataMass, dataMass1]
+    cfgPath['ppr'] = [dataRef, dataSim]
+    cfgPath['mb'] = [dataMass, dataMass1]
     pathResult = os.path.join(dirname, 'data')
     cfgPath['pathResult'] = pathResult
     cfgPath['dirName'] = 'testAIMEC'
@@ -85,11 +85,17 @@ def test_makeDomainTransfo(capfd):
     demSource = glob.glob(os.path.join(dirname, '*.asc'))
     cfgPath['demSource'] = ''.join(demSource)
 
-    cfgPath['pressurefileList'] = ana3AIMEC.getFileList(pathData)
-    cfgPath['depthfileList'] = ana3AIMEC.getFileList(pathData)
-    cfgPath['speedfileList'] = ana3AIMEC.getFileList(pathData)
+    cfgPath['ppr'] = [os.path.join(pathData, 'testAimec_0.asc'), os.path.join(pathData, 'testAimec_1.asc'),
+                      os.path.join(pathData, 'testAimec_2.asc'), os.path.join(pathData, 'testAimec_3.asc'),
+                      os.path.join(pathData, 'testAimec_4.asc')]
+    cfgPath['pfd'] = [os.path.join(pathData, 'testAimec_0.asc'), os.path.join(pathData, 'testAimec_1.asc'),
+                      os.path.join(pathData, 'testAimec_2.asc'), os.path.join(pathData, 'testAimec_3.asc'),
+                      os.path.join(pathData, 'testAimec_4.asc')]
+    cfgPath['pfv'] = [os.path.join(pathData, 'testAimec_0.asc'), os.path.join(pathData, 'testAimec_1.asc'),
+                      os.path.join(pathData, 'testAimec_2.asc'), os.path.join(pathData, 'testAimec_3.asc'),
+                      os.path.join(pathData, 'testAimec_4.asc')]
 
-    cfgPath['massfileList'] = [os.path.join(dirname, '000001.txt')]*5
+    cfgPath['mb'] = [os.path.join(dirname, '000001.txt')]*5
 
     pathResult = os.path.join(dirname, 'results')
     cfgPath['pathResult'] = pathResult
@@ -106,7 +112,7 @@ def test_makeDomainTransfo(capfd):
     cfgFlags['savePlot'] = 'False'
     cfgSetup['startOfRunoutAngle'] = '0'
     cfgSetup['domainWidth'] = '160'
-    cfgSetup['pressureLimit'] = '0.9'
+    cfgSetup['ppr'] = '0.9'
 
     rasterTransfo = ana3AIMEC.makeDomainTransfo(cfgPath, cfgSetup)
 
@@ -120,7 +126,7 @@ def test_makeDomainTransfo(capfd):
     newRasters = {}
     # assign pressure data
     interpMethod = cfgSetup['interpMethod']
-    newRasters['newRasterPressure'] = ana3AIMEC.assignData(cfgPath['pressurefileList'], rasterTransfo, interpMethod)
+    newRasters['newRasterPressure'] = ana3AIMEC.assignData(cfgPath['ppr'], rasterTransfo, interpMethod)
     newRasters['newRasterDepth'] = newRasters['newRasterPressure']
     newRasters['newRasterSpeed'] = newRasters['newRasterPressure']
     newRasterDEM = ana3AIMEC.assignData([cfgPath['demSource']], rasterTransfo,
@@ -132,7 +138,7 @@ def test_makeDomainTransfo(capfd):
     resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
 
     for i in range(5):
-        rasterSource = cfgPath['pressurefileList'][i]
+        rasterSource = cfgPath['ppr'][i]
         sourceData = IOf.readRaster(rasterSource)
         rasterdata = sourceData['rasterData']
         error = (resAnalysis['TP'][i]+resAnalysis['FP'][i]-np.nansum(rasterdata))/(
