@@ -43,7 +43,7 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 cfgSetup = cfg['AIMECSETUP']
 
 # Setup input from com1DFA
-pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, cfgSetup)
+pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir)
 
 # TODO: define referenceFile
 pathDict['numSim'] = len(pathDict['ppr'])
