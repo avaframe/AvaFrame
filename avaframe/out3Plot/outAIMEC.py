@@ -491,15 +491,17 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     fid.write('\n')
     # write table values
     for i in range(np.shape(output)[1]):
-        tmp = os.path.basename(dataName[i])
-        name = os.path.splitext(tmp)[0]
-        fid.write('{:<15s}'.format(name))
+        fid.write('{:<15d}'.format(i))
         for j in range(np.shape(output)[0]):
             try:
                 fid.write('{:<15.3f}'.format(output[j][i]))
             except:
                 fid.write('{:<15}'.format('NaN'))
         fid.write('\n')
+    for i in range(np.shape(output)[1]):
+        tmp = os.path.basename(dataName[i])
+        name = os.path.splitext(tmp)[0]
+        fid.write('file number: %d = %s \n' %(i, name))
     fid.close()
 
     log.info('File written: %s' % outname)

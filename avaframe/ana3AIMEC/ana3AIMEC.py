@@ -97,6 +97,92 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
 # Aimec main
 # -----------------------------------------------------------
 
+def AIMEC2Report(cfgPath, cfg):
+    """ Main logic for AIMEC postprocessing
+
+    Reads the required files location for ana3AIMEC postpocessing
+    given an avalanche directory
+
+    Parameters
+    ----------
+    cfgPath : dict
+        dictionary with paths to data to analyze
+    cfg : configparser
+        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
+
+    Returns
+    -------
+    rasterTransfo: dict
+        domain transformation information
+    newRasters: dict
+        raster data expressed in the new coordinates
+    resAnalysis: dict
+        results of ana3AIMEC analysis
+    """
+
+    # Extract input config parameters
+    cfgSetup = cfg['AIMECSETUP']
+    cfgFlags = cfg['FLAGS']
+    pressureLimit = float(cfgSetup['pressureLimit'])
+    interpMethod = cfgSetup['interpMethod']
+
+    log.info('Prepare data for post-ptocessing')
+    # Make domain transformation
+    log.info("Creating new deskewed raster and preparing new raster assignment function")
+    rasterTransfo = makeDomainTransfo(cfgPath, cfgSetup)
+
+    ###########################################################################
+    # visualisation
+    # TODO: needs to be moved somewhere else
+    # read reference file
+    nRef = cfgPath['referenceFile']
+    rasterSource = cfgPath['ppr'][nRef]
+
+    pressureRaster = IOf.readRaster(rasterSource)
+    slRaster = transform(rasterSource, rasterTransfo, interpMethod)
+    inputData = {}
+    inputData['slRaster'] = slRaster
+    inputData['xyRaster'] = pressureRaster['rasterData']
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags)
+    #################################################################
+
+    # transform pressure_data, depth_data and speed_data in new raster
+    newRasters = {}
+    # assign pressure data
+    log.info("Assigning pressure data to deskewed raster")
+    newRasters['newRasterPressure'] = assignData(cfgPath['ppr'],
+                                                 rasterTransfo, interpMethod)
+    # assign depth data
+    log.info("Assigning depth data to deskewed raster")
+    newRasters['newRasterDepth'] = assignData(cfgPath['pfd'],
+                                              rasterTransfo, interpMethod)
+    # assign speed data
+    if cfgPath['pfv']:
+        log.info("Assigning speed data to deskewed raster")
+        newRasters['newRasterSpeed'] = assignData(cfgPath['pfv'],
+                                                  rasterTransfo, interpMethod)
+
+    # assign dem data
+    log.info("Assigning dem data to deskewed raster")
+    newRasterDEM = assignData([cfgPath['demSource']], rasterTransfo,
+                              interpMethod)
+    newRasters['newRasterDEM'] = newRasterDEM[0]
+
+    # Analyze data
+    log.info('Analyzing data in path coordinate system')
+    resAnalysis = postProcessAIMEC(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
+
+    # -----------------------------------------------------------
+    # result visualisation + report
+    # -----------------------------------------------------------
+    log.info('Visualisation of results')
+    outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
+    if cfgPath['numSim']==2:
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
+        outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
+
+    return rasterTransfo, newRasters, resAnalysis
+
 
 def mainAIMEC(cfgPath, cfg):
     """ Main logic for AIMEC postprocessing
