@@ -157,10 +157,9 @@ def AIMEC2Report(cfgPath, cfg):
     newRasters['newRasterDepth'] = assignData(cfgPath['pfd'],
                                               rasterTransfo, interpMethod)
     # assign speed data
-    if cfgPath['pfv']:
-        log.info("Assigning speed data to deskewed raster")
-        newRasters['newRasterSpeed'] = assignData(cfgPath['pfv'],
-                                                  rasterTransfo, interpMethod)
+    log.info("Assigning speed data to deskewed raster")
+    newRasters['newRasterSpeed'] = assignData(cfgPath['pfv'],
+                                              rasterTransfo, interpMethod)
 
     # assign dem data
     log.info("Assigning dem data to deskewed raster")
@@ -170,16 +169,14 @@ def AIMEC2Report(cfgPath, cfg):
 
     # Analyze data
     log.info('Analyzing data in path coordinate system')
-    resAnalysis = postProcessAIMEC(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
+    resAnalysis = postProcessAIMECReport(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of results')
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
-    if cfgPath['numSim']==2:
-        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
-        outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
+    outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
 
     return rasterTransfo, newRasters, resAnalysis
 
@@ -869,6 +866,72 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis['TN'] = TN
 
     return resAnalysis
+
+def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
+    """ Analyse pressure and depth transformed data
+
+    Analyse pressure depth and speed.
+    Calculate runout, Max Peak Pressure, Average PP...
+    Get mass and entrainement
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        transformation information
+    pLim: float
+        numerical value of the pressure limit to use
+    newRasters: dict
+        dictionary containing pressure, velocity and flow depth rasters after
+        transformation
+    cfgPath: dict
+        path to data to analyse
+
+    Returns
+    -------
+    resAnalysis: dict
+        resAnalysis dictionnary containing all results:
+
+    """
+    # read inputs
+    fnameMass = cfgPath['mb']
+    dataPressure = newRasters['newRasterPressure']
+    dataDepth = newRasters['newRasterDepth']
+    dataSpeed = newRasters['newRasterSpeed']
+    transformedDEMRasters = newRasters['newRasterDEM']
+
+    maxPPRCrossMax, PPRCrossMax, PPRCrossMean = analyzeField(rasterTransfo, dataPressure, 'ppr')
+    maxPFDCrossMax, PFDCrossMax, PFDCrossMean = analyzeField(rasterTransfo, dataDepth, 'pfd')
+    maxPFVCrossMax, PFVCrossMax, PFVCrossMean = analyzeField(rasterTransfo, dataSpeed, 'pfv')
+
+    runout, runoutMean, elevRel, deltaH = computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEMRasters)
+
+    runoutLength = runout[0]
+    TP, FN, FP, TN = analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
+
+    # affect values to output dictionary
+    resAnalysis = {}
+    resAnalysis['runout'] = runout
+    resAnalysis['runoutMean'] = runoutMean
+    resAnalysis['MMPPR'] = maxPPRCrossMax
+    resAnalysis['MMPFD'] = maxPFDCrossMax
+    resAnalysis['MMPFV'] = maxPFVCrossMax
+    resAnalysis['elevRel'] = elevRel
+    resAnalysis['deltaH'] = deltaH
+    resAnalysis['PPRCrossMax'] = PPRCrossMax
+    resAnalysis['PPRCrossMean'] = PPRCrossMean
+    resAnalysis['PFDCrossMax'] = PFDCrossMax
+    resAnalysis['PFDCrossMean'] = PFDCrossMean
+    resAnalysis['PFVCrossMax'] = PFVCrossMax
+    resAnalysis['PFVCrossMean'] = PFVCrossMean
+    resAnalysis['pressureLimit'] = pLim
+    resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
+    resAnalysis['TP'] = TP
+    resAnalysis['FN'] = FN
+    resAnalysis['FP'] = FP
+    resAnalysis['TN'] = TN
+
+    return resAnalysis
+
 
 
 def analyzeMass(fnameMass):
