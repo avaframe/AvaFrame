@@ -17,7 +17,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def extractMBInfo(avaDir, pathDict, simNameInput=''):
+def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
     """ Extract the mass balance info from the log file """
 
     if simNameInput != '':
@@ -164,7 +164,7 @@ def dfaComp2Aimec(avaDir, cfgSetup):
                                 if comMod == 'ref':
                                     pathDict = getRefMB(testName, pathDict, simNameRef)
                                 elif comMod == 'com1DFA':
-                                    pathDict = extractMBInfo(avaDir, pathDict, simNameInput=simNameRef)
+                                    pathDict = extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=simNameRef)
                                 else:
                                     pathDict = getMBInfo(avaDir, pathDict, simName=simNameRef)
                 simNamesMatch[simNameRef] = True
@@ -190,7 +190,7 @@ def mainDfa2Aimec(avaDir, comModule='com1DFA'):
 
     # Extract mb info
     if comModule == 'com1DFA':
-        pathDict = extractMBInfo(avaDir, pathDict)
+        pathDict = extractCom1DFAMBInfo(avaDir, pathDict)
     elif comModule == 'com1DFAPy':
         pathDict = getMBInfo(avaDir, pathDict)
 
