@@ -78,20 +78,8 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
     cfgPath['projectName'] = projectName
     pathName = os.path.basename(profileLayer[0])
     cfgPath['pathName'] = pathName
-    #cfgPath['dirName'] = dirName
-
 
     return cfgPath
-
-
-# def getFileList(path2Folder):
-#     """ Get sorted list of all files in folder path2Folder"""
-#     fileList = [path2Folder +
-#                 os.path.sep +
-#                 str(name) for name in
-#                 sorted(os.listdir(path2Folder))
-#                 if os.path.isfile(os.path.join(path2Folder, name))]
-#     return fileList
 
 # -----------------------------------------------------------
 # Aimec main
@@ -175,8 +163,8 @@ def AIMEC2Report(cfgPath, cfg):
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
-    outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
-    outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
+    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
+    resAnalysis['slCompPlot'] = plotName
 
     return rasterTransfo, newRasters, resAnalysis
 
@@ -832,7 +820,7 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = analyzeMass(fnameMass)
 
     runoutLength = runout[0]
-    TP, FN, FP, TN = analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
+    TP, FN, FP, TN, _ = analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}
@@ -906,7 +894,7 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     runout, runoutMean, elevRel, deltaH = computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEMRasters)
 
     runoutLength = runout[0]
-    TP, FN, FP, TN = analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
+    TP, FN, FP, TN, compPlotPath = analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}
@@ -929,6 +917,7 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis['FN'] = FN
     resAnalysis['FP'] = FP
     resAnalysis['TN'] = TN
+    resAnalysis['areasPlot'] = compPlotPath
 
     return resAnalysis
 
@@ -1221,8 +1210,10 @@ def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFla
         inputs['newRasterMask'] = newRasterData
         inputs['i'] = i
 
-        outAimec.visuComparison(rasterTransfo, inputs, cfgPath,
-                                cfgFlags)
+        # only plot comparisons of simulations to reference
+        if i != nRef:
+            compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, cfgPath,
+                                    cfgFlags)
 
         tpInd = np.where((refMask[nStart:] == 1) &
                          (newRasterData[nStart:] == 1))
@@ -1250,7 +1241,7 @@ def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFla
         log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
             *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
 
-    return TP, FN, FP, TN
+    return TP, FN, FP, TN, compPlotPath
 
 
 def readWrite(fname_ent, time):

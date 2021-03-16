@@ -107,7 +107,6 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     # Get input data
     # read paths
     projectName = cfgPath['projectName']
-    #dirName = cfgPath['dirName']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
@@ -155,6 +154,10 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
                             str(int(plim)), 'slComparison'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
+    outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
+
+    return outFilePath
+
 
 def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
     """
@@ -164,7 +167,6 @@ def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     # Get input data
     # read paths
     projectName = cfgPath['projectName']
-    #dirName = cfgPath['dirName']
     nRef = cfgPath['referenceFile']
     # read data
     s = rasterTransfo['s']
@@ -238,7 +240,6 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
     # Get input data
     # read paths
     projectName = cfgPath['projectName']
-    #dirName = cfgPath['dirName']
     # read data
     entMassArray = resAnalysis['entMassArray']
     totalMassArray = resAnalysis['totalMassArray']
@@ -392,14 +393,22 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
     ax2.set_title(
         'Difference between current and reference in the RunOut area' + '\n' + 'Blue = FN, Red = FP')
+
+    if cfgPath['compType'][0] == 'comModules':
+        namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
+        pU.putAvaNameOnPlot(ax2, namePrint)
     im.set_clim(vmin=-0.000000001, vmax=0.000000001)
     ax2.set_ylim([s[indStartOfRunout], y_lim])
     plt.subplots_adjust(wspace=0.3)
 
-    outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  str(i), 'comparisonToReference'])
+    outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  'sim', str(i), 'comparisonToReference'])
 
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
+
+    outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
+    
+    return outFilePath
 
 
 def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
@@ -410,7 +419,6 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     ####################################
     # Get input data
     projectName = cfgPath['projectName']
-    #dirName = cfgPath['dirName']
     pathResult = cfgPath['pathResult']
     pathName = cfgPath['pathName']
     demName = os.path.basename(cfgPath['demSource'])

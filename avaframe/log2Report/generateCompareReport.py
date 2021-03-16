@@ -15,7 +15,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def copyPlots(avaName, testName, outDir, plotListRep, rel):
+def copyQuickPlots(avaName, testName, outDir, plotListRep, rel):
     """ copy the quick plots to report directory """
 
     plotPaths = {}
@@ -27,6 +27,17 @@ def copyPlots(avaName, testName, outDir, plotListRep, rel):
 
     return plotPaths
 
+def copyAimecPlots(plotFiles , testName, outDir, plotPaths):
+    """ copy the quick plots to report directory """
+
+    for pFile in plotFiles:
+        name = os.path.basename(pFile)
+        plotName =  os.path.join(outDir, '%s_%s.png' % (testName, name))
+        shutil.copy2(pFile, plotName)
+        log.info('Copied: %s to %s' % (pFile, plotName))
+        plotPaths[name] = plotName
+
+    return plotPaths
 
 def makeLists(simDict, benchDict):
     """ Create a list for table creation """
@@ -127,16 +138,17 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
             if value != 'type':
                 pfile.write('##### Figure:   %s \n' % value)
                 pfile.write(' \n')
-                maxDiff = max(abs(float(reportD['Simulation Difference'][value][2])),
-                                 abs(float(reportD['Simulation Difference'][value][0])))
-                maxVal = float(reportD['Simulation Stats'][value][0])
-                if maxDiff < (-1.0*diffLim*maxVal) or maxDiff > (diffLim*maxVal):
-                    textString1 = '<span style="color:red"> Warning absolute difference exceeds the tolerance of %.0f percent of %s-max value (%.2f) </span>' % (100.*diffLim, value, maxVal)
-                    textString2 = '<span style="color:red"> Difference is: Max = %0.2f, Mean = %.02f and Min = %.02f </span>' % (reportD['Simulation Difference'][value][0],
-                                 reportD['Simulation Difference'][value][1], reportD['Simulation Difference'][value][2])
-                    pfile.write(' %s \n' % textString1)
-                    pfile.write(' %s \n' % textString2)
-                    pfile.write(' \n')
+                if value == 'ppr' or value == 'pfd' or value == 'pfv':
+                    maxDiff = max(abs(float(reportD['Simulation Difference'][value][2])),
+                                     abs(float(reportD['Simulation Difference'][value][0])))
+                    maxVal = float(reportD['Simulation Stats'][value][0])
+                    if maxDiff < (-1.0*diffLim*maxVal) or maxDiff > (diffLim*maxVal):
+                        textString1 = '<span style="color:red"> Warning absolute difference exceeds the tolerance of %.0f percent of %s-max value (%.2f) </span>' % (100.*diffLim, value, maxVal)
+                        textString2 = '<span style="color:red"> Difference is: Max = %0.2f, Mean = %.02f and Min = %.02f </span>' % (reportD['Simulation Difference'][value][0],
+                                     reportD['Simulation Difference'][value][1], reportD['Simulation Difference'][value][2])
+                        pfile.write(' %s \n' % textString1)
+                        pfile.write(' %s \n' % textString2)
+                        pfile.write(' \n')
                 pfile.write('![%s](%s) \n' % (value, reportD['Simulation Results'][value]))
                 pfile.write(' \n')
                 pfile.write(' \n')
