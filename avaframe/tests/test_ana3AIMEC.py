@@ -26,6 +26,7 @@ def test_analyzeArea(capfd):
     cfgPath['pathResult'] = pathResult
     cfgPath['dirName'] = 'testAIMEC'
     cfgPath['referenceFile'] = 0
+    cfgPath['compType'] = ['singleModule', 'com1DFA']
 
     cfg = cfgUtils.getModuleConfig(test_logUtils)
     cfgFlags = cfg['FLAGS']
@@ -105,6 +106,7 @@ def test_makeDomainTransfo(capfd):
     cfgPath['pathName'] = pathName
     cfgPath['dirName'] = 'com1DFA'
     cfgPath['referenceFile'] = 0
+    cfgPath['compType'] = ['singleModule', 'com1DFA']
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
