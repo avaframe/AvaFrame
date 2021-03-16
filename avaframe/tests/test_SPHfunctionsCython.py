@@ -19,6 +19,7 @@ def test_normalizeC(capfd):
     norme2 = DFAfunC.norm2py(x, y, z)
     norme2 = np.asarray(norme2)
     xn, yn, zn = DFAfunC.normalizepy(x, y, z)
+    print(xn, yn, zn)
     atol = 1e-10
     assert norme == np.sqrt(3.)
     assert norme2 == 3.

@@ -731,7 +731,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
-    Lxy, w = getWeights(x, y, csz, interpOption)
+    getWeights(x, y, csz, interpOption, Lxy, w)
     # add the component of the points value to the 4 neighbour grid points
     # start with the lower left
     MassBilinear[Lxy[2], Lxy[0]] = MassBilinear[Lxy[2], Lxy[0]] + m * w[0]
@@ -1495,7 +1495,7 @@ def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Py
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (int [4], double [4]) getWeights(double x, double y, double csz, int interpOption):
+cdef void getWeights(double x, double y, double csz, int interpOption, int *Lxy, double *w):
 # cdef (int, int, int, int, double, double, double, double) getWeights(double x, double y, double csz, int interpOption):
   """ Prepare weight for interpolation from grid to single point location
 
@@ -1523,10 +1523,6 @@ cdef (int [4], double [4]) getWeights(double x, double y, double csz, int interp
       f00, f10, f01, f11: float
           corresponding weights
   """
-  cdef int Lxy[4]
-  cdef double w[4]
-  # cdef int Lx0, Ly0, Lx1, Ly1
-  # cdef double f00, f10, f01, f11
   cdef double Lx, Ly
   cdef double xllc = 0.
   cdef double yllc = 0.
@@ -1535,10 +1531,6 @@ cdef (int [4], double [4]) getWeights(double x, double y, double csz, int interp
   Lx = (x - xllc) / csz
   Ly = (y - yllc) / csz
   # find coordinates of the 4 nearest cornes on the raster
-  # Lx0 = <int>math.floor(Lx)
-  # Ly0 = <int>math.floor(Ly)
-  # Lx1 = Lx0 + 1
-  # Ly1 = Ly0 + 1
   Lxy[0] = <int>math.floor(Lx)
   Lxy[2] = <int>math.floor(Ly)
   Lxy[1] = Lxy[0] + 1
@@ -1555,26 +1547,20 @@ cdef (int [4], double [4]) getWeights(double x, double y, double csz, int interp
     dy = 1./2.
 
   # lower left
-  # f00 = (1-dx)*(1-dy)
   w[0] = (1-dx)*(1-dy)
   # lower right
-  # f10 = dx*(1-dy)
   w[1] = dx*(1-dy)
   # uper left
-  # f01 = (1-dx)*dy
   w[2] = (1-dx)*dy
   # and uper right
-  # f11 = dx*dy
   w[3] = dx*dy
 
-  # return Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11
-  return Lxy, w
 
 
 def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeightspy() to Python
-  # Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
-  # return np.asarray(Lx0), np.asarray(Lx1), np.asarray(Ly0), np.asarray(Ly1), np.asarray(f00), np.asarray(f10), np.asarray(f01), np.asarray(f11)
-  Lxy, w = getWeights(x, y, csz, interpOption)
+  cdef int Lxy[4]
+  cdef double w[4]
+  getWeights(x, y, csz, interpOption, Lxy, w)
   return np.asarray(Lxy[0]), np.asarray(Lxy[1]), np.asarray(Lxy[2]), np.asarray(Lxy[3]), np.asarray(w[0]), np.asarray(w[1]), np.asarray(w[2]), np.asarray(w[3])
 
 @cython.boundscheck(False)
@@ -1640,7 +1626,7 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz, int interp
   # V[Ly1, Lx1]*f11)
   cdef int Lxy[4]
   cdef double w[4]
-  Lxy, w = getWeights(x, y, csz, interpOption)
+  getWeights(x, y, csz, interpOption, Lxy, w)
   cdef double v = (V[Lxy[2], Lxy[0]]*w[0] +
                    V[Lxy[2], Lxy[1]]*w[1] +
                    V[Lxy[3], Lxy[0]]*w[2] +
@@ -1707,7 +1693,7 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
 
   cdef int Lxy[4]
   cdef double w[4]
-  Lxy, w = getWeights(x, y, csz, interpOption)
+  getWeights(x, y, csz, interpOption, Lxy, w)
   cdef double nx = (Nx[Lxy[2], Lxy[0]]*w[0] +
                    Nx[Lxy[2], Lxy[1]]*w[1] +
                    Nx[Lxy[3], Lxy[0]]*w[2] +
