@@ -1248,7 +1248,7 @@ def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFla
         FP[i] = fp
         TN[i] = tn
 
-        log.info('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
+        log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
             *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
 
     return TP, FN, FP, TN
