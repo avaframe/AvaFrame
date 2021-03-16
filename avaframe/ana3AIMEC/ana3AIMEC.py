@@ -259,7 +259,7 @@ def mainAIMEC(cfgPath, cfg):
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
-    log.info('Visualisation of results')
+    log.info('Visualisation of AIMEC results')
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
     if cfgPath['numSim']==2:
         outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
