@@ -102,6 +102,7 @@ Theory
 .. only:: html
 
     * :doc:`theoryCom1DFA`
+    * :doc:`DFAnumerics`
     * :doc:`2_5DSPH`
 
 .. toctree::
@@ -110,6 +111,7 @@ Theory
    :caption: Theory
 
    theoryCom1DFA.rst
+   DFAnumerics.rst
    2_5DSPH.rst
 
 

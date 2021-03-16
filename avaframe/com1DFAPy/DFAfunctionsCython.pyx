@@ -214,13 +214,11 @@ def computeForceC(cfg, particles, fields, dem, dT):
       uz = UZ[j]
       indCellX = IndCellX[j]
       indCellY = IndCellY[j]
-      areaCell = areaRatser[indCellY, indCellX]
       # deduce area
       areaPart = m / (h * rho)
       # get normal at the particle location
       nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
-      nx, ny, nz = normalize(nx, ny, nz)
-
+      normalize(&nx, &ny, &nz)
 
       # add artificial viscosity
       vMeanx, vMeany, vMeanz = getVector(x, y, VX, VY, VZ, csz, interpOption)
@@ -250,12 +248,12 @@ def computeForceC(cfg, particles, fields, dem, dT):
       xEnd = x + dt * ux
       yEnd = y + dt * uy
       nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz, interpOption)
-      nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
+      normalize(&nxEnd, &nyEnd, &nzEnd)
       # get average of those normals
       nxAvg = nx + nxEnd
       nyAvg = ny + nyEnd
       nzAvg = nz + nzEnd
-      nxAvg, nyAvg, nzAvg = normalize(nxAvg, nyAvg, nzAvg)
+      normalize(&nxAvg, &nyAvg, &nzAvg)
 
       # acceleration due to curvature
       accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
@@ -312,14 +310,8 @@ def computeForceC(cfg, particles, fields, dem, dT):
       m = m + dm
       mass[j] = m
       dM[j] = dm
-      # update surfacic entrainment mass available
-      entrMassCell = entrMassCell - dm/areaCell
-      if entrMassCell < 0:
-        entrMassCell = 0
 
-      entrMassRaster[indCellY, indCellX] = entrMassCell
-
-      # speed loss due to energy loss
+      # speed loss due to energy loss due to entrained mass
       dEnergyEntr = areaEntrPart * entShearResistance + dm * entDefResistance
       dis = 1.0 - dEnergyEntr / (0.5 * m * (uMag*uMag + velMagMin))
       if dis < 0.0:
@@ -329,7 +321,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
       uy = uy * dis
       uz = uz * dis
 
-      # adding resistance force du to obstacles
+      # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
       cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag)
       forceFrict[j] = forceFrict[j] - cResPart
@@ -349,6 +341,19 @@ def computeForceC(cfg, particles, fields, dem, dT):
   particles['uz'] = np.asarray(UZ)
   particles['m'] = np.asarray(mass)
 
+  # update mass available for entrainement
+  # TODO: this allows to entrain more mass then available...
+  for j in range(Npart):
+    indCellX = IndCellX[j]
+    indCellY = IndCellY[j]
+    entrMassCell = entrMassRaster[indCellY, indCellX]
+    areaCell = areaRatser[indCellY, indCellX]
+    dm = dM[j]
+    # update surfacic entrainment mass available
+    entrMassCell = entrMassCell - dm/areaCell
+    if entrMassCell < 0:
+      entrMassCell = 0
+    entrMassRaster[indCellY, indCellX] = entrMassCell
   fields['entrMassRaster'] = np.asarray(entrMassRaster)
 
   return particles, force, fields
@@ -397,12 +402,6 @@ cdef (double, double) computeEntMassAndForce(double dt, double entrMassCell, dou
           ABotSwiped = width * uMag * dt
           dm = entrMassCell * ABotSwiped
           areaEntrPart = entrMassCell / rhoEnt
-
-      # adding force du to entrained mass
-      # Fent = width * (entShearResistance + dm / aEnt * entDefResistance)
-      # fEntX = fEntX + Fent * uxDir
-      # fEntY = fEntY + Fent * uyDir
-      # fEntZ = fEntZ + Fent * uzDir
 
   return dm, areaEntrPart
 
@@ -542,7 +541,10 @@ def updatePositionC(cfg, particles, dem, force):
     uyNew = uy + ForceDriveY * dt / m
     uzNew = uz + ForceDriveZ * dt / m
 
-    xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
+    xDir = uxNew
+    yDir = uyNew
+    zDir = uzNew
+    normalize(&xDir, &yDir, &zDir)
     uxNew = uxNew / (1.0 + dt * forceFrict[j] / m)
     uyNew = uyNew / (1.0 + dt * forceFrict[j] / m)
     uzNew = uzNew / (1.0 + dt * forceFrict[j] / m)
@@ -558,7 +560,7 @@ def updatePositionC(cfg, particles, dem, force):
     # make sure particle is on the mesh (recompute the z component)
     zNew = getScalar(xNew, yNew, Z, csz, interpOption)
     nx, ny, nz = getVector(xNew, yNew, Nx, Ny, Nz, csz, interpOption)
-    nx, ny, nz = normalize(nx, ny, nz)
+    normalize(&nx, &ny, &nz)
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity
@@ -697,37 +699,6 @@ def updateFieldsC(cfg, particles, dem, fields):
     uy = UY[j]
     uz = UZ[j]
     m = mass[j]
-    # # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-    # # find coordinates of the 4 nearest cornes on the raster
-    # # prepare for bilinear interpolation
-    # Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
-    #
-    # # add the component of the points value to the 4 neighbour grid points
-    # # start with the lower left
-    # MassBilinear[Ly0, Lx0] = MassBilinear[Ly0, Lx0] + m * f00
-    # FDBilinear[Ly0, Lx0] = FDBilinear[Ly0, Lx0] + m / (areaRaster[Ly0, Lx0] * rho) * f00
-    # MomBilinearX[Ly0, Lx0] = MomBilinearX[Ly0, Lx0] + m * ux * f00
-    # MomBilinearY[Ly0, Lx0] = MomBilinearY[Ly0, Lx0] + m * uy * f00
-    # MomBilinearZ[Ly0, Lx0] = MomBilinearZ[Ly0, Lx0] + m * uz * f00
-    # # lower right
-    # MassBilinear[Ly0, Lx1] = MassBilinear[Ly0, Lx1] + m * f10
-    # FDBilinear[Ly0, Lx1] = FDBilinear[Ly0, Lx1] + m / (areaRaster[Ly0, Lx1] * rho) * f10
-    # MomBilinearX[Ly0, Lx1] = MomBilinearX[Ly0, Lx1] + m * ux * f10
-    # MomBilinearY[Ly0, Lx1] = MomBilinearY[Ly0, Lx1] + m * uy * f10
-    # MomBilinearZ[Ly0, Lx1] = MomBilinearZ[Ly0, Lx1] + m * uz * f10
-    # # uper left
-    # MassBilinear[Ly1, Lx0] = MassBilinear[Ly1, Lx0] + m * f01
-    # FDBilinear[Ly1, Lx0] = FDBilinear[Ly1, Lx0] + m / (areaRaster[Ly1, Lx0] * rho) * f01
-    # MomBilinearX[Ly1, Lx0] = MomBilinearX[Ly1, Lx0] + m * ux * f01
-    # MomBilinearY[Ly1, Lx0] = MomBilinearY[Ly1, Lx0] + m * uy * f01
-    # MomBilinearZ[Ly1, Lx0] = MomBilinearZ[Ly1, Lx0] + m * uz * f01
-    # # and uper right
-    # MassBilinear[Ly1, Lx1] = MassBilinear[Ly1, Lx1] + m * f11
-    # FDBilinear[Ly1, Lx1] = FDBilinear[Ly1, Lx1] + m / (areaRaster[Ly1, Lx1] * rho) * f11
-    # MomBilinearX[Ly1, Lx1] = MomBilinearX[Ly1, Lx1] + m * ux * f11
-    # MomBilinearY[Ly1, Lx1] = MomBilinearY[Ly1, Lx1] + m * uy * f11
-    # MomBilinearZ[Ly1, Lx1] = MomBilinearZ[Ly1, Lx1] + m * uz * f11
-
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
@@ -1022,21 +993,21 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     uy = UY[j]
     uz = UZ[j]
     nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz, interpOption)
-    nx, ny, nz = normalize(nx, ny, nz)
+    normalize(&nx, &ny, &nz)
     gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
     uMag = norm(ux, uy, uz)
     if uMag < velMagMin:
         ux = 1
         uy = 0
         uz = -(1*nx + 0*ny) / nz
-        ux, uy, uz = normalize(ux, uy, uz)
+        normalize(&nx, &ny, &nz)
         K1 = 1
         K2 = 1
     else:
-        ux, uy, uz = normalize(ux, uy, uz)
+        normalize(&nx, &ny, &nz)
 
     uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
-    uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+    normalize(&uxOrtho, &uyOrtho, &uzOrtho)
 
     g1 = nx/(nz)
     g2 = ny/(nz)
@@ -1305,7 +1276,7 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
     indx = indX[j]
     indy = indY[j]
     nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz, interpOption)
-    nx, ny, nz = normalize(nx, ny, nz)
+    normalize(&nx, &ny, &nz)
 
     # startTime = time.time()
     # L = np.empty((0), dtype=int)
@@ -1425,7 +1396,7 @@ def norm2py(x, y, z): # <-- small wrapper to expose norm2() to Python
 
 
 @cython.cdivision(True)
-cdef (double, double, double) normalize(double x, double y, double z):
+cdef void normalize(double *x, double *y, double *z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
 
   (x, y, z) can be np arrays.
@@ -1451,20 +1422,23 @@ cdef (double, double, double) normalize(double x, double y, double z):
   # TODO : avoid error message when input vector is zero and make sure
   # to return zero
   cdef double norme
-  norme = norm(x, y, z)
+  norme = norm(x[0], y[0], z[0])
   if norme>0:
-    x = x / norme
+    x[0] = x[0] / norme
     # xn = np.where(np.isnan(xn), 0, xn)
-    y = y / norme
+    y[0] = y[0] / norme
     # yn = np.where(np.isnan(yn), 0, yn)
-    z = z / norme
+    z[0] = z[0] / norme
     # zn = np.where(np.isnan(zn), 0, zn)
-  return x, y, z
+  # return x, y, z
 
 
 def normalizepy(x, y, z): # <-- small wrapper to expose normalize() to Python
-  x, y, z = normalize(x, y, z)
-  return np.asarray(x), np.asarray(y), np.asarray(z)
+  cdef double xx=x
+  cdef double yy=y
+  cdef double zz=z
+  normalize(&xx, &yy, &zz)
+  return np.asarray(xx), np.asarray(yy), np.asarray(zz)
 
 
 @cython.cdivision(True)
@@ -1496,7 +1470,6 @@ def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Py
 @cython.wraparound(False)
 @cython.cdivision(True)
 cdef void getWeights(double x, double y, double csz, int interpOption, int *Lxy, double *w):
-# cdef (int, int, int, int, double, double, double, double) getWeights(double x, double y, double csz, int interpOption):
   """ Prepare weight for interpolation from grid to single point location
 
   3 Options available : -0: nearest neighbour interpolation
@@ -1556,12 +1529,12 @@ cdef void getWeights(double x, double y, double csz, int interpOption, int *Lxy,
   w[3] = dx*dy
 
 
-
 def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeightspy() to Python
   cdef int Lxy[4]
   cdef double w[4]
   getWeights(x, y, csz, interpOption, Lxy, w)
   return np.asarray(Lxy[0]), np.asarray(Lxy[1]), np.asarray(Lxy[2]), np.asarray(Lxy[3]), np.asarray(w[0]), np.asarray(w[1]), np.asarray(w[2]), np.asarray(w[3])
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
