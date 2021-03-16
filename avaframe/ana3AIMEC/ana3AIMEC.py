@@ -974,8 +974,8 @@ def analyzeMass(fnameMass):
     relativMassDiff = np.empty((nTopo))
     time = 0
 
-    log.info('Analyzing mass')
-    log.info('{: <10} {: <10} {: <10}'.format('Sim number ', 'GI ', 'GR '))
+    log.debug('Analyzing mass')
+    log.debug('{: <10} {: <10} {: <10}'.format('Sim number ', 'GI ', 'GR '))
     # For each data set
     for i in range(nTopo):
         # analyze mass
