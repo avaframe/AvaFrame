@@ -98,7 +98,7 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
 # -----------------------------------------------------------
 
 def AIMEC2Report(cfgPath, cfg):
-    """ Main logic for AIMEC postprocessing
+    """ Generate AIMEC info for reports
 
     Reads the required files location for ana3AIMEC postpocessing
     given an avalanche directory
