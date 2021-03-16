@@ -698,37 +698,6 @@ def updateFieldsC(cfg, particles, dem, fields):
     uy = UY[j]
     uz = UZ[j]
     m = mass[j]
-    # # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-    # # find coordinates of the 4 nearest cornes on the raster
-    # # prepare for bilinear interpolation
-    # Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
-    #
-    # # add the component of the points value to the 4 neighbour grid points
-    # # start with the lower left
-    # MassBilinear[Ly0, Lx0] = MassBilinear[Ly0, Lx0] + m * f00
-    # FDBilinear[Ly0, Lx0] = FDBilinear[Ly0, Lx0] + m / (areaRaster[Ly0, Lx0] * rho) * f00
-    # MomBilinearX[Ly0, Lx0] = MomBilinearX[Ly0, Lx0] + m * ux * f00
-    # MomBilinearY[Ly0, Lx0] = MomBilinearY[Ly0, Lx0] + m * uy * f00
-    # MomBilinearZ[Ly0, Lx0] = MomBilinearZ[Ly0, Lx0] + m * uz * f00
-    # # lower right
-    # MassBilinear[Ly0, Lx1] = MassBilinear[Ly0, Lx1] + m * f10
-    # FDBilinear[Ly0, Lx1] = FDBilinear[Ly0, Lx1] + m / (areaRaster[Ly0, Lx1] * rho) * f10
-    # MomBilinearX[Ly0, Lx1] = MomBilinearX[Ly0, Lx1] + m * ux * f10
-    # MomBilinearY[Ly0, Lx1] = MomBilinearY[Ly0, Lx1] + m * uy * f10
-    # MomBilinearZ[Ly0, Lx1] = MomBilinearZ[Ly0, Lx1] + m * uz * f10
-    # # uper left
-    # MassBilinear[Ly1, Lx0] = MassBilinear[Ly1, Lx0] + m * f01
-    # FDBilinear[Ly1, Lx0] = FDBilinear[Ly1, Lx0] + m / (areaRaster[Ly1, Lx0] * rho) * f01
-    # MomBilinearX[Ly1, Lx0] = MomBilinearX[Ly1, Lx0] + m * ux * f01
-    # MomBilinearY[Ly1, Lx0] = MomBilinearY[Ly1, Lx0] + m * uy * f01
-    # MomBilinearZ[Ly1, Lx0] = MomBilinearZ[Ly1, Lx0] + m * uz * f01
-    # # and uper right
-    # MassBilinear[Ly1, Lx1] = MassBilinear[Ly1, Lx1] + m * f11
-    # FDBilinear[Ly1, Lx1] = FDBilinear[Ly1, Lx1] + m / (areaRaster[Ly1, Lx1] * rho) * f11
-    # MomBilinearX[Ly1, Lx1] = MomBilinearX[Ly1, Lx1] + m * ux * f11
-    # MomBilinearY[Ly1, Lx1] = MomBilinearY[Ly1, Lx1] + m * uy * f11
-    # MomBilinearZ[Ly1, Lx1] = MomBilinearZ[Ly1, Lx1] + m * uz * f11
-
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation

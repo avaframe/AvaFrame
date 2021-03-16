@@ -100,6 +100,7 @@ def test_getWeightsC(capfd):
             assert ff10 == pytest.approx(f10, rel=atol)
             assert ff01 == pytest.approx(f01, rel=atol)
             assert ff11 == pytest.approx(f11, rel=atol)
+            assert 1 == 0
 
 
 def test_getNormalMesh(capfd):
