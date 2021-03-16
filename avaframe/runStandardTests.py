@@ -12,6 +12,7 @@ from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
 from avaframe.out1Peak import outPlotAllPeak as oP
+from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec
 from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
@@ -114,6 +115,33 @@ for test in testList:
 
         # Add info on run time
         reportD['runTime'] = timeNeeded
+
+        # +++++++Aimec analysis
+        # load configuration
+        aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' % avaName)
+        cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
+        cfgAimecSetup = cfgAimec['AIMECSETUP']
+        cfgAimecSetup['testName'] = test['NAME']
+
+        # Setup input from com1DFA and reference
+        pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
+
+        for pathD in pathDictList:
+            if pathD == reportD['simName']['name']:
+                pathDict = pathDictList[pathD]
+
+        # TODO: define referenceFile
+        pathDict['numSim'] = len(pathDict['ppr'])
+        pathDict['referenceFile'] = 0
+
+        # Extract input file locations
+        pathDict = ana3AIMEC.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
+
+        # perform analysis
+        rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
+
+        # +++++++++++Aimec analysis
+
 
         # Create plots for report
         # Load input parameters from configuration file
