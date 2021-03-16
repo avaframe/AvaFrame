@@ -1188,7 +1188,7 @@ def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFla
     refMask = np.where(refMask < pLim, 0, refMask)
     refMask = np.where(refMask >= pLim, 1, refMask)
     # comparison rasterdata with mask
-    log.info('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
+    log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
         'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
     # rasterinfo
     nStart = indStartOfRunout
