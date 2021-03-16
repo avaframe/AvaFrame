@@ -1091,7 +1091,7 @@ def computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEM
 
 
 def analyzeField(rasterTransfo, transformedRasters, dataType):
-    """ Analyse tranformed field A
+    """ Analyse transformed field 
 
     Analyse transformed rasters
     Max Mean values in cross sections, overall maximum
