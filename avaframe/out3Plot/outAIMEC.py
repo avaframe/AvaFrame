@@ -119,17 +119,17 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
 
     ############################################
     # prepare for plot
-    Title = ['Pressure ', 'Flow Depth ', 'Flow Velocity ']
-    Unit = ['$P(s)$ [kPa]', '$fd(s)$ [m]', '$v(s) [m.s^{-1}]$']
-    DataMax = np.array(([None] * 3))
-    DataMax[0] = PPRCrossMax
-    DataMax[1] = PFDCrossMax
-    DataMax[2] = PFVCrossMax
+    title = ['Pressure ', 'Flow Depth ', 'Flow Velocity ']
+    unit = ['$P(s)$ [kPa]', '$fd(s)$ [m]', '$v(s) [m.s^{-1}]$']
+    dataMax = np.array(([None] * 3))
+    dataMax[0] = PPRCrossMax
+    dataMax[1] = PFDCrossMax
+    dataMax[2] = PFVCrossMax
 
-    DataMean = np.array(([None] * 3))
-    DataMean[0] = PPRCrossMean
-    DataMean[1] = PFDCrossMean
-    DataMean[2] = PFVCrossMean
+    dataMean = np.array(([None] * 3))
+    dataMean[0] = PPRCrossMean
+    dataMean[1] = PFDCrossMean
+    dataMean[2] = PFVCrossMean
 
     ############################################
     # Figure: Pressure depth speed
@@ -137,18 +137,18 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
-    for ax, dataMax, dataMean, title, unit in zip(axes.flatten(), DataMax, DataMean, Title, Unit):
-        ax.plot(dataMax[0, :], s, '--k', label='Max Reference')
-        ax.plot(dataMean[0, :], s, '-k', label='Mean Reference')
-        ax.plot(dataMax[1, :], s, '--b', label='Max Simulation')
-        ax.plot(dataMean[1, :], s, '-b', label='Mean Simulation')
+    for ax, maxVal, meanVal, titleVal, unitVal in zip(axes.flatten(), dataMax, dataMean, title, unit):
+        ax.plot(maxVal[0, :], s, '--k', label='Max Reference')
+        ax.plot(meanVal[0, :], s, '-k', label='Mean Reference')
+        ax.plot(maxVal[1, :], s, '--b', label='Max Simulation')
+        ax.plot(meanVal[1, :], s, '-b', label='Mean Simulation')
 
-        ax.set_title(title + 'distribution along the path')
+        ax.set_title(titleVal + 'distribution along the path')
         ax.legend(loc=4)
         ax.set_ylabel('s [m]')
         ax.set_ylim([s.min(), s.max()])
         ax.set_xlim(auto=True)
-        ax.set_xlabel(unit)
+        ax.set_xlabel(unitVal)
     pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
     outFileName = '_'.join([projectName, 'plim',
                             str(int(plim)), 'slComparison'])
@@ -407,7 +407,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
-    
+
     return outFilePath
 
 

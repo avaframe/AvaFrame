@@ -164,7 +164,7 @@ def AIMEC2Report(cfgPath, cfg):
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
     plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
-    resAnalysis['slCompPlot'] = plotName
+    resAnalysis['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
 
     return rasterTransfo, newRasters, resAnalysis
 
@@ -917,7 +917,7 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis['FN'] = FN
     resAnalysis['FP'] = FP
     resAnalysis['TN'] = TN
-    resAnalysis['areasPlot'] = compPlotPath
+    resAnalysis['areasPlot'] = {'Aimec area analysis': compPlotPath}
 
     return resAnalysis
 

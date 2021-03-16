@@ -133,6 +133,7 @@ for test in testList:
         # TODO: define referenceFile
         pathDict['numSim'] = len(pathDict['ppr'])
         pathDict['referenceFile'] = 0
+        print('reference file chosen here:', pathDict['ppr'][pathDict['referenceFile']])
 
         # Extract input file locations
         pathDict = ana3AIMEC.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
@@ -170,7 +171,9 @@ for test in testList:
                 reportD['Simulation Stats'].update({var: plotDict['stats']})
 
         # copy files to report directory
-        plotPaths = generateCompareReport.copyPlots(avaName, test['NAME'], outDir, plotListRep, rel)
+        plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep, rel)
+        aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
+        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, plotPaths)
 
         # add plot info to general report Dict
         reportD['Simulation Results'] = plotPaths
