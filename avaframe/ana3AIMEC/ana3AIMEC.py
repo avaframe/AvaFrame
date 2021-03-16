@@ -1049,7 +1049,7 @@ def computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEM
     elevRel = np.empty((nTopo))
     deltaH = np.empty((nTopo))
 
-    log.info('Computig Run-Out')
+    log.debug('Computig runout')
     # For each data set
     for i in range(nTopo):
         lindex = np.nonzero(PPRCrossMax[i] > pLim)[0]
