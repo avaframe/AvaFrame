@@ -889,7 +889,7 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     Returns
     -------
     resAnalysis: dict
-        resAnalysis dictionnary containing all results:
+        resAnalysis dictionary containing all results:
 
     """
     # read inputs
