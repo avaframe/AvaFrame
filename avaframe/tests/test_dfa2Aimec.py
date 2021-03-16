@@ -23,10 +23,14 @@ def test_mainDfa2Aimec(tmp_path):
 
     # get path dictionary for test
     pathDTest = {}
-    pathDTest['ppr'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_ppr.asc'), os.path.join(pathData, 'release2HS_entres_dfa_0.15500_ppr.asc')]
-    pathDTest['pfd'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_pfd.asc'), os.path.join(pathData, 'release2HS_entres_dfa_0.15500_pfd.asc')]
-    pathDTest['pfv'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_pfv.asc'), os.path.join(pathData, 'release2HS_entres_dfa_0.15500_pfv.asc')]
-    pathDTest['mb'] = [os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_entres_dfa_0.15500.txt'), os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release2HS_entres_dfa_0.15500.txt')]
+    pathDTest['ppr'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_ppr.asc'),
+                        os.path.join(pathData, 'release2HS_entres_dfa_0.15500_ppr.asc')]
+    pathDTest['pfd'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_pfd.asc'),
+                        os.path.join(pathData, 'release2HS_entres_dfa_0.15500_pfd.asc')]
+    pathDTest['pfv'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_pfv.asc'),
+                        os.path.join(pathData, 'release2HS_entres_dfa_0.15500_pfv.asc')]
+    pathDTest['mb'] = [os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_entres_dfa_0.15500.txt'),
+                       os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release2HS_entres_dfa_0.15500.txt')]
 
 
     assert pathDict['ppr'] == pathDTest['ppr']

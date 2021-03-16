@@ -149,20 +149,20 @@ def AIMEC2Report(cfgPath, cfg):
     # transform pressure_data, depth_data and speed_data in new raster
     newRasters = {}
     # assign pressure data
-    log.info("Assigning pressure data to deskewed raster")
+    log.debug("Assigning pressure data to deskewed raster")
     newRasters['newRasterPressure'] = assignData(cfgPath['ppr'],
                                                  rasterTransfo, interpMethod)
     # assign depth data
-    log.info("Assigning depth data to deskewed raster")
+    log.debug("Assigning depth data to deskewed raster")
     newRasters['newRasterDepth'] = assignData(cfgPath['pfd'],
                                               rasterTransfo, interpMethod)
     # assign speed data
-    log.info("Assigning speed data to deskewed raster")
+    log.debug("Assigning speed data to deskewed raster")
     newRasters['newRasterSpeed'] = assignData(cfgPath['pfv'],
                                               rasterTransfo, interpMethod)
 
     # assign dem data
-    log.info("Assigning dem data to deskewed raster")
+    log.debug("Assigning dem data to deskewed raster")
     newRasterDEM = assignData([cfgPath['demSource']], rasterTransfo,
                               interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM[0]
@@ -233,16 +233,16 @@ def mainAIMEC(cfgPath, cfg):
     # transform pressure_data, depth_data and speed_data in new raster
     newRasters = {}
     # assign pressure data
-    log.info("Assigning pressure data to deskewed raster")
+    log.debug("Assigning pressure data to deskewed raster")
     newRasters['newRasterPressure'] = assignData(cfgPath['ppr'],
                                                  rasterTransfo, interpMethod)
     # assign depth data
-    log.info("Assigning depth data to deskewed raster")
+    log.debug("Assigning depth data to deskewed raster")
     newRasters['newRasterDepth'] = assignData(cfgPath['pfd'],
                                               rasterTransfo, interpMethod)
     # assign speed data
     if cfgPath['pfv']:
-        log.info("Assigning speed data to deskewed raster")
+        log.debug("Assigning speed data to deskewed raster")
         newRasters['newRasterSpeed'] = assignData(cfgPath['pfv'],
                                                   rasterTransfo, interpMethod)
 
@@ -349,20 +349,20 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     rasterTransfo['cellsize'] = csz
 
     # read avaPath
-    Avapath = shpConv.readLine(ProfileLayer, DefaultName, dem)
+    avaPath = shpConv.readLine(ProfileLayer, DefaultName, dem)
     # read split point
     splitPoint = shpConv.readPoints(splitPointSource, dem)
     # add 'z' coordinate to the avaPath
-    Avapath, _ = geoTrans.projectOnRaster(dem, Avapath)
+    avaPath, _ = geoTrans.projectOnRaster(dem, avaPath)
     # reverse avaPath if necessary
-    _, Avapath = geoTrans.checkProfile(Avapath, projSplitPoint=None)
+    _, avaPath = geoTrans.checkProfile(avaPath, projSplitPoint=None)
 
     log.info('Creating new raster along polyline: %s' % ProfileLayer)
 
     # Get new Domain Boundaries DB
     # input: ava path
     # output: Left and right side points for the domain
-    rasterTransfo = geoTrans.path2domain(Avapath, rasterTransfo)
+    rasterTransfo = geoTrans.path2domain(avaPath, rasterTransfo)
 
     # Make transformation matrix
     rasterTransfo = makeTransfoMat(rasterTransfo)
@@ -1091,7 +1091,7 @@ def computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEM
 
 
 def analyzeField(rasterTransfo, transformedRasters, dataType):
-    """ Analyse transformed field 
+    """ Analyse transformed field
 
     Analyse transformed rasters
     Max Mean values in cross sections, overall maximum
@@ -1125,16 +1125,15 @@ def analyzeField(rasterTransfo, transformedRasters, dataType):
     maxACrossMax = np.empty((nTopo))
     ACrossMax = np.zeros((nTopo, len(scoord)))
     ACrossMean = np.zeros((nTopo, len(scoord)))
-    log.info('Analyzing %s' % (dataType))
-    log.info('{: <10} {: <10}'.format('Sim number ', 'maxCrossMax '))
+    log.debug('Analyzing %s' % (dataType))
+    log.debug('{: <10} {: <10}'.format('Sim number ', 'maxCrossMax '))
     # For each data set
     for i in range(nTopo):
         rasterData = transformedRasters[i]
-        # rasterArea[np.where(np.isnan(rasterdataPres))] = np.nan
 
         # Max Mean in each Cross-Section for each field
         maxACrossMax[i], ACrossMax[i], ACrossMean[i] = getMaxMeanValues(rasterData, rasterArea)
-        log.info('{: <10} {:<10.4f}'.format(*[i+1, maxACrossMax[i]]))
+        log.debug('{: <10} {:<10.4f}'.format(*[i+1, maxACrossMax[i]]))
 
     return maxACrossMax, ACrossMax, ACrossMean
 

@@ -29,7 +29,6 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     # Get input data
     # read paths
     projectName = cfgPath['projectName']
-    #dirName = cfgPath['dirName']
     # read rasterdata
     slRaster = inputData['slRaster']
     xyRaster = inputData['xyRaster']
@@ -96,7 +95,6 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     ax2.legend(loc=4)
     pU.addColorBar(im, ax2, ticks, pU.cfgPlotUtils['unitppr'])
 
-    #outFileName = '_'.join([projectName, dirName, 'DomainTransformation'])
     outFileName = '_'.join([projectName, 'DomainTransformation'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -153,8 +151,6 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
         ax.set_xlim(auto=True)
         ax.set_xlabel(unit)
     pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
-    #outFileName = '_'.join([projectName, dirName, 'plim',
-    #                        str(int(plim)), 'slComparison'])
     outFileName = '_'.join([projectName, 'plim',
                             str(int(plim)), 'slComparison'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
@@ -227,8 +223,6 @@ def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [kPa]')
 
-    #outFileName = '_'.join([projectName, dirName, 'plim',
-    #                        str(int(plim)), 'slComparisonStat'])
     outFileName = '_'.join([projectName, 'plim',  str(int(plim)), 'slComparisonStat'])
 
 
@@ -273,7 +267,6 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
         ax.set_xlabel('t [s]')
         ax.set_ylabel(unit + '[kg]')
 
-    #outFileName = '_'.join([projectName, dirName, 'massAnalysis'])
     outFileName = '_'.join([projectName, 'massAnalysis'])
 
 
@@ -289,7 +282,6 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     # Get input data
     # read paths
     projectName = cfgPath['projectName']
-    #dirName = cfgPath['dirName']
     nRef = cfgPath['referenceFile']
     # read data
     plim = resAnalysis['pressureLimit']
@@ -338,8 +330,6 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         pU.addColorBar(im, ax, ticks, unit)
         pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
 
-    # outFileName = '_'.join([projectName, dirName,'plim',
-    #                         str(int(plim)), 'referenceFields'])
     outFileName = '_'.join([projectName, 'plim',
                             str(int(plim)), 'referenceFields'])
 
@@ -355,7 +345,6 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     # Get input data
     # read paths
     projectName = cfgPath['projectName']
-    #dirName = cfgPath['dirName']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
@@ -407,7 +396,6 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax2.set_ylim([s[indStartOfRunout], y_lim])
     plt.subplots_adjust(wspace=0.3)
 
-    #outFileName = '_'.join([projectName, dirName, 'plim', str(int(pLim)),  str(i), 'comparisonToReference'])
     outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  str(i), 'comparisonToReference'])
 
 
@@ -469,8 +457,6 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
                       'pressure_limit: ', str(pressureLimit), ' kPa\n',
                       'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAngle, 2)), ' °\n'])
 
-    # outFileName = '_'.join(['Results', projectName, '', dirName, '', 'plim',
-    #                         str(pressureLimit), 'w', str(domainWidth)]) + '.txt'
     outFileName = '_'.join(['Results', projectName, '', '', 'plim',
                             str(pressureLimit), 'w', str(domainWidth)]) + '.txt'
     outname = os.path.join(pathResult, outFileName)
@@ -605,8 +591,6 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
 
     ax1.grid('on')
 
-    #utFileName = '_'.join([cfgPath['projectName'], cfgPath['dirName'],
-    #                    'plim', str(int(plim)), tipo])
     outFileName = '_'.join([cfgPath['projectName'],
                         'plim', str(int(plim)), tipo])
 
@@ -654,8 +638,6 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     plt.ylim([-0.03, 1.03])
     plt.grid('on')
 
-    #outFileName = '_'.join([cfgPath['projectName'], cfgPath['dirName'],
-    #                    'plim', str(int(plim)), 'ROC'])
     outFileName = '_'.join([cfgPath['projectName'],
                         'plim', str(int(plim)), 'ROC'])
 
