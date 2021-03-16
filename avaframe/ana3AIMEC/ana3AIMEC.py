@@ -168,7 +168,7 @@ def AIMEC2Report(cfgPath, cfg):
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
-    log.info('Analyzing data in path coordinate system')
+    log.debug('Analyzing data in path coordinate system')
     resAnalysis = postProcessAIMECReport(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
