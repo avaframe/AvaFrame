@@ -11,6 +11,7 @@ from avaframe.com1DFAPy import runCom1DFA
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
+from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec
 from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
@@ -107,6 +108,35 @@ for test in testList:
         # Add info on run time
         reportD['runTime'] = timeNeeded
 
+        # +++++++Aimec analysis
+        # load configuration
+        aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECPyCfg.ini' % avaName)
+        cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
+        cfgAimecSetup = cfgAimec['AIMECSETUP']
+        cfgAimecSetup['testName'] = test['NAME']
+
+        # Setup input from com1DFA and reference
+        pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
+
+        print('pd', pathDictList)
+        for pathD in pathDictList:
+            if pathD == reportD['simName']['name']:
+                pathDict = pathDictList[pathD]
+
+        # TODO: define referenceFile
+        pathDict['numSim'] = len(pathDict['ppr'])
+        pathDict['referenceFile'] = 0
+        print('reference file chosen here:', pathDict['ppr'][pathDict['referenceFile']])
+
+        # Extract input file locations
+        pathDict = ana3AIMEC.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
+
+        # perform analysis
+        rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
+
+        # +++++++++++Aimec analysis
+
+
         # Create plots for report
         # Load input parameters from configuration file
         cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
@@ -134,7 +164,9 @@ for test in testList:
                 reportD['Simulation Stats'].update({var: plotDict['stats']})
 
         # copy files to report directory
-        plotPaths = generateCompareReport.copyPlots(avaName, outDir, plotListRep, rel)
+        plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep, rel)
+        aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
+        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, plotPaths)
 
         # add plot info to general report Dict
         reportD['Simulation Results'] = plotPaths
