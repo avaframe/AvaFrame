@@ -117,8 +117,6 @@ for test in testList:
 
         # Setup input from com1DFA and reference
         pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
-
-        print('pd', pathDictList)
         for pathD in pathDictList:
             if pathD == reportD['simName']['name']:
                 pathDict = pathDictList[pathD]
@@ -126,7 +124,6 @@ for test in testList:
         # TODO: define referenceFile
         pathDict['numSim'] = len(pathDict['ppr'])
         pathDict['referenceFile'] = 0
-        print('reference file chosen here:', pathDict['ppr'][pathDict['referenceFile']])
 
         # Extract input file locations
         pathDict = ana3AIMEC.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
