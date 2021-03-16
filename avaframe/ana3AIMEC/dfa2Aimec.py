@@ -168,11 +168,15 @@ def dfaComp2Aimec(avaDir, cfgSetup):
                                 else:
                                     pathDict = getMBInfo(avaDir, pathDict, simName=simNameRef)
                 simNamesMatch[simNameRef] = True
+                pathDict[simNameRef]['compType'] = ['comModules', refModule, compModule]
 
     for key in simNamesMatch:
         if simNamesMatch[key] == False:
             log.info('no matching files found for simulation: %s' % key)
             del pathDict[key]
+
+
+
 
     return pathDict
 
@@ -194,5 +198,6 @@ def mainDfa2Aimec(avaDir, comModule='com1DFA'):
     elif comModule == 'com1DFAPy':
         pathDict = getMBInfo(avaDir, pathDict)
 
+    pathDict['compType'] = ['singleModule', comModule]
 
     return pathDict
