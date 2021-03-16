@@ -174,7 +174,7 @@ def AIMEC2Report(cfgPath, cfg):
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
-    log.info('Visualisation of results')
+    log.info('Visualisation of AIMEC results')
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
     outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
 
