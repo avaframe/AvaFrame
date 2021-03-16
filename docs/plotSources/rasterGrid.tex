@@ -1,0 +1,80 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Compile with
+% pdflatex --shell-escape -synctex=1 -interaction=nonstopmode rasterGrid.tex
+% to convert it to png use:
+% convert -density 300 -transparent white "\image.pdf" "\image.png"},
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{standalone}
+
+\input{GeneralPlotHeader.tex}
+
+\begin{document}
+
+\tikzset{
+   every node/.style={scale=1.3}
+}
+
+\begin{tikzpicture}[
+    scale=1
+ ]
+\def\xMin{0}
+\def\xMinSec{1}
+\def\yMin{0}
+\def\yMinSec{1}
+\def\xMax{5}
+\def\yMax{5}
+
+\def\xxMin{-0.5}
+\def\xxMinSec{0.5}
+\def\yyMin{-0.5}
+\def\yyMinSec{0.5}
+\def\xxMax{5.5}
+\def\yyMax{5.5}
+    \foreach \i in {\xMin,\xMinSec,...,\xMax} {
+        \draw [gray] (\i,\yMin-0.5) -- (\i,\yMax+0.5);
+    }
+    \foreach \i in {\yMin,\yMinSec,...,\yMax} {
+        \draw [gray] (\xMin-0.5,\i) -- (\xMax+0.5,\i);
+        \foreach \j in {\yMin,\yMinSec,...,\yMax} {
+            \draw [color=AFMiddle] plot [only marks, mark size=2, mark=square*] coordinates {(\j,\i)};
+        }
+    }
+
+    \foreach \i in {\xxMin,\xxMinSec,...,\xxMax} {
+        \draw [thin, dotted, gray] (\i,\yyMin) -- (\i,\yyMax);
+    }
+    \foreach \i in {\yyMin,\yyMinSec,...,\yyMax} {
+        \draw [thin, dotted, gray] (\xxMin,\i) -- (\xxMax,\i);
+        \foreach \j in {\yyMin,\yyMinSec,...,\yyMax} {
+            \draw [color=AFLight] plot [only marks, mark size=1, mark=*] coordinates {(\j,\i)};
+        }
+    }
+
+\draw (0,\yMin-0.5) node[below] {\footnotesize $0$};
+\draw (1,\yMin-0.5) node[below] {\footnotesize $1$};
+\draw (2.5,\yMin-0.5) node[below] {\footnotesize $\cdots\cdots$};
+%\draw (4,\yMin-0.5) node[below] {\footnotesize $N_{cols}-2$};
+\draw (5,\yMin-0.5) node[below] {\footnotesize $N_{cols}\!\!-\!\!1$};
+
+
+\draw (\xMin-0.5,0) node[left] {\footnotesize $0$};
+\draw (\xMin-0.5,1) node[left] {\footnotesize $1$};
+\draw (\xMin-0.5,2.5) node[rotate = 90, above] {\footnotesize $\cdots\cdots$};
+%\draw (4,\yMin-0.5) node[below] {\footnotesize $N_{cols}-2$};
+\draw (\xMin-0.5,5) node[rotate = 90, above] {\footnotesize $N_{rows}\!\!-\!\!1$};
+
+
+\draw[AFDark,fill,pattern color=AFOppo,pattern=north west lines] (3.5,3.5) rectangle ++(1,1);
+\draw[->, AFDark] (5,6) node[above] {$\mbox{Cell}$} -- (4.25,4.25);
+
+\draw[->, AFMiddle] (2.5,6) node[above] {$\mbox{Cell center}$} -- (2.05,4.1);
+
+\draw[->, AFLight] (0,6) node[above] {$\mbox{Cell vertex}$} -- (0.48,4.55);
+
+
+\draw [thick,decorate,decoration={brace,amplitude=10pt,mirror},yshift=-5pt](\xMin,\yMin-1) -- (\xMax,\yMin-1) node[black,midway,yshift=-0.5cm] {\footnotesize $N_{cols}$};
+\draw [thick,decorate,decoration={brace,amplitude=10pt,mirror},xshift=-5pt](\xMin-1,\yMax) -- (\xMin-1,\yMin) node[black,midway,xshift=-0.8cm] {\footnotesize $N_{rows}$};
+\end{tikzpicture}
+
+\end{document}
