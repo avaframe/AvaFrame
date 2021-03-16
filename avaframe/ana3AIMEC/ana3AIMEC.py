@@ -1107,12 +1107,12 @@ def analyzeField(rasterTransfo, transformedRasters, dataType):
 
     Returns
     -------
-    maxACrossMax: 1D numpy array
+    maxaCrossMax: 1D numpy array
         containing for each simulation analyzed the overall maximum
-    ACrossMax: 2D numpy array
+    aCrossMax: 2D numpy array
         containing for each simulation analyzed the
         max of the field in each cross section
-    ACrossMean: 2D numpy array
+    aCrossMean: 2D numpy array
         containing for each simulation analyzed the
         mean of the field in each cross section
     """
@@ -1122,9 +1122,9 @@ def analyzeField(rasterTransfo, transformedRasters, dataType):
 
     # initialize Arrays
     nTopo = len(transformedRasters)
-    maxACrossMax = np.empty((nTopo))
-    ACrossMax = np.zeros((nTopo, len(scoord)))
-    ACrossMean = np.zeros((nTopo, len(scoord)))
+    maxaCrossMax = np.empty((nTopo))
+    aCrossMax = np.zeros((nTopo, len(scoord)))
+    aCrossMean = np.zeros((nTopo, len(scoord)))
     log.debug('Analyzing %s' % (dataType))
     log.debug('{: <10} {: <10}'.format('Sim number ', 'maxCrossMax '))
     # For each data set
@@ -1132,10 +1132,10 @@ def analyzeField(rasterTransfo, transformedRasters, dataType):
         rasterData = transformedRasters[i]
 
         # Max Mean in each Cross-Section for each field
-        maxACrossMax[i], ACrossMax[i], ACrossMean[i] = getMaxMeanValues(rasterData, rasterArea)
-        log.debug('{: <10} {:<10.4f}'.format(*[i+1, maxACrossMax[i]]))
+        maxaCrossMax[i], aCrossMax[i], aCrossMean[i] = getMaxMeanValues(rasterData, rasterArea)
+        log.debug('{: <10} {:<10.4f}'.format(*[i+1, maxaCrossMax[i]]))
 
-    return maxACrossMax, ACrossMax, ACrossMean
+    return maxaCrossMax, aCrossMax, aCrossMean
 
 
 def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags):
@@ -1333,12 +1333,12 @@ def getMaxMeanValues(rasterdataA, rasterArea):
     """
     # get mean max for each cross section for A field
     rasterArea = np.where(np.where(np.isnan(rasterdataA), 0, rasterdataA) > 0, rasterArea, 0)
-    AreaSum = np.nansum(rasterArea, axis=1)
-    AreaSum = np.where(AreaSum > 0, AreaSum, 1)
-    ACrossMean = np.nansum(rasterdataA*rasterArea, axis=1)/AreaSum
+    areaSum = np.nansum(rasterArea, axis=1)
+    areaSum = np.where(areaSum > 0, areaSum, 1)
+    aCrossMean = np.nansum(rasterdataA*rasterArea, axis=1)/areaSum
     # aCrossMean = np.nanmean(rasterdataA, axis=1)
-    ACrossMax = np.nanmax(rasterdataA, 1)
+    aCrossMax = np.nanmax(rasterdataA, 1)
     # maximum of field a
-    maxACrossMax = np.nanmax(ACrossMax)
+    maxaCrossMax = np.nanmax(aCrossMax)
 
-    return maxACrossMax, ACrossMax, ACrossMean
+    return maxaCrossMax, aCrossMax, aCrossMean
