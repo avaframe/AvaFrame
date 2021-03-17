@@ -17,8 +17,8 @@ For practical reasons, a 2D rectilinear grid is used. Indeed the topographic
 input information is read from 2D raster files which corresponds exactly to a
 2D rectilinear grid. Moreover, as we will see in the following sections,
 2D rectilinear grids are very convenient for interpolations as well as for
-particle tracking. The 2D rectilinear grid is composed of :math:`N_{rows}` and
-:math:`N_{cols}` rows and columns of square cells (of side length :math:`csz`)
+particle tracking. The 2D rectilinear grid is composed of :math:`N_{y}` and
+:math:`N_{x}` rows and columns of square cells (of side length :math:`csz`)
 as described in :numref:`rasterGrid`. Each cell has a center (also referred to
 as node or grid point) and four vertices. Grid values are defined at cell centers.
 
@@ -149,6 +149,25 @@ from the mass and momentum fields and the cell area (real area of each grid cell
 Neighbor search
 ------------------
 
+The SPH flow depth gradient computation is based on the particle interactions.
+It requires, in order to compute the gradient of the flow depth at a particle location, to
+find all the particles in its neighborhood. This represents in the end a lot of
+interactions and it is important that the neighbor search is fast and efficient.
+:cite:`IhOrSoKoTe2014` describe different uniform grid neighbor search
+methods. In com1DFA, the simplest method is used. The idea is to locate each
+particle in a cell, this way, it is possible to keep track of the particles
+in each cell. To find the neighbors of a particle, one only needs to read the
+cell in which the particle is located (dark blue cell in :numref:`neighborSearch`)
+, as well as the direct adjacent cells in all directions (light blue cells) and
+simply read all particles within those cells. This is very easily achieved
+on uniform grids because locating a particle in a cell is straightforward and
+finding the adjacent cells is also immediate.
+
+.. _neighborSearch:
+
+.. figure:: _static/neighborSearch.png
+        :width: 90%
+
 
 SPH gadient
 --------------
@@ -163,7 +182,7 @@ The aim is to adapt the SPH method to apply it to depth integrated equations
 on a 2D surface living in a 3D world.
 
 Method
-------
+~~~~~~~
 The SPH method is used to express a quantity (the flow depth in our case) and
 its gradient at a certain particle location as a weighted sum of its neighbors
 properties. The principle of the method is well described in :cite:`LiLi2010`.
@@ -189,7 +208,7 @@ The computation of its gradient depends on the coordinate system used.
 .. _standard-method:
 
 Standard method
-~~~~~~~~~~~~~~~~~
+""""""""""""""""
 
 Let us start with the computation of the gradient of a scalar function
 :math:`f \colon \mathbb{R}^2 \to \mathbb{R}` on a horizontal plane.
@@ -268,7 +287,7 @@ The gradient of :math:`f` is then simply:
     :label: sph dradient
 
 2.5D SPH method
-~~~~~~~~~~~~~~~~~
+""""""""""""""""
 We now want to express a function :math:`f` and its gradient on a potentially
 curved surface and express this gradient in the 3 dimensional Cartesian
 coordinate system :math:`(P_i,\mathbf{e_1},\mathbf{e_2},\mathbf{e_3})`.

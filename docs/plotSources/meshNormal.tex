@@ -12,7 +12,8 @@
 \begin{document}
 
 \tikzset{
-   every node/.style={scale=1.3}
+   every node/.style={scale=1.3},
+   >=stealth
 }
 
 \begin{tikzpicture}[
@@ -54,14 +55,14 @@
 \draw (1.25,0.75) node[color=AFDark] {$3$};
 \draw (0.75,0.75) node[color=AFDark] {$4$};
 
-\draw[->, thick, AFDark] (1,1) -- (1,2);
-\draw[->, thick, AFDark] (1,1) -- (2,1);
-\draw [dotted, AFDark, thick] (1,2) -- (2,1);
-\draw[->, thick, AFDark] (1,1) -- (1,0);
-\draw [dotted, AFDark, thick] (2,1) -- (1,0);
-\draw[->, thick, AFDark] (1,1) -- (0,1);
-\draw [dotted, AFDark, thick] (1,0) -- (0,1);
-\draw [dotted, AFDark, thick] (0,1) -- (1,2);
+\draw[->, very thick, AFDark] (1,1) -- (1,2);
+\draw[->, very thick, AFDark] (1,1) -- (2,1);
+\draw [dotted, AFDark, very thick] (1,2) -- (2,1);
+\draw[->, very thick, AFDark] (1,1) -- (1,0);
+\draw [dotted, AFDark, very thick] (2,1) -- (1,0);
+\draw[->, very thick, AFDark] (1,1) -- (0,1);
+\draw [dotted, AFDark, very thick] (1,0) -- (0,1);
+\draw [dotted, AFDark, very thick] (0,1) -- (1,2);
 
 
 \end{tikzpicture}
@@ -108,22 +109,22 @@
 \draw (0.75,0.25) node[color=AFDark] {$7$};
 \draw (0.25,0.75) node[color=AFDark] {$8$};
 
-\draw[->, thick, AFDark] (1,1) -- (1,2);
-\draw[->, thick, AFDark] (1,1) -- (2,2);
-\draw [dotted, AFDark, thick] (1,2) -- (2,2);
-\draw[->, thick, AFDark] (1,1) -- (2,1);
-\draw [dotted, AFDark, thick] (2,2) -- (2,1);
-\draw[->, thick, AFDark] (1,1) -- (2,0);
-\draw [dotted, AFDark, thick] (2,1) -- (2,0);
-\draw[->, thick, AFDark] (1,1) -- (1,0);
-\draw [dotted, AFDark, thick] (2,0) -- (1,0);
-\draw[->, thick, AFDark] (1,1) -- (0,0);
-\draw [dotted, AFDark, thick] (1,0) -- (0,0);
+\draw[->, very thick, AFDark] (1,1) -- (1,2);
+\draw[->, very thick, AFDark] (1,1) -- (2,2);
+\draw [dotted, AFDark, very thick] (1,2) -- (2,2);
+\draw[->, very thick, AFDark] (1,1) -- (2,1);
+\draw [dotted, AFDark, very thick] (2,2) -- (2,1);
+\draw[->, very thick, AFDark] (1,1) -- (2,0);
+\draw [dotted, AFDark, very thick] (2,1) -- (2,0);
+\draw[->, very thick, AFDark] (1,1) -- (1,0);
+\draw [dotted, AFDark, very thick] (2,0) -- (1,0);
+\draw[->, very thick, AFDark] (1,1) -- (0,0);
+\draw [dotted, AFDark, very thick] (1,0) -- (0,0);
 \draw[->, thick, AFDark] (1,1) -- (0,1);
-\draw [dotted, AFDark, thick] (0,0) -- (0,1);
-\draw[->, thick, AFDark] (1,1) -- (0,2);
-\draw [dotted, AFDark, thick] (0,1) -- (0,2);
-\draw [dotted, AFDark, thick] (0,2) -- (1,2);
+\draw [dotted, AFDark, very thick] (0,0) -- (0,1);
+\draw[->, very thick, AFDark] (1,1) -- (0,2);
+\draw [dotted, AFDark, very thick] (0,1) -- (0,2);
+\draw [dotted, AFDark, very thick] (0,2) -- (1,2);
 
 
 \end{tikzpicture}
