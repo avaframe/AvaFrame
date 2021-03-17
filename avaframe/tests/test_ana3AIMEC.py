@@ -5,6 +5,7 @@ import glob
 
 # Local imports
 import avaframe.ana3AIMEC.ana3AIMEC as ana3AIMEC
+import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.tests import test_logUtils
@@ -27,6 +28,7 @@ def test_analyzeArea(capfd):
     cfgPath['dirName'] = 'testAIMEC'
     cfgPath['referenceFile'] = 0
     cfgPath['compType'] = ['singleModule', 'com1DFA']
+    cfgPath['numSim'] = 2
 
     cfg = cfgUtils.getModuleConfig(test_logUtils)
     cfgFlags = cfg['FLAGS']
@@ -115,8 +117,9 @@ def test_makeDomainTransfo(capfd):
     cfgSetup['startOfRunoutAngle'] = '0'
     cfgSetup['domainWidth'] = '160'
     cfgSetup['pressureLimit'] = '0.9'
+    cfgPath['numSim'] = 5
 
-    rasterTransfo = ana3AIMEC.makeDomainTransfo(cfgPath, cfgSetup)
+    rasterTransfo = aT.makeDomainTransfo(cfgPath, cfgSetup)
 
     assert rasterTransfo['gridx'][-1, 0] == 60
     assert rasterTransfo['gridx'][-1, -1] == 220
@@ -128,10 +131,10 @@ def test_makeDomainTransfo(capfd):
     newRasters = {}
     # assign pressure data
     interpMethod = cfgSetup['interpMethod']
-    newRasters['newRasterPressure'] = ana3AIMEC.assignData(cfgPath['ppr'], rasterTransfo, interpMethod)
+    newRasters['newRasterPressure'] = aT.assignData(cfgPath['ppr'], rasterTransfo, interpMethod)
     newRasters['newRasterDepth'] = newRasters['newRasterPressure']
     newRasters['newRasterSpeed'] = newRasters['newRasterPressure']
-    newRasterDEM = ana3AIMEC.assignData([cfgPath['demSource']], rasterTransfo,
+    newRasterDEM = aT.assignData([cfgPath['demSource']], rasterTransfo,
                                         interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
