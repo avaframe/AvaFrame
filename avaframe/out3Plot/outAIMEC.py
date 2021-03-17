@@ -38,17 +38,17 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
     # read domain boundarries with scale
     xllc = rasterTransfo['xllc']
     yllc = rasterTransfo['yllc']
-    cellsize = rasterTransfo['cellsize']
-    DBXl = rasterTransfo['DBXl']*cellsize+xllc
-    DBXr = rasterTransfo['DBXr']*cellsize+xllc
-    DBYl = rasterTransfo['DBYl']*cellsize+yllc
-    DBYr = rasterTransfo['DBYr']*cellsize+yllc
+    cellSize = rasterTransfo['cellSize']
+    DBXl = rasterTransfo['DBXl']*cellSize+xllc
+    DBXr = rasterTransfo['DBXr']*cellSize+xllc
+    DBYl = rasterTransfo['DBYl']*cellSize+yllc
+    DBYr = rasterTransfo['DBYr']*cellSize+yllc
 
     ############################################
     # prepare for plot
     n, m = np.shape(xyRaster)
-    x = np.arange(m)*cellsize+xllc
-    y = np.arange(n)*cellsize+yllc
+    x = np.arange(m)*cellSize+xllc
+    y = np.arange(n)*cellSize+yllc
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     xx = rasterTransfo['x'][indStartOfRunout]
     yy = rasterTransfo['y'][indStartOfRunout]

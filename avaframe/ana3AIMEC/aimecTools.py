@@ -138,14 +138,14 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     header = dem['header']
     xllc = header.xllcenter
     yllc = header.yllcenter
-    csz = header.cellsize
+    cellSize = header.cellsize
     rasterdata = dem['rasterData']
     # Initialize transformation dictionary
     rasterTransfo = {}
     rasterTransfo['domainWidth'] = w
     rasterTransfo['xllc'] = xllc
     rasterTransfo['yllc'] = yllc
-    rasterTransfo['cellsize'] = csz
+    rasterTransfo['cellSize'] = cellSize
 
     # read avaPath
     avaPath = shpConv.readLine(ProfileLayer, DefaultName, dem)
@@ -178,11 +178,11 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     # affect values
     rasterTransfo['header'] = header
     # put back scale and origin
-    rasterTransfo['s'] = rasterTransfo['s']*csz
-    rasterTransfo['l'] = rasterTransfo['l']*csz
-    rasterTransfo['gridx'] = rasterTransfo['gridx']*csz + xllc
-    rasterTransfo['gridy'] = rasterTransfo['gridy']*csz + yllc
-    rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*csz*csz
+    rasterTransfo['s'] = rasterTransfo['s']*cellSize
+    rasterTransfo['l'] = rasterTransfo['l']*cellSize
+    rasterTransfo['gridx'] = rasterTransfo['gridx']*cellSize + xllc
+    rasterTransfo['gridy'] = rasterTransfo['gridy']*cellSize + yllc
+    rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*cellSize*cellSize
     # (x,y) coordinates of the resamples avapth (centerline where l = 0)
     n = np.shape(rasterTransfo['l'])[0]
     indCenter = int(np.floor(n/2))
@@ -281,7 +281,7 @@ def makeTransfoMat(rasterTransfo):
     rasterTransfo: dict
         dictionary containing:
             domainWidth: float
-            csz: float
+            cellSize: float
             DBXl: 1D numpy array
                 x coord of the left boundary
             DBXr: 1D numpy array
@@ -303,14 +303,14 @@ def makeTransfoMat(rasterTransfo):
                 new coord system in the cross direction
     """
     w = rasterTransfo['domainWidth']
-    csz = rasterTransfo['cellsize']
+    cellSize = rasterTransfo['cellSize']
     # number of points describing the avaPath
     n_pnt = np.shape(rasterTransfo['DBXr'])[0]
     # Working with no dimentions
     # (the cellsize scaling will be readded at the end)
     # lcoord is the distance from the polyline (cross section)
     # maximum step should be smaller then the cellsize
-    nTot = np.ceil(w/csz)
+    nTot = np.ceil(w/cellSize)
     # take the next odd integer. This ensures that the lcoord = 0 exists
     nTot = int(nTot+1) if ((nTot % 2) == 0) else int(nTot)
     n2Tot = int(np.floor(nTot/2))
@@ -363,7 +363,7 @@ def getSArea(rasterTransfo):
     rasterTransfo: dict
         dictionary containing:
             domainWidth: float
-            csz: float
+            cellSize: float
             gridx: 2D numpy array
                 x coord of the new raster points in old coord system
             gridy: 2D numpy array
