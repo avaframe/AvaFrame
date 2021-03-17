@@ -143,7 +143,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
         ax.plot(maxVal[1, :], s, '--b', label='Max Simulation')
         ax.plot(meanVal[1, :], s, '-b', label='Mean Simulation')
 
-        ax.set_title(titleVal + 'distribution along the path')
+        ax.set_title(titleVal + 'distribution along path')
         ax.legend(loc=4)
         ax.set_ylabel('s [m]')
         ax.set_ylim([s.min(), s.max()])
@@ -392,7 +392,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
                          extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
 
     ax2.set_title(
-        'Difference between current and reference in the RunOut area' + '\n' + 'Blue = FN, Red = FP')
+        'Difference current - reference in runout area' + '\n' + 'Blue = FN, Red = FP')
 
     if cfgPath['compType'][0] == 'comModules':
         namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
