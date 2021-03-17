@@ -297,7 +297,7 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
                     mean peak flow velocity in each cross section
             -pressureLimit: float
                     pressure threshold
-            -startOfRunoutAngle: float
+            -startOfRunoutAreaAngle: float
                     angle of the slope at the beginning of the run-out
                     area (given in input)
             -TP: float
@@ -352,7 +352,7 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis['PFVCrossMax'] = PFVCrossMax
     resAnalysis['PFVCrossMean'] = PFVCrossMean
     resAnalysis['pressureLimit'] = pLim
-    resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
+    resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
     resAnalysis['TP'] = TP
     resAnalysis['FN'] = FN
     resAnalysis['FP'] = FP
@@ -418,7 +418,7 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis['PFVCrossMax'] = PFVCrossMax
     resAnalysis['PFVCrossMean'] = PFVCrossMean
     resAnalysis['pressureLimit'] = pLim
-    resAnalysis['startOfRunoutAngle'] = rasterTransfo['startOfRunoutAngle']
+    resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
     resAnalysis['TP'] = TP
     resAnalysis['FN'] = FN
     resAnalysis['FP'] = FP

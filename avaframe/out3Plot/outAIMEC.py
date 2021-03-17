@@ -73,7 +73,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
                          extent=[x.min(), x.max(), y.min(), y.max()],
                          cmap=cmap, norm=norm)
     plt.plot(xx, yy, 'k+', label='start of run-out area point : %.1f °' %
-             rasterTransfo['startOfRunoutAngle'])
+             rasterTransfo['startOfRunoutAreaAngle'])
     plt.plot(xPath, yPath, 'k--', label='flow path')
     plt.plot(DBXl, DBYl, 'k-', label='domain')
     plt.plot(DBXr, DBYr, 'k-')
@@ -89,7 +89,7 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
     ax2.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAngle'])
+                label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
 
     ax2.set_title('sl Domain' + '\n' + 'Black = out of raster')
     ax2.legend(loc=4)
@@ -200,7 +200,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
 
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                label='start of run-out area point : %.1f °' % resAnalysis['startOfRunoutAngle'])
+                label='start of run-out area point : %.1f °' % resAnalysis['startOfRunoutAreaAngle'])
     ref5, im = pU.NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
@@ -321,7 +321,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
 
         ax.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                   label='Start or run-out point : %.1f °' % resAnalysis['startOfRunoutAngle'])
+                   label='Start or run-out point : %.1f °' % resAnalysis['startOfRunoutAreaAngle'])
         ref3, im = pU.NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                              extent=[l.min(), l.max(), s.min(), s.max()],
                              cmap=cmap, norm=norm)
@@ -426,7 +426,7 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     domainWidth = cfgSetup['domainWidth']
     pressureLimit = cfgSetup['pressureLimit']
 
-    startOfRunoutAngle = resAnalysis['startOfRunoutAngle']
+    startOfRunoutAreaAngle = resAnalysis['startOfRunoutAreaAngle']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     s = rasterTransfo['s']
     sStart = s[indStartOfRunout]
@@ -463,7 +463,7 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
                       'dhm: ', demName, '\n',
                       'domain_width: ', str(domainWidth), ' m\n',
                       'pressure_limit: ', str(pressureLimit), ' kPa\n',
-                      'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAngle, 2)), ' °\n'])
+                      'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAreaAngle, 2)), ' °\n'])
 
     outFileName = '_'.join(['Results', projectName, '', '', 'plim',
                             str(pressureLimit), 'w', str(domainWidth)]) + '.txt'

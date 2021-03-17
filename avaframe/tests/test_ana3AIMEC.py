@@ -53,7 +53,7 @@ def test_analyzeArea(capfd):
     rasterTransfo['y'] = 50*np.ones(np.shape(rasterTransfo['s']))
     rasterTransfo['rasterArea'] = np.ones((500, 100))
     rasterTransfo['indStartOfRunout'] = 400
-    rasterTransfo['startOfRunoutAngle'] = 10
+    rasterTransfo['startOfRunoutAreaAngle'] = 10
     resAnalysis = {}
     runout = np.array([100])
     resAnalysis['runout'] = runout
@@ -114,7 +114,7 @@ def test_makeDomainTransfo(capfd):
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
     cfgFlags['savePlot'] = 'False'
-    cfgSetup['startOfRunoutAngle'] = '0'
+    cfgSetup['startOfRunoutAreaAngle'] = '0'
     cfgSetup['domainWidth'] = '160'
     cfgSetup['pressureLimit'] = '0.9'
     cfgPath['numSim'] = 5
