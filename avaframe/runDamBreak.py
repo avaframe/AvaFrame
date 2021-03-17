@@ -44,10 +44,10 @@ xR = xR * np.cos(phi)  # projected on the horizontal plane
 dtAnalysis = cfg['DAMBREAK'].getfloat('dtStep')
 
 # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=damBreakCfg, flagAnalysis=True)
+Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=damBreakCfg)
 
 # create simDict of results
-inputDir = 'data/avaDamBreak/Outputs/com1DFAPy/peakFiles/'
+inputDir = 'data/avaDamBreak/Outputs/com1DFAPy/peakFiles/timeSteps'
 dataComSol = fU.makeSimDict(inputDir, avaDir=avaDir)
 
 # make comparison plots

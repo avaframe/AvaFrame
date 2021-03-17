@@ -12,7 +12,7 @@ from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
 from avaframe.out1Peak import outPlotAllPeak as oP
-from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec
+from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
 from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
@@ -130,17 +130,14 @@ for test in testList:
             if pathD == reportD['simName']['name']:
                 pathDict = pathDictList[pathD]
 
-        # TODO: define referenceFile
+        log.info('reference file comes from: %s' % pathDict['compType'][1])
         pathDict['numSim'] = len(pathDict['ppr'])
-        pathDict['referenceFile'] = 0
-        print('reference file chosen here:', pathDict['ppr'][pathDict['referenceFile']])
 
-        # Extract input file locations
-        pathDict = ana3AIMEC.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
+        # Extract geometry input files locations
+        pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
 
         # perform analysis
         rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
-
         # +++++++++++Aimec analysis
 
 
@@ -172,8 +169,9 @@ for test in testList:
 
         # copy files to report directory
         plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep, rel)
+        # add aimec plots
         aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
-        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, plotPaths)
+        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, rel, plotPaths)
 
         # add plot info to general report Dict
         reportD['Simulation Results'] = plotPaths

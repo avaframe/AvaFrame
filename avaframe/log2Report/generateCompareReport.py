@@ -28,13 +28,13 @@ def copyQuickPlots(avaName, testName, outDir, plotListRep, rel):
     return plotPaths
 
 
-def copyAimecPlots(plotFiles, testName, outDir, plotPaths):
+def copyAimecPlots(plotFiles, testName, outDir, rel, plotPaths):
     """ copy the quick plots to report directory """
 
     for pDict in plotFiles:
         for key in pDict:
             name = os.path.basename(pDict[key])
-            plotName =  os.path.join(outDir, '%s_%s.png' % (testName, name))
+            plotName =  os.path.join(outDir, '%s_%s_%s.png' % (testName, rel, name))
             shutil.copy2(pDict[key], plotName)
             log.debug('Copied: %s to %s' % (pDict[key], plotName))
             plotPaths[key] = plotName
