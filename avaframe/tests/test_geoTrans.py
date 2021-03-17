@@ -221,7 +221,7 @@ def test_path2domain(capfd):
     rasterTransfo = {}
     rasterTransfo['xllc'] = xllc
     rasterTransfo['yllc'] = yllc
-    rasterTransfo['cellsize'] = csz
+    rasterTransfo['cellSize'] = csz
     rasterTransfo['domainWidth'] = w
 
     DB = geoTrans.path2domain(xyPath, rasterTransfo)

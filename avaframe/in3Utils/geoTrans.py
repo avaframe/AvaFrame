@@ -407,7 +407,7 @@ def path2domain(xyPath, rasterTransfo):
     """
     xllc = rasterTransfo['xllc']
     yllc = rasterTransfo['yllc']
-    csz = rasterTransfo['cellsize']
+    csz = rasterTransfo['cellSize']
     x = xyPath['x']
     y = xyPath['y']
     w = rasterTransfo['domainWidth']/2/csz
