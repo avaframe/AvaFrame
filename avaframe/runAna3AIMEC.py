@@ -11,7 +11,7 @@ import logging
 import time
 
 # Local imports
-from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC
+from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools
 from avaframe.in3Utils import initializeProject as iP
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
@@ -49,7 +49,7 @@ pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir)
 pathDict['numSim'] = len(pathDict['ppr'])
 pathDict['referenceFile'] = 0
 
-pathDict = ana3AIMEC.readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA')
+pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA')
 
 startTime = time.time()
 

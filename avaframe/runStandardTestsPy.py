@@ -121,16 +121,15 @@ for test in testList:
             if pathD == reportD['simName']['name']:
                 pathDict = pathDictList[pathD]
 
-        # TODO: define referenceFile
+        #
         pathDict['numSim'] = len(pathDict['ppr'])
-        pathDict['referenceFile'] = 0
+        log.info('reference file comes from: %s' % pathDict['compType'][1])
 
         # Extract input file locations
         pathDict = ana3AIMEC.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
 
         # perform analysis
         rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
-
         # +++++++++++Aimec analysis
 
 
@@ -163,7 +162,7 @@ for test in testList:
         # copy files to report directory
         plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep, rel)
         aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
-        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, plotPaths)
+        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, rel, plotPaths)
 
         # add plot info to general report Dict
         reportD['Simulation Results'] = plotPaths

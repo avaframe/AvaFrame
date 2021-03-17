@@ -125,7 +125,7 @@ def dfaComp2Aimec(avaDir, cfgSetup):
     log.info('Comparison data is from module: %s' % compModule)
 
     # Lead all infos on refernce simulations
-    if refModule == 'ref':
+    if refModule == 'benchmarkReference':
         testName = cfgSetup['testName']
         inputDirRef = os.path.join('..', 'benchmarks', testName)
         refData = fU.makeSimDict(inputDirRef)
@@ -169,13 +169,13 @@ def dfaComp2Aimec(avaDir, cfgSetup):
                                     pathDict = getMBInfo(avaDir, pathDict, simName=simNameRef)
                 simNamesMatch[simNameRef] = True
                 pathDict[simNameRef]['compType'] = ['comModules', refModule, compModule]
+                pathDict[simNameRef]['referenceFile'] = 0
+
 
     for key in simNamesMatch:
         if simNamesMatch[key] == False:
             log.info('no matching files found for simulation: %s' % key)
             del pathDict[key]
-
-
 
 
     return pathDict

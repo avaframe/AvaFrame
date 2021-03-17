@@ -197,7 +197,7 @@ def fetchBenchParameters(avaDir):
 
     elif avaDictName == 'avaInclinedPlaneDict':
         avaDictName = {'simName': 'release1IP_entres_dfa_0.15500',
-        		'testName': 'avaInclinedPlaneEntTest',
+        		'testName': 'avaInclinedPlaneEntresTest',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': 'release1IP',
