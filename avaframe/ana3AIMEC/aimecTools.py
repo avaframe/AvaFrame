@@ -95,7 +95,7 @@ def makeDomainTransfo(cfgPath, cfgSetup):
         dictionary with path to data to analyze
     cfgSetup : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
-        regarding domain transformation (domain width w, startOfRunoutAngle or
+        regarding domain transformation (domain width w, startOfRunoutAreaAngle or
         interpolation method)
     cfgFlags : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
@@ -129,7 +129,7 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     DefaultName = cfgPath['projectName']
 
     w = float(cfgSetup['domainWidth'])
-    startOfRunoutAngle = float(cfgSetup['startOfRunoutAngle'])
+    startOfRunoutAreaAngle = float(cfgSetup['startOfRunoutAreaAngle'])
 
     log.info('Data-file %s analysed' % demSource)
     # read data
@@ -169,7 +169,7 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     # calculate the real area of the new cells as well as the scoord
     rasterTransfo = getSArea(rasterTransfo)
 
-    log.info('Size of rasterdata- old: %d x %d - new: %d x %d' % (
+    log.debug('Size of rasterdata- old: %d x %d - new: %d x %d' % (
         np.size(rasterdata, 0), np.size(rasterdata, 1),
         np.size(rasterTransfo['gridx'], 0),
         np.size(rasterTransfo['gridx'], 1)))
@@ -196,15 +196,15 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    angle, tmp, delta_ind = geoTrans.prepareAngleProfile(startOfRunoutAngle,
+    angle, tmp, delta_ind = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle,
                                                          rasterTransfo)
-    # find the runout point: first point under startOfRunoutAngle
+    # find the runout point: first point under startOfRunoutAreaAngle
     indStartOfRunout = geoTrans.findAngleProfile(tmp, delta_ind)
     rasterTransfo['indStartOfRunout'] = indStartOfRunout
     rasterTransfo['xBetaPoint'] = rasterTransfo['x'][indStartOfRunout]
     rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
-    rasterTransfo['startOfRunoutAngle'] = angle[indStartOfRunout]
-    log.info('Measuring run-out length from the %.2f ° point of coordinates (%.2f, %.2f)' % (rasterTransfo['startOfRunoutAngle'],rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
+    rasterTransfo['startOfRunoutAreaAngle'] = angle[indStartOfRunout]
+    log.info('Measuring run-out length from the %.2f ° point of coordinates (%.2f, %.2f)' % (rasterTransfo['startOfRunoutAreaAngle'],rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
 
     return rasterTransfo
 
@@ -418,7 +418,7 @@ def getSArea(rasterTransfo):
     x4 = xcoord[0:n-1, 1:m]
     y4 = ycoord[0:n-1, 1:m]
 
-    Area = np.abs(x1*y2-y1*x2 + x2*y3-y2*x3 + x3*y4-y3*x4 + x4*y1-y4*x1)/2
+    area = np.abs(x1*y2-y1*x2 + x2*y3-y2*x3 + x3*y4-y3*x4 + x4*y1-y4*x1)/2
 
     # Method 2
     # calculate area of each cell assuming they are parallelogramms
@@ -426,7 +426,7 @@ def getSArea(rasterTransfo):
     # newAreaRaster = np.abs(dxl*dys - dxs*dyl)
 
     # save Area matrix
-    rasterTransfo['rasterArea'] = Area
+    rasterTransfo['rasterArea'] = area
     # get scoord
     ds = Vs[:, int(np.floor(m/2))-1]
     scoord = np.cumsum(ds)-ds[0]
