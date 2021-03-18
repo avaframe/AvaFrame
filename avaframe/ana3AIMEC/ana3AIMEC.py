@@ -327,6 +327,7 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     runoutLength = runout[0]
     TP, FN, FP, TN, _ = aT.analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
 
+    print('RUNOUT', runout)
     # affect values to output dictionary
     resAnalysis = {}
     resAnalysis['runout'] = runout
@@ -439,11 +440,11 @@ def aimecRes2ReportD(resAnalysis, reportD, benchD, refSim):
     else:
         log.warning('Reference File out of range - needs to be 0 or 1')
 
-    reportD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][2][compSim],
+    reportD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][0][compSim],
     'max peak pressure': resAnalysis['MMPPR'][compSim], 'max peak flow depth': resAnalysis['MMPFD'][compSim],
     'max peak flow velocity': resAnalysis['MMPFV'][compSim]}
 
-    benchD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][2][refSim],
+    benchD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][0][refSim],
     'max peak pressure': resAnalysis['MMPPR'][refSim], 'max peak flow depth': resAnalysis['MMPFD'][refSim],
     'max peak flow velocity': resAnalysis['MMPFV'][refSim]}
 
