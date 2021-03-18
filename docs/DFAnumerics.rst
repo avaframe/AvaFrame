@@ -4,8 +4,8 @@ com1DFA DFA-Kernel numerics
 Mesh and interpolation
 -----------------------
 The numerical method used in com1DFA mixes particle methods and
-grid methods. Mass and momentum are tracked using particles but flow
-depth is tracked using the grid. The grid is also to access topographic information
+mesh methods. Mass and momentum are tracked using particles but flow
+depth is tracked using the mesh. The mesh is also to access topographic information
 (surface elevation, normal) as well as for displaying results. Therefore it is
 important to define properly the mesh and the interpolation method that enables
 transition from particle to mesh values and the other way around.
@@ -13,14 +13,16 @@ transition from particle to mesh values and the other way around.
 Mesh
 ~~~~~~
 
-For practical reasons, a 2D rectilinear grid is used. Indeed the topographic
-input information is read from 2D raster files which corresponds exactly to a
-2D rectilinear grid. Moreover, as we will see in the following sections,
-2D rectilinear grids are very convenient for interpolations as well as for
-particle tracking. The 2D rectilinear grid is composed of :math:`N_{y}` and
-:math:`N_{x}` rows and columns of square cells (of side length :math:`csz`)
-as described in :numref:`rasterGrid`. Each cell has a center (also referred to
-as node or grid point) and four vertices. Grid values are defined at cell centers.
+For practical reasons, a 2D rectilinear mesh (grid) is used. Indeed the topographic
+input information is read from 2D raster files (with :math:`N_{y}` and :math:`N_{x}`
+rows and columns) which corresponds exactly to a
+2D rectilinear mesh. Moreover, as we will see in the following sections,
+2D rectilinear meshes are very convenient for interpolations as well as for
+particle tracking. The 2D rectilinear mesh is composed of :math:`N_{y}-1` and
+:math:`N_{x}-1` rows and columns of square cells (of side length :math:`csz`)
+and :math:`N_{y}` and :math:`N_{x}` rows and columns of vertices
+as described in :numref:`rasterGrid`. Each cell has a center and four vertices.
+The data read from the raster file is affected to the vertices.
 
 .. _rasterGrid:
 
@@ -32,16 +34,16 @@ as node or grid point) and four vertices. Grid values are defined at cell center
 Cell normals
 """"""""""""""
 There are many different methods available for computing normal vectors
-on a 2D rectilinear grid. Several options are available in com1DFA.
+on a 2D rectilinear mesh. Several options are available in com1DFA.
 
 The first one consists in computing the cross product of the diagonal vectors
-between four cell centers. This defines the normal vector at the vertices. It is
-then possible to interpolate the normal vector at the cell centers from the ones
-at the vertices.
+between four vertices. This defines the normal vector at the cell center. It is
+then possible to interpolate the normal vector at the vertices from the ones
+at the cell centers.
 
 The other methods use the plane defined by the different adjacent triangles to
-a cell center. Each triangle has a normal and the cell normal is the average
-of the triangles normals.
+a vertex. Each triangle has a normal and the vertices is the average
+of the triangles normal vectors.
 
 .. _meshNormal:
 
@@ -64,7 +66,7 @@ A cell is a plane (:math:`z = ax+by+c`) of same normal as the cell center:
    \end{aligned}
    \right.
 
-Surface integration on the cell extend leads to the area of the cell:
+Surface integration over the cell extend leads to the area of the cell:
 
 .. math::
    A_{cell} = \iint_{S} \mathrm{d}{S} = \int\limits_{0}^{csz}\int\limits_{0}^{csz}
@@ -72,18 +74,19 @@ Surface integration on the cell extend leads to the area of the cell:
    \mathrm{d}{x}\,\mathrm{d}{y} =
    csz^2 \sqrt{1+\frac{\partial z}{\partial x}^2+\frac{\partial z}{\partial y}^2} = \frac{csz^2}{n_z}
 
+The same method is used to get the area of a vertex (this does not make any sense...).
 
 
 Interpolation
 ~~~~~~~~~~~~~~
 In the DFA kernel, mass, flow depths, velocity fields can be defined at particle
-location or on the grid. We need a method to be able to go from particle property
-to grid field values and from grid values to particle property.
+location or on the mesh. We need a method to be able to go from particle property
+to mesh field values and from mesh values to particle property.
 
 Grid to particle
 """"""""""""""""""
 
-On a 2D rectilinear grid, scalar and vector fields defined on grid points
+On a 2D rectilinear mesh, scalar and vector fields defined on grid points
 can be evaluated anywhere within the mesh using a bilinear interpolation
 between grid points. Evaluating a vector field simply consists in evaluating
 the three components as scalar fields.
@@ -118,7 +121,7 @@ the :math:`w` are the bilinear weights.
 .. figure:: _static/BilinearInterp.png
         :width: 90%
 
-        Bilinear interpolation on in a unit cell.
+        Bilinear interpolation in a unit cell.
 
 
 Particles to grid
@@ -167,6 +170,11 @@ finding the adjacent cells is also immediate.
 
 .. figure:: _static/neighborSearch.png
         :width: 90%
+
+        Support grid for neighbor search:
+        if the cell side is bigger than the kernel length :math:`r_{kernel}` (red circle in the picture),
+        the neighbors for any particle in any given cell (dark blue square)
+        can be found in direct neighborhood of the cell itself (light blue squares)
 
 
 SPH gadient

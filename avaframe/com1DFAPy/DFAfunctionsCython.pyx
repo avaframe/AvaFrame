@@ -655,7 +655,6 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] areaRaster = dem['areaRaster']
   ncols = header.ncols
   nrows = header.nrows
-  cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] PBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] FDBilinear = np.zeros((nrows, ncols))
@@ -704,37 +703,24 @@ def updateFieldsC(cfg, particles, dem, fields):
     # prepare for bilinear interpolation
     getWeights(x, y, csz, interpOption, Lxy, w)
     # add the component of the points value to the 4 neighbour grid points
-    # start with the lower left
-    MassBilinear[Lxy[2], Lxy[0]] = MassBilinear[Lxy[2], Lxy[0]] + m * w[0]
-    FDBilinear[Lxy[2], Lxy[0]] = FDBilinear[Lxy[2], Lxy[0]] + m / (areaRaster[Lxy[2], Lxy[0]] * rho) * w[0]
-    MomBilinearX[Lxy[2], Lxy[0]] = MomBilinearX[Lxy[2], Lxy[0]] + m * ux * w[0]
-    MomBilinearY[Lxy[2], Lxy[0]] = MomBilinearY[Lxy[2], Lxy[0]] + m * uy * w[0]
-    MomBilinearZ[Lxy[2], Lxy[0]] = MomBilinearZ[Lxy[2], Lxy[0]] + m * uz * w[0]
-    # lower right
-    MassBilinear[Lxy[2], Lxy[1]] = MassBilinear[Lxy[2], Lxy[1]] + m * w[1]
-    FDBilinear[Lxy[2], Lxy[1]] = FDBilinear[Lxy[2], Lxy[1]] + m / (areaRaster[Lxy[2], Lxy[1]] * rho) * w[1]
-    MomBilinearX[Lxy[2], Lxy[1]] = MomBilinearX[Lxy[2], Lxy[1]] + m * ux * w[1]
-    MomBilinearY[Lxy[2], Lxy[1]] = MomBilinearY[Lxy[2], Lxy[1]] + m * uy * w[1]
-    MomBilinearZ[Lxy[2], Lxy[1]] = MomBilinearZ[Lxy[2], Lxy[1]] + m * uz * w[1]
-    # uper left
-    MassBilinear[Lxy[3], Lxy[0]] = MassBilinear[Lxy[3], Lxy[0]] + m * w[2]
-    FDBilinear[Lxy[3], Lxy[0]] = FDBilinear[Lxy[3], Lxy[0]] + m / (areaRaster[Lxy[3], Lxy[0]] * rho) * w[2]
-    MomBilinearX[Lxy[3], Lxy[0]] = MomBilinearX[Lxy[3], Lxy[0]] + m * ux * w[2]
-    MomBilinearY[Lxy[3], Lxy[0]] = MomBilinearY[Lxy[3], Lxy[0]] + m * uy * w[2]
-    MomBilinearZ[Lxy[3], Lxy[0]] = MomBilinearZ[Lxy[3], Lxy[0]] + m * uz * w[2]
-    # and uper right
-    MassBilinear[Lxy[3], Lxy[1]] = MassBilinear[Lxy[3], Lxy[1]] + m * w[3]
-    FDBilinear[Lxy[3], Lxy[1]] = FDBilinear[Lxy[3], Lxy[1]] + m / (areaRaster[Lxy[3], Lxy[1]] * rho) * w[3]
-    MomBilinearX[Lxy[3], Lxy[1]] = MomBilinearX[Lxy[3], Lxy[1]] + m * ux * w[3]
-    MomBilinearY[Lxy[3], Lxy[1]] = MomBilinearY[Lxy[3], Lxy[1]] + m * uy * w[3]
-    MomBilinearZ[Lxy[3], Lxy[1]] = MomBilinearZ[Lxy[3], Lxy[1]] + m * uz * w[3]
+    for i in range(4):
+      indx = Lxy[i%2] # 0 1 0 1
+      indy = Lxy[i/2+2] # 2 2 3 3
+      FDBilinear[indy, indx] = FDBilinear[indy, indx] + m * w[i]
+      MomBilinearX[indy, indx] = MomBilinearX[indy, indx] + m * ux * w[i]
+      MomBilinearY[indy, indx] = MomBilinearY[indy, indx] + m * uy * w[i]
+      MomBilinearZ[indy, indx] = MomBilinearZ[indy, indx] + m * uz * w[i]
 
   for i in range(ncol):
     for j in range(nrow):
-      if MassBilinear[j, i] > 0:
-        VXBilinear[j, i] = MomBilinearX[j, i]/MassBilinear[j, i]
-        VYBilinear[j, i] = MomBilinearY[j, i]/MassBilinear[j, i]
-        VZBilinear[j, i] = MomBilinearZ[j, i]/MassBilinear[j, i]
+      m = FDBilinear[j, i]
+      if m > 0:
+        # TODO: here we devide by the area of the vertex, would it not make
+        # more sense to devide by the area of the cell in the previous loop?
+        FDBilinear[j, i] = m / (areaRaster[j, i] * rho)
+        VXBilinear[j, i] = MomBilinearX[j, i]/m
+        VYBilinear[j, i] = MomBilinearY[j, i]/m
+        VZBilinear[j, i] = MomBilinearZ[j, i]/m
         VBilinear[j, i] = norm(VXBilinear[j, i], VYBilinear[j, i], VZBilinear[j, i])
         PBilinear[j, i] = VBilinear[j, i] * VBilinear[j, i] * rho
       if VBilinear[j, i] > PFV[j, i]:
@@ -807,7 +793,7 @@ def getNeighboursC(particles, dem):
     cdef double[:] y = particles['y']
 
     # initialize outputs
-    cdef int Ncells = ncols*nrows
+    cdef int Ncells = (ncols-1)*(nrows-1)
     cdef long[:] indPartInCell = np.zeros(Ncells + 1).astype('int')
     cdef long[:] indPartInCell2 = np.zeros(Ncells + 1).astype('int')
     cdef long[:] partInCell = np.zeros(Npart).astype('int')
@@ -817,10 +803,13 @@ def getNeighboursC(particles, dem):
     # Count number of particles in each cell
     cdef long indx, indy, ic
     for j in range(Npart):
-      indx = int((x[j] + csz/2) / csz)
-      indy = int((y[j] + csz/2) / csz)
+      # indx = int((x[j] + csz/2) / csz)
+      # indy = int((y[j] + csz/2) / csz)
+      indx = int(x[j] / csz)
+      indy = int(y[j] / csz)
       # get index of cell containing the particle
-      ic = indx + ncols * indy
+      # ic = indx + ncols * indy
+      ic = indx + (ncols-1) * indy
       indPartInCell[ic+1] = indPartInCell[ic+1] + 1
     for j in range(Ncells):
       indPartInCell[j+1] = indPartInCell[j] + indPartInCell[j+1]
@@ -828,9 +817,12 @@ def getNeighboursC(particles, dem):
 
     # make the list of which particles are in which cell
     for j in range(Npart):
-        indx = int((x[j] + csz/2) / csz)
-        indy = int((y[j] + csz/2) / csz)
-        ic = int(indx + ncols * indy)
+        # indx = int((x[j] + csz/2) / csz)
+        # indy = int((y[j] + csz/2) / csz)
+        indx = int(x[j] / csz)
+        indy = int(y[j] / csz)
+        # ic = int(indx + ncols * indy)
+        ic = indx + (ncols-1) * indy
         partInCell[indPartInCell2[ic]] = j
         indPartInCell2[ic] = indPartInCell2[ic] + 1
         indX[j] = indx
@@ -1021,10 +1013,10 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     if indy == nrows - 1:
         rInd = 1
     for n in range(lInd, rInd):
-        ic = (indx - 1) + ncols * (indy + n)
+        ic = (indx - 1) + (ncols-1) * (indy + n)
         # make sure not to take particles from the other edge
-        imax = max(ic, ncols * (indy + n))
-        imin = min(ic+3, ncols * (indy + n + 1))
+        imax = max(ic, (ncols-1) * (indy + n))
+        imin = min(ic+3, (ncols-1) * (indy + n + 1))
         iPstart = indPartInCell[imax]
         iPend = indPartInCell[imin]
         # loop on all particles in neighbour boxes
