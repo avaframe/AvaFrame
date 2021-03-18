@@ -179,13 +179,5 @@ for test in testList:
         # add plot info to general report Dict
         reportD['Simulation Results'] = plotPaths
 
-        print('reportD')
-        for key in reportD:
-            print(key, reportD[key])
-
-        print('reportD')
-        for key in reportD:
-            print(key, reportD[key])
-
         # write report
         generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)
