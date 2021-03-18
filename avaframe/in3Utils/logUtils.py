@@ -44,7 +44,7 @@ def initiateLogger(targetDir, logName='runLog'):
     logConfFile = os.path.join(logConfPath, 'logging.conf')
 
     logging.config.fileConfig(fname=logConfFile,
-                              defaults={'logfilename': logFileName},
+                              defaults={'logfilename': logFileName.replace('\\', '/')},
                               disable_existing_loggers=False)
     log = logging.getLogger('avaframe')
 
