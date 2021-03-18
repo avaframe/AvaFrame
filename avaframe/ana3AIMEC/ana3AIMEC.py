@@ -441,11 +441,11 @@ def aimecRes2ReportD(resAnalysis, reportD, benchD, refSim):
         log.warning('Reference File out of range - needs to be 0 or 1')
 
     reportD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][0][compSim],
-    'max peak pressure': resAnalysis['MMPPR'][compSim], 'max peak flow depth': resAnalysis['MMPFD'][compSim],
-    'max peak flow velocity': resAnalysis['MMPFV'][compSim]}
+    'max peak pressure [kPa]': resAnalysis['MMPPR'][compSim], 'max peak flow depth [m]': resAnalysis['MMPFD'][compSim],
+    'max peak flow velocity [ms-1]': resAnalysis['MMPFV'][compSim]}
 
     benchD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][0][refSim],
-    'max peak pressure': resAnalysis['MMPPR'][refSim], 'max peak flow depth': resAnalysis['MMPFD'][refSim],
-    'max peak flow velocity': resAnalysis['MMPFV'][refSim]}
+    'max peak pressure [kPa]': resAnalysis['MMPPR'][refSim], 'max peak flow depth [m]': resAnalysis['MMPFD'][refSim],
+    'max peak flow velocity [ms-1]': resAnalysis['MMPFV'][refSim]}
 
     return reportD, benchD
