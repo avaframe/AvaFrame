@@ -175,7 +175,6 @@ def makeDomainTransfo(cfgPath, cfgSetup):
         np.size(rasterTransfo['gridx'], 1)))
 
     ##########################################################################
-    # affect values
     rasterTransfo['header'] = header
     # put back scale and origin
     rasterTransfo['s'] = rasterTransfo['s']*cellSize
@@ -781,10 +780,10 @@ def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFla
 
         """
         area
-        # true positive: reality(mask)=1, model(rasterdata)=1
-        # false negative: reality(mask)=1, model(rasterdata)=0
-        # false positive: reality(mask)=0, model(rasterdata)=1
-        # true negative: reality(mask)=0, model(rasterdata)=0
+        # true positive: result1(mask)=1, result2(rasterdata)=1
+        # false negative: result1(mask)=1, result2(rasterdata)=0
+        # false positive: result1(mask)=0, result2(rasterdata)=1
+        # true negative: result1(mask)=0, result2(rasterdata)=0
         """
         # for each pressure-file pLim is introduced (1/3/.. kPa),
         # where the avalanche has stopped
