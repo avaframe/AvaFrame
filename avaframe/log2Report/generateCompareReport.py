@@ -148,7 +148,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
             # mark red
             if valuesBench[countValue] != valuesSim[countValue]:
                 valueRed = '<span style="color:red"> %.4f </span>' % valuesSim[countValue]
-                pfile.write('| %s | %.4f | %.4f | \n' % (value, valuesBench[countValue], valueRed))
+                pfile.write('| %s | %.4f | %s | \n' % (value, valuesBench[countValue], valueRed))
                 countValue = countValue + 1
             else:
                 pfile.write('| %s | %.4f | %.4f | \n' % (value, valuesBench[countValue], valuesSim[countValue]))
