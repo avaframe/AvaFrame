@@ -13,6 +13,8 @@ Work
 
 build
 
+*.egg*
+
 _autosummary
 
 avaframe/**/*.png
