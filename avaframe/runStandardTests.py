@@ -138,6 +138,9 @@ for test in testList:
 
         # perform analysis
         rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
+
+        # add aimec results to report dictionary
+        reportD, benchDict = ana3AIMEC.aimecRes2ReportD(resAnalysis, reportD, benchDict, pathDict['referenceFile'])
         # +++++++++++Aimec analysis
 
 
@@ -175,6 +178,14 @@ for test in testList:
 
         # add plot info to general report Dict
         reportD['Simulation Results'] = plotPaths
+
+        print('reportD')
+        for key in reportD:
+            print(key, reportD[key])
+
+        print('reportD')
+        for key in reportD:
+            print(key, reportD[key])
 
         # write report
         generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)

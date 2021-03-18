@@ -133,6 +133,31 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
         pfile.write(' \n')
         pfile.write(' \n')
 
+        # Create lists to write tables for aimec results
+        parameterList, valuesSim, valuesBench = makeLists(reportD['Aimec analysis'], benchD['Aimec analysis'])
+
+        # PARAMETER BLOCK
+        # Table listing all the simulation parameters
+        pfile.write('#### Aimec Analysis \n')
+        pfile.write(' \n')
+        pfile.write('| Parameter | Reference | Simulation | \n')
+        pfile.write('| --------- | --------- | ---------- | \n')
+        countValue = 0
+        for value in parameterList:
+            # if reference and simulation parameter value do not match
+            # mark red
+            if valuesBench[countValue] != valuesSim[countValue]:
+                valueRed = '<span style="color:red"> %.4f </span>' % valuesSim[countValue]
+                pfile.write('| %s | %.4f | %.4f | \n' % (value, valuesBench[countValue], valueRed))
+                countValue = countValue + 1
+            else:
+                pfile.write('| %s | %.4f | %.4f | \n' % (value, valuesBench[countValue], valuesSim[countValue]))
+                countValue = countValue + 1
+
+        pfile.write(' \n')
+        pfile.write(' \n')
+
+
         # IMAGE BLOCK
         pfile.write('#### Comparison Plots \n')
         pfile.write(' \n')

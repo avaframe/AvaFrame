@@ -426,3 +426,25 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis['areasPlot'] = {'Aimec area analysis': compPlotPath}
 
     return resAnalysis
+
+
+
+def aimecRes2ReportD(resAnalysis, reportD, benchD, refSim):
+    """ gather aimec results and append them to report dictionary """
+
+    if refSim == 0:
+        compSim = 1
+    elif refSim == 1:
+        compSim = 0
+    else:
+        log.warning('Reference File out of range - needs to be 0 or 1')
+
+    reportD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][2][compSim],
+    'max peak pressure': resAnalysis['MMPPR'][compSim], 'max peak flow depth': resAnalysis['MMPFD'][compSim],
+    'max peak flow velocity': resAnalysis['MMPFV'][compSim]}
+
+    benchD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][2][refSim],
+    'max peak pressure': resAnalysis['MMPPR'][refSim], 'max peak flow depth': resAnalysis['MMPFD'][refSim],
+    'max peak flow velocity': resAnalysis['MMPFV'][refSim]}
+
+    return reportD, benchD
