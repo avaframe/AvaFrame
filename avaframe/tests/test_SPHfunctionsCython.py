@@ -100,7 +100,6 @@ def test_getWeightsC(capfd):
             assert ff10 == pytest.approx(f10, rel=atol)
             assert ff01 == pytest.approx(f01, rel=atol)
             assert ff11 == pytest.approx(f11, rel=atol)
-            assert 1 == 0
 
 
 def test_getNormalMesh(capfd):
@@ -182,15 +181,15 @@ def test_getAreaMesh(capfd):
 
 def test_getNeighboursC(capfd):
     header = IOf.cASCheader()
-    header.ncols = 4
-    header.nrows = 5
+    header.ncols = 5
+    header.nrows = 6
     header.cellsize = 1
     dem = {}
     dem['header'] = header
     particles = {}
     particles['Npart'] = 16
-    particles['x'] = np.array([1., 0., 1., 2., 1., 2., 0., 1., 0., 2., 0., 2., 1., 2., 3., 3.])
-    particles['y'] = np.array([2., 1., 0., 1., 3., 3., 2., 1., 0., 0., 3., 2., 2., 1., 1., 4.])
+    particles['x'] = np.array([1.5, 0.5, 1.5, 2.5, 1.5, 2.5, 0.5, 1.5, 0.5, 2.5, 0.5, 2.5, 1.5, 2.5, 3.5, 3.5])
+    particles['y'] = np.array([2.5, 1.5, 0.5, 1.5, 3.5, 3.5, 2.5, 1.5, 0.5, 0.5, 3.5, 2.5, 2.5, 1.5, 1.5, 4.5])
     particles['z'] = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
     particles['m'] = particles['z']
     atol = 1e-10
