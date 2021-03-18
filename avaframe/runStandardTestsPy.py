@@ -11,7 +11,7 @@ from avaframe.com1DFAPy import runCom1DFA
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
-from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec
+from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
 from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
@@ -126,10 +126,13 @@ for test in testList:
         log.info('reference file comes from: %s' % pathDict['compType'][1])
 
         # Extract input file locations
-        pathDict = ana3AIMEC.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
+        pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
 
         # perform analysis
         rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
+
+        # add aimec results to report dictionary
+        reportD, benchDict = ana3AIMEC.aimecRes2ReportD(resAnalysis, reportD, benchDict, pathDict['referenceFile'])
         # +++++++++++Aimec analysis
 
 
