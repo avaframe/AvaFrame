@@ -132,7 +132,7 @@ for test in testList:
         rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
 
         # add aimec results to report dictionary
-        reportD, benchDict = ana3AIMEC.aimecRes2ReportD(resAnalysis, reportD, benchDict, pathDict['referenceFile'])
+        reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportD, benchDict, pathDict['referenceFile'])
         # +++++++++++Aimec analysis
 
 
