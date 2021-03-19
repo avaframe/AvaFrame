@@ -37,9 +37,7 @@ def initiateLogger(targetDir, logName='runLog'):
         log : logging object
 
     """
-    # logFileName = os.path.join(targetDir, logName+'.log')
-    # logFileName = os.path.join('data', 'avaParabola', logName+'.log')
-    logFileName = os.path.join(logName+'.log')
+    logFileName = os.path.join(targetDir, logName+'.log')
 
     # get path of module and generate logging.conf file path
     logConfPath = os.path.dirname(__file__)
