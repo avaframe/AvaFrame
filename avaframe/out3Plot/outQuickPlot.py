@@ -9,6 +9,7 @@ This file is part of Avaframe.
 
 import matplotlib.pyplot as plt
 from avaframe.in3Utils import fileHandlerUtils as fU
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
 import os
 import logging
@@ -17,6 +18,7 @@ import glob
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.geoTrans as geoTrans
+import avaframe.out3Plot.statsPlots as statsPlots
 import avaframe.out3Plot.makePalette as makePalette
 import avaframe.out3Plot.plotUtils as pU
 
@@ -122,6 +124,14 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax3.set_aspect('auto')
     ax3.set_xlabel('x [m]')
     ax3.set_title('Difference ref-sim')
+
+    # for difference histogramm - remove dataDiff == 0 values from array
+    dataDiffPlot = dataDiff[dataDiff != 0]
+    axin2 = ax3.inset_axes([0.75, 0.1, 0.25, 0.25])
+    axin2.patch.set_alpha(0.0)
+    axin2.hist(dataDiffPlot, density=True, stacked=True, bins=30)
+    axin2.set_ylabel('density')
+
     fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
 
     # Fgiure 2 cross and lonprofile
