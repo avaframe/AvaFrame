@@ -140,7 +140,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
         # Table listing all the simulation parameters
         pfile.write('#### Aimec Analysis \n')
         pfile.write(' \n')
-        pfile.write('| Parameter | Reference | Simulation | \n')
+        pfile.write('| Characteristics | Reference | Simulation | \n')
         pfile.write('| --------- | --------- | ---------- | \n')
         countValue = 0
         for value in parameterList:
