@@ -327,7 +327,6 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     runoutLength = runout[0]
     TP, FN, FP, TN, _ = aT.analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
 
-    print('RUNOUT', runout)
     # affect values to output dictionary
     resAnalysis = {}
     resAnalysis['runout'] = runout
@@ -430,7 +429,7 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
 
 
 
-def aimecRes2ReportD(resAnalysis, reportD, benchD, refSim):
+def aimecRes2ReportDict(resAnalysis, reportD, benchD, refSim):
     """ gather aimec results and append them to report dictionary """
 
     if refSim == 0:

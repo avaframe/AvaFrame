@@ -147,11 +147,11 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
             # if reference and simulation parameter value do not match
             # mark red
             if valuesBench[countValue] != valuesSim[countValue]:
-                valueRed = '<span style="color:red"> %.4f </span>' % valuesSim[countValue]
-                pfile.write('| %s | %.4f | %s | \n' % (value, valuesBench[countValue], valueRed))
+                valueRed = '<span style="color:red"> %.2f </span>' % valuesSim[countValue]
+                pfile.write('| %s | %.2f | %s | \n' % (value, valuesBench[countValue], valueRed))
                 countValue = countValue + 1
             else:
-                pfile.write('| %s | %.4f | %.4f | \n' % (value, valuesBench[countValue], valuesSim[countValue]))
+                pfile.write('| %s | %.2f | %.2f | \n' % (value, valuesBench[countValue], valuesSim[countValue]))
                 countValue = countValue + 1
 
         pfile.write(' \n')
