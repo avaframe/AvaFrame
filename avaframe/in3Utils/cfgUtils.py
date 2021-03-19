@@ -8,6 +8,7 @@
 import configparser
 import os
 import logging
+import pathlib
 # Local imports
 import avaframe as avaf
 from avaframe.in3Utils import logUtils
@@ -22,14 +23,16 @@ def getGeneralConfig():
     '''
 
     # get path of module
-    modPath = os.path.dirname(avaf.__file__)
-    localFile = os.path.join(modPath, 'local_avaframeCfg.ini')
-    defaultFile = os.path.join(modPath, 'avaframeCfg.ini')
-    if os.path.isfile(localFile):
+    modPath = pathlib.Path(avaf.__file__).resolve().parent
+
+    localFile = modPath / 'local_avaframeCfg.ini'
+    defaultFile = modPath / 'avaframeCfg.ini'
+
+    if localFile.is_file():
         iniFile = localFile
         iniFile = [defaultFile, localFile]
         compare = True
-    elif os.path.isfile(defaultFile):
+    elif defaultFile.is_file():
         iniFile = defaultFile
         compare = False
     else:
@@ -61,14 +64,13 @@ def getModuleConfig(module, fileOverride=''):
     '''
 
     # get path of module
-    modPath = os.path.dirname(module.__file__)
+    modPath = pathlib.Path(module.__file__).resolve().parent
 
     # get filename of module
-    modName = os.path.basename(module.__file__)
-    modName = os.path.splitext(modName)[0]
+    modName = str(pathlib.Path(module.__file__).stem)
 
-    localFile = os.path.join(modPath, 'local_'+modName+'Cfg.ini')
-    defaultFile = os.path.join(modPath, modName+'Cfg.ini')
+    localFile = modPath / ('local_'+modName+'Cfg.ini')
+    defaultFile = modPath / (modName+'Cfg.ini')
 
     log.debug('localFile: %s', localFile)
     log.debug('defaultFile: %s', defaultFile)
@@ -82,11 +84,11 @@ def getModuleConfig(module, fileOverride=''):
             raise FileNotFoundError('Provided fileOverride does not exist: '
                                     + fileOverride)
 
-    elif os.path.isfile(localFile):
+    elif localFile.is_file():
         iniFile = localFile
         iniFile = [defaultFile, localFile]
         compare = True
-    elif os.path.isfile(defaultFile):
+    elif defaultFile.is_file():
         iniFile = defaultFile
         compare = False
     else:
