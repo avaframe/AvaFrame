@@ -1582,13 +1582,6 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz, int interp
       v: float
           interpolated scalar at position (x, y)
   """
-  # cdef int Lx0, Ly0, Lx1, Ly1
-  # cdef double f00, f01, f10, f11
-  # Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
-  # cdef double v = (V[Ly0, Lx0]*f00 +
-  # V[Ly0, Lx1]*f10 +
-  # V[Ly1, Lx0]*f01 +
-  # V[Ly1, Lx1]*f11)
   cdef int Lxy[4]
   cdef double w[4]
   getWeights(x, y, csz, interpOption, Lxy, w)
@@ -1640,22 +1633,6 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
       nz: float
           z component of the interpolated vector field at position (x, y)
   """
-  # cdef int Lx0, Ly0, Lx1, Ly1
-  # cdef double f00, f01, f10, f11
-  # Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = getWeights(x, y, csz, interpOption)
-  # cdef double nx = (Nx[Ly0, Lx0]*f00 +
-  #                   Nx[Ly0, Lx1]*f10 +
-  #                   Nx[Ly1, Lx0]*f01 +
-  #                   Nx[Ly1, Lx1]*f11)
-  # cdef double ny = (Ny[Ly0, Lx0]*f00 +
-  #                   Ny[Ly0, Lx1]*f10 +
-  #                   Ny[Ly1, Lx0]*f01 +
-  #                   Ny[Ly1, Lx1]*f11)
-  # cdef double nz = (Nz[Ly0, Lx0]*f00 +
-  #                   Nz[Ly0, Lx1]*f10 +
-  #                   Nz[Ly1, Lx0]*f01 +
-  #                   Nz[Ly1, Lx1]*f11)
-
   cdef int Lxy[4]
   cdef double w[4]
   getWeights(x, y, csz, interpOption, Lxy, w)
