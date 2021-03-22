@@ -129,8 +129,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     dataDiffPlot = dataDiff[dataDiff != 0]
     axin2 = ax3.inset_axes([0.75, 0.1, 0.25, 0.25])
     axin2.patch.set_alpha(0.0)
-    axin2.hist(dataDiffPlot, density=True, stacked=True, bins=30)
-    axin2.set_ylabel('density')
+    axin2.hist(dataDiffPlot, bins=30)
+    axin2.get_yaxis().set_ticks([])
 
     fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
 
