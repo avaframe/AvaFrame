@@ -121,7 +121,7 @@ def writeABpostOut(resAB, cfg, reportDictList):
         reportAB['AlphaBeta plots'][name] = '.'.join((savePath, pU.outputFormat))
         # Add to report dictionary list
         reportDictList.append(reportAB)
-    if flags.getboolean('PlotPath') or flags.getboolean('PlotProfile'):
+    if flags.getboolean('plotPath') or flags.getboolean('plotProfile'):
         plt.pause(0.001)
         input("Press [enter] to continue.")
     return reportDictList, FileNamePlot_ext, FileNameWrite_ext
@@ -136,7 +136,7 @@ def plotPath(resAB, name, flags):
     y = resAB[name]['y']
     indSplit = resAB[name]['indSplit']
 
-    if flags.getboolean('PlotPath'):
+    if flags.getboolean('plotPath'):
         # Plot raster and path
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         titleText = name
@@ -212,9 +212,9 @@ def plotProfile(resAB, name, save_file, flags):
     plt.grid(linestyle=':', color='0.9')
     plt.legend(frameon=False)
     plt.draw()
-    if flags.getboolean('PlotProfile'):
+    if flags.getboolean('plotProfile'):
         plt.show(block=False)
-    if flags.getboolean('SaveProfile'):
+    if flags.getboolean('saveProfile'):
         log.debug('Saving profile figure to: %s', save_file)
         fig_prof.savefig(save_file)
 
