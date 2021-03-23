@@ -714,7 +714,7 @@ def analyzeField(rasterTransfo, transformedRasters, dataType):
     return maxaCrossMax, aCrossMax, aCrossMean
 
 
-def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags):
+def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, cfgFlags):
     """Compare results to reference.
 
     Compute True positive, False negative... areas.
@@ -725,7 +725,7 @@ def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFla
         transformation information
     resAnalysis: dict
         resAnalysis dictionary containing all results to update
-    pLim: float
+    pThreshold: float
         numerical value of the pressure limit to use
     dataPressure: list
         list of transformed pressure rasters
@@ -751,28 +751,19 @@ def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFla
 
     # initialize Arrays
     nTopo = len(dataPressure)
-    TP = np.empty((nTopo))
-    FN = np.empty((nTopo))
-    FP = np.empty((nTopo))
-    TN = np.empty((nTopo))
+    TP = np.empty((nTopo, 4))
+    FN = np.empty((nTopo, 4))
+    FP = np.empty((nTopo, 4))
+    TN = np.empty((nTopo, 4))
 
-    # take first simulation as reference
-    refMask = copy.deepcopy(dataPressure[nRef])
-    # prepare mask for area resAnalysis
-    refMask = np.where(np.isnan(refMask), 0, refMask)
-    refMask = np.where(refMask < pLim, 0, refMask)
-    refMask = np.where(refMask >= pLim, 1, refMask)
-    # comparison rasterdata with mask
-    log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
-        'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
     # rasterinfo
     nStart = indStartOfRunout
     # inputs for plot
     inputs = {}
     inputs['runoutLength'] = runoutLength
-    inputs['pressureLimit'] = pLim
+    inputs['pressureLimit'] = pThreshold
     inputs['refDataPressure'] = dataPressure[nRef]
-    inputs['refRasterMask'] = refMask
+    # inputs['refRasterMask'] = refMask
     inputs['nStart'] = nStart
 
     for i in range(nTopo):
@@ -785,16 +776,57 @@ def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFla
         # false positive: result1(mask)=0, result2(rasterdata)=1
         # true negative: result1(mask)=0, result2(rasterdata)=0
         """
-        # for each pressure-file pLim is introduced (1/3/.. kPa),
-        # where the avalanche has stopped
-        newRasterData = copy.deepcopy(rasterdata)
-        # prepare mask for area resAnalysis
-        newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
-        newRasterData = np.where(newRasterData < pLim, 0, newRasterData)
-        newRasterData = np.where(newRasterData >= pLim, 1, newRasterData)
+        pressureLimit = [1, 3, 5, 10]
+        for pLim, j in zip(pressureLimit, np.arange(4)):
+            # take first simulation as reference
+            refMask = copy.deepcopy(dataPressure[nRef])
+            # prepare mask for area resAnalysis
+            refMask = np.where(np.isnan(refMask), 0, refMask)
+            refMask = np.where(refMask < pLim, 0, refMask)
+            refMask = np.where(refMask >= pLim, 1, refMask)
+            # comparison rasterdata with mask
+            log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
+                'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
+            # for each pressure-file pLim is introduced (1/3/.. kPa),
+            # where the avalanche has stopped
+            newRasterData = copy.deepcopy(rasterdata)
+            # prepare mask for area resAnalysis
+            newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
+            newRasterData = np.where(newRasterData < pLim, 0, newRasterData)
+            newRasterData = np.where(newRasterData >= pLim, 1, newRasterData)
 
+            tpInd = np.where((refMask[nStart:] == 1) &
+                             (newRasterData[nStart:] == 1))
+            fpInd = np.where((refMask[nStart:] == 0) &
+                             (newRasterData[nStart:] == 1))
+            fnInd = np.where((refMask[nStart:] == 1) &
+                             (newRasterData[nStart:] == 0))
+            tnInd = np.where((refMask[nStart:] == 0) &
+                             (newRasterData[nStart:] == 0))
+
+            # subareas
+            tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
+            fp = np.nansum(cellarea[fpInd[0] + nStart, fpInd[1]])
+            fn = np.nansum(cellarea[fnInd[0] + nStart, fnInd[1]])
+            tn = np.nansum(cellarea[tnInd[0] + nStart, tnInd[1]])
+
+            # take reference (first simulation) as normalizing area
+            areaSum = tp + fn
+
+            TP[i, j] = tp
+            FN[i, j] = fn
+            FP[i, j] = fp
+            TN[i, j] = tn
+
+            log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
+                *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
         # inputs for plot
-        inputs['newRasterMask'] = newRasterData
+        inputs['compDataPressure'] = rasterdata
+        # inputs['newRasterMask'] = newRasterData
+        inputs['TP'] = TP[i, :]
+        inputs['FN'] = FN[i, :]
+        inputs['FP'] = FP[i, :]
+        inputs['TN'] = TN[i, :]
         inputs['i'] = i
 
         # only plot comparisons of simulations to reference
@@ -806,33 +838,7 @@ def analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFla
                                     cfgFlags)
             log.warning('only one simulation, area comparison not meaningful')
 
-        tpInd = np.where((refMask[nStart:] == 1) &
-                         (newRasterData[nStart:] == 1))
-        fpInd = np.where((refMask[nStart:] == 0) &
-                         (newRasterData[nStart:] == 1))
-        fnInd = np.where((refMask[nStart:] == 1) &
-                         (newRasterData[nStart:] == 0))
-        tnInd = np.where((refMask[nStart:] == 0) &
-                         (newRasterData[nStart:] == 0))
-
-        # subareas
-        tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
-        fp = np.nansum(cellarea[fpInd[0] + nStart, fpInd[1]])
-        fn = np.nansum(cellarea[fnInd[0] + nStart, fnInd[1]])
-        tn = np.nansum(cellarea[tnInd[0] + nStart, tnInd[1]])
-
-        # take reference (first simulation) as normalizing area
-        areaSum = tp + fn
-
-        TP[i] = tp
-        FN[i] = fn
-        FP[i] = fp
-        TN[i] = tn
-
-        log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
-            *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
-
-    return TP, FN, FP, TN, compPlotPath
+    return TP[:,1], FN[:,1], FP[:,1], TN[:,1], compPlotPath
 
 
 def readWrite(fname_ent, time):

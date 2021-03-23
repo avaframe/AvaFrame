@@ -7,6 +7,8 @@
 import os
 import logging
 import math
+import copy
+from scipy import interpolate
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib
@@ -354,56 +356,83 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     pLim = inputs['pressureLimit']
     runoutLength = inputs['runoutLength']
     refDataPressure = inputs['refDataPressure']
-    refRasterMask = inputs['refRasterMask']
-    newRasterMask = inputs['newRasterMask']
+    compDataPressure = inputs['compDataPressure']
+    TP = inputs['TP']
+    FN = inputs['FN']
+    FP = inputs['FP']
+    TN = inputs['TN']
+    # refRasterMask = inputs['refRasterMask']
+    # newRasterMask = inputs['newRasterMask']
     nStart = inputs['nStart']
     i = inputs['i']
 
     ############################################
     # Figure: Raster comparison
     fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-    ax1 = plt.subplot(121)
+    ax1 = plt.subplot2grid((3,2), (0,0), rowspan=3)
 
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, pLim,
-                                                       np.nanmax((refDataPressure)[nStart:]),
+                                                       np.nanmax((refDataPressure)),
                                                        continuous=pU.contCmap)
     cmap.set_under(color='w')
-
     ref0, im = pU.NonUnifIm(ax1, l, s, refDataPressure, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
-    im.set_clim(vmin=pLim, vmax=np.nanmax((refDataPressure)[nStart:]))
-
-    ax1.set_title('Reference Peak Pressure in the RunOut area' +
-                  '\n' + 'Pressure threshold: %.1f kPa' % pLim)
+    ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
+                label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
+    im.set_clim(vmin=0.0001, vmax=np.nanmax((refDataPressure)))
+    ax1.set_title('Reference Peak Pressure')
     pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
 
     y_lim = s[indStartOfRunout+20]+np.nanmax(runoutLength-sStart)
-    ax1.set_ylim([s[indStartOfRunout], y_lim])
+    ax1.set_ylim([0, y_lim])
     pU.putAvaNameOnPlot(ax1, projectName)
-    ax2 = plt.subplot(122)
-    colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
-    cmap = matplotlib.colors.ListedColormap(colorsList)
-    cmap.set_under(color='b')
-    cmap.set_over(color='r')
-    cmap.set_bad(color='k')
-    ref0, im = pU.NonUnifIm(ax2, l, s, newRasterMask-refRasterMask, 'l [m]', 's [m]',
-                         extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
+
+    ax2 = plt.subplot2grid((3,2), (0,1), rowspan=2)
+    # colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
+    # cmap = matplotlib.colors.ListedColormap(colorsList)
+    # cmap.set_under(color='b')
+    # cmap.set_over(color='r')
+    # cmap.set_bad(alpha=0)
+    # data = newRasterMask-refRasterMask
+    # data = np.where(data==0, np.nan, data)
+    # ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
+    #                      extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
+    # im1.set_clim(vmin=-0.001, vmax=0.0001)
+    L, S = np.meshgrid(l, s)
+    colorsP = pU.cmapPres['colors'][1:5]
+    contourRef = ax2.contour(L, S, refDataPressure, levels=(1, 3, 5, 10), linewidths=1, colors=colorsP)
+    contourComp = ax2.contour(L, S, compDataPressure, levels=(1, 3, 5, 10), linewidths=1, colors=colorsP, linestyles= 'dashed')
+
+    labels = ['1kPa', '3kPa','5kPa','10kPa']
+    for i in range(len(labels)):
+        contourRef.collections[i].set_label(labels[i])
 
     ax2.set_title(
-        'Difference current - reference in runout area' + '\n' + 'Blue = FN, Red = FP')
+        'Peak pressure contour lines' + '\n' + 'reference = full line, curent = dashed line')
 
     if cfgPath['compType'][0] == 'comModules':
         namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
-    im.set_clim(vmin=-0.000000001, vmax=0.000000001)
     ax2.set_ylim([s[indStartOfRunout], y_lim])
-    plt.subplots_adjust(wspace=0.3)
+    # plt.subplots_adjust(wspace=0.3)
+    ax2.legend(loc='lower right')
 
+    tabax = plt.subplot2grid((3,2), (2, 1))
+    cols = ['$P_{lim}$ [kPa]','Area difference [$m^2$]', 'relative area difference[%]', 'relative area [%]']
+    data = np.random.rand(4,4)
+    data[:, 0] = [1, 3, 5, 10]
+    data[:, 1] = FN + FP
+    data[:, 2] = (FN + FP)/(TP + FN)*100
+    data[:, 3] = (FN + FP)/(FN[0] + FP[0])*100
+    new_array = np.array(["%.2f" % x for x in data.reshape(data.size)])
+    data = new_array.reshape(data.shape)
+    tabax.axis("off")
+    the_table = tabax.table(cellText=data, colLabels=cols, colWidths=[.1]*4, loc='center')
+    the_table.set_fontsize(24)
+    the_table.scale(3, 2)
     outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  'sim', str(i), 'comparisonToReference'])
-
-
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
