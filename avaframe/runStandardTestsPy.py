@@ -47,9 +47,6 @@ with open(reportFile, 'w') as pfile:
 # run Standard Tests sequentially
 for test in testList:
 
-    # avalanche directory
-    avaDir = 'data' + os.sep + test['AVANAME']
-
     # Start logging
     log = logUtils.initiateLogger(avaDir, logName)
     log.info('Current avalanche: %s', avaDir)
@@ -57,7 +54,7 @@ for test in testList:
     # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfgPy.ini' % avaName)
+    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfgPy.ini' % test['AVANAME'])
 
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir,  keep=logName)
@@ -88,7 +85,7 @@ for test in testList:
 
         # -----------Compare to benchmark results
         # Fetch simulation info from benchmark results
-        benchDictList = simParameters.fetchBenchParameters(avaDir)
+        benchDictList = simParameters.fetchBenchParameters(test['AVANAME'])
         benchDict = ''
         for bDict in benchDictList:
 
@@ -110,7 +107,7 @@ for test in testList:
 
         # +++++++Aimec analysis
         # load configuration
-        aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECPyCfg.ini' % avaName)
+        aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECPyCfg.ini' % test['AVANAME'])
         cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
         cfgAimecSetup = cfgAimec['AIMECSETUP']
         cfgAimecSetup['testName'] = test['NAME']
