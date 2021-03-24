@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from avaframe.in3Utils import fileHandlerUtils as fU
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
+import numpy.ma as ma
 import os
 import logging
 import glob
@@ -72,10 +73,17 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     nx_loc = int(ny * 0.5)
 
     # Difference between datasets
-    dataDiff = np.nan_to_num(data1 - data2)
-    diffMax = np.amax(dataDiff)
-    diffMin = np.amin(dataDiff)
-    diffMean = np.mean(dataDiff)
+    dataMask = np.ones((ny, nx))
+    for m in range(ny):
+        for k in range(nx):
+            if data1[m,k] == 0.0 and data2[m,k] == 0.0:
+                dataMask[m,k] = np.nan
+
+    dataDiff = data1 - data2
+    dataDiff[np.isnan(dataMask)] = np.nan
+    diffMax = np.nanmax(dataDiff)
+    diffMin = np.nanmin(dataDiff)
+    diffMean = np.nanmean(dataDiff)
 
     # Location of box
     nybox = int(nx * 0.2)
@@ -89,7 +97,9 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
         pU.cmapPres, np.amin(data1), np.amax(data1), continuous=pU.contCmap)
 
-    im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+    cmap.set_bad('w')
+    data1P = ma.masked_where(data1 == 0.0, data1)
+    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
@@ -102,7 +112,9 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
         pU.cmapPres, np.amin(data2), np.amax(data2), continuous=pU.contCmap)
 
-    im2 = plt.imshow(data2, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+    cmap.set_bad('w')
+    data2P = ma.masked_where(data2 == 0.0, data2)
+    im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     pU.addColorBar(im2, ax2, ticks, unit)
 
     ax2.set_aspect('auto')
@@ -112,7 +124,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     ax3 = fig.add_subplot(133)
     cmap = pU.cmapdiv
-    elev_max = np.max(np.abs(dataDiff))
+    elev_max = np.nanmax(np.abs(dataDiff))
     im3 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
                      extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     fig.colorbar(im3, ax=ax3)
@@ -125,7 +137,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax3.set_title('Difference ref-sim')
 
     # for difference histogramm - remove dataDiff == 0 values from array
-    dataDiffPlot = dataDiff[dataDiff != 0.0]
+    dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
     axin2 = ax3.inset_axes([0.75, 0.1, 0.25, 0.25])
     axin2.patch.set_alpha(0.0)
     axin2.hist(dataDiffPlot, bins=30)
