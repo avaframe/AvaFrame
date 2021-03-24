@@ -73,14 +73,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     nx_loc = int(ny * 0.5)
 
     # Difference between datasets
-    dataMask = np.ones((ny, nx))
-    for m in range(ny):
-        for k in range(nx):
-            if data1[m,k] == 0.0 and data2[m,k] == 0.0:
-                dataMask[m,k] = np.nan
-
     dataDiff = data1 - data2
-    dataDiff[np.isnan(dataMask)] = np.nan
+    dataDiff = np.where((data1==0) & (data2==0), np.nan, dataDiff)
     diffMax = np.nanmax(dataDiff)
     diffMin = np.nanmin(dataDiff)
     diffMean = np.nanmean(dataDiff)
