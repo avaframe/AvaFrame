@@ -49,7 +49,10 @@ with open(reportFile, 'w') as pfile:
 for test in testList:
 
     # avalanche directory
-    avaDir = 'data' + os.sep + test['AVANAME']
+    if test['TOPOTYPE'] == 'real':
+        avaDir = 'data' + os.sep + test['AVANAME'] + ST
+    else:
+        avaDir = 'data' + os.sep + test['AVANAME']
 
     # get path to executable
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
@@ -62,7 +65,7 @@ for test in testList:
     # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfg.ini' % avaName)
+    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfg.ini' %  test['AVANAME'])
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
@@ -97,7 +100,7 @@ for test in testList:
 
         # -----------Compare to benchmark results
         # Fetch simulation info from benchmark results
-        benchDictList = simParameters.fetchBenchParameters(avaDir)
+        benchDictList = simParameters.fetchBenchParameters(test['AVANAME'])
         benchDict = ''
         for bDict in benchDictList:
             if bDict['testName'] ==  test['NAME'] and rel == bDict['Simulation Parameters']['Release Area Scenario']:
@@ -118,7 +121,7 @@ for test in testList:
 
         # +++++++Aimec analysis
         # load configuration
-        aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' % avaName)
+        aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' %  test['AVANAME'])
         cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
         cfgAimecSetup = cfgAimec['AIMECSETUP']
         cfgAimecSetup['testName'] = test['NAME']
