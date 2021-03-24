@@ -6,9 +6,9 @@ Mesh and interpolation
 The numerical method used in com1DFA mixes particle methods and
 mesh methods. Mass and momentum are tracked using particles but flow
 depth is tracked using the mesh. The mesh is also to access topographic information
-(surface elevation, normal) as well as for displaying results. Therefore it is
-important to define properly the mesh and the interpolation method that enables
-transition from particle to mesh values and the other way around.
+(surface elevation, normal vector) as well as for displaying results. Here is
+a description of the mesh and the interpolation method used to
+switch from particle to mesh values and the other way around.
 
 Mesh
 ~~~~~~
@@ -83,12 +83,12 @@ In the DFA kernel, mass, flow depths, velocity fields can be defined at particle
 location or on the mesh. We need a method to be able to go from particle property
 to mesh field values and from mesh values to particle property.
 
-Grid to particle
+Mesh to particle
 """"""""""""""""""
 
-On a 2D rectilinear mesh, scalar and vector fields defined on grid points
+On a 2D rectilinear mesh, scalar and vector fields defined on mesh vertex and center
 can be evaluated anywhere within the mesh using a bilinear interpolation
-between grid points. Evaluating a vector field simply consists in evaluating
+between mesh vertices. Evaluating a vector field simply consists in evaluating
 the three components as scalar fields.
 
 The bilinear interpolation consists in successive linear interpolations
@@ -113,7 +113,9 @@ and
                   = & w_{00}f_{00} + w_{01}f_{01} + w_{10}f_{10} + w_{11}f_{11}
     \end{aligned}
 
-the :math:`w` are the bilinear weights.
+the :math:`w` are the bilinear weights. The example given here is for a unit cell.
+For no unit cells, the :math:`u` and :math:`v` simply have to be normalized by the
+cell size.
 
 
 .. _BilinearInterp:
@@ -124,15 +126,16 @@ the :math:`w` are the bilinear weights.
         Bilinear interpolation in a unit cell.
 
 
-Particles to grid
+Particles to mesh
 """""""""""""""""""
-Going from particle property to grid value is also based on bilinear interpolation and
-weights but require a bit more care in order to conserve mass and momentum balance.
-Flow depth and velocity fields are determined on the grid using, as intermediate step
-mass and momentum fields. First, mass and momentum grid fields can be evaluated by
+Going from particle property to mesh value is also based on bilinear interpolation and
+weights but requires a bit more care in order to conserve mass and momentum balance.
+Flow depth and velocity fields are determined on the mesh using, as intermediate step
+mass and momentum fields. First, mass and momentum mesh fields can be evaluated by
 summing particles mass and momentum. This can be donne using the bilinear
 weights :math:`w` defined in the previous paragraph (here :math:`f` represents
-the mass or momentum and :math:`f_{uv}` is the particle value):
+the mass or momentum and :math:`f_{uv}` is the particle value. :math:`f_{ij}`
+are the vertex values):
 
 .. math::
     \begin{aligned}
@@ -142,28 +145,30 @@ the mass or momentum and :math:`f_{uv}` is the particle value):
     f_{11} = & w_{11}f_{uv}
     \end{aligned}
 
-The contribution of each particle to the different grid points is summed up to
-the finally give the grid value. This method ensures that the total mass and
-momentum of the particles is preserved (the mass and momentum on the grid will
-sum up to the same total) Flow depth and velocity grid fields can then be deduced
-from the mass and momentum fields and the cell area (real area of each grid cell):
+The contribution of each particle to the different mesh points is summed up to
+finally give the mesh value. This method ensures that the total mass and
+momentum of the particles is preserved (the mass and momentum on the mesh will
+sum up to the same total). Flow depth and velocity grid fields can then be deduced
+from the mass and momentum fields and the cell area (real area of each grid cell).
 
 
 Neighbor search
 ------------------
 
-The SPH flow depth gradient computation is based on the particle interactions.
+The SPH flow depth gradient computation is based on particle interactions.
 It requires, in order to compute the gradient of the flow depth at a particle location, to
-find all the particles in its neighborhood. This represents in the end a lot of
-interactions and it is important that the neighbor search is fast and efficient.
-:cite:`IhOrSoKoTe2014` describe different uniform grid neighbor search
+find all the particles in its surrounding. Considering the number of particles and
+their density, computing the gradient ends up in computing a lot of
+interactions and represents the most computationally expensive part of the dense
+flow avalanche simulation. It is therefore important that the neighbor search is fast and efficient.
+:cite:`IhOrSoKoTe2014` describe different rectilinear mesh neighbor search
 methods. In com1DFA, the simplest method is used. The idea is to locate each
 particle in a cell, this way, it is possible to keep track of the particles
 in each cell. To find the neighbors of a particle, one only needs to read the
 cell in which the particle is located (dark blue cell in :numref:`neighborSearch`)
-, as well as the direct adjacent cells in all directions (light blue cells) and
+, find the direct adjacent cells in all directions (light blue cells) and
 simply read all particles within those cells. This is very easily achieved
-on uniform grids because locating a particle in a cell is straightforward and
+on rectilinear meshes because locating a particle in a cell is straightforward and
 finding the adjacent cells is also immediate.
 
 .. _neighborSearch:
@@ -171,11 +176,21 @@ finding the adjacent cells is also immediate.
 .. figure:: _static/neighborSearch.png
         :width: 90%
 
-        Support grid for neighbor search:
+        Support mesh for neighbor search:
         if the cell side is bigger than the kernel length :math:`r_{kernel}` (red circle in the picture),
         the neighbors for any particle in any given cell (dark blue square)
-        can be found in direct neighborhood of the cell itself (light blue squares)
+        can be found in the direct neighborhood of the cell itself (light blue squares)
 
+.. _partInCell:
+
+.. figure:: _static/partInCell.png
+        :width: 90%
+
+        The particles are located in the cells using
+        tow arrays. indPartInCell of size number of cells + 1
+        which keeps track of the number of particles in each cell
+        and partInCell of size number of particles + 1 which lists
+        the particles contained in the cells.
 
 SPH gadient
 --------------
@@ -317,32 +332,33 @@ in the plane local basis:
 .. math::
   \mathbf{r'}_{ij}=\mathbf{x}_i-\mathbf{x'}_j = v_{ij,1}\mathbf{V_1} + v_{ij,2}\mathbf{V_2}
 
-It is important to define :math:`f` properly:
+It is important to define :math:`f` properly and the gradient that will be calculated:
 
 .. math::
   \left.
   \begin{aligned}
   f \colon \mathcal{TP}\subset\mathbb{R}^3 &\to \mathbb{R}\\
-  (x_1,x_2,x_3) &\mapsto f(x_1,x_2,x_3) = \hat{f}(x_1(v_1,v_2),x_2(v_1,v_2))
+  (x_1,x_2,x_3) &\mapsto f(x_1,x_2,x_3) = f(x_1(v_1,v_2),x_2(v_1,v_2)) = \tilde{f}(v_1,v_2)
   \end{aligned}
   \right.
 Indeed, since :math:`(x_1,x_2,x_3)` lies in :math:`\mathcal{TP}`, :math:`x_3`
 is not independent of :math:`(x_1,x_2)`:
 
-.. math::
-   x_3 = \frac{-x_1(\mathbf{e_1}.\mathbf{V_3})-x_2(\mathbf{e_2}.\mathbf{V_3})}{\mathbf{e_3}.\mathbf{V_3}}
+..  .. math::
+..   x_3 = \frac{-x_1(\mathbf{e_1}.\mathbf{V_3})-x_2(\mathbf{e_2}.\mathbf{V_3})}{\mathbf{e_3}.\mathbf{V_3}} */
 
 .. math::
   \left.
   \begin{aligned}
   \tilde{f} \colon \mathcal{TP}\subset\mathbb{R}^2 &\to \mathbb{R}\\
-  (v_1,v_2) &\mapsto \tilde{f}(v_1,v_2) = \tilde{f}(v_1(x_1,x_2),v_2(x_1,x_2))
+  (v_1,v_2) &\mapsto \tilde{f}(v_1,v_2) = \tilde{f}(v_1(x_1,x_2),v_2(x_1,x_2)) = f(x_1,x_2,x_3)
   \end{aligned}
   \right.
 
-It is then easy to apply the :ref:`standard-method`
-to compute the gradient in the tangent plane :math:`\mathcal{TP}`.
-Let us call this gradient :math:`\mathbf{\nabla}_\mathcal{TP}`:
+The target is the gradient of :math:`\tilde{f}` in terms of the :math:`\mathcal{TP}` variables
+:math:`(v_1,v_2)`. Let us call this gradient :math:`\mathbf{\nabla}_\mathcal{TP}`.
+It is then possible to apply the :ref:`standard-method` to compute this gradient:
+
 
 .. math::
    \mathbf{\nabla}_\mathcal{TP}W_{ij} = \frac{\partial W}{\partial r}.\mathbf{\nabla}_\mathcal{TP}r,
@@ -352,13 +368,35 @@ Let us call this gradient :math:`\mathbf{\nabla}_\mathcal{TP}`:
 Which leads to:
 
 .. math::
-  \mathbf{\nabla}_\mathcal{TP}W_{ij} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert)^2}{r_{ij}}\left\{
+  \mathbf{\nabla}_\mathcal{TP}W_{ij} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{ij}'}\right\Vert)^2}{r_{ij}'}\left\{
   \begin{aligned}
-  & v_{ij,1}\mathbf{V_1} + v_{ij,2}\mathbf{V_2}, \quad &0\leq \left\Vert \mathbf{r_{ij}}\right\Vert \leq  r_0\\
-  & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
+  & v_{ij,1}\mathbf{V_1} + v_{ij,2}\mathbf{V_2}, \quad &0\leq \left\Vert \mathbf{r_{ij}'}\right\Vert \leq  r_0\\
+  & 0 , & r_0 <\left\Vert \mathbf{r_{ij}'}\right\Vert
   \end{aligned}
   \right.
   :label: kernel function gradient TP 2
+
+
+.. math::
+  \mathbf{\nabla}_\mathcal{TP}\tilde{f_{i}} = -\sum\limits_{j}\tilde{f_{j}}A_{j}\,\mathbf{\nabla}W_{ij}
+  :label: sph dradient
+
+This gradient can now be expressed in the Cartesian coordinate system.
+It is clear that the change of coordinate system was not needed:
+
+
+.. math::
+  \mathbf{\nabla}_\mathcal{TP}W_{ij} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{ij}'}\right\Vert)^2}{r_{ij}'}\left\{
+  \begin{aligned}
+  & r_{ij,1}\mathbf{e_1} + r_{ij,2}\mathbf{e_2} + r_{ij,3}\mathbf{e_3}, \quad &0\leq \left\Vert \mathbf{r_{ij}'}\right\Vert \leq  r_0\\
+  & 0 , & r_0 <\left\Vert \mathbf{r_{ij}'}\right\Vert
+  \end{aligned}
+  \right.
+
+The advantage of computing the gradient in the local coordinate system is if
+the components (in flow direction or in cross flow direction) need to be treated
+differently.
+
 
 .. _2_5DSPH:
 
@@ -371,3 +409,47 @@ Which leads to:
 
 Artificial viscosity
 --------------------
+
+Question: Why add the artificial viscosity at the beginning of the time step? makes no sense
+
+In :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche`, the governing
+equations for the DFA were derived and all first order or smaller terms where neglected.
+Among those terms is the lateral shear stress. This term leads toward
+the homogenization of the velocity field. It means that two neighbor elements
+of fluid should have similar velocities. The aim behind adding artificial viscosity is to
+
+
+.. math::
+    \begin{aligned}
+    \mathbf{F_{viscosity}} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\|^2 A_{Lat}
+    \frac{\mathbf{du}}{\|\mathbf{du}\|}\\
+    = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\| A_{Lat} \mathbf{du}
+    \end{aligned}
+
+Where the velocity difference reads :math:`\mathbf{du} = \mathbf{u} - \mathbf{\bar{u}}`
+(:math:`\mathbf{\bar{u}}` is the mesh velocity interpolated at the particle position).
+:math:`C_{Lat}` is a coefficient that rules the viscous force. It would be the
+equivalent of :math:`C_{Drag}` in the case of the drag force. The :math:`C_{Lat}`
+is a numerical parameter that depends on the mesh size. Its value is set to 100
+and should be discussed and further tested.
+
+Adding the viscous force
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The viscous force is added implicitly:
+
+.. math::
+  \begin{aligned}
+  \mathbf{F_{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}
+  \mathbf{du}^{new}\\
+  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}^{old} - \mathbf{\bar{u}}^{old}\| A_{Lat}
+  (\mathbf{u}^{new} - \mathbf{\bar{u}}^{old})
+  \end{aligned}
+
+Updating the velocity is done in two steps. First adding the explcit term related to the
+mean mesh velocity and then the implicit term which leads to:
+
+.. math::
+  \mathbf{u}^{new} = \frac{\mathbf{u}^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
+
+With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}\frac{dt}{m}`
