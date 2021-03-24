@@ -48,6 +48,8 @@ with open(reportFile, 'w') as pfile:
 # run Standard Tests sequentially
 for test in testList:
 
+    avaDir = 'data' + os.sep + test['AVANAME']
+
     # get path to executable
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
     com1Exe = cfgCom1DFA['GENERAL']['com1Exe']

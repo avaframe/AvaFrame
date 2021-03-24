@@ -47,6 +47,8 @@ with open(reportFile, 'w') as pfile:
 # run Standard Tests sequentially
 for test in testList:
 
+    avaDir = 'data' + os.sep + test['AVANAME']
+
     # Start logging
     log = logUtils.initiateLogger(avaDir, logName)
     log.info('Current avalanche: %s', avaDir)
