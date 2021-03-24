@@ -7,11 +7,10 @@ import os
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 
-def fetchBenchParameters(avaDir):
+def fetchBenchParameters(avaName):
     """ Collect simulation parameter info from standard tests """
 
     # get name of avalanche
-    avaName = os.path.basename(avaDir)
     avaDictName = avaName + 'Dict'
     avaDictList = []
 

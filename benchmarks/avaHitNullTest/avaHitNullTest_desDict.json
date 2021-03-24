@@ -1,1 +1,1 @@
-{"TAGS": ["null", "standardTest"], "DESCRIPTION": " this is Hit test", "TYPE": ["2DPeak"], "FILES": ["relHit_null_ref_0.15500_pfv.asc", "relHit_null_ref_0.15500_ppr.asc", "relHit_null_ref_0.15500_pfd.asc", "relHit_null_ref_0.15500_fd.asc"], "AVANAME": "avaHit"}
+{"TAGS": ["null", "standardTest"], "DESCRIPTION": " this is Hit test", "TYPE": ["2DPeak"], "FILES": ["relHit_null_ref_0.15500_pfv.asc", "relHit_null_ref_0.15500_ppr.asc", "relHit_null_ref_0.15500_pfd.asc", "relHit_null_ref_0.15500_fd.asc"], "TOPOTYPE": "real", "AVANAME": "avaHit"}

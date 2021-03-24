@@ -1,1 +1,1 @@
-{"TAGS": ["resistance", "standardTest"], "DESCRIPTION": " this is Parabola test", "TYPE": ["2DPeak"], "FILES": ["release1PF_entres_ref_0.15500_pfv.asc", "release1PF_entres_refV_0.15500_ppr.asc", "release1PF_entres_ref_0.15500_pfd.asc"], "AVANAME": "avaParabola"}
+{"TAGS": ["resistance", "standardTest"], "DESCRIPTION": " this is Parabola test", "TYPE": ["2DPeak"], "FILES": ["release1PF_entres_ref_0.15500_pfv.asc", "release1PF_entres_refV_0.15500_ppr.asc", "release1PF_entres_ref_0.15500_pfd.asc"], "TOPOTYPE": "idealised",  "AVANAME": "avaParabola"}
