@@ -218,7 +218,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
       areaPart = m / (h * rho)
       # get normal at the particle location
       nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
-      normalize(&nx, &ny, &nz)
+      nx, ny, nz = normalize(nx, ny, nz)
 
       # add artificial viscosity
       vMeanx, vMeany, vMeanz = getVector(x, y, VX, VY, VZ, csz, interpOption)
@@ -248,12 +248,12 @@ def computeForceC(cfg, particles, fields, dem, dT):
       xEnd = x + dt * ux
       yEnd = y + dt * uy
       nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz, interpOption)
-      normalize(&nxEnd, &nyEnd, &nzEnd)
+      nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
       # get average of those normals
       nxAvg = nx + nxEnd
       nyAvg = ny + nyEnd
       nzAvg = nz + nzEnd
-      normalize(&nxAvg, &nyAvg, &nzAvg)
+      nxAvg, nyAvg, nzAvg = normalize(nxAvg, nyAvg, nzAvg)
 
       # acceleration due to curvature
       accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
@@ -541,10 +541,7 @@ def updatePositionC(cfg, particles, dem, force):
     uyNew = uy + ForceDriveY * dt / m
     uzNew = uz + ForceDriveZ * dt / m
 
-    xDir = uxNew
-    yDir = uyNew
-    zDir = uzNew
-    normalize(&xDir, &yDir, &zDir)
+    xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
     uxNew = uxNew / (1.0 + dt * forceFrict[j] / m)
     uyNew = uyNew / (1.0 + dt * forceFrict[j] / m)
     uzNew = uzNew / (1.0 + dt * forceFrict[j] / m)
@@ -560,7 +557,7 @@ def updatePositionC(cfg, particles, dem, force):
     # make sure particle is on the mesh (recompute the z component)
     zNew = getScalar(xNew, yNew, Z, csz, interpOption)
     nx, ny, nz = getVector(xNew, yNew, Nx, Ny, Nz, csz, interpOption)
-    normalize(&nx, &ny, &nz)
+    nx, ny, nz = normalize(nx, ny, nz)
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity
@@ -985,21 +982,21 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     uy = UY[j]
     uz = UZ[j]
     nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz, interpOption)
-    normalize(&nx, &ny, &nz)
+    nx, ny, nz = normalize(nx, ny, nz)
     gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
     uMag = norm(ux, uy, uz)
     if uMag < velMagMin:
         ux = 1
         uy = 0
         uz = -(1*nx + 0*ny) / nz
-        normalize(&nx, &ny, &nz)
+        nx, ny, nz = normalize(nx, ny, nz)
         K1 = 1
         K2 = 1
     else:
-        normalize(&nx, &ny, &nz)
+        nx, ny, nz = normalize(nx, ny, nz)
 
     uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
-    normalize(&uxOrtho, &uyOrtho, &uzOrtho)
+    uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
 
     g1 = nx/(nz)
     g2 = ny/(nz)
@@ -1268,7 +1265,7 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
     indx = indX[j]
     indy = indY[j]
     nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz, interpOption)
-    normalize(&nx, &ny, &nz)
+    nx, ny, nz = normalize(nx, ny, nz)
 
     # startTime = time.time()
     # L = np.empty((0), dtype=int)
@@ -1388,7 +1385,7 @@ def norm2py(x, y, z): # <-- small wrapper to expose norm2() to Python
 
 
 @cython.cdivision(True)
-cdef void normalize(double *x, double *y, double *z):
+cdef (double, double, double) normalize(double x, double y, double z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
 
   (x, y, z) can be np arrays.
@@ -1414,23 +1411,20 @@ cdef void normalize(double *x, double *y, double *z):
   # TODO : avoid error message when input vector is zero and make sure
   # to return zero
   cdef double norme
-  norme = norm(x[0], y[0], z[0])
+  norme = norm(x, y, z)
   if norme>0:
-    x[0] = x[0] / norme
+    x = x / norme
     # xn = np.where(np.isnan(xn), 0, xn)
-    y[0] = y[0] / norme
+    y = y / norme
     # yn = np.where(np.isnan(yn), 0, yn)
-    z[0] = z[0] / norme
+    z = z / norme
     # zn = np.where(np.isnan(zn), 0, zn)
-  # return x, y, z
+  return x, y, z
 
 
 def normalizepy(x, y, z): # <-- small wrapper to expose normalize() to Python
-  cdef double xx=x
-  cdef double yy=y
-  cdef double zz=z
-  normalize(&xx, &yy, &zz)
-  return np.asarray(xx), np.asarray(yy), np.asarray(zz)
+  x, y, z = normalize(x, y, z)
+  return np.asarray(x), np.asarray(y), np.asarray(z)
 
 
 @cython.cdivision(True)
