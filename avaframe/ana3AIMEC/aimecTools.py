@@ -751,10 +751,10 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
 
     # initialize Arrays
     nTopo = len(dataPressure)
-    TP = np.empty((nTopo, 4))
-    FN = np.empty((nTopo, 4))
-    FP = np.empty((nTopo, 4))
-    TN = np.empty((nTopo, 4))
+    TP = np.empty((nTopo, 5))
+    FN = np.empty((nTopo, 5))
+    FP = np.empty((nTopo, 5))
+    TN = np.empty((nTopo, 5))
 
     # rasterinfo
     nStart = indStartOfRunout
@@ -763,7 +763,6 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
     inputs['runoutLength'] = runoutLength
     inputs['pressureLimit'] = pThreshold
     inputs['refDataPressure'] = dataPressure[nRef]
-    # inputs['refRasterMask'] = refMask
     inputs['nStart'] = nStart
 
     for i in range(nTopo):
@@ -776,8 +775,8 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
         # false positive: result1(mask)=0, result2(rasterdata)=1
         # true negative: result1(mask)=0, result2(rasterdata)=0
         """
-        pressureLimit = [1, 3, 5, 10]
-        for pLim, j in zip(pressureLimit, np.arange(4)):
+        pressureLimit = [1, 3, 5, 10, pThreshold]
+        for pLim, j in zip(pressureLimit, np.arange(5)):
             # take first simulation as reference
             refMask = copy.deepcopy(dataPressure[nRef])
             # prepare mask for area resAnalysis
@@ -822,7 +821,9 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
                 *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
         # inputs for plot
         inputs['compDataPressure'] = rasterdata
-        # inputs['newRasterMask'] = newRasterData
+        # masked data for the pThreshold given in the ini file
+        inputs['refRasterMask'] = refMask
+        inputs['newRasterMask'] = newRasterData
         inputs['TP'] = TP[i, :]
         inputs['FN'] = FN[i, :]
         inputs['FP'] = FP[i, :]
@@ -838,7 +839,7 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
                                     cfgFlags)
             log.warning('only one simulation, area comparison not meaningful')
 
-    return TP[:,1], FN[:,1], FP[:,1], TN[:,1], compPlotPath
+    return TP[:,-1], FN[:,-1], FP[:,-1], TN[:,-1], compPlotPath
 
 
 def readWrite(fname_ent, time):
