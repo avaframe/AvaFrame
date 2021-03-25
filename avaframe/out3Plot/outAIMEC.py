@@ -434,15 +434,18 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax2 = plt.subplot2grid((3,2), (0,1), rowspan=2)
     dataDiff = refDataPressure - compDataPressure
     dataDiff = np.where((refDataPressure==0) & (compDataPressure==0), np.nan, dataDiff)
-    dataDiff = np.where(refDataPressure>1, dataDiff/refDataPressure*100, dataDiff*100)
-    # cmap = pU.cmapdiv
-    cmap = pU.cmapDense
+    # dataDiff = np.where(refDataPressure>1, dataDiff/refDataPressure*100, dataDiff*100)
+    # dataDiff = np.where(refDataPressure>1, dataDiff/, dataDiff)
+    cmap = pU.cmapdiv
+    # cmap = pU.cmapDense
     cmap.set_bad(color='w')
-    elev_max = 500#np.nanmax(np.abs(dataDiff[indStartOfRunout:, :]))
-    ref0, im3 = pU.NonUnifIm(ax2, l, s, np.abs(dataDiff), 'l [m]', 's [m]',
+    elev_max = 5#np.nanmax(np.abs(dataDiff[indStartOfRunout:, :]))
+    ref0, im3 = pU.NonUnifIm(ax2, l, s, (dataDiff), 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
-                         norm=colors.LogNorm(vmin=np.nanmin(np.abs(dataDiff[indStartOfRunout:, :])), vmax=np.nanmax(np.abs(dataDiff[indStartOfRunout:, :]))), cmap=cmap)
-    # im3.set_clim(vmin=-elev_max, vmax=elev_max)
+                         # norm=colors.SymLogNorm(vmin=np.nanmin((dataDiff[indStartOfRunout:, :])), vmax=np.nanmax((dataDiff[indStartOfRunout:, :]))),
+                         # norm=colors.SymLogNorm(10**-1),
+                         cmap=cmap)
+    im3.set_clim(vmin=-elev_max, vmax=elev_max)
     fig.colorbar(im3, ax=ax2)
     L, S = np.meshgrid(l, s)
     colorsP = pU.cmapPres['colors'][1:5]
