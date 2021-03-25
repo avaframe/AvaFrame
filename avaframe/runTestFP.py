@@ -31,7 +31,7 @@ avalancheDir = 'data/avaFPtest'
 modName = 'com1DFAPy'
 
 # Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
+# initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
@@ -57,16 +57,9 @@ relDict = FPtest.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
 # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave, dem = runCom1DFA.runCom1DFAPy(avaDir=avalancheDir, cfgFile=FPCfg, relTh=relTh, flagAnalysis=False)
+Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avalancheDir, cfgFile=FPCfg, relTh=relTh)
 relDict['dem'] = dem
 # +++++++++POSTPROCESS++++++++++++++++++++++++
-if cfgMain['FLAGS'].getboolean('showPlot'):
-    # Analyse resutls
-    outDirPlots = os.path.join(outDirTest, 'FPtest')
-    fU.makeADir(outDirPlots)
-    com1DFA.analysisPlots(Particles, Fields, cfg, relDict['demOri'], dem, outDirPlots)
-
-
 # option for user interaction
 if cfgFP.getboolean('flagInteraction'):
     showPlot = True
