@@ -31,7 +31,7 @@ avalancheDir = 'data/avaFPtest'
 modName = 'com1DFAPy'
 
 # Clean input directory(ies) of old work and output files
-# initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
+initProj.cleanModuleFiles(avalancheDir, com1DFA, modName)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
