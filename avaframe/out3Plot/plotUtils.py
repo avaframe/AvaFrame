@@ -216,11 +216,11 @@ def saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
     return
 
 
-def addColorBar(im, ax2, ticks, myUnit, title=''):
+def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither'):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''
-    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks)
+    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend)
     cbar.outline.set_visible(False)
     cbar.ax.set_title('[' + myUnit + ']')
     if title != '':
