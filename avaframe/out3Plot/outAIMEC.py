@@ -244,6 +244,8 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
     # read data
     entMassArray = resAnalysis['entMassArray']
     totalMassArray = resAnalysis['totalMassArray']
+    entMass = resAnalysis['entMass']
+    finalMass = resAnalysis['finalMass']
     time = resAnalysis['time']
 
     ############################################
@@ -253,7 +255,6 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
     DataMass = np.array(([None] * 2))
     DataMass[0] = entMassArray
     DataMass[1] = totalMassArray
-
     ############################################
     # Figure: Pressure depth speed
 
@@ -268,6 +269,18 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
         ax.legend(loc=4)
         ax.set_xlabel('t [s]')
         ax.set_ylabel(unit + '[kg]')
+
+    ax2 = axes.flatten()[1].twinx()
+    # ax2.set_ylabel('z [m]')
+    ax2.spines['right'].set_color('r')
+    ax2.tick_params(axis='y', colors='r')
+    ax2.plot(time, (dataMass[0, :]-dataMass[1, :])/dataMass[0, :]*100, 'r', label='Difference')
+    ax2.set_ylabel('Entrained Mass Difference relative to total mass [%]', color='r')
+
+    axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[0, :])+np.nanmax(dataMass[0, :]))/2, 'Entrained Mass Difference : %.2f kg \n Relative to entrained mass : %.2f %% \n Relative to total mass : %.2f %% ' %
+             ((entMass[0]-entMass[1]), (entMass[0]-entMass[1])/entMass[0]*100, (entMass[0]-entMass[1])/finalMass[0]*100),
+             bbox=dict(boxstyle="square", ec='white', fc='white'),
+             horizontalalignment='left', verticalalignment='bottom')
 
     outFileName = '_'.join([projectName, 'massAnalysis'])
 
@@ -426,27 +439,21 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     im.set_clim(vmin=0.0001, vmax=np.nanmax((refDataPressure)))
     ax1.set_title('Reference Peak Pressure')
     pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
-
     y_lim = s[indStartOfRunout+20]+np.nanmax(runoutLength-sStart)
     ax1.set_ylim([0, y_lim])
     pU.putAvaNameOnPlot(ax1, projectName)
 
     ax2 = plt.subplot2grid((3,2), (0,1), rowspan=2)
-    dataDiff = refDataPressure - compDataPressure
+    dataDiff = compDataPressure - refDataPressure
     dataDiff = np.where((refDataPressure==0) & (compDataPressure==0), np.nan, dataDiff)
     # dataDiff = np.where(refDataPressure>1, dataDiff/refDataPressure*100, dataDiff*100)
-    # dataDiff = np.where(refDataPressure>1, dataDiff/, dataDiff)
     cmap = pU.cmapdiv
-    # cmap = pU.cmapDense
     cmap.set_bad(color='w')
-    elev_max = 5#np.nanmax(np.abs(dataDiff[indStartOfRunout:, :]))
+    elev_max = 5
     ref0, im3 = pU.NonUnifIm(ax2, l, s, (dataDiff), 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
-                         # norm=colors.SymLogNorm(vmin=np.nanmin((dataDiff[indStartOfRunout:, :])), vmax=np.nanmax((dataDiff[indStartOfRunout:, :]))),
-                         # norm=colors.SymLogNorm(10**-1),
                          cmap=cmap)
     im3.set_clim(vmin=-elev_max, vmax=elev_max)
-    fig.colorbar(im3, ax=ax2)
     L, S = np.meshgrid(l, s)
     colorsP = pU.cmapPres['colors'][1:5]
     contourRef = ax2.contour(L, S, refDataPressure, levels=(1, 3, 5, 10), linewidths=1, colors=colorsP)
@@ -457,28 +464,28 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         contourRef.collections[i].set_label(labels[i])
 
     ax2.set_title(
-        'Peak pressure contour lines' + '\n' + 'reference = full line, curent = dashed line')
+        'Peak pressure contour lines' + '\n' + 'refMod = full, compMod = dashed line')
 
     if cfgPath['compType'][0] == 'comModules':
         namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
     ax2.set_ylim([s[indStartOfRunout], y_lim])
     ax2.legend(loc='lower right')
+    pU.addColorBar(im3, ax2, ticks, 'kPa', title='Pressure difference', extend='both')
 
     tabax = plt.subplot2grid((3,2), (2, 1))
-    cols = ['$P_{lim}$ [kPa]','Area difference [$m^2$]', 'relative area difference[%]', 'relative area [%]']
-    data = np.random.rand(5,4)
+    cols = ['$P_{lim}$ [kPa]','Area difference [$m^2$]', 'relative area difference[%]']
+    data = np.random.rand(5, 3)
     data[:, 0] = [1, 3, 5, 10, pLim]
     data[:, 1] = FN + FP
     data[:, 2] = (FN + FP)/(TP + FN)*100
-    data[:, 3] = (FN + FP)/(FN[0] + FP[0])*100
     new_array = np.array(["%.2f" % x for x in data.reshape(data.size)])
     data = new_array.reshape(data.shape)
     tabax.axis("off")
-    the_table = tabax.table(cellText=data, colLabels=cols, colWidths=[.2, 0.3, 0.3, 0.3], loc='center')
+    the_table = tabax.table(cellText=data, colLabels=cols, colWidths=[0.2, 0.45, 0.5], loc='center')
     the_table.auto_set_font_size(False)
-    the_table.set_fontsize(12)
-    the_table.scale(1.25, 1.25)
+    the_table.set_fontsize(10)
+    the_table.scale(1, 1)
     outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  'sim', str(i), 'ContourComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
