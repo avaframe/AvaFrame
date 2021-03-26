@@ -84,17 +84,17 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
     return pathDict
 
 
-def getMBInfo(avaDir, pathDict, simName=''):
+def getMBInfo(avaDir, pathDict, comMod, simName=''):
     """ Get MB info """
 
     # Get info from ExpLog
     if simName != '':
-        mbFile = os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'mass_%s.txt' % simName)
+        mbFile = os.path.join(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
         pathDict[simName]['mb'].append(mbFile)
         log.info('Added to pathDict[mb] %s' % (mbFile))
 
     else:
-        mbFiles = glob.glob(os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'mass*.txt'))
+        mbFiles = glob.glob(os.path.join(avaDir, 'Outputs', comMod, 'mass*.txt'))
         mbNames = sorted(set(mbFiles), key=lambda s: (s.split("_")[1], s.split("_")[2], s.split("_")[4]))
 
         for mFile in mbNames:
@@ -166,8 +166,8 @@ def dfaComp2Aimec(avaDir, cfgSetup):
                                 elif comMod == 'com1DFA':
                                     pathDict = extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=simNameRef)
                                 else:
-                                    pathDict = getMBInfo(avaDir, pathDict, simName=simNameRef)
-                simNamesMatch[simNameRef] = True
+                                    pathDict = getMBInfo(avaDir, pathDict, comMod, simName=simNameRef)
+                        simNamesMatch[simNameRef] = True
                 pathDict[simNameRef]['compType'] = ['comModules', refModule, compModule]
                 pathDict[simNameRef]['referenceFile'] = 0
 
