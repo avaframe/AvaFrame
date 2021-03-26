@@ -460,7 +460,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     contourComp = ax2.contour(L, S, compDataPressure, levels=(1, 3, 5, 10), linewidths=1, colors=colorsP, linestyles= 'dashed')
 
     labels = ['1kPa', '3kPa','5kPa','10kPa']
-    for i in range(len(labels)):
+    for i in range(len(contourRef.collections)):
         contourRef.collections[i].set_label(labels[i])
 
     ax2.set_title(
