@@ -698,7 +698,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
-    getWeights(x, y, csz, interpOption, Lxy, w)
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)#, Lxy, w)
     # add the component of the points value to the 4 neighbour grid points
     for i in range(4):
       indx = Lxy[i%2] # 0 1 0 1
@@ -989,11 +989,11 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
         ux = 1
         uy = 0
         uz = -(1*nx + 0*ny) / nz
-        nx, ny, nz = normalize(nx, ny, nz)
+        ux, uy, uz = normalize(ux, uy, uz)
         K1 = 1
         K2 = 1
     else:
-        nx, ny, nz = normalize(nx, ny, nz)
+        ux, uy, uz = normalize(ux, uy, uz)
 
     uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
     uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
@@ -1455,7 +1455,7 @@ def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Py
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef void getWeights(double x, double y, double csz, int interpOption, int *Lxy, double *w):
+cdef (int, int, int, int, double, double, double, double) getWeights(double x, double y, double csz, int interpOption):#, int *Lxy, double *w):
   """ Prepare weight for interpolation from grid to single point location
 
   3 Options available : -0: nearest neighbour interpolation
@@ -1482,6 +1482,8 @@ cdef void getWeights(double x, double y, double csz, int interpOption, int *Lxy,
       f00, f10, f01, f11: float
           corresponding weights
   """
+  cdef int Lxy[4]
+  cdef double w[4]
   cdef double Lx, Ly
   cdef double xllc = 0.
   cdef double yllc = 0.
@@ -1514,11 +1516,13 @@ cdef void getWeights(double x, double y, double csz, int interpOption, int *Lxy,
   # and uper right
   w[3] = dx*dy
 
+  return Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3]
+
 
 def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeightspy() to Python
   cdef int Lxy[4]
   cdef double w[4]
-  getWeights(x, y, csz, interpOption, Lxy, w)
+  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)#, Lxy, w)
   return np.asarray(Lxy[0]), np.asarray(Lxy[1]), np.asarray(Lxy[2]), np.asarray(Lxy[3]), np.asarray(w[0]), np.asarray(w[1]), np.asarray(w[2]), np.asarray(w[3])
 
 
@@ -1578,7 +1582,7 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz, int interp
   """
   cdef int Lxy[4]
   cdef double w[4]
-  getWeights(x, y, csz, interpOption, Lxy, w)
+  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)#, Lxy, w)
   cdef double v = (V[Lxy[2], Lxy[0]]*w[0] +
                    V[Lxy[2], Lxy[1]]*w[1] +
                    V[Lxy[3], Lxy[0]]*w[2] +
@@ -1629,7 +1633,7 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
   """
   cdef int Lxy[4]
   cdef double w[4]
-  getWeights(x, y, csz, interpOption, Lxy, w)
+  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)#, Lxy, w)
   cdef double nx = (Nx[Lxy[2], Lxy[0]]*w[0] +
                    Nx[Lxy[2], Lxy[1]]*w[1] +
                    Nx[Lxy[3], Lxy[0]]*w[2] +
