@@ -698,7 +698,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
-    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)#, Lxy, w)
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
     # add the component of the points value to the 4 neighbour grid points
     for i in range(4):
       indx = Lxy[i%2] # 0 1 0 1
@@ -800,12 +800,9 @@ def getNeighboursC(particles, dem):
     # Count number of particles in each cell
     cdef long indx, indy, ic
     for j in range(Npart):
-      # indx = int((x[j] + csz/2) / csz)
-      # indy = int((y[j] + csz/2) / csz)
       indx = int(x[j] / csz)
       indy = int(y[j] / csz)
       # get index of cell containing the particle
-      # ic = indx + ncols * indy
       ic = indx + (ncols-1) * indy
       indPartInCell[ic+1] = indPartInCell[ic+1] + 1
     for j in range(Ncells):
@@ -1522,7 +1519,7 @@ cdef (int, int, int, int, double, double, double, double) getWeights(double x, d
 def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeightspy() to Python
   cdef int Lxy[4]
   cdef double w[4]
-  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)#, Lxy, w)
+  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
   return np.asarray(Lxy[0]), np.asarray(Lxy[1]), np.asarray(Lxy[2]), np.asarray(Lxy[3]), np.asarray(w[0]), np.asarray(w[1]), np.asarray(w[2]), np.asarray(w[3])
 
 
@@ -1582,7 +1579,7 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz, int interp
   """
   cdef int Lxy[4]
   cdef double w[4]
-  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)#, Lxy, w)
+  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
   cdef double v = (V[Lxy[2], Lxy[0]]*w[0] +
                    V[Lxy[2], Lxy[1]]*w[1] +
                    V[Lxy[3], Lxy[0]]*w[2] +
@@ -1633,7 +1630,7 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
   """
   cdef int Lxy[4]
   cdef double w[4]
-  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)#, Lxy, w)
+  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
   cdef double nx = (Nx[Lxy[2], Lxy[0]]*w[0] +
                    Nx[Lxy[2], Lxy[1]]*w[1] +
                    Nx[Lxy[3], Lxy[0]]*w[2] +
