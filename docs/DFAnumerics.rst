@@ -192,7 +192,7 @@ finding the adjacent cells is also immediate.
         and partInCell of size number of particles + 1 which lists
         the particles contained in the cells.
 
-SPH gadient
+SPH gradient
 --------------
 SPH method can be used to solve depth integrated equations where a 2D
 (respectively 3D) equation is reduced to a 1D (respectively 2D) one.
