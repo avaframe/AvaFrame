@@ -349,7 +349,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
     entrMassCell = entrMassRaster[indCellY, indCellX]
     areaCell = areaRatser[indCellY, indCellX]
     dm = dM[j]
-    # update surfacic entrainment mass available
+    # update surface entrainment mass available
     entrMassCell = entrMassCell - dm/areaCell
     if entrMassCell < 0:
       entrMassCell = 0
