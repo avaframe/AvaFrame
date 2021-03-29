@@ -100,14 +100,16 @@ def com1DFAMain(cfg, avaDir, relTh):
     # Loop through release areas
     for rel in relFiles:
         # find out which simulations to perform
-        relName, cuSim, relDict, badName = getSimulation(cfg['FLAGS'], rel)
+        relName, cuSim, relDict, badName = getSimulation(cfg, rel)
+        releaseLine['d0'] = relDict['d0']
+
         for sim in cuSim:
             logName = sim + '_' + cfgGen['mu']
 
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, fields, dem = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relTh)
+            particles, fields, dem, areaInfo = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relTh)
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
@@ -126,10 +128,16 @@ def com1DFAMain(cfg, avaDir, relTh):
             # Result parameters to be exported
             exportFields(cfgGen, Tsave, Fields, rel, demOri, outDir, logName)
 
-            reportST = createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea)
+            reportDict = createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea)
+
+            # add area info to reportDict
+            reportDict['Release Area'].update(areaInfo)
+
+            for key in reportDict:
+                print('report', key, reportDict[key])
 
             # Add to report dictionary list
-            reportDictList.append(reportST)
+            reportDictList.append(reportDict)
 
             # Count total number of simulations
             countRel = countRel + 1
@@ -138,7 +146,7 @@ def com1DFAMain(cfg, avaDir, relTh):
     return Particles, Fields, Tsave, dem, reportDictList
 
 
-def getSimulation(cfgFlags, rel):
+def getSimulation(cfg, rel):
     """ get Simulation to run for a given release
 
 
@@ -160,6 +168,8 @@ def getSimulation(cfgFlags, rel):
     badName : boolean
         changed release name
     """
+
+    cfgFlags = cfg['FLAGS']
     entRes = cfgFlags.getboolean('entRes')
     onlyEntrRes = cfgFlags.getboolean('onlyEntrRes')
     # Set release areas and simulation name
@@ -174,7 +184,8 @@ def getSimulation(cfgFlags, rel):
     relDict = shpConv.SHP2Array(rel)
     for k in range(len(relDict['d0'])):
         if relDict['d0'][k] == 'None':
-            relDict['d0'][k] = '1.0'
+            relDict['d0'][k] = cfg['GENERAL']['relTh']
+
     log.info('Release area scenario: %s - perform simulations' % (relName))
     if entRes:
         # Possibility to run only entrainment resistance or also with null
@@ -359,11 +370,16 @@ def initializeMesh(dem, num):
     # get real Area
     areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, csz, num)
     dem['areaRaster'] = areaRaster
+    projArea = ncols * nrows * csz * csz
+    actualArea = np.nansum(areaRaster)
     log.info('Largest cell area: %.2f m²' % (np.nanmax(areaRaster)))
-    log.debug('Projected Area : %.2f' % (ncols * nrows * csz * csz))
-    log.debug('Total Area : %.2f' % (np.nansum(areaRaster)))
+    log.debug('Projected Area : %.2f' % projArea)
+    log.debug('Total Area : %.2f' % actualArea)
 
-    return dem
+    areaInfo = {'Projected Area [m2]':  '%.2f' % (projArea),
+             'Actual Area [m2]': '%.2f' % (actualArea)}
+
+    return dem, areaInfo
 
 
 def setDEMoriginToZero(demOri):
@@ -415,14 +431,16 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
 
     # -----------------------
     # Initialize mesh
-    dem = initializeMesh(dem, methodMeshNormal)
+    dem, areaInfo = initializeMesh(dem, methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
-    relRaster = prepareArea(releaseLine, demOri)
-    if len(relTh) == 0:
-        relTh = cfgGen.getfloat('relTh')
+    if relTh == '':
+        relRaster = prepareArea(releaseLine, demOri, releaseLine['d0'])
+    else:
+        relRaster = prepareArea(releaseLine, demOri)
+        relRaster = relRaster * relTh
 
-    relRaster = relRaster * relTh
+
     # ------------------------
     # initialize simulation
 
@@ -441,7 +459,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
     fields['cResRaster'] = cResRaster
 
-    return particles, fields, dem
+    return particles, fields, dem, areaInfo
 
 
 def initializeParticles(cfg, relRaster, dem, logName=''):
@@ -1156,7 +1174,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     return particles, fields, Tcpu, dt
 
 
-def prepareArea(releaseLine, dem):
+def prepareArea(releaseLine, dem, relThList):
     """ convert shape file polygon to raster
 
     Parameters
@@ -1175,6 +1193,7 @@ def prepareArea(releaseLine, dem):
     StartRel = releaseLine['Start']
     LengthRel = releaseLine['Length']
     Raster = np.zeros(np.shape(dem['rasterData']))
+    RasterList = []
 
     for i in range(len(NameRel)):
         name = NameRel[i]
@@ -1184,11 +1203,27 @@ def prepareArea(releaseLine, dem):
         avapath['x'] = releaseLine['x'][int(start):int(end)]
         avapath['y'] = releaseLine['y'][int(start):int(end)]
         avapath['Name'] = name
-        Raster = polygon2Raster(dem['header'], avapath, Raster)
+        if relThList != '':
+            log.info('RELEASE %d %s, relTh= %.2f' % (i, name, float(relThList[i])))
+            Raster = np.zeros(np.shape(dem['rasterData']))
+            Raster = polygon2Raster(dem['header'], avapath, Raster, relTh=float(relThList[i]))
+            RasterList.append(Raster)
+        else:
+            Raster = polygon2Raster(dem['header'], avapath, Raster, relTh='')
+
+    if relThList != '':
+        Raster = np.zeros(np.shape(dem['rasterData']))
+        for rast in RasterList:
+            Raster = Raster + rast
+    # fig = plt.figure()
+    # ax = plt.gca()
+    # im = plt.imshow(Raster, cmap='Blues')
+    # fig.colorbar(im, ax=ax)
+    # plt.show()
     return Raster
 
 
-def polygon2Raster(demHeader, Line, Mask):
+def polygon2Raster(demHeader, Line, Mask, relTh=''):
     """ convert line to raster
 
     Parameters
@@ -1235,7 +1270,11 @@ def polygon2Raster(demHeader, Line, Mask):
     mask = mask.reshape((nrows, ncols)).astype(int)
     # mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
     Mask = Mask + mask
-    Mask = np.where(Mask > 0, 1, 0)
+    if relTh != '':
+        log.info('REL set from dict, %.2f' % relTh)
+        Mask = np.where(Mask > 0, relTh, 0)
+    else:
+        Mask = np.where(Mask > 0, 1, 0)
 
     if debugPlot:
         x = np.arange(ncols) * csz

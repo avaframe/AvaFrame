@@ -107,6 +107,7 @@ def extractParameterInfo(avaDir, simName):
     time = []
     mass = []
     entrMass = []
+    stopCrit = ''
     flagNoStop = True
     # Read log file
     fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName))
@@ -120,11 +121,23 @@ def extractParameterInfo(avaDir, simName):
                 entrMass.append(float(line.split()[3]))
             elif "total DFA mass" in line:
                 mass.append(float(line.split()[3]))
+            elif "Kinetische Energie" in line:
+                stopCrit = 'kinetic energy %.2f of peak KE' % (float(line.split()[5]))
+            elif "terminated" in line:
+                stopTime = float(line.split()[5])
+
 
     # Set values in dictionary
     parameterDict['release mass [kg]'] = np.asarray(mass)[0]
     parameterDict['final time step [s]'] = np.asarray(time)[-1]
     parameterDict['current mass [kg]'] = np.asarray(mass)[-1]
+    if stopCrit != '':
+        parameterDict['stop criterion'] = stopCrit
+    else:
+        parameterDict['stop criterion'] = 'end time: %.2f s' % np.asarray(time)[-1]
+    parameterDict['CPU time [s]'] = stopTime
+
+    print('parameterDict', parameterDict)
 
     return parameterDict
 

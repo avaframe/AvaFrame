@@ -306,9 +306,7 @@ def com1DFAMain(cfg, avaDir):
                         'Resistance Area': resistanceArea,
                         'Parameter variation on': cfgPar['varPar'],
                         'Parameter value': item},
-                    'Release area': {'type': 'columns', 'Release area scenario': relName,  'Release features': relDict['Name']},
-                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)},
-                    'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}}
+                    'Release area': {'type': 'columns', 'Release area scenario': relName,  'Release features': relDict['Name']}}
 
                 if cfgPar['varPar'] == 'RelTh':
                     reportVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
@@ -320,6 +318,10 @@ def com1DFAMain(cfg, avaDir):
                     reportVar['Simulation Parameters'].update({'Mu': item})
                     reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
                     reportVar['Release area'].update({'Release thickness [m]': relDict['d0']})
+
+                if cfgPar.getboolean('varEnt') and (simName + '_entres_dfa') in cuSim:
+                    reportVar['Entrainment area'] = {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}
+                    reportVar['Resistance area'] = {'type': 'columns', 'Resistance area scenario': resistanceArea}
 
                 endTime = time.time()
                 timeNeeded =  '%.2f' % (endTime - startTime)

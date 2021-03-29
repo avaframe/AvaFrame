@@ -9,6 +9,7 @@ import time
 # Local imports
 from avaframe.com1DFA import com1DFA
 from avaframe.log2Report import generateReport as gR
+from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
@@ -41,6 +42,15 @@ reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
 # Print time needed
 endTime = time.time()
 log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
+
+
+for reportD in reportDictList:
+    simName = reportD['simName']['name']
+    parameterDict = fU.extractParameterInfo(avalancheDir, simName)
+
+    # get parameters from log
+    reportD['Simulation Parameters'].update({'stop criterion': parameterDict['stop criterion']})
+    reportD['Simulation Parameters'].update({'CPU time [s]': parameterDict['CPU time [s]']})
 
 # Generata plots for all peakFiles
 plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
