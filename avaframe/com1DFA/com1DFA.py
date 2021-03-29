@@ -9,6 +9,8 @@ import shutil
 import logging
 import numpy as np
 import pickle
+import time
+from datetime import datetime
 
 # Local imports
 from avaframe.in3Utils import fileHandlerUtils as fU
@@ -109,6 +111,7 @@ def com1DFAMain(cfg, avaDir):
         list of dictionaries that contain information on simulations that can be used for report generation
     """
 
+    startTime = time.time()
     # Setup configuration
     cfgGen = cfg['GENERAL']
     com1Exe = cfgGen['com1Exe']
@@ -155,6 +158,7 @@ def com1DFAMain(cfg, avaDir):
         varPar = 'Mu'
 
     # Initialise full experiment log file
+    dateTimeInfo = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     with open(os.path.join(workDir, 'ExpLog.txt'), 'w') as logFile:
         logFile.write("NoOfSimulation,SimulationRunName,%s\n" % varPar)
 
@@ -176,6 +180,7 @@ def com1DFAMain(cfg, avaDir):
             the suffix _AF will be added')
             simName = relName + '_AF'
         relDict = sP.SHP2Array(rel)
+        print('relDict', relDict)
         for k in range(len(relDict['d0'])):
             if relDict['d0'][k] == 'None':
                 relDict['d0'][k] = '1.0'
@@ -237,6 +242,7 @@ def com1DFAMain(cfg, avaDir):
             reportNull = {}
             reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
             'simName': {'type': 'simName', 'name': logName},
+            'time': {'type': 'time', 'time': dateTimeInfo},
                 'Simulation Parameters': {
                     'type': 'list',
                     'Release Area Scenario': relName,
@@ -248,10 +254,15 @@ def com1DFAMain(cfg, avaDir):
                     'Mu': defValues['Mu'],
                     'Release thickness [m]': relDict['d0'],
                     'Entrainment thickness [m]': float(entrainmentTH)},
-                'Release area': {'type': 'columns', 'Release area scenario': relName}}
+                'Release area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['d0']}}
+
+            endTime = time.time()
+            timeNeeded = '%.2f' % (endTime - startTime)
+            reportNull['Simulation Parameters'].update({'run time [s]': timeNeeded})
 
             # Add to report dictionary list
             reportDictList.append(reportNull)
+            startTime = time.time()
 
             # Count total number of simulations
             countRel = countRel + 1
@@ -286,6 +297,7 @@ def com1DFAMain(cfg, avaDir):
                 reportVar = {}
                 reportVar = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
                 'simName': {'type': 'simName', 'name': logName},
+                'time': {'type': 'time', 'time': dateTimeInfo},
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': relName,
@@ -294,21 +306,28 @@ def com1DFAMain(cfg, avaDir):
                         'Resistance Area': resistanceArea,
                         'Parameter variation on': cfgPar['varPar'],
                         'Parameter value': item},
-                    'Release area': {'type': 'columns', 'Release area scenario': relName},
-                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea},
+                    'Release area': {'type': 'columns', 'Release area scenario': relName,  'Release features': relDict['Name']},
+                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}}
 
                 if cfgPar['varPar'] == 'RelTh':
                     reportVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
                     reportVar['Simulation Parameters'].update({'Release thickness [m]': item})
                     reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
+                    reportVar['Release area'].update({'Release thickness [m]': item})
                 elif cfgPar['varPar'] == 'Mu':
                     reportVar['Simulation Parameters'].update({'Release thickness [m]': relDict['d0']})
                     reportVar['Simulation Parameters'].update({'Mu': item})
                     reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
+                    reportVar['Release area'].update({'Release thickness [m]': relDict['d0']})
+
+                endTime = time.time()
+                timeNeeded =  '%.2f' % (endTime - startTime)
+                reportVar['Simulation Parameters'].update({'run time [s]': timeNeeded})
 
                 # Add to report dictionary list
                 reportDictList.append(reportVar)
+                startTime = time.time()
 
                 # Count total number of simulations
                 countRel = countRel + 1
@@ -341,6 +360,7 @@ def com1DFAMain(cfg, avaDir):
                 reportST = {}
                 reportST = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
                 'simName': {'type': 'simName', 'name': logName},
+                'time': {'type': 'time', 'time': dateTimeInfo},
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': relName,
@@ -352,13 +372,17 @@ def com1DFAMain(cfg, avaDir):
                         'Mu': defValues['Mu'],
                         'Release thickness [m]': relDict['d0'],
                         'Entrainment thickness [m]': float(entrainmentTH)},
-                    'Release Area': {'type': 'columns', 'Release area scenario': relName}}
+                    'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['d0']}}
 
                 if 'entres' in sim:
                     reportST['Simulation Parameters'].update({'Entrainment Area': entrainmentArea})
                     reportST['Simulation Parameters'].update({'Resistance Area': resistanceArea})
-                    reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea}})
+                    reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}})
                     reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
+
+                endTime = time.time()
+                timeNeeded =  '%.2f' % (endTime - startTime)
+                reportST['Simulation Parameters'].update({'run time [s]': timeNeeded})
 
                 # Add to report dictionary list
                 reportDictList.append(reportST)
