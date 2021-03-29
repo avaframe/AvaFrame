@@ -59,7 +59,13 @@ def writeReportFile(reportD, pfile):
                     if value != 'type':
                         pfile.write('### Simulation name: *%s* \n' % reportD[key][value])
                         pfile.write(' \n')
-
+            # Time info
+            if reportD[key][subKey] == 'time':
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('### Date: %s \n' % reportD[key][value])
+                        pfile.write(' \n')
+                        break
             # PARAMETER BLOCK
             # Table listing all the key : value pairs in rows
             if reportD[key][subKey] == 'list':
