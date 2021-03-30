@@ -136,9 +136,6 @@ def com1DFAMain(cfg, avaDir, relThField):
             # add area info to reportDict
             reportDict['Release Area'].update(areaInfo)
 
-            for key in reportDict:
-                print('report', key, reportDict[key])
-
             # Add to report dictionary list
             reportDictList.append(reportDict)
 
@@ -440,7 +437,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     # process release info to get it as a raster
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
-        relRaster = prepareArea(releaseLine, demOri, releaseLine['d0'])
+        relRaster = prepareArea(releaseLine, demOri, relThList=releaseLine['d0'])
     else:
         # if relTh provided - set release thickness with field or function
         relRaster = prepareArea(releaseLine, demOri)

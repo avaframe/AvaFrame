@@ -180,7 +180,6 @@ def com1DFAMain(cfg, avaDir):
             the suffix _AF will be added')
             simName = relName + '_AF'
         relDict = sP.SHP2Array(rel)
-        print('relDict', relDict)
         for k in range(len(relDict['d0'])):
             if relDict['d0'][k] == 'None':
                 relDict['d0'][k] = '1.0'
