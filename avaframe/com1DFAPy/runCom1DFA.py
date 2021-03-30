@@ -17,7 +17,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
 
-def runCom1DFAPy(avaDir='', cfgFile='', relTh=''):
+def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
     """ run com1DFAPy module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -54,7 +54,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relTh=''):
 
     # +++++++++++++++++++++++++++++++++
     # ------------------------
-    Particles, Fields, Tsave, dem, reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir, relTh)
+    Particles, Fields, Tsave, dem, reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir, relThField)
 
     # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
     # Generate plots for all peakFiles
