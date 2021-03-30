@@ -53,7 +53,7 @@ seed = 12345
 rng = np.random.default_rng(seed)
 
 
-def com1DFAMain(cfg, avaDir, relTh):
+def com1DFAMain(cfg, avaDir, relThField):
     """ Run main model
 
     This will compute a dense flow avalanche
@@ -64,6 +64,9 @@ def com1DFAMain(cfg, avaDir, relTh):
         configuration read from ini file
     avaDir : str
         path to avalanche directory
+    relThField: 2D array
+        release thickness field with varying release thickness if '', release thickness is taken from
+        (a) shapefile or (b) configuration file
 
     Returns
     -------
@@ -109,7 +112,7 @@ def com1DFAMain(cfg, avaDir, relTh):
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, fields, dem, areaInfo = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relTh)
+            particles, fields, dem, areaInfo = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relThField)
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
@@ -394,7 +397,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relTh):
+def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relThField):
     """ create simulaton report dictionary
 
     Parameters
@@ -411,8 +414,9 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
         resistance line dictionary
     logName : str
         simulation scenario name
-    relTh : 2D numpy array
-        inhomogeneous release thickness if wanted (relTh='' by default)
+    relThField : 2D numpy array
+        inhomogeneous release thickness if wanted (relThField='' by default  - in this case
+        release thickness from (a) shapefile or if not provided (b) configuration file is used)
 
     Returns
     -------
@@ -434,11 +438,13 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     dem, areaInfo = initializeMesh(dem, methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
-    if relTh == '':
+    if len(relThField) == 0:
+        # if no release thickness field or function - set release according to shapefile or ini file
         relRaster = prepareArea(releaseLine, demOri, releaseLine['d0'])
     else:
+        # if relTh provided - set release thickness with field or function
         relRaster = prepareArea(releaseLine, demOri)
-        relRaster = relRaster * relTh
+        relRaster = relRaster * relThField
 
 
     # ------------------------
@@ -1174,7 +1180,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     return particles, fields, Tcpu, dt
 
 
-def prepareArea(releaseLine, dem, relThList):
+def prepareArea(releaseLine, dem, relThList=''):
     """ convert shape file polygon to raster
 
     Parameters
@@ -1183,6 +1189,9 @@ def prepareArea(releaseLine, dem, relThList):
         line dictionary
     dem : dict
         dictionary with dem information
+    relThList: list
+        release thickness values for all release features
+
     Returns
     -------
 
@@ -1203,23 +1212,21 @@ def prepareArea(releaseLine, dem, relThList):
         avapath['x'] = releaseLine['x'][int(start):int(end)]
         avapath['y'] = releaseLine['y'][int(start):int(end)]
         avapath['Name'] = name
+        # if relTh is given - set relTh
         if relThList != '':
-            log.info('RELEASE %d %s, relTh= %.2f' % (i, name, float(relThList[i])))
+            log.info('Release feature %s, relTh= %.2f' % (name, float(relThList[i])))
             Raster = np.zeros(np.shape(dem['rasterData']))
             Raster = polygon2Raster(dem['header'], avapath, Raster, relTh=float(relThList[i]))
             RasterList.append(Raster)
         else:
             Raster = polygon2Raster(dem['header'], avapath, Raster, relTh='')
 
+    # if relTh provided by a field or function - create release Raster with ones
     if relThList != '':
         Raster = np.zeros(np.shape(dem['rasterData']))
         for rast in RasterList:
             Raster = Raster + rast
-    # fig = plt.figure()
-    # ax = plt.gca()
-    # im = plt.imshow(Raster, cmap='Blues')
-    # fig.colorbar(im, ax=ax)
-    # plt.show()
+
     return Raster
 
 
@@ -1270,6 +1277,7 @@ def polygon2Raster(demHeader, Line, Mask, relTh=''):
     mask = mask.reshape((nrows, ncols)).astype(int)
     # mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
     Mask = Mask + mask
+    # set release thickness unless release thickness field is provided, then return array with ones
     if relTh != '':
         log.info('REL set from dict, %.2f' % relTh)
         Mask = np.where(Mask > 0, relTh, 0)
