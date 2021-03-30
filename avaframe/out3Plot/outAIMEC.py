@@ -399,6 +399,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
     y_lim = s[indStartOfRunout+20]+np.nanmax(runoutLength-sStart)
     ax1.set_ylim([0, y_lim])
+    ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
 
     ax2 = plt.subplot2grid((1,2), (0,1))
@@ -441,12 +442,12 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
     y_lim = s[indStartOfRunout+20]+np.nanmax(runoutLength-sStart)
     ax1.set_ylim([0, y_lim])
+    ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
 
     ax2 = plt.subplot2grid((3,2), (0,1), rowspan=2)
     dataDiff = compDataPressure - refDataPressure
     dataDiff = np.where((refDataPressure==0) & (compDataPressure==0), np.nan, dataDiff)
-    # dataDiff = np.where(refDataPressure>1, dataDiff/refDataPressure*100, dataDiff*100)
     cmap = pU.cmapdiv
     cmap.set_bad(color='w')
     elev_max = 5
