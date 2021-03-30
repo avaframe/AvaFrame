@@ -1,6 +1,11 @@
 com1DFA DFA-Kernel numerics
 ============================
 
+
+.. warning::
+
+   This theory has not been fully reviewed yet.
+
 Mesh and interpolation
 -----------------------
 The numerical method used in com1DFA mixes particle methods and
