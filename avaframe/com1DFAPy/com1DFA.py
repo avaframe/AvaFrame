@@ -278,6 +278,7 @@ def createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resista
     """
 
     frictModels = cfgGen['frictModels'].split('_')
+    intModel = int(cfgGen['frictType'])-1
     # Create dictionary
     reportST = {}
     reportST = {}
@@ -292,7 +293,7 @@ def createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resista
                 'Parameter variation on': '',
                 'Parameter value': '',
                 'Mu': cfgGen['mu'],
-                'Friction model': frictModels[int(cfgGen['frictType'])],
+                'Friction model': frictModels[intModel],
                 'Release thickness [m]': relDict['d0']},
                 'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name']}}
 
