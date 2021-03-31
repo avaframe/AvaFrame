@@ -944,7 +944,7 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   # SPH kernel
   # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
   cdef double rKernel = csz
-  cdef double facKernel = 10.0 / (3.1415 * rKernel * rKernel * rKernel * rKernel * rKernel)
+  cdef double facKernel = 10.0 / (math.pi * rKernel * rKernel * rKernel * rKernel * rKernel)
   cdef double dfacKernel = - 3.0 * facKernel
   cdef double[:] GHX = np.zeros(N, dtype=np.float64)
   cdef double[:] GHY = np.zeros(N, dtype=np.float64)
