@@ -337,8 +337,8 @@ def initializeMesh(dem, num):
     # this corresponds to our cell vertex
     if num == 1:
         # Create com1DFA (original) vertex grid
-        x = np.linspace(-csz/2, (ncols-1)*csz - csz/2, ncols)
-        y = np.linspace(-csz/2, (nrows-1)*csz - csz/2, nrows)
+        x = np.linspace(-csz/2., (ncols-1)*csz - csz/2., ncols)
+        y = np.linspace(-csz/2., (nrows-1)*csz - csz/2., nrows)
         X, Y = np.meshgrid(x, y)
         # interpolate the normal from com1DFA (original) center to his vertex
         # this means from our vertex to our centers
@@ -346,8 +346,8 @@ def initializeMesh(dem, num):
         # this is for tracking mesh cell with actual data
         NzCenter = np.where(np.isnan(Nx), Nz, NzCenter)
         Nz = NzCenter
-    dem['Nx'] = np.where(np.isnan(Nx), 0, Nx)
-    dem['Ny'] = np.where(np.isnan(Ny), 0, Ny)
+    dem['Nx'] = np.where(np.isnan(Nx), 0., Nx)
+    dem['Ny'] = np.where(np.isnan(Ny), 0., Ny)
     # build no data mask (used to find out of dem particles)
     bad = np.where(np.isnan(Nx), True, False)
     dem['Nz'] = Nz
@@ -447,7 +447,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     # compute release area
     header = dem['header']
     csz = header.cellsize
-    relRasterOnes = np.where(relRaster > 0, 1, 0)
+    relRasterOnes = np.where(relRaster > 0, 1., 0.)
     relAreaActual = np.nansum(relRasterOnes*dem['areaRaster'])
     relAreaProjected = np.sum(csz*csz*relRasterOnes)
     areaInfo = {'Projected Area [m2]':  '%.2f' % (relAreaProjected),
@@ -715,7 +715,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart):
         n = (np.floor(np.sqrt(massCell / massPerPart)) + 1).astype('int')
         nPart = n*n
         d = csz/n
-        pos = np.linspace(0, csz-d, n) + d/2
+        pos = np.linspace(0., csz-d, n) + d/2.
         x, y = np.meshgrid(pos, pos)
         x = x.flatten()
         y = y.flatten()
@@ -1286,9 +1286,9 @@ def polygon2Raster(demHeader, Line, Mask, relTh=''):
     # set release thickness unless release thickness field is provided, then return array with ones
     if relTh != '':
         log.info('REL set from dict, %.2f' % relTh)
-        Mask = np.where(Mask > 0, relTh, 0)
+        Mask = np.where(Mask > 0, relTh, 0.)
     else:
-        Mask = np.where(Mask > 0, 1, 0)
+        Mask = np.where(Mask > 0, 1., 0.)
 
     if debugPlot:
         x = np.arange(ncols) * csz
