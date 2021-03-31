@@ -675,8 +675,6 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef long[:] IndY = particles['indY']
   cdef int nrow = int(nrows)
   cdef int ncol = int(ncols)
-  # cdef int Lx0, Ly0, Lx1, Ly1
-  # cdef double f00, f01, f10, f11
   cdef int Lxy[4]
   cdef double w[4]
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart
@@ -811,14 +809,11 @@ def getNeighboursC(particles, dem):
 
     # make the list of which particles are in which cell
     for j in range(Npart):
-        # indx = int((x[j] + csz/2) / csz)
-        # indy = int((y[j] + csz/2) / csz)
         indx = int(x[j] / csz)
         indy = int(y[j] / csz)
-        # ic = int(indx + ncols * indy)
         ic = indx + (ncols-1) * indy
-        partInCell[indPartInCell2[ic]] = j
-        indPartInCell2[ic] = indPartInCell2[ic] + 1
+        partInCell[indPartInCell2[ic+1]-1] = j
+        indPartInCell2[ic+1] = indPartInCell2[ic+1] - 1
         indX[j] = indx
         indY[j] = indy
         InCell[j] = ic
