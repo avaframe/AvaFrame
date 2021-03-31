@@ -276,6 +276,8 @@ def createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resista
     reportST : dict
         simulation scenario dictionary
     """
+
+    frictModels = cfgGen['frictModels'].split('_')
     # Create dictionary
     reportST = {}
     reportST = {}
@@ -290,8 +292,9 @@ def createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resista
                 'Parameter variation on': '',
                 'Parameter value': '',
                 'Mu': cfgGen['mu'],
+                'Friction model': frictModels[int(cfgGen['frictType'])],
                 'Release thickness [m]': relDict['d0']},
-                'Release Area': {'type': 'columns', 'Release area scenario': relName}}
+                'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name']}}
 
     if 'entres' in logName:
         reportST['Simulation Parameters'].update({'Entrainment Area': entrainmentArea})
@@ -376,10 +379,7 @@ def initializeMesh(dem, num):
     log.debug('Projected Area : %.2f' % projArea)
     log.debug('Total Area : %.2f' % actualArea)
 
-    areaInfo = {'Projected Area [m2]':  '%.2f' % (projArea),
-             'Actual Area [m2]': '%.2f' % (actualArea)}
-
-    return dem, areaInfo
+    return dem
 
 
 def setDEMoriginToZero(demOri):
@@ -432,7 +432,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
 
     # -----------------------
     # Initialize mesh
-    dem, areaInfo = initializeMesh(dem, methodMeshNormal)
+    dem = initializeMesh(dem, methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
     if len(relThField) == 0:
@@ -443,6 +443,14 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
         relRaster = prepareArea(releaseLine, demOri)
         relRaster = relRaster * relThField
 
+    # compute release area
+    header = dem['header']
+    csz = header.cellsize
+    relRasterOnes = np.where(relRaster > 0, 1, 0)
+    relAreaActual = np.nansum(relRasterOnes*dem['areaRaster'])
+    relAreaProjected = np.sum(csz*csz*relRasterOnes)
+    areaInfo = {'Projected Area [m2]':  '%.2f' % (relAreaProjected),
+                'Actual Area [m2]': '%.2f' % (relAreaActual)}
 
     # ------------------------
     # initialize simulation
