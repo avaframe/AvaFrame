@@ -137,6 +137,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     axin2.patch.set_alpha(0.0)
     axin2.hist(dataDiffPlot, bins=100, density=True, histtype="stepfilled")
     axin2.get_yaxis().set_ticks([])
+    axin2.tick_params(axis='x', which='major', labelsize=8, rotation=45)
 
     ax4 = fig.add_subplot(224)
     cmap = pU.cmapdiv
@@ -232,7 +233,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     return plotDict
 
 
-def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='null', comModule='com1DFA'):
+def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='null', comModule='com1DFA', comModule2=''):
     """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension) and save to
         Outputs/out3Plot within avalanche directoy
 
@@ -278,9 +279,11 @@ def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', sim
 
     # Setup input from com1DFA
     fU.getDFAData(avaDir, workDir, suffix, comModule=comModule)
-
-    # Get data from reference run
-    fU.getRefData(testDir, workDir, suffix)
+    if comModule2 == '':
+        # Get data from reference run
+        fU.getRefData(testDir, workDir, suffix)
+    else:
+        fU.getDFAData(avaDir, workDir, suffix, comModule=comModule2)
 
     # prepare data
     if parameter == 'Mu' or parameter == 'RelTh':
@@ -307,10 +310,12 @@ def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', sim
 
         # get list of indices of files that are of correct simulation type and result paramete
         indSuffix = [-9999, -9999]
+        findComp = True
         for m in range(len(data['files'])):
             if data['resType'][m] == suffix and data['releaseArea'][m] == rel and data[parameter][m] == val and data['simType'][m] == simType:
-                if data['modelType'][m] == 'dfa':
+                if (data['modelType'][m] == 'dfa') and findComp:
                     indSuffix[0] = m
+                    findComp = False
                 elif data['modelType'][m] == cfgPlot['PLOT']['refModel']:
                     indSuffix[1] = m
 
