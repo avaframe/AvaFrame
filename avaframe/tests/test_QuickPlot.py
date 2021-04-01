@@ -6,7 +6,7 @@
 #  Load modules
 import numpy as np
 import os
-from avaframe.out3Plot import outQuickPlotNew as oP
+from avaframe.out3Plot import outQuickPlot as oP
 from avaframe.in3Utils import cfgUtils
 import pytest
 import configparser
@@ -41,8 +41,8 @@ def test_outQuickPlotHist(tmp_path):
 
 
     assert (plotDict['difference'][0] == 4.0)
-    assert (plotDict['difference'][1] == 0.5)
-    assert (plotDict['difference'][2] == 0.0)
-    assert (plotDict['differenceZoom'][0] == 1)
-    assert (plotDict['differenceZoom'][1] == 0.022727272727272728)
-    assert (plotDict['differenceZoom'][2] == 0.0)
+    assert (plotDict['difference'][1] == -0.5)
+    assert (plotDict['difference'][2] == -8.0)
+    assert (plotDict['differenceZoom'][0] == 0)
+    assert (plotDict['differenceZoom'][1] == -0.023255813953488372)
+    assert (plotDict['differenceZoom'][2] == -1.0)
