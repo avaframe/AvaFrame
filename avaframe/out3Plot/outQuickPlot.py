@@ -176,6 +176,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ticks = []
     for val in [0.99, 0.95]:
         ind = np.searchsorted(hist, val)
+        ind = min(ind, np.size(hist)-1)
         axin4.plot(sortedDiffPlot, hist)
         axin4.hlines(hist[ind], 0, sortedDiffPlot[ind], linestyles='--', linewidths=0.5)
         axin4.vlines(sortedDiffPlot[ind], 0, hist[ind], linestyles='--', linewidths=0.5)
