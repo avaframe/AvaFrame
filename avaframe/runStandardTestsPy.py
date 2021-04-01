@@ -65,7 +65,7 @@ for test in testList:
     startTime = time.time()
     # Run Standalone DFA
     # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-    _, _, _, _, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relTh='')
+    _, _, _, _, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relThField='')
 
     # Print time needed
     endTime = time.time()
