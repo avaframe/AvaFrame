@@ -6,19 +6,18 @@
 #  Load modules
 import numpy as np
 import os
-from avaframe.out3Plot import outQuickPlot as oP
+from avaframe.out3Plot import outQuickPlotNew as oP
 from avaframe.in3Utils import cfgUtils
 import pytest
 import configparser
 import shutil
 
 
-def test_outQuickPlot(tmp_path):
-    """ test  computation of mean, max and min of difference of two datasets """
+def test_outQuickPlotHist(tmp_path):
 
     # Initialise inputs
     avaName = 'avaHockeyChannel'
-    avaTestDir = 'avaHockeyChannelEntTest'
+    avaTestDir = 'avaPlotPytest'
     dirPath = os.path.dirname(__file__)
     avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
     outDir = tmp_path
@@ -37,10 +36,13 @@ def test_outQuickPlot(tmp_path):
 
     # Initialise plotList
     rel = 'release1HS'
-    plotDict = {'relArea' : rel, 'plots': [], 'difference': [], 'stats': []}
+    plotDict = {'relArea' : rel, 'plots': [], 'difference': [], 'differenceZoom': [], 'stats': []}
     plotDictNew = oP.generatePlot(dataDict, avaName, outDir, cfg, plotDict)
 
 
-    assert (plotDict['difference'][0] == 7.24068)
-    assert (plotDict['difference'][1] == -0.24090283440839708)
-    assert (plotDict['difference'][2] == -3.26828)
+    assert (plotDict['difference'][0] == 4.0)
+    assert (plotDict['difference'][1] == 0.5)
+    assert (plotDict['difference'][2] == 0.0)
+    assert (plotDict['differenceZoom'][0] == 1)
+    assert (plotDict['differenceZoom'][1] == 0.022727272727272728)
+    assert (plotDict['differenceZoom'][2] == 0.0)

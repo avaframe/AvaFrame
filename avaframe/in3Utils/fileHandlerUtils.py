@@ -137,8 +137,6 @@ def extractParameterInfo(avaDir, simName):
         parameterDict['stop criterion'] = 'end time: %.2f s' % np.asarray(time)[-1]
     parameterDict['CPU time [s]'] = stopTime
 
-    print('parameterDict', parameterDict)
-
     return parameterDict
 
 
