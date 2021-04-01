@@ -83,6 +83,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
 
     # Set limit to produce warning for differences in peak fields
     diffLim = float(cfgRep['GENERAL']['diffLim'])
+    perDiff = float(cfgRep['GENERAL']['perDiff'])
 
     # Start writing markdown style report
     with open(reportFile, 'a') as pfile:
@@ -146,7 +147,8 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
         for value in parameterList:
             # if reference and simulation parameter value do not match
             # mark red
-            if valuesBench[countValue] != valuesSim[countValue]:
+            diffPercent = (float(valuesBench[countValue]) - float(valuesSim[countValue])) / float(valuesBench[countValue])
+            if diffPercent > perDiff:
                 valueRed = '<span style="color:red"> %.1f </span>' % valuesSim[countValue]
                 pfile.write('| %s | %.1f | %s | \n' % (value, valuesBench[countValue], valueRed))
                 countValue = countValue + 1
