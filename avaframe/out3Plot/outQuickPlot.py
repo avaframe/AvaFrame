@@ -75,9 +75,9 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     # Difference between datasets
     dataDiff = data1 - data2
     dataDiff = np.where((data1==0) & (data2==0), np.nan, dataDiff)
-    diffMax = np.nanmax(abs(dataDiff))
-    diffMin = np.nanmin(abs(dataDiff))
-    diffMean = np.nanmean(abs(dataDiff))
+    diffMax = np.nanmax(dataDiff)
+    diffMin = np.nanmin(dataDiff)
+    diffMean = np.nanmean(dataDiff)
 
     # Location of box
     nybox = int(nx * 0.2)
@@ -148,7 +148,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
             elev_max = 100
         elif dataDict['suffix'] == 'pfv':
             elev_max = 10
-        ax4.set_title('Difference capped at %s: +-%d' % (dataDict['suffix'], elev_max))
+        ax4.set_title('Difference capped at max difference in %s: +-%d %s' % (dataDict['suffix'], elev_max, unit))
 
     else:
         cutVal = 0.5
@@ -157,15 +157,15 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     # for difference histogramm - remove dataDiff == 0 values from array
     dataDiffZoom = np.where((dataDiffPlot<-elev_max) | (dataDiffPlot>elev_max), np.nan, dataDiffPlot)
-    diffMaxZoom = np.nanmax(abs(dataDiffZoom))
-    diffMinZoom = np.nanmin(abs(dataDiffZoom))
-    diffMeanZoom = np.nanmean(abs(dataDiffZoom))
+    diffMaxZoom = np.nanmax(dataDiffZoom)
+    diffMinZoom = np.nanmin(dataDiffZoom)
+    diffMeanZoom = np.nanmean(dataDiffZoom)
 
     im4 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
                      extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     fig.colorbar(im4, ax=ax4)
     ax4.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' %
-             (diffMean, unit, diffMax, unit, diffMin, unit),
+             (diffMeanZoom, unit, diffMaxZoom, unit, diffMinZoom, unit),
              bbox=dict(boxstyle="square", ec='white', fc='white'),
              horizontalalignment='left', verticalalignment='bottom')
     ax4.set_aspect('auto')

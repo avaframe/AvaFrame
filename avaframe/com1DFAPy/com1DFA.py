@@ -184,7 +184,9 @@ def getSimulation(cfg, rel):
     relDict = shpConv.SHP2Array(rel)
     for k in range(len(relDict['d0'])):
         if relDict['d0'][k] == 'None':
-            relDict['d0'][k] = cfg['GENERAL']['relTh']
+            relDict['d0'][k] = cfg['GENERAL'].getfloat('relTh')
+        else:
+            relDict['d0'][k] = float(relDict['d0'][k])
 
     log.info('Release area scenario: %s - perform simulations' % (relName))
     if entRes:
@@ -1220,9 +1222,9 @@ def prepareArea(releaseLine, dem, relThList=''):
         avapath['Name'] = name
         # if relTh is given - set relTh
         if relThList != '':
-            log.info('Release feature %s, relTh= %.2f' % (name, float(relThList[i])))
+            log.info('Release feature %s, relTh= %.2f' % (name, relThList[i]))
             Raster = np.zeros(np.shape(dem['rasterData']))
-            Raster = polygon2Raster(dem['header'], avapath, Raster, relTh=float(relThList[i]))
+            Raster = polygon2Raster(dem['header'], avapath, Raster, relTh=relThList[i])
             RasterList.append(Raster)
         else:
             Raster = polygon2Raster(dem['header'], avapath, Raster, relTh='')
