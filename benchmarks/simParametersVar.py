@@ -19,7 +19,7 @@ def fetchBenchParameters(avaDir):
 
     # set desired benchmark simulation info dictionary
     if avaDictName == 'avaFlatPlaneDict':
-        avaDictName = {'simName': 'release1FP_null_dfa_2.00000',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1FP_null_dfa_2.00000'},
         		'testName': 'avaFlatPlaneVarParTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -39,7 +39,7 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaHelixChannelDict':
-        avaDictName = {'simName': 'release1HX_entres_dfa_0.05500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_entres_dfa_0.05500'},
         		'testName': 'avaHelixChannelVarParTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -60,7 +60,7 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
 
-        avaDictName = {'simName': 'release1HX_entres_dfa_0.50000',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_entres_dfa_0.50000'},
         		'testName': 'avaHelixChannelEnt1mVarParTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -82,7 +82,7 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaParabolaDict':
-        avaDictName = {'simName': 'release1PF_entres_dfa_0.50000',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1PF_entres_dfa_0.50000'},
         		'testName': 'avaParabolaVarParTest',
                     'Simulation Parameters': {
                         'type': 'list',

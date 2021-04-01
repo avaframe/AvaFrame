@@ -16,7 +16,7 @@ def fetchBenchParameters(avaName):
 
     # set desired benchmark simulation info dictionary
     if avaDictName == 'avaBowlDict':
-        avaDictName = {'simName': 'release1BL_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1BL_null_dfa_0.15500'},
         		'testName': 'avaBowlNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -25,7 +25,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1'],
+                        'Release thickness [m]': [1],
                         'Release Mass [kg]': '20196.2',
                         'Final Mass [kg]': '20196.2',
                         'Entrainment thickness [m]': 0.3},
@@ -35,7 +35,7 @@ def fetchBenchParameters(avaName):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaFlatPlaneDict':
-        avaDictName = {'simName': 'release1FP_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1FP_null_dfa_0.15500'},
         		'testName': 'avaFlatPlaneNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -44,7 +44,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Release Mass [kg]': '20000.',
                         'Final Mass [kg]': '20000.',
                         'Entrainment thickness [m]': 0.3},
@@ -54,7 +54,7 @@ def fetchBenchParameters(avaName):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaHelixDict':
-        avaDictName = {'simName': 'release1HX_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_null_dfa_0.15500'},
         		'testName': 'avaHelixNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -63,7 +63,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1'],
+                        'Release thickness [m]': [1],
                         'Release Mass [kg]': '20522.4',
                         'Final Mass [kg]': '20522.4',
                         'Entrainment thickness [m]': 0.3},
@@ -74,7 +74,7 @@ def fetchBenchParameters(avaName):
 
     elif avaDictName == 'avaHelixChannelDict':
 
-        avaDictName = {'simName': 'release1HX_entres_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_entres_dfa_0.15500'},
         		'testName': 'avaHelixChannelEntTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -83,7 +83,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': 'entrainment1HX',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1', '1'],
+                        'Release thickness [m]': [1, 1],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HX'},
@@ -93,7 +93,7 @@ def fetchBenchParameters(avaName):
 
         avaDictList.append(avaDictName)
 
-        avaDictName = {'simName': 'release1HX_entres_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_entres_dfa_0.15500'},
         		'testName': 'avaHelixChannelEnt1mTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -102,7 +102,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': 'entrainment1HX',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1', '1'],
+                        'Release thickness [m]': [1, 1],
                         'Entrainment thickness [m]': 1.0},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HX', 'Entrainment Thickness': '1'},
@@ -114,7 +114,7 @@ def fetchBenchParameters(avaName):
 
     elif avaDictName == 'avaParabolaDict':
 
-        avaDictName = {'simName': 'release1PF_entres_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1PF_entres_dfa_0.15500'},
         		'testName': 'avaParabolaResTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -123,7 +123,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': 'resistance1PF',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Release Mass [kg]': '20657.1',
                         'Final Mass [kg]': '20657.1',
                         'Entrainment thickness [m]': 0.3},
@@ -136,7 +136,7 @@ def fetchBenchParameters(avaName):
 
     elif avaDictName == 'avaHockeyChannelDict':
 
-        avaDictName = {'simName': 'release1HS_entres_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HS_entres_dfa_0.15500'},
         		'testName': 'avaHockeyChannelEntTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -145,7 +145,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': 'entrainment1HS',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS'},
@@ -155,7 +155,7 @@ def fetchBenchParameters(avaName):
 
         avaDictList.append(avaDictName)
 
-        avaDictName = {'simName': 'release2HS_entres_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release2HS_entres_dfa_0.15500'},
         		'testName': 'avaHockeyChannelEntTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -164,7 +164,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': 'entrainment1HS',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0', '1.0'],
+                        'Release thickness [m]': [1.0, 1.0],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS'},
@@ -175,7 +175,7 @@ def fetchBenchParameters(avaName):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaHockeySmallDict':
-        avaDictName = {'simName': 'release1HS_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HS_null_dfa_0.15500'},
        			'testName': 'avaHockeySmallNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -184,7 +184,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Final Mass [kg]': '10000.',
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
@@ -195,7 +195,7 @@ def fetchBenchParameters(avaName):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaInclinedPlaneDict':
-        avaDictName = {'simName': 'release1IP_entres_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1IP_entres_dfa_0.15500'},
         		'testName': 'avaInclinedPlaneEntresTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -204,7 +204,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': 'entrainment1IP',
                         'Resistance Area': 'resistance1IP',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Release Mass [kg]': '20000.',
                         'Final Mass [kg]': '21735.1',
                         'Entrainment thickness [m]': 0.3},
@@ -216,7 +216,7 @@ def fetchBenchParameters(avaName):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaAlrDict':
-        avaDictName = {'simName': 'relAlr_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'relAlr_null_dfa_0.15500'},
         		'testName': 'avaAlrNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -225,7 +225,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Release Mass [kg]': '	10586.3',
                         'Final Mass [kg]': '10586.3',
                         'Entrainment thickness [m]': 0.3},
@@ -237,7 +237,7 @@ def fetchBenchParameters(avaName):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaKotDict':
-        avaDictName = {'simName': 'relKot_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'relKot_null_dfa_0.15500'},
         		'testName': 'avaKotNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -246,7 +246,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relKot'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Kot test.'}}
@@ -254,7 +254,7 @@ def fetchBenchParameters(avaName):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaMalDict':
-        avaDictName = {'simName': 'relMal1to3_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'relMal1to3_null_dfa_0.15500'},
         		'testName': 'avaMalNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -271,7 +271,7 @@ def fetchBenchParameters(avaName):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaWogDict':
-        avaDictName = {'simName': 'relWog_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'relWog_null_dfa_0.15500'},
         		'testName': 'avaWogNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -280,7 +280,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relWog'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Wog test.'}}
@@ -288,7 +288,7 @@ def fetchBenchParameters(avaName):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaGarDict':
-        avaDictName = {'simName': 'relGar_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'relGar_null_dfa_0.15500'},
         		'testName': 'avaGarNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -297,14 +297,14 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.2'],
+                        'Release thickness [m]': [1.2],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relGar'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
 
         avaDictList.append(avaDictName)
 
-        avaDictName = {'simName': 'relGar23_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'relGar23_null_dfa_0.15500'},
         		'testName': 'avaGarNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -313,14 +313,14 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.5','1.35'],
+                        'Release thickness [m]': [1.5,1.35],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relGar23'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
 
         avaDictList.append(avaDictName)
 
-        avaDictName = {'simName': 'relGar6_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'relGar6_null_dfa_0.15500'},
         		'testName': 'avaGarNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -329,7 +329,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relGar6'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
@@ -338,7 +338,7 @@ def fetchBenchParameters(avaName):
 
 
     elif avaDictName == 'avaHitDict':
-        avaDictName = {'simName': 'relHit_null_dfa_0.15500',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'relHit_null_dfa_0.15500'},
         		'testName': 'avaHitNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -347,7 +347,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0'],
+                        'Release thickness [m]': [1.0],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relHit'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Hit test.'}}

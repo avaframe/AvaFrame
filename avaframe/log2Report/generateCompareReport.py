@@ -92,7 +92,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
         pfile.write('## *%s* \n' % avaName)
         simName = reportD['simName']['name']
         pfile.write('### Simulation name: *%s* \n' % reportD['simName']['name'])
-        if benchD['simName'] != simName:
+        if benchD['simName']['name'] != simName:
             textString = '<span style="color:red"> Reference simulation name is different: \
                          %s  </span>' % benchD['simName']
             pfile.write('#### %s \n' % textString)
