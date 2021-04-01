@@ -8,8 +8,8 @@ This file is part of Avaframe.
 """
 
 import matplotlib.pyplot as plt
-from avaframe.in3Utils import fileHandlerUtils as fU
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from matplotlib.ticker import FormatStrFormatter
+# from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
 import numpy.ma as ma
 import os
@@ -21,6 +21,7 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.makePalette as makePalette
 import avaframe.out3Plot.plotUtils as pU
+from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -78,6 +79,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     diffMax = np.nanmax(dataDiff)
     diffMin = np.nanmin(dataDiff)
     diffMean = np.nanmean(dataDiff)
+    diffSTD = np.nanstd(dataDiff)
 
     # Location of box
     nybox = int(nx * 0.2)
@@ -121,10 +123,9 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     elev_max = np.nanmax(np.abs(dataDiff))
     im3 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
                      extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-    fig.colorbar(im3, ax=ax3)
+    pU.addColorBar(im3, ax3, None, unit)
     ax3.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' %
              (diffMean, unit, diffMax, unit, diffMin, unit),
-             bbox=dict(boxstyle="square", ec='white', fc='white'),
              horizontalalignment='left', verticalalignment='bottom')
     ax3.set_aspect('auto')
     ax3.set_xlabel('x [m]')
@@ -134,9 +135,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
     axin2 = ax3.inset_axes([0.75, 0.1, 0.25, 0.25])
     axin2.patch.set_alpha(0.0)
-    axin2.hist(dataDiffPlot, bins=30)
+    axin2.hist(dataDiffPlot, bins=100, density=True, histtype="stepfilled")
     axin2.get_yaxis().set_ticks([])
-
 
     ax4 = fig.add_subplot(224)
     cmap = pU.cmapdiv
@@ -163,18 +163,34 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     im4 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
                      extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
-    fig.colorbar(im4, ax=ax4)
-    ax4.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' %
-             (diffMeanZoom, unit, diffMaxZoom, unit, diffMinZoom, unit),
-             bbox=dict(boxstyle="square", ec='white', fc='white'),
-             horizontalalignment='left', verticalalignment='bottom')
+    pU.addColorBar(im4, ax4, None, unit, extend='both')
     ax4.set_aspect('auto')
     ax4.set_xlabel('x [m]')
 
-    axin4 = ax4.inset_axes([0.73, 0.1, 0.25, 0.25])
+    axin4 = ax4.inset_axes([0.6, 0.1, 0.4, 0.25])
     axin4.patch.set_alpha(0.0)
-    axin4.hist(dataDiffZoom, bins=30)
-    axin4.get_yaxis().set_ticks([])
+    sortedDiffPlot = np.sort(np.abs(dataDiffPlot))
+    nSample = np.size(sortedDiffPlot)
+    hist = np.array(range(nSample))/float(nSample)
+    ticks = []
+    for val in [0.99, 0.95]:
+        ind = np.searchsorted(hist, val)
+        axin4.plot(sortedDiffPlot, hist)
+        axin4.hlines(hist[ind], 0, sortedDiffPlot[ind], linestyles='--', linewidths=0.5)
+        axin4.vlines(sortedDiffPlot[ind], 0, hist[ind], linestyles='--', linewidths=0.5)
+        ticks.append(sortedDiffPlot[ind])
+        axin2.set_xlim([-sortedDiffPlot[ind], sortedDiffPlot[ind]])
+    # lim = axin4.get_xlim()
+    # axin4.set_xticks(list(axin4.get_xticks()) + ticks)
+    # axin4.set_xlim(lim)
+
+    ticks.append(np.floor(np.nanmax(np.abs(dataDiffPlot))))
+    axin4.set_xticks(ticks)
+    axin4.xaxis.set_major_formatter(FormatStrFormatter('%0.2f'))
+    axin4.tick_params(axis='both', which='major', labelsize=8, rotation=45)
+    ax4.text(nybox, nxbox, '95%% centile: %.2f %s\n 99%% centile: %.2f %s' %
+             (ticks[1], unit, ticks[0], unit),
+             horizontalalignment='left', verticalalignment='bottom')
 
     fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
 
