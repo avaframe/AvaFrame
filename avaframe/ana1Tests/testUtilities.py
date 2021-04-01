@@ -61,7 +61,7 @@ def readAllBenchmarkDesDicts(info=False):
     for testDir in testDirs:
         desDictFile = glob.glob(testDir + os.sep + '*desDict.json')
         if desDictFile != []:
-            testName = os.path.basename(desDictFile[0]).split('_')[0]
+            testName = os.path.basename(testDir)           
             desDict = readDesDictFromJson(desDictFile[0])
             desDict.update({'NAME': testName})
             if info:

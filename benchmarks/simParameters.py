@@ -263,7 +263,7 @@ def fetchBenchParameters(avaName):
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['1.0', '1.0', '1.0'],
+                        'Release thickness [m]': [1.0, 1.0, 1.0],
                         'Entrainment thickness [m]': 0.3},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relMal1to3'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Mal test.'}}
