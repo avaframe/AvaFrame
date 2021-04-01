@@ -75,9 +75,9 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     # Difference between datasets
     dataDiff = data1 - data2
     dataDiff = np.where((data1==0) & (data2==0), np.nan, dataDiff)
-    diffMax = np.nanmax(dataDiff)
-    diffMin = np.nanmin(dataDiff)
-    diffMean = np.nanmean(dataDiff)
+    diffMax = np.nanmax(abs(dataDiff))
+    diffMin = np.nanmin(abs(dataDiff))
+    diffMean = np.nanmean(abs(dataDiff))
 
     # Location of box
     nybox = int(nx * 0.2)
@@ -85,9 +85,9 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     # Plot data
     # Figure 1 shows the result parameter data
-    fig = plt.figure(figsize=(pU.figW*3, pU.figH))
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH*2))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
-    ax1 = fig.add_subplot(131)
+    ax1 = fig.add_subplot(221)
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
         pU.cmapPres, np.amin(data1), np.amax(data1), continuous=pU.contCmap)
 
@@ -102,7 +102,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
 
-    ax2 = fig.add_subplot(132)
+    ax2 = fig.add_subplot(222)
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
         pU.cmapPres, np.amin(data2), np.amax(data2), continuous=pU.contCmap)
 
@@ -116,7 +116,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     title = str('%s' % name2)
     ax2.set_title(title)
 
-    ax3 = fig.add_subplot(133)
+    ax3 = fig.add_subplot(223)
     cmap = pU.cmapdiv
     elev_max = np.nanmax(np.abs(dataDiff))
     im3 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
@@ -136,6 +136,45 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     axin2.patch.set_alpha(0.0)
     axin2.hist(dataDiffPlot, bins=30)
     axin2.get_yaxis().set_ticks([])
+
+
+    ax4 = fig.add_subplot(224)
+    cmap = pU.cmapdiv
+
+    if 'suffix' in dataDict:
+        if dataDict['suffix'] == 'pfd':
+            elev_max = 1
+        elif dataDict['suffix'] == 'ppr':
+            elev_max = 100
+        elif dataDict['suffix'] == 'pfv':
+            elev_max = 10
+        ax4.set_title('Difference capped at %s: +-%d' % (dataDict['suffix'], elev_max))
+
+    else:
+        cutVal = 0.5
+        elev_max = cutVal * elev_max
+        ax4.set_title('Difference capped at %.1f times max difference: +-%.2f' % (cutVal, elev_max))
+
+    # for difference histogramm - remove dataDiff == 0 values from array
+    dataDiffZoom = np.where((dataDiffPlot<-elev_max) | (dataDiffPlot>elev_max), np.nan, dataDiffPlot)
+    diffMaxZoom = np.nanmax(abs(dataDiffZoom))
+    diffMinZoom = np.nanmin(abs(dataDiffZoom))
+    diffMeanZoom = np.nanmean(abs(dataDiffZoom))
+
+    im4 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
+                     extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+    fig.colorbar(im4, ax=ax4)
+    ax4.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' %
+             (diffMean, unit, diffMax, unit, diffMin, unit),
+             bbox=dict(boxstyle="square", ec='white', fc='white'),
+             horizontalalignment='left', verticalalignment='bottom')
+    ax4.set_aspect('auto')
+    ax4.set_xlabel('x [m]')
+
+    axin4 = ax4.inset_axes([0.73, 0.1, 0.25, 0.25])
+    axin4.patch.set_alpha(0.0)
+    axin4.hist(dataDiffZoom, bins=30)
+    axin4.get_yaxis().set_ticks([])
 
     fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
 
@@ -167,6 +206,10 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     plotDict['difference'].append(diffMin)
     plotDict['stats'].append(np.amax(data2))
     plotDict['stats'].append(np.amin(data2))
+    if 'differenceZoom' in plotDict:
+        plotDict['differenceZoom'].append(diffMaxZoom)
+        plotDict['differenceZoom'].append(diffMeanZoom)
+        plotDict['differenceZoom'].append(diffMinZoom)
 
     plt.close('all')
 
