@@ -92,7 +92,6 @@ def com1DFAMain(cfg, avaDir, relThField):
         avalancheDir, cfg['FLAGS'], flagDev)
     # save flags
     cfg['FLAGS']['entRes'] = str(entRes)
-    demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, relFiles, entFiles, resFile)
 
     # Counter for release area loop
     countRel = 0
@@ -102,6 +101,9 @@ def com1DFAMain(cfg, avaDir, relThField):
 
     # Loop through release areas
     for rel in relFiles:
+
+        demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, rel, entFiles, resFile)
+
         # find out which simulations to perform
         relName, cuSim, relDict, badName = getSimulation(cfg, rel)
         releaseLine['d0'] = relDict['d0']
@@ -201,7 +203,7 @@ def getSimulation(cfg, rel):
     return relName, cuSim, relDict, badName
 
 
-def prepareInputData(demFile, relFiles, entFiles, resFile):
+def prepareInputData(demFile, relFile, entFiles, resFile):
     """ Fetch input data
 
     Parameters
@@ -233,8 +235,8 @@ def prepareInputData(demFile, relFiles, entFiles, resFile):
     # get dem information
     demOri = IOf.readRaster(demFile)
     # get line from release area polygon
-    releaseLine = shpConv.readLine(relFiles[0], 'release1', demOri)
-    releaseLine['file'] = relFiles
+    releaseLine = shpConv.readLine(relFile, 'release1', demOri)
+    releaseLine['file'] = relFile
     # get line from entrainement area polygon
     if entFiles:
         entLine = shpConv.readLine(entFiles, '', demOri)
