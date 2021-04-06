@@ -17,6 +17,7 @@ from matplotlib import cm
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.out3Plot.makePalette as makePalette
+from avaframe.out3Plot import statsPlots as sPlot
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -424,8 +425,8 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
     ############################################
     # Figure: Raster comparison
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-    ax1 = plt.subplot2grid((3,2), (0,0), rowspan=3)
+    fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))#, constrained_layout=True)
+    ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
 
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, pLim,
@@ -440,22 +441,25 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     im.set_clim(vmin=0.0001, vmax=np.nanmax((refDataPressure)))
     ax1.set_title('Reference Peak Pressure')
     pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
-    y_lim = s[indStartOfRunout+20]+np.nanmax(runoutLength-sStart)
+    y_lim = min(np.nanmax(runoutLength)+20, s[-1])
     ax1.set_ylim([0, y_lim])
     ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
 
-    ax2 = plt.subplot2grid((3,2), (0,1), rowspan=2)
+    ax2 = plt.subplot2grid((3,3), (0,1), rowspan=2, colspan=2)
+    compDataPressure = compDataPressure[indStartOfRunout:, :]
+    refDataPressure = refDataPressure[indStartOfRunout:, :]
     dataDiff = compDataPressure - refDataPressure
     dataDiff = np.where((refDataPressure==0) & (compDataPressure==0), np.nan, dataDiff)
+    dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
     cmap = pU.cmapdiv
     cmap.set_bad(color='w')
     elev_max = 5
-    ref0, im3 = pU.NonUnifIm(ax2, l, s, (dataDiff), 'l [m]', 's [m]',
-                         extent=[l.min(), l.max(), s.min(), s.max()],
+    ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
+                         extent=[l.min(), l.max(), s[indStartOfRunout:].min(), s[indStartOfRunout:].max()],
                          cmap=cmap)
     im3.set_clim(vmin=-elev_max, vmax=elev_max)
-    L, S = np.meshgrid(l, s)
+    L, S = np.meshgrid(l, s[indStartOfRunout:])
     colorsP = pU.cmapPres['colors'][1:5]
     contourRef = ax2.contour(L, S, refDataPressure, levels=(1, 3, 5, 10), linewidths=1, colors=colorsP)
     contourComp = ax2.contour(L, S, compDataPressure, levels=(1, 3, 5, 10), linewidths=1, colors=colorsP, linestyles= 'dashed')
@@ -474,19 +478,30 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax2.legend(loc='lower right')
     pU.addColorBar(im3, ax2, ticks, 'kPa', title='Pressure difference', extend='both')
 
-    tabax = plt.subplot2grid((3,2), (2, 1))
-    cols = ['$P_{lim}$ [kPa]','Area difference [$m^2$]', 'relative area difference[%]']
-    data = np.random.rand(5, 3)
-    data[:, 0] = [1, 3, 5, 10, pLim]
-    data[:, 1] = FN + FP
-    data[:, 2] = (FN + FP)/(TP + FN)*100
-    new_array = np.array(["%.2f" % x for x in data.reshape(data.size)])
-    data = new_array.reshape(data.shape)
-    tabax.axis("off")
-    the_table = tabax.table(cellText=data, colLabels=cols, colWidths=[0.2, 0.45, 0.5], loc='center')
-    the_table.auto_set_font_size(False)
-    the_table.set_fontsize(10)
-    the_table.scale(1, 1)
+    ax3 = plt.subplot2grid((3,3), (2, 1))
+    ax4 = plt.subplot2grid((3,3), (2, 2))
+    if dataDiffPlot:
+        # there is data to compare in the run out area
+        centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False',
+                                     title=['Pressure diff histogram', 'Pressure diff CDF (95% and 99% centiles)'])
+    else:
+        log.warning('No data in the run out area!')
+
+    # # print table with area
+    # tabax = plt.subplot2grid((3,3), (2, 1), colspan=2)
+    # cols = ['$P_{lim}$ [kPa]','Area difference [$m^2$]', 'relative area difference[%]']
+    # data = np.random.rand(5, 3)
+    # data[:, 0] = [1, 3, 5, 10, pLim]
+    # data[:, 1] = FN + FP
+    # data[:, 2] = (FN + FP)/(TP + FN)*100
+    # new_array = np.array(["%.2f" % x for x in data.reshape(data.size)])
+    # data = new_array.reshape(data.shape)
+    # tabax.axis("off")
+    # the_table = tabax.table(cellText=data, colLabels=cols, colWidths=[0.2, 0.45, 0.5], loc='center')
+    # the_table.auto_set_font_size(False)
+    # the_table.set_fontsize(10)
+    # the_table.scale(1, 1)
+    fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  'sim', str(i), 'ContourComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 

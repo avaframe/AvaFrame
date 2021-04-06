@@ -174,6 +174,6 @@ def writeResultToAsc(header, resultArray, outFileName, flip=False):
                 line = np.array([resultArray[M-m-1,:]])
             else:
                 line = np.array([resultArray[m,:]])
-            np.savetxt(outFile, line, fmt='%f')
+            np.savetxt(outFile, line, fmt='%.16g')
 
         outFile.close()

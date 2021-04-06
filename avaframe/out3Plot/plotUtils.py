@@ -200,16 +200,16 @@ def saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
     closes it afterwards
     """
 
+    if cfgFlags.getboolean('plotFigure'):
+        plt.show()
+    else:
+        plt.ioff()
+
     if cfgFlags.getboolean('savePlot'):
         outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
         fig.savefig(outname)
-
-    if cfgFlags.getboolean('plotFigure'):
-        plt.show()
-    else:
-        plt.ioff()
 
     plt.close(fig)
 
