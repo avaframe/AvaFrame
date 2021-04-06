@@ -9,7 +9,6 @@ import time
 # Local imports
 from avaframe.com1DFAPy import runCom1DFA
 from avaframe.com1DFA import com1DFA
-from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
 from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
@@ -19,7 +18,6 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-from benchmarks import simParameters
 
 # log file name; leave empty to use default runLog.log
 logName = 'runComparisonTestsPy'
@@ -28,20 +26,20 @@ logName = 'runComparisonTestsPy'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-outNew = 'OutputsFloatSphArtifdt001'
-testList = ['avaInclinedPlane', 'avaInclinedPlaneDiag', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
+outNew = 'OutputsFloatAllSamos'
+testList = ['avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot'] #, 'avaInclinedPlaneDiag'
 simType = 'null'
 # Set directory for full standard test report
-outDir = os.path.join(os.getcwd(), 'tests', 'reportsComparisonSamosPy')
+outDir = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPy')
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
-reportFile = os.path.join(outDir, 'ComparisonSamosPy.md')
+reportFile = os.path.join(outDir, 'com1DFAvsPy.md')
 with open(reportFile, 'w') as pfile:
 
     # Write header
     pfile.write('# Standard Tests Report \n')
-    pfile.write('## Compare com1DFAPy simulations to benchmark results \n')
+    pfile.write('## Compare com1DFA simulation to com1DFAPy results \n')
 
 # run Standard Tests sequentially
 for test in testList:
@@ -61,29 +59,31 @@ for test in testList:
     initProj.cleanSingleAvaDir(avaDir,  keep=logName)
 
     #####################################################################
-    ########################## Run SamosAT ##############################
+    ########################## Run com1DFA ##############################
+    # use the local config file
 
     # get path to executable
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
     # Set timing
     startTime = time.time()
     # Run Standalone DFA
-    reportDictListSamos = com1DFA.com1DFAMain(cfgCom1DFA, avaDir)
+    reportDictListcom1DFA = com1DFA.com1DFAMain(cfgCom1DFA, avaDir)
 
     # Print time needed
     endTime = time.time()
-    timeNeededSamos = endTime - startTime
-    log.info(('Took %s seconds to calculate.' % (timeNeededSamos)))
+    timeNeededcom1DFA = endTime - startTime
+    log.info(('Took %s seconds to calculate.' % (timeNeededcom1DFA)))
 
     # Generata plots for all peakFiles
-    plotDictSamos = oP.plotAllPeakFields(avaDir, cfgCom1DFA, cfgMain['FLAGS'])
+    plotDictcom1DFA = oP.plotAllPeakFields(avaDir, cfgCom1DFA, cfgMain['FLAGS'])
 
     # Set directory for report
     outDirOld = os.path.join(avaDir, 'Outputs')
+    # name needed to rename the outputs at the end
     outDirNew = os.path.join(avaDir, outNew)
     reportDir = os.path.join(outDirOld, 'com1DFA', 'reports')
     # write report
-    gR.writeReport(reportDir, reportDictListSamos, cfgMain['FLAGS'], plotDictSamos)
+    gR.writeReport(reportDir, reportDictListcom1DFA, cfgMain['FLAGS'], plotDictcom1DFA)
 
 
     #####################################################################
@@ -92,26 +92,26 @@ for test in testList:
     startTime = time.time()
     # Run Standalone DFA
     # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-    _, _, _, _, plotDictPy, reportDictListPy = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile='', relThField='')
+    _, _, _, _, plotDictcom1DFAPy, reportDictListcom1DFAPy = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile='', relThField='')
 
     # Print time needed
     endTime = time.time()
-    timeNeededPy = endTime - startTime
-    log.info(('Took %s seconds to calculate.' % (timeNeededPy)))
+    timeNeededcom1DFAPy = endTime - startTime
+    log.info(('Took %s seconds to calculate.' % (timeNeededcom1DFAPy)))
 
     # Set directory for report
     reportDir = os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'reports')
     # write report
-    gR.writeReport(reportDir, reportDictListPy, cfgMain['FLAGS'], plotDictPy)
+    gR.writeReport(reportDir, reportDictListcom1DFAPy, cfgMain['FLAGS'], plotDictcom1DFAPy)
 
     #######################################################
     ############ Analyze results ##########################
-    reportSamos = reportDictListSamos[0]
-    reportPy = reportDictListPy[0]
+    reportcom1DFA = reportDictListcom1DFA[0]
+    reportcom1DFAPy = reportDictListcom1DFAPy[0]
     # Add info on run time
-    reportSamos['runTime'] = timeNeededSamos
-    reportPy['runTime'] = timeNeededPy
-    rel = reportSamos['Simulation Parameters']['Release Area Scenario']
+    reportcom1DFA['runTime'] = timeNeededcom1DFA
+    reportcom1DFAPy['runTime'] = timeNeededcom1DFAPy
+    rel = reportcom1DFA['Simulation Parameters']['Release Area Scenario']
 
     # +++++++Aimec analysis
     # load configuration
@@ -125,19 +125,18 @@ for test in testList:
 
     # Setup input from com1DFA and reference
     pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
-    pathDict = pathDictList[reportSamos['simName']['name']]
+    pathDict = pathDictList[reportcom1DFA['simName']['name']]
     pathDict['numSim'] = len(pathDict['ppr'])
     log.info('reference file comes from: %s' % pathDict['compType'][1])
 
     # Extract input file locations
-    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportSamos['simName']['name'])
-    # ana3AIMEC.mainAIMEC(pathDict, cfgAimec)
+    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportcom1DFA['simName']['name'])
 
     # perform analysis
     rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
 
     # add aimec results to report dictionary
-    reportSamos, reportPy = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportSamos, reportPy, pathDict['referenceFile'])
+    reportSamos, reportPy = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportcom1DFA, reportcom1DFAPy, pathDict['referenceFile'])
     # +++++++++++Aimec analysis
 
 
@@ -175,11 +174,11 @@ for test in testList:
     # add plot info to general report Dict
     reportSamos['Simulation Results'] = plotPaths
 
-    reportPy['Test Info'] = {'type': 'text', 'Test Info': 'This test uses a bowl-shaped geometry.'}
-    reportSamos['Test Info'] = {'type': 'text', 'Test Info': 'This test uses a bowl-shaped geometry.'}
+    reportcom1DFAPy['Test Info'] = {'type': 'text', 'Test Info': 'Compare com1DFA to com1DFAPy results.'}
+    reportcom1DFA['Test Info'] = {'type': 'text', 'Test Info': 'Compare com1DFA to com1DFAPy results.'}
 
     # write report
-    generateCompareReport.writeCompareReport(reportFile, reportPy, reportSamos, avaName, cfgRep)
+    generateCompareReport.writeCompareReport(reportFile, reportcom1DFAPy, reportcom1DFA, avaName, cfgRep)
 
     # rename output folder
     # initProj.cleanModuleFiles(avaDir, com1DFA, alternativeName=outNew)
