@@ -856,32 +856,31 @@ def DFAIterate(cfg, particles, fields, dem):
     # Initialize time and counters
     nSave = 1
     Tcpu['nSave'] = nSave
-    nIter = 0
-    nIter0 = 0
+    nIter = 1
+    nIter0 = 1
+    dt0 = cfg.getfloat('mindT')
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
     timeM = []
     massEntrained = []
     massTotal = []
+    # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
+    # CALL TIME STEP:
+    # to play around with the courant number
+    if featCFL:
+        dtStable = tD.getcflTimeStep(particles, dem, cfg)
+    elif featCFLConstrain:
+        dtStable = tD.getcfldTwithConstraints(particles, dem, cfg)
+
+    # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
+    # ++++++++++++++++++++++++++++++++++++++++++++++
+    # get time step
+    dt = cfg.getfloat('dt')
+    t = t + dt
 
     # Start time step computation
-    while t < tEnd and iterate:
-        # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
-        # CALL TIME STEP:
-        # to play around with the courant number
-        if featCFL:
-            dtStable = tD.getcflTimeStep(particles, dem, cfg)
-        elif featCFLConstrain:
-            dtStable = tD.getcfldTwithConstraints(particles, dem, cfg)
-
-        # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
-        # ++++++++++++++++++++++++++++++++++++++++++++++
-        # get time step
-        dt = cfg.getfloat('dt')
-        t = t + dt
-        nIter = nIter + 1
-        nIter0 = nIter0 + 1
+    while t < tEnd+dt0/2 and iterate:
         log.debug('Computing time step t = %f s', t)
 
         # Perform computations
@@ -915,9 +914,25 @@ def DFAIterate(cfg, particles, fields, dem):
             Fields.append(copy.deepcopy(fields))
             nSave = nSave + 1
 
+        # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
+        # CALL TIME STEP:
+        # to play around with the courant number
+        if featCFL:
+            dtStable = tD.getcflTimeStep(particles, dem, cfg)
+        elif featCFLConstrain:
+            dtStable = tD.getcfldTwithConstraints(particles, dem, cfg)
+
+        # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
+        # ++++++++++++++++++++++++++++++++++++++++++++++
+        # get time step
+        dt = cfg.getfloat('dt')
+        t = t + dt
+        nIter = nIter + 1
+        nIter0 = nIter0 + 1
+
     Tcpu['nIter'] = nIter
-    log.info('Ending computation at time t = %f s', t)
-    log.info('Saving results for time step t = %f s', t)
+    log.info('Ending computation at time t = %f s', t-dt)
+    log.info('Saving results for time step t = %f s', t-dt)
     log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
     log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))

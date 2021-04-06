@@ -168,3 +168,55 @@ def plotValuesScatterHist(peakDictList, resType1, resType2, varPar, cfg, avalanc
         plt.show()
 
     plt.close('all')
+
+
+def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
+    """ Produce histogram and CDF plot of the raster difference of two simulations
+
+    Parameters
+    -----------
+    dataDiffPlot: 2D numpy array
+        raster of the difference of the two simulations
+    ax1: axes
+        axes for the histogram plot
+    ax2: axes
+        axes for the CDF plot
+    insert: boolean
+        true if the plots are in inserted axes (size of the lables is then smaller)
+    title: list
+        if not inserts, title for the plots
+
+    """
+    # Difference between datasets
+    diffMax = np.nanmax(dataDiffPlot)
+    diffMin = np.nanmin(dataDiffPlot)
+
+    sortedDiffPlot = np.sort(np.abs(dataDiffPlot))
+    nSample = np.size(sortedDiffPlot)
+    hist = np.array(range(nSample))/float(nSample)
+    ticks = []
+    for val in [0.95, 0.99]:
+        ind = np.searchsorted(hist, val)
+        ind = min(ind, np.size(hist)-1)
+        ax1.plot(sortedDiffPlot, hist)
+        ax1.hlines(hist[ind], 0, sortedDiffPlot[ind], linestyles='--', linewidths=0.5)
+        ax1.vlines(sortedDiffPlot[ind], 0, hist[ind], linestyles='--', linewidths=0.5)
+        ticks.append(sortedDiffPlot[ind])
+
+    ax2.set_xlim([-sortedDiffPlot[ind], sortedDiffPlot[ind]])
+    width = diffMax - diffMin
+    stepWidth = 2*sortedDiffPlot[ind]/50 # 50 bins in the [-2sigma,+2sigma] interval
+    bins = int(width/stepWidth)
+    ax2.hist(dataDiffPlot, bins=bins, density=True, histtype="stepfilled")
+    ax2.get_yaxis().set_ticks([])
+    if insert:
+        ax2.tick_params(axis='x', which='major', labelsize=8, rotation=45)
+        ax2.set_title(title[0])
+
+    ticks.append(np.floor(np.nanmax(np.abs(dataDiffPlot))))
+    ax1.set_xticks(ticks)
+    if insert:
+        ax1.tick_params(axis='both', which='major', labelsize=8, rotation=45)
+        ax1.set_title(title[1])
+
+    return ticks

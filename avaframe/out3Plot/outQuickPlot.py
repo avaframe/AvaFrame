@@ -8,8 +8,6 @@ This file is part of Avaframe.
 """
 
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FormatStrFormatter
-# from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
 import numpy.ma as ma
 import os
@@ -22,6 +20,7 @@ import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.makePalette as makePalette
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import fileHandlerUtils as fU
+from avaframe.out3Plot import statsPlots as sPlot
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -79,7 +78,6 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     diffMax = np.nanmax(dataDiff)
     diffMin = np.nanmin(dataDiff)
     diffMean = np.nanmean(dataDiff)
-    diffSTD = np.nanstd(dataDiff)
 
     # Location of box
     nybox = int(nx * 0.2)
@@ -135,9 +133,6 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
     axin2 = ax3.inset_axes([0.6, 0.1, 0.4, 0.25])
     axin2.patch.set_alpha(0.0)
-    axin2.hist(dataDiffPlot, bins=100, density=True, histtype="stepfilled")
-    axin2.get_yaxis().set_ticks([])
-    axin2.tick_params(axis='x', which='major', labelsize=8, rotation=45)
 
     ax4 = fig.add_subplot(224)
     cmap = pU.cmapdiv
@@ -170,28 +165,10 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     axin4 = ax4.inset_axes([0.6, 0.1, 0.4, 0.25])
     axin4.patch.set_alpha(0.0)
-    sortedDiffPlot = np.sort(np.abs(dataDiffPlot))
-    nSample = np.size(sortedDiffPlot)
-    hist = np.array(range(nSample))/float(nSample)
-    ticks = []
-    for val in [0.95, 0.99]:
-        ind = np.searchsorted(hist, val)
-        ind = min(ind, np.size(hist)-1)
-        axin4.plot(sortedDiffPlot, hist)
-        axin4.hlines(hist[ind], 0, sortedDiffPlot[ind], linestyles='--', linewidths=0.5)
-        axin4.vlines(sortedDiffPlot[ind], 0, hist[ind], linestyles='--', linewidths=0.5)
-        ticks.append(sortedDiffPlot[ind])
-        axin2.set_xlim([-sortedDiffPlot[ind], sortedDiffPlot[ind]])
-    # lim = axin4.get_xlim()
-    # axin4.set_xticks(list(axin4.get_xticks()) + ticks)
-    # axin4.set_xlim(lim)
 
-    ticks.append(np.floor(np.nanmax(np.abs(dataDiffPlot))))
-    axin4.set_xticks(ticks)
-    # axin4.xaxis.set_major_formatter(FormatStrFormatter('%0.2f'))
-    axin4.tick_params(axis='both', which='major', labelsize=8, rotation=45)
+    centiles = sPlot.plotHistCDFDiff(dataDiffPlot, axin4, axin2)
     ax4.text(nybox, nxbox, '95%% centile: %.2e %s\n 99%% centile: %.2e %s' %
-             (ticks[0], unit, ticks[1], unit),
+             (centiles[0], unit, centiles[1], unit),
              horizontalalignment='left', verticalalignment='bottom')
 
     fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
