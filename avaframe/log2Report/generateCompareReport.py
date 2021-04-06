@@ -148,7 +148,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
             # if reference and simulation parameter value do not match
             # mark red
             diffPercent = (float(valuesBench[countValue]) - float(valuesSim[countValue])) / float(valuesBench[countValue])
-            if diffPercent > perDiff:
+            if abs(diffPercent) > perDiff:
                 valueRed = '<span style="color:red"> %.1f </span>' % valuesSim[countValue]
                 pfile.write('| %s | %.1f | %s | \n' % (value, valuesBench[countValue], valueRed))
                 countValue = countValue + 1
