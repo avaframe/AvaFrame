@@ -87,7 +87,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     # Plot data
     # Figure 1 shows the result parameter data
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH*2))
+    fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(221)
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
@@ -124,7 +124,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     im3 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
                      extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
     pU.addColorBar(im3, ax3, None, unit)
-    ax3.text(nybox, nxbox, 'Mean: %.2f %s\n Max: %.2f %s\n Min: %.2f %s' %
+    ax3.text(nybox, nxbox, 'Mean: %.2e %s\n Max: %.2e %s\n Min: %.2e %s' %
              (diffMean, unit, diffMax, unit, diffMin, unit),
              horizontalalignment='left', verticalalignment='bottom')
     ax3.set_aspect('auto')
@@ -133,7 +133,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     # for difference histogramm - remove dataDiff == 0 values from array
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
-    axin2 = ax3.inset_axes([0.75, 0.1, 0.25, 0.25])
+    axin2 = ax3.inset_axes([0.6, 0.1, 0.4, 0.25])
     axin2.patch.set_alpha(0.0)
     axin2.hist(dataDiffPlot, bins=100, density=True, histtype="stepfilled")
     axin2.get_yaxis().set_ticks([])
@@ -174,7 +174,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     nSample = np.size(sortedDiffPlot)
     hist = np.array(range(nSample))/float(nSample)
     ticks = []
-    for val in [0.99, 0.95]:
+    for val in [0.95, 0.99]:
         ind = np.searchsorted(hist, val)
         ind = min(ind, np.size(hist)-1)
         axin4.plot(sortedDiffPlot, hist)
@@ -188,10 +188,10 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     ticks.append(np.floor(np.nanmax(np.abs(dataDiffPlot))))
     axin4.set_xticks(ticks)
-    axin4.xaxis.set_major_formatter(FormatStrFormatter('%0.2f'))
+    # axin4.xaxis.set_major_formatter(FormatStrFormatter('%0.2f'))
     axin4.tick_params(axis='both', which='major', labelsize=8, rotation=45)
-    ax4.text(nybox, nxbox, '95%% centile: %.2f %s\n 99%% centile: %.2f %s' %
-             (ticks[1], unit, ticks[0], unit),
+    ax4.text(nybox, nxbox, '95%% centile: %.2e %s\n 99%% centile: %.2e %s' %
+             (ticks[0], unit, ticks[1], unit),
              horizontalalignment='left', verticalalignment='bottom')
 
     fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
