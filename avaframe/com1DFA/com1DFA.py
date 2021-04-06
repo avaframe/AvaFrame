@@ -182,7 +182,10 @@ def com1DFAMain(cfg, avaDir):
         relDict = sP.SHP2Array(rel)
         for k in range(len(relDict['d0'])):
             if relDict['d0'][k] == 'None':
-                relDict['d0'][k] = '1.0'
+                relDict['d0'][k] = defValues.getfloat('RelTh')
+            else:
+                relDict['d0'][k] = float(relDict['d0'][k])
+
         log.info('Release area scenario: %s - perform simulations' % (relName))
         if flagEntRes:
             log.info('Entrainment area: %s and resistance area: %s' % (entrainmentArea, resistanceArea))
