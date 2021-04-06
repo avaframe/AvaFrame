@@ -28,8 +28,8 @@ logName = 'runComparisonTestsPy'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-outNew = 'Outputs'
-testList = ['avaAlr0']#, 'avaInclinedPlaneDiag', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
+outNew = 'OutputsFloatSphArtifdt001'
+testList = ['avaInclinedPlane', 'avaInclinedPlaneDiag', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
 simType = 'null'
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reportsComparisonSamosPy')
@@ -182,4 +182,5 @@ for test in testList:
     generateCompareReport.writeCompareReport(reportFile, reportPy, reportSamos, avaName, cfgRep)
 
     # rename output folder
-    # os.rename(outDirOld, outDirNew)
+    # initProj.cleanModuleFiles(avaDir, com1DFA, alternativeName=outNew)
+    os.rename(outDirOld, outDirNew)
