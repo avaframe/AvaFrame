@@ -78,7 +78,6 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     diffMax = np.nanmax(dataDiff)
     diffMin = np.nanmin(dataDiff)
     diffMean = np.nanmean(dataDiff)
-    diffSTD = np.nanstd(dataDiff)
 
     # Location of box
     nybox = int(nx * 0.2)
