@@ -299,6 +299,10 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
     outFileName = '_'.join([projectName, 'massAnalysis'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
+    outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
+
+    return outFilePath
+
 
 def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     """

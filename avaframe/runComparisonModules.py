@@ -118,7 +118,8 @@ for avaName in testList:
 
         # write configuration to file
         cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)
-
+        if simType == 'entres':
+            cfgAimec['FLAGS']['analyzeMass'] = 'True'
         cfgAimecSetup = cfgAimec['AIMECSETUP']
 
         # Setup input from com1DFA and com1DFAPy
@@ -167,9 +168,9 @@ for avaName in testList:
                 reportDcom1DFAPy['Simulation Stats'].update({var: plotDict['stats']})
 
         # copy files to report directory
-        plotPaths = generateCompareReport.copyQuickPlots(avaName, avaName, outDirReport, plotListRep, rel)
-        aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
-        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, avaName, outDirReport, rel, plotPaths)
+        plotPaths = generateCompareReport.copyQuickPlots(avaName, avaName, outDir, plotListRep, rel)
+        aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot'], resAnalysis['massAnalysisPlot']]
+        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, avaName, outDir, rel, plotPaths)
 
         # add plot info to general report Dict
         reportDcom1DFAPy['Simulation Results'] = plotPaths

@@ -852,7 +852,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
                                     cfgFlags)
             log.warning('only one simulation, area comparison not meaningful')
 
-    return TP[:,-1], FN[:,-1], FP[:,-1], TN[:,-1], compPlotPath
+    return TP[:, -1], FN[:, -1], FP[:, -1], TN[:, -1], compPlotPath
 
 
 def readWrite(fname_ent, time):
@@ -875,7 +875,6 @@ def readWrite(fname_ent, time):
         growthIndex: float
         growthGrad: float
     """
-
 
     #    load data
     #    time, total mass, entrained mass
