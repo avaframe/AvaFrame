@@ -27,7 +27,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
 outNew = 'OutputsFloatAllSamos'
-testList = ['avaAlr0']#'avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
+testList = ['avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPy')
 fU.makeADir(outDir)
@@ -144,6 +144,7 @@ for avaName in testList:
         # Create plots for report
         # Load input parameters from configuration file
         cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
+        cfgRep['PLOT']['refModel'] = 'dfa'
 
         # REQUIRED+++++++++++++++++++
         # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or

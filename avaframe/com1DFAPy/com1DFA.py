@@ -859,7 +859,6 @@ def DFAIterate(cfg, particles, fields, dem):
     Tcpu['nSave'] = nSave
     nIter = 1
     nIter0 = 1
-    dt0 = cfg.getfloat('mindT')
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
@@ -881,7 +880,7 @@ def DFAIterate(cfg, particles, fields, dem):
     t = t + dt
 
     # Start time step computation
-    while t < tEnd+dt0/2 and iterate:
+    while t <= tEnd*(1.+1.e-13) and iterate:
         log.debug('Computing time step t = %f s', t)
 
         # Perform computations
