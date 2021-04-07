@@ -111,7 +111,6 @@ def com1DFAMain(cfg, avaDir):
         list of dictionaries that contain information on simulations that can be used for report generation
     """
 
-    startTime = time.time()
     # Setup configuration
     cfgGen = cfg['GENERAL']
     com1Exe = cfgGen['com1Exe']
@@ -170,7 +169,7 @@ def com1DFAMain(cfg, avaDir):
 
     # Loop through release areas
     for rel in rels:
-
+        startTime = time.time()
         # Set release areas and simulation name
         relName = os.path.splitext(os.path.basename(rel))[0]
         simName = relName
@@ -260,11 +259,11 @@ def com1DFAMain(cfg, avaDir):
 
             endTime = time.time()
             timeNeeded = '%.2f' % (endTime - startTime)
+            log.info(('Took %s seconds to calculate.' % (timeNeeded)))
             reportNull['Simulation Parameters'].update({'run time [s]': timeNeeded})
 
             # Add to report dictionary list
             reportDictList.append(reportNull)
-            startTime = time.time()
 
             # Count total number of simulations
             countRel = countRel + 1
@@ -282,6 +281,7 @@ def com1DFAMain(cfg, avaDir):
             for itemR in itemsRaw:
                 items.append('%.5f' % float(itemR))
             for item in items:
+                startTime = time.time()
                 logName = sim + '_' + item
                 log.info('Perform simulation with %s = %s: logName = %s' % (cfgPar['varPar'], item, logName))
                 templateFile = os.path.join(modPath, '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
@@ -327,6 +327,7 @@ def com1DFAMain(cfg, avaDir):
 
                 endTime = time.time()
                 timeNeeded =  '%.2f' % (endTime - startTime)
+                log.info(('Took %s seconds to calculate.' % (timeNeeded)))
                 reportVar['Simulation Parameters'].update({'run time [s]': timeNeeded})
 
                 # Add to report dictionary list
@@ -344,6 +345,7 @@ def com1DFAMain(cfg, avaDir):
                 else:
                     log.debug('Standard simulation is performed without entrainment and resistance')
 
+                startTime = time.time()
                 templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
                 workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
                 logName = sim + '_' + defValues['Mu']
@@ -386,6 +388,8 @@ def com1DFAMain(cfg, avaDir):
 
                 endTime = time.time()
                 timeNeeded =  '%.2f' % (endTime - startTime)
+                log.info(('Took %s seconds to calculate.' % (timeNeeded)))
+
                 reportST['Simulation Parameters'].update({'run time [s]': timeNeeded})
 
                 # Add to report dictionary list

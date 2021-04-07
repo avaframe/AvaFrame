@@ -28,7 +28,8 @@ def fetchBenchParameters(avaName):
                         'Release thickness [m]': [1],
                         'Release Mass [kg]': '20196.2',
                         'Final Mass [kg]': '20196.2',
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1BL'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a bowl-shaped geometry.'}}
 
@@ -47,7 +48,8 @@ def fetchBenchParameters(avaName):
                         'Release thickness [m]': [1.0],
                         'Release Mass [kg]': '20000.',
                         'Final Mass [kg]': '20000.',
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1FP'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs on a flat plane geometry.'}}
 
@@ -66,7 +68,8 @@ def fetchBenchParameters(avaName):
                         'Release thickness [m]': [1],
                         'Release Mass [kg]': '20522.4',
                         'Final Mass [kg]': '20522.4',
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a helix-shaped geometry.'}}
 
@@ -84,7 +87,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1, 1],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HX'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
@@ -103,7 +107,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1, 1],
-                        'Entrainment thickness [m]': 1.0},
+                        'Entrainment thickness [m]': 1.0,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HX', 'Entrainment Thickness': '1'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
@@ -126,7 +131,8 @@ def fetchBenchParameters(avaName):
                         'Release thickness [m]': [1.0],
                         'Release Mass [kg]': '20657.1',
                         'Final Mass [kg]': '20657.1',
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1PF'},
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
@@ -146,7 +152,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.0],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
@@ -165,7 +172,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.0, 1.0],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
@@ -186,7 +194,8 @@ def fetchBenchParameters(avaName):
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.0],
                         'Final Mass [kg]': '10000.',
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
                      where a linearly sloping surface transitions smoothly into a flat foreland. \
@@ -207,7 +216,8 @@ def fetchBenchParameters(avaName):
                         'Release thickness [m]': [1.0],
                         'Release Mass [kg]': '20000.',
                         'Final Mass [kg]': '21735.1',
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1IP'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1IP'},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
@@ -228,7 +238,8 @@ def fetchBenchParameters(avaName):
                         'Release thickness [m]': [1.0],
                         'Release Mass [kg]': '	10586.3',
                         'Final Mass [kg]': '10586.3',
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relAlr'},
                     'Entrainment area': {'type': 'columns', 'Entrainment area scenario': ''},
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
@@ -247,7 +258,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.0],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relKot'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Kot test.'}}
 
@@ -264,7 +276,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.0, 1.0, 1.0],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relMal1to3'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Mal test.'}}
 
@@ -281,7 +294,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.0],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relWog'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Wog test.'}}
 
@@ -298,7 +312,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.2],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relGar'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
 
@@ -314,7 +329,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.5,1.35],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relGar23'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
 
@@ -330,7 +346,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.0],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relGar6'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
 
@@ -348,7 +365,8 @@ def fetchBenchParameters(avaName):
                         'Resistance Area': '',
                         'Mu': '0.15500',
                         'Release thickness [m]': [1.0],
-                        'Entrainment thickness [m]': 0.3},
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'relHit'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Hit test.'}}
 

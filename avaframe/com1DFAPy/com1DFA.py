@@ -123,7 +123,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             # write mass balance to File
             writeMBFile(infoDict, avaDir, logName)
 
-            tcpuDFA = time.time() - startTime
+            tcpuDFA = '%.2f' % (time.time() - startTime)
             log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
             # export particles dictionaries of saving time steps
@@ -137,6 +137,7 @@ def com1DFAMain(cfg, avaDir, relThField):
 
             # add area info to reportDict
             reportDict['Release Area'].update(areaInfo)
+            reportDict['Simulation Parameters'].update({'run time [s]': tcpuDFA})
 
             # Add to report dictionary list
             reportDictList.append(reportDict)

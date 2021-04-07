@@ -34,7 +34,7 @@ def copyAimecPlots(plotFiles, testName, outDir, rel, plotPaths):
     for pDict in plotFiles:
         for key in pDict:
             name = os.path.basename(pDict[key])
-            plotName =  os.path.join(outDir, '%s_%s_%s.png' % (testName, rel, name))
+            plotName =  os.path.join(outDir, '%s_%s_%s' % (testName, rel, name))
             shutil.copy2(pDict[key], plotName)
             log.debug('Copied: %s to %s' % (pDict[key], plotName))
             plotPaths[key] = plotName
@@ -130,7 +130,6 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
                 countValue = countValue + 1
 
         # Add time needed for simulation to table
-        pfile.write('| Run time [s] |  | %.2f | \n' % (reportD['runTime']))
         pfile.write(' \n')
         pfile.write(' \n')
 

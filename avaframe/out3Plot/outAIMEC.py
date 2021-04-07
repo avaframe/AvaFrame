@@ -480,27 +480,13 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
     ax3 = plt.subplot2grid((3,3), (2, 1))
     ax4 = plt.subplot2grid((3,3), (2, 2))
-    if dataDiffPlot:
+    if dataDiffPlot is None:
+        log.warning('No data in the run out area!')
+    else:
         # there is data to compare in the run out area
         centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False',
-                                     title=['Pressure diff histogram', 'Pressure diff CDF (95% and 99% centiles)'])
-    else:
-        log.warning('No data in the run out area!')
+                                         title=['Pressure diff histogram', 'Pressure diff CDF (95% and 99% centiles)'])
 
-    # # print table with area
-    # tabax = plt.subplot2grid((3,3), (2, 1), colspan=2)
-    # cols = ['$P_{lim}$ [kPa]','Area difference [$m^2$]', 'relative area difference[%]']
-    # data = np.random.rand(5, 3)
-    # data[:, 0] = [1, 3, 5, 10, pLim]
-    # data[:, 1] = FN + FP
-    # data[:, 2] = (FN + FP)/(TP + FN)*100
-    # new_array = np.array(["%.2f" % x for x in data.reshape(data.size)])
-    # data = new_array.reshape(data.shape)
-    # tabax.axis("off")
-    # the_table = tabax.table(cellText=data, colLabels=cols, colWidths=[0.2, 0.45, 0.5], loc='center')
-    # the_table.auto_set_font_size(False)
-    # the_table.set_fontsize(10)
-    # the_table.scale(1, 1)
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  'sim', str(i), 'ContourComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
