@@ -179,9 +179,10 @@ def mainAIMEC(cfgPath, cfg):
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
-    if cfgPath['numSim']==2:
-        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
-        outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
+    if cfgPath['numSim'] == 2:
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
+        if cfgFlags.getboolean('analyzeMass'):
+            outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
     else:
         outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
     outAimec.resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis)
@@ -478,6 +479,9 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
 
     # compute runout based on resType
     runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
+
+    if cfgFlags.getboolean('analyzeMass'):
+        releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = aT.analyzeMass(fnameMass)
 
     runoutLength = runout[0]
     TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, dataResType, cfgSetup, cfgPath, cfgFlags)

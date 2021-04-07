@@ -303,6 +303,10 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
 
     return outFilePath
 
+    outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
+
+    return outFilePath
+
 
 def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     """
