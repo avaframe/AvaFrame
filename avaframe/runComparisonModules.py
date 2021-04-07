@@ -27,7 +27,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
 outNew = 'OutputsFloatAllSamos'
-testList = ['avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
+testList = ['avaAlr0']#'avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
 # Set directory for full standard test report
 outDir = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPy')
 fU.makeADir(outDir)
@@ -38,7 +38,7 @@ with open(reportFile, 'w') as pfile:
 
     # Write header
     pfile.write('# Standard Tests Report \n')
-    pfile.write('## Compare com1DFA simulation to com1DFAPy results \n')
+    pfile.write('## Compare com1DFA simulation to com1DFAPy simulation results \n')
 
 # run Standard Tests sequentially
 for avaName in testList:
@@ -175,11 +175,10 @@ for avaName in testList:
         # add plot info to general report Dict
         reportDcom1DFAPy['Simulation Results'] = plotPaths
 
-        reportDcom1DFAPy['Test Info'] = {'type': 'text', 'Test Info': 'Compare com1DFA to com1DFAPy results.'}
-        reportDcom1DFA['Test Info'] = {'type': 'text', 'Test Info': 'Compare com1DFA to com1DFAPy results.'}
+        reportDcom1DFA['Test Info'] = {'type': 'text', 'Test Info': 'Compare com1DFA (Reference) to com1DFAPy (Simulation) results.'}
 
         # write report
         generateCompareReport.writeCompareReport(reportFile, reportDcom1DFAPy, reportDcom1DFA, avaName, cfgRep)
 
         # rename output folder
-        os.rename(outDirOld, outDirNew)
+        # os.rename(outDirOld, outDirNew)
