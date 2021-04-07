@@ -143,7 +143,6 @@ def dfaComp2Aimec(avaDir, cfgSetup):
     pathDict = {}
     simNamesMatch = {}
     count = 0
-
     # initialise path dicionary with subdictionary for each simulation
     for simNameRef in refData['simName']:
         pathDict.update({simNameRef: {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}})
@@ -171,12 +170,10 @@ def dfaComp2Aimec(avaDir, cfgSetup):
                 pathDict[simNameRef]['compType'] = ['comModules', refModule, compModule]
                 pathDict[simNameRef]['referenceFile'] = 0
 
-
     for key in simNamesMatch:
         if simNamesMatch[key] == False:
             log.info('no matching files found for simulation: %s' % key)
             del pathDict[key]
-
 
     return pathDict
 

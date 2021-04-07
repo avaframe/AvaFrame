@@ -93,6 +93,9 @@ def AIMEC2Report(cfgPath, cfg):
 
     plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
     resAnalysis['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
+    if cfgFlags.getboolean('analyzeMass'):
+        plotName = outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
+        resAnalysis['massAnalysisPlot'] = {'Aimec mass analysis': plotName}
 
     return rasterTransfo, newRasters, resAnalysis
 
