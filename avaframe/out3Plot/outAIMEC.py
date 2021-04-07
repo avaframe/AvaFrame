@@ -480,12 +480,13 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
     ax3 = plt.subplot2grid((3,3), (2, 1))
     ax4 = plt.subplot2grid((3,3), (2, 2))
-    if dataDiffPlot is None:
-        log.warning('No data in the run out area!')
-    else:
+    if dataDiffPlot.size:
         # there is data to compare in the run out area
         centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False',
                                          title=['Pressure diff histogram', 'Pressure diff CDF (95% and 99% centiles)'])
+    else:
+        log.warning('No data in the run out area!')
+
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  'sim', str(i), 'ContourComparisonToReference'])
