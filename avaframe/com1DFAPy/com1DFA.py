@@ -9,6 +9,7 @@ import numpy as np
 import glob
 import copy
 import pickle
+from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.path as mpltPath
 import matplotlib as mpl
@@ -88,10 +89,10 @@ def com1DFAMain(cfg, avaDir, relThField):
     flagDev = cfg['FLAGS'].getboolean('flagDev')
     avalancheDir = cfgGen['avalancheDir']
     # fetch input data - dem, release-, entrainment- and resistance areas
-    demFile, relFiles, entFiles, resFile, entRes = gI.getInputData(
+    demFile, relFiles, entFiles, resFile, entResInfo = gI.getInputData(
         avalancheDir, cfg['FLAGS'], flagDev)
     # save flags
-    cfg['FLAGS']['entRes'] = str(entRes)
+    cfg['FLAGS']['entRes'] = str(entResInfo['flagEntRes'])
 
     # Counter for release area loop
     countRel = 0
@@ -133,11 +134,21 @@ def com1DFAMain(cfg, avaDir, relThField):
             # Result parameters to be exported
             exportFields(cfgGen, Tsave, Fields, rel, demOri, outDir, logName)
 
-            reportDict = createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea)
+            reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, entResInfo)
 
             # add area info to reportDict
             reportDict['Release Area'].update(areaInfo)
-            reportDict['Simulation Parameters'].update({'run time [s]': tcpuDFA})
+            reportDict['Simulation Parameters'].update({'CPU time [s]': tcpuDFA})
+
+            # add stopping info to reportDict
+            stopCritNotReached = Particles[-1]['iterate']
+            avaTime = Particles[-1]['t']
+            stopCritPer = cfgGen.getfloat('stopCrit') *100.
+            if stopCritNotReached:
+                reportDict['Simulation Parameters'].update({'Stop criterion': 'end Time reached: %.2f' % avaTime})
+            else:
+                reportDict['Simulation Parameters'].update({'Stop criterion': '< %.2f percent of PKE' % stopCritPer})
+            reportDict['Simulation Parameters'].update({'Avalanche run time [s]': '%.2f' % avaTime})
 
             # Add to report dictionary list
             reportDictList.append(reportDict)
@@ -258,7 +269,7 @@ def prepareInputData(demFile, relFile, entFiles, resFile):
     return demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea
 
 
-def createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea):
+def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, entResInfo):
     """ create simulaton report dictionary
 
     Parameters
@@ -282,31 +293,41 @@ def createReportDict(logName, relName, relDict, cfgGen, entrainmentArea, resista
         simulation scenario dictionary
     """
 
+    # load parameters set in configuration file
     frictModels = cfgGen['frictModels'].split('_')
     intModel = int(cfgGen['frictType'])-1
+    dateTimeInfo = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    entInfo = 'No'
+    resInfo = 'No'
+    if 'entres' in logName:
+        entInfo = entResInfo['flagEnt']
+        resInfo = entResInfo['flagRes']
+
     # Create dictionary
     reportST = {}
     reportST = {}
     reportST = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+                'avaName': {'type': 'avaName', 'name': avaDir},
                 'simName': {'type': 'simName', 'name': logName},
+                'time': {'type': 'time', 'time': dateTimeInfo},
                 'Simulation Parameters': {
                 'type': 'list',
                 'Release Area Scenario': relName,
-                'Release Area': relDict['Name'],
-                'Entrainment Area': '',
-                'Resistance Area': '',
+                'Entrainment': entInfo,
+                'Resistance': resInfo,
                 'Parameter variation on': '',
                 'Parameter value': '',
                 'Mu': cfgGen['mu'],
-                'Friction model': frictModels[intModel],
-                'Release thickness [m]': relDict['d0']},
-                'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name']}}
+                'Density [kgm-3]': cfgGen['rho'],
+                'Friction model': frictModels[intModel]},
+                'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name'],
+                                 'Release thickness [m]': relDict['d0']}}
 
     if 'entres' in logName:
-        reportST['Simulation Parameters'].update({'Entrainment Area': entrainmentArea})
-        reportST['Simulation Parameters'].update({'Resistance Area': resistanceArea})
-        reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea}})
-        reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
+        if entInfo == 'Yes':
+            reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
+        if resInfo == 'Yes':
+            reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
 
     return reportST
 

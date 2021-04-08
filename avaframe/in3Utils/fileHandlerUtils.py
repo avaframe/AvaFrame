@@ -78,7 +78,7 @@ def readLogFile(logName, cfg=''):
     return logDict
 
 
-def extractParameterInfo(avaDir, simName):
+def extractParameterInfo(avaDir, simName, reportD):
     """ Extract info about simulation parameters from the log file
 
         Parameters
@@ -134,10 +134,15 @@ def extractParameterInfo(avaDir, simName):
     if stopCrit != '':
         parameterDict['stop criterion'] = stopCrit
     else:
-        parameterDict['stop criterion'] = 'end time: %.2f s' % np.asarray(time)[-1]
+        parameterDict['stop criterion'] = 'end time reached: %.2f s' % np.asarray(time)[-1]
+    parameterDict['Avalanche run time [s]'] = '%.2f' % stopTime
     parameterDict['CPU time [s]'] = stopTime
 
-    return parameterDict
+    reportD['Simulation Parameters'].update({'Stop criterion': parameterDict['stop criterion']})
+    reportD['Simulation Parameters'].update({'CPU time [s]': parameterDict['CPU time [s]']})
+    reportD['Simulation Parameters'].update({'Avalanche run time [s]': parameterDict['final time step [s]']})
+
+    return parameterDict, reportD
 
 
 def checkCommonSims(logName, localLogName):

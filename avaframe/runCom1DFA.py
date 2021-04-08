@@ -43,16 +43,13 @@ reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
 endTime = time.time()
 log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
 
-
+# append parameters from logFile
 for reportD in reportDictList:
     simName = reportD['simName']['name']
-    parameterDict = fU.extractParameterInfo(avalancheDir, simName)
+    parameterDict, reportD = fU.extractParameterInfo(avalancheDir, simName, reportD)
 
-    # get parameters from log
-    reportD['Simulation Parameters'].update({'stop criterion': parameterDict['stop criterion']})
-    reportD['Simulation Parameters'].update({'CPU time [s]': parameterDict['CPU time [s]']})
 
-# Generata plots for all peakFiles
+# Generate plots for all peakFiles
 plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
 
 # Set directory for report

@@ -145,6 +145,9 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   printf("\n[BatchCom1DFA] Setting in %s ent depth to %s m \n",EntAr,entHString);
   set(EntAr, "set_depth", entHString);
 
+  //------------Set time stepping--------------------
+  // set(Sim, "EndTime", "150");
+  // set(Sim, "DeltaOut", "20");
 
   // *************Start processing************************
   set("", "SaveProject", "");

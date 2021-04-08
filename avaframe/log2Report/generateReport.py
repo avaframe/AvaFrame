@@ -53,6 +53,14 @@ def writeReportFile(reportD, pfile):
                         pfile.write('# %s \n' % reportD[key][value])
                         pfile.write(' \n')
                         break
+
+            # Avalanche name
+            if reportD[key][subKey] == 'avaName':
+                for value in reportD[key]:
+                    if value != 'type':
+                        pfile.write('### Avalanche directory: *%s* \n' % reportD[key][value])
+                        pfile.write(' \n')
+
             # Simulation name
             if reportD[key][subKey] == 'simName':
                 for value in reportD[key]:
