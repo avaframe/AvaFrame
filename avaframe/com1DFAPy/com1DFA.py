@@ -1005,18 +1005,12 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
 
-
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
     particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, gradient=0)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
-    # force['forceSPHX'] = 0*force['forceSPHX']
-    # force['forceSPHY'] = 0*force['forceSPHY']
-    # force['forceSPHZ'] = 0*force['forceSPHZ']
 
-    nSave = Tcpu['nSave']
-    dtSave = cfg.getfloat('dtSave')
     hmin = cfg.getfloat('hmin')
 
     # update velocity and particle position

@@ -89,11 +89,11 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(221)
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapPres, np.amin(data1), np.amax(data1), continuous=pU.contCmap)
+        pU.cmapPres, np.nanmin(data1), np.nanmax(data1), continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
-    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
@@ -104,11 +104,11 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     ax2 = fig.add_subplot(222)
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapPres, np.amin(data2), np.amax(data2), continuous=pU.contCmap)
+        pU.cmapPres, np.nanmin(data2), np.nanmax(data2), continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data2P = ma.masked_where(data2 == 0.0, data2)
-    im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+    im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
     pU.addColorBar(im2, ax2, ticks, unit)
 
     ax2.set_aspect('auto')
@@ -468,9 +468,9 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     suptitle = fig.suptitle(name1, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(121)
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapPres, np.amin(data1), np.amax(data1), continuous=pU.contCmap)
+        pU.cmapPres, np.nanmin(data1), np.nanmax(data1), continuous=pU.contCmap)
 
-    im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+    im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
