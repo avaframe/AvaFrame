@@ -58,6 +58,10 @@ for avaName in testList:
     # Run Standalone DFA
     reportDictListcom1DFA = com1DFA.com1DFAMain(cfgCom1DFA, avaDir)
 
+    for reportD1 in reportDictListcom1DFA:
+        simName1 = reportD1['simName']['name']
+        parameterDict = fU.extractParameterInfo(avaDir, simName1, reportD1)
+
     # Generata plots for all peakFiles
     plotDictcom1DFA = oP.plotAllPeakFields(avaDir, cfgCom1DFA, cfgMain['FLAGS'])
 

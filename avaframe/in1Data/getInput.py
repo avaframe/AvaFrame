@@ -95,7 +95,7 @@ def getInputData(avaDir, cfg, flagDev=False):
     inputDir = os.path.join(avaDir, 'Inputs')
 
     # Set flag if there is an entrainment or resistance area
-    flagEntRes = False
+    entResInfo= {'flagEntRes': False, 'flagEnt': 'No', 'flagRes': 'No'}
 
     # Initialise release areas, default is to look for shapefiles
     if flagDev is True:
@@ -135,7 +135,8 @@ def getInputData(avaDir, cfg, flagDev=False):
                 assert len(resFiles) < 2, message
             except AssertionError:
                 raise
-            flagEntRes = True
+            entResInfo['flagRes'] = 'Yes'
+            entResInfo['flagEntRes'] = True
 
     # Initialise entrainment areas
     if cfg.getboolean('noEntrainment'):
@@ -152,10 +153,11 @@ def getInputData(avaDir, cfg, flagDev=False):
                 assert len(entFiles) < 2, message
             except AssertionError:
                 raise
-            flagEntRes = True
+            entResInfo['flagEnt'] = 'Yes'
+            entResInfo['flagEntRes'] = True
 
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
     # return DEM, first item of release, entrainment and resistance areas
-    return demFile, relFiles, entFiles[0], resFiles[0], flagEntRes
+    return demFile, relFiles, entFiles[0], resFiles[0], entResInfo

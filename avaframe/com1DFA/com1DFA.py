@@ -139,7 +139,8 @@ def com1DFAMain(cfg, avaDir):
     workDir, outDir = iD.initialiseRunDirs(avaDir, modName)
 
     # Load input data
-    dem, rels, ent, res, flagEntRes = gI.getInputData(avaDir, cfgGen)
+    dem, rels, ent, res, entResInfo = gI.getInputData(avaDir, cfgGen)
+    flagEntRes = entResInfo['flagEntRes']
     flagBadName = False
     entrainmentArea = ''
     resistanceArea = ''
@@ -248,8 +249,8 @@ def com1DFAMain(cfg, avaDir):
                     'type': 'list',
                     'Release Area Scenario': relName,
                     'Release Area': relDict['Name'],
-                    'Entrainment Area': '',
-                    'Resistance Area': '',
+                    'Entrainment': 'No',
+                    'Resistance': 'No',
                     'Parameter variation on': '',
                     'Parameter value': '',
                     'Mu': defValues['Mu'],
@@ -304,8 +305,8 @@ def com1DFAMain(cfg, avaDir):
                         'type': 'list',
                         'Release Area Scenario': relName,
                         'Release Area': relDict['Name'],
-                        'Entrainment Area': entrainmentArea,
-                        'Resistance Area': resistanceArea,
+                        'Entrainment': entResInfo['flagEnt'],
+                        'Resistance': entResInfo['flagRes'],
                         'Parameter variation on': cfgPar['varPar'],
                         'Parameter value': item},
                     'Release area': {'type': 'columns', 'Release area scenario': relName,  'Release features': relDict['Name']}}
@@ -322,8 +323,10 @@ def com1DFAMain(cfg, avaDir):
                     reportVar['Release area'].update({'Release thickness [m]': relDict['d0']})
 
                 if cfgPar.getboolean('varEnt') and (simName + '_entres_dfa') in cuSim:
-                    reportVar['Entrainment area'] = {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}
-                    reportVar['Resistance area'] = {'type': 'columns', 'Resistance area scenario': resistanceArea}
+                    if entResInfo['flagEnt'] == 'Yes':
+                        reportVar['Entrainment area'] = {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}
+                    if entResInfo['flagRes'] == 'Yes':
+                        reportVar['Resistance area'] = {'type': 'columns', 'Resistance area scenario': resistanceArea}
 
                 endTime = time.time()
                 timeNeeded =  '%.2f' % (endTime - startTime)
@@ -339,9 +342,16 @@ def com1DFAMain(cfg, avaDir):
 
         else:
             for sim in cuSim:
+                # set entrainment and resistance to No
+                entInfo = 'No'
+                resInfo = 'No'
+                
                 if flagEntRes:
                     log.debug('One simulation is performed using entrainment and \
                                one standard simulation without')
+                    if 'entres' in sim:
+                        entInfo = entResInfo['flagEnt']
+                        resInfo = entResInfo['flagRes']
                 else:
                     log.debug('Standard simulation is performed without entrainment and resistance')
 
@@ -371,8 +381,8 @@ def com1DFAMain(cfg, avaDir):
                         'type': 'list',
                         'Release Area Scenario': relName,
                         'Release Area': relDict['Name'],
-                        'Entrainment Area': '',
-                        'Resistance Area': '',
+                        'Entrainment': entInfo,
+                        'Resistance': resInfo,
                         'Parameter variation on': '',
                         'Parameter value': '',
                         'Mu': defValues['Mu'],
@@ -381,10 +391,10 @@ def com1DFAMain(cfg, avaDir):
                     'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['d0']}}
 
                 if 'entres' in sim:
-                    reportST['Simulation Parameters'].update({'Entrainment Area': entrainmentArea})
-                    reportST['Simulation Parameters'].update({'Resistance Area': resistanceArea})
-                    reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}})
-                    reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
+                    if entResInfo['flagEnt'] == 'Yes':
+                        reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}})
+                    if entResInfo['flagRes'] == 'Yes':
+                        reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
 
                 endTime = time.time()
                 timeNeeded =  '%.2f' % (endTime - startTime)
