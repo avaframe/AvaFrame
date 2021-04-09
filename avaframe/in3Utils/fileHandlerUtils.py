@@ -122,7 +122,7 @@ def extractParameterInfo(avaDir, simName, reportD):
             elif "total DFA mass" in line:
                 mass.append(float(line.split()[3]))
             elif "Kinetische Energie" in line:
-                stopCrit = 'kinetic energy %.2f of peak KE' % (float(line.split()[5]))
+                stopCrit = 'kinetic energy %.2f of peak KE' % (float(line.split()[3]))
             elif "terminated" in line:
                 stopTime = float(line.split()[5])
 
