@@ -725,8 +725,9 @@ def analyzeArea(rasterTransfo, runoutLength, inputs, data, cfgPath, cfgFlags):
         transformation information
     resAnalysis: dict
         resAnalysis dictionary containing all results to update
-    dataThreshold: float
+    inputs: dict
         numerical value of the limit to use for the runout computation
+        as well as the levels for the contour line plot
     data: list
         list of transformed rasters
     cfgPath: dict
