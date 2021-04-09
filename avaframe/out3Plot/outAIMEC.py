@@ -447,6 +447,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))#, constrained_layout=True)
     ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
 
+    y_lim = min(np.nanmax(runoutLength)+20, s[-1])
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
                                                        np.nanmax((refData)),
@@ -475,7 +476,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     cmap.set_bad(color='w')
     elev_max = inputs['diffLim']
     ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
-                         extent=[l.min(), l.max(), s[indStartOfRunout:].min(), s[indStartOfRunout:].max()],
+                         extent=[l.min(), l.max(), s[indStartOfRunout:].min(), y_lim],
                          cmap=cmap)
     im3.set_clim(vmin=-elev_max, vmax=elev_max)
     L, S = np.meshgrid(l, s[indStartOfRunout:])
@@ -600,6 +601,29 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
             except:
                 fid.write('{:<15}'.format('NaN'))
         fid.write('\n')
+    # compute and write min, max, mean, std to file
+    fid.write('Range of the output parameters\n')
+    for j in range(len(legend)):
+        fid.write('{:<15s}'.format(legend[j]))
+    fid.write('\n')
+    fid.write('{:<15s}'.format('Minimum'))
+    for j in range(np.shape(output)[0]):
+        fid.write('{:<15.3f}'.format(np.nanmin(output[j][:])))
+    fid.write('\n')
+
+    fid.write('{:<15s}'.format('Maximum'))
+    for j in range(np.shape(output)[0]):
+            fid.write('{:<15.3f}'.format(np.nanmax(output[j][:])))
+    fid.write('\n')
+    fid.write('{:<15s}'.format('Mean'))
+    for j in range(np.shape(output)[0]):
+            fid.write('{:<15.3f}'.format(np.nanmean(output[j][:])))
+    fid.write('\n')
+    fid.write('{:<15s}'.format('STD'))
+    for j in range(np.shape(output)[0]):
+            fid.write('{:<15.3f}'.format(np.nanstd(output[j][:])))
+    fid.write('\n')
+
     for i in range(np.shape(output)[1]):
         tmp = os.path.basename(dataName[i])
         name = os.path.splitext(tmp)[0]
