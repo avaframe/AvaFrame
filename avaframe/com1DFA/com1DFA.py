@@ -243,6 +243,7 @@ def com1DFAMain(cfg, avaDir):
             # Create dictionary
             reportNull = {}
             reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+            'avaName': {'type': 'avaName', 'name': avaDir},
             'simName': {'type': 'simName', 'name': logName},
             'time': {'type': 'time', 'time': dateTimeInfo},
                 'Simulation Parameters': {
@@ -261,7 +262,7 @@ def com1DFAMain(cfg, avaDir):
             endTime = time.time()
             timeNeeded = '%.2f' % (endTime - startTime)
             log.info(('Took %s seconds to calculate.' % (timeNeeded)))
-            reportNull['Simulation Parameters'].update({'run time [s]': timeNeeded})
+            reportNull['Simulation Parameters'].update({'Computation time [s]': timeNeeded})
 
             # Add to report dictionary list
             reportDictList.append(reportNull)
@@ -299,6 +300,7 @@ def com1DFAMain(cfg, avaDir):
                 # Create dictionary
                 reportVar = {}
                 reportVar = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+                'avaName': {'type': 'avaName', 'name': avaDir},
                 'simName': {'type': 'simName', 'name': logName},
                 'time': {'type': 'time', 'time': dateTimeInfo},
                     'Simulation Parameters': {
@@ -331,7 +333,7 @@ def com1DFAMain(cfg, avaDir):
                 endTime = time.time()
                 timeNeeded =  '%.2f' % (endTime - startTime)
                 log.info(('Took %s seconds to calculate.' % (timeNeeded)))
-                reportVar['Simulation Parameters'].update({'run time [s]': timeNeeded})
+                reportVar['Simulation Parameters'].update({'Computation time [s]': timeNeeded})
 
                 # Add to report dictionary list
                 reportDictList.append(reportVar)
@@ -345,7 +347,7 @@ def com1DFAMain(cfg, avaDir):
                 # set entrainment and resistance to No
                 entInfo = 'No'
                 resInfo = 'No'
-                
+
                 if flagEntRes:
                     log.debug('One simulation is performed using entrainment and \
                                one standard simulation without')
@@ -375,6 +377,7 @@ def com1DFAMain(cfg, avaDir):
                 reportST = {}
                 reportST = {}
                 reportST = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+                'avaName': {'type': 'avaName', 'name': avaDir},
                 'simName': {'type': 'simName', 'name': logName},
                 'time': {'type': 'time', 'time': dateTimeInfo},
                     'Simulation Parameters': {
@@ -400,7 +403,7 @@ def com1DFAMain(cfg, avaDir):
                 timeNeeded =  '%.2f' % (endTime - startTime)
                 log.info(('Took %s seconds to calculate.' % (timeNeeded)))
 
-                reportST['Simulation Parameters'].update({'run time [s]': timeNeeded})
+                reportST['Simulation Parameters'].update({'Computation time [s]': timeNeeded})
 
                 # Add to report dictionary list
                 reportDictList.append(reportST)

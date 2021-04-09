@@ -138,7 +138,7 @@ def com1DFAMain(cfg, avaDir, relThField):
 
             # add area info to reportDict
             reportDict['Release Area'].update(areaInfo)
-            reportDict['Simulation Parameters'].update({'CPU time [s]': tcpuDFA})
+            reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
 
             # add stopping info to reportDict
             stopCritNotReached = Particles[-1]['iterate']
@@ -325,7 +325,8 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
 
     if 'entres' in logName:
         if entInfo == 'Yes':
-            reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
+            reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea,
+                             'Entrainment density [kgm-3]': cfgGen['rhoEnt'], 'Entrainment thickness [m]': cfgGen['hEnt']}})
         if resInfo == 'Yes':
             reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
 

@@ -203,6 +203,84 @@ def mainAIMEC(cfgPath, cfg):
     return rasterTransfo, newRasters, resAnalysis
 
 
+def AIMECIndi(cfgPath, cfg):
+    """ perform AIMEC analysis and generate plots for reports
+
+    Reads the required files location for ana3AIMEC postpocessing
+    given a path dictionary to the input files
+
+    Parameters
+    ----------
+    cfgPath : dict
+        dictionary with paths to data to analyze
+    cfg : configparser
+        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
+
+    Returns
+    -------
+    rasterTransfo: dict
+        domain transformation information
+    newRasters: dict
+        raster data expressed in the new coordinates
+    resAnalysis: dict
+        results of ana3AIMEC analysis
+    """
+
+    # Extract input config parameters
+    cfgSetup = cfg['AIMECSETUP']
+    cfgFlags = cfg['FLAGS']
+    anaLimit = cfgSetup.getfloat('pressureLimit')
+    interpMethod = cfgSetup['interpMethod']
+    resType = cfgPath['resType']
+
+    log.info('Prepare data for post-ptocessing')
+    # Make domain transformation
+    log.info("Creating new deskewed raster and preparing new raster assignment function")
+    rasterTransfo = aT.makeDomainTransfo(cfgPath, cfgSetup)
+
+    ###########################################################################
+    # visualisation
+    # TODO: needs to be moved somewhere else
+    # read reference file
+    nRef = cfgPath['referenceFile']
+    rasterSource = cfgPath[resType][nRef]
+
+    anaRaster = IOf.readRaster(rasterSource)
+    slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
+    inputData = {}
+    inputData['slRaster'] = slRaster
+    inputData['xyRaster'] = anaRaster['rasterData']
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags)
+    #################################################################
+
+    # transform resType_data in new raster
+    newRasters = {}
+    # assign pressure data
+    log.debug("Assigning data to deskewed raster")
+    newRasters['newRasterResType'] = aT.assignData(cfgPath[resType],
+                                                 rasterTransfo, interpMethod)
+    # assign dem data
+    log.debug("Assigning dem data to deskewed raster")
+    newRasterDEM = aT.assignData([cfgPath['demSource']], rasterTransfo,
+                              interpMethod)
+    newRasters['newRasterDEM'] = newRasterDEM[0]
+
+    # Analyze data
+    log.debug('Analyzing data in path coordinate system')
+    resAnalysis = postProcessAIMECIndi(rasterTransfo, anaLimit, newRasters, cfgPath, cfgFlags)
+
+    # -----------------------------------------------------------
+    # result visualisation + report
+    # -----------------------------------------------------------
+    log.info('Visualisation of AIMEC results')
+
+    #outAimec.visuRunoutStat(rasterTransfo, resAnalysis, anaLimit, newRasters, cfgPath, cfgFlags)
+    outAimec.resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis,
+                        anaLimit, flagIndi=True)
+
+    return rasterTransfo, newRasters, resAnalysis
+
+
 
 
 # -----------------------------------------------------------
@@ -427,6 +505,64 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
 
     return resAnalysis
 
+
+def postProcessAIMECIndi(rasterTransfo, anaLim, newRasters, cfgPath, cfgFlags):
+    """ Analyse pressure, depth and speed transformed data
+
+    Analyse pressure depth and speed.
+    Calculate runout, Max Peak Pressure, Average PP...
+    Mass is currently not included
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        transformation information
+    pLim: float
+        numerical value of the pressure limit to use
+    newRasters: dict
+        dictionary containing pressure, velocity and flow depth rasters after
+        transformation
+    cfgPath: dict
+        path to data to analyse
+
+    Returns
+    -------
+    resAnalysis: dict
+        resAnalysis dictionary containing all results:
+
+    """
+    # read inputs
+    resType = cfgPath['resType']
+    dataResType = newRasters['newRasterResType']
+    transformedDEMRasters = newRasters['newRasterDEM']
+
+    # get max and mean values along path for cross profiles
+    maxPCrossMax, PCrossMax, PCrossMean = aT.analyzeField(rasterTransfo, dataResType, resType)
+
+    # compute runout based on peak pressure
+    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, anaLim, PCrossMax, PCrossMean, transformedDEMRasters)
+
+    runoutLength = runout[0]
+    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, anaLim, dataResType, cfgPath, cfgFlags)
+
+    # affect values to output dictionary
+    resAnalysis = {}
+    resAnalysis['runout'] = runout
+    resAnalysis['runoutMean'] = runoutMean
+    resAnalysis['MMP'] = maxPCrossMax
+    resAnalysis['elevRel'] = elevRel
+    resAnalysis['deltaH'] = deltaH
+    resAnalysis['PCrossMax'] = PCrossMax
+    resAnalysis['PCrossMean'] = PCrossMean
+    resAnalysis['anaLimit'] = anaLim
+    resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
+    resAnalysis['TP'] = TP
+    resAnalysis['FN'] = FN
+    resAnalysis['FP'] = FP
+    resAnalysis['TN'] = TN
+    resAnalysis['areasPlot'] = {'Aimec area analysis': compPlotPath}
+
+    return resAnalysis
 
 
 def aimecRes2ReportDict(resAnalysis, reportD, benchD, refSim):

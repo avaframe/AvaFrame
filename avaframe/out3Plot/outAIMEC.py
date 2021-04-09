@@ -587,13 +587,20 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     log.info('File written: %s' % outname)
 
 
-def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
+def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim, flagIndi=False):
     """
     Visualize results in a nice way
     """
     ####################################
     # Get input data
-    fnames = cfgPath['ppr']
+    if flagIndi:
+        fnames = cfgPath[cfgPath['resType']]
+        maxMaxDPPR = resAnalysis['MMP']
+    else:
+        maxMaxDPPR = resAnalysis['MMPPR']
+        GI = resAnalysis['growthIndex']
+        fnames = cfgPath['ppr']
+
     nRef = cfgPath['referenceFile']
 
     flag = float(cfgFlags['typeFlag'])
@@ -604,8 +611,6 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim):
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     sStart = sPath[indStartOfRunout]
     runout = resAnalysis['runout'][0]
-    maxMaxDPPR = resAnalysis['MMPPR']
-    GI = resAnalysis['growthIndex']
 
     # prepare for plot
     if flag == 2:
