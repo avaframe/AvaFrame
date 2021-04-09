@@ -66,7 +66,9 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
         log.debug('now plot %s:' % (fileName))
 
         # Load data
-        data = np.loadtxt(fileName, skiprows=6)
+        raster = IOf.readRaster(fileName)
+        data = raster['rasterData']
+        data = np.ma.masked_where(data == 0.0, data)
         unit = pU.cfgPlotUtils['unit%s' % peakFiles['resType'][m]]
 
         # Set extent of peak file
@@ -82,7 +84,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
         # choose colormap
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             pU.cmapPres, np.amin(data), np.amax(data), continuous=pU.contCmap)
-
+        cmap.set_bad('w')
         im1 = ax.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         pU.addColorBar(im1, ax, ticks, unit)
 
@@ -126,14 +128,16 @@ def plotAllFields(avaDir, inputDir, outDir, cfg):
     fU.makeADir(outDir)
 
     # Loop through peakFiles and generate plot
-    for m in range(len(peakFiles)):
+    for filename in peakFiles:
 
         # Load data
-        data = np.loadtxt(peakFiles[m], skiprows=6)
+        raster = IOf.readRaster(filename)
+        data = raster['rasterData']
+        data = np.ma.masked_where(data == 0.0, data)
         name = os.path.splitext(os.path.basename(peakFiles[m]))[0]
 
         # get header info for file writing
-        header = IOf.readASCheader(peakFiles[m])
+        header = raster['header']
         cellSize = header.cellsize
 
         # Set extent of peak file
@@ -149,7 +153,7 @@ def plotAllFields(avaDir, inputDir, outDir, cfg):
         # choose colormap
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             pU.cmapPres, np.amin(data), np.amax(data), continuous=pU.contCmap)
-
+        cmap.set_bad('w')
         im1 = ax.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         pU.addColorBar(im1, ax, ticks, unit)
 
