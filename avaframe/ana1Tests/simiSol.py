@@ -277,7 +277,7 @@ def runSimilarity():
     eps_xy = L_y/L_x
 
     # Full scale end time
-    T_end = cfgGen.getfloat('Tend') + cfgGen.getfloat('maxdT')
+    T_end = cfgGen.getfloat('tEnd') + cfgGen.getfloat('maxdT')
 
     # Non dimentional time for similarity sim calculation
     t_1 = 0.1           # start time for ode solvers
