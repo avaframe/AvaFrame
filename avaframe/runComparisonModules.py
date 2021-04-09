@@ -56,7 +56,7 @@ for avaName in testList:
 
     #####################################################################
     # ######################### Run com1DFA ##############################
-    # get path to executable
+    # get module configuration (path to executable...)
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
     # Run Standalone DFA
     reportDictListcom1DFA = com1DFA.com1DFAMain(cfgCom1DFA, avaDir)
