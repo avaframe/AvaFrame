@@ -190,14 +190,30 @@ def mainDfa2Aimec(avaDir, comModule='com1DFA'):
     # Setup input from com1DFA and save file paths to dictionary
     suffix = ['pfd', 'ppr', 'pfv']
     for suf in suffix:
-        pathDict = fU.getDFADataPaths(avaDir, pathDict, suf)
+        pathDict = fU.getDFADataPaths(avaDir, pathDict, suf, comModule)
 
     # Extract mb info
     if comModule == 'com1DFA':
         pathDict = extractCom1DFAMBInfo(avaDir, pathDict)
     elif comModule == 'com1DFAPy':
-        pathDict = getMBInfo(avaDir, pathDict)
+        pathDict = getMBInfo(avaDir, pathDict, comModule)
 
     pathDict['compType'] = ['singleModule', comModule]
+
+    return pathDict
+
+
+def indiDfa2Aimec(avaDir, suffix, comModule='com1DFA'):
+    """ Exports the required data from com1DFA to be used by Aimec """
+
+    # path dictionary for Aimec
+    pathDict = {suffix: []}
+
+    # Setup input from com1DFA and save file paths to dictionary
+    pathDict = fU.getDFADataPaths(avaDir, pathDict, suffix, comModule)
+
+
+    pathDict['compType'] = ['singleModule', comModule]
+    pathDict['resType'] = suffix
 
     return pathDict

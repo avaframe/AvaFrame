@@ -42,12 +42,13 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
 cfgSetup = cfg['AIMECSETUP']
 anaMod = cfgSetup['anaMod']
+resType = 'ppr'
 
 # Setup input from com1DFA
-pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, comModule=anaMod)
+pathDict = dfa2Aimec.indiDfa2Aimec(avalancheDir, resType, comModule=anaMod)
 
 # TODO: define referenceFile
-pathDict['numSim'] = len(pathDict['ppr'])
+pathDict['numSim'] = len(pathDict[resType])
 pathDict['referenceFile'] = 0
 
 pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
@@ -57,7 +58,7 @@ startTime = time.time()
 log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
          pathDict['demSource'], pathDict['profileLayer'])
 # Run AIMEC postprocessing
-ana3AIMEC.mainAIMEC(pathDict, cfg)
+ana3AIMEC.AIMECIndi(pathDict, cfg)
 
 endTime = time.time()
 

@@ -139,7 +139,7 @@ def extractParameterInfo(avaDir, simName, reportD):
     parameterDict['CPU time [s]'] = stopTime
 
     reportD['Simulation Parameters'].update({'Stop criterion': parameterDict['stop criterion']})
-    reportD['Simulation Parameters'].update({'CPU time [s]': parameterDict['CPU time [s]']})
+    #reportD['Simulation Parameters'].update({'CPU time [s]': parameterDict['CPU time [s]']})
     reportD['Simulation Parameters'].update({'Avalanche run time [s]': parameterDict['final time step [s]']})
 
     return parameterDict, reportD
@@ -252,7 +252,7 @@ def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir=''):
                 log.info('%s   : %s/%s/%06d.txt' % (data['files'][m], workDir, nameDir, countSuf+1))
             countSuf = countSuf + 1
 
-def getDFADataPaths(avaDir, pathDict, suffix, comModule='com1DFA'):
+def getDFADataPaths(avaDir, pathDict, suffix, comModule):
     """ Determine the paths of the required data from comModule output for Aimec
 
         Parameters
@@ -270,11 +270,10 @@ def getDFADataPaths(avaDir, pathDict, suffix, comModule='com1DFA'):
     # Lead all infos on simulations
     inputDir = os.path.join(avaDir, 'Outputs', comModule, 'peakFiles')
     data = makeSimDict(inputDir)
-
     for m in range(len(data['files'])):
         if data['resType'][m] == suffix:
             pathDict[suffix].append(data['files'][m])
-            log.debug('Added to pathDict: %s' % (data['files'][m]))
+            log.info('Added to pathDict: %s' % (data['files'][m]))
 
     return pathDict
 
