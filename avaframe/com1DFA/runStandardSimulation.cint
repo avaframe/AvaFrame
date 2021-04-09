@@ -136,6 +136,8 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   //set(Sim, "DynamicFrictionCoefficient", "0");
   //set(Sim, "BedFrictionAngle", "8.81073298598490889287");
 
+  set(Sim, "EndTime", "400");
+
   val = atof(varVal);
   // Update log
   fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,val);

@@ -844,13 +844,14 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
         inputs['i'] = i
 
         # only plot comparisons of simulations to reference
-        if i != nRef:
-            compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, cfgPath,
-                                    cfgFlags)
-        elif cfgPath['numSim'] == 1:
-            compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, cfgPath,
-                                    cfgFlags)
-            log.warning('only one simulation, area comparison not meaningful')
+        if cfgFlags['savePlot']:
+            if i != nRef:
+                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, cfgPath,
+                                        cfgFlags)
+            elif cfgPath['numSim'] == 1:
+                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, cfgPath,
+                                        cfgFlags)
+                log.warning('only one simulation, area comparison not meaningful')
 
     return TP[:, -1], FN[:, -1], FP[:, -1], TN[:, -1], compPlotPath
 
