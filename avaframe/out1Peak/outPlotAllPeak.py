@@ -134,7 +134,7 @@ def plotAllFields(avaDir, inputDir, outDir, cfg):
         raster = IOf.readRaster(filename)
         data = raster['rasterData']
         data = np.ma.masked_where(data == 0.0, data)
-        name = os.path.splitext(os.path.basename(peakFiles[m]))[0]
+        name = os.path.splitext(os.path.basename(filename))[0]
 
         # get header info for file writing
         header = raster['header']
