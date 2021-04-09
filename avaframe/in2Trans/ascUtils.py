@@ -84,50 +84,10 @@ def isEqualASCheader(headerA, headerB):
 
 
 def readASCdata2numpyArray(fName, headerFile=None):
-
-    if headerFile is not None:
-        # open input File
-        infile = open(fName, "r")
-
-        # create numpy array with dimesions based on ncols and nrows
-        # initialize values of array with respective noDataValue obtained
-        # from the header file
-        data = np.zeros((headerFile.nrows, headerFile.ncols))
-        data = np.where(data == 0, float(headerFile.noDataValue), data)
-
-        i = 0  # index in vertical direction (row-count)
-        j = 0  # index in horizontal direction (column-count)
-        for aline in infile:
-            item = aline.split()
-            if i > 5:
-                for x in range(headerFile.ncols):
-                    data[i - 6, j] = float(item[x])
-                    j += 1
-                j = 0
-            i += 1
-
-    else:
-        header = readASCheader(fName)
-        infile = open(fName, "r")
-
-        # create numpy array with dimesions based on ncols and nrows
-        # initialize values of array with respective noDataValue obtained
-        # from the header file
-        data = np.zeros((header.nrows, header.ncols))
-        data = np.where(data == 0, float(header.noDataValue), data)
-
-        i = 0  # index in vertical direction (row-count)
-        j = 0  # index in horizontal direction (column-count)
-        for aline in infile:
-            item = aline.split()
-            if i > 5:
-                for x in range(header.ncols):
-                    data[i-6, j] = float(item[x])
-                    j += 1
-                j = 0
-            i += 1
-
-    return (data)
+    infile = open(fName, "r")
+    rasterdata = np.loadtxt(fName, skiprows=6)
+    infile.close()
+    return (rasterdata)
 
 
 def readRaster(fname):
