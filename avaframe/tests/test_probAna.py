@@ -25,8 +25,10 @@ def test_probAna(tmp_path):
     dirPath = os.path.dirname(__file__)
     avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
     avaDir2 = os.path.join(dirPath, '..', '..', 'benchmarks', avaName)
-    inputDir = os.path.join(avaDir, 'ana4Stats')
-    outDir = tmp_path
+    avaDirtmp =  os.path.join(tmp_path, avaName)
+    inputDir = os.path.join(tmp_path, avaName, 'ana4Stats')
+    inputDir1 = os.path.join(avaDir, 'ana4Stats')
+    shutil.copytree(inputDir1, inputDir)
 
     # set configurations
     testCfg = os.path.join(inputDir, '%sProbAna_com1DFACfg.ini' % avaName)
@@ -37,11 +39,11 @@ def test_probAna(tmp_path):
     cfg['GENERAL'] = {'peakLim': 10.0, 'peakVar': 'ppr'}
 
     # call function to test
-    pA.probAnalysis(avaDir2, cfg, cfgMain, inputDir, outDir)
-    probTest = np.loadtxt(os.path.join(tmp_path, 'avaParabola_probMap10.0.asc'), skiprows=6)
+    pA.probAnalysis(avaDirtmp, cfg, cfgMain, inputDir)
+    probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_probMap10.0.asc'), skiprows=6)
 
     # Load reference solution
-    probSol = np.loadtxt(os.path.join(inputDir, 'avaParabola_probMap10.0.txt'), skiprows=6)
+    probSol = np.loadtxt(os.path.join(inputDir1, 'avaParabola_probMap10.0.txt'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(probTest, probSol, atol=1.e-6)

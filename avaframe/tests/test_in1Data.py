@@ -45,4 +45,4 @@ def test_getInputData(tmp_path):
     assert rels2 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
     assert res == ''
     assert ent == os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp')
-    assert flagEntRes == True
+    assert flagEntRes['flagEntRes'] == True
