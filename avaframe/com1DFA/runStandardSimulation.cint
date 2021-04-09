@@ -132,11 +132,6 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   // Friction type
   set(Sim, "FrictionType", "samosAT_Standard");
-  //set(Sim, "FrictionType", "Chezy + Mohr-Coulomb");
-  //set(Sim, "DynamicFrictionCoefficient", "0");
-  //set(Sim, "BedFrictionAngle", "8.81073298598490889287");
-
-  set(Sim, "EndTime", "400");
 
   val = atof(varVal);
   // Update log
@@ -151,8 +146,8 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   set(EntAr, "set_depth", entHString);
 
   //------------Set time stepping--------------------
-  set(Sim, "EndTime", "400");
-  set(Sim, "DeltaT", "0.1");
+
+  // set(Sim, "EndTime", "150");
   // set(Sim, "DeltaOut", "20");
 
   // *************Start processing************************
