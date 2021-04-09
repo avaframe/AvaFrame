@@ -18,7 +18,7 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
+def probAnalysis(avaDir, cfg, cfgMain='', inputDir=''):
     """ Compute propability map of a given set of simulation result exceeding a particular threshold and save to outDir
 
         Parameters
@@ -35,14 +35,17 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
             optional - path to directory where results shall be saved to
     """
 
-    # Set input and output directory
+    # Set input and output directory and Load all infos on simulations
+    flagStandard = False
     if inputDir == '':
         inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
-        outDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
-        fU.makeADir(outDir)
+        flagStandard = True
+        peakFiles = fU.makeSimDict(inputDir, cfgMain['PARAMETERVAR']['varPar'], avaDir=avaDir)
+    else:
+        peakFiles = fU.makeSimDict(inputDir, avaDir=avaDir)
 
-    # Load all infos on simulations
-    peakFiles = fU.makeSimDict(inputDir, cfgMain['PARAMETERVAR']['varPar'], avaDir)
+    outDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
+    fU.makeADir(outDir)
 
     # get header info from peak files
     header = IOf.readASCheader(peakFiles['files'][0])
@@ -62,20 +65,38 @@ def probAnalysis(avaDir, cfg, cfgMain, inputDir='', outDir=''):
 
         # Load peak field for desired peak field parameter
         # be aware of the standard simulation - so if default value should not be part of the analysis
-        if peakFiles['resType'][m] == cfg['GENERAL']['peakVar'] and peakFiles[cfgMain['PARAMETERVAR']['varPar']][m] != cfgMain['DEFVALUES'][cfgMain['PARAMETERVAR']['varPar']]:
-            log.info('Simulation parameter %s= %s ' % (cfgMain['PARAMETERVAR']['varPar'], peakFiles[cfgMain['PARAMETERVAR']['varPar']][m]))
+        if peakFiles['resType'][m] == cfg['GENERAL']['peakVar']:
+            log.info('Simulation parameter %s ' % ( cfg['GENERAL']['peakVar']))
 
-            # Load data
-            fileName = peakFiles['files'][m]
-            data = np.loadtxt(fileName, skiprows=6)
-            dataLim = np.zeros((nRows, nCols))
+            if flagStandard:
+                if peakFiles[cfgMain['PARAMETERVAR']['varPar']][m] != cfgMain['DEFVALUES'][cfgMain['PARAMETERVAR']['varPar']]:
+                    log.info('Simulation parameter %s= %s ' % (cfgMain['PARAMETERVAR']['varPar'], peakFiles[cfgMain['PARAMETERVAR']['varPar']][m]))
 
-            log.debug('File name is %s' % fileName)
+                # Load data
+                fileName = peakFiles['files'][m]
+                data = np.loadtxt(fileName, skiprows=6)
+                dataLim = np.zeros((nRows, nCols))
 
-            # Check if peak values exceed desired threshold
-            dataLim[data>float(cfg['GENERAL']['peakLim'])] = 1.0
-            probSum = probSum + dataLim
-            count = count + 1
+                log.debug('File name is %s' % fileName)
+
+                # Check if peak values exceed desired threshold
+                dataLim[data>float(cfg['GENERAL']['peakLim'])] = 1.0
+                probSum = probSum + dataLim
+                count = count + 1
+
+            else:
+
+                # Load data
+                fileName = peakFiles['files'][m]
+                data = np.loadtxt(fileName, skiprows=6)
+                dataLim = np.zeros((nRows, nCols))
+
+                log.debug('File name is %s' % fileName)
+
+                # Check if peak values exceed desired threshold
+                dataLim[data>float(cfg['GENERAL']['peakLim'])] = 1.0
+                probSum = probSum + dataLim
+                count = count + 1
 
     # Create probability map ranging from 0-1
     probMap = probSum / count
