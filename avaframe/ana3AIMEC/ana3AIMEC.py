@@ -65,15 +65,15 @@ def AIMEC2Report(cfgPath, cfg):
     newRasters = {}
     # assign pressure data
     log.debug("Assigning pressure data to deskewed raster")
-    newRasters['newRasterPressure'] = aT.assignData(cfgPath['ppr'],
+    newRasters['newRasterPPR'] = aT.assignData(cfgPath['ppr'],
                                                  rasterTransfo, interpMethod)
     # assign depth data
     log.debug("Assigning depth data to deskewed raster")
-    newRasters['newRasterDepth'] = aT.assignData(cfgPath['pfd'],
+    newRasters['newRasterPFD'] = aT.assignData(cfgPath['pfd'],
                                               rasterTransfo, interpMethod)
     # assign speed data
     log.debug("Assigning speed data to deskewed raster")
-    newRasters['newRasterSpeed'] = aT.assignData(cfgPath['pfv'],
+    newRasters['newRasterPFV'] = aT.assignData(cfgPath['pfv'],
                                               rasterTransfo, interpMethod)
 
     # assign dem data
@@ -149,16 +149,16 @@ def mainAIMEC(cfgPath, cfg):
     newRasters = {}
     # assign pressure data
     log.debug("Assigning pressure data to deskewed raster")
-    newRasters['newRasterPressure'] = aT.assignData(cfgPath['ppr'],
+    newRasters['newRasterPPR'] = aT.assignData(cfgPath['ppr'],
                                                  rasterTransfo, interpMethod)
     # assign depth data
     log.debug("Assigning depth data to deskewed raster")
-    newRasters['newRasterDepth'] = aT.assignData(cfgPath['pfd'],
+    newRasters['newRasterPFD'] = aT.assignData(cfgPath['pfd'],
                                               rasterTransfo, interpMethod)
     # assign speed data
     if cfgPath['pfv']:
         log.debug("Assigning speed data to deskewed raster")
-        newRasters['newRasterSpeed'] = aT.assignData(cfgPath['pfv'],
+        newRasters['newRasterPFV'] = aT.assignData(cfgPath['pfv'],
                                                   rasterTransfo, interpMethod)
 
     # assign dem data
@@ -246,7 +246,7 @@ def AIMECIndi(cfgPath, cfg):
     newRasters = {}
     # assign pressure data
     log.debug("Assigning data to deskewed raster")
-    newRasters['newRasterResType'] = aT.assignData(cfgPath[resType],
+    newRasters['newRaster' + resType.upper()] = aT.assignData(cfgPath[resType],
                                                  rasterTransfo, interpMethod)
     # assign dem data
     log.debug("Assigning dem data to deskewed raster")
@@ -375,9 +375,9 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     """
     # read inputs
     fnameMass = cfgPath['mb']
-    dataPressure = newRasters['newRasterPressure']
-    dataDepth = newRasters['newRasterDepth']
-    dataSpeed = newRasters['newRasterSpeed']
+    dataPressure = newRasters['newRasterPPR']
+    dataDepth = newRasters['newRasterPFD']
+    dataSpeed = newRasters['newRasterPFV']
     transformedDEMRasters = newRasters['newRasterDEM']
 
     resType = cfgSetup['resType']
@@ -471,9 +471,9 @@ def postProcessAIMECReport(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlag
 
     """
     # read inputs
-    dataPressure = newRasters['newRasterPressure']
-    dataDepth = newRasters['newRasterDepth']
-    dataSpeed = newRasters['newRasterSpeed']
+    dataPressure = newRasters['newRasterPPR']
+    dataDepth = newRasters['newRasterPFD']
+    dataSpeed = newRasters['newRasterPFV']
     transformedDEMRasters = newRasters['newRasterDEM']
 
     resType = cfgSetup['resType']
@@ -560,7 +560,7 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
     # read inputs
     resType = cfgSetup['resType']
     thresholdValue = cfgSetup.getfloat('thresholdValue')
-    dataResType = newRasters['newRasterResType']
+    dataResType = newRasters['newRaster' + resType.upper()]
     transformedDEMRasters = newRasters['newRasterDEM']
 
     # get max and mean values along path for cross profiles
@@ -586,8 +586,8 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
     resAnalysis['MM' + resType.upper()] = maxPCrossMax
     resAnalysis['elevRel'] = elevRel
     resAnalysis['deltaH'] = deltaH
-    resAnalysis['PCrossMax'] = PCrossMax
-    resAnalysis['PCrossMean'] = PCrossMean
+    resAnalysis[resType.upper() + 'CrossMax'] = PCrossMax
+    resAnalysis[resType.upper() + 'CrossMean'] = PCrossMean
     resAnalysis['thresholdValue'] = thresholdValue
     resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
     resAnalysis['TP'] = TP
