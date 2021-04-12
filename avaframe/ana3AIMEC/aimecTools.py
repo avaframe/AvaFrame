@@ -12,6 +12,7 @@ import copy
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.outAIMEC as outAimec
 
@@ -43,7 +44,6 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
     cfgPath : dict
         updated dictionary with path to geometry input data
     """
-
 
     profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES',
                                           '*aimec*.shp'))
@@ -97,9 +97,6 @@ def makeDomainTransfo(cfgPath, cfgSetup):
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
         regarding domain transformation (domain width w, startOfRunoutAreaAngle or
         interpolation method)
-    cfgFlags : configparser
-        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
-        regarding plotting and writing results flags
 
     Returns
     -------
@@ -572,21 +569,22 @@ def analyzeMass(fnameMass):
     return releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time
 
 
-def computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEMRasters):
-    """ Compute runout based on peak pressure results
+def computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters):
+    """ Compute runout based on peak field results
 
     Parameters
     ----------
     rasterTransfo: dict
         transformation information
-    pLim: float
-        numerical value of the pressure limit to use
-    PPRCrossMax: 2D numpy array
-        containing for each simulation analyzed the
-        max of the peak pressure in each cross section
-    PPRCrossMean: 2D numpy array
-        containing for each simulation analyzed the
-        mean of the peak pressure in each cross section
+    thresholdValue: float
+        numerical value of the threshold limit to use
+    resultsAreaAnalysis : dict
+        PResCrossMax: 2D numpy array
+            containing for each simulation analyzed the
+            max of the peak result in each cross section
+        PResCrossMean: 2D numpy array
+            containing for each simulation analyzed the
+            mean of the peak result in each cross section
 
     Returns
     -------
@@ -594,17 +592,17 @@ def computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEM
         containing for each simulation analyzed the x and
         y coord of the runout point as well as the runout distance
         measured from the begining of the path. run-out
-        calculated with the MAX pressure in each cross section
+        calculated with the MAX result in each cross section
     runoutMean: 2D numpy array
         containing for each simulation analyzed the x
         and y coord of the runout point as well as the runout
         distance measured from the begining of the path.
-        run-out calculated with the MEAN pressure in each cross
+        run-out calculated with the MEAN result in each cross
         section
     elevRel: 1D numpy array
         containing for each simulation analyzed the
         elevation of the release area (based on first point with
-        peak pressure > pLim)
+        peak field > thresholdValue)
     deltaH: 1D numpy array
         containing for each simulation analyzed the
         elevation fall difference between elevRel and altitude of
@@ -618,8 +616,12 @@ def computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEM
     x = rasterTransfo['x']
     y = rasterTransfo['y']
 
+    resType = resultsAreaAnalysis['resType']
+    PResCrossMax = resultsAreaAnalysis[resType]['aCrossMax']
+    PResCrossMean = resultsAreaAnalysis[resType]['aCrossMean']
+
     # initialize Arrays
-    nTopo = len(PPRCrossMax)
+    nTopo = len(PResCrossMax)
     runout = np.empty((3, nTopo))
     runoutMean = np.empty((3, nTopo))
     elevRel = np.empty((nTopo))
@@ -628,21 +630,21 @@ def computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEM
     log.debug('Computig runout')
     # For each data set
     for i in range(nTopo):
-        lindex = np.nonzero(PPRCrossMax[i] > pLim)[0]
+        lindex = np.nonzero(PResCrossMax[i] > thresholdValue)[0]
         if lindex.any():
             cupper = min(lindex)
             clower = max(lindex)
         else:
-            log.error('No average pressure values > threshold found. threshold = %4.2f, too high?' % pLim)
+            log.error('No max values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
             cupper = 0
             clower = 0
         # search in mean values
-        lindex = np.nonzero(PPRCrossMean[i] > pLim)[0]
+        lindex = np.nonzero(PResCrossMean[i] > thresholdValue)[0]
         if lindex.any():
             cupperm = min(lindex)
             clowerm = max(lindex)
         else:
-            log.error('No average pressure values > threshold found. threshold = %4.2f, too high?' % pLim)
+            log.error('No average values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
             cupperm = 0
             clowerm = 0
         cInd = {}
@@ -714,7 +716,7 @@ def analyzeField(rasterTransfo, transformedRasters, dataType):
     return maxaCrossMax, aCrossMax, aCrossMean
 
 
-def analyzeArea(rasterTransfo, runoutLength, inputs, data, cfgPath, cfgFlags):
+def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
     """Compare results to reference.
 
     Compute True positive, False negative... areas.
@@ -725,11 +727,11 @@ def analyzeArea(rasterTransfo, runoutLength, inputs, data, cfgPath, cfgFlags):
         transformation information
     resAnalysis: dict
         resAnalysis dictionary containing all results to update
-    inputs: dict
-        numerical value of the limit to use for the runout computation
-        as well as the levels for the contour line plot
     data: list
         list of transformed rasters
+    cfgSetup: dict
+        numerical value of the limit to use for the runout computation
+        as well as the levels for the contour line plot
     cfgPath: dict
         path to data to analyse
     cfgFlags: configparser
@@ -749,8 +751,8 @@ def analyzeArea(rasterTransfo, runoutLength, inputs, data, cfgPath, cfgFlags):
     nRef = cfgPath['referenceFile']
     cellarea = rasterTransfo['rasterArea']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    dataThreshold = inputs['dataThreshold']
-    contourLevels = inputs['contourLevels']
+    thresholdValue = cfgSetup.getfloat('thresholdValue')
+    contourLevels = fU.splitIniValueToArray(cfgSetup['contourLevels'])
 
     # initialize Arrays
     nTopo = len(data)
@@ -762,13 +764,15 @@ def analyzeArea(rasterTransfo, runoutLength, inputs, data, cfgPath, cfgFlags):
     # rasterinfo
     nStart = indStartOfRunout
     # inputs for plot
+    inputs = {}
     inputs['runoutLength'] = runoutLength
     inputs['refData'] = data[nRef]
     inputs['nStart'] = nStart
+    inputs['resType'] = cfgSetup['resType']
 
-    dataThresholdList = contourLevels
-    dataThresholdList.append(dataThreshold)
-    inputs['dataThresholdList'] = dataThresholdList
+    thresholdArray = contourLevels
+    thresholdArray = np.append(thresholdArray, thresholdValue)
+    inputs['thresholdArray'] = thresholdArray
 
     for i in range(nTopo):
         rasterdata = data[i]
@@ -780,7 +784,7 @@ def analyzeArea(rasterTransfo, runoutLength, inputs, data, cfgPath, cfgFlags):
         # false positive: result1(mask)=0, result2(rasterdata)=1
         # true negative: result1(mask)=0, result2(rasterdata)=0
         """
-        for dataLim, j in zip(dataThresholdList, np.arange(5)):
+        for dataLim, j in zip(thresholdArray, np.arange(5)):
             # take first simulation as reference
             refMask = copy.deepcopy(data[nRef])
             # prepare mask for area resAnalysis
@@ -790,8 +794,6 @@ def analyzeArea(rasterTransfo, runoutLength, inputs, data, cfgPath, cfgFlags):
             # comparison rasterdata with mask
             log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
                 'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
-            # for each pressure-file pLim is introduced (1/3/.. kPa),
-            # where the avalanche has stopped
             newRasterData = copy.deepcopy(rasterdata)
             # prepare mask for area resAnalysis
             newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)

@@ -184,7 +184,7 @@ def splitIniValueToArray(cfgValues):
         items = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
     else:
         itemsL = cfgValues.split('|')
-        items = np.array(itemsL,dtype=float)
+        items = np.array(itemsL, dtype=float)
 
     return items
 
