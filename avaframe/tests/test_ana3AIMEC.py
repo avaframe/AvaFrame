@@ -47,9 +47,9 @@ def test_analyzeArea(capfd):
     avalData[1] = np.transpose(data['rasterData'])
 
     newRasters = {}
-    newRasters['newRasterPressure'] = avalData
-    newRasters['newRasterDepth'] = avalData
-    newRasters['newRasterSpeed'] = avalData
+    newRasters['newRasterPPR'] = avalData
+    newRasters['newRasterPFD'] = avalData
+    newRasters['newRasterPFV'] = avalData
     newRasters['newRasterDEM'] = np.transpose(data['rasterData'])
     rasterTransfo = {}
     rasterTransfo['s'] = np.linspace(0, 499, 500)
@@ -136,9 +136,9 @@ def test_makeDomainTransfo(capfd):
     newRasters = {}
     # assign pressure data
     interpMethod = cfgSetup['interpMethod']
-    newRasters['newRasterPressure'] = aT.assignData(cfgPath['ppr'], rasterTransfo, interpMethod)
-    newRasters['newRasterDepth'] = newRasters['newRasterPressure']
-    newRasters['newRasterSpeed'] = newRasters['newRasterPressure']
+    newRasters['newRasterPPR'] = aT.assignData(cfgPath['ppr'], rasterTransfo, interpMethod)
+    newRasters['newRasterPFD'] = newRasters['newRasterPPR']
+    newRasters['newRasterPFV'] = newRasters['newRasterPPR']
     newRasterDEM = aT.assignData([cfgPath['demSource']], rasterTransfo,
                                         interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM[0]
