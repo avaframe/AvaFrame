@@ -2,23 +2,15 @@
     Main logic for AIMEC post processing
 """
 
-import os
 import logging
-import glob
-import numpy as np
-import copy
-
 
 # Local imports
-import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.in2Trans.ascUtils as IOf
-import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.outAIMEC as outAimec
 
 # create local logger
 log = logging.getLogger(__name__)
-
 
 
 def AIMEC2Report(cfgPath, cfg):
@@ -47,7 +39,6 @@ def AIMEC2Report(cfgPath, cfg):
     # Extract input config parameters
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
-    pressureLimit = cfgSetup.getfloat('pressureLimit')
     interpMethod = cfgSetup['interpMethod']
 
     log.info('Prepare data for post-ptocessing')
@@ -67,7 +58,7 @@ def AIMEC2Report(cfgPath, cfg):
     inputData = {}
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = pressureRaster['rasterData']
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags)
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, cfgPath, cfgFlags)
     #################################################################
 
     # transform pressure_data, depth_data and speed_data in new raster
@@ -93,13 +84,14 @@ def AIMEC2Report(cfgPath, cfg):
 
     # Analyze data
     log.debug('Analyzing data in path coordinate system')
-    resAnalysis = postProcessAIMECReport(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
+    resAnalysis = postProcessAIMECReport(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
-    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
+    print(cfgSetup)
+    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
     resAnalysis['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
 
     return rasterTransfo, newRasters, resAnalysis
@@ -131,7 +123,6 @@ def mainAIMEC(cfgPath, cfg):
     # Extract input config parameters
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
-    pressureLimit = cfgSetup.getfloat('pressureLimit')
     interpMethod = cfgSetup['interpMethod']
 
     log.info('Prepare data for post-ptocessing')
@@ -151,7 +142,7 @@ def mainAIMEC(cfgPath, cfg):
     inputData = {}
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = pressureRaster['rasterData']
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags)
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, cfgPath, cfgFlags)
     #################################################################
 
     # transform pressure_data, depth_data and speed_data in new raster
@@ -178,7 +169,7 @@ def mainAIMEC(cfgPath, cfg):
 
     # Analyze data
     log.info('Analyzing data in path coordinate system')
-    resAnalysis = postProcessAIMEC(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
+    resAnalysis = postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
     # result visualisation + report
@@ -186,12 +177,11 @@ def mainAIMEC(cfgPath, cfg):
     log.info('Visualisation of AIMEC results')
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
     if cfgPath['numSim']==2:
-        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
         outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
     else:
-        outAimec.visuRunoutStat(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
-    outAimec.resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis,
-                        pressureLimit)
+        outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
+    outAimec.resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis)
 
     # -----------------------------------------------------------
     # write results to file
@@ -229,9 +219,8 @@ def AIMECIndi(cfgPath, cfg):
     # Extract input config parameters
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
-    anaLimit = cfgSetup.getfloat('pressureLimit')
     interpMethod = cfgSetup['interpMethod']
-    resType = cfgPath['resType']
+    resType = cfgSetup['resType']
 
     log.info('Prepare data for post-ptocessing')
     # Make domain transformation
@@ -250,7 +239,7 @@ def AIMECIndi(cfgPath, cfg):
     inputData = {}
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = anaRaster['rasterData']
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags)
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, cfgPath, cfgFlags)
     #################################################################
 
     # transform resType_data in new raster
@@ -267,26 +256,23 @@ def AIMECIndi(cfgPath, cfg):
 
     # Analyze data
     log.debug('Analyzing data in path coordinate system')
-    resAnalysis = postProcessAIMECIndi(rasterTransfo, anaLimit, newRasters, cfgPath, cfgFlags)
+    resAnalysis = postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
 
-    #outAimec.visuRunoutStat(rasterTransfo, resAnalysis, anaLimit, newRasters, cfgPath, cfgFlags)
-    outAimec.resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis,
-                        anaLimit, flagIndi=True)
+    outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
+    outAimec.resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis)
 
     return rasterTransfo, newRasters, resAnalysis
-
-
 
 
 # -----------------------------------------------------------
 # Aimec analysis tools
 # -----------------------------------------------------------
-def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
+def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     """ Analyse pressure and depth transformed data
 
     Analyse pressure depth and speed.
@@ -297,11 +283,11 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     ----------
     rasterTransfo: dict
         transformation information
-    pLim: float
-        numerical value of the pressure limit to use
     newRasters: dict
         dictionary containing pressure, velocity and flow depth rasters after
         transformation
+    cfgSetup: dict
+        parameters for data analysis
     cfgPath: dict
         path to data to analyse
 
@@ -332,7 +318,7 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
             -elevRel: 1D numpy array
                     containing for each simulation analyzed the
                     elevation of the release area (based on first point with
-                    peak pressure > pLim)
+                    peak field > thresholdValue)
             -deltaH: 1D numpy array
                     containing for each simulation analyzed the
                     elevation fall difference between elevRel and altitude of
@@ -373,8 +359,8 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
             -PFVCrossMean: 2D numpy array
                     containing for each simulation analyzed the
                     mean peak flow velocity in each cross section
-            -pressureLimit: float
-                    pressure threshold
+            -thresholdValue: float
+                    threshold value for runout analysis
             -startOfRunoutAreaAngle: float
                     angle of the slope at the beginning of the run-out
                     area (given in input)
@@ -394,29 +380,39 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     dataSpeed = newRasters['newRasterSpeed']
     transformedDEMRasters = newRasters['newRasterDEM']
 
+    resType = cfgSetup['resType']
+    thresholdValue = cfgSetup.getfloat('thresholdValue')
+
     maxPPRCrossMax, PPRCrossMax, PPRCrossMean = aT.analyzeField(rasterTransfo, dataPressure, 'ppr')
     maxPFDCrossMax, PFDCrossMax, PFDCrossMean = aT.analyzeField(rasterTransfo, dataDepth, 'pfd')
     maxPFVCrossMax, PFVCrossMax, PFVCrossMean = aT.analyzeField(rasterTransfo, dataSpeed, 'pfv')
 
-    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEMRasters)
+    resultsAreaAnalysis = {}
+    resultsAreaAnalysis['resType'] = resType
+    resultsAreaAnalysis['ppr'] = {'transformedRasters' : dataPressure,
+                                  'maxaCrossMax' : maxPPRCrossMax,
+                                  'aCrossMax' : PPRCrossMax,
+                                  'aCrossMean' : PPRCrossMean}
+    resultsAreaAnalysis['pfd'] = {'transformedRasters' : dataDepth,
+                                  'maxaCrossMax' : maxPFDCrossMax,
+                                  'aCrossMax' : PFDCrossMax,
+                                  'aCrossMean' : PFDCrossMean}
+    resultsAreaAnalysis['pfv'] = {'transformedRasters' : dataSpeed,
+                                  'maxaCrossMax' : maxPFVCrossMax,
+                                  'aCrossMax' : PFVCrossMax,
+                                  'aCrossMean' : PFVCrossMean}
+
+    # compute runout based on resType
+    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
+
+    runoutLength = runout[0]
+    TP, FN, FP, TN, _ = aT.analyzeArea(rasterTransfo, runoutLength, resultsAreaAnalysis[resType]['transformedRasters'], cfgSetup, cfgPath, cfgFlags)
 
     releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = aT.analyzeMass(fnameMass)
 
-    runoutLength = runout[0]
-    inputsAnaArea = {}
-    # inputsAnaArea['contourLevels'] = [0.1, 0.25, 0.5, 1]
-    # inputsAnaArea['dataThreshold'] = 0.5
-    # inputsAnaArea['dataType'] = 'pfd'
-    # TP, FN, FP, TN, _ = aT.analyzeArea(rasterTransfo, runoutLength, inputsAnaArea, dataDepth, cfgPath, cfgFlags)
-
-    inputsAnaArea['contourLevels'] = [1, 3, 5, 10]
-    inputsAnaArea['dataThreshold'] = pLim
-    inputsAnaArea['dataType'] = 'ppr'
-
-    TP, FN, FP, TN, _ = aT.analyzeArea(rasterTransfo, runoutLength, inputsAnaArea, dataPressure, cfgPath, cfgFlags)
-
     # affect values to output dictionary
     resAnalysis = {}
+    resAnalysis['resType'] = resType
     resAnalysis['runout'] = runout
     resAnalysis['runoutMean'] = runoutMean
     resAnalysis['MMPPR'] = maxPPRCrossMax
@@ -439,7 +435,7 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis['PFDCrossMean'] = PFDCrossMean
     resAnalysis['PFVCrossMax'] = PFVCrossMax
     resAnalysis['PFVCrossMean'] = PFVCrossMean
-    resAnalysis['pressureLimit'] = pLim
+    resAnalysis['thresholdValue'] = thresholdValue
     resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
     resAnalysis['TP'] = TP
     resAnalysis['FN'] = FN
@@ -449,7 +445,7 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     return resAnalysis
 
 
-def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
+def postProcessAIMECReport(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     """ Analyse pressure, depth and speed transformed data
 
     Analyse pressure depth and speed.
@@ -460,11 +456,11 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     ----------
     rasterTransfo: dict
         transformation information
-    pLim: float
-        numerical value of the pressure limit to use
     newRasters: dict
         dictionary containing pressure, velocity and flow depth rasters after
         transformation
+    cfgSetup: dict
+        parameters for data analysis
     cfgPath: dict
         path to data to analyse
 
@@ -480,24 +476,38 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     dataSpeed = newRasters['newRasterSpeed']
     transformedDEMRasters = newRasters['newRasterDEM']
 
+    resType = cfgSetup['resType']
+    thresholdValue = cfgSetup.getfloat('thresholdValue')
+
     # get max and mean values along path for cross profiles
     maxPPRCrossMax, PPRCrossMax, PPRCrossMean = aT.analyzeField(rasterTransfo, dataPressure, 'ppr')
     maxPFDCrossMax, PFDCrossMax, PFDCrossMean = aT.analyzeField(rasterTransfo, dataDepth, 'pfd')
     maxPFVCrossMax, PFVCrossMax, PFVCrossMean = aT.analyzeField(rasterTransfo, dataSpeed, 'pfv')
 
-    # compute runout based on peak pressure
-    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEMRasters)
+    resultsAreaAnalysis = {}
+    resultsAreaAnalysis['resType'] = resType
+    resultsAreaAnalysis['ppr'] = {'transformedRasters' : dataPressure,
+                                  'maxaCrossMax' : maxPPRCrossMax,
+                                  'aCrossMax' : PPRCrossMax,
+                                  'aCrossMean' : PPRCrossMean}
+    resultsAreaAnalysis['pfd'] = {'transformedRasters' : dataDepth,
+                                  'maxaCrossMax' : maxPFDCrossMax,
+                                  'aCrossMax' : PFDCrossMax,
+                                  'aCrossMean' : PFDCrossMean}
+    resultsAreaAnalysis['pfv'] = {'transformedRasters' : dataSpeed,
+                                  'maxaCrossMax' : maxPFVCrossMax,
+                                  'aCrossMax' : PFVCrossMax,
+                                  'aCrossMean' : PFVCrossMean}
+
+    # compute runout based on resType
+    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
 
     runoutLength = runout[0]
-    inputsAnaArea = {}
-    inputsAnaArea['contourLevels'] = [1, 3, 5, 10]
-    inputsAnaArea['dataThreshold'] = pLim
-    inputsAnaArea['dataType'] = 'ppr'
-
-    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, inputsAnaArea, dataPressure, cfgPath, cfgFlags)
+    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, resultsAreaAnalysis[resType]['transformedRasters'], cfgSetup, cfgPath, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}
+    resAnalysis['resType'] = resType
     resAnalysis['runout'] = runout
     resAnalysis['runoutMean'] = runoutMean
     resAnalysis['MMPPR'] = maxPPRCrossMax
@@ -511,7 +521,7 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis['PFDCrossMean'] = PFDCrossMean
     resAnalysis['PFVCrossMax'] = PFVCrossMax
     resAnalysis['PFVCrossMean'] = PFVCrossMean
-    resAnalysis['pressureLimit'] = pLim
+    resAnalysis['thresholdValue'] = thresholdValue
     resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
     resAnalysis['TP'] = TP
     resAnalysis['FN'] = FN
@@ -522,7 +532,7 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     return resAnalysis
 
 
-def postProcessAIMECIndi(rasterTransfo, anaLim, newRasters, cfgPath, cfgFlags):
+def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     """ Analyse pressure, depth and speed transformed data
 
     Analyse pressure depth and speed.
@@ -533,11 +543,11 @@ def postProcessAIMECIndi(rasterTransfo, anaLim, newRasters, cfgPath, cfgFlags):
     ----------
     rasterTransfo: dict
         transformation information
-    pLim: float
-        numerical value of the pressure limit to use
     newRasters: dict
         dictionary containing pressure, velocity and flow depth rasters after
         transformation
+    cfgSetup: dict
+        parameters for data analysis
     cfgPath: dict
         path to data to analyse
 
@@ -548,29 +558,37 @@ def postProcessAIMECIndi(rasterTransfo, anaLim, newRasters, cfgPath, cfgFlags):
 
     """
     # read inputs
-    resType = cfgPath['resType']
+    resType = cfgSetup['resType']
+    thresholdValue = cfgSetup.getfloat('thresholdValue')
     dataResType = newRasters['newRasterResType']
     transformedDEMRasters = newRasters['newRasterDEM']
 
     # get max and mean values along path for cross profiles
     maxPCrossMax, PCrossMax, PCrossMean = aT.analyzeField(rasterTransfo, dataResType, resType)
+    resultsAreaAnalysis = {}
+    resultsAreaAnalysis['resType'] = resType
+    resultsAreaAnalysis[resType] = {'transformedRasters' : dataResType,
+                                  'maxaCrossMax' : maxPCrossMax,
+                                  'aCrossMax' : PCrossMax,
+                                  'aCrossMean' : PCrossMean}
 
-    # compute runout based on peak pressure
-    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, anaLim, PCrossMax, PCrossMean, transformedDEMRasters)
+    # compute runout based on resType
+    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
 
     runoutLength = runout[0]
-    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, anaLim, dataResType, cfgPath, cfgFlags)
+    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, dataResType, cfgSetup, cfgPath, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}
+    resAnalysis['resType'] = resType
     resAnalysis['runout'] = runout
     resAnalysis['runoutMean'] = runoutMean
-    resAnalysis['MMP'] = maxPCrossMax
+    resAnalysis['MM' + resType.upper()] = maxPCrossMax
     resAnalysis['elevRel'] = elevRel
     resAnalysis['deltaH'] = deltaH
     resAnalysis['PCrossMax'] = PCrossMax
     resAnalysis['PCrossMean'] = PCrossMean
-    resAnalysis['anaLimit'] = anaLim
+    resAnalysis['thresholdValue'] = thresholdValue
     resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
     resAnalysis['TP'] = TP
     resAnalysis['FN'] = FN

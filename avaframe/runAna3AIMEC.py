@@ -1,4 +1,3 @@
-#! /usr/bin/python
 """
     Run ana3AIMEC
 
@@ -7,7 +6,6 @@
 """
 
 # Load modules
-import logging
 import time
 
 # Local imports

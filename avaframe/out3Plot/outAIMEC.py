@@ -7,7 +7,6 @@
 import os
 import logging
 import math
-import matplotlib.colors as colors
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib
@@ -23,12 +22,14 @@ from avaframe.out3Plot import statsPlots as sPlot
 log = logging.getLogger(__name__)
 
 
-def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
+def visuTransfo(rasterTransfo, inputData, cfgSetup, cfgPath, cfgFlags):
     """
     Plot and save the domain transformation figure
     """
     ####################################
     # Get input data
+    resType = cfgSetup['resType']
+    unit = pU.cfgPlotUtils['unit' + resType]
     # read paths
     projectName = cfgPath['projectName']
     # read rasterdata
@@ -95,18 +96,21 @@ def visuTransfo(rasterTransfo, inputData, cfgPath, cfgFlags):
 
     ax2.set_title('sl Domain' + '\n' + 'Black = out of raster')
     ax2.legend(loc=4)
-    pU.addColorBar(im, ax2, ticks, pU.cfgPlotUtils['unitppr'])
+    pU.addColorBar(im, ax2, ticks, unit)
 
     outFileName = '_'.join([projectName, 'DomainTransformation'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
-def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
+def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags):
     """
-    Plot and save the Peak Pressure  distribution after coord transfo
+    Plot and save the Peak Fields distribution (max mean per cross section)
+    after coordinate transformation
     """
     ####################################
     # Get input data
+    resType = cfgSetup['resType']
+    thresholdValue = cfgSetup['thresholdValue']
     # read paths
     projectName = cfgPath['projectName']
     # read data
@@ -151,9 +155,10 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
         ax.set_ylim([s.min(), s.max()])
         ax.set_xlim(auto=True)
         ax.set_xlabel(unitVal)
-    pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
-    outFileName = '_'.join([projectName, 'plim',
-                            str(int(plim)), 'slComparison'])
+    pU.putAvaNameOnPlot(ax, projectName)
+
+    outFileName = '_'.join([projectName, resType,
+                            'thresholdValue', str(int(thresholdValue)), 'slComparison'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
@@ -161,12 +166,17 @@ def visuRunoutComp(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     return outFilePath
 
 
-def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFlags):
+def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags):
     """
-    Plot and save the Peak Pressure  distribution after coord transfo
+    Plot and save the Peak field  distribution after coord transfo
+    used when more then 2 simulations are compared
     """
     ####################################
     # Get input data
+    resType = cfgSetup['resType']
+    thresholdValue = cfgSetup['thresholdValue']
+    unit = pU.cfgPlotUtils['unit' + resType]
+    name = pU.cfgPlotUtils['name' + resType]
     # read paths
     projectName = cfgPath['projectName']
     nRef = cfgPath['referenceFile']
@@ -209,7 +219,8 @@ def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
 
     ax1.set_title('Peak Pressure 2D plot for the reference')
     ax1.legend(loc=4)
-    pU.putAvaNameOnPlot(ax1, cfgPath['projectName'])
+    pU.putAvaNameOnPlot(ax1, projectName)
+
     pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
 
     ax2 = plt.subplot(122)
@@ -220,23 +231,22 @@ def visuRunoutStat(rasterTransfo, resAnalysis, plim, newRasters, cfgPath, cfgFla
     ax2.plot(pMedian, s, color='r', label='median')
     ax2.plot(pMean, s, color='b', label='mean')
 
-    ax2.set_title('Peak Pressure distribution along the path between runs')
+    ax2.set_title('%s distribution along the path between runs' % name)
     ax2.legend(loc=4)
     ax2.set_ylabel('s [m]')
     ax2.set_ylim([s.min(), s.max()])
     ax2.set_xlim(auto=True)
-    ax2.set_xlabel('$P_{max}(s)$ [kPa]')
+    ax2.set_xlabel('$P_{max}(s)$ [%s]' % unit)
 
-    outFileName = '_'.join([projectName, 'plim',  str(int(plim)), 'slComparisonStat'])
-
+    outFileName = '_'.join([projectName, resType,
+                            'thresholdValue', str(int(thresholdValue)), 'slComparisonStat'])
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
 def visuMass(resAnalysis, cfgPath, cfgFlags):
     """
-    Plot and save the comparison between current simulation and Reference
-    in the run-out area
+    Plot and save the results from mass analysis
     """
     ####################################
     # Get input data
@@ -300,7 +310,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     projectName = cfgPath['projectName']
     nRef = cfgPath['referenceFile']
     # read data
-    plim = resAnalysis['pressureLimit']
+    plim = resAnalysis['thresholdValue']
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
@@ -366,18 +376,17 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     sStart = s[indStartOfRunout]
-    dataThreshold = inputs['dataThreshold']
     runoutLength = inputs['runoutLength']
     refData = inputs['refData']
     compData = inputs['compData']
     refRasterMask = inputs['refRasterMask']
     newRasterMask = inputs['newRasterMask']
     i = inputs['i']
-    dataType = inputs['dataType']
-    unit = pU.cfgPlotUtils['unit' + dataType]
-    name = pU.cfgPlotUtils['name' + dataType]
-    dataThresholdList = inputs['dataThresholdList']
-    dataThreshold = dataThresholdList[-1]
+    resType = inputs['resType']
+    unit = pU.cfgPlotUtils['unit' + resType]
+    name = pU.cfgPlotUtils['name' + resType]
+    thresholdArray = inputs['thresholdArray']
+    thresholdValue = thresholdArray[-1]
 
     ############################################
     # Figure: Raster comparison (mask for the pThreshold given in the ini file)
@@ -385,7 +394,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax1 = plt.subplot2grid((1,2), (0,0))
 
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, dataThreshold,
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
                                                        np.nanmax((refData)),
                                                        continuous=pU.contCmap)
     cmap.set_under(color='w')
@@ -396,7 +405,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
     im.set_clim(vmin=0.0001, vmax=np.nanmax((refData)))
     ax1.set_title('Reference %s in the RunOut area' % name +
-                  '\n' + '%s threshold: %.1f %s' % (name, dataThreshold, unit))
+                  '\n' + '%s threshold: %.1f %s' % (name, thresholdValue, unit))
     pU.addColorBar(im, ax1, ticks, unit)
 
     y_lim = s[indStartOfRunout+20]+np.nanmax(runoutLength-sStart)
@@ -421,7 +430,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax2.set_ylim([s[indStartOfRunout], y_lim])
     ax2.set_title('Difference current - reference in runout area' + '\n' + 'Blue = FN, Red = FP')
 
-    outFileName = '_'.join([projectName, 'plim', str(int(dataThreshold)),  'sim', str(i), 'AreaComparisonToReference'])
+    outFileName = '_'.join([projectName, 'plim', str(int(thresholdValue)),  'sim', str(i), 'AreaComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     ############################################
@@ -430,7 +439,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
 
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, dataThreshold,
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
                                                        np.nanmax((refData)),
                                                        continuous=pU.contCmap)
     cmap.set_under(color='w')
@@ -462,10 +471,10 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     im3.set_clim(vmin=-elev_max, vmax=elev_max)
     L, S = np.meshgrid(l, s[indStartOfRunout:])
     colorsP = pU.cmapPres['colors'][1:5]
-    contourRef = ax2.contour(L, S, refData, levels=dataThresholdList[:-1], linewidths=1, colors=colorsP)
-    contourComp = ax2.contour(L, S, compData, levels=dataThresholdList[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
+    contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP)
+    contourComp = ax2.contour(L, S, compData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
 
-    labels = [str(level) + unit for level in dataThresholdList[:-1]]
+    labels = [str(level) + unit for level in thresholdArray[:-1]]
     for j in range(len(contourRef.collections)):
         contourRef.collections[j].set_label(labels[j])
 
@@ -489,7 +498,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         log.warning('No data in the run out area!')
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
-    outFileName = '_'.join([projectName, 'plim', str(int(dataThreshold)),  'sim', str(i), 'ContourComparisonToReference'])
+    outFileName = '_'.join([projectName, 'plim', str(int(thresholdValue)),  'sim', str(i), 'ContourComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
@@ -510,7 +519,10 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     demName = os.path.basename(cfgPath['demSource'])
     dataName = [os.path.basename(name) for name in cfgPath['ppr']]
     domainWidth = cfgSetup['domainWidth']
-    pressureLimit = cfgSetup['pressureLimit']
+    thresholdValue = cfgSetup['thresholdValue']
+    resType = cfgSetup['resType']
+    unit = pU.cfgPlotUtils['unit' + resType]
+    name = pU.cfgPlotUtils['name' + resType]
 
     startOfRunoutAreaAngle = resAnalysis['startOfRunoutAreaAngle']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
@@ -548,11 +560,12 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
                       'path: ', pathName, '\n',
                       'dhm: ', demName, '\n',
                       'domain_width: ', str(domainWidth), ' m\n',
-                      'pressure_limit: ', str(pressureLimit), ' kPa\n',
+                      'run out based on ', name, ' results\n',
+                      name, ' limit: ', str(thresholdValue), unit, '\n',
                       'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAreaAngle, 2)), ' °\n'])
 
     outFileName = '_'.join(['Results', projectName, '', '', 'plim',
-                            str(pressureLimit), 'w', str(domainWidth)]) + '.txt'
+                            str(thresholdValue), 'w', str(domainWidth)]) + '.txt'
     outname = os.path.join(pathResult, outFileName)
 
     # check if folder exists / create
@@ -587,19 +600,19 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     log.info('File written: %s' % outname)
 
 
-def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim, flagIndi=False):
+def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     """
     Visualize results in a nice way
     """
     ####################################
     # Get input data
-    if flagIndi:
-        fnames = cfgPath[cfgPath['resType']]
-        maxMaxDPPR = resAnalysis['MMP']
-    else:
-        maxMaxDPPR = resAnalysis['MMPPR']
-        GI = resAnalysis['growthIndex']
-        fnames = cfgPath['ppr']
+    resType = cfgSetup['resType']
+    unit = pU.cfgPlotUtils['unit' + resType]
+    name = pU.cfgPlotUtils['name' + resType]
+    fnames = cfgPath[resType]
+    maxMaxDPPR = resAnalysis['MM' + resType.upper()]
+
+    thresholdValue = cfgSetup['thresholdValue']
 
     nRef = cfgPath['referenceFile']
 
@@ -616,14 +629,15 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim, flagIndi=Fal
     if flag == 2:
         title = 'Visualizing EGU growth index data'
         tipo = 'growthInd'
+        GI = resAnalysis['growthIndex']
         data = GI
         yaxis_label = 'growth index [GI]'
 
     elif flag == 3:
-        title = 'Visualizing max peak pressure data'
-        tipo = 'relMaxPeakPres'
+        title = 'Visualizing max ' + name + ' data'
+        tipo = 'relMax' + resType + '_thresholdValue' + str(int(thresholdValue))
         data = maxMaxDPPR / maxMaxDPPR[nRef]
-        yaxis_label = 'relative max peak pressure [-]'
+        yaxis_label = 'relative max ' + name + ' [-]'
 
     else:
         log.error('Wrong flag')
@@ -650,7 +664,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim, flagIndi=Fal
     ax1.set_ylabel(yaxis_label, color=color[-3])
     ax1.spines['left'].set_color(color[-3])
     ax1.tick_params(axis='y', colors=color[-3])
-    ax1.set_xlabel(''.join(['s [m] - runout with ', str(plim),
+    ax1.set_xlabel(''.join(['s [m] - runout with ', str(thresholdValue),
                             ' kPa threshold']))
     pU.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
@@ -690,8 +704,7 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim, flagIndi=Fal
 
     ax1.grid('on')
 
-    outFileName = '_'.join([cfgPath['projectName'],
-                        'plim', str(int(plim)), tipo])
+    outFileName = '_'.join([cfgPath['projectName'], tipo])
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -737,8 +750,8 @@ def resultVisu(cfgPath, cfgFlags, rasterTransfo, resAnalysis, plim, flagIndi=Fal
     plt.ylim([-0.03, 1.03])
     plt.grid('on')
 
-    outFileName = '_'.join([cfgPath['projectName'],
-                        'plim', str(int(plim)), 'ROC'])
+    outFileName = '_'.join([cfgPath['projectName'], resType,
+                            'thresholdValue', str(int(thresholdValue)), 'ROC'])
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 

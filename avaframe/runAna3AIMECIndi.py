@@ -1,4 +1,3 @@
-#! /usr/bin/python
 """
     Run ana3AIMEC
 
@@ -7,7 +6,6 @@
 """
 
 # Load modules
-import logging
 import time
 
 # Local imports
@@ -42,7 +40,7 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
 cfgSetup = cfg['AIMECSETUP']
 anaMod = cfgSetup['anaMod']
-resType = 'ppr'
+resType = cfgSetup['resType']
 
 # Setup input from com1DFA
 pathDict = dfa2Aimec.indiDfa2Aimec(avalancheDir, resType, comModule=anaMod)

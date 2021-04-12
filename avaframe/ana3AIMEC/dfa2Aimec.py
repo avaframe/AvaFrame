@@ -212,8 +212,6 @@ def indiDfa2Aimec(avaDir, suffix, comModule='com1DFA'):
     # Setup input from com1DFA and save file paths to dictionary
     pathDict = fU.getDFADataPaths(avaDir, pathDict, suffix, comModule)
 
-
     pathDict['compType'] = ['singleModule', comModule]
-    pathDict['resType'] = suffix
 
     return pathDict
