@@ -80,13 +80,15 @@ def calcV2(x, y, z, v2d, d, g, mu):
     c = np.sqrt(1+bx2+by2)
 
     # JT's formulation
-    # v2rest = v2d - 2*g*((z-zd) + mu*((sn-sd)))
+    v2rest = v2d - 2*g*((z-zd) + mu*(DeltaSLoc))
     # Matthias formulation
     # calculate V2 in the reciver cells
-    v2rest = v2d - 2*g*((z-zd) + mu*DeltaLLoc/c)
+    # v2rest = v2d - 2*g*((z-zd) + mu*DeltaLLoc/c)
     # calculate GradV2 in the reciver cells
     DeltaSLoc[1, 1] = 1
-    gradV2 = -2*g*((z-zd) + mu*DeltaLLoc/c)/DeltaSLoc
+    # gradV2 = -2*g*((z-zd) + mu*DeltaLLoc/c)/DeltaSLoc
+
+    gradV2 = -2*g*((z-zd) + mu*DeltaSLoc)/DeltaSLoc
     # update GradV2 with forbiden cells
     # if cell is donor
     gradV2 = np.where(np.isnan(d), np.nan, gradV2)
@@ -145,6 +147,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
     yPath = np.array([y0])
     zPath = np.array([z0])
     sPath = np.array([0])
+    sBisPath = np.array([0])
 
     log.info("Running with standard start point X0=%3.2f m, Y0=%3.2f m at an altitude of Z0=%3.2f m \n", x0, y0, z0)
     # initialize list that can grow
@@ -409,6 +412,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
             # calculate XY locations of computation step
             xcoE = np.sum(pond*X)/pondSum
             ycoE = np.sum(pond*Y)/pondSum
+            sBiscoE = np.sqrt((xcoE-xPath[-1])*(xcoE-xPath[-1]) + (ycoE-yPath[-1])*(ycoE-yPath[-1])) + sBisPath[-1]
             # calculate global distance of coE coordinates
             scoE = np.sum(pond*Smes)/pondSum
             v2coE = np.sum(pond*V2)/pondSum
@@ -418,6 +422,7 @@ def com3MDELMMain(cfgPath, cfgSetup):
             yPath = np.append(yPath, ycoE)
             zPath = np.append(zPath, zcoE)
             sPath = np.append(sPath, scoE)
+            sBisPath = np.append(sBisPath, sBiscoE)
             V2Path = np.append(V2Path, v2coE)
 
             # update energy
@@ -537,11 +542,15 @@ def com3MDELMMain(cfgPath, cfgSetup):
     # ax2.legend()
 
     ax2.plot(sPath, zPath, 'k-', label='Avalanche profile')
+    ax2.plot(sBisPath, zPath, 'k--', label='Avalanche profile')
     # ax2.plot(AvaProfile['s'], AvaProfile['z'], 'r-', label='Avalanche profile')
     f = zPath[0] - mu * sPath
+    fBis = zPath[0] - mu * sBisPath
     ax2.plot(sPath, f, '-', color='b', label='AlphaLine')
+    ax2.plot(sBisPath, fBis, '--', color='b', label='AlphaLine')
     Zene = zPath + V2Path/(2*g)
     scat = ax2.scatter(sPath, Zene, marker='s', cmap=cmap, s=2*ms, c= EkinPath, label='Total energy height')
+    scat = ax2.scatter(sBisPath, Zene, marker='s', cmap=cmap, s=2*ms, c= EkinPath, label='Total energy height')
     cbar2 = ax2.figure.colorbar(scat, ax=ax2, use_gridspec=True)
     cbar2.ax.set_ylabel('Kinetic Energy [J]')
     ax2.axvline(x=sPath[-1], color='k',
