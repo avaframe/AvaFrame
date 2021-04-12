@@ -714,7 +714,7 @@ def analyzeField(rasterTransfo, transformedRasters, dataType):
     return maxaCrossMax, aCrossMax, aCrossMean
 
 
-def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, cfgFlags):
+def analyzeArea(rasterTransfo, runoutLength, inputs, data, cfgPath, cfgFlags):
     """Compare results to reference.
 
     Compute True positive, False negative... areas.
@@ -725,10 +725,11 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
         transformation information
     resAnalysis: dict
         resAnalysis dictionary containing all results to update
-    pThreshold: float
-        numerical value of the pressure limit to use
-    dataPressure: list
-        list of transformed pressure rasters
+    inputs: dict
+        numerical value of the limit to use for the runout computation
+        as well as the levels for the contour line plot
+    data: list
+        list of transformed rasters
     cfgPath: dict
         path to data to analyse
     cfgFlags: configparser
@@ -748,9 +749,11 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
     nRef = cfgPath['referenceFile']
     cellarea = rasterTransfo['rasterArea']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
+    dataThreshold = inputs['dataThreshold']
+    contourLevels = inputs['contourLevels']
 
     # initialize Arrays
-    nTopo = len(dataPressure)
+    nTopo = len(data)
     TP = np.empty((nTopo, 5))
     FN = np.empty((nTopo, 5))
     FP = np.empty((nTopo, 5))
@@ -759,14 +762,16 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
     # rasterinfo
     nStart = indStartOfRunout
     # inputs for plot
-    inputs = {}
     inputs['runoutLength'] = runoutLength
-    inputs['pressureLimit'] = pThreshold
-    inputs['refDataPressure'] = dataPressure[nRef]
+    inputs['refData'] = data[nRef]
     inputs['nStart'] = nStart
 
+    dataThresholdList = contourLevels
+    dataThresholdList.append(dataThreshold)
+    inputs['dataThresholdList'] = dataThresholdList
+
     for i in range(nTopo):
-        rasterdata = dataPressure[i]
+        rasterdata = data[i]
 
         """
         area
@@ -775,14 +780,13 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
         # false positive: result1(mask)=0, result2(rasterdata)=1
         # true negative: result1(mask)=0, result2(rasterdata)=0
         """
-        pressureLimit = [1, 3, 5, 10, pThreshold]
-        for pLim, j in zip(pressureLimit, np.arange(5)):
+        for dataLim, j in zip(dataThresholdList, np.arange(5)):
             # take first simulation as reference
-            refMask = copy.deepcopy(dataPressure[nRef])
+            refMask = copy.deepcopy(data[nRef])
             # prepare mask for area resAnalysis
             refMask = np.where(np.isnan(refMask), 0, refMask)
-            refMask = np.where(refMask < pLim, 0, refMask)
-            refMask = np.where(refMask >= pLim, 1, refMask)
+            refMask = np.where(refMask < dataLim, 0, refMask)
+            refMask = np.where(refMask >= dataLim, 1, refMask)
             # comparison rasterdata with mask
             log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
                 'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
@@ -791,8 +795,8 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
             newRasterData = copy.deepcopy(rasterdata)
             # prepare mask for area resAnalysis
             newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
-            newRasterData = np.where(newRasterData < pLim, 0, newRasterData)
-            newRasterData = np.where(newRasterData >= pLim, 1, newRasterData)
+            newRasterData = np.where(newRasterData < dataLim, 0, newRasterData)
+            newRasterData = np.where(newRasterData >= dataLim, 1, newRasterData)
 
             tpInd = np.where((refMask[nStart:] == 1) &
                              (newRasterData[nStart:] == 1))
@@ -820,8 +824,8 @@ def analyzeArea(rasterTransfo, runoutLength, pThreshold, dataPressure, cfgPath, 
             log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
                 *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
         # inputs for plot
-        inputs['compDataPressure'] = rasterdata
-        # masked data for the pThreshold given in the ini file
+        inputs['compData'] = rasterdata
+        # masked data for the dataThreshold given in the ini file
         inputs['refRasterMask'] = refMask
         inputs['newRasterMask'] = newRasterData
         inputs['TP'] = TP[i, :]

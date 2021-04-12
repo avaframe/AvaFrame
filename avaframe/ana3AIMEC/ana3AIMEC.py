@@ -403,7 +403,17 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = aT.analyzeMass(fnameMass)
 
     runoutLength = runout[0]
-    TP, FN, FP, TN, _ = aT.analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
+    inputsAnaArea = {}
+    # inputsAnaArea['contourLevels'] = [0.1, 0.25, 0.5, 1]
+    # inputsAnaArea['dataThreshold'] = 0.5
+    # inputsAnaArea['dataType'] = 'pfd'
+    # TP, FN, FP, TN, _ = aT.analyzeArea(rasterTransfo, runoutLength, inputsAnaArea, dataDepth, cfgPath, cfgFlags)
+
+    inputsAnaArea['contourLevels'] = [1, 3, 5, 10]
+    inputsAnaArea['dataThreshold'] = pLim
+    inputsAnaArea['dataType'] = 'ppr'
+
+    TP, FN, FP, TN, _ = aT.analyzeArea(rasterTransfo, runoutLength, inputsAnaArea, dataPressure, cfgPath, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}
@@ -437,6 +447,7 @@ def postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     resAnalysis['TN'] = TN
 
     return resAnalysis
+
 
 def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     """ Analyse pressure, depth and speed transformed data
@@ -478,7 +489,12 @@ def postProcessAIMECReport(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags):
     runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, pLim, PPRCrossMax, PPRCrossMean, transformedDEMRasters)
 
     runoutLength = runout[0]
-    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, pLim, dataPressure, cfgPath, cfgFlags)
+    inputsAnaArea = {}
+    inputsAnaArea['contourLevels'] = [1, 3, 5, 10]
+    inputsAnaArea['dataThreshold'] = pLim
+    inputsAnaArea['dataType'] = 'ppr'
+
+    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, inputsAnaArea, dataPressure, cfgPath, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}

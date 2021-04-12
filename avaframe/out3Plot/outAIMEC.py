@@ -366,17 +366,18 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     sStart = s[indStartOfRunout]
-    pLim = inputs['pressureLimit']
+    dataThreshold = inputs['dataThreshold']
     runoutLength = inputs['runoutLength']
-    refDataPressure = inputs['refDataPressure']
-    compDataPressure = inputs['compDataPressure']
-    TP = inputs['TP']
-    FN = inputs['FN']
-    FP = inputs['FP']
+    refData = inputs['refData']
+    compData = inputs['compData']
     refRasterMask = inputs['refRasterMask']
     newRasterMask = inputs['newRasterMask']
-    nStart = inputs['nStart']
     i = inputs['i']
+    dataType = inputs['dataType']
+    unit = pU.cfgPlotUtils['unit' + dataType]
+    name = pU.cfgPlotUtils['name' + dataType]
+    dataThresholdList = inputs['dataThresholdList']
+    dataThreshold = dataThresholdList[-1]
 
     ############################################
     # Figure: Raster comparison (mask for the pThreshold given in the ini file)
@@ -384,19 +385,19 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax1 = plt.subplot2grid((1,2), (0,0))
 
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, pLim,
-                                                       np.nanmax((refDataPressure)),
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, dataThreshold,
+                                                       np.nanmax((refData)),
                                                        continuous=pU.contCmap)
     cmap.set_under(color='w')
-    ref0, im = pU.NonUnifIm(ax1, l, s, refDataPressure, 'l [m]', 's [m]',
+    ref0, im = pU.NonUnifIm(ax1, l, s, refData, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
-    im.set_clim(vmin=0.0001, vmax=np.nanmax((refDataPressure)))
-    ax1.set_title('Reference Peak Pressure in the RunOut area' +
-                  '\n' + 'Pressure threshold: %.1f kPa' % pLim)
-    pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
+    im.set_clim(vmin=0.0001, vmax=np.nanmax((refData)))
+    ax1.set_title('Reference %s in the RunOut area' % name +
+                  '\n' + '%s threshold: %.1f %s' % (name, dataThreshold, unit))
+    pU.addColorBar(im, ax1, ticks, unit)
 
     y_lim = s[indStartOfRunout+20]+np.nanmax(runoutLength-sStart)
     ax1.set_ylim([0, y_lim])
@@ -420,7 +421,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax2.set_ylim([s[indStartOfRunout], y_lim])
     ax2.set_title('Difference current - reference in runout area' + '\n' + 'Blue = FN, Red = FP')
 
-    outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  'sim', str(i), 'AreaComparisonToReference'])
+    outFileName = '_'.join([projectName, 'plim', str(int(dataThreshold)),  'sim', str(i), 'AreaComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     ############################################
@@ -429,28 +430,28 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
 
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, pLim,
-                                                       np.nanmax((refDataPressure)),
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, dataThreshold,
+                                                       np.nanmax((refData)),
                                                        continuous=pU.contCmap)
     cmap.set_under(color='w')
-    ref0, im = pU.NonUnifIm(ax1, l, s, refDataPressure, 'l [m]', 's [m]',
+    ref0, im = pU.NonUnifIm(ax1, l, s, refData, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
-    im.set_clim(vmin=0.0001, vmax=np.nanmax((refDataPressure)))
-    ax1.set_title('Reference Peak Pressure')
-    pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
+    im.set_clim(vmin=0.0001, vmax=np.nanmax((refData)))
+    ax1.set_title('Reference %s' % name)
+    pU.addColorBar(im, ax1, ticks, unit)
     y_lim = min(np.nanmax(runoutLength)+20, s[-1])
     ax1.set_ylim([0, y_lim])
     ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
 
     ax2 = plt.subplot2grid((3,3), (0,1), rowspan=2, colspan=2)
-    compDataPressure = compDataPressure[indStartOfRunout:, :]
-    refDataPressure = refDataPressure[indStartOfRunout:, :]
-    dataDiff = compDataPressure - refDataPressure
-    dataDiff = np.where((refDataPressure==0) & (compDataPressure==0), np.nan, dataDiff)
+    compData = compData[indStartOfRunout:, :]
+    refData = refData[indStartOfRunout:, :]
+    dataDiff = compData - refData
+    dataDiff = np.where((refData==0) & (compData==0), np.nan, dataDiff)
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
     cmap = pU.cmapdiv
     cmap.set_bad(color='w')
@@ -461,35 +462,34 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     im3.set_clim(vmin=-elev_max, vmax=elev_max)
     L, S = np.meshgrid(l, s[indStartOfRunout:])
     colorsP = pU.cmapPres['colors'][1:5]
-    contourRef = ax2.contour(L, S, refDataPressure, levels=(1, 3, 5, 10), linewidths=1, colors=colorsP)
-    contourComp = ax2.contour(L, S, compDataPressure, levels=(1, 3, 5, 10), linewidths=1, colors=colorsP, linestyles= 'dashed')
+    contourRef = ax2.contour(L, S, refData, levels=dataThresholdList[:-1], linewidths=1, colors=colorsP)
+    contourComp = ax2.contour(L, S, compData, levels=dataThresholdList[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
 
-    labels = ['1kPa', '3kPa','5kPa','10kPa']
-    for i in range(len(contourRef.collections)):
-        contourRef.collections[i].set_label(labels[i])
+    labels = [str(level) + unit for level in dataThresholdList[:-1]]
+    for j in range(len(contourRef.collections)):
+        contourRef.collections[j].set_label(labels[j])
 
     ax2.set_title(
-        'Peak pressure contour lines' + '\n' + 'refMod = full, compMod = dashed line')
+        '%s contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
 
     if cfgPath['compType'][0] == 'comModules':
         namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
     ax2.set_ylim([s[indStartOfRunout], y_lim])
     ax2.legend(loc='lower right')
-    pU.addColorBar(im3, ax2, ticks, 'kPa', title='Pressure difference', extend='both')
+    pU.addColorBar(im3, ax2, ticks, unit, title=name, extend='both')
 
     ax3 = plt.subplot2grid((3,3), (2, 1))
     ax4 = plt.subplot2grid((3,3), (2, 2))
     if dataDiffPlot.size:
         # there is data to compare in the run out area
         centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False',
-                                         title=['Pressure diff histogram', 'Pressure diff CDF (95% and 99% centiles)'])
+                                         title=['%s diff histogram' % name, '%s diff CDF (95%% and 99%% centiles)' % name])
     else:
         log.warning('No data in the run out area!')
 
-
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
-    outFileName = '_'.join([projectName, 'plim', str(int(pLim)),  'sim', str(i), 'ContourComparisonToReference'])
+    outFileName = '_'.join([projectName, 'plim', str(int(dataThreshold)),  'sim', str(i), 'ContourComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
