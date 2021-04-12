@@ -184,10 +184,10 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    dataPressure = newRasters['newRasterPressure']
+    dataPressure = newRasters['newRaster' + resType.upper()]
     rasterdataPres = dataPressure[nRef]
     runout = resAnalysis['runout'][0]
-    PPRCrossMax = resAnalysis['PPRCrossMax']
+    PPRCrossMax = resAnalysis[resType.upper() + 'CrossMax']
 
     ############################################
     # prepare for plot
@@ -221,7 +221,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
     ax1.legend(loc=4)
     pU.putAvaNameOnPlot(ax1, projectName)
 
-    pU.addColorBar(im, ax1, ticks, pU.cfgPlotUtils['unitppr'])
+    pU.addColorBar(im, ax1, ticks, unit)
 
     ax2 = plt.subplot(122)
 
@@ -314,11 +314,11 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    dataPressure = newRasters['newRasterPressure']
+    dataPressure = newRasters['newRasterPPR']
     rasterdataPres = dataPressure[nRef]
-    dataDepth = newRasters['newRasterDepth']
+    dataDepth = newRasters['newRasterPFD']
     rasterdataDepth = dataDepth[nRef]
-    dataSpeed = newRasters['newRasterSpeed']
+    dataSpeed = newRasters['newRasterPFV']
     rasterdataSpeed = dataSpeed[nRef]
     runout = resAnalysis['runout'][0]
 
