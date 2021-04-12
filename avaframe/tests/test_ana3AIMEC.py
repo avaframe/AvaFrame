@@ -30,10 +30,15 @@ def test_analyzeArea(capfd):
     cfgPath['compType'] = ['singleModule', 'com1DFA']
     cfgPath['numSim'] = 2
 
-    cfg = cfgUtils.getModuleConfig(test_logUtils)
+    cfg = cfgUtils.getModuleConfig(ana3AIMEC)
+    cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
-
-    pLim = 0.5
+    cfgFlags['savePlot'] = 'True'
+    cfgSetup['resType'] = 'ppr'
+    cfgSetup['thresholdValue'] = '0.9'
+    cfgSetup['contourLevels'] = '0.1|0.5|1'
+    cfgSetup['domainWidth'] = '600'
+    cfgSetup['startOfRunoutAreaAngle'] = '10'
 
     avalData = np.array(([None] * 2))
     data = IOf.readRaster(dataRef)
@@ -54,17 +59,15 @@ def test_analyzeArea(capfd):
     rasterTransfo['rasterArea'] = np.ones((500, 100))
     rasterTransfo['indStartOfRunout'] = 400
     rasterTransfo['startOfRunoutAreaAngle'] = 10
-    resAnalysis = {}
-    runout = np.array([100])
-    resAnalysis['runout'] = runout
 
     # testing analyzeFields function
-    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, pLim, newRasters, cfgPath, cfgFlags)
+    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
 
     assert (resAnalysis['runout'][0][0] == 449) and (
             resAnalysis['runout'][1][1] == 419) and (
             resAnalysis['runout'][2][0] == 50) and (
             resAnalysis['MMPPR'][1] == 1)
+
 
     assert (resAnalysis['TP'][1] == 800) and (
             resAnalysis['FN'][1] == 1700) and (
@@ -116,7 +119,9 @@ def test_makeDomainTransfo(capfd):
     cfgFlags['savePlot'] = 'False'
     cfgSetup['startOfRunoutAreaAngle'] = '0'
     cfgSetup['domainWidth'] = '160'
-    cfgSetup['pressureLimit'] = '0.9'
+    cfgSetup['resType'] = 'ppr'
+    cfgSetup['thresholdValue'] = '0.9'
+    cfgSetup['contourLevels'] = '0.1|0.5|1'
     cfgPath['numSim'] = 5
 
     rasterTransfo = aT.makeDomainTransfo(cfgPath, cfgSetup)
@@ -139,8 +144,7 @@ def test_makeDomainTransfo(capfd):
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
-    pressureLimit = float(cfgSetup['pressureLimit'])
-    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, pressureLimit, newRasters, cfgPath, cfgFlags)
+    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
 
     for i in range(5):
         rasterSource = cfgPath['ppr'][i]

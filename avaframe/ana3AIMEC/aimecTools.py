@@ -756,10 +756,11 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
 
     # initialize Arrays
     nTopo = len(data)
-    TP = np.empty((nTopo, 5))
-    FN = np.empty((nTopo, 5))
-    FP = np.empty((nTopo, 5))
-    TN = np.empty((nTopo, 5))
+    nLevels = np.size(contourLevels) + 1
+    TP = np.empty((nTopo, nLevels))
+    FN = np.empty((nTopo, nLevels))
+    FP = np.empty((nTopo, nLevels))
+    TN = np.empty((nTopo, nLevels))
 
     # rasterinfo
     nStart = indStartOfRunout
