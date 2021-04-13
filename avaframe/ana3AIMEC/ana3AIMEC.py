@@ -403,8 +403,8 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     resAnalysis['runout'] = runout
     resAnalysis['runoutMean'] = runoutMean
     resAnalysis['MMPPR'] = resultsAreaAnalysis['ppr']['maxaCrossMax']
-    resAnalysis['MMPFD'] = resultsAreaAnalysis['ppr']['maxaCrossMax']
-    resAnalysis['MMPFV'] = resultsAreaAnalysis['ppr']['maxaCrossMax']
+    resAnalysis['MMPFD'] = resultsAreaAnalysis['pfd']['maxaCrossMax']
+    resAnalysis['MMPFV'] = resultsAreaAnalysis['pfv']['maxaCrossMax']
     resAnalysis['elevRel'] = elevRel
     resAnalysis['deltaH'] = deltaH
     resAnalysis['relMass'] = releaseMass
