@@ -321,8 +321,11 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
 
     if 'entres' in logName:
         if entInfo == 'Yes':
-            reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea,
-                             'Entrainment density [kgm-3]': cfgGen['rhoEnt'], 'Entrainment thickness [m]': cfgGen['hEnt']}})
+            reportST.update({'Entrainment area':
+                                       {'type': 'columns',
+                                       'Entrainment area scenario': entrainmentArea,
+                                       'Entrainment thickness [m]': cfgGen.getfloat('hEnt'),
+                                       'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
         if resInfo == 'Yes':
             reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
 
