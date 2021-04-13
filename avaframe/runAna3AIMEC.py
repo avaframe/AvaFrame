@@ -46,6 +46,7 @@ cfgSetup['resType'] = 'ppr'
 cfgSetup['thresholdValue'] = '1'
 cfgSetup['diffLim'] = '5'
 cfgSetup['contourLevels'] = '1|3|5|10'
+cfg['FLAGS']['flagMass'] = 'True'
 
 # Setup input from com1DFA
 pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, comModule=anaMod)
