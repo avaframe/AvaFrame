@@ -383,24 +383,11 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     resType = cfgSetup['resType']
     thresholdValue = cfgSetup.getfloat('thresholdValue')
 
-    maxPPRCrossMax, PPRCrossMax, PPRCrossMean = aT.analyzeField(rasterTransfo, dataPressure, 'ppr')
-    maxPFDCrossMax, PFDCrossMax, PFDCrossMean = aT.analyzeField(rasterTransfo, dataDepth, 'pfd')
-    maxPFVCrossMax, PFVCrossMax, PFVCrossMean = aT.analyzeField(rasterTransfo, dataSpeed, 'pfv')
-
     resultsAreaAnalysis = {}
     resultsAreaAnalysis['resType'] = resType
-    resultsAreaAnalysis['ppr'] = {'transformedRasters' : dataPressure,
-                                  'maxaCrossMax' : maxPPRCrossMax,
-                                  'aCrossMax' : PPRCrossMax,
-                                  'aCrossMean' : PPRCrossMean}
-    resultsAreaAnalysis['pfd'] = {'transformedRasters' : dataDepth,
-                                  'maxaCrossMax' : maxPFDCrossMax,
-                                  'aCrossMax' : PFDCrossMax,
-                                  'aCrossMean' : PFDCrossMean}
-    resultsAreaAnalysis['pfv'] = {'transformedRasters' : dataSpeed,
-                                  'maxaCrossMax' : maxPFVCrossMax,
-                                  'aCrossMax' : PFVCrossMax,
-                                  'aCrossMean' : PFVCrossMean}
+    resTypesAnalysed = ['ppr', 'pfd', 'pfv']
+    for resTypeA in resTypesAnalysed:
+        resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataPressure, resTypeA, resultsAreaAnalysis)
 
     # compute runout based on resType
     runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
@@ -415,9 +402,9 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     resAnalysis['resType'] = resType
     resAnalysis['runout'] = runout
     resAnalysis['runoutMean'] = runoutMean
-    resAnalysis['MMPPR'] = maxPPRCrossMax
-    resAnalysis['MMPFD'] = maxPFDCrossMax
-    resAnalysis['MMPFV'] = maxPFVCrossMax
+    resAnalysis['MMPPR'] = resultsAreaAnalysis['ppr']['maxaCrossMax']
+    resAnalysis['MMPFD'] = resultsAreaAnalysis['ppr']['maxaCrossMax']
+    resAnalysis['MMPFV'] = resultsAreaAnalysis['ppr']['maxaCrossMax']
     resAnalysis['elevRel'] = elevRel
     resAnalysis['deltaH'] = deltaH
     resAnalysis['relMass'] = releaseMass
@@ -429,12 +416,12 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     resAnalysis['relativMassDiff'] = relativMassDiff
     resAnalysis['growthIndex'] = grIndex
     resAnalysis['growthGrad'] = grGrad
-    resAnalysis['PPRCrossMax'] = PPRCrossMax
-    resAnalysis['PPRCrossMean'] = PPRCrossMean
-    resAnalysis['PFDCrossMax'] = PFDCrossMax
-    resAnalysis['PFDCrossMean'] = PFDCrossMean
-    resAnalysis['PFVCrossMax'] = PFVCrossMax
-    resAnalysis['PFVCrossMean'] = PFVCrossMean
+    resAnalysis['PPRCrossMax'] = resultsAreaAnalysis['ppr']['aCrossMax']
+    resAnalysis['PPRCrossMean'] = resultsAreaAnalysis['ppr']['aCrossMean']
+    resAnalysis['PFDCrossMax'] = resultsAreaAnalysis['pfd']['aCrossMax']
+    resAnalysis['PFDCrossMean'] = resultsAreaAnalysis['pfd']['aCrossMean']
+    resAnalysis['PFVCrossMax'] = resultsAreaAnalysis['pfv']['aCrossMax']
+    resAnalysis['PFVCrossMean'] = resultsAreaAnalysis['pfv']['aCrossMean']
     resAnalysis['thresholdValue'] = thresholdValue
     resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
     resAnalysis['TP'] = TP
@@ -479,25 +466,12 @@ def postProcessAIMECReport(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlag
     resType = cfgSetup['resType']
     thresholdValue = cfgSetup.getfloat('thresholdValue')
 
-    # get max and mean values along path for cross profiles
-    maxPPRCrossMax, PPRCrossMax, PPRCrossMean = aT.analyzeField(rasterTransfo, dataPressure, 'ppr')
-    maxPFDCrossMax, PFDCrossMax, PFDCrossMean = aT.analyzeField(rasterTransfo, dataDepth, 'pfd')
-    maxPFVCrossMax, PFVCrossMax, PFVCrossMean = aT.analyzeField(rasterTransfo, dataSpeed, 'pfv')
-
     resultsAreaAnalysis = {}
     resultsAreaAnalysis['resType'] = resType
-    resultsAreaAnalysis['ppr'] = {'transformedRasters' : dataPressure,
-                                  'maxaCrossMax' : maxPPRCrossMax,
-                                  'aCrossMax' : PPRCrossMax,
-                                  'aCrossMean' : PPRCrossMean}
-    resultsAreaAnalysis['pfd'] = {'transformedRasters' : dataDepth,
-                                  'maxaCrossMax' : maxPFDCrossMax,
-                                  'aCrossMax' : PFDCrossMax,
-                                  'aCrossMean' : PFDCrossMean}
-    resultsAreaAnalysis['pfv'] = {'transformedRasters' : dataSpeed,
-                                  'maxaCrossMax' : maxPFVCrossMax,
-                                  'aCrossMax' : PFVCrossMax,
-                                  'aCrossMean' : PFVCrossMean}
+    # get max and mean values along path for cross profiles
+    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataPressure, 'ppr', resultsAreaAnalysis)
+    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataDepth, 'pfd', resultsAreaAnalysis)
+    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataSpeed, 'pfv', resultsAreaAnalysis)
 
     # compute runout based on resType
     runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
@@ -510,17 +484,17 @@ def postProcessAIMECReport(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlag
     resAnalysis['resType'] = resType
     resAnalysis['runout'] = runout
     resAnalysis['runoutMean'] = runoutMean
-    resAnalysis['MMPPR'] = maxPPRCrossMax
-    resAnalysis['MMPFD'] = maxPFDCrossMax
-    resAnalysis['MMPFV'] = maxPFVCrossMax
+    resAnalysis['MMPPR'] = resultsAreaAnalysis['ppr']['maxaCrossMax']
+    resAnalysis['MMPFD'] = resultsAreaAnalysis['pfd']['maxaCrossMax']
+    resAnalysis['MMPFV'] = resultsAreaAnalysis['pfv']['maxaCrossMax']
     resAnalysis['elevRel'] = elevRel
     resAnalysis['deltaH'] = deltaH
-    resAnalysis['PPRCrossMax'] = PPRCrossMax
-    resAnalysis['PPRCrossMean'] = PPRCrossMean
-    resAnalysis['PFDCrossMax'] = PFDCrossMax
-    resAnalysis['PFDCrossMean'] = PFDCrossMean
-    resAnalysis['PFVCrossMax'] = PFVCrossMax
-    resAnalysis['PFVCrossMean'] = PFVCrossMean
+    resAnalysis['PPRCrossMax'] = resultsAreaAnalysis['ppr']['aCrossMax']
+    resAnalysis['PPRCrossMean'] = resultsAreaAnalysis['ppr']['aCrossMean']
+    resAnalysis['PFDCrossMax'] = resultsAreaAnalysis['pfd']['aCrossMax']
+    resAnalysis['PFDCrossMean'] = resultsAreaAnalysis['pfd']['aCrossMean']
+    resAnalysis['PFVCrossMax'] = resultsAreaAnalysis['pfv']['aCrossMax']
+    resAnalysis['PFVCrossMean'] = resultsAreaAnalysis['pfv']['aCrossMean']
     resAnalysis['thresholdValue'] = thresholdValue
     resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
     resAnalysis['TP'] = TP
@@ -563,14 +537,10 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
     dataResType = newRasters['newRaster' + resType.upper()]
     transformedDEMRasters = newRasters['newRasterDEM']
 
-    # get max and mean values along path for cross profiles
-    maxPCrossMax, PCrossMax, PCrossMean = aT.analyzeField(rasterTransfo, dataResType, resType)
     resultsAreaAnalysis = {}
     resultsAreaAnalysis['resType'] = resType
-    resultsAreaAnalysis[resType] = {'transformedRasters' : dataResType,
-                                  'maxaCrossMax' : maxPCrossMax,
-                                  'aCrossMax' : PCrossMax,
-                                  'aCrossMean' : PCrossMean}
+    # get max and mean values along path for cross profiles
+    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataResType, resType, resultsAreaAnalysis)
 
     # compute runout based on resType
     runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
@@ -583,11 +553,11 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
     resAnalysis['resType'] = resType
     resAnalysis['runout'] = runout
     resAnalysis['runoutMean'] = runoutMean
-    resAnalysis['MM' + resType.upper()] = maxPCrossMax
+    resAnalysis['MM' + resType.upper()] = resultsAreaAnalysis[resType]['maxaCrossMax']
     resAnalysis['elevRel'] = elevRel
     resAnalysis['deltaH'] = deltaH
-    resAnalysis[resType.upper() + 'CrossMax'] = PCrossMax
-    resAnalysis[resType.upper() + 'CrossMean'] = PCrossMean
+    resAnalysis[resType.upper() + 'CrossMax'] = resultsAreaAnalysis[resType]['aCrossMax']
+    resAnalysis[resType.upper() + 'CrossMean'] = resultsAreaAnalysis[resType]['aCrossMean']
     resAnalysis['thresholdValue'] = thresholdValue
     resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
     resAnalysis['TP'] = TP

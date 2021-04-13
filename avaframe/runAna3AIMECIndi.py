@@ -43,9 +43,9 @@ cfgSetup = cfg['AIMECSETUP']
 anaMod = cfgSetup['anaMod']
 resType = cfgSetup['resType']
 
-inputDir = os.path.join(avalancheDir, 'seedAnalysis')
+
 # Setup input from com1DFA
-pathDict = dfa2Aimec.indiDfa2Aimec(avalancheDir, resType, inputDir=inputDir)
+pathDict = dfa2Aimec.indiDfa2Aimec(avalancheDir, resType, comModule=anaMod, inputDir='')
 
 # TODO: define referenceFile
 pathDict['numSim'] = len(pathDict[resType])
