@@ -203,14 +203,14 @@ def mainDfa2Aimec(avaDir, comModule='com1DFA'):
     return pathDict
 
 
-def indiDfa2Aimec(avaDir, suffix, comModule='com1DFA'):
+def indiDfa2Aimec(avaDir, suffix, comModule='com1DFA', inputDir=''):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec
     pathDict = {suffix: []}
 
     # Setup input from com1DFA and save file paths to dictionary
-    pathDict = fU.getDFADataPaths(avaDir, pathDict, suffix, comModule)
+    pathDict = fU.getDFADataPaths(avaDir, pathDict, suffix, comModule, inputDir=inputDir)
 
     pathDict['compType'] = ['singleModule', comModule]
 
