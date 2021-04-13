@@ -266,6 +266,10 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
     DataMass = np.array(([None] * 2))
     DataMass[0] = entMassArray
     DataMass[1] = totalMassArray
+    print('Data here', entMassArray)
+    print('Data here', type(DataMass))
+    print('Data here', DataMass[0])
+    print('Data here', DataMass[1])
     ############################################
     # Figure: Pressure depth speed
 
@@ -286,16 +290,17 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
     ax2.spines['right'].set_color('r')
     ax2.tick_params(axis='y', colors='r')
     ax2.plot(time, (dataMass[0, :]-dataMass[1, :])/dataMass[0, :]*100, 'r', label='Difference')
-    ax2.set_ylabel('Entrained Mass Difference relative to total mass [%]', color='r')
 
-    axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[0, :])+np.nanmax(dataMass[0, :]))/2, 'Entrained Mass Difference : %.2f kg \n Relative to entrained mass : %.2f %% \n Relative to total mass : %.2f %% ' %
+    if np.any(entMass):
+        axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[0, :])+np.nanmax(dataMass[0, :]))/2, 'Entrained Mass Difference : %.2f kg \n Relative to entrained mass : %.2f %% \n Relative to total mass : %.2f %% ' %
              ((entMass[0]-entMass[1]), (entMass[0]-entMass[1])/entMass[0]*100, (entMass[0]-entMass[1])/finalMass[0]*100),
              bbox=dict(boxstyle="square", ec='white', fc='white'),
              horizontalalignment='left', verticalalignment='bottom')
+        ax2.set_ylabel('Entrained Mass Difference relative to total mass [%]', color='r')
+    else:
+        ax2.set_ylabel('Mass Difference relative to total mass [%]', color='r')
 
     outFileName = '_'.join([projectName, 'massAnalysis'])
-
-
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
 
