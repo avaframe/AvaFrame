@@ -469,9 +469,9 @@ def postProcessAIMECReport(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlag
     resultsAreaAnalysis = {}
     resultsAreaAnalysis['resType'] = resType
     # get max and mean values along path for cross profiles
-    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataPressure, 'ppr', resultsAreaAnalysis)
-    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataDepth, 'pfd', resultsAreaAnalysis)
-    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataSpeed, 'pfv', resultsAreaAnalysis)
+    resTypesAnalysed = ['ppr', 'pfd', 'pfv']
+    for resTypeA in resTypesAnalysed:
+        resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataPressure, resTypeA, resultsAreaAnalysis)
 
     # compute runout based on resType
     runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
