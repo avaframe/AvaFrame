@@ -791,7 +791,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
         # false positive: result1(mask)=0, result2(rasterdata)=1
         # true negative: result1(mask)=0, result2(rasterdata)=0
         """
-        for dataLim, j in zip(thresholdArray, np.arange(5)):
+        for dataLim, j in zip(thresholdArray, np.arange(nLevels)):
             # take first simulation as reference
             refMask = copy.deepcopy(data[nRef])
             # prepare mask for area resAnalysis
