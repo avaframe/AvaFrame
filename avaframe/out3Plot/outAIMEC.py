@@ -266,10 +266,6 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
     DataMass = np.array(([None] * 2))
     DataMass[0] = entMassArray
     DataMass[1] = totalMassArray
-    print('Data here', entMassArray)
-    print('Data here', type(DataMass))
-    print('Data here', DataMass[0])
-    print('Data here', DataMass[1])
     ############################################
     # Figure: Pressure depth speed
 

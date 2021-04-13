@@ -668,7 +668,7 @@ def computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transforme
     return runout, runoutMean, elevRel, deltaH
 
 
-def analyzeField(rasterTransfo, transformedRasters, dataType):
+def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysis):
     """ Analyse transformed field
 
     Analyse transformed rasters
@@ -713,7 +713,12 @@ def analyzeField(rasterTransfo, transformedRasters, dataType):
         maxaCrossMax[i], aCrossMax[i], aCrossMean[i] = getMaxMeanValues(rasterData, rasterArea)
         log.debug('{: <10} {:<10.4f}'.format(*[i+1, maxaCrossMax[i]]))
 
-    return maxaCrossMax, aCrossMax, aCrossMean
+    resultsAreaAnalysis[dataType] = {'transformedRasters' : transformedRasters,
+                                  'maxaCrossMax' : maxaCrossMax,
+                                  'aCrossMax' : aCrossMax,
+                                  'aCrossMean' : aCrossMean}
+
+    return resultsAreaAnalysis
 
 
 def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
