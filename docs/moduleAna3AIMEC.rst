@@ -2,9 +2,17 @@ ana3AIMEC: Aimec
 ==========================
 
 Aimec is a post-processing module to analyze and compare results from avalanche simulations.
-It enables the comparison of different simulations (with different input parameters variations for example)
+It enables the comparison of different simulations (with different input parameters variations for example, or from different models)
 of the same avalanche (meaning using the same DEM and going down the same avalanche path) in a standardized way.
 
+In ``AvaFrame/avaframe/``, three different run scripts are provided that show examples on how to use the postprocessing module aimec can be used.
+These examples include:
+
+* full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations)
+* using aimec to compare the results of two different computational modules (for one simulation at a time)
+* using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations)
+
+Here is an example worflow for the full aimec analysis, as provided in ``runAna3AIMEC.py``:
 
 Inputs
 -------
@@ -26,10 +34,11 @@ To run
 -------
 
 * copy ``ana3AIMECCfg.py`` to ``local_ana3AIMECCfg.py`` (if not, the standard settings are used)
-* enter path to the desired ``NameOfAvalanche/`` folder in ``AvaFrame/avaframe/avaframeCfg.ini``
+* enter path to the desired ``NameOfAvalanche/`` folder in your local copy of ``AvaFrame/avaframe/avaframeCfg.ini``
 * in ``AvaFrame/avaframe/`` run::
 
       python3 runAna3AIMEC.py
+
 
 .. _Theory:
 
@@ -220,10 +229,15 @@ Configuration parameters
 ---------------------------------
 
 :domainWidth: width of the domain around the avalanche path in [m]
-:runoutAngle: angle of the slope at the start of the run-out zone [°]
-:pressureLimit: pressure limit value for evaluation of runout in [kPa]
+:startOfRunoutAngle: angle of the slope at the start of the run-out zone [°]
+:resType: data result type for runout analysis
+:thresholdValue: limit value for evaluation of runout (according to the chosen resType)
+:contourLevels: contour levels for difference plot (according to the chosen resType)
+:diffLim: max/min of chosen resType displayed in difference plot
 :interpMethod: interpolation method used to project the a point on the input raster (chose between 'nearest' and 'bilinear')
 :distance: re-sampling distance. The given avalanche path is re-sampled with a 10m (default) step.
+:anaMod: computational module used to perform ava simulations
+:comModules: two computational modules used to perform ava simulations in order to compare the results
 :plotFigure: plot figures; default False
 :savePlot: Save figures; default True
 :WriteRes: Write result to file: default True
