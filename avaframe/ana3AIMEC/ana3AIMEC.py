@@ -84,13 +84,13 @@ def AIMEC2Report(cfgPath, cfg):
 
     # Analyze data
     log.debug('Analyzing data in path coordinate system')
-    resAnalysis = postProcessAIMECReport(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
+    resAnalysis = postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
 
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
-    print(cfgSetup)
+
     plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
     resAnalysis['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
 
@@ -374,7 +374,7 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
                     ref = False sim2 = False
     """
     # read inputs
-    fnameMass = cfgPath['mb']
+    flagMass = cfgFlags.getboolean('flagMass')
     dataPressure = newRasters['newRasterPPR']
     dataDepth = newRasters['newRasterPFD']
     dataSpeed = newRasters['newRasterPFV']
@@ -385,93 +385,10 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
 
     resultsAreaAnalysis = {}
     resultsAreaAnalysis['resType'] = resType
-    resTypesAnalysed = ['ppr', 'pfd', 'pfv']
-    for resTypeA in resTypesAnalysed:
-        resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataPressure, resTypeA, resultsAreaAnalysis)
-
-    # compute runout based on resType
-    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
-
-    runoutLength = runout[0]
-    TP, FN, FP, TN, _ = aT.analyzeArea(rasterTransfo, runoutLength, resultsAreaAnalysis[resType]['transformedRasters'], cfgSetup, cfgPath, cfgFlags)
-
-    releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = aT.analyzeMass(fnameMass)
-
-    # affect values to output dictionary
-    resAnalysis = {}
-    resAnalysis['resType'] = resType
-    resAnalysis['runout'] = runout
-    resAnalysis['runoutMean'] = runoutMean
-    resAnalysis['MMPPR'] = resultsAreaAnalysis['ppr']['maxaCrossMax']
-    resAnalysis['MMPFD'] = resultsAreaAnalysis['pfd']['maxaCrossMax']
-    resAnalysis['MMPFV'] = resultsAreaAnalysis['pfv']['maxaCrossMax']
-    resAnalysis['elevRel'] = elevRel
-    resAnalysis['deltaH'] = deltaH
-    resAnalysis['relMass'] = releaseMass
-    resAnalysis['entMass'] = entrainedMass
-    resAnalysis['entMassArray'] = entMassArray
-    resAnalysis['totalMassArray'] = totalMassArray
-    resAnalysis['time'] = time
-    resAnalysis['finalMass'] = finalMass
-    resAnalysis['relativMassDiff'] = relativMassDiff
-    resAnalysis['growthIndex'] = grIndex
-    resAnalysis['growthGrad'] = grGrad
-    resAnalysis['PPRCrossMax'] = resultsAreaAnalysis['ppr']['aCrossMax']
-    resAnalysis['PPRCrossMean'] = resultsAreaAnalysis['ppr']['aCrossMean']
-    resAnalysis['PFDCrossMax'] = resultsAreaAnalysis['pfd']['aCrossMax']
-    resAnalysis['PFDCrossMean'] = resultsAreaAnalysis['pfd']['aCrossMean']
-    resAnalysis['PFVCrossMax'] = resultsAreaAnalysis['pfv']['aCrossMax']
-    resAnalysis['PFVCrossMean'] = resultsAreaAnalysis['pfv']['aCrossMean']
-    resAnalysis['thresholdValue'] = thresholdValue
-    resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
-    resAnalysis['TP'] = TP
-    resAnalysis['FN'] = FN
-    resAnalysis['FP'] = FP
-    resAnalysis['TN'] = TN
-
-    return resAnalysis
-
-
-def postProcessAIMECReport(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
-    """ Analyse pressure, depth and speed transformed data
-
-    Analyse pressure depth and speed.
-    Calculate runout, Max Peak Pressure, Average PP...
-    Mass is currently not included
-
-    Parameters
-    ----------
-    rasterTransfo: dict
-        transformation information
-    newRasters: dict
-        dictionary containing pressure, velocity and flow depth rasters after
-        transformation
-    cfgSetup: dict
-        parameters for data analysis
-    cfgPath: dict
-        path to data to analyse
-
-    Returns
-    -------
-    resAnalysis: dict
-        resAnalysis dictionary containing all results:
-
-    """
-    # read inputs
-    dataPressure = newRasters['newRasterPPR']
-    dataDepth = newRasters['newRasterPFD']
-    dataSpeed = newRasters['newRasterPFV']
-    transformedDEMRasters = newRasters['newRasterDEM']
-
-    resType = cfgSetup['resType']
-    thresholdValue = cfgSetup.getfloat('thresholdValue')
-
-    resultsAreaAnalysis = {}
-    resultsAreaAnalysis['resType'] = resType
-    # get max and mean values along path for cross profiles
-    resTypesAnalysed = ['ppr', 'pfd', 'pfv']
-    for resTypeA in resTypesAnalysed:
-        resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataPressure, resTypeA, resultsAreaAnalysis)
+    # analyize all fields
+    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataPressure, 'ppr', resultsAreaAnalysis)
+    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataDepth, 'pfd', resultsAreaAnalysis)
+    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataSpeed, 'pfv', resultsAreaAnalysis)
 
     # compute runout based on resType
     runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
@@ -502,6 +419,20 @@ def postProcessAIMECReport(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlag
     resAnalysis['FP'] = FP
     resAnalysis['TN'] = TN
     resAnalysis['areasPlot'] = {'Aimec area analysis': compPlotPath}
+
+    if flagMass:
+        # perform mass analysis
+        fnameMass = cfgPath['mb']
+        releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = aT.analyzeMass(fnameMass)
+        resAnalysis['relMass'] = releaseMass
+        resAnalysis['entMass'] = entrainedMass
+        resAnalysis['entMassArray'] = entMassArray
+        resAnalysis['totalMassArray'] = totalMassArray
+        resAnalysis['time'] = time
+        resAnalysis['finalMass'] = finalMass
+        resAnalysis['relativMassDiff'] = relativMassDiff
+        resAnalysis['growthIndex'] = grIndex
+        resAnalysis['growthGrad'] = grGrad
 
     return resAnalysis
 

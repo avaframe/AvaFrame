@@ -121,6 +121,12 @@ for test in testList:
         cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
         cfgAimecSetup = cfgAimec['AIMECSETUP']
         cfgAimecSetup['testName'] = test['NAME']
+        cfgAimec['AIMECSETUP']['resType'] = 'ppr'
+        cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
+        cfgAimec['AIMECSETUP']['diffLim'] = '5'
+        cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
+        cfgAimec['FLAGS']['flagMass'] = 'False'
+        cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFAPy'
 
         # Setup input from com1DFA and reference
         pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
