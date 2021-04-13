@@ -7,6 +7,7 @@
 
 # Load modules
 import time
+import os
 
 # Local imports
 from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools
@@ -42,14 +43,15 @@ cfgSetup = cfg['AIMECSETUP']
 anaMod = cfgSetup['anaMod']
 resType = cfgSetup['resType']
 
+inputDir = os.path.join(avalancheDir, 'seedAnalysis')
 # Setup input from com1DFA
-pathDict = dfa2Aimec.indiDfa2Aimec(avalancheDir, resType, comModule=anaMod)
+pathDict = dfa2Aimec.indiDfa2Aimec(avalancheDir, resType, inputDir=inputDir)
 
 # TODO: define referenceFile
 pathDict['numSim'] = len(pathDict[resType])
 pathDict['referenceFile'] = 0
 
-pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
+pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName='test')
 
 startTime = time.time()
 
