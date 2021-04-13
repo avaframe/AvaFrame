@@ -428,7 +428,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
     ax2.set_ylim([s[indStartOfRunout], y_lim])
-    ax2.set_title('Difference current - reference in runout area' + '\n' + 'Blue = FN, Red = FP')
+    ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
 
     outFileName = '_'.join([projectName, 'plim', str(int(thresholdValue)),  'sim', str(i), 'AreaComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
@@ -464,7 +464,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
     cmap = pU.cmapdiv
     cmap.set_bad(color='w')
-    elev_max = 5
+    elev_max = inputs['diffLim']
     ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s[indStartOfRunout:].min(), s[indStartOfRunout:].max()],
                          cmap=cmap)
@@ -479,7 +479,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         contourRef.collections[j].set_label(labels[j])
 
     ax2.set_title(
-        '%s contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
+        '%s difference and contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
 
     if cfgPath['compType'][0] == 'comModules':
         namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
