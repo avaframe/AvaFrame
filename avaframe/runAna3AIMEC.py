@@ -41,6 +41,12 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 cfgSetup = cfg['AIMECSETUP']
 anaMod = cfgSetup['anaMod']
 
+# set parameter for standard aimec analysis
+cfgSetup['resType'] = 'ppr'
+cfgSetup['thresholdValue'] = '1'
+cfgSetup['diffLim'] = '5'
+cfgSetup['contourLevels'] = '1|3|5|10'
+
 # Setup input from com1DFA
 pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, comModule=anaMod)
 

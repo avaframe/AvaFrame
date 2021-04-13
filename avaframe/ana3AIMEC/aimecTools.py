@@ -774,6 +774,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
     thresholdArray = contourLevels
     thresholdArray = np.append(thresholdArray, thresholdValue)
     inputs['thresholdArray'] = thresholdArray
+    inputs['diffLim'] = cfgSetup.getfloat('diffLim')
 
     for i in range(nTopo):
         rasterdata = data[i]

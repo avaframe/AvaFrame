@@ -269,6 +269,8 @@ def getDFADataPaths(avaDir, pathDict, suffix, comModule):
 
     # Lead all infos on simulations
     inputDir = os.path.join(avaDir, 'Outputs', comModule, 'peakFiles')
+    if os.path.isdir(inputDir) == False:
+        log.error('Input directory does not exist - check anaMod')
     data = makeSimDict(inputDir)
     for m in range(len(data['files'])):
         if data['resType'][m] == suffix:
