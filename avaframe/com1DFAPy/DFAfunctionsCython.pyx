@@ -257,7 +257,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
       nxAvg, nyAvg, nzAvg = normalize(nxAvg, nyAvg, nzAvg)
 
       # acceleration due to curvature
-      accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
+      accNormCurv = 0*(ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
       # normal component of the acceleration of gravity
       gravAccNorm = - gravAcc * nzAvg
       # turn off curvature with the  curvAcceleration coefficient
@@ -299,7 +299,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
       if uMag<velMagMin:
         uMag = velMagMin
       forceBotTang = - areaPart * tau
-      forceFrict[j] = forceFrict[j] - forceBotTang/uMag
+      forceFrict[j] = forceFrict[j] - forceBotTang#/uMag
 
       # compute entrained mass
       entrMassCell = entrMassRaster[indCellY, indCellX]
@@ -487,6 +487,7 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double[:] YNew = np.zeros(Npart, dtype=np.float64)
   cdef double[:] ZNew = np.zeros(Npart, dtype=np.float64)
   cdef double[:] SNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] LNew = np.zeros(Npart, dtype=np.float64)
   cdef double[:] UXNew = np.zeros(Npart, dtype=np.float64)
   cdef double[:] UYNew = np.zeros(Npart, dtype=np.float64)
   cdef double[:] UZNew = np.zeros(Npart, dtype=np.float64)
@@ -545,11 +546,31 @@ def updatePositionC(cfg, particles, dem, force):
     uyNew = uy + ForceDriveY * dt / m
     uzNew = uz + ForceDriveZ * dt / m
 
-    xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
-    uxNew = uxNew / (1.0 + dt * forceFrict[j] / m)
-    uyNew = uyNew / (1.0 + dt * forceFrict[j] / m)
-    uzNew = uzNew / (1.0 + dt * forceFrict[j] / m)
-    dtStop = dt
+    uMagNew = norm(uxNew, uyNew, uzNew)
+    # will friction force stop the particle
+    if uMagNew<dt*forceFrict[j]/m:
+      # stop the particle
+      uxNew = 0
+      uyNew = 0
+      uzNew = 0
+      # particle stops after
+      if uMag<=0:
+        dtStop = 0
+      else:
+        dtStop = m * uMagNew / (dt * forceFrict[j])
+    else:
+      # add friction force in the opposite direction of the motion
+      xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
+      uxNew = uxNew - xDir * forceFrict[j] * dt / m
+      uyNew = uyNew - yDir * forceFrict[j] * dt / m
+      uzNew = uzNew - zDir * forceFrict[j] * dt / m
+      dtStop = dt
+
+    # xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
+    # uxNew = uxNew / (1.0 + dt * forceFrict[j] / m)
+    # uyNew = uyNew / (1.0 + dt * forceFrict[j] / m)
+    # uzNew = uzNew / (1.0 + dt * forceFrict[j] / m)
+    # dtStop = dt
 
     # update mass (already done un computeForceC)
     mNew = m
@@ -598,11 +619,13 @@ def updatePositionC(cfg, particles, dem, force):
     UYNew[j] = uyNew
     UZNew[j] = uzNew
     SNew[j] = sNew
+    LNew[j] = lNew
     MNew[j] = mNew
   particles['ux'] = np.asarray(UXNew)
   particles['uy'] = np.asarray(UYNew)
   particles['uz'] = np.asarray(UZNew)
   particles['s'] = np.asarray(SNew)
+  particles['l'] = np.asarray(LNew)
   particles['m'] = np.asarray(MNew)
   particles['mTot'] = np.sum(particles['m'])
   particles['x'] = np.asarray(XNew)

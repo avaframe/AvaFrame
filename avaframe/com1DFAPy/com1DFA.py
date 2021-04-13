@@ -1084,6 +1084,9 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
         particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, gradient=0)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
+    force['forceSPHX'] = 0*force['forceSPHX']
+    force['forceSPHY'] = 0*force['forceSPHY']
+    force['forceSPHZ'] = 0*force['forceSPHZ']
 
     hmin = cfg.getfloat('hmin')
 
