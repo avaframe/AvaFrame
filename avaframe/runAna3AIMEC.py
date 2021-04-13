@@ -41,7 +41,7 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 cfgSetup = cfg['AIMECSETUP']
 anaMod = cfgSetup['anaMod']
 
-# set parameter for standard aimec analysis
+# set parameter for standard aimec analysis with mass analysis
 cfgSetup['resType'] = 'ppr'
 cfgSetup['thresholdValue'] = '1'
 cfgSetup['diffLim'] = '5'
