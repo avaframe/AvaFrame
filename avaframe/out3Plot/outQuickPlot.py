@@ -131,8 +131,6 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     # for difference histogramm - remove dataDiff == 0 values from array
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
-    axin2 = ax3.inset_axes([0.6, 0.1, 0.4, 0.25])
-    axin2.patch.set_alpha(0.0)
 
     ax4 = fig.add_subplot(224)
     cmap = pU.cmapdiv
@@ -163,13 +161,18 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax4.set_aspect('auto')
     ax4.set_xlabel('x [m]')
 
-    axin4 = ax4.inset_axes([0.6, 0.1, 0.4, 0.25])
-    axin4.patch.set_alpha(0.0)
+    indDiff = dataDiffPlot > 0
+    if indDiff.any():
+        axin3 = ax3.inset_axes([0.6, 0.1, 0.4, 0.25])
+        axin3.patch.set_alpha(0.0)
 
-    centiles = sPlot.plotHistCDFDiff(dataDiffPlot, axin4, axin2)
-    ax4.text(nybox, nxbox, '95%% centile: %.2e %s\n 99%% centile: %.2e %s' %
-             (centiles[0], unit, centiles[1], unit),
-             horizontalalignment='left', verticalalignment='bottom')
+        axin4 = ax4.inset_axes([0.6, 0.1, 0.4, 0.25])
+        axin4.patch.set_alpha(0.0)
+
+        centiles = sPlot.plotHistCDFDiff(dataDiffPlot, axin4, axin3)
+        ax4.text(nybox, nxbox, '95%% centile: %.2e %s\n 99%% centile: %.2e %s' %
+                 (centiles[0], unit, centiles[1], unit),
+                 horizontalalignment='left', verticalalignment='bottom')
 
     fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
 
