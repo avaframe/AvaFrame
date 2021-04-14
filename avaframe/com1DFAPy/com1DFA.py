@@ -49,10 +49,6 @@ featLF = False
 featCFL = False
 featCFLConstrain = False
 
-# initiate random generator
-seed = 12345
-rng = np.random.default_rng(seed)
-
 
 def com1DFAMain(cfg, avaDir, relThField):
     """ Run main model
@@ -569,6 +565,10 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         # plt.plot(particles['y'], particles['z'], 'k+')
         # plt.show()
     else:
+        # initiate random generator
+        seed = 12345
+        rng = np.random.default_rng(seed)
+
         Npart = 0
         NPPC = np.empty(0)
         Apart = np.empty(0)
@@ -585,7 +585,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
             hCell = relRaster[indRely, indRelx]
             volCell = areaRaster[indRely, indRelx] * hCell
             massCell = volCell * rho
-            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart)
+            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng)
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
             # initialize field Flow depth
@@ -696,7 +696,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     return particles, fields
 
 
-def placeParticles(massCell, indx, indy, csz, massPerPart):
+def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
     """ Create particles in given cell
 
     Compute number of particles to create in a given cell.
