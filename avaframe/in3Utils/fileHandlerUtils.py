@@ -139,7 +139,6 @@ def extractParameterInfo(avaDir, simName, reportD):
     parameterDict['CPU time [s]'] = stopTime
 
     reportD['Simulation Parameters'].update({'Stop criterion': parameterDict['stop criterion']})
-    #reportD['Simulation Parameters'].update({'CPU time [s]': parameterDict['CPU time [s]']})
     reportD['Simulation Parameters'].update({'Avalanche run time [s]': parameterDict['final time step [s]']})
 
     return parameterDict, reportD
