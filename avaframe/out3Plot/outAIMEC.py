@@ -453,8 +453,8 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
                                                        np.nanmax((refData)),
                                                        continuous=pU.contCmap)
     cmap.set_under(color='w')
-    ref0, im = pU.NonUnifIm(ax1, l, s, refData, 'l [m]', 's [m]',
-                         extent=[l.min(), l.max(), s.min(), s.max()],
+    ref0, im = pU.NonUnifIm(ax1, l, s, refDataPressure, 'l [m]', 's [m]',
+                         extent=[l.min(), l.max(), 0, yLim],
                          cmap=cmap, norm=norm)
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
