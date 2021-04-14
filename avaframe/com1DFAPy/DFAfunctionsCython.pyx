@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 
 
 ctypedef double dtypef_t
-ctypedef long dtypel_t
+ctypedef int dtypel_t
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -186,8 +186,8 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double[:, :] VZ = fields['Vz']
   cdef double[:, :] entrMassRaster = fields['entrMassRaster']
   cdef double[:, :] cResRaster = fields['cResRaster']
-  cdef long[:] IndCellX = particles['indX']
-  cdef long[:] IndCellY = particles['indY']
+  cdef int[:] indXDEM = particles['indXDEM']
+  cdef int[:] indYDEM = particles['indYDEM']
   # initialize outputs
   cdef double[:] Fnormal = np.zeros(Npart, dtype=np.float64)
   cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
@@ -196,7 +196,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double[:] forceFrict = np.zeros(Npart, dtype=np.float64)
   cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
   # declare intermediate step variables
-  cdef long indCellX, indCellY
+  cdef int indCellX, indCellY
   cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
   cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
   cdef double x, y, z, ux, uy, uz, uxDir, uyDir, uzDir
@@ -213,8 +213,8 @@ def computeForceC(cfg, particles, fields, dem, dT):
       ux = UX[j]
       uy = UY[j]
       uz = UZ[j]
-      indCellX = IndCellX[j]
-      indCellY = IndCellY[j]
+      indCellX = indXDEM[j]
+      indCellY = indYDEM[j]
       # deduce area
       areaPart = m / (h * rho)
       # get normal at the particle location
@@ -346,8 +346,8 @@ def computeForceC(cfg, particles, fields, dem, dT):
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
   for j in range(Npart):
-    indCellX = IndCellX[j]
-    indCellY = IndCellY[j]
+    indCellX = indXDEM[j]
+    indCellY = indYDEM[j]
     entrMassCell = entrMassRaster[indCellY, indCellX]
     areaCell = areaRatser[indCellY, indCellX]
     dm = dM[j]
@@ -492,7 +492,6 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double[:] UZNew = np.zeros(Npart, dtype=np.float64)
 
   cdef double[:] mass = particles['m']
-  cdef double[:] H = particles['h']
   cdef double[:] S = particles['s']
   cdef double[:] L = particles['l']
   cdef double[:] X = particles['x']
@@ -684,8 +683,6 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PFV = fields['pfv']
   cdef double[:, :] PP = fields['ppr']
   cdef double[:, :] PFD = fields['pfd']
-  cdef long[:] IndX = particles['indX']
-  cdef long[:] IndY = particles['indY']
   cdef int nrow = int(nrows)
   cdef int ncol = int(ncols)
   cdef int Lxy[4]
@@ -697,7 +694,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef int Npart = np.size(particles['x'])
   cdef double[:] hBB = np.zeros((Npart))
   cdef int j, i
-  cdef long indx, indy
+  cdef int indx, indy
 
   for j in range(Npart):
     x = X[j]
@@ -754,8 +751,8 @@ def updateFieldsC(cfg, particles, dem, fields):
     x = X[j]
     y = Y[j]
     hbb = getScalar(x, y, FDBilinear, csz, interpOption)
-    indx = IndX[j]
-    indy = IndY[j]
+    # indx = indXDEM[j]
+    # indy = indYDEM[j]
     # areaPart = areaRaster[indy, indx]
     # hLim = mass[j]/(rho*aPart)
     # if hbb< hLim:
@@ -770,30 +767,41 @@ def updateFieldsC(cfg, particles, dem, fields):
 
   return particles, fields
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
 def getNeighboursC(particles, dem):
-    """ Locate particles in cell for SPH computation (for loop implementation)
+    """ Locate particles on DEM and SPH grid
 
-    Ĺocate each particle in a grid cell and build the indPartInCell and
-    partInCell arrays. See issue #200 and documentation for details
+    Ĺocate each particle in a grid cell (both DEM and SPH grid) and build the
+    indPartInCell and partInCell arrays for SPH neighbourSearch and
+    InCell, IndX and IndY arrays location on the DEM grid.
+    See issue #200 and documentation for details
 
     Parameters
     ----------
     particles : dict
     dem : dict
+      dem dict with SPH header (information about SPH grid)
 
     Returns
     -------
     particles : dict
-      updated particles dictionary with indPartInCell and partInCell arrays
+      updated particles dictionary with
+      neighbouts info indPartInCell and partInCell arrays for SPH and
+      with InCell, IndX and IndY arrays location on the DEM grid
     """
-    # get grid information
+    # get DEM grid information
     header = dem['header']
-    cdef int ncols = header.ncols
-    cdef int nrows = header.nrows
-    cdef float csz = header.cellsize
+    cdef int ncolsDEM = header.ncols
+    cdef int nrowsDEM = header.nrows
+    cdef float cszDEM = header.cellsize
+    # get SPH grid information
+    headerSPH = dem['headerSPH']
+    cdef int ncolsSPH = headerSPH.ncols
+    cdef int nrowsSPH = headerSPH.nrows
+    cdef float cszSPH = headerSPH.cellsize
     # get particle location
     cdef int Npart = particles['Npart']
     cdef int j
@@ -801,39 +809,40 @@ def getNeighboursC(particles, dem):
     cdef double[:] y = particles['y']
 
     # initialize outputs
-    cdef int Ncells = (ncols-1)*(nrows-1)
-    cdef long[:] indPartInCell = np.zeros(Ncells + 1).astype('int')
-    cdef long[:] indPartInCell2 = np.zeros(Ncells + 1).astype('int')
-    cdef long[:] partInCell = np.zeros(Npart).astype('int')
-    cdef long[:] indX = np.zeros(Npart).astype('int')
-    cdef long[:] indY = np.zeros(Npart).astype('int')
-    cdef long[:] InCell = np.zeros(Npart).astype('int')
-    # Count number of particles in each cell
-    cdef long indx, indy, ic
+    cdef int NcellsSPH = (ncolsSPH-1)*(nrowsSPH-1)
+    cdef int[:] indPartInCell = np.zeros(NcellsSPH + 1).astype('intc')
+    cdef int[:] indPartInCell2 = np.zeros(NcellsSPH + 1).astype('intc')
+    cdef int[:] partInCell = np.zeros(Npart).astype('intc')
+    cdef int[:] indXDEM = np.zeros(Npart).astype('intc')
+    cdef int[:] indYDEM = np.zeros(Npart).astype('intc')
+    cdef int[:] inCellDEM = np.zeros(Npart).astype('intc')
+    # Count number of particles in each SPH grid cell
+    cdef int indx, indy, ic
     for j in range(Npart):
-      indx = int(x[j] / csz)
-      indy = int(y[j] / csz)
+      indx = int(x[j] / cszSPH)
+      indy = int(y[j] / cszSPH)
       # get index of cell containing the particle
-      ic = indx + (ncols-1) * indy
+      ic = indx + (ncolsSPH-1) * indy
       indPartInCell[ic+1] = indPartInCell[ic+1] + 1
-    for j in range(Ncells):
+    for j in range(NcellsSPH):
       indPartInCell[j+1] = indPartInCell[j] + indPartInCell[j+1]
       indPartInCell2[j+1] = indPartInCell[j+1]
 
     # make the list of which particles are in which cell
     for j in range(Npart):
-        indx = int(x[j] / csz)
-        indy = int(y[j] / csz)
-        ic = indx + (ncols-1) * indy
+        indx = int(x[j] / cszSPH)
+        indy = int(y[j] / cszSPH)
+        ic = indx + (ncolsSPH-1) * indy
         partInCell[indPartInCell2[ic+1]-1] = j
         indPartInCell2[ic+1] = indPartInCell2[ic+1] - 1
-        indX[j] = indx
-        indY[j] = indy
-        InCell[j] = ic
+        indXDEM[j] = int(x[j] / cszDEM)
+        indYDEM[j] = int(y[j] / cszDEM)
+        # get index of cell containing the particle
+        inCellDEM[j] = indXDEM[j] + (ncolsDEM-1) * indYDEM[j]
 
-    particles['indX'] = np.asarray(indX)
-    particles['indY'] = np.asarray(indY)
-    particles['InCell'] = np.asarray(InCell)
+    particles['inCellDEM'] = np.asarray(inCellDEM)
+    particles['indXDEM'] = np.asarray(indXDEM)
+    particles['indYDEM'] = np.asarray(indYDEM)
     particles['indPartInCell'] = np.asarray(indPartInCell)
     particles['partInCell'] = np.asarray(partInCell)
 
@@ -861,19 +870,16 @@ def computeForceSPHC(cfg, particles, force, dem, gradient=0):
   force : dict
       force dictionary
   """
-  # Load required parameters
-  Npart = particles['Npart']
+  # get SPH grid information
+  headerSPH = dem['headerSPH']
+  # get DEM header and normal field
   header = dem['header']
-  nrows = dem['header'].nrows
-  ncols = dem['header'].ncols
-  csz = dem['header'].cellsize
+  cszNormal = header.cellsize
   Nx = dem['Nx']
   Ny = dem['Ny']
   Nz = dem['Nz']
 
-  indX = particles['indX'].astype('int')
-  indY = particles['indY'].astype('int')
-  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, header, Nx, Ny, Nz, indX, indY, gradient)
+  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, headerSPH, cszNormal, Nx, Ny, Nz, gradient)
   forceSPHX = np.asarray(forceSPHX)
   forceSPHY = np.asarray(forceSPHY)
   forceSPHZ = np.asarray(forceSPHZ)
@@ -887,8 +893,8 @@ def computeForceSPHC(cfg, particles, force, dem, gradient=0):
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
-                 double[:, :] Nz, long[:] indX, long[:] indY, gradient):
+def computeGradC(cfg, particles, headerSPH, double cszNormal, double[:, :] Nx, double[:, :] Ny,
+                 double[:, :] Nz, gradient):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -899,17 +905,16 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
       configuration for DFA simulation
   particles : dict
       particles dictionary at t
-  header : dict
-      header dictionary
+  headerSPH : dict
+      SPH header dictionary (information about SPH grid)
+  cszNormal : double
+      cell size of normal vector Grid
   Nx : 2D numpy array
       x component of the normal vector of the DEM
   Ny : 2D numpy array
       y component of the normal vector of the DEM
   Nz : 2D numpy array
       z component of the normal vector of the DEM
-  indX : 1D numpy array
-      column index of the location of the particles
-  indY : 1D numpy array
       row index of the location of the particles
   gradient : int
     Return the gradient (if 1) or the force associated (if 0, default)
@@ -922,14 +927,26 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   GHZ : 1D numpy array
       z component of the lateral force
   """
+  # get all inputs
+  # configuration parameters
   cdef double rho = cfg.getfloat('rho')
   cdef double minRKern = cfg.getfloat('minRKern')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int SPHoption = cfg.getint('sphOption')
-  cdef double gravAcc3
-  cdef double csz = header.cellsize
+  # SPH grid information and neighbour information
+  cdef double cszSPH = headerSPH.cellsize
+  cdef int nrowsSPH = headerSPH.nrows
+  cdef int ncolsSPH = headerSPH.ncols
+  cdef int[:] indPartInCell = particles['indPartInCell']
+  cdef int[:] partInCell = particles['partInCell']
+  # SPH kernel
+  # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
+  cdef double rKernel = cszSPH
+  cdef double facKernel = 10.0 / (math.pi * rKernel * rKernel * rKernel * rKernel * rKernel)
+  cdef double dfacKernel = - 3.0 * facKernel
+  # particle information
   cdef double[:] mass = particles['m']
   cdef double[:] h = particles['h']
   cdef double[:] X = particles['x']
@@ -938,41 +955,27 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
   cdef double[:] UX = particles['ux']
   cdef double[:] UY = particles['uy']
   cdef double[:] UZ = particles['uz']
-  cdef long[:] indPartInCell = particles['indPartInCell']
-  cdef long[:] partInCell = particles['partInCell']
   cdef int N = X.shape[0]
-  cdef int nrows = header.nrows
-  cdef int ncols = header.ncols
-  # SPH kernel
-  # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
-  cdef double rKernel = csz
-  cdef double facKernel = 10.0 / (math.pi * rKernel * rKernel * rKernel * rKernel * rKernel)
-  cdef double dfacKernel = - 3.0 * facKernel
+
+  # initialize variables and outputs
   cdef double[:] GHX = np.zeros(N, dtype=np.float64)
   cdef double[:] GHY = np.zeros(N, dtype=np.float64)
   cdef double[:] GHZ = np.zeros(N, dtype=np.float64)
   cdef double K1 = 1
   cdef double K2 = 1
+  cdef double gravAcc3
   cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr
   cdef double g1, g2, g11, g12, g22, g33
   cdef double m11, m12, m22, GG1, GG2
   cdef double xx, yy, zz, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
   cdef double dx, dy, dz, dn, r, hr, dwdr
   cdef int lInd, rInd
-  cdef long indx, indy
+  cdef int indx, indy
   cdef int j, ic, n, p, l, imax, imin, iPstart, iPend
   cdef int grad = gradient
-  # cdef int pytest = Pytest
-  # cdef int[:] L = np.zeros((100), dtype=np.int32)
-  # cdef int[:] indL = np.zeros((N+1), dtype=np.int32)
-  # cdef int sum = 0
+
   # loop on particles
   for j in range(N):
-    # if pytest == 1:
-    #   sum = sum + indL[j]
-    xx = X[j]
-    yy = Y[j]
-    zz = Z[j]
     gradhX = 0
     gradhY = 0
     gradhZ = 0
@@ -981,13 +984,19 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     m11 = 0
     m12 = 0
     m22 = 0
-    indx = indX[j]
-    indy = indY[j]
+    xx = X[j]
+    yy = Y[j]
+    zz = Z[j]
     ux = UX[j]
     uy = UY[j]
     uz = UZ[j]
-    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz, interpOption)
+    # locate particle in SPH grid
+    indx = int(xx / cszSPH)
+    indy = int(yy / cszSPH)
+    # get normal vector
+    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, cszNormal, interpOption)
     nx, ny, nz = normalize(nx, ny, nz)
+    # projection of gravity on normal vector
     gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
     uMag = norm(ux, uy, uz)
     if uMag < velMagMin:
@@ -1006,19 +1015,18 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
     g1 = nx/(nz)
     g2 = ny/(nz)
 
-    # startTime = time.time()
     # check if we are on the bottom ot top row!!!
     lInd = -1
     rInd = 2
     if indy == 0:
         lInd = 0
-    if indy == nrows - 1:
+    if indy == nrowsSPH - 1:
         rInd = 1
     for n in range(lInd, rInd):
-        ic = (indx - 1) + (ncols-1) * (indy + n)
+        ic = (indx - 1) + (ncolsSPH-1) * (indy + n)
         # make sure not to take particles from the other edge
-        imax = max(ic, (ncols-1) * (indy + n))
-        imin = min(ic+3, (ncols-1) * (indy + n + 1))
+        imax = max(ic, (ncolsSPH-1) * (indy + n))
+        imin = min(ic+3, (ncolsSPH-1) * (indy + n + 1))
         iPstart = indPartInCell[imax]
         iPend = indPartInCell[imin]
         # loop on all particles in neighbour boxes
@@ -1026,9 +1034,6 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
             # index of particle in neighbour box
             l = partInCell[p]
             if j != l:
-                # if pytest == 1:
-                #   L[sum + indL[j+1]] = l
-                #   indL[j+1] = indL[j+1] + 1
                 dx = X[l] - xx
                 dy = Y[l] - yy
                 dz = Z[l] - zz
@@ -1181,16 +1186,13 @@ def computeGradC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny,
         GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc3
         GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc3
 
-  # if pytest == 1:
-  #   return GHX, GHY, GHZ, L, indL
-  # else:
   return GHX, GHY, GHZ
 
 
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, long[:] indX, long[:] indY):
+def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, int[:] indX, int[:] indY):
   """ compute flow depth at particle location (SPH flow depth)
 
   Cython implementation
@@ -1233,8 +1235,8 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   # cdef double[:] gradx = particles['gradx']
   # cdef double[:] grady = particles['grady']
   # cdef double[:] gradz = particles['gradz']
-  cdef long[:] indPartInCell = particles['indPartInCell']
-  cdef long[:] partInCell = particles['partInCell']
+  cdef int[:] indPartInCell = particles['indPartInCell']
+  cdef int[:] partInCell = particles['partInCell']
   cdef int N = X.shape[0]
   cdef int nrows = header.nrows
   cdef int ncols = header.ncols
@@ -1251,8 +1253,8 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   cdef double dx, dy, dz, r, hr, dwdr, massl, hl, ww
   cdef int lInd = -1
   cdef int rInd = 2
-  cdef long indx
-  cdef long indy
+  cdef int indx
+  cdef int indy
   cdef int ic, n, p, l, imax, imin, iPstart, iPend
   # With loop
   # loop on particles

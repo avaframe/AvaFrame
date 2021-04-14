@@ -55,7 +55,7 @@ def getNormalArray(x, y, Nx, Ny, Nz, csz):
     return nx, ny, nz
 
 
-def getNormalMesh(z, csz, num):
+def getNormalMesh(dem, num):
     """ Compute normal to surface at grid points
 
         Get the normal vectors to the surface defined by a DEM.
@@ -66,10 +66,11 @@ def getNormalMesh(z, csz, num):
 
         Parameters
         ----------
-            z: 2D numpy array
-                elevation at grid points
-            csz: float
-                cellsize of the grid
+            dem: dict
+                header :
+                    dem header (cellsize, ncols, nrows)
+                rasterData : 2D numpy array
+                    elevation at grid points
             num: int
                 chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
                        1 to use the simple cross product method (with the diagonals)
@@ -83,6 +84,13 @@ def getNormalMesh(z, csz, num):
             Nz: 2D numpy array
                 z component of the normal vector field on grid points
     """
+    # read dem header
+    header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
+    csz = header.cellsize
+    # read rasterData
+    z = dem['rasterData']
     n, m = np.shape(z)
     Nx = np.ones((n, m))
     Ny = np.ones((n, m))
@@ -249,6 +257,19 @@ def getNormalMesh(z, csz, num):
         Nx[0:n-1, m-1] = -Nx[0:n-1, m-1]
         Ny[n-1, m-1] = -Ny[n-1, m-1]
         Nx[n-1, m-1] = -Nx[n-1, m-1]
+        # TODO, Try to replicate samosAT notmal computation
+        # if method num=1 is used, the normals are computed at com1DFA (original) cell center
+        # this corresponds to our cell vertex
+        # Create com1DFA (original) vertex grid
+        x = np.linspace(-csz/2., (ncols-1)*csz - csz/2., ncols)
+        y = np.linspace(-csz/2., (nrows-1)*csz - csz/2., nrows)
+        X, Y = np.meshgrid(x, y)
+        # interpolate the normal from com1DFA (original) center to his vertex
+        # this means from our vertex to our centers
+        Nx, Ny, NzCenter = getNormalArray(X, Y, Nx, Ny, Nz, csz)
+        # this is for tracking mesh cell with actual data
+        NzCenter = np.where(np.isnan(Nx), Nz, NzCenter)
+        Nz = NzCenter
 
     return 0.5*Nx, 0.5*Ny, 0.5*Nz
 

@@ -489,7 +489,7 @@ def writeDEM(cfg, z, outDir):
         f.write('nRows  %d\n' % (nRows))
         f.write('xllcenter  %.02f\n' % (xllcenter))
         f.write('yllcenter %.02f\n' % (yllcenter))
-        f.write('cellsize  %d\n' % (cellsize))
+        f.write('cellsize  %.02f\n' % (cellsize))
         f.write('nodata_value %.02f\n' % (noDATA))
         for line in z_mat:
             np.savetxt(f, line, fmt='%f')
