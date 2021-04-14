@@ -566,8 +566,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         # plt.show()
     else:
         # initiate random generator
-        seed = 12345
-        rng = np.random.default_rng(seed)
+        rng = np.random.default_rng(cfg['seed'])
 
         Npart = 0
         NPPC = np.empty(0)
