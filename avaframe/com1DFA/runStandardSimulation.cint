@@ -132,6 +132,8 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   // Friction type
   set(Sim, "FrictionType", "samosAT_Standard");
+  set(Sim, "SubgridMixingFactor", "100");
+
 
   val = atof(varVal);
   // Update log
