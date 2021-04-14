@@ -161,6 +161,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax4.set_aspect('auto')
     ax4.set_xlabel('x [m]')
 
+    # if difference is zero dont insert CDF plots
     indDiff = dataDiffPlot > 0
     if indDiff.any():
         axin3 = ax3.inset_axes([0.6, 0.1, 0.4, 0.25])
