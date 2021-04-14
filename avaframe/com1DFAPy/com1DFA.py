@@ -1277,7 +1277,7 @@ def prepareArea(releaseLine, dem, relThList=''):
                 assert indMatch.any() == False, message
                 Raster = Raster + rast
             except AssertionError:
-                log.error('Release area features are overlaping - this is not allowed')
+                log.error('%s' % message)
                 raise
 
     return Raster
