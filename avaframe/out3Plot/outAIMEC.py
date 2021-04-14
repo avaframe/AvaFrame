@@ -447,7 +447,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))#, constrained_layout=True)
     ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
 
-    y_lim = min(np.nanmax(runoutLength)+20, s[-1])
+    yLim = min(np.nanmax(runoutLength)+20, s[-1])
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
                                                        np.nanmax((refData)),
