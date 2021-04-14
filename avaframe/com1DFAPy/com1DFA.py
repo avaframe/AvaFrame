@@ -340,7 +340,7 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
     return reportST
 
 
-def initializeMesh(dem, num):
+def initializeMesh(cfg, demOri, num):
     """ Create rectangular mesh
 
     Reads the DEM information, computes the normal vector field and
@@ -357,47 +357,46 @@ def initializeMesh(dem, num):
     Returns
     -------
     dem : dict
-        dictionary completed with normal field and boundaries
+        dictionary completed with normal field and boundaries as well as SPH
+        grid information
     """
+
+    dem = setDEMoriginToZero(demOri)
+
     # read dem header
-    header = dem['header']
-    ncols = header.ncols
-    nrows = header.nrows
-    csz = header.cellsize
+    headerDEM = dem['header']
+    ncolsDEM = headerDEM.ncols
+    nrowsDEM = headerDEM.nrows
+    cszDEM = headerDEM.cellsize
+
     # get normal vector of the grid mesh
-    Nx, Ny, Nz = DFAtls.getNormalMesh(dem['rasterData'], csz, num)
-    # TODO, Try to replicate samosAT notmal computation
-    # if method num=1 is used, the normals are computed at com1DFA (original) cell center
-    # this corresponds to our cell vertex
-    if num == 1:
-        # Create com1DFA (original) vertex grid
-        x = np.linspace(-csz/2., (ncols-1)*csz - csz/2., ncols)
-        y = np.linspace(-csz/2., (nrows-1)*csz - csz/2., nrows)
-        X, Y = np.meshgrid(x, y)
-        # interpolate the normal from com1DFA (original) center to his vertex
-        # this means from our vertex to our centers
-        Nx, Ny, NzCenter = DFAtls.getNormalArray(X, Y, Nx, Ny, Nz, csz)
-        # this is for tracking mesh cell with actual data
-        NzCenter = np.where(np.isnan(Nx), Nz, NzCenter)
-        Nz = NzCenter
+    Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
     dem['Nx'] = np.where(np.isnan(Nx), 0., Nx)
     dem['Ny'] = np.where(np.isnan(Ny), 0., Ny)
     # build no data mask (used to find out of dem particles)
     bad = np.where(np.isnan(Nx), True, False)
     dem['Nz'] = Nz
     dem['Bad'] = bad
+
+    # Prepare SPH grid
+    headerSPH = IOf.cASCheader()
+    cszSPH = cfg.getfloat('sphKernekRadi')
+    headerSPH.cellsize = cszSPH
+    headerSPH.ncols = np.floor(ncolsDEM * cszDEM / cszSPH) + 1
+    headerSPH.nrows = np.floor(nrowsDEM * cszDEM / cszSPH) + 1
+    dem['headerSPH'] = headerSPH
     if debugPlot:
-        x = np.arange(ncols) * csz
-        y = np.arange(nrows) * csz
+        x = np.arange(ncolsDEM) * cszDEM
+        y = np.arange(nrowsDEM) * cszDEM
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         ax1 = fig.add_subplot(121)
         ax2 = fig.add_subplot(122)
-        ax1.plot(x, dem['Nx'][int(nrows/2+1), :], '--k', label='Nx(x)')
-        ax1.plot(x, dem['Ny'][int(nrows/2+1), :], '--b', label='Ny(x)')
-        ax1.plot(x, dem['Nz'][int(nrows/2+1), :], '--r', label='Nz(x)')
-        ax2.plot(y, dem['Nx'][:, int(ncols/2+1)], ':k', label='Nx(y)')
-        ax2.plot(y, dem['Ny'][:, int(ncols/2+1)], ':b', label='Ny(y)')
-        ax2.plot(y, dem['Nz'][:, int(ncols/2+1)], ':r', label='Nz(y)')
+        ax1.plot(x, dem['Nx'][int(nrowsDEM/2+1), :], '--k', label='Nx(x)')
+        ax1.plot(x, dem['Ny'][int(nrowsDEM/2+1), :], '--b', label='Ny(x)')
+        ax1.plot(x, dem['Nz'][int(nrowsDEM/2+1), :], '--r', label='Nz(x)')
+        ax2.plot(y, dem['Nx'][:, int(ncolsDEM/2+1)], ':k', label='Nx(y)')
+        ax2.plot(y, dem['Ny'][:, int(ncolsDEM/2+1)], ':b', label='Ny(y)')
+        ax2.plot(y, dem['Nz'][:, int(ncolsDEM/2+1)], ':r', label='Nz(y)')
         ax1.legend()
         ax2.legend()
         plt.show()
@@ -406,9 +405,9 @@ def initializeMesh(dem, num):
         IOf.writeResultToAsc(dem['header'], dem['Nz'], 'Nz.asc')
 
     # get real Area
-    areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, csz, num)
+    areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, cszDEM, num)
     dem['areaRaster'] = areaRaster
-    projArea = ncols * nrows * csz * csz
+    projArea = ncolsDEM * nrowsDEM * cszDEM * cszDEM
     actualArea = np.nansum(areaRaster)
     log.info('Largest cell area: %.2f m²' % (np.nanmax(areaRaster)))
     log.debug('Projected Area : %.2f' % projArea)
@@ -463,11 +462,9 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     entRes = cfg.getboolean('FLAGS', 'entRes')
     methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
 
-    dem = setDEMoriginToZero(demOri)
-
     # -----------------------
     # Initialize mesh
-    dem = initializeMesh(dem, methodMeshNormal)
+    dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
     if len(relThField) == 0:
@@ -567,15 +564,8 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         Hpart = np.ones(len(Xpart))
         NPPC = np.ones(len(Xpart))
         particles['Npart'] = len(Xpart)
-        particles = DFAfunC.getNeighboursC(particles, dem)
         particles['s'] = np.zeros(np.shape(Xpart))
         particles['l'] = np.zeros(np.shape(Xpart))
-        # # adding z component
-        # zSamos = copy.deepcopy(particles['z'])
-        # particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
-        # plt.plot(particles['y'], zSamos, 'bo')
-        # plt.plot(particles['y'], particles['z'], 'k+')
-        # plt.show()
     else:
         # initiate random generator
         rng = np.random.default_rng(int(cfg['seed']))
@@ -587,9 +577,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         Ypart = np.empty(0)
         Mpart = np.empty(0)
         Hpart = np.empty(0)
-        InCell = np.empty((0), int)
-        IndX = np.empty((0), int)
-        IndY = np.empty((0), int)
         # loop on non empty cells
         for indRelx, indRely in zip(indRelX, indRelY):
             # compute number of particles for this cell
@@ -608,10 +595,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
             Ypart = np.append(Ypart, ypart)
             Mpart = np.append(Mpart, mPart * np.ones(nPart))
             Hpart = np.append(Hpart, hCell * np.ones(nPart))
-            ic = indRelx + ncols * indRely
-            IndX = np.append(IndX, np.ones(nPart)*indRelx)
-            IndY = np.append(IndY, np.ones(nPart)*indRely)
-            InCell = np.append(InCell, np.ones(nPart)*ic)
 
         Hpart, _ = geoTrans.projectOnGrid(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
         Mpart = rho * Hpart * Apart
@@ -627,9 +610,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         # readjust mass
         mTot = np.sum(Mpart)
         particles['m'] = Mpart*totalMassRaster/mTot
-        particles['InCell'] = InCell
-        particles['indX'] = IndX
-        particles['indY'] = IndY
 
     particles['mTot'] = np.sum(particles['m'])
     particles['h'] = Hpart
@@ -667,19 +647,21 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     particles = DFAfunC.getNeighboursC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
 
-    Nx = dem['Nx']
-    Ny = dem['Ny']
-    Nz = dem['Nz']
-    indX = (particles['indX']).astype('int')
-    indY = (particles['indY']).astype('int')
-    H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
-    H = np.asarray(H)
-    # particles['h'] = H
-    # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
-    # particles['h'] = hh
-    # H = np.asarray(H)
-    W = np.asarray(W)
-    particles['hSPH'] = H/W
+    if flagFDSPH:
+        Nx = dem['Nx']
+        Ny = dem['Ny']
+        Nz = dem['Nz']
+        indXDEM = (particles['indXDEM']).astype('intc')
+        indYDEM = (particles['indYDEM']).astype('intc')
+        H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indXDEM, indYDEM)
+        H = np.asarray(H)
+        # particles['h'] = H
+        # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        # particles['h'] = hh
+        # H = np.asarray(H)
+        W = np.asarray(W)
+        particles['hSPH'] = H/W
+
     # initialize time
     t = 0
     particles['t'] = t
@@ -1081,9 +1063,9 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
         Nx = dem['Nx']
         Ny = dem['Ny']
         Nz = dem['Nz']
-        indX = (particles['indX']).astype('int')
-        indY = (particles['indY']).astype('int')
-        H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
+        indXDEM = (particles['indXDEM']).astype('intc')
+        indYDEM = (particles['indYDEM']).astype('intc')
+        H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indXDEM, indYDEM)
         H = np.asarray(H)
         # particles['h'] = H
         # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
@@ -1500,8 +1482,6 @@ def removeOutPart(cfg, particles, dem):
     y = particles['y']
     ux = particles['ux']
     uy = particles['uy']
-    indX = particles['indX']
-    indY = particles['indY']
     x = x + ux*dt
     y = y + uy*dt
 
@@ -1531,15 +1511,15 @@ def removeOutPart(cfg, particles, dem):
     y = particles['y']
     ux = particles['ux']
     uy = particles['uy']
-    indX = particles['indX']
-    indY = particles['indY']
-    indOut = np.where(Bad[indY, indX], False, True)
+    indXDEM = particles['indXDEM']
+    indYDEM = particles['indYDEM']
+    indOut = np.where(Bad[indYDEM, indXDEM], False, True)
     mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indY+np.sign(uy).astype('int'), indX], False, True)
+    indOut = np.where(Bad[indYDEM+np.sign(uy).astype('int'), indXDEM], False, True)
     mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indY, indX+np.sign(ux).astype('int')], False, True)
+    indOut = np.where(Bad[indYDEM, indXDEM+np.sign(ux).astype('int')], False, True)
     mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indY+np.sign(uy).astype('int'), indX+np.sign(ux).astype('int')], False, True)
+    indOut = np.where(Bad[indYDEM+np.sign(uy).astype('int'), indXDEM+np.sign(ux).astype('int')], False, True)
     mask = np.logical_and(mask, indOut)
 
     nRemove = len(mask)-np.sum(mask)
@@ -1611,9 +1591,9 @@ def removePart(particles, mask, nRemove):
     particles['uz'] = particles['uz'][mask]
     particles['m'] = particles['m'][mask]
     particles['h'] = particles['h'][mask]
-    particles['InCell'] = particles['InCell'][mask]
-    particles['indX'] = particles['indX'][mask]
-    particles['indY'] = particles['indY'][mask]
+    particles['inCellDEM'] = particles['inCellDEM'][mask]
+    particles['indXDEM'] = particles['indXDEM'][mask]
+    particles['indYDEM'] = particles['indYDEM'][mask]
     particles['partInCell'] = particles['partInCell'][mask]
 
     return particles
@@ -1642,9 +1622,9 @@ def splitPart(cfg, particles, dem):
             particles['m'] = np.append(particles['m'], mNew*np.ones((nAdd)))
             particles['m'][ind] = mNew
             particles['h'] = np.append(particles['h'], particles['h'][ind]*np.ones((nAdd)))
-            particles['InCell'] = np.append(particles['InCell'], particles['InCell'][ind]*np.ones((nAdd)))
-            particles['indX'] = np.append(particles['indX'], particles['indX'][ind]*np.ones((nAdd)))
-            particles['indY'] = np.append(particles['indY'], particles['indY'][ind]*np.ones((nAdd)))
+            particles['inCellDEM'] = np.append(particles['inCellDEM'], particles['inCellDEM'][ind]*np.ones((nAdd)))
+            particles['indXDEM'] = np.append(particles['indXDEM'], particles['indXDEM'][ind]*np.ones((nAdd)))
+            particles['indYDEM'] = np.append(particles['indYDEM'], particles['indYDEM'][ind]*np.ones((nAdd)))
             particles['partInCell'] = np.append(particles['partInCell'], particles['partInCell'][ind]*np.ones((nAdd)))
 
     return particles
