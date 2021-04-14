@@ -372,4 +372,42 @@ def fetchBenchParameters(avaName):
 
         avaDictList.append(avaDictName)
 
+
+    elif avaDictName == 'avaPyramidDict':
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1PY_null_dfa_0.15500'},
+        		'testName': 'avaPyramidNullTest',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area Scenario': 'release1PY',
+                        'Release Area': ['rel1'],
+                        'Entrainment Area': '',
+                        'Resistance Area': '',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': [1.0],
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1PY'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs the pyramid test.'}}
+
+        avaDictList.append(avaDictName)
+
+
+    elif avaDictName == 'avaPyramid45Dict':
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1PY_null_dfa_0.15500'},
+        		'testName': 'avaPyramid45NullTest',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Release Area Scenario': 'release1PY',
+                        'Release Area': ['rel'],
+                        'Entrainment Area': '',
+                        'Resistance Area': '',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': [1.0],
+                        'Entrainment thickness [m]': 0.3,
+                        'run time [s]': ''},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1PY'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs the rotation pyramid test.'}}
+
+        avaDictList.append(avaDictName)
+
     return avaDictList
