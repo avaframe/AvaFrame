@@ -1269,7 +1269,13 @@ def prepareArea(releaseLine, dem, relThList=''):
     if relThList != '':
         Raster = np.zeros(np.shape(dem['rasterData']))
         for rast in RasterList:
-            Raster = Raster + rast
+            ind1 = Raster > 0
+            ind2 = rast > 0
+            indMatch = np.logical_and(ind1, ind2)
+            if indMatch.any() == True:
+                log.error('Release area features are overlaping - this is not allowed')
+            else:
+                Raster = Raster + rast
 
     return Raster
 
