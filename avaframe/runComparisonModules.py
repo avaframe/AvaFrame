@@ -28,7 +28,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 # load all benchmark info as dictionaries from description files
 # testList = ['avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
 # for entrainment tests
-testList = ['avaHelixChannel', 'avaKot']  # 'avaInclinedPlane', 'avaWog',
+testList = ['avaKot']#'avaHelixChannel', 'avaKot']  # 'avaInclinedPlane', 'avaWog',
 # Set directory for full standard test report
 outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPy')
 fU.makeADir(outDirReport)
@@ -172,7 +172,9 @@ for avaName in testList:
 
         # copy files to report directory
         plotPaths = generateCompareReport.copyQuickPlots(avaName, avaName, outDirReport, plotListRep, rel)
-        aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot'], resAnalysis['massAnalysisPlot']]
+        aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
+        if cfgAimec.getboolean('FLAGS', 'analyzeMass'):
+            aimecPlots.append(resAnalysis['massAnalysisPlot'])
         plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, avaName, outDirReport, rel, plotPaths)
 
         # add plot info to general report Dict
