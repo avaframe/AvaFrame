@@ -22,7 +22,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
     # log file name; leave empty to use default runLog.log
-    logName = 'testKernel'
+    logName = 'runCom1DFAPy'
 
     # Load avalanche directory from general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
