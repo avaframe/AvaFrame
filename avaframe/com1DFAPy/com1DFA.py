@@ -1272,10 +1272,13 @@ def prepareArea(releaseLine, dem, relThList=''):
             ind1 = Raster > 0
             ind2 = rast > 0
             indMatch = np.logical_and(ind1, ind2)
-            if indMatch.any() == True:
-                log.error('Release area features are overlaping - this is not allowed')
-            else:
+            try:
+                message = 'Release area features are overlaping - this is not allowed'
+                assert indMatch.any() == False, message
                 Raster = Raster + rast
+            except AssertionError:
+                log.error('Release area features are overlaping - this is not allowed')
+                raise
 
     return Raster
 
