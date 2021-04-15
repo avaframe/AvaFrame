@@ -126,7 +126,7 @@ for test in testList:
         cfgAimec['AIMECSETUP']['diffLim'] = '5'
         cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
         cfgAimec['FLAGS']['flagMass'] = 'False'
-        cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFAPy'
+        cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFA'
 
         # Setup input from com1DFA and reference
         pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)

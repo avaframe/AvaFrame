@@ -319,19 +319,19 @@ def fetchBenchParameters(avaName):
 
         avaDictList.append(avaDictName)
 
-        avaDictName = {'simName': {'type': 'simName', 'name': 'relGar23_null_dfa_0.15500'},
+        avaDictName = {'simName': {'type': 'simName', 'name': 'relGar2_null_dfa_0.15500'},
         		'testName': 'avaGarNullTest',
                     'Simulation Parameters': {
                         'type': 'list',
-                        'Release Area Scenario': 'relGar23',
-                        'Release Area': ['GaR2', 'GaR3'],
+                        'Release Area Scenario': 'relGar2',
+                        'Release Area': ['GaR2'],
                         'Entrainment Area': '',
                         'Resistance Area': '',
                         'Mu': '0.15500',
-                        'Release thickness [m]': [1.5,1.35],
+                        'Release thickness [m]': [1.5],
                         'Entrainment thickness [m]': 0.3,
                         'run time [s]': ''},
-                    'Release area': {'type': 'columns', 'Release area scenario': 'relGar23'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'relGar2'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
 
         avaDictList.append(avaDictName)
