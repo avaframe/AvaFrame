@@ -303,10 +303,6 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
 
     return outFilePath
 
-    outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
-
-    return outFilePath
-
 
 def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
     """
@@ -406,19 +402,19 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
                                                        np.nanmax((refData)),
                                                        continuous=pU.contCmap)
-    cmap.set_under(color='w')
-    ref0, im = pU.NonUnifIm(ax1, l, s, refData, 'l [m]', 's [m]',
+    cmap.set_bad(color='w')
+    refDataPlot = np.ma.masked_where(refData == 0.0, refData)
+    ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()],
                          cmap=cmap, norm=norm)
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
-    im.set_clim(vmin=0.0001, vmax=np.nanmax((refData)))
     ax1.set_title('Reference %s in the RunOut area' % name +
                   '\n' + '%s threshold: %.1f %s' % (name, thresholdValue, unit))
     pU.addColorBar(im, ax1, ticks, unit)
 
-    y_lim = s[indStartOfRunout+20]+np.nanmax(runoutLength-sStart)
-    ax1.set_ylim([0, y_lim])
+    yLim = s[max(np.max(np.nonzero(np.any(refData != 0, axis=1))[0]), np.max(np.nonzero(np.any(compData != 0, axis=1))[0]))]
+    ax1.set_ylim([0, yLim])
     ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
 
@@ -429,14 +425,13 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     cmap.set_over(color='r')
     cmap.set_bad(alpha=0)
     data = newRasterMask-refRasterMask
-    data = np.where(data==0, np.nan, data)
+    data = np.ma.masked_where(data == 0.0, data)
     ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
-    im1.set_clim(vmin=-0.001, vmax=0.0001)
     if cfgPath['compType'][0] == 'comModules':
         namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
-    ax2.set_ylim([s[indStartOfRunout], y_lim])
+    ax2.set_ylim([s[indStartOfRunout], yLim])
     ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
 
     outFileName = '_'.join([projectName, 'plim', str(int(thresholdValue)),  'sim', str(i), 'AreaComparisonToReference'])
@@ -446,23 +441,20 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     # Figure: Raster comparison
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))#, constrained_layout=True)
     ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
-
-    yLim = min(np.nanmax(runoutLength)+20, s[-1])
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
                                                        np.nanmax((refData)),
                                                        continuous=pU.contCmap)
-    cmap.set_under(color='w')
-    ref0, im = pU.NonUnifIm(ax1, l, s, refData, 'l [m]', 's [m]',
+    cmap.set_bad(color='w')
+    refDataPlot = np.ma.masked_where(refData == 0.0, refData)
+    ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), 0, yLim],
                          cmap=cmap, norm=norm)
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
-    im.set_clim(vmin=0.0001, vmax=np.nanmax((refData)))
     ax1.set_title('Reference %s' % name)
     pU.addColorBar(im, ax1, ticks, unit)
-    y_lim = min(np.nanmax(runoutLength)+20, s[-1])
-    ax1.set_ylim([0, y_lim])
+    ax1.set_ylim([0, yLim])
     ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
 
@@ -494,7 +486,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     if cfgPath['compType'][0] == 'comModules':
         namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
-    ax2.set_ylim([s[indStartOfRunout], y_lim])
+    ax2.set_ylim([s[indStartOfRunout], yLim])
     ax2.legend(loc='lower right')
     pU.addColorBar(im3, ax2, ticks, unit, title=name, extend='both')
 
