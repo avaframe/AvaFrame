@@ -73,6 +73,10 @@ def com1DFAMain(cfg, avaDir, relThField):
 
     # Setup configuration
     cfgGen = cfg['GENERAL']
+     # turn friction models into integers
+    frictModelsList = ['samosAT', 'Coulomb']
+    cfgGen['frictType'] = str(frictModelsList.index(cfgGen['frictModel']) + 1)
+    log.info('Friction Model used: %s, %s' % (cfgGen['frictModel'], cfgGen['frictType']))
     modName = 'com1DFAPy'
 
     # Log current avalanche directory
