@@ -7,12 +7,13 @@ import os
 import time
 
 # Local imports
-from avaframe.com1DFAPy import runCom1DFA
+from avaframe.com1DFAPy import com1DFA
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
 from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
 from avaframe.out3Plot import outQuickPlot
+from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
@@ -29,7 +30,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 testDictList = tU.readAllBenchmarkDesDicts(info=False)
 # filter benchmarks for tag standardTest
 type = 'TAGS'
-valuesList = ['standardTest', 'null']
+valuesList = ['standardTest', 'null', 'test1']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
@@ -57,15 +58,23 @@ for test in testList:
     # write config to log file
     avaName = os.path.basename(avaDir)
     standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfgPy.ini' % test['AVANAME'])
-
+    cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
+    cfg['GENERAL']['frictModel'] = 'samosAT'
+    modName = 'com1DFAPy'
+    
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir,  keep=logName)
 
     # Set timing
     startTime = time.time()
+
     # Run Standalone DFA
-    # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-    _, _, _, _, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relThField='')
+    # call com1DFAPy to perform simulation - provide configuration
+    Particles, Fields, Tsave, dem, reportDictList = com1DFA.com1DFAMain(cfg, avaDir, relThField='')
+
+    # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+    # Generate plots for all peakFiles
+    plotDict = oP.plotAllPeakFields(avaDir, cfg, cfgMain['FLAGS'], modName)
 
     # Print time needed
     endTime = time.time()

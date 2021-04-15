@@ -87,10 +87,10 @@ def com1DFAMain(cfg, avaDir, relThField):
 
     # Load input data
     flagDev = cfg['FLAGS'].getboolean('flagDev')
-    avalancheDir = cfgGen['avalancheDir']
+    cfgGen['avalancheDir'] = avaDir
     # fetch input data - dem, release-, entrainment- and resistance areas
     demFile, relFiles, entFiles, resFile, entResInfo = gI.getInputData(
-        avalancheDir, cfg['FLAGS'], flagDev)
+        avaDir, cfg['FLAGS'], flagDev)
     # save flags
     cfg['FLAGS']['entRes'] = str(entResInfo['flagEntRes'])
 
