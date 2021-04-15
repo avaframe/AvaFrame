@@ -490,14 +490,18 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax2.legend(loc='lower right')
     pU.addColorBar(im3, ax2, ticks, unit, title=name, extend='both')
 
-    ax3 = plt.subplot2grid((3,3), (2, 1))
-    ax4 = plt.subplot2grid((3,3), (2, 2))
+    # ax3 = plt.subplot2grid((3,3), (2, 1))
+    # ax4 = plt.subplot2grid((3,3), (2, 2))
     if dataDiffPlot.size:
-        # there is data to compare in the run out area
-        centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False',
-                                         title=['%s diff histogram' % name, '%s diff CDF (95%% and 99%% centiles)' % name])
-    else:
-        log.warning('No data in the run out area!')
+        indDiff = dataDiffPlot > 0
+        if indDiff.any():
+            ax3 = plt.subplot2grid((3,3), (2, 1))
+            ax4 = plt.subplot2grid((3,3), (2, 2))
+            # there is data to compare in the run out area
+            centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False',
+                                                 title=['%s diff histogram' % name, '%s diff CDF (95%% and 99%% centiles)' % name])
+        else:
+            log.warning('No data in the run out area!')
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(int(thresholdValue)),  'sim', str(i), 'ContourComparisonToReference'])
