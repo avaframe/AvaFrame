@@ -50,7 +50,6 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
     else:
         cfg = cfgUtils.getModuleConfig(com1DFA)
     cfgGen = cfg['GENERAL']
-    cfgGen['avalancheDir'] = avalancheDir
 
     # +++++++++++++++++++++++++++++++++
     # ------------------------
