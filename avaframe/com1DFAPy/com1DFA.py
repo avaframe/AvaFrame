@@ -294,8 +294,6 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
     """
 
     # load parameters set in configuration file
-    frictModels = cfgGen['frictModels'].split('_')
-    intModel = int(cfgGen['frictType'])-1
     dateTimeInfo = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     entInfo = 'No'
     resInfo = 'No'
@@ -319,7 +317,7 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
                 'Parameter value': '',
                 'Mu': cfgGen['mu'],
                 'Density [kgm-3]': cfgGen['rho'],
-                'Friction model': frictModels[intModel]},
+                'Friction model': cfgGen['frictModel']},
                 'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name'],
                                  'Release thickness [m]': relDict['d0']}}
 
