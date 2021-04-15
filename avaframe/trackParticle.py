@@ -14,6 +14,7 @@ import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.com1DFAPy.DFAtools as DFAtls
 from avaframe.out3Plot.plotUtils import *
+from avaframe.out3Plot.makePalette import *
 
 
 def writeLine2SHPfile(part, lineName, fileName):
@@ -30,14 +31,27 @@ def writeLine2SHPfile(part, lineName, fileName):
 
 
 def trackParticle():
-    inDir = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/avaParabola/Outputs/com1DFAPy/particles'
-    inDEM = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/avaParabola/Inputs/DEM_PF_Topo.asc'
+    # inDir = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaParabola/Outputs/com1DFAPy/particles'
+    # inDEM = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaParabola/Inputs/DEM_PF_Topo.asc'
+
+    inDir = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaHelix/Outputs/com1DFAPy/particles'
+    inDEM = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaHelix/Inputs/DEM_HX_Topo.asc'
 
     # inDir = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/avaInclinedPlane/Outputs/com1DFAPy/particles'
     # inDEM = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/avaInclinedPlane/Inputs/DEM_IP_Topo.asc'
     header = IOf.readASCheader(inDEM)
+    dem = IOf.readRaster(inDEM)
+    ncols = header.ncols
+    nrows = header.nrows
     xllc = header.xllcenter
     yllc = header.yllcenter
+    csz = header.cellsize
+    xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+    ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+    PointsX, PointsY = np.meshgrid(xgrid, ygrid)
+    XX = PointsX[0, :]
+    YY = PointsY[:, 0]
+    ZZ = dem['rasterData']
     Particles, TimeStepInfo = com1DFA.readPartFromPickle(inDir, flagAvaDir=False)
 
     # listt = []
@@ -53,6 +67,8 @@ def trackParticle():
     EkinPath = np.empty((0, 1))
     EpotPath = np.empty((0, 1))
     count = 0
+    fig2 = plt.figure(figsize=(2*figW, figH))
+    ax = plt.subplot(211)
     for t in TimeStepInfo:
         particles = Particles[count]
         # force = Force[count]
@@ -78,9 +94,13 @@ def trackParticle():
             pond = kineticEne
             pondSum = kineticEneSum
 
-
+        # pond = np.zeros(np.shape(kineticEne))
+        # pond[13000] = 1
+        # pondSum = 1
         # pond = m
         # pondSum = np.sum(m)
+        # pond = np.ones(np.shape(kineticEne))
+        # pondSum = Npart
 
         zcoE = np.nansum(pond*Z)/pondSum
         # calculate XY locations of computation step
@@ -104,12 +124,37 @@ def trackParticle():
         # EpotPath = np.append(EpotPath, EpotSumCoE)
         count = count + 1
 
-    mu = 0.3
+        ax.clear()
+        ax.set_title('t=%.2f s' % particles['t'])
+        variable = particles['m']
+        Cp1 = ax.contour(XX, YY, ZZ, levels=10, colors='k')
+        cmap, _, _, norm, ticks = makeColorMap(
+            cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
+        # set range and steps of colormap
+        cc = variable
+        sc = ax.scatter(X, Y, c=cc, cmap=cmap, marker='.')
+        # plt.pause(0.01)
+
+
+    print(np.min(m), np.mean(m), np.max(m), np.std(m))
+    mu = 0.5
     g = 9.81
     avapath = {}
     avapath['x'] = np.array([xPath[0], xPath[-1]])
     avapath['y'] = np.array([yPath[0], yPath[-1]])
+    header = IOf.readASCheader(inDEM)
     dem = IOf.readRaster(inDEM)
+    ncols = header.ncols
+    nrows = header.nrows
+    xllc = header.xllcenter
+    yllc = header.yllcenter
+    csz = header.cellsize
+    xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+    ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+    PointsX, PointsY = np.meshgrid(xgrid, ygrid)
+    XX = PointsX[0, :]
+    YY = PointsY[:, 0]
+    ZZ = dem['rasterData']
     AvaProfile, projPoint = geoTrans.prepareLine(dem, avapath, distance=10, Point=None)
 
     fig = plt.figure(figsize=(2*figW, figH))
@@ -129,6 +174,8 @@ def trackParticle():
     # Cp = ax1.contour(X, Y, Z, levels=10, colors='k')
     # # ax1.clabel(Cp, colors='k', inline=1, fontsize=5)
     ax1.plot(xPath, yPath, 'k--', label='avapath')
+    sc = ax1.scatter(X, Y, c=cc, cmap=cmap, marker='.')
+    Cp1 = ax.contour(XX, YY, ZZ, levels=10, colors='k')
     # ax1.axis('equal')
     # ax1.set_xlim([x.min(), x.max()])
     # ax1.set_ylim([y.min(), y.max()])
@@ -139,7 +186,7 @@ def trackParticle():
     ax2 = plt.subplot(212)
 
     ax2.plot(sPath, zPath, 'k-', label='Avalanche profile')
-    ax2.plot(AvaProfile['s'], AvaProfile['z'], 'r-', label='Avalanche profile')
+    # ax2.plot(AvaProfile['s'], AvaProfile['z'], 'r-', label='Avalanche profile')
     Zene = zPath + V2Path/(2*g)
     f = zPath[5] - mu * sPath + (V2Path[5]/(2*g) + mu * sPath[5])
     ax2.plot(sPath, f, '-', color='b', label='AlphaLine')
@@ -154,7 +201,6 @@ def trackParticle():
     ax2.legend()
     fig.tight_layout()
     plt.show()
-
 
 
 if __name__ == "__main__":

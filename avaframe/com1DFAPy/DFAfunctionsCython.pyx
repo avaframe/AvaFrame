@@ -514,7 +514,7 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double peakKinEne = particles['peakKinEne']
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
-  cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
+  cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop, nxNew, nyNew, nzNew
   cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
   cdef double massEntrained = 0
