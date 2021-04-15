@@ -453,7 +453,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
                                                        np.nanmax((refData)),
                                                        continuous=pU.contCmap)
     cmap.set_under(color='w')
-    ref0, im = pU.NonUnifIm(ax1, l, s, refDataPressure, 'l [m]', 's [m]',
+    ref0, im = pU.NonUnifIm(ax1, l, s, refData, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), 0, yLim],
                          cmap=cmap, norm=norm)
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
@@ -516,7 +516,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     return outFilePath
 
 
-def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
+def resultWrite(cfgPath, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     """
     This function writes the main Aimec results to a file (outputFile)
     in cfgPath
@@ -545,12 +545,13 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     MMPFV = resAnalysis['MMPFV']
     deltaH = resAnalysis['deltaH']
     elevRel = resAnalysis['elevRel']
-    relMass = resAnalysis['relMass']
-    entMass = resAnalysis['entMass']
-    relativMassDiff = resAnalysis['relativMassDiff']
-    finalMass = resAnalysis['finalMass']
-    GI = resAnalysis['growthIndex']
-    GR = resAnalysis['growthGrad']
+    if flagMass:
+        relMass = resAnalysis['relMass']
+        entMass = resAnalysis['entMass']
+        relativMassDiff = resAnalysis['relativMassDiff']
+        finalMass = resAnalysis['finalMass']
+        GI = resAnalysis['growthIndex']
+        GR = resAnalysis['growthGrad']
     TP = resAnalysis['TP']
     FN = resAnalysis['FN']
     FP = resAnalysis['FP']
@@ -560,11 +561,13 @@ def resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis):
     ############################################
     # prepare for writing
     legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'runoutFromSROA', 'elevRel', 'deltaH',
-              'MMPPR', 'MMPFD', 'MMPFV', 'relMass', 'entMass',
-              'finalMass', 'rMassDif', 'GI', 'GR', 'TP ', 'FN ', 'FP ', 'TN']
+              'MMPPR', 'MMPFD', 'MMPFV', 'TP ', 'FN ', 'FP ', 'TN']
     resfile = [runout[1], runout[2], runout[0], runoutFromMid, elevRel, deltaH, MMPPR,
-               MMPFD, MMPFV, relMass, entMass, finalMass, relativMassDiff,
-               GI, GR, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
+               MMPFD, MMPFV, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
+
+    if flagMass:
+        legend = legend + ['relMass', 'entMass', 'finalMass', 'rMassDif', 'GI', 'GR']
+        resfile = resfile + [relMass, entMass, finalMass, relativMassDiff, GI, GR]
 
     header = ''.join(['projectName: ', projectName, '\n',
                       'path: ', pathName, '\n',

@@ -7,7 +7,6 @@
 
 # Load modules
 import time
-import os
 
 # Local imports
 from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools

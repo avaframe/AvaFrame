@@ -122,7 +122,9 @@ for avaName in testList:
         # write configuration to file
         cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)
         if simType == 'entres':
-            cfgAimec['FLAGS']['analyzeMass'] = 'True'
+            cfgAimec['FLAGS']['flagMass'] = 'True'
+        else:
+            cfgAimec['FLAGS']['flagMass'] = 'False'
         cfgAimecSetup = cfgAimec['AIMECSETUP']
 
         # Setup input from com1DFA and com1DFAPy
@@ -173,7 +175,7 @@ for avaName in testList:
         # copy files to report directory
         plotPaths = generateCompareReport.copyQuickPlots(avaName, avaName, outDirReport, plotListRep, rel)
         aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
-        if cfgAimec.getboolean('FLAGS', 'analyzeMass'):
+        if cfgAimec.getboolean('FLAGS', 'flagMass'):
             aimecPlots.append(resAnalysis['massAnalysisPlot'])
         plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, avaName, outDirReport, rel, plotPaths)
 

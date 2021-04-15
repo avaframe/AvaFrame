@@ -93,7 +93,7 @@ def AIMEC2Report(cfgPath, cfg):
 
     plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
     resAnalysis['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
-    if cfgFlags.getboolean('analyzeMass'):
+    if cfgFlags.getboolean('flagMass'):
         plotName = outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
         resAnalysis['massAnalysisPlot'] = {'Aimec mass analysis': plotName}
 
@@ -180,8 +180,8 @@ def mainAIMEC(cfgPath, cfg):
     log.info('Visualisation of AIMEC results')
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags)
     if cfgPath['numSim'] == 2:
-        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, pressureLimit, newRasters, cfgPath, cfgFlags)
-        if cfgFlags.getboolean('analyzeMass'):
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
+        if cfgFlags.getboolean('flagMass'):
             outAimec.visuMass(resAnalysis, cfgPath, cfgFlags)
     else:
         outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cfgFlags)
@@ -191,8 +191,8 @@ def mainAIMEC(cfgPath, cfg):
     # write results to file
     # -----------------------------------------------------------
     log.info('Writing results to file')
-
-    outAimec.resultWrite(cfgPath, cfgSetup, rasterTransfo, resAnalysis)
+    flagMass = cfgFlags.getboolean('flagMass')
+    outAimec.resultWrite(cfgPath, cfgSetup, flagMass, rasterTransfo, resAnalysis)
 
     return rasterTransfo, newRasters, resAnalysis
 
@@ -479,9 +479,6 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
 
     # compute runout based on resType
     runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
-
-    if cfgFlags.getboolean('analyzeMass'):
-        releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = aT.analyzeMass(fnameMass)
 
     runoutLength = runout[0]
     TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, dataResType, cfgSetup, cfgPath, cfgFlags)
