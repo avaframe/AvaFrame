@@ -30,7 +30,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 testDictList = tU.readAllBenchmarkDesDicts(info=False)
 # filter benchmarks for tag standardTest
 type = 'TAGS'
-valuesList = ['standardTest', 'null', 'test1']
+valuesList = ['standardTest', 'null']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
@@ -61,7 +61,7 @@ for test in testList:
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
     cfg['GENERAL']['frictModel'] = 'samosAT'
     modName = 'com1DFAPy'
-    
+
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir,  keep=logName)
 
