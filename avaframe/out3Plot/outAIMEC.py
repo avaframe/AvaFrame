@@ -458,12 +458,19 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
 
-    ax2 = plt.subplot2grid((3,3), (0,1), rowspan=2, colspan=2)
     compData = compData[indStartOfRunout:, :]
     refData = refData[indStartOfRunout:, :]
     dataDiff = compData - refData
     dataDiff = np.where((refData==0) & (compData==0), np.nan, dataDiff)
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
+    # only plot hist and CDF if there is a difference in the data
+    if dataDiffPlot.size:
+        indDiff = dataDiffPlot > 0
+        if indDiff.any():
+            ax2 = plt.subplot2grid((3,3), (0,1), rowspan=2, colspan=2)
+        else:
+            ax2 = plt.subplot2grid((3,3), (0,1), rowspan=3, colspan=3)
+
     cmap = pU.cmapdiv
     cmap.set_bad(color='w')
     elev_max = inputs['diffLim']
@@ -490,8 +497,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax2.legend(loc='lower right')
     pU.addColorBar(im3, ax2, ticks, unit, title=name, extend='both')
 
-    # ax3 = plt.subplot2grid((3,3), (2, 1))
-    # ax4 = plt.subplot2grid((3,3), (2, 2))
+    # only plot hist and CDF if there is a difference in the data
     if dataDiffPlot.size:
         indDiff = dataDiffPlot > 0
         if indDiff.any():
