@@ -586,8 +586,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
             xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng)
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
-            # initialize field Flow depth
-            FD[indRely, indRelx] = hCell
             # initialize particles position, mass, height...
             NPPC = np.append(NPPC, nPart*np.ones(nPart))
             Apart = np.append(Apart, areaRaster[indRely, indRelx]*np.ones(nPart)/nPart)
@@ -633,6 +631,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
 
     PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
+    FD = np.zeros((nrows, ncols))
     fields = {}
     fields['pfv'] = PFV
     fields['ppr'] = PP
