@@ -73,21 +73,27 @@ def com1DFAMain(cfg, avaDir, relThField):
 
     # Setup configuration
     cfgGen = cfg['GENERAL']
+
+    # add avalanache directory to configuration
+    cfgGen['avalancheDir'] = avaDir
+
      # turn friction models into integers
     frictModelsList = ['samosAT', 'Coulomb']
     cfgGen['frictType'] = str(frictModelsList.index(cfgGen['frictModel']) + 1)
     log.info('Friction Model used: %s, %s' % (cfgGen['frictModel'], cfgGen['frictType']))
-    modName = 'com1DFAPy'
 
     # Log current avalanche directory
     log.debug('Your current avalanche name: %s' % avaDir)
 
     # Create output and work directories
+    # set module name, reqiured as long we are in dev phase
+    # - because need to create e.g. Output folder for com1DFAPy to distinguish from
+    modName = 'com1DFAPy'
     workDir, outDir = inDirs.initialiseRunDirs(avaDir, modName)
 
     # Load input data
     flagDev = cfg['FLAGS'].getboolean('flagDev')
-    cfgGen['avalancheDir'] = avaDir
+
     # fetch input data - dem, release-, entrainment- and resistance areas
     demFile, relFiles, entFiles, resFile, entResInfo = gI.getInputData(
         avaDir, cfg['FLAGS'], flagDev)

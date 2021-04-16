@@ -44,12 +44,11 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
     log.info('MAIN SCRIPT')
     log.info('Current avalanche: %s', avalancheDir)
 
-    # Load configuration
+    # Load configuration 
     if cfgFile != '':
         cfg = cfgUtils.getModuleConfig(com1DFA, cfgFile)
     else:
         cfg = cfgUtils.getModuleConfig(com1DFA)
-    cfgGen = cfg['GENERAL']
 
     # +++++++++++++++++++++++++++++++++
     # ------------------------
