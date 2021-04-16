@@ -149,6 +149,7 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   //------------Set time stepping--------------------
 
+  // set(Sim, "DeltaT", "0.2");
   // set(Sim, "EndTime", "150");
   // set(Sim, "DeltaOut", "20");
 
