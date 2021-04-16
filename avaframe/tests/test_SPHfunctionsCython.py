@@ -113,9 +113,16 @@ def test_getNormalMesh(capfd):
     y = np.linspace(0, n-1, n)
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
+    header = IOf.cASCheader()
+    header.ncols = m
+    header.nrows = n
+    header.cellsize = cellsize
+    dem = {}
+    dem['header'] = header
     Z1 = a * X * X + b * Y * Y
     for num in [4, 6, 8]:
-        Nx, Ny, Nz = DFAtls.getNormalMesh(Z, cellsize, num)
+        dem['rasterData'] = Z
+        Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
         Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
         print(Nx)
         print((-a*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
@@ -135,7 +142,8 @@ def test_getNormalMesh(capfd):
                                                 np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
         assert TestNZ
 
-        Nx, Ny, Nz = DFAtls.getNormalMesh(Z1, cellsize, num)
+        dem['rasterData'] = Z1
+        Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
         Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
 
         print(Nx)
@@ -168,7 +176,14 @@ def test_getAreaMesh(capfd):
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
     Z1 = a * X * X + b * Y * Y
-    Nx, Ny, Nz = DFAtls.getNormalMesh(Z, csz, 4)
+    header = IOf.cASCheader()
+    header.ncols = m
+    header.nrows = n
+    header.cellsize = csz
+    dem = {}
+    dem['header'] = header
+    dem['rasterData'] = Z
+    Nx, Ny, Nz = DFAtls.getNormalMesh(dem, 4)
     Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
     Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz, 4)
     print(np.sqrt((1+a*a+b*b)))
@@ -186,6 +201,7 @@ def test_getNeighboursC(capfd):
     header.cellsize = 1
     dem = {}
     dem['header'] = header
+    dem['headerSPH'] = header
     particles = {}
     particles['Npart'] = 16
     particles['x'] = np.array([1.5, 0.5, 1.5, 2.5, 1.5, 2.5, 0.5, 1.5, 0.5, 2.5, 0.5, 2.5, 1.5, 2.5, 3.5, 3.5])
@@ -227,7 +243,7 @@ def test_getNeighboursC(capfd):
                      15])
 
     particles = DFAfunC.getNeighboursC(particles, dem)
-    print(particles['InCell'])
+    print(particles['inCellDEM'])
     print(particles['indPartInCell'])
     print(particles['partInCell'])
     assert np.allclose(particles['indPartInCell'], indPCell, atol=atol)
