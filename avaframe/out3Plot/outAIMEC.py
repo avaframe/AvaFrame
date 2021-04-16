@@ -158,7 +158,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
     pU.putAvaNameOnPlot(ax, projectName)
 
     outFileName = '_'.join([projectName, resType,
-                            'thresholdValue', str(int(thresholdValue)), 'slComparison'])
+                            'thresholdValue', str(thresholdValue).replace('.', ''), 'slComparison'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
@@ -239,7 +239,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
     ax2.set_xlabel('$P_{max}(s)$ [%s]' % unit)
 
     outFileName = '_'.join([projectName, resType,
-                            'thresholdValue', str(int(thresholdValue)), 'slComparisonStat'])
+                            'thresholdValue', str(thresholdValue).replace('.', ''), 'slComparisonStat'])
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -362,7 +362,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
         pU.putAvaNameOnPlot(ax, cfgPath['projectName'])
 
     outFileName = '_'.join([projectName, 'plim',
-                            str(int(plim)), 'referenceFields'])
+                            str((plim)).replace('.', ''), 'referenceFields'])
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
@@ -434,7 +434,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax2.set_ylim([s[indStartOfRunout], yLim])
     ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
 
-    outFileName = '_'.join([projectName, 'plim', str(int(thresholdValue)),  'sim', str(i), 'AreaComparisonToReference'])
+    outFileName = '_'.join([projectName, 'thresholdValue', str(thresholdValue).replace('.', ''),  'sim', str(i), 'AreaComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     ############################################
@@ -510,7 +510,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
             log.warning('No data in the run out area!')
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
-    outFileName = '_'.join([projectName, 'plim', str(int(thresholdValue)),  'sim', str(i), 'ContourComparisonToReference'])
+    outFileName = '_'.join([projectName, 'plim', str(thresholdValue).replace('.', ''),  'sim', str(i), 'ContourComparisonToReference'])
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
     outFilePath = os.path.join(cfgPath['pathResult'], 'pics', outFileName + '.png')
@@ -673,7 +673,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
 
     elif flag == 3:
         title = 'Visualizing max ' + name + ' data'
-        tipo = 'relMax' + resType + '_thresholdValue' + str(int(thresholdValue))
+        tipo = 'relMax' + resType + '_thresholdValue' + str(thresholdValue).replace('.', '')
         data = maxMaxDPPR / maxMaxDPPR[nRef]
         yaxis_label = 'relative max ' + name + ' [-]'
 
@@ -789,7 +789,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     plt.grid('on')
 
     outFileName = '_'.join([cfgPath['projectName'], resType,
-                            'thresholdValue', str(int(thresholdValue)), 'ROC'])
+                            'thresholdValue', str(thresholdValue).replace('.', ''), 'ROC'])
 
     pU.saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig)
 
