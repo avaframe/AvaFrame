@@ -460,7 +460,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     relRasterOnes = np.where(relRaster > 0, 1., 0.)
     relAreaActual = np.nansum(relRasterOnes*dem['areaRaster'])
     relAreaProjected = np.sum(csz*csz*relRasterOnes)
-    reporAreaInfo = {'Projected Area [m2]':  '%.2f' % (relAreaProjected),
+    reportAreaInfo = {'Projected Area [m2]':  '%.2f' % (relAreaProjected),
                 'Actual Area [m2]': '%.2f' % (relAreaActual)}
 
     # ------------------------
