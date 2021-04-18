@@ -213,12 +213,26 @@ def getSimulation(cfg, rel, entResInfo):
     # define simulation type
     cuSim = []
     for simType in simTypeList:
-        if simType == 'ent' and entResInfo['flagEnt'] == 'Yes':
-            cuSim.append(simName + '_ent_dfa')
-        elif simType == 'entres' and entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
-            cuSim.append(simName + '_entres_dfa')
-        elif simType == 'res' and entResInfo['flagRes'] == 'Yes':
-            cuSim.append(simName + '_res_dfa')
+        if simType == 'ent':
+            if entResInfo['flagEnt'] == 'Yes':
+                cuSim.append(simName + '_ent_dfa')
+            else:
+                log.warning('No entrainment area available for ent simulation')
+        elif simType == 'entres':
+            if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
+                cuSim.append(simName + '_entres_dfa')
+            else:
+                if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'No':
+                    log.warning('No resistance area available for entres simulation')
+                elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'Yes':
+                    log.warning('No entrainment area available for entres simulation')
+                elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'No':
+                    log.warning('No resistance and no entrainment area available for entres simulation')
+        elif simType == 'res':
+            if entResInfo['flagRes'] == 'Yes':
+                cuSim.append(simName + '_res_dfa')
+            else:
+                log.warning('No resistance area available for res simulation')
         elif simType == 'null':
             cuSim.append(simName + '_null_dfa')
 
