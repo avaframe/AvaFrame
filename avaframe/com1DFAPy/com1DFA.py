@@ -109,11 +109,12 @@ def com1DFAMain(cfg, avaDir, relThField):
         demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, rel, entFiles, resFile)
 
         # find out which simulations to perform
-        relName, cuSim, relDict, badName = getSimulation(cfg, rel)
+        relName, cuSim, relDict, badName = getSimulation(cfg, rel, entResInfo)
         releaseLine['d0'] = relDict['d0']
 
         for sim in cuSim:
             logName = sim + '_' + cfgGen['mu']
+            log.info('Perform %s simulation' % sim)
 
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
@@ -163,7 +164,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     return Particles, Fields, Tsave, dem, reportDictList
 
 
-def getSimulation(cfg, rel):
+def getSimulation(cfg, rel, entResInfo):
     """ get Simulation to run for a given release
 
 
@@ -187,8 +188,10 @@ def getSimulation(cfg, rel):
     """
 
     cfgFlags = cfg['FLAGS']
-    entRes = cfgFlags.getboolean('entRes')
-    onlyEntrRes = cfgFlags.getboolean('onlyEntrRes')
+
+    # read list of desired simulation types
+    simTypeList = cfg['GENERAL']['simTypeList'].split('|')
+
     # Set release areas and simulation name
     relName = os.path.splitext(os.path.basename(rel))[0]
     simName = relName
@@ -206,15 +209,19 @@ def getSimulation(cfg, rel):
             relDict['d0'][k] = float(relDict['d0'][k])
 
     log.info('Release area scenario: %s - perform simulations' % (relName))
-    if entRes:
-        # Possibility to run only entrainment resistance or also with null
-        if onlyEntrRes:
-            cuSim = [simName + '_entres_dfa']
-        else:
-            cuSim = [simName + '_null_dfa', simName + '_entres_dfa']
-    else:
-        # Initialise CreateSimulations cint file and set parameters
-        cuSim = [simName + '_null_dfa']
+
+    # define simulation type
+    cuSim = []
+    for simType in simTypeList:
+        if simType == 'ent' and entResInfo['flagEnt']:
+            cuSim.append(simName + '_ent_dfa')
+        elif simType == 'entres' and entResInfo['flagEnt'] and entResInfo['flagRes']:
+            cuSim.append(simName + '_entres_dfa')
+        elif simType == 'res' and entResInfo['flagRes']:
+            cuSim.append(simName + '_res_dfa')
+        elif simType == 'null':
+            cuSim.append(simName + '_null_dfa')
+
     return relName, cuSim, relDict, badName
 
 
@@ -759,8 +766,13 @@ def initializeMassEnt(dem, logName, entLine):
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
         entrMassRaster = prepareArea(entLine, dem)
+    elif ('ent' in logName) and entLine:
+        entrainmentArea = entLine['Name']
+        log.info('Entrainment area: %s' % (entrainmentArea))
+        entrMassRaster = prepareArea(entLine, dem)
     else:
         entrMassRaster = np.zeros((nrows, ncols))
+
     return entrMassRaster
 
 
@@ -790,8 +802,15 @@ def initializeResistance(cfg, dem, logName, resLine):
         log.info('Resistance area: %s' % (resistanceArea))
         mask = prepareArea(resLine, dem)
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
+    elif ('res' in logName) and resLine:
+        # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
+        resistanceArea = resLine['Name']
+        log.info('Resistance area: %s' % (resistanceArea))
+        mask = prepareArea(resLine, dem)
+        cResRaster = 0.5 * d * cw / (sres*sres) * mask
     else:
         cResRaster = np.zeros((nrows, ncols))
+
     return cResRaster
 
 
