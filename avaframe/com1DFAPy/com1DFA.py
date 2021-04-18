@@ -213,11 +213,11 @@ def getSimulation(cfg, rel, entResInfo):
     # define simulation type
     cuSim = []
     for simType in simTypeList:
-        if simType == 'ent' and entResInfo['flagEnt']:
+        if simType == 'ent' and entResInfo['flagEnt'] == 'Yes':
             cuSim.append(simName + '_ent_dfa')
-        elif simType == 'entres' and entResInfo['flagEnt'] and entResInfo['flagRes']:
+        elif simType == 'entres' and entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
             cuSim.append(simName + '_entres_dfa')
-        elif simType == 'res' and entResInfo['flagRes']:
+        elif simType == 'res' and entResInfo['flagRes'] == 'Yes':
             cuSim.append(simName + '_res_dfa')
         elif simType == 'null':
             cuSim.append(simName + '_null_dfa')
@@ -309,6 +309,12 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
     resInfo = 'No'
     if 'entres' in logName:
         entInfo = entResInfo['flagEnt']
+        resInfo = entResInfo['flagRes']
+    elif 'ent' in logName and 'res' not in logName:
+        entInfo = entResInfo['flagEnt']
+        resInfo = 'No'
+    elif 'res' in logName and 'ent' not in logName:
+        entInfo = 'No'
         resInfo = entResInfo['flagRes']
 
     # Create dictionary
