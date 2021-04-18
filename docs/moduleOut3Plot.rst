@@ -6,11 +6,13 @@ out3Plot: Plots
 quickPlot
 ===========
 
-This function creates two plots, one plot with three panels, first dataset, second dataset and the absolute difference of the two datasets and
-one plot showing a cross- and a longprofile of the two datasets.
+This function creates two plots, one plot with four panels, first dataset, second dataset, the absolute difference of the two datasets
+and the absolute difference capped to a smaller range of differences (ppr: +- 100kPa, pfd: +-10m, pfv:+- 10ms-1).
+The difference plots also include an insert showing the histogram and the cumulative density function of the differences.
+The second plot shows a cross- and a longprofile of the two datasets.
 According to the characteristics of a simulation, as for example provided by the simulation dictionary created with *fileHandlerUtils.makeSimDict*,
 the required input parameters can be defined in order to choose the first dataset.
-The second dataset is fetched from the benchmark results using the same filtering characteristics.
+The second dataset is fetched from the benchmark results or from the Outputs of a second computational module, using the same filtering characteristics.
 The function returns a list with the file paths of the generated plots.
 
 
@@ -29,6 +31,7 @@ Outputs
 -------
 
 * plot with three panels showing the specified peak field, the reference peak field, and their difference including a text box with absolute Mean, Max and Min of the difference
+  as well as a histogram and the cumulative density function of the differences
 * plot of a cross- and a longprofile of the two datasets
 * list with full file paths of the generated plots
 
@@ -48,8 +51,9 @@ quickPlotSimple
 =================
 
 This function creates two plots of any two raster datasets (with identical dimensions).
-The first plot has three panels, showing the first dataset, the second dataset and the absolute difference of the two datasets and
-the second plot shows a cross- and a longprofile of the two datasets.
+The first plot has three panels, showing the first dataset, the second dataset and the absolute difference of the two datasets
+including a histogram and the cumulative density function of the differences
+The second plot shows a cross- and a longprofile of the two datasets.
 The function returns a list with the file paths of the generated plots.
 
 
@@ -63,6 +67,7 @@ Outputs
 -------
 
 * plot with three panels showing dataset 1, dataset 2, and their difference including a text box with absolute Mean, Max and Min of the difference
+  and a histogram and the cumulative density function of the differences
 * plot of a cross- and a longprofile of the two datasets
 * list with full file paths of the generated plots
 
