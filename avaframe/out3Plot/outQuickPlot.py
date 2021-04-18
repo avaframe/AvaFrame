@@ -219,7 +219,8 @@ def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', sim
     """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension) and save to
         Outputs/out3Plot within avalanche directoy
 
-        figure 1: plot raster data for dataset1, dataset2 and their difference
+        figure 1: plot raster data for dataset1, dataset2 and their difference,
+                  including a histogram and the cumulative density function of the differences
         figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
         -plots are saved to Outputs/out3Plot
 
