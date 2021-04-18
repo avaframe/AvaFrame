@@ -118,7 +118,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, fields, dem, areaInfo = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relThField)
+            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relThField)
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
@@ -140,7 +140,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, entResInfo)
 
             # add area info to reportDict
-            reportDict['Release Area'].update(areaInfo)
+            reportDict['Release Area'].update(reportAreaInfo)
             reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
 
             # add stopping info to reportDict
@@ -460,7 +460,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     relRasterOnes = np.where(relRaster > 0, 1., 0.)
     relAreaActual = np.nansum(relRasterOnes*dem['areaRaster'])
     relAreaProjected = np.sum(csz*csz*relRasterOnes)
-    areaInfo = {'Projected Area [m2]':  '%.2f' % (relAreaProjected),
+    reporAreaInfo = {'Projected Area [m2]':  '%.2f' % (relAreaProjected),
                 'Actual Area [m2]': '%.2f' % (relAreaActual)}
 
     # ------------------------
@@ -481,7 +481,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
     fields['cResRaster'] = cResRaster
 
-    return particles, fields, dem, areaInfo
+    return particles, fields, dem, reportAreaInfo
 
 
 def initializeParticles(cfg, relRaster, dem, logName=''):
@@ -506,11 +506,13 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     fields : dict
         fields dictionary at initial time step
     """
+
     # get simulation parameters
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
-    massPerPart = cfg.getfloat('massPerPart')
     avaDir = cfg['avalancheDir']
+    methodParticles = cfg['methodParticles']
+
     # read dem header
     header = dem['header']
     ncols = header.ncols
@@ -518,15 +520,27 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     csz = header.cellsize
     areaRaster = dem['areaRaster']
     totalMassRaster = np.nansum(areaRaster*relRaster*rho)
+
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     FD = np.zeros((nrows, ncols))
     # find all non empty cells (meaning release area)
     indRelY, indRelX = np.nonzero(relRaster)
 
+    # derive mass per particle to define number of particles per cell:
+    if methodParticles == 'MPPDIR':
+        massPerPart = cfg.getfloat('massPerPart')
+        log.info('Number of particles defined by: mass per particle %' % cfg['massPerPart'])
+    elif methodParticles == 'MPPDH':
+        deltaTh = cfg.getfloat('deltaTh')
+        meshResolution = cfg.getfloat('meshResolution')
+        massPerPart = rho * meshResolution * meshResolution * deltaTh
+        log.info('Number of particles defined by: release thickness per particle: %s' % cfg['deltaTh'])
+        log.info('mass per particle is %.2f' % massPerPart)
+
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
-        # TODO: this is for development purpouses, change or remove in the future
+        # TODO: this is for development purposes, change or remove in the future
         # If initialisation from file
         if cfg['particleFile']:
             inDirPart = cfg['particleFile']
@@ -546,7 +560,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         particles['s'] = np.zeros(np.shape(Xpart))
         particles['l'] = np.zeros(np.shape(Xpart))
     else:
-        # initiate random generator
+        # initialize random generator
         rng = np.random.default_rng(int(cfg['seed']))
 
         Npart = 0
