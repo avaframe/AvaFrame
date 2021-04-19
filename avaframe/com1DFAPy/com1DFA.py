@@ -1033,7 +1033,12 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
-    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, gradient=0)
+    if cfg.getint('sphOption') == 0:
+        force['forceSPHX'] = np.zeros(np.shape(force['forceX']))
+        force['forceSPHY'] = np.zeros(np.shape(force['forceY']))
+        force['forceSPHZ'] = np.zeros(np.shape(force['forceZ']))
+    else:
+        particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, gradient=0)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
