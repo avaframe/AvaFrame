@@ -789,7 +789,7 @@ def getNeighboursC(particles, dem):
     -------
     particles : dict
       updated particles dictionary with
-      neighbouts info indPartInCell and partInCell arrays for SPH and
+      neighbours info indPartInCell and partInCell arrays for SPH and
       with InCell, IndX and IndY arrays location on the DEM grid
     """
     # get DEM grid information
