@@ -160,6 +160,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double rhoEnt = cfg.getfloat('rhoEnt')
   cdef double hRes = cfg.getfloat('hRes')
   cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double curvAcceleration = cfg.getfloat('curvAcceleration')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef int frictType = cfg.getint('frictType')
   cdef int interpOption = cfg.getint('interpOption')
@@ -259,7 +260,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
       accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
       # normal component of the acceleration of gravity
       gravAccNorm = - gravAcc * nzAvg
-      effAccNorm = gravAccNorm + accNormCurv
+      effAccNorm = gravAccNorm + curvAcceleration * accNormCurv
       if(effAccNorm < 0.0):
           Fnormal[j] = m * effAccNorm
 
