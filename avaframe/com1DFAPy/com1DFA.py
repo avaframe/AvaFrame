@@ -569,6 +569,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         particles['Npart'] = len(Xpart)
         particles = DFAfunC.getNeighboursC(particles, dem)
         particles['s'] = np.zeros(np.shape(Xpart))
+        particles['l'] = np.zeros(np.shape(Xpart))
         # # adding z component
         # zSamos = copy.deepcopy(particles['z'])
         # particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
@@ -620,6 +621,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         particles['x'] = Xpart
         particles['y'] = Ypart
         particles['s'] = np.zeros(np.shape(Xpart))
+        particles['l'] = np.zeros(np.shape(Xpart))
         # adding z component
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         # readjust mass
@@ -1603,6 +1605,7 @@ def removePart(particles, mask, nRemove):
     particles['y'] = particles['y'][mask]
     particles['z'] = particles['z'][mask]
     particles['s'] = particles['s'][mask]
+    particles['l'] = particles['l'][mask]
     particles['ux'] = particles['ux'][mask]
     particles['uy'] = particles['uy'][mask]
     particles['uz'] = particles['uz'][mask]
@@ -1632,6 +1635,7 @@ def splitPart(cfg, particles, dem):
             particles['y'] = np.append(particles['y'], particles['y'][ind]*np.ones((nAdd)))
             particles['z'] = np.append(particles['z'], particles['z'][ind]*np.ones((nAdd)))
             particles['s'] = np.append(particles['s'], particles['s'][ind]*np.ones((nAdd)))
+            particles['l'] = np.append(particles['l'], particles['l'][ind]*np.ones((nAdd)))
             particles['ux'] = np.append(particles['ux'], particles['ux'][ind]*np.ones((nAdd)))
             particles['uy'] = np.append(particles['uy'], particles['uy'][ind]*np.ones((nAdd)))
             particles['uz'] = np.append(particles['uz'], particles['uz'][ind]*np.ones((nAdd)))

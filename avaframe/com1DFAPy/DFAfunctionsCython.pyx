@@ -479,7 +479,7 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double[:, :] Nx = dem['Nx']
   cdef double[:, :] Ny = dem['Ny']
   cdef double[:, :] Nz = dem['Nz']
-  cdef double[:, :] Z = dem['rasterData']
+  cdef double[:, :] ZDEM = dem['rasterData']
   # initializeinter = np.zeros(N, dtype=np.float64)
   cdef double[:] MNew = np.zeros(Npart, dtype=np.float64)
   cdef double[:] XNew = np.zeros(Npart, dtype=np.float64)
@@ -493,8 +493,10 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double[:] mass = particles['m']
   cdef double[:] H = particles['h']
   cdef double[:] S = particles['s']
+  cdef double[:] L = particles['l']
   cdef double[:] X = particles['x']
   cdef double[:] Y = particles['y']
+  cdef double[:] Z = particles['z']
   cdef double[:] UX = particles['ux']
   cdef double[:] UY = particles['uy']
   cdef double[:] UZ = particles['uz']
@@ -511,9 +513,9 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double peakKinEne = particles['peakKinEne']
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
-  cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, dtStop
+  cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
   cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
-  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, uN, uMag, uMagNew
+  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
   cdef double massEntrained = 0
   cdef int j
   # loop on particles
@@ -521,11 +523,13 @@ def updatePositionC(cfg, particles, dem, force):
     m = mass[j]
     x = X[j]
     y = Y[j]
+    z = Z[j]
     h = H[j]
     ux = UX[j]
     uy = UY[j]
     uz = UZ[j]
     s = S[j]
+    l = L[j]
 
     # Force magnitude (without friction)
     ForceDriveX = forceX[j] + forceSPHX[j]
@@ -554,20 +558,23 @@ def updatePositionC(cfg, particles, dem, force):
     # update position
     xNew = x + dtStop * 0.5 * (ux + uxNew)
     yNew = y + dtStop * 0.5 * (uy + uyNew)
-    sNew = s + math.sqrt((xNew-x)*(xNew-x) + (yNew-y)*(yNew-y))
     # make sure particle is on the mesh (recompute the z component)
-    zNew = getScalar(xNew, yNew, Z, csz, interpOption)
-    nx, ny, nz = getVector(xNew, yNew, Nx, Ny, Nz, csz, interpOption)
-    nx, ny, nz = normalize(nx, ny, nz)
+    zNew = getScalar(xNew, yNew, ZDEM, csz, interpOption)
+    lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
+    nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
+    nxNew, nyNew, nzNew = getVector(xNew, yNew, Nx, Ny, Nz, csz, interpOption)
+    nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
+    nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
+    sNew = s + nz*norm((xNew-x), (yNew-y), (zNew-z))
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity
     # uN = scalProd(uxNew, uyNew, uzNew, nx, ny, nz)
-    uN = uxNew*nx + uyNew*ny + uzNew*nz
+    uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
     # remove normal component of the velocity
-    uxNew = uxNew - uN * nx
-    uyNew = uyNew - uN * ny
-    uzNew = uzNew - uN * nz
+    uxNew = uxNew - uN * nxNew
+    uyNew = uyNew - uN * nyNew
+    uzNew = uzNew - uN * nzNew
 
     # velocity magnitude new
     uMagNew = norm(uxNew, uyNew, uzNew)
