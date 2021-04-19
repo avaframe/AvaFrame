@@ -765,9 +765,9 @@ def updateFieldsC(cfg, particles, dem, fields):
 @cython.wraparound(False)
 @cython.cdivision(True)
 def getNeighboursC(particles, dem):
-    """ Locate particles on DEM and SPH grid
+    """ Locate particles on DEM and neighbour search grid
 
-    Ĺocate each particle in a grid cell (both DEM and SPH grid) and build the
+    Ĺocate each particle in a grid cell (both DEM and neighbour search grid) and build the
     indPartInCell and partInCell arrays for SPH neighbourSearch and
     InCell, IndX and IndY arrays location on the DEM grid.
     See issue #200 and documentation for details
@@ -776,13 +776,13 @@ def getNeighboursC(particles, dem):
     ----------
     particles : dict
     dem : dict
-      dem dict with SPH header (information about SPH grid)
+      dem dict with neighbour search grid header (information about neighbour search grid)
 
     Returns
     -------
     particles : dict
       updated particles dictionary with
-      neighbours info indPartInCell and partInCell arrays for SPH and
+      neighbours info indPartInCell and partInCell arrays for neighbour search and
       with InCell, IndX and IndY arrays location on the DEM grid
     """
     # get DEM grid information
@@ -790,7 +790,7 @@ def getNeighboursC(particles, dem):
     cdef int nColsDEM = header.ncols
     cdef int nRowsDEM = header.nrows
     cdef float cszDEM = header.cellsize
-    # get SPH grid information
+    # get neighbour search grid information
     headerNeighbourGrid = dem['headerNeighbourGrid']
     cdef int nColsNeighbourGrid = headerNeighbourGrid.ncols
     cdef int nRowsNeighbourGrid = headerNeighbourGrid.nrows
@@ -802,9 +802,9 @@ def getNeighboursC(particles, dem):
     cdef double[:] y = particles['y']
 
     # initialize outputs
-    cdef int NcellsNeighbourGrid = (nColsNeighbourGrid-1)*(nRowsNeighbourGrid-1)
-    cdef int[:] indPartInCell = np.zeros(NcellsNeighbourGrid + 1).astype('intc')
-    cdef int[:] indPartInCell2 = np.zeros(NcellsNeighbourGrid + 1).astype('intc')
+    cdef int nCellsNeighbourGrid = (nColsNeighbourGrid-1)*(nRowsNeighbourGrid-1)
+    cdef int[:] indPartInCell = np.zeros(nCellsNeighbourGrid + 1).astype('intc')
+    cdef int[:] indPartInCell2 = np.zeros(nCellsNeighbourGrid + 1).astype('intc')
     cdef int[:] partInCell = np.zeros(Npart).astype('intc')
     cdef int[:] indXDEM = np.zeros(Npart).astype('intc')
     cdef int[:] indYDEM = np.zeros(Npart).astype('intc')
@@ -817,7 +817,7 @@ def getNeighboursC(particles, dem):
       # get index of cell containing the particle
       ic = indx + (nColsNeighbourGrid-1) * indy
       indPartInCell[ic+1] = indPartInCell[ic+1] + 1
-    for j in range(NcellsNeighbourGrid):
+    for j in range(nCellsNeighbourGrid):
       indPartInCell[j+1] = indPartInCell[j] + indPartInCell[j+1]
       indPartInCell2[j+1] = indPartInCell[j+1]
 
@@ -899,7 +899,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
   particles : dict
       particles dictionary at t
   headerNeighbourGrid : dict
-      SPH header dictionary (information about SPH grid)
+      neighbour search header dictionary (information about SPH grid)
   cszNormal : double
       cell size of normal vector Grid
   Nx : 2D numpy array
@@ -928,7 +928,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int SPHoption = cfg.getint('sphOption')
-  # SPH grid information and neighbour information
+  # neighbour search grid information and neighbour information
   cdef double cszNeighbourGrid = headerNeighbourGrid.cellsize
   cdef int nRowsNeighbourGrid = headerNeighbourGrid.nrows
   cdef int nColsNeighbourGrid = headerNeighbourGrid.ncols

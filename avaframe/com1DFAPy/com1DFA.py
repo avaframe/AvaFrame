@@ -341,12 +341,12 @@ def initializeMesh(cfg, demOri, num):
     """ Create rectangular mesh
 
     Reads the DEM information, computes the normal vector field and
-    boundries to the DEM
+    boundries to the DEM. Also generates the grid for the neighbour search
 
     Parameters
     ----------
-    dem : dict
-        dictionary with dem information
+    demOri : dict
+        dictionary with initial dem information
     num : int
         chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
         1 to use the simple cross product method
@@ -354,8 +354,8 @@ def initializeMesh(cfg, demOri, num):
     Returns
     -------
     dem : dict
-        dictionary completed with normal field and boundaries as well as SPH
-        grid information
+        dictionary relocated in (0,0) and completed with normal field and
+        boundaries as well as neighbour search grid information
     """
 
     dem = setDEMoriginToZero(demOri)
@@ -796,8 +796,6 @@ def DFAIterate(cfg, particles, fields, dem):
         fields dictionary at initial time step
     dem : dict
         dictionary with dem information
-    Tcpu : dict
-        computation time dictionary
 
     Returns
     -------
@@ -807,6 +805,8 @@ def DFAIterate(cfg, particles, fields, dem):
         list of fields dictionary (for each time step saved)
     Tcpu : dict
         computation time dictionary
+    infoDict : dict
+        Dictionary of all simulations carried out
     """
 
     # Initialise cpu timing
@@ -948,7 +948,6 @@ def writeMBFile(infoDict, avaDir, logName):
 def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     """ compute next time step using an euler forward scheme
 
-
     Parameters
     ----------
     cfg: configparser
@@ -961,10 +960,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
         time step
     dem : dict
         dictionary with dem information
-    Ment : 2D numpy array
-        entrained mass raster
-    Cres : 2D numpy array
-        resistance raster
     Tcpu : dict
         computation time dictionary
 
