@@ -235,6 +235,8 @@ def getSimulation(cfg, rel, entResInfo):
                 log.warning('No resistance area available for res simulation')
         elif simType == 'null':
             cuSim.append(simName + '_null_dfa')
+        elif simType == 'all':
+            cuSim.append(simName + 'all')
 
     return relName, cuSim, relDict, badName
 
@@ -790,6 +792,10 @@ def initializeMassEnt(dem, logName, entLine):
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
         entrMassRaster = prepareArea(entLine, dem)
+    elif ('all' in logName) and entLine:
+        entrainmentArea = entLine['Name']
+        log.info('Entrainment area: %s' % (entrainmentArea))
+        entrMassRaster = prepareArea(entLine, dem)
     else:
         entrMassRaster = np.zeros((nrows, ncols))
 
@@ -823,6 +829,12 @@ def initializeResistance(cfg, dem, logName, resLine):
         mask = prepareArea(resLine, dem)
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
     elif ('res' in logName) and resLine:
+        # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
+        resistanceArea = resLine['Name']
+        log.info('Resistance area: %s' % (resistanceArea))
+        mask = prepareArea(resLine, dem)
+        cResRaster = 0.5 * d * cw / (sres*sres) * mask
+    elif ('all' in logName) and resLine:
         # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
         resistanceArea = resLine['Name']
         log.info('Resistance area: %s' % (resistanceArea))
