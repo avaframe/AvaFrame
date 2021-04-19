@@ -30,8 +30,6 @@ void CreateProject(char Com1DFAProjectDir[], char DhmFile[],
 
   // choose DHM
   sprintf(Dhm, "%s", DhmFile);
-  set("Project/DHMs", "AutoCreateSimulationMesh", "0");
-  set("Project/DHMs", "SimulationDefaultCellSize", "2.5");
   set("Project/DHMs", "Import", Dhm);
   sprintf(name,"Project/DHMs/%s_simulation",DhmName);
   set(name, "Active", "1");
