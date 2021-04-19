@@ -138,10 +138,9 @@ def com1DFAMain(cfg, avaDir, relThField):
             # Result parameters to be exported
             exportFields(cfgGen, Tsave, Fields, rel, demOri, outDir, logName)
 
-            reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, entResInfo)
+            reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, areaInfo)
 
-            # add area info to reportDict
-            reportDict['Release Area'].update(reportAreaInfo)
+            # add computation time to report dict
             reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
 
             # add stopping info to reportDict
@@ -236,7 +235,7 @@ def getSimulation(cfg, rel, entResInfo):
         elif simType == 'null':
             cuSim.append(simName + '_null_dfa')
         elif simType == 'all':
-            cuSim.append(simName + 'all')
+            cuSim.append(simName + '_all_dfa')
 
     return relName, cuSim, relDict, badName
 
@@ -295,7 +294,7 @@ def prepareInputData(demFile, relFile, entFiles, resFile):
     return demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea
 
 
-def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, entResInfo):
+def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, areaInfo):
     """ create simulaton report dictionary
 
     Parameters
@@ -321,17 +320,8 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
 
     # load parameters set in configuration file
     dateTimeInfo = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    entInfo = 'No'
-    resInfo = 'No'
-    if 'entres' in logName:
-        entInfo = entResInfo['flagEnt']
-        resInfo = entResInfo['flagRes']
-    elif 'ent' in logName and 'res' not in logName:
-        entInfo = entResInfo['flagEnt']
-        resInfo = 'No'
-    elif 'res' in logName and 'ent' not in logName:
-        entInfo = 'No'
-        resInfo = entResInfo['flagRes']
+    entInfo = areaInfo['entrainment']
+    resInfo = areaInfo['resistance']
 
     # Create dictionary
     reportST = {}
@@ -362,6 +352,8 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
                                        'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
         if resInfo == 'Yes':
             reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
+
+    reportST['Release Area'].update(areaInfo)
 
     return reportST
 
@@ -502,8 +494,8 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     # initialize entrainment and resistance
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster = initializeMassEnt(demOri, logName, entLine)
-    cResRaster = initializeResistance(cfgGen, demOri, logName, resLine)
+    entrMassRaster, areaInfo = initializeMassEnt(demOri, logName, entLine, areaInfo)
+    cResRaster, areaInfo = initializeResistance(cfgGen, demOri, logName, resLine, areaInfo)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
@@ -766,7 +758,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, logName, entLine):
+def initializeMassEnt(dem, logName, entLine, areaInfo):
     """ Initialize mass for entrainment
 
     Parameters
@@ -788,21 +780,25 @@ def initializeMassEnt(dem, logName, entLine):
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
         entrMassRaster = prepareArea(entLine, dem)
+        areaInfo['entrainment'] = 'Yes'
     elif ('ent' in logName) and entLine:
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
         entrMassRaster = prepareArea(entLine, dem)
+        areaInfo['entrainment'] = 'Yes'
     elif ('all' in logName) and entLine:
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
         entrMassRaster = prepareArea(entLine, dem)
+        areaInfo['entrainment'] = 'Yes'
     else:
         entrMassRaster = np.zeros((nrows, ncols))
+        areaInfo['entrainment'] = 'No'
 
-    return entrMassRaster
+    return entrMassRaster, areaInfo
 
 
-def initializeResistance(cfg, dem, logName, resLine):
+def initializeResistance(cfg, dem, logName, resLine, areaInfo):
     """ Initialize resistance matrix
 
     Parameters
@@ -828,22 +824,26 @@ def initializeResistance(cfg, dem, logName, resLine):
         log.info('Resistance area: %s' % (resistanceArea))
         mask = prepareArea(resLine, dem)
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
+        areaInfo['resistance'] = 'Yes'
     elif ('res' in logName) and resLine:
         # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
         resistanceArea = resLine['Name']
         log.info('Resistance area: %s' % (resistanceArea))
         mask = prepareArea(resLine, dem)
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
+        areaInfo['resistance'] = 'Yes'
     elif ('all' in logName) and resLine:
         # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
         resistanceArea = resLine['Name']
         log.info('Resistance area: %s' % (resistanceArea))
         mask = prepareArea(resLine, dem)
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
+        areaInfo['resistance'] = 'Yes'
     else:
         cResRaster = np.zeros((nrows, ncols))
+        areaInfo['resistance'] = 'No'
 
-    return cResRaster
+    return cResRaster, areaInfo
 
 
 def DFAIterate(cfg, particles, fields, dem):
