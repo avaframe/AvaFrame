@@ -31,11 +31,17 @@ def writeLine2SHPfile(part, lineName, fileName):
 
 
 def trackParticle():
+
+    # inDir = '/home/marie/ava0/AvaFrame/avaframe/data/avaParabola/Outputs/com1DFAPy/particles'
+    inDir = '/home/marie/ava0/AvaFrame/avaframe/data/avaAlr/Outputs/com1DFAPy/particles'
+    # inDEM = '/home/marie/ava0/AvaFrame/avaframe/data/avaParabola/Inputs/DEM_PF_Topo.asc'
+    inDEM = '/home/marie/ava0/AvaFrame/avaframe/data/avaAlr/Inputs/avaAlr.asc'
+
     # inDir = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaParabola/Outputs/com1DFAPy/particles'
     # inDEM = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaParabola/Inputs/DEM_PF_Topo.asc'
 
-    inDir = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaHelix/Outputs/com1DFAPy/particles'
-    inDEM = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaHelix/Inputs/DEM_HX_Topo.asc'
+    inDir = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaAlr0/Outputs/com1DFAPy/particles'
+    inDEM = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaAlr0/Inputs/avaAlr.asc'
 
     # inDir = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/avaInclinedPlane/Outputs/com1DFAPy/particles'
     # inDEM = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/avaInclinedPlane/Inputs/DEM_IP_Topo.asc'
@@ -68,7 +74,7 @@ def trackParticle():
     EpotPath = np.empty((0, 1))
     count = 0
     fig2 = plt.figure(figsize=(2*figW, figH))
-    ax = plt.subplot(211)
+    ax = plt.subplot(111)
     for t in TimeStepInfo:
         particles = Particles[count]
         # force = Force[count]
@@ -97,8 +103,8 @@ def trackParticle():
         # pond = np.zeros(np.shape(kineticEne))
         # pond[13000] = 1
         # pondSum = 1
-        # pond = m
-        # pondSum = np.sum(m)
+        pond = m
+        pondSum = np.sum(m)
         # pond = np.ones(np.shape(kineticEne))
         # pondSum = Npart
 
@@ -126,18 +132,18 @@ def trackParticle():
 
         ax.clear()
         ax.set_title('t=%.2f s' % particles['t'])
-        variable = particles['m']
+        variable = particles['h']
         Cp1 = ax.contour(XX, YY, ZZ, levels=10, colors='k')
         cmap, _, _, norm, ticks = makeColorMap(
             cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
         # set range and steps of colormap
         cc = variable
         sc = ax.scatter(X, Y, c=cc, cmap=cmap, marker='.')
-        # plt.pause(0.01)
+        plt.pause(0.01)
 
 
     print(np.min(m), np.mean(m), np.max(m), np.std(m))
-    mu = 0.5
+    mu = 0.55
     g = 9.81
     avapath = {}
     avapath['x'] = np.array([xPath[0], xPath[-1]])
@@ -161,18 +167,6 @@ def trackParticle():
     ax1 = plt.subplot(211)
     cmap = cmapPlasma
     cmap.set_under(color='w')
-    # x = Points['x'][0, :]
-    # y = Points['y'][:, 0]
-    # im0 = NonUniformImage(ax1, extent=[x.min(), x.max(), y.min(), y.max()], cmap=cmap)
-    # im0.set_clim(vmin=0.000000001)
-    # # im.set_interpolation('bilinear')
-    # im0.set_data(x, y, Ekin)
-    # ref1 = ax1.images.append(im0)
-    # cbar = ax1.figure.colorbar(im0, ax=ax1, use_gridspec=True)
-    # cbar.ax.set_ylabel('Kinetic Energy [J]')
-    # ax1.title.set_text('Energy')
-    # Cp = ax1.contour(X, Y, Z, levels=10, colors='k')
-    # # ax1.clabel(Cp, colors='k', inline=1, fontsize=5)
     ax1.plot(xPath, yPath, 'k--', label='avapath')
     sc = ax1.scatter(X, Y, c=cc, cmap=cmap, marker='.')
     Cp1 = ax.contour(XX, YY, ZZ, levels=10, colors='k')
