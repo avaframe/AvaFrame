@@ -201,7 +201,7 @@ def test_getNeighboursC(capfd):
     header.cellsize = 1
     dem = {}
     dem['header'] = header
-    dem['headerSPH'] = header
+    dem['headerNeighbourGrid'] = header
     particles = {}
     particles['Npart'] = 16
     particles['x'] = np.array([1.5, 0.5, 1.5, 2.5, 1.5, 2.5, 0.5, 1.5, 0.5, 2.5, 0.5, 2.5, 1.5, 2.5, 3.5, 3.5])
