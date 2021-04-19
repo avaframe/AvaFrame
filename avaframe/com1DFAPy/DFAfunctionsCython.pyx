@@ -260,6 +260,7 @@ def computeForceC(cfg, particles, fields, dem, dT):
       accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
       # normal component of the acceleration of gravity
       gravAccNorm = - gravAcc * nzAvg
+      # turn off curvature with the  curvAcceleration coefficient
       effAccNorm = gravAccNorm + curvAcceleration * accNormCurv
       if(effAccNorm < 0.0):
           Fnormal[j] = m * effAccNorm
@@ -560,11 +561,15 @@ def updatePositionC(cfg, particles, dem, force):
     yNew = y + dtStop * 0.5 * (uy + uyNew)
     # make sure particle is on the mesh (recompute the z component)
     zNew = getScalar(xNew, yNew, ZDEM, csz, interpOption)
+    # compute the distance traveled by the particle
     lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
+    # compute average normal between the beginning and end of the time step
     nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
     nxNew, nyNew, nzNew = getVector(xNew, yNew, Nx, Ny, Nz, csz, interpOption)
     nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
+    # compute the horizontal distance traveled by the particle (corrected with
+    # the angle difference between the slope and the normal)
     sNew = s + nz*norm((xNew-x), (yNew-y), (zNew-z))
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
