@@ -41,9 +41,6 @@ debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 flagSemiRand = False
 # particles are randomly distributed
 flagRand = True
-# set feature flag for flow deth calculation
-# use SPH to get the particles flow depth
-flagFDSPH = False
 # set feature leapfrog time stepping
 featLF = False
 featCFL = False
@@ -365,8 +362,8 @@ def initializeMesh(cfg, demOri, num):
 
     # read dem header
     headerDEM = dem['header']
-    ncolsDEM = headerDEM.ncols
-    nrowsDEM = headerDEM.nrows
+    nColsDEM = headerDEM.ncols
+    nRowsDEM = headerDEM.nrows
     cszDEM = headerDEM.cellsize
 
     # get normal vector of the grid mesh
@@ -379,35 +376,17 @@ def initializeMesh(cfg, demOri, num):
     dem['Bad'] = bad
 
     # Prepare SPH grid
-    headerSPH = IOf.cASCheader()
-    cszSPH = cfg.getfloat('sphKernekRadi')
-    headerSPH.cellsize = cszSPH
-    headerSPH.ncols = np.floor(ncolsDEM * cszDEM / cszSPH) + 1
-    headerSPH.nrows = np.floor(nrowsDEM * cszDEM / cszSPH) + 1
-    dem['headerSPH'] = headerSPH
-    if debugPlot:
-        x = np.arange(ncolsDEM) * cszDEM
-        y = np.arange(nrowsDEM) * cszDEM
-        fig = plt.figure(figsize=(pU.figW, pU.figH))
-        ax1 = fig.add_subplot(121)
-        ax2 = fig.add_subplot(122)
-        ax1.plot(x, dem['Nx'][int(nrowsDEM/2+1), :], '--k', label='Nx(x)')
-        ax1.plot(x, dem['Ny'][int(nrowsDEM/2+1), :], '--b', label='Ny(x)')
-        ax1.plot(x, dem['Nz'][int(nrowsDEM/2+1), :], '--r', label='Nz(x)')
-        ax2.plot(y, dem['Nx'][:, int(ncolsDEM/2+1)], ':k', label='Nx(y)')
-        ax2.plot(y, dem['Ny'][:, int(ncolsDEM/2+1)], ':b', label='Ny(y)')
-        ax2.plot(y, dem['Nz'][:, int(ncolsDEM/2+1)], ':r', label='Nz(y)')
-        ax1.legend()
-        ax2.legend()
-        plt.show()
-        IOf.writeResultToAsc(dem['header'], dem['Nx'], 'Nx.asc')
-        IOf.writeResultToAsc(dem['header'], dem['Ny'], 'Ny.asc')
-        IOf.writeResultToAsc(dem['header'], dem['Nz'], 'Nz.asc')
+    headerNeighbourGrid = IOf.cASCheader()
+    cszNeighbourGrid = cfg.getfloat('sphKernelRadius')
+    headerNeighbourGrid.cellsize = cszNeighbourGrid
+    headerNeighbourGrid.ncols = np.floor(nColsDEM * cszDEM / cszNeighbourGrid) + 1
+    headerNeighbourGrid.nrows = np.floor(nRowsDEM * cszDEM / cszNeighbourGrid) + 1
+    dem['headerNeighbourGrid'] = headerNeighbourGrid
 
     # get real Area
     areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, cszDEM, num)
     dem['areaRaster'] = areaRaster
-    projArea = ncolsDEM * nrowsDEM * cszDEM * cszDEM
+    projArea = nColsDEM * nRowsDEM * cszDEM * cszDEM
     actualArea = np.nansum(areaRaster)
     log.info('Largest cell area: %.2f m²' % (np.nanmax(areaRaster)))
     log.debug('Projected Area : %.2f' % projArea)
@@ -645,21 +624,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
 
     particles = DFAfunC.getNeighboursC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
-
-    if flagFDSPH:
-        Nx = dem['Nx']
-        Ny = dem['Ny']
-        Nz = dem['Nz']
-        indXDEM = (particles['indXDEM']).astype('intc')
-        indYDEM = (particles['indYDEM']).astype('intc')
-        H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indXDEM, indYDEM)
-        H = np.asarray(H)
-        # particles['h'] = H
-        # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
-        # particles['h'] = hh
-        # H = np.asarray(H)
-        W = np.asarray(W)
-        particles['hSPH'] = H/W
 
     # initialize time
     t = 0
@@ -1053,29 +1017,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
-
-    # get SPH flow depth
-
-    if flagFDSPH:
-        # particles = SPH.computeFlowDepth(cfg, particles, dem)
-        header = dem['header']
-        Nx = dem['Nx']
-        Ny = dem['Ny']
-        Nz = dem['Nz']
-        indXDEM = (particles['indXDEM']).astype('intc')
-        indYDEM = (particles['indYDEM']).astype('intc')
-        H, C, W = DFAfunC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indXDEM, indYDEM)
-        H = np.asarray(H)
-        # particles['h'] = H
-        # H, W = SPHC.computeFDC(cfg, particles, header, Nx, Ny, Nz, indX, indY)
-        # particles['h'] = hh
-        # H = np.asarray(H)
-        W = np.asarray(W)
-        H = np.where(W > 0, H/W, H)
-        particles['hSPH'] = np.where(H <= hmin, hmin, H)
-        particles['h'] = particles['hSPH']
-
-        # print(np.min(particles['h']))
 
     return particles, fields, Tcpu
 
