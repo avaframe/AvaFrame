@@ -92,10 +92,8 @@ def com1DFAMain(cfg, avaDir, relThField):
     flagDev = cfg['FLAGS'].getboolean('flagDev')
 
     # fetch input data - dem, release-, entrainment- and resistance areas
-    demFile, relFiles, entFiles, resFile, entResInfo = gI.getInputData(
+    demFile, relFiles, entFiles, resFile, entResInfo = gI.getInputDataCom1DFAPy(
         avaDir, cfg['FLAGS'], flagDev)
-    # save flags
-    cfg['FLAGS']['entRes'] = str(entResInfo['flagEntRes'])
 
     # Counter for release area loop
     countRel = 0
@@ -113,8 +111,11 @@ def com1DFAMain(cfg, avaDir, relThField):
         releaseLine['d0'] = relDict['d0']
 
         for sim in cuSim:
-            logName = sim + '_' + cfgGen['mu']
-            log.info('Perform %s simulation' % sim)
+            #logName = sim + '_' + cfgGen['mu']
+            logName = relName + '_' + sim + '_dfa_' + cfgGen['mu']
+            log.info('Perform %s simulation' % logName)
+            # add simType to configuration
+            cfgGen['simTypeActual'] = sim
 
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
@@ -214,12 +215,12 @@ def getSimulation(cfg, rel, entResInfo):
     for simType in simTypeList:
         if simType == 'ent':
             if entResInfo['flagEnt'] == 'Yes':
-                cuSim.append(simName + '_ent_dfa')
+                cuSim.append('ent')
             else:
                 log.warning('No entrainment area available for ent simulation')
         elif simType == 'entres':
             if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
-                cuSim.append(simName + '_entres_dfa')
+                cuSim.append('entres')
             else:
                 if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'No':
                     log.warning('No resistance area available for entres simulation')
@@ -229,13 +230,13 @@ def getSimulation(cfg, rel, entResInfo):
                     log.warning('No resistance and no entrainment area available for entres simulation')
         elif simType == 'res':
             if entResInfo['flagRes'] == 'Yes':
-                cuSim.append(simName + '_res_dfa')
+                cuSim.append('res')
             else:
                 log.warning('No resistance area available for res simulation')
         elif simType == 'null':
-            cuSim.append(simName + '_null_dfa')
+            cuSim.append('null')
         elif simType == 'all':
-            cuSim.append(simName + '_all_dfa')
+            cuSim.append('all')
 
     return relName, cuSim, relDict, badName
 
@@ -343,15 +344,14 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
                 'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name'],
                                  'Release thickness [m]': relDict['d0']}}
 
-    if 'entres' in logName:
-        if entInfo == 'Yes':
-            reportST.update({'Entrainment area':
-                                       {'type': 'columns',
-                                       'Entrainment area scenario': entrainmentArea,
-                                       'Entrainment thickness [m]': cfgGen.getfloat('hEnt'),
-                                       'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
-        if resInfo == 'Yes':
-            reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
+    if entInfo == 'Yes':
+        reportST.update({'Entrainment area':
+                                   {'type': 'columns',
+                                   'Entrainment area scenario': entrainmentArea,
+                                   'Entrainment thickness [m]': cfgGen.getfloat('hEnt'),
+                                   'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
+    if resInfo == 'Yes':
+        reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
 
     reportST['Release Area'].update(areaInfo)
 
@@ -459,7 +459,6 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
         dictionary with new dem (lower left center at origin)
     """
     cfgGen = cfg['GENERAL']
-    entRes = cfg.getboolean('FLAGS', 'entRes')
     methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
 
     # -----------------------
@@ -492,10 +491,12 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     particles, fields = initializeParticles(cfgGen, relRaster, dem, logName=logName)
 
     # initialize entrainment and resistance
+    # get info of simType and whether or not to initialize resistance and entrainment
+    simTypeActual = cfgGen['simTypeActual']
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster, areaInfo = initializeMassEnt(demOri, logName, entLine, areaInfo)
-    cResRaster, areaInfo = initializeResistance(cfgGen, demOri, logName, resLine, areaInfo)
+    entrMassRaster, areaInfo = initializeMassEnt(demOri, simTypeActual, entLine, areaInfo)
+    cResRaster, areaInfo = initializeResistance(cfgGen, demOri, simTypeActual, resLine, areaInfo)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
@@ -758,7 +759,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, logName, entLine, areaInfo):
+def initializeMassEnt(dem, simTypeActual, entLine, areaInfo):
     """ Initialize mass for entrainment
 
     Parameters
@@ -775,18 +776,8 @@ def initializeMassEnt(dem, logName, entLine, areaInfo):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if ('entres' in logName) and entLine:
+    if simTypeActual == 'entres' or simTypeActual == 'ent' or (simTypeActual == 'all' and entLine):
         # entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
-        entrainmentArea = entLine['Name']
-        log.info('Entrainment area: %s' % (entrainmentArea))
-        entrMassRaster = prepareArea(entLine, dem)
-        areaInfo['entrainment'] = 'Yes'
-    elif ('ent' in logName) and entLine:
-        entrainmentArea = entLine['Name']
-        log.info('Entrainment area: %s' % (entrainmentArea))
-        entrMassRaster = prepareArea(entLine, dem)
-        areaInfo['entrainment'] = 'Yes'
-    elif ('all' in logName) and entLine:
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
         entrMassRaster = prepareArea(entLine, dem)
@@ -798,7 +789,7 @@ def initializeMassEnt(dem, logName, entLine, areaInfo):
     return entrMassRaster, areaInfo
 
 
-def initializeResistance(cfg, dem, logName, resLine, areaInfo):
+def initializeResistance(cfg, dem, simTypeActual, resLine, areaInfo):
     """ Initialize resistance matrix
 
     Parameters
@@ -818,22 +809,7 @@ def initializeResistance(cfg, dem, logName, resLine, areaInfo):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if ('entres' in logName) and resLine:
-        # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
-        resistanceArea = resLine['Name']
-        log.info('Resistance area: %s' % (resistanceArea))
-        mask = prepareArea(resLine, dem)
-        cResRaster = 0.5 * d * cw / (sres*sres) * mask
-        areaInfo['resistance'] = 'Yes'
-    elif ('res' in logName) and resLine:
-        # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
-        resistanceArea = resLine['Name']
-        log.info('Resistance area: %s' % (resistanceArea))
-        mask = prepareArea(resLine, dem)
-        cResRaster = 0.5 * d * cw / (sres*sres) * mask
-        areaInfo['resistance'] = 'Yes'
-    elif ('all' in logName) and resLine:
-        # resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
+    if simTypeActual == 'entres' or simTypeActual == 'res' or (simTypeActual == 'all' and resLine):
         resistanceArea = resLine['Name']
         log.info('Resistance area: %s' % (resistanceArea))
         mask = prepareArea(resLine, dem)
