@@ -511,7 +511,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
     avaDir = cfg['avalancheDir']
-    methodParticles = cfg['methodParticles']
+    massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
 
     # read dem header
     header = dem['header']
@@ -528,13 +528,13 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     indRelY, indRelX = np.nonzero(relRaster)
 
     # derive mass per particle to define number of particles per cell:
-    if methodParticles == 'MPPDIR':
+    if massPerParticleDeterminationMethod == 'MPPDIR':
         massPerPart = cfg.getfloat('massPerPart')
-        log.info('Number of particles defined by: mass per particle %' % cfg['massPerPart'])
-    elif methodParticles == 'MPPDH':
+        log.info('Number of particles defined by: mass per particle %s' % cfg['massPerPart'])
+    elif massPerParticleDeterminationMethod == 'MPPDH':
         deltaTh = cfg.getfloat('deltaTh')
-        meshResolution = cfg.getfloat('meshResolution')
-        massPerPart = rho * meshResolution * meshResolution * deltaTh
+        ds = min(csz, cfg.getfloat('sphKernelRadius'))
+        massPerPart = rho * ds * ds * deltaTh
         log.info('Number of particles defined by: release thickness per particle: %s' % cfg['deltaTh'])
         log.info('mass per particle is %.2f' % massPerPart)
 
