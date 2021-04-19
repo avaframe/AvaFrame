@@ -524,7 +524,6 @@ def updatePositionC(cfg, particles, dem, force):
     x = X[j]
     y = Y[j]
     z = Z[j]
-    h = H[j]
     ux = UX[j]
     uy = UY[j]
     uz = UZ[j]
