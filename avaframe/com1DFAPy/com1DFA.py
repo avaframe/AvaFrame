@@ -217,26 +217,41 @@ def getSimulation(cfg, rel, entResInfo):
             if entResInfo['flagEnt'] == 'Yes':
                 cuSim.append('ent')
             else:
-                log.warning('No entrainment area available for ent simulation')
+                log.error('No entrainment area available for ent simulation')
+                raise FileNotFoundError
         elif simType == 'entres':
             if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
                 cuSim.append('entres')
             else:
                 if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'No':
-                    log.warning('No resistance area available for entres simulation')
+                    log.error('No resistance area available for entres simulation')
+                    raise FileNotFoundError
                 elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'Yes':
-                    log.warning('No entrainment area available for entres simulation')
+                    log.error('No entrainment area available for entres simulation')
+                    raise FileNotFoundError
                 elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'No':
-                    log.warning('No resistance and no entrainment area available for entres simulation')
+                    log.error('No resistance and no entrainment area available for entres simulation')
+                    raise FileNotFoundError
         elif simType == 'res':
             if entResInfo['flagRes'] == 'Yes':
                 cuSim.append('res')
             else:
-                log.warning('No resistance area available for res simulation')
+                log.error('No resistance area available for res simulation')
+                raise FileNotFoundError
         elif simType == 'null':
             cuSim.append('null')
-        elif simType == 'all':
-            cuSim.append('all')
+        elif simType == 'available':
+            if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
+                cuSim.append('entres')
+            elif entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'No':
+                cuSim.append('ent')
+            elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'Yes':
+                cuSim.append('res')
+            elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'No':
+                cuSim.append('null')
+
+    # remove duplicate simulation types 
+    cuSim = set(cuSim)
 
     return relName, cuSim, relDict, badName
 
@@ -776,7 +791,7 @@ def initializeMassEnt(dem, simTypeActual, entLine, areaInfo):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if simTypeActual == 'entres' or simTypeActual == 'ent' or (simTypeActual == 'all' and entLine):
+    if simTypeActual in ['entres', 'ent']:
         # entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
         entrainmentArea = entLine['Name']
         log.info('Entrainment area: %s' % (entrainmentArea))
@@ -809,7 +824,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, areaInfo):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if simTypeActual == 'entres' or simTypeActual == 'res' or (simTypeActual == 'all' and resLine):
+    if simTypeActual in ['entres', 'res']:
         resistanceArea = resLine['Name']
         log.info('Resistance area: %s' % (resistanceArea))
         mask = prepareArea(resLine, dem)

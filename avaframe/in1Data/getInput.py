@@ -165,7 +165,9 @@ def getInputData(avaDir, cfg, flagDev=False):
 
 
 def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
-    """ Fetch input datasets required for simulation
+    """ Fetch input datasets required for simulation, duplicated function because
+        simulation type set differently in com1DFAPy compared to com1DFA:
+        TODO: remove duplicate once it is not required anymore
 
     Parameters
     ----------
