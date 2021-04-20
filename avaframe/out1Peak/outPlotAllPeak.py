@@ -8,9 +8,11 @@ import os
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
+import numpy.ma as ma
 import glob
 
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.makePalette as makePalette
@@ -43,6 +45,10 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
     inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
     peakFiles = fU.makeSimDict(inputDir, '', avaDir)
 
+    demFile = gI.getDEMPath(avaDir)
+    demData = IOf.readRaster(demFile)
+    demField = demData['rasterData']
+
     # Output directory
     if cfgFLAGS.getboolean('ReportDir'):
         outDir = os.path.join(avaDir, 'Outputs', modName, 'reports')
@@ -69,18 +75,21 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
         raster = IOf.readRaster(fileName)
         data = raster['rasterData']
 
+        # constrain data to where there is data
+        cellSize = peakFiles['cellSize'][m]
         ind = np.where(data>0)
-        rowsMin = max(np.amin(ind[0])-5, 0)
-        rowsMax = min(np.amax(ind[0])+5, data.shape[0])
-        colsMin = max(np.amin(ind[1])-5, 0)
-        colsMax = min(np.amax(ind[1])+5, data.shape[1])
+        plotBuffer = int(pU.cfg.getfloat('plotBuffer') / cellSize)
+        rowsMin = max(np.amin(ind[0])-plotBuffer, 0)
+        rowsMax = min(np.amax(ind[0])+plotBuffer, data.shape[0])
+        colsMin = max(np.amin(ind[1])-plotBuffer, 0)
+        colsMax = min(np.amax(ind[1])+plotBuffer, data.shape[1])
         dataConstrained = data[rowsMin:rowsMax+1, colsMin:colsMax+1]
+        demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
 
         data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
         unit = pU.cfgPlotUtils['unit%s' % peakFiles['resType'][m]]
 
         # Set extent of peak file
-        cellSize = peakFiles['cellSize'][m]
         ny = data.shape[0]
         nx = data.shape[1]
         Ly = ny*cellSize
@@ -92,12 +101,13 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
         # choose colormap
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             pU.cmapPres, np.amin(data), np.amax(data), continuous=pU.contCmap)
-        cmap.set_bad('w')
+        cmap.set_bad(alpha=0)
         rowsMinPlot = rowsMin*cellSize
         rowsMaxPlot = (rowsMax+1)*cellSize
         colsMinPlot = colsMin*cellSize
         colsMaxPlot = (colsMax+1)*cellSize
-        im1 = ax.imshow(data, cmap=cmap, extent=[rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot], origin='lower')#, aspect=nx/ny)
+        im0 = ax.imshow(demConstrained, cmap='Greys', extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
+        im1 = ax.imshow(data, cmap=cmap, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
         pU.addColorBar(im1, ax, ticks, unit)
 
         title = str('%s' % name)
