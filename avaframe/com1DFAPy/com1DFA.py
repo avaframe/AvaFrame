@@ -141,18 +141,10 @@ def com1DFAMain(cfg, avaDir, relThField):
 
             reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
 
-            # add computation time to report dict
-            reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
-
             # add stopping info to reportDict
             stopCritNotReached = Particles[-1]['iterate']
             avaTime = Particles[-1]['t']
-            stopCritPer = cfgGen.getfloat('stopCrit') *100.
-            if stopCritNotReached:
-                reportDict['Simulation Parameters'].update({'Stop criterion': 'end Time reached: %.2f' % avaTime})
-            else:
-                reportDict['Simulation Parameters'].update({'Stop criterion': '< %.2f percent of PKE' % stopCritPer})
-            reportDict['Simulation Parameters'].update({'Avalanche run time [s]': '%.2f' % avaTime})
+            reportDict = reportAddInfo(reportDict, tcpuDFA, cfgGen, stopCritNotReached, avaTime, infoDict)
 
             # Add to report dictionary list
             reportDictList.append(reportDict)
@@ -329,6 +321,8 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
                 'time': {'type': 'time', 'time': dateTimeInfo},
                 'Simulation Parameters': {
                 'type': 'list',
+                'Program version': 'developement',
+                'Parameter set': '',
                 'Release Area Scenario': relName,
                 'Entrainment': entInfo,
                 'Resistance': resInfo,
@@ -352,6 +346,29 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
     reportST['Release Area'].update(reportAreaInfo['Release area info'])
 
     return reportST
+
+
+def reportAddInfo(reportDict, tcpuDFA, cfgGen, stopCritNotReached, avaTime, infoDict):
+    """ Add time and mass info to report """
+
+    # add mass info
+    reportDict['Simulation Parameters'].update({'Initial mass [kg]': ('%.2f' % infoDict['initial mass'])})
+    reportDict['Simulation Parameters'].update({'Final mass [kg]': ('%.2f' % infoDict['final mass'])})
+    reportDict['Simulation Parameters'].update({'Entrained mass [kg]': ('%.2f' % infoDict['entrained mass'])})
+    reportDict['Simulation Parameters'].update({'Entrained volume [m3]': ('%.2f' % infoDict['entrained volume'])})
+
+    # add stop info
+    stopCritPer = cfgGen.getfloat('stopCrit') *100.
+    if stopCritNotReached:
+        reportDict['Simulation Parameters'].update({'Stop criterion': 'end Time reached: %.2f' % avaTime})
+    else:
+        reportDict['Simulation Parameters'].update({'Stop criterion': '< %.2f percent of PKE' % stopCritPer})
+    reportDict['Simulation Parameters'].update({'Avalanche run time [s]': '%.2f' % avaTime})
+
+    # add computation time to report dict
+    reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
+
+    return reportDict
 
 
 def initializeMesh(cfg, demOri, num):
@@ -960,7 +977,9 @@ def DFAIterate(cfg, particles, fields, dem):
     Particles.append(copy.deepcopy(particles))
     Fields.append(copy.deepcopy(fields))
 
-    infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu}
+    infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu,
+                'final mass': massTotal[-1], 'initial mass': massTotal[0], 'entrained mass': np.sum(massEntrained),
+                'entrained volume': (np.sum(massEntrained)/cfg.getfloat('rhoEnt'))}
 
     return Tsave, Particles, Fields, infoDict
 

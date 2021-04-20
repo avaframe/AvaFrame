@@ -68,7 +68,15 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
         # Load data
         raster = IOf.readRaster(fileName)
         data = raster['rasterData']
-        data = np.ma.masked_where(data == 0.0, data)
+
+        ind = np.where(data>0)
+        rowsMin = max(np.amin(ind[0])-5, 0)
+        rowsMax = min(np.amax(ind[0])+5, data.shape[0])
+        colsMin = max(np.amin(ind[1])-5, 0)
+        colsMax = min(np.amax(ind[1])+5, data.shape[1])
+        dataConstrained = data[rowsMin:rowsMax+1, colsMin:colsMax+1]
+
+        data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
         unit = pU.cfgPlotUtils['unit%s' % peakFiles['resType'][m]]
 
         # Set extent of peak file
@@ -85,7 +93,11 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             pU.cmapPres, np.amin(data), np.amax(data), continuous=pU.contCmap)
         cmap.set_bad('w')
-        im1 = ax.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+        rowsMinPlot = rowsMin*cellSize
+        rowsMaxPlot = (rowsMax+1)*cellSize
+        colsMinPlot = colsMin*cellSize
+        colsMaxPlot = (colsMax+1)*cellSize
+        im1 = ax.imshow(data, cmap=cmap, extent=[rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot], origin='lower')#, aspect=nx/ny)
         pU.addColorBar(im1, ax, ticks, unit)
 
         title = str('%s' % name)
