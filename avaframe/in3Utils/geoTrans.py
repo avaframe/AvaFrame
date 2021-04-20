@@ -4,10 +4,14 @@
 import logging
 import math
 import numpy as np
+import scipy as sp
 import copy
+from matplotlib import pyplot as plt
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.out3Plot.makePalette as makePalette
+import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -147,6 +151,76 @@ def resizeData(raster, rasterRef):
         Points, _ = projectOnRaster(raster, Points, interp='bilinear')
         raster['rasterData'] = Points['z']
         return raster['rasterData'], rasterRef['rasterData']
+
+
+def remeshDEM(cfg, dem):
+    """ change DEM cell size by reprojecting on a new grid
+
+    Parameters
+    ----------
+    cfg : configParser
+        meshCellSizeThreshold : threshold under which no remeshing is done
+        meshCellSize : desired cell size
+
+    dem : dict
+        dem dictionary
+
+    Returns
+    -------
+    dem : dict
+        reprjected dem dictionary
+
+    """
+
+    cszThreshold = cfg.getfloat('meshCellSizeThreshold')
+    cszNew = cfg.getfloat('meshCellSize')
+    # read dem header
+    headerDEM = dem['header']
+    nColsDEM = headerDEM.ncols
+    nRowsDEM = headerDEM.nrows
+    xllcenter = headerDEM.xllcenter
+    yllcenter = headerDEM.yllcenter
+    cszDEM = headerDEM.cellsize
+    # remesh if input DEM size does not correspond to the computational cellSize
+    if np.abs(cszNew - cszDEM) > cszThreshold:
+        log.info('Remeshing the input DEM (of cell size %.2g m) to a cell size of %.2g m' % (cszDEM, cszNew))
+        x = np.linspace(0, (nColsDEM-1)*cszDEM, nColsDEM) + xllcenter
+        y = np.linspace(0, (nRowsDEM-1)*cszDEM, nRowsDEM) + yllcenter
+        z = dem['rasterData']
+        fInterp = sp.interpolate.RectBivariateSpline(x, y, np.transpose(z), ky=3, kx=3)
+
+        headerRemeshed = IOf.cASCheader()
+        headerRemeshed.cellsize = cszNew
+        nColsRemeshed = np.floor(nColsDEM * cszDEM / cszNew)
+        nRowsRemeshed = np.floor(nRowsDEM * cszDEM / cszNew)
+        headerRemeshed.ncols = int(nColsRemeshed)
+        headerRemeshed.nrows = int(nRowsRemeshed)
+        headerRemeshed.xllcenter = xllcenter
+        headerRemeshed.yllcenter = yllcenter
+        headerRemeshed.xllcorner = xllcenter - cszNew/2
+        headerRemeshed.yllcorner = yllcenter - cszNew/2
+        headerRemeshed.noDataValue = headerDEM.noDataValue
+
+        dem['header'] = headerRemeshed
+        xNew = np.linspace(0, (nColsRemeshed-1)*cszNew, int(nColsRemeshed)) + xllcenter
+        yNew = np.linspace(0, (nRowsRemeshed-1)*cszNew, int(nRowsRemeshed)) + yllcenter
+
+        zNew = fInterp(xNew, yNew, grid=True)
+        dem['rasterData'] = np.transpose(zNew)
+
+
+
+        cmap, _, _, norm, ticks = makePalette.makeColorMap(
+            pU.cmapPres, 0.0, np.nanmax(z), continuous=pU.contCmap)
+        cmap.set_under(color='w')
+        fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+
+        ax1 = plt.subplot(111)
+        ax1.plot(x, z[100, :])
+        ax1.plot(xNew, zNew[:, 100])
+        plt.show()
+
+    return dem
 
 
 def prepareLine(dem, avapath, distance=10, Point=None):
