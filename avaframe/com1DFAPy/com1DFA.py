@@ -220,6 +220,8 @@ def getSimulation(cfg, rel, entResInfo):
             simTypeList.append('res')
         elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'No':
             simTypeList.append('null')
+        # always add null simulation
+        simTypeList.append('null')
         simTypeList.remove('available')
 
     # remove duplicate entries
@@ -227,13 +229,12 @@ def getSimulation(cfg, rel, entResInfo):
 
     if 'ent' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagEnt'] == 'No':
-            log.error('No entrainment area available found')
+            log.error('No entrainment file found')
             raise FileNotFoundError
     if 'res' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagRes'] == 'No':
-            log.error('No resistance area available found')
+            log.error('No resistance file found')
             raise FileNotFoundError
-    print('simTypeList', simTypeList)
 
     return relName, simTypeList, relDict, badName
 
