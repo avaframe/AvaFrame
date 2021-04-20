@@ -12,7 +12,7 @@ The difference plots also include an insert showing the histogram and the cumula
 The second plot shows a cross- and a longprofile of the two datasets.
 According to the characteristics of a simulation, as for example provided by the simulation dictionary created with *fileHandlerUtils.makeSimDict*,
 the required input parameters can be defined in order to choose the first dataset.
-The second dataset is fetched from the benchmark results or from the Outputs of a second computational module, using the same filtering characteristics.
+The second dataset is fetched from the benchmark results or from the output of a second computational module, using the same filtering characteristics.
 The function returns a list with the file paths of the generated plots.
 
 
