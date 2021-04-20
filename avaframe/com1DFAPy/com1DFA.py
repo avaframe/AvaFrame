@@ -218,8 +218,6 @@ def getSimulation(cfg, rel, entResInfo):
             simTypeList.append('ent')
         elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'Yes':
             simTypeList.append('res')
-        elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'No':
-            simTypeList.append('null')
         # always add null simulation
         simTypeList.append('null')
         simTypeList.remove('available')
