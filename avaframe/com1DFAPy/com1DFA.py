@@ -91,7 +91,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     flagDev = cfg['FLAGS'].getboolean('flagDev')
 
     # fetch input data - dem, release-, entrainment- and resistance areas
-    demFile, relFiles, entFiles, resFile, entResInfo = gI.getInputDataCom1DFAPy(
+    demFile, relFiles, relSecondaryFile, entFiles, resFile, entResInfo = gI.getInputDataCom1DFAPy(
         avaDir, cfg['FLAGS'], flagDev)
 
     # Counter for release area loop
@@ -103,11 +103,12 @@ def com1DFAMain(cfg, avaDir, relThField):
     # Loop through release areas
     for rel in relFiles:
 
-        demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, rel, entFiles, resFile)
+        demOri, releaseLine, releaseSecondaryLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, rel, relSecondaryFile, entFiles, resFile)
 
         # find out which simulations to perform
-        relName, cuSim, relDict, badName = getSimulation(cfg, rel, entResInfo)
+        relName, cuSim, relDict, badName = getSimulation(cfg, rel, relSecondaryFile, entResInfo)
         releaseLine['d0'] = relDict['d0']
+        releaseSecondaryLine['d0'] = relDict['d0']
 
         for sim in cuSim:
             #logName = sim + '_' + cfgGen['mu']
@@ -119,8 +120,8 @@ def com1DFAMain(cfg, avaDir, relThField):
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relThField)
-            relFiles = releaseLine['fileName']
+            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, releaseLine, releaseSecondaryLine, entLine, resLine, logName, relThField)
+            relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
             Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
@@ -155,7 +156,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     return particlesList, fieldsList, Tsave, dem, reportDictList
 
 
-def getSimulation(cfg, rel, entResInfo):
+def getSimulation(cfg, rel, relSecondaryFile, entResInfo):
     """ get Simulation to run for a given release
 
 
@@ -201,6 +202,13 @@ def getSimulation(cfg, rel, entResInfo):
 
     log.info('Release area scenario: %s - perform simulations' % (relName))
 
+    releaseSecondaryDict = shpConv.SHP2Array(relSecondaryFile)
+    for k in range(len(releaseSecondaryDict['d0'])):
+        if releaseSecondaryDict['d0'][k] == 'None':
+            releaseSecondaryDict['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
+        else:
+            releaseSecondaryDict['d0'][k] = float(releaseSecondaryDict['d0'][k])
+
     # define simulation type
     if 'available' in simTypeList:
         if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
@@ -225,10 +233,10 @@ def getSimulation(cfg, rel, entResInfo):
             log.error('No resistance file found')
             raise FileNotFoundError
 
-    return relName, simTypeList, relDict, badName
+    return relName, simTypeList, relDict, releaseSecondaryDict, badName
 
 
-def prepareInputData(demFile, relFile, entFiles, resFile):
+def prepareInputData(demFile, relFile, relSecondaryFile, entFiles, resFile):
     """ Fetch input data
 
     Parameters
@@ -262,7 +270,15 @@ def prepareInputData(demFile, relFile, entFiles, resFile):
 
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
-    releaseLine['fileName'] = relFile
+    releaseLine['file'] = relFile
+    # get line from secondary release area polygon
+    if relSecondaryFile:
+        releaseSecondaryLine = shpConv.readLine(relSecondaryFile, '', demOri)
+        secondaryReleaseArea = os.path.splitext(os.path.basename(relSecondaryFile))[0]
+        releaseSecondaryLine['Name'] = [secondaryReleaseArea]
+    else:
+        entLine = None
+        entrainmentArea = ''
     # get line from entrainement area polygon
     if entFiles:
         entLine = shpConv.readLine(entFiles, '', demOri)
@@ -280,7 +296,7 @@ def prepareInputData(demFile, relFile, entFiles, resFile):
         resLine = None
         resistanceArea = ''
 
-    return demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea
+    return demOri, releaseLine, releaseSecondaryLine, entLine, resLine, entrainmentArea, resistanceArea
 
 
 def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo):
@@ -436,7 +452,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relThField):
+def initializeSimulation(cfg, demOri, releaseLine, releaseSecondaryLine, entLine, resLine, logName, relThField):
     """ create simulaton report dictionary
 
     Parameters
@@ -485,6 +501,10 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
         # if relTh provided - set release thickness with field or function
         relRaster = prepareArea(releaseLine, demOri)
         relRaster = relRaster * relThField
+
+    # ------------------------
+    # process secondary release info to get it as a raster
+    releaseSecondaryRaster = prepareArea(releaseSecondaryLine, demOri, relThList=releaseSecondaryLine['d0'])
 
     # compute release area
     header = dem['header']
