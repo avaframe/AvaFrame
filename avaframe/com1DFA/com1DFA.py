@@ -278,7 +278,7 @@ def com1DFAMain(cfg, avaDir):
                 log.info('Parameter variation used not including entrainment and resistance, varying: %s' % cfgPar['varPar'])
 
             # read values of parameter variation in config file
-            itemsRaw = fU.splitIniValueToArray(cfg['PARAMETERVAR']['varParValues'])
+            itemsRaw = fU.splitIniValueToArraySteps(cfg['PARAMETERVAR']['varParValues'])
             items = []
             for itemR in itemsRaw:
                 items.append('%.5f' % float(itemR))

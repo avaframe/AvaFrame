@@ -130,19 +130,20 @@ def com1DFAMain(cfg, avaDir, relThField):
             tcpuDFA = '%.2f' % (time.time() - startTime)
             log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
-            # export particles dictionaries of saving time steps
-            outDirData = os.path.join(outDir, 'particles')
-            fU.makeADir(outDirData)
-            savePartToPickle(Particles, outDirData)
+            if 'particles' in cfgGen['resType']:
+                # export particles dictionaries of saving time steps
+                outDirData = os.path.join(outDir, 'particles')
+                fU.makeADir(outDirData)
+                savePartToPickle(Particles, outDirData)
+
             # Result parameters to be exported
+            print('SAVED timesteps', Tsave)
             exportFields(cfgGen, Tsave, Fields, rel, demOri, outDir, logName)
 
             reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
 
-            # add stopping info to reportDict
-            stopCritNotReached = Particles[-1]['iterate']
-            avaTime = Particles[-1]['t']
-            reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, stopCritNotReached, avaTime, infoDict)
+            # add computation time to report dict
+            reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
 
             # Add to report dictionary list
             reportDictList.append(reportDict)
@@ -874,12 +875,19 @@ def DFAIterate(cfg, particles, fields, dem):
 
     # Load configuration settings
     tEnd = cfg.getfloat('tEnd')
-    dtSave = cfg.getfloat('dtSave')
+    dtSave = fU.splitIniValueToArrayInterval(cfg['tSteps'], cfg)
+    # remove time step o as this is anyway saved
+    if dtSave[0] == 0.0:
+        dtSave = dtSave[1:]
+    print('TIME: dtSave', dtSave)
     sphOption = cfg.getint('sphOption')
     log.info('using sphOption %s:' % sphOption)
 
     # Initialise Lists to save fields
-    Particles = [copy.deepcopy(particles)]
+    if 'particles' in cfg['resType']:
+        Particles = [copy.deepcopy(particles)]
+    else:
+        Particles = ''
     Fields = [copy.deepcopy(fields)]
     Tsave = [0]
 
@@ -926,8 +934,8 @@ def DFAIterate(cfg, particles, fields, dem):
         massEntrained.append(particles['massEntrained'])
         massTotal.append(particles['mTot'])
         timeM.append(t)
-
-        if t >= nSave * dtSave:
+        if t >= dtSave[0]:
+            print('TIME is', t, dtSave)
             Tsave.append(t)
             log.info('Saving results for time step t = %f s', t)
             log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
@@ -937,9 +945,13 @@ def DFAIterate(cfg, particles, fields, dem):
             log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
             log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
             log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
-            Particles.append(copy.deepcopy(particles))
+            if 'particles' in cfg['resType']:
+                Particles.append(copy.deepcopy(particles))
             Fields.append(copy.deepcopy(fields))
-            nSave = nSave + 1
+            if len(dtSave) > 1:
+                dtSave = dtSave[1:]
+            else:
+                dtSave = [cfg.getfloat('tEnd')]
 
         if cfg.getboolean('cflTimeStepping'):
             # overwrite the dt value in the cfg
@@ -962,12 +974,23 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
     log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     Tsave.append(t)
-    Particles.append(copy.deepcopy(particles))
+    if 'particles' in cfg['resType']:
+        Particles.append(copy.deepcopy(particles))
     Fields.append(copy.deepcopy(fields))
 
     infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu,
                 'final mass': massTotal[-1], 'initial mass': massTotal[0], 'entrained mass': np.sum(massEntrained),
                 'entrained volume': (np.sum(massEntrained)/cfg.getfloat('rhoEnt'))}
+
+    # determine if stop criterion is reached or end time
+    stopCritNotReached = particles['iterate']
+    avaTime = particles['t']
+    stopCritPer = cfg.getfloat('stopCrit') *100.
+    if stopCritNotReached:
+        infoDict.update({'Stop criterion': 'end Time reached: %.2f' % avaTime})
+    else:
+        infoDict.update({'Stop criterion': '< %.2f percent of PKE' % stopCritPer})
+    infoDict.update({'Avalanche run time [s]': '%.2f' % avaTime})
 
     return Tsave, Particles, Fields, infoDict
 
@@ -1657,6 +1680,59 @@ def readPartFromPickle(inDir, flagAvaDir=False):
 
 
 def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
+    """ export result fields to Outputs directory according to result parameters and time step
+        that can be specified in the configuration file
+
+        Parameters
+        -----------
+        cfgGen: dict
+            configurations
+        Tsave: list
+            list of time step that corresponds to each dict in Fields
+        Fields: list
+            list of Fields for each dtSave
+        relFile: str
+            path to release area shapefile
+        outDir: str
+            outputs Directory
+
+
+        Returns
+        --------
+        exported peak fields are saved in Outputs/com1DFAPy/peakFiles
+
+    """
+
+    resTypesString = cfgGen['resType']
+    resTypes = resTypesString.split('_')
+    numberTimes = len(Tsave)-1
+    countTime = 0
+    for timeStep in Tsave:
+        for resType in resTypes:
+            print('ResType', resType, 'timestep', countTime, Tsave[countTime])
+            resField = Fields[countTime][resType]
+            if resType == 'ppr':
+                resField = resField * 0.001
+            dataName = logName + '_' + resType + '_'  + 't%.2f' % (Tsave[countTime]) +'.asc'
+            # create directory
+            outDirPeak = os.path.join(outDir, 'peakFiles', 'timeSteps')
+            fU.makeADir(outDirPeak)
+            outFile = os.path.join(outDirPeak, dataName)
+            IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
+            if countTime == numberTimes:
+                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType,Tsave[countTime]))
+                dataName = logName + '_' + resType + '_' +'.asc'
+                # create directory
+                outDirPeakAll = os.path.join(outDir, 'peakFiles')
+                fU.makeADir(outDirPeakAll)
+                outFile = os.path.join(outDirPeakAll, dataName)
+                IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
+            else:
+                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType,Tsave[countTime]))
+        countTime = countTime + 1
+
+
+def exportFieldsOld(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
     """ export result fields to Outputs directory according to result parameters and time step
         that can be specified in the configuration file
 

@@ -163,7 +163,7 @@ def checkCommonSims(logName, localLogName):
     return indSims
 
 
-def splitIniValueToArray(cfgValues):
+def splitIniValueToArraySteps(cfgValues):
     """ read values in ini file and return numpy array of values, values can either be separated by |
         or provided in start:end:numberOfSteps format
 
@@ -184,6 +184,33 @@ def splitIniValueToArray(cfgValues):
     else:
         itemsL = cfgValues.split('|')
         items = np.array(itemsL, dtype=float)
+
+    return items
+
+
+def splitIniValueToArrayInterval(cfgValues, cfgGen):
+    """ read values in ini file and return numpy array of values, values can either be separated by |
+        or provided in start:end:numberOfSteps format
+
+        Parameters
+        ----------
+        cfgValues : str
+            values of parameter to be read from ini file
+
+        Returns
+        --------
+        items : 1D numpy array
+            values as 1D numpy array
+    """
+
+    if ':' in cfgValues:
+        itemsInput = cfgValues.split(':')
+        endTime = cfgGen.getfloat('tEnd')
+        items = np.arange(float(itemsInput[0]), endTime, float(itemsInput[1]))
+    else:
+        itemsL = cfgValues.split('|')
+        items = np.array(itemsL, dtype=float)
+        items = sorted(items)
 
     return items
 

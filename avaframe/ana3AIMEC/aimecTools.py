@@ -757,7 +757,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
     cellarea = rasterTransfo['rasterArea']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     thresholdValue = cfgSetup.getfloat('thresholdValue')
-    contourLevels = fU.splitIniValueToArray(cfgSetup['contourLevels'])
+    contourLevels = fU.splitIniValueToArraySteps(cfgSetup['contourLevels'])
 
     # initialize Arrays
     nTopo = len(data)
