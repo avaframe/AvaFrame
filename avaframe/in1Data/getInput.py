@@ -184,6 +184,8 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
         list of full path to DEM .asc file
     relFiles : list
         list of full path to release area scenario .shp files
+    relSecondaryFile[0] : str (fist element of list)
+        list of full path to secondary release area .shp files
     entFiles[0] : str (fist element of list)
         list of full path to entrainment area .shp files
     resFiles[0] : str (first element of list)
@@ -221,6 +223,19 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
         relFiles = sorted(glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp'))
     log.info('Release area files are: %s' % relFiles)
 
+    # Initialise secondary release areas
+    relSecondaryFile = glob.glob(inputDir+os.sep + 'SECREL' + os.sep+'*.shp')
+    if len(relSecondaryFile) < 1:
+        log.debug('No secondary release area file found')
+        relSecondaryFile.append('')  # Kept this for future enhancements
+    else:
+        try:
+            message = 'There shouldn\'t be more than one entrainment .shp file in ' + inputDir + '/SECREL/'
+            assert len(relSecondaryFile) < 2, message
+        except AssertionError:
+            raise
+        entResInfo['flagSecondaryRelease'] = 'Yes'
+
     # Initialise resistance areas
     resFiles = glob.glob(inputDir+os.sep + 'RES' + os.sep+'*.shp')
     if len(resFiles) < 1:
@@ -251,4 +266,4 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
     demFile = getDEMPath(avaDir)
 
     # return DEM, first item of release, entrainment and resistance areas
-    return demFile, relFiles, entFiles[0], resFiles[0], entResInfo
+    return demFile, relFiles, relSecondaryFile[0], entFiles[0], resFiles[0], entResInfo
