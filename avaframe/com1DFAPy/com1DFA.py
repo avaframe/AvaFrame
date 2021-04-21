@@ -869,7 +869,7 @@ def DFAIterate(cfg, particles, fields, dem):
 
     # Load configuration settings
     tEnd = cfg.getfloat('tEnd')
-    dtSave = fU.splitIniValueToArrayInterval(cfg['tSteps'], cfg)
+    dtSave = fU.splitTimeValueToArrayInterval(cfg['tSteps'], cfg)
     # remove time step o as this is anyway saved
     if dtSave[0] == 0.0:
         dtSave = dtSave[1:]
