@@ -992,11 +992,10 @@ def DFAIterate(cfg, particles, fields, dem):
     avaTime = particles['t']
     stopCritPer = cfg.getfloat('stopCrit') *100.
     if stopCritNotReached:
-        infoDict.update({'stopInfo': {'Stop criterion': 'end Time reached: %.2f' % avaTime}})
+        infoDict.update({'stopInfo': {'Stop criterion': 'end Time reached: %.2f' % avaTime, 'Avalanche run time [s]': '%.2f' % avaTime}})
     else:
-        infoDict.update({'stopInfo': {'Stop criterion': '< %.2f percent of PKE' % stopCritPer}})
-    infoDict.update({'stopInfo': {'Avalanche run time [s]': '%.2f' % avaTime}})
-
+        infoDict.update({'stopInfo': {'Stop criterion': '< %.2f percent of PKE' % stopCritPer, 'Avalanche run time [s]': '%.2f' % avaTime}})
+    
     return Tsave, Particles, Fields, infoDict
 
 
