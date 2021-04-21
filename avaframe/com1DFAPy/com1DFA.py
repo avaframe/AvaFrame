@@ -1734,60 +1734,6 @@ def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
         countTime = countTime + 1
 
 
-def exportFieldsOld(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
-    """ export result fields to Outputs directory according to result parameters and time step
-        that can be specified in the configuration file
-
-        Parameters
-        -----------
-        cfgGen: dict
-            configurations
-        Tsave: list
-            list of time step that corresponds to each dict in Fields
-        Fields: list
-            list of Fields for each dtSave
-        relFile: str
-            path to release area shapefile
-        outDir: str
-            outputs Directory
-
-
-        Returns
-        --------
-        exported peak fields are saved in Outputs/com1DFAPy/peakFiles
-
-    """
-
-    resTypesString = cfgGen['resType']
-    resTypes = resTypesString.split('_')
-    tSteps = fU.getTimeIndex(cfgGen, Fields)
-    if -1 not in tSteps:
-        tSteps.append(-1)
-        log.info('-1 added to tStep')
-    for tStep in tSteps:
-        finalFields = Fields[tStep]
-        for resType in resTypes:
-            resField = finalFields[resType]
-            if resType == 'ppr':
-                resField = resField * 0.001
-            dataName = logName + '_' + resType + '_'  + 't%.2f' % (Tsave[tStep]) +'.asc'
-            # create directory
-            outDirPeak = os.path.join(outDir, 'peakFiles', 'timeSteps')
-            fU.makeADir(outDirPeak)
-            outFile = os.path.join(outDirPeak, dataName)
-            IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
-            if tStep == -1:
-                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType,Tsave[tStep]))
-                dataName = logName + '_' + resType + '_' +'.asc'
-                # create directory
-                outDirPeakAll = os.path.join(outDir, 'peakFiles')
-                fU.makeADir(outDirPeakAll)
-                outFile = os.path.join(outDirPeakAll, dataName)
-                IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
-            else:
-                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType,Tsave[tStep]))
-
-
 def analysisPlots(Particles, Fields, cfg, demOri, dem, outDir):
     """ create analysis plots during simulation run """
 
