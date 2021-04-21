@@ -142,9 +142,7 @@ def com1DFAMain(cfg, avaDir, relThField):
 
             reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
 
-            # add computation time to report dict
-            reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
-
+            reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict)
             # Add to report dictionary list
             reportDictList.append(reportDict)
 
@@ -347,7 +345,7 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
     return reportST
 
 
-def reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, stopCritNotReached, avaTime, infoDict):
+def reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict):
     """ Add time and mass info to report """
 
     # add mass info
@@ -357,12 +355,7 @@ def reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, stopCritNotReached, avaTi
     reportDict['Simulation Parameters'].update({'Entrained volume [m3]': ('%.2f' % infoDict['entrained volume'])})
 
     # add stop info
-    stopCritPer = cfgGen.getfloat('stopCrit') *100.
-    if stopCritNotReached:
-        reportDict['Simulation Parameters'].update({'Stop criterion': 'end Time reached: %.2f' % avaTime})
-    else:
-        reportDict['Simulation Parameters'].update({'Stop criterion': '< %.2f percent of PKE' % stopCritPer})
-    reportDict['Simulation Parameters'].update({'Avalanche run time [s]': '%.2f' % avaTime})
+    reportDict['Simulation Parameters'].update(infoDict['stopInfo'])
 
     # add computation time to report dict
     reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
@@ -987,10 +980,10 @@ def DFAIterate(cfg, particles, fields, dem):
     avaTime = particles['t']
     stopCritPer = cfg.getfloat('stopCrit') *100.
     if stopCritNotReached:
-        infoDict.update({'Stop criterion': 'end Time reached: %.2f' % avaTime})
+        infoDict.update({'stopInfo': {'Stop criterion': 'end Time reached: %.2f' % avaTime}})
     else:
-        infoDict.update({'Stop criterion': '< %.2f percent of PKE' % stopCritPer})
-    infoDict.update({'Avalanche run time [s]': '%.2f' % avaTime})
+        infoDict.update({'stopInfo': {'Stop criterion': '< %.2f percent of PKE' % stopCritPer}})
+    infoDict.update({'stopInfo': {'Avalanche run time [s]': '%.2f' % avaTime}})
 
     return Tsave, Particles, Fields, infoDict
 
