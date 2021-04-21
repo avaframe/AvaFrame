@@ -43,8 +43,6 @@ flagSemiRand = False
 flagRand = True
 # set feature leapfrog time stepping
 featLF = False
-featCFL = False
-featCFLConstrain = False
 
 
 def com1DFAMain(cfg, avaDir, relThField):
@@ -375,8 +373,11 @@ def initializeMesh(cfg, demOri, num):
         boundaries as well as neighbour search grid information
     """
 
+    print(demOri['header'])
+    demOri = geoTrans.remeshDEM(cfg, demOri)
+    print(demOri['header'])
     dem = setDEMoriginToZero(demOri)
-
+    print(dem['header'])
     # read dem header
     headerDEM = dem['header']
     nColsDEM = headerDEM.ncols
@@ -396,8 +397,10 @@ def initializeMesh(cfg, demOri, num):
     headerNeighbourGrid = IOf.cASCheader()
     cszNeighbourGrid = cfg.getfloat('sphKernelRadius')
     headerNeighbourGrid.cellsize = cszNeighbourGrid
-    headerNeighbourGrid.ncols = np.floor(nColsDEM * cszDEM / cszNeighbourGrid) + 1
-    headerNeighbourGrid.nrows = np.floor(nRowsDEM * cszDEM / cszNeighbourGrid) + 1
+    headerNeighbourGrid.ncols = np.ceil(nColsDEM * cszDEM / cszNeighbourGrid)
+    headerNeighbourGrid.nrows = np.ceil(nRowsDEM * cszDEM / cszNeighbourGrid)
+    headerNeighbourGrid.xllcenter = 0
+    headerNeighbourGrid.yllcenter = 0
     dem['headerNeighbourGrid'] = headerNeighbourGrid
 
     # get real Area
@@ -409,7 +412,7 @@ def initializeMesh(cfg, demOri, num):
     log.debug('Projected Area : %.2f' % projArea)
     log.debug('Total Area : %.2f' % actualArea)
 
-    return dem
+    return demOri, dem
 
 
 def setDEMoriginToZero(demOri):
@@ -459,7 +462,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
 
     # -----------------------
     # Initialize mesh
-    dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
+    demOri, dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
     if len(relThField) == 0:
@@ -881,16 +884,9 @@ def DFAIterate(cfg, particles, fields, dem):
     timeM = []
     massEntrained = []
     massTotal = []
-    # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
-    # CALL TIME STEP:
-    # to play around with the courant number
-    if featCFL:
+    # compute time step
+    if cfg.getboolean('cflTimeStepping'):
         dtStable = tD.getcflTimeStep(particles, dem, cfg)
-    elif featCFLConstrain:
-        dtStable = tD.getcfldTwithConstraints(particles, dem, cfg)
-
-    # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
-    # ++++++++++++++++++++++++++++++++++++++++++++++
     # get time step
     dt = cfg.getfloat('dt')
     t = t + dt
@@ -933,12 +929,8 @@ def DFAIterate(cfg, particles, fields, dem):
         # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
         # CALL TIME STEP:
         # to play around with the courant number
-        if featCFL:
+        if cfg.getboolean('cflTimeStepping'):
             dtStable = tD.getcflTimeStep(particles, dem, cfg)
-        elif featCFLConstrain:
-            dtStable = tD.getcfldTwithConstraints(particles, dem, cfg)
-
-        # dt overwrites dt in .ini file, so comment this block if you dont want to use cfl
         # ++++++++++++++++++++++++++++++++++++++++++++++
         # get time step
         dt = cfg.getfloat('dt')
