@@ -152,7 +152,10 @@ def resizeData(raster, rasterRef):
 
 def remeshDEM(cfg, dem):
     """ change DEM cell size by reprojecting on a new grid
-
+    
+    Interpolation is based in RectBivariateSpline of order 3. Here would be the place
+    to change the order of the interpolation or to switch to another interpolation method.
+    
     Parameters
     ----------
     cfg : configParser
