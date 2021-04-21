@@ -144,7 +144,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             # add stopping info to reportDict
             stopCritNotReached = Particles[-1]['iterate']
             avaTime = Particles[-1]['t']
-            reportDict = reportAddInfo(reportDict, tcpuDFA, cfgGen, stopCritNotReached, avaTime, infoDict)
+            reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, stopCritNotReached, avaTime, infoDict)
 
             # Add to report dictionary list
             reportDictList.append(reportDict)
@@ -348,7 +348,7 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
     return reportST
 
 
-def reportAddInfo(reportDict, tcpuDFA, cfgGen, stopCritNotReached, avaTime, infoDict):
+def reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, stopCritNotReached, avaTime, infoDict):
     """ Add time and mass info to report """
 
     # add mass info
