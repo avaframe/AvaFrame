@@ -188,14 +188,16 @@ def splitIniValueToArraySteps(cfgValues):
     return items
 
 
-def splitIniValueToArrayInterval(cfgValues, cfgGen):
+def splitTimeValueToArrayInterval(cfgValues, cfgGen):
     """ read values in ini file and return numpy array of values, values can either be separated by |
-        or provided in start:end:numberOfSteps format
+        or provided in start:interval format
 
         Parameters
         ----------
         cfgValues : str
             values of parameter to be read from ini file
+        cfgGen: dict
+            configuration settings
 
         Returns
         --------
