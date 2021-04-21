@@ -373,11 +373,8 @@ def initializeMesh(cfg, demOri, num):
         boundaries as well as neighbour search grid information
     """
 
-    print(demOri['header'])
     demOri = geoTrans.remeshDEM(cfg, demOri)
-    print(demOri['header'])
     dem = setDEMoriginToZero(demOri)
-    print(dem['header'])
     # read dem header
     headerDEM = dem['header']
     nColsDEM = headerDEM.ncols

@@ -6,12 +6,9 @@ import math
 import numpy as np
 import scipy as sp
 import copy
-from matplotlib import pyplot as plt
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
-import avaframe.out3Plot.makePalette as makePalette
-import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -207,18 +204,6 @@ def remeshDEM(cfg, dem):
 
         zNew = fInterp(xNew, yNew, grid=True)
         dem['rasterData'] = np.transpose(zNew)
-
-
-
-        cmap, _, _, norm, ticks = makePalette.makeColorMap(
-            pU.cmapPres, 0.0, np.nanmax(z), continuous=pU.contCmap)
-        cmap.set_under(color='w')
-        fig = plt.figure(figsize=(pU.figW*2, pU.figH))
-
-        ax1 = plt.subplot(111)
-        ax1.plot(x, z[100, :])
-        ax1.plot(xNew, zNew[:, 100])
-        plt.show()
 
     return dem
 
