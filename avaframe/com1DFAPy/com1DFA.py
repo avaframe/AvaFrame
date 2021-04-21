@@ -137,12 +137,13 @@ def com1DFAMain(cfg, avaDir, relThField):
                 savePartToPickle(Particles, outDirData)
 
             # Result parameters to be exported
-            print('SAVED timesteps', Tsave)
             exportFields(cfgGen, Tsave, Fields, rel, demOri, outDir, logName)
 
+            # write report dictionary
             reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
-
+            # add time and mass info to report
             reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict)
+
             # Add to report dictionary list
             reportDictList.append(reportDict)
 
@@ -872,16 +873,22 @@ def DFAIterate(cfg, particles, fields, dem):
     # remove time step o as this is anyway saved
     if dtSave[0] == 0.0:
         dtSave = dtSave[1:]
-    print('TIME: dtSave', dtSave)
     sphOption = cfg.getint('sphOption')
     log.info('using sphOption %s:' % sphOption)
+    # desired output fields
+    resTypesString = cfg['resType']
+    resTypes = resTypesString.split('_')
 
     # Initialise Lists to save fields
-    if 'particles' in cfg['resType']:
+    if 'particles' in resTypes:
         Particles = [copy.deepcopy(particles)]
     else:
         Particles = ''
-    Fields = [copy.deepcopy(fields)]
+    fieldAppend = {}
+    for resType in resTypes:
+        fieldAppend[resType] = fields[resType]
+    Fields = [copy.deepcopy(fieldAppend)]
+    #Fields = [copy.deepcopy(fields)]
     Tsave = [0]
 
     if featLF:
@@ -928,7 +935,6 @@ def DFAIterate(cfg, particles, fields, dem):
         massTotal.append(particles['mTot'])
         timeM.append(t)
         if t >= dtSave[0]:
-            print('TIME is', t, dtSave)
             Tsave.append(t)
             log.info('Saving results for time step t = %f s', t)
             log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
@@ -938,9 +944,12 @@ def DFAIterate(cfg, particles, fields, dem):
             log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
             log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
             log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
-            if 'particles' in cfg['resType']:
+            if 'particles' in resTypes:
                 Particles.append(copy.deepcopy(particles))
-            Fields.append(copy.deepcopy(fields))
+            fieldAppend = {}
+            for resType in resTypes:
+                fieldAppend[resType] = fields[resType]
+            Fields.append(copy.deepcopy(fieldAppend))
             if len(dtSave) > 1:
                 dtSave = dtSave[1:]
             else:
@@ -967,9 +976,11 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
     log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     Tsave.append(t)
-    if 'particles' in cfg['resType']:
+    if 'particles' in resTypes:
         Particles.append(copy.deepcopy(particles))
-    Fields.append(copy.deepcopy(fields))
+    for resType in resTypes:
+        fieldAppend[resType] = fields[resType]
+    Fields.append(copy.deepcopy(fieldAppend))
 
     infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu,
                 'final mass': massTotal[-1], 'initial mass': massTotal[0], 'entrained mass': np.sum(massEntrained),
@@ -983,7 +994,7 @@ def DFAIterate(cfg, particles, fields, dem):
         infoDict.update({'stopInfo': {'Stop criterion': 'end Time reached: %.2f' % avaTime, 'Avalanche run time [s]': '%.2f' % avaTime}})
     else:
         infoDict.update({'stopInfo': {'Stop criterion': '< %.2f percent of PKE' % stopCritPer, 'Avalanche run time [s]': '%.2f' % avaTime}})
-    
+
     return Tsave, Particles, Fields, infoDict
 
 
@@ -1701,7 +1712,6 @@ def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
     countTime = 0
     for timeStep in Tsave:
         for resType in resTypes:
-            print('ResType', resType, 'timestep', countTime, Tsave[countTime])
             resField = Fields[countTime][resType]
             if resType == 'ppr':
                 resField = resField * 0.001
