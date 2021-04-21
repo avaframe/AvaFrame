@@ -900,7 +900,8 @@ def DFAIterate(cfg, particles, fields, dem):
     massTotal = []
     # compute time step
     if cfg.getboolean('cflTimeStepping'):
-        dtStable = tD.getcflTimeStep(particles, dem, cfg)
+        # overwrite the dt value in the cfg
+        tD.getcflTimeStep(particles, dem, cfg)
     # get time step
     dt = cfg.getfloat('dt')
     t = t + dt
@@ -940,12 +941,10 @@ def DFAIterate(cfg, particles, fields, dem):
             Fields.append(copy.deepcopy(fields))
             nSave = nSave + 1
 
-        # ++++++++++++++++if you want to use cfl time step+++++++++++++++++++
-        # CALL TIME STEP:
-        # to play around with the courant number
         if cfg.getboolean('cflTimeStepping'):
-            dtStable = tD.getcflTimeStep(particles, dem, cfg)
-        # ++++++++++++++++++++++++++++++++++++++++++++++
+            # overwrite the dt value in the cfg
+            tD.getcflTimeStep(particles, dem, cfg)
+            
         # get time step
         dt = cfg.getfloat('dt')
         t = t + dt
