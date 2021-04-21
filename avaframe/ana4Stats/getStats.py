@@ -73,7 +73,7 @@ def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
     nSims = len(peakFiles['simName'])
 
     # load parameter variation values to check if they include default value
-    itemsRaw = fU.splitIniValueToArray(cfgMain['PARAMETERVAR']['varParValues'])
+    itemsRaw = fU.splitIniValueToArraySteps(cfgMain['PARAMETERVAR']['varParValues'])
     dVal = float(cfgMain['DEFVALUES'][varPar])
     flagValue = False
     if dVal in itemsRaw:
