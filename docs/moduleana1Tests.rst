@@ -7,7 +7,7 @@ ana1Tests: testing
 Dambreak
 ====================
 
-This function is used to reproduce the exact solution for a dam break problem based on the Savage Hutter model and was described in Mageney 2012.
+This function is used to reproduce the exact solution for a dam break problem based on the Savage Hutter model and was described in :cite:`FaMa2012`.
 In this test a release mass in suddenly released  over an inclined plane.
 This function also provides its own plotting routines that can be used to generate plots of the
 analytical results and also to compare simulation results to the exact solutions.
