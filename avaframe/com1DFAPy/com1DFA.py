@@ -108,7 +108,8 @@ def com1DFAMain(cfg, avaDir, relThField):
         # find out which simulations to perform
         relName, cuSim, relDict, releaseSecondaryDict, badName = getSimulation(cfg, rel, secondaryReleaseFile, entResInfo)
         releaseLine['d0'] = relDict['d0']
-        secondaryReleaseLine['d0'] = releaseSecondaryDict['d0']
+        if releaseSecondaryDict:
+            secondaryReleaseLine['d0'] = releaseSecondaryDict['d0']
 
         for sim in cuSim:
             #logName = sim + '_' + cfgGen['mu']
@@ -202,12 +203,15 @@ def getSimulation(cfg, rel, secondaryReleaseFile, entResInfo):
 
     log.info('Release area scenario: %s - perform simulations' % (relName))
 
-    releaseSecondaryDict = shpConv.SHP2Array(secondaryReleaseFile)
-    for k in range(len(releaseSecondaryDict['d0'])):
-        if releaseSecondaryDict['d0'][k] == 'None':
-            releaseSecondaryDict['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
-        else:
-            releaseSecondaryDict['d0'][k] = float(releaseSecondaryDict['d0'][k])
+    if secondaryReleaseFile:
+        releaseSecondaryDict = shpConv.SHP2Array(secondaryReleaseFile)
+        for k in range(len(releaseSecondaryDict['d0'])):
+            if releaseSecondaryDict['d0'][k] == 'None':
+                releaseSecondaryDict['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
+            else:
+                releaseSecondaryDict['d0'][k] = float(releaseSecondaryDict['d0'][k])
+    else:
+        releaseSecondaryDict = None
 
     # define simulation type
     if 'available' in simTypeList:
@@ -271,13 +275,13 @@ def prepareInputData(demFile, relFile, secondaryReleaseFile, entFiles, resFile):
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
     releaseLine['file'] = relFile
+
     # get line from secondary release area polygon
     if secondaryReleaseFile:
         secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
-        secondaryReleaseArea = os.path.splitext(os.path.basename(secondaryReleaseFile))[0]
     else:
         secondaryReleaseLine = None
-        secondaryReleaseArea = ''
+
     # get line from entrainement area polygon
     if entFiles:
         entLine = shpConv.readLine(entFiles, '', demOri)
@@ -286,6 +290,7 @@ def prepareInputData(demFile, relFile, secondaryReleaseFile, entFiles, resFile):
     else:
         entLine = None
         entrainmentArea = ''
+
     # get line from resistance area polygon
     if resFile:
         resLine = shpConv.readLine(resFile, '', demOri)
@@ -502,10 +507,6 @@ def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine
         relRaster = prepareArea(releaseLine, demOri, combine=True)
         relRaster = relRaster * relThField
 
-    # ------------------------
-    # process secondary release info to get it as a list of rasters
-    secondaryReleaseRaster = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
-
     # compute release area
     header = dem['header']
     csz = header.cellsize
@@ -517,13 +518,18 @@ def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine
 
     # ------------------------
     # initialize simulation
-
     # create primary release area particles and fields
     log.info('Initializing main release area')
     particles, fields = initializeParticles(cfgGen, relRaster, dem, logName=logName)
 
-    # create secondary release area particles
-    secondaryReleaseParticles = initializeSecReleaseParticles(cfgGen, secondaryReleaseLine, secondaryReleaseRaster, dem)
+    # ------------------------
+    # process secondary release info to get it as a list of rasters
+    if secondaryReleaseLine:
+        secondaryReleaseRaster = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
+        # create secondary release area particles
+        secondaryReleaseParticles = initializeSecReleaseParticles(cfgGen, secondaryReleaseLine, secondaryReleaseRaster, dem)
+    else:
+        secondaryReleaseParticles = None
 
     # initialize entrainment and resistance
     # get info of simType and whether or not to initialize resistance and entrainment
@@ -1171,7 +1177,8 @@ def computeEulerTimeStep(cfg, particles, secondaryReleaseParticles, fields, dt, 
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
     # release secondary release area?
-    particles, secondaryReleaseParticles = releaseSecRelArea(particles, secondaryReleaseParticles, fields, dem)
+    if secondaryReleaseParticles:
+        particles, secondaryReleaseParticles = releaseSecRelArea(particles, secondaryReleaseParticles, fields, dem)
 
     # get particles location (neighbours for sph)
     startTime = time.time()
