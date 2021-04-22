@@ -122,7 +122,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
-            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfgGen, particles, fields, dem)
+            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
 
             # write mass balance to File
             writeMBFile(infoDict, avaDir, logName)
@@ -137,7 +137,7 @@ def com1DFAMain(cfg, avaDir, relThField):
                 savePartToPickle(particlesList, outDirData)
 
             # Result parameters to be exported
-            exportFields(cfgGen, Tsave, fieldsList, rel, demOri, outDir, logName)
+            exportFields(cfg, Tsave, fieldsList, rel, demOri, outDir, logName)
 
             # write report dictionary
             reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
@@ -858,6 +858,7 @@ def DFAIterate(cfg, particles, fields, dem):
         Dictionary of all simulations carried out
     """
 
+    cfgGen = cfg['GENERAL']
     # Initialise cpu timing
     Tcpu = {}
     Tcpu['Force'] = 0.
@@ -868,23 +869,25 @@ def DFAIterate(cfg, particles, fields, dem):
     Tcpu['Field'] = 0.
 
     # Load configuration settings
-    tEnd = cfg.getfloat('tEnd')
-    dtSave = fU.splitTimeValueToArrayInterval(cfg['tSteps'], cfg)
-    # remove time step o as this is anyway saved
-    if dtSave[0] == 0.0:
-        dtSave = dtSave[1:]
-    sphOption = cfg.getint('sphOption')
+    tEnd = cfgGen.getfloat('tEnd')
+    dtSave = fU.splitTimeValueToArrayInterval(cfgGen)
+    sphOption = cfgGen.getint('sphOption')
     log.info('using sphOption %s:' % sphOption)
     # desired output fields
-    resTypesString = cfg['resType']
+    resTypesString = cfgGen['resType']
     resTypes = resTypesString.split('_')
+    # make sure to save all desiered resuts for first and last time step for
+    # the report
+    resTypesReportString = cfg['REPORT']['plotFields']
+    resTypesReport = resTypesReportString.split('_')
+    resTypesFirstLast = list(set(resTypes + resTypesReport))
 
     # Initialise Lists to save fields and add initial time step
     particlesList = []
     fieldsList = []
-    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
-    # add initial time step to Tsave array
-    Tsave = [0]
+    timeM = []
+    massEntrained = []
+    massTotal = []
 
     # time stepping scheme info
     if featLF:
@@ -899,15 +902,16 @@ def DFAIterate(cfg, particles, fields, dem):
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
-    timeM = []
-    massEntrained = []
-    massTotal = []
+    log.info('Saving results for time step t = %f s', t)
+    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesFirstLast)
+    # add initial time step to Tsave array
+    Tsave = [0]
     # compute time step
-    if cfg.getboolean('cflTimeStepping'):
+    if cfgGen.getboolean('cflTimeStepping'):
         # overwrite the dt value in the cfg
-        tD.getcflTimeStep(particles, dem, cfg)
+        tD.getcflTimeStep(particles, dem, cfgGen)
     # get time step
-    dt = cfg.getfloat('dt')
+    dt = cfgGen.getfloat('dt')
     t = t + dt
 
     # Start time step computation
@@ -917,10 +921,10 @@ def DFAIterate(cfg, particles, fields, dem):
         # Perform computations
         if featLF:
             particles, fields, Tcpu, dt = computeLeapFrogTimeStep(
-                cfg, particles, fields, dt, dem, Tcpu)
+                cfgGen, particles, fields, dt, dem, Tcpu)
         else:
             particles, fields, Tcpu = computeEulerTimeStep(
-                cfg, particles, fields, dt, dem, Tcpu)
+                cfgGen, particles, fields, dt, dem, Tcpu)
 
         Tcpu['nSave'] = nSave
         particles['t'] = t
@@ -944,14 +948,14 @@ def DFAIterate(cfg, particles, fields, dem):
             if len(dtSave) > 1:
                 dtSave = dtSave[1:]
             else:
-                dtSave = [cfg.getfloat('tEnd')]
+                dtSave = [cfgGen.getfloat('tEnd')]
 
-        if cfg.getboolean('cflTimeStepping'):
+        if cfgGen.getboolean('cflTimeStepping'):
             # overwrite the dt value in the cfg
-            tD.getcflTimeStep(particles, dem, cfg)
-            
+            tD.getcflTimeStep(particles, dem, cfgGen)
+
         # get time step
-        dt = cfg.getfloat('dt')
+        dt = cfgGen.getfloat('dt')
         t = t + dt
         nIter = nIter + 1
         nIter0 = nIter0 + 1
@@ -967,17 +971,17 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
     log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     Tsave.append(t)
-    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
+    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesFirstLast)
 
     # create infoDict for report and mass log file
     infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu,
                 'final mass': massTotal[-1], 'initial mass': massTotal[0], 'entrained mass': np.sum(massEntrained),
-                'entrained volume': (np.sum(massEntrained)/cfg.getfloat('rhoEnt'))}
+                'entrained volume': (np.sum(massEntrained)/cfgGen.getfloat('rhoEnt'))}
 
     # determine if stop criterion is reached or end time
     stopCritNotReached = particles['iterate']
     avaTime = particles['t']
-    stopCritPer = cfg.getfloat('stopCrit') *100.
+    stopCritPer = cfgGen.getfloat('stopCrit') *100.
     # update info dict with stopping info for report
     if stopCritNotReached:
         infoDict.update({'stopInfo': {'Stop criterion': 'end Time reached: %.2f' % avaTime, 'Avalanche run time [s]': '%.2f' % avaTime}})
@@ -1008,11 +1012,12 @@ def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes
 
     """
 
-    if 'particles' in resTypes:
-        particlesList.append(copy.deepcopy(particles))
     fieldAppend = {}
     for resType in resTypes:
-        fieldAppend[resType] = fields[resType]
+        if 'particles' in resType:
+            particlesList.append(copy.deepcopy(particles))
+        elif resType != '':
+            fieldAppend[resType] = fields[resType]
     fieldsList.append(copy.deepcopy(fieldAppend))
 
     return fieldsList, particlesList
@@ -1702,13 +1707,13 @@ def readPartFromPickle(inDir, flagAvaDir=False):
     return Particles, TimeStepInfo
 
 
-def exportFields(cfgGen, Tsave, fieldsList, relFile, demOri, outDir, logName):
+def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
     """ export result fields to Outputs directory according to result parameters and time step
         that can be specified in the configuration file
 
         Parameters
         -----------
-        cfgGen: dict
+        cfg: dict
             configurations
         Tsave: list
             list of time step that corresponds to each dict in Fields
@@ -1726,11 +1731,22 @@ def exportFields(cfgGen, Tsave, fieldsList, relFile, demOri, outDir, logName):
 
     """
 
-    resTypesString = cfgGen['resType']
-    resTypes = resTypesString.split('_')
+    resTypesString = cfg['GENERAL']['resType']
+    resTypesGen = resTypesString.split('_')
+    if resTypesGen == ['']:
+        resTypesGen = []
+    if 'particles' in resTypesGen:
+        resTypesGen.remove('particles')
+    resTypesReportString = cfg['REPORT']['plotFields']
+    resTypesReport = resTypesReportString.split('_')
     numberTimes = len(Tsave)-1
     countTime = 0
     for timeStep in Tsave:
+        if (timeStep == 0) or (timeStep == Tsave[-1]):
+            # for first and last time step we need to add the report fields
+            resTypes = list(set(resTypesGen + resTypesReport))
+        else:
+            resTypes = resTypesGen
         for resType in resTypes:
             resField = fieldsList[countTime][resType]
             if resType == 'ppr':

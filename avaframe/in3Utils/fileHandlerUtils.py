@@ -188,14 +188,12 @@ def splitIniValueToArraySteps(cfgValues):
     return items
 
 
-def splitTimeValueToArrayInterval(cfgValues, cfgGen):
+def splitTimeValueToArrayInterval(cfgGen):
     """ read values in ini file and return numpy array of values, values can either be separated by |
         or provided in start:interval format
 
         Parameters
         ----------
-        cfgValues : str
-            values of parameter to be read from ini file
         cfgGen: dict
             configuration settings
 
@@ -204,15 +202,22 @@ def splitTimeValueToArrayInterval(cfgValues, cfgGen):
         items : 1D numpy array
             values as 1D numpy array
     """
-
+    cfgValues = cfgGen['tSteps']
+    endTime = cfgGen.getfloat('tEnd')
     if ':' in cfgValues:
         itemsInput = cfgValues.split(':')
-        endTime = cfgGen.getfloat('tEnd')
-        items = np.arange(float(itemsInput[0]), endTime, float(itemsInput[1]))
+        if float(endTime - float(itemsInput[0])) < float(itemsInput[1]):
+            items = np.array([float(itemsInput[0]), endTime])
+        else:
+            items = np.arange(float(itemsInput[0]), endTime, float(itemsInput[1]))
+    elif cfgValues == '':
+        items = np.array([endTime])
     else:
         itemsL = cfgValues.split('|')
         items = np.array(itemsL, dtype=float)
         items = sorted(items)
+    if items[0] == 0:
+        items = np.delete(items, 0)
 
     return items
 
