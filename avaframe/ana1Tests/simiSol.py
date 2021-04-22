@@ -17,7 +17,6 @@ import matplotlib.pyplot as plt
 # local imports
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFAPy.com1DFA as com1DFA
-import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.ana1Tests.simiSol as simiSol
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
