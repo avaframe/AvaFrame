@@ -122,7 +122,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
-            Tsave, Particles, Fields, infoDict = DFAIterate(cfgGen, particles, fields, dem)
+            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfgGen, particles, fields, dem)
 
             # write mass balance to File
             writeMBFile(infoDict, avaDir, logName)
@@ -134,10 +134,10 @@ def com1DFAMain(cfg, avaDir, relThField):
                 # export particles dictionaries of saving time steps
                 outDirData = os.path.join(outDir, 'particles')
                 fU.makeADir(outDirData)
-                savePartToPickle(Particles, outDirData)
+                savePartToPickle(particlesList, outDirData)
 
             # Result parameters to be exported
-            exportFields(cfgGen, Tsave, Fields, rel, demOri, outDir, logName)
+            exportFields(cfgGen, Tsave, fieldsList, rel, demOri, outDir, logName)
 
             # write report dictionary
             reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
@@ -151,7 +151,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             countRel = countRel + 1
     log.debug('Avalanche Simulations performed')
 
-    return Particles, Fields, Tsave, dem, reportDictList
+    return particlesList, fieldsList, Tsave, dem, reportDictList
 
 
 def getSimulation(cfg, rel, entResInfo):
@@ -879,18 +879,14 @@ def DFAIterate(cfg, particles, fields, dem):
     resTypesString = cfg['resType']
     resTypes = resTypesString.split('_')
 
-    # Initialise Lists to save fields
-    if 'particles' in resTypes:
-        Particles = [copy.deepcopy(particles)]
-    else:
-        Particles = ''
-    fieldAppend = {}
-    for resType in resTypes:
-        fieldAppend[resType] = fields[resType]
-    Fields = [copy.deepcopy(fieldAppend)]
-    #Fields = [copy.deepcopy(fields)]
+    # Initialise Lists to save fields and add initial time step
+    particlesList = []
+    fieldsList = []
+    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
+    # add initial time step to Tsave array
     Tsave = [0]
 
+    # time stepping scheme info
     if featLF:
         log.info('Use LeapFrog time stepping')
     else:
@@ -944,12 +940,7 @@ def DFAIterate(cfg, particles, fields, dem):
             log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
             log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
             log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
-            if 'particles' in resTypes:
-                Particles.append(copy.deepcopy(particles))
-            fieldAppend = {}
-            for resType in resTypes:
-                fieldAppend[resType] = fields[resType]
-            Fields.append(copy.deepcopy(fieldAppend))
+            fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
             if len(dtSave) > 1:
                 dtSave = dtSave[1:]
             else:
@@ -976,12 +967,9 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
     log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     Tsave.append(t)
-    if 'particles' in resTypes:
-        Particles.append(copy.deepcopy(particles))
-    for resType in resTypes:
-        fieldAppend[resType] = fields[resType]
-    Fields.append(copy.deepcopy(fieldAppend))
+    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
 
+    # create infoDict for report and mass log file
     infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu,
                 'final mass': massTotal[-1], 'initial mass': massTotal[0], 'entrained mass': np.sum(massEntrained),
                 'entrained volume': (np.sum(massEntrained)/cfg.getfloat('rhoEnt'))}
@@ -990,12 +978,44 @@ def DFAIterate(cfg, particles, fields, dem):
     stopCritNotReached = particles['iterate']
     avaTime = particles['t']
     stopCritPer = cfg.getfloat('stopCrit') *100.
+    # update info dict with stopping info for report
     if stopCritNotReached:
         infoDict.update({'stopInfo': {'Stop criterion': 'end Time reached: %.2f' % avaTime, 'Avalanche run time [s]': '%.2f' % avaTime}})
     else:
         infoDict.update({'stopInfo': {'Stop criterion': '< %.2f percent of PKE' % stopCritPer, 'Avalanche run time [s]': '%.2f' % avaTime}})
 
-    return Tsave, Particles, Fields, infoDict
+    return Tsave, particlesList, fieldsList, infoDict
+
+
+def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes):
+    """ append fields and optionally particle dictionaries to list for export
+
+        Parameters
+        ------------
+        particles: dict
+            dictionary with particle properties
+        fields: dict
+            dictionary with all result type fields
+        resTypes: list
+            list with all result types that shall be exported
+
+        Returns
+        -------
+        Fields: list
+            updated list with desired result type fields dictionary
+        Particles: list
+            updated list with particles dicionaries
+
+    """
+
+    if 'particles' in resTypes:
+        particlesList.append(copy.deepcopy(particles))
+    fieldAppend = {}
+    for resType in resTypes:
+        fieldAppend[resType] = fields[resType]
+    fieldsList.append(copy.deepcopy(fieldAppend))
+
+    return fieldsList, particlesList
 
 
 def writeMBFile(infoDict, avaDir, logName):
@@ -1682,7 +1702,7 @@ def readPartFromPickle(inDir, flagAvaDir=False):
     return Particles, TimeStepInfo
 
 
-def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
+def exportFields(cfgGen, Tsave, fieldsList, relFile, demOri, outDir, logName):
     """ export result fields to Outputs directory according to result parameters and time step
         that can be specified in the configuration file
 
@@ -1712,7 +1732,7 @@ def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
     countTime = 0
     for timeStep in Tsave:
         for resType in resTypes:
-            resField = Fields[countTime][resType]
+            resField = fieldsList[countTime][resType]
             if resType == 'ppr':
                 resField = resField * 0.001
             dataName = logName + '_' + resType + '_'  + 't%.2f' % (Tsave[countTime]) +'.asc'
@@ -1734,7 +1754,7 @@ def exportFields(cfgGen, Tsave, Fields, relFile, demOri, outDir, logName):
         countTime = countTime + 1
 
 
-def analysisPlots(Particles, Fields, cfg, demOri, dem, outDir):
+def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
     """ create analysis plots during simulation run """
 
     cfgGen = cfg['GENERAL']
@@ -1750,7 +1770,7 @@ def analysisPlots(Particles, Fields, cfg, demOri, dem, outDir):
         Z = np.array([0])
         U = np.array([0])
         S = np.array([0])
-        for part, field in zip(Particles, Fields):
+        for part, field in zip(particlesList, fieldsList):
             T = np.append(T, part['t'])
             S = np.append(S, part['s'][0])
             Z = np.append(Z, part['z'][0])
@@ -1766,8 +1786,8 @@ def analysisPlots(Particles, Fields, cfg, demOri, dem, outDir):
         if value != 'y':
             repeat = False
 
-    fieldEnd = Fields[-1]
-    partEnd = Particles[-1]
+    fieldEnd = fieldsList[-1]
+    partEnd = particlesList[-1]
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
     fig2, ax2 = plt.subplots(figsize=(pU.figW, pU.figH))
     fig3, ax3 = plt.subplots(figsize=(pU.figW, pU.figH))
