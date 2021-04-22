@@ -215,7 +215,7 @@ def splitTimeValueToArrayInterval(cfgGen):
     else:
         itemsL = cfgValues.split('|')
         items = np.array(itemsL, dtype=float)
-        items = sorted(items)
+        items = np.sort(items)
         
     # make sure that 0 is not in the array (initial time step is any ways saved)
     if items[0] == 0:
