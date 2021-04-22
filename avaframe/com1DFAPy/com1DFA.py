@@ -91,7 +91,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     flagDev = cfg['FLAGS'].getboolean('flagDev')
 
     # fetch input data - dem, release-, entrainment- and resistance areas
-    demFile, relFiles, relSecondaryFile, entFiles, resFile, entResInfo = gI.getInputDataCom1DFAPy(
+    demFile, relFiles, secondaryReleaseFile, entFiles, resFile, entResInfo = gI.getInputDataCom1DFAPy(
         avaDir, cfg['FLAGS'], flagDev)
 
     # Counter for release area loop
@@ -103,12 +103,12 @@ def com1DFAMain(cfg, avaDir, relThField):
     # Loop through release areas
     for rel in relFiles:
 
-        demOri, releaseLine, releaseSecondaryLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, rel, relSecondaryFile, entFiles, resFile)
+        demOri, releaseLine, secondaryReleaseLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, rel, secondaryReleaseFile, entFiles, resFile)
 
         # find out which simulations to perform
-        relName, cuSim, relDict, badName = getSimulation(cfg, rel, relSecondaryFile, entResInfo)
+        relName, cuSim, relDict, releaseSecondaryDict, badName = getSimulation(cfg, rel, secondaryReleaseFile, entResInfo)
         releaseLine['d0'] = relDict['d0']
-        releaseSecondaryLine['d0'] = relDict['d0']
+        secondaryReleaseLine['d0'] = releaseSecondaryDict['d0']
 
         for sim in cuSim:
             #logName = sim + '_' + cfgGen['mu']
@@ -120,11 +120,11 @@ def com1DFAMain(cfg, avaDir, relThField):
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, releaseLine, releaseSecondaryLine, entLine, resLine, logName, relThField)
+            particles, secondaryReleaseParticles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine, resLine, logName, relThField)
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
-            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
+            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfgGen, particles, secondaryReleaseParticles, fields, dem)
 
             # write mass balance to File
             writeMBFile(infoDict, avaDir, logName)
@@ -156,7 +156,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     return particlesList, fieldsList, Tsave, dem, reportDictList
 
 
-def getSimulation(cfg, rel, relSecondaryFile, entResInfo):
+def getSimulation(cfg, rel, secondaryReleaseFile, entResInfo):
     """ get Simulation to run for a given release
 
 
@@ -202,7 +202,7 @@ def getSimulation(cfg, rel, relSecondaryFile, entResInfo):
 
     log.info('Release area scenario: %s - perform simulations' % (relName))
 
-    releaseSecondaryDict = shpConv.SHP2Array(relSecondaryFile)
+    releaseSecondaryDict = shpConv.SHP2Array(secondaryReleaseFile)
     for k in range(len(releaseSecondaryDict['d0'])):
         if releaseSecondaryDict['d0'][k] == 'None':
             releaseSecondaryDict['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
@@ -236,7 +236,7 @@ def getSimulation(cfg, rel, relSecondaryFile, entResInfo):
     return relName, simTypeList, relDict, releaseSecondaryDict, badName
 
 
-def prepareInputData(demFile, relFile, relSecondaryFile, entFiles, resFile):
+def prepareInputData(demFile, relFile, secondaryReleaseFile, entFiles, resFile):
     """ Fetch input data
 
     Parameters
@@ -272,13 +272,12 @@ def prepareInputData(demFile, relFile, relSecondaryFile, entFiles, resFile):
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
     releaseLine['file'] = relFile
     # get line from secondary release area polygon
-    if relSecondaryFile:
-        releaseSecondaryLine = shpConv.readLine(relSecondaryFile, '', demOri)
-        secondaryReleaseArea = os.path.splitext(os.path.basename(relSecondaryFile))[0]
-        releaseSecondaryLine['Name'] = [secondaryReleaseArea]
+    if secondaryReleaseFile:
+        secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
+        secondaryReleaseArea = os.path.splitext(os.path.basename(secondaryReleaseFile))[0]
     else:
-        entLine = None
-        entrainmentArea = ''
+        secondaryReleaseLine = None
+        secondaryReleaseArea = ''
     # get line from entrainement area polygon
     if entFiles:
         entLine = shpConv.readLine(entFiles, '', demOri)
@@ -296,7 +295,7 @@ def prepareInputData(demFile, relFile, relSecondaryFile, entFiles, resFile):
         resLine = None
         resistanceArea = ''
 
-    return demOri, releaseLine, releaseSecondaryLine, entLine, resLine, entrainmentArea, resistanceArea
+    return demOri, releaseLine, secondaryReleaseLine, entLine, resLine, entrainmentArea, resistanceArea
 
 
 def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo):
@@ -452,7 +451,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, releaseLine, releaseSecondaryLine, entLine, resLine, logName, relThField):
+def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine, resLine, logName, relThField):
     """ create simulaton report dictionary
 
     Parameters
@@ -496,15 +495,16 @@ def initializeSimulation(cfg, demOri, releaseLine, releaseSecondaryLine, entLine
     # process release info to get it as a raster
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
-        relRaster = prepareArea(releaseLine, demOri, relThList=releaseLine['d0'])
+        # this is a list of release rasters that we want to combine
+        relRaster = prepareArea(releaseLine, demOri, relThList=releaseLine['d0'], combine=True)
     else:
         # if relTh provided - set release thickness with field or function
-        relRaster = prepareArea(releaseLine, demOri)
+        relRaster = prepareArea(releaseLine, demOri, combine=True)
         relRaster = relRaster * relThField
 
     # ------------------------
-    # process secondary release info to get it as a raster
-    releaseSecondaryRaster = prepareArea(releaseSecondaryLine, demOri, relThList=releaseSecondaryLine['d0'])
+    # process secondary release info to get it as a list of rasters
+    secondaryReleaseRaster = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
 
     # compute release area
     header = dem['header']
@@ -518,9 +518,12 @@ def initializeSimulation(cfg, demOri, releaseLine, releaseSecondaryLine, entLine
     # ------------------------
     # initialize simulation
 
-    # create particles, create resistance and
-    # entrainment matrix, initialize fields, get normals and neighbours
+    # create primary release area particles and fields
+    log.info('Initializing main release area')
     particles, fields = initializeParticles(cfgGen, relRaster, dem, logName=logName)
+
+    # create secondary release area particles
+    secondaryReleaseParticles = initializeSecReleaseParticles(cfgGen, secondaryReleaseLine, secondaryReleaseRaster, dem)
 
     # initialize entrainment and resistance
     # get info of simType and whether or not to initialize resistance and entrainment
@@ -535,7 +538,7 @@ def initializeSimulation(cfg, demOri, releaseLine, releaseSecondaryLine, entLine
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
     fields['cResRaster'] = cResRaster
 
-    return particles, fields, dem, reportAreaInfo
+    return particles, secondaryReleaseParticles, fields, dem, reportAreaInfo
 
 
 def initializeParticles(cfg, relRaster, dem, logName=''):
@@ -704,7 +707,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     relCells = np.size(indRelY)
     partPerCell = particles['Npart']/relCells
     log.info('Expeced mass. Mexpected = %.2f kg.' % (totalMassRaster))
-    log.info('Initializted simulation. MTot = %.2f kg, %s particles in %.2f cells.' %
+    log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
              (particles['mTot'], particles['Npart'], relCells))
     log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
              (particles['mTot']/particles['Npart'], partPerCell))
@@ -723,6 +726,50 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         plt.show()
 
     return particles, fields
+
+
+def initializeSecReleaseParticles(cfgGen, secondaryReleaseLine, secondaryReleaseRaster, dem):
+    """ Initialize secondary release area particles
+
+    Create secondary release area particles dictionaries according to config
+    parameters release raster and dem
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    secondaryReleaseLine: release area dictionary
+        name and release depth of each feature
+    secondaryReleaseRaster: list
+        list of 2D numpy array secondary release rasters
+    dem : dict
+        dictionary with dem information
+
+    Returns
+    -------
+    secondaryReleaseParticles : dict
+        secondaryReleaseParticlesList : list
+            list of secondary release area particles (same size as the
+            secondaryReleaseRaster input list)
+
+        Name : list
+            list of secondary release area Names (same size as the
+            secondaryReleaseRaster input list)
+    """
+    secondaryReleaseParticles = {}
+    secondaryReleaseParticlesList = []
+    log.info('Initializing secondary release area')
+    for secRelRaster, relName in zip(secondaryReleaseRaster, secondaryReleaseLine['Name']):
+        # create secondary release area particles
+        log.info('Initializing secondary release area feature %s' % relName)
+        particles, _ = initializeParticles(cfgGen, secRelRaster, dem)
+        particles['secRelRaster'] = secRelRaster
+        secondaryReleaseParticlesList.append(particles)
+
+    secondaryReleaseParticles['Name'] = secondaryReleaseLine['Name']
+    secondaryReleaseParticles['secondaryReleaseParticlesList'] = secondaryReleaseParticlesList
+
+    return secondaryReleaseParticles
 
 
 def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
@@ -859,7 +906,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo):
     return cResRaster, reportAreaInfo
 
 
-def DFAIterate(cfg, particles, fields, dem):
+def DFAIterate(cfg, particles, secondaryReleaseParticles, fields, dem):
     """ Perform time loop for DFA simulation
 
      Save results at desired intervals
@@ -870,6 +917,8 @@ def DFAIterate(cfg, particles, fields, dem):
         configuration for DFA simulation
     particles : dict
         particles dictionary at initial time step
+    secondaryReleaseParticles : list
+        list of secondary release area particles dictionaries at initial time step
     fields : dict
         fields dictionary at initial time step
     dem : dict
@@ -952,8 +1001,8 @@ def DFAIterate(cfg, particles, fields, dem):
             particles, fields, Tcpu, dt = computeLeapFrogTimeStep(
                 cfgGen, particles, fields, dt, dem, Tcpu)
         else:
-            particles, fields, Tcpu = computeEulerTimeStep(
-                cfgGen, particles, fields, dt, dem, Tcpu)
+            particles, secondaryReleaseParticles, fields, Tcpu = computeEulerTimeStep(
+                cfg, particles, secondaryReleaseParticles, fields, dt, dem, Tcpu)
 
         Tcpu['nSave'] = nSave
         particles['t'] = t
@@ -1069,7 +1118,7 @@ def writeMBFile(infoDict, avaDir, logName):
                     (t[m], massTotal[m], massEntrained[m]))
 
 
-def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
+def computeEulerTimeStep(cfg, particles, secondaryReleaseParticles, fields, dt, dem, Tcpu):
     """ compute next time step using an euler forward scheme
 
     Parameters
@@ -1114,14 +1163,15 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
-    hmin = cfg.getfloat('hmin')
-
     # update velocity and particle position
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
     particles = DFAfunC.updatePositionC(cfg, particles, dem, force)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
+
+    # release secondary release area?
+    particles, secondaryReleaseParticles = releaseSecRelArea(particles, secondaryReleaseParticles, fields, dem)
 
     # get particles location (neighbours for sph)
     startTime = time.time()
@@ -1137,7 +1187,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
-    return particles, fields, Tcpu
+    return particles, secondaryReleaseParticles, fields, Tcpu
 
 
 def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
@@ -1282,7 +1332,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     return particles, fields, Tcpu, dt
 
 
-def prepareArea(releaseLine, dem, relThList=''):
+def prepareArea(releaseLine, dem, relThList='', combine=True):
     """ convert shape file polygon to raster
 
     Parameters
@@ -1293,12 +1343,19 @@ def prepareArea(releaseLine, dem, relThList=''):
         dictionary with dem information
     relThList: list
         release thickness values for all release features
+    combine : Boolean
+        if True sum upe the rasters in the area list to return only 1 raster
+        if False return the list of distinct area rasters
+        this option works only if relThList is not empty
 
     Returns
     -------
-
     Raster : 2D numpy array
-        raster
+        raster of the area (returned if relRHlist is empty OR if combine is set
+        to True)
+    RasterList : list
+        list of 2D numpy array rasters (returned if relRHlist is not empty AND
+        if combine is set to True)
     """
     NameRel = releaseLine['Name']
     StartRel = releaseLine['Start']
@@ -1322,23 +1379,25 @@ def prepareArea(releaseLine, dem, relThList=''):
             RasterList.append(Raster)
         else:
             Raster = polygon2Raster(dem['header'], avapath, Raster, relTh='')
+            return Raster
 
     # if relTh provided by a field or function - create release Raster with ones
-    if relThList != '':
-        Raster = np.zeros(np.shape(dem['rasterData']))
-        for rast in RasterList:
-            ind1 = Raster > 0
-            ind2 = rast > 0
-            indMatch = np.logical_and(ind1, ind2)
-            try:
-                message = 'Release area features are overlaping - this is not allowed'
-                assert indMatch.any() == False, message
-                Raster = Raster + rast
-            except AssertionError:
-                log.error('%s' % message)
-                raise
-
-    return Raster
+    Raster = np.zeros(np.shape(dem['rasterData']))
+    for rast in RasterList:
+        ind1 = Raster > 0
+        ind2 = rast > 0
+        indMatch = np.logical_and(ind1, ind2)
+        try:
+            message = 'Release area features are overlaping - this is not allowed'
+            assert indMatch.any() == False, message
+            Raster = Raster + rast
+        except AssertionError:
+            log.error('%s' % message)
+            raise
+    if combine:
+        return Raster
+    else:
+        return RasterList
 
 
 def polygon2Raster(demHeader, Line, Mask, relTh=''):
@@ -1511,6 +1570,32 @@ def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
     return fig, ax, cmap, lev
 
 
+def releaseSecRelArea(particles, secondaryReleaseParticles, fields, dem):
+    flowDepthField = fields['FD']
+    secRelParticlesList = secondaryReleaseParticles['secondaryReleaseParticlesList']
+    secRelParticlesNameList = secondaryReleaseParticles['Name']
+    count = 0
+    for secRelParticles, secRelParticlesName in zip(secRelParticlesList, secRelParticlesNameList):
+        relRaster = secRelParticles['secRelRaster']
+        # do the two arrays intersect (meaning a flowing particle entered the
+        # secondary release area)
+        mask = (relRaster > 0) & (flowDepthField > 0)
+        if mask.any():
+            # release secondary release area by just appending the particles
+            log.info('Releasing secondary release area %s' % secRelParticlesName)
+
+            particles = mergeParticleDict(particles, secRelParticles)
+            # remove it from the secondary release area list
+            secRelParticlesList.pop(count)
+            secRelParticlesNameList.pop(count)
+        count = count + 1
+
+    secondaryReleaseParticles['secondaryReleaseParticlesList'] = secRelParticlesList
+    secondaryReleaseParticles['Name'] = secRelParticlesNameList
+
+    return particles, secondaryReleaseParticles
+
+
 def removeOutPart(cfg, particles, dem):
     """ find and remove out of raster particles
 
@@ -1679,7 +1764,7 @@ def splitPart(cfg, particles, dem):
             particles['uy'] = np.append(particles['uy'], particles['uy'][ind]*np.ones((nAdd)))
             particles['uz'] = np.append(particles['uz'], particles['uz'][ind]*np.ones((nAdd)))
             particles['m'] = np.append(particles['m'], mNew*np.ones((nAdd)))
-            particles['m'][ind] = mNew
+            particles['mTot'] = np.sum(particles['m'])
             particles['h'] = np.append(particles['h'], particles['h'][ind]*np.ones((nAdd)))
             particles['inCellDEM'] = np.append(particles['inCellDEM'], particles['inCellDEM'][ind]*np.ones((nAdd)))
             particles['indXDEM'] = np.append(particles['indXDEM'], particles['indXDEM'][ind]*np.ones((nAdd)))
@@ -1689,7 +1774,29 @@ def splitPart(cfg, particles, dem):
     return particles
 
 
-def savePartToPickle(dictList, outDir, logName):
+def mergeParticleDict(particles1, particles2):
+    particles1['Npart'] = particles1['Npart'] + particles2['Npart']
+    particles1['NPPC'] = np.append(particles1['NPPC'], particles2['NPPC'])
+    particles1['x'] = np.append(particles1['x'], particles2['x'])
+    particles1['y'] = np.append(particles1['y'], particles2['y'])
+    particles1['z'] = np.append(particles1['z'], particles2['z'])
+    particles1['s'] = np.append(particles1['s'], particles2['s'])
+    particles1['l'] = np.append(particles1['l'], particles2['l'])
+    particles1['ux'] = np.append(particles1['ux'], particles2['ux'])
+    particles1['uy'] = np.append(particles1['uy'], particles2['uy'])
+    particles1['uz'] = np.append(particles1['uz'], particles2['uz'])
+    particles1['m'] = np.append(particles1['m'], particles2['m'])
+    particles1['mTot'] = np.sum(particles1['m'])
+    particles1['h'] = np.append(particles1['h'], particles2['h'])
+    particles1['inCellDEM'] = np.append(particles1['inCellDEM'], particles2['inCellDEM'])
+    particles1['indXDEM'] = np.append(particles1['indXDEM'], particles2['indXDEM'])
+    particles1['indYDEM'] = np.append(particles1['indYDEM'], particles2['indYDEM'])
+    particles1['partInCell'] = np.append(particles1['partInCell'], particles2['partInCell'])
+
+    return particles1
+
+
+def savePartToPickle(dictList, outDir):
     """ Save each dictionary from a list to a pickle in outDir; works also for one dictionary instead of list
 
         Parameters
