@@ -16,12 +16,12 @@ cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 
 plotList = ['data/avaPyramid',
+            'data/avaParabola',
             'data/avaHelix',
             'data/avaHelixChannel',
-            'data/avaHockeySmoothChannel',
-            'data/avaHockeySmoothSmall',
+            'data/avaHockeyChannel',
+            'data/avaHockeySmall',
             'data/avaBowl',
-            'data/avaSlide',
             'data/avaInclinedPlane',
             'data/avaFlatPlane',
             'data/avaWog',
@@ -29,7 +29,8 @@ plotList = ['data/avaPyramid',
             'data/avaHit',
             'data/avaKot',
             'data/avaMal',
-            'data/avaAlr']
+            'data/avaAlr'
+            ]
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
