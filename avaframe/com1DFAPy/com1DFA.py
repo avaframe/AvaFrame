@@ -1770,7 +1770,7 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
     """ create analysis plots during simulation run """
 
     cfgGen = cfg['GENERAL']
-    partRef = Particles[0]
+    partRef = particlesList[0]
     Z0 = partRef['z'][0]
     rho = cfgGen.getfloat('rho')
     gravAcc = cfgGen.getfloat('gravAcc')
