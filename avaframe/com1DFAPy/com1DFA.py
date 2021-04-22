@@ -1018,7 +1018,7 @@ def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes
             particlesList.append(copy.deepcopy(particles))
         elif resType != '':
             fieldAppend[resType] = copy.deepcopy(fields[resType])
-            fieldsList.append(fieldAppend)
+    fieldsList.append(fieldAppend)
 
     return fieldsList, particlesList
 
