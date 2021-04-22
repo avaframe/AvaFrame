@@ -7,6 +7,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import os
 import numpy as np
 import logging
+from matplotlib.colors import LightSource
+from matplotlib import cm
 
 from scipy.interpolate import griddata
 # local imports
@@ -21,8 +23,19 @@ def _generateDEMPlot(X, Y, z, title):
 
     plt.figure(figsize=(10, 10))
     ax = plt.axes(projection='3d')
-    ax.plot_surface(X, Y, z, cmap=plt.cm.viridis,
-                    linewidth=0, antialiased=False)
+
+    ls = LightSource(270, 45)
+    # To use a custom hillshading mode, override the built-in shading and pass
+    # in the rgb colors of the shaded surface calculated from "shade".
+    rgb = ls.shade(z, cmap=cm.viridis, vert_exag=0.1, blend_mode='soft')
+    surf = ax.plot_surface(X, Y, z, rstride=1, cstride=1, facecolors=rgb,
+                           linewidth=0, antialiased=False, shade=False)
+
+    # These are other options to plot in 3d in case another look is needed
+    # ax.contour(X, Y, z, 20, linewidth=3, colors="g", linestyles="solid")
+    # ax.plot_wireframe(X, Y, z, rstride=100, cstride=100,lw=1)
+    # ax.plot_surface(X, Y, z, cmap=plt.cm.viridis,
+    #                 linewidth=0, antialiased=False)
 
     ax.set_title('DEM: %s' % title)
     ax.set_xlabel('x [m]')
