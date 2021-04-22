@@ -880,7 +880,7 @@ def DFAIterate(cfg, particles, fields, dem):
     # the report
     resTypesReportString = cfg['REPORT']['plotFields']
     resTypesReport = resTypesReportString.split('_')
-    resTypesFirstLast = list(set(resTypes + resTypesReport))
+    resTypesLast = list(set(resTypes + resTypesReport))
 
     # Initialise Lists to save fields and add initial time step
     particlesList = []
@@ -903,7 +903,7 @@ def DFAIterate(cfg, particles, fields, dem):
     particles['iterate'] = iterate
     t = particles['t']
     log.info('Saving results for time step t = %f s', t)
-    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesFirstLast)
+    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
     # add initial time step to Tsave array
     Tsave = [0]
     # compute time step
@@ -971,7 +971,7 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
     log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     Tsave.append(t)
-    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesFirstLast)
+    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
     # create infoDict for report and mass log file
     infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu,
@@ -1014,11 +1014,11 @@ def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes
 
     fieldAppend = {}
     for resType in resTypes:
-        if 'particles' in resType:
+        if resType == 'particles':
             particlesList.append(copy.deepcopy(particles))
         elif resType != '':
-            fieldAppend[resType] = fields[resType]
-    fieldsList.append(copy.deepcopy(fieldAppend))
+            fieldAppend[resType] = copy.deepcopy(fields[resType])
+            fieldsList.append(fieldAppend)
 
     return fieldsList, particlesList
 
@@ -1742,8 +1742,8 @@ def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
     numberTimes = len(Tsave)-1
     countTime = 0
     for timeStep in Tsave:
-        if (timeStep == 0) or (timeStep == Tsave[-1]):
-            # for first and last time step we need to add the report fields
+        if (timeStep == Tsave[-1]):
+            # for last time step we need to add the report fields
             resTypes = list(set(resTypesGen + resTypesReport))
         else:
             resTypes = resTypesGen
