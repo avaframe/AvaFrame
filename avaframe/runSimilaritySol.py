@@ -96,7 +96,6 @@ while isinstance(value, float):
     simiSol.plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, 'xaxis')
 
     # get particle parameters
-    comSol = {}
     comSol = simiSol.prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, 'yaxis')
     comSol['outDirTest'] = outDirTest
     comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')

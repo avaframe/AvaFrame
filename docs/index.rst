@@ -79,6 +79,7 @@ Analysis/helper modules
 
 .. only:: html
 
+    * :doc:`moduleAna1Tests`
     * :doc:`moduleAna3AIMEC`
     * :doc:`moduleAna4Stats`
     * :doc:`moduleOut1Peak`
@@ -90,11 +91,13 @@ Analysis/helper modules
    :hidden:
    :caption: Analysis/helper Modules
 
+   moduleAna1Tests.rst
    moduleAna3AIMEC.rst
    moduleAna4Stats.rst
    moduleOut1Peak.rst
    moduleOut3Plot.rst
    moduleLog2Report.rst
+
 
 Theory
 ======
