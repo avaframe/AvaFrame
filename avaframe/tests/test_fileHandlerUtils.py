@@ -139,23 +139,39 @@ def test_splitTimeValueToArrayInterval():
     cfgValues = '1.0|2.5|3.8'
     cfgValuesList = np.asarray([1.0, 2.5, 3.8])
 
+    cfgValues1 = '0.|2.5|3.8'
+    cfgValuesList1 = np.asarray([2.5, 3.8])
+
     cfgValues2 = '0:5'
+    cfgValuesList2 = np.asarray([5., 10., 15.])
+
+    cfgValues3 = ''
+    cfgValuesList3 = np.asarray([20.])
+
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'tEnd': '20'}
     cfgGen = cfg['GENERAL']
-    cfgValuesList2 = np.asarray([0., 5., 10., 15.])
 
     # call function to be tested
-    items = fU.splitTimeValueToArrayInterval(cfgValues, cfgGen)
-    items2 = fU.splitTimeValueToArrayInterval(cfgValues2, cfgGen)
-
+    cfgGen['tSteps'] = cfgValues
+    items = fU.splitTimeValueToArrayInterval(cfgGen)
+    cfgGen['tSteps'] = cfgValues1
+    items1 = fU.splitTimeValueToArrayInterval(cfgGen)
+    cfgGen['tSteps'] = cfgValues2
+    items2 = fU.splitTimeValueToArrayInterval(cfgGen)
+    cfgGen['tSteps'] = cfgValues3
+    items3 = fU.splitTimeValueToArrayInterval(cfgGen)
 
     assert len(items) == len(cfgValuesList)
     assert items[0] == cfgValuesList[0]
     assert items[1] == cfgValuesList[1]
     assert items[2] == cfgValuesList[2]
+    assert len(items1) == len(cfgValuesList1)
+    assert items1[0] == cfgValuesList1[0]
+    assert items1[1] == cfgValuesList1[1]
     assert len(items2) == len(cfgValuesList2)
     assert items2[0] == cfgValuesList2[0]
     assert items2[1] == cfgValuesList2[1]
     assert items2[2] == cfgValuesList2[2]
-    assert items2[3] == cfgValuesList2[3]
+    assert len(items3) == len(cfgValuesList3)
+    assert items3[0] == cfgValuesList3[0]
