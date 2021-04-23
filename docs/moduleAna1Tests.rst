@@ -78,8 +78,6 @@ analytical solution for the given time step.
 Input
 -----
 
-damBreakSol:
-
 * avalanche directory ('data/avaSimilaritySol')
 * configuration settings of com1DFA including a section 'SIMISOL'
 
