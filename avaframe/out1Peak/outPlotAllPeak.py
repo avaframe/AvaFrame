@@ -77,12 +77,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName='com1DFA'):
 
         # constrain data to where there is data
         cellSize = peakFiles['cellSize'][m]
-        ind = np.where(data>0)
-        plotBuffer = int(pU.cfg.getfloat('plotBuffer') / cellSize)
-        rowsMin = max(np.amin(ind[0])-plotBuffer, 0)
-        rowsMax = min(np.amax(ind[0])+plotBuffer, data.shape[0])
-        colsMin = max(np.amin(ind[1])-plotBuffer, 0)
-        colsMax = min(np.amax(ind[1])+plotBuffer, data.shape[1])
+        rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
         dataConstrained = data[rowsMin:rowsMax+1, colsMin:colsMax+1]
         demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
 

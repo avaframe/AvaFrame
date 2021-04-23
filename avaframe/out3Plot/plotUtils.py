@@ -7,6 +7,7 @@
 import os
 import seaborn as sns
 import copy
+import numpy as np
 import matplotlib
 import datetime
 import pathlib
@@ -214,6 +215,20 @@ def saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
     plt.close(fig)
 
     return
+
+
+def constrainPlotsToData(inputData, cellSize):
+    """ constrain inut raster dataset to where there is data plus buffer zone """
+
+    ind = np.where(inputData>0)
+    plotBuffer = int(cfg.getfloat('plotBuffer') / cellSize)
+    rowsMin = max(np.amin(ind[0])-plotBuffer, 0)
+    rowsMax = min(np.amax(ind[0])+plotBuffer, inputData.shape[0])
+    colsMin = max(np.amin(ind[1])-plotBuffer, 0)
+    colsMax = min(np.amax(ind[1])+plotBuffer, inputData.shape[1])
+
+    return rowsMin, rowsMax, colsMin, colsMax
+
 
 
 def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither'):
