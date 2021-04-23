@@ -20,6 +20,7 @@ General
     * :doc:`configuration`
     * :doc:`logging`
     * :doc:`develop`
+    * :doc:`testing`
     * :doc:`releaseNotes`
     * :doc:`api`
 
@@ -36,6 +37,7 @@ General
    configuration.rst
    logging.rst
    develop.rst
+   testing.rst
    releaseNotes.rst
    api.rst
 
