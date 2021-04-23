@@ -121,7 +121,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, logName, relThField)
+            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir)
             # ------------------------
             #  Start time step computation
             Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
@@ -139,7 +139,7 @@ def com1DFAMain(cfg, avaDir, relThField):
                 savePartToPickle(particlesList, outDirData, logName)
 
             # Result parameters to be exported
-            exportFields(cfg, Tsave, fieldsList, rel, demOri, outDir, logName)
+            exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName)
 
             # write report dictionary
             entrainmentArea = inputSimLines['entrainmentArea']
@@ -470,7 +470,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
+def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir):
     """ create simulaton report dictionary
 
     Parameters
@@ -547,7 +547,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     if secondaryReleaseLine:
         secondaryReleaseRaster = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
         # create secondary release area particles
-        secondaryReleaseParticles = initializeSecReleaseParticles(cfgGen, secondaryReleaseLine, secondaryReleaseRaster, dem)
+        secondaryReleaseParticles = initializeSecReleaseParticles(cfg, secondaryReleaseLine, secondaryReleaseRaster, dem, demOri, outDir)
     else:
         secondaryReleaseParticles = None
 
@@ -757,7 +757,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     return particles, fields
 
 
-def initializeSecReleaseParticles(cfgGen, secondaryReleaseLine, secondaryReleaseRaster, dem):
+def initializeSecReleaseParticles(cfg, secondaryReleaseLine, secondaryReleaseRaster, dem, demOri, outDir):
     """ Initialize secondary release area particles
 
     Create secondary release area particles dictionaries according to config
@@ -785,15 +785,22 @@ def initializeSecReleaseParticles(cfgGen, secondaryReleaseLine, secondaryRelease
             list of secondary release area Names (same size as the
             secondaryReleaseRaster input list)
     """
+    cfgGen = cfg['GENERAL']
     secondaryReleaseParticles = {}
     secondaryReleaseParticlesList = []
     log.info('Initializing secondary release area')
     for secRelRaster, relName in zip(secondaryReleaseRaster, secondaryReleaseLine['Name']):
         # create secondary release area particles
         log.info('Initializing secondary release area feature %s' % relName)
-        particles, _ = initializeParticles(cfgGen, secRelRaster, dem)
+        particles, fields = initializeParticles(cfgGen, secRelRaster, dem)
         particles['secRelRaster'] = secRelRaster
         secondaryReleaseParticlesList.append(particles)
+        # save particles and fields for the initial time step to file
+        outDirData = os.path.join(outDir, 'secondaryReleaseArea', relName)
+        exportFields(cfg, [0.], [fields], demOri, outDirData, relName)
+        if 'particles' in cfgGen['resType']:
+            # export particles dictionaries of saving time steps
+            savePartToPickle([particles], outDirData)
 
     secondaryReleaseParticles['Name'] = secondaryReleaseLine['Name']
     secondaryReleaseParticles['secondaryReleaseParticlesList'] = secondaryReleaseParticlesList
@@ -1936,8 +1943,6 @@ def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
             list of time step that corresponds to each dict in Fields
         Fields: list
             list of Fields for each dtSave
-        relFile: str
-            path to release area shapefile
         outDir: str
             outputs Directory
 
