@@ -203,10 +203,10 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
     if flagDev is True:
         releaseDir = 'devREL'
         relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
-    elif cfg['releaseScenario'] != '':
+    elif cfg['FLAGS']['releaseScenario'] != '':
         releaseDir = 'REL'
         relFiles = []
-        releaseFiles = cfg['releaseScenario'].split('|')
+        releaseFiles = cfg['FLAGS']['releaseScenario'].split('|')
         for rel in releaseFiles:
             if '.shp' in rel:
                 relf = os.path.join(inputDir, releaseDir, rel)
@@ -224,16 +224,18 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
 
     # Initialise secondary release areas
     secondaryReleaseFile = glob.glob(inputDir+os.sep + 'SECREL' + os.sep+'*.shp')
-    if len(secondaryReleaseFile) < 1:
-        log.debug('No secondary release area file found')
+    if (len(secondaryReleaseFile) < 1) and cfg.getboolean('GENERAL', 'secRelArea'):
+        log.info('No secondary release area file found')
         secondaryReleaseFile.append('')  # Kept this for future enhancements
-    else:
+    elif cfg.getboolean('GENERAL', 'secRelArea'):
         try:
             message = 'There shouldn\'t be more than one entrainment .shp file in ' + inputDir + '/SECREL/'
             assert len(secondaryReleaseFile) < 2, message
         except AssertionError:
             raise
         entResInfo['flagSecondaryRelease'] = 'Yes'
+    else:
+        secondaryReleaseFile = [None]
 
     # Initialise resistance areas
     resFiles = glob.glob(inputDir+os.sep + 'RES' + os.sep+'*.shp')
@@ -265,4 +267,6 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
     demFile = getDEMPath(avaDir)
 
     # return DEM, first item of release, entrainment and resistance areas
-    return demFile, relFiles, secondaryReleaseFile[0], entFiles[0], resFiles[0], entResInfo
+    inputSimFiles = {'relFiles': relFiles, 'secondaryReleaseFile': secondaryReleaseFile[0],
+                     'entFile': entFiles[0], 'resFile': resFiles[0], 'entResInfo': entResInfo}
+    return demFile, inputSimFiles

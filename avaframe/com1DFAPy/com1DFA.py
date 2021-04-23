@@ -91,8 +91,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     flagDev = cfg['FLAGS'].getboolean('flagDev')
 
     # fetch input data - dem, release-, entrainment- and resistance areas
-    demFile, relFiles, secondaryReleaseFile, entFiles, resFile, entResInfo = gI.getInputDataCom1DFAPy(
-        avaDir, cfg['FLAGS'], flagDev)
+    demFile, inputSimFiles = gI.getInputDataCom1DFAPy(avaDir, cfg, flagDev)
 
     # Counter for release area loop
     countRel = 0
@@ -101,15 +100,16 @@ def com1DFAMain(cfg, avaDir, relThField):
     reportDictList = []
 
     # Loop through release areas
+    relFiles = inputSimFiles['relFiles']
     for rel in relFiles:
 
-        demOri, releaseLine, secondaryReleaseLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, rel, secondaryReleaseFile, entFiles, resFile)
+        demOri, inputSimLines = prepareInputData(demFile, rel, inputSimFiles)
 
         # find out which simulations to perform
-        relName, cuSim, relDict, releaseSecondaryDict, badName = getSimulation(cfg, rel, secondaryReleaseFile, entResInfo)
-        releaseLine['d0'] = relDict['d0']
+        relName, cuSim, relDict, releaseSecondaryDict, badName = getSimulation(cfg, rel, inputSimFiles)
+        inputSimLines['releaseLine']['d0'] = relDict['d0']
         if releaseSecondaryDict:
-            secondaryReleaseLine['d0'] = releaseSecondaryDict['d0']
+            inputSimLines['secondaryReleaseLine']['d0'] = releaseSecondaryDict['d0']
 
         for sim in cuSim:
             #logName = sim + '_' + cfgGen['mu']
@@ -121,11 +121,10 @@ def com1DFAMain(cfg, avaDir, relThField):
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, secondaryReleaseParticles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine, resLine, logName, relThField)
-            relFiles = releaseLine['file']
+            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, logName, relThField)
             # ------------------------
             #  Start time step computation
-            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, secondaryReleaseParticles, fields, dem)
+            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
 
             # write mass balance to File
             writeMBFile(infoDict, avaDir, logName)
@@ -143,6 +142,8 @@ def com1DFAMain(cfg, avaDir, relThField):
             exportFields(cfg, Tsave, fieldsList, rel, demOri, outDir, logName)
 
             # write report dictionary
+            entrainmentArea = inputSimLines['entrainmentArea']
+            resistanceArea = inputSimLines['resistanceArea']
             reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
             # add time and mass info to report
             reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict)
@@ -157,7 +158,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     return particlesList, fieldsList, Tsave, dem, reportDictList
 
 
-def getSimulation(cfg, rel, secondaryReleaseFile, entResInfo):
+def getSimulation(cfg, rel, inputSimFiles):
     """ get Simulation to run for a given release
 
 
@@ -203,6 +204,7 @@ def getSimulation(cfg, rel, secondaryReleaseFile, entResInfo):
 
     log.info('Release area scenario: %s - perform simulations' % (relName))
 
+    secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
     if secondaryReleaseFile:
         releaseSecondaryDict = shpConv.SHP2Array(secondaryReleaseFile)
         for k in range(len(releaseSecondaryDict['d0'])):
@@ -214,6 +216,7 @@ def getSimulation(cfg, rel, secondaryReleaseFile, entResInfo):
         releaseSecondaryDict = None
 
     # define simulation type
+    entResInfo = inputSimFiles['entResInfo']
     if 'available' in simTypeList:
         if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
             simTypeList.append('entres')
@@ -240,7 +243,7 @@ def getSimulation(cfg, rel, secondaryReleaseFile, entResInfo):
     return relName, simTypeList, relDict, releaseSecondaryDict, badName
 
 
-def prepareInputData(demFile, relFile, secondaryReleaseFile, entFiles, resFile):
+def prepareInputData(demFile, relFile, inputSimFiles):
     """ Fetch input data
 
     Parameters
@@ -249,25 +252,31 @@ def prepareInputData(demFile, relFile, secondaryReleaseFile, entFiles, resFile):
         path to dem file
     relFiles : str
         path to release file
-    entFiles : str
-        path to entrainment file
-    resFile : str
-        path to resistance file
+    inputSimFiles : dict
+        secondaryReleaseFile : str
+            path to secondaryRelease file
+        entFiles : str
+            path to entrainment file
+        resFile : str
+            path to resistance file
 
     Returns
     -------
     demOri : dict
         dictionary with original dem
-    releaseLine : dict
-        release line dictionary
-    entLine : dict
-        entrainment line dictionary
-    resLine : dict
-        resistance line dictionary
-    entrainmentArea : str
-        entrainment file name
-    resistanceArea : str
-        resistance file name
+    inputSimLines : dict
+        releaseLine : dict
+            release line dictionary
+        secondaryReleaseLine : dict
+            secondaryRelease line dictionary
+        entLine : dict
+            entrainment line dictionary
+        resLine : dict
+            resistance line dictionary
+        entrainmentArea : str
+            entrainment file name
+        resistanceArea : str
+            resistance file name
     """
     # get dem information
     demOri = IOf.readRaster(demFile)
@@ -277,6 +286,7 @@ def prepareInputData(demFile, relFile, secondaryReleaseFile, entFiles, resFile):
     releaseLine['file'] = relFile
 
     # get line from secondary release area polygon
+    secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
     if secondaryReleaseFile:
         secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
     else:
@@ -292,6 +302,7 @@ def prepareInputData(demFile, relFile, secondaryReleaseFile, entFiles, resFile):
         entrainmentArea = ''
 
     # get line from resistance area polygon
+    resFile = inputSimFiles['resFile']
     if resFile:
         resLine = shpConv.readLine(resFile, '', demOri)
         resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
@@ -300,7 +311,10 @@ def prepareInputData(demFile, relFile, secondaryReleaseFile, entFiles, resFile):
         resLine = None
         resistanceArea = ''
 
-    return demOri, releaseLine, secondaryReleaseLine, entLine, resLine, entrainmentArea, resistanceArea
+    inputSimLines = {'releaseLine': releaseLine, 'secondaryReleaseLine': secondaryReleaseLine,
+                     'entLine': entLine, 'resLine': resLine, 'entrainmentArea': entrainmentArea,
+                     'resistanceArea': resistanceArea}
+    return demOri, inputSimLines
 
 
 def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo):
@@ -456,7 +470,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine, resLine, logName, relThField):
+def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     """ create simulaton report dictionary
 
     Parameters
@@ -465,12 +479,15 @@ def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine
         simulation scenario name
     demOri : dict
         dictionary with original dem
-    releaseLine : dict
-        release line dictionary
-    entLine : dict
-        entrainment line dictionary
-    resLine : dict
-        resistance line dictionary
+    inputSimLines : dict
+        releaseLine : dict
+            release line dictionary
+        secondaryReleaseLine : dict
+            secondary release line dictionary
+        entLine : dict
+            entrainment line dictionary
+        resLine : dict
+            resistance line dictionary
     logName : str
         simulation scenario name
     relThField : 2D numpy array
@@ -481,6 +498,7 @@ def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine
     -------
     particles : dict
         particles dictionary at initial time step
+        list of secondary release particles to be used
     fields : dict
         fields dictionary at initial time step
     dem : dict
@@ -498,6 +516,7 @@ def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine
     demOri, dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
     # ------------------------
     # process release info to get it as a raster
+    releaseLine = inputSimLines['releaseLine']
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
@@ -524,6 +543,7 @@ def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine
 
     # ------------------------
     # process secondary release info to get it as a list of rasters
+    secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
     if secondaryReleaseLine:
         secondaryReleaseRaster = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
         # create secondary release area particles
@@ -531,12 +551,15 @@ def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine
     else:
         secondaryReleaseParticles = None
 
+    particles['secondaryReleaseParticles'] = secondaryReleaseParticles
     # initialize entrainment and resistance
     # get info of simType and whether or not to initialize resistance and entrainment
     simTypeActual = cfgGen['simTypeActual']
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, entLine, relRaster, reportAreaInfo)
+    entLine = inputSimLines['entLine']
+    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, entLine, reportAreaInfo)
+    resLine = inputSimLines['resLine']
     cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, resLine, reportAreaInfo)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
@@ -544,7 +567,7 @@ def initializeSimulation(cfg, demOri, releaseLine, secondaryReleaseLine, entLine
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
     fields['cResRaster'] = cResRaster
 
-    return particles, secondaryReleaseParticles, fields, dem, reportAreaInfo
+    return particles, fields, dem, reportAreaInfo
 
 
 def initializeParticles(cfg, relRaster, dem, logName=''):
@@ -912,7 +935,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo):
     return cResRaster, reportAreaInfo
 
 
-def DFAIterate(cfg, particles, secondaryReleaseParticles, fields, dem):
+def DFAIterate(cfg, particles, fields, dem):
     """ Perform time loop for DFA simulation
 
      Save results at desired intervals
@@ -923,8 +946,8 @@ def DFAIterate(cfg, particles, secondaryReleaseParticles, fields, dem):
         configuration for DFA simulation
     particles : dict
         particles dictionary at initial time step
-    secondaryReleaseParticles : list
-        list of secondary release area particles dictionaries at initial time step
+        secondaryReleaseParticles : list
+            list of secondary release area particles dictionaries at initial time step
     fields : dict
         fields dictionary at initial time step
     dem : dict
@@ -1007,8 +1030,8 @@ def DFAIterate(cfg, particles, secondaryReleaseParticles, fields, dem):
             particles, fields, Tcpu, dt = computeLeapFrogTimeStep(
                 cfgGen, particles, fields, dt, dem, Tcpu)
         else:
-            particles, secondaryReleaseParticles, fields, Tcpu = computeEulerTimeStep(
-                cfgGen, particles, secondaryReleaseParticles, fields, dt, dem, Tcpu)
+            particles, fields, Tcpu = computeEulerTimeStep(
+                cfgGen, particles, fields, dt, dem, Tcpu)
 
         Tcpu['nSave'] = nSave
         particles['t'] = t
@@ -1124,7 +1147,7 @@ def writeMBFile(infoDict, avaDir, logName):
                     (t[m], massTotal[m], massEntrained[m]))
 
 
-def computeEulerTimeStep(cfg, particles, secondaryReleaseParticles, fields, dt, dem, Tcpu):
+def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     """ compute next time step using an euler forward scheme
 
     Parameters
@@ -1177,8 +1200,7 @@ def computeEulerTimeStep(cfg, particles, secondaryReleaseParticles, fields, dt, 
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
     # release secondary release area?
-    if secondaryReleaseParticles:
-        particles, secondaryReleaseParticles = releaseSecRelArea(particles, secondaryReleaseParticles, fields, dem)
+    particles = releaseSecRelArea(particles, fields, dem)
 
     # get particles location (neighbours for sph)
     startTime = time.time()
@@ -1194,7 +1216,7 @@ def computeEulerTimeStep(cfg, particles, secondaryReleaseParticles, fields, dt, 
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
-    return particles, secondaryReleaseParticles, fields, Tcpu
+    return particles, fields, Tcpu
 
 
 def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
@@ -1577,30 +1599,33 @@ def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
     return fig, ax, cmap, lev
 
 
-def releaseSecRelArea(particles, secondaryReleaseParticles, fields, dem):
+def releaseSecRelArea(particles, fields, dem):
     flowDepthField = fields['FD']
-    secRelParticlesList = secondaryReleaseParticles['secondaryReleaseParticlesList']
-    secRelParticlesNameList = secondaryReleaseParticles['Name']
-    count = 0
-    for secRelParticles, secRelParticlesName in zip(secRelParticlesList, secRelParticlesNameList):
-        relRaster = secRelParticles['secRelRaster']
-        # do the two arrays intersect (meaning a flowing particle entered the
-        # secondary release area)
-        mask = (relRaster > 0) & (flowDepthField > 0)
-        if mask.any():
-            # release secondary release area by just appending the particles
-            log.info('Releasing secondary release area %s' % secRelParticlesName)
+    secondaryReleaseParticles = particles['secondaryReleaseParticles']
+    if secondaryReleaseParticles:
+        secRelParticlesList = secondaryReleaseParticles['secondaryReleaseParticlesList']
+        secRelParticlesNameList = secondaryReleaseParticles['Name']
+        count = 0
+        for secRelParticles, secRelParticlesName in zip(secRelParticlesList, secRelParticlesNameList):
+            relRaster = secRelParticles['secRelRaster']
+            # do the two arrays intersect (meaning a flowing particle entered the
+            # secondary release area)
+            mask = (relRaster > 0) & (flowDepthField > 0)
+            if mask.any():
+                # release secondary release area by just appending the particles
+                log.info('Releasing secondary release area %s' % secRelParticlesName)
 
-            particles = mergeParticleDict(particles, secRelParticles)
-            # remove it from the secondary release area list
-            secRelParticlesList.pop(count)
-            secRelParticlesNameList.pop(count)
-        count = count + 1
+                particles = mergeParticleDict(particles, secRelParticles)
+                # remove it from the secondary release area list
+                secRelParticlesList.pop(count)
+                secRelParticlesNameList.pop(count)
+            count = count + 1
 
-    secondaryReleaseParticles['secondaryReleaseParticlesList'] = secRelParticlesList
-    secondaryReleaseParticles['Name'] = secRelParticlesNameList
+        secondaryReleaseParticles['secondaryReleaseParticlesList'] = secRelParticlesList
+        secondaryReleaseParticles['Name'] = secRelParticlesNameList
+        particles['secondaryReleaseParticles'] = secondaryReleaseParticles
 
-    return particles, secondaryReleaseParticles
+    return particles
 
 
 def removeOutPart(cfg, particles, dem):
