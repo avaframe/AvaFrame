@@ -125,7 +125,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             relFiles = releaseLine['file']
             # ------------------------
             #  Start time step computation
-            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfgGen, particles, secondaryReleaseParticles, fields, dem)
+            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, secondaryReleaseParticles, fields, dem)
 
             # write mass balance to File
             writeMBFile(infoDict, avaDir, logName)
@@ -1008,7 +1008,7 @@ def DFAIterate(cfg, particles, secondaryReleaseParticles, fields, dem):
                 cfgGen, particles, fields, dt, dem, Tcpu)
         else:
             particles, secondaryReleaseParticles, fields, Tcpu = computeEulerTimeStep(
-                cfg, particles, secondaryReleaseParticles, fields, dt, dem, Tcpu)
+                cfgGen, particles, secondaryReleaseParticles, fields, dt, dem, Tcpu)
 
         Tcpu['nSave'] = nSave
         particles['t'] = t
