@@ -38,6 +38,13 @@ For further details have a look at the module ``ana1Test`` and the Section :ref:
 Similarity Solution
 --------------------
 
+This test makes use of an exact solution of a sliding granular mass on an inclined plane.
+In :cite:`HuSiSaNo1993` the analytic solutions is derived for this problem, based on the Savage-Hutter shallow flow
+model to describe the granular flow.
+Here, we provide an implementation of the analytic similarity solution and compare
+it to the output of a numerical simulation.
+For further details have a look at the module ``ana1Test`` and the Section :ref:`moduleana1Tests:Similarity solution`.
+
 
 Tests for model validation
 ========================
