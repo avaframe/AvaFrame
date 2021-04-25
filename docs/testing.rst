@@ -3,7 +3,7 @@ Testing
 ##################################
 
 
-In AvaFrame we attempt to provide a continuously growing test suite. This includes test that strive towards model verification and model validation.
+In AvaFrame we provide a continuously growing test suite. This includes tests that target model verification and model validation.
 The former are used to test the numerical implementation of the mathematical model, whereas the latter are aiming at testing if
 the mathematical model employed is appropriate to describe the physical processes of the desired application, in our case the simulation of dense snow avalanches.
 
@@ -119,9 +119,6 @@ Real-world test cases
 
 We provide a range of real-word topographies to perform avalanche simulations including different release area scenarios including
 entrainment areas. These can be found in ``data/NameOfAvalanche``.
-
-..
-    TODO add the release areas!
 
 Alr
 ^^^
