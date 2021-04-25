@@ -57,10 +57,100 @@ Idealized test cases
 -----------------------
 
 We provide a range of idealized topographies to perform avalanche simulations including different release area scenarios. Some of the topographies also
-include entrainment and/or resistance areas. These can be found in ``data/NameOfAvalanche``.
+include entrainment and/or resistance areas. These can be found in ``data/NameOfAvalanche``. The functions to produce these can be found in
+module ``in3utils/generateTopo.py``.
+
+..
+    TODO Make link out of the py scripts
+
+..
+    TODO add the test cases, not just the topographies
+
+
+
+Bowl - BL
+^^^^^^^^^
+
+Bowl shaped topopraphy. Used to test e.g. rotational symmetry.
+
+.. figure:: _static/testCaseTopos/DEM_BL_Topo_plot.png
+
+
+Flat Plane - FP
+^^^^^^^^^^^^^^^
+
+.. figure:: _static/testCaseTopos/myDEM_FP_Topo_plot.png
+
+Inclined Plane - IP
+^^^^^^^^^^^^^^^^^^^
+IP (Inclined plane)
+
+.. figure:: _static/testCaseTopos/DEM_IP_Topo_plot.png
+
+Parabolic slope - PF
+^^^^^^^^^^^^^^^^^^^
+Parabolic slope with flat foreland
+
+.. figure:: _static/testCaseTopos/DEM_PF_Topo_plot.png
+
+Hockeystick - HS
+^^^^^^^^^^^^^^^^
+
+Hockeystick with linear slope and flat foreland and smooth transition
+
+.. figure:: _static/testCaseTopos/DEM_HS_Topo_plot.png
+
+Helix - HX
+^^^^^^^^^^
+
+Helix-shaped topography
+
+.. figure:: _static/testCaseTopos/DEM_HX_Topo_plot.png
+
+Pyramid - PY
+^^^^^^^^^^^^
+
+pyramid-shaped topography, optional with flat foreland
+
+.. figure:: _static/testCaseTopos/DEM_PY_Topo_plot.png
 
 Real-world test cases
 ----------------------
 
 We provide a range of real-word topographies to perform avalanche simulations including different release area scenarios including
 entrainment areas. These can be found in ``data/NameOfAvalanche``.
+
+..
+    TODO add the release areas!
+
+Alr
+^^^
+
+.. figure:: _static/testCaseTopos/avaAlr_plot.png
+
+Gar
+^^^
+
+.. figure:: _static/testCaseTopos/avaGar_plot.png
+
+Hit
+^^^
+
+.. figure:: _static/testCaseTopos/avaHit_plot.png
+
+Kot
+^^^
+
+.. figure:: _static/testCaseTopos/avaKot_plot.png
+
+Mal
+^^^
+
+.. figure:: _static/testCaseTopos/avaMal_plot.png
+
+Wog
+^^^
+
+.. figure:: _static/testCaseTopos/avaWog_plot.png
+
+
