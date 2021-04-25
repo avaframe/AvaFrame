@@ -126,31 +126,49 @@ entrainment areas. These can be found in ``data/NameOfAvalanche``.
 Alr
 ^^^
 
-.. figure:: _static/testCaseTopos/avaAlr_plot.png
+.. image:: _static/testCaseTopos/avaAlr_plot.png
+    :width: 59%
+.. image:: _static/testCaseTopos/alrRelEnt.png
+    :width: 39%
 
 Gar
 ^^^
 
-.. figure:: _static/testCaseTopos/avaGar_plot.png
+.. image:: _static/testCaseTopos/avaGar_plot.png
+    :width: 59%
+.. image:: _static/testCaseTopos/garRelEnt.png
+    :width: 39%
 
 Hit
 ^^^
 
-.. figure:: _static/testCaseTopos/avaHit_plot.png
+.. image:: _static/testCaseTopos/avaHit_plot.png
+    :width: 59%
+.. image:: _static/testCaseTopos/hitRelEnt.png
+    :width: 39%
 
 Kot
 ^^^
 
-.. figure:: _static/testCaseTopos/avaKot_plot.png
+.. image:: _static/testCaseTopos/avaKot_plot.png
+    :width: 59%
+.. image:: _static/testCaseTopos/kotRelEnt.png
+    :width: 39%
 
 Mal
 ^^^
 
-.. figure:: _static/testCaseTopos/avaMal_plot.png
+.. image:: _static/testCaseTopos/avaMal_plot.png
+    :width: 59%
+.. image:: _static/testCaseTopos/malRelEnt.png
+    :width: 39%
 
 Wog
 ^^^
 
-.. figure:: _static/testCaseTopos/avaWog_plot.png
+.. image:: _static/testCaseTopos/avaWog_plot.png
+    :width: 59%
+.. image:: _static/testCaseTopos/wogRelEnt.png
+    :width: 39%
 
 
