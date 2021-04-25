@@ -6,6 +6,7 @@
 The Open Avalanche Framework
 ============================
 
+.. include:: introduction.rst
 
 General
 =======
