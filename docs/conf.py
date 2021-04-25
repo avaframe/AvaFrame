@@ -21,7 +21,7 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'AvaFrame'
-copyright = '2020, AvaFrame developers'
+copyright = '2021, AvaFrame developers'
 author = 'AvaFrame developers'
 
 

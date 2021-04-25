@@ -1,5 +1,5 @@
 ######################################
-ana4Stats: statisitcal analysis tools
+ana4Stats: Statistical analysis tools
 ######################################
 
 
