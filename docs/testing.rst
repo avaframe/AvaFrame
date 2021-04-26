@@ -58,10 +58,8 @@ Idealized test cases
 
 We provide a range of idealized topographies to perform avalanche simulations including different release area scenarios. Some of the topographies also
 include entrainment and/or resistance areas. These can be found in ``data/NameOfAvalanche``. The functions to produce these can be found in
-module ``in3utils/generateTopo.py``.
+module ``in3utils/generateTopo.py`` (see :ref:`api:API Reference`).
 
-..
-    TODO Make link out of the py scripts
 
 ..
     TODO add the test cases, not just the topographies
@@ -119,6 +117,8 @@ Real-world test cases
 
 We provide a range of real-word topographies to perform avalanche simulations including different release area scenarios including
 entrainment areas. These can be found in ``data/NameOfAvalanche``.
+
+.. Note::  All images give you a bigger version on click.
 
 Alr
 ^^^
