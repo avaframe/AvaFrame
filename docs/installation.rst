@@ -1,9 +1,9 @@
-Installation
-================
-This is a quick guide on how to install AvaFrame and the required dependencies on your machine.
-AvaFrame is developed on **Linux machines** (Ubuntu/Manjaro/Arch) with recent
-Python versions 3.8/3.9. Instructions for Windows/MacOS will follow at a later
-stage. These instructions assume you are familiar with working in a terminal. 
+Installation ================ This is a quick guide on how to install AvaFrame
+and the required dependencies on your machine. AvaFrame is developed on **Linux
+machines** (Ubuntu/Manjaro/Arch) with recent Python versions 3.8/3.9. An
+(experimental) windows version is available too, but be aware this requires you
+to modify some of the instructions below. These instructions assume you are
+familiar with working in a terminal.
 
 Install `git <https://github.com/git-guides/install-git>`_ and python, we 
 suggest to work with miniconda/anaconda. For installation see `miniconda
@@ -58,13 +58,24 @@ Com1DFA Executable
 ------------------
 
 The computation of the ``com1DFA`` dense flow avalanche module relies on a C++ executable.
-The executable (for now only 64bit linux) and needed files are
+The executable (for now 64bit linux and windows) and needed files are
 available in this `git repository <https://github.com/avaframe/com1DFA_Exe>`_.
 To install, change into your directory [YOURDIR] from the AvaFrame installation above and
 clone the repository::
-
+ 
   cd [YOURDIR]
   git clone https://github.com/avaframe/com1DFA_Exe
+
+Rename the exectuables according to your operating system, i.e. for Linux do::
+
+  mv com1DFA_Exe/com1DFA_x86_64.exe com1DFA_Exe/com1DFA.exe
+  mv com1DFA_Exe/SHPConv_Linux.exe com1DFA_Exe/SHPConv.exe
+
+for Windows do::
+
+  mv com1DFA_Exe/com1DFA_win64.exe com1DFA_Exe/com1DFA.exe
+  mv com1DFA_Exe/SHPConv_win.exe com1DFA_Exe/SHPConv.exe
+
 
 Go to the ``com1DFA`` directory of the AvaFrame repository from above and copy the configuration file::
 
@@ -74,7 +85,7 @@ Go to the ``com1DFA`` directory of the AvaFrame repository from above and copy t
 Open the ``local_com1DFACfg.ini`` file in you prefered text editor and change
 the ``com1Exe`` variable to reflect you paths, i.e.::
 
-  com1Exe = [YOURDIR]/com1DFA_Exe/com1DFALinux.exe -files [YOURDIR]/com1DFA_Exe/files/AK_Attributes
+  com1Exe = [YOURDIR]/com1DFA_Exe/com1DFA.exe -files [YOURDIR]/com1DFA_Exe/files/AK_Attributes
 
 
 .. Attention::  We suggest to use the full path.
@@ -84,14 +95,14 @@ executable::
 
   cd [YOURDIR]
   cd com1DFA_Exe
-  ./com1DFA_x86_64.exe -files files/AK_Attributes/
+  ./com1DFA.exe -files files/AK_Attributes/
 
 The output should start like this::
 
   Setting config files directory: files/AK_Attributes/	(src/SW_Workspace.cpp:3435)
-  ./com1DFALinux.exe -files files/AK_Attributes/ 	(src/SW_Workspace.cpp:3453)
+  ./com1DFA.exe -files files/AK_Attributes/ 	(src/SW_Workspace.cpp:3453)
   =================================================================
-  ./com1DFA_x86_64.exe
+  ./com1DFA.exe
   Compiled Oct 19 2020 21:34:15
   ...
 
