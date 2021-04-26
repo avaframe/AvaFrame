@@ -1,6 +1,26 @@
 Release Notes
 =============
 
+v0.3 (26. April 2021)
+---------------------
+
+The AIMEC and Windows release
+
+This release brings an AIMEC refactor, plenty of improvements related to the
+test cases and Windows capabilities. 3 new idealised/generic test case are 
+included: flat plane, inclined slope and pyramid.
+
+Com1DFAPy recieved a lot of advancement as well, e.g. parts of it are converted
+to cython to speed up computation times.  
+
+Documentation regarding our testing is included, see more at the
+`testing <https://docs.avaframe.org/en/latest/testing.html>`_ page. 
+
+Contributers:
+
+- **Code: core team**
+
+
 v0.2 (28. Dezember 2020)
 ------------------------
 
