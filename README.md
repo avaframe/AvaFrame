@@ -14,3 +14,8 @@ All details about installation, running etc can be found there.
 ### License 
 Licensed with [![European Public License EUPL](https://img.shields.io/badge/license-EUPL-green.png)](https://git.avaframe.org/AvaFrame/AvaFrame/src/branch/master/LICENSE.txt)
 
+### To cite
+
+[![DOI](https://zenodo.org/badge/281922740.svg)](https://zenodo.org/badge/latestdoi/281922740)
+
+

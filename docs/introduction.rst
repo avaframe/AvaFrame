@@ -30,3 +30,8 @@ A summery of the lattest advances of the project can be found on the
 Feel free to contact us at our `matrix room <#public:matrix.avaframe.org>`_ if
 you have any questions or suggestions. Avaframe is in an early development phase
 and all ideas and contributions are welcome!
+
+If you want to cite our project, please use:
+
+.. image:: https://zenodo.org/badge/281922740.svg
+   :target: https://zenodo.org/badge/latestdoi/281922740

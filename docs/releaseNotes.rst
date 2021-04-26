@@ -20,6 +20,11 @@ Contributers:
 
 - **Code: core team**
 
+DOI for this release:
+
+.. image:: https://zenodo.org/badge/281922740.svg
+   :target: https://zenodo.org/badge/latestdoi/281922740
+
 
 v0.2 (28. Dezember 2020)
 ------------------------
