@@ -319,7 +319,7 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
                 'time': {'type': 'time', 'time': dateTimeInfo},
                 'Simulation Parameters': {
                 'type': 'list',
-                'Program version': 'developement',
+                'Program version': 'development',
                 'Parameter set': '',
                 'Release Area Scenario': relName,
                 'Entrainment': entInfo,

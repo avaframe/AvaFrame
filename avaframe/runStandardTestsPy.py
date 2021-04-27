@@ -62,6 +62,15 @@ for test in testList:
     cfg['GENERAL']['frictModel'] = 'samosAT'
     cfg['GENERAL']['sphKernelRadius'] = '5.'
     cfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPDH'
+    cfg['GENERAL']['curvature'] = '1'
+    cfg['GENERAL']['meshCellSize'] = '5'
+    cfg['GENERAL']['meshCellSizeThreshold'] = '0.001'
+    cfg['GENERAL']['sphOption'] = '1'
+    cfg['GENERAL']['interpOption'] = '2'
+    cfg['GENERAL']['methodMeshNormal'] = '1'
+    cfg['GENERAL']['resType'] = 'ppr_pfd_pfv'
+    cfg['GENERAL']['tSteps'] = '0'
+    cfg['GENERAL']['seed'] = '12345'
     modName = 'com1DFAPy'
 
     # Clean input directory(ies) of old work and output files
@@ -101,14 +110,11 @@ for test in testList:
         benchDictList = simParameters.fetchBenchParameters(test['AVANAME'])
         benchDict = ''
         for bDict in benchDictList:
-
-            if rel == bDict['Simulation Parameters']['Release Area Scenario']:
+            if test['NAME'] == bDict['testName'] and rel == bDict['Simulation Parameters']['Release Area Scenario']:
                 benchDict = bDict
         benchSimName = benchDict['simName']['name']
         # Check if simulation with entrainment and/or resistance or standard simulation
-        simType = 'null'
-        if 'entres' in benchSimName:
-            simType = 'entres'
+        simType = benchDict['simType']
 
         # Fetch correct reportDict according to flagEntRes
         for dict in reportDictList:
