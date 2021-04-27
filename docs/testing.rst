@@ -11,6 +11,9 @@ In the following, a brief description of the available tests is given.
 
 .. Note::  This section is currently under development and will be updated regularly.
 
+.. Note::  See this `example pdf <https://avaframe.org/pdf/standardTestsReportExample.pdf>`_ (25mb)
+           how we apply these tests during development.
+
 Tests for model verification
 =========================
 
@@ -59,12 +62,6 @@ Idealized test cases
 We provide a range of idealized topographies to perform avalanche simulations including different release area scenarios. Some of the topographies also
 include entrainment and/or resistance areas. These can be found in ``data/NameOfAvalanche``. The functions to produce these can be found in
 module ``in3utils/generateTopo.py`` (see :ref:`api:API Reference`).
-
-
-..
-    TODO add the test cases, not just the topographies
-
-
 
 Bowl - BL
 ^^^^^^^^^
