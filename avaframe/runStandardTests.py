@@ -101,7 +101,7 @@ for test in testList:
         for bDict in benchDictList:
             if bDict['testName'] ==  test['NAME'] and rel == bDict['Simulation Parameters']['Release Area Scenario']:
                     benchDict = bDict
-        benchSimName = benchDict['simName']
+        benchSimName = benchDict['simName']['name']
         # Check if simulation with entrainment and/or resistance or standard simulation
         simType = 'null'
         if 'entres' in benchSimName:
