@@ -152,10 +152,10 @@ def resizeData(raster, rasterRef):
 
 def remeshDEM(cfg, dem):
     """ change DEM cell size by reprojecting on a new grid
-    
-    Interpolation is based in RectBivariateSpline of order 3. Here would be the place
+
+    Interpolation is based on griddata with a cubic method. Here would be the place
     to change the order of the interpolation or to switch to another interpolation method.
-    
+
     Parameters
     ----------
     cfg : configParser
@@ -183,11 +183,19 @@ def remeshDEM(cfg, dem):
     cszDEM = headerDEM.cellsize
     # remesh if input DEM size does not correspond to the computational cellSize
     if np.abs(cszNew - cszDEM) > cszThreshold:
-        log.info('Remeshing the input DEM (of cell size %.2g m) to a cell size of %.2g m' % (cszDEM, cszNew))
+        log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszNew))
         x = np.linspace(0, (nColsDEM-1)*cszDEM, nColsDEM) + xllcenter
         y = np.linspace(0, (nRowsDEM-1)*cszDEM, nRowsDEM) + yllcenter
+        xGrid, yGrid = np.meshgrid(x, y)
+        xGrid = xGrid.flatten()
+        yGrid = yGrid.flatten()
         z = dem['rasterData']
-        fInterp = sp.interpolate.RectBivariateSpline(x, y, np.transpose(z), ky=3, kx=3)
+        zCopy = np.copy(z)
+        zCopy = zCopy.flatten()
+        mask = np.where(~np.isnan(zCopy))
+        xGrid = xGrid[mask]
+        yGrid = yGrid[mask]
+        z = zCopy[mask]
 
         headerRemeshed = IOf.cASCheader()
         headerRemeshed.cellsize = cszNew
@@ -204,9 +212,10 @@ def remeshDEM(cfg, dem):
         dem['header'] = headerRemeshed
         xNew = np.linspace(0, (nColsRemeshed-1)*cszNew, int(nColsRemeshed)) + xllcenter
         yNew = np.linspace(0, (nRowsRemeshed-1)*cszNew, int(nRowsRemeshed)) + yllcenter
+        xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
+        zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic', fill_value=headerDEM.noDataValue)
 
-        zNew = fInterp(xNew, yNew, grid=True)
-        dem['rasterData'] = np.transpose(zNew)
+        dem['rasterData'] = zNew
 
     return dem
 
