@@ -1,4 +1,7 @@
-Installation ================ This is a quick guide on how to install AvaFrame
+Installation
+================ 
+
+This is a quick guide on how to install AvaFrame
 and the required dependencies on your machine. AvaFrame is developed on **Linux
 machines** (Ubuntu/Manjaro/Arch) with recent Python versions 3.8/3.9. An
 (experimental) windows version is available too, but be aware this requires you
