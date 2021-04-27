@@ -1,1 +1,1 @@
-{"TAGS": ["null", "rotational"], "DESCRIPTION": " this is my null test", "TYPE": ["2DPeak"], "FILES": ["release1PY_null_ref_0.15500_ppr.asc", "release1PY_null_ref_0.15500_pfd.asc", "release1PY_null_ref_0.15500_pfv.asc"], "AVANAME": "avaPyramid45"}
+{"TAGS": ["null", "rotational", "idealized"], "DESCRIPTION": " this is my null test", "TYPE": ["2DPeak"], "FILES": ["release1PY_null_ref_0.15500_ppr.asc", "release1PY_null_ref_0.15500_pfd.asc", "release1PY_null_ref_0.15500_pfv.asc"], "AVANAME": "avaPyramid45"}

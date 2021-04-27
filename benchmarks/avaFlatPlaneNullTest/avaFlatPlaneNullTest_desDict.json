@@ -1,1 +1,1 @@
-{"TAGS": ["null","standardTest"], "DESCRIPTION": " this is FlatPlane test", "TYPE": ["2DPeak"], "FILES": ["release1FP_null_ref_0.15500_pfv.asc", "release1FP_null_ref_0.15500_ppr.asc", "release1FP_null_ref_0.15500_pfd.asc"], "TOPOTYPE": "idealised", "AVANAME": "avaFlatPlane"}
+{"TAGS": ["null","standardTest", "idealized"], "DESCRIPTION": " this is FlatPlane test", "TYPE": ["2DPeak"], "FILES": ["release1FP_null_ref_0.15500_pfv.asc", "release1FP_null_ref_0.15500_ppr.asc", "release1FP_null_ref_0.15500_pfd.asc"], "TOPOTYPE": "idealised", "AVANAME": "avaFlatPlane"}
