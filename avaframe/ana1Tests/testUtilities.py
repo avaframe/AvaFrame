@@ -103,7 +103,7 @@ def filterBenchmarks(testDictList, type, valuesList, condition='or'):
     flag = False
     for testDict in testDictList:
         if type == 'AVANAME':
-            if testDict['AVANAME'] == valuesList:
+            if testDict['AVANAME'] in valuesList:
                 testList.append(testDict)
         else:
             if condition == 'or':
