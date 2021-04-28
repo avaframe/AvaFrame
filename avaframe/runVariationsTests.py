@@ -13,6 +13,7 @@ from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
 from avaframe.out1Peak import outPlotAllPeak as oP
+from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
 from avaframe.out3Plot import outQuickPlot
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
@@ -101,11 +102,9 @@ for test in testList:
         for bDict in benchDictList:
             if test['NAME'] == bDict['testName'] and rel == bDict['Simulation Parameters']['Release Area Scenario']:
                     benchDict = bDict
-        benchSimName = benchDict['simName']
+
         # Check if simulation with entrainment and/or resistance or standard simulation
-        simType = 'null'
-        if 'entres' in benchSimName:
-            simType = 'entres'
+        simType = benchDict['simType']
 
         # Fetch correct reportDict according to flagEntRes and varPar
         for dict in reportDictList:
@@ -116,6 +115,40 @@ for test in testList:
 
         # Add info on run time
         reportD['runTime'] = timeNeeded
+
+        # +++++++Aimec analysis
+        # load configuration
+        aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' %  test['AVANAME'])
+        cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
+        cfgAimecSetup = cfgAimec['AIMECSETUP']
+        cfgAimecSetup['testName'] = test['NAME']
+        cfgAimec['AIMECSETUP']['resType'] = 'ppr'
+        cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
+        cfgAimec['AIMECSETUP']['diffLim'] = '5'
+        cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
+        cfgAimec['FLAGS']['flagMass'] = 'False'
+        cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFA'
+
+        # Setup input from com1DFA and reference
+        pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
+
+        for pathD in pathDictList:
+            if pathD == reportD['simName']['name']:
+                pathDict = pathDictList[pathD]
+
+        log.info('reference file comes from: %s' % pathDict['compType'][1])
+        pathDict['numSim'] = len(pathDict['ppr'])
+
+        # Extract geometry input files locations
+        pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
+
+        # perform analysis
+        rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
+
+        # add aimec results to report dictionary
+        reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportD, benchDict, pathDict['referenceFile'])
+        # +++++++++++Aimec analysis
+
 
         # Create plots for report
         # Load input parameters from configuration file
@@ -130,7 +163,6 @@ for test in testList:
         plotListRep = {}
         reportD['Simulation Difference'] = {}
         reportD['Simulation Stats'] = {}
-        cfgRep['PLOT'].update({'refModel': 'refVAR'})
         # ++++++++++++++++++++++++++++
 
         # Plot data comparison for all output variables defined in suffix
@@ -145,8 +177,12 @@ for test in testList:
                 reportD['Simulation Stats'].update({var: plotDict['stats']})
 
         # copy files to report directory
-        plotPaths = generateCompareReport.copyPlots(avaName, test['NAME'], outDir, plotListRep, rel)
+        plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep, rel)
 
+        # add aimec plots
+        aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
+        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, rel, plotPaths)
+        
         # add plot info to general report Dict
         reportD['Simulation Results'] = plotPaths
 
