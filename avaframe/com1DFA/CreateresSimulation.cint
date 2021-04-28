@@ -1,0 +1,68 @@
+int MAXSTRLEN = 512;
+
+void CreateSimulations(char Com1DFAProjectDir[],
+                       char BaseName[])
+{
+  char ProjDir[512];
+  char s[1000*MAXSTRLEN];
+  char x[512];
+  char CuSimName[1000*MAXSTRLEN];
+  char Rel[512];
+  char Sim[512];
+  char Text[512];
+  int NRelAreas;
+  int i;
+  FILE *SimLog;
+  char FPath[512];
+
+
+
+  // Load project
+  set("", "Close", "");
+  sprintf(ProjDir, "%s", Com1DFAProjectDir);
+  set("", "LoadProject", ProjDir);
+
+
+  // Start simulation log
+  sprintf(FPath, "%s_SimLog.txt", ProjDir);
+  SimLog = fopen(FPath,"w");
+  fprintf(SimLog, "SimName;Type\n");
+
+  // Add entrainment and resistance simulation
+  sprintf(CuSimName, "%s_res_dfa", BaseName);
+  // printf("[BatchCom1DFA] Current Sim: %s \n",CuSimName);
+  set("Project/Simulations", "CreateSimulation", CuSimName);
+
+  sprintf(Sim,"Project/Simulations/%s/ReleaseAreas/",CuSimName);
+  set(Sim, "AppendAllObjectsOfType", "");
+  sprintf(Sim,"Project/Simulations/%s/ResistanceAreas/",CuSimName);
+  set(Sim, "AppendAllObjectsOfType", "");
+  fprintf(SimLog, "%s;%s\n",CuSimName,"res");
+
+  fclose(SimLog);
+  set("", "SaveProject", "");
+  set("", "Close", "");
+
+}
+
+// ################################# main #####################################
+int main()
+{
+  char Com1DFAProjectDir[512];
+  char BaseSimName[512];
+
+
+  // --- Setup
+  strcpy(Com1DFAProjectDir, "##PROJECTDIR##");
+  // Base name for simulations
+  strcpy(BaseSimName, "##BASESIMNAME##");
+
+
+  // --- Calls
+  CreateSimulations(Com1DFAProjectDir, BaseSimName);
+
+
+  // printf("[BatchCom1DFA] Project %s now with reference simulations\n", Com1DFAProjectDir);
+  return 0;
+
+}
