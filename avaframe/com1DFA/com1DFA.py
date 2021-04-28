@@ -94,7 +94,8 @@ def copyReplace(origFile, workFile, searchString, replString):
 
 
 def getSimulation(cfg, rel, entResInfo):
-    """ get Simulation to run for a given release
+    """ Get a list of all simulations that shall be performed according to simTypeList in configuration file;
+        and a dictionary with information on release area 
 
 
     Parameters
