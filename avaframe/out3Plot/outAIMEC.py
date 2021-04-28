@@ -392,6 +392,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     name = pU.cfgPlotUtils['name' + resType]
     thresholdArray = inputs['thresholdArray']
     thresholdValue = thresholdArray[-1]
+    contCmap = cfgPath['contMap']
 
     ############################################
     # Figure: Raster comparison (mask for the pThreshold given in the ini file)
@@ -401,7 +402,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
                                                        np.nanmax((refData)),
-                                                       continuous=pU.contCmap)
+                                                       continuous=contCmap)
     cmap.set_bad(color='w')
     refDataPlot = np.ma.masked_where(refData == 0.0, refData)
     ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',

@@ -11,6 +11,7 @@ import shutil
 
 # local modules
 from avaframe.in3Utils import fileHandlerUtils as fU
+import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -175,6 +176,9 @@ def dfaComp2Aimec(avaDir, cfgSetup):
             log.info('no matching files found for simulation: %s' % key)
             del pathDict[key]
 
+    # info about colourmap
+    pathDict['contCmap'] = True
+
     return pathDict
 
 
@@ -197,6 +201,9 @@ def mainDfa2Aimec(avaDir, comModule='com1DFA'):
 
     pathDict['compType'] = ['singleModule', comModule]
 
+    # info about colormap
+    pathDict['contCmap'] = pU.contCmap
+
     return pathDict
 
 
@@ -210,5 +217,8 @@ def indiDfa2Aimec(avaDir, suffix, comModule='com1DFA', inputDir=''):
     pathDict = fU.getDFADataPaths(avaDir, pathDict, suffix, comModule, inputDir=inputDir)
 
     pathDict['compType'] = ['singleModule', comModule]
+
+    # info about colormap
+    pathDict['contCmap'] = pU.contCmap
 
     return pathDict
