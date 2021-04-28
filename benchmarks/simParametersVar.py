@@ -21,12 +21,13 @@ def fetchBenchParameters(avaDir):
     if avaDictName == 'avaFlatPlaneDict':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1FP_null_dfa_2.00000'},
         		'testName': 'avaFlatPlaneVarParTest',
+        		'simType': 'null',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': 'release1FP',
                         'Release Area': ['Rel_Example'],
-                        'Entrainment Area': '',
-                        'Resistance Area': '',
+                        'Entrainment': 'No',
+                        'Resistance': 'No',
                         'Parameter variation on': 'RelTh',
                         'Parameter value': '2.00000',
                         'Mu': '0.15500',
@@ -40,18 +41,19 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaHelixChannelDict':
-        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_entres_dfa_0.05500'},
-        		'testName': 'avaHelixChannelVarParTest',
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_ent_dfa_0.05500'},
+        		'testName': 'avaHelixChannelVarParTest', 
+        		'simType': 'ent',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': 'release1HX',
                         'Release Area': ['Rel_Example', 'Rel_Two'],
-                        'Entrainment Area': 'entrainment1HX',
-                        'Resistance Area': '',
+                        'Entrainment': 'Yes',
+                        'Resistance': 'No',
                         'Parameter variation on': 'Mu',
                         'Parameter value': '0.05500',
                         'Mu': '0.05500',
-                        'Release thickness [m]': ['1', '1'],
+                        'Release thickness [m]': [1.0, 1.0],
                         'Entrainment thickness [m]': 0.3,
                         'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
@@ -62,18 +64,19 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
 
-        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_entres_dfa_0.50000'},
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_ent_dfa_0.50000'},
         		'testName': 'avaHelixChannelEnt1mVarParTest',
+        		'simType': 'ent',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': 'release1HX',
                         'Release Area': ['Rel_Example', 'Rel_Two'],
-                        'Entrainment Area': 'entrainment1HX',
-                        'Resistance Area': '',
+                        'Entrainment': 'Yes',
+                        'Resistance': 'No',
                         'Parameter variation on': 'RelTh',
                         'Parameter value': '0.50000',
                         'Mu': '0.15500',
-                        'Release thickness [m]': ['0.5', '0.5'],
+                        'Release thickness [m]': [0.5, 0.5],
                         'Entrainment thickness [m]': 1.0,
                         'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
@@ -85,14 +88,15 @@ def fetchBenchParameters(avaDir):
         avaDictList.append(avaDictName)
 
     elif avaDictName == 'avaParabolaDict':
-        avaDictName = {'simName': {'type': 'simName', 'name': 'release1PF_entres_dfa_0.50000'},
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1PF_res_dfa_0.50000'},
         		'testName': 'avaParabolaVarParTest',
+        		'simType': 'res',
                     'Simulation Parameters': {
                         'type': 'list',
                         'Release Area Scenario': 'release1PF',
                         'Release Area': ['Rel_Example'],
-                        'Entrainment Area': '',
-                        'Resistance Area': 'resistance1PF',
+                        'Entrainment': 'No',
+                        'Resistance': 'Yes',
                         'Parameter variation on': 'RelTh',
                         'Parameter value': '0.50000',
                         'Mu': '0.15500',

@@ -93,6 +93,71 @@ def copyReplace(origFile, workFile, searchString, replString):
         file.write(fileData)
 
 
+def getSimulation(cfg, rel, entResInfo):
+    """ get Simulation to run for a given release
+
+
+    Parameters
+    ----------
+    cfg : dict
+        general configuration
+    entResInfo: dict
+        info about available entrainment and resistance info
+
+    Returns
+    -------
+    simTypeList: list
+        list of simulation types to be performed
+    """
+
+    # Set release areas and simulation name
+    relName = os.path.splitext(os.path.basename(rel))[0]
+    simName = relName
+    badName = False
+    if '_' in relName:
+        badName = True
+        log.warning('Release area scenario file name includes an underscore \
+        the suffix _AF will be added')
+        simName = relName + '_AF'
+    relDict = sP.SHP2Array(rel)
+    for k in range(len(relDict['d0'])):
+        if relDict['d0'][k] == 'None':
+            relDict['d0'][k] = cfg['DEFVALUES'].getfloat('RelTh')
+        else:
+            relDict['d0'][k] = float(relDict['d0'][k])
+
+    log.info('Release area scenario: %s - perform simulations' % (relName))
+
+    # read list of desired simulation types
+    simTypeList = cfg['GENERAL']['simTypeList'].split('|')
+
+    # define simulation type
+    if 'available' in simTypeList:
+        if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
+            simTypeList.append('entres')
+        elif entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'No':
+            simTypeList.append('ent')
+        elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'Yes':
+            simTypeList.append('res')
+        # always add null simulation
+        simTypeList.append('null')
+        simTypeList.remove('available')
+
+    # remove duplicate entries
+    simTypeList = set(simTypeList)
+
+    if 'ent' in simTypeList or 'entres' in simTypeList:
+        if entResInfo['flagEnt'] == 'No':
+            log.error('No entrainment file found')
+            raise FileNotFoundError
+    if 'res' in simTypeList or 'entres' in simTypeList:
+        if entResInfo['flagRes'] == 'No':
+            log.error('No resistance file found')
+            raise FileNotFoundError
+
+    return simTypeList, relName, relDict,  badName
+
+
 def com1DFAMain(cfg, avaDir):
     """ Run main model
 
@@ -115,8 +180,6 @@ def com1DFAMain(cfg, avaDir):
     cfgGen = cfg['GENERAL']
     com1Exe = cfgGen['com1Exe']
     modName = 'com1DFA'
-    flagNoEnt = cfgGen.getboolean('noEntrainment')
-    flagNoRes = cfgGen.getboolean('noResistance')
     fullOut = cfgGen.getboolean('fullOut')
     cfgPar = cfg['PARAMETERVAR']
     resDir = os.path.join(avaDir, 'Work', 'com1DFA')
@@ -126,12 +189,6 @@ def com1DFAMain(cfg, avaDir):
     defValues = cfg['DEFVALUES']
     entrainmentTH = defValues['defaultEntH']
 
-    # Log chosen settings
-    if flagNoEnt:
-        log.info('Entrainment is forced off')
-    if flagNoRes:
-        log.info('Resistance is forced off')
-
     # Log current avalanche directory
     log.debug('Your current avalanche name: %s' % avaDir)
 
@@ -139,17 +196,7 @@ def com1DFAMain(cfg, avaDir):
     workDir, outDir = iD.initialiseRunDirs(avaDir, modName)
 
     # Load input data
-    dem, rels, ent, res, entResInfo = gI.getInputData(avaDir, cfgGen)
-    flagEntRes = entResInfo['flagEntRes']
-    flagBadName = False
-    entrainmentArea = ''
-    resistanceArea = ''
-    if flagEntRes:
-        entrainmentArea = os.path.splitext(os.path.basename(ent))[0]
-        resistanceArea = os.path.splitext(os.path.basename(res))[0]
-        if cfg['ENTRAINMENT'].getboolean('setEntDepth'):
-            entrainmentTH = cfg['ENTRAINMENT']['entH']
-            log.info('Entrainment thickness is changed! set to %s' % entrainmentTH)
+    dem, rels, ent, res, entResInfo = gI.getInputDataCom1DFAPy(avaDir, cfgGen, flagDev=False)
 
     # Parameter variation
     if cfgPar.getboolean('parameterVar'):
@@ -171,29 +218,23 @@ def com1DFAMain(cfg, avaDir):
     # Loop through release areas
     for rel in rels:
         startTime = time.time()
-        # Set release areas and simulation name
-        relName = os.path.splitext(os.path.basename(rel))[0]
-        simName = relName
-        if '_' in relName:
-            flagBadName = True
-            log.warning('Release area scenario file name includes an underscore \
-            the suffix _AF will be added')
-            simName = relName + '_AF'
-        relDict = sP.SHP2Array(rel)
-        for k in range(len(relDict['d0'])):
-            if relDict['d0'][k] == 'None':
-                relDict['d0'][k] = defValues.getfloat('RelTh')
-            else:
-                relDict['d0'][k] = float(relDict['d0'][k])
 
-        log.info('Release area scenario: %s - perform simulations' % (relName))
-        if flagEntRes:
-            log.info('Entrainment area: %s and resistance area: %s' % (entrainmentArea, resistanceArea))
+        # load release area and simulation type
+        simTypeList, relName, relDict, badName = getSimulation(cfg, rel, entResInfo)
+        entrainmentArea = ''
+        resistanceArea = ''
+        if 'ent' in simTypeList:
+            entrainmentArea = os.path.splitext(os.path.basename(ent))[0]
+            if cfg['ENTRAINMENT'].getboolean('setEntDepth'):
+                entrainmentTH = cfg['ENTRAINMENT']['entH']
+                log.info('Entrainment thickness is changed! set to %s' % entrainmentTH)
+        if 'res' in simTypeList:
+            resistanceArea = os.path.splitext(os.path.basename(res))[0]
 
         # Initialise CreateProject cint file
         templateFile = os.path.join(modPath, 'CreateProject.cint')
         workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateProject.cint')
-        projDir = os.path.join(avaDir, 'Work', 'com1DFA', simName)
+        projDir = os.path.join(avaDir, 'Work', 'com1DFA', relName)
         demName = os.path.splitext(os.path.basename(dem))[0]
 
         # Set Parameters in cint file
@@ -206,165 +247,109 @@ def com1DFAMain(cfg, avaDir):
         # Setup Project
         execCom1Exe(com1Exe, workFile, avaDir, fullOut)
 
-        if flagEntRes:
+        # loop over simulations
+        for simTypeActual in simTypeList:
+
+            simName = relName + '_' + simTypeActual + '_dfa'
+            log.info('Perform %s simulation ' % simName)
+
+            # set entrainment and resistance info
+            resInfo = 'No'
+            entInfo = 'No'
+            if 'ent' in simTypeActual:
+                entInfo = 'Yes'
+            if 'res' in simTypeActual:
+                resInfo = 'Yes'
+
             # Initialise CreateSimulations cint file and set parameters
-            templateFile = os.path.join(modPath, 'CreateEntResSimulations.cint')
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateEntResSimulations.cint')
-            cuSim = [simName + '_entres_dfa', simName + '_null_dfa']
-        else:
-            # Initialise CreateSimulations cint file and set parameters
-            templateFile = os.path.join(modPath, 'CreateNullSimulation.cint')
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateNullSimulation.cint')
-            cuSim = [simName + '_null_dfa']
+            templateFile = os.path.join(modPath, 'Create%sSimulation.cint' % simTypeActual)
+            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'Create%sSimulation.cint' % simTypeActual)
 
-        # Write required info to cint file
-        copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
-        copyReplace(workFile, workFile, '##BASESIMNAME##', simName)
-        execCom1Exe(com1Exe, workFile, avaDir, fullOut)
-
-        # If parameter shall be varied
-        if cfgPar.getboolean('parameterVar'):
-
-            # Also perform one standard simulation
-            simST = simName + '_null_dfa'
-            logName = simST + '_' + defValues[cfgPar['varPar']]
-            log.info('Also perform one standard simulation: %s' % simST)
-            templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
             # Write required info to cint file
             copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
-            copyReplace(workFile, workFile, '##RESDIR##', resDir)
-            copyReplace(workFile, workFile, '##NAME##', simST)
-            copyReplace(workFile, workFile, '##COUNTREL##', countRel)
-            copyReplace(workFile, workFile, '##VARPAR##', cfgPar['varPar'])
-            copyReplace(workFile, workFile, '##VALUE##', defValues[cfgPar['varPar']])
-            copyReplace(workFile, workFile, '##ENTH##', entrainmentTH)
-            execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
-            # Create dictionary
-            reportNull = {}
-            reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
-            'avaName': {'type': 'avaName', 'name': avaDir},
-            'simName': {'type': 'simName', 'name': logName},
-            'time': {'type': 'time', 'time': dateTimeInfo},
-                'Simulation Parameters': {
-                    'type': 'list',
-                    'Release Area Scenario': relName,
-                    'Release Area': relDict['Name'],
-                    'Entrainment': 'No',
-                    'Resistance': 'No',
-                    'Parameter variation on': '',
-                    'Parameter value': '',
-                    'Mu': defValues['Mu'],
-                    'Release thickness [m]': relDict['d0'],
-                    'Entrainment thickness [m]': float(entrainmentTH)},
-                'Release area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['d0']}}
+            copyReplace(workFile, workFile, '##BASESIMNAME##', relName)
+            execCom1Exe(com1Exe, workFile, avaDir, fullOut)
 
-            endTime = time.time()
-            timeNeeded = '%.2f' % (endTime - startTime)
-            log.info(('Took %s seconds to calculate.' % (timeNeeded)))
-            reportNull['Simulation Parameters'].update({'Computation time [s]': timeNeeded})
+            # If parameter shall be varied
+            if cfgPar.getboolean('parameterVar'):
 
-            # Add to report dictionary list
-            reportDictList.append(reportNull)
+                log.info('Parameter variation used varying: %s' % cfgPar['varPar'])
 
-            # Count total number of simulations
-            countRel = countRel + 1
+                # read values of parameter variation in config file
+                itemsRaw = fU.splitIniValueToArraySteps(cfg['PARAMETERVAR']['varParValues'])
+                items = []
+                for itemR in itemsRaw:
+                    items.append('%.5f' % float(itemR))
+                for item in items:
+                    startTime = time.time()
+                    logName = simName + '_' + item
+                    log.info('Perform simulation with %s = %s: logName = %s' % (cfgPar['varPar'], item, logName))
+                    templateFile = os.path.join(modPath, '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
+                    workFile = os.path.join(avaDir, 'Work', 'com1DFA',
+                                            '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
+                    copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
+                    copyReplace(workFile, workFile, '##RESDIR##', resDir)
+                    copyReplace(workFile, workFile, '##NAME##', simName)
+                    copyReplace(workFile, workFile, '##COUNTREL##', countRel)
+                    copyReplace(workFile, workFile, '##VALUE##', item)
+                    copyReplace(workFile, workFile, '##ENTH##', entrainmentTH)
+                    execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
 
-            if cfgPar.getboolean('varEnt') and (simName + '_entres_dfa') in cuSim:
-                sim = simName + '_entres_dfa'
-                log.info('Parameter variation used including entrainment and resistance, varying: %s' % cfgPar['varPar'])
-            else:
-                sim = simName + '_null_dfa'
-                log.info('Parameter variation used not including entrainment and resistance, varying: %s' % cfgPar['varPar'])
+                    # Create dictionary
+                    reportVar = {}
+                    reportVar = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+                    'avaName': {'type': 'avaName', 'name': avaDir},
+                    'simName': {'type': 'simName', 'name': logName},
+                    'time': {'type': 'time', 'time': dateTimeInfo},
+                        'Simulation Parameters': {
+                            'type': 'list',
+                            'Release Area Scenario': relName,
+                            'Release Area': relDict['Name'],
+                            'Entrainment': entInfo,
+                            'Resistance': resInfo,
+                            'Parameter variation on': cfgPar['varPar'],
+                            'Parameter value': item},
+                        'Release area': {'type': 'columns', 'Release area scenario': relName,  'Release features': relDict['Name']}}
 
-            # read values of parameter variation in config file
-            itemsRaw = fU.splitIniValueToArraySteps(cfg['PARAMETERVAR']['varParValues'])
-            items = []
-            for itemR in itemsRaw:
-                items.append('%.5f' % float(itemR))
-            for item in items:
-                startTime = time.time()
-                logName = sim + '_' + item
-                log.info('Perform simulation with %s = %s: logName = %s' % (cfgPar['varPar'], item, logName))
-                templateFile = os.path.join(modPath, '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
-                workFile = os.path.join(avaDir, 'Work', 'com1DFA',
-                                        '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
-                copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
-                copyReplace(workFile, workFile, '##RESDIR##', resDir)
-                copyReplace(workFile, workFile, '##NAME##', sim)
-                copyReplace(workFile, workFile, '##COUNTREL##', countRel)
-                copyReplace(workFile, workFile, '##VALUE##', item)
-                copyReplace(workFile, workFile, '##ENTH##', entrainmentTH)
-                execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
+                    if cfgPar['varPar'] == 'RelTh':
+                        reportVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
+                        reportVar['Simulation Parameters'].update({'Release thickness [m]': item})
+                        reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
+                        reportVar['Release area'].update({'Release thickness [m]': item})
+                    elif cfgPar['varPar'] == 'Mu':
+                        reportVar['Simulation Parameters'].update({'Release thickness [m]': relDict['d0']})
+                        reportVar['Simulation Parameters'].update({'Mu': item})
+                        reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
+                        reportVar['Release area'].update({'Release thickness [m]': relDict['d0']})
 
-                # Create dictionary
-                reportVar = {}
-                reportVar = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
-                'avaName': {'type': 'avaName', 'name': avaDir},
-                'simName': {'type': 'simName', 'name': logName},
-                'time': {'type': 'time', 'time': dateTimeInfo},
-                    'Simulation Parameters': {
-                        'type': 'list',
-                        'Release Area Scenario': relName,
-                        'Release Area': relDict['Name'],
-                        'Entrainment': entResInfo['flagEnt'],
-                        'Resistance': entResInfo['flagRes'],
-                        'Parameter variation on': cfgPar['varPar'],
-                        'Parameter value': item},
-                    'Release area': {'type': 'columns', 'Release area scenario': relName,  'Release features': relDict['Name']}}
-
-                if cfgPar['varPar'] == 'RelTh':
-                    reportVar['Simulation Parameters'].update({'Mu': defValues['Mu']})
-                    reportVar['Simulation Parameters'].update({'Release thickness [m]': item})
-                    reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
-                    reportVar['Release area'].update({'Release thickness [m]': item})
-                elif cfgPar['varPar'] == 'Mu':
-                    reportVar['Simulation Parameters'].update({'Release thickness [m]': relDict['d0']})
-                    reportVar['Simulation Parameters'].update({'Mu': item})
-                    reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
-                    reportVar['Release area'].update({'Release thickness [m]': relDict['d0']})
-
-                if cfgPar.getboolean('varEnt') and (simName + '_entres_dfa') in cuSim:
-                    if entResInfo['flagEnt'] == 'Yes':
+                    if entInfo == 'Yes':
                         reportVar['Entrainment area'] = {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}
-                    if entResInfo['flagRes'] == 'Yes':
+                    if resInfo == 'Yes':
                         reportVar['Resistance area'] = {'type': 'columns', 'Resistance area scenario': resistanceArea}
 
-                endTime = time.time()
-                timeNeeded =  '%.2f' % (endTime - startTime)
-                log.info(('Took %s seconds to calculate.' % (timeNeeded)))
-                reportVar['Simulation Parameters'].update({'Computation time [s]': timeNeeded})
+                    endTime = time.time()
+                    timeNeeded =  '%.2f' % (endTime - startTime)
+                    log.info(('Took %s seconds to calculate.' % (timeNeeded)))
+                    reportVar['Simulation Parameters'].update({'Computation time [s]': timeNeeded})
 
-                # Add to report dictionary list
-                reportDictList.append(reportVar)
-                startTime = time.time()
+                    # Add to report dictionary list
+                    reportDictList.append(reportVar)
+                    startTime = time.time()
 
-                # Count total number of simulations
-                countRel = countRel + 1
+                    # Count total number of simulations
+                    countRel = countRel + 1
 
-        else:
-            for sim in cuSim:
-                # set entrainment and resistance to No
-                entInfo = 'No'
-                resInfo = 'No'
+            else:
 
-                if flagEntRes:
-                    log.debug('One simulation is performed using entrainment and \
-                               one standard simulation without')
-                    if 'entres' in sim:
-                        entInfo = entResInfo['flagEnt']
-                        resInfo = entResInfo['flagRes']
-                else:
-                    log.debug('Standard simulation is performed without entrainment and resistance')
-
+                # set entrainment and resistance
                 startTime = time.time()
                 templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
                 workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
-                logName = sim + '_' + defValues['Mu']
+                logName = simName + '_' + defValues['Mu']
                 # Write required info to cint file
                 copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
                 copyReplace(workFile, workFile, '##RESDIR##', resDir)
-                copyReplace(workFile, workFile, '##NAME##', sim)
+                copyReplace(workFile, workFile, '##NAME##', simName)
                 copyReplace(workFile, workFile, '##COUNTREL##', countRel)
                 copyReplace(workFile, workFile, '##VARPAR##', 'Mu')
                 copyReplace(workFile, workFile, '##VALUE##', defValues['Mu'])
@@ -393,11 +378,10 @@ def com1DFAMain(cfg, avaDir):
                         'Entrainment thickness [m]': float(entrainmentTH)},
                     'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['d0']}}
 
-                if 'entres' in sim:
-                    if entResInfo['flagEnt'] == 'Yes':
-                        reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}})
-                    if entResInfo['flagRes'] == 'Yes':
-                        reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
+                if entInfo == 'Yes':
+                    reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}})
+                if resInfo == 'Yes':
+                    reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
 
                 endTime = time.time()
                 timeNeeded =  '%.2f' % (endTime - startTime)
@@ -410,6 +394,64 @@ def com1DFAMain(cfg, avaDir):
 
                 # Count total number of simulations
                 countRel = countRel + 1
+
+    # If parameter shall be varied
+    if cfgPar.getboolean('parameterVar'):
+
+        # Initialise CreateSimulations cint file and set parameters
+        templateFile = os.path.join(modPath, 'CreatenullSimulation.cint')
+        workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreatenullSimulation.cint')
+
+        # Write required info to cint file
+        copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
+        copyReplace(workFile, workFile, '##BASESIMNAME##', relName)
+        execCom1Exe(com1Exe, workFile, avaDir, fullOut)
+
+        # Also perform one standard simulation
+        simST = relName + '_null_dfa'
+        logName = simST + '_' + defValues[cfgPar['varPar']]
+        log.info('Also perform one standard simulation: %s' % simST)
+        templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
+        workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
+        # Write required info to cint file
+        copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
+        copyReplace(workFile, workFile, '##RESDIR##', resDir)
+        copyReplace(workFile, workFile, '##NAME##', simST)
+        copyReplace(workFile, workFile, '##COUNTREL##', countRel)
+        copyReplace(workFile, workFile, '##VARPAR##', cfgPar['varPar'])
+        copyReplace(workFile, workFile, '##VALUE##', defValues[cfgPar['varPar']])
+        copyReplace(workFile, workFile, '##ENTH##', entrainmentTH)
+        execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
+        # Create dictionary
+        reportNull = {}
+        reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+        'avaName': {'type': 'avaName', 'name': avaDir},
+        'simName': {'type': 'simName', 'name': logName},
+        'time': {'type': 'time', 'time': dateTimeInfo},
+            'Simulation Parameters': {
+                'type': 'list',
+                'Release Area Scenario': relName,
+                'Release Area': relDict['Name'],
+                'Entrainment': 'No',
+                'Resistance': 'No',
+                'Parameter variation on': '',
+                'Parameter value': '',
+                'Mu': defValues['Mu'],
+                'Release thickness [m]': relDict['d0'],
+                'Entrainment thickness [m]': float(entrainmentTH)},
+            'Release area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['d0']}}
+
+        endTime = time.time()
+        timeNeeded = '%.2f' % (endTime - startTime)
+        log.info(('Took %s seconds to calculate.' % (timeNeeded)))
+        reportNull['Simulation Parameters'].update({'Computation time [s]': timeNeeded})
+
+        # Add to report dictionary list
+        reportDictList.append(reportNull)
+
+        # Count total number of simulations
+        countRel = countRel + 1
+
 
     log.debug('Avalanche Simulations performed')
 
