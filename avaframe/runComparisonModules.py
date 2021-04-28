@@ -26,7 +26,7 @@ logName = 'runComparisonModules'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testList = ['avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
+testList = ['avaAlr0']#'avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
 # Set directory for full standard test report
 outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPy')
 fU.makeADir(outDirReport)
@@ -92,21 +92,32 @@ for avaName in testList:
 
     for rel in relAreaSet:
         reportDcom1DFAentres = ''
+        reportDcom1DFAent = ''
+        reportDcom1DFAres = ''
         for dict in reportDictListcom1DFA:
             com1DFASimName = dict['simName']['name']
             if (rel == dict['Simulation Parameters']['Release Area Scenario']):
-                # is it an entres or null simulation?
-                if ('entres' in com1DFASimName):
+                if 'entres' in com1DFASimName:
                     reportDcom1DFAentres = dict
+                elif 'ent' in com1DFASimName:
+                    reportDcom1DFAent = dict
+                elif 'res' in com1DFASimName:
+                    reportDcom1DFAres = dict
                 else:
-                    reportDcom1DFA = dict
                     simType = 'null'
-        # take the entres sim if it exists
+                    reportDcom1DFA = dict
         if reportDcom1DFAentres:
-            reportDcom1DFA = reportDcom1DFAentres
             simType = 'entres'
-        com1DFASimName = reportDcom1DFA['simName']['name']
+            reportDcom1DFA = reportDcom1DFAentres
+        elif reportDcom1DFAent:
+            simType = 'ent'
+            reportDcom1DFA = reportDcom1DFAent
+        elif reportDcom1DFAres:
+            simType = 'res'
+            reportDcom1DFA = reportDcom1DFAres
 
+
+        com1DFASimName = reportDcom1DFA['simName']['name']
         # Fetch corresponding com1DFAPy
         for dict in reportDictListcom1DFAPy:
             if simType in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel:
@@ -119,7 +130,7 @@ for avaName in testList:
 
         # write configuration to file
         cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)
-        if simType == 'entres':
+        if 'ent' in simType:
             cfgAimec['FLAGS']['flagMass'] = 'True'
         else:
             cfgAimec['FLAGS']['flagMass'] = 'False'
