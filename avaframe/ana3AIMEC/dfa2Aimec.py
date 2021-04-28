@@ -170,14 +170,14 @@ def dfaComp2Aimec(avaDir, cfgSetup):
                         simNamesMatch[simNameRef] = True
                 pathDict[simNameRef]['compType'] = ['comModules', refModule, compModule]
                 pathDict[simNameRef]['referenceFile'] = 0
+                # info about colourmap
+                pathDict[simNameRef]['contCmap'] = True
 
     for key in simNamesMatch:
         if simNamesMatch[key] == False:
             log.info('no matching files found for simulation: %s' % key)
             del pathDict[key]
 
-    # info about colourmap
-    pathDict['contCmap'] = True
 
     return pathDict
 
