@@ -392,7 +392,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     name = pU.cfgPlotUtils['name' + resType]
     thresholdArray = inputs['thresholdArray']
     thresholdValue = thresholdArray[-1]
-    contCmap = cfgPath['contMap']
+    contCmap = cfgPath['contCmap']
 
     ############################################
     # Figure: Raster comparison (mask for the pThreshold given in the ini file)
