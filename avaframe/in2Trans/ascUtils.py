@@ -55,13 +55,13 @@ def readASCheader(fname):
             if item[0] == 'ncols' or item[0] == 'nCols':
                 headerInfo.ncols = int(item[1])
             else:
-                log.error('In input DEM header is not in correct format - check line 1: should be ncols')
+                log.error('DEM header is not in correct format - check line 1: should be ncols')
                 raise ValueError
         elif ln == 1:
             if item[0] == 'nrows' or item[0] == 'nRows':
                 headerInfo.nrows = int(item[1])
             else:
-                log.error('In input DEM header is not in correct format - check line 2: should be nrows')
+                log.error('DEM header is not in correct format - check line 2: should be nrows')
                 raise ValueError
         elif ln == 2:
             if item[0] == "xllcorner" or item[0] == "XLLCORNER" or item[0] == "Xllcorner":
@@ -69,7 +69,7 @@ def readASCheader(fname):
             elif item[0] == "xllcenter" or item[0] == "XLLCENTER" or item[0] == "Xllcenter":
                 headerInfo.xllcenter = float(item[1])
             else:
-                log.error('In input DEM header is not in correct format - check line 3: should be xllcenter or xllcorner')
+                log.error('DEM header is not in correct format - check line 3: should be xllcenter or xllcorner')
                 raise ValueError
         elif ln == 3:
             if item[0] == "yllcorner" or item[0] == "YLLCORNER" or item[0] == "Yllcorner":
@@ -77,19 +77,19 @@ def readASCheader(fname):
             elif item[0] == "yllcenter" or item[0] == "YLLCENTER" or item[0] == "Yllcenter":
                 headerInfo.yllcenter = float(item[1])
             else:
-                log.error('In input DEM header is not in correct format - check line 4: should be yllcenter or yllcorner')
+                log.error('DEM header is not in correct format - check line 4: should be yllcenter or yllcorner')
                 raise ValueError
         elif ln == 4:
             if item[0] == 'cellSize' or item[0] == 'cellsize':
                 headerInfo.cellsize = float(item[1])
             else:
-                log.error('In input DEM header is not in correct format - check line 5: should be cellsize')
+                log.error('DEM header is not in correct format - check line 5: should be cellsize')
                 raise ValueError
         elif ln == 5:
             if 'nodata' in item[0] or 'NODATA' in item[0]:
                 headerInfo.noDataValue = float(item[1])
             else:
-                log.error('In input DEM header is not in correct format - check line 6: should be NODATA_value')
+                log.error('DEM header is not in correct format - check line 6: should be NODATA_value')
                 raise ValueError
         ln += 1
 
