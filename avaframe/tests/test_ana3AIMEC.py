@@ -29,6 +29,7 @@ def test_analyzeArea(capfd):
     cfgPath['referenceFile'] = 0
     cfgPath['compType'] = ['singleModule', 'com1DFA']
     cfgPath['numSim'] = 2
+    cfgPath['contCmap'] = True
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
@@ -102,6 +103,8 @@ def test_makeDomainTransfo(capfd):
                       os.path.join(pathData, 'testAimec_4.asc')]
 
     cfgPath['mb'] = [os.path.join(dirname, '000001.txt')]*5
+
+    cfgPath['contCmap'] = True
 
     pathResult = os.path.join(dirname, 'results')
     cfgPath['pathResult'] = pathResult
