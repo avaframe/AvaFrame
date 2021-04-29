@@ -20,7 +20,7 @@ This avalanche directory can be created by running: ``runInitializeProject.py``.
 In the directory Inputs, the following files are required:
 
 * digital elevation model as .asc file
-  -> use xllcenter and yllcenter
+  -> use `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
 * release area scenario as shapefile (in Inputs/REL); multiple are possible
   -> the release area name should not contain an underscore, if so '_AF' is added
 
@@ -33,11 +33,9 @@ The simulation settings area defined in the configuration file ``com1DFACfg.ini`
 
 * com1Exe - path to com1DFA executable
 * flagOut - print full model output
-* flagNoEnt - NOT include entrainment areas
-* flagNoRes - NOT include resistance areas
+* simTypeList - simulation types that shall be performed (options: null, ent, res, entres, available; if multiple, separate by '|'))
 * releaseScenario - name of release area scenario shapefile (with or without extension -shp, if multiple, separate by '|')
 * flagVarPar - perform parameter variation
-* flagVarEnt - perform parameter variation with entrainment and resistance
 * varPar - parameter to be varied
 * varParValues - values for parameter variation
 
