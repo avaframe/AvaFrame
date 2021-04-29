@@ -17,59 +17,92 @@ class cASCheader:
         self.nrows = None
         self.ncols = None
         self.cellsize = None
-        self.xllcorner = None
         self.xllcenter = None
-        self.yllcorner = None
         self.yllcenter = None
         self.noDataValue = None
 
     def __str__(self):
         rStr = ''
         rStr += "nrows:\t%s\nncols:\t%s\ncellsize:\t%s\n" % (self.nrows, self.ncols, self.cellsize)
-        rStr += "xllcorner:\t%s\nyllcorner:\t%s\nnoDataValue:\t%s\n" % (
-            self.xllcorner, self.yllcorner, self.noDataValue)
+        rStr += "xllcenter:\t%s\nyllcenter:\t%s\nnoDataValue:\t%s\n" % (
+            self.xllcenter, self.yllcenter, self.noDataValue)
         return rStr
 
 
 def readASCheader(fname):
-    """input: Filename (z.B.: 'xx/xx/file.asc')
-    returns: ascHeader for filename (see class cASCheader)
+    """ return a class with information from an ascii file header
+
+    Parameters
+    -----------
+
+    fname: str
+        path to ascii file
+
+    Returns
+    --------
+    headerInfo: class
+        information that is stored in header (ncols, nrows, xllcenter, yllcenter, noDataValue)
     """
-    dhmInfo = cASCheader()
+
+
+    headerInfo = cASCheader()
     infile = open(fname, "r")
     i = 0
     ln = 0
     for aline in infile:
         item = aline.split()
         if ln == 0:
-            dhmInfo.ncols = int(item[1])
+            if item[0] == 'ncols' or item[0] == 'nCols':
+                headerInfo.ncols = int(item[1])
+            else:
+                log.error('In input DEM header is not in correct format - check line 1: should be ncols')
+                raise ValueError
         elif ln == 1:
-            dhmInfo.nrows = int(item[1])
+            if item[0] == 'nrows' or item[0] == 'nRows':
+                headerInfo.nrows = int(item[1])
+            else:
+                log.error('In input DEM header is not in correct format - check line 2: should be nrows')
+                raise ValueError
         elif ln == 2:
             if item[0] == "xllcorner" or item[0] == "XLLCORNER" or item[0] == "Xllcorner":
-                dhmInfo.xllcorner = float(item[1])
+                headerInfo.xllcorner = float(item[1])
             elif item[0] == "xllcenter" or item[0] == "XLLCENTER" or item[0] == "Xllcenter":
-                dhmInfo.xllcenter = float(item[1])
+                headerInfo.xllcenter = float(item[1])
+            else:
+                log.error('In input DEM header is not in correct format - check line 3: should be xllcenter or xllcorner')
+                raise ValueError
         elif ln == 3:
             if item[0] == "yllcorner" or item[0] == "YLLCORNER" or item[0] == "Yllcorner":
-                dhmInfo.yllcorner = float(item[1])
+                headerInfo.yllcorner = float(item[1])
             elif item[0] == "yllcenter" or item[0] == "YLLCENTER" or item[0] == "Yllcenter":
-                dhmInfo.yllcenter = float(item[1])
+                headerInfo.yllcenter = float(item[1])
+            else:
+                log.error('In input DEM header is not in correct format - check line 4: should be yllcenter or yllcorner')
+                raise ValueError
         elif ln == 4:
-            dhmInfo.cellsize = float(item[1])
+            if item[0] == 'cellSize' or item[0] == 'cellsize':
+                headerInfo.cellsize = float(item[1])
+            else:
+                log.error('In input DEM header is not in correct format - check line 5: should be cellsize')
+                raise ValueError
         elif ln == 5:
-            dhmInfo.noDataValue = float(item[1])
+            if 'nodata' in item[0] or 'NODATA' in item[0]:
+                headerInfo.noDataValue = float(item[1])
+            else:
+                log.error('In input DEM header is not in correct format - check line 6: should be NODATA_value')
+                raise ValueError
         ln += 1
 
-    if dhmInfo.xllcenter is None and dhmInfo.yllcenter is None:
-        dhmInfo.xllcenter = dhmInfo.xllcorner + dhmInfo.cellsize / 2
-        dhmInfo.yllcenter = dhmInfo.yllcorner + dhmInfo.cellsize / 2
-    else:
-        dhmInfo.xllcorner = dhmInfo.xllcenter - dhmInfo.cellsize / 2
-        dhmInfo.yllcorner = dhmInfo.yllcenter - dhmInfo.cellsize / 2
+    if headerInfo.xllcenter is None:
+        headerInfo.xllcenter = headerInfo.xllcorner + headerInfo.cellsize / 2
+        headerInfo.yllcenter = headerInfo.yllcorner + headerInfo.cellsize / 2
+        # remove xllcorner, yllcorner
+        delattr(headerInfo, 'xllcorner')
+        delattr(headerInfo, 'yllcorner')
 
     infile.close()
-    return dhmInfo
+
+    return headerInfo
 
 
 def isEqualASCheader(headerA, headerB):
@@ -79,8 +112,7 @@ def isEqualASCheader(headerA, headerB):
     a = headerA
     b = headerB
     return (a.ncols == b.ncols) and (a.nrows == b.nrows) and (a.xllcenter == b.xllcenter) and\
-           (a.xllcorner == b.xllcorner) and (a.yllcenter == b.yllcenter) and \
-           (a.yllcorner == b.yllcorner) and (a.cellsize == b.cellsize)
+            (a.yllcenter == b.yllcenter) and (a.cellsize == b.cellsize)
 
 
 def readASCdata2numpyArray(fName, headerFile=None):

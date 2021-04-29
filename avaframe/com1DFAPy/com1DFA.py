@@ -258,6 +258,7 @@ def prepareInputData(demFile, relFile, entFiles, resFile):
     """
     # get dem information
     demOri = IOf.readRaster(demFile)
+
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
     releaseLine['file'] = relFile
@@ -430,9 +431,7 @@ def setDEMoriginToZero(demOri):
     dem = copy.deepcopy(demOri)
     dem['header'].xllcenter = 0
     dem['header'].yllcenter = 0
-    dem['header'].xllcorner = -dem['header'].cellsize/2
-    dem['header'].yllcorner = -dem['header'].cellsize/2
-
+    
     return dem
 
 

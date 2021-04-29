@@ -475,7 +475,7 @@ def writeDEM(cfg, z, outDir):
     nRows = z.shape[0]
     nCols = z.shape[1]
 
-    # Read lower left corner coordinates, cellsize and noDATA value
+    # Read lower left center coordinates, cellsize and noDATA value
     xllcenter = float(cfg['DEMDATA']['xl'])
     yllcenter = float(cfg['DEMDATA']['yl'])
     cellsize = float(cfg['TOPO']['dx'])

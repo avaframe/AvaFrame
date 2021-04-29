@@ -205,8 +205,6 @@ def remeshDEM(cfg, dem):
         headerRemeshed.nrows = int(nRowsRemeshed)
         headerRemeshed.xllcenter = xllcenter
         headerRemeshed.yllcenter = yllcenter
-        headerRemeshed.xllcorner = xllcenter - cszNew/2
-        headerRemeshed.yllcorner = yllcenter - cszNew/2
         headerRemeshed.noDataValue = headerDEM.noDataValue
 
         dem['header'] = headerRemeshed
