@@ -168,7 +168,7 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
                 reportD['Simulation Results'].update({'type': 'image'})
 
             # Start writing markdown style report
-            with open(os.path.join(outDir, '%s.md' % reportD['simName']), 'w') as pfile:
+            with open(os.path.join(outDir, '%s.md' % reportD['simName']['name']), 'w') as pfile:
 
                 # Write report file
                 writeReportFile(reportD, pfile)

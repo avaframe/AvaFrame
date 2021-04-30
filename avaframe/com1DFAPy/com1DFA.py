@@ -109,8 +109,13 @@ def com1DFAMain(cfg, avaDir, relThField):
         releaseLine['d0'] = relDict['d0']
 
         for sim in cuSim:
-            #logName = sim + '_' + cfgGen['mu']
-            logName = relName + '_' + sim + '_dfa_' + cfgGen['mu']
+
+            # create simulation name
+            if cfg['FLAGS'].getboolean('varPar'):
+                varParVal = str('%.5f' % cfgGen.getfloat(cfgGen['varPar']))
+                logName = relName + '_' + sim + '_dfa_' + varParVal
+            else:
+                logName = relName + '_' + sim + '_dfa_' + cfgGen['mu']
             log.info('Perform %s simulation' % logName)
             # add simType to configuration
             cfgGen['simTypeActual'] = sim
@@ -431,7 +436,7 @@ def setDEMoriginToZero(demOri):
     dem = copy.deepcopy(demOri)
     dem['header'].xllcenter = 0
     dem['header'].yllcenter = 0
-    
+
     return dem
 
 
