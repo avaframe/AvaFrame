@@ -522,11 +522,12 @@ def aimecRes2ReportDict(resAnalysis, reportD, benchD, refSim):
     'max peak pressure [kPa]': resAnalysis['MMPPR'][refSim], 'max peak flow depth [m]': resAnalysis['MMPFD'][refSim],
     'max peak flow velocity [ms-1]': resAnalysis['MMPFV'][refSim]}
     # add mass info
-    reportD['Aimec analysis'].update({'Initial mass [kg]': resAnalysis['relMass'][compSim]})
-    reportD['Aimec analysis'].update({'Final mass [kg]': resAnalysis['finalMass'][compSim]})
-    reportD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysis['entMass'][compSim]})
-    benchD['Aimec analysis'].update({'Initial mass [kg]': resAnalysis['relMass'][refSim]})
-    benchD['Aimec analysis'].update({'Final mass [kg]': resAnalysis['finalMass'][refSim]})
-    benchD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysis['entMass'][refSim]})
+    if "relMass" in resAnalysis:
+        reportD['Aimec analysis'].update({'Initial mass [kg]': resAnalysis['relMass'][compSim]})
+        reportD['Aimec analysis'].update({'Final mass [kg]': resAnalysis['finalMass'][compSim]})
+        reportD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysis['entMass'][compSim]})
+        benchD['Aimec analysis'].update({'Initial mass [kg]': resAnalysis['relMass'][refSim]})
+        benchD['Aimec analysis'].update({'Final mass [kg]': resAnalysis['finalMass'][refSim]})
+        benchD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysis['entMass'][refSim]})
 
     return reportD, benchD
