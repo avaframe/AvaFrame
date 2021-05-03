@@ -199,7 +199,6 @@ def fetchBenchParameters(avaName):
                         'Mu': '0.15500',
                         'Density [kgm-3]': '200',
                         'Release thickness [m]': [1.0],
-                        'Entrained mass [kg]': '-na-',
                         'Entrainment thickness [m]': 0.3,
                         'Initial mass [kg]': ' 19939294.00',
                         'Final mass [kg]': '20287572.97',
