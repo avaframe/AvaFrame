@@ -26,7 +26,8 @@ logName = 'runComparisonModules'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testList = ['avaAlr0']#'avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
+testList = ['avaKot']#'avaInclinedPlane', 'avaParabola', 'avaHelix', 'avaHelixChannel', 'avaWog', 'avaKot']
+simType = 'ent'
 # Set directory for full standard test report
 outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPy')
 fU.makeADir(outDirReport)
@@ -91,107 +92,89 @@ for avaName in testList:
     relAreaSet = sorted(set(relArea))
 
     for rel in relAreaSet:
-        reportDcom1DFAentres = ''
-        reportDcom1DFAent = ''
-        reportDcom1DFAres = ''
+        reportDcom1DFA = ''
         for dict in reportDictListcom1DFA:
             com1DFASimName = dict['simName']['name']
             if (rel == dict['Simulation Parameters']['Release Area Scenario']):
-                if 'entres' in com1DFASimName:
-                    reportDcom1DFAentres = dict
-                elif 'ent' in com1DFASimName:
-                    reportDcom1DFAent = dict
-                elif 'res' in com1DFASimName:
-                    reportDcom1DFAres = dict
-                else:
-                    simType = 'null'
+                if simType in com1DFASimName:
                     reportDcom1DFA = dict
-        if reportDcom1DFAentres:
-            simType = 'entres'
-            reportDcom1DFA = reportDcom1DFAentres
-        elif reportDcom1DFAent:
-            simType = 'ent'
-            reportDcom1DFA = reportDcom1DFAent
-        elif reportDcom1DFAres:
-            simType = 'res'
-            reportDcom1DFA = reportDcom1DFAres
+                    break
+        if reportDcom1DFA:
+            com1DFASimName = reportDcom1DFA['simName']['name']
+            # Fetch corresponding com1DFAPy
+            for dict in reportDictListcom1DFAPy:
+                if simType in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel:
+                    reportDcom1DFAPy = dict
 
+            # Aimec analysis
+            # load configuration
+            cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
+            initProj.cleanModuleFiles(avaDir, ana3AIMEC)
 
-        com1DFASimName = reportDcom1DFA['simName']['name']
-        # Fetch corresponding com1DFAPy
-        for dict in reportDictListcom1DFAPy:
-            if simType in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel:
-                reportDcom1DFAPy = dict
+            # write configuration to file
+            cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)
+            if 'ent' in simType:
+                cfgAimec['FLAGS']['flagMass'] = 'True'
+            else:
+                cfgAimec['FLAGS']['flagMass'] = 'False'
+            cfgAimecSetup = cfgAimec['AIMECSETUP']
 
-        # Aimec analysis
-        # load configuration
-        cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
-        initProj.cleanModuleFiles(avaDir, ana3AIMEC)
+            # Setup input from com1DFA and com1DFAPy
+            pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
+            for pathD in pathDictList:
+                if pathD == reportDcom1DFA['simName']['name']:
+                    pathDict = pathDictList[pathD]
 
-        # write configuration to file
-        cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)
-        if 'ent' in simType:
-            cfgAimec['FLAGS']['flagMass'] = 'True'
-        else:
-            cfgAimec['FLAGS']['flagMass'] = 'False'
-        cfgAimecSetup = cfgAimec['AIMECSETUP']
+            pathDict['numSim'] = len(pathDict['ppr'])
+            log.info('reference file comes from: %s' % pathDict['compType'][1])
 
-        # Setup input from com1DFA and com1DFAPy
-        pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
-        for pathD in pathDictList:
-            if pathD == reportDcom1DFA['simName']['name']:
-                pathDict = pathDictList[pathD]
+            # Extract input file locations
+            pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportDcom1DFA['simName']['name'])
 
-        pathDict['numSim'] = len(pathDict['ppr'])
-        log.info('reference file comes from: %s' % pathDict['compType'][1])
+            # perform analysis
+            rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
 
-        # Extract input file locations
-        pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportDcom1DFA['simName']['name'])
+            # add aimec results to report dictionary
+            reportDcom1DFAPy, reportDcom1DFA = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportDcom1DFAPy, reportDcom1DFA, pathDict['referenceFile'])
 
-        # perform analysis
-        rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
+            # Create plots for report
+            # Load input parameters from configuration file
+            cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
+            cfgRep['PLOT']['refModel'] = 'dfa'
 
-        # add aimec results to report dictionary
-        reportDcom1DFA, reportDcom1DFAPy = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportDcom1DFA, reportDcom1DFAPy, pathDict['referenceFile'])
+            # REQUIRED+++++++++++++++++++
+            # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
+            # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
+            outputVariable = ['ppr', 'pfd', 'pfv']
+            values = simType
+            parameter = 'simType'
+            plotListRep = {}
+            reportDcom1DFAPy['Simulation Difference'] = {}
+            reportDcom1DFAPy['Simulation Stats'] = {}
+            # ++++++++++++++++++++++++++++
 
-        # Create plots for report
-        # Load input parameters from configuration file
-        cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
-        cfgRep['PLOT']['refModel'] = 'dfa'
+            # Plot data comparison for all output variables defined in suffix
+            for var in outputVariable:
+                plotList = outQuickPlot.quickPlot(avaDir, avaName, var, values, parameter, cfgMain, cfgRep, rel, simType=simType, comModule='com1DFA', comModule2='com1DFAPy')
+                for pDict in plotList:
+                    if rel in pDict['relArea']:
+                        plotDict = pDict
+                for plot in plotDict['plots']:
+                    plotListRep.update({var: plot})
+                    reportDcom1DFAPy['Simulation Difference'].update({var: plotDict['difference']})
+                    reportDcom1DFAPy['Simulation Stats'].update({var: plotDict['stats']})
 
-        # REQUIRED+++++++++++++++++++
-        # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
-        # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
-        outputVariable = ['ppr', 'pfd', 'pfv']
-        values = simType
-        parameter = 'simType'
-        plotListRep = {}
-        reportDcom1DFAPy['Simulation Difference'] = {}
-        reportDcom1DFAPy['Simulation Stats'] = {}
-        # ++++++++++++++++++++++++++++
+            # copy files to report directory
+            plotPaths = generateCompareReport.copyQuickPlots(avaName, avaName, outDirReport, plotListRep, rel)
+            aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
+            if cfgAimec.getboolean('FLAGS', 'flagMass'):
+                aimecPlots.append(resAnalysis['massAnalysisPlot'])
+            plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, avaName, outDirReport, rel, plotPaths)
 
-        # Plot data comparison for all output variables defined in suffix
-        for var in outputVariable:
-            plotList = outQuickPlot.quickPlot(avaDir, avaName, var, values, parameter, cfgMain, cfgRep, rel, simType=simType, comModule='com1DFA', comModule2='com1DFAPy')
-            for pDict in plotList:
-                if rel in pDict['relArea']:
-                    plotDict = pDict
-            for plot in plotDict['plots']:
-                plotListRep.update({var: plot})
-                reportDcom1DFAPy['Simulation Difference'].update({var: plotDict['difference']})
-                reportDcom1DFAPy['Simulation Stats'].update({var: plotDict['stats']})
+            # add plot info to general report Dict
+            reportDcom1DFAPy['Simulation Results'] = plotPaths
 
-        # copy files to report directory
-        plotPaths = generateCompareReport.copyQuickPlots(avaName, avaName, outDirReport, plotListRep, rel)
-        aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
-        if cfgAimec.getboolean('FLAGS', 'flagMass'):
-            aimecPlots.append(resAnalysis['massAnalysisPlot'])
-        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, avaName, outDirReport, rel, plotPaths)
+            reportDcom1DFA['Test Info'] = {'type': 'text', 'Test Info': 'Compare com1DFA (Reference) to com1DFAPy (Simulation) results.'}
 
-        # add plot info to general report Dict
-        reportDcom1DFAPy['Simulation Results'] = plotPaths
-
-        reportDcom1DFA['Test Info'] = {'type': 'text', 'Test Info': 'Compare com1DFA (Reference) to com1DFAPy (Simulation) results.'}
-
-        # write report
-        generateCompareReport.writeCompareReport(reportFile, reportDcom1DFAPy, reportDcom1DFA, avaName, cfgRep)
+            # write report
+            generateCompareReport.writeCompareReport(reportFile, reportDcom1DFAPy, reportDcom1DFA, avaName, cfgRep)
