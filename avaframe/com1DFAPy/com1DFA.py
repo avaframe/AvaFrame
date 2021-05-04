@@ -119,7 +119,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             # for timing the sims
             startTime = time.time()
             particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relThField)
-            relFiles = releaseLine['file']
+            relFiles = releaseLine['fileName']
             # ------------------------
             #  Start time step computation
             Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
@@ -261,12 +261,12 @@ def prepareInputData(demFile, relFile, entFiles, resFile):
 
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
-    releaseLine['file'] = relFile
+    releaseLine['fileName'] = relFile
     # get line from entrainement area polygon
     if entFiles:
         entLine = shpConv.readLine(entFiles, '', demOri)
         entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
-        entLine['Name'] = [entrainmentArea]
+        entLine['fileName'] = [entrainmentArea]
     else:
         entLine = None
         entrainmentArea = ''
@@ -274,7 +274,7 @@ def prepareInputData(demFile, relFile, entFiles, resFile):
     if resFile:
         resLine = shpConv.readLine(resFile, '', demOri)
         resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
-        resLine['Name'] = [resistanceArea]
+        resLine['fileName'] = [resistanceArea]
     else:
         resLine = None
         resistanceArea = ''
@@ -431,7 +431,7 @@ def setDEMoriginToZero(demOri):
     dem = copy.deepcopy(demOri)
     dem['header'].xllcenter = 0
     dem['header'].yllcenter = 0
-    
+
     return dem
 
 
@@ -502,7 +502,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     simTypeActual = cfgGen['simTypeActual']
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, entLine, reportAreaInfo)
+    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, entLine, relRaster, reportAreaInfo)
     cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, resLine, reportAreaInfo)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
@@ -766,7 +766,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo):
+def initializeMassEnt(dem, simTypeActual, entLine, relRaster, reportAreaInfo):
     """ Initialize mass for entrainment
 
     Parameters
@@ -783,12 +783,13 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo):
     header = dem['header']
     ncols = header.ncols
     nrows = header.nrows
-    if simTypeActual in ['entres', 'ent']:
-        # entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
-        entrainmentArea = entLine['Name']
+    if 'ent' in simTypeActual:
+        entrainmentArea = entLine['fileName']
         log.info('Entrainment area: %s' % (entrainmentArea))
         entrMassRaster = prepareArea(entLine, dem)
         reportAreaInfo['entrainment'] = 'Yes'
+        # check if entrainment and release overlap
+        entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', crop=True)
     else:
         entrMassRaster = np.zeros((nrows, ncols))
         reportAreaInfo['entrainment'] = 'No'
@@ -817,7 +818,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo):
     ncols = header.ncols
     nrows = header.nrows
     if simTypeActual in ['entres', 'res']:
-        resistanceArea = resLine['Name']
+        resistanceArea = resLine['fileName']
         log.info('Resistance area: %s' % (resistanceArea))
         mask = prepareArea(resLine, dem)
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
