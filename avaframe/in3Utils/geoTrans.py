@@ -632,3 +632,33 @@ def areaPoly(X, Y):
     for i in range(np.size(X)-1):
         sum = sum + (X[i]*Y[i+1]-Y[i]*X[i+1])/2
     return sum
+
+
+def checkOverlap(toCheckRaster, refRaster, name, crop=False):
+    """Check if two raster overlap
+
+    Parameters
+    ----------
+        toCheckRaster : 2D numpy array
+            Raster to check
+        refRaster : 2D numpy array
+            refference Raster
+        crop : boolean
+            if True, remove overlaping part and send a warning
+    Returns
+    -------
+    if crop is True, return toCheckRaster without the overlaping part and send a
+    warning if needed
+    if crop is False, return error if Rasters overlap otherwise return toCheckRaster
+    """
+    mask = (toCheckRaster > 0) & (refRaster > 0)
+    if mask.any():
+        if crop:
+            toCheckRaster[mask] = 0
+            message = name + ' area features are overlaping - removing the overlaping part'
+            log.warning('%s' % message)
+        else:
+            message = name + ' area features are overlaping - this is not allowed'
+            log.error('%s' % message)
+
+    return toCheckRaster
