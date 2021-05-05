@@ -200,3 +200,34 @@ def readCfgFile(avaDir, module, suffix=''):
     cfg.read(inFile)
 
     return cfg
+
+
+
+def cfgHash(cfg):
+    """UID hash of a config. Given a configParser object cfg, returns a uid
+    hash
+
+    Parameters
+    ----------
+    cfg: configParser object 
+
+    Returns:
+    --------
+    uid: str
+       uid hash 
+    """
+
+    uidHash = hashlib.shake_256()
+
+    cfgDict = {}
+    for section in cfg.sections():
+        cfgDict[section] = {}
+        for key, val in cfg.items(section):
+            cfgDict[section][key] = val
+
+    encoded = json.dumps(cfgDict, sort_keys=True, ensure_ascii=True).encode()
+
+    uidHash.update(encoded)
+    uid = uidHash.hexdigest(5)
+
+    return uid
