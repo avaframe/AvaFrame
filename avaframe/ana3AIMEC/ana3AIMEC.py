@@ -427,10 +427,10 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     if flagMass:
         # perform mass analysis
         fnameMass = cfgPath['mb']
-        releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = aT.analyzeMass(fnameMass)
+        releaseMass, entrainedMass, entMassFlowArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = aT.analyzeMass(fnameMass)
         resAnalysis['relMass'] = releaseMass
         resAnalysis['entMass'] = entrainedMass
-        resAnalysis['entMassArray'] = entMassArray
+        resAnalysis['entMassFlowArray'] = entMassFlowArray
         resAnalysis['totalMassArray'] = totalMassArray
         resAnalysis['time'] = time
         resAnalysis['finalMass'] = finalMass

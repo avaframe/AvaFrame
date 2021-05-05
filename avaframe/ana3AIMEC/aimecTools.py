@@ -552,12 +552,12 @@ def analyzeMass(fnameMass):
     # For each data set
     for i in range(nTopo):
         # analyze mass
-        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i], entMass, totalMass, time = readWrite(
+        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i], entMassFlow, totalMass, time = readWrite(
             fnameMass[i], time)
         if i == 0:
-            entMassArray = np.zeros((nTopo, np.size(time)))
+            entMassFlowArray = np.zeros((nTopo, np.size(time)))
             totalMassArray = np.zeros((nTopo, np.size(time)))
-        entMassArray[i] = entMass
+        entMassFlowArray[i] = entMassFlow
         totalMassArray[i] = totalMass
         relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
         if not (releaseMass[i] == releaseMass[0]):
@@ -566,7 +566,7 @@ def analyzeMass(fnameMass):
     if massDiffers:
         log.warning('Release masses differs between simulations!')
 
-    return releaseMass, entrainedMass, entMassArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time
+    return releaseMass, entrainedMass, entMassFlowArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time
 
 
 def computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters):
@@ -869,8 +869,8 @@ def readWrite(fname_ent, time):
         -------
         relMass: float
             release mass
-        entMass: float
-            entrained mass
+        entMassentMassFlow: float
+            entrained mass flow (kg/s)
         finalMass: float
             final mass
         growthIndex: float
@@ -880,12 +880,14 @@ def readWrite(fname_ent, time):
     #    load data
     #    time, total mass, entrained mass
     massTime = np.loadtxt(fname_ent, delimiter=',', skiprows=1)
+    timeSimulation = massTime[:, 0]
+    dt = timeSimulation[1:] - timeSimulation[:-1]
     timeResults = [massTime[0, 0], massTime[-1, 0]]
     totMassResults = [massTime[0, 1], massTime[-1, 1]]
     relMass = totMassResults[0]
     if np.size(time) == 1:
         time = np.arange(0, int(timeResults[1]), 0.1)
-    entMass = np.interp(time, massTime[:, 0], massTime[:, 2])
+    entMassFlow = np.interp(time, massTime[1:, 0], massTime[1:, 2]/dt)
     totalMass = np.interp(time, massTime[:, 0], massTime[:, 1])
     entrainedMass = np.sum(massTime[:, 2])
     finalMass = totMassResults[1]
@@ -914,7 +916,7 @@ def readWrite(fname_ent, time):
     growthIndex = totMassResults[1]/totMassResults[0]
     growthGrad = (totMassResults[1] - totMassResults[0]) / (timeResults[1] - timeResults[0])
 
-    return relMass, entrainedMass, finalMass, growthIndex, growthGrad, entMass, totalMass, time
+    return relMass, entrainedMass, finalMass, growthIndex, growthGrad, entMassFlow, totalMass, time
 
 
 def getMaxMeanValues(rasterdataA, rasterArea):
