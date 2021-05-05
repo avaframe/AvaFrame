@@ -28,7 +28,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 testList = ['avaInclinedPlane', 'avaHelixChannel', 'avaAlr1', 'avaWog1', 'avaKot1', 'avaHit1', 'avaGar1', 'avaMal1']
 simType = 'ent'
 # Set directory for full standard test report
-outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPy')
+outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPyEnt')
 fU.makeADir(outDirReport)
 
 # Start writing markdown style report for standard tests

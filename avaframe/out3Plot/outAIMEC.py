@@ -253,7 +253,7 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
     # read paths
     projectName = cfgPath['projectName']
     # read data
-    entMassArray = resAnalysis['entMassArray']
+    entMassFlowArray = resAnalysis['entMassFlowArray']
     totalMassArray = resAnalysis['totalMassArray']
     entMass = resAnalysis['entMass']
     finalMass = resAnalysis['finalMass']
@@ -261,10 +261,10 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
 
     ############################################
     # prepare for plot
-    Title = ['Entrained ', 'Total ']
-    Unit = ['Entrained Mass ', 'Total Mass ']
+    Title = ['Entrained Mass Flow', 'Total Mass']
+    Unit = ['Entrained Mass Flow [$kg.s{^-1}$]', 'Total Mass [kg]']
     DataMass = np.array(([None] * 2))
-    DataMass[0] = entMassArray
+    DataMass[0] = entMassFlowArray
     DataMass[1] = totalMassArray
     ############################################
     # Figure: Pressure depth speed
@@ -276,10 +276,10 @@ def visuMass(resAnalysis, cfgPath, cfgFlags):
         ax.plot(time, dataMass[0, :], '-k', label='Reference')
         ax.plot(time, dataMass[1, :], '-b', label='Simulation')
 
-        ax.set_title(title + 'mass function of time')
+        ax.set_title(title + ' function of time')
         ax.legend(loc=4)
         ax.set_xlabel('t [s]')
-        ax.set_ylabel(unit + '[kg]')
+        ax.set_ylabel(unit)
 
     ax2 = axes.flatten()[1].twinx()
     # ax2.set_ylabel('z [m]')
