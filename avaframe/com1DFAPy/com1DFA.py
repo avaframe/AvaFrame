@@ -1731,30 +1731,40 @@ def savePartToCsv(particleProperties, dictList, outDir):
     # read particle properties to be saved
     particleProperties = particleProperties.split('|')
 
-    for partProp in particleProperties:
+    # write particles locations and properties to csv file
+    nParticles = len(dictList)
+    count = 0
+    for m in range(nParticles):
+        particles = dictList[count]
+        x = particles['x'] + particles['xllcenter']
+        y = particles['y'] + particles['yllcenter']
+        z = particles['z']
+        simName = particles['simName']
+        partPropDict = {}
 
-        # write particles locations and properties to csv file
-        nParticles = len(dictList)
-        count = 0
-        for m in range(nParticles):
-            particles = dictList[count]
-            x = particles['x'] + particles['xllcenter']
-            y = particles['y'] + particles['yllcenter']
-            z = particles['z']
+        for partProp in particleProperties:
             if partProp == 'velocityMagnitude':
                 ux = particles['ux']
                 uy = particles['uy']
                 uz = particles['uz']
-                value = DFAtls.norm(ux, uy, uz)
+                partPropDict[partProp] = DFAtls.norm(ux, uy, uz)
             else:
-                value = particles[partProp]
-            simName = particles['simName']
-            with open(os.path.join(outDir, 'particles%s_%s.csv.%d' % (simName, partProp, count)), 'w') as pFile:
-                pFile.write('X, Y, Z, %s\n' % partProp)
-                for k in range(len(x)):
-                    pFile.write('%.8f, %.8f, %.8f, %.8f\n' % (x[k], y[k], z[k], value[k]))
+                partPropDict[partProp] = particles[partProp]
 
-            count = count + 1
+
+        with open(os.path.join(outDir, 'particles%s.csv.%d' % (simName, count)), 'w') as pFile:
+                pFile.write('X, Y, Z,')
+                for m in range(len(particleProperties)-1):
+                    pFile.write('%s,' % (particleProperties[m]))
+                pFile.write('%s\n' % (particleProperties[-1]))
+
+                for k in range(len(x)):
+                    pFile.write('%.8f, %.8f, %.8f,' % (x[k], y[k], z[k]))
+                    for m in range(len(particleProperties)-1):
+                        pFile.write('%.8f,' % (partPropDict[particleProperties[m]][k]))
+                    pFile.write('%.8f\n' % (partPropDict[particleProperties[-1]][k]))
+
+                count = count + 1
 
 
 def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
