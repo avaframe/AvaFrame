@@ -545,13 +545,13 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
     # process secondary release info to get it as a list of rasters
     secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
     if secondaryReleaseLine:
-        secondaryReleaseRaster = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
-        # create secondary release area particles
-        secondaryReleaseParticles = initializeSecReleaseParticles(cfg, secondaryReleaseLine, secondaryReleaseRaster, dem, demOri, outDir)
+        secondaryReleaseInfo = {}
+        secondaryReleaseInfo['rasterList'] = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
+        secondaryReleaseInfo['Name'] = secondaryReleaseLine['Name']
     else:
-        secondaryReleaseParticles = None
+        secondaryReleaseInfo = None
 
-    particles['secondaryReleaseParticles'] = secondaryReleaseParticles
+    particles['secondaryReleaseInfo'] = secondaryReleaseInfo
     # initialize entrainment and resistance
     # get info of simType and whether or not to initialize resistance and entrainment
     simTypeActual = cfgGen['simTypeActual']
@@ -755,57 +755,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         plt.show()
 
     return particles, fields
-
-
-def initializeSecReleaseParticles(cfg, secondaryReleaseLine, secondaryReleaseRaster, dem, demOri, outDir):
-    """ Initialize secondary release area particles
-
-    Create secondary release area particles dictionaries according to config
-    parameters release raster and dem
-
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    secondaryReleaseLine: release area dictionary
-        name and release depth of each feature
-    secondaryReleaseRaster: list
-        list of 2D numpy array secondary release rasters
-    dem : dict
-        dictionary with dem information
-
-    Returns
-    -------
-    secondaryReleaseParticles : dict
-        secondaryReleaseParticlesList : list
-            list of secondary release area particles (same size as the
-            secondaryReleaseRaster input list)
-
-        Name : list
-            list of secondary release area Names (same size as the
-            secondaryReleaseRaster input list)
-    """
-    cfgGen = cfg['GENERAL']
-    secondaryReleaseParticles = {}
-    secondaryReleaseParticlesList = []
-    log.info('Initializing secondary release area')
-    for secRelRaster, relName in zip(secondaryReleaseRaster, secondaryReleaseLine['Name']):
-        # create secondary release area particles
-        log.info('Initializing secondary release area feature %s' % relName)
-        particles, fields = initializeParticles(cfgGen, secRelRaster, dem)
-        particles['secRelRaster'] = secRelRaster
-        secondaryReleaseParticlesList.append(particles)
-        # save particles and fields for the initial time step to file
-        outDirData = os.path.join(outDir, 'secondaryReleaseArea', relName)
-        exportFields(cfg, [0.], [fields], demOri, outDirData, relName)
-        if 'particles' in cfgGen['resType']:
-            # export particles dictionaries of saving time steps
-            savePartToPickle([particles], outDirData)
-
-    secondaryReleaseParticles['Name'] = secondaryReleaseLine['Name']
-    secondaryReleaseParticles['secondaryReleaseParticlesList'] = secondaryReleaseParticlesList
-
-    return secondaryReleaseParticles
 
 
 def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
@@ -1207,7 +1156,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
     # release secondary release area?
-    particles = releaseSecRelArea(particles, fields, dem)
+    particles = releaseSecRelArea(cfg, particles, fields, dem)
 
     # get particles location (neighbours for sph)
     startTime = time.time()
@@ -1606,31 +1555,40 @@ def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
     return fig, ax, cmap, lev
 
 
-def releaseSecRelArea(particles, fields, dem):
+def releaseSecRelArea(cfg, particles, fields, dem):
     flowDepthField = fields['FD']
-    secondaryReleaseParticles = particles['secondaryReleaseParticles']
-    if secondaryReleaseParticles:
-        secRelParticlesList = secondaryReleaseParticles['secondaryReleaseParticlesList']
-        secRelParticlesNameList = secondaryReleaseParticles['Name']
+    secondaryReleaseInfo = particles['secondaryReleaseInfo']
+    if secondaryReleaseInfo:
+        secRelRasterList = secondaryReleaseInfo['rasterList']
+        secRelRasterNameList = secondaryReleaseInfo['Name']
         count = 0
-        for secRelParticles, secRelParticlesName in zip(secRelParticlesList, secRelParticlesNameList):
-            relRaster = secRelParticles['secRelRaster']
+        for secRelRaster, secRelRasterName in zip(secRelRasterList, secRelRasterNameList):
             # do the two arrays intersect (meaning a flowing particle entered the
             # secondary release area)
-            mask = (relRaster > 0) & (flowDepthField > 0)
+            mask = (secRelRaster > 0) & (flowDepthField > 0)
             if mask.any():
-                # release secondary release area by just appending the particles
-                log.info('Releasing secondary release area %s' % secRelParticlesName)
+                # create secondary release area particles
+                log.info('Initializing secondary release area feature %s' % secRelRasterName)
+                secRelParticles, fields = initializeParticles(cfg, secRelRaster, dem)
 
+                # # save particles and fields for the initial time step to file
+                # outDirData = os.path.join(outDir, 'secondaryReleaseArea', secRelRasterName)
+                # exportFields(cfg, [0.], [fields], demOri, outDirData, secRelRasterName)
+                # if 'particles' in cfg['resType']:
+                #     # export particles dictionaries of saving time steps
+                #     savePartToPickle([secRelParticles], outDirData)
+
+                # release secondary release area by just appending the particles
+                log.info('Releasing secondary release area %s' % secRelRasterName)
                 particles = mergeParticleDict(particles, secRelParticles)
                 # remove it from the secondary release area list
-                secRelParticlesList.pop(count)
-                secRelParticlesNameList.pop(count)
+                secRelRasterList.pop(count)
+                secRelRasterNameList.pop(count)
             count = count + 1
 
-        secondaryReleaseParticles['secondaryReleaseParticlesList'] = secRelParticlesList
-        secondaryReleaseParticles['Name'] = secRelParticlesNameList
-        particles['secondaryReleaseParticles'] = secondaryReleaseParticles
+        secondaryReleaseInfo['secondaryReleaseParticlesList'] = secRelRasterList
+        secondaryReleaseInfo['Name'] = secRelRasterNameList
+        particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
     return particles
 
