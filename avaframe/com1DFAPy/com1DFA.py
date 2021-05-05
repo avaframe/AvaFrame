@@ -134,7 +134,7 @@ def com1DFAMain(cfg, avaDir, relThField):
                 # export particles dictionaries of saving time steps
                 outDirData = os.path.join(outDir, 'particles')
                 fU.makeADir(outDirData)
-                savePartToPickle(particlesList, outDirData)
+                savePartToPickle(particlesList, outDirData, logName)
 
             # Result parameters to be exported
             exportFields(cfg, Tsave, fieldsList, rel, demOri, outDir, logName)
@@ -431,7 +431,7 @@ def setDEMoriginToZero(demOri):
     dem = copy.deepcopy(demOri)
     dem['header'].xllcenter = 0
     dem['header'].yllcenter = 0
-    
+
     return dem
 
 
@@ -467,6 +467,10 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     """
     cfgGen = cfg['GENERAL']
     methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
+
+    # add dem origin to cfg
+    cfgGen['xllcenter'] = str(demOri['header'].xllcenter)
+    cfgGen['yllcenter'] = str(demOri['header'].yllcenter)
 
     # -----------------------
     # Initialize mesh
@@ -650,6 +654,10 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     particles['kineticEne'] = kineticEne
     particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
     particles['peakKinEne'] = kineticEne
+    particles['simName'] = logName
+    particles['xllcenter'] = cfg.getfloat('xllcenter')
+    particles['yllcenter'] = cfg.getfloat('yllcenter')
+
 
     PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
@@ -1659,7 +1667,7 @@ def splitPart(cfg, particles, dem):
     return particles
 
 
-def savePartToPickle(dictList, outDir):
+def savePartToPickle(dictList, outDir, logName):
     """ Save each dictionary from a list to a pickle in outDir; works also for one dictionary instead of list
 
         Parameters
@@ -1672,9 +1680,9 @@ def savePartToPickle(dictList, outDir):
 
     if isinstance(dictList, list):
         for dict in dictList:
-            pickle.dump(dict, open(os.path.join(outDir, "particles%09.4f.p" % (dict['t'])), "wb"))
+            pickle.dump(dict, open(os.path.join(outDir, "particles_%s_%09.4f.p" % (logName, dict['t'])), "wb"))
     else:
-        pickle.dump(dictList, open(os.path.join(outDir, "particles%09.4f.p" % (dictList['t'])), "wb"))
+        pickle.dump(dictList, open(os.path.join(outDir, "particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb"))
 
 
 def readPartFromPickle(inDir, flagAvaDir=False):
@@ -1704,6 +1712,48 @@ def readPartFromPickle(inDir, flagAvaDir=False):
         TimeStepInfo.append(particles['t'])
 
     return Particles, TimeStepInfo
+
+
+def savePartToCsv(particleProperties, dictList, outDir):
+    """ Save each particle dictionary from a list to a csv file; works also for one dictionary instead of list
+
+        Parameters
+        ---------
+        dictList: list or dict
+            list of dictionaries or single dictionary
+    """
+
+    # set output directory
+    outDir = os.path.join(outDir, 'particlesCSV')
+    fU.makeADir(outDir)
+
+    # read particle properties to be saved
+    particleProperties = particleProperties.split('|')
+
+    for partProp in particleProperties:
+
+        # write particles locations and properties to csv file
+        nParticles = len(dictList)
+        count = 0
+        for m in range(nParticles):
+            particles = dictList[count]
+            x = particles['x'] + particles['xllcenter']
+            y = particles['y'] + particles['yllcenter']
+            z = particles['z']
+            if partProp == 'velocityMagnitude':
+                ux = particles['ux']
+                uy = particles['uy']
+                uz = particles['uz']
+                value = DFAtls.norm(ux, uy, uz)
+            else:
+                value = particles[partProp]
+            simName = particles['simName']
+            with open(os.path.join(outDir, 'particles%s_%s.csv.%d' % (simName, partProp, count)), 'w') as pFile:
+                pFile.write('X, Y, Z, %s\n' % partProp)
+                for k in range(len(x)):
+                    pFile.write('%.8f, %.8f, %.8f, %.8f\n' % (x[k], y[k], z[k], value[k]))
+
+            count = count + 1
 
 
 def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
