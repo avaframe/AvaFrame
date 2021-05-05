@@ -293,9 +293,10 @@ def prepareInputData(demFile, relFile, inputSimFiles):
         secondaryReleaseLine = None
 
     # get line from entrainement area polygon
-    if entFiles:
-        entLine = shpConv.readLine(entFiles, '', demOri)
-        entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
+    entFile = inputSimFiles['entFile']
+    if entFile:
+        entLine = shpConv.readLine(entFile, '', demOri)
+        entrainmentArea = os.path.splitext(os.path.basename(entFile))[0]
         entLine['fileName'] = [entrainmentArea]
     else:
         entLine = None
@@ -558,7 +559,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
     entLine = inputSimLines['entLine']
-    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, entLine, reportAreaInfo)
+    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, entLine, relRaster, reportAreaInfo)
     resLine = inputSimLines['resLine']
     cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, resLine, reportAreaInfo)
     # surfacic entrainment mass available (unit kg/m²)
