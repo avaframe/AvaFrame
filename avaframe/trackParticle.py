@@ -37,11 +37,11 @@ def trackParticle():
     # inDEM = '/home/marie/ava0/AvaFrame/avaframe/data/avaParabola/Inputs/DEM_PF_Topo.asc'
     inDEM = '/home/marie/ava0/AvaFrame/avaframe/data/avaAlr/Inputs/avaAlr.asc'
 
-    # inDir = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaParabola/Outputs/com1DFAPy/particles'
-    # inDEM = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaParabola/Inputs/DEM_PF_Topo.asc'
+    inDir = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaParabola/Outputs/com1DFAPy/particles'
+    inDEM = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaParabola/Inputs/DEM_PF_Topo.asc'
 
-    inDir = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaAlr0/Outputs/com1DFAPy/particles'
-    inDEM = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaAlr0/Inputs/avaAlr.asc'
+    # inDir = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaAlr/Outputs/com1DFAPy/particles'
+    # inDEM = '/home/matthias/Documents/github/AvaFrame/avaframe/data/avaAlr/Inputs/avaAlr.asc'
 
     # inDir = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/avaInclinedPlane/Outputs/com1DFAPy/particles'
     # inDEM = '/home/matthiastonnel/Documents/github/AvaFrame/avaframe/data/avaInclinedPlane/Inputs/DEM_IP_Topo.asc'
@@ -130,20 +130,20 @@ def trackParticle():
         # EpotPath = np.append(EpotPath, EpotSumCoE)
         count = count + 1
 
-        ax.clear()
-        ax.set_title('t=%.2f s' % particles['t'])
-        variable = particles['h']
-        Cp1 = ax.contour(XX, YY, ZZ, levels=10, colors='k')
-        cmap, _, _, norm, ticks = makeColorMap(
-            cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
         # set range and steps of colormap
+        variable = particles['m']
         cc = variable
-        sc = ax.scatter(X, Y, c=cc, cmap=cmap, marker='.')
-        plt.pause(0.01)
+        # ax.clear()
+        # ax.set_title('t=%.2f s' % particles['t'])
+        # Cp1 = ax.contour(XX, YY, ZZ, levels=10, colors='k')
+        # cmap, _, _, norm, ticks = makeColorMap(
+        #     cmapDepth, np.amin(variable), np.amax(variable), continuous=True)
+        # sc = ax.scatter(X, Y, c=cc, cmap=cmap, marker='.')
+        # plt.pause(0.01)
 
 
     print(np.min(m), np.mean(m), np.max(m), np.std(m))
-    mu = 0.55
+    mu = 0.4
     g = 9.81
     avapath = {}
     avapath['x'] = np.array([xPath[0], xPath[-1]])
@@ -182,7 +182,7 @@ def trackParticle():
     ax2.plot(sPath, zPath, 'k-', label='Avalanche profile')
     # ax2.plot(AvaProfile['s'], AvaProfile['z'], 'r-', label='Avalanche profile')
     Zene = zPath + V2Path/(2*g)
-    f = zPath[5] - mu * sPath + (V2Path[5]/(2*g) + mu * sPath[5])
+    f = zPath[0] - mu * sPath + (V2Path[0]/(2*g) + mu * sPath[0])
     ax2.plot(sPath, f, '-', color='b', label='AlphaLine')
     scat = ax2.scatter(sPath, Zene, marker='s', cmap=cmap, s=2*ms, c= EkinPath, label='Total energy height')
     cbar2 = ax2.figure.colorbar(scat, ax=ax2, use_gridspec=True)
