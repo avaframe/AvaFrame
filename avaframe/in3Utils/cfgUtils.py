@@ -1,18 +1,16 @@
 '''
     Utilities for handling configuration files
-
-    This file is part of Avaframe.
-
 '''
 
 import configparser
 import os
 import logging
 import pathlib
+import hashlib
+import json
 # Local imports
 import avaframe as avaf
 from avaframe.in3Utils import logUtils
-
 
 log = logging.getLogger(__name__)
 
@@ -171,8 +169,6 @@ def compareConfig(iniFile, modName, compare):
 def writeCfgFile(avaDir, module, cfg, suffix=''):
     """ Save configuration used to text file in Outputs """
 
-    # write configuration to ini file
-    modPath = os.path.dirname(module.__file__)
     # get filename of module
     name = os.path.basename(module.__file__)
     modName = name.split('.')[0]
@@ -202,19 +198,18 @@ def readCfgFile(avaDir, module, suffix=''):
     return cfg
 
 
-
 def cfgHash(cfg):
     """UID hash of a config. Given a configParser object cfg, returns a uid
     hash
 
     Parameters
     ----------
-    cfg: configParser object 
+    cfg: configParser object
 
     Returns:
     --------
     uid: str
-       uid hash 
+       uid hash
     """
 
     uidHash = hashlib.shake_256()
