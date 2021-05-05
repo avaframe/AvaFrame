@@ -25,7 +25,7 @@ logName = 'runComparisonModules'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testList = ['avaInclinedPlane', 'avaHelixChannel', 'avaAlr1', 'avaWog1', 'avaKot1', 'avaHit1', 'avaGar1', 'avaMal1']
+testList = ['avaInclinedPlane', 'avaHelixChannel', 'avaAlr', 'avaWog', 'avaKot', 'avaHit', 'avaGar', 'avaMal']
 simType = 'ent'
 # Set directory for full standard test report
 outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPyEnt')
