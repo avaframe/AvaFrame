@@ -44,7 +44,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
     log.info('MAIN SCRIPT')
     log.info('Current avalanche: %s', avalancheDir)
 
-    # Load configuration 
+    # Load configuration
     if cfgFile != '':
         cfg = cfgUtils.getModuleConfig(com1DFA, cfgFile)
     else:
@@ -52,7 +52,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
 
     # +++++++++++++++++++++++++++++++++
     # ------------------------
-    Particles, Fields, Tsave, dem, reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir, relThField)
+    particlesList, fieldsList, Tsave, dem, reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir, relThField)
 
     # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
     # Generate plots for all peakFiles
@@ -63,7 +63,12 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
-    return Particles, Fields, Tsave, dem, plotDict, reportDictList
+    # export for visulation
+    if cfg['VISUALISATION'].getboolean('exportPartCSV'):
+        outDir = os.path.join(avalancheDir, 'Outputs', modName)
+        com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+
+    return particlesList, fieldsList, Tsave, dem, plotDict, reportDictList
 
 
 if __name__ == "__main__":
