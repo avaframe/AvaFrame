@@ -310,6 +310,7 @@ def writeDictToConfigP(cfgDict):
     return cfg
 
 
+<<<<<<< HEAD
 def writeDictToJson(dict, outFilePath):
     """ write a dictionary to a json file """
 
@@ -360,3 +361,34 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False):
         simDF.to_csv(outFile)
 
     return simDF
+=======
+
+def cfgHash(cfg):
+    """UID hash of a config. Given a configParser object cfg, returns a uid
+    hash
+
+    Parameters
+    ----------
+    cfg: configParser object 
+
+    Returns:
+    --------
+    uid: str
+       uid hash 
+    """
+
+    uidHash = hashlib.shake_256()
+
+    cfgDict = {}
+    for section in cfg.sections():
+        cfgDict[section] = {}
+        for key, val in cfg.items(section):
+            cfgDict[section][key] = val
+
+    encoded = json.dumps(cfgDict, sort_keys=True, ensure_ascii=True).encode()
+
+    uidHash.update(encoded)
+    uid = uidHash.hexdigest(5)
+
+    return uid
+>>>>>>> 38020e0... add function to generate uid from config object
