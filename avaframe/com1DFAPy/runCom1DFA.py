@@ -64,7 +64,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
     # export for visulation
-    if cfg['VISUALISATION'].getboolean('exportPartCSV'):
+    if cfg['VISUALISATION'].getboolean('writePartToCSV'):
         outDir = os.path.join(avalancheDir, 'Outputs', modName)
         com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 

@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpltPath
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import pandas as pd
 
 # Local imports
 import avaframe.in3Utils.initialiseDirs as inDirs
@@ -1720,8 +1721,12 @@ def savePartToCsv(particleProperties, dictList, outDir):
 
         Parameters
         ---------
+        particleProperties: str
+            all particle properties that shall be saved to csv file (e.g.: m, velocityMagnitude, ux,..)
         dictList: list or dict
             list of dictionaries or single dictionary
+        outDir: str
+            path to output directory; particlesCSV will be created in this outDir
     """
 
     # set output directory
@@ -1736,35 +1741,28 @@ def savePartToCsv(particleProperties, dictList, outDir):
     count = 0
     for m in range(nParticles):
         particles = dictList[count]
-        x = particles['x'] + particles['xllcenter']
-        y = particles['y'] + particles['yllcenter']
-        z = particles['z']
         simName = particles['simName']
-        partPropDict = {}
+        csvData = {}
+        csvData['X'] = particles['x'] + particles['xllcenter']
+        csvData['Y'] = particles['y'] + particles['yllcenter']
+        csvData['Z'] = particles['z']
+
 
         for partProp in particleProperties:
             if partProp == 'velocityMagnitude':
                 ux = particles['ux']
                 uy = particles['uy']
                 uz = particles['uz']
-                partPropDict[partProp] = DFAtls.norm(ux, uy, uz)
+                csvData[partProp] = DFAtls.norm(ux, uy, uz)
             else:
-                partPropDict[partProp] = particles[partProp]
+                csvData[partProp] = particles[partProp]
+        csvData['time'] = particles['t']
 
-
-        with open(os.path.join(outDir, 'particles%s.csv.%d' % (simName, count)), 'w') as pFile:
-                pFile.write('X, Y, Z,')
-                for m in range(len(particleProperties)-1):
-                    pFile.write('%s,' % (particleProperties[m]))
-                pFile.write('%s\n' % (particleProperties[-1]))
-
-                for k in range(len(x)):
-                    pFile.write('%.8f, %.8f, %.8f,' % (x[k], y[k], z[k]))
-                    for m in range(len(particleProperties)-1):
-                        pFile.write('%.8f,' % (partPropDict[particleProperties[m]][k]))
-                    pFile.write('%.8f\n' % (partPropDict[particleProperties[-1]][k]))
-
-                count = count + 1
+        # create pandas dataFrame and save to csv
+        outFile = os.path.join(outDir, 'particles%s.csv.%d' % (simName, count))
+        particlesData = pd.DataFrame(data=csvData)
+        particlesData.to_csv(outFile, index=False)
+        count = count + 1
 
 
 def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
