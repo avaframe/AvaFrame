@@ -514,8 +514,11 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
 
     # -----------------------
     # Initialize mesh
+    log.info('Initializing Mesh')
     demOri, dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
+
     # ------------------------
+    log.info('Initializing main release area')
     # process release info to get it as a raster
     releaseLine = inputSimLines['releaseLine']
     if len(relThField) == 0:
@@ -539,33 +542,42 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
     # ------------------------
     # initialize simulation
     # create primary release area particles and fields
-    log.info('Initializing main release area')
     particles, fields = initializeParticles(cfgGen, relRaster, dem, logName=logName)
 
     # ------------------------
     # process secondary release info to get it as a list of rasters
+    log.info('Initializing secondary release area')
     secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
     if secondaryReleaseLine:
+        # fetch secondary release areas
+        rasterList = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
+        # remove overlap with main release areas
+        noOverlaprasterList = []
+        for secRelRatser in rasterList:
+            noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release', crop=True))
+
         secondaryReleaseInfo = {}
-        secondaryReleaseInfo['rasterList'] = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
+        secondaryReleaseInfo['rasterList'] = noOverlaprasterList
         secondaryReleaseInfo['Name'] = secondaryReleaseLine['Name']
     else:
         secondaryReleaseInfo = None
 
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
+
     # initialize entrainment and resistance
+    log.info('Initializing entrainment area')
     # get info of simType and whether or not to initialize resistance and entrainment
     simTypeActual = cfgGen['simTypeActual']
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entLine = inputSimLines['entLine']
-    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, entLine, relRaster, reportAreaInfo)
-    resLine = inputSimLines['resLine']
-    cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, resLine, reportAreaInfo)
+    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], relRaster, reportAreaInfo)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
+
+    log.info('Initializing resistance area')
+    cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, inputSimLines['resLine'], reportAreaInfo)
     fields['cResRaster'] = cResRaster
 
     return particles, fields, dem, reportAreaInfo
@@ -1012,7 +1024,7 @@ def DFAIterate(cfg, particles, fields, dem):
             if len(dtSave) > 1:
                 dtSave = dtSave[1:]
             else:
-                dtSave = [cfgGen.getfloat('tEnd')]
+                dtSave = [2*cfgGen.getfloat('tEnd')]
 
         if cfgGen.getboolean('cflTimeStepping'):
             # overwrite the dt value in the cfg
@@ -1028,6 +1040,7 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info('Ending computation at time t = %f s', t-dt)
     log.info('Saving results for time step t = %f s', t-dt)
     log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+    log.info('Computational performances:')
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
     log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
     log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
@@ -1157,7 +1170,8 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
     # release secondary release area?
-    particles = releaseSecRelArea(cfg, particles, fields, dem)
+    if cfg['secRelArea']:
+        particles = releaseSecRelArea(cfg, particles, fields, dem)
 
     # get particles location (neighbours for sph)
     startTime = time.time()
@@ -1330,7 +1344,7 @@ def prepareArea(releaseLine, dem, relThList='', combine=True):
     relThList: list
         release thickness values for all release features
     combine : Boolean
-        if True sum upe the rasters in the area list to return only 1 raster
+        if True sum up the rasters in the area list to return only 1 raster
         if False return the list of distinct area rasters
         this option works only if relThList is not empty
 
@@ -1580,7 +1594,7 @@ def releaseSecRelArea(cfg, particles, fields, dem):
                 #     savePartToPickle([secRelParticles], outDirData)
 
                 # release secondary release area by just appending the particles
-                log.info('Releasing secondary release area %s' % secRelRasterName)
+                log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
                 particles = mergeParticleDict(particles, secRelParticles)
                 # remove it from the secondary release area list
                 secRelRasterList.pop(count)
