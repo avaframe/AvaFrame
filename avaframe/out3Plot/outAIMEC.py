@@ -150,7 +150,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
         ax.plot(meanVal[1, :], s, '-b', label='Mean Simulation')
 
         ax.set_title(titleVal + 'distribution along path')
-        ax.legend(loc=1)
+        ax.legend(loc='best' )
         ax.set_ylabel('s [m]')
         ax.set_ylim([s.min(), s.max()])
         ax.set_xlim(auto=True)

@@ -225,15 +225,16 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
     # Initialise secondary release areas
     secondaryReleaseFile = glob.glob(inputDir+os.sep + 'SECREL' + os.sep+'*.shp')
     if (len(secondaryReleaseFile) < 1) and cfg.getboolean('GENERAL', 'secRelArea'):
-        log.info('No secondary release area file found')
+        log.warning('No secondary release area file found')
         secondaryReleaseFile.append('')  # Kept this for future enhancements
     elif cfg.getboolean('GENERAL', 'secRelArea'):
         try:
-            message = 'There shouldn\'t be more than one entrainment .shp file in ' + inputDir + '/SECREL/'
+            message = 'There shouldn\'t be more than one secondary release .shp file in ' + inputDir + '/SECREL/'
             assert len(secondaryReleaseFile) < 2, message
         except AssertionError:
             raise
         entResInfo['flagSecondaryRelease'] = 'Yes'
+        log.info('Secondary release area file is: %s' % secondaryReleaseFile)
     else:
         secondaryReleaseFile = [None]
 
@@ -249,6 +250,7 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
         except AssertionError:
             raise
         entResInfo['flagRes'] = 'Yes'
+        log.info('Resistance area file is: %s' % resFiles)
 
     # Initialise entrainment areas
     entFiles = glob.glob(inputDir+os.sep + 'ENT' + os.sep+'*.shp')
@@ -262,6 +264,7 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
         except AssertionError:
             raise
         entResInfo['flagEnt'] = 'Yes'
+        log.info('Entrainment area file is: %s' % entFiles)
 
     # Initialise DEM
     demFile = getDEMPath(avaDir)
