@@ -91,8 +91,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     flagDev = cfg['FLAGS'].getboolean('flagDev')
 
     # fetch input data - dem, release-, entrainment- and resistance areas
-    demFile, relFiles, entFiles, resFile, entResInfo = gI.getInputDataCom1DFAPy(
-        avaDir, cfg['FLAGS'], flagDev)
+    demFile, inputSimFiles = gI.getInputDataCom1DFAPy(avaDir, cfg, flagDev)
 
     # Counter for release area loop
     countRel = 0
@@ -101,13 +100,16 @@ def com1DFAMain(cfg, avaDir, relThField):
     reportDictList = []
 
     # Loop through release areas
+    relFiles = inputSimFiles['relFiles']
     for rel in relFiles:
 
-        demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea = prepareInputData(demFile, rel, entFiles, resFile)
+        demOri, inputSimLines = prepareInputData(demFile, rel, inputSimFiles)
 
         # find out which simulations to perform
-        relName, cuSim, relDict, badName = getSimulation(cfg, rel, entResInfo)
-        releaseLine['d0'] = relDict['d0']
+        relName, cuSim, relDict, releaseSecondaryDict, badName = getSimulation(cfg, rel, inputSimFiles)
+        inputSimLines['releaseLine']['d0'] = relDict['d0']
+        if releaseSecondaryDict:
+            inputSimLines['secondaryReleaseLine']['d0'] = releaseSecondaryDict['d0']
 
         for sim in cuSim:
             #logName = sim + '_' + cfgGen['mu']
@@ -119,8 +121,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
             # for timing the sims
             startTime = time.time()
-            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relThField)
-            relFiles = releaseLine['fileName']
+            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir)
             # ------------------------
             #  Start time step computation
             Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
@@ -138,9 +139,11 @@ def com1DFAMain(cfg, avaDir, relThField):
                 savePartToPickle(particlesList, outDirData, logName)
 
             # Result parameters to be exported
-            exportFields(cfg, Tsave, fieldsList, rel, demOri, outDir, logName)
+            exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName)
 
             # write report dictionary
+            entrainmentArea = inputSimLines['entrainmentArea']
+            resistanceArea = inputSimLines['resistanceArea']
             reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
             # add time and mass info to report
             reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict)
@@ -155,7 +158,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     return particlesList, fieldsList, Tsave, dem, reportDictList
 
 
-def getSimulation(cfg, rel, entResInfo):
+def getSimulation(cfg, rel, inputSimFiles):
     """ get Simulation to run for a given release
 
 
@@ -201,7 +204,19 @@ def getSimulation(cfg, rel, entResInfo):
 
     log.info('Release area scenario: %s - perform simulations' % (relName))
 
+    secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
+    if secondaryReleaseFile:
+        releaseSecondaryDict = shpConv.SHP2Array(secondaryReleaseFile)
+        for k in range(len(releaseSecondaryDict['d0'])):
+            if releaseSecondaryDict['d0'][k] == 'None':
+                releaseSecondaryDict['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
+            else:
+                releaseSecondaryDict['d0'][k] = float(releaseSecondaryDict['d0'][k])
+    else:
+        releaseSecondaryDict = None
+
     # define simulation type
+    entResInfo = inputSimFiles['entResInfo']
     if 'available' in simTypeList:
         if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
             simTypeList.append('entres')
@@ -218,17 +233,19 @@ def getSimulation(cfg, rel, entResInfo):
 
     if 'ent' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagEnt'] == 'No':
-            log.error('No entrainment file found')
-            raise FileNotFoundError
+            message = 'No entrainment file found'
+            log.error(message)
+            raise FileNotFoundError(message)
     if 'res' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagRes'] == 'No':
-            log.error('No resistance file found')
-            raise FileNotFoundError
+            message = 'No resistance file found'
+            log.error(message)
+            raise FileNotFoundError(message)
 
-    return relName, simTypeList, relDict, badName
+    return relName, simTypeList, relDict, releaseSecondaryDict, badName
 
 
-def prepareInputData(demFile, relFile, entFiles, resFile):
+def prepareInputData(demFile, relFile, inputSimFiles):
     """ Fetch input data
 
     Parameters
@@ -237,50 +254,70 @@ def prepareInputData(demFile, relFile, entFiles, resFile):
         path to dem file
     relFiles : str
         path to release file
-    entFiles : str
-        path to entrainment file
-    resFile : str
-        path to resistance file
+    inputSimFiles : dict
+        secondaryReleaseFile : str
+            path to secondaryRelease file
+        entFiles : str
+            path to entrainment file
+        resFile : str
+            path to resistance file
 
     Returns
     -------
     demOri : dict
         dictionary with original dem
-    releaseLine : dict
-        release line dictionary
-    entLine : dict
-        entrainment line dictionary
-    resLine : dict
-        resistance line dictionary
-    entrainmentArea : str
-        entrainment file name
-    resistanceArea : str
-        resistance file name
+    inputSimLines : dict
+        releaseLine : dict
+            release line dictionary
+        secondaryReleaseLine : dict
+            secondaryRelease line dictionary
+        entLine : dict
+            entrainment line dictionary
+        resLine : dict
+            resistance line dictionary
+        entrainmentArea : str
+            entrainment file name
+        resistanceArea : str
+            resistance file name
     """
     # get dem information
     demOri = IOf.readRaster(demFile)
 
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
-    releaseLine['fileName'] = relFile
+    releaseLine['file'] = relFile
+
+    # get line from secondary release area polygon
+    secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
+    if secondaryReleaseFile:
+        secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
+    else:
+        secondaryReleaseLine = None
+
     # get line from entrainement area polygon
-    if entFiles:
-        entLine = shpConv.readLine(entFiles, '', demOri)
-        entrainmentArea = os.path.splitext(os.path.basename(entFiles))[0]
-        entLine['fileName'] = [entrainmentArea]
+    entFile = inputSimFiles['entFile']
+    if entFile:
+        entLine = shpConv.readLine(entFile, '', demOri)
+        entrainmentArea = os.path.splitext(os.path.basename(entFile))[0]
+        entLine['fileName'] = [entFile]
     else:
         entLine = None
         entrainmentArea = ''
+
     # get line from resistance area polygon
+    resFile = inputSimFiles['resFile']
     if resFile:
         resLine = shpConv.readLine(resFile, '', demOri)
         resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
-        resLine['fileName'] = [resistanceArea]
+        resLine['fileName'] = [resFile]
     else:
         resLine = None
         resistanceArea = ''
 
-    return demOri, releaseLine, entLine, resLine, entrainmentArea, resistanceArea
+    inputSimLines = {'releaseLine': releaseLine, 'secondaryReleaseLine': secondaryReleaseLine,
+                     'entLine': entLine, 'resLine': resLine, 'entrainmentArea': entrainmentArea,
+                     'resistanceArea': resistanceArea}
+    return demOri, inputSimLines
 
 
 def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo):
@@ -436,7 +473,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, relThField):
+def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir):
     """ create simulaton report dictionary
 
     Parameters
@@ -445,12 +482,15 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
         simulation scenario name
     demOri : dict
         dictionary with original dem
-    releaseLine : dict
-        release line dictionary
-    entLine : dict
-        entrainment line dictionary
-    resLine : dict
-        resistance line dictionary
+    inputSimLines : dict
+        releaseLine : dict
+            release line dictionary
+        secondaryReleaseLine : dict
+            secondary release line dictionary
+        entLine : dict
+            entrainment line dictionary
+        resLine : dict
+            resistance line dictionary
     logName : str
         simulation scenario name
     relThField : 2D numpy array
@@ -461,6 +501,7 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
     -------
     particles : dict
         particles dictionary at initial time step
+        list of secondary release particles to be used
     fields : dict
         fields dictionary at initial time step
     dem : dict
@@ -475,15 +516,20 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
 
     # -----------------------
     # Initialize mesh
+    log.info('Initializing Mesh')
     demOri, dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
+
     # ------------------------
+    log.info('Initializing main release area')
     # process release info to get it as a raster
+    releaseLine = inputSimLines['releaseLine']
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
-        relRaster = prepareArea(releaseLine, demOri, relThList=releaseLine['d0'])
+        # this is a list of release rasters that we want to combine
+        relRaster = prepareArea(releaseLine, demOri, relThList=releaseLine['d0'], combine=True)
     else:
         # if relTh provided - set release thickness with field or function
-        relRaster = prepareArea(releaseLine, demOri)
+        relRaster = prepareArea(releaseLine, demOri, combine=True)
         relRaster = relRaster * relThField
 
     # compute release area
@@ -497,22 +543,48 @@ def initializeSimulation(cfg, demOri, releaseLine, entLine, resLine, logName, re
 
     # ------------------------
     # initialize simulation
-
-    # create particles, create resistance and
-    # entrainment matrix, initialize fields, get normals and neighbours
+    # create primary release area particles and fields
     particles, fields = initializeParticles(cfgGen, relRaster, dem, logName=logName)
+
+    # ------------------------
+    # process secondary release info to get it as a list of rasters
+    secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
+    if secondaryReleaseLine and cfgGen.getboolean('secRelArea'):
+        log.info('Initializing secondary release area')
+        # fetch secondary release areas
+        secRelRasterList = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
+        # remove overlap with main release areas
+        noOverlaprasterList = []
+        for secRelRatser, secRelName in zip(secRelRasterList, secondaryReleaseLine['Name']):
+            noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release ' + secRelName, 'Release', crop=True))
+
+        secondaryReleaseInfo = {}
+        secondaryReleaseInfo['rasterList'] = noOverlaprasterList
+        secondaryReleaseInfo['Name'] = secondaryReleaseLine['Name']
+    else:
+        secondaryReleaseInfo = None
+
+    particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
     # initialize entrainment and resistance
     # get info of simType and whether or not to initialize resistance and entrainment
     simTypeActual = cfgGen['simTypeActual']
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, entLine, relRaster, reportAreaInfo)
-    cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, resLine, reportAreaInfo)
+    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], reportAreaInfo)
+    # check if entrainment and release overlap
+    entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', 'Release', crop=True)
+    # check for overlap with the secondary release area
+    if secondaryReleaseInfo:
+        for secRelRatser in secondaryReleaseInfo['rasterList']:
+            entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRatser, 'Entrainment', 'Secondary release ', crop=True)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
+
+    log.info('Initializing resistance area')
+    cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, inputSimLines['resLine'], reportAreaInfo)
     fields['cResRaster'] = cResRaster
 
     return particles, fields, dem, reportAreaInfo
@@ -644,9 +716,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     particles['hBilinearNearest'] = Hpart
     particles['hBilinearBilinear'] = Hpart
     particles['hSPH'] = Hpart
-    particles['GHX'] = np.zeros(np.shape(Xpart))
-    particles['GHY'] = np.zeros(np.shape(Xpart))
-    particles['GHZ'] = np.zeros(np.shape(Xpart))
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
@@ -684,7 +753,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     relCells = np.size(indRelY)
     partPerCell = particles['Npart']/relCells
     log.info('Expeced mass. Mexpected = %.2f kg.' % (totalMassRaster))
-    log.info('Initializted simulation. MTot = %.2f kg, %s particles in %.2f cells.' %
+    log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
              (particles['mTot'], particles['Npart'], relCells))
     log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
              (particles['mTot']/particles['Npart'], partPerCell))
@@ -775,7 +844,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, simTypeActual, entLine, relRaster, reportAreaInfo):
+def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo):
     """ Initialize mass for entrainment
 
     Parameters
@@ -794,11 +863,10 @@ def initializeMassEnt(dem, simTypeActual, entLine, relRaster, reportAreaInfo):
     nrows = header.nrows
     if 'ent' in simTypeActual:
         entrainmentArea = entLine['fileName']
-        log.info('Entrainment area: %s' % (entrainmentArea))
+        log.info('Initializing entrainment area %s' % (entrainmentArea))
+        log.info('Entrainment area features: %s' % (entLine['Name']))
         entrMassRaster = prepareArea(entLine, dem)
         reportAreaInfo['entrainment'] = 'Yes'
-        # check if entrainment and release overlap
-        entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', crop=True)
     else:
         entrMassRaster = np.zeros((nrows, ncols))
         reportAreaInfo['entrainment'] = 'No'
@@ -828,7 +896,8 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo):
     nrows = header.nrows
     if simTypeActual in ['entres', 'res']:
         resistanceArea = resLine['fileName']
-        log.info('Resistance area: %s' % (resistanceArea))
+        log.info('Initializing resistance area %s' % (resistanceArea))
+        log.info('Resistance area features: %s' % (resLine['Name']))
         mask = prepareArea(resLine, dem)
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
         reportAreaInfo['resistance'] = 'Yes'
@@ -850,6 +919,8 @@ def DFAIterate(cfg, particles, fields, dem):
         configuration for DFA simulation
     particles : dict
         particles dictionary at initial time step
+        secondaryReleaseParticles : list
+            list of secondary release area particles dictionaries at initial time step
     fields : dict
         fields dictionary at initial time step
     dem : dict
@@ -957,7 +1028,7 @@ def DFAIterate(cfg, particles, fields, dem):
             if len(dtSave) > 1:
                 dtSave = dtSave[1:]
             else:
-                dtSave = [cfgGen.getfloat('tEnd')]
+                dtSave = [2*cfgGen.getfloat('tEnd')]
 
         if cfgGen.getboolean('cflTimeStepping'):
             # overwrite the dt value in the cfg
@@ -973,6 +1044,7 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info('Ending computation at time t = %f s', t-dt)
     log.info('Saving results for time step t = %f s', t-dt)
     log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+    log.info('Computational performances:')
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
     log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
     log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
@@ -1094,14 +1166,16 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
-    hmin = cfg.getfloat('hmin')
-
     # update velocity and particle position
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
     particles = DFAfunC.updatePositionC(cfg, particles, dem, force)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
+
+    # release secondary release area?
+    if cfg['secRelArea']:
+        particles = releaseSecRelArea(cfg, particles, fields, dem)
 
     # get particles location (neighbours for sph)
     startTime = time.time()
@@ -1262,7 +1336,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     return particles, fields, Tcpu, dt
 
 
-def prepareArea(releaseLine, dem, relThList=''):
+def prepareArea(releaseLine, dem, relThList='', combine=True):
     """ convert shape file polygon to raster
 
     Parameters
@@ -1273,17 +1347,23 @@ def prepareArea(releaseLine, dem, relThList=''):
         dictionary with dem information
     relThList: list
         release thickness values for all release features
+    combine : Boolean
+        if True sum up the rasters in the area list to return only 1 raster
+        if False return the list of distinct area rasters
+        this option works only if relThList is not empty
 
     Returns
     -------
-
     Raster : 2D numpy array
-        raster
+        raster of the area (returned if relRHlist is empty OR if combine is set
+        to True)
+    RasterList : list
+        list of 2D numpy array rasters (returned if relRHlist is not empty AND
+        if combine is set to True)
     """
     NameRel = releaseLine['Name']
     StartRel = releaseLine['Start']
     LengthRel = releaseLine['Length']
-    Raster = np.zeros(np.shape(dem['rasterData']))
     RasterList = []
 
     for i in range(len(NameRel)):
@@ -1297,31 +1377,30 @@ def prepareArea(releaseLine, dem, relThList=''):
         # if relTh is given - set relTh
         if relThList != '':
             log.info('Release feature %s, relTh= %.2f' % (name, relThList[i]))
-            Raster = np.zeros(np.shape(dem['rasterData']))
-            Raster = polygon2Raster(dem['header'], avapath, Raster, relTh=relThList[i])
-            RasterList.append(Raster)
+            Raster = polygon2Raster(dem['header'], avapath, relTh=relThList[i])
         else:
-            Raster = polygon2Raster(dem['header'], avapath, Raster, relTh='')
+            Raster = polygon2Raster(dem['header'], avapath)
+        RasterList.append(Raster)
 
-    # if relTh provided by a field or function - create release Raster with ones
-    if relThList != '':
-        Raster = np.zeros(np.shape(dem['rasterData']))
-        for rast in RasterList:
-            ind1 = Raster > 0
-            ind2 = rast > 0
-            indMatch = np.logical_and(ind1, ind2)
-            try:
-                message = 'Release area features are overlaping - this is not allowed'
-                assert indMatch.any() == False, message
-                Raster = Raster + rast
-            except AssertionError:
-                log.error('%s' % message)
-                raise
+    # if RasterList not empty check for overlap between features
+    Raster = np.zeros(np.shape(dem['rasterData']))
+    for rast in RasterList:
+        ind1 = Raster > 0
+        ind2 = rast > 0
+        indMatch = np.logical_and(ind1, ind2)
+        # if there is an overlap, raise error
+        if indMatch.any():
+            message = 'Features are overlaping - this is not allowed'
+            log.error(message)
+            raise AssertionError(message)
+        Raster = Raster + rast
+    if combine:
+        return Raster
+    else:
+        return RasterList
 
-    return Raster
 
-
-def polygon2Raster(demHeader, Line, Mask, relTh=''):
+def polygon2Raster(demHeader, Line, relTh=''):
     """ convert line to raster
 
     Parameters
@@ -1365,10 +1444,8 @@ def polygon2Raster(demHeader, Line, Mask, relTh=''):
     Y = Y.flatten()
     points = np.stack((X, Y), axis=-1)
     mask = path.contains_points(points)
-    mask = mask.reshape((nrows, ncols)).astype(int)
-    # mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
-    Mask = Mask + mask
-    # set release thickness unless release thickness field is provided, then return array with ones
+    Mask = mask.reshape((nrows, ncols)).astype(int)
+    # thickness field is provided, then return array with ones
     if relTh != '':
         log.info('REL set from dict, %.2f' % relTh)
         Mask = np.where(Mask > 0, relTh, 0.)
@@ -1489,6 +1566,37 @@ def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
 
     plt.pause(0.1)
     return fig, ax, cmap, lev
+
+
+def releaseSecRelArea(cfg, particles, fields, dem):
+    flowDepthField = fields['FD']
+    secondaryReleaseInfo = particles['secondaryReleaseInfo']
+    if secondaryReleaseInfo:
+        secRelRasterList = secondaryReleaseInfo['rasterList']
+        secRelRasterNameList = secondaryReleaseInfo['Name']
+        count = 0
+        for secRelRaster, secRelRasterName in zip(secRelRasterList, secRelRasterNameList):
+            # do the two arrays intersect (meaning a flowing particle entered the
+            # secondary release area)
+            mask = (secRelRaster > 0) & (flowDepthField > 0)
+            if mask.any():
+                # create secondary release area particles
+                log.info('Initializing secondary release area feature %s' % secRelRasterName)
+                secRelParticles, fields = initializeParticles(cfg, secRelRaster, dem)
+
+                # release secondary release area by just appending the particles
+                log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
+                particles = mergeParticleDict(particles, secRelParticles)
+                # remove it from the secondary release area list
+                secRelRasterList.pop(count)
+                secRelRasterNameList.pop(count)
+            count = count + 1
+
+        secondaryReleaseInfo['secondaryReleaseParticlesList'] = secRelRasterList
+        secondaryReleaseInfo['Name'] = secRelRasterNameList
+        particles['secondaryReleaseInfo'] = secondaryReleaseInfo
+
+    return particles
 
 
 def removeOutPart(cfg, particles, dem):
@@ -1639,6 +1747,25 @@ def removePart(particles, mask, nRemove):
 
 
 def splitPart(cfg, particles, dem):
+    """Split big particles
+
+    Split particles bigger than 1.5 times the massPerPart
+
+    Parameters
+    ----------
+    cfg: configparser
+        DFA configuration
+    particles : dict
+        particles dictionary
+    dem : dict
+        dem dictionary
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary
+
+    """
     massPerPart = cfg.getfloat('massPerPart')
     m = particles['m']
     nSplit = np.round(m/massPerPart)
@@ -1659,13 +1786,43 @@ def splitPart(cfg, particles, dem):
             particles['uy'] = np.append(particles['uy'], particles['uy'][ind]*np.ones((nAdd)))
             particles['uz'] = np.append(particles['uz'], particles['uz'][ind]*np.ones((nAdd)))
             particles['m'] = np.append(particles['m'], mNew*np.ones((nAdd)))
-            particles['m'][ind] = mNew
+            particles['mTot'] = np.sum(particles['m'])
             particles['h'] = np.append(particles['h'], particles['h'][ind]*np.ones((nAdd)))
             particles['inCellDEM'] = np.append(particles['inCellDEM'], particles['inCellDEM'][ind]*np.ones((nAdd)))
             particles['indXDEM'] = np.append(particles['indXDEM'], particles['indXDEM'][ind]*np.ones((nAdd)))
             particles['indYDEM'] = np.append(particles['indYDEM'], particles['indYDEM'][ind]*np.ones((nAdd)))
             particles['partInCell'] = np.append(particles['partInCell'], particles['partInCell'][ind]*np.ones((nAdd)))
 
+    return particles
+
+
+def mergeParticleDict(particles1, particles2):
+    """Merge two particles dictionary
+
+    Parameters
+    ----------
+    particles1 : dict
+        first particles dictionary
+    particles2 : dict
+        second particles dictionary
+
+    Returns
+    -------
+    particles1 : dict
+        merged particles dictionary
+
+    """
+    particles = {}
+    for key in particles1:
+        if key == 'Npart':
+            particles['Npart'] = particles1['Npart'] + particles2['Npart']
+        elif (key in particles2) and (type(particles1[key]).__module__ == np.__name__):
+            if np.size(particles1[key]) > 1:
+                particles[key] = np.append(particles1[key], particles2[key])
+            else:
+                particles[key] = particles1[key] + particles2[key]
+        else:
+            particles[key] = particles1[key]
     return particles
 
 
@@ -1678,6 +1835,8 @@ def savePartToPickle(dictList, outDir, logName):
             list of dictionaries or single dictionary
         outDir: str
             path to output directory
+        logName : str
+            simulation Id
     """
 
     if isinstance(dictList, list):
@@ -1765,7 +1924,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
         count = count + 1
 
 
-def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
+def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
     """ export result fields to Outputs directory according to result parameters and time step
         that can be specified in the configuration file
 
@@ -1777,8 +1936,6 @@ def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
             list of time step that corresponds to each dict in Fields
         Fields: list
             list of Fields for each dtSave
-        relFile: str
-            path to release area shapefile
         outDir: str
             outputs Directory
 

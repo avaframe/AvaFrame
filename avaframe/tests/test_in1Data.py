@@ -6,10 +6,8 @@
  """
 
 #  Load modules
-import numpy as np
 import os
 from avaframe.in1Data import getInput
-import pytest
 import configparser
 import shutil
 

@@ -95,7 +95,7 @@ def copyReplace(origFile, workFile, searchString, replString):
 
 def getSimulation(cfg, rel, entResInfo):
     """ Get a list of all simulations that shall be performed according to simTypeList in configuration file;
-        and a dictionary with information on release area 
+        and a dictionary with information on release area
 
 
     Parameters
@@ -197,7 +197,7 @@ def com1DFAMain(cfg, avaDir):
     workDir, outDir = iD.initialiseRunDirs(avaDir, modName)
 
     # Load input data
-    dem, rels, ent, res, entResInfo = gI.getInputDataCom1DFAPy(avaDir, cfgGen, flagDev=False)
+    dem, rels, ent, res, entResInfo = gI.getInputData(avaDir, cfgGen, flagDev=False)
 
     # Parameter variation
     if cfgPar.getboolean('parameterVar'):

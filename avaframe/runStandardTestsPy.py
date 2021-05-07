@@ -59,6 +59,7 @@ for test in testList:
     avaName = os.path.basename(avaDir)
     standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfgPy.ini' % test['AVANAME'])
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
+    cfg['GENERAL']['secRelArea'] = 'False'
     cfg['GENERAL']['frictModel'] = 'samosAT'
     cfg['GENERAL']['sphKernelRadius'] = '5.'
     cfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPDH'

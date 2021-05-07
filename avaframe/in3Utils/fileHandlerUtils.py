@@ -211,12 +211,12 @@ def splitTimeValueToArrayInterval(cfgGen):
         else:
             items = np.arange(float(itemsInput[0]), endTime, float(itemsInput[1]))
     elif cfgValues == '':
-        items = np.array([endTime])
+        items = np.array([2*endTime])
     else:
         itemsL = cfgValues.split('|')
         items = np.array(itemsL, dtype=float)
         items = np.sort(items)
-        
+
     # make sure that 0 is not in the array (initial time step is any ways saved)
     if items[0] == 0:
         items = np.delete(items, 0)
