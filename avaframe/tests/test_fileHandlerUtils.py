@@ -146,7 +146,7 @@ def test_splitTimeValueToArrayInterval():
     cfgValuesList2 = np.asarray([5., 10., 15.])
 
     cfgValues3 = ''
-    cfgValuesList3 = np.asarray([20.])
+    cfgValuesList3 = np.asarray([40.])
 
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'tEnd': '20'}
