@@ -233,12 +233,14 @@ def getSimulation(cfg, rel, inputSimFiles):
 
     if 'ent' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagEnt'] == 'No':
-            log.error('No entrainment file found')
-            raise FileNotFoundError
+            message = 'No entrainment file found'
+            log.error(message)
+            raise FileNotFoundError(message)
     if 'res' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagRes'] == 'No':
-            log.error('No resistance file found')
-            raise FileNotFoundError
+            message = 'No resistance file found'
+            log.error(message)
+            raise FileNotFoundError(message)
 
     return relName, simTypeList, relDict, releaseSecondaryDict, badName
 
@@ -1379,21 +1381,19 @@ def prepareArea(releaseLine, dem, relThList='', combine=True):
             RasterList.append(Raster)
         else:
             Raster = polygon2Raster(dem['header'], avapath, Raster, relTh='')
-            return Raster
 
-    # if relTh provided by a field or function - create release Raster with ones
+    # if RasterList not empty check for overlap between features
     Raster = np.zeros(np.shape(dem['rasterData']))
     for rast in RasterList:
         ind1 = Raster > 0
         ind2 = rast > 0
         indMatch = np.logical_and(ind1, ind2)
-        try:
+        # if there is an overlap, raise error
+        if indMatch.any():
             message = 'Release area features are overlaping - this is not allowed'
-            assert indMatch.any() == False, message
-            Raster = Raster + rast
-        except AssertionError:
-            log.error('%s' % message)
-            raise
+            log.error(message)
+            raise AssertionError(message)
+        Raster = Raster + rast
     if combine:
         return Raster
     else:
