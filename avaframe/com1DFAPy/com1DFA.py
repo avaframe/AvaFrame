@@ -1808,7 +1808,7 @@ def mergeParticleDict(particles1, particles2):
     return particles1
 
 
-def savePartToPickle(dictList, outDir):
+def savePartToPickle(dictList, outDir, logName):
     """ Save each dictionary from a list to a pickle in outDir; works also for one dictionary instead of list
 
         Parameters
@@ -1817,6 +1817,8 @@ def savePartToPickle(dictList, outDir):
             list of dictionaries or single dictionary
         outDir: str
             path to output directory
+        logName : str
+            simulation Id
     """
 
     if isinstance(dictList, list):
