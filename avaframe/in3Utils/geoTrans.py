@@ -634,7 +634,7 @@ def areaPoly(X, Y):
     return sum
 
 
-def checkOverlap(toCheckRaster, refRaster, name, crop=False):
+def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
     """Check if two raster overlap
 
     Parameters
@@ -655,10 +655,11 @@ def checkOverlap(toCheckRaster, refRaster, name, crop=False):
     if mask.any():
         if crop:
             toCheckRaster[mask] = 0
-            message = name + ' area features are overlaping - removing the overlaping part'
-            log.warning('%s' % message)
+            message = '%s area feature overlaping with %s - removing the overlaping part' % (nameToCheck, nameRef)
+            log.warning(message)
         else:
-            message = name + ' area features are overlaping - this is not allowed'
-            log.error('%s' % message)
+            message = '%s area features overlapingwith %s - this is not allowed' % (nameToCheck, nameRef)
+            log.error(message)
+            AssertionError(message)
 
     return toCheckRaster

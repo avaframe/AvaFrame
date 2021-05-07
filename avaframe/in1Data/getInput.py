@@ -283,6 +283,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, flag=False):
     else:
         available = 'Yes'
         OutputFile = OutputFile[0]
-        log.info('%s area file is: %s' % (inputType, OutputFile))
+        if flag:
+            log.info('%s area file is: %s' % (inputType, OutputFile))
 
     return OutputFile, available

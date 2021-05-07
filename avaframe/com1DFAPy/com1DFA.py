@@ -299,7 +299,7 @@ def prepareInputData(demFile, relFile, inputSimFiles):
     if entFile:
         entLine = shpConv.readLine(entFile, '', demOri)
         entrainmentArea = os.path.splitext(os.path.basename(entFile))[0]
-        entLine['fileName'] = [entrainmentArea]
+        entLine['fileName'] = [entFile]
     else:
         entLine = None
         entrainmentArea = ''
@@ -309,7 +309,7 @@ def prepareInputData(demFile, relFile, inputSimFiles):
     if resFile:
         resLine = shpConv.readLine(resFile, '', demOri)
         resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
-        resLine['fileName'] = [resistanceArea]
+        resLine['fileName'] = [resFile]
     else:
         resLine = None
         resistanceArea = ''
@@ -548,15 +548,15 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
 
     # ------------------------
     # process secondary release info to get it as a list of rasters
-    log.info('Initializing secondary release area')
     secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
-    if secondaryReleaseLine:
+    if secondaryReleaseLine and cfgGen.getboolean('secRelArea'):
+        log.info('Initializing secondary release area')
         # fetch secondary release areas
-        rasterList = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
+        secRelRasterList = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
         # remove overlap with main release areas
         noOverlaprasterList = []
-        for secRelRatser in rasterList:
-            noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release', crop=True))
+        for secRelRatser, secRelName in zip(secRelRasterList, secondaryReleaseLine['Name']):
+            noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release ' + secRelName, 'Release', crop=True))
 
         secondaryReleaseInfo = {}
         secondaryReleaseInfo['rasterList'] = noOverlaprasterList
@@ -567,12 +567,17 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
     # initialize entrainment and resistance
-    log.info('Initializing entrainment area')
     # get info of simType and whether or not to initialize resistance and entrainment
     simTypeActual = cfgGen['simTypeActual']
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], relRaster, reportAreaInfo)
+    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], reportAreaInfo)
+    # check if entrainment and release overlap
+    entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', 'Release', crop=True)
+    # check for overlap with the secondary release area
+    if secondaryReleaseInfo:
+        for secRelRatser in secondaryReleaseInfo['rasterList']:
+            entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRatser, 'Entrainment', 'Secondary release ', crop=True)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
@@ -839,7 +844,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, simTypeActual, entLine, relRaster, reportAreaInfo):
+def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo):
     """ Initialize mass for entrainment
 
     Parameters
@@ -858,11 +863,10 @@ def initializeMassEnt(dem, simTypeActual, entLine, relRaster, reportAreaInfo):
     nrows = header.nrows
     if 'ent' in simTypeActual:
         entrainmentArea = entLine['fileName']
-        log.info('Entrainment area: %s' % (entrainmentArea))
+        log.info('Initializing entrainment area %s' % (entrainmentArea))
+        log.info('Entrainment area features: %s' % (entLine['Name']))
         entrMassRaster = prepareArea(entLine, dem)
         reportAreaInfo['entrainment'] = 'Yes'
-        # check if entrainment and release overlap
-        entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', crop=True)
     else:
         entrMassRaster = np.zeros((nrows, ncols))
         reportAreaInfo['entrainment'] = 'No'
@@ -892,7 +896,8 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo):
     nrows = header.nrows
     if simTypeActual in ['entres', 'res']:
         resistanceArea = resLine['fileName']
-        log.info('Resistance area: %s' % (resistanceArea))
+        log.info('Initializing resistance area %s' % (resistanceArea))
+        log.info('Resistance area features: %s' % (resLine['Name']))
         mask = prepareArea(resLine, dem)
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
         reportAreaInfo['resistance'] = 'Yes'
@@ -1359,7 +1364,6 @@ def prepareArea(releaseLine, dem, relThList='', combine=True):
     NameRel = releaseLine['Name']
     StartRel = releaseLine['Start']
     LengthRel = releaseLine['Length']
-    Raster = np.zeros(np.shape(dem['rasterData']))
     RasterList = []
 
     for i in range(len(NameRel)):
@@ -1373,11 +1377,10 @@ def prepareArea(releaseLine, dem, relThList='', combine=True):
         # if relTh is given - set relTh
         if relThList != '':
             log.info('Release feature %s, relTh= %.2f' % (name, relThList[i]))
-            Raster = np.zeros(np.shape(dem['rasterData']))
-            Raster = polygon2Raster(dem['header'], avapath, Raster, relTh=relThList[i])
-            RasterList.append(Raster)
+            Raster = polygon2Raster(dem['header'], avapath, relTh=relThList[i])
         else:
-            Raster = polygon2Raster(dem['header'], avapath, Raster, relTh='')
+            Raster = polygon2Raster(dem['header'], avapath)
+        RasterList.append(Raster)
 
     # if RasterList not empty check for overlap between features
     Raster = np.zeros(np.shape(dem['rasterData']))
@@ -1387,7 +1390,7 @@ def prepareArea(releaseLine, dem, relThList='', combine=True):
         indMatch = np.logical_and(ind1, ind2)
         # if there is an overlap, raise error
         if indMatch.any():
-            message = 'Release area features are overlaping - this is not allowed'
+            message = 'Features are overlaping - this is not allowed'
             log.error(message)
             raise AssertionError(message)
         Raster = Raster + rast
@@ -1397,7 +1400,7 @@ def prepareArea(releaseLine, dem, relThList='', combine=True):
         return RasterList
 
 
-def polygon2Raster(demHeader, Line, Mask, relTh=''):
+def polygon2Raster(demHeader, Line, relTh=''):
     """ convert line to raster
 
     Parameters
@@ -1441,10 +1444,8 @@ def polygon2Raster(demHeader, Line, Mask, relTh=''):
     Y = Y.flatten()
     points = np.stack((X, Y), axis=-1)
     mask = path.contains_points(points)
-    mask = mask.reshape((nrows, ncols)).astype(int)
-    # mask = geoTrans.poly2maskSimple(xCoord, yCoord, ncols, nrows)
-    Mask = Mask + mask
-    # set release thickness unless release thickness field is provided, then return array with ones
+    Mask = mask.reshape((nrows, ncols)).astype(int)
+    # thickness field is provided, then return array with ones
     if relTh != '':
         log.info('REL set from dict, %.2f' % relTh)
         Mask = np.where(Mask > 0, relTh, 0.)
