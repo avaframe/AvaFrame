@@ -217,6 +217,7 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
                 message = 'No release scenario called: %s' % (relf)
                 log.error(message)
                 raise FileNotFoundError(message)
+            relFiles.append(relf)
         log.debug('Release area file is specified to be: %s' % relFiles)
     else:
         releaseDir = 'REL'

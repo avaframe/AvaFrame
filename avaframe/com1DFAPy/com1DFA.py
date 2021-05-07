@@ -711,9 +711,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     particles['hBilinearNearest'] = Hpart
     particles['hBilinearBilinear'] = Hpart
     particles['hSPH'] = Hpart
-    particles['GHX'] = np.zeros(np.shape(Xpart))
-    particles['GHY'] = np.zeros(np.shape(Xpart))
-    particles['GHZ'] = np.zeros(np.shape(Xpart))
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
@@ -1586,13 +1583,6 @@ def releaseSecRelArea(cfg, particles, fields, dem):
                 log.info('Initializing secondary release area feature %s' % secRelRasterName)
                 secRelParticles, fields = initializeParticles(cfg, secRelRaster, dem)
 
-                # # save particles and fields for the initial time step to file
-                # outDirData = os.path.join(outDir, 'secondaryReleaseArea', secRelRasterName)
-                # exportFields(cfg, [0.], [fields], demOri, outDirData, secRelRasterName)
-                # if 'particles' in cfg['resType']:
-                #     # export particles dictionaries of saving time steps
-                #     savePartToPickle([secRelParticles], outDirData)
-
                 # release secondary release area by just appending the particles
                 log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
                 particles = mergeParticleDict(particles, secRelParticles)
@@ -1756,6 +1746,25 @@ def removePart(particles, mask, nRemove):
 
 
 def splitPart(cfg, particles, dem):
+    """Split big particles
+
+    Split particles bigger than 1.5 times the massPerPart
+
+    Parameters
+    ----------
+    cfg: configparser
+        DFA configuration
+    particles : dict
+        particles dictionary
+    dem : dict
+        dem dictionary
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary
+
+    """
     massPerPart = cfg.getfloat('massPerPart')
     m = particles['m']
     nSplit = np.round(m/massPerPart)
@@ -1787,25 +1796,33 @@ def splitPart(cfg, particles, dem):
 
 
 def mergeParticleDict(particles1, particles2):
-    particles1['Npart'] = particles1['Npart'] + particles2['Npart']
-    particles1['NPPC'] = np.append(particles1['NPPC'], particles2['NPPC'])
-    particles1['x'] = np.append(particles1['x'], particles2['x'])
-    particles1['y'] = np.append(particles1['y'], particles2['y'])
-    particles1['z'] = np.append(particles1['z'], particles2['z'])
-    particles1['s'] = np.append(particles1['s'], particles2['s'])
-    particles1['l'] = np.append(particles1['l'], particles2['l'])
-    particles1['ux'] = np.append(particles1['ux'], particles2['ux'])
-    particles1['uy'] = np.append(particles1['uy'], particles2['uy'])
-    particles1['uz'] = np.append(particles1['uz'], particles2['uz'])
-    particles1['m'] = np.append(particles1['m'], particles2['m'])
-    particles1['mTot'] = np.sum(particles1['m'])
-    particles1['h'] = np.append(particles1['h'], particles2['h'])
-    particles1['inCellDEM'] = np.append(particles1['inCellDEM'], particles2['inCellDEM'])
-    particles1['indXDEM'] = np.append(particles1['indXDEM'], particles2['indXDEM'])
-    particles1['indYDEM'] = np.append(particles1['indYDEM'], particles2['indYDEM'])
-    particles1['partInCell'] = np.append(particles1['partInCell'], particles2['partInCell'])
+    """Merge two particles dictionary
 
-    return particles1
+    Parameters
+    ----------
+    particles1 : dict
+        first particles dictionary
+    particles2 : dict
+        second particles dictionary
+
+    Returns
+    -------
+    particles1 : dict
+        merged particles dictionary
+
+    """
+    particles = {}
+    for key in particles1:
+        if key == 'Npart':
+            particles['Npart'] = particles1['Npart'] + particles2['Npart']
+        elif (key in particles2) and (type(particles1[key]).__module__ == np.__name__):
+            if np.size(particles1[key]) > 1:
+                particles[key] = np.append(particles1[key], particles2[key])
+            else:
+                particles[key] = particles1[key] + particles2[key]
+        else:
+            particles[key] = particles1[key]
+    return particles
 
 
 def savePartToPickle(dictList, outDir, logName):
@@ -1906,7 +1923,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
         count = count + 1
 
 
-def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
+def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
     """ export result fields to Outputs directory according to result parameters and time step
         that can be specified in the configuration file
 
