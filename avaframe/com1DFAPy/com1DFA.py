@@ -1014,6 +1014,9 @@ def DFAIterate(cfg, particles, fields, dem):
         massEntrained.append(particles['massEntrained'])
         massTotal.append(particles['mTot'])
         timeM.append(t)
+        # make sure the array is not empty
+        if dtSave.size == 0:
+            dtSave = [2*cfgGen.getfloat('tEnd')]
         if t >= dtSave[0]:
             Tsave.append(t)
             log.info('Saving results for time step t = %f s', t)
@@ -1025,10 +1028,7 @@ def DFAIterate(cfg, particles, fields, dem):
             log.debug(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
             log.debug(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
             fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
-            if len(dtSave) > 1:
-                dtSave = dtSave[1:]
-            else:
-                dtSave = [2*cfgGen.getfloat('tEnd')]
+            dtSave = dtSave[1:]
 
         if cfgGen.getboolean('cflTimeStepping'):
             # overwrite the dt value in the cfg

@@ -23,24 +23,21 @@ def test_getInputData(tmp_path):
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
     shutil.copytree(avaData, avaInputs)
 
-    # flags for entrainment and resistance
-    flagEnt = True
-    flagRes = True
-
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'flagEnt': 'True', 'flagRes': 'True', 'flagDev': 'False', 'releaseScenario': ''}
     cfgGen = cfg['GENERAL']
 
     # call function to be tested
-    dem, rels, ent, res, flagEntRes = getInput.getInputData(avaDir, cfgGen)
+    dem, rels, ent, res, entResInfo = getInput.getInputData(avaDir, cfgGen)
     # second option
     cfg['GENERAL']['releaseScenario'] = 'release1HS'
-    dem2, rels2, ent2, res2, flagEntRes2 = getInput.getInputData(avaDir, cfgGen)
+    dem2, rels2, ent2, res2, entResInfo2 = getInput.getInputData(avaDir, cfgGen)
     # Test
     assert dem == os.path.join(avaDir, 'Inputs', 'DEM_HS_Topo.asc')
     assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release3HS.shp')]
     assert rels2 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
     assert res == ''
     assert ent == os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp')
-    assert flagEntRes['flagEntRes'] == True
+    assert entResInfo['flagEnt'] == "Yes"
+    assert entResInfo['flagRes'] == "No"
