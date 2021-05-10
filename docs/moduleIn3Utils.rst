@@ -233,11 +233,12 @@ This function creates the folder structure required to perform avalanche simulat
 
 		NameOfAvalanche/
 			Inputs/
+				ENT/		- entrainment areas
+				LINES/		- avalanche paths
+				POINTS/		- split points
 				REL/		- release area scenario
 				RES/		- resistance areas
-				ENT/		- entrainment areas
-				POINTS/		- split points
-				LINES/		- avalanche paths
+				SECREL/ - secondary release areas
 				.asc		- DEM
 			Outputs/
 			Work/

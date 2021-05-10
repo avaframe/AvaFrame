@@ -19,6 +19,7 @@ def _checkForFolderAndDelete(baseDir, folderName):
     except FileNotFoundError:
         log.debug("No %s folder found.", folderName)
 
+
 def _checkAvaDirVariable(avaDir):
     '''Check for empty or nonString avaDir variable'''
     # check for empty avaDir name, abort if empty
@@ -33,6 +34,7 @@ def _checkAvaDirVariable(avaDir):
         return 'AvaDir is NOT a string'
 
     return 'SUCCESS'
+
 
 def cleanModuleFiles(avaDir, module, alternativeName=''):
     '''Cleans all generated files from the provided module in the outputs
@@ -73,6 +75,7 @@ def cleanModuleFiles(avaDir, module, alternativeName=''):
     _checkForFolderAndDelete(workDir, modName)
 
     return 'SUCCESS'
+
 
 def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     '''
@@ -148,7 +151,7 @@ def createFolderStruct(pathAvaName):
 
     Inputs = checkMakeDir(pathAvaName, 'Inputs')
 
-    inputsSubDirs = ['RES', 'REL', 'ENT',
+    inputsSubDirs = ['RES', 'REL', 'SECREL', 'ENT',
                      'POINTS', 'LINES']
 
     for cuDir in inputsSubDirs:
