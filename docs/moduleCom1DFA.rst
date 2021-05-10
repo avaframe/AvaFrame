@@ -28,6 +28,7 @@ and the following files are optional:
 
 * entrainment area as shapefile (in Inputs/ENT)
 * resistance area as shapefile (in Inputs/RES)
+* secondary release area as shapefile (in Inputs/SECREL)
 
 The simulation settings area defined in the configuration file ``com1DFACfg.ini``:
 
