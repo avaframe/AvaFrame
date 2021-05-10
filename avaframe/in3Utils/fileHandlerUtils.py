@@ -222,7 +222,7 @@ def splitTimeValueToArrayInterval(cfgGen):
         items = np.delete(items, 0)
     # make sure the array is not empty
     if items.size == 0:
-        items = np.array([endTime])
+        items = np.array([2*endTime])
 
     return items
 

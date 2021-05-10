@@ -65,7 +65,9 @@ def getDEMPath(avaDir):
 
 
 def getInputData(avaDir, cfg, flagDev=False):
-    """ Fetch input datasets required for simulation
+    """ Fetch input datasets required for simulation, duplicated function because
+        simulation type set differently in com1DFAPy compared to com1DFA:
+        TODO: remove duplicate once it is not required anymore
 
     Parameters
     ----------
@@ -82,19 +84,21 @@ def getInputData(avaDir, cfg, flagDev=False):
         list of full path to DEM .asc file
     relFiles : list
         list of full path to release area scenario .shp files
-    entFiles[0] : str (fist element of list)
-        list of full path to entrainment area .shp files
-    resFiles[0] : str (first element of list)
-        list of full path to resistance area .shp files
-    flagEntRes : bool
-        flag if True entrainment and/or resistance areas found and used for simulation
+    secondaryReleaseFile : str
+        full path to secondary release area .shp file
+    entFile : str
+        full path to entrainment area .shp file
+    resFile : str
+        full path to resistance area .shp file
+    entResInfo : flag dict
+        flag if Yes entrainment and/or resistance areas found and used for simulation
     """
 
     # Set directories for inputs, outputs and current work
     inputDir = os.path.join(avaDir, 'Inputs')
 
     # Set flag if there is an entrainment or resistance area
-    entResInfo= {'flagEntRes': False, 'flagEnt': 'No', 'flagRes': 'No'}
+    entResInfo= {'flagEnt': 'No', 'flagRes': 'No'}
 
     # Initialise release areas, default is to look for shapefiles
     if flagDev is True:
@@ -109,10 +113,11 @@ def getInputData(avaDir, cfg, flagDev=False):
                 relf = os.path.join(inputDir, releaseDir, rel)
             else:
                 relf = os.path.join(inputDir, releaseDir, '%s.shp' % (rel))
-            if os.path.isfile(relf) is True:
-                relFiles.append(relf)
-            else:
-                log.error('No release scenario called: %s' % (relf))
+            if not os.path.isfile(relf):
+                message = 'No release scenario called: %s' % (relf)
+                log.error(message)
+                raise FileNotFoundError(message)
+            relFiles.append(relf)
         log.debug('Release area file is specified to be: %s' % relFiles)
     else:
         releaseDir = 'REL'
@@ -120,46 +125,17 @@ def getInputData(avaDir, cfg, flagDev=False):
     log.info('Release area files are: %s' % relFiles)
 
     # Initialise resistance areas
-    if cfg.getboolean('noResistance'):
-        resFiles = []
-        resFiles.append('')
-    else:
-        resFiles = glob.glob(inputDir+os.sep + 'RES' + os.sep+'*.shp')
-        if len(resFiles) < 1:
-            log.debug('No resistance file found')
-            resFiles.append('')  # Kept this for future enhancements
-        else:
-            try:
-                message = 'There shouldn\'t be more than one resistance .shp file in ' + inputDir + '/RES/'
-                assert len(resFiles) < 2, message
-            except AssertionError:
-                raise
-            entResInfo['flagRes'] = 'Yes'
-            entResInfo['flagEntRes'] = True
-
+    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance')
+    if resFile==None:
+        resFile = ''
     # Initialise entrainment areas
-    if cfg.getboolean('noEntrainment'):
-        entFiles = []
-        entFiles.append('')
-    else:
-        entFiles = glob.glob(inputDir+os.sep + 'ENT' + os.sep+'*.shp')
-        if len(entFiles) < 1:
-            log.debug('No entrainment file found')
-            entFiles.append('')  # Kept this for future enhancements
-        else:
-            try:
-                message = 'There shouldn\'t be more than one entrainment .shp file in ' + inputDir + '/ENT/'
-                assert len(entFiles) < 2, message
-            except AssertionError:
-                raise
-            entResInfo['flagEnt'] = 'Yes'
-            entResInfo['flagEntRes'] = True
-
+    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment')
+    if entFile==None:
+        entFile = ''
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
-    # return DEM, first item of release, entrainment and resistance areas
-    return demFile, relFiles, entFiles[0], resFiles[0], entResInfo
+    return demFile, relFiles, entFile, resFile, entResInfo
 
 
 def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
