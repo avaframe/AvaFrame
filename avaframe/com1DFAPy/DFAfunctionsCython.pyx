@@ -127,7 +127,7 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def computeForceC(cfg, particles, fields, dem, dT):
+def computeForceC(cfg, particles, fields, dem, dT, frictType):
   """ compute forces acting on the particles (without the SPH component)
 
   Cython implementation implementation
@@ -162,7 +162,6 @@ def computeForceC(cfg, particles, fields, dem, dT):
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double curvAcceleration = cfg.getfloat('curvAcceleration')
   cdef double velMagMin = cfg.getfloat('velMagMin')
-  cdef int frictType = cfg.getint('frictType')
   cdef int interpOption = cfg.getint('interpOption')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef double dt = dT
@@ -624,7 +623,7 @@ def updatePositionC(cfg, particles, dem, force):
   # this is dangerous!!!!!!!!!!!!!!
   ###############################################################
   # remove particles that are not located on the mesh any more
-  particles = com1DFA.removeOutPart(cfg, particles, dem)
+  particles = com1DFA.removeOutPart(cfg, particles, dem, dt)
 
   # split particles with too much mass
   particles = com1DFA.splitPart(cfg, particles, dem)

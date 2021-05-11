@@ -164,7 +164,7 @@ def getInputData(avaDir, cfg, flagDev=False):
 
 
 
-def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
+def getInputDataCom1DFAPy(avaDir, cfg):
     """ Fetch input datasets required for simulation, duplicated function because
         simulation type set differently in com1DFAPy compared to com1DFA:
         TODO: remove duplicate once it is not required anymore
@@ -175,8 +175,6 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
         path to avalanche directory
     cfg : dict
         configuration read from com1DFA simulation ini file
-    flagDev : bool
-        optional - if True: use for devREL folder to get release area scenarios
 
     Returns
     -------
@@ -194,6 +192,9 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
 
     # Set directories for inputs, outputs and current work
     inputDir = os.path.join(avaDir, 'Inputs')
+
+    # Load dev flag
+    flagDev = cfg.getboolean('flagDev')
 
     # Set flag if there is an entrainment or resistance area
     entResInfo= {'flagEntRes': False, 'flagEnt': 'No', 'flagRes': 'No'}
@@ -251,4 +252,7 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
     demFile = getDEMPath(avaDir)
 
     # return DEM, first item of release, entrainment and resistance areas
-    return demFile, relFiles, entFiles[0], resFiles[0], entResInfo
+    inputSimFiles = {'demFile': demFile, 'relFiles': relFiles, 'entFile': entFiles[0], 'resFile': resFiles[0], 'entResInfo': entResInfo}
+
+    # return DEM, first item of release, entrainment and resistance areas
+    return inputSimFiles
