@@ -39,6 +39,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.extlinks',
     'sphinxcontrib.bibtex',
+    'sphinx.ext.graphviz',
 ]
 
 bibtex_bibfiles = ['references_all.bib']
