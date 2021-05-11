@@ -105,8 +105,9 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
 
         # create hash to check if config didnt change
         simHashFinal = cfgUtils.cfgHash(cfgFinal)
-        log.info('simHash check for final cfg %s' % simHashFinal)
-        #cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, cfg, fileName='%s_after' % simHashFinal)
+        if simHashFinal != simHash:
+            log.warning('simulation configuration has been changed since start')
+            cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, cfg, fileName='%s_butModified' % simHash)
 
 
     # Set directory for report
