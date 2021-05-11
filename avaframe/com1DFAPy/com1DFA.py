@@ -1026,7 +1026,7 @@ def DFAIterate(cfg, particles, fields, dem):
             log.debug(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
             log.debug(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
             fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
-            if dtSave.size == 0:
+            if dtSave.size == 1:
                 dtSave = [2*cfgGen.getfloat('tEnd')]
             else:
                 dtSave = dtSave[1:]
@@ -1787,13 +1787,14 @@ def splitPart(cfg, particles, dem):
             particles['uy'] = np.append(particles['uy'], particles['uy'][ind]*np.ones((nAdd)))
             particles['uz'] = np.append(particles['uz'], particles['uz'][ind]*np.ones((nAdd)))
             particles['m'] = np.append(particles['m'], mNew*np.ones((nAdd)))
-            particles['mTot'] = np.sum(particles['m'])
+            particles['m'][ind] = mNew
             particles['h'] = np.append(particles['h'], particles['h'][ind]*np.ones((nAdd)))
             particles['inCellDEM'] = np.append(particles['inCellDEM'], particles['inCellDEM'][ind]*np.ones((nAdd)))
             particles['indXDEM'] = np.append(particles['indXDEM'], particles['indXDEM'][ind]*np.ones((nAdd)))
             particles['indYDEM'] = np.append(particles['indYDEM'], particles['indYDEM'][ind]*np.ones((nAdd)))
             particles['partInCell'] = np.append(particles['partInCell'], particles['partInCell'][ind]*np.ones((nAdd)))
 
+        particles['mTot'] = np.sum(particles['m'])
     return particles
 
 
