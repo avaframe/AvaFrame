@@ -415,13 +415,13 @@ differently.
 Artificial viscosity
 --------------------
 
-Question: Why add the artificial viscosity at the beginning of the time step? makes no sense
 
 In :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche`, the governing
 equations for the DFA were derived and all first order or smaller terms where neglected.
 Among those terms is the lateral shear stress. This term leads toward
 the homogenization of the velocity field. It means that two neighbor elements
 of fluid should have similar velocities. The aim behind adding artificial viscosity is to
+take this phenomena into account. The following vicosity force is added:
 
 
 .. math::
@@ -431,7 +431,7 @@ of fluid should have similar velocities. The aim behind adding artificial viscos
     = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\| A_{Lat} \mathbf{du}
     \end{aligned}
 
-Where the velocity difference reads :math:`\mathbf{du} = \mathbf{u} - \mathbf{\bar{u}}`
+Where the velocity difference reads :math:`\mathbf{du} = \mathbf{u} - \mathbf{\bar{u}}` 
 (:math:`\mathbf{\bar{u}}` is the mesh velocity interpolated at the particle position).
 :math:`C_{Lat}` is a coefficient that rules the viscous force. It would be the
 equivalent of :math:`C_{Drag}` in the case of the drag force. The :math:`C_{Lat}`

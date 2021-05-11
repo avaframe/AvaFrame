@@ -403,7 +403,7 @@ Several friction models already implemented in the simulation tool are
 described here.
 
 SamosAT Model
-~~~~~~~~~~~~~
+""""""""""""""
 
 SamosAT friction model is a modification of some more clasical models
 such as Voellmy model. The basal shear stress tensor :math:`\tau^{(b)}`
