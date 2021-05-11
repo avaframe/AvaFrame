@@ -304,7 +304,7 @@ def getAreaMesh(Nx, Ny, Nz, csz, num):
     return A
 
 
-def removeOutPart(cfg, particles, dem):
+def removeOutPart(cfg, particles, dem, dt):
     """ find and remove out of raster particles
 
     Parameters
@@ -315,13 +315,15 @@ def removeOutPart(cfg, particles, dem):
         particles dictionary
     dem : dict
         dem dictionary
+    dt: float
+        time step
 
     Returns
     -------
     particles : dict
         particles dictionary
     """
-    dt = cfg.getfloat('dt')
+    
     header = dem['header']
     nrows = header.nrows
     ncols = header.ncols

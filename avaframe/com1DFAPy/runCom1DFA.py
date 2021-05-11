@@ -3,17 +3,23 @@
 """
 
 import os
+import json
 
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.com1DFAPy.com1DFA as com1DFA
 from avaframe.out1Peak import outPlotAllPeak as oP
+from avaframe.in1Data import getInput as gI
+import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+import avaframe.com1DFAPy.com1DFA as com1DFAPy
+import avaframe.com1DFAPy.deriveParameterSet as dP
 
 
-def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
+def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
+
     """ run com1DFAPy module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -40,29 +46,80 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField=''):
     log.info('MAIN SCRIPT')
     log.info('Current avalanche: %s', avalancheDir)
 
-    # Load configuration
-    if cfgFile != '':
-        cfg = cfgUtils.getModuleConfig(com1DFA, cfgFile)
+    # Load standard/ default configuration
+    standardCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+    # add avalanche directory info
+    standardCfg['GENERAL']['avalancheDir'] = avalancheDir
+
+    # Create output and work directories
+    # set module name, reqiured as long we are in dev phase
+    # - because need to create e.g. Output folder for com1DFAPy to distinguish from
+    modName = 'com1DFAPy'
+    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
+
+    # fetch input data - dem, release-, entrainment- and resistance areas
+    inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, standardCfg['FLAGS'])
+
+    # generate list of simulations from desired configuration
+    if variationDict == '':
+        variationDict = dP.getVariationDict(avalancheDir, com1DFA, standardCfg, cfgFile=cfgFile)
     else:
-        cfg = cfgUtils.getModuleConfig(com1DFA)
+        log.info('Variations are performed for:')
+        for key in variationDict:
+            log.info('%s: %s' % (key, variationDict[key]))
 
-    # +++++++++++++++++++++++++++++++++
-    # ------------------------
-    particlesList, fieldsList, Tsave, dem, reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir, relThField)
+    # create a list of simulations
+    # if need to reproduce exactely the hash - need to be strings with exately the same number of digits!!
+    simDict = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True)
 
-    # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
-    # Generate plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
+    log.info('The following simulations will be performed')
+    for key in simDict:
+        log.info('Simulation: %s' % key)
+
+    reportDictList = []
+    # loop over all simulations
+    for cuSim in simDict:
+
+        # load configuration dictionary for cuSim
+        cfg = simDict[cuSim]['cfgSim']
+
+        # save configuration settings for each simulation
+        simHash = simDict[cuSim]['simHash']
+        cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, cfg, fileName=simHash)
+
+        # log simulation name
+        log.info('Run simulation: %s' % cuSim)
+
+        # set release area scenario
+        inputSimFiles['releaseScenario'] = simDict[cuSim]['relFile']
+
+        # +++++++++++++++++++++++++++++++++
+        # ------------------------
+        particlesList, fieldsList, Tsave, dem, reportDict, cfgFinal = com1DFA.com1DFAMain(cfg, avalancheDir, cuSim, inputSimFiles, outDir, relThField)
+
+        # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+        # Generate plots for all peakFiles
+        plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
+
+        reportDictList.append(reportDict)
+
+        # create hash to check if config didnt change
+        simHashFinal = cfgUtils.cfgHash(cfgFinal)
+        log.info('simHash check for final cfg %s' % simHashFinal)
+        #cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, cfg, fileName='%s_after' % simHashFinal)
+
 
     # Set directory for report
     reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAPy', 'reports')
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
-
     # export for visulation
     if cfg['VISUALISATION'].getboolean('writePartToCSV'):
         outDir = os.path.join(avalancheDir, 'Outputs', modName)
         com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+
+    # read all simulation configuration files and return dataFrame and write to csv
+    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg, writeCSV=True)
 
     return particlesList, fieldsList, Tsave, dem, plotDict, reportDictList
 

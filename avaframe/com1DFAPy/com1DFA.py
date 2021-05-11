@@ -9,6 +9,7 @@ import numpy as np
 import glob
 import copy
 import pickle
+import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.path as mpltPath
@@ -29,6 +30,7 @@ import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
+import avaframe.com1DFAPy.com1DFA as com1DFAPy
 
 #######################################
 # Set flags here
@@ -46,7 +48,7 @@ flagRand = True
 featLF = False
 
 
-def com1DFAMain(cfg, avaDir, relThField):
+def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     """ Run main model
 
     This will compute a dense flow avalanche
@@ -70,92 +72,51 @@ def com1DFAMain(cfg, avaDir, relThField):
     # Setup configuration
     cfgGen = cfg['GENERAL']
 
-    # add avalanache directory to configuration
-    cfgGen['avalancheDir'] = avaDir
+    # create required input from files
+    demOri, inputSimLines = prepareInputData(inputSimFiles)
 
-     # turn friction models into integers
-    frictModelsList = ['samosAT', 'Coulomb']
-    cfgGen['frictType'] = str(frictModelsList.index(cfgGen['frictModel']) + 1)
-    log.info('Friction Model used: %s, %s' % (cfgGen['frictModel'], cfgGen['frictType']))
+    # find out which simulations to perform
+    relName, relDict, badName = prepareRelase(cfg, inputSimFiles['releaseScenario'])
+    releaseLine['d0'] = relDict['d0']
 
-    # Log current avalanche directory
-    log.debug('Your current avalanche name: %s' % avaDir)
+    log.info('Perform %s simulation' % cuSimName)
 
-    # Create output and work directories
-    # set module name, reqiured as long we are in dev phase
-    # - because need to create e.g. Output folder for com1DFAPy to distinguish from
-    modName = 'com1DFAPy'
-    workDir, outDir = inDirs.initialiseRunDirs(avaDir, modName)
+    # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
+    # for timing the sims
+    startTime = time.time()
+    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName, relThField)
+    relFiles = releaseLine['fileName']
 
-    # Load input data
-    flagDev = cfg['FLAGS'].getboolean('flagDev')
+    # ------------------------
+    #  Start time step computation
+    Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
 
-    # fetch input data - dem, release-, entrainment- and resistance areas
-    inputSimFiles = gI.getInputDataCom1DFAPy(avaDir, cfg, flagDev)
+    # write mass balance to File
+    writeMBFile(infoDict, avaDir, cuSimName)
 
-    # Counter for release area loop
-    countRel = 0
+    tcpuDFA = '%.2f' % (time.time() - startTime)
+    log.debug(('cpu time DFA = %s s' % (tcpuDFA)))
 
-    # Setup simulation dictionaries for report genereation
-    reportDictList = []
+    if 'particles' in cfgGen['resType']:
+        # export particles dictionaries of saving time steps
+        outDirData = os.path.join(outDir, 'particles')
+        fU.makeADir(outDirData)
+        savePartToPickle(particlesList, outDirData)
 
-    # Loop through release areas
-    relFiles = inputSimFiles['relFiles']
-    for rel in relFiles:
+    # Result parameters to be exported
+    exportFields(cfg, Tsave, fieldsList, inputSimFiles['releaseScenario'], demOri, outDir, cuSimName)
 
-        demOri, inputSimLines = prepareInputData(rel, inputSimFiles)
+    # write report dictionary
+    entrainmentArea = inputSimLines['entrainmentArea']
+    resistanceArea = inputSimLines['resistanceArea']
+    reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines['releaseLine'], cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
+    # add time and mass info to report
+    reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict)
 
-        # find out which simulations to perform
-        relName, cuSim, inputSimLines, badName = getSimulation(cfg, rel, inputSimLines)
-
-        for sim in cuSim:
-            #logName = sim + '_' + cfgGen['mu']
-            logName = relName + '_' + sim + '_dfa_' + cfgGen['mu']
-            log.info('Perform %s simulation' % logName)
-            # add simType to configuration
-            cfgGen['simTypeActual'] = sim
-
-            # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
-            # for timing the sims
-            startTime = time.time()
-            particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir)
-            # ------------------------
-            #  Start time step computation
-            Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
-
-            # write mass balance to File
-            writeMBFile(infoDict, avaDir, logName)
-
-            tcpuDFA = '%.2f' % (time.time() - startTime)
-            log.debug(('cpu time DFA = %s s' % (tcpuDFA)))
-
-            if 'particles' in cfgGen['resType']:
-                # export particles dictionaries of saving time steps
-                outDirData = os.path.join(outDir, 'particles')
-                fU.makeADir(outDirData)
-                savePartToPickle(particlesList, outDirData, logName)
-
-            # Result parameters to be exported
-            exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName)
-
-            # write report dictionary
-            entrainmentArea = inputSimLines['entrainmentArea']
-            resistanceArea = inputSimLines['resistanceArea']
-            reportDict = createReportDict(avaDir, logName, relName, inputSimLines['releaseLine'], cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
-            # add time and mass info to report
-            reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict)
-
-            # Add to report dictionary list
-            reportDictList.append(reportDict)
-
-            # Count total number of simulations
-            countRel = countRel + 1
-    log.debug('Avalanche Simulations performed')
-
-    return particlesList, fieldsList, Tsave, dem, reportDictList
+    return particlesList, fieldsList, Tsave, dem, reportDict, cfg
 
 
-def getSimulation(cfg, rel, inputSimLines):
+def prepareRelase(cfg, rel):
     """ get Simulation to run for a given release
 
 
@@ -170,8 +131,6 @@ def getSimulation(cfg, rel, inputSimLines):
     -------
     relName : str
         release name
-    cuSim : list
-        list of simulations to run
     relDict : list
         release dictionary
     badName : boolean
@@ -179,9 +138,6 @@ def getSimulation(cfg, rel, inputSimLines):
     """
 
     entResInfo = inputSimLines['entResInfo']
-
-    # read list of desired simulation types
-    simTypeList = cfg['GENERAL']['simTypeList'].split('|')
 
     # Set release areas and simulation name
     relName = os.path.splitext(os.path.basename(rel))[0]
@@ -201,57 +157,10 @@ def getSimulation(cfg, rel, inputSimLines):
     inputSimLines['releaseLine'] = releaseLine
     log.info('Release area scenario: %s - perform simulations' % (relName))
 
-    if cfg.getboolean('GENERAL', 'secRelArea'):
-        if entResInfo['flagSecondaryRelease'] == 'No':
-            message = 'No secondary release file found'
-            log.error(message)
-            raise FileNotFoundError(message)
-        secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
-        for k in range(len(secondaryReleaseLine['d0'])):
-            if secondaryReleaseLine['d0'][k] == 'None':
-                secondaryReleaseLine['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
-            else:
-                secondaryReleaseLine['d0'][k] = float(secondaryReleaseLine['d0'][k])
-    else:
-        inputSimLines['entResInfo']['flagSecondaryRelease'] = 'No'
-        secondaryReleaseLine = None
-
-    inputSimLines['secondaryReleaseLine'] = secondaryReleaseLine
-
-    # define simulation type
-    if 'available' in simTypeList:
-        if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
-            simTypeList.append('entres')
-        elif entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'No':
-            simTypeList.append('ent')
-        elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'Yes':
-            simTypeList.append('res')
-        # always add null simulation
-        simTypeList.append('null')
-        simTypeList.remove('available')
-
-    # remove duplicate entries
-    simTypeList = set(simTypeList)
-
-    if 'ent' in simTypeList or 'entres' in simTypeList:
-        if entResInfo['flagEnt'] == 'No':
-            message = 'No entrainment file found'
-            log.error(message)
-            raise FileNotFoundError(message)
-    else:
-        inputSimLines['entResInfo']['flagEnt'] = 'No'
-    if 'res' in simTypeList or 'entres' in simTypeList:
-        if entResInfo['flagRes'] == 'No':
-            message = 'No resistance file found'
-            log.error(message)
-            raise FileNotFoundError(message)
-    else:
-        inputSimLines['entResInfo']['flagRes'] = 'No'
-
-    return relName, simTypeList, inputSimLines, badName
+    return relName, relDict, badName
 
 
-def prepareInputData(relFile, inputSimFiles):
+def prepareInputData(inputSimFiles):
     """ Fetch input data
 
     Parameters
@@ -292,7 +201,10 @@ def prepareInputData(relFile, inputSimFiles):
             flag if Yes entrainment and/or resistance areas found and used for simulation
             flag True if a Secondary Release file found and activated
     """
+
+    # load data
     entResInfo = inputSimFiles['entResInfo']
+
     # get dem information
     demOri = IOf.readRaster(inputSimFiles['demFile'])
 
@@ -331,6 +243,7 @@ def prepareInputData(relFile, inputSimFiles):
     inputSimLines = {'releaseLine': releaseLine, 'secondaryReleaseLine': secondaryReleaseLine,
                      'entLine': entLine, 'resLine': resLine, 'entrainmentArea': entrainmentArea,
                      'resistanceArea': resistanceArea, 'entResInfo': entResInfo}
+
     return demOri, inputSimLines
 
 
@@ -440,6 +353,8 @@ def initializeMesh(cfg, demOri, num):
 
     demOri = geoTrans.remeshDEM(cfg, demOri)
     dem = setDEMoriginToZero(demOri)
+    dem['originOri'] = {'xllcenter': demOri['header'].xllcenter, 'yllcenter': demOri['header'].yllcenter}
+
     # read dem header
     headerDEM = dem['header']
     nColsDEM = headerDEM.ncols
@@ -487,7 +402,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir):
+def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     """ create simulaton report dictionary
 
     Parameters
@@ -523,10 +438,6 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
     """
     cfgGen = cfg['GENERAL']
     methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
-
-    # add dem origin to cfg
-    cfgGen['xllcenter'] = str(demOri['header'].xllcenter)
-    cfgGen['yllcenter'] = str(demOri['header'].yllcenter)
 
     # -----------------------
     # Initialize mesh
@@ -740,8 +651,8 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
     particles['peakKinEne'] = kineticEne
     particles['simName'] = logName
-    particles['xllcenter'] = cfg.getfloat('xllcenter')
-    particles['yllcenter'] = cfg.getfloat('yllcenter')
+    particles['xllcenter'] = dem['originOri']['xllcenter']
+    particles['yllcenter'] = dem['originOri']['yllcenter']
 
 
     PFV = np.zeros((nrows, ncols))
@@ -976,6 +887,11 @@ def DFAIterate(cfg, particles, fields, dem):
     resTypesReportString = cfg['REPORT']['plotFields']
     resTypesReport = resTypesReportString.split('_')
     resTypesLast = list(set(resTypes + resTypesReport))
+    # derive friction type
+    # turn friction model into integer
+    frictModelsList = ['samosAT', 'Coulomb']
+    frictType = frictModelsList.index(cfgGen['frictModel']) + 1
+    log.info('Friction Model used: %s, %s' % (cfgGen['frictModel'],frictType))
 
     # Initialise Lists to save fields and add initial time step
     particlesList = []
@@ -1001,12 +917,12 @@ def DFAIterate(cfg, particles, fields, dem):
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
     # add initial time step to Tsave array
     Tsave = [0]
-    # compute time step
-    if cfgGen.getboolean('cflTimeStepping'):
-        # overwrite the dt value in the cfg
-        tD.getcflTimeStep(particles, dem, cfgGen)
-    # get time step
+    # derive time step for first iteration
     dt = cfgGen.getfloat('dt')
+    if cfgGen.getboolean('cflTimeStepping'):
+        # overwrite the dt value
+        dt = tD.getcflTimeStep(particles, dem, cfgGen)
+
     t = t + dt
 
     # Start time step computation
@@ -1019,7 +935,7 @@ def DFAIterate(cfg, particles, fields, dem):
                 cfgGen, particles, fields, dt, dem, Tcpu)
         else:
             particles, fields, Tcpu = computeEulerTimeStep(
-                cfgGen, particles, fields, dt, dem, Tcpu)
+                cfgGen, particles, fields, dt, dem, Tcpu, frictType)
 
         Tcpu['nSave'] = nSave
         particles['t'] = t
@@ -1048,10 +964,11 @@ def DFAIterate(cfg, particles, fields, dem):
 
         if cfgGen.getboolean('cflTimeStepping'):
             # overwrite the dt value in the cfg
-            tD.getcflTimeStep(particles, dem, cfgGen)
+            dt = tD.getcflTimeStep(particles, dem, cfgGen)
+        else:
+            # get time step
+            dt = cfgGen.getfloat('dt')
 
-        # get time step
-        dt = cfgGen.getfloat('dt')
         t = t + dt
         nIter = nIter + 1
         nIter0 = nIter0 + 1
@@ -1137,7 +1054,7 @@ def writeMBFile(infoDict, avaDir, logName):
                     (t[m], massTotal[m], massEntrained[m]))
 
 
-def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
+def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     """ compute next time step using an euler forward scheme
 
     Parameters
@@ -1166,8 +1083,9 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     """
     # get forces
     startTime = time.time()
+
     # loop version of the compute force
-    particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, dt)
+    particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, dt, frictType)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
 
@@ -1333,7 +1251,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     # this is dangerous!!!!!!!!!!!!!!
     ###############################################################
     # remove particles that are not located on the mesh any more
-    particles = DFAtls.removeOutPart(cfg, particles, dem)
+    particles = DFAtls.removeOutPart(cfg, particles, dem, dt)
 
     # ++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()
@@ -1829,3 +1747,155 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
     fig3, ax3 = plotPosition(
         fig3, ax3, partEnd, demOri, fieldEnd['P']/1000, pU.cmapPres, 'kPa', plotPart=False)
     plt.show()
+
+
+def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True):
+    """ Prepare a dictionary with simulations that shall be run with varying parameters following the variation dict
+
+        Parameters
+        -----------
+        standardCfg : configParser object
+            default configuration or local configuration
+        inputSimFiles: dict
+            info dict on available input data
+        variationDict: dict
+            dictionary with parameter to be varied as key and list of it's values
+        varyAll: boolean
+            True if all possible parameter combinations shall be performed
+            False if only one parameter shall be varied and the others from standard configuration
+
+        Returns
+        -------
+        simDict: dict
+            dicionary with info on simHash, releaseScenario, release area file path, simType and contains full configuration
+            configparser object for simulation run
+
+    """
+
+    # get list of simulation types
+    if 'simTypeList' in variationDict:
+        if isinstance(variationDict['simTypeList'], str):
+            simTypeList = [variationDict['simTypeList']]
+        else:
+            simTypeList = variationDict['simTypeList']
+        del variationDict['simTypeList']
+    else:
+        simTypeList = standardCfg['GENERAL']['simTypeList'].split('|')
+    # get a list of simulation types that are desired AND available
+    simTypeList = getSimTypeList(simTypeList, inputSimFiles)
+
+    if varyAll:
+        variationDict['simTypeList'] = simTypeList
+        # get dfs with same, constant index
+        flagFirst = True
+        for parameter in variationDict:
+            if flagFirst:
+                variationDF = pd.DataFrame({parameter: variationDict[parameter]}, index=np.repeat(0, len(variationDict[parameter])))
+                flagFirst = False
+            else:
+                parameterDF = pd.DataFrame({parameter: variationDict[parameter]}, index=np.repeat(0, len(variationDict[parameter])))
+                variationDF = pd.merge(variationDF, parameterDF, left_index=True, right_index=True)
+
+        variationDF = variationDF.reset_index()
+        variationDF = variationDF.drop_duplicates()
+
+        # generate a list of full simulation info for all release area scenarios and simTypes
+        # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
+        simDict = {}
+        ingoredParameters = []
+
+        for rel in inputSimFiles['relFiles']:
+            relName = os.path.splitext(os.path.basename(rel))[0]
+            cfgSim = cfgUtils.createJsonDict(standardCfg)
+            for row in variationDF.itertuples():
+                for parameter in variationDict:
+                    if parameter in cfgSim['GENERAL']:
+                        cfgSim['GENERAL'][parameter] = row._asdict()[parameter]
+                    else:
+                        ingoredParameters.append(parameter)
+                cfgSim['GENERAL']['simTypeActual'] = row._asdict()['simTypeList']
+                cfgSim['GENERAL']['releaseScenario'] = relName
+                # convert back to configParser object
+                cfgSimObject = cfgUtils.writeDictToConfigP(cfgSim)
+                # create unique hash for simulation configuration
+                simHash = cfgUtils.cfgHash(cfgSimObject)
+                simName = relName + '_' + row._asdict()['simTypeList'] + '_dfa_' + simHash
+                simDict[simName] = {'simHash': simHash, 'releaseScenario': relName, 'simType': row._asdict()['simTypeList'], 'relFile': rel, 'cfgSim': cfgSimObject}
+
+    else:
+        # generate a list of full simulation info for all release area scenarios and simTypes
+        # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
+        simDict = {}
+        ingoredParameters = []
+        for parameter in variationDict:
+            for value in variationDict[parameter]:
+                for rel in inputSimFiles['relFiles']:
+                    for sim in simTypeList:
+                        relName = os.path.splitext(os.path.basename(rel))[0]
+                        cfgSim = cfgUtils.createJsonDict(standardCfg)
+                        if parameter in cfgSim['GENERAL']:
+                            cfgSim['GENERAL'][parameter] = value
+                            cfgSim['GENERAL']['simTypeActual'] = sim
+                            cfgSim['GENERAL']['releaseScenario'] = relName
+                            # convert back to configParser object
+                            cfgSimObject = cfgUtils.writeDictToConfigP(cfgSim)
+                            # create unique hash for simulation configuration
+                            simHash = cfgUtils.cfgHash(cfgSimObject)
+                            simName = relName + '_' + sim + '_dfa_' + simHash
+                            simDict[simName] = {'simHash': simHash, 'releaseScenario': relName, 'simType': sim, 'relFile': rel, 'cfgSim': cfgSimObject}
+                        else:
+                            ingoredParameters.append(parameter)
+
+    ingoredParameters = set(ingoredParameters)
+    for par in ingoredParameters:
+        log.warning('Parameter %s cannot be varied- item is ignored' % par)
+
+    return simDict
+
+
+def getSimTypeList(simTypeList, inputSimFiles):
+    """ Define available simulation types of requested types
+
+        Parameters
+        -----------
+        standardCfg : configParser object
+            default configuration or local configuration
+        inputSimFiles: dict
+            info dict on available input data
+
+        Returns
+        --------
+        simTypeList: list
+            list of requested simTypes where also the required input data is available
+
+    """
+
+    # read entrainment resistance info
+    entResInfo = inputSimFiles['entResInfo']
+
+    # define simulation type
+    if 'available' in simTypeList:
+        if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
+            simTypeList.append('entres')
+        elif entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'No':
+            simTypeList.append('ent')
+        elif entResInfo['flagEnt'] == 'No' and entResInfo['flagRes'] == 'Yes':
+            simTypeList.append('res')
+        # always add null simulation
+        simTypeList.append('null')
+        simTypeList.remove('available')
+
+    # remove duplicate entries
+    simTypeList = set(simTypeList)
+    simTypeList = sorted(list(simTypeList), reverse=False)
+
+    if 'ent' in simTypeList or 'entres' in simTypeList:
+        if entResInfo['flagEnt'] == 'No':
+            log.error('No entrainment file found')
+            raise FileNotFoundError
+    if 'res' in simTypeList or 'entres' in simTypeList:
+        if entResInfo['flagRes'] == 'No':
+            log.error('No resistance file found')
+            raise FileNotFoundError
+
+    return simTypeList
