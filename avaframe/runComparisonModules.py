@@ -25,7 +25,7 @@ logName = 'runComparisonModules'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testList = ['avaInclinedPlane', 'avaParabola']
+testList = ['avaInclinedPlane', 'avaParabola', 'avaKot']
 # testList = ['avaInclinedPlane', 'avaHelixChannel', 'avaAlr', 'avaWog', 'avaKot', 'avaHit', 'avaGar', 'avaMal']
 simType = 'res'
 # Set directory for full standard test report
