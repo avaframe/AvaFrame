@@ -107,6 +107,7 @@ Theory
 
     * :doc:`theoryCom1DFA`
     * :doc:`DFAnumerics`
+    * :doc:`com1DFAAlgorithm`
 
 .. toctree::
    :maxdepth: 3
@@ -115,7 +116,7 @@ Theory
 
    theoryCom1DFA.rst
    DFAnumerics.rst
-
+   com1DFAAlgorithm.rst
 
 .. only:: html
 
