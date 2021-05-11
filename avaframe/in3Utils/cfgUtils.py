@@ -231,20 +231,20 @@ def writeCfgFile(avaDir, module, cfg, fileName=''):
 
 
 def readCfgFile(avaDir, module='', fileName=''):
-    """ Save configuration used to text file in Outputs """
+    """ Read configuration from ini file  """
 
 
     # write to file
     if fileName != '':
         inFile = fileName
-    else:
-        # set outputs
-        inFile = os.path.join(avaDir, 'Outputs', '%s%s_settings.ini' % (modName, suffix))
-        # write configuration to text file
+    elif module != '':
+        # read configuration from ini file
         modPath = os.path.dirname(module.__file__)
         # get filename of module
         name = os.path.basename(module.__file__)
         modName = name.split('.')[0]
+        # set outputs
+        inFile = os.path.join(avaDir, 'Outputs', '%s_settings.ini' % (modName))
 
     # read configParser object
     cfg = configparser.ConfigParser()
