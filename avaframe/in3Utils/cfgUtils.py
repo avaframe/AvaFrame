@@ -1,8 +1,6 @@
 '''
     Utilities for handling configuration files
 
-    This file is part of Avaframe.
-
 '''
 
 import configparser
@@ -207,8 +205,6 @@ def compareConfig(iniFile, modName, compare):
 def writeCfgFile(avaDir, module, cfg, fileName=''):
     """ Save configuration used to text file in Outputs """
 
-    # write configuration to ini file
-    modPath = os.path.dirname(module.__file__)
     # get filename of module
     name = os.path.basename(module.__file__)
     modName = name.split('.')[0]
@@ -310,10 +306,10 @@ def writeDictToConfigP(cfgDict):
     return cfg
 
 
-def writeDictToJson(dict, outFilePath):
+def writeDictToJson(inDict, outFilePath):
     """ write a dictionary to a json file """
 
-    jsonDict = json.dumps(dict, sort_keys=True, ensure_ascii=True)
+    jsonDict = json.dumps(inDict, sort_keys=True, ensure_ascii=True)
     f = open(outFilePath, "w")
     f.write(jsonDict)
     f.close()
@@ -356,7 +352,7 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False):
 
     # if writeCSV, write dataFrame to csv file
     if writeCSV:
-        outFile =  os.path.join(inDir, 'allConfigurations.csv')
+        outFile = os.path.join(inDir, 'allConfigurations.csv')
         simDF.to_csv(outFile)
 
     return simDF
