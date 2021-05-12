@@ -655,7 +655,7 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
     if mask.any():
         if crop:
             toCheckRaster[mask] = 0
-            message = '%s area feature overlaping with %s - removing the overlaping part' % (nameToCheck, nameRef)
+            message = '%s area feature overlapping with %s - removing the overlapping part' % (nameToCheck, nameRef)
             log.warning(message)
         else:
             message = '%s area features overlapingwith %s - this is not allowed' % (nameToCheck, nameRef)
