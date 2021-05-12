@@ -1,73 +1,160 @@
 
-digraph "sphinx-ext-graphviz" {
-compound=true;
-  size="12,20";
+digraph "com1DFA algorithm graph" {
+  /* compound=true; */
+  newrank=true;
+  size="100,100";
   rankdir="TB";
-  graph [ranksep=1, splines=ortho, fontname="Verdana", fontsize="18"];
-  node [shape=box style=filled fontsize=12 fontname="Verdana" fillcolor="#efefef"];
-  edge [fontname="Sans", fontsize="9"];
+  graph [compound=true, ranksep=1, splines=ortho, fontname="Verdana", fontsize="32"];
+  node [shape=box, style=filled, fontsize=24 fontname="Verdana" fillcolor="#efefef"];
+  edge [fontname="Sans", fontsize="18"];
 
-  prepareMesh [label="Read and prepare mesh",
-    href="DFAnumerics.html#mesh-and-interpolation"];
-  initializeParticles [label="Initialize particles",
-    href=""];
-  initializeFields [label="Initialize entrainment, \n resistance fields",
-    href="modelCom1DFA.html"];
-  timeLoop [label="Time iterations"];
+  prepareMesh [label=<
+   <table border="0" cellborder="0" cellspacing="1">
+     <tr><td align="left" href="../_autosummary/com1DFAPy.com1DFA.initializeMesh.html#com1DFAPy.com1DFA.initializeMesh" title="initializeMesh function" target="_blank"><b>Read and prepare DEM</b></td></tr>
+     <tr><td align="left" href="../_autosummary/in3Utils.geoTrans.remeshDEM.html#in3Utils.geoTrans.remeshDEM" title="remesh function" target="_blank">remesh if needed</td></tr>
+     <tr><td align="left" href="../DFAnumerics.html#mesh" title="compute normals and area" target="_blank">compute normal vector field and area</td></tr>
+     <tr><td align="left"><font color="darkgreen">done</font></td></tr>
+   </table>>];
+
+  initializeParticles [label=<
+    <table border="0" cellborder="0" cellspacing="1">
+     <tr><td align="left"><b>Initialize particles:</b></td></tr>
+     <tr><td align="left">read mass per particle determinatio method</td></tr>
+     <tr><td align="left">place particles and initialize particle properties</td></tr>
+     <tr><td align="left"><font color="darkgreen">done</font></td></tr>
+    </table>>];
+
+  initializeFields [label=<
+    <table border="0" cellborder="0" cellspacing="1">
+     <tr><td align="left"><b>Initialize fields:</b></td></tr>
+     <tr><td align="left" href="../DFAnumerics.html" title="This is a link title in SVG!" target="_blank">result fields (flow depth, flow velocity...)</td></tr>
+     <tr><td align="left" href="../DFAnumerics.html#artificial-viscosity" target="_blank">entrainment and resistance fields</td></tr>
+    </table>>];
+
+  timeLoop [label="Start time iterations"];
+  timeLoop [label=<
+    <table border="0" cellborder="0" cellspacing="1">
+     <tr><td align="left"><b>Time loop</b></td></tr>
+     <tr><td align="left">Start time iterations</td></tr>
+    </table>>];
   endTimeLoop [width=0 shape=point label=""];
-  artifViscosity [label="Add artificial viscosity",
-    href="DFAnumerics.html#artificial-viscosity"];
-  coputeFrictForce [label="Compute friction forces",
-    href="theoryCom1DFA.html#friction-model"];
+  middleUpdatePos [width=0 shape=point label=""];
+  middleUpdateFields [width=0 shape=point label=""];
+  artifViscosity [label=<
+     <table border="0" cellborder="0" cellspacing="1">
+       <tr><td align="left"><b>Artificial viscosity</b></td></tr>
+       <tr><td align="left">compute viscous force</td></tr>
+       <tr><td align="left">update particles velocity</td></tr>
+       <tr><td align="left"><font color="darkgreen">implicite method</font></td></tr>
+     </table>>, href="../DFAnumerics.html#artificial-viscosity"];
+
+
+  computeGravityForce [label=<
+      <table border="0" cellborder="0" cellspacing="1">
+       <tr><td align="left"><b>Gravity force:</b></td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#equation-sigmab" target="_blank">compute gravity driving force (include curvature component)</td></tr>
+       <tr><td align="left" >append this force to the Fdrive component of the force</td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#friction-model" target="_blank"><font color="darkgreen">explicite method</font></td></tr>
+     </table>>];
+  computeFrictForce [label=<
+      <table border="0" cellborder="0" cellspacing="1">
+       <tr><td align="left"><b>Basal shear force:</b></td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#friction-model" target="_blank">compute bottom shear force according to chosen friction law</td></tr>
+       <tr><td align="left" >append this force to the Fres component of the force</td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#friction-model" target="_blank"><font color="darkgreen">implicite method</font></td></tr>
+     </table>>];
   computeResForce [label="Compute resistance forces"];
-  updateMassEntr [label="Update mass due to entrainment"];
-  updateVelocityEntr [label="Update velocity due to \nentrainmened mass"];
+  computeResForce [label=<
+      <table border="0" cellborder="0" cellspacing="1">
+       <tr><td align="left"><b>Additional resistance forces:</b></td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#resistance" target="_blank">compute resistance force due to resstance area</td></tr>
+       <tr><td align="left" >append this force to the Fres component of the force</td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#resistance" target="_blank"><font color="darkgreen">implicite method</font></td></tr>
+     </table>>];
+  updateMassEntr [label=<
+      <table border="0" cellborder="0" cellspacing="1">
+       <tr><td align="left"><b>Entrained mass:</b></td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#resistance" target="_blank">Update mass due to entrainment</td></tr>
+       <tr><td align="left" >Update velocity due to entrainmened mass</td></tr>
+    </table>>];
+  computeSPHForce [label="Compute lateral pressure forces"];
+  computeSPHForce [label=<
+      <table border="0" cellborder="0" cellspacing="1">
+       <tr><td align="left"><b>Lateral pressure force:</b></td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#resistance" target="_blank">Compute lateral pressure forces using SPH method</td></tr>
+       <tr><td align="left" >append this force to the FSPH component of the force</td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#resistance" target="_blank"><font color="darkgreen">explicite method</font></td></tr>
+     </table>>];
   updateVelocityDrive [label="Update velocity with \n dirving force component"];
   updateVelocityFrict [label="Update velocity with \n friction component"];
+  updatePartPos [label=<
+      <table border="0" cellborder="0" cellspacing="1">
+       <tr><td align="left"><b>Particle position:</b></td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#resistance" target="_blank">Update particle position using centered Euler squeme</td></tr>
+     </table>>];
+  addSecRelease [label=<
+      <table border="0" cellborder="0" cellspacing="1">
+       <tr><td align="left"><b>Secondary release areas:</b></td></tr>
+       <tr><td align="left" >Check potential secondary release areas to trigure</td></tr>
+       <tr><td align="left" >Add the secondary release particles to the simulation</td></tr>
+     </table>>];
   updateFields [label="Update fields"];
   updateParticlesFlowDepth [label="Update particles flow depth"];
 
 
-  subgraph cluster_0 {
+  /* start -> prepareMesh [lhead=cluster_initialization]; */
+  prepareMesh -> timeLoop [weight=10,ltail=cluster_initialization];
+  timeLoop -> artifViscosity [weight=10,lhead=cluster_Forces];
+  artifViscosity -> computeSPHForce [weight=10, ltail=cluster_Forces];
+  computeSPHForce -> updateVelocityDrive [weight=10,lhead=cluster_2];
+  updateVelocityDrive -> addSecRelease [weight=10,ltail=cluster_2];
+  addSecRelease -> updateFields [weight=10,lhead=cluster_3];
+  updateFields -> endTimeLoop [weight=10,ltail=cluster_3, arrowhead=none];
+  endTimeLoop -> end [weight=10];
+  endTimeLoop -> timeLoop [weight=1, constraint=false];
+  /* computeFrictForce -> updateVelocityFrict[constraint=false];
+  computeResForce -> updateVelocityFrict [constraint=false];
+  computeSPHForce -> updateVelocityDrive [constraint=false];#, xlabel="add lateral pressure force \n component to the driving force"];
+  computeGravityForce -> updateVelocityDrive [constraint=false]#, xlabel="add gravity force \n component to the driving force"]; */
+
+
+  subgraph cluster_initialization {
+    rank=same;
     style=filled;
     color=lightgrey;
-    prepareMesh -> initializeParticles [weight=1];
-    initializeParticles -> initializeFields [weight=1];
+    prepareMesh -> initializeParticles;
+    initializeParticles -> initializeFields;
     label = "Initializazion";
   }
 
-  subgraph cluster_1 {
+  subgraph cluster_Forces {
+    rank=same;
     style=filled;
     color=lightgrey;
-    artifViscosity -> coputeFrictForce [weight=10];
-    coputeFrictForce -> computeResForce [weight=10];
-    computeResForce -> updateMassEntr [weight=10];
-    updateMassEntr -> updateVelocityEntr [weight=10];
+    artifViscosity -> computeFrictForce;
+    computeFrictForce -> computeGravityForce;
+    computeGravityForce -> computeResForce;
+    computeResForce -> updateMassEntr;
     label = "Compute Forces";
   }
 
   subgraph cluster_2 {
-    updateVelocityDrive -> updateVelocityFrict [weight=10];
+    rank=same;
+    updateVelocityDrive -> middleUpdatePos [weight=10, arrowhead=none];
+    middleUpdatePos -> updateVelocityFrict [weight=10];
+    updateVelocityFrict -> updatePartPos [weight=10];
+
     label = "Update position";
     style=filled;
     color=lightgrey;
   }
   subgraph cluster_3 {
-    updateFields -> updateParticlesFlowDepth [weight=1];
+    rank=same;
+    updateFields -> middleUpdateFields [weight=10, arrowhead=none];
+    middleUpdateFields -> updateParticlesFlowDepth [weight=10];
     label = "Update Fields";
     style=filled;
     color=lightgrey;
   }
 
-  start -> prepareMesh [lhead=cluster_0];
-  initializeFields -> timeLoop [weight=10,ltail=cluster_0];
-  timeLoop -> artifViscosity [weight=10,lhead=cluster_1];
-  updateVelocityEntr -> updateVelocityDrive [weight=10,ltail=cluster_1,lhead=cluster_2];
-  updateVelocityFrict -> updateFields [weight=10,ltail=cluster_2,lhead=cluster_3];
-  updateParticlesFlowDepth -> endTimeLoop [weight=10,ltail=cluster_3, arrowhead=none];
-  endTimeLoop -> end [weight=10];
-  endTimeLoop -> timeLoop [weight=1, constraint=false];
-
-  start [shape=Mdiamond];
-  end [shape=Msquare];
    }

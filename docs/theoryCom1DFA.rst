@@ -118,6 +118,8 @@ leads to:
    \mbox{for} \quad i=(1,2),\quad \mbox{and} \quad u^{(b)}_2 = u^{(b)}_3 = 0
 ..   :label: NCS-consequence
 
+Depth average equations:
+~~~~~~~~~~~~~~~~~~~~~~~~~
 In this NCS and considering a prism-like Control volume, the volume
 content :math:`V(t) = A_b(t)\overline{h}` is obtained by multiplication
 of the basal area of the prism, :math:`A_b`, with the averaged value of
@@ -127,6 +129,9 @@ the flow-depth,
     \overline{h} = \frac{1}{A_b(t)}\int\limits_{A_b(t)} [s(\mathbf{x})-b(\mathbf{x})]\,\mathrm{d}A = \frac{1}{A_b(t)}\int\limits_{A_b(t)} h(\mathbf{x})\,\mathrm{d}A,\qquad
     \overline{u}_i = \frac{1}{V(t)}\int\limits_{V(t)} u_i(\mathbf{x})\,\mathrm{d}V
     :label: hmean-umean
+
+Entrainment:
+"""""""""""""
 
 The snow entrainment is either due to plowing at the front of the avalanche or to erosion
 at the bottom. The entrainment rate at the front :math:`q^{\text{plo}}` can be expressed function of the
@@ -168,6 +173,10 @@ breaking energy per fracture surface unit :math:`e_s`
 
 .. math:: F_i^{\text{ent}} = -w_f\,(e_s+\,q^{\text{ent}}\,e_d)
 
+
+Resistance:
+"""""""""""""
+
 The force :math:`F_i^{\text{res}}` due to obstacles is expressed
 function of the characteristic diameter :math:`\overline{d}` and height
 :math:`h_{\text{res}}` of the obstacles, the spacing
@@ -187,6 +196,11 @@ is defined as :math:`\min\left\lbrace\begin{array}{l} \overline{h}\\h_{res}\end{
         :width: 90%
 
         Resistance force due to obstacles (from [FiKo2013]_)
+
+
+
+Surface integral forces:
+"""""""""""""""""""""""""
 
 The surface integral is split in three terms, an integral over
 :math:`A_b` the bottom :math:`x_3 = b(x_1,x_2)`, :math:`A_s` the top

@@ -41,6 +41,8 @@ extensions = [
     'sphinxcontrib.bibtex',
     'sphinx.ext.graphviz',
 ]
+# -- GraphViz configuration ----------------------------------
+graphviz_output_format = 'svg'
 
 bibtex_bibfiles = ['references_all.bib']
 
@@ -64,7 +66,7 @@ autosummary_mock_imports = [
     'mpl_toolkits',
     'make_axes_locatable',
 ]
-autosummary_generate = True
+autosummary_generate = False
 
 napoleon_google_docstring = False
 napoleon_use_param = False
