@@ -91,7 +91,7 @@ def com1DFAMain(cfg, avaDir, relThField):
     flagDev = cfg['FLAGS'].getboolean('flagDev')
 
     # fetch input data - dem, release-, entrainment- and resistance areas
-    demFile, inputSimFiles = gI.getInputDataCom1DFAPy(avaDir, cfg, flagDev)
+    inputSimFiles = gI.getInputDataCom1DFAPy(avaDir, cfg, flagDev)
 
     # Counter for release area loop
     countRel = 0
@@ -103,13 +103,10 @@ def com1DFAMain(cfg, avaDir, relThField):
     relFiles = inputSimFiles['relFiles']
     for rel in relFiles:
 
-        demOri, inputSimLines = prepareInputData(demFile, rel, inputSimFiles)
+        demOri, inputSimLines = prepareInputData(rel, inputSimFiles)
 
         # find out which simulations to perform
-        relName, cuSim, relDict, releaseSecondaryDict, badName = getSimulation(cfg, rel, inputSimFiles)
-        inputSimLines['releaseLine']['d0'] = relDict['d0']
-        if releaseSecondaryDict:
-            inputSimLines['secondaryReleaseLine']['d0'] = releaseSecondaryDict['d0']
+        relName, cuSim, inputSimLines, badName = getSimulation(cfg, rel, inputSimLines)
 
         for sim in cuSim:
             #logName = sim + '_' + cfgGen['mu']
@@ -144,7 +141,7 @@ def com1DFAMain(cfg, avaDir, relThField):
             # write report dictionary
             entrainmentArea = inputSimLines['entrainmentArea']
             resistanceArea = inputSimLines['resistanceArea']
-            reportDict = createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
+            reportDict = createReportDict(avaDir, logName, relName, inputSimLines['releaseLine'], cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
             # add time and mass info to report
             reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict)
 
@@ -158,14 +155,14 @@ def com1DFAMain(cfg, avaDir, relThField):
     return particlesList, fieldsList, Tsave, dem, reportDictList
 
 
-def getSimulation(cfg, rel, inputSimFiles):
+def getSimulation(cfg, rel, inputSimLines):
     """ get Simulation to run for a given release
 
 
     Parameters
     ----------
-    cfgFlags : dict
-        Flags configuration parameters
+    cfg : dict
+        configuration parameters
     rel : str
         path to release file
 
@@ -181,7 +178,7 @@ def getSimulation(cfg, rel, inputSimFiles):
         changed release name
     """
 
-    cfgFlags = cfg['FLAGS']
+    entResInfo = inputSimLines['entResInfo']
 
     # read list of desired simulation types
     simTypeList = cfg['GENERAL']['simTypeList'].split('|')
@@ -195,28 +192,33 @@ def getSimulation(cfg, rel, inputSimFiles):
         log.warning('Release area scenario file name includes an underscore \
         the suffix _AF will be added')
         simName = relName + '_AF'
-    relDict = shpConv.SHP2Array(rel)
-    for k in range(len(relDict['d0'])):
-        if relDict['d0'][k] == 'None':
-            relDict['d0'][k] = cfg['GENERAL'].getfloat('relTh')
+    releaseLine = inputSimLines['releaseLine']
+    for k in range(len(releaseLine['d0'])):
+        if releaseLine['d0'][k] == 'None':
+            releaseLine['d0'][k] = cfg['GENERAL'].getfloat('relTh')
         else:
-            relDict['d0'][k] = float(relDict['d0'][k])
-
+            releaseLine['d0'][k] = float(releaseLine['d0'][k])
+    inputSimLines['releaseLine'] = releaseLine
     log.info('Release area scenario: %s - perform simulations' % (relName))
 
-    secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
-    if secondaryReleaseFile:
-        releaseSecondaryDict = shpConv.SHP2Array(secondaryReleaseFile)
-        for k in range(len(releaseSecondaryDict['d0'])):
-            if releaseSecondaryDict['d0'][k] == 'None':
-                releaseSecondaryDict['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
+    if cfg.getboolean('GENERAL', 'secRelArea'):
+        if entResInfo['flagSecondaryRelease'] == 'No':
+            message = 'No secondary release file found'
+            log.error(message)
+            raise FileNotFoundError(message)
+        secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
+        for k in range(len(secondaryReleaseLine['d0'])):
+            if secondaryReleaseLine['d0'][k] == 'None':
+                secondaryReleaseLine['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
             else:
-                releaseSecondaryDict['d0'][k] = float(releaseSecondaryDict['d0'][k])
+                secondaryReleaseLine['d0'][k] = float(secondaryReleaseLine['d0'][k])
     else:
-        releaseSecondaryDict = None
+        inputSimLines['entResInfo']['flagSecondaryRelease'] = 'No'
+        secondaryReleaseLine = None
+
+    inputSimLines['secondaryReleaseLine'] = secondaryReleaseLine
 
     # define simulation type
-    entResInfo = inputSimFiles['entResInfo']
     if 'available' in simTypeList:
         if entResInfo['flagEnt'] == 'Yes' and entResInfo['flagRes'] == 'Yes':
             simTypeList.append('entres')
@@ -236,31 +238,38 @@ def getSimulation(cfg, rel, inputSimFiles):
             message = 'No entrainment file found'
             log.error(message)
             raise FileNotFoundError(message)
+    else:
+        inputSimLines['entResInfo']['flagEnt'] = 'No'
     if 'res' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagRes'] == 'No':
             message = 'No resistance file found'
             log.error(message)
             raise FileNotFoundError(message)
+    else:
+        inputSimLines['entResInfo']['flagRes'] = 'No'
 
-    return relName, simTypeList, relDict, releaseSecondaryDict, badName
+    return relName, simTypeList, inputSimLines, badName
 
 
-def prepareInputData(demFile, relFile, inputSimFiles):
+def prepareInputData(relFile, inputSimFiles):
     """ Fetch input data
 
     Parameters
     ----------
-    demFile : str
-        path to dem file
     relFiles : str
         path to release file
     inputSimFiles : dict
+        demFile : str
+            path to dem file
         secondaryReleaseFile : str
             path to secondaryRelease file
         entFiles : str
             path to entrainment file
         resFile : str
             path to resistance file
+        entResInfo : flag dict
+            flag if Yes entrainment and/or resistance areas found and used for simulation
+            flag True if a Secondary Release file found and activated
 
     Returns
     -------
@@ -279,24 +288,29 @@ def prepareInputData(demFile, relFile, inputSimFiles):
             entrainment file name
         resistanceArea : str
             resistance file name
+        entResInfo : flag dict
+            flag if Yes entrainment and/or resistance areas found and used for simulation
+            flag True if a Secondary Release file found and activated
     """
+    entResInfo = inputSimFiles['entResInfo']
     # get dem information
-    demOri = IOf.readRaster(demFile)
+    demOri = IOf.readRaster(inputSimFiles['demFile'])
 
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
     releaseLine['file'] = relFile
 
     # get line from secondary release area polygon
-    secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
-    if secondaryReleaseFile:
+    if entResInfo['flagSecondaryRelease'] == 'Yes':
+        secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
         secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
+        secondaryReleaseLine['fileName'] = [secondaryReleaseFile]
     else:
         secondaryReleaseLine = None
 
     # get line from entrainement area polygon
-    entFile = inputSimFiles['entFile']
-    if entFile:
+    if entResInfo['flagEnt'] == 'Yes':
+        entFile = inputSimFiles['entFile']
         entLine = shpConv.readLine(entFile, '', demOri)
         entrainmentArea = os.path.splitext(os.path.basename(entFile))[0]
         entLine['fileName'] = [entFile]
@@ -305,8 +319,8 @@ def prepareInputData(demFile, relFile, inputSimFiles):
         entrainmentArea = ''
 
     # get line from resistance area polygon
-    resFile = inputSimFiles['resFile']
-    if resFile:
+    if entResInfo['flagRes'] == 'Yes':
+        resFile = inputSimFiles['resFile']
         resLine = shpConv.readLine(resFile, '', demOri)
         resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
         resLine['fileName'] = [resFile]
@@ -316,7 +330,7 @@ def prepareInputData(demFile, relFile, inputSimFiles):
 
     inputSimLines = {'releaseLine': releaseLine, 'secondaryReleaseLine': secondaryReleaseLine,
                      'entLine': entLine, 'resLine': resLine, 'entrainmentArea': entrainmentArea,
-                     'resistanceArea': resistanceArea}
+                     'resistanceArea': resistanceArea, 'entResInfo': entResInfo}
     return demOri, inputSimLines
 
 
@@ -548,9 +562,10 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
 
     # ------------------------
     # process secondary release info to get it as a list of rasters
-    secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
-    if secondaryReleaseLine and cfgGen.getboolean('secRelArea'):
+    secondaryReleaseInfo = {}
+    if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
         log.info('Initializing secondary release area')
+        secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
         # fetch secondary release areas
         secRelRasterList = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
         # remove overlap with main release areas
@@ -558,11 +573,11 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
         for secRelRatser, secRelName in zip(secRelRasterList, secondaryReleaseLine['Name']):
             noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release ' + secRelName, 'Release', crop=True))
 
-        secondaryReleaseInfo = {}
+        secondaryReleaseInfo['flagSecondaryRelease'] = 'Yes'
         secondaryReleaseInfo['rasterList'] = noOverlaprasterList
         secondaryReleaseInfo['Name'] = secondaryReleaseLine['Name']
     else:
-        secondaryReleaseInfo = None
+        secondaryReleaseInfo['flagSecondaryRelease'] = 'No'
 
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
@@ -575,7 +590,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir
     # check if entrainment and release overlap
     entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', 'Release', crop=True)
     # check for overlap with the secondary release area
-    if secondaryReleaseInfo:
+    if secondaryReleaseInfo['flagSecondaryRelease'] == 'Yes':
         for secRelRaster in secondaryReleaseInfo['rasterList']:
             entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ', crop=True)
     # surfacic entrainment mass available (unit kg/m²)
@@ -1175,7 +1190,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
     # release secondary release area?
-    if cfg['secRelArea']:
+    if particles['secondaryReleaseInfo']['flagSecondaryRelease'] == 'Yes':
         particles = releaseSecRelArea(cfg, particles, fields, dem)
 
     # get particles location (neighbours for sph)
@@ -1570,32 +1585,36 @@ def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
 
 
 def releaseSecRelArea(cfg, particles, fields, dem):
-    flowDepthField = fields['FD']
+    """ Release secondary release area if trigered
+
+    Initialize particles of the trigured secondary release area and add them
+    to the simulation (particles dictionary)
+    """
     secondaryReleaseInfo = particles['secondaryReleaseInfo']
-    if secondaryReleaseInfo:
-        secRelRasterList = secondaryReleaseInfo['rasterList']
-        secRelRasterNameList = secondaryReleaseInfo['Name']
-        count = 0
-        for secRelRaster, secRelRasterName in zip(secRelRasterList, secRelRasterNameList):
-            # do the two arrays intersect (meaning a flowing particle entered the
-            # secondary release area)
-            mask = (secRelRaster > 0) & (flowDepthField > 0)
-            if mask.any():
-                # create secondary release area particles
-                log.info('Initializing secondary release area feature %s' % secRelRasterName)
-                secRelParticles, fields = initializeParticles(cfg, secRelRaster, dem)
+    flowDepthField = fields['FD']
+    secRelRasterList = secondaryReleaseInfo['rasterList']
+    secRelRasterNameList = secondaryReleaseInfo['Name']
+    count = 0
+    for secRelRaster, secRelRasterName in zip(secRelRasterList, secRelRasterNameList):
+        # do the two arrays intersect (meaning a flowing particle entered the
+        # secondary release area)
+        mask = (secRelRaster > 0) & (flowDepthField > 0)
+        if mask.any():
+            # create secondary release area particles
+            log.info('Initializing secondary release area feature %s' % secRelRasterName)
+            secRelParticles, fields = initializeParticles(cfg, secRelRaster, dem)
 
-                # release secondary release area by just appending the particles
-                log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
-                particles = mergeParticleDict(particles, secRelParticles)
-                # remove it from the secondary release area list
-                secRelRasterList.pop(count)
-                secRelRasterNameList.pop(count)
-            count = count + 1
+            # release secondary release area by just appending the particles
+            log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
+            particles = mergeParticleDict(particles, secRelParticles)
+            # remove it from the secondary release area list
+            secRelRasterList.pop(count)
+            secRelRasterNameList.pop(count)
+        count = count + 1
 
-        secondaryReleaseInfo['secondaryReleaseParticlesList'] = secRelRasterList
-        secondaryReleaseInfo['Name'] = secRelRasterNameList
-        particles['secondaryReleaseInfo'] = secondaryReleaseInfo
+    secondaryReleaseInfo['secondaryReleaseParticlesList'] = secRelRasterList
+    secondaryReleaseInfo['Name'] = secRelRasterNameList
+    particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
     return particles
 
