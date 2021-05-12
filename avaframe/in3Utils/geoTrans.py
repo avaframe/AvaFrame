@@ -658,7 +658,7 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
             message = '%s area feature overlapping with %s - removing the overlapping part' % (nameToCheck, nameRef)
             log.warning(message)
         else:
-            message = '%s area features overlapingwith %s - this is not allowed' % (nameToCheck, nameRef)
+            message = '%s area features overlapping with %s - this is not allowed' % (nameToCheck, nameRef)
             log.error(message)
             AssertionError(message)
 
