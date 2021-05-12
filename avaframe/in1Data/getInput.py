@@ -84,8 +84,6 @@ def getInputData(avaDir, cfg, flagDev=False):
         list of full path to DEM .asc file
     relFiles : list
         list of full path to release area scenario .shp files
-    secondaryReleaseFile : str
-        full path to secondary release area .shp file
     entFile : str
         full path to entrainment area .shp file
     resFile : str
@@ -154,10 +152,10 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
 
     Returns
     -------
-    demFile[0] : str (first element of list)
-        list of full path to DEM .asc file
     inputSimFiles: dict
         dictionary with all the input files:
+        demFile : str (first element of list)
+            list of full path to DEM .asc file
         relFiles : list
             list of full path to release area scenario .shp files
         secondaryReleaseFile : str
@@ -168,6 +166,7 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
             full path to resistance area .shp file
         entResInfo : flag dict
             flag if Yes entrainment and/or resistance areas found and used for simulation
+            flag True if a Secondary Release file found and activated
     """
 
     # Set directories for inputs, outputs and current work
@@ -201,7 +200,7 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
     log.info('Release area files are: %s' % relFiles)
 
     # Initialise secondary release areas
-    secondaryReleaseFile, entResInfo['flagSecondaryRelease'] = getAndCheckInputFiles(inputDir, 'SECREL', 'Secondary release', flag=cfg.getboolean('GENERAL', 'secRelArea'))
+    secondaryReleaseFile, entResInfo['flagSecondaryRelease'] = getAndCheckInputFiles(inputDir, 'SECREL', 'Secondary release')
 
     # Initialise resistance areas
     resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance')
@@ -213,16 +212,15 @@ def getInputDataCom1DFAPy(avaDir, cfg, flagDev=False):
     demFile = getDEMPath(avaDir)
 
     # return DEM, first item of release, entrainment and resistance areas
-    inputSimFiles = {'relFiles': relFiles, 'secondaryReleaseFile': secondaryReleaseFile,
+    inputSimFiles = {'demFile': demFile, 'relFiles': relFiles, 'secondaryReleaseFile': secondaryReleaseFile,
                      'entFile': entFile, 'resFile': resFile, 'entResInfo': entResInfo}
-    return demFile, inputSimFiles
+    return inputSimFiles
 
 
-def getAndCheckInputFiles(inputDir, folder, inputType, flag=False):
+def getAndCheckInputFiles(inputDir, folder, inputType):
     """Fetch input shape files and check them
 
     Raises error if there is more than one shape file.
-    If the flag is set to true, raise an error if there is no shape file
 
     Parameters
     ----------
@@ -232,8 +230,6 @@ def getAndCheckInputFiles(inputDir, folder, inputType, flag=False):
         subfolder name where the shape file should be located (SECREL, ENT or RES)
     inputType : str
         type of input (used for the logging messages). Secondary release or Entrainment or Resistance
-    flag : bool
-        optional (false as default) - if True: raise error if there is no shape file
 
     Returns
     -------
@@ -246,12 +242,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType, flag=False):
     # Initialise secondary release areas
     OutputFile = glob.glob(inputDir+os.sep + folder + os.sep+'*.shp')
     if len(OutputFile) < 1:
-        if flag:
-            message = 'No %s area file found' % (inputType)
-            log.error(message)
-            raise FileNotFoundError(message)
-        else:
-            OutputFile = None
+        OutputFile = None
     elif len(OutputFile) > 1:
         message = 'There shouldn\'t be more than one %s .shp file in %s/%s/' % (inputType, inputDir, folder)
         log.error(message)
@@ -259,7 +250,5 @@ def getAndCheckInputFiles(inputDir, folder, inputType, flag=False):
     else:
         available = 'Yes'
         OutputFile = OutputFile[0]
-        if flag:
-            log.info('%s area file is: %s' % (inputType, OutputFile))
 
     return OutputFile, available
