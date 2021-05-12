@@ -4,3 +4,7 @@
 .eqno {
     float: right;
 }
+
+.wy-nav-content {
+    max-width: none;
+}

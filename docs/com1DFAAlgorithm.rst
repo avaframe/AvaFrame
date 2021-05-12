@@ -52,6 +52,4 @@ Take gravity and lateral pressure forces into account
 Take friction into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
 .. graphviz:: com1DFAAlgorithmGraph.dot
