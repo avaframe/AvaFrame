@@ -3,34 +3,10 @@
 """
 
 import logging
-import time
-import os
-import numpy as np
-import glob
-import copy
-import pickle
-import pandas as pd
-from datetime import datetime
-import matplotlib.pyplot as plt
-import matplotlib.path as mpltPath
-import matplotlib as mpl
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # Local imports
-import avaframe.in3Utils.initialiseDirs as inDirs
-import avaframe.in2Trans.shpConversion as shpConv
-from avaframe.in1Data import getInput as gI
-import avaframe.in3Utils.geoTrans as geoTrans
-import avaframe.out3Plot.plotUtils as pU
-import avaframe.out3Plot.makePalette as makePalette
-import avaframe.com1DFAPy.timeDiscretizations as tD
-import avaframe.com1DFAPy.DFAtools as DFAtls
-import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
-import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
-import avaframe.com1DFAPy.com1DFA as com1DFAPy
-import avaframe.com1DFAPy.com1DFA as com1DFA
 
 
 log = logging.getLogger(__name__)
