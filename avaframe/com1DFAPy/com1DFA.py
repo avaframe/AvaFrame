@@ -856,10 +856,10 @@ def DFAIterate(cfg, particles, fields, dem):
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
     # add initial time step to Tsave array
     Tsave = [0]
-    # derive time step
+    # derive time step for first iteration
     dt = cfgGen.getfloat('dt')
     if cfgGen.getboolean('cflTimeStepping'):
-        # overwrite the dt value 
+        # overwrite the dt value
         dt = tD.getcflTimeStep(particles, dem, cfgGen)
 
     t = t + dt
@@ -900,6 +900,7 @@ def DFAIterate(cfg, particles, fields, dem):
             else:
                 dtSave = [cfgGen.getfloat('tEnd')]
 
+        # derive time step
         if cfgGen.getboolean('cflTimeStepping'):
             # overwrite the dt value in the cfg
             dt = tD.getcflTimeStep(particles, dem, cfgGen)
@@ -1846,7 +1847,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True):
         del variationDict['simTypeList']
     else:
         simTypeList = standardCfg['GENERAL']['simTypeList'].split('|')
-        print('simTpye', simTypeList, standardCfg['GENERAL']['simTypeList'] )
     # get a list of simulation types that are desired AND available
     simTypeList = getSimTypeList(simTypeList, inputSimFiles)
 
@@ -1900,7 +1900,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True):
                         # create unique hash for simulation configuration
                         simHash = cfgUtils.cfgHash(cfgSimObject)
                         simName = relName + '_' + sim + '_dfa_' + simHash
-                        simDict[simName] = {'simHash': simHash, 'releaseScenario': relName, 'simType': sim, 'relFile': rel, 'cfgSim': cfgSimObject}
+                        simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
+                                            'simType': sim, 'relFile': rel,
+                                            'cfgSim': cfgSimObject}
                     else:
                         ingoredParameters.append(parameter)
 
