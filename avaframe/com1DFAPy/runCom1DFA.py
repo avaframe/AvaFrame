@@ -112,7 +112,6 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
             log.warning('simulation configuration has been changed since start')
             cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, cfg, fileName='%s_butModified' % simHash)
 
-
     # Set directory for report
     reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAPy', 'reports')
     # write report

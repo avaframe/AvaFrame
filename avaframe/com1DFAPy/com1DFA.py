@@ -595,7 +595,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     particles['xllcenter'] = dem['originOri']['xllcenter']
     particles['yllcenter'] = dem['originOri']['yllcenter']
 
-
     PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
     FD = np.zeros((nrows, ncols))
@@ -1691,7 +1690,6 @@ def savePartToCsv(particleProperties, dictList, outDir):
         csvData['Y'] = particles['y'] + particles['yllcenter']
         csvData['Z'] = particles['z']
 
-
         for partProp in particleProperties:
             if partProp == 'velocityMagnitude':
                 ux = particles['ux']
@@ -1753,22 +1751,22 @@ def exportFields(cfg, Tsave, fieldsList, relFile, demOri, outDir, logName):
             resField = fieldsList[countTime][resType]
             if resType == 'ppr':
                 resField = resField * 0.001
-            dataName = logName + '_' + resType + '_'  + 't%.2f' % (Tsave[countTime]) +'.asc'
+            dataName = logName + '_' + resType + '_' + 't%.2f' % (Tsave[countTime]) + '.asc'
             # create directory
             outDirPeak = os.path.join(outDir, 'peakFiles', 'timeSteps')
             fU.makeADir(outDirPeak)
             outFile = os.path.join(outDirPeak, dataName)
             IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             if countTime == numberTimes:
-                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType,Tsave[countTime]))
-                dataName = logName + '_' + resType + '_' +'.asc'
+                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType, Tsave[countTime]))
+                dataName = logName + '_' + resType + '_' + '.asc'
                 # create directory
                 outDirPeakAll = os.path.join(outDir, 'peakFiles')
                 fU.makeADir(outDirPeakAll)
                 outFile = os.path.join(outDirPeakAll, dataName)
                 IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             else:
-                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType,Tsave[countTime]))
+                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType, Tsave[countTime]))
         countTime = countTime + 1
 
 
@@ -1836,8 +1834,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True):
         Returns
         -------
         simDict: dict
-            dicionary with info on simHash, releaseScenario, release area file path, simType and contains full configuration
-            configparser object for simulation run
+            dicionary with info on simHash, releaseScenario, release area file path,
+            simType and contains full configuration configparser object for simulation run
 
     """
 
