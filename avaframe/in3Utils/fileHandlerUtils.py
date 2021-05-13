@@ -272,6 +272,7 @@ def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir=''):
                 log.info('%s   : %s/%s/%06d.txt' % (data['files'][m], workDir, nameDir, countSuf+1))
             countSuf = countSuf + 1
 
+
 def getDFADataPaths(avaDir, pathDict, suffix, comModule='', inputDir=''):
     """ Determine the paths of the required data from comModule output for Aimec
 
@@ -420,7 +421,7 @@ def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
             pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
                                     '%s_tFirst_fd.txt' % logDict['simName'][k])
             pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tFirst_fd.asc'
-                                               % (logDict['simName'][k], logDict[varPar][k]))
+                                  % (logDict['simName'][k], logDict[varPar][k]))
             shutil.copy(pathFrom, pathTo)
 
     # Export ExpLog to Outputs/com1DFA
@@ -428,14 +429,16 @@ def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
 
 
 def makeSimDict(inputDir, varPar='', avaDir=''):
-    """ Create a dictionary that contains all info on simulations that can then be used to filter simulations for example
+    """ Create a dictionary that contains all info on simulations that
+        can then be used to filter simulations for example
 
         Parameters
         ----------
         inputDir : str
             path to directory of simulation results
         varPar : str
-            optional - parameter that has been used in parameter variation - reqiured if parameter variation has been used
+            optional - parameter that has been used in parameter variation -
+            required if parameter variation has been used
         avaDir : str
             optional - path to avalanche directory
 
@@ -465,7 +468,7 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
     # Set name of avalanche if avaDir is given
     if avaDir != '':
         avaName = os.path.basename(avaDir)
-        data.update({'avaName' : []})
+        data.update({'avaName': []})
 
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])

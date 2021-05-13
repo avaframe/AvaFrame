@@ -61,7 +61,7 @@ def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
                         # if yes and if this value is different add this key to
                         # the parameter variation dict
                         if key[0] == 'resType' or key[0] == 'tSteps':
-                             locValue = [locValue]
+                            locValue = [locValue]
                         elif ':' in locValue or '|' in locValue:
                             locValue = fU.splitIniValueToArraySteps(locValue)
                         else:
