@@ -203,7 +203,21 @@ def compareConfig(iniFile, modName, compare):
 
 
 def writeCfgFile(avaDir, module, cfg, fileName=''):
-    """ Save configuration used to text file in Outputs """
+    """ Save configuration used to text file in Outputs as moduleName_settings.ini
+        or optional in Outputs/moduleName/configurationFiles/filenName.ini
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        module:
+            module
+        cfg: configparser object
+            configuration settings
+        fileName: str
+            name of saved configuration file - optional
+
+    """
 
     # get filename of module
     name = os.path.basename(module.__file__)
@@ -227,28 +241,45 @@ def writeCfgFile(avaDir, module, cfg, fileName=''):
 
 
 def readCfgFile(avaDir, module='', fileName=''):
-    """ Read configuration from ini file  """
+    """ Read configuration from ini file, if module is provided, module configuration is read from Ouputs,
+        if fileName is provided configuration is read from fileName
 
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        module:
+            module
+        fileName: str
+            path to file that should be read - optional
 
-    # write to file
+        Returns
+        --------
+        cfg: configParser object
+            configuration that is from file
+
+    """
+
+    # define file that should be read
     if fileName != '':
         inFile = fileName
     elif module != '':
-        # read configuration from ini file
-        modPath = os.path.dirname(module.__file__)
-        # get filename of module
+        # get module name
         name = os.path.basename(module.__file__)
         modName = name.split('.')[0]
-        # set outputs
+        # set input file
         inFile = os.path.join(avaDir, 'Outputs', '%s_settings.ini' % (modName))
+    else:
+        log.error('Please provide either a module or a fileName to read configuration from file')
+        raise NameError
 
-    # read configParser object
+    # read configParser object from input file, case sensitive
     cfg = configparser.ConfigParser()
     cfg.optionxform = str
     cfg.read(inFile)
     cfg.optionxform = str
-    return cfg
 
+    return cfg
 
 
 def cfgHash(cfg, typeDict=False):
@@ -273,7 +304,7 @@ def cfgHash(cfg, typeDict=False):
     if typeDict:
         cfgDict = cfg
     else:
-        cfgDict = createJsonDict(cfg)
+        cfgDict = convertConfigParserToDict(cfg)
 
     jsonDict = json.dumps(cfgDict, sort_keys=True, ensure_ascii=True)
     encoded = jsonDict.encode()
@@ -284,7 +315,7 @@ def cfgHash(cfg, typeDict=False):
     return uid
 
 
-def createJsonDict(cfg):
+def convertConfigParserToDict(cfg):
     """ create dictionary from configparser object """
 
     cfgDict = {}
@@ -295,7 +326,7 @@ def createJsonDict(cfg):
 
     return cfgDict
 
-def writeDictToConfigP(cfgDict):
+def convertDictToConfigParser(cfgDict):
     """ create configParser object from dict """
 
     cfg = configparser.ConfigParser()
@@ -332,7 +363,7 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False):
     """
 
     # read default configuration of this module
-    standardCfgDict = createJsonDict(standardCfg)
+    standardCfgDict = convertConfigParserToDict(standardCfg)
     # create pandas dataFrame
     simDF = pd.DataFrame(data=standardCfgDict['GENERAL'], index=['current standard'])
 
@@ -346,7 +377,7 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False):
         simName = os.path.splitext(os.path.basename(cfile))[0]
         cfgObject = readCfgFile(avaDir, fileName=cfile)
         indexItem = [simName]
-        cfgDict = createJsonDict(cfgObject)
+        cfgDict = convertConfigParserToDict(cfgObject)
         simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
         simDF = pd.concat([simDF, simItemDF], axis=0)
 
