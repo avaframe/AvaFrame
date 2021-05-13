@@ -326,6 +326,7 @@ def convertConfigParserToDict(cfg):
 
     return cfgDict
 
+
 def convertDictToConfigParser(cfgDict):
     """ create configParser object from dict """
 
