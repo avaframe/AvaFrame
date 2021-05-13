@@ -252,7 +252,9 @@ def getInputDataCom1DFAPy(avaDir, cfg):
     demFile = getDEMPath(avaDir)
 
     # return DEM, first item of release, entrainment and resistance areas
-    inputSimFiles = {'demFile': demFile, 'relFiles': relFiles, 'entFile': entFiles[0], 'resFile': resFiles[0], 'entResInfo': entResInfo}
+    inputSimFiles = {'demFile': demFile, 'relFiles': relFiles,
+                     'entFile': entFiles[0], 'resFile': resFiles[0],
+                     'entResInfo': entResInfo}
 
     # return DEM, first item of release, entrainment and resistance areas
     return inputSimFiles
