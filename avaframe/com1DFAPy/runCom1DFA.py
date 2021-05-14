@@ -72,7 +72,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
 
     # create a list of simulations
     # if need to reproduce exactely the hash - need to be strings with exately the same number of digits!!
-    simDict = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True)
+    simDict = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict)
 
     log.info('The following simulations will be performed')
     for key in simDict:
