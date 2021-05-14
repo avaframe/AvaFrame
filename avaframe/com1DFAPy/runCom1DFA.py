@@ -64,6 +64,8 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     if variationDict == '':
         variationDict = dP.getVariationDict(avalancheDir, com1DFA, standardCfg, cfgFile=cfgFile)
     else:
+        # check if variationDict items exist and are provided in correct format
+        variationDict = dP.validateVarDict(variationDict, standardCfg)
         log.info('Variations are performed for:')
         for key in variationDict:
             log.info('%s: %s' % (key, variationDict[key]))
