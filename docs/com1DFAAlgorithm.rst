@@ -147,6 +147,9 @@ are found in :ref:`Resistance <theoryCom1DFA:Resistance:>`.
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 
+Added resistance force
+"""""""""""""""""""""""
+
 Compute body driving force
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -156,6 +159,7 @@ The expression of this force is rater simple, it represents the tangential (tang
 
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
+
 
 
 Take entrainment into account
@@ -184,6 +188,7 @@ after using an implicit formulation.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
+
 Compute lateral pressure forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -200,6 +205,9 @@ Update position
 Driving force, lateral pressure force and friction forces are sequently used to update the velocity.
 Then the particle position is updated using a centered Euler scheme.
 This steps are done in :py:func:`com1DFAPy.DFAfunctionsCython.updatePositionC`.
+
+Update position
+----------------
 
 Take gravity and lateral pressure forces into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
