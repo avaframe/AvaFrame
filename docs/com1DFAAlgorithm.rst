@@ -4,8 +4,8 @@ Dense Flow Avalanche algorithm and workflow
 Initialization:
 -----------------
 
-DEM
-~~~~
+Read and prepare DEM
+~~~~~~~~~~~~~~~~~~~~~~~~
 Read and check DEM (remesh if needed).
 Prepare DEM for simulation (compute surface normals vector field, cell area)
 done in the :py:func:`com1DFAPy.com1DFA.initializeMesh` function:
