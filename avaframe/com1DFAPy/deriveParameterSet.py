@@ -3,6 +3,7 @@
 """
 
 import logging
+import numpy as np
 
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -81,3 +82,39 @@ def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
                 log.warning('Key [\'%s\'] in section [\'%s\'] in the parameter variation Cfg file is not needed.' % (key[0], section))
 
     return variations['GENERAL']
+
+
+def validateVarDict(variationDict, standardCfg):
+    """ Check if all parameters in variationDict exist in default configuration and
+        are provided in the correct format
+
+        Parameters
+        -----------
+        variationDict: dict
+            dictionary with parameters that shall be varied and a list for the parameter values for each parameter
+        standardCfg: config Parser object
+            default model configuration
+
+        Returns
+        --------
+        variationDict: dict
+            cleaned variation dict that meets the required structure
+
+    """
+
+    # check if values are provided as list or numpy array
+    # check if parameters exist in model configuration
+    ignoredParameters = []
+    for parameter in variationDict:
+        if parameter in standardCfg['GENERAL']:
+            if not isinstance(variationDict[parameter], (list, np.ndarray)):
+                variationDict[parameter] = [variationDict[parameter]]
+        else:
+            ignoredParameters.append(parameter)
+
+
+    for ipar in ignoredParameters:
+        log.warning('Parameter %s does not exist in model configuration - parameter is ignored' % ipar)
+        del variationDict[ipar]
+
+    return variationDict
