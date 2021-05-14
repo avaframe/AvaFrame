@@ -24,6 +24,7 @@ import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.com1DFAPy.deriveParameterSet as dP
 import avaframe.out3Plot.makePalette as makePalette
 import avaframe.com1DFAPy.timeDiscretizations as tD
 import avaframe.com1DFAPy.DFAtools as DFAtls
@@ -1790,17 +1791,12 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True):
         # generate a list of full simulation info for all release area scenarios and simTypes
         # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
         simDict = {}
-        ingoredParameters = []
-
         for rel in inputSimFiles['relFiles']:
             relName = os.path.splitext(os.path.basename(rel))[0]
             cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
             for row in variationDF.itertuples():
                 for parameter in variationDict:
-                    if parameter in cfgSim['GENERAL']:
-                        cfgSim['GENERAL'][parameter] = row._asdict()[parameter]
-                    else:
-                        ingoredParameters.append(parameter)
+                    cfgSim['GENERAL'][parameter] = row._asdict()[parameter]
                 cfgSim['GENERAL']['simTypeActual'] = row._asdict()['simTypeList']
                 cfgSim['GENERAL']['releaseScenario'] = relName
                 # convert back to configParser object
@@ -1811,35 +1807,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True):
                 simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
                                     'simType': row._asdict()['simTypeList'], 'relFile': rel,
                                     'cfgSim': cfgSimObject}
-
-    else:
-        # generate a list of full simulation info for all release area scenarios and simTypes
-        # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
-        simDict = {}
-        ingoredParameters = []
-        for parameter, value in variationDict:
-            for rel in inputSimFiles['relFiles']:
-                for sim in simTypeList:
-                    relName = os.path.splitext(os.path.basename(rel))[0]
-                    cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
-                    if parameter in cfgSim['GENERAL']:
-                        cfgSim['GENERAL'][parameter] = value
-                        cfgSim['GENERAL']['simTypeActual'] = sim
-                        cfgSim['GENERAL']['releaseScenario'] = relName
-                        # convert back to configParser object
-                        cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
-                        # create unique hash for simulation configuration
-                        simHash = cfgUtils.cfgHash(cfgSimObject)
-                        simName = relName + '_' + sim + '_dfa_' + simHash
-                        simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
-                                            'simType': sim, 'relFile': rel,
-                                            'cfgSim': cfgSimObject}
-                    else:
-                        ingoredParameters.append(parameter)
-
-    ingoredParameters = set(ingoredParameters)
-    for par in ingoredParameters:
-        log.warning('Parameter %s cannot be varied- item is ignored' % par)
 
     return simDict
 
