@@ -180,7 +180,7 @@ def getInputDataCom1DFAPy(avaDir, cfg):
     if flagDev is True:
         releaseDir = 'devREL'
         relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
-    elif cfg['FLAGS']['releaseScenario'] != '':
+    elif cfg['releaseScenario'] != '':
         releaseDir = 'REL'
         relFiles = []
         releaseFiles = cfg['FLAGS']['releaseScenario'].split('|')

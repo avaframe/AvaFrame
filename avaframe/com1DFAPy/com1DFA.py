@@ -78,8 +78,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     demOri, inputSimLines = prepareInputData(inputSimFiles)
 
     # find out which simulations to perform
-    relName, relDict, badName = prepareRelase(cfg, inputSimFiles['releaseScenario'])
-    releaseLine['d0'] = relDict['d0']
+    relName, inputSimLines, badName = prepareRelase(cfg, inputSimFiles['releaseScenario'], inputSimLines)
 
     log.info('Perform %s simulation' % cuSimName)
 
@@ -87,7 +86,6 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     # for timing the sims
     startTime = time.time()
     particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName, relThField)
-    relFiles = releaseLine['fileName']
 
     # ------------------------
     #  Start time step computation
@@ -106,7 +104,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
         savePartToPickle(particlesList, outDirData)
 
     # Result parameters to be exported
-    exportFields(cfg, Tsave, fieldsList, inputSimFiles['releaseScenario'], demOri, outDir, cuSimName)
+    exportFields(cfg, Tsave, fieldsList, demOri, outDir, cuSimName)
 
     # write report dictionary
     entrainmentArea = inputSimLines['entrainmentArea']
@@ -118,7 +116,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     return particlesList, fieldsList, Tsave, dem, reportDict, cfg
 
 
-def prepareRelase(cfg, rel):
+def prepareRelase(cfg, rel, inputSimLines):
     """ get Simulation to run for a given release
 
 
@@ -139,7 +137,7 @@ def prepareRelase(cfg, rel):
         changed release name
     """
 
-    entResInfo = inputSimLines['entResInfo']
+
 
     # Set release areas and simulation name
     relName = os.path.splitext(os.path.basename(rel))[0]
@@ -159,7 +157,7 @@ def prepareRelase(cfg, rel):
     inputSimLines['releaseLine'] = releaseLine
     log.info('Release area scenario: %s - perform simulations' % (relName))
 
-    return relName, relDict, badName
+    return relName, inputSimLines, badName
 
 
 def prepareInputData(inputSimFiles):
@@ -206,6 +204,7 @@ def prepareInputData(inputSimFiles):
 
     # load data
     entResInfo = inputSimFiles['entResInfo']
+    relFile = inputSimFiles['releaseScenario']
 
     # get dem information
     demOri = IOf.readRaster(inputSimFiles['demFile'])
@@ -1750,7 +1749,7 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
     plt.show()
 
 
-def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True):
+def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
     """ Prepare a dictionary with simulations that shall be run with varying parameters following the variation dict
 
         Parameters
@@ -1761,9 +1760,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True):
             info dict on available input data
         variationDict: dict
             dictionary with parameter to be varied as key and list of it's values
-        varyAll: boolean
-            True if all possible parameter combinations shall be performed
-            False if only one parameter shall be varied and the others from standard configuration
+
 
         Returns
         -------
@@ -1782,31 +1779,30 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, varyAll=True):
     # get a list of simulation types that are desired AND available
     simTypeList = getSimTypeList(simTypeList, inputSimFiles)
 
-    if varyAll:
-        # set simTypeList (that has been checked if available) as parameter in variationDict
-        variationDict['simTypeList'] = simTypeList
-        # create a dataFrame with all possible combinations of the variationDict values
-        variationDF = pds.DataFrame(product(*variationDict.values()), columns=variationDict.keys())
+    # set simTypeList (that has been checked if available) as parameter in variationDict
+    variationDict['simTypeList'] = simTypeList
+    # create a dataFrame with all possible combinations of the variationDict values
+    variationDF = pd.DataFrame(product(*variationDict.values()), columns=variationDict.keys())
 
-        # generate a list of full simulation info for all release area scenarios and simTypes
-        # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
-        simDict = {}
-        for rel in inputSimFiles['relFiles']:
-            relName = os.path.splitext(os.path.basename(rel))[0]
-            cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
-            for row in variationDF.itertuples():
-                for parameter in variationDict:
-                    cfgSim['GENERAL'][parameter] = row._asdict()[parameter]
-                cfgSim['GENERAL']['simTypeActual'] = row._asdict()['simTypeList']
-                cfgSim['GENERAL']['releaseScenario'] = relName
-                # convert back to configParser object
-                cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
-                # create unique hash for simulation configuration
-                simHash = cfgUtils.cfgHash(cfgSimObject)
-                simName = relName + '_' + row._asdict()['simTypeList'] + '_dfa_' + simHash
-                simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
-                                    'simType': row._asdict()['simTypeList'], 'relFile': rel,
-                                    'cfgSim': cfgSimObject}
+    # generate a list of full simulation info for all release area scenarios and simTypes
+    # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
+    simDict = {}
+    for rel in inputSimFiles['relFiles']:
+        relName = os.path.splitext(os.path.basename(rel))[0]
+        cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
+        for row in variationDF.itertuples():
+            for parameter in variationDict:
+                cfgSim['GENERAL'][parameter] = row._asdict()[parameter]
+            cfgSim['GENERAL']['simTypeActual'] = row._asdict()['simTypeList']
+            cfgSim['GENERAL']['releaseScenario'] = relName
+            # convert back to configParser object
+            cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
+            # create unique hash for simulation configuration
+            simHash = cfgUtils.cfgHash(cfgSimObject)
+            simName = relName + '_' + row._asdict()['simTypeList'] + '_dfa_' + simHash
+            simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
+                                'simType': row._asdict()['simTypeList'], 'relFile': rel,
+                                'cfgSim': cfgSimObject}
 
     return simDict
 
