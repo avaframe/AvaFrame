@@ -13,7 +13,7 @@ digraph "com1DFA algorithm graph" {
      <tr><td align="left"><b>Initialize Mesh</b></td></tr>
      <tr><td align="left">Read DEM and remesh if needed</td></tr>
      <tr><td align="left" >Compute normal vector field and area</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#read-and-prepare-dem" tooltip="Go to: initialize mesh" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#initialize-mesh" tooltip="Go to: initialize mesh" target="_blank"];
 
   prepareAreas [label=<
    <table border="0" cellborder="0" cellspacing="1">
@@ -21,7 +21,7 @@ digraph "com1DFA algorithm graph" {
      <tr><td align="left">Read and check release, secondary release, entrainment</td></tr>
      <tr><td align="left">and resistance shape files</td></tr>
      <tr><td align="left" >Compute normal vector field and area</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#read-and-prepare-dem" tooltip="Go to: release... initialization" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#initialize-release-entrainment-and-resistance" tooltip="Go to: release... initialization" target="_blank"];
 
   initializeParticles [label=<
     <table border="0" cellborder="0" cellspacing="1">
@@ -44,9 +44,11 @@ digraph "com1DFA algorithm graph" {
      <tr><td align="left">The mass and momentum balance equations are solved</td></tr>
      <tr><td align="left">using an operator spliting method</td></tr>
      <tr><td align="left">Particle position is updated using a centered Euler scheme</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#time-loop" tooltip="Go to: Time scheme" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#time-scheme-and-iterations" tooltip="Go to: Time scheme" target="_blank"];
 
   endTimeLoop [width=0 shape=point label=""];
+
+
   artifViscosity [label=<
      <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Artificial viscosity</b></td></tr>
@@ -57,8 +59,8 @@ digraph "com1DFA algorithm graph" {
 
   computeFrictForce [label=<
      <table border="0" cellborder="0" cellspacing="1">
-        <tr><td align="left"><b>Bottom shear force:</b></td></tr>
-        <tr><td align="left" href="../theoryCom1DFA.html#friction-model" title="Go to: Friction model" target="_blank">Compute bottom shear force according to chosen friction law</td></tr>
+        <tr><td align="left" href="../theoryCom1DFA.html#compute-friction-forces"><b>Bottom shear force:</b></td></tr>
+        <tr><td align="left" href="../theoryCom1DFA.html#bottom-shear-force" title="Go to: Friction model" target="_blank">Compute bottom shear force according to chosen friction law</td></tr>
         <tr><td align="left" >Append this force to the F<SUB>res</SUB> component of the force</td></tr>
         <tr><td align="left"><font color="darkgreen">Implicite method</font></td></tr>
       </table>>];
@@ -69,12 +71,12 @@ digraph "com1DFA algorithm graph" {
        <tr><td align="left">Compute gravity driving force (include curvature component)</td></tr>
        <tr><td align="left" >Append this force to the F<SUB>drive</SUB> component of the force</td></tr>
        <tr><td align="left"><font color="darkgreen">Explicite method</font></td></tr>
-     </table>>, href="../com1DFAAlgorithm.html#gravity-force" tooltip="Go to: Gravity force" target="_blank"];
+     </table>>, href="../com1DFAAlgorithm.html#compute-body-driving-force" tooltip="Go to: Gravity force" target="_blank"];
 
   computeResForce [label=<
       <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Additional resistance forces:</b></td></tr>
-       <tr><td align="left" href="../theoryCom1DFA.html#resistance" title="Go to: Resistance force" target="_blank">Compute resistance force due to resstance area</td></tr>
+       <tr><td align="left" href="../com1DFAAlgorithm.html#added-resistance-force" title="Go to: Resistance force" target="_blank">Compute resistance force due to resstance area</td></tr>
        <tr><td align="left" >Append this force to the F<SUB>res</SUB> component of the force</td></tr>
        <tr><td align="left"><font color="darkgreen">Implicite method</font></td></tr>
      </table>>];
@@ -83,7 +85,7 @@ digraph "com1DFA algorithm graph" {
        <tr><td align="left"><b>Entrained mass:</b></td></tr>
        <tr><td align="left" href="../theoryCom1DFA.html#entrainment" target="_blank"><font color="red">Update mass due to entrainment</font></td></tr>
        <tr><td align="left" ><font color="red">Update velocity due to entrainmened mass</font></td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#entrained-mass" tooltip="Go to: Add entrained mass" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#take-entrainment-into-account" tooltip="Go to: Add entrained mass" target="_blank"];
 
   computeSPHForce [label=<
       <table border="0" cellborder="0" cellspacing="1">
@@ -118,7 +120,7 @@ digraph "com1DFA algorithm graph" {
        <tr><td align="left"><b>Secondary release areas:</b></td></tr>
        <tr><td align="left" >Check potential secondary release areas to trigure</td></tr>
        <tr><td align="left" >Add the secondary release particles to the simulation</td></tr>
-     </table>>, href="../com1DFAAlgorithm.html#secondary-release" tooltip="Go to: Secondary release" target="_blank"];
+     </table>>, href="../com1DFAAlgorithm.html#add-secondary-release-area" tooltip="Go to: Secondary release" target="_blank"];
 
   updateFields [label=<
     <table border="0" cellborder="0" cellspacing="1">
@@ -163,7 +165,7 @@ digraph "com1DFA algorithm graph" {
     prepareMesh -> prepareAreas
     prepareAreas -> initializeParticles;
     initializeParticles -> initializeFields;
-    label = "Initializaze Simulation";
+    label = "Initialize Simulation";
   }
 
   subgraph cluster_Forces {
