@@ -927,7 +927,7 @@ def DFAIterate(cfg, particles, fields, dem):
 
     # Start time step computation
     while t <= tEnd*(1.+1.e-13) and iterate:
-        log.debug('Computing time step t = %f s', t)
+        log.info('Computing time step t = %f s', t)
 
         # Perform computations
         if featLF:
@@ -1072,6 +1072,8 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
         dictionary with dem information
     Tcpu : dict
         computation time dictionary
+    frictType: int
+        indicator for chosen type of friction model
 
     Returns
     -------
