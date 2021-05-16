@@ -32,7 +32,7 @@ def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
         Returns
         -------
         variationDict: dict
-            dictionary with the parameters that shall be varied
+            dictionary with the parameters that shall be varied and the chosen flags for the run
 
     """
 
@@ -49,7 +49,7 @@ def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
     # loop through all sections of the defCfg
     for section in defCfg.sections():
         # look for parameters that are different than default in section GENERAL
-        if section == 'GENERAL':
+        if section == 'GENERAL' or section == 'FLAGS':
             variations[section] = {}
             for key in defCfg.items(section):
                 # output saving options not relevant for parameter variation!
@@ -58,7 +58,7 @@ def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
                 # check if key is also in the localCfg
                 if locCfg.has_option(section, key[0]):
                     locValue = locCfg.get(section, key[0])
-                    if locValue != defValue:
+                    if locValue != defValue and section == 'GENERAL':
                         # if yes and if this value is different add this key to
                         # the parameter variation dict
                         if key[0] == 'resType' or key[0] == 'tSteps':
@@ -71,6 +71,8 @@ def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
                         variations[section][key[0]] = locValue
                         log.info('\t\t%s : %s \t(default value was : %s)',
                                  key[0], locValue, defValue)
+                    elif section == 'FLAGS':
+                        variations[section][key[0]] = locValue
                     # remove the key from the localCfg
                     locCfg.remove_option(section, key[0])
 
@@ -81,7 +83,7 @@ def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
             for key in locCfg.items(section):
                 log.warning('Key [\'%s\'] in section [\'%s\'] in the parameter variation Cfg file is not needed.' % (key[0], section))
 
-    return variations['GENERAL']
+    return variations['GENERAL'], variations['FLAGS']
 
 
 def validateVarDict(variationDict, standardCfg):

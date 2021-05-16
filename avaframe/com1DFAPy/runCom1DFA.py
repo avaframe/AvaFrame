@@ -57,18 +57,18 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     modName = 'com1DFAPy'
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 
-    # fetch input data - dem, release-, entrainment- and resistance areas
-    inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, standardCfg['FLAGS'])
-
     # generate list of simulations from desired configuration
     if variationDict == '':
-        variationDict = dP.getVariationDict(avalancheDir, com1DFA, standardCfg, cfgFile=cfgFile)
+        variationDict, flagDict = dP.getVariationDict(avalancheDir, com1DFA, standardCfg, cfgFile=cfgFile)
     else:
         # check if variationDict items exist and are provided in correct format
         variationDict = dP.validateVarDict(variationDict, standardCfg)
         log.info('Variations are performed for:')
         for key in variationDict:
             log.info('%s: %s' % (key, variationDict[key]))
+
+    # fetch input data - dem, release-, entrainment- and resistance areas
+    inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, flagDict)
 
     # create a list of simulations
     # if need to reproduce exactely the hash - need to be strings with exately the same number of digits!!

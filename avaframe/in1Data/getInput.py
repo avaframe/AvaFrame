@@ -170,20 +170,20 @@ def getInputDataCom1DFAPy(avaDir, cfg):
     # Set directories for inputs, outputs and current work
     inputDir = os.path.join(avaDir, 'Inputs')
 
-    # Load dev flag
-    flagDev = cfg.getboolean('flagDev')
+    # Load dev flag as string
+    flagDev = cfg['flagDev']
 
     # Set flag if there is an entrainment or resistance area
     entResInfo= {'flagEnt': 'No', 'flagRes': 'No'}
 
     # Initialise release areas, default is to look for shapefiles
-    if flagDev is True:
+    if flagDev == 'True':
         releaseDir = 'devREL'
         relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
     elif cfg['releaseScenario'] != '':
         releaseDir = 'REL'
         relFiles = []
-        releaseFiles = cfg['FLAGS']['releaseScenario'].split('|')
+        releaseFiles = cfg['releaseScenario'].split('|')
         for rel in releaseFiles:
             if '.shp' in rel:
                 relf = os.path.join(inputDir, releaseDir, rel)

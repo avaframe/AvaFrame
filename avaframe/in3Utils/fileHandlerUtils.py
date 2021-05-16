@@ -186,7 +186,7 @@ def splitIniValueToArraySteps(cfgValues):
         flagFloat = False
         flagString = False
         for its in itemsL:
-            if its.isalpha():
+            if its.upper().isupper() and '.e' not in its and '.E' not in its:
                 flagString = True
             if '.' in its:
                 flagFloat = True
