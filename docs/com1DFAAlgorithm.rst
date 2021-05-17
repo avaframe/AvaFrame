@@ -149,6 +149,14 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 Added resistance force
 """""""""""""""""""""""
+An additional friction force called resistance can be added. This force aim to model the added
+resistance due to the specificity of the terrain on which the avalanche evolves, for example
+due to trees. To add a resistance force, one must provide a resistance shape file in the ``Inputs``
+folder and switch the ``simType`` to ``res``, ``entres`` or ``available`` to take this resistance area into account.
+Then, during the simulation, all particles flowing through this resistance area will undergo an
+extra resistance force. More details about how this force is computed and the different parameters chosen
+are found in :ref:`Resistance <theoryCom1DFA:Resistance:>`.
+
 
 Compute body driving force
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
