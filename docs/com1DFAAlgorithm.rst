@@ -16,6 +16,8 @@ from more then ``meshCellSizeThreshold`` [m] the DEM is remeshed (:py:func:`in3T
 Prepare DEM for simulation, compute surface normals vector field, cell area (:ref:`DFAnumerics:Mesh`). This is done
 in the :py:func:`com1DFAPy.com1DFA.initializeMesh` function.
 
+Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
+
 Initialize release, entrainment and resistance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Read and check shape file according to the configuration (check consistency between
@@ -61,37 +63,107 @@ See :py:func:`com1DFAPy.com1DFA.initializeFields`
 
 Time scheme and iterations:
 ------------------------------
-
+The mass and momentum equations described in :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche` are solved numerically
+in time using an operator splitting method. The different forces involved are sequently added to update the velocity.
+Position is then updated using a centered Euler scheme.
+The time step can either be fixed or dynamically computed using the Courant–Friedrichs–Lewy (CFL) condition.
 
 
 Compute Forces:
 -----------------
+This section gives an overview of the different steps to compute the forces acting on the snow particles.
+Those forces are separated in several terms: A gravity driving fore (:math:`F_{drive}`), a friction force
+(:math:`F_{fric}`), an entrainment force (related to the entrained mass of snow) and an artificial viscous force.
+Those forces are computed by the two following functions
+:py:func:`com1DFAPy.DFAfunctionsCython.computeForceC` and :py:func:`com1DFAPy.DFAfunctionsCython.computeForceSPHC`
 
 Artificial viscosity
-~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+
+In :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche`, the governing
+equations for the DFA were derived and all first order or smaller terms where neglected.
+Among those terms is the lateral shear stress. This term leads toward
+the homogenization of the velocity field. It means that two neighbor elements
+of fluid should have similar velocities. The aim behind adding artificial viscosity is to
+take this phenomena into account. The following vicosity force is added:
+
+
+.. math::
+    \begin{aligned}
+    \mathbf{F_{viscosity}} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\|^2 A_{Lat}
+    \frac{\mathbf{du}}{\|\mathbf{du}\|}\\
+    = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\| A_{Lat} \mathbf{du}
+    \end{aligned}
+
+Where the velocity difference reads :math:`\mathbf{du} = \mathbf{u} - \mathbf{\bar{u}}`
+(:math:`\mathbf{\bar{u}}` is the mesh velocity interpolated at the particle position).
+:math:`C_{Lat}` is a coefficient that rules the viscous force. It would be the
+equivalent of :math:`C_{Drag}` in the case of the drag force. The :math:`C_{Lat}`
+is a numerical parameter that depends on the mesh size. Its value is set to 100
+and should be discussed and further tested.
+
+Adding the viscous force
+"""""""""""""""""""""""""
+
+The viscous force is added implicitly:
+
+.. math::
+  \begin{aligned}
+  \mathbf{F_{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}
+  \mathbf{du}^{new}\\
+  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}^{old} - \mathbf{\bar{u}}^{old}\| A_{Lat}
+  (\mathbf{u}^{new} - \mathbf{\bar{u}}^{old})
+  \end{aligned}
+
+Updating the velocity is done in two steps. First adding the explcit term related to the
+mean mesh velocity and then the implicit term which leads to:
+
+.. math::
+  \mathbf{u}^{new} = \frac{\mathbf{u}^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
+
+With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}\frac{dt}{m}`
+
 
 Compute friction forces
 ~~~~~~~~~~~~~~~~~~~~~~~~
+The friction force encompasses all forces that oppose the motion of the particles.
+More details about One of those forces is the bottom shear force. The other is an optional resistance force.
+Both components are added to the :math:`F_{fric}` force term.
 
 Bottom shear force
 """""""""""""""""""""
-
-Compute the bottom shear force according to the friction model chosen and the
-resistance force if activated.
-
+This force accounts for the friction between the snow particles and the bottom surface (:ref:`theoryCom1DFA:Bottom friction`).
+The expression of the bottom shear stress depends on the friction model chosen but can be written in the
+following general force, :math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})`.
+The friction model and its parameters can be set in the configuration file. More details about the different friction models are given in :ref:`theoryCom1DFA:Friction model`.
+Be aware that the normal stress on the bottom surface :math:`\sigma^{(b)}` is composed of the normal component of the
+gravity force and the curvature acceleration term as shown in :eq:`sigmab`. It is possible
+to deactivate the curvature acceleration component of the shear stress by setting the
+``curvAcceleration`` coefficient to 1 in the configuration file.
 
 Added resistance force
 """""""""""""""""""""""
+An additional friction force called resistance can be added. This force aim to model the added
+resistance due to the specificity of the terrain on which the avalanche evolves, for example
+due to trees. To add a resistance force, one must provide a resistance shape file in the ``Inputs``
+folder and switch the ``simType`` to ``res``, ``entres`` or ``available`` to take this resistance area into account.
+Then, during the simulation, all particles flowing through this resistance area will undergo an
+extra resistance force. More details about how this force is computed and the different parameters chosen
+are found in :ref:`Resistance <theoryCom1DFA:Resistance:>`.
+
 
 Compute body driving force
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Compute the gravity force component.
+This force takes into account the gravity force, which is the driving force of the snow motion.
+The expression of this force is rater simple, it represents the tangential (tangent to the surface) part of the gravity force
+(the normal part of the force is accounted for in the friction term).
 
 
 Take entrainment into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+In the entrainment areas, particles can entrain mass through erosion or plowing process.
 Update mass according to the entrainment model.
 Update velocity (momentum conservation and dissipation)
 
@@ -125,5 +197,8 @@ Update fields
 
 Update particles flow depth
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Algorithm graph
+----------------
 
 .. graphviz:: com1DFAAlgorithmGraph.dot

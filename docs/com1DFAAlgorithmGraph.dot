@@ -113,6 +113,7 @@ digraph "com1DFA algorithm graph" {
       <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Particle position:</b></td></tr>
        <tr><td align="left">Update particle position using centered Euler squeme</td></tr>
+       <tr><td align="left">Split big particles</td></tr>
      </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"];
 
   addSecRelease [label=<
