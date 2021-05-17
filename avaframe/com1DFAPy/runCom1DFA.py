@@ -46,10 +46,6 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     log.info('MAIN SCRIPT')
     log.info('Current avalanche: %s', avalancheDir)
 
-    # Load standard/ default configuration
-    standardCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
-    # add avalanche directory info
-    standardCfg['GENERAL']['avalancheDir'] = avalancheDir
 
     # Create output and work directories
     # set module name, reqiured as long we are in dev phase
@@ -59,20 +55,31 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
 
     # generate list of simulations from desired configuration
     if variationDict == '':
-        variationDict, flagDict = dP.getVariationDict(avalancheDir, com1DFA, standardCfg, cfgFile=cfgFile)
+        # Load full configuration
+        modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
+        # add avalanche directory info
+        modCfg['GENERAL']['avalancheDir'] = avalancheDir
+        variationDict = dP.getVariationDict(avalancheDir, modCfg, modInfo)
     else:
         # check if variationDict items exist and are provided in correct format
-        variationDict = dP.validateVarDict(variationDict, standardCfg)
+        # Load standard/ default configuration
+        modCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+        # add avalanche directory info
+        modCfg['GENERAL']['avalancheDir'] = avalancheDir
+        variationDict = dP.validateVarDict(variationDict, modCfg)
         log.info('Variations are performed for:')
         for key in variationDict:
             log.info('%s: %s' % (key, variationDict[key]))
 
     # fetch input data - dem, release-, entrainment- and resistance areas
-    inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, flagDict)
+    inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, modCfg['FLAGS'])
+
+    # write full simulations configuration
+    cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, modCfg, fileName='overallConfiguration')
 
     # create a list of simulations
-    # if need to reproduce exactely the hash - need to be strings with exately the same number of digits!!
-    simDict = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict)
+    # if need to reproduce exactely the hash - need to be strings with exactely the same number of digits!!
+    simDict = com1DFA.prepareVarSimDict(modCfg, inputSimFiles, variationDict['GENERAL'])
 
     log.info('The following simulations will be performed')
     for key in simDict:
@@ -121,6 +128,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
         com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
     # read all simulation configuration files and return dataFrame and write to csv
+    standardCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg, writeCSV=True)
 
     return particlesList, fieldsList, Tsave, dem, plotDict, reportDictList

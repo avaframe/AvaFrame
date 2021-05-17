@@ -13,7 +13,7 @@ from avaframe.in3Utils import cfgUtils
 log = logging.getLogger(__name__)
 
 
-def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
+def getVariationDict(avaDir, fullCfg, modDict):
     """ Create a dictionary with all the parameters that shall be varied from the standard configuration;
         either provide a cfgFile that contains info on parameters to be varied,
         or the local_ cfg file is used
@@ -22,12 +22,10 @@ def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
         -----------
         avaDir: str
             path to avalanche directory
-        module:
-            computational module
-        standardCfg: dict
-            default configuration
-        cfgFile: str
-            path to configuration file that includes info on parameters to be varied - optional
+        fullCfg: configParser object
+            full configuration potentially including variations of parameter
+        modDict: dict
+            info on modifications to standard configuration
 
         Returns
         -------
@@ -36,54 +34,31 @@ def getVariationDict(avaDir, module, standardCfg, cfgFile=''):
 
     """
 
-    # default configurations for module
-    defCfg = standardCfg
-
-    # load modified configuration either from provided cfg file or from local_ cfg file
-    if cfgFile != '':
-        locCfg = cfgUtils.getModuleConfig(module, fileOverride=cfgFile)
-    else:
-        locCfg = cfgUtils.getModuleConfig(module)
-
     variations = {}
     # loop through all sections of the defCfg
-    for section in defCfg.sections():
+    for section in fullCfg.sections():
         # look for parameters that are different than default in section GENERAL
         if section == 'GENERAL' or section == 'FLAGS':
             variations[section] = {}
-            for key in defCfg.items(section):
+            for key in fullCfg.items(section):
                 # output saving options not relevant for parameter variation!
-
-                defValue = key[1]
-                # check if key is also in the localCfg
-                if locCfg.has_option(section, key[0]):
-                    locValue = locCfg.get(section, key[0])
-                    if locValue != defValue and section == 'GENERAL':
-                        # if yes and if this value is different add this key to
-                        # the parameter variation dict
-                        if key[0] == 'resType' or key[0] == 'tSteps':
-                            locValue = [locValue]
-                        elif ':' in locValue or '|' in locValue:
-                            locValue = fU.splitIniValueToArraySteps(locValue)
-                        else:
-                            # if only one item - create list
-                            locValue = [locValue]
+                fullValue = key[1]
+                if section == 'GENERAL' and key[0] != 'resType' and key[0] != 'tSteps':
+                    # if yes and if this value is different add this key to
+                    # the parameter variation dict
+                    if ':' in fullValue or '|' in fullValue:
+                        locValue = fU.splitIniValueToArraySteps(fullValue)
                         variations[section][key[0]] = locValue
-                        log.info('\t\t%s : %s \t(default value was : %s)',
-                                 key[0], locValue, defValue)
-                    elif section == 'FLAGS':
-                        variations[section][key[0]] = locValue
-                    # remove the key from the localCfg
-                    locCfg.remove_option(section, key[0])
+                        defValue = modDict[section][key[0]][1]
+                        log.info('%s: %s (default value was: %s)' % (key[0], locValue, defValue))
 
-    # Now check if there are some sections/ keys left in the local cfg and
-    # that are not used
-    for section in locCfg.sections():
-        if section == 'GENERAL':
-            for key in locCfg.items(section):
-                log.warning('Key [\'%s\'] in section [\'%s\'] in the parameter variation Cfg file is not needed.' % (key[0], section))
+    # print modified parameters 
+    for sec in modDict:
+        for value in modDict[sec]:
+            if value not in variations[sec]:
+                log.info('%s: %s (default value was: %s)' % (value, modDict[sec][value][0], modDict[sec][value][1]))
 
-    return variations['GENERAL'], variations['FLAGS']
+    return variations
 
 
 def validateVarDict(variationDict, standardCfg):
