@@ -387,12 +387,13 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False):
     # create confiparser object, convert to json object, write to dataFrame
     # append all dataFrames
     for cfile in configFiles:
-        simName = os.path.splitext(os.path.basename(cfile))[0]
-        cfgObject = readCfgFile(avaDir, fileName=cfile)
-        indexItem = [simName]
-        cfgDict = convertConfigParserToDict(cfgObject)
-        simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
-        simDF = pd.concat([simDF, simItemDF], axis=0)
+        if 'overallConfiguration' not in cfile:
+            simName = os.path.splitext(os.path.basename(cfile))[0]
+            cfgObject = readCfgFile(avaDir, fileName=cfile)
+            indexItem = [simName]
+            cfgDict = convertConfigParserToDict(cfgObject)
+            simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
+            simDF = pd.concat([simDF, simItemDF], axis=0)
 
     # if writeCSV, write dataFrame to csv file
     if writeCSV:
