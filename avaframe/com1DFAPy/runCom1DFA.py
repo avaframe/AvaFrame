@@ -46,7 +46,6 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     log.info('MAIN SCRIPT')
     log.info('Current avalanche: %s', avalancheDir)
 
-
     # Create output and work directories
     # set module name, reqiured as long we are in dev phase
     # - because need to create e.g. Output folder for com1DFAPy to distinguish from
@@ -57,8 +56,6 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     if variationDict == '':
         # Load full configuration
         modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
-        # add avalanche directory info
-        modCfg['GENERAL']['avalancheDir'] = avalancheDir
         variationDict = dP.getVariationDict(avalancheDir, modCfg, modInfo)
     else:
         # check if variationDict items exist and are provided in correct format
@@ -70,6 +67,9 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
         log.info('Variations are performed for:')
         for key in variationDict:
             log.info('%s: %s' % (key, variationDict[key]))
+
+    # add avalanche directory info to cfg
+    modCfg['GENERAL']['avalancheDir'] = avalancheDir
 
     # fetch input data - dem, release-, entrainment- and resistance areas
     inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, modCfg['FLAGS'])
