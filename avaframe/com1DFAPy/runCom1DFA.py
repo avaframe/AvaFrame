@@ -112,6 +112,11 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
 
         reportDictList.append(reportDict)
 
+        # export for visulation
+        if cfg['VISUALISATION'].getboolean('writePartToCSV'):
+            outDir = os.path.join(avalancheDir, 'Outputs', modName)
+            com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+
         # create hash to check if config didnt change
         simHashFinal = cfgUtils.cfgHash(cfgFinal)
         if simHashFinal != simHash:
@@ -122,10 +127,6 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAPy', 'reports')
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
-    # export for visulation
-    if cfg['VISUALISATION'].getboolean('writePartToCSV'):
-        outDir = os.path.join(avalancheDir, 'Outputs', modName)
-        com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
     # read all simulation configuration files and return dataFrame and write to csv
     standardCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
