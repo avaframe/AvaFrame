@@ -74,7 +74,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     # fetch input data - dem, release-, entrainment- and resistance areas
     inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, modCfg['FLAGS'])
 
-    # write full simulations configuration
+    # write full configuration file to file
     cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, modCfg, fileName='overallConfiguration')
 
     # create a list of simulations
