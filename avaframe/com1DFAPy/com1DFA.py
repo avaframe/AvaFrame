@@ -101,7 +101,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
         # export particles dictionaries of saving time steps
         outDirData = os.path.join(outDir, 'particles')
         fU.makeADir(outDirData)
-        savePartToPickle(particlesList, outDirData)
+        savePartToPickle(particlesList, outDirData, cuSimName)
 
     # Result parameters to be exported
     exportFields(cfg, Tsave, fieldsList, demOri, outDir, cuSimName)
