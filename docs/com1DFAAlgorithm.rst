@@ -50,9 +50,13 @@ be rounded to 6 with a probability of 0.7 and 5 with a probability of 0.3). This
 match with the desired ``massPerPart`` value. Particles are then place randomly within the
 mesh cell.
 Other particles properties velocity, cell number... are also initialized here.
+See :py:func:`com1DFAPy.com1DFA.initializeParticles`
 
 Initialize fields
 ~~~~~~~~~~~~~~~~~
+All fields (grid values defined as a raster) ar initialized. Flow velocity, pressure, peak flow velocity and peak pressures
+are set to zero. Flow depth and peak flow depth are set according to the initial particle distribution.
+See :py:func:`com1DFAPy.com1DFA.initializeFields`
 
 
 Time scheme and iterations:
