@@ -137,7 +137,8 @@ def prepareRelase(cfg, rel, inputSimLines):
         changed release name
     """
 
-
+    # load info
+    entResInfo = inputSimLines['entResInfo']
 
     # Set release areas and simulation name
     relName = os.path.splitext(os.path.basename(rel))[0]
@@ -156,6 +157,24 @@ def prepareRelase(cfg, rel, inputSimLines):
             releaseLine['d0'][k] = float(releaseLine['d0'][k])
     inputSimLines['releaseLine'] = releaseLine
     log.info('Release area scenario: %s - perform simulations' % (relName))
+
+    if cfg.getboolean('GENERAL', 'secRelArea'):
+        if entResInfo['flagSecondaryRelease'] == 'No':
+            message = 'No secondary release file found'
+            log.error(message)
+            raise FileNotFoundError(message)
+        secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
+        for k in range(len(secondaryReleaseLine['d0'])):
+            if secondaryReleaseLine['d0'][k] == 'None':
+                secondaryReleaseLine['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
+            else:
+                secondaryReleaseLine['d0'][k] = float(secondaryReleaseLine['d0'][k])
+    else:
+        inputSimLines['entResInfo']['flagSecondaryRelease'] = 'No'
+        secondaryReleaseLine = None
+
+    inputSimLines['secondaryReleaseLine'] = secondaryReleaseLine
+
 
     return relName, inputSimLines, badName
 
@@ -478,6 +497,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
         log.info('Initializing secondary release area')
         secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
+
         # fetch secondary release areas
         secRelRasterList = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
         # remove overlap with main release areas
