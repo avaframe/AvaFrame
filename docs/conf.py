@@ -66,7 +66,7 @@ autosummary_mock_imports = [
     'mpl_toolkits',
     'make_axes_locatable',
 ]
-autosummary_generate = False
+autosummary_generate = True
 
 napoleon_google_docstring = True
 napoleon_use_param = False
@@ -77,7 +77,7 @@ add_module_names = False
 
 # make referencing unique if the same section heading exists doubly
 autosectionlabel_prefix_document = True
-autosectionlabel_maxdepth = 2
+autosectionlabel_maxdepth = 4
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
