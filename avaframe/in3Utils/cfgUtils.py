@@ -48,7 +48,7 @@ def getGeneralConfig():
     return cfg
 
 
-def getModuleConfig(module, fileOverride=''):
+def getModuleConfig(module, fileOverride='', modInfo=False):
     ''' Returns the configuration for a given module
     returns a configParser object
 
@@ -61,6 +61,9 @@ def getModuleConfig(module, fileOverride=''):
            leads to getModuleConfig(c2)
 
     Str: fileOverride : allows for a completely different file location
+
+    modInfo: bool
+        true if dictionary with info on differences to standard config
 
     Order is as follows:
     fileOverride -> local_MODULECfg.ini -> MODULECfg.ini
@@ -99,7 +102,7 @@ def getModuleConfig(module, fileOverride=''):
         raise FileNotFoundError('None of the provided cfg files exist ')
 
     # Finally read it
-    cfg = compareConfig(iniFile, modName, compare)
+    cfg = compareConfig(iniFile, modName, compare, modInfo)
 
     return cfg
 
@@ -134,16 +137,19 @@ def getDefaultModuleConfig(module):
     return cfg
 
 
-def compareConfig(iniFile, modName, compare):
+def compareConfig(iniFile, modName, compare, modInfo=False):
     ''' Compare configuration files (if a local and default are both provided)
     and inform user of the eventuel differences. Take the default as reference.
 
     Inputs:
             -iniFile: path to config file. Only one path if compare=False
             -compare: True if two paths are provided and a comparison is needed
+            -modInfo: True if dictionary with modifications shall be returned
 
     Output: ConfigParser object
     '''
+
+    modDict = {}
     if compare:
         log.info('Reading config from: %s and %s' % (iniFile[0], iniFile[1]))
         # initialize our final configparser object
@@ -160,6 +166,7 @@ def compareConfig(iniFile, modName, compare):
         # loop through all sections of the defCfg
         log.debug('Writing cfg for: %s', modName)
         for section in defCfg.sections():
+            modDict[section] = {}
             cfg.add_section(section)
             log.info('\t%s', section)
             for key in defCfg.items(section):
@@ -174,6 +181,8 @@ def compareConfig(iniFile, modName, compare):
                         cfg.set(section, key[0], locValue)
                         log.info('\t\t%s : %s \t(default value was : %s)',
                                  key[0], locValue, defValue)
+                        modString = [locValue, defValue]
+                        modDict[section][key[0]] = modString
                     else:
                         cfg.set(section, key[0], defValue)
                         log.info('\t\t%s : %s', key[0], defValue)
@@ -199,7 +208,10 @@ def compareConfig(iniFile, modName, compare):
         # Write config to log file
         logUtils.writeCfg2Log(cfg, modName)
 
-    return cfg
+    if modInfo:
+        return cfg, modDict
+    else:
+        return cfg
 
 
 def writeCfgFile(avaDir, module, cfg, fileName=''):
