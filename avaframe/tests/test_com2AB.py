@@ -11,6 +11,7 @@ from avaframe.in3Utils import cfgUtils
 
 def test_setEqParameters(capfd):
     '''Simple test for module setEqParameters'''
+    cfg = cfgUtils.getModuleConfig(com2AB)
     # small avalanche
     eqParamRef = {}
     eqParamRef['ParameterSet'] = 'Small avalanches'
@@ -20,7 +21,7 @@ def test_setEqParameters(capfd):
     eqParamRef['k4'] = -5.02
     eqParamRef['SD'] = 2.36
 
-    eqParams = com2AB.setEqParameters(smallAva=True, customParam=None)
+    eqParams = com2AB.setEqParameters(cfg, smallAva=True)
     for key in eqParamRef.keys():
         assert eqParamRef[key] == eqParams[key]
 
@@ -32,26 +33,26 @@ def test_setEqParameters(capfd):
     eqParamRef['k4'] = -2.38
     eqParamRef['SD'] = 1.25
 
-    eqParams = com2AB.setEqParameters(smallAva=False, customParam=None)
+    eqParams = com2AB.setEqParameters(cfg, smallAva=False)
     for key in eqParamRef.keys():
         assert eqParamRef[key] == eqParams[key]
 
-    customParam = {}
-    customParam['k1'] = 1
-    customParam['k2'] = 2
-    customParam['k3'] = 3
-    customParam['k4'] = 4
-    customParam['SD'] = 5
+    cfg['ABSETUP']['customParam'] = 'True'
+    cfg['ABSETUP']['k1'] = '1'
+    cfg['ABSETUP']['k2'] = '2'
+    cfg['ABSETUP']['k3'] = '3'
+    cfg['ABSETUP']['k4'] = '4'
+    cfg['ABSETUP']['SD'] = '5'
 
     eqParamRef = {}
     eqParamRef['ParameterSet'] = 'Custom'
-    eqParamRef['k1'] = customParam['k1']
-    eqParamRef['k2'] = customParam['k2']
-    eqParamRef['k3'] = customParam['k3']
-    eqParamRef['k4'] = customParam['k4']
-    eqParamRef['SD'] = customParam['SD']
+    eqParamRef['k1'] = cfg.getfloat('ABSETUP', 'k1')
+    eqParamRef['k2'] = cfg.getfloat('ABSETUP', 'k2')
+    eqParamRef['k3'] = cfg.getfloat('ABSETUP', 'k3')
+    eqParamRef['k4'] = cfg.getfloat('ABSETUP', 'k4')
+    eqParamRef['SD'] = cfg.getfloat('ABSETUP', 'SD')
 
-    eqParams = com2AB.setEqParameters(smallAva=False, customParam=customParam)
+    eqParams = com2AB.setEqParameters(cfg, smallAva=False)
     for key in eqParamRef.keys():
         assert eqParamRef[key] == eqParams[key]
 
@@ -59,6 +60,7 @@ def test_setEqParameters(capfd):
 def test_calcAB(capfd):
     '''Simple test for function calcAB'''
 
+    cfg = cfgUtils.getModuleConfig(com2AB)
     # Make a reference quadratic profile
     B = -np.tan(np.deg2rad(45))
     A = -B/4000
@@ -93,7 +95,7 @@ def test_calcAB(capfd):
     eqIn['y'] = []  # y coordinate of the path
     eqIn['z'] = z  # z coordinate of the path (projection of x,y on the raster)
     eqIn['indSplit'] = 2  # index of split point
-    eqParams = com2AB.setEqParameters(smallAva=False, customParam=None)
+    eqParams = com2AB.setEqParameters(cfg, smallAva=False)
     eqOut = com2AB.calcAB(eqIn, eqParams)
     alpha = eqOut['alpha']
     alphaSD = eqOut['alphaSD']
