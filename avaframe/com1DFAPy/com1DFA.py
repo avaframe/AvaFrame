@@ -1333,7 +1333,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     # this is dangerous!!!!!!!!!!!!!!
     ###############################################################
     # remove particles that are not located on the mesh any more
-    particles = removeOutPart(cfg, particles, dem)
+    particles = DFAtls.removeOutPart(cfg, particles, dem)
 
     # ++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()
@@ -1459,7 +1459,7 @@ def polygon2Raster(demHeader, Line, relTh=''):
     X = X.flatten()
     Y = Y.flatten()
     points = np.stack((X, Y), axis=-1)
-    mask = path.contains_points(points)
+    mask = path.contains_points(points, radius=-0.1)
     Mask = mask.reshape((nrows, ncols)).astype(int)
     # thickness field is provided, then return array with ones
     if relTh != '':
@@ -1478,6 +1478,7 @@ def polygon2Raster(demHeader, Line, relTh=''):
                                 extent=[x.min(), x.max(), y.min(), y.max()],
                                 cmap=cmap, norm=None)
         ax.plot(xCoord0 * csz, yCoord0 * csz, 'r', label='release polyline')
+        ax.plot(X[mask] * csz, Y[mask] * csz, '.b')
         plt.legend()
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
@@ -1606,7 +1607,7 @@ def releaseSecRelArea(cfg, particles, fields, dem):
 
             # release secondary release area by just appending the particles
             log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
-            particles = mergeParticleDict(particles, secRelParticles)
+            particles = DFAtls.mergeParticleDict(particles, secRelParticles)
             # remove it from the secondary release area list
             secRelRasterList.pop(count)
             secRelRasterNameList.pop(count)
@@ -1616,234 +1617,6 @@ def releaseSecRelArea(cfg, particles, fields, dem):
     secondaryReleaseInfo['Name'] = secRelRasterNameList
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
-    return particles
-
-
-def removeOutPart(cfg, particles, dem):
-    """ find and remove out of raster particles
-
-    Parameters
-    ----------
-    cfg : configparser
-        DFA parameters
-    particles : dict
-        particles dictionary
-    dem : dict
-        dem dictionary
-
-    Returns
-    -------
-    particles : dict
-        particles dictionary
-    """
-    dt = cfg.getfloat('dt')
-    header = dem['header']
-    nrows = header.nrows
-    ncols = header.ncols
-    xllc = header.xllcenter
-    yllc = header.yllcenter
-    csz = header.cellsize
-    Bad = dem['Bad']
-
-    x = particles['x']
-    y = particles['y']
-    ux = particles['ux']
-    uy = particles['uy']
-    x = x + ux*dt
-    y = y + uy*dt
-
-    # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-    Lx = (x - xllc) / csz
-    Ly = (y - yllc) / csz
-    mask = np.ones(len(x), dtype=bool)
-    indOut = np.where(Lx <= 1.5)
-    mask[indOut] = False
-    indOut = np.where(Ly <= 1.5)
-    mask[indOut] = False
-    indOut = np.where(Lx >= ncols-1.5)
-    mask[indOut] = False
-    indOut = np.where(Ly >= nrows-1.5)
-    mask[indOut] = False
-
-    nRemove = len(mask)-np.sum(mask)
-    if nRemove > 0:
-        particles = removePart(particles, mask, nRemove)
-        log.info('removed %s particles because they exited the domain' % (nRemove))
-
-    x = particles['x']
-    y = particles['y']
-    ux = particles['ux']
-    uy = particles['uy']
-    mask = np.ones(len(x), dtype=bool)
-    y = particles['y']
-    ux = particles['ux']
-    uy = particles['uy']
-    indXDEM = particles['indXDEM']
-    indYDEM = particles['indYDEM']
-    indOut = np.where(Bad[indYDEM, indXDEM], False, True)
-    mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indYDEM+np.sign(uy).astype('int'), indXDEM], False, True)
-    mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indYDEM, indXDEM+np.sign(ux).astype('int')], False, True)
-    mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indYDEM+np.sign(uy).astype('int'), indXDEM+np.sign(ux).astype('int')], False, True)
-    mask = np.logical_and(mask, indOut)
-
-    nRemove = len(mask)-np.sum(mask)
-    if nRemove > 0:
-        particles = removePart(particles, mask, nRemove)
-        log.info('removed %s particles because they exited the domain' % (nRemove))
-
-    return particles
-
-
-def removeSmallPart(hmin, particles, dem):
-    """ find and remove too small particles
-
-    Parameters
-    ----------
-    hmin : float
-        minimum depth
-    particles : dict
-        particles dictionary
-    dem : dict
-        dem dictionary
-
-    Returns
-    -------
-    particles : dict
-        particles dictionary
-    """
-    h = particles['h']
-
-    indOut = np.where(h < hmin)
-    mask = np.ones(len(h), dtype=bool)
-    mask[indOut] = False
-
-    nRemove = len(mask)-np.sum(mask)
-    if nRemove > 0:
-        particles = removePart(particles, mask, nRemove)
-        log.info('removed %s particles because they were too thin' % (nRemove))
-        particles = DFAfunC.getNeighboursC(particles, dem)
-
-    return particles
-
-
-def removePart(particles, mask, nRemove):
-    """ remove given particles
-
-    Parameters
-    ----------
-    particles : dict
-        particles dictionary
-    mask : 1D numpy array
-        particles to keep
-    nRemove : int
-        number of particles removed
-
-    Returns
-    -------
-    particles : dict
-        particles dictionary
-    """
-    particles['Npart'] = particles['Npart'] - nRemove
-    particles['NPPC'] = particles['NPPC'][mask]
-    particles['x'] = particles['x'][mask]
-    particles['y'] = particles['y'][mask]
-    particles['z'] = particles['z'][mask]
-    particles['s'] = particles['s'][mask]
-    particles['l'] = particles['l'][mask]
-    particles['ux'] = particles['ux'][mask]
-    particles['uy'] = particles['uy'][mask]
-    particles['uz'] = particles['uz'][mask]
-    particles['m'] = particles['m'][mask]
-    particles['h'] = particles['h'][mask]
-    particles['inCellDEM'] = particles['inCellDEM'][mask]
-    particles['indXDEM'] = particles['indXDEM'][mask]
-    particles['indYDEM'] = particles['indYDEM'][mask]
-    particles['partInCell'] = particles['partInCell'][mask]
-
-    return particles
-
-
-def splitPart(cfg, particles, dem):
-    """Split big particles
-
-    Split particles bigger than 1.5 times the massPerPart
-
-    Parameters
-    ----------
-    cfg: configparser
-        DFA configuration
-    particles : dict
-        particles dictionary
-    dem : dict
-        dem dictionary
-
-    Returns
-    -------
-    particles : dict
-        particles dictionary
-
-    """
-    massPerPart = cfg.getfloat('massPerPart')
-    m = particles['m']
-    nSplit = np.round(m/massPerPart)
-    Ind = np.where(nSplit > 1)[0]
-    if np.size(Ind) > 0:
-        for ind in Ind:
-            mNew = m[ind] / nSplit[ind]
-            nAdd = (nSplit[ind]-1).astype('int')
-            log.debug('Spliting particle %s in %s' % (ind, nAdd+1))
-            particles['Npart'] = particles['Npart'] + nAdd
-            particles['NPPC'] = np.append(particles['NPPC'], particles['NPPC'][ind]*np.ones((nAdd)))
-            particles['x'] = np.append(particles['x'], particles['x'][ind]*np.ones((nAdd)))
-            particles['y'] = np.append(particles['y'], particles['y'][ind]*np.ones((nAdd)))
-            particles['z'] = np.append(particles['z'], particles['z'][ind]*np.ones((nAdd)))
-            particles['s'] = np.append(particles['s'], particles['s'][ind]*np.ones((nAdd)))
-            particles['l'] = np.append(particles['l'], particles['l'][ind]*np.ones((nAdd)))
-            particles['ux'] = np.append(particles['ux'], particles['ux'][ind]*np.ones((nAdd)))
-            particles['uy'] = np.append(particles['uy'], particles['uy'][ind]*np.ones((nAdd)))
-            particles['uz'] = np.append(particles['uz'], particles['uz'][ind]*np.ones((nAdd)))
-            particles['m'] = np.append(particles['m'], mNew*np.ones((nAdd)))
-            particles['m'][ind] = mNew
-            particles['h'] = np.append(particles['h'], particles['h'][ind]*np.ones((nAdd)))
-            particles['inCellDEM'] = np.append(particles['inCellDEM'], particles['inCellDEM'][ind]*np.ones((nAdd)))
-            particles['indXDEM'] = np.append(particles['indXDEM'], particles['indXDEM'][ind]*np.ones((nAdd)))
-            particles['indYDEM'] = np.append(particles['indYDEM'], particles['indYDEM'][ind]*np.ones((nAdd)))
-            particles['partInCell'] = np.append(particles['partInCell'], particles['partInCell'][ind]*np.ones((nAdd)))
-
-        particles['mTot'] = np.sum(particles['m'])
-    return particles
-
-
-def mergeParticleDict(particles1, particles2):
-    """Merge two particles dictionary
-
-    Parameters
-    ----------
-    particles1 : dict
-        first particles dictionary
-    particles2 : dict
-        second particles dictionary
-
-    Returns
-    -------
-    particles : dict
-        merged particles dictionary
-
-    """
-    particles = {}
-    for key in particles1:
-        if key == 'Npart':
-            particles['Npart'] = particles1['Npart'] + particles2['Npart']
-        elif (key in particles2) and (type(particles1[key]).__module__ == np.__name__):
-            if np.size(particles1[key]) > 1:
-                particles[key] = np.append(particles1[key], particles2[key])
-            else:
-                particles[key] = particles1[key] + particles2[key]
-        else:
-            particles[key] = particles1[key]
     return particles
 
 

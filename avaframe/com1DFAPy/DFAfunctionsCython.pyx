@@ -16,7 +16,6 @@ from libc cimport math as math
 cimport cython
 
 # Local imports
-import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.in3Utils.geoTrans as geoTrans
 
@@ -624,10 +623,10 @@ def updatePositionC(cfg, particles, dem, force):
   # this is dangerous!!!!!!!!!!!!!!
   ###############################################################
   # remove particles that are not located on the mesh any more
-  particles = com1DFA.removeOutPart(cfg, particles, dem)
+  particles = DFAtls.removeOutPart(cfg, particles, dem)
 
   # split particles with too much mass
-  particles = com1DFA.splitPart(cfg, particles, dem)
+  particles = DFAtls.splitPart(cfg, particles, dem)
   return particles
 
 @cython.boundscheck(False)

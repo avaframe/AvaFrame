@@ -2,16 +2,12 @@
     Run script for running python DFA kernel
 """
 
-import time
-import copy
 import os
 
 # Local imports
-import avaframe.in3Utils.initialiseDirs as inDirs
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.com1DFAPy.com1DFA as com1DFA
 from avaframe.out1Peak import outPlotAllPeak as oP
-import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
