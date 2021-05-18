@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpltPath
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-import pandas as pd
 
 # Local imports
 import avaframe.in3Utils.initialiseDirs as inDirs
