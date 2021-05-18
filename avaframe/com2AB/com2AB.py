@@ -20,21 +20,21 @@ log = logging.getLogger(__name__)
 debugPlot = False
 
 
-def setEqParameters(smallAva, customParam):
+def setEqParameters(cfg, smallAva):
     """ Set alpha beta equation parameters
 
     Set alpha beta equation parameters to
     - standard (default)
     - small avalanche (if smallAva==True)
-    - custom (if customParam dictionary is provided)
+    - custom (if cfgsetup('customParam') is True use the custom values provided in the ini file)
 
     Parameters
     ----------
+    cfg : configParser
+        if cfgsetup('customParam') is True, the custom parameters provided
+        in the cfg are used in theAlphaBeta equation. (provide all 5 k1, k2, k3, k4 and SD values)
     smallAva : boolean
         True if the small avallanche AlphaBeta equation parameters should be used
-    customParam : dict
-        If provided, the parameters in customParam dictionary are used in the
-        AlphaBeta equation. (provide all 5 k1, k2, k3, k4 and SD values)
 
     Returns
     -------
@@ -42,6 +42,7 @@ def setEqParameters(smallAva, customParam):
         k1, k2, k3, k4 and SD values to be used in the AlphaBeta equation
     """
 
+    cfgsetup = cfg['ABSETUP']
     eqParameters = {}
 
     if smallAva is True:
@@ -54,13 +55,16 @@ def setEqParameters(smallAva, customParam):
 
         ParameterSet = "Small avalanches"
 
-    elif customParam:
-        log.debug('Using custom Avalanche Setup')
-        eqParameters['k1'] = customParam['k1']
-        eqParameters['k2'] = customParam['k2']
-        eqParameters['k3'] = customParam['k3']
-        eqParameters['k4'] = customParam['k4']
-        eqParameters['SD'] = customParam['SD']
+    elif cfgsetup.getboolean('customParam'):
+        log.debug('Using custom Avalanche Setup:')
+        parameterName = ['k1', 'k2', 'k3', 'k4', 'SD']
+        for paramName in parameterName:
+            if cfg.has_option('ABSETUP', paramName):
+                eqParameters[paramName] = cfgsetup.getfloat(paramName)
+            else:
+                message = 'Custom parameter %s is missing in the configuration file' % paramName
+                log.error(message)
+                raise KeyError(message)
 
         ParameterSet = "Custom"
 
@@ -73,6 +77,7 @@ def setEqParameters(smallAva, customParam):
         eqParameters['SD'] = 1.25
 
         ParameterSet = "Standard"
+
     eqParameters['ParameterSet'] = ParameterSet
     return eqParameters
 
@@ -97,7 +102,6 @@ def com2ABMain(cfg, avalancheDir):
     abVersion = '4.1'
     cfgsetup = cfg['ABSETUP']
     smallAva = cfgsetup.getboolean('smallAva')
-    customParam = cfgsetup.getboolean('customParam')
     distance = float(cfgsetup['distance'])
     resAB = {}
     # Extract input file locations
@@ -116,7 +120,7 @@ def com2ABMain(cfg, avalancheDir):
     resAB['splitPoint'] = shpConv.readPoints(cfgPath['splitPointSource'], dem)
 
     # Read input setup
-    eqParams = setEqParameters(smallAva, customParam)
+    eqParams = setEqParameters(cfg, smallAva)
     resAB['eqParams'] = eqParams
 
     NameAva = AvaPath['Name']
