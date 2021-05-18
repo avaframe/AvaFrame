@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.path as mpltPath
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import pandas as pds
 
 # Local imports
 import avaframe.in3Utils.initialiseDirs as inDirs
@@ -1718,7 +1719,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
 
         # create pandas dataFrame and save to csv
         outFile = os.path.join(outDir, 'particles%s.csv.%d' % (simName, count))
-        particlesData = pd.DataFrame(data=csvData)
+        particlesData = pds.DataFrame(data=csvData)
         particlesData.to_csv(outFile, index=False)
         count = count + 1
 
