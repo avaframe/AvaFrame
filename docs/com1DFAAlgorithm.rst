@@ -134,18 +134,19 @@ Bottom shear force
 """""""""""""""""""""
 This force accounts for the friction between the snow particles and the bottom surface (:ref:`theoryCom1DFA:Bottom friction`).
 The expression of the bottom shear stress depends on the friction model chosen but can be written in the
-following general force, :math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})`.
-The friction model and its parameters can be set in the configuration file. More details about the different friction models are given in :ref:`theoryCom1DFA:Friction model`.
+following general forme, :math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})`.
+The friction model and its parameters can be set in the configuration file. More details about the different
+friction models are given in :ref:`theoryCom1DFA:Friction model`.
 Be aware that the normal stress on the bottom surface :math:`\sigma^{(b)}` is composed of the normal component of the
 gravity force and the curvature acceleration term as shown in :eq:`sigmab`. It is possible
 to deactivate the curvature acceleration component of the shear stress by setting the
-``curvAcceleration`` coefficient to 1 in the configuration file.
+``curvAcceleration`` coefficient to 0 in the configuration file.
 
 Added resistance force
 """""""""""""""""""""""
-An additional friction force called resistance can be added. This force aim to model the added
+An additional friction force called resistance can be added. This force aims to model the added
 resistance due to the specificity of the terrain on which the avalanche evolves, for example
-due to trees. To add a resistance force, one must provide a resistance shape file in the ``Inputs``
+due to forests. To add a resistance force, one must provide a resistance shape file in the ``Inputs``
 folder and switch the ``simType`` to ``res``, ``entres`` or ``available`` to take this resistance area into account.
 Then, during the simulation, all particles flowing through this resistance area will undergo an
 extra resistance force. More details about how this force is computed and the different parameters chosen
@@ -164,21 +165,40 @@ Take entrainment into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the entrainment areas, particles can entrain mass through erosion or plowing process.
-Update mass according to the entrainment model.
-Update velocity (momentum conservation and dissipation)
+In both mechanisms, one must account for three things:
 
+    - The change of mass due to the entrainment.
+
+    - The change of momentum. Indeed, the entrained snow was accelerated from rest to the speed of the avalanche.
+
+    - The loss of momentum due to the plowing or erosion phenomena. The entrained mass bounds with the ground
+    needs to be broken.
+
+These 3 terms are further detailed in :ref:`Entrainment <theoryCom1DFA:Entrainment:>`.
+
+In the numerics, the mass is updated according to the entrainment model in
+:py:func:`com1DFAPy.DFAfunctionsCython.computeEntMassAndForce`. The velocity is updated immediately
+after using an implicit formulation.
 
 Compute lateral pressure forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Compute SPH gradients that lead to the lateral pressure forces.
+The lateral pressure forces are related to the gradient of the flow depth. This gradient
+is computed using a smoothed particle hydrodynamic method.
+This force is added to the :math:`F_{SPH}`.
 
 
 Update position
 ----------------
 
+Driving force, lateral pressure force and friction forces are sequently used to update the velocity.
+Then the particle position is updated using a centered Euler scheme.
+This steps are done in :py:func:`com1DFAPy.DFAfunctionsCython.updatePositionC`.
+
 Take gravity and lateral pressure forces into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:math:`F_{drive}` and :math:`F_{SPH}` are summed up and taken into account to update the velocity.
+This is done explicitly.
 
 Take friction into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
