@@ -149,9 +149,9 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 Added resistance force
 """""""""""""""""""""""
-An additional friction force called resistance can be added. This force aim to model the added
+An additional friction force called resistance can be added. This force aims to model the added
 resistance due to the specificity of the terrain on which the avalanche evolves, for example
-due to trees. To add a resistance force, one must provide a resistance shape file in the ``Inputs``
+due to forests. To add a resistance force, one must provide a resistance shape file in the ``Inputs``
 folder and switch the ``simType`` to ``res``, ``entres`` or ``available`` to take this resistance area into account.
 Then, during the simulation, all particles flowing through this resistance area will undergo an
 extra resistance force. More details about how this force is computed and the different parameters chosen
@@ -196,6 +196,18 @@ after using an implicit formulation.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
+    - The change of mass due to the entrainment.
+
+    - The change of momentum. Indeed, the entrained snow was accelerated from rest to the speed of the avalanche.
+
+    - The loss of momentum due to the plowing or erosion phenomena. The entrained mass bounds with the ground
+    needs to be broken.
+
+These 3 terms are further detailed in :ref:`Entrainment <theoryCom1DFA:Entrainment:>`.
+
+In the numerics, the mass is updated according to the entrainment model in
+:py:func:`com1DFAPy.DFAfunctionsCython.computeEntMassAndForce`. The velocity is updated immediately
+after using an implicit formulation.
 
 Compute lateral pressure forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -216,6 +228,10 @@ This steps are done in :py:func:`com1DFAPy.DFAfunctionsCython.updatePositionC`.
 
 Update position
 ----------------
+
+Driving force, lateral pressure force and friction forces are sequently used to update the velocity.
+Then the particle position is updated using a centered Euler scheme.
+This steps are done in :py:func:`com1DFAPy.DFAfunctionsCython.updatePositionC`.
 
 Take gravity and lateral pressure forces into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
