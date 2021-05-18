@@ -1453,13 +1453,19 @@ def polygon2Raster(demHeader, Line, relTh=''):
     # get the raster corresponding to the polygon
     polygon = np.stack((xCoord, yCoord), axis=-1)
     path = mpltPath.Path(polygon)
+    # add a tolerance to include cells for which the center is on the lines
+    # for this we need to know if the path is clockwise or counter clockwise
+    # to decide if the radius should be positif or negatif in contains_points
+    is_ccw = geoTrans.isCounterClockWise(path)
+    r = 0.001
+    r = r*is_ccw - r*(1-is_ccw)
     x = np.linspace(0, ncols-1, ncols)
     y = np.linspace(0, nrows-1, nrows)
     X, Y = np.meshgrid(x, y)
     X = X.flatten()
     Y = Y.flatten()
     points = np.stack((X, Y), axis=-1)
-    mask = path.contains_points(points, radius=-0.1)
+    mask = path.contains_points(points, radius=r)
     Mask = mask.reshape((nrows, ncols)).astype(int)
     # thickness field is provided, then return array with ones
     if relTh != '':
