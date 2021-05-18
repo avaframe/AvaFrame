@@ -55,6 +55,7 @@ autosummary_mock_imports = [
     'subprocess',
     'shutil',
     'math',
+    'pandas',
     'copy',
     'os',
     'logging',
