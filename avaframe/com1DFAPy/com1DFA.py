@@ -107,9 +107,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     exportFields(cfg, Tsave, fieldsList, demOri, outDir, cuSimName)
 
     # write report dictionary
-    entrainmentArea = inputSimLines['entrainmentArea']
-    resistanceArea = inputSimLines['resistanceArea']
-    reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines['releaseLine'], cfgGen, entrainmentArea, resistanceArea, reportAreaInfo)
+    reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines, cfgGen, reportAreaInfo)
     # add time and mass info to report
     reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict)
 
@@ -267,7 +265,7 @@ def prepareInputData(inputSimFiles):
     return demOri, inputSimLines
 
 
-def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea, resistanceArea, reportAreaInfo):
+def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportAreaInfo):
     """ create simulaton report dictionary
 
     Parameters
@@ -291,10 +289,13 @@ def createReportDict(avaDir, logName, relName, relDict, cfgGen, entrainmentArea,
         simulation scenario dictionary
     """
 
-    # load parameters set in configuration file
+    # load parameters
     dateTimeInfo = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     entInfo = reportAreaInfo['entrainment']
     resInfo = reportAreaInfo['resistance']
+    entrainmentArea = inputSimLines['entrainmentArea']
+    resistanceArea = inputSimLines['resistanceArea']
+    relDict = inputSimLines['releaseLine']
 
     # Create dictionary
     reportST = {}

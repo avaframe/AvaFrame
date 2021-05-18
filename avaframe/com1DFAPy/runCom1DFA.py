@@ -47,9 +47,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     log.info('Current avalanche: %s', avalancheDir)
 
     # Create output and work directories
-    # set module name, reqiured as long we are in dev phase
     # - because need to create e.g. Output folder for com1DFAPy to distinguish from
-    modName = 'com1DFAPy'
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 
     # generate list of simulations from desired configuration
@@ -61,8 +59,6 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
         # check if variationDict items exist and are provided in correct format
         # Load standard/ default configuration
         modCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
-        # add avalanche directory info
-        modCfg['GENERAL']['avalancheDir'] = avalancheDir
         variationDict = dP.validateVarDict(variationDict, modCfg)
         log.info('Variations are performed for:')
         for key in variationDict:
