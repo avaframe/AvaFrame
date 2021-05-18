@@ -266,6 +266,9 @@ def WriteResults(resAB, name, flags):
 
     # write report and log
     log.info('Profile: %s with %s parameter set',  name, ParameterSet)
+    parameterName = ['k1', 'k2', 'k3', 'k4', 'SD']
+    for paramName in parameterName:
+        log.info('%s = %g' % (paramName, eqParameters[paramName]))
     log.info(('{:<13s}'*6).format(
         ' ', 'x [m]', 'y [m]', 'z [m]', 's [m]', 'angle [°]'))
     for ind, label, angle in zip(IND, LABEL, ANGLE):
@@ -278,6 +281,8 @@ def WriteResults(resAB, name, flags):
         with open(FileName_ext, 'w') as outfile:
             outfile.write('Profile name %s\n' % name)
             outfile.write('Parameter Set %s\n' % ParameterSet)
+            for paramName in parameterName:
+                outfile.write('%s = %g\n' % (paramName, eqParameters[paramName]))
             outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
             outfile.write(('{:<13s}'*5 + '\n').format(
                 'x', 'y', 'z', 's', 'angle'))
