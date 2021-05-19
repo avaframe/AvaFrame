@@ -6,6 +6,7 @@ import os
 import json
 
 # Local imports
+import avaframe.in3Utils.initialiseDirs as inDirs
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.com1DFAPy.com1DFA as com1DFA
 from avaframe.out1Peak import outPlotAllPeak as oP
