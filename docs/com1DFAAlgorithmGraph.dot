@@ -21,21 +21,21 @@ digraph "com1DFA algorithm graph" {
      <tr><td align="left">Read and check release, secondary release, entrainment</td></tr>
      <tr><td align="left">and resistance shape files</td></tr>
      <tr><td align="left" >Compute normal vector field and area</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#initialize-release-entrainment-and-resistance" tooltip="Go to: release... initialization" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#initialize-release-entrainment-and-resistance" tooltip="Go to: release... initialization" target="_top"];
 
   initializeParticles [label=<
     <table border="0" cellborder="0" cellspacing="1">
      <tr><td align="left"><b>Initialize particles:</b></td></tr>
      <tr><td align="left">Place particles and initialize particle properties</td></tr>
      <tr><td align="left">according to mass per particle determination method</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#initialize-particles" tooltip="Go to: particle initialization" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#initialize-particles" tooltip="Go to: particle initialization" target="_top"];
 
   initializeFields [label=<
     <table border="0" cellborder="0" cellspacing="1">
      <tr><td align="left"><b>Initialize fields:</b></td></tr>
      <tr><td align="left">Initialize pressure, flow depth and flow velocity fields</td></tr>
      <tr><td align="left">Initialize entrainment and resistance fields</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#initialize-fields" tooltip="Go to: Initialize fields" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#initialize-fields" tooltip="Go to: Initialize fields" target="_top"];
 
   timeLoop [label=<
     <table border="0" cellborder="0" cellspacing="1">
@@ -44,7 +44,7 @@ digraph "com1DFA algorithm graph" {
      <tr><td align="left">The mass and momentum balance equations are solved</td></tr>
      <tr><td align="left">using an operator spliting method</td></tr>
      <tr><td align="left">Particle position is updated using a centered Euler scheme</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#time-scheme-and-iterations" tooltip="Go to: Time scheme" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#time-scheme-and-iterations" tooltip="Go to: Time scheme" target="_top"];
 
   endTimeLoop [width=0 shape=point label=""];
 
@@ -55,12 +55,12 @@ digraph "com1DFA algorithm graph" {
        <tr><td align="left">Compute viscous force</td></tr>
        <tr><td align="left"><font color="red">Update particles velocity</font></td></tr>
        <tr><td align="left"><font color="darkgreen">Implicite method</font></td></tr>
-     </table>>, href="../com1DFAAlgorithm.html#artificial-viscosity" tooltip="Go to: Artificial viscosity" target="_blank"];
+     </table>>, href="../com1DFAAlgorithm.html#artificial-viscosity" tooltip="Go to: Artificial viscosity" target="_top"];
 
   computeFrictForce [label=<
      <table border="0" cellborder="0" cellspacing="1">
         <tr><td align="left" href="../theoryCom1DFA.html#compute-friction-forces"><b>Bottom shear force:</b></td></tr>
-        <tr><td align="left" href="../theoryCom1DFA.html#bottom-shear-force" title="Go to: Friction model" target="_blank">Compute bottom shear force according to chosen friction law</td></tr>
+        <tr><td align="left" href="../theoryCom1DFA.html#bottom-shear-force" title="Go to: Friction model" target="_top">Compute bottom shear force according to chosen friction law</td></tr>
         <tr><td align="left" >Append this force to the F<SUB>res</SUB> component of the force</td></tr>
         <tr><td align="left"><font color="darkgreen">Implicite method</font></td></tr>
       </table>>];
@@ -71,26 +71,26 @@ digraph "com1DFA algorithm graph" {
        <tr><td align="left">Compute gravity driving force (include curvature component)</td></tr>
        <tr><td align="left" >Append this force to the F<SUB>drive</SUB> component of the force</td></tr>
        <tr><td align="left"><font color="darkgreen">Explicite method</font></td></tr>
-     </table>>, href="../com1DFAAlgorithm.html#compute-body-driving-force" tooltip="Go to: Gravity force" target="_blank"];
+     </table>>, href="../com1DFAAlgorithm.html#compute-body-driving-force" tooltip="Go to: Gravity force" target="_top"];
 
   computeResForce [label=<
       <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Additional resistance forces:</b></td></tr>
-       <tr><td align="left" href="../com1DFAAlgorithm.html#added-resistance-force" title="Go to: Resistance force" target="_blank">Compute resistance force due to resstance area</td></tr>
+       <tr><td align="left" href="../com1DFAAlgorithm.html#added-resistance-force" title="Go to: Resistance force" target="_top">Compute resistance force due to resstance area</td></tr>
        <tr><td align="left" >Append this force to the F<SUB>res</SUB> component of the force</td></tr>
        <tr><td align="left"><font color="darkgreen">Implicite method</font></td></tr>
      </table>>];
   updateMassEntr [label=<
       <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Entrained mass:</b></td></tr>
-       <tr><td align="left" href="../theoryCom1DFA.html#entrainment" target="_blank"><font color="red">Update mass due to entrainment</font></td></tr>
+       <tr><td align="left" href="../theoryCom1DFA.html#entrainment" target="_top"><font color="red">Update mass due to entrainment</font></td></tr>
        <tr><td align="left" ><font color="red">Update velocity due to entrainmened mass</font></td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#take-entrainment-into-account" tooltip="Go to: Add entrained mass" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#take-entrainment-into-account" tooltip="Go to: Add entrained mass" target="_top"];
 
   computeSPHForce [label=<
       <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Lateral pressure force:</b></td></tr>
-       <tr><td align="left" href="../DFAnumerics.html#sph-gradient" title="Go to: Add lateral pressure force" target="_blank">Compute lateral pressure forces using SPH method</td></tr>
+       <tr><td align="left" href="../DFAnumerics.html#sph-gradient" title="Go to: Add lateral pressure force" target="_top">Compute lateral pressure forces using SPH method</td></tr>
        <tr><td align="left" >Append this force to the F<SUB>SPH</SUB> component of the force</td></tr>
        <tr><td align="left"><font color="darkgreen">Explicite method</font></td></tr>
      </table>>];
@@ -100,54 +100,54 @@ digraph "com1DFA algorithm graph" {
        <tr><td align="left"><b>Update velocity with dirving force component:</b></td></tr>
        <tr><td align="left" >Update particle velocity with F<SUB>drive</SUB> <font color="darkgreen">Explicite method</font></td></tr>
        <tr><td align="left"></td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"];
 
   updateVelocityFrict [label=<
     <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Update velocity with resistance force component:</b></td></tr>
        <tr><td align="left" >Update particle velocity with F<SUB>res</SUB> <font color="darkgreen">Implicite method      </font></td></tr>
        <tr><td align="left"></td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"];
 
   updatePartPos [label=<
       <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Particle position:</b></td></tr>
        <tr><td align="left">Update particle position using centered Euler scheme</td></tr>
        <tr><td align="left">Split big particles</td></tr>
-     </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"];
+     </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"];
 
   correctPartPos [label=<
       <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Correction step:</b></td></tr>
-       <tr><td align="left">Make sure particles lay on the surface</td></tr>
+       <tr><td align="left">Make sure particles lie on the surface</td></tr>
        <tr><td align="left">Make sure particles velocity is tangent to the surface</td></tr>
-     </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"];
+     </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"];
 
   addSecRelease [label=<
       <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Secondary release areas:</b></td></tr>
        <tr><td align="left" >Check potential secondary release areas to trigure</td></tr>
        <tr><td align="left" >Add the secondary release particles to the simulation</td></tr>
-     </table>>, href="../com1DFAAlgorithm.html#add-secondary-release-area" tooltip="Go to: Secondary release" target="_blank"];
+     </table>>, href="../com1DFAAlgorithm.html#add-secondary-release-area" tooltip="Go to: Secondary release" target="_top"];
 
   updateFields [label=<
     <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Update fields:</b></td></tr>
        <tr><td align="left" >Interpolate particle properties onto the mesh</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#update-fields" tooltip="Go to: Update fields" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#update-fields" tooltip="Go to: Update fields" target="_top"];
 
   updateParticlesFlowDepth [label=<
     <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Update particles flow depth:</b></td></tr>
        <tr><td align="left" >Interpolate grid flow depth to particles</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#update-fields" tooltip="Go to: Update fields" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#update-fields" tooltip="Go to: Update fields" target="_top"];
 
   endSimulation [label=<
     <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>End simulation:</b></td></tr>
        <tr><td align="left" >Return output results</td></tr>
        <tr><td align="left" >Export results</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#simulation-outputs" tooltip="Go to: Simulation outputs" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#simulation-outputs" tooltip="Go to: Simulation outputs" target="_top"];
 
 
   initializeFields -> timeLoop [weight=10,ltail=cluster_initialization];
@@ -197,7 +197,7 @@ digraph "com1DFA algorithm graph" {
     updateVelocityDrive -> updateVelocityFrict [weight=10];
     updateVelocityFrict -> updatePartPos [weight=10];
     updatePartPos -> correctPartPos [weight=10];
-    href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"
+    href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"
     label = "Update position";
     style=filled;
     color=lightgrey;

@@ -284,7 +284,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       uMag = norm(ux, uy, uz)
       if(effAccNorm > 0.0):
           # if fluid detatched
-          # log.info('fluid detatched for particle %s', j)
+          # log.info('fluid detatched for particle %s' % j)
           tau = 0.0
       else:
           # bottom normal stress sigmaB
