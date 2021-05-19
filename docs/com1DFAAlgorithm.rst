@@ -198,13 +198,23 @@ This steps are done in :py:func:`com1DFAPy.DFAfunctionsCython.updatePositionC`.
 Take gravity and lateral pressure forces into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 :math:`F_{drive}` and :math:`F_{SPH}` are summed up and taken into account to update the velocity.
-This is done explicitly.
+This is done via an explicit method.
 
 Take friction into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+:math:`F_{fric}` is taken into account to update the velocity.
+This is done via an implicit method.
 
 Update particle position
 ~~~~~~~~~~~~~~~~~~~~~~~~~
+The particles position is updated using the new velocity and a centered Euler scheme.
+
+.. math::
+  \mathbf{}^{new} = \mathbf{}^{old} + dt * 0.5 * (\mathbf{u}^{old} + \mathbf{u}^{new})
+
+
+Correction step:
+~~~~~~~~~~~~~~~~
 
 Add secondary release area
 ----------------------------
