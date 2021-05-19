@@ -4,16 +4,16 @@ digraph "com1DFA algorithm graph" {
   newrank=true;
   size="100,100";
   rankdir="TB";
-  graph [compound=true, ranksep=1, splines=ortho, fontname="Verdana", fontsize="32"];
-  node [shape=box, style=filled, fontsize=24 fontname="Verdana" fillcolor="#efefef"];
-  edge [fontname="Sans", fontsize="18"];
+  graph [compound=true, ranksep=1, splines=ortho, fontname="helvetica", fontsize="32"];
+  node [shape=box, style=filled, fontsize=24 fontname="helvetica" fillcolor="#efefef"];
+  edge [fontname="helvetica", fontsize="18"];
 
   prepareMesh [label=<
    <table border="0" cellborder="0" cellspacing="1">
      <tr><td align="left"><b>Initialize Mesh</b></td></tr>
      <tr><td align="left">Read DEM and remesh if needed</td></tr>
      <tr><td align="left" >Compute normal vector field and area</td></tr>
-    </table>>, href="../com1DFAAlgorithm.html#initialize-mesh" tooltip="Go to: initialize mesh" target="_blank"];
+    </table>>, href="../com1DFAAlgorithm.html#initialize-mesh" tooltip="Go to: initialize mesh" target="_top"];
 
   prepareAreas [label=<
    <table border="0" cellborder="0" cellspacing="1">
@@ -105,15 +105,22 @@ digraph "com1DFA algorithm graph" {
   updateVelocityFrict [label=<
     <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Update velocity with resistance force component:</b></td></tr>
-       <tr><td align="left" >Update particle velocity with F<SUB>res</SUB> <font color="darkgreen">Implicite method</font></td></tr>
+       <tr><td align="left" >Update particle velocity with F<SUB>res</SUB> <font color="darkgreen">Implicite method      </font></td></tr>
        <tr><td align="left"></td></tr>
     </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"];
 
   updatePartPos [label=<
       <table border="0" cellborder="0" cellspacing="1">
        <tr><td align="left"><b>Particle position:</b></td></tr>
-       <tr><td align="left">Update particle position using centered Euler squeme</td></tr>
+       <tr><td align="left">Update particle position using centered Euler scheme</td></tr>
        <tr><td align="left">Split big particles</td></tr>
+     </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"];
+
+  correctPartPos [label=<
+      <table border="0" cellborder="0" cellspacing="1">
+       <tr><td align="left"><b>Correction step:</b></td></tr>
+       <tr><td align="left">Make sure particles lay on the surface</td></tr>
+       <tr><td align="left">Make sure particles velocity is tangent to the surface</td></tr>
      </table>>, href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"];
 
   addSecRelease [label=<
@@ -143,8 +150,18 @@ digraph "com1DFA algorithm graph" {
     </table>>, href="../com1DFAAlgorithm.html#simulation-outputs" tooltip="Go to: Simulation outputs" target="_blank"];
 
 
-  /* start -> prepareMesh [lhead=cluster_initialization]; */
-  prepareMesh -> timeLoop [weight=10,ltail=cluster_initialization];
+  initializeFields -> timeLoop [weight=10,ltail=cluster_initialization];
+  timeLoop -> artifViscosity [weight=10,lhead=cluster_Forces];
+  updateMassEntr -> computeSPHForce [weight=10, ltail=cluster_Forces];
+  computeSPHForce -> updateVelocityDrive [weight=10,lhead=cluster_2];
+  correctPartPos -> addSecRelease [weight=10,ltail=cluster_2];
+  addSecRelease -> updateFields [weight=10,lhead=cluster_3];
+  updateParticlesFlowDepth -> endTimeLoop [weight=10,ltail=cluster_3, arrowhead=none];
+  endTimeLoop -> endSimulation [weight=10];
+  endTimeLoop -> timeLoop [weight=1, constraint=false];
+
+
+  /* prepareMesh -> timeLoop [weight=10,ltail=cluster_initialization];
   timeLoop -> artifViscosity [weight=10,lhead=cluster_Forces];
   artifViscosity -> computeSPHForce [weight=10, ltail=cluster_Forces];
   computeSPHForce -> updateVelocityDrive [weight=10,lhead=cluster_2];
@@ -152,45 +169,41 @@ digraph "com1DFA algorithm graph" {
   addSecRelease -> updateFields [weight=10,lhead=cluster_3];
   updateFields -> endTimeLoop [weight=10,ltail=cluster_3, arrowhead=none];
   endTimeLoop -> endSimulation [weight=10];
-  endTimeLoop -> timeLoop [weight=1, constraint=false];
-  /* computeFrictForce -> updateVelocityFrict[constraint=false];
-  computeResForce -> updateVelocityFrict [constraint=false];
-  computeSPHForce -> updateVelocityDrive [constraint=false];#, xlabel="add lateral pressure force \n component to the driving force"];
-  computeGravityForce -> updateVelocityDrive [constraint=false]#, xlabel="add gravity force \n component to the driving force"]; */
-
+  endTimeLoop -> timeLoop [weight=1, constraint=false]; */
 
   subgraph cluster_initialization {
-    rank=same;
+    /* rank=same; */
     style=filled;
     color=lightgrey;
-    prepareMesh -> prepareAreas
-    prepareAreas -> initializeParticles;
-    initializeParticles -> initializeFields;
+    prepareMesh -> prepareAreas[weight=10];
+    prepareAreas -> initializeParticles[weight=10];
+    initializeParticles -> initializeFields[weight=10];
     label = "Initialize Simulation";
   }
 
   subgraph cluster_Forces {
-    rank=same;
+    /* rank=same; */
     style=filled;
     color=lightgrey;
-    artifViscosity -> computeFrictForce;
-    computeFrictForce -> computeGravityForce;
-    computeGravityForce -> computeResForce;
-    computeResForce -> updateMassEntr;
+    artifViscosity -> computeFrictForce[weight=10];
+    computeFrictForce -> computeGravityForce[weight=10];
+    computeGravityForce -> computeResForce[weight=10];
+    computeResForce -> updateMassEntr[weight=10];
     label = "Compute Forces";
   }
 
   subgraph cluster_2 {
-    rank=same;
+    /* rank=same; */
     updateVelocityDrive -> updateVelocityFrict [weight=10];
     updateVelocityFrict -> updatePartPos [weight=10];
+    updatePartPos -> correctPartPos [weight=10];
     href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_blank"
     label = "Update position";
     style=filled;
     color=lightgrey;
   }
   subgraph cluster_3 {
-    rank=same;
+    /* rank=same; */
     updateFields -> updateParticlesFlowDepth [weight=10];
     label = "Update Fields";
     style=filled;

@@ -66,7 +66,7 @@ autosummary_mock_imports = [
     'mpl_toolkits',
     'make_axes_locatable',
 ]
-autosummary_generate = True
+autosummary_generate = False
 
 napoleon_google_docstring = True
 napoleon_use_param = False
