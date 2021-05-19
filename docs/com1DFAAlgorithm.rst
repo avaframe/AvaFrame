@@ -86,6 +86,8 @@ The time step can either be fixed or dynamically computed using the Courant–Fr
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
+Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
+
 
 Compute Forces:
 -----------------
@@ -110,6 +112,8 @@ Setting this parameter to 0 deactivates the artificial viscosity term.
 The default value (100) does not have any physical foundings yet. Future work
 will help define this parameter in a more physical way. The velocity is updated immediately
 after using an explicit/implicit formulation.
+
+Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
@@ -156,6 +160,9 @@ folder and switch the ``simType`` to ``res``, ``entres`` or ``available`` to tak
 Then, during the simulation, all particles flowing through this resistance area will undergo an
 extra resistance force. More details about how this force is computed and the different parameters chosen
 are found in :ref:`Resistance <theoryCom1DFA:Resistance:>`.
+
+
+Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 
 Compute body driving force
@@ -208,6 +215,9 @@ These 3 terms are further detailed in :ref:`Entrainment <theoryCom1DFA:Entrainme
 In the numerics, the mass is updated according to the entrainment model in
 :py:func:`com1DFAPy.DFAfunctionsCython.computeEntMassAndForce`. The velocity is updated immediately
 after using an implicit formulation.
+
+
+Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 Compute lateral pressure forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
