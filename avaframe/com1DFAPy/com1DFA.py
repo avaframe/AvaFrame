@@ -19,7 +19,6 @@ import pandas as pds
 from itertools import product
 
 # Local imports
-import avaframe.in3Utils.initialiseDirs as inDirs
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
