@@ -15,7 +15,7 @@ In the following, a brief description of the available tests is given.
            how we apply these tests during development.
 
 Tests for model verification
-=========================
+=============================
 
 This section includes testing of bits and pieces of the model code up to tests that check whether the full workflow is numerically robust.
 However, at the 'smallest scale', where individual functions are tested, we also refer to the Section about *pytests*: :ref:`develop:How to test code`.
@@ -50,7 +50,7 @@ For further details have a look at the module ``ana1Test`` and the Section :ref:
 
 
 Tests for model validation
-========================
+==========================
 
 In this section, tests that check whether the chosen mathematical model is suitable to represent the problem at hand. Currently, we provide idealized and real-world Topographies
 that can be used for avalanche simulations. Additionally, there are several functions that can be used to analyse the simulation results
@@ -64,7 +64,7 @@ include entrainment and/or resistance areas. These can be found in ``data/NameOf
 module ``in3utils/generateTopo.py`` (see :ref:`api:API Reference`).
 
 Bowl - BL
-^^^^^^^^^
+^^^^^^^^^^
 
 Bowl shaped topopraphy. Used to test e.g. rotational symmetry.
 
@@ -72,7 +72,7 @@ Bowl shaped topopraphy. Used to test e.g. rotational symmetry.
 
 
 Flat Plane - FP
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^
 
 .. figure:: _static/testCaseTopos/myDEM_FP_Topo_plot.png
 
@@ -83,27 +83,27 @@ IP (Inclined plane)
 .. figure:: _static/testCaseTopos/DEM_IP_Topo_plot.png
 
 Parabolic slope - PF
-^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
 Parabolic slope with flat foreland
 
 .. figure:: _static/testCaseTopos/DEM_PF_Topo_plot.png
 
 Hockeystick - HS
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^
 
 Hockeystick with linear slope and flat foreland and smooth transition
 
 .. figure:: _static/testCaseTopos/DEM_HS_Topo_plot.png
 
 Helix - HX
-^^^^^^^^^^
+^^^^^^^^^^^
 
 Helix-shaped topography
 
 .. figure:: _static/testCaseTopos/DEM_HX_Topo_plot.png
 
 Pyramid - PY
-^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 pyramid-shaped topography, optional with flat foreland
 
@@ -164,5 +164,3 @@ Wog
     :width: 59%
 .. image:: _static/testCaseTopos/wogRelEnt.png
     :width: 39%
-
-
