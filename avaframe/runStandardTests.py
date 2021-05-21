@@ -130,7 +130,7 @@ for test in testList:
         pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
 
         for pathD in pathDictList:
-            if pathD == reportD['simName']['name']:
+            if simType in pathD and rel in pathD:
                 pathDict = pathDictList[pathD]
 
         log.info('reference file comes from: %s' % pathDict['compType'][1])

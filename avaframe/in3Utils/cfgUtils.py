@@ -359,7 +359,7 @@ def writeDictToJson(inDict, outFilePath):
     f.close()
 
 
-def createConfigurationInfo(avaDir, standardCfg, writeCSV=False):
+def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
     """ Read configurations from all simulations configuration ini files from directory
 
         Parameters
@@ -381,13 +381,16 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False):
     simDF = pd.DataFrame(data=standardCfgDict['GENERAL'], index=['current standard'])
 
     # collect all configuration files for this module
-    inDir = os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'configurationFiles')
+    if specDir != '':
+        inDir = os.path.join(specDir, 'configurationFiles')
+    else:
+        inDir = os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'configurationFiles')
     configFiles = glob.glob(inDir+os.sep+'*.ini')
 
     # create confiparser object, convert to json object, write to dataFrame
     # append all dataFrames
     for cfile in configFiles:
-        if 'overallConfiguration' not in cfile:
+        if 'originConfiguration' not in cfile:
             simName = os.path.splitext(os.path.basename(cfile))[0]
             cfgObject = readCfgFile(avaDir, fileName=cfile)
             indexItem = [simName]
@@ -395,9 +398,28 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False):
             simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
             simDF = pd.concat([simDF, simItemDF], axis=0)
 
+    # add simName to dataFrame
+    simDF['simName'] = simDF['releaseScenario'] + '_' +  simDF['simTypeActual'] + '_' + simDF['modelType']+ '_' + simDF.index
+
     # if writeCSV, write dataFrame to csv file
     if writeCSV:
         outFile = os.path.join(inDir, 'allConfigurations.csv')
         simDF.to_csv(outFile)
 
     return simDF
+
+
+def filterSims(avalancheDir, parametersDict, module, specDir=''):
+    """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations """
+
+
+    standardCfg = getDefaultModuleConfig(module)
+    simDF = createConfigurationInfo(avalancheDir, standardCfg, writeCSV=False, specDir=specDir)
+    for key, value in parametersDict.items():
+        if isinstance(value, list) == False:
+            value = [value]
+        simDF = simDF[simDF[key].isin(value)]
+
+    simNameList = simDF['simName']
+
+    return simNameList

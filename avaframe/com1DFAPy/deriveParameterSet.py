@@ -34,31 +34,28 @@ def getVariationDict(avaDir, fullCfg, modDict):
 
     """
 
+    # look for parameters that are different than default in section GENERAL
+    section = 'GENERAL'
     variations = {}
-    # loop through all sections of the defCfg
-    for section in fullCfg.sections():
-        # look for parameters that are different than default in section GENERAL
-        if section == 'GENERAL':
-            variations[section] = {}
-            for key in fullCfg.items(section):
-                # output saving options not relevant for parameter variation!
-                fullValue = key[1]
-                if key[0] != 'resType' and key[0] != 'tSteps':
-                    # if yes and if this value is different add this key to
-                    # the parameter variation dict
-                    if ':' in fullValue or '|' in fullValue:
-                        locValue = fU.splitIniValueToArraySteps(fullValue)
-                        variations[section][key[0]] = locValue
-                        defValue = modDict[section][key[0]][1]
-                        log.info('%s: %s (default value was: %s)' % (key[0], locValue, defValue))
+    for key in fullCfg.items(section):
+        # output saving options not relevant for parameter variation!
+        fullValue = key[1]
+        if key[0] != 'resType' and key[0] != 'tSteps':
+            # if yes and if this value is different add this key to
+            # the parameter variation dict
+            if ':' in fullValue or '|' in fullValue:
+                locValue = fU.splitIniValueToArraySteps(fullValue)
+                variations[key[0]] = locValue
+                defValue = modDict[section][key[0]][1]
+                log.info('%s: %s (default value was: %s)' % (key[0], locValue, defValue))
 
     # print modified parameters
     for sec in modDict:
         for value in modDict[sec]:
-            if sec != 'GENERAL':
+            if sec != section:
                 log.info('%s: %s (default value was: %s)' % (value, modDict[sec][value][0], modDict[sec][value][1]))
             else:
-                if value not in variations[sec]:
+                if value not in variations:
                     log.info('%s: %s (default value was: %s)' % (value, modDict[sec][value][0], modDict[sec][value][1]))
 
 

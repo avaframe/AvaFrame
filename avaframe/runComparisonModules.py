@@ -25,8 +25,10 @@ logName = 'runComparisonModules'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testList = ['avaInclinedPlane', 'avaHelixChannel', 'avaAlr', 'avaWog', 'avaKot', 'avaHit', 'avaGar', 'avaMal']
+# testList = ['avaInclinedPlane', 'avaHelixChannel', 'avaAlr', 'avaWog', 'avaKot', 'avaHit', 'avaGar', 'avaMal']
+testList = ['avaKotST']
 simType = 'ent'
+simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
 outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPyEnt')
 fU.makeADir(outDirReport)
@@ -95,15 +97,23 @@ for avaName in testList:
         for dict in reportDictListcom1DFA:
             com1DFASimName = dict['simName']['name']
             if (rel == dict['Simulation Parameters']['Release Area Scenario']):
-                if simType in com1DFASimName:
+                if simTypeString in com1DFASimName:
                     reportDcom1DFA = dict
+                    log.info('Comparison based on releaseScenario: %s and simType: %s' % (rel, simType))
+                    log.info('Reference simulation: %s' % com1DFASimName)
                     break
+                else:
+                    log.error('No reference simulation found based on releaseScenario: %s and simType: %s' % (rel, simType))
         if reportDcom1DFA:
             com1DFASimName = reportDcom1DFA['simName']['name']
             # Fetch corresponding com1DFAPy
             for dict in reportDictListcom1DFAPy:
-                if simType in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel:
+                if simTypeString in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel:
                     reportDcom1DFAPy = dict
+                    log.info('Comparison simulation: %s' % dict['simName']['name'])
+                    break
+                else:
+                    log.error('No matching simulation found based on releaseScenario: %s and simType: %s' % (rel, simType))
 
             # Aimec analysis
             # load configuration
@@ -116,14 +126,10 @@ for avaName in testList:
                 cfgAimec['FLAGS']['flagMass'] = 'True'
             else:
                 cfgAimec['FLAGS']['flagMass'] = 'False'
-            cfgAimecSetup = cfgAimec['AIMECSETUP']
+            cfgAimec['AIMECSETUP']['comModules'] = 'com1DFA|com1DFAPy'
 
             # Setup input from com1DFA and com1DFAPy
-            pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
-            for pathD in pathDictList:
-                if pathD == reportDcom1DFA['simName']['name']:
-                    pathDict = pathDictList[pathD]
-
+            pathDict = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimec, rel, simType)
             pathDict['numSim'] = len(pathDict['ppr'])
             log.info('reference file comes from: %s' % pathDict['compType'][1])
 
