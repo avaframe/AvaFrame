@@ -1,23 +1,40 @@
 com1DFA: DFA-Kernel
 ===========================
 
-This module is a simulation tool for dense flow (snow) avalanches (DFA). It is based on the
-samos-AT (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
+This module is a simulation tool for dense flow (snow) avalanches (DFA). It is based on
+samosAT (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
 in cooperation with the company AVL List GmbH in Graz.
 The calculation of the DFA is based on the depth integrated governing equations and
-solved numerically using the smoothed particle hydrodynamic (sph) method.
+solved numerically using the smoothed particle hydrodynamics (sph) method.
 
 Dense flow avalanche simulations can be performed for different release area scenarios, with or without
 entrainment and/or resistance areas.
-There is the option to vary the internal friction parameter or the release snow thickness.
+The model configuration is controlled via a configuration file.
+This configuration file can be modified in order to change any of the default settings.
 
 
 Input
 ---------
 
-The module requires an avalanche directory, that follows a specified folder structure.
-This avalanche directory can be created by running: ``runInitializeProject.py``.
-In the directory Inputs, the following files are required:
+DFA simulations are performed within an avalanche directory that has to be organized following a specified folder structure.
+
+.. Note::  An avalanche directory can be created by running: ``runInitializeProject.py``, which creates the required folder structure:
+
+    ::
+
+    		NameOfAvalanche/
+    			Inputs/
+    				REL/		- release area scenario
+    				RES/		- resistance areas
+    				ENT/		- entrainment areas
+    				POINTS/ - split points
+            LINES/  - avalanches paths
+    				SECREL/ - secondary release area
+    			Outputs/
+    			Work/
+
+
+In the directory ``Inputs``, the following files are required:
 
 * digital elevation model as .asc file
   -> use `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
@@ -30,35 +47,52 @@ and the following files are optional:
 * resistance area as shapefile (in Inputs/RES)
 * secondary release area as shapefile (in Inputs/SECREL)
 
-The simulation settings area defined in the configuration file ``com1DFACfg.ini``:
 
-* com1Exe - path to com1DFA executable
-* flagOut - print full model output
-* simTypeList - simulation types that shall be performed (options: null, ent, res, entres, available; if multiple, separate by '|'))
-* releaseScenario - name of release area scenario shapefile (with or without extension -shp, if multiple, separate by '|')
-* flagVarPar - perform parameter variation
-* varPar - parameter to be varied
-* varParValues - values for parameter variation
+Model configuration
+--------------------
+The model configuration is read from a configuration file: ``com1DFACfg.ini``. In this file,
+all model parameters are listed and can be modified. We recommend to create a local copy of the file,
+and keep the default configuration in ``com1DFACfg.ini`` untouched.
+For this purpose, in ``avaframe/`` run:
+  ::
+
+      cp com1DFAPy/com1DFACfg.ini com1DFAPy/local_com1DFACfg.ini
+
+and modify the parameter values in there.
+
+Another option is to directly provide the path to a particular configuration file.
+The order is as follows, read configuration file from provided path, read local configuration file,
+if not present read default configuration file.
+
+It is also possible to perform multiple simulations at once, with varying input parameters.
+There are multiple options to vary a parameter:
+
+* replace the default parameter value with desired value
+* provide a number of parameter values separated by ``|`` (e.g. ``relTh=1.|2.|3.``)
+* provide a number of parameter values using ``start:stop:numberOfSteps`` (e.g. ``relTh=1.:3.:3``)
 
 
 Output
 ---------
-The simulation results are saved to: *Outputs/com1DFA* and include:
+Using the default configuration, the simulation results are saved to: *Outputs/com1DFA* and include:
 
 * raster files of the peak values for pressure, flow depth and flow velocity (*Outputs/com1DFA/peakFiles*)
-* reports of all simulations (*Outputs/com1DFA/reports*)
-* log files of all simulations
-* experiment log that lists all simulations
+* raster files of the peak values for pressure, flow depth and flow velocity for the initial time step (*Outputs/com1DFA/peakFiles/timeSteps*)
+* markdown report including figures for all simulations (*Outputs/com1DFA/reports*)
+* mass log files of all simulations (*Outputs/com1DFA*)
+* configuration files for all simulations (*Outputs/com1DFA/configurationFiles*)
+
+
+However, in the configuration file, it is possible to change the result parameters and time Steps that shall be exported.
+Have a look at the designated Output section in ``com1DFACfg.ini``.
 
 
 To run
 --------
 
-.. Attention:: Please refer to the instructions in :ref:`Installation:Com1DFA Executable` on how to get the
-               necessary C++ executable and setup the correct paths.
-
-* create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
+* create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
+* copy ``com1DFACfg.ini`` to ``local_com1DFACfg.ini`` and if desired change configuration settings
 * in ``avaframe/`` run:
   ::
 
