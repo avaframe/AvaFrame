@@ -47,6 +47,7 @@ Computational modules
 .. only:: html
 
     * :doc:`moduleCom1DFA`
+    * :doc:`moduleCom1DFAPy`
     * :doc:`moduleCom2AB`
 
 .. toctree::
@@ -55,6 +56,7 @@ Computational modules
    :caption: Computatonal modules
 
    moduleCom1DFA.rst
+   moduleCom1DFAPy.rst
    moduleCom2AB.rst
 
 Input/transformation modules
