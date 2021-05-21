@@ -81,7 +81,8 @@ Time scheme and iterations:
 The mass and momentum equations described in :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche` are solved numerically
 in time using an operator splitting method. The different forces involved are sequently added to update the velocity.
 Position is then updated using a centered Euler scheme.
-The time step can either be fixed or dynamically computed using the Courant–Friedrichs–Lewy (CFL) condition.
+The time step can either be fixed or dynamically computed using the Courant–Friedrichs–Lewy (CFL) condition
+(in the second case one must set ``cflTimeStepping`` to ``True`` and set the desired CFL coefficient).
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
@@ -107,7 +108,8 @@ to some second order forces that were neglected (lateral shear stress) as explai
 This force is controlled by the ``subgridMixingFactor`` in the configuration file.
 Setting this parameter to 0 deactivates the artificial viscosity term.
 The default value (100) does not have any physical foundings yet. Future work
-will help define this parameter in a more physical way.
+will help define this parameter in a more physical way. The velocity is updated immediately
+after using an explicit/implicit formulation.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
@@ -123,8 +125,8 @@ Bottom shear force
 This force accounts for the friction between the snow particles and the bottom surface.
 The expression of the bottom shear stress depends on the friction model chosen but can be written in the
 following general forme, :math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})`.
-The friction model and its parameters can be set in the configuration file. More details about the different
-friction models are given in :ref:`theoryCom1DFA:Friction model`.
+The friction model is set by the ``frictModel`` value and the corresponding parameters can be set in the configuration file.
+More details about the different friction models are given in :ref:`theoryCom1DFA:Friction model`.
 Be aware that the normal stress on the bottom surface :math:`\sigma^{(b)}` is composed of the normal component of the
 gravity force and the curvature acceleration term as shown in :eq:`sigmab`. It is possible
 to deactivate the curvature acceleration component of the shear stress by setting the
@@ -159,7 +161,10 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 Take entrainment into account
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the entrainment areas, particles can entrain mass through erosion or plowing process.
+Snow entrainment can be added to the simulation. One must provide an entrainment file and set the
+``simType`` to ``ent``, ``entres`` or ``available``
+(see :ref:`com1DFAAlgorithm:Initialize release, entrainment and resistance areas`).
+In the entrainment areas defined by the entrainment file, particles can entrain mass through erosion or plowing process.
 In both mechanisms, one must account for three things:
 
     - The change of mass due to the entrainment.
@@ -169,7 +174,8 @@ In both mechanisms, one must account for three things:
     - The loss of momentum due to the plowing or erosion phenomena. The entrained mass bounds with the ground
     needs to be broken.
 
-These 3 terms are further detailed in :ref:`Entrainment <theoryCom1DFA:Entrainment:>`.
+These 3 terms are further detailed in :ref:`Entrainment <theoryCom1DFA:Entrainment:>`. The parameters
+describing the phenomena can be set in the configuration file.
 
 In the numerics, the mass is updated according to the entrainment model in
 :py:func:`com1DFAPy.DFAfunctionsCython.computeEntMassAndForce`. The velocity is updated immediately
