@@ -215,7 +215,7 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
     if cfg['FLAGS'].getboolean('flagMass'):
         for comMod in comModules:
             if comMod == 'ref':
-                pathDict = getRefMB(testName, pathDict, simNameRef)
+                pathDict = getRefMB(cfgAimec['AIMECSETUP']['testName'], pathDict, simNameRef)
             elif comMod == 'com1DFA':
                 pathDict = extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=simNameRef)
             else:
