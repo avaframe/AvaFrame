@@ -4,6 +4,7 @@
 import numpy as np
 import os
 import glob
+import configparser
 
 # Local imports
 import avaframe.ana3AIMEC.dfa2Aimec as dfa2Aimec
@@ -48,9 +49,10 @@ def test_dfaComp2Aimec(tmp_path):
     testPath = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestName)
     pathData = os.path.join(testPath, 'Outputs', 'com1DFA', 'peakFiles')
     pathData2 = os.path.join(testPath, 'Outputs', 'com1DFAPy', 'peakFiles')
-    cfgSetup = {'comModules': 'com1DFA|com1DFAPy'}
-    pathDictList = dfa2Aimec.dfaComp2Aimec(testPath, cfgSetup)
-    pathDict = pathDictList['release1HS_entres_dfa_0.15500']
+    cfg = configparser.ConfigParser()
+    cfg['AIMECSETUP'] = {'comModules': 'com1DFA|com1DFAPy'}
+    cfg['FLAGS'] = {'flagMass': 'True'}
+    pathDict = dfa2Aimec.dfaComp2Aimec(testPath, cfg, 'release1HS', 'entres')
 
     # get path dictionary for test
     pathDTest = {}
