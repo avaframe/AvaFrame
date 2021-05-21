@@ -133,18 +133,20 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
             simulation type (null, ent, entres, ..)
 
         Returns
-        -------
-        pathDict: list
-            list of pathDicts for matching simulations from two modules - matching in terms
-            of releaseScenarion and simType
+        --------
+        pathDict: dict
+            dictionary with paths to result and optionally mass files for matching simulations from two modules - matching in terms
+            of releaseScenario and simType
     """
 
     cfgSetup = cfg['AIMECSETUP']
 
+    # initialise empty pathDict for all required files
     pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}
+    # get directories where simulation results can be found for both modules
     inputDirRef, inputDirComp, pathDict, refModule = getCompDirs(avaDir, cfgSetup, pathDict)
 
-    # Load all infos on refernce simulations
+    # Load all infos on reference simulations
     if refModule == 'benchmarkReference':
         refData = fU.makeSimDict(inputDirRef)
     else:
@@ -153,6 +155,7 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
     # Load all infos on comparison module simulations
     compData = fU.makeSimDict(inputDirComp)
 
+    # identify names of simulations that match criteria for both cases
     simSearch = True
     for countRef, simNameShort in enumerate(refData['simName']):
         for countComp, simNameComp in enumerate(compData['simName']):
@@ -163,16 +166,42 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
                     log.info('Reference simulation: %s and to comparison simulation: %s ' % (refSimName, compSimName))
                     simSearch = False
 
+    # fill pathDict
     pathDict = getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, refSimName, inputDirComp, compSimName)
 
     return pathDict
 
 
 def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp):
-    """ Set paths of reference and comparison files """
+    """ Set paths of reference and comparison files
+
+        Parameters
+        -----------
+        pathDict: dict
+            dictionary where paths should be filled
+        avaDir: str
+            path to avalanche directory
+        cfg: configparser object
+            configuration for aimec
+        inputDirRef: str
+            path to reference simulation results
+        simNameRef: str
+            name of reference simulation results
+        inputDirComp: str
+            path to comparison simulation results
+        simNameComp: str
+            name of comparison simulation results
+
+        Returns
+        -------
+        pathDict: dictionary
+            dictionary with paths to simulation results
+
+        """
 
     comModules = cfg['AIMECSETUP']['comModules'].split('|')
 
+    # set path to peak field results
     suffix = ['pfd', 'ppr', 'pfv']
     for suf in suffix:
         refFile = os.path.join(inputDirRef, simNameRef + '_' + suf + '.asc')
@@ -182,6 +211,7 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
         pathDict[suf].append(compFile)
         log.info('Added to pathDict[%s] %s ' % (suf,compFile))
 
+    # if desired set path to mass log files
     if cfg['FLAGS'].getboolean('flagMass'):
         for comMod in comModules:
             if comMod == 'ref':
@@ -195,18 +225,62 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
 
 
 def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
-    """ Exports the required data from com1DFA to be used by Aimec """
+    """ Exports the required data from com1DFA to be used by Aimec
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        cfg: confiParser object
+            configuration settings for aimec
+        simNameRef: str
+            name of reference simulation results
+        simNameComp: str
+            name of comparison simulation results
+
+        Returns
+        --------
+        pathDict: dict
+            dictionary with paths to simulation results
+
+    """
 
     cfgSetup = cfg['AIMECSETUP']
+
+    # initialise empty pathDict for all required files
     pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}
+    # get directories where simulation results can be found for both modules
     inputDirRef, inputDirComp, pathDict, refModule = getCompDirs(avaDir, cfgSetup, pathDict)
 
+    # fill pathDict
     pathDict = getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp)
 
     return pathDict
 
 
 def getCompDirs(avaDir, cfgSetup, pathDict):
+    """ Determine dictionaries where simulation results can be found
+
+        Parameters
+        ----------
+        avaDir: str
+            path to avalanche directory
+        cfgSetup: configParser object
+            configuration settings for aimec
+        pathDict: dict
+            dictionary for paths for aimec
+
+        Returns
+        --------
+        inputDirRef: str
+            path to reference simulation results
+        inputDirComp: str
+            path to comparison simulation results
+        pathDict: dict
+            dictionary with paths for aimec
+        refModule: str
+            name of reference module
+    """
 
     # look for matching simulations
     comModules = cfgSetup['comModules'].split('|')
@@ -230,8 +304,6 @@ def getCompDirs(avaDir, cfgSetup, pathDict):
     pathDict['contCmap'] = True
 
     return inputDirRef, inputDirComp, pathDict, refModule
-
-
 
 
 def mainDfa2Aimec(avaDir, comModule='com1DFA'):
