@@ -11,24 +11,27 @@ Initialization:
 -----------------
 At the beginning of the simulation, the avalanche folder and the configuration
 are read (:ref:`configuration:Configuration`).
-Input data is read and checked according to the chose configuration.
+Input data is read and checked according to the chosen configuration.
 Mesh, particles and fields are sequently initialized.
 
 Initialize Mesh
 ~~~~~~~~~~~~~~~~~
+
 Read DEM ascii file provided in the Input folder (one and only one should be provided).
 If the DEM cell size is different from the :``meshCellSize`` specified in the configuration
 from more then ``meshCellSizeThreshold`` [m] the DEM is remeshed (:py:func:`in3Trans.geoTrans.remesh`).
-Prepare DEM for simulation, compute surface normals vector field, cell area (:ref:`DFAnumerics:Mesh`). This is done
-in the :py:func:`com1DFAPy.com1DFA.initializeMesh` function.
+
+Prepare DEM for simulation, compute surface normals vector field, cell area (:ref:`DFAnumerics:Mesh`).
+
+This is done in the :py:func:`com1DFAPy.com1DFA.initializeMesh` function.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
-Initialize release, entrainment and resistance
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Read and check shape file according to the configuration (check consistency between
+Initialize release, entrainment and resistance areas
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Read and check shape files according to the configuration (check consistency between
 what is required by the configuration file and what is available in the ``Inputs`` folder).
-Convert shape file features (polygons) to rasters (:py:func:`com1DFAPy.com1DFA.prepareAreas`).
+Convert shape files features (polygons) to rasters (:py:func:`com1DFAPy.com1DFA.prepareAreas`).
 Check consistency of rasters according to the following rules:
 
   - multiple release features in the release and secondary release shape files
@@ -43,14 +46,14 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 Initialize particles
 ~~~~~~~~~~~~~~~~~~~~~
-Particles are initialize according to the release raster extracted from the release shape file
+Particles are initialized according to the release raster extracted from the release shape file
 and the mass per particle determination method (``massPerParticleDeterminationMethod``) specified in the configuration.
 The mass per particle determination method can be chosen between:
 
   - MPPDIR= mass per particle direct. The ``massPerPart`` value is taken from the configration
 
   - MPPDH= mass per particles through release thickness. The ``massPerPart`` value is computed
-    using the release thickness per particle ``deltaTh`` value given in the configration, the area of
+    using the release thickness per particle ``deltaTh`` value given in the configuration and the area of
     the release mesh cell: :math:`massPerPart = \rho cellArea deltaTh`.
 
 The number of particles placed in each release cell is computed according to the ``massPerPart``
@@ -66,7 +69,7 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 Initialize fields
 ~~~~~~~~~~~~~~~~~
-All fields (grid values defined as a raster) ar initialized. Flow velocity, pressure, peak flow velocity and peak pressures
+All fields (mesh values defined as a raster) are initialized. Flow velocity, pressure, peak flow velocity and peak pressures
 are set to zero. Flow depth and peak flow depth are set according to the initial particle distribution.
 See :py:func:`com1DFAPy.com1DFA.initializeFields`
 
@@ -96,48 +99,15 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 Artificial viscosity
 ~~~~~~~~~~~~~~~~~~~~~~
 
-In :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche`, the governing
-equations for the DFA were derived and all first order or smaller terms where neglected.
-Among those terms is the lateral shear stress. This term leads toward
-the homogenization of the velocity field. It means that two neighbor elements
-of fluid should have similar velocities. The aim behind adding artificial viscosity is to
-take this phenomena into account. The following vicosity force is added:
-
-
-.. math::
-    \begin{aligned}
-    \mathbf{F_{viscosity}} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\|^2 A_{Lat}
-    \frac{\mathbf{du}}{\|\mathbf{du}\|}\\
-    = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\| A_{Lat} \mathbf{du}
-    \end{aligned}
-
-Where the velocity difference reads :math:`\mathbf{du} = \mathbf{u} - \mathbf{\bar{u}}`
-(:math:`\mathbf{\bar{u}}` is the mesh velocity interpolated at the particle position).
-:math:`C_{Lat}` is a coefficient that rules the viscous force. It would be the
-equivalent of :math:`C_{Drag}` in the case of the drag force. The :math:`C_{Lat}`
-is a numerical parameter that depends on the mesh size. Its value is set to 100
-and should be discussed and further tested.
-
-Adding the viscous force
-"""""""""""""""""""""""""
-
-The viscous force is added implicitly:
-
-.. math::
-  \begin{aligned}
-  \mathbf{F_{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}
-  \mathbf{du}^{new}\\
-  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}^{old} - \mathbf{\bar{u}}^{old}\| A_{Lat}
-  (\mathbf{u}^{new} - \mathbf{\bar{u}}^{old})
-  \end{aligned}
-
-Updating the velocity is done in two steps. First adding the explcit term related to the
-mean mesh velocity and then the implicit term which leads to:
-
-.. math::
-  \mathbf{u}^{new} = \frac{\mathbf{u}^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
-
-With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}\frac{dt}{m}`
+This viscous friction force is artificially added to the numerical computation.
+The aim of this force is to stabilize the simulation and prevent neighbor particles
+to have too significant velocities. Physically, this force also makes sense and corresponds
+to some second order forces that were neglected (lateral shear stress) as explained in
+:ref:`DFAnumerics:Artificial viscosity`.
+This force is controlled by the ``subgridMixingFactor`` in the configuration file.
+Setting this parameter to 0 deactivates the artificial viscosity term.
+The default value (100) does not have any physical foundings yet. Future work
+will help define this parameter in a more physical way.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
@@ -145,12 +115,12 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 Compute friction forces
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The friction force encompasses all forces that oppose the motion of the particles.
-More details about One of those forces is the bottom shear force. The other is an optional resistance force.
+One of those forces is the bottom shear force. The other is an optional resistance force.
 Both components are added to the :math:`F_{fric}` force term.
 
 Bottom shear force
 """""""""""""""""""""
-This force accounts for the friction between the snow particles and the bottom surface (:ref:`theoryCom1DFA:Bottom friction`).
+This force accounts for the friction between the snow particles and the bottom surface.
 The expression of the bottom shear stress depends on the friction model chosen but can be written in the
 following general forme, :math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})`.
 The friction model and its parameters can be set in the configuration file. More details about the different
