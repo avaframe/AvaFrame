@@ -607,7 +607,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
             log.error(messagePart)
             raise FileNotFoundError(messagePart)
         elif len(inDirPart) > 1:
-            log.warning('More than one file found for Initialise particle from file: took %s' % indirPart[0])
+            log.warning('More than one file found for Initialise particle from file: took %s' % inDirPart[0])
             inDirPart = inDirPart[0]
         else:
             inDirPart = inDirPart[0]
