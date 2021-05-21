@@ -6,13 +6,50 @@ com1DFA DFA-Kernel numerics
 
    This theory has not been fully reviewed yet.
 
-Mesh and interpolation
------------------------
+
 The numerical method used in com1DFA mixes particle methods and
 mesh methods. Mass and momentum are tracked using particles but flow
 depth is tracked using the mesh. The mesh is also to access topographic information
-(surface elevation, normal vector) as well as for displaying results. Here is
-a description of the mesh and the interpolation method used to
+(surface elevation, normal vector) as well as for displaying results.
+
+Mass :eq:`mass-balance3` and momentum :eq:`momentum-balance6` balance
+equations as well as basal normal stress :eq:`sigmab` are computed numerically using a SPH method
+(**S**\ moothed **P**\ article **H**\ ydrodynamis) (:cite:`Mo1992`) for the three variables
+:math:`\overline{\mathbf{u}}=(\overline{u}_1, \overline{u}_2)` and
+:math:`\overline{h}` by discretization of the released avalanche volume
+in a large number of mass elements. SPH in general, is a mesh-less
+numerical method for solving partial differential equations. The SPH
+algorithm discretizes the numerical problem within a domain using
+particles (:cite:`Sa2007,SaGr2009`), which interact
+with each-other in a defined zone of influence. Some of the advantages
+of the SPH method are that free surface flows, material boundaries and
+moving boundary conditions are considered implicitly. In addition, large
+deformations can be modeled due to the fact that the method is not based
+on a mesh. From a numerical point of view, the SPH method itself is
+relatively robust.
+
+
+Discretization
+----------------
+
+Space discretization
+~~~~~~~~~~~~~~~~~~~~~~
+
+The domain is discretized in particles. Each particle :math:`p_j` is affected with the following properties:
+a mass :math:`m_{p_j}`, a depth :math:`{h}_{p_j}`, a density :math:`\rho_{p_j}=\rho_0` and
+a velocity :math:`\mathbf{{u}}_{p_j}=({u}_{p_j,1}, {u}_{p_j,2})` (**those
+quantities are depth averagee, note that we droped the overline from** :eq:`hmean-umean` **for simplicity reasons**).
+This mesh also caries the velocity, mass and flow depth properties. It is possible to navigate
+from particle property to mesh property using the interpolation methods described in :ref:`Mesh and interpolation`
+
+
+Time discretization
+~~~~~~~~~~~~~~~~~~~~~~
+
+
+Mesh and interpolation
+-----------------------
+Here is a description of the mesh and the interpolation method used to
 switch from particle to mesh values and the other way around.
 
 Mesh
@@ -160,8 +197,10 @@ from the mass and momentum fields and the cell area (real area of each grid cell
 Neighbor search
 ------------------
 
-The SPH flow depth gradient computation is based on particle interactions.
-It requires, in order to compute the gradient of the flow depth at a particle location, to
+The lateral pressure forces are computed via the SPH flow depth gradient.
+This method is based on neighborhood particle interactions, meaning that it
+is necessary to keep track of all the particles within the neighborhood each particles.
+Computing the gradient of the flow depth at a particle location, requires to
 find all the particles in its surrounding. Considering the number of particles and
 their density, computing the gradient ends up in computing a lot of
 interactions and represents the most computationally expensive part of the dense
@@ -456,3 +495,94 @@ mean mesh velocity and then the implicit term which leads to:
   \mathbf{u}^{new} = \frac{\mathbf{u}^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
 
 With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}\frac{dt}{m}`
+
+
+Forces discretization
+----------------------
+
+
+The SPH method is introduced when expressing the flow depth gradient for each
+particle as a weighted sum of its neighbors
+(:cite:`LiLi2010,Sa2007`). The :math:`p` in :math:`p_i` is dropped
+(same applies for :math:`p_j`):
+
+The lateral pressure forces on each particle are calculated from the compression
+forces on the boundary of the particle.
+The boundary is approximated as a square with the base side length
+:math:`\Delta s = \sqrt{A_p}` and the respective flow height. This leads to
+(subscript :math:`|_{,d}` stands for the component in the :math:`d^{th}`
+direction, :math:`d = {1,2}`):
+
+.. math::
+    F_{i,d}^{\text{lat}} = K_{(d)}\oint\limits_{\partial{A_{i}}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_d\,\mathrm{d}x_3\right)\mathrm{d}l
+
+From equation :eq:`momentum-balance6`
+
+.. math::
+    F_{i,d}^{\text{lat}} = K_{(d)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{d}-
+    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{d}+\frac{\Delta{s}}{2}}\right)
+    = K_{(d)}\frac{\Delta{s}^2}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_d}\right\rvert_{i}
+
+The product of the average flow depth :math:`\overline{h}` and the basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}`
+reads (using equation :eq:`sigmab` and dropping the curvature acceleration term):
+
+.. math::
+   \overline{h}\,\overline{\sigma}^{(b)} = \overline{h}^2\,\rho_0\,\left(g_3-\overline{u_1}^2\,\frac{\partial^2{b}}{\partial{x_1^2}}\right)
+   \approx \overline{h}^2\,\rho_0\,g_3
+
+Which leads to, using the relation :eq:`sph formulation`:
+
+.. math::
+    F_{i,d}^{\text{lat}} = K_{(d)}\,\rho_0\,g_3\,A_{i}\,\overline{h}_{i}\,.\,\left.\frac{d\,\overline{h}}{d\,x_d}\right\rvert_{i}
+    = -K_{(d)}\,m_{i}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{j}{m_{j}}\,\left.\frac{d\,W_{ij}}{d\,x_d}\right\rvert_{j}
+    :label: lateral force
+
+The bottom friction forces on each particle depend on the chose friction model and reads for the SamosAT friction model
+(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{i}`):
+
+.. math::
+    F_{i,d}^{\text{bot}} = -\delta_{d1}\,A_{i}\,\tau^{(b)}_{i}
+    = -\delta_{d1}\,A_{i}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{i}
+     + \frac{\rho_0\,\mathbf{\overline{u}}_{i}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
+    :label: bottom force
+
+The resistance force on each particle reads (where :math:`h^{\text{eff}}_{j}`
+is a function of the average flow depth :math:`\overline{h}_{j}`):
+
+.. math::
+    F_{i,d}^{\text{res}}
+    = - \rho_0\,A_{i}\,h^{\text{eff}}_{i}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{i}\|\,\overline{u}_{i,d}
+    :label: resistance force
+
+The term related to the entrained mass and mass balance
+:math:`- \overline{u_d}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
+now reads:
+
+.. math::
+    - \overline{u}_{i,d}\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{i}\,\overline{h}_{i}\right)
+    = - \overline{u}_{i,d}\,A^{\text{ent}}_{i}\,q^{\text{ent}}_{i}
+
+
+The mass of entrained snow for each particle depends on the type of entrainment involved
+(ploughing or erosion) and reads:
+
+.. math::
+    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{i}\,\overline{h}_{i}\right)
+    = \frac{\mathrm{d}\,m_{i}}{\mathrm{d}t}
+    = A_{i}^\text{ent}\,q_{i}^{\text{ent}}
+
+with
+
+.. math::
+    \begin{aligned}
+    A_{i}^{\text{plo}} &= w_f\,h_{i}^{\text{ent}}= \sqrt{\frac{m_{i}}{\rho_0\,\overline{h}_{i}}}\,h_{i}^{\text{ent}}
+    \quad &\mbox{and} \quad &q_{i}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{i}\right\Vert
+    \quad &\mbox{for ploughing}\\
+    A_{i}^{\text{ero}} &= A_{i} = \frac{m_{i}}{\rho_0\,\overline{h}_{i}}
+    \quad &\mbox{and} \quad &q_{i}^{\text{ero}} = \frac{\tau_{i}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{i}\right\Vert
+    \quad &\mbox{for erosion}\end{aligned}
+
+Finaly, the entrainment force reads:
+
+.. math::
+    F_{i,d}^{\text{ent}} = -w_f\,(e_s+\,q_{i}^{\text{ent}}\,e_d)
