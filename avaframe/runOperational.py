@@ -4,14 +4,15 @@
 
 # Load modules
 import time
+import os
 import logging
 
 # # Local imports
 from avaframe.com1DFA import com1DFA
 from avaframe.com2AB import com2AB
-# # from avaframe.log2Report import generateReport as gR
-# from avaframe.out1Peak import outPlotAllPeak as oP
-# from avaframe.out3Plot import outAB
+from avaframe.log2Report import generateReport as gR
+from avaframe.out1Peak import outPlotAllPeak as oP
+from avaframe.out3Plot import outAB
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import initializeProject as initProj
@@ -50,8 +51,8 @@ def runOperational(avalancheDir=''):
 
     # # ----------------
     # # Run dense flow
-    # cfg = cfgUtils.getModuleConfig(com1DFA)
-    # reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
+    cfg = cfgUtils.getModuleConfig(com1DFA)
+    reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
 
     # ----------------
     # Run Alpha Beta
@@ -64,13 +65,14 @@ def runOperational(avalancheDir=''):
     # # peak file plot
 
     # # Generata plots for all peakFiles
-    # plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
-    # reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
+    plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
+    reportDictList = []
+    reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
 
     # # Set directory for report
-    # reportDir = os.path.join(avalancheDir, 'Outputs')
+    reportDir = os.path.join(avalancheDir, 'Outputs')
     # # write report
-    # gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
     # Print time needed
     endTime = time.time()
