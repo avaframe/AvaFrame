@@ -600,8 +600,18 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         else:
             inDirPart = os.path.join(avaDir, 'Outputs', 'com1DFA')
 
-        partDirName = logName
-        inDirPart = os.path.join(inDirPart, 'particles', partDirName)
+        inDirPart = glob.glob(inDirPart + os.sep + 'particles' + os.sep + '*' + cfg['releaseScenario'] + '_' + '*' + '*' + cfg['simTypeActual'] + '*')
+        if inDirPart == []:
+            messagePart = 'Initialise particles from file - no particles file found for releaseScenario: %s and simType: %s' % \
+                            (cfg['releaseScenario'], cfg['simTypeActual'])
+            log.error(messagePart)
+            raise FileNotFoundError(messagePart)
+        elif len(inDirPart) > 1:
+            log.warning('More than one file found for Initialise particle from file: took %s' % indirPart[0])
+            inDirPart = inDirPart[0]
+        else:
+            inDirPart = inDirPart[0]
+
         log.info('Initial particle distribution read from file!! %s' % (inDirPart))
         Particles, TimeStepInfo = readPartFromPickle(inDirPart)
         particles = Particles[0]
@@ -1398,7 +1408,7 @@ def polygon2Raster(demHeader, Line, relTh=''):
     # for this we need to know if the path is clockwise or counter clockwise
     # to decide if the radius should be positif or negatif in contains_points
     is_ccw = geoTrans.isCounterClockWise(path)
-    r = 0.001
+    r = 0.000
     r = r*is_ccw - r*(1-is_ccw)
     x = np.linspace(0, ncols-1, ncols)
     y = np.linspace(0, nrows-1, nrows)
@@ -1714,7 +1724,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
             IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             if countTime == numberTimes:
                 log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType, Tsave[countTime]))
-                dataName = logName + '_' + resType + '_' + '.asc'
+                dataName = logName + '_' + resType + '.asc'
                 # create directory
                 outDirPeakAll = os.path.join(outDir, 'peakFiles')
                 fU.makeADir(outDirPeakAll)
@@ -1821,7 +1831,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
             cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
             # create unique hash for simulation configuration
             simHash = cfgUtils.cfgHash(cfgSimObject)
-            simName = relName + '_' + row._asdict()['simTypeList'] + '_dfa_' + simHash
+            simName = relName + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' + simHash
             simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
                                 'simType': row._asdict()['simTypeList'], 'relFile': rel,
                                 'cfgSim': cfgSimObject}

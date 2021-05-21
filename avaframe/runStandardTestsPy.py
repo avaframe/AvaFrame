@@ -7,7 +7,7 @@ import os
 import time
 
 # Local imports
-from avaframe.com1DFAPy import com1DFA
+from avaframe.com1DFAPy import runCom1DFA
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
@@ -19,6 +19,8 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from benchmarks import simParameters
+import avaframe.com1DFAPy.com1DFA as com1DFA
+import avaframe.com1DFAPy.com1DFA as com1DFAPy
 
 # log file name; leave empty to use default runLog.log
 logName = 'runStandardTestsPy'
@@ -30,7 +32,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 testDictList = tU.readAllBenchmarkDesDicts(info=False)
 # filter benchmarks for tag standardTest
 type = 'TAGS'
-valuesList = ['standardTest', 'null']
+valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
@@ -54,49 +56,17 @@ for test in testList:
     log = logUtils.initiateLogger(avaDir, logName)
     log.info('Current avalanche: %s', avaDir)
 
+    # Clean input directory(ies) of old work and output files
+    initProj.cleanSingleAvaDir(avaDir,  keep=logName)
+
     # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = os.path.basename(avaDir)
     standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfgPy.ini' % test['AVANAME'])
-    cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
-    cfg['GENERAL']['secRelArea'] = 'False'
-    cfg['GENERAL']['frictModel'] = 'samosAT'
-    cfg['GENERAL']['sphKernelRadius'] = '5.'
-    cfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPDH'
-    cfg['GENERAL']['curvature'] = '1'
-    cfg['GENERAL']['meshCellSize'] = '5'
-    cfg['GENERAL']['meshCellSizeThreshold'] = '0.001'
-    cfg['GENERAL']['sphOption'] = '1'
-    cfg['GENERAL']['interpOption'] = '2'
-    cfg['GENERAL']['methodMeshNormal'] = '1'
-    cfg['GENERAL']['resType'] = 'ppr_pfd_pfv'
-    cfg['GENERAL']['tSteps'] = '0'
-    cfg['GENERAL']['seed'] = '12345'
+
+    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relThField='', variationDict='')
+
     modName = 'com1DFAPy'
-
-    # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir,  keep=logName)
-
-    # Set timing
-    startTime = time.time()
-
-    # Run Standalone DFA
-    # call com1DFAPy to perform simulation - provide configuration
-    Particles, Fields, Tsave, dem, reportDictList = com1DFA.com1DFAMain(cfg, avaDir, relThField='')
-
-    # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
-    # Generate plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avaDir, cfg, cfgMain['FLAGS'], modName)
-
-    # Print time needed
-    endTime = time.time()
-    timeNeeded = endTime - startTime
-    log.info(('Took %s seconds to calculate.' % (timeNeeded)))
-
-    # Set directory for report
-    reportDir = os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'reports')
-    # write report
-    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
     # get release area scenarios
     relArea = []
@@ -113,43 +83,41 @@ for test in testList:
         for bDict in benchDictList:
             if test['NAME'] == bDict['testName'] and rel == bDict['Simulation Parameters']['Release Area Scenario']:
                 benchDict = bDict
-        benchSimName = benchDict['simName']['name']
+
         # Check if simulation with entrainment and/or resistance or standard simulation
         simType = benchDict['simType']
 
-        # Fetch correct reportDict according to flagEntRes
-        for dict in reportDictList:
-            if simType in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel:
-                reportD = dict
+        # Fetch correct reportDict according to releaseScenario and simType
+        parametersDict = {'simTypeActual': simType, 'releaseScenario': rel}
+        simNameComp = cfgUtils.filterSims(avaDir, parametersDict, com1DFA)
+        if len(simNameComp) > 1:
+            log.error('more than one matching simulation found for criteria! ')
+        else:
+            simNameComp = simNameComp[0]
 
-        # Add info on run time
-        reportD['runTime'] = timeNeeded
+        for dict in reportDictList:
+            if simNameComp == dict['simName']['name']:
+                reportD = dict
 
         # +++++++Aimec analysis
         # load configuration
         aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECPyCfg.ini' % test['AVANAME'])
         cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
-        cfgAimecSetup = cfgAimec['AIMECSETUP']
-        cfgAimecSetup['testName'] = test['NAME']
         cfgAimec['AIMECSETUP']['resType'] = 'ppr'
         cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
         cfgAimec['AIMECSETUP']['diffLim'] = '5'
         cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
         cfgAimec['FLAGS']['flagMass'] = 'False'
         cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFAPy'
+        cfgAimec['AIMECSETUP']['testName'] = test['NAME']
 
-        # Setup input from com1DFA and reference
-        pathDictList = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimecSetup)
-        for pathD in pathDictList:
-            if pathD == reportD['simName']['name']:
-                pathDict = pathDictList[pathD]
-
-        #
+        # create pathDict required to run aimec
+        pathDict = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimec, rel, simType)
         pathDict['numSim'] = len(pathDict['ppr'])
         log.info('reference file comes from: %s' % pathDict['compType'][1])
 
         # Extract input file locations
-        pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
+        pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=rel+'_'+simType)
 
         # perform analysis
         rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)

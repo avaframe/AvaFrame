@@ -75,11 +75,11 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
                     MBFile.write('%.02f,    %.06f,    %.06f\n' %
                                  (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
             if simNameInput != '':
-                pathDict[simName]['mb'].append(saveName)
+                pathDict['mb'].append(saveName)
             else:
                 pathDict['mb'].append(saveName)
             log.debug('Mass file saved to %s ' % (saveName))
-            log.debug('Added to pathDict[mb] %s ' % (saveName))
+            log.info('Added to pathDict[mb] %s ' % (saveName))
             countFile = countFile + 1
 
     return pathDict
@@ -91,7 +91,7 @@ def getMBInfo(avaDir, pathDict, comMod, simName=''):
     # Get info from ExpLog
     if simName != '':
         mbFile = os.path.join(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
-        pathDict[simName]['mb'].append(mbFile)
+        pathDict['mb'].append(mbFile)
         log.info('Added to pathDict[mb] %s' % (mbFile))
 
     else:
@@ -109,14 +109,104 @@ def getRefMB(testName, pathDict, simName):
 
     # Get info from ExpLog
     mbFile = os.path.join('..', 'benchmarks', testName, 'mass_%s.txt' % simName)
-    pathDict[simName]['mb'].append(mbFile)
+    pathDict['mb'].append(mbFile)
     log.info('Added to pathDict[mb] %s' % (mbFile))
 
     return pathDict
 
 
-def dfaComp2Aimec(avaDir, cfgSetup):
+def dfaComp2Aimec(avaDir, cfg, rel, simType):
+    """ Create a pathDict where the paths to all the files required by aimec are saved for two modules -
+        in order to compare always two simulations at a time
+
+        for now matchin simulations are identified via releaseScenario and simType
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        cfgSetup: configParser object
+            configuration for aimec
+        rel: str
+            releaseScenario
+        simType: str
+            simulation type (null, ent, entres, ..)
+
+        Returns
+        -------
+        pathDict: list
+            list of pathDicts for matching simulations from two modules - matching in terms
+            of releaseScenarion and simType
+    """
+
+    cfgSetup = cfg['AIMECSETUP']
+
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}
+    inputDirRef, inputDirComp, pathDict, refModule = getCompDirs(avaDir, cfgSetup, pathDict)
+
+    # Load all infos on refernce simulations
+    if refModule == 'benchmarkReference':
+        refData = fU.makeSimDict(inputDirRef)
+    else:
+        refData = fU.makeSimDict(inputDirRef)
+
+    # Load all infos on comparison module simulations
+    compData = fU.makeSimDict(inputDirComp)
+
+    simSearch = True
+    for countRef, simNameShort in enumerate(refData['simName']):
+        for countComp, simNameComp in enumerate(compData['simName']):
+            if simSearch:
+                if refData['releaseArea'][countRef] == compData['releaseArea'][countComp] == rel and refData['simType'][countRef] == compData['simType'][countComp] == simType:
+                    refSimName = refData['simName'][countRef]
+                    compSimName = compData['simName'][countComp]
+                    log.info('Reference simulation: %s and to comparison simulation: %s ' % (refSimName, compSimName))
+                    simSearch = False
+
+    pathDict = getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, refSimName, inputDirComp, compSimName)
+
+    return pathDict
+
+
+def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp):
+    """ Set paths of reference and comparison files """
+
+    comModules = cfg['AIMECSETUP']['comModules'].split('|')
+
+    suffix = ['pfd', 'ppr', 'pfv']
+    for suf in suffix:
+        refFile = os.path.join(inputDirRef, simNameRef + '_' + suf + '.asc')
+        pathDict[suf].append(refFile)
+        log.info('Added to pathDict[%s] %s ' % (suf,refFile))
+        compFile =  os.path.join(inputDirComp, simNameComp + '_' + suf + '.asc')
+        pathDict[suf].append(compFile)
+        log.info('Added to pathDict[%s] %s ' % (suf,compFile))
+
+    if cfg['FLAGS'].getboolean('flagMass'):
+        for comMod in comModules:
+            if comMod == 'ref':
+                pathDict = getRefMB(testName, pathDict, simNameRef)
+            elif comMod == 'com1DFA':
+                pathDict = extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=simNameRef)
+            else:
+                pathDict = getMBInfo(avaDir, pathDict, comMod, simName=simNameComp)
+
+    return pathDict
+
+
+def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
     """ Exports the required data from com1DFA to be used by Aimec """
+
+    cfgSetup = cfg['AIMECSETUP']
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}
+    inputDirRef, inputDirComp, pathDict, refModule = getCompDirs(avaDir, cfgSetup, pathDict)
+
+    pathDict = getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp)
+
+    return pathDict
+
+
+def getCompDirs(avaDir, cfgSetup, pathDict):
 
     # look for matching simulations
     comModules = cfgSetup['comModules'].split('|')
@@ -129,57 +219,19 @@ def dfaComp2Aimec(avaDir, cfgSetup):
     if refModule == 'benchmarkReference':
         testName = cfgSetup['testName']
         inputDirRef = os.path.join('..', 'benchmarks', testName)
-        refData = fU.makeSimDict(inputDirRef)
-        # this is required to find matching sim Names
-        for m in range(len(refData['simName'])):
-            refData['simName'][m] = refData['simName'][m].replace('ref', 'dfa')
     else:
         inputDirRef = os.path.join(avaDir, 'Outputs', refModule, 'peakFiles')
-        refData = fU.makeSimDict(inputDirRef)
 
-    # Load all infos on comparison module simulations
     inputDirComp = os.path.join(avaDir, 'Outputs', compModule, 'peakFiles')
-    compData = fU.makeSimDict(inputDirComp)
 
-    pathDict = {}
-    simNamesMatch = {}
-    count = 0
-    # initialise path dicionary with subdictionary for each simulation
-    for simNameRef in refData['simName']:
-        pathDict.update({simNameRef: {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}})
-        simNamesMatch[simNameRef] = False
+    pathDict['compType'] = ['comModules', refModule, compModule]
+    pathDict['referenceFile'] = 0
+    # info about colourmap
+    pathDict['contCmap'] = True
 
-    for countRef, simNameRef in enumerate(refData['simName']):
-        for countComp, simNameComp in enumerate(compData['simName']):
-            if simNameRef == simNameComp:
-                suffix = ['pfd', 'ppr', 'pfv']
-                for suf in suffix:
-                    if refData['resType'][countRef] == suf and compData['resType'][countComp] == suf:
-                        pathDict[simNameRef][suf].append(refData['files'][countRef])
-                        log.info('Added to pathDict[%s] %s ' % (suf, refData['files'][countRef]))
-                        pathDict[simNameRef][suf].append(compData['files'][countComp])
-                        log.info('Added to pathDict[%s] %s' % (suf, compData['files'][countComp]))
-                        if simNamesMatch[simNameRef] == False:
-                            for comMod in comModules:
-                                if comMod == 'ref':
-                                    pathDict = getRefMB(testName, pathDict, simNameRef)
-                                elif comMod == 'com1DFA':
-                                    pathDict = extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=simNameRef)
-                                else:
-                                    pathDict = getMBInfo(avaDir, pathDict, comMod, simName=simNameRef)
-                        simNamesMatch[simNameRef] = True
-                pathDict[simNameRef]['compType'] = ['comModules', refModule, compModule]
-                pathDict[simNameRef]['referenceFile'] = 0
-                # info about colourmap
-                pathDict[simNameRef]['contCmap'] = True
-
-    for key in simNamesMatch:
-        if simNamesMatch[key] == False:
-            log.info('no matching files found for simulation: %s' % key)
-            del pathDict[key]
+    return inputDirRef, inputDirComp, pathDict, refModule
 
 
-    return pathDict
 
 
 def mainDfa2Aimec(avaDir, comModule='com1DFA'):

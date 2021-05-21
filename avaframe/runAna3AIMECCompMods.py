@@ -40,19 +40,24 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
 cfgSetup = cfg['AIMECSETUP']
 
-# Setup input from com1DFA
-pathDictList = dfa2Aimec.dfaComp2Aimec(avalancheDir, cfgSetup)
+compList = [['relKot', 'null'], ['relKot', 'ent']]
 
-for simN in pathDictList:
+for comp in compList:
 
-    pathDict = pathDictList[simN]
+    # get config
+    rel = comp[0]
+    simType = comp[1]
+
+    print('NEW')
+    # Setup input from com1DFA
+    pathDict = dfa2Aimec.dfaComp2Aimec(avalancheDir, cfg, rel, simType)
 
     # TODO: define referenceFile
     pathDict['numSim'] = len(pathDict['ppr'])
     pathDict['referenceFile'] = 0
 
     # Extract input file locations
-    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=simN)
+    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=rel+'_'+simType)
 
     startTime = time.time()
 

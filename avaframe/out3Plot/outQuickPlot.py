@@ -301,6 +301,8 @@ def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', sim
                     findComp = False
                 elif data['modelType'][m] == cfgPlot['PLOT']['refModel']:
                     indSuffix[1] = m
+        if findComp:
+            log.error('No matching files found')
 
         # Load data
         raster = IOf.readRaster(data['files'][indSuffix[0]])
