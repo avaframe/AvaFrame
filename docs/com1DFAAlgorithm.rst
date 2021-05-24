@@ -11,13 +11,13 @@ Initialization:
 -----------------
 At the beginning of the simulation, the avalanche folder and the configuration
 are read (:ref:`configuration:Configuration`).
-Input data is read and checked according to the chosen configuration.
-Mesh, particles and fields are sequently initialized.
+Input data is fetched according to the chosen configuration.
+Mesh, particles and fields are subsequently initialized.
 
 Initialize Mesh
 ~~~~~~~~~~~~~~~~~
 
-Read DEM ascii file provided in the Input folder (one and only one should be provided).
+Read DEM ascii file provided in the Input folder (only one DEM ascii file allowed).
 If the DEM cell size is different from the :``meshCellSize`` specified in the configuration
 from more then ``meshCellSizeThreshold`` [m] the DEM is remeshed (:py:func:`in3Trans.geoTrans.remesh`).
 
