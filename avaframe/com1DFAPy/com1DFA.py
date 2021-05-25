@@ -1410,7 +1410,7 @@ def polygon2Raster(demHeader, Line, relTh=''):
     # for this we need to know if the path is clockwise or counter clockwise
     # to decide if the radius should be positif or negatif in contains_points
     is_ccw = geoTrans.isCounterClockWise(path)
-    r = 0.000
+    r = 0.001
     r = r*is_ccw - r*(1-is_ccw)
     x = np.linspace(0, ncols-1, ncols)
     y = np.linspace(0, nrows-1, nrows)
