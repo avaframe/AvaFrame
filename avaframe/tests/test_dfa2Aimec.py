@@ -31,14 +31,14 @@ def test_mainDfa2Aimec(tmp_path):
                         pathData / 'release2HS_entres_dfa_0.15500_pfd.asc']
     pathDTest['pfv'] = [pathData / 'release1HS_entres_dfa_0.15500_pfv.asc',
                         pathData / 'release2HS_entres_dfa_0.15500_pfv.asc']
-    pathDTest['mb'] = [os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_entres_dfa_0.15500.txt'),
+    pathDTest['massBal'] = [os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_entres_dfa_0.15500.txt'),
                        os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release2HS_entres_dfa_0.15500.txt')]
 
 
     assert pathDict['ppr'] == pathDTest['ppr']
     assert pathDict['pfd'] == pathDTest['pfd']
     assert pathDict['pfv'] == pathDTest['pfv']
-    assert pathDict['mb'] == pathDTest['mb']
+    assert pathDict['massBal'] == pathDTest['massBal']
 
 
 
@@ -60,10 +60,10 @@ def test_dfaComp2Aimec(tmp_path):
     pathDTest['ppr'] = [pathData / 'release1HS_entres_dfa_0.15500_ppr.asc', pathData2 / 'release1HS_entres_dfa_0.15500_ppr.asc']
     pathDTest['pfd'] = [pathData / 'release1HS_entres_dfa_0.15500_pfd.asc', pathData2 / 'release1HS_entres_dfa_0.15500_pfd.asc']
     pathDTest['pfv'] = [pathData / 'release1HS_entres_dfa_0.15500_pfv.asc', pathData2 / 'release1HS_entres_dfa_0.15500_pfv.asc']
-    pathDTest['mb'] = [os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_entres_dfa_0.15500.txt'), os.path.join(testPath, 'Outputs', 'com1DFAPy', 'mass_release1HS_entres_dfa_0.15500.txt')]
+    pathDTest['massBal'] = [os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_entres_dfa_0.15500.txt'), os.path.join(testPath, 'Outputs', 'com1DFAPy', 'mass_release1HS_entres_dfa_0.15500.txt')]
 
 
     assert pathDict['ppr'] == pathDTest['ppr']
     assert pathDict['pfd'] == pathDTest['pfd']
     assert pathDict['pfv'] == pathDTest['pfv']
-    assert pathDict['mb'] == pathDTest['mb']
+    assert pathDict['massBal'] == pathDTest['massBal']

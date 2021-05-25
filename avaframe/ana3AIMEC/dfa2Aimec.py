@@ -76,42 +76,42 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
                     MBFile.write('%.02f,    %.06f,    %.06f\n' %
                                  (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
             if simNameInput != '':
-                pathDict['mb'].append(saveName)
+                pathDict['massBal'].append(saveName)
             else:
-                pathDict['mb'].append(saveName)
+                pathDict['massBal'].append(saveName)
             log.debug('Mass file saved to %s ' % (saveName))
-            log.info('Added to pathDict[mb] %s ' % (saveName))
+            log.info('Added to pathDict[massBal] %s ' % (saveName))
             countFile = countFile + 1
 
     return pathDict
 
 
 def getMBInfo(avaDir, pathDict, comMod, simName=''):
-    """ Get MB info """
+    """ Get mass balance info """
 
     # Get info from ExpLog
     if simName != '':
         mbFile = os.path.join(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
-        pathDict['mb'].append(mbFile)
-        log.info('Added to pathDict[mb] %s' % (mbFile))
+        pathDict['massBal'].append(mbFile)
+        log.info('Added to pathDict[massBal] %s' % (mbFile))
 
     else:
         mbFiles = glob.glob(os.path.join(avaDir, 'Outputs', comMod, 'mass*.txt'))
         mbNames = sorted(set(mbFiles), key=lambda s: (s.split("_")[1], s.split("_")[2], s.split("_")[4]))
 
         for mFile in mbNames:
-            pathDict['mb'].append(mFile)
-            log.debug('Added to pathDict[mb] %s' % (mFile))
+            pathDict['massBal'].append(mFile)
+            log.debug('Added to pathDict[massBal] %s' % (mFile))
 
     return pathDict
 
 def getRefMB(testName, pathDict, simName):
-    """ Get MB info """
+    """ Get mass balance info """
 
     # Get info from ExpLog
     mbFile = os.path.join('..', 'benchmarks', testName, 'mass_%s.txt' % simName)
-    pathDict['mb'].append(mbFile)
-    log.info('Added to pathDict[mb] %s' % (mbFile))
+    pathDict['massBal'].append(mbFile)
+    log.info('Added to pathDict[massBal] %s' % (mbFile))
 
     return pathDict
 
@@ -143,7 +143,7 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
     cfgSetup = cfg['AIMECSETUP']
 
     # initialise empty pathDict for all required files
-    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
     # get directories where simulation results can be found for both modules
     inputDirRef, inputDirComp, pathDict, refModule = getCompDirs(avaDir, cfgSetup, pathDict)
 
@@ -253,7 +253,7 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
     cfgSetup = cfg['AIMECSETUP']
 
     # initialise empty pathDict for all required files
-    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
     # get directories where simulation results can be found for both modules
     inputDirRef, inputDirComp, pathDict, refModule = getCompDirs(avaDir, cfgSetup, pathDict)
 
@@ -315,7 +315,7 @@ def mainDfa2Aimec(avaDir, comModule='com1DFA'):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec
-    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'mb': []}
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
 
     # Setup input from com1DFA and save file paths to dictionary
     suffix = ['pfd', 'ppr', 'pfv']

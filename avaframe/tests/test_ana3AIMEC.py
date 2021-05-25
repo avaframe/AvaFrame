@@ -22,7 +22,7 @@ def test_analyzeArea(capfd):
     cfgPath = {}
     cfgPath['projectName'] = 'NameOfAvalanche'
     cfgPath['ppr'] = [dataRef, dataSim]
-    cfgPath['mb'] = [dataMass, dataMass1]
+    cfgPath['massBal'] = [dataMass, dataMass1]
     pathResult = os.path.join(dirname, 'data')
     cfgPath['pathResult'] = pathResult
     cfgPath['dirName'] = 'testAIMEC'
@@ -102,7 +102,7 @@ def test_makeDomainTransfo(capfd):
                       os.path.join(pathData, 'testAimec_2.asc'), os.path.join(pathData, 'testAimec_3.asc'),
                       os.path.join(pathData, 'testAimec_4.asc')]
 
-    cfgPath['mb'] = [os.path.join(dirname, '000001.txt')]*5
+    cfgPath['massBal'] = [os.path.join(dirname, '000001.txt')]*5
 
     cfgPath['contCmap'] = True
 
