@@ -392,14 +392,22 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
     for cfile in configFiles:
         if 'originConfiguration' not in cfile:
             simName = os.path.splitext(os.path.basename(cfile))[0]
+            if '_AF_' in simName:
+                nameParts = simName.split('_AF_')
+                fNamePart = nameParts[0] + '_AF'
+                infoParts = nameParts[1].split('_')
+
+            else:
+                nameParts = simName.split('_')
+                fNamePart = nameParts[0]
+                infoParts = nameParts[1:]
+            simHash = infoParts[2]
             cfgObject = readCfgFile(avaDir, fileName=cfile)
-            indexItem = [simName]
+            indexItem = [simHash]
             cfgDict = convertConfigParserToDict(cfgObject)
             simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
+            simItemDF = simItemDF.assign(simName=simName)
             simDF = pd.concat([simDF, simItemDF], axis=0)
-
-    # add simName to dataFrame
-    simDF['simName'] = simDF['releaseScenario'] + '_' +  simDF['simTypeActual'] + '_' + simDF['modelType']+ '_' + simDF.index
 
     # if writeCSV, write dataFrame to csv file
     if writeCSV:
