@@ -72,7 +72,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, modCfg['FLAGS'])
 
     # write full configuration file to file
-    cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, modCfg, fileName='originConfiguration')
+    cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, modCfg, fileName='sourceConfiguration')
 
     # create a list of simulations
     # if need to reproduce exactely the hash - need to be strings with exactely the same number of digits!!

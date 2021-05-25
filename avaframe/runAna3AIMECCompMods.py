@@ -48,7 +48,6 @@ for comp in compList:
     rel = comp[0]
     simType = comp[1]
 
-    print('NEW')
     # Setup input from com1DFA
     pathDict = dfa2Aimec.dfaComp2Aimec(avalancheDir, cfg, rel, simType)
 

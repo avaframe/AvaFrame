@@ -6,6 +6,7 @@
 import os
 import glob
 import logging
+import pathlib
 import numpy as np
 import shutil
 
@@ -119,7 +120,7 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
     """ Create a pathDict where the paths to all the files required by aimec are saved for two modules -
         in order to compare always two simulations at a time
 
-        for now matchin simulations are identified via releaseScenario and simType
+        for now matching simulations are identified via releaseScenario and simType
 
         Parameters
         -----------
@@ -165,6 +166,10 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
                     compSimName = compData['simName'][countComp]
                     log.info('Reference simulation: %s and to comparison simulation: %s ' % (refSimName, compSimName))
                     simSearch = False
+    if simSearch == True:
+        message = 'No matching simulations found for reference and comparison simulation for releaseScenario: %s and simType: %s' % (rel, simType)
+        log.error(message)
+        raise FileNotFoundError(message)
 
     # fill pathDict
     pathDict = getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, refSimName, inputDirComp, compSimName)
@@ -204,10 +209,10 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
     # set path to peak field results
     suffix = ['pfd', 'ppr', 'pfv']
     for suf in suffix:
-        refFile = os.path.join(inputDirRef, simNameRef + '_' + suf + '.asc')
+        refFile = inputDirRef / (simNameRef + '_' + suf + '.asc')
         pathDict[suf].append(refFile)
         log.info('Added to pathDict[%s] %s ' % (suf,refFile))
-        compFile =  os.path.join(inputDirComp, simNameComp + '_' + suf + '.asc')
+        compFile =  inputDirComp / (simNameComp + '_' + suf + '.asc')
         pathDict[suf].append(compFile)
         log.info('Added to pathDict[%s] %s ' % (suf,compFile))
 
@@ -292,11 +297,11 @@ def getCompDirs(avaDir, cfgSetup, pathDict):
     # Lead all infos on refernce simulations
     if refModule == 'benchmarkReference':
         testName = cfgSetup['testName']
-        inputDirRef = os.path.join('..', 'benchmarks', testName)
+        inputDirRef = pathlib.Path('..', 'benchmarks', testName)
     else:
-        inputDirRef = os.path.join(avaDir, 'Outputs', refModule, 'peakFiles')
+        inputDirRef = pathlib.Path(avaDir, 'Outputs', refModule, 'peakFiles')
 
-    inputDirComp = os.path.join(avaDir, 'Outputs', compModule, 'peakFiles')
+    inputDirComp = pathlib.Path(avaDir, 'Outputs', compModule, 'peakFiles')
 
     pathDict['compType'] = ['comModules', refModule, compModule]
     pathDict['referenceFile'] = 0

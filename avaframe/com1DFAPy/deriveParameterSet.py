@@ -37,17 +37,16 @@ def getVariationDict(avaDir, fullCfg, modDict):
     # look for parameters that are different than default in section GENERAL
     section = 'GENERAL'
     variations = {}
-    for key in fullCfg.items(section):
+    for key, value in fullCfg.items(section):
         # output saving options not relevant for parameter variation!
-        fullValue = key[1]
-        if key[0] != 'resType' and key[0] != 'tSteps':
+        if key not in ['resType', 'tSteps']:
             # if yes and if this value is different add this key to
             # the parameter variation dict
-            if ':' in fullValue or '|' in fullValue:
-                locValue = fU.splitIniValueToArraySteps(fullValue)
-                variations[key[0]] = locValue
-                defValue = modDict[section][key[0]][1]
-                log.info('%s: %s (default value was: %s)' % (key[0], locValue, defValue))
+            if ':' in value or '|' in value:
+                locValue = fU.splitIniValueToArraySteps(value)
+                variations[key] = locValue
+                defValue = modDict[section][key][1]
+                log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
 
     # print modified parameters
     for sec in modDict:
