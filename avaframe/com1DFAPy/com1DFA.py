@@ -912,12 +912,10 @@ def DFAIterate(cfg, particles, fields, dem):
     sphOption = cfgGen.getint('sphOption')
     log.info('using sphOption %s:' % sphOption)
     # desired output fields
-    resTypesString = cfgGen['resType']
-    resTypes = resTypesString.split('_')
+    resTypes = fU.splitIniValueToArraySteps(cfgGen['resType'])
     # make sure to save all desiered resuts for first and last time step for
     # the report
-    resTypesReportString = cfg['REPORT']['plotFields']
-    resTypesReport = resTypesReportString.split('_')
+    resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
     resTypesLast = list(set(resTypes + resTypesReport))
     # derive friction type
     # turn friction model into integer
@@ -1698,14 +1696,12 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
 
     """
 
-    resTypesString = cfg['GENERAL']['resType']
-    resTypesGen = resTypesString.split('_')
+    resTypesGen = fU.splitIniValueToArraySteps(cfg['GENERAL']['resType'])
     if resTypesGen == ['']:
         resTypesGen = []
     if 'particles' in resTypesGen:
         resTypesGen.remove('particles')
-    resTypesReportString = cfg['REPORT']['plotFields']
-    resTypesReport = resTypesReportString.split('_')
+    resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
     numberTimes = len(Tsave)-1
     countTime = 0
     for timeStep in Tsave:
