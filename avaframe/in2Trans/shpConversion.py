@@ -53,6 +53,7 @@ def SHP2Array(infile, defname=None):
     if os.path.isfile(prjfile):
         prjf = open(prjfile, 'r')
         sks = prjf.readline()
+        prjf.close()
 
     # Start reading the shapefile
     records = sf.shapeRecords()
@@ -119,6 +120,9 @@ def SHP2Array(infile, defname=None):
     SHPdata['x'] = Coordx
     SHPdata['y'] = Coordy
     SHPdata['z'] = Coordz
+
+    sf.close()
+
     return SHPdata
 
 
