@@ -48,7 +48,7 @@ entrained snow from the ground and to compress it (since the dense-flow
 bulk density is usually larger than the density of the entrained snow,
 i.e. :math:`\rho_{\text{ent}}<\rho`) and :math:`F_i^{\text{res}}`
 represents the resistance force due to obstacles (for example trees).
-Which leads to in :eq:`momentum-balance1`:
+This leads to in :eq:`momentum-balance1`:
 
 .. math::
    \rho_0 \frac{dV(t) \overline{u}_i}{dt} = \rho_0 V \frac{d\overline{u}_i}{dt} +
@@ -416,11 +416,61 @@ With
 Several friction models already implemented in the simulation tool are
 described here.
 
-SamosAT Model
-""""""""""""""
 
-SamosAT friction model is a modification of some more clasical models
-such as Voellmy model. The basal shear stress tensor :math:`\tau^{(b)}`
+
+Mohr-Coulomb friction model
+"""""""""""""""""""""""""""""""
+The Mohr-Coulomb friction model describes the friction interaction between twos solids.
+The bottom shear stress simply reads:
+
+.. math::
+ \tau^{(b)} = \tan{\delta}\,\sigma^{(b)}
+
+:math:`\tan{\delta}=\mu` is the friction coefficient (and :math:`\delta` the friction angle). The bottom shear stress linearly
+increases with the normal stress component :math:`\sigma^{(b)}` (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa2007`).
+
+With this friction model, an avalanche starts to flow if the slope inclination is steeper than the
+friction angle :math:`\delta`. In the case of an infinite slope of constant inclination,
+the avalanche velocity would increase indefinitely. This is unrealistic to model snow
+avalanches because it leads to over prediction of the flow velocity.
+The Mohr-Coulomb friction model is on the other hand well suited to model
+granular flow. Because of its relative simplicity, this friction model is also
+very convenient to derive analytic solutions and validate the numerical implementation.
+
+Chezy friction model
+""""""""""""""""""""""""
+The Chezy friction model describes viscous friction interaction.
+The bottom shear stress then reads:
+
+.. math::
+ \tau^{(b)} = c_{\text{dyn}}\,\rho_0\,\bar{u}^2
+
+:math:`c_{\text{dyn}}` is the viscous friction coefficient. The bottom shear stress
+is a quadratic function of the velocity. the normal stress component :math:`\sigma^{(b)}` (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa2007`).
+
+This model enables to reach more realistic velocities for avalanche simulations.
+The draw back is that the avalanche flows as long as the slope inclination reaches zero.
+This means it flows to the lowest local point.
+
+Voellmy friction model
+"""""""""""""""""""""""""
+Anton Voellmy was a Swiss engineer interested by avalanche dynamics :cite:`Vo1955`.
+He first had the idea to combine both Mohr-Coulomb and Chezy model by summing them up
+in order to take advantage of both. This leads to the following friction law:
+
+.. math::
+ \tau^{(b)} = \tan{\delta}\,\sigma^{(b)} + c_\text{dyn}\,\rho_0\,\bar{u}^2
+
+
+This model is described as Voellmy-Fluid :cite:`Sa2004,Sa2007`, and the turbulenten
+friction term :math:`\xi` is used instead of :math:`c_{\text{dyn}}`.
+
+
+SamosAT friction model
+""""""""""""""""""""""""
+
+SamosAT friction model is a modification of some more classical models
+such as Voellmy model :ref:`Voellmy friction model`. The basal shear stress tensor :math:`\tau^{(b)}`
 is expressed as (:cite:`Sa2007`):
 
 .. math::
@@ -451,6 +501,74 @@ Therefore lower avalanche speeds lead to a higher bed friction, making
 avalanche flow stop already at steeper slopes :math:`\alpha`, than
 without this effect. This effect is intended to avoid lateral creep of
 the avalanche mass (:cite:`SaGr2009`)
+
+
+
+
+.. Logarithmic friction model
+.. """""""""""""""""""""""""""""
+.. Im Gegensatz zum Chezy-Modell, welches eine Näherung der Bodenreibung in turbulenten Strömungen liefert,
+.. wird mit der turbulenten Grenzschichttheorie das Verhalten einer solchen Strömung in Bodennähe genauer analysiert.
+.. Für die Grundlagen der Grenzschichttheorie.
+.. Im Falle einer Lawine kann man von einem vollkommen rauen Untergrund ausgehen. Somit kann in unmittelbarer
+.. Bodennäche ein logarithmisches Geschwindigkeitsprofil zugrunde gelegt werden,
+.. welches proportional zum Abstand von der Geländeoberfläche $x_3$ ist.
+.. Die Verteilung der Geschwindigkeit wird somit über das logarithmisches Geschwindigkeitsprofil $\tilde{u}(x_3)$ ersetzt.
+.. Diese Profil wird ''universelles Wandgesetz'' genannt.
+..
+.. .. math::
+..   \begin{aligned}
+..     \frac{\tilde{u}}{u_{\tau}} &= \frac{1}{\kappa}\,\ln{\frac{x_3}{R}} + B\\
+..     &\text{mit}\\
+..     u_{\tau} &= \sqrt{\frac{\tau^{(b)}}{\bar{\rho}}},
+..   \end{aligned}
+..
+..
+.. .. math::
+..   \begin{aligned}
+..   &R \qquad &\text{Surface rugosity}\\
+..   &B \qquad &\text{empirical  constant}\\
+..   &\kappa \qquad &\text{Karman constant (0.4 fur Newtonsche Flussigkeiten)}\\
+..   &u_{\tau} \quad &\text{Schubspannungsgeschwindigkeit}\end{aligned}
+..
+..
+..
+.. sind. Für Kanalströmungen mit vorgegebener Fließhöhe $\bar{h}$ lässt sich zudem
+.. das Geschwindigkeitsprofil auch in größeren Entfernungen von der Wand logarithmisch darstellen.
+.. Daraus folgt das ''Mittengesetz''.
+..
+.. .. math::
+..   \begin{align*}
+..     \frac{\tilde{u}}{u_{\tau}} &= \frac{\tilde{u}_\text{max}}{u_{\tau}} + \frac{1}{\kappa}\,\ln{\frac{x_3}{\bar{h}}}
+..     \intertext{mit}
+..     \tilde{u}_\text{max} &= \tilde{u}(x_3 = \bar{h})
+..   \end{align*}
+..
+.. Kombiniert man nun diese beiden Gesetze, indem das Mittengesetz dem Wandgesetz gleichsetzt,
+.. erhält man
+..
+.. .. math::
+..     \frac{\tilde{u}_\text{max}}{u_{\tau}} = \frac{1}{\kappa}\,\ln{\frac{\bar{h}}{R}} + B.
+..
+.. Durch Einsetzen für $u_{\tau}$ und Ersetzen von $\tilde{u}_\text{max}$ durch die in Kapitel \ref{sec:vereinfachtegleichungen}
+.. tiefengemittelte Geschwindigkeit $\bar{u}$
+.. erhält man nach Umformen schließlich eine Beziehung für die gesuchte Bodenschubspannung $\tau^{(b)}$.
+..
+.. .. math::
+..     \tau^{(b)} = \frac{\bar{\rho}\,\bar{u}^2}{\left(\frac{1}{\kappa}\,\ln{\frac{\bar{h}}{R}}+B\right)^2}
+..
+..
+.. Dieses Modell lässt sich wie beim Voellmy-Modell mit der Coulomb'schen Reibung kombinieren.
+..
+.. .. math::
+..     \tau^{(b)} = \tan{\delta}\,\sigma^{(b)} +
+..     \frac{\bar{\rho}\,\bar{u}^2}{\left(\frac{1}{\kappa}\,\ln{\frac{\bar{h}}{R}}+B\right)^2}
+..
+..
+.. Im Gegensatz zum klassischen Voellmy-Modell ist die Bodenschubspannung also auch von der Fließmächtigkeit $\bar{h}$
+.. und Bodenrauhigkeit $R$ abhängig.
+.. Steigende Fließmächtigkeit, bzw. abnehmende Bodenrauhigkeit führt demnach
+.. zu einer Reduktion der Reibung \citep[vgl.][]{Sa2007}.
 
 
 
