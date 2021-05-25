@@ -76,6 +76,8 @@ def readLogFile(logName, cfg=''):
         logDict['fullName'].append(vals[1] + '_' + '%.5f' % float(vals[2]))
         countSims = countSims + 1
 
+    logFile.close()
+
     return logDict
 
 
