@@ -6,6 +6,7 @@
 import os
 import glob
 import logging
+import pathlib
 import numpy as np
 import shutil
 
@@ -451,7 +452,9 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
     """
 
     # Load input datasets from input directory
-    datafiles = glob.glob(inputDir+os.sep + '*.asc')
+    if isinstance(inputDir, pathlib.Path) == False:
+        inputDir = pathlib.Path(inputDir)
+    datafiles = list(inputDir.glob('*.asc'))
 
     # Sort datafiles by name
     datafiles = sorted(datafiles)

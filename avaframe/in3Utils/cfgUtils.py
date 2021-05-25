@@ -389,9 +389,9 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
 
     # create confiparser object, convert to json object, write to dataFrame
     # append all dataFrames
-    for cfile in configFiles:
-        if 'originConfiguration' not in cfile:
-            simName = os.path.splitext(os.path.basename(cfile))[0]
+    for cFile in configFiles:
+        if 'sourceConfiguration' not in cFile:
+            simName = os.path.splitext(os.path.basename(cFile))[0]
             if '_AF_' in simName:
                 nameParts = simName.split('_AF_')
                 fNamePart = nameParts[0] + '_AF'
@@ -402,7 +402,7 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
                 fNamePart = nameParts[0]
                 infoParts = nameParts[1:]
             simHash = infoParts[2]
-            cfgObject = readCfgFile(avaDir, fileName=cfile)
+            cfgObject = readCfgFile(avaDir, fileName=cFile)
             indexItem = [simHash]
             cfgDict = convertConfigParserToDict(cfgObject)
             simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)

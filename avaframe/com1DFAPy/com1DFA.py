@@ -17,6 +17,7 @@ import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pds
 from itertools import product
+import pathlib
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
@@ -596,11 +597,12 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         # TODO: this is for development purposes, change or remove in the future
         # If initialisation from file
         if cfg['particleFile']:
-            inDirPart = cfg['particleFile']
+            inDirPart = pathlib.Path(cfg['particleFile'])
         else:
-            inDirPart = os.path.join(avaDir, 'Outputs', 'com1DFA')
+            inDirPart = pathlib.Path(avaDir, 'Outputs', 'com1DFA')
 
-        inDirPart = glob.glob(inDirPart + os.sep + 'particles' + os.sep + '*' + cfg['releaseScenario'] + '_' + '*' + '*' + cfg['simTypeActual'] + '*')
+        searchDir = inDirPart / 'particles'
+        inDirPart = list(searchDir.glob( ('*' + cfg['releaseScenario'] + '_' + '*' + cfg['simTypeActual'] + '*')))
         if inDirPart == []:
             messagePart = 'Initialise particles from file - no particles file found for releaseScenario: %s and simType: %s' % \
                             (cfg['releaseScenario'], cfg['simTypeActual'])
