@@ -5,6 +5,7 @@ import numpy as np
 import os
 import glob
 import configparser
+import pathlib
 
 # Local imports
 import avaframe.ana3AIMEC.dfa2Aimec as dfa2Aimec
@@ -16,20 +17,20 @@ from avaframe.tests import test_logUtils
 def test_mainDfa2Aimec(tmp_path):
 
     # Initialise inputs
-    dirPath = os.path.dirname(__file__)
+    dirPath = pathlib.Path(__file__).parents[0]
     avaTestName = 'avaHockeyChannelPytest'
-    testPath = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestName)
-    pathData = os.path.join(testPath, 'Outputs', 'com1DFA', 'peakFiles')
+    testPath = dirPath / '..' / '..' / 'benchmarks' / avaTestName
+    pathData = testPath / 'Outputs' / 'com1DFA' / 'peakFiles'
     pathDict = dfa2Aimec.mainDfa2Aimec(testPath)
 
     # get path dictionary for test
     pathDTest = {}
-    pathDTest['ppr'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_ppr.asc'),
-                        os.path.join(pathData, 'release2HS_entres_dfa_0.15500_ppr.asc')]
-    pathDTest['pfd'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_pfd.asc'),
-                        os.path.join(pathData, 'release2HS_entres_dfa_0.15500_pfd.asc')]
-    pathDTest['pfv'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_pfv.asc'),
-                        os.path.join(pathData, 'release2HS_entres_dfa_0.15500_pfv.asc')]
+    pathDTest['ppr'] = [pathData / 'release1HS_entres_dfa_0.15500_ppr.asc',
+                        pathData / 'release2HS_entres_dfa_0.15500_ppr.asc']
+    pathDTest['pfd'] = [pathData / 'release1HS_entres_dfa_0.15500_pfd.asc',
+                        pathData / 'release2HS_entres_dfa_0.15500_pfd.asc']
+    pathDTest['pfv'] = [pathData / 'release1HS_entres_dfa_0.15500_pfv.asc',
+                        pathData / 'release2HS_entres_dfa_0.15500_pfv.asc']
     pathDTest['mb'] = [os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_entres_dfa_0.15500.txt'),
                        os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release2HS_entres_dfa_0.15500.txt')]
 
@@ -44,11 +45,11 @@ def test_mainDfa2Aimec(tmp_path):
 def test_dfaComp2Aimec(tmp_path):
 
     # Initialise inputs
-    dirPath = os.path.dirname(__file__)
+    dirPath = pathlib.Path(__file__).parents[0]
     avaTestName = 'avaHockeyChannelPytest'
-    testPath = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestName)
-    pathData = os.path.join(testPath, 'Outputs', 'com1DFA', 'peakFiles')
-    pathData2 = os.path.join(testPath, 'Outputs', 'com1DFAPy', 'peakFiles')
+    testPath = dirPath / '..' / '..' / 'benchmarks' / avaTestName
+    pathData = testPath / 'Outputs' / 'com1DFA' / 'peakFiles'
+    pathData2 = testPath / 'Outputs' / 'com1DFAPy' / 'peakFiles'
     cfg = configparser.ConfigParser()
     cfg['AIMECSETUP'] = {'comModules': 'com1DFA|com1DFAPy'}
     cfg['FLAGS'] = {'flagMass': 'True'}
@@ -56,9 +57,9 @@ def test_dfaComp2Aimec(tmp_path):
 
     # get path dictionary for test
     pathDTest = {}
-    pathDTest['ppr'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_ppr.asc'), os.path.join(pathData2, 'release1HS_entres_dfa_0.15500_ppr.asc')]
-    pathDTest['pfd'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_pfd.asc'), os.path.join(pathData2, 'release1HS_entres_dfa_0.15500_pfd.asc')]
-    pathDTest['pfv'] = [os.path.join(pathData, 'release1HS_entres_dfa_0.15500_pfv.asc'), os.path.join(pathData2, 'release1HS_entres_dfa_0.15500_pfv.asc')]
+    pathDTest['ppr'] = [pathData / 'release1HS_entres_dfa_0.15500_ppr.asc', pathData2 / 'release1HS_entres_dfa_0.15500_ppr.asc']
+    pathDTest['pfd'] = [pathData / 'release1HS_entres_dfa_0.15500_pfd.asc', pathData2 / 'release1HS_entres_dfa_0.15500_pfd.asc']
+    pathDTest['pfv'] = [pathData / 'release1HS_entres_dfa_0.15500_pfv.asc', pathData2 / 'release1HS_entres_dfa_0.15500_pfv.asc']
     pathDTest['mb'] = [os.path.join(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_entres_dfa_0.15500.txt'), os.path.join(testPath, 'Outputs', 'com1DFAPy', 'mass_release1HS_entres_dfa_0.15500.txt')]
 
 
