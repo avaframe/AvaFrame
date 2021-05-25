@@ -91,7 +91,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
 
         # save configuration settings for each simulation
         simHash = simDict[cuSim]['simHash']
-        cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, cfg, fileName=simHash)
+        cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, cfg, fileName=cuSim)
 
         # log simulation name
         log.info('Run simulation: %s' % cuSim)
