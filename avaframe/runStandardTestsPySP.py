@@ -18,7 +18,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-from benchmarks import simParametersST as simParameters
+from benchmarks import simParametersSP as simParameters
 import avaframe.com1DFAPy.com1DFA as com1DFAPy
 import avaframe.com1DFAPy.com1DFA as com1DFA
 
