@@ -10,6 +10,8 @@ from scipy.stats import norm
 from scipy.interpolate import griddata
 import os
 
+from avaframe.in3Utils import geoTrans
+
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
@@ -70,6 +72,10 @@ def flatplane(cfg):
     # Set elevation of surface
     zv = zv + zElev
 
+    # If a step shall be introduced
+    if cfg['TOPO'].getboolean('step'):
+        zv = addDrop(cfg, x, y, zv)
+
     # Log info here
     log.info('Flatplane coordinates computed')
 
@@ -92,6 +98,10 @@ def inclinedplane(cfg):
 
     # Set surface elevation from slope and max. elevation
     zv = z0 - np.tan(np.radians(meanAlpha)) * x
+
+    # If a step shall be introduced
+    if cfg['TOPO'].getboolean('step'):
+        zv = addDrop(cfg, x, y, zv)
 
     # If a channel shall be introduced
     if cfg['TOPO'].getboolean('channel'):
@@ -116,6 +126,36 @@ def inclinedplane(cfg):
     log.info('Inclined plane coordinates computed')
 
     return x, y, zv
+
+
+def addDrop(cfg, x, y, zv):
+    """ Compute coordinates of inclined plane with given slope (meanAlpha)
+    and a drop/step"""
+
+    # input parameters
+    dx, xEnd, yEnd = getGridDefs(cfg)
+
+    xStartDrop = float(cfg['STEP']['xStartDrop'])
+    dxDrop = float(cfg['STEP']['dxDrop'])
+    alphaDrop = float(cfg['STEP']['alphaDrop'])
+
+    # get zcoord
+    dzDrop = dxDrop * np.tan(np.radians(alphaDrop))
+    xEndDrop = xStartDrop + dxDrop
+
+    nrows, ncols = np.shape(x)
+    zIniDrop, _ = geoTrans.projectOnGrid(xStartDrop*np.ones((nrows)), y[:, 0], np.vstack((zv[0,:], zv)), csz=dx, xllc=x[0, 0], yllc=y[0, 0], interp='bilinear')
+    zIniDrop = np.tile(zIniDrop, (ncols, 1)).transpose()
+    zEndDrop, _ = geoTrans.projectOnGrid(xEndDrop*np.ones((nrows)), y[:, 0], np.vstack((zv[0,:], zv)), csz=dx, xllc=x[0, 0], yllc=y[0, 0], interp='bilinear')
+    zEndDrop = np.tile(zEndDrop, (ncols, 1)).transpose()
+    # Set surface elevation from slope and max. elevation
+    zv = np.where(((x >= xStartDrop) & (x <= xEndDrop)), zIniDrop - (x - xStartDrop)*np.tan(np.radians(alphaDrop)), zv)
+    zv = np.where(x > xEndDrop, zv - (dzDrop + zEndDrop - zIniDrop), zv)
+
+    # Log info here
+    log.info('Added step to the topography')
+
+    return zv
 
 
 def hockey(cfg):
