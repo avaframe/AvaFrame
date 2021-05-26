@@ -52,27 +52,28 @@ def runOperational(avalancheDir=''):
     # # ----------------
     # # Run dense flow
     cfg = cfgUtils.getModuleConfig(com1DFA)
-    reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
+    # reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
 
     # ----------------
     # Run Alpha Beta
     cfgAB = cfgUtils.getModuleConfig(com2AB)
     resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
+    outAB.writeABtoSHP(resAB)
 
     # # ----------------
     # # Collect results/plots/report  to a single directory
     # # make simple plots (com1DFA, com2AB)
     # # peak file plot
 
-    # # Generata plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
-    reportDictList = []
-    reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
+    # # # Generata plots for all peakFiles
+    # plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
+    # reportDictList = []
+    # reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
 
-    # # Set directory for report
-    reportDir = os.path.join(avalancheDir, 'Outputs')
-    # # write report
-    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+    # # # Set directory for report
+    # reportDir = os.path.join(avalancheDir, 'Outputs')
+    # # # write report
+    # gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
     # Print time needed
     endTime = time.time()

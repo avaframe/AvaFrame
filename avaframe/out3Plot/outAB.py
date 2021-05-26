@@ -1,14 +1,14 @@
 """
     Plotting and saving Alpha Beta results
-
-    This file is part of Avaframe.
 """
 
 import pickle
 import os
+from pathlib import Path
 import logging
 import copy
 import datetime
+import shapefile
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -22,6 +22,63 @@ log = logging.getLogger(__name__)
 
 colors = ["#393955", "#8A8A9B", "#E9E940"]
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
+
+
+def writeABtoSHP(resAB):
+    """ Execute compiled com1Exe file using cintFile to set configuration
+    and run options
+
+    Parameters
+    ----------
+    resAB : dict
+        dict with com2AB results
+    cfgAB : configParser object
+        com2AB configuration
+    """
+
+    saveOutFile = Path(resAB['saveOutPath']) / 'com2AB_Results'
+    avaPath = resAB['AvaPath']
+
+    # write projection information file
+    with open(str(saveOutFile)+'.prj', 'w') as prjf:
+        prjf.write(avaPath['sks'])
+
+    # open shapefile writer with point shapetype
+    w = shapefile.Writer(str(saveOutFile), shapeType=1)
+
+    # set fields
+    w.field('fid', 'N')
+    w.field('Name', 'C', '60')
+    w.field('Angle', 'F', 5, 1)
+    # w.field('Distance', 'F', '40')
+
+    # loop through the profiles
+    for i, profile in enumerate(avaPath['Name']):
+
+        resAB = processABresults(resAB, profile)
+        cuProf = resAB[profile]
+
+        pointName = profile + '_Beta'
+        w.point(cuProf['x'][cuProf['ids10Point']], cuProf['y'][cuProf['ids10Point']])
+        w.record(i, pointName, cuProf['beta'])
+
+        pointName = profile + '_Alpha'
+        w.point(cuProf['x'][cuProf['ids_alpha']], cuProf['y'][cuProf['ids_alpha']])
+        w.record(i, pointName, cuProf['alpha'])
+
+        pointName = profile + '_AlphaPlus1SD'
+        w.point(cuProf['x'][cuProf['ids_alphaP1SD']], cuProf['y'][cuProf['ids_alphaP1SD']])
+        w.record(i, pointName, cuProf['alphaSD'][0])
+
+        pointName = profile + '_AlphaMinus1SD'
+        w.point(cuProf['x'][cuProf['ids_alphaM1SD']], cuProf['y'][cuProf['ids_alphaM1SD']])
+        w.record(i, pointName, cuProf['alphaSD'][1])
+
+        pointName = profile + '_AlphaMinus2SD'
+        w.point(cuProf['x'][cuProf['ids_alphaM2SD']], cuProf['y'][cuProf['ids_alphaM2SD']])
+        w.record(i, pointName, cuProf['alphaSD'][2])
+
+    w.close()
 
 
 def readABresults(saveOutPath, name, flags):
