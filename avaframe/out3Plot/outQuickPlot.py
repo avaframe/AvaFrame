@@ -83,17 +83,21 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     nybox = int(nx * 0.2)
     nxbox = int(ny * 0.2)
 
+    minVal = min(np.nanmin(data1), np.nanmin(data2))
+    maxVal = max(np.nanmax(data1), np.nanmax(data2))
+
     # Plot data
     # Figure 1 shows the result parameter data
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(221)
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapPres, np.nanmin(data1), np.nanmax(data1), continuous=pU.contCmap)
+        pU.cmapPres, minVal, maxVal, continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
-    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
+    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
+                     aspect=nx/ny, norm=norm, vmin = minVal, vmax = maxVal)
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
@@ -103,12 +107,11 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax1.set_ylabel('y [m]')
 
     ax2 = fig.add_subplot(222)
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapPres, np.nanmin(data2), np.nanmax(data2), continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data2P = ma.masked_where(data2 == 0.0, data2)
-    im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
+    im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
+                     aspect=nx/ny, norm=norm, vmin = minVal, vmax = maxVal)
     pU.addColorBar(im2, ax2, ticks, unit)
 
     ax2.set_aspect('auto')
@@ -416,7 +419,6 @@ def quickPlotOne(inputDir, datafile, cfg, locVal, axis, resType=''):
 
     # Create Plots
     plotList = generateOnePlot(dataDict, outDir, cfg, plotDict)
-
 
 
 def generateOnePlot(dataDict, outDir, cfg, plotDict):

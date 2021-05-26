@@ -300,7 +300,7 @@ def getAreaMesh(Nx, Ny, Nz, csz, num):
         _, _, NzNormed = normalize(Nx, Ny, Nz)
         A = csz * csz / NzNormed
     # limit maximum area (for very steeps cells)
-    A = np.where(A > 3*csz*csz, 3*csz*csz, A)
+    # A = np.where(A > 3*csz*csz, 3*csz*csz, A)
     return A
 
 
@@ -323,7 +323,7 @@ def removeOutPart(cfg, particles, dem, dt):
     particles : dict
         particles dictionary
     """
-    
+
     header = dem['header']
     nrows = header.nrows
     ncols = header.ncols

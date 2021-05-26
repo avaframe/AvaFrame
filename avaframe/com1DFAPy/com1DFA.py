@@ -85,7 +85,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # for timing the sims
     startTime = time.time()
-    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName, relThField)
+    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName, relThField, outDir)
 
     # ------------------------
     #  Start time step computation
@@ -423,7 +423,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
+def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField, outDir):
     """ create simulaton report dictionary
 
     Parameters
@@ -464,6 +464,20 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # Initialize mesh
     log.info('Initializing Mesh')
     demOri, dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
+    if debugPlot:
+        mesh = readMeshFromPickle(outDir)
+        NxS, NyS, NzS = DFAtls.normalize(mesh['Nx'], mesh['Ny'], mesh['Nz'])
+        IOf.writeResultToAsc(mesh['header'], NxS, 'Nx_Samos.asc', flip=True)
+        IOf.writeResultToAsc(mesh['header'], NyS, 'Ny_Samos.asc', flip=True)
+        IOf.writeResultToAsc(mesh['header'], NzS, 'Nz_Samos.asc', flip=True)
+        IOf.writeResultToAsc(mesh['header'], mesh['Area'], 'Area_Samos.asc', flip=True)
+
+        Nx, Ny, Nz = DFAtls.normalize(dem['Nx'], dem['Ny'], dem['Nz'])
+        IOf.writeResultToAsc(demOri['header'], Nx, 'Nx.asc', flip=True)
+        IOf.writeResultToAsc(demOri['header'], Ny, 'Ny.asc', flip=True)
+        IOf.writeResultToAsc(demOri['header'], Nz, 'Nz.asc', flip=True)
+        Area = np.where(np.isnan(dem['areaRaster']), -9999.00, dem['areaRaster'])
+        IOf.writeResultToAsc(demOri['header'], Area, 'Area.asc', flip=True)
 
     # ------------------------
     log.info('Initializing main release area')
@@ -618,6 +632,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         Particles, TimeStepInfo = readPartFromPickle(inDirPart)
         particles = Particles[0]
         Xpart = particles['x']
+        Ypart = particles['y']
         Mpart = particles['m']
         Hpart = np.ones(len(Xpart))
         NPPC = np.ones(len(Xpart))
@@ -1624,6 +1639,30 @@ def readPartFromPickle(inDir, flagAvaDir=False):
         TimeStepInfo.append(particles['t'])
 
     return Particles, TimeStepInfo
+
+
+def readMeshFromPickle(inDir):
+    """ Read pickles within a directory and return List of dicionaries read from pickle
+
+        Parameters
+        -----------
+        inDir: str
+            path to input directory
+        flagAvaDir: bool
+            if True inDir corresponds to an avalanche directory and pickles are
+            read from avaDir/Outputs/com1DFAPy/particles
+    """
+
+    inDir = os.path.join(inDir, 'Mesh')
+    inDir = inDir.replace('Py', '')
+
+    # search for all pickles within directory
+    Mesh = sorted(glob.glob(os.path.join(inDir, '*', '*.p')))
+
+    # initialise list of particle dictionaries
+    mesh = pickle.load(open(Mesh[0], "rb"))
+
+    return mesh
 
 
 def savePartToCsv(particleProperties, dictList, outDir):

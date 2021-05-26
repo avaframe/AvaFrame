@@ -26,7 +26,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
 # testList = ['avaInclinedPlane', 'avaHelixChannel', 'avaAlr', 'avaWog', 'avaKot', 'avaHit', 'avaGar', 'avaMal']
-testList = ['avaFlatPlane0']
+testList = ['avaHockeyDrop']
 simType = 'null'
 simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
@@ -86,6 +86,10 @@ for avaName in testList:
 
     #######################################################
     # ########### Analyze results ##########################
+    # Aimec analysis
+    # load configuration
+    cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
+    initProj.cleanModuleFiles(avaDir, ana3AIMEC)
     # get release area scenarios
     relArea = []
     for dict in reportDictListcom1DFAPy:
@@ -114,11 +118,6 @@ for avaName in testList:
                     break
                 else:
                     log.error('No matching simulation found based on releaseScenario: %s and simType: %s' % (rel, simType))
-
-            # Aimec analysis
-            # load configuration
-            cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
-            initProj.cleanModuleFiles(avaDir, ana3AIMEC)
 
             # write configuration to file
             cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)

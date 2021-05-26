@@ -72,10 +72,6 @@ def flatplane(cfg):
     # Set elevation of surface
     zv = zv + zElev
 
-    # If a step shall be introduced
-    if cfg['TOPO'].getboolean('step'):
-        zv = addDrop(cfg, x, y, zv)
-
     # Log info here
     log.info('Flatplane coordinates computed')
 
@@ -98,10 +94,6 @@ def inclinedplane(cfg):
 
     # Set surface elevation from slope and max. elevation
     zv = z0 - np.tan(np.radians(meanAlpha)) * x
-
-    # If a step shall be introduced
-    if cfg['TOPO'].getboolean('step'):
-        zv = addDrop(cfg, x, y, zv)
 
     # If a channel shall be introduced
     if cfg['TOPO'].getboolean('channel'):
@@ -206,10 +198,6 @@ def hockey(cfg):
     mask[np.where(((x1 - yc) <= x) & (x <= (x1 + xc)))] = 1
     # rCirc + np.sqrt(rCirc**2 - (xv[m] - xCirc)**2)
     zv = zv + (rCirc - np.sqrt(np.abs(rCirc**2 - (xCirc - x)**2)))*mask
-
-    # If a step shall be introduced
-    if cfg['TOPO'].getboolean('step'):
-        zv = addDrop(cfg, x, y, zv)
 
     # If a channel shall be introduced
     if cfg['TOPO'].getboolean('channel'):
@@ -579,6 +567,11 @@ def generateTopo(cfg, avalancheDir):
 
     elif demType == 'PY':
         [x, y, z] = pyramid(cfg)
+
+
+    # If a step shall be introduced
+    if cfg['TOPO'].getboolean('step'):
+        z = addDrop(cfg, x, y, z)
 
     # Write DEM to file
     writeDEM(cfg, z, outDir)
