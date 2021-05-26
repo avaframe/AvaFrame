@@ -514,7 +514,7 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
   cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
-  cdef double massEntrained = 0
+  cdef double massEntrained = 0, massFlowing = 0
   cdef int j
   # loop on particles
   for j in range(Npart):
@@ -586,6 +586,9 @@ def updatePositionC(cfg, particles, dem, force):
       uyNew = uyNew * uMag / (uMagNew + velMagMin)
       uzNew = uzNew * uMag / (uMagNew + velMagMin)
 
+    if uMag > 0.01:
+      # if velocity is bigger then threshold add to flowing mass
+      massFlowing = massFlowing + mNew
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
     # print('totkinet', TotkinEneNew, uMag)
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
@@ -612,9 +615,25 @@ def updatePositionC(cfg, particles, dem, force):
   particles['potentialEne'] = TotpotEneNew
   if peakKinEne < TotkinEneNew:
     particles['peakKinEne'] = TotkinEneNew
-  if TotkinEneNew <= stopCrit*peakKinEne:
+  if particles['peakMassFlowing'] < massFlowing:
+    particles['peakMassFlowing'] = massFlowing
+
+  if cfg['stopCritType'] == 'massFlowing':
+    value = massFlowing
+    peakValue = particles['peakMassFlowing']
+    stop = (value <= stopCrit*peakValue) and peakValue > 0
+  elif cfg['stopCritType'] == 'kinEnergy':
+    value = TotkinEneNew
+    peakValue = particles['peakKinEne']
+    stop = value <= stopCrit*peakValue
+  else:
+    message = 'stopCritType %s is not defined' % cfg['stopCritType']
+    log.error(message)
+    raise AssertionError(message)
+
+  if stop:
     particles['iterate'] = False
-    log.info('stopping because of energy stopCriterion')
+    log.info('stopping because of %s stopCriterion.' % (cfg['stopCritType']))
 
   # make sure particle is on the mesh (recompute the z component)
   # particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')

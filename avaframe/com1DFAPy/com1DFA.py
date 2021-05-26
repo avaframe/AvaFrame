@@ -683,6 +683,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     particles['kineticEne'] = kineticEne
     particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
     particles['peakKinEne'] = kineticEne
+    particles['peakMassFlowing'] = 0
     particles['simName'] = logName
     particles['xllcenter'] = dem['originOri']['xllcenter']
     particles['yllcenter'] = dem['originOri']['yllcenter']
