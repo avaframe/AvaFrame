@@ -72,6 +72,10 @@ def flatplane(cfg):
     # Set elevation of surface
     zv = zv + zElev
 
+    # If a step shall be introduced
+    if cfg['TOPO'].getboolean('step'):
+        zv = addDrop(cfg, x, y, zv)
+
     # Log info here
     log.info('Flatplane coordinates computed')
 
@@ -94,6 +98,10 @@ def inclinedplane(cfg):
 
     # Set surface elevation from slope and max. elevation
     zv = z0 - np.tan(np.radians(meanAlpha)) * x
+
+    # If a step shall be introduced
+    if cfg['TOPO'].getboolean('step'):
+        zv = addDrop(cfg, x, y, zv)
 
     # If a channel shall be introduced
     if cfg['TOPO'].getboolean('channel'):
