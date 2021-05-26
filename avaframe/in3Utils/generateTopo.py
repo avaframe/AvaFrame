@@ -207,6 +207,10 @@ def hockey(cfg):
     # rCirc + np.sqrt(rCirc**2 - (xv[m] - xCirc)**2)
     zv = zv + (rCirc - np.sqrt(np.abs(rCirc**2 - (xCirc - x)**2)))*mask
 
+    # If a step shall be introduced
+    if cfg['TOPO'].getboolean('step'):
+        zv = addDrop(cfg, x, y, zv)
+
     # If a channel shall be introduced
     if cfg['TOPO'].getboolean('channel'):
         # Compute cumulative distribution function - c1 for upper part (start)
