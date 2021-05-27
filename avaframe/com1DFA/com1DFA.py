@@ -358,7 +358,7 @@ def com1DFAMain(cfg, avaDir):
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
                 # save initial particle distribution
                 saveInitialParticleDistribution(avaDir, logName, dem)
-                # saveMesh(avaDir, logName, dem)
+                saveMesh(avaDir, logName, dem)
 
                 # Create dictionary
                 reportST = {}
