@@ -467,6 +467,7 @@ def updatePositionC(cfg, particles, dem, force):
   DT = cfg.getfloat('dt')
   cdef double dt = DT
   cdef double stopCrit = cfg.getfloat('stopCrit')
+  cdef double uFlowingThreshold = cfg.getfloat('uFlowingThreshold')
   log.debug('dt used now is %f' % DT)
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double velMagMin = cfg.getfloat('velMagMin')
@@ -586,12 +587,14 @@ def updatePositionC(cfg, particles, dem, force):
       uyNew = uyNew * uMag / (uMagNew + velMagMin)
       uzNew = uzNew * uMag / (uMagNew + velMagMin)
 
-    if uMag > 0.01:
+    # prepare for stopping criterion
+    if uMag > uFlowingThreshold:
       # if velocity is bigger then threshold add to flowing mass
       massFlowing = massFlowing + mNew
+
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
-    # print('totkinet', TotkinEneNew, uMag)
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
+
     XNew[j] = xNew
     YNew[j] = yNew
     ZNew[j] = zNew
