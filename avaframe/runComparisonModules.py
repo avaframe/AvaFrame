@@ -26,11 +26,11 @@ cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
 # testList = ['avaInclinedPlane', 'avaHelixChannel', 'avaAlr', 'avaWog', 'avaKot', 'avaHit', 'avaGar', 'avaMal']
-testList = ['avaHockeyDrop', 'avaParabolaDrop']
+testList = ['avaHockeyDrop']
 simType = 'null'
 simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
-outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPyDrop')
+outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAvsPy')
 fU.makeADir(outDirReport)
 
 # Start writing markdown style report for standard tests

@@ -123,9 +123,9 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 
     return Z1
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
 def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   """ compute forces acting on the particles (without the SPH component)
 
@@ -167,6 +167,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef double mu = cfg.getfloat('mu')
   cdef int Npart = particles['Npart']
   cdef double csz = dem['header'].cellsize
+  cdef double[:, :] ZDEM = dem['rasterData']
   cdef double[:, :] Nx = dem['Nx']
   cdef double[:, :] Ny = dem['Ny']
   cdef double[:, :] Nz = dem['Nz']
@@ -176,6 +177,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef double[:] H = particles['h']
   cdef double[:] X = particles['x']
   cdef double[:] Y = particles['y']
+  cdef double[:] Z = particles['z']
   cdef double[:] UX = particles['ux']
   cdef double[:] UY = particles['uy']
   cdef double[:] UZ = particles['uz']
@@ -197,7 +199,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
   cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
-  cdef double x, y, z, ux, uy, uz, uxDir, uyDir, uzDir
+  cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
   cdef int j
@@ -207,6 +209,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       m = mass[j]
       x = X[j]
       y = Y[j]
+      z = Z[j]
       h = H[j]
       ux = UX[j]
       uy = UY[j]
@@ -246,8 +249,10 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
       yEnd = y + dt * uy
-      nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz, interpOption)
-      nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
+      zEnd = z + dt * uz
+      # nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz, interpOption)
+      # nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
+      xEnd, yEnd, zEnd, nxEnd, nyEnd, nzEnd = normalProjectionIteratrive(xEnd, yEnd, zEnd, ZDEM, Nx, Ny, Nz, csz, interpOption)
       # get average of those normals
       nxAvg = nx + nxEnd
       nyAvg = ny + nyEnd
@@ -440,7 +445,6 @@ cdef double computeResForce(double hRes, double h, double areaPart, double rho, 
   return cRecResPart
 
 
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -555,15 +559,16 @@ def updatePositionC(cfg, particles, dem, force):
     # update position
     xNew = x + dtStop * 0.5 * (ux + uxNew)
     yNew = y + dtStop * 0.5 * (uy + uyNew)
-    # make sure particle is on the mesh (recompute the z component)
+    zNew = z + dtStop * 0.5 * (uz + uzNew)
+    # make sure particle is on the mesh (normal reprojection!!)
+    xNew, yNew, zNew, nxNew, nyNew, nzNew = normalProjectionIteratrive(xNew, yNew, zNew, ZDEM, Nx, Ny, Nz, csz, interpOption)
     zNew = getScalar(xNew, yNew, ZDEM, csz, interpOption)
     # compute the distance traveled by the particle
     lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
     # compute average normal between the beginning and end of the time step
     nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
-    nxNew, nyNew, nzNew = getVector(xNew, yNew, Nx, Ny, Nz, csz, interpOption)
+    nx, ny, nz = normalize(nx, ny, nz)
     nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
-    nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
     sNew = s + nz*norm((xNew-x), (yNew-y), (zNew-z))
@@ -582,9 +587,9 @@ def updatePositionC(cfg, particles, dem, force):
 
     if uMag > 0.0:
       # ensure that velocitity magnitude stays the same also after reprojection onto terrain
-      uxNew = uxNew * uMag / (uMagNew + velMagMin)
-      uyNew = uyNew * uMag / (uMagNew + velMagMin)
-      uzNew = uzNew * uMag / (uMagNew + velMagMin)
+      uxNew = uxNew * uMag / (uMagNew + 0*velMagMin)
+      uyNew = uyNew * uMag / (uMagNew + 0*velMagMin)
+      uzNew = uzNew * uMag / (uMagNew + 0*velMagMin)
 
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
     # print('totkinet', TotkinEneNew, uMag)
@@ -989,22 +994,24 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
     nx, ny, nz = normalize(nx, ny, nz)
     # projection of gravity on normal vector
     gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
-    uMag = norm(ux, uy, uz)
-    if uMag < velMagMin:
-        ux = 1
-        uy = 0
-        uz = -(1*nx + 0*ny) / nz
-        ux, uy, uz = normalize(ux, uy, uz)
-        K1 = 1
-        K2 = 1
-    else:
-        ux, uy, uz = normalize(ux, uy, uz)
 
-    uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
-    uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+    if SPHoption > 1:
+      uMag = norm(ux, uy, uz)
+      if uMag < velMagMin:
+          ux = 1
+          uy = 0
+          uz = -(1*nx + 0*ny) / nz
+          ux, uy, uz = normalize(ux, uy, uz)
+          K1 = 1
+          K2 = 1
+      else:
+          ux, uy, uz = normalize(ux, uy, uz)
 
-    g1 = nx/(nz)
-    g2 = ny/(nz)
+      uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
+      uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+
+      g1 = nx/(nz)
+      g2 = ny/(nz)
 
     # check if we are on the bottom ot top row!!!
     lInd = -1
@@ -1522,6 +1529,93 @@ def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeig
   cdef double w[4]
   Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
   return np.asarray(Lxy[0]), np.asarray(Lxy[1]), np.asarray(Lxy[2]), np.asarray(Lxy[3]), np.asarray(w[0]), np.asarray(w[1]), np.asarray(w[2]), np.asarray(w[3])
+
+
+
+cdef (double, double, double, double, double, double) normalProjectionIteratrive(double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] Nx, double[:,:] Ny, double[:,:] Nz, double csz, int interpOption):
+  """ Find the orthogonal projection of a point on a mesh
+      and the associated normal vector
+
+  Iterative method to find the projection of a point on a surface defined by its mesh
+  Parameters
+  ----------
+      xOld: float
+          x coordinate of the point to project
+      yOld: float
+          y coordinate of the point to project
+      zOld: float
+          z coordinate of the point to project
+      ZDEM: 2D array
+          z component of the DEM field at the grid nodes
+      Nx: 2D array
+          x component of the normal vector field at the grid nodes
+      Ny: 2D array
+          y component of the normal vector field at the grid nodes
+      Nz: 2D array
+          z component of the normal vector field at the grid nodes
+      csz: float
+          cellsize of the grid
+      interpOption: int
+          -0: nearest neighbour interpolation
+          -1: equal weights interpolation
+          -2: bilinear interpolation
+    Returns
+    -------
+    xNew: float
+        x coordinate of the projected point
+    yNew: float
+        y coordinate of the projected point
+    zNew: float
+        z coordinate of the projected point
+    nx: float
+        x component of the normal of the projected point
+    ny: float
+        y component of the normal of the projected point
+    nz: float
+        z component of the normal of the projected point
+    """
+  cdef double zTemp, zn, xNew, yNew, zNew
+  cdef double nx, ny, nz
+  cdef int reprojectionIterations = 5
+  cdef int Lxi, Lyi, Lxj, Lyj
+  xNew = xOld
+  yNew = yOld
+  zNew = zOld
+  # get the cell location of the point
+  Lxi = <int>math.floor(xNew / csz)
+  Lyi = <int>math.floor(yNew / csz)
+  # iterate
+  while reprojectionIterations > 0:
+    reprojectionIterations = reprojectionIterations - 1
+    # vertical projection of the point
+    zTemp = getScalar(xNew, yNew, ZDEM, csz, interpOption)
+    # normal vector at this vertical projection location
+    nx, ny, nz = getVector(xNew, yNew, Nx, Ny, Nz, csz, interpOption)
+    nx, ny, nz = normalize(nx, ny, nz)
+    zn = (xNew-xOld) * nx + (yNew-yOld) * ny + (zTemp-zOld) * nz
+    # correct position with the normal part
+    xNew = xOld + zn * nx
+    yNew = yOld + zn * ny
+    zNew = zOld + zn * nz
+    # # Normal component of the vector between the initial and projected point
+    # zn = (xNew-xNew) * nx + (yNew-yNew) * ny + (zTemp-zTemp) * nz
+    # # correct position with the normal part
+    # xNew = xNew + zn * nx
+    # yNew = yNew + zn * ny
+    # zNew = zNew + zn * nz
+    # get cell
+    Lxj = <int>math.floor(xNew / csz)
+    Lyj = <int>math.floor(yNew / csz)
+    # are we in the same cell?
+    if Lxi==Lxj and Lyi==Lyj:
+      zNew = getScalar(xNew, yNew, ZDEM, csz, interpOption)
+      return xNew, yNew, zNew, nx, ny, nz
+    Lxj = Lxi
+    Lyj = Lyi
+
+  zNew = getScalar(xNew, yNew, ZDEM, csz, interpOption)
+  return xNew, yNew, zNew, nx, ny, nz
+
 
 
 @cython.boundscheck(False)

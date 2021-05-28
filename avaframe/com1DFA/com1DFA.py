@@ -358,7 +358,8 @@ def com1DFAMain(cfg, avaDir):
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
                 # save initial particle distribution
                 saveInitialParticleDistribution(avaDir, logName, dem)
-                saveMesh(avaDir, logName, dem)
+                trackParticle(avaDir, logName, dem)
+                # saveMesh(avaDir, logName, dem)
 
                 # Create dictionary
                 reportST = {}
@@ -494,6 +495,33 @@ def saveInitialParticleDistribution(avaDir, simName, dem):
     partDit = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'particles', simName)
     fU.makeADir(partDit)
     savePartToPickle(particles, partDit)
+
+
+def trackParticle(avaDir, simName, dem):
+    DEM = IOf.readRaster(dem)
+    header = DEM['header']
+    # Read log file
+    fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName))
+    with open(fileName, 'r') as file:
+        for line in file:
+            if "TrackPart" in line:
+                ltime = line.split(', ')
+                t = np.array([float(ltime[1])])
+                x = np.array([float(ltime[2])])
+                y = np.array([float(ltime[3])])
+                z = np.array([float(ltime[4])])
+                ux = np.array([float(ltime[5])])
+                uy = np.array([float(ltime[6])])
+                uz = np.array([float(ltime[7])])
+                m = np.array([float(ltime[8])])
+
+                x = x - header.xllcenter
+                y = y - header.yllcenter
+                particles = {'t': t, 'x': x, 'y': y, 'z': z, 'ux': ux, 'uy': uy, 'uz': uz, 'm': m}
+
+                partDit = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'particles', simName)
+                fU.makeADir(partDit)
+                savePartToPickle(particles, partDit)
 
 
 def saveMesh(avaDir, simName, dem):
