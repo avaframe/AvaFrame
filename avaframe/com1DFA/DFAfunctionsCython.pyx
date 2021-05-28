@@ -117,9 +117,9 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
 
     return Z1
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+# @cython.cdivision(True)
 def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   """ compute forces acting on the particles (without the SPH component)
 
@@ -606,9 +606,9 @@ def updatePositionC(cfg, particles, dem, force, DT):
 
     if uMag > 0.0:
       # ensure that velocitity magnitude stays the same also after reprojection onto terrain
-      uxNew = uxNew * uMag / (uMagNew + velMagMin)
-      uyNew = uyNew * uMag / (uMagNew + velMagMin)
-      uzNew = uzNew * uMag / (uMagNew + velMagMin)
+      uxNew = uxNew * uMag / (uMagNew + 0*velMagMin)
+      uyNew = uyNew * uMag / (uMagNew + 0*velMagMin)
+      uzNew = uzNew * uMag / (uMagNew + 0*velMagMin)
 
     # prepare for stopping criterion
     if uMag > uFlowingThreshold:
