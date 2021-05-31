@@ -14,7 +14,7 @@ from avaframe.ana1Tests import testUtilities as tU
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import initializeProject as initProj
-from benchmarks import simParameters
+from benchmarks import simParametersDict
 import pytest
 import configparser
 import shutil
@@ -54,30 +54,29 @@ def test_execCom1Exe(tmp_path):
 
 
 @pytest.mark.skip(reason="com1DFA exe is missing, no way of testing this")
-@pytest.mark.parametrize("avaName", ["avaBowl", "avaFlatPlane", "avaHelix", "avaHelixChannel",
-                          "avaParabola", "avaHockeyChannel", "avaHockeySmall", "avaInclinedPlane"])
-def test_com1DFAMain(tmp_path, avaName):
+@pytest.mark.parametrize("testName", ["avaBowlNullTest", "avaFlatPlaneNullTest", "avaHelixNullTest", "avaHelixChannelEntTest",
+                          "avaParabolaRestTest", "avaHockeyChannelEntTest", "avaHockeySmallNullTest", "avaInclinedPlaneEntResTest"])
+def test_com1DFAMain(tmp_path, testName):
     """ test call to com1DFA module """
 
     # get path to executable
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
     com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
 
+    # load all benchmark info as dictionaries from description files
+    testDictList = tU.readAllBenchmarkDesDicts(info=False)
+    for test in testDictList:
+        if test['NAME'] == testName:
+            testAva = test
+
+    avaTestName = testAva['NAME']
+    avaName = testAva['AVANAME']
+
     # get input data
     dirPath = os.path.dirname(__file__)
     avaDir  = os.path.join(tmp_path, avaName)
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
-    # load all benchmark info as dictionaries from description files
-    testDictList = tU.readAllBenchmarkDesDicts(info=False)
-    type = 'TAGS'
-    valuesList = ['standardTest']
-    testList = tU.filterBenchmarks(testDictList, type, valuesList)
-    type = 'AVANAME'
-    valuesList = avaName
-    testList = tU.filterBenchmarks(testList, type, valuesList)
-    avaTestName = testList[0]['NAME']
-    print('avaTEstNAme', avaTestName)
 
     testCfg = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestName, '%s_com1DFACfg.ini' % avaName)
     shutil.copytree(avaData, avaInputs)
@@ -93,9 +92,8 @@ def test_com1DFAMain(tmp_path, avaName):
                                          reportD['simName']['name'] + '_ppr.asc'), skiprows=6)
 
     # Fetch simulation info from benchmark results
-    benchDictList = simParameters.fetchBenchParameters(avaDir)
-    benchDict = benchDictList[0]
-    simBench = benchDict['simName'].replace('dfa', 'ref')
+    benchDict = simParametersDict.fetchBenchParameters(avaTestName)
+    simBench = benchDict['simName']['name'].replace('dfa', 'ref')
     pprBench = np.loadtxt(os.path.join(dirPath, '..', '..', 'benchmarks', avaTestName,
                                        simBench + '_ppr.asc'), skiprows=6)
 
@@ -103,10 +101,10 @@ def test_com1DFAMain(tmp_path, avaName):
     testRes = np.allclose(pprCom1DFA, pprBench, atol=1.e-12)
 
     # Test module
-    assert reportD['simName']['name'] == benchDict['simName']
+    assert reportD['simName']['name'] == benchDict['simName']['name']
     assert reportD['Simulation Parameters']['Release Area'] == benchDict['Simulation Parameters']['Release Area']
-    assert reportD['Simulation Parameters']['Entrainment Area'] == benchDict['Simulation Parameters']['Entrainment Area']
-    assert reportD['Simulation Parameters']['Resistance Area'] == benchDict['Simulation Parameters']['Resistance Area']
+    assert reportD['Simulation Parameters']['Entrainment'] == benchDict['Simulation Parameters']['Entrainment']
+    assert reportD['Simulation Parameters']['Resistance'] == benchDict['Simulation Parameters']['Resistance']
     assert reportD['Simulation Parameters']['Mu'] == benchDict['Simulation Parameters']['Mu']
     assert reportD['Simulation Parameters']['Parameter value'] == ''
     assert reportD['Simulation Parameters']['Release thickness [m]'] == benchDict['Simulation Parameters']['Release thickness [m]']
