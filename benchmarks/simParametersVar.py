@@ -9,16 +9,11 @@ import os
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 
-def fetchBenchParameters(avaDir):
+def fetchBenchParameters(testName):
     """ Collect simulation parameter info from standard tests """
 
-    # get name of avalanche
-    avaName = os.path.basename(avaDir)
-    avaDictName = avaName + 'Dict'
-    avaDictList = []
-
     # set desired benchmark simulation info dictionary
-    if avaDictName == 'avaFlatPlaneDict':
+    if testName == 'avaFlatPlaneVarParTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1FP_null_dfa_2.00000'},
         		'testName': 'avaFlatPlaneVarParTest',
         		'simType': 'null',
@@ -38,9 +33,8 @@ def fetchBenchParameters(avaDir):
                         'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1FP'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs on a flat plane geometry.'}}
-        avaDictList.append(avaDictName)
 
-    elif avaDictName == 'avaHelixChannelDict':
+    elif testName == 'avaHelixChannelVarParTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_ent_dfa_0.05500'},
         		'testName': 'avaHelixChannelVarParTest', 
         		'simType': 'ent',
@@ -61,9 +55,8 @@ def fetchBenchParameters(avaDir):
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
-        avaDictList.append(avaDictName)
 
-
+    elif testName == 'avaHelixChannelEnt1mVarParTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_ent_dfa_0.50000'},
         		'testName': 'avaHelixChannelEnt1mVarParTest',
         		'simType': 'ent',
@@ -85,9 +78,7 @@ def fetchBenchParameters(avaDir):
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaParabolaDict':
+    elif testName == 'avaParabolaVarParTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1PF_res_dfa_0.50000'},
         		'testName': 'avaParabolaVarParTest',
         		'simType': 'res',
@@ -107,6 +98,4 @@ def fetchBenchParameters(avaDir):
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
 
-        avaDictList.append(avaDictName)
-
-    return avaDictList
+    return avaDictName
