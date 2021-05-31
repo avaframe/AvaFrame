@@ -15,7 +15,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def copyQuickPlots(avaName, testName, outDir, plotListRep, rel):
+def copyQuickPlots(avaName, testName, outDir, plotListRep, rel=''):
     """ copy the quick plots to report directory """
 
     plotPaths = {}
@@ -28,7 +28,7 @@ def copyQuickPlots(avaName, testName, outDir, plotListRep, rel):
     return plotPaths
 
 
-def copyAimecPlots(plotFiles, testName, outDir, rel, plotPaths):
+def copyAimecPlots(plotFiles, testName, outDir, plotPaths, rel=''):
     """ copy the quick plots to report directory """
 
     for pDict in plotFiles:

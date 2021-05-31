@@ -5,6 +5,8 @@
 # Load modules
 import os
 import time
+import pathlib
+import glob
 
 # Local imports
 from avaframe.com1DFAPy import runCom1DFA
@@ -18,7 +20,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-from benchmarks import simParameters
+from benchmarks import simParametersDict
 import avaframe.com1DFAPy.com1DFA as com1DFA
 import avaframe.com1DFAPy.com1DFA as com1DFAPy
 
@@ -28,9 +30,13 @@ logName = 'runStandardTestsPy'
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 
+# set desired filter criteria to filter individual simulations
+parametersDict = {'simTypeActual': [], 'releaseScenario': []}
+
 # load all benchmark info as dictionaries from description files
 testDictList = tU.readAllBenchmarkDesDicts(info=False)
-# filter benchmarks for tag standardTest
+
+# filter benchmarks for a tag
 type = 'TAGS'
 valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
@@ -42,19 +48,24 @@ fU.makeADir(outDir)
 # Start writing markdown style report for standard tests
 reportFile = os.path.join(outDir, 'standardTestsReportPy.md')
 with open(reportFile, 'w') as pfile:
-
     # Write header
     pfile.write('# Standard Tests Report \n')
     pfile.write('## Compare com1DFAPy simulations to benchmark results \n')
 
-# run Standard Tests sequentially
+log = logUtils.initiateLogger(outDir, logName)
+log.info('The following benchmark tests will be fetched ')
+for test in testList:
+    log.info('%s' % test['NAME'])
+
 for test in testList:
 
-    avaDir = 'data' + os.sep + test['AVANAME']
-
     # Start logging
-    log = logUtils.initiateLogger(avaDir, logName)
-    log.info('Current avalanche: %s', avaDir)
+    avaDir = test['AVADIR']
+
+    # Fetch benchmark test info
+    benchDict = simParametersDict.fetchBenchParameters(test['NAME'])
+    simNameRef = test['simNameRef']
+    refDir = pathlib.Path('..', 'benchmarks', test['NAME'])
 
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir,  keep=logName)
@@ -68,98 +79,77 @@ for test in testList:
 
     modName = 'com1DFAPy'
 
-    # get release area scenarios
-    relArea = []
+    # Fetch correct reportDict according to parametersDict
+    simNameComp = cfgUtils.filterSims(avaDir, parametersDict, com1DFA)
+    if len(simNameComp) > 1:
+        log.error('more than one matching simulation found for criteria! ')
+    else:
+        simNameComp = simNameComp[0]
+
     for dict in reportDictList:
-        relArea.append(dict['Simulation Parameters']['Release Area Scenario'])
-    relAreaSet = sorted(set(relArea))
+        if simNameComp == dict['simName']['name']:
+            reportD = dict
 
-    for rel in relAreaSet:
+    # set result files directory
+    compDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
 
-        # -----------Compare to benchmark results
-        # Fetch simulation info from benchmark results
-        benchDictList = simParameters.fetchBenchParameters(test['AVANAME'])
-        benchDict = ''
-        for bDict in benchDictList:
-            if test['NAME'] == bDict['testName'] and rel == bDict['Simulation Parameters']['Release Area Scenario']:
-                benchDict = bDict
+    # +++++++Aimec analysis
+    # load configuration
+    aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECPyCfg.ini' % test['AVANAME'])
+    cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
+    cfgAimec['AIMECSETUP']['resType'] = 'ppr'
+    cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
+    cfgAimec['AIMECSETUP']['diffLim'] = '5'
+    cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
+    cfgAimec['FLAGS']['flagMass'] = 'False'
+    cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFAPy'
+    cfgAimec['AIMECSETUP']['testName'] = test['NAME']
 
-        # Check if simulation with entrainment and/or resistance or standard simulation
-        simType = benchDict['simType']
+    # Setup input from com1DFA and reference
+    pathDict = []
+    pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfgAimec, simNameRef, simNameComp)
+    pathDict['numSim'] = len(pathDict['ppr'])
+    log.info('reference file comes from: %s' % pathDict['compType'][1])
 
-        # Fetch correct reportDict according to releaseScenario and simType
-        parametersDict = {'simTypeActual': simType, 'releaseScenario': rel}
-        simNameComp = cfgUtils.filterSims(avaDir, parametersDict, com1DFA)
-        if len(simNameComp) > 1:
-            log.error('more than one matching simulation found for criteria! ')
-        else:
-            simNameComp = simNameComp[0]
+    # Extract input file locations
+    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=simNameComp)
 
-        for dict in reportDictList:
-            if simNameComp == dict['simName']['name']:
-                reportD = dict
+    # perform analysis
+    rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
 
-        # +++++++Aimec analysis
-        # load configuration
-        aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECPyCfg.ini' % test['AVANAME'])
-        cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
-        cfgAimec['AIMECSETUP']['resType'] = 'ppr'
-        cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
-        cfgAimec['AIMECSETUP']['diffLim'] = '5'
-        cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
-        cfgAimec['FLAGS']['flagMass'] = 'False'
-        cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFAPy'
-        cfgAimec['AIMECSETUP']['testName'] = test['NAME']
-
-        # create pathDict required to run aimec
-        pathDict = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimec, rel, simType)
-        pathDict['numSim'] = len(pathDict['ppr'])
-        log.info('reference file comes from: %s' % pathDict['compType'][1])
-
-        # Extract input file locations
-        pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=rel+'_'+simType)
-
-        # perform analysis
-        rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
-
-        # add aimec results to report dictionary
-        reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportD, benchDict, pathDict['referenceFile'])
-        # +++++++++++Aimec analysis
+    # add aimec results to report dictionary
+    reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportD, benchDict, pathDict['referenceFile'])
+    # +++++++++++Aimec analysis
 
 
-        # Create plots for report
-        # Load input parameters from configuration file
-        cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
+    # Create plots for report
+    # Load input parameters from configuration file
+    cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
 
-        # REQUIRED+++++++++++++++++++
-        # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
-        # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
-        outputVariable = ['ppr', 'pfd', 'pfv']
-        values = simType
-        parameter = 'simType'
-        plotListRep = {}
-        reportD['Simulation Difference'] = {}
-        reportD['Simulation Stats'] = {}
-        # ++++++++++++++++++++++++++++
+    # REQUIRED+++++++++++++++++++
+    # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
+    # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
+    outputVariable = ['ppr', 'pfd', 'pfv']
+    plotListRep = {}
+    reportD['Simulation Difference'] = {}
+    reportD['Simulation Stats'] = {}
+    # ++++++++++++++++++++++++++++
 
-        # Plot data comparison for all output variables defined in suffix
-        for var in outputVariable:
-            plotList = outQuickPlot.quickPlot(avaDir, test['NAME'], var, values, parameter, cfgMain, cfgRep, rel, simType=simType, comModule='com1DFAPy')
-            for pDict in plotList:
-                if rel in pDict['relArea']:
-                    plotDict = pDict
-            for plot in plotDict['plots']:
-                plotListRep.update({var: plot})
-                reportD['Simulation Difference'].update({var: plotDict['difference']})
-                reportD['Simulation Stats'].update({var: plotDict['stats']})
+    # Plot data comparison for all output variables defined in suffix
+    for var in outputVariable:
+        plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir,  cfgMain, cfgRep, var)
+        for plot in plotDict['plots']:
+            plotListRep.update({var: plot})
+            reportD['Simulation Difference'].update({var: plotDict['difference']})
+            reportD['Simulation Stats'].update({var: plotDict['stats']})
 
-        # copy files to report directory
-        plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep, rel)
-        aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
-        plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, rel, plotPaths)
+    # copy files to report directory
+    plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep)
+    aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
+    plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, plotPaths)
 
-        # add plot info to general report Dict
-        reportD['Simulation Results'] = plotPaths
+    # add plot info to general report Dict
+    reportD['Simulation Results'] = plotPaths
 
-        # write report
-        generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)
+    # write report
+    generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)

@@ -4,6 +4,7 @@
 
 # Load modules
 import os
+import pathlib
 
 # Local imports
 from avaframe.com1DFAPy import runCom1DFA
@@ -86,6 +87,10 @@ for avaName in testList:
 
     #######################################################
     # ########### Analyze results ##########################
+    # Aimec analysis
+    # load configuration
+    cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
+    initProj.cleanModuleFiles(avaDir, ana3AIMEC)
     # get release area scenarios
     relArea = []
     for dict in reportDictListcom1DFAPy:
@@ -104,6 +109,9 @@ for avaName in testList:
                     break
                 else:
                     log.error('No reference simulation found based on releaseScenario: %s and simType: %s' % (rel, simType))
+
+        simNameRef = reportDcom1DFA['simName']['name']
+        refDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
         if reportDcom1DFA:
             com1DFASimName = reportDcom1DFA['simName']['name']
             # Fetch corresponding com1DFAPy
@@ -115,10 +123,8 @@ for avaName in testList:
                 else:
                     log.error('No matching simulation found based on releaseScenario: %s and simType: %s' % (rel, simType))
 
-            # Aimec analysis
-            # load configuration
-            cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
-            initProj.cleanModuleFiles(avaDir, ana3AIMEC)
+            simNameComp = reportDcom1DFAPy['simName']['name']
+            compDir = pathlib.Path(avaDir, 'Outputs', 'com1DFAPy', 'peakFiles')
 
             # write configuration to file
             cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)
@@ -129,7 +135,8 @@ for avaName in testList:
             cfgAimec['AIMECSETUP']['comModules'] = 'com1DFA|com1DFAPy'
 
             # Setup input from com1DFA and com1DFAPy
-            pathDict = dfa2Aimec.dfaComp2Aimec(avaDir, cfgAimec, rel, simType)
+            pathDict = []
+            pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfgAimec, simNameRef, simNameComp)
             pathDict['numSim'] = len(pathDict['ppr'])
             log.info('reference file comes from: %s' % pathDict['compType'][1])
 
@@ -170,11 +177,11 @@ for avaName in testList:
                     reportDcom1DFAPy['Simulation Stats'].update({var: plotDict['stats']})
 
             # copy files to report directory
-            plotPaths = generateCompareReport.copyQuickPlots(avaName, avaName, outDirReport, plotListRep, rel)
+            plotPaths = generateCompareReport.copyQuickPlots(avaName, avaName, outDirReport, plotListRep, rel=rel)
             aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
             if cfgAimec.getboolean('FLAGS', 'flagMass'):
                 aimecPlots.append(resAnalysis['massAnalysisPlot'])
-            plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, avaName, outDirReport, rel, plotPaths)
+            plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, avaName, outDirReport, plotPaths, rel=rel)
 
             # add plot info to general report Dict
             reportDcom1DFAPy['Simulation Results'] = plotPaths
