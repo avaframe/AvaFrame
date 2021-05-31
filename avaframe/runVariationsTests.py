@@ -45,7 +45,7 @@ fU.makeADir(outDir)
 reportFile = os.path.join(outDir, 'variationTestsReport.md')
 with open(reportFile, 'w') as pfile:
     # Write header
-    pfile.write('# Standard Tests Report \n')
+    pfile.write('# Variation Tests Report \n')
     pfile.write('## Compare com1DFA simulations to benchmark results \n')
 
 log = logUtils.initiateLogger(outDir, logName)
