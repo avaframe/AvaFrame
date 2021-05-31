@@ -42,8 +42,6 @@ def getcflTimeStep(particles, dem, cfg):
             if dtStable < float(cfg['mindT']):
                 dtStable = float(cfg['mindT'])
 
-    # 'overwrite' dt that is read from cfg ini file
-    cfg['dt'] = str(dtStable)
     log.debug('dtStable is with cMAX=%.1f is: %.4f with vmax:%.2f' % (cMax, dtStable, vmax))
 
     # return stable time step

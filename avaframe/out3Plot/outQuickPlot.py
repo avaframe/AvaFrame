@@ -326,6 +326,80 @@ def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', sim
     return plotList
 
 
+def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, cfgPlot, suffix):
+    """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension) and save to
+        Outputs/out3Plot within avalanche directoy
+
+        figure 1: plot raster data for dataset1, dataset2 and their difference,
+                  including a histogram and the cumulative density function of the differences
+        figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
+        -plots are saved to Outputs/out3Plot
+
+        Parameters
+        ----------
+        avaDir : str
+            path to avalanche directory
+        suffix : str
+            result parameter abbreviation (e.g. 'ppr')
+        val : str
+            value of parameter
+        parameter : str
+            parameter that is used to filter simulation results within folder, for example, symType, parameter variation, etc.
+        cfg : dict
+            global configuration settings
+        cfgPlot : dict
+            configuration settings for plots, required for flag if plots shall be shown or only saved
+        rel : str
+            optional - name of release area scenarios
+        simType : str
+            optional - simulation type null or entres
+
+        Returns
+        -------
+        plotList : list
+            list of plot dictionaries (path to plots, min, mean and max difference
+            between plotted datasets, max and mean value of reference dataset )
+
+    """
+
+    # Create required directories
+    outDir = os.path.join(avaDir, 'Outputs', 'out3Plot')
+    fU.makeADir(outDir)
+
+    # Initialise plotDictList
+    plotList = []
+
+    # Initialise plotList
+    plotDict = {'plots': [], 'difference': [], 'stats': []}
+
+    simRefFile = os.path.join(refDir, simNameRef + '_' + suffix + '.asc')
+    simCompFile = os.path.join(compDir, simNameComp + '_' + suffix + '.asc')
+
+    if os.path.isfile(simRefFile) == False or os.path.isfile(simCompFile) == False:
+        log.error('File for result type: %s not found' % suffix)
+
+    # Load data
+    raster = IOf.readRaster(simCompFile)
+    rasterRef = IOf.readRaster(simRefFile)
+    data1, data2 = geoTrans.resizeData(raster, rasterRef)
+    log.debug('dataset1: %s' % simCompFile)
+    log.debug('dataset2: %s' % simRefFile)
+
+    cellSize = rasterRef['header'].cellsize
+    unit = pU.cfgPlotUtils['unit%s' % suffix]
+
+    # Get name of Avalanche
+    avaName = os.path.basename(avaDir)
+    # Create dataDict to be passed to generatePlot
+    dataDict = {'data1': data1, 'data2': data2, 'name1': simNameComp + '_' + suffix,
+                'name2': simNameRef + '_' + suffix, 'compareType': 'compToRef',
+                'simName': simNameComp, 'suffix': suffix, 'cellSize': cellSize, 'unit': unit}
+    # Create Plots
+    plotDictNew = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
+
+    return plotDictNew
+
+
 def quickPlotSimple(avaDir, inputDir, cfg):
     """ Plot two raster datasets of identical dimension and difference between two datasets
 

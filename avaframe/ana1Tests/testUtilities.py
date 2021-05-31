@@ -5,12 +5,14 @@
 # Load modules
 import os
 import glob
+import pathlib
 import logging
 import json
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+import avaframe.com1DFAPy.com1DFA as com1DFA
 
 
 # create local logger
@@ -58,10 +60,11 @@ def readAllBenchmarkDesDicts(info=False):
     testDirs = glob.glob(inDir + os.sep + 'ava*')
     testDictList = []
 
+
     for testDir in testDirs:
         desDictFile = glob.glob(testDir + os.sep + '*desDict.json')
         if desDictFile != []:
-            testName = os.path.basename(testDir)           
+            testName = os.path.basename(testDir)
             desDict = readDesDictFromJson(desDictFile[0])
             desDict.update({'NAME': testName})
             if info:
@@ -130,3 +133,34 @@ def getTestAvaDirs(testList):
         avaDirs.append(avaDir)
 
     return avaDirs
+
+def fetchBenchmarkResults(testName, resTypes=[]):
+    """ Fetch a list of all paths to result files in a benchmark test,
+        default all result file paths, if resType list provided only for resTypes in list
+
+        Parameters
+        -----------
+        refDir: str
+            path to benchmark test directory
+        resTypes: list
+            list of all resTypes that shall be returned
+
+        Returns
+        -------
+        refFiles: list
+            list of paths to all result files found for benchmark test and resType
+    """
+
+
+    refDir = pathlib.Path('..', 'benchmarks', testName)
+    if resTypes != []:
+        refFiles = []
+        for resType in resTypes:
+            refFiles.extend(list(refDir.glob('*' + resType + '.asc')))
+    else:
+        refFiles = list(refDir.glob('*.asc'))
+
+    for refFile in refFiles:
+        log.info('Benchmarktest fetched result file: %s' % refFile)
+
+    return refFiles

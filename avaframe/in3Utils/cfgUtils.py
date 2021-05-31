@@ -424,9 +424,13 @@ def filterSims(avalancheDir, parametersDict, module, specDir=''):
     standardCfg = getDefaultModuleConfig(module)
     simDF = createConfigurationInfo(avalancheDir, standardCfg, writeCSV=False, specDir=specDir)
     for key, value in parametersDict.items():
-        if isinstance(value, list) == False:
-            value = [value]
-        simDF = simDF[simDF[key].isin(value)]
+        if value != []:
+            if isinstance(value, list) == False:
+                value = [value]
+            simDF = simDF[simDF[key].isin(value)]
+
+    if 'current standard' in simDF.index:
+        simDF = simDF.drop('current standard')
 
     simNameList = simDF['simName']
 
