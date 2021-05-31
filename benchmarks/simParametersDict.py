@@ -7,15 +7,11 @@ import os
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 
-def fetchBenchParameters(avaName):
+def fetchBenchParameters(testName):
     """ Collect simulation parameter info from standard tests """
 
-    # get name of avalanche
-    avaDictName = avaName + 'Dict'
-    avaDictList = []
-
     # set desired benchmark simulation info dictionary
-    if avaDictName == 'avaBowlDict':
+    if testName == 'avaBowlNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1BL_null_dfa_0.15500'},
         		'testName': 'avaBowlNullTest',
         		'simType': 'null',
@@ -39,9 +35,8 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1BL'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a bowl-shaped geometry.'}}
 
-        avaDictList.append(avaDictName)
 
-    elif avaDictName == 'avaFlatPlaneDict':
+    elif testName == 'avaFlatPlaneNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1FP_null_dfa_0.15500'},
         		'testName': 'avaFlatPlaneNullTest',
         		'simType': 'null',
@@ -65,9 +60,7 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1FP'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs on a flat plane geometry.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaHelixDict':
+    elif testName == 'avaHelixNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_null_dfa_0.15500'},
         		'testName': 'avaHelixNullTest',
         		'simType': 'null',
@@ -91,9 +84,7 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a helix-shaped geometry.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaHelixChannelDict':
+    elif testName ==  'avaHelixChannelEntTest':
 
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_ent_dfa_0.15500'},
         		'testName': 'avaHelixChannelEntTest',
@@ -122,8 +113,7 @@ def fetchBenchParameters(avaName):
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
 
-        avaDictList.append(avaDictName)
-
+    elif testName ==  'avaHelixChannelEnt1mTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_ent_dfa_0.15500'},
         		'testName': 'avaHelixChannelEnt1mTest',
         		'simType': 'ent',
@@ -151,9 +141,7 @@ def fetchBenchParameters(avaName):
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaParabolaDict':
+    elif testName == 'avaParabolaResTest':
 
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1PF_res_dfa_0.15500'},
         		'testName': 'avaParabolaResTest',
@@ -180,10 +168,8 @@ def fetchBenchParameters(avaName):
                     'Test Info': {'type': 'text',
                     'Test Info': 'This test runs on a parabolically sloping surface with a flat foreland.'}}
 
-        avaDictList.append(avaDictName)
 
-
-    elif avaDictName == 'avaHockeyChannelDict':
+    elif testName == 'avaHockeyChannelEntTest':
 
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1HS_ent_dfa_0.15500'},
         		'testName': 'avaHockeyChannelEntTest',
@@ -212,8 +198,7 @@ def fetchBenchParameters(avaName):
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
                      where a linearly sloping surface transitions smoothly into a flat foreland.'}}
 
-        avaDictList.append(avaDictName)
-
+    elif testName == 'avaHockeyChannelEntTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release2HS_ent_dfa_0.15500'},
         		'testName': 'avaHockeyChannelEntTest',
         		'simType': 'ent',
@@ -241,9 +226,7 @@ def fetchBenchParameters(avaName):
                     'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
                      where a linearly sloping surface transitions smoothly into a flat foreland.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaHockeySmallDict':
+    elif testName == 'avaHockeySmallNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1HS_null_dfa_0.15500'},
        			'testName': 'avaHockeySmallNullTest',
        			'simType': 'null',
@@ -270,9 +253,7 @@ def fetchBenchParameters(avaName):
                      where a linearly sloping surface transitions smoothly into a flat foreland. \
                      This geometry also includes a channel.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaInclinedPlaneDict':
+    elif testName == 'avaInclinedPlaneEntresTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1IP_entres_dfa_0.15500'},
         		'testName': 'avaInclinedPlaneEntresTest',
         		'simType': 'entres',
@@ -299,9 +280,8 @@ def fetchBenchParameters(avaName):
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs on a linearly sloping surface.'}}
 
-        avaDictList.append(avaDictName)
 
-    elif avaDictName == 'avaAlrDict':
+    elif testName == 'avaAlrNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'relAlr_null_dfa_0.15500'},
         		'testName': 'avaAlrNullTest',
         		'simType': 'null',
@@ -328,9 +308,7 @@ def fetchBenchParameters(avaName):
                     'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs on a Alr DEM.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaKotDict':
+    elif testName == 'avaKotNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'relKot_null_dfa_0.15500'},
         		'testName': 'avaKotNullTest',
         		'simType': 'null',
@@ -355,9 +333,7 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'relKot'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Kot test.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaMalDict':
+    elif testName == 'avaMalNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'relMal1to3_null_dfa_0.15500'},
         		'testName': 'avaMalNullTest',
         		'simType': 'null',
@@ -382,9 +358,7 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'relMal1to3'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Mal test.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaWogDict':
+    elif testName == 'avaWogNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'relWog_null_dfa_0.15500'},
         		'testName': 'avaWogNullTest',
         		'simType': 'null',
@@ -409,9 +383,7 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'relWog'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Wog test.'}}
 
-        avaDictList.append(avaDictName)
-
-    elif avaDictName == 'avaGarDict':
+    elif testName == 'avaGarNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'relGar_null_dfa_0.15500'},
         		'testName': 'avaGarNullTest',
         		'simType': 'null',
@@ -436,10 +408,9 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'relGar'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
 
-        avaDictList.append(avaDictName)
-
+    elif testName == 'avaGarNullTest2':
         avaDictName = {'simName': {'type': 'simName', 'name': 'relGar2_null_dfa_0.15500'},
-        		'testName': 'avaGarNullTest',
+        		'testName': 'avaGarNullTest2',
         		'simType': 'null',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -462,10 +433,9 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'relGar2'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
 
-        avaDictList.append(avaDictName)
-
+    elif testName == 'avaGarNullTest6':
         avaDictName = {'simName': {'type': 'simName', 'name': 'relGar6_null_dfa_0.15500'},
-        		'testName': 'avaGarNullTest',
+        		'testName': 'avaGarNullTest6',
         		'simType': 'null',
                     'Simulation Parameters': {
                         'type': 'list',
@@ -488,10 +458,7 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'relGar6'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Gar test.'}}
 
-        avaDictList.append(avaDictName)
-
-
-    elif avaDictName == 'avaHitDict':
+    elif testName == 'avaHitNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'relHit_null_dfa_0.15500'},
         		'testName': 'avaHitNullTest',
         		'simType': 'null',
@@ -516,10 +483,8 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'relHit'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the Hit test.'}}
 
-        avaDictList.append(avaDictName)
 
-
-    elif avaDictName == 'avaPyramidDict':
+    elif testName == 'avaPyramidNullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1PY_null_dfa_0.15500'},
         		'testName': 'avaPyramidNullTest',
         		'simType': 'null',
@@ -539,10 +504,8 @@ def fetchBenchParameters(avaName):
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1PY'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the pyramid test.'}}
 
-        avaDictList.append(avaDictName)
 
-
-    elif avaDictName == 'avaPyramid45Dict':
+    elif testName == 'avaPyramid45NullTest':
         avaDictName = {'simName': {'type': 'simName', 'name': 'release1PY_null_dfa_0.15500'},
         		'testName': 'avaPyramid45NullTest',
         		'simType': 'null',
@@ -561,7 +524,120 @@ def fetchBenchParameters(avaName):
                         'run time [s]': ''},
                     'Release area': {'type': 'columns', 'Release area scenario': 'release1PY'},
                     'Test Info': {'type': 'text', 'Test Info': 'This test runs the rotation pyramid test.'}}
+    elif testName == 'avaFlatPlaneNullTestPy':
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1FP_null_dfa_f8fca36398'},
+        	       'testName': 'avaFlatPlaneNullTestPy',
+        	       'simType': 'null',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Program version': 'macro',
+                        'Friction model': 'samosAT',
+                        'Release Area Scenario': 'release1FP',
+                        'Release Area': ['Rel_Example'],
+                        'Entrainment': 'No',
+                        'Resistance': 'No',
+                        'Mu': '0.15500',
+                        'Density [kgm-3]': '200',
+                        'Release thickness [m]': [1.0],
+                        'Initial mass [kg]': '19500000.00',
+                        'Final mass [kg]': '19500000.00',
+                        'Entrained mass [kg]': '0.00',
+                        'Entrainment thickness [m]': 0.3,
+                        'Stop criterion': '< 1.00 percent of PKE',
+                        'Avalanche run time [s]': '17.80'},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1FP'},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs on a flat plane geometry.'}}
 
-        avaDictList.append(avaDictName)
 
-    return avaDictList
+    elif testName == 'avaHelixChannelEntTestPy':
+
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HX_ent_dfa_f005e4e9c5'},
+        	       'testName': 'avaHelixChannelEntTestPy',
+        	       'simType': 'ent',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Program version': 'com1DFAPy',
+                        'Friction model': 'samosAT',
+                        'Release Area Scenario': 'release1HX',
+                        'Release Area': ['Rel_Example', 'Rel_Two'],
+                        'Entrainment': 'Yes',
+                        'Resistance': 'No',
+                        'Mu': '0.15500',
+                        'Density [kgm-3]': '200',
+                        'Release thickness [m]': [1, 1],
+                        'Entrainment thickness [m]': 0.3,
+                        'Initial mass [kg]': '34264950.92',
+                        'Final mass [kg]': '34921704.69',
+                        'Entrained mass [kg]': '656753.77',
+                        'Stop criterion': '< 1.00 percent of PKE',
+                        'Avalanche run time [s]': '140.80',
+                        'run time [s]': ''},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HX'},
+                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HX'},
+                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
+                    'Test Info': {'type': 'text',
+                    'Test Info': 'This test uses a helix-shaped geometry with a channel with a channel.'}}
+
+
+    elif testName == 'avaHockeyChannelEntTestPy':
+
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1HS_ent_dfa_5afbc252c7'},
+        	       'testName': 'avaHockeyChannelEntTestPy',
+        	       'simType': 'ent',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Program version': 'macro',
+                        'Friction model': 'samosAT',
+                        'Release Area Scenario': 'release1HS',
+                        'Release Area': ['Rel_Example'],
+                        'Entrainment': 'Yes',
+                        'Resistance': 'No',
+                        'Mu': '0.15500',
+                        'Density [kgm-3]': '200',
+                        'Release thickness [m]': [1.0],
+                        'Entrained mass [kg]': '366651.77',
+                        'Entrainment thickness [m]': 0.3,
+                        'Initial mass [kg]': '19512767.70',
+                        'Final mass [kg]': '19879419.47',
+                        'Stop criterion': '< 1.00 percent of PKE',
+                        'Avalanche run time [s]': '309.40',
+                        'run time [s]': ''},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1HS'},
+                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1HS'},
+                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test uses a hockey stick-shaped geometry, \
+                     where a linearly sloping surface transitions smoothly into a flat foreland.'}}
+
+        
+    elif testName == 'avaInclinedPlaneEntresTestPy':
+        
+        avaDictName = {'simName': {'type': 'simName', 'name': 'release1IP_entres_dfa_eeaf249f5c'},
+        	       'testName': 'avaInclinedPlaneEntresTestPy',
+        	       'simType': 'entres',
+                    'Simulation Parameters': {
+                        'type': 'list',
+                        'Program version': 'macro',
+                        'Friction model': 'samosAT',
+                        'Release Area Scenario': 'release1IP',
+                        'Release Area': ['Rel_Example'],
+                        'Entrainment': 'Yes',
+                        'Resistance': 'Yes',
+                        'Mu': '0.15500',
+                        'Release thickness [m]': [1.0],
+                        'Density [kgm-3]': '200',
+                        'Initial mass [kg]': '19570886.22',
+                        'Final mass [kg]': '21313398.02',
+                        'Entrained mass [kg]': '1742511.80',
+                        'Entrainment thickness [m]': 0.3,
+                        'Stop criterion': 'end Time reached: 400.00',
+                        'Avalanche run time [s]': '400.00',
+                        'run time [s]': ''},
+                    'Release area': {'type': 'columns', 'Release area scenario': 'release1IP'},
+                    'Entrainment area': {'type': 'columns', 'Entrainment area scenario': 'entrainment1IP'},
+                    'Resistance area': {'type': 'columns', 'Resistance area scenario': ''},
+                    'Test Info': {'type': 'text', 'Test Info': 'This test runs on a linearly sloping surface.'}}
+
+
+
+
+    return avaDictName
