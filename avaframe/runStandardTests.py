@@ -46,7 +46,7 @@ reportFile = os.path.join(outDir, 'standardTestsReport.md')
 with open(reportFile, 'w') as pfile:
     # Write header
     pfile.write('# Standard Tests Report \n')
-    pfile.write('## Compare com1DFAPy simulations to benchmark results \n')
+    pfile.write('## Compare com1DFA simulations to benchmark results \n')
 
 log = logUtils.initiateLogger(outDir, logName)
 log.info('The following benchmark tests will be fetched ')
@@ -114,7 +114,7 @@ for test in testList:
 
     # +++++++Aimec analysis
     # load configuration
-    aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECPyCfg.ini' % test['AVANAME'])
+    aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' % test['AVANAME'])
     cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
     cfgAimec['AIMECSETUP']['resType'] = 'ppr'
     cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
@@ -163,7 +163,6 @@ for test in testList:
             reportD['Simulation Stats'].update({var: plotDict['stats']})
 
     # copy files to report directory
-    print('plots', plotListRep)
     plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep)
     aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
     plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, plotPaths)
