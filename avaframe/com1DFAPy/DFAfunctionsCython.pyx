@@ -258,12 +258,6 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       # get the normal at this location
       nxEnd, nyEnd, nzEnd = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
       nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
-      xEnd = x + dt * ux
-      yEnd = y + dt * uy
-      zEnd = z + dt * uz
-      # Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xEnd, yEnd, csz, interpOption)
-      nxEnd, nyEnd, nzEnd = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
-      nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
       # get average of those normals
       nxAvg = nx + nxEnd
       nyAvg = ny + nyEnd
@@ -578,7 +572,6 @@ def updatePositionC(cfg, particles, dem, force):
     zNew = z + dtStop * 0.5 * (uz + uzNew)
     # make sure particle is on the mesh (normal reprojection!!)
     xNew, yNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = normalProjectionIteratrive(xNew, yNew, zNew, ZDEM, Nx, Ny, Nz, csz, interpOption)
-    # LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = getWeights(xNew, yNew, csz, interpOption)
     zNew = getScalar(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
     nxNew, nyNew, nzNew = getVector(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], Nx, Ny, Nz)
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
@@ -1033,14 +1026,14 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
     # locate particle in SPH grid
     indx = int(xx / cszNeighbourGrid)
     indy = int(yy / cszNeighbourGrid)
-    # get normal vector
-    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xx, yy, cszNormal, interpOption)
-    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
-    nx, ny, nz = normalize(nx, ny, nz)
-    # projection of gravity on normal vector
-    gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
 
     if SPHoption > 1:
+      # get normal vector
+      Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xx, yy, cszNormal, interpOption)
+      nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+      nx, ny, nz = normalize(nx, ny, nz)
+      # projection of gravity on normal vector
+      gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
       uMag = norm(ux, uy, uz)
       if uMag < velMagMin:
           ux = 1
@@ -1643,6 +1636,7 @@ cdef (double, double, int, int, int, int, double, double, double, double) normal
     xNew = xNew + zn * nx
     yNew = yNew + zn * ny
     zNew = zNew + zn * nz
+    # What I think is better for normal projection
     # # Normal component of the vector between the initial and projected point
     # zn = (xNew-xOld) * nx + (yNew-yOld) * ny + (zTemp-zNew) * nz
     # # correct position with the normal part
