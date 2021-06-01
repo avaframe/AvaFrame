@@ -32,7 +32,6 @@ import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
-import avaframe.com1DFAPy.com1DFA as com1DFAPy
 
 #######################################
 # Set flags here
