@@ -53,7 +53,7 @@ for avaName in testList:
     outDir = os.path.join(avaDir, 'Outputs')
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir,  keep=logName)
+    initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     #####################################################################
     # ######################### Run com1DFA ##############################
@@ -186,7 +186,8 @@ for avaName in testList:
             # add plot info to general report Dict
             reportDcom1DFAPy['Simulation Results'] = plotPaths
 
-            reportDcom1DFA['Test Info'] = {'type': 'text', 'Test Info': 'Compare com1DFA (Reference) to com1DFAPy (Simulation) results.'}
+            reportDcom1DFA['Test Info'] = {'type': 'text',
+                           'Test Info': 'Compare com1DFA (Reference) to com1DFAPy (Simulation) results.'}
 
             # write report
             generateCompareReport.writeCompareReport(reportFile, reportDcom1DFAPy, reportDcom1DFA, avaName, cfgRep)

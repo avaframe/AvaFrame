@@ -68,7 +68,7 @@ for test in testList:
     refDir = pathlib.Path('..', 'benchmarks', test['NAME'])
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir,  keep=logName)
+    initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # Load input parameters from configuration file for standard tests
     # write config to log file
@@ -121,7 +121,6 @@ for test in testList:
     reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportD, benchDict, pathDict['referenceFile'])
     # +++++++++++Aimec analysis
 
-
     # Create plots for report
     # Load input parameters from configuration file
     cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
@@ -137,7 +136,7 @@ for test in testList:
 
     # Plot data comparison for all output variables defined in suffix
     for var in outputVariable:
-        plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir,  cfgMain, cfgRep, var)
+        plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfgMain, cfgRep, var)
         for plot in plotDict['plots']:
             plotListRep.update({var: plot})
             reportD['Simulation Difference'].update({var: plotDict['difference']})

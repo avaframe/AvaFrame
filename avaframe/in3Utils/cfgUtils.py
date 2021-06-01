@@ -420,7 +420,6 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
 def filterSims(avalancheDir, parametersDict, module, specDir=''):
     """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations """
 
-
     standardCfg = getDefaultModuleConfig(module)
     simDF = createConfigurationInfo(avalancheDir, standardCfg, writeCSV=False, specDir=specDir)
     for key, value in parametersDict.items():
