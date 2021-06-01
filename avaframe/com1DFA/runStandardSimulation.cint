@@ -134,10 +134,10 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   //set(Sim, "FrictionType", "samosAT_Standard");
   set(Sim, "FrictionType", "Chezy + Mohr-Coulomb");
   set(Sim, "DynamicFrictionCoefficient", "0");
-  set(Sim, "BedFrictionAngle", "26.56505117707798935157");
+  set(Sim, "BedFrictionAngle", "21.80140948635181177024");
 
-  //set(Sim, "MassPerParticleDeterminationMethod", "delta-depth per particle");
-  //set(Sim, "DeltaDepthPerParticle", "2");
+  set(Sim, "MassPerParticleDeterminationMethod", "delta-depth per particle");
+  set(Sim, "DeltaDepthPerParticle", "2");
 
   val = atof(varVal);
   // Update log
@@ -153,8 +153,8 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
 
   //------------Set time stepping--------------------
 
-  //set(Sim, "EndTime", "40");
-  set(Sim, "DeltaT", "0.1");
+  set(Sim, "EndTime", "40");
+  set(Sim, "DeltaT", "0.01");
   // set(Sim, "DeltaOut", "20");
 
   // *************Start processing************************

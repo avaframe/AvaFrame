@@ -26,7 +26,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
 # testList = ['avaInclinedPlane', 'avaHelixChannel', 'avaAlr', 'avaWog', 'avaKot', 'avaHit', 'avaGar', 'avaMal']
-testList = ['avaHockeyDrop']
+testList = ['avaHockeyChannel']
 simType = 'null'
 simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
