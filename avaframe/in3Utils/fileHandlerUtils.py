@@ -182,6 +182,8 @@ def splitIniValueToArraySteps(cfgValues):
     if ':' in cfgValues:
         itemsInput = cfgValues.split(':')
         items = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
+    elif cfgValues == '':
+        items = []
     else:
         itemsL = cfgValues.split('|')
         flagFloat = False
