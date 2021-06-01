@@ -131,23 +131,23 @@ void RunExport(char Com1DFAProjectDir[], char ResDir[], char CuSim[], int countR
   printf("\n[BatchCom1DFA] Computing Simulation: %s\n",Sim);
 
   // Friction type
-  set(Sim, "FrictionType", "samosAT_Standard");
+ set(Sim, "FrictionType", "samosAT_Standard");
 
-  val = atof(varVal);
-  // Update log
-  fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,val);
-  fprintf(ExpLog2, "%d  %s  %f\n",ExpCount,CuSim,val);
+ val = atof(varVal);
+ // Update log
+ fprintf(ExpLog, "%d;%s;%f\n",ExpCount,CuSim,val);
+ fprintf(ExpLog2, "%d  %s  %f\n",ExpCount,CuSim,val);
 
-  // Set entrainment thickness
-  entth = atof(entH);
-  sprintf(EntAr,"%s/EntrainmentAreas",Sim);
-  sprintf(entHString,"%.5f",entth);
-  printf("\n[BatchCom1DFA] Setting in %s ent depth to %s m \n",EntAr,entHString);
-  set(EntAr, "set_depth", entHString);
+ // Set entrainment thickness
+ entth = atof(entH);
+ sprintf(EntAr,"%s/EntrainmentAreas",Sim);
+ sprintf(entHString,"%.5f",entth);
+ printf("\n[BatchCom1DFA] Setting in %s ent depth to %s m \n",EntAr,entHString);
+ set(EntAr, "set_depth", entHString);
 
-  //------------Set time stepping--------------------
-  
-  // set(Sim, "EndTime", "150");
+ //------------Set time stepping--------------------
+
+ //set(Sim, "EndTime", "400");
   // set(Sim, "DeltaOut", "20");
 
   // *************Start processing************************

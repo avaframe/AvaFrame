@@ -83,6 +83,9 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     nybox = int(nx * 0.2)
     nxbox = int(ny * 0.2)
 
+    minVal = min(np.nanmin(data1), np.nanmin(data2))
+    maxVal = max(np.nanmax(data1), np.nanmax(data2))
+
     # Plot data
     # Figure 1 shows the result parameter data
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
@@ -93,7 +96,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
-    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
+    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
+                     aspect=nx/ny, norm=norm, vmin = minVal, vmax = maxVal)
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
@@ -108,7 +112,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     cmap.set_bad('w')
     data2P = ma.masked_where(data2 == 0.0, data2)
-    im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
+    im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
+                     aspect=nx/ny, norm=norm, vmin = minVal, vmax = maxVal)
     pU.addColorBar(im2, ax2, ticks, unit)
 
     ax2.set_aspect('auto')

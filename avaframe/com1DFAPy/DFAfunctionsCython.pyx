@@ -167,6 +167,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef double mu = cfg.getfloat('mu')
   cdef int Npart = particles['Npart']
   cdef double csz = dem['header'].cellsize
+  cdef double[:, :] ZDEM = dem['rasterData']
   cdef double[:, :] Nx = dem['Nx']
   cdef double[:, :] Ny = dem['Ny']
   cdef double[:, :] Nz = dem['Nz']
@@ -176,6 +177,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef double[:] H = particles['h']
   cdef double[:] X = particles['x']
   cdef double[:] Y = particles['y']
+  cdef double[:] Z = particles['z']
   cdef double[:] UX = particles['ux']
   cdef double[:] UY = particles['uy']
   cdef double[:] UZ = particles['uz']
@@ -197,9 +199,11 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
   cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
-  cdef double x, y, z, ux, uy, uz, uxDir, uyDir, uzDir
+  cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
+  cdef int Lxy[4]
+  cdef double w[4]
   cdef int j
   force = {}
   # loop on particles
@@ -207,6 +211,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       m = mass[j]
       x = X[j]
       y = Y[j]
+      z = Z[j]
       h = H[j]
       ux = UX[j]
       uy = UY[j]
@@ -216,11 +221,12 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       # deduce area
       areaPart = m / (h * rho)
       # get normal at the particle location
-      nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
+      Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
+      nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
       nx, ny, nz = normalize(nx, ny, nz)
 
       # add artificial viscosity
-      vMeanx, vMeany, vMeanz = getVector(x, y, VX, VY, VZ, csz, interpOption)
+      vMeanx, vMeany, vMeanz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], VX, VY, VZ)
       # compute normal component of the velocity
       vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
       # remove normal component (make sure vMean is in the tangent plane)
@@ -246,7 +252,17 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
       yEnd = y + dt * uy
-      nxEnd, nyEnd, nzEnd = getVector(xEnd, yEnd, Nx, Ny, Nz, csz, interpOption)
+      zEnd = z + dt * uz
+      # this point is not necessarily on the surface, project it on the surface
+      xEnd, yEnd, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = normalProjectionIteratrive(xEnd, yEnd, zEnd, ZDEM, Nx, Ny, Nz, csz, interpOption)
+      # get the normal at this location
+      nxEnd, nyEnd, nzEnd = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+      nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
+      xEnd = x + dt * ux
+      yEnd = y + dt * uy
+      zEnd = z + dt * uz
+      # Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xEnd, yEnd, csz, interpOption)
+      nxEnd, nyEnd, nzEnd = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
       nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
       # get average of those normals
       nxAvg = nx + nxEnd
@@ -440,7 +456,6 @@ cdef double computeResForce(double hRes, double h, double areaPart, double rho, 
   return cRecResPart
 
 
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -481,15 +496,6 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double[:, :] Nz = dem['Nz']
   cdef double[:, :] ZDEM = dem['rasterData']
   # initializeinter = np.zeros(N, dtype=np.float64)
-  cdef double[:] MNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] XNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] YNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] ZNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] SNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] UXNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] UYNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] UZNew = np.zeros(Npart, dtype=np.float64)
-
   cdef double[:] mass = particles['m']
   cdef double[:] S = particles['s']
   cdef double[:] L = particles['l']
@@ -510,11 +516,24 @@ def updatePositionC(cfg, particles, dem, force):
   cdef double TotkinEne = particles['kineticEne']
   cdef double TotpotEne = particles['potentialEne']
   cdef double peakKinEne = particles['peakKinEne']
+
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
   cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
   cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
+  cdef double[:] MNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] XNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] YNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] ZNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] SNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] UXNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] UYNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] UZNew = np.zeros(Npart, dtype=np.float64)
+  cdef int Lxy[4]
+  cdef double w[4]
+  cdef int LxyNew[4]
+  cdef double wNew[4]
   cdef double massEntrained = 0, massFlowing = 0
   cdef int j
   # loop on particles
@@ -556,18 +575,23 @@ def updatePositionC(cfg, particles, dem, force):
     # update position
     xNew = x + dtStop * 0.5 * (ux + uxNew)
     yNew = y + dtStop * 0.5 * (uy + uyNew)
-    # make sure particle is on the mesh (recompute the z component)
-    zNew = getScalar(xNew, yNew, ZDEM, csz, interpOption)
+    zNew = z + dtStop * 0.5 * (uz + uzNew)
+    # make sure particle is on the mesh (normal reprojection!!)
+    xNew, yNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = normalProjectionIteratrive(xNew, yNew, zNew, ZDEM, Nx, Ny, Nz, csz, interpOption)
+    # LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = getWeights(xNew, yNew, csz, interpOption)
+    zNew = getScalar(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+    nxNew, nyNew, nzNew = getVector(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], Nx, Ny, Nz)
+    nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
     # compute the distance traveled by the particle
     lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
     # compute average normal between the beginning and end of the time step
-    nx, ny, nz = getVector(x, y, Nx, Ny, Nz, csz, interpOption)
-    nxNew, nyNew, nzNew = getVector(xNew, yNew, Nx, Ny, Nz, csz, interpOption)
-    nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
-    nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
+    # Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
+    # nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+    # nx, ny, nz = normalize(nx, ny, nz)
+    # nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
-    sNew = s + nz*norm((xNew-x), (yNew-y), (zNew-z))
+    sNew = s + nzNew*norm((xNew-x), (yNew-y), (zNew-z))
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity
@@ -769,7 +793,8 @@ def updateFieldsC(cfg, particles, dem, fields):
   for j in range(Npart):
     x = X[j]
     y = Y[j]
-    hbb = getScalar(x, y, FDBilinear, csz, interpOption)
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
+    hbb = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], FDBilinear)
     hBB[j] = hbb
 
   particles['hBilinearBilinear'] = np.asarray(hBB)
@@ -981,7 +1006,9 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
   cdef double g1, g2, g11, g12, g22, g33
   cdef double m11, m12, m22, GG1, GG2
   cdef double xx, yy, zz, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
-  cdef double dx, dy, dz, dn, r, hr, dwdr
+  cdef double dx, dy, dz, dn, r, hr, dwdr, wKernel
+  cdef int Lxy[4]
+  cdef double w[4]
   cdef int lInd, rInd
   cdef int indx, indy
   cdef int j, ic, n, p, l, imax, imin, iPstart, iPend
@@ -1007,26 +1034,29 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
     indx = int(xx / cszNeighbourGrid)
     indy = int(yy / cszNeighbourGrid)
     # get normal vector
-    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, cszNormal, interpOption)
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xx, yy, cszNormal, interpOption)
+    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
     nx, ny, nz = normalize(nx, ny, nz)
     # projection of gravity on normal vector
     gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
-    uMag = norm(ux, uy, uz)
-    if uMag < velMagMin:
-        ux = 1
-        uy = 0
-        uz = -(1*nx + 0*ny) / nz
-        ux, uy, uz = normalize(ux, uy, uz)
-        K1 = 1
-        K2 = 1
-    else:
-        ux, uy, uz = normalize(ux, uy, uz)
 
-    uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
-    uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+    if SPHoption > 1:
+      uMag = norm(ux, uy, uz)
+      if uMag < velMagMin:
+          ux = 1
+          uy = 0
+          uz = -(1*nx + 0*ny) / nz
+          ux, uy, uz = normalize(ux, uy, uz)
+          K1 = 1
+          K2 = 1
+      else:
+          ux, uy, uz = normalize(ux, uy, uz)
 
-    g1 = nx/(nz)
-    g2 = ny/(nz)
+      uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
+      uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+
+      g1 = nx/(nz)
+      g2 = ny/(nz)
 
     # check if we are on the bottom ot top row!!!
     lInd = -1
@@ -1153,12 +1183,12 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
                       r = minRKern * rKernel
                   if r < rKernel:
                       hr = rKernel - r
-                      w = facKernel * hr * hr * hr
-                      m11 = m11 + mass[l] / h[l] * w * r1 * r1 / rho
-                      m12 = m12 + mass[l] / h[l] * w * r1 * r2 / rho
-                      m22 = m22 + mass[l] / h[l] * w * r2 * r2 / rho
-                      G1 = G1 + mass[l] * (1 - h[j]/h[l]) * w * K1*r1
-                      G2 = G2 + mass[l] * (1 - h[j]/h[l]) * w * K2*r2
+                      wKernel = facKernel * hr * hr * hr
+                      m11 = m11 + mass[l] / h[l] * wKernel * r1 * r1 / rho
+                      m12 = m12 + mass[l] / h[l] * wKernel * r1 * r2 / rho
+                      m22 = m22 + mass[l] / h[l] * wKernel * r2 * r2 / rho
+                      G1 = G1 + mass[l] * (1 - h[j]/h[l]) * wKernel * K1*r1
+                      G2 = G2 + mass[l] * (1 - h[j]/h[l]) * wKernel * K2*r2
 
     if grad == 1:
       if SPHoption >= 4:
@@ -1264,6 +1294,8 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   cdef int j
   cdef double xx, yy, zz
   cdef double dx, dy, dz, r, hr, dwdr, massl, hl, ww
+  cdef int Lxy[4]
+  cdef double w[4]
   cdef int lInd = -1
   cdef int rInd = 2
   cdef int indx
@@ -1284,7 +1316,8 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
     gz = 0
     indx = indX[j]
     indy = indY[j]
-    nx, ny, nz = getVector(xx, yy, Nx, Ny, Nz, csz, interpOption)
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xx, yy, csz, interpOption)
+    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
     nx, ny, nz = normalize(nx, ny, nz)
 
     # startTime = time.time()
@@ -1329,14 +1362,14 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
                     r = minRKern * rKernel
                 if r < rKernel:
                     hr = rKernel - r
-                    w = facKernel * hr * hr * hr
+                    wKernel = facKernel * hr * hr * hr
                     massl = mass[l]
                     hl = H1[l]
-                    dh = massl * w
+                    dh = massl * wKernel
                     # gx = gx + massl * w / hl * dx
                     # gy = gy + massl * w / hl * dy
                     # gz = gz + massl * w / hl * dz
-                    ww = ww + massl * w / hl
+                    ww = ww + massl * wKernel / hl
                     h = h + dh
 
                     # gradhX = gradhX + mdwdrr * dx
@@ -1472,8 +1505,6 @@ def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Py
   return np.asarray(s)
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 @cython.cdivision(True)
 cdef (int, int, int, int, double, double, double, double) getWeights(double x, double y, double csz, int interpOption):#, int *Lxy, double *w):
   """ Prepare weight for interpolation from grid to single point location
@@ -1546,6 +1577,91 @@ def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeig
   return np.asarray(Lxy[0]), np.asarray(Lxy[1]), np.asarray(Lxy[2]), np.asarray(Lxy[3]), np.asarray(w[0]), np.asarray(w[1]), np.asarray(w[2]), np.asarray(w[3])
 
 
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef (double, double, int, int, int, int, double, double, double, double) normalProjectionIteratrive(double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] Nx, double[:,:] Ny, double[:,:] Nz, double csz, int interpOption):
+  """ Find the orthogonal projection of a point on a mesh
+
+  Iterative method to find the projection of a point on a surface defined by its mesh
+  Parameters
+  ----------
+      xOld: float
+          x coordinate of the point to project
+      yOld: float
+          y coordinate of the point to project
+      zOld: float
+          z coordinate of the point to project
+      ZDEM: 2D array
+          z component of the DEM field at the grid nodes
+      Nx: 2D array
+          x component of the normal vector field at the grid nodes
+      Ny: 2D array
+          y component of the normal vector field at the grid nodes
+      Nz: 2D array
+          z component of the normal vector field at the grid nodes
+      csz: float
+          cellsize of the grid
+      interpOption: int
+          -0: nearest neighbour interpolation
+          -1: equal weights interpolation
+          -2: bilinear interpolation
+    Returns
+    -------
+    xNew: float
+        x coordinate of the projected point
+    yNew: float
+        y coordinate of the projected point
+    Lxy: int[4]
+        colomn and row indices for interpolation
+    w: float[4]
+        corresponding weights
+    """
+  cdef double zTemp, zn, xNew, yNew, zNew
+  cdef double nx, ny, nz
+  cdef int reprojectionIterations = 5
+  cdef int Lxi, Lyi, Lxj, Lyj
+  cdef int Lxy[4]
+  cdef double w[4]
+  xNew = xOld
+  yNew = yOld
+  zNew = zOld
+  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, csz, interpOption)
+  # get the cell location of the point
+  Lxi = Lxy[0]
+  Lyi = Lxy[2]
+  # iterate
+  while reprojectionIterations > 0:
+    reprojectionIterations = reprojectionIterations - 1
+    # vertical projection of the point
+    zTemp = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], ZDEM)
+    # normal vector at this vertical projection location
+    # nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], 0.25, 0.25, 0.25, 0.25, Nx, Ny, Nz)
+    nx, ny, nz = normalize(nx, ny, nz)
+    zn = (xNew-xNew) * nx + (yNew-yNew) * ny + (zTemp-zNew) * nz
+    # correct position with the normal part
+    xNew = xNew + zn * nx
+    yNew = yNew + zn * ny
+    zNew = zNew + zn * nz
+    # # Normal component of the vector between the initial and projected point
+    # zn = (xNew-xOld) * nx + (yNew-yOld) * ny + (zTemp-zNew) * nz
+    # # correct position with the normal part
+    # xNew = xOld + zn * nx
+    # yNew = yOld + zn * ny
+    # zNew = zOld + zn * nz
+    # get cell
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, csz, interpOption)
+    Lxj = Lxy[0]
+    Lyj = Lxy[2]
+    # are we in the same cell?
+    if Lxi==Lxj and Lyi==Lyj:
+      return xNew, yNew, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3]
+    Lxj = Lxi
+    Lyj = Lyi
+  return xNew, yNew, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3]
+
+
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
@@ -1559,20 +1675,21 @@ def projOnRaster(X, Y, V, csz, interp):
   cdef double[:, :] VV = V
   cdef double CSZ = csz
   cdef double x, y
+  cdef int Lxy[4]
+  cdef double w[4]
   cdef int j
   cdef double[:] v = np.zeros(N)
   for j in range(N):
     x = XX[j]
     y = YY[j]
-    v[j] = getScalar(x, y, VV, CSZ, interpOption)
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, CSZ, interpOption)
+    v[j] = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], VV)
 
   return np.asarray(v)
 
 
 @cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-cdef double getScalar(double x, double y, double[:, :] V, double csz, int interpOption):
+cdef double getScalar(int Lxy0, int Lxy1, int Lxy2, int Lxy3, double w0, double w1, double w2, double w3, double[:, :] V):
   """ Interpolate vector field from grid to single point location
 
   Originaly created to get the normal vector at location (x,y) given the
@@ -1582,40 +1699,29 @@ cdef double getScalar(double x, double y, double[:, :] V, double csz, int interp
 
   Parameters
   ----------
-      x: float
-          location in the x location of desiered interpolation
-      y: float
-          location in the y location of desiered interpolation
+      Lxy: int[4]
+          colomn and row indices for interpolation
+      w: float[4]
+          corresponding weights
       V: 2D numpy array
           scalar field at the grid nodes
-      csz: float
-          cellsize of the grid
-      interpOption: int
-          -0: nearest neighbour interpolation
-          -1: equal weights interpolation
-          -2: bilinear interpolation
 
   Returns
   -------
       v: float
           interpolated scalar at position (x, y)
   """
-  cdef int Lxy[4]
-  cdef double w[4]
-  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
-  cdef double v = (V[Lxy[2], Lxy[0]]*w[0] +
-                   V[Lxy[2], Lxy[1]]*w[1] +
-                   V[Lxy[3], Lxy[0]]*w[2] +
-                   V[Lxy[3], Lxy[1]]*w[3])
+  cdef double v = (V[Lxy2, Lxy0]*w0 +
+                   V[Lxy2, Lxy1]*w1 +
+                   V[Lxy3, Lxy0]*w2 +
+                   V[Lxy3, Lxy1]*w3)
 
 
   return v
 
 
 @cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, double csz, int interpOption):
+cdef (double, double, double) getVector(int Lxy0, int Lxy1, int Lxy2, int Lxy3, double w0, double w1, double w2, double w3, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz):
   """ Interpolate vector field from grid to single point location
 
   Originaly created to get the normal vector at location (x,y) given the
@@ -1625,9 +1731,10 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
 
   Parameters
   ----------
-      x: float
-          location in the x location of desiered interpolation
-      y: float
+      Lxy: int[4]
+          colomn and row indices for interpolation
+      w: float[4]
+          corresponding weights
           location in the y location of desiered interpolation
       Nx: 2D numpy array
           x component of the vector field at the grid nodes
@@ -1635,12 +1742,6 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
           y component of the vector field at the grid nodes
       Nz: 2D numpy array
           z component of the vector field at the grid nodes
-      csz: float
-          cellsize of the grid
-      interpOption: int
-          -0: nearest neighbour interpolation
-          -1: equal weights interpolation
-          -2: bilinear interpolation
 
   Returns
   -------
@@ -1651,21 +1752,18 @@ cdef (double, double, double) getVector(double x, double y, double[:, :] Nx, dou
       nz: float
           z component of the interpolated vector field at position (x, y)
   """
-  cdef int Lxy[4]
-  cdef double w[4]
-  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
-  cdef double nx = (Nx[Lxy[2], Lxy[0]]*w[0] +
-                   Nx[Lxy[2], Lxy[1]]*w[1] +
-                   Nx[Lxy[3], Lxy[0]]*w[2] +
-                   Nx[Lxy[3], Lxy[1]]*w[3])
-  cdef double ny = (Ny[Lxy[2], Lxy[0]]*w[0] +
-                   Ny[Lxy[2], Lxy[1]]*w[1] +
-                   Ny[Lxy[3], Lxy[0]]*w[2] +
-                   Ny[Lxy[3], Lxy[1]]*w[3])
-  cdef double nz = (Nz[Lxy[2], Lxy[0]]*w[0] +
-                   Nz[Lxy[2], Lxy[1]]*w[1] +
-                   Nz[Lxy[3], Lxy[0]]*w[2] +
-                   Nz[Lxy[3], Lxy[1]]*w[3])
+  cdef double nx = (Nx[Lxy2, Lxy0]*w0 +
+                   Nx[Lxy2, Lxy1]*w1 +
+                   Nx[Lxy3, Lxy0]*w2 +
+                   Nx[Lxy3, Lxy1]*w3)
+  cdef double ny = (Ny[Lxy2, Lxy0]*w0 +
+                   Ny[Lxy2, Lxy1]*w1 +
+                   Ny[Lxy3, Lxy0]*w2 +
+                   Ny[Lxy3, Lxy1]*w3)
+  cdef double nz = (Nz[Lxy2, Lxy0]*w0 +
+                   Nz[Lxy2, Lxy1]*w1 +
+                   Nz[Lxy3, Lxy0]*w2 +
+                   Nz[Lxy3, Lxy1]*w3)
   return nx, ny, nz
 
 @cython.cdivision(True)
