@@ -24,10 +24,10 @@ def createDesDictTemplate():
     """ create an empty dictionary with all required test info keys """
 
     desDict = {'TAGS': [],
-                'DESCRIPTION': '',
-                'TYPE': [],
-                'FILES': [],
-                'AVANAME': ''}
+               'DESCRIPTION': '',
+               'TYPE': [],
+               'FILES': [],
+               'AVANAME': ''}
 
     return desDict
 
@@ -36,7 +36,7 @@ def writeDesDicttoJson(desDict, testName, outDir):
     """ create a json file with all required test info from desdict """
 
     jsonDict = json.dumps(desDict)
-    fileName = os.path.join(outDir,"%s_desDict.json" % testName)
+    fileName = os.path.join(outDir, "%s_desDict.json" % testName)
     f = open(fileName, "w")
     f.write(jsonDict)
     f.close()
@@ -59,7 +59,6 @@ def readAllBenchmarkDesDicts(info=False):
     inDir = os.path.join('..', 'benchmarks')
     testDirs = glob.glob(inDir + os.sep + 'ava*')
     testDictList = []
-
 
     for testDir in testDirs:
         desDictFile = glob.glob(testDir + os.sep + '*desDict.json')
@@ -113,8 +112,8 @@ def filterBenchmarks(testDictList, type, valuesList, condition='or'):
                 if any(values in testDict[type] for values in valuesList):
                     testList.append(testDict)
             elif condition == 'and':
-                 if all(values in testDict[type] for values in valuesList):
-                     testList.append(testDict)
+                if all(values in testDict[type] for values in valuesList):
+                    testList.append(testDict)
             else:
                 flag = True
 
@@ -134,6 +133,7 @@ def getTestAvaDirs(testList):
 
     return avaDirs
 
+
 def fetchBenchmarkResults(testName, resTypes=[]):
     """ Fetch a list of all paths to result files in a benchmark test,
         default all result file paths, if resType list provided only for resTypes in list
@@ -150,7 +150,6 @@ def fetchBenchmarkResults(testName, resTypes=[]):
         refFiles: list
             list of paths to all result files found for benchmark test and resType
     """
-
 
     refDir = pathlib.Path('..', 'benchmarks', testName)
     if resTypes != []:

@@ -20,7 +20,7 @@ def copyQuickPlots(avaName, testName, outDir, plotListRep, rel=''):
 
     plotPaths = {}
     for key in plotListRep:
-        plotName =  os.path.join(outDir, '%s_%s_%s.png' % (testName, rel, key))
+        plotName = os.path.join(outDir, '%s_%s_%s.png' % (testName, rel, key))
         shutil.copy2(plotListRep[key], plotName)
         log.debug('Copied: %s to %s' % (plotListRep[key], plotName))
         plotPaths[key] = plotName
@@ -34,12 +34,13 @@ def copyAimecPlots(plotFiles, testName, outDir, plotPaths, rel=''):
     for pDict in plotFiles:
         for key in pDict:
             name = os.path.basename(pDict[key])
-            plotName =  os.path.join(outDir, '%s_%s_%s' % (testName, rel, name))
+            plotName = os.path.join(outDir, '%s_%s_%s' % (testName, rel, name))
             shutil.copy2(pDict[key], plotName)
             log.debug('Copied: %s to %s' % (pDict[key], plotName))
             plotPaths[key] = plotName
 
     return plotPaths
+
 
 def makeLists(simDict, benchDict):
     """ Create a list for table creation """
@@ -173,7 +174,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
                 pfile.write(' \n')
                 if value == 'ppr' or value == 'pfd' or value == 'pfv':
                     maxDiff = max(abs(float(reportD['Simulation Difference'][value][2])),
-                                     abs(float(reportD['Simulation Difference'][value][0])))
+                                  abs(float(reportD['Simulation Difference'][value][0])))
                     maxVal = float(reportD['Simulation Stats'][value][0])
                     if maxDiff < (-1.0*diffLim*maxVal) or maxDiff > (diffLim*maxVal):
                         textString1 = '<span style="color:red"> Warning absolute difference exceeds the tolerance of %.0f percent of %s-max value (%.2f) </span>' % (100.*diffLim, value, maxVal)

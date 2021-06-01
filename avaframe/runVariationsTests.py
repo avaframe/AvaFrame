@@ -67,7 +67,7 @@ for test in testList:
     rel = benchDict['Simulation Parameters']['Release Area Scenario']
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir,  keep=logName)
+    initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # get path to executable
     cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
@@ -76,7 +76,7 @@ for test in testList:
     # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%sVarPar_com1DFACfg.ini' %  test['AVANAME'])
+    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%sVarPar_com1DFACfg.ini' % test['AVANAME'])
     cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
@@ -141,7 +141,6 @@ for test in testList:
     reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportD, benchDict, pathDict['referenceFile'])
     # +++++++++++Aimec analysis
 
-
     # Create plots for report
     # Load input parameters from configuration file
     cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
@@ -157,7 +156,7 @@ for test in testList:
 
     # Plot data comparison for all output variables defined in suffix
     for var in outputVariable:
-        plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir,  cfgMain, cfgRep, var)
+        plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfgMain, cfgRep, var)
         for plot in plotDict['plots']:
             plotListRep.update({var: plot})
             reportD['Simulation Difference'].update({var: plotDict['difference']})

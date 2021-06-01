@@ -27,7 +27,7 @@ def test_execCom1Exe(tmp_path):
     com1Exe = 'testPath'
     dirPath = os.path.dirname(__file__)
     avaName = 'avaParabola'
-    avaDir  = os.path.join(tmp_path, avaName)
+    avaDir = os.path.join(tmp_path, avaName)
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
     shutil.copytree(avaData, avaInputs)
@@ -54,8 +54,9 @@ def test_execCom1Exe(tmp_path):
 
 
 @pytest.mark.skip(reason="com1DFA exe is missing, no way of testing this")
-@pytest.mark.parametrize("testName", ["avaBowlNullTest", "avaFlatPlaneNullTest", "avaHelixNullTest", "avaHelixChannelEntTest",
-                          "avaParabolaRestTest", "avaHockeyChannelEntTest", "avaHockeySmallNullTest", "avaInclinedPlaneEntResTest"])
+@pytest.mark.parametrize("testName", ["avaBowlNullTest", "avaFlatPlaneNullTest", "avaHelixNullTest",
+                         "avaHelixChannelEntTest", "avaParabolaRestTest",
+                         "avaHockeyChannelEntTest", "avaHockeySmallNullTest", "avaInclinedPlaneEntResTest"])
 def test_com1DFAMain(tmp_path, testName):
     """ test call to com1DFA module """
 
@@ -74,7 +75,7 @@ def test_com1DFAMain(tmp_path, testName):
 
     # get input data
     dirPath = os.path.dirname(__file__)
-    avaDir  = os.path.join(tmp_path, avaName)
+    avaDir = os.path.join(tmp_path, avaName)
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
 

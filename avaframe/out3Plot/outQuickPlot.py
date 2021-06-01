@@ -74,7 +74,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     # Difference between datasets
     dataDiff = data1 - data2
-    dataDiff = np.where((data1==0) & (data2==0), np.nan, dataDiff)
+    dataDiff = np.where((data1 == 0) & (data2 == 0), np.nan, dataDiff)
     diffMax = np.nanmax(dataDiff)
     diffMin = np.nanmin(dataDiff)
     diffMean = np.nanmean(dataDiff)
@@ -150,7 +150,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
         ax4.set_title('Difference capped at %.1f times max difference: +-%.2f' % (cutVal, elev_max))
 
     # for difference histogramm - remove dataDiff == 0 values from array
-    dataDiffZoom = np.where((dataDiffPlot<-elev_max) | (dataDiffPlot>elev_max), np.nan, dataDiffPlot)
+    dataDiffZoom = np.where((dataDiffPlot <- elev_max) | (dataDiffPlot > elev_max), np.nan, dataDiffPlot)
     diffMaxZoom = np.nanmax(dataDiffZoom)
     diffMinZoom = np.nanmin(dataDiffZoom)
     diffMeanZoom = np.nanmean(dataDiffZoom)
@@ -216,7 +216,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
 
 def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', simType='null', comModule='com1DFA', comModule2=''):
-    """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension) and save to
+    """ Plot simulation result and compare to reference solution
+        (two raster datasets of identical dimension) and save to
         Outputs/out3Plot within avalanche directoy
 
         figure 1: plot raster data for dataset1, dataset2 and their difference,
@@ -233,7 +234,8 @@ def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', sim
         val : str
             value of parameter
         parameter : str
-            parameter that is used to filter simulation results within folder, for example, symType, parameter variation, etc.
+            parameter that is used to filter simulation results within folder,
+            for example, symType, parameter variation, etc.
         cfg : dict
             global configuration settings
         cfgPlot : dict
@@ -289,7 +291,7 @@ def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', sim
     for rel in relAreas:
 
         # Initialise plotList
-        plotDict = {'relArea' : rel, 'plots': [], 'difference': [], 'stats': []}
+        plotDict = {'relArea': rel, 'plots': [], 'difference': [], 'stats': []}
 
         # get list of indices of files that are of correct simulation type and result paramete
         indSuffix = [-9999, -9999]
@@ -327,7 +329,8 @@ def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', sim
 
 
 def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, cfgPlot, suffix):
-    """ Plot simulation result and compare to reference solution (two raster datasets of identical dimension) and save to
+    """ Plot simulation result and compare to reference solution
+        (two raster datasets of identical dimension) and save to
         Outputs/out3Plot within avalanche directoy
 
         figure 1: plot raster data for dataset1, dataset2 and their difference,
@@ -344,7 +347,8 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, cfgPlo
         val : str
             value of parameter
         parameter : str
-            parameter that is used to filter simulation results within folder, for example, symType, parameter variation, etc.
+            parameter that is used to filter simulation results
+            within folder, for example, symType, parameter variation, etc.
         cfg : dict
             global configuration settings
         cfgPlot : dict
@@ -492,7 +496,6 @@ def quickPlotOne(inputDir, datafile, cfg, locVal, axis, resType=''):
     plotList = generateOnePlot(dataDict, outDir, cfg, plotDict)
 
 
-
 def generateOnePlot(dataDict, outDir, cfg, plotDict):
     """ Create plots of ascii dataset
 
@@ -574,7 +577,6 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
         ax3.set_title('Profile at y ~ %d [%s] (%d)' % (location, unit, ny_loc))
 
     fig.savefig(os.path.join(outDir, 'Profiles_%s.%s' % (name1, pU.outputFormat)))
-
 
     log.info('Figures saved to: %s' % outDir)
 
