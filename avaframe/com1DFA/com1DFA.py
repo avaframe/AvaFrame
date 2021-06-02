@@ -358,7 +358,6 @@ def com1DFAMain(cfg, avaDir):
                 execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
                 # save initial particle distribution
                 saveInitialParticleDistribution(avaDir, logName, dem)
-                # trackParticle(avaDir, logName, dem)
                 # saveMesh(avaDir, logName, dem)
 
                 # Create dictionary
@@ -471,6 +470,8 @@ def com1DFAMain(cfg, avaDir):
 
 
 def saveInitialParticleDistribution(avaDir, simName, dem):
+    """ fetch the initial particles produced by com1DFA and saved to the log file
+    """
     x = np.empty(0)
     y = np.empty(0)
     z = np.empty(0)
@@ -497,34 +498,9 @@ def saveInitialParticleDistribution(avaDir, simName, dem):
     savePartToPickle(particles, partDit)
 
 
-def trackParticle(avaDir, simName, dem):
-    DEM = IOf.readRaster(dem)
-    header = DEM['header']
-    # Read log file
-    fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName))
-    with open(fileName, 'r') as file:
-        for line in file:
-            if "TrackPart" in line:
-                ltime = line.split(', ')
-                t = np.array([float(ltime[1])])
-                x = np.array([float(ltime[2])])
-                y = np.array([float(ltime[3])])
-                z = np.array([float(ltime[4])])
-                ux = np.array([float(ltime[5])])
-                uy = np.array([float(ltime[6])])
-                uz = np.array([float(ltime[7])])
-                m = np.array([float(ltime[8])])
-
-                x = x - header.xllcenter
-                y = y - header.yllcenter
-                particles = {'t': t, 'x': x, 'y': y, 'z': z, 'ux': ux, 'uy': uy, 'uz': uz, 'm': m}
-
-                partDit = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'particles', simName)
-                fU.makeADir(partDit)
-                savePartToPickle(particles, partDit)
-
-
 def saveMesh(avaDir, simName, dem):
+    """ fetch the mesh produced by com1DFA and saved to the log file
+    """
     Nx = np.empty(0)
     Ny = np.empty(0)
     Nz = np.empty(0)
