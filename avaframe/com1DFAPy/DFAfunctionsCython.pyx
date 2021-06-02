@@ -40,7 +40,7 @@ ctypedef int dtypel_t
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
+def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, double csz=1, double xllc=0, double yllc=0):
     """ Interpolate from unstructured points to grid
 
     Interpolate unstructured points on a structured grid using bilinear interpolation
@@ -73,24 +73,18 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
     cdef int nrow = int(n)
     cdef int ncol = int(m)
     cdef int Lx0, Ly0, Lx1, Ly1
-    cdef double Lx, Ly, xx, yy, zz
-    cdef double xllc0 = xllc
-    cdef double yllc0 = yllc
-    cdef double csz0 = csz
-    cdef double[:] XX = x
-    cdef double[:] YY = y
-    cdef double[:] ZZ = z
-    cdef double[:] Z = Z0.flatten()
-    cdef int Npart = len(x)
+    cdef double Lx, Ly, x, y, z
+    cdef double[:] zRaster = Z0.flatten()
+    cdef int Npart = len(xArray)
     cdef int j, ic
 
     for j in range(Npart):
-      xx = XX[j]
-      yy = YY[j]
-      zz = ZZ[j]
+      x = xArray[j]
+      y = yArray[j]
+      z = zArray[j]
       # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-      Lx = (xx - xllc0) / csz0
-      Ly = (yy - yllc0) / csz0
+      Lx = (x - xllc) / csz
+      Ly = (y - yllc) / csz
 
       # find coordinates of the 4 nearest cornes on the raster
       Lx0 = <int>math.floor(Lx)
@@ -103,23 +97,23 @@ def pointsToRasterC(x, y, z, Z0, csz=1, xllc=0, yllc=0):
 
       # add the component of the points value to the 4 neighbour grid points
       # start with the lower left
-      f11 = zz*(1-dx)*(1-dy)
+      f11 = z*(1-dx)*(1-dy)
       ic = Lx0 + ncol * Ly0
-      Z[ic] = Z[ic] + f11
+      zRaster[ic] = zRaster[ic] + f11
       # lower right
-      f21 = zz*dx*(1-dy)
+      f21 = z*dx*(1-dy)
       ic = Lx1 + ncol * Ly0
-      Z[ic] = Z[ic] + f21
+      zRaster[ic] = zRaster[ic] + f21
       # uper left
-      f12 = zz*(1-dx)*dy
+      f12 = z*(1-dx)*dy
       ic = Lx0 + ncol * Ly1
-      Z[ic] = Z[ic] + f12
+      zRaster[ic] = zRaster[ic] + f12
       # and uper right
-      f22 = zz*dx*dy
+      f22 = z*dx*dy
       ic = Lx1 + ncol * Ly1
-      Z[ic] = Z[ic] + f22
+      zRaster[ic] = zRaster[ic] + f22
 
-    Z1 = np.reshape(np.asarray(Z), (np.shape(Z0)))
+    Z1 = np.reshape(np.asarray(zRaster), (np.shape(Z0)))
 
     return Z1
 
@@ -168,19 +162,19 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef int Npart = particles['Npart']
   cdef double csz = dem['header'].cellsize
   cdef double[:, :] ZDEM = dem['rasterData']
-  cdef double[:, :] Nx = dem['Nx']
-  cdef double[:, :] Ny = dem['Ny']
-  cdef double[:, :] Nz = dem['Nz']
+  cdef double[:, :] nxArray = dem['Nx']
+  cdef double[:, :] nyArray = dem['Ny']
+  cdef double[:, :] nzArray = dem['Nz']
   cdef double[:, :] areaRatser = dem['areaRaster']
   # read particles and fields
   cdef double[:] mass = particles['m']
-  cdef double[:] H = particles['h']
-  cdef double[:] X = particles['x']
-  cdef double[:] Y = particles['y']
-  cdef double[:] Z = particles['z']
-  cdef double[:] UX = particles['ux']
-  cdef double[:] UY = particles['uy']
-  cdef double[:] UZ = particles['uz']
+  cdef double[:] hArray = particles['h']
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] zArray = particles['z']
+  cdef double[:] uxArray = particles['ux']
+  cdef double[:] uyArray = particles['uy']
+  cdef double[:] uzArray = particles['uz']
   cdef double[:, :] VX = fields['Vx']
   cdef double[:, :] VY = fields['Vy']
   cdef double[:, :] VZ = fields['Vz']
@@ -209,20 +203,20 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   # loop on particles
   for j in range(Npart):
       m = mass[j]
-      x = X[j]
-      y = Y[j]
-      z = Z[j]
-      h = H[j]
-      ux = UX[j]
-      uy = UY[j]
-      uz = UZ[j]
+      x = xArray[j]
+      y = yArray[j]
+      z = zArray[j]
+      h = hArray[j]
+      ux = uxArray[j]
+      uy = uyArray[j]
+      uz = uzArray[j]
       indCellX = indXDEM[j]
       indCellY = indYDEM[j]
       # deduce area
       areaPart = m / (h * rho)
       # get normal at the particle location
       Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
-      nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+      nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
       nx, ny, nz = normalize(nx, ny, nz)
 
       # add artificial viscosity
@@ -254,9 +248,9 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       yEnd = y + dt * uy
       zEnd = z + dt * uz
       # this point is not necessarily on the surface, project it on the surface
-      xEnd, yEnd, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = normalProjectionIteratrive(xEnd, yEnd, zEnd, ZDEM, Nx, Ny, Nz, csz, interpOption)
+      xEnd, yEnd, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = normalProjectionIteratrive(xEnd, yEnd, zEnd, ZDEM, nxArray, nyArray, nzArray, csz, interpOption)
       # get the normal at this location
-      nxEnd, nyEnd, nzEnd = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+      nxEnd, nyEnd, nzEnd = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
       nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
       # get average of those normals
       nxAvg = nx + nxEnd
@@ -336,9 +330,9 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag)
       forceFrict[j] = forceFrict[j] - cResPart
 
-      UX[j] = ux
-      UY[j] = uy
-      UZ[j] = uz
+      uxArray[j] = ux
+      uyArray[j] = uy
+      uzArray[j] = uz
 
   # save results
   force['dM'] = np.asarray(dM)
@@ -346,9 +340,9 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   force['forceY'] = np.asarray(forceY)
   force['forceZ'] = np.asarray(forceZ)
   force['forceFrict'] = np.asarray(forceFrict)
-  particles['ux'] = np.asarray(UX)
-  particles['uy'] = np.asarray(UY)
-  particles['uz'] = np.asarray(UZ)
+  particles['ux'] = np.asarray(uxArray)
+  particles['uy'] = np.asarray(uyArray)
+  particles['uz'] = np.asarray(uzArray)
   particles['m'] = np.asarray(mass)
 
   # update mass available for entrainement
@@ -485,20 +479,20 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double csz = dem['header'].cellsize
   cdef double mu = cfg.getfloat('mu')
   cdef int Npart = particles['Npart']
-  cdef double[:, :] Nx = dem['Nx']
-  cdef double[:, :] Ny = dem['Ny']
-  cdef double[:, :] Nz = dem['Nz']
+  cdef double[:, :] nxArray = dem['Nx']
+  cdef double[:, :] nyArray = dem['Ny']
+  cdef double[:, :] nzArray = dem['Nz']
   cdef double[:, :] ZDEM = dem['rasterData']
   # initializeinter = np.zeros(N, dtype=np.float64)
   cdef double[:] mass = particles['m']
   cdef double[:] S = particles['s']
   cdef double[:] L = particles['l']
-  cdef double[:] X = particles['x']
-  cdef double[:] Y = particles['y']
-  cdef double[:] Z = particles['z']
-  cdef double[:] UX = particles['ux']
-  cdef double[:] UY = particles['uy']
-  cdef double[:] UZ = particles['uz']
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] zArray = particles['z']
+  cdef double[:] uxArray = particles['ux']
+  cdef double[:] uyArray = particles['uy']
+  cdef double[:] uzArray = particles['uz']
   cdef double[:] forceX = force['forceX']
   cdef double[:] forceY = force['forceY']
   cdef double[:] forceZ = force['forceZ']
@@ -516,14 +510,14 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
   cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
-  cdef double[:] MNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] XNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] YNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] ZNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] SNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] UXNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] UYNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] UZNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] mNewArray = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] xNewArray = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] yNewArray = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] zNewArray = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] sNewArray = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] uxArrayNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] uyArrayNew = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] uzArrayNew = np.zeros(Npart, dtype=np.float64)
   cdef int Lxy[4]
   cdef double w[4]
   cdef int LxyNew[4]
@@ -533,12 +527,12 @@ def updatePositionC(cfg, particles, dem, force, DT):
   # loop on particles
   for j in range(Npart):
     m = mass[j]
-    x = X[j]
-    y = Y[j]
-    z = Z[j]
-    ux = UX[j]
-    uy = UY[j]
-    uz = UZ[j]
+    x = xArray[j]
+    y = yArray[j]
+    z = zArray[j]
+    ux = uxArray[j]
+    uy = uyArray[j]
+    uz = uzArray[j]
     s = S[j]
     l = L[j]
 
@@ -571,15 +565,15 @@ def updatePositionC(cfg, particles, dem, force, DT):
     yNew = y + dtStop * 0.5 * (uy + uyNew)
     zNew = z + dtStop * 0.5 * (uz + uzNew)
     # make sure particle is on the mesh (normal reprojection!!)
-    xNew, yNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = normalProjectionIteratrive(xNew, yNew, zNew, ZDEM, Nx, Ny, Nz, csz, interpOption)
+    xNew, yNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = normalProjectionIteratrive(xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, interpOption)
     zNew = getScalar(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
-    nxNew, nyNew, nzNew = getVector(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], Nx, Ny, Nz)
+    nxNew, nyNew, nzNew = getVector(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
     # compute the distance traveled by the particle
     lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
     # compute average normal between the beginning and end of the time step
     Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
-    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
     nx, ny, nz = normalize(nx, ny, nz)
     nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
     # compute the horizontal distance traveled by the particle (corrected with
@@ -612,23 +606,23 @@ def updatePositionC(cfg, particles, dem, force, DT):
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
 
-    XNew[j] = xNew
-    YNew[j] = yNew
-    ZNew[j] = zNew
-    UXNew[j] = uxNew
-    UYNew[j] = uyNew
-    UZNew[j] = uzNew
-    SNew[j] = sNew
-    MNew[j] = mNew
-  particles['ux'] = np.asarray(UXNew)
-  particles['uy'] = np.asarray(UYNew)
-  particles['uz'] = np.asarray(UZNew)
-  particles['s'] = np.asarray(SNew)
-  particles['m'] = np.asarray(MNew)
+    xNewArray[j] = xNew
+    yNewArray[j] = yNew
+    zNewArray[j] = zNew
+    uxArrayNew[j] = uxNew
+    uyArrayNew[j] = uyNew
+    uzArrayNew[j] = uzNew
+    sNewArray[j] = sNew
+    mNewArray[j] = mNew
+  particles['ux'] = np.asarray(uxArrayNew)
+  particles['uy'] = np.asarray(uyArrayNew)
+  particles['uz'] = np.asarray(uzArrayNew)
+  particles['s'] = np.asarray(sNewArray)
+  particles['m'] = np.asarray(mNewArray)
   particles['mTot'] = np.sum(particles['m'])
-  particles['x'] = np.asarray(XNew)
-  particles['y'] = np.asarray(YNew)
-  particles['z'] = np.asarray(ZNew)
+  particles['x'] = np.asarray(xNewArray)
+  particles['y'] = np.asarray(yNewArray)
+  particles['z'] = np.asarray(zNewArray)
   particles['massEntrained'] = np.asarray(massEntrained)
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
@@ -711,11 +705,11 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] VZBilinear = np.zeros((nrows, ncols))
 
   cdef double[:] mass = particles['m']
-  cdef double[:] X = particles['x']
-  cdef double[:] Y = particles['y']
-  cdef double[:] UX = particles['ux']
-  cdef double[:] UY = particles['uy']
-  cdef double[:] UZ = particles['uz']
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] uxArray = particles['ux']
+  cdef double[:] uyArray = particles['uy']
+  cdef double[:] uzArray = particles['uz']
   cdef double[:, :] PFV = fields['pfv']
   cdef double[:, :] PP = fields['ppr']
   cdef double[:, :] PFD = fields['pfd']
@@ -733,11 +727,11 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef int indx, indy
 
   for j in range(Npart):
-    x = X[j]
-    y = Y[j]
-    ux = UX[j]
-    uy = UY[j]
-    uz = UZ[j]
+    x = xArray[j]
+    y = yArray[j]
+    ux = uxArray[j]
+    uy = uyArray[j]
+    uz = uzArray[j]
     m = mass[j]
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
@@ -784,8 +778,8 @@ def updateFieldsC(cfg, particles, dem, fields):
 
 
   for j in range(Npart):
-    x = X[j]
-    y = Y[j]
+    x = xArray[j]
+    y = yArray[j]
     Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
     hbb = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], FDBilinear)
     hBB[j] = hbb
@@ -836,8 +830,8 @@ def getNeighboursC(particles, dem):
     # get particle location
     cdef int Npart = particles['Npart']
     cdef int j
-    cdef double[:] x = particles['x']
-    cdef double[:] y = particles['y']
+    cdef double[:] xArray = particles['x']
+    cdef double[:] yArray = particles['y']
 
     # initialize outputs
     cdef int nCellsNeighbourGrid = (nColsNeighbourGrid-1)*(nRowsNeighbourGrid-1)
@@ -850,8 +844,8 @@ def getNeighboursC(particles, dem):
     # Count number of particles in each SPH grid cell
     cdef int indx, indy, ic
     for j in range(Npart):
-      indx = int(x[j] / cszNeighbourGrid)
-      indy = int(y[j] / cszNeighbourGrid)
+      indx = int(xArray[j] / cszNeighbourGrid)
+      indy = int(yArray[j] / cszNeighbourGrid)
       # get index of cell containing the particle
       ic = indx + (nColsNeighbourGrid-1) * indy
       indPartInCell[ic+1] = indPartInCell[ic+1] + 1
@@ -861,13 +855,13 @@ def getNeighboursC(particles, dem):
 
     # make the list of which particles are in which cell
     for j in range(Npart):
-        indx = int(x[j] / cszNeighbourGrid)
-        indy = int(y[j] / cszNeighbourGrid)
+        indx = int(xArray[j] / cszNeighbourGrid)
+        indy = int(yArray[j] / cszNeighbourGrid)
         ic = indx + (nColsNeighbourGrid-1) * indy
         partInCell[indPartInCell2[ic+1]-1] = j
         indPartInCell2[ic+1] = indPartInCell2[ic+1] - 1
-        indXDEM[j] = int(x[j] / cszDEM)
-        indYDEM[j] = int(y[j] / cszDEM)
+        indXDEM[j] = int(xArray[j] / cszDEM)
+        indYDEM[j] = int(yArray[j] / cszDEM)
         # get index of cell containing the particle
         inCellDEM[j] = indXDEM[j] + (nColsDEM-1) * indYDEM[j]
 
@@ -906,11 +900,11 @@ def computeForceSPHC(cfg, particles, force, dem, gradient=0):
   # get DEM header and normal field
   header = dem['header']
   cszNormal = header.cellsize
-  Nx = dem['Nx']
-  Ny = dem['Ny']
-  Nz = dem['Nz']
+  nxArray = dem['Nx']
+  nyArray = dem['Ny']
+  nzArray = dem['Nz']
 
-  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, headerNeighbourGrid, cszNormal, Nx, Ny, Nz, gradient)
+  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, headerNeighbourGrid, cszNormal, nxArray, nyArray, nzArray, gradient)
   forceSPHX = np.asarray(forceSPHX)
   forceSPHY = np.asarray(forceSPHY)
   forceSPHZ = np.asarray(forceSPHZ)
@@ -924,8 +918,8 @@ def computeForceSPHC(cfg, particles, force, dem, gradient=0):
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:, :] Nx, double[:, :] Ny,
-                 double[:, :] Nz, gradient):
+def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:, :] nxArray, double[:, :] nyArray,
+                 double[:, :] nzArray, gradient):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -940,11 +934,11 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
       neighbour search header dictionary (information about SPH grid)
   cszNormal : double
       cell size of normal vector Grid
-  Nx : 2D numpy array
+  nxArray : 2D numpy array
       x component of the normal vector of the DEM
-  Ny : 2D numpy array
+  nyArray : 2D numpy array
       y component of the normal vector of the DEM
-  Nz : 2D numpy array
+  nzArray : 2D numpy array
       z component of the normal vector of the DEM
       row index of the location of the particles
   gradient : int
@@ -980,13 +974,13 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
   # particle information
   cdef double[:] mass = particles['m']
   cdef double[:] h = particles['h']
-  cdef double[:] X = particles['x']
-  cdef double[:] Y = particles['y']
-  cdef double[:] Z = particles['z']
-  cdef double[:] UX = particles['ux']
-  cdef double[:] UY = particles['uy']
-  cdef double[:] UZ = particles['uz']
-  cdef int N = X.shape[0]
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] zArray = particles['z']
+  cdef double[:] uxArray = particles['ux']
+  cdef double[:] uyArray = particles['uy']
+  cdef double[:] uzArray = particles['uz']
+  cdef int N = xArray.shape[0]
 
   # initialize variables and outputs
   cdef double[:] GHX = np.zeros(N, dtype=np.float64)
@@ -998,7 +992,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
   cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr
   cdef double g1, g2, g11, g12, g22, g33
   cdef double m11, m12, m22, GG1, GG2
-  cdef double xx, yy, zz, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
+  cdef double x, y, z, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
   cdef double dx, dy, dz, dn, r, hr, dwdr, wKernel
   cdef int Lxy[4]
   cdef double w[4]
@@ -1017,20 +1011,20 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
     m11 = 0
     m12 = 0
     m22 = 0
-    xx = X[j]
-    yy = Y[j]
-    zz = Z[j]
-    ux = UX[j]
-    uy = UY[j]
-    uz = UZ[j]
+    x = xArray[j]
+    y = yArray[j]
+    z = zArray[j]
+    ux = uxArray[j]
+    uy = uyArray[j]
+    uz = uzArray[j]
     # locate particle in SPH grid
-    indx = int(xx / cszNeighbourGrid)
-    indy = int(yy / cszNeighbourGrid)
+    indx = int(x / cszNeighbourGrid)
+    indy = int(y / cszNeighbourGrid)
 
     if SPHoption > 1:
       # get normal vector
-      Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xx, yy, cszNormal, interpOption)
-      nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+      Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, cszNormal, interpOption)
+      nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
       nx, ny, nz = normalize(nx, ny, nz)
       # projection of gravity on normal vector
       gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
@@ -1070,9 +1064,9 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
             # index of particle in neighbour box
             l = partInCell[p]
             if j != l:
-                dx = X[l] - xx
-                dy = Y[l] - yy
-                dz = Z[l] - zz
+                dx = xArray[l] - x
+                dy = yArray[l] - y
+                dz = zArray[l] - z
                 if SPHoption == 1:
                   dz = 0
                   # get norm of r = xj - xl
@@ -1228,7 +1222,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, double cszNormal, double[:
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz, int[:] indX, int[:] indY):
+def computeFDC(cfg, particles, header, double[:, :] nxArray, double[:, :] nyArray, double[:, :] nzArray, int[:] indX, int[:] indY):
   """ compute flow depth at particle location (SPH flow depth)
 
   Cython implementation
@@ -1261,19 +1255,19 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   cdef int interpOption = cfg.getint('interpOption')
   cdef double csz = header.cellsize
   cdef double[:] mass = particles['m']
-  cdef double[:] X = particles['x']
-  cdef double[:] Y = particles['y']
-  cdef double[:] Z = particles['z']
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] zArray = particles['z']
   cdef double[:] H1 = particles['h']
-  cdef double[:] UX = particles['ux']
-  cdef double[:] UY = particles['uy']
-  cdef double[:] UZ = particles['uz']
+  cdef double[:] uxArray = particles['ux']
+  cdef double[:] uyArray = particles['uy']
+  cdef double[:] uzArray = particles['uz']
   # cdef double[:] gradx = particles['gradx']
   # cdef double[:] grady = particles['grady']
   # cdef double[:] gradz = particles['gradz']
   cdef int[:] indPartInCell = particles['indPartInCell']
   cdef int[:] partInCell = particles['partInCell']
-  cdef int N = X.shape[0]
+  cdef int N = xArray.shape[0]
   cdef int nrows = header.nrows
   cdef int ncols = header.ncols
   # SPH kernel
@@ -1285,7 +1279,7 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   cdef double[:] C = np.zeros(N)
   cdef double dn, h, nx, ny, nz, gx, gy, gz
   cdef int j
-  cdef double xx, yy, zz
+  cdef double x, y, z
   cdef double dx, dy, dz, r, hr, dwdr, massl, hl, ww
   cdef int Lxy[4]
   cdef double w[4]
@@ -1299,9 +1293,9 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
   # TcpuSPH = 0
   # Tcpuadd = 0
   for j in range(N):
-    xx = X[j]
-    yy = Y[j]
-    zz = Z[j]
+    x = xArray[j]
+    y = yArray[j]
+    z = zArray[j]
     h = 0
     ww = 0
     gx = 0
@@ -1309,8 +1303,8 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
     gz = 0
     indx = indX[j]
     indy = indY[j]
-    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xx, yy, csz, interpOption)
-    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
+    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
     nx, ny, nz = normalize(nx, ny, nz)
 
     # startTime = time.time()
@@ -1335,9 +1329,9 @@ def computeFDC(cfg, particles, header, double[:, :] Nx, double[:, :] Ny, double[
             l = partInCell[p]
             if j != l:
                 # L = np.append(L, l)
-                dx = X[l] - xx
-                dy = Y[l] - yy
-                dz = Z[l] - zz
+                dx = xArray[l] - x
+                dy = yArray[l] - y
+                dz = zArray[l] - z
                 # get coordinates in local coord system
                 dn = nx*dx + ny*dy + nz*dz
                 dx = dx - dn*nx
@@ -1573,7 +1567,7 @@ def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeig
 @cython.wraparound(False)
 @cython.cdivision(True)
 cdef (double, double, int, int, int, int, double, double, double, double) normalProjectionIteratrive(
-  double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] Nx, double[:,:] Ny, double[:,:] Nz, double csz, int interpOption):
+  double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray, double[:,:] nzArray, double csz, int interpOption):
   """ Find the orthogonal projection of a point on a mesh
 
   Iterative method to find the projection of a point on a surface defined by its mesh
@@ -1630,7 +1624,7 @@ cdef (double, double, int, int, int, int, double, double, double, double) normal
     zTemp = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], ZDEM)
     # normal vector at this vertical projection location
     # nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
-    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], 0.25, 0.25, 0.25, 0.25, Nx, Ny, Nz)
+    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], 0.25, 0.25, 0.25, 0.25, nxArray, nyArray, nzArray)
     nx, ny, nz = normalize(nx, ny, nz)
     zn = (xNew-xNew) * nx + (yNew-yNew) * ny + (zTemp-zNew) * nz
     # correct position with the normal part
@@ -1660,25 +1654,20 @@ cdef (double, double, int, int, int, int, double, double, double, double) normal
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def projOnRaster(X, Y, V, csz, interp):
+def projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vArray, double csz, int interpOption):
   """ Interpolate vector field from grid to points
   """
-  cdef int N = X.shape[0]
-  cdef int interpOption = interp
-  cdef double[:] XX = X
-  cdef double[:] YY = Y
-  cdef double[:, :] VV = V
-  cdef double CSZ = csz
+  cdef int N = xArray.shape[0]
   cdef double x, y
   cdef int Lxy[4]
   cdef double w[4]
   cdef int j
   cdef double[:] v = np.zeros(N)
   for j in range(N):
-    x = XX[j]
-    y = YY[j]
-    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, CSZ, interpOption)
-    v[j] = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], VV)
+    x = xArray[j]
+    y = yArray[j]
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
+    v[j] = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], vArray)
 
   return np.asarray(v)
 
