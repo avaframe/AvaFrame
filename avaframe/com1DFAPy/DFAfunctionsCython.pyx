@@ -444,7 +444,7 @@ cdef double computeResForce(double hRes, double h, double areaPart, double rho, 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def updatePositionC(cfg, particles, dem, force):
+def updatePositionC(cfg, particles, dem, force, DT):
   """ update particle position using euler forward scheme
 
   Cython implementation
@@ -464,7 +464,7 @@ def updatePositionC(cfg, particles, dem, force):
   particles : dict
       particles dictionary at t + dt
   """
-  DT = cfg.getfloat('dt')
+
   cdef double dt = DT
   cdef double stopCrit = cfg.getfloat('stopCrit')
   cdef double uFlowingThreshold = cfg.getfloat('uFlowingThreshold')

@@ -1137,7 +1137,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     # update velocity and particle position
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
-    particles = DFAfunC.updatePositionC(cfg, particles, dem, force)
+    particles = DFAfunC.updatePositionC(cfg, particles, dem, force, dt)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
