@@ -578,10 +578,10 @@ def updatePositionC(cfg, particles, dem, force, DT):
     # compute the distance traveled by the particle
     lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
     # compute average normal between the beginning and end of the time step
-    # Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
-    # nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
-    # nx, ny, nz = normalize(nx, ny, nz)
-    # nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(x, y, csz, interpOption)
+    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+    nx, ny, nz = normalize(nx, ny, nz)
+    nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
     sNew = s + nzNew*norm((xNew-x), (yNew-y), (zNew-z))
@@ -1572,7 +1572,8 @@ def getWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose getWeig
 
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (double, double, int, int, int, int, double, double, double, double) normalProjectionIteratrive(double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] Nx, double[:,:] Ny, double[:,:] Nz, double csz, int interpOption):
+cdef (double, double, int, int, int, int, double, double, double, double) normalProjectionIteratrive(
+  double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] Nx, double[:,:] Ny, double[:,:] Nz, double csz, int interpOption):
   """ Find the orthogonal projection of a point on a mesh
 
   Iterative method to find the projection of a point on a surface defined by its mesh
@@ -1715,7 +1716,9 @@ cdef double getScalar(int Lxy0, int Lxy1, int Lxy2, int Lxy3, double w0, double 
 
 
 @cython.boundscheck(False)
-cdef (double, double, double) getVector(int Lxy0, int Lxy1, int Lxy2, int Lxy3, double w0, double w1, double w2, double w3, double[:, :] Nx, double[:, :] Ny, double[:, :] Nz):
+cdef (double, double, double) getVector(
+  int Lxy0, int Lxy1, int Lxy2, int Lxy3, double w0, double w1, double w2, double w3,
+  double[:, :] Nx, double[:, :] Ny, double[:, :] Nz):
   """ Interpolate vector field from grid to single point location
 
   Originaly created to get the normal vector at location (x,y) given the
