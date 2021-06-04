@@ -156,6 +156,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef double curvAcceleration = cfg.getfloat('curvAcceleration')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef int interpOption = cfg.getint('interpOption')
+  cdef int explicitFriction = cfg.getint('explicitFriction')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef double dt = dT
   cdef double mu = cfg.getfloat('mu')
@@ -301,7 +302,11 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       if uMag<velMagMin:
         uMag = velMagMin
       forceBotTang = - areaPart * tau
-      forceFrict[j] = forceFrict[j] - forceBotTang/uMag
+      if explicitFriction>0:
+        # explicit formulation
+        forceFrict[j] = forceFrict[j] - forceBotTang
+      else:
+        forceFrict[j] = forceFrict[j] - forceBotTang/uMag
 
       # compute entrained mass
       entrMassCell = entrMassRaster[indCellY, indCellX]
@@ -327,7 +332,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
 
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
-      cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag)
+      cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
       forceFrict[j] = forceFrict[j] - cResPart
 
       uxArray[j] = ux
@@ -413,7 +418,7 @@ cdef (double, double) computeEntMassAndForce(double dt, double entrMassCell, dou
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef double computeResForce(double hRes, double h, double areaPart, double rho, double cResCell, double uMag):
+cdef double computeResForce(double hRes, double h, double areaPart, double rho, double cResCell, double uMag, int explicitFriction):
   """ compute force component due to resistance
 
   Parameters
@@ -430,6 +435,8 @@ cdef double computeResForce(double hRes, double h, double areaPart, double rho, 
       resisance coefficient of cell
   uMag : float
       particle speed (velocity magnitude)
+  explicitFriction: int
+    if 1 add resistance with an explicit method. Implicit otherwise
 
   Returns
   -------
@@ -440,7 +447,11 @@ cdef double computeResForce(double hRes, double h, double areaPart, double rho, 
   cdef double cRecResPart
   if(h < hRes):
       hResEff = h
-  cRecResPart = - rho * areaPart * hResEff * cResCell * uMag
+  if explicitFriction>0:
+    # explicit formulation
+    cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag
+  else:
+    cRecResPart = - rho * areaPart * hResEff * cResCell * uMag
   return cRecResPart
 
 
@@ -476,6 +487,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double rho = cfg.getfloat('rho')
   cdef int interpOption = cfg.getint('interpOption')
+  cdef int explicitFriction = cfg.getint('explicitFriction')
   cdef double csz = dem['header'].cellsize
   cdef int Npart = particles['Npart']
   cdef double[:, :] nxArray = dem['Nx']
@@ -507,7 +519,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
   cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
-  cdef double xDir, yDir, zDir, ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
+  cdef double ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
   cdef double[:] mNewArray = np.zeros(Npart, dtype=np.float64)
   cdef double[:] xNewArray = np.zeros(Npart, dtype=np.float64)
@@ -550,11 +562,8 @@ def updatePositionC(cfg, particles, dem, force, DT):
     uyNew = uy + ForceDriveY * dt / m
     uzNew = uz + ForceDriveZ * dt / m
 
-    xDir, yDir, zDir = normalize(uxNew, uyNew, uzNew)
-    uxNew = uxNew / (1.0 + dt * forceFrict[j] / m)
-    uyNew = uyNew / (1.0 + dt * forceFrict[j] / m)
-    uzNew = uzNew / (1.0 + dt * forceFrict[j] / m)
-    dtStop = dt
+    # take friction force into account
+    uxNew, uyNew, uzNew, dtStop = account4FrictionForce(uxNew, uyNew, uzNew, m, dt, forceFrict[j], uMag, explicitFriction)
 
     # update mass (already done un computeForceC)
     mNew = m
@@ -659,6 +668,70 @@ def updatePositionC(cfg, particles, dem, force, DT):
   # split particles with too much mass
   particles = DFAtls.splitPart(cfg, particles, dem)
   return particles
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef (double, double, double, double) account4FrictionForce(double ux, double uy, double uz, double m, double dt, double forceFrict, double uMag, int explicitFriction):
+  """ update velocity with friction force
+
+  Parameters
+  ----------
+  ux: float
+      x velocity
+  uy: float
+      y velocity
+  uz: float
+      z velocity
+  m : float
+      particle area
+  dt : float
+      snow density
+  forceFrict : float
+      resisance coefficient of cell
+  uMag : float
+      particle speed (velocity magnitude)
+  explicitFriction: int
+    if 1 add resistance with an explicit method. Implicit otherwise
+
+  Returns
+  -------
+  cResPart : float
+      resistance component for particle
+  """
+  cdef double xDir, yDir, zDir, uxNew, uyNew, uzNew, uMagNew, dtStop
+
+  if explicitFriction>0:
+    # explicite method
+    uMagNew = norm(ux, uy, uz)
+    # will friction force stop the particle
+    if uMagNew<dt*forceFrict/m:
+      # stop the particle
+      uxNew = 0
+      uyNew = 0
+      uzNew = 0
+      # particle stops after
+      if uMag<=0:
+        dtStop = 0
+      else:
+        dtStop = m * uMagNew / (dt * forceFrict)
+    else:
+      # add friction force in the opposite direction of the motion
+      xDir, yDir, zDir = normalize(ux, uy, uz)
+      uxNew = ux - xDir * forceFrict * dt / m
+      uyNew = uy - yDir * forceFrict * dt / m
+      uzNew = uz - zDir * forceFrict * dt / m
+      dtStop = dt
+  else:
+    # implicite method
+    uxNew = ux / (1.0 + dt * forceFrict / m)
+    uyNew = uy / (1.0 + dt * forceFrict / m)
+    uzNew = uz / (1.0 + dt * forceFrict / m)
+    dtStop = dt
+
+  return uxNew, uyNew, uzNew, dtStop
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
