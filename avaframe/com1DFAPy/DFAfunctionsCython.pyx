@@ -1623,7 +1623,9 @@ cdef (double, double, int, int, int, int, double, double, double, double) normal
     # vertical projection of the point
     zTemp = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], ZDEM)
     # normal vector at this vertical projection location
+    # if we take the normal at the new particle position)
     # nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], Nx, Ny, Nz)
+    # What Peter does: get the normal of the cell center (but still not exactly giving the same results)
     nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], 0.25, 0.25, 0.25, 0.25, nxArray, nyArray, nzArray)
     nx, ny, nz = normalize(nx, ny, nz)
     zn = (xNew-xNew) * nx + (yNew-yNew) * ny + (zTemp-zNew) * nz
