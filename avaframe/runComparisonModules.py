@@ -78,7 +78,7 @@ for avaName in testList:
     # ######################### Run Com1DFAPy #############################
     # Run python DFA
     # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-    _, _, _, _, plotDictcom1DFAPy, reportDictListcom1DFAPy = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile='', relThField='')
+    _, _, _, _, plotDictcom1DFAPy, reportDictListcom1DFAPy = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile='', relThField='')
 
     # Set directory for com1DFAPy report
     reportDir = os.path.join(outDir, 'com1DFAPy', 'reports')
