@@ -8,7 +8,7 @@
 #  Load modules
 import numpy as np
 import os
-from avaframe.com1DFAOrig import com1DFA
+from avaframe.com1DFAOrig import com1DFAOrig as com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.out1Peak import outPlotAllPeak as oP
