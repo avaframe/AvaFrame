@@ -30,7 +30,7 @@ testList = ['avaParabola']
 simType = 'null'
 simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
-outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAOrigvsPyRes')
+outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAOrigvsPy')
 fU.makeADir(outDirReport)
 
 # Start writing markdown style report for standard tests
