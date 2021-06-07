@@ -8,7 +8,7 @@ import pathlib
 
 # Local imports
 from avaframe import runCom1DFA
-from avaframe.com1DFAOrig import com1DFA as com1DFAOrig
+from avaframe.com1DFAOrig import com1DFAOrig
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
 from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools

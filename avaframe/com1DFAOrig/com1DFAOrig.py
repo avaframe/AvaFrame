@@ -159,7 +159,7 @@ def getSimulation(cfg, rel, entResInfo):
     return simTypeList, relName, relDict,  badName
 
 
-def com1DFAMain(cfg, avaDir):
+def com1DFAOrigMain(cfg, avaDir):
     """ Run main model
 
     This will compute a dense flow avalanche
