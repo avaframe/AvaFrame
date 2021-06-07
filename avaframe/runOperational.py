@@ -52,20 +52,21 @@ def runOperational(avalancheDir=''):
     # # ----------------
     # # Run dense flow
     cfg = cfgUtils.getModuleConfig(com1DFA)
-    # reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
+    reportDictList = com1DFA.com1DFAMain(cfg, avalancheDir)
+    pprFile = '/home/felix/tmp/TestAva2/Outputs/com1DFA/peakFiles/slideRelease_null_dfa_0.15500_ppr.asc'
 
     # ----------------
     # Run Alpha Beta
     cfgAB = cfgUtils.getModuleConfig(com2AB)
     resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
-    outAB.writeABtoSHP(resAB)
+    abShpFile = outAB.writeABtoSHP(resAB)
 
-    # # ----------------
-    # # Collect results/plots/report  to a single directory
-    # # make simple plots (com1DFA, com2AB)
-    # # peak file plot
+    # ----------------
+    # Collect results/plots/report  to a single directory
+    # make simple plots (com1DFA, com2AB)
+    # peak file plot
 
-    # # # Generata plots for all peakFiles
+    # # Generata plots for all peakFiles
     # plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
     # reportDictList = []
     # reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
@@ -77,6 +78,8 @@ def runOperational(avalancheDir=''):
 
     # Print time needed
     endTime = time.time()
+
+    return str(abShpFile), pprFile
     # log.info('Took %s seconds to calculate.' % (endTime - startTime))
 
 if __name__ == '__main__':
