@@ -9,7 +9,7 @@ import pathlib
 import glob
 
 # Local imports
-from avaframe.com1DFA import com1DFA
+from avaframe.com1DFAOrig import com1DFAOrig
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
@@ -24,7 +24,7 @@ from benchmarks import simParametersDict
 
 
 # log file name; leave empty to use default runLog.log
-logName = 'runStandardTests'
+logName = 'runStandardTestsOrig'
 
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
@@ -38,7 +38,7 @@ valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
-outDir = os.path.join(os.getcwd(), 'tests', 'reports')
+outDir = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAOrig')
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
@@ -69,22 +69,22 @@ for test in testList:
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # get path to executable
-    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
+    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFAOrig)
     com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
 
     # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfg.ini' % test['AVANAME'])
-    cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
+    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFAOrigCfg.ini' % test['AVANAME'])
+    cfg = cfgUtils.getModuleConfig(com1DFAOrig, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
     # Set timing
     startTime = time.time()
     # Run Standalone DFA
-    reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
+    reportDictList = com1DFAOrig.com1DFAOrigMain(cfg, avaDir)
 
-    modName = 'com1DFA'
+    modName = 'com1DFAOrig'
 
     # Print time needed
     endTime = time.time()
@@ -92,10 +92,10 @@ for test in testList:
     log.info(('Took %s seconds to calculate.' % (timeNeeded)))
 
     # Generata plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avaDir, cfg, cfgMain['FLAGS'])
+    plotDict = oP.plotAllPeakFields(avaDir, cfg, cfgMain['FLAGS'], modName)
 
     # Set directory for report
-    reportDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
+    reportDir = os.path.join(avaDir, 'Outputs', modName, 'reports')
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
@@ -121,7 +121,7 @@ for test in testList:
     cfgAimec['AIMECSETUP']['diffLim'] = '5'
     cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
     cfgAimec['FLAGS']['flagMass'] = 'False'
-    cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFA'
+    cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFAOrig'
     cfgAimec['AIMECSETUP']['testName'] = test['NAME']
 
     # Setup input from com1DFA and reference

@@ -9,7 +9,7 @@ import pathlib
 import glob
 
 # Local imports
-from avaframe.com1DFAPy import runCom1DFA
+from avaframe import runCom1DFA
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
@@ -21,11 +21,11 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from benchmarks import simParametersDict
-import avaframe.com1DFAPy.com1DFA as com1DFA
-import avaframe.com1DFAPy.com1DFA as com1DFAPy
+import avaframe.com1DFA.com1DFA as com1DFA
+
 
 # log file name; leave empty to use default runLog.log
-logName = 'runStandardTestsPy'
+logName = 'runStandardTests'
 
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
@@ -42,7 +42,7 @@ valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
-outDir = os.path.join(os.getcwd(), 'tests', 'reportsPy')
+outDir = os.path.join(os.getcwd(), 'tests', 'reportsCom1DFA')
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
@@ -50,7 +50,7 @@ reportFile = os.path.join(outDir, 'standardTestsReportPy.md')
 with open(reportFile, 'w') as pfile:
     # Write header
     pfile.write('# Standard Tests Report \n')
-    pfile.write('## Compare com1DFAPy simulations to benchmark results \n')
+    pfile.write('## Compare com1DFA simulations to benchmark results \n')
 
 log = logUtils.initiateLogger(outDir, logName)
 log.info('The following benchmark tests will be fetched ')
@@ -73,11 +73,11 @@ for test in testList:
     # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfgPy.ini' % test['AVANAME'])
+    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfg.ini' % test['AVANAME'])
 
     particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile=standardCfg, relThField='', variationDict='')
 
-    modName = 'com1DFAPy'
+    modName = 'com1DFA'
 
     # Fetch correct reportDict according to parametersDict
     simNameComp = cfgUtils.filterSims(avaDir, parametersDict, com1DFA)
@@ -95,14 +95,14 @@ for test in testList:
 
     # +++++++Aimec analysis
     # load configuration
-    aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECPyCfg.ini' % test['AVANAME'])
+    aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' % test['AVANAME'])
     cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
     cfgAimec['AIMECSETUP']['resType'] = 'ppr'
     cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
     cfgAimec['AIMECSETUP']['diffLim'] = '5'
     cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
     cfgAimec['FLAGS']['flagMass'] = 'False'
-    cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFAPy'
+    cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFA'
     cfgAimec['AIMECSETUP']['testName'] = test['NAME']
 
     # Setup input from com1DFA and reference
