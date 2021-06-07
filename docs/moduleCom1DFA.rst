@@ -1,5 +1,5 @@
-com1DFAOrigin: Original DFA-Kernel
-===================================
+com1DFA: DFA-Kernel
+===========================
 
 This module is a simulation tool for dense flow (snow) avalanches (DFA). It is based on
 samosAT (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
