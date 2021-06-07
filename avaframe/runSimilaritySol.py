@@ -10,8 +10,8 @@ import numpy as np
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI
-import avaframe.com1DFAPy.com1DFA as com1DFA
-from avaframe.com1DFAPy import runCom1DFA
+import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe import runCom1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.ana1Tests.simiSol as simiSol
@@ -24,10 +24,6 @@ logName = 'runSimilarityTest'
 # Load general configuration
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = 'data/avaSimilaritySol'
-# set module name, reqiured as long we are in dev phase
-# - because need to create e.g. Output folder for com1DFAPy to distinguish from
-# current com1DFA
-modName = 'com1DFAPy'
 
 # Clean input directory(ies) of old work and output files
 initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
@@ -53,7 +49,7 @@ demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir,
 relDict = simiSol.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
-# call com1DFAPy to perform simulation - provide configuration file and release thickness function
+# call com1DFA to perform simulation - provide configuration file and release thickness function
 Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avalancheDir, cfgFile=simiSolCfg, relThField=relTh)
 
 # compute similartiy solution
@@ -87,7 +83,7 @@ while isinstance(value, float):
     simiDict = simiSol.getSimiSolParameters(solSimi, relDict, ind_time, cfg)
 
     # get particle parameters
-    comSol = simiSol.prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, 'xaxis')
+    comSol = simiSol.prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, 'xaxis')
     comSol['outDirTest'] = outDirTest
     comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
     comSol['Tsave'] = Tsave[ind_t]
@@ -96,7 +92,7 @@ while isinstance(value, float):
     simiSol.plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, 'xaxis')
 
     # get particle parameters
-    comSol = simiSol.prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, 'yaxis')
+    comSol = simiSol.prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, 'yaxis')
     comSol['outDirTest'] = outDirTest
     comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
     comSol['Tsave'] = Tsave[ind_t]

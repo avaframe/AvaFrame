@@ -9,8 +9,8 @@ import numpy as np
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI
-import avaframe.com1DFAPy.com1DFA as com1DFA
-from avaframe.com1DFAPy import runCom1DFA
+import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe import runCom1DFA
 import avaframe.ana1Tests.FPtest as FPtest
 
 # from avaframe.DFAkernel.setParam import *
@@ -25,10 +25,7 @@ logName = 'runFlatPlaneTest'
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = 'data/avaFPtest'
-# set module name, reqiured as long we are in dev phase
-# - because need to create e.g. Output folder for com1DFAPy to distinguish from
-# current com1DFA
-modName = 'com1DFAPy'
+modName = 'com1DFA'
 
 # Clean input directory(ies) of old work and output files
 initProj.cleanModuleFiles(avalancheDir, com1DFA, modName)
@@ -56,7 +53,7 @@ demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(
 relDict = FPtest.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
-# call com1DFAPy to perform simulation - provide configuration file and release thickness function
+# call com1DFA to perform simulation - provide configuration file and release thickness function
 Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avalancheDir, cfgFile=FPCfg, relTh=relTh)
 relDict['dem'] = dem
 # +++++++++POSTPROCESS++++++++++++++++++++++++
@@ -75,7 +72,7 @@ while isinstance(value, float):
     ind_t = min(np.searchsorted(Tsave, value), len(Tsave)-1)
 
     # get particle parameters
-    comSol = FPtest.postProcessFPcom1DFAPy(cfgGen, Particles, Fields, ind_t, relDict)
+    comSol = FPtest.postProcessFPcom1DFA(cfgGen, Particles, Fields, ind_t, relDict)
     comSol['outDirTest'] = outDirTest
     comSol['showPlot'] = showPlot
     comSol['Tsave'] = Tsave[ind_t]

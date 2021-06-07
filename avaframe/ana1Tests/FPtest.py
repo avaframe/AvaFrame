@@ -5,8 +5,8 @@ import logging
 import matplotlib.pyplot as plt
 
 # local imports
-import avaframe.com1DFAPy.DFAtools as DFAtls
-import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
+import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
 
@@ -45,7 +45,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     return relDict
 
 
-def postProcessFPcom1DFAPy(cfgGen, Particles, Fields, ind_t, relDict):
+def postProcessFPcom1DFA(cfgGen, Particles, Fields, ind_t, relDict):
     """ get fields and particles dictionaries for given time step """
 
     fields = Fields[ind_t]
@@ -82,11 +82,11 @@ def postProcessFPcom1DFAPy(cfgGen, Particles, Fields, ind_t, relDict):
     x = particles['x']+xllc
     y = particles['y']+yllc
     r = np.sqrt(x*x + y*y)
-    com1DFAPySol = {'x': x, 'y': y, 'r': r, 'h': h, 'hsph': hsph, 'v': v,
+    com1DFASol = {'x': x, 'y': y, 'r': r, 'h': h, 'hsph': hsph, 'v': v,
                     'gradNorm': gradNorm,
                     'grad': grad, 'Grad': Grad, 'uMag': uMag, 'fields': fields}
 
-    return com1DFAPySol
+    return com1DFASol
 
 
 def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
@@ -119,7 +119,7 @@ def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
     yllc = demOri['header'].yllcenter
     csz = demOri['header'].cellsize
 
-    # com1DFAPy results
+    # com1DFA results
     fields = comSol['fields']
     x = comSol['x']
     y = comSol['y']
