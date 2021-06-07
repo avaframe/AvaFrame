@@ -8,20 +8,20 @@ import json
 # Local imports
 import avaframe.in3Utils.initialiseDirs as inDirs
 import avaframe.in3Utils.initializeProject as initProj
-import avaframe.com1DFAPy.com1DFA as com1DFA
+import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-import avaframe.com1DFAPy.com1DFA as com1DFAPy
-import avaframe.com1DFAPy.deriveParameterSet as dP
+import avaframe.com1DFA.com1DFA as com1DFA
+import avaframe.com1DFA.deriveParameterSet as dP
 
 
 def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
 
-    """ run com1DFAPy module """
+    """ run com1DFA module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
     # log file name; leave empty to use default runLog.log
@@ -34,9 +34,9 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     else:
         avalancheDir = cfgMain['MAIN']['avalancheDir']
     # set module name, reqiured as long we are in dev phase
-    # - because need to create e.g. Output folder for com1DFAPy to distinguish from
+    # - because need to create e.g. Output folder for com1DFA to distinguish from
     # current com1DFA
-    modName = 'com1DFAPy'
+    modName = 'com1DFA'
 
     # Clean input directory(ies) of old work and output files
     # initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
@@ -48,7 +48,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     log.info('Current avalanche: %s', avalancheDir)
 
     # Create output and work directories
-    # - because need to create e.g. Output folder for com1DFAPy to distinguish from
+    # - because need to create e.g. Output folder for com1DFA to distinguish from
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 
     # generate list of simulations from desired configuration
@@ -72,7 +72,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
     inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, modCfg['FLAGS'])
 
     # write full configuration file to file
-    cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, modCfg, fileName='sourceConfiguration')
+    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName='sourceConfiguration')
 
     # create a list of simulations
     # if need to reproduce exactely the hash - need to be strings with exactely the same number of digits!!
@@ -91,7 +91,7 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
 
         # save configuration settings for each simulation
         simHash = simDict[cuSim]['simHash']
-        cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, cfg, fileName=cuSim)
+        cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName=cuSim)
 
         # log simulation name
         log.info('Run simulation: %s' % cuSim)
@@ -118,10 +118,10 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
         simHashFinal = cfgUtils.cfgHash(cfgFinal)
         if simHashFinal != simHash:
             log.warning('simulation configuration has been changed since start')
-            cfgUtils.writeCfgFile(avalancheDir, com1DFAPy, cfg, fileName='%s_butModified' % simHash)
+            cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
 
     # Set directory for report
-    reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAPy', 'reports')
+    reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFA', 'reports')
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
