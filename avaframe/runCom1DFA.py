@@ -3,7 +3,6 @@
 """
 
 import os
-import json
 
 # Local imports
 import avaframe.in3Utils.initialiseDirs as inDirs
@@ -11,11 +10,9 @@ import avaframe.in3Utils.initializeProject as initProj
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.in1Data import getInput as gI
-import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.deriveParameterSet as dP
 
 
