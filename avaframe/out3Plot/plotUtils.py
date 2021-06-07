@@ -220,12 +220,18 @@ def saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
 def constrainPlotsToData(inputData, cellSize):
     """ constrain inut raster dataset to where there is data plus buffer zone """
 
-    ind = np.where(inputData>0)
-    plotBuffer = int(cfg.getfloat('plotBuffer') / cellSize)
-    rowsMin = max(np.amin(ind[0])-plotBuffer, 0)
-    rowsMax = min(np.amax(ind[0])+plotBuffer, inputData.shape[0])
-    colsMin = max(np.amin(ind[1])-plotBuffer, 0)
-    colsMax = min(np.amax(ind[1])+plotBuffer, inputData.shape[1])
+    ind = np.where(inputData > 0)
+    if len(ind[0]) > 0:
+        plotBuffer = int(cfg.getfloat('plotBuffer') / cellSize)
+        rowsMin = max(np.amin(ind[0])-plotBuffer, 0)
+        rowsMax = min(np.amax(ind[0])+plotBuffer, inputData.shape[0])
+        colsMin = max(np.amin(ind[1])-plotBuffer, 0)
+        colsMax = min(np.amax(ind[1])+plotBuffer, inputData.shape[1])
+    else:
+        rowsMin = 0
+        rowsMax = inputData.shape[0]
+        colsMin = 0
+        colsMax = inputData.shape[1]
 
     return rowsMin, rowsMax, colsMin, colsMax
 
