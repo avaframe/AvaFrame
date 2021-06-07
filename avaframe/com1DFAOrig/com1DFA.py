@@ -47,7 +47,7 @@ def execCom1Exe(com1Exe, cintFile, avaDir, fullOut=False, simName=''):
 
     # initialise log file to save stoudt
     if simName != '':
-        f_log = open(os.path.join(avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName)), 'w')
+        f_log = open(os.path.join(avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName)), 'w')
 
     # Call command
     proc = subprocess.Popen(runCommand, shell=True, stdout=subprocess.PIPE,
@@ -159,7 +159,7 @@ def getSimulation(cfg, rel, entResInfo):
     return simTypeList, relName, relDict,  badName
 
 
-def com1DFAMain(cfg, avaDir):
+def com1DFAOrigMain(cfg, avaDir):
     """ Run main model
 
     This will compute a dense flow avalanche
@@ -180,10 +180,10 @@ def com1DFAMain(cfg, avaDir):
     # Setup configuration
     cfgGen = cfg['GENERAL']
     com1Exe = cfgGen['com1Exe']
-    modName = 'com1DFA'
+    modName = 'com1DFAOrig'
     fullOut = cfgGen.getboolean('fullOut')
     cfgPar = cfg['PARAMETERVAR']
-    resDir = os.path.join(avaDir, 'Work', 'com1DFA')
+    resDir = os.path.join(avaDir, 'Work', 'com1DFAOrig')
     # Get path of module
     modPath = os.path.dirname(__file__)
     # Standard values for parameters that can be varied
@@ -234,8 +234,8 @@ def com1DFAMain(cfg, avaDir):
 
         # Initialise CreateProject cint file
         templateFile = os.path.join(modPath, 'CreateProject.cint')
-        workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreateProject.cint')
-        projDir = os.path.join(avaDir, 'Work', 'com1DFA', relName)
+        workFile = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'CreateProject.cint')
+        projDir = os.path.join(avaDir, 'Work', 'com1DFAOrig', relName)
         demName = os.path.splitext(os.path.basename(dem))[0]
 
         # Set Parameters in cint file
@@ -264,7 +264,7 @@ def com1DFAMain(cfg, avaDir):
 
             # Initialise CreateSimulations cint file and set parameters
             templateFile = os.path.join(modPath, 'Create%sSimulation.cint' % simTypeActual)
-            workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'Create%sSimulation.cint' % simTypeActual)
+            workFile = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'Create%sSimulation.cint' % simTypeActual)
 
             # Write required info to cint file
             copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
@@ -286,7 +286,7 @@ def com1DFAMain(cfg, avaDir):
                     logName = simName + '_' + item
                     log.info('Perform simulation with %s = %s: logName = %s' % (cfgPar['varPar'], item, logName))
                     templateFile = os.path.join(modPath, '%s%s.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
-                    workFile = os.path.join(avaDir, 'Work', 'com1DFA',
+                    workFile = os.path.join(avaDir, 'Work', 'com1DFAOrig',
                                             '%s%sBasic.cint' % (cfgPar['varRunCint'], cfgPar['varPar']))
                     copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
                     copyReplace(workFile, workFile, '##RESDIR##', resDir)
@@ -298,7 +298,7 @@ def com1DFAMain(cfg, avaDir):
 
                     # Create dictionary
                     reportVar = {}
-                    reportVar = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+                    reportVar = {'headerLine': {'type': 'title', 'title': 'com1DFAOrig Simulation'},
                     'avaName': {'type': 'avaName', 'name': avaDir},
                     'simName': {'type': 'simName', 'name': logName},
                     'time': {'type': 'time', 'time': dateTimeInfo},
@@ -345,7 +345,7 @@ def com1DFAMain(cfg, avaDir):
                 # set entrainment and resistance
                 startTime = time.time()
                 templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
-                workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
+                workFile = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'runStandardSimulation.cint')
                 logName = simName + '_' + defValues['Mu']
                 # Write required info to cint file
                 copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
@@ -362,7 +362,7 @@ def com1DFAMain(cfg, avaDir):
                 # Create dictionary
                 reportST = {}
                 reportST = {}
-                reportST = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+                reportST = {'headerLine': {'type': 'title', 'title': 'com1DFAOrig Simulation'},
                 'avaName': {'type': 'avaName', 'name': avaDir},
                 'simName': {'type': 'simName', 'name': logName},
                 'time': {'type': 'time', 'time': dateTimeInfo},
@@ -401,7 +401,7 @@ def com1DFAMain(cfg, avaDir):
 
         # Initialise CreateSimulations cint file and set parameters
         templateFile = os.path.join(modPath, 'CreatenullSimulation.cint')
-        workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'CreatenullSimulation.cint')
+        workFile = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'CreatenullSimulation.cint')
 
         # Write required info to cint file
         copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
@@ -413,7 +413,7 @@ def com1DFAMain(cfg, avaDir):
         logName = simST + '_' + defValues[cfgPar['varPar']]
         log.info('Also perform one standard simulation: %s' % simST)
         templateFile = os.path.join(modPath, 'runStandardSimulation.cint')
-        workFile = os.path.join(avaDir, 'Work', 'com1DFA', 'runStandardSimulation.cint')
+        workFile = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'runStandardSimulation.cint')
         # Write required info to cint file
         copyReplace(templateFile, workFile, '##PROJECTDIR##', projDir)
         copyReplace(workFile, workFile, '##RESDIR##', resDir)
@@ -425,7 +425,7 @@ def com1DFAMain(cfg, avaDir):
         execCom1Exe(com1Exe, workFile, avaDir, fullOut, logName)
         # Create dictionary
         reportNull = {}
-        reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
+        reportNull = {'headerLine': {'type': 'title', 'title': 'com1DFAOrig Simulation'},
         'avaName': {'type': 'avaName', 'name': avaDir},
         'simName': {'type': 'simName', 'name': logName},
         'time': {'type': 'time', 'time': dateTimeInfo},
@@ -456,14 +456,14 @@ def com1DFAMain(cfg, avaDir):
 
     log.debug('Avalanche Simulations performed')
 
-    # Setup input from com1DFA and exort to Outputs/com1DFA
+    # Setup input from com1DFAOrig and exort to Outputs/com1DFAOrig
     if cfgPar.getboolean('parameterVar'):
-        fU.exportcom1DFAOutput(avaDir, cfgPar, cfgGen.getboolean('addTSteps'))
+        fU.exportcom1DFAOrigOutput(avaDir, cfgPar, cfgGen.getboolean('addTSteps'))
     else:
         cfgParHere = ''
-        fU.exportcom1DFAOutput(avaDir, cfgParHere, cfgGen.getboolean('addTSteps'))
+        fU.exportcom1DFAOrigOutput(avaDir, cfgParHere, cfgGen.getboolean('addTSteps'))
 
-    log.info('Exported results to Outputs/com1DFA')
+    log.info('Exported results to Outputs/com1DFAOrig')
 
     return reportDictList
 
@@ -476,7 +476,7 @@ def saveInitialParticleDistribution(avaDir, simName, dem):
     DEM = IOf.readRaster(dem)
     header = DEM['header']
     # Read log file
-    fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName))
+    fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
     with open(fileName, 'r') as file:
         for line in file:
             if "IPD" in line:
@@ -490,7 +490,7 @@ def saveInitialParticleDistribution(avaDir, simName, dem):
     y = y - header.yllcenter
     particles = {'t': 0.0, 'x': x, 'y': y, 'z': z, 'm': m}
 
-    partDit = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'particles', simName)
+    partDit = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFAOrig', 'particles', simName)
     fU.makeADir(partDit)
     savePartToPickle(particles, partDit)
 

@@ -347,7 +347,7 @@ def getRefData(testDir, outputDir, suffix, nameDir='', testDirFP=''):
         log.debug('Reference files copied from directory: %s' % refDir)
 
 
-def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
+def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     """ Export the simulation results from com1DFA output to desired location
 
         Parameters

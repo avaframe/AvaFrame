@@ -7,7 +7,7 @@ import os
 import time
 
 # Local imports
-from avaframe.com1DFA import com1DFA
+from avaframe.com1DFAOrig import com1DFA
 from avaframe.log2Report import generateReport as gR
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.out1Peak import outPlotAllPeak as oP
@@ -53,7 +53,7 @@ for reportD in reportDictList:
 plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
 
 # Set directory for report
-reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFA', 'reports')
+reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAOrig', 'reports')
 # write report
 gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 

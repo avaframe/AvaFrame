@@ -52,7 +52,7 @@ def test_makeSimDict():
     assert data['test'][0] == '0.888'
 
 
-def test_exportcom1DFAOutput(tmp_path):
+def test_exportcom1DFAOrigOutput(tmp_path):
     """ Test if export of result files works """
 
     # Create input directoy structure
@@ -93,7 +93,7 @@ def test_exportcom1DFAOutput(tmp_path):
     cfg = {'varPar' : 'RelTh'}
 
     # Call function to test
-    fU.exportcom1DFAOutput(avaDir, cfg)
+    fU.exportcom1DFAOrigOutput(avaDir, cfg)
     # load exported file
     pprTest = np.loadtxt(os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles',
                                          'release1PF_entres_dfa_1.25000_ppr.asc'), skiprows=6)
