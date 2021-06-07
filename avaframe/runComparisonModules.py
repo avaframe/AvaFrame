@@ -26,7 +26,7 @@ logName = 'runComparisonModules'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testList = ['avaParabola']
+testList = ['avaFlatPlane']
 simType = 'null'
 simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
@@ -66,7 +66,7 @@ for avaName in testList:
         parameterDict = fU.extractParameterInfo(avaDir, simName1, reportD1)
 
     # Generata plots for all peakFiles
-    plotDictcom1DFAOrig = oP.plotAllPeakFields(avaDir, cfgCom1DFAOrig, cfgMain['FLAGS'])
+    plotDictcom1DFAOrig = oP.plotAllPeakFields(avaDir, cfgCom1DFAOrig, cfgMain['FLAGS'], modName='com1DFAOrig')
 
     # Set directory for com1DFA report
     reportDirOrig = os.path.join(outDir, 'com1DFAOrig', 'reports')
@@ -79,7 +79,7 @@ for avaName in testList:
     # call com1DFA to perform simulation - provide configuration file and release thickness function
     _, _, _, _, plotDictcom1DFA, reportDictListcom1DFA = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile='', relThField='')
 
-    # Set directory for com1DFAPy report
+    # Set directory for com1DFA report
     reportDir = os.path.join(outDir, 'com1DFA', 'reports')
     # write report
     gR.writeReport(reportDir, reportDictListcom1DFA, cfgMain['FLAGS'], plotDictcom1DFA)
@@ -113,7 +113,7 @@ for avaName in testList:
         refDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
         if reportDcom1DFAOrig:
             com1DFASimName = reportDcom1DFAOrig['simName']['name']
-            # Fetch corresponding com1DFAPy
+            # Fetch corresponding com1DFA
             for dict in reportDictListcom1DFA:
                 if simTypeString in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel:
                     reportDcom1DFA = dict
@@ -123,7 +123,7 @@ for avaName in testList:
                     log.error('No matching simulation found based on releaseScenario: %s and simType: %s' % (rel, simType))
 
             simNameComp = reportDcom1DFA['simName']['name']
-            compDir = pathlib.Path(avaDir, 'Outputs', 'com1DFAPy', 'peakFiles')
+            compDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
 
             # write configuration to file
             cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)
@@ -131,7 +131,7 @@ for avaName in testList:
                 cfgAimec['FLAGS']['flagMass'] = 'True'
             else:
                 cfgAimec['FLAGS']['flagMass'] = 'False'
-            cfgAimec['AIMECSETUP']['comModules'] = 'com1DFA|com1DFAPy'
+            cfgAimec['AIMECSETUP']['comModules'] = 'com1DFAOrig|com1DFA'
 
             # Setup input from com1DFA and com1DFAPy
             pathDict = []
@@ -186,7 +186,7 @@ for avaName in testList:
             reportDcom1DFA['Simulation Results'] = plotPaths
 
             reportDcom1DFAOrig['Test Info'] = {'type': 'text',
-                           'Test Info': 'Compare com1DFA (Reference) to com1DFAPy (Simulation) results.'}
+                           'Test Info': 'Compare com1DFAOrig (Reference) to com1DFA (Simulation) results.'}
 
             # write report
             generateCompareReport.writeCompareReport(reportFile, reportDcom1DFA, reportDcom1DFAOrig, avaName, cfgRep)

@@ -599,7 +599,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         if cfg['particleFile']:
             inDirPart = pathlib.Path(cfg['particleFile'])
         else:
-            inDirPart = pathlib.Path(avaDir, 'Outputs', 'com1DFA')
+            inDirPart = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
 
         searchDir = inDirPart / 'particles'
         inDirPart = list(searchDir.glob( ('*' + cfg['releaseScenario'] + '_' + '*' + cfg['simTypeActual'] + '*')))

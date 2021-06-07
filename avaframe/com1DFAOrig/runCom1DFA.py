@@ -50,7 +50,7 @@ for reportD in reportDictList:
 
 
 # Generate plots for all peakFiles
-plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
+plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName='com1DFAOrig')
 
 # Set directory for report
 reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAOrig', 'reports')
