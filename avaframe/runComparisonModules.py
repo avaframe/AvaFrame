@@ -66,7 +66,7 @@ for avaName in testList:
         parameterDict = fU.extractParameterInfo(avaDir, simName1, reportD1)
 
     # Generata plots for all peakFiles
-    plotDictcom1DFAOrig = oP.plotAllPeakFields(avaDir, cfgCom1DFAOrig, cfgMain['FLAGS'], modName='com1DFAOrig')
+    plotDictcom1DFAOrig = oP.plotAllPeakFields(avaDir, cfgCom1DFAOrig, cfgMain['FLAGS'], 'com1DFAOrig')
 
     # Set directory for com1DFA report
     reportDirOrig = os.path.join(outDir, 'com1DFAOrig', 'reports')
