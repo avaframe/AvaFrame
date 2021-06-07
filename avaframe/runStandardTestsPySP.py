@@ -67,7 +67,7 @@ for test in testList:
     modName = 'com1DFAPy'
     # Set timing
     startTime = time.time()
-    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=standardCfg, relThField='', variationDict='')
+    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile=standardCfg, relThField='', variationDict='')
 
     endTime = time.time()
     timeNeeded = endTime - startTime

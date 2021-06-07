@@ -19,13 +19,13 @@ import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.deriveParameterSet as dP
 
 
-def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
+def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
 
     """ run com1DFA module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
     # log file name; leave empty to use default runLog.log
-    logName = 'runCom1DFAPy'
+    logName = 'runCom1DFA'
 
     # Load avalanche directory from general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
@@ -133,4 +133,4 @@ def runCom1DFAPy(avaDir='', cfgFile='', relThField='', variationDict=''):
 
 
 if __name__ == "__main__":
-    runCom1DFAPy()
+    runCom1DFA()

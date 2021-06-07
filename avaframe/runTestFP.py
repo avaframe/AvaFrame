@@ -57,7 +57,7 @@ relDict = FPtest.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
 # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avalancheDir, cfgFile=FPCfg, relTh=relTh)
+Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avalancheDir, cfgFile=FPCfg, relTh=relTh)
 relDict['dem'] = dem
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 # option for user interaction
