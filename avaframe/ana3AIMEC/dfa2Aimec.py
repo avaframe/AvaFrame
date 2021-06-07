@@ -37,7 +37,7 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
     # Read mass data from log and save to file for each simulation run
     countFile = 0
     for simName in simNames:
-        log.debug('This is the simulation name %s for mod com1DFA ' % (simName))
+        log.debug('This is the simulation name %s for mod com1DFAOrig ' % (simName))
 
         # Initialise fields
         time = []
@@ -104,6 +104,7 @@ def getMBInfo(avaDir, pathDict, comMod, simName=''):
             log.debug('Added to pathDict[massBal] %s' % (mFile))
 
     return pathDict
+
 
 def getRefMB(testName, pathDict, simName):
     """ Get mass balance info """
