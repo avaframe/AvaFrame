@@ -17,6 +17,7 @@ from avaframe.in3Utils import logUtils
 
 # log file name; leave empty to use default runLog.log
 logName = 'runCom1DFA'
+modName = 'com1DFAOrig'
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
@@ -50,7 +51,7 @@ for reportD in reportDictList:
 
 
 # Generate plots for all peakFiles
-plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], 'com1DFAOrig')
+plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
 
 # Set directory for report
 reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAOrig', 'reports')

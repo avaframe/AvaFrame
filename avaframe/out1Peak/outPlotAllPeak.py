@@ -21,7 +21,7 @@ import avaframe.out3Plot.makePalette as makePalette
 log = logging.getLogger(__name__)
 
 
-def plotAllPeakFields(avaDir, cfg, cfgFLAGS, 'com1DFA'):
+def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
     """ Plot all peak fields and return dictionary with paths to plots
 
         Parameters
