@@ -41,7 +41,6 @@ def test_mainDfa2Aimec(tmp_path):
     assert pathDict['massBal'] == pathDTest['massBal']
 
 
-
 def test_dfaComp2Aimec(tmp_path):
 
     # Initialise inputs
