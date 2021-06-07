@@ -21,10 +21,8 @@ import pathlib
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
-from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
-import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.out3Plot.makePalette as makePalette
 import avaframe.com1DFA.timeDiscretizations as tD
 import avaframe.com1DFA.DFAtools as DFAtls
@@ -32,7 +30,6 @@ import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
-import avaframe.com1DFA.com1DFA as com1DFA
 
 #######################################
 # Set flags here
