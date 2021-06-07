@@ -687,9 +687,9 @@ cdef (double, double, double, double) account4FrictionForce(double ux, double uy
   m : float
       particle area
   dt : float
-      snow density
+      time step
   forceFrict : float
-      resisance coefficient of cell
+      friction force (actually a force for the explicit method, force/vel for implicit)
   uMag : float
       particle speed (velocity magnitude)
   explicitFriction: int
@@ -697,8 +697,14 @@ cdef (double, double, double, double) account4FrictionForce(double ux, double uy
 
   Returns
   -------
-  cResPart : float
-      resistance component for particle
+  uxNew: float
+      x velocity
+  uyNew: float
+      y velocity
+  uzNew: float
+      z velocity
+  dtStop : float
+      time step (smaller then dt if the particle stops during this time step)
   """
   cdef double xDir, yDir, zDir, uxNew, uyNew, uzNew, uMagNew, dtStop
 
