@@ -8,7 +8,7 @@ import logging
 import numpy as np
 
 # Local imports
-import avaframe.com1DFAPy.DFAtools as DFAtls
+import avaframe.com1DFA.DFAtools as DFAtls
 
 
 # create local logger

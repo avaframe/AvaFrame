@@ -16,7 +16,7 @@ from libc cimport math as math
 cimport cython
 
 # Local imports
-import avaframe.com1DFAPy.DFAtools as DFAtls
+import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.geoTrans as geoTrans
 
 

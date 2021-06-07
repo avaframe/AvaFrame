@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
-import avaframe.com1DFAPy.DFAtools as DFAtls
-import avaframe.com1DFAPy.com1DFA as com1DFA
-# import avaframe.com1DFAPy.SPHfunctions as SPH
+import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.com1DFA as com1DFA
+# import avaframe.com1DFA.SPHfunctions as SPH
 from avaframe.in3Utils import cfgUtils
-import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
+import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 
 cfg = cfgUtils.getModuleConfig(com1DFA)['GENERAL']
 cfgFull = cfgUtils.getModuleConfig(com1DFA)

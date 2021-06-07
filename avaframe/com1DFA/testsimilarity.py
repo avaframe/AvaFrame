@@ -12,15 +12,15 @@ import avaframe.in3Utils.initialiseDirs as inDirs
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
-import avaframe.com1DFAPy.com1DFA as com1DFA
-import avaframe.com1DFAPy.DFAtools as DFAtls
+import avaframe.com1DFA.com1DFA as com1DFA
+import avaframe.com1DFA.DFAtools as DFAtls
 
 # from avaframe.DFAkernel.setParam import *
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-import avaframe.com1DFAPy.simiSol as simiSol
+import avaframe.com1DFA.simiSol as simiSol
 
 
 # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -31,9 +31,9 @@ logName = 'testKernel'
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 # set module name, reqiured as long we are in dev phase
-# - because need to create e.g. Output folder for com1DFAPy to distinguish from
+# - because need to create e.g. Output folder for com1DFA to distinguish from
 # current com1DFA
-modName = 'com1DFAPy'
+modName = 'com1DFA'
 
 # Clean input directory(ies) of old work and output files
 initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)

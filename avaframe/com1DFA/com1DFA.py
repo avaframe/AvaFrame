@@ -24,15 +24,15 @@ import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
-import avaframe.com1DFAPy.deriveParameterSet as dP
+import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.out3Plot.makePalette as makePalette
-import avaframe.com1DFAPy.timeDiscretizations as tD
-import avaframe.com1DFAPy.DFAtools as DFAtls
-import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
+import avaframe.com1DFA.timeDiscretizations as tD
+import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
-import avaframe.com1DFAPy.com1DFA as com1DFAPy
+import avaframe.com1DFA.com1DFA as com1DFA
 
 #######################################
 # Set flags here
@@ -1077,7 +1077,7 @@ def writeMBFile(infoDict, avaDir, logName):
     massTotal = infoDict['massTotal']
 
     # write mass balance info to log file
-    massDir = os.path.join(avaDir, 'Outputs', 'com1DFAPy')
+    massDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
     fU.makeADir(massDir)
     with open(os.path.join(massDir, 'mass_%s.txt' % logName), 'w') as mFile:
         mFile.write('time, current, entrained\n')
@@ -1607,11 +1607,11 @@ def readPartFromPickle(inDir, flagAvaDir=False):
             path to input directory
         flagAvaDir: bool
             if True inDir corresponds to an avalanche directory and pickles are
-            read from avaDir/Outputs/com1DFAPy/particles
+            read from avaDir/Outputs/com1DFA/particles
     """
 
     if flagAvaDir:
-        inDir = os.path.join(inDir, 'Outputs', 'com1DFAPy', 'particles')
+        inDir = os.path.join(inDir, 'Outputs', 'com1DFA', 'particles')
 
     # search for all pickles within directory
     PartDicts = sorted(glob.glob(os.path.join(inDir, '*.p')))
@@ -1693,7 +1693,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
 
         Returns
         --------
-        exported peak fields are saved in Outputs/com1DFAPy/peakFiles
+        exported peak fields are saved in Outputs/com1DFA/peakFiles
 
     """
 
