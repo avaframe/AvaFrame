@@ -469,15 +469,16 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
-        relRaster = prepareArea(releaseLine, demOri, relThList=releaseLine['d0'], combine=True)
+        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['d0'], combine=True)
     else:
         # if relTh provided - set release thickness with field or function
-        relRaster = prepareArea(releaseLine, demOri, combine=True)
-        relRaster = relRaster * relThField
+        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True)
+        releaseLine['rasterData'] = releaseLine['rasterData'] * relThField
 
     # compute release area
     header = dem['header']
     csz = header.cellsize
+    relRaster = releaseLine['rasterData']
     relRasterOnes = np.where(relRaster > 0, 1., 0.)
     relAreaActual = np.nansum(relRasterOnes*dem['areaRaster'])
     relAreaProjected = np.sum(csz*csz*relRasterOnes)
@@ -487,26 +488,28 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # ------------------------
     # initialize simulation
     # create primary release area particles and fields
-    particles, fields = initializeParticles(cfgGen, relRaster, dem, logName=logName)
+    releaseLine['header'] = demOri['header']
+    particles = initializeParticles(cfgGen, releaseLine, dem, logName=logName)
+    particles, fields = initializeFields(cfgGen, dem, particles)
 
     # ------------------------
     # process secondary release info to get it as a list of rasters
-    secondaryReleaseInfo = {}
     if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
         log.info('Initializing secondary release area')
-        secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
+        secondaryReleaseInfo = inputSimLines['secondaryReleaseLine']
+        secondaryReleaseInfo['header'] = demOri['header']
 
         # fetch secondary release areas
-        secRelRasterList = prepareArea(secondaryReleaseLine, demOri, relThList=secondaryReleaseLine['d0'], combine=False)
+        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2), thList=secondaryReleaseInfo['d0'], combine=False)
         # remove overlap with main release areas
         noOverlaprasterList = []
-        for secRelRatser, secRelName in zip(secRelRasterList, secondaryReleaseLine['Name']):
+        for secRelRatser, secRelName in zip(secondaryReleaseInfo['secRelRasterList'], secondaryReleaseInfo['Name']):
             noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release ' + secRelName, 'Release', crop=True))
 
         secondaryReleaseInfo['flagSecondaryRelease'] = 'Yes'
         secondaryReleaseInfo['rasterList'] = noOverlaprasterList
-        secondaryReleaseInfo['Name'] = secondaryReleaseLine['Name']
     else:
+        secondaryReleaseInfo = {}
         secondaryReleaseInfo['flagSecondaryRelease'] = 'No'
 
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
@@ -535,7 +538,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     return particles, fields, dem, reportAreaInfo
 
 
-def initializeParticles(cfg, relRaster, dem, logName=''):
+def initializeParticles(cfg, releaseLine, dem, logName=''):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -569,12 +572,11 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     ncols = header.ncols
     nrows = header.nrows
     csz = header.cellsize
+    relRaster = releaseLine['rasterData']
     areaRaster = dem['areaRaster']
-    totalMassRaster = np.nansum(areaRaster*relRaster*rho)
 
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
-    FD = np.zeros((nrows, ncols))
     # find all non empty cells (meaning release area)
     indRelY, indRelX = np.nonzero(relRaster)
 
@@ -627,7 +629,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
 
         Npart = 0
         NPPC = np.empty(0)
-        Apart = np.empty(0)
         Xpart = np.empty(0)
         Ypart = np.empty(0)
         Mpart = np.empty(0)
@@ -643,14 +644,11 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
             partPerCell[indRely, indRelx] = nPart
             # initialize particles position, mass, height...
             NPPC = np.append(NPPC, nPart*np.ones(nPart))
-            Apart = np.append(Apart, areaRaster[indRely, indRelx]*np.ones(nPart)/nPart)
             Xpart = np.append(Xpart, xpart)
             Ypart = np.append(Ypart, ypart)
             Mpart = np.append(Mpart, mPart * np.ones(nPart))
-            Hpart = np.append(Hpart, hCell * np.ones(nPart))
 
         Hpart, _ = geoTrans.projectOnGrid(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
-        Mpart = rho * Hpart * Apart
         # create dictionnary to store particles properties
         particles = {}
         particles['Npart'] = Npart
@@ -660,9 +658,7 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
         particles['l'] = np.zeros(np.shape(Xpart))
         # adding z component
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
-        # readjust mass
-        mTot = np.sum(Mpart)
-        particles['m'] = Mpart*totalMassRaster/mTot
+        particles['m'] = Mpart
 
     particles['mTot'] = np.sum(particles['m'])
     particles['h'] = Hpart
@@ -685,6 +681,59 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
     particles['xllcenter'] = dem['originOri']['xllcenter']
     particles['yllcenter'] = dem['originOri']['yllcenter']
 
+    particles = checkParticlesInRelease(particles, releaseLine)
+
+    # initialize time
+    t = 0
+    particles['t'] = t
+
+    relCells = np.size(indRelY)
+    partPerCell = particles['Npart']/relCells
+
+    log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
+             (particles['mTot'], particles['Npart'], relCells))
+    log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
+             (particles['mTot']/particles['Npart'], partPerCell))
+
+    if debugPlot:
+        x = np.arange(ncols) * csz
+        y = np.arange(nrows) * csz
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        cmap = copy.copy(mpl.cm.get_cmap("Greys"))
+        ref0, im = pU.NonUnifIm(ax, x, y, areaRaster, 'x [m]', 'y [m]',
+                                extent=[x.min(), x.max(), y.min(), y.max()],
+                                cmap=cmap, norm=None)
+
+        ax.plot(particles['x'], particles['y'], 'or', linestyle='None')
+        pU.addColorBar(im, ax, None, 'm²')
+        plt.show()
+
+    return particles
+
+
+def initializeFields(cfg, dem, particles):
+    """Initialize fields and update particles flow depth
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    dem : dict
+        dictionary with dem information
+    particles : dict
+        particles dictionary at initial time step
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary at initial time step updated with the flow depth
+    fields : dict
+        fields dictionary at initial time step
+    """
+    # read dem header
+    header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
     PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
     FD = np.zeros((nrows, ncols))
@@ -701,31 +750,6 @@ def initializeParticles(cfg, relRaster, dem, logName=''):
 
     particles = DFAfunC.getNeighboursC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
-
-    # initialize time
-    t = 0
-    particles['t'] = t
-
-    relCells = np.size(indRelY)
-    partPerCell = particles['Npart']/relCells
-    log.info('Expeced mass. Mexpected = %.2f kg.' % (totalMassRaster))
-    log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
-             (particles['mTot'], particles['Npart'], relCells))
-    log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
-             (particles['mTot']/particles['Npart'], partPerCell))
-
-    if debugPlot:
-        x = np.arange(ncols) * csz
-        y = np.arange(nrows) * csz
-        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        ref0, im = pU.NonUnifIm(ax, x, y, areaRaster, 'x [m]', 'y [m]',
-                                extent=[x.min(), x.max(), y.min(), y.max()],
-                                cmap=cmap, norm=None)
-
-        ax.plot(Xpart, Ypart, 'or', linestyle='None')
-        pU.addColorBar(im, ax, None, 'm²')
-        plt.show()
 
     return particles, fields
 
@@ -821,7 +845,8 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo):
         entrainmentArea = entLine['fileName']
         log.info('Initializing entrainment area %s' % (entrainmentArea))
         log.info('Entrainment area features: %s' % (entLine['Name']))
-        entrMassRaster = prepareArea(entLine, dem)
+        entLine = prepareArea(entLine, dem, 0.001)
+        entrMassRaster = entLine['rasterData']
         reportAreaInfo['entrainment'] = 'Yes'
     else:
         entrMassRaster = np.zeros((nrows, ncols))
@@ -854,7 +879,8 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo):
         resistanceArea = resLine['fileName']
         log.info('Initializing resistance area %s' % (resistanceArea))
         log.info('Resistance area features: %s' % (resLine['Name']))
-        mask = prepareArea(resLine, dem)
+        resLine = prepareArea(resLine, dem, 0.001)
+        mask = resLine['rasterData']
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
         reportAreaInfo['resistance'] = 'Yes'
     else:
@@ -1301,34 +1327,38 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     return particles, fields, Tcpu, dt
 
 
-def prepareArea(releaseLine, dem, relThList='', combine=True):
+def prepareArea(line, dem, radius, thList='', combine=True):
     """ convert shape file polygon to raster
 
     Parameters
     ----------
-    releaseLine: dict
+    line: dict
         line dictionary
     dem : dict
         dictionary with dem information
-    relThList: list
-        release thickness values for all release features
+    radius : float
+        include all cells which center is in the polygon or close enough
+    thList: list
+        thickness values for all features in the line dictionary
     combine : Boolean
         if True sum up the rasters in the area list to return only 1 raster
         if False return the list of distinct area rasters
-        this option works only if relThList is not empty
+        this option works only if thList is not empty
 
     Returns
     -------
-    Raster : 2D numpy array
-        raster of the area (returned if relRHlist is empty OR if combine is set
-        to True)
-    RasterList : list
-        list of 2D numpy array rasters (returned if relRHlist is not empty AND
-        if combine is set to True)
+    updates the line dictionary with the rasterData: Either
+        Raster : 2D numpy array
+            raster of the area (returned if relRHlist is empty OR if combine is set
+            to True)
+        or
+        RasterList : list
+            list of 2D numpy array rasters (returned if relRHlist is not empty AND
+            if combine is set to True)
     """
-    NameRel = releaseLine['Name']
-    StartRel = releaseLine['Start']
-    LengthRel = releaseLine['Length']
+    NameRel = line['Name']
+    StartRel = line['Start']
+    LengthRel = line['Length']
     RasterList = []
 
     for i in range(len(NameRel)):
@@ -1336,15 +1366,15 @@ def prepareArea(releaseLine, dem, relThList='', combine=True):
         start = StartRel[i]
         end = start + LengthRel[i]
         avapath = {}
-        avapath['x'] = releaseLine['x'][int(start):int(end)]
-        avapath['y'] = releaseLine['y'][int(start):int(end)]
+        avapath['x'] = line['x'][int(start):int(end)]
+        avapath['y'] = line['y'][int(start):int(end)]
         avapath['Name'] = name
         # if relTh is given - set relTh
-        if relThList != '':
-            log.info('Release feature %s, relTh= %.2f' % (name, relThList[i]))
-            Raster = polygon2Raster(dem['header'], avapath, relTh=relThList[i])
+        if thList != '':
+            log.info('Release feature %s, relTh= %.2f' % (name, thList[i]))
+            Raster = polygon2Raster(dem['header'], avapath, radius, th=thList[i])
         else:
-            Raster = polygon2Raster(dem['header'], avapath)
+            Raster = polygon2Raster(dem['header'], avapath, radius)
         RasterList.append(Raster)
 
     # if RasterList not empty check for overlap between features
@@ -1360,12 +1390,14 @@ def prepareArea(releaseLine, dem, relThList='', combine=True):
             raise AssertionError(message)
         Raster = Raster + rast
     if combine:
-        return Raster
+        line['rasterData'] = Raster
+        return line
     else:
-        return RasterList
+        line['rasterData'] = RasterList
+        return line
 
 
-def polygon2Raster(demHeader, Line, relTh=''):
+def polygon2Raster(demHeader, Line, radius, th=''):
     """ convert line to raster
 
     Parameters
@@ -1374,8 +1406,10 @@ def polygon2Raster(demHeader, Line, relTh=''):
         dem header dictionary
     Line : dict
         line dictionary
-    Mask : 2D numpy array
-        raster to update
+    radius : float
+        include all cells which center is in the polygon or close enough
+    th: float
+        thickness value ot the line feature
     Returns
     -------
 
@@ -1406,8 +1440,7 @@ def polygon2Raster(demHeader, Line, relTh=''):
     # for this we need to know if the path is clockwise or counter clockwise
     # to decide if the radius should be positif or negatif in contains_points
     is_ccw = geoTrans.isCounterClockWise(path)
-    r = 0.001
-    r = r*is_ccw - r*(1-is_ccw)
+    r = (radius*is_ccw - radius*(1-is_ccw))/4
     x = np.linspace(0, ncols-1, ncols)
     y = np.linspace(0, nrows-1, nrows)
     X, Y = np.meshgrid(x, y)
@@ -1417,9 +1450,9 @@ def polygon2Raster(demHeader, Line, relTh=''):
     mask = path.contains_points(points, radius=r)
     Mask = mask.reshape((nrows, ncols)).astype(int)
     # thickness field is provided, then return array with ones
-    if relTh != '':
-        log.info('REL set from dict, %.2f' % relTh)
-        Mask = np.where(Mask > 0, relTh, 0.)
+    if th != '':
+        log.info('REL set from dict, %.2f' % th)
+        Mask = np.where(Mask > 0, th, 0.)
     else:
         Mask = np.where(Mask > 0, 1., 0.)
 
@@ -1441,6 +1474,100 @@ def polygon2Raster(demHeader, Line, relTh=''):
         plt.show()
 
     return Mask
+
+
+def checkParticlesInRelease(particles, line):
+    """ remove particles laying outside the line
+
+    Parameters
+    ----------
+    particles : dict
+        particles dictionary
+    line: dict
+        line dictionary
+
+    Returns
+    -------
+    particles : dict
+        particles dictionnary cleened from particles lying outside the line
+
+    """
+    NameRel = line['Name']
+    StartRel = line['Start']
+    LengthRel = line['Length']
+    Mask = np.full(np.size(particles['x']), False)
+    for i in range(len(NameRel)):
+        name = NameRel[i]
+        start = StartRel[i]
+        end = start + LengthRel[i]
+        avapath = {}
+        avapath['x'] = line['x'][int(start):int(end)]
+        avapath['y'] = line['y'][int(start):int(end)]
+        avapath['Name'] = name
+        mask = pointInPolygon(line['header'], particles, avapath)
+        Mask = np.logical_or(Mask, mask)
+
+    nRemove = len(Mask)-np.sum(Mask)
+    if nRemove > 0:
+        particles = DFAtls.removePart(particles, Mask, nRemove)
+        log.info('removed %s particles because they are not within the release polygon' % (nRemove))
+
+    return particles
+
+
+def pointInPolygon(demHeader, points, Line):
+    """ find particles within a polygon
+
+    Parameters
+    ----------
+    demHeader: dict
+        dem header dictionary
+    points: dict
+        points to check
+    Line : dict
+        line dictionary
+    Returns
+    -------
+
+    Mask : 1D numpy array
+        Mask of particles to keep
+    """
+    xllc = demHeader.xllcenter
+    yllc = demHeader.yllcenter
+    xCoord0 = (Line['x'] - xllc)
+    yCoord0 = (Line['y'] - yllc)
+    if (xCoord0[0] == xCoord0[-1]) and (yCoord0[0] == yCoord0[-1]):
+        xCoord = np.delete(xCoord0, -1)
+        yCoord = np.delete(yCoord0, -1)
+    else:
+        xCoord = copy.deepcopy(xCoord0)
+        yCoord = copy.deepcopy(yCoord0)
+        xCoord0 = np.append(xCoord0, xCoord0[0])
+        yCoord0 = np.append(yCoord0, yCoord0[0])
+
+    # get the raster corresponding to the polygon
+    polygon = np.stack((xCoord, yCoord), axis=-1)
+    path = mpltPath.Path(polygon)
+    # add a tolerance to include cells for which the center is on the lines
+    # for this we need to know if the path is clockwise or counter clockwise
+    # to decide if the radius should be positif or negatif in contains_points
+    is_ccw = geoTrans.isCounterClockWise(path)
+    radius = 0.001
+    r = (radius*is_ccw - radius*(1-is_ccw))
+    points2Check = np.stack((points['x'], points['y']), axis=-1)
+    mask = path.contains_points(points2Check, radius=r)
+    mask = np.where(mask > 0, True, False)
+
+    if debugPlot:
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        ax.set_title('Release area')
+        ax.plot(xCoord0, yCoord0, 'r', label='release polyline')
+        ax.plot(points['x'], points['y'], '.b')
+        ax.plot(points['x'][mask], points['y'][mask], '.g')
+        plt.legend()
+        plt.show()
+
+    return mask
 
 
 def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last=False):
@@ -1558,7 +1685,7 @@ def releaseSecRelArea(cfg, particles, fields, dem):
         if mask.any():
             # create secondary release area particles
             log.info('Initializing secondary release area feature %s' % secRelRasterName)
-            secRelParticles, fields = initializeParticles(cfg, secRelRaster, dem)
+            secRelParticles = initializeParticles(cfg, secondaryReleaseInfo, dem)
 
             # release secondary release area by just appending the particles
             log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
