@@ -11,6 +11,60 @@ Dense flow avalanche simulations can be performed for different release area sce
 entrainment and/or resistance areas.
 There is the option to vary the internal friction parameter or the release snow thickness.
 
+C++ Executable
+------------------
+
+The computation of the ``com1DFAOrig`` dense flow avalanche module relies on a C++ executable.
+The executable (for now 64bit linux and windows) and needed files are
+available in this `git repository <https://github.com/avaframe/com1DFA_Exe>`_.
+To install, change into your directory [YOURDIR] from the AvaFrame installation above and
+clone the repository::
+
+  cd [YOURDIR]
+  git clone https://github.com/avaframe/com1DFA_Exe
+
+Rename the exectuables according to your operating system, i.e. for Linux do::
+
+  mv com1DFA_Exe/com1DFA_x86_64.exe com1DFA_Exe/com1DFA.exe
+  mv com1DFA_Exe/SHPConv_Linux.exe com1DFA_Exe/SHPConv.exe
+
+for Windows do::
+
+  mv com1DFA_Exe/com1DFA_win64.exe com1DFA_Exe/com1DFA.exe
+  mv com1DFA_Exe/SHPConv_win.exe com1DFA_Exe/SHPConv.exe
+
+
+Go to the ``com1DFAOrig`` directory of the AvaFrame repository from above and copy the configuration file::
+
+  cd AvaFrame/avaframe/com1DFAOrig
+  cp com1DFACfg.ini local_com1DFACfg.ini
+
+Open the ``local_com1DFACfg.ini`` file in you prefered text editor and change
+the ``com1Exe`` variable to reflect you paths, i.e.::
+
+  com1Exe = [YOURDIR]/com1DFA_Exe/com1DFA.exe -files [YOURDIR]/com1DFA_Exe/files/AK_Attributes
+
+
+.. Attention::  We suggest to use the full path.
+
+To test go to [YOURDIR], change into the com1DFA_Exe repository and run the
+executable::
+
+  cd [YOURDIR]
+  cd com1DFA_Exe
+  ./com1DFA.exe -files files/AK_Attributes/
+
+The output should start like this::
+
+  Setting config files directory: files/AK_Attributes/	(src/SW_Workspace.cpp:3435)
+  ./com1DFA.exe -files files/AK_Attributes/ 	(src/SW_Workspace.cpp:3453)
+  =================================================================
+  ./com1DFA.exe
+  Compiled Oct 19 2020 21:34:15
+  ...
+
+Exit by pressing ``q``
+
 
 Input
 ---------
@@ -54,7 +108,7 @@ The simulation results are saved to: *Outputs/com1DFA* and include:
 To run
 --------
 
-.. Attention:: Please refer to the instructions in :ref:`Installation:Com1DFA Executable` on how to get the
+.. Attention:: Please refer to the instructions in :ref:`C++ Executable` on how to get the
                necessary C++ executable and setup the correct paths.
 
 * create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
