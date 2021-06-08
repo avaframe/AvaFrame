@@ -238,7 +238,7 @@ def writeCfgFile(avaDir, module, cfg, fileName=''):
     # write to file
     if fileName != '':
         # set outputs
-        modName = 'com1DFAPy'
+        modName = 'com1DFA'
         outDir = os.path.join(avaDir, 'Outputs', modName, 'configurationFiles')
         fU.makeADir(outDir)
         cfg.optionxform = str
@@ -384,7 +384,7 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
     if specDir != '':
         inDir = os.path.join(specDir, 'configurationFiles')
     else:
-        inDir = os.path.join(avaDir, 'Outputs', 'com1DFAPy', 'configurationFiles')
+        inDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
     configFiles = glob.glob(inDir+os.sep+'*.ini')
 
     # create confiparser object, convert to json object, write to dataFrame

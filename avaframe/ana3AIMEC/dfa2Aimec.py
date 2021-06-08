@@ -27,8 +27,8 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
         nameDir = simNameInput
     else:
         # Get info from ExpLog
-        nameDir = 'com1DFA'
-        logLoc = os.path.join(avaDir, 'Outputs', 'com1DFA')
+        nameDir = 'com1DFAOrig'
+        logLoc = os.path.join(avaDir, 'Outputs', 'com1DFAOrig')
         logName = os.path.join(logLoc, 'ExpLog.txt')
         logDictExp = fU.readLogFile(logName)
         names = logDictExp['fullName']
@@ -37,7 +37,7 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
     # Read mass data from log and save to file for each simulation run
     countFile = 0
     for simName in simNames:
-        log.debug('This is the simulation name %s for mod com1DFA ' % (simName))
+        log.debug('This is the simulation name %s for mod com1DFAOrig ' % (simName))
 
         # Initialise fields
         time = []
@@ -48,8 +48,8 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
         flagStop = 0
 
         # Read log file
-        locFiles = os.path.join(avaDir, 'Outputs', 'com1DFA')
-        fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName))
+        locFiles = os.path.join(avaDir, 'Outputs', 'com1DFAOrig')
+        fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
         with open(fileName, 'r') as file:
             for line in file:
                 if "computing time step" in line:
@@ -104,6 +104,7 @@ def getMBInfo(avaDir, pathDict, comMod, simName=''):
             log.debug('Added to pathDict[massBal] %s' % (mFile))
 
     return pathDict
+
 
 def getRefMB(testName, pathDict, simName):
     """ Get mass balance info """
@@ -221,7 +222,7 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
         for comMod in comModules:
             if comMod == 'ref':
                 pathDict = getRefMB(cfg['AIMECSETUP']['testName'], pathDict, simNameRef)
-            elif comMod == 'com1DFA':
+            elif comMod == 'com1DFAOrig':
                 pathDict = extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=simNameRef)
             else:
                 pathDict = getMBInfo(avaDir, pathDict, comMod, simName=simNameComp)
@@ -311,7 +312,7 @@ def getCompDirs(avaDir, cfgSetup, pathDict):
     return inputDirRef, inputDirComp, pathDict, refModule
 
 
-def mainDfa2Aimec(avaDir, comModule='com1DFA'):
+def mainDfa2Aimec(avaDir, comModule):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec
@@ -323,9 +324,11 @@ def mainDfa2Aimec(avaDir, comModule='com1DFA'):
         pathDict = fU.getDFADataPaths(avaDir, pathDict, suf, comModule)
 
     # Extract mb info
-    if comModule == 'com1DFA':
+    if comModule == 'com1DFAOrig':
         pathDict = extractCom1DFAMBInfo(avaDir, pathDict)
-    elif comModule == 'com1DFAPy':
+    elif comModule == 'com1DFA':
+        pathDict = getMBInfo(avaDir, pathDict, comModule)
+    else:
         pathDict = getMBInfo(avaDir, pathDict, comModule)
 
     pathDict['compType'] = ['singleModule', comModule]
@@ -336,7 +339,7 @@ def mainDfa2Aimec(avaDir, comModule='com1DFA'):
     return pathDict
 
 
-def indiDfa2Aimec(avaDir, suffix, comModule='com1DFA', inputDir=''):
+def indiDfa2Aimec(avaDir, suffix, comModule, inputDir=''):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec

@@ -1,1 +1,1 @@
-"""Dense flow avalanche kernel (wrapper around c++ code)"""
+"""Development code for python version of com1DFA"""

@@ -1,12 +1,11 @@
 """Tests for module com1DFAtools"""
 import numpy as np
 import pytest
-import configparser
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
-import avaframe.com1DFAPy.DFAfunctionsCython as DFAfunC
-import avaframe.com1DFAPy.DFAtools as DFAtls
+import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
+import avaframe.com1DFA.DFAtools as DFAtls
 
 
 def test_normalizeC(capfd):

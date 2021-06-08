@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 # local imports
 from avaframe.in3Utils import cfgUtils
-import avaframe.com1DFAPy.com1DFA as com1DFA
+import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.ana1Tests.simiSol as simiSol
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
@@ -408,8 +408,8 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest):
     fig.savefig(os.path.join(outDirTest, 'ContourSimiSolFinal.%s' % (pU.outputFormat)))
 
 
-def prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict, axis):
-    """ get fields and particles dictionaries for given time step, for com1DFAPy domain origin is set to 0,0
+def prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, axis):
+    """ get fields and particles dictionaries for given time step, for com1DFA domain origin is set to 0,0
         for particles - so info on domain is required
 
         Parameters
@@ -430,7 +430,7 @@ def prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict,
 
         Returns
         --------
-        com1DFAPySol: dict
+        com1DFASol: dict
             dictionary with location of particles, flow depth, flow velocity,
             fields, and index for x or y cut of domain at the required time step
 
@@ -466,9 +466,9 @@ def prepareParticlesFieldscom1DFAPy(Fields, Particles, ind_t, relDict, simiDict,
     uz = particles['uz'][ind]
     v = np.sqrt(ux*ux + uy*uy + uz*uz)
 
-    com1DFAPySol = {'x': x, 'y': y, 'h': h, 'v': v, 'indFinal': indFinal, 'fields': fields}
+    com1DFASol = {'x': x, 'y': y, 'h': h, 'v': v, 'indFinal': indFinal, 'fields': fields}
 
-    return com1DFAPySol
+    return com1DFASol
 
 
 def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
@@ -578,7 +578,7 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
         ax2.plot(x, v, '.g', linestyle='None', label='Part flow velocity')
         ax1.plot(X[indFinal,:], hSimi[indFinal,:], '--k', label='SimiSol flow depth')
         ax2.plot(X[indFinal,:], vSimi[indFinal,:], '--g', label='SimiSol flow velocity')
-        ax1.set_title('Profile along flow at t=%.2f (com1DFAPy), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
+        ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
         ax1.set_xlabel('x in [m]')
     elif axis == 'yaxis':
         ax1.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:,indFinal], 'k', label='Field flow depth')
@@ -587,7 +587,7 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
         ax2.plot(y, v, '.g', linestyle='None', label='Part flow velocity')
         ax1.plot(Y[:,indFinal], hSimi[:,indFinal], '--k', label='SimiSol flow depth')
         ax2.plot(Y[:,indFinal], vSimi[:,indFinal], '--g', label='SimiSol flow velocity')
-        ax1.set_title('Profile across flow at t=%.2f (com1DFAPy), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
+        ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
         ax1.set_xlabel('y in [m]')
 
     ax1.set_ylabel('flow depth [m]')

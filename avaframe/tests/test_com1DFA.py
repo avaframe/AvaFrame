@@ -8,7 +8,7 @@
 #  Load modules
 import numpy as np
 import os
-from avaframe.com1DFA import com1DFA
+from avaframe.com1DFAOrig import com1DFAOrig as com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.out1Peak import outPlotAllPeak as oP
@@ -36,7 +36,7 @@ def test_execCom1Exe(tmp_path):
     fullOut = False
 
     # create required Output folder
-    os.makedirs(os.path.join(avaDir, 'Outputs', 'com1DFA'))
+    os.makedirs(os.path.join(avaDir, 'Outputs', 'com1DFAOrig'))
 
     # Call function
     com1DFA.execCom1Exe(com1Exe, cintFile, avaDir, fullOut, logName)
@@ -46,7 +46,7 @@ def test_execCom1Exe(tmp_path):
 
     # check if log file has been created with correct name
     flagFile = False
-    if os.path.isfile(os.path.join(avaDir, 'Outputs', 'com1DFA', logFile)):
+    if os.path.isfile(os.path.join(avaDir, 'Outputs', 'com1DFAOrig', logFile)):
         flagFile = True
 
     # Test

@@ -96,7 +96,7 @@ def extractParameterInfo(avaDir, simName, reportD):
         """
 
     # Get info from ExpLog
-    logName = os.path.join(avaDir, 'Outputs', 'com1DFA', 'ExpLog.txt')
+    logName = os.path.join(avaDir, 'Outputs', 'com1DFAOrig', 'ExpLog.txt')
     logDictExp = readLogFile(logName)
     names = logDictExp['fullName']
     simNames = sorted(set(names), key=lambda s: s.split("_")[3])
@@ -111,7 +111,7 @@ def extractParameterInfo(avaDir, simName, reportD):
     stopCrit = ''
     flagNoStop = True
     # Read log file
-    fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFA', 'start%s.log' % (simName))
+    fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
     with open(fileName, 'r') as file:
         for line in file:
             if "computing time step" in line:
@@ -347,7 +347,7 @@ def getRefData(testDir, outputDir, suffix, nameDir='', testDirFP=''):
         log.debug('Reference files copied from directory: %s' % refDir)
 
 
-def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
+def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     """ Export the simulation results from com1DFA output to desired location
 
         Parameters
@@ -362,8 +362,8 @@ def exportcom1DFAOutput(avaDir, cfg='', addTSteps=False):
     """
 
     # Initialise directories
-    inputDir = os.path.join(avaDir, 'Work', 'com1DFA')
-    outDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
+    inputDir = os.path.join(avaDir, 'Work', 'com1DFAOrig')
+    outDir = os.path.join(avaDir, 'Outputs', 'com1DFAOrig')
     outDirPF = os.path.join(outDir, 'peakFiles')
     outDirRep = os.path.join(outDir, 'reports')
     makeADir(outDir)

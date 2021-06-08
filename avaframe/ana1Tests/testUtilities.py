@@ -12,7 +12,7 @@ import json
 # Local imports
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-import avaframe.com1DFAPy.com1DFA as com1DFA
+import avaframe.com1DFA.com1DFA as com1DFA
 
 
 # create local logger

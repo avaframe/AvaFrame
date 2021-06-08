@@ -7,8 +7,8 @@ import os
 import numpy as np
 
 # Local imports
-import avaframe.com1DFAPy.com1DFA as com1DFAPy
-from avaframe.com1DFAPy import runCom1DFA
+import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe import runCom1DFA
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.ana1Tests import damBreak
 import avaframe.in3Utils.initializeProject as initProj
@@ -25,7 +25,7 @@ avaDir = 'data/avaDamBreak'
 cfgMain['MAIN']['avalancheDir'] = avaDir
 
 # Clean input directory(ies) of old work and output files
-initProj.cleanModuleFiles(avaDir, com1DFAPy, 'com1DFAPy')
+initProj.cleanModuleFiles(avaDir, com1DFA, 'com1DFA')
 
 # Start logging
 log = logUtils.initiateLogger(avaDir, logName)
@@ -35,7 +35,7 @@ log.info('Current avalanche: %s', avaDir)
 
 # Load configuration
 damBreakCfg = os.path.join(avaDir, 'Inputs', 'damBreak_com1DFACfg.ini')
-cfg = cfgUtils.getModuleConfig(com1DFAPy, damBreakCfg)
+cfg = cfgUtils.getModuleConfig(com1DFA, damBreakCfg)
 cfgGen = cfg['GENERAL']
 
 # Load flow depth from analytical solution
@@ -44,7 +44,7 @@ xR = xR * np.cos(phi)  # projected on the horizontal plane
 dtAnalysis = cfg['DAMBREAK'].getfloat('dtStep')
 
 # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFAPy(avaDir=avaDir, cfgFile=damBreakCfg)
+Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile=damBreakCfg)
 
 # create simDict of results
 inputDir = 'data/avaDamBreak/Outputs/com1DFAPy/peakFiles/timeSteps'

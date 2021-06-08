@@ -52,7 +52,7 @@ def test_makeSimDict():
     assert data['test'][0] == '0.888'
 
 
-def test_exportcom1DFAOutput(tmp_path):
+def test_exportcom1DFAOrigOutput(tmp_path):
     """ Test if export of result files works """
 
     # Create input directoy structure
@@ -60,7 +60,7 @@ def test_exportcom1DFAOutput(tmp_path):
     avaName = 'avaParabola'
     avaNameTest = 'avaParabolaPyest'
     avaDir  = os.path.join(tmp_path, avaName)
-    outDir = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000', 'release1PF_entres_dfa', 'raster')
+    outDir = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'FullOutput_RelTh_1.25000', 'release1PF_entres_dfa', 'raster')
     os.makedirs(avaDir)
     os.makedirs(outDir)
 
@@ -70,21 +70,21 @@ def test_exportcom1DFAOutput(tmp_path):
         if m == 'pfv':
             avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
                                'release1PF_entres_dfa_1.25000_pfv.asc')
-            input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
+            input = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'FullOutput_RelTh_1.25000',
                                      'release1PF_entres_dfa', 'raster', 'release1PF_entres_dfa_pv.asc')
         else:
             avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
                                 'release1PF_entres_dfa_1.25000_%s.asc' % m)
-            input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
+            input = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'FullOutput_RelTh_1.25000',
                                  'release1PF_entres_dfa', 'raster', 'release1PF_entres_dfa_%s.asc' % m)
         shutil.copy(avaData, input)
     avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
                            'ExpLog.txt')
-    input = os.path.join(avaDir, 'Work', 'com1DFA', 'ExpLog.txt')
+    input = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'ExpLog.txt')
     shutil.copy(avaData, input)
     avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
                            'test.html')
-    input = os.path.join(avaDir, 'Work', 'com1DFA', 'FullOutput_RelTh_1.25000',
+    input = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'FullOutput_RelTh_1.25000',
                              'release1PF_entres_dfa.html')
     shutil.copy(avaData, input)
 
@@ -93,9 +93,9 @@ def test_exportcom1DFAOutput(tmp_path):
     cfg = {'varPar' : 'RelTh'}
 
     # Call function to test
-    fU.exportcom1DFAOutput(avaDir, cfg)
+    fU.exportcom1DFAOrigOutput(avaDir, cfg)
     # load exported file
-    pprTest = np.loadtxt(os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles',
+    pprTest = np.loadtxt(os.path.join(avaDir, 'Outputs', 'com1DFAOrig', 'peakFiles',
                                          'release1PF_entres_dfa_1.25000_ppr.asc'), skiprows=6)
 
     # load initial file
