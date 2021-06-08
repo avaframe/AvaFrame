@@ -21,7 +21,7 @@ def test_mainDfa2Aimec(tmp_path):
     avaTestName = 'avaHockeyChannelPytest'
     testPath = dirPath / '..' / '..' / 'benchmarks' / avaTestName
     pathData = testPath / 'Outputs' / 'com1DFA' / 'peakFiles'
-    pathDict = dfa2Aimec.mainDfa2Aimec(testPath, comModule='com1DFA')
+    pathDict = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFA')
 
     # get path dictionary for test
     pathDTest = {}

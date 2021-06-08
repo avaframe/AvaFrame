@@ -13,7 +13,7 @@ import numpy as np
 # Local imports
 from avaframe.out3Plot import statsPlots as sPlot
 from avaframe.ana4Stats import getStats
-from avaframe.com1DFA import com1DFA
+from avaframe.com1DFAOrig import com1DFAOrig
 from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
@@ -26,12 +26,13 @@ from avaframe.in3Utils import logUtils
 
 # log file name; leave empty to use default runLog.log
 logName = 'runGetStats'
+modName = 'com1DFAOrig'
 
 # Load general configuration filee
 cfgMain = cfgUtils.getGeneralConfig()
 flagShow = cfgMain['FLAGS'].getboolean('showPlot')
 # get path to executable
-cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
+cfgCom1DFA = cfgUtils.getModuleConfig(com1DFAOrig)
 com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
 
 peakDictList = []
@@ -54,21 +55,21 @@ for avaDir in avalancheDirs:
     avaName = os.path.basename(avaDir)
     avaNameTest = avaName + 'StatsTest'
     statsSimCfg = os.path.join('..', 'benchmarks', avaNameTest, '%sStats%d_com1DFACfg.ini' % (avaName, count))
-    cfgDFA = cfgUtils.getModuleConfig(com1DFA, statsSimCfg)
+    cfgDFA = cfgUtils.getModuleConfig(com1DFAOrig, statsSimCfg)
     cfgDFA['GENERAL']['com1Exe'] = com1Exe
 
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # Run Standalone DFA
-    reportDictList = com1DFA.com1DFAMain(cfgDFA, avaDir)
+    reportDictList = com1DFAOrig.com1DFAOrigMain(cfgDFA, avaDir)
     fU.makeADir(outDir)
 
     # Generata plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avaDir, cfgDFA, cfgMain['FLAGS'])
+    plotDict = oP.plotAllPeakFields(avaDir, cfgDFA, cfgMain['FLAGS'], modName)
 
     # Set directory for report
-    reportDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
+    reportDir = os.path.join(avaDir, 'Outputs', 'com1DFAOrig', 'reports')
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
@@ -79,7 +80,7 @@ for avaDir in avalancheDirs:
         cfgAimecSetup = cfgAIMEC['AIMECSETUP']
 
         # Setup input from com1DFA
-        dfa2Aimec.mainDfa2Aimec(avaDir, cfgAimecSetup)
+        dfa2Aimec.mainDfa2Aimec(avaDir, cfgAimecSetup, modName)
         # Extract input file locations
         cfgPath = ana3AIMEC.readAIMECinputs(avaDir, dirName='com1DFA')
         # Run AIMEC postprocessing
@@ -92,7 +93,7 @@ for avaDir in avalancheDirs:
 
     # ----- determine max values of peak fields
     # set directory of peak files
-    inputDir = os.path.join(avaDir, 'Outputs%s' % cfgDFA['GENERAL']['releaseScenario'], 'com1DFA', 'peakFiles')
+    inputDir = os.path.join(avaDir, 'Outputs%s' % cfgDFA['GENERAL']['releaseScenario'], 'com1DFAOrig', 'peakFiles')
 
     # get max values of peak files
     peakValues = getStats.extractMaxValues(inputDir, cfgDFA, avaDir, nameScenario=cfgDFA['GENERAL']['releaseScenario'])

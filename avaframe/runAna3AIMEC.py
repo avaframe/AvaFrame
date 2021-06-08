@@ -49,7 +49,7 @@ cfgSetup['contourLevels'] = '1|3|5|10'
 cfg['FLAGS']['flagMass'] = 'True'
 
 # Setup input from com1DFA
-pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, comModule=anaMod)
+pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod)
 
 # TODO: define referenceFile
 pathDict['numSim'] = len(pathDict['ppr'])

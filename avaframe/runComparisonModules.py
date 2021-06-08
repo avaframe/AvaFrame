@@ -59,7 +59,7 @@ for avaName in testList:
     # get module configuration (path to executable...)
     cfgCom1DFAOrig = cfgUtils.getModuleConfig(com1DFAOrig)
     # Run Standalone DFA
-    reportDictListcom1DFAOrig = com1DFAOrig.com1DFAMain(cfgCom1DFAOrig, avaDir)
+    reportDictListcom1DFAOrig = com1DFAOrig.com1DFAOrigMain(cfgCom1DFAOrig, avaDir)
 
     for reportD1 in reportDictListcom1DFAOrig:
         simName1 = reportD1['simName']['name']

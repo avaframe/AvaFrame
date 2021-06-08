@@ -312,7 +312,7 @@ def getCompDirs(avaDir, cfgSetup, pathDict):
     return inputDirRef, inputDirComp, pathDict, refModule
 
 
-def mainDfa2Aimec(avaDir, comModule='com1DFAOrig'):
+def mainDfa2Aimec(avaDir, comModule):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec
@@ -328,6 +328,8 @@ def mainDfa2Aimec(avaDir, comModule='com1DFAOrig'):
         pathDict = extractCom1DFAMBInfo(avaDir, pathDict)
     elif comModule == 'com1DFA':
         pathDict = getMBInfo(avaDir, pathDict, comModule)
+    else:
+        pathDict = getMBInfo(avaDir, pathDict, comModule)
 
     pathDict['compType'] = ['singleModule', comModule]
 
@@ -337,7 +339,7 @@ def mainDfa2Aimec(avaDir, comModule='com1DFAOrig'):
     return pathDict
 
 
-def indiDfa2Aimec(avaDir, suffix, comModule='com1DFAOrig', inputDir=''):
+def indiDfa2Aimec(avaDir, suffix, comModule, inputDir=''):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec
