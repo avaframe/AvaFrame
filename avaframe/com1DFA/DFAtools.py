@@ -299,8 +299,6 @@ def getAreaMesh(Nx, Ny, Nz, csz, num):
     else:
         _, _, NzNormed = normalize(Nx, Ny, Nz)
         A = csz * csz / NzNormed
-    # limit maximum area (for very steeps cells)
-    A = np.where(A > 3*csz*csz, 3*csz*csz, A)
     return A
 
 
