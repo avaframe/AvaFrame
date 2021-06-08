@@ -36,7 +36,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Compile cython code
       run: |
-        if [ -f avaframe/com1DFAPy/DFAfunctionsCython.pyx ]; then python avaframe/com1DFAPy/setup.py build_ext --inplace --define CYTHON_TRACE; fi
+        if [ -f avaframe/com1DFA/DFAfunctionsCython.pyx ]; then python avaframe/com1DFA/setup.py build_ext --inplace --define CYTHON_TRACE; fi
     - name: Test with pytest
       run: |
         pytest -rP --cov --cov-report=xml --cov-config=.coveragerc
