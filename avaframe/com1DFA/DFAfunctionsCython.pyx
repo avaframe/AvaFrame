@@ -477,7 +477,6 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double rho = cfg.getfloat('rho')
   cdef int interpOption = cfg.getint('interpOption')
   cdef double csz = dem['header'].cellsize
-  cdef double mu = cfg.getfloat('mu')
   cdef int Npart = particles['Npart']
   cdef double[:, :] nxArray = dem['Nx']
   cdef double[:, :] nyArray = dem['Ny']

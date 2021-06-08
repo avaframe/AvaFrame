@@ -321,7 +321,7 @@ def removeOutPart(cfg, particles, dem, dt):
     particles : dict
         particles dictionary
     """
-    
+
     header = dem['header']
     nrows = header.nrows
     ncols = header.ncols
@@ -430,23 +430,15 @@ def removePart(particles, mask, nRemove):
     particles : dict
         particles dictionary
     """
-    particles['Npart'] = particles['Npart'] - nRemove
-    particles['NPPC'] = particles['NPPC'][mask]
-    particles['x'] = particles['x'][mask]
-    particles['y'] = particles['y'][mask]
-    particles['z'] = particles['z'][mask]
-    particles['s'] = particles['s'][mask]
-    particles['l'] = particles['l'][mask]
-    particles['ux'] = particles['ux'][mask]
-    particles['uy'] = particles['uy'][mask]
-    particles['uz'] = particles['uz'][mask]
-    particles['m'] = particles['m'][mask]
-    particles['h'] = particles['h'][mask]
-    particles['inCellDEM'] = particles['inCellDEM'][mask]
-    particles['indXDEM'] = particles['indXDEM'][mask]
-    particles['indYDEM'] = particles['indYDEM'][mask]
-    particles['partInCell'] = particles['partInCell'][mask]
 
+    for key in particles:
+        if key == 'Npart':
+            particles['Npart'] = particles['Npart'] - nRemove
+        elif type(particles[key]).__module__ == np.__name__:
+            if np.size(particles[key]) > 1:
+                particles[key] = particles[key][mask]
+
+    particles['mTot'] = np.sum(particles['m'])
     return particles
 
 
