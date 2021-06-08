@@ -1,22 +1,22 @@
 {
     "creators": [
         {
-            "affiliation": "BFW", 
+            "affiliation": "BFW",
             "name": "Anna Wirbel"
-        }, 
+        },
         {
-            "affiliation": "BOKU", 
+            "affiliation": "BOKU",
             "name": "Felix Oesterle"
             "orcid": "0000-0002-7772-6884"
-        }, 
+        },
         {
-            "affiliation": "BFW", 
+            "affiliation": "BFW",
             "name": "Matthias Tonnel"
-        }, 
+        },
         {
-            "affiliation": "BFW", 
+            "affiliation": "BFW",
             "name": "Jan-Thomas Fischer"
             "orcid": "0000-0001-5179-6457"
         }
-    ], 
+    ]
 }
