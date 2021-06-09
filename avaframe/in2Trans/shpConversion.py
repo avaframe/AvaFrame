@@ -6,6 +6,7 @@
 import os
 import shapefile
 import sys
+import copy
 import numpy as np
 import logging
 
@@ -146,3 +147,49 @@ def readPoints(fname, dem):
         elif np.isnan(rasterDEM[int(np.floor(Ly)), int(np.floor(Lx))]):
             raise ValueError('Nan Value encountered. Try with another split point')
     return Points
+
+
+def removeFeature(featureIn, featureName):
+    """ Remove feature featureName from featureIn"""
+    NameRel = featureIn['Name']
+    StartRel = featureIn['Start']
+    LengthRel = featureIn['Length']
+    d0 = featureIn['d0']
+    featureOut = copy.deepcopy(featureIn)
+    # find index of feature to remove
+    nFeature2Remove = NameRel.index(featureName)
+    start = StartRel[nFeature2Remove]
+    end = start + LengthRel[nFeature2Remove]
+    # remove feature
+    featureOut['x'] = np.delete(featureIn['x'], np.arange(int(start), int(end)))
+    featureOut['y'] = np.delete(featureIn['y'], np.arange(int(start), int(end)))
+    del NameRel[nFeature2Remove]
+    featureOut['Name'] = NameRel
+    StartRel = StartRel[nFeature2Remove:] - LengthRel[nFeature2Remove]
+    featureOut['Start'] = np.delete(StartRel, nFeature2Remove)
+    featureOut['Length'] = np.delete(LengthRel, nFeature2Remove)
+    featureOut['d0'] = np.delete(d0, nFeature2Remove)
+
+    return featureOut
+
+
+def extractFeature(featureIn, featureName):
+    """ Extract feature featureName from featureIn"""
+    NameRel = featureIn['Name']
+    StartRel = featureIn['Start']
+    LengthRel = featureIn['Length']
+    d0 = featureIn['d0']
+    featureOut = copy.deepcopy(featureIn)
+    # find index of feature to extract
+    nFeature2Extract = NameRel.index(featureName)
+    # extract feature
+    featureOut['Name'] = [NameRel[nFeature2Extract]]
+    featureOut['Start'] = np.array([StartRel[nFeature2Extract]])
+    featureOut['Length'] = np.array([LengthRel[nFeature2Extract]])
+    featureOut['d0'] = np.array([d0[nFeature2Extract]])
+    start = StartRel[nFeature2Extract]
+    end = start + LengthRel[nFeature2Extract]
+    featureOut['x'] = featureIn['x'][int(start):int(end)]
+    featureOut['y'] = featureIn['y'][int(start):int(end)]
+
+    return featureOut
