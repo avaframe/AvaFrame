@@ -153,6 +153,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef double rhoEnt = cfg.getfloat('rhoEnt')
   cdef double hRes = cfg.getfloat('hRes')
   cdef double gravAcc = cfg.getfloat('gravAcc')
+  cdef double xsi = cfg.getfloat('xsi')
   cdef double curvAcceleration = cfg.getfloat('curvAcceleration')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef int interpOption = cfg.getint('interpOption')
@@ -294,6 +295,8 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
           elif frictType == 2:
             # coulomb friction type (bottom shear stress)
             tau = mu * sigmaB
+          elif frictType == 3:
+            tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi
           else:
             tau = 0.0
 
