@@ -968,7 +968,7 @@ def DFAIterate(cfg, particles, fields, dem):
     resTypesLast = list(set(resTypes + resTypesReport))
     # derive friction type
     # turn friction model into integer
-    frictModelsList = ['samosAT', 'Coulomb']
+    frictModelsList = ['samosAT', 'Coulomb', 'Voellmy']
     frictType = frictModelsList.index(cfgGen['frictModel']) + 1
     log.info('Friction Model used: %s, %s' % (cfgGen['frictModel'],frictType))
 
