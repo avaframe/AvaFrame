@@ -196,8 +196,16 @@ def compareConfig(iniFile, modName, compare, modInfo=False):
         # Now check if there are some sections/ keys left in the local cfg and
         # that are not used
         for section in locCfg.sections():
-            for key in locCfg.items(section):
-                log.warning('Key [\'%s\'] in section [\'%s\'] in the localCfg file is not needed.' % (key[0], section))
+            if defCfg.has_section(section):
+                for key in locCfg.items(section):
+                    log.warning('Additional Key [\'%s\'] in section [\'%s\'] is ignored.' % (key[0], section))
+            else:
+                cfg.add_section(section)
+                log.info('Additional section [\'%s\'] is added to the configuration.' % (section))
+                for key in locCfg.items(section):
+                    log.info('Additional Key [\'%s\'] in section [\'%s\'] is added to the configuration.' % (key[0], section))
+                    cfg.set(section, key[0], key[1])
+                    log.info('\t\t%s : %s', key[0], key[1])
 
     else:
         log.info('Reading config from: %s', iniFile)
