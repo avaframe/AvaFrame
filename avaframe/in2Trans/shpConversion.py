@@ -151,7 +151,6 @@ def readPoints(fname, dem):
 
 def removeFeature(featureIn, nFeature2Remove):
     """ Remove feature number nFeature2Remove from featureIn"""
-    NameRel = featureIn['Name']
     StartRel = featureIn['Start']
     LengthRel = featureIn['Length']
     d0 = featureIn['d0']
@@ -161,8 +160,11 @@ def removeFeature(featureIn, nFeature2Remove):
     # remove feature
     featureOut['x'] = np.delete(featureIn['x'], np.arange(int(start), int(end)))
     featureOut['y'] = np.delete(featureIn['y'], np.arange(int(start), int(end)))
-    del NameRel[nFeature2Remove]
-    featureOut['Name'] = NameRel
+    if 'z' in featureIn.keys():
+        featureOut['z'] = np.delete(featureIn['z'], np.arange(int(start), int(end)))
+
+    del featureOut['Name'][nFeature2Remove]
+    StartRel = featureOut['Start']
     StartRel[nFeature2Remove:] = StartRel[nFeature2Remove:] - LengthRel[nFeature2Remove]
     featureOut['Start'] = np.delete(StartRel, nFeature2Remove)
     featureOut['Length'] = np.delete(LengthRel, nFeature2Remove)
@@ -187,5 +189,7 @@ def extractFeature(featureIn, nFeature2Extract):
     end = start + LengthRel[nFeature2Extract]
     featureOut['x'] = featureIn['x'][int(start):int(end)]
     featureOut['y'] = featureIn['y'][int(start):int(end)]
+    if 'z' in featureIn.keys():
+        featureOut['z'] = featureIn['z'][int(start):int(end)]
 
     return featureOut
