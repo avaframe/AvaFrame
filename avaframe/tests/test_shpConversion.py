@@ -53,6 +53,141 @@ def test_SHP2Array(capfd):
     assert testRes
 
 
+def test_extractFeature(capfd):
+    '''Simple test for function extractFeature'''
+    dirname = os.path.dirname(__file__)
+    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLine.shp')
+    SHPdata = shpConv.SHP2Array(shpFileName, defname=None)
+
+    atol = 1e-10
+    # extract feature 0
+    featureOut = shpConv.extractFeature(SHPdata, 0)
+
+    assert featureOut['Name'] == ['line1']
+
+    # check start index lines
+    Sol = np.array([0])
+    testRes = np.allclose(featureOut['Start'], Sol, atol=atol)
+    assert testRes
+
+    # check length lines
+    Sol = np.array([3])
+    testRes = np.allclose(featureOut['Length'], Sol, atol=atol)
+    assert testRes
+
+    # check line x coord
+    Sol = np.array([15.7390148, 28.11881745, 110.48527428])
+    testRes = np.allclose(featureOut['x'], Sol, atol=atol)
+    assert testRes
+
+    # check line y coord
+    Sol = np.array([44.12575919, 51.67232464, 65.17502248])
+    testRes = np.allclose(featureOut['y'], Sol, atol=atol)
+    assert testRes
+
+    # check line z coord
+    Sol = np.array([0., 0., 0.])
+    testRes = np.allclose(featureOut['z'], Sol, atol=atol)
+    assert testRes
+
+    featureOut = shpConv.extractFeature(SHPdata, 1)
+
+    # extract feature 1
+    assert featureOut['Name'] == ['line2']
+
+    # check start index lines
+    Sol = np.array([0])
+    testRes = np.allclose(featureOut['Start'], Sol, atol=atol)
+    assert testRes
+
+    # check length lines
+    Sol = np.array([3])
+    testRes = np.allclose(featureOut['Length'], Sol, atol=atol)
+    assert testRes
+
+    # check line x coord
+    Sol = np.array([32.27956687, 55.29299685, 173.27281924])
+    testRes = np.allclose(featureOut['x'], Sol, atol=atol)
+    assert testRes
+
+    # check line y coord
+    Sol = np.array([29.69676696, 84.07879946, 69.05704811])
+    testRes = np.allclose(featureOut['y'], Sol, atol=atol)
+    assert testRes
+
+    # check line z coord
+    Sol = np.array([0., 0., 0.])
+    testRes = np.allclose(featureOut['z'], Sol, atol=atol)
+    assert testRes
+
+
+def test_removeFeature(capfd):
+    '''Simple test for function removeFeature'''
+    dirname = os.path.dirname(__file__)
+    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLine.shp')
+    SHPdata = shpConv.SHP2Array(shpFileName, defname=None)
+    atol = 1e-10
+    # extract feature 0
+    featureOut = shpConv.removeFeature(SHPdata, 1)
+
+    assert featureOut['Name'] == ['line1']
+
+    # check start index lines
+    Sol = np.array([0])
+    testRes = np.allclose(featureOut['Start'], Sol, atol=atol)
+    assert testRes
+
+    # check length lines
+    Sol = np.array([3])
+    testRes = np.allclose(featureOut['Length'], Sol, atol=atol)
+    assert testRes
+
+    # check line x coord
+    Sol = np.array([15.7390148, 28.11881745, 110.48527428])
+    testRes = np.allclose(featureOut['x'], Sol, atol=atol)
+    assert testRes
+
+    # check line y coord
+    Sol = np.array([44.12575919, 51.67232464, 65.17502248])
+    testRes = np.allclose(featureOut['y'], Sol, atol=atol)
+    assert testRes
+
+    # check line z coord
+    Sol = np.array([0., 0., 0.])
+    testRes = np.allclose(featureOut['z'], Sol, atol=atol)
+    assert testRes
+
+    featureOut = shpConv.removeFeature(SHPdata, 0)
+    print(featureOut)
+    # extract feature 1
+    assert featureOut['Name'] == ['line2']
+
+    # check start index lines
+    Sol = np.array([0])
+    testRes = np.allclose(featureOut['Start'], Sol, atol=atol)
+    assert testRes
+
+    # check length lines
+    Sol = np.array([3])
+    testRes = np.allclose(featureOut['Length'], Sol, atol=atol)
+    assert testRes
+
+    # check line x coord
+    Sol = np.array([32.27956687, 55.29299685, 173.27281924])
+    testRes = np.allclose(featureOut['x'], Sol, atol=atol)
+    assert testRes
+
+    # check line y coord
+    Sol = np.array([29.69676696, 84.07879946, 69.05704811])
+    testRes = np.allclose(featureOut['y'], Sol, atol=atol)
+    assert testRes
+
+    # check line z coord
+    Sol = np.array([0., 0., 0.])
+    testRes = np.allclose(featureOut['z'], Sol, atol=atol)
+    assert testRes
+
+
 def test_readLine(capfd):
     '''Simple test for function readLine'''
     dirname = os.path.dirname(__file__)
