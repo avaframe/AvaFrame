@@ -149,15 +149,13 @@ def readPoints(fname, dem):
     return Points
 
 
-def removeFeature(featureIn, featureName):
-    """ Remove feature featureName from featureIn"""
+def removeFeature(featureIn, nFeature2Remove):
+    """ Remove feature number nFeature2Remove from featureIn"""
     NameRel = featureIn['Name']
     StartRel = featureIn['Start']
     LengthRel = featureIn['Length']
     d0 = featureIn['d0']
     featureOut = copy.deepcopy(featureIn)
-    # find index of feature to remove
-    nFeature2Remove = NameRel.index(featureName)
     start = StartRel[nFeature2Remove]
     end = start + LengthRel[nFeature2Remove]
     # remove feature
@@ -165,7 +163,7 @@ def removeFeature(featureIn, featureName):
     featureOut['y'] = np.delete(featureIn['y'], np.arange(int(start), int(end)))
     del NameRel[nFeature2Remove]
     featureOut['Name'] = NameRel
-    StartRel = StartRel[nFeature2Remove:] - LengthRel[nFeature2Remove]
+    StartRel[nFeature2Remove:] = StartRel[nFeature2Remove:] - LengthRel[nFeature2Remove]
     featureOut['Start'] = np.delete(StartRel, nFeature2Remove)
     featureOut['Length'] = np.delete(LengthRel, nFeature2Remove)
     featureOut['d0'] = np.delete(d0, nFeature2Remove)
@@ -173,18 +171,16 @@ def removeFeature(featureIn, featureName):
     return featureOut
 
 
-def extractFeature(featureIn, featureName):
-    """ Extract feature featureName from featureIn"""
+def extractFeature(featureIn, nFeature2Extract):
+    """ Extract feature nFeature2Extract from featureIn"""
     NameRel = featureIn['Name']
     StartRel = featureIn['Start']
     LengthRel = featureIn['Length']
     d0 = featureIn['d0']
     featureOut = copy.deepcopy(featureIn)
-    # find index of feature to extract
-    nFeature2Extract = NameRel.index(featureName)
     # extract feature
     featureOut['Name'] = [NameRel[nFeature2Extract]]
-    featureOut['Start'] = np.array([StartRel[nFeature2Extract]])
+    featureOut['Start'] = np.array([0])
     featureOut['Length'] = np.array([LengthRel[nFeature2Extract]])
     featureOut['d0'] = np.array([d0[nFeature2Extract]])
     start = StartRel[nFeature2Extract]

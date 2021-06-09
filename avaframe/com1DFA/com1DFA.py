@@ -1710,7 +1710,7 @@ def releaseSecRelArea(cfg, particles, fields, dem):
         if mask.any():
             # create secondary release area particles
             log.info('Initializing secondary release area feature %s' % secRelRasterName)
-            secRelInfo = shpConv.extractFeature(secondaryReleaseInfo, secRelRasterName)
+            secRelInfo = shpConv.extractFeature(secondaryReleaseInfo, count)
             secRelInfo['rasterData'] = secRelRaster
             secRelParticles = initializeParticles(cfg, secRelInfo, dem)
             # release secondary release area by just appending the particles
@@ -1718,7 +1718,7 @@ def releaseSecRelArea(cfg, particles, fields, dem):
             particles = DFAtls.mergeParticleDict(particles, secRelParticles)
             # remove it from the secondary release area list
             secRelRasterList.pop(count)
-            secondaryReleaseInfo = shpConv.removeFeature(secondaryReleaseInfo, secRelRasterName)
+            secondaryReleaseInfo = shpConv.removeFeature(secondaryReleaseInfo, count)
         count = count + 1
 
     secondaryReleaseInfo['rasterData'] = secRelRasterList
