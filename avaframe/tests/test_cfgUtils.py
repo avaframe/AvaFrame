@@ -13,7 +13,7 @@ def test_getModuleConfig():
     cfg = cfgUtils.getModuleConfig(test_logUtils)
     sections = cfg.sections()
 
-    assert sections == ['GENERAL', 'FLAGS', 'GOODSECTION1', 'GOODSECTION2']
+    assert sections == ['GENERAL', 'FLAGS', 'GOODSECTION1', 'GOODSECTION2', 'BADSECTION1']
     assert cfg['GENERAL']['inputDir'] == 'path/to/avalanche'
     assert cfg['GENERAL']['fullLog'] == 'True'
     assert cfg['GOODSECTION1']['goodKey1'] == '1'
@@ -25,7 +25,7 @@ def test_getModuleConfig():
     filename = os.path.join(avalancheDir, 'local_test_logUtilsCfg.ini')
     cfg = cfgUtils.getModuleConfig(test_logUtils, fileOverride=filename)
     sections = cfg.sections()
-    assert sections == ['GENERAL', 'FLAGS', 'GOODSECTION1', 'GOODSECTION2']
+    assert sections == ['GENERAL', 'FLAGS', 'GOODSECTION1', 'GOODSECTION2', 'BADSECTION1']
     assert sections != ['GENERAL', 'FLAGS', 'GOODSECTION1', 'BADSECTION1']
     assert cfg['GENERAL']['inputDir'] == 'path/to/avalanche'
     assert cfg['GENERAL']['fullLog'] == 'True'
@@ -45,10 +45,10 @@ def test_cfgHash():
     uid = cfgUtils.cfgHash(cfg)
 
     # test for the correct uid
-    assert uid == 'b81459a252'
+    assert uid == 'bcc6c69699'
 
     # change and test again
     cfg['GOODSECTION1']['goodKey1'] = '1.5'
     uid = cfgUtils.cfgHash(cfg)
     # make sure it is not the same hash
-    assert uid != 'b81459a252'
+    assert uid != 'bcc6c69699'

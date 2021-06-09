@@ -10,6 +10,9 @@ cfgUtils - INFO -  		goodKey2 : False 	(default value was : True)
 cfgUtils - INFO -  	GOODSECTION2
 cfgUtils - INFO -  		goodKey3 : 0
 cfgUtils - INFO -  		goodKey4 : False
-cfgUtils - WARNING -  Key ['badKey1'] in section ['GOODSECTION1'] in the localCfg file is not needed.
-cfgUtils - WARNING -  Key ['badKey2'] in section ['BADSECTION1'] in the localCfg file is not needed.
-cfgUtils - WARNING -  Key ['badKey3'] in section ['BADSECTION1'] in the localCfg file is not needed.
+cfgUtils - WARNING -  Additional Key ['badKey1'] in section ['GOODSECTION1'] is ignored.
+cfgUtils - INFO -  Additional section ['BADSECTION1'] is added to the configuration.
+cfgUtils - INFO -  Additional Key ['badKey2'] in section ['BADSECTION1'] is added to the configuration.
+cfgUtils - INFO -  		badKey2 : 10
+cfgUtils - INFO -  Additional Key ['badKey3'] in section ['BADSECTION1'] is added to the configuration.
+cfgUtils - INFO -  		badKey3 : None
