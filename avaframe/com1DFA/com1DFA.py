@@ -505,7 +505,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
         secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2), thList=secondaryReleaseInfo['d0'], combine=False)
         # remove overlap with main release areas
         noOverlaprasterList = []
-        for secRelRatser, secRelName in zip(secondaryReleaseInfo['secRelRasterList'], secondaryReleaseInfo['Name']):
+        for secRelRatser, secRelName in zip(secondaryReleaseInfo['rasterData'], secondaryReleaseInfo['Name']):
             noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release ' + secRelName, 'Release', crop=True))
 
         secondaryReleaseInfo['flagSecondaryRelease'] = 'Yes'
@@ -1385,12 +1385,35 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         ind1 = Raster > 0
         ind2 = rast > 0
         indMatch = np.logical_and(ind1, ind2)
-        # if there is an overlap, raise error
-        if indMatch.any() and checkOverlap:
-            message = 'Features are overlaping - this is not allowed'
-            log.error(message)
-            raise AssertionError(message)
-        Raster = Raster + rast
+        if indMatch.any():
+            # if there is an overlap, raise error
+            if checkOverlap:
+                message = 'Features are overlaping - this is not allowed'
+                log.error(message)
+                raise AssertionError(message)
+            else:
+                # if there is an overlap, take average of values for the overlapping cells
+                Raster = np.where(((Raster > 0) & (rast > 0)),  (Raster + rast)/2, Raster + rast)
+        else:
+            Raster = Raster + rast
+    if debugPlot:
+        ncols = dem['header'].ncols
+        nrows = dem['header'].nrows
+        csz = dem['header'].cellsize
+        x = np.arange(ncols) * csz
+        y = np.arange(nrows) * csz
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        ax.set_title('Release area')
+        cmap = copy.copy(mpl.cm.get_cmap("Greys"))
+        ref0, im = pU.NonUnifIm(ax, x, y, Raster, 'x [m]', 'y [m]',
+                                extent=[x.min(), x.max(), y.min(), y.max()],
+                                cmap=cmap, norm=None)
+        ax.plot(avapath['x'] * csz, avapath['y'] * csz, 'r', label='release polyline')
+        plt.legend()
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.1)
+        fig.colorbar(im, cax=cax)
+        plt.show()
     if combine:
         line['rasterData'] = Raster
         return line
@@ -1677,7 +1700,7 @@ def releaseSecRelArea(cfg, particles, fields, dem):
     """
     secondaryReleaseInfo = particles['secondaryReleaseInfo']
     flowDepthField = fields['FD']
-    secRelRasterList = secondaryReleaseInfo['rasterList']
+    secRelRasterList = secondaryReleaseInfo['rasterData']
     secRelRasterNameList = secondaryReleaseInfo['Name']
     count = 0
     for secRelRaster, secRelRasterName in zip(secRelRasterList, secRelRasterNameList):
@@ -1687,18 +1710,18 @@ def releaseSecRelArea(cfg, particles, fields, dem):
         if mask.any():
             # create secondary release area particles
             log.info('Initializing secondary release area feature %s' % secRelRasterName)
-            secRelParticles = initializeParticles(cfg, secondaryReleaseInfo, dem)
-
+            secRelInfo = shpConv.extractFeature(secondaryReleaseInfo, secRelRasterName)
+            secRelInfo['rasterData'] = secRelRaster
+            secRelParticles = initializeParticles(cfg, secRelInfo, dem)
             # release secondary release area by just appending the particles
             log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
             particles = DFAtls.mergeParticleDict(particles, secRelParticles)
             # remove it from the secondary release area list
             secRelRasterList.pop(count)
-            secRelRasterNameList.pop(count)
+            secondaryReleaseInfo = shpConv.removeFeature(secondaryReleaseInfo, secRelRasterName)
         count = count + 1
 
-    secondaryReleaseInfo['secondaryReleaseParticlesList'] = secRelRasterList
-    secondaryReleaseInfo['Name'] = secRelRasterNameList
+    secondaryReleaseInfo['rasterData'] = secRelRasterList
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
     return particles
