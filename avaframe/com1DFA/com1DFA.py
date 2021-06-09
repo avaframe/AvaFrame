@@ -466,13 +466,15 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     log.info('Initializing main release area')
     # process release info to get it as a raster
     releaseLine = inputSimLines['releaseLine']
+    # check if release features overlap between features
+    prepareArea(releaseLine, demOri, 0.001, combine=True, checkOverlap=True)
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
-        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['d0'], combine=True)
+        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['d0'], combine=True, checkOverlap=False)
     else:
         # if relTh provided - set release thickness with field or function
-        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True)
+        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True, checkOverlap=False)
         releaseLine['rasterData'] = releaseLine['rasterData'] * relThField
 
     # compute release area
@@ -1327,7 +1329,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     return particles, fields, Tcpu, dt
 
 
-def prepareArea(line, dem, radius, thList='', combine=True):
+def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
     """ convert shape file polygon to raster
 
     Parameters
@@ -1384,7 +1386,7 @@ def prepareArea(line, dem, radius, thList='', combine=True):
         ind2 = rast > 0
         indMatch = np.logical_and(ind1, ind2)
         # if there is an overlap, raise error
-        if indMatch.any():
+        if indMatch.any() and checkOverlap:
             message = 'Features are overlaping - this is not allowed'
             log.error(message)
             raise AssertionError(message)
@@ -1440,7 +1442,7 @@ def polygon2Raster(demHeader, Line, radius, th=''):
     # for this we need to know if the path is clockwise or counter clockwise
     # to decide if the radius should be positif or negatif in contains_points
     is_ccw = geoTrans.isCounterClockWise(path)
-    r = (radius*is_ccw - radius*(1-is_ccw))/4
+    r = (radius*is_ccw - radius*(1-is_ccw))
     x = np.linspace(0, ncols-1, ncols)
     y = np.linspace(0, nrows-1, nrows)
     X, Y = np.meshgrid(x, y)
