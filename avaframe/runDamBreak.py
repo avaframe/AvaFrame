@@ -47,7 +47,7 @@ dtAnalysis = cfg['DAMBREAK'].getfloat('dtStep')
 Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile=damBreakCfg)
 
 # create simDict of results
-inputDir = 'data/avaDamBreak/Outputs/com1DFAPy/peakFiles/timeSteps'
+inputDir = 'data/avaDamBreak/Outputs/com1DFA/peakFiles/timeSteps'
 dataComSol = fU.makeSimDict(inputDir, avaDir=avaDir)
 
 # make comparison plots
