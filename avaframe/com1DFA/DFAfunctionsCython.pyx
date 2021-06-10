@@ -296,6 +296,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
             # coulomb friction type (bottom shear stress)
             tau = mu * sigmaB
           elif frictType == 3:
+            # voellmy friction type
             tau = mu * sigmaB + rho * uMag * uMag * gravAcc / xsi
           else:
             tau = 0.0
