@@ -732,7 +732,7 @@ cdef (double, double, double, double) account4FrictionForce(double ux, double uy
       uyNew = uy - yDir * forceFrict * dt / m
       uzNew = uz - zDir * forceFrict * dt / m
       dtStop = dt
-  if explicitFriction == 0:
+  elif explicitFriction == 0:
     # implicite method
     uxNew = ux / (1.0 + dt * forceFrict / m)
     uyNew = uy / (1.0 + dt * forceFrict / m)
