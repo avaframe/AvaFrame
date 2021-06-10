@@ -456,6 +456,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     """
     cfgGen = cfg['GENERAL']
     methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
+    thresholdPointInPoly = cfgGen.getfloat('thresholdPointInPoly')
 
     # -----------------------
     # Initialize mesh
@@ -467,7 +468,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # process release info to get it as a raster
     releaseLine = inputSimLines['releaseLine']
     # check if release features overlap between features
-    prepareArea(releaseLine, demOri, 0.001, combine=True, checkOverlap=True)
+    prepareArea(releaseLine, demOri, thresholdPointInPoly, combine=True, checkOverlap=True)
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
@@ -521,7 +522,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     simTypeActual = cfgGen['simTypeActual']
     rhoEnt = cfgGen.getfloat('rhoEnt')
     hEnt = cfgGen.getfloat('hEnt')
-    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], reportAreaInfo)
+    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], reportAreaInfo, thresholdPointInPoly)
     # check if entrainment and release overlap
     entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', 'Release', crop=True)
     # check for overlap with the secondary release area
@@ -534,7 +535,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
 
     log.info('Initializing resistance area')
-    cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, inputSimLines['resLine'], reportAreaInfo)
+    cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, inputSimLines['resLine'], reportAreaInfo, thresholdPointInPoly)
     fields['cResRaster'] = cResRaster
 
     return particles, fields, dem, reportAreaInfo
@@ -683,7 +684,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     particles['xllcenter'] = dem['originOri']['xllcenter']
     particles['yllcenter'] = dem['originOri']['yllcenter']
 
-    particles = checkParticlesInRelease(particles, releaseLine)
+    particles = checkParticlesInRelease(particles, releaseLine, cfg.getfloat('thresholdPointInPoly'))
 
     # initialize time
     t = 0
@@ -826,18 +827,29 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo):
+def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly):
     """ Initialize mass for entrainment
 
     Parameters
     ----------
     dem: dict
         dem dictionary
+    simTypeActual: str
+        simulation type
+    entLine: dict
+        entrainment line dictionary
+    reportAreaInfo: dict
+        simulation area information dictionary
+    thresholdPointInPoly: float
+        threshold val that decides if a point is in the polygon, on the line or
+        very close but outside
 
     Returns
     -------
     entrMassRaster : 2D numpy array
         raster of available mass for entrainment
+    reportAreaInfo: dict
+        simulation area information dictionary completed with entrainment area info
     """
     # read dem header
     header = dem['header']
@@ -847,7 +859,7 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo):
         entrainmentArea = entLine['fileName']
         log.info('Initializing entrainment area %s' % (entrainmentArea))
         log.info('Entrainment area features: %s' % (entLine['Name']))
-        entLine = prepareArea(entLine, dem, 0.001)
+        entLine = prepareArea(entLine, dem, thresholdPointInPoly)
         entrMassRaster = entLine['rasterData']
         reportAreaInfo['entrainment'] = 'Yes'
     else:
@@ -857,18 +869,29 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo):
     return entrMassRaster, reportAreaInfo
 
 
-def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo):
+def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly):
     """ Initialize resistance matrix
 
     Parameters
     ----------
     dem: dict
         dem dictionary
+    simTypeActual: str
+        simulation type
+    resLine: dict
+        resistance line dictionary
+    reportAreaInfo: dict
+        simulation area information dictionary
+    thresholdPointInPoly: float
+        threshold val that decides if a point is in the polygon, on the line or
+        very close but outside
 
     Returns
     -------
     cResRaster : 2D numpy array
         raster of resistance coefficients
+    reportAreaInfo: dict
+        simulation area information dictionary completed with entrainment area info
     """
     d = cfg.getfloat('dRes')
     cw = cfg.getfloat('cw')
@@ -881,7 +904,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo):
         resistanceArea = resLine['fileName']
         log.info('Initializing resistance area %s' % (resistanceArea))
         log.info('Resistance area features: %s' % (resLine['Name']))
-        resLine = prepareArea(resLine, dem, 0.001)
+        resLine = prepareArea(resLine, dem, thresholdPointInPoly)
         mask = resLine['rasterData']
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
         reportAreaInfo['resistance'] = 'Yes'
@@ -1504,7 +1527,7 @@ def polygon2Raster(demHeader, Line, radius, th=''):
     return Mask
 
 
-def checkParticlesInRelease(particles, line):
+def checkParticlesInRelease(particles, line, radius):
     """ remove particles laying outside the polygon
 
     Parameters
@@ -1513,6 +1536,9 @@ def checkParticlesInRelease(particles, line):
         particles dictionary
     line: dict
         line dictionary
+    radius: float
+        threshold val that decides if a point is in the polygon, on the line or
+        very close but outside
 
     Returns
     -------
@@ -1532,7 +1558,7 @@ def checkParticlesInRelease(particles, line):
         avapath['x'] = line['x'][int(start):int(end)]
         avapath['y'] = line['y'][int(start):int(end)]
         avapath['Name'] = name
-        mask = pointInPolygon(line['header'], particles, avapath)
+        mask = pointInPolygon(line['header'], particles, avapath, radius)
         Mask = np.logical_or(Mask, mask)
 
     nRemove = len(Mask)-np.sum(Mask)
@@ -1543,7 +1569,7 @@ def checkParticlesInRelease(particles, line):
     return particles
 
 
-def pointInPolygon(demHeader, points, Line):
+def pointInPolygon(demHeader, points, Line, radius):
     """ find particles within a polygon
 
     Parameters
@@ -1554,6 +1580,9 @@ def pointInPolygon(demHeader, points, Line):
         points to check
     Line : dict
         line dictionary
+    radius: float
+        threshold val that decides if a point is in the polygon, on the line or
+        very close but outside
     Returns
     -------
 
@@ -1580,7 +1609,6 @@ def pointInPolygon(demHeader, points, Line):
     # for this we need to know if the path is clockwise or counter clockwise
     # to decide if the radius should be positif or negatif in contains_points
     is_ccw = geoTrans.isCounterClockWise(path)
-    radius = 0.001
     r = (radius*is_ccw - radius*(1-is_ccw))
     points2Check = np.stack((points['x'], points['y']), axis=-1)
     mask = path.contains_points(points2Check, radius=r)
