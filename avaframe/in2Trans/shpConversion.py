@@ -15,15 +15,27 @@ log = logging.getLogger(__name__)
 
 
 def SHP2Array(infile, defname=None):
-    """ Read shapefile and convert it to a python dictionnary
-    containing the name of the paths in the shape file, the np array with
+    """ Read shapefile and convert it to a python dictionary
+
+    Dictionary contains the name of the paths in the shape file, the np array with
     the coordinates of the path points (all stacked in the same array)
     and information about the startin index and length of each path
-    Output : SHPdata dictionnary
-    SHPdata['Name'] = list of paths names
-    SHPdata['Coord'] = np array of the coords of points in paths
-    SHPdata['Start'] = list of starting index of each path in Coord
-    SHPdata['Length'] = list of length of each path in Coord
+
+    Parameters
+    ----------
+    infile: str
+        path to shape file
+    defname: str
+        name to give to the feature in the shape file
+
+    Returns
+    -------
+    SHPdata : dict
+        SHPdata['Name'] : list of feature names
+        SHPdata['Coord'] : np array of the coords of points in feature
+        SHPdata['Start'] : list of starting index of each feature in Coord
+        SHPdata['Length'] : list of length of each feature in Coord
+
     """
     #  Input shapefile
     sf = shapefile.Reader(infile)
@@ -111,7 +123,26 @@ def SHP2Array(infile, defname=None):
 
 
 def readLine(fname, defname, dem):
-    """ Read avalanche path from  .shp"""
+    """ Read line from  .shp
+    Check if the lines are laying inside the dem extend
+
+    Parameters
+    ----------
+    fname: str
+        path to shape file
+    defname: str
+        name to give to the line in the shape file
+    dem: dict
+        dem dictionary
+
+    Returns
+    -------
+    Line : dict
+        Line['Name'] : list of lines names
+        Line['Coord'] : np array of the coords of points in lines
+        Line['Start'] : list of starting index of each line in Coord
+        Line['Length'] : list of length of each line in Coord
+    """
 
     log.debug('Reading avalanche path : %s ', fname)
     header = dem['header']
@@ -130,7 +161,26 @@ def readLine(fname, defname, dem):
 
 
 def readPoints(fname, dem):
-    """ Read split point path from .shp"""
+    """ Read points from  .shp
+    Check if the points are laying inside the dem extend
+
+    Parameters
+    ----------
+    fname: str
+        path to shape file
+    defname: str
+        name to give to the points in the shape file
+    dem: dict
+        dem dictionary
+
+    Returns
+    -------
+    Line : dict
+        Line['Name'] : list of points names
+        Line['Coord'] : np array of the coords of points in points
+        Line['Start'] : list of starting index of each point in Coord
+        Line['Length'] : list of length of each point in Coord
+    """
 
     log.debug('Reading split point : %s ', fname)
     header = dem['header']
@@ -150,7 +200,20 @@ def readPoints(fname, dem):
 
 
 def removeFeature(featureIn, nFeature2Remove):
-    """ Remove feature number nFeature2Remove from featureIn"""
+    """ Remove feature number nFeature2Remove from featureIn
+
+    Parameters
+    ----------
+    featureIn: dict
+        shape file dicionary (structure produced by SHP2Array, readLine or readPoint)
+    nFeature2Remove: int
+        index of feature to remove from featureIn
+
+    Returns
+    -------
+    featureOut : dict
+        shape file dicionary without feature nFeature2Remove
+    """
     StartRel = featureIn['Start']
     LengthRel = featureIn['Length']
     d0 = featureIn['d0']
@@ -174,7 +237,20 @@ def removeFeature(featureIn, nFeature2Remove):
 
 
 def extractFeature(featureIn, nFeature2Extract):
-    """ Extract feature nFeature2Extract from featureIn"""
+    """ Extract feature nFeature2Extract from featureIn
+
+    Parameters
+    ----------
+    featureIn: dict
+        shape file dicionary (structure produced by SHP2Array, readLine or readPoint)
+    nFeature2Extract: int
+        index of feature to extract from featureIn
+
+    Returns
+    -------
+    featureOut : dict
+        shape file dicionary with feature nFeature2Extract
+    """
     NameRel = featureIn['Name']
     StartRel = featureIn['Start']
     LengthRel = featureIn['Length']
