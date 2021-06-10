@@ -5,6 +5,7 @@
 # Load modules
 import os
 import numpy as np
+import pathlib
 
 # Local imports
 import avaframe.com1DFA.com1DFA as com1DFA
@@ -47,7 +48,7 @@ dtAnalysis = cfg['DAMBREAK'].getfloat('dtStep')
 Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile=damBreakCfg)
 
 # create simDict of results
-inputDir = 'data/avaDamBreak/Outputs/com1DFA/peakFiles/timeSteps'
+inputDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')
 dataComSol = fU.makeSimDict(inputDir, avaDir=avaDir)
 
 # make comparison plots
