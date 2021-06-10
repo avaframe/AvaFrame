@@ -467,7 +467,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # process release info to get it as a raster
     releaseLine = inputSimLines['releaseLine']
     # check if release features overlap between features
-    prepareArea(releaseLine, demOri, 0.001, combine=True, checkOverlap=True)
+    prepareArea(releaseLine, demOri, cfgGen.getfloat(radiusPolygon), combine=True, checkOverlap=True)
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
@@ -1346,6 +1346,9 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         if True sum up the rasters in the area list to return only 1 raster
         if False return the list of distinct area rasters
         this option works only if thList is not empty
+    checkOverlap : Boolean
+        if True check if features are overlaping and return an error if it is the case
+        if False check if features are overlaping and average the value for overlaping areas
 
     Returns
     -------
@@ -1502,7 +1505,7 @@ def polygon2Raster(demHeader, Line, radius, th=''):
 
 
 def checkParticlesInRelease(particles, line):
-    """ remove particles laying outside the line
+    """ remove particles laying outside the polygon
 
     Parameters
     ----------
@@ -1514,7 +1517,7 @@ def checkParticlesInRelease(particles, line):
     Returns
     -------
     particles : dict
-        particles dictionnary cleened from particles lying outside the line
+        particles dictionary where particles outside of the polygon have been removed
 
     """
     NameRel = line['Name']
