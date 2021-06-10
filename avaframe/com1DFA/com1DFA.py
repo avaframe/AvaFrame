@@ -467,7 +467,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # process release info to get it as a raster
     releaseLine = inputSimLines['releaseLine']
     # check if release features overlap between features
-    prepareArea(releaseLine, demOri, cfgGen.getfloat(radiusPolygon), combine=True, checkOverlap=True)
+    prepareArea(releaseLine, demOri, 0.001, combine=True, checkOverlap=True)
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
