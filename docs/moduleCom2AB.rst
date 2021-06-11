@@ -1,8 +1,10 @@
-com2AB: Alpha Beta
+com2AB: Alpha Beta Model
 ==========================
 
-Calculates the run-out of an avalanche for a given DEM, avalanche path and split point according to the alphabeta model
-suited for avalanches in the Austrian Alps.
+This module calculates the run-out of an avalanche according to the statistical :math:`\alpha-\beta` model.
+An avalanche is defined by its DEM (digital elevation model), a path and split point.
+The run-out is calculated according to the :math:`\alpha-\beta` model suited for avalanches in the Austrian Alps.
+It is also possible to adapt the model parameters for other regions.
 
 Input
 -----
@@ -20,8 +22,9 @@ Outputs
 To run
 -------
 
-* copy ``com2ABCfg.py`` to ``local_com2ABCfg.py`` (if not, the demo example is used)
-* enter paths to the desired datasets and output files in ``local_com2ABCfg.py`` (if not, the demo example is used)
+* copy ``com2ABCfg.py`` to ``local_com2ABCfg.py`` (if not, default values are used).
+* make sure all the required inputs are available in the avalanche directory.
+* enter the path to the desired dataset in ``local_avaframeCfg.py``.
 * in ``AvaFrame/`` run::
 
       python3 avaframe/runCom2AB.py
@@ -61,7 +64,8 @@ run-out. In other words, the probability of the run-out being shorter than
 83%.
 
 
-In this module, the coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard deviation :math:`SD` are already known, they are simply used in the :math:`\alpha`
+In this module, the coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard
+deviation :math:`SD` are already known, they are simply used in the :math:`\alpha`
 equation to calculate the run-out on a new profile.
 
 Procedure
@@ -69,7 +73,10 @@ Procedure
 
 Pre-processing :
 
-* The avalanche path (x,y) is first re-sampled. Default value for re-sampling is distance=10m (maximal horizontal distance between two points). Note that it does not make much sense to decrease this value lower than the raster grid resolution. We then introduce the curvilinear coordinate s.
+* The avalanche path (x,y) is first re-sampled. Default value for re-sampling is distance=10m (maximal horizontal distance between two points).
+  Note that it does not make much sense to decrease this value lower than the raster grid resolution.
+  We then introduce the curvilinear coordinate s which is the represents the projected horizontal distance along the path.
+
 * The avalanche path is projected on the DEM to generate the profile using a bi-linear interpolation on the DEM to the point of interest.
 * The split point (which is not necessarily given on the avalanche path) is projected on the avalanche path.
 
@@ -85,23 +92,29 @@ Post-processing:
 
 * Plot and save results.
 
-Optional configuration parameters
+Configuration parameters
 ---------------------------------
 
-:distance: re-sampling distance. The given avalanche path is re-sampled with a 10m (default) step.
+:distance: re-sampling distance. The given avalanche path is re-sampled with a step <= 10m (default).
 
-:smallAva: is True or False (default) depending on if you want to apply the :math:`(k_1, k_2, k_3, k_4, SD)` set of small avalanches or standard avalanches
+:dsMin: float. Threshold distance [m]. When looking for the beta point make sure at least
+dsMin meters after the beta point also have an angle bellow 10° (dsMin=30m as default).
 
-:customParam: enables to choose custom :math:`(k_1, k_2, k_3, k_4, SD)``. customParam = None as default. Otherwise customParam has to be declared as a python dictionary:
+:smallAva: boolean (False as default) depending on if you want to apply the :math:`(k_1, k_2, k_3, k_4, SD)` set of small avalanches or standard avalanches
 
-::
+:customParam: boolean (False as default). Enables to choose custom :math:`(k_1, k_2, k_3, k_4, SD)``. If True,
+  the value from the configuration file are used
 
-    customParam = {} # = None by default
-    customParam['k1'] = 'your value'
-    customParam['k2'] = 'your value'
-    customParam['k3'] = 'your value'
-    customParam['k4'] = 'your value'
-    customParam['SD'] = 'your value'
+:k1: float. Use this value if ``customParam=True``
+
+:k2: float. Use this value if ``customParam=True``
+
+:k3: float. Use this value if ``customParam=True``
+
+:k4: float. Use this value if ``customParam=True``
+
+:SD: float. Use this value if ``customParam=True``
+
 
 :PlotPath: Plot Avalanche path on raster; default False
 :PlotProfile: Plot profile; default False
