@@ -997,16 +997,18 @@ def DFAIterate(cfg, particles, fields, dem):
     # add initial time step to Tsave array
     Tsave = [0]
     # derive time step for first iteration
-    dt = cfgGen.getfloat('dt')
-    if cfgGen.getboolean('cflTimeStepping'):
-        # overwrite the dt value
+    if cfgGen.getboolean('cflTimeStepping') and nIter > cfgGen.getfloat('cflIterConstant'):
+        # overwrite the dt value in the cfg
         dt = tD.getcflTimeStep(particles, dem, cfgGen)
+    else:
+        # get time step
+        dt = cfgGen.getfloat('dt')
 
     t = t + dt
 
     # Start time step computation
     while t <= tEnd*(1.+1.e-13) and iterate:
-        log.debug('Computing time step t = %f s', t)
+        log.debug('Computing time step t = %f s, dt = %f s'% (t, dt))
 
         # Perform computations
         if featLF:
@@ -1042,7 +1044,7 @@ def DFAIterate(cfg, particles, fields, dem):
                 dtSave = dtSave[1:]
 
         # derive time step
-        if cfgGen.getboolean('cflTimeStepping'):
+        if cfgGen.getboolean('cflTimeStepping') and nIter > cfgGen.getfloat('cflIterConstant'):
             # overwrite the dt value in the cfg
             dt = tD.getcflTimeStep(particles, dem, cfgGen)
         else:

@@ -21,7 +21,7 @@ def getcflTimeStep(particles, dem, cfg):
 
     # determine max velocity of particles
     vmagnitude = DFAtls.norm(particles['ux'], particles['uy'], particles['uz'])
-    vmax = np.amax(vmagnitude)
+    vMax = np.amax(vmagnitude)
 
     # get cell size
     cszDEM = dem['header'].cellsize
@@ -34,15 +34,15 @@ def getcflTimeStep(particles, dem, cfg):
 
     # compute stable time step
     # if velocity is zero - divided by zero error so to avoid:
-    if vmax <= (cMax * csz)/float(cfg['maxdT']):
+    if vMax <= (cMax * csz)/float(cfg['maxdT']):
         dtStable = float(cfg['maxdT'])
     else:
-        dtStable = (cMax * csz) / vmax
+        dtStable = (cMax * csz) / vMax
         if cfg.getboolean('constrainCFL'):
             if dtStable < float(cfg['mindT']):
                 dtStable = float(cfg['mindT'])
 
-    log.debug('dtStable is with cMAX=%.1f is: %.4f with vmax:%.2f' % (cMax, dtStable, vmax))
+    log.debug('dtStable is with cMAX=%.1f is: %.4f with vMax:%.2f' % (cMax, dtStable, vMax))
 
     # return stable time step
     return dtStable
