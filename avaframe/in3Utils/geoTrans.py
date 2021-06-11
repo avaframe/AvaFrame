@@ -327,11 +327,25 @@ def checkProfile(AvaProfile, projSplitPoint=None):
     return projSplitPoint, AvaProfile
 
 
-def findAngleProfile(tmp, deltaInd):
+def findAngleProfile(tmp, ds, dsMin):
     """
     Find the beta point: first point under the beta value given in
-    prepareFind10Point. Make sure that the delta_ind next indexes are also
-    under the beta value otherwise keep looking
+    prepareAngleProfile. Make sure that at least dsMin meters behind the point
+    are also under the beta value otherwise keep searching
+
+    Parameters
+    ----------
+    tmp: 1D numpy array
+        index array of point in profile with slope bellow the given beta angle
+        and bellow the splitPoint
+    ds: 1D numpy array
+        distance between points discribed in tmp
+    dsMis: float
+
+    Returns
+    -------
+    idsAnglePoint: int
+        index of beta point
     """
     noBetaFoundMessage = 'No Beta point found. Check your pathAB.shp and splitPoint.shp.'
     i = 0
@@ -340,14 +354,18 @@ def findAngleProfile(tmp, deltaInd):
         raise IndexError(noBetaFoundMessage)
     while (i <= np.size(tmp) and condition):
         ind = tmp[i]
-        for j in range(deltaInd):
+        j = 0
+        dist = 0
+        while dist < dsMin:
             try:
                 condition = condition and (tmp[i+j+1] == ind+j+1)
+                dist = dist + ds[i + j]
             except IndexError:
                 raise IndexError(noBetaFoundMessage)
             if not condition:
                 i = i + j + 1
                 break
+            j = j + 1
         if condition:
             idsAnglePoint = ind
             break
@@ -356,16 +374,30 @@ def findAngleProfile(tmp, deltaInd):
 
 
 def prepareAngleProfile(beta, AvaProfile):
-    """
-    Prepare inputs for findBetaPoint function: Read profile, compute Angle
+    """Prepare inputs for findAngleProfile function
+    Read profile (s, z), compute the slope Angle
     look for points for which the slope is under the given Beta value and
     that are located downstreem of the splitPoint
+
+    Parameters
+    ----------
+    beta: float
+        beta angle in degrees
+    AvaProfile: dict
+        profile dictionary, s, z and a split point(optional)
+    Returns
+    -------
+    angle: 1D numpy array
+        profile angle
+    tmp: 1D numpy array
+        index array of point in profile with slope bellow the given beta angle
+        and bellow the splitPoint
+    ds: 1D numpy array
+        distance between points discribed in tmp
     """
 
     s = AvaProfile['s']
     z = AvaProfile['z']
-    distance = s[1] - s[0]
-    deltaInd = max(int(np.floor(30/distance)), 1)
     try:
         indSplit = AvaProfile['indSplit']
         CuSplit = s[indSplit]
@@ -383,13 +415,19 @@ def prepareAngleProfile(beta, AvaProfile):
     # tmp = x[(angle < 10.0) & (angle > 0.0) & (x > 450)]
     tmp = np.where((angle <= beta) & (s > CuSplit))
     tmp = np.asarray(tmp).flatten()
-    return angle, tmp, deltaInd
+    ds = ds[tmp]
+    return angle, tmp, ds
 
 
 def isCounterClockWise(path):
     """ Determines if a polygon path is mostly clockwise or counter clockwise
 
     Parameters
+    ----------
+      path: matplotlib.path
+        polygon path
+    Returns
+    -------Parameters
     ----------
       path: matplotlib.path
         polygon path

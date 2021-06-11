@@ -103,12 +103,14 @@ def test_findAngleProfile(capfd):
     angle = np.linspace(40, 0, 41)
     tmp = np.where((angle < 10.0) & (angle >= 0.0))
     tmp = np.asarray(tmp).flatten()
-    deltaInd = 3
-    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
+    ds = np.abs(s - np.roll(s, 1))
+    ds = ds[tmp]
+    dsMin = 30
+    ids10Point = geoTrans.findAngleProfile(tmp, ds, dsMin)
     assert ids10Point == 31
 
-    deltaInd = 1
-    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
+    dsMin = 10
+    ids10Point = geoTrans.findAngleProfile(tmp, ds, dsMin)
     assert ids10Point == 31
 
     angle[10] = 8
@@ -116,30 +118,38 @@ def test_findAngleProfile(capfd):
     angle[12] = 8
     tmp = np.where((angle < 10.0) & (angle >= 0.0))
     tmp = np.asarray(tmp).flatten()
-    deltaInd = 3
-    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
+    ds = np.abs(s - np.roll(s, 1))
+    ds = ds[tmp]
+    dsMin = 30
+    ids10Point = geoTrans.findAngleProfile(tmp, ds, dsMin)
     assert ids10Point == 31
 
     angle[13] = 8
     tmp = np.where((angle < 10.0) & (angle > 0.0))
     tmp = np.asarray(tmp).flatten()
-    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
+    ids10Point = geoTrans.findAngleProfile(tmp, ds, dsMin)
+    ds = np.abs(s - np.roll(s, 1))
+    ds = ds[tmp]
     assert ids10Point == 10
 
     tmp = np.where((angle < 0.0) & (angle >= 0.0))
     tmp = np.asarray(tmp).flatten()
-    deltaInd = 1
+    ds = np.abs(s - np.roll(s, 1))
+    ds = ds[tmp]
+    dsMin = 10
     # do we react properly when the input line exceeds the dem?
     with pytest.raises(Exception) as e:
-        assert geoTrans.findAngleProfile(tmp, deltaInd)
+        assert geoTrans.findAngleProfile(tmp, ds, dsMin)
     assert str(e.value) == "No Beta point found. Check your pathAB.shp and splitPoint.shp."
 
     tmp = np.where((angle < 4.0) & (angle >= 0.0))
     tmp = np.asarray(tmp).flatten()
-    deltaInd = 4
+    ds = np.abs(s - np.roll(s, 1))
+    ds = ds[tmp]
+    dsMin = 40
     # do we react properly when the input line exceeds the dem?
     with pytest.raises(Exception) as e:
-        assert geoTrans.findAngleProfile(tmp, deltaInd)
+        assert geoTrans.findAngleProfile(tmp, ds, dsMin)
     assert str(e.value) == "No Beta point found. Check your pathAB.shp and splitPoint.shp."
 
 
@@ -152,19 +162,19 @@ def test_prepareAngleProfile(caplog):
     theta = -np.arctan(2*s/400 - 2)*180/math.pi
     beta = 10
     with caplog.at_level(logging.WARNING):
-        angle, tmp, deltaInd = geoTrans.prepareAngleProfile(beta, AvaProfile)
+        angle, tmp, ds = geoTrans.prepareAngleProfile(beta, AvaProfile)
     assert 'No split Point given!' in caplog.text
     AvaProfile['indSplit'] = 12
-    angle, tmp, deltaInd = geoTrans.prepareAngleProfile(beta, AvaProfile)
+    angle, tmp, ds = geoTrans.prepareAngleProfile(beta, AvaProfile)
     print(theta)
     print(angle)
     print(tmp)
-    print(deltaInd)
+    print(ds)
     index = np.array([37, 38, 39, 40])
     tol = 1e-8
     testRes = np.allclose(tmp, index, atol=tol)
     assert testRes
-    assert deltaInd == 3
+    assert np.allclose(ds, 10*np.ones(4), atol=tol)
     smaller = np.where(angle[1:39] > theta[0:38])
     print(smaller)
     assert np.size(smaller) == 0
