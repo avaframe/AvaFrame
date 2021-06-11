@@ -102,7 +102,6 @@ def com2ABMain(cfg, avalancheDir):
     abVersion = '4.1'
     cfgsetup = cfg['ABSETUP']
     smallAva = cfgsetup.getboolean('smallAva')
-    distance = float(cfgsetup['distance'])
     resAB = {}
     # Extract input file locations
     cfgPath = readABinputs(avalancheDir)
@@ -136,7 +135,7 @@ def com2ABMain(cfg, avalancheDir):
         avapath['y'] = AvaPath['y'][int(start):int(end)]
         avapath['Name'] = name
         log.info('Running Alpha Beta %s on: %s ', abVersion, name)
-        resAB = com2ABKern(avapath, resAB, distance)
+        resAB = com2ABKern(avapath, resAB, cfgsetup.getfloat('distance'), cfgsetup.getfloat('dsMin'))
 
         if cfg.getboolean('FLAGS', 'fullOut'):
             # saving results to pickle saveABResults(resAB, name)
@@ -152,7 +151,7 @@ def com2ABMain(cfg, avalancheDir):
     return resAB
 
 
-def com2ABKern(avapath, resAB, distance):
+def com2ABKern(avapath, resAB, distance, dsMin):
     """ Compute AlpahBeta model for a given avapath
 
     Computes the AlphaBeta model given an input raster (of the dem),
@@ -166,6 +165,10 @@ def com2ABKern(avapath, resAB, distance):
     resAB : dict
         dictionary with AlphaBeta model intput parameters as well as the
         results of already computed avapath.
+    distance: float
+        line resampling distance
+    dsMin: float
+        threshold distance [m] for looking for the 10° point
 
     Returns
     -------
@@ -194,7 +197,7 @@ def com2ABKern(avapath, resAB, distance):
 
     AvaProfile['indSplit'] = projSplitPoint['indSplit']  # index of split point
 
-    eqOut = calcAB(AvaProfile, eqParams)
+    eqOut = calcAB(AvaProfile, eqParams, dsMin)
     resAB[name] = eqOut
 
     return resAB
@@ -257,7 +260,7 @@ def readABinputs(avalancheDir):
     return cfgPath
 
 
-def calcAB(AvaProfile, eqParameters):
+def calcAB(AvaProfile, eqParameters, dsMin):
     """ Compute AlpahBeta model for a given AvaProfile and chosen eqParameters
 
     Kernel function that computes the AlphaBeta model for a given AvaProfile
@@ -268,6 +271,10 @@ def calcAB(AvaProfile, eqParameters):
     AvaProfile : dict
         dictionary with the name of the avapath, the x, y and z coordinates of
         the path
+    eqParameters: dict
+        AB parameter dictionary
+    dsMin: float
+        threshold distance [m] for looking for the 10° point
 
     Returns
     -------
@@ -287,14 +294,13 @@ def calcAB(AvaProfile, eqParameters):
 
     # prepare find Beta points
     betaValue = 10
-    angle, tmp, deltaInd = geoTrans.prepareAngleProfile(betaValue, AvaProfile)
-
+    angle, tmp, ds = geoTrans.prepareAngleProfile(betaValue, AvaProfile)
     # find the beta point: first point under 10°
     # (make sure that the 30 next meters are also under 10°)
-    ids10Point = geoTrans.findAngleProfile(tmp, deltaInd)
+    ids10Point = geoTrans.findAngleProfile(tmp, ds, dsMin)
     if debugPlot:
         plt.figure(figsize=(10, 6))
-        plt.plot(s, angle)
+        plt.plot(s, angle, '.k')
         plt.plot(s[ids10Point], angle[ids10Point], 'or')
         plt.axhline(y=10, color='0.8',
                     linewidth=1, linestyle='-.', label='10° line')
