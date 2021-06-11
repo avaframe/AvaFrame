@@ -302,10 +302,10 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       if uMag<velMagMin:
         uMag = velMagMin
       forceBotTang = - areaPart * tau
-      if explicitFriction>0:
+      if explicitFriction == 1:
         # explicit formulation
         forceFrict[j] = forceFrict[j] - forceBotTang
-      else:
+      elif explicitFriction == 0:
         forceFrict[j] = forceFrict[j] - forceBotTang/uMag
 
       # compute entrained mass
@@ -447,10 +447,10 @@ cdef double computeResForce(double hRes, double h, double areaPart, double rho, 
   cdef double cRecResPart
   if(h < hRes):
       hResEff = h
-  if explicitFriction>0:
+  if explicitFriction == 1:
     # explicit formulation
     cRecResPart = - rho * areaPart * hResEff * cResCell * uMag * uMag
-  else:
+  elif explicitFriction == 0:
     cRecResPart = - rho * areaPart * hResEff * cResCell * uMag
   return cRecResPart
 
@@ -673,7 +673,10 @@ def updatePositionC(cfg, particles, dem, force, DT):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (double, double, double, double) account4FrictionForce(double ux, double uy, double uz, double m, double dt, double forceFrict, double uMag, int explicitFriction):
+cdef (double, double, double, double) account4FrictionForce(double ux, double uy,
+                                                            double uz, double m,
+                                                            double dt, double forceFrict,
+                                                            double uMag, int explicitFriction):
   """ update velocity with friction force
 
   Parameters
@@ -708,7 +711,7 @@ cdef (double, double, double, double) account4FrictionForce(double ux, double uy
   """
   cdef double xDir, yDir, zDir, uxNew, uyNew, uzNew, uMagNew, dtStop
 
-  if explicitFriction>0:
+  if explicitFriction == 1:
     # explicite method
     uMagNew = norm(ux, uy, uz)
     # will friction force stop the particle
@@ -729,7 +732,7 @@ cdef (double, double, double, double) account4FrictionForce(double ux, double uy
       uyNew = uy - yDir * forceFrict * dt / m
       uzNew = uz - zDir * forceFrict * dt / m
       dtStop = dt
-  else:
+  if explicitFriction == 0:
     # implicite method
     uxNew = ux / (1.0 + dt * forceFrict / m)
     uyNew = uy / (1.0 + dt * forceFrict / m)
