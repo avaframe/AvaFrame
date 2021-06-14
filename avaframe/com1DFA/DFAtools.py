@@ -376,6 +376,7 @@ def removeOutPart(cfg, particles, dem, dt):
 
     nRemove = len(mask)-np.sum(mask)
     if nRemove > 0:
+        particles = removePart(particles, mask, nRemove)
         log.info('removed %s particles because they exited the domain' % (nRemove))
 
     return particles
