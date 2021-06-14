@@ -86,8 +86,6 @@ The time step can either be fixed or dynamically computed using the Courant–Fr
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
-Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
-
 
 Compute Forces:
 -----------------
@@ -104,18 +102,17 @@ Artificial viscosity
 
 This viscous friction force is artificially added to the numerical computation.
 The aim of this force is to stabilize the simulation and prevent neighbor particles
-to have too significant velocities. Physically, this force also makes sense and corresponds
+to have too significantly different velocities. Physically, this force also makes sense and corresponds
 to some second order forces that were neglected (lateral shear stress) as explained in
 :ref:`DFAnumerics:Artificial viscosity`.
 This force is controlled by the ``subgridMixingFactor`` in the configuration file.
 Setting this parameter to 0 deactivates the artificial viscosity term.
 The default value (100) does not have any physical foundings yet. Future work
-will help define this parameter in a more physical way. The velocity is updated immediately
+will help defining this parameter in a more physical way. The velocity is updated immediately
 after using an explicit/implicit formulation.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
-Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 
 Compute friction forces
@@ -135,20 +132,6 @@ Be aware that the normal stress on the bottom surface :math:`\sigma^{(b)}` is co
 gravity force and the curvature acceleration term as shown in :eq:`sigmab`. It is possible
 to deactivate the curvature acceleration component of the shear stress by setting the
 ``curvAcceleration`` coefficient to 0 in the configuration file.
-
-
-Added resistance force
-"""""""""""""""""""""""
-An additional friction force called resistance can be added. This force aims to model the added
-resistance due to the specificity of the terrain on which the avalanche evolves, for example
-due to forests. To add a resistance force, one must provide a resistance shape file in the ``Inputs``
-folder and switch the ``simType`` to ``res``, ``entres`` or ``available`` to take this resistance area into account.
-Then, during the simulation, all particles flowing through this resistance area will undergo an
-extra resistance force. More details about how this force is computed and the different parameters chosen
-are found in :ref:`Resistance <theoryCom1DFA:Resistance:>`.
-
-
-Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 
 Added resistance force
@@ -203,27 +186,12 @@ after using an implicit formulation.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
-    - The change of mass due to the entrainment.
-
-    - The change of momentum. Indeed, the entrained snow was accelerated from rest to the speed of the avalanche.
-
-    - The loss of momentum due to the plowing or erosion phenomena. The entrained mass bounds with the ground
-    needs to be broken.
-
-These 3 terms are further detailed in :ref:`Entrainment <theoryCom1DFA:Entrainment:>`.
-
-In the numerics, the mass is updated according to the entrainment model in
-:py:func:`com1DFAPy.DFAfunctionsCython.computeEntMassAndForce`. The velocity is updated immediately
-after using an implicit formulation.
-
-
-Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 Compute lateral pressure forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The lateral pressure forces are related to the gradient of the flow depth. This gradient
-is computed using a smoothed particle hydrodynamic method.
+The lateral pressure forces are related to the gradient of the flow depth (:ref:`DFAnumerics:Forces discretization`). This gradient
+is computed using a smoothed particle hydrodynamic method (:ref:`DFAnumerics:SPH gradient`).
 This force is added to the :math:`F_{SPH}`.
 
 
@@ -279,6 +247,10 @@ There are two reasons for which the particles would not lie on the surface anymo
 
 Similarly, the velocity of the particles is corrected to make sure it lies in tangent
 plane to the surface (the velocity vector magnitude is preserved, only the direction is changed).
+
+The way the particles position is reprojected on the surface does not allow both the
+velocity magnitude and the particle displacement to match perfectly. This is amplified
+by highly curved topographies or abrupt changes in slope.
 
 
 
