@@ -6,8 +6,8 @@ Working with ASCII files
 =========================================================
 
 ``ascUtilis.py`` is a module created to handle raster ASCII files. It contains different functions
-to read ASCII files, either just the header or also the raster matrix and write the data to a numpy array or to
-compare raster file headers as well as to write a raster to an ASCII file given a header and data.
+to read ASCII files and write the data to a numpy array, to
+compare raster file headers or to write a raster to an ASCII file given a header and data.
 
 .. _ascii:
 
@@ -31,7 +31,7 @@ Header information are read and stored as object from ``class cASCheader``:
 
 **Read ASCII header:**
 
-``header = readASCheader(fname)`` takes a .asc file name as input and returns the header information.
+``header = readASCheader(fname)`` takes a .asc file path as input and returns the header information.
 
 **Compare headers:**
 
@@ -45,8 +45,8 @@ raster data in a numpy array.
 
 **Read ASCII file to dictionary:**
 
-``rasterHeaderData = readRaster(fname):`` takes a .asc file name as input uses readASCdata2numpyArray and returns the
-header information as well as the raster data in a numpy array in a dictionary.
+``rasterHeaderData = readRaster(fname):`` takes a .asc file path as input, uses readASCdata2numpyArray and returns the
+header information as well as the raster data (2D numpy array) in a dictionary.
 ::
 
 		rasterHeaderData['header'] = header
@@ -94,3 +94,14 @@ reads the shape file, checks that the Lines lay on the DEM and returns the SHPda
 
 ``Points = readPoints(fname, header)`` takes a .shp file name as input,  a default name for the layer and a DEM header
 reads the shape file, checks that the Lines lay on the DEM and returns the SHPdata dictionnary containing the Points information.
+
+**Remove feature from layer information:**
+
+``featureOut = removeFeature(featureIn, nFeature2Remove)`` takes a dictionary corresponding to a shape file layer (``featureIn``)
+and the index of the feature to remove ``nFeature2Remove`` removes it and returns the new layer dictionary.
+
+
+**Extract feature from layer information:**
+
+``featureOut = extractFeature(featureIn, nFeature2Extract)`` takes a dictionary corresponding to a shape file layer (``featureIn``)
+and the index of the feature to extract ``nFeature2Extract``, extracts it and returns the layer dictionary corresponding to the extracted feature.

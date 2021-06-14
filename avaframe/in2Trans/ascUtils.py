@@ -1,16 +1,15 @@
 """
     ASCII file readers and handlers
 
-    This file is part of Avaframe.
 """
-import os
-from decimal import *
+
 import numpy as np
 import logging
 
 
 # create local logger
 log = logging.getLogger(__name__)
+
 
 class cASCheader:
     def __init__(self):
@@ -43,7 +42,6 @@ def readASCheader(fname):
     headerInfo: class
         information that is stored in header (ncols, nrows, xllcenter, yllcenter, noDataValue)
     """
-
 
     headerInfo = cASCheader()
     infile = open(fname, "r")
@@ -106,7 +104,17 @@ def readASCheader(fname):
 
 
 def isEqualASCheader(headerA, headerB):
-    # test if two headers (A,B) are the same (except for noData Values)
+    """ Test if two headers (A,B) are the same (except for noData Values)
+
+    Parameters
+    -----------
+    headerA: class
+    headerB: class
+
+    Returns
+    --------
+    boolean: True if header A and B are equal (disregrad the noData field)
+    """
     a = cASCheader()
     b = cASCheader()
     a = headerA
@@ -115,7 +123,20 @@ def isEqualASCheader(headerA, headerB):
             (a.yllcenter == b.yllcenter) and (a.cellsize == b.cellsize)
 
 
-def readASCdata2numpyArray(fName, headerFile=None):
+def readASCdata2numpyArray(fName):
+    """ Read ascii matrix as numpy array
+
+    Parameters
+    -----------
+
+    fname: str
+        path to ascii file
+
+    Returns
+    --------
+    -rasterdata : 2D numpy array
+            2D numpy array of ascii matrix
+    """
     infile = open(fName, "r")
     rasterdata = np.loadtxt(fName, skiprows=6)
     infile.close()
@@ -123,16 +144,31 @@ def readASCdata2numpyArray(fName, headerFile=None):
 
 
 def readRaster(fname):
-    """ Read raster file (.asc)"""
+    """ Read raster file (.asc)
+
+    Parameters
+    -----------
+
+    fname: str
+        path to ascii file
+
+    Returns
+    --------
+    data: dict
+        -headerInfo: class
+            information that is stored in header (ncols, nrows, xllcenter, yllcenter, noDataValue)
+        -rasterdata : 2D numpy array
+                2D numpy array of ascii matrix
+    """
 
     log.debug('Reading dem : %s', fname)
     header = readASCheader(fname)
-    rasterdata = readASCdata2numpyArray(fname, header)
+    rasterdata = readASCdata2numpyArray(fname)
     rasterdata[rasterdata == header.noDataValue] = np.NaN
-    dem = {}
-    dem['header'] = header
-    dem['rasterData'] = np.flipud(rasterdata)
-    return dem
+    data = {}
+    data['header'] = header
+    data['rasterData'] = np.flipud(rasterdata)
+    return data
 
 
 def writeResultToAsc(header, resultArray, outFileName, flip=False):
@@ -143,7 +179,7 @@ def writeResultToAsc(header, resultArray, outFileName, flip=False):
         header : class
             class with methods that give cellsize, nrows, ncols, xllcenter
             yllcenter, noDataValue
-        resultArray : numpy.ndarray
+        resultArray : 2D numpy array
             2D numpy array of values that shall be written to file
         outFileName : str
             path incl. name of file to be written

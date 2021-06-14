@@ -1,5 +1,5 @@
 """
-    Conversion functions to read/ write Shape files or xyz profiles
+    Conversion functions to read/ write Shape files
 """
 
 
