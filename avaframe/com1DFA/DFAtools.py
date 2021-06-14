@@ -376,7 +376,6 @@ def removeOutPart(cfg, particles, dem, dt):
 
     nRemove = len(mask)-np.sum(mask)
     if nRemove > 0:
-        particles = removePart(particles, mask, nRemove)
         log.info('removed %s particles because they exited the domain' % (nRemove))
 
     return particles
@@ -430,12 +429,12 @@ def removePart(particles, mask, nRemove):
     particles : dict
         particles dictionary
     """
-
+    nPart = particles['Npart']
     for key in particles:
         if key == 'Npart':
             particles['Npart'] = particles['Npart'] - nRemove
         elif type(particles[key]).__module__ == np.__name__:
-            if np.size(particles[key]) > 1:
+            if np.size(particles[key]) == nPart:
                 particles[key] = particles[key][mask]
 
     particles['mTot'] = np.sum(particles['m'])
@@ -510,11 +509,12 @@ def mergeParticleDict(particles1, particles2):
 
     """
     particles = {}
+    nPart1 = particles1['Npart']
     for key in particles1:
         if key == 'Npart':
             particles['Npart'] = particles1['Npart'] + particles2['Npart']
         elif (key in particles2) and (type(particles1[key]).__module__ == np.__name__):
-            if np.size(particles1[key]) > 1:
+            if np.size(particles1[key]) == nPart1:
                 particles[key] = np.append(particles1[key], particles2[key])
             else:
                 particles[key] = particles1[key] + particles2[key]
