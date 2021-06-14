@@ -104,6 +104,10 @@ def mainAIMEC(cfgPath, cfg):
 
     Reads the required files location for ana3AIMEC postpocessing
     given an avalanche directory
+    Make the domain transformation corresponding to the input avalanche path
+    Transform 2D fields (pressure, flow depth ...)
+    Analyze transformed rasters and masse
+    Produce plots and report
 
     Parameters
     ----------
@@ -298,6 +302,40 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     -------
     resAnalysis: dict
         resAnalysis dictionnary containing all results:
+            -MMPPR: 1D numpy array
+                    containing for each simulation analyzed the max max
+                    peak pressure
+            -PPRCrossMax: 2D numpy array
+                    containing for each simulation analyzed the
+                    max peak pressure in each cross section
+            -PPRCrossMean: 2D numpy array
+                    containing for each simulation analyzed the
+                    mean peak pressure in each cross section
+            -MMPFD: 1D numpy array
+                    containing for each simulation analyzed the max max
+                    peak flow depth
+            -PFDCrossMax: 2D numpy array
+                    containing for each simulation analyzed the
+                    max peak flow depth in each cross section
+            -PFDCrossMean: 2D numpy array
+                    containing for each simulation analyzed the
+                    mean peak flow depth in each cross section
+            -MMPFV: 1D numpy array
+                    containing for each simulation analyzed the max max
+                    peak flow velocity
+            -PFVCrossMax: 2D numpy array
+                    containing for each simulation analyzed the
+                    max peak flow velocity in each cross section
+            -PFVCrossMean: 2D numpy array
+                    containing for each simulation analyzed the
+                    mean peak flow velocity in each cross section
+
+            -thresholdValue: float
+                    threshold value for runout analysis
+            -startOfRunoutAreaAngle: float
+                    angle of the slope at the beginning of the run-out
+                    area (given in input)
+
             -runout: 2D numpy array
                     containing for each simulation analyzed the x and
                     y coord of the runout point as well as the runout distance
@@ -309,15 +347,6 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
                     distance measured from the begining of the path.
                     run-out calculated with the MEAN pressure in each cross
                     section
-            -MMPPR: 1D numpy array
-                    containing for each simulation analyzed the max max
-                    peak pressure
-            -MMPFD: 1D numpy array
-                    containing for each simulation analyzed the max max
-                    peak flow depth
-            -MMPFV: 1D numpy array
-                    containing for each simulation analyzed the max max
-                    peak flow velocity
             -elevRel: 1D numpy array
                     containing for each simulation analyzed the
                     elevation of the release area (based on first point with
@@ -326,6 +355,17 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
                     containing for each simulation analyzed the
                     elevation fall difference between elevRel and altitude of
                     run-out point
+
+            -TP: float
+                    ref = True sim2 = True
+            -FN: float
+                    ref = False sim2 = True
+            -FP: float
+                    ref = True sim2 = False
+            -TN: float
+                    ref = False sim2 = False
+
+            if mass analysis is performed
             -relMass: 1D numpy array
                     containing for each simulation analyzed the
                     release mass
@@ -344,37 +384,6 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
             -growthGrad: 1D numpy array
                     containing for each simulation analyzed the
                     growth gradient
-            -PPRCrossMax: 2D numpy array
-                    containing for each simulation analyzed the
-                    max peak pressure in each cross section
-            -PPRCrossMean: 2D numpy array
-                    containing for each simulation analyzed the
-                    mean peak pressure in each cross section
-            -PFDCrossMax: 2D numpy array
-                    containing for each simulation analyzed the
-                    max peak flow depth in each cross section
-            -PFDCrossMean: 2D numpy array
-                    containing for each simulation analyzed the
-                    mean peak flow depth in each cross section
-            -PFVCrossMax: 2D numpy array
-                    containing for each simulation analyzed the
-                    max peak flow velocity in each cross section
-            -PFVCrossMean: 2D numpy array
-                    containing for each simulation analyzed the
-                    mean peak flow velocity in each cross section
-            -thresholdValue: float
-                    threshold value for runout analysis
-            -startOfRunoutAreaAngle: float
-                    angle of the slope at the beginning of the run-out
-                    area (given in input)
-            -TP: float
-                    ref = True sim2 = True
-            -FN: float
-                    ref = False sim2 = True
-            -FP: float
-                    ref = True sim2 = False
-            -TN: float
-                    ref = False sim2 = False
     """
     # read inputs
     flagMass = cfgFlags.getboolean('flagMass')
