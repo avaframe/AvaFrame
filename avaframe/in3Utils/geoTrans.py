@@ -427,11 +427,6 @@ def isCounterClockWise(path):
       path: matplotlib.path
         polygon path
     Returns
-    -------Parameters
-    ----------
-      path: matplotlib.path
-        polygon path
-    Returns
     -------
       1 if the path is counter clockwise, 0 otherwise
     https://stackoverflow.com/a/45986805/15887086
