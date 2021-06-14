@@ -340,8 +340,9 @@ def findAngleProfile(tmp, ds, dsMin):
         and bellow the splitPoint
     ds: 1D numpy array
         distance between points discribed in tmp
-    dsMis: float
-
+    dsMin: float
+        threshold distance [m] for looking for the beta point (at least dsMin meters below
+        beta degres)
     Returns
     -------
     idsAnglePoint: int
