@@ -8,8 +8,9 @@ of the same avalanche (meaning using the same DEM and going down the same avalan
 In ``AvaFrame/avaframe/``, three different run scripts are provided that show examples on how to use the postprocessing module aimec can be used.
 These examples include:
 
-* full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations)
-* using aimec to compare the results of two different computational modules (for one simulation at a time)
+* full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMEC`
+* using aimec to compare the results of two different computational modules (for one simulation at a time meaning there should be only one simulation result per
+  computation module). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMECCompMods`
 * using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations)
 
 Here is an example worflow for the full aimec analysis, as provided in ``runAna3AIMEC.py``:
@@ -152,6 +153,8 @@ it is possible to calculate the growth index :math:`GI` and growth gradient :mat
 .. math::
     GI = \frac{m_t}{m_r} = \frac{m_r + m_e}{m_r} \quad\mbox{and}\quad GG = \frac{m_r + m_e}{t_{end}-t_{ini}}
 
+Time evolution of the total mass and entrained one are also analyzed.
+
 Procedure
 -----------
 
@@ -161,57 +164,67 @@ Perform path-domain transformation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 First, the transformation from (x,y) coordinate system (where the original rasters lie in) to (s,l) coordinate system is applied
-given a new domain width. A new grid corresponding to the new domain (following the avalanche path) is built.
-The transformation information are stored in a ``rasterTransfo`` dictionary:
+given a new domain width. This is done by :py:func:`ana3AIMEC.aimecTools.makeDomainTransfo`. A new grid corresponding to the new domain (following the avalanche path) is built.
+The transformation information are stored in a ``rasterTransfo`` dictionary (see :py:func:`ana3AIMEC.aimecTools.makeDomainTransfo` for more details).
 
-:xllc: x coordinate of the lower left cell of the (x,y) domain
-:yllc: y coordinate of the lower left cell of the (x,y) domain
-:cellsize: original raster cell size
-:domainWidth: desired width for the new domain
-:gridx: x coordinate of the new raster points (2D numpy array of size (n,m))
-:gridy: y coordinate of the new raster points (2D numpy array of size (n,m))
-:s: new s coordinates (1D numpy array of size n)
-:l: new l coordinates (1D numpy array  of size m)
-:x: x coordinate of the centerline (s,l=0) of the new raster (1D numpy arrayof size n)
-:y: y coordinate of the centerline (s,l=0) of the new raster (1D numpy arrayof size m)
-:rasterArea: area of the cells of the new raster grid (2D numpy array of size (n,m))
-:indSplit: index of the projected split point on the avalanche path
-:startOfRunoutAngle: slope angle defining the start of run-out point (run-out will be measured from this point) in degrees
-:indstartOfRunout: 	index of the start of run-out point (first point under the given startOfRunoutAngle)
+.. :xllc: x coordinate of the lower left cell of the (x,y) domain
+.. :yllc: y coordinate of the lower left cell of the (x,y) domain
+.. :cellsize: original raster cell size
+.. :domainWidth: desired width for the new domain
+.. :gridx: x coordinate of the new raster points (2D numpy array of size (n,m))
+.. :gridy: y coordinate of the new raster points (2D numpy array of size (n,m))
+.. :s: new s coordinates (1D numpy array of size n)
+.. :l: new l coordinates (1D numpy array  of size m)
+.. :x: x coordinate of the centerline (s,l=0) of the new raster (1D numpy arrayof size n)
+.. :y: y coordinate of the centerline (s,l=0) of the new raster (1D numpy arrayof size m)
+.. :rasterArea: area of the cells of the new raster grid (2D numpy array of size (n,m))
+.. :indSplit: index of the projected split point on the avalanche path
+.. :startOfRunoutAngle: slope angle defining the start of run-out point (run-out will be measured from this point) in degrees
+.. :indstartOfRunout: 	index of the start of run-out point (first point under the given startOfRunoutAngle)
+
 
 Assign data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 The simulation results (for example peak velocities / pressure or flow depth) are projected on the new grid using the
-transformation information. The projected results are stored in the ``newRasters`` dictionary.
+transformation information by :py:func:`ana3AIMEC.aimecTools.assignData`. The projected results are stored in the ``newRasters`` dictionary.
+
+This results in the following plot:
+
+.. _fig-aimec-comp-real:
+
+    .. figure:: _static/avaAlr0_DomainTransformation.png
+
+        Alr avalanche coordinate transformation and peak pressure field reprojetion.
 
 .. _analyze-results:
 
 Analyze results
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
 
-Calculates the different indicators described in the :ref:`Theory` section for a given pressure threshold.
-Returns a ``resAnalysis`` dictionary with the analysis results.
+Calculates the different indicators described in the :ref:`Theory` section for a given threshold. The threshold
+can be based on pressure, flow depth, ... (this needs to be specified in the configuration file).
+Returns a ``resAnalysis`` dictionary with the analysis results (see :py:func:`ana3AIMEC.ana3AIMEC.postProcessAIMEC` for more details).
 
-:runout: (x,y) coordinates of the run-out as well as the run-out length based on P_cross_max and the pressure Threshold
-:runoutMean: (x,y) coordinates of the run-out as well as the run-out length based on P_cross_mean and the pressure Threshold
-:AMPP: average maximum peak pressure
-:MMPP: maximum maximum peak pressure
-:AMD: average maximum flow depth
-:MMD: maximum maximum flow depth
-:elevRel: z coordinate of the release area (first point with max Peak pressure over pressure Threshold)
-:deltaH: DeltaZ between the release point and run-out point
-:relMass: release Mass
-:entMass: entrained Mass
-:growthIndex: growth Index
-:growthGrad: growth Gradient
-:pressureLimit: pressure Threshold
-:pCrossAll: :math:`P_{cross}^{max}(s)` for each simulation
+.. :runout: (x,y) coordinates of the run-out as well as the run-out length based on P_cross_max and the pressure Threshold
+.. :runoutMean: (x,y) coordinates of the run-out as well as the run-out length based on P_cross_mean and the pressure Threshold
+.. :AMPP: average maximum peak pressure
+.. :MMPP: maximum maximum peak pressure
+.. :AMD: average maximum flow depth
+.. :MMD: maximum maximum flow depth
+.. :elevRel: z coordinate of the release area (first point with max Peak pressure over pressure Threshold)
+.. :deltaH: DeltaZ between the release point and run-out point
+.. :relMass: release Mass
+.. :entMass: entrained Mass
+.. :growthIndex: growth Index
+.. :growthGrad: growth Gradient
+.. :pressureLimit: pressure Threshold
+.. :pCrossAll: :math:`P_{cross}^{max}(s)` for each simulation
 
 .. _plot-save-results:
 
 Plot and save results
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Plots and saves the desired figures. Writes results in ``resAnalysis`` to a text file.
 By default, Aimec saves five plots plus as many plots as numerical simulations to
@@ -226,7 +239,7 @@ compare to the reference. The first five ones are :
 The last plots "_i_compToRef" where "i" gives the number of the simulation plots the 2D difference with the reference.
 
 Configuration parameters
----------------------------------
+----------------------------
 
 :domainWidth: width of the domain around the avalanche path in [m]
 :startOfRunoutAngle: angle of the slope at the start of the run-out zone [°]
@@ -236,6 +249,9 @@ Configuration parameters
 :diffLim: max/min of chosen resType displayed in difference plot
 :interpMethod: interpolation method used to project the a point on the input raster (chose between 'nearest' and 'bilinear')
 :distance: re-sampling distance. The given avalanche path is re-sampled with a 10m (default) step.
+:dsMin: float. Threshold distance [m]. When looking for the beta point make sure at least
+  dsMin meters after the beta point also have an angle bellow 10° (dsMin=30m as default).
+
 :anaMod: computational module used to perform ava simulations
 :comModules: two computational modules used to perform ava simulations in order to compare the results
 :plotFigure: plot figures; default False

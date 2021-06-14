@@ -1029,6 +1029,8 @@ def DFAIterate(cfg, particles, fields, dem):
         massEntrained.append(particles['massEntrained'])
         massTotal.append(particles['mTot'])
         timeM.append(t)
+        # print progress to terminal
+        print("time step t = %f s\r"% t, end="")
         # make sure the array is not empty
         if t >= dtSave[0]:
             Tsave.append(t)
