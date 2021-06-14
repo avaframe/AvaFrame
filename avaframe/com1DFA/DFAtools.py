@@ -302,13 +302,11 @@ def getAreaMesh(Nx, Ny, Nz, csz, num):
     return A
 
 
-def removeOutPart(cfg, particles, dem, dt):
+def removeOutPart(particles, dem, dt):
     """ find and remove out of raster particles
 
     Parameters
     ----------
-    cfg : configparser
-        DFA parameters
     particles : dict
         particles dictionary
     dem : dict
@@ -442,15 +440,13 @@ def removePart(particles, mask, nRemove):
     return particles
 
 
-def splitPart(cfg, particles, dem):
+def splitPart(particles, dem):
     """Split big particles
 
     Split particles bigger than 1.5 times the massPerPart
 
     Parameters
     ----------
-    cfg: configparser
-        DFA configuration
     particles : dict
         particles dictionary
     dem : dict
@@ -462,7 +458,7 @@ def splitPart(cfg, particles, dem):
         particles dictionary
 
     """
-    massPerPart = cfg.getfloat('massPerPart')
+    massPerPart = particles['massPerPart']
     m = particles['m']
     nSplit = np.round(m/massPerPart)
     Ind = np.where(nSplit > 1)[0]

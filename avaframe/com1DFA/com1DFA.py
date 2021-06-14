@@ -665,6 +665,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         particles['m'] = Mpart
 
+    particles['massPerPart'] = massPerPart
     particles['mTot'] = np.sum(particles['m'])
     particles['h'] = Hpart
     particles['NPPC'] = NPPC
@@ -1340,7 +1341,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     # this is dangerous!!!!!!!!!!!!!!
     ###############################################################
     # remove particles that are not located on the mesh any more
-    particles = DFAtls.removeOutPart(cfg, particles, dem, dt)
+    particles = DFAtls.removeOutPart(particles, dem, dt)
 
     # ++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()

@@ -162,7 +162,7 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
     for countRef, simNameShort in enumerate(refData['simName']):
         for countComp, simNameComp in enumerate(compData['simName']):
             if simSearch:
-                if refData['releaseArea'][countRef] == compData['releaseArea'][countComp] == rel:
+                if refData['releaseArea'][countRef] == compData['releaseArea'][countComp] == rel and refData['simType'][countRef] == compData['simType'][countComp] == simType:
                     refSimName = refData['simName'][countRef]
                     compSimName = compData['simName'][countComp]
                     log.info('Reference simulation: %s and to comparison simulation: %s ' % (refSimName, compSimName))

@@ -9,7 +9,7 @@ com1DFA DFA-Kernel numerics
 
 The numerical method used in com1DFA mixes particle methods and
 mesh methods. Mass and momentum are tracked using particles but flow
-depth is tracked using the mesh. The mesh is also to access topographic information
+depth is tracked using the mesh. The mesh is also used to access topographic information
 (surface elevation, normal vector) as well as for displaying results.
 
 Mass :eq:`mass-balance3` and momentum :eq:`momentum-balance6` balance
@@ -38,13 +38,15 @@ Space discretization
 The domain is discretized in particles. Each particle :math:`p_j` is affected with the following properties:
 a mass :math:`m_{p_j}`, a depth :math:`{h}_{p_j}`, a density :math:`\rho_{p_j}=\rho_0` and
 a velocity :math:`\mathbf{{u}}_{p_j}=({u}_{p_j,1}, {u}_{p_j,2})` (**those
-quantities are depth averagee, note that we droped the overline from** :eq:`hmean-umean` **for simplicity reasons**).
+quantities are depth averaged, note that we dropped the overline from** :eq:`hmean-umean` **for simplicity reasons**).
 This mesh also caries the velocity, mass and flow depth properties. It is possible to navigate
 from particle property to mesh property using the interpolation methods described in :ref:`Mesh and interpolation`
 
 
 Time discretization
 ~~~~~~~~~~~~~~~~~~~~~~
+
+Two time discretization methods are available, a fixed time step one and a variable one.
 
 
 Mesh and interpolation
@@ -84,7 +86,7 @@ then possible to interpolate the normal vector at the vertices from the ones
 at the cell centers.
 
 The other methods use the plane defined by the different adjacent triangles to
-a vertex. Each triangle has a normal and the vertices is the average
+a vertex. Each triangle has a normal and the vertices normal is the average
 of the triangles normal vectors.
 
 .. _meshNormal:
@@ -199,7 +201,7 @@ Neighbor search
 
 The lateral pressure forces are computed via the SPH flow depth gradient.
 This method is based on neighborhood particle interactions, meaning that it
-is necessary to keep track of all the particles within the neighborhood each particles.
+is necessary to keep track of all the particles within the neighborhood of each particle.
 Computing the gradient of the flow depth at a particle location, requires to
 find all the particles in its surrounding. Considering the number of particles and
 their density, computing the gradient ends up in computing a lot of
@@ -500,6 +502,8 @@ With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}\frac{
 Forces discretization
 ----------------------
 
+Lateral force
+~~~~~~~~~~~~~~
 
 The SPH method is introduced when expressing the flow depth gradient for each
 particle as a weighted sum of its neighbors
@@ -537,6 +541,9 @@ Which leads to, using the relation :eq:`sph formulation`:
     = -K_{(d)}\,m_{i}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{j}{m_{j}}\,\left.\frac{d\,W_{ij}}{d\,x_d}\right\rvert_{j}
     :label: lateral force
 
+
+Bottom friction force
+~~~~~~~~~~~~~~~~~~~~~~~
 The bottom friction forces on each particle depend on the chose friction model and reads for the SamosAT friction model
 (using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{i}`):
 
@@ -546,6 +553,9 @@ The bottom friction forces on each particle depend on the chose friction model a
      + \frac{\rho_0\,\mathbf{\overline{u}}_{i}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
     :label: bottom force
 
+
+Added resistance force
+~~~~~~~~~~~~~~~~~~~~~~~
 The resistance force on each particle reads (where :math:`h^{\text{eff}}_{j}`
 is a function of the average flow depth :math:`\overline{h}_{j}`):
 
@@ -554,6 +564,9 @@ is a function of the average flow depth :math:`\overline{h}_{j}`):
     = - \rho_0\,A_{i}\,h^{\text{eff}}_{i}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{i}\|\,\overline{u}_{i,d}
     :label: resistance force
 
+
+Entrainment force
+~~~~~~~~~~~~~~~~~~~~~~~
 The term related to the entrained mass and mass balance
 :math:`- \overline{u_d}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
 now reads:
@@ -564,7 +577,7 @@ now reads:
 
 
 The mass of entrained snow for each particle depends on the type of entrainment involved
-(ploughing or erosion) and reads:
+(plowing or erosion) and reads:
 
 .. math::
     \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{i}\,\overline{h}_{i}\right)
@@ -577,7 +590,7 @@ with
     \begin{aligned}
     A_{i}^{\text{plo}} &= w_f\,h_{i}^{\text{ent}}= \sqrt{\frac{m_{i}}{\rho_0\,\overline{h}_{i}}}\,h_{i}^{\text{ent}}
     \quad &\mbox{and} \quad &q_{i}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{i}\right\Vert
-    \quad &\mbox{for ploughing}\\
+    \quad &\mbox{for plowing}\\
     A_{i}^{\text{ero}} &= A_{i} = \frac{m_{i}}{\rho_0\,\overline{h}_{i}}
     \quad &\mbox{and} \quad &q_{i}^{\text{ero}} = \frac{\tau_{i}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{i}\right\Vert
     \quad &\mbox{for erosion}\end{aligned}

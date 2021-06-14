@@ -572,9 +572,9 @@ the avalanche mass (:cite:`SaGr2009`)
 
 
 
-.. _fig-infinitesimales_element:
-
-.. figure:: _static/infinitesimales_element.png
-        :width: 90%
-
-        Infinitesimal volume element and acting forces on it (from [FiKo2013]_)
+.. .. _fig-infinitesimales_element:
+..
+.. .. figure:: _static/infinitesimales_element.png
+..         :width: 90%
+..
+..         Infinitesimal volume element and acting forces on it (from [FiKo2013]_)
