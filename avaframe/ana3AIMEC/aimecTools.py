@@ -671,8 +671,9 @@ def computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transforme
 def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysis):
     """ Analyse transformed field
 
-    Analyse transformed rasters
-    Max Mean values in cross sections, overall maximum
+    Analyse transformed rasters in transformedRasters and for each one, compute
+    the Max and Mean values in each cross sections, as well as the
+    overall maximum
 
     Parameters
     ----------
@@ -682,17 +683,21 @@ def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysi
         list containing rasters after transformation
     dataType: str
         type of the data to analyze ('ppr', 'pfd' or 'pfv')
+    resultsAreaAnalysis: dict
+        result dictionnary to be updated
 
     Returns
     -------
-    maxaCrossMax: 1D numpy array
-        containing for each simulation analyzed the overall maximum
-    aCrossMax: 2D numpy array
-        containing for each simulation analyzed the
-        max of the field in each cross section
-    aCrossMean: 2D numpy array
-        containing for each simulation analyzed the
-        mean of the field in each cross section
+    Updates the resultsAreaAnalysis input dictionary with a sub dictionary
+    of the name dataType containing:
+        -maxaCrossMax: 1D numpy array
+            containing for each simulation analyzed the overall maximum
+        -aCrossMax: 2D numpy array
+            containing for each simulation analyzed the
+            max of the field in each cross section
+        -aCrossMean: 2D numpy array
+            containing for each simulation analyzed the
+            mean of the field in each cross section
     """
     # read inputs
     scoord = rasterTransfo['s']
@@ -713,10 +718,10 @@ def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysi
         maxaCrossMax[i], aCrossMax[i], aCrossMean[i] = getMaxMeanValues(rasterData, rasterArea)
         log.debug('{: <10} {:<10.4f}'.format(*[i+1, maxaCrossMax[i]]))
 
-    resultsAreaAnalysis[dataType] = {'transformedRasters' : transformedRasters,
-                                  'maxaCrossMax' : maxaCrossMax,
-                                  'aCrossMax' : aCrossMax,
-                                  'aCrossMean' : aCrossMean}
+    resultsAreaAnalysis[dataType] = {'transformedRasters': transformedRasters,
+                                     'maxaCrossMax': maxaCrossMax,
+                                     'aCrossMax': aCrossMax,
+                                     'aCrossMean': aCrossMean}
 
     return resultsAreaAnalysis
 
