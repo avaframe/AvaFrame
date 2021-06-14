@@ -1,1 +1,1 @@
-"""Development code for python version of com1DFA"""
+"""Dense flow avalanche kernel (Python/cython)"""
