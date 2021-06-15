@@ -73,7 +73,7 @@ def getNormalMesh(dem, num):
                     elevation at grid points
             num: int
                 chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
-                       1 to use the simple cross product method (with the diagonals)
+                1 to use the simple cross product method (with the diagonals)
 
         Returns
         -------
