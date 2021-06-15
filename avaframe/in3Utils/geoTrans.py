@@ -486,6 +486,8 @@ def prepareAngleProfile(beta, AvaProfile):
 def isCounterClockWise(path):
     """ Determines if a polygon path is mostly clockwise or counter clockwise
 
+    https://stackoverflow.com/a/45986805/15887086
+
     Parameters
     ----------
     path: matplotlib.path
@@ -494,8 +496,6 @@ def isCounterClockWise(path):
     -------
     isCounterCloc1: int
         1 if the path is counter clockwise, 0 otherwise
-
-    https://stackoverflow.com/a/45986805/15887086
     """
     v = path.vertices-path.vertices[0, :]
     a = np.arctan2(v[1:, 1], v[1:, 0])
