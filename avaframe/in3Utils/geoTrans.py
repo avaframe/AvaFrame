@@ -15,13 +15,21 @@ log = logging.getLogger(__name__)
 
 
 def projectOnRaster(dem, Points, interp='bilinear'):
-    """
-    Projects the points Points on Raster using a bilinear or nearest
-    interpolation and returns the z coord (no for loop)
-    Input :
-    Points: list of points (x,y) 2 rows as many columns as Points
-    Output:
-    PointsZ: list of points (x,y,z) 3 rows as many columns as Points
+    """Projects Points on raster
+    using a bilinear or nearest interpolation and returns the z coord (no for loop)
+
+    Parameters
+    -------------
+    dem: dict
+        dem dictionary
+    Points: dict
+        Points dictionary (x,y)
+    interp: str
+        interpolation option, between nearest or bilinear
+    Returns
+    -------
+    Points: dict
+        Points dictionary with z coordinate added or updated
 
     """
     header = dem['header']
@@ -40,14 +48,31 @@ def projectOnRaster(dem, Points, interp='bilinear'):
 
 
 def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
-    """
-    Projects the points Points on Raster using a bilinear or nearest
-    interpolation and returns the z coord
-    Input :
-    Points: (x, y) coord of the points
-    Output:
-    PointsZ: z coord of the points
-             ioob number of out of bounds indexes
+    """Projects the points (x,y) on Raster
+    using a bilinear or nearest interpolation and returns the z coord
+
+    Parameters
+    -------------
+    x: array
+        x coord of the points to project
+    y: array
+        y coord of the points to project
+    Z : 2D numpy array
+        raster data
+    csz: float
+        cellsize corresponding to the raster data
+    xllc: float
+        x coord of the lower left center of the raster
+    yllc: float
+        y coord of the lower left center of the raster
+    interp: str
+        interpolation option, between nearest or bilinear
+    Returns
+    -------
+    z : 2D numpy array
+        projected data on the raster data
+    ioob: int
+        number of out of bounds indexes
     """
     nrow, ncol = np.shape(Z)
     # initialize outputs
@@ -118,6 +143,7 @@ def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
 def resizeData(raster, rasterRef):
     """
     Reproject raster on a grid of shape rasterRef
+
     Parameters
     ----------
     raster : dict
@@ -219,23 +245,29 @@ def remeshDEM(cfg, dem):
 
 
 def prepareLine(dem, avapath, distance=10, Point=None):
-    """
+    """Resample and project line on dem
     1- Resample the avapath line with a max intervall of distance=10m
     between points (projected distance on the horizontal plane).
     2- Make avalanche profile out of the path (affect a z value using the dem)
     3- Get projection of points on the profil (closest point)
 
     Parameters
-    ----------
-      - a dem dictionary
-      - a avapath line dictionary
-      - a resampling Distance
-      - a point dictionary (optional, can contain several point)
+    -----------
+    dem: dict
+        dem dictionary
+    avapath: dict
+        line dictionary
+    distance: float
+        resampling distance
+    Point: dict
+        a point dictionary (optional, can contain several point)
 
     Returns
     -------
-      - the resampled avaprofile
-      - the projection of the point on the profile (if several points
+    AvaProfile: dict
+        the resampled avapath with the z coordinate
+    projPoint: dict
+        point dictionary projected on the profile (if several points
         were give in input, only the closest point to the profile
         is projected)
     """
@@ -278,6 +310,20 @@ def prepareLine(dem, avapath, distance=10, Point=None):
 def findSplitPoint(AvaProfile, Points):
     """ Finds the closest point in Points to the AvaProfile and returns
     its projection on AvaProfile.
+
+    Parameters
+    -----------
+    AvaProfile: dict
+        line dictionary with x and y coordinates
+    Point: dict
+        a point dictionary
+
+    Returns
+    -------
+    projPoint: dict
+        point dictionary projected on the profile (if several points
+        were give in input, only the closest point to the profile
+        is projected)
     """
     xcoor = AvaProfile['x']
     ycoor = AvaProfile['y']
@@ -302,7 +348,23 @@ def findSplitPoint(AvaProfile, Points):
 
 
 def checkProfile(AvaProfile, projSplitPoint=None):
-    """ check that the avalanche profiles goes from top to bottom """
+    """ check that the avalanche profiles goes from top to bottom
+    flip it if not and adjust the splitpoint in consequence
+
+    Parameters
+    -----------
+    AvaProfile: dict
+        line dictionary with x and y coordinates
+    projSplitPoint: dict
+        a point dictionary already projected on the AvaProfile
+
+    Returns
+    -------
+    AvaProfile: dict
+        avaprofile, fliped if needed
+    projSplitPoint: dict
+        point dictionary
+    """
     if projSplitPoint:
         indSplit = projSplitPoint['indSplit']
     if AvaProfile['z'][-1] > AvaProfile['z'][0]:
@@ -343,6 +405,7 @@ def findAngleProfile(tmp, ds, dsMin):
     dsMin: float
         threshold distance [m] for looking for the beta point (at least dsMin meters below
         beta degres)
+
     Returns
     -------
     idsAnglePoint: int
@@ -425,16 +488,19 @@ def isCounterClockWise(path):
 
     Parameters
     ----------
-      path: matplotlib.path
+    path: matplotlib.path
         polygon path
     Returns
     -------
-      1 if the path is counter clockwise, 0 otherwise
+    isCounterCloc1: int
+        1 if the path is counter clockwise, 0 otherwise
+
     https://stackoverflow.com/a/45986805/15887086
     """
     v = path.vertices-path.vertices[0, :]
     a = np.arctan2(v[1:, 1], v[1:, 0])
-    return (a[1:] >= a[:-1]).astype(int).mean() >= 0.5
+    isCounterClock = (a[1:] >= a[:-1]).astype(int).mean() >= 0.5
+    return isCounterClock
 
 
 def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
@@ -500,23 +566,36 @@ def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
 
 
 def path2domain(xyPath, rasterTransfo):
-    """
-    path2domain
-    Creates a domain (irregular raster) along a path, given the path polyline,
-    a domain width and a raster cellsize
-    Usage:
-        [rasterTransfo] = path2domain(xyPath, rasterTransfo)
-       Input:
-           -xyPath:   Polyline Coordinates
-           -rasterTransfo['w']:      Domain width
-           -rasterTransfo['xllc']: xllc
-           -rasterTransfo['yllc']: yllc
-           -rasterTransfo['cellsize']: cellsize
-       Output: xp, yp Arrays determining a path of width w along a polyline
-            -rasterTransfo['DBXl']: x coord of the left boundary
-            -rasterTransfo['DBXr']: x coord of the right boundary
-            -rasterTransfo['DBYl']: y coord of the left boundary
-            -rasterTransfo['DBYr']: y coord of the right boundary
+    """Creates a domain (irregular raster) along a path,
+    given the path xyPath, a domain width and a raster cellsize
+
+    Parameters:
+    -------------
+    xyPath: dict
+        line dictionary with coordinates x and y
+    rasterTransfo: dict
+        rasterTransfo['w']: float
+            Domain width
+        rasterTransfo['xllc']: float
+            xllc
+        rasterTransfo['yllc']: float
+            yllc
+        rasterTransfo['cellsize']: float
+            cellsize
+
+    Returns:
+    ---------
+    rasterTransfo: dict
+        rasterTransfo updated with xp, yp Arrays determining a path of width w along a line
+
+        rasterTransfo['DBXl']:
+            x coord of the left boundary
+        rasterTransfo['DBXr']:
+            x coord of the right boundary
+        rasterTransfo['DBYl']:
+            y coord of the left boundary
+        rasterTransfo['DBYr']:
+            y coord of the right boundary
 
     [Fischer2013] Fischer, Jan-Thomas. (2013).
     A novel approach to evaluate and compare computational snow avalanche
@@ -573,12 +652,9 @@ def path2domain(xyPath, rasterTransfo):
 
 
 def poly2maskSimple(xdep, ydep, ncols, nrows):
-    """
-    poly2maskSimple
-    Create a mask from a polyline
-    Usage:
-        mask = poly2maskSimple(ydep, xdep, ncols, nrows)
-       Input:
+    """Create a mask from a polyline
+
+    Input:
            ydep, xdep:      Polyline Coordinates
            ncols, nrows:    Raster size
        Output:
@@ -669,38 +745,42 @@ def areaPoly(X, Y):
 
     Parameters
     ----------
-        - X coord of the vertices
-        - Y coord of the vertices
-        (Without repeating the first vertex!!!)
+    X: 1D numpy array
+        x coord of the vertices
+    Y: 1D numpy array
+        y coord of the vertices
+    (Without repeating the first vertex!!!)
     Returns
     -------
-    Area of the polygon
+    area: float
+        Area of the polygon
     """
 
     X = np.append(X, X[0])
     Y = np.append(Y, Y[0])
-    sum = 0
+    area = 0
     for i in range(np.size(X)-1):
-        sum = sum + (X[i]*Y[i+1]-Y[i]*X[i+1])/2
-    return sum
+        area = area + (X[i]*Y[i+1]-Y[i]*X[i+1])/2
+    return area
 
 
 def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
-    """Check if two raster overlap
+    """Check if two rasters overlap
 
     Parameters
     ----------
-        toCheckRaster : 2D numpy array
-            Raster to check
-        refRaster : 2D numpy array
-            refference Raster
-        crop : boolean
-            if True, remove overlaping part and send a warning
+    toCheckRaster : 2D numpy array
+        Raster to check
+    refRaster : 2D numpy array
+        refference Raster
+    crop : boolean
+        if True, remove overlaping part and send a warning
     Returns
     -------
-    if crop is True, return toCheckRaster without the overlaping part and send a
-    warning if needed
-    if crop is False, return error if Rasters overlap otherwise return toCheckRaster
+    toCheckRaster: 2D numpy array
+        if crop is True, return toCheckRaster without the overlaping part and send a
+        warning if needed
+        if crop is False, return error if Rasters overlap otherwise return toCheckRaster
     """
     mask = (toCheckRaster > 0) & (refRaster > 0)
     if mask.any():
