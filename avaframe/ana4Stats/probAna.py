@@ -45,7 +45,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     fU.makeADir(outDir)
 
     # fetch all result files and filter simulations according to parametersDict
-    simNameList = cfgUtils.filterSims(avaDir, parametersDict)
+    simNameList = cfgUtils.filterSims(avaDir, parametersDict, specDir=inputDir)
     if inputDir == '':
         inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
         flagStandard = True
