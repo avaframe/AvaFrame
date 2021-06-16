@@ -98,7 +98,7 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
 
         # +++++++++++++++++++++++++++++++++
         # ------------------------
-        particlesList, fieldsList, Tsave, dem, reportDict, cfgFinal = com1DFA.com1DFAMain(cfg, avalancheDir, cuSim, inputSimFiles, outDir, relThField)
+        particlesList, fieldsList, tSave, dem, reportDict, cfgFinal = com1DFA.com1DFAMain(cfg, avalancheDir, cuSim, inputSimFiles, outDir, relThField)
 
         # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
         # Generate plots for all peakFiles
@@ -126,7 +126,7 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
     standardCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg, writeCSV=True)
 
-    return particlesList, fieldsList, Tsave, dem, plotDict, reportDictList
+    return particlesList, fieldsList, tSave, dem, plotDict, reportDictList
 
 
 if __name__ == "__main__":
