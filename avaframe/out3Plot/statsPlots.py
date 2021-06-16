@@ -185,7 +185,7 @@ def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
 
     ax2.set_xlim([-sortedDiffPlot[ind], sortedDiffPlot[ind]])
     width = diffMax - diffMin
-    stepWidth = 2*sortedDiffPlot[ind]/50 # 50 bins in the [-2sigma,+2sigma] interval
+    stepWidth = 2*sortedDiffPlot[ind]/50     # 50 bins in the [-2sigma,+2sigma] interval
     bins = int(width/stepWidth)
     ax2.hist(dataDiffPlot, bins=bins, density=True, histtype="stepfilled")
     ax2.get_yaxis().set_ticks([])

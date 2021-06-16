@@ -91,7 +91,7 @@ peakValues = getStats.extractMaxValues(inputDir, cfgDFA, avaDir, cfgStats['GENER
 for key in peakValues:
     print('peakValues:', key, peakValues[key])
 
- #++++++++++++++ Plot max values +++++++++++++++++
+#++++++++++++++ Plot max values +++++++++++++++++
 sPlot.plotValuesScatter(peakValues, 'pfd', 'pfv', 'relTh', cfg, avaDir, flagShow)
 sPlot.plotValuesScatterHist(peakValues, 'pfd', 'pfv', 'relTh', cfg, avaDir, flagShow, flagHue=True)
 
