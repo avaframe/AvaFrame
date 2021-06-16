@@ -8,8 +8,10 @@ import os
 import numpy as np
 import logging
 from matplotlib import pyplot as plt
+import pathlib
 
 import avaframe.out3Plot.plotUtils as pU
+from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 
@@ -18,7 +20,7 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def probAnalysis(avaDir, cfg, cfgMain='', inputDir=''):
+def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     """ Compute propability map of a given set of simulation result exceeding a particular threshold and save to outDir
 
         Parameters
@@ -27,27 +29,31 @@ def probAnalysis(avaDir, cfg, cfgMain='', inputDir=''):
             path to avalanche directory
         cfg : dict
             configuration read from ini file of probAna function
-        cfgMain : dict
-            configuration read from ini file that has been used for the com1DFA simulation
+        module
+            computational module that was used to run the simulations
+        parametersDict: dict
+            dictionary with simulation parameters to filter simulations
         inputDir : str
-            optional - path to directory where data that should be analysed can be found, required if not in com1DFA results
-        outDir : str
-            optional - path to directory where results shall be saved to
+            optional - path to directory where data that should be analysed can be found, required if not in module results
     """
 
-    # Set input and output directory and Load all infos on simulations
-    flagStandard = False
-    if inputDir == '':
-        inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
-        flagStandard = True
-        peakFiles = fU.makeSimDict(inputDir, cfgMain['PARAMETERVAR']['varPar'], avaDir=avaDir)
-    else:
-        peakFiles = fU.makeSimDict(inputDir, avaDir=avaDir)
+    # get filename of module
+    modName = str(pathlib.Path(module.__file__).stem)
 
+    # set output directory
     outDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
     fU.makeADir(outDir)
 
-    # get header info from peak files
+    # fetch all result files and filter simulations according to parametersDict
+    simNameList = cfgUtils.filterSims(avaDir, parametersDict)
+    if inputDir == '':
+        inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
+        flagStandard = True
+        peakFiles = fU.makeSimDict(inputDir, varPar='simHash', avaDir=avaDir)
+    else:
+        peakFiles = fU.makeSimDict(inputDir, avaDir=avaDir)
+
+    # get header info from peak files - this should be the same for all peakFiles
     header = IOf.readASCheader(peakFiles['files'][0])
     cellSize = header.cellsize
     nRows = header.nrows
@@ -63,35 +69,17 @@ def probAnalysis(avaDir, cfg, cfgMain='', inputDir=''):
     # Loop through peakFiles and compute probability
     for m in range(len(peakFiles['names'])):
 
-        # Load peak field for desired peak field parameter
-        # be aware of the standard simulation - so if default value should not be part of the analysis
-        if peakFiles['resType'][m] == cfg['GENERAL']['peakVar']:
-            log.info('Simulation parameter %s ' % ( cfg['GENERAL']['peakVar']))
-
-            if flagStandard:
-                if peakFiles[cfgMain['PARAMETERVAR']['varPar']][m] != cfgMain['DEFVALUES'][cfgMain['PARAMETERVAR']['varPar']]:
-                    log.info('Simulation parameter %s= %s ' % (cfgMain['PARAMETERVAR']['varPar'], peakFiles[cfgMain['PARAMETERVAR']['varPar']][m]))
+        # only take simulations that match filter criteria from parametersDict
+        if peakFiles['simName'][m] in simNameList:
+            # Load peak field for desired peak field parameter
+            if peakFiles['resType'][m] == cfg['GENERAL']['peakVar']:
 
                 # Load data
                 fileName = peakFiles['files'][m]
                 data = np.loadtxt(fileName, skiprows=6)
                 dataLim = np.zeros((nRows, nCols))
 
-                log.debug('File name is %s' % fileName)
-
-                # Check if peak values exceed desired threshold
-                dataLim[data>float(cfg['GENERAL']['peakLim'])] = 1.0
-                probSum = probSum + dataLim
-                count = count + 1
-
-            else:
-
-                # Load data
-                fileName = peakFiles['files'][m]
-                data = np.loadtxt(fileName, skiprows=6)
-                dataLim = np.zeros((nRows, nCols))
-
-                log.debug('File name is %s' % fileName)
+                log.info('File Name: %s , simulation parameter %s ' % (fileName, cfg['GENERAL']['peakVar']))
 
                 # Check if peak values exceed desired threshold
                 dataLim[data>float(cfg['GENERAL']['peakLim'])] = 1.0

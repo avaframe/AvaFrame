@@ -80,7 +80,7 @@ for test in testList:
     modName = 'com1DFA'
 
     # Fetch correct reportDict according to parametersDict
-    simNameComp = cfgUtils.filterSims(avaDir, parametersDict, com1DFA)
+    simNameComp = cfgUtils.filterSims(avaDir, parametersDict)
     if len(simNameComp) > 1:
         log.error('more than one matching simulation found for criteria! ')
     else:

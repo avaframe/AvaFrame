@@ -17,13 +17,13 @@ import pandas as pd
 log = logging.getLogger(__name__)
 
 
-def plotValuesScatter(peakDictList, resType1, resType2, varPar, cfg, avalancheDir, flagShow=False):
+def plotValuesScatter(peakValues, resType1, resType2, varPar, cfg, avalancheDir, flagShow=False):
     """ Produce scatter plot of max values (resType1 und resType2), for one set of simulations or multiple
 
         Parameters
         -----------
-        peakDictList: list
-            list of peakValues dictionaries that contain max values of peak parameters and parameter variation info
+        peakDictList: dict
+            peakValues dictionary that contain max values of peak parameters and parameter variation info
         resType1: str
             result parameter 1, 'ppr', 'pfd', 'pfv'
         resType2: str
@@ -40,18 +40,10 @@ def plotValuesScatter(peakDictList, resType1, resType2, varPar, cfg, avalancheDi
     varVal = []
     values1 = []
     values2 = []
-    if len(peakDictList) > 1:
-        for peakValues in peakDictList:
-            for key in peakValues:
-                values1.append(peakValues[key][resType1])
-                values2.append(peakValues[key][resType2])
-                varVal.append(peakValues[key]['varPar'])
-    else:
-        peakValues = peakDictList[0]
-        for key in peakValues:
-            values1.append(peakValues[key][resType1])
-            values2.append(peakValues[key][resType2])
-            varVal.append(peakValues[key]['varPar'])
+    for key in peakValues:
+        values1.append(peakValues[key][resType1])
+        values2.append(peakValues[key][resType2])
+        varVal.append(peakValues[key]['varPar'])
 
     log.info('Number of simulations is: %d' % (len(varVal)))
 
@@ -60,8 +52,8 @@ def plotValuesScatter(peakDictList, resType1, resType2, varPar, cfg, avalancheDi
     name2 = pU.cfgPlotUtils['name%s' % resType2]
     unit1 = pU.cfgPlotUtils['unit%s' % resType1]
     unit2 = pU.cfgPlotUtils['unit%s' % resType2]
-    nameVar = pU.cfgPlotUtils['name%s' % varPar]
-    unitVar = pU.cfgPlotUtils['unit%s' % varPar]
+    nameVar = pU.cfgPlotUtils['name%s' % varPar.lower()]
+    unitVar = pU.cfgPlotUtils['unit%s' % varPar.lower()]
     varValV = np.array(varVal)
 
     # load variation colormap
@@ -88,13 +80,13 @@ def plotValuesScatter(peakDictList, resType1, resType2, varPar, cfg, avalancheDi
     plt.close('all')
 
 
-def plotValuesScatterHist(peakDictList, resType1, resType2, varPar, cfg, avalancheDir, flagShow=False, flagHue=False):
+def plotValuesScatterHist(peakValues, resType1, resType2, varPar, cfg, avalancheDir, flagShow=False, flagHue=False):
     """ Produce scatter and marginal kde plot of max values, for one set of simulations or multiple
 
         Parameters
         -----------
-        peakDictList: list
-            list of peakValues dictionaries that contain max values of peak parameters and parameter variation info
+        peakDictList: dict
+            peakValues dictionary that contain max values of peak parameters and parameter variation info
         resType1: str
             result parameter 1, 'ppr', 'pfd', 'pfv'
         resType2: str
@@ -113,25 +105,13 @@ def plotValuesScatterHist(peakDictList, resType1, resType2, varPar, cfg, avalanc
     values1 = []
     values2 = []
     scenario = []
-    if len(peakDictList) > 1:
-        for peakValues in peakDictList:
-            for key in peakValues:
-                values1.append(peakValues[key][resType1])
-                values2.append(peakValues[key][resType2])
-                varVal.append(peakValues[key]['varPar'])
-                if flagHue:
-                    scenario.append(peakValues[key]['scenario'])
 
-    else:
-        peakValues = peakDictList[0]
-        for key in peakValues:
-            if 'scenario' in peakValues:
-                flagHue = True
-            values1.append(peakValues[key][resType1])
-            values2.append(peakValues[key][resType2])
-            varVal.append(peakValues[key]['varPar'])
-            if flagHue:
-                scenario.append(peakValues[key]['scenario'])
+    for key in peakValues:
+        values1.append(peakValues[key][resType1])
+        values2.append(peakValues[key][resType2])
+        varVal.append(peakValues[key]['varPar'])
+        if 'scenario' in peakValues[key] and flagHue:
+            scenario.append(peakValues[key]['scenario'])
 
     log.info('Number of simulations is: %d' % (len(varVal)))
 
@@ -140,8 +120,8 @@ def plotValuesScatterHist(peakDictList, resType1, resType2, varPar, cfg, avalanc
     name2 = pU.cfgPlotUtils['name%s' % resType2]
     unit1 = pU.cfgPlotUtils['unit%s' % resType1]
     unit2 = pU.cfgPlotUtils['unit%s' % resType2]
-    nameVar = pU.cfgPlotUtils['name%s' % varPar]
-    unitVar = pU.cfgPlotUtils['unit%s' % varPar]
+    nameVar = pU.cfgPlotUtils['name%s' % varPar.lower()]
+    unitVar = pU.cfgPlotUtils['unit%s' % varPar.lower()]
     varValV = np.array(varVal)
     title1 = name1+' [' + unit1 + ']'
     title2 = name2+' [' + unit2 + ']'

@@ -11,6 +11,7 @@ import hashlib
 import json
 import pandas as pd
 import glob
+import numpy as np
 
 # Local imports
 import avaframe as avaf
@@ -107,7 +108,7 @@ def getModuleConfig(module, fileOverride='', modInfo=False):
     return cfg
 
 
-def getDefaultModuleConfig(module):
+def getDefaultModuleConfig(module, noPrint=False):
     ''' Returns the default configuration for a given module
     returns a configParser object
 
@@ -132,12 +133,12 @@ def getDefaultModuleConfig(module):
     log.debug('defaultFile: %s', defaultFile)
 
     # Finally read it
-    cfg = compareConfig(defaultFile, modName, compare=False)
+    cfg = compareConfig(defaultFile, modName, compare=False, noPrint=noPrint)
 
     return cfg
 
 
-def compareConfig(iniFile, modName, compare, modInfo=False):
+def compareConfig(iniFile, modName, compare, modInfo=False, noPrint=False):
     ''' Compare configuration files (if a local and default are both provided)
     and inform user of the eventuel differences. Take the default as reference.
 
@@ -145,6 +146,7 @@ def compareConfig(iniFile, modName, compare, modInfo=False):
             -iniFile: path to config file. Only one path if compare=False
             -compare: True if two paths are provided and a comparison is needed
             -modInfo: True if dictionary with modifications shall be returned
+            -noPrint: True do not print configuration to terminal
 
     Output: ConfigParser object
     '''
@@ -214,7 +216,8 @@ def compareConfig(iniFile, modName, compare, modInfo=False):
         # Finally read it
         cfg.read(iniFile)
         # Write config to log file
-        logUtils.writeCfg2Log(cfg, modName)
+        if noPrint == False:
+            logUtils.writeCfg2Log(cfg, modName)
 
     if modInfo:
         return cfg, modDict
@@ -367,7 +370,7 @@ def writeDictToJson(inDict, outFilePath):
     f.close()
 
 
-def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
+def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
     """ Read configurations from all simulations configuration ini files from directory
 
         Parameters
@@ -375,7 +378,11 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
         avaDir: str
             path to avalanche directory
         standardCfg: dict
-            standard configuration for module
+            standard configuration for module - option
+        writeCSV: bool
+            True if configuration dataFrame shall be written to csv file
+        specDir: str
+            path to a directory where simulation configuration files can be found - optional
 
         Returns
         --------
@@ -383,12 +390,7 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
             DF with all the simulation configurations
     """
 
-    # read default configuration of this module
-    standardCfgDict = convertConfigParserToDict(standardCfg)
-    # create pandas dataFrame
-    simDF = pd.DataFrame(data=standardCfgDict['GENERAL'], index=['current standard'])
-
-    # collect all configuration files for this module
+    # collect all configuration files for this module from directory
     if specDir != '':
         inDir = os.path.join(specDir, 'configurationFiles')
     else:
@@ -397,6 +399,7 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
 
     # create confiparser object, convert to json object, write to dataFrame
     # append all dataFrames
+    count = 0
     for cFile in configFiles:
         if 'sourceConfiguration' not in cFile:
             simName = os.path.splitext(os.path.basename(cFile))[0]
@@ -415,7 +418,27 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
             cfgDict = convertConfigParserToDict(cfgObject)
             simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
             simItemDF = simItemDF.assign(simName=simName)
-            simDF = pd.concat([simDF, simItemDF], axis=0)
+            if count == 0:
+                simDF = simItemDF
+            else:
+                simDF = pd.concat([simDF, simItemDF], axis=0)
+            count = count + 1
+
+    # convert numeric parameters to numerics
+    for name, values in simDF.iteritems():
+        simDFTest = simDF[name].str.replace('.','', regex=True)
+        if  simDFTest.str.isdigit()[0]:
+            simDF[name] = pd.to_numeric(simDF[name])
+            log.debug('Converted to numeric %s' % name)
+        else:
+            log.debug('Not converted to numeric: %s' % name)
+
+    # add default configuration
+    if standardCfg != '':
+        # read default configuration of this module
+        standardCfgDict = convertConfigParserToDict(standardCfg)
+        simDFCS = pd.DataFrame(data=standardCfgDict['GENERAL'], index=['current standard'])
+        simDF = pd.concat([simDF, simDFCS], axis=0)
 
     # if writeCSV, write dataFrame to csv file
     if writeCSV:
@@ -425,20 +448,33 @@ def createConfigurationInfo(avaDir, standardCfg, writeCSV=False, specDir=''):
     return simDF
 
 
-def filterSims(avalancheDir, parametersDict, module, specDir=''):
-    """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations """
+def filterSims(avalancheDir, parametersDict, specDir=''):
+    """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations
 
-    standardCfg = getDefaultModuleConfig(module)
-    simDF = createConfigurationInfo(avalancheDir, standardCfg, writeCSV=False, specDir=specDir)
-    for key, value in parametersDict.items():
-        if value != []:
-            if isinstance(value, list) == False:
-                value = [value]
+        Parameters
+        -----------
+        avalancheDir: str
+            path to avalanche directory
+        parametersDict: dict
+            dictionary with parameter and parameter values for filtering
+        specDir: str
+            path to a directory where simulation configuration files can be found - optional
+
+        Returns
+        --------
+        simNameList: list
+            list of simNames that match filtering criteria
+    """
+
+    # load dataFrame for all configurations
+    simDF = createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
+
+    # filter simulations
+    if parametersDict != '':
+        for key, value in parametersDict.items():
             simDF = simDF[simDF[key].isin(value)]
 
-    if 'current standard' in simDF.index:
-        simDF = simDF.drop('current standard')
-
-    simNameList = simDF['simName']
+    # list of simNames after filtering 
+    simNameList = simDF['simName'].tolist()
 
     return simNameList
