@@ -9,6 +9,7 @@
 import numpy as np
 import os
 from avaframe.com1DFA import com1DFA
+import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.ana4Stats import probAna as pA
 import pytest
@@ -36,14 +37,18 @@ def test_probAna(tmp_path):
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'peakLim': 10.0, 'peakVar': 'ppr'}
+    cfg['GENERAL'] = {'peakLim': 1.0, 'peakVar': 'ppr'}
+    cfg['FILTER'] = {}
 
+    # provide optional filter criteria for simulations
+    parametersDict = fU.getFilterDict(cfg, 'FILTER')
+    print('inputdir', inputDir)
     # call function to test
-    pA.probAnalysis(avaDirtmp, cfg, cfgMain, inputDir)
-    probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_probMap10.0.asc'), skiprows=6)
+    pA.probAnalysis(avaDirtmp, cfg, com1DFA, parametersDict=parametersDict,  inputDir=inputDir1)
+    probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_probMap1.0.asc'), skiprows=6)
 
     # Load reference solution
-    probSol = np.loadtxt(os.path.join(inputDir1, 'avaParabola_probMap10.0.txt'), skiprows=6)
+    probSol = np.loadtxt(os.path.join(inputDir1, 'avaParabola_probMap1.0.txt'), skiprows=6)
 
     # Compare result to reference solution
     testRes = np.allclose(probTest, probSol, atol=1.e-6)
