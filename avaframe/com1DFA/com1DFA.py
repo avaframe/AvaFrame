@@ -151,7 +151,7 @@ def prepareRelase(cfg, rel, inputSimLines):
         else:
             releaseLine['d0'][k] = float(releaseLine['d0'][k])
     inputSimLines['releaseLine'] = releaseLine
-    log.info('Release area scenario: %s - perform simulations' % (relName))
+    log.debug('Release area scenario: %s - perform simulations' % (relName))
 
     if cfg.getboolean('GENERAL', 'secRelArea'):
         if entResInfo['flagSecondaryRelease'] == 'No':
@@ -403,7 +403,7 @@ def initializeMesh(cfg, demOri, num):
     dem['areaRaster'] = areaRaster
     projArea = nColsDEM * nRowsDEM * cszDEM * cszDEM
     actualArea = np.nansum(areaRaster)
-    log.info('Largest cell area: %.2f m²' % (np.nanmax(areaRaster)))
+    log.debug('Largest cell area: %.2f m²' % (np.nanmax(areaRaster)))
     log.debug('Projected Area : %.2f' % projArea)
     log.debug('Total Area : %.2f' % actualArea)
 
@@ -460,11 +460,11 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
 
     # -----------------------
     # Initialize mesh
-    log.info('Initializing Mesh')
+    log.debug('Initializing Mesh')
     demOri, dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
 
     # ------------------------
-    log.info('Initializing main release area')
+    log.debug('Initializing main release area')
     # process release info to get it as a raster
     releaseLine = inputSimLines['releaseLine']
     # check if release features overlap between features
@@ -534,7 +534,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
 
-    log.info('Initializing resistance area')
+    log.debug('Initializing resistance area')
     cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, inputSimLines['resLine'], reportAreaInfo, thresholdPointInPoly)
     fields['cResRaster'] = cResRaster
 
@@ -586,13 +586,13 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     # derive mass per particle to define number of particles per cell:
     if massPerParticleDeterminationMethod == 'MPPDIR':
         massPerPart = cfg.getfloat('massPerPart')
-        log.info('Number of particles defined by: mass per particle %s' % cfg['massPerPart'])
+        log.debug('Number of particles defined by: mass per particle %s' % cfg['massPerPart'])
     elif massPerParticleDeterminationMethod == 'MPPDH':
         deltaTh = cfg.getfloat('deltaTh')
         ds = min(csz, cfg.getfloat('sphKernelRadius'))
         massPerPart = rho * ds * ds * deltaTh
-        log.info('Number of particles defined by: release thickness per particle: %s' % cfg['deltaTh'])
-        log.info('mass per particle is %.2f' % massPerPart)
+        log.debug('Number of particles defined by: release thickness per particle: %s' % cfg['deltaTh'])
+        log.debug('mass per particle is %.2f' % massPerPart)
 
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
@@ -693,9 +693,9 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     relCells = np.size(indRelY)
     partPerCell = particles['Npart']/relCells
 
-    log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
+    log.debug('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
              (particles['mTot'], particles['Npart'], relCells))
-    log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
+    log.debug('Mass per particle = %.2f kg and particles per cell = %.2f.' %
              (particles['mTot']/particles['Npart'], partPerCell))
 
     if debugPlot:
@@ -902,8 +902,8 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     nrows = header.nrows
     if simTypeActual in ['entres', 'res']:
         resistanceArea = resLine['fileName']
-        log.info('Initializing resistance area %s' % (resistanceArea))
-        log.info('Resistance area features: %s' % (resLine['Name']))
+        log.debug('Initializing resistance area %s' % (resistanceArea))
+        log.debug('Resistance area features: %s' % (resLine['Name']))
         resLine = prepareArea(resLine, dem, thresholdPointInPoly)
         mask = resLine['rasterData']
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
@@ -959,7 +959,7 @@ def DFAIterate(cfg, particles, fields, dem):
     tEnd = cfgGen.getfloat('tEnd')
     dtSave = fU.splitTimeValueToArrayInterval(cfgGen)
     sphOption = cfgGen.getint('sphOption')
-    log.info('using sphOption %s:' % sphOption)
+    log.debug('using sphOption %s:' % sphOption)
     # desired output fields
     resTypes = fU.splitIniValueToArraySteps(cfgGen['resType'])
     # make sure to save all desiered resuts for first and last time step for
@@ -971,7 +971,7 @@ def DFAIterate(cfg, particles, fields, dem):
     frictModelsList = ['samosat', 'coulomb', 'voellmy']
     frictModel = cfgGen['frictModel'].lower()
     frictType = frictModelsList.index(frictModel) + 1
-    log.info('Friction Model used: %s, %s' % (frictModelsList[frictType-1],frictType))
+    log.debug('Friction Model used: %s, %s' % (frictModelsList[frictType-1],frictType))
 
     # Initialise Lists to save fields and add initial time step
     particlesList = []
@@ -982,9 +982,9 @@ def DFAIterate(cfg, particles, fields, dem):
 
     # time stepping scheme info
     if featLF:
-        log.info('Use LeapFrog time stepping')
+        log.debug('Use LeapFrog time stepping')
     else:
-        log.info('Use standard time stepping')
+        log.debug('Use standard time stepping')
     # Initialize time and counters
     nSave = 1
     Tcpu['nSave'] = nSave
@@ -993,7 +993,7 @@ def DFAIterate(cfg, particles, fields, dem):
     iterate = True
     particles['iterate'] = iterate
     t = particles['t']
-    log.info('Saving results for time step t = %f s', t)
+    log.debug('Saving results for time step t = %f s', t)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
     # add initial time step to Tsave array
     Tsave = [0]
@@ -1030,8 +1030,8 @@ def DFAIterate(cfg, particles, fields, dem):
         # make sure the array is not empty
         if t >= dtSave[0]:
             Tsave.append(t)
-            log.info('Saving results for time step t = %f s', t)
-            log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+            log.debug('Saving results for time step t = %f s', t)
+            log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
             log.debug(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
             log.debug(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
             log.debug(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
@@ -1058,15 +1058,15 @@ def DFAIterate(cfg, particles, fields, dem):
 
     Tcpu['nIter'] = nIter
     log.info('Ending computation at time t = %f s', t-dt)
-    log.info('Saving results for time step t = %f s', t-dt)
-    log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
-    log.info('Computational performances:')
-    log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
-    log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
-    log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
-    log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
-    log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
-    log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
+    log.debug('Saving results for time step t = %f s', t-dt)
+    log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+    log.debug('Computational performances:')
+    log.debug(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
+    log.debug(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
+    log.debug(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
+    log.debug(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
+    log.debug(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
+    log.debug(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     Tsave.append(t)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
@@ -1505,7 +1505,7 @@ def polygon2Raster(demHeader, Line, radius, th=''):
     Mask = mask.reshape((nrows, ncols)).astype(int)
     # thickness field is provided, then return array with ones
     if th != '':
-        log.info('REL set from dict, %.2f' % th)
+        log.debug('REL set from dict, %.2f' % th)
         Mask = np.where(Mask > 0, th, 0.)
     else:
         Mask = np.where(Mask > 0, 1., 0.)
@@ -1567,7 +1567,7 @@ def checkParticlesInRelease(particles, line, radius):
     nRemove = len(Mask)-np.sum(Mask)
     if nRemove > 0:
         particles = DFAtls.removePart(particles, Mask, nRemove)
-        log.info('removed %s particles because they are not within the release polygon' % (nRemove))
+        log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
 
     return particles
 
@@ -1905,7 +1905,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
             outFile = os.path.join(outDirPeak, dataName)
             IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             if countTime == numberTimes:
-                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType, Tsave[countTime]))
+                log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType, Tsave[countTime]))
                 dataName = logName + '_' + resType + '.asc'
                 # create directory
                 outDirPeakAll = os.path.join(outDir, 'peakFiles')
@@ -1913,7 +1913,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 outFile = os.path.join(outDirPeakAll, dataName)
                 IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             else:
-                log.info('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType, Tsave[countTime]))
+                log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType, Tsave[countTime]))
         countTime = countTime + 1
 
 
