@@ -26,7 +26,7 @@ def test_probAna(tmp_path):
     dirPath = os.path.dirname(__file__)
     avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
     avaDir2 = os.path.join(dirPath, '..', '..', 'benchmarks', avaName)
-    avaDirtmp =  os.path.join(tmp_path, avaName)
+    avaDirtmp = os.path.join(tmp_path, avaName)
     inputDir = os.path.join(tmp_path, avaName, 'ana4Stats')
     inputDir1 = os.path.join(avaDir, 'ana4Stats')
     shutil.copytree(inputDir1, inputDir)
@@ -42,9 +42,9 @@ def test_probAna(tmp_path):
 
     # provide optional filter criteria for simulations
     parametersDict = fU.getFilterDict(cfg, 'FILTER')
-    print('inputdir', inputDir)
+
     # call function to test
-    pA.probAnalysis(avaDirtmp, cfg, com1DFA, parametersDict=parametersDict,  inputDir=inputDir1)
+    pA.probAnalysis(avaDirtmp, cfg, com1DFA, parametersDict=parametersDict, inputDir=inputDir1)
     probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_probMap1.0.asc'), skiprows=6)
 
     # Load reference solution

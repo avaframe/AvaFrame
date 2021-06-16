@@ -43,12 +43,11 @@ def readAimecRunout(workingDir, avaName, cfg):
     dWidth = cfg['domainWidth']
 
     # set input file
-    inputFile = workingDir+os.sep+ 'Results_%s__com1DFA__plim_%s_w_%s.txt' % (avaName, pLim, dWidth)
+    inputFile = workingDir + os.sep + 'Results_%s__com1DFA__plim_%s_w_%s.txt' % (avaName, pLim, dWidth)
     dataset = np.loadtxt(inputFile, skiprows=7)
-    Lrun = dataset[:,3]
+    Lrun = dataset[:, 3]
 
     return Lrun
-
 
 
 def extractMaxValues(inputDir, cfgMain, avaDir, varPar, nameScenario='', parametersDict=''):
@@ -103,9 +102,9 @@ def extractMaxValues(inputDir, cfgMain, avaDir, varPar, nameScenario='', paramet
 
             # add statistical measures
             # fetch varPar value and nameScenario
-            varParVal = simDF[simDF['simName']==simName][varPar]
+            varParVal = simDF[simDF['simName'] == simName][varPar]
             if nameScenario != '':
-                nameScenarioVal = simDF[simDF['simName']==simName][nameScenario]
+                nameScenarioVal = simDF[simDF['simName'] == simName][nameScenario]
             log.info('Simulation parameter %s= %s for resType: %s and name %s' % (varPar, varParVal[0], peakFiles['resType'][m], nameScenarioVal[0]))
             peakValues[simName].update({peakFiles['resType'][m]: max})
             peakValues[simName].update({'varPar': float(varParVal)})

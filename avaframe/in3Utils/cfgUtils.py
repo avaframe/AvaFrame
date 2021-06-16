@@ -426,8 +426,8 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
 
     # convert numeric parameters to numerics
     for name, values in simDF.iteritems():
-        simDFTest = simDF[name].str.replace('.','', regex=True)
-        if  simDFTest.str.isdigit()[0]:
+        simDFTest = simDF[name].str.replace('.', '', regex=True)
+        if simDFTest.str.isdigit()[0]:
             simDF[name] = pd.to_numeric(simDF[name])
             log.debug('Converted to numeric %s' % name)
         else:
@@ -474,7 +474,7 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
         for key, value in parametersDict.items():
             simDF = simDF[simDF[key].isin(value)]
 
-    # list of simNames after filtering 
+    # list of simNames after filtering
     simNameList = simDF['simName'].tolist()
 
     return simNameList

@@ -82,7 +82,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
                 log.info('File Name: %s , simulation parameter %s ' % (fileName, cfg['GENERAL']['peakVar']))
 
                 # Check if peak values exceed desired threshold
-                dataLim[data>float(cfg['GENERAL']['peakLim'])] = 1.0
+                dataLim[data > float(cfg['GENERAL']['peakLim'])] = 1.0
                 probSum = probSum + dataLim
                 count = count + 1
 
@@ -91,7 +91,6 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     unit = pU.cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
     log.info('probability analysis performed for peak parameter: %s and a peak value threshold of: %s %s' % (cfg['GENERAL']['peakVar'], cfg['GENERAL']['peakLim'], unit))
     log.info('%s peak fields added to analysis' % count)
-
 
     # # Save to .asc file
     avaName = os.path.basename(avaDir)
