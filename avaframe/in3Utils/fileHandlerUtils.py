@@ -164,7 +164,41 @@ def checkCommonSims(logName, localLogName):
     return indSims
 
 
-def splitIniValueToArraySteps(cfgValues):
+def getFilterDict(cfg, section):
+    """ Create parametersDict for filtering simulations from ini file
+
+        Parameters
+        -----------
+        cfg: configParser object
+            configuration with information on filtering criteria
+        section: str
+            section of cfg where filtering criteria can be found
+
+        Returns
+        ---------
+        parametersDict : dict
+            dictionary with parameter and parameter values for filtering simulation results
+
+    """
+
+    parametersDict = {}
+    for key, value in cfg.items(section):
+        if ':' in value or '|' in value:
+            locValue = splitIniValueToArraySteps(value)
+            parametersDict[key] = locValue
+            log.info('Filter simulations that match %s: %s' % (key, locValue))
+        elif isinstance(value, str):
+            testValue = value.replace('.', '')
+            if testValue.isdigit():
+                parametersDict[key] = [float(value)]
+            else:
+                parametersDict[key] = [value]
+            log.info('Filter simulations that match %s: %s' % (key, value))
+
+    return parametersDict
+
+
+def splitIniValueToArraySteps(cfgValues, returnList=False):
     """ read values in ini file and return numpy array of values or a list if the items are strings;
         values can either be separated by | or provided in start:end:numberOfSteps format
 
@@ -186,19 +220,22 @@ def splitIniValueToArraySteps(cfgValues):
         items = []
     else:
         itemsL = cfgValues.split('|')
-        flagFloat = False
-        flagString = False
-        for its in itemsL:
-            if its.upper().isupper() and '.e' not in its and '.E' not in its:
-                flagString = True
-            if '.' in its:
-                flagFloat = True
-        if flagString:
+        if returnList:
             items = itemsL
-        elif flagFloat:
-            items = np.array(itemsL, dtype=float)
         else:
-            items = np.array(itemsL, dtype=int)
+            flagFloat = False
+            flagString = False
+            for its in itemsL:
+                if its.upper().isupper() and '.e' not in its and '.E' not in its:
+                    flagString = True
+                if '.' in its:
+                    flagFloat = True
+            if flagString:
+                items = itemsL
+            elif flagFloat:
+                items = np.array(itemsL, dtype=float)
+            else:
+                items = np.array(itemsL, dtype=int)
 
     return items
 

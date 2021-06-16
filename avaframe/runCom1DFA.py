@@ -124,7 +124,7 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
 
     # read all simulation configuration files and return dataFrame and write to csv
     standardCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
-    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg, writeCSV=True)
+    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg=standardCfg, writeCSV=True)
 
     return particlesList, fieldsList, Tsave, dem, plotDict, reportDictList
 

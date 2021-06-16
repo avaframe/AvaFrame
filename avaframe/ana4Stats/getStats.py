@@ -11,6 +11,8 @@ from matplotlib import pyplot as plt
 
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
+from avaframe.in3Utils import cfgUtils
+
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -48,7 +50,8 @@ def readAimecRunout(workingDir, avaName, cfg):
     return Lrun
 
 
-def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
+
+def extractMaxValues(inputDir, cfgMain, avaDir, varPar, nameScenario='', parametersDict=''):
     """ Extract max values of result parameters and save to dictionary
 
         Parameters
@@ -59,44 +62,36 @@ def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
             configuration used to perform simulations
         avaDir: str
             path to avalanche directoy
+        varPar: str
+            parameter that has been varied when performing simulations (for example relTh)
+        nameScenario: str
+            parameter that shall be used for color coding of simulation results in plots (for example releaseScenario)
+        parametersDict: dict
+            dictionary with parameter and parameter values to filter simulations
 
         Returns
         --------
         peakValues: dict
-            dictionary that contain max values for all result parameters for
+            dictionary that contains max values for all result parameters for
             each simulation
         """
 
-    # load simulation results and info
-    varPar = cfgMain['PARAMETERVAR']['varPar']
-    peakFiles = fU.makeSimDict(inputDir, varPar, avaDir)
+    # filter simulation results using parametersDict
+    simNameList = cfgUtils.filterSims(avaDir, parametersDict)
+    # load dataFrame of all simulation configurations
+    simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='')
+
+    # load peakFiles of all simulations and generate dictionary
+    peakFiles = fU.makeSimDict(inputDir, varPar='simHash', avaDir=avaDir)
     nSims = len(peakFiles['simName'])
-
-    # load parameter variation values to check if they include default value
-    itemsRaw = fU.splitIniValueToArraySteps(cfgMain['PARAMETERVAR']['varParValues'])
-    dVal = float(cfgMain['DEFVALUES'][varPar])
-    flagValue = False
-    if dVal in itemsRaw:
-        flagValue = True
-
-    # initialize dictionary to save values, if default value not in parameter variation, exclude this value
     peakValues = {}
-    count = 0
-    for simName in peakFiles['simName']:
-        if flagValue == False:
-            if peakFiles[varPar][count] != dVal:
-                peakValues[simName] = {}
-        else:
-            peakValues[simName] = {}
-        count = count + 1
+    for sName in simDF['simName'].tolist():
+        peakValues[sName] = {}
 
     # Loop through peakFiles and compute probability
     for m in range(nSims):
 
-        # Load peak fields
-        # be aware of the standard simulation - so if default value should not be part of the analysis
-        if flagValue == True:
-            log.debug('Simulation parameter %s= %s' % (varPar, peakFiles[varPar][m]))
+        if peakFiles['simName'][m] in simNameList:
 
             # Load data
             fileName = peakFiles['files'][m]
@@ -107,26 +102,15 @@ def extractMaxValues(inputDir, cfgMain, avaDir, nameScenario=''):
             max = np.amax(data)
 
             # add statistical measures
-            peakValues[simName].update({peakFiles['resType'][m]: max})
-            peakValues[simName].update({'varPar': float(peakFiles[varPar][m])})
+            # fetch varPar value and nameScenario
+            varParVal = simDF[simDF['simName']==simName][varPar]
             if nameScenario != '':
-                peakValues[simName].update({'scenario': nameScenario})
+                nameScenarioVal = simDF[simDF['simName']==simName][nameScenario]
+            log.info('Simulation parameter %s= %s for resType: %s and name %s' % (varPar, varParVal[0], peakFiles['resType'][m], nameScenarioVal[0]))
+            peakValues[simName].update({peakFiles['resType'][m]: max})
+            peakValues[simName].update({'varPar': float(varParVal)})
+            peakValues[simName].update({'scenario': nameScenarioVal[0]})
         else:
-            if peakFiles[varPar][m] != dVal:
-                log.debug('Simulation parameter %s= %s' % (varPar, peakFiles[varPar][m]))
-
-                # Load data
-                fileName = peakFiles['files'][m]
-                simName = peakFiles['simName'][m]
-                data = np.loadtxt(fileName, skiprows=6)
-
-                # compute max
-                max = np.amax(data)
-
-                # add statistical measures
-                peakValues[simName].update({peakFiles['resType'][m]: max})
-                peakValues[simName].update({'varPar': float(peakFiles[varPar][m])})
-                if nameScenario != '':
-                    peakValues[simName].update({'scenario': nameScenario})
+            peakValues.pop(peakFiles['simName'][m], None)
 
     return peakValues
