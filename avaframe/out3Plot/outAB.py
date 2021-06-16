@@ -25,15 +25,17 @@ mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
 
 def writeABtoSHP(resAB):
-    """ Execute compiled com1Exe file using cintFile to set configuration
-    and run options
+    """ Write com2AB results to shapefile
 
     Parameters
     ----------
     resAB : dict
         dict with com2AB results
-    cfgAB : configParser object
-        com2AB configuration
+
+    Returns
+    -------
+    saveOutFile: str
+        path to shapefile
     """
 
     saveOutFile = Path(resAB['saveOutPath']) / 'com2AB_Results'
@@ -79,6 +81,8 @@ def writeABtoSHP(resAB):
         w.record(i, pointName, cuProf['alphaSD'][2])
 
     w.close()
+
+    log.info('Writing com2AB to shapefile: %s.shp', saveOutFile)
 
     return saveOutFile
 
