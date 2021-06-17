@@ -30,9 +30,9 @@ def runOperational(avalancheDir=''):
     Returns
     -------
     abShpFile: str
-        path to com1AB results as shapefile
+        path to com2AB results as shapefile
     peakFilesDF: pandas dataframe
-        dataframe with info about peak file locations
+        dataframe with info about com1DFA peak file locations
     """
     # Time the whole routine
     startTime = time.time()
