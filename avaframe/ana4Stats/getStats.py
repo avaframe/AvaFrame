@@ -7,6 +7,7 @@ Function to determine statistics of datasets
 import os
 import numpy as np
 import logging
+import pathlib
 from matplotlib import pyplot as plt
 
 from avaframe.in3Utils import fileHandlerUtils as fU
@@ -43,7 +44,8 @@ def readAimecRunout(workingDir, avaName, cfg):
     dWidth = cfg['domainWidth']
 
     # set input file
-    inputFile = workingDir + os.sep + 'Results_%s__com1DFA__plim_%s_w_%s.txt' % (avaName, pLim, dWidth)
+    inputFileName = 'Results_%s__com1DFA__plim_%s_w_%s.txt' % (avaName, pLim, dWidth)
+    inputFile = pathlib.Path(workingDir, inputFileName)
     dataset = np.loadtxt(inputFile, skiprows=7)
     Lrun = dataset[:, 3]
 

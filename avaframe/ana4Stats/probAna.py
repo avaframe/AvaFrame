@@ -38,16 +38,16 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     """
 
     # get filename of module
-    modName = str(pathlib.Path(module.__file__).stem)
+    modName = pathlib.Path(module.__file__).stem
 
     # set output directory
-    outDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
+    outDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
     fU.makeADir(outDir)
 
     # fetch all result files and filter simulations according to parametersDict
     simNameList = cfgUtils.filterSims(avaDir, parametersDict, specDir=inputDir)
     if inputDir == '':
-        inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
+        inputDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
         flagStandard = True
         peakFiles = fU.makeSimDict(inputDir, varPar='simHash', avaDir=avaDir)
     else:
@@ -94,5 +94,6 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
 
     # # Save to .asc file
     avaName = os.path.basename(avaDir)
-    outFile = os.path.join(outDir, '%s_probMap%s.asc' % (avaName, cfg['GENERAL']['peakLim']))
+    outFileName = '%s_probMap%s.asc' % (avaName, cfg['GENERAL']['peakLim'])
+    outFile = outDir / outFileName
     IOf.writeResultToAsc(header, probMap, outFile)

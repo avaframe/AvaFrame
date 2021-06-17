@@ -108,7 +108,7 @@ def getModuleConfig(module, fileOverride='', modInfo=False):
     return cfg
 
 
-def getDefaultModuleConfig(module, noPrint=False):
+def getDefaultModuleConfig(module, toPrint=True):
     ''' Returns the default configuration for a given module
     returns a configParser object
 
@@ -133,12 +133,12 @@ def getDefaultModuleConfig(module, noPrint=False):
     log.debug('defaultFile: %s', defaultFile)
 
     # Finally read it
-    cfg = compareConfig(defaultFile, modName, compare=False, noPrint=noPrint)
+    cfg = compareConfig(defaultFile, modName, compare=False, toPrint=toPrint)
 
     return cfg
 
 
-def compareConfig(iniFile, modName, compare, modInfo=False, noPrint=False):
+def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
     ''' Compare configuration files (if a local and default are both provided)
     and inform user of the eventuel differences. Take the default as reference.
 
@@ -146,7 +146,7 @@ def compareConfig(iniFile, modName, compare, modInfo=False, noPrint=False):
             -iniFile: path to config file. Only one path if compare=False
             -compare: True if two paths are provided and a comparison is needed
             -modInfo: True if dictionary with modifications shall be returned
-            -noPrint: True do not print configuration to terminal
+            -toPrint: True print configuration to terminal
 
     Output: ConfigParser object
     '''
@@ -216,7 +216,7 @@ def compareConfig(iniFile, modName, compare, modInfo=False, noPrint=False):
         # Finally read it
         cfg.read(iniFile)
         # Write config to log file
-        if noPrint == False:
+        if toPrint:
             logUtils.writeCfg2Log(cfg, modName)
 
     if modInfo:
@@ -468,8 +468,9 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
 
     # load dataFrame for all configurations
     simDF = createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
+    print('SIMDF', simDF.to_string())
 
-    # filter simulations
+    # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
         for key, value in parametersDict.items():
             simDF = simDF[simDF[key].isin(value)]

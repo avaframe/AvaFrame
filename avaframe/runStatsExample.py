@@ -8,6 +8,7 @@ import time
 import glob
 import configparser
 import shutil
+import pathlib
 import numpy as np
 
 # Local imports
@@ -92,7 +93,7 @@ for key in peakValues:
     print('peakValues:', key, peakValues[key])
 
 #++++++++++++++ Plot max values +++++++++++++++++
-sPlot.plotValuesScatter(peakValues, 'pfd', 'pfv', 'relTh', cfg, avaDir, flagShow)
-sPlot.plotValuesScatterHist(peakValues, 'pfd', 'pfv', 'relTh', cfg, avaDir, flagShow, flagHue=True)
+sPlot.plotValuesScatter(peakValues, 'pfd', 'pfv', cfgStats['GENERAL']['varPar'], cfg, avaDir, flagShow)
+sPlot.plotValuesScatterHist(peakValues, 'pfd', 'pfv', cfgStats['GENERAL']['varPar'], cfg, avaDir, flagShow, flagHue=True)
 
 log.info('Plots have been saved to: %s' % outDir)
