@@ -4,15 +4,13 @@
 
 # Load modules
 import time
-import os
 import logging
 import pathlib
+import pandas
 
 # # Local imports
 from avaframe import runCom1DFA
 from avaframe.com2AB import com2AB
-from avaframe.log2Report import generateReport as gR
-from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.out3Plot import outAB
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
@@ -20,8 +18,22 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 
-
 def runOperational(avalancheDir=''):
+    """ Run com1DFA and com2AB in the default configuration with only an
+    avalanche directory as input
+
+    Parameters
+    ----------
+    avalancheDir: str
+        path to avalanche directory (setup eg. with init scipts)
+
+    Returns
+    -------
+    abShpFile: str
+        path to com1AB results as shapefile
+    peakFilesDF: pandas dataframe
+        dataframe with info about peak file locations
+    """
     # Time the whole routine
     startTime = time.time()
     print('runOperational')
@@ -53,15 +65,18 @@ def runOperational(avalancheDir=''):
     avaDir = pathlib.Path(avalancheDir)
     inputDir = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
     peakFiles = fU.makeSimDict(inputDir, '', avaDir)
-    # print(peakFiles['files'])
 
-    # ----------------
+    # Convert peakFiles to pandas DataFrame
+    peakFiles.pop('timeStep', None)
+    peakFilesDF = pandas.DataFrame.from_dict(peakFiles)
+
     # Run Alpha Beta
     cfgAB = cfgUtils.getModuleConfig(com2AB)
     resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
     abShpFile = outAB.writeABtoSHP(resAB)
 
     # ----------------
+    # TODO: make report and feed info back (for QGis)
     # Collect results/plots/report  to a single directory
     # make simple plots (com1DFA, com2AB)
     # peak file plot
@@ -80,7 +95,8 @@ def runOperational(avalancheDir=''):
     endTime = time.time()
     log.info('Took %6.1f seconds to calculate.' % (endTime - startTime))
 
-    return str(abShpFile), peakFiles['files'] 
+    return str(abShpFile), peakFilesDF
+
 
 if __name__ == '__main__':
     runOperational()
