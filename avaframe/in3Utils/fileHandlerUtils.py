@@ -183,7 +183,9 @@ def getFilterDict(cfg, section):
 
     parametersDict = {}
     for key, value in cfg.items(section):
-        if ':' in value or '|' in value:
+        if value == '':
+            parametersDict.pop(key, None)
+        elif ':' in value or '|' in value:
             locValue = splitIniValueToArraySteps(value)
             parametersDict[key] = locValue
             log.info('Filter simulations that match %s: %s' % (key, locValue))
@@ -361,8 +363,6 @@ def getRefData(testDir, outputDir, suffix, nameDir='', testDirFP=''):
         refDir = testDirFP
     else:
         refDir = os.path.join('..', 'benchmarks', testDir)
-
-    print('refDir', refDir)
 
     # Create simulations dictionary
     data = makeSimDict(refDir)

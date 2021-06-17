@@ -175,7 +175,9 @@ def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
     nSample = np.size(sortedDiffPlot)
     hist = np.array(range(nSample))/float(nSample)
     ticks = []
-    for val in [0.95, 0.99]:
+    centile1 = pU.cfgPlotUtils['centile1']
+    centile2 = pU.cfgPlotUtils['centile2']
+    for val in [centile1, centile2]:
         ind = np.searchsorted(hist, val)
         ind = min(ind, np.size(hist)-1)
         ax1.plot(sortedDiffPlot, hist)
@@ -185,7 +187,8 @@ def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
 
     ax2.set_xlim([-sortedDiffPlot[ind], sortedDiffPlot[ind]])
     width = diffMax - diffMin
-    stepWidth = 2*sortedDiffPlot[ind]/50     # 50 bins in the [-2sigma,+2sigma] interval
+    stepsInterval = pU.cfgPlotUtils['steps2Centile2']
+    stepWidth = 2*sortedDiffPlot[ind]/stepsInterval    # stepsInterval bins in the [-2sigma,+2sigma] interval
     bins = int(width/stepWidth)
     ax2.hist(dataDiffPlot, bins=bins, density=True, histtype="stepfilled")
     ax2.get_yaxis().set_ticks([])
