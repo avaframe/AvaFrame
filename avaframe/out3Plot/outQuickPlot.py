@@ -302,6 +302,8 @@ def quickPlotSimple(avaDir, inputDir, cfg):
             path to avalanche directory
         inputDir : str
             path to directory of input data (only 2 raster files allowed)
+        cfg: configParser object
+            global configuration settings
 
     """
 
