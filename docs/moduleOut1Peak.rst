@@ -7,8 +7,9 @@ out1Peak: Peak plots
 Plot all peak fields
 ====================
 
-This function generates one plot for each peak field in *Outputs/com1DFA/peakFiles*.
-These peak fields represent the peak values of the simulation result parameters (*dynamic peak pressure*, *peak flow depth*, *peak velocity*).
+This function generates one plot for each peak field in *Outputs/modName/peakFiles*.
+These peak fields represent the peak values of the simulation result parameters (*dynamic peak pressure*, *peak flow depth*, *peak velocity*),
+and modName corresponds to the name of the computational module that has been used to perform the simualtions.
 
 
 Input
@@ -27,20 +28,22 @@ where cfgFlags is a configparser object that contains the global flags, whether 
 Outputs
 -------
 
-* one plot of each peak field, called like the peak file (in *Outputs/out1Peak*)
+* one plot of each peak field, called like the peak file (in *Outputs/out1Peak*),
+if cfgFlags['ReportDir'] = True, plots are saved to *Outputs/modName/reports*
 * dictionary with name of plot and full path to plot
 
 To run
 ------
 
-* call plotAllPeakFields(avalancheDir, cfg)
+* call plotAllPeakFields(avalancheDir, cfg, cfgFlags, modName)
 
 
 Plot all fields
 ====================
 
 This function generates one plot for each simulation result field provided in the specified input directory.
-
+This function is designed to work for result fields that follow a certain naming convention in order to provide full functionality:
+*releaseAreaName_simulationType_modelType_simulationIdentifier_resultType.asc*
 
 Input
 -----
@@ -48,7 +51,7 @@ Input
 * avalanche directory
 * input directory
 * output directory where plots shall be saved
-* configuration settings
+* result type as string (e.g. 'ppr') - optional if unit shall be specified in plot
 
 
 Outputs
@@ -60,4 +63,4 @@ Outputs
 To run
 ------
 
-* call plotAllFields(avalancheDir, inputDir, outDir, cfg)
+* call plotAllFields(avalancheDir, inputDir, outDir, resType=resType)

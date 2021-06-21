@@ -2,58 +2,59 @@
 out3Plot: Plots
 ##################################
 
+:py:mod:`out3Plot.outQuickPlot`
 
-quickPlot
-===========
+quickPlotBench
+===============
 
 This function creates two plots, one plot with four panels, first dataset, second dataset, the absolute difference of the two datasets
-and the absolute difference capped to a smaller range of differences (ppr: +- 100kPa, pfd: +-10m, pfv:+- 10ms-1).
+and the absolute difference capped to a smaller range of differences (ppr: +- 100kPa, pfd: +-1m, pfv:+- 10ms-1).
 The difference plots also include an insert showing the histogram and the cumulative density function of the differences.
-The second plot shows a cross- and a longprofile of the two datasets.
-According to the characteristics of a simulation, as for example provided by the simulation dictionary created with *fileHandlerUtils.makeSimDict*,
-the required input parameters can be defined in order to choose the first dataset.
-The second dataset is fetched from the benchmark results or from the output of a second computational module, using the same filtering characteristics.
-The function returns a list with the file paths of the generated plots.
+The second plot shows a cross- and along profile cut of the two datasets.
+The folder and simulation name of the datasets has to be passed to the function.
 
 
 Input
 -----
 
 * avalanche directory
+* reference simulation name
+* comparison simulation name
+* path to reference simulation directory
+* path to comparison simulation directory
+* plotFlag - True if plots shall be printed to screen
 * result parameter ('ppr', 'pfd', 'pfv')
-* parameter (e.g. 'Mu', 'RelTh', 'simType')
-* values of the parameter (e.g. '0.155', '1.000', 'entres')
-* configuration setting of com1DFA
-* configuration setting for outQuickPlot
-
 
 Outputs
 -------
 
-* plot with three panels showing the specified peak field, the reference peak field, and their difference including a text box with absolute Mean, Max and Min of the difference
+* plot with four panels showing the specified dataset, the reference dataset, and their difference including a text box with Mean, Max and Min of the difference
   as well as a histogram and the cumulative density function of the differences
-* plot of a cross- and a longprofile of the two datasets
+* plot of a cross- and along profile of the two datasets
 * list with full file paths of the generated plots
 
 Both plots are saved in *Outputs/out3Plot*.
 
 
+.. figure:: _static/Diff_avaAlr_pfd.png
+
+          Output plot from quickPlotBench on peak pressure results
 
 To run
 ------
+Call:
 
-* runQuickPlot.py
-
-In this run script, one can specify the result parameter and a second parameter, like e.g. 'Mu' or 'simType' to specify the datasets to be plotted.
+* quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, cfgPlot, suffix)
 
 
 quickPlotSimple
 =================
 
 This function creates two plots of any two raster datasets (with identical dimensions).
-The first plot has three panels, showing the first dataset, the second dataset and the absolute difference of the two datasets
-including a histogram and the cumulative density function of the differences
-The second plot shows a cross- and a longprofile of the two datasets.
+The first plot has four panels, showing the first dataset, the second dataset, the absolute difference of the two datasets and
+the absolute difference limited to 50% of the max difference. The difference plots
+include a histogram and the cumulative density function of the differences.
+The second plot shows a cross- and along profile of the two datasets.
 The function returns a list with the file paths of the generated plots.
 
 
@@ -62,11 +63,12 @@ Input
 
 * avalanche directory
 * input directory (where the two datasets are located)
+* plotFlag - True if plots shall be printed to screen
 
 Outputs
 -------
 
-* plot with three panels showing dataset 1, dataset 2, and their difference including a text box with absolute Mean, Max and Min of the difference
+* plot with four panels showing dataset 1, dataset 2, and their difference including a text box with absolute Mean, Max and Min of the difference
   and a histogram and the cumulative density function of the differences
 * plot of a cross- and a longprofile of the two datasets
 * list with full file paths of the generated plots
@@ -77,9 +79,42 @@ Both plots are saved in *Outputs/out3Plot*.
 To run
 ------
 
+* copy *avaframeCfg.ini* to *local_avaframeCfg.ini* and set your avalanche directory and showPlot flag
 * specifiy input directory, default is *Work/simplePlot*
 * runQuickPlotSimple.py
 
+
+quickPlotOne
+=================
+
+This function creates one plot of a single raster dataset.
+The first panel shows the dataset and the second panel shows a cross- or a longprofile of the dataset.
+The function returns a list with the file path of the generated plot.
+
+
+Input
+-----
+
+* avalanche directory
+* input directory (where the two datasets are located)
+* plotFlag - True if plots shall be printed to screen
+
+Outputs
+-------
+
+* plot two panels showing dataset 1 and a cross- or a longprofile of the dataset
+* list with full file path of the generated plot
+
+Both plots are saved in *inputDir/out3Plots*. If no inputDir is specified in the ini file,
+as default *avalancheDir/Work/simplePlot* is used.
+
+
+To run
+------
+
+* copy *avaframeCfg.ini* to *local_avaframeCfg.ini* and set your avalanche directory and showPlot flag
+* copy *outQuickPlotCfg.ini* to *local_outQuickPlotCfg.ini* and set desired settings - specifiy input directory, default is *Work/simplePlot*
+* runQuickPlotSimple.py
 
 
 in1DataPlots
@@ -95,10 +130,10 @@ statsPlots
 =================
 
 statsPlots can be used to create scatter plots using a peak dictionary where information on two result parameters of avalanche simulations is saved.
-This peak dictionary or a list of those can be created using the function ``extractMaxValues`` of ``ana4Stats/getStats.py``.
+This peak dictionary can be created using the function ``extractMaxValues`` of ``ana4Stats/getStats.py``.
 This can be used to visualize results of avalanche simulations where parameter variation has been used or for e.g. the case of
-multiple release area scenarios. If parameter variation was used to derive the simulation results, the plots indicate the parameter values in color.
-If the input data includes information about the 'scenario' that was used, the plots use different colors for each scenario.
+different release area scenarios. If parameter variation was used to derive the simulation results, the plots indicate the parameter values in color.
+If the input data includes information about the 'scenario' that was used, for example different release scenarios, the plots use different colors for each scenario.
 There is also the option to add a kde (kernel density estimation) plot for each result parameter as marginal plots.
 
 
@@ -108,7 +143,7 @@ Input
 plotValuesScatter
 ~~~~~~~~~~~~~~~~~~
 
-* list of peak info dictionaries (one or more)
+* peak info dictionary
 * result parameter type 1
 * result parameter type 2
 * parameter that has been varied to perform avalanche simulations
@@ -119,9 +154,10 @@ plotValuesScatter
 plotValuesScatterHist
 ~~~~~~~~~~~~~~~~~~~~~~
 
-* list of peak info dictionaries (one or more)
+* peak info dictionary
 * result parameter type 1
 * result parameter type 2
+* parameter that has been varied to perform avalanche simulations
 * configuration
 * path to avalanche directory
 * flagShow - if True show plots
@@ -148,4 +184,4 @@ To run
 
 runStatsExample includes an example run script to perform avalanche simulations for varying release thickness and for two different
 release area scenarios. The simulation results are visualized using the plotValuesScatter and plotValuesScatterHist and saved to
-``data/avaHockeySmoothChannel``. This script can be used as a template to design your own workflow.
+``data/avaHockeyChannel``. This script can be used as a template to design your own workflow.
