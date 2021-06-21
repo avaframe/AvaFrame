@@ -472,7 +472,8 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
         for key, value in parametersDict.items():
-            simDF = simDF[simDF[key].isin(value)]
+            if value != '' and value != []:
+                simDF = simDF[simDF[key].isin(value)]
 
     # list of simNames after filtering
     simNameList = simDF['simName'].tolist()
