@@ -481,12 +481,13 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     im3.set_clim(vmin=-elev_max, vmax=elev_max)
     L, S = np.meshgrid(l, s[indStartOfRunout:])
     colorsP = pU.cmapPres['colors'][1:5]
-    contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP)
-    contourComp = ax2.contour(L, S, compData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
+    if not (np.isnan(dataDiff)).all():
+        contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP)
+        labels = [str(level) + unit for level in thresholdArray[:-1]]
+        for j in range(len(contourRef.collections)):
+            contourRef.collections[j].set_label(labels[j])
+            contourComp = ax2.contour(L, S, compData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
 
-    labels = [str(level) + unit for level in thresholdArray[:-1]]
-    for j in range(len(contourRef.collections)):
-        contourRef.collections[j].set_label(labels[j])
 
     ax2.set_title(
         '%s difference and contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
@@ -496,7 +497,9 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         pU.putAvaNameOnPlot(ax2, namePrint)
     ax2.set_ylim([s[indStartOfRunout], yLim])
     ax2.legend(loc='lower right')
-    pU.addColorBar(im3, ax2, ticks, unit, title=name, extend='both')
+    if not (np.isnan(dataDiff)).all():
+        # add color bar only if there is something to plot (this avoids getting an error)
+        pU.addColorBar(im3, ax2, ticks, unit, title=name, extend='both')
 
     # only plot hist and CDF if there is a difference in the data
     if dataDiffPlot.size:
@@ -560,6 +563,9 @@ def resultWrite(cfgPath, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     FP = resAnalysis['FP']
     TN = resAnalysis['TN']
     areaSum = TP + FN
+    if np.where(areaSum == 0):
+        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
+        areaSum = np.ones(np.shape(TP))
 
     ############################################
     # prepare for writing
@@ -749,9 +755,12 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
 
     ############################################
     # Final result diagram - roc-plots
-
-    rTP = resAnalysis['TP'] / (resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef])
-    rFP = resAnalysis['FP'] / (resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef])
+    areaSum = resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef]
+    if areaSum == 0:
+        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
+        areaSum = 1
+    rTP = resAnalysis['TP'] / areaSum
+    rFP = resAnalysis['FP'] / areaSum
 
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     mk = 0
