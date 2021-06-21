@@ -333,12 +333,12 @@ def quickPlot(avaDir, testDir, suffix, val, parameter, cfg, cfgPlot, rel='', sim
     return plotList
 
 
-def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, cfgPlot, suffix):
+def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix):
     """ Plot simulation result and compare to reference solution
         (two raster datasets of identical dimension) and save to
         Outputs/out3Plot within avalanche directoy
 
-        figure 1: plot raster data for dataset1, dataset2 and their difference,
+        figure 1: plot raster data for dataset1, dataset2 and their difference, their difference limited to specified range,
                   including a histogram and the cumulative density function of the differences
         figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
         -plots are saved to Outputs/out3Plot
@@ -347,26 +347,19 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, cfgPlo
         ----------
         avaDir : str
             path to avalanche directory
-        suffix : str
-            result parameter abbreviation (e.g. 'ppr')
-        val : str
-            value of parameter
-        parameter : str
-            parameter that is used to filter simulation results
-            within folder, for example, symType, parameter variation, etc.
+        simNameRef: str
+            name of reference simulation
+        simNameComp: str
+            name of comparison simulation
         cfg : dict
             global configuration settings
-        cfgPlot : dict
-            configuration settings for plots, required for flag if plots shall be shown or only saved
-        rel : str
-            optional - name of release area scenarios
-        simType : str
-            optional - simulation type null or entres
+        suffix: str
+            result type
 
         Returns
         -------
-        plotList : list
-            list of plot dictionaries (path to plots, min, mean and max difference
+        plotList : dict
+            plot dictionaries (path to plots, min, mean and max difference
             between plotted datasets, max and mean value of reference dataset )
 
     """

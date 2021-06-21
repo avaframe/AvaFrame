@@ -136,7 +136,7 @@ for test in testList:
 
     # Plot data comparison for all output variables defined in suffix
     for var in outputVariable:
-        plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfgMain, cfgRep, var)
+        plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfgMain, var)
         for plot in plotDict['plots']:
             plotListRep.update({var: plot})
             reportD['Simulation Difference'].update({var: plotDict['difference']})
