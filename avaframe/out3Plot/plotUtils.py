@@ -236,7 +236,6 @@ def constrainPlotsToData(inputData, cellSize):
     return rowsMin, rowsMax, colsMin, colsMax
 
 
-
 def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither'):
     '''
     Adds, styles and labels a colorbar to the given image and axes

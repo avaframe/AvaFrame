@@ -829,9 +829,11 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
             FN[i, j] = fn
             FP[i, j] = fp
             TN[i, j] = tn
-
-            log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
-                *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
+            if tp + fp > 0:
+                log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
+                          *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
+            else:
+                log.warning('Simulation %s did not reach the run-out area' % i)
         # inputs for plot
         inputs['compData'] = rasterdata
         # masked data for the dataThreshold given in the ini file
