@@ -89,7 +89,7 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, fla
 
         Parameters
         -----------
-        peakDictList: dict
+        peakValues: dict
             peakValues dictionary that contain max values of peak parameters and parameter variation info
         resType1: str
             result parameter 1, 'ppr', 'pfd', 'pfv'
