@@ -249,7 +249,6 @@ def writeCfgFile(avaDir, module, cfg, fileName=''):
     # write to file
     if fileName != '':
         # set outputs
-        modName = 'com1DFA'
         outDir = os.path.join(avaDir, 'Outputs', modName, 'configurationFiles')
         fU.makeADir(outDir)
         cfg.optionxform = str

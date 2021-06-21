@@ -89,4 +89,4 @@ iPlot.plotEmpCDF(workingDir, CDF, ECDF, xSample, cfgGen, 'ECDF', flagShow)
 iPlot.plotEmpPDF(workingDir, PDF, sampleVect, cfgGen, flagShow)
 
 # write configuration to file
-cfgUtils.writeCfgFile(avalancheDir, cF, cfg, suffix=cfgGen['distType'])
+cfgUtils.writeCfgFile(avalancheDir, cF, cfg, fileName=cfgGen['distType'])
