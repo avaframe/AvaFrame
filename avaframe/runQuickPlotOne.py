@@ -28,7 +28,7 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # Set directory where input files is located
-if cfgPlot.getboolean('flagInput') == True:
+if cfgPlot['inputDir'] != '':
     inputDir = cfgPlot['inputDir']
 else:
     inputDir = os.path.join(avalancheDir, 'Work', 'simplePlot')
