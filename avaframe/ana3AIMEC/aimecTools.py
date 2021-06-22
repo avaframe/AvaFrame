@@ -165,7 +165,7 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     w = float(cfgSetup['domainWidth'])
     startOfRunoutAreaAngle = float(cfgSetup['startOfRunoutAreaAngle'])
 
-    log.info('Data-file %s analysed' % demSource)
+    log.debug('Data-file %s analysed and domain transformation done' % demSource)
     # read data
     # read dem data
     dem = IOf.readRaster(demSource)
@@ -190,7 +190,7 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     # reverse avaPath if necessary
     _, avaPath = geoTrans.checkProfile(avaPath, projSplitPoint=None)
 
-    log.info('Creating new raster along polyline: %s' % ProfileLayer)
+    log.debug('Creating new raster along polyline: %s' % ProfileLayer)
 
     # Get new Domain Boundaries DB
     # input: ava path
@@ -237,7 +237,7 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     rasterTransfo['xBetaPoint'] = rasterTransfo['x'][indStartOfRunout]
     rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
     rasterTransfo['startOfRunoutAreaAngle'] = angle[indStartOfRunout]
-    log.info('Measuring run-out length from the %.2f ° point of coordinates (%.2f, %.2f)' % (rasterTransfo['startOfRunoutAreaAngle'],rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
+    log.info('Start of run-out area at the %.2f ° point of coordinates (%.2f, %.2f)' % (rasterTransfo['startOfRunoutAreaAngle'],rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
 
     return rasterTransfo
 
@@ -504,7 +504,7 @@ def transform(fname, rasterTransfo, interpMethod):
     iib = len(Points['x'])
     Points, ioob = geoTrans.projectOnRaster(data, Points, interp=interpMethod)
     newData = Points['z'].reshape(n, m)
-    log.info('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
+    log.debug('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
              (name, iib-ioob, ioob))
 
     return newData
@@ -536,7 +536,7 @@ def assignData(fnames, rasterTransfo, interpMethod):
     maxtopo = len(fnames)
     avalData = np.array(([None] * maxtopo))
 
-    log.info('Transfer data of %d file(s) from old to new raster' % maxtopo)
+    log.debug('Transfer data of %d file(s) from old to new raster' % maxtopo)
     for i in range(maxtopo):
         fname = fnames[i]
         avalData[i] = transform(fname, rasterTransfo, interpMethod)
@@ -870,7 +870,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
                 log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
                           *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
             else:
-                log.warning('Simulation %s did not reach the run-out area' % i)
+                log.warning('Simulation %s did not reach the run-out area for threshold %.2f' % (i, dataLim))
         # inputs for plot
         inputs['compData'] = rasterdata
         # masked data for the dataThreshold given in the ini file

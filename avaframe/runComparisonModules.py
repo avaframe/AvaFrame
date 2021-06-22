@@ -26,7 +26,7 @@ logName = 'runComparisonModules'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testList = ['avaBowl']
+testList = ['avaAlr0']
 simType = 'null'
 simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
