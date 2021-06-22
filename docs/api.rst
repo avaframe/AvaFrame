@@ -38,4 +38,5 @@ Analysis/Output/Helper Modules
    ana4Stats.probAna
    ana4Stats.getStats
    out1Peak.outPlotAllPeak
+   out3Plot
    tmp1Ex.tmp1Ex

@@ -2,7 +2,7 @@
 out1Peak: Peak plots
 ##################################
 
-
+:py:mod:`out1Peak.outPlotAllPeak`
 
 Plot all peak fields
 ====================
@@ -15,8 +15,11 @@ Input
 -----
 
 * avalanche directory
+
 * configuration settings of com1DFA
+
 * cfgFlags
+
 * optional: name of module that has been used to produce data to be plotted
 
 where cfgFlags is a configparser object that contains the global flags, whether a plot shall be saved and/or printed to screen
