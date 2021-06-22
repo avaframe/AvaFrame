@@ -26,7 +26,7 @@ logName = 'runComparisonModules'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testList = ['avaFlatPlane']
+testList = ['avaBowl']
 simType = 'null'
 simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
@@ -111,7 +111,7 @@ for avaName in testList:
                     log.error('No reference simulation found based on releaseScenario: %s and simType: %s' % (rel, simType))
 
         simNameRef = reportDcom1DFAOrig['simName']['name']
-        refDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+        refDir = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'peakFiles')
         if reportDcom1DFAOrig:
             com1DFASimName = reportDcom1DFAOrig['simName']['name']
             # Fetch corresponding com1DFA
@@ -167,10 +167,7 @@ for avaName in testList:
 
             # Plot data comparison for all output variables defined in suffix
             for var in outputVariable:
-                plotList = outQuickPlot.quickPlot(avaDir, avaName, var, values, parameter, cfgMain, cfgRep, rel, simType=simType, comModule='com1DFAOrig', comModule2='com1DFA')
-                for pDict in plotList:
-                    if rel in pDict['relArea']:
-                        plotDict = pDict
+                plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfgMain, var)
                 for plot in plotDict['plots']:
                     plotListRep.update({var: plot})
                     reportDcom1DFA['Simulation Difference'].update({var: plotDict['difference']})
