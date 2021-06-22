@@ -425,7 +425,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     cmap.set_bad(alpha=0)
     data = newRasterMask-refRasterMask
     data = np.ma.masked_where(data == 0.0, data)
-    if newRasterMask[indStartOfRunout:, :].any() and refRasterMask[indStartOfRunout:, :].any():
+    if newRasterMask[indStartOfRunout:, :].any() or refRasterMask[indStartOfRunout:, :].any():
         ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
         ax2.set_ylim([s[indStartOfRunout], yLim])
@@ -470,7 +470,8 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
     if dataDiffPlot.size:
         # only add the second axis if the avalanche reached the run out area
-        indDiff = dataDiffPlot > 0
+        indDiff = np.abs(dataDiffPlot) > 0
+
         if indDiff.any():
             # only plot hist and CDF if there is a difference in the data
             ax2 = plt.subplot2grid((3,3), (0,1), rowspan=2, colspan=2)
@@ -480,7 +481,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         cmap = pU.cmapdiv
         cmap.set_bad(color='w')
         elev_max = inputs['diffLim']
-        ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
+        ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (compData), 'l [m]', 's [m]',
                              extent=[l.min(), l.max(), s[indStartOfRunout:].min(), yLim],
                              cmap=cmap)
         im3.set_clim(vmin=-elev_max, vmax=elev_max)
@@ -491,7 +492,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
             labels = [str(level) + unit for level in thresholdArray[:-1]]
             for j in range(len(contourRef.collections)):
                 contourRef.collections[j].set_label(labels[j])
-                contourComp = ax2.contour(L, S, compData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
+            contourComp = ax2.contour(L, S, compData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
         if cfgPath['compType'][0] == 'comModules':
             namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
             pU.putAvaNameOnPlot(ax2, namePrint)
