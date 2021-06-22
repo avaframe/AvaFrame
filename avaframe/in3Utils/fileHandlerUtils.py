@@ -184,20 +184,24 @@ def getFilterDict(cfg, section):
     """
 
     parametersDict = {}
-    for key, value in cfg.items(section):
-        if value == '':
-            parametersDict.pop(key, None)
-        elif ':' in value or '|' in value:
-            locValue = splitIniValueToArraySteps(value)
-            parametersDict[key] = locValue
-            log.info('Filter simulations that match %s: %s' % (key, locValue))
-        elif isinstance(value, str):
-            testValue = value.replace('.', '')
-            if testValue.isdigit():
-                parametersDict[key] = [float(value)]
-            else:
-                parametersDict[key] = [value]
-            log.info('Filter simulations that match %s: %s' % (key, value))
+    if cfg.has_section(section):
+        for key, value in cfg.items(section):
+            if value == '':
+                parametersDict.pop(key, None)
+            elif ':' in value or '|' in value:
+                locValue = splitIniValueToArraySteps(value)
+                parametersDict[key] = locValue
+                log.info('Filter simulations that match %s: %s' % (key, locValue))
+            elif isinstance(value, str):
+                testValue = value.replace('.', '')
+                if testValue.isdigit():
+                    parametersDict[key] = [float(value)]
+                else:
+                    parametersDict[key] = [value]
+                log.info('Filter simulations that match %s: %s' % (key, value))
+    else:
+        log.warning('No section %s in configuration file found - cannot create dict for filtering' % section)
+
 
     return parametersDict
 

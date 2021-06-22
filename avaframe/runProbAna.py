@@ -58,4 +58,4 @@ for avaDir in avalancheDirectories:
     # make a plot of the map
     inputDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
     outputDir = os.path.join(avaDir, 'Outputs', 'ana4Stats', 'plots')
-    oP.plotAllFields(avaDir, inputDir, outputDir, cfgProb)
+    oP.plotAllFields(avaDir, inputDir, outputDir, cfgProb['GENERAL']['unit'])
