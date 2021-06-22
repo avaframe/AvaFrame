@@ -12,7 +12,9 @@ The report is structured in blocks according to the types provided in the dictio
 Currently, the report generation supports the following types:
 
 * title - creates a title header
+* avaName - includes a line with the avalanche directory
 * simName - includes a line with Simulation name in the header
+* time - includes a line with the date
 * list - creates a table with two columns where the keys and values are listed and the dictionary name is set as title
 * columns - creates a table with two rows and one column for each key and value pair and the dictionary name is set as title
 * image - creates a block with the dictionary name as title and prints the key as heading with the prefix *Figure* and plots the image provided as value
@@ -21,9 +23,11 @@ Currently, the report generation supports the following types:
 
 Input
 -----
+* outDir - a path variable where to save the report
+* reportDictList - a list of reportDicts from the simulations
+* cfgFLAGS - main configuration including a flag reportOneFile
+* plotDict - including title and the absolute paths to the image you want to be included - optional
 
-As input, a path variable (outDirectory) and a python inputDictionary is required, optionally you can provide a plotDictionary,
-including title and the absolute paths to the image you want to be included.
 For the inputDictionary, a certain structure is required as illustrated for the following example:
 
 ::
@@ -53,7 +57,7 @@ set the flag *reportOneFile = False*. This report file is saved to the outDirect
 To run
 ------
 
-* call generateReport(outDirectory, inputDictionary, plotDict, reportOneFile=True) in the run script of your computational module
+* call generateReport(outDirectory, reportDictList, cfgFLAGS, plotDict=plotDict) in the run script of your computational module
 
 
 
@@ -67,7 +71,9 @@ The report is structured as follows:
   * simulation name
   * text block with info on test
   * table listing simulation parameter name, value (reference) and value (simulation)
-    -> if value of simulation run differs of reference value, it is highlighted in red
+    -> if value of simulation run differs from reference value, it is highlighted in red
+  * table listing aimec analysis measure, value (reference) and value (simulation)
+    -> if value of simulation run differs from reference value, it is highlighted in red
   * block with plots including a header with plot title
     -> if differences exceed threshold a Warning is printed for each plot
 
@@ -104,6 +110,7 @@ Input
 * simulation dictionary
 * benchmark dictionary
 * name of avalanche
+* configuration read from *genereateCompareReportCfg.ini*
 
 
 Output
@@ -115,11 +122,12 @@ Output
 To run
 -------
 
+* copy *genereateCompareReportCfg.ini* to *local_genereateCompareReportCfg.ini* and set desired values
+
 * call::
 
-  ``generateCompareReport(outputDir, simulationDictionary, benchmarkDictionary, avalancheName)``
+  ``generateCompareReport(outputDir, simulationDictionary, benchmarkDictionary, avalancheName, cfgRep)``
 
-An example of creating a comparison report can be found in ``runStandardTests.py``. There, the standard tests: *avaAlr*, *avaHit*, *avaGar*, *avaJot*, *avaMal*, *avaWog*,
-*avaBowl*, *avaFlatPlane*, *avaHelix*, *avaHelixChannel*, *avaHockey*, *avaParabola*,
-*avaHockeySmoothSmall*, are run sequentially and a report is created where the com1DFA simulation results
+An example of creating a comparison report can be found in ``runStandardTestsCom1DFA.py``. There, all the standard tests are run sequentially
+and a report is created where the com1DFA simulation results
 and the benchmark results are compared.
