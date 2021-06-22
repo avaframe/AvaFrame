@@ -61,7 +61,7 @@ pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
 
 startTime = time.time()
 
-log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
+log.info("Running ana3AIMEC model on test case DEM: \n %s \n with profile: \n %s ",
          pathDict['demSource'], pathDict['profileLayer'])
 # Run AIMEC postprocessing
 ana3AIMEC.mainAIMEC(pathDict, cfg)

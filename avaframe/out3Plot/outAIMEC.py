@@ -427,12 +427,17 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     cmap.set_bad(alpha=0)
     data = newRasterMask-refRasterMask
     data = np.ma.masked_where(data == 0.0, data)
-    ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
+    if newRasterMask.any() and refRasterMask.any():
+        ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
+        ax2.set_ylim([s[indStartOfRunout], yLim])
+    else:
+        ax2.text(.5,.5, 'No data in the run out area!', fontsize=18, color='red',
+        bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
     if cfgPath['compType'][0] == 'comModules':
         namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
-    ax2.set_ylim([s[indStartOfRunout], yLim])
+
     ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
 
     outFileName = '_'.join([projectName, 'thresholdValue', str(thresholdValue).replace('.', 'p'),  'sim', str(i), 'AreaComparisonToReference'])
@@ -440,7 +445,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
     ############################################
     # Figure: Raster comparison
-    fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))#, constrained_layout=True)
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))#, constrained_layout=True)
     ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
@@ -464,54 +469,55 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     dataDiff = compData - refData
     dataDiff = np.where((refData==0) & (compData==0), np.nan, dataDiff)
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
-    # only plot hist and CDF if there is a difference in the data
+
     if dataDiffPlot.size:
+        # only add the second axis if the avalanche reached the run out area
         indDiff = dataDiffPlot > 0
         if indDiff.any():
+            # only plot hist and CDF if there is a difference in the data
             ax2 = plt.subplot2grid((3,3), (0,1), rowspan=2, colspan=2)
         else:
             ax2 = plt.subplot2grid((3,3), (0,1), rowspan=3, colspan=3)
 
-    cmap = pU.cmapdiv
-    cmap.set_bad(color='w')
-    elev_max = inputs['diffLim']
-    ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
-                         extent=[l.min(), l.max(), s[indStartOfRunout:].min(), yLim],
-                         cmap=cmap)
-    im3.set_clim(vmin=-elev_max, vmax=elev_max)
-    L, S = np.meshgrid(l, s[indStartOfRunout:])
-    colorsP = pU.cmapPres['colors'][1:5]
-    if not (np.isnan(dataDiff)).all():
-        contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP)
-        labels = [str(level) + unit for level in thresholdArray[:-1]]
-        for j in range(len(contourRef.collections)):
-            contourRef.collections[j].set_label(labels[j])
-            contourComp = ax2.contour(L, S, compData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
+        cmap = pU.cmapdiv
+        cmap.set_bad(color='w')
+        elev_max = inputs['diffLim']
+        ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
+                             extent=[l.min(), l.max(), s[indStartOfRunout:].min(), yLim],
+                             cmap=cmap)
+        im3.set_clim(vmin=-elev_max, vmax=elev_max)
+        L, S = np.meshgrid(l, s[indStartOfRunout:])
+        colorsP = pU.cmapPres['colors'][1:5]
+        if not (np.isnan(dataDiff)).all():
+            contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP)
+            labels = [str(level) + unit for level in thresholdArray[:-1]]
+            for j in range(len(contourRef.collections)):
+                contourRef.collections[j].set_label(labels[j])
+                contourComp = ax2.contour(L, S, compData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
+        if cfgPath['compType'][0] == 'comModules':
+            namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
+            pU.putAvaNameOnPlot(ax2, namePrint)
 
-
-    ax2.set_title(
-        '%s difference and contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
-
-    if cfgPath['compType'][0] == 'comModules':
-        namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
-        pU.putAvaNameOnPlot(ax2, namePrint)
-    ax2.set_ylim([s[indStartOfRunout], yLim])
-    ax2.legend(loc='lower right')
-    if not (np.isnan(dataDiff)).all():
-        # add color bar only if there is something to plot (this avoids getting an error)
-        pU.addColorBar(im3, ax2, ticks, unit, title=name, extend='both')
-
-    # only plot hist and CDF if there is a difference in the data
-    if dataDiffPlot.size:
-        indDiff = dataDiffPlot > 0
         if indDiff.any():
+            # only plot hist and CDF if there is a difference in the data
             ax3 = plt.subplot2grid((3,3), (2, 1))
             ax4 = plt.subplot2grid((3,3), (2, 2))
             # there is data to compare in the run out area
             centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False',
                                                  title=['%s diff histogram' % name, '%s diff CDF (95%% and 99%% centiles)' % name])
-        else:
-            log.warning('No data in the run out area!')
+
+        ax2.set_ylim([s[indStartOfRunout], yLim])
+        ax2.legend(loc='lower right')
+        pU.addColorBar(im3, ax2, ticks, unit, title=name, extend='both')
+    else:
+        # if no avalanche reached the run out area print a warning on the second plot
+        ax2 = plt.subplot2grid((3,3), (0,1), rowspan=3, colspan=3)
+        log.warning('No data in the run out area!')
+        ax2.text(.5,.5, 'No data in the run out area!', fontsize=24, color='red',
+        bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
+
+    ax2.set_title(
+        '%s difference and contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(thresholdValue).replace('.', 'p'),  'sim', str(i), 'ContourComparisonToReference'])
@@ -532,6 +538,7 @@ def resultWrite(cfgPath, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     projectName = cfgPath['projectName']
     pathResult = cfgPath['pathResult']
     pathName = cfgPath['pathName']
+    nRef = cfgPath['referenceFile']
     demName = os.path.basename(cfgPath['demSource'])
     dataName = [os.path.basename(name) for name in cfgPath['ppr']]
     domainWidth = cfgSetup['domainWidth']
@@ -562,8 +569,8 @@ def resultWrite(cfgPath, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     FN = resAnalysis['FN']
     FP = resAnalysis['FP']
     TN = resAnalysis['TN']
-    areaSum = TP + FN
-    if np.where(areaSum == 0):
+    areaSum = TP[nRef] + FN[nRef]
+    if areaSum == 0:
         log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
         areaSum = np.ones(np.shape(TP))
 
