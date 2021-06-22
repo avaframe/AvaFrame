@@ -119,11 +119,16 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     return 'Cleaned directory'
 
 
-def initializeFolderStruct(pathAvaName):
-    ''' Initialize the standard folder structure
+def initializeFolderStruct(pathAvaName, removeExisting=False):
+    ''' Initialize the standard folder structure. If removeExisting is true,
+    deletes any existing folders! BEWARE!
 
-    str: pathAvaName : string with base avalanche path
+    pathAvaName: str
+        string with base avalanche path
 
+    removeExisting: boolean, optional
+        remove existing directory, use this to completely clean out the
+        directory
     '''
 
     avaName = os.path.basename(os.path.normpath(pathAvaName))
@@ -131,8 +136,13 @@ def initializeFolderStruct(pathAvaName):
     log.info("Running initialization sequence for avalanche %s", avaName)
 
     if os.path.exists(pathAvaName):
-        log.warning("Folder %s already exists. Continuing", avaName)
-        createFolderStruct(pathAvaName)
+        if removeExisting:
+            log.warning('Will delete %s !', pathAvaName)
+            # remove and remake
+            shutil.rmtree(pathAvaName)
+            os.makedirs(pathAvaName)
+        else:
+            log.warning("Folder %s already exists. Continuing", avaName)
 
     else:
         try:
@@ -141,7 +151,7 @@ def initializeFolderStruct(pathAvaName):
             print('I/O error({0}): {1}'.format(e.errno, e.strerror))
             return
 
-        createFolderStruct(pathAvaName)
+    createFolderStruct(pathAvaName)
 
     log.info("Done initializing avalanche %s", avaName)
 

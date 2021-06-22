@@ -36,7 +36,6 @@ def runOperational(avalancheDir=''):
     """
     # Time the whole routine
     startTime = time.time()
-    print('runOperational')
 
     # log file name; leave empty to use default runLog.log
     logName = 'runOperational'

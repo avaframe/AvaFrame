@@ -101,3 +101,8 @@ def test_initializeFolderStruct(tmp_path):
     assert os.path.exists(avaDir / 'Inputs')
     assert os.path.exists(avaDir / 'Inputs' / 'REL')
     assert os.path.exists(avaDir / 'Outputs')
+
+    initProj.initializeFolderStruct(avaDir, removeExisting=True)
+    assert os.path.exists(avaDir / 'Inputs')
+    assert os.path.exists(avaDir / 'Inputs' / 'REL')
+    assert os.path.exists(avaDir / 'Outputs')
