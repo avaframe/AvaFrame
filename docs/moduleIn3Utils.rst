@@ -9,12 +9,7 @@ The ``geoTrans.py`` module gathers useful functions to operate transformations,
 comparison or interpolation on raster, lines, points...
 Further information available here:
 
-.. autosummary::
-   :toctree: _autosummary
-   :template: custom-module-template.rst
-   :recursive:
-
-   in3Utils.geoTrans
+:py:mod:`in3Utils.geoTrans`
 
 
 
