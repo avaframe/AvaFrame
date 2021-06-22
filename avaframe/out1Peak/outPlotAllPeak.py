@@ -124,7 +124,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
     return plotDict
 
 
-def plotAllFields(avaDir, inputDir, outDir, cfg):
+def plotAllFields(avaDir, inputDir, outDir, unit=''):
     """ Plot all fields within given directory and save to outDir
 
         Parameters
@@ -135,8 +135,8 @@ def plotAllFields(avaDir, inputDir, outDir, cfg):
             path to input directoy
         outDir : str
             path to directoy where plots shall be saved to
-        cfg : dict
-            configuration settings
+        unit: str
+            unit of result type
 
         """
 
@@ -164,8 +164,8 @@ def plotAllFields(avaDir, inputDir, outDir, cfg):
         nx = data.shape[1]
         Ly = ny*cellSize
         Lx = nx*cellSize
-        unit = pU.cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
-
+        unit = unit
+        
         # Figure  shows the result parameter data
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         fig, ax = plt.subplots()

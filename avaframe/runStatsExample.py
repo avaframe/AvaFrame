@@ -36,14 +36,14 @@ cfgMain = cfgUtils.getGeneralConfig()
 flagShow = cfgMain['FLAGS'].getboolean('showPlot')
 
 avaDir = 'data/avaHockeyChannel'
-cfgFull = cfgUtils.getModuleConfig(getStats)
-cfg = cfgFull['GENERAL']
+cfgStats = cfgUtils.getModuleConfig(getStats)
+cfg = cfgStats['GENERAL']
 # Clean input directory(ies) of old work and output files
 initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
 # set output directory, first ava in list
 outDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
-cfg['outDir'] = outDir
+cfgStats['GENERAL']['outDir'] = outDir
 # Specify where you want the results to be stored
 fU.makeADir(outDir)
 
@@ -79,9 +79,6 @@ inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
 # get max values of peak files
 cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=statsSimCfg)
 
-# Load input parameters from configuration file
-cfgStats = cfgUtils.getModuleConfig(getStats)
-
 # provide optional filter criteria for simulations
 parametersDict = fU.getFilterDict(cfgStats, 'FILTER')
 
@@ -93,7 +90,7 @@ for key in peakValues:
     print('peakValues:', key, peakValues[key])
 
 #++++++++++++++ Plot max values +++++++++++++++++
-sPlot.plotValuesScatter(peakValues, 'pfd', 'pfv', cfgStats['GENERAL']['varPar'], cfg, avaDir, flagShow)
-sPlot.plotValuesScatterHist(peakValues, 'pfd', 'pfv', cfgStats['GENERAL']['varPar'], cfg, avaDir, flagShow, flagHue=True)
+sPlot.plotValuesScatter(peakValues, 'pfd', 'pfv', cfgStats['GENERAL'], avaDir, flagShow)
+sPlot.plotValuesScatterHist(peakValues, 'pfd', 'pfv', cfgStats['GENERAL'], avaDir, flagShow, flagHue=True)
 
 log.info('Plots have been saved to: %s' % outDir)

@@ -17,7 +17,7 @@ import pandas as pd
 log = logging.getLogger(__name__)
 
 
-def plotValuesScatter(peakValues, resType1, resType2, varPar, cfg, avalancheDir, flagShow=False):
+def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, flagShow=False):
     """ Produce scatter plot of max values (resType1 und resType2), for one set of simulations or multiple
 
         Parameters
@@ -28,14 +28,13 @@ def plotValuesScatter(peakValues, resType1, resType2, varPar, cfg, avalancheDir,
             result parameter 1, 'ppr', 'pfd', 'pfv'
         resType2: str
             result parameter 1, 'ppr', 'pfd', 'pfv'
-        varPar: str
-            parameter that is varied to perfom a set of simulations
         cfg: dict
-            configuration, for now contains output location
+            configuration, for now contains output location and varPar: parameter that is varied to perfom a set of simulations
         flagShow: bool
             if True show plot
         """
 
+    varPar = cfg['varPar']
     # extract values from dictionaries
     varVal = []
     values1 = []
@@ -52,8 +51,8 @@ def plotValuesScatter(peakValues, resType1, resType2, varPar, cfg, avalancheDir,
     name2 = pU.cfgPlotUtils['name%s' % resType2]
     unit1 = pU.cfgPlotUtils['unit%s' % resType1]
     unit2 = pU.cfgPlotUtils['unit%s' % resType2]
-    nameVar = pU.cfgPlotUtils['name%s' % varPar.lower()]
-    unitVar = pU.cfgPlotUtils['unit%s' % varPar.lower()]
+    nameVar = cfg['varParName']
+    unitVar = cfg['varParUnit']
     varValV = np.array(varVal)
 
     # load variation colormap
@@ -80,7 +79,7 @@ def plotValuesScatter(peakValues, resType1, resType2, varPar, cfg, avalancheDir,
     plt.close('all')
 
 
-def plotValuesScatterHist(peakValues, resType1, resType2, varPar, cfg, avalancheDir, flagShow=False, flagHue=False):
+def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, flagShow=False, flagHue=False):
     """ Produce scatter and marginal kde plot of max values, for one set of simulations or multiple
 
         Parameters
@@ -91,15 +90,14 @@ def plotValuesScatterHist(peakValues, resType1, resType2, varPar, cfg, avalanche
             result parameter 1, 'ppr', 'pfd', 'pfv'
         resType2: str
             result parameter 1, 'ppr', 'pfd', 'pfv'
-        varPar: str
-            parameter that is varied to perfom a set of simulations
         cfg: dict
-            configuration, for now contains output location
+            configuration, for now contains output location and varPar: parameter that is varied to perfom a set of simulations
         flagShow: bool
             if True show plot
 
     """
 
+    varPar = cfg['varPar']
     # extract values from dictionaries
     varVal = []
     values1 = []
@@ -120,8 +118,8 @@ def plotValuesScatterHist(peakValues, resType1, resType2, varPar, cfg, avalanche
     name2 = pU.cfgPlotUtils['name%s' % resType2]
     unit1 = pU.cfgPlotUtils['unit%s' % resType1]
     unit2 = pU.cfgPlotUtils['unit%s' % resType2]
-    nameVar = pU.cfgPlotUtils['name%s' % varPar.lower()]
-    unitVar = pU.cfgPlotUtils['unit%s' % varPar.lower()]
+    nameVar = cfg['varParName']
+    unitVar = cfg['varParUnit']
     varValV = np.array(varVal)
     title1 = name1+' [' + unit1 + ']'
     title2 = name2+' [' + unit2 + ']'
