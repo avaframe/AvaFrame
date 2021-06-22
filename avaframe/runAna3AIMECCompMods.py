@@ -40,7 +40,7 @@ cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
 cfgSetup = cfg['AIMECSETUP']
 
-compList = [['relKot', 'null'], ['relKot', 'ent']]
+compList = [['relAlr', 'null']]#, ['relKot', 'ent']]
 
 for comp in compList:
 

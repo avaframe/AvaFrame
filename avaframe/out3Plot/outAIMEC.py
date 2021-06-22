@@ -427,7 +427,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     cmap.set_bad(alpha=0)
     data = newRasterMask-refRasterMask
     data = np.ma.masked_where(data == 0.0, data)
-    if newRasterMask.any() and refRasterMask.any():
+    if newRasterMask[indStartOfRunout:, :].any() and refRasterMask[indStartOfRunout:, :].any():
         ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
         ax2.set_ylim([s[indStartOfRunout], yLim])
@@ -445,7 +445,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
     ############################################
     # Figure: Raster comparison
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))#, constrained_layout=True)
+    fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))#, constrained_layout=True)
     ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
     # get color map
     cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
