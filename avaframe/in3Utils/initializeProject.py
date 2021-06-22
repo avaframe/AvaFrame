@@ -123,10 +123,12 @@ def initializeFolderStruct(pathAvaName, removeExisting=False):
     ''' Initialize the standard folder structure. If removeExisting is true,
     deletes any existing folders! BEWARE!
 
+    Parameters
+    ----------
     pathAvaName: str
         string with base avalanche path
 
-    removeExisting: boolean, optional
+    removeExisting: boolean, optional, default: False
         remove existing directory, use this to completely clean out the
         directory
     '''
