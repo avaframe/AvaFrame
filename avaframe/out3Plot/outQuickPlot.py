@@ -213,7 +213,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
         plotDict['differenceZoom'].append(diffMeanZoom)
         plotDict['differenceZoom'].append(diffMinZoom)
 
-    plt.close('all')
+    plt.close(fig)
 
     return plotDict
 
@@ -467,6 +467,6 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
 
     plotDict['plots'].append(os.path.join(outDir, 'Profiles_%s.%s' % (name1, pU.outputFormat)))
 
-    plt.close('all')
+    plt.close(fig)
 
     return plotDict

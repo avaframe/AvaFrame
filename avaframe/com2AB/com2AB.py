@@ -310,7 +310,7 @@ def calcAB(AvaProfile, eqParameters, dsMin):
         plt.axvline(x=s[ids10Point], color='0.8',
                     linewidth=1, linestyle='-.')
         plt.show()
-        plt.close('all')
+        plt.close()
 
     # Do a quadtratic fit and get the polynom for 2nd derivative later
     zQuad = np.polyfit(s, z, 2)

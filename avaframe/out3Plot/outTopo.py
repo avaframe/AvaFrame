@@ -91,7 +91,7 @@ def plotDEM3D(cfg, showPlot = False):
     if showPlot:
         plt.show()
 
-    plt.close('all')
+    plt.close()
 
 
 def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
@@ -125,7 +125,7 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
     if cfgMain['FLAGS'].getboolean('showPlot'):
         plt.show()
 
-    plt.close('all')
+    plt.close()
 
 
 def plotReleasePoints(xv, yv, xyPoints, demType):

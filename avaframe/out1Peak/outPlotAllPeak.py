@@ -119,7 +119,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
             plt.show()
         plotPath = os.path.join(os.getcwd(), plotName)
         plotDict[peakFilesDF['simName'][m]].update({peakFilesDF['resType'][m]: plotPath})
-        plt.close('all')
+        plt.close(fig)
 
     return plotDict
 
@@ -184,4 +184,4 @@ def plotAllFields(avaDir, inputDir, outDir, unit=''):
         pU.putAvaNameOnPlot(ax, avaDir)
 
         fig.savefig(plotName)
-        plt.close('all')
+        plt.close(fig)

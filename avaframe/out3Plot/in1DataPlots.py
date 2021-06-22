@@ -33,7 +33,7 @@ def plotDist(workingDir, CDF, a, b, c, cfg, flagShow):
 
     # save fig
     fig.savefig(os.path.join(workingDir, 'CDF_%s_%s.png' % (cfg['name'], cfg['distType'])))
-    plt.close('all')
+    plt.close(fig)
 
 
 def plotSample(workingDir, sample, cfg, flagShow):
@@ -50,7 +50,7 @@ def plotSample(workingDir, sample, cfg, flagShow):
 
     # save fig
     fig.savefig(os.path.join(workingDir, 'samples_%s_%s.png' % (cfg['name'], cfg['distType'])))
-    plt.close('all')
+    plt.close(fig)
 
 
 def plotSamplePDF(workingDir, sampleVect, kdeDict, PDF, cfg, flagShow):
@@ -70,7 +70,7 @@ def plotSamplePDF(workingDir, sampleVect, kdeDict, PDF, cfg, flagShow):
 
     # save fig
     fig.savefig(os.path.join(workingDir, 'PDFcompare_%s_%s.png' % (cfg['name'], cfg['distType'])))
-    plt.close('all')
+    plt.close(fig)
 
 
 def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow):
@@ -89,7 +89,7 @@ def plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfg, methodAbbr, flagShow):
 
     # save fig
     fig.savefig(os.path.join(workingDir, 'CDFcompare%s_%s_%s.png' % (methodAbbr, cfg['name'], cfg['distType'])))
-    plt.close('all')
+    plt.close(fig)
 
 
 def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow):
@@ -109,7 +109,7 @@ def plotEmpPDF(workingDir, PDF, sampleVect, cfg, flagShow):
 
     # save fig
     fig.savefig(os.path.join(workingDir, 'PDFcompare_%s_%s.png' % (cfg['name'], cfg['distType'])))
-    plt.close('all')
+    plt.close(fig)
 
 
 def plotECDF(workingDir, CDF, sample, cfg, methodAbbr, flagShow):
@@ -130,4 +130,4 @@ def plotECDF(workingDir, CDF, sample, cfg, methodAbbr, flagShow):
 
     # save fig
     fig.savefig(os.path.join(workingDir, 'CDFcompare%s_%s_%s.png' % (methodAbbr, cfg['name'], cfg['distType'])))
-    plt.close('all')
+    plt.close(fig)
