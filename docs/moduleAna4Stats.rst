@@ -6,16 +6,17 @@ ana4Stats: Statistical analysis tools
 probAna
 ==========================
 
-probAna is used to derive simple probability maps for the point-wise probability of
-an avalanche result parameter exceeding a threshold for a given set of
-avalanche simulations. For example, a probability map of an avalanche exceeding a
-peak pressure of 1kPa can be created.
+probAna is used to derive simple probability maps for a set of simulations from a same avalanche. 
+These maps show for each point in space the probabilty for a chosen parameter to exceed a given threshold. 
+For example, it is possible to compute the probability map of an avalanche to exceed a
+peak pressure of 1kPa.
 
-A set of multiple avalanche simulations is required to generate these maps. This can be generated with com1DFA
-using parameter variation, different release-, entrainment- or resistance scenarios.
-See runProbAna.py for an example: avalanche simulations for the hockey topography
-are performed with varying release thickness and a probability map is generated
-ranging from 0-1, which corresponds to a probability of 0-100 %.
+A set of multiple avalanche simulations is required to generate these maps. The simulations can be generated with com1DFA
+using a parameter variation, different release-, entrainment- or resistance scenarios.
+``runProbAna.py`` gives a example: avalanche simulations for the hockey topography
+are performed with varying release thickness. A probability map based on peak pressure is generated.
+The output is a raster file (.asc) with values ranging from 0-1. 0 meaning that no simulation exceeded the threshold
+in this point in space. 1 on the contrary means that all simulations exceeded the threshold.
 
 
 Inputs
@@ -36,7 +37,7 @@ To run
 -------
 An example on how to generate probability maps for avalanche simulations performed with com1DFA
 is given in ``runProbAna.py``, where for avaHockeyChannel simulations are performed
-varying release thickness values ranging from 0.75 to 1.75 meters in steps of 0.5 meters.
+varying release thickness values ranging from 0.75 to 1.75 meters in steps of 0.05 meters.
 The resulting simulations are then used to generate the probability map. There is also the option
 to filter the simulations further - using the function ``getFilterDict`` which generates a
 parameter dictionary for filtering according to the filter criteria set in the
@@ -104,7 +105,7 @@ To run
 
 An example on how to use these statistical functions is given in ``runStatsExample.py``, where
 for avaHockeyChannel simulations are performed for two different release area scenarios and
-the release thickness is varied from 0.75 to 1.75 meters in steps of 0.5 meters. The resulting
+the release thickness is varied from 0.75 to 1.75 meters in steps of 0.05 meters. The resulting
 simulations are then analysed using the extractMaxValues function and plots are generated using the
 plotting routines from ``statsPlots.py``.
 
