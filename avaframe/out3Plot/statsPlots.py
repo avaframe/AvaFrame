@@ -75,7 +75,7 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, flagSho
     # save fig
     outDir = cfg['outDir']
     fig.savefig(os.path.join(outDir, 'Scatter_%s_vs_%s_dist%s_%s.png' % (resType1, resType2, cfg['distType'], cfg['scenario'])))
-    plt.close('all')
+    plt.close(fig)
 
 
 def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, flagShow=False, flagHue=False):
@@ -144,7 +144,7 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, fla
     if flagShow:
         plt.show()
 
-    plt.close('all')
+    plt.close()
 
 
 def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
