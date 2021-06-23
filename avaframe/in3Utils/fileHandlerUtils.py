@@ -333,7 +333,7 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
             dictionary with paths to simulation results
         cfg: configParser object
             configuration for aimec, here varPar and ascendingOrder used
-        suffix : str
+        suffix : str or list
             result parameter abbreviation (e.g. 'ppr')
         comModule : str
             optional - name of computational module (default is com1DFA)
@@ -347,22 +347,40 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
         if os.path.isdir(inputDir) == False:
             log.error('Input directory does not exist - check anaMod')
 
+    if isinstance(suffix, str):
+        suffix = [suffix]
+
     # fetch parameters that shall be used for ordering
     varParList = cfg['varParList'].split('|')
-    # create dataFrame with ordered paths to simulation results
-    dataDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfg['ascendingOrder'])
+    if comModule == 'com1DFA' and cfg['varParList'] != '':
 
-    # get paths for desired resType
-    dataFiles = dataDF[dataDF['resType']==suffix]['files'].to_list()
+        # fetch parameters that shall be used for ordering
+        varParList = cfg['varParList'].split('|')
 
-    # add result file paths to pathDict
-    pathDict[suffix] = dataFiles
+        # create dataFrame with ordered paths to simulation results
+        dataDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfg['ascendingOrder'])
 
-    # add value of first parameter used for ordering for colorcoding in plots
-    pathDict['colorParameter'] = dataDF[dataDF['resType']==suffix][varParList[0]].to_list()
-    
-    for pathVal in dataFiles:
-        log.info('Added to pathDict: %s' % (pathVal))
+        for suf in suffix:
+            # get paths for desired resType
+            dataFiles = dataDF[dataDF['resType']==suf]['files'].to_list()
+
+            # add result file paths to pathDict
+            pathDict[suf] = dataFiles
+
+            for pathVal in dataFiles:
+                log.info('Added to pathDict: %s' % (pathVal))
+
+        # add value of first parameter used for ordering for colorcoding in plots
+        pathDict['colorParameter'] = dataDF[dataDF['resType']==suf][varParList[0]].to_list()
+
+    else:
+        log.warning('Did not apply filtering')
+        data, _ = makeSimDict(inputDir)
+        for m in range(len(data['files'])):
+            for suf in suffix:
+                if data['resType'][m] == suf:
+                    pathDict[suf].append(data['files'][m])
+                    log.info('Added to pathDict: %s' % (data['files'][m]))
 
     return pathDict
 
@@ -507,9 +525,11 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
         Returns
         -------
         data : dict
-            dictionary with full file path, file name, release area scenario, simulation type (null/entres),
+            dictionary with full file path, file name, release area scenario, simulation type (null, entres, etc.),
             model type (dfa, ref, etc.), parameter variation, result type (ppr, pfd, etc.), simulation name,
             cell size and optional name of avalanche
+        dataDF: pandas DataFrame
+            dataFrame created from data
     """
 
     # Load input datasets from input directory

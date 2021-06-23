@@ -81,6 +81,34 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
 
     return cfgPath
 
+def fetchReferenceSimNo(pathDict, cfgSetup):
+    """ Define reference simulation used for aimec analysis from configuration file,
+        if no ordering is performed - set simulation 0 as reference simulation
+
+        Parameters
+        -----------
+        pathDict: dict
+            dictionary wiht paths to result files for given result types (ppr, pfd, ..)
+            optional key colorParameter - gives ordering of simulations
+        cfgSetup: configParser object
+            configuration for aimec - referenceSimValue, varParList used here
+
+        Returns
+        --------
+        pathDict: dict
+            updated pathDict with key: referenceFile to define reference simulation for aimec
+    """
+
+    if 'colorParameter' in pathDict and cfgSetup['referenceSimValue'] != '':
+        typeCP = type(pathDict['colorParameter'][0])
+        pathDict['referenceFile'] = pathDict['colorParameter'].index(typeCP(cfgSetup['referenceSimValue']))
+        log.info('Reference Simulation is based on %s = %s' % (cfgSetup['varParList'].split('|')[0], cfgSetup['referenceSimValue']))
+    else:
+        pathDict['referenceFile'] = 0
+        log.info('Reference Simulation is based on first simulation in folder')
+
+    return pathDict
+
 
 def makeDomainTransfo(cfgPath, cfgSetup):
     """ Make domain transformation

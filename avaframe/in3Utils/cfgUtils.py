@@ -516,10 +516,10 @@ def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''
     columnNames = ['simName'] + varParList
 
     # merge varParList parameters as columns to dataDF for matching simNames
-    dataDFNEW = dataDF.merge(simDF[columnNames], left_on='simName',
+    dataDFNew = dataDF.merge(simDF[columnNames], left_on='simName',
                              right_on='simName')
 
     # sort according to varParList and ascendingOrder flag
-    dataDFNEW = dataDFNEW.sort_values(by=varParList, ascending=ascendingOrder)
+    dataDFNew = dataDFNew.sort_values(by=varParList, ascending=ascendingOrder)
 
-    return dataDFNEW
+    return dataDFNew

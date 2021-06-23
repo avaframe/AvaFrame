@@ -313,15 +313,30 @@ def getCompDirs(avaDir, cfgSetup, pathDict):
 
 
 def mainDfa2Aimec(avaDir, comModule, cfg):
-    """ Exports the required data from com1DFA to be used by Aimec """
+    """ Exports the required data from com1DFA to be used by Aimec
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        comModule: str
+            computational module name that has been used to produce simulation results
+        cfg: configParser object
+            configuration for aimec
+
+        Returns
+        --------
+        pathDict: dict
+            dictionary with path to simulation results for result types - keys: ppr, pfd, pfv
+            and if configuration for ordering is provided, key: colorParameter with values for color coding results
+    """
 
     # path dictionary for Aimec
     pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
 
     # Setup input from com1DFA and save file paths to dictionary
     suffix = ['pfd', 'ppr', 'pfv']
-    for suf in suffix:
-        pathDict = fU.getDFADataPaths(avaDir, pathDict, cfg, suf, comModule)
+    pathDict = fU.getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule)
 
     # Extract mb info
     if comModule == 'com1DFAOrig':
@@ -340,7 +355,27 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
 
 
 def indiDfa2Aimec(avaDir, suffix, comModule, cfg, inputDir=''):
-    """ Exports the required data from com1DFA to be used by Aimec """
+    """ Exports the required data from com1DFA to be used by Aimec for only one results parameter
+        and with an option to specify the input directory
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        comModule: str
+            computational module name that has been used to produce simulation results
+        cfg: configParser object
+            configuration for aimec
+        inputDir: str
+            optional - path to an input directory where simulation results can be found
+
+        Returns
+        --------
+        pathDict: dict
+            dictionary with path to simulation results for result types - keys: suffix
+            and if configuration for ordering is provided, key: colorParameter with values for color coding results
+
+     """
 
     # path dictionary for Aimec
     pathDict = {suffix: []}
