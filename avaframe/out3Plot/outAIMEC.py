@@ -412,7 +412,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
                   '\n' + '%s threshold: %.1f %s' % (name, thresholdValue, unit))
     pU.addColorBar(im, ax1, ticks, unit)
 
-    yLim = s[max(np.max(np.nonzero(np.any(refData != 0, axis=1))[0]), np.max(np.nonzero(np.any(compData != 0, axis=1))[0]))]
+    yLim = s[max(np.max(np.nonzero(np.any(refData > 0, axis=1))[0]), np.max(np.nonzero(np.any(compData > 0, axis=1))[0]))]
     ax1.set_ylim([0, yLim])
     ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
@@ -469,7 +469,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
 
     if dataDiffPlot.size:
-        # only add the second axis if the avalanche reached the run out area
+        # only add the second axis if the two avalanche reached the run out area
         indDiff = np.abs(dataDiffPlot) > 0
 
         if indDiff.any():
@@ -481,18 +481,30 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         cmap = pU.cmapdiv
         cmap.set_bad(color='w')
         elev_max = inputs['diffLim']
-        ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (compData), 'l [m]', 's [m]',
+        ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
                              extent=[l.min(), l.max(), s[indStartOfRunout:].min(), yLim],
                              cmap=cmap)
         im3.set_clim(vmin=-elev_max, vmax=elev_max)
+
+        # print contour lines only if the thre threshold is reached
         L, S = np.meshgrid(l, s[indStartOfRunout:])
         colorsP = pU.cmapPres['colors'][1:5]
-        if not (np.isnan(dataDiff)).all():
+        if (np.where(refData > 0, True, False)).any():
             contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP)
             labels = [str(level) + unit for level in thresholdArray[:-1]]
             for j in range(len(contourRef.collections)):
                 contourRef.collections[j].set_label(labels[j])
+        else:
+            log.warning('Reference did not reach the run out area!')
+            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference did not reach the run out area!', fontsize=24, color='red',
+            bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
+        if (np.where(compData > 0, True, False)).any():
             contourComp = ax2.contour(L, S, compData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
+        else:
+            log.warning('Simulation did not reach the run out area!')
+            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Simulation did not reach the run out area!', fontsize=24, color='red',
+            bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
+
         if cfgPath['compType'][0] == 'comModules':
             namePrint = 'refMod:' + cfgPath['compType'][1] +'_' + 'compMod:' +cfgPath['compType'][2]
             pU.putAvaNameOnPlot(ax2, namePrint)

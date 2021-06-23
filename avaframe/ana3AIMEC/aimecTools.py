@@ -15,6 +15,7 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.outAIMEC as outAimec
+import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -798,10 +799,10 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
 
     # initialize Arrays
     nTopo = len(data)
-    TP = np.empty((nTopo, 1))
-    FN = np.empty((nTopo, 1))
-    FP = np.empty((nTopo, 1))
-    TN = np.empty((nTopo, 1))
+    TP = np.empty((nTopo))
+    FN = np.empty((nTopo))
+    FP = np.empty((nTopo))
+    TN = np.empty((nTopo))
 
     # rasterinfo
     nStart = indStartOfRunout
@@ -868,7 +869,8 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
             log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
                       *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
         else:
-            log.warning('Simulation %s did not reach the run-out area for threshold %.2f' % (i, thresholdValue))
+            log.warning('Simulation %s did not reach the run-out area for threshold %.2f %s' %
+                        (i, thresholdValue, pU.cfgPlotUtils['unit' + cfgSetup['resType']]))
         # inputs for plot
         inputs['compData'] = rasterdata
         # masked data for the dataThreshold given in the ini file
