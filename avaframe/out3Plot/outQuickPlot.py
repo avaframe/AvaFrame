@@ -1,9 +1,6 @@
 """
-
-This function creates a quick plot of datasets and option for comparison
-between two datasets of identical shape. Also plots cross and longprofiles.
-
-This file is part of Avaframe.
+Functions to plot 2D avalanche simulation results as well as comparison plots
+between two datasets of identical shape.
 
 """
 
@@ -28,18 +25,36 @@ log = logging.getLogger(__name__)
 
 
 def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
-    """ Create plots of two ascii datasets that shall be compared
+    """ Create comparison plots of two ascii datasets
+
+        This function creates two plots, one plot with four panels with, first dataset, second dataset, the absolute difference of the two datasets
+        and the absolute difference capped to a smaller range of differences (ppr: +- 100kPa, pfd: +-1m, pfv:+- 10ms-1).
+        The difference plots also include an insert showing the histogram and the cumulative density function of the differences.
+        The second plot shows a cross- and along profile cut of the two datasets.
+        The folder and simulation name of the datasets has to be passed to the function.
 
         Parameters
         ----------
         dataDict : dict
-            dictionary with info on both datasets to be plotted
+            dictionary with info on both datasets to be plotted:
+                name1: str
+                    string with the name of the first data set
+                name2: str
+                    string with the name of the second data set
+                data1: 2D numpy arrays
+                    raster of the first data sets
+                data2: 2D numpy arrays
+                    raster of the first second sets
+                cellSize: float
+                    cell size
+                suffix: str
+                    optional information about the data type compared ('ppr', 'pfd', 'pfv')
         avaName : str
             name of avalanche
         outDir : str
             path to dictionary where plots shall be saved to
-        cfg : dict
-            main configuration settings
+        cfg : configParser
+            cfg['FLAGS'].getboolean('showPlot')
         plotDict : dict
             dictionary with information about plots, for example release area
 
