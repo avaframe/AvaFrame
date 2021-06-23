@@ -174,6 +174,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
     """
     ####################################
     # Get input data
+    percentile = cfgSetup.getfloat('percentile')
     resType = cfgSetup['resType']
     thresholdValue = cfgSetup['thresholdValue']
     unit = pU.cfgPlotUtils['unit' + resType]
@@ -194,7 +195,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
     # prepare for plot
     pMean = np.mean(PPRCrossMax, axis=0)
     pMedian = np.median(PPRCrossMax, axis=0)
-    pPercentile = np.percentile(PPRCrossMax, [2.5, 50, 97.5], axis=0)
+    pPercentile = np.percentile(PPRCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
 
@@ -225,7 +226,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
     ax2 = plt.subplot(122)
 
     ax2.fill_betweenx(s, pPercentile[2], pPercentile[0],
-                      facecolor=[.8, .8, .8], alpha=0.5, label='quantiles')
+                      facecolor=[.8, .8, .8], alpha=0.5, label=('[%.2f, %.2f]%% interval' % (percentile/2, 100-percentile/2)))
     matplotlib.patches.Patch(alpha=0.5, color=[.8, .8, .8])
     ax2.plot(pMedian, s, color='r', label='median')
     ax2.plot(pMean, s, color='b', label='mean')
