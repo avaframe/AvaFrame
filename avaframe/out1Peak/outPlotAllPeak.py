@@ -164,7 +164,6 @@ def plotAllFields(avaDir, inputDir, outDir, unit=''):
         nx = data.shape[1]
         Ly = ny*cellSize
         Lx = nx*cellSize
-        unit = unit
         
         # Figure  shows the result parameter data
         fig = plt.figure(figsize=(pU.figW, pU.figH))
