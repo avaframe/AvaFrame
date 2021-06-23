@@ -191,11 +191,9 @@ transformation information by :py:func:`ana3AIMEC.aimecTools.assignData`. The pr
 
 This results in the following plot:
 
-.. _fig-aimec-comp-real:
+.. figure:: _static/avaAlr0_DomainTransformation.png
 
-    .. figure:: _static/avaAlr0_DomainTransformation.png
-
-        Alr avalanche coordinate transformation and peak pressure field reprojetion.
+      Alr avalanche coordinate transformation and peak pressure field reprojetion.
 
 .. _analyze-results:
 
@@ -231,12 +229,37 @@ By default, Aimec saves five plots plus as many plots as numerical simulations t
 compare to the reference. The first five ones are :
 
   * "domTransfo" shows the real domain on the left and new domain on the right
-  * "referenceFields" shows the peak pressure, flow depth and speed in the new domain
-  * "slComparisom" shows the difference the statistics in terms of the peak pressure along the avalanche of all the simulations
-  * "ROC" shows the normalized area difference between reference and other simulations.
-  * "rmmp" shows the relative difference in maximum peak pressure between reference and other simulation function of run-out length
 
-The last plots "_i_compToRef" where "i" gives the number of the simulation plots the 2D difference with the reference.
+  * "referenceFields" shows the peak pressure, flow depth and speed in the new domain
+
+    .. figure:: _static/avaAlr0_plim_1p0_referenceFields.png
+
+
+  * "slComparison" shows the difference between all simulations in terms of peak values along profile.
+    If only two simulations are provides, a 3 panel plot like the following is produced:
+
+    .. figure:: _static/avaAlr1_ppr_thresholdValue_1_slComparison.png
+
+    if more then two simulations are provided only the peak field specified in the configuration file is analyzed
+    and the statistics in terms of peak value along profile are plotted (mean, max and quantiles):
+
+    .. figure:: _static/avaAlr0_ppr_thresholdValue_1_slComparisonStat.png
+
+
+  * "ROC" shows the normalized area difference between reference and other simulations.
+
+  * "rmmp" shows the relative difference in maximum peak value between reference and other simulation function of run-out length
+
+The last plots "_i_ContourComparisonToReference" and "_i_AreaComparisonToReference"  where "i" gives the number of the simulation plots the 2D difference with the reference
+and the statistics associated.
+
+.. figure:: _static/avaAlr0_thresholdValue_1p0_sim_5_AreaComparisonToReference.png
+
+          Area comparison
+
+.. figure:: _static/avaAlr0_plim_1p0_sim_5_ContourComparisonToReference.png
+
+          Contour comparison
 
 Configuration parameters
 ----------------------------
