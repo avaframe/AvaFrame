@@ -481,7 +481,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         cmap = pU.cmapdiv
         cmap.set_bad(color='w')
         elev_max = inputs['diffLim']
-        ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (compData), 'l [m]', 's [m]',
+        ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
                              extent=[l.min(), l.max(), s[indStartOfRunout:].min(), yLim],
                              cmap=cmap)
         im3.set_clim(vmin=-elev_max, vmax=elev_max)
