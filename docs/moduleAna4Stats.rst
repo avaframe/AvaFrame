@@ -6,8 +6,8 @@ ana4Stats: Statistical analysis tools
 probAna
 ==========================
 
-probAna is used to derive simple probability maps for a set of simulations from a same avalanche. 
-These maps show for each point in space the probabilty for a chosen parameter to exceed a given threshold. 
+probAna is used to derive simple probability maps for a set of simulations for one avalanche track.
+These maps show for each point in space the probability for a chosen parameter to exceed a given threshold.
 For example, it is possible to compute the probability map of an avalanche to exceed a
 peak pressure of 1kPa.
 
@@ -24,7 +24,8 @@ Inputs
 
 * path to avalanche directory with simulation result peak files
 * configuration settings for probability analysis
-* configuration settings used for avalanche simulations
+* computational module used to perform avalanche simulations
+* optional parameter dictionary used to filter simulations
 * optional input directory with simulation result peak files
 
 Outputs
@@ -43,7 +44,8 @@ to filter the simulations further - using the function ``getFilterDict`` which g
 parameter dictionary for filtering according to the filter criteria set in the
 configuration file (``probAnaCfg.ini``) of the ``probAna`` function.
 
-* copy ``probAnaCfg.ini`` to ``local_probAnaCfg.ini`` (if not, the standard settings are used)
+* copy ``probAnaCfg.ini`` to ``local_probAnaCfg.ini``
+* uncomment FILTER section in ``local_probAnaCfg.ini`` and insert filter parameters if you want to first filter simulations
 * in ``AvaFrame/avaframe/`` run::
 
       python3 runProbAna.py
@@ -109,7 +111,8 @@ the release thickness is varied from 0.75 to 1.75 meters in steps of 0.05 meters
 simulations are then analysed using the extractMaxValues function and plots are generated using the
 plotting routines from ``statsPlots.py``.
 
-* copy ``getStats.ini`` to ``local_getStatsCfg.ini`` (if not, the standard settings are used)
+* copy ``getStats.ini`` to ``local_getStatsCfg.ini``
+* uncomment FILTER section in ``local_getStatsCfg.ini`` and insert filter parameters if you want to first filter simulations
 * in ``AvaFrame/avaframe/`` run::
 
       python3 runStatsExample.py
