@@ -8,11 +8,12 @@ import glob
 import logging
 import pathlib
 import numpy as np
+import pandas as pd
 import shutil
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
-
+from avaframe.in3Utils import cfgUtils
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -309,7 +310,7 @@ def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir=''):
 
     # Lead all infos on simulations
     inputDir = os.path.join(avaDir, 'Outputs', comModule, 'peakFiles')
-    data = makeSimDict(inputDir)
+    data, _ = makeSimDict(inputDir)
     countSuf = 0
     for m in range(len(data['files'])):
         if data['resType'][m] == suffix:
@@ -321,7 +322,7 @@ def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir=''):
             countSuf = countSuf + 1
 
 
-def getDFADataPaths(avaDir, pathDict, suffix, comModule='', inputDir=''):
+def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
     """ Determine the paths of the required data from comModule output for Aimec
 
         Parameters
@@ -330,11 +331,15 @@ def getDFADataPaths(avaDir, pathDict, suffix, comModule='', inputDir=''):
             path to avalanche directory
         pathDict: dict
             dictionary with paths to simulation results
+        cfg: configParser object
+            configuration for aimec, here varPar and ascendingOrder used
         suffix : str
             result parameter abbreviation (e.g. 'ppr')
         comModule : str
             optional - name of computational module (default is com1DFA)
-      """
+        inputDir: str
+            optional - path to a different input directory
+    """
 
     # Lead all infos on simulations
     if inputDir == '':
@@ -342,11 +347,17 @@ def getDFADataPaths(avaDir, pathDict, suffix, comModule='', inputDir=''):
         if os.path.isdir(inputDir) == False:
             log.error('Input directory does not exist - check anaMod')
 
-    data = makeSimDict(inputDir)
-    for m in range(len(data['files'])):
-        if data['resType'][m] == suffix:
-            pathDict[suffix].append(data['files'][m])
-            log.info('Added to pathDict: %s' % (data['files'][m]))
+    # fetch parameters that shall be used for ordering
+    varParList = cfg['varParList'].split('|')
+    # create dataFrame with ordered paths to simulation results
+    dataDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfg['ascendingOrder'])
+
+    # get paths for desired resType
+    dataFiles = dataDF[dataDF['resType']==suffix]['files'].to_list()
+
+    pathDict[suffix] = dataFiles
+    for pathVal in dataFiles:
+        log.info('Added to pathDict: %s' % (pathVal))
 
     return pathDict
 
@@ -371,7 +382,7 @@ def getRefData(testDir, outputDir, suffix, nameDir='', testDirFP=''):
         refDir = os.path.join('..', 'benchmarks', testDir)
 
     # Create simulations dictionary
-    data = makeSimDict(refDir)
+    data, _ = makeSimDict(refDir)
 
     # copy these files to desired working directory for outQuickPlot
     for m in range(len(data['files'])):
@@ -543,9 +554,14 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
         data['cellSize'].append(header.cellsize)
         if len(infoParts) == 5:
             data['timeStep'].append(infoParts[4])
+        else:
+            data['timeStep'].append('')
 
         # Set name of avalanche if avaDir is given
         if avaDir != '':
             data['avaName'].append(avaName)
 
-    return data
+
+    dataDF = pd.DataFrame.from_dict(data)
+
+    return data, dataDF

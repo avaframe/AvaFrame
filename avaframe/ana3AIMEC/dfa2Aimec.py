@@ -150,12 +150,12 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
 
     # Load all infos on reference simulations
     if refModule == 'benchmarkReference':
-        refData = fU.makeSimDict(inputDirRef)
+        refData, _ = fU.makeSimDict(inputDirRef)
     else:
-        refData = fU.makeSimDict(inputDirRef)
+        refData, _ = fU.makeSimDict(inputDirRef)
 
     # Load all infos on comparison module simulations
-    compData = fU.makeSimDict(inputDirComp)
+    compData, _ = fU.makeSimDict(inputDirComp)
 
     # identify names of simulations that match criteria for both cases
     simSearch = True
@@ -312,7 +312,7 @@ def getCompDirs(avaDir, cfgSetup, pathDict):
     return inputDirRef, inputDirComp, pathDict, refModule
 
 
-def mainDfa2Aimec(avaDir, comModule):
+def mainDfa2Aimec(avaDir, comModule, cfg):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec
@@ -321,7 +321,7 @@ def mainDfa2Aimec(avaDir, comModule):
     # Setup input from com1DFA and save file paths to dictionary
     suffix = ['pfd', 'ppr', 'pfv']
     for suf in suffix:
-        pathDict = fU.getDFADataPaths(avaDir, pathDict, suf, comModule)
+        pathDict = fU.getDFADataPaths(avaDir, pathDict, cfg, suf, comModule)
 
     # Extract mb info
     if comModule == 'com1DFAOrig':
@@ -339,14 +339,14 @@ def mainDfa2Aimec(avaDir, comModule):
     return pathDict
 
 
-def indiDfa2Aimec(avaDir, suffix, comModule, inputDir=''):
+def indiDfa2Aimec(avaDir, suffix, comModule, cfg, inputDir=''):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec
     pathDict = {suffix: []}
 
     # Setup input from com1DFA and save file paths to dictionary
-    pathDict = fU.getDFADataPaths(avaDir, pathDict, suffix, comModule, inputDir=inputDir)
+    pathDict = fU.getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule, inputDir=inputDir)
 
     pathDict['compType'] = ['singleModule', comModule]
 

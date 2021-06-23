@@ -42,7 +42,7 @@ def test_makeSimDict():
     inputDir = os.path.join(dirPath, 'data', 'testSim')
     cfg = configparser.ConfigParser()
     cfg = {'varPar' : 'test'}
-    data = fU.makeSimDict(inputDir, cfg['varPar'])
+    data, _ = fU.makeSimDict(inputDir, cfg['varPar'])
 
     assert data['names'][0] == 'releaseTest1_entres_dfa_0.888_ppr'
     assert data['releaseArea'][0] == 'releaseTest1'

@@ -1,3 +1,3 @@
 NoOfSimulation,SimulationRunName,Mu
-0  release1HS_entres_dfa  0.155000
-1  release2HS_entres_dfa  0.155000
+0  release1HS_ent_dfa  0.155000
+1  release2HS_ent_dfa  0.155000
