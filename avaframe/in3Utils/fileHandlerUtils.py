@@ -355,7 +355,12 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
     # get paths for desired resType
     dataFiles = dataDF[dataDF['resType']==suffix]['files'].to_list()
 
+    # add result file paths to pathDict
     pathDict[suffix] = dataFiles
+
+    # add value of first parameter used for ordering for colorcoding in plots
+    pathDict['colorParameter'] = dataDF[dataDF['resType']==suffix][varParList[0]].to_list()
+    
     for pathVal in dataFiles:
         log.info('Added to pathDict: %s' % (pathVal))
 

@@ -316,7 +316,7 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
     """ Exports the required data from com1DFA to be used by Aimec """
 
     # path dictionary for Aimec
-    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
 
     # Setup input from com1DFA and save file paths to dictionary
     suffix = ['pfd', 'ppr', 'pfv']
