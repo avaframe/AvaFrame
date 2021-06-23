@@ -53,7 +53,9 @@ pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfgSetup)
 
 # TODO: define referenceFile
 pathDict['numSim'] = len(pathDict['ppr'])
-pathDict['referenceFile'] = 0
+
+# define reference simulation 
+pathDict = aimecTools.fetchReferenceSimNo(pathDict, cfgSetup)
 
 pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
 
