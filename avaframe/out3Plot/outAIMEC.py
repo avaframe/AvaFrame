@@ -489,7 +489,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         # print contour lines only if the thre threshold is reached
         L, S = np.meshgrid(l, s[indStartOfRunout:])
         colorsP = pU.cmapPres['colors'][1:5]
-        if (np.where(refData > 0, True, False)).any():
+        if (np.where(refData > thresholdArray[-1], True, False)).any():
             contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP)
             labels = [str(level) + unit for level in thresholdArray[:-1]]
             for j in range(len(contourRef.collections)):
@@ -498,7 +498,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
             log.warning('Reference did not reach the run out area!')
             ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference did not reach the run out area!', fontsize=24, color='red',
             bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
-        if (np.where(compData > 0, True, False)).any():
+        if (np.where(compData > thresholdArray[-1], True, False)).any():
             contourComp = ax2.contour(L, S, compData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP, linestyles= 'dashed')
         else:
             log.warning('Simulation did not reach the run out area!')
