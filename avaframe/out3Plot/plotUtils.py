@@ -5,6 +5,7 @@
 """
 
 import os
+import warnings
 import seaborn as sns
 import copy
 import numpy as np
@@ -210,8 +211,9 @@ def saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
         outname = os.path.join(cfgPath['pathResult'], 'pics', outFileName)
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
-        # fig.set_tight_layout(False)
-        fig.savefig(outname)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            fig.savefig(outname)
 
     plt.close(fig)
 
