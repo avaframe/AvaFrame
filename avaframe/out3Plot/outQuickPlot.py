@@ -355,7 +355,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     plotList = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
 
 
-def quickPlotOne(inputDir, datafile, cfg, locVal, axis, resType=''):
+def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
     """ Plots one raster dataset and a cross profile
 
         figure 1: plot raster data for dataset and profile
@@ -363,8 +363,8 @@ def quickPlotOne(inputDir, datafile, cfg, locVal, axis, resType=''):
 
         Parameters
         ----------
-        inputDir : str
-            path to directory of input data (takes first dataset)
+        avaDir : str
+            path to avalanche directory
         datafile : str
             path to data file
         cfg : dict
@@ -376,7 +376,7 @@ def quickPlotOne(inputDir, datafile, cfg, locVal, axis, resType=''):
 
     """
 
-    outDir = os.path.join(inputDir, 'out3Plot')
+    outDir = os.path.join(avaDir, 'out3Plot')
     fU.makeADir(outDir)
 
     name1 = os.path.basename(datafile)
@@ -400,12 +400,12 @@ def quickPlotOne(inputDir, datafile, cfg, locVal, axis, resType=''):
 
 
 def generateOnePlot(dataDict, outDir, cfg, plotDict):
-    """ Create plots of ascii dataset
+    """ Create plot of ascii dataset
 
         Parameters
         ----------
         dataDict : dict
-            dictionary with info on both datasets to be plotted
+            dictionary with info of the dataset to be plotted
         avaName : str
             name of avalanche
         outDir : str
@@ -413,12 +413,12 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
         cfg : dict
             main configuration settings
         plotDict : dict
-            dictionary with information about plots, for example release area
+            dictionary with information about plots, for example release area...
 
         Returns
         -------
         plotDict : dict
-            updated plot dictionary with info about e.g. min, mean, max of difference between datasets
+            updated plot dictionary with path to plot
     """
 
     # Extract info for plotting

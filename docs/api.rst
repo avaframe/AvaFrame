@@ -39,4 +39,6 @@ Analysis/Output/Helper Modules
    ana4Stats.getStats
    out1Peak.outPlotAllPeak
    out3Plot.outQuickPlot
+   out3Plot.in1DataPlots
+   out3Plot.statsPlots
    tmp1Ex.tmp1Ex
