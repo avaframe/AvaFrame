@@ -8,35 +8,35 @@ of the same avalanche (meaning using the same DEM and going down the same avalan
 In ``AvaFrame/avaframe/``, three different run scripts are provided that show examples on how to use the postprocessing module aimec can be used.
 These examples include:
 
-* full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMEC`
-* using aimec to compare the results of two different computational modules (for one simulation at a time meaning there should be only one simulation result per
+*  full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMEC`
+*  using aimec to compare the results of two different computational modules (for one simulation at a time meaning there should be only one simulation result per
   computation module). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMECCompMods`
-* using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations)
+*  using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations)
 
 Here is an example worflow for the full aimec analysis, as provided in ``runAna3AIMEC.py``:
 
 Inputs
 -------
 
-* raster of the DEM (.asc file)
-* avalanche path in LINES (as a shape file named ``path_aimec.shp``).
-* a splitPoint in POINTS (as a shape file named ``splitPoint.shp``).
-* Results from avalanche simulation (when using results from com1DFA,
+*  raster of the DEM (.asc file)
+*  avalanche path in LINES (as a shape file named ``path_aimec.shp``).
+*  a splitPoint in POINTS (as a shape file named ``splitPoint.shp``).
+*  Results from avalanche simulation (when using results from com1DFA,
   the helper function ``mainDfa2Aimec`` in ``dfa2Aimec.py`` fetches and prepares the input for Aimec)
 
 Outputs
 --------
 
-* output figures in ``NameOfAvalanche/Outputs/ana3AIMEC/com1DFA/pics/``
-* txt file with results in ``NameOfAvalanche/Outputs/ana3AIMEC/com1DFA/``
+*  output figures in ``NameOfAvalanche/Outputs/ana3AIMEC/com1DFA/pics/``
+*  txt file with results in ``NameOfAvalanche/Outputs/ana3AIMEC/com1DFA/``
   (a detailed list of the results is described in :ref:`analyze-results`)
 
 To run
 -------
 
-* copy ``ana3AIMECCfg.py`` to ``local_ana3AIMECCfg.py`` (if not, the standard settings are used)
-* enter path to the desired ``NameOfAvalanche/`` folder in your local copy of ``AvaFrame/avaframe/avaframeCfg.ini``
-* in ``AvaFrame/avaframe/`` run::
+*  copy ``ana3AIMECCfg.py`` to ``local_ana3AIMECCfg.py`` (if not, the standard settings are used)
+*  enter path to the desired ``NameOfAvalanche/`` folder in your local copy of ``AvaFrame/avaframe/avaframeCfg.ini``
+*  in ``AvaFrame/avaframe/`` run::
 
       python3 runAna3AIMEC.py
 
@@ -64,7 +64,7 @@ The following figure illustrates the process.
 
 
 
-    * - .. _fig-aimec-comp-real:
+    *  - .. _fig-aimec-comp-real:
 
         .. figure:: _static/aimec_comparison_real_topo.png
 
@@ -127,19 +127,19 @@ When comparing the run-out area (corresponding to a given pressure threshold :ma
 it is possible to distinguish four different zones. For example, if the first simulation (sim1) is taken as reference and if True corresponds
 to the assertion that the avalanche covered this zone and False there was no avalanche in this zone, those four zones are:
 
-    * TP (true positive) zone: green zone on :numref:`fig-aimec-comp-new` , sim1 = True  sim2 = True
-    * FP (false positive) zone: blue zone on :numref:`fig-aimec-comp-new` , sim1 = False  sim2 = True
-    * FN (false negative) zone: red zone on :numref:`fig-aimec-comp-new` , sim1 = True  sim2 = False
-    * TN (true negative) zone: gray zone on :numref:`fig-aimec-comp-new` , sim1 = False  sim2 = False
+    *  TP (true positive) zone: green zone on :numref:`fig-aimec-comp-new` , sim1 = True  sim2 = True
+    *  FP (false positive) zone: blue zone on :numref:`fig-aimec-comp-new` , sim1 = False  sim2 = True
+    *  FN (false negative) zone: red zone on :numref:`fig-aimec-comp-new` , sim1 = True  sim2 = False
+    *  TN (true negative) zone: gray zone on :numref:`fig-aimec-comp-new` , sim1 = False  sim2 = False
 
 The two simulations are identical (in the run-out zone) when the area of both FP and FN is zero. In order to provide a normalized
 number describing the difference between two simulations, the area of the different zones is normalized by the area of the reference
 simulation :math:`A_{ref} = A_{TP} + A_{FP}`. This leads to the 4 area indicators:
 
-    * :math:`\alpha_{TP} = A_{TP}/A_{ref}`, which is 1 if sim2 covers at least the reference
-    * :math:`\alpha_{FP} = A_{FP}/A_{ref}`, which is a positive value if sim2 covers an area outside of the reference
-    * :math:`\alpha_{FN} = A_{FN}/A_{ref}`, which is a positive value if the reference covers an area outside of sim2
-    * :math:`\alpha_{TN} = A_{TN}/A_{ref}`
+    *  :math:`\alpha_{TP} = A_{TP}/A_{ref}`, which is 1 if sim2 covers at least the reference
+    *  :math:`\alpha_{FP} = A_{FP}/A_{ref}`, which is a positive value if sim2 covers an area outside of the reference
+    *  :math:`\alpha_{FN} = A_{FN}/A_{ref}`, which is a positive value if the reference covers an area outside of sim2
+    *  :math:`\alpha_{TN} = A_{TN}/A_{ref}`
 
 Identical simulations (in the run-out zone) lead to :math:`\alpha_{TP} = 1` , :math:`\alpha_{FP} = 0` and :math:`\alpha_{FN} = 0`
 
@@ -228,14 +228,13 @@ Plots and saves the desired figures. Writes results in ``resAnalysis`` to a text
 By default, Aimec saves five plots plus as many plots as numerical simulations to
 compare to the reference. The first five ones are :
 
-  * "domTransfo" shows the real domain on the left and new domain on the right
-
-  * "referenceFields" shows the peak pressure, flow depth and speed in the new domain
+  *  "domTransfo" shows the real domain on the left and new domain on the right
+  *  "referenceFields" shows the peak pressure, flow depth and speed in the new domain
 
     .. figure:: _static/avaAlr0_plim_1p0_referenceFields.png
 
 
-  * "slComparison" shows the difference between all simulations in terms of peak values along profile.
+  *  "slComparison" shows the difference between all simulations in terms of peak values along profile.
     If only two simulations are provides, a 3 panel plot like the following is produced:
 
     .. figure:: _static/avaAlr1_ppr_thresholdValue_1_slComparison.png
@@ -246,9 +245,8 @@ compare to the reference. The first five ones are :
     .. figure:: _static/avaAlr0_ppr_thresholdValue_1_slComparisonStat.png
 
 
-  * "ROC" shows the normalized area difference between reference and other simulations.
-
-  * "rmmp" shows the relative difference in maximum peak value between reference and other simulation function of run-out length
+  *  "ROC" shows the normalized area difference between reference and other simulations.
+  *  "rmmp" shows the relative difference in maximum peak value between reference and other simulation function of run-out length
 
 The last plots "_i_ContourComparisonToReference" and "_i_AreaComparisonToReference"  where "i" gives the number of the simulation plots the 2D difference with the reference
 and the statistics associated.
