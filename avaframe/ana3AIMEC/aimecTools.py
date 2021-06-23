@@ -798,11 +798,10 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
 
     # initialize Arrays
     nTopo = len(data)
-    nLevels = np.size(contourLevels) + 1
-    TP = np.empty((nTopo, nLevels))
-    FN = np.empty((nTopo, nLevels))
-    FP = np.empty((nTopo, nLevels))
-    TN = np.empty((nTopo, nLevels))
+    TP = np.empty((nTopo, 1))
+    FN = np.empty((nTopo, 1))
+    FP = np.empty((nTopo, 1))
+    TN = np.empty((nTopo, 1))
 
     # rasterinfo
     nStart = indStartOfRunout
@@ -828,58 +827,53 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
         # false positive: result1(mask)=0, result2(rasterdata)=1
         # true negative: result1(mask)=0, result2(rasterdata)=0
         """
-        for dataLim, j in zip(thresholdArray, np.arange(nLevels)):
-            # take first simulation as reference
-            refMask = copy.deepcopy(data[nRef])
-            # prepare mask for area resAnalysis
-            refMask = np.where(np.isnan(refMask), 0, refMask)
-            refMask = np.where(refMask < dataLim, 0, refMask)
-            refMask = np.where(refMask >= dataLim, 1, refMask)
-            # comparison rasterdata with mask
-            log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
-                'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
-            newRasterData = copy.deepcopy(rasterdata)
-            # prepare mask for area resAnalysis
-            newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
-            newRasterData = np.where(newRasterData < dataLim, 0, newRasterData)
-            newRasterData = np.where(newRasterData >= dataLim, 1, newRasterData)
+        # take first simulation as reference
+        refMask = copy.deepcopy(data[nRef])
+        # prepare mask for area resAnalysis
+        refMask = np.where(np.isnan(refMask), 0, refMask)
+        refMask = np.where(refMask < thresholdValue, 0, refMask)
+        refMask = np.where(refMask >= thresholdValue, 1, refMask)
+        # comparison rasterdata with mask
+        log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
+            'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
+        newRasterData = copy.deepcopy(rasterdata)
+        # prepare mask for area resAnalysis
+        newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
+        newRasterData = np.where(newRasterData < thresholdValue, 0, newRasterData)
+        newRasterData = np.where(newRasterData >= thresholdValue, 1, newRasterData)
 
-            tpInd = np.where((refMask[nStart:] == 1) &
-                             (newRasterData[nStart:] == 1))
-            fpInd = np.where((refMask[nStart:] == 0) &
-                             (newRasterData[nStart:] == 1))
-            fnInd = np.where((refMask[nStart:] == 1) &
-                             (newRasterData[nStart:] == 0))
-            tnInd = np.where((refMask[nStart:] == 0) &
-                             (newRasterData[nStart:] == 0))
+        tpInd = np.where((refMask[nStart:] == 1) &
+                         (newRasterData[nStart:] == 1))
+        fpInd = np.where((refMask[nStart:] == 0) &
+                         (newRasterData[nStart:] == 1))
+        fnInd = np.where((refMask[nStart:] == 1) &
+                         (newRasterData[nStart:] == 0))
+        tnInd = np.where((refMask[nStart:] == 0) &
+                         (newRasterData[nStart:] == 0))
 
-            # subareas
-            tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
-            fp = np.nansum(cellarea[fpInd[0] + nStart, fpInd[1]])
-            fn = np.nansum(cellarea[fnInd[0] + nStart, fnInd[1]])
-            tn = np.nansum(cellarea[tnInd[0] + nStart, tnInd[1]])
+        # subareas
+        tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
+        fp = np.nansum(cellarea[fpInd[0] + nStart, fpInd[1]])
+        fn = np.nansum(cellarea[fnInd[0] + nStart, fnInd[1]])
+        tn = np.nansum(cellarea[tnInd[0] + nStart, tnInd[1]])
 
-            # take reference (first simulation) as normalizing area
-            areaSum = tp + fn
+        # take reference (first simulation) as normalizing area
+        areaSum = tp + fn
 
-            TP[i, j] = tp
-            FN[i, j] = fn
-            FP[i, j] = fp
-            TN[i, j] = tn
-            if tp + fp > 0:
-                log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
-                          *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
-            else:
-                log.warning('Simulation %s did not reach the run-out area for threshold %.2f' % (i, dataLim))
+        TP[i] = tp
+        FN[i] = fn
+        FP[i] = fp
+        TN[i] = tn
+        if tp + fp > 0:
+            log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
+                      *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
+        else:
+            log.warning('Simulation %s did not reach the run-out area for threshold %.2f' % (i, thresholdValue))
         # inputs for plot
         inputs['compData'] = rasterdata
         # masked data for the dataThreshold given in the ini file
         inputs['refRasterMask'] = refMask
         inputs['newRasterMask'] = newRasterData
-        inputs['TP'] = TP[i, :]
-        inputs['FN'] = FN[i, :]
-        inputs['FP'] = FP[i, :]
-        inputs['TN'] = TN[i, :]
         inputs['i'] = i
 
         # only plot comparisons of simulations to reference
@@ -892,7 +886,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
                                         cfgFlags)
                 log.warning('only one simulation, area comparison not meaningful')
 
-    return TP[:, -1], FN[:, -1], FP[:, -1], TN[:, -1], compPlotPath
+    return TP, FN, FP, TN, compPlotPath
 
 
 def readWrite(fname_ent, time):

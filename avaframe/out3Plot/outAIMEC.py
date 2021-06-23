@@ -380,8 +380,6 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    sStart = s[indStartOfRunout]
-    runoutLength = inputs['runoutLength']
     refData = inputs['refData']
     compData = inputs['compData']
     refRasterMask = inputs['refRasterMask']
