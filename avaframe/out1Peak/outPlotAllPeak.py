@@ -1,14 +1,12 @@
 """
-This is a simple function for a quick plot of all peak files at once
+Functions to plot 2D simulation results: plot of all peak files at once
 
-This file is part of Avaframe.
 """
 
 import os
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
-import numpy.ma as ma
 import glob
 
 import avaframe.out3Plot.plotUtils as pU
