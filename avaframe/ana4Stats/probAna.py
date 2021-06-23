@@ -49,9 +49,9 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     if inputDir == '':
         inputDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
         flagStandard = True
-        peakFiles = fU.makeSimDict(inputDir, varPar='simHash', avaDir=avaDir)
+        peakFiles, _ = fU.makeSimDict(inputDir, varPar='simHash', avaDir=avaDir)
     else:
-        peakFiles = fU.makeSimDict(inputDir, avaDir=avaDir)
+        peakFiles, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
 
     # get header info from peak files - this should be the same for all peakFiles
     header = IOf.readASCheader(peakFiles['files'][0])

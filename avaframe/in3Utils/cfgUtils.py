@@ -479,3 +479,47 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
     simNameList = simDF['simName'].tolist()
 
     return simNameList
+
+def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''):
+    """ Filter simulations results using a list of parameters and a flag if in ascending or descending order
+
+        Parameters
+        -----------
+        avalancheDir: str
+            path to avalanche directory
+        inputDir: str
+            path to simulation results
+        varParList: str or list
+            simulation configuration parameters for ordering simulations
+        ascendingOrder: bool
+            True if simulations shall be ordered in ascending order regarding varPar
+        specDir: str
+            path to a directory where simulation configuration files can be found - optional
+
+        Returns
+        --------
+        dataDF: pandas dataFrame
+            dataFrame of simulation results (fileName, ... and values for parameters in varParList)
+    """
+
+
+    # load dataFrame for all configurations
+    simDF = createConfigurationInfo(avalancheDir)
+    # create dataframe for simulation results in inputDir
+    data, dataDF = fU.makeSimDict(inputDir)
+
+    # make sure that parameters used for ordering are provided as list
+    if isinstance(varParList, str):
+        varParList = [varParList]
+
+    # append 'simName' for merging of dataframes according to simNames
+    columnNames = ['simName'] + varParList
+
+    # merge varParList parameters as columns to dataDF for matching simNames
+    dataDFNEW = dataDF.merge(simDF[columnNames], left_on='simName',
+                             right_on='simName')
+
+    # sort according to varParList and ascendingOrder flag
+    dataDFNEW = dataDFNEW.sort_values(by=varParList, ascending=ascendingOrder)
+
+    return dataDFNEW

@@ -49,7 +49,7 @@ Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(
 
 # create simDict of results
 inputDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')
-dataComSol = fU.makeSimDict(inputDir, avaDir=avaDir)
+dataComSol, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
 
 # make comparison plots
 damBreak.plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain)
