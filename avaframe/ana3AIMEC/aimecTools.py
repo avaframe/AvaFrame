@@ -866,10 +866,10 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
         FN[i] = fn
         FP[i] = fp
         TN[i] = tn
-        if tp + fp > 0:
+        if areaSum > 0:
             log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
                       *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
-        else:
+        if tp + fp == 0:
             log.warning('Simulation %s did not reach the run-out area for threshold %.2f %s' %
                         (i, thresholdValue, pU.cfgPlotUtils['unit' + cfgSetup['resType']]))
         # inputs for plot

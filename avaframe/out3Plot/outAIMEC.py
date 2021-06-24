@@ -8,6 +8,8 @@ import os
 import logging
 import math
 import numpy as np
+import pandas as pd
+import seaborn as sns
 from matplotlib import pyplot as plt
 import matplotlib
 from matplotlib import cm
@@ -428,6 +430,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     if newRasterMask[indStartOfRunout:, :].any() or refRasterMask[indStartOfRunout:, :].any():
         ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
                          extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
+        im1.set_clim(vmin=-0.5, vmax=0.5)
         ax2.set_ylim([s[indStartOfRunout], yLim])
     else:
         ax2.text(.5,.5, 'No data in the run out area!', fontsize=18, color='red',
@@ -466,6 +469,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     refData = refData[indStartOfRunout:, :]
     dataDiff = compData - refData
     dataDiff = np.where((refData==0) & (compData==0), np.nan, dataDiff)
+    dataDiff = np.where((refData<thresholdArray[-1]) & (compData<thresholdArray[-1]), np.nan, dataDiff)
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
 
     if dataDiffPlot.size:
@@ -686,6 +690,12 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     sPath = rasterTransfo['s']
 
     runout = resAnalysis['runout'][0]
+    areaSum = resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef]
+    if areaSum == 0:
+        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
+        areaSum = 1
+    rTP = resAnalysis['TP'] / areaSum
+    rFP = resAnalysis['FP'] / areaSum
 
     # prepare for plot
     if flag == 2:
@@ -712,9 +722,20 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     if (len(fnames) > 100):
         plotDensity = 1
 
-    color = pU.cmapAimec(np.linspace(1, 0, len(runout) + 3, dtype=float))
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapVar, np.nanmin(cfgPath['colorParameter']), np.nanmax(cfgPath['colorParameter']), continuous=True)
+    typeCP = type(cfgPath['colorParameter'][0])
+    print(cfgPath['colorParameter'][0], typeCP)
+    if typeCP == str:
+        keys = list(set(cfgPath['colorParameter']))
+        nKeys = len(keys)
+        cmap = pU.cmapAimec(np.linspace(0, 1, nKeys, dtype=float))
+        df = pd.DataFrame(dict(runout=runout, data=data, rFP=rFP, rTP=rTP, colorParameter = cfgPath['colorParameter']))
+        color = {}
+        for key, j in zip(keys, range(nKeys)):
+            color[key] = cmap[j]
+        print(color)
+    else:
+        cmap, _, _, norm, ticks = makePalette.makeColorMap(
+            pU.cmapVar, np.nanmin(cfgPath['colorParameter']), np.nanmax(cfgPath['colorParameter']), continuous=True)
     #######################################
     # Final result diagram - z_profile+data
 
@@ -723,9 +744,9 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     # show flow path
     ax1 = fig.add_subplot(111)
     ax1.set_title(title)
-    ax1.set_ylabel(yaxis_label, color=color[-3])
-    ax1.spines['left'].set_color(color[-3])
-    ax1.tick_params(axis='y', colors=color[-3])
+    ax1.set_ylabel(yaxis_label, color=pU.cmapAimec(0))
+    ax1.spines['left'].set_color(pU.cmapAimec(0))
+    ax1.tick_params(axis='y', colors=pU.cmapAimec(0))
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(thresholdValue),
                             ' kPa threshold']))
     pU.putAvaNameOnPlot(ax1, cfgPath['projectName'])
@@ -734,23 +755,26 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
-        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cmap)
+        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('Counts')
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('z [m]')
-    ax2.spines['left'].set_color(color[-3])
+    ax2.spines['left'].set_color(pU.cmapAimec(0))
     ax2.tick_params(axis='y', colors='k')
     ax2.plot(sPath, zPath, color='k', label='path', linestyle='--')
     plt.xlim([0, max(sPath) + 50])
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
 
     if not plotDensity:
-        sc = ax1.scatter(runout, data, marker=pU.markers, c=cfgPath['colorParameter'], cmap=cmap)
+        if typeCP == str:
+            sns.scatterplot('runout', 'data', marker=pU.markers, data=df, hue='colorParameter', palette=cmap, ax=ax1)
+        else:
+            sc = ax1.scatter(runout, data, marker=pU.markers, c=cfgPath['colorParameter'], cmap=cmap)
+            pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
         ax1.plot(runout[nRef], data[nRef], color='g', label='Reference', marker='+',
                          markersize=2*pU.ms, linestyle='None')
-        pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
         ax1.legend(loc=4)
 
     ax1.grid('on')
@@ -761,12 +785,6 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
 
     ############################################
     # Final result diagram - roc-plots
-    areaSum = resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef]
-    if areaSum == 0:
-        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
-        areaSum = 1
-    rTP = resAnalysis['TP'] / areaSum
-    rFP = resAnalysis['FP'] / areaSum
 
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     ax1 = fig.add_subplot(111)
@@ -779,16 +797,17 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
-        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cmap)
+        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.cool)
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     else:
-        sc = ax1.scatter(rFP, rTP, marker=pU.markers, c=cfgPath['colorParameter'], cmap=cmap)
+        if typeCP == str:
+            sns.scatterplot('rFP', 'rTP', marker=pU.markers, data=df, hue='colorParameter', palette=cmap, ax=ax1)
+        else:
+            sc = ax1.scatter(rFP, rTP, marker=pU.markers, c=cfgPath['colorParameter'], cmap=cmap)
+            pU.addColorBar(sc, ax1, ticks, unit, title=paraVar)
         ax1.plot(rFP[nRef], rTP[nRef], color='g', label='Reference', marker='+',
                          markersize=2*pU.ms, linestyle='None')
-
-        pU.addColorBar(sc, ax1, ticks, unit, title=paraVar)
-        # ax1.colorbar(sc)
         ax1.legend(loc=4)
 
     plt.xlim([-0.03, max(1, max(rFP)+0.03)])
