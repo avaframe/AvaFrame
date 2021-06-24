@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 
 def makeADir(dirName):
-    """ Create a directory and print warning if it already existed
+    """ Check if a directory exists, if not create directory
 
         Parameters
         ----------
@@ -91,11 +91,15 @@ def extractParameterInfo(avaDir, simName, reportD):
             path to avalanche
         simName : str
             name of the simulation
+        reportD: dict
+            report dictionary
 
         Returns
         -------
         parameterDict : dict
             dictionary listing name of parameter and value; release mass, final time step and current mast
+        reportD: dict
+            upated report dictionary with info on simulation
         """
 
     # Get info from ExpLog
@@ -168,7 +172,7 @@ def checkCommonSims(logName, localLogName):
 
 
 def getFilterDict(cfg, section):
-    """ Create parametersDict for filtering simulations from ini file
+    """ Create parametersDict from ini file, for filtering simulations
 
         Parameters
         -----------
@@ -208,13 +212,15 @@ def getFilterDict(cfg, section):
 
 
 def splitIniValueToArraySteps(cfgValues, returnList=False):
-    """ read values in ini file and return numpy array of values or a list if the items are strings;
+    """ read values in ini file and return numpy array or list if the items are strings;
         values can either be separated by | or provided in start:end:numberOfSteps format
 
         Parameters
         ----------
         cfgValues : str
             values of parameter to be read from ini file
+        returnList: bool
+            if True force to return values as list
 
         Returns
         --------
