@@ -101,8 +101,15 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
 
     if 'colorParameter' in pathDict and cfgSetup['referenceSimValue'] != '':
         typeCP = type(pathDict['colorParameter'][0])
-        pathDict['referenceFile'] = pathDict['colorParameter'].index(typeCP(cfgSetup['referenceSimValue']))
-        log.info('Reference Simulation is based on %s = %s' % (cfgSetup['varParList'].split('|')[0], cfgSetup['referenceSimValue']))
+        if typeCP == str:
+            colorValues = [x.lower() for x in pathDict['colorParameter']]
+            indexRef = colorValues.index(typeCP(cfgSetup['referenceSimValue'].lower()))
+        elif typeCP in [float, int]:
+            colorValues = np.asarray(pathDict['colorParameter'])
+            indexRef = (np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
+        pathDict['referenceFile'] = indexRef
+        log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
+                 (cfgSetup['varParList'].split('|')[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
     else:
         pathDict['referenceFile'] = 0
         log.info('Reference Simulation is based on first simulation in folder')

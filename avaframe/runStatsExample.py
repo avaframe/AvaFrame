@@ -17,7 +17,7 @@ import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.ana4Stats.probAna as probAna
 from avaframe.ana4Stats import getStats
 from avaframe.runCom1DFA import runCom1DFA
-from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec
+from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.log2Report import generateReport as gR
@@ -59,17 +59,26 @@ statsSimCfg = os.path.join('..', 'benchmarks', avaNameTest, '%sStats_com1DFACfg.
 particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = runCom1DFA(avaDir=avaDir, cfgFile=statsSimCfg, relThField='', variationDict='')
 
 if cfg.getboolean('aimec') == True:
+
+    initProj.cleanModuleFiles(avaDir, ana3AIMEC)
     # run aimec
     statsAimecCfg = os.path.join('..', 'benchmarks', avaNameTest, '%sStats_ana3AIMECCfg.ini' % (avaName))
     cfgAIMEC = cfgUtils.getModuleConfig(ana3AIMEC, statsAimecCfg)
     cfgAimecSetup = cfgAIMEC['AIMECSETUP']
 
     # Setup input from com1DFA
-    dfa2Aimec.mainDfa2Aimec(avaDir, cfgAimecSetup, modName)
+    pathDict = dfa2Aimec.mainDfa2Aimec(avaDir, cfgAimecSetup['anaMod'], cfgAimecSetup)
+
+    # TODO: define referenceFile
+    pathDict['numSim'] = len(pathDict['ppr'])
+    # define reference simulation
+    pathDict = aimecTools.fetchReferenceSimNo(pathDict, cfgAimecSetup)
+
     # Extract input file locations
-    cfgPath = ana3AIMEC.readAIMECinputs(avaDir, dirName='com1DFA')
+    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=cfgAimecSetup['anaMod'])
+
     # Run AIMEC postprocessing
-    ana3AIMEC.mainAIMEC(cfgPath, cfgAIMEC)
+    ana3AIMEC.mainAIMEC(pathDict, cfgAIMEC)
 
 
 # ----- determine max values of peak fields
