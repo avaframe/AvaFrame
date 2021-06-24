@@ -670,7 +670,8 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     ####################################
     # Get input data
     resType = cfgSetup['resType']
-    unit = pU.cfgPlotUtils['unit' + resType]
+    unit = cfgSetup['unit']
+    paraVar = cfgSetup['varParList'].split('|')[0]
     name = pU.cfgPlotUtils['name' + resType]
     fnames = cfgPath[resType]
     maxMaxDPPR = resAnalysis['MM' + resType.upper()]
@@ -684,8 +685,6 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     zPath = rasterTransfo['z']
     sPath = rasterTransfo['s']
 
-    indStartOfRunout = rasterTransfo['indStartOfRunout']
-    sStart = sPath[indStartOfRunout]
     runout = resAnalysis['runout'][0]
 
     # prepare for plot
@@ -714,7 +713,8 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         plotDensity = 1
 
     color = pU.cmapAimec(np.linspace(1, 0, len(runout) + 3, dtype=float))
-
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(
+        pU.cmapVar, np.nanmin(cfgPath['colorParameter']), np.nanmax(cfgPath['colorParameter']), continuous=True)
     #######################################
     # Final result diagram - z_profile+data
 
@@ -734,7 +734,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
-        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.Blues)
+        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cmap)
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('Counts')
 
@@ -747,12 +747,10 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
 
     if not plotDensity:
-        for k in range(len(runout)):
-            ax1.plot(runout[k], data[k], marker=pU.markers, color=color[k+1],
-                     linestyle='None')
-            if k == nRef:
-                ax1.plot(runout[k], data[k], marker='+', linestyle='None',
-                         markersize=2*pU.ms, color='g', label='Reference')
+        sc = ax1.scatter(runout, data, marker=pU.markers, c=cfgPath['colorParameter'], cmap=cmap)
+        ax1.plot(runout[nRef], data[nRef], color='g', label='Reference', marker='+',
+                         markersize=2*pU.ms, linestyle='None')
+        pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
         ax1.legend(loc=4)
 
     ax1.grid('on')
@@ -781,21 +779,16 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         H, xedges, yedges = np.histogram2d(rFP, rTP, bins=nbins)
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
-        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cm.cool)
+        dataDensity = plt.pcolormesh(xedges, yedges, Hmasked, cmap=cmap)
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     else:
-        for k in range(len(rTP)):
-            pfarbe = color[k+1]  # colorvar(float(k), len(rTP), colorflag)
-            if k == 0:
-                ax1.plot(rFP[k], rTP[k], color='g', label='Reference', marker='+',
+        sc = ax1.scatter(rFP, rTP, marker=pU.markers, c=cfgPath['colorParameter'], cmap=cmap)
+        ax1.plot(rFP[nRef], rTP[nRef], color='g', label='Reference', marker='+',
                          markersize=2*pU.ms, linestyle='None')
-            elif k == 1:
-                ax1.plot(rFP[k], rTP[k], marker=pU.markers, label='sims',
-                         color=pfarbe, linestyle='None')
-            else:
-                ax1.plot(rFP[k], rTP[k], marker=pU.markers,
-                         color=pfarbe, linestyle='None')
+
+        pU.addColorBar(sc, ax1, ticks, unit, title=paraVar)
+        # ax1.colorbar(sc)
         ax1.legend(loc=4)
 
     plt.xlim([-0.03, max(1, max(rFP)+0.03)])
