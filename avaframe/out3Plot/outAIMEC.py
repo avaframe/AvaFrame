@@ -714,7 +714,6 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         plotDensity = 1
 
     color = pU.cmapAimec(np.linspace(1, 0, len(runout) + 3, dtype=float))
-    mk = 0
 
     #######################################
     # Final result diagram - z_profile+data
@@ -731,7 +730,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
                             ' kPa threshold']))
     pU.putAvaNameOnPlot(ax1, cfgPath['projectName'])
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
-        nbins = 100
+        nbins = 10
         H, xedges, yedges = np.histogram2d(runout, data, bins=nbins)
         H = np.flipud(np.rot90(H))
         Hmasked = np.ma.masked_where(H == 0, H)
@@ -749,20 +748,11 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
 
     if not plotDensity:
         for k in range(len(runout)):
-            topoName = cfgPath['projectName']
-            pfarbe = color[k+1]
-            if k == 0:
+            ax1.plot(runout[k], data[k], marker=pU.markers, color=color[k+1],
+                     linestyle='None')
+            if k == nRef:
                 ax1.plot(runout[k], data[k], marker='+', linestyle='None',
                          markersize=2*pU.ms, color='g', label='Reference')
-            elif k == 1:
-                ax1.plot(runout[k], data[k], marker=pU.markers, label='sims',
-                         color=pfarbe, linestyle='None')
-            else:
-                ax1.plot(runout[k], data[k], marker=pU.markers, color=pfarbe,
-                         linestyle='None')
-            mk = mk+1
-            if mk == len(pU.markers):
-                mk = 1
         ax1.legend(loc=4)
 
     ax1.grid('on')
@@ -781,7 +771,6 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     rFP = resAnalysis['FP'] / areaSum
 
     fig = plt.figure(figsize=(pU.figW, pU.figH))
-    mk = 0
     ax1 = fig.add_subplot(111)
     ax1.set_title('Normalized difference compared to reference')
     ax1.set_ylabel('True positive rate')
@@ -807,9 +796,6 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
             else:
                 ax1.plot(rFP[k], rTP[k], marker=pU.markers,
                          color=pfarbe, linestyle='None')
-            mk = mk+1
-            if mk == len(pU.markers):
-                mk = 0
         ax1.legend(loc=4)
 
     plt.xlim([-0.03, max(1, max(rFP)+0.03)])
