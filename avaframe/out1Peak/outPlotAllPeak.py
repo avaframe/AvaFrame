@@ -43,7 +43,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
 
     # Load all infos on simulations
     inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
-    peakFiles, _ = fU.makeSimDict(inputDir, '', avaDir)
+    peakFiles, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
 
     demFile = gI.getDEMPath(avaDir)
     demData = IOf.readRaster(demFile)
