@@ -83,7 +83,7 @@ def extractMaxValues(inputDir, cfgMain, avaDir, varPar, nameScenario='', paramet
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='')
 
     # load peakFiles of all simulations and generate dictionary
-    peakFiles, _ = fU.makeSimDict(inputDir, varPar='simHash', avaDir=avaDir)
+    peakFiles, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
     nSims = len(peakFiles['simName'])
     peakValues = {}
     for sName in simDF['simName'].tolist():

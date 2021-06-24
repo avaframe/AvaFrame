@@ -439,7 +439,7 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     shutil.copy2(os.path.join('%s' % inputDir, 'ExpLog.txt'), outDir)
 
 
-def makeSimDict(inputDir, varPar='', avaDir=''):
+def makeSimDict(inputDir, simID='simID', avaDir=''):
     """ Create a dictionary and dataFrame that contains all info on simulations
 
         this can then be used to filter simulations for example
@@ -448,9 +448,10 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
         ----------
         inputDir : str
             path to directory of simulation results
-        varPar : str
-            optional - parameter that has been used in parameter variation -
-            required if parameter variation has been used
+        simID : str
+            optional - simulation identification, depending on the computational module:
+            com1DFA: simHash
+            com1DFAOrig: Mu or parameter that has been used in parameter variation
         avaDir : str
             optional - path to avalanche directory
 
@@ -458,7 +459,7 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
         -------
         data : dict
             dictionary with full file path, file name, release area scenario, simulation type (null, entres, etc.),
-            model type (dfa, ref, etc.), parameter variation, result type (ppr, pfd, etc.), simulation name,
+            model type (dfa, ref, etc.), simID, result type (ppr, pfd, etc.), simulation name,
             cell size and optional name of avalanche
         dataDF: pandas DataFrame
             dataFrame created from data
@@ -472,14 +473,10 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
     # Sort datafiles by name
     datafiles = sorted(datafiles)
 
-    # Check if parameter variation other than Mu
-    if varPar == '':
-        varPar = 'Mu'
-
     # Set name of avalanche if avaDir is given
     # Make dictionary of input data info
     data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'simName' : [],
-            'modelType' : [], 'releaseArea': [], 'cellSize': [], varPar: [], 'timeStep': []}
+            'modelType' : [], 'releaseArea': [], 'cellSize': [], simID: [], 'timeStep': []}
 
     # Set name of avalanche if avaDir is given
     if avaDir != '':
@@ -503,7 +500,7 @@ def makeSimDict(inputDir, varPar='', avaDir=''):
         data['releaseArea'].append(fNamePart)
         data['simType'].append(infoParts[0])
         data['modelType'].append(infoParts[1])
-        data[varPar].append(infoParts[2])
+        data[simID].append(infoParts[2])
         data['resType'].append(infoParts[3])
         data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:3])))
 

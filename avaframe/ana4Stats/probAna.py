@@ -49,7 +49,7 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     if inputDir == '':
         inputDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
         flagStandard = True
-        peakFiles, _ = fU.makeSimDict(inputDir, varPar='simHash', avaDir=avaDir)
+        peakFiles, _ = fU.makeSimDict(inputDir, simID='simHash', avaDir=avaDir)
     else:
         peakFiles, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
 
