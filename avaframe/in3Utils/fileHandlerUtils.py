@@ -250,19 +250,21 @@ def splitIniValueToArraySteps(cfgValues, returnList=False):
 
 
 def splitTimeValueToArrayInterval(cfgGen):
-    """ read values in ini file and return numpy array of values, values can either be separated by |
-        or provided in start:interval format
+    """ read save time step info from ini file and return numpy array of values
+
+        values can either be separated by | or provided in start:interval format
 
         Parameters
         ----------
-        cfgGen: dict
-            configuration settings
+        cfgGen: configParser object
+            configuration settings, here 'tSteps' used
 
         Returns
         --------
         items : 1D numpy array
-            values as 1D numpy array
+            time step values as 1D numpy array
     """
+
     cfgValues = cfgGen['tSteps']
     endTime = cfgGen.getfloat('tEnd')
     if ':' in cfgValues:
@@ -289,39 +291,6 @@ def splitTimeValueToArrayInterval(cfgGen):
     return items
 
 
-def getDFAData(avaDir, workDir, suffix, comModule='com1DFA', nameDir=''):
-    """ Export the required data from com1DFA output to Aimec Work directory and rename,
-        if nameDir='', data from com1DFA output copied to workDir without renaming
-
-        Parameters
-        ----------
-        avaDir : str
-            path to avalanche directory
-        workDir : str
-            path to directory that data should be copied to
-        suffix : str
-            result parameter abbreviation (e.g. 'ppr')
-        comModule : str
-            optional - name of computational module (default is com1DFA)
-        nameDir : str
-            optional - name of subdirectory of workDir where data shall be copied to and
-            in this case data files get renamed to 0000xx.txt xx is the number of the file
-      """
-
-    # Lead all infos on simulations
-    inputDir = os.path.join(avaDir, 'Outputs', comModule, 'peakFiles')
-    data, _ = makeSimDict(inputDir)
-    countSuf = 0
-    for m in range(len(data['files'])):
-        if data['resType'][m] == suffix:
-            if nameDir == '':
-                shutil.copy(data['files'][m], workDir)
-            else:
-                shutil.copy(data['files'][m], '%s/%s/%06d.txt' % (workDir, nameDir, countSuf+1))
-                log.info('%s   : %s/%s/%06d.txt' % (data['files'][m], workDir, nameDir, countSuf+1))
-            countSuf = countSuf + 1
-
-
 def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
     """ Determine the paths of the required data from comModule output for Aimec
 
@@ -332,11 +301,11 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
         pathDict: dict
             dictionary with paths to simulation results
         cfg: configParser object
-            configuration for aimec, here varPar and ascendingOrder used
+            configuration for aimec, here 'varPar' and 'ascendingOrder' used
         suffix : str or list
             result parameter abbreviation (e.g. 'ppr')
         comModule : str
-            optional - name of computational module (default is com1DFA)
+            optional - name of computational module
         inputDir: str
             optional - path to a different input directory
     """
@@ -386,45 +355,6 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
     return pathDict
 
 
-def getRefData(testDir, outputDir, suffix, nameDir='', testDirFP=''):
-    """ Grab reference data and save to outputDir
-
-        Parameters
-        ----------
-        avaDir : str
-            path to avalanche directory
-        suffix : str
-            result parameter abbreviation (e.g. 'ppr')
-        outputDir: str
-            path to directoy that files should be copied to
-    """
-
-    # Input directory and load input datasets
-    if testDirFP != '':
-        refDir = testDirFP
-    else:
-        refDir = os.path.join('..', 'benchmarks', testDir)
-
-    # Create simulations dictionary
-    data, _ = makeSimDict(refDir)
-
-    # copy these files to desired working directory for outQuickPlot
-    for m in range(len(data['files'])):
-        if data['resType'][m] == suffix:
-            if nameDir != '':
-                shutil.copy(data['files'][m], '%s/%s/000000.txt' % (outputDir, nameDir))
-            else:
-                shutil.copy2(data['files'][m], outputDir)
-
-    # Give status information
-    if os.path.isdir(refDir) == False:
-        log.error('%s does not exist - no files for reference found' % refDir)
-    elif data['files'] == []:
-        log.error('No files found in %s' % refDir)
-    else:
-        log.debug('Reference files copied from directory: %s' % refDir)
-
-
 def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     """ Export the simulation results from com1DFA output to desired location
 
@@ -433,7 +363,7 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
         avaDir: str
             path to avalanche directory
         cfg : dict
-            configuration read from ini file that has been used for the com1DFA simulation
+            configuration read from ini file that has been used for the com1DFAOrig simulation
         addTSteps : bool
             if True: first and last time step of flow depth are exported
 
@@ -510,8 +440,9 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
 
 
 def makeSimDict(inputDir, varPar='', avaDir=''):
-    """ Create a dictionary that contains all info on simulations that
-        can then be used to filter simulations for example
+    """ Create a dictionary and dataFrame that contains all info on simulations
+
+        this can then be used to filter simulations for example
 
         Parameters
         ----------
