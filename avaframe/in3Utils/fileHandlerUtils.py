@@ -347,11 +347,11 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
         if os.path.isdir(inputDir) == False:
             log.error('Input directory does not exist - check anaMod')
 
+    # check if is string - then convert to list
     if isinstance(suffix, str):
         suffix = [suffix]
 
-    # fetch parameters that shall be used for ordering
-    varParList = cfg['varParList'].split('|')
+    # if com1DFA check for configuration files to fetch paramerter values for ordering
     if comModule == 'com1DFA' and cfg['varParList'] != '':
 
         # fetch parameters that shall be used for ordering
@@ -374,7 +374,8 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
         pathDict['colorParameter'] = dataDF[dataDF['resType']==suf][varParList[0]].to_list()
 
     else:
-        log.warning('Did not apply filtering')
+        # do not apply ordering
+        log.warning('Did not apply ordering')
         data, _ = makeSimDict(inputDir)
         for m in range(len(data['files'])):
             for suf in suffix:
