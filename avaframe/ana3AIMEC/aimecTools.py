@@ -82,6 +82,7 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
 
     return cfgPath
 
+
 def fetchReferenceSimNo(pathDict, cfgSetup):
     """ Define reference simulation used for aimec analysis from configuration file,
         if no ordering is performed - set simulation 0 as reference simulation

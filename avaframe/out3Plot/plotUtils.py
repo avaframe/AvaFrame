@@ -239,11 +239,11 @@ def constrainPlotsToData(inputData, cellSize):
     return rowsMin, rowsMax, colsMin, colsMax
 
 
-def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither'):
+def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''
-    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend)
+    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad)
     cbar.outline.set_visible(False)
     cbar.ax.set_title('[' + myUnit + ']')
     if title != '':
