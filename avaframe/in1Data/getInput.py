@@ -216,7 +216,7 @@ def getInputDataCom1DFA(avaDir, cfg):
 
 
 def getAndCheckInputFiles(inputDir, folder, inputType):
-    """Fetch input shape files and check them
+    """Fetch shape files and check if they exist and if it is not more than one
 
     Raises error if there is more than one shape file.
 
