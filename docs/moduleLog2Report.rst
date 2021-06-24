@@ -7,7 +7,8 @@ log2Reports: Create Reports
 Generate Report
 ===================
 
-The Generate Report function creates a markdown style report of data that is provided in a python dictionary.
+The Generate Report function creates a markdown style report corresponding to the
+data provided in the python input dictionary.
 The report is structured in blocks according to the types provided in the dictionary.
 Currently, the report generation supports the following types:
 
@@ -28,7 +29,7 @@ Input
 * cfgFLAGS - main configuration including a flag reportOneFile
 * plotDict - including title and the absolute paths to the image you want to be included - optional
 
-For the inputDictionary, a certain structure is required as illustrated for the following example:
+For the input dictionary, a certain structure is required as illustrated for the following example:
 
 ::
 
@@ -64,7 +65,7 @@ To run
 Generate Compare Report
 =========================
 
-This function creates a markdown style report where the simulation results are compared to benchmark results.
+This function creates a markdown style report where the simulation results are compared to the benchmark results.
 The report is structured as follows:
 
   * name of avalanche
