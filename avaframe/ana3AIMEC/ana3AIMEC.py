@@ -45,7 +45,6 @@ def AIMEC2Report(cfgPath, cfg):
     # Make domain transformation
     log.info("Creating new deskewed raster and preparing new raster assignment function")
     rasterTransfo = aT.makeDomainTransfo(cfgPath, cfgSetup)
-
     ###########################################################################
     # visualisation
     # TODO: needs to be moved somewhere else
@@ -138,13 +137,13 @@ def mainAIMEC(cfgPath, cfg):
     # TODO: needs to be moved somewhere else
     # read reference file
     nRef = cfgPath['referenceFile']
-    rasterSource = cfgPath['ppr'][nRef]
+    rasterSource = cfgPath[cfgSetup['resType']][nRef]
 
-    pressureRaster = IOf.readRaster(rasterSource)
+    raster = IOf.readRaster(rasterSource)
     slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
     inputData = {}
     inputData['slRaster'] = slRaster
-    inputData['xyRaster'] = pressureRaster['rasterData']
+    inputData['xyRaster'] = raster['rasterData']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, cfgPath, cfgFlags)
     #################################################################
 

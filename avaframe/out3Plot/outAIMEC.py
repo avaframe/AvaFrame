@@ -65,7 +65,7 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, cfgPath, cfgFlags):
     maskedArraySL = np.ma.masked_where(slRaster == 0, slRaster)
 
     cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapPres, 0.0, np.nanmax(maskedArray), continuous=pU.contCmap)
+        pU.colorMaps[resType], 0.0, np.nanmax(maskedArray), continuous=pU.contCmap)
     cmap.set_under(color='w')
 
     ############################################
@@ -199,7 +199,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
 
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, 0.0,
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.colorMaps[resType], 0.0,
                                                        np.nanmax(maskedArray),
                                                        continuous=pU.contCmap)
     cmap.set_bad('w', 1.)
@@ -400,7 +400,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax1 = plt.subplot2grid((1,2), (0,0))
 
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.colorMaps[resType], thresholdValue,
                                                        np.nanmax((refData)),
                                                        continuous=contCmap)
     cmap.set_bad(color='w')
@@ -449,7 +449,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))#, constrained_layout=True)
     ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, thresholdValue,
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.colorMaps[resType], thresholdValue,
                                                        np.nanmax((refData)),
                                                        continuous=pU.contCmap)
     cmap.set_bad(color='w')
