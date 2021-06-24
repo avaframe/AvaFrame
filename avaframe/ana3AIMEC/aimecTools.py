@@ -107,6 +107,8 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
         elif typeCP in [float, int]:
             colorValues = np.asarray(pathDict['colorParameter'])
             indexRef = (np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
+        else:
+            indexRef = pathDict['colorParameter'].index(typeCP(cfgSetup['referenceSimValue']))
         pathDict['referenceFile'] = indexRef
         log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
                  (cfgSetup['varParList'].split('|')[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
