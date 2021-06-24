@@ -104,6 +104,7 @@ def makeColorMap(colormap, levMin, levMax, continuous=False):
         ticks = None
 
     else:
+        print(lev, levMin, levMax)
         indStart = np.where(np.asarray(lev) <= levMin)[0][-1]
         indEnd = np.where(np.asarray(lev) > levMax)[0][0]
         newLev = lev[indStart:indEnd+1]
