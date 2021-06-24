@@ -101,8 +101,6 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
         particlesList, fieldsList, tSave, dem, reportDict, cfgFinal = com1DFA.com1DFAMain(cfg, avalancheDir, cuSim, inputSimFiles, outDir, relThField)
 
         # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
-        # Generate plots for all peakFiles
-        plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
 
         reportDictList.append(reportDict)
 
@@ -119,6 +117,8 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
 
     # Set directory for report
     reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFA', 'reports')
+    # Generate plots for all peakFiles
+    plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
