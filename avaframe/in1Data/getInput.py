@@ -136,7 +136,7 @@ def getInputData(avaDir, cfg, flagDev=False):
     return demFile, relFiles, entFile, resFile, entResInfo
 
 
-def getInputDataCom1DFAPy(avaDir, cfg):
+def getInputDataCom1DFA(avaDir, cfg):
     """ Fetch input datasets required for simulation, duplicated function because
         simulation type set differently in com1DFAPy compared to com1DFA:
         TODO: remove duplicate once it is not required anymore
