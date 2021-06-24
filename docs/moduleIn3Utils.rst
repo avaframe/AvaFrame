@@ -36,6 +36,10 @@ Extra features can be added to the above topographies:
 		or by cutting them into the original topography (topoAdd=False).
 	* In case of the parabola topography, a Dam can be added by setting dam=True.
 
+Detailed information on the individual functions used to create the topographies can be found in:
+
+:py:mod:`in3Utils.generateTopo`
+
 Input
 ------
 
@@ -87,7 +91,7 @@ slope of the pyramid facets (meanAlpha)
 :z0: 		max elevation [m]
 :zElev:	  elevation of flat plane [m]
 :rCirc: 	radius of smoothing circle [m]
-:demType: topography types (FP, IP, PF, HS, BL, HX, PY - explanation given in the introductory description**
+:demType: topography types (FP, IP, PF, HS, BL, HX, PY - explanation given in the introductory description)
 :flatx: extent of flat foreland for pyramid in x
 :flaty: extent of flat foreland for pyramid in y
 :phi: rotation angle for pyramid
@@ -122,10 +126,15 @@ Generate a release area for a topography created with ``generateTopo`` , this fu
 
 The release areas are defined as rectangular features build by four corner points, which are based on the following conditions:
 
-* prescribed vertical stretch of 200 m (difference in altitude)
+* prescribed vertical stretch in meters (difference in altitude)
 * prescribed volume of the release area
 * lower margin is located where the slope angle falls below 30°
 * if slope does not fall below 30 °, upper margin is located xStart away from upper margin of the DEM
+
+Detailed information on the individual functions used to create the topographies can be found in:
+
+:py:mod:`in3Utils.getReleaseArea`
+
 
 Input
 ------
@@ -141,7 +150,7 @@ Output
 To run
 ------
 
-Following this steps, you can generate an avalanche test case including a DEM and a simple realease area.
+Following these steps, you can generate an avalanche test case including a DEM and a simple realease area.
 
 * copy ``generateTopoCfg`` and  ``getReleaseAreaCfg`` to ``local_generateTopoCfg.ini``
   and ``local_getReleaseAreaCfg.ini`` and set desired parameter values (if not, the default values are used)
@@ -156,7 +165,6 @@ Following this steps, you can generate an avalanche test case including a DEM an
 :dh: release snow thickness [m]
 :xStart: upper margin of release area distance in x from origin [m]
 :lenP: number of release area polygon points
-:showPlot: True - show plot of release area
 :outputtxt: True - copy the output to txt file
 :xExtent: horizontal extent of release area for flat plane
 :alphaStop: slope angle that defines lower margin of release area
