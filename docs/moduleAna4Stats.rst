@@ -94,7 +94,7 @@ Outputs
 readAimecRunout
 ~~~~~~~~~~~~~~~~~
 
-* 1D numpy array with runout lengths
+* aimec analysis including resluts text file and plots, see for further information :ref:`moduleAna3AIMEC:ana3AIMEC: Aimec`
 
 ExtractMaxValues
 ~~~~~~~~~~~~~~~~~
