@@ -66,7 +66,7 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
     modCfg['GENERAL']['avalancheDir'] = avalancheDir
 
     # fetch input data - dem, release-, entrainment- and resistance areas
-    inputSimFiles = gI.getInputDataCom1DFAPy(avalancheDir, modCfg['FLAGS'])
+    inputSimFiles = gI.getInputDataCom1DFA(avalancheDir, modCfg['FLAGS'])
 
     # write full configuration file to file
     cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName='sourceConfiguration')
