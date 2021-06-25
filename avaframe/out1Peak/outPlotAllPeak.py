@@ -43,7 +43,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
 
     # Load all infos on simulations
     inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
-    peakFiles, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
+    peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
     demFile = gI.getDEMPath(avaDir)
     demData = IOf.readRaster(demFile)
@@ -59,17 +59,17 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
 
     # Initialise plot dictionary with simulation names
     plotDict = {}
-    for sName in peakFiles['simName']:
+    for sName in peakFilesDF['simName']:
         plotDict[sName] = {}
 
     # Loop through peakFiles and generate plot
-    for m in range(len(peakFiles['names'])):
+    for m in range(len(peakFilesDF['names'])):
 
         # Load names and paths of peakFiles
-        name = peakFiles['names'][m]
-        fileName = peakFiles['files'][m]
-        avaName = peakFiles['avaName'][m]
-        resType = peakFiles['resType'][m]
+        name = peakFilesDF['names'][m]
+        fileName = peakFilesDF['files'][m]
+        avaName = peakFilesDF['avaName'][m]
+        resType = peakFilesDF['resType'][m]
         log.debug('now plot %s:' % (fileName))
 
         # Load data
@@ -77,7 +77,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
         data = raster['rasterData']
 
         # constrain data to where there is data
-        cellSize = peakFiles['cellSize'][m]
+        cellSize = peakFilesDF['cellSize'][m]
         rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
         dataConstrained = data[rowsMin:rowsMax+1, colsMin:colsMax+1]
         demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
@@ -119,7 +119,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
         if cfgFLAGS.getboolean('showPlot'):
             plt.show()
         plotPath = os.path.join(os.getcwd(), plotName)
-        plotDict[peakFiles['simName'][m]].update({peakFiles['resType'][m]: plotPath})
+        plotDict[peakFilesDF['simName'][m]].update({peakFilesDF['resType'][m]: plotPath})
         plt.close('all')
 
     return plotDict

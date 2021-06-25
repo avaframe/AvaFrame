@@ -47,9 +47,9 @@ dtAnalysis = cfg['DAMBREAK'].getfloat('dtStep')
 # call com1DFAPy to perform simulation - provide configuration file and release thickness function
 Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile=damBreakCfg)
 
-# create simDict of results
+# create dataFrame of results
 inputDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')
-dataComSol, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
+dataComSolDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
 # make comparison plots
-damBreak.plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain)
+damBreak.plotComparison(dataComSolDF, hL, xR, hR, uR, dtAnalysis, cfgMain)

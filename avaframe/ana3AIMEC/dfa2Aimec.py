@@ -150,12 +150,12 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
 
     # Load all infos on reference simulations
     if refModule == 'benchmarkReference':
-        refData, _ = fU.makeSimDict(inputDirRef)
+        refData = fU.makeSimDF(inputDirRef)
     else:
-        refData, _ = fU.makeSimDict(inputDirRef)
+        refData = fU.makeSimDF(inputDirRef)
 
     # Load all infos on comparison module simulations
-    compData, _ = fU.makeSimDict(inputDirComp)
+    compData = fU.makeSimDF(inputDirComp)
 
     # identify names of simulations that match criteria for both cases
     simSearch = True

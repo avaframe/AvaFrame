@@ -64,11 +64,7 @@ def runOperational(avalancheDir=''):
     # Get peakfiles to return to QGIS
     avaDir = pathlib.Path(avalancheDir)
     inputDir = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
-    peakFiles, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
-
-    # Convert peakFiles to pandas DataFrame
-    peakFiles.pop('timeStep', None)
-    peakFilesDF = pandas.DataFrame.from_dict(peakFiles)
+    peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
     # Run Alpha Beta
     cfgAB = cfgUtils.getModuleConfig(com2AB)

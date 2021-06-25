@@ -506,7 +506,7 @@ def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''
     # load dataFrame for all configurations
     simDF = createConfigurationInfo(avalancheDir)
     # create dataframe for simulation results in inputDir
-    data, dataDF = fU.makeSimDict(inputDir)
+    dataDF = fU.makeSimDF(inputDir)
 
     # make sure that parameters used for ordering are provided as list
     if isinstance(varParList, str):
