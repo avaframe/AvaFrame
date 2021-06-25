@@ -439,7 +439,7 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     shutil.copy2(os.path.join('%s' % inputDir, 'ExpLog.txt'), outDir)
 
 
-def makeSimDict(inputDir, simID='simID', avaDir=''):
+def makeSimDict(inputDir, avaDir='', simID='simID'):
     """ Create a dictionary and dataFrame that contains all info on simulations
 
         this can then be used to filter simulations for example
@@ -448,12 +448,12 @@ def makeSimDict(inputDir, simID='simID', avaDir=''):
         ----------
         inputDir : str
             path to directory of simulation results
+        avaDir : str
+            optional - path to avalanche directory
         simID : str
             optional - simulation identification, depending on the computational module:
             com1DFA: simHash
             com1DFAOrig: Mu or parameter that has been used in parameter variation
-        avaDir : str
-            optional - path to avalanche directory
 
         Returns
         -------
