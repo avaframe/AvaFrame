@@ -17,9 +17,9 @@ log = logging.getLogger(__name__)
 def SHP2Array(infile, defname=None):
     """ Read shapefile and convert it to a python dictionary
 
-    Dictionary contains the name of the paths in the shape file, the np array with
-    the coordinates of the path points (all stacked in the same array)
-    and information about the startin index and length of each path
+    The dictionary contains the name of the paths in the shape file, the np array with
+    the coordinates of the feature points (all stacked in the same array)
+    and information about the starting index and length of each feature
 
     Parameters
     ----------
@@ -31,10 +31,25 @@ def SHP2Array(infile, defname=None):
     Returns
     -------
     SHPdata : dict
-        SHPdata['Name'] : list of feature names
-        SHPdata['Coord'] : np array of the coords of points in feature
-        SHPdata['Start'] : list of starting index of each feature in Coord
-        SHPdata['Length'] : list of length of each feature in Coord
+        sks :
+            projection information
+        Name : str
+            list of feature names
+        x : 1D numpy array
+            np array of the x coord of the points in the features
+        y : 1D numpy array
+            np array of the y coord of the points in the features
+        z : 1D numpy array
+            np array of zeros and same size as the x an y coordinates array
+        Start : 1D numpy array
+            np array with the starting index of each feature in the coordinates
+            arrays (as many indexes as features)
+        Lengt : 1D numpy array
+            np array with the length of each feature in the coordinates
+            arrays (as many indexes as features)
+        d0 (optional) : 1D numpy array
+            np array with the releath thickness of each feature (as many values as features)
+
 
     """
     #  Input shapefile
@@ -128,6 +143,7 @@ def SHP2Array(infile, defname=None):
 
 def readLine(fname, defname, dem):
     """ Read line from  .shp
+    Use SHP2Array to read the shape file.
     Check if the lines are laying inside the dem extend
 
     Parameters
@@ -166,6 +182,7 @@ def readLine(fname, defname, dem):
 
 def readPoints(fname, dem):
     """ Read points from  .shp
+    Use SHP2Array to read the shape file.
     Check if the points are laying inside the dem extend
 
     Parameters

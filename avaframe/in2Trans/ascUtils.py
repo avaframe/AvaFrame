@@ -1,5 +1,5 @@
 """
-    ASCII file readers and handlers
+    ASCII file reader and handler
 
 """
 
@@ -12,6 +12,31 @@ log = logging.getLogger(__name__)
 
 
 class cASCheader:
+    """
+    A class to store ascii raster file header information.
+
+    ...
+
+    Attributes
+    ----------
+    nrows : int
+        number of rows of the raster matix
+    ncols : int
+        number of columns of the raster matix
+    cellsize : float
+        raster cell size (in [m])
+    xllcenter : float
+        x coordinate of the lower left cell center
+    yllcenter : float
+        y coordinate of the lower left cell center
+    noDataValue : float
+        no data identifier
+
+    Methods
+    -------
+    __str__(self):
+        Prints the header
+    """
     def __init__(self):
         self.nrows = None
         self.ncols = None

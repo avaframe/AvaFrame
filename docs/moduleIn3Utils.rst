@@ -1,46 +1,50 @@
 ######################################
-in3Utils: Geo Transformation Utilities
+in3Utils: Various Utilities Modules
 ######################################
 
 
 geoTrans
 ============
-The ``geoTrans.py`` module gathers useful functions to operate transformations,
+The :py:mod:`in3Utils.geoTrans` module provides useful functions to operate transformations,
 comparison or interpolation on raster, lines, points...
-Further information available here:
-
-:py:mod:`in3Utils.geoTrans`
+Further information about the available functions in :py:mod:`in3Utils.geoTrans`
 
 
 
 Generate Topography
 ===================
 
-Generate DEM files for idealised/generic topographies that can be used as required DEM input data for snow avalanche simulations.
+The :py:mod:`in3Utils.generateTopo` module provides functions to generate DEM files
+for idealized/generic topographies that can be used for snow avalanche simulations.
 
-The following topography types can be chosen:
+This module can generate the following topographies:
 
 * flat plane (FP)
 * inclined plane of constant slope (IP)
-* parabola - using a parabola to describe the sloping plane that then transitions into a flat foreland (PF)
-* hockey stick - using an linearly sloping plane with smoothed transition to the flat foreland (HS)
+* parabola - parabolic slope transitioning into a flat foreland (PF)
+* hockey stick - inclined plane of constant slope with a smooth transition to a flat foreland (HS)
 * bowl-shaped topography (BL)
 * helix-shaped topography (HX)
 * pyramid-shaped topography (PY)
 
-On top of these topographies, channels can be introduced (then set channel=True), and these channels can also be set to become narrower along the channel and wider at the end of the channel (then set narrowing=True).
-There is the option to introduce these channels by either adding a 'channel layer' (max thickness=channel depth) on top of the topography (topoAdd=True) or by cutting them into the original topography (topoAdd=False).
-In case of the parabola topography also a Dam can be added by setting dam=True.
+Extra features can be added to the above topographies:
+
+	* a channel can be introduced (then set channel=True).
+		This channel can also be set to widen towards the top and bottom of the channel (then set narrowing=True).
+		The channel can be added by either adding a 'channel layer'
+		(max thickness=channel depth) on top of the topography (topoAdd=True)
+		or by cutting them into the original topography (topoAdd=False).
+	* In case of the parabola topography, a Dam can be added by setting dam=True.
 
 Input
 ------
 
-* in ``generateTopoCfg.ini`` all required input parameters are listed (does include default values for all parameters)
+* in ``generateTopoCfg.ini`` all required input parameters are listed (includes default values for all parameters).
 
 Output
 -------
 
-* 3D surface plot of generated topography as .png file and possibly shown to screen (see flags)
+* 3D surface plot of the generated topography as .png file and possibly shown to screen (see flags)
 * .asc file of DEM data
 
 
@@ -57,7 +61,8 @@ Theory
 ------
 
 Topographies are generated using inclined and flat planes, parabolas, spheres and circles.
-Channels are introduced as half-sphere shaped features with smooth transition from no channel to channel using cumulative distribution functions.
+Channels are introduced as half-sphere shaped features with smooth transition
+from the no channel area to the channel using cumulative distribution functions.
 
 Configuration parameters
 ------------------------
