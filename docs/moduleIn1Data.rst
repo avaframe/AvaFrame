@@ -2,28 +2,30 @@
 in1Data: Input data utilities
 ######################################
 
-In this module, functions are gathered to fetch or generate input data for avalanche simulations within AvaFrame.
-Here, the main functions are described in more detail, however find a detailed description of the smaller helper functions in:
+Get input data
+================
 
-:py:mod:`in1Data.getInput`
+:py:mod:`in1Data.getInput` module provides functions to fetch or generate input data for avalanche simulations within AvaFrame.
+The main functions are described in more detail in the following sections.
+A detailed description of all the small helper functions is provided in :py:mod:`in1Data.getInput`
 
 
 getInputCom1DFA
-==========================
+----------------
 
 This function fetches the input data from an avalanche directory, that is required to start avalanche simulations with com1DFA.
-This data consists of a digital elevation model (DEM), release scenario shapefiles and optional entraiment and resistance area shapefiles.
+This data consists of a digital elevation model (DEM), a release scenario shapefiles and optional entrainment and resistance area shapefiles.
 
 
 Inputs
--------
+~~~~~~
 
 * path to avalanche directory
 * configuration for the avalanche simulations - provides info on whether entrainment and resistance shall be included
 
 
 Outputs
---------
+~~~~~~~~~
 
 * inputSimFiles - dictionary with:
   - DEM
