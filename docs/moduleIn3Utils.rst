@@ -175,7 +175,12 @@ Following these steps, you can generate an avalanche test case including a DEM a
 Initialize Project
 =====================
 
-This function creates the folder structure required to perform avalanche simulations:
+Here functions to initialize a project, create the required directory structure and delete specified
+files or directories. Details on these functions can be found in:
+
+:py:mod:`in3Utils.InitializeProject`
+
+The main function *initializeFolderStruct*, creates the folder structure required to perform avalanche simulations:
 ::
 
 		NameOfAvalanche/
@@ -207,7 +212,7 @@ Output
 To run
 -------
 
-*  copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
+* copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
 * in ``avaframe`` run:
 
 			python3 runInitializeProject.py
@@ -230,50 +235,7 @@ fileHandlerUtils
 =================
 
 ``fileHandlerUtils.py`` gathers useful functions to create directories, read log files,
-extract information from logs, fetch and export data and fetch simulation infos into a dictionnary
-that can be used within other functions.
+extract information from logs, fetch and export data and fetch simulation infos into a dataFrame
+that can be used within other functions. Details on these functions can be found in:
 
-Functions
------------
-
-**makeADir:**
-
-``makeADir(dirName)`` takes a path to directory and if this directory does not yet exist, creates
-the directory *dirName*.
-
-
-**readLogFile:**
-
-``logDict = readLogFile(logname, cfg='')`` takes a log file and returns a dictionary with information
-on the simulations that have been performed.
-
-
-**extractParameterInfo:**
-
-``parameterDict =  extractParameterInfo(avaDir, simName)`` reads the log saved when performing a simulation
-with com1DFA and returns a dictionary with info on the release mass, the final time step and the current mass.
-
-
-**getDFAData:**
-
-``getDFAData`` exports and renames the simulation results to the Aimec work directory following the required naming conventions.
-
-
-**getRefData:**
-
-``getRefData(avaDir, outputDir, suffix, nameDir='')`` takes the data from the benchmark directory and
-exports it to the specified ouputDir and optionally renames the data.
-
-
-**exportcom1DFAOutput:**
-
-``exportcom1DFAOutput(avaDir, cfg='')`` exports the simulation results of com1DFA to the Outputs directory
-and renames the peak files to include information on additional parameters such as Mu or release thickness.
-
-
-**makeSimDict:**
-
-``data =  makeSimDict(inputDir, varPar='', avaDir='')`` takes all the peak files (avalanche simulation results saved as .asc file)
-and creates a dictionary that contains information for each simulation, such as path to file, file name,
-release area scenario, simulation type, model type, parameter variation, result type, simulation name, cell Size and name of avalanche.
-This dictionary can be used in other functions to load or filter simulation results.
+:py:mod:`in3Utils.fileHandlerUtils`
