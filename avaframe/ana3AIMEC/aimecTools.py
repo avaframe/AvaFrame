@@ -99,7 +99,7 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
             updated pathDict with key: referenceFile to define reference simulation for aimec
     """
 
-    if 'colorParameter' in pathDict and cfgSetup['referenceSimValue'] != '':
+    if pathDict['colorParameter'] != [] and cfgSetup['referenceSimValue'] != '':
         typeCP = type(pathDict['colorParameter'][0])
         if typeCP == str:
             colorValues = [x.lower() for x in pathDict['colorParameter']]
