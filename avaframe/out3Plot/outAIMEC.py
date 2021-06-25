@@ -722,19 +722,36 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     if (len(fnames) > 100):
         plotDensity = 1
 
-    typeCP = type(cfgPath['colorParameter'][0])
-    if typeCP == str:
-        keys = list(set(cfgPath['colorParameter']))
-        nKeys = len(keys)
-        cmap = pU.cmapAimec(np.linspace(0, 1, nKeys, dtype=float))
-        df = pd.DataFrame(dict(runout=runout, data=data, rFP=rFP, rTP=rTP, colorParameter = cfgPath['colorParameter']))
-        color = {}
-        for key, j in zip(keys, range(nKeys)):
-            color[key] = cmap[j]
-        print(color)
+    if 'colorParameter' in cfgPath:
+        if cfgPath['colorParameter'] == []:
+            nSamples = np.size(runout)
+            colors = np.zeros(nSamples)
+            cmap, _, _, norm, ticks = makePalette.makeColorMap(
+                pU.cmapVar, 0, 0, continuous=True)
+            displayColorBar = False
+            dataFrame = False
+        else:
+            typeCP = type(cfgPath['colorParameter'][0])
+            if typeCP == str:
+                keys = list(set(cfgPath['colorParameter']))
+                nKeys = len(keys)
+                cmap = pU.cmapAimec(np.linspace(0, 1, nKeys, dtype=float))
+                df = pd.DataFrame(dict(runout=runout, data=data, rFP=rFP, rTP=rTP, colorParameter = cfgPath['colorParameter']))
+                dataFrame = True
+                displayColorBar = False
+            else:
+                colors = cfgPath['colorParameter']
+                cmap, _, _, norm, ticks = makePalette.makeColorMap(
+                    pU.cmapVar, np.nanmin(cfgPath['colorParameter']), np.nanmax(cfgPath['colorParameter']), continuous=True)
+                displayColorBar = True
+                dataFrame = False
     else:
+        displayColorBar = False
+        dataFrame = False
+        nSamples = np.size(runout)
+        colors = np.zeros(nSamples)
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
-            pU.cmapVar, np.nanmin(cfgPath['colorParameter']), np.nanmax(cfgPath['colorParameter']), continuous=True)
+            pU.cmapVar, 0, 0, continuous=True)
     #######################################
     # Final result diagram - z_profile+data
 
@@ -767,11 +784,12 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
 
     if not plotDensity:
-        if typeCP == str:
+        if dataFrame:
             sns.scatterplot('runout', 'data', marker=pU.markers, data=df, hue='colorParameter', palette=cmap, ax=ax1)
         else:
-            sc = ax1.scatter(runout, data, marker=pU.markers, c=cfgPath['colorParameter'], cmap=cmap)
-            pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
+            sc = ax1.scatter(runout, data, marker=pU.markers, c=colors, cmap=cmap)
+            if displayColorBar:
+                pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
         ax1.plot(runout[nRef], data[nRef], color='g', label='Reference', marker='+',
                          markersize=2*pU.ms, linestyle='None')
         ax1.legend(loc=4)
@@ -800,11 +818,12 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     else:
-        if typeCP == str:
+        if dataFrame:
             sns.scatterplot('rFP', 'rTP', marker=pU.markers, data=df, hue='colorParameter', palette=cmap, ax=ax1)
         else:
-            sc = ax1.scatter(rFP, rTP, marker=pU.markers, c=cfgPath['colorParameter'], cmap=cmap)
-            pU.addColorBar(sc, ax1, ticks, unit, title=paraVar)
+            sc = ax1.scatter(rFP, rTP, marker=pU.markers, c=colors, cmap=cmap)
+            if displayColorBar:
+                pU.addColorBar(sc, ax1, ticks, unit, title=paraVar)
         ax1.plot(rFP[nRef], rTP[nRef], color='g', label='Reference', marker='+',
                          markersize=2*pU.ms, linestyle='None')
         ax1.legend(loc=4)
