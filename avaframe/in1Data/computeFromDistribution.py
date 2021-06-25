@@ -3,18 +3,9 @@
 """
 
 # load python modules
-import os
 import numpy as np
 import scipy.special as sc
-from scipy import stats
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
-
-# load avaframe modules
-from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.out3Plot import in1DataPlots as iPlot
-from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import logUtils
 
 
 def computeParameters(a, b, c):
