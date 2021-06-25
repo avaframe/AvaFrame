@@ -83,8 +83,8 @@ def extractMaxValues(inputDir, cfgMain, avaDir, varPar, nameScenario='', paramet
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='')
 
     # load peakFiles of all simulations and generate dictionary
-    peakFiles, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
-    nSims = len(peakFiles['simName'])
+    peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
+    nSims = len(peakFilesDF['simName'])
     peakValues = {}
     for sName in simDF['simName'].tolist():
         peakValues[sName] = {}
@@ -92,11 +92,11 @@ def extractMaxValues(inputDir, cfgMain, avaDir, varPar, nameScenario='', paramet
     # Loop through peakFiles and compute probability
     for m in range(nSims):
 
-        if peakFiles['simName'][m] in simNameList:
+        if peakFilesDF['simName'][m] in simNameList:
 
             # Load data
-            fileName = peakFiles['files'][m]
-            simName = peakFiles['simName'][m]
+            fileName = peakFilesDF['files'][m]
+            simName = peakFilesDF['simName'][m]
             data = np.loadtxt(fileName, skiprows=6)
 
             # compute max
@@ -107,11 +107,11 @@ def extractMaxValues(inputDir, cfgMain, avaDir, varPar, nameScenario='', paramet
             varParVal = simDF[simDF['simName'] == simName][varPar]
             if nameScenario != '':
                 nameScenarioVal = simDF[simDF['simName'] == simName][nameScenario]
-            log.info('Simulation parameter %s= %s for resType: %s and name %s' % (varPar, varParVal[0], peakFiles['resType'][m], nameScenarioVal[0]))
-            peakValues[simName].update({peakFiles['resType'][m]: max})
+            log.info('Simulation parameter %s= %s for resType: %s and name %s' % (varPar, varParVal[0], peakFilesDF['resType'][m], nameScenarioVal[0]))
+            peakValues[simName].update({peakFilesDF['resType'][m]: max})
             peakValues[simName].update({'varPar': float(varParVal)})
             peakValues[simName].update({'scenario': nameScenarioVal[0]})
         else:
-            peakValues.pop(peakFiles['simName'][m], None)
+            peakValues.pop(peakFilesDF['simName'][m], None)
 
     return peakValues

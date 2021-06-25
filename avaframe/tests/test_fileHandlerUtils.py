@@ -34,22 +34,22 @@ def test_readLogFile():
     assert logDictMu['Mu'][2] == 4.0
 
 
-def test_makeSimDict():
-    """ Test if simulation dictionary is generated correctly """
+def test_makeSimDF():
+    """ Test if simulation dataFrame is generated correctly """
 
     # Test function
     dirPath = os.path.dirname(__file__)
     inputDir = os.path.join(dirPath, 'data', 'testSim')
     cfg = configparser.ConfigParser()
     cfg = {'varPar' : 'test'}
-    data, _ = fU.makeSimDict(inputDir, simID=cfg['varPar'])
+    dataDF = fU.makeSimDF(inputDir, simID=cfg['varPar'])
 
-    assert data['names'][0] == 'releaseTest1_entres_dfa_0.888_ppr'
-    assert data['releaseArea'][0] == 'releaseTest1'
-    assert data['simType'][0] == 'entres'
-    assert data['resType'][0] == 'ppr'
-    assert data['cellSize'][0] == 5.0
-    assert data['test'][0] == '0.888'
+    assert dataDF['names'][0] == 'releaseTest1_entres_dfa_0.888_ppr'
+    assert dataDF['releaseArea'][0] == 'releaseTest1'
+    assert dataDF['simType'][0] == 'entres'
+    assert dataDF['resType'][0] == 'ppr'
+    assert dataDF['cellSize'][0] == 5.0
+    assert dataDF['test'][0] == '0.888'
 
 
 def test_exportcom1DFAOrigOutput(tmp_path):

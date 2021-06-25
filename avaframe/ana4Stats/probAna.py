@@ -49,12 +49,12 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     if inputDir == '':
         inputDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
         flagStandard = True
-        peakFiles, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
+        peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
     else:
-        peakFiles, _ = fU.makeSimDict(inputDir, avaDir=avaDir)
+        peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
     # get header info from peak files - this should be the same for all peakFiles
-    header = IOf.readASCheader(peakFiles['files'][0])
+    header = IOf.readASCheader(peakFilesDF['files'][0])
     cellSize = header.cellsize
     nRows = header.nrows
     nCols = header.ncols
@@ -67,15 +67,15 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
     count = 0
 
     # Loop through peakFiles and compute probability
-    for m in range(len(peakFiles['names'])):
+    for m in range(len(peakFilesDF['names'])):
 
         # only take simulations that match filter criteria from parametersDict
-        if peakFiles['simName'][m] in simNameList:
+        if peakFilesDF['simName'][m] in simNameList:
             # Load peak field for desired peak field parameter
-            if peakFiles['resType'][m] == cfg['GENERAL']['peakVar']:
+            if peakFilesDF['resType'][m] == cfg['GENERAL']['peakVar']:
 
                 # Load data
-                fileName = peakFiles['files'][m]
+                fileName = peakFilesDF['files'][m]
                 data = np.loadtxt(fileName, skiprows=6)
                 dataLim = np.zeros((nRows, nCols))
 

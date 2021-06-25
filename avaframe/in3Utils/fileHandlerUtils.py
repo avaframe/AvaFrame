@@ -345,12 +345,12 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
     else:
         # do not apply ordering
         log.warning('Did not apply ordering')
-        data, _ = makeSimDict(inputDir)
-        for m in range(len(data['files'])):
+        dataDF = makeSimDF(inputDir)
+        for m in range(len(dataDF['files'])):
             for suf in suffix:
-                if data['resType'][m] == suf:
-                    pathDict[suf].append(data['files'][m])
-                    log.info('Added to pathDict: %s' % (data['files'][m]))
+                if dataDF['resType'][m] == suf:
+                    pathDict[suf].append(dataDF['files'][m])
+                    log.info('Added to pathDict: %s' % (dataDF['files'][m]))
 
     return pathDict
 
@@ -439,8 +439,8 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     shutil.copy2(os.path.join('%s' % inputDir, 'ExpLog.txt'), outDir)
 
 
-def makeSimDict(inputDir, avaDir='', simID='simID'):
-    """ Create a dictionary and dataFrame that contains all info on simulations
+def makeSimDF(inputDir, avaDir='', simID='simID'):
+    """ Create a  dataFrame that contains all info on simulations
 
         this can then be used to filter simulations for example
 
@@ -457,12 +457,10 @@ def makeSimDict(inputDir, avaDir='', simID='simID'):
 
         Returns
         -------
-        data : dict
-            dictionary with full file path, file name, release area scenario, simulation type (null, entres, etc.),
+        dataDF : dataFrame
+            dataframe with full file path, file name, release area scenario, simulation type (null, entres, etc.),
             model type (dfa, ref, etc.), simID, result type (ppr, pfd, etc.), simulation name,
-            cell size and optional name of avalanche
-        dataDF: pandas DataFrame
-            dataFrame created from data
+            cell size and optional name of avalanche, optional time step
     """
 
     # Load input datasets from input directory
@@ -518,4 +516,4 @@ def makeSimDict(inputDir, avaDir='', simID='simID'):
 
     dataDF = pd.DataFrame.from_dict(data)
 
-    return data, dataDF
+    return dataDF
