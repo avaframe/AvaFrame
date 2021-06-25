@@ -69,6 +69,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
         name = peakFiles['names'][m]
         fileName = peakFiles['files'][m]
         avaName = peakFiles['avaName'][m]
+        resType = peakFiles['resType'][m]
         log.debug('now plot %s:' % (fileName))
 
         # Load data
@@ -82,7 +83,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
         demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
 
         data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
-        unit = pU.cfgPlotUtils['unit%s' % peakFiles['resType'][m]]
+        unit = pU.cfgPlotUtils['unit%s' % resType]
 
         # Set extent of peak file
         ny = data.shape[0]
@@ -95,14 +96,14 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
         fig, ax = plt.subplots()
         # choose colormap
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
-            pU.cmapPres, np.amin(data), np.amax(data), continuous=pU.contCmap)
+            pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
         cmap.set_bad(alpha=0)
         rowsMinPlot = rowsMin*cellSize
         rowsMaxPlot = (rowsMax+1)*cellSize
         colsMinPlot = colsMin*cellSize
         colsMaxPlot = (colsMax+1)*cellSize
         im0 = ax.imshow(demConstrained, cmap='Greys', extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
-        im1 = ax.imshow(data, cmap=cmap, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
+        im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
         pU.addColorBar(im1, ax, ticks, unit)
 
         title = str('%s' % name)
@@ -164,7 +165,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit=''):
         nx = data.shape[1]
         Ly = ny*cellSize
         Lx = nx*cellSize
-        
+
         # Figure  shows the result parameter data
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         fig, ax = plt.subplots()
@@ -172,7 +173,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit=''):
         cmap, _, _, norm, ticks = makePalette.makeColorMap(
             pU.cmapPres, np.amin(data), np.amax(data), continuous=pU.contCmap)
         cmap.set_bad('w')
-        im1 = ax.imshow(data, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+        im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         pU.addColorBar(im1, ax, ticks, unit)
 
         title = str('%s' % name)
