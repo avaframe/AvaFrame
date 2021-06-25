@@ -723,7 +723,6 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         plotDensity = 1
 
     typeCP = type(cfgPath['colorParameter'][0])
-    print(cfgPath['colorParameter'][0], typeCP)
     if typeCP == str:
         keys = list(set(cfgPath['colorParameter']))
         nKeys = len(keys)
