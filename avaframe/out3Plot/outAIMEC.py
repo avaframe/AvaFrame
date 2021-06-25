@@ -492,7 +492,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
         # print contour lines only if the thre threshold is reached
         L, S = np.meshgrid(l, s[indStartOfRunout:])
-        colorsP = pU.cmapPres['colors'][1:5]
+        colorsP = pU.colorMaps[resType]['colors'][1:]
         if (np.where(refData > thresholdArray[-1], True, False)).any():
             contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=1, colors=colorsP)
             labels = [str(level) + unit for level in thresholdArray[:-1]]
