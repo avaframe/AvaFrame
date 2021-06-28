@@ -106,7 +106,7 @@ def mainAIMEC(cfgPath, cfg):
     given an avalanche directory
     Make the domain transformation corresponding to the input avalanche path
     Transform 2D fields (pressure, flow depth ...)
-    Analyze transformed rasters and masse
+    Analyze transformed rasters and mass
     Produce plots and report
 
     Parameters
@@ -293,10 +293,12 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     newRasters: dict
         dictionary containing pressure, velocity and flow depth rasters after
         transformation
-    cfgSetup: dict
+    cfgSetup: configParser objec
         parameters for data analysis
     cfgPath: dict
         path to data to analyse
+    cfgFlags: congfigParser object
+        configuration settings flagMass used
 
     Returns
     -------
@@ -450,10 +452,10 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
 
 
 def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
-    """ Analyse pressure, depth and speed transformed data
+    """ Analyse one peak field transformed data
 
-    Analyse pressure depth and speed.
-    Calculate runout, Max Peak Pressure, Average PP...
+    Analyse peak field set in resType e.g. ppr
+    Calculate runout, Max Peak Value, Average PP...
     Mass is currently not included
 
     Parameters
@@ -467,7 +469,9 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
         parameters for data analysis
     cfgPath: dict
         path to data to analyse
-
+    cfgFlags: congfigParser object
+        configuration settings flagMass used
+        
     Returns
     -------
     resAnalysis: dict
