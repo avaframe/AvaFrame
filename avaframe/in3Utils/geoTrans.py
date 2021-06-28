@@ -194,7 +194,7 @@ def remeshDEM(cfg, dem):
     Returns
     -------
     dem : dict
-        reprjected dem dictionary
+        reprojected dem dictionary
 
     """
 
@@ -441,7 +441,7 @@ def prepareAngleProfile(beta, AvaProfile):
     """Prepare inputs for findAngleProfile function
     Read profile (s, z), compute the slope Angle
     look for points for which the slope is under the given Beta value and
-    that are located downstreem of the splitPoint
+    that are located downstream of the splitPoint
 
     Parameters
     ----------
@@ -773,6 +773,10 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
         Raster to check
     refRaster : 2D numpy array
         refference Raster
+    nameToCheck: str
+        name of raster that might overlap 
+    nameRef: str
+        name of reference raster
     crop : boolean
         if True, remove overlaping part and send a warning
     Returns
