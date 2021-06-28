@@ -42,6 +42,7 @@ def _plotVariable(var, x, dtInd, dtStep, label):
 def plotResults(x, h, u, dtStep, cfg):
     """ Create plots of the analytical solution for the given settings,
         including an animation
+
     """
 
     # index of time steps
@@ -182,7 +183,30 @@ def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
 
 
 def damBreakSol(avaDir, cfg, cfgC):
-    """ Compute flow depth for dam break for granular flow over a dry rough sloping bed with the Savage Hutter model """
+    """ Compute flow depth for dam break for granular flow over a dry rough sloping bed with the Savage Hutter model
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        cfg: configParser object
+            main avaframe configuration - here showPlot flag used
+        cfgC: configParser object
+            configuration setting for avalanche simulation including DAMBREAK section
+
+        Returns
+        -------
+        hL: float
+            release thickness
+        h: numpy array
+            flow depth
+        u: numpy array
+            flow velocity
+        phi: float
+            slope angle
+        x: numpy array
+            extent of horizontal domain
+    """
 
     # Set Parameters
     # Coordinate system chosen in the direction of the inclined plane
