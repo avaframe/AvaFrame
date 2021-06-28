@@ -34,9 +34,10 @@ Outputs
 To run
 -------
 
+*  first go to ``AvaFrame/avaframe``
 *  copy ``ana3AIMECCfg.py`` to ``local_ana3AIMECCfg.py`` (if not, the standard settings are used)
-*  enter path to the desired ``NameOfAvalanche/`` folder in your local copy of ``AvaFrame/avaframe/avaframeCfg.ini``
-*  in ``AvaFrame/avaframe/`` run::
+*  enter path to the desired ``NameOfAvalanche/`` folder in your local copy of ``avaframeCfg.ini``
+*  run::
 
       python3 runAna3AIMEC.py
 
@@ -235,7 +236,7 @@ compare to the reference. The first five ones are :
 
 
   *  "slComparison" shows the difference between all simulations in terms of peak values along profile.
-    If only two simulations are provides, a 3 panel plot like the following is produced:
+    If only two simulations are provided, a 3 panel plot like the following is produced:
 
     .. figure:: _static/avaAlr1_ppr_thresholdValue_1_slComparison.png
 
@@ -269,7 +270,7 @@ Configuration parameters
 :contourLevels: contour levels for difference plot (according to the chosen resType)
 :diffLim: max/min of chosen resType displayed in difference plot
 :interpMethod: interpolation method used to project the a point on the input raster (chose between 'nearest' and 'bilinear')
-:distance: re-sampling distance. The given avalanche path is re-sampled with a 10m (default) step.
+:distance: resampling distance. The given avalanche path is resampled with a 10m (default) step.
 :dsMin: float. Threshold distance [m]. When looking for the beta point make sure at least
   dsMin meters after the beta point also have an angle bellow 10° (dsMin=30m as default).
 

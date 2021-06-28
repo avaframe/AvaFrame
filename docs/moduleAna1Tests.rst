@@ -56,6 +56,7 @@ damBreakSol:
 To run
 ------
 
+* first go to ``AvaFrame/avaframe``
 * runDamBreak.py
 
 
@@ -101,4 +102,5 @@ velocity in real time and space.
 To run
 ------
 
+* first go to ``AvaFrame/avaframe``
 * runSimilaritySol.py

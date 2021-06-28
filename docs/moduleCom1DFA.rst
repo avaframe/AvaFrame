@@ -10,7 +10,8 @@ solved numerically using the smoothed particle hydrodynamics (sph) method.
 Dense flow avalanche simulations can be performed for different release area scenarios, with or without
 entrainment and/or resistance areas.
 The model configuration is controlled via a configuration file.
-This configuration file can be modified in order to change any of the default settings.
+This configuration file can be modified in order to change any of the default settings and also allows
+to perform simulations for varying parameters all at once.
 
 
 Input
@@ -20,18 +21,18 @@ DFA simulations are performed within an avalanche directory that has to be organ
 
 .. Note::  An avalanche directory can be created by running: ``runInitializeProject.py``, which creates the required folder structure:
 
-    ::
+  ::
 
-    		NameOfAvalanche/
-    			Inputs/
-    				REL/		- release area scenario
-    				RES/		- resistance areas
-    				ENT/		- entrainment areas
-    				POINTS/ - split points
-            LINES/  - avalanches paths
-    				SECREL/ - secondary release area
-    			Outputs/
-    			Work/
+    NameOfAvalanche/
+      Inputs/
+        REL/      - release area scenario
+        RES/      - resistance areas
+        ENT/      - entrainment area
+        POINTS/   - split points
+        LINES/    - avalanche paths
+        SECREL/   - secondary release area
+      Outputs/
+      Work/
 
 
 In the directory ``Inputs``, the following files are required:
@@ -90,10 +91,11 @@ Have a look at the designated Output section in ``com1DFACfg.ini``.
 To run
 --------
 
+* first go to ``AvaFrame/avaframe``
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
 * create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
 * copy ``com1DFACfg.ini`` to ``local_com1DFACfg.ini`` and if desired change configuration settings
-* in ``avaframe/`` run:
+* run:
   ::
 
     python3 runCom1DFA.py

@@ -44,9 +44,10 @@ to filter the simulations further - using the function ``getFilterDict`` which g
 parameter dictionary for filtering according to the filter criteria set in the
 configuration file (``probAnaCfg.ini``) of the ``probAna`` function.
 
+* first go to ``AvaFrame/avaframe``
 * copy ``probAnaCfg.ini`` to ``local_probAnaCfg.ini``
 * uncomment FILTER section in ``local_probAnaCfg.ini`` and insert filter parameters if you want to first filter simulations
-* in ``AvaFrame/avaframe/`` run::
+* run::
 
       python3 runProbAna.py
 

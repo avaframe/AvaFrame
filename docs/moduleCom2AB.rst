@@ -22,12 +22,13 @@ Outputs
 To run
 -------
 
+* first go to ``AvaFrame/avaframe``
 * copy ``com2ABCfg.py`` to ``local_com2ABCfg.py`` (if not, default values are used)
 * make sure all the required inputs are available in the avalanche directory
 * enter the path to the desired dataset in ``local_avaframeCfg.py``
-* in ``AvaFrame/`` run::
+* run::
 
-      python3 avaframe/runCom2AB.py
+      python3 runCom2AB.py
 
 
 Theory
