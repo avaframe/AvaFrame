@@ -50,7 +50,7 @@ featLF = False
 
 
 def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
-    """ Run main model
+    """ Run main com1DFA model
 
     This will compute a dense flow avalanche
 
@@ -58,8 +58,14 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     ----------
     cfg : dict
         configuration read from ini file
+    cuSimName: str
+        name of simulation
+    inputSimFiles: dict
+        dictionary with input files
     avaDir : str
         path to avalanche directory
+    outDir: str
+        path to Outputs
     relThField: 2D array
         release thickness field with varying release thickness if '', release thickness is taken from
         (a) shapefile or (b) configuration file
