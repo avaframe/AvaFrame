@@ -111,9 +111,10 @@ To run
 .. Attention:: Please refer to the instructions in :ref:`C++ Executable` on how to get the
                necessary C++ executable and setup the correct paths.
 
+* first go to ``AvaFrame/avaframe``
 * create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
-* in ``avaframe/`` run:
+* run:
   ::
 
     python3 com1DFAOrig/runCom1DFA.py
