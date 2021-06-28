@@ -1072,7 +1072,7 @@ def DFAIterate(cfg, particles, fields, dem):
     log.debug(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
     log.debug(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
     log.debug(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
-    Tsave.append(t)
+    Tsave.append(t-dt)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
     # create infoDict for report and mass log file
