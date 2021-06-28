@@ -1,5 +1,12 @@
 """
     Run script for running python DFA kernel and similarity solution test
+    This script calculates the similarity solution for a gliding avalanche on
+    a inclined plane according to similarity solution from :
+    Hutter, K., Siegel, M., Savage, S.B. et al.
+    Two-dimensional spreading of a granular avalanche down an inclined plane
+    Part I. theory. Acta Mechanica 100, 37–68 (1993).
+    https://doi.org/10.1007/BF01176861
+    and compares it to the DFA kernel com1DFA
 """
 
 import os
@@ -76,8 +83,8 @@ except ValueError:
 while isinstance(value, float):
 
     # determine index for time step
-    ind_t = np.searchsorted(Tsave, value)
-    ind_time = np.searchsorted(solSimi['Time'], value)
+    ind_t = min(np.searchsorted(Tsave, value), len(Tsave)-1)
+    ind_time = np.searchsorted(solSimi['Time'], Tsave[ind_t])
 
     # get similartiy solution h, u at reuired time step
     simiDict = simiSol.getSimiSolParameters(solSimi, relDict, ind_time, cfg)

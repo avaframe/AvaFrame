@@ -1,5 +1,6 @@
-""" This script calculates the similarity solution for a gliding avalanche on
-a inclined plane according to similarity solution from :
+""" Similarity solution module
+This module contains functions that compute the similarity solution
+for a gliding avalanche on a inclined plane according to similarity solution from :
 Hutter, K., Siegel, M., Savage, S.B. et al.
 Two-dimensional spreading of a granular avalanche down an inclined plane
 Part I. theory. Acta Mechanica 100, 37–68 (1993).
@@ -17,7 +18,6 @@ import matplotlib.pyplot as plt
 # local imports
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFA.com1DFA as com1DFA
-import avaframe.ana1Tests.simiSol as simiSol
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
 
@@ -66,8 +66,22 @@ def defineEarthPressCoeff(phi, delta):
 
 
 def computeEarthPressCoeff(x, earthPressureCoefficients):
-    """ Compute earth pressure coefficients function of sng of f and g
+    """ Computes the earth pressure coefficients function of sng of f and g
         i.e depending on if we are in the active or passive case
+
+        Parameters
+        -----------
+        x: float
+            internal friction angle
+        earthPressureCoefficients: numpy array
+            [Kxact Kxpass Kyact(Kxact) Kypass(Kxact) Kyact(Kxpass) Kypass(Kxpass)]
+
+        Returns
+        --------
+        K_x: float
+            earth pressure coefficient in x direction
+        K_y: float
+            earth pressure coefficient in y direction
     """
 
     g_p = x[1]
@@ -88,12 +102,11 @@ def computeEarthPressCoeff(x, earthPressureCoefficients):
             log.info('ky passive')
             K_y = earthPressureCoefficients[5]
 
-    return [K_x, K_y]
+    return K_x, K_y
 
 
 def computeFCoeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
-    """ Compute coefficients for function F
-        coefficients for the simplified mode, eq 3.1
+    """ Compute coefficients eq 3.2 for the function F
     """
 
     A = np.sin(zeta)
@@ -107,7 +120,7 @@ def computeFCoeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
         E = (A-C)/A
         C = np.cos(zeta) * np.tan(delta)
 
-    return [A, B, C, D, E]
+    return A, B, C, D, E
 
 
 def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y):
@@ -117,8 +130,8 @@ def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, 
 
     # early solution exists only if first derivative of f at t=0 is zero
     assert x_0[3] == 0, "f'(t=0)=f_p0 must be equal to 0"
-    [K_x, K_y] = computeEarthPressCoeff(x_0, earthPressureCoefficients)
-    [A, B, C, D, E] = computeFCoeff(x_0, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
+    K_x, K_y = computeEarthPressCoeff(x_0, earthPressureCoefficients)
+    A, B, C, D, E = computeFCoeff(x_0, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
     g0 = x_0[0]
     g_p0 = x_0[1]
     f0 = x_0[2]
@@ -156,8 +169,8 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y
     """
 
     global A, C
-    [K_x, K_y] = computeEarthPressCoeff(x, earthPressureCoefficients)
-    [A, B, C, D, E] = computeFCoeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
+    K_x, K_y = computeEarthPressCoeff(x, earthPressureCoefficients)
+    A, B, C, D, E = computeFCoeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
     u_c = (A - C)*t
     g = x[0]
     g_p = x[1]
@@ -177,7 +190,8 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y
 
 
 def odeSolver(solver, dt, t_end, solSimi):
-
+    """ Solve the ODE using a Runge-Kutta method
+    """
     time = solSimi['time']
     g_sol = solSimi['g_sol']
     g_p_sol = solSimi['g_p_sol']
@@ -204,7 +218,8 @@ def odeSolver(solver, dt, t_end, solSimi):
 
 
 def h(solSimi, x1, y1, i, L_y, L_x, H):
-
+    """ get flow depth from f and g solutions
+    """
     time = solSimi['time']
     g_sol = solSimi['g_sol']
     f_sol = solSimi['f_sol']
@@ -216,7 +231,8 @@ def h(solSimi, x1, y1, i, L_y, L_x, H):
 
 
 def u(solSimi, x1, y1, i, L_x, U):
-
+    """ get flow velocity in x direction from f and g solutions
+    """
     time = solSimi['time']
     g_sol = solSimi['g_sol']
     g_p_sol = solSimi['g_p_sol']
@@ -226,7 +242,8 @@ def u(solSimi, x1, y1, i, L_x, U):
 
 
 def v(solSimi, x1, y1, i, L_y, V):
-
+    """ get flow velocity in y direction from f and g solutions
+    """
     f_sol = solSimi['f_sol']
     f_p_sol = solSimi['f_p_sol']
     z = V*y1/L_y*f_p_sol[i]/f_sol[i]
@@ -235,7 +252,8 @@ def v(solSimi, x1, y1, i, L_y, V):
 
 
 def xc(solSimi, x1, y1, i, L_x):
-
+    """ get center of mass location
+    """
     time = solSimi['time']
     z = L_x*(A-C)/2*(time[i])**2
 
@@ -243,7 +261,7 @@ def xc(solSimi, x1, y1, i, L_x):
 
 
 def runSimilarity():
-    """ Run main model"""
+    """ Compute similarity solution"""
 
     # Load configuration
     simiSolCfg = os.path.join('data/avaSimilaritySol', 'Inputs', 'simiSol_com1DFACfg.ini')
@@ -323,21 +341,25 @@ def runSimilarity():
 
 
 def getReleaseThickness(avaDir, cfg, demFile):
-    """ define release thickness for similarity solution test
+    """ Define release thickness for the similarity solution test
 
-        Parameters
-        -----------
-        avaDir: str
-            path to avalanche directory
-        cfg: dict
-            confguration settings
-        demFile: str
-            path to DEM file
+    Release area is defined as an elipse or main radius Lx and Ly.
+    Release thickness has a parabolic shape from relTh in the
+    center to 0 on the edges
 
-        Returns
-        --------
-        relDict: dict
-            dictionary with info on release thickness distribution
+    Parameters
+    -----------
+    avaDir: str
+        path to avalanche directory
+    cfg: dict
+        confguration settings
+    demFile: str
+        path to DEM file
+
+    Returns
+    --------
+    relDict: dict
+        dictionary with info on release thickness distribution
 
     """
 
@@ -362,8 +384,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     sin = math.sin(math.pi*planeinclinationAngleDeg/180)
     X1 = X/cos
     Y1 = Y
-    r = np.sqrt((X*X)/(cos*cos)+(Y*Y))
-    relTh = Hini * (1 - (r/L_x) * (r/L_y))
+    relTh = Hini * (1 - X1*X1/(L_x*L_x) - Y*Y/(L_y*L_y))
     relTh = np.where(relTh < 0, 0, relTh)
 
     relDict = {'relTh': relTh, 'X1': X1, 'Y1': Y1, 'demOri': demOri, 'X': X, 'Y': Y,
@@ -391,7 +412,7 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest):
     for part, field in zip(Particles, Fields):
         t = part['t']
         ind_time = np.searchsorted(solSimi['Time'], t)
-        hSimi = simiSol.h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
+        hSimi = h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
         hSimi = np.where(hSimi <= 0, 0, hSimi)
         fig, ax, cmap, lev = com1DFA.plotContours(
             fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm')
@@ -507,14 +528,14 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
     V = np.sqrt(gravAcc*L_y)
 
     # get simi sol
-    hSimi = simiSol.h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
+    hSimi = h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
     hSimi = np.where(hSimi <= 0, 0, hSimi)
-    uxSimi = simiSol.u(solSimi, X1, Y1, ind_time, L_x, U)
+    uxSimi = u(solSimi, X1, Y1, ind_time, L_x, U)
     uxSimi = np.where(hSimi <= 0, 0, uxSimi)
-    uySimi = simiSol.v(solSimi, X1, Y1, ind_time, L_y, V)
+    uySimi = v(solSimi, X1, Y1, ind_time, L_y, V)
     uySimi = np.where(hSimi <= 0, 0, uySimi)
     vSimi = np.sqrt(uxSimi*uxSimi + uySimi*uySimi)
-    xCenter = simiSol.xc(solSimi, X1, Y1, ind_time, L_x)*cos
+    xCenter = xc(solSimi, X1, Y1, ind_time, L_x)*cos
 
     simiDict = {'hSimi': hSimi, 'vSimi': vSimi, 'xCenter': xCenter}
 
