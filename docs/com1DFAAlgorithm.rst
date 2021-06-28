@@ -148,7 +148,7 @@ are found in :ref:`Resistance <theoryCom1DFA:Resistance:>`.
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 
 
-Compute body driving force
+Compute driving force
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This force takes into account the gravity force, which is the driving force of the snow motion.
@@ -189,9 +189,8 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 Compute lateral pressure forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The lateral pressure forces are related to the gradient of the flow depth (:ref:`DFAnumerics:Forces discretization`). This gradient
-is computed using a smoothed particle hydrodynamics method (:ref:`DFAnumerics:SPH gradient`).
-This force is added to the :math:`F_{SPH}`.
+The lateral pressure forces (:math:`F_{SPH}`) are related to the gradient of the flow depth (:ref:`DFAnumerics:Forces discretization`). This gradient
+is computed using a smoothed particle hydrodynamic method (:ref:`DFAnumerics:SPH gradient`).
 
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`

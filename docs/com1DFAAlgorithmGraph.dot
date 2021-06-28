@@ -10,7 +10,7 @@ digraph "com1DFA algorithm graph" {
 
   prepareMesh [label="Initialize Mesh", href="../com1DFAAlgorithm.html#initialize-mesh" tooltip="Go to: initialize mesh" target="_top"];
 
-  prepareAreas [label= "Initilize release, entrainment and resistance areas",
+  prepareAreas [label= "Initialize release, entrainment and resistance areas",
   href="../com1DFAAlgorithm.html#initialize-release-entrainment-and-resistance-areas" tooltip="Go to: release... initialization" target="_top"];
 
   initializeParticles [label="Initialize particles", href="../com1DFAAlgorithm.html#initialize-particles" tooltip="Go to: particle initialization" target="_top"];
@@ -46,10 +46,10 @@ digraph "com1DFA algorithm graph" {
   computeSPHForce [label="Compute lateral pressure force using SPH",
   href="../DFAnumerics.html#sph-gradient" title="Go to: Add lateral pressure force" target="_top"];
 
-  updateVelocityDrive [label="Update velocity with dirving force component",
+  updateVelocityDrive [label="Update velocity with driving force component",
   href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"];
 
-  updateVelocityFrict [label="Update velocity with resistance force component",
+  updateVelocityFrict [label="Update velocity with friction force component",
   href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"];
 
   updatePartPos [label="Update particle position",
