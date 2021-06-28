@@ -1,30 +1,30 @@
 com2AB: Alpha Beta Model
 ==========================
 
-This module calculates the run-out of an avalanche according to the statistical :math:`\alpha-\beta` model.
-An avalanche is defined by its DEM (digital elevation model), a path and split point.
-The run-out is calculated according to the :math:`\alpha-\beta` model suited for avalanches in the Austrian Alps.
+This module calculates the runout of an avalanche according to the statistical :math:`\alpha-\beta` model.
+An avalanche is defined by its DEM (digital elevation model), a path and a split point.
+The runout is calculated according to the :math:`\alpha-\beta` model suited for avalanches in the Austrian Alps.
 It is also possible to adapt the model parameters for other regions.
 
 Input
 -----
 
 * raster of the DEM (.asc file)
-* set of avalanche paths (as a shape file). There can be multiple paths in the shape file.
-* Split point (as a shape file). There can be multiple split points in the shape file.
+* set of avalanche paths (shapefile), there can be multiple paths in the shapefile
+* Split point (shapefile), there can be multiple split points in the shapefile
 
 Outputs
 --------
 
-* profile plot with alpha, beta and run-out points
+* profile plot with alpha, beta and runout points
 * txt file with angle and coordinates of the different points
 
 To run
 -------
 
-* copy ``com2ABCfg.py`` to ``local_com2ABCfg.py`` (if not, default values are used).
-* make sure all the required inputs are available in the avalanche directory.
-* enter the path to the desired dataset in ``local_avaframeCfg.py``.
+* copy ``com2ABCfg.py`` to ``local_com2ABCfg.py`` (if not, default values are used)
+* make sure all the required inputs are available in the avalanche directory
+* enter the path to the desired dataset in ``local_avaframeCfg.py``
 * in ``AvaFrame/`` run::
 
       python3 avaframe/runCom2AB.py
@@ -38,7 +38,7 @@ Theory
         Topographical variables for the calculation of :math:`\alpha`
 
 
-The snow avalanche run-out distance is calculated using a statistical model
+The snow avalanche runout distance is calculated using a statistical model
 based on data collected for real avalanches
 (:cite:`LiBa1980,BaDoLi1983,Wa2016`). An equation of the following type is
 fitted to the data:
@@ -57,30 +57,30 @@ obviously depend on the initial set of chosen data. :math:`\alpha_0= \alpha` is
 the angle between the stopping and the starting point of the avalanche.
 :math:`\alpha_j= \alpha + j SD` takes into account the variability of the
 process. The values of the SD used are based on normal distribution. It is
-important to note that a bigger run-out angle leads to a shorter run-out
+important to note that a bigger runout angle leads to a shorter runout
 distance. This means that :math:`\alpha_{-1}= \alpha - SD` leads to a longer
-run-out. In other words, the probability of the run-out being shorter than
+runout. In other words, the probability of the runout being shorter than
 :math:`x_{\alpha_{-1}}` corresponding to :math:`\alpha_{-1}` is approximately
 83%.
 
 
 In this module, the coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard
 deviation :math:`SD` are already known, they are simply used in the :math:`\alpha`
-equation to calculate the run-out on a new profile.
+equation to calculate the runout on a new profile.
 
 Procedure
 -----------
 
-Pre-processing :
+Preprocessing :
 
-* The avalanche path (x,y) is first re-sampled. Default value for re-sampling is distance=10m (maximal horizontal distance between two points).
-  Note that it does not make much sense to decrease this value lower than the raster grid resolution.
-  We then introduce the curvilinear coordinate s which is the represents the projected horizontal distance along the path.
+* The avalanche path (x,y) is first resampled. Default value for resampling is distance=10m (maximal horizontal distance between two points).
+  Note that it does not make much sense to decrease this value to be smaller than the raster grid resolution.
+  We then introduce the curvilinear coordinate s which represents the projected horizontal distance along the path.
 
 * The avalanche path is projected on the DEM to generate the profile using a bi-linear interpolation on the DEM to the point of interest.
 * The split point (which is not necessarily given on the avalanche path) is projected on the avalanche path.
 
-We end up with the (x,y,z) and (s,z) coordinates of the avalanche profile.
+From this we obtain the (x,y,z) and (s,z) coordinates of the avalanche profile.
 
 AlphaBeta Model:
 
@@ -88,22 +88,21 @@ AlphaBeta Model:
 * Calculate :math:`\beta`.
 * Calculate the :math:`\alpha_j` angles using the adequate standard, small avalanche or custom parameter set.
 
-Post-processing:
+Postprocessing:
 
 * Plot and save results.
 
 Configuration parameters
 ---------------------------------
 
-:distance: re-sampling distance. The given avalanche path is re-sampled with a step <= 10m (default).
+:distance: resampling distance. The given avalanche path is resampled with a step <= 10m (default).
 
-:dsMin: float. Threshold distance [m]. When looking for the beta point make sure at least
-dsMin meters after the beta point also have an angle bellow 10° (dsMin=30m as default).
+:dsMin: float. Threshold distance [m]. When looking for the beta point make sure at least dsMin meters after the beta point also have an angle bellow 10° (dsMin=30m as default).
 
-:smallAva: boolean (False as default) depending on if you want to apply the :math:`(k_1, k_2, k_3, k_4, SD)` set of small avalanches or standard avalanches
+:smallAva: boolean (False as default) if True apply :math:`(k_1, k_2, k_3, k_4, SD)` set of small avalanches or False, standard avalanches
 
 :customParam: boolean (False as default). Enables to choose custom :math:`(k_1, k_2, k_3, k_4, SD)``. If True,
-  the value from the configuration file are used
+  the values from the configuration file are used
 
 :k1: float. Use this value if ``customParam=True``
 
