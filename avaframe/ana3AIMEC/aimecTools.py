@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
     """ Read inputs for AIMEC postprocessing
 
-    Reads the requiered geometry files location for AIMEC postpocessing
+    Reads the required geometry files location for AIMEC postpocessing
     given an avalanche directory; avalanche path, split point and DEM
 
     Parameters
@@ -521,7 +521,7 @@ def assignData(fnames, rasterTransfo, interpMethod):
 
     Parameters
     ----------
-    fname: list of str
+    fnames: list of str
         list of path to rasterfile to transform
     rasterTransfo: dict
         transformation information
@@ -711,7 +711,7 @@ def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysi
     """ Analyse transformed field
 
     Analyse transformed rasters in transformedRasters and for each one, compute
-    the Max and Mean values in each cross sections, as well as the
+    the Max and Mean values in each cross section, as well as the
     overall maximum
 
     Parameters
