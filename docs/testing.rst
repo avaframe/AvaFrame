@@ -31,10 +31,9 @@ Dambreak problem
 
 This test is based on a Riemann problem, where the initial condition is described by two different states that are separated by a discontinuity.
 In :cite:`FaMa2012` exact solutions are derived for this problem, based on the Savage-Hutter model to describe the granular flow.
-Here, we provide an implementation of two of the seven cases presented in :cite:`FaMa2012`.
-In Test 2, the initial velocity is zero and a granular mass is suddenly released and flows downslope, whereas in Test 3 the release thickness is constant over the domain, however there is a
-discontinuity in velocity. The upper part is has an initial velocity of the same magnitude, however in reverse direction, i.e. introducing a separation of the release mass.
-For further details have a look at the module ``ana1Test`` and the Section :ref:`moduleana1Tests:Dambreak`.
+Here, we provide an implementation of one of the seven cases presented in :cite:`FaMa2012`.
+In Test 2, the initial velocity is zero and a granular mass is suddenly released and flows downslope.
+For further details have a look at the module :py:mod:`ana1Tests.damBreak` and the Section :ref:`moduleana1Tests:Dambreak`.
 
 
 
@@ -42,26 +41,27 @@ Similarity Solution
 --------------------
 
 This test makes use of an exact solution of a sliding granular mass on an inclined plane.
-In :cite:`HuSiSaNo1993` the analytic solutions is derived for this problem, based on the Savage-Hutter shallow flow
+In :cite:`HuSiSaNo1993` the analytic solution is derived for this problem, based on the Savage-Hutter shallow flow
 model to describe the granular flow.
 Here, we provide an implementation of the analytic similarity solution and compare
 it to the output of a numerical simulation.
-For further details have a look at the module ``ana1Test`` and the Section :ref:`moduleana1Tests:Similarity solution`.
+For further details have a look at the module :py:mod:`ana1Tests.simiSol` and the Section :ref:`moduleana1Tests:Similarity solution`.
 
 
 Tests for model validation
 ==========================
 
-In this section, tests that check whether the chosen mathematical model is suitable to represent the problem at hand. Currently, we provide idealized and real-world Topographies
-that can be used for avalanche simulations. Additionally, there are several functions that can be used to analyse the simulation results
-and compare them to other data such as results from other models or observations. For this, we refer to Sections :ref:`moduleAna3AIMEC:ana3AIMEC: Aimec` and :ref:`moduleOut3Plot:quickPlot`.
+In this section, tests that check whether the chosen mathematical model is suitable to represent the problem at hand can be found.
+Currently, we provide idealized and real-world topographies that can be used for avalanche simulations. Additionally, there are several functions
+that can be used to analyse the simulation results
+and compare them to other data such as results from other models or observations. For this, we refer to Sections :ref:`moduleAna3AIMEC:ana3AIMEC: Aimec` and :ref:`moduleOut3Plot:outQuickPlot`.
 
 Idealized test cases
 -----------------------
 
 We provide a range of idealized topographies to perform avalanche simulations including different release area scenarios. Some of the topographies also
 include entrainment and/or resistance areas. These can be found in ``data/NameOfAvalanche``. The functions to produce these can be found in
-module ``in3utils/generateTopo.py`` (see :ref:`api:API Reference`).
+module :py:mod:`in3Utils/generateTopo.py`.
 
 Bowl - BL
 ^^^^^^^^^^
