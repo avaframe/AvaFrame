@@ -55,7 +55,7 @@ Output
 To run
 ------
 
-* copy ``generateTopoCfg.ini`` to ``local_generateTopoCfg.ini`` and set desired parameter values (if not, the default values are used)
+* copy ``generateTopoCfg.ini`` to ``local_generateTopoCfg.ini`` and set the desired parameter values (if not, the default values are used)
 * in ``Avaframe/`` run::
 
 	python3 runGenerateTopo.py
@@ -78,23 +78,23 @@ slope of the pyramid facets (meanAlpha)
 
 :dx: DEM spatial resolution [m]
 :xEnd: total horizontal extent of the domain [m]
-:yEnd: total horizontal extent of the domain [m]
+:yEnd: total vertical extent of the domain [m]
 
 
 **Topography parameters:**
 
-:flens: 	distance to point where slope transitions into flat plane [m]
-:meanAlpha: 	slope angle from max. elevation to start flat plane [°] - or slope of inclined plane [°]
+:flens: 	distance to the point where the slope transitions into a flat plane [m]
+:meanAlpha: 	slope angle from the max. elevation to the start of the flat plane [°] - or slope of the inclined plane [°]
 :C: 		total fall height [m]
 :rBowl:	  bowl radius [m]
 :rHelix:	  radius for helix [m]
 :z0: 		max elevation [m]
-:zElev:	  elevation of flat plane [m]
-:rCirc: 	radius of smoothing circle [m]
+:zElev:	  elevation of the flat plane [m]
+:rCirc: 	radius of the smoothing circle [m]
 :demType: topography types (FP, IP, PF, HS, BL, HX, PY - explanation given in the introductory description)
-:flatx: extent of flat foreland for pyramid in x
-:flaty: extent of flat foreland for pyramid in y
-:phi: rotation angle for pyramid
+:flatx: extent of the flat foreland for the pyramid in x
+:flaty: extent of the flat foreland for the pyramid in y
+:phi: rotation angle for the pyramid
 
 
 **Flags for channels and plotting:**
@@ -129,17 +129,15 @@ The release areas are defined as rectangular features build by four corner point
 * prescribed vertical stretch in meters (difference in altitude)
 * prescribed volume of the release area
 * lower margin is located where the slope angle falls below 30°
-* if slope does not fall below 30 °, upper margin is located xStart away from upper margin of the DEM
+* if slope does not fall below 30 °, the upper margin is located xStart away from the upper margin of the DEM
 
-Detailed information on the individual functions used to create the topographies can be found in:
-
-:py:mod:`in3Utils.getReleaseArea`
+Detailed information on the individual functions used to create the topographies can be found in :py:mod:`in3Utils.getReleaseArea`
 
 
 Input
 ------
 
-* in ``getReleaseAreaCfg.ini`` and ``generateTopoCfg.ini`` all required input parameters are listed (does include default values for all parameters)
+* in ``getReleaseAreaCfg.ini`` and ``generateTopoCfg.ini`` all the required input parameters are listed (does include default values for all parameters)
 
 Output
 ------
@@ -163,7 +161,7 @@ Following these steps, you can generate an avalanche test case including a DEM a
 :hr: release area vertical stretch [m]
 :vol: volume of snow in release area [m3]
 :dh: release snow thickness [m]
-:xStart: upper margin of release area distance in x from origin [m]
+:xStart: upper margin of the release area distance in x from origin [m]
 :lenP: number of release area polygon points
 :outputtxt: True - copy the output to txt file
 :xExtent: horizontal extent of release area for flat plane
@@ -175,10 +173,8 @@ Following these steps, you can generate an avalanche test case including a DEM a
 Initialize Project
 =====================
 
-Here functions to initialize a project, create the required directory structure and delete specified
-files or directories. Details on these functions can be found in:
-
-:py:mod:`in3Utils.InitializeProject`
+:py:mod:`in3Utils.InitializeProject` provides functions to initialize a project, create the required directory structure and delete specified
+files or directories.
 
 The main function *initializeFolderStruct*, creates the folder structure required to perform avalanche simulations:
 ::
@@ -234,8 +230,8 @@ To run
 fileHandlerUtils
 =================
 
-``fileHandlerUtils.py`` gathers useful functions to create directories, read log files,
-extract information from logs, fetch and export data and fetch simulation infos into a dataFrame
+:py:mod:`in3Utils.fileHandlerUtils` gathers useful functions to create directories, read log files,
+extract information from logs, fetch and export data and fetch simulation info into a dataFrame
 that can be used within other functions. Details on these functions can be found in:
 
 :py:mod:`in3Utils.fileHandlerUtils`
