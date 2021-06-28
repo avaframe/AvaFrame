@@ -27,10 +27,10 @@ DFA simulations are performed within an avalanche directory that has to be organ
       Inputs/
         REL/      - release area scenario
         RES/      - resistance areas
-        ENT/      - entrainment area
+        ENT/      - entrainment areas
         POINTS/   - split points
         LINES/    - avalanche paths
-        SECREL/   - secondary release area
+        SECREL/   - secondary release areas
       Outputs/
       Work/
 

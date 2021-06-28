@@ -34,6 +34,7 @@ Analysis/Output/Helper Modules
    :template: custom-module-template.rst
    :recursive:
 
+   ana1Tests
    ana3AIMEC
    ana4Stats.probAna
    ana4Stats.getStats
