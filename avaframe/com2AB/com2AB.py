@@ -154,7 +154,7 @@ def com2ABMain(cfg, avalancheDir):
 def com2ABKern(avapath, resAB, distance, dsMin):
     """ Compute AlpahBeta model for a given avapath
 
-    Computes the AlphaBeta model given an input raster (of the dem),
+    Call calcAB to compute the AlphaBeta model given an input raster (of the dem),
     an avalanche path and split points
 
     Parameters
@@ -204,10 +204,9 @@ def com2ABKern(avapath, resAB, distance, dsMin):
 
 
 def readABinputs(avalancheDir):
-    """ Compute AlpahBeta model for a given avapath
+    """ Fetch inputs for AlpahBeta model
 
-    Computes the AlphaBeta model given an input raster (of the dem),
-    an avalanche path and split points
+    Get path to AlphaBeta model inputs (dem raster, avalanche path and split points)
 
     Parameters
     ----------
@@ -261,10 +260,8 @@ def readABinputs(avalancheDir):
 
 
 def calcAB(AvaProfile, eqParameters, dsMin):
-    """ Compute AlpahBeta model for a given AvaProfile and chosen eqParameters
-
-    Kernel function that computes the AlphaBeta model for a given AvaProfile
-    and eqParameters
+    """ Kernel function that computes the AlphaBeta model
+    for a given AvaProfile and eqParameters
 
     Parameters
     ----------
