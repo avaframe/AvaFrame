@@ -1,4 +1,6 @@
-""" Similarity solution module
+"""
+Similarity solution module
+
 This module contains functions that compute the similarity solution
 for a gliding avalanche on a inclined plane according to similarity solution from :
 Hutter, K., Siegel, M., Savage, S.B. et al.

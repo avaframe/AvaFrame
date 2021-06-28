@@ -44,7 +44,7 @@ debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 # particles are homegeneosly distributed with a little random variation
 flagSemiRand = False
 # particles are randomly distributed
-flagRand = True
+flagRand = False
 # set feature leapfrog time stepping
 featLF = False
 

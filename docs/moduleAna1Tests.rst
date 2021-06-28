@@ -89,7 +89,7 @@ Input
 -----
 
 * avalanche directory ('data/avaSimilaritySol')
-* configuration settings of com1DFA including a section 'SIMISOL' (see ``data/avaSimilaritySol\Inputs\simiSol_com1DFACfg.ini``)
+* configuration settings of com1DFA including a section 'SIMISOL' (see ``data/avaSimilaritySol/Inputs/simiSol_com1DFACfg.ini``)
 
 
 Outputs
@@ -118,15 +118,61 @@ Comparing the results from the DFA module to the similarity solution leads to th
 .. list-table::
 
 
-    * - .. figure:: _static/simiSol_x.png
+    * - Along slope flow depth and velocity of the DFA solution and similarity solution
 
-          along slope flow depth and velocity of the DFA solution and similarity solution
+        .. figure:: _static/simiSol_x.png
 
-      - .. figure:: _static/simiSol_y.png
 
-          cross slope flow depth and velocity of the DFA solution and similarity solution
+      - Cross slope flow depth and velocity of the DFA solution and similarity solution
+
+        .. figure:: _static/simiSol_y.png
+
 
 .. figure:: _static/simiSol_2D.png
 
-* first go to ``AvaFrame/avaframe``
-* runSimilaritySol.py
+    2D flow depth of the DFA solution (full lines) and similarity solution (dashed lines) in meters
+
+
+
+
+Flat plane test
+====================
+
+In this test, the behavior of a conical pile of material placed on a flat plane
+and ruled by Coulomb friction is studied. The pile starts at rest and depending
+on the steepness of the slope and the friction angle will start flowing. The idea behind this test
+is to check implementation of the bottom shear stress in the DFA module as well as the gradient
+computation (SPH method).
+
+The :py:mod:`ana1Tests.FPtest` module provides functions to compute the analytic solution and some plotting routines
+to visualize the pile and to compare it to the output from the DFA computational module.
+
+
+An workflow example is given in :py:func:`runTestFP`. The input data for this example can be found in ``data/avaFPtest``.
+
+
+Input
+-----
+
+* avalanche directory ('data/avaFPtest')
+* configuration settings of com1DFA including a section 'FPSOL' (see ``data/avaFPtest/Inputs/FlatPlane_com1DFACfg.ini``)
+
+
+Outputs
+-------
+
+The :py:func:`plotProfilesFPtest` function generates a profile plot of the flow depth in the radial direction.
+The simulation results are plotted alongside the analytical solution for the given time step.
+
+
+.. list-table::
+
+
+    * - Pile at initial time step
+
+        .. figure:: _static/flatPlaneTest.png
+
+
+      - Pile after 19.8s
+
+        .. figure:: _static/flatPlaneTest20s.png
