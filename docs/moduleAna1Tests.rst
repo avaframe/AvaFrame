@@ -8,7 +8,7 @@ Dambreak
 =========
 
 This function is used to reproduce the exact solution for a dam break problem based on the Savage Hutter model and was described in :cite:`FaMa2012`.
-In this test a release mass in suddenly released  over an inclined plane.
+In this test a release mass in suddenly released over an inclined plane.
 This function also provides its own plotting routines that can be used to generate plots of the
 analytical results and also to compare simulation results to the exact solutions.
 An example is given in runDamBreak.py, where the analytical solution is computed and
@@ -27,6 +27,7 @@ Input
 damBreakSol:
 
 * avalanche directory
+* main avaframe configuration settings
 * configuration settings of com1DFA including a section 'DAMBREAK'
 
 plotResults:
@@ -37,7 +38,7 @@ plotResults:
 
 plotComparison:
 
-* dataComsol (dictionary with simulation results)
+* dataComsol (dataFrame with simulation results)
 * hL, xR, hR, uR - initial release thickness, domain extent, flow depth and flow velocity from exact solution
 * dtAnalysis - time step
 * cfgMain - main configuration
@@ -58,12 +59,13 @@ To run
 * runDamBreak.py
 
 
+
 Similarity solution
 ====================
 
 This function is used to reproduce the exact similarity solution for a dry friction
-avalanche (coulom friction) based on the Savage Hutter model and was described in :cite:`HuSiSaNo1993`.
-In this test a release mass (distributed in an elliptic shape) andn suddenly released  over an inclined plane.
+avalanche (Coulomb friction) based on the Savage Hutter model and was described in :cite:`HuSiSaNo1993`.
+In this test a release mass (distributed in an elliptic shape) is suddenly released over an inclined plane.
 This function also provides its own plotting routines that can be used to generate plots of the
 analytical results and also to compare simulation results to the exact solutions.
 An example is given in runSimilaritySol.py, where the analytical solution is computed and
