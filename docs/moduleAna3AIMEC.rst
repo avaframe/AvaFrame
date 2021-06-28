@@ -2,15 +2,15 @@ ana3AIMEC: Aimec
 ==========================
 
 Aimec is a post-processing module to analyze and compare results from avalanche simulations.
-It enables the comparison of different simulations (with different input parameters variations for example, or from different models)
+It enables the comparison of different simulations (with different input parameter sets for example, or from different models)
 of the same avalanche (meaning using the same DEM and going down the same avalanche path) in a standardized way.
 
-In ``AvaFrame/avaframe/``, three different run scripts are provided that show examples on how to use the postprocessing module aimec can be used.
+In ``AvaFrame/avaframe/``, three different run scripts are provided that show examples on how the postprocessing module aimec can be used.
 These examples include:
 
 *  full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMEC`
-*  using aimec to compare the results of two different computational modules (for one simulation at a time meaning there should be only one simulation result per
-  computation module). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMECCompMods`
+*  using aimec to compare the results of two different computational modules (for one simulation at a time hence only one simulation result per
+  computation module is passed at a time). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMECCompMods`
 *  using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations)
 
 Here is an example worflow for the full aimec analysis, as provided in ``runAna3AIMEC.py``:
@@ -19,8 +19,8 @@ Inputs
 -------
 
 *  raster of the DEM (.asc file)
-*  avalanche path in LINES (as a shape file named ``path_aimec.shp``).
-*  a splitPoint in POINTS (as a shape file named ``splitPoint.shp``).
+*  avalanche path in LINES (as a shapefile named ``path_aimec.shp``)
+*  a splitPoint in POINTS (as a shapefile named ``splitPoint.shp``)
 *  Results from avalanche simulation (when using results from com1DFA,
   the helper function ``mainDfa2Aimec`` in ``dfa2Aimec.py`` fetches and prepares the input for Aimec)
 
@@ -49,7 +49,7 @@ Theory
 The simulation results (two dimensional fields of e.g. peak velocities / pressure or flow depth) are processed in a way
 that it is possible to compare characteristic values that are directly linked to the flow variables such as
 maximum peak flow depth, maximum peak velocity or deduced quantities, for example maximum peak pressure,
-pressure based run-out (including direct comparison to possible references, see :ref:`area-indicators`) for different simulations.
+pressure based runout (including direct comparison to possible references, see :ref:`area-indicators`) for different simulations.
 
 AIMEC (Automated Indicator based Model Evaluation and Comparison, :cite:`Fi2013`) was developed
 to analyze and compare avalanche simulations. The computational module presented here is inspired from the original AIMEC code.
@@ -64,7 +64,7 @@ The following figure illustrates the process.
 
 
 
-    *  - .. _fig-aimec-comp-real:
+    * - .. _fig-aimec-comp-real:
 
         .. figure:: _static/aimec_comparison_real_topo.png
 
@@ -91,21 +91,21 @@ dimensional distribution :math:`A(s,l)` is:
     A_{cross}^{max}(s) = \max_{\forall l \in [-\frac{w}{2},\frac{w}{2}]} A(s,l) \quad\mbox{and}\quad
     \bar{A}_{cross}(s) = \frac{1}{w}\int_{-\frac{w}{2}}^{\frac{w}{2}} A(s,l)dl
 
-Run-out point
+Runout point
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The run-out point corresponding to a given pressure threshold :math:`P_{lim}>0kPa` is the first point :math:`s=s_{runout}`
+The runout point corresponding to a given pressure threshold :math:`P_{lim}>0kPa` is the first point :math:`s=s_{runout}`
 where the maximum peak pressure falls below the pressure limit (:math:`P_{cross}^{max}(s)<P_{Lim}`). This :math:`s=s_{runout}` is related
 to a :math:`(x_{runout},y_{runout})` in the original coordinate system. It is very important to note that the position of this
 point depends on the chosen pressure limit value. It would also be possible to use :math:`\bar{P}_{cross}(s)<P_{Lim}` instead of
 :math:`P_{cross}^{max}(s)<P_{Lim}`.
 
-Run-out length
+Runout length
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This length depends on what is considered the beginning of the avalanche :math:`s=s_{start}`. It can be related to the release area,
-to the transition point (first point where the slope angle is below :math:`30^{\circ}`) or to the run-out area point
-(first point where the slope angle is below :math:`10^{\circ}`). The run-out length is then defined as :math:`L=s_{runout}-s_{start}`.
+to the transition point (first point where the slope angle is below :math:`30^{\circ}`) or to the runout area point
+(first point where the slope angle is below :math:`10^{\circ}`). The runout length is then defined as :math:`L=s_{runout}-s_{start}`.
 
 Mean and max indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -123,7 +123,7 @@ the global maximum (MMA) and average maximum (AMA) values of the two dimensional
 Area indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When comparing the run-out area (corresponding to a given pressure threshold :math:`P_{cross}^{max}(s)>P_{Lim}`) of two simulations,
+When comparing the runout area (corresponding to a given pressure threshold :math:`P_{cross}^{max}(s)>P_{Lim}`) of two simulations,
 it is possible to distinguish four different zones. For example, if the first simulation (sim1) is taken as reference and if True corresponds
 to the assertion that the avalanche covered this zone and False there was no avalanche in this zone, those four zones are:
 
@@ -132,7 +132,7 @@ to the assertion that the avalanche covered this zone and False there was no ava
     *  FN (false negative) zone: red zone on :numref:`fig-aimec-comp-new` , sim1 = True  sim2 = False
     *  TN (true negative) zone: gray zone on :numref:`fig-aimec-comp-new` , sim1 = False  sim2 = False
 
-The two simulations are identical (in the run-out zone) when the area of both FP and FN is zero. In order to provide a normalized
+The two simulations are identical (in the runout zone) when the area of both FP and FN is zero. In order to provide a normalized
 number describing the difference between two simulations, the area of the different zones is normalized by the area of the reference
 simulation :math:`A_{ref} = A_{TP} + A_{FP}`. This leads to the 4 area indicators:
 
@@ -141,7 +141,7 @@ simulation :math:`A_{ref} = A_{TP} + A_{FP}`. This leads to the 4 area indicator
     *  :math:`\alpha_{FN} = A_{FN}/A_{ref}`, which is a positive value if the reference covers an area outside of sim2
     *  :math:`\alpha_{TN} = A_{TN}/A_{ref}`
 
-Identical simulations (in the run-out zone) lead to :math:`\alpha_{TP} = 1` , :math:`\alpha_{FP} = 0` and :math:`\alpha_{FN} = 0`
+Identical simulations (in the runout zone) lead to :math:`\alpha_{TP} = 1` , :math:`\alpha_{FP} = 0` and :math:`\alpha_{FN} = 0`
 
 Mass indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -179,8 +179,8 @@ The transformation information are stored in a ``rasterTransfo`` dictionary (see
 .. :y: y coordinate of the centerline (s,l=0) of the new raster (1D numpy arrayof size m)
 .. :rasterArea: area of the cells of the new raster grid (2D numpy array of size (n,m))
 .. :indSplit: index of the projected split point on the avalanche path
-.. :startOfRunoutAngle: slope angle defining the start of run-out point (run-out will be measured from this point) in degrees
-.. :indstartOfRunout: 	index of the start of run-out point (first point under the given startOfRunoutAngle)
+.. :startOfRunoutAngle: slope angle defining the start of runout point (runout will be measured from this point) in degrees
+.. :indstartOfRunout: 	index of the start of runout point (first point under the given startOfRunoutAngle)
 
 
 Assign data
@@ -204,14 +204,14 @@ Calculates the different indicators described in the :ref:`Theory` section for a
 can be based on pressure, flow depth, ... (this needs to be specified in the configuration file).
 Returns a ``resAnalysis`` dictionary with the analysis results (see :py:func:`ana3AIMEC.ana3AIMEC.postProcessAIMEC` for more details).
 
-.. :runout: (x,y) coordinates of the run-out as well as the run-out length based on P_cross_max and the pressure Threshold
-.. :runoutMean: (x,y) coordinates of the run-out as well as the run-out length based on P_cross_mean and the pressure Threshold
+.. :runout: (x,y) coordinates of the runout as well as the runout length based on P_cross_max and the pressure Threshold
+.. :runoutMean: (x,y) coordinates of the runout as well as the runout length based on P_cross_mean and the pressure Threshold
 .. :AMPP: average maximum peak pressure
 .. :MMPP: maximum maximum peak pressure
 .. :AMD: average maximum flow depth
 .. :MMD: maximum maximum flow depth
 .. :elevRel: z coordinate of the release area (first point with max Peak pressure over pressure Threshold)
-.. :deltaH: DeltaZ between the release point and run-out point
+.. :deltaH: DeltaZ between the release point and runout point
 .. :relMass: release Mass
 .. :entMass: entrained Mass
 .. :growthIndex: growth Index
@@ -246,7 +246,7 @@ compare to the reference. The first five ones are :
 
 
   *  "ROC" shows the normalized area difference between reference and other simulations.
-  *  "rmmp" shows the relative difference in maximum peak value between reference and other simulation function of run-out length
+  *  "rmmp" shows the relative difference in maximum peak value between reference and other simulation function of runout length
 
 The last plots "_i_ContourComparisonToReference" and "_i_AreaComparisonToReference"  where "i" gives the number of the simulation plots the 2D difference with the reference
 and the statistics associated.
@@ -263,7 +263,7 @@ Configuration parameters
 ----------------------------
 
 :domainWidth: width of the domain around the avalanche path in [m]
-:startOfRunoutAngle: angle of the slope at the start of the run-out zone [°]
+:startOfRunoutAngle: angle of the slope at the start of the runout zone [°]
 :resType: data result type for runout analysis
 :thresholdValue: limit value for evaluation of runout (according to the chosen resType)
 :contourLevels: contour levels for difference plot (according to the chosen resType)
