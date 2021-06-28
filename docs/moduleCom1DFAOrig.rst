@@ -23,7 +23,7 @@ clone the repository::
   cd [YOURDIR]
   git clone https://github.com/avaframe/com1DFA_Exe
 
-Rename the exectuables according to your operating system, i.e. for Linux do::
+Rename the executables according to your operating system, i.e. for Linux do::
 
   mv com1DFA_Exe/com1DFA_x86_64.exe com1DFA_Exe/com1DFA.exe
   mv com1DFA_Exe/SHPConv_Linux.exe com1DFA_Exe/SHPConv.exe
@@ -39,8 +39,8 @@ Go to the ``com1DFAOrig`` directory of the AvaFrame repository from above and co
   cd AvaFrame/avaframe/com1DFAOrig
   cp com1DFACfg.ini local_com1DFACfg.ini
 
-Open the ``local_com1DFACfg.ini`` file in you prefered text editor and change
-the ``com1Exe`` variable to reflect you paths, i.e.::
+Open the ``local_com1DFACfg.ini`` file in your preferred text editor and change
+the ``com1Exe`` variable to reflect your paths, i.e.::
 
   com1Exe = [YOURDIR]/com1DFA_Exe/com1DFA.exe -files [YOURDIR]/com1DFA_Exe/files/AK_Attributes
 
@@ -76,7 +76,7 @@ In the directory Inputs, the following files are required:
 * digital elevation model as .asc file
   -> use `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
 * release area scenario as shapefile (in Inputs/REL); multiple are possible
-  -> the release area name should not contain an underscore, if so '_AF' is added
+  -> the shapefile name should not contain an underscore, if so '_AF' is added
 
 and the following files are optional:
 
@@ -97,10 +97,10 @@ The simulation settings area defined in the configuration file ``com1DFACfg.ini`
 
 Output
 ---------
-The simulation results are saved to: *Outputs/com1DFA* and include:
+The simulation results are saved to: *Outputs/com1DFAOrig* and include:
 
-* raster files of the peak values for pressure, flow depth and flow velocity (*Outputs/com1DFA/peakFiles*)
-* reports of all simulations (*Outputs/com1DFA/reports*)
+* raster files of the peak values for pressure, flow depth and flow velocity (*Outputs/com1DFAOrig/peakFiles*)
+* reports of all simulations (*Outputs/com1DFAOrig/reports*)
 * log files of all simulations
 * experiment log that lists all simulations
 
@@ -126,7 +126,7 @@ Theory
 
 The governing equations of the dense flow avalanche are derived from the
 incompressible mass and momentum balance on a Lagrange control volume
-([Zw2000]_ [ZwKlSa2003]_). Assuming the avalanche is much longer and larger
+(:cite:`Zw2000,ZwKlSa2003`). Assuming the avalanche is much longer and larger
 than thick, it is possible to integrate the governing equations over the thickness
 of the avalanche and operate some simplifications due to the shape of the avalanche.
 This leads, after some calculation steps described in details in Theory
