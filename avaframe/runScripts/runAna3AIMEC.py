@@ -48,28 +48,20 @@ def runAna3AIMEC(avalancheDir=''):
     anaMod = cfgSetup['anaMod']
 
     # Setup input from com1DFA
-    pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod)
+    pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfgSetup)
 
-# Setup input from com1DFA
-pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfgSetup)
+    # TODO: define referenceFile
+    pathDict['numSim'] = len(pathDict['ppr'])
 
-# TODO: define referenceFile
-pathDict['numSim'] = len(pathDict['ppr'])
+    # define reference simulation
+    pathDict = aimecTools.fetchReferenceSimNo(pathDict, cfgSetup)
 
-# define reference simulation
-pathDict = aimecTools.fetchReferenceSimNo(pathDict, cfgSetup)
+    pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
 
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])
     # Run AIMEC postprocessing
     ana3AIMEC.mainAIMEC(pathDict, cfg)
-
-    endTime = time.time()
-
-log.info("Running ana3AIMEC model on test case DEM: \n %s \n with profile: \n %s ",
-         pathDict['demSource'], pathDict['profileLayer'])
-# Run AIMEC postprocessing
-ana3AIMEC.mainAIMEC(pathDict, cfg)
 
 
 if __name__ == '__main__':
