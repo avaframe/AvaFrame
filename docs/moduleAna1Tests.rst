@@ -55,11 +55,11 @@ damBreakSol:
 
 To run
 ------
-An example on how to apply this test to ``com1DFA`` is provided in :py:func:`runScripts/runSimilaritySol`.
+An example on how to apply this test to :py:mod:`com1DFA` is provided in :py:mod:`runScripts/runDamBreak`.
 
 * in ``AvaFrame/avaframe`` run::
 
-  runDamBreak.py
+    runScripts/runDamBreak.py
 
 
 
@@ -78,7 +78,7 @@ The :py:mod:`ana1Tests.simiSol` module provides functions to compute the analyti
 to visualize this solution and to compare it to the output from the DFA computational module.
 
 
-A workflow example is given in :py:func:`runScripts/runSimilaritySol`, where the analytical solution is computed and
+A workflow example is given in :py:mod:`runScripts/runSimilaritySol`, where the analytical solution is computed and
 avalanche simulations are performed and both results are then compared.
 The input data for this example can be found in ``data/avaSimilaritySol``.
 
@@ -150,20 +150,20 @@ The :py:mod:`ana1Tests.FPtest` module provides functions to compute the analytic
 to visualize the pile and to compare it to the output from the DFA computational module.
 
 
-An workflow example is given in :py:func:`runTestFP`. The input data for this example can be found in ``data/avaFPtest``.
+An workflow example is given in :py:mod:`runScripts.runTestFP`. The input data for this example can be found in ``data/avaFPtest``.
 
 
 Input
 -----
 
-* avalanche directory ('data/avaFPtest')
+* avalanche directory (``data/avaFPtest``)
 * configuration settings of com1DFA including a section 'FPSOL' (see ``data/avaFPtest/Inputs/FlatPlane_com1DFACfg.ini``)
 
 
 Outputs
 -------
 
-The :py:func:`plotProfilesFPtest` function generates a profile plot of the flow depth in the radial direction.
+The :py:func:`ana1Tests.FPtest.plotProfilesFPtest` function generates a profile plot of the flow depth in the radial direction.
 The simulation results are plotted alongside the analytical solution for the given time step.
 
 
