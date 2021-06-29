@@ -55,9 +55,11 @@ damBreakSol:
 
 To run
 ------
+An example on how to apply this test to ``com1DFA`` is provided in :py:func:`runScripts/runSimilaritySol`.
 
-* first go to ``AvaFrame/avaframe``
-* runDamBreak.py
+* in ``AvaFrame/avaframe`` run::
+
+  runDamBreak.py
 
 
 
@@ -76,7 +78,7 @@ The :py:mod:`ana1Tests.simiSol` module provides functions to compute the analyti
 to visualize this solution and to compare it to the output from the DFA computational module.
 
 
-A workflow example is given in :py:func:`runSimilaritySol`, where the analytical solution is computed and
+A workflow example is given in :py:func:`runScripts/runSimilaritySol`, where the analytical solution is computed and
 avalanche simulations are performed and both results are then compared.
 The input data for this example can be found in ``data/avaSimilaritySol``.
 

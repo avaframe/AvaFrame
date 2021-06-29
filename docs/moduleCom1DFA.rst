@@ -19,7 +19,7 @@ Input
 
 DFA simulations are performed within an avalanche directory that has to be organized following a specified folder structure.
 
-.. Note::  An avalanche directory can be created by running: ``runInitializeProject.py``, which creates the required folder structure:
+.. Note::  An avalanche directory can be created by running: :py:mod:`runInitializeProject.py`, which creates the required folder structure:
 
   ::
 
@@ -51,10 +51,10 @@ and the following files are optional:
 
 Model configuration
 --------------------
-The model configuration is read from a configuration file: ``com1DFACfg.ini``. In this file,
+The model configuration is read from a configuration file: ``com1DFA/com1DFACfg.ini``. In this file,
 all model parameters are listed and can be modified. We recommend to create a local copy of the file,
-and keep the default configuration in ``com1DFACfg.ini`` untouched.
-For this purpose, in ``avaframe/`` run:
+and keep the default configuration in ``com1DFA/com1DFACfg.ini`` untouched.
+For this purpose, in ``AvaFrame/avaframe/`` run:
   ::
 
       cp com1DFA/com1DFACfg.ini com1DFA/local_com1DFACfg.ini
@@ -85,7 +85,7 @@ Using the default configuration, the simulation results are saved to: *Outputs/c
 
 
 However, in the configuration file, it is possible to change the result parameters and time Steps that shall be exported.
-Have a look at the designated Output section in ``com1DFACfg.ini``.
+Have a look at the designated Output section in ``com1DFA/com1DFACfg.ini``.
 
 
 To run
@@ -94,7 +94,7 @@ To run
 * first go to ``AvaFrame/avaframe``
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
 * create an avalanche directory with required input files - for this task you can use :ref:`moduleIn3Utils:Initialize Project`
-* copy ``com1DFACfg.ini`` to ``local_com1DFACfg.ini`` and if desired change configuration settings
+* copy ``com1DFA/com1DFACfg.ini`` to ``com1DFA/local_com1DFACfg.ini`` and if desired change configuration settings
 * run:
   ::
 
