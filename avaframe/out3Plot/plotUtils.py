@@ -125,10 +125,6 @@ levP = [0., 1.0, 10.0, 25.0, 50.0, 1000.0]
 ticksP = [0., 1.0, 10.0, 25.0, 50.0]
 # Hawaii color map
 colorsP = ['#FFFAFA', "#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
-# levP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0, 1000.0]
-# ticksP = [0., 1.0, 3.0, 5.0, 10.0, 25.0, 50.0, 100.0, 500.0]
-# colorsP = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E',
-#            '#C51F2E', '#A30A54', '#232D5F', '#102D5B']
 cmapP = makePalette.get_continuous_cmap(colorsP, continuous=True)
 
 # multi sequential colormap for flow depth
@@ -136,9 +132,6 @@ levD = [0., 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 50.0]
 ticksD = [0., 0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
 # Lajolla color map
 colorsD = ['#FFFAFA', "#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
-# levD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 50.0]
-# ticksD = [0., 0.5, 1.0, 2.0, 3.0, 5.0, 10.0]
-# colorsD = ['#E1F88F', '#D7C410', '#D58B15', '#C51F2E', '#A30A54', '#232D5F', '#232D5F']
 cmapD = makePalette.get_continuous_cmap(colorsD, continuous=True)
 
 # multi sequential colormap for speed
@@ -146,10 +139,6 @@ levS = [0., 1, 5, 10, 15, 20, 25, 30, 100]
 ticksS = [0., 1, 5, 10, 15, 20, 25, 30]
 # Batflow color map
 colorsS = ['#FFFAFA', '#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960', '#201158']
-# levS = [0., 1, 5, 10, 15, 20, 25, 30, 35, 100]
-# ticksS = [0., 1, 5, 10, 15, 20, 25, 30, 35]
-# colorsS = ['#F0FF94', '#DFF244', '#E4C82F', '#D77411', '#C5491E', '#BC3334', '#A70753', '#5B2967', '#102D5B']
-# '#851D62' or '#A70753' and '#5B2967'
 cmapS = makePalette.get_continuous_cmap(colorsS, continuous=True)
 
 ###############################################
