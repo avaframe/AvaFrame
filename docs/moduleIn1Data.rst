@@ -66,11 +66,11 @@ An example of how a parameter set distributed following a uniform or Pert distri
 generated, is provided by ``runComputeDist.py``.
 
 * first go to ``AvaFrame/avaframe``
-* copy ``computeFromDistributionCfg.py`` to ``local_computeFromDistributionCfg.py`` (if not, the standard settings are used)
+* copy ``in1Data/computeFromDistributionCfg.py`` to ``in1Data/local_computeFromDistributionCfg.py`` (if not, the standard settings are used)
 * adjust path to the desired ``NameOfAvalanche/`` folder in your local copy of ``avaframeCfg.ini``
 * run::
 
-      python3 runComputeDist.py
+      python3 runScripts/runComputeDist.py
 
 .. _Theory:
 

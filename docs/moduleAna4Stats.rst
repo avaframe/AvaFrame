@@ -37,10 +37,10 @@ Outputs
 To run
 -------
 An example on how to generate probability maps for avalanche simulations performed with com1DFA
-is given in :py:mod:`runScripts.runProbAna`, where for `*avaHockeyChannel* simulations are performed
+is given in :py:mod:`runScripts.runProbAna`, where for *avaHockeyChannel* simulations are performed
 varying release thickness values ranging from 0.75 to 1.75 meters in steps of 0.05 meters.
 The resulting simulations are then used to generate the probability map. There is also the option
-to filter the simulations further - using the function :py:func:`in3Utils.getFilterDict` which generates a
+to filter the simulations further - using the function :py:func:`in3Utils.fileHandlerUtils.getFilterDict` which generates a
 parameter dictionary for filtering according to the filter criteria set in the
 configuration file (``ana4Stats/probAnaCfg.ini``) of the :py:mod:`ana4Stats.probAna` function.
 

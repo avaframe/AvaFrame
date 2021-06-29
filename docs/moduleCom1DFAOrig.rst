@@ -71,7 +71,7 @@ Input
 
 The module requires an avalanche directory, that follows a specified folder structure.
 This avalanche directory can be created by running: py:mod:`runInitializeProject.py`.
-In the directory Inputs, the following files are required:
+In the directory *Inputs*, the following files are required:
 
 * digital elevation model as .asc file
   -> use `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
@@ -80,8 +80,8 @@ In the directory Inputs, the following files are required:
 
 and the following files are optional:
 
-* entrainment area as shapefile (in Inputs/ENT)
-* resistance area as shapefile (in Inputs/RES)
+* entrainment area as shapefile (in *Inputs/ENT*)
+* resistance area as shapefile (in *Inputs/RES*)
 * secondary release area as shapefile (in Inputs/SECREL)
 
 The simulation settings area defined in the configuration file ``com1DFAOrig/com1DFAOrigCfg.ini``:
