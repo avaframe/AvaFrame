@@ -13,7 +13,7 @@ peak pressure of 1kPa.
 
 A set of multiple avalanche simulations is required to generate these maps. The simulations can be generated with com1DFA
 using a parameter variation, different release-, entrainment- or resistance scenarios.
-``runProbAna.py`` gives a example: avalanche simulations for the hockey topography
+:py:mod:`runScripts.runProbAna` gives a example: avalanche simulations for the hockey topography
 are performed with varying release thickness. A probability map based on peak pressure is generated.
 The output is a raster file (.asc) with values ranging from 0-1. 0 meaning that no simulation exceeded the threshold
 in this point in space. 1 on the contrary means that all simulations exceeded the threshold.
@@ -37,19 +37,19 @@ Outputs
 To run
 -------
 An example on how to generate probability maps for avalanche simulations performed with com1DFA
-is given in ``runProbAna.py``, where for avaHockeyChannel simulations are performed
+is given in :py:mod:`runScripts.runProbAna`, where for `*avaHockeyChannel* simulations are performed
 varying release thickness values ranging from 0.75 to 1.75 meters in steps of 0.05 meters.
 The resulting simulations are then used to generate the probability map. There is also the option
-to filter the simulations further - using the function ``getFilterDict`` which generates a
+to filter the simulations further - using the function :py:func:`in3Utils.getFilterDict` which generates a
 parameter dictionary for filtering according to the filter criteria set in the
-configuration file (``probAnaCfg.ini``) of the ``probAna`` function.
+configuration file (``ana4Stats/probAnaCfg.ini``) of the :py:mod:`ana4Stats.probAna` function.
 
 * first go to ``AvaFrame/avaframe``
-* copy ``probAnaCfg.ini`` to ``local_probAnaCfg.ini``
-* uncomment FILTER section in ``local_probAnaCfg.ini`` and insert filter parameters if you want to first filter simulations
+* copy ``ana4Stats/probAnaCfg.ini`` to ``ana4Stats/local_probAnaCfg.ini``
+* uncomment ``'FILTER'`` section in ``local_probAnaCfg.ini`` and insert filter parameters if you want to first filter simulations
 * run::
 
-      python3 runProbAna.py
+      python3 runScripts/runProbAna.py
 
 .. _Theory:
 
@@ -64,8 +64,8 @@ getStats
 ==========================
 
 Here, functions that help to compute statistical properties of simulation results are gathered.
-In ``readAimecRunout``, the runout length is read from the ana3Aimec output and saved into a 1D numpy array.
-``ExtractMaxValues`` can be used to determine the maximum peak values of the simulation results.
+In :py:func:`ana4Stats.getStats.readAimecRunout`, the runout length is read from the ana3Aimec output and saved into a 1D numpy array.
+:py:func:`ana4Stats.getStats.extractMaxValues` can be used to determine the maximum peak values of the simulation results.
 
 
 Inputs
@@ -106,14 +106,15 @@ ExtractMaxValues
 To run
 -------
 
-An example on how to use these statistical functions is given in ``runStatsExample.py``, where
-for avaHockeyChannel simulations are performed for two different release area scenarios and
+An example on how to use these statistical functions is given in :py:mod:`runScripts.runStatsExample`, where
+for *avaHockeyChannel* simulations are performed for two different release area scenarios and
 the release thickness is varied from 0.75 to 1.75 meters in steps of 0.05 meters. The resulting
-simulations are then analysed using the extractMaxValues function and plots are generated using the
-plotting routines from ``statsPlots.py``.
+simulations are then analysed using the :py:func:`ana4Stats.getStats.extractMaxValues` function and plots are generated using the
+plotting routines from :py:mod:`out3Plot.statsPlots` .
 
-* copy ``getStats.ini`` to ``local_getStatsCfg.ini``
-* uncomment FILTER section in ``local_getStatsCfg.ini`` and insert filter parameters if you want to first filter simulations
-* in ``AvaFrame/avaframe/`` run::
+* first go to ``AvaFrame/avaframe``
+* copy ``ana4Stats/getStats.ini`` to ``ana4Stats/local_getStatsCfg.ini``
+* uncomment ``'FILTER'`` section in ``ana4Stats/local_getStatsCfg.ini`` and insert filter parameters if you want to first filter simulations
+* run::
 
-      python3 runStatsExample.py
+      python3 runScripts/runStatsExample.py

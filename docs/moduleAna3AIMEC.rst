@@ -5,15 +5,15 @@ Aimec is a post-processing module to analyze and compare results from avalanche 
 It enables the comparison of different simulations (with different input parameter sets for example, or from different models)
 of the same avalanche (meaning using the same DEM and going down the same avalanche path) in a standardized way.
 
-In ``AvaFrame/avaframe/``, three different run scripts are provided that show examples on how the postprocessing module aimec can be used.
+In ``AvaFrame/avaframe/runScripts``, three different run scripts are provided that show examples on how the postprocessing module aimec can be used.
 These examples include:
 
-*  full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMEC`
+*  full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`ana3AIMEC.runScripts.runAna3AIMEC()`
 *  using aimec to compare the results of two different computational modules (for one simulation at a time hence only one simulation result per
-  computation module is passed at a time). :py:func:`ana3AIMEC.runAna3AIMEC.runAna3AIMECCompMods`
+  computation module is passed at a time). :py:func:`ana3AIMEC.runScripts.runAna3AIMECCompMods()`
 *  using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations)
 
-Here is an example worflow for the full aimec analysis, as provided in ``runAna3AIMEC.py``:
+Here is an example worflow for the full aimec analysis, as provided in ``runScripts/runAna3AIMEC.py``:
 
 Inputs
 -------
@@ -35,11 +35,11 @@ To run
 -------
 
 *  first go to ``AvaFrame/avaframe``
-*  copy ``ana3AIMECCfg.py`` to ``local_ana3AIMECCfg.py`` (if not, the standard settings are used)
+*  copy ``ana3AIMEC/ana3AIMECCfg.py`` to ``ana3AIMEC/local_ana3AIMECCfg.py`` (if not, the standard settings are used)
 *  enter path to the desired ``NameOfAvalanche/`` folder in your local copy of ``avaframeCfg.ini``
 *  run::
 
-      python3 runAna3AIMEC.py
+      python3 runScripts/runAna3AIMEC.py
 
 
 .. _Theory:

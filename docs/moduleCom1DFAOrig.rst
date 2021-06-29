@@ -14,7 +14,7 @@ There is the option to vary the internal friction parameter or the release snow 
 C++ Executable
 ------------------
 
-The computation of the ``com1DFAOrig`` dense flow avalanche module relies on a C++ executable.
+The computation of the :py:mod:`com1DFAOrig` dense flow avalanche module relies on a C++ executable.
 The executable (for now 64bit linux and windows) and needed files are
 available in this `git repository <https://github.com/avaframe/com1DFA_Exe>`_.
 To install, change into your directory [YOURDIR] from the AvaFrame installation above and
@@ -70,7 +70,7 @@ Input
 ---------
 
 The module requires an avalanche directory, that follows a specified folder structure.
-This avalanche directory can be created by running: ``runInitializeProject.py``.
+This avalanche directory can be created by running: py:mod:`runInitializeProject.py`.
 In the directory Inputs, the following files are required:
 
 * digital elevation model as .asc file
@@ -84,7 +84,7 @@ and the following files are optional:
 * resistance area as shapefile (in Inputs/RES)
 * secondary release area as shapefile (in Inputs/SECREL)
 
-The simulation settings area defined in the configuration file ``com1DFACfg.ini``:
+The simulation settings area defined in the configuration file ``com1DFAOrig/com1DFAOrigCfg.ini``:
 
 * com1Exe - path to com1DFA executable
 * flagOut - print full model output
