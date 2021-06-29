@@ -16,6 +16,7 @@ from matplotlib.image import NonUniformImage
 from matplotlib import pyplot as plt
 import cmocean
 import logging
+from cmcrameri import cm as cmapCameri
 
 from avaframe.in3Utils import cfgUtils
 from avaframe.out3Plot import makePalette
@@ -121,25 +122,25 @@ cmapAvaframeCont = makePalette.get_continuous_cmap(colorAvaframe, continuous=Tru
 # for the choice of the colormaps, check https://www.fabiocrameri.ch/colourmaps/
 # and http://hclwizard.org:3000/hclwizard/
 # multi sequential colormap for pressure
-levP = [0., 1.0, 10.0, 25.0, 50.0, 1000.0]
+levP = [1.0, 10.0, 25.0, 50.0, 1000.0]
 ticksP = [0., 1.0, 10.0, 25.0, 50.0]
 # Hawaii color map
-colorsP = ['#FFFAFA', "#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
-cmapP = makePalette.get_continuous_cmap(colorsP, continuous=True)
+colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
+cmapP = cmapCameri.hawaii.reversed()
 
 # multi sequential colormap for flow depth
-levD = [0., 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 50.0]
-ticksD = [0., 0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
+levD = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 50.0]
+ticksD = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
 # Lajolla color map
-colorsD = ['#FFFAFA', "#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
-cmapD = makePalette.get_continuous_cmap(colorsD, continuous=True)
+colorsD = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
+cmapD = cmapCameri.lajolla
 
 # multi sequential colormap for speed
-levS = [0., 1, 5, 10, 15, 20, 25, 30, 100]
-ticksS = [0., 1, 5, 10, 15, 20, 25, 30]
+levS = [1, 5, 10, 15, 20, 25, 30, 100]
+ticksS = [1, 5, 10, 15, 20, 25, 30]
 # Batflow color map
-colorsS = ['#FFFAFA', '#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960', '#201158']
-cmapS = makePalette.get_continuous_cmap(colorsS, continuous=True)
+colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960', '#201158']
+cmapS = cmapCameri.batlow.reversed()
 
 ###############################################
 # Set colormaps to use

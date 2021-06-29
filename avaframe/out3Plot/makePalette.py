@@ -52,13 +52,12 @@ def get_continuous_cmap(hex_list, continuous=False, float_list=None):
     return cmp
 
 
-def makeColorMap(colormap, levMin, levMax, continuous=False):
+def makeColorMap(colormap, levMax, continuous=False):
     """
     Extract part of a listed colormap
     Inputs:
             -colors: list of hex colors
             -lev: levels associated to the colors
-            -levMin: min of the new levels
             -levMax: max of the new levels
     Outputs: Returns the new colormap
             -newCmap: new color map
@@ -66,37 +65,11 @@ def makeColorMap(colormap, levMin, levMax, continuous=False):
             -newLev: new levels list
             -newNorm: new norm for plotting
     """
-    N = 30
     colors = colormap['colors']
     cmap = colormap['cmap']
     lev = colormap['lev']
     ticks = colormap['ticks']
     if continuous:
-        ############# option one##############
-        # stick to the same colors for the same thresholds
-        # a bit more time consiuming to calculate and non linear scale
-        #############################################
-        # indStart = np.where(np.asarray(lev) <= levMin)[0][-1]
-        # indEnd = np.where(np.asarray(lev) > levMax)[0][0]
-        # lev = lev[indStart:indEnd+1]
-        # colors = colors[indStart:indEnd]
-        # newLev = []
-        # newColors =  np.empty((0, 4))
-        # for i in range(len(lev)-2):
-        #     interColors = [colors[i], colors[i+1]]
-        #     interCmap = get_continuous_cmap(interColors, continuous=True)
-        #     extractLev = list(np.linspace(lev[i],lev[i+1],N))
-        #     extractlevcol = np.linspace(0,1,N)
-        #     extractcol = interCmap(extractlevcol)
-        #     newColors = np.vstack((newColors, extractcol))
-        #     newLev = newLev+extractLev
-        # newCmap = mcolors.ListedColormap(newColors)
-        # newNorm = mcolors.BoundaryNorm(newLev, newCmap.N)
-
-        ########### option two #############
-        # use any colormap
-        # does not match the predefined thresholds / color pairs from the discrete map
-        #########################################
         newNorm = None
         newLev = None
         newColors = None
@@ -104,10 +77,10 @@ def makeColorMap(colormap, levMin, levMax, continuous=False):
         ticks = None
 
     else:
-        indStart = np.where(np.asarray(lev) <= levMin)[0][-1]
+        # indStart = np.where(np.asarray(lev) <= levMin)[0][-1]
         indEnd = np.where(np.asarray(lev) > levMax)[0][0]
-        newLev = lev[indStart:indEnd+1]
-        newColors = colors[indStart:indEnd]
+        newLev = lev[:indEnd+1]
+        newColors = colors[:indEnd]
         newCmap = get_continuous_cmap(newColors, continuous=False)
         newNorm = mcolors.BoundaryNorm(newLev, newCmap.N)
 
