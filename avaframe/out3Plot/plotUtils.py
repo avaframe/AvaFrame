@@ -14,7 +14,6 @@ import datetime
 import pathlib
 from matplotlib.image import NonUniformImage
 from matplotlib import pyplot as plt
-import cmocean
 import logging
 from cmcrameri import cm as cmapCameri
 
@@ -98,12 +97,6 @@ cmapPlasma.set_bad(color='k')
 
 cmapViridis = copy.copy(matplotlib.cm.viridis)
 cmapViridis.set_bad(color='k')
-
-cmapIce = copy.copy(cmocean.cm.ice)
-cmapIce.set_bad(color='k')
-
-cmapDense = copy.copy(cmocean.cm.dense)
-cmapDense.set_bad(color='k')
 
 # divergent color map
 cmapdiv = copy.copy(matplotlib.cm.RdBu_r)  # sns.color_palette("RdBu_r")

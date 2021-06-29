@@ -2,7 +2,7 @@ numpy
 matplotlib
 pyshp
 scipy
-cmocean
+cmcrameri
 seaborn
 cython
 pandas
