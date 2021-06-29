@@ -91,8 +91,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(221)
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapPres, np.nanmin(data1), np.nanmax(data1), continuous=pU.contCmap)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, np.nanmax(data1), continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
@@ -107,8 +106,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax1.set_ylabel('y [m]')
 
     ax2 = fig.add_subplot(222)
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapPres, np.nanmin(data2), np.nanmax(data2), continuous=pU.contCmap)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, np.nanmax(data2), continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data2P = ma.masked_where(data2 == 0.0, data2)
@@ -436,8 +434,7 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     fig = plt.figure(figsize=(pU.figW*2, pU.figH))
     suptitle = fig.suptitle(name1, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(121)
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapPres, np.nanmin(data1), np.nanmax(data1), continuous=pU.contCmap)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, np.nanmax(data1), continuous=pU.contCmap)
 
     im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
     pU.addColorBar(im1, ax1, ticks, unit)

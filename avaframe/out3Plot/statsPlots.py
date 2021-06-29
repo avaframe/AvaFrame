@@ -56,8 +56,7 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, flagSho
     varValV = np.array(varVal)
 
     # load variation colormap
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(
-        pU.cmapVar, np.amin(varValV), np.amax(varValV), continuous=True)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapVar, np.amax(varValV), continuous=True)
 
     fig, ax = plt.subplots()
     plt.title('%s vs. %s' % (name1, name2))
