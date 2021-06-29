@@ -107,7 +107,7 @@ def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
         Parameters
         -----------
 
-        dataComsol: dataFrame
+        dataComSol: dataFrame
             dataframe of simulation results (including name, file path, result type, etc.)
         hL: float
             initial release thickness
