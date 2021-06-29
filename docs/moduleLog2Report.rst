@@ -7,7 +7,7 @@ log2Reports: Create Reports
 Generate Report
 ===================
 
-The Generate Report function creates a markdown style report corresponding to the
+:py:mod:`log2Report.generateReport` creates a markdown style report corresponding to the
 data provided in the python input dictionary.
 The report is structured in blocks according to the types provided in the dictionary.
 Currently, the report generation supports the following types:
@@ -21,13 +21,6 @@ Currently, the report generation supports the following types:
 * image - creates a block with the dictionary name as title and prints the key as heading with the prefix *Figure* and plots the image provided as value
 * text - creates a text block with the dictionary name as title and prints the key as header with the prefix *Topic* and prints the text provided as value
 
-
-Input
------
-* outDir - a path variable where to save the report
-* reportDictList - a list of reportDicts from the simulations
-* cfgFLAGS - main configuration including a flag reportOneFile
-* plotDict - including title and the absolute paths to the image you want to be included - optional
 
 For the input dictionary, a certain structure is required as illustrated for the following example:
 
@@ -47,25 +40,23 @@ This example dictionary results in a report of the form:
 
 If a separate plotDictionary shall be included, in addition the key *simName* is required so that it can be appended to the correct simulation dictionary.
 
-
-Output
--------
-
 The default setting is to produce one report file, *fullSimulationReport.md*, however if one wants to receive on report for each *simName*,
-set the flag *reportOneFile = False*. This report file is saved to the outDirectory.
+set the flag *reportOneFile = False* in ``avaframeCfg.ini`` or preferabley your local copy ``local_com1DFACfg.ini``.
 
 
 To run
 ------
 
-* call generateReport(outDirectory, reportDictList, cfgFLAGS, plotDict=plotDict) in the run script of your computational module
+* in your run scripts call::
+
+   generateReport(outDirectory, reportDictList, cfgFLAGS, plotDict=plotDict)
 
 
 
 Generate Compare Report
 =========================
 
-This function creates a markdown style report where the simulation results are compared to the benchmark results.
+:py:mod:`log2Report.generateCompareReport` creates a markdown style report where the simulation results are compared to the benchmark results.
 The report is structured as follows:
 
   * name of avalanche
@@ -102,30 +93,14 @@ the dictionaries require a certain structure too, for example:
                                   },
 
 where the required **keys** are indicated by the asterisk sign.
-
-
-Input
-------
-
-* output directory
-* simulation dictionary
-* benchmark dictionary
-* name of avalanche
-* configuration read from *genereateCompareReportCfg.ini*
-
-
-Output
--------
-
-* markdown style report
-
+The settings can be found in the respective configuration file ``log2Report/genereateCompareReportCfg.ini``.
 
 To run
 -------
 
-* copy *genereateCompareReportCfg.ini* to *local_genereateCompareReportCfg.ini* and set desired values
-
-* call::
+* first go to ``AvaFrame/avaframe``
+* copy ``log2Report/genereateCompareReportCfg.ini`` to ``log2Report/local_genereateCompareReportCfg.ini`` and set desired values
+* in your run scripts call::
 
   ``generateCompareReport(outputDir, simulationDictionary, benchmarkDictionary, avalancheName, cfgRep)``
 
