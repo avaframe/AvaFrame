@@ -6,8 +6,8 @@ in3Utils: Various Utilities Modules
 geoTrans
 ============
 The :py:mod:`in3Utils.geoTrans` module provides useful functions to operate transformations,
-comparison or interpolation on raster, lines, points...
-Further information about the available functions in :py:mod:`in3Utils.geoTrans`
+comparison or interpolation on rasters, lines, points...
+Further information about the available functions can be found in :py:mod:`in3Utils.geoTrans`
 
 
 
@@ -29,36 +29,26 @@ This module can generate the following topographies:
 
 Extra features can be added to the above topographies:
 
-	* a channel can be introduced (then set channel=True).
+	* a channel can be introduced (then set ``channel=True``).
 		This channel can also be set to widen towards the top and bottom of the channel (then set narrowing=True).
 		The channel can be added by either adding a 'channel layer'
-		(max thickness=channel depth) on top of the topography (topoAdd=True)
-		or by cutting them into the original topography (topoAdd=False).
-	* In case of the parabola topography, a Dam can be added by setting dam=True.
+		(max thickness=channel depth) on top of the topography (``topoAdd=True``)
+		or by cutting them into the original topography (``topoAdd=False``).
+	* **in case of the parabola topography, a Dam can be added by setting ``dam=True``.**
 
-Detailed information on the individual functions used to create the topographies can be found in:
-
-:py:mod:`in3Utils.generateTopo`
-
-Input
-------
-
-* in ``generateTopoCfg.ini`` all required input parameters are listed (includes default values for all parameters).
-
-Output
--------
-
-* 3D surface plot of the generated topography as .png file and possibly shown to screen (see flags)
-* .asc file of DEM data
+This modules returns a 3D plot of the generated topography as well as an .asc file of the DEM data.
+The input parameters are defined in the respective configuration file ``in3Utils.generateTopoCfg.ini``.
+Detailed information on the individual functions used to create the topographies can be found in :py:mod:`in3Utils.generateTopo`
 
 
 To run
 ------
 
-* copy ``generateTopoCfg.ini`` to ``local_generateTopoCfg.ini`` and set the desired parameter values (if not, the default values are used)
-* in ``Avaframe/`` run::
+* first go to ``AvaFrame/avaframe``
+* copy ``in3Utils/generateTopoCfg.ini`` to ``in3Utils/local_generateTopoCfg.ini`` and set the desired parameter values (if not, the default values are used)
+* run::
 
-	python3 runGenerateTopo.py
+	python3 runScripts/runGenerateTopo.py
 
 
 Theory
@@ -117,7 +107,8 @@ slope of the pyramid facets (meanAlpha)
 Get Release Area
 ===================
 
-Generate a release area for a topography created with ``generateTopo`` , this function is available for the following topographies:
+:py:mod:`in3Utils.getReleaseArea` generates a release area for a topography created with :py:mod:`in3Utils.generateTopo`,
+this function is available for the following topographies:
 
 * flat plane (FP)
 * inclined plane (IP)
@@ -131,28 +122,21 @@ The release areas are defined as rectangular features build by four corner point
 * lower margin is located where the slope angle falls below 30°
 * if slope does not fall below 30 °, the upper margin is located xStart away from the upper margin of the DEM
 
-Detailed information on the individual functions used to create the topographies can be found in :py:mod:`in3Utils.getReleaseArea`
-
-
-Input
-------
-
-* in ``getReleaseAreaCfg.ini`` and ``generateTopoCfg.ini`` all the required input parameters are listed (does include default values for all parameters)
-
-Output
-------
-
-* release area as shapefile, .nxyz and .txt file
-* if showplot flag is True, plot of release area on domain extent
+The release areas can be saved as shapefile, .nxyz and .txt file.
+The required input parameters can be set in the respective configuration files
+``in3Utils/getReleaseAreaCfg.ini`` and ``in3Utils.generateTopoCfg.ini``.
+Detailed information on the individual functions used to create the release areas
+can be found in :py:mod:`in3Utils.getReleaseArea`
 
 To run
 ------
 
 Following these steps, you can generate an avalanche test case including a DEM and a simple realease area.
 
-* copy ``generateTopoCfg`` and  ``getReleaseAreaCfg`` to ``local_generateTopoCfg.ini``
-  and ``local_getReleaseAreaCfg.ini`` and set desired parameter values (if not, the default values are used)
-* in ``avaframe`` run::
+* first go to ``AvaFrame/avaframe``
+* copy ``in3Utils/generateTopoCfg.ini`` and  ``in3Utils/getReleaseAreaCfg.ini`` to ``in3Utils/local_generateTopoCfg.ini``
+  and ``in3Utils/local_getReleaseAreaCfg.ini`` and set desired parameter values (if not, the default values are used)
+* run::
 
 	python3 runGenProjTopoRelease.py
 
@@ -173,10 +157,10 @@ Following these steps, you can generate an avalanche test case including a DEM a
 Initialize Project
 =====================
 
-:py:mod:`in3Utils.InitializeProject` provides functions to initialize a project, create the required directory structure and delete specified
+:py:mod:`in3Utils.initializeProject` provides functions to initialize a project, create the required directory structure and delete specified
 files or directories.
 
-The main function *initializeFolderStruct*, creates the folder structure required to perform avalanche simulations:
+The main function :py:func:`in3Utils.initializeProject.initializeFolderStruct`, creates the folder structure required to perform avalanche simulations:
 ::
 
 		NameOfAvalanche/
@@ -192,24 +176,15 @@ The main function *initializeFolderStruct*, creates the folder structure require
 			Work/
 
 
-Input
--------
-
-* path to NameOfAvalanche
-
-This path is specified in the configuration file ``avaframeCfg.ini`` with the parameter *avalancheDir*.
-
-Output
--------
-
-* NameOfAvalanche directory
+The path to this folder is specified in the configuration file ``avaframeCfg.ini``, with the parameter *avalancheDir*.
 
 
 To run
 -------
 
+* first go to ``AvaFrame/avaframe``
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
-* in ``avaframe`` run:
+* run:
 
 			python3 runInitializeProject.py
 
@@ -232,6 +207,4 @@ fileHandlerUtils
 
 :py:mod:`in3Utils.fileHandlerUtils` gathers useful functions to create directories, read log files,
 extract information from logs, fetch and export data and fetch simulation info into a dataFrame
-that can be used within other functions. Details on these functions can be found in:
-
-:py:mod:`in3Utils.fileHandlerUtils`
+that can be used within other functions. Details on these functions can be found in :py:mod:`in3Utils.fileHandlerUtils`.

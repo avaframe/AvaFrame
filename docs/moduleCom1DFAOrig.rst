@@ -1,7 +1,7 @@
-com1DFAOrigin: Original DFA-Kernel
+com1DFAOrig: Original DFA-Kernel
 ===================================
 
-This module is a simulation tool for dense flow (snow) avalanches (DFA). It is based on the
+:py:mod:`com1DFAOrig` is a simulation tool for dense flow (snow) avalanches (DFA). It is based on the
 samos-AT (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
 in cooperation with the company AVL List GmbH in Graz.
 The calculation of the DFA is based on the depth integrated governing equations and
@@ -70,7 +70,7 @@ Input
 ---------
 
 The module requires an avalanche directory, that follows a specified folder structure.
-This avalanche directory can be created by running: py:mod:`runInitializeProject.py`.
+This avalanche directory can be created by running :py:mod:`runInitializeProject.py`.
 In the directory *Inputs*, the following files are required:
 
 * digital elevation model as .asc file

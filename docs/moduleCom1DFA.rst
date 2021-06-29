@@ -1,7 +1,7 @@
 com1DFA: DFA-Kernel
 ===========================
 
-This module is a simulation tool for dense flow (snow) avalanches (DFA). It is based on
+:py:mod:`com1DFA` is a simulation tool for dense flow (snow) avalanches (DFA). It is based on
 samosAT (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
 in cooperation with the company AVL List GmbH in Graz.
 The calculation of the DFA is based on the depth integrated governing equations and
@@ -85,7 +85,7 @@ Using the default configuration, the simulation results are saved to: *Outputs/c
 
 
 However, in the configuration file, it is possible to change the result parameters and time Steps that shall be exported.
-Have a look at the designated Output section in ``com1DFA/com1DFACfg.ini``.
+Have a look at the designated subsection Output in ``com1DFA/com1DFACfg.ini``.
 
 
 To run

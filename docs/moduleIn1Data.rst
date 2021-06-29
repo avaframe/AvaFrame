@@ -13,51 +13,20 @@ A detailed description of all the small helper functions is provided in :py:mod:
 getInputCom1DFA
 ----------------
 
-This function fetches the input data from an avalanche directory, that is required to start avalanche simulations with com1DFA.
-This data consists of a digital elevation model (DEM), a release scenario shapefiles and optional entrainment and resistance area shapefiles.
-
-
-Inputs
-~~~~~~
-
-* path to avalanche directory
-* configuration for the avalanche simulations - provides info on whether entrainment and resistance shall be included
-
-
-Outputs
-~~~~~~~~~
-
-* inputSimFiles - dictionary with:
-  - DEM
-  - release area scenarios
-  - secondary release area scenario
-  - entrainment area
-  - resistance area
-  - entResInfo - dictionary with info if there is an entraiment and/or resistance area
+:py:func:`in1Data.getInput.getInputCom1DFA` fetches the input data from an avalanche directory, that is required to start avalanche simulations with :py:mod:`com1DFA`.
+This data consists of a digital elevation model (DEM), a release scenario shapefiles and optional entrainment and resistance area shapefiles and is returned as a dictionary.
 
 
 computeFromDistribution
 ==========================
 
-This collection of functions allows to retrieve a sample of values that are distributed following a uniform or Pert distribution.
+:py:mod:`in1Data.computeFromDistribution` is collection of functions that facilitates retrieving a sample of values that are distributed following a uniform or Pert distribution.
 This is for example useful if you want to perform avalanche simulations for a range of release thickness values,
 that should be distributed following a specific distribution, or another parameter that can be varied.
-Detailed information on the functions can be found in:
-
-:py:mod:`in1Data.computeFromDistribution`
-
-Inputs
--------
-
-* configuration for the distribution
-
-
-Outputs
---------
-
-* sample derived from the chosen distribution
-* various plots of the chosen distribution and the sample characteristics
-
+Besides returning a sample of values following the desired distribution, various plots can be generated detailing
+the characteristics of the sample.
+The required input parameters can be found in the respective configuration file ``in1Data.computeFromDistributionCfg.ini``.
+Detailed information on the functions can be found in :py:mod:`in1Data.computeFromDistribution`.
 
 To run
 -------
@@ -71,8 +40,3 @@ generated, is provided by ``runComputeDist.py``.
 * run::
 
       python3 runScripts/runComputeDist.py
-
-.. _Theory:
-
-Theory
------------

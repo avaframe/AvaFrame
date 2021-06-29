@@ -8,12 +8,13 @@ of the same avalanche (meaning using the same DEM and going down the same avalan
 In ``AvaFrame/avaframe/runScripts``, three different run scripts are provided that show examples on how the postprocessing module aimec can be used.
 These examples include:
 
-*  full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`ana3AIMEC.runScripts.runAna3AIMEC()`
+*  full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`ana3AIMEC.runScripts.runAna3AIMEC.runAna3AIMEC`
 *  using aimec to compare the results of two different computational modules (for one simulation at a time hence only one simulation result per
-  computation module is passed at a time). :py:func:`ana3AIMEC.runScripts.runAna3AIMECCompMods()`
-*  using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations)
+   computational module is passed at a time). :py:func:`ana3AIMEC.runScripts.runAna3AIMECCompMods.runAna3AIMECCompMods`
+*  using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations).
+   :py:mod:`ana3AIMEC.runScripts.runAna3AIMECIndi`
 
-Here is an example worflow for the full aimec analysis, as provided in ``runScripts/runAna3AIMEC.py``:
+Here is an example workflow for the full Aimec analysis, as provided in :py:mod:`runScripts/runAna3AIMEC.py`:
 
 Inputs
 -------
@@ -22,7 +23,7 @@ Inputs
 *  avalanche path in LINES (as a shapefile named ``path_aimec.shp``)
 *  a splitPoint in POINTS (as a shapefile named ``splitPoint.shp``)
 *  Results from avalanche simulation (when using results from com1DFA,
-  the helper function ``mainDfa2Aimec`` in ``dfa2Aimec.py`` fetches and prepares the input for Aimec)
+   the helper function :py:func:`ana3AIMEC.dfa2Aimec.mainDfa2Aimec` in :py:mod:`ana3AIMEC.dfa2Aimec` fetches and prepares the input for Aimec)
 
 Outputs
 --------
