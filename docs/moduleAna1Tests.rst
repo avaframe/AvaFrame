@@ -13,49 +13,22 @@ This function also provides its own plotting routines that can be used to genera
 analytical results and also to compare simulation results to the exact solutions.
 An example is given in runDamBreak.py, where the analytical solution is computed and
 avalanche simulations are performed and both results are then compared.
-The input data for this example can be found in 'data/avaDamBreak'.
+The input data for this example can be found in ``data/avaDamBreak``.
 
-The plotResults function generates profile plots for the flow depth and velocity and
+The :py:func:`ana1Tests.damBreak.plotResults` function generates profile plots for the flow depth and velocity and
 an animation of the flow depth evolution.
-With the plotComparison function, the simulation results are plotted alongside the
+With the :py:func:`ana1Tests.damBreak.plotComparison` function, the simulation results are plotted alongside the
 analytical solution for the given time step for both, flow depth and velocity.
+Details can be found here: :py:mod:`ana1Tests.damBreak`.
 
-
-Input
------
-
-damBreakSol:
-
-* avalanche directory
-* main avaframe configuration settings
-* configuration settings of com1DFA including a section 'DAMBREAK'
-
-plotResults:
-
-* x, h, u - domain extent, flow depth and flow velocity from exact solution
-* dtStep - time step (of results)
-* cfg - main configuration
-
-plotComparison:
-
-* dataComsol (dataFrame with simulation results)
-* hL, xR, hR, uR - initial release thickness, domain extent, flow depth and flow velocity from exact solution
-* dtAnalysis - time step
-* cfgMain - main configuration
-
-Outputs
--------
-damBreakSol:
-
-* hL: initial release thickness
-* h: flow depth
-* u: flow velocity
-* phi: slope angle
-* x: horizontal domain
 
 To run
 ------
 An example on how to apply this test to :py:mod:`com1DFA` is provided in :py:mod:`runScripts/runDamBreak`.
+The required input files are located in ``data/avaDamBreak``, where also the model configuration file .. caution::
+be found (``data/avaDamBreak/Inputs/damBreak_com1DFACfg.ini``). In this congifuration file, there
+is a specific section ``'DAMBREAK'`` providing the required input parameters to compute the analytical solution.
+In order to run the test example:
 
 * in ``AvaFrame/avaframe`` run::
 
