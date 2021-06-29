@@ -68,7 +68,7 @@ The similarity solution is one of the few cases where an analytic solution can b
 It is therefore a very useful test case for validating simulation results coming from the dense flow avalanche computation module.
 This analytic solution can be derived under very strict conditions and making one major assumption on the shape of the solution.
 The full development of the conditions and assumptions as well as the derivation of the solution is presented in details in :cite:`HuSiSaNo1993`.
-In this problem, we consider an avalanche ruled by dry friction law (Coulomb friction) flowing down an inclined plane.
+In this problem, we consider an avalanche governed by a dry friction law (Coulomb friction) flowing down an inclined plane.
 The released mass is initially distributed in an ellipse with a parabolic depth shape.
 This mass is suddenly released at :math:`t=0` and flows down the inclined plane.
 
@@ -76,7 +76,7 @@ The :py:mod:`ana1Tests.simiSol` module provides functions to compute the analyti
 to visualize this solution and to compare it to the output from the DFA computational module.
 
 
-An workflow example is given in :pyfunc:`runSimilaritySol`, where the analytical solution is computed and
+A workflow example is given in :py:func:`runSimilaritySol`, where the analytical solution is computed and
 avalanche simulations are performed and both results are then compared.
 The input data for this example can be found in ``data/avaSimilaritySol``.
 
@@ -88,7 +88,7 @@ analytical solution for the given time step.
 Input
 -----
 
-* avalanche directory ('data/avaSimilaritySol')
+* avalanche directory (``data/avaSimilaritySol``)
 * configuration settings of com1DFA including a section 'SIMISOL' (see ``data/avaSimilaritySol/Inputs/simiSol_com1DFACfg.ini``)
 
 
@@ -101,7 +101,7 @@ solSimi
 Results of the analytic solution of the problem. Dictionary with:
 
 * T: real time array
-* f, g and there first derivative: time solution of the transformed variables
+* f, g and their first derivative: time solution of the transformed variables
 
 getSimiSolParameters
 ~~~~~~~~~~~~~~~~~~~~~
