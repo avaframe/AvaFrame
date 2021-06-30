@@ -5,8 +5,9 @@ digraph "com1DFA algorithm graph" {
   size="100,100";
   rankdir="TB";
   graph [compound=true, ranksep=0.5, splines=ortho, fontname="helvetica", fontsize="32" fontcolor="#0E4160"];
-  node [shape=box style="rounded,filled" fontsize=24 fontcolor="#0E4160" fontname="helvetica" fillcolor="#51ADE5"];
-  edge [fontname="helvetica", fontsize="18"];
+  /* subgraph [compound=true, ranksep=0.5, splines=ortho, fontname="helvetica", fontsize="32" fontcolor="#0E4160"]; */
+  node [shape=box style="rounded,filled" fontsize=24 fontcolor="#0E4160" fontname="helvetica" fillcolor="#51ADE5cf" penwidth=1.5];
+  edge [fontname="helvetica", fontsize="18" penwidth=1.5];
 
   prepareMesh [label="Initialize Mesh", href="../com1DFAAlgorithm.html#initialize-mesh" tooltip="Go to: initialize mesh" target="_top"];
 
@@ -97,8 +98,9 @@ digraph "com1DFA algorithm graph" {
 
   subgraph cluster_initialization {
     /* rank=same; */
-    style="rounded,filled";
-    color="#5CE0E6";
+    style="rounded";
+    color="#0E4160";
+    penwidth=3;
     prepareMesh -> prepareAreas[weight=10];
     prepareAreas -> initializeParticles[weight=10];
     initializeParticles -> initializeFields[weight=10];
@@ -107,8 +109,9 @@ digraph "com1DFA algorithm graph" {
 
   subgraph cluster_Forces {
     /* rank=same; */
-    style="rounded,filled";
-    color="#5CE0E6";
+    style="rounded";
+    color="#0E4160";
+    penwidth=3;
     artifViscosity -> computeFrictForce[weight=10];
     computeFrictForce -> computeGravityForce[weight=10];
     computeGravityForce -> computeResForce[weight=10];
@@ -123,15 +126,17 @@ digraph "com1DFA algorithm graph" {
     updatePartPos -> correctPartPos [weight=10];
     href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"
     label = "Update position";
-    style="rounded,filled";
-    color="#5CE0E6";
+    style="rounded";
+    color="#0E4160";
+    penwidth=3;
   }
   subgraph cluster_3 {
     /* rank=same; */
     updateFields -> updateParticlesFlowDepth [weight=10];
     label = "Update Fields";
-    style="rounded,filled";
-    color="#5CE0E6";
+    style="rounded";
+    color="#0E4160";
+    penwidth=3;
   }
 
    }

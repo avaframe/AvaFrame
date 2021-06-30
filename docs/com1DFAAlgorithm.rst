@@ -54,7 +54,7 @@ The mass per particle determination method can be chosen between:
 
   - MPPDH= mass per particles through release thickness. The ``massPerPart`` value is computed
     using the release thickness per particle ``deltaTh`` value given in the configuration and the area of
-    the release mesh cell: :math:`massPerPart = \rho cellArea deltaTh`.
+    the release mesh cell: :math:`\mbox{massPerPart} = \rho\times \mbox{cellArea} \times\mbox{deltaTh}`.
 
 The number of particles placed in each release cell is computed according to the ``massPerPart``
 and the area and release thickness of the cell. The number should be an integer meaning that the
@@ -107,9 +107,10 @@ to some second order forces that were neglected (lateral shear stress) as explai
 :ref:`DFAnumerics:Artificial viscosity`.
 This force is controlled by the ``subgridMixingFactor`` in the configuration file.
 Setting this parameter to 0 deactivates the artificial viscosity term.
-The default value (100) does not have any physical foundings yet. Future work
-will help defining this parameter in a more physical way. The velocity is updated immediately
-after using an explicit/implicit formulation.
+The default value (set to 100) does not have any physical foundation yet. Future work
+will help defining this parameter in a more physical way. Remember that the artificial viscosity is dependent on the grid cell size.
+
+The velocity is updated immediately after using an explicit/implicit formulation.
 
 Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 

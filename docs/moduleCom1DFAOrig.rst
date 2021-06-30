@@ -1,9 +1,12 @@
 com1DFAOrig: Original DFA-Kernel
 ===================================
 
-:py:mod:`com1DFAOrig` is a simulation tool for dense flow (snow) avalanches (DFA). It is based on the
-samos-AT (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
-in cooperation with the company AVL List GmbH in Graz.
+:py:mod:`com1DFAOrig` is a simulation tool for dense flow (snow) avalanches (DFA). It is
+a python wrapper function calling the samos-AT C++ (Snow Avalanche Modeling and  Simulation- Advanced Technologies)
+DFA simulation code developed by the Austrian government in cooperation with the company AVL List GmbH in Graz.
+This code served as base for the implementation of the python DFA simulation module :py:mod:`com1DFA` presented
+in :ref:`moduleCom1DFA:com1DFA: DFA-Kernel`. :py:mod:`com1DFA` module is now the default DFA simulation module in AvaFrame.
+
 The calculation of the DFA is based on the depth integrated governing equations and
 solved numerically using the smoothed particle hydrodynamic (sph) method.
 
