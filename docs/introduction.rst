@@ -24,11 +24,11 @@ AvaFrame is part of an BMLRT initiative to foster technological innovation withi
 
 Information in German can be found on the `BMLRT Homepage <https://www.bmlrt.gv.at/forst/wildbach-lawinenverbauung/kooperationen-zusammenarbeit/lawinenschutzvorsorgeprojekt.html>`_.
 
-A summery of the lattest advances of the project can be found on the
+A summery of the latest advances of the project can be found on the
 `Avaframe homepage <https://avaframe.org/>`_ web-page.
 
 Feel free to contact us at our `matrix room <#public:matrix.avaframe.org>`_ if
-you have any questions or suggestions. Avaframe is in an early development phase
+you have any questions or suggestions. AvaFrame is in an early development phase
 and all ideas and contributions are welcome!
 
 If you want to cite our project, please use:
