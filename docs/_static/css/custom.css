@@ -8,3 +8,8 @@
 /* .wy-nav-content {
     max-width: 100%;
 } */
+
+/* disable horizontal scroll bar for tables */
+.wy-table-responsive table td {
+white-space: normal;
+}
