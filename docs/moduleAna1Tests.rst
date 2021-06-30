@@ -44,10 +44,14 @@ Analytical solution of dam break problem, flow depth and flow velocity at 0.5 s.
 Similarity solution
 ====================
 
-The similarity solution is one of the few cases where an analytic solution can be derived for solving the depth integrated equations.
+The similarity solution is one of the few cases where an semi-analytic solution can be derived for solving the depth integrated equations.
 It is therefore a very useful test case for validating simulation results coming from the dense flow avalanche computation module.
-This analytic solution can be derived under very strict conditions and making one major assumption on the shape of the solution.
+This semi-analytic solution can be derived under very strict conditions and making one major assumption on the shape of the solution.
 The full development of the conditions and assumptions as well as the derivation of the solution is presented in details in :cite:`HuSiSaNo1993`.
+The term semi-analytic is here used because the method enables to transform the PDE (partial differential equation) of the problem
+into an ODE using a similarity analysis method. Solving the ODE still requires a numerical integration but this last one is way
+more accurate (when conducted properly) and requires less computation power than solving the PDE.
+
 In this problem, we consider an avalanche governed by a dry friction law (Coulomb friction) flowing down an inclined plane.
 The released mass is initially distributed in an ellipse with a parabolic depth shape.
 This mass is suddenly released at :math:`t=0` and flows down the inclined plane.
@@ -104,9 +108,7 @@ Comparing the results from the DFA module to the similarity solution leads to th
         .. figure:: _static/simiSol_x.png
             :width: 100%
 
-            Along slope flow depth and velocity of the
-
-            DFA solution and similarity solution
+            Along slope flow depth and velocity of the DFA solution and similarity solution
 
 
       -
@@ -114,9 +116,7 @@ Comparing the results from the DFA module to the similarity solution leads to th
         .. figure:: _static/simiSol_y.png
             :width: 100%
 
-            Cross slope flow depth and velocity of the
-
-            DFA solution and similarity solution
+            Cross slope flow depth and velocity of the DFA solution and similarity solution
 
 
 .. figure:: _static/simiSol_2D.png
