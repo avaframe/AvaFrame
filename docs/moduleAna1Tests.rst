@@ -25,8 +25,8 @@ Details can be found here: :py:mod:`ana1Tests.damBreak`.
 To run
 ------
 An example on how to apply this test to :py:mod:`com1DFA` is provided in :py:mod:`runScripts/runDamBreak`.
-The required input files are located in ``data/avaDamBreak``, where also the model configuration file .. caution::
-be found (``data/avaDamBreak/Inputs/damBreak_com1DFACfg.ini``). In this congifuration file, there
+The required input files are located in ``data/avaDamBreak``, where the model configuration file can
+be found (``data/avaDamBreak/Inputs/damBreak_com1DFACfg.ini``). In this configuration file, there
 is a specific section ``'DAMBREAK'`` providing the required input parameters to compute the analytical solution.
 In order to run the test example:
 
@@ -86,7 +86,7 @@ Results of the analytic solution of the problem. Dictionary with:
 getSimiSolParameters
 ~~~~~~~~~~~~~~~~~~~~~
 
-Function that transforms the f, g transformed variables back to flow depth and
+Function that transforms the f, g variables back to flow depth and
 velocity in real time and space.
 
 Plotting routine
@@ -96,21 +96,34 @@ Comparing the results from the DFA module to the similarity solution leads to th
 
 
 .. list-table::
+    :widths: 50 50
 
 
-    * - Along slope flow depth and velocity of the DFA solution and similarity solution
+    * -
 
         .. figure:: _static/simiSol_x.png
+            :width: 100%
+
+            Along slope flow depth and velocity of the
+
+            DFA solution and similarity solution
 
 
-      - Cross slope flow depth and velocity of the DFA solution and similarity solution
+      -
 
         .. figure:: _static/simiSol_y.png
+            :width: 100%
+
+            Cross slope flow depth and velocity of the
+
+            DFA solution and similarity solution
 
 
 .. figure:: _static/simiSol_2D.png
+    :width: 90%
 
     2D flow depth of the DFA solution (full lines) and similarity solution (dashed lines) in meters
+
 
 
 
@@ -121,7 +134,7 @@ Flat plane test
 In this test, the behavior of a conical pile of material placed on a flat plane
 and ruled by Coulomb friction is studied. The pile starts at rest and depending
 on the steepness of the slope and the friction angle will start flowing. The idea behind this test
-is to check implementation of the bottom shear stress in the DFA module as well as the gradient
+is to check the implementation of the bottom shear stress in the DFA module as well as the gradient
 computation (SPH method).
 
 The :py:mod:`ana1Tests.FPtest` module provides functions to compute the analytic solution and some plotting routines
@@ -148,11 +161,17 @@ The simulation results are plotted alongside the analytical solution for the giv
 .. list-table::
 
 
-    * - Pile at initial time step
+    * -
 
         .. figure:: _static/flatPlaneTest.png
+            :width: 90%
+
+            Pile at initial time step
 
 
-      - Pile after 19.8s
+      -
 
         .. figure:: _static/flatPlaneTest20s.png
+            :width: 90%
+
+            Pile after 19.8s

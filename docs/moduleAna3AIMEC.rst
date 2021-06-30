@@ -30,28 +30,21 @@ Outputs
 
 *  output figures in ``NameOfAvalanche/Outputs/ana3AIMEC/com1DFA/pics/``
 *  txt file with results in ``NameOfAvalanche/Outputs/ana3AIMEC/com1DFA/``
-  (a detailed list of the results is described in :ref:`analyze-results`)
+  (a detailed list of the results is described in :ref:`moduleAna3AIMEC.analyze-results`)
 
 To run
 -------
 
 *  first go to ``AvaFrame/avaframe``
-*  copy ``ana3AIMEC/ana3AIMECCfg.py`` to ``ana3AIMEC/local_ana3AIMECCfg.py`` (if not, the standard settings are used)
+*  copy ``ana3AIMEC/ana3AIMECCfg.ini`` to ``ana3AIMEC/local_ana3AIMECCfg.ini`` (if not, the standard settings are used)
 *  enter path to the desired ``NameOfAvalanche/`` folder in your local copy of ``avaframeCfg.ini``
 *  run::
 
       python3 runScripts/runAna3AIMEC.py
 
 
-.. _Theory:
-
 Theory
 -----------
-
-The simulation results (two dimensional fields of e.g. peak velocities / pressure or flow depth) are processed in a way
-that it is possible to compare characteristic values that are directly linked to the flow variables such as
-maximum peak flow depth, maximum peak velocity or deduced quantities, for example maximum peak pressure,
-pressure based runout (including direct comparison to possible references, see :ref:`area-indicators`) for different simulations.
 
 AIMEC (Automated Indicator based Model Evaluation and Comparison, :cite:`Fi2013`) was developed
 to analyze and compare avalanche simulations. The computational module presented here is inspired from the original AIMEC code.
@@ -60,7 +53,14 @@ that are compared) called avalanche path.
 The raster data, initially located on a regular and uniform grid (with coordinates x and y) is projected on a regular non uniform grid
 (grid points are not uniformly spaced) that follows the avalanche path (with curvilinear coordinates (s,l)).
 This grid can then be "straightened" or "deskewed" in order to plot it in the (s,l) coordinates system.
-The following figure illustrates the process.
+
+The simulation results (two dimensional fields of e.g. peak velocities / pressure or flow depth) are processed in a way
+that it is possible to compare characteristic values that are directly linked to the flow variables such as
+maximum peak flow depth, maximum peak velocity or deduced quantities, for example maximum peak pressure,
+pressure based runout (including direct comparison to possible references, see :ref:`moduleAna3AIMEC:Area indicators`) for different simulations.
+The following figure illustrates the raster transformation process.
+
+
 
 .. list-table::
 
@@ -69,17 +69,19 @@ The following figure illustrates the process.
     * - .. _fig-aimec-comp-real:
 
         .. figure:: _static/aimec_comparison_real_topo.png
+            :width: 90%
 
             In the real coordinate system (x,y)
 
       - .. _fig-aimec-comp-new:
 
         .. figure:: _static/aimec_comparison_new_topo.png
+            :width: 90%
 
-           In the new coordinate system (s,l)
+            In the new coordinate system (s,l)
 
 
-.. _mean-max-path:
+Here is the definition of the different indicators and outputs from the AIMEC post-processing process:
 
 Mean and max values along path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -112,15 +114,13 @@ to the transition point (first point where the slope angle is below :math:`30^{\
 Mean and max indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-From the maximum values along path of the distribution :math:`A(s,l)` calculated in :ref:`mean-max-path`, it is possible to calculate
+From the maximum values along path of the distribution :math:`A(s,l)` calculated in :ref:`moduleAna3AIMEC:Mean and max values along path`, it is possible to calculate
 the global maximum (MMA) and average maximum (AMA) values of the two dimensional distribution :math:`A(s,l)`:
 
 .. math::
     MMA = \max_{\forall s \in [s_{start},s_{runout}]} A_{cross}^{max}(s) \quad\mbox{and}\quad
     AMA = \frac{1}{s_{runout}-s_{start}}\int_{s_{start}}^{s_{runout}} A_{cross}^{max}(s)ds
 
-
-.. _area-indicators:
 
 Area indicators
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -193,16 +193,18 @@ transformation information by :py:func:`ana3AIMEC.aimecTools.assignData`. The pr
 
 This results in the following plot:
 
+.. _fig-aimec-domain-transfo:
+
 .. figure:: _static/avaAlr0_DomainTransformation.png
+    :width: 90%
 
-      Alr avalanche coordinate transformation and peak pressure field reprojetion.
+    Alr avalanche coordinate transformation and peak pressure field reprojetion.
 
-.. _analyze-results:
 
 Analyze results
 ~~~~~~~~~~~~~~~~~~~
 
-Calculates the different indicators described in the :ref:`Theory` section for a given threshold. The threshold
+Calculates the different indicators described in the :ref:`moduleAna3AIMEC:Theory` section for a given threshold. The threshold
 can be based on pressure, flow depth, ... (this needs to be specified in the configuration file).
 Returns a ``resAnalysis`` dictionary with the analysis results (see :py:func:`ana3AIMEC.ana3AIMEC.postProcessAIMEC` for more details).
 
@@ -221,7 +223,7 @@ Returns a ``resAnalysis`` dictionary with the analysis results (see :py:func:`an
 .. :pressureLimit: pressure Threshold
 .. :pCrossAll: :math:`P_{cross}^{max}(s)` for each simulation
 
-.. _plot-save-results:
+
 
 Plot and save results
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -230,36 +232,58 @@ Plots and saves the desired figures. Writes results in ``resAnalysis`` to a text
 By default, Aimec saves five plots plus as many plots as numerical simulations to
 compare to the reference. The first five ones are :
 
-  *  "domTransfo" shows the real domain on the left and new domain on the right
+  *  "domTransfo" shows the real domain on the left and new domain on the right (:numref:`fig-aimec-domain-transfo`)
   *  "referenceFields" shows the peak pressure, flow depth and speed in the new domain
 
     .. figure:: _static/avaAlr0_plim_1p0_referenceFields.png
+        :width: 90%
+
+        Reference peak fields
 
 
   *  "slComparison" shows the difference between all simulations in terms of peak values along profile.
     If only two simulations are provided, a 3 panel plot like the following is produced:
 
     .. figure:: _static/avaAlr1_ppr_thresholdValue_1_slComparison.png
+        :width: 90%
+
+        Maximum peak fields comparison between two simulations
 
     if more then two simulations are provided only the peak field specified in the configuration file is analyzed
     and the statistics in terms of peak value along profile are plotted (mean, max and quantiles):
 
     .. figure:: _static/avaAlr0_ppr_thresholdValue_1_slComparisonStat.png
+        :width: 90%
+
+        Maximum peak pressure distribution along path
 
 
   *  "ROC" shows the normalized area difference between reference and other simulations.
+
+    .. figure:: _static/avaAlr0_ppr_thresholdValue_1_ROC.png
+        :width: 90%
+
+        Area analysis plot
+
   *  "rmmp" shows the relative difference in maximum peak value between reference and other simulation function of runout length
+
+    .. figure:: _static/avaAlr0_relMaxppr_thresholdValue1.png
+        :width: 90%
+
+        Relative maximum peak pressure function of runout
 
 The last plots "_i_ContourComparisonToReference" and "_i_AreaComparisonToReference"  where "i" gives the number of the simulation plots the 2D difference with the reference
 and the statistics associated.
 
-.. figure:: _static/avaAlr0_thresholdValue_1p0_sim_5_AreaComparisonToReference.png
+.. figure:: _static/avaAlr0_thresholdValue_1p0_sim_2_AreaComparisonToReference.png
+    :width: 90%
 
-          Area comparison
+    Area comparison
 
-.. figure:: _static/avaAlr0_plim_1p0_sim_5_ContourComparisonToReference.png
+.. figure:: _static/avaAlr0_plim_1p0_sim_2_ContourComparisonToReference.png
+    :width: 90%
 
-          Contour comparison
+    Contour comparison
 
 Configuration parameters
 ----------------------------
