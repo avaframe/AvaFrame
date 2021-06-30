@@ -36,10 +36,24 @@ In order to run the test example:
 
 Analytical solution of dam break problem, flow depth and flow velocity at 0.5 s.
 
-.. image:: _static/damBreakFlowDepth.png
-  :width: 45%
-.. image:: _static/damBreakFlowVelocity.png
-  :width: 45%
+.. list-table::
+    :widths: 50 50
+
+
+    * -
+
+        .. figure:: _static/damBreakFlowDepth.png
+            :width: 100%
+
+            Flow depth in x direction after 5s
+
+
+      -
+
+        .. figure:: _static/damBreakFlowVelocity.png
+            :width: 100%
+
+            Flow velocity magnitude in x direction after 5s
 
 Similarity solution
 ====================
@@ -60,41 +74,17 @@ The :py:mod:`ana1Tests.simiSol` module provides functions to compute the analyti
 to visualize this solution and to compare it to the output from the DFA computational module.
 
 
+To run
+------
+
 A workflow example is given in :py:mod:`runScripts/runSimilaritySol`, where the analytical solution is computed and
 avalanche simulations are performed and both results are then compared.
-The input data for this example can be found in ``data/avaSimilaritySol``.
+The input data for this example can be found in ``data/avaSimilaritySol`` with the
+configuration settings of com1DFA including a section 'SIMISOL' (see ``data/avaSimilaritySol/Inputs/simiSol_com1DFACfg.ini``).
 
 The plotResults function generates profile plots for the flow depth and velocity
 in both slope and cross slope directions. The simulation results are plotted alongside the
 analytical solution for the given time step.
-
-
-Input
------
-
-* avalanche directory (``data/avaSimilaritySol``)
-* configuration settings of com1DFA including a section 'SIMISOL' (see ``data/avaSimilaritySol/Inputs/simiSol_com1DFACfg.ini``)
-
-
-Outputs
--------
-
-solSimi
-~~~~~~~~~
-
-Results of the analytic solution of the problem. Dictionary with:
-
-* T: real time array
-* f, g and their first derivative: time solution of the transformed variables
-
-getSimiSolParameters
-~~~~~~~~~~~~~~~~~~~~~
-
-Function that transforms the f, g variables back to flow depth and
-velocity in real time and space.
-
-Plotting routine
-~~~~~~~~~~~~~~~~~
 
 Comparing the results from the DFA module to the similarity solution leads to the following plots:
 
@@ -141,18 +131,13 @@ The :py:mod:`ana1Tests.FPtest` module provides functions to compute the analytic
 to visualize the pile and to compare it to the output from the DFA computational module.
 
 
-An workflow example is given in :py:mod:`runScripts.runTestFP`. The input data for this example can be found in ``data/avaFPtest``.
+To run
+------
 
+An workflow example is given in :py:mod:`runScripts.runTestFP`.
+The input data for this example can be found in ``data/avaFPtest`` with the
+configuration settings of com1DFA including a section 'FPSOL' (see ``data/avaFPtest/Inputs/FlatPlane_com1DFACfg.ini``).
 
-Input
------
-
-* avalanche directory (``data/avaFPtest``)
-* configuration settings of com1DFA including a section 'FPSOL' (see ``data/avaFPtest/Inputs/FlatPlane_com1DFACfg.ini``)
-
-
-Outputs
--------
 
 The :py:func:`ana1Tests.FPtest.plotProfilesFPtest` function generates a profile plot of the flow depth in the radial direction.
 The simulation results are plotted alongside the analytical solution for the given time step.

@@ -232,7 +232,7 @@ Plots and saves the desired figures. Writes results in ``resAnalysis`` to a text
 By default, Aimec saves five plots plus as many plots as numerical simulations to
 compare to the reference. The first five ones are :
 
-  *  "domTransfo" shows the real domain on the left and new domain on the right (:numref:`fig-aimec-domain-transfo`)
+  *  "DomainTransformation" shows the real domain on the left and new domain on the right (:numref:`fig-aimec-domain-transfo`)
   *  "referenceFields" shows the peak pressure, flow depth and speed in the new domain
 
     .. figure:: _static/avaAlr0_plim_1p0_referenceFields.png
@@ -265,7 +265,7 @@ compare to the reference. The first five ones are :
 
         Area analysis plot
 
-  *  "rmmp" shows the relative difference in maximum peak value between reference and other simulation function of runout length
+  *  "relMaxPeakField" shows the relative difference in maximum peak value between reference and other simulation function of runout length
 
     .. figure:: _static/avaAlr0_relMaxppr_thresholdValue1.png
         :width: 90%
