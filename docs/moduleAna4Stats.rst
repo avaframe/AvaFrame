@@ -1,3 +1,4 @@
+
 ######################################
 ana4Stats: Statistical analysis tools
 ######################################
@@ -54,14 +55,14 @@ In :py:mod:`ana4Stats.getStats`, functions that help to compute statistical prop
 In :py:func:`ana4Stats.getStats.readAimecRunout`, the runout length is read from the ana3Aimec output and saved into a 1D numpy array.
 :py:func:`ana4Stats.getStats.extractMaxValues` can be used to determine the maximum peak values of the simulation results.
 These values can then be plotted using the functions in :py:mod:`out3Plot.statsPlots` in order to visualise the statistics of
-a set of avalanche simulations. 
+a set of avalanche simulations.
 For further details on the specific functions, have a look at: :py:mod:`ana4Stats.getStats`.
 
 To run
 -------
 
 An example on how to use these statistical functions is given in :py:mod:`runScripts.runStatsExample`, where
-for *avaHockeyChannel* simulations are performed for two different release area scenarios and
+for ``avaHockeyChannel`` simulations are performed for two different release area scenarios and
 the release thickness is varied from 0.75 to 1.75 meters in steps of 0.05 meters. The resulting
 simulations are then analysed using the :py:func:`ana4Stats.getStats.extractMaxValues` function and plots are generated using the
 plotting routines from :py:mod:`out3Plot.statsPlots` .
@@ -72,3 +73,16 @@ plotting routines from :py:mod:`out3Plot.statsPlots` .
 * run::
 
       python3 runScripts/runStatsExample.py
+
+
+.. figure:: _static/Scatter_pfd_vs_pfv_dist_test.png
+    :width: 90%
+
+    Scatter plot of the hockey example with color-coded release thickness values.
+
+
+.. figure:: _static/Scatterkde_pfd_vs_pfv_dist_test.png
+    :width: 90%
+
+    Scatter plot of the hockey example including a marginal kde plot and color coded with release
+    area scenario. 
