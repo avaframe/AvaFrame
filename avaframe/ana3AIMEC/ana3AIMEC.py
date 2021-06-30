@@ -471,7 +471,7 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
         path to data to analyse
     cfgFlags: congfigParser object
         configuration settings flagMass used
-        
+
     Returns
     -------
     resAnalysis: dict

@@ -750,9 +750,9 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
     # show flow path
     ax1 = fig.add_subplot(111)
     ax1.set_title(title)
-    ax1.set_ylabel(yaxis_label, color=pU.cmapAimec(0))
-    ax1.spines['left'].set_color(pU.cmapAimec(0))
-    ax1.tick_params(axis='y', colors=pU.cmapAimec(0))
+    ax1.set_ylabel(yaxis_label, color=pU.cmapVar['colors'][-1])
+    ax1.spines['left'].set_color(pU.cmapVar['colors'][-1])
+    ax1.tick_params(axis='y', colors=pU.cmapVar['colors'][-1])
     ax1.set_xlabel(''.join(['s [m] - runout with ', str(thresholdValue),
                             ' kPa threshold']))
     pU.putAvaNameOnPlot(ax1, cfgPath['projectName'])
@@ -767,7 +767,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
 
     ax2 = ax1.twinx()
     ax2.set_ylabel('z [m]')
-    ax2.spines['left'].set_color(pU.cmapAimec(0))
+    ax2.spines['left'].set_color(pU.cmapVar['colors'][-1])
     ax2.tick_params(axis='y', colors='k')
     ax2.plot(sPath, zPath, color='k', label='path', linestyle='--')
     plt.xlim([0, max(sPath) + 50])
