@@ -34,7 +34,12 @@ In order to run the test example:
 
     runScripts/runDamBreak.py
 
+Analytical solution of dam break problem, flow depth and flow velocity at 0.5 s.
 
+.. image:: _static/damBreakFlowDepth.png
+  :width: 45%
+.. image:: _static/damBreakFlowVelocity.png
+  :width: 45%
 
 Similarity solution
 ====================
