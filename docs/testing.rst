@@ -40,10 +40,10 @@ For further details have a look at the module :py:mod:`ana1Tests.damBreak` and t
 Similarity Solution
 --------------------
 
-This test makes use of an exact solution of a sliding granular mass on an inclined plane.
-In :cite:`HuSiSaNo1993` the analytic solution is derived for this problem, based on the Savage-Hutter shallow flow
+This test makes use of semi-analytic solution of a sliding granular mass on an inclined plane.
+In :cite:`HuSiSaNo1993` the semi-analytic solution is derived for this problem, based on the Savage-Hutter shallow flow
 model to describe the granular flow.
-Here, we provide an implementation of the analytic similarity solution and compare
+Here, we provide an implementation of the similarity solution and compare
 it to the output of a numerical simulation.
 For further details have a look at the module :py:mod:`ana1Tests.simiSol` and the Section :ref:`moduleana1Tests:Similarity solution`.
 
