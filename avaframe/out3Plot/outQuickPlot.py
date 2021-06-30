@@ -456,6 +456,7 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     fig = plt.figure(figsize=(pU.figW*2, pU.figH))
     suptitle = fig.suptitle(name1, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(121)
+
     cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(data1), continuous=pU.contCmap)
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)

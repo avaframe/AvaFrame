@@ -36,8 +36,8 @@ To run
 
 * first go to ``AvaFrame/avaframe``
 * in your run scripts call::
-
-  generatePlot(dataDict, avaName, outDir, cfg, plotDict)
+  
+    generatePlot(dataDict, avaName, outDir, cfg, plotDict)
 
 
 
@@ -54,7 +54,7 @@ To run
 * first go to ``AvaFrame/avaframe``
 * in your run script call::
 
-  quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, cfgPlot, suffix)
+    quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, cfgPlot, suffix)
 
 
 quickPlotSimple
@@ -74,7 +74,7 @@ in :py:mod:`runScript/runQuickPlotSimple`
 * specifiy input directory, default is ``data/NameOfAvalanche/Work/simplePlot``
 * run::
 
-  python3 runScripts/runQuickPlotSimple.py
+    python3 runScripts/runQuickPlotSimple.py
 
 
 generateOnePlot
@@ -84,6 +84,12 @@ generateOnePlot
 The first panel shows the dataset and the second panel shows a cross- or along profile of the dataset.
 The function returns a list with the file path of the generated plot.
 For further details have a look at :py:func:`out3Plot.outQuickPlot.generateOnePlot`.
+
+
+.. figure:: _static/Profiles_relAlr_null_dfa_7f85c44142_pfd.asc.png
+
+          Output plot from generatePlotOne on peak flow depth results
+
 
 
 quickPlotOne
@@ -102,7 +108,7 @@ is provided in :py:mod:`runScript/runQuickPlotOne`
 *  copy ``out3Plot/outQuickPlotCfg`` to ``out3Plot/outQuickPlotCfg`` and optionally specify input directory
 *  run::
 
-  python3 runScripts/runQuickPlotOne.py
+    python3 runScripts/runQuickPlotOne.py
 
 
 in1DataPlots
@@ -122,6 +128,7 @@ This can be used to visualize results of avalanche simulations where a parameter
 different release area scenarios. If a parameter variation was used to derive the simulation results, the plots indicate the parameter values in color.
 If the input data includes information about the 'scenario' that was used, for example different release scenarios, the plots use different colors for each scenario.
 There is also the option to add a kde (kernel density estimation) plot for each result parameter as marginal plots.
+An example on how these plotting functions are used and exemplary plots can be found in :ref:`moduleAna4Stats:getStats`
 
 plotValuesScatter
 -------------------
@@ -145,16 +152,3 @@ plotHistCDFDiff
 .. figure:: _static/avaAlr_plotHistCDFDiff.png
 
           Output plot from plotHistCDFDiff on peak pressure results from two simulations of avaAlr
-
-To run
-------
-
-:py:mod:`runScripts/runStatsExample` includes an example run script to perform avalanche simulations for varying release thickness and for two different
-release area scenarios. The simulation results are visualized using :py:func:`out3Plot.statsPlots.plotValuesScatter`
-and :py:func:`out3Plot.statsPlots.plotValuesScatterHist` and saved to
-``data/avaHockeyChannel/Outputs/ana4Stats``. This script can be used as a template to design your own workflow.
-
-* first go to ``AvaFrame/avaframe``
-* run::
-
-    python3 runScripts/runStatsExample.py
