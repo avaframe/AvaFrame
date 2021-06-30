@@ -11,5 +11,8 @@
 
 /* disable horizontal scroll bar for tables */
 .wy-table-responsive table td {
-white-space: normal;
+    white-space: normal !important;
+}
+.wy-table-responsive {
+    overflow: visible !important;
 }
