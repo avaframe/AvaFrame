@@ -88,7 +88,7 @@ The boundary conditions at the free surface and bottom of the flow read:
 
 :math:`\sigma^{(b)}_i = (\sigma_{kl}n_ln_k)n_i` represents the normal stress at the bottom and
 :math:`\tau^{(b)}_i = \sigma_{ij}n_j - \sigma^{(b)}_i` represents the shear stress at the bottom surface.
-:math:`f` describes the chosen friction model and are described in `[sec:friction model] <#sec:friction model>`__.
+:math:`f` describes the chosen friction model and are described in :ref:`theoryCom1DFA:Friction Model`.
 The normals at the free surface (:math:`n_i^{(s)}`) and bottom surface (:math:`n_i^{(b)}`) are:
 
 .. math::
