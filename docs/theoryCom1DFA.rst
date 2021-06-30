@@ -118,7 +118,7 @@ leads to:
    \mbox{for} \quad i=(1,2),\quad \mbox{and} \quad u^{(b)}_2 = u^{(b)}_3 = 0
 ..   :label: NCS-consequence
 
-Depth average equations:
+Depth averaged equations:
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 In this NCS and considering a prism-like Control volume, the volume
 content :math:`V(t) = A_b(t)\overline{h}` is obtained by multiplication
@@ -134,19 +134,19 @@ Entrainment:
 """""""""""""
 
 The snow entrainment is either due to plowing at the front of the avalanche or to erosion
-at the bottom. The entrainment rate at the front :math:`q^{\text{plo}}` can be expressed function of the
+at the bottom. The entrainment rate at the front :math:`q^{\text{plo}}` can be expressed as a function of the
 properties of the entrained snow (density :math:`\rho_{\text{ent}}` and
 snow depth :math:`h_{\text{ent}}`), the velocity of the avalanche at the
-front :math:`\overline{\mathbf{u}}` and length :math:`w_f` of the front cell (measured perpendicularly
-to the flow velocity :math:`\overline{\mathbf{u}}`). It obviously only happens on the front cells of
-the avalanche (meaning that :math:`w_f` is zero for inner parts of the avalanche):
+front :math:`\overline{\mathbf{u}}` and length :math:`w_f` of the front (measured perpendicularly
+to the flow velocity :math:`\overline{\mathbf{u}}`). It obviously only happens on the front of
+the avalanche:
 
 .. math::
    \oint\limits_{\partial V(t)} q^{\text{plo}}\,\mathrm{d}A = \int\limits_{l_{\text{front}}}\int_b^s q^{\text{plo}}\,
    \mathrm{d}{l}\,\mathrm{d}{z} =  \rho_{\text{ent}}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    :label: ploughing
 
-The entrainment rate at the bottom :math:`q^{\text{ero}}` can be expressed function of the
+The entrainment rate at the bottom :math:`q^{\text{ero}}` can be expressed as a function of the
 bottom area :math:`A_b` of the control volume, the velocity of the avalanche :math:`\overline{\mathbf{u}}`,
 the bottom shear stress :math:`\tau^{(b)}` and the specific erosion energy :math:`e_b`):
 
@@ -161,11 +161,11 @@ This leads in the mass balance :eq:`mass-balance1` to :
 .. math::
    \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}(A_b\overline{h})}{\mathrm{d}t}
    = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert +
-   A_b\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+   \frac{A_b}{\rho_0}\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    :label: mass-balance2
 
 The force :math:`F_i^{\text{ent}}` required to break the entrained snow
-from the ground and to compress it is expressed function of the required
+from the ground and to compress it is expressed as a function of the required
 breaking energy per fracture surface unit :math:`e_s`
 (:math:`J.m^{-2}`), the deformation energy per entrained mass element
 :math:`e_d` (:math:`J.kg^{-1}`) and the entrained snow depth
@@ -178,11 +178,11 @@ Resistance:
 """""""""""""
 
 The force :math:`F_i^{\text{res}}` due to obstacles is expressed
-function of the characteristic diameter :math:`\overline{d}` and height
+as a function of the characteristic diameter :math:`\overline{d}` and height
 :math:`h_{\text{res}}` of the obstacles, the spacing
 :math:`s_{\text{res}}` between the obstacles and an empirical
 coefficient :math:`c_w` (see :numref:`f-res`). The effective height :math:`h^{\text{eff}}`
-is defined as :math:`\min\left\lbrace\begin{array}{l} \overline{h}\\h_{res}\end{array}\right\rbrace`:
+is defined as :math:`\min(\overline{h}, h_{res} )`:
 
 .. math::
    F_i^{\text{res}} = -(\frac{1}{2}\,\overline{d}\,c_w/s^2_{\text{res}})\,\rho_0\,A\,
@@ -231,7 +231,7 @@ used to obtain a relation for the vertical distribution of the stress
 tensor (:cite:`Sa2007`). Due to the choice of
 coordinate system and because of the kinematic boundary condition at the
 bottom, the left side of :eq:`momentum-balance5` can be
-expressed function of the velocity :math:`\overline{u}_1` in direction
+expressed as a function of the velocity :math:`\overline{u}_1` in direction
 :math:`x_1` and the curvature of the terrain in this same direction
 :math:`\frac{\partial^2{b}}{\partial{x_1^2}}` (:cite:`Zw2000`):
 
@@ -256,7 +256,7 @@ Non-dimensional Equations
 
         Characteristic size of the avalanche along its path (from [Zw2000]_, modified)
 
-The previous equations :eq:`momentum-balance5` and :eq:`sigma33` are can be further simplified by
+The previous equations :eq:`momentum-balance5` and :eq:`sigma33` can be further simplified by
 introducing a scaling based on the characteristic values of the physical
 quantities describing the avalanche. The characteristic length L, the
 thickness H, the acceleration due to gravity g and the characteristic
@@ -296,7 +296,7 @@ Introducing those properties in :eq:`sigma33`, leads to
    (s^*-x^*_3) + \underbrace{\varepsilon\oint\limits_{\partial A_b^*}\left(\int\limits_{x^*_3}^{s^*}\sigma^*_{31}\,\mathrm{d}x^*_3\right)\,\mathrm{d}l^*}_{O(\varepsilon)}.
    :label: sigma33star
 
-The height, H of dense flow avalanches is assumed to me small compared
+The height, H of dense flow avalanches is assumed to be small compared
 to its length, L. Meaning that the equations are examined in the limit
 :math:`\varepsilon \ll 1`. It is then possible to neglect the last term
 in :eq:`sigma33star` which leads to (after reinserting
@@ -318,7 +318,7 @@ Calculating the surface integral in equation :eq:`momentum-balance5` requires to
 express the other components of the stress tensor. Here again a
 magnitude consideration between the shear stresses :math:`\sigma_{12} = \sigma_{21}` and :math:`\sigma_{13}`.
 The shear stresses are based on a generalized Newtonian law of materials,
-which controls the influence of normal stresse and the rate of deformation through the viscosity.
+which controls the influence of normal stress and the rate of deformation through the viscosity.
 
 .. math::
     \tau_{ij} = \eta\left(\frac{\partial{u_i}}{\partial{x_j}}+\frac{\partial{u_j}}{\partial{x_i}}\right), ~ i\neq j
@@ -379,14 +379,14 @@ remains unchanged:
 .. math::
    \frac{\mathrm{d}V(t)}{\mathrm{d}t} = \frac{\mathrm{d}\left(A_b\overline{h}\right)}{\mathrm{d}t}
    = \frac{\rho_{\text{ent}}}{\rho_0}\,w_f\,h_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}\right\Vert
-   + A_b\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
+   + \frac{A_b}{\rho_0}\,\frac{\tau^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}\right\Vert
    :label: mass-balance3
 
 The unknown :math:`\overline{u}_1`, :math:`\overline{u}_2` and
 :math:`\overline{h}` satisfy :eq:`sigmab`,
 :eq:`momentum-balance6` and
 :eq:`mass-balance3`. In equation
-:eq:`momentum-balance6` the ground shear
+:eq:`momentum-balance6` the bottom shear
 stress :math:`\tau^{(b)}` remains unknown, and and a constitutive equation
 has to be introduced in order to completely solve the equations.
 
@@ -446,23 +446,23 @@ The bottom shear stress then reads:
  \tau^{(b)} = c_{\text{dyn}}\,\rho_0\,\bar{u}^2
 
 :math:`c_{\text{dyn}}` is the viscous friction coefficient. The bottom shear stress
-is a quadratic function of the velocity. the normal stress component :math:`\sigma^{(b)}` (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa2007`).
+is a quadratic function of the velocity. (:cite:`Zw2000,BaSaGr1999,WaHuPu2004,Sa2007`).
 
 This model enables to reach more realistic velocities for avalanche simulations.
-The draw back is that the avalanche flows as long as the slope inclination reaches zero.
-This means it flows to the lowest local point.
+The draw back is that the avalanche doesn't stop flowing before the slope inclination approaches zero.
+This implies that the avalanche flows to the lowest local point.
 
 Voellmy friction model
 """""""""""""""""""""""""
-Anton Voellmy was a Swiss engineer interested by avalanche dynamics :cite:`Vo1955`.
-He first had the idea to combine both Mohr-Coulomb and Chezy model by summing them up
+Anton Voellmy was a Swiss engineer interested in avalanche dynamics :cite:`Vo1955`.
+He first had the idea to combine both the Mohr-Coulomb and the Chezy model by summing them up
 in order to take advantage of both. This leads to the following friction law:
 
 .. math::
  \tau^{(b)} = \tan{\delta}\,\sigma^{(b)} + c_\text{dyn}\,\rho_0\,\bar{u}^2
 
 
-This model is described as Voellmy-Fluid :cite:`Sa2004,Sa2007`, and the turbulenten
+This model is described as Voellmy-Fluid :cite:`Sa2004,Sa2007`, and the turbulent
 friction term :math:`\xi` is used instead of :math:`c_{\text{dyn}}`.
 
 
@@ -500,7 +500,7 @@ with the empirical parameter :math:`R_s^0` the term
 Therefore lower avalanche speeds lead to a higher bed friction, making
 avalanche flow stop already at steeper slopes :math:`\alpha`, than
 without this effect. This effect is intended to avoid lateral creep of
-the avalanche mass (:cite:`SaGr2009`)
+the avalanche mass (:cite:`SaGr2009`). 
 
 
 
