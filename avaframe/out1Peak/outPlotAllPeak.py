@@ -122,7 +122,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
     return plotDict
 
 
-def plotAllFields(avaDir, inputDir, outDir, unit=''):
+def plotAllFields(avaDir, inputDir, outDir, unit='', constrainData=True):
     """ Plot all fields within given directory and save to outDir
 
         Parameters
@@ -169,7 +169,19 @@ def plotAllFields(avaDir, inputDir, outDir, unit=''):
         # choose colormap
         cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapNN, np.amax(data), continuous=pU.contCmap)
         cmap.set_bad('w')
-        im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+
+        if constrainData:
+            rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
+            dataConstrained = data[rowsMin:rowsMax+1, colsMin:colsMax+1]
+            data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
+            rowsMinPlot = rowsMin*cellSize
+            rowsMaxPlot = (rowsMax+1)*cellSize
+            colsMinPlot = colsMin*cellSize
+            colsMaxPlot = (colsMax+1)*cellSize
+            im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect=nx/ny)
+        else:
+            im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+
         pU.addColorBar(im1, ax, ticks, unit)
 
         title = str('%s' % name)
