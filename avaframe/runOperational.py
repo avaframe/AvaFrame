@@ -3,19 +3,26 @@
 """
 
 # Load modules
+# importing general python modules 
 import time
 import logging
 import pathlib
 import pandas
 
-# # Local imports
-from avaframe import runCom1DFA
-from avaframe.com2AB import com2AB
-from avaframe.out3Plot import outAB
+# Import the avaframe modules you want to use. This list will
+# grow as you use more avaframe modules. You can refer to the different
+# computational modules documentation to know which imports are required
+
+# first import the always useful tools
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
+
+# then depending on which computational module you want to use
+from avaframe import runCom1DFA
+from avaframe.com2AB import com2AB
+from avaframe.out3Plot import outAB
 
 
 def runOperational(avalancheDir=''):
@@ -40,7 +47,9 @@ def runOperational(avalancheDir=''):
     # log file name; leave empty to use default runLog.log
     logName = 'runOperational'
 
-    # # Load avalanche directory from general configuration file
+    # Load avalanche directory from general configuration file
+    # More information about the configuration can be found here
+    # on the Configuration page in the documentation
     cfgMain = cfgUtils.getGeneralConfig()
     if avalancheDir != '':
         cfgMain['MAIN']['avalancheDir'] = avalancheDir
@@ -54,6 +63,8 @@ def runOperational(avalancheDir=''):
 
     # ----------------
     # Clean input directory(ies) of old work and output files
+    # If you just created the ``avalancheDir`` this one should be clean but if you
+    # already did some calculations you might want to clean it::
     initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 
     # ----------------

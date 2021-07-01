@@ -108,3 +108,64 @@ Some other options are:
 * Use the Atom editor with a markdown plugin
 * If you have *pandoc* installed use this to convert it to pdf/html
 * Some browsers have markdown extensions you can install easily
+
+
+Workflow example
+^^^^^^^^^^^^^^^^
+
+The following example should make it easier for you to find your way in AvaFrame
+and setup your own AvaFrame workflow. Before starting, make sure you have
+installed AvaFrame and the required dependencies as explained in
+:ref:`installation:Installation`.
+
+Make sure you change to your ``AvaFrame`` direcotry by::
+
+  cd [YOURDIR]/AvaFrame
+
+Replace ``[YOURDIR]`` with the directory from your installation step.
+
+Initialize project
+~~~~~~~~~~~~~~~~~~
+
+To create the folder where the input data lies and where the
+output results will be saved, specify the full path to the folder
+in the ``local_avaframeCfg.ini`` (which is a copy of
+``avaframeCfg.ini`` that you need to create). So::
+
+  cd avaframe
+  cp avaframeCfg.ini local_avaframeCfg.ini
+
+and edit ``local_avaframeCfg.ini`` with your favorite text editor and adjust the
+variable ``avalancheDir``.
+
+Then run ::
+
+  python runInitializeProject.py
+
+This will create a new directory with the input required by AvaFrame structured as described
+in :ref:`moduleIn3Utils:Initialize Project`. 
+
+Input data
+~~~~~~~~~~
+
+Check the input data required by the different modules you want to use and fill
+the ``Inputs/`` inside the ``[avalancheDir]`` folder from the initialize step accordingly.
+
+For example the ``com1DFA`` module needs input as described in
+:ref:`moduleCom1DFA:Input`. You can also have a look at the default setting for
+the module you want to use (for example ``com1DFACfg.ini`` for module com1DFA).
+If you want to use different settings, create a ``local_`` copy of the ``.ini``
+file and modify the desired parameters.
+
+More information about the configuration can be found here: :ref:`configuration:Configuration`
+
+Building your run script
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create your own workflow by taking the ``runOperational.py`` script as
+template. 
+
+We suggest you copy it and adjust it to your liking. There are annotations in
+the code that should help you to understand the structure.
+
+A lot more examples can be found in the ``runScripts`` directory.
