@@ -35,11 +35,14 @@ Discretization
 Space discretization
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The domain is discretized in particles. Each particle :math:`p_j` is affected with the following properties:
-a mass :math:`m_{p_j}`, a depth :math:`{h}_{p_j}`, a density :math:`\rho_{p_j}=\rho_0` and
-a velocity :math:`\mathbf{{u}}_{p_j}=({u}_{p_j,1}, {u}_{p_j,2})` (**those
+The domain is discretized in particles. Each particle :math:`p_k` is affected with the following properties:
+a mass :math:`m_{p_k}`, a depth :math:`{h}_{p_k}`, a density :math:`\rho_{p_k}=\rho_0` and
+a velocity :math:`\mathbf{{u}}_{p_k}=({u}_{p_k,1}, {u}_{p_k,2})` (**those
 quantities are depth averaged, note that we dropped the overline from** :eq:`hmean-umean` **for simplicity reasons**).
-This mesh also caries the velocity, mass and flow depth properties. It is possible to navigate
+In the following paragraphs, :math:`i` and :math:`j` indexes refer to the different directions in the NCS,
+whereas  :math:`k` and :math:`l` indexes refer to particles
+
+A fixed mesh also caries the velocity, mass and flow depth properties. It is possible to navigate
 from particle property to mesh property using the interpolation methods described in :ref:`Mesh and interpolation`
 
 
@@ -178,8 +181,8 @@ Flow depth and velocity fields are determined on the mesh using, as intermediate
 mass and momentum fields. First, mass and momentum mesh fields can be evaluated by
 summing particles mass and momentum. This can be donne using the bilinear
 weights :math:`w` defined in the previous paragraph (here :math:`f` represents
-the mass or momentum and :math:`f_{uv}` is the particle value. :math:`f_{ij}`
-are the vertex values):
+the mass or momentum and :math:`f_{uv}` is the particle value. :math:`f_{nm}`
+, :math:`{n, m} \in \{0, 1\} \times \{0, 1\}`, are the vertex values):
 
 .. math::
     \begin{aligned}
@@ -259,15 +262,15 @@ In the case a depth integrated equations (for example SWE), a scalar function
 :math:`f` and its gradient can be expressed as following:
 
 .. math::
-    f_{i} &= \sum\limits_{j}f_{j}A_{j}\,W_{ij}\\
-    \mathbf{\nabla}f_{i} &= -\sum\limits_{j}f_{j}A_{j}\,\mathbf{\nabla}W_{ij}
+    f_{k} &= \sum\limits_{l}f_{l}A_{l}\,W_{kl}\\
+    \mathbf{\nabla}f_{k} &= -\sum\limits_{l}f_{l}A_{l}\,\mathbf{\nabla}W_{kl}
     :label: sph formulation
 
 Which gives for the flow depth:
 
 .. math::
-    \overline{h}_{i} &= \frac{1}{\rho_0}\,\sum\limits_{j}{m_{j}}\,W_{ij}\\
-    \mathbf{\nabla}\overline{h}_{i} &= -\frac{1}{\rho_0}\,\sum\limits_{j}{m_{j}}\,\mathbf{\nabla}W_{ij}
+    \overline{h}_{k} &= \frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,W_{kl}\\
+    \mathbf{\nabla}\overline{h}_{k} &= -\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\mathbf{\nabla}W_{kl}
     :label: sph formulation for fd
 
 Where :math:`W` represents the SPH-Kernel function.
@@ -281,9 +284,9 @@ Standard method
 
 Let us start with the computation of the gradient of a scalar function
 :math:`f \colon \mathbb{R}^2 \to \mathbb{R}` on a horizontal plane.
-Let :math:`P_i=\mathbf{x}_i=(x_{i,1},x_{i,2})` and :math:`Q_j=\mathbf{x}_j=(x_{j,1},x_{j,2})` be two points in :math:`\mathbb{R}^2` defined by
-their coordinates in the Cartesian coordinate system :math:`(P_i,\mathbf{e_1},\mathbf{e_2})`. :math:`\mathbf{r}_{ij}=\mathbf{x}_i-\mathbf{x}_j` is the vector going from
-:math:`Q_j` to :math:`P_i` and :math:`r_{ij} = \left\Vert \mathbf{r}_{ij}\right\Vert` the length of this vector.
+Let :math:`P_k=\mathbf{x}_k=(x_{k,1},x_{k,2})` and :math:`Q_l=\mathbf{x}_l=(x_{l,1},x_{l,2})` be two points in :math:`\mathbb{R}^2` defined by
+their coordinates in the Cartesian coordinate system :math:`(P_k,\mathbf{e_1},\mathbf{e_2})`. :math:`\mathbf{r}_{kl}=\mathbf{x}_k-\mathbf{x}_l` is the vector going from
+:math:`Q_l` to :math:`P_k` and :math:`r_{kl} = \left\Vert \mathbf{r}_{kl}\right\Vert` the length of this vector.
 Now consider the kernel function :math:`W`:
 
 
@@ -291,7 +294,7 @@ Now consider the kernel function :math:`W`:
   \left.
   \begin{aligned}
   W \colon \mathbb{R}^2 \times \mathbb{R}^2 \times \mathbb{R} &\to \mathbb{R}\\
-  (P_i, Q_j, r_0) &\mapsto W(P_i, Q_j, r_0)
+  (P_k, Q_l, r_0) &\mapsto W(P_k, Q_l, r_0)
   \end{aligned}
   \right.\quad, r_0\in\mathbb{R} \mbox{ is the smoothing kernel length}
 
@@ -299,19 +302,19 @@ In the case of the spiky kernel, :math:`W` reads (2D case):
 
 .. math::
    \begin{aligned}
-   W_{ij} = &W(\mathbf{x_i},\mathbf{x_j},r_0) = W(\mathbf{x_i}-\mathbf{x_j},r_0) = W(\mathbf{r_{ij}},r_0)\\
+   W_{kl} = &W(\mathbf{x_k},\mathbf{x_l},r_0) = W(\mathbf{x_k}-\mathbf{x_l},r_0) = W(\mathbf{r_{kl}},r_0)\\
    =&\frac{10}{\pi r_0^5}\left\{
    \begin{aligned}
-   & (r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert)^3, \quad &0\leq \left\Vert \mathbf{r_{lj}}\right\Vert \leq  r_0\\
-   & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
+   & (r_0 - \left\Vert \mathbf{r_{kl}}\right\Vert)^3, \quad &0\leq \left\Vert \mathbf{r_{kl}}\right\Vert \leq  r_0\\
+   & 0 , & r_0 <\left\Vert \mathbf{r_{kl}}\right\Vert
    \end{aligned}
    \right.
    \end{aligned}
    :label: kernel function
 
 
-:math:`\left\Vert \mathbf{r_{ij}}\right\Vert= \left\Vert \mathbf{x_{i}}-\mathbf{x_{j}}\right\Vert`
-represents the distance between particle :math:`i` and :math:`j` and
+:math:`\left\Vert \mathbf{r_{kl}}\right\Vert= \left\Vert \mathbf{x_{k}}-\mathbf{x_{l}}\right\Vert`
+represents the distance between particle :math:`k` and :math:`l` and
 :math:`r_0` the smoothing length.
 
 Using the chain rule to express the gradient of :math:`W` in the Cartesian
@@ -319,8 +322,8 @@ coordinate system :math:`(x_1,x_2)` leads to:
 
 
 .. math::
-   \mathbf{\nabla}W_{ij} = \frac{\partial W}{\partial r}.\mathbf{\nabla}r,
-   \quad r = \left\Vert \mathbf{r} \right\Vert = \sqrt{(x_{i,1}-x_{j,1})^2 + (x_{i,2}-x_{j,2})^2}
+   \mathbf{\nabla}W_{kl} = \frac{\partial W}{\partial r}.\mathbf{\nabla}r,
+   \quad r = \left\Vert \mathbf{r} \right\Vert = \sqrt{(x_{k,1}-x_{l,1})^2 + (x_{k,2}-x_{l,2})^2}
    :label: kernel function gradient 1
 
 with,
@@ -328,16 +331,16 @@ with,
 .. math::
   \frac{\partial W}{\partial r} = -3\frac{10}{\pi r_0^5}\left\{
   \begin{aligned}
-  & (r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert)^2, \quad &0\leq \left\Vert \mathbf{r_{lj}}\right\Vert \leq  r_0\\
-  & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
+  & (r_0 - \left\Vert \mathbf{r_{kl}}\right\Vert)^2, \quad &0\leq \left\Vert \mathbf{r_{kl}}\right\Vert \leq  r_0\\
+  & 0 , & r_0 <\left\Vert \mathbf{r_{kl}}\right\Vert
   \end{aligned}
   \right.
 
 and
 
 .. math::
-  \frac{\partial r}{\partial w_{i,k}} = \frac{(x_{i,k}-x_{j,k})}{\sqrt{(x_{i,1}-x_{j,1})^2 + (x_{i,2}-x_{j,2})^2}},
-  \quad k=\{1,2\}
+  \frac{\partial r}{\partial x_{k,i}} = \frac{(x_{k,i}-x_{l,i})}{\sqrt{(x_{k,1}-x_{l,1})^2 + (x_{k,2}-x_{l,2})^2}},
+  \quad i=\{1,2\}
 which leads to the following expression for the gradient:
 
 .. math::
@@ -352,31 +355,31 @@ which leads to the following expression for the gradient:
 The gradient of :math:`f` is then simply:
 
 .. math::
-    \mathbf{\nabla}f_{i} = -\sum\limits_{j}f_{j}A_{j}\,\mathbf{\nabla}W_{ij}
-    :label: sph dradient
+    \mathbf{\nabla}f_{k} = -\sum\limits_{l}f_{l}A_{l}\,\mathbf{\nabla}W_{kl}
+    :label: sph gradient
 
 2.5D SPH method
 """"""""""""""""
 We now want to express a function :math:`f` and its gradient on a potentially
 curved surface and express this gradient in the 3 dimensional Cartesian
-coordinate system :math:`(P_i,\mathbf{e_1},\mathbf{e_2},\mathbf{e_3})`.
+coordinate system :math:`(P_k,\mathbf{e_1},\mathbf{e_2},\mathbf{e_3})`.
 
 Let us consider a smooth surface :math:`\mathcal{S}` and two points
-:math:`P_i=\mathbf{x}_i=(x_{i,1},x_{i,2},x_{i,3})` and :math:`Q_j=\mathbf{x}_j=(x_{j,1},x_{j,2},x_{j,3})`
+:math:`P_k=\mathbf{x}_k=(x_{k,1},x_{k,2},x_{k,3})` and :math:`Q_l=\mathbf{x}_l=(x_{l,1},x_{l,2},x_{l,3})`
 on :math:`\mathcal{S}`. We can define :math:`\mathcal{TP}` the tangent plane
-to :math:`\mathcal{S}` in :math:`P_i`. If :math:`\mathbf{u}_i` is the (none zero)
-velocity of the particle at :math:`P_i`, it is possible to define the local
-orthonormal coordinate system :math:`(P_i,\mathbf{V_1},\mathbf{V_2},\mathbf{V_3}=\mathbf{n})`
-with :math:`\mathbf{V_1}=\frac{\mathbf{u}_j}{\left\Vert \mathbf{u}_j\right\Vert}`
-and :math:`\mathbf{n}` the normal to :math:`\mathcal{S}` at :math:`P_i`.
+to :math:`\mathcal{S}` in :math:`P_k`. If :math:`\mathbf{u}_k` is the (none zero)
+velocity of the particle at :math:`P_k`, it is possible to define the local
+orthonormal coordinate system :math:`(P_k,\mathbf{V_1},\mathbf{V_2},\mathbf{V_3}=\mathbf{n})`
+with :math:`\mathbf{V_1}=\frac{\mathbf{u}_k}{\left\Vert \mathbf{u}_k\right\Vert}`
+and :math:`\mathbf{n}` the normal to :math:`\mathcal{S}` at :math:`P_k`.
 Locally, :math:`\mathcal{S}` can be assimilated to :math:`\mathcal{TP}` and
-:math:`Q_j` to its projection :math:`Q'_j` on :math:`\mathcal{TP}`.
-The vector :math:`\mathbf{r'}_{ij}=\mathbf{x}_i-\mathbf{x'}_j` going from
-:math:`Q'_j` to :math:`P_i` lies in :math:`\mathcal{TP}` and can be express
+:math:`Q_l` to its projection :math:`Q'_l` on :math:`\mathcal{TP}`.
+The vector :math:`\mathbf{r'}_{kl}=\mathbf{x}_k-\mathbf{x'}_l` going from
+:math:`Q'_l` to :math:`P_k` lies in :math:`\mathcal{TP}` and can be express
 in the plane local basis:
 
 .. math::
-  \mathbf{r'}_{ij}=\mathbf{x}_i-\mathbf{x'}_j = v_{ij,1}\mathbf{V_1} + v_{ij,2}\mathbf{V_2}
+  \mathbf{r'}_{kl}=\mathbf{x}_k-\mathbf{x'}_l = v_{kl,1}\mathbf{V_1} + v_{kl,2}\mathbf{V_2}
 
 It is important to define :math:`f` properly and the gradient that will be calculated:
 
@@ -407,35 +410,35 @@ It is then possible to apply the :ref:`standard-method` to compute this gradient
 
 
 .. math::
-   \mathbf{\nabla}_\mathcal{TP}W_{ij} = \frac{\partial W}{\partial r}.\mathbf{\nabla}_\mathcal{TP}r,
-   \quad r = \left\Vert \mathbf{r} \right\Vert = \sqrt{v_{ij,1}^2 + v_{ij,2}^2}
+   \mathbf{\nabla}_\mathcal{TP}W_{kl} = \frac{\partial W}{\partial r}.\mathbf{\nabla}_\mathcal{TP}r,
+   \quad r = \left\Vert \mathbf{r} \right\Vert = \sqrt{v_{kl,1}^2 + v_{kl,2}^2}
    :label: kernel function gradient TP 1
 
 Which leads to:
 
 .. math::
-  \mathbf{\nabla}_\mathcal{TP}W_{ij} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{ij}'}\right\Vert)^2}{r_{ij}'}\left\{
+  \mathbf{\nabla}_\mathcal{TP}W_{kl} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{kl}'}\right\Vert)^2}{r_{kl}'}\left\{
   \begin{aligned}
-  & v_{ij,1}\mathbf{V_1} + v_{ij,2}\mathbf{V_2}, \quad &0\leq \left\Vert \mathbf{r_{ij}'}\right\Vert \leq  r_0\\
-  & 0 , & r_0 <\left\Vert \mathbf{r_{ij}'}\right\Vert
+  & v_{kl,1}\mathbf{V_1} + v_{kl,2}\mathbf{V_2}, \quad &0\leq \left\Vert \mathbf{r_{kl}'}\right\Vert \leq  r_0\\
+  & 0 , & r_0 <\left\Vert \mathbf{r_{kl}'}\right\Vert
   \end{aligned}
   \right.
   :label: kernel function gradient TP 2
 
 
 .. math::
-  \mathbf{\nabla}_\mathcal{TP}\tilde{f_{i}} = -\sum\limits_{j}\tilde{f_{j}}A_{j}\,\mathbf{\nabla}W_{ij}
-  :label: sph dradient
+  \mathbf{\nabla}_\mathcal{TP}\tilde{f_{k}} = -\sum\limits_{l}\tilde{f_{l}}A_{l}\,\mathbf{\nabla}W_{kl}
+  :label: sph gradient
 
 This gradient can now be expressed in the Cartesian coordinate system.
 It is clear that the change of coordinate system was not needed:
 
 
 .. math::
-  \mathbf{\nabla}_\mathcal{TP}W_{ij} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{ij}'}\right\Vert)^2}{r_{ij}'}\left\{
+  \mathbf{\nabla}_\mathcal{TP}W_{kl} = -3\frac{10}{\pi r_0^5}\frac{(r_0 - \left\Vert \mathbf{r_{kl}'}\right\Vert)^2}{r_{kl}'}\left\{
   \begin{aligned}
-  & r_{ij,1}\mathbf{e_1} + r_{ij,2}\mathbf{e_2} + r_{ij,3}\mathbf{e_3}, \quad &0\leq \left\Vert \mathbf{r_{ij}'}\right\Vert \leq  r_0\\
-  & 0 , & r_0 <\left\Vert \mathbf{r_{ij}'}\right\Vert
+  & r_{kl,1}\mathbf{e_1} + r_{kl,2}\mathbf{e_2} + r_{kl,3}\mathbf{e_3}, \quad &0\leq \left\Vert \mathbf{r_{kl}'}\right\Vert \leq  r_0\\
+  & 0 , & r_0 <\left\Vert \mathbf{r_{kl}'}\right\Vert
   \end{aligned}
   \right.
 
@@ -507,25 +510,25 @@ Lateral force
 
 The SPH method is introduced when expressing the flow depth gradient for each
 particle as a weighted sum of its neighbors
-(:cite:`LiLi2010,Sa2007`). The :math:`p` in :math:`p_i` is dropped
-(same applies for :math:`p_j`):
+(:cite:`LiLi2010,Sa2007`). The :math:`p` in :math:`p_k` is dropped
+(same applies for :math:`p_k`):
 
 The lateral pressure forces on each particle are calculated from the compression
 forces on the boundary of the particle.
 The boundary is approximated as a square with the base side length
 :math:`\Delta s = \sqrt{A_p}` and the respective flow height. This leads to
-(subscript :math:`|_{,d}` stands for the component in the :math:`d^{th}`
-direction, :math:`d = {1,2}`):
+(subscript :math:`|_{.,i}` stands for the component in the :math:`i^{th}`
+direction, :math:`i = {1,2}`):
 
 .. math::
-    F_{i,d}^{\text{lat}} = K_{(d)}\oint\limits_{\partial{A_{i}}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_d\,\mathrm{d}x_3\right)\mathrm{d}l
+    F_{k,i}^{\text{lat}} = K_{(i)}\oint\limits_{\partial{A_{k}}}\left(\int\limits_{b}^{s}\sigma_{33}\,n_i\,\mathrm{d}x_3\right)\mathrm{d}l
 
 From equation :eq:`momentum-balance6`
 
 .. math::
-    F_{i,d}^{\text{lat}} = K_{(d)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{d}-
-    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{d}+\frac{\Delta{s}}{2}}\right)
-    = K_{(d)}\frac{\Delta{s}^2}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_d}\right\rvert_{i}
+    F_{k,i}^{\text{lat}} = K_{(i)}\,\frac{\Delta{s}}{2}\left((\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{i}-
+    \frac{\Delta{s}}{2}}-(\overline{h}\,\overline{\sigma}^{(b)}_{33})_{x_{i}+\frac{\Delta{s}}{2}}\right)
+    = K_{(i)}\frac{\Delta{s}^2}{2}\,\left.\frac{d\,\overline{h}\,\overline{\sigma}^{(b)}}{d\,x_i}\right\rvert_{k}
 
 The product of the average flow depth :math:`\overline{h}` and the basal normal pressure :math:`\overline{\sigma}^{(b)}_{33}`
 reads (using equation :eq:`sigmab` and dropping the curvature acceleration term):
@@ -537,65 +540,64 @@ reads (using equation :eq:`sigmab` and dropping the curvature acceleration term)
 Which leads to, using the relation :eq:`sph formulation`:
 
 .. math::
-    F_{i,d}^{\text{lat}} = K_{(d)}\,\rho_0\,g_3\,A_{i}\,\overline{h}_{i}\,.\,\left.\frac{d\,\overline{h}}{d\,x_d}\right\rvert_{i}
-    = -K_{(d)}\,m_{i}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{j}{m_{j}}\,\left.\frac{d\,W_{ij}}{d\,x_d}\right\rvert_{j}
+    F_{k,i}^{\text{lat}} = K_{(i)}\,\rho_0\,g_3\,A_{k}\,\overline{h}_{k}\,.\,\left.\frac{d\,\overline{h}}{d\,x_i}\right\rvert_{k}
+    = -K_{(i)}\,m_{i}\,g_3\,.\,\frac{1}{\rho_0}\,\sum\limits_{l}{m_{l}}\,\left.\frac{d\,W_{kl}}{d\,x_i}\right\rvert_{l}
     :label: lateral force
 
 
 Bottom friction force
 ~~~~~~~~~~~~~~~~~~~~~~~
 The bottom friction forces on each particle depend on the chose friction model and reads for the SamosAT friction model
-(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{i}`):
+(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{k}`):
 
 .. math::
-    F_{i,d}^{\text{bot}} = -\delta_{d1}\,A_{i}\,\tau^{(b)}_{i}
-    = -\delta_{d1}\,A_{i}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{i}
-     + \frac{\rho_0\,\mathbf{\overline{u}}_{i}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
+    F_{k,i}^{\text{bot}} = -\delta_{k1}\,A_{k}\,\tau^{(b)}_{k}
+    = -\delta_{k1}\,A_{k}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{k}
+     + \frac{\rho_0\,\mathbf{\overline{u}}_{k}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
     :label: bottom force
 
 
 Added resistance force
 ~~~~~~~~~~~~~~~~~~~~~~~
-The resistance force on each particle reads (where :math:`h^{\text{eff}}_{j}`
-is a function of the average flow depth :math:`\overline{h}_{j}`):
+The resistance force on each particle reads (where :math:`h^{\text{eff}}_{k}`
+is a function of the average flow depth :math:`\overline{h}_{k}`):
 
 .. math::
-    F_{i,d}^{\text{res}}
-    = - \rho_0\,A_{i}\,h^{\text{eff}}_{i}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{i}\|\,\overline{u}_{i,d}
+    F_{k,i}^{\text{res}}
+    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{k}\|\,\overline{u}_{k,i}
     :label: resistance force
 
 
 Entrainment force
 ~~~~~~~~~~~~~~~~~~~~~~~
-The term related to the entrained mass and mass balance
-:math:`- \overline{u_d}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
-now reads:
+The term :math:`- \overline{u_i}\,\rho_0\,\frac{\mathrm{d}(A\,\overline{h})}{\mathrm{d}t}`
+related to the entrained mass in :eq:`momentum-balance3` now reads:
 
 .. math::
-    - \overline{u}_{i,d}\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{i}\,\overline{h}_{i}\right)
-    = - \overline{u}_{i,d}\,A^{\text{ent}}_{i}\,q^{\text{ent}}_{i}
+    - \overline{u}_{k,i}\,\rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,\overline{h}_{k}\right)
+    = - \overline{u}_{k,i}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}
 
 
 The mass of entrained snow for each particle depends on the type of entrainment involved
 (plowing or erosion) and reads:
 
 .. math::
-    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{i}\,\overline{h}_{i}\right)
-    = \frac{\mathrm{d}\,m_{i}}{\mathrm{d}t}
-    = A_{i}^\text{ent}\,q_{i}^{\text{ent}}
+    \rho_0\,\frac{\mathrm{d}}{\mathrm{d}t}\,\left(A_{k}\,\overline{h}_{k}\right)
+    = \frac{\mathrm{d}\,m_{k}}{\mathrm{d}t}
+    = A_{k}^\text{ent}\,q_{k}^{\text{ent}}
 
 with
 
 .. math::
     \begin{aligned}
-    A_{i}^{\text{plo}} &= w_f\,h_{i}^{\text{ent}}= \sqrt{\frac{m_{i}}{\rho_0\,\overline{h}_{i}}}\,h_{i}^{\text{ent}}
-    \quad &\mbox{and} \quad &q_{i}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{i}\right\Vert
+    A_{k}^{\text{plo}} &= w_f\,h_{k}^{\text{ent}}= \sqrt{\frac{m_{k}}{\rho_0\,\overline{h}_{k}}}\,h_{k}^{\text{ent}}
+    \quad &\mbox{and} \quad &q_{k}^{\text{plo}} = \rho_{\text{ent}}\,\left\Vert \overline{\mathbf{u}}_{k}\right\Vert
     \quad &\mbox{for plowing}\\
-    A_{i}^{\text{ero}} &= A_{i} = \frac{m_{i}}{\rho_0\,\overline{h}_{i}}
-    \quad &\mbox{and} \quad &q_{i}^{\text{ero}} = \frac{\tau_{i}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{i}\right\Vert
+    A_{k}^{\text{ero}} &= A_{k} = \frac{m_{k}}{\rho_0\,\overline{h}_{k}}
+    \quad &\mbox{and} \quad &q_{k}^{\text{ero}} = \frac{\tau_{k}^{(b)}}{e_b}\,\left\Vert \overline{\mathbf{u}}_{k}\right\Vert
     \quad &\mbox{for erosion}\end{aligned}
 
 Finaly, the entrainment force reads:
 
 .. math::
-    F_{i,d}^{\text{ent}} = -w_f\,(e_s+\,q_{i}^{\text{ent}}\,e_d)
+    F_{k,i}^{\text{ent}} = -w_f\,(e_s+\,q_{k}^{\text{ent}}\,e_d)
