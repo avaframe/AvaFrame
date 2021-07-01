@@ -1,6 +1,56 @@
 Release Notes
 =============
 
+
+current dev
+-----------
+
+ENHANCEMENTS
+
+- filtering functions for com1DFA simulations
+- flag to disable print at CFG reading
+- new colormaps for ppr, pfd, pfv
+- *com1DFA* option to add friction explicitly using the method described in #273 .
+- *com1DFA* Resistance force is  added explicitly.
+- *com1DFA* New method to get the release area
+- *com2AB* function to write results to shapefile
+- *ana3AIMEC* warning for empty runout zone
+- *ana3AIMEC* enable simulation ordering/filtering
+
+FIX
+
+- beta angle issue i.e. distance below angle
+- correct removal of particles 
+- AIMEC produces warning on empty runout area
+- adapt quickplot to new naming scheme
+
+
+v0.4.1 (9. June 2021)
+---------------------
+
+Minor release to fix issue with zenodo
+
+v0.4 (8. June 2021)
+-------------------
+
+The switch release
+
+This is a big release: we switched our dense flow module 'com1DFA' to the python
+version. This means that you know get to use the python version as default.
+However, the original version is still available in the module com1DFAOrig. The
+full documentation for the python com1DFA version as well as updated benchmarks
+will be released in the next version.
+
+Module com2AB (AlphaBeta) recieved an update allowing for custom parameters.
+
+Simulation naming and identification also recieved a major change, we introduced
+unique ID's for each individual configuration.
+
+Contributers:
+
+- **Code: core team**
+
+
 v0.3 (26. April 2021)
 ---------------------
 
