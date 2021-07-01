@@ -148,7 +148,7 @@ the avalanche:
 
 The entrainment rate at the bottom :math:`q^{\text{ero}}` can be expressed as a function of the
 bottom area :math:`A_b` of the control volume, the velocity of the avalanche :math:`\overline{\mathbf{u}}`,
-the bottom shear stress :math:`\tau^{(b)}` and the specific erosion energy :math:`e_b`):
+the bottom shear stress :math:`\tau^{(b)}` and the specific erosion energy :math:`e_b`:
 
 .. math::
     \oint\limits_{\partial V(t)} q^{\text{ero}}\,\mathrm{d}A = \int\limits_{A_b} q^{\text{ero}}\,
@@ -500,7 +500,7 @@ with the empirical parameter :math:`R_s^0` the term
 Therefore lower avalanche speeds lead to a higher bed friction, making
 avalanche flow stop already at steeper slopes :math:`\alpha`, than
 without this effect. This effect is intended to avoid lateral creep of
-the avalanche mass (:cite:`SaGr2009`). 
+the avalanche mass (:cite:`SaGr2009`).
 
 
 
