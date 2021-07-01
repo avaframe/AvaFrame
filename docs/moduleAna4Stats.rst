@@ -39,6 +39,12 @@ In order to run this example:
 
       python3 runScripts/runProbAna.py
 
+
+.. figure:: _static/avaHockeyChannel_probMap1.0.png
+    :width: 90%
+
+      Probability map example.
+
 .. _Theory:
 
 Theory
@@ -85,4 +91,4 @@ plotting routines from :py:mod:`out3Plot.statsPlots` .
     :width: 90%
 
     Scatter plot of the hockey example including a marginal kde plot and color coded with release
-    area scenario. 
+    area scenario.
