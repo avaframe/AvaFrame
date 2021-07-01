@@ -14,7 +14,7 @@ depth is tracked using the mesh. The mesh is also used to access topographic inf
 
 Mass :eq:`mass-balance3` and momentum :eq:`momentum-balance6` balance
 equations as well as basal normal stress :eq:`sigmab` are computed numerically using a SPH method
-(**S**\ moothed **P**\ article **H**\ ydrodynamis) (:cite:`Mo1992`) for the three variables
+(**S**\ moothed **P**\ article **H**\ ydrodynamics) (:cite:`Mo1992`) for the variables
 :math:`\overline{\mathbf{u}}=(\overline{u}_1, \overline{u}_2)` and
 :math:`\overline{h}` by discretization of the released avalanche volume
 in a large number of mass elements. SPH in general, is a mesh-less
@@ -35,21 +35,21 @@ Discretization
 Space discretization
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The domain is discretized in particles. Each particle :math:`p_k` is affected with the following properties:
+The domain is discretized in particles. The following properties are assigned to each particle :math:`p_k`:
 a mass :math:`m_{p_k}`, a depth :math:`{h}_{p_k}`, a density :math:`\rho_{p_k}=\rho_0` and
 a velocity :math:`\mathbf{{u}}_{p_k}=({u}_{p_k,1}, {u}_{p_k,2})` (**those
 quantities are depth averaged, note that we dropped the overline from** :eq:`hmean-umean` **for simplicity reasons**).
 In the following paragraphs, :math:`i` and :math:`j` indexes refer to the different directions in the NCS,
-whereas  :math:`k` and :math:`l` indexes refer to particles
+whereas  :math:`k` and :math:`l` indexes refer to particles.
 
-A fixed mesh also caries the velocity, mass and flow depth properties. It is possible to navigate
-from particle property to mesh property using the interpolation methods described in :ref:`Mesh and interpolation`
+The quantities velocity, mass and flow depth are also defined on the fixed mesh. It is possible to navigate
+from particle property to mesh property using the interpolation methods described in :ref:`DFAnumerics:Mesh and interpolation`.
 
 
-Time discretization
+Time step
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Two time discretization methods are available, a fixed time step one and a variable one.
+A fixed time step can be used or an adaptive time step can be computed using Courant-Friedrich-Lewy condition.
 
 
 Mesh and interpolation
@@ -69,7 +69,7 @@ particle tracking. The 2D rectilinear mesh is composed of :math:`N_{y}-1` and
 :math:`N_{x}-1` rows and columns of square cells (of side length :math:`csz`)
 and :math:`N_{y}` and :math:`N_{x}` rows and columns of vertices
 as described in :numref:`rasterGrid`. Each cell has a center and four vertices.
-The data read from the raster file is affected to the vertices.
+The data read from the raster file is assigned to the vertices.
 
 .. _rasterGrid:
 
@@ -88,7 +88,7 @@ between four vertices. This defines the normal vector at the cell center. It is
 then possible to interpolate the normal vector at the vertices from the ones
 at the cell centers.
 
-The other methods use the plane defined by the different adjacent triangles to
+The other methods use the plane defined by different adjacent triangles to
 a vertex. Each triangle has a normal and the vertices normal is the average
 of the triangles normal vectors.
 
@@ -113,7 +113,7 @@ A cell is a plane (:math:`z = ax+by+c`) of same normal as the cell center:
    \end{aligned}
    \right.
 
-Surface integration over the cell extend leads to the area of the cell:
+Surface integration over the cell extent leads to the area of the cell:
 
 .. math::
    A_{cell} = \iint_{S} \mathrm{d}{S} = \int\limits_{0}^{csz}\int\limits_{0}^{csz}
@@ -126,9 +126,9 @@ The same method is used to get the area of a vertex (this does not make any sens
 
 Interpolation
 ~~~~~~~~~~~~~~
-In the DFA kernel, mass, flow depths, velocity fields can be defined at particle
-location or on the mesh. We need a method to be able to go from particle property
-to mesh field values and from mesh values to particle property.
+In the DFA kernel, mass, flow depth and flow velocity can be defined at particle
+location or on the mesh. We need a method to be able to go from particle properties
+to mesh (field) values and from mesh values to particle properties.
 
 Mesh to particle
 """"""""""""""""""
