@@ -56,9 +56,10 @@ The model configuration is read from a configuration file: ``com1DFA/com1DFACfg.
 all model parameters are listed and can be modified. We recommend to create a local copy
 and keep the default configuration in ``com1DFA/com1DFACfg.ini`` untouched.
 For this purpose, in ``AvaFrame/avaframe/`` run:
+
   ::
 
-      cp com1DFA/com1DFACfg.ini com1DFA/local_com1DFACfg.ini
+    cp com1DFA/com1DFACfg.ini com1DFA/local_com1DFACfg.ini
 
 and modify the parameter values in there. For more information see :ref:`configuration:Configuration`.
 
@@ -125,4 +126,4 @@ Those equations are solved numerically using a **SPH** method (:cite:`LiLi2010,S
 small mass particles. The particles interact with each other according to the
 equation of motion described in :ref:`moduleCom1DFA:Theory` and the chosen kernel function.
 This kernel function describes the domain of influence of a particle (through the smoothing length parameter).
-See theory :ref:`theoryCom1DFA:Numerics` for further details.
+See theory :ref:`theoryCom1DFA:com1DFA DFA-Kernel theory` for further details.
