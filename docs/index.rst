@@ -15,7 +15,6 @@ General
 
     * :doc:`introduction`
     * :doc:`installation`
-    * :doc:`workflowExample`
     * :doc:`configuration`
     * :doc:`logging`
     * :doc:`develop`
@@ -30,7 +29,6 @@ General
 
    introduction.rst
    installation.rst
-   workflowExample.rst
    configuration.rst
    logging.rst
    develop.rst

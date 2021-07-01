@@ -111,12 +111,10 @@ Some other options are:
 
 
 Workflow example
-^^^^^^^^^^^^^^^^
+----------------
 
 The following example should make it easier for you to find your way in AvaFrame
-and setup your own AvaFrame workflow. Before starting, make sure you have
-installed AvaFrame and the required dependencies as explained in
-:ref:`installation:Installation`.
+and setup your own AvaFrame workflow after you did the full setup. 
 
 Make sure you change to your ``AvaFrame`` direcotry by::
 
@@ -125,7 +123,7 @@ Make sure you change to your ``AvaFrame`` direcotry by::
 Replace ``[YOURDIR]`` with the directory from your installation step.
 
 Initialize project
-~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^
 
 To create the folder where the input data lies and where the
 output results will be saved, specify the full path to the folder
@@ -146,7 +144,7 @@ This will create a new directory with the input required by AvaFrame structured 
 in :ref:`moduleIn3Utils:Initialize Project`. 
 
 Input data
-~~~~~~~~~~
+^^^^^^^^^^
 
 Check the input data required by the different modules you want to use and fill
 the ``Inputs/`` inside the ``[avalancheDir]`` folder from the initialize step accordingly.
@@ -160,7 +158,7 @@ file and modify the desired parameters.
 More information about the configuration can be found here: :ref:`configuration:Configuration`
 
 Building your run script
-~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create your own workflow by taking the ``runOperational.py`` script as
 template. 
