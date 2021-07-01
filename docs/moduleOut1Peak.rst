@@ -21,6 +21,7 @@ Plot all fields
 This function is designed to work for result fields that follow a certain naming convention in order to provide full functionality:
 *releaseAreaName_simulationType_modelType_simulationIdentifier_resultType.asc*
 
-One plot for each field is saved using the name of the input field. The plot can be constrained to where there is data
-by setting ``constrainData=True`` in the inputs. Details on this function, as for example required inputs,
+One plot for each field is saved using the name of the input field. By default, the plot is constrained to where there is data,
+however this can be turned off by setting ``constrainData=False`` in the inputs.
+Details on this function, as for example required inputs,
 can be found in :py:func:`out1Peak.outPlotAllPeak.plotAllField`.
