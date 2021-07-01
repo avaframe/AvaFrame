@@ -1,25 +1,24 @@
 com1DFA: DFA-Kernel
 ===========================
 
-:py:mod:`com1DFA` is a simulation tool for dense flow (snow) avalanches (DFA).
-This module is currently the default DFA simulation module. It is a python and
-cython implementation of the DFA C++ implementation samosAT
+:py:mod:`com1DFA` is a module for dense flow (snow) avalanche computations (DFA) .
+It is a python and cython implementation of the DFA C++ implementation samosAT
 (Snow Avalanche Modeling and  Simulation- Advanced Technologies) developed by the Austrian government
 in cooperation with the company AVL List GmbH in Graz (see :ref:`moduleCom1DFAOrig:com1DFAOrig: Original DFA-Kernel`).
-The calculation of the DFA is based on the depth integrated governing equations and
+Calculations are based on the depth integrated governing equations and
 solved numerically using the smoothed particle hydrodynamics (sph) method.
 
 Dense flow avalanche simulations can be performed for different release area scenarios, with or without
-entrainment and/or resistance areas.
-The model configuration is controlled via a configuration file.
-This configuration file can be modified in order to change any of the default settings and also allows
+entrainment and/or resistance areas, and is controlled via a configuration file. 
+The configration can be modified in order to change any of the default settings and also allows
 to perform simulations for varying parameters all at once.
 
 
 Input
 ---------
 
-DFA simulations are performed within an avalanche directory that has to be organized following a specified folder structure.
+DFA simulations are performed within an avalanche directory, organized with the
+folder structure described below.
 
 .. Note::  An avalanche directory can be created by running: :py:mod:`runInitializeProject.py`, which creates the required folder structure:
 
@@ -41,7 +40,7 @@ In the directory ``Inputs``, the following files are required:
 
 * digital elevation model as .asc file
   -> use `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
-* release area scenario as shapefile (in Inputs/REL); multiple are possible
+* release area scenario as shapefile (in Inputs/REL); multiple features are possible
   -> the release area name should not contain an underscore, if so '_AF' is added
 
 and the following files are optional:
@@ -54,25 +53,16 @@ and the following files are optional:
 Model configuration
 --------------------
 The model configuration is read from a configuration file: ``com1DFA/com1DFACfg.ini``. In this file,
-all model parameters are listed and can be modified. We recommend to create a local copy of the file,
+all model parameters are listed and can be modified. We recommend to create a local copy
 and keep the default configuration in ``com1DFA/com1DFACfg.ini`` untouched.
 For this purpose, in ``AvaFrame/avaframe/`` run:
   ::
 
       cp com1DFA/com1DFACfg.ini com1DFA/local_com1DFACfg.ini
 
-and modify the parameter values in there.
-
-Another option is to directly provide the path to a particular configuration file.
-The order is as follows, read configuration file from provided path, read local configuration file,
-if not present read default configuration file.
+and modify the parameter values in there. For more information see :ref:`configuration:Configuration`.
 
 It is also possible to perform multiple simulations at once, with varying input parameters.
-There are multiple options to vary a parameter:
-
-* replace the default parameter value with desired value
-* provide a number of parameter values separated by ``|`` (e.g. ``relTh=1.|2.|3.``)
-* provide a number of parameter values using ``start:stop:numberOfSteps`` (e.g. ``relTh=1.:3.:3``)
 
 
 Output

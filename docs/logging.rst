@@ -35,7 +35,7 @@ To get output that looks like this in your console::
   tmp1Ex:DEBUG - Should be here
   tmp1Ex:INFO - DEM : /path/to/DEM
 
-And something similar in the ``.log`` file which is saved in ``./runTmp1Ex.log`` in this example.
+and something similar in the ``.log`` file which is saved in ``./runTmp1Ex.log`` in this example.
 The logging configuration is set in ``AvaFrame/avaframe/in3Utils/logging.conf``.
 
 You can modify this ``logging.conf`` file to modify the levels or format of the messages to display

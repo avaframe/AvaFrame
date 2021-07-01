@@ -41,3 +41,10 @@ So the order is as follows:
 
 #. if there is no ``local_...``, the ``getModuleConfig`` function reads the
    settings from the default configuration file with the default settings.
+
+
+In the configuration file itself, there are multiple options to vary a parameter:
+
+* replace the default parameter value with desired value
+* provide a number of parameter values separated by ``|`` (e.g. ``relTh=1.|2.|3.``)
+* provide a number of parameter values using ``start:stop:numberOfSteps`` (e.g. ``relTh=1.:3.:3``)
