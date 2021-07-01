@@ -20,16 +20,11 @@ Setup AvaFrame
 --------------
 
 #. Open the command prompt -> Windows start menu -> cmd
-#. Clone the Avaframe git repository with
+#. Clone the necessary repositories with
 
     .. code-block:: bash
 
       git clone https://github.com/avaframe/AvaFrame.git
-
-#. Clone the QGis connector repository with
-
-    .. code-block:: bash
-
       git clone https://github.com/avaframe/QGisAF.git
 
 #. Close the command prompt and open the `OSGeo4W Shell` from your start menu
@@ -60,13 +55,13 @@ Setup AvaFrame
 
 #. Compile the com1DFA executable
 
-    .. code-block:: bash
+    .. code-block::
 
       python avaframe\com1DFA\setup.py build_ext --inplace
 
 #. Finally install AvaFrame
 
-    .. code-block:: bash
+    .. code-block::
 
       python -m pip install -e .
 
