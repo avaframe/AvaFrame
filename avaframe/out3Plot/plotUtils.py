@@ -145,6 +145,7 @@ ticksProb = [0, 0.25, 0.50, 0.75, 1.]
 # lapaz color map
 colorsProb = ['#FEF1F1', '#B2AB96', '#5B8BA3', '#2D5393', '#1A0C64']
 cmapProbmap = cmapCameri.lapaz.reversed()
+
 ###############################################
 # Set colormaps to use
 ###############################################

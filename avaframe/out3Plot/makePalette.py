@@ -65,6 +65,7 @@ def makeColorMap(colormap, levMax, continuous=False):
             -newLev: new levels list
             -newNorm: new norm for plotting
     """
+
     cmap = colormap['cmap']
     if continuous:
         newNorm = None
