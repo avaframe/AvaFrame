@@ -112,7 +112,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
 
         pU.putAvaNameOnPlot(ax, avaDir)
 
-        fig.savefig(plotName)
+        fig.savefig(plotName, bbox_inches = 'tight')
         if cfgFLAGS.getboolean('showPlot'):
             plt.show()
         plotPath = os.path.join(os.getcwd(), plotName)
