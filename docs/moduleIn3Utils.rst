@@ -184,8 +184,8 @@ To run
 
 * first go to ``AvaFrame/avaframe``
 * copy ``avaframeCfg.ini`` to ``local_avaframeCfg.ini`` and set your desired avalanche directory name
-* run:
-
+* run::
+	
 			python3 runInitializeProject.py
 
 

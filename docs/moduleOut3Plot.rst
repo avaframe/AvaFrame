@@ -31,15 +31,6 @@ Details on the required inputs for this function can be found in :py:func:`out3P
 
           Output plot from generatePlot on peak flow depth results
 
-To run
-~~~~~~~~~~~~~~~~~~
-
-* first go to ``AvaFrame/avaframe``
-* in your run scripts call::
-
-    generatePlot(dataDict, avaName, outDir, cfg, plotDict)
-
-
 
 quickPlotBench
 ----------------
@@ -47,14 +38,6 @@ quickPlotBench
 :py:func:`out3Plot.outQuickPlot.quickPlotBench` calls :py:func:`out3Plot.outQuickPlot.generatePlot` to generate all comparison plots between the results of
 two simulations. This requires information on simulation names and paths to the simulation results and the desired result type.
 For further details have a look at :py:func:`out3Plot.outQuickPlot.quickPlotBench`.
-
-To run
-~~~~~~~~~~~~~~~~~~
-
-* first go to ``AvaFrame/avaframe``
-* in your run script call::
-
-    quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, cfgPlot, suffix)
 
 
 quickPlotSimple
