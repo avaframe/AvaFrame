@@ -1,14 +1,11 @@
 Operational setup and run
-=========================
+-------------------------
 
 This is the quick start for the operational AvaFrame setup with QGis as
-frontend.
-
-.. Note::  If you want to develop or run AvaFrame via python see the
-           :ref:`getStarted:Quick start` page.
+frontend. Currently described for **Windows** only. 
 
 Requirements
-------------
+^^^^^^^^^^^^
 
 The prerequisites are:
 
@@ -17,7 +14,7 @@ The prerequisites are:
 * Git: `see here <https://git-scm.com/downloads>`_
 
 Setup AvaFrame
---------------
+^^^^^^^^^^^^^^
 
 #. Open the command prompt -> Windows start menu -> cmd
 #. Clone the necessary repositories with
@@ -35,17 +32,11 @@ Setup AvaFrame
 
       cd %userprofile%
 
-#. Install cython
-
-    .. code-block:: bash
-
-      python -m pip install cython
-
 #. Change to the AvaFrame directory
 
     .. code-block:: bash
 
-      cd Avaframe
+      cd AvaFrame
 
 #. Install the requirements
 
@@ -53,10 +44,11 @@ Setup AvaFrame
 
       python -m pip install -r requirements.txt
 
-#. Compile the com1DFA executable
+#. Install cython and compile the com1DFA executable
 
     .. code-block::
 
+      python -m pip install cython
       python avaframe\com1DFA\setup.py build_ext --inplace
 
 #. Finally install AvaFrame
@@ -65,8 +57,8 @@ Setup AvaFrame
 
       python -m pip install -e .
 
-Setup QGis
-----------
+Setup QGis and run
+^^^^^^^^^^^^^^^^^^
 
 #. Open QGis from your start menu
 
@@ -75,3 +67,6 @@ Setup QGis
 #. Reload the processing toolbox (or restart QGis)
 
 #. Access the QGis - Avaframe connector via Toolbox -> scripts -> AvaFrame -> AvaFrame  QGis
+
+#. Add the described data and run. Results will be loaded after a while
+   (depending on the size of your DEM).
