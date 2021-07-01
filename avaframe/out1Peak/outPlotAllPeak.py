@@ -167,7 +167,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit=''):
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         fig, ax = plt.subplots()
         # choose colormap
-        cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, np.amax(data), continuous=pU.contCmap)
+        cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapNN, np.amax(data), continuous=pU.contCmap)
         cmap.set_bad('w')
         im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
         pU.addColorBar(im1, ax, ticks, unit)
