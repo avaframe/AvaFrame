@@ -39,11 +39,11 @@ To run
 -------
 
 An example of how a parameter set distributed following a uniform or Pert
-distribution can be generated, is provided by ``runComputeDist.py``.
+distribution can be generated, is provided by :py:mod:`runScripts/runComputeDist.py`.
 
 * first go to ``AvaFrame/avaframe``
-* copy ``in1Data/computeFromDistributionCfg.py`` to
-  ``in1Data/local_computeFromDistributionCfg.py`` (if not, the standard settings
+* copy ``in1Data/computeFromDistributionCfg.ini`` to
+  ``in1Data/local_computeFromDistributionCfg.ini`` (if not, the standard settings
   are used)
 * adjust path to the desired ``NameOfAvalanche/`` folder in your local copy of
   ``avaframeCfg.ini``
