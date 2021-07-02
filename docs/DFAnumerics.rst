@@ -554,7 +554,7 @@ Bottom friction force
 ~~~~~~~~~~~~~~~~~~~~~~~
 The bottom friction forces on each particle depend on the chose friction model. Using the SamosAT friction model
 (using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{k}`) the formulation of the bottom friction forec
-becomes:
+reads:
 
 .. math::
     F_{k,i}^{\text{bot}} = -\delta_{k1}\,A_{k}\,\tau^{(b)}_{k}
