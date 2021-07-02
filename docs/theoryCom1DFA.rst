@@ -100,14 +100,14 @@ Choice of the coordinate system:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The previous equations will be developed in the orthonormal coordinate
-system :math:`(B,\mathbf{e_1},\mathbf{e_2},\mathbf{e_3})`, further
+system :math:`(B,\mathbf{v_1},\mathbf{v_2},\mathbf{v_3})`, further
 referenced as Natural Coordinate System (NCS). In this NCS,
-:math:`\mathbf{e_1}` is aligned with the velocity vector at the bottom
-and :math:`\mathbf{e_3}` with the normal to the slope, i.e.:
+:math:`\mathbf{v_1}` is aligned with the velocity vector at the bottom
+and :math:`\mathbf{v_3}` with the normal to the slope, i.e.:
 
 .. math::
-   \mathbf{e_1} = \frac{\mathbf{u}}{\left\Vert \mathbf{u}\right\Vert},\quad \mathbf{e_2} = \mathbf{e_3}\wedge\mathbf{e_1},
-   \quad \mathbf{e_3} = \mathbf{n^{(b)}}
+   \mathbf{v_1} = \frac{\mathbf{u}}{\left\Vert \mathbf{u}\right\Vert},\quad \mathbf{v_2} = \mathbf{v_3}\wedge\mathbf{v_1},
+   \quad \mathbf{v_3} = \mathbf{n^{(b)}}
 ..   :label: natural-coordinate-system
 
 The origin :math:`B` of the NCS is attached to the slope. This choice
@@ -330,7 +330,7 @@ is of the order of :math:`H`, it follows that:
     O\left(\frac{\sigma_{12}}{\sigma_{13}}\right) = \frac{H}{L} = \varepsilon \ll 1
 
 and thus :math:`\sigma_{12} = \sigma_{21}` is negligible compared to :math:`\sigma_{13}`.
-:math:`\sigma_{13}` is exressed using the bottom friction law
+:math:`\sigma_{13}` is expressed using the bottom friction law
 :math:`\tau^{(b)}_i = f(\sigma^{(b)},\overline{u},\overline{h},\rho_0,t,\mathbf{x})`
 introduced in :eq:`boundary-conditions`.
 
