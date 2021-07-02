@@ -250,7 +250,8 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       yEnd = y + dt * uy
       zEnd = z + dt * uz
       # this point is not necessarily on the surface, project it on the surface
-      xEnd, yEnd, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = normalProjectionIteratrive(xEnd, yEnd, zEnd, ZDEM, nxArray, nyArray, nzArray, csz, interpOption)
+      # xEnd, yEnd, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = normalProjectionIteratrive(xEnd, yEnd, zEnd, ZDEM, nxArray, nyArray, nzArray, csz, interpOption)
+      xEnd, yEnd, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = distConservProjectionIteratrive(x, y, z, ZDEM, nxArray, nyArray, nzArray, xEnd, yEnd, zEnd, csz, interpOption)
       # get the normal at this location
       nxEnd, nyEnd, nzEnd = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
       nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
@@ -525,6 +526,10 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
+  cdef double xNoReproj, zNoReproj, yNoReproj
+  cdef double[:] xNoReprojArray = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] yNoReprojArray = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] zNoReprojArray = np.zeros(Npart, dtype=np.float64)
   cdef double[:] mNewArray = np.zeros(Npart, dtype=np.float64)
   cdef double[:] xNewArray = np.zeros(Npart, dtype=np.float64)
   cdef double[:] yNewArray = np.zeros(Npart, dtype=np.float64)
@@ -576,8 +581,12 @@ def updatePositionC(cfg, particles, dem, force, DT):
     xNew = x + dtStop * 0.5 * (ux + uxNew)
     yNew = y + dtStop * 0.5 * (uy + uyNew)
     zNew = z + dtStop * 0.5 * (uz + uzNew)
+    xNoReproj = xNew
+    yNoReproj = yNew
+    zNoReproj = zNew
     # make sure particle is on the mesh (normal reprojection!!)
-    xNew, yNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = normalProjectionIteratrive(xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, interpOption)
+    # xNew, yNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = normalProjectionIteratrive(xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, interpOption)
+    xNew, yNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = distConservProjectionIteratrive(x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, interpOption)
     zNew = getScalar(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
     nxNew, nyNew, nzNew = getVector(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
@@ -621,6 +630,9 @@ def updatePositionC(cfg, particles, dem, force, DT):
     xNewArray[j] = xNew
     yNewArray[j] = yNew
     zNewArray[j] = zNew
+    xNoReprojArray[j] = xNoReproj
+    yNoReprojArray[j] = yNoReproj
+    zNoReprojArray[j] = zNoReproj
     uxArrayNew[j] = uxNew
     uyArrayNew[j] = uyNew
     uzArrayNew[j] = uzNew
@@ -635,6 +647,12 @@ def updatePositionC(cfg, particles, dem, force, DT):
   particles['x'] = np.asarray(xNewArray)
   particles['y'] = np.asarray(yNewArray)
   particles['z'] = np.asarray(zNewArray)
+  particles['xPrev'] = np.asarray(xArray)
+  particles['yPrev'] = np.asarray(yArray)
+  particles['zPrev'] = np.asarray(zArray)
+  particles['xNoReproj'] = np.asarray(xNoReprojArray)
+  particles['yNoReproj'] = np.asarray(yNoReprojArray)
+  particles['zNoReproj'] = np.asarray(zNoReprojArray)
   particles['massEntrained'] = np.asarray(massEntrained)
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
@@ -1720,7 +1738,7 @@ cdef (double, double, int, int, int, int, double, double, double, double) normal
     zNew = zNew + zn * nz
     # What I think is better for normal projection
     # # Normal component of the vector between the initial and projected point
-    # zn = (xNew-xOld) * nx + (yNew-yOld) * ny + (zTemp-zNew) * nz
+    # zn = (xNew-xOld) * nx + (yNew-yOld) * ny + (zTemp-zOld) * nz
     # # correct position with the normal part
     # xNew = xOld + zn * nx
     # yNew = yOld + zn * ny
@@ -1736,6 +1754,90 @@ cdef (double, double, int, int, int, int, double, double, double, double) normal
     Lyj = Lyi
   return xNew, yNew, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3]
 
+
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef (double, double, int, int, int, int, double, double, double, double) distConservProjectionIteratrive(
+  double xPrev, double yPrev, double zPrev, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray, double[:,:] nzArray, double xOld, double yOld, double zOld, double csz, int interpOption):
+  """ Find the orthogonal projection of a point on a mesh
+
+  Iterative method to find the projection of a point on a surface defined by its mesh
+  Parameters
+  ----------
+      xOld: float
+          x coordinate of the point to project
+      yOld: float
+          y coordinate of the point to project
+      zOld: float
+          z coordinate of the point to project
+      ZDEM: 2D array
+          z component of the DEM field at the grid nodes
+      Nx: 2D array
+          x component of the normal vector field at the grid nodes
+      Ny: 2D array
+          y component of the normal vector field at the grid nodes
+      Nz: 2D array
+          z component of the normal vector field at the grid nodes
+      csz: float
+          cellsize of the grid
+      interpOption: int
+          -0: nearest neighbour interpolation
+          -1: equal weights interpolation
+          -2: bilinear interpolation
+    Returns
+    -------
+    xNew: float
+        x coordinate of the projected point
+    yNew: float
+        y coordinate of the projected point
+    Lxy: int[4]
+        colomn and row indices for interpolation
+    w: float[4]
+        corresponding weights
+    """
+  cdef double zTemp, zn, dist, distn, xNew, yNew, zNew
+  cdef double nx, ny, nz
+  cdef int reprojectionIterations = 10
+  cdef int Lxi, Lyi, Lxj, Lyj
+  cdef int Lxy[4]
+  cdef double w[4]
+  xNew = xOld
+  yNew = yOld
+  zNew = zOld
+  dist = norm(xNew-xPrev, yNew-yPrev, zNew-zPrev)
+  Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, csz, interpOption)
+  # get the cell location of the point
+  Lxi = Lxy[0]
+  Lyi = Lxy[2]
+  # iterate
+  while reprojectionIterations > 0 and dist > 0.1:
+    reprojectionIterations = reprojectionIterations - 1
+    # vertical projection of the point
+    zTemp = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], ZDEM)
+    # get normal vector
+    nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+    nx, ny, nz = normalize(nx, ny, nz)
+    zn = (xNew-xNew) * nx + (yNew-yNew) * ny + (zTemp-zNew) * nz
+    # correct position with the normal part
+    xNew = xNew + zn * nx
+    yNew = yNew + zn * ny
+    zNew = zNew + zn * nz
+    # measure distance between this new pint and the previous time step position
+    distn = norm(xNew-xPrev, yNew-yPrev, zNew-zPrev)
+    # adjust position on the Xprev, Xnew line
+    xNew = xPrev + (xNew-xPrev) * dist / distn
+    yNew = yPrev + (yNew-yPrev) * dist / distn
+    zNew = zPrev + (zNew-zPrev) * dist / distn
+    # get cell
+    Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, csz, interpOption)
+    Lxj = Lxy[0]
+    Lyj = Lxy[2]
+    # are we in the same cell?
+    # if Lxi==Lxj and Lyi==Lyj:
+    #   return xNew, yNew, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3]
+    Lxj = Lxi
+    Lyj = Lyi
+  return xNew, yNew, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3]
 
 
 @cython.boundscheck(False)
