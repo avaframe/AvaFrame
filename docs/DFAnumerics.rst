@@ -49,12 +49,13 @@ from particle property to mesh property using the interpolation methods describe
 Time step
 ~~~~~~~~~~~~~~~~~~~~~~
 
-A fixed time step can be used or an adaptive time step can be computed using Courant-Friedrich-Lewy condition.
+A fixed time step can be used or an adaptive time step can be computed using a
+Courant-Friedrich-Lewy condition.
 
 
 Mesh and interpolation
 -----------------------
-Here is a description of the mesh and the interpolation method used to
+Here is a description of the mesh and the interpolation method that is used to
 switch from particle to mesh values and the other way around.
 
 Mesh
@@ -62,14 +63,19 @@ Mesh
 
 For practical reasons, a 2D rectilinear mesh (grid) is used. Indeed the topographic
 input information is read from 2D raster files (with :math:`N_{y}` and :math:`N_{x}`
-rows and columns) which corresponds exactly to a
+rows and columns) which correspond exactly to a
 2D rectilinear mesh. Moreover, as we will see in the following sections,
 2D rectilinear meshes are very convenient for interpolations as well as for
 particle tracking. The 2D rectilinear mesh is composed of :math:`N_{y}` and
 :math:`N_{x}` rows and columns of square cells (of side length :math:`csz`)
 and :math:`N_{y}+1` and :math:`N_{x}+1` rows and columns of vertices
 as described in :numref:`rasterGrid`. Each cell has a center and four vertices.
-The data read from the raster file is assigned to the cell centers.
+The data read from the raster file is assigned to the cell centers. Note that
+although this is a 2D mesh, as we use a terrain-following coordinate system to perform
+our computations, this 2D mesh is oriented in 3D space and hence the projected side length
+corresponds to :math:`csz`, whereas the actual side length and hence also the
+:ref:`DFAnumerics:cell area`, depend on the local slope,
+expressed by the :ref:`DFAnumerics:Cell normals`.
 
 .. _rasterGrid:
 
@@ -137,7 +143,7 @@ between mesh cell centers. Evaluating a vector field simply consists in evaluati
 the three components as scalar fields.
 
 The bilinear interpolation consists in successive linear interpolations
-in both :math:`x` and :math:`y` using the four nearest grid points,
+in both :math:`x` and :math:`y` direction using the four nearest cell centers,
 two linear interpolations in the first direction (in our case in the
 :math:`y` direction in order to evaluated :math:`f_{0v}` and :math:`f_{1v}`)
 followed by a second linear interpolation in the second direction
@@ -175,7 +181,7 @@ Particles to mesh
 """""""""""""""""""
 Going from particle property to mesh value is also based on bilinear interpolation and
 weights but requires a bit more care in order to conserve mass and momentum balance.
-Flow depth and velocity fields are determined on the mesh using, as intermediate step
+Flow depth and velocity fields are determined on the mesh using, as intermediate step,
 mass and momentum fields. First, mass and momentum mesh fields can be evaluated by
 summing particles mass and momentum. This can be donne using the bilinear
 weights :math:`w` defined in the previous paragraph (here :math:`f` represents
@@ -193,15 +199,16 @@ the mass or momentum and :math:`f_{uv}` is the particle value. :math:`f_{nm}`
 The contribution of each particle to the different mesh points is summed up to
 finally give the mesh value. This method ensures that the total mass and
 momentum of the particles is preserved (the mass and momentum on the mesh will
-sum up to the same total). Flow depth and velocity grid fields can then be deduced
-from the mass and momentum fields and the cell area (real area of each grid cell).
+sum up to the same total). Flow depth and velocity mesh fields can then be deduced
+from the mass and momentum fields and the cell area (actual area of each grid cell,
+not the projected area).
 
 
 Neighbor search
 ------------------
 
 The lateral pressure forces are computed via the SPH flow depth gradient.
-This method is based on neighborhood particle interactions, meaning that it
+This method is based on particle interactions within a certain neighborhood, meaning that it
 is necessary to keep track of all the particles within the neighborhood of each particle.
 Computing the gradient of the flow depth at a particle location, requires to
 find all the particles in its surrounding. Considering the number of particles and
@@ -216,7 +223,7 @@ cell in which the particle is located (dark blue cell in :numref:`neighborSearch
 , find the direct adjacent cells in all directions (light blue cells) and
 simply read all particles within those cells. This is very easily achieved
 on rectilinear meshes because locating a particle in a cell is straightforward and
-finding the adjacent cells is also immediate.
+finding the adjacent cells is also easily done.
 
 .. _neighborSearch:
 
@@ -256,7 +263,7 @@ Method
 The SPH method is used to express a quantity (the flow depth in our case) and
 its gradient at a certain particle location as a weighted sum of its neighbors
 properties. The principle of the method is well described in :cite:`LiLi2010`.
-In the case a depth integrated equations (for example SWE), a scalar function
+In the case of depth integrated equations (for example SWE), a scalar function
 :math:`f` and its gradient can be expressed as following:
 
 .. math::
@@ -508,8 +515,8 @@ Lateral force
 
 The SPH method is introduced when expressing the flow depth gradient for each
 particle as a weighted sum of its neighbors
-(:cite:`LiLi2010,Sa2007`). The :math:`p` in :math:`p_k` is dropped
-(same applies for :math:`p_k`):
+(:cite:`LiLi2010,Sa2007`). From now on the :math:`p` for particles in math:`p_k` is dropped
+(same applies for :math:`p_l`).
 
 The lateral pressure forces on each particle are calculated from the compression
 forces on the boundary of the particle.
@@ -545,8 +552,9 @@ Which leads to, using the relation :eq:`sph formulation`:
 
 Bottom friction force
 ~~~~~~~~~~~~~~~~~~~~~~~
-The bottom friction forces on each particle depend on the chose friction model and reads for the SamosAT friction model
-(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{k}`):
+The bottom friction forces on each particle depend on the chose friction model. Using the SamosAT friction model
+(using equation :eq:`sigmab` for the expression of :math:`\sigma^{(b)}_{k}`) the formulation of the bottom friction forec
+becomes:
 
 .. math::
     F_{k,i}^{\text{bot}} = -\delta_{k1}\,A_{k}\,\tau^{(b)}_{k}
