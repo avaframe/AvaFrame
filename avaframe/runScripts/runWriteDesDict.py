@@ -32,6 +32,8 @@ desDict['DESCRIPTION'] = " this is my null test"        # what is this test abou
 desDict['TYPE'] = ["2DPeak"]                            # what type of benchmark data does the test provide
 desDict['FILES'] = ["mytest1.asc", "mytest2.asc"]       # which files does the test provide
 desDict['AVANAME'] = 'avaInclinedPlane'                 # which avalanache does the test refer to
+desDict['AVADIR'] = 'data/InclinedPlane'                # path to the avalanche directory
+desDict['simNameRef'] = 'release1IP_null_ref_0.15500' # simulation name 
 
 # write dictionary to json file
 fileName = tU.writeDesDicttoJson(desDict, testName, inDir)

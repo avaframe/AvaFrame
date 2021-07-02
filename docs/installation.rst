@@ -1,4 +1,4 @@
-Installation and first run 
+Installation and first run
 ==========================
 
 .. Note::
@@ -52,7 +52,7 @@ AvaFrame needs following requirements as specified in the requirements.txt:
 .. include:: ../requirements.txt
    :literal:
 
-Install these with (conda-forge is needed for cmocrameri)::
+Install these with (conda-forge is needed for cmcrameri)::
 
   conda install -c conda-forge --file requirements.txt
 
@@ -91,9 +91,9 @@ Follow these steps to run your first simulation:
   ::
 
     logUtils - INFO -  Started logging at: 03.11.2020 22:42:04
-    logUtils - INFO -  Also logging to: data/avaHelix/runCom1DFA.log
+    logUtils - INFO -  Also logging to: data/avaParabola/runCom1DFA.log
     runCom1DFA - INFO -  MAIN SCRIPT
-    runCom1DFA - INFO -  Current avalanche: data/avaHelix
+    runCom1DFA - INFO -  Current avalanche: data/avaParabola
     ...
 
 
@@ -114,7 +114,7 @@ Workflow example
 ----------------
 
 The following example should make it easier for you to find your way in AvaFrame
-and setup your own AvaFrame workflow after you did the full setup. 
+and setup your own AvaFrame workflow after you did the full setup.
 
 Make sure you change to your ``AvaFrame`` direcotry by::
 
@@ -141,7 +141,7 @@ Then run ::
   python runInitializeProject.py
 
 This will create a new directory with the input required by AvaFrame structured as described
-in :ref:`moduleIn3Utils:Initialize Project`. 
+in :ref:`moduleIn3Utils:Initialize Project`.
 
 Input data
 ^^^^^^^^^^
@@ -161,7 +161,7 @@ Building your run script
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Create your own workflow by taking the ``runOperational.py`` script as
-template. 
+template.
 
 We suggest you copy it and adjust it to your liking. There are annotations in
 the code that should help you to understand the structure.
