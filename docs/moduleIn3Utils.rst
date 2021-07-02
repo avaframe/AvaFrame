@@ -34,18 +34,22 @@ Extra features can be added to the above topographies:
 		The channel can be added by either adding a 'channel layer'
 		(max thickness=channel depth) on top of the topography (``topoAdd=True``)
 		or by cutting them into the original topography (``topoAdd=False``).
-	* **in case of the parabola topography, a Dam can be added by setting ``dam=True``.**
+	* **in case of the parabola topography, a dam can be added by setting ``dam=True``.**
 
-This modules returns a 3D plot of the generated topography as well as an .asc file of the DEM data.
-The input parameters are defined in the respective configuration file ``in3Utils.generateTopoCfg.ini``.
-Detailed information on the individual functions used to create the topographies can be found in :py:mod:`in3Utils.generateTopo`
+This modules returns a 3D plot of the generated topography as well as an .asc
+file of the DEM data. The input parameters are defined in the respective
+configuration file ``in3Utils.generateTopoCfg.ini``. Detailed information on the
+individual functions used to create the topographies can be found in
+:py:mod:`in3Utils.generateTopo`
 
 
 To run
 ------
 
 * first go to ``AvaFrame/avaframe``
-* copy ``in3Utils/generateTopoCfg.ini`` to ``in3Utils/local_generateTopoCfg.ini`` and set the desired parameter values (if not, the default values are used)
+* copy ``in3Utils/generateTopoCfg.ini`` to
+  ``in3Utils/local_generateTopoCfg.ini`` and set the desired parameter values
+  (if not, the default values are used)
 * run::
 
 	python3 runScripts/runGenerateTopo.py
@@ -56,13 +60,14 @@ Theory
 
 Topographies are generated using inclined and flat planes, parabolas, spheres and circles.
 Channels are introduced as half-sphere shaped features with smooth transition
-from the no channel area to the channel using cumulative distribution functions.
+from the no-channel area to the channel using cumulative distribution functions.
 
 Configuration parameters
 ------------------------
 
-In the case of the pyramid-shaped topography, the domain extent is defined by the max elevation (z0 - elevation of the appex point) and the
-slope of the pyramid facets (meanAlpha)
+In the case of the pyramid-shaped topography, the domain extent is defined by
+the max elevation (z0 - elevation of the appex point) and the slope of the
+pyramid facets (meanAlpha)
 
 **Domain parameters:**
 
@@ -107,31 +112,34 @@ slope of the pyramid facets (meanAlpha)
 Get Release Area
 ===================
 
-:py:mod:`in3Utils.getReleaseArea` generates a release area for a topography created with :py:mod:`in3Utils.generateTopo`,
-this function is available for the following topographies:
+:py:mod:`in3Utils.getReleaseArea` generates a release area for a topography
+created with :py:mod:`in3Utils.generateTopo`, this function is available for the
+following topographies:
 
 * flat plane (FP)
 * inclined plane (IP)
 * parabola (PF)
 * hockey stick (HS)
 
-The release areas are defined as rectangular features build by four corner points, which are based on the following conditions:
+The release areas are defined as rectangular features build by four corner
+points, which are based on the following conditions:
 
 * prescribed vertical stretch in meters (difference in altitude)
 * prescribed volume of the release area
 * lower margin is located where the slope angle falls below 30°
-* if slope does not fall below 30 °, the upper margin is located xStart away from the upper margin of the DEM
+* if slope does not fall below 30 °, the upper margin is located xStart away
+  from the upper margin of the DEM
 
-The release areas can be saved as shapefile, .nxyz and .txt file.
-The required input parameters can be set in the respective configuration files
+The release areas can be saved as shapefile, .nxyz and .txt file. The required
+input parameters can be set in the respective configuration files
 ``in3Utils/getReleaseAreaCfg.ini`` and ``in3Utils.generateTopoCfg.ini``.
-Detailed information on the individual functions used to create the release areas
-can be found in :py:mod:`in3Utils.getReleaseArea`
+Detailed information on the individual functions used to create the release
+areas can be found in :py:mod:`in3Utils.getReleaseArea`
 
 To run
 ------
 
-Following these steps, you can generate an avalanche test case including a DEM and a simple realease area.
+Following these steps, you can generate an avalanche test case including a DEM and a simple release area.
 
 * first go to ``AvaFrame/avaframe``
 * copy ``in3Utils/generateTopoCfg.ini`` and  ``in3Utils/getReleaseAreaCfg.ini`` to ``in3Utils/local_generateTopoCfg.ini``
@@ -157,11 +165,12 @@ Following these steps, you can generate an avalanche test case including a DEM a
 Initialize Project
 =====================
 
-:py:mod:`in3Utils.initializeProject` provides functions to initialize a project, create the required directory structure and delete specified
-files or directories.
+:py:mod:`in3Utils.initializeProject` provides functions to initialize a project,
+create the required directory structure and delete specified files or
+directories.
 
-The main function :py:func:`in3Utils.initializeProject.initializeFolderStruct`, creates the folder structure required to perform avalanche simulations:
-::
+The main function :py:func:`in3Utils.initializeProject.initializeFolderStruct`,
+creates the folder structure required to perform avalanche simulations: ::
 
 		NameOfAvalanche/
 			Inputs/
@@ -205,6 +214,7 @@ To run
 fileHandlerUtils
 =================
 
-:py:mod:`in3Utils.fileHandlerUtils` gathers useful functions to create directories, read log files,
-extract information from logs, fetch and export data and fetch simulation info into a dataFrame
-that can be used within other functions. Details on these functions can be found in :py:mod:`in3Utils.fileHandlerUtils`.
+:py:mod:`in3Utils.fileHandlerUtils` gathers useful functions to create
+directories, read log files, extract information from logs, fetch and export
+data and fetch simulation info into a dataFrame. Details on these functions can
+be found in :py:mod:`in3Utils.fileHandlerUtils`.

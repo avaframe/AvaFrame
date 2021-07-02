@@ -3,7 +3,7 @@ com2AB: Alpha Beta Model
 
 :py:mod:`com2AB` calculates the runout of an avalanche according to the statistical :math:`\alpha-\beta` model.
 An avalanche is defined by its DEM (digital elevation model), a path and a split point.
-The runout is calculated according to the :math:`\alpha-\beta` model suited for avalanches in the Austrian Alps.
+The runout is calculated according to the :math:`\alpha-\beta` model calibrated for avalanches in the Austrian Alps.
 It is also possible to adapt the model parameters for other regions.
 
 Input
@@ -22,8 +22,8 @@ Outputs
 To run
 -------
 
-* first go to ``AvaFrame/avaframe``
-* copy ``com2AB/com2ABCfg.py`` to ``com2AB/local_com2ABCfg.py`` (if not, default values are used)
+* go to ``AvaFrame/avaframe``
+* copy ``com2AB/com2ABCfg.py`` to ``com2AB/local_com2ABCfg.py`` and edit (if not, default values are used)
 * make sure all the required inputs are available in the avalanche directory
 * enter the path to the desired dataset in ``local_avaframeCfg.ini``
 * run::
