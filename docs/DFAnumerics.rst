@@ -65,15 +65,15 @@ input information is read from 2D raster files (with :math:`N_{y}` and :math:`N_
 rows and columns) which corresponds exactly to a
 2D rectilinear mesh. Moreover, as we will see in the following sections,
 2D rectilinear meshes are very convenient for interpolations as well as for
-particle tracking. The 2D rectilinear mesh is composed of :math:`N_{y}-1` and
-:math:`N_{x}-1` rows and columns of square cells (of side length :math:`csz`)
-and :math:`N_{y}` and :math:`N_{x}` rows and columns of vertices
+particle tracking. The 2D rectilinear mesh is composed of :math:`N_{y}` and
+:math:`N_{x}` rows and columns of square cells (of side length :math:`csz`)
+and :math:`N_{y}+1` and :math:`N_{x}+1` rows and columns of vertices
 as described in :numref:`rasterGrid`. Each cell has a center and four vertices.
-The data read from the raster file is assigned to the vertices.
+The data read from the raster file is assigned to the cell centers.
 
 .. _rasterGrid:
 
-.. figure:: _static/rasterGrid.png
+.. figure:: _static/rasterGrid0.png
         :width: 90%
 
         Rectangular grid
@@ -84,17 +84,17 @@ There are many different methods available for computing normal vectors
 on a 2D rectilinear mesh. Several options are available in com1DFA.
 
 The first one consists in computing the cross product of the diagonal vectors
-between four vertices. This defines the normal vector at the cell center. It is
-then possible to interpolate the normal vector at the vertices from the ones
-at the cell centers.
+between four cell centers. This defines the normal vector at the vertices. It is
+then possible to interpolate the normal vector at the cell centers from the ones
+at the vertices.
 
 The other methods use the plane defined by different adjacent triangles to
-a vertex. Each triangle has a normal and the vertices normal is the average
+a cell center. Each triangle has a normal and the cell center normal is the average
 of the triangles normal vectors.
 
 .. _meshNormal:
 
-.. figure:: _static/meshNormal.png
+.. figure:: _static/meshNormal0.png
         :width: 90%
 
         Grid normal computation
@@ -120,8 +120,6 @@ Surface integration over the cell extent leads to the area of the cell:
    \sqrt{1+\frac{\partial z}{\partial x}^2+\frac{\partial z}{\partial y}^2}
    \mathrm{d}{x}\,\mathrm{d}{y} =
    csz^2 \sqrt{1+\frac{\partial z}{\partial x}^2+\frac{\partial z}{\partial y}^2} = \frac{csz^2}{n_z}
-
-The same method is used to get the area of a vertex (this does not make any sense...).
 
 
 Interpolation

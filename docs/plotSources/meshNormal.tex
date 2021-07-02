@@ -2,7 +2,7 @@
 % Compile with
 % pdflatex --shell-escape -synctex=1 -interaction=nonstopmode meshNormal.tex
 % to convert it to png use:
-% convert -density 300 -transparent white "\image.pdf" "\image.png"},
+% convert -density 300 -transparent white meshNormal.pdf meshNormal.png
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass{standalone}
@@ -38,13 +38,13 @@
     \foreach \i in {\yMin,\yMinSec,...,\yMax} {
         \draw [dotted, gray] (\xMin-0.5,\i) -- (\xMax+0.5,\i);
         \foreach \j in {\xMin,\xMinSec,...,\xMax} {
-            \draw [color=AFLight] plot [only marks, mark size=1, mark=*] coordinates {(\j,\i)};
+            \draw [color=AFMiddle] plot [only marks, mark size=1, mark=square*] coordinates {(\j,\i)};
         }
     }
 
     \foreach \i in {\yyMin} {
         \foreach \j in {\xxMin} {
-            \draw [color=AFMiddle] plot [only marks, mark size=1, mark=square*] coordinates {(\j,\i)};
+            \draw [color=AFLight] plot [only marks, mark size=1, mark=*] coordinates {(\j,\i)};
         }
 
     }
@@ -77,13 +77,13 @@
     \foreach \i in {\yMin,\yMinSec,...,\yMax} {
         \draw [dotted, gray] (\xMin-0.5,\i) -- (\xMax+0.5,\i);
         \foreach \j in {\xMin,\xMinSec,...,\xMax} {
-            \draw [color=AFLight] plot [only marks, mark size=1, mark=*] coordinates {(\j,\i)};
+            \draw [color=AFMiddle] plot [only marks, mark size=1, mark=square*] coordinates {(\j,\i)};
         }
     }
 
     \foreach \i in {\yyMin,\yyMinSec,...,\yyMax} {
         \foreach \j in {\xxMin,\xxMinSec,...,\xxMax} {
-            \draw [color=AFMiddle] plot [only marks, mark size=1, mark=square*] coordinates {(\j,\i)};
+            \draw [color=AFLight] plot [only marks, mark size=1, mark=*] coordinates {(\j,\i)};
         }
 
     }
@@ -126,13 +126,13 @@
     \foreach \i in {\yMin,\yMinSec,...,\yMax} {
         \draw [dotted, gray] (\xMin-0.5,\i) -- (\xMax+0.5,\i);
         \foreach \j in {\xMin,\xMinSec,...,\xMax} {
-            \draw [color=AFLight] plot [only marks, mark size=1, mark=*] coordinates {(\j,\i)};
+            \draw [color=AFMiddle] plot [only marks, mark size=1, mark=square*] coordinates {(\j,\i)};
         }
     }
 
     \foreach \i in {\yyMin,\yyMinSec,...,\yyMax} {
         \foreach \j in {\xxMin,\xxMinSec,...,\xxMax} {
-            \draw [color=AFMiddle] plot [only marks, mark size=1, mark=square*] coordinates {(\j,\i)};
+            \draw [color=AFLight] plot [only marks, mark size=1, mark=*] coordinates {(\j,\i)};
         }
 
     }

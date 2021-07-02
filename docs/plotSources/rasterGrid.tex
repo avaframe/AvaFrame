@@ -56,9 +56,9 @@
 \draw[AFLight] (2,\yMin-0.5) node[below] {\footnotesize $\cdots$};
 \draw[AFLight] (3,\yMin-0.5) node[below] {\footnotesize $n_x$};
 \draw[AFLight] (4,\yMin-0.5) node[below] {\footnotesize $\cdots$};
-%\draw (4,\yMin-0.5) node[below] {\footnotesize $N_{cols}-2$};
+%\draw (4,\yMin-0.5) node[below] {\footnotesize $N_{cols}-1$};
 %\draw[AFLight] (5,\yMin-0.5) node[below] {\footnotesize $N_{x}\!\!-\!\!2$};
-\draw[AFLight] (6,\yMin-0.5) node[below] {\footnotesize $N_{x}\!\!-\!\!1$};
+\draw[AFLight] (6,\yMin-0.5) node[below] {\footnotesize $N_{x}$};
 
 
 \draw[AFDark] (0.5,\yMin) node[below] {\footnotesize $0$};
@@ -66,21 +66,21 @@
 \draw[AFDark] (1.5,\yMin) node[below] {\footnotesize $1$};
 \draw[AFDark] (3.5,\yMin) node[below] {\footnotesize $n_x$};
 \draw[AFDark] (4.5,\yMin) node[below] {\footnotesize $\cdots$};
-%\draw (4,\yMin-0.5) node[below] {\footnotesize $N_{cols}-2$};
-\draw[AFDark] (5.5,\yMin) node[below] {\footnotesize $N_{x}\!\!-\!\!2$};
+%\draw (4,\yMin-0.5) node[below] {\footnotesize $N_{cols}-1$};
+\draw[AFDark] (5.5,\yMin) node[below] {\footnotesize $N_{x}\!\!-\!\!1$};
 
 \draw[AFLight] (\xMin-0.5,0) node[rotate = 90, above] {\footnotesize $0$};
 \draw[AFLight] (\xMin-0.5,1) node[rotate = 90, above] {\footnotesize $1$};
 \draw[AFLight] (\xMin-0.5,2) node[rotate = 90, above] {\footnotesize $\cdots$};
 \draw[AFLight] (\xMin-0.5,3) node[rotate = 90, above] {\footnotesize $n_y$};
 \draw[AFLight] (\xMin-0.5,4) node[rotate = 90, above] {\footnotesize $\cdots$};
-%\draw (4,\yMin-0.5) node[below] {\footnotesize $N_{cols}-2$};
-\draw[AFLight] (\xMin-0.5,5) node[rotate = 90, above] {\footnotesize $N_{y}\!\!-\!\!1$};
+%\draw (4,\yMin-0.5) node[below] {\footnotesize $N_{cols}-1$};
+\draw[AFLight] (\xMin-0.5,5) node[rotate = 90, above] {\footnotesize $N_{y}$};
 
 
 
 \draw[color=AFDark, thick, fill=AFDark, fill opacity=0.3] (3,3) rectangle ++(1,1);
-\draw[->, AFDark] (5.5,6) node[above right] {\begin{tabular}{c} Cell \\ $i_c = n_x + n_y(N_x-1)$ \\ $0 \leq n_x \leq (N_x-2)$ \\ $0 \leq n_y \leq (N_y-2)$ \end{tabular}} -- (3.75,3.75);
+\draw[->, AFDark] (5.5,6) node[above right] {\begin{tabular}{c} Cell \\ $i_c = n_x + n_yN_x$ \\ $0 \leq n_x \leq (N_x-1)$ \\ $0 \leq n_y \leq (N_y-1)$ \end{tabular}} -- (3.75,3.75);
 \draw[color=AFDark, thick, fill=AFDark, fill opacity=0.3] (0,0) rectangle ++(1,1);
 \draw[->, AFDark] (-0.5,-1) node[below] {\begin{tabular}{c} Cell \\ $i_c = 0$ \end{tabular}} -- (0.25,0.25);
 
