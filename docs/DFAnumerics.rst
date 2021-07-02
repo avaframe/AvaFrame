@@ -131,9 +131,9 @@ to mesh (field) values and from mesh values to particle properties.
 Mesh to particle
 """"""""""""""""""
 
-On a 2D rectilinear mesh, scalar and vector fields defined on mesh vertex and center
+On a 2D rectilinear mesh, scalar and vector fields defined at cell centers
 can be evaluated anywhere within the mesh using a bilinear interpolation
-between mesh vertices. Evaluating a vector field simply consists in evaluating
+between mesh cell centers. Evaluating a vector field simply consists in evaluating
 the three components as scalar fields.
 
 The bilinear interpolation consists in successive linear interpolations
@@ -168,7 +168,7 @@ cell size.
 .. figure:: _static/BilinearInterp.png
         :width: 90%
 
-        Bilinear interpolation in a unit cell.
+        Bilinear interpolation in a unit mesh (cell size is 1).
 
 
 Particles to mesh
@@ -180,7 +180,7 @@ mass and momentum fields. First, mass and momentum mesh fields can be evaluated 
 summing particles mass and momentum. This can be donne using the bilinear
 weights :math:`w` defined in the previous paragraph (here :math:`f` represents
 the mass or momentum and :math:`f_{uv}` is the particle value. :math:`f_{nm}`
-, :math:`{n, m} \in \{0, 1\} \times \{0, 1\}`, are the vertex values):
+, :math:`{n, m} \in \{0, 1\} \times \{0, 1\}`, are the cell center values):
 
 .. math::
     \begin{aligned}
