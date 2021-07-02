@@ -20,6 +20,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pds
 from itertools import product
 import pathlib
+from matplotlib.patches import Ellipse, Circle
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
@@ -1049,6 +1050,7 @@ def DFAIterate(cfg, particles, fields, dem):
             log.debug(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
             log.debug(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
             fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
+            plotReproj(cfgGen, dem, particles)
             if dtSave.size == 1:
                 dtSave = [2*cfgGen.getfloat('tEnd')]
             else:
@@ -1967,6 +1969,47 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
         fig2, ax2, partEnd, demOri, fieldEnd['FV'], pU.cmapPres, 'm/s', plotPart=False)
     fig3, ax3 = plotPosition(
         fig3, ax3, partEnd, demOri, fieldEnd['P']/1000, pU.cmapPres, 'kPa', plotPart=False)
+    plt.show()
+
+
+def plotReproj(cfgGen, dem, particles):
+    header = dem['header']
+    ncols = header.ncols
+    nrows = header.nrows
+    xllc = header.xllcenter
+    yllc = header.yllcenter
+    csz = header.cellsize
+    xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+    ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+    PointsX, PointsY = np.meshgrid(xgrid, ygrid)
+    XX = PointsX[0, :]
+    print('time: ', particles['t'], particles['xPrev'], particles['zPrev'])
+
+    fig = plt.figure(figsize=(2*pU.figW, pU.figH))
+    ax = plt.subplot(121)
+    ax2 = plt.subplot(122)
+    # ax.plot(Time, xPath, 'b-')
+    # ax.plot(TimeS, xPathS, 'k-')
+    ax.plot(particles['xPrev'], particles['zPrev'], 'ko', ms=4)
+    ax.plot(particles['xNoReproj'], particles['zNoReproj'], 'go', ms=3)
+    ax.plot(particles['x'], particles['z'], 'ro', ms=2)
+    dist = DFAtls.norm(particles['xNoReproj']-particles['xPrev'], particles['yNoReproj']-particles['yPrev'], particles['zNoReproj']-particles['zPrev'])
+    circ = plt.Circle([particles['xPrev'][0], particles['zPrev'][0]], dist, fill=True, lw=2)
+    # circ = Circle((particles['xPrev'][0], particles['zPrev'][0]), 30, fill=False)
+    # ax.add_patch(circ)
+    ax.add_artist(circ)
+    ax.set_aspect('equal', 'box')
+
+    NNX, NNY, NNZ = DFAtls.normalize(dem['Nx'], dem['Ny'], dem['Nz'])
+    Cp1 = ax.plot(XX, dem['rasterData'][10, :], color='r')
+    # Cp1 = ax.plot(XX, NNX[10, :]*250 + 250, 'g-')
+    # Cp1 = ax.plot(XX, NNZ[10, :]*250 + 250, 'g--')
+
+    ax2.plot(particles['x'], DFAtls.norm(particles['ux'], particles['uy'], particles['uz']), 'bo', ms=4)
+    ax2.plot(particles['x'], DFAtls.norm(particles['x']-particles['xPrev'], particles['y']-particles['yPrev'], particles['z']-particles['zPrev'])/0.1, 'go', ms=3)
+    ax2.plot(particles['x'], DFAtls.norm(particles['xNoReproj']-particles['xPrev'], particles['yNoReproj']-particles['yPrev'], particles['zNoReproj']-particles['zPrev'])/0.1, 'ro', ms=2)
+
+
     plt.show()
 
 
