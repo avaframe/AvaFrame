@@ -5,16 +5,17 @@ in2Trans: Transformation Utilities
 Working with ASCII files
 ==========================
 
-:py:mod:`in2Trans.ascUtils` is a module created to handle raster ASCII files. It contains different functions
-to read ASCII files and write the data to a numpy array, to
-compare raster file headers or to write a raster to an ASCII file given a header and numpy data.
-A description of the functions is available in :py:mod:`in2Trans.ascUtils`.
+:py:mod:`in2Trans.ascUtils` is a module created to handle raster ASCII files. It
+contains different functions to read ASCII files and write the data to a numpy
+array, to compare raster file headers or to write a raster to an ASCII file.
+A description of the functions is available in
+:py:mod:`in2Trans.ascUtils`.
 
 
 Working with shapefiles
 =============================
 
-:py:mod:`in2Trans.shpConversion` is a module created to handle shapefiles.
+:py:mod:`in2Trans.shpConversion` is a module for handling shapefiles.
 It contains different functions to read shapefiles and convert them to a python dictionary.
 It also provides functions to extract or remove a feature from the shapefile dictionary.
 
