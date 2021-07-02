@@ -703,10 +703,10 @@ def updatePositionC(cfg, particles, dem, force, DT):
   # this is dangerous!!!!!!!!!!!!!!
   ###############################################################
   # remove particles that are not located on the mesh any more
-  particles = DFAtls.removeOutPart(particles, dem, dt)
+  particles = DFAtls.removeOutPart(cfg, particles, dem, dt)
 
   # split particles with too much mass
-  particles = DFAtls.splitPart(particles, dem)
+  particles = DFAtls.splitPart(cfg, particles, dem)
   return particles
 
 
