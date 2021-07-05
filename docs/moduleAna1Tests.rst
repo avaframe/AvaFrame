@@ -123,20 +123,20 @@ Flat plane test
 
 In this test, the behavior of a conical pile of material placed on a flat plane
 and ruled by Coulomb friction is studied. The pile starts at rest and depending
-on the steepness of the slope and the friction angle will start flowing. The idea behind this test
+on the steepness of the slope and the value of the bed friction angle will start to flow. The idea behind this test
 is to check the implementation of the bottom shear stress in the DFA module as well as the gradient
 computation (SPH method).
 
 The :py:mod:`ana1Tests.FPtest` module provides functions to compute the analytic solution and some plotting routines
-to visualize the pile and to compare it to the output from the DFA computational module.
+for visualizing the pile and for comparison to the output from the DFA computational module.
 
 
 To run
 ------
 
-An workflow example is given in :py:mod:`runScripts.runTestFP`.
+A workflow example is given in :py:mod:`runScripts.runTestFP`.
 The input data for this example can be found in ``data/avaFPtest`` with the
-configuration settings of com1DFA including a section 'FPSOL' (see ``data/avaFPtest/Inputs/FlatPlane_com1DFACfg.ini``).
+configuration settings of com1DFA including a section ``'FPSOL'`` (see ``data/avaFPtest/Inputs/FlatPlane_com1DFACfg.ini``).
 
 
 The :py:func:`ana1Tests.FPtest.plotProfilesFPtest` function generates a profile plot of the flow depth in the radial direction.
