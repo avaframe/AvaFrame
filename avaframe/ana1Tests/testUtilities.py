@@ -1,5 +1,5 @@
 """
-    test
+    Functions for handling benchmark tests data, filtering, sorting
 """
 
 # Load modules

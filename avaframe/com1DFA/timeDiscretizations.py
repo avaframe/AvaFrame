@@ -1,6 +1,5 @@
 """
-    function regarding time discretization and time stepping for com1DFA
-    This file is part of Avaframe.
+    Functions regarding time discretization and time stepping for com1DFA
 """
 
 # Load modules
