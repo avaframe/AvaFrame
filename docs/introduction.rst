@@ -22,7 +22,7 @@ Our aims are to make AvaFrame:
 
 AvaFrame is part of an BMLRT initiative to foster technological innovation within a strategic focus on the area of Austrian safety policies, digital innovations and climate mitigation strategies.
 
-Information in German can be found on the `BMLRT Homepage <https://www.bmlrt.gv.at/forst/wildbach-lawinenverbauung/kooperationen-zusammenarbeit/lawinenschutzvorsorgeprojekt.html>`_.
+Information in German can be found on the `BMLRT Homepage <https://info.bmlrt.gv.at/themen/wald/wald-und-naturgefahren/wildbach--und-lawinenverbauung/kooperationen-zusammenarbeit/lawinenschutzvorsorgeprojekt.html>`_.
 
 A summery of the latest advances of the project can be found on the
 `Avaframe homepage <https://avaframe.org/>`_ web-page.
