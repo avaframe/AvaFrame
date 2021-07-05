@@ -1,5 +1,5 @@
 """
-    Extract sample of values to fit a beta-pert distribution
+    Generate sample of values following a beta-pert or a uniform distribution
 """
 
 # load python modules

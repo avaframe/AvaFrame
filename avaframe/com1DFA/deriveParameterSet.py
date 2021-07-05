@@ -1,5 +1,5 @@
 """
-    Main functions for python DFA kernel
+    Create dictionary for parameter variations
 """
 
 import logging

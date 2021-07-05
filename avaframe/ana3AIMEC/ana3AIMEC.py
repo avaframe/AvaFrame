@@ -1,5 +1,5 @@
 """
-    Main logic for AIMEC post processing
+    AIMEC post processing workflow 
 """
 
 import logging
