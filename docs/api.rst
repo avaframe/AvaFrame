@@ -37,9 +37,8 @@ Analysis/Output/Helper Modules
    ana1Tests
    ana3AIMEC
    ana4Stats
-   in1Data
    log2Report
-   out1Peak.outPlotAllPeak
+   out1Peak
    out3Plot.outQuickPlot
    out3Plot.in1DataPlots
    out3Plot.statsPlots
