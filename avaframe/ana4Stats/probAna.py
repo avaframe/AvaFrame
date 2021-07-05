@@ -1,6 +1,6 @@
 """
 
-This is a simple function for computing a mask of all peak files of one parameter that exceed a particular threshold
+This is a simple function for computing a probability map of all peak files of one parameter that exceed a particular threshold
 
 """
 
