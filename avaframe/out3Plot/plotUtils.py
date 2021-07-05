@@ -162,7 +162,7 @@ cmapSpeed['colors'] = colorsS
 cmapSpeed['lev'] = levS
 cmapSpeed['ticks'] = ticksS
 
-colorMaps = {'ppr' : cmapPres, 'pfv' : cmapSpeed, 'pfd' : cmapDepth}
+colorMaps = {'ppr' : cmapPres, 'pfv' : cmapSpeed, 'pfd' : cmapDepth, 'PR' : cmapPres, 'FV' : cmapSpeed, 'FD' : cmapDepth}
 
 cmapDEM = cmapGreys
 
