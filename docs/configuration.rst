@@ -19,7 +19,7 @@ In the second step the specific settings to a given module are imported::
   # Write config to log file
   cfg = cfgUtils.getModuleConfig(tmp1Ex)
 
-The ``getModuleConfig`` function reads the settings from a configuration file (``tmpEx.ini``
+The py:func:`in3Utils.cfgUtils.getModuleConfig` function reads the settings from a configuration file (``tmpEx.ini``
 in our example) and writes these settings to the log file. The default settings can be found in the
 configuration file provided within each module.
 
