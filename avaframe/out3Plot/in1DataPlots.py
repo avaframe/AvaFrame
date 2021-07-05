@@ -1,8 +1,6 @@
 """
     make plots for in1Data module
 
-    This file is part of Avaframe.
-
 """
 
 # load python modules
