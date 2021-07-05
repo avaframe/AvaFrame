@@ -42,15 +42,7 @@ If a separate plotDictionary shall be included, in addition the key *simName* is
 
 The default setting is to produce one report file, *fullSimulationReport.md*, however if one wants to receive on report for each *simName*,
 set the flag *reportOneFile = False* in ``avaframeCfg.ini`` or preferabley your local copy ``local_com1DFACfg.ini``.
-
-
-To run
-------
-
-* in your run scripts call::
-
-   generateReport(outDirectory, reportDictList, cfgFLAGS, plotDict=plotDict)
-
+For further details have a look at :py:mod:`log2Report.generateReport` .
 
 
 Generate Compare Report
@@ -94,16 +86,8 @@ the dictionaries require a certain structure too, for example:
 
 where the required **keys** are indicated by the asterisk sign.
 The settings can be found in the respective configuration file ``log2Report/genereateCompareReportCfg.ini``.
+For further details visit :py:mod:`log2Report.generateCompareReport`.
 
-To run
--------
-
-* first go to ``AvaFrame/avaframe``
-* copy ``log2Report/genereateCompareReportCfg.ini`` to ``log2Report/local_genereateCompareReportCfg.ini`` and set desired values
-* in your run scripts call::
-
-  ``generateCompareReport(outputDir, simulationDictionary, benchmarkDictionary, avalancheName, cfgRep)``
-
-An example of creating a comparison report can be found in ``runStandardTestsCom1DFA.py``. There, all the standard tests are run sequentially
+An example of creating a comparison report can be found in :py:mod:`runStandardTestsCom1DFA.py`. There, all the standard tests are run sequentially
 and a report is created where the com1DFA simulation results
 and the benchmark results are compared.
