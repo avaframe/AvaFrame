@@ -195,7 +195,7 @@ is defined as :math:`\min(\overline{h}, h_{res} )`:
 .. figure:: _static/f_res.png
         :width: 90%
 
-        Resistance force due to obstacles (from [FiKo2013]_)
+        Resistance force due to obstacles (from :cite:`FiKo2013`)
 
 
 
@@ -254,7 +254,7 @@ Non-dimensional Equations
 .. figure:: _static/characteristic_size.png
         :width: 90%
 
-        Characteristic size of the avalanche along its path (from [Zw2000]_, modified)
+        Characteristic size of the avalanche along its path (from :cite:`Zw2000`, modified)
 
 The previous equations :eq:`momentum-balance5` and :eq:`sigma33` can be further simplified by
 introducing a scaling based on the characteristic values of the physical
