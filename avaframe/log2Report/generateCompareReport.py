@@ -29,7 +29,7 @@ def copyQuickPlots(avaName, testName, outDir, plotListRep, rel=''):
 
 
 def copyAimecPlots(plotFiles, testName, outDir, plotPaths, rel=''):
-    """ copy the quick plots to report directory """
+    """ copy the aimec plots to report directory """
 
     for pDict in plotFiles:
         for key in pDict:

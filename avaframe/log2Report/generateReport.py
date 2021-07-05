@@ -1,7 +1,6 @@
 """
     Generate a markdown report for data provided in dictionary
 
-    This file is part of Avaframe.
 """
 
 # Load modules
@@ -31,7 +30,7 @@ def writeColumns(dict, key, pfile):
 
 
 def writeReportFile(reportD, pfile):
-    """ Write text to file
+    """ Create markdown report with blocks, tables, list according to type key
 
         Parameters
         ----------
