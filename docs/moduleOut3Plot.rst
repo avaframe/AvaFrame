@@ -97,7 +97,7 @@ is provided in :py:mod:`runScript/runQuickPlotOne`
 in1DataPlots
 =================
 
-:py:mod:`out3Plot.in1DataPlots` can be used to plot a sample and its characteristics derived with ``computeFromDistribution.py``,
+:py:mod:`out3Plot.in1DataPlots` can be used to plot a sample and its characteristics derived with :py:mod:`in1Data.computeFromDistribution`,
 such as: cumulative distribution function (CDF), bar plot of sample values, probability density function (PDF) of the sample,
 comparison plot of empirical- and desired CDF and comparison of empirical- and desired PDF.
 
@@ -106,12 +106,13 @@ statsPlots
 =================
 
 :py:mod:`out3Plot.statsPlots` can be used to create scatter plots using a peak dictionary where information on two result parameters of avalanche simulations is saved.
-This peak dictionary can be created using the function :py:func:`ana4Stats.extractMaxValues` of :py:mod:`ana4Stats/getStats.py`.
+This peak dictionary can be created using the function :py:func:`ana4Stats.getStats.extractMaxValues` of :py:mod:`ana4Stats.getStats`.
 This can be used to visualize results of avalanche simulations where a parameter variation has been used or for e.g. in the case of
 different release area scenarios. If a parameter variation was used to derive the simulation results, the plots indicate the parameter values in color.
 If the input data includes information about the 'scenario' that was used, for example different release scenarios, the plots use different colors for each scenario.
 There is also the option to add a kde (kernel density estimation) plot for each result parameter as marginal plots.
 An example on how these plotting functions are used and exemplary plots can be found in :ref:`moduleAna4Stats:getStats`
+
 
 plotValuesScatter
 -------------------
