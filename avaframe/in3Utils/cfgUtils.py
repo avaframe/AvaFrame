@@ -397,6 +397,15 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
         inDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
     configFiles = glob.glob(inDir+os.sep+'*.ini')
 
+    if not os.path.isdir(inDir):
+        message = 'configuration file directory not found: %s' % (inDir)
+        log.error(message)
+        raise NotADirectoryError(message)
+    elif configFiles == []:
+        message = 'No configuration file found in: %s' % (inDir)
+        log.error(message)
+        raise FileNotFoundError(message)
+
     # create confiparser object, convert to json object, write to dataFrame
     # append all dataFrames
     count = 0

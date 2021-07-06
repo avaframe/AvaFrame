@@ -2,7 +2,9 @@
 
 from avaframe.in3Utils import cfgUtils
 from avaframe.tests import test_logUtils
+import pathlib
 import os
+import configparser
 
 
 def test_getModuleConfig():
@@ -34,6 +36,7 @@ def test_getModuleConfig():
     assert cfg['GOODSECTION2']['goodKey3'] == '0'
     assert cfg['GOODSECTION2']['goodKey4'] == 'False'
 
+
 def test_cfgHash():
     '''Test for the uid hash generation '''
 
@@ -52,3 +55,68 @@ def test_cfgHash():
     uid = cfgUtils.cfgHash(cfg)
     # make sure it is not the same hash
     assert uid != 'bcc6c69699'
+
+
+def test_convertConfigParserToDict():
+    """ test conversion of cfg to dict """
+
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'name': 'nameTest', 'relTh': '1.0'}
+    cfg['TEST1'] = {'mu': '0.15500', 'id': 'name'}
+
+    cfgDict = cfgUtils.convertConfigParserToDict(cfg)
+
+    assert cfg['GENERAL'] == cfgDict['GENERAL']
+    assert cfg['TEST1'] == cfgDict['TEST1']
+
+
+def test_convertDictToConfigParser():
+    """ test conversion to cfg """
+
+    cfgDict = {}
+    cfgDict['GENERAL'] = {'name': 'nameTest', 'relTh': 1.0}
+    cfgDict['TEST1'] = {'mu': 0.15500, 'id': 'name'}
+
+    cfg = cfgUtils.convertDictToConfigParser(cfgDict)
+
+    assert cfgDict['GENERAL']['relTh'] == cfg['GENERAL'].getfloat('relTh')
+    assert cfgDict['TEST1']['mu'] != cfg['TEST1']['mu']
+    assert cfgDict['TEST1']['mu'] == cfg['TEST1'].getfloat('mu')
+
+
+def test_createConfigurationInfo(tmp_path):
+    """ test configuration info generation as DF """
+
+    avaTestDir = 'avaHockeyChannelPytest'
+    dirPath = os.path.dirname(__file__)
+    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
+
+    simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir='')
+
+    assert simDF.loc['67dc2dc10a']['releaseScenario'] == 'release1HS'
+    assert simDF.loc['67dc2dc10a']['mu'] == 0.155
+    assert simDF.loc['872f0101a4']['releaseScenario'] != 'release1HS'
+    assert simDF.loc['872f0101a4']['relTh'] == 1.
+
+
+def test_filterSims(tmp_path):
+    """ test filtering of simulations using configuration files """
+
+    avaTestDir = 'avaHockeyChannelPytest'
+    dirPath = os.path.dirname(__file__)
+    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
+
+    parametersDict = {'releaseScenario': ['release1HS']}
+
+    simNames = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
+
+    testRel = False
+    testRel2 = False
+    if 'release1HS' in simNames[0]:
+        testRel = True
+    if 'release2HS' in simNames[0]:
+        testRel2 = True
+
+    assert testRel == True
+    assert testRel2 == False
+    assert len(simNames) == 1
