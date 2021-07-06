@@ -10,7 +10,7 @@ import configparser
 def test_getModuleConfig():
     '''Test for module getModuleConfig'''
 
-    avalancheDir = os.path.dirname(__file__)
+    avalancheDir = pathlib.Path(__file__).parents[0]
     # test with both a default and local .ini file
     cfg = cfgUtils.getModuleConfig(test_logUtils)
     sections = cfg.sections()
@@ -24,7 +24,7 @@ def test_getModuleConfig():
     assert hasKey == False
 
     # test reading a different file
-    filename = os.path.join(avalancheDir, 'local_test_logUtilsCfg.ini')
+    filename = avalancheDir / 'local_test_logUtilsCfg.ini'
     cfg = cfgUtils.getModuleConfig(test_logUtils, fileOverride=filename)
     sections = cfg.sections()
     assert sections == ['GENERAL', 'FLAGS', 'GOODSECTION1', 'GOODSECTION2', 'BADSECTION1']
@@ -40,9 +40,9 @@ def test_getModuleConfig():
 def test_cfgHash():
     '''Test for the uid hash generation '''
 
-    avalancheDir = os.path.dirname(__file__)
+    avalancheDir = pathlib.Path(__file__).parents[0]
 
-    filename = os.path.join(avalancheDir, 'local_test_logUtilsCfg.ini')
+    filename = avalancheDir / 'local_test_logUtilsCfg.ini'
     cfg = cfgUtils.getModuleConfig(test_logUtils, fileOverride=filename)
 
     uid = cfgUtils.cfgHash(cfg)
@@ -88,9 +88,9 @@ def test_orderSimFiles():
     """ test generating order of simulation results """
 
     avaTestDir = 'avaHockeyChannelPytest'
-    dirPath = os.path.dirname(__file__)
-    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
+    inputDir = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
 
     varParList = 'releaseScenario'
 
@@ -103,8 +103,8 @@ def test_createConfigurationInfo(tmp_path):
     """ test configuration info generation as DF """
 
     avaTestDir = 'avaHockeyChannelPytest'
-    dirPath = os.path.dirname(__file__)
-    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
 
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir='')
 
@@ -118,8 +118,8 @@ def test_filterSims(tmp_path):
     """ test filtering of simulations using configuration files """
 
     avaTestDir = 'avaHockeyChannelPytest'
-    dirPath = os.path.dirname(__file__)
-    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
 
     parametersDict = {'releaseScenario': 'release1HS'}
 
@@ -132,6 +132,6 @@ def test_filterSims(tmp_path):
     if 'release2HS' in simNames[0]:
         testRel2 = True
 
-    assert testRel == True
+    assert testRel
     assert testRel2 == False
     assert len(simNames) == 1
