@@ -32,37 +32,59 @@ Setup AvaFrame
 
       cd %userprofile%
 
+#. Some versions of QGis might require to activate the python 3 environment:
+
+    .. code-block:: bash
+
+      py3_env
+
 #. Change to the AvaFrame directory
 
     .. code-block:: bash
 
       cd AvaFrame
 
-#. Install the requirements
+#. Install the requirements (the `--user` avoids admin rights for installation)
 
     .. code-block:: bash
 
-      python -m pip install -r requirements.txt
+      python3 -m pip install --user -r requirements.txt
 
-#. Install cython and compile the com1DFA executable
+#. Compile the com1DFA cython executable. *If this fails with an error, see the
+   additional info at the end of this section*. 
 
     .. code-block::
 
-      python -m pip install cython
-      python avaframe\com1DFA\setup.py build_ext --inplace
+      python3 avaframe\com1DFA\setup.py build_ext --inplace
 
 #. Finally install AvaFrame
 
     .. code-block::
 
-      python -m pip install -e .
+      python3 -m pip install --user -e .
+
+In case you run into problems with the cython compilation (due to a missing c++
+compiler on Windows, etc), use following steps:
+
+#. Find your python version with:
+
+    .. code-block::
+
+      python3 --version
+
+#. Go to the latest release on the `github release
+   page <https://github.com/avaframe/AvaFrame/releases>`_. Choose the
+   *DFAfunctionCython.XXX* file from the assets according to your python version, i.e. for
+   python 3.7 choose *cp37*, for python 3.9 *cp39* and so on.
+
+#. Download this file and put it in the ``avaframe/com1DFA`` directory.
 
 Setup QGis and run
 ^^^^^^^^^^^^^^^^^^
 
 #. Open QGis from your start menu
 
-#. Add the QGis Connector directory (previous step 3) to your processing toolbox (TODO)
+#. Add the QGis Connector directory (previous step 3) to your processing toolbox 
 
 #. Reload the processing toolbox (or restart QGis)
 

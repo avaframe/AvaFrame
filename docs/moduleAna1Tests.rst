@@ -32,7 +32,7 @@ In order to run the test example:
 
 * in ``AvaFrame/avaframe`` run::
 
-    runScripts/runDamBreak.py
+    python3 runScripts/runDamBreak.py
 
 Analytical solution of dam break problem, flow depth and flow velocity at 0.5 s.
 

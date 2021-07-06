@@ -27,7 +27,7 @@ Information in German can be found on the `BMLRT Homepage <https://info.bmlrt.gv
 A summary of the latest advances of the project can be found on the
 `Avaframe homepage <https://avaframe.org/>`_ web-page.
 
-Feel free to contact us at our `matrix room <#public:matrix.avaframe.org>`_ if
+Feel free to contact us at our `matrix room <https://matrix.to/#/#public:matrix.avaframe.org>`_ if
 you have any questions or suggestions. AvaFrame is in an early development phase
 and all ideas and contributions are welcome!
 
