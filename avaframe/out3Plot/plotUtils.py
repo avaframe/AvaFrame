@@ -116,7 +116,7 @@ cmapAvaframeCont = makePalette.get_continuous_cmap(colorAvaframe, continuous=Tru
 # and http://hclwizard.org:3000/hclwizard/
 # multi sequential colormap for pressure
 levP = [1.0, 10.0, 25.0, 50.0, 1000.0]
-ticksP = [0., 1.0, 10.0, 25.0, 50.0]
+ticksP = [1.0, 10.0, 25.0, 50.0]
 # Hawaii color map
 colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
 cmapP = cmapCameri.hawaii.reversed()
@@ -136,8 +136,14 @@ colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960', '#2
 cmapS = cmapCameri.batlow.reversed()
 
 # colormap used if no resType provided
-cmapProbmap = cmapCameri.lapaz.reversed()
+cmapNNcmap = cmapCameri.imola
 
+# colormap for probabilities
+levProb = [0.0, 0.25, 0.5, 0.75, 0.9999999999, 10]
+ticksProb = [0, 0.25, 0.50, 0.75, 1.]
+# lapaz color map
+colorsProb = ['#1A0C64', '#2D5393', '#5B8BA3', '#B2AB96', '#FEF1F1']
+cmapProbmap = cmapCameri.lapaz
 ###############################################
 # Set colormaps to use
 ###############################################
@@ -168,8 +174,12 @@ cmapSpeed['ticks'] = ticksS
 
 cmapProb = {}
 cmapProb['cmap'] = cmapProbmap
+cmapProb['colors'] = colorsProb
+cmapProb['lev'] = levProb
+cmapProb['ticks'] = ticksProb
 
-colorMaps = {'ppr' : cmapPres, 'pfv' : cmapSpeed, 'pfd' : cmapDepth, 'PR' : cmapPres, 'FV' : cmapSpeed, 'FD' : cmapDepth}
+colorMaps = {'ppr' : cmapPres, 'pfv' : cmapSpeed, 'pfd' : cmapDepth, 'PR' : cmapPres,
+             'FV' : cmapSpeed, 'FD' : cmapDepth, 'prob': cmapProb}
 
 cmapDEM = cmapGreys
 
