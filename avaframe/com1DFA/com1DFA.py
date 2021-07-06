@@ -96,7 +96,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     writeMBFile(infoDict, avaDir, cuSimName)
 
     tcpuDFA = '%.2f' % (time.time() - startTime)
-    log.debug(('cpu time DFA = %s s' % (tcpuDFA)))
+    log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
     if 'particles' in cfgGen['resType']:
         # export particles dictionaries of saving time steps
@@ -1071,14 +1071,14 @@ def DFAIterate(cfg, particles, fields, dem):
     Tcpu['nIter'] = nIter
     log.info('Ending computation at time t = %f s', t-dt)
     log.debug('Saving results for time step t = %f s', t-dt)
-    log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
-    log.debug('Computational performances:')
-    log.debug(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
-    log.debug(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
-    log.debug(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
-    log.debug(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
-    log.debug(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
-    log.debug(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
+    log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+    log.info('Computational performances:')
+    log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
+    log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
+    log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
+    log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
+    log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
+    log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     Tsave.append(t-dt)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
