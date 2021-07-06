@@ -481,6 +481,8 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
         for key, value in parametersDict.items():
+            if not isinstance(value, (list, np.ndarray)):
+                value = [value]
             if value != '' and value != []:
                 simDF = simDF[simDF[key].isin(value)]
 

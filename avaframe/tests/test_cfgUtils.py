@@ -106,7 +106,7 @@ def test_filterSims(tmp_path):
     dirPath = os.path.dirname(__file__)
     avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
 
-    parametersDict = {'releaseScenario': ['release1HS']}
+    parametersDict = {'releaseScenario': 'release1HS'}
 
     simNames = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
 
@@ -120,3 +120,18 @@ def test_filterSims(tmp_path):
     assert testRel == True
     assert testRel2 == False
     assert len(simNames) == 1
+
+
+def test_orderSimFiles():
+    """ test generating order of simulation results """
+
+    avaTestDir = 'avaHockeyChannelPytest'
+    dirPath = os.path.dirname(__file__)
+    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
+    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+
+    varParList = 'releaseScenario'
+
+    simFilesDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, True, specDir='')
+
+    assert simFilesDF['simName'][0] == 'release1HS_ent_dfa_67dc2dc10a'
