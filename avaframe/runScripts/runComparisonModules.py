@@ -26,11 +26,11 @@ logName = 'runComparisonModules'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
-testList = ['avaParabola']
+testList = ['avaInclinedPlane', 'avaParabola', 'avaBowl', 'avaHelix', 'avaHelixChannel', 'avaHockeySmall', 'avaAlr1', 'avaKot1', 'avaMal1', 'avaHit1', 'avaWog1', 'avaGar1']
 simType = 'null'
 simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
-outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAOrigvsPy')
+outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAOrigvsPy_Null_Reproj_0')
 fU.makeADir(outDirReport)
 
 # Start writing markdown style report for standard tests

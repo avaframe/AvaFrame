@@ -161,7 +161,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef int explicitFriction = cfg.getint('explicitFriction')
   cdef int distReproj = cfg.getint('distReproj')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
-  cdef int thresholdProjection = cfg.getfloat('thresholdProjection')
+  cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef double dt = dT
   cdef double mu = cfg.getfloat('mu')
@@ -504,7 +504,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef int explicitFriction = cfg.getint('explicitFriction')
   cdef int distReproj = cfg.getint('distReproj')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
-  cdef int thresholdProjection = cfg.getfloat('thresholdProjection')
+  cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double csz = dem['header'].cellsize
   cdef int Npart = particles['Npart']
   cdef double[:, :] nxArray = dem['Nx']
@@ -538,10 +538,6 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ, zeroCrossing
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
-  cdef double xNoReproj, zNoReproj, yNoReproj
-  cdef double[:] xNoReprojArray = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] yNoReprojArray = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] zNoReprojArray = np.zeros(Npart, dtype=np.float64)
   cdef double[:] mNewArray = np.zeros(Npart, dtype=np.float64)
   cdef double[:] xNewArray = np.zeros(Npart, dtype=np.float64)
   cdef double[:] yNewArray = np.zeros(Npart, dtype=np.float64)
@@ -633,9 +629,9 @@ def updatePositionC(cfg, particles, dem, force, DT):
 
     if uMag > 0.0:
       # ensure that velocitity magnitude stays the same also after reprojection onto terrain
-      uxNew = uxNew * uMag / (uMagNew + 0*velMagMin)
-      uyNew = uyNew * uMag / (uMagNew + 0*velMagMin)
-      uzNew = uzNew * uMag / (uMagNew + 0*velMagMin)
+      uxNew = uxNew * uMag / (uMagNew + velMagMin)
+      uyNew = uyNew * uMag / (uMagNew + velMagMin)
+      uzNew = uzNew * uMag / (uMagNew + velMagMin)
 
     # prepare for stopping criterion
     if uMag > uFlowingThreshold:
@@ -648,9 +644,6 @@ def updatePositionC(cfg, particles, dem, force, DT):
     xNewArray[j] = xNew
     yNewArray[j] = yNew
     zNewArray[j] = zNew
-    xNoReprojArray[j] = xNoReproj
-    yNoReprojArray[j] = yNoReproj
-    zNoReprojArray[j] = zNoReproj
     uxArrayNew[j] = uxNew
     uyArrayNew[j] = uyNew
     uzArrayNew[j] = uzNew
@@ -665,12 +658,6 @@ def updatePositionC(cfg, particles, dem, force, DT):
   particles['x'] = np.asarray(xNewArray)
   particles['y'] = np.asarray(yNewArray)
   particles['z'] = np.asarray(zNewArray)
-  particles['xPrev'] = np.asarray(xArray)
-  particles['yPrev'] = np.asarray(yArray)
-  particles['zPrev'] = np.asarray(zArray)
-  particles['xNoReproj'] = np.asarray(xNoReprojArray)
-  particles['yNoReproj'] = np.asarray(yNoReprojArray)
-  particles['zNoReproj'] = np.asarray(zNoReprojArray)
   particles['massEntrained'] = np.asarray(massEntrained)
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
@@ -1847,7 +1834,6 @@ cdef (double, double, double, int, int, int, int, double, double, double, double
   # while iterate and error too big (aiming to conserve the distance dist during the reprojection)
   while reprojectionIterations > 0 and abs(distn-dist) > threshold*(dist + csz):
     reprojectionIterations = reprojectionIterations - 1
-    xTemp = xNew
     # first step: orthogonal reprojection
     # get normal vector
     nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
