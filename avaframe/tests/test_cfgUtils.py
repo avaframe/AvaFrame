@@ -84,6 +84,21 @@ def test_convertDictToConfigParser():
     assert cfgDict['TEST1']['mu'] == cfg['TEST1'].getfloat('mu')
 
 
+def test_orderSimFiles():
+    """ test generating order of simulation results """
+
+    avaTestDir = 'avaHockeyChannelPytest'
+    dirPath = os.path.dirname(__file__)
+    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
+    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
+
+    varParList = 'releaseScenario'
+
+    simFilesDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, True, specDir='')
+
+    assert simFilesDF['simName'][0] == 'release1HS_ent_dfa_67dc2dc10a'
+
+
 def test_createConfigurationInfo(tmp_path):
     """ test configuration info generation as DF """
 
@@ -120,18 +135,3 @@ def test_filterSims(tmp_path):
     assert testRel == True
     assert testRel2 == False
     assert len(simNames) == 1
-
-
-def test_orderSimFiles():
-    """ test generating order of simulation results """
-
-    avaTestDir = 'avaHockeyChannelPytest'
-    dirPath = os.path.dirname(__file__)
-    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
-    inputDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
-
-    varParList = 'releaseScenario'
-
-    simFilesDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, True, specDir='')
-
-    assert simFilesDF['simName'][0] == 'release1HS_ent_dfa_67dc2dc10a'
