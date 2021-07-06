@@ -1050,7 +1050,7 @@ def DFAIterate(cfg, particles, fields, dem):
             log.debug(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
             log.debug(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
             fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
-            plotReproj(cfgGen, dem, particles)
+            # plotReproj(cfgGen, dem, particles)
             if dtSave.size == 1:
                 dtSave = [2*cfgGen.getfloat('tEnd')]
             else:
@@ -1182,6 +1182,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     startTime = time.time()
 
     # loop version of the compute force
+    log.debug('Compute Force C')
     particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, dt, frictType)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
@@ -1193,6 +1194,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
         force['forceSPHY'] = np.zeros(np.shape(force['forceY']))
         force['forceSPHZ'] = np.zeros(np.shape(force['forceZ']))
     else:
+        log.debug('Compute Force SPH C')
         particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, gradient=0)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
@@ -1200,6 +1202,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     # update velocity and particle position
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
+    log.debug('Update position C')
     particles = DFAfunC.updatePositionC(cfg, particles, dem, force, dt)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
@@ -1210,6 +1213,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
 
     # get particles location (neighbours for sph)
     startTime = time.time()
+    log.debug('get Neighbours C')
     particles = DFAfunC.getNeighboursC(particles, dem)
 
     tcpuNeigh = time.time() - startTime
@@ -1217,6 +1221,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
 
     # update fields (compute grid values)
     startTime = time.time()
+    log.debug('update Fields C')
     # particles, fields = updateFields(cfg, particles, force, dem, fields)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tcpuField = time.time() - startTime

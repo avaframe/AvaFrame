@@ -12,6 +12,7 @@ import math
 import numpy as np
 cimport numpy as np
 from libc cimport math as math
+import matplotlib.pyplot as plt
 # from libc.math cimport log as ln
 cimport cython
 
@@ -251,7 +252,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       zEnd = z + dt * uz
       # this point is not necessarily on the surface, project it on the surface
       # xEnd, yEnd, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = normalProjectionIteratrive(xEnd, yEnd, zEnd, ZDEM, nxArray, nyArray, nzArray, csz, interpOption)
-      xEnd, yEnd, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = distConservProjectionIteratrive(x, y, z, ZDEM, nxArray, nyArray, nzArray, xEnd, yEnd, zEnd, csz, interpOption)
+      xEnd, yEnd, zEnd, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = distConservProjectionIteratrive(x, y, z, ZDEM, nxArray, nyArray, nzArray, xEnd, yEnd, zEnd, csz, interpOption)
       # get the normal at this location
       nxEnd, nyEnd, nzEnd = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
       nxEnd, nyEnd, nzEnd = normalize(nxEnd, nyEnd, nzEnd)
@@ -586,8 +587,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
     zNoReproj = zNew
     # make sure particle is on the mesh (normal reprojection!!)
     # xNew, yNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = normalProjectionIteratrive(xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, interpOption)
-    xNew, yNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = distConservProjectionIteratrive(x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, interpOption)
-    zNew = getScalar(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+    xNew, yNew, zNew, LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3] = distConservProjectionIteratrive(x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, interpOption)
     nxNew, nyNew, nzNew = getVector(LxyNew[0], LxyNew[1], LxyNew[2], LxyNew[3], wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
     # compute the distance traveled by the particle
@@ -1757,19 +1757,19 @@ cdef (double, double, int, int, int, int, double, double, double, double) normal
 
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (double, double, int, int, int, int, double, double, double, double) distConservProjectionIteratrive(
+cdef (double, double, double, int, int, int, int, double, double, double, double) distConservProjectionIteratrive(
   double xPrev, double yPrev, double zPrev, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray, double[:,:] nzArray, double xOld, double yOld, double zOld, double csz, int interpOption):
   """ Find the orthogonal projection of a point on a mesh
 
   Iterative method to find the projection of a point on a surface defined by its mesh
   Parameters
   ----------
-      xOld: float
-          x coordinate of the point to project
-      yOld: float
-          y coordinate of the point to project
-      zOld: float
-          z coordinate of the point to project
+      xPrev: float
+          x coordinate of the point at the previous time step
+      yPrev: float
+          y coordinate of the point at the previous time step
+      zPrev: float
+          z coordinate of the point at the previous time step
       ZDEM: 2D array
           z component of the DEM field at the grid nodes
       Nx: 2D array
@@ -1778,6 +1778,12 @@ cdef (double, double, int, int, int, int, double, double, double, double) distCo
           y component of the normal vector field at the grid nodes
       Nz: 2D array
           z component of the normal vector field at the grid nodes
+      xOld: float
+          x coordinate of the point to project
+      yOld: float
+          y coordinate of the point to project
+      zOld: float
+          z coordinate of the point to project
       csz: float
           cellsize of the grid
       interpOption: int
@@ -1790,30 +1796,41 @@ cdef (double, double, int, int, int, int, double, double, double, double) distCo
         x coordinate of the projected point
     yNew: float
         y coordinate of the projected point
+    zNew: float
+        z coordinate of the projected point
     Lxy: int[4]
         colomn and row indices for interpolation
     w: float[4]
         corresponding weights
     """
-  cdef double zTemp, zn, dist, distn, xNew, yNew, zNew
+  cdef double xTemp, zTemp, zn, dist, distn, xNew, yNew, zNew
   cdef double nx, ny, nz
-  cdef int reprojectionIterations = 10
-  cdef int Lxi, Lyi, Lxj, Lyj
+  cdef double thresholdDist = csz/10000
+  cdef int reprojectionIterations = 40
   cdef int Lxy[4]
   cdef double w[4]
   xNew = xOld
   yNew = yOld
   zNew = zOld
+  # distance traveled by the point within the time step
   dist = norm(xNew-xPrev, yNew-yPrev, zNew-zPrev)
+  # vertical projection of the point on the DEM
   Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, csz, interpOption)
-  # get the cell location of the point
-  Lxi = Lxy[0]
-  Lyi = Lxy[2]
-  # iterate
-  while reprojectionIterations > 0 and dist > 0.1:
+  zTemp = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], ZDEM)
+  # measure distance between the projected point and the previous time step position
+  distn = norm(xNew-xPrev, yNew-yPrev, zTemp-zPrev)
+  # if reprojectionIterations > 0 and abs(distn-dist) > (0.001*dist + thresholdDist):
+  #   fig = plt.figure()
+  #   ax = plt.subplot(111)
+  #   ax.plot(xOld, zOld, 'ro')
+  #   ax.plot(xPrev, zPrev, 'go')
+  # while iterate and error too big (aiming to conserve the distance dist during the reprojection)
+  while reprojectionIterations > 0 and abs(distn-dist) > (0.0001*dist + thresholdDist):
     reprojectionIterations = reprojectionIterations - 1
-    # vertical projection of the point
-    zTemp = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], ZDEM)
+    # ax.plot(xNew, zTemp, 'ko')
+    # ax.plot([xNew, xNew], [zNew, zTemp], 'k:')
+    xTemp = xNew
+    # first step: orthogonal reprojection
     # get normal vector
     nx, ny, nz = getVector(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
     nx, ny, nz = normalize(nx, ny, nz)
@@ -1822,22 +1839,40 @@ cdef (double, double, int, int, int, int, double, double, double, double) distCo
     xNew = xNew + zn * nx
     yNew = yNew + zn * ny
     zNew = zNew + zn * nz
-    # measure distance between this new pint and the previous time step position
+
+    # ax.plot([xTemp, xNew], [zTemp, zNew], 'b:')
+    xTemp = xNew
+    zTemp = zNew
+
+    # second step: conserve the distance dist (correction ov the position)
+    # measure distance between this new point and the previous time step position
     distn = norm(xNew-xPrev, yNew-yPrev, zNew-zPrev)
     # adjust position on the Xprev, Xnew line
     xNew = xPrev + (xNew-xPrev) * dist / distn
     yNew = yPrev + (yNew-yPrev) * dist / distn
     zNew = zPrev + (zNew-zPrev) * dist / distn
-    # get cell
+
+    # ax.plot(xTemp, zTemp, 'bo')
+    # ax.plot([xTemp, xNew], [zTemp, zNew], 'k:')
+    # ax.plot(xNew, zNew, 'ko')
+
+    # third step
+    # vertical projection of the point on the DEM
     Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, csz, interpOption)
-    Lxj = Lxy[0]
-    Lyj = Lxy[2]
-    # are we in the same cell?
-    # if Lxi==Lxj and Lyi==Lyj:
-    #   return xNew, yNew, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3]
-    Lxj = Lxi
-    Lyj = Lyi
-  return xNew, yNew, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3]
+    zTemp = getScalar(Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3], ZDEM)
+    # measure distance between this new point and the previous time step position
+    distn = norm(xNew-xPrev, yNew-yPrev, zTemp-zPrev)
+  # if reprojectionIterations<=39:
+  #   ax.plot([xPrev, xOld], [zPrev, zOld], 'b')
+  #   circ = plt.Circle([xPrev, zPrev], dist, fill=False)
+  #   ax.add_patch(circ)
+  #   ax.set_aspect('equal', 'box')
+  #   # plt.show()
+  #   # plt.pause(0.5)
+  #   plt.close(fig)
+  if reprojectionIterations <= 20:
+    print('reprojection steps: ', reprojectionIterations)
+  return xNew, yNew, zTemp, Lxy[0], Lxy[1], Lxy[2], Lxy[3], w[0], w[1], w[2], w[3]
 
 
 @cython.boundscheck(False)
