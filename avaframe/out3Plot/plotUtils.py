@@ -135,6 +135,9 @@ ticksS = [1, 5, 10, 15, 20, 25, 30]
 colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960', '#201158']
 cmapS = cmapCameri.batlow.reversed()
 
+# colormap used if no resType provided
+cmapProbmap = cmapCameri.lapaz.reversed()
+
 ###############################################
 # Set colormaps to use
 ###############################################
@@ -161,6 +164,10 @@ cmapSpeed['cmap'] = cmapS
 cmapSpeed['colors'] = colorsS
 cmapSpeed['lev'] = levS
 cmapSpeed['ticks'] = ticksS
+
+
+cmapProb = {}
+cmapProb['cmap'] = cmapProbmap
 
 colorMaps = {'ppr' : cmapPres, 'pfv' : cmapSpeed, 'pfd' : cmapDepth, 'PR' : cmapPres, 'FV' : cmapSpeed, 'FD' : cmapDepth}
 
