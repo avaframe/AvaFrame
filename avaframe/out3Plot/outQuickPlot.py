@@ -58,9 +58,11 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     if dataDict['compareType'] == 'compToRef':
         simName = dataDict['simName'] + '_' + dataDict['suffix']
         unit = dataDict['unit']
+        cmapType = pU.colorMaps[dataDict['suffix']]
     else:
         simName = 'compare'
         unit = ''
+        cmapType = pU.cmapNN
 
     # Set dimensions of plots
     ny = data2.shape[0]
@@ -91,7 +93,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(221)
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, np.nanmax(data1), continuous=pU.contCmap)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(data1), continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
@@ -106,7 +108,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax1.set_ylabel('y [m]')
 
     ax2 = fig.add_subplot(222)
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, np.nanmax(data2), continuous=pU.contCmap)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(data2), continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data2P = ma.masked_where(data2 == 0.0, data2)
@@ -364,7 +366,8 @@ def quickPlotOne(inputDir, datafile, cfg, locVal, axis, resType=''):
     log.info('input dataset #1 is %s' % name1)
 
     # Load data
-    data1 = np.loadtxt(datafile, skiprows=6)
+    raster = IOf.readRaster(datafile)
+    data1 = raster['rasterData']
     header = IOf.readASCheader(datafile)
     cellSize = header.cellsize
 
@@ -409,9 +412,11 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     if plotDict['resType'] != '':
         unit = pU.cfgPlotUtils['unit%s' % plotDict['resType']]
         nameRes = pU.cfgPlotUtils['name%s' % plotDict['resType']]
+        cmapType = pU.colorMaps[plotDict['resType']]
     else:
         unit = ''
         nameRes = 'Result parameter'
+        cmapType = pU.cmapNN
 
     # Set dimensions of plots
     ny = data1.shape[0]
@@ -434,9 +439,10 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     fig = plt.figure(figsize=(pU.figW*2, pU.figH))
     suptitle = fig.suptitle(name1, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(121)
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapPres, np.nanmax(data1), continuous=pU.contCmap)
-
-    im1 = plt.imshow(data1, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
+    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(data1), continuous=pU.contCmap)
+    cmap.set_bad('w')
+    data1P = ma.masked_where(data1 == 0.0, data1)
+    im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')

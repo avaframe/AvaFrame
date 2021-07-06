@@ -65,10 +65,7 @@ def makeColorMap(colormap, levMax, continuous=False):
             -newLev: new levels list
             -newNorm: new norm for plotting
     """
-    colors = colormap['colors']
     cmap = colormap['cmap']
-    lev = colormap['lev']
-    ticks = colormap['ticks']
     if continuous:
         newNorm = None
         newLev = None
@@ -77,6 +74,9 @@ def makeColorMap(colormap, levMax, continuous=False):
         ticks = None
 
     else:
+        colors = colormap['colors']
+        lev = colormap['lev']
+        ticks = colormap['ticks']
         # indStart = np.where(np.asarray(lev) <= levMin)[0][-1]
         indEnd = np.where(np.asarray(lev) > levMax)[0][0]
         newLev = lev[:indEnd+1]
