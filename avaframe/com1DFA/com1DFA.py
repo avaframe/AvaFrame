@@ -9,8 +9,10 @@ import numpy as np
 import glob
 import copy
 import pickle
-import pandas as pd
 from datetime import datetime
+import pandas as pd
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.path as mpltPath
 import matplotlib as mpl
