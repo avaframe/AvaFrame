@@ -4,10 +4,10 @@ digraph "com1DFA algorithm graph" {
   newrank=true;
   size="100,100";
   rankdir="TB";
-  graph [compound=true, ranksep=0.5, splines=ortho, fontname="helvetica", fontsize="32" fontcolor="#0E4160"];
+  graph [compound=true, ranksep=0.25, splines=ortho, fontname="helvetica", fontsize="24" fontcolor="#0E4160"];
   /* subgraph [compound=true, ranksep=0.5, splines=ortho, fontname="helvetica", fontsize="32" fontcolor="#0E4160"]; */
-  node [shape=box style="rounded,filled" fontsize=24 fontcolor="#0E4160" fontname="helvetica" fillcolor="#51ADE5cf" penwidth=1.5];
-  edge [fontname="helvetica", fontsize="18" penwidth=1.5];
+  node [shape=box style="rounded,filled" fontsize=18 fontcolor="#0E4160" fontname="helvetica" fillcolor="#51ADE5cf" penwidth=1.5];
+  edge [fontname="helvetica", fontsize="14" penwidth=1.5];
 
   prepareMesh [label="Initialize Mesh", href="../com1DFAAlgorithm.html#initialize-mesh" tooltip="Go to: initialize mesh" target="_top"];
 

@@ -4,6 +4,9 @@ Dense Flow Avalanche algorithm and workflow
 Algorithm graph
 ----------------
 
+The following graph describes the Dense Flow Avalanche simulation workflow
+(the different nodes are clickable and link to the detailed documentation)
+
 .. graphviz:: com1DFAAlgorithmGraph.dot
 
 
