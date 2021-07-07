@@ -143,7 +143,7 @@ cmapNNcmap = cmapCameri.imola.reversed()
 levProb = [0.0, 0.25, 0.5, 0.75, 0.9999999999, 10]
 ticksProb = [0, 0.25, 0.50, 0.75, 1.]
 # lapaz color map
-colorsProb = ['#1A0C64', '#2D5393', '#5B8BA3', '#B2AB96', '#FEF1F1']
+colorsProb = ['#FEF1F1', '#B2AB96', '#5B8BA3', '#2D5393', '#1A0C64']
 cmapProbmap = cmapCameri.lapaz.reversed()
 ###############################################
 # Set colormaps to use

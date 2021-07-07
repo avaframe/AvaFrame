@@ -275,6 +275,7 @@ def plotProbMap(avaDir, inDir, cfgFull):
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         suptitle = fig.suptitle(cfg['name'], fontsize=14, color='0.5')
         ax1 = fig.add_subplot(111)
+        # for now continuous color map is desired 
         cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(dataPlot), continuous=True)
         cmap.set_bad('seashell')
         data1P = ma.masked_where(dataPlot == 0.0, dataPlot)
