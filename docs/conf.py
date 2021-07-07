@@ -64,6 +64,7 @@ autosummary_mock_imports = [
     'logging',
     'time',
     'mpl_toolkits',
+    'seaborn',
     'make_axes_locatable',
 ]
 autosummary_generate = True
