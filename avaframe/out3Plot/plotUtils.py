@@ -89,7 +89,7 @@ cmapReds = copy.copy(matplotlib.cm.Reds)
 cmapReds.set_bad(color='k')
 
 cmapBlues = copy.copy(matplotlib.cm.Blues)
-cmapBlues.smatplotlib.rcParams['savefig.bbox'] = 'tight'et_bad(color='k')
+cmapBlues.set_bad(color='k')
 
 cmapGreys = copy.copy(matplotlib.cm.get_cmap("Greys"))
 
