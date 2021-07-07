@@ -68,6 +68,7 @@ matplotlib.rcParams['ytick.labelsize'] = cfg['tickLabelSize']
 # set output extension {png, ps, pdf, svg}
 outputFormat = cfg['savefigFormat']
 matplotlib.rcParams['savefig.format'] = outputFormat
+matplotlib.rcParams['savefig.bbox'] = 'tight'
 
 matplotlib.rcParams['legend.edgecolor'] = 'None'
 matplotlib.rcParams['text.usetex'] = cfg.getboolean('usetex')
@@ -88,7 +89,7 @@ cmapReds = copy.copy(matplotlib.cm.Reds)
 cmapReds.set_bad(color='k')
 
 cmapBlues = copy.copy(matplotlib.cm.Blues)
-cmapBlues.set_bad(color='k')
+cmapBlues.smatplotlib.rcParams['savefig.bbox'] = 'tight'et_bad(color='k')
 
 cmapGreys = copy.copy(matplotlib.cm.get_cmap("Greys"))
 
@@ -116,7 +117,7 @@ cmapAvaframeCont = makePalette.get_continuous_cmap(colorAvaframe, continuous=Tru
 # and http://hclwizard.org:3000/hclwizard/
 # multi sequential colormap for pressure
 levP = [1.0, 10.0, 25.0, 50.0, 1000.0]
-ticksP = [0.0, 1.0, 10.0, 25.0, 50.0]
+ticksP = [0., 1.0, 10.0, 25.0, 50.0]
 # Hawaii color map
 colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
 cmapP = cmapCameri.hawaii.reversed()
@@ -136,7 +137,7 @@ colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960', '#2
 cmapS = cmapCameri.batlow.reversed()
 
 # colormap used if no resType provided
-cmapNNcmap = cmapCameri.imola
+cmapNNcmap = cmapCameri.imola.reversed()
 
 # colormap for probabilities
 levProb = [0.0, 0.25, 0.5, 0.75, 0.9999999999, 10]
@@ -180,6 +181,9 @@ cmapProb['ticks'] = ticksProb
 
 colorMaps = {'ppr' : cmapPres, 'pfv' : cmapSpeed, 'pfd' : cmapDepth, 'PR' : cmapPres,
              'FV' : cmapSpeed, 'FD' : cmapDepth, 'prob': cmapProb}
+
+cmapNN = {}
+cmapNN['cmap'] = cmapNNcmap
 
 cmapDEM = cmapGreys
 
