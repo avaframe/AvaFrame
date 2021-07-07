@@ -11,7 +11,6 @@ Computational Modules
    :recursive:
 
    com1DFA
-   com1DFAPy
    com2AB
 
 Input/Transformation Modules
