@@ -116,7 +116,7 @@ cmapAvaframeCont = makePalette.get_continuous_cmap(colorAvaframe, continuous=Tru
 # and http://hclwizard.org:3000/hclwizard/
 # multi sequential colormap for pressure
 levP = [1.0, 10.0, 25.0, 50.0, 1000.0]
-ticksP = [1.0, 10.0, 25.0, 50.0]
+ticksP = [0.0, 1.0, 10.0, 25.0, 50.0]
 # Hawaii color map
 colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
 cmapP = cmapCameri.hawaii.reversed()
@@ -143,7 +143,7 @@ levProb = [0.0, 0.25, 0.5, 0.75, 0.9999999999, 10]
 ticksProb = [0, 0.25, 0.50, 0.75, 1.]
 # lapaz color map
 colorsProb = ['#1A0C64', '#2D5393', '#5B8BA3', '#B2AB96', '#FEF1F1']
-cmapProbmap = cmapCameri.lapaz
+cmapProbmap = cmapCameri.lapaz.reversed()
 ###############################################
 # Set colormaps to use
 ###############################################
@@ -197,7 +197,8 @@ cmapVar['colors'] = colorAvaframe
 cmapVar['lev'] = None
 cmapVar['ticks'] = None
 
-
+cmapGreys1 = {}
+cmapGreys1['cmap'] = cmapGreys
 ###################################
 # shortcut plot functions
 ###################################
@@ -237,8 +238,27 @@ def saveAndOrPlot(cfgPath, cfgFlags, outFileName, fig):
     return
 
 
-def constrainPlotsToData(inputData, cellSize):
-    """ constrain inut raster dataset to where there is data plus buffer zone """
+def constrainPlotsToData(inputData, cellSize, extentOption=False):
+    """ constrain inut raster dataset to where there is data plus buffer zone
+
+        Parameters
+        -----------
+        inputData: numpy array
+            raster data to be plotted
+        cellSize: float
+            cellsize of raster data
+        extentOption: bool
+            if True rows and columns limits converted to acutal extent in meters
+
+        Returns
+        --------
+        rowsMin, rowsMax: int or float
+            indices where there is data in x direction (or min/max extent in meters)
+        colsMin, colsMax: int or float
+            indices where there is data in y direction (or min/max extent in meters)
+        dataConstrained: numpy array
+            constrained array where there is data
+        """
 
     ind = np.where(inputData > 0)
     if len(ind[0]) > 0:
@@ -253,7 +273,16 @@ def constrainPlotsToData(inputData, cellSize):
         colsMin = 0
         colsMax = inputData.shape[1]
 
-    return rowsMin, rowsMax, colsMin, colsMax
+    if extentOption:
+        dataConstrained = inputData[rowsMin:rowsMax+1, colsMin:colsMax+1]
+        rowsMinPlot = rowsMin*cellSize
+        rowsMaxPlot = (rowsMax+1)*cellSize
+        colsMinPlot = colsMin*cellSize
+        colsMaxPlot = (colsMax+1)*cellSize
+
+        return rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataConstrained
+    else:
+        return rowsMin, rowsMax, colsMin, colsMax
 
 
 def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05):
