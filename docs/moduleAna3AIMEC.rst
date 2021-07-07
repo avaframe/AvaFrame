@@ -8,11 +8,11 @@ of the same avalanche (meaning using the same DEM and going down the same avalan
 In ``AvaFrame/avaframe/runScripts``, three different run scripts are provided that show examples on how the postprocessing module aimec can be used.
 These examples include:
 
-*  full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`ana3AIMEC.runScripts.runAna3AIMEC.runAna3AIMEC`
+*  full aimec analysis for simulation results of one computational module (from 1 simulation to x simulations). :py:func:`runScripts.runAna3AIMEC.runAna3AIMEC`
 *  using aimec to compare the results of two different computational modules (for one simulation at a time hence only one simulation result per
-   computational module is passed at a time). :py:func:`ana3AIMEC.runScripts.runAna3AIMECCompMods.runAna3AIMECCompMods`
+   computational module is passed at a time). :py:func:`runScripts.runAna3AIMECCompMods.runAna3AIMECCompMods`
 *  using aimec to compare one result parameter (ppr, pfd, pfv) for different simulations in a given inputDir (from 1 simulation to x simulations).
-   :py:mod:`ana3AIMEC.runScripts.runAna3AIMECIndi`
+   :py:mod:`runScripts.runAna3AIMECIndi`
 
 Here is an example workflow for the full Aimec analysis, as provided in :py:mod:`runScripts/runAna3AIMEC.py`:
 
