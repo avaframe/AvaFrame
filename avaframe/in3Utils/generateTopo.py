@@ -121,8 +121,26 @@ def inclinedplane(cfg):
 
 
 def addDrop(cfg, x, y, zv):
-    """ Compute coordinates of inclined plane with given slope (meanAlpha)
-    and a drop/step"""
+    """ Add a drop/step to a given topography
+
+    The step is added in the x drection
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for generateTopo
+    x: 2D numpy array
+        x coordinate of the raster
+    y: 2D numpy array
+        y coordinate of the raster
+    zv: 2D numpy array
+        z coordinate of the raster
+
+    Returns
+    -------
+    zv: 2D numpy array
+        z coordinate of the raster taking the step into account
+    """
 
     # input parameters
     dx, xEnd, yEnd = getGridDefs(cfg)
@@ -132,16 +150,25 @@ def addDrop(cfg, x, y, zv):
     alphaDrop = float(cfg['STEP']['alphaDrop'])
 
     # get zcoord
+    # deduce drop height from the drop steepness and length in x direction
     dzDrop = dxDrop * np.tan(np.radians(alphaDrop))
     xEndDrop = xStartDrop + dxDrop
 
     nrows, ncols = np.shape(x)
-    zIniDrop, _ = geoTrans.projectOnGrid(xStartDrop*np.ones((nrows)), y[:, 0], np.vstack((zv[0,:], zv)), csz=dx, xllc=x[0, 0], yllc=y[0, 0], interp='bilinear')
+    # get the z coordinate of the point at the beginning of the drop
+    zIniDrop, _ = geoTrans.projectOnGrid(xStartDrop*np.ones((nrows)), y[:, 0],
+                                         np.vstack((zv[0,:], zv)), csz=dx,
+                                         xllc=x[0, 0], yllc=y[0, 0], interp='bilinear')
     zIniDrop = np.tile(zIniDrop, (ncols, 1)).transpose()
-    zEndDrop, _ = geoTrans.projectOnGrid(xEndDrop*np.ones((nrows)), y[:, 0], np.vstack((zv[0,:], zv)), csz=dx, xllc=x[0, 0], yllc=y[0, 0], interp='bilinear')
+    # get the z coordinate of the point at the end of the drop
+    zEndDrop, _ = geoTrans.projectOnGrid(xEndDrop*np.ones((nrows)), y[:, 0],
+                                         np.vstack((zv[0,:], zv)), csz=dx,
+                                         xllc=x[0, 0], yllc=y[0, 0], interp='bilinear')
     zEndDrop = np.tile(zEndDrop, (ncols, 1)).transpose()
     # Set surface elevation from slope and max. elevation
-    zv = np.where(((x >= xStartDrop) & (x <= xEndDrop)), zIniDrop - (x - xStartDrop)*np.tan(np.radians(alphaDrop)), zv)
+    zv = np.where(((x >= xStartDrop) & (x <= xEndDrop)),
+                  zIniDrop - (x - xStartDrop)*np.tan(np.radians(alphaDrop)),
+                  zv)
     zv = np.where(x > xEndDrop, zv - (dzDrop + zEndDrop - zIniDrop), zv)
 
     # Log info here
