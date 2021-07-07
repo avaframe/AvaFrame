@@ -113,6 +113,11 @@ If the input data includes information about the 'scenario' that was used, for e
 There is also the option to add a kde (kernel density estimation) plot for each result parameter as marginal plots.
 An example on how these plotting functions are used and exemplary plots can be found in :ref:`moduleAna4Stats:getStats`
 
+Additionally, a plotting function for visualising probability maps is provided by :py:func:`out3Plot.statsPlots.plotProbMap`, where probability maps can be plotted
+including contour lines.
+An example on how these plotting function is used and an exemplary plot can be found in :ref:`moduleAna4Stats:probAna`.
+
+
 
 plotValuesScatter
 -------------------
