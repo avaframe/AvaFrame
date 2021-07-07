@@ -8,10 +8,16 @@ import os
 import numpy as np
 import logging
 import matplotlib.pyplot as plt
-import avaframe.out3Plot.plotUtils as pU
-import avaframe.out3Plot.makePalette as makePalette
+import numpy.ma as ma
 import seaborn as sns
 import pandas as pd
+import pathlib
+
+# local imports
+import avaframe.out3Plot.plotUtils as pU
+import avaframe.out3Plot.makePalette as makePalette
+import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.in2Trans.ascUtils as IOf
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -200,3 +206,102 @@ def plotHistCDFDiff(dataDiffPlot, ax1, ax2, insert='True', title=['', '']):
         ax1.set_title(title[1])
 
     return ticks
+
+
+def plotProbMap(avaDir, inDir, cfgFull):
+    """ plot probability maps including contour lines
+
+        Parameters
+        ----------
+        avaDir: str
+            path to avalanche directory
+        inDir: str
+            path to datasets that shall be plotted
+        cfgFull: configParser object
+            configuration settings for probAna
+            keys used: name, cmapType, levels, unit
+
+    """
+
+    # configuration settings
+    cfg = cfgFull['PLOT']
+
+    # fetch probabiltiy map datasets in inDir
+    dataFiles = list(inDir.glob('*.asc'))
+    if dataFiles == []:
+        message = 'No probability map dataset found in: %s' % (inDir)
+        log.error(message)
+        raise FileNotFoundError(message)
+        log.info('Probability maps found for generating plots: %d' % len(dataFiles))
+
+    # load levels and define colors
+    levels = fU.splitIniValueToArraySteps(cfg['levels'])
+    multLabel = False
+    if len(levels) > 2:
+        multLabel = True
+        cmapType = pU.cmapGreys1
+        log.info('in mult')
+    else:
+        cmapType = pU.colorMaps[cfg['cmapType']]
+        colorsP = ['black', 'white']
+        if len(levels) == 1 and levels[0] > 0.5:
+            colorsP = ['white']
+    unit = cfg['unit']
+
+    # set colors for contourlines according to levels
+    labels = []
+    for lev in levels:
+        labels.append('%.0f %%' % (lev*100))
+
+    # loop over all datasets and create plots
+    for data in dataFiles:
+
+        raster = IOf.readRaster(data)
+        dataPlot = raster['rasterData']
+        header = IOf.readASCheader(data)
+        cellSize = header.cellsize
+
+        # Set dimensions of plots
+        ny = dataPlot.shape[0]
+        nx = dataPlot.shape[1]
+        Ly = ny*cellSize
+        Lx = nx*cellSize
+
+        # constrain plot to where there is data
+        rowsMin, rowsMax, colsMin, colsMax, dataConstrained = pU.constrainPlotsToData(dataPlot,
+                                                                        cellSize, extentOption=True)
+        dataPlot = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
+
+        # create figure
+        fig = plt.figure(figsize=(pU.figW, pU.figH))
+        suptitle = fig.suptitle(cfg['name'], fontsize=14, color='0.5')
+        ax1 = fig.add_subplot(111)
+        cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(dataPlot), continuous=True)
+        cmap.set_bad('seashell')
+        data1P = ma.masked_where(dataPlot == 0.0, dataPlot)
+        im1 = plt.imshow(data1P, cmap=cmap, extent=[colsMin, colsMax, rowsMin, rowsMax], origin='lower', aspect=nx/ny, norm=norm)
+
+        # create meshgrid for contour plot also constrained to where there is data
+        xx = np.arange(colsMin, colsMax, cellSize)
+        yy = np.arange(rowsMin, rowsMax, cellSize)
+        X, Y = np.meshgrid(xx, yy)
+
+        # add contourlines for levels
+        if multLabel:
+            CS = ax1.contour(X, Y, data1P, levels=levels, cmap=pU.cmapD.reversed(), linewidths=1)
+        else:
+            CS = ax1.contour(X, Y, data1P, levels=levels, colors=colorsP, linewidths=1)
+        for i in range(len(labels)):
+            CS.collections[i].set_label(labels[i])
+
+        pU.addColorBar(im1, ax1, ticks, unit)
+        title = str('%s' % cfg['name'])
+        ax1.set_title(title)
+        ax1.set_xlabel('x [m]')
+        ax1.set_ylabel('y [m]')
+        plt.legend(facecolor='black', framealpha=0.04)
+        outDir = inDir / 'plots'
+        fU.makeADir(outDir)
+        avaName = pathlib.PurePath(avaDir).name
+        outFile = outDir / ('%s_probMap_lim%s.%s' % (avaName, cfgFull['GENERAL']['peakLim'], pU.outputFormat))
+        fig.savefig(outFile)

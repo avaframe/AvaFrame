@@ -6,9 +6,11 @@
 import os
 import time
 import glob
+import pathlib
 
 # Local imports
 from avaframe.runCom1DFA import runCom1DFA
+from avaframe.out3Plot import statsPlots as sP
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.ana4Stats import probAna
 from avaframe.in3Utils import initializeProject as initProj
@@ -56,6 +58,5 @@ for avaDir in avalancheDirectories:
     probAna.probAnalysis(avaDir, cfgProb, com1DFA, parametersDict=parametersDict)
 
     # make a plot of the map
-    inputDir = os.path.join(avaDir, 'Outputs', 'ana4Stats')
-    outputDir = os.path.join(avaDir, 'Outputs', 'ana4Stats', 'plots')
-    oP.plotAllFields(avaDir, inputDir, outputDir, cfgProb['GENERAL']['unit'])
+    inputDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
+    sP.plotProbMap(avaDir, inputDir, cfgProb)
