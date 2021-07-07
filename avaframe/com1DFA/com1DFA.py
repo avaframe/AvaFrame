@@ -690,7 +690,8 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     particles['xllcenter'] = dem['originOri']['xllcenter']
     particles['yllcenter'] = dem['originOri']['yllcenter']
 
-    particles = checkParticlesInRelease(particles, releaseLine, cfg.getfloat('thresholdPointInPoly'))
+    if not cfg.getboolean('initialiseParticlesFromFile'):
+        particles = checkParticlesInRelease(particles, releaseLine, cfg.getfloat('thresholdPointInPoly'))
 
     # initialize time
     t = 0
