@@ -240,7 +240,6 @@ def plotProbMap(avaDir, inDir, cfgFull):
     if len(levels) > 2:
         multLabel = True
         cmapType = pU.cmapGreys1
-        log.info('in mult')
     else:
         cmapType = pU.colorMaps[cfg['cmapType']]
         colorsP = ['black', 'white']
@@ -305,3 +304,4 @@ def plotProbMap(avaDir, inDir, cfgFull):
         avaName = pathlib.PurePath(avaDir).name
         outFile = outDir / ('%s_probMap_lim%s.%s' % (avaName, cfgFull['GENERAL']['peakLim'], pU.outputFormat))
         fig.savefig(outFile)
+        plt.close(fig)
