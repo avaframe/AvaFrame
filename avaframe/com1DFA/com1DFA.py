@@ -645,7 +645,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
             hCell = relRaster[indRely, indRelx]
             volCell = areaRaster[indRely, indRelx] * hCell
             massCell = volCell * rho
-            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng, cfg['initPartDistType'])
+            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng, cfg['initPartDistType'].lower())
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
             # initialize particles position, mass, height...
@@ -819,7 +819,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
     # TODO make this an independent function
     #######################
     # start ###############
-    if initPartDistType == 'semiRandom':
+    if initPartDistType == 'semirandom':
         # place particles equaly distributed with a small variation
         xpart = csz * (- 0.5 + indx) + x + (rng.random(nPart) - 0.5) * d
         ypart = csz * (- 0.5 + indy) + y + (rng.random(nPart) - 0.5) * d
