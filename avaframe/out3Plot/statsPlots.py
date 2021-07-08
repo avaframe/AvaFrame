@@ -240,9 +240,11 @@ def plotProbMap(avaDir, inDir, cfgFull):
     if len(levels) > 2:
         multLabel = True
         cmapType = pU.cmapGreys1
+        colorBackGround = 'seashell'
     else:
         cmapType = pU.colorMaps[cfg['cmapType']]
         colorsP = ['black', 'white']
+        colorBackGround = 'lightgrey'
         if len(levels) == 1 and levels[0] > 0.5:
             colorsP = ['white']
     unit = cfg['unit']
@@ -275,9 +277,9 @@ def plotProbMap(avaDir, inDir, cfgFull):
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         suptitle = fig.suptitle(cfg['name'], fontsize=14, color='0.5')
         ax1 = fig.add_subplot(111)
-        # for now continuous color map is desired 
+        # for now continuous color map is desired
         cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(dataPlot), continuous=True)
-        cmap.set_bad('seashell')
+        cmap.set_bad(colorBackGround)
         data1P = ma.masked_where(dataPlot == 0.0, dataPlot)
         im1 = plt.imshow(data1P, cmap=cmap, extent=[colsMin, colsMax, rowsMin, rowsMax], origin='lower', aspect=nx/ny, norm=norm)
 
