@@ -650,7 +650,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
             hCell = relRaster[indRely, indRelx]
             volCell = areaRaster[indRely, indRelx] * hCell
             massCell = volCell * rho
-            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng)
+            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng, cfg['initPartDistType'])
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
             # initialize particles position, mass, height...
@@ -766,7 +766,7 @@ def initializeFields(cfg, dem, particles):
     return particles, fields
 
 
-def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
+def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType):
     """ Create particles in given cell
 
     Compute number of particles to create in a given cell.
@@ -785,6 +785,8 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
         cellsize
     massPerPart : float
         maximum mass per particle
+    initPartDistType: str
+        initial particle distribution: random, semiRandom, uniform
 
     Returns
     -------
@@ -797,7 +799,8 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
     nPart : int
         number of particles created
     """
-    if flagRand:
+
+    if initPartDistType == 'random':
         # number of particles needed (floating number)
         nFloat = massCell / massPerPart
         nPart = int(np.floor(nFloat))
@@ -821,11 +824,11 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng):
     # TODO make this an independent function
     #######################
     # start ###############
-    if flagSemiRand:
+    if initPartDistType == 'semiRandom':
         # place particles equaly distributed with a small variation
         xpart = csz * (- 0.5 + indx) + x + (rng.random(nPart) - 0.5) * d
         ypart = csz * (- 0.5 + indy) + y + (rng.random(nPart) - 0.5) * d
-    elif flagRand:
+    elif initPartDistType == 'random':
         # place particles randomly in the cell
         xpart = csz * (rng.random(nPart) - 0.5 + indx)
         ypart = csz * (rng.random(nPart) - 0.5 + indy)
