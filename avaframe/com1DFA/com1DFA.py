@@ -40,11 +40,6 @@ from avaframe.in3Utils import cfgUtils
 log = logging.getLogger(__name__)
 cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
-# set feature flag for initial particle distribution
-# particles are homegeneosly distributed with a little random variation
-flagSemiRand = False
-# particles are randomly distributed
-flagRand = False
 # set feature leapfrog time stepping
 featLF = False
 
