@@ -645,7 +645,8 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
             hCell = relRaster[indRely, indRelx]
             volCell = areaRaster[indRely, indRelx] * hCell
             massCell = volCell * rho
-            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng, cfg['initPartDistType'].lower())
+            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz,
+                                         massPerPart, rng, cfg['initPartDistType'].lower())
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
             # initialize particles position, mass, height...
