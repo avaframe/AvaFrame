@@ -63,6 +63,23 @@ Setup AvaFrame
 
       python3 -m pip install --user -e .
 
+#. Try to run the model::
+
+     cd avaframe
+     python3 runOperational.py
+
+
+.. Note::
+   If you encounter an error similar to this::
+
+      ValueError: numpy.ndarray size changed, may indicate binary
+      incompatibility. Expected 88 from C header, got 80 from PyObject
+
+   run the following in OSGeo4W shell::
+
+     python3 -m pip install --user --upgrade numpy pandas
+
+
 In case you run into problems with the cython compilation (due to a missing c++
 compiler on Windows, etc), use following steps:
 
@@ -79,12 +96,16 @@ compiler on Windows, etc), use following steps:
 
 #. Download this file and put it in the ``avaframe/com1DFA`` directory.
 
+
+
+
+
 Setup QGis and run
 ^^^^^^^^^^^^^^^^^^
 
 #. Open QGis from your start menu
 
-#. Add the QGis Connector directory (previous step 3) to your processing toolbox 
+#. Add the QGis Connector directory (previous step 2) to your processing toolbox 
 
 #. Reload the processing toolbox (or restart QGis)
 
