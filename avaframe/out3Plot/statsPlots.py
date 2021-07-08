@@ -244,7 +244,7 @@ def plotProbMap(avaDir, inDir, cfgFull):
     else:
         cmapType = pU.colorMaps[cfg['cmapType']]
         colorsP = ['black', 'white']
-        colorBackGround = 'lightgrey'
+        colorBackGround = 'gainsboro'
         if len(levels) == 1 and levels[0] > 0.5:
             colorsP = ['white']
     unit = cfg['unit']
