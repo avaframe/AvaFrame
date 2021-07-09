@@ -20,7 +20,6 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pds
 from itertools import product
 import pathlib
-from matplotlib.patches import Ellipse, Circle
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
