@@ -589,9 +589,6 @@ def updatePositionC(cfg, particles, dem, force, DT):
     xNew = x + dtStop * 0.5 * (ux + uxNew)
     yNew = y + dtStop * 0.5 * (uy + uyNew)
     zNew = z + dtStop * 0.5 * (uz + uzNew)
-    xNoReproj = xNew
-    yNoReproj = yNew
-    zNoReproj = zNew
     # make sure particle is on the mesh (normal reprojection!!)
 
     if distReproj:
