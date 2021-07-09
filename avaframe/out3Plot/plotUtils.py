@@ -254,7 +254,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             log.error(message)
             raise FileNotFoundError(message)
 
-        norm = None
+        norm = mplCol.Normalize(vmin=levMin, vmax=levMax, clip=False)
         levelsNew = None
     else:
         try:
