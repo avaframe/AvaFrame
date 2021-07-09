@@ -719,6 +719,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
             nSamples = np.size(runout)
             colors = np.zeros(nSamples)
             cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+            norm = None
             displayColorBar = False
             dataFrame = False
         else:
@@ -741,6 +742,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         nSamples = np.size(runout)
         colors = np.zeros(nSamples)
         cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+        norm = None
     #######################################
     # Final result diagram - z_profile+data
 
