@@ -109,7 +109,7 @@ colorAvaframe = ['#0EF8EA', '#12E4E6', '#28D0DF', '#3CBCD5', '#4AA8C9',
 cmapAvaframe = mplCol.ListedColormap(colorAvaframe)
 cmapAvaframe.set_bad(color='k')
 # add a continuous version
-cmapAvaframeCont = mplCol.LinearSegmentedColormap('cmapAvaframeCont', colorAvaframe, N=256)
+cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list('cmapAvaframeCont', colorAvaframe, N=256)
 
 
 # for the choice of the colormaps, check https://www.fabiocrameri.ch/colourmaps/
@@ -187,7 +187,7 @@ cmapDEM2['levels'] = None
 cmapAimec = cmapAvaframe
 
 cmapVar = {}
-cmapVar['cmap'] = cmapAvaframeCont
+# cmapVar['cmap'] = cmapAvaframeCont
 cmapVar['colors'] = colorAvaframe
 cmapVar['levels'] = None
 
