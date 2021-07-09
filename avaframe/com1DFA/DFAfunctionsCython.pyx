@@ -12,7 +12,6 @@ import math
 import numpy as np
 cimport numpy as np
 from libc cimport math as math
-import matplotlib.pyplot as plt
 # from libc.math cimport log as ln
 cimport cython
 
