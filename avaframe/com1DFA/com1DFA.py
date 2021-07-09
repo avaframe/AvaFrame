@@ -1671,7 +1671,7 @@ def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last
 
     ax.clear()
     ax.set_title('t=%.2f s' % particles['t'])
-    cmap, _, ticks, norm, _ = pU.makeColorMap(Cmap, np.nanmin(data), np.nanmax(data), continuous=True)
+    cmap, _, ticks, norm = pU.makeColorMap(Cmap, np.nanmin(data), np.nanmax(data), continuous=True)
     cmap.set_under(color='w')
     ref0, im = pU.NonUnifIm(ax, xx, yy, data, 'x [m]', 'y [m]',
                          extent=[x.min(), x.max(), y.min(), y.max()],
@@ -1687,7 +1687,7 @@ def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last
         # ax.plot(x[NPPC == 16], y[NPPC == 16], '.m', linestyle='None', markersize=1)
         # load variation colormap
         variable = particles['h']
-        cmap, _, ticks, norm, _ = pU.makeColorMap(pU.cmapDepth, np.nanmin(data), np.amax(variable), continuous=True)
+        cmap, _, ticks, norm = pU.makeColorMap(pU.cmapDepth, np.nanmin(data), np.amax(variable), continuous=True)
         # set range and steps of colormap
         cc = variable
         sc = ax.scatter(x, y, c=cc, cmap=cmap, marker='.')
@@ -1722,7 +1722,7 @@ def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
 
     ax.clear()
     ax.set_title('t=%.2f s' % particles['t'])
-    cmap, _, ticks, norm, _ = pU.makeColorMap(Cmap, np.nanmin(data), np.nanmax(data), continuous=True)
+    cmap, _, ticks, norm = pU.makeColorMap(Cmap, np.nanmin(data), np.nanmax(data), continuous=True)
     cmap.set_under(color='w')
 
     CS = ax.contour(X, Y, data, levels=8, origin='lower', cmap=cmap,

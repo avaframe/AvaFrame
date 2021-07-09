@@ -14,7 +14,6 @@ import glob
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.geoTrans as geoTrans
-import avaframe.out3Plot.makePalette as makePalette
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.out3Plot import statsPlots as sPlot
@@ -108,7 +107,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(221)
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(data1), continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(data1), np.nanmax(data1), continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
@@ -123,7 +122,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax1.set_ylabel('y [m]')
 
     ax2 = fig.add_subplot(222)
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(data2), continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(data2), np.nanmax(data2), continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data2P = ma.masked_where(data2 == 0.0, data2)
@@ -457,7 +456,7 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     suptitle = fig.suptitle(name1, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(121)
 
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(data1), continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(data1), np.nanmax(data1), continuous=pU.contCmap)
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
     im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny, norm=norm)

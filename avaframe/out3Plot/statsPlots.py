@@ -15,7 +15,6 @@ import pathlib
 
 # local imports
 import avaframe.out3Plot.plotUtils as pU
-import avaframe.out3Plot.makePalette as makePalette
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
 
@@ -62,7 +61,7 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, flagSho
     varValV = np.array(varVal)
 
     # load variation colormap
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapVar, np.amax(varValV), continuous=True)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, np.amin(varValV), np.amax(varValV), continuous=True)
 
     fig, ax = plt.subplots()
     plt.title('%s vs. %s' % (name1, name2))
@@ -278,7 +277,7 @@ def plotProbMap(avaDir, inDir, cfgFull):
         suptitle = fig.suptitle(cfg['name'], fontsize=14, color='0.5')
         ax1 = fig.add_subplot(111)
         # for now continuous color map is desired
-        cmap, _, _, norm, ticks = makePalette.makeColorMap(cmapType, np.nanmax(dataPlot), continuous=True)
+        cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(dataPlot), np.nanmax(dataPlot), continuous=True)
         cmap.set_bad(colorBackGround)
         data1P = ma.masked_where(dataPlot == 0.0, dataPlot)
         im1 = plt.imshow(data1P, cmap=cmap, extent=[colsMin, colsMax, rowsMin, rowsMax], origin='lower', aspect=nx/ny, norm=norm)

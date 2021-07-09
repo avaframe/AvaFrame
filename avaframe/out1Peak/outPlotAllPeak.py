@@ -92,7 +92,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         fig, ax = plt.subplots()
         # choose colormap
-        cmap, _, ticks, norm, _ = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
+        cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
         cmap.set_bad(alpha=0)
         rowsMinPlot = rowsMin*cellSize
         rowsMaxPlot = (rowsMax+1)*cellSize
@@ -166,7 +166,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit='', constrainData=True):
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         fig, ax = plt.subplots()
         # choose colormap
-        cmap, _, ticks, norm, _  = pU.makeColorMap(pU.cmapNN, np.amin(data), np.amax(data), continuous=pU.contCmap)
+        cmap, _, ticks, norm  = pU.makeColorMap(pU.cmapNN, np.amin(data), np.amax(data), continuous=pU.contCmap)
         cmap.set_bad('w')
 
         if constrainData:

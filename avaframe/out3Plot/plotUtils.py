@@ -100,8 +100,7 @@ cmapViridis = copy.copy(matplotlib.cm.viridis)
 cmapViridis.set_bad(color='k')
 
 # divergent color map
-cmapdiv = copy.copy(matplotlib.cm.RdBu_r)  # sns.color_palette("RdBu_r")
-
+cmapdiv = cmapCameri.vik
 
 # custom colomaps
 # cmap based on avaframe logo colors
@@ -197,19 +196,25 @@ cmapGreys1['cmap'] = cmapGreys
 
 
 def makeColorMap(colormapDict, levMin, levMax, continuous=False):
-    """Get colormat for plot
+    """Get colormap for plot
 
     get the colormap, norm, levels... for ploting results
 
+    colormapDict is a dict as described in the Parameters section or a matplotlib
+    cmap. In the second case, the continuous flag is ignored and a continuous cmap is returned with
+    levelsNew and colorsNew set to None.
+    In the first case, depending on the continuous flag and what is given in the colormapDict
+    dictionary, the cmap is created and the levelsNew and colorsNew are created.
+
     Parameters
     ----------
-        colormapDict: dict
+        colormapDict: dict or cmap
             cmap: matplotlib colormap
-                continuous colormap (used only if continuous=True)
+                continuous colormap
             colors: list
                 list of hex or rgb or dec colors
             levels: list
-                levels corresponding to the colors (one more level than colors)
+                levels corresponding to the colors (same number of levels as colors)
         levMin : float
             minimum value of the colormap
         levMax: float
@@ -227,10 +232,14 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             new levels corresponding to the colors (one more level than colors)
         norm: matplotlib norm
             norm associated to the levels and the colors (None for continuous=True)
-        extend: str
-            'extend' parameter for the colorbar (should it be 'neither' or 'max')
     """
-    if continuous:
+
+    if type(colormapDict) is matplotlib.colors.LinearSegmentedColormap:
+        cmap = colormapDict
+        colorsNew = None
+        norm = None
+        levelsNew = None
+    elif continuous:
         # do we have a cmap in the dict?
         if 'cmap' in colormapDict.keys():
             cmap = colormapDict['cmap']
@@ -247,7 +256,6 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
 
         norm = None
         levelsNew = None
-        extend = "neither"
     else:
         try:
             levels = colormapDict['levels']
@@ -258,10 +266,8 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
 
         try:
             indEnd = np.where(np.asarray(levels) >= levMax)[0][0]
-            extend = "neither"
         except IndexError:
             indEnd = len(levels)
-            extend = "neither"
         levelsNew = levels[:indEnd]
         levelsNew.append(levMax)
 
@@ -286,7 +292,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
 
         norm = mplCol.BoundaryNorm(levelsNew, cmap.N)
 
-    return cmap, colorsNew, levelsNew, norm, extend
+    return cmap, colorsNew, levelsNew, norm
 
 
 ###################################

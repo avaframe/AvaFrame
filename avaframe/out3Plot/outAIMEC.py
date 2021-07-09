@@ -17,7 +17,6 @@ from matplotlib import cm
 
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
-import avaframe.out3Plot.makePalette as makePalette
 from avaframe.out3Plot import statsPlots as sPlot
 
 # create local logger
@@ -64,7 +63,7 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, cfgPath, cfgFlags):
     maskedArray = np.ma.masked_where(xyRaster == 0, xyRaster)
     maskedArraySL = np.ma.masked_where(slRaster == 0, slRaster)
 
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.colorMaps[resType], np.nanmax(maskedArray), continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin(maskedArray), np.nanmax(maskedArray), continuous=pU.contCmap)
     cmap.set_under(color='w')
 
     ############################################
@@ -199,7 +198,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, cfgPath, cf
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
 
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.colorMaps[resType], np.nanmax(maskedArray), continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin(maskedArray), np.nanmax(maskedArray), continuous=pU.contCmap)
     cmap.set_bad('w', 1.)
 
     ############################################
@@ -345,7 +344,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, cfgPath, cfgFlags):
 
     for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
         maskedArray = np.ma.masked_where(data == 0, data)
-        cmap, _, _, norm, ticks = makePalette.makeColorMap(cmap, np.nanmax(maskedArray), continuous=pU.contCmap)
+        cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(maskedArray), np.nanmax(maskedArray), continuous=pU.contCmap)
         cmap.set_bad('w', 1.)
         ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
 
@@ -397,7 +396,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     ax1 = plt.subplot2grid((1,2), (0,0))
 
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.colorMaps[resType], np.nanmax((refData)), continuous=contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin((refData)), np.nanmax((refData)), continuous=contCmap)
     cmap.set_bad(color='w')
     refDataPlot = np.ma.masked_where(refData == 0.0, refData)
     ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',
@@ -444,7 +443,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))#, constrained_layout=True)
     ax1 = plt.subplot2grid((3,3), (0,0), rowspan=3)
     # get color map
-    cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.colorMaps[resType], np.nanmax((refData)), continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin((refData)), np.nanmax((refData)), continuous=pU.contCmap)
     cmap.set_bad(color='w')
     refDataPlot = np.ma.masked_where(refData == 0.0, refData)
     ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',
@@ -719,7 +718,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         if cfgPath['colorParameter'] == []:
             nSamples = np.size(runout)
             colors = np.zeros(nSamples)
-            cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapVar, None, continuous=True)
+            cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
             displayColorBar = False
             dataFrame = False
         else:
@@ -733,7 +732,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
                 displayColorBar = False
             else:
                 colors = cfgPath['colorParameter']
-                cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapVar, np.nanmax(cfgPath['colorParameter']), continuous=True)
+                cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, np.nanmin(cfgPath['colorParameter']), np.nanmax(cfgPath['colorParameter']), continuous=True)
                 displayColorBar = True
                 dataFrame = False
     else:
@@ -741,7 +740,7 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         dataFrame = False
         nSamples = np.size(runout)
         colors = np.zeros(nSamples)
-        cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapVar, None, continuous=True)
+        cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
     #######################################
     # Final result diagram - z_profile+data
 
