@@ -121,9 +121,9 @@ def inclinedplane(cfg):
 
 
 def addDrop(cfg, x, y, zv):
-    """ Add a drop/step to a given topography
+    """ Add a drop to a given topography
 
-    The step is added in the x drection
+    The drop is added in the x drection
 
     Parameters
     ----------
@@ -139,15 +139,15 @@ def addDrop(cfg, x, y, zv):
     Returns
     -------
     zv: 2D numpy array
-        z coordinate of the raster taking the step into account
+        z coordinate of the raster taking the drop into account
     """
 
     # input parameters
     dx, xEnd, yEnd = getGridDefs(cfg)
 
-    xStartDrop = float(cfg['STEP']['xStartDrop'])
-    dxDrop = float(cfg['STEP']['dxDrop'])
-    alphaDrop = float(cfg['STEP']['alphaDrop'])
+    xStartDrop = float(cfg['DROP']['xStartDrop'])
+    dxDrop = float(cfg['DROP']['dxDrop'])
+    alphaDrop = float(cfg['DROP']['alphaDrop'])
 
     # get zcoord
     # deduce drop height from the drop steepness and length in x direction
@@ -172,7 +172,7 @@ def addDrop(cfg, x, y, zv):
     zv = np.where(x > xEndDrop, zv - (dzDrop + zEndDrop - zIniDrop), zv)
 
     # Log info here
-    log.info('Added step to the topography')
+    log.info('Added drop to the topography')
 
     return zv
 
@@ -596,8 +596,8 @@ def generateTopo(cfg, avalancheDir):
         [x, y, z] = pyramid(cfg)
 
 
-    # If a step shall be introduced
-    if cfg['TOPO'].getboolean('step'):
+    # If a drop shall be introduced
+    if cfg['TOPO'].getboolean('drop'):
         z = addDrop(cfg, x, y, z)
 
     # Write DEM to file
