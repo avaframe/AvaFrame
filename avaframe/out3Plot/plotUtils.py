@@ -14,11 +14,11 @@ import datetime
 import pathlib
 from matplotlib.image import NonUniformImage
 from matplotlib import pyplot as plt
+from matplotlib import colors as mplCol
 import logging
 from cmcrameri import cm as cmapCameri
 
 from avaframe.in3Utils import cfgUtils
-from avaframe.out3Plot import makePalette
 from avaframe.out3Plot import plotUtils
 
 
@@ -107,31 +107,28 @@ cmapdiv = copy.copy(matplotlib.cm.RdBu_r)  # sns.color_palette("RdBu_r")
 # cmap based on avaframe logo colors
 colorAvaframe = ['#0EF8EA', '#12E4E6', '#28D0DF', '#3CBCD5', '#4AA8C9',
                  '#5595B9', '#5C82A8', '#5F6F95', '#5E5E81', '#5A4D6C', '#523E58', '#483045']
-cmapAvaframe = makePalette.get_continuous_cmap(colorAvaframe)
+cmapAvaframe = mplCol.ListedColormap(colorAvaframe)
 cmapAvaframe.set_bad(color='k')
 # add a continuous version
-cmapAvaframeCont = makePalette.get_continuous_cmap(colorAvaframe, continuous=True)
+cmapAvaframeCont = mplCol.LinearSegmentedColormap('cmapAvaframeCont', colorAvaframe, N=256)
 
 
 # for the choice of the colormaps, check https://www.fabiocrameri.ch/colourmaps/
 # and http://hclwizard.org:3000/hclwizard/
 # multi sequential colormap for pressure
-levP = [1.0, 10.0, 25.0, 50.0, 1000.0]
-ticksP = [0., 1.0, 10.0, 25.0, 50.0]
+levP = [1.0, 10.0, 25.0, 50.0]
 # Hawaii color map
 colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
 cmapP = cmapCameri.hawaii.reversed()
 
 # multi sequential colormap for flow depth
-levD = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 50.0]
-ticksD = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
+levD = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
 # Lajolla color map
 colorsD = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
 cmapD = cmapCameri.lajolla
 
 # multi sequential colormap for speed
-levS = [1, 5, 10, 15, 20, 25, 30, 100]
-ticksS = [1, 5, 10, 15, 20, 25, 30]
+levS = [1, 5, 10, 15, 20, 25, 30]
 # Batflow color map
 colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960', '#201158']
 cmapS = cmapCameri.batlow.reversed()
@@ -140,8 +137,7 @@ cmapS = cmapCameri.batlow.reversed()
 cmapNNcmap = cmapCameri.imola.reversed()
 
 # colormap for probabilities
-levProb = [0.0, 0.25, 0.5, 0.75, 0.9999999999, 10]
-ticksProb = [0, 0.25, 0.50, 0.75, 1.]
+levProb = [0, 0.25, 0.50, 0.75, 1.]
 # lapaz color map
 colorsProb = ['#FEF1F1', '#B2AB96', '#5B8BA3', '#2D5393', '#1A0C64']
 cmapProbmap = cmapCameri.lapaz.reversed()
@@ -157,28 +153,24 @@ contCmap = cfg.getboolean('contCmap')
 cmapPres = {}
 cmapPres['cmap'] = cmapP
 cmapPres['colors'] = colorsP
-cmapPres['lev'] = levP
-cmapPres['ticks'] = ticksP
+cmapPres['levels'] = levP
 
 
 cmapDepth = {}
 cmapDepth['cmap'] = cmapD
 cmapDepth['colors'] = colorsD
-cmapDepth['lev'] = levD
-cmapDepth['ticks'] = ticksD
+cmapDepth['levels'] = levD
 
 cmapSpeed = {}
 cmapSpeed['cmap'] = cmapS
 cmapSpeed['colors'] = colorsS
-cmapSpeed['lev'] = levS
-cmapSpeed['ticks'] = ticksS
+cmapSpeed['levels'] = levS
 
 
 cmapProb = {}
 cmapProb['cmap'] = cmapProbmap
 cmapProb['colors'] = colorsProb
-cmapProb['lev'] = levProb
-cmapProb['ticks'] = ticksProb
+cmapProb['levels'] = levProb
 
 colorMaps = {'ppr' : cmapPres, 'pfv' : cmapSpeed, 'pfd' : cmapDepth, 'PR' : cmapPres,
              'FV' : cmapSpeed, 'FD' : cmapDepth, 'prob': cmapProb}
@@ -191,19 +183,112 @@ cmapDEM = cmapGreys
 cmapDEM2 = {}
 cmapDEM2['cmap'] = cmapGreys
 cmapDEM2['colors'] = colorsS
-cmapDEM2['lev'] = None
-cmapDEM2['ticks'] = None
+cmapDEM2['levels'] = None
 
 cmapAimec = cmapAvaframe
 
 cmapVar = {}
 cmapVar['cmap'] = cmapAvaframeCont
 cmapVar['colors'] = colorAvaframe
-cmapVar['lev'] = None
-cmapVar['ticks'] = None
+cmapVar['levels'] = None
 
 cmapGreys1 = {}
 cmapGreys1['cmap'] = cmapGreys
+
+
+def makeColorMap(colormapDict, levMin, levMax, continuous=False):
+    """Get colormat for plot
+
+    get the colormap, norm, levels... for ploting results
+
+    Parameters
+    ----------
+        colormapDict: dict
+            cmap: matplotlib colormap
+                continuous colormap (used only if continuous=True)
+            colors: list
+                list of hex or rgb or dec colors
+            levels: list
+                levels corresponding to the colors (one more level than colors)
+        levMin : float
+            minimum value of the colormap
+        levMax: float
+            maximum value of the colormap
+        continuous: boolean
+            True for continuous cmaps
+
+    Returns
+    -------
+        cmap: matplotlib colormap
+            new color map
+        colorsNew: list
+            new list of hex or rgb or dec colors (None for continuous=True)
+        levelsNew: list
+            new levels corresponding to the colors (one more level than colors)
+        norm: matplotlib norm
+            norm associated to the levels and the colors (None for continuous=True)
+        extend: str
+            'extend' parameter for the colorbar (should it be 'neither' or 'max')
+    """
+    if continuous:
+        # do we have a cmap in the dict?
+        if 'cmap' in colormapDict.keys():
+            cmap = colormapDict['cmap']
+            colorsNew = None
+        # if not do we have a list of colors in the dict?
+        elif 'colors' in colormapDict.keys():
+            colorsNew = colormapDict['colors']
+            cmap = mplCol.LinearSegmentedColormap.from_list('myCmap', colorsNew, N=256)
+        # Houston ve have a problem
+        else:
+            message = 'You need a `colors` list or a `cmap` to be able to create the colormap'
+            log.error(message)
+            raise FileNotFoundError(message)
+
+        norm = None
+        levelsNew = None
+        extend = "neither"
+    else:
+        try:
+            levels = colormapDict['levels']
+        except KeyError:
+            message = 'You need to specify a `levels` list to be able to create a discrete colormap'
+            log.error(message)
+            raise FileNotFoundError(message)
+
+        try:
+            indEnd = np.where(np.asarray(levels) >= levMax)[0][0]
+            extend = "neither"
+        except IndexError:
+            indEnd = len(levels)
+            extend = "neither"
+        levelsNew = levels[:indEnd]
+        levelsNew.append(levMax)
+
+        # do we have a list of colors in the dict?
+        if 'colors' in colormapDict.keys():
+            colors = colormapDict['colors']
+            colorsNew = colors[:indEnd]
+            colorsNew.append(colors[indEnd-1])
+            cmap = mplCol.ListedColormap(colorsNew)
+            cmap.set_bad(color='w')
+            cmap.set_under(color='w')
+            # cmap.set_over(color='w')
+        # if not do we have a cmap in the dict?
+        elif 'cmap' in colormapDict.keys():
+            cmap = colormapDict['cmap']
+            colorsNew = cmap(levelsNew[:-1]/levelsNew[-1])
+        # Houston ve have a problem
+        else:
+            message = 'You need a `colors` list or a `cmap` to be able to create the colormap'
+            log.error(message)
+            raise FileNotFoundError(message)
+
+        norm = mplCol.BoundaryNorm(levelsNew, cmap.N)
+
+    return cmap, colorsNew, levelsNew, norm, extend
+
+
 ###################################
 # shortcut plot functions
 ###################################

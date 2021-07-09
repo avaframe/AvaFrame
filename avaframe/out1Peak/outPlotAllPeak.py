@@ -13,7 +13,6 @@ import avaframe.out3Plot.plotUtils as pU
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
-import avaframe.out3Plot.makePalette as makePalette
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -93,7 +92,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         fig, ax = plt.subplots()
         # choose colormap
-        cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.colorMaps[resType], np.amax(data), continuous=pU.contCmap)
+        cmap, _, ticks, norm, _ = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
         cmap.set_bad(alpha=0)
         rowsMinPlot = rowsMin*cellSize
         rowsMaxPlot = (rowsMax+1)*cellSize
@@ -167,7 +166,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit='', constrainData=True):
         fig = plt.figure(figsize=(pU.figW, pU.figH))
         fig, ax = plt.subplots()
         # choose colormap
-        cmap, _, _, norm, ticks = makePalette.makeColorMap(pU.cmapNN, np.amax(data), continuous=pU.contCmap)
+        cmap, _, ticks, norm, _  = pU.makeColorMap(pU.cmapNN, np.amin(data), np.amax(data), continuous=pU.contCmap)
         cmap.set_bad('w')
 
         if constrainData:
