@@ -107,12 +107,12 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
     suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
     ax1 = fig.add_subplot(221)
-    cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(data1), np.nanmax(data1), continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(cmapType, minVal, maxVal, continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data1P = ma.masked_where(data1 == 0.0, data1)
     im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
-                     aspect=nx/ny, norm=norm, vmin = minVal, vmax = maxVal)
+                     aspect=nx/ny, norm=norm)
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
@@ -122,12 +122,12 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax1.set_ylabel('y [m]')
 
     ax2 = fig.add_subplot(222)
-    cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(data2), np.nanmax(data2), continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(cmapType, minVal, maxVal, continuous=pU.contCmap)
 
     cmap.set_bad('w')
     data2P = ma.masked_where(data2 == 0.0, data2)
     im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
-                     aspect=nx/ny, norm=norm, vmin = minVal, vmax = maxVal)
+                     aspect=nx/ny, norm=norm)
     pU.addColorBar(im2, ax2, ticks, unit)
 
     ax2.set_aspect('auto')
