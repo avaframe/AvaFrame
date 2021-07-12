@@ -96,7 +96,6 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     diffMin = np.nanmin(dataDiff)
     diffMean = np.nanmean(dataDiff)
 
-
     minVal = min(np.nanmin(data1), np.nanmin(data2))
     maxVal = max(np.nanmax(data1), np.nanmax(data2))
 
@@ -104,8 +103,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, _ = pU.constrainPlotsToData(dataExtend, cellSize, extentOption=True)
 
     # Location of box
-    nybox = rowsMinPlot#int(nx * 0.2)
-    nxbox = colsMinPlot#int(ny * 0.2)
+    nybox = 0.05
+    nxbox = 0.05
     # Plot data
     # Figure 1 shows the result parameter data
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
@@ -153,7 +152,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     pU.addColorBar(im3, ax3, None, unit)
     ax3.text(nybox, nxbox, 'Mean: %.2e %s\n Max: %.2e %s\n Min: %.2e %s' %
              (diffMean, unit, diffMax, unit, diffMin, unit),
-             horizontalalignment='left', verticalalignment='bottom')
+             horizontalalignment='left', verticalalignment='bottom', transform=ax3.transAxes)
     ax3.set_aspect('auto')
     ax3.set_xlabel('x [m]')
     ax3.set_title('Difference ref-sim')
@@ -205,7 +204,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
         centiles = sPlot.plotHistCDFDiff(dataDiffPlot, axin4, axin3)
         ax4.text(nybox, nxbox, '95%% centile: %.2e %s\n 99%% centile: %.2e %s' %
                  (centiles[0], unit, centiles[1], unit),
-                 horizontalalignment='left', verticalalignment='bottom')
+                 horizontalalignment='left', verticalalignment='bottom', transform=ax4.transAxes)
 
     fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
 
