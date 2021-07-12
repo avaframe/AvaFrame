@@ -1901,7 +1901,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
     numberTimes = len(Tsave)-1
     countTime = 0
     for timeStep in Tsave:
-        if (timeStep == Tsave[-1]):
+        if (countTime == numberTimes):
             # for last time step we need to add the report fields
             resTypes = list(set(resTypesGen + resTypesReport))
         else:

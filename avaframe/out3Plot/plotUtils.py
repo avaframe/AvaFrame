@@ -100,7 +100,8 @@ cmapViridis = copy.copy(matplotlib.cm.viridis)
 cmapViridis.set_bad(color='k')
 
 # divergent color map
-cmapdiv = cmapCameri.vik
+# cmapdiv = cmapCameri.vik
+cmapdiv = cmapCameri.broc
 
 # custom colomaps
 # cmap based on avaframe logo colors
@@ -200,21 +201,24 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
 
     get the colormap, norm, levels... for ploting results
 
-    colormapDict is a dict as described in the Parameters section or a matplotlib
-    cmap. In the second case, the continuous flag is ignored and a continuous cmap is returned with
-    levelsNew and colorsNew set to None.
-    In the first case, depending on the continuous flag and what is given in the colormapDict
-    dictionary, the cmap is created and the levelsNew and colorsNew are created.
+
+    1) colormapDict = dict (details see Parameters) - depending on the continuous flag and what is
+    given in the colormapDict dictionary, the cmap is created and the levelsNew and
+    colorsNew are created.
+    2) colormapDict = matplotlib cmap - the continuous flag is ignored and a continuous cmap is
+    returned with levelsNew set to None.
+
 
     Parameters
     ----------
         colormapDict: dict or cmap
-            cmap: matplotlib colormap
-                continuous colormap
-            colors: list
-                list of hex or rgb or dec colors
-            levels: list
-                levels corresponding to the colors (same number of levels as colors)
+            if colormap= dict :
+                cmap: matplotlib colormap
+                    continuous colormap
+                colors: list
+                    list of hex or rgb or dec colors
+                levels: list
+                    levels corresponding to the colors (same number of levels as colors)
         levMin : float
             minimum value of the colormap
         levMax: float
@@ -227,24 +231,26 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
         cmap: matplotlib colormap
             new color map
         colorsNew: list
-            new list of hex or rgb or dec colors (None for continuous=True)
+            new list of hex or rgb or dec colors
         levelsNew: list
             new levels corresponding to the colors (one more level than colors)
         norm: matplotlib norm
-            norm associated to the levels and the colors (None for continuous=True)
+            norm associated to the levels and the colors (includes the vmin and vmax for
+            continuous colormaps)
     """
 
     if type(colormapDict) is matplotlib.colors.LinearSegmentedColormap:
         cmap = colormapDict
         colorsNew = None
-        norm = None
+        norm = mplCol.Normalize(vmin=levMin, vmax=levMax, clip=False)
         levelsNew = None
     elif continuous:
-        # do we have a cmap in the dict?
+        # make a continuous color map
+        # check if cmap is provided
         if 'cmap' in colormapDict.keys():
             cmap = colormapDict['cmap']
             colorsNew = None
-        # if not do we have a list of colors in the dict?
+        # check if list of colors is provided
         elif 'colors' in colormapDict.keys():
             colorsNew = colormapDict['colors']
             cmap = mplCol.LinearSegmentedColormap.from_list('myCmap', colorsNew, N=256)
@@ -257,6 +263,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
         norm = mplCol.Normalize(vmin=levMin, vmax=levMax, clip=False)
         levelsNew = None
     else:
+        # make a discrete color map
         try:
             levels = colormapDict['levels']
         except KeyError:
@@ -271,7 +278,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
         levelsNew = levels[:indEnd]
         levelsNew.append(levMax)
 
-        # do we have a list of colors in the dict?
+        # check if list of colors is provided
         if 'colors' in colormapDict.keys():
             colors = colormapDict['colors']
             colorsNew = colors[:indEnd]
@@ -279,8 +286,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             cmap = mplCol.ListedColormap(colorsNew)
             cmap.set_bad(color='w')
             cmap.set_under(color='w')
-            # cmap.set_over(color='w')
-        # if not do we have a cmap in the dict?
+        # check if a cmap is provided
         elif 'cmap' in colormapDict.keys():
             cmap = colormapDict['cmap']
             colorsNew = cmap(levelsNew[:-1]/levelsNew[-1])
@@ -290,6 +296,8 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             log.error(message)
             raise FileNotFoundError(message)
 
+        if len(levelsNew) == 1:
+            levelsNew = [0] + levelsNew
         norm = mplCol.BoundaryNorm(levelsNew, cmap.N)
 
     return cmap, colorsNew, levelsNew, norm
@@ -385,7 +393,7 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''
-    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad)
+    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9)
     cbar.outline.set_visible(False)
     cbar.ax.set_title('[' + myUnit + ']')
     if title != '':

@@ -91,17 +91,21 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     # Difference between datasets
     dataDiff = data1 - data2
     dataDiff = np.where((data1 == 0) & (data2 == 0), np.nan, dataDiff)
+    dataExtend = np.where((data1 == 0) | (data2 == 0), 0, 1)
     diffMax = np.nanmax(dataDiff)
     diffMin = np.nanmin(dataDiff)
     diffMean = np.nanmean(dataDiff)
 
-    # Location of box
-    nybox = int(nx * 0.2)
-    nxbox = int(ny * 0.2)
 
     minVal = min(np.nanmin(data1), np.nanmin(data2))
     maxVal = max(np.nanmax(data1), np.nanmax(data2))
 
+    # constrain data to where there is data
+    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, _ = pU.constrainPlotsToData(dataExtend, cellSize, extentOption=True)
+
+    # Location of box
+    nybox = rowsMinPlot#int(nx * 0.2)
+    nxbox = colsMinPlot#int(ny * 0.2)
     # Plot data
     # Figure 1 shows the result parameter data
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
@@ -113,6 +117,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     data1P = ma.masked_where(data1 == 0.0, data1)
     im1 = plt.imshow(data1P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
                      aspect=nx/ny, norm=norm)
+    ax1.set_xlim([colsMinPlot, colsMaxPlot])
+    ax1.set_ylim([rowsMinPlot, rowsMaxPlot])
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
@@ -129,7 +135,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     im2 = plt.imshow(data2P, cmap=cmap, extent=[0, Lx, 0, Ly], origin='lower',
                      aspect=nx/ny, norm=norm)
     pU.addColorBar(im2, ax2, ticks, unit)
-
+    ax2.set_xlim([colsMinPlot, colsMaxPlot])
+    ax2.set_ylim([rowsMinPlot, rowsMaxPlot])
     ax2.set_aspect('auto')
     ax2.set_xlabel('x [m]')
     title = str('%s' % name2)
@@ -139,7 +146,10 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     cmap = pU.cmapdiv
     elev_max = np.nanmax(np.abs(dataDiff))
     im3 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
-                     extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+                     extent=[0, Lx, 0, Ly],
+                     origin='lower', aspect=nx/ny)
+    ax3.set_xlim([colsMinPlot, colsMaxPlot])
+    ax3.set_ylim([rowsMinPlot, rowsMaxPlot])
     pU.addColorBar(im3, ax3, None, unit)
     ax3.text(nybox, nxbox, 'Mean: %.2e %s\n Max: %.2e %s\n Min: %.2e %s' %
              (diffMean, unit, diffMax, unit, diffMin, unit),
@@ -175,7 +185,10 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     diffMeanZoom = np.nanmean(dataDiffZoom)
 
     im4 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
-                     extent=[0, Lx, 0, Ly], origin='lower', aspect=nx/ny)
+                     extent=[0, Lx, 0, Ly],
+                     origin='lower', aspect=nx/ny)
+    ax4.set_xlim([colsMinPlot, colsMaxPlot])
+    ax4.set_ylim([rowsMinPlot, rowsMaxPlot])
     pU.addColorBar(im4, ax4, None, unit, extend='both')
     ax4.set_aspect('auto')
     ax4.set_xlabel('x [m]')
