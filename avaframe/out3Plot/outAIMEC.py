@@ -423,7 +423,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
     data = np.ma.masked_where(data == 0.0, data)
     if newRasterMask[indStartOfRunout:, :].any() or refRasterMask[indStartOfRunout:, :].any():
         ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
-                         extent=[l.min(), l.max(), s.min(), s.max()], cmap=cmap)
+                         extent=[l.min(), l.max(), s[indStartOfRunout], yLim], cmap=cmap)
         im1.set_clim(vmin=-0.5, vmax=0.5)
         ax2.set_ylim([s[indStartOfRunout], yLim])
     else:
@@ -478,7 +478,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
         cmap.set_bad(color='w')
         elev_max = inputs['diffLim']
         ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
-                             extent=[l.min(), l.max(), s[indStartOfRunout:].min(), yLim],
+                             extent=[l.min(), l.max(), s[indStartOfRunout], yLim],
                              cmap=cmap)
         im3.set_clim(vmin=-elev_max, vmax=elev_max)
 
@@ -515,7 +515,7 @@ def visuComparison(rasterTransfo, inputs, cfgPath, cfgFlags):
 
         ax2.set_ylim([s[indStartOfRunout], yLim])
         ax2.legend(loc='lower right')
-        pU.addColorBar(im3, ax2, ticks, unit, title=name, extend='both')
+        pU.addColorBar(im3, ax2, None, unit, title=name, extend='both')
     else:
         # if no avalanche reached the run out area print a warning on the second plot
         ax2 = plt.subplot2grid((3,3), (0,1), rowspan=3, colspan=3)
@@ -719,7 +719,6 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
             nSamples = np.size(runout)
             colors = np.zeros(nSamples)
             cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
-            norm = None
             displayColorBar = False
             dataFrame = False
         else:
@@ -742,7 +741,6 @@ def resultVisu(cfgSetup, cfgPath, cfgFlags, rasterTransfo, resAnalysis):
         nSamples = np.size(runout)
         colors = np.zeros(nSamples)
         cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
-        norm = None
     #######################################
     # Final result diagram - z_profile+data
 
