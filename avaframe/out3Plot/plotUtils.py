@@ -100,7 +100,6 @@ cmapViridis = copy.copy(matplotlib.cm.viridis)
 cmapViridis.set_bad(color='k')
 
 # divergent color map
-# cmapdiv = cmapCameri.vik
 cmapdiv = cmapCameri.broc
 
 # custom colomaps
