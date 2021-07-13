@@ -320,62 +320,63 @@ def removeOutPart(particles, dem, dt):
         particles dictionary
     """
 
-    header = dem['header']
-    nrows = header.nrows
-    ncols = header.ncols
-    xllc = header.xllcenter
-    yllc = header.yllcenter
-    csz = header.cellsize
-    Bad = dem['Bad']
+    # header = dem['header']
+    # nrows = header.nrows
+    # ncols = header.ncols
+    # xllc = header.xllcenter
+    # yllc = header.yllcenter
+    # csz = header.cellsize
+    # Bad = dem['Bad']
 
-    x = particles['x']
-    y = particles['y']
-    ux = particles['ux']
-    uy = particles['uy']
-    x = x + ux*dt
-    y = y + uy*dt
-
-    # find coordinates in normalized ref (origin (0,0) and cellsize 1)
-    Lx = (x - xllc) / csz
-    Ly = (y - yllc) / csz
-    mask = np.ones(len(x), dtype=bool)
-    indOut = np.where(Lx <= 1.5)
-    mask[indOut] = False
-    indOut = np.where(Ly <= 1.5)
-    mask[indOut] = False
-    indOut = np.where(Lx >= ncols-1.5)
-    mask[indOut] = False
-    indOut = np.where(Ly >= nrows-1.5)
-    mask[indOut] = False
-
-    nRemove = len(mask)-np.sum(mask)
-    if nRemove > 0:
-        particles = removePart(particles, mask, nRemove)
-        log.info('removed %s particles because they exited the domain' % (nRemove))
-
-    x = particles['x']
-    y = particles['y']
-    ux = particles['ux']
-    uy = particles['uy']
-    mask = np.ones(len(x), dtype=bool)
-    y = particles['y']
-    ux = particles['ux']
-    uy = particles['uy']
-    indXDEM = particles['indXDEM']
-    indYDEM = particles['indYDEM']
-    indOut = np.where(Bad[indYDEM, indXDEM], False, True)
-    mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indYDEM+np.sign(uy).astype('int'), indXDEM], False, True)
-    mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indYDEM, indXDEM+np.sign(ux).astype('int')], False, True)
-    mask = np.logical_and(mask, indOut)
-    indOut = np.where(Bad[indYDEM+np.sign(uy).astype('int'), indXDEM+np.sign(ux).astype('int')], False, True)
-    mask = np.logical_and(mask, indOut)
+    # x = particles['x']
+    # y = particles['y']
+    # ux = particles['ux']
+    # uy = particles['uy']
+    # x = x + ux*dt
+    # y = y + uy*dt
+    #
+    # # find coordinates in normalized ref (origin (0,0) and cellsize 1)
+    # Lx = (x - xllc) / csz
+    # Ly = (y - yllc) / csz
+    # mask = np.ones(len(x), dtype=bool)
+    # indOut = np.where(Lx <= 1.5)
+    # mask[indOut] = False
+    # indOut = np.where(Ly <= 1.5)
+    # mask[indOut] = False
+    # indOut = np.where(Lx >= ncols-1.5)
+    # mask[indOut] = False
+    # indOut = np.where(Ly >= nrows-1.5)
+    # mask[indOut] = False
+    mask = np.array(particles['keepParticle'], dtype=bool)
 
     nRemove = len(mask)-np.sum(mask)
     if nRemove > 0:
         particles = removePart(particles, mask, nRemove)
         log.info('removed %s particles because they exited the domain' % (nRemove))
+
+    # x = particles['x']
+    # y = particles['y']
+    # ux = particles['ux']
+    # uy = particles['uy']
+    # mask = np.ones(len(x), dtype=bool)
+    # y = particles['y']
+    # ux = particles['ux']
+    # uy = particles['uy']
+    # indXDEM = particles['indXDEM']
+    # indYDEM = particles['indYDEM']
+    # indOut = np.where(Bad[indYDEM, indXDEM], False, True)
+    # mask = np.logical_and(mask, indOut)
+    # indOut = np.where(Bad[indYDEM+np.sign(uy).astype('int'), indXDEM], False, True)
+    # mask = np.logical_and(mask, indOut)
+    # indOut = np.where(Bad[indYDEM, indXDEM+np.sign(ux).astype('int')], False, True)
+    # mask = np.logical_and(mask, indOut)
+    # indOut = np.where(Bad[indYDEM+np.sign(uy).astype('int'), indXDEM+np.sign(ux).astype('int')], False, True)
+    # mask = np.logical_and(mask, indOut)
+    #
+    # nRemove = len(mask)-np.sum(mask)
+    # if nRemove > 0:
+    #     particles = removePart(particles, mask, nRemove)
+    #     log.info('removed %s particles because they exited the domain' % (nRemove))
 
     return particles
 
@@ -428,6 +429,8 @@ def removePart(particles, mask, nRemove):
     particles : dict
         particles dictionary
     """
+
+    log.info('removed %s particles because they exited the domain' % (nRemove))
     nPart = particles['Npart']
     for key in particles:
         if key == 'Npart':
