@@ -48,7 +48,7 @@ def projectOnRaster(dem, Points, interp='bilinear'):
 
 
 def projectOnGrid(x, y, Z, csz=1, xllc=0, yllc=0, interp='bilinear'):
-    """Projects the points (x,y) on Raster
+    """Projects Z onto points (x,y)
     using a bilinear or nearest interpolation and returns the z coord
 
     Parameters
@@ -174,6 +174,56 @@ def resizeData(raster, rasterRef):
         Points, _ = projectOnRaster(raster, Points, interp='bilinear')
         raster['rasterData'] = Points['z']
         return raster['rasterData'], rasterRef['rasterData']
+
+
+def remeshData(rasterFile, cellSize):
+    """ compute raster data on a new mesh with cellSize using scipy RectBivariateSpline
+
+    Parameters
+    ----------
+    rasterFile : str
+        path to raster file
+    cellSize : float
+        mesh size of new mesh
+
+    Returns
+    -------
+    data : dict
+        remeshed data dict with data as numpy array and header info
+
+    """
+
+    # load data
+    raster = IOf.readRaster(rasterFile)
+    header = raster['header']
+
+    # fetch shape info
+    xllc = header.xllcenter
+    yllc = header.yllcenter
+    ncols = header.ncols
+    nrows = header.nrows
+    xExtent =  ncols * header.cellsize
+    yExtent =  nrows * header.cellsize
+    x = np.linspace(0, (ncols-1)*header.cellsize, ncols) + xllc
+    y = np.linspace(0, (nrows-1)*header.cellsize, nrows) + yllc
+    xGrid, yGrid = np.meshgrid(x, y)
+    data = raster['rasterData']
+
+    # make new x, y vectors
+    xNew = np.arange(xllc, xllc+xExtent, cellSize)
+    yNew = np.arange(yllc, yllc+yExtent, cellSize)
+    print('x', x[-1], xNew[-1], y[-1], yNew[-1])
+
+    # use scipy interpolate to compute data on points of new mesh and save to raster dict
+    rasterNew = sp.interpolate.RectBivariateSpline(y, x, data)(yNew, xNew, grid=True)
+    raster['rasterData'] = rasterNew
+
+    # set new header
+    header.ncols = len(xNew)
+    header.nrows = len(yNew)
+    header.cellsize = cellSize
+
+    return raster
 
 
 def remeshDEM(cfg, dem):
@@ -774,7 +824,7 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
     refRaster : 2D numpy array
         refference Raster
     nameToCheck: str
-        name of raster that might overlap 
+        name of raster that might overlap
     nameRef: str
         name of reference raster
     crop : boolean
