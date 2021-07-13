@@ -24,7 +24,7 @@ Setup AvaFrame
       git clone https://github.com/avaframe/AvaFrame.git
       git clone https://github.com/avaframe/QGisAF.git
 
-#. Close the command prompt and open the `OSGeo4W Shell` from your start menu
+#. Close the command prompt and open the **OSGeo4W Shell** from your start menu
 
 #. Change to your HOME directory
 
@@ -32,7 +32,7 @@ Setup AvaFrame
 
       cd %userprofile%
 
-#. Some versions of QGis might require to activate the python 3 environment:
+#. Activate the python 3 environment:
 
     .. code-block:: bash
 
@@ -50,8 +50,8 @@ Setup AvaFrame
 
       python3 -m pip install --user -r requirements.txt
 
-#. Compile the com1DFA cython executable. *If this fails with an error, see the
-   additional info at the end of this section*. 
+#. Compile the com1DFA cython executable. **If this fails with an error, see the
+   additional info at** :ref:`operational:Troubleshooting cython compilation`.
 
     .. code-block::
 
@@ -63,7 +63,7 @@ Setup AvaFrame
 
       python3 -m pip install --user -e .
 
-#. Try to run the model::
+#. Run the model::
 
      cd avaframe
      python3 runOperational.py
@@ -80,10 +80,13 @@ Setup AvaFrame
      python3 -m pip install --user --upgrade numpy pandas
 
 
+Troubleshooting cython compilation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 In case you run into problems with the cython compilation (due to a missing c++
 compiler on Windows, etc), use following steps:
 
-#. Find your python version with:
+#. Find your python version in the **OSGeo4W Shell** with:
 
     .. code-block::
 
