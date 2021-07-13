@@ -12,7 +12,7 @@ import pickle
 from datetime import datetime
 import pandas as pd
 import matplotlib
-matplotlib.use('agg')
+# matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.path as mpltPath
 import matplotlib as mpl
@@ -383,6 +383,7 @@ def initializeMesh(cfg, demOri, num):
 
     # get normal vector of the grid mesh
     Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
+    # if no normal available, put 0 for Nx and Ny and 1 for Nz
     dem['Nx'] = np.where(np.isnan(Nx), 0., Nx)
     dem['Ny'] = np.where(np.isnan(Ny), 0., Ny)
     # build no data mask (used to find out of dem particles)
@@ -956,6 +957,7 @@ def DFAIterate(cfg, particles, fields, dem):
     cfgGen = cfg['GENERAL']
     # Initialise cpu timing
     Tcpu = {}
+    Tcpu['TimeLoop'] = 0
     Tcpu['Force'] = 0.
     Tcpu['ForceVect'] = 0.
     Tcpu['ForceSPH'] = 0.
@@ -1017,8 +1019,8 @@ def DFAIterate(cfg, particles, fields, dem):
 
     # Start time step computation
     while t <= tEnd*(1.+1.e-13) and iterate:
+        startTime = time.time()
         log.debug('Computing time step t = %f s, dt = %f s'% (t, dt))
-
         # Perform computations
         if featLF:
             particles, fields, Tcpu, dt = computeLeapFrogTimeStep(
@@ -1065,6 +1067,8 @@ def DFAIterate(cfg, particles, fields, dem):
         t = t + dt
         nIter = nIter + 1
         nIter0 = nIter0 + 1
+        tcpuTimeLoop = time.time() - startTime
+        Tcpu['TimeLoop'] = Tcpu['TimeLoop'] + tcpuTimeLoop
 
     Tcpu['nIter'] = nIter
     log.info('Ending computation at time t = %f s', t-dt)
@@ -1077,6 +1081,8 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
     log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
     log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
+    log.info(('cpu time TimeLoop = %s s' % (Tcpu['TimeLoop'] / nIter)))
+    log.info(('cpu time total other = %s s' % ((Tcpu['Force'] + Tcpu['ForceSPH'] + Tcpu['Pos'] + Tcpu['Neigh'] + Tcpu['Field']) / nIter)))
     Tsave.append(t-dt)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
