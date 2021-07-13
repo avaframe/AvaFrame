@@ -212,7 +212,6 @@ def remeshData(rasterFile, cellSize):
     # make new x, y vectors
     xNew = np.arange(xllc, xllc+xExtent, cellSize)
     yNew = np.arange(yllc, yllc+yExtent, cellSize)
-    print('x', x[-1], xNew[-1], y[-1], yNew[-1])
 
     # use scipy interpolate to compute data on points of new mesh and save to raster dict
     rasterNew = sp.interpolate.RectBivariateSpline(y, x, data)(yNew, xNew, grid=True)
