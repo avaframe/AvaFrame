@@ -614,13 +614,14 @@ def updatePositionC(cfg, particles, dem, force, DT):
       xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = normalProjectionIteratrive(
         xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
       zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
-      if iCellNew < 0:
-        # if not on the DEM take remove particle at next update
-        keepParticle[j] = 0
-        LxNew0 = Lx0
-        LyNew0 = Ly0
-        wNew = w
-        nRemove = nRemove + 1
+
+    if iCellNew < 0:
+      # if the particle is not on the DEM, memorize it and remove it at the next update
+      keepParticle[j] = 0
+      LxNew0 = Lx0
+      LyNew0 = Ly0
+      wNew = w
+      nRemove = nRemove + 1
 
     nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
@@ -966,7 +967,7 @@ def getNeighboursC(particles, dem):
     cdef double[:] yArray = particles['y']
 
     # initialize outputs
-    cdef int nCellsNeighbourGrid = (nColsNeighbourGrid-1)*(nRowsNeighbourGrid-1)
+    cdef int nCellsNeighbourGrid = nColsNeighbourGrid*nRowsNeighbourGrid
     cdef int[:] indPartInCell = np.zeros(nCellsNeighbourGrid + 1).astype('intc')
     cdef int[:] indPartInCell2 = np.zeros(nCellsNeighbourGrid + 1).astype('intc')
     cdef int[:] partInCell = np.zeros(Npart).astype('intc')
@@ -979,7 +980,7 @@ def getNeighboursC(particles, dem):
       indx = int(xArray[j] / cszNeighbourGrid)
       indy = int(yArray[j] / cszNeighbourGrid)
       # get index of cell containing the particle
-      ic = indx + (nColsNeighbourGrid-1) * indy
+      ic = indx + nColsNeighbourGrid * indy
       indPartInCell[ic+1] = indPartInCell[ic+1] + 1
     for j in range(nCellsNeighbourGrid):
       indPartInCell[j+1] = indPartInCell[j] + indPartInCell[j+1]
@@ -989,13 +990,13 @@ def getNeighboursC(particles, dem):
     for j in range(Npart):
         indx = int(xArray[j] / cszNeighbourGrid)
         indy = int(yArray[j] / cszNeighbourGrid)
-        ic = indx + (nColsNeighbourGrid-1) * indy
+        ic = indx + nColsNeighbourGrid * indy
         partInCell[indPartInCell2[ic+1]-1] = j
         indPartInCell2[ic+1] = indPartInCell2[ic+1] - 1
         indXDEM[j] = int(xArray[j] / cszDEM)
         indYDEM[j] = int(yArray[j] / cszDEM)
         # get index of cell containing the particle
-        inCellDEM[j] = indXDEM[j] + (nColsDEM-1) * indYDEM[j]
+        inCellDEM[j] = indXDEM[j] + nColsDEM * indYDEM[j]
 
     particles['inCellDEM'] = np.asarray(inCellDEM)
     particles['indXDEM'] = np.asarray(indXDEM)
@@ -1191,10 +1192,10 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
     if indy == nRowsNeighbourGrid - 1:
         rInd = 1
     for n in range(lInd, rInd):
-        ic = (indx - 1) + (nColsNeighbourGrid-1) * (indy + n)
+        ic = (indx - 1) + nColsNeighbourGrid * (indy + n)
         # make sure not to take particles from the other edge
-        imax = max(ic, (nColsNeighbourGrid-1) * (indy + n))
-        imin = min(ic+3, (nColsNeighbourGrid-1) * (indy + n + 1))
+        imax = max(ic, nColsNeighbourGrid * (indy + n))
+        imin = min(ic+3, nColsNeighbourGrid * (indy + n + 1))
         iPstart = indPartInCell[imax]
         iPend = indPartInCell[imin]
         # loop on all particles in neighbour boxes
@@ -1668,7 +1669,7 @@ cdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
   Lx0 = <int>math.floor(Lx)
   Ly0 = <int>math.floor(Ly)
   iCell = Ly0*ncols + Lx0
-  if (Lx0<0) | (Ly0<0) | (Lx0+1>ncols) | (Ly0+1>nrows):
+  if (Lx0<=0) | (Ly0<=0) | (Lx0+1>=ncols) | (Ly0+1>=nrows):
     # check if whether we are in the domain or not
     return -1
 
@@ -1812,7 +1813,7 @@ def getCellAndWeightspy(x, y, csz, interpOption): # <-- small wrapper to expose 
   return np.asarray(Lxy[0]), np.asarray(Lxy[1]), np.asarray(Lxy[2]), np.asarray(Lxy[3]), np.asarray(w[0]), np.asarray(w[1]), np.asarray(w[2]), np.asarray(w[3])
 
 
-@cython.wraparound(False)
+# @cython.wraparound(False)
 @cython.cdivision(True)
 cdef (double, double, int, int, int, double, double, double, double) normalProjectionIteratrive(
   double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
@@ -1915,7 +1916,7 @@ cdef (double, double, int, int, int, double, double, double, double) normalProje
   return xNew, yNew, iCell, Lx0, Ly0, w[0], w[1], w[2], w[3]
 
 
-@cython.wraparound(False)
+# @cython.wraparound(False)
 @cython.cdivision(True)
 cdef (double, double, double, int, int, int, double, double, double, double) distConservProjectionIteratrive(
   double xPrev, double yPrev, double zPrev, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
@@ -2013,7 +2014,8 @@ cdef (double, double, double, int, int, int, double, double, double, double) dis
     zNew = zPrev + (zNew-zPrev) * dist / distn
 
     # third step
-    # vertical projection of the point on the DEMiCell = getCells(xNew, yNew, ncols, nrows, csz)
+    # vertical projection of the point on the DEM
+    iCell = getCells(xNew, yNew, ncols, nrows, csz)
     if iCell < 0:
       # if not on the DEM exit with iCell=-1
       return xNew, yNew, zNew, iCell, -1, -1, 0, 0, 0, 0
