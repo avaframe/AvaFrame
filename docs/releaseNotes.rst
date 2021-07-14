@@ -1,9 +1,15 @@
 Release Notes
 =============
 
-
 current dev
 -----------
+
+ENHANCEMENTS
+
+FIX
+
+v0.5 (13. July 2021)
+--------------------
 
 ENHANCEMENTS
 
@@ -23,6 +29,16 @@ FIX
 - correct removal of particles 
 - AIMEC produces warning on empty runout area
 - adapt quickplot to new naming scheme
+
+Contributers:
+
+- **Code: core team**
+- **Colormaps: C.Tollinger**
+
+DOI for this release:
+
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5094509.svg
+   :target: https://doi.org/10.5281/zenodo.5094509
 
 
 v0.4.1 (9. June 2021)
