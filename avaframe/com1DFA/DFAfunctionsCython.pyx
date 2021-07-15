@@ -254,7 +254,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
           reprojectionIterations, thresholdProjection)
       else:
         # using a normal projection method
-        xEnd, yEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = normalProjectionIteratrive(
+        xEnd, yEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = samosProjectionIteratrive(
           xEnd, yEnd, zEnd, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
         if iCellEnd < 0:
           # if not on the DEM take x, y as end point
@@ -605,7 +605,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
         x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, ncols, nrows, interpOption, reprojectionIterations, thresholdProjection)
     else:
 
-      xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = normalProjectionIteratrive(
+      xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = samosProjectionIteratrive(
         xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
       zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
 
@@ -1601,7 +1601,7 @@ cpdef double scalProd(double ux, double uy, double uz, double vx, double vy, dou
 
 
 @cython.cdivision(True)
-cdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
+cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
   """ Locate point on grid.
 
   Parameters
@@ -1635,7 +1635,7 @@ cdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
   Lx0 = <int>math.floor(Lx)
   Ly0 = <int>math.floor(Ly)
   iCell = Ly0*ncols + Lx0
-  if (Lx0<0) | (Ly0<0) | (Lx0+1>ncols) | (Ly0+1>nrows):
+  if (Lx0<0) | (Ly0<0) | (Lx0+1>=ncols) | (Ly0+1>=nrows):
     # check whether we are in the domain or not
     return -1
 
@@ -1643,7 +1643,7 @@ cdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
 
 
 @cython.cdivision(True)
-cdef (double, double, double, double) getWeights(double x, double y, int iCell, double csz, int ncols, int interpOption):
+cpdef (double, double, double, double) getWeights(double x, double y, int iCell, double csz, int ncols, int interpOption):
   """ Get weight for interpolation from grid to single point location
 
   3 Options available : -0: nearest neighbour interpolation
@@ -1720,10 +1720,110 @@ cpdef (int, int, int, double, double, double, double) getCellAndWeights(double x
 
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (double, double, int, int, int, double, double, double, double) normalProjectionIteratrive(
+cpdef (double, double, int, int, int, double, double, double, double) normalProjectionIteratrive(
+  double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
+  double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption,
+  int reprojectionIterations, double threshold):
+  """ Find the orthogonal projection of a point on a mesh
+
+  Iterative method to find the projection of a point on a surface defined by its mesh
+  Parameters
+  ----------
+      xOld: float
+          x coordinate of the point to project
+      yOld: float
+          y coordinate of the point to project
+      zOld: float
+          z coordinate of the point to project
+      ZDEM: 2D array
+          z component of the DEM field at the grid nodes
+      Nx: 2D array
+          x component of the normal vector field at the grid nodes
+      Ny: 2D array
+          y component of the normal vector field at the grid nodes
+      Nz: 2D array
+          z component of the normal vector field at the grid nodes
+      csz: float
+          cellsize of the grid
+      interpOption: int
+          -0: nearest neighbour interpolation
+          -1: equal weights interpolation
+          -2: bilinear interpolation
+      reprojectionIterations: int
+          maximum number or iterations
+      threshold: double
+          stop criterion for reprojection, stops when the distance between two iterations
+          is smaller than threshold * csz
+    Returns
+    -------
+    xNew: float
+        x coordinate of the projected point
+    yNew: float
+        y coordinate of the projected point
+    iCell: int
+        index of the nearest lower left cell
+    Lx0: int
+        colomn of the nearest lower left cell
+    Ly0: int
+        row of the nearest lower left cell
+    w: float[4]
+        corresponding weights
+    """
+  cdef double zTemp, zn, xNew, yNew, zNew, dist, xPrev, yPrev, zPrev
+  cdef double nx, ny, nz
+  cdef int Lxi, Lyi, Lxj, Lyj
+  cdef int Lx0, Ly0, iCell
+  cdef double w[4]
+  xNew = xOld
+  yNew = yOld
+  zNew = zOld
+  iCell = getCells(xNew, yNew, ncols, nrows, csz)
+  if iCell < 0:
+    # if not on the DEM exit with iCell=-1
+    return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
+  w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
+  Lx0 = iCell % ncols
+  Ly0 = iCell / ncols
+  dist = csz
+  # iterate
+  while reprojectionIterations > 0 and dist > threshold*csz:
+    reprojectionIterations = reprojectionIterations - 1
+    xPrev = xNew
+    yPrev = yNew
+    zPrev = zNew
+    # vertical projection of the point
+    zTemp = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], ZDEM)
+    # normal vector at this vertical projection location
+    # if we take the normal at the new particle position)
+    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+    nx, ny, nz = normalize(nx, ny, nz)
+    # What I think is better for normal projection
+    # Normal component of the vector between the initial and projected point
+    zn = (xNew-xOld) * nx + (yNew-yOld) * ny + (zTemp-zOld) * nz
+    # correct position with the normal part
+    xNew = xOld + zn * nx
+    yNew = yOld + zn * ny
+    zNew = zOld + zn * nz
+    # get cell
+    iCell = getCells(xNew, yNew, ncols, nrows, csz)
+    if iCell < 0:
+      # if not on the DEM exit with iCell=-1
+      return xNew, yNew, iCell, -1, -1, 0, 0, 0, 0
+    w[0], w[1], w[2], w[3] = getWeights(xNew, yNew, iCell, csz, ncols, interpOption)
+    Lx0 = iCell % ncols
+    Ly0 = iCell / ncols
+
+    dist = norm(xNew-xPrev, yNew-yPrev, zNew-zPrev)
+
+  return xNew, yNew, iCell, Lx0, Ly0, w[0], w[1], w[2], w[3]
+
+
+@cython.wraparound(False)
+@cython.cdivision(True)
+cpdef (double, double, int, int, int, double, double, double, double) samosProjectionIteratrive(
   double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
   double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption, int reprojectionIterations):
-  """ Find the orthogonal projection of a point on a mesh
+  """ Find the projection of a point on a mesh (comes from samos)
 
   Iterative method to find the projection of a point on a surface defined by its mesh
   Parameters
@@ -1799,13 +1899,6 @@ cdef (double, double, int, int, int, double, double, double, double) normalProje
     xNew = xNew + zn * nx
     yNew = yNew + zn * ny
     zNew = zNew + zn * nz
-    # What I think is better for normal projection
-    # # Normal component of the vector between the initial and projected point
-    # zn = (xNew-xOld) * nx + (yNew-yOld) * ny + (zTemp-zOld) * nz
-    # # correct position with the normal part
-    # xNew = xOld + zn * nx
-    # yNew = yOld + zn * ny
-    # zNew = zOld + zn * nz
     # get cell
     iCell = getCells(xNew, yNew, ncols, nrows, csz)
     if iCell < 0:
@@ -1827,11 +1920,12 @@ cdef (double, double, int, int, int, double, double, double, double) normalProje
 
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (double, double, double, int, int, int, double, double, double, double) distConservProjectionIteratrive(
+cpdef (double, double, double, int, int, int, double, double, double, double) distConservProjectionIteratrive(
   double xPrev, double yPrev, double zPrev, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
   double[:,:] nzArray, double xOld, double yOld, double zOld, double csz, int ncols, int nrows, int interpOption,
   int reprojectionIterations, double threshold):
-  """ Find the orthogonal projection of a point on a mesh
+  """ Find the projection of a point on a mesh conserving the distance
+  with the previous time step position
 
   Iterative method to find the projection of a point on a surface defined by its mesh
   Parameters
@@ -1967,7 +2061,7 @@ def projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vArray, double
 
 
 @cython.boundscheck(False)
-cdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double w3, double[:, :] V):
+cpdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double w3, double[:, :] V):
   """ Interpolate vector field from grid to single point location
 
   Originaly created to get the normal vector at location (x,y) given the
@@ -2001,7 +2095,7 @@ cdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double 
 
 
 @cython.boundscheck(False)
-cdef (double, double, double) getVector(
+cpdef (double, double, double) getVector(
   int Lx0, int Ly0, double w0, double w1, double w2, double w3,
   double[:, :] Nx, double[:, :] Ny, double[:, :] Nz):
   """ Interpolate vector field from grid to single point location
