@@ -3,6 +3,8 @@ import numpy as np
 import math
 import pytest
 import logging
+import os
+import configparser
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
@@ -268,3 +270,64 @@ def test_areaPoly(capfd):
     area = geoTrans.areaPoly(x, y)
     tol = 1e-14
     assert area == pytest.approx(A, rel=tol)
+
+
+def test_rmeshData(tmp_path):
+    """ test interpolating data onto different mesh """
+
+    headerInfo = IOf.cASCheader()
+    headerInfo.cellsize = 5
+    headerInfo.ncols = 4
+    headerInfo.nrows = 4
+    headerInfo.xllcenter = 0
+    headerInfo.yllcenter = 0
+    headerInfo.noDataValue = -9999
+    data = np.asarray([[1, 1, 1, 1],
+                      [1, 4, 4, 1],
+                      [1, 4, 4, 1],
+                      [1, 1, 1, 1]])
+
+    outFile = os.path.join(tmp_path, 'test.asc')
+    IOf.writeResultToAsc(headerInfo, data, outFile, flip=False)
+
+    dataNew = geoTrans.remeshData(outFile, 2.)
+    dataRaster = dataNew['rasterData']
+    indNoData = np.where(dataRaster == -9999)
+
+    assert dataNew['rasterData'].shape[0] == 8
+    assert dataNew['rasterData'].shape[1] == 8
+    assert len(indNoData[0]) == 0
+    assert np.argmax(dataRaster) == 36
+
+
+
+def test_rmeshDEM(tmp_path):
+    """ test interpolating data onto different mesh """
+
+    headerInfo = IOf.cASCheader()
+    headerInfo.cellsize = 5
+    headerInfo.ncols = 4
+    headerInfo.nrows = 4
+    headerInfo.xllcenter = 0
+    headerInfo.yllcenter = 0
+    headerInfo.noDataValue = -9999
+    data = np.asarray([[1, 1, 1, 1],
+                      [1, 4, 4, 1],
+                      [1, 4, 4, 1],
+                      [1, 1, 1, 1]])
+
+    dataDict = {}
+    dataDict['rasterData'] = data
+    dataDict['header'] = headerInfo
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'meshCellSizeThreshold': '0.0001', 'meshCellSize': '2.'}
+
+    # call function
+    dataNew = geoTrans.remeshDEM(cfg['GENERAL'], dataDict)
+    dataRaster = dataNew['rasterData']
+    indNoData = np.where(dataRaster == -9999)
+
+    assert dataNew['rasterData'].shape[0] == 8
+    assert dataNew['rasterData'].shape[1] == 8
+    assert len(indNoData[0]) == 0
+    assert np.argmax(dataRaster) == 36

@@ -179,6 +179,8 @@ def resizeData(raster, rasterRef):
 def remeshData(rasterFile, cellSize):
     """ compute raster data on a new mesh with cellSize using scipy RectBivariateSpline
 
+        the new mesh is as big or smaller as the original mesh
+
     Parameters
     ----------
     rasterFile : str
@@ -202,16 +204,22 @@ def remeshData(rasterFile, cellSize):
     yllc = header.yllcenter
     ncols = header.ncols
     nrows = header.nrows
-    xExtent =  ncols * header.cellsize
-    yExtent =  nrows * header.cellsize
-    x = np.linspace(0, (ncols-1)*header.cellsize, ncols) + xllc
-    y = np.linspace(0, (nrows-1)*header.cellsize, nrows) + yllc
+    xExtent = (ncols-1) * header.cellsize
+    yExtent = (nrows-1) * header.cellsize
+    x = np.linspace(0, xExtent, ncols) + xllc
+    y = np.linspace(0, yExtent, nrows) + yllc
     xGrid, yGrid = np.meshgrid(x, y)
     data = raster['rasterData']
 
     # make new x, y vectors
-    xNew = np.arange(xllc, xllc+xExtent, cellSize)
-    yNew = np.arange(yllc, yllc+yExtent, cellSize)
+    nColsNew = int(xExtent/cellSize+1)
+    nRowsNew = int(yExtent/cellSize+1)
+    xNew = np.linspace(0, (nColsNew-1)*cellSize, nColsNew) + xllc
+    yNew = np.linspace(0, (nRowsNew-1)*cellSize, nRowsNew) + yllc
+    diffExtentX = xExtent -(nColsNew-1)*cellSize
+    diffExtentY = yExtent -(nRowsNew-1)*cellSize
+    log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
+    print('Remeshed data extent x: %f and y %f' % (diffExtentX, diffExtentY))
 
     # use scipy interpolate to compute data on points of new mesh and save to raster dict
     rasterNew = sp.interpolate.RectBivariateSpline(y, x, data)(yNew, xNew, grid=True)
@@ -227,6 +235,8 @@ def remeshData(rasterFile, cellSize):
 
 def remeshDEM(cfg, dem):
     """ change DEM cell size by reprojecting on a new grid
+
+    the new DEM is as big or smaller as the original DEM
 
     Interpolation is based on griddata with a cubic method. Here would be the place
     to change the order of the interpolation or to switch to another interpolation method.
@@ -259,8 +269,10 @@ def remeshDEM(cfg, dem):
     # remesh if input DEM size does not correspond to the computational cellSize
     if np.abs(cszNew - cszDEM) > cszThreshold:
         log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszNew))
-        x = np.linspace(0, (nColsDEM-1)*cszDEM, nColsDEM) + xllcenter
-        y = np.linspace(0, (nRowsDEM-1)*cszDEM, nRowsDEM) + yllcenter
+        xExtent = (nColsDEM-1) * headerDEM.cellsize
+        yExtent = (nRowsDEM-1) * headerDEM.cellsize
+        x = np.linspace(0, xExtent, nColsDEM) + xllcenter
+        y = np.linspace(0, yExtent, nRowsDEM) + yllcenter
         xGrid, yGrid = np.meshgrid(x, y)
         xGrid = xGrid.flatten()
         yGrid = yGrid.flatten()
@@ -274,20 +286,22 @@ def remeshDEM(cfg, dem):
 
         headerRemeshed = IOf.cASCheader()
         headerRemeshed.cellsize = cszNew
-        nColsRemeshed = np.floor(nColsDEM * cszDEM / cszNew)
-        nRowsRemeshed = np.floor(nRowsDEM * cszDEM / cszNew)
-        headerRemeshed.ncols = int(nColsRemeshed)
-        headerRemeshed.nrows = int(nRowsRemeshed)
+        nColsRemeshed = int(xExtent/cszNew+1)
+        nRowsRemeshed = int(yExtent/cszNew+1)
+        headerRemeshed.ncols = nColsRemeshed
+        headerRemeshed.nrows = nRowsRemeshed
         headerRemeshed.xllcenter = xllcenter
         headerRemeshed.yllcenter = yllcenter
         headerRemeshed.noDataValue = headerDEM.noDataValue
 
         dem['header'] = headerRemeshed
-        xNew = np.linspace(0, (nColsRemeshed-1)*cszNew, int(nColsRemeshed)) + xllcenter
-        yNew = np.linspace(0, (nRowsRemeshed-1)*cszNew, int(nRowsRemeshed)) + yllcenter
+        xNew = np.linspace(0, (nColsRemeshed-1)*cszNew, nColsRemeshed) + xllcenter
+        yNew = np.linspace(0, (nRowsRemeshed-1)*cszNew, nRowsRemeshed) + yllcenter
         xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
         zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic', fill_value=headerDEM.noDataValue)
-
+        diffExtentX = xExtent -(nColsRemeshed-1)*cszNew
+        diffExtentY = yExtent -(nRowsRemeshed-1)*cszNew
+        log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
         dem['rasterData'] = zNew
 
     return dem
