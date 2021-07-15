@@ -1,5 +1,6 @@
 """Tests for module com1DFAtools"""
 import numpy as np
+import matplotlib.pyplot as plt
 import pytest
 
 # Local imports
@@ -131,6 +132,105 @@ def test_getWeightsC(capfd):
             assert ff10 == pytest.approx(f10, rel=atol)
             assert ff01 == pytest.approx(f01, rel=atol)
             assert ff11 == pytest.approx(f11, rel=atol)
+
+    ncols = 4
+    nrows = 3
+    csz = 1.
+    X = np.array([0., 1, -0.5, 0, 0, 1, 3, 3, 3.1, 2])
+    Y = np.array([0., -0.5, 1, 1, 2, 0, 0, 2, 1, 2.1])
+    cellInd = np.array([0, -1, -1, 4, -1, 1, -1, -1, -1, -1])
+    for x, y, res in zip(X, Y, cellInd):
+        iCell = DFAfunC.getCells(x, y, ncols, nrows, csz)
+        print(iCell)
+        assert iCell == res
+
+
+def test_reprojectionC(capfd):
+    '''test reprojection'''
+    ncols = 100
+    nrows = 10
+    csz = 5
+    header = IOf.cASCheader()
+    header.ncols = ncols
+    header.nrows = nrows
+    header.cellsize = csz
+    dem = {}
+    dem['header'] = header
+    x0 = 500
+    z0 = 1000
+    X = np.linspace(0, csz*(ncols-1), ncols)
+    Y = np.linspace(0, csz*(nrows-1), nrows)
+    XX, YY = np.meshgrid(X, Y)
+    ZZ = z0/(x0*x0) * (XX-x0)*(XX-x0)
+    dem['rasterData'] = ZZ
+    num = 1
+    interpOption = 2
+    threshold = 0.001
+
+    # build normals corresponding to dem
+    Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
+
+    # expected normal projection
+    xpExpected = 242
+    ypExpected = 25
+    Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xpExpected, ypExpected, ncols, nrows, csz, interpOption)
+    zpExpected = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
+
+    # make a point above the parabola at dist d:
+    d = 15
+    # normal vector
+    nx = -2*z0/(x0*x0)*(xpExpected-x0)
+    ny = 0
+    nz = 1
+    nx, ny, nz = DFAfunC.normalize(nx, ny, nz)
+
+
+    print(xpExpected, zpExpected)
+    x1 = xpExpected + d*nx
+    y1 = ypExpected + d*ny
+    z1 = zpExpected + d*nz
+    fig = plt.figure()
+    ax = plt.subplot(111)
+    ax.plot(X, ZZ[5, :], 'ok-')
+    ax.plot(x1, z1, 'ro')
+    ax.plot(xpExpected, zpExpected, 'go')
+
+    for reprojectionIterations in range(10):
+        xpn, ypn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.samosProjectionIteratrive(x1, y1, z1, ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations)
+        zpn = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
+        print(xpn, zpn)
+        ax.plot(xpn, zpn, 'bo')
+    ax.set_aspect('equal', 'box')
+    # plt.show()
+
+
+    print(xpExpected, zpExpected)
+    x1 = xpExpected + d*nx
+    y1 = ypExpected + d*ny
+    z1 = zpExpected + d*nz
+    fig = plt.figure()
+    ax = plt.subplot(111)
+    ax.plot(X, ZZ[5, :], 'ok-')
+    ax.plot(x1, z1, 'ro')
+    ax.plot(xpExpected, zpExpected, 'go')
+
+    for reprojectionIterations in range(10):
+        xpn, ypn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.normalProjectionIteratrive(x1, y1, z1, ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations, threshold)
+        zpn = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
+        print(xpn, zpn)
+        ax.plot(xpn, zpn, 'bo')
+
+    ax.plot([xpExpected, x1], [zpExpected, z1], 'b')
+    ax.set_aspect('equal', 'box')
+    # plt.show()
+
+    atol = 1e-2
+
+    dist = DFAfunC.norm(xpn-xpExpected, ypn-ypExpected, zpn-zpExpected)
+    assert dist <= csz*threshold
+    assert xpn == pytest.approx(xpExpected, rel=atol)
+    assert ypn == pytest.approx(ypExpected, rel=atol)
+    assert zpn == pytest.approx(zpExpected, rel=atol)
 
 
 def test_getNormalMesh(capfd):
