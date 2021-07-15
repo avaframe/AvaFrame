@@ -212,10 +212,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       areaPart = m / (h * rho)
 
       # get cell and weights
-      iCell = getCells(x, y, ncols, nrows, csz)
-      w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
-      Lx0 = iCell % ncols
-      Ly0 = iCell / ncols
+      Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
 
       # get normal at the particle location
       nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
@@ -623,10 +620,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
     # compute the distance traveled by the particle
     lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
     # compute average normal between the beginning and end of the time step
-    iCell = getCells(x, y, ncols, nrows, csz)
-    w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
-    Lx0 = iCell % ncols
-    Ly0 = iCell / ncols
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
     nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
     nx, ny, nz = normalize(nx, ny, nz)
     nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
@@ -861,10 +855,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
-    iCell = getCells(x, y, ncols, nrows, csz)
-    w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
-    Lx0 = iCell % ncols
-    Ly0 = iCell / ncols
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
     # add the component of the points value to the 4 neighbour grid points
     for i in range(4):
       indx = Lx0 + i%2 # + 0 1 0 1
@@ -908,10 +899,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   for j in range(Npart):
     x = xArray[j]
     y = yArray[j]
-    iCell = getCells(x, y, ncols, nrows, csz)
-    w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
-    Lx0 = iCell % ncols
-    Ly0 = iCell / ncols
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
     hbb = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], FDBilinear)
     hBB[j] = hbb
 
@@ -927,7 +915,7 @@ def updateFieldsC(cfg, particles, dem, fields):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def getNeighboursC(particles, dem):
+def getNeighborsC(particles, dem):
     """ Locate particles on DEM and neighbour search grid
 
     Ĺocate each particle in a grid cell (both DEM and neighbour search grid) and build the
@@ -975,8 +963,8 @@ def getNeighboursC(particles, dem):
     # Count number of particles in each SPH grid cell
     cdef int indx, indy, ic
     for j in range(Npart):
-      indx = int(xArray[j] / cszNeighbourGrid)
-      indy = int(yArray[j] / cszNeighbourGrid)
+      indx = <int>math.round(xArray[j] / cszNeighbourGrid)
+      indy = <int>math.round(yArray[j] / cszNeighbourGrid)
       # get index of cell containing the particle
       ic = indx + nColsNeighbourGrid * indy
       indPartInCell[ic+1] = indPartInCell[ic+1] + 1
@@ -986,13 +974,13 @@ def getNeighboursC(particles, dem):
 
     # make the list of which particles are in which cell
     for j in range(Npart):
-        indx = int(xArray[j] / cszNeighbourGrid)
-        indy = int(yArray[j] / cszNeighbourGrid)
+        indx = <int>math.round(xArray[j] / cszNeighbourGrid)
+        indy = <int>math.round(yArray[j] / cszNeighbourGrid)
         ic = indx + nColsNeighbourGrid * indy
         partInCell[indPartInCell2[ic+1]-1] = j
         indPartInCell2[ic+1] = indPartInCell2[ic+1] - 1
-        indXDEM[j] = int(xArray[j] / cszDEM)
-        indYDEM[j] = int(yArray[j] / cszDEM)
+        indXDEM[j] = <int>math.round(xArray[j] / cszDEM)
+        indYDEM[j] = <int>math.round(yArray[j] / cszDEM)
         # get index of cell containing the particle
         inCellDEM[j] = indXDEM[j] + nColsDEM * indYDEM[j]
 
@@ -1152,15 +1140,12 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
     uy = uyArray[j]
     uz = uzArray[j]
     # locate particle in SPH grid
-    indx = int(x / cszNeighbourGrid)
-    indy = int(y / cszNeighbourGrid)
+    indx = <int>math.round(x / cszNeighbourGrid)
+    indy = <int>math.round(y / cszNeighbourGrid)
 
     if SPHoption > 1:
       # get normal vector
-      iCell = getCells(x, y, nColsNormal, nRowsNormal, cszNormal)
-      w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, cszNormal, nColsNormal, interpOption)
-      Lx0 = iCell % nColsNormal
-      Ly0 = iCell / nColsNormal
+      Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
       nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
       nx, ny, nz = normalize(nx, ny, nz)
       # projection of gravity on normal vector
@@ -1176,7 +1161,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
       else:
           ux, uy, uz = normalize(ux, uy, uz)
 
-      uxOrtho, uyOrtho, uzOrtho = croosProd(nx, ny, nz, ux, uy, uz)
+      uxOrtho, uyOrtho, uzOrtho = crossProd(nx, ny, nz, ux, uy, uz)
       uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
 
       g1 = nx/(nz)
@@ -1440,10 +1425,7 @@ def computeFDC(cfg, particles, header, double[:, :] nxArray, double[:, :] nyArra
     gz = 0
     indx = indX[j]
     indy = indY[j]
-    iCell = getCells(x, y, ncols, nrows, csz)
-    w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
-    Lx0 = iCell % ncols
-    Ly0 = iCell / ncols
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
     nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
     nx, ny, nz = normalize(nx, ny, nz)
 
@@ -1515,7 +1497,7 @@ def computeFDC(cfg, particles, header, double[:, :] nxArray, double[:, :] nyArra
   return H, C, W
 
 
-cdef double norm(double x, double y, double z):
+cpdef double norm(double x, double y, double z):
   """ Compute the Euclidean norm of the vector (x, y, z).
 
   (x, y, z) can be numpy arrays.
@@ -1536,10 +1518,7 @@ cdef double norm(double x, double y, double z):
   """
   return math.sqrt(x*x + y*y + z*z)
 
-def normpy(x, y, z): # <-- small wrapper to expose norm() to Python
-    return np.asarray(norm(x, y, z))
-
-cdef double norm2(double x, double y, double z):
+cpdef double norm2(double x, double y, double z):
   """ Compute the Euclidean norm of the vector (x, y, z).
 
   (x, y, z) can be numpy arrays.
@@ -1560,12 +1539,9 @@ cdef double norm2(double x, double y, double z):
   """
   return x*x + y*y + z*z
 
-def norm2py(x, y, z): # <-- small wrapper to expose norm2() to Python
-    return np.asarray(norm2(x, y, z))
-
 
 @cython.cdivision(True)
-cdef (double, double, double) normalize(double x, double y, double z):
+cpdef (double, double, double) normalize(double x, double y, double z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
 
   (x, y, z) can be np arrays.
@@ -1588,8 +1564,6 @@ cdef (double, double, double) normalize(double x, double y, double z):
       zn: numpy array
           z component of the normalized vector
   """
-  # TODO : avoid error message when input vector is zero and make sure
-  # to return zero
   cdef double norme
   norme = norm(x, y, z)
   if norme>0:
@@ -1602,13 +1576,8 @@ cdef (double, double, double) normalize(double x, double y, double z):
   return x, y, z
 
 
-def normalizepy(x, y, z): # <-- small wrapper to expose normalize() to Python
-  x, y, z = normalize(x, y, z)
-  return np.asarray(x), np.asarray(y), np.asarray(z)
-
-
 @cython.cdivision(True)
-cdef (double, double, double) croosProd(double ux, double uy, double uz, double vx, double vy, double vz):
+cpdef (double, double, double) crossProd(double ux, double uy, double uz, double vx, double vy, double vz):
   """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
   """
   cdef double wx = uy * vz - uz * vy
@@ -1617,19 +1586,11 @@ cdef (double, double, double) croosProd(double ux, double uy, double uz, double 
   return wx, wy, wz
 
 
-def crossProdpy(x, y, z, u, v, w): # <-- small wrapper to expose croosProd() to Python
-  wx, wy, wz = croosProd(x, y, z, u, v, w)
-  return np.asarray(wx), np.asarray(wy), np.asarray(wz)
-
-
-cdef double scalProd(double ux, double uy, double uz, double vx, double vy, double vz):
+cpdef double scalProd(double ux, double uy, double uz, double vx, double vy, double vz):
   """ Compute scalar product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
   """
   return ux*vx + uy*vy + uz*vz
 
-def scalProdpy(x, y, z, u, v, w): # <-- small wrapper to expose scalProd() to Python
-  s = scalProd(x, y, z, u, v, w)
-  return np.asarray(s)
 
 
 @cython.cdivision(True)
@@ -1667,7 +1628,7 @@ cdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
   Lx0 = <int>math.floor(Lx)
   Ly0 = <int>math.floor(Ly)
   iCell = Ly0*ncols + Lx0
-  if (Lx0<=0) | (Ly0<=0) | (Lx0+1>=ncols) | (Ly0+1>=nrows):
+  if (Lx0<0) | (Ly0<0) | (Lx0+1>ncols) | (Ly0+1>nrows):
     # check whether we are in the domain or not
     return -1
 
@@ -1737,15 +1698,17 @@ cdef (double, double, double, double) getWeights(double x, double y, int iCell, 
 
   return w[0], w[1], w[2], w[3]
 
-
-def getCellAndWeightspy(x, y, csz, ncols, nrows, interpOption): # <-- small wrapper to expose getWeightspy() to Python
+@cython.boundscheck(False)  # Deactivate bounds checking
+@cython.wraparound(False)   # Deactivate negative indexing.
+@cython.cdivision(True)
+cpdef (int, int, int, double, double, double, double) getCellAndWeights(double x, double y, int ncols, int nrows, double csz, int interpOption):
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
   iCell = getCells(x, y, ncols, nrows, csz)
   w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
   Lx0 = iCell % ncols
   Ly0 = iCell / ncols
-  return np.asarray(Lx0), np.asarray(Ly0), np.asarray(iCell), np.asarray(w[0]), np.asarray(w[1]), np.asarray(w[2]), np.asarray(w[3])
+  return Lx0, Ly0, iCell, w[0], w[1], w[2], w[3]
 
 
 @cython.wraparound(False)
@@ -1989,10 +1952,7 @@ def projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vArray, double
     x = xArray[j]
     y = yArray[j]
 
-    iCell = getCells(x, y, ncols, nrows, csz)
-    w[0], w[1], w[2], w[3] = getWeights(x, y, iCell, csz, ncols, interpOption)
-    Lx0 = iCell % ncols
-    Ly0 = iCell / ncols
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
 
     v[j] = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], vArray)
 
