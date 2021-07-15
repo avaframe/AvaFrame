@@ -206,6 +206,12 @@ def test_reprojectionC(capfd):
     # plt.show()
     plt.close(fig)
 
+    atol = 1e-2
+
+    assert xpn == pytest.approx(xpExpected, rel=atol)
+    assert ypn == pytest.approx(ypExpected, rel=atol)
+    assert zpn == pytest.approx(zpExpected, rel=atol)
+
     fig = plt.figure()
     ax = plt.subplot(111)
     ax.plot(X, ZZ[5, :], 'ok-')
