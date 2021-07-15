@@ -272,8 +272,8 @@ def test_areaPoly(capfd):
     assert area == pytest.approx(A, rel=tol)
 
 
-def test_rmeshData(tmp_path):
-    """ test interpolating data onto different mesh """
+def test_remeshData(tmp_path):
+    """ test shape of interpolated data onto new mesh """
 
     headerInfo = IOf.cASCheader()
     headerInfo.cellsize = 5
@@ -301,8 +301,8 @@ def test_rmeshData(tmp_path):
 
 
 
-def test_rmeshDEM(tmp_path):
-    """ test interpolating data onto different mesh """
+def test_remeshDEM(tmp_path):
+    """ test size of interpolated data onto new mesh """
 
     headerInfo = IOf.cASCheader()
     headerInfo.cellsize = 5
