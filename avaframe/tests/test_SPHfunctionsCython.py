@@ -175,14 +175,16 @@ def test_reprojectionC(capfd):
     ypExpected = 25
     Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xpExpected, ypExpected, ncols, nrows, csz, interpOption)
     zpExpected = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
+    nx, ny, nz = DFAfunC.getVector(Lx0, Ly0, w0, w1, w2, w3, Nx, Ny, Nz)
+    nx, ny, nz = DFAfunC.normalize(nx, ny, nz)
+    # previous position
+    xPrev = 230
+    yPrev = 25
+    Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xPrev, yPrev, ncols, nrows, csz, interpOption)
+    zPrev = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
 
     # make a point above the parabola at dist d:
     d = 15
-    # normal vector
-    nx = -2*z0/(x0*x0)*(xpExpected-x0)
-    ny = 0
-    nz = 1
-    nx, ny, nz = DFAfunC.normalize(nx, ny, nz)
 
 
     print(xpExpected, zpExpected)
@@ -202,12 +204,8 @@ def test_reprojectionC(capfd):
         ax.plot(xpn, zpn, 'bo')
     ax.set_aspect('equal', 'box')
     # plt.show()
+    plt.close(fig)
 
-
-    print(xpExpected, zpExpected)
-    x1 = xpExpected + d*nx
-    y1 = ypExpected + d*ny
-    z1 = zpExpected + d*nz
     fig = plt.figure()
     ax = plt.subplot(111)
     ax.plot(X, ZZ[5, :], 'ok-')
@@ -223,6 +221,7 @@ def test_reprojectionC(capfd):
     ax.plot([xpExpected, x1], [zpExpected, z1], 'b')
     ax.set_aspect('equal', 'box')
     # plt.show()
+    plt.close(fig)
 
     atol = 1e-2
 
@@ -231,6 +230,32 @@ def test_reprojectionC(capfd):
     assert xpn == pytest.approx(xpExpected, rel=atol)
     assert ypn == pytest.approx(ypExpected, rel=atol)
     assert zpn == pytest.approx(zpExpected, rel=atol)
+
+    fig = plt.figure()
+    ax = plt.subplot(111)
+    ax.plot(X, ZZ[5, :], 'ok-')
+    ax.plot(x1, z1, 'ro')
+    ax.plot(xPrev, zPrev, 'mo')
+    ax.plot(xpExpected, zpExpected, 'go')
+
+    for reprojectionIterations in range(10):
+        xpn, ypn, zpn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.distConservProjectionIteratrive(xPrev, yPrev, zPrev, ZZ, Nx, Ny, Nz, x1, y1, z1, csz, ncols, nrows, interpOption, reprojectionIterations, threshold)
+        print(xpn, zpn)
+        ax.plot(xpn, zpn, 'bo')
+
+    ax.plot([xpExpected, x1], [zpExpected, z1], 'b')
+    dist0 = DFAfunC.norm(x1-xPrev, y1-yPrev, z1-zPrev)
+    circ = plt.Circle([xPrev, zPrev], dist0, fill=True)
+    ax.add_patch(circ)
+    ax.set_aspect('equal', 'box')
+    # plt.show()
+    plt.close(fig)
+
+    atol = 1e-2
+
+    dist0 = DFAfunC.norm(x1-xPrev, y1-yPrev, z1-zPrev)
+    dist = DFAfunC.norm(xpn-xPrev, ypn-yPrev, zpn-zPrev)
+    assert abs(dist-dist0) <= threshold*(dist0 + csz)
 
 
 def test_getNormalMesh(capfd):
