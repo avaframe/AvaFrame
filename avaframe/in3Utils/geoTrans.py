@@ -176,6 +176,50 @@ def resizeData(raster, rasterRef):
         return raster['rasterData'], rasterRef['rasterData']
 
 
+def getMeshXY(rasterDict, cellSizeNew=None):
+    """ Get x and y vectors for mesh with given number of rows and columns, lowerleftcenter and cellSize
+
+        Parameters
+        -----------
+        rasterDict: dict
+            'rasterData' : 2D numpy array of data
+            'header': class with info on ncols, nrows, csz, xllcenter, yllcenter, noDataValue
+
+        Returns
+        --------
+        x, y: 1D numpy arrays
+            vector of x and y values for mesh center coordinates
+        xExtent, yExtent: float
+            extent of mesh from first cell center to last cell center in x/y
+
+    """
+
+    header = rasterDict['header']
+    xllc = header.xllcenter
+    yllc = header.yllcenter
+    ncols = header.ncols
+    nrows = header.nrows
+    xExtent = (ncols-1) * header.cellsize
+    yExtent = (nrows-1) * header.cellsize
+    x = np.linspace(0, xExtent, ncols) + xllc
+    y = np.linspace(0, yExtent, nrows) + yllc
+
+    if cellSizeNew != None:
+
+        nColsNew = int(xExtent/cellSizeNew+1)
+        nRowsNew = int(yExtent/cellSizeNew+1)
+        xNew = np.linspace(0, (nColsNew-1)*cellSizeNew, nColsNew) + xllc
+        yNew = np.linspace(0, (nRowsNew-1)*cellSizeNew, nRowsNew) + yllc
+        diffExtentX = xExtent -(nColsNew-1)*cellSizeNew
+        diffExtentY = yExtent -(nRowsNew-1)*cellSizeNew
+
+        return x, y, xNew, yNew, diffExtentX, diffExtentY
+
+    else:
+
+        return x, y, xExtent, yExtent
+
+
 def remeshData(rasterFile, cellSize):
     """ compute raster data on a new mesh with cellSize using scipy RectBivariateSpline
 
@@ -199,25 +243,11 @@ def remeshData(rasterFile, cellSize):
     raster = IOf.readRaster(rasterFile)
     header = raster['header']
 
-    # fetch shape info
-    xllc = header.xllcenter
-    yllc = header.yllcenter
-    ncols = header.ncols
-    nrows = header.nrows
-    xExtent = (ncols-1) * header.cellsize
-    yExtent = (nrows-1) * header.cellsize
-    x = np.linspace(0, xExtent, ncols) + xllc
-    y = np.linspace(0, yExtent, nrows) + yllc
+    # fetch shape info and get new mesh info 
+    x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(raster, cellSizeNew=cellSize)
     xGrid, yGrid = np.meshgrid(x, y)
     data = raster['rasterData']
 
-    # make new x, y vectors
-    nColsNew = int(xExtent/cellSize+1)
-    nRowsNew = int(yExtent/cellSize+1)
-    xNew = np.linspace(0, (nColsNew-1)*cellSize, nColsNew) + xllc
-    yNew = np.linspace(0, (nRowsNew-1)*cellSize, nRowsNew) + yllc
-    diffExtentX = xExtent -(nColsNew-1)*cellSize
-    diffExtentY = yExtent -(nRowsNew-1)*cellSize
     log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
     print('Remeshed data extent x: %f and y %f' % (diffExtentX, diffExtentY))
 
@@ -261,18 +291,11 @@ def remeshDEM(cfg, dem):
     cszNew = cfg.getfloat('meshCellSize')
     # read dem header
     headerDEM = dem['header']
-    nColsDEM = headerDEM.ncols
-    nRowsDEM = headerDEM.nrows
-    xllcenter = headerDEM.xllcenter
-    yllcenter = headerDEM.yllcenter
     cszDEM = headerDEM.cellsize
     # remesh if input DEM size does not correspond to the computational cellSize
     if np.abs(cszNew - cszDEM) > cszThreshold:
         log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszNew))
-        xExtent = (nColsDEM-1) * headerDEM.cellsize
-        yExtent = (nRowsDEM-1) * headerDEM.cellsize
-        x = np.linspace(0, xExtent, nColsDEM) + xllcenter
-        y = np.linspace(0, yExtent, nRowsDEM) + yllcenter
+        x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(dem, cellSizeNew=cszNew)
         xGrid, yGrid = np.meshgrid(x, y)
         xGrid = xGrid.flatten()
         yGrid = yGrid.flatten()
@@ -286,21 +309,15 @@ def remeshDEM(cfg, dem):
 
         headerRemeshed = IOf.cASCheader()
         headerRemeshed.cellsize = cszNew
-        nColsRemeshed = int(xExtent/cszNew+1)
-        nRowsRemeshed = int(yExtent/cszNew+1)
-        headerRemeshed.ncols = nColsRemeshed
-        headerRemeshed.nrows = nRowsRemeshed
-        headerRemeshed.xllcenter = xllcenter
-        headerRemeshed.yllcenter = yllcenter
+        headerRemeshed.ncols = len(xNew)
+        headerRemeshed.nrows = len(yNew)
+        headerRemeshed.xllcenter = headerDEM.xllcenter
+        headerRemeshed.yllcenter = headerDEM.yllcenter
         headerRemeshed.noDataValue = headerDEM.noDataValue
 
         dem['header'] = headerRemeshed
-        xNew = np.linspace(0, (nColsRemeshed-1)*cszNew, nColsRemeshed) + xllcenter
-        yNew = np.linspace(0, (nRowsRemeshed-1)*cszNew, nRowsRemeshed) + yllcenter
         xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
         zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic', fill_value=headerDEM.noDataValue)
-        diffExtentX = xExtent -(nColsRemeshed-1)*cszNew
-        diffExtentY = yExtent -(nRowsRemeshed-1)*cszNew
         log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
         dem['rasterData'] = zNew
 
