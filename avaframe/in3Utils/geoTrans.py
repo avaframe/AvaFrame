@@ -212,11 +212,9 @@ def getMeshXY(rasterDict, cellSizeNew=None):
         yNew = np.linspace(0, (nRowsNew-1)*cellSizeNew, nRowsNew) + yllc
         diffExtentX = xExtent -(nColsNew-1)*cellSizeNew
         diffExtentY = yExtent -(nRowsNew-1)*cellSizeNew
-
         return x, y, xNew, yNew, diffExtentX, diffExtentY
 
     else:
-
         return x, y, xExtent, yExtent
 
 
@@ -245,7 +243,6 @@ def remeshData(rasterFile, cellSize):
 
     # fetch shape info and get new mesh info
     x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(raster, cellSizeNew=cellSize)
-    xGrid, yGrid = np.meshgrid(x, y)
     data = raster['rasterData']
 
     log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))

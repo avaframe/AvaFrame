@@ -278,13 +278,13 @@ def test_remeshData(tmp_path):
     headerInfo = IOf.cASCheader()
     headerInfo.cellsize = 5
     headerInfo.ncols = 4
-    headerInfo.nrows = 4
+    headerInfo.nrows = 5
     headerInfo.xllcenter = 0
     headerInfo.yllcenter = 0
     headerInfo.noDataValue = -9999
     # create an inclined plane
     z0 = 10
-    data = getIPZ(z0, 15, 15, 5)
+    data = getIPZ(z0, 15, 20, 5)
     outFile = os.path.join(tmp_path, 'test.asc')
     IOf.writeResultToAsc(headerInfo, data, outFile, flip=False)
 
@@ -301,7 +301,7 @@ def test_remeshData(tmp_path):
     # compare solution to result from function
     testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)
 
-    assert dataNew['rasterData'].shape[0] == 8
+    assert dataNew['rasterData'].shape[0] == 11
     assert dataNew['rasterData'].shape[1] == 8
     assert len(indNoData[0]) == 0
     assert np.isclose(dataNew['rasterData'][0,0], 10.)
@@ -314,13 +314,13 @@ def test_remeshDEM(tmp_path):
     headerInfo = IOf.cASCheader()
     headerInfo.cellsize = 5
     headerInfo.ncols = 4
-    headerInfo.nrows = 4
+    headerInfo.nrows = 5
     headerInfo.xllcenter = 0
     headerInfo.yllcenter = 0
     headerInfo.noDataValue = -9999
     # create an inclined plane
     z0 = 10
-    data = getIPZ(z0, 15, 15, 5)
+    data = getIPZ(z0, 15, 20, 5)
 
     dataDict = {}
     dataDict['rasterData'] = data
@@ -342,7 +342,7 @@ def test_remeshDEM(tmp_path):
     # compare solution to result from function
     testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)
 
-    assert dataNew['rasterData'].shape[0] == 8
+    assert dataNew['rasterData'].shape[0] == 11
     assert dataNew['rasterData'].shape[1] == 8
     assert len(indNoData[0]) == 0
     assert testRes
@@ -352,9 +352,10 @@ def test_remeshDEM(tmp_path):
 def getIPZ(z0, xEnd, yEnd, dx):
 
     meanAlpha = 30.
-    nsteps = int((xEnd + dx) / dx)
-    xv = np.linspace(0, xEnd, nsteps)
-    yv = np.linspace(0, yEnd, nsteps)
+    nstepsX = int((xEnd + dx) / dx)
+    nstepsY = int((yEnd + dx) / dx)
+    xv = np.linspace(0, xEnd, nstepsX)
+    yv = np.linspace(0, yEnd, nstepsY)
     nRows = len(yv)
     nCols = len(xv)
     x, y = np.meshgrid(xv, yv)
