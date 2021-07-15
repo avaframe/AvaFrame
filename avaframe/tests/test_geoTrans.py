@@ -282,23 +282,30 @@ def test_remeshData(tmp_path):
     headerInfo.xllcenter = 0
     headerInfo.yllcenter = 0
     headerInfo.noDataValue = -9999
-    data = np.asarray([[1, 1, 1, 1],
-                      [1, 4, 4, 1],
-                      [1, 4, 4, 1],
-                      [1, 1, 1, 1]])
-
+    # create an inclined plane
+    z0 = 10
+    data = getIPZ(z0, 15, 15, 5)
     outFile = os.path.join(tmp_path, 'test.asc')
     IOf.writeResultToAsc(headerInfo, data, outFile, flip=False)
 
     dataNew = geoTrans.remeshData(outFile, 2.)
     dataRaster = dataNew['rasterData']
     indNoData = np.where(dataRaster == -9999)
+    headerNew = dataNew['header']
+    xExtent = (headerNew.ncols-1) * headerNew.cellsize
+    yExtent = (headerNew.nrows-1) * headerNew.cellsize
+
+    # compute solution
+    dataSol = getIPZ(z0, xExtent, yExtent, headerNew.cellsize)
+
+    # compare solution to result from function
+    testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)
 
     assert dataNew['rasterData'].shape[0] == 8
     assert dataNew['rasterData'].shape[1] == 8
     assert len(indNoData[0]) == 0
-    assert np.argmax(dataRaster) == 36
-
+    assert np.isclose(dataNew['rasterData'][0,0], 10.)
+    assert testRes
 
 
 def test_remeshDEM(tmp_path):
@@ -311,10 +318,9 @@ def test_remeshDEM(tmp_path):
     headerInfo.xllcenter = 0
     headerInfo.yllcenter = 0
     headerInfo.noDataValue = -9999
-    data = np.asarray([[1, 1, 1, 1],
-                      [1, 4, 4, 1],
-                      [1, 4, 4, 1],
-                      [1, 1, 1, 1]])
+    # create an inclined plane
+    z0 = 10
+    data = getIPZ(z0, 15, 15, 5)
 
     dataDict = {}
     dataDict['rasterData'] = data
@@ -326,8 +332,33 @@ def test_remeshDEM(tmp_path):
     dataNew = geoTrans.remeshDEM(cfg['GENERAL'], dataDict)
     dataRaster = dataNew['rasterData']
     indNoData = np.where(dataRaster == -9999)
+    headerNew = dataNew['header']
+    xExtent = (headerNew.ncols-1) * headerNew.cellsize
+    yExtent = (headerNew.nrows-1) * headerNew.cellsize
+
+    # compute solution
+    dataSol = getIPZ(z0, xExtent, yExtent, headerNew.cellsize)
+
+    # compare solution to result from function
+    testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)
 
     assert dataNew['rasterData'].shape[0] == 8
     assert dataNew['rasterData'].shape[1] == 8
     assert len(indNoData[0]) == 0
-    assert np.argmax(dataRaster) == 36
+    assert testRes
+    assert np.isclose(dataRaster[0,0], 10.)
+
+
+def getIPZ(z0, xEnd, yEnd, dx):
+
+    meanAlpha = 30.
+    xv = np.arange(0, xEnd+dx, dx)
+    yv = np.arange(-0.5 * yEnd, 0.5 * (yEnd+dx), dx)
+    nRows = len(yv)
+    nCols = len(xv)
+    x, y = np.meshgrid(xv, yv)
+    zv = np.zeros((nRows, nCols))
+    # Set surface elevation from slope and max. elevation
+    zv = z0 - np.tan(np.radians(meanAlpha)) * x
+
+    return zv
