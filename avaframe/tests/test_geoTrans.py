@@ -352,8 +352,9 @@ def test_remeshDEM(tmp_path):
 def getIPZ(z0, xEnd, yEnd, dx):
 
     meanAlpha = 30.
-    xv = np.arange(0, xEnd+dx, dx)
-    yv = np.arange(-0.5 * yEnd, 0.5 * (yEnd+dx), dx)
+    nsteps = int((xEnd + dx) / dx)
+    xv = np.linspace(0, xEnd, nsteps)
+    yv = np.linspace(0, yEnd, nsteps)
     nRows = len(yv)
     nCols = len(xv)
     x, y = np.meshgrid(xv, yv)
