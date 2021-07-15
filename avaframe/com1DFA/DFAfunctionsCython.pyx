@@ -515,6 +515,8 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double[:, :] nyArray = dem['Ny']
   cdef double[:, :] nzArray = dem['Nz']
   cdef double[:, :] ZDEM = dem['rasterData']
+  cdef np.ndarray[np.uint8_t, ndim = 1, cast=True] outOfDEM
+  outOfDEM = np.array(dem['outOfDEM'], dtype=bool)
   # read particles and fields
   cdef double[:] mass = particles['m']
   cdef double[:] S = particles['s']
@@ -614,6 +616,11 @@ def updatePositionC(cfg, particles, dem, force, DT):
       LyNew0 = 0
       wNew = [0, 0, 0, 0]
       nRemove = nRemove + 1
+    elif outOfDEM[iCellNew]:
+      # if the particle is on the DEM but in a noData area,
+      # memorize it and remove it at the next update
+      keepParticle[j] = 0
+
 
     nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
