@@ -243,13 +243,12 @@ def remeshData(rasterFile, cellSize):
     raster = IOf.readRaster(rasterFile)
     header = raster['header']
 
-    # fetch shape info and get new mesh info 
+    # fetch shape info and get new mesh info
     x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(raster, cellSizeNew=cellSize)
     xGrid, yGrid = np.meshgrid(x, y)
     data = raster['rasterData']
 
     log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
-    print('Remeshed data extent x: %f and y %f' % (diffExtentX, diffExtentY))
 
     # use scipy interpolate to compute data on points of new mesh and save to raster dict
     rasterNew = sp.interpolate.RectBivariateSpline(y, x, data)(yNew, xNew, grid=True)
