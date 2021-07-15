@@ -9,15 +9,14 @@ import avaframe.com1DFA.DFAtools as DFAtls
 
 
 def test_normalizeC(capfd):
-    '''normalize'''
+    '''test DFAfunctions tools
+    norm, norm2, normalize, crossProd and scalProd'''
     x = np.array([1.])
     y = np.array([1.])
     z = np.array([1.])
-    norme = DFAfunC.normpy(x, y, z)
-    norme = np.asarray(norme)
-    norme2 = DFAfunC.norm2py(x, y, z)
-    norme2 = np.asarray(norme2)
-    xn, yn, zn = DFAfunC.normalizepy(x, y, z)
+    norme = DFAfunC.norm(x, y, z)
+    norme2 = DFAfunC.norm2(x, y, z)
+    xn, yn, zn = DFAfunC.normalize(x, y, z)
     print(xn, yn, zn)
     atol = 1e-10
     assert norme == np.sqrt(3.)
@@ -27,16 +26,28 @@ def test_normalizeC(capfd):
     assert yn == 1/np.sqrt(3.)
     assert zn == 1/np.sqrt(3.)
 
+    x = np.array([0.])
+    y = np.array([0.])
+    z = np.array([1e-18])
+    xn, yn, zn = DFAfunC.normalize(x, y, z)
+    assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1, rel=atol)
+
+    x = np.array([0.])
+    y = np.array([0.])
+    z = np.array([0.])
+    xn, yn, zn = DFAfunC.normalize(x, y, z)
+    assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(0, rel=atol)
+
     x = np.array([1.])
     y = np.array([2.])
     z = np.array([3.])
-    xn, yn, zn = DFAfunC.normalizepy(x, y, z)
+    xn, yn, zn = DFAfunC.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1., rel=atol)
 
     x = np.array([1.])
     y = np.array([0.])
     z = np.array([1.])
-    xn, yn, zn = DFAfunC.normalizepy(x, y, z)
+    xn, yn, zn = DFAfunC.normalize(x, y, z)
     assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1, rel=atol)
     assert xn == pytest.approx(1/np.sqrt(2.), rel=atol)
     assert yn == pytest.approx(0, rel=atol)
@@ -48,7 +59,7 @@ def test_normalizeC(capfd):
     x1 = np.array([4.])
     y1 = np.array([5.])
     z1 = np.array([6.])
-    xn, yn, zn = DFAfunC.crossProdpy(x, y, z, x1, y1, z1)
+    xn, yn, zn = DFAfunC.crossProd(x, y, z, x1, y1, z1)
     assert xn == -3
     assert yn == 6
     assert zn == -3
@@ -59,12 +70,14 @@ def test_normalizeC(capfd):
     x1 = np.array([4.])
     y1 = np.array([5.])
     z1 = np.array([6.])
-    scal = DFAfunC.scalProdpy(x, y, z, x1, y1, z1)
+    scal = DFAfunC.scalProd(x, y, z, x1, y1, z1)
     assert scal == 32
 
 
 def test_getWeightsC(capfd):
     '''getWeights getScalar and getVector'''
+    ncols = 4
+    nrows = 3
     X = np.array([0., 1, 2.5, 4., 4., 4.9])
     Y = np.array([0., 0., 2.5, 2.5, 3., 4.9])
     F00 = np.array([[1., 1., 0., 0., 0., 0.],
@@ -88,13 +101,32 @@ def test_getWeightsC(capfd):
         FF01 = F01[interpOption]
         FF11 = F11[interpOption]
         for x, y, ff00, ff10, ff01, ff11 in zip(X, Y, FF00, FF10, FF01, FF11):
-            Lx0, Lx1, Ly0, Ly1, f00, f10, f01, f11 = DFAfunC.getWeightspy(x, y, csz, interpOption)
-            print(Lx0, Lx1, Ly0, Ly1)
+            Lx0, Ly0, iCell, f00, f10, f01, f11 = DFAfunC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+            print(Lx0, Ly0)
             print(f00, f10, f01, f11)
             assert Lx0 == 0.
             assert Ly0 == 0.
-            assert Lx1 == 1.
-            assert Ly1 == 1.
+            assert iCell == 0.
+            assert ff00 == pytest.approx(f00, rel=atol)
+            assert ff10 == pytest.approx(f10, rel=atol)
+            assert ff01 == pytest.approx(f01, rel=atol)
+            assert ff11 == pytest.approx(f11, rel=atol)
+
+    # same as before but shift 2 in x dir and 1 in y dir
+    X = X + 2*csz
+    Y = Y + csz
+    for interpOption in range(3):
+        FF00 = F00[interpOption]
+        FF10 = F10[interpOption]
+        FF01 = F01[interpOption]
+        FF11 = F11[interpOption]
+        for x, y, ff00, ff10, ff01, ff11 in zip(X, Y, FF00, FF10, FF01, FF11):
+            Lx0, Ly0, iCell, f00, f10, f01, f11 = DFAfunC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+            print(Lx0, Ly0, iCell)
+            print(f00, f10, f01, f11)
+            assert Lx0 == 2.
+            assert Ly0 == 1.
+            assert iCell == 6.
             assert ff00 == pytest.approx(f00, rel=atol)
             assert ff10 == pytest.approx(f10, rel=atol)
             assert ff01 == pytest.approx(f01, rel=atol)
@@ -193,7 +225,8 @@ def test_getAreaMesh(capfd):
     assert TestArea
 
 
-def test_getNeighboursC(capfd):
+def test_getNeighborsC(capfd):
+    """ Test the grid search/particle location method"""
     header = IOf.cASCheader()
     header.ncols = 5
     header.nrows = 6
@@ -202,9 +235,9 @@ def test_getNeighboursC(capfd):
     dem['header'] = header
     dem['headerNeighbourGrid'] = header
     particles = {}
-    particles['Npart'] = 16
-    particles['x'] = np.array([1.5, 0.5, 1.5, 2.5, 1.5, 2.5, 0.5, 1.5, 0.5, 2.5, 0.5, 2.5, 1.5, 2.5, 3.5, 3.5])
-    particles['y'] = np.array([2.5, 1.5, 0.5, 1.5, 3.5, 3.5, 2.5, 1.5, 0.5, 0.5, 3.5, 2.5, 2.5, 1.5, 1.5, 4.5])
+    particles['Npart'] = 18
+    particles['x'] = np.array([1.6, 0.4, 1, 2, 1, 2, 0, 1, 0, 2, 0, 2, 1, 2, 3, 3, 4, 0])
+    particles['y'] = np.array([2.6, 1.4, 0, 1, 3, 3, 2, 1, 0, 0, 3, 2, 2, 1, 1, 4, 5, 5])
     particles['z'] = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
     particles['m'] = particles['z']
     atol = 1e-10
@@ -213,19 +246,25 @@ def test_getNeighboursC(capfd):
                          2,  # found 1 particle
                          3,  # found 1 particle
                          3,  # nothing happens
+                         3,  # nothing happens
                          4,  # found 1 particle
                          5,  # found 1 particle
                          7,   # found 2 particles
                          8,  # found 1 particle
+                         8,  # nothing happens
                          9,  # found 1 particle
-                         11,   # found 2 particles
+                         10,  # found 1 particle
+                         11,   # found 1 particles
+                         11, 11,  # nothing happens
                          12,  # found 1 particle
-                         12,  # nothing happens
                          13,  # found 1 particle
-                         14,  # found 1 particle
-                         15,  # found 1 particle
-                         15, 15, 15, 15,  # nothing happens
-                         16])  # found 1 particle
+                         15,  # found 2 particle
+                         15, 15, 15, 15, 15,  # nothing happens
+                         16,  # found 1 particle
+                         16,  # nothing happens
+                         17,  # found 1 particle
+                         17, 17, 17,  # nothing happens
+                         18])  # found 1 particle
     pInC = np.array([8,
                      2,
                      9,
@@ -234,14 +273,16 @@ def test_getNeighboursC(capfd):
                      13, 3,
                      14,
                      6,
-                     12, 0,
+                     12,
                      11,
                      10,
                      4,
-                     5,
-                     15])
+                     5, 0,
+                     15,
+                     17,
+                     16])
 
-    particles = DFAfunC.getNeighboursC(particles, dem)
+    particles = DFAfunC.getNeighborsC(particles, dem)
     print(particles['inCellDEM'])
     print(particles['indPartInCell'])
     print(particles['partInCell'])

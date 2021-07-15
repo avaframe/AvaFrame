@@ -757,7 +757,7 @@ def initializeFields(cfg, dem, particles):
     fields['Vy'] = PFV
     fields['Vz'] = PFV
 
-    particles = DFAfunC.getNeighboursC(particles, dem)
+    particles = DFAfunC.getNeighborsC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
 
     return particles, fields
@@ -1218,7 +1218,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     # get particles location (neighbours for sph)
     startTime = time.time()
     log.debug('get Neighbours C')
-    particles = DFAfunC.getNeighboursC(particles, dem)
+    particles = DFAfunC.getNeighborsC(particles, dem)
 
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
@@ -1361,7 +1361,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
 
     # ++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()
-    particles = DFAfunC.getNeighboursC(particles, dem)
+    particles = DFAfunC.getNeighborsC(particles, dem)
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
 
