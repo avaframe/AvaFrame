@@ -12,7 +12,7 @@ import pickle
 from datetime import datetime
 import pandas as pd
 import matplotlib
-# matplotlib.use('agg')
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib.path as mpltPath
 import matplotlib as mpl
@@ -959,7 +959,6 @@ def DFAIterate(cfg, particles, fields, dem):
     Tcpu = {}
     Tcpu['TimeLoop'] = 0
     Tcpu['Force'] = 0.
-    Tcpu['ForceVect'] = 0.
     Tcpu['ForceSPH'] = 0.
     Tcpu['Pos'] = 0.
     Tcpu['Neigh'] = 0.
@@ -1045,7 +1044,6 @@ def DFAIterate(cfg, particles, fields, dem):
             log.debug('Saving results for time step t = %f s', t)
             log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
             log.debug(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
-            log.debug(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
             log.debug(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
             log.debug(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
             log.debug(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
@@ -1076,13 +1074,14 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
     log.info('Computational performances:')
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
-    log.info(('cpu time ForceVect = %s s' % (Tcpu['ForceVect'] / nIter)))
     log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
     log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
     log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
     log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     log.info(('cpu time TimeLoop = %s s' % (Tcpu['TimeLoop'] / nIter)))
-    log.info(('cpu time total other = %s s' % ((Tcpu['Force'] + Tcpu['ForceSPH'] + Tcpu['Pos'] + Tcpu['Neigh'] + Tcpu['Field']) / nIter)))
+    log.info(('cpu time total other = %s s' %
+              ((Tcpu['Force'] + Tcpu['ForceSPH'] + Tcpu['Pos'] + Tcpu['Neigh'] + Tcpu['Field'])
+               / nIter)))
     Tsave.append(t-dt)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
@@ -1316,7 +1315,6 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     particles, force = DFAfunC.computeForceC(cfg, particles, fields, dem, dtK5)
     tcpuForce = time.time() - startTime
     Tcpu['Force'] = Tcpu['Force'] + tcpuForce
-    # force = computeForceVect(cfg, particles, dem, Ment, Cres, dtK5)
     startTime = time.time()
     particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem)
     tcpuForceSPH = time.time() - startTime
