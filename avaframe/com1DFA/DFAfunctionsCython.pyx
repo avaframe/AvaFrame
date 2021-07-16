@@ -620,24 +620,20 @@ def updatePositionC(cfg, particles, dem, force, DT):
       # if the particle is on the DEM but in a noData area,
       # memorize it and remove it at the next update
       keepParticle[j] = 0
+      nRemove = nRemove + 1
 
 
     nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
     # compute the distance traveled by the particle
     lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
-    # compute average normal between the beginning and end of the time step
-    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
-    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-    nx, ny, nz = normalize(nx, ny, nz)
-    nx, ny, nz = normalize(nx + nxNew, ny + nyNew, nz + nzNew)
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
     sNew = s + nzNew*norm((xNew-x), (yNew-y), (zNew-z))
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity
-    # uN = scalProd(uxNew, uyNew, uzNew, nx, ny, nz)
+    # uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
     uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
     # remove normal component of the velocity
     uxNew = uxNew - uN * nxNew
@@ -864,6 +860,7 @@ def updateFieldsC(cfg, particles, dem, fields):
     # prepare for bilinear interpolation
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
     # add the component of the points value to the 4 neighbour grid points
+    # TODO : check if giving the arrays [0 1 0 1].. is faster
     for i in range(4):
       indx = Lx0 + i%2 # + 0 1 0 1
       indy = Ly0 + i/2 # + 0 0 1 1
