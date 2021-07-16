@@ -102,7 +102,8 @@ def test_getWeightsC(capfd):
         FF01 = F01[interpOption]
         FF11 = F11[interpOption]
         for x, y, ff00, ff10, ff01, ff11 in zip(X, Y, FF00, FF10, FF01, FF11):
-            Lx0, Ly0, iCell, f00, f10, f01, f11 = DFAfunC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+            Lx0, Ly0, iCell, f00, f10, f01, f11 = DFAfunC.getCellAndWeights(x, y, ncols, nrows,
+                                                                            csz, interpOption)
             print(Lx0, Ly0)
             print(f00, f10, f01, f11)
             assert Lx0 == 0.
@@ -122,7 +123,8 @@ def test_getWeightsC(capfd):
         FF01 = F01[interpOption]
         FF11 = F11[interpOption]
         for x, y, ff00, ff10, ff01, ff11 in zip(X, Y, FF00, FF10, FF01, FF11):
-            Lx0, Ly0, iCell, f00, f10, f01, f11 = DFAfunC.getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+            Lx0, Ly0, iCell, f00, f10, f01, f11 = DFAfunC.getCellAndWeights(x, y, ncols, nrows,
+                                                                            csz, interpOption)
             print(Lx0, Ly0, iCell)
             print(f00, f10, f01, f11)
             assert Lx0 == 2.
@@ -159,7 +161,8 @@ def test_getScalVect(capfd):
     xpExpected = [0, 12.5, 12.5, 52, 95, 494]
     ypExpected = [0, 0, 12.5, 41, 37, 44]
     for xpExp, ypExp in zip(xpExpected, ypExpected):
-        Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xpExp, ypExp, ncols, nrows, csz, interpOption)
+        Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xpExp, ypExp, ncols, nrows,
+                                                                    csz, interpOption)
         zScalRes = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
         xRes, yRes, zRes = DFAfunC.getVector(Lx0, Ly0, w0, w1, w2, w3, ZZ, 2*ZZ, 3*ZZ)
         res = -2*xpExp + 1000-ypExp + 500
@@ -199,14 +202,16 @@ def test_reprojectionC(capfd):
     # expected normal projection
     xpExpected = 242
     ypExpected = 25
-    Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xpExpected, ypExpected, ncols, nrows, csz, interpOption)
+    Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xpExpected, ypExpected, ncols,
+                                                                nrows, csz, interpOption)
     zpExpected = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
     nx, ny, nz = DFAfunC.getVector(Lx0, Ly0, w0, w1, w2, w3, Nx, Ny, Nz)
     nx, ny, nz = DFAfunC.normalize(nx, ny, nz)
     # previous position
     xPrev = 230
     yPrev = 25
-    Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xPrev, yPrev, ncols, nrows, csz, interpOption)
+    Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xPrev, yPrev, ncols, nrows,
+                                                                csz, interpOption)
     zPrev = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
 
     # make a point above the parabola at dist d:
@@ -224,7 +229,8 @@ def test_reprojectionC(capfd):
     ax.plot(xpExpected, zpExpected, 'go')
 
     for reprojectionIterations in range(10):
-        xpn, ypn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.samosProjectionIteratrive(x1, y1, z1, ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations)
+        xpn, ypn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.samosProjectionIteratrive(x1, y1, z1,
+                        ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations)
         zpn = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
         print(xpn, zpn)
         ax.plot(xpn, zpn, 'bo')
@@ -245,7 +251,8 @@ def test_reprojectionC(capfd):
     ax.plot(xpExpected, zpExpected, 'go')
 
     for reprojectionIterations in range(10):
-        xpn, ypn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.normalProjectionIteratrive(x1, y1, z1, ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations, threshold)
+        xpn, ypn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.normalProjectionIteratrive(x1, y1, z1,
+            ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations, threshold)
         zpn = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
         print(xpn, zpn)
         ax.plot(xpn, zpn, 'bo')
@@ -271,7 +278,9 @@ def test_reprojectionC(capfd):
     ax.plot(xpExpected, zpExpected, 'go')
 
     for reprojectionIterations in range(10):
-        xpn, ypn, zpn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.distConservProjectionIteratrive(xPrev, yPrev, zPrev, ZZ, Nx, Ny, Nz, x1, y1, z1, csz, ncols, nrows, interpOption, reprojectionIterations, threshold)
+        xpn, ypn, zpn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.distConservProjectionIteratrive(
+            xPrev, yPrev, zPrev, ZZ, Nx, Ny, Nz, x1, y1, z1, csz, ncols, nrows, interpOption,
+            reprojectionIterations, threshold)
         print(xpn, zpn)
         ax.plot(xpn, zpn, 'bo')
 
