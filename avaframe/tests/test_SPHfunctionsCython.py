@@ -76,7 +76,7 @@ def test_normalizeC(capfd):
 
 
 def test_getWeightsC(capfd):
-    '''getWeights getScalar and getVector'''
+    '''getWeights'''
     ncols = 4
     nrows = 3
     X = np.array([0., 1, 2.5, 4., 4., 4.9])
@@ -143,6 +143,32 @@ def test_getWeightsC(capfd):
         iCell = DFAfunC.getCells(x, y, ncols, nrows, csz)
         print(iCell)
         assert iCell == res
+
+
+def test_getScalVect(capfd):
+    '''getScalar and getVector'''
+    ncols = 100
+    nrows = 10
+    csz = 5
+    interpOption = 2
+    X = np.linspace(0, csz*(ncols-1), ncols)
+    Y = np.linspace(0, csz*(nrows-1), nrows)
+    XX, YY = np.meshgrid(X, Y)
+    ZZ = -2*XX + 1000 -YY + 500
+
+    xpExpected = [0, 12.5, 12.5, 52, 95, 494]
+    ypExpected = [0, 0, 12.5, 41, 37, 44]
+    for xpExp, ypExp in zip(xpExpected, ypExpected):
+        Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xpExp, ypExp, ncols, nrows, csz, interpOption)
+        zScalRes = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
+        xRes, yRes, zRes = DFAfunC.getVector(Lx0, Ly0, w0, w1, w2, w3, ZZ, 2*ZZ, 3*ZZ)
+        res = -2*xpExp + 1000-ypExp + 500
+        print(xRes, res)
+        atol = 1e-10
+        assert zScalRes == pytest.approx(res, rel=atol)
+        assert xRes == pytest.approx(res, rel=atol)
+        assert yRes == pytest.approx(2*res, rel=atol)
+        assert zRes == pytest.approx(3*res, rel=atol)
 
 
 def test_reprojectionC(capfd):
