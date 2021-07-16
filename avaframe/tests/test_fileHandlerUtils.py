@@ -175,3 +175,20 @@ def test_splitTimeValueToArrayInterval():
     assert items2[2] == cfgValuesList2[2]
     assert len(items3) == len(cfgValuesList3)
     assert items3[0] == cfgValuesList3[0]
+
+
+def test_getFilterDict():
+    """ test generation of filter dictionary """
+
+    cfg = configparser.ConfigParser()
+    cfg.optionxform = str
+    cfg['GENERAL'] = {'tEnd': '20'}
+    cfg['FILTER'] = {'relTh': '1:2:3', 'entH': 200, 'simType': ''}
+
+    parametersDict = fU.getFilterDict(cfg, 'FILTER')
+
+    noKey = 'simType' in parametersDict
+
+    assert (parametersDict['relTh']==np.asarray([1, 1.5, 2])).all
+    assert noKey == False
+    assert parametersDict['entH'] == [200.]
