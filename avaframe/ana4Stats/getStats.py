@@ -52,15 +52,13 @@ def readAimecRunout(workingDir, avaName, cfg):
     return Lrun
 
 
-def extractMaxValues(inputDir, cfgMain, avaDir, varPar, nameScenario='', parametersDict=''):
+def extractMaxValues(inputDir, avaDir, varPar, nameScenario='', parametersDict=''):
     """ Extract max values of result parameters and save to dictionary
 
         Parameters
         -----------
         inputDir: str
             path to directoy where peak files can be found
-        cfgMain: dict
-            configuration used to perform simulations
         avaDir: str
             path to avalanche directoy
         varPar: str
@@ -105,12 +103,14 @@ def extractMaxValues(inputDir, cfgMain, avaDir, varPar, nameScenario='', paramet
             # add statistical measures
             # fetch varPar value and nameScenario
             varParVal = simDF[simDF['simName'] == simName][varPar]
-            if nameScenario != '':
-                nameScenarioVal = simDF[simDF['simName'] == simName][nameScenario]
-            log.info('Simulation parameter %s= %s for resType: %s and name %s' % (varPar, varParVal[0], peakFilesDF['resType'][m], nameScenarioVal[0]))
             peakValues[simName].update({peakFilesDF['resType'][m]: max})
             peakValues[simName].update({'varPar': float(varParVal)})
-            peakValues[simName].update({'scenario': nameScenarioVal[0]})
+            if nameScenario != '':
+                nameScenarioVal = simDF[simDF['simName'] == simName][nameScenario]
+                peakValues[simName].update({'scenario': nameScenarioVal[0]})
+                log.info('Simulation parameter %s= %s for resType: %s and name %s' % (varPar, varParVal[0], peakFilesDF['resType'][m], nameScenarioVal[0]))
+            else:
+                log.info('Simulation parameter %s= %s for resType: %s' % (varPar, varParVal[0], peakFilesDF['resType'][m]))
         else:
             peakValues.pop(peakFilesDF['simName'][m], None)
 

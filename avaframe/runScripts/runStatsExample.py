@@ -85,14 +85,11 @@ if cfg.getboolean('aimec') == True:
 # set directory of peak files
 inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
 
-# get max values of peak files
-cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=statsSimCfg)
-
 # provide optional filter criteria for simulations
 parametersDict = fU.getFilterDict(cfgStats, 'FILTER')
 
 # get statisical measure of simulations
-peakValues = getStats.extractMaxValues(inputDir, cfgDFA, avaDir, cfgStats['GENERAL']['varPar'], nameScenario=cfgStats['GENERAL']['nameScenario'], parametersDict=parametersDict)
+peakValues = getStats.extractMaxValues(inputDir, avaDir, cfgStats['GENERAL']['varPar'], nameScenario=cfgStats['GENERAL']['nameScenario'], parametersDict=parametersDict)
 
 # log to screen
 for key in peakValues:
