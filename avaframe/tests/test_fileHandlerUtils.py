@@ -12,7 +12,24 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import initializeProject as initProj
 import pytest
 import shutil
+import pathlib
 import configparser
+
+
+def test_makeADir(tmp_path):
+    """ test make directory """
+
+    # create temporary directory
+    avaName = 'testAva'
+    avaDir = os.path.join(tmp_path, avaName)
+    fU.makeADir(avaDir)
+    avaDir2 = os.path.join(tmp_path, avaName, 'test')
+
+    dirTrue = os.path.isdir(avaDir)
+    dirFalse = os.path.isdir(avaDir2)
+
+    assert dirTrue
+    assert dirFalse == False
 
 
 def test_readLogFile():
@@ -192,3 +209,37 @@ def test_getFilterDict():
     assert (parametersDict['relTh']==np.asarray([1, 1.5, 2])).all
     assert noKey == False
     assert parametersDict['entH'] == [200.]
+
+
+def test_getDFADataPaths():
+    """ test generating pathDict for aimec """
+
+    # define input directory
+    dirPath = os.path.dirname(__file__)
+    avaName = 'avaHockeyChannel'
+    avaNameTest = 'avaHockeyChannelPytest'
+    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest)
+
+    cfg = configparser.ConfigParser()
+    cfg['AIMECSETUP'] = {'varParList': 'releaseScenario', 'ascendingOrder': True}
+    cfgSetup = cfg['AIMECSETUP']
+    suffix = ['ppr', 'pfd', 'pfv']
+    comModule = 'com1DFA'
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
+
+    # return pathDict for comModule=com1DFA
+    pathDict = fU.getDFADataPaths(avaDir, pathDict, cfgSetup, suffix, comModule=comModule, inputDir='')
+
+    # return pathDict for given inputDir
+    pathDict2 = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
+    inputDir = pathlib.Path('/home/anna/repos/github/AvaFrame/avaframe/tests/../../benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles')
+    pathDict2 = fU.getDFADataPaths(avaDir, pathDict2, cfgSetup, suffix, comModule='', inputDir=inputDir)
+
+    # define paths
+    path1 = pathlib.Path('/home/anna/repos/github/AvaFrame/avaframe/tests/../../benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_ppr.asc')
+    path2  = pathlib.Path('/home/anna/repos/github/AvaFrame/avaframe/tests/../../benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release2HS_ent_dfa_872f0101a4_ppr.asc')
+
+    assert pathDict['colorParameter'] == ['release1HS', 'release2HS']
+    assert pathDict['ppr'] == [path1, path2]
+    assert pathDict2['colorParameter'] == []
+    assert pathDict2['ppr'] == [path1, path2]
