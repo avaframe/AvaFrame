@@ -89,14 +89,14 @@ inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
 parametersDict = fU.getFilterDict(cfgStats, 'FILTER')
 
 # get statisical measure of simulations
-peakValues = getStats.extractMaxValues(inputDir, avaDir, cfgStats['GENERAL']['varPar'], nameScenario=cfgStats['GENERAL']['nameScenario'], parametersDict=parametersDict)
+peakValues = getStats.extractMaxValues(inputDir, avaDir, cfgStats['GENERAL']['varPar'], restrictType='pfd', nameScenario=cfgStats['GENERAL']['nameScenario'], parametersDict=parametersDict)
 
 # log to screen
 for key in peakValues:
     print('peakValues:', key, peakValues[key])
 
 #++++++++++++++ Plot max values +++++++++++++++++
-sPlot.plotValuesScatter(peakValues, 'pfd', 'pfv', cfgStats['GENERAL'], avaDir, flagShow)
-sPlot.plotValuesScatterHist(peakValues, 'pfd', 'pfv', cfgStats['GENERAL'], avaDir, flagShow, flagHue=True)
+sPlot.plotValuesScatter(peakValues, 'pfd', 'pfv', cfgStats['GENERAL'], avaDir, statsMeasure='max', flagShow=flagShow)
+sPlot.plotValuesScatterHist(peakValues, 'pfd', 'pfv', cfgStats['GENERAL'], avaDir, statsMeasure='max', flagShow=flagShow, flagHue=True)
 
 log.info('Plots have been saved to: %s' % outDir)

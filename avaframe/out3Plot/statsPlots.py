@@ -22,8 +22,8 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, flagShow=False):
-    """ Produce scatter plot of max values (resType1 und resType2), for one set of simulations or multiple
+def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMeasure='max', flagShow=False):
+    """ Produce scatter plot of statistical measures (eg. max values) (resType1 und resType2), for one set of simulations or multiple
 
         Parameters
         -----------
@@ -35,6 +35,8 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, flagSho
             result parameter 1, 'ppr', 'pfd', 'pfv'
         cfg: dict
             configuration, for now contains output location and varPar: parameter that is varied to perfom a set of simulations
+        statsMeasure: str
+            statistical measure for plotting, options: max, min, std
         flagShow: bool
             if True show plot
         """
@@ -45,8 +47,8 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, flagSho
     values1 = []
     values2 = []
     for key in peakValues:
-        values1.append(peakValues[key][resType1])
-        values2.append(peakValues[key][resType2])
+        values1.append(peakValues[key][resType1][statsMeasure])
+        values2.append(peakValues[key][resType2][statsMeasure])
         varVal.append(peakValues[key]['varPar'])
 
     log.info('Number of simulations is: %d' % (len(varVal)))
@@ -68,8 +70,8 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, flagSho
     # set range and steps of colormap
     cc = varValV
     sc = ax.scatter(values1, values2, c=cc, cmap=cmap)
-    ax.set_xlabel('%s [%s]' % (name1, unit1))
-    ax.set_ylabel('%s [%s]' % (name2, unit2))
+    ax.set_xlabel('%s %s [%s]' % (statsMeasure, name1, unit1))
+    ax.set_ylabel('%s %s [%s]' % (statsMeasure, name2, unit2))
     pU.addColorBar(sc, ax, ticks, unitVar, nameVar)
     pU.putAvaNameOnPlot(ax, avalancheDir)
 
@@ -83,7 +85,7 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, flagSho
     plt.close(fig)
 
 
-def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, flagShow=False, flagHue=False):
+def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, statsMeasure='max', flagShow=False, flagHue=False):
     """ Produce scatter and marginal kde plot of max values, for one set of simulations or multiple
 
         Parameters
@@ -96,6 +98,8 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, fla
             result parameter 1, 'ppr', 'pfd', 'pfv'
         cfg: dict
             configuration, for now contains output location and varPar: parameter that is varied to perfom a set of simulations
+        statsMeasure: str
+            statistical measure for plotting, options: max, min, std
         flagShow: bool
             if True show plot
 
@@ -109,8 +113,8 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, fla
     scenario = []
 
     for key in peakValues:
-        values1.append(peakValues[key][resType1])
-        values2.append(peakValues[key][resType2])
+        values1.append(peakValues[key][resType1][statsMeasure])
+        values2.append(peakValues[key][resType2][statsMeasure])
         varVal.append(peakValues[key]['varPar'])
         if 'scenario' in peakValues[key] and flagHue:
             scenario.append(peakValues[key]['scenario'])
@@ -125,8 +129,8 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, fla
     nameVar = cfg['varParName']
     unitVar = cfg['varParUnit']
     varValV = np.array(varVal)
-    title1 = name1+' [' + unit1 + ']'
-    title2 = name2+' [' + unit2 + ']'
+    title1 = statsMeasure + ' ' + name1+' [' + unit1 + ']'
+    title2 = statsMeasure + ' ' + name2+' [' + unit2 + ']'
 
     if flagHue:
         # create pandas data frame reqiured for seaborn jointplot
