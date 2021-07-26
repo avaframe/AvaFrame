@@ -36,7 +36,7 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMe
         cfg: dict
             configuration, for now contains output location and varPar: parameter that is varied to perfom a set of simulations
         statsMeasure: str
-            statistical measure for plotting, options: max, min, std
+            statistical measure for plotting, options: max, mean, min, std
         flagShow: bool
             if True show plot
         """
@@ -99,7 +99,7 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, sta
         cfg: dict
             configuration, for now contains output location and varPar: parameter that is varied to perfom a set of simulations
         statsMeasure: str
-            statistical measure for plotting, options: max, min, std
+            statistical measure for plotting, options: max, mean, min, std
         flagShow: bool
             if True show plot
 
