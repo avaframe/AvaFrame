@@ -52,8 +52,11 @@ def readAimecRunout(workingDir, avaName, cfg):
     return Lrun
 
 
-def extractMaxValues(inputDir, avaDir, varPar, nameScenario='', parametersDict=''):
+def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='', parametersDict=''):
     """ Extract max values of result parameters and save to dictionary
+
+        - optionally restrict data of peak fields by defining which result parameter with restrictType,
+          provide nameScenario and a parametersDict to filter simulations
 
         Parameters
         -----------
@@ -63,10 +66,12 @@ def extractMaxValues(inputDir, avaDir, varPar, nameScenario='', parametersDict='
             path to avalanche directoy
         varPar: str
             parameter that has been varied when performing simulations (for example relTh)
+        restrictType: str
+            optional -result type of result parameters that should be used to mask result fields (eg. ppr, pfd, ..)
         nameScenario: str
-            parameter that shall be used for color coding of simulation results in plots (for example releaseScenario)
+            optional -parameter that shall be used for color coding of simulation results in plots (for example releaseScenario)
         parametersDict: dict
-            dictionary with parameter and parameter values to filter simulations
+            optional -dictionary with parameter and parameter values to filter simulations
 
         Returns
         --------
@@ -80,30 +85,44 @@ def extractMaxValues(inputDir, avaDir, varPar, nameScenario='', parametersDict='
     # load dataFrame of all simulation configurations
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='')
 
-    # load peakFiles of all simulations and generate dictionary
+    # load peakFiles of all simulations and generate dataframe
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
     nSims = len(peakFilesDF['simName'])
+    # initialize peakValues dictionary
     peakValues = {}
     for sName in simDF['simName'].tolist():
         peakValues[sName] = {}
 
-    # Loop through peakFiles and compute probability
+    # Loop through result field files and compute statistical measures
     for m in range(nSims):
-
+        # filter simulations according to parametersDict
         if peakFilesDF['simName'][m] in simNameList:
 
             # Load data
             fileName = peakFilesDF['files'][m]
             simName = peakFilesDF['simName'][m]
-            data = np.loadtxt(fileName, skiprows=6)
+            dataFull = IOf.readRaster(fileName)
 
-            # compute max
-            max = np.amax(data)
+            # if restrictType, set result field values to nan if restrictType result field equals 0
+            if restrictType != '':
+                peakFilesSimName = peakFilesDF[peakFilesDF['simName'] == simName]
+                fileNamePFD = peakFilesSimName[peakFilesSimName['resType'] == restrictType]['files'].values[0]
+                dataPFD = IOf.readRaster(fileNamePFD)
+                data = np.where((dataPFD['rasterData'] == 0.0), np.nan, dataFull['rasterData'])
+            else:
+                data =  dataFull['rasterData']
 
+            # compute max, mean, min and standard deviation of result field
+            max = np.nanmax(data)
+            min = np.nanmin(data)
+            mean = np.nanmean(data)
+            std = np.nanstd(data)
+            statVals = {'max': max, 'min': min, 'mean': mean, 'std': std}
             # add statistical measures
+            peakValues[simName].update({peakFilesDF['resType'][m]: statVals})
+
             # fetch varPar value and nameScenario
             varParVal = simDF[simDF['simName'] == simName][varPar]
-            peakValues[simName].update({peakFilesDF['resType'][m]: max})
             peakValues[simName].update({'varPar': float(varParVal)})
             if nameScenario != '':
                 nameScenarioVal = simDF[simDF['simName'] == simName][nameScenario]
