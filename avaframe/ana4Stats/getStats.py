@@ -20,38 +20,6 @@ from avaframe.in3Utils import cfgUtils
 log = logging.getLogger(__name__)
 
 
-def readAimecRunout(workingDir, avaName, cfg):
-    """ Read runout length from aimec results
-
-        Parameters
-        ----------
-        workingDir: str
-            path to avalanche aimec directoy
-        avaName: str
-            name of avalanche directoy
-        cfg : dict
-            configuration read from ini file of aimec
-
-        Returns
-        --------
-        Lrun: numpy array 1D
-            runout length from aimec analaysis
-
-    """
-
-    # load configuration
-    pLim = cfg['pressureLimit']
-    dWidth = cfg['domainWidth']
-
-    # set input file
-    inputFileName = 'Results_%s__com1DFA__plim_%s_w_%s.txt' % (avaName, pLim, dWidth)
-    inputFile = pathlib.Path(workingDir, inputFileName)
-    dataset = np.loadtxt(inputFile, skiprows=7)
-    Lrun = dataset[:, 3]
-
-    return Lrun
-
-
 def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='', parametersDict=''):
     """ Extract max values of result parameters and save to dictionary
 
