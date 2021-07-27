@@ -58,7 +58,6 @@ getStats
 ==========================
 
 In :py:mod:`ana4Stats.getStats`, functions that help to compute statistical properties of simulation results are gathered.
-In :py:func:`ana4Stats.getStats.readAimecRunout`, the runout length is read from the ana3Aimec output and saved into a 1D numpy array.
 :py:func:`ana4Stats.getStats.extractMaxValues` can be used to determine the maximum peak values of the simulation results.
 These values can then be plotted using the functions in :py:mod:`out3Plot.statsPlots` in order to visualise the statistics of
 a set of avalanche simulations.
@@ -72,6 +71,8 @@ for ``avaHockeyChannel`` simulations are performed for two different release are
 the release thickness is varied from 0.75 to 1.75 meters in steps of 0.05 meters. The resulting
 simulations are then analysed using the :py:func:`ana4Stats.getStats.extractMaxValues` function and plots are generated using the
 plotting routines from :py:mod:`out3Plot.statsPlots` .
+If in the configuration file ``ana4Stats/getStats.ini`` the flag aimec is set to True,
+additionally an :ref:`moduleAna3AIMEC:ana3AIMEC: Aimec` analysis is performed.
 
 * first go to ``AvaFrame/avaframe``
 * copy ``ana4Stats/getStats.ini`` to ``ana4Stats/local_getStatsCfg.ini``
