@@ -34,7 +34,8 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMe
         resType2: str
             result parameter 1, 'ppr', 'pfd', 'pfv'
         cfg: dict
-            configuration, for now contains output location and varPar: parameter that is varied to perfom a set of simulations
+            configuration, for now contains output location and varPar: parameter that is varied
+            to perfom a set of simulations
         statsMeasure: str
             statistical measure for plotting, options: max, mean, min, std
         flagShow: bool
@@ -81,7 +82,8 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMe
 
     # save fig
     outDir = cfg['outDir']
-    fig.savefig(os.path.join(outDir, 'Scatter_%s_vs_%s_dist%s_%s.png' % (resType1, resType2, cfg['distType'], cfg['scenario'])))
+    fig.savefig(os.path.join(outDir, 'Scatter_%s_vs_%s_dist%s_%s.png' %
+                (resType1, resType2, cfg['distType'], cfg['scenario'])))
     plt.close(fig)
 
 
@@ -97,7 +99,8 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, sta
         resType2: str
             result parameter 1, 'ppr', 'pfd', 'pfv'
         cfg: dict
-            configuration, for now contains output location and varPar: parameter that is varied to perfom a set of simulations
+            configuration, for now contains output location and varPar: parameter that is varied
+            to perfom a set of simulations
         statsMeasure: str
             statistical measure for plotting, options: max, mean, min, std
         flagShow: bool
@@ -147,7 +150,8 @@ def plotValuesScatterHist(peakValues, resType1, resType2, cfg, avalancheDir, sta
 
     # save fig
     outDir = cfg['outDir']
-    plt.savefig(os.path.join(outDir, 'Scatterkde_%s_vs_%s_dist%s_%s.png' % (resType1, resType2, cfg['distType'], cfg['scenario'])))
+    plt.savefig(os.path.join(outDir, 'Scatterkde_%s_vs_%s_dist%s_%s.png' %
+                (resType1, resType2, cfg['distType'], cfg['scenario'])))
 
     # shpw plot
     if flagShow:
@@ -284,7 +288,8 @@ def plotProbMap(avaDir, inDir, cfgFull):
         cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(dataPlot), np.nanmax(dataPlot), continuous=True)
         cmap.set_bad(colorBackGround)
         data1P = ma.masked_where(dataPlot == 0.0, dataPlot)
-        im1 = plt.imshow(data1P, cmap=cmap, extent=[colsMin, colsMax, rowsMin, rowsMax], origin='lower', aspect=nx/ny, norm=norm)
+        im1 = plt.imshow(data1P, cmap=cmap, extent=[colsMin, colsMax, rowsMin, rowsMax],
+                         origin='lower', aspect=nx/ny, norm=norm)
 
         # create meshgrid for contour plot also constrained to where there is data
         xx = np.arange(colsMin, colsMax, cellSize)
