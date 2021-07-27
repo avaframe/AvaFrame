@@ -76,7 +76,7 @@ def test_exportcom1DFAOrigOutput(tmp_path):
     dirPath = os.path.dirname(__file__)
     avaName = 'avaParabola'
     avaNameTest = 'avaParabolaPyest'
-    avaDir  = os.path.join(tmp_path, avaName)
+    avaDir = os.path.join(tmp_path, avaName)
     outDir = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'FullOutput_RelTh_1.25000', 'release1PF_entres_dfa', 'raster')
     os.makedirs(avaDir)
     os.makedirs(outDir)
