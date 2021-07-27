@@ -52,8 +52,8 @@ def test_getStats(tmp_path):
     cfg2['GENERAL'] = {'relTh': '2.0', 'releaseScenario': 'release1'}
     configurationSettings = [cfg1, cfg2]
 
-    configFiles =  [os.path.join(avaDirConfigFiles, 'release1_null_dfa_1000000.ini'),
-                    os.path.join(avaDirConfigFiles, 'release1_null_dfa_2000000.ini')]
+    configFiles = [os.path.join(avaDirConfigFiles, 'release1_null_dfa_1000000.ini'),
+                   os.path.join(avaDirConfigFiles, 'release1_null_dfa_2000000.ini')]
 
     for k in range(2):
         # Open outfile
@@ -70,7 +70,7 @@ def test_getStats(tmp_path):
             resultArray = resultArrayList[k]
             M = resultArray.shape[0]
             for m in range(M):
-                line = np.array([resultArray[m,:]])
+                line = np.array([resultArray[m, :]])
                 np.savetxt(outFile, line, fmt='%.16g')
 
             outFile.close()
@@ -87,9 +87,9 @@ def test_getStats(tmp_path):
 
     assert peakValues['release1_null_dfa_1000000']['varPar'] == 1.0
     assert peakValues['release1_null_dfa_2000000']['varPar'] == 2.0
-    assert peakValues['release1_null_dfa_1000000']['ppr']['max']== 4.0
-    assert peakValues['release1_null_dfa_1000000']['ppr']['mean']== 2.0
-    assert peakValues['release1_null_dfa_1000000']['ppr']['min']== 1.0
+    assert peakValues['release1_null_dfa_1000000']['ppr']['max'] == 4.0
+    assert peakValues['release1_null_dfa_1000000']['ppr']['mean'] == 2.0
+    assert peakValues['release1_null_dfa_1000000']['ppr']['min'] == 1.0
     assert peakValues['release1_null_dfa_2000000']['ppr']['max'] == 10.0
     assert peakValues['release1_null_dfa_2000000']['ppr']['min'] == 1.0
-    assert peakValues['release1_null_dfa_2000000']['ppr']['mean']== 3.0
+    assert peakValues['release1_null_dfa_2000000']['ppr']['mean'] == 3.0

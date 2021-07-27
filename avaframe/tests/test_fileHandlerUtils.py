@@ -29,7 +29,7 @@ def test_makeADir(tmp_path):
     dirFalse = os.path.isdir(avaDir2)
 
     assert dirTrue
-    assert dirFalse == False
+    assert dirFalse is False
 
 
 def test_readLogFile():
@@ -39,7 +39,7 @@ def test_readLogFile():
     dirPath = os.path.dirname(__file__)
     logName = os.path.join(dirPath, 'data', 'testExpLog.txt')
     cfg = configparser.ConfigParser()
-    cfg = {'varPar' : 'RelTh'}
+    cfg = {'varPar': 'RelTh'}
     logDict = fU.readLogFile(logName, cfg)
     logDictMu = fU.readLogFile(logName)
 
@@ -58,7 +58,7 @@ def test_makeSimDF():
     dirPath = os.path.dirname(__file__)
     inputDir = os.path.join(dirPath, 'data', 'testSim')
     cfg = configparser.ConfigParser()
-    cfg = {'varPar' : 'test'}
+    cfg = {'varPar': 'test'}
     dataDF = fU.makeSimDF(inputDir, simID=cfg['varPar'])
 
     assert dataDF['names'][0] == 'releaseTest1_entres_dfa_0.888_ppr'
@@ -88,7 +88,7 @@ def test_exportcom1DFAOrigOutput(tmp_path):
             avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
                                'release1PF_entres_dfa_1.25000_pfv.asc')
             input = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'FullOutput_RelTh_1.25000',
-                                     'release1PF_entres_dfa', 'raster', 'release1PF_entres_dfa_pv.asc')
+                                'release1PF_entres_dfa', 'raster', 'release1PF_entres_dfa_pv.asc')
         else:
             avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
                                 'release1PF_entres_dfa_1.25000_%s.asc' % m)
@@ -102,18 +102,18 @@ def test_exportcom1DFAOrigOutput(tmp_path):
     avaData = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
                            'test.html')
     input = os.path.join(avaDir, 'Work', 'com1DFAOrig', 'FullOutput_RelTh_1.25000',
-                             'release1PF_entres_dfa.html')
+                        'release1PF_entres_dfa.html')
     shutil.copy(avaData, input)
 
     # Set cfg
     cfg = configparser.ConfigParser()
-    cfg = {'varPar' : 'RelTh'}
+    cfg = {'varPar': 'RelTh'}
 
     # Call function to test
     fU.exportcom1DFAOrigOutput(avaDir, cfg)
     # load exported file
     pprTest = np.loadtxt(os.path.join(avaDir, 'Outputs', 'com1DFAOrig', 'peakFiles',
-                                         'release1PF_entres_dfa_1.25000_ppr.asc'), skiprows=6)
+                         'release1PF_entres_dfa_1.25000_ppr.asc'), skiprows=6)
 
     # load initial file
     pprBench = np.loadtxt(os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest,
@@ -121,7 +121,7 @@ def test_exportcom1DFAOrigOutput(tmp_path):
     # Compare result to reference solution
     testRes = np.allclose(pprTest, pprBench, atol=1.e-12)
 
-    assert testRes == True
+    assert testRes is True
 
 
 def test_splitIniValueToArraySteps():
@@ -136,7 +136,6 @@ def test_splitIniValueToArraySteps():
     # call function to be tested
     items = fU.splitIniValueToArraySteps(cfgValues)
     items2 = fU.splitIniValueToArraySteps(cfgValues2)
-
 
     assert len(items) == len(cfgValuesList)
     assert items[0] == cfgValuesList[0]
@@ -206,8 +205,8 @@ def test_getFilterDict():
 
     noKey = 'simType' in parametersDict
 
-    assert (parametersDict['relTh']==np.asarray([1, 1.5, 2])).all
-    assert noKey == False
+    assert (parametersDict['relTh'] == np.asarray([1, 1.5, 2])).all
+    assert noKey is False
     assert parametersDict['entH'] == [200.]
 
 
@@ -232,14 +231,16 @@ def test_getDFADataPaths():
 
     # return pathDict for given inputDir
     pathDict2 = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
-    inputDir = pathlib.Path('/home/anna/repos/github/AvaFrame/avaframe/tests/../../benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles')
+    inputDir = pathlib.Path(avaDir, 'Outputs/com1DFA/peakFiles')
     pathDict2 = fU.getDFADataPaths(avaDir, pathDict2, cfgSetup, suffix, comModule='', inputDir=inputDir)
 
     # define paths
-    path1 = pathlib.Path('/home/anna/repos/github/AvaFrame/avaframe/tests/../../benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_ppr.asc')
-    path2  = pathlib.Path('/home/anna/repos/github/AvaFrame/avaframe/tests/../../benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release2HS_ent_dfa_872f0101a4_ppr.asc')
+    path1 = 'benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_ppr.asc'
+    path2 = 'benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release2HS_ent_dfa_872f0101a4_ppr.asc'
 
     assert pathDict['colorParameter'] == ['release1HS', 'release2HS']
-    assert pathDict['ppr'] == [path1, path2]
+    assert path1 in str(pathDict['ppr'][0])
+    assert path2 in str(pathDict['ppr'][1])
     assert pathDict2['colorParameter'] == []
-    assert pathDict2['ppr'] == [path1, path2]
+    assert path1 in str(pathDict2['ppr'][0])
+    assert path2 in str(pathDict2['ppr'][1])

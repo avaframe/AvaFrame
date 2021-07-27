@@ -69,7 +69,8 @@ def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='',
         restrictType: str
             optional -result type of result parameters that should be used to mask result fields (eg. ppr, pfd, ..)
         nameScenario: str
-            optional -parameter that shall be used for color coding of simulation results in plots (for example releaseScenario)
+            optional -parameter that shall be used for color coding of simulation results
+            in plots (for example releaseScenario)
         parametersDict: dict
             optional -dictionary with parameter and parameter values to filter simulations
 
@@ -110,7 +111,7 @@ def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='',
                 dataPFD = IOf.readRaster(fileNamePFD)
                 data = np.where((dataPFD['rasterData'] == 0.0), np.nan, dataFull['rasterData'])
             else:
-                data =  dataFull['rasterData']
+                data = dataFull['rasterData']
 
             # compute max, mean, min and standard deviation of result field
             max = np.nanmax(data)
@@ -127,9 +128,11 @@ def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='',
             if nameScenario != '':
                 nameScenarioVal = simDF[simDF['simName'] == simName][nameScenario]
                 peakValues[simName].update({'scenario': nameScenarioVal[0]})
-                log.info('Simulation parameter %s= %s for resType: %s and name %s' % (varPar, varParVal[0], peakFilesDF['resType'][m], nameScenarioVal[0]))
+                log.info('Simulation parameter %s= %s for resType: %s and name %s' %
+                        (varPar, varParVal[0], peakFilesDF['resType'][m], nameScenarioVal[0]))
             else:
-                log.info('Simulation parameter %s= %s for resType: %s' % (varPar, varParVal[0], peakFilesDF['resType'][m]))
+                log.info('Simulation parameter %s= %s for resType: %s' %
+                        (varPar, varParVal[0], peakFilesDF['resType'][m]))
         else:
             peakValues.pop(peakFilesDF['simName'][m], None)
 
