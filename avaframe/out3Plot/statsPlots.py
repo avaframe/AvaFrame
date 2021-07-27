@@ -23,7 +23,8 @@ log = logging.getLogger(__name__)
 
 
 def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMeasure='max', flagShow=False):
-    """ Produce scatter plot of statistical measures (eg. max values) (resType1 und resType2), for one set of simulations or multiple
+    """ Produce scatter plot of statistical measures (eg. max values) (resType1 und resType2),
+        for one set of simulations or multiple
 
         Parameters
         -----------
