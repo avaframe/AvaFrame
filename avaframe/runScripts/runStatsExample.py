@@ -90,7 +90,7 @@ parametersDict = fU.getFilterDict(cfgStats, 'FILTER')
 
 # get statisical measure of simulations
 peakValues = getStats.extractMaxValues(inputDir, avaDir, cfgStats['GENERAL']['varPar'],
-                      restrictType='pfd', nameScenario=cfgStats['GENERAL']['nameScenario'],
+                      restrictType=cfgStats['GENERAL']['restrictType'], nameScenario=cfgStats['GENERAL']['nameScenario'],
                       parametersDict=parametersDict)
 
 # log to screen
