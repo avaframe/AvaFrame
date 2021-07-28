@@ -579,68 +579,6 @@ def isCounterClockWise(path):
     return isCounterClock
 
 
-def findCellsCrossedByLineBresenham(x0, y0, x1, y1, cs):
-    # normalize Cellsize cs to 1
-    x0 = round(x0/cs)
-    x1 = round(x1/cs)
-    y0 = round(y0/cs)
-    y1 = round(y1/cs)
-
-    dx = abs(x1-x0)
-    dy = abs(y1-y0)
-    sx = np.sign(x1-x0)  # step in x direction
-    sy = np.sign(y1-y0)  # step in y direction
-
-    x = x0
-    y = y0
-    n = dx + dy
-
-    ddx = 2 * dx
-    ddy = 2 * dy
-    if ddx >= ddy:
-        err = dx
-        N = dx
-    else:
-        err = dy
-        N = dy
-
-    z = []
-    n = 0
-    while n < N:
-        errprev = err
-        z.append([x*cs, y*cs])
-        if ddx >= ddy:
-            x += sx
-            err += ddy
-            if err > ddx:
-                y += sy
-                err -= ddx
-                if (err + errprev) < ddx:
-                    z.append([x*cs, (y-sy)*cs])
-                elif (err + errprev) > ddx:
-                    z.append([(x-sx)*cs, y*cs])
-                # else:
-                #     z.append([x*cs, (y-sy)*cs])
-                #     z.append([(x-sx)*cs, y*cs])
-        else:
-            y += sy
-            err += ddx
-            if err > ddy:
-                x += sx
-                err -= ddy
-                if (err + errprev) < ddy:
-                    z.append([(x-sx)*cs, y*cs])
-                elif (err + errprev) > ddy:
-                    z.append([x*cs, (y-sy)*cs])
-                # else:
-                #     z.append([x*cs, (y-sy)*cs])
-                #     z.append([(x-sx)*cs, y*cs])
-        n = n + 1
-    z.append([x*cs, y*cs])
-
-    return z
-
-
 def path2domain(xyPath, rasterTransfo):
     """Creates a domain (irregular raster) along a path,
     given the path xyPath, a domain width and a raster cellsize
@@ -727,95 +665,6 @@ def path2domain(xyPath, rasterTransfo):
     return rasterTransfo
 
 
-def poly2maskSimple(xdep, ydep, ncols, nrows):
-    """Create a mask from a polyline
-
-    Input:
-           ydep, xdep:      Polyline Coordinates
-           ncols, nrows:    Raster size
-       Output:
-           mask:            Raster of the polyline mask
-
-    """
-    mask = np.zeros((nrows, ncols))
-    xyframe = findCellsCrossedByLineBresenham(xdep[0], ydep[0], xdep[1],
-                                              ydep[1], 1)
-    xyframe = np.delete(xyframe, -1, 0)
-    xyframe = np.transpose(xyframe)
-    for i in range(1, len(xdep)-1):
-        xyline = findCellsCrossedByLineBresenham(xdep[i], ydep[i], xdep[i+1],
-                                                 ydep[i+1], 1)
-        # last point is first point of the next line
-        xyline = np.delete(xyline, -1, 0)
-        xyline = np.transpose(xyline)
-        xyframe = np.hstack((xyframe, xyline))
-
-    xyline = findCellsCrossedByLineBresenham(xdep[-1], ydep[-1], xdep[0],
-                                             ydep[0], 1)
-    xyline = np.delete(xyline, -1, 0)
-    xyline = np.transpose(xyline)
-    xyframe = np.hstack((xyframe, xyline))
-
-    # filling the inside of the polygon with ones
-    # i = xyframe[0]
-    # j = xyframe[1]
-    mv, nv = np.meshgrid(np.linspace(0, ncols-1, ncols),
-                         np.linspace(0, nrows-1, nrows))  # create index space
-    # mask = inpolygon(mv, nv, i, j)
-    mask = inpolygon(mv, nv, np.append(xdep, xdep[-1]), np.append(ydep, ydep[-1]))
-    # TODO: decide if we add the margin or not.
-    # for i in range(0, len(xyframe[0, :])):
-    #     mask[xyframe[1, i], xyframe[0, i]] = 1
-    return mask
-
-
-def inpolygon(X, Y, xv, yv):
-    """
-    inpolygon
-    For a polygon defined by vertex points (xv, yv),
-    returns a np array of size X with ones if the points (X, Y)
-    are inside (or on the boundary) of the polygon;
-    Otherwise, returns zeros.
-    Usage:
-        mask = inpolygon(X, Y, xv, yv)
-       Input:
-           X, Y:      Set of points to check
-           xv, yv:    polygon vertex points
-       Output:
-           mask:      np array of zeros and ones
-
-    Octave Implementation [IN, ON] = inpolygon (X, Y, xv, yv)
-    """
-    npol = len(xv)
-    xv = np.floor(xv+0.5).astype('int')
-    yv = np.floor(yv+0.5).astype('int')
-    maxXv = np.ceil(np.max(xv)).astype('int') + 1
-    minXv = np.floor(np.min(xv)).astype('int')
-    maxYv = np.ceil(np.max(yv)).astype('int') + 1
-    minYv = np.floor(np.min(yv)).astype('int')
-    IN = np.zeros(np.shape(X))
-    j = npol-1
-    for i in range(npol-1):
-        deltaxv = xv[j] - xv[i]
-        deltayv = yv[j] - yv[i]
-        # distance = [distance from (X,Y) to edge] * length(edge)
-        distance = deltaxv*(Y-yv[i]) - (X-xv[i])*deltayv
-        # is Y between the y-values of edge i,j
-        # AND (X,Y) on the left of the edge ?
-        for ii in range(minYv, maxYv, 1):
-            for jj in range(minXv, maxXv, 1):
-                if (((yv[i] <= Y[ii][jj] and Y[ii][jj] < yv[j]) or (yv[j] <= Y[ii][jj] and Y[ii][jj] < yv[i])) and (0 < distance[ii][jj]*deltayv)):
-                    if IN[ii][jj] == 0:
-                        IN[ii][jj] = 1
-                    else:
-                        IN[ii][jj] = 0
-        j = i
-    # for i in range(npol-1):
-    #     IN[yv[i]][xv[i]] = 0
-
-    return IN
-
-
 def areaPoly(X, Y):
     """Gauss's area formula to calculate polygon area
 
@@ -871,6 +720,6 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
         else:
             message = '%s area features overlapping with %s area - this is not allowed' % (nameToCheck, nameRef)
             log.error(message)
-            AssertionError(message)
+            raise AssertionError(message)
 
     return toCheckRaster
