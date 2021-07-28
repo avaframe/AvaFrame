@@ -8,6 +8,7 @@ import glob
 import pathlib
 import logging
 import json
+import numpy as np
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -36,7 +37,7 @@ def writeDesDicttoJson(desDict, testName, outDir):
     """ create a json file with all required test info from desdict """
 
     jsonDict = json.dumps(desDict)
-    fileName = os.path.join(outDir, "%s_desDict.json" % testName)
+    fileName = pathlib.Path(outDir, "%s_desDict.json" % testName)
     f = open(fileName, "w")
     f.write(jsonDict)
     f.close()
@@ -103,16 +104,28 @@ def filterBenchmarks(testDictList, type, valuesList, condition='or'):
 
     testList = []
     flag = False
+
+    # convert valueslist to list if not already list
+    if (isinstance(valuesList, list) is False) and (isinstance(valuesList, np.ndarray) is False):
+        valuesList = [valuesList]
+
     for testDict in testDictList:
         if type == 'AVANAME':
             if testDict['AVANAME'] in valuesList:
                 testList.append(testDict)
         else:
+            # convert valueslist to list if not already list
+            if isinstance(testDict[type], list) is False:
+                testDict[type] = [testDict[type]]
             if condition == 'or':
-                if any(values in testDict[type] for values in valuesList):
-                    testList.append(testDict)
+                for item in testDict[type]:
+                    if any(values == item for values in valuesList):
+                        testList.append(testDict)
             elif condition == 'and':
-                if all(values in testDict[type] for values in valuesList):
+                flagAllList = []
+                for item in testDict[type]:
+                    flagAllList.append(all(values == item for values in valuesList))
+                if all(flagAllList):
                     testList.append(testDict)
             else:
                 flag = True
