@@ -32,10 +32,10 @@ def test_getStats(tmp_path):
     # set path to required input files
     dirPath = os.path.dirname(__file__)
     testDataDir = os.path.join(dirPath, 'data')
-    data1 = os.path.join(testDataDir, 'release1_null_dfa_1000000_ppr.asc')
-    data2 = os.path.join(testDataDir, 'release1_null_dfa_2000000_ppr.asc')
-    cfg1 = os.path.join(testDataDir, 'release1_null_dfa_1000000.ini')
-    cfg2 = os.path.join(testDataDir, 'release1_null_dfa_2000000.ini')
+    data1 = os.path.join(testDataDir, 'testGetStats_1000000_ppr.asc')
+    data2 = os.path.join(testDataDir, 'testGetStats_2000000_ppr.asc')
+    cfg1 = os.path.join(testDataDir, 'testGetStats_1000000.ini')
+    cfg2 = os.path.join(testDataDir, 'testGetStats_2000000.ini')
 
     # define destination paths
     fNames = [os.path.join(avaDirPeakFiles, 'release1_null_dfa_1000000_ppr.asc'),
