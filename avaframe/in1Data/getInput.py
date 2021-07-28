@@ -5,11 +5,11 @@
 # Load modules
 import os
 import glob
+import pathlib
 import logging
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
-from avaframe.in3Utils import cfgUtils
 
 
 # create local logger
@@ -168,7 +168,7 @@ def getInputDataCom1DFA(avaDir, cfg):
     """
 
     # Set directories for inputs, outputs and current work
-    inputDir = os.path.join(avaDir, 'Inputs')
+    inputDir = pathlib.Path(avaDir, 'Inputs')
 
     # Set flag if there is an entrainment or resistance area
     entResInfo= {'flagEnt': 'No', 'flagRes': 'No'}
@@ -176,17 +176,18 @@ def getInputDataCom1DFA(avaDir, cfg):
     # Initialise release areas, default is to look for shapefiles
     if cfg['flagDev'] == 'True':
         releaseDir = 'devREL'
-        relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
+        releaseDir = pathlib.Path(inputDir, 'devREL')
+        relFiles = list(releaseDir.glob('*.shp'))
     elif cfg['releaseScenario'] != '':
         releaseDir = 'REL'
         relFiles = []
         releaseFiles = cfg['releaseScenario'].split('|')
         for rel in releaseFiles:
             if '.shp' in rel:
-                relf = os.path.join(inputDir, releaseDir, rel)
+                relf = pathlib.Path(inputDir, releaseDir, rel)
             else:
-                relf = os.path.join(inputDir, releaseDir, '%s.shp' % (rel))
-            if not os.path.isfile(relf):
+                relf = pathlib.Path(inputDir, releaseDir, '%s.shp' % (rel))
+            if not rel.exists():
                 message = 'No release scenario called: %s' % (relf)
                 log.error(message)
                 raise FileNotFoundError(message)
@@ -194,7 +195,8 @@ def getInputDataCom1DFA(avaDir, cfg):
         log.debug('Release area file is specified to be: %s' % relFiles)
     else:
         releaseDir = 'REL'
-        relFiles = sorted(glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp'))
+        releaseDir = pathlib.Path(inputDir, 'REL')
+        relFiles = (list(releaseDir.glob('*.shp')))
     log.info('Release area files are: %s' % relFiles)
 
     # Initialise secondary release areas
@@ -238,7 +240,8 @@ def getAndCheckInputFiles(inputDir, folder, inputType):
     """
     available = 'No'
     # Initialise secondary release areas
-    OutputFile = glob.glob(inputDir+os.sep + folder + os.sep+'*.shp')
+    dir = pathlib.Path(inputDir, folder)
+    OutputFile = list(dir.glob('*.shp'))
     if len(OutputFile) < 1:
         OutputFile = None
     elif len(OutputFile) > 1:

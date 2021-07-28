@@ -251,7 +251,7 @@ def readABinputs(avalancheDir):
     saveOutPath = pathlib.Path(avalancheDir, 'Outputs/com2AB/')
     if not saveOutPath.exists():
         # log.info('Creating output folder %s', saveOutPath)
-        os.makedirs(saveOutPath)
+        saveOutPath.mkdir(parents=True, exist_ok=True)
     cfgPath['saveOutPath'] = saveOutPath
 
     defaultName = str(avalancheDir).split('/')[-1]
