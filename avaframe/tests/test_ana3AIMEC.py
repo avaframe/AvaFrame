@@ -17,10 +17,10 @@ def test_getAimecInputs(capfd):
     cfgPath = {}
     cfgPath = aT.readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA')
     print(cfgPath)
-    assert str(cfgPath['profileLayer']) == '/home/matthias/Documents/github/AvaFrame/avaframe/tests/../data/avaParabola/Inputs/LINES/path_aimec.shp'
-    assert str(cfgPath['splitPointSource']) == '/home/matthias/Documents/github/AvaFrame/avaframe/tests/../data/avaParabola/Inputs/POINTS/splitPoint.shp'
-    assert str(cfgPath['demSource']) == '/home/matthias/Documents/github/AvaFrame/avaframe/tests/../data/avaParabola/Inputs/DEM_PF_Topo.asc'
-    assert str(cfgPath['pathResult']) == '/home/matthias/Documents/github/AvaFrame/avaframe/tests/../data/avaParabola/Outputs/ana3AIMEC/com1DFA'
+    assert 'avaframe/tests/../data/avaParabola/Inputs/LINES/path_aimec.shp' in str(cfgPath['profileLayer'])
+    assert 'avaframe/tests/../data/avaParabola/Inputs/POINTS/splitPoint.shp' in str(cfgPath['splitPointSource'])
+    assert 'avaframe/tests/../data/avaParabola/Inputs/DEM_PF_Topo.asc' in str(cfgPath['demSource'])
+    assert 'avaframe/tests/../data/avaParabola/Outputs/ana3AIMEC/com1DFA' in str(cfgPath['pathResult'])
     assert cfgPath['projectName'] == 'avaParabola'
     assert cfgPath['pathName'] == 'path_aimec'
 

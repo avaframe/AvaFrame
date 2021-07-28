@@ -55,7 +55,8 @@ def getDEMPath(avaDir):
         full path to DEM .asc file
     """
 
-    demFile = glob.glob(os.path.join(avaDir, 'Inputs', '*.asc'))
+    inputDir = pathlib.Path(avaDir, 'Inputs')
+    demFile = list(inputDir.glob('*.asc'))
     if not len(demFile) == 1:
         message = 'There should be exactly one topography .asc file in %s/Inputs/' % (avaDir)
         log.error(message)
@@ -187,7 +188,8 @@ def getInputDataCom1DFA(avaDir, cfg):
                 relf = pathlib.Path(inputDir, releaseDir, rel)
             else:
                 relf = pathlib.Path(inputDir, releaseDir, '%s.shp' % (rel))
-            if not rel.exists():
+
+            if not relf.is_file():
                 message = 'No release scenario called: %s' % (relf)
                 log.error(message)
                 raise FileNotFoundError(message)
@@ -196,7 +198,7 @@ def getInputDataCom1DFA(avaDir, cfg):
     else:
         releaseDir = 'REL'
         releaseDir = pathlib.Path(inputDir, 'REL')
-        relFiles = (list(releaseDir.glob('*.shp')))
+        relFiles = sorted(list(releaseDir.glob('*.shp')))
     log.info('Release area files are: %s' % relFiles)
 
     # Initialise secondary release areas
