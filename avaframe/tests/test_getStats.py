@@ -20,7 +20,7 @@ import shutil
 def test_getStats(tmp_path):
     """ test get statistics of data """
 
-    # define input directory
+    # define test directory
     avaName = 'avaStats'
     avaDirtmp = os.path.join(tmp_path, avaName)
     avaDirPeakFiles = os.path.join(tmp_path, avaName, 'Outputs', 'com1DFA', 'peakFiles')
@@ -29,56 +29,26 @@ def test_getStats(tmp_path):
     os.makedirs(avaDirPeakFiles)
     os.makedirs(avaDirConfigFiles)
 
-    data1 = np.asarray([[0., 1., 0.], [0., 2., 2.], [0., 4., 1.]])
-    data2 = np.asarray([[0., 10., 0.], [2., 2., 1.], [1., 4., 1.]])
+    # set path to required input files
+    dirPath = os.path.dirname(__file__)
+    testDataDir = os.path.join(dirPath, 'data')
+    data1 = os.path.join(testDataDir, 'release1_null_dfa_1000000_ppr.asc')
+    data2 = os.path.join(testDataDir, 'release1_null_dfa_2000000_ppr.asc')
+    cfg1 = os.path.join(testDataDir, 'release1_null_dfa_1000000.ini')
+    cfg2 = os.path.join(testDataDir, 'release1_null_dfa_2000000.ini')
 
-    ncols = data1.shape[1]
-    nrows = data1.shape[0]
-    noDataValue = -9999
-    xllcenter = 0.0
-    yllcenter = 0.0
-    cellSize = 1.
-
-    resultArrayList = [data1, data2]
+    # define destination paths
     fNames = [os.path.join(avaDirPeakFiles, 'release1_null_dfa_1000000_ppr.asc'),
               os.path.join(avaDirPeakFiles, 'release1_null_dfa_2000000_ppr.asc')]
-
-    # write configuration files
-    cfg1 = configparser.ConfigParser()
-    cfg1.optionxform = str
-    cfg1['GENERAL'] = {'relTh': '1.0', 'releaseScenario': 'release1'}
-    cfg2 = configparser.ConfigParser()
-    cfg2.optionxform = str
-    cfg2['GENERAL'] = {'relTh': '2.0', 'releaseScenario': 'release1'}
-    configurationSettings = [cfg1, cfg2]
 
     configFiles = [os.path.join(avaDirConfigFiles, 'release1_null_dfa_1000000.ini'),
                    os.path.join(avaDirConfigFiles, 'release1_null_dfa_2000000.ini')]
 
-    for k in range(2):
-        # Open outfile
-        with open(fNames[k], 'w') as outFile:
-
-            # write the header and array values to file
-            outFile.write("ncols %d\n" % ncols)
-            outFile.write("nrows %d\n" % nrows)
-            outFile.write("xllcenter %.2f\n" % xllcenter)
-            outFile.write("yllcenter %.2f\n" % yllcenter)
-            outFile.write("cellsize %.2f\n" % cellSize)
-            outFile.write("nodata_value %.2f\n" % noDataValue)
-
-            resultArray = resultArrayList[k]
-            M = resultArray.shape[0]
-            for m in range(M):
-                line = np.array([resultArray[m, :]])
-                np.savetxt(outFile, line, fmt='%.16g')
-
-            outFile.close()
-
-        cfg = configurationSettings[k]
-        cfg.optionxform = str
-        with open(os.path.join(configFiles[k]), 'w') as conf:
-            cfg.write(conf)
+    # copy files
+    shutil.copy(data1, fNames[0])
+    shutil.copy(data2, fNames[1])
+    shutil.copy(cfg1, configFiles[0])
+    shutil.copy(cfg2, configFiles[1])
 
     # parameter dictionary
     varPar = 'relTh'
