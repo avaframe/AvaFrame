@@ -3,6 +3,7 @@ import numpy as np
 import math
 import pytest
 import logging
+import matplotlib.path as mpltPath
 import os
 import configparser
 
@@ -347,6 +348,44 @@ def test_remeshDEM(tmp_path):
     assert len(indNoData[0]) == 0
     assert testRes
     assert np.isclose(dataRaster[0,0], 10.)
+
+
+def test_isCounterClockWise(capfd):
+    """ test isCounterClockWise """
+    xCoord = np.array([0, 1, 2, 0.5])
+    yCoord = np.array([0, 1, -1, -2])
+    polygon = np.stack((xCoord, yCoord), axis=-1)
+    path = mpltPath.Path(polygon)
+    is_ccw = geoTrans.isCounterClockWise(path)
+    assert is_ccw==False
+
+
+def test_checkOverlap(capfd):
+    """ test checkOverlap function with both crop set to False and True
+    """
+    nRows = 5
+    nCols = 6
+    refRaster = np.zeros((nRows, nCols))
+    refRaster[:3, :3] = 1
+    checkedRaster1 = np.zeros((nRows, nCols))
+    checkedRaster1[3:, 3:] = 1
+
+    toCheckRaster = np.zeros((nRows, nCols))
+    toCheckRaster[2:, 2:] = 1
+    checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, 'to Check', 'ref', crop=True)
+    assert (checkedRaster2 == checkedRaster1).all
+
+    toCheckRaster = np.zeros((nRows, nCols))
+    toCheckRaster[2:, 2:] = 1
+    with pytest.raises(AssertionError, match=r"to Check area features overlapping with ref area - this is not allowed"):
+        checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, 'to Check', 'ref', crop=False)
+
+    toCheckRaster = np.zeros((nRows, nCols))
+    toCheckRaster[3:, 3:] = 1
+    checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, 'to Check', 'ref', crop=True)
+    assert (checkedRaster2 == toCheckRaster).all
+    checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, 'to Check', 'ref', crop=False)
+    assert (checkedRaster2 == toCheckRaster).all
 
 
 def getIPZ(z0, xEnd, yEnd, dx):
