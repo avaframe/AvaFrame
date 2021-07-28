@@ -4,9 +4,9 @@
 
 import logging
 import time
+import pathlib
 import os
 import numpy as np
-import glob
 import copy
 import pickle
 from datetime import datetime
@@ -98,7 +98,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
 
     if 'particles' in cfgGen['resType']:
         # export particles dictionaries of saving time steps
-        outDirData = os.path.join(outDir, 'particles')
+        outDirData = pathlib.Path(outDir, 'particles')
         fU.makeADir(outDirData)
         savePartToPickle(particlesList, outDirData, cuSimName)
 
@@ -138,7 +138,7 @@ def prepareRelase(cfg, rel, inputSimLines):
     entResInfo = inputSimLines['entResInfo']
 
     # Set release areas and simulation name
-    relName = os.path.splitext(os.path.basename(rel))[0]
+    relName = os.path.splitext(rel.stem)[0]
     simName = relName
     badName = False
     if '_' in relName:
@@ -241,7 +241,7 @@ def prepareInputData(inputSimFiles):
     if entResInfo['flagEnt'] == 'Yes':
         entFile = inputSimFiles['entFile']
         entLine = shpConv.readLine(entFile, '', demOri)
-        entrainmentArea = os.path.splitext(os.path.basename(entFile))[0]
+        entrainmentArea = os.path.splitext(entFile.stem)[0]
         entLine['fileName'] = [entFile]
     else:
         entLine = None
@@ -251,7 +251,7 @@ def prepareInputData(inputSimFiles):
     if entResInfo['flagRes'] == 'Yes':
         resFile = inputSimFiles['resFile']
         resLine = shpConv.readLine(resFile, '', demOri)
-        resistanceArea = os.path.splitext(os.path.basename(resFile))[0]
+        resistanceArea = os.path.splitext(resFile.stem)[0]
         resLine['fileName'] = [resFile]
     else:
         resLine = None
@@ -608,7 +608,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
             inDirPart = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
 
         searchDir = inDirPart / 'particles'
-        inDirPart = list(searchDir.glob( ('*' + cfg['releaseScenario'] + '_' + '*' + cfg['simTypeActual'] + '*')))
+        inDirPart = list(searchDir.glob(('*' + cfg['releaseScenario'] + '_' + '*' + cfg['simTypeActual'] + '*')))
         if inDirPart == []:
             messagePart = 'Initialise particles from file - no particles file found for releaseScenario: %s and simType: %s' % \
                             (cfg['releaseScenario'], cfg['simTypeActual'])
@@ -1139,9 +1139,9 @@ def writeMBFile(infoDict, avaDir, logName):
     massTotal = infoDict['massTotal']
 
     # write mass balance info to log file
-    massDir = os.path.join(avaDir, 'Outputs', 'com1DFA')
+    massDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA')
     fU.makeADir(massDir)
-    with open(os.path.join(massDir, 'mass_%s.txt' % logName), 'w') as mFile:
+    with open(pathlib.Path(massDir, 'mass_%s.txt' % logName), 'w') as mFile:
         mFile.write('time, current, entrained\n')
         for m in range(len(t)):
             mFile.write('%.02f,    %.06f,    %.06f\n' %
@@ -1788,9 +1788,9 @@ def savePartToPickle(dictList, outDir, logName):
 
     if isinstance(dictList, list):
         for dict in dictList:
-            pickle.dump(dict, open(os.path.join(outDir, "particles_%s_%09.4f.p" % (logName, dict['t'])), "wb"))
+            pickle.dump(dict, open(pathlib.Path(outDir, "particles_%s_%09.4f.p" % (logName, dict['t'])), "wb"))
     else:
-        pickle.dump(dictList, open(os.path.join(outDir, "particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb"))
+        pickle.dump(dictList, open(pathlib.Path(outDir, "particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb"))
 
 
 def readPartFromPickle(inDir, flagAvaDir=False):
@@ -1806,10 +1806,10 @@ def readPartFromPickle(inDir, flagAvaDir=False):
     """
 
     if flagAvaDir:
-        inDir = os.path.join(inDir, 'Outputs', 'com1DFA', 'particles')
+        inDir = pathlib.Path(inDir, 'Outputs', 'com1DFA', 'particles')
 
     # search for all pickles within directory
-    PartDicts = sorted(glob.glob(os.path.join(inDir, '*.p')))
+    PartDicts = sorted(inDir.glob('*.p'))
 
     # initialise list of particle dictionaries
     Particles = []
@@ -1836,7 +1836,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
     """
 
     # set output directory
-    outDir = os.path.join(outDir, 'particlesCSV')
+    outDir = pathlib.Path(outDir, 'particlesCSV')
     fU.makeADir(outDir)
 
     # read particle properties to be saved
@@ -1864,7 +1864,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
         csvData['time'] = particles['t']
 
         # create pandas dataFrame and save to csv
-        outFile = os.path.join(outDir, 'particles%s.csv.%d' % (simName, count))
+        outFile = pathlib.Path(outDir, 'particles%s.csv.%d' % (simName, count))
         particlesData = pds.DataFrame(data=csvData)
         particlesData.to_csv(outFile, index=False)
         count = count + 1
@@ -1912,17 +1912,17 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 resField = resField * 0.001
             dataName = logName + '_' + resType + '_' + 't%.2f' % (Tsave[countTime]) + '.asc'
             # create directory
-            outDirPeak = os.path.join(outDir, 'peakFiles', 'timeSteps')
+            outDirPeak = pathlib.Path(outDir, 'peakFiles', 'timeSteps')
             fU.makeADir(outDirPeak)
-            outFile = os.path.join(outDirPeak, dataName)
+            outFile = pathlib.Path(outDirPeak, dataName)
             IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             if countTime == numberTimes:
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType, Tsave[countTime]))
                 dataName = logName + '_' + resType + '.asc'
                 # create directory
-                outDirPeakAll = os.path.join(outDir, 'peakFiles')
+                outDirPeakAll = pathlib.Path(outDir, 'peakFiles')
                 fU.makeADir(outDirPeakAll)
-                outFile = os.path.join(outDirPeakAll, dataName)
+                outFile = pathlib.Path(outDirPeakAll, dataName)
                 IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             else:
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType, Tsave[countTime]))
@@ -1952,11 +1952,11 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
             U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
             fig, ax = plotPosition(
                 fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True)
-            fig.savefig(os.path.join(outDir, 'particlest%f.%s' % (part['t'], pU.outputFormat)))
+            fig.savefig(pathlib.Path(outDir, 'particlest%f.%s' % (part['t'], pU.outputFormat)))
 
         fig, ax = plotPosition(
                 fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True, last=True)
-        fig.savefig(os.path.join(outDir, 'particlesFinal.%s' % (pU.outputFormat)))
+        fig.savefig(pathlib.Path(outDir, 'particlesFinal.%s' % (pU.outputFormat)))
         value = input("[y] to repeat:\n")
         if value != 'y':
             repeat = False
@@ -2014,7 +2014,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
     # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
     simDict = {}
     for rel in inputSimFiles['relFiles']:
-        relName = os.path.splitext(os.path.basename(rel))[0]
+        print(rel)
+        print(os.path.basename(rel))
+        relName = os.path.splitext(rel.stem)[0]
         cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
         for row in variationDF.itertuples():
             for parameter in variationDict:

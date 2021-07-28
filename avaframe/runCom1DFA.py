@@ -2,7 +2,7 @@
     Run script for running python DFA kernel
 """
 
-import os
+import pathlib
 
 # Local imports
 import avaframe.in3Utils.initialiseDirs as inDirs
@@ -106,7 +106,7 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
 
         # export for visulation
         if cfg['VISUALISATION'].getboolean('writePartToCSV'):
-            outDir = os.path.join(avalancheDir, 'Outputs', modName)
+            outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
             com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
         # create hash to check if config didnt change
@@ -116,7 +116,7 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
             cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
 
     # Set directory for report
-    reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFA', 'reports')
+    reportDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'reports')
     # Generate plots for all peakFiles
     plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
     # write report
