@@ -3,12 +3,11 @@
 
 """
 
-import os
-import glob
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import pathlib
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
@@ -140,13 +139,13 @@ def com2ABMain(cfg, avalancheDir):
         if cfg.getboolean('FLAGS', 'fullOut'):
             # saving results to pickle saveABResults(resAB, name)
             savename = name + '_com2AB_eqparam.pickle'
-            save_file = os.path.join(cfgPath['saveOutPath'], savename)
+            save_file = pathlib.Path(cfgPath['saveOutPath'], savename)
             pickle.dump(resAB['eqParams'], open(save_file, "wb"))
-            log.info('Saving intermediate results to: %s'% (save_file))
+            log.info('Saving intermediate results to: %s' % (save_file))
             savename = name + '_com2AB_eqout.pickle'
-            save_file = os.path.join(cfgPath['saveOutPath'], savename)
+            save_file = pathlib.Path(cfgPath['saveOutPath'], savename)
             pickle.dump(resAB[name], open(save_file, "wb"))
-            log.info('Saving intermediate results to: %s'% (save_file))
+            log.info('Saving intermediate results to: %s' % (save_file))
 
     return resAB
 
@@ -220,35 +219,37 @@ def readABinputs(avalancheDir):
     """
     cfgPath = {}
     # read avalanche paths for AB
-    profileLayer = glob.glob(avalancheDir + '/Inputs/LINES/*AB*.shp')
+    refDir = pathlib.Path(avalancheDir, 'Inputs', 'LINES')
+    profileLayer = list(refDir.glob('*AB*.shp'))
     try:
-        message = 'There should be exactly one pathAB.shp file containing (multiple) avalanche paths in ' + avalancheDir + '/Inputs/LINES/'
+        message = 'There should be exactly one pathAB.shp file containing (multiple) avalanche paths in %s /Inputs/LINES/' % avalancheDir
         assert len(profileLayer) == 1, message
     except AssertionError:
         raise
-    cfgPath['profileLayer'] = ''.join(profileLayer)
+    cfgPath['profileLayer'] = profileLayer[0]
 
     # read DEM
-    demSource = glob.glob(avalancheDir + '/Inputs/*.asc')
+    refDir = pathlib.Path(avalancheDir, 'Inputs')
+    demSource = list(refDir.glob('*.asc'))
     try:
-        assert len(demSource) == 1, 'There should be exactly one topography .asc file in ' + \
-            avalancheDir + '/Inputs/'
+        assert len(demSource) == 1, 'There should be exactly one topography .asc file in %s /Inputs/' % avalancheDir
     except AssertionError:
         raise
-    cfgPath['demSource'] = ''.join(demSource)
+    cfgPath['demSource'] = demSource[0]
 
     # read split points
-    splitPointSource = glob.glob(avalancheDir + '/Inputs/POINTS/*.shp')
+    refDir = pathlib.Path(avalancheDir, 'Inputs', 'POINTS')
+    splitPointSource = list(refDir.glob('*.shp'))
     try:
-        message = 'There should be exactly one .shp file containing the split points in ' + avalancheDir + '/Inputs/POINTS/'
+        message = 'There should be exactly one .shp file containing the split points in %s /Inputs/POINTS/' %  avalancheDir
         assert len(splitPointSource) == 1, message
     except AssertionError:
         raise
-    cfgPath['splitPointSource'] = ''.join(splitPointSource)
+    cfgPath['splitPointSource'] = splitPointSource[0]
 
     # make output path
-    saveOutPath = os.path.join(avalancheDir, 'Outputs/com2AB/')
-    if not os.path.exists(saveOutPath):
+    saveOutPath = pathlib.Path(avalancheDir, 'Outputs/com2AB/')
+    if not saveOutPath.exists():
         # log.info('Creating output folder %s', saveOutPath)
         os.makedirs(saveOutPath)
     cfgPath['saveOutPath'] = saveOutPath

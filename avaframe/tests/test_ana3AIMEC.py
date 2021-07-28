@@ -1,29 +1,43 @@
 ''' Tests for module ana3AIMEC '''
 import numpy as np
-import os
-import glob
+import pathlib
 
 # Local imports
 import avaframe.ana3AIMEC.ana3AIMEC as ana3AIMEC
 import avaframe.ana3AIMEC.aimecTools as aT
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
-from avaframe.tests import test_logUtils
+
+
+def test_getAimecInputs(capfd):
+    """ test readAIMECinputs and fetchReferenceSimNo"""
+    dirname = pathlib.Path(__file__).parents[0]
+
+    avalancheDir = pathlib.Path(dirname, '..', 'data', 'avaParabola')
+    cfgPath = {}
+    cfgPath = aT.readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA')
+    print(cfgPath)
+    assert str(cfgPath['profileLayer']) == '/home/matthias/Documents/github/AvaFrame/avaframe/tests/../data/avaParabola/Inputs/LINES/path_aimec.shp'
+    assert str(cfgPath['splitPointSource']) == '/home/matthias/Documents/github/AvaFrame/avaframe/tests/../data/avaParabola/Inputs/POINTS/splitPoint.shp'
+    assert str(cfgPath['demSource']) == '/home/matthias/Documents/github/AvaFrame/avaframe/tests/../data/avaParabola/Inputs/DEM_PF_Topo.asc'
+    assert str(cfgPath['pathResult']) == '/home/matthias/Documents/github/AvaFrame/avaframe/tests/../data/avaParabola/Outputs/ana3AIMEC/com1DFA'
+    assert cfgPath['projectName'] == 'avaParabola'
+    assert cfgPath['pathName'] == 'path_aimec'
 
 
 def test_analyzeArea(capfd):
     '''Simple test for module analyzeArea'''
     # get input data
-    dirname = os.path.dirname(__file__)
-    dataRef = os.path.join(dirname, 'data', 'refTestAimecTopo.asc')
-    dataSim = os.path.join(dirname, 'data', 'simTestAimecTopo.asc')
-    dataMass = os.path.join(dirname, 'data', '000000.txt')
-    dataMass1 = os.path.join(dirname, 'data', '000001.txt')
+    dirname = pathlib.Path(__file__).parents[0]
+    dataRef = pathlib.Path(dirname, 'data', 'refTestAimecTopo.asc')
+    dataSim = pathlib.Path(dirname, 'data', 'simTestAimecTopo.asc')
+    dataMass = pathlib.Path(dirname, 'data', '000000.txt')
+    dataMass1 = pathlib.Path(dirname, 'data', '000001.txt')
     cfgPath = {}
     cfgPath['projectName'] = 'NameOfAvalanche'
     cfgPath['ppr'] = [dataRef, dataSim]
     cfgPath['massBal'] = [dataMass, dataMass1]
-    pathResult = os.path.join(dirname, 'data')
+    pathResult = pathlib.Path(dirname, 'data')
     cfgPath['pathResult'] = pathResult
     cfgPath['dirName'] = 'testAIMEC'
     cfgPath['referenceFile'] = 0
@@ -79,38 +93,41 @@ def test_makeDomainTransfo(capfd):
     '''Simple test for module makeDomainTransfo'''
     # Extract input file locations
     cfgPath = {}
-    dir = os.path.dirname(__file__)
-    dirname = os.path.join(dir, 'data', 'testAna3Aimec')
-    pathData = os.path.join(dirname, 'data')
+    dir = pathlib.Path(__file__).parents[0]
+    dirname = pathlib.Path(dir, 'data', 'testAna3Aimec')
+    pathData = pathlib.Path(dirname, 'data')
 
-    profileLayer = glob.glob(os.path.join(dirname, 'LINES', '*aimec*.shp'))
-    cfgPath['profileLayer'] = ''.join(profileLayer)
+    refDir = pathlib.Path(dirname, 'LINES')
+    profileLayer = list(refDir.glob('*aimec*.shp'))
+    cfgPath['profileLayer'] = profileLayer[0]
 
-    splitPointLayer = glob.glob(os.path.join(dirname, 'POINTS', '*.shp'))
-    cfgPath['splitPointSource'] = ''.join(splitPointLayer)
+    refDir = pathlib.Path(dirname, 'POINTS')
+    splitPointLayer = list(refDir.glob('*.shp'))
+    cfgPath['splitPointSource'] = splitPointLayer[0]
 
-    demSource = glob.glob(os.path.join(dirname, '*.asc'))
-    cfgPath['demSource'] = ''.join(demSource)
+    refDir = pathlib.Path(dirname)
+    demSource = list(refDir.glob('*.asc'))
+    cfgPath['demSource'] = demSource[0]
 
-    cfgPath['ppr'] = [os.path.join(pathData, 'testAimec_0.asc'), os.path.join(pathData, 'testAimec_1.asc'),
-                      os.path.join(pathData, 'testAimec_2.asc'), os.path.join(pathData, 'testAimec_3.asc'),
-                      os.path.join(pathData, 'testAimec_4.asc')]
-    cfgPath['pfd'] = [os.path.join(pathData, 'testAimec_0.asc'), os.path.join(pathData, 'testAimec_1.asc'),
-                      os.path.join(pathData, 'testAimec_2.asc'), os.path.join(pathData, 'testAimec_3.asc'),
-                      os.path.join(pathData, 'testAimec_4.asc')]
-    cfgPath['pfv'] = [os.path.join(pathData, 'testAimec_0.asc'), os.path.join(pathData, 'testAimec_1.asc'),
-                      os.path.join(pathData, 'testAimec_2.asc'), os.path.join(pathData, 'testAimec_3.asc'),
-                      os.path.join(pathData, 'testAimec_4.asc')]
+    cfgPath['ppr'] = [pathlib.Path(pathData, 'testAimec_0.asc'), pathlib.Path(pathData, 'testAimec_1.asc'),
+                      pathlib.Path(pathData, 'testAimec_2.asc'), pathlib.Path(pathData, 'testAimec_3.asc'),
+                      pathlib.Path(pathData, 'testAimec_4.asc')]
+    cfgPath['pfd'] = [pathlib.Path(pathData, 'testAimec_0.asc'), pathlib.Path(pathData, 'testAimec_1.asc'),
+                      pathlib.Path(pathData, 'testAimec_2.asc'), pathlib.Path(pathData, 'testAimec_3.asc'),
+                      pathlib.Path(pathData, 'testAimec_4.asc')]
+    cfgPath['pfv'] = [pathlib.Path(pathData, 'testAimec_0.asc'), pathlib.Path(pathData, 'testAimec_1.asc'),
+                      pathlib.Path(pathData, 'testAimec_2.asc'), pathlib.Path(pathData, 'testAimec_3.asc'),
+                      pathlib.Path(pathData, 'testAimec_4.asc')]
 
-    cfgPath['massBal'] = [os.path.join(dirname, '000001.txt')]*5
+    cfgPath['massBal'] = [pathlib.Path(dirname, '000001.txt')]*5
 
     cfgPath['contCmap'] = True
 
-    pathResult = os.path.join(dirname, 'results')
+    pathResult = pathlib.Path(dirname, 'results')
     cfgPath['pathResult'] = pathResult
 
     cfgPath['projectName'] = 'testAna3Aimec'
-    pathName = os.path.basename(profileLayer[0])
+    pathName = profileLayer[0].stem
     cfgPath['pathName'] = pathName
     cfgPath['dirName'] = 'com1DFA'
     cfgPath['referenceFile'] = 0
@@ -149,6 +166,16 @@ def test_makeDomainTransfo(capfd):
     # Analyze data
     resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
 
+    for i in range(5):
+        rasterSource = cfgPath['ppr'][i]
+        sourceData = IOf.readRaster(rasterSource)
+        rasterdata = sourceData['rasterData']
+        error = (resAnalysis['TP'][i]+resAnalysis['FP'][i]-np.nansum(rasterdata))/(
+                np.nansum(rasterdata)*100)
+        assert error < 0.4
+        assert np.abs(resAnalysis['runout'][0, i] - (240 + 10*(i+1))) < 5
+
+    resAnalysis = ana3AIMEC.postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
     for i in range(5):
         rasterSource = cfgPath['ppr'][i]
         sourceData = IOf.readRaster(rasterSource)

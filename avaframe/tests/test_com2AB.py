@@ -1,7 +1,7 @@
 """Tests for module com2AB"""
 import numpy as np
 import pytest
-import os
+import pathlib
 
 # Local imports
 import avaframe.com2AB.com2AB as com2AB
@@ -113,10 +113,10 @@ def test_com2ABMain(capfd):
     '''Simple test for function com2ABMain'''
     # load and prepare Inputs
     listNames = ['avaHockeySmall', 'avaHockeyChannel', 'avaBowl']
-    dirname = os.path.dirname(__file__)
+    dirname = pathlib.Path(__file__).parents[0]
     for name in listNames:
-        avalancheDir = os.path.join(dirname, '..', 'data', name)
-        saveOutPathRef = os.path.join(dirname, '..', '..', 'benchmarks', name + 'ABPytest')
+        avalancheDir = pathlib.Path(dirname, '..', 'data', name)
+        saveOutPathRef = pathlib.Path(dirname, '..', '..', 'benchmarks', name + 'ABPytest')
         cfg = cfgUtils.getModuleConfig(com2AB)
         flags = cfg['FLAGS']
         # run main routine
@@ -146,8 +146,8 @@ def test_QGISAB(capfd):
     '''Compare com2ABMain results to QGIS AB results for avaSlide'''
     # load and prepare Inputs
     avaName = 'avaSlide'
-    dirname = os.path.dirname(__file__)
-    avalancheDir = os.path.join(dirname, '..', 'data', avaName)
+    dirname = pathlib.Path(__file__).parents[0]
+    avalancheDir = pathlib.Path(dirname, '..', 'data', avaName)
     cfg = cfgUtils.getModuleConfig(com2AB)
     # run main routine
     resAB = com2AB.com2ABMain(cfg, avalancheDir)
@@ -168,7 +168,7 @@ def test_QGISAB(capfd):
         ids_alphaM2SD = resAB[name]['ids_alphaM2SD']
         # get ref results
         nameRef = name + '_AB_QGIS.txt'
-        nameRefpath = os.path.join(dirname, '..', '..', 'benchmarks', avaName + 'ABPytest',
+        nameRefpath = pathlib.Path(dirname, '..', '..', 'benchmarks', avaName + 'ABPytest',
                                    nameRef)
         data = np.loadtxt(nameRefpath, skiprows=4, delimiter=',')
         tolDist = 10

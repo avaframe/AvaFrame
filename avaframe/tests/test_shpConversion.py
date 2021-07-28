@@ -1,6 +1,6 @@
 """Tests for module com2AB"""
 import numpy as np
-import os
+import pathlib
 import pytest
 
 # Local imports
@@ -10,8 +10,8 @@ import avaframe.in2Trans.shpConversion as shpConv
 
 def test_SHP2Array(capfd):
     '''Simple test for function SHP2Array'''
-    dirname = os.path.dirname(__file__)
-    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLine.shp')
+    dirname = pathlib.Path(__file__).parents[0]
+    shpFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testLine.shp')
     SHPdata = shpConv.SHP2Array(shpFileName, defname=None)
     Name = SHPdata['Name']
     Start = SHPdata['Start']
@@ -55,8 +55,8 @@ def test_SHP2Array(capfd):
 
 def test_extractFeature(capfd):
     '''Simple test for function extractFeature'''
-    dirname = os.path.dirname(__file__)
-    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLine.shp')
+    dirname = pathlib.Path(__file__).parents[0]
+    shpFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testLine.shp')
     SHPdata = shpConv.SHP2Array(shpFileName, defname=None)
 
     atol = 1e-10
@@ -123,8 +123,8 @@ def test_extractFeature(capfd):
 
 def test_removeFeature(capfd):
     '''Simple test for function removeFeature'''
-    dirname = os.path.dirname(__file__)
-    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLine.shp')
+    dirname = pathlib.Path(__file__).parents[0]
+    shpFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testLine.shp')
     SHPdata = shpConv.SHP2Array(shpFileName, defname=None)
     atol = 1e-10
     # extract feature 0
@@ -190,10 +190,10 @@ def test_removeFeature(capfd):
 
 def test_readLine(capfd):
     '''Simple test for function readLine'''
-    dirname = os.path.dirname(__file__)
-    demFileName = os.path.join(dirname, 'data', 'testShpConv', 'testShpConv.asc')
+    dirname = pathlib.Path(__file__).parents[0]
+    demFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testShpConv.asc')
     dem = ascUtils.readRaster(demFileName)
-    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLine.shp')
+    shpFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testLine.shp')
 
     # do we react properly when the input line exceeds the dem?
     with pytest.raises(Exception) as e:
@@ -201,12 +201,12 @@ def test_readLine(capfd):
     assert str(e.value) == "Nan Value encountered. Try with another path"
 
     # do we react properly when the input line exceeds the dem?
-    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLineOut.shp')
+    shpFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testLineOut.shp')
     with pytest.raises(Exception) as e:
         assert shpConv.readLine(shpFileName, '', dem)
     assert str(e.value) == "The avalanche path exceeds dem extent. Try with another path"
 
-    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLineGood.shp')
+    shpFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testLineGood.shp')
     Line = shpConv.readLine(shpFileName, '', dem)
 
     # check lines name
@@ -241,18 +241,18 @@ def test_readLine(capfd):
 
 def test_readPoints(capfd):
     '''Simple test for function readPoints'''
-    dirname = os.path.dirname(__file__)
-    demFileName = os.path.join(dirname, 'data', 'testShpConv', 'testShpConv.asc')
+    dirname = pathlib.Path(__file__).parents[0]
+    demFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testShpConv.asc')
     dem = ascUtils.readRaster(demFileName)
 
     # do we react properly when the input point exceeds the dem?
-    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLine.shp')
+    shpFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testLine.shp')
     with pytest.raises(Exception) as e:
         assert shpConv.readPoints(shpFileName, dem)
     assert str(e.value) == 'Nan Value encountered. Try with another split point'
 
     # do we react properly when the input point exceeds the dem?
-    shpFileName = os.path.join(dirname, 'data', 'testShpConv', 'testLineOut.shp')
+    shpFileName = pathlib.Path(dirname, 'data', 'testShpConv', 'testLineOut.shp')
     with pytest.raises(Exception) as e:
         assert shpConv.readPoints(shpFileName, dem)
     assert str(e.value) == 'The split point is not on the dem. Try with another split point'
