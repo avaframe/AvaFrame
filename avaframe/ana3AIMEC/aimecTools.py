@@ -2,9 +2,8 @@
     Main logic for AIMEC post processing
 """
 
-import os
 import logging
-import glob
+import pathlib
 import numpy as np
 import copy
 
@@ -46,38 +45,38 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
         updated dictionary with path to geometry input data
     """
 
-    profileLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'LINES',
-                                          '*aimec*.shp'))
+    refDir = pathlib.Path(avalancheDir, 'Inputs', 'LINES')
+    profileLayer = list(refDir.glob('*aimec*.shp'))
     try:
-        message = 'There should be exactly one path_aimec.shp file containing the avalanche path in ' + avalancheDir + '/Inputs/LINES/'
+        message = 'There should be exactly one path_aimec.shp file containing the avalanche path in %s/Inputs/LINES/' % avalancheDir
         assert len(profileLayer) == 1, message
     except AssertionError:
         raise
-    cfgPath['profileLayer'] = ''.join(profileLayer)
+    cfgPath['profileLayer'] = profileLayer[0]
 
-    splitPointLayer = glob.glob(os.path.join(avalancheDir, 'Inputs', 'POINTS',
-                                             '*.shp'))
+    refDir = pathlib.Path(avalancheDir, 'Inputs', 'POINTS')
+    splitPointLayer = list(refDir.glob('*.shp'))
     try:
-        message = 'There should be exactly one .shp file containing the split point in ' + avalancheDir + '/Inputs/POINTS/'
+        message = 'There should be exactly one .shp file containing the split point in %s/Inputs/POINTS/' % avalancheDir
         assert len(splitPointLayer) == 1, message
     except AssertionError:
         raise
-    cfgPath['splitPointSource'] = ''.join(splitPointLayer)
+    cfgPath['splitPointSource'] = splitPointLayer[0]
 
-    demSource = glob.glob(os.path.join(avalancheDir, 'Inputs', '*.asc'))
+    refDir = pathlib.Path(avalancheDir, 'Inputs')
+    demSource = list(refDir.glob('*.asc'))
     try:
-        assert len(demSource) == 1, 'There should be exactly one topography .asc file in ' + \
-            avalancheDir + '/Inputs/'
+        assert len(demSource) == 1, 'There should be exactly one topography .asc file in %s/Inputs/' % avalancheDir
     except AssertionError:
         raise
-    cfgPath['demSource'] = ''.join(demSource)
+    cfgPath['demSource'] = demSource[0]
 
-    pathResult = os.path.join(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
+    pathResult = pathlib.Path(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
     cfgPath['pathResult'] = pathResult
 
-    projectName = os.path.basename(avalancheDir)
+    projectName = pathlib.Path(avalancheDir).stem
     cfgPath['projectName'] = projectName
-    pathName = os.path.basename(profileLayer[0])
+    pathName = profileLayer[0].stem
     cfgPath['pathName'] = pathName
 
     return cfgPath
@@ -490,7 +489,7 @@ def transform(fname, rasterTransfo, interpMethod):
         new_data = z, pressure or depth... corresponding to fname on
         the new raster
     """
-    name = os.path.basename(fname)
+    name = fname.stem
     data = IOf.readRaster(fname)
 
     # read tranformation info
@@ -949,9 +948,9 @@ def readWrite(fname_ent, time):
 
     # check mass balance
     log.info('Total mass change between first and last time step in sim %s is: %.1f kg' %
-             (os.path.splitext(os.path.basename(fname_ent)), totMassResults[1] - relMass))
+             (fname_ent.stem, totMassResults[1] - relMass))
     log.info('Total entrained mass in sim %s is: %.1f kg' %
-             (os.path.splitext(os.path.basename(fname_ent)), entrainedMass))
+             (fname_ent.stem, entrainedMass))
     if (totMassResults[1] - relMass) == 0:
         diff = np.abs((totMassResults[1] - relMass) - entrainedMass)
         if diff > 0:

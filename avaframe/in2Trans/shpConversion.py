@@ -53,7 +53,7 @@ def SHP2Array(infile, defname=None):
 
     """
     #  Input shapefile
-    sf = shapefile.Reader(infile)
+    sf = shapefile.Reader(str(infile))
 
     # set defaults for variables
     layername = None
@@ -64,7 +64,7 @@ def SHP2Array(infile, defname=None):
     d01 = []
 
     # get coordinate system
-    prjfile = infile.replace('.shp', '.prj')
+    prjfile = infile.with_suffix('.prj')
     if os.path.isfile(prjfile):
         prjf = open(prjfile, 'r')
         sks = prjf.readline()
@@ -164,7 +164,7 @@ def readLine(fname, defname, dem):
         Line['Length'] : list of length of each line in Coord
     """
 
-    log.debug('Reading avalanche path : %s ', fname)
+    log.debug('Reading avalanche path : %s ', str(fname))
     header = dem['header']
     rasterDEM = dem['rasterData']
     Line = SHP2Array(fname, defname)
@@ -203,7 +203,7 @@ def readPoints(fname, dem):
         Line['Length'] : list of length of each point in Coord
     """
 
-    log.debug('Reading split point : %s ', fname)
+    log.debug('Reading split point : %s ', str(fname))
     header = dem['header']
     rasterDEM = dem['rasterData']
     defname = 'SHP'

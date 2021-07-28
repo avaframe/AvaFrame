@@ -3,12 +3,9 @@
 """
 
 # Load modules
-import os
-import glob
 import logging
 import pathlib
 import numpy as np
-import shutil
 
 # local modules
 from avaframe.in3Utils import fileHandlerUtils as fU
@@ -28,8 +25,8 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
     else:
         # Get info from ExpLog
         nameDir = 'com1DFAOrig'
-        logLoc = os.path.join(avaDir, 'Outputs', 'com1DFAOrig')
-        logName = os.path.join(logLoc, 'ExpLog.txt')
+        logLoc = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
+        logName = pathlib.Path(logLoc, 'ExpLog.txt')
         logDictExp = fU.readLogFile(logName)
         names = logDictExp['fullName']
         simNames = sorted(set(names), key=lambda s: (s.split("_")[0], s.split("_")[1], s.split("_")[3]))
@@ -48,8 +45,8 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
         flagStop = 0
 
         # Read log file
-        locFiles = os.path.join(avaDir, 'Outputs', 'com1DFAOrig')
-        fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
+        locFiles = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
+        fileName = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
         with open(fileName, 'r') as file:
             for line in file:
                 if "computing time step" in line:
@@ -69,7 +66,7 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
 
         # Write mass balance info files
         for k in range(len(indRun)-1):
-            saveName = os.path.join(locFiles, 'mass_%s.txt' % (simName))
+            saveName = pathlib.Path(locFiles, 'mass_%s.txt' % (simName))
             with open(saveName, 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
@@ -91,13 +88,14 @@ def getMBInfo(avaDir, pathDict, comMod, simName=''):
 
     # Get info from ExpLog
     if simName != '':
-        mbFile = os.path.join(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
+        mbFile = pathlib.Path(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
         pathDict['massBal'].append(mbFile)
         log.info('Added to pathDict[massBal] %s' % (mbFile))
 
     else:
-        mbFiles = glob.glob(os.path.join(avaDir, 'Outputs', comMod, 'mass*.txt'))
-        mbNames = sorted(set(mbFiles), key=lambda s: (s.split("_")[1], s.split("_")[2], s.split("_")[4]))
+        dir = pathlib.Path(avaDir, 'Outputs', comMod)
+        mbFiles = list(dir.glob('mass*.txt'))
+        mbNames = sorted(set(mbFiles), key=lambda s: (str(s).split("_")[1], str(s).split("_")[2], str(s).split("_")[4]))
 
         for mFile in mbNames:
             pathDict['massBal'].append(mFile)
@@ -110,7 +108,7 @@ def getRefMB(testName, pathDict, simName):
     """ Get mass balance info """
 
     # Get info from ExpLog
-    mbFile = os.path.join('..', 'benchmarks', testName, 'mass_%s.txt' % simName)
+    mbFile = pathlib.Path('..', 'benchmarks', testName, 'mass_%s.txt' % simName)
     pathDict['massBal'].append(mbFile)
     log.info('Added to pathDict[massBal] %s' % (mbFile))
 
