@@ -59,7 +59,7 @@ def readASCheader(fname):
     Parameters
     -----------
 
-    fname: str
+    fname: str or pathlib object
         path to ascii file
 
     Returns
@@ -154,7 +154,7 @@ def readASCdata2numpyArray(fName):
     Parameters
     -----------
 
-    fname: str
+    fname: str or pathlib object
         path to ascii file
 
     Returns
@@ -174,7 +174,7 @@ def readRaster(fname):
     Parameters
     -----------
 
-    fname: str
+    fname: str or pathlib object
         path to ascii file
 
     Returns
