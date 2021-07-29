@@ -3,7 +3,6 @@
 """
 
 # Load modules
-import glob
 import pathlib
 import logging
 import json
