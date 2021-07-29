@@ -3,7 +3,6 @@
 """
 
 # Load modules
-import os
 import time
 import glob
 import pathlib
@@ -40,8 +39,9 @@ for avaDir in avalancheDirectories:
 
     # Load input parameters from configuration file
     # write config to log file
-    avaName = os.path.basename(avaDir)
-    probSimCfg = os.path.join('..', 'benchmarks', '%sStatsTest' % avaName, '%sProbAna_com1DFACfg.ini' % avaName)
+    avaDir = pathlib.Path(avaDir)
+    avaName = avaDir.name
+    probSimCfg = pathlib.Path('..', 'benchmarks', '%sStatsTest' % avaName, '%sProbAna_com1DFACfg.ini' % avaName)
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
