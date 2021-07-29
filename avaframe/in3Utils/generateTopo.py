@@ -8,7 +8,7 @@ import logging
 import numpy as np
 from scipy.stats import norm
 from scipy.interpolate import griddata
-import os
+import pathlib
 
 from avaframe.in3Utils import geoTrans
 
@@ -543,7 +543,8 @@ def writeDEM(cfg, z, outDir):
 
     # Save elevation data to .asc file and add header lines
     z_mat = np.matrix(z)
-    with open(os.path.join(outDir, '%s_%s_Topo.asc' % (demName, nameExt)), 'w') as f:
+    demFile = outDir / ('%s_%s_Topo.asc' % (demName, nameExt))
+    with open(demFile, 'w') as f:
         f.write('nCols  %d\n' % (nCols))
         f.write('nRows  %d\n' % (nRows))
         f.write('xllcenter  %.02f\n' % (xllcenter))
@@ -566,8 +567,8 @@ def generateTopo(cfg, avalancheDir):
     log.info('DEM type is set to: %s' % demType)
 
     # Set Output directory
-    outDir = os.path.join(avalancheDir, 'Inputs')
-    if os.path.isdir(outDir):
+    outDir = pathlib.Path(avalancheDir, 'Inputs')
+    if outDir.is_dir():
         log.info('The new DEM is saved to %s' % (outDir))
     else:
         log.error('Required folder structure: NameOfAvalanche/Inputs missing! \
