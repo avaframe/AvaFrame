@@ -4,7 +4,6 @@ This is a simple function for computing a probability map of all peak files of o
 
 """
 
-import os
 import numpy as np
 import logging
 from matplotlib import pyplot as plt

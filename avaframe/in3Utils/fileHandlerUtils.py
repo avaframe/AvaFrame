@@ -103,7 +103,7 @@ def extractParameterInfo(avaDir, simName, reportD):
         """
 
     # Get info from ExpLog
-    logName = os.path.join(avaDir, 'Outputs', 'com1DFAOrig', 'ExpLog.txt')
+    logName = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'ExpLog.txt')
     logDictExp = readLogFile(logName)
     names = logDictExp['fullName']
     simNames = sorted(set(names), key=lambda s: s.split("_")[3])
@@ -118,7 +118,7 @@ def extractParameterInfo(avaDir, simName, reportD):
     stopCrit = ''
     flagNoStop = True
     # Read log file
-    fileName = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
+    fileName = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
     with open(fileName, 'r') as file:
         for line in file:
             if "computing time step" in line:
@@ -318,8 +318,8 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
 
     # Lead all infos on simulations
     if inputDir == '':
-        inputDir = os.path.join(avaDir, 'Outputs', comModule, 'peakFiles')
-        if os.path.isdir(inputDir) == False:
+        inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
+        if inputDir.is_dir() == False:
             log.error('Input directory does not exist - check anaMod')
 
     # check if is string - then convert to list
@@ -376,16 +376,16 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     """
 
     # Initialise directories
-    inputDir = os.path.join(avaDir, 'Work', 'com1DFAOrig')
-    outDir = os.path.join(avaDir, 'Outputs', 'com1DFAOrig')
-    outDirPF = os.path.join(outDir, 'peakFiles')
-    outDirRep = os.path.join(outDir, 'reports')
+    inputDir = pathlib.Path(avaDir, 'Work', 'com1DFAOrig')
+    outDir = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
+    outDirPF = outDir / 'peakFiles'
+    outDirRep = outDir / 'reports'
     makeADir(outDir)
     makeADir(outDirPF)
     makeADir(outDirRep)
 
     # Read log file information
-    logName = os.path.join(inputDir, 'ExpLog.txt')
+    logName = inputDir / 'ExpLog.txt'
     if cfg != '':
         logDict = readLogFile(logName, cfg)
         varPar = cfg['varPar']
@@ -397,52 +397,52 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     sNo = len(logDict['noSim'])
 
     # Path to com1DFA results
-    resPath = os.path.join(inputDir, 'FullOutput_%s_' % varPar)
+    resPath = inputDir / ('FullOutput_%s_' % varPar)
 
     if addTSteps == True:
-        timeStepDir = os.path.join(outDirPF, 'timeSteps')
+        timeStepDir = outDirPF / 'timeSteps'
         makeADir(timeStepDir)
 
     # Export peak files and reports
     for k in range(sNo):
-        pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
+        pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_pfd.asc' % logDict['simName'][k])
-        pathTo = os.path.join(outDirPF, '%s_%.05f_pfd.asc' % (logDict['simName'][k], logDict[varPar][k]))
+        pathTo = outDirPF / ('%s_%.05f_pfd.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
         if addTSteps == True:
-            pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
+            pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                     logDict['simName'][k], 'raster',
                                     '%s_fd.asc' % logDict['simName'][k])
-            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tLast_fd.asc' % (logDict['simName'][k], logDict[varPar][k]))
+            pathTo = outDirPF / 'timeSteps' / ('%s_%.05f_tLast_fd.asc' % (logDict['simName'][k], logDict[varPar][k]))
             shutil.copy(pathFrom, pathTo)
-        pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
+        pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_ppr.asc' % logDict['simName'][k])
-        pathTo = os.path.join(outDirPF, '%s_%.05f_ppr.asc' % (logDict['simName'][k], logDict[varPar][k]))
+        pathTo = outDirPF / ('%s_%.05f_ppr.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
-        pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
+        pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                 logDict['simName'][k], 'raster',
                                 '%s_pv.asc' % logDict['simName'][k])
-        pathTo = os.path.join(outDirPF, '%s_%.05f_pfv.asc' % (logDict['simName'][k], logDict[varPar][k]))
+        pathTo = outDirPF / ('%s_%.05f_pfv.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
-        pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
+        pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                 '%s.html' % logDict['simName'][k])
-        pathTo = os.path.join(outDirRep, '%s_%.05f.html' % (logDict['simName'][k], logDict[varPar][k]))
+        pathTo = outDirRep / ('%s_%.05f.html' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
 
     if addTSteps == True:
 
         # Export peak files and reports
         for k in range(sNo):
-            pathFrom = os.path.join('%s%.05f' % (resPath, logDict[varPar][k]),
+            pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                     '%s_tFirst_fd.txt' % logDict['simName'][k])
-            pathTo = os.path.join(outDirPF, 'timeSteps', '%s_%.05f_tFirst_fd.asc'
-                                  % (logDict['simName'][k], logDict[varPar][k]))
+            pathTo = outDirPF / 'timeSteps' / ('%s_%.05f_tFirst_fd.asc' % (logDict['simName'][k],
+                     logDict[varPar][k]))
             shutil.copy(pathFrom, pathTo)
 
     # Export ExpLog to Outputs/com1DFA
-    shutil.copy2(os.path.join('%s' % inputDir, 'ExpLog.txt'), outDir)
+    shutil.copy2(pathlib.Path('%s' % inputDir, 'ExpLog.txt'), outDir)
 
 
 def makeSimDF(inputDir, avaDir='', simID='simID'):
@@ -489,7 +489,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
 
     for m in range(len(datafiles)):
         data['files'].append(datafiles[m])
-        name = os.path.splitext(os.path.basename(datafiles[m]))[0]
+        name = datafiles[m].stem
         data['names'].append(name)
         if '_AF_' in name:
             nameParts = name.split('_AF_')
