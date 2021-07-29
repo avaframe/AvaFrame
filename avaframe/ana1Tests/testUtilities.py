@@ -3,7 +3,6 @@
 """
 
 # Load modules
-import os
 import glob
 import pathlib
 import logging
@@ -54,17 +53,19 @@ def readDesDictFromJson(fileName):
     return desDict
 
 
-def readAllBenchmarkDesDicts(info=False):
+def readAllBenchmarkDesDicts(info=False, inDir=''):
     """ get descritption dicts for all benchmark tests and add test name as key"""
 
-    inDir = os.path.join('..', 'benchmarks')
-    testDirs = glob.glob(inDir + os.sep + 'ava*')
+    if inDir == '':
+        inDir = pathlib.Path('..', 'benchmarks')
+
+    testDirs = list(inDir.glob('ava*'))
     testDictList = []
 
     for testDir in testDirs:
-        desDictFile = glob.glob(testDir + os.sep + '*desDict.json')
+        desDictFile = list(testDir.glob('*desDict.json'))
         if desDictFile != []:
-            testName = os.path.basename(testDir)
+            testName = testDir.name
             desDict = readDesDictFromJson(desDictFile[0])
             desDict.update({'NAME': testName})
             if info:
@@ -73,7 +74,7 @@ def readAllBenchmarkDesDicts(info=False):
 
             testDictList.append(desDict)
         else:
-            testName = os.path.basename(testDir)
+            testName = testDir.name
             log.debug('%s: No test description file provided! Test skipped' % testName)
 
     return testDictList
@@ -137,13 +138,13 @@ def getTestAvaDirs(testList):
 
     avaDirs = []
     for tests in testList:
-        avaDir = 'data' + os.sep + tests['AVANAME']
-        avaDirs.append(avaDir)
+        avaDir = pathlib.Path('data', tests['AVANAME'])
+        avaDirs.append(str(avaDir))
 
     return avaDirs
 
 
-def fetchBenchmarkResults(testName, resTypes=[]):
+def fetchBenchmarkResults(testName, resTypes=[], refDir=''):
     """ Fetch a list of all paths to result files in a benchmark test,
         default all result file paths, if resType list provided only for resTypes in list
 
@@ -160,7 +161,9 @@ def fetchBenchmarkResults(testName, resTypes=[]):
             list of paths to all result files found for benchmark test and resType
     """
 
-    refDir = pathlib.Path('..', 'benchmarks', testName)
+    if refDir == '':
+        refDir = pathlib.Path('..', 'benchmarks', testName)
+
     if resTypes != []:
         refFiles = []
         for resType in resTypes:
