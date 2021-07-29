@@ -489,7 +489,7 @@ def transform(fname, rasterTransfo, interpMethod):
         new_data = z, pressure or depth... corresponding to fname on
         the new raster
     """
-    name = fname.stem
+    name = fname.name
     data = IOf.readRaster(fname)
 
     # read tranformation info

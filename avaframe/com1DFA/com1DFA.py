@@ -5,7 +5,6 @@
 import logging
 import time
 import pathlib
-import os
 import numpy as np
 import copy
 import pickle
@@ -56,9 +55,9 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
         name of simulation
     inputSimFiles: dict
         dictionary with input files
-    avaDir : str
+    avaDir : str or pathlib object
         path to avalanche directory
-    outDir: str
+    outDir: str or pathlib object
         path to Outputs
     relThField: 2D array
         release thickness field with varying release thickness if '', release thickness is taken from
@@ -138,7 +137,7 @@ def prepareRelase(cfg, rel, inputSimLines):
     entResInfo = inputSimLines['entResInfo']
 
     # Set release areas and simulation name
-    relName = os.path.splitext(rel.stem)[0]
+    relName = rel.stem
     simName = relName
     badName = False
     if '_' in relName:
@@ -171,7 +170,6 @@ def prepareRelase(cfg, rel, inputSimLines):
         secondaryReleaseLine = None
 
     inputSimLines['secondaryReleaseLine'] = secondaryReleaseLine
-
 
     return relName, inputSimLines, badName
 
@@ -241,8 +239,8 @@ def prepareInputData(inputSimFiles):
     if entResInfo['flagEnt'] == 'Yes':
         entFile = inputSimFiles['entFile']
         entLine = shpConv.readLine(entFile, '', demOri)
-        entrainmentArea = os.path.splitext(entFile.stem)[0]
-        entLine['fileName'] = [entFile]
+        entrainmentArea = entFile.name
+        entLine['fileName'] = entFile
     else:
         entLine = None
         entrainmentArea = ''
@@ -251,8 +249,8 @@ def prepareInputData(inputSimFiles):
     if entResInfo['flagRes'] == 'Yes':
         resFile = inputSimFiles['resFile']
         resLine = shpConv.readLine(resFile, '', demOri)
-        resistanceArea = os.path.splitext(resFile.stem)[0]
-        resLine['fileName'] = [resFile]
+        resistanceArea = resFile.name
+        resLine['fileName'] = resFile
     else:
         resLine = None
         resistanceArea = ''
@@ -862,7 +860,7 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
     nrows = header.nrows
     if 'ent' in simTypeActual:
         entrainmentArea = entLine['fileName']
-        log.info('Initializing entrainment area %s' % (entrainmentArea))
+        log.info('Initializing entrainment area: %s' % (entrainmentArea))
         log.info('Entrainment area features: %s' % (entLine['Name']))
         entLine = prepareArea(entLine, dem, thresholdPointInPoly)
         entrMassRaster = entLine['rasterData']
@@ -907,8 +905,8 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     nrows = header.nrows
     if simTypeActual in ['entres', 'res']:
         resistanceArea = resLine['fileName']
-        log.debug('Initializing resistance area %s' % (resistanceArea))
-        log.debug('Resistance area features: %s' % (resLine['Name']))
+        log.info('Initializing resistance area: %s' % (resistanceArea))
+        log.info('Resistance area features: %s' % (resLine['Name']))
         resLine = prepareArea(resLine, dem, thresholdPointInPoly)
         mask = resLine['rasterData']
         cResRaster = 0.5 * d * cw / (sres*sres) * mask
@@ -2014,9 +2012,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
     # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
     simDict = {}
     for rel in inputSimFiles['relFiles']:
-        print(rel)
-        print(os.path.basename(rel))
-        relName = os.path.splitext(rel.stem)[0]
+        relName = rel.stem
         cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
         for row in variationDF.itertuples():
             for parameter in variationDict:

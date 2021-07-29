@@ -144,7 +144,7 @@ def getInputDataCom1DFA(avaDir, cfg):
 
     Parameters
     ----------
-    avaDir : str
+    avaDir : str or pathlib object
         path to avalanche directory
     cfg : dict
         configuration read from com1DFA simulation ini file
@@ -177,7 +177,7 @@ def getInputDataCom1DFA(avaDir, cfg):
     # Initialise release areas, default is to look for shapefiles
     if cfg['flagDev'] == 'True':
         releaseDir = 'devREL'
-        releaseDir = pathlib.Path(inputDir, 'devREL')
+        releaseDir = inputDir / 'devREL'
         relFiles = list(releaseDir.glob('*.shp'))
     elif cfg['releaseScenario'] != '':
         releaseDir = 'REL'
@@ -185,9 +185,9 @@ def getInputDataCom1DFA(avaDir, cfg):
         releaseFiles = cfg['releaseScenario'].split('|')
         for rel in releaseFiles:
             if '.shp' in rel:
-                relf = pathlib.Path(inputDir, releaseDir, rel)
+                relf = inputDir / releaseDir / rel
             else:
-                relf = pathlib.Path(inputDir, releaseDir, '%s.shp' % (rel))
+                relf = inputDir / releaseDir / ('%s.shp' % (rel))
 
             if not relf.is_file():
                 message = 'No release scenario called: %s' % (relf)
@@ -197,9 +197,9 @@ def getInputDataCom1DFA(avaDir, cfg):
         log.debug('Release area file is specified to be: %s' % relFiles)
     else:
         releaseDir = 'REL'
-        releaseDir = pathlib.Path(inputDir, 'REL')
+        releaseDir = inputDir / 'REL'
         relFiles = sorted(list(releaseDir.glob('*.shp')))
-    log.info('Release area files are: %s' % relFiles)
+    log.info('Release area files are: %s' % [str(relFilestr) for relFilestr in relFiles])
 
     # Initialise secondary release areas
     secondaryReleaseFile, entResInfo['flagSecondaryRelease'] = getAndCheckInputFiles(inputDir, 'SECREL', 'Secondary release')
@@ -226,7 +226,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType):
 
     Parameters
     ----------
-    inputDir : str
+    inputDir : pathlib object or str
         path to avalanche input directory
     folder : str
         subfolder name where the shape file should be located (SECREL, ENT or RES)

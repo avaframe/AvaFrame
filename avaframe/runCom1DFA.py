@@ -30,6 +30,7 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
         avalancheDir = avaDir
     else:
         avalancheDir = cfgMain['MAIN']['avalancheDir']
+
     # set module name, reqiured as long we are in dev phase
     # - because need to create e.g. Output folder for com1DFA to distinguish from
     # current com1DFA

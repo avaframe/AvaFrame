@@ -33,5 +33,5 @@ resAB = com2AB.com2ABMain(cfg, avalancheDir)
 reportDictList = []
 _, plotFile, writeFile = outAB.writeABpostOut(resAB, cfg, reportDictList)
 
-log.info('Plotted to: %s', plotFile)
-log.info('Data written: %s', writeFile)
+log.info('Plotted to: %s' % [str(plotFileName) for plotFileName in plotFile])
+log.info('Data written: %s' % [str(writeFileName) for writeFileName in writeFile])

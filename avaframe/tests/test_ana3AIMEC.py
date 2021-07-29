@@ -29,15 +29,15 @@ def test_analyzeArea(capfd):
     '''Simple test for module analyzeArea'''
     # get input data
     dirname = pathlib.Path(__file__).parents[0]
-    dataRef = pathlib.Path(dirname, 'data', 'refTestAimecTopo.asc')
-    dataSim = pathlib.Path(dirname, 'data', 'simTestAimecTopo.asc')
-    dataMass = pathlib.Path(dirname, 'data', '000000.txt')
-    dataMass1 = pathlib.Path(dirname, 'data', '000001.txt')
+    dataRef = dirname / 'data' / 'refTestAimecTopo.asc'
+    dataSim = dirname / 'data' / 'simTestAimecTopo.asc'
+    dataMass = dirname / 'data' / '000000.txt'
+    dataMass1 = dirname / 'data' / '000001.txt'
     cfgPath = {}
     cfgPath['projectName'] = 'NameOfAvalanche'
     cfgPath['ppr'] = [dataRef, dataSim]
     cfgPath['massBal'] = [dataMass, dataMass1]
-    pathResult = pathlib.Path(dirname, 'data')
+    pathResult = dirname / 'data'
     cfgPath['pathResult'] = pathResult
     cfgPath['dirName'] = 'testAIMEC'
     cfgPath['referenceFile'] = 0
@@ -83,7 +83,6 @@ def test_analyzeArea(capfd):
             resAnalysis['runout'][2][0] == 50) and (
             resAnalysis['MMPPR'][1] == 1)
 
-
     assert (resAnalysis['TP'][1] == 800) and (
             resAnalysis['FN'][1] == 1700) and (
             resAnalysis['FP'][1] == 200) and (resAnalysis['TN'][1] == 7300)
@@ -94,36 +93,35 @@ def test_makeDomainTransfo(capfd):
     # Extract input file locations
     cfgPath = {}
     dir = pathlib.Path(__file__).parents[0]
-    dirname = pathlib.Path(dir, 'data', 'testAna3Aimec')
-    pathData = pathlib.Path(dirname, 'data')
+    dirname = dir / 'data' / 'testAna3Aimec'
+    pathData = dirname / 'data'
 
-    refDir = pathlib.Path(dirname, 'LINES')
+    refDir = dirname / 'LINES'
     profileLayer = list(refDir.glob('*aimec*.shp'))
     cfgPath['profileLayer'] = profileLayer[0]
 
-    refDir = pathlib.Path(dirname, 'POINTS')
+    refDir = dirname / 'POINTS'
     splitPointLayer = list(refDir.glob('*.shp'))
     cfgPath['splitPointSource'] = splitPointLayer[0]
 
-    refDir = pathlib.Path(dirname)
-    demSource = list(refDir.glob('*.asc'))
+    demSource = list(dirname.glob('*.asc'))
     cfgPath['demSource'] = demSource[0]
 
-    cfgPath['ppr'] = [pathlib.Path(pathData, 'testAimec_0.asc'), pathlib.Path(pathData, 'testAimec_1.asc'),
-                      pathlib.Path(pathData, 'testAimec_2.asc'), pathlib.Path(pathData, 'testAimec_3.asc'),
-                      pathlib.Path(pathData, 'testAimec_4.asc')]
-    cfgPath['pfd'] = [pathlib.Path(pathData, 'testAimec_0.asc'), pathlib.Path(pathData, 'testAimec_1.asc'),
-                      pathlib.Path(pathData, 'testAimec_2.asc'), pathlib.Path(pathData, 'testAimec_3.asc'),
-                      pathlib.Path(pathData, 'testAimec_4.asc')]
-    cfgPath['pfv'] = [pathlib.Path(pathData, 'testAimec_0.asc'), pathlib.Path(pathData, 'testAimec_1.asc'),
-                      pathlib.Path(pathData, 'testAimec_2.asc'), pathlib.Path(pathData, 'testAimec_3.asc'),
-                      pathlib.Path(pathData, 'testAimec_4.asc')]
+    cfgPath['ppr'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+                      pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
+                      pathData / 'testAimec_4.asc']
+    cfgPath['pfd'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+                      pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
+                      pathData / 'testAimec_4.asc']
+    cfgPath['pfv'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+                      pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
+                      pathData / 'testAimec_4.asc']
 
-    cfgPath['massBal'] = [pathlib.Path(dirname, '000001.txt')]*5
+    cfgPath['massBal'] = [dirname / '000001.txt']*5
 
     cfgPath['contCmap'] = True
 
-    pathResult = pathlib.Path(dirname, 'results')
+    pathResult = dirname / 'results'
     cfgPath['pathResult'] = pathResult
 
     cfgPath['projectName'] = 'testAna3Aimec'

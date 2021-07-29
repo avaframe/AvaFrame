@@ -218,8 +218,9 @@ def readABinputs(avalancheDir):
         dictionary with path to AlphaBeta inputs (dem, avaPath, splitPoint)
     """
     cfgPath = {}
+    avalancheDir = pathlib.Path(avalancheDir)
     # read avalanche paths for AB
-    refDir = pathlib.Path(avalancheDir, 'Inputs', 'LINES')
+    refDir = avalancheDir / 'Inputs' / 'LINES'
     profileLayer = list(refDir.glob('*AB*.shp'))
     try:
         message = 'There should be exactly one pathAB.shp file containing (multiple) avalanche paths in %s /Inputs/LINES/' % avalancheDir
@@ -229,7 +230,7 @@ def readABinputs(avalancheDir):
     cfgPath['profileLayer'] = profileLayer[0]
 
     # read DEM
-    refDir = pathlib.Path(avalancheDir, 'Inputs')
+    refDir = avalancheDir / 'Inputs'
     demSource = list(refDir.glob('*.asc'))
     try:
         assert len(demSource) == 1, 'There should be exactly one topography .asc file in %s /Inputs/' % avalancheDir
@@ -238,7 +239,7 @@ def readABinputs(avalancheDir):
     cfgPath['demSource'] = demSource[0]
 
     # read split points
-    refDir = pathlib.Path(avalancheDir, 'Inputs', 'POINTS')
+    refDir = avalancheDir / 'Inputs' / 'POINTS'
     splitPointSource = list(refDir.glob('*.shp'))
     try:
         message = 'There should be exactly one .shp file containing the split points in %s /Inputs/POINTS/' %  avalancheDir
@@ -248,13 +249,13 @@ def readABinputs(avalancheDir):
     cfgPath['splitPointSource'] = splitPointSource[0]
 
     # make output path
-    saveOutPath = pathlib.Path(avalancheDir, 'Outputs/com2AB/')
+    saveOutPath = avalancheDir / 'Outputs' / 'com2AB'
     if not saveOutPath.exists():
         # log.info('Creating output folder %s', saveOutPath)
         saveOutPath.mkdir(parents=True, exist_ok=True)
     cfgPath['saveOutPath'] = saveOutPath
 
-    defaultName = str(avalancheDir).split('/')[-1]
+    defaultName = avalancheDir.stem
     cfgPath['defaultName'] = defaultName
 
     return cfgPath
