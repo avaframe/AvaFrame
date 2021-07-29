@@ -1807,7 +1807,7 @@ def readPartFromPickle(inDir, flagAvaDir=False):
         inDir = pathlib.Path(inDir, 'Outputs', 'com1DFA', 'particles')
 
     # search for all pickles within directory
-    PartDicts = sorted(inDir.glob('*.p'))
+    PartDicts = sorted(list(inDir.glob('*.p')))
 
     # initialise list of particle dictionaries
     Particles = []
@@ -1912,7 +1912,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
             # create directory
             outDirPeak = pathlib.Path(outDir, 'peakFiles', 'timeSteps')
             fU.makeADir(outDirPeak)
-            outFile = pathlib.Path(outDirPeak, dataName)
+            outFile = outDirPeak / dataName
             IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             if countTime == numberTimes:
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType, Tsave[countTime]))
@@ -1920,7 +1920,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 # create directory
                 outDirPeakAll = pathlib.Path(outDir, 'peakFiles')
                 fU.makeADir(outDirPeakAll)
-                outFile = pathlib.Path(outDirPeakAll, dataName)
+                outFile = poutDirPeakAll / dataName
                 IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             else:
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType, Tsave[countTime]))
