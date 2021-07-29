@@ -56,7 +56,9 @@ def test_readAllBenchmarkDesDicts():
     """ test reading all benchmark desDicts """
 
     # call function to be tested
-    testDictList = tU.readAllBenchmarkDesDicts()
+    dirName = pathlib.Path(__file__).parents[0]
+    inDir = dirName / '..' / '..' / 'benchmarks'
+    testDictList = tU.readAllBenchmarkDesDicts(info=False, inDir=inDir)
 
     assert isinstance(testDictList[0], dict)
 
@@ -114,7 +116,9 @@ def test_fetchBenchmarkResults():
     # setup required inputs
     testName = 'avaAlrNullTest'
 
-    refFiles = tU.fetchBenchmarkResults(testName, resTypes=[])
-    
+    dirName = pathlib.Path(__file__).parents[0]
+    refDir = dirName / '..' / '..' / 'benchmarks' / testName
+    refFiles = tU.fetchBenchmarkResults(testName, resTypes=[], refDir=refDir)
+
     assert 'relAlr_null_ref_0.15500' in str(refFiles[0])
     assert len(refFiles) == 4
