@@ -26,7 +26,7 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
         # Get info from ExpLog
         nameDir = 'com1DFAOrig'
         logLoc = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
-        logName = pathlib.Path(logLoc, 'ExpLog.txt')
+        logName = logLoc / 'ExpLog.txt'
         logDictExp = fU.readLogFile(logName)
         names = logDictExp['fullName']
         simNames = sorted(set(names), key=lambda s: (s.split("_")[0], s.split("_")[1], s.split("_")[3]))
@@ -66,7 +66,7 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
 
         # Write mass balance info files
         for k in range(len(indRun)-1):
-            saveName = pathlib.Path(locFiles, 'mass_%s.txt' % (simName))
+            saveName = locFiles / ('mass_%s.txt' % (simName))
             with open(saveName, 'w') as MBFile:
                 MBFile.write('time, current, entrained\n')
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):

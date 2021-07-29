@@ -51,8 +51,8 @@ def test_getInputDataCom1DFA(tmp_path):
     dirPath = pathlib.Path(__file__).parents[0]
     avaName = 'avaHockeyChannel'
     avaDir = pathlib.Path(tmp_path, avaName)
-    avaInputs = pathlib.Path(avaDir, 'Inputs')
-    avaData = pathlib.Path(dirPath, '..', 'data', avaName, 'Inputs')
+    avaInputs = avaDir / 'Inputs'
+    avaData = dirPath / '..'/ 'data'/ avaName / 'Inputs'
     shutil.copytree(avaData, avaInputs)
 
     # Initialise input in correct format
@@ -67,13 +67,13 @@ def test_getInputDataCom1DFA(tmp_path):
     inputSimFiles2 = getInput.getInputDataCom1DFA(avaDir, cfgGen)
     # Test
     print(inputSimFiles['demFile'])
-    print(pathlib.Path(avaDir, 'Inputs', 'DEM_HS_Topo.asc'))
+    print(avaDir / 'Inputs' / 'DEM_HS_Topo.asc')
     print(inputSimFiles['relFiles'])
-    print([pathlib.Path(avaDir, 'Inputs', 'REL', 'release1HS.shp'), pathlib.Path(avaDir, 'Inputs', 'REL', 'release2HS.shp'), pathlib.Path(avaDir, 'Inputs', 'REL', 'release3HS.shp')])
-    assert inputSimFiles['demFile'] == pathlib.Path(avaDir, 'Inputs', 'DEM_HS_Topo.asc')
-    assert inputSimFiles['relFiles'] == [pathlib.Path(avaDir, 'Inputs', 'REL', 'release1HS.shp'), pathlib.Path(avaDir, 'Inputs', 'REL', 'release2HS.shp'), pathlib.Path(avaDir, 'Inputs', 'REL', 'release3HS.shp')]
-    assert inputSimFiles2['relFiles'] == [pathlib.Path(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
+    print([avaDir / 'Inputs' / 'REL' / 'release1HS.shp', avaDir / 'Inputs' / 'REL' / 'release2HS.shp', avaDir / 'Inputs' / 'REL' / 'release3HS.shp'])
+    assert inputSimFiles['demFile'] == avaDir / 'Inputs' / 'DEM_HS_Topo.asc'
+    assert inputSimFiles['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp', avaDir / 'Inputs' / 'REL' / 'release2HS.shp', avaDir / 'Inputs' / 'REL' / 'release3HS.shp']
+    assert inputSimFiles2['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp']
     assert inputSimFiles['resFile'] == None
-    assert inputSimFiles['entFile'] == pathlib.Path(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp')
+    assert inputSimFiles['entFile'] == avaDir / 'Inputs' / 'ENT' / 'entrainment1HS.shp'
     assert inputSimFiles['entResInfo']['flagEnt'] == "Yes"
     assert inputSimFiles['entResInfo']['flagRes'] == "No"

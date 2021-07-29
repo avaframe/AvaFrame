@@ -3,7 +3,7 @@
 """
 
 
-import os
+import pathlib
 import shapefile
 import sys
 import copy
@@ -54,7 +54,7 @@ def SHP2Array(infile, defname=None):
     """
     #  Input shapefile
     sf = shapefile.Reader(str(infile))
-
+    infile = pathlib.Path(infile)
     # set defaults for variables
     layername = None
     d0 = None
@@ -65,7 +65,7 @@ def SHP2Array(infile, defname=None):
 
     # get coordinate system
     prjfile = infile.with_suffix('.prj')
-    if os.path.isfile(prjfile):
+    if prjfile.is_file():
         prjf = open(prjfile, 'r')
         sks = prjf.readline()
         prjf.close()

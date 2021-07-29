@@ -29,7 +29,6 @@ def test_mainDfa2Aimec(tmp_path):
     pathDTest['massBal'] = [pathlib.Path(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_ent_dfa_67dc2dc10a.txt'),
                        pathlib.Path(testPath, 'Outputs', 'com1DFA', 'mass_release2HS_ent_dfa_872f0101a4.txt')]
 
-
     assert pathDict['ppr'] == pathDTest['ppr']
     assert pathDict['pfd'] == pathDTest['pfd']
     assert pathDict['pfv'] == pathDTest['pfv']
