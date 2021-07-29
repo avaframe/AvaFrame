@@ -88,3 +88,33 @@ def test_filterBenchmarks():
     assert testList2 == [dict2]
     assert testList3 == [dict1, dict3]
     assert testList4 == []
+
+
+def test_getTestAvaDirs():
+    """ test fetching avaDirs from tests """
+
+    # set up required input data
+    dict1 = {'TAGS': ['null', 'standard'], 'AVANAME': 'avaTest'}
+    dict2 = {'TAGS': 'entres', 'AVANAME': 'avaTest2'}
+    dict3 = {'TAGS': 'res', 'AVANAME': 'avaTest4'}
+    testList = [dict1, dict2, dict3]
+
+    # call function to be tested
+    avaDirs = tU.getTestAvaDirs(testList)
+
+    assert 'data/avaTest' in avaDirs
+    assert 'data/avaTest2' in avaDirs
+    assert 'data/avaTest4' in avaDirs
+    assert ('data/avaTest3' in avaDirs) is False
+
+
+def test_fetchBenchmarkResults():
+    """ test fetching benchmark results path """
+
+    # setup required inputs
+    testName = 'avaAlrNullTest'
+
+    refFiles = tU.fetchBenchmarkResults(testName, resTypes=[])
+    
+    assert 'relAlr_null_ref_0.15500' in str(refFiles[0])
+    assert len(refFiles) == 4

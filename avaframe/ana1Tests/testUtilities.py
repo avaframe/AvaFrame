@@ -114,18 +114,14 @@ def filterBenchmarks(testDictList, type, valuesList, condition='or'):
             if testDict['AVANAME'] in valuesList:
                 testList.append(testDict)
         else:
-            # convert valueslist to list if not already list
+            # convert testDict[type] to list if not already list
             if isinstance(testDict[type], list) is False:
                 testDict[type] = [testDict[type]]
             if condition == 'or':
-                for item in testDict[type]:
-                    if any(values == item for values in valuesList):
-                        testList.append(testDict)
+                if any(values in testDict[type] for values in valuesList):
+                    testList.append(testDict)
             elif condition == 'and':
-                flagAllList = []
-                for item in testDict[type]:
-                    flagAllList.append(all(values == item for values in valuesList))
-                if all(flagAllList):
+                if all(values in testDict[type] for values in valuesList):
                     testList.append(testDict)
             else:
                 flag = True
