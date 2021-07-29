@@ -8,10 +8,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from avaframe.in3Utils import generateTopo as gT
-import os
 import shapefile
 import logging
 import shutil
+import pathlib
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -40,13 +40,13 @@ def makexyPoints(x1, x2, y1, cfgR):
 def getCornersFP(cfgR):
 
     # Terrain parameters
-    hr = float(cfgR['GENERAL']['hr'])
-    vol = float(cfgR['GENERAL']['vol'])
-    dh = float(cfgR['GENERAL']['dh'])
-    xStart = float(cfgR['GENERAL']['xStart'])
+    hr = cfgR['GENERAL'].getfloat('hr')
+    vol = cfgR['GENERAL'].getfloat('vol')
+    dh = cfgR['GENERAL'].getfloat('dh')
+    xStart = cfgR['GENERAL'].getfloat('xStart')
 
     # Compute release area ---------------------------------------------------------------------------------------
-    xr = float(cfgR['FP']['xExtent'])
+    xr = cfgR['FP'].getfloat('xExtent')
     yr = vol / (xr * dh)
 
     log.info('volume is: %f' % (yr*xr*dh))
@@ -60,11 +60,11 @@ def getCornersFP(cfgR):
 def getCornersIP(cfgR, cfgT):
 
     # Terrain parameters
-    hr = float(cfgR['GENERAL']['hr'])
-    vol = float(cfgR['GENERAL']['vol'])
-    dh = float(cfgR['GENERAL']['dh'])
-    xStart = float(cfgR['GENERAL']['xStart'])
-    meanAlpha = float(cfgT['TOPO']['meanAlpha'])
+    hr = cfgR['GENERAL'].getfloat('hr')
+    vol = cfgR['GENERAL'].getfloat('vol')
+    dh = cfgR['GENERAL'].getfloat('dh')
+    xStart = cfgR['GENERAL'].getfloat('xStart')
+    meanAlpha = cfgT['TOPO'].getfloat('meanAlpha')
 
     # Compute release area ---------------------------------------------------------------------------------------
     xr = hr / np.sin(np.radians(meanAlpha))        # along valley extent of release area
@@ -82,11 +82,11 @@ def getCornersIP(cfgR, cfgT):
 def getCornersHS(cfgR, cfgT):
 
     # Terrain parameters
-    hr = float(cfgR['GENERAL']['hr'])
-    vol = float(cfgR['GENERAL']['vol'])
-    dh = float(cfgR['GENERAL']['dh'])
+    hr = cfgR['GENERAL'].getfloat('hr')
+    vol = cfgR['GENERAL'].getfloat('vol')
+    dh = cfgR['GENERAL'].getfloat('dh')
     lenp = int(cfgR['GENERAL']['lenP'])
-    alphaStop = float(cfgR['HS']['alphaStop'])
+    alphaStop = cfgR['HS'].getfloat('alphaStop')
 
     # get A, B from HS
     [A, B, fLen] = gT.getParabolaParams(cfgT)
@@ -109,16 +109,16 @@ def correctOrigin(xyPoints, cfgT):
     """ Move the points so that the correct origin is set """
 
     # determine number of rows and columns to define domain
-    dx = float(cfgT['TOPO']['dx'])
-    xEnd = float(cfgT['TOPO']['xEnd'])
-    yEnd = float(cfgT['TOPO']['yEnd'])
+    dx = cfgT['TOPO'].getfloat('dx')
+    xEnd = cfgT['TOPO'].getfloat('xEnd')
+    yEnd = cfgT['TOPO'].getfloat('yEnd')
 
     # Compute coordinate grid
     xv = np.arange(0, xEnd+dx, dx)
     yv = np.arange(-0.5 * yEnd, 0.5 * (yEnd+dx), dx)
 
-    xl = float(cfgT['DEMDATA']['xl'])
-    yl = float(cfgT['DEMDATA']['yl'])
+    xl = cfgT['DEMDATA'].getfloat('xl')
+    yl = cfgT['DEMDATA'].getfloat('yl')
 
     xv = xv + xl
     yv = yv + yl + 0.5 * yEnd
@@ -138,7 +138,7 @@ def writeReleaseArea(xyPoints, demType, cfgR, outDir):
 
     lenp = len(xyPoints)
     relNo = int(cfgR['FILE']['relNo'])
-    relH = float(cfgR['GENERAL']['dh'])
+    relH = cfgR['GENERAL'].getfloat('dh')
     relName = cfgR['FILE']['relName']
 
     # Add vertical coordinate
@@ -146,7 +146,8 @@ def writeReleaseArea(xyPoints, demType, cfgR, outDir):
     p_mat = np.matrix(np.append(xyPoints, z, axis=1))
 
     # Save elevation data to .asc file and add header lines
-    with open(os.path.join(outDir, 'release%d%s.nxyz' % (relNo, demType)), 'w') as f:
+    releaseFile = outDir / ('release%d%s.nxyz' % (relNo, demType))
+    with open(releaseFile, 'w') as f:
         f.write('name=%s\n' % (relName))
         f.write('d0=%.2f\n' % (relH))
         f.write('rho=None\n')
@@ -157,8 +158,8 @@ def writeReleaseArea(xyPoints, demType, cfgR, outDir):
     # Log info here
     log.info('Release Area written to: %s/release_%d%s as .nxyz and .shp' % (outDir, relNo, demType))
     if cfgR.getboolean('GENERAL', 'outputtxt'):
-        shutil.copyfile(os.path.join(outDir, 'release%d%s.nxyz' % (relNo, demType)),
-                        os.path.join(outDir, 'release%d%s.txt' % (relNo, demType)))
+        shutil.copyfile((outDir / ('release%d%s.nxyz' % (relNo, demType))),
+                        (outDir / ('release%d%s.txt' % (relNo, demType))))
 
     # Make list of Points
     xy = []
@@ -166,7 +167,8 @@ def writeReleaseArea(xyPoints, demType, cfgR, outDir):
         xy.append([xyPoints[m, 0], xyPoints[m, 1]])
 
     # Wr
-    w = shapefile.Writer(os.path.join(outDir, 'release%d%s' % (relNo, demType)))
+    releaseFileName = outDir / ('release%d%s' % (relNo, demType))
+    w = shapefile.Writer(str(releaseFileName))
     w.poly([[xy[3], xy[2], xy[1], xy[0]]])
     w.field('ID', 'C', '40')
     w.field('Name', 'C', '40')
@@ -183,8 +185,8 @@ def getReleaseArea(cfgT, cfgR, avalancheDir):
     log.info('DEM type is set to: %s' % demType)
 
     # Set Output directory
-    outDir = os.path.join(avalancheDir, 'Inputs', 'REL')
-    if os.path.isdir(outDir):
+    outDir = pathlib.Path(avalancheDir, 'Inputs', 'REL')
+    if outDir.is_dir():
         log.info('The new release area is saved to %s' % (outDir))
     else:
         log.error('Required folder structure: NameOfAvalanche/Inputs missing! \
