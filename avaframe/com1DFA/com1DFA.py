@@ -1041,7 +1041,7 @@ def DFAIterate(cfg, particles, fields, dem):
         # make sure the array is not empty
         if t >= dtSave[0]:
             Tsave.append(t)
-            log.debug('Saving results for time step t = %f s', t)
+            log.info('Saving results for time step t = %f s', t)
             log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
             log.debug(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
             log.debug(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
@@ -1052,7 +1052,8 @@ def DFAIterate(cfg, particles, fields, dem):
             if dtSave.size == 1:
                 dtSave = [2*cfgGen.getfloat('tEnd')]
             else:
-                dtSave = dtSave[1:]
+                indSave = np.where(dtSave>t)
+                dtSave = dtSave[indSave]
 
         # derive time step
         if cfgGen.getboolean('cflTimeStepping') and nIter > cfgGen.getfloat('cflIterConstant'):
