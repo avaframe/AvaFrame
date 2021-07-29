@@ -484,7 +484,8 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
 
     # Set name of avalanche if avaDir is given
     if avaDir != '':
-        avaName = os.path.basename(avaDir)
+        avaDir = pathlib.Path(avaDir)
+        avaName = avaDir.name
         data.update({'avaName': []})
 
     for m in range(len(datafiles)):
