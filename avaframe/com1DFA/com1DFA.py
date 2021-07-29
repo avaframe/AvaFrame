@@ -1920,7 +1920,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 # create directory
                 outDirPeakAll = pathlib.Path(outDir, 'peakFiles')
                 fU.makeADir(outDirPeakAll)
-                outFile = poutDirPeakAll / dataName
+                outFile = outDirPeakAll / dataName
                 IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             else:
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType, Tsave[countTime]))
