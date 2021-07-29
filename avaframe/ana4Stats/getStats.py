@@ -4,7 +4,6 @@ Function to determine statistics of datasets
 
 """
 
-import os
 import numpy as np
 import logging
 import pathlib
