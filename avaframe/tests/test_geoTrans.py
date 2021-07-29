@@ -352,11 +352,15 @@ def test_remeshDEM(tmp_path):
 
 def test_isCounterClockWise(capfd):
     """ test isCounterClockWise """
+
     xCoord = np.array([0, 1, 2, 0.5])
     yCoord = np.array([0, 1, -1, -2])
+
     polygon = np.stack((xCoord, yCoord), axis=-1)
+
     path = mpltPath.Path(polygon)
     is_ccw = geoTrans.isCounterClockWise(path)
+
     assert is_ccw==False
 
 
