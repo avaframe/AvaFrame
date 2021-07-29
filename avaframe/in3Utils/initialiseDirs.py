@@ -4,6 +4,7 @@
 
 # Load modules
 import os
+import pathlib
 import glob
 import subprocess
 import shutil
@@ -37,11 +38,11 @@ def initialiseRunDirs(avaDir, modName):
     """
 
     # Set directories outputs and current work
-    outputDir = os.path.join(avaDir, 'Outputs', modName)
+    outputDir = pathlib.Path(avaDir, 'Outputs', modName)
     fU.makeADir(outputDir)
-    workDir = os.path.join(avaDir, 'Work', modName)
+    workDir = pathlib.Path(avaDir, 'Work', modName)
     # If Work directory already exists - error
-    if os.path.isdir(workDir):
+    if workDir.is_dir():
         log.error('Work directory %s already exists - delete first!' % (workDir))
     else:
         os.makedirs(workDir)
