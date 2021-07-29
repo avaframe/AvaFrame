@@ -5,7 +5,6 @@
 # Load modules
 import os
 import pathlib
-import glob
 import subprocess
 import shutil
 import logging

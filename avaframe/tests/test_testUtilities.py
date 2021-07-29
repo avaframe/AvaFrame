@@ -2,8 +2,6 @@
 
 from avaframe.ana1Tests import testUtilities as tU
 import pathlib
-import os
-import configparser
 import json
 
 

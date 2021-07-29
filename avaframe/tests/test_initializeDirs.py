@@ -25,3 +25,5 @@ def test_initialiseRunDirs(tmp_path):
 
     assert workDir == workDirTest
     assert outputDir == outputDirTest
+    assert workDir.is_dir()
+    assert outputDir.is_dir()

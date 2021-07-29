@@ -45,7 +45,7 @@ def test_getStats(tmp_path):
     configFiles = [str(avaDirConfigFiles / 'release1_null_dfa_1000000.ini'),
                    str(avaDirConfigFiles / 'release1_null_dfa_2000000.ini')]
 
-    # copy files
+    # copy files as for extractMaxValues avaDir folder structure is needed
     shutil.copy(data1, fNames[0])
     shutil.copy(data2, fNames[1])
     shutil.copy(cfg1, configFiles[0])
