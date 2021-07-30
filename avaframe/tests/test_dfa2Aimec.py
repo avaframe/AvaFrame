@@ -26,13 +26,14 @@ def test_mainDfa2Aimec(tmp_path):
                         pathData / 'release2HS_ent_dfa_872f0101a4_pfd.asc']
     pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_67dc2dc10a_pfv.asc',
                         pathData / 'release2HS_ent_dfa_872f0101a4_pfv.asc']
-    pathDTest['massBal'] = [pathlib.Path(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_ent_dfa_67dc2dc10a.txt'),
-                       pathlib.Path(testPath, 'Outputs', 'com1DFA', 'mass_release2HS_ent_dfa_872f0101a4.txt')]
+    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFA' / 'mass_release1HS_ent_dfa_67dc2dc10a.txt',
+                            testPath / 'Outputs' / 'com1DFA' / 'mass_release2HS_ent_dfa_872f0101a4.txt']
 
     assert pathDict['ppr'] == pathDTest['ppr']
     assert pathDict['pfd'] == pathDTest['pfd']
     assert pathDict['pfv'] == pathDTest['pfv']
-    assert pathDict['massBal'] == pathDTest['massBal']
+    for massName1, massName2 in zip(pathDict['massBal'], pathDTest['massBal']):
+        assert str(massName1) == str(massName2)
 
 
 def test_dfaComp2Aimec(tmp_path):
@@ -53,10 +54,10 @@ def test_dfaComp2Aimec(tmp_path):
     pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc', pathData2 / 'release1HS_ent_dfa_67dc2dc10a_ppr.asc']
     pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_0.15500_pfd.asc', pathData2 / 'release1HS_ent_dfa_67dc2dc10a_pfd.asc']
     pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc', pathData2 / 'release1HS_ent_dfa_67dc2dc10a_pfv.asc']
-    pathDTest['massBal'] = [pathlib.Path(testPath, 'Outputs', 'com1DFAOrig', 'mass_release1HS_ent_dfa_0.15500.txt'), pathlib.Path(testPath, 'Outputs', 'com1DFA', 'mass_release1HS_ent_dfa_67dc2dc10a.txt')]
-
+    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt', testPath / 'Outputs' / 'com1DFA' / 'mass_release1HS_ent_dfa_67dc2dc10a.txt']
 
     assert pathDict['ppr'] == pathDTest['ppr']
     assert pathDict['pfd'] == pathDTest['pfd']
     assert pathDict['pfv'] == pathDTest['pfv']
-    assert pathDict['massBal'] == pathDTest['massBal']
+    for massName1, massName2 in zip(pathDict['massBal'], pathDTest['massBal']):
+        assert str(massName1) == str(massName2)
