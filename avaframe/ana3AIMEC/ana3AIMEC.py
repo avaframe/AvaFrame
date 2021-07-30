@@ -1,5 +1,5 @@
 """
-    AIMEC post processing workflow 
+    AIMEC post processing workflow
 """
 
 import logging
@@ -437,16 +437,7 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     if flagMass:
         # perform mass analysis
         fnameMass = cfgPath['massBal']
-        releaseMass, entrainedMass, entMassFlowArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time = aT.analyzeMass(fnameMass)
-        resAnalysis['relMass'] = releaseMass
-        resAnalysis['entMass'] = entrainedMass
-        resAnalysis['entMassFlowArray'] = entMassFlowArray
-        resAnalysis['totalMassArray'] = totalMassArray
-        resAnalysis['time'] = time
-        resAnalysis['finalMass'] = finalMass
-        resAnalysis['relativMassDiff'] = relativMassDiff
-        resAnalysis['growthIndex'] = grIndex
-        resAnalysis['growthGrad'] = grGrad
+        resAnalysis = aT.analyzeMass(fnameMass, resAnalysis)
 
     return resAnalysis
 
