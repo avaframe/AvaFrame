@@ -699,9 +699,9 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     relCells = np.size(indRelY)
     partPerCell = particles['Npart']/relCells
 
-    log.debug('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
+    log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
              (particles['mTot'], particles['Npart'], relCells))
-    log.debug('Mass per particle = %.2f kg and particles per cell = %.2f.' %
+    log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
              (particles['mTot']/particles['Npart'], partPerCell))
 
     if debugPlot:
@@ -809,7 +809,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         # TODO: ensure that there is at last one particle
         nPart = np.maximum(nPart, 1)
     else:
-        n = (np.floor(np.sqrt(massCell / massPerPart)) + 1).astype('int')
+        n = (np.ceil(np.sqrt(massCell / massPerPart))).astype('int')
         nPart = n*n
         d = csz/n
         pos = np.linspace(0., csz-d, n) + d/2.
@@ -818,6 +818,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         y = y.flatten()
 
     mPart = massCell / nPart
+
     # TODO make this an independent function
     #######################
     # start ###############
