@@ -173,6 +173,11 @@ def test_getScalVect(capfd):
         assert yRes == pytest.approx(2*res, rel=atol)
         assert zRes == pytest.approx(3*res, rel=atol)
 
+    zRes = DFAfunC.projOnRaster(np.array(xpExpected), np.array(ypExpected), ZZ, csz, ncols, nrows,
+                                interpOption)
+    res = -2*np.array(xpExpected) + 1000-np.array(ypExpected) + 500
+    assert (zRes == res).all
+
 
 def test_reprojectionC(capfd):
     '''test reprojection'''
