@@ -91,7 +91,7 @@ def definePart(dx, dy, Lx, Ly):
     Hpart, _, _, _ = Hfunction(Xpart, Ypart, Zpart)
     Mpart = Hpart * dx * dy * area * rho
     # Mpart = np.array([2000., 3000.])
-    # create dictionnary to store particles properties
+    # create dictionary to store particles properties
     particles = {}
     particles['Npart'] = Npart
     particles['mTot'] = np.sum(Mpart)
