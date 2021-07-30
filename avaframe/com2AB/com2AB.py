@@ -103,19 +103,19 @@ def com2ABMain(cfg, avalancheDir):
     smallAva = cfgsetup.getboolean('smallAva')
     resAB = {}
     # Extract input file locations
-    cfgPath = readABinputs(avalancheDir)
+    pathDict = readABinputs(avalancheDir)
 
     log.info("Running com2ABMain model on DEM \n \t %s \n \t with profile \n \t %s ",
-             cfgPath['demSource'], cfgPath['profileLayer'])
+             pathDict['demSource'], pathDict['profileLayer'])
 
-    resAB['saveOutPath'] = cfgPath['saveOutPath']
+    resAB['saveOutPath'] = pathDict['saveOutPath']
     # Read input data for ALPHABETA
-    dem = IOf.readRaster(cfgPath['demSource'])
+    dem = IOf.readRaster(pathDict['demSource'])
     resAB['dem'] = dem
-    AvaPath = shpConv.readLine(cfgPath['profileLayer'], cfgPath['defaultName'],
+    AvaPath = shpConv.readLine(pathDict['profileLayer'], pathDict['defaultName'],
                                dem)
     resAB['AvaPath'] = AvaPath
-    resAB['splitPoint'] = shpConv.readPoints(cfgPath['splitPointSource'], dem)
+    resAB['splitPoint'] = shpConv.readPoints(pathDict['splitPointSource'], dem)
 
     # Read input setup
     eqParams = setEqParameters(cfg, smallAva)
@@ -139,11 +139,11 @@ def com2ABMain(cfg, avalancheDir):
         if cfg.getboolean('FLAGS', 'fullOut'):
             # saving results to pickle saveABResults(resAB, name)
             savename = name + '_com2AB_eqparam.pickle'
-            save_file = pathlib.Path(cfgPath['saveOutPath'], savename)
+            save_file = pathlib.Path(pathDict['saveOutPath'], savename)
             pickle.dump(resAB['eqParams'], open(save_file, "wb"))
             log.info('Saving intermediate results to: %s' % (save_file))
             savename = name + '_com2AB_eqout.pickle'
-            save_file = pathlib.Path(cfgPath['saveOutPath'], savename)
+            save_file = pathlib.Path(pathDict['saveOutPath'], savename)
             pickle.dump(resAB[name], open(save_file, "wb"))
             log.info('Saving intermediate results to: %s' % (save_file))
 
@@ -214,10 +214,10 @@ def readABinputs(avalancheDir):
 
     Returns
     -------
-    cfgPath : dict
+    pathDict : dict
         dictionary with path to AlphaBeta inputs (dem, avaPath, splitPoint)
     """
-    cfgPath = {}
+    pathDict = {}
     avalancheDir = pathlib.Path(avalancheDir)
     # read avalanche paths for AB
     refDir = avalancheDir / 'Inputs' / 'LINES'
@@ -227,7 +227,7 @@ def readABinputs(avalancheDir):
         assert len(profileLayer) == 1, message
     except AssertionError:
         raise
-    cfgPath['profileLayer'] = profileLayer[0]
+    pathDict['profileLayer'] = profileLayer[0]
 
     # read DEM
     refDir = avalancheDir / 'Inputs'
@@ -236,7 +236,7 @@ def readABinputs(avalancheDir):
         assert len(demSource) == 1, 'There should be exactly one topography .asc file in %s /Inputs/' % avalancheDir
     except AssertionError:
         raise
-    cfgPath['demSource'] = demSource[0]
+    pathDict['demSource'] = demSource[0]
 
     # read split points
     refDir = avalancheDir / 'Inputs' / 'POINTS'
@@ -246,19 +246,19 @@ def readABinputs(avalancheDir):
         assert len(splitPointSource) == 1, message
     except AssertionError:
         raise
-    cfgPath['splitPointSource'] = splitPointSource[0]
+    pathDict['splitPointSource'] = splitPointSource[0]
 
     # make output path
     saveOutPath = avalancheDir / 'Outputs' / 'com2AB'
     if not saveOutPath.exists():
         # log.info('Creating output folder %s', saveOutPath)
         saveOutPath.mkdir(parents=True, exist_ok=True)
-    cfgPath['saveOutPath'] = saveOutPath
+    pathDict['saveOutPath'] = saveOutPath
 
     defaultName = avalancheDir.stem
-    cfgPath['defaultName'] = defaultName
+    pathDict['defaultName'] = defaultName
 
-    return cfgPath
+    return pathDict
 
 
 def calcAB(AvaProfile, eqParameters, dsMin):

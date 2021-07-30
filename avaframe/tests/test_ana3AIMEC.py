@@ -14,15 +14,15 @@ def test_getAimecInputs(capfd):
     dirname = pathlib.Path(__file__).parents[0]
 
     avalancheDir = pathlib.Path(dirname, '..', 'data', 'avaParabola')
-    cfgPath = {}
-    cfgPath = aT.readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA')
-    print(cfgPath)
-    assert 'avaframe/tests/../data/avaParabola/Inputs/LINES/path_aimec.shp' in str(cfgPath['profileLayer'])
-    assert 'avaframe/tests/../data/avaParabola/Inputs/POINTS/splitPoint.shp' in str(cfgPath['splitPointSource'])
-    assert 'avaframe/tests/../data/avaParabola/Inputs/DEM_PF_Topo.asc' in str(cfgPath['demSource'])
-    assert 'avaframe/tests/../data/avaParabola/Outputs/ana3AIMEC/com1DFA' in str(cfgPath['pathResult'])
-    assert cfgPath['projectName'] == 'avaParabola'
-    assert cfgPath['pathName'] == 'path_aimec'
+    pathDict = {}
+    pathDict = aT.readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA')
+    print(pathDict)
+    assert 'avaframe/tests/../data/avaParabola/Inputs/LINES/path_aimec.shp' in str(pathDict['profileLayer'])
+    assert 'avaframe/tests/../data/avaParabola/Inputs/POINTS/splitPoint.shp' in str(pathDict['splitPointSource'])
+    assert 'avaframe/tests/../data/avaParabola/Inputs/DEM_PF_Topo.asc' in str(pathDict['demSource'])
+    assert 'avaframe/tests/../data/avaParabola/Outputs/ana3AIMEC/com1DFA' in str(pathDict['pathResult'])
+    assert pathDict['projectName'] == 'avaParabola'
+    assert pathDict['pathName'] == 'path_aimec'
 
 
 def test_analyzeArea(capfd):
@@ -33,17 +33,17 @@ def test_analyzeArea(capfd):
     dataSim = dirname / 'data' / 'simTestAimecTopo.asc'
     dataMass = dirname / 'data' / '000000.txt'
     dataMass1 = dirname / 'data' / '000001.txt'
-    cfgPath = {}
-    cfgPath['projectName'] = 'NameOfAvalanche'
-    cfgPath['ppr'] = [dataRef, dataSim]
-    cfgPath['massBal'] = [dataMass, dataMass1]
+    pathDict = {}
+    pathDict['projectName'] = 'NameOfAvalanche'
+    pathDict['ppr'] = [dataRef, dataSim]
+    pathDict['massBal'] = [dataMass, dataMass1]
     pathResult = dirname / 'data'
-    cfgPath['pathResult'] = pathResult
-    cfgPath['dirName'] = 'testAIMEC'
-    cfgPath['referenceFile'] = 0
-    cfgPath['compType'] = ['singleModule', 'com1DFA']
-    cfgPath['numSim'] = 2
-    cfgPath['contCmap'] = True
+    pathDict['pathResult'] = pathResult
+    pathDict['dirName'] = 'testAIMEC'
+    pathDict['referenceFile'] = 0
+    pathDict['compType'] = ['singleModule', 'com1DFA']
+    pathDict['numSim'] = 2
+    pathDict['contCmap'] = True
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
@@ -76,7 +76,7 @@ def test_analyzeArea(capfd):
     rasterTransfo['startOfRunoutAreaAngle'] = 10
 
     # testing analyzeFields function
-    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
+    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags)
 
     assert (resAnalysis['runout'][0][0] == 449) and (
             resAnalysis['runout'][1][1] == 419) and (
@@ -91,45 +91,45 @@ def test_analyzeArea(capfd):
 def test_makeDomainTransfo(capfd):
     '''Simple test for module makeDomainTransfo'''
     # Extract input file locations
-    cfgPath = {}
+    pathDict = {}
     dir = pathlib.Path(__file__).parents[0]
     dirname = dir / 'data' / 'testAna3Aimec'
     pathData = dirname / 'data'
 
     refDir = dirname / 'LINES'
     profileLayer = list(refDir.glob('*aimec*.shp'))
-    cfgPath['profileLayer'] = profileLayer[0]
+    pathDict['profileLayer'] = profileLayer[0]
 
     refDir = dirname / 'POINTS'
     splitPointLayer = list(refDir.glob('*.shp'))
-    cfgPath['splitPointSource'] = splitPointLayer[0]
+    pathDict['splitPointSource'] = splitPointLayer[0]
 
     demSource = list(dirname.glob('*.asc'))
-    cfgPath['demSource'] = demSource[0]
+    pathDict['demSource'] = demSource[0]
 
-    cfgPath['ppr'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+    pathDict['ppr'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
                       pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
                       pathData / 'testAimec_4.asc']
-    cfgPath['pfd'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+    pathDict['pfd'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
                       pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
                       pathData / 'testAimec_4.asc']
-    cfgPath['pfv'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+    pathDict['pfv'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
                       pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
                       pathData / 'testAimec_4.asc']
 
-    cfgPath['massBal'] = [dirname / '000001.txt']*5
+    pathDict['massBal'] = [dirname / '000001.txt']*5
 
-    cfgPath['contCmap'] = True
+    pathDict['contCmap'] = True
 
     pathResult = dirname / 'results'
-    cfgPath['pathResult'] = pathResult
+    pathDict['pathResult'] = pathResult
 
-    cfgPath['projectName'] = 'testAna3Aimec'
+    pathDict['projectName'] = 'testAna3Aimec'
     pathName = profileLayer[0].stem
-    cfgPath['pathName'] = pathName
-    cfgPath['dirName'] = 'com1DFA'
-    cfgPath['referenceFile'] = 0
-    cfgPath['compType'] = ['singleModule', 'com1DFA']
+    pathDict['pathName'] = pathName
+    pathDict['dirName'] = 'com1DFA'
+    pathDict['referenceFile'] = 0
+    pathDict['compType'] = ['singleModule', 'com1DFA']
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
@@ -140,9 +140,9 @@ def test_makeDomainTransfo(capfd):
     cfgSetup['resType'] = 'ppr'
     cfgSetup['thresholdValue'] = '0.9'
     cfgSetup['contourLevels'] = '0.1|0.5|1'
-    cfgPath['numSim'] = 5
+    pathDict['numSim'] = 5
 
-    rasterTransfo = aT.makeDomainTransfo(cfgPath, cfgSetup)
+    rasterTransfo = aT.makeDomainTransfo(pathDict, cfgSetup)
 
     assert rasterTransfo['gridx'][-1, 0] == 60
     assert rasterTransfo['gridx'][-1, -1] == 220
@@ -154,18 +154,18 @@ def test_makeDomainTransfo(capfd):
     newRasters = {}
     # assign pressure data
     interpMethod = cfgSetup['interpMethod']
-    newRasters['newRasterPPR'] = aT.assignData(cfgPath['ppr'], rasterTransfo, interpMethod)
+    newRasters['newRasterPPR'] = aT.assignData(pathDict['ppr'], rasterTransfo, interpMethod)
     newRasters['newRasterPFD'] = newRasters['newRasterPPR']
     newRasters['newRasterPFV'] = newRasters['newRasterPPR']
-    newRasterDEM = aT.assignData([cfgPath['demSource']], rasterTransfo,
+    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo,
                                         interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
-    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
+    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags)
 
     for i in range(5):
-        rasterSource = cfgPath['ppr'][i]
+        rasterSource = pathDict['ppr'][i]
         sourceData = IOf.readRaster(rasterSource)
         rasterdata = sourceData['rasterData']
         error = (resAnalysis['TP'][i]+resAnalysis['FP'][i]-np.nansum(rasterdata))/(
@@ -173,9 +173,9 @@ def test_makeDomainTransfo(capfd):
         assert error < 0.4
         assert np.abs(resAnalysis['runout'][0, i] - (240 + 10*(i+1))) < 5
 
-    resAnalysis = ana3AIMEC.postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags)
+    resAnalysis = ana3AIMEC.postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags)
     for i in range(5):
-        rasterSource = cfgPath['ppr'][i]
+        rasterSource = pathDict['ppr'][i]
         sourceData = IOf.readRaster(rasterSource)
         rasterdata = sourceData['rasterData']
         error = (resAnalysis['TP'][i]+resAnalysis['FP'][i]-np.nansum(rasterdata))/(
