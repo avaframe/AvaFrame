@@ -115,8 +115,8 @@ def test_com2ABMain(capfd):
     listNames = ['avaHockeySmall', 'avaHockeyChannel', 'avaBowl']
     dirname = pathlib.Path(__file__).parents[0]
     for name in listNames:
-        avalancheDir = pathlib.Path(dirname, '..', 'data', name)
-        saveOutPathRef = pathlib.Path(dirname, '..', '..', 'benchmarks', name + 'ABPytest')
+        avalancheDir = dirname / '..' / 'data' / name
+        saveOutPathRef = dirname / '..' / '..' / 'benchmarks' / (name + 'ABPytest')
         cfg = cfgUtils.getModuleConfig(com2AB)
         flags = cfg['FLAGS']
         # run main routine
@@ -147,7 +147,7 @@ def test_QGISAB(capfd):
     # load and prepare Inputs
     avaName = 'avaSlide'
     dirname = pathlib.Path(__file__).parents[0]
-    avalancheDir = pathlib.Path(dirname, '..', 'data', avaName)
+    avalancheDir = dirname / '..' / 'data' / avaName
     cfg = cfgUtils.getModuleConfig(com2AB)
     # run main routine
     resAB = com2AB.com2ABMain(cfg, avalancheDir)
