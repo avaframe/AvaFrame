@@ -546,34 +546,38 @@ def assignData(fnames, rasterTransfo, interpMethod):
     return avalData
 
 
-def analyzeMass(fnameMass):
+def analyzeMass(fnameMass, resAnalysis):
     """ Analyse Mass data
 
     Parameters
     ----------
     fnameMass: list
         list of path to mass data to analyse
+    resAnalysis: dict
+        resAnalysis dictionnary to update with mass inifo
 
     Returns
     -------
-    relMass: 1D numpy array
-        containing for each simulation analyzed the
-        release mass
-    entMass: 1D numpy array
-        containing for each simulation analyzed the
-        entrained mass
-    finalMass: 1D numpy array
-        containing for each simulation analyzed the
-        final mass
-    relativMassDiff: 1D numpy array
-        containing for each simulation analyzed
-        the final mass diff with ref (in %)
-    growthIndex: 1D numpy array
-        containing for each simulation analyzed the
-        growth index
-    growthGrad: 1D numpy array
-        containing for each simulation analyzed the
-        growth gradient
+    resAnalysis: dict
+        resAnalysis dictionnary to updated with mass inifo:
+            relMass: 1D numpy array
+                containing for each simulation analyzed the
+                release mass
+            entMass: 1D numpy array
+                containing for each simulation analyzed the
+                entrained mass
+            finalMass: 1D numpy array
+                containing for each simulation analyzed the
+                final mass
+            relativMassDiff: 1D numpy array
+                containing for each simulation analyzed
+                the final mass diff with ref (in %)
+            growthIndex: 1D numpy array
+                containing for each simulation analyzed the
+                growth index
+            growthGrad: 1D numpy array
+                containing for each simulation analyzed the
+                growth gradient
     """
     # initialize Arrays
     nTopo = len(fnameMass)
@@ -605,7 +609,17 @@ def analyzeMass(fnameMass):
     if massDiffers:
         log.warning('Release masses differs between simulations!')
 
-    return releaseMass, entrainedMass, entMassFlowArray, totalMassArray, finalMass, relativMassDiff, grIndex, grGrad, time
+    resAnalysis['relMass'] = releaseMass
+    resAnalysis['entMass'] = entrainedMass
+    resAnalysis['entMassFlowArray'] = entMassFlowArray
+    resAnalysis['totalMassArray'] = totalMassArray
+    resAnalysis['time'] = time
+    resAnalysis['finalMass'] = finalMass
+    resAnalysis['relativMassDiff'] = relativMassDiff
+    resAnalysis['growthIndex'] = grIndex
+    resAnalysis['growthGrad'] = grGrad
+
+    return resAnalysis
 
 
 def computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters):
