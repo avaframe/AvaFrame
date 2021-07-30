@@ -572,6 +572,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     gravAcc = cfg.getfloat('gravAcc')
     avaDir = cfg['avalancheDir']
     massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
+    interpOption = cfg.getfloat('interpOption')
 
     # read dem header
     header = dem['header']
@@ -655,7 +656,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
             Ypart = np.append(Ypart, ypart)
             Mpart = np.append(Mpart, mPart * np.ones(nPart))
 
-        Hpart, _ = geoTrans.projectOnGrid(Xpart, Ypart, relRaster, csz=csz, interp='bilinear')
+        Hpart = DFAfunC.projOnRaster(Xpart, Ypart, relRaster, csz, ncols, nrows, interpOption)
         # create dictionnary to store particles properties
         particles = {}
         particles['Npart'] = Npart
