@@ -111,7 +111,7 @@ def defineGrid(Lx, Ly, csz):
     # define grid
     NX = np.int(Lx/csz + 1)
     NY = np.int(Ly/csz + 1)
-    header = IOf.{}
+    header = {}
     header['ncols'] = NX
     header['nrows'] = NY
     header['cellsize'] = csz
