@@ -111,10 +111,10 @@ def defineGrid(Lx, Ly, csz):
     # define grid
     NX = np.int(Lx/csz + 1)
     NY = np.int(Ly/csz + 1)
-    header = IOf.cASCheader()
-    header.ncols = NX
-    header.nrows = NY
-    header.cellsize = csz
+    header = IOf.{}
+    header['ncols'] = NX
+    header['nrows'] = NY
+    header['cellsize'] = csz
     dem = {}
     dem['header'] = header
     X = np.linspace(0, Lx, NX)

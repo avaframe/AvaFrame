@@ -367,11 +367,11 @@ def getReleaseThickness(avaDir, cfg, demFile):
 
     # Read dem
     demOri = IOf.readRaster(demFile)
-    nrows = demOri['header'].nrows
-    ncols = demOri['header'].ncols
-    xllc = demOri['header'].xllcenter
-    yllc = demOri['header'].yllcenter
-    csz = demOri['header'].cellsize
+    nrows = demOri['header']['nrows']
+    ncols = demOri['header']['ncols']
+    xllc = demOri['header']['xllcenter']
+    yllc = demOri['header']['yllcenter']
+    csz = demOri['header']['cellsize']
 
     # define release thickness distribution
     cfgSimi = cfg['SIMISOL']
@@ -469,10 +469,10 @@ def prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, a
     xCenter = simiDict['xCenter']
 
     # get info on DEM extent
-    nrows = demOri['header'].nrows
-    xllc = demOri['header'].xllcenter
-    yllc = demOri['header'].yllcenter
-    csz = demOri['header'].cellsize
+    nrows = demOri['header']['nrows']
+    xllc = demOri['header']['xllcenter']
+    yllc = demOri['header']['yllcenter']
+    csz = demOri['header']['cellsize']
 
     if axis == 'xaxis':
         ind = np.where(((particles['y']+yllc > -2.5) & (particles['y']+yllc < 2.5)))
@@ -565,11 +565,11 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
 
     # get info from dem
     demOri = relDict['demOri']
-    ncols = demOri['header'].ncols
-    nrows = demOri['header'].nrows
-    xllc = demOri['header'].xllcenter
-    yllc = demOri['header'].yllcenter
-    csz = demOri['header'].cellsize
+    ncols = demOri['header']['ncols']
+    nrows = demOri['header']['nrows']
+    xllc = demOri['header']['xllcenter']
+    yllc = demOri['header']['yllcenter']
+    csz = demOri['header']['cellsize']
 
     # com1DFAPy results
     fields = comSol['fields']

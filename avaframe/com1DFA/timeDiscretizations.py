@@ -23,8 +23,8 @@ def getcflTimeStep(particles, dem, cfg):
     vMax = np.amax(vmagnitude)
 
     # get cell size
-    cszDEM = dem['header'].cellsize
-    cszNeighbourGrid = dem['headerNeighbourGrid'].cellsize
+    cszDEM = dem['header']['cellsize']
+    cszNeighbourGrid = dem['headerNeighbourGrid']['cellsize']
     # use the smallest of those two values
     csz = min(cszDEM, cszNeighbourGrid)
 

@@ -184,10 +184,10 @@ def test_reprojectionC(capfd):
     ncols = 100
     nrows = 10
     csz = 5
-    header = IOf.cASCheader()
-    header.ncols = ncols
-    header.nrows = nrows
-    header.cellsize = csz
+    header = {}
+    header['ncols'] = ncols
+    header['nrows'] = nrows
+    header['cellsize'] = csz
     dem = {}
     dem['header'] = header
     x0 = 500
@@ -315,10 +315,10 @@ def test_getNormalMesh(capfd):
     y = np.linspace(0, n-1, n)
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
-    header = IOf.cASCheader()
-    header.ncols = m
-    header.nrows = n
-    header.cellsize = cellsize
+    header = {}
+    header['ncols'] = m
+    header['nrows'] = n
+    header['cellsize'] = cellsize
     dem = {}
     dem['header'] = header
     Z1 = a * X * X + b * Y * Y
@@ -378,10 +378,10 @@ def test_getAreaMesh(capfd):
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
     Z1 = a * X * X + b * Y * Y
-    header = IOf.cASCheader()
-    header.ncols = m
-    header.nrows = n
-    header.cellsize = csz
+    header = {}
+    header['ncols'] = m
+    header['nrows'] = n
+    header['cellsize'] = csz
     dem = {}
     dem['header'] = header
     dem['rasterData'] = Z
@@ -398,10 +398,10 @@ def test_getAreaMesh(capfd):
 
 def test_getNeighborsC(capfd):
     """ Test the grid search/particle location method"""
-    header = IOf.cASCheader()
-    header.ncols = 5
-    header.nrows = 6
-    header.cellsize = 1
+    header = {}
+    header['ncols'] = 5
+    header['nrows'] = 6
+    header['cellsize'] = 1
     dem = {}
     dem['header'] = header
     dem['headerNeighbourGrid'] = header

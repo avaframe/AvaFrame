@@ -268,7 +268,7 @@ def plotProbMap(avaDir, inDir, cfgFull):
         raster = IOf.readRaster(data)
         dataPlot = raster['rasterData']
         header = IOf.readASCheader(data)
-        cellSize = header.cellsize
+        cellSize = header['cellsize']
 
         # Set dimensions of plots
         ny = dataPlot.shape[0]

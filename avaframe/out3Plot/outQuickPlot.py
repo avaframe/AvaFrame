@@ -300,7 +300,7 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
     log.debug('dataset1: %s' % simCompFile)
     log.debug('dataset2: %s' % simRefFile)
 
-    cellSize = rasterRef['header'].cellsize
+    cellSize = rasterRef['header']['cellsize']
     unit = pU.cfgPlotUtils['unit%s' % suffix]
 
     # Get name of Avalanche
@@ -353,7 +353,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     rasterRef = IOf.readRaster(datafiles[1])
     data1, data2 = geoTrans.resizeData(raster, rasterRef)
     header = IOf.readASCheader(datafiles[0])
-    cellSize = header.cellsize
+    cellSize = header['cellsize']
 
     # Create dataDict to be passed to generatePlot
     dataDict = {'data1': data1, 'data2': data2, 'name1': name1,
@@ -397,7 +397,7 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
     raster = IOf.readRaster(datafile)
     data1 = raster['rasterData']
     header = IOf.readASCheader(datafile)
-    cellSize = header.cellsize
+    cellSize = header['cellsize']
 
     # Create dataDict to be passed to generatePlot
     dataDict = {'data1': data1, 'name1': name1,

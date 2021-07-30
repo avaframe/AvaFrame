@@ -510,7 +510,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
         data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:3])))
 
         header = IOf.readASCheader(datafiles[m])
-        data['cellSize'].append(header.cellsize)
+        data['cellSize'].append(header['cellsize'])
         if len(infoParts) == 5:
             data['timeStep'].append(infoParts[4])
         else:

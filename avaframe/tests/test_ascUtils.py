@@ -8,8 +8,8 @@ def test_readASCheader(capfd):
     dirname = os.path.dirname(__file__)
     DGMSource = os.path.join(dirname, '../data/avaSlide/Inputs/slideTopo.asc')
     header = IOf.readASCheader(DGMSource)
-    assert((header.ncols == 419) and (header.nrows == 201) and
-           (header.cellsize == 5))
+    assert((header['ncols'] == 419) and (header['nrows'] == 201) and
+           (header['cellsize'] == 5))
 
 
 def test_isEqualASCheader(capfd):

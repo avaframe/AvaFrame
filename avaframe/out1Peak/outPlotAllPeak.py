@@ -154,7 +154,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit='', constrainData=True):
 
         # get header info for file writing
         header = raster['header']
-        cellSize = header.cellsize
+        cellSize = header['cellsize']
 
         # Set extent of peak file
         ny = data.shape[0]

@@ -19,10 +19,10 @@ def test_projectOnRaster(capfd):
     '''projectOnRaster'''
     dem = {}
     Points = {}
-    header = IOf.cASCheader()
-    header.xllcenter = 0
-    header.yllcenter = 0
-    header.cellsize = 1
+    header = {}
+    header['xllcenter'] = 0
+    header['yllcenter'] = 0
+    header['cellsize'] = 1
     # make sure it works for 2D arrays too
     rasterdata = np.array(([0, 1, 2, 3], [1, 2, 3, 4], [2, 3, 4, 5]))
     Points['x'] = np.array(([0.4, 0], [0.5, 1.6], [2.4, 3.4], [2.4, -1], [4, 0]))
@@ -65,12 +65,12 @@ def test_resizeData(capfd):
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
     raster1 = {}
-    header1 = IOf.cASCheader()
-    header1.ncols = m
-    header1.nrows = n
-    header1.xllcenter = 0
-    header1.yllcenter = 0
-    header1.cellsize = csz1
+    header1 = {}
+    header1['ncols'] = m
+    header1['nrows'] = n
+    header1['xllcenter'] = 0
+    header1['yllcenter'] = 0
+    header1['cellsize'] = csz1
     raster1['header'] = header1
     raster1['rasterData'] = Z
 
@@ -82,12 +82,12 @@ def test_resizeData(capfd):
     X, Y = np.meshgrid(x, y)
     Z = a * X + b * Y
     raster2 = {}
-    header2 = IOf.cASCheader()
-    header2.ncols = m
-    header2.nrows = n
-    header2.xllcenter = 0.8
-    header2.yllcenter = 0.8
-    header2.cellsize = csz2
+    header2 = {}
+    header2['ncols'] = m
+    header2['nrows'] = n
+    header2['xllcenter'] = 0.8
+    header2['yllcenter'] = 0.8
+    header2['cellsize'] = csz2
     raster2['header'] = header2
     raster2['rasterData'] = Z
 
@@ -276,13 +276,13 @@ def test_areaPoly(capfd):
 def test_remeshData(tmp_path):
     """ test shape of interpolated data onto new mesh """
 
-    headerInfo = IOf.cASCheader()
-    headerInfo.cellsize = 5
-    headerInfo.ncols = 4
-    headerInfo.nrows = 5
-    headerInfo.xllcenter = 0
-    headerInfo.yllcenter = 0
-    headerInfo.noDataValue = -9999
+    headerInfo = {}
+    headerInfo['cellsize'] = 5
+    headerInfo['ncols'] = 4
+    headerInfo['nrows'] = 5
+    headerInfo['xllcenter'] = 0
+    headerInfo['yllcenter'] = 0
+    headerInfo['noDataValue'] = -9999
     # create an inclined plane
     z0 = 10
     data = getIPZ(z0, 15, 20, 5)
@@ -293,11 +293,11 @@ def test_remeshData(tmp_path):
     dataRaster = dataNew['rasterData']
     indNoData = np.where(dataRaster == -9999)
     headerNew = dataNew['header']
-    xExtent = (headerNew.ncols-1) * headerNew.cellsize
-    yExtent = (headerNew.nrows-1) * headerNew.cellsize
+    xExtent = (headerNew['ncols']-1) * headerNew['cellsize']
+    yExtent = (headerNew['nrows']-1) * headerNew['cellsize']
 
     # compute solution
-    dataSol = getIPZ(z0, xExtent, yExtent, headerNew.cellsize)
+    dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
 
     # compare solution to result from function
     testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)
@@ -312,13 +312,13 @@ def test_remeshData(tmp_path):
 def test_remeshDEM(tmp_path):
     """ test size of interpolated data onto new mesh """
 
-    headerInfo = IOf.cASCheader()
-    headerInfo.cellsize = 5
-    headerInfo.ncols = 4
-    headerInfo.nrows = 5
-    headerInfo.xllcenter = 0
-    headerInfo.yllcenter = 0
-    headerInfo.noDataValue = -9999
+    headerInfo = {}
+    headerInfo['cellsize'] = 5
+    headerInfo['ncols'] = 4
+    headerInfo['nrows'] = 5
+    headerInfo['xllcenter'] = 0
+    headerInfo['yllcenter'] = 0
+    headerInfo['noDataValue'] = -9999
     # create an inclined plane
     z0 = 10
     data = getIPZ(z0, 15, 20, 5)
@@ -334,11 +334,11 @@ def test_remeshDEM(tmp_path):
     dataRaster = dataNew['rasterData']
     indNoData = np.where(dataRaster == -9999)
     headerNew = dataNew['header']
-    xExtent = (headerNew.ncols-1) * headerNew.cellsize
-    yExtent = (headerNew.nrows-1) * headerNew.cellsize
+    xExtent = (headerNew['ncols']-1) * headerNew['cellsize']
+    yExtent = (headerNew['nrows']-1) * headerNew['cellsize']
 
     # compute solution
-    dataSol = getIPZ(z0, xExtent, yExtent, headerNew.cellsize)
+    dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
 
     # compare solution to result from function
     testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)

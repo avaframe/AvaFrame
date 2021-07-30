@@ -25,11 +25,11 @@ def getReleaseThickness(avaDir, cfg, demFile):
 
     # Read dem
     demOri = IOf.readRaster(demFile)
-    nrows = demOri['header'].nrows
-    ncols = demOri['header'].ncols
-    xllc = demOri['header'].xllcenter
-    yllc = demOri['header'].yllcenter
-    csz = demOri['header'].cellsize
+    nrows = demOri['header']['nrows']
+    ncols = demOri['header']['ncols']
+    xllc = demOri['header']['xllcenter']
+    yllc = demOri['header']['yllcenter']
+    csz = demOri['header']['cellsize']
 
     # define release thickness distribution
     cfgFP = cfg['FPSOL']
@@ -56,11 +56,11 @@ def postProcessFPcom1DFA(cfgGen, Particles, Fields, ind_t, relDict):
     particles = Particles[ind_t]
 
     demOri = relDict['demOri']
-    nrows = demOri['header'].nrows
-    ncols = demOri['header'].ncols
-    xllc = demOri['header'].xllcenter
-    yllc = demOri['header'].yllcenter
-    csz = demOri['header'].cellsize
+    nrows = demOri['header']['nrows']
+    ncols = demOri['header']['ncols']
+    xllc = demOri['header']['xllcenter']
+    yllc = demOri['header']['yllcenter']
+    csz = demOri['header']['cellsize']
     dem = relDict['dem']
 
     x = particles['x']
@@ -117,11 +117,11 @@ def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
     # get info from dem
     demOri = relDict['demOri']
     relTh = relDict['relTh']
-    ncols = demOri['header'].ncols
-    nrows = demOri['header'].nrows
-    xllc = demOri['header'].xllcenter
-    yllc = demOri['header'].yllcenter
-    csz = demOri['header'].cellsize
+    ncols = demOri['header']['ncols']
+    nrows = demOri['header']['nrows']
+    xllc = demOri['header']['xllcenter']
+    yllc = demOri['header']['yllcenter']
+    csz = demOri['header']['cellsize']
 
     # com1DFA results
     fields = comSol['fields']

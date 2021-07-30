@@ -55,12 +55,12 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
 
     # get header info from peak files - this should be the same for all peakFiles
     header = IOf.readASCheader(peakFilesDF['files'][0])
-    cellSize = header.cellsize
-    nRows = header.nrows
-    nCols = header.ncols
-    xllcenter = header.xllcenter
-    yllcenter = header.yllcenter
-    noDataValue = header.noDataValue
+    cellSize = header['cellsize']
+    nRows = header['nrows']
+    nCols = header['ncols']
+    xllcenter = header['xllcenter']
+    yllcenter = header['yllcenter']
+    noDataValue = header['noDataValue']
 
     # Initialise array for computations
     probSum = np.zeros((nRows, nCols))

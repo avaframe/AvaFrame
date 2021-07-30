@@ -152,9 +152,9 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef double dt = dT
   cdef double mu = cfg.getfloat('mu')
   cdef int Npart = particles['Npart']
-  cdef double csz = dem['header'].cellsize
-  cdef int nrows = dem['header'].nrows
-  cdef int ncols = dem['header'].ncols
+  cdef double csz = dem['header']['cellsize']
+  cdef int nrows = dem['header']['nrows']
+  cdef int ncols = dem['header']['ncols']
   cdef double[:, :] ZDEM = dem['rasterData']
   cdef double[:, :] nxArray = dem['Nx']
   cdef double[:, :] nyArray = dem['Ny']
@@ -507,9 +507,9 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef int distReproj = cfg.getint('distReproj')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
-  cdef double csz = dem['header'].cellsize
-  cdef int nrows = dem['header'].nrows
-  cdef int ncols = dem['header'].ncols
+  cdef double csz = dem['header']['cellsize']
+  cdef int nrows = dem['header']['nrows']
+  cdef int ncols = dem['header']['ncols']
   cdef int Npart = particles['Npart']
   cdef double[:, :] nxArray = dem['Nx']
   cdef double[:, :] nyArray = dem['Ny']
@@ -812,11 +812,11 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double rho = cfg.getfloat('rho')
   cdef int interpOption = cfg.getint('interpOption')
   header = dem['header']
-  cdef int nrows = header.nrows
-  cdef int ncols = header.ncols
+  cdef int nrows = header['nrows']
+  cdef int ncols = header['ncols']
   cdef double xllc = 0
   cdef double yllc = 0
-  cdef double csz = header.cellsize
+  cdef double csz = header['cellsize']
   cdef int Npart = np.size(particles['x'])
   cdef double[:, :] areaRaster = dem['areaRaster']
   # read particles and fields
@@ -942,14 +942,14 @@ def getNeighborsC(particles, dem):
     """
     # get DEM grid information
     header = dem['header']
-    cdef int nColsDEM = header.ncols
-    cdef int nRowsDEM = header.nrows
-    cdef float cszDEM = header.cellsize
+    cdef int nColsDEM = header['ncols']
+    cdef int nRowsDEM = header['nrows']
+    cdef float cszDEM = header['cellsize']
     # get neighbour search grid information
     headerNeighbourGrid = dem['headerNeighbourGrid']
-    cdef int nColsNeighbourGrid = headerNeighbourGrid.ncols
-    cdef int nRowsNeighbourGrid = headerNeighbourGrid.nrows
-    cdef float cszNeighbourGrid = headerNeighbourGrid.cellsize
+    cdef int nColsNeighbourGrid = headerNeighbourGrid['ncols']
+    cdef int nRowsNeighbourGrid = headerNeighbourGrid['nrows']
+    cdef float cszNeighbourGrid = headerNeighbourGrid['cellsize']
     # get particle location
     cdef int Npart = particles['Npart']
     cdef int j
@@ -1083,13 +1083,13 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef int interpOption = cfg.getint('interpOption')
   cdef int SPHoption = cfg.getint('sphOption')
   # grid normal raster information
-  cdef double cszNormal = headerNormalGrid.cellsize
-  cdef int nRowsNormal = headerNormalGrid.nrows
-  cdef int nColsNormal = headerNormalGrid.ncols
+  cdef double cszNormal = headerNormalGrid['cellsize']
+  cdef int nRowsNormal = headerNormalGrid['nrows']
+  cdef int nColsNormal = headerNormalGrid['ncols']
   # neighbour search grid information and neighbour information
-  cdef double cszNeighbourGrid = headerNeighbourGrid.cellsize
-  cdef int nRowsNeighbourGrid = headerNeighbourGrid.nrows
-  cdef int nColsNeighbourGrid = headerNeighbourGrid.ncols
+  cdef double cszNeighbourGrid = headerNeighbourGrid['cellsize']
+  cdef int nRowsNeighbourGrid = headerNeighbourGrid['nrows']
+  cdef int nColsNeighbourGrid = headerNeighbourGrid['ncols']
   cdef int[:] indPartInCell = particles['indPartInCell']
   cdef int[:] partInCell = particles['partInCell']
   # SPH kernel
@@ -1379,7 +1379,7 @@ def computeFDC(cfg, particles, header, double[:, :] nxArray, double[:, :] nyArra
   cdef double rho = cfg.getfloat('rho')
   cdef double minRKern = cfg.getfloat('minRKern')
   cdef int interpOption = cfg.getint('interpOption')
-  cdef double csz = header.cellsize
+  cdef double csz = header['cellsize']
   cdef double[:] mass = particles['m']
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
@@ -1394,8 +1394,8 @@ def computeFDC(cfg, particles, header, double[:, :] nxArray, double[:, :] nyArra
   cdef int[:] indPartInCell = particles['indPartInCell']
   cdef int[:] partInCell = particles['partInCell']
   cdef int N = xArray.shape[0]
-  cdef int nrows = header.nrows
-  cdef int ncols = header.ncols
+  cdef int nrows = header['nrows']
+  cdef int ncols = header['ncols']
   # SPH kernel
   # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
   cdef double rKernel = csz

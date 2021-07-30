@@ -150,10 +150,10 @@ def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
 
     # Location of Profiles
     header = IOf.readASCheader(data1FD)
-    cellSize = header.cellsize
+    cellSize = header['cellsize']
     ny = dataAnaFD.shape[0]
     nx = dataAnaFD.shape[1]
-    xllc = header.xllcenter
+    xllc = header['xllcenter']
     nx_loc = int(ny *0.5)
 
     # set x Vector
