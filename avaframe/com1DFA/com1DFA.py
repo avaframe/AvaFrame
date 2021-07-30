@@ -371,13 +371,13 @@ def initializeMesh(cfg, demOri, num):
 
     demOri = geoTrans.remeshDEM(cfg, demOri)
     dem = setDEMoriginToZero(demOri)
-    dem['originOri'] = {'xllcenter': demOri['header'].xllcenter, 'yllcenter': demOri['header'].yllcenter}
+    dem['originOri'] = {'xllcenter': demOri['header']['xllcenter'], 'yllcenter': demOri['header']['yllcenter']}
 
     # read dem header
     headerDEM = dem['header']
-    nColsDEM = headerDEM.ncols
-    nRowsDEM = headerDEM.nrows
-    cszDEM = headerDEM.cellsize
+    nColsDEM = headerDEM['ncols']
+    nRowsDEM = headerDEM['nrows']
+    cszDEM = headerDEM['cellsize']
 
     # get normal vector of the grid mesh
     Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
@@ -390,13 +390,13 @@ def initializeMesh(cfg, demOri, num):
     dem['outOfDEM'] = outOfDEM
 
     # Prepare SPH grid
-    headerNeighbourGrid = IOf.cASCheader()
+    headerNeighbourGrid = {}
     cszNeighbourGrid = cfg.getfloat('sphKernelRadius')
-    headerNeighbourGrid.cellsize = cszNeighbourGrid
-    headerNeighbourGrid.ncols = np.ceil(nColsDEM * cszDEM / cszNeighbourGrid)
-    headerNeighbourGrid.nrows = np.ceil(nRowsDEM * cszDEM / cszNeighbourGrid)
-    headerNeighbourGrid.xllcenter = 0
-    headerNeighbourGrid.yllcenter = 0
+    headerNeighbourGrid['cellsize'] = cszNeighbourGrid
+    headerNeighbourGrid['ncols'] = np.ceil(nColsDEM * cszDEM / cszNeighbourGrid)
+    headerNeighbourGrid['nrows'] = np.ceil(nRowsDEM * cszDEM / cszNeighbourGrid)
+    headerNeighbourGrid['xllcenter'] = 0
+    headerNeighbourGrid['yllcenter'] = 0
     dem['headerNeighbourGrid'] = headerNeighbourGrid
 
     # get real Area
@@ -415,8 +415,8 @@ def setDEMoriginToZero(demOri):
     """ set origin of DEM to 0,0 """
 
     dem = copy.deepcopy(demOri)
-    dem['header'].xllcenter = 0
-    dem['header'].yllcenter = 0
+    dem['header']['xllcenter'] = 0
+    dem['header']['yllcenter'] = 0
 
     return dem
 
@@ -481,7 +481,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
 
     # compute release area
     header = dem['header']
-    csz = header.cellsize
+    csz = header['cellsize']
     relRaster = releaseLine['rasterData']
     relRasterOnes = np.where(relRaster > 0, 1., 0.)
     relAreaActual = np.nansum(relRasterOnes*dem['areaRaster'])
@@ -574,9 +574,9 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
 
     # read dem header
     header = dem['header']
-    ncols = header.ncols
-    nrows = header.nrows
-    csz = header.cellsize
+    ncols = header['ncols']
+    nrows = header['nrows']
+    csz = header['cellsize']
     relRaster = releaseLine['rasterData']
     areaRaster = dem['areaRaster']
 
@@ -735,8 +735,8 @@ def initializeFields(cfg, dem, particles):
     """
     # read dem header
     header = dem['header']
-    ncols = header.ncols
-    nrows = header.nrows
+    ncols = header['ncols']
+    nrows = header['nrows']
     PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
     FD = np.zeros((nrows, ncols))
@@ -857,8 +857,8 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
     """
     # read dem header
     header = dem['header']
-    ncols = header.ncols
-    nrows = header.nrows
+    ncols = header['ncols']
+    nrows = header['nrows']
     if 'ent' in simTypeActual:
         entrainmentArea = entLine['fileName']
         log.info('Initializing entrainment area: %s' % (entrainmentArea))
@@ -902,8 +902,8 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     sres = cfg.getfloat('sres')
     # read dem header
     header = dem['header']
-    ncols = header.ncols
-    nrows = header.nrows
+    ncols = header['ncols']
+    nrows = header['nrows']
     if simTypeActual in ['entres', 'res']:
         resistanceArea = resLine['fileName']
         log.info('Initializing resistance area: %s' % (resistanceArea))
@@ -1275,7 +1275,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     log.debug('dt used now is %f' % dt)
 
     # load required DEM and mesh info
-    csz = dem['header'].cellsize
+    csz = dem['header']['cellsize']
     Nx = dem['Nx']
     Ny = dem['Ny']
     Nz = dem['Nz']
@@ -1441,9 +1441,9 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         else:
             Raster = Raster + rast
     if debugPlot:
-        ncols = dem['header'].ncols
-        nrows = dem['header'].nrows
-        csz = dem['header'].cellsize
+        ncols = dem['header']['ncols']
+        nrows = dem['header']['nrows']
+        csz = dem['header']['cellsize']
         x = np.arange(ncols) * csz
         y = np.arange(nrows) * csz
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
@@ -1486,11 +1486,11 @@ def polygon2Raster(demHeader, Line, radius, th=''):
         updated raster
     """
     # adim and center dem and polygon
-    ncols = demHeader.ncols
-    nrows = demHeader.nrows
-    xllc = demHeader.xllcenter
-    yllc = demHeader.yllcenter
-    csz = demHeader.cellsize
+    ncols = demHeader['ncols']
+    nrows = demHeader['nrows']
+    xllc = demHeader['xllcenter']
+    yllc = demHeader['yllcenter']
+    csz = demHeader['cellsize']
     xCoord0 = (Line['x'] - xllc) / csz
     yCoord0 = (Line['y'] - yllc) / csz
     if (xCoord0[0] == xCoord0[-1]) and (yCoord0[0] == yCoord0[-1]):
@@ -1607,8 +1607,8 @@ def pointInPolygon(demHeader, points, Line, radius):
     Mask : 1D numpy array
         Mask of particles to keep
     """
-    xllc = demHeader.xllcenter
-    yllc = demHeader.yllcenter
+    xllc = demHeader['xllcenter']
+    yllc = demHeader['yllcenter']
     xCoord0 = (Line['x'] - xllc)
     yCoord0 = (Line['y'] - yllc)
     if (xCoord0[0] == xCoord0[-1]) and (yCoord0[0] == yCoord0[-1]):
@@ -1646,11 +1646,11 @@ def pointInPolygon(demHeader, points, Line, radius):
 
 def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last=False):
     header = dem['header']
-    ncols = header.ncols
-    nrows = header.nrows
-    xllc = header.xllcenter
-    yllc = header.yllcenter
-    csz = header.cellsize
+    ncols = header['ncols']
+    nrows = header['nrows']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
     xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
     ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
     PointsX, PointsY = np.meshgrid(xgrid, ygrid)
@@ -1701,11 +1701,11 @@ def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last
 
 def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
     header = dem['header']
-    ncols = header.ncols
-    nrows = header.nrows
-    xllc = header.xllcenter
-    yllc = header.yllcenter
-    csz = header.cellsize
+    ncols = header['ncols']
+    nrows = header['nrows']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
     xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
     ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
     PointsX, PointsY = np.meshgrid(xgrid, ygrid)

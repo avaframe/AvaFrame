@@ -208,16 +208,16 @@ def plotPath(resAB, name, flags):
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
         fig.colorbar(im, cax=cax)
-        # path1 = ax1.plot((x-header.xllcorner)/header.cellsize,
-        #                  (y-header.yllcorner)/header.cellsize)
-        ax.plot((x-header.xllcorner)/header.cellsize,
-                (y-header.yllcorner)/header.cellsize, 'k',
+        # path1 = ax1.plot((x-header['xllcorner'])/header['cellsize'],
+        #                  (y-header['yllcorner'])/header['cellsize'])
+        ax.plot((x-header['xllcorner'])/header['cellsize'],
+                (y-header['yllcorner'])/header['cellsize'], 'k',
                 label='avapath')
-        ax.plot((splitPoint['x']-header.xllcorner)/header.cellsize,
-                (splitPoint['y']-header.yllcorner)/header.cellsize, '.',
+        ax.plot((splitPoint['x']-header['xllcorner'])/header['cellsize'],
+                (splitPoint['y']-header['yllcorner'])/header['cellsize'], '.',
                 color='0.3', label='Split points')
-        ax.plot((x[indSplit]-header.xllcorner)/header.cellsize,
-                (y[indSplit]-header.yllcorner)/header.cellsize, '.',
+        ax.plot((x[indSplit]-header['xllcorner'])/header['cellsize'],
+                (y[indSplit]-header['yllcorner'])/header['cellsize'], '.',
                 color='0.6', label='Projection of Split Point on ava path')
         fig.legend(frameon=False, loc='lower center')
         pU.putAvaNameOnPlot(ax, name)

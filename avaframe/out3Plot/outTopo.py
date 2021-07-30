@@ -69,9 +69,9 @@ def plotDEM3D(cfg, showPlot = False):
     demPath = getInput.getDEMPath(avalancheDir)
 
     header = dem['header']
-    xl = header.xllcenter
-    yl = header.yllcenter
-    dx = header.cellsize
+    xl = header['xllcenter']
+    yl = header['yllcenter']
+    dx = header['cellsize']
     z = dem['rasterData']
 
     # this line is needed for plot_surface to be able to handle the nans

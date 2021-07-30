@@ -86,9 +86,9 @@ def getNormalMesh(dem, num):
     """
     # read dem header
     header = dem['header']
-    ncols = header.ncols
-    nrows = header.nrows
-    csz = header.cellsize
+    ncols = header['ncols']
+    nrows = header['nrows']
+    csz = header['cellsize']
     # read rasterData
     z = dem['rasterData']
     n, m = np.shape(z)

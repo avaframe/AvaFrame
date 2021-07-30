@@ -486,8 +486,8 @@ def saveInitialParticleDistribution(avaDir, simName, dem):
                 z = np.append(z, float(ltime[3]))
                 m = np.append(m, float(ltime[4]))
 
-    x = x - header.xllcenter
-    y = y - header.yllcenter
+    x = x - header['xllcenter']
+    y = y - header['yllcenter']
     particles = {'t': 0.0, 'x': x, 'y': y, 'z': z, 'm': m}
 
     partDit = os.path.join(os.getcwd(), avaDir, 'Outputs', 'com1DFAOrig', 'particles', simName)

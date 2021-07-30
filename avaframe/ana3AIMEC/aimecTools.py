@@ -171,9 +171,9 @@ def makeDomainTransfo(cfgPath, cfgSetup):
     # read dem data
     dem = IOf.readRaster(demSource)
     header = dem['header']
-    xllc = header.xllcenter
-    yllc = header.yllcenter
-    cellSize = header.cellsize
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    cellSize = header['cellsize']
     rasterdata = dem['rasterData']
     # Initialize transformation dictionary
     rasterTransfo = {}
