@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 # -----------------------------------------------------------
 
 
-def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
+def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     """ Read inputs for AIMEC postprocessing
 
     Reads the required geometry files location for AIMEC postpocessing
@@ -34,14 +34,14 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
     ----------
     avalancheDir : str
         path to directory of avalanche to analyze
-    cfgPath: dict
+    pathDict: dict
         dictionary with paths to simulation results that shall be analaysed
     dirName: str
         name of results directory (e.g. comModule, simName, ...)
 
     Returns
     -------
-    cfgPath : dict
+    pathDict : dict
         updated dictionary with path to geometry input data
     """
 
@@ -52,7 +52,7 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
         assert len(profileLayer) == 1, message
     except AssertionError:
         raise
-    cfgPath['profileLayer'] = profileLayer[0]
+    pathDict['profileLayer'] = profileLayer[0]
 
     refDir = pathlib.Path(avalancheDir, 'Inputs', 'POINTS')
     splitPointLayer = list(refDir.glob('*.shp'))
@@ -61,7 +61,7 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
         assert len(splitPointLayer) == 1, message
     except AssertionError:
         raise
-    cfgPath['splitPointSource'] = splitPointLayer[0]
+    pathDict['splitPointSource'] = splitPointLayer[0]
 
     refDir = pathlib.Path(avalancheDir, 'Inputs')
     demSource = list(refDir.glob('*.asc'))
@@ -69,17 +69,17 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
         assert len(demSource) == 1, 'There should be exactly one topography .asc file in %s/Inputs/' % avalancheDir
     except AssertionError:
         raise
-    cfgPath['demSource'] = demSource[0]
+    pathDict['demSource'] = demSource[0]
 
     pathResult = pathlib.Path(avalancheDir, 'Outputs', 'ana3AIMEC', dirName)
-    cfgPath['pathResult'] = pathResult
+    pathDict['pathResult'] = pathResult
 
     projectName = pathlib.Path(avalancheDir).stem
-    cfgPath['projectName'] = projectName
+    pathDict['projectName'] = projectName
     pathName = profileLayer[0].stem
-    cfgPath['pathName'] = pathName
+    pathDict['pathName'] = pathName
 
-    return cfgPath
+    return pathDict
 
 
 def fetchReferenceSimNo(pathDict, cfgSetup):
@@ -120,7 +120,7 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
     return pathDict
 
 
-def makeDomainTransfo(cfgPath, cfgSetup):
+def makeDomainTransfo(pathDict, cfgSetup):
     """ Make domain transformation
 
     This function returns the information about the domain transformation
@@ -129,7 +129,7 @@ def makeDomainTransfo(cfgPath, cfgSetup):
 
     Parameters
     ----------
-    cfgPath : dict
+    pathDict : dict
         dictionary with path to data to analyze
     cfgSetup : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
@@ -158,10 +158,10 @@ def makeDomainTransfo(cfgPath, cfgSetup):
                 index for start of the runout area (in s)
     """
     # Read input parameters
-    demSource = cfgPath['demSource']
-    ProfileLayer = cfgPath['profileLayer']
-    splitPointSource = cfgPath['splitPointSource']
-    DefaultName = cfgPath['projectName']
+    demSource = pathDict['demSource']
+    ProfileLayer = pathDict['profileLayer']
+    splitPointSource = pathDict['splitPointSource']
+    DefaultName = pathDict['projectName']
 
     w = float(cfgSetup['domainWidth'])
     startOfRunoutAreaAngle = float(cfgSetup['startOfRunoutAreaAngle'])
@@ -778,7 +778,7 @@ def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysi
     return resultsAreaAnalysis
 
 
-def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
+def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict, cfgFlags):
     """Compare results to reference.
 
     Compute True positive, False negative... areas.
@@ -794,7 +794,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
     cfgSetup: dict
         numerical value of the limit to use for the runout computation
         as well as the levels for the contour line plot
-    cfgPath: dict
+    pathDict: dict
         path to data to analyse
     cfgFlags: configparser
         configparser with plot and write flags
@@ -810,7 +810,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
     TN: float
         ref = False sim2 = False
     """
-    nRef = cfgPath['referenceFile']
+    nRef = pathDict['referenceFile']
     cellarea = rasterTransfo['rasterArea']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     thresholdValue = cfgSetup.getfloat('thresholdValue')
@@ -900,10 +900,10 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, cfgPath, cfgFlags):
         # only plot comparisons of simulations to reference
         if cfgFlags['savePlot']:
             if i != nRef:
-                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, cfgPath,
+                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict,
                                         cfgFlags)
-            elif cfgPath['numSim'] == 1:
-                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, cfgPath,
+            elif pathDict['numSim'] == 1:
+                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict,
                                         cfgFlags)
                 log.warning('only one simulation, area comparison not meaningful')
 
