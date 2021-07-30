@@ -2036,7 +2036,7 @@ cpdef (double, double, double, int, int, int, double, double, double, double) di
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vArray, double csz, int ncols,
+cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vArray, double csz, int ncols,
                  int nrows, int interpOption):
   """ Interpolate vector field from grid to points
   """
@@ -2054,7 +2054,7 @@ def projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vArray, double
 
     v[j] = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], vArray)
 
-  return np.asarray(v)
+  return v
 
 
 @cython.boundscheck(False)
