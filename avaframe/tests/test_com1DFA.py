@@ -5,6 +5,7 @@
 #  Load modules
 import numpy as np
 from avaframe.com1DFA import com1DFA
+import avaframe.in2Trans.ascUtils as IOf
 import pytest
 
 
@@ -13,14 +14,12 @@ def test_setDEMOriginToZero():
     """ test if origin is set to zero """
 
     # setup required input
-    class testHeader:
-        def __init__(self):
-            self.xllcenter = 1.0
-            self.yllcenter = 4.0
-
-    tHeader = testHeader()
+    tHeader = IOf.cASCheader()
+    tHeader.xllcenter = 10.
+    tHeader.yllcenter = 4.0
     dem = {'header': tHeader}
 
+    # call function to be tested
     demTest = com1DFA.setDEMoriginToZero(dem)
 
     assert demTest['header'].xllcenter == 0.0
