@@ -303,7 +303,7 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, cfgPath, cfgFlags):
     Returns
     -------
     resAnalysis: dict
-        resAnalysis dictionnary containing all results:
+        resAnalysis dictionary containing all results:
             -MMPPR: 1D numpy array
                     containing for each simulation analyzed the max max
                     peak pressure

@@ -554,12 +554,12 @@ def analyzeMass(fnameMass, resAnalysis):
     fnameMass: list
         list of path to mass data to analyse
     resAnalysis: dict
-        resAnalysis dictionnary to update with mass inifo
+        resAnalysis dictionary to update with mass inifo
 
     Returns
     -------
     resAnalysis: dict
-        resAnalysis dictionnary to updated with mass inifo:
+        resAnalysis dictionary to updated with mass inifo:
             relMass: 1D numpy array
                 containing for each simulation analyzed the
                 release mass
@@ -737,7 +737,7 @@ def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysi
     dataType: str
         type of the data to analyze ('ppr', 'pfd' or 'pfv')
     resultsAreaAnalysis: dict
-        result dictionnary to be updated
+        result dictionary to be updated
 
     Returns
     -------
