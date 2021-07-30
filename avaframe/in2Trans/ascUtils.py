@@ -33,45 +33,51 @@ def readASCheader(fname):
     for aline in infile:
         item = aline.split()
         if ln == 0:
-            if item[0] == 'ncols' or item[0] == 'nCols':
+            if item[0].lower() == 'ncols':
                 headerInfo['ncols'] = int(item[1])
             else:
-                log.error('DEM header is not in correct format - check line 1: should be ncols')
-                raise ValueError
+                message = 'DEM header is not in correct format - check line 1: should be ncols'
+                log.error(message)
+                raise ValueError(message)
         elif ln == 1:
-            if item[0] == 'nrows' or item[0] == 'nRows':
+            if item[0].lower() == 'nrows':
                 headerInfo['nrows'] = int(item[1])
             else:
-                log.error('DEM header is not in correct format - check line 2: should be nrows')
-                raise ValueError
+                message = ('DEM header is not in correct format - check line 2: should be nrows')
+                log.error(message)
+                raise ValueError(message)
         elif ln == 2:
-            if item[0] == "xllcorner" or item[0] == "XLLCORNER" or item[0] == "Xllcorner":
+            if item[0].lower() == "xllcorner":
                 headerInfo['xllcorner'] = float(item[1])
-            elif item[0] == "xllcenter" or item[0] == "XLLCENTER" or item[0] == "Xllcenter":
+            elif item[0].lower() == "xllcenter":
                 headerInfo['xllcenter'] = float(item[1])
             else:
-                log.error('DEM header is not in correct format - check line 3: should be xllcenter or xllcorner')
-                raise ValueError
+                message = ('DEM header is not in correct format - check line 3: should be xllcenter or xllcorner')
+                log.error(message)
+                raise ValueError(message)
         elif ln == 3:
-            if item[0] == "yllcorner" or item[0] == "YLLCORNER" or item[0] == "Yllcorner":
+            if item[0].lower() == "yllcorner":
                 headerInfo['yllcorner'] = float(item[1])
-            elif item[0] == "yllcenter" or item[0] == "YLLCENTER" or item[0] == "Yllcenter":
+            elif item[0].lower() == "yllcenter":
                 headerInfo['yllcenter'] = float(item[1])
             else:
-                log.error('DEM header is not in correct format - check line 4: should be yllcenter or yllcorner')
-                raise ValueError
+                message = ('DEM header is not in correct format - check line 4: should be yllcenter or yllcorner')
+                log.error(message)
+                raise ValueError(message)
         elif ln == 4:
-            if item[0] == 'cellSize' or item[0] == 'cellsize':
+            if item[0].lower() == 'cellsize':
                 headerInfo['cellsize'] = float(item[1])
             else:
-                log.error('DEM header is not in correct format - check line 5: should be cellsize')
-                raise ValueError
+                message = ('DEM header is not in correct format - check line 5: should be cellsize')
+                log.error(message)
+                raise ValueError(message)
         elif ln == 5:
-            if 'nodata' in item[0] or 'NODATA' in item[0]:
+            if 'nodata' in item[0].lower():
                 headerInfo['noDataValue'] = float(item[1])
             else:
-                log.error('DEM header is not in correct format - check line 6: should be NODATA_value')
-                raise ValueError
+                message = ('DEM header is not in correct format - check line 6: should be noDataValue')
+                log.error(message)
+                raise ValueError(message)
         ln += 1
 
     if 'xllcenter' not in headerInfo:
@@ -175,7 +181,7 @@ def writeResultToAsc(header, resultArray, outFileName, flip=False):
         outFile.write("xllcenter %.2f\n" % header['xllcenter'])
         outFile.write("yllcenter %.2f\n" % header['yllcenter'])
         outFile.write("cellsize %.2f\n" % header['cellsize'])
-        outFile.write("nodata_value %.2f\n" % header['noDataValue'])
+        outFile.write("noDataValue %.2f\n" % header['noDataValue'])
 
         M = resultArray.shape[0]
         for m in range(M):
