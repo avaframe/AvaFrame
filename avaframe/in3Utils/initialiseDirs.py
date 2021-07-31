@@ -3,15 +3,11 @@
 """
 
 # Load modules
-import os
 import pathlib
-import subprocess
-import shutil
 import logging
 
 # Local imports
 from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.in2Trans import ascUtils as aU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -44,7 +40,7 @@ def initialiseRunDirs(avaDir, modName):
     if workDir.is_dir():
         log.error('Work directory %s already exists - delete first!' % (workDir))
     else:
-        os.makedirs(workDir)
+        workDir.mkdir(parents=True, exist_ok=False)
     log.debug('Directory: %s created' % workDir)
 
     return workDir, outputDir
