@@ -97,7 +97,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
 
     if 'particles' in cfgGen['resType']:
         # export particles dictionaries of saving time steps
-        outDirData = pathlib.Path(outDir, 'particles')
+        outDirData = outDir / 'particles'
         fU.makeADir(outDirData)
         savePartToPickle(particlesList, outDirData, cuSimName)
 
@@ -1139,7 +1139,7 @@ def writeMBFile(infoDict, avaDir, logName):
     # write mass balance info to log file
     massDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA')
     fU.makeADir(massDir)
-    with open(pathlib.Path(massDir, 'mass_%s.txt' % logName), 'w') as mFile:
+    with open(massDir / ('mass_%s.txt' % logName), 'w') as mFile:
         mFile.write('time, current, entrained\n')
         for m in range(len(t)):
             mFile.write('%.02f,    %.06f,    %.06f\n' %
@@ -1786,9 +1786,9 @@ def savePartToPickle(dictList, outDir, logName):
 
     if isinstance(dictList, list):
         for dict in dictList:
-            pickle.dump(dict, open(pathlib.Path(outDir, "particles_%s_%09.4f.p" % (logName, dict['t'])), "wb"))
+            pickle.dump(dict, open(outDir / ("particles_%s_%09.4f.p" % (logName, dict['t'])), "wb"))
     else:
-        pickle.dump(dictList, open(pathlib.Path(outDir, "particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb"))
+        pickle.dump(dictList, open(outDir / ("particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb"))
 
 
 def readPartFromPickle(inDir, flagAvaDir=False):
@@ -1834,7 +1834,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
     """
 
     # set output directory
-    outDir = pathlib.Path(outDir, 'particlesCSV')
+    outDir = outDir, 'particlesCSV'
     fU.makeADir(outDir)
 
     # read particle properties to be saved
@@ -1862,7 +1862,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
         csvData['time'] = particles['t']
 
         # create pandas dataFrame and save to csv
-        outFile = pathlib.Path(outDir, 'particles%s.csv.%d' % (simName, count))
+        outFile = outDir / ('particles%s.csv.%d' % (simName, count))
         particlesData = pds.DataFrame(data=csvData)
         particlesData.to_csv(outFile, index=False)
         count = count + 1
@@ -1910,7 +1910,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 resField = resField * 0.001
             dataName = logName + '_' + resType + '_' + 't%.2f' % (Tsave[countTime]) + '.asc'
             # create directory
-            outDirPeak = pathlib.Path(outDir, 'peakFiles', 'timeSteps')
+            outDirPeak = outDir / 'peakFiles' / 'timeSteps'
             fU.makeADir(outDirPeak)
             outFile = outDirPeak / dataName
             IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
@@ -1918,7 +1918,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f - FINAL time step ' % (resType, Tsave[countTime]))
                 dataName = logName + '_' + resType + '.asc'
                 # create directory
-                outDirPeakAll = pathlib.Path(outDir, 'peakFiles')
+                outDirPeakAll = outDir / 'peakFiles'
                 fU.makeADir(outDirPeakAll)
                 outFile = outDirPeakAll / dataName
                 IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)

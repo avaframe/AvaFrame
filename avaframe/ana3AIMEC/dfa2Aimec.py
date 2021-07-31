@@ -46,7 +46,7 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
 
         # Read log file
         locFiles = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
-        fileName = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
+        fileName = locFiles / ('start%s.log' % (simName))
         with open(fileName, 'r') as file:
             for line in file:
                 if "computing time step" in line:
