@@ -46,7 +46,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName, demData=''):
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
     if demData != '':
-        noDataValue = demData['header'].noDataValue
+        noDataValue = demData['header']['noDataValue']
         demField = np.where(demData['rasterData'] == noDataValue, np.nan, demData['rasterData'])
     else:
         demFile = gI.getDEMPath(avaDir)
