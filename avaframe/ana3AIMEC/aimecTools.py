@@ -76,7 +76,7 @@ def readAIMECinputs(avalancheDir, cfgPath, dirName='com1DFA'):
 
     projectName = pathlib.Path(avalancheDir).stem
     cfgPath['projectName'] = projectName
-    pathName = profileLayer[0].name
+    pathName = profileLayer[0].stem
     cfgPath['pathName'] = pathName
 
     return cfgPath
