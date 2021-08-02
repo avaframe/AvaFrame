@@ -137,13 +137,12 @@ def test_initializeMesh():
     headerNeighbourGrid.xllcenter = 0
     headerNeighbourGrid.yllcenter = 0
     demTest['headerNeighbourGrid'] = headerNeighbourGrid
-    areaCell = np.sqrt(-25.*-25. + 0*0 + 25*25)
+    areaCell = 1 / np.cos(np.deg2rad(45))
     demTest['areaRaster'] = np.zeros((5, 5)) + areaCell
     demTest['rasterData'] = demData
 
     # call function to be tested
     demOri, dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, num)
-
 
     assert dem['header'].xllcenter == demTest['header'].xllcenter
     assert dem['header'].yllcenter == demTest['header'].yllcenter
@@ -152,9 +151,9 @@ def test_initializeMesh():
     assert dem['header'].cellsize == demTest['header'].cellsize
     assert dem['header'].yllcenter == demTest['header'].yllcenter
     assert np.array_equal(dem['rasterData'][0:4, 0:4], demTest['rasterData'][0:4, 0:4])
-    assert np.isnan(dem['rasterData'][4,4])
+    assert np.all(np.isnan(dem['rasterData'][0:5,4]))
     assert abs(dem['Nx'][2,2]) == abs(dem['Nz'][2,2])
-    assert np.array_equal(dem['areaRaster'], demTest['areaRaster'])
+    assert np.isclose(dem['areaRaster'][2,2], demTest['areaRaster'][2,2])
     assert dem['headerNeighbourGrid'].xllcenter == demTest['headerNeighbourGrid'].xllcenter
     assert dem['headerNeighbourGrid'].yllcenter == demTest['headerNeighbourGrid'].yllcenter
     assert dem['headerNeighbourGrid'].ncols == demTest['headerNeighbourGrid'].ncols
