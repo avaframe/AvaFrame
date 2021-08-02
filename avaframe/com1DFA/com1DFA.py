@@ -672,11 +672,6 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     particles['mTot'] = np.sum(particles['m'])
     particles['h'] = Hpart
     particles['NPPC'] = NPPC
-    particles['hNearestNearest'] = Hpart
-    particles['hNearestBilinear'] = Hpart
-    particles['hBilinearNearest'] = Hpart
-    particles['hBilinearBilinear'] = Hpart
-    particles['hSPH'] = Hpart
     particles['ux'] = np.zeros(np.shape(Xpart))
     particles['uy'] = np.zeros(np.shape(Xpart))
     particles['uz'] = np.zeros(np.shape(Xpart))
@@ -1128,6 +1123,7 @@ def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes
     fieldAppend = {}
     for resType in resTypes:
         if resType == 'particles':
+            print(particles)
             particlesList.append(copy.deepcopy(particles))
         elif resType != '':
             fieldAppend[resType] = copy.deepcopy(fields[resType])
