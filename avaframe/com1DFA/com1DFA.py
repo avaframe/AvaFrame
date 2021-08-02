@@ -1123,7 +1123,6 @@ def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes
     fieldAppend = {}
     for resType in resTypes:
         if resType == 'particles':
-            print(particles)
             particlesList.append(copy.deepcopy(particles))
         elif resType != '':
             fieldAppend[resType] = copy.deepcopy(fields[resType])
