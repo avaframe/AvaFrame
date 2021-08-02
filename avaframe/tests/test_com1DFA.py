@@ -15,16 +15,16 @@ def test_setDEMOriginToZero():
     """ test if origin is set to zero """
 
     # setup required input
-    tHeader = IOf.cASCheader()
-    tHeader.xllcenter = 10.
-    tHeader.yllcenter = 4.0
+    tHeader = {}
+    tHeader['xllcenter'] = 10.
+    tHeader['yllcenter'] = 4.0
     dem = {'header': tHeader}
 
     # call function to be tested
     demTest = com1DFA.setDEMoriginToZero(dem)
 
-    assert demTest['header'].xllcenter == 0.0
-    assert demTest['header'].yllcenter == 0.0
+    assert demTest['header']['xllcenter'] == 0.0
+    assert demTest['header']['yllcenter'] == 0.0
 
 
 def test_placeParticles():
@@ -77,13 +77,13 @@ def test_initializeMesh():
     """ test mesh initialization """
 
     # setup required input
-    demHeader = IOf.cASCheader()
-    demHeader.xllcenter = 101.23
-    demHeader.yllcenter = 24.54
-    demHeader.cellsize = 1.0
-    demHeader.noDataValue = -9999
-    demHeader.nrows = 5
-    demHeader.ncols = 5
+    demHeader = {}
+    demHeader['xllcenter'] = 101.23
+    demHeader['yllcenter'] = 24.54
+    demHeader['cellsize'] = 1.0
+    demHeader['noDataValue'] = -9999
+    demHeader['nrows'] = 5
+    demHeader['ncols'] = 5
 
     # define plane with constant slope of 45°
     demData = np.asarray([[1., 2., 3., 4., np.nan],
@@ -99,13 +99,13 @@ def test_initializeMesh():
     num = 1
 
     # setup testResults
-    demNewHeader = IOf.cASCheader()
-    demNewHeader.xllcenter = 0.
-    demNewHeader.yllcenter = 0.
-    demNewHeader.cellsize = 1.0
-    demNewHeader.noDataValue = -9999
-    demNewHeader.nrows = 5
-    demNewHeader.ncols = 5
+    demNewHeader = {}
+    demNewHeader['xllcenter'] = 0.
+    demNewHeader['yllcenter'] = 0.
+    demNewHeader['cellsize'] = 1.0
+    demNewHeader['noDataValue'] = -9999
+    demNewHeader['nrows'] = 5
+    demNewHeader['ncols'] = 5
     demTest = {'header': demNewHeader}
     demTest['originOri'] =  {'xllcenter': 101.23, 'yllcenter': 24.54}
     demTest['outOfDEM'] = np.asarray([[False, False, False, False, True],
@@ -130,12 +130,12 @@ def test_initializeMesh():
                                      [0., 0., 0., 0., 0.],
                                      [0., 0., 0., 0., 0.]]) + 25.
     # setup neighbour grid
-    headerNeighbourGrid = IOf.cASCheader()
-    headerNeighbourGrid.cellsize = 0.5
-    headerNeighbourGrid.ncols = 10
-    headerNeighbourGrid.nrows = 10
-    headerNeighbourGrid.xllcenter = 0
-    headerNeighbourGrid.yllcenter = 0
+    headerNeighbourGrid = {}
+    headerNeighbourGrid['cellsize'] = 0.5
+    headerNeighbourGrid['ncols'] = 10
+    headerNeighbourGrid['nrows'] = 10
+    headerNeighbourGrid['xllcenter'] = 0
+    headerNeighbourGrid['yllcenter'] = 0
     demTest['headerNeighbourGrid'] = headerNeighbourGrid
     areaCell = 1 / np.cos(np.deg2rad(45))
     demTest['areaRaster'] = np.zeros((5, 5)) + areaCell
@@ -144,34 +144,34 @@ def test_initializeMesh():
     # call function to be tested
     demOri, dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, num)
 
-    assert dem['header'].xllcenter == demTest['header'].xllcenter
-    assert dem['header'].yllcenter == demTest['header'].yllcenter
-    assert dem['header'].ncols == demTest['header'].ncols
-    assert dem['header'].nrows == demTest['header'].nrows
-    assert dem['header'].cellsize == demTest['header'].cellsize
-    assert dem['header'].yllcenter == demTest['header'].yllcenter
+    assert dem['header']['xllcenter'] == demTest['header']['xllcenter']
+    assert dem['header']['yllcenter'] == demTest['header']['yllcenter']
+    assert dem['header']['ncols'] == demTest['header']['ncols']
+    assert dem['header']['nrows'] == demTest['header']['nrows']
+    assert dem['header']['cellsize'] == demTest['header']['cellsize']
+    assert dem['header']['yllcenter'] == demTest['header']['yllcenter']
     assert np.array_equal(dem['rasterData'][0:4, 0:4], demTest['rasterData'][0:4, 0:4])
     assert np.all(np.isnan(dem['rasterData'][0:5,4]))
     assert abs(dem['Nx'][2,2]) == abs(dem['Nz'][2,2])
     assert np.isclose(dem['areaRaster'][2,2], demTest['areaRaster'][2,2])
-    assert dem['headerNeighbourGrid'].xllcenter == demTest['headerNeighbourGrid'].xllcenter
-    assert dem['headerNeighbourGrid'].yllcenter == demTest['headerNeighbourGrid'].yllcenter
-    assert dem['headerNeighbourGrid'].ncols == demTest['headerNeighbourGrid'].ncols
-    assert dem['headerNeighbourGrid'].nrows == demTest['headerNeighbourGrid'].nrows
-    assert dem['headerNeighbourGrid'].cellsize == demTest['headerNeighbourGrid'].cellsize
-    assert dem['headerNeighbourGrid'].yllcenter == demTest['headerNeighbourGrid'].yllcenter
+    assert dem['headerNeighbourGrid']['xllcenter'] == demTest['headerNeighbourGrid']['xllcenter']
+    assert dem['headerNeighbourGrid']['yllcenter'] == demTest['headerNeighbourGrid']['yllcenter']
+    assert dem['headerNeighbourGrid']['ncols'] == demTest['headerNeighbourGrid']['ncols']
+    assert dem['headerNeighbourGrid']['nrows'] == demTest['headerNeighbourGrid']['nrows']
+    assert dem['headerNeighbourGrid']['cellsize'] == demTest['headerNeighbourGrid']['cellsize']
+    assert dem['headerNeighbourGrid']['yllcenter'] == demTest['headerNeighbourGrid']['yllcenter']
 
 
 def test_polygon2Raster():
     """ test if polygon is converted to raster properly """
 
     # setup required inputs
-    demHeader = IOf.cASCheader()
-    demHeader.cellsize = 1
-    demHeader.ncols = 10
-    demHeader.nrows = 10
-    demHeader.xllcenter = 0
-    demHeader.yllcenter = 0
+    demHeader = {}
+    demHeader['cellsize'] = 1
+    demHeader['ncols'] = 10
+    demHeader['nrows'] = 10
+    demHeader['xllcenter'] = 0
+    demHeader['yllcenter'] = 0
 
     Line = {'x': np.asarray([0, 1., 0.989, 0., 0.]), 'y': np.asarray([0., 0., 0.989, 1., 0.0])}
     radius = 0.0001
