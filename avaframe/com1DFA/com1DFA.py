@@ -13,7 +13,6 @@ import pandas as pd
 import matplotlib.path as mpltPath
 import pandas as pds
 from itertools import product
-import pathlib
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
