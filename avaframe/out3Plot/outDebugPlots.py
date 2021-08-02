@@ -1,9 +1,11 @@
 import numpy as np
+import pathlib
 import copy
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import avaframe.com1DFA.DFAtools as DFAtls
 
 
 import avaframe.out3Plot.plotUtils as pU
@@ -95,11 +97,11 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
             U = np.append(U, DFAtls.norm(part['ux'][0], part['uy'][0], part['uz'][0]))
             fig, ax = plotPosition(
                 fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True)
-            fig.savefig(os.path.join(outDir, 'particlest%f.%s' % (part['t'], pU.outputFormat)))
+            fig.savefig(pathlib.Path(outDir, 'particlest%f.%s' % (part['t'], pU.outputFormat)))
 
         fig, ax = plotPosition(
                 fig, ax, part, demOri, dem['Nz'], pU.cmapDEM2, '', plotPart=True, last=True)
-        fig.savefig(os.path.join(outDir, 'particlesFinal.%s' % (pU.outputFormat)))
+        fig.savefig(pathlib.Path(outDir, 'particlesFinal.%s' % (pU.outputFormat)))
         value = input("[y] to repeat:\n")
         if value != 'y':
             repeat = False
@@ -116,7 +118,6 @@ def analysisPlots(particlesList, fieldsList, cfg, demOri, dem, outDir):
     fig3, ax3 = plotPosition(
         fig3, ax3, partEnd, demOri, fieldEnd['P']/1000, pU.cmapPres, 'kPa', plotPart=False)
     plt.show()
-
 
 
 def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last=False):
