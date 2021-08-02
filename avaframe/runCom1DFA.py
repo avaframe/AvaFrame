@@ -119,7 +119,7 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
     # Set directory for report
     reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
     # Generate plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
+    plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName, demData=dem)
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
