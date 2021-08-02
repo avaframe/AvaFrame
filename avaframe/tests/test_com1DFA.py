@@ -80,29 +80,29 @@ def test_initializeMesh():
     demHeader = IOf.cASCheader()
     demHeader.xllcenter = 101.23
     demHeader.yllcenter = 24.54
-    demHeader.cellsize = 5.0
+    demHeader.cellsize = 1.0
     demHeader.noDataValue = -9999
     demHeader.nrows = 5
     demHeader.ncols = 5
 
     # define plane with constant slope of 45°
-    demData = np.asarray([[1., 2., 3., 4., 5.],
-                          [1., 2., 3., 4., 5.],
-                          [1., 2., 3., 4., 5.],
-                          [1., 2., 3., 4., 5.],
-                          [1., 2., 3., 4., 5.]])
+    demData = np.asarray([[1., 2., 3., 4., np.nan],
+                          [1., 2., 3., 4., np.nan],
+                          [1., 2., 3., 4., np.nan],
+                          [1., 2., 3., 4., np.nan],
+                          [1., 2., 3., 4., np.nan]])
 
     demOri = {'header': demHeader, 'rasterData': demData}
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'sphKernelRadius': '2.5', 'meshCellSizeThreshold': '0.0001',
-                      'meshCellSize': '5.'}
+    cfg['GENERAL'] = {'sphKernelRadius': '0.5', 'meshCellSizeThreshold': '0.0001',
+                      'meshCellSize': '1.'}
     num = 1
 
     # setup testResults
     demNewHeader = IOf.cASCheader()
     demNewHeader.xllcenter = 0.
     demNewHeader.yllcenter = 0.
-    demNewHeader.cellsize = 5.0
+    demNewHeader.cellsize = 1.0
     demNewHeader.noDataValue = -9999
     demNewHeader.nrows = 5
     demNewHeader.ncols = 5
@@ -131,7 +131,7 @@ def test_initializeMesh():
                                      [0., 0., 0., 0., 0.]]) + 25.
     # setup neighbour grid
     headerNeighbourGrid = IOf.cASCheader()
-    headerNeighbourGrid.cellsize = 2.5
+    headerNeighbourGrid.cellsize = 0.5
     headerNeighbourGrid.ncols = 10
     headerNeighbourGrid.nrows = 10
     headerNeighbourGrid.xllcenter = 0
@@ -144,16 +144,16 @@ def test_initializeMesh():
     # call function to be tested
     demOri, dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, num)
 
+
     assert dem['header'].xllcenter == demTest['header'].xllcenter
     assert dem['header'].yllcenter == demTest['header'].yllcenter
     assert dem['header'].ncols == demTest['header'].ncols
     assert dem['header'].nrows == demTest['header'].nrows
     assert dem['header'].cellsize == demTest['header'].cellsize
     assert dem['header'].yllcenter == demTest['header'].yllcenter
-    assert np.array_equal(dem['rasterData'], demTest['rasterData'])
-    assert dem['Nx'][4,4] == demTest['Nx'][4,4]
-    assert dem['Ny'][4,4] == demTest['Ny'][4,4]
-    assert dem['Nz'][4,4] == demTest['Nz'][4,4]
+    assert np.array_equal(dem['rasterData'][0:4, 0:4], demTest['rasterData'][0:4, 0:4])
+    assert np.isnan(dem['rasterData'][4,4])
+    assert abs(dem['Nx'][2,2]) == abs(dem['Nz'][2,2])
     assert np.array_equal(dem['areaRaster'], demTest['areaRaster'])
     assert dem['headerNeighbourGrid'].xllcenter == demTest['headerNeighbourGrid'].xllcenter
     assert dem['headerNeighbourGrid'].yllcenter == demTest['headerNeighbourGrid'].yllcenter
