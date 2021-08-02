@@ -18,8 +18,9 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
+def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName, demData=''):
     """ Plot all peak fields and return dictionary with paths to plots
+        with DEM in background
 
         Parameters
         ----------
@@ -31,6 +32,8 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
             general configuration, required to define if plots saved to reports directoy
         modName : str
             name of module that has been used to produce data to be plotted
+        demData: dictionary
+            optional - if not the dem in the avaDir/Inputs folder has been used but a different one
 
         Returns
         -------
@@ -42,9 +45,13 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName):
     inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
-    demFile = gI.getDEMPath(avaDir)
-    demData = IOf.readRaster(demFile)
-    demField = demData['rasterData']
+    if demData != '':
+        noDataValue = demData['header'].noDataValue
+        demField = np.where(demData['rasterData'] == noDataValue, np.nan, demData['rasterData'])
+    else:
+        demFile = gI.getDEMPath(avaDir)
+        demData = IOf.readRaster(demFile)
+        demField = demData['rasterData']
 
     # Output directory
     if cfgFLAGS.getboolean('ReportDir'):

@@ -1836,7 +1836,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
     """
 
     # set output directory
-    outDir = outDir, 'particlesCSV'
+    outDir = outDir / 'particlesCSV'
     fU.makeADir(outDir)
 
     # read particle properties to be saved
