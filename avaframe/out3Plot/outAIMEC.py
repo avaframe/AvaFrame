@@ -632,23 +632,14 @@ def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     for j in range(len(legend)):
         fid.write('{:<15s}'.format(legend[j]))
     fid.write('\n')
-    fid.write('{:<15s}'.format('Minimum'))
-    for j in range(np.shape(output)[0]):
-        fid.write('{:<15.3f}'.format(np.nanmin(output[j][:])))
-    fid.write('\n')
 
-    fid.write('{:<15s}'.format('Maximum'))
-    for j in range(np.shape(output)[0]):
-            fid.write('{:<15.3f}'.format(np.nanmax(output[j][:])))
-    fid.write('\n')
-    fid.write('{:<15s}'.format('Mean'))
-    for j in range(np.shape(output)[0]):
-            fid.write('{:<15.3f}'.format(np.nanmean(output[j][:])))
-    fid.write('\n')
-    fid.write('{:<15s}'.format('STD'))
-    for j in range(np.shape(output)[0]):
-            fid.write('{:<15.3f}'.format(np.nanstd(output[j][:])))
-    fid.write('\n')
+    names = ['Minimum', 'Maximum', 'Mean', 'STD']
+    operators = ['nanmin', 'nanmax', 'nanmean', 'nanstd']
+    for name, operator in zip(names, operators):
+        fid.write('{:<15s}'.format(name))
+        for j in range(np.shape(output)[0]):
+            fid.write('{:<15.3f}'.format(getattr(np, operator)(output[j][:], axis=0)))
+        fid.write('\n')
 
     for i in range(np.shape(output)[1]):
         tmp = os.path.basename(dataName[i])
