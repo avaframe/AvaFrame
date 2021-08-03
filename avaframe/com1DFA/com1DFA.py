@@ -10,12 +10,7 @@ import copy
 import pickle
 from datetime import datetime
 import pandas as pd
-import matplotlib
-matplotlib.use('agg')
-import matplotlib.pyplot as plt
 import matplotlib.path as mpltPath
-import matplotlib as mpl
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 import pandas as pds
 from itertools import product
 import pathlib
@@ -23,13 +18,13 @@ import pathlib
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.geoTrans as geoTrans
-import avaframe.out3Plot.plotUtils as pU
 import avaframe.com1DFA.timeDiscretizations as tD
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
+import avaframe.out3Plot.outDebugPlots as debPlot
 
 #######################################
 # Set flags here
@@ -699,17 +694,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
              (particles['mTot']/particles['Npart'], partPerCell))
 
     if debugPlot:
-        x = np.arange(ncols) * csz
-        y = np.arange(nrows) * csz
-        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        ref0, im = pU.NonUnifIm(ax, x, y, areaRaster, 'x [m]', 'y [m]',
-                                extent=[x.min(), x.max(), y.min(), y.max()],
-                                cmap=cmap, norm=None)
-
-        ax.plot(particles['x'], particles['y'], 'or', linestyle='None')
-        pU.addColorBar(im, ax, None, 'm²')
-        plt.show()
+        debPlot.plotPartIni(particles, dem)
 
     return particles
 
@@ -1441,23 +1426,7 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         else:
             Raster = Raster + rast
     if debugPlot:
-        ncols = dem['header']['ncols']
-        nrows = dem['header']['nrows']
-        csz = dem['header']['cellsize']
-        x = np.arange(ncols) * csz
-        y = np.arange(nrows) * csz
-        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        ax.set_title('Release area')
-        cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        ref0, im = pU.NonUnifIm(ax, x, y, Raster, 'x [m]', 'y [m]',
-                                extent=[x.min(), x.max(), y.min(), y.max()],
-                                cmap=cmap, norm=None)
-        ax.plot(avapath['x'] * csz, avapath['y'] * csz, 'r', label='release polyline')
-        plt.legend()
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.1)
-        fig.colorbar(im, cax=cax)
-        plt.show()
+        debPlot.plotAreaDebug(dem, avapath, Raster)
     if combine:
         line['rasterData'] = Raster
         return line
@@ -1526,21 +1495,7 @@ def polygon2Raster(demHeader, Line, radius, th=''):
         Mask = np.where(Mask > 0, 1., 0.)
 
     if debugPlot:
-        x = np.arange(ncols) * csz
-        y = np.arange(nrows) * csz
-        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        ax.set_title('Release area')
-        cmap = copy.copy(mpl.cm.get_cmap("Greys"))
-        ref0, im = pU.NonUnifIm(ax, x, y, Mask, 'x [m]', 'y [m]',
-                                extent=[x.min(), x.max(), y.min(), y.max()],
-                                cmap=cmap, norm=None)
-        ax.plot(xCoord0 * csz, yCoord0 * csz, 'r', label='release polyline')
-        ax.plot(X[mask] * csz, Y[mask] * csz, '.b')
-        plt.legend()
-        divider = make_axes_locatable(ax)
-        cax = divider.append_axes("right", size="5%", pad=0.1)
-        fig.colorbar(im, cax=cax)
-        plt.show()
+        debPlot.plotRemovePart(xCoord0, yCoord0, demHeader, X, Y, Mask, mask)
 
     return Mask
 
@@ -1633,13 +1588,7 @@ def pointInPolygon(demHeader, points, Line, radius):
     mask = np.where(mask > 0, True, False)
 
     if debugPlot:
-        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        ax.set_title('Release area')
-        ax.plot(xCoord0, yCoord0, 'r', label='release polyline')
-        ax.plot(points['x'], points['y'], '.b')
-        ax.plot(points['x'][mask], points['y'][mask], '.g')
-        plt.legend()
-        plt.show()
+        debPlot.plotPartAfterRemove(points, xCoord0, yCoord0, mask)
 
     return mask
 
