@@ -294,8 +294,8 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
         log.error('File for result type: %s not found' % suffix)
 
     # Load data
-    raster = IOf.readRaster(simCompFile)
-    rasterRef = IOf.readRaster(simRefFile)
+    raster = IOf.readRaster(simCompFile, noDataToNan=True)
+    rasterRef = IOf.readRaster(simRefFile, noDataToNan=True)
     data1, data2 = geoTrans.resizeData(raster, rasterRef)
     log.debug('dataset1: %s' % simCompFile)
     log.debug('dataset2: %s' % simRefFile)
@@ -349,8 +349,8 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     log.info('input dataset #2 is %s' % name2)
 
     # Load data
-    raster = IOf.readRaster(datafiles[0])
-    rasterRef = IOf.readRaster(datafiles[1])
+    raster = IOf.readRaster(datafiles[0], noDataToNan=True)
+    rasterRef = IOf.readRaster(datafiles[1], noDataToNan=True)
     data1, data2 = geoTrans.resizeData(raster, rasterRef)
     header = IOf.readASCheader(datafiles[0])
     cellSize = header['cellsize']
@@ -394,7 +394,7 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
     log.info('input dataset #1 is %s' % name1)
 
     # Load data
-    raster = IOf.readRaster(datafile)
+    raster = IOf.readRaster(datafile, noDataToNan=True)
     data1 = raster['rasterData']
     header = IOf.readASCheader(datafile)
     cellSize = header['cellsize']

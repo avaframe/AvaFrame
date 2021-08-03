@@ -238,7 +238,7 @@ def remeshData(rasterFile, cellSize):
     """
 
     # load data
-    raster = IOf.readRaster(rasterFile)
+    raster = IOf.readRaster(rasterFile, noDataToNan=True)
     header = raster['header']
 
     # fetch shape info and get new mesh info

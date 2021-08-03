@@ -265,7 +265,7 @@ def plotProbMap(avaDir, inDir, cfgFull):
     # loop over all datasets and create plots
     for data in dataFiles:
 
-        raster = IOf.readRaster(data)
+        raster = IOf.readRaster(data, noDataToNan=True)
         dataPlot = raster['rasterData']
         header = IOf.readASCheader(data)
         cellSize = header['cellsize']

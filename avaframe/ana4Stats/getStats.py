@@ -69,13 +69,13 @@ def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='',
             # Load data
             fileName = peakFilesDF['files'][m]
             simName = peakFilesDF['simName'][m]
-            dataFull = IOf.readRaster(fileName)
+            dataFull = IOf.readRaster(fileName, noDataToNan=True)
 
             # if restrictType, set result field values to nan if restrictType result field equals 0
             if restrictType != '':
                 peakFilesSimName = peakFilesDF[peakFilesDF['simName'] == simName]
                 fileNameRestrict = peakFilesSimName[peakFilesSimName['resType'] == restrictType]['files'].values[0]
-                dataRestrict = IOf.readRaster(fileNameRestrict)
+                dataRestrict = IOf.readRaster(fileNameRestrict, noDataToNan=True)
                 data = np.where((dataRestrict['rasterData'] == 0.0), np.nan, dataFull['rasterData'])
             else:
                 data = dataFull['rasterData']

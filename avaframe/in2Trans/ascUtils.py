@@ -130,7 +130,7 @@ def readASCdata2numpyArray(fName):
     return (rasterdata)
 
 
-def readRaster(fname):
+def readRaster(fname, noDataToNan=True):
     """ Read raster file (.asc)
 
     Parameters
@@ -138,6 +138,8 @@ def readRaster(fname):
 
     fname: str or pathlib object
         path to ascii file
+    noDataToNan: bool
+        if True convert noDataValues to nan and set noDataValue to nan
 
     Returns
     --------
@@ -151,10 +153,14 @@ def readRaster(fname):
     log.debug('Reading dem : %s', fname)
     header = readASCheader(fname)
     rasterdata = readASCdata2numpyArray(fname)
-    rasterdata[rasterdata == header['noDataValue']] = np.NaN
+
     data = {}
     data['header'] = header
+    if noDataToNan:
+        rasterdata[rasterdata == header['noDataValue']] = np.NaN
+        data['header']['noDataValue'] = np.nan
     data['rasterData'] = np.flipud(rasterdata)
+
     return data
 
 
