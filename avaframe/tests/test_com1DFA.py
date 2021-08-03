@@ -8,7 +8,60 @@ from avaframe.com1DFA import com1DFA
 import avaframe.in2Trans.ascUtils as IOf
 import pytest
 import configparser
+import pathlib
 
+
+
+
+def test_prepareInputData():
+    """ test preparing input data """
+
+    # setup requuired input data
+    inputSimFiles = {'entResInfo': {'flagEnt': 'Yes', 'flagRes': 'No', 'flagSecondaryRelease': 'No'}}
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / '..' / 'data' / 'avaAlr'
+    relFile = avaDir / 'Inputs' / 'REL' / 'relAlr.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['demFile'] =  avaDir / 'Inputs' / 'avaAlr.asc'
+    inputSimFiles['entFile'] = avaDir / 'Inputs' / 'ENT' / 'entAlr.shp'
+
+    # call function to be tested
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles)
+
+    assert demOri['header']['ncols'] == 417
+    assert demOri['header']['nrows'] == 915
+    assert inputSimLines['releaseLine']['d0'] == ['None']
+    assert inputSimLines['releaseLine']['Start'] == np.asarray([0.])
+    assert inputSimLines['releaseLine']['Length'] == np.asarray([33.])
+    assert inputSimLines['releaseLine']['Name'] == ['AlR']
+    assert inputSimLines['entLine']['d0'] == ['None']
+    assert inputSimLines['entLine']['Start'] == np.asarray([0.])
+    assert inputSimLines['entLine']['Length'] == np.asarray([48.])
+    assert inputSimLines['entLine']['Name'] == ['entAlr']
+    assert inputSimLines['resLine'] == None
+    assert inputSimLines['entrainmentArea'] == 'entAlr.shp'
+
+
+def test_prepareRelase(tmp_path):
+    """ test preparing release areas """
+
+    # setup required inputs
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'secRelArea': 'True', 'relTh': '1.32', 'secondaryRelTh': '2.5'}
+    inputSimLines = {}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes'}
+    inputSimLines['releaseLine'] = {'d0': ['None', 'None']}
+    inputSimLines['secondaryReleaseLine'] = {'d0': ['1.789']}
+    rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
+
+    # call function to be tested
+    relName, inputSimLines, badName = com1DFA.prepareRelase(cfg, rel, inputSimLines)
+
+    assert relName == 'release1PF_test_AF'
+    assert inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes'
+    assert inputSimLines['releaseLine']['d0'] == [1.32, 1.32]
+    assert inputSimLines['secondaryReleaseLine']['d0'] == [1.789]
+    assert badName == True
 
 
 def test_setDEMOriginToZero():
