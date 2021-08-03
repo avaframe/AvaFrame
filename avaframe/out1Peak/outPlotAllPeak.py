@@ -18,7 +18,7 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName, demData=''):
+def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
     """ Plot all peak fields and return dictionary with paths to plots
         with DEM in background
 
@@ -26,8 +26,6 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName, demData=''):
         ----------
         avaDir : str
             path to avalanche directoy
-        cfg : dict
-            configuration used to perform simulations
         cfgFLAGS : str
             general configuration, required to define if plots saved to reports directoy
         modName : str
@@ -48,7 +46,9 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName, demData=''):
     if demData == '':
         demFile = gI.getDEMPath(avaDir)
         demData = IOf.readRaster(demFile, noDataToNan=True)
-    demField = demData['rasterData']
+    else:
+        demDataField = np.where(demData['rasterData'] == demData['header']['noDataValue'], np.nan, demData['rasterData'])
+    demField = demDataField
 
     # Output directory
     if cfgFLAGS.getboolean('ReportDir'):
@@ -74,7 +74,7 @@ def plotAllPeakFields(avaDir, cfg, cfgFLAGS, modName, demData=''):
         log.debug('now plot %s:' % (fileName))
 
         # Load data
-        raster = IOf.readRaster(fileName)
+        raster = IOf.readRaster(fileName, noDataToNan=True)
         data = raster['rasterData']
 
         # constrain data to where there is data
