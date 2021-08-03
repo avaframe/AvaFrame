@@ -15,17 +15,17 @@ import shutil
 def test_plotAllPeakFields(tmp_path):
 
     # Initialise inputs
-    avaName = 'avaHockeyChannel'
-    avaTestDir = 'avaPlotPytest'
+    avaName = 'avaAlr'
+    avaTestDir = 'avaAlrNullTest'
     dirPath = pathlib.Path(__file__).parents[0]
     avaDir = dirPath / '..' / '..' / 'benchmarks'/ avaTestDir
-    peakFile1 = avaDir / 'Out1PeakTestData' / 'relAlr_null_dfa_dfa019adb7_pfd.asc'
-    peakFile2 = avaDir / 'Out1PeakTestData' / 'relAlr_null_dfa_dfa019adb7_pfv.asc'
-    demFile = avaDir / 'avaAlr.asc'
+    peakFile1 = avaDir / 'relAlr_null_ref_0.15500_pfd.asc'
+    peakFile2 = avaDir / 'relAlr_null_ref_0.15500_pfv.asc'
+    demFile = dirPath / '..' / 'data' / 'avaAlr' / 'Inputs' / 'avaAlr.asc'
     avaDirTmp = pathlib.Path(tmp_path, avaTestDir)
     resultDir = avaDirTmp / 'Outputs' / 'com1DFA' / 'peakFiles'
-    peakFileResult1 = resultDir / 'relAlr_null_dfa_dfa019adb7_pfd.asc'
-    peakFileResult2 = resultDir / 'relAlr_null_dfa_dfa019adb7_pfv.asc'
+    peakFileResult1 = resultDir / 'relAlr_null_ref_0.15500_pfd.asc'
+    peakFileResult2 = resultDir / 'relAlr_null_ref_0.15500_pfv.asc'
     resultDir.mkdir(parents=True)
     shutil.copy(peakFile1, peakFileResult1)
     shutil.copy(peakFile2, peakFileResult2)
@@ -44,7 +44,7 @@ def test_plotAllPeakFields(tmp_path):
 
     # call function to be tested
     plotDict = oP.plotAllPeakFields(avaDirTmp, cfg['FLAGS'], modName, demData=demData)
-    plotPath = avaDirTmp / 'Outputs' / 'out1Peak' / 'relAlr_null_dfa_dfa019adb7_pfd.png'
+    plotPath = avaDirTmp / 'Outputs' / 'out1Peak' / 'relAlr_null_ref_0.15500_pfd.png'
 
-    assert 'relAlr_null_dfa_dfa019adb7' in plotDict
-    assert plotDict['relAlr_null_dfa_dfa019adb7']['pfd'] == str(plotPath)
+    assert 'relAlr_null_ref_0.15500' in plotDict
+    assert plotDict['relAlr_null_ref_0.15500']['pfd'] == str(plotPath)
