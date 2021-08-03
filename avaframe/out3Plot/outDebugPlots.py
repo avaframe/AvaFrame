@@ -11,8 +11,8 @@ import avaframe.out3Plot.plotUtils as pU
 
 def plotPartIni(particles, dem):
     header = dem['header']
-    x = np.arange(header.ncols) * header.cellsize
-    y = np.arange(header.nrows) * header.cellsize
+    x = np.arange(header['ncols']) * header['cellsize']
+    y = np.arange(header['nrows']) * header['cellsize']
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     cmap = copy.copy(mpl.cm.get_cmap("Greys"))
     ref0, im = pU.NonUnifIm(ax, x, y, dem['areaRaster'], 'x [m]', 'y [m]',
@@ -25,9 +25,9 @@ def plotPartIni(particles, dem):
 
 
 def plotAreaDebug(dem, avapath, Raster):
-    ncols = dem['header'].ncols
-    nrows = dem['header'].nrows
-    cellsize = dem['header'].cellsize
+    ncols = dem['header']['ncols']
+    nrows = dem['header']['nrows']
+    cellsize = dem['header']['cellsize']
     x = np.arange(ncols) * cellsize
     y = np.arange(nrows) * cellsize
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
@@ -45,16 +45,16 @@ def plotAreaDebug(dem, avapath, Raster):
 
 
 def plotRemovePart(xCoord0, yCoord0, header, X, Y, Mask, mask):
-    x = np.arange(header.ncols) * header.cellsize
-    y = np.arange(header.nrows) * header.cellsize
+    x = np.arange(header['ncols']) * header['cellsize']
+    y = np.arange(header['nrows']) * header['cellsize']
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     ax.set_title('Release area')
     cmap = copy.copy(mpl.cm.get_cmap("Greys"))
     ref0, im = pU.NonUnifIm(ax, x, y, Mask, 'x [m]', 'y [m]',
                             extent=[x.min(), x.max(), y.min(), y.max()],
                             cmap=cmap, norm=None)
-    ax.plot(xCoord0 * header.cellsize, yCoord0 * header.cellsize, 'r', label='release polyline')
-    ax.plot(X[mask] * header.cellsize, Y[mask] * header.cellsize, '.b')
+    ax.plot(xCoord0 * header['cellsize'], yCoord0 * header['cellsize'], 'r', label='release polyline')
+    ax.plot(X[mask] * header['cellsize'], Y[mask] * header['cellsize'], '.b')
     plt.legend()
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.1)
