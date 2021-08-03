@@ -221,7 +221,7 @@ def prepareInputData(inputSimFiles):
     relFile = inputSimFiles['releaseScenario']
 
     # get dem information
-    demOri = IOf.readRaster(inputSimFiles['demFile'])
+    demOri = IOf.readRaster(inputSimFiles['demFile'], noDataToNan=True)
 
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
