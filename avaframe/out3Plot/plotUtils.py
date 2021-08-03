@@ -406,7 +406,7 @@ def putAvaNameOnPlot(ax, avaDir):
     '''
 
     # if avaDir is just a single avaDir or a list of avaDirs
-    if isinstance(avaDir, str):
+    if isinstance(avaDir, str) or isinstance(avaDir, pathlib.Path):
         avaName = pathlib.PurePath(avaDir).name
         infoText = datetime.datetime.now().strftime("%d.%m.%y") + \
                '; ' + str(avaName)
