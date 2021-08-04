@@ -57,7 +57,7 @@ def test_prepareRelase(tmp_path):
     # call function to be tested
     relName, inputSimLines, badName = com1DFA.prepareRelase(cfg, rel, inputSimLines)
 
-    assert relName == 'release1PF_test_AF'
+    assert relName == 'release1PF_test'
     assert inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes'
     assert inputSimLines['releaseLine']['d0'] == [1.32, 1.32]
     assert inputSimLines['secondaryReleaseLine']['d0'] == [1.789]

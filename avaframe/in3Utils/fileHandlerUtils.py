@@ -495,14 +495,17 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
         if '_AF_' in name:
             nameParts = name.split('_AF_')
             fNamePart = nameParts[0] + '_AF'
+            relNameSim = nameParts[0]
             infoParts = nameParts[1].split('_')
+
 
         else:
             nameParts = name.split('_')
             fNamePart = nameParts[0]
+            relNameSim = nameParts[0]
             infoParts = nameParts[1:]
 
-        data['releaseArea'].append(fNamePart)
+        data['releaseArea'].append(relNameSim)
         data['simType'].append(infoParts[0])
         data['modelType'].append(infoParts[1])
         data[simID].append(infoParts[2])
