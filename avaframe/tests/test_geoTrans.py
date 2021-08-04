@@ -372,12 +372,18 @@ def test_checkOverlap(capfd):
     refRaster = np.zeros((nRows, nCols))
     refRaster[:3, :3] = 1
     checkedRaster1 = np.zeros((nRows, nCols))
-    checkedRaster1[3:, 3:] = 1
+    checkedRaster1[2:, 2:] = 1
+    checkedRaster1[2, 2] = 0
 
     toCheckRaster = np.zeros((nRows, nCols))
     toCheckRaster[2:, 2:] = 1
+    print(refRaster)
+    print(toCheckRaster)
     checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, 'to Check', 'ref', crop=True)
-    assert (checkedRaster2 == checkedRaster1).all
+    atol = 1e-10
+    print(checkedRaster2)
+    print(checkedRaster1)
+    assert np.allclose(checkedRaster2, checkedRaster1, atol = atol)
 
     toCheckRaster = np.zeros((nRows, nCols))
     toCheckRaster[2:, 2:] = 1
@@ -387,9 +393,13 @@ def test_checkOverlap(capfd):
     toCheckRaster = np.zeros((nRows, nCols))
     toCheckRaster[3:, 3:] = 1
     checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, 'to Check', 'ref', crop=True)
-    assert (checkedRaster2 == toCheckRaster).all
+    toCheckRaster = np.zeros((nRows, nCols))
+    toCheckRaster[3:, 3:] = 1
+    assert np.allclose(checkedRaster2, toCheckRaster, atol=atol)
     checkedRaster2 = geoTrans.checkOverlap(toCheckRaster, refRaster, 'to Check', 'ref', crop=False)
-    assert (checkedRaster2 == toCheckRaster).all
+    toCheckRaster = np.zeros((nRows, nCols))
+    toCheckRaster[3:, 3:] = 1
+    assert np.allclose(checkedRaster2, toCheckRaster, atol=atol)
 
 
 def getIPZ(z0, xEnd, yEnd, dx):

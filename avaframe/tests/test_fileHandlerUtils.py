@@ -205,7 +205,7 @@ def test_getFilterDict():
 
     noKey = 'simType' in parametersDict
 
-    assert (parametersDict['relTh'] == np.asarray([1, 1.5, 2])).all
+    assert np.allclose(parametersDict['relTh'], np.asarray([1, 1.5, 2]), atol=1e-10)
     assert noKey is False
     assert parametersDict['entH'] == [200.]
 

@@ -175,7 +175,8 @@ def test_getScalVect(capfd):
     zRes = DFAfunC.projOnRaster(np.array(xpExpected), np.array(ypExpected), ZZ, csz, ncols, nrows,
                                 interpOption)
     res = -2*np.array(xpExpected) + 1000-np.array(ypExpected) + 500
-    assert (zRes == res).all
+    atol = 1e-10
+    assert np.allclose(zRes, res, atol=atol)
 
 
 def test_reprojectionC(capfd):

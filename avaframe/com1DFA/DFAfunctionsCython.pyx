@@ -706,7 +706,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
       particles = DFAtls.removePart(particles, mask, nRemove)
 
   # split particles with too much mass
-  particles = DFAtls.splitPart(particles, dem)
+  particles = DFAtls.splitPart(particles)
   return particles
 
 
@@ -909,9 +909,6 @@ def updateFieldsC(cfg, particles, dem, fields):
 
   particles['hBilinearBilinear'] = np.asarray(hBB)
   particles['h'] = np.asarray(hBB)
-
-  # remove particles that have a too small height
-  # particles = removeSmallPart(hmin, particles, dem)
 
   return particles, fields
 
