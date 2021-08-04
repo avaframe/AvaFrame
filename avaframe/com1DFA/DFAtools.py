@@ -476,8 +476,6 @@ def normalize(x, y, z):
         z: numpy array
             z component of the normalized vector
     """
-    # TODO : avoid error message when input vector is zero and make sure
-    # to return zero
     norme = norm(x, y, z)
     ind = np.where(norme > 0)
     x[ind] = x[ind] / norme[ind]
