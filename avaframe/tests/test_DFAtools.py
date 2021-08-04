@@ -6,7 +6,7 @@ import pytest
 import avaframe.com1DFA.DFAtools as DFAtls
 
 
-def test_normalizeC(capfd):
+def test_normalize(capfd):
     '''test DFAfunctions tools
     norm, norm2, normalize, crossProd and scalProd'''
     x = np.array([1.])
