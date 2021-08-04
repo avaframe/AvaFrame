@@ -1,10 +1,75 @@
 """Tests for module com1DFAtools"""
 import numpy as np
-import matplotlib.pyplot as plt
 import pytest
 
 # Local imports
 import avaframe.com1DFA.DFAtools as DFAtls
+
+
+def test_normalizeC(capfd):
+    '''test DFAfunctions tools
+    norm, norm2, normalize, crossProd and scalProd'''
+    x = np.array([1.])
+    y = np.array([1.])
+    z = np.array([1.])
+    norme = DFAtls.norm(x, y, z)
+    norme2 = DFAtls.norm2(x, y, z)
+    xn, yn, zn = DFAtls.normalize(x, y, z)
+    print(xn, yn, zn)
+    atol = 1e-10
+    assert norme == np.sqrt(3.)
+    assert norme2 == 3.
+    assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1., rel=atol)
+    assert xn == 1/np.sqrt(3.)
+    assert yn == 1/np.sqrt(3.)
+    assert zn == 1/np.sqrt(3.)
+
+    x = np.array([0.])
+    y = np.array([0.])
+    z = np.array([1e-18])
+    xn, yn, zn = DFAtls.normalize(x, y, z)
+    assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1, rel=atol)
+
+    x = np.array([0.])
+    y = np.array([0.])
+    z = np.array([0.])
+    xn, yn, zn = DFAtls.normalize(x, y, z)
+    assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(0, rel=atol)
+
+    x = np.array([1.])
+    y = np.array([2.])
+    z = np.array([3.])
+    xn, yn, zn = DFAtls.normalize(x, y, z)
+    assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1., rel=atol)
+
+    x = np.array([1.])
+    y = np.array([0.])
+    z = np.array([1.])
+    xn, yn, zn = DFAtls.normalize(x, y, z)
+    assert np.sqrt(xn*xn + yn*yn + zn*zn) == pytest.approx(1, rel=atol)
+    assert xn == pytest.approx(1/np.sqrt(2.), rel=atol)
+    assert yn == pytest.approx(0, rel=atol)
+    assert zn == pytest.approx(1/np.sqrt(2.), rel=atol)
+
+    x = np.array([1.])
+    y = np.array([2.])
+    z = np.array([3.])
+    x1 = np.array([4.])
+    y1 = np.array([5.])
+    z1 = np.array([6.])
+    xn, yn, zn = DFAtls.crossProd(x, y, z, x1, y1, z1)
+    assert xn == -3
+    assert yn == 6
+    assert zn == -3
+
+    x = np.array([1.])
+    y = np.array([2.])
+    z = np.array([3.])
+    x1 = np.array([4.])
+    y1 = np.array([5.])
+    z1 = np.array([6.])
+    scal = DFAtls.scalProd(x, y, z, x1, y1, z1)
+    assert scal == 32
 
 
 def test_getNormalMesh(capfd):
@@ -97,3 +162,71 @@ def test_getAreaMesh(capfd):
     TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a+b*b)) *
                            np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
     assert TestArea
+
+
+def test_removePart(capfd):
+    particles = {}
+    particles['Npart'] = 10
+    particles['m'] = np.linspace(0, 9, 10)
+    particles['x'] = np.linspace(0, 9, 10)
+    particles['ux'] = np.linspace(0, 9, 10)
+    particles['mTot'] = np.sum(particles['m'])
+    mask = np.array([True, True, False, True, True, True, False, False, True, True])
+    nRemove = 3
+    particles = DFAtls.removePart(particles, mask, nRemove)
+
+    res = np.array([0, 1, 3, 4, 5, 8, 9])
+    atol = 1e-10
+    assert particles['Npart'] == 7
+    assert np.allclose(particles['m'], res, atol=atol)
+    assert np.allclose(particles['x'], res, atol=atol)
+    assert np.allclose(particles['ux'], res, atol=atol)
+    assert particles['mTot'] == np.sum(res)
+
+
+def test_splitPart(capfd):
+    particles = {}
+    particles['Npart'] = 10
+    particles['massPerPart'] = 1
+    particles['m'] = np.array([1, 2, 1, 3.6, 1, 1, 5, 1, 1, 1])
+    particles['x'] = np.linspace(0, 9, 10)
+    particles['ux'] = np.linspace(0, 9, 10)
+    particles['mTot'] = np.sum(particles['m'])
+    particles = DFAtls.splitPart(particles)
+    print(particles)
+    massNew = np.array([1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1, 1, 0.9, 0.9, 0.9, 1, 1, 1, 1])
+    res = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 3, 3, 3, 6, 6, 6, 6])
+    print(particles['m'])
+    print(massNew)
+    atol = 1e-10
+    assert particles['Npart'] == 18
+    assert np.allclose(particles['m'], massNew, atol=atol)
+    assert np.allclose(particles['x'], res, atol=atol)
+    assert np.allclose(particles['ux'], res, atol=atol)
+    assert particles['mTot'] == np.sum(massNew)
+
+
+def test_mergeParticleDict(capfd):
+
+    particles1 = {}
+    particles1['Npart'] = 5
+    particles1['m'] = np.linspace(0, 4, 5)
+    particles1['x'] = np.linspace(0, 4, 5)
+    particles1['ux'] = np.linspace(0, 4, 5)
+    particles1['mTot'] = np.sum(particles1['m'])
+
+    particles2 = {}
+    particles2['Npart'] = 4
+    particles2['m'] = np.linspace(5, 8, 4)
+    particles2['x'] = np.linspace(5, 8, 4)
+    particles2['ux'] = np.linspace(5, 8, 4)
+    particles2['mTot'] = np.sum(particles1['m'])
+
+    particles = DFAtls.mergeParticleDict(particles1, particles2)
+    res = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8])
+    atol = 1e-10
+    assert particles['Npart'] == 9
+    assert np.allclose(particles['m'], res, atol=atol)
+    assert np.allclose(particles['x'], res, atol=atol)
+    assert np.allclose(particles['ux'], res, atol=atol)
+    assert particles['mTot'] == np.sum(res)

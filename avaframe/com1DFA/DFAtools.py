@@ -302,37 +302,6 @@ def getAreaMesh(Nx, Ny, Nz, csz, num):
     return A
 
 
-def removeSmallPart(hmin, particles, dem):
-    """ find and remove too small particles
-
-    Parameters
-    ----------
-    hmin : float
-        minimum depth
-    particles : dict
-        particles dictionary
-    dem : dict
-        dem dictionary
-
-    Returns
-    -------
-    particles : dict
-        particles dictionary
-    """
-    h = particles['h']
-
-    indOut = np.where(h < hmin)
-    mask = np.ones(len(h), dtype=bool)
-    mask[indOut] = False
-
-    nRemove = len(mask)-np.sum(mask)
-    if nRemove > 0:
-        particles = removePart(particles, mask, nRemove)
-        log.info('removed %s particles because they were too thin' % (nRemove))
-
-    return particles
-
-
 def removePart(particles, mask, nRemove):
     """ remove given particles
 
@@ -364,7 +333,7 @@ def removePart(particles, mask, nRemove):
     return particles
 
 
-def splitPart(particles, dem):
+def splitPart(particles):
     """Split big particles
 
     Split particles bigger than 1.5 times the massPerPart
@@ -373,8 +342,6 @@ def splitPart(particles, dem):
     ----------
     particles : dict
         particles dictionary
-    dem : dict
-        dem dictionary
 
     Returns
     -------
@@ -388,28 +355,18 @@ def splitPart(particles, dem):
     Ind = np.where(nSplit > 1)[0]
     if np.size(Ind) > 0:
         for ind in Ind:
+            nPart = particles['Npart']
             mNew = m[ind] / nSplit[ind]
             nAdd = (nSplit[ind]-1).astype('int')
-            log.debug('Spliting particle %s in %s' % (ind, nAdd+1))
             particles['Npart'] = particles['Npart'] + nAdd
-            particles['NPPC'] = np.append(particles['NPPC'], particles['NPPC'][ind]*np.ones((nAdd)))
-            particles['x'] = np.append(particles['x'], particles['x'][ind]*np.ones((nAdd)))
-            particles['y'] = np.append(particles['y'], particles['y'][ind]*np.ones((nAdd)))
-            particles['z'] = np.append(particles['z'], particles['z'][ind]*np.ones((nAdd)))
-            particles['s'] = np.append(particles['s'], particles['s'][ind]*np.ones((nAdd)))
-            particles['l'] = np.append(particles['l'], particles['l'][ind]*np.ones((nAdd)))
-            particles['ux'] = np.append(particles['ux'], particles['ux'][ind]*np.ones((nAdd)))
-            particles['uy'] = np.append(particles['uy'], particles['uy'][ind]*np.ones((nAdd)))
-            particles['uz'] = np.append(particles['uz'], particles['uz'][ind]*np.ones((nAdd)))
-            particles['m'] = np.append(particles['m'], mNew*np.ones((nAdd)))
-            particles['m'][ind] = mNew
-            particles['h'] = np.append(particles['h'], particles['h'][ind]*np.ones((nAdd)))
-            particles['inCellDEM'] = np.append(particles['inCellDEM'], particles['inCellDEM'][ind]*np.ones((nAdd)))
-            particles['indXDEM'] = np.append(particles['indXDEM'], particles['indXDEM'][ind]*np.ones((nAdd)))
-            particles['indYDEM'] = np.append(particles['indYDEM'], particles['indYDEM'][ind]*np.ones((nAdd)))
-            particles['partInCell'] = np.append(particles['partInCell'], particles['partInCell'][ind]*np.ones((nAdd)))
+            log.debug('Spliting particle %s in %s' % (ind, nAdd+1))
+            for key in particles:
+                particles['m'][ind] = mNew
+                if type(particles[key]).__module__ == np.__name__:
+                    if np.size(particles[key]) == nPart:
+                        particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
 
-        particles['mTot'] = np.sum(particles['m'])
+    particles['mTot'] = np.sum(particles['m'])
     return particles
 
 
@@ -441,6 +398,8 @@ def mergeParticleDict(particles1, particles2):
                 particles[key] = particles1[key] + particles2[key]
         else:
             particles[key] = particles1[key]
+
+    particles['mTot'] = np.sum(particles['m'])
     return particles
 
 ##############################################################################
@@ -510,30 +469,25 @@ def normalize(x, y, z):
 
     Returns
     -------
-        xn: numpy array
+        x: numpy array
             x component of the normalized vector
-        yn: numpy array
+        y: numpy array
             y component of the normalized vector
-        zn: numpy array
+        z: numpy array
             z component of the normalized vector
     """
     # TODO : avoid error message when input vector is zero and make sure
     # to return zero
     norme = norm(x, y, z)
-    xn = x / norme
-    xn = np.where(np.isnan(xn), x, xn)
-    xn = np.where(np.isnan(x), x, xn)
-    yn = y / norme
-    yn = np.where(np.isnan(yn), y, yn)
-    yn = np.where(np.isnan(y), y, yn)
-    zn = z / norme
-    zn = np.where(np.isnan(zn), z, zn)
-    zn = np.where(np.isnan(z), z, zn)
+    ind = np.where(norme > 0)
+    x[ind] = x[ind] / norme[ind]
+    y[ind] = y[ind] / norme[ind]
+    z[ind] = z[ind] / norme[ind]
 
-    return xn, yn, zn
+    return x, y, z
 
 
-def croosProd(ux, uy, uz, vx, vy, vz):
+def crossProd(ux, uy, uz, vx, vy, vz):
     """ Compute cross product of vector u = (ux, uy, uz) and v = (vx, vy, vz).
     """
     wx = uy*vz - uz*vy
