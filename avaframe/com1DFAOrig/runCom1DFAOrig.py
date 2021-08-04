@@ -51,7 +51,6 @@ for reportD in reportDictList:
 
 
 # Generate plots for all peakFiles
-print(avalancheDir)
 plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData='')
 
 # Set directory for report
