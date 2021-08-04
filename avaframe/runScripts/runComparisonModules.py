@@ -68,7 +68,7 @@ for avaName in testList:
 
     # Generata plots for all peakFiles
     modNameOrig = 'com1DFAOrig'
-    plotDictcom1DFAOrig = oP.plotAllPeakFields(avaDir, cfgCom1DFAOrig, cfgMain['FLAGS'], modNameOrig)
+    plotDictcom1DFAOrig = oP.plotAllPeakFields(avaDir, cfgMain['FLAGS'], modNameOrig)
 
     # Set directory for com1DFA report
     reportDirOrig = os.path.join(outDir, 'com1DFAOrig', 'reports')

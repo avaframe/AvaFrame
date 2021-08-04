@@ -34,7 +34,7 @@ cfg = cfgUtils.getModuleConfig(com1DFAOrig)
 
 startTime = time.time()
 
-# Clean input directory(ies) of module files 
+# Clean input directory(ies) of module files
 initProj.cleanModuleFiles(avalancheDir, com1DFAOrig, modName)
 
 # Run Standalone DFA
@@ -51,7 +51,8 @@ for reportD in reportDictList:
 
 
 # Generate plots for all peakFiles
-plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'], modName)
+print(avalancheDir)
+plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData='')
 
 # Set directory for report
 reportDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAOrig', 'reports')
