@@ -113,7 +113,7 @@ def prepareRelase(cfg, rel, inputSimLines):
     Parameters
     ----------
     cfg : dict
-        configuration parameters
+        configuration parameters - keys: relTh, secRelArea, secondaryRelTh
     rel : str
         path to release file
 
@@ -137,8 +137,7 @@ def prepareRelase(cfg, rel, inputSimLines):
     if '_' in relName:
         badName = True
         log.warning('Release area scenario file name includes an underscore \
-        the suffix _AF will be added')
-        simName = relName + '_AF'
+        the suffix _AF will be added for the simulation name')
     releaseLine = inputSimLines['releaseLine']
     for k in range(len(releaseLine['d0'])):
         if releaseLine['d0'][k] == 'None':
@@ -1824,6 +1823,10 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
     simDict = {}
     for rel in inputSimFiles['relFiles']:
         relName = rel.stem
+        if '_' in relName:
+            relNameSim = relName + '_AF'
+        else:
+            relNameSim = relName
         cfgSim = cfgUtils.convertConfigParserToDict(standardCfg)
         for row in variationDF.itertuples():
             for parameter in variationDict:
@@ -1834,7 +1837,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
             cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
             # create unique hash for simulation configuration
             simHash = cfgUtils.cfgHash(cfgSimObject)
-            simName = relName + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' + simHash
+            simName = relNameSim + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' + simHash
             simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
                                 'simType': row._asdict()['simTypeList'], 'relFile': rel,
                                 'cfgSim': cfgSimObject}
