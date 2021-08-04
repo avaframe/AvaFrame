@@ -69,7 +69,7 @@ def test_checkParticlesInRelease():
 
     # setup required input
     releaseLine = {'Name': ['testRel'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]),
-                   'x': np.asarray([0, 10., 10.989, 0., 0.]), 'y': np.asarray([0., 0., 10.989, 10., 0.0])}
+                   'x': np.asarray([0, 10., 10.0, 0., 0.]), 'y': np.asarray([0., 0., 10.0, 10., 0.0])}
     demHeader = {}
     demHeader['xllcenter'] = 0.0
     demHeader['yllcenter'] = 0.0
@@ -78,26 +78,26 @@ def test_checkParticlesInRelease():
     demHeader['nrows'] = 5
     demHeader['ncols'] = 5
     releaseLine['header'] = demHeader
-    particles = {'x': np.asarray([2.4, 9.7, 11.4, 13.8]), 'y': np.asarray([2.4, 9.7, 11.4, 13.8]),
+    particles = {'x': np.asarray([2.4, 9.7, 10.02, 11.5]), 'y': np.asarray([2.4, 9.7, 10.2, 11.5]),
                  'Npart': 4, 'm': np.asarray([1.4, 1.7, 1.4, 1.8])}
     radius = np.sqrt(2)
 
     # call function to be tested
     particles = com1DFA.checkParticlesInRelease(particles, releaseLine, radius)
     # call function to be tested
-    particles2 = {'x': np.asarray([2.4, 9.7, 11.4, 13.8, 0.0]), 'y': np.asarray([2.4, 9.7, 11.4, 13.8, 0.0]),
+    particles2 = {'x': np.asarray([2.4, 9.7, 9.997, 10.09, 0.0]), 'y': np.asarray([2.4, 9.7, 9.994, 10.8, 0.0]),
                  'Npart': 5, 'm': np.asarray([1.4, 1.7, 1.4, 1.8, 1.1])}
-    particles2 = com1DFA.checkParticlesInRelease(particles2, releaseLine, 0.1)
+    particles2 = com1DFA.checkParticlesInRelease(particles2, releaseLine, 0.01)
 
     print('particles', particles, particles2)
-    assert np.array_equal(particles['x'], np.asarray([2.4, 9.7, 11.4]))
-    assert np.array_equal(particles['y'], np.asarray([2.4, 9.7, 11.4]))
+    assert np.array_equal(particles['x'], np.asarray([2.4, 9.7, 10.02]))
+    assert np.array_equal(particles['y'], np.asarray([2.4, 9.7, 10.2]))
     assert particles['mTot'] == (1.4+1.7+1.4)
     assert particles['Npart'] == 3
-    assert np.array_equal(particles2['x'], np.asarray([2.4, 9.7, 0.0]))
-    assert np.array_equal(particles2['y'], np.asarray([2.4, 9.7, 0.0]))
-    assert particles2['mTot'] == (1.4+1.7+1.1)
-    assert particles2['Npart'] == 3
+    assert np.array_equal(particles2['x'], np.asarray([2.4, 9.7, 9.997, 0.0]))
+    assert np.array_equal(particles2['y'], np.asarray([2.4, 9.7, 9.994, 0.0]))
+    assert particles2['mTot'] == (1.4+1.7+1.4+1.1)
+    assert particles2['Npart'] == 4
 
 
 def test_pointInPolygon():
@@ -108,13 +108,13 @@ def test_pointInPolygon():
     demHeader['xllcenter'] = 0.0
     demHeader['yllcenter'] = 0.0
     radius = np.sqrt(2)
-    line = {'x': np.asarray([0, 10., 10.989, 0., 0.]), 'y': np.asarray([0., 0., 10.989, 10., 0.0])}
-    points = {'x': np.asarray([2.4, 9.7, 11.4, 13.8, 0.0]), 'y': np.asarray([2.4, 9.7, 11.4, 13.8, 0.0])}
+    line = {'x': np.asarray([0, 10., 10., 0., 0.]), 'y': np.asarray([0., 0., 10., 10., 0.0])}
+    points = {'x': np.asarray([2.4, 9.7, -0.04, 10.09, 0.0]), 'y': np.asarray([2.4, 9.7, -0.11, 10.8, 0.0])}
 
     # call function to be tested
     mask = com1DFA.pointInPolygon(demHeader, points, line, radius)
     # call function to be tested
-    mask2 = com1DFA.pointInPolygon(demHeader, points, line, 0.4)
+    mask2 = com1DFA.pointInPolygon(demHeader, points, line, 0.01)
 
     # test mask
     testMask = np.asarray([True, True, True, False, True])
@@ -123,6 +123,43 @@ def test_pointInPolygon():
     assert np.array_equal(mask, testMask)
     assert np.array_equal(mask2, testMask2)
 
+
+def test_initializeMassEnt():
+    """ test initializing entrainment area """
+
+    # setup required input
+    nrows = 110
+    ncols = 150
+    demHeader = {}
+    demHeader['xllcenter'] = 0.0
+    demHeader['yllcenter'] = 0.0
+    demHeader['cellsize'] = 1.0
+    demHeader['noDataValue'] = -9999
+    demHeader['nrows'] = nrows
+    demHeader['ncols'] = ncols
+    dem = {'header': demHeader}
+    dem['rasterData'] = np.ones((nrows, ncols))
+
+    simTypeActual = 'entres'
+    dirName = pathlib.Path(__file__).parents[0]
+    fileName = dirName / 'testEnt.shp'
+    entLine = {'fileName': fileName, 'Name': ['testEnt'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]),
+                   'x': np.asarray([0, 10., 10.0, 0., 0.]), 'y': np.asarray([0., 0., 10.0, 10., 0.0])}
+    reportAreaInfo = {'entrainment': '', }
+    thresholdPointInPoly = 0.001
+
+    # call function to be tested
+    entrMassRaster, reportAreaInfo = com1DFA.initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly)
+    testData = np.zeros((nrows, ncols))
+    testData[0:11, 0:11] = 1.0
+
+    print('data', testData)
+    print('ent', entrMassRaster, entLine)
+
+    assert np.array_equal(entrMassRaster, testData)
+    assert np.sum(entrMassRaster) == 121
+    assert entrMassRaster.shape[0] == nrows
+    assert reportAreaInfo['entrainment'] == 'Yes'
 
 
 def test_setDEMOriginToZero():
