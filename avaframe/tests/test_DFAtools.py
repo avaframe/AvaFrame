@@ -1,4 +1,4 @@
-"""Tests for module com1DFAtools"""
+"""Tests for module DFAtools"""
 import numpy as np
 import pytest
 
