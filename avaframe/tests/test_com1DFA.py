@@ -64,6 +64,18 @@ def test_prepareRelase(tmp_path):
     assert badName == True
 
 
+def test_checkParticlesInRelease():
+    """ test if particles are within release polygon and removed if not """
+
+    # setup required input
+    releaseLine = {'Name': 'testRel', 'Start': np.asarray[0.], 'Length': np.asarray([4]),
+                   'x': np.asarray([0, 1., 0.989, 0., 0.]), 'y': np.asarray([0., 0., 0.989, 1., 0.0]),
+                   'header': }
+
+
+    
+
+
 def test_setDEMOriginToZero():
     """ test if origin is set to zero """
 
