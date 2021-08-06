@@ -64,6 +64,79 @@ def test_prepareRelase(tmp_path):
     assert badName == True
 
 
+def test_prepareArea():
+    """ test converting a polygon from a shape file to a raster """
+
+    # setup required input
+    releaseLine = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]), 'Length': np.asarray([5, 5]),
+                   'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+                   'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
+    demHeader = {}
+    demHeader['xllcenter'] = 0.0
+    demHeader['yllcenter'] = 0.0
+    demHeader['cellsize'] = 5.0
+    demHeader['noDataValue'] = -9999
+    demHeader['nrows'] = 7
+    demHeader['ncols'] = 7
+    dem = {'header': demHeader}
+    dem['rasterData'] = np.ones((demHeader['nrows'], demHeader['ncols']))
+    radius = 0.01
+    thList = [1.234, 7.8]
+    combine = True
+    checkOverlap = True
+
+    # call function to be tested
+    # test 1
+    line = com1DFA.prepareArea(releaseLine, dem, radius, thList='', combine=True, checkOverlap=True)
+
+    # test 2
+    releaseLine2 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]), 'Length': np.asarray([5, 5]),
+                   'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+                   'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
+    line2 = com1DFA.prepareArea(releaseLine2, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
+
+    # test 3
+    releaseLine3 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]), 'Length': np.asarray([5, 5]),
+                   'x': np.asarray([0, 10., 10.0, 0., 0., 9.4, 16.5, 16., 9., 9.4]),
+                   'y': np.asarray([0., 0., 10.0, 10., 0.0, 9.4, 9., 17., 17., 9.4])}
+
+    with pytest.raises(AssertionError) as e:
+        assert com1DFA.prepareArea(releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
+    assert str(e.value) == "Features are overlaping - this is not allowed"
+
+    # test 4
+    releaseLine4 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]), 'Length': np.asarray([5, 5]),
+                    'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+                    'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
+    line4 = com1DFA.prepareArea(releaseLine4, dem, 0.6, thList=thList, combine=False, checkOverlap=True)
+
+    # test results
+    testRaster = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster[0:3, 0:3] = 1.0
+    testRaster[5, 4:6] = 1.0
+    testRaster2 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster2[0:3, 0:3] = 1.234
+    testRaster2[4, 4:6] = 7.8
+    testRaster2[5, 4:6] = 7.8
+    testRaster4 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster5 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster4[0:3, 0:3] = 1.234
+    testRaster5[4, 4:6] = 7.8
+    testRaster5[5, 4:6] = 7.8
+    testList = [testRaster4, testRaster5]
+
+    print('line Raster', line['rasterData'])
+    print('testRaster', testRaster)
+    print('line Raster', line2['rasterData'])
+    print('testRaster', testRaster2)
+    print('test 4 line Raster', line4['rasterData'])
+    print('testRaster', testList)
+
+    assert np.array_equal(line['rasterData'], testRaster)
+    assert np.array_equal(line2['rasterData'], testRaster2)
+    assert np.array_equal(line4['rasterData'], testList)
+
+
 def test_checkParticlesInRelease():
     """ test if particles are within release polygon and removed if not """
 
