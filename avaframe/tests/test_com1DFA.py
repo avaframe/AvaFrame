@@ -64,6 +64,63 @@ def test_prepareRelase(tmp_path):
     assert badName == True
 
 
+def test_createReportDict():
+    """ test creating a report dictionary """
+
+    # setup required input
+    avaDir = 'data/avaTest'
+    logName = 'testName'
+    relName = 'relTest'
+    inputSimLines = {'entrainmentArea': 'entTest', 'resistanceArea': 'resTest', 'releaseLine':
+                      {'Name': 'relTestFeature', 'd0': '1.45'}}
+    reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'Yes', 'Release area info':
+                      {'Projected Area [m2]': 'm2'}}
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'mu': '0.15500', 'rho': '200.', 'frictModel': 'samosAT', 'hEnt': '0.3',
+                      'rhoEnt': '100.0'}
+
+    # call function to be tested
+    reportST = com1DFA.createReportDict(avaDir, logName, relName, inputSimLines, cfg['GENERAL'], reportAreaInfo)
+
+
+    assert 'Simulation Parameters' in reportST
+    assert 'Program version' in reportST['Simulation Parameters']
+    assert reportST['avaName']['name'] == avaDir
+    assert reportST['simName']['name'] == logName
+    assert reportST['Simulation Parameters']['Release Area Scenario'] == relName
+    assert reportST['Simulation Parameters']['Entrainment'] == 'Yes'
+    assert reportST['Simulation Parameters']['Resistance'] == 'Yes'
+    assert reportST['Simulation Parameters']['Mu'] == '0.15500'
+    assert reportST['Simulation Parameters']['Density [kgm-3]'] == '200.'
+    assert reportST['Simulation Parameters']['Friction model'] == 'samosAT'
+    assert reportST['Release Area']['Release area scenario'] == relName
+    assert reportST['Release Area']['Release Area'] == 'relTestFeature'
+    assert reportST['Release Area']['Release thickness [m]'] ==  '1.45'
+    assert reportST['Entrainment area']['Entrainment area scenario'] == 'entTest'
+    assert 'Projected Area [m2]' in reportST['Release Area']
+
+
+def test_reportAddTimeMassInfo():
+    """ test adding mass and time info to report dict """
+
+    # setup required input
+    reportDict = {'Simulation Parameters': {'testItem': 1.0}}
+    tcpuDFA = 400.
+    infoDict = {'initial mass': 400000.2345, 'final mass': 400000.8345, 'entrained mass': 0.8,
+                'entrained volume': 0.2, 'stopInfo': {'Stop criterion': '0.1 percent of PKE'}}
+
+    # call function to be tested
+    reportDict = com1DFA.reportAddTimeMassInfo(reportDict, tcpuDFA, infoDict)
+
+    assert reportDict['Simulation Parameters']['testItem'] == 1.0
+    assert reportDict['Simulation Parameters']['Initial mass [kg]'] == '400000.23'
+    assert reportDict['Simulation Parameters']['Final mass [kg]'] == '400000.83'
+    assert reportDict['Simulation Parameters']['Entrained mass [kg]'] == '0.80'
+    assert reportDict['Simulation Parameters']['Entrained volume [m3]'] == '0.20'
+    assert reportDict['Simulation Parameters']['Stop criterion'] == '0.1 percent of PKE'
+
+
+
 def test_prepareArea():
     """ test converting a polygon from a shape file to a raster """
 
@@ -233,6 +290,45 @@ def test_initializeMassEnt():
     assert np.sum(entrMassRaster) == 121
     assert entrMassRaster.shape[0] == nrows
     assert reportAreaInfo['entrainment'] == 'Yes'
+
+
+def test_initializeResistance():
+    """ test initializing resistance area """
+
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'dRes': '0.3', 'cw': '0.5', 'sres': '5'}
+
+    nrows = 11
+    ncols = 15
+    demHeader = {}
+    demHeader['nrows'] = nrows
+    demHeader['ncols'] = ncols
+    demHeader['xllcenter'] = 0.0
+    demHeader['yllcenter'] = 0.0
+    demHeader['cellsize'] = 1.0
+    demHeader['noDataValue'] = -9999
+    dem = {'header': demHeader}
+    dem['rasterData'] = np.ones((nrows, ncols))
+
+    simTypeActual = 'entres'
+    resLine = {'fileName': 'resTest', 'Name': 'resFeature', 'Start': np.asarray([0]), 'Length': np.asarray([5]),
+               'Name': ['resTestFeat'],
+               'x': np.asarray([0, 10., 10.0, 0., 0.]), 'y': np.asarray([0., 0., 10.0, 10., 0.0])}
+    reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'No'}
+    thresholdPointInPoly = 0.01
+
+    # call function to be tested
+    cResRaster, reportAreaInfo = com1DFA.initializeResistance(cfg['GENERAL'], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly)
+    testArray = np.zeros((nrows, ncols))
+    testArray[0:11, 0:11] = 0.003
+
+    print('cResRaster', cResRaster)
+    print('reportAreaInfo', reportAreaInfo)
+
+    assert np.array_equal(cResRaster, testArray)
+    assert np.sum(cResRaster) == 0.363
+    assert reportAreaInfo['resistance'] == 'Yes'
 
 
 def test_setDEMOriginToZero():
@@ -433,3 +529,132 @@ def test_getSimTypeList():
 
     assert set(simTypeListTest).issubset(simTypeList)
     assert 'available' not in simTypeList
+
+
+def test_appendFieldsParticles():
+    """ test if correct fields and particles list are created for export """
+
+    # setup required input
+    fieldsListIn = [{'ppr': np.zeros((3, 3)), 'pfv': np.zeros((3, 3))}]
+    particlesListIn = [{'x': np.asarray([0., 4., 0.,]), 'y': np.asarray([0., 4., 0.,]), 'm': np.asarray([0., 4., 0.,])}]
+    particles = {'x': np.asarray([0., 5., 0.,]), 'y': np.asarray([0., 5., 0.,]), 'm': np.asarray([0., 4., 0.,])}
+    fields = {'ppr': np.ones((3,3)), 'pfd': np.ones((3,3)), 'pfv': np.ones((3,3)), 'FD': np.ones((3,3))}
+    resTypes = ['ppr', 'pfv', 'pfd', 'particles']
+
+    # call function to be tested
+    fieldsList, particlesList = com1DFA.appendFieldsParticles(fieldsListIn, particlesListIn, particles, fields, resTypes)
+    print('fieldsList', fieldsList[1])
+    print('particlesList', {'ppr': np.ones((3,3)), 'pfv': np.ones((3,3)), 'pfd': np.ones((3,3))})
+
+    assert np.array_equal(fieldsList[1]['ppr'], np.ones((3,3)))
+    assert np.array_equal(fieldsList[1]['pfv'], np.ones((3,3)))
+    assert np.array_equal(fieldsList[1]['pfd'], np.ones((3,3)))
+    assert resTypes[0:3] == list(fieldsList[1].keys())
+    assert len(fieldsList) == 2
+    assert np.array_equal(particlesList[1]['x'], particles['x'])
+    assert np.array_equal(particlesList[1]['y'], particles['y'])
+    assert np.array_equal(particlesList[1]['m'], particles['m'])
+    assert ['x', 'y', 'm'] == list(particlesList[1].keys())
+    assert fieldsList[1].get('FD') == None
+
+
+def test_releaseSecRelArea():
+    """ test if secondary release area is triggered """
+
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
+                      'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
+                      'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest'}
+    demHeader = {}
+    demHeader['cellsize'] = 1
+    demHeader['ncols'] = 12
+    demHeader['nrows'] = 12
+    demHeader['xllcenter'] = 0
+    demHeader['yllcenter'] = 0
+    demRaster = np.ones((demHeader['nrows'], demHeader['ncols']))
+    areaRaster = np.ones((demHeader['nrows'], demHeader['ncols']))
+    dem = {'header': demHeader, 'rasterData': demRaster, 'areaRaster': areaRaster}
+    dem['originOri'] = {'xllcenter': 1.0, 'yllcenter': 1.0}
+    secRelRaster = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    secRelRaster[6:8, 7] = 1.0
+    secondaryReleaseInfo = {'x': np.asarray([7.4, 8.5, 8.5, 7.4, 7.4]), 'y': np.asarray([7.4, 7.4, 8.5, 8.5, 7.4]),
+                            'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0],
+                            'rasterData': [secRelRaster]}
+    secondaryReleaseInfo['header'] = demHeader
+    secondaryReleaseInfo['header']['xllcenter'] = dem['originOri']['xllcenter']
+    secondaryReleaseInfo['header']['yllcenter'] = dem['originOri']['yllcenter']
+    particlesIn = {'secondaryReleaseInfo': secondaryReleaseInfo}
+    particlesIn['x'] = np.asarray([6., 7.])
+    particlesIn['y'] = np.asarray([6., 7.])
+    particlesIn['m'] = np.asarray([1250., 1250.])
+    particlesIn['t'] = 1.0
+    particlesIn['Npart'] = 2.
+    fieldsFD = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    fieldsFD[7:9, 7:9] = 1.0
+    fields = {'FD': fieldsFD}
+
+    # call function to be tested
+    particles = com1DFA.releaseSecRelArea(cfg['GENERAL'], particlesIn, fields, dem)
+
+    print('particles', particles)
+
+    assert particles['Npart'] == 6
+    assert np.array_equal(particles['x'], np.asarray([6., 7., 6.75, 7.25, 6.75, 7.25]))
+    assert np.array_equal(particles['y'], np.asarray([6., 7., 6.75, 6.75, 7.25, 7.25]))
+    assert np.array_equal(particles['m'], np.asarray([1250., 1250., 50., 50., 50., 50.]))
+    assert particles['mTot'] == 2700.0
+
+
+def test_initializeParticles():
+    """ test initialising particles """
+
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
+                      'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
+                      'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest'}
+
+    demHeader = {}
+    demHeader['cellsize'] = 1
+    demHeader['ncols'] = 12
+    demHeader['nrows'] = 12
+    demHeader['xllcenter'] = 0
+    demHeader['yllcenter'] = 0
+    demRaster = np.ones((demHeader['nrows'], demHeader['ncols']))
+    areaRaster = np.ones((demHeader['nrows'], demHeader['ncols']))
+    dem = {'header': demHeader, 'rasterData': demRaster, 'areaRaster': areaRaster}
+    dem['originOri'] = {'xllcenter': 1.0, 'yllcenter': 1.0}
+
+    relRaster = np.zeros((12, 12))
+    relRaster[6:8, 6:8] = 1.0
+    releaseLine =  {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([6.9, 6.9, 8.5, 8.5, 6.9]),
+                            'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0],
+                            'rasterData': relRaster}
+
+    releaseLine['header'] = demHeader
+    releaseLine['header']['xllcenter'] = dem['originOri']['xllcenter']
+    releaseLine['header']['yllcenter'] = dem['originOri']['yllcenter']
+
+    # call function to be tested
+    particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
+
+    cfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPDIR'
+    cfg['GENERAL'].update({'massPerPart': '60.'})
+    particles2 = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
+
+    print('particles', particles2)
+
+    assert particles['Npart'] == 9
+    assert np.array_equal(particles['x'], np.asarray([6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
+    assert np.array_equal(particles['y'], np.asarray([6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
+    assert np.array_equal(particles['m'], np.asarray([50., 50., 50., 50., 50., 50., 50., 50., 50.]))
+    assert particles['mTot'] == 450.0
+    assert np.sum(particles['ux']) == 0.0
+
+    assert particles2['Npart'] == 9
+    assert np.array_equal(particles2['x'], np.asarray([6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
+    assert np.array_equal(particles2['y'], np.asarray([6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
+    assert np.array_equal(particles2['m'], np.asarray([50., 50., 50., 50., 50., 50., 50., 50., 50.]))
+    assert particles2['mTot'] == 450.0
+    assert np.sum(particles2['ux']) == 0.0

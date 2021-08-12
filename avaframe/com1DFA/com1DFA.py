@@ -101,7 +101,7 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     # write report dictionary
     reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines, cfgGen, reportAreaInfo)
     # add time and mass info to report
-    reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict)
+    reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, infoDict)
 
     return particlesList, fieldsList, Tsave, dem, reportDict, cfg
 
@@ -323,7 +323,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
     return reportST
 
 
-def reportAddTimeMassInfo(reportDict, tcpuDFA, cfgGen, infoDict):
+def reportAddTimeMassInfo(reportDict, tcpuDFA, infoDict):
     """ Add time and mass info to report """
 
     # add mass info
