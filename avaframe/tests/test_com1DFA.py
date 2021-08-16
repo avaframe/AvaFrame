@@ -9,8 +9,7 @@ import avaframe.in2Trans.ascUtils as IOf
 import pytest
 import configparser
 import pathlib
-
-
+import copy
 
 
 def test_prepareInputData():
@@ -576,14 +575,20 @@ def test_releaseSecRelArea():
     areaRaster = np.ones((demHeader['nrows'], demHeader['ncols']))
     dem = {'header': demHeader, 'rasterData': demRaster, 'areaRaster': areaRaster}
     dem['originOri'] = {'xllcenter': 1.0, 'yllcenter': 1.0}
-    secRelRaster = np.zeros((demHeader['nrows'], demHeader['ncols']))
-    secRelRaster[6:8, 7] = 1.0
-    secondaryReleaseInfo = {'x': np.asarray([7.4, 8.5, 8.5, 7.4, 7.4]), 'y': np.asarray([7.4, 7.4, 8.5, 8.5, 7.4]),
-                            'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0],
-                            'rasterData': [secRelRaster]}
+    secRelRaster2 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    secRelRaster2[6:8, 7] = 1.0
+    secRelRaster3 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    secRelRaster3[9, 9] = 0.5
+    secRelRaster1 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    secRelRaster1[1, 1] = 0.5
+    secondaryReleaseInfo = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5, 7.4, 8.5, 8.5, 7.4, 7.4, 9.5, 10.5, 10.5, 9.5, 9.5]),
+                            'y': np.asarray([1.5, 1.5, 2.5, 2.5, 1.5, 7.4, 7.4, 8.5, 8.5, 7.4, 9.5, 9.5, 10.5, 10.5, 9.5]),
+                            'Start': np.asarray([0, 5, 10]), 'Length': np.asarray([5, 5, 5]), 'Name': ['secRel1', 'secRel2', 'secRel3'], 'd0': [0.5, 1.0, 0.5],
+                            'rasterData': [secRelRaster1, secRelRaster2, secRelRaster3]}
     secondaryReleaseInfo['header'] = demHeader
     secondaryReleaseInfo['header']['xllcenter'] = dem['originOri']['xllcenter']
     secondaryReleaseInfo['header']['yllcenter'] = dem['originOri']['yllcenter']
+    secondaryReleaseInfo2 = copy.deepcopy(secondaryReleaseInfo)
     particlesIn = {'secondaryReleaseInfo': secondaryReleaseInfo}
     particlesIn['x'] = np.asarray([6., 7.])
     particlesIn['y'] = np.asarray([6., 7.])
@@ -596,14 +601,34 @@ def test_releaseSecRelArea():
 
     # call function to be tested
     particles = com1DFA.releaseSecRelArea(cfg['GENERAL'], particlesIn, fields, dem)
+    print('particles IN pytest 1', particles)
 
-    print('particles', particles)
+    # call function to be tested test 2
+    particlesIn2 = {'secondaryReleaseInfo': secondaryReleaseInfo2}
+    particlesIn2['x'] = np.asarray([6., 7., 9.1])
+    particlesIn2['y'] = np.asarray([6., 7., 9.1])
+    particlesIn2['m'] = np.asarray([1250., 1250., 1250.])
+    particlesIn2['t'] = 1.0
+    particlesIn2['Npart'] = 3
+    fieldsFD2 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    fieldsFD2[7:9, 7:9] = 1.0
+    fieldsFD2[9, 9] = 0.4
+    fields2 = {'FD': fieldsFD2}
+
+    particles2 = com1DFA.releaseSecRelArea(cfg['GENERAL'], particlesIn2, fields2, dem)
+
+    print('particles IN pytest socond', particles2)
 
     assert particles['Npart'] == 6
     assert np.array_equal(particles['x'], np.asarray([6., 7., 6.75, 7.25, 6.75, 7.25]))
     assert np.array_equal(particles['y'], np.asarray([6., 7., 6.75, 6.75, 7.25, 7.25]))
     assert np.array_equal(particles['m'], np.asarray([1250., 1250., 50., 50., 50., 50.]))
     assert particles['mTot'] == 2700.0
+    assert particles2['Npart'] == 11
+    assert np.array_equal(particles2['x'], np.asarray([6., 7., 9.1, 6.75, 7.25, 6.75, 7.25, 8.75, 9.25, 8.75, 9.25]))
+    assert np.array_equal(particles2['y'], np.asarray([6., 7., 9.1, 6.75, 6.75, 7.25, 7.25, 8.75, 8.75, 9.25, 9.25]))
+    assert np.array_equal(particles2['m'], np.asarray([1250., 1250., 1250., 50., 50., 50., 50., 25., 25., 25., 25.]))
+    assert particles2['mTot'] == 4050.0
 
 
 def test_initializeParticles():

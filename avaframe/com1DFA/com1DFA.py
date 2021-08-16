@@ -1597,11 +1597,13 @@ def releaseSecRelArea(cfg, particles, fields, dem):
     Initialize particles of the trigured secondary release area and add them
     to the simulation (particles dictionary)
     """
+
     secondaryReleaseInfo = particles['secondaryReleaseInfo']
     flowDepthField = fields['FD']
     secRelRasterList = secondaryReleaseInfo['rasterData']
     secRelRasterNameList = secondaryReleaseInfo['Name']
     count = 0
+    indexRel = []
     for secRelRaster, secRelRasterName in zip(secRelRasterList, secRelRasterNameList):
         # do the two arrays intersect (meaning a flowing particle entered the
         # secondary release area)
@@ -1615,11 +1617,20 @@ def releaseSecRelArea(cfg, particles, fields, dem):
             # release secondary release area by just appending the particles
             log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
             particles = DFAtls.mergeParticleDict(particles, secRelParticles)
-            # remove it from the secondary release area list
-            secRelRasterList.pop(count)
-            secondaryReleaseInfo = shpConv.removeFeature(secondaryReleaseInfo, count)
+            # save index of secRel feature
+            indexRel.append(secRelRasterName)
         count = count + 1
 
+    secondaryReleaseInfo['rasterData'] = secRelRasterList
+    particles['secondaryReleaseInfo'] = secondaryReleaseInfo
+    for item in indexRel:
+        iR = secRelRasterNameList.index(item)
+        # remove it from the secondary release area list
+        secRelRasterList.pop(iR)
+        secondaryReleaseInfo = shpConv.removeFeature(secondaryReleaseInfo, iR)
+        secRelRasterNameList.pop(iR)
+
+    # update secondaryReleaseInfo
     secondaryReleaseInfo['rasterData'] = secRelRasterList
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
