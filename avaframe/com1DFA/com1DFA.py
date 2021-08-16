@@ -311,10 +311,10 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
 
     if entInfo == 'Yes':
         reportST.update({'Entrainment area':
-                                   {'type': 'columns',
-                                   'Entrainment area scenario': entrainmentArea,
-                                   'Entrainment thickness [m]': cfgGen.getfloat('hEnt'),
-                                   'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
+                            {'type': 'columns',
+                            'Entrainment area scenario': entrainmentArea,
+                            'Entrainment thickness [m]': cfgGen.getfloat('hEnt'),
+                            'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
     if resInfo == 'Yes':
         reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
 
@@ -479,8 +479,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     relRasterOnes = np.where(relRaster > 0, 1., 0.)
     relAreaActual = np.nansum(relRasterOnes*dem['areaRaster'])
     relAreaProjected = np.sum(csz*csz*relRasterOnes)
-    reportAreaInfo = {'Release area info': {'Projected Area [m2]':  '%.2f' % (relAreaProjected),
-                'Actual Area [m2]': '%.2f' % (relAreaActual)}}
+    reportAreaInfo = {'Release area info': {'Projected Area [m2]': '%.2f' % (relAreaProjected),
+                      'Actual Area [m2]': '%.2f' % (relAreaActual)}}
 
     # ------------------------
     # initialize simulation
@@ -602,7 +602,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
         inDirPart = list(searchDir.glob(('*' + cfg['releaseScenario'] + '_' + '*' + cfg['simTypeActual'] + '*')))
         if inDirPart == []:
             messagePart = 'Initialise particles from file - no particles file found for releaseScenario: %s and simType: %s' % \
-                            (cfg['releaseScenario'], cfg['simTypeActual'])
+                          (cfg['releaseScenario'], cfg['simTypeActual'])
             log.error(messagePart)
             raise FileNotFoundError(messagePart)
         elif len(inDirPart) > 1:
@@ -782,7 +782,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         proba = nFloat - nPart
         if rng.random(1) < proba:
             nPart = nPart + 1
-        #nPart = (nFloor + rng.binomial(1, proba)).astype('int')
+        # nPart = (nFloor + rng.binomial(1, proba)).astype('int')
         # TODO: ensure that there is at last one particle
         nPart = np.maximum(nPart, 1)
     else:
@@ -958,7 +958,7 @@ def DFAIterate(cfg, particles, fields, dem):
     frictModelsList = ['samosat', 'coulomb', 'voellmy']
     frictModel = cfgGen['frictModel'].lower()
     frictType = frictModelsList.index(frictModel) + 1
-    log.debug('Friction Model used: %s, %s' % (frictModelsList[frictType-1],frictType))
+    log.debug('Friction Model used: %s, %s' % (frictModelsList[frictType-1], frictType))
 
     # Initialise Lists to save fields and add initial time step
     particlesList = []
@@ -997,7 +997,7 @@ def DFAIterate(cfg, particles, fields, dem):
     # Start time step computation
     while t <= tEnd*(1.+1.e-13) and iterate:
         startTime = time.time()
-        log.debug('Computing time step t = %f s, dt = %f s'% (t, dt))
+        log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
         if featLF:
             particles, fields, Tcpu, dt = computeLeapFrogTimeStep(
@@ -1015,7 +1015,7 @@ def DFAIterate(cfg, particles, fields, dem):
         massTotal.append(particles['mTot'])
         timeM.append(t)
         # print progress to terminal
-        print("time step t = %f s\r"% t, end="")
+        print("time step t = %f s\r" % t, end="")
         # make sure the array is not empty
         if t >= dtSave[0]:
             Tsave.append(t)
@@ -1030,7 +1030,7 @@ def DFAIterate(cfg, particles, fields, dem):
             if dtSave.size == 1:
                 dtSave = [2*cfgGen.getfloat('tEnd')]
             else:
-                indSave = np.where(dtSave>t)
+                indSave = np.where(dtSave > t)
                 dtSave = dtSave[indSave]
 
         # derive time step
@@ -1059,8 +1059,8 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
     log.info(('cpu time TimeLoop = %s s' % (Tcpu['TimeLoop'] / nIter)))
     log.info(('cpu time total other = %s s' %
-              ((Tcpu['Force'] + Tcpu['ForceSPH'] + Tcpu['Pos'] + Tcpu['Neigh'] + Tcpu['Field'])
-               / nIter)))
+              ((Tcpu['Force'] + Tcpu['ForceSPH'] + Tcpu['Pos'] + Tcpu['Neigh'] + Tcpu['Field']) /
+               nIter)))
     Tsave.append(t-dt)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
@@ -1072,7 +1072,7 @@ def DFAIterate(cfg, particles, fields, dem):
     # determine if stop criterion is reached or end time
     stopCritNotReached = particles['iterate']
     avaTime = particles['t']
-    stopCritPer = cfgGen.getfloat('stopCrit') *100.
+    stopCritPer = cfgGen.getfloat('stopCrit') * 100.
     # update info dict with stopping info for report
     if stopCritNotReached:
         infoDict.update({'stopInfo': {'Stop criterion': 'end Time reached: %.2f' % avaTime, 'Avalanche run time [s]': '%.2f' % avaTime}})
@@ -1791,7 +1791,6 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
             else:
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' % (resType, Tsave[countTime]))
         countTime = countTime + 1
-
 
 
 def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
