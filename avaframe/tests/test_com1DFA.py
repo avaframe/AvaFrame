@@ -789,7 +789,7 @@ def test_savePartToCsv(tmp_path):
     """ test saving particle infos to csv file """
 
     # setup required input
-    particleProperties = 'm|x|y|velocityMagnitude'
+    particleProperties = 'm|x|y|velocityMagnitude|test'
     particles1 = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
                   'z': np.asarray([1., 4., 5.]),
                   'm': np.asarray([10., 11., 11.]), 't': 0., 'simName': 'simNameTest',
