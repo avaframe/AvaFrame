@@ -10,6 +10,8 @@ import pytest
 import configparser
 import pathlib
 import copy
+import pickle
+import pandas as pd
 
 
 def test_prepareInputData():
@@ -529,7 +531,6 @@ def test_getSimTypeList():
     assert set(simTypeListTest).issubset(simTypeList)
     assert 'available' not in simTypeList
 
-
 def test_appendFieldsParticles():
     """ test if correct fields and particles list are created for export """
 
@@ -683,3 +684,146 @@ def test_initializeParticles():
     assert np.array_equal(particles2['m'], np.asarray([50., 50., 50., 50., 50., 50., 50., 50., 50.]))
     assert particles2['mTot'] == 450.0
     assert np.sum(particles2['ux']) == 0.0
+
+
+def test_writeMBFile(tmp_path):
+    """ test writing of mass balance info to file """
+
+    # setup required input
+    infoDict = {'timeStep': np.asarray([0, 1, 2, 3, 4])}
+    infoDict['massEntrained'] = np.asarray([0, 0, 10, 20, 30])
+    infoDict['massTotal'] = np.asarray([60., 60., 70., 90., 120.])
+    avaName = 'data/avaTest'
+    avaDir = pathlib.Path(tmp_path, avaName)
+    logName = 'simTestName'
+
+    # call function to be tested
+    com1DFA.writeMBFile(infoDict, avaDir, logName)
+
+    mbFilePath = avaDir / 'Outputs' / 'com1DFA' / 'mass_simTestName.txt'
+    mbInfo = np.loadtxt(mbFilePath, delimiter=',', skiprows=1)
+
+    print('mbInfo', mbInfo)
+
+    assert np.array_equal(mbInfo[:, 0], infoDict['timeStep'])
+    assert np.array_equal(mbInfo[:, 2], infoDict['massEntrained'])
+    assert np.array_equal(mbInfo[:, 1], infoDict['massTotal'])
+    assert mbInfo.shape[0] == 5
+    assert mbInfo.shape[1] == 3
+
+
+def test_savePartToPickle(tmp_path):
+    """ test saving particles info to pickle """
+
+    # setup required input
+    particles1 = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
+                  'm': np.asarray([10., 11., 11.]), 't': 0.}
+    particles2 = {'x': np.asarray([10., 20., 30.]), 'y': np.asarray([10., 40., 50.]),
+                  'm': np.asarray([100., 110., 110.]), 't': 2.}
+    dictList = [particles1, particles2]
+    outDir =  pathlib.Path(tmp_path, 'particles')
+    outDir.mkdir()
+    logName = 'simNameTest'
+
+    # call function to be tested
+    com1DFA.savePartToPickle(dictList, outDir, logName)
+
+    # read pickle
+    picklePath1 = outDir / 'particles_simNameTest_0000.0000.p'
+    picklePath2 = outDir / 'particles_simNameTest_0002.0000.p'
+    particlesRead1 = pickle.load(open(picklePath1, "rb"))
+    particlesRead2 = pickle.load(open(picklePath2, "rb"))
+
+    print('particklesRead1', particlesRead1)
+    print('particklesRead2', particlesRead2)
+
+    assert np.array_equal(particlesRead1['x'], particles1['x'])
+    assert np.array_equal(particlesRead1['y'], particles1['y'])
+    assert np.array_equal(particlesRead1['m'], particles1['m'])
+    assert particlesRead1['t'] == 0.
+    assert  np.array_equal(particlesRead2['x'], particles2['x'])
+    assert np.array_equal(particlesRead2['y'], particles2['y'])
+    assert np.array_equal(particlesRead2['m'], particles2['m'])
+    assert particlesRead2['t'] == 2.
+
+
+    # call function to be tested
+    logName = 'simNameTest3'
+    com1DFA.savePartToPickle(particles1, outDir, logName)
+
+    # read pickle
+    picklePath3 = outDir / 'particles_simNameTest3_0000.0000.p'
+    particlesRead3 = pickle.load(open(picklePath3, "rb"))
+
+    print('particklesRead3', particlesRead3)
+    print('particklesRead2', particlesRead2)
+
+    assert np.array_equal(particlesRead3['x'], particles1['x'])
+    assert np.array_equal(particlesRead3['y'], particles1['y'])
+    assert np.array_equal(particlesRead3['m'], particles1['m'])
+    assert particlesRead3['t'] == 0.
+
+
+def test_readPartFromPickle(tmp_path):
+    """ test reading particle properties from pickle """
+
+    # setup required inputs
+    inDir = pathlib.Path(tmp_path, 'avaTest')
+    inDir.mkdir()
+    particlesTestDict =  {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
+                          'm': np.asarray([10., 11., 11.]), 't': 0.}
+    pickle.dump(particlesTestDict, open(inDir / 'test.p', "wb"))
+
+
+    # call function to be tested
+    Particles, TimeStepInfo = com1DFA.readPartFromPickle(inDir, flagAvaDir=False)
+
+    print('Particles', Particles)
+    print('TimeStepInfo', TimeStepInfo)
+
+    assert np.array_equal(Particles[0]['x'], particlesTestDict['x'])
+    assert TimeStepInfo == [0.]
+
+
+def test_savePartToCsv(tmp_path):
+    """ test saving particle infos to csv file """
+
+    # setup required input
+    particleProperties = 'm|x|y|velocityMagnitude'
+    particles1 = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
+                  'z': np.asarray([1., 4., 5.]),
+                  'm': np.asarray([10., 11., 11.]), 't': 0., 'simName': 'simNameTest',
+                  'xllcenter': 11., 'yllcenter': 12., 'ux': np.asarray([0., 0., 0.]),
+                  'uy': np.asarray([0., 0., 0.]), 'uz': np.asarray([0., 0., 0.])}
+    particles2 = {'x': np.asarray([10., 20., 30.]), 'y': np.asarray([10., 40., 50.]),
+                  'z': np.asarray([1., 4., 5.]),
+                  'm': np.asarray([100., 110., 110.]), 't': 2., 'simName': 'simNameTest',
+                  'xllcenter': 4., 'yllcenter': 2., 'ux': np.asarray([4., 4., 4.]),
+                  'uy': np.asarray([4., 4., 4.]), 'uz': np.asarray([4., 4., 4.])}
+    dictList = [particles1, particles2]
+    outDir = pathlib.Path(tmp_path, 'testDir')
+    outDir.mkdir()
+
+    # call function to be tested
+    com1DFA.savePartToCsv(particleProperties, dictList, outDir)
+
+    # read csv file
+    partCsv1 = outDir / 'particlesCSV' / 'particlessimNameTest.csv.0'
+    DF1 = pd.read_csv(partCsv1)
+    partCsv2 = outDir / 'particlesCSV' / 'particlessimNameTest.csv.1'
+    DF2 = pd.read_csv(partCsv2)
+    velMag = np.sqrt(4**2 + 4**2 + 4**2)
+
+    print('csv df1', DF1.to_string())
+    print('csv df2', DF2.to_string())
+
+    assert np.array_equal(DF1['X'], (np.asarray([12., 13., 14.])))
+    assert np.array_equal(DF1['Y'], (np.asarray([13., 16., 17.])))
+    assert np.array_equal(DF1['m'], np.asarray([10., 11., 11.]))
+    assert np.array_equal(DF1['velocityMagnitude'], np.asarray([0., 0., 0.]))
+    assert DF1['time'][0] == 0.0
+    assert np.array_equal(DF2['X'], (np.asarray([14., 24., 34.])))
+    assert np.array_equal(DF2['Y'], (np.asarray([12., 42., 52.])))
+    assert np.array_equal(DF2['m'], np.asarray([100., 110., 110.]))
+    assert np.array_equal(DF2['velocityMagnitude'], np.asarray([velMag, velMag, velMag]))
+    assert DF2['time'][0] == 2.0
