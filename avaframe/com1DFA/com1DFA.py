@@ -1113,7 +1113,17 @@ def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes
 
 
 def writeMBFile(infoDict, avaDir, logName):
-    """ write mass balance info to file """
+    """ write mass balance info to file
+
+        Parameters
+        -----------
+        infoDict: dict
+            info on mass
+        avaDir: str or pathlib path
+            path to avalanche directory
+        logName: str
+            simulation name
+    """
 
     t = infoDict['timeStep']
     massEntrained = infoDict['massEntrained']
@@ -1722,7 +1732,10 @@ def savePartToCsv(particleProperties, dictList, outDir):
                 uz = particles['uz']
                 csvData[partProp] = DFAtls.norm(ux, uy, uz)
             else:
-                csvData[partProp] = particles[partProp]
+                if partProp in particles:
+                    csvData[partProp] = particles[partProp]
+                else:
+                    log.warning('Particle property %s does not exist' % (partProp))
         csvData['time'] = particles['t']
 
         # create pandas dataFrame and save to csv
