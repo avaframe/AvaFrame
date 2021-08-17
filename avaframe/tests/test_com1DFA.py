@@ -640,7 +640,6 @@ def test_initializeParticles():
     cfg['GENERAL'] = {'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
                       'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
                       'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest'}
-
     demHeader = {}
     demHeader['cellsize'] = 1
     demHeader['ncols'] = 12
@@ -886,4 +885,3 @@ def test_exportFields(tmp_path):
     assert np.array_equal(fieldFinal, pprFinal)
     assert np.array_equal(field10, pfdt10)
     assert len(fieldsList) == 16
-    
