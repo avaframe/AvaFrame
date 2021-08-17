@@ -782,8 +782,6 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         proba = nFloat - nPart
         if rng.random(1) < proba:
             nPart = nPart + 1
-        # nPart = (nFloor + rng.binomial(1, proba)).astype('int')
-        # TODO: ensure that there is at last one particle
         nPart = np.maximum(nPart, 1)
     else:
         n = (np.ceil(np.sqrt(massCell / massPerPart))).astype('int')
