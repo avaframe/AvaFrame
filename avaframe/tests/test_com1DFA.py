@@ -827,3 +827,63 @@ def test_savePartToCsv(tmp_path):
     assert np.array_equal(DF2['m'], np.asarray([100., 110., 110.]))
     assert np.array_equal(DF2['velocityMagnitude'], np.asarray([velMag, velMag, velMag]))
     assert DF2['time'][0] == 2.0
+
+
+def test_exportFields(tmp_path):
+    """ test exporting fields to ascii files """
+
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'resType': 'ppr|pfd|FD'}
+    cfg['REPORT'] = {'plotFields': 'ppr|pfd|pfv'}
+    Tsave = [0, 10, 15, 25, 40]
+    demHeader = {}
+    demHeader['cellsize'] = 1
+    demHeader['ncols'] = 10
+    demHeader['nrows'] = 10
+    demHeader['xllcenter'] = 0
+    demHeader['yllcenter'] = 0
+    demHeader['noDataValue'] = -9999
+    dem = {'header': demHeader}
+    outDir = pathlib.Path(tmp_path, 'testDir')
+    outDir.mkdir()
+    logName = 'simNameTest'
+    FD = np.zeros((5, 5))
+    pfd = np.zeros((5, 5))
+    pfv = np.zeros((5, 5))
+    ppr = np.zeros((5, 5))
+    fields1 = {'ppr': ppr+1, 'pfd': pfd+1, 'pfv': pfv+1, 'FD': FD+1}
+    fields2 = {'ppr': ppr+2, 'pfd': pfd+2, 'pfv': pfv+2, 'FD': FD+2}
+    fields3 = {'ppr': ppr+4, 'pfd': pfd+4, 'pfv': pfv+4, 'FD': FD+4}
+    fields4 = {'ppr': ppr+5, 'pfd': pfd+5, 'pfv': pfv+5, 'FD': FD+5}
+    fields5 = {'ppr': ppr+6, 'pfd': pfd+6, 'pfv': pfv+6, 'FD': FD+6}
+    fieldsList = [fields1, fields2, fields3, fields4, fields5]
+
+    # call function to be tested
+    com1DFA.exportFields(cfg, Tsave, fieldsList, dem, outDir, logName)
+
+    # read fields
+    fieldDir = outDir / 'peakFiles'
+    fieldDirTSteps = outDir / 'peakFiles' / 'timeSteps'
+    fieldFiles = list(fieldDirTSteps.glob('*.asc'))
+    fieldsList = []
+
+    for f in fieldFiles:
+        fieldsList.append(f.name)
+
+    field1 = fieldDir / 'simNameTest_ppr.asc'
+    field2 = fieldDirTSteps / 'simNameTest_pfd_t10.00.asc'
+    fieldFinal = np.loadtxt(field1, skiprows=6)
+    field10 = np.loadtxt(field2, skiprows=6)
+    pprFinal = ppr+0.006
+    pfdt10 = pfd+2
+
+    print('field1', fieldFinal)
+    print('pprFinal', pprFinal)
+    print('fields', fieldsList)
+
+
+    assert np.array_equal(fieldFinal, pprFinal)
+    assert np.array_equal(field10, pfdt10)
+    assert len(fieldsList) == 16
+    
