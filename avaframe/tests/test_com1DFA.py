@@ -24,7 +24,7 @@ def test_prepareInputData():
     avaDir = dirName / '..' / 'data' / 'avaAlr'
     relFile = avaDir / 'Inputs' / 'REL' / 'relAlr.shp'
     inputSimFiles['releaseScenario'] = relFile
-    inputSimFiles['demFile'] =  avaDir / 'Inputs' / 'avaAlr.asc'
+    inputSimFiles['demFile'] = avaDir / 'Inputs' / 'avaAlr.asc'
     inputSimFiles['entFile'] = avaDir / 'Inputs' / 'ENT' / 'entAlr.shp'
 
     # call function to be tested
@@ -40,7 +40,7 @@ def test_prepareInputData():
     assert inputSimLines['entLine']['Start'] == np.asarray([0.])
     assert inputSimLines['entLine']['Length'] == np.asarray([48.])
     assert inputSimLines['entLine']['Name'] == ['entAlr']
-    assert inputSimLines['resLine'] == None
+    assert inputSimLines['resLine'] is None
     assert inputSimLines['entrainmentArea'] == 'entAlr.shp'
 
 
@@ -63,7 +63,7 @@ def test_prepareRelase(tmp_path):
     assert inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes'
     assert inputSimLines['releaseLine']['d0'] == [1.32, 1.32]
     assert inputSimLines['secondaryReleaseLine']['d0'] == [1.789]
-    assert badName == True
+    assert badName is True
 
 
 def test_createReportDict():
@@ -74,7 +74,7 @@ def test_createReportDict():
     logName = 'testName'
     relName = 'relTest'
     inputSimLines = {'entrainmentArea': 'entTest', 'resistanceArea': 'resTest', 'releaseLine':
-                      {'Name': 'relTestFeature', 'd0': '1.45'}}
+                    {'Name': 'relTestFeature', 'd0': '1.45'}}
     reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'Yes', 'Release area info':
                       {'Projected Area [m2]': 'm2'}}
     cfg = configparser.ConfigParser()
@@ -83,7 +83,6 @@ def test_createReportDict():
 
     # call function to be tested
     reportST = com1DFA.createReportDict(avaDir, logName, relName, inputSimLines, cfg['GENERAL'], reportAreaInfo)
-
 
     assert 'Simulation Parameters' in reportST
     assert 'Program version' in reportST['Simulation Parameters']
@@ -97,7 +96,7 @@ def test_createReportDict():
     assert reportST['Simulation Parameters']['Friction model'] == 'samosAT'
     assert reportST['Release Area']['Release area scenario'] == relName
     assert reportST['Release Area']['Release Area'] == 'relTestFeature'
-    assert reportST['Release Area']['Release thickness [m]'] ==  '1.45'
+    assert reportST['Release Area']['Release thickness [m]'] == '1.45'
     assert reportST['Entrainment area']['Entrainment area scenario'] == 'entTest'
     assert 'Projected Area [m2]' in reportST['Release Area']
 
@@ -120,7 +119,6 @@ def test_reportAddTimeMassInfo():
     assert reportDict['Simulation Parameters']['Entrained mass [kg]'] == '0.80'
     assert reportDict['Simulation Parameters']['Entrained volume [m3]'] == '0.20'
     assert reportDict['Simulation Parameters']['Stop criterion'] == '0.1 percent of PKE'
-
 
 
 def test_prepareArea():
@@ -276,7 +274,7 @@ def test_initializeMassEnt():
     dirName = pathlib.Path(__file__).parents[0]
     fileName = dirName / 'testEnt.shp'
     entLine = {'fileName': fileName, 'Name': ['testEnt'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]),
-                   'x': np.asarray([0, 10., 10.0, 0., 0.]), 'y': np.asarray([0., 0., 10.0, 10., 0.0])}
+               'x': np.asarray([0, 10., 10.0, 0., 0.]), 'y': np.asarray([0., 0., 10.0, 10., 0.0])}
     reportAreaInfo = {'entrainment': '', }
     thresholdPointInPoly = 0.001
 
@@ -362,7 +360,7 @@ def test_placeParticles():
     rng = np.random.default_rng(12345)
 
     # call funciton to be tested - uniform
-    xpart, ypart, mPart, nPart =  com1DFA.placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
+    xpart, ypart, mPart, nPart = com1DFA.placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
     xpartTest = np.asarray([-1.66666666, 0.0, 1.66666666, -1.66666666, 0., 1.66666666, -1.66666666,
                         0.0, 1.66666666])
     ypartTest = np.asarray([3.33333333, 3.33333333, 3.33333333, 5.0, 5., 5., 6.66666666, 6.66666666,
@@ -370,14 +368,14 @@ def test_placeParticles():
 
     # call funciton to be tested - uniform
     massCell = 8.
-    xpart2, ypart2, mPart2, nPart2 =  com1DFA.placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
+    xpart2, ypart2, mPart2, nPart2 = com1DFA.placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
     xpartTest2 = np.asarray([-1.25, 1.25, -1.25, 1.25])
     ypartTest2 = np.asarray([3.75, 3.75, 6.25, 6.25])
 
     # call funciton to be tested - random
     massCell = 11.5
     initPartDistType = 'random'
-    xpart3, ypart3, mPart3, nPart3 =  com1DFA.placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
+    xpart3, ypart3, mPart3, nPart3 = com1DFA.placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
     xpartTest3 = np.asarray([-0.9162083, 1.48682729, 0.88127335, -0.54445225, -0.83593036, 0.49154377])
     ypartTest3 = np.asarray([3.43367093, 5.86378022, 7.20901433, 3.74122857, 7.24440576, 5.83618727])
 
@@ -429,7 +427,7 @@ def test_initializeMesh():
     demNewHeader['nrows'] = 5
     demNewHeader['ncols'] = 5
     demTest = {'header': demNewHeader}
-    demTest['originOri'] =  {'xllcenter': 101.23, 'yllcenter': 24.54}
+    demTest['originOri'] = {'xllcenter': 101.23, 'yllcenter': 24.54}
     demTest['outOfDEM'] = np.asarray([[False, False, False, False, True],
                                       [False, False, False, False, True],
                                       [False, False, False, False, True],
@@ -437,20 +435,20 @@ def test_initializeMesh():
                                       [False, False, False, False, True]])
     # normal vector of plane
     demTest['Nx'] = np.asarray([[0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.]]) - 25.
+                                [0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0.]]) - 25.
     demTest['Ny'] = np.asarray([[0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.]])
+                                [0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0.]])
     demTest['Nz'] = np.asarray([[0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.],
-                                     [0., 0., 0., 0., 0.]]) + 25.
+                                [0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0.],
+                                [0., 0., 0., 0., 0.]]) + 25.
     # setup neighbour grid
     headerNeighbourGrid = {}
     headerNeighbourGrid['cellsize'] = 0.5
@@ -473,9 +471,9 @@ def test_initializeMesh():
     assert dem['header']['cellsize'] == demTest['header']['cellsize']
     assert dem['header']['yllcenter'] == demTest['header']['yllcenter']
     assert np.array_equal(dem['rasterData'][0:4, 0:4], demTest['rasterData'][0:4, 0:4])
-    assert np.all(np.isnan(dem['rasterData'][0:5,4]))
-    assert abs(dem['Nx'][2,2]) == abs(dem['Nz'][2,2])
-    assert np.isclose(dem['areaRaster'][2,2], demTest['areaRaster'][2,2])
+    assert np.all(np.isnan(dem['rasterData'][0:5, 4]))
+    assert abs(dem['Nx'][2, 2]) == abs(dem['Nz'][2, 2])
+    assert np.isclose(dem['areaRaster'][2, 2], demTest['areaRaster'][2, 2])
     assert dem['headerNeighbourGrid']['xllcenter'] == demTest['headerNeighbourGrid']['xllcenter']
     assert dem['headerNeighbourGrid']['yllcenter'] == demTest['headerNeighbourGrid']['yllcenter']
     assert dem['headerNeighbourGrid']['ncols'] == demTest['headerNeighbourGrid']['ncols']
@@ -532,31 +530,31 @@ def test_getSimTypeList():
     assert set(simTypeListTest).issubset(simTypeList)
     assert 'available' not in simTypeList
 
+
 def test_appendFieldsParticles():
     """ test if correct fields and particles list are created for export """
 
     # setup required input
     fieldsListIn = [{'ppr': np.zeros((3, 3)), 'pfv': np.zeros((3, 3))}]
-    particlesListIn = [{'x': np.asarray([0., 4., 0.,]), 'y': np.asarray([0., 4., 0.,]), 'm': np.asarray([0., 4., 0.,])}]
-    particles = {'x': np.asarray([0., 5., 0.,]), 'y': np.asarray([0., 5., 0.,]), 'm': np.asarray([0., 4., 0.,])}
-    fields = {'ppr': np.ones((3,3)), 'pfd': np.ones((3,3)), 'pfv': np.ones((3,3)), 'FD': np.ones((3,3))}
+    particlesListIn = [{'x': np.asarray([0., 4., 0.]), 'y': np.asarray([0., 4., 0.]), 'm': np.asarray([0., 4., 0.])}]
+    particles = {'x': np.asarray([0., 5., 0.]), 'y': np.asarray([0., 5., 0.]), 'm': np.asarray([0., 4., 0.])}
+    fields = {'ppr': np.ones((3,3)), 'pfd': np.ones((3, 3)), 'pfv': np.ones((3, 3)), 'FD': np.ones((3, 3))}
     resTypes = ['ppr', 'pfv', 'pfd', 'particles']
 
     # call function to be tested
     fieldsList, particlesList = com1DFA.appendFieldsParticles(fieldsListIn, particlesListIn, particles, fields, resTypes)
     print('fieldsList', fieldsList[1])
-    print('particlesList', {'ppr': np.ones((3,3)), 'pfv': np.ones((3,3)), 'pfd': np.ones((3,3))})
 
-    assert np.array_equal(fieldsList[1]['ppr'], np.ones((3,3)))
-    assert np.array_equal(fieldsList[1]['pfv'], np.ones((3,3)))
-    assert np.array_equal(fieldsList[1]['pfd'], np.ones((3,3)))
+    assert np.array_equal(fieldsList[1]['ppr'], np.ones((3, 3)))
+    assert np.array_equal(fieldsList[1]['pfv'], np.ones((3, 3)))
+    assert np.array_equal(fieldsList[1]['pfd'], np.ones((3, 3)))
     assert resTypes[0:3] == list(fieldsList[1].keys())
     assert len(fieldsList) == 2
     assert np.array_equal(particlesList[1]['x'], particles['x'])
     assert np.array_equal(particlesList[1]['y'], particles['y'])
     assert np.array_equal(particlesList[1]['m'], particles['m'])
     assert ['x', 'y', 'm'] == list(particlesList[1].keys())
-    assert fieldsList[1].get('FD') == None
+    assert fieldsList[1].get('FD') is None
 
 
 def test_releaseSecRelArea():
@@ -585,7 +583,8 @@ def test_releaseSecRelArea():
     secRelRaster1[1, 1] = 0.5
     secondaryReleaseInfo = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5, 7.4, 8.5, 8.5, 7.4, 7.4, 9.5, 10.5, 10.5, 9.5, 9.5]),
                             'y': np.asarray([1.5, 1.5, 2.5, 2.5, 1.5, 7.4, 7.4, 8.5, 8.5, 7.4, 9.5, 9.5, 10.5, 10.5, 9.5]),
-                            'Start': np.asarray([0, 5, 10]), 'Length': np.asarray([5, 5, 5]), 'Name': ['secRel1', 'secRel2', 'secRel3'], 'd0': [0.5, 1.0, 0.5],
+                            'Start': np.asarray([0, 5, 10]), 'Length': np.asarray([5, 5, 5]),
+                            'Name': ['secRel1', 'secRel2', 'secRel3'], 'd0': [0.5, 1.0, 0.5],
                             'rasterData': [secRelRaster1, secRelRaster2, secRelRaster3]}
     secondaryReleaseInfo['header'] = demHeader
     secondaryReleaseInfo['header']['xllcenter'] = dem['originOri']['xllcenter']
@@ -654,9 +653,9 @@ def test_initializeParticles():
 
     relRaster = np.zeros((12, 12))
     relRaster[6:8, 6:8] = 1.0
-    releaseLine =  {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([6.9, 6.9, 8.5, 8.5, 6.9]),
-                            'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0],
-                            'rasterData': relRaster}
+    releaseLine = {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([6.9, 6.9, 8.5, 8.5, 6.9]),
+                    'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0],
+                    'rasterData': relRaster}
 
     releaseLine['header'] = demHeader
     releaseLine['header']['xllcenter'] = dem['originOri']['xllcenter']
@@ -721,7 +720,7 @@ def test_savePartToPickle(tmp_path):
     particles2 = {'x': np.asarray([10., 20., 30.]), 'y': np.asarray([10., 40., 50.]),
                   'm': np.asarray([100., 110., 110.]), 't': 2.}
     dictList = [particles1, particles2]
-    outDir =  pathlib.Path(tmp_path, 'particles')
+    outDir = pathlib.Path(tmp_path, 'particles')
     outDir.mkdir()
     logName = 'simNameTest'
 
@@ -746,7 +745,6 @@ def test_savePartToPickle(tmp_path):
     assert np.array_equal(particlesRead2['m'], particles2['m'])
     assert particlesRead2['t'] == 2.
 
-
     # call function to be tested
     logName = 'simNameTest3'
     com1DFA.savePartToPickle(particles1, outDir, logName)
@@ -770,10 +768,9 @@ def test_readPartFromPickle(tmp_path):
     # setup required inputs
     inDir = pathlib.Path(tmp_path, 'avaTest')
     inDir.mkdir()
-    particlesTestDict =  {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
+    particlesTestDict = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
                           'm': np.asarray([10., 11., 11.]), 't': 0.}
     pickle.dump(particlesTestDict, open(inDir / 'test.p', "wb"))
-
 
     # call function to be tested
     Particles, TimeStepInfo = com1DFA.readPartFromPickle(inDir, flagAvaDir=False)
@@ -882,7 +879,6 @@ def test_exportFields(tmp_path):
     print('pprFinal', pprFinal)
     print('fields', fieldsList)
 
-
     assert np.array_equal(fieldFinal, pprFinal)
     assert np.array_equal(field10, pfdt10)
     assert len(fieldsList) == 16
@@ -895,7 +891,7 @@ def test_initializeFields():
     demHeader = {'nrows': 11, 'ncols': 12, 'cellsize': 1}
     areaRaster = np.ones((11, 12))
     dem = {'header': demHeader, 'headerNeighbourGrid': demHeader, 'areaRaster': areaRaster}
-    particles = {'x': np.asarray([1., 2., 3.,]), 'y': np.asarray([1., 2., 3.,]), 'Npart': 3,
+    particles = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 2., 3.]), 'Npart': 3,
                  'ux': np.asarray([0., 0., 0.]), 'uy': np.asarray([0., 0., 0.]),
                  'uz': np.asarray([0., 0., 0.]), 'm': np.asarray([10., 10., 10.])}
     cfg = configparser.ConfigParser()
@@ -973,14 +969,14 @@ def test_initializeSimulation():
     demHeader['noDataValue'] = -9999
     demHeader['nrows'] = 12
     demHeader['ncols'] = 12
-    demData = np.ones((12,12))
+    demData = np.ones((12, 12))
     demOri = {'header': demHeader, 'rasterData': demData}
 
     # setup release line, entrainment line
-    releaseLine =  {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
+    releaseLine = {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
                     'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0]}
     entLine = {'fileName': 'test/entTest.shp', 'Name': ['testEnt'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]),
-                   'x': np.asarray([4, 5., 5.0, 4., 4.]), 'y': np.asarray([4., 4., 5.0, 5., 4.0])}
+               'x': np.asarray([4, 5., 5.0, 4., 4.]), 'y': np.asarray([4., 4., 5.0, 5., 4.0])}
     inputSimLines = {'releaseLine': releaseLine, 'entResInfo': {'flagSecondaryRelease': 'No'}, 'entLine': entLine,
                      'resLine': ''}
     # set release thickness read from file or not
@@ -994,7 +990,6 @@ def test_initializeSimulation():
     print('fields', fields)
     print('dem', dem)
     print('reportAreaInfo', reportAreaInfo)
-
 
     assert np.array_equal(particles['y'], np.asarray([6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
     assert np.sum(fields['pfv']) == 0.0
@@ -1037,4 +1032,4 @@ def test_initializeSimulation():
     assert reportAreaInfo['Release area info']['Projected Area [m2]'] == '9.00'
     assert reportAreaInfo['entrainment'] == 'Yes'
     assert reportAreaInfo['resistance'] == 'No'
-    assert np.sum(particles2['secondaryReleaseInfo']['rasterData']) == 4.5 
+    assert np.sum(particles2['secondaryReleaseInfo']['rasterData']) == 4.5
