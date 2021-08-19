@@ -6,6 +6,7 @@
 import numpy as np
 from avaframe.com1DFA import com1DFA
 import avaframe.in2Trans.ascUtils as IOf
+from avaframe.in3Utils import cfgUtils
 import pytest
 import configparser
 import pathlib
@@ -885,3 +886,159 @@ def test_exportFields(tmp_path):
     assert np.array_equal(fieldFinal, pprFinal)
     assert np.array_equal(field10, pfdt10)
     assert len(fieldsList) == 16
+
+
+def test_initializeFields():
+    """ test initializing fieldgetSimTypeLists """
+
+    # setup required inputs
+    demHeader = {'nrows': 11, 'ncols': 12, 'cellsize': 1}
+    areaRaster = np.ones((11, 12))
+    dem = {'header': demHeader, 'headerNeighbourGrid': demHeader, 'areaRaster': areaRaster}
+    particles = {'x': np.asarray([1., 2., 3.,]), 'y': np.asarray([1., 2., 3.,]), 'Npart': 3,
+                 'ux': np.asarray([0., 0., 0.]), 'uy': np.asarray([0., 0., 0.]),
+                 'uz': np.asarray([0., 0., 0.]), 'm': np.asarray([10., 10., 10.])}
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'rho': '200.', 'interpOption': '2'}
+
+    # call function to be tested
+    particles, fields = com1DFA.initializeFields(cfg['GENERAL'], dem, particles)
+
+    print('particles', particles)
+    print('fields', fields)
+
+    assert len(fields) == 9
+    assert np.sum(fields['pfv']) == 0.0
+    assert np.sum(fields['ppr']) == 0.0
+    assert np.sum(fields['FV']) == 0.0
+    assert np.sum(fields['P']) == 0.0
+    assert np.sum(fields['Vx']) == 0.0
+    assert np.sum(fields['Vy']) == 0.0
+    assert np.sum(fields['Vz']) == 0.0
+    assert np.sum(fields['pfd']) != 0.0
+    assert np.sum(fields['FD']) != 0.0
+
+
+def test_prepareVarSimDict():
+    """ test prepare variation sim dictionary """
+
+    # setup required input
+    standardCfg = configparser.ConfigParser()
+    standardCfg.optionxform = str
+    standardCfg['GENERAL'] = {'simTypeList': 'entres|null', 'modelType': 'dfa', 'simTypeActual': 'entres'}
+    relPath = pathlib.Path('test', 'relTest.shp')
+    inputSimFiles = {'relFiles': [relPath], 'entResInfo': {'flagEnt': 'Yes', 'flagRes': 'Yes'}}
+    variationDict = {'rho': np.asarray([200., 150.])}
+
+    # call function to be tested
+    simDict = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict)
+    testCfg = configparser.ConfigParser()
+    testCfg.optionxform = str
+    testCfg['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa', 'rho': '200.0',
+                          'simTypeActual': 'entres', 'releaseScenario': 'relTest'}
+    simHash = cfgUtils.cfgHash(testCfg)
+    simName1 = 'relTest_entres_dfa_' + simHash
+    testDict = {'relTest_entres_dfa_f466369a03': {'simHash': 'f466369a03', 'releaseScenario': 'relTest',
+                'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
+
+    print('simDict', simDict)
+    print('simName1', simName1)
+
+    for key in testDict[simName1]:
+        assert simDict[simName1][key] == testDict[simName1][key]
+
+    for section in testCfg.sections():
+        for key in testCfg[section]:
+            print('section', section, 'key', key)
+            assert simDict[simName1]['cfgSim'][section][key] == testCfg[section][key]
+
+
+def test_initializeSimulation():
+    """ test initializing a simulation """
+
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'methodMeshNormal': '1', 'thresholdPointInPoly': '0.001',
+                      'sphKernelRadius': '1.', 'meshCellSizeThreshold': '0.0001',
+                      'meshCellSize': '1.', 'simTypeActual': 'ent', 'rhoEnt': '100.', 'hEnt': '0.3',
+                      'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
+                      'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
+                      'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest',
+                      'dRes': '0.3', 'cw': '0.5', 'sres': '5', 'initialiseParticlesFromFile': 'False'}
+    # setup required input
+    demHeader = {}
+    demHeader['xllcenter'] = 1.0
+    demHeader['yllcenter'] = 2.0
+    demHeader['cellsize'] = 1.0
+    demHeader['noDataValue'] = -9999
+    demHeader['nrows'] = 12
+    demHeader['ncols'] = 12
+
+    # define plane with constant slope of 45°
+    demData = np.ones((12,12))
+
+    demOri = {'header': demHeader, 'rasterData': demData}
+
+    releaseLine =  {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
+                    'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0]}
+    entLine = {'fileName': 'test/entTest.shp', 'Name': ['testEnt'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]),
+                   'x': np.asarray([4, 5., 5.0, 4., 4.]), 'y': np.asarray([4., 4., 5.0, 5., 4.0])}
+
+    inputSimLines = {'releaseLine': releaseLine, 'entResInfo': {'flagSecondaryRelease': 'No'}, 'entLine': entLine,
+                     'resLine': ''}
+    relThField = ''
+    #np.zeros((12,12)) + 1.12
+    logName = 'simLog'
+
+    # call function to be tested
+    particles, fields, dem, reportAreaInfo = com1DFA.initializeSimulation(cfg, demOri, inputSimLines, logName, relThField)
+
+    print('particles', particles)
+    print('fields', fields)
+    print('dem', dem)
+    print('reportAreaInfo', reportAreaInfo)
+
+
+    assert np.array_equal(particles['y'], np.asarray([6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
+    assert np.sum(fields['pfv']) == 0.0
+    assert np.sum(fields['pfd']) != 0.0
+    assert dem['header']['xllcenter'] == 0.0
+    assert dem['header']['yllcenter'] == 0.0
+    assert dem['originOri']['xllcenter'] == 1.0
+    assert dem['originOri']['yllcenter'] == 2.0
+    assert particles['Npart'] == 9
+    assert np.array_equal(particles['x'], np.asarray([6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
+    assert np.array_equal(particles['m'], np.asarray([50., 50., 50., 50., 50., 50., 50., 50., 50.]))
+    assert particles['mTot'] == 450.
+    assert np.sum(particles['ux']) == 0.0
+    assert reportAreaInfo['Release area info']['Projected Area [m2]'] == '9.00'
+    assert reportAreaInfo['entrainment'] == 'Yes'
+    assert reportAreaInfo['resistance'] == 'No'
+
+    # call function to be tested
+    inputSimLines['entResInfo']['flagSecondaryRelease'] = 'Yes'
+    inputSimLines['secondaryReleaseLine'] = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5]),
+                                             'y': np.asarray([2.5, 2.5, 3.5, 3.5, 2.5]),
+                                             'Start': np.asarray([0]), 'Length': np.asarray([5]),
+                                             'Name': ['secRel1'], 'd0': [0.5]}
+
+    particles, fields, dem, reportAreaInfo = com1DFA.initializeSimulation(cfg, demOri, inputSimLines, logName, relThField)
+
+    print('secRel', particles['secondaryReleaseInfo'])
+
+    assert np.array_equal(particles['y'], np.asarray([6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
+    assert np.sum(fields['pfv']) == 0.0
+    assert np.sum(fields['pfd']) != 0.0
+    assert dem['header']['xllcenter'] == 0.0
+    assert dem['header']['yllcenter'] == 0.0
+    assert dem['originOri']['xllcenter'] == 1.0
+    assert dem['originOri']['yllcenter'] == 2.0
+    assert particles['Npart'] == 9
+    assert np.array_equal(particles['x'], np.asarray([6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
+    assert np.array_equal(particles['m'], np.asarray([50., 50., 50., 50., 50., 50., 50., 50., 50.]))
+    assert particles['mTot'] == 450.
+    assert np.sum(particles['ux']) == 0.0
+    assert reportAreaInfo['Release area info']['Projected Area [m2]'] == '9.00'
+    assert reportAreaInfo['entrainment'] == 'Yes'
+    assert reportAreaInfo['resistance'] == 'No'
+    assert np.sum(particles['secondaryReleaseInfo']['rasterData']) == 4.5
