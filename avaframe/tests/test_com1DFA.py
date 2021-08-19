@@ -965,7 +965,7 @@ def test_initializeSimulation():
                       'interpOption': '2', 'sphKernelRadius': '1', 'deltaTh': '0.25', 'seed': '12345',
                       'initPartDistType': 'uniform', 'thresholdPointInPoly': '0.001', 'avalancheDir': 'data/avaTest',
                       'dRes': '0.3', 'cw': '0.5', 'sres': '5', 'initialiseParticlesFromFile': 'False'}
-    # setup required input
+    # setup dem input
     demHeader = {}
     demHeader['xllcenter'] = 1.0
     demHeader['yllcenter'] = 2.0
@@ -973,21 +973,18 @@ def test_initializeSimulation():
     demHeader['noDataValue'] = -9999
     demHeader['nrows'] = 12
     demHeader['ncols'] = 12
-
-    # define plane with constant slope of 45°
     demData = np.ones((12,12))
-
     demOri = {'header': demHeader, 'rasterData': demData}
 
+    # setup release line, entrainment line
     releaseLine =  {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
                     'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0]}
     entLine = {'fileName': 'test/entTest.shp', 'Name': ['testEnt'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]),
                    'x': np.asarray([4, 5., 5.0, 4., 4.]), 'y': np.asarray([4., 4., 5.0, 5., 4.0])}
-
     inputSimLines = {'releaseLine': releaseLine, 'entResInfo': {'flagSecondaryRelease': 'No'}, 'entLine': entLine,
                      'resLine': ''}
+    # set release thickness read from file or not
     relThField = ''
-    #np.zeros((12,12)) + 1.12
     logName = 'simLog'
 
     # call function to be tested
@@ -1021,24 +1018,23 @@ def test_initializeSimulation():
                                              'y': np.asarray([2.5, 2.5, 3.5, 3.5, 2.5]),
                                              'Start': np.asarray([0]), 'Length': np.asarray([5]),
                                              'Name': ['secRel1'], 'd0': [0.5]}
+    relThField = np.zeros((12, 12)) + 0.5
+    particles2, fields2, dem2, reportAreaInfo2 = com1DFA.initializeSimulation(cfg, demOri, inputSimLines, logName, relThField)
 
-    particles, fields, dem, reportAreaInfo = com1DFA.initializeSimulation(cfg, demOri, inputSimLines, logName, relThField)
+    print('secRel', particles2['secondaryReleaseInfo'])
+    print('particles', particles2)
+    print('fields', fields2['pfd'])
 
-    print('secRel', particles['secondaryReleaseInfo'])
-
-    assert np.array_equal(particles['y'], np.asarray([6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
-    assert np.sum(fields['pfv']) == 0.0
-    assert np.sum(fields['pfd']) != 0.0
-    assert dem['header']['xllcenter'] == 0.0
-    assert dem['header']['yllcenter'] == 0.0
-    assert dem['originOri']['xllcenter'] == 1.0
-    assert dem['originOri']['yllcenter'] == 2.0
-    assert particles['Npart'] == 9
-    assert np.array_equal(particles['x'], np.asarray([6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
-    assert np.array_equal(particles['m'], np.asarray([50., 50., 50., 50., 50., 50., 50., 50., 50.]))
-    assert particles['mTot'] == 450.
+    assert np.sum(fields2['pfv']) == 0.0
+    assert np.sum(fields2['pfd']) != np.sum(fields['pfd'])
+    assert dem2['header']['xllcenter'] == 0.0
+    assert dem2['header']['yllcenter'] == 0.0
+    assert dem2['originOri']['xllcenter'] == 1.0
+    assert dem2['originOri']['yllcenter'] == 2.0
+    assert particles2['Npart'] == 9
+    assert particles2['mTot'] == 225.
     assert np.sum(particles['ux']) == 0.0
     assert reportAreaInfo['Release area info']['Projected Area [m2]'] == '9.00'
     assert reportAreaInfo['entrainment'] == 'Yes'
     assert reportAreaInfo['resistance'] == 'No'
-    assert np.sum(particles['secondaryReleaseInfo']['rasterData']) == 4.5
+    assert np.sum(particles2['secondaryReleaseInfo']['rasterData']) == 4.5 
