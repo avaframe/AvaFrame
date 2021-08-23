@@ -6,12 +6,21 @@
 import numpy as np
 import scipy.special as sc
 from scipy.interpolate import interp1d
+import logging
+
+
+# create local logger
+log = logging.getLogger(__name__)
 
 
 def computeParameters(a, b, c):
     """ Compute alpha, beta and mu """
 
     # computation of paramters
+    if a > b or b > c or a > c:
+        message = 'a:%.2f must be smaller than b: %.2f must be smaller than c: %.2f' % (a, b, c)
+        log.error(message)
+        raise ValueError(message)
     mu = (a + 4*b + c) / 6.0
     alpha = (4*b + c - 5*a) / (c - a)
     beta = (5*c - a - 4*b) / (c - a)

@@ -48,7 +48,7 @@ def runAna3AIMEC(avalancheDir=''):
     anaMod = cfgSetup['anaMod']
 
     # Setup input from com1DFA
-    pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfgSetup)
+    pathDict = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg)
 
     # TODO: define referenceFile
     pathDict['numSim'] = len(pathDict['ppr'])

@@ -221,9 +221,17 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
     suffix = ['pfd', 'ppr', 'pfv']
     for suf in suffix:
         refFile = inputDirRef / (simNameRef + '_' + suf + '.asc')
+        if not refFile.is_file():
+            message = 'No file found called: %s' %  (str(refFile))
+            log.error(message)
+            raise FileNotFoundError(message)
         pathDict[suf].append(refFile)
         log.info('Added to pathDict[%s] %s ' % (suf,refFile))
         compFile =  inputDirComp / (simNameComp + '_' + suf + '.asc')
+        if not refFile.is_file():
+            message = 'No file found called: %s' %  (str(compFile))
+            log.error(message)
+            raise FileNotFoundError(message)
         pathDict[suf].append(compFile)
         log.info('Added to pathDict[%s] %s ' % (suf,compFile))
 
@@ -346,15 +354,17 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
 
     # Setup input from com1DFA and save file paths to dictionary
     suffix = ['pfd', 'ppr', 'pfv']
-    pathDict = fU.getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule)
+    cfgSetup = cfg['AIMECSETUP']
+    pathDict = fU.getDFADataPaths(avaDir, pathDict, cfgSetup, suffix, comModule)
 
-    # Extract mb info
-    if comModule == 'com1DFAOrig':
-        pathDict = extractCom1DFAMBInfo(avaDir, pathDict)
-    elif comModule == 'com1DFA':
-        pathDict = getMBInfo(avaDir, pathDict, comModule)
-    else:
-        pathDict = getMBInfo(avaDir, pathDict, comModule)
+    if cfg['FLAGS'].getboolean('flagMass'):
+        # Extract mb info
+        if comModule == 'com1DFAOrig':
+            pathDict = extractCom1DFAMBInfo(avaDir, pathDict)
+        elif comModule == 'com1DFA':
+            pathDict = getMBInfo(avaDir, pathDict, comModule)
+        else:
+            pathDict = getMBInfo(avaDir, pathDict, comModule)
 
     pathDict['compType'] = ['singleModule', comModule]
 
@@ -388,10 +398,11 @@ def indiDfa2Aimec(avaDir, suffix, comModule, cfg, inputDir=''):
      """
 
     # path dictionary for Aimec
-    pathDict = {suffix: []}
+    pathDict = {suffix: [], 'colorParameter': []}
 
     # Setup input from com1DFA and save file paths to dictionary
     pathDict = fU.getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule, inputDir=inputDir)
+    print('pathDict in dfa', pathDict)
 
     pathDict['compType'] = ['singleModule', comModule]
 
