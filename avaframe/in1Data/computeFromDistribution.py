@@ -84,10 +84,10 @@ def extractUniform(a, c, x, cfg):
     return CDF, CDFInt, sampleVect
 
 
-def getEmpiricalCDF(sample, CDF, cfg):
+def getEmpiricalCDF(sample):
     """ Derive empirical CDF using numpy histogram and cumsum """
 
-    binsNo = int(int(cfg['sampleSize']) *0.25)
+    binsNo = int(len(sample) *0.25)
     hist, binsEd = np.histogram(sample, bins=binsNo)
     CDFEmp = np.cumsum(hist)
     CDFEmpPlot = CDFEmp / CDFEmp[-1]

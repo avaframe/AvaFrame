@@ -11,6 +11,8 @@ import pathlib
 from avaframe.in1Data import getInput
 import configparser
 import shutil
+import numpy as np
+from avaframe.in1Data import computeFromDistribution as cD
 
 
 def test_getInputData(tmp_path):
@@ -77,3 +79,65 @@ def test_getInputDataCom1DFA(tmp_path):
     assert inputSimFiles['entFile'] == avaDir / 'Inputs' / 'ENT' / 'entrainment1HS.shp'
     assert inputSimFiles['entResInfo']['flagEnt'] == "Yes"
     assert inputSimFiles['entResInfo']['flagRes'] == "No"
+
+
+def test_computeParameters():
+    """ test computing parameters """
+
+    # setup required input
+    a = 2
+    b = 4
+    c = 3
+
+    # call function to be tested
+    alpha, beta, mu = cD.computeParameters(a, b, c)
+
+    # test
+    muTest = 3.5
+    alphaTest = 9
+    betaTest = -3
+
+    print('alpa, beta, mu', alpha, beta, mu)
+
+    assert alpha == alphaTest
+    assert beta == betaTest
+    assert mu == muTest
+
+
+def test_extractUniform():
+    """ test extracting a uniform distribution """
+
+    # setup required input
+    a = 10
+    c = 105
+    sampleSize = 20
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'sampleSize': sampleSize, 'flagMinMax': 'True', 'support': 10000}
+    steps = 10000
+
+    # compute the support of the distribution
+    x = np.linspace(a, c, steps)
+    # call function to be tested
+    CDF, CDFInt, sampleVect = cD.extractUniform(a, c, x, cfg['GENERAL'])
+
+    print('CDF', CDF)
+    print('sample', sampleVect)
+    print('CDF', CDF)
+
+    assert np.array_equal(sampleVect, np.linspace(10,105,20))
+    assert len(sampleVect) == sampleSize
+    assert len(CDF) == 10000
+    assert CDFInt(57.5) == 0.5
+
+    # call function to be tested
+    cfg['GENERAL']['flagMinMax'] = 'False'
+    CDF, CDFInt, sampleVect = cD.extractUniform(a, c, x, cfg['GENERAL'])
+
+    print('CDF', CDF)
+    print('sample', sampleVect)
+    print('CDF', CDF)
+
+    assert np.allclose(sampleVect, np.linspace(10,105,22)[1:-1], atol=1.e-6)
+    assert len(sampleVect) == sampleSize
+    assert len(CDF) == 10000
+    assert CDFInt(57.5) == 0.5
