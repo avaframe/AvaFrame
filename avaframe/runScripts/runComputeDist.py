@@ -80,7 +80,7 @@ iPlot.plotSample(workingDir, sampleVect, cfgGen, flagShow)
 
 # +++++++++++++++ Check if retrieved sample actually fits the desired distriution .....
 # retrieve approximation of sample PDF using numpy histogram and cumsum
-CDFEmp, xSample = cF.getEmpiricalCDF(sampleVect, CDF, cfgGen)
+CDFEmp, xSample = cF.getEmpiricalCDF(sampleVect)
 iPlot.plotEmpCDF(workingDir, CDF, CDFEmp, xSample, cfgGen, 'Hist', flagShow)
 # retrieve approximation of sample using the ECDF function
 ECDF, xSample = cF.getEmpiricalCDFNEW(sampleVect)

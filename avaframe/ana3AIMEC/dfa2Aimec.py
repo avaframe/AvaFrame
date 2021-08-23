@@ -47,6 +47,10 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
         # Read log file
         locFiles = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
         fileName = locFiles / ('start%s.log' % (simName))
+        if not fileName.is_file():
+            message = 'No log file for fetching mass info found called: %s' % (fileName)
+            log.error(message)
+            raise FileNotFoundError(message)
         with open(fileName, 'r') as file:
             for line in file:
                 if "computing time step" in line:
@@ -89,12 +93,20 @@ def getMBInfo(avaDir, pathDict, comMod, simName=''):
     # Get info from ExpLog
     if simName != '':
         mbFile = pathlib.Path(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
+        if not mbFile.is_file():
+            message = 'No mass log file found called: %s' % (str(mbFile))
+            log.error(message)
+            raise FileNotFoundError(message)
         pathDict['massBal'].append(mbFile)
         log.info('Added to pathDict[massBal] %s' % (mbFile))
 
     else:
         dir = pathlib.Path(avaDir, 'Outputs', comMod)
         mbFiles = list(dir.glob('mass*.txt'))
+        if len(mbFiles) == 0:
+            message = 'No mass log file found in directory %s' % (str(dir))
+            log.error(message)
+            raise FileNotFoundError(message)
         mbNames = sorted(set(mbFiles), key=lambda s: (str(s).split("_")[1], str(s).split("_")[2], str(s).split("_")[4]))
 
         for mFile in mbNames:
