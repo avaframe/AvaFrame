@@ -320,7 +320,9 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
     if inputDir == '':
         inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
         if inputDir.is_dir() == False:
-            log.error('Input directory does not exist - check anaMod')
+            message = 'Input directory %s does not exist - check anaMod' % inputDir
+            log.error(message)
+            raise FileNotFoundError(message)
 
     # check if is string - then convert to list
     if isinstance(suffix, str):
@@ -357,6 +359,12 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
                 if dataDF['resType'][m] == suf:
                     pathDict[suf].append(dataDF['files'][m])
                     log.info('Added to pathDict: %s' % (dataDF['files'][m]))
+
+    for suf in suffix:
+        if pathDict[suf] == []:
+            message = 'No files found for %s in directory: %s' % (suf, inputDir)
+            log.error(message)
+            raise FileNotFoundError(message)
 
     return pathDict
 

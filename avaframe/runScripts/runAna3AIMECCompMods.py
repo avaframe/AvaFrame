@@ -44,7 +44,8 @@ def runAna3AIMECCompMods(avalancheDir=''):
     # write configuration to file
     cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
-    compList = [['relAlr', 'null'], ['relKot', 'ent']]
+    # compList = [['relAlr', 'null'], ['relKot', 'ent']]
+    compList = [['relAlr', 'ent']]
 
     for comp in compList:
 

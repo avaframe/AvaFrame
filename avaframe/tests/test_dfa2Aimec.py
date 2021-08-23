@@ -62,7 +62,8 @@ def test_mainDfa2Aimec(tmp_path):
     pathData = testPath / 'Outputs' / 'com1DFA' / 'peakFiles'
     cfg = configparser.ConfigParser()
     cfg['AIMECSETUP'] = {'varParList': 'releaseScenario', 'ascendingOrder': 'True'}
-    pathDict = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFA', cfg['AIMECSETUP'])
+    cfg['FLAGS'] = {'flagMass': 'True'}
+    pathDict = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFA', cfg)
     print('path', dirPath)
     # get path dictionary for test
     pathDTest = {}

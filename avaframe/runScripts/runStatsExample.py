@@ -67,7 +67,7 @@ if cfg.getboolean('aimec'):
     cfgAimecSetup = cfgAIMEC['AIMECSETUP']
 
     # Setup input from com1DFA
-    pathDict = dfa2Aimec.mainDfa2Aimec(avaDir, cfgAimecSetup['anaMod'], cfgAimecSetup)
+    pathDict = dfa2Aimec.mainDfa2Aimec(avaDir, cfgAimecSetup['anaMod'], cfgAIMEC)
 
     # TODO: define referenceFile
     pathDict['numSim'] = len(pathDict['ppr'])

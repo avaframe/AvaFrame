@@ -10,6 +10,7 @@ import os
 import pathlib
 from avaframe.in1Data import getInput
 import configparser
+import pytest
 import shutil
 import numpy as np
 from avaframe.in1Data import computeFromDistribution as cD
@@ -87,21 +88,29 @@ def test_computeParameters():
     # setup required input
     a = 2
     b = 4
-    c = 3
+    c = 7
 
     # call function to be tested
     alpha, beta, mu = cD.computeParameters(a, b, c)
 
     # test
-    muTest = 3.5
-    alphaTest = 9
-    betaTest = -3
+    muTest = 4 + 1./6.
+    alphaTest = 2.6
+    betaTest = 3.4
 
     print('alpa, beta, mu', alpha, beta, mu)
 
     assert alpha == alphaTest
     assert beta == betaTest
     assert mu == muTest
+
+    # call function to be tested and check for correct error if file does not exist
+    a = 4
+    b = 2
+    c = 0
+    with pytest.raises(ValueError) as e:
+        assert cD.computeParameters(a, b, c)
+    assert str(e.value) == 'a:%.2f must be smaller than b: %.2f must be smaller than c: %.2f' % (a, b, c)
 
 
 def test_extractUniform():
@@ -141,3 +150,32 @@ def test_extractUniform():
     assert len(sampleVect) == sampleSize
     assert len(CDF) == 10000
     assert CDFInt(57.5) == 0.5
+
+
+def test_computePert():
+    """ test computing pert distribution """
+
+    # setup required input
+    a = 0
+    b = 10
+    c = 100
+    x = np.linspace(a, c, 10000)
+    alpha = 1.4
+    beta = 4.6
+
+    # call function to be tested
+    PDF, CDF, CDFInt = cD.computePert(a, b, c, x, alpha, beta)
+
+    assert np.isclose(x[np.where(PDF==np.amax(PDF))[0][0]], 10.0, atol=1.e-3)
+    assert len(PDF) == 10000
+    assert np.isclose(x[np.where((CDF < (0.5+1.4e-4)) & (CDF > (0.5 - 1.4e-4)))[0][0]], 20.26, atol=1.e-2)
+
+    # call function to be tested
+    b = 50
+    alpha = 3.
+    beta = 3.
+    PDF, CDF, CDFInt = cD.computePert(a, b, c, x, alpha, beta)
+
+    assert np.isclose(x[np.where(PDF==np.amax(PDF))[0][0]], 50.0, atol=1.e-2)
+    assert len(PDF) == 10000
+    assert np.isclose(x[np.where((CDF < (0.5+1.4e-4)) & (CDF > (0.5 - 1.4e-4)))[0][0]], 50.0, atol=1.e-2)
