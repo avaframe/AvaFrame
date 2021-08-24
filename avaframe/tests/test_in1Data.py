@@ -207,3 +207,17 @@ def test_extractFromCDF():
     assert sampleVect[0] == sampleTest[0]
     assert sampleVect[-1] == sampleTest[-1]
     assert np.allclose(sampleVect, sampleTest, atol=1.e-6)
+
+
+def test_EmpiricalCDFNEW():
+    """ test extracting empirical CDF """
+
+    # setup required input
+    sample = np.linspace(1, 105, 20)
+
+    # call function to be tested
+    ECDF, sampleSorted = cD.getEmpiricalCDFNEW(sample)
+
+    print('ECDF', ECDF, sampleSorted)
+
+    assert np.allclose(np.linspace(0.05, 1, 20), ECDF, atol=1.e-6)
