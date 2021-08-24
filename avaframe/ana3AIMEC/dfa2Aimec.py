@@ -222,18 +222,18 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
     for suf in suffix:
         refFile = inputDirRef / (simNameRef + '_' + suf + '.asc')
         if not refFile.is_file():
-            message = 'No file found called: %s' %  (str(refFile))
+            message = 'No file found called: %s' % (str(refFile))
             log.error(message)
             raise FileNotFoundError(message)
         pathDict[suf].append(refFile)
-        log.info('Added to pathDict[%s] %s ' % (suf,refFile))
-        compFile =  inputDirComp / (simNameComp + '_' + suf + '.asc')
+        log.info('Added to pathDict[%s] %s ' % (suf, refFile))
+        compFile = inputDirComp / (simNameComp + '_' + suf + '.asc')
         if not refFile.is_file():
-            message = 'No file found called: %s' %  (str(compFile))
+            message = 'No file found called: %s' % (str(compFile))
             log.error(message)
             raise FileNotFoundError(message)
         pathDict[suf].append(compFile)
-        log.info('Added to pathDict[%s] %s ' % (suf,compFile))
+        log.info('Added to pathDict[%s] %s ' % (suf, compFile))
 
     # if desired set path to mass log files
     if cfg['FLAGS'].getboolean('flagMass'):
