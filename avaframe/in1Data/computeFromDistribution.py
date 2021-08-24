@@ -88,7 +88,8 @@ def extractUniform(a, c, x, cfg):
         sampleVect = sampleVect[1:-1]
 
     CDF = np.linspace(0, 1, int(cfg['support']))
-    CDFInt = interp1d(x, CDF)
+    print('CDF in ', len(CDF), len(x))
+    CDFInt = interp1d(CDF, x)
 
     return CDF, CDFInt, sampleVect
 
