@@ -13,6 +13,7 @@ import configparser
 import pytest
 import shutil
 import numpy as np
+from scipy.interpolate import interp1d
 from avaframe.in1Data import computeFromDistribution as cD
 
 
@@ -136,7 +137,7 @@ def test_extractUniform():
     assert np.array_equal(sampleVect, np.linspace(10,105,20))
     assert len(sampleVect) == sampleSize
     assert len(CDF) == 10000
-    assert CDFInt(57.5) == 0.5
+    assert CDFInt(0.5) == 57.5
 
     # call function to be tested
     cfg['GENERAL']['flagMinMax'] = 'False'
@@ -149,7 +150,7 @@ def test_extractUniform():
     assert np.allclose(sampleVect, np.linspace(10,105,22)[1:-1], atol=1.e-6)
     assert len(sampleVect) == sampleSize
     assert len(CDF) == 10000
-    assert CDFInt(57.5) == 0.5
+    assert CDFInt(0.5) == 57.5
 
 
 def test_computePert():
@@ -179,3 +180,30 @@ def test_computePert():
     assert np.isclose(x[np.where(PDF==np.amax(PDF))[0][0]], 50.0, atol=1.e-2)
     assert len(PDF) == 10000
     assert np.isclose(x[np.where((CDF < (0.5+1.4e-4)) & (CDF > (0.5 - 1.4e-4)))[0][0]], 50.0, atol=1.e-2)
+
+
+def test_extractFromCDF():
+    """ test extract sample from CDF """
+
+    # setup required input
+    a = 10
+    c = 105
+    steps = 10000
+    x = np.linspace(a, c, steps)
+    CDF = np.linspace(0, 1, steps)
+    CDFInt = interp1d(CDF, x)
+    cfg = configparser.ConfigParser()
+    sampleSize = '20'
+    cfg['GENERAL'] = {'sampleSize': sampleSize, 'flagMinMax': 'True'}
+
+    # call function to be tested
+    sampleVect = cD.extractFromCDF(CDF, CDFInt, x, cfg['GENERAL'])
+    print('sample', sampleVect)
+
+    # test output
+    sampleTest = np.linspace(10, 105, 20)
+
+    assert len(sampleVect) == 20
+    assert sampleVect[0] == sampleTest[0]
+    assert sampleVect[-1] == sampleTest[-1]
+    assert np.allclose(sampleVect, sampleTest, atol=1.e-6)
