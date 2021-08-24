@@ -9,7 +9,6 @@ import numpy as np
 import avaframe.ana3AIMEC.dfa2Aimec as dfa2Aimec
 
 
-
 def test_extractCom1DFAMBInfo():
     """ test extracting mass balance from log file """
 
@@ -33,24 +32,23 @@ def test_extractCom1DFAMBInfo():
     massFile = avaDir / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt'
     massTime = np.loadtxt(massFile, delimiter=',', skiprows=1)
     print('massTime', massTime[1:10, :])
-    print('ent mass', massTime[np.where(massTime[:,0]==30.2)], np.where(massTime[:,0]==30.2))
+    print('ent mass', massTime[np.where(massTime[:, 0]==30.2)], np.where(massTime[:,0]==30.2))
 
     assert str(pathDict['massBal'][0]) == str(massFile)
-    assert np.where(massTime[:,2] > 0.0)[0][0] == 301.0
+    assert np.where(massTime[:, 2] > 0.0)[0][0] == 301.0
 
     # call function to be tested
     simNameInput = 'release1HS_ent_dfa_0.15500'
     pathDict2 = dfa2Aimec.extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=simNameInput)
 
-
     # read created mass file
     massFile2 = avaDir / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt'
     massTime2 = np.loadtxt(massFile2, delimiter=',', skiprows=1)
     print('massTime', massTime2[1:10, :])
-    print('ent mass', massTime2[np.where(massTime2[:,0]==30.2)], np.where(massTime2[:,0]==30.2))
+    print('ent mass', massTime2[np.where(massTime2[:, 0] == 30.2)], np.where(massTime2[:, 0] == 30.2))
 
     assert str(pathDict2['massBal'][0]) == str(massFile2)
-    assert np.where(massTime2[:,2] > 0.0)[0][0] == 301.0
+    assert np.where(massTime2[:, 2] > 0.0)[0][0] == 301.0
 
 
 def test_mainDfa2Aimec(tmp_path):
@@ -194,7 +192,6 @@ def test_getPathsFromSimName():
     assert 'release1HS_ent_dfa_0.15500_pfv' in str(pathDict['pfv'][0])
 
 
-
 def test_dfaBench2Aimec():
     """ test export data used for aimec """
 
@@ -247,7 +244,7 @@ def test_getCompDirs():
     assert refModule == 'com1DFAOrig'
     assert pathDict['compType'] == ['comModules', 'com1DFAOrig', 'com1DFA']
     assert pathDict['referenceFile'] == 0
-    assert pathDict['contCmap'] == True
+    assert pathDict['contCmap'] is True
 
 
 def test_indiDfa2Aimec():
@@ -268,7 +265,6 @@ def test_indiDfa2Aimec():
 
     assert 'pfv' not in pathDict.keys()
     assert 'release1HS_ent_dfa_67dc2dc10a_ppr' in str(pathDict['ppr'][0])
-    #assert 'release1HS_ent_dfa_0.15500_ppr' in str(pathDict['ppr'][0])
     assert 'pfd' not in pathDict.keys()
     assert pathDict['compType'] == ['singleModule', 'com1DFA']
     assert pathDict['colorParameter'] == ['release1HS', 'release2HS']

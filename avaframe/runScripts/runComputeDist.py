@@ -63,7 +63,7 @@ elif cfgGen['distType'] == 'Uni':
 else:
     log.error('Distribution type not known')
 
-#++++++++++++++ Print result to log and save results in outFile
+# ++++++++++++++ Print result to log and save results in outFile
 for m in range(len(sampleVect)):
     log.info('%.5f' % (sampleVect[m]))
 outFile = os.path.join(workingDir, 'sampleFromDist%s.txt' % cfgGen['distType'])

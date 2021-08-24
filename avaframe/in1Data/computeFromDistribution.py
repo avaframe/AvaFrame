@@ -79,7 +79,7 @@ def extractUniform(a, c, x, cfg):
     # Compute sample
     sampleVect = np.zeros(sampleSize)
     sampleVect[0] = a
-    for m in range(1,sampleSize):
+    for m in range(1, sampleSize):
         sampleVect[m] = sampleVect[m-1] + interval
 
     if cfg.getboolean('flagMinMax'):
@@ -97,7 +97,7 @@ def extractUniform(a, c, x, cfg):
 def getEmpiricalCDF(sample):
     """ Derive empirical CDF using numpy histogram and cumsum """
 
-    binsNo = int(len(sample) *0.25)
+    binsNo = int(len(sample) * 0.25)
     hist, binsEd = np.histogram(sample, bins=binsNo)
     CDFEmp = np.cumsum(hist)
     CDFEmpPlot = CDFEmp / CDFEmp[-1]

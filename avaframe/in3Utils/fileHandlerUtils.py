@@ -488,7 +488,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
     # Set name of avalanche if avaDir is given
     # Make dictionary of input data info
     data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'simName' : [],
-            'modelType' : [], 'releaseArea': [], 'cellSize': [], simID: [], 'timeStep': []}
+            'modelType': [], 'releaseArea': [], 'cellSize': [], simID: [], 'timeStep': []}
 
     # Set name of avalanche if avaDir is given
     if avaDir != '':
@@ -505,7 +505,6 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
             fNamePart = nameParts[0] + '_AF'
             relNameSim = nameParts[0]
             infoParts = nameParts[1].split('_')
-
 
         else:
             nameParts = name.split('_')
@@ -530,7 +529,6 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
         # Set name of avalanche if avaDir is given
         if avaDir != '':
             data['avaName'].append(avaName)
-
 
     dataDF = pd.DataFrame.from_dict(data)
 
