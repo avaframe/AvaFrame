@@ -55,8 +55,9 @@ def test_validateVarDict():
 
     print('variationDictTest', variationDictTest)
 
-    assert len(variationDictTest.keys()) == 2
+    assert len(variationDictTest.keys()) == 3
     assert variationDictTest['simTypeList'][0] == 'null'
     assert variationDictTest['simTypeList'][1] == 'ent'
+    assert variationDictTest['rhoEnt'] == ['200.']
     assert np.array_equal(variationDictTest['rho'], np.asarray([300, 400]))
     assert 'relThAA' not in variationDictTest.keys()
