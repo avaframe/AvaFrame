@@ -774,6 +774,8 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         number of particles created
     """
 
+    initPartDistType = initPartDistType.lower()
+
     if initPartDistType == 'random':
         # number of particles needed (floating number)
         nFloat = massCell / massPerPart
@@ -801,14 +803,23 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         # place particles equaly distributed with a small variation
         xpart = csz * (- 0.5 + indx) + x + (rng.random(nPart) - 0.5) * d
         ypart = csz * (- 0.5 + indy) + y + (rng.random(nPart) - 0.5) * d
+        print('semiRand', (rng.random(nPart) - 0.5) * d)
+        print('y',  (rng.random(nPart) - 0.5) * d, 'd', d)
     elif initPartDistType == 'random':
         # place particles randomly in the cell
         xpart = csz * (rng.random(nPart) - 0.5 + indx)
         ypart = csz * (rng.random(nPart) - 0.5 + indy)
-    else:
+    elif initPartDistType == 'uniform':
         # place particles equaly distributed
         xpart = csz * (- 0.5 + indx) + x
         ypart = csz * (- 0.5 + indy) + y
+    else:
+        log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
+                    initPartDistType)
+        # place particles equaly distributed
+        xpart = csz * (- 0.5 + indx) + x
+        ypart = csz * (- 0.5 + indy) + y
+
     return xpart, ypart, mPart, nPart
 
 
@@ -1768,11 +1779,11 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
     """
 
     resTypesGen = fU.splitIniValueToArraySteps(cfg['GENERAL']['resType'])
-    if resTypesGen == ['']:
-        resTypesGen = []
+    resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
+    if resTypesGen == []:
+        resTypesGen = resTypesReport
     if 'particles' in resTypesGen:
         resTypesGen.remove('particles')
-    resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
     numberTimes = len(Tsave)-1
     countTime = 0
     for timeStep in Tsave:
@@ -1904,11 +1915,13 @@ def getSimTypeList(simTypeList, inputSimFiles):
 
     if 'ent' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagEnt'] == 'No':
-            log.error('No entrainment file found')
-            raise FileNotFoundError
+            message = 'No entrainment file found'
+            log.error(message)
+            raise FileNotFoundError(message)
     if 'res' in simTypeList or 'entres' in simTypeList:
         if entResInfo['flagRes'] == 'No':
-            log.error('No resistance file found')
-            raise FileNotFoundError
+            message = 'No resistance file found'
+            log.error(message)
+            raise FileNotFoundError(message)
 
     return simTypeList

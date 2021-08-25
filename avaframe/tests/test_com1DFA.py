@@ -43,6 +43,23 @@ def test_prepareInputData():
     assert inputSimLines['resLine'] is None
     assert inputSimLines['entrainmentArea'] == 'entAlr.shp'
 
+    # call function to be tested
+    inputSimFiles = {'entResInfo': {'flagEnt': 'No', 'flagRes': 'Yes', 'flagSecondaryRelease': 'No'}}
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / '..' / 'data' / 'avaParabola'
+    relFile = avaDir / 'Inputs' / 'REL' / 'release1PF.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['demFile'] = avaDir / 'Inputs' / 'DEM_PF_Topo.asc'
+    inputSimFiles['resFile'] = avaDir / 'Inputs' / 'RES' / 'resistance1PF.shp'
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles)
+
+    print('inputSimLines', inputSimLines)
+
+    assert inputSimLines['entLine'] is None
+    assert inputSimLines['resLine']['Start'] == np.asarray([0.])
+    assert inputSimLines['resLine']['Length'] == np.asarray([5.])
+    assert inputSimLines['resLine']['Name'] == ['']
+
 
 def test_prepareRelase(tmp_path):
     """ test preparing release areas """
@@ -64,6 +81,44 @@ def test_prepareRelase(tmp_path):
     assert inputSimLines['releaseLine']['d0'] == [1.32, 1.32]
     assert inputSimLines['secondaryReleaseLine']['d0'] == [1.789]
     assert badName is True
+
+    # setup required inputs
+    inputSimLines = {}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes'}
+    inputSimLines['releaseLine'] = {'d0': ['1.78', '4.328']}
+    inputSimLines['secondaryReleaseLine'] = {'d0': ['None']}
+    rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
+
+    # call function to be tested
+    relName2, inputSimLines2, badName2 = com1DFA.prepareRelase(cfg, rel, inputSimLines)
+
+    assert relName2 == 'release1PF_test'
+    assert inputSimLines2['entResInfo']['flagSecondaryRelease'] == 'Yes'
+    assert inputSimLines2['releaseLine']['d0'] == [1.78, 4.328]
+    assert inputSimLines2['secondaryReleaseLine']['d0'] == [2.5]
+    assert badName2 is True
+
+    # setup required inputs
+    inputSimLines = {}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No'}
+    inputSimLines['releaseLine'] = {'d0': ['1.78', '4.328']}
+    rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
+
+    # call function to be tested
+    with pytest.raises(FileNotFoundError) as e:
+        assert com1DFA.prepareRelase(cfg, rel, inputSimLines)
+    assert str(e.value) == "No secondary release file found"
+
+    # call function to be tested
+    cfg['GENERAL']['secRelArea'] = 'False'
+    relName3, inputSimLines3, badName3 = com1DFA.prepareRelase(cfg, rel, inputSimLines)
+
+    assert relName3 == 'release1PF_test'
+    assert inputSimLines3['entResInfo']['flagSecondaryRelease'] == 'No'
+    assert inputSimLines3['releaseLine']['d0'] == [1.78, 4.328]
+    assert inputSimLines3['secondaryReleaseLine'] == None
+    assert badName3 is True
+
 
 
 def test_createReportDict():
@@ -154,12 +209,18 @@ def test_prepareArea():
 
     # test 3
     releaseLine3 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]), 'Length': np.asarray([5, 5]),
-                   'x': np.asarray([0, 10., 10.0, 0., 0., 9.4, 16.5, 16., 9., 9.4]),
-                   'y': np.asarray([0., 0., 10.0, 10., 0.0, 9.4, 9., 17., 17., 9.4])}
+                   'x': np.asarray([0, 10., 10.0, 0., 0., 5, 15., 15., 5., 5]),
+                   'y': np.asarray([0., 0., 10.0, 10., 0.0, 5, 5, 15., 15., 5.])}
 
     with pytest.raises(AssertionError) as e:
         assert com1DFA.prepareArea(releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=True)
     assert str(e.value) == "Features are overlaping - this is not allowed"
+
+    line5 = com1DFA.prepareArea(releaseLine3, dem, 0.6, thList=thList, combine=True, checkOverlap=False)
+
+    print('line5', line5)
+
+
 
     # test 4
     releaseLine4 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]), 'Length': np.asarray([5, 5]),
@@ -181,6 +242,12 @@ def test_prepareArea():
     testRaster5[4, 4:6] = 7.8
     testRaster5[5, 4:6] = 7.8
     testList = [testRaster4, testRaster5]
+    testRaster6 = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    testRaster6[0:3, 0] = 1.234
+    testRaster6[0, 0:3] = 1.234
+    testRaster6[1:3, 1:3] = (1.234 + 7.8) / 2.
+    testRaster6[3, 1:4] = 7.8
+    testRaster6[1:4, 3] = 7.8
 
     print('line Raster', line['rasterData'])
     print('testRaster', testRaster)
@@ -188,11 +255,12 @@ def test_prepareArea():
     print('testRaster', testRaster2)
     print('test 4 line Raster', line4['rasterData'])
     print('testRaster', testList)
+    print('test raster 6', testRaster6)
 
     assert np.array_equal(line['rasterData'], testRaster)
     assert np.array_equal(line2['rasterData'], testRaster2)
     assert np.array_equal(line4['rasterData'], testList)
-
+    assert np.array_equal(line5['rasterData'], testRaster6)
 
 def test_checkParticlesInRelease():
     """ test if particles are within release polygon and removed if not """
@@ -253,6 +321,13 @@ def test_pointInPolygon():
     assert np.array_equal(mask, testMask)
     assert np.array_equal(mask2, testMask2)
 
+    # call function to be tested
+    line = {'x': np.asarray([0, 10., 10., 0.]), 'y': np.asarray([0., 0., 10., 10.])}
+    mask3 = com1DFA.pointInPolygon(demHeader, points, line, 0.01)
+    testMask3 = np.asarray([True, True, False, False, True])
+
+    assert np.array_equal(mask3, testMask3)
+
 
 def test_initializeMassEnt():
     """ test initializing entrainment area """
@@ -290,6 +365,13 @@ def test_initializeMassEnt():
     assert np.sum(entrMassRaster) == 121
     assert entrMassRaster.shape[0] == nrows
     assert reportAreaInfo['entrainment'] == 'Yes'
+
+    # call function to be tested
+    simTypeActual = 'res'
+    entrMassRaster, reportAreaInfo = com1DFA.initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly)
+
+    assert np.array_equal(entrMassRaster, np.zeros((nrows, ncols)))
+    assert reportAreaInfo['entrainment'] == 'No'
 
 
 def test_initializeResistance():
@@ -391,6 +473,26 @@ def test_placeParticles():
     assert np.isclose(mPart3, 1.9166666666666)
     assert np.allclose(xpart3, xpartTest3)
     assert np.allclose(ypart3, ypartTest3)
+
+    # call funciton to be tested - random
+    massCell = 8
+    initPartDistType = 'semiRandom'
+    csz = 4
+    xpart4, ypart4, mPart4, nPart4 = com1DFA.placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
+
+    print('xpart4', xpart4)
+    print('ypart4', ypart4)
+
+    assert nPart4 == 4.0
+    assert mPart2 == 2.
+    assert -2.0 < xpart4[0] < 0.0
+    assert 2.0 < ypart4[0] < 4.0
+    assert 0.0 < xpart4[1] < 2.0
+    assert 2.0 < ypart4[1] < 4.0
+    assert -2.0 < xpart4[2] < 0.0
+    assert 4.0 < ypart4[2] < 6.0
+    assert 0.0 < xpart4[3] < 2.0
+    assert 4.0 < ypart4[3] < 6.0
 
 
 def test_initializeMesh():
@@ -513,6 +615,14 @@ def test_polygon2Raster():
     assert np.array_equal(maskTest, Mask)
     assert np.array_equal(maskTest2, Mask2)
 
+    # call function to be tested
+    Line = {'x': np.asarray([0, 1., 0.989, 0.]), 'y': np.asarray([0., 0., 0.989, 1.])}
+    Mask3 = com1DFA.polygon2Raster(demHeader, Line, 0.1, th=th)
+    maskTest3 = maskTest.copy()
+    maskTest3[1, 1] = 1.2
+
+    assert np.array_equal(maskTest3, Mask3)
+
 
 def test_getSimTypeList():
     """ test create list of simTypes """
@@ -529,6 +639,48 @@ def test_getSimTypeList():
 
     assert set(simTypeListTest).issubset(simTypeList)
     assert 'available' not in simTypeList
+
+    # call function to be tested
+    simTypeList = ['ent', 'null', 'available']
+    inputSimFiles['entResInfo']['flagRes'] = 'No'
+    simTypeList2 = com1DFA.getSimTypeList(simTypeList, inputSimFiles)
+
+    # setup test result
+    simTypeListTest2 = ['ent', 'null']
+
+    assert set(simTypeListTest2).issubset(simTypeList2)
+    assert 'available' not in simTypeList2
+    assert 'entres' not in simTypeList2
+    assert 'res' not in simTypeList2
+
+    # call function to be tested
+    simTypeList = ['res', 'null', 'available']
+    inputSimFiles['entResInfo']['flagEnt'] = 'No'
+    inputSimFiles['entResInfo']['flagRes'] = 'Yes'
+    simTypeList3 = com1DFA.getSimTypeList(simTypeList, inputSimFiles)
+
+    # setup test result
+    simTypeListTest3 = ['res', 'null']
+
+    assert set(simTypeListTest3).issubset(simTypeList3)
+    assert 'available' not in simTypeList3
+    assert 'entres' not in simTypeList3
+    assert 'ent' not in simTypeList3
+
+    # call function to be tested
+    simTypeList = ['ent', 'null', 'available', 'entres', 'res']
+    inputSimFiles['entResInfo']['flagEnt'] = 'Yes'
+    inputSimFiles['entResInfo']['flagRes'] = 'No'
+    with pytest.raises(FileNotFoundError) as e:
+        assert com1DFA.getSimTypeList(simTypeList, inputSimFiles)
+    assert str(e.value) == "No resistance file found"
+
+    # call function to be tested
+    inputSimFiles['entResInfo']['flagEnt'] = 'No'
+    inputSimFiles['entResInfo']['flagRes'] = 'Yes'
+    with pytest.raises(FileNotFoundError) as e:
+        assert com1DFA.getSimTypeList(simTypeList, inputSimFiles)
+    assert str(e.value) == "No entrainment file found"
 
 
 def test_appendFieldsParticles():
@@ -771,15 +923,22 @@ def test_readPartFromPickle(tmp_path):
     particlesTestDict = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
                           'm': np.asarray([10., 11., 11.]), 't': 0.}
     pickle.dump(particlesTestDict, open(inDir / 'test.p', "wb"))
+    testDir = inDir / 'Outputs' / 'com1DFA' / 'particles'
+    testDir.mkdir(parents=True)
+    pickle.dump(particlesTestDict, open(testDir / 'test.p', "wb"))
 
     # call function to be tested
     Particles, TimeStepInfo = com1DFA.readPartFromPickle(inDir, flagAvaDir=False)
+    # call function to be tested
+    Particles2, TimeStepInfo2 = com1DFA.readPartFromPickle(inDir, flagAvaDir=True)
 
     print('Particles', Particles)
     print('TimeStepInfo', TimeStepInfo)
 
     assert np.array_equal(Particles[0]['x'], particlesTestDict['x'])
     assert TimeStepInfo == [0.]
+    assert np.array_equal(Particles2[0]['x'], particlesTestDict['x'])
+    assert TimeStepInfo2 == [0.]
 
 
 def test_savePartToCsv(tmp_path):
@@ -863,10 +1022,10 @@ def test_exportFields(tmp_path):
     fieldDir = outDir / 'peakFiles'
     fieldDirTSteps = outDir / 'peakFiles' / 'timeSteps'
     fieldFiles = list(fieldDirTSteps.glob('*.asc'))
-    fieldsList = []
+    fieldsListTest = []
 
     for f in fieldFiles:
-        fieldsList.append(f.name)
+        fieldsListTest.append(f.name)
 
     field1 = fieldDir / 'simNameTest_ppr.asc'
     field2 = fieldDirTSteps / 'simNameTest_pfd_t10.00.asc'
@@ -877,11 +1036,29 @@ def test_exportFields(tmp_path):
 
     print('field1', fieldFinal)
     print('pprFinal', pprFinal)
-    print('fields', fieldsList)
+    print('fields', fieldsListTest)
 
     assert np.array_equal(fieldFinal, pprFinal)
     assert np.array_equal(field10, pfdt10)
-    assert len(fieldsList) == 16
+    assert len(fieldsListTest) == 16
+
+    # call function to be tested
+    outDir2 = pathlib.Path(tmp_path, 'testDir2')
+    outDir2.mkdir()
+    cfg['GENERAL']['resType'] = ''
+    cfg['REPORT'] = {'plotFields': 'ppr|pfd|pfv|particles'}
+    com1DFA.exportFields(cfg, Tsave, fieldsList, dem, outDir2, logName)
+
+    # read fields
+    fieldDir = outDir2 / 'peakFiles'
+    fieldDirTSteps = outDir2 / 'peakFiles' / 'timeSteps'
+    fieldFiles = list(fieldDirTSteps.glob('*.asc'))
+    fieldsListTest2 = []
+
+    for f in fieldFiles:
+        fieldsListTest2.append(f.name)
+
+    assert len(fieldsListTest2) == 15
 
 
 def test_initializeFields():
@@ -947,6 +1124,32 @@ def test_prepareVarSimDict():
         for key in testCfg[section]:
             print('section', section, 'key', key)
             assert simDict[simName1]['cfgSim'][section][key] == testCfg[section][key]
+
+    # call function to be tested
+    relPath = pathlib.Path('test', 'relTest_extended.shp')
+    inputSimFiles = {'relFiles': [relPath], 'entResInfo': {'flagEnt': 'Yes', 'flagRes': 'Yes'}}
+    variationDict = {'rho': np.asarray([200., 150.]), 'simTypeList': ['entres', 'ent']}
+    simDict2 = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict)
+
+    testCfg2 = configparser.ConfigParser()
+    testCfg2.optionxform = str
+    testCfg2['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa', 'rho': '200.0',
+                          'simTypeActual': 'entres', 'releaseScenario': 'relTest_extended'}
+    simHash2 = cfgUtils.cfgHash(testCfg2)
+    simName2 = 'relTest_extended_AF_entres_dfa_' + simHash2
+    testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relTest_extended',
+                'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg2}}
+
+    print('simDict', simDict2)
+    print('simName1', simName2)
+
+    for key in testDict2[simName2]:
+        assert simDict2[simName2][key] == testDict2[simName2][key]
+
+    for section in testCfg2.sections():
+        for key in testCfg2[section]:
+            print('section', section, 'key', key)
+            assert simDict2[simName2]['cfgSim'][section][key] == testCfg2[section][key]
 
 
 def test_initializeSimulation():
