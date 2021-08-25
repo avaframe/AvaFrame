@@ -61,7 +61,6 @@ def test_readAllBenchmarkDesDicts():
     print('testDictList', testDictList)
 
     assert isinstance(testDictList[0], dict)
-    assert testDictList['avaAlrNullTest'] == 1
 
 
 def test_filterBenchmarks():
