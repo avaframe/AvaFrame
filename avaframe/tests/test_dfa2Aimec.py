@@ -107,6 +107,10 @@ def test_dfaComp2Aimec(tmp_path):
     for massName1, massName2 in zip(pathDict['massBal'], pathDTest['massBal']):
         assert str(massName1) == str(massName2)
 
+    with pytest.raises(FileNotFoundError) as e:
+        assert dfa2Aimec.dfaComp2Aimec(testPath, cfg, 'release3HS', 'ent')
+    assert 'No matching simulations found for reference and comparison simulation for releaseScenario:' in str(e.value)
+
 
 def test_getRefMB():
     """ test get reference mass balance info """
@@ -182,15 +186,33 @@ def test_getPathsFromSimName():
 
     print('pathDict', pathDict)
 
-    assert 'mass_release1HS_ent_dfa_67dc2dc10a' in str(pathDict['massBal'][1])
-    assert 'release1HS_ent_dfa_67dc2dc10a_pfd' in str(pathDict['pfd'][1])
-    assert 'release1HS_ent_dfa_67dc2dc10a_ppr' in str(pathDict['ppr'][1])
-    assert 'release1HS_ent_dfa_67dc2dc10a_pfv' in str(pathDict['pfv'][1])
-    assert 'mass_release1HS_ent_dfa_0.15500' in str(pathDict['massBal'][0])
-    assert 'release1HS_ent_dfa_0.15500_pfd' in str(pathDict['pfd'][0])
+    assert 'com1DFA/mass_release1HS_ent_dfa_67dc2dc10a' in str(pathDict['massBal'][1])
+    assert 'com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_pfd' in str(pathDict['pfd'][1])
+    assert 'com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_ppr' in str(pathDict['ppr'][1])
+    assert 'com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_pfv' in str(pathDict['pfv'][1])
+    assert 'com1DFAOrig/mass_release1HS_ent_dfa_0.15500' in str(pathDict['massBal'][0])
+    assert 'com1DFAOrig/peakFiles/release1HS_ent_dfa_0.15500_pfd' in str(pathDict['pfd'][0])
     assert 'release1HS_ent_dfa_0.15500_ppr' in str(pathDict['ppr'][0])
     assert 'release1HS_ent_dfa_0.15500_pfv' in str(pathDict['pfv'][0])
 
+    # call function to be tested
+    cfg['AIMECSETUP']['comModules'] = 'ref|com1DFA'
+    cfg['AIMECSETUP']['testName'] = 'avaHockeyChannelEntTest'
+    cfg['FLAGS'] = {'flagMass': 'False'}
+    inputDirRef = dirPath / '..' / '..' / 'benchmarks' / 'avaHockeyChannelEntTest'
+    simNameRef = 'release1HS_ent_ref_0.15500'
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
+    pathDict2 = dfa2Aimec.getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp)
+
+    print('pathDict2', pathDict2)
+
+    assert pathDict2['massBal'] == []
+    assert 'release1HS_ent_dfa_67dc2dc10a_pfd' in str(pathDict2['pfd'][1])
+    assert 'release1HS_ent_dfa_67dc2dc10a_ppr' in str(pathDict2['ppr'][1])
+    assert 'release1HS_ent_dfa_67dc2dc10a_pfv' in str(pathDict2['pfv'][1])
+    assert 'avaHockeyChannelEntTest/release1HS_ent_ref_0.15500_pfd' in str(pathDict2['pfd'][0])
+    assert 'avaHockeyChannelEntTest/release1HS_ent_ref_0.15500_ppr' in str(pathDict2['ppr'][0])
+    assert 'avaHockeyChannelEntTest/release1HS_ent_ref_0.15500_pfv' in str(pathDict2['pfv'][0])
 
 def test_dfaBench2Aimec():
     """ test export data used for aimec """
