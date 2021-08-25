@@ -807,16 +807,13 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         # place particles randomly in the cell
         xpart = csz * (rng.random(nPart) - 0.5 + indx)
         ypart = csz * (rng.random(nPart) - 0.5 + indy)
-    elif initPartDistType == 'uniform':
+    else:
         # place particles equaly distributed
         xpart = csz * (- 0.5 + indx) + x
         ypart = csz * (- 0.5 + indy) + y
-    else:
+        if initPartDistType != 'uniform':
         log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
                     initPartDistType)
-        # place particles equaly distributed
-        xpart = csz * (- 0.5 + indx) + x
-        ypart = csz * (- 0.5 + indy) + y
 
     return xpart, ypart, mPart, nPart
 
