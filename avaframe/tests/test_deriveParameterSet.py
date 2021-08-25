@@ -21,7 +21,8 @@ def test_getVariationDict():
                       'particleFile': '', 'seed': '12345', 'rho': '300|400', 'rhoEnt': '100', 'relTh': '1.',
                       'secRelArea': 'True', 'secondaryRelTh': '0.5', 'dt': '0.05', 'tEnd': '400'}
     modDict = {'GENERAL': {'simTypeList': ['null|ent', 'available'], 'resType': ['ppr|pfd|pfv', 'ppr|pfd|pfv|particles|FD'],
-                'tSteps': ['0:1', '1'], 'rho': ['300|400', '200'], 'secRelArea': ['True', 'False']}}
+                'tSteps': ['0:1', '1'], 'rho': ['300|400', '200'], 'secRelArea': ['True', 'False']},
+                'TEST': {'test': ['test1', '']}}
 
     # call function to be tested
     variations = dP.getVariationDict(avaDir, cfg, modDict)
@@ -41,7 +42,7 @@ def test_validateVarDict():
 
     # setup required input
     variationDict = {'simTypeList': ['null', 'ent'], 'rho': np.asarray([300, 400]), 'relThAA': np.asarray([1.0, 2.0]),
-                     'secRelAreA': ['False', 'True']}
+                     'secRelAreA': ['False', 'True'], 'rhoEnt': '200.'}
     standardCfg = configparser.ConfigParser()
     standardCfg.optionxform = str
     standardCfg['GENERAL'] = {'simTypeList' : 'available', 'modelType' : 'dfa', 'resType' : 'ppr|pfd|pfv',
