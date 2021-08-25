@@ -68,6 +68,17 @@ def test_makeSimDF():
     assert dataDF['cellSize'][0] == 5.0
     assert dataDF['test'][0] == '0.888'
 
+    inputDir = os.path.join(dirPath, 'data', 'testSim1')
+    dataDF = fU.makeSimDF(inputDir, simID=cfg['varPar'])
+    assert dataDF['names'][0] == 'releaseTest1_test_AF_entres_dfa_0.888_ppr'
+    assert dataDF['releaseArea'][0] == 'releaseTest1_test'
+    assert dataDF['simType'][0] == 'entres'
+    assert dataDF['resType'][0] == 'ppr'
+    assert dataDF['cellSize'][0] == 5.0
+    assert dataDF['test'][0] == '0.888'
+
+
+
 
 def test_exportcom1DFAOrigOutput(tmp_path):
     """ Test if export of result files works """
@@ -136,6 +147,7 @@ def test_splitIniValueToArraySteps():
     # call function to be tested
     items = fU.splitIniValueToArraySteps(cfgValues)
     items2 = fU.splitIniValueToArraySteps(cfgValues2)
+    items3 = fU.splitIniValueToArraySteps(cfgValues, returnList=True)
 
     assert len(items) == len(cfgValuesList)
     assert items[0] == cfgValuesList[0]
@@ -147,6 +159,11 @@ def test_splitIniValueToArraySteps():
     assert items2[2] == cfgValuesList2[2]
     assert items2[3] == cfgValuesList2[3]
     assert items2[4] == cfgValuesList2[4]
+    assert len(items3) == len(cfgValuesList)
+    assert items3[0] == '1.0'
+    assert items3[1] == '2.5'
+    assert items3[2] == '3.8'
+    assert isinstance(items3, list)
 
 
 def test_splitTimeValueToArrayInterval():
@@ -199,15 +216,22 @@ def test_getFilterDict():
     cfg = configparser.ConfigParser()
     cfg.optionxform = str
     cfg['GENERAL'] = {'tEnd': '20'}
-    cfg['FILTER'] = {'relTh': '1:2:3', 'entH': 200, 'simType': ''}
+    cfg['FILTER'] = {'relTh': '1:2:3', 'entH': 200, 'simType': '', 'secRelArea': 'True'}
 
     parametersDict = fU.getFilterDict(cfg, 'FILTER')
 
     noKey = 'simType' in parametersDict
 
+    print('parametersDict', parametersDict)
+
     assert np.allclose(parametersDict['relTh'], np.asarray([1, 1.5, 2]), atol=1e-10)
     assert noKey is False
     assert parametersDict['entH'] == [200.]
+    assert parametersDict['secRelArea'] == ['True']
+
+    parametersDict = fU.getFilterDict(cfg, 'TESTS')
+
+    assert parametersDict == {}
 
 
 def test_getDFADataPaths():
@@ -231,7 +255,7 @@ def test_getDFADataPaths():
 
     # return pathDict for given inputDir
     pathDict2 = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
-    inputDir = pathlib.Path(avaDir, 'Outputs/com1DFA/peakFiles')
+    inputDir = pathlib.Path(avaDir, 'Outputs' , 'com1DFA', 'peakFiles')
     pathDict2 = fU.getDFADataPaths(avaDir, pathDict2, cfgSetup, suffix, comModule='', inputDir=inputDir)
 
     # define paths
@@ -244,3 +268,8 @@ def test_getDFADataPaths():
     assert pathDict2['colorParameter'] == []
     assert path1 in str(pathDict2['ppr'][0])
     assert path2 in str(pathDict2['ppr'][1])
+
+    # call function to be tested
+    with pytest.raises(FileNotFoundError) as e:
+        assert fU.getDFADataPaths(avaDir, pathDict2, cfgSetup, suffix, comModule='test', inputDir='')
+    assert 'Input directory' in str(e.value)
