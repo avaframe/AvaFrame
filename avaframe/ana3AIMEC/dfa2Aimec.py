@@ -225,7 +225,7 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
         pathDict[suf].append(refFile)
         log.info('Added to pathDict[%s] %s ' % (suf, refFile))
         compFile = inputDirComp / (simNameComp + '_' + suf + '.asc')
-        if not refFile.is_file():
+        if not compFile.is_file():
             message = 'No file found called: %s' % (str(compFile))
             log.error(message)
             raise FileNotFoundError(message)
