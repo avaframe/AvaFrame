@@ -803,8 +803,6 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         # place particles equaly distributed with a small variation
         xpart = csz * (- 0.5 + indx) + x + (rng.random(nPart) - 0.5) * d
         ypart = csz * (- 0.5 + indy) + y + (rng.random(nPart) - 0.5) * d
-        print('semiRand', (rng.random(nPart) - 0.5) * d)
-        print('y',  (rng.random(nPart) - 0.5) * d, 'd', d)
     elif initPartDistType == 'random':
         # place particles randomly in the cell
         xpart = csz * (rng.random(nPart) - 0.5 + indx)
