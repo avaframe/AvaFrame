@@ -159,10 +159,7 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
     inputDirRef, inputDirComp, pathDict, refModule = getCompDirs(avaDir, cfgSetup, pathDict)
 
     # Load all infos on reference simulations
-    if refModule == 'benchmarkReference':
-        refData = fU.makeSimDF(inputDirRef)
-    else:
-        refData = fU.makeSimDF(inputDirRef)
+    refData = fU.makeSimDF(inputDirRef)
 
     # Load all infos on comparison module simulations
     compData = fU.makeSimDF(inputDirComp)
