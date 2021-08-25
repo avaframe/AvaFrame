@@ -32,7 +32,22 @@ def createDesDictTemplate():
 
 
 def writeDesDicttoJson(desDict, testName, outDir):
-    """ create a json file with all required test info from desdict """
+    """ create a json file with all required test info from desdict
+
+        Parameters
+        -----------
+        desDict: dict
+            description dictionary of test
+        testName: str
+            name of benchmark test
+        outDir: str or pathlib Path
+            path where json file is saved
+
+        Returns
+        --------
+        fileName: pathlib path
+            path to json file
+    """
 
     jsonDict = json.dumps(desDict)
     fileName = pathlib.Path(outDir, "%s_desDict.json" % testName)
@@ -44,7 +59,18 @@ def writeDesDicttoJson(desDict, testName, outDir):
 
 
 def readDesDictFromJson(fileName):
-    """ read dict from json file """
+    """ read dict from json file
+
+        Parameters
+        -----------
+        fileName: str or pathlib path
+            path to json file
+
+        Returns
+        --------
+        desDict: dict
+            dictionary read from json file
+    """
 
     with open(fileName) as f:
         desDict = json.load(f)
@@ -53,7 +79,20 @@ def readDesDictFromJson(fileName):
 
 
 def readAllBenchmarkDesDicts(info=False, inDir=''):
-    """ get descritption dicts for all benchmark tests and add test name as key"""
+    """ get descritption dicts for all benchmark tests and add test name as key
+
+        Parameters
+        ----------
+        info: bool
+            True if info shall be printed to log
+        inDir: pathLib object
+            path to benchmarks directory
+
+        Returns
+        --------
+        testDictList: list
+            list of test info dictionaries
+    """
 
     if inDir == '':
         inDir = pathlib.Path('..', 'benchmarks')
@@ -133,7 +172,18 @@ def filterBenchmarks(testDictList, type, valuesList, condition='or'):
 
 
 def getTestAvaDirs(testList):
-    """ get a list of avalanche directories of tests """
+    """ get a list of avalanche directories of tests
+
+        Parameters
+        -----------
+        testList: list
+            list of test dictionaries
+
+        Returns
+        --------
+        avaDirs: list
+            list of paths to avalanche directories
+    """
 
     avaDirs = []
     for tests in testList:

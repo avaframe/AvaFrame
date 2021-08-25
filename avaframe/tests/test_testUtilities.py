@@ -56,9 +56,12 @@ def test_readAllBenchmarkDesDicts():
     # call function to be tested
     dirName = pathlib.Path(__file__).parents[0]
     inDir = dirName / '..' / '..' / 'benchmarks'
-    testDictList = tU.readAllBenchmarkDesDicts(info=False, inDir=inDir)
+    testDictList = tU.readAllBenchmarkDesDicts(info=True, inDir=inDir)
+
+    print('testDictList', testDictList)
 
     assert isinstance(testDictList[0], dict)
+    assert testDictList['avaAlrNullTest'] == 1
 
 
 def test_filterBenchmarks():
