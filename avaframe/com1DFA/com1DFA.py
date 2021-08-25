@@ -812,8 +812,8 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         xpart = csz * (- 0.5 + indx) + x
         ypart = csz * (- 0.5 + indy) + y
         if initPartDistType != 'uniform':
-        log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
-                    initPartDistType)
+            log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
+                        initPartDistType)
 
     return xpart, ypart, mPart, nPart
 
