@@ -84,10 +84,8 @@ def validateVarDict(variationDict, standardCfg):
     ignoredParameters = []
     for parameter in variationDict:
         if parameter in standardCfg['GENERAL']:
-            if isinstance(variationDict[parameter], (list, np.ndarray)):
+            if not isinstance(variationDict[parameter], (list, np.ndarray)):
                 variationDict[parameter] = [variationDict[parameter]]
-            else:
-                log.warning('Parameter %s does not have correct format - parameter is ignored' % parameter)
         else:
             ignoredParameters.append(parameter)
 
