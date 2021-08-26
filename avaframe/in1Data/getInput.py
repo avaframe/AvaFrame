@@ -175,7 +175,7 @@ def getInputDataCom1DFA(avaDir, cfg):
     entResInfo= {'flagEnt': 'No', 'flagRes': 'No'}
 
     # Initialise release areas, default is to look for shapefiles
-    if cfg['flagDev'] == 'True':
+    if cfg.getboolean('flagDev'):
         releaseDir = 'devREL'
         releaseDir = inputDir / 'devREL'
         relFiles = list(releaseDir.glob('*.shp'))
@@ -188,7 +188,6 @@ def getInputDataCom1DFA(avaDir, cfg):
                 relf = inputDir / releaseDir / rel
             else:
                 relf = inputDir / releaseDir / ('%s.shp' % (rel))
-
             if not relf.is_file():
                 message = 'No release scenario called: %s' % (relf)
                 log.error(message)
@@ -247,7 +246,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType):
     if len(OutputFile) < 1:
         OutputFile = None
     elif len(OutputFile) > 1:
-        message = 'There shouldn\'t be more than one %s .shp file in %s/%s/' % (inputType, inputDir, folder)
+        message = 'More than one %s .shp file in %s/%s/ not allowed' % (inputType, inputDir, folder)
         log.error(message)
         raise AssertionError(message)
     else:
