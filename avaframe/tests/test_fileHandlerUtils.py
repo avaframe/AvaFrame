@@ -181,6 +181,12 @@ def test_splitTimeValueToArrayInterval():
     cfgValues3 = ''
     cfgValuesList3 = np.asarray([40.])
 
+    cfgValues4 = '0:22'
+    cfgValuesList4 = np.asarray([20.])
+
+    cfgValues5 = '0'
+    cfgValuesList5 = np.asarray([40.])
+
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'tEnd': '20'}
     cfgGen = cfg['GENERAL']
@@ -194,6 +200,10 @@ def test_splitTimeValueToArrayInterval():
     items2 = fU.splitTimeValueToArrayInterval(cfgGen)
     cfgGen['tSteps'] = cfgValues3
     items3 = fU.splitTimeValueToArrayInterval(cfgGen)
+    cfgGen['tSteps'] = cfgValues4
+    items4 = fU.splitTimeValueToArrayInterval(cfgGen)
+    cfgGen['tSteps'] = cfgValues5
+    items5 = fU.splitTimeValueToArrayInterval(cfgGen)
 
     assert len(items) == len(cfgValuesList)
     assert items[0] == cfgValuesList[0]
@@ -206,8 +216,10 @@ def test_splitTimeValueToArrayInterval():
     assert items2[0] == cfgValuesList2[0]
     assert items2[1] == cfgValuesList2[1]
     assert items2[2] == cfgValuesList2[2]
-    assert len(items3) == len(cfgValuesList3)
-    assert items3[0] == cfgValuesList3[0]
+    assert len(items4) == len(cfgValuesList4)
+    assert items4[0] == cfgValuesList4[0]
+    assert len(items5) == len(cfgValuesList5)
+    assert items5[0] == cfgValuesList5[0]
 
 
 def test_getFilterDict():
@@ -256,6 +268,7 @@ def test_getDFADataPaths():
     # return pathDict for given inputDir
     pathDict2 = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
     inputDir = pathlib.Path(avaDir, 'Outputs' , 'com1DFA', 'peakFiles')
+    suffix = 'ppr'
     pathDict2 = fU.getDFADataPaths(avaDir, pathDict2, cfgSetup, suffix, comModule='', inputDir=inputDir)
 
     # define paths

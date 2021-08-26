@@ -15,6 +15,7 @@ from avaframe.ana4Stats import probAna as pA
 import pytest
 import configparser
 import shutil
+import pathlib
 
 
 def test_probAna(tmp_path):
@@ -23,12 +24,11 @@ def test_probAna(tmp_path):
     # set input directory
     avaName = 'avaParabola'
     avaTestDir = 'avaParabolaStatsTest'
-    dirPath = os.path.dirname(__file__)
-    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaTestDir)
-    avaDir2 = os.path.join(dirPath, '..', '..', 'benchmarks', avaName)
-    avaDirtmp = os.path.join(tmp_path, avaName)
-    inputDir = os.path.join(tmp_path, avaName, 'ana4Stats')
-    inputDir1 = os.path.join(avaDir, 'ana4Stats')
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
+    avaDirtmp = pathlib.Path(tmp_path, avaName)
+    inputDir = pathlib.Path(tmp_path, avaName)
+    inputDir1 = avaDir
     shutil.copytree(inputDir1, inputDir)
 
     # set configurations
@@ -44,7 +44,7 @@ def test_probAna(tmp_path):
     parametersDict = fU.getFilterDict(cfg, 'FILTER')
 
     # call function to test
-    pA.probAnalysis(avaDirtmp, cfg, com1DFA, parametersDict=parametersDict, inputDir=inputDir1)
+    pA.probAnalysis(avaDirtmp, cfg, com1DFA, parametersDict=parametersDict, inputDir='')
     probTest = np.loadtxt(os.path.join(avaDirtmp, 'Outputs', 'ana4Stats', 'avaParabola_probMap1.0.asc'), skiprows=6)
 
     # Load reference solution
@@ -55,3 +55,16 @@ def test_probAna(tmp_path):
 
     # Test
     assert (testRes == True)
+
+    # call function to test
+    testInputDir = avaDir / 'Outputs' / 'com1DFA'
+    avaDirtmp2 = pathlib.Path(tmp_path, 'avaTest')
+    avaDirtmp2.mkdir()
+    pA.probAnalysis(avaDirtmp2, cfg, com1DFA, parametersDict='', inputDir=testInputDir)
+    probTest2 = np.loadtxt(os.path.join(avaDirtmp2, 'Outputs', 'ana4Stats', 'avaTest_probMap1.0.asc'), skiprows=6)
+
+    # Compare result to reference solution
+    testRes2 = np.allclose(probTest2, probSol, atol=1.e-6)
+
+    # Test
+    assert (testRes2 == True)
