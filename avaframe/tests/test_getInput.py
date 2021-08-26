@@ -118,7 +118,7 @@ def test_getInputData(tmp_path):
         assert getInput.getInputData(avaDir, cfg['GENERAL'])
     assert str(e.value) == ("No release scenario called: %s" % releaseF)
 
-    # fith option
+    # fifth option
     cfg['GENERAL']['flagDev'] = 'False'
     cfg['GENERAL']['releaseScenario'] = 'release1BL.shp'
     avaName = 'avaBowl'
@@ -160,7 +160,9 @@ def test_getInputDataCom1DFA(tmp_path):
     print(inputSimFiles['relFiles'])
     print([avaDir / 'Inputs' / 'REL' / 'release1HS.shp', avaDir / 'Inputs' / 'REL' / 'release2HS.shp', avaDir / 'Inputs' / 'REL' / 'release3HS.shp'])
     assert inputSimFiles['demFile'] == avaDir / 'Inputs' / 'DEM_HS_Topo.asc'
-    assert inputSimFiles['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp', avaDir / 'Inputs' / 'REL' / 'release2HS.shp', avaDir / 'Inputs' / 'REL' / 'release3HS.shp']
+    assert inputSimFiles['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp',
+                                         avaDir / 'Inputs' / 'REL' / 'release2HS.shp',
+                                         avaDir / 'Inputs' / 'REL' / 'release3HS.shp']
     assert inputSimFiles2['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp']
     assert inputSimFiles['resFile'] == None
     assert inputSimFiles['entFile'] == avaDir / 'Inputs' / 'ENT' / 'entrainment1HS.shp'
