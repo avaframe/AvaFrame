@@ -7,7 +7,7 @@ import os
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
-import glob
+import pathlib
 
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in1Data.getInput as gI
@@ -144,10 +144,12 @@ def plotAllFields(avaDir, inputDir, outDir, unit='', constrainData=True):
         """
 
     # Load all infos on simulations
-    peakFiles = glob.glob(inputDir+os.sep + '*.asc')
-
-    # create out dir if not allready existing
-    fU.makeADir(outDir)
+    inputDir = pathlib.Path(inputDir)
+    outDir = pathlib.Path(outDir)
+    if outDir.is_dir() is False:
+        # create out dir if not already existing
+        outDir.mkdir()
+    peakFiles = list(inputDir.glob('*.asc'))
 
     # Loop through peakFiles and generate plot
     for filename in peakFiles:
@@ -156,7 +158,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit='', constrainData=True):
         raster = IOf.readRaster(filename)
         data = raster['rasterData']
         data = np.ma.masked_where(data == 0.0, data)
-        name = os.path.splitext(os.path.basename(filename))[0]
+        name = filename.stem
 
         # get header info for file writing
         header = raster['header']
@@ -194,7 +196,7 @@ def plotAllFields(avaDir, inputDir, outDir, unit='', constrainData=True):
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
 
-        plotName = os.path.join(outDir, '%s.%s' % (name, pU.outputFormat))
+        plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
 
         pU.putAvaNameOnPlot(ax, avaDir)
 
