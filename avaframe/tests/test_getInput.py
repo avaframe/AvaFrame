@@ -111,6 +111,13 @@ def test_getInputData(tmp_path):
     assert entResInfo5['flagRes'] == "No"
     assert rels5 == []
 
+    # call function to be tested
+    cfg['GENERAL']['releaseScenario'] = 'release4HS'
+    releaseF = os.path.join(avaDir, 'Inputs', 'REL', 'release4HS.shp')
+    with pytest.raises(FileNotFoundError) as e:
+        assert getInput.getInputData(avaDir, cfg['GENERAL'])
+    assert str(e.value) == ("No release scenario called: %s" % releaseF)
+
     # fith option
     cfg['GENERAL']['flagDev'] = 'False'
     cfg['GENERAL']['releaseScenario'] = 'release1BL.shp'
