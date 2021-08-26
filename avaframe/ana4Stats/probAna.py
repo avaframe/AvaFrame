@@ -33,7 +33,9 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
         parametersDict: dict
             dictionary with simulation parameters to filter simulations
         inputDir : str
-            optional - path to directory where data that should be analysed can be found, required if not in module results
+            optional - path to directory where data that should be analysed can be found in
+            a subfolder called peakFiles and configurationFiles, required if not in module results
+
     """
 
     # get filename of module
@@ -51,7 +53,8 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
         flagStandard = True
         peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
     else:
-        peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
+        inputDirPF = inputDir / 'peakFiles'
+        peakFilesDF = fU.makeSimDF(inputDirPF, avaDir=avaDir)
 
     # get header info from peak files - this should be the same for all peakFiles
     header = IOf.readASCheader(peakFilesDF['files'][0])

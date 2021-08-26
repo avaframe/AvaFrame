@@ -56,6 +56,12 @@ def test_getStats(tmp_path):
     inputDir = avaDirPeakFiles
     peakValues = getStats.extractMaxValues(inputDir, avaDirtmp, varPar, restrictType='ppr', nameScenario='', parametersDict='')
 
+    # call function to be tested test 2
+    parametersDict = {'relTh': 1.0}
+    peakValues2 = getStats.extractMaxValues(inputDir, avaDirtmp, varPar, restrictType='', nameScenario='releaseScenario', parametersDict=parametersDict)
+
+    print('peakValues2', peakValues2)
+
     assert peakValues['release1_null_dfa_1000000']['varPar'] == 1.0
     assert peakValues['release1_null_dfa_2000000']['varPar'] == 2.0
     assert peakValues['release1_null_dfa_1000000']['ppr']['max'] == 4.0
@@ -64,3 +70,4 @@ def test_getStats(tmp_path):
     assert peakValues['release1_null_dfa_2000000']['ppr']['max'] == 10.0
     assert peakValues['release1_null_dfa_2000000']['ppr']['min'] == 1.0
     assert peakValues['release1_null_dfa_2000000']['ppr']['mean'] == 3.0
+    assert peakValues2['release1_null_dfa_1000000']['scenario'] == 'release1'
