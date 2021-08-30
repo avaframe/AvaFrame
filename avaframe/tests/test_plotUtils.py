@@ -1,0 +1,118 @@
+"""Tests for plotUtils"""
+import avaframe.out3Plot.plotUtils as pU
+import pathlib
+import datetime
+import pytest
+import numpy as np
+import matplotlib.pyplot as plt
+from cmcrameri import cm as cmapCameri
+
+
+def test_constrainPlotsToData():
+    """ test constraining plots to data """
+
+    # setup required input
+    inputData = np.zeros((10,12))
+    inputData[4:7,3:9] = 4.
+    cellSize = 100
+
+    # call function to be tested
+    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(inputData, cellSize, extentOption=False)
+
+    print('rows', rowsMin, rowsMax)
+    print('cols', colsMin, colsMax)
+
+    assert rowsMin == 3
+    assert rowsMax == 7
+    assert colsMin == 2
+    assert colsMax == 9
+
+    # call function to be tested
+    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataConstrained = pU.constrainPlotsToData(inputData, cellSize, extentOption=True)
+
+    print('rows', rowsMinPlot, rowsMaxPlot)
+    print('cols', colsMinPlot, colsMaxPlot)
+    print('dataConstrained', dataConstrained)
+    dataConstrainedTest = np.zeros((5, 8))
+    dataConstrainedTest[1:4, 1:7] = 4.
+
+    assert rowsMinPlot == 300
+    assert rowsMaxPlot == 800
+    assert colsMinPlot == 200
+    assert colsMaxPlot == 1000
+    assert np.array_equal(dataConstrained, dataConstrainedTest)
+
+    # call function to be tested
+    inputData = np.zeros((10,12))
+    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(inputData, cellSize, extentOption=False)
+
+    assert rowsMin == 0
+    assert rowsMax == inputData.shape[0]
+    assert colsMin == 0
+    assert colsMax == inputData.shape[1]
+
+
+def test_putAvaNameOnPlot(tmp_path):
+    """ test put avaName on a plot """
+
+    # setup required input
+    avaDir = pathlib.Path(tmp_path, 'avaTest')
+    avaDir2 = pathlib.Path(tmp_path, 'avaTest2')
+    avaDirL = [avaDir, avaDir2]
+    plt.figure()
+    fig, ax = plt.subplots()
+
+    # call function to be tested
+    infoText = pU.putAvaNameOnPlot(ax, avaDir)
+    infoText2 = pU.putAvaNameOnPlot(ax, avaDirL)
+    print('info', infoText)
+    print('info2', infoText2)
+
+    assert infoText == (datetime.datetime.now().strftime("%d.%m.%y")  + '; ' + avaDir.stem)
+    assert infoText2 == (datetime.datetime.now().strftime("%d.%m.%y") + ';' + 'avaTest;avaTest2')
+
+
+def makeColorMap():
+    """ test generating a customized colormap """
+
+    # setup required input
+    colormapDict = cmapCameri.lapaz
+    levMin = 1.0
+    levMax = 11.0
+
+    # call function to be tested
+    cmap, colorsNew, levelsNew, norm = pU.makeColorMap(colormapDict, levMin, levMax, continuous=False)
+
+    assert colorsNew == None
+    assert levelsNew == None
+    assert cmap == cmapCameri.lapaz
+
+    # call function to be tested
+    colormapDict2 = {'cmap': cmapCameri.lapaz}
+    with pytest.raises(FileNotFoundError) as e:
+        assert pU.makeColorMap(colormapDict2, levMin, levMax, continuous=False)
+    assert str(e.value) == "`colors` list or a `cmap` is required to create the colormap"
+
+    # call function to be tested
+    levMax = 400.0
+    colormapDict3 = {'cmap': cmapCameri.hawaii.reversed(), 'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"],
+                    'levels': [1.0, 10.0, 25.0, 50.0]}
+    cmap2, colorsNew2, levelsNew2, norm2 = pU.makeColorMap(colormapDict3, levMin, levMax, continuous=False)
+    assert colorsNew2 == ["#B0F4FA", "#75C165", "#A96C00", "#8B0069", "#8B0069"]
+    assert levelsNew2 == [1.0, 10.0, 25.0, 50.0, 400]
+    assert cmap2.colors == ["#B0F4FA", "#75C165", "#A96C00", "#8B0069", "#8B0069"]
+
+    # call function to be tested
+    with pytest.raises(AssertionError) as e:
+        assert pU.makeColorMap(colormapDict2, levMin, levMax, continuous=False)
+    assert str(e.value) == "Number of levels is not allowed to exceed number of colors"
+
+    # call function to be tested
+    levMax = 400.0
+    colormapDict4 = {'cmap': cmapCameri.hawaii.reversed(), 'levels': [1.0, 10.0, 25.0, 50.0]}
+    cmap4, colorsNew4, levelsNew4, norm4 = pU.makeColorMap(colormapDict4, levMin, levMax, continuous=False)
+    assert np.array_equal(colorsNew4, np.asarray([[0.703779, 0.948977, 0.993775, 1.],
+                                     [0.638645, 0.946543, 0.974739, 1.],
+                                     [0.529715, 0.938416, 0.932588, 1.],
+                                     [0.398074, 0.911369, 0.826627, 1.]]))
+    assert levelsNew4 == [1.0, 10.0, 25.0, 50.0, 400]

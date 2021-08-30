@@ -133,7 +133,7 @@ colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960', '#2
 cmapS = cmapCameri.batlow.reversed()
 
 # colormap used if no resType provided
-cmapNNcmap = cmapCameri.imola.reversed()
+cmapNN = cmapCameri.imola.reversed()
 
 # colormap for probabilities
 levProb = [0, 0.25, 0.50, 0.75, 1.]
@@ -173,9 +173,6 @@ cmapProb['levels'] = levProb
 
 colorMaps = {'ppr' : cmapPres, 'pfv' : cmapSpeed, 'pfd' : cmapDepth, 'PR' : cmapPres,
              'FV' : cmapSpeed, 'FD' : cmapDepth, 'prob': cmapProb}
-
-cmapNN = {}
-cmapNN['cmap'] = cmapNNcmap
 
 cmapDEM = cmapGreys
 
@@ -238,11 +235,13 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             continuous colormaps)
     """
 
-    if type(colormapDict) is matplotlib.colors.LinearSegmentedColormap:
+    if type(colormapDict) is matplotlib.colors.LinearSegmentedColormap or ('levels' not in colormapDict and continuous == False):
         cmap = colormapDict
         colorsNew = None
         norm = mplCol.Normalize(vmin=levMin, vmax=levMax, clip=False)
         levelsNew = None
+        if type(colormapDict) is not matplotlib.colors.LinearSegmentedColormap:
+            log.warning('No levels provided for discrete colormap - proceeding with continuous cmap')
     elif continuous:
         # make a continuous color map
         # check if cmap is provided
@@ -279,6 +278,10 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
 
         # check if list of colors is provided
         if 'colors' in colormapDict.keys():
+            if indEnd > len(colormapDict['colors']):
+                message = 'Number of levels is not allowed to exceed number of colors'
+                log.error(message)
+                raise AssertionError(message)
             colors = colormapDict['colors']
             colorsNew = colors[:indEnd]
             colorsNew.append(colors[indEnd-1])
@@ -288,10 +291,10 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
         # check if a cmap is provided
         elif 'cmap' in colormapDict.keys():
             cmap = colormapDict['cmap']
-            colorsNew = cmap(levelsNew[:-1]/levelsNew[-1])
+            colorsNew = cmap(np.asarray(levelsNew[:-1])/levelsNew[-1])
         # Houston ve have a problem
         else:
-            message = 'You need a `colors` list or a `cmap` to be able to create the colormap'
+            message = 'A `colors` list or a `cmap` is required to create the colormap'
             log.error(message)
             raise FileNotFoundError(message)
 
