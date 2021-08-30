@@ -79,7 +79,7 @@ matplotlib.rcParams['grid.linewidth'] = 0.3
 
 
 # define settings for colormaps creation
-defLevels = cfg.getint('defLevels')
+discreteLevels = cfg.getint('discreteLevels')
 ############################
 # Color maps
 ############################
@@ -271,10 +271,10 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
                             creating %d levels ranging from %.2f to %.2f' %
                             (len(colormapDict['colors']), levMin, levMax))
             else:
-                levels = list(np.linspace(levMin, levMax, defLevels))
+                levels = list(np.linspace(levMin, levMax, discreteLevels))
                 log.warning('No `levels` list is provided to generate a discrete colormap, \
                             creating %d levels ranging from %.2f to %.2f' %
-                            (defLevels, levMin, levMax))
+                            (discreteLevels, levMin, levMax))
         try:
             indEnd = np.where(np.asarray(levels) >= levMax)[0][0]
         except IndexError:
