@@ -116,3 +116,9 @@ def makeColorMap():
                                      [0.529715, 0.938416, 0.932588, 1.],
                                      [0.398074, 0.911369, 0.826627, 1.]]))
     assert levelsNew4 == [1.0, 10.0, 25.0, 50.0, 400]
+
+    # call function to be tested
+    levMax = 400.0
+    colormapDict5 = {'cmap': cmapCameri.hawaii.reversed(), 'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]}
+    cmap5, colorsNew5, levelsNew5, norm5 = pU.makeColorMap(colormapDict5, levMin, levMax, continuous=False)
+    assert levelsNew5 == [1.0, 100.75, 200.5, 300.25, 400]
