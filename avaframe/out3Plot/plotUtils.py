@@ -235,13 +235,11 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             continuous colormaps)
     """
 
-    if type(colormapDict) is matplotlib.colors.LinearSegmentedColormap or ('levels' not in colormapDict and continuous == False):
+    if type(colormapDict) is matplotlib.colors.LinearSegmentedColormap:
         cmap = colormapDict
         colorsNew = None
         norm = mplCol.Normalize(vmin=levMin, vmax=levMax, clip=False)
         levelsNew = None
-        if type(colormapDict) is not matplotlib.colors.LinearSegmentedColormap:
-            log.warning('No levels provided for discrete colormap - proceeding with continuous cmap')
     elif continuous:
         # make a continuous color map
         # check if cmap is provided
