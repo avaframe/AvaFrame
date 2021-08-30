@@ -419,3 +419,5 @@ def putAvaNameOnPlot(ax, avaDir):
     plt.text(0, 0, infoText, fontsize=8, verticalalignment='bottom',
              horizontalalignment='left', transform=ax.transAxes,
              color='0.6')
+
+    return infoText
