@@ -267,12 +267,14 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
         else:
             if 'colors' in colormapDict:
                 levels = list(np.linspace(levMin, levMax, len(colormapDict['colors'])+1))
-                log.warning = 'No `levels` list is provided to generate a discrete colormap, \
-                               creating %d levels ranging from %.2f to %.2f' % (len(colormapDict['colors']), levMin, levMax)
+                log.warning('No `levels` list is provided to generate a discrete colormap, \
+                            creating %d levels ranging from %.2f to %.2f' %
+                            (len(colormapDict['colors']), levMin, levMax))
             else:
                 levels = list(np.linspace(levMin, levMax, defLevels))
-                log.warning = 'No `levels` list is provided to generate a discrete colormap, \
-                               creating %d levels ranging from %.2f to %.2f' % (defLevels, levMin, levMax)
+                log.warning('No `levels` list is provided to generate a discrete colormap, \
+                            creating %d levels ranging from %.2f to %.2f' %
+                            (defLevels, levMin, levMax))
         try:
             indEnd = np.where(np.asarray(levels) >= levMax)[0][0]
         except IndexError:
