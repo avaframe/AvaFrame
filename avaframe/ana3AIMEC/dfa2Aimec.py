@@ -235,7 +235,7 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
     # if desired set path to mass log files
     if cfg['FLAGS'].getboolean('flagMass'):
         for comMod in comModules:
-            if comMod == 'ref':
+            if comMod == 'benchmarkReference':
                 pathDict = getRefMB(cfg['AIMECSETUP']['testName'], pathDict, simNameRef)
             elif comMod == 'com1DFAOrig':
                 pathDict = extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=simNameRef)

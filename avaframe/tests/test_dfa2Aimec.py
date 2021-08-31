@@ -196,7 +196,7 @@ def test_getPathsFromSimName():
     assert 'release1HS_ent_dfa_0.15500_pfv' in str(pathDict['pfv'][0])
 
     # call function to be tested
-    cfg['AIMECSETUP']['comModules'] = 'ref|com1DFA'
+    cfg['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFA'
     cfg['AIMECSETUP']['testName'] = 'avaHockeyChannelEntTest'
     cfg['FLAGS'] = {'flagMass': 'False'}
     inputDirRef = dirPath / '..' / '..' / 'benchmarks' / 'avaHockeyChannelEntTest'
@@ -213,6 +213,28 @@ def test_getPathsFromSimName():
     assert 'avaHockeyChannelEntTest/release1HS_ent_ref_0.15500_pfd' in str(pathDict2['pfd'][0])
     assert 'avaHockeyChannelEntTest/release1HS_ent_ref_0.15500_ppr' in str(pathDict2['ppr'][0])
     assert 'avaHockeyChannelEntTest/release1HS_ent_ref_0.15500_pfv' in str(pathDict2['pfv'][0])
+
+    # call function to be tested
+    cfg['AIMECSETUP']['comModules'] = 'com1DFAOrig|com1DFA'
+    cfg['AIMECSETUP']['testName'] = 'avaHockeyChannelEntTest'
+    cfg['FLAGS'] = {'flagMass': 'False'}
+    inputDirRef = dirPath / '..' / '..' / 'benchmarks' / 'avaHockeyChannelEntTest'
+    simNameRef = 'release1HS_null_ref_0.15500'
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
+
+    refFileTest = inputDirRef / simNameRef
+    with pytest.raises(FileNotFoundError) as e:
+        assert dfa2Aimec.getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp)
+    assert ('No file found called: %s' % str(refFileTest))  in str(e.value)
+
+    simNameRef = 'release1HS_ent_ref_0.15500'
+    simNameComp = 'release1HS_null_dfa_67dc2dc10a'
+    compFileTest = inputDirComp / simNameComp
+    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
+    with pytest.raises(FileNotFoundError) as e:
+        assert dfa2Aimec.getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp)
+    assert ('No file found called: %s' % str(compFileTest))  in str(e.value)
+
 
 def test_dfaBench2Aimec():
     """ test export data used for aimec """
@@ -265,6 +287,21 @@ def test_getCompDirs():
     assert str(inputDirComp) == str(avaDir / 'Outputs' / 'com1DFA' / 'peakFiles')
     assert refModule == 'com1DFAOrig'
     assert pathDict['compType'] == ['comModules', 'com1DFAOrig', 'com1DFA']
+    assert pathDict['referenceFile'] == 0
+    assert pathDict['contCmap'] is True
+
+    # call function to be tested
+    cfg['AIMECSETUP'] = {'comModules': 'benchmarkReference|com1DFA'}
+    pathDict = {'ppr': []}
+    cfg['AIMECSETUP']['testName'] = 'avaHockeyChannelEntTest'
+    inputDirRef, inputDirComp, pathDict, refModule = dfa2Aimec.getCompDirs(avaDir, cfg['AIMECSETUP'], pathDict)
+
+    testPath = dirPath / '..' / '..' / 'benchmarks' / 'avaHockeyChannelEntTest'
+
+    assert str(inputDirRef) == '../benchmarks/avaHockeyChannelEntTest'
+    assert str(inputDirComp) == str(avaDir / 'Outputs' / 'com1DFA' / 'peakFiles')
+    assert refModule == 'benchmarkReference'
+    assert pathDict['compType'] == ['comModules', 'benchmarkReference', 'com1DFA']
     assert pathDict['referenceFile'] == 0
     assert pathDict['contCmap'] is True
 
