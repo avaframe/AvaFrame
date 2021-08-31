@@ -136,5 +136,12 @@ def makeColorMap():
     # call function to be tested
     colormapDict6 = {'levels': [1.0, 10.0, 25.0, 50.0]}
     with pytest.raises(AssertionError) as e:
+        assert pU.makeColorMap(colormapDict6, levMin, levMax, continuous=False)
+    assert str(e.value) == "A `colors` list or a `cmap` is required to create the colormap"
+
+
+    # call function to be tested
+    colormapDict6 = {'levels': [1.0, 10.0, 25.0, 50.0]}
+    with pytest.raises(AssertionError) as e:
         assert pU.makeColorMap(colormapDict6, levMin, levMax, continuous=True)
-    assert str(e.value) == "'You need a `colors` list or a `cmap` to be able to create the colormap"
+    assert str(e.value) == "You need a `colors` list or a `cmap` to be able to create the colormap"
