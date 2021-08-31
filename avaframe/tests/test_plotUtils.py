@@ -103,8 +103,10 @@ def makeColorMap():
     assert cmap2.colors == ["#B0F4FA", "#75C165", "#A96C00", "#8B0069", "#8B0069"]
 
     # call function to be tested
+    colormapDict3 = {'cmap': cmapCameri.hawaii.reversed(), 'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"],
+                    'levels': [1.0, 10.0, 25.0, 50.0, 100.]}
     with pytest.raises(AssertionError) as e:
-        assert pU.makeColorMap(colormapDict2, levMin, levMax, continuous=False)
+        assert pU.makeColorMap(colormapDict3, levMin, levMax, continuous=False)
     assert str(e.value) == "Number of levels is not allowed to exceed number of colors"
 
     # call function to be tested
@@ -122,3 +124,17 @@ def makeColorMap():
     colormapDict5 = {'cmap': cmapCameri.hawaii.reversed(), 'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]}
     cmap5, colorsNew5, levelsNew5, norm5 = pU.makeColorMap(colormapDict5, levMin, levMax, continuous=False)
     assert levelsNew5 == [1.0, 100.75, 200.5, 300.25, 400]
+
+    # call function to be tested
+    levMax = 400.0
+    colormapDict6 = {'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"],
+                    'levels': [1.0, 10.0, 25.0, 50.0]}
+    cmap6, colorsNew6, levelsNew6, norm6 = pU.makeColorMap(colormapDict6, levMin, levMax, continuous=True)
+    assert colorsNew6 == ["#B0F4FA", "#75C165", "#A96C00", "#8B0069", "#8B0069"]
+    assert levelsNew6 == None
+
+    # call function to be tested
+    colormapDict6 = {'levels': [1.0, 10.0, 25.0, 50.0]}
+    with pytest.raises(AssertionError) as e:
+        assert pU.makeColorMap(colormapDict6, levMin, levMax, continuous=True)
+    assert str(e.value) == "'You need a `colors` list or a `cmap` to be able to create the colormap"
