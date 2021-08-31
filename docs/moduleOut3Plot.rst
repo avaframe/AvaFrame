@@ -28,10 +28,10 @@ These can be initialised by::
   from avaframe.out3Plot import plotUtils
   plotUtils.cmapDepth
 
-In this manner, a colormap dictionary is loaded, which carries information about the colormap,
-specific colors and levels which correspond to the default option to visualise pressure in com1DFA.
-If the flag continuous is set to True, this function returns a colormap object and a norm object
-that is fitted to the minimum and maximim values provided as input parameters.
+A colormap dictionary is loaded with information about the colormap,
+specific colors and levels corresponding to the default option of visualising pressure in com1DFA.
+If the flag `continuous` is set to `True`, this function returns a colormap object and a norm object
+fitted to the minimum and maximim values provided as input parameters.
 However, if the continuous flag is set to False, it will return a colormap object and a norm object
 representing the discrete levels defined in the dictionary, where the maximum
 level provided in the inputs will be added as maximum level of the colorscale. See the two example plots below,
