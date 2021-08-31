@@ -88,12 +88,6 @@ def test_makeColorMap():
     assert cmap == cmapCameri.lapaz
 
     # call function to be tested
-    colormapDict2 = {'cmap': cmapCameri.lapaz}
-    with pytest.raises(FileNotFoundError) as e:
-        assert pU.makeColorMap(colormapDict2, levMin, levMax, continuous=False)
-    assert str(e.value) == "`colors` list or a `cmap` is required to create the colormap"
-
-    # call function to be tested
     levMax = 400.0
     colormapDict3 = {'cmap': cmapCameri.hawaii.reversed(), 'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"],
                     'levels': [1.0, 10.0, 25.0, 50.0]}
@@ -113,10 +107,11 @@ def test_makeColorMap():
     levMax = 400.0
     colormapDict4 = {'cmap': cmapCameri.hawaii.reversed(), 'levels': [1.0, 10.0, 25.0, 50.0]}
     cmap4, colorsNew4, levelsNew4, norm4 = pU.makeColorMap(colormapDict4, levMin, levMax, continuous=False)
-    assert np.array_equal(colorsNew4, np.asarray([[0.703779, 0.948977, 0.993775, 1.],
-                                     [0.638645, 0.946543, 0.974739, 1.],
-                                     [0.529715, 0.938416, 0.932588, 1.],
-                                     [0.398074, 0.911369, 0.826627, 1.]]))
+
+    assert np.array_equal(colorsNew4[0,:], np.asarray([0.703779, 0.948977, 0.993775, 1.]))
+    assert np.allclose(colorsNew4[1,:], np.asarray([0.638645, 0.946543, 0.974739, 1.]), atol=1.e-6)
+    assert np.allclose(colorsNew4[2,:], np.asarray([0.529715, 0.938416, 0.932588, 1.]), atol=1.e-6)
+    assert np.allclose(colorsNew4[3,:], np.asarray([0.398074, 0.911369, 0.826627, 1.]), atol=1.e-6)
     assert levelsNew4 == [1.0, 10.0, 25.0, 50.0, 400]
 
     # call function to be tested
@@ -130,17 +125,19 @@ def test_makeColorMap():
     colormapDict6 = {'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"],
                     'levels': [1.0, 10.0, 25.0, 50.0]}
     cmap6, colorsNew6, levelsNew6, norm6 = pU.makeColorMap(colormapDict6, levMin, levMax, continuous=True)
-    assert colorsNew6 == ["#B0F4FA", "#75C165", "#A96C00", "#8B0069", "#8B0069"]
+    assert colorsNew6[0] == "#B0F4FA"
+    assert len(colorsNew6) == 4
+    assert colorsNew6[3] == "#8B0069"
     assert levelsNew6 == None
 
     # call function to be tested
     colormapDict6 = {'levels': [1.0, 10.0, 25.0, 50.0]}
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(FileNotFoundError) as e:
         assert pU.makeColorMap(colormapDict6, levMin, levMax, continuous=False)
     assert str(e.value) == "A `colors` list or a `cmap` is required to create the colormap"
 
     # call function to be tested
     colormapDict6 = {'levels': [1.0, 10.0, 25.0, 50.0]}
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(FileNotFoundError) as e:
         assert pU.makeColorMap(colormapDict6, levMin, levMax, continuous=True)
-    assert str(e.value) == "You need a `colors` list or a `cmap` to be able to create the colormap"
+    assert str(e.value) == 'You need a `colors` list or a `cmap` to be able to create the colormap'
