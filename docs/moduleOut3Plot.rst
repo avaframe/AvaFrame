@@ -32,8 +32,8 @@ A colormap dictionary is loaded with information about the colormap,
 specific colors and levels corresponding to the default option of visualising pressure in com1DFA.
 If the flag `continuous` is set to `True`, this function returns a colormap object and a norm object
 fitted to the minimum and maximim values provided as input parameters.
-However, if the continuous flag is set to False, it will return a colormap object and a norm object
-representing the discrete levels defined in the dictionary, where the maximum
+If the `continuous` flag is set to `False`, it will return a colormap object and a norm object
+representing the discrete levels defined in the dictionary. The maximum
 level provided in the inputs will be added as maximum level of the colorscale. See the two example plots below,
 where the predefined levels correspond to 1, 10, 25, and 50 kPa and the maximum level provided as input
 is 320 kPa.
