@@ -38,6 +38,7 @@ Analysis/Output/Helper Modules
    ana4Stats
    log2Report
    out1Peak
+   out3Plot.plotUtils
    out3Plot.outQuickPlot
    out3Plot.in1DataPlots
    out3Plot.statsPlots
