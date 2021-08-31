@@ -100,11 +100,6 @@ def test_mainDfa2Aimec(tmp_path):
         assert str(massName1) == str(massName2)
 
 
-
-
-
-
-
 def test_dfaComp2Aimec(tmp_path):
 
     # Initialise inputs
