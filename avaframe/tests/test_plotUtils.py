@@ -72,7 +72,7 @@ def test_putAvaNameOnPlot(tmp_path):
     assert infoText2 == (datetime.datetime.now().strftime("%d.%m.%y") + ';' + 'avaTest;avaTest2')
 
 
-def makeColorMap():
+def test_makeColorMap():
     """ test generating a customized colormap """
 
     # setup required input
@@ -138,7 +138,6 @@ def makeColorMap():
     with pytest.raises(AssertionError) as e:
         assert pU.makeColorMap(colormapDict6, levMin, levMax, continuous=False)
     assert str(e.value) == "A `colors` list or a `cmap` is required to create the colormap"
-
 
     # call function to be tested
     colormapDict6 = {'levels': [1.0, 10.0, 25.0, 50.0]}
