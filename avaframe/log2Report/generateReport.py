@@ -12,23 +12,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def writeColumns(dict, key, pfile):
-    """ Create block with columns for each key and value pair of dict """
-
-    # Write header for block - key of the reporDict
-    pfile.write('### %s \n' % key)
-    for value in dict:
-        pfile.write('| %s ' % value)
-    pfile.write('| \n')
-    for value in dict:
-        pfile.write('| ----------')
-    pfile.write('| \n')
-    for value in dict:
-        pfile.write('| %s ' % dict[value])
-    pfile.write('| \n')
-    pfile.write(' \n')
-
-
 def writeReportFile(reportD, pfile):
     """ Create markdown report with blocks, tables, list according to type key
 

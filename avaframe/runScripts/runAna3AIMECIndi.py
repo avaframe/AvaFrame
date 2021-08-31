@@ -44,7 +44,7 @@ resType = cfgSetup['resType']
 
 
 # Setup input from com1DFA
-pathDict = dfa2Aimec.indiDfa2Aimec(avalancheDir, resType, anaMod, cfgSetup, inputDir='')
+pathDict = dfa2Aimec.indiDfa2Aimec(avalancheDir, resType, cfgSetup, inputDir='')
 
 # TODO: define referenceFile
 pathDict['numSim'] = len(pathDict[resType])

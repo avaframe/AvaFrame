@@ -36,37 +36,12 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
     for simName in simNames:
         log.debug('This is the simulation name %s for mod com1DFAOrig ' % (simName))
 
-        # Initialise fields
-        time = []
-        mass = []
-        entrMass = []
-        indRun = [0]
-        countMass = 0
-        flagStop = 0
-
-        # Read log file
+        # Read log file and extract mass and time info
         locFiles = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
         fileName = locFiles / ('start%s.log' % (simName))
-        if not fileName.is_file():
-            message = 'No log file for fetching mass info found called: %s' % (fileName)
-            log.error(message)
-            raise FileNotFoundError(message)
-        with open(fileName, 'r') as file:
-            for line in file:
-                if "computing time step" in line:
-                    ltime = line.split()[3]
-                    timeNum = ltime.split('...')[0]
-                    time.append(float(timeNum))
-                elif "entrained DFA mass" in line:
-                    entrMass.append(float(line.split()[3]))
-                elif "total DFA mass" in line:
-                    mass.append(float(line.split()[3]))
-                    countMass = countMass + 1
-                elif "terminated" in line:
-                    indRun.append(countMass)
-        # Save to dictionary
-        logDict = {'time': np.asarray(time), 'mass': np.asarray(mass),
-                   'entrMass': np.asarray(entrMass)}
+        fU.checkIfFileExists(fileName, fileType='mass log info')
+        logDict = fU.extractLogInfo(fileName)
+        indRun = logDict['indRun']
 
         # Write mass balance info files
         for k in range(len(indRun)-1):
@@ -93,10 +68,7 @@ def getMBInfo(avaDir, pathDict, comMod, simName=''):
     # Get info from ExpLog
     if simName != '':
         mbFile = pathlib.Path(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
-        if not mbFile.is_file():
-            message = 'No mass log file found called: %s' % (str(mbFile))
-            log.error(message)
-            raise FileNotFoundError(message)
+        fU.checkIfFileExists(mbFile, fileType='mass')
         pathDict['massBal'].append(mbFile)
         log.info('Added to pathDict[massBal] %s' % (mbFile))
 
@@ -218,17 +190,11 @@ def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDir
     suffix = ['pfd', 'ppr', 'pfv']
     for suf in suffix:
         refFile = inputDirRef / (simNameRef + '_' + suf + '.asc')
-        if not refFile.is_file():
-            message = 'No file found called: %s' % (str(refFile))
-            log.error(message)
-            raise FileNotFoundError(message)
+        fU.checkIfFileExists(refFile, fileType='reference simulation')
         pathDict[suf].append(refFile)
         log.info('Added to pathDict[%s] %s ' % (suf, refFile))
         compFile = inputDirComp / (simNameComp + '_' + suf + '.asc')
-        if not compFile.is_file():
-            message = 'No file found called: %s' % (str(compFile))
-            log.error(message)
-            raise FileNotFoundError(message)
+        fU.checkIfFileExists(compFile, fileType='comparison simulation')
         pathDict[suf].append(compFile)
         log.info('Added to pathDict[%s] %s ' % (suf, compFile))
 
@@ -358,8 +324,6 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
         # Extract mb info
         if comModule == 'com1DFAOrig':
             pathDict = extractCom1DFAMBInfo(avaDir, pathDict)
-        elif comModule == 'com1DFA':
-            pathDict = getMBInfo(avaDir, pathDict, comModule)
         else:
             pathDict = getMBInfo(avaDir, pathDict, comModule)
 
@@ -371,7 +335,7 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
     return pathDict
 
 
-def indiDfa2Aimec(avaDir, suffix, comModule, cfg, inputDir=''):
+def indiDfa2Aimec(avaDir, suffix, cfg, inputDir=''):
     """ Exports the required data from com1DFA to be used by Aimec for only one results parameter
         and with an option to specify the input directory
 
@@ -379,8 +343,6 @@ def indiDfa2Aimec(avaDir, suffix, comModule, cfg, inputDir=''):
         -----------
         avaDir: str
             path to avalanche directory
-        comModule: str
-            computational module name that has been used to produce simulation results
         cfg: configParser object
             configuration for aimec
         inputDir: str
@@ -398,8 +360,8 @@ def indiDfa2Aimec(avaDir, suffix, comModule, cfg, inputDir=''):
     pathDict = {suffix: [], 'colorParameter': []}
 
     # Setup input from com1DFA and save file paths to dictionary
+    comModule = cfg['anaMod']
     pathDict = fU.getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule, inputDir=inputDir)
-    print('pathDict in dfa', pathDict)
 
     pathDict['compType'] = ['singleModule', comModule]
 
