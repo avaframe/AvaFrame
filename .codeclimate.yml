@@ -23,7 +23,7 @@ checks:
   method-lines:
     enabled: true
     config:
-      threshold: 25
+      threshold: 30
   nested-control-flow:
     enabled: true
     config:
@@ -42,11 +42,12 @@ checks:
       threshold: #language-specific defaults. overrides affect all languages.
 plugins:
  pep8:
-  enabled: true
+  enabled: false
 exclude_patterns:
 - "config/"
 - "db/"
 - "dist/"
+- "**/.*"
 - "**/data/"
 - "**/runScripts/"
 - "**/tinyHelper/"
