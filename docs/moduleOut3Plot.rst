@@ -4,7 +4,7 @@ out3Plot: Plots
 
 This module gathers various functions for creating visualisations of simulation results,
 analysis results, etc. Details on these functions can be found in :py:mod:`out3Plot`.
-General settings for plots can be found in :py:mod:`out3Plot.plotUtils`
+General plot settings can be found in :py:mod:`out3Plot.plotUtils`
 and the respective configuration file ``out3Plot/plotUtilsCfg.ini``.
 
 In the following sections, some of these plotting functions are described in more detail.
