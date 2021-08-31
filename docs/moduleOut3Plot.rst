@@ -2,12 +2,61 @@
 out3Plot: Plots
 ##################################
 
-This module gathers various functions for producing visualisations of simulation results,
+This module gathers various functions for creating visualisations of simulation results,
 analysis results, etc. Details on these functions can be found in :py:mod:`out3Plot`.
-Further information on general settings for plots can be found in :py:mod:`out3Plot.plotUtils`
+General settings for plots can be found in :py:mod:`out3Plot.plotUtils`
 and the respective configuration file ``out3Plot/plotUtilsCfg.ini``.
 
 In the following sections, some of these plotting functions are described in more detail.
+
+plotUtils
+==========
+:py:mod:`out3Plot.plotUtils` gathers the general settings used for creating plots as well as small utility functions.
+
+makeColorMap
+-------------
+When plotting raster data, :py:func:`out3Plot.plotUtils.makeColorMap` is useful for deriving
+a suitable colormap. As inputs, this function requires: ::
+
+  makeColorMap(colormapDict, minimum level, maximum level, continuous flag)
+
+By setting the continuous flag, there is the option to return a continuous or discrete colormap.
+Within this function, several default colormaps are available, as for example the ones used
+to visualize flow depth, flow velocity or pressure.
+These can be initialised by::
+
+  from avaframe.out3Plot import plotUtils
+  plotUtils.cmapDepth
+
+In this manner, a colormap dictionary is loaded, which carries information about the colormap,
+specific colors and levels which correspond to the default option to visualise pressure in com1DFA.
+If the flag continuous is set to True, this function returns a colormap object and a norm object
+that is fitted to the minimum and maximim values provided as input parameters.
+However, if the continuous flag is set to False, it will return a colormap object and a norm object
+representing the discrete levels defined in the dictionary, where the maximum
+level provided in the inputs will be added as maximum level of the colorscale. See the two example plots below,
+where the predefined levels correspond to 1, 10, 25, and 50 kPa and the maximum level provided as input
+is 320 kPa.
+
+.. figure:: _static/plotPPR.png
+
+          left panel: continuous colormap. right panel: default discrete colormap used for pressure in com1DFA
+
+In order to define customized discrete colorbars, there are different options. Firstly, provide
+a colorbar dictionary that follows the structure in the example dictionary: ::
+
+  from cmcrameri import cm as cmapCameri
+  colormapDict = {'cmap': cmapCameri.hawaii.reversed(),
+                  'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"],
+                  'levels': [1.0, 10.0, 25.0, 50.0]}
+
+It is also possible to provide only the key colors, in this case as many levels as colors will be equally distributed
+between the maximum and minimum value provided. If neither colors nor levels are provided in the dictionary,
+six levels will be equally distributed between the maximum and minimum value provided to the function.
+It is also possible to just provide a colormap object instead of a dictionary to the function, in this
+case the continuous flag will be ignored and a colormap object as well as a norm object fitted to the
+maximum and minimum value will be returned.
+
 
 outQuickPlot
 =================
