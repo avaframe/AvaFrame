@@ -81,6 +81,30 @@ def test_mainDfa2Aimec(tmp_path):
         assert str(massName1) == str(massName2)
 
 
+    pathDict2 = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFAOrig', cfg)
+
+    pathData = testPath / 'Outputs' / 'com1DFAOrig' / 'peakFiles'
+    pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc',
+                        pathData / 'release2HS_ent_dfa_0.15500_ppr.asc']
+    pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_0.15500_pfd.asc',
+                        pathData / 'release2HS_ent_dfa_0.15500_pfd.asc']
+    pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc',
+                        pathData / 'release2HS_ent_dfa_0.15500_pfv.asc']
+    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt',
+                            testPath / 'Outputs' / 'com1DFAOrig' / 'mass_release2HS_ent_dfa_0.15500.txt']
+
+    assert pathDict2['ppr'] == pathDTest['ppr']
+    assert pathDict2['pfd'] == pathDTest['pfd']
+    assert pathDict2['pfv'] == pathDTest['pfv']
+    for massName1, massName2 in zip(pathDict2['massBal'], pathDTest['massBal']):
+        assert str(massName1) == str(massName2)
+
+
+
+
+
+
+
 def test_dfaComp2Aimec(tmp_path):
 
     # Initialise inputs
@@ -225,7 +249,7 @@ def test_getPathsFromSimName():
     refFileTest = inputDirRef / simNameRef
     with pytest.raises(FileNotFoundError) as e:
         assert dfa2Aimec.getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp)
-    assert ('No file found called: %s' % str(refFileTest))  in str(e.value)
+    assert ('No reference simulation file found called: %s' % str(refFileTest))  in str(e.value)
 
     simNameRef = 'release1HS_ent_ref_0.15500'
     simNameComp = 'release1HS_null_dfa_67dc2dc10a'
@@ -233,7 +257,7 @@ def test_getPathsFromSimName():
     pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
     with pytest.raises(FileNotFoundError) as e:
         assert dfa2Aimec.getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp)
-    assert ('No file found called: %s' % str(compFileTest))  in str(e.value)
+    assert ('No comparison simulation file found called: %s' % str(compFileTest))  in str(e.value)
 
 
 def test_dfaBench2Aimec():
@@ -316,10 +340,10 @@ def test_indiDfa2Aimec():
     cfg = configparser.ConfigParser()
     cfg['AIMECSETUP'] = {'varParList': 'releaseScenario|relTh', 'ascendingOrder': 'True'}
     suffix = 'ppr'
-    comModule = 'com1DFA'
+    cfg['AIMECSETUP']['anaMod'] = 'com1DFA'
 
     # call function to be tested
-    pathDict = dfa2Aimec.indiDfa2Aimec(avaDir, suffix, comModule, cfg['AIMECSETUP'])
+    pathDict = dfa2Aimec.indiDfa2Aimec(avaDir, suffix, cfg['AIMECSETUP'])
     print('pathDict', pathDict)
 
     assert 'pfv' not in pathDict.keys()

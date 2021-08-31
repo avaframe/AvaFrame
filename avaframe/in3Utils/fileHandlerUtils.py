@@ -119,6 +119,35 @@ def extractParameterInfo(avaDir, simName, reportD):
     flagNoStop = True
     # Read log file
     fileName = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
+    logDict = extractLogInfo(fileName)
+
+    # Set values in dictionary
+    parameterDict['release mass [kg]'] = logDict['mass'][0]
+    parameterDict['final time step [s]'] = logDict['time'][-1]
+    parameterDict['current mass [kg]'] = logDict['mass'][-1]
+    if stopCrit != '':
+        parameterDict['stop criterion'] = logDict['stopCrit']
+    else:
+        parameterDict['stop criterion'] = 'end time reached: %.2f s' % logDict['time'][-1]
+    parameterDict['Avalanche run time [s]'] = '%.2f' % logDict['stopTime']
+    parameterDict['CPU time [s]'] = logDict['stopTime']
+
+    reportD['Simulation Parameters'].update({'Stop criterion': parameterDict['stop criterion']})
+    reportD['Simulation Parameters'].update({'Avalanche run time [s]': parameterDict['final time step [s]']})
+
+    return parameterDict, reportD
+
+
+def extractLogInfo(fileName):
+    """ read log file and extract info on time, mass stop criterion """
+
+    time = []
+    mass = []
+    entrMass = []
+    stopCrit = ''
+    indRun = [0]
+    countMass = 0
+
     with open(fileName, 'r') as file:
         for line in file:
             if "computing time step" in line:
@@ -129,27 +158,26 @@ def extractParameterInfo(avaDir, simName, reportD):
                 entrMass.append(float(line.split()[3]))
             elif "total DFA mass" in line:
                 mass.append(float(line.split()[3]))
+                countMass = countMass + 1
             elif "Kinetische Energie" in line:
                 stopCrit = 'kinetic energy %.2f of peak KE' % (float(line.split()[3]))
             elif "terminated" in line:
                 stopTime = float(line.split()[5])
+                indRun.append(countMass)
+
+    logDict = {'time': np.asarray(time), 'mass': np.asarray(mass), 'stopTime': stopTime,
+               'entrMass': np.asarray(entrMass), 'indRun': indRun, 'stopCrit': stopCrit}
+
+    return logDict
 
 
-    # Set values in dictionary
-    parameterDict['release mass [kg]'] = np.asarray(mass)[0]
-    parameterDict['final time step [s]'] = np.asarray(time)[-1]
-    parameterDict['current mass [kg]'] = np.asarray(mass)[-1]
-    if stopCrit != '':
-        parameterDict['stop criterion'] = stopCrit
-    else:
-        parameterDict['stop criterion'] = 'end time reached: %.2f s' % np.asarray(time)[-1]
-    parameterDict['Avalanche run time [s]'] = '%.2f' % stopTime
-    parameterDict['CPU time [s]'] = stopTime
+def checkIfFileExists(filePath, fileType=''):
+    """ test if file exists if not throw error """
 
-    reportD['Simulation Parameters'].update({'Stop criterion': parameterDict['stop criterion']})
-    reportD['Simulation Parameters'].update({'Avalanche run time [s]': parameterDict['final time step [s]']})
-
-    return parameterDict, reportD
+    if not filePath.is_file():
+        message = 'No %s file found called: %s' % (fileType, str(filePath))
+        log.error(message)
+        raise FileNotFoundError(message)
 
 
 def checkCommonSims(logName, localLogName):
