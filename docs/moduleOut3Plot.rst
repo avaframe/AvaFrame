@@ -50,12 +50,8 @@ a colorbar dictionary that follows the structure in the example dictionary: ::
                   'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"],
                   'levels': [1.0, 10.0, 25.0, 50.0]}
 
-It is also possible to provide only the key colors, in this case as many levels as colors will be equally distributed
-between the maximum and minimum value provided. If neither colors nor levels are provided in the dictionary,
-six levels will be equally distributed between the maximum and minimum value provided to the function.
-It is also possible to just provide a colormap object instead of a dictionary to the function, in this
-case the continuous flag will be ignored and a colormap object as well as a norm object fitted to the
-maximum and minimum value will be returned.
+It is also possible to provide key colors only.  In this case the number of levels will match the number of colors and are equally distributed between the provided maximum and minimum value. If neither colors nor levels are provided in the dictionary, a default of six levels will be used.
+Another option is to just provide a colormap object instead of a dictionary.  Here the `continuous` flag will be ignored and a colormap object as well as a norm object fitted to the maximum and minimum value will be returned.
 
 
 outQuickPlot
