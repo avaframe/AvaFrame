@@ -386,7 +386,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (double, double) computeEntMassAndForce(double dt, double entrMassCell, double areaPart, double uMag, double tau, double entEroEnergy, double rhoEnt):
+cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell, double areaPart, double uMag, double tau, double entEroEnergy, double rhoEnt):
   """ compute force component due to entrained mass
 
   Parameters
@@ -433,7 +433,7 @@ cdef (double, double) computeEntMassAndForce(double dt, double entrMassCell, dou
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef double computeResForce(double hRes, double h, double areaPart, double rho, double cResCell, double uMag, int explicitFriction):
+cpdef double computeResForce(double hRes, double h, double areaPart, double rho, double cResCell, double uMag, int explicitFriction):
   """ compute force component due to resistance
 
   Parameters
@@ -713,7 +713,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cdef (double, double, double, double) account4FrictionForce(double ux, double uy,
+cpdef (double, double, double, double) account4FrictionForce(double ux, double uy,
                                                             double uz, double m,
                                                             double dt, double forceFrict,
                                                             double uMag, int explicitFriction):
@@ -764,7 +764,7 @@ cdef (double, double, double, double) account4FrictionForce(double ux, double uy
       if uMag<=0:
         dtStop = 0
       else:
-        dtStop = m * uMagNew / (dt * forceFrict)
+        dtStop = m * uMagNew / (forceFrict)
     else:
       # add friction force in the opposite direction of the motion
       xDir, yDir, zDir = normalize(ux, uy, uz)

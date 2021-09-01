@@ -155,7 +155,7 @@ def test_getScalVect(capfd):
     X = np.linspace(0, csz*(ncols-1), ncols)
     Y = np.linspace(0, csz*(nrows-1), nrows)
     XX, YY = np.meshgrid(X, Y)
-    ZZ = -2*XX + 1000 -YY + 500
+    ZZ = -2*XX + 1000 - YY + 500
 
     xpExpected = [0, 12.5, 12.5, 52, 95, 494]
     ypExpected = [0, 0, 12.5, 41, 37, 44]
@@ -163,7 +163,8 @@ def test_getScalVect(capfd):
         Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xpExp, ypExp, ncols, nrows,
                                                                     csz, interpOption)
         zScalRes = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
-        xRes, yRes, zRes = DFAfunC.getVector(Lx0, Ly0, w0, w1, w2, w3, ZZ, 2*ZZ, 3*ZZ)
+        xRes, yRes, zRes = DFAfunC.getVector(
+            Lx0, Ly0, w0, w1, w2, w3, ZZ, 2*ZZ, 3*ZZ)
         res = -2*xpExp + 1000-ypExp + 500
         print(xRes, res)
         atol = 1e-10
@@ -222,7 +223,6 @@ def test_reprojectionC(capfd):
     # make a point above the parabola at dist d:
     d = 15
 
-
     print(xpExpected, zpExpected)
     x1 = xpExpected + d*nx
     y1 = ypExpected + d*ny
@@ -235,7 +235,7 @@ def test_reprojectionC(capfd):
 
     for reprojectionIterations in range(10):
         xpn, ypn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.samosProjectionIteratrive(x1, y1, z1,
-                        ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations)
+                                                                                      ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations)
         zpn = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
         print(xpn, zpn)
         ax.plot(xpn, zpn, 'bo')
@@ -257,7 +257,7 @@ def test_reprojectionC(capfd):
 
     for reprojectionIterations in range(10):
         xpn, ypn, iCell, Lx0, Ly0, w0, w1, w2, w3 = DFAfunC.normalProjectionIteratrive(x1, y1, z1,
-            ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations, threshold)
+                                                                                       ZZ, Nx, Ny, Nz, csz, ncols, nrows, interpOption, reprojectionIterations, threshold)
         zpn = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
         print(xpn, zpn)
         ax.plot(xpn, zpn, 'bo')
@@ -315,9 +315,12 @@ def test_getNeighborsC(capfd):
     dem['headerNeighbourGrid'] = header
     particles = {}
     particles['Npart'] = 18
-    particles['x'] = np.array([1.6, 0.4, 1, 2, 1, 2, 0, 1, 0, 2, 0, 2, 1, 2, 3, 3, 4, 0])
-    particles['y'] = np.array([2.6, 1.4, 0, 1, 3, 3, 2, 1, 0, 0, 3, 2, 2, 1, 1, 4, 5, 5])
-    particles['z'] = np.array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
+    particles['x'] = np.array(
+        [1.6, 0.4, 1, 2, 1, 2, 0, 1, 0, 2, 0, 2, 1, 2, 3, 3, 4, 0])
+    particles['y'] = np.array(
+        [2.6, 1.4, 0, 1, 3, 3, 2, 1, 0, 0, 3, 2, 2, 1, 1, 4, 5, 5])
+    particles['z'] = np.array(
+        [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.])
     particles['m'] = particles['z']
     atol = 1e-10
     indPCell = np.array([0.,  # always an extra zero at the begining
@@ -367,3 +370,101 @@ def test_getNeighborsC(capfd):
     print(particles['partInCell'])
     assert np.allclose(particles['indPartInCell'], indPCell, atol=atol)
     assert np.allclose(particles['partInCell'], pInC, atol=atol)
+
+
+def test_computeEntMassAndForce(capfd):
+    """ Test the computeEntMassAndForce function"""
+    dt = 0.1
+    entrMassCell = 0
+    areaPart = 1
+    uMag = 10
+    tau = 1000
+    entEroEnergy = 5000
+    rhoEnt = 100
+    dm, areaEntrPart = DFAfunC.computeEntMassAndForce(
+        dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
+    print(dm, areaEntrPart)
+    assert dm == 0
+    assert areaEntrPart == 1
+
+    entrMassCell = 200
+    entEroEnergy = 0
+    dm, areaEntrPart = DFAfunC.computeEntMassAndForce(
+        dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
+    print(dm, areaEntrPart)
+    assert dm == 200
+    assert areaEntrPart == 2
+
+    entEroEnergy = 5000
+    dm, areaEntrPart = DFAfunC.computeEntMassAndForce(
+        dt, entrMassCell, areaPart, uMag, tau, entEroEnergy, rhoEnt)
+    print(dm, areaEntrPart)
+    assert dm == 0.2
+    assert areaEntrPart == 1
+
+
+def test_computeResForce(capfd):
+    """ Test the computeResForce function"""
+    hRes = 2
+    h = 1
+    areaPart = 1
+    rho = 200
+    cResCell = 1
+    uMag = 10
+    explicitFriction = 0
+    cResPart = DFAfunC.computeResForce(
+        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
+    print(cResPart)
+    assert cResPart == -2000
+
+    h = 3
+    cResPart = DFAfunC.computeResForce(
+        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
+    print(cResPart)
+    assert cResPart == -4000
+
+    explicitFriction = 1
+    cResPart = DFAfunC.computeResForce(
+        hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
+    print(cResPart)
+    assert cResPart == -40000
+
+
+def test_account4FrictionForce(capfd):
+    """ Test the account4FrictionForce function"""
+    uxNew = 10
+    uyNew = 0
+    uzNew = 0
+    m = 10
+    dt = 0.1
+    forceFrict = 100
+    uMag = 10
+    explicitFriction = 0
+    uxNew, uyNew, uzNew, dtStop = DFAfunC.account4FrictionForce(
+        uxNew, uyNew, uzNew, m, dt, forceFrict, uMag, explicitFriction)
+    print(uxNew, uyNew, uzNew, dtStop)
+    assert dtStop == 0.1
+    assert uxNew == 5
+
+    uxNew = 10
+    uyNew = 0
+    uzNew = 0
+    explicitFriction = 1
+    m = 0.5
+    uxNew, uyNew, uzNew, dtStop = DFAfunC.account4FrictionForce(
+        uxNew, uyNew, uzNew, m, dt, forceFrict, uMag, explicitFriction)
+    print(uxNew, uyNew, uzNew, dtStop)
+    print(dt*forceFrict/m)
+    assert dtStop == 0.05
+    assert uxNew == 0
+
+    uxNew = 10
+    uyNew = 0
+    uzNew = 0
+    m = 10
+    uxNew, uyNew, uzNew, dtStop = DFAfunC.account4FrictionForce(
+        uxNew, uyNew, uzNew, m, dt, forceFrict, uMag, explicitFriction)
+    print(uxNew, uyNew, uzNew, dtStop)
+    print(dt*forceFrict/m)
+    assert dtStop == 0.1
+    assert uxNew == 9.0
