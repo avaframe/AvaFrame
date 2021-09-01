@@ -1982,7 +1982,7 @@ cpdef (double, double, double) getVector(
   return nx, ny, nz
 
 @cython.cdivision(True)
-cdef double SamosATfric(double rho, double Rs0, double mu, double kappa, double B, double R, double v, double p, double h):
+cpdef double SamosATfric(double rho, double Rs0, double mu, double kappa, double B, double R, double v, double p, double h):
   cdef double Rs = rho * v * v / (p + 0.001)
   cdef double div = h / R
   if div < 1.0:

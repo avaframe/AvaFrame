@@ -468,3 +468,19 @@ def test_account4FrictionForce(capfd):
     print(dt*forceFrict/m)
     assert dtStop == 0.1
     assert uxNew == 9.0
+
+
+def test_SamosATfric(capfd):
+    """ Test the account4FrictionForce function"""
+    Rs0 = 0.222
+    kappa = 0.43
+    R = 0.05
+    B = 4.13
+    rho = 0.1
+    mu = 0.155
+    uMag = 10
+    sigmaB = 10
+    h = 1
+    tau = DFAfunC.SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+    print(tau)
+    assert tau == 1.9128193823277053
