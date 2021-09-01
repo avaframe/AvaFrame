@@ -28,7 +28,9 @@ def test_constrainPlotsToData():
     assert colsMax == 9
 
     # call function to be tested
-    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataConstrained = pU.constrainPlotsToData(inputData, cellSize, extentOption=True)
+    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataConstrained = pU.constrainPlotsToData(
+                                                                          inputData, cellSize,
+                                                                          extentOption=True)
 
     print('rows', rowsMinPlot, rowsMaxPlot)
     print('cols', colsMinPlot, colsMaxPlot)
@@ -120,14 +122,19 @@ def test_makeColorMap():
     cmap5, colorsNew5, levelsNew5, norm5 = pU.makeColorMap(colormapDict5, levMin, levMax, continuous=False)
     assert levelsNew5 == [1.0, 100.75, 200.5, 300.25, 400]
 
+
+    # call function to be tested
+    levMax = 400.0
+    colormapDict5 = {'cmap': cmapCameri.hawaii.reversed()}
+    cmap5, colorsNew5, levelsNew5, norm5 = pU.makeColorMap(colormapDict5, levMin, levMax, continuous=False)
+    assert levelsNew5 == list(np.linspace(1, 400, 6))
+
     # call function to be tested
     levMax = 400.0
     colormapDict6 = {'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"],
                     'levels': [1.0, 10.0, 25.0, 50.0]}
     cmap6, colorsNew6, levelsNew6, norm6 = pU.makeColorMap(colormapDict6, levMin, levMax, continuous=True)
-    assert colorsNew6[0] == "#B0F4FA"
-    assert len(colorsNew6) == 4
-    assert colorsNew6[3] == "#8B0069"
+    assert colorsNew6 == ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]69"
     assert levelsNew6 == None
 
     # call function to be tested
