@@ -21,7 +21,7 @@ CLASSIFIERS = [
         'Development Status :: 4 - Beta',
         # Indicate who your project is intended for
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: EUPL License',
+        'License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
@@ -40,7 +40,7 @@ setup(
     name=DISTNAME,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
-    version='dev',
+    version='0.5',
     # The project's main homepage.
     url=URL,
     # Author details
