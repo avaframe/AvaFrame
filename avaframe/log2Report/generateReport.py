@@ -23,6 +23,8 @@ def addLineBlock(titleString, reportDKey, pfile, italicFont=False, flagBreak=Fal
         reportDKey: dict
             dictionary with info for string
         pfile: file
+        italicFont: bool
+            if True write value in italic
         flagBreak: bool
             True break if if conidtion is met
     """
@@ -164,7 +166,7 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
                 reportD['Simulation Results'].update({'type': 'image'})
 
             # Start writing markdown style report
-            with open(os.path.join(outDir, '%s.md' % reportD['simName']), 'w') as pfile:
+            with open(os.path.join(outDir, '%s.md' % reportD['simName']['name']), 'w') as pfile:
 
                 # Write report file
                 writeReportFile(reportD, pfile)
