@@ -51,6 +51,33 @@ def test_readLogFile():
     assert logDictMu['Mu'][2] == 4.0
 
 
+def test_extractLogInfo():
+    """ test extracting info from logFile """
+
+    # setup required input
+    dirPath = pathlib.Path(__file__).parents[0]
+    logName = dirPath / 'data' / 'logTest.log'
+
+    # call function to be tested
+    logDict = fU.extractLogInfo(logName)
+
+    print('logDict', logDict)
+    # define test results
+    time = np.asarray([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 301.1])
+    mass = np.asarray([1.99393e+07, 1.99393e+07, 1.99393e+07, 1.99393e+07, 1.99393e+07, 1.99393e+07,
+                       2.02876e+07])
+    entrMass = np.asarray([0., 0., 0., 0., 0., 0., 0.])
+    stopTime = 78.4059
+    stopCrit = 'kinetic energy 0.00 of peak KE'
+
+    assert logDict['indRun'] == [0, 7]
+    assert np.array_equal(logDict['time'], time)
+    assert np.array_equal(logDict['mass'], mass)
+    assert np.array_equal(logDict['entrMass'], entrMass)
+    assert logDict['stopTime'] == stopTime
+    assert logDict['stopCrit'] == stopCrit
+
+
 def test_makeSimDF():
     """ Test if simulation dataFrame is generated correctly """
 
@@ -76,8 +103,6 @@ def test_makeSimDF():
     assert dataDF['resType'][0] == 'ppr'
     assert dataDF['cellSize'][0] == 5.0
     assert dataDF['test'][0] == '0.888'
-
-
 
 
 def test_exportcom1DFAOrigOutput(tmp_path):
