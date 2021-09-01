@@ -68,7 +68,7 @@ def test_extractLogInfo():
                        2.02876e+07])
     entrMass = np.asarray([0., 0., 0., 0., 0., 0., 0.])
     stopTime = 78.4059
-    stopCrit = 'kinetic energy 0.00 of peak KE'
+    stopCrit = 'kinetic energy 1.00 of peak KE'
 
     assert logDict['indRun'] == [0, 7]
     assert np.array_equal(logDict['time'], time)
@@ -76,6 +76,33 @@ def test_extractLogInfo():
     assert np.array_equal(logDict['entrMass'], entrMass)
     assert logDict['stopTime'] == stopTime
     assert logDict['stopCrit'] == stopCrit
+
+
+def test_checkIfFileExists():
+    """ test if a file exists and if not throw error """
+
+    # setup required input
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaTestName = 'avaHockeyChannelPytest'
+    testPath = dirPath / '..' / '..' / 'benchmarks' / avaTestName
+    pathData = testPath / 'Outputs' / 'com1DFAOri' / 'peakFiles' / 'release1HS_ent_dfa_67dc2dc10a_pfd.asc'
+
+    # call function to be tested
+    with pytest.raises(FileNotFoundError) as e:
+        assert fU.checkIfFileExists(pathData, fileType='')
+    assert str(e.value) == ('No  file found called: %s' % str(pathData))
+
+    # call function to be tested
+    with pytest.raises(FileNotFoundError) as e:
+        assert fU.checkIfFileExists(pathData, fileType='log info')
+    assert str(e.value) == ('No log info file found called: %s' % str(pathData))
+
+    # call function to be tested
+    pathData2 = 'test/dataTest'
+    print('pathDatastr', pathData2)
+    with pytest.raises(FileNotFoundError) as e:
+        assert fU.checkIfFileExists(pathData, fileType='log info')
+    assert str(e.value) == ('No log info file found called: %s' % str(pathData))
 
 
 def test_makeSimDF():
