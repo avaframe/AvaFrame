@@ -1,0 +1,350 @@
+Setting config files directory: /home/anna/repos/github/com1DFA_Exe/files/AK_Attributes/	(src/SW_Workspace.cpp:3432)
+/home/anna/repos/github/com1DFA_Exe/com1DFA.exe -files /home/anna/repos/github/com1DFA_Exe/files/AK_Attributes/ -offscreen data/avaHockeyChannel/Work/com1DFA/runStandardSimulation.cint 	(src/SW_Workspace.cpp:3450)
+=================================================================
+/home/anna/repos/github/com1DFA_Exe/com1DFA.exe
+Compiled Nov  4 2020 10:11:21
+Developed by AVL List GmbH
+for the Austrian Service for Torrent and Avalanche Control/ AvaFrame / BMLRT
+
+=================================================================
+	(src/SW_Workspace.cpp:3451)
+[BatchCom1DFA] Number of total sims now 0 
+loading 'DEM_HS_Topo_simulation' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/DHMs/DEM_HS_Topo_simulation	(src/AK_Object.cpp:1405)
+computing connectivity for 400000 cells...	(src/SW_Mesh.cpp:2337)
+initializing lcc...	(src/SW_Mesh.cpp:2346)
+computing lcc...	(src/SW_Mesh.cpp:2349)
+cell 1	(src/SW_Mesh.cpp:2352)
+cell 200001	(src/SW_Mesh.cpp:2352)
+lcc ready, 15.9979 search steps per cell	(src/SW_Mesh.cpp:2372)
+computing connectivity done	(src/SW_Mesh.cpp:2374)
+loading 'DHMs' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/DHMs	(src/AK_Object.cpp:1405)
+loading 'ReleaseDHMs' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/ReleaseDHMs	(src/AK_Object.cpp:1405)
+loading 'Polygons' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Polygons	(src/AK_Object.cpp:1405)
+loading 'Polylines' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Polylines	(src/AK_Object.cpp:1405)
+loading 'Rel_Example' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/ReleaseAreas/Rel_Example	(src/AK_Object.cpp:1405)
+loading 'ReleaseAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/ReleaseAreas	(src/AK_Object.cpp:1405)
+loading 'Ent_0' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/EntrainmentAreas/Ent_0	(src/AK_Object.cpp:1405)
+loading 'EntrainmentAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/EntrainmentAreas	(src/AK_Object.cpp:1405)
+loading 'ResistanceAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/ResistanceAreas	(src/AK_Object.cpp:1405)
+loading 'WallLines' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/WallLines	(src/AK_Object.cpp:1405)
+loading 'SourceLines' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/SourceLines	(src/AK_Object.cpp:1405)
+formula syntax OK	(src/SW_Simulation.cpp:637)
+loading 'ReleaseAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/ReleaseAreas	(src/AK_Object.cpp:1405)
+loading 'EntrainmentAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentAreas	(src/AK_Object.cpp:1405)
+loading 'SecondaryReleaseAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/SecondaryReleaseAreas	(src/AK_Object.cpp:1405)
+loading 'ResistanceAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/ResistanceAreas	(src/AK_Object.cpp:1405)
+loading 'WallLines' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/WallLines	(src/AK_Object.cpp:1405)
+loading 'SourceLines' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/SourceLines	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FlowDepth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'FlowDepth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FlowDepth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakFlowDepth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'PeakFlowDepth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakFlowDepth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Velocity/Colorbar	(src/AK_Object.cpp:1405)
+loading 'Velocity' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Velocity	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/DynamicPeakPressure/Colorbar	(src/AK_Object.cpp:1405)
+loading 'DynamicPeakPressure' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/DynamicPeakPressure	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakForcePerWidth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'PeakForcePerWidth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakForcePerWidth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakTorquePerWidth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'PeakTorquePerWidth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakTorquePerWidth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FrontArrivalTime/Colorbar	(src/AK_Object.cpp:1405)
+loading 'FrontArrivalTime' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FrontArrivalTime	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentMass/Colorbar	(src/AK_Object.cpp:1405)
+loading 'EntrainmentMass' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentMass	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentEnthalpy/Colorbar	(src/AK_Object.cpp:1405)
+loading 'EntrainmentEnthalpy' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentEnthalpy	(src/AK_Object.cpp:1405)
+loading 'Position' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Position	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Mass/Colorbar	(src/AK_Object.cpp:1405)
+loading 'Mass' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Mass	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Velocity/Colorbar	(src/AK_Object.cpp:1405)
+loading 'Velocity' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Velocity	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/TotalEnthalpy/Colorbar	(src/AK_Object.cpp:1405)
+loading 'TotalEnthalpy' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/TotalEnthalpy	(src/AK_Object.cpp:1405)
+loading 'Particles' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles	(src/AK_Object.cpp:1405)
+loading 'release1HS_entres_dfa' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa	(src/AK_Object.cpp:1405)
+initializing cell entrainment area weights...	(src/SW_Simulation.cpp:1479)
+updating cell entrainment area weights done	(src/SW_Simulation.cpp:1533)
+computing release depths in cells...	(src/SW_Simulation.cpp:1269)
+computing release depths in cells done	(src/SW_Simulation.cpp:1342)
+total mass:1.99393e+07 kg in 3304 cells	(src/SW_Simulation.cpp:1343)
+estimated number of particles:15951	(src/SW_Simulation.cpp:1373)
+estimated mass per particle:1250	(src/SW_Simulation.cpp:1374)
+generating 15877 particles...	(src/SW_Workspace.cpp:2764)
+15877 particles generated	(src/SW_Workspace.cpp:2799)
+total mass:1.98662e+07 kg	(src/SW_Workspace.cpp:2800)
+mass per particle corrected:1255.86	(src/SW_Simulation.cpp:1387)
+formula syntax OK	(src/SW_Simulation.cpp:637)
+loading 'ReleaseAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/ReleaseAreas	(src/AK_Object.cpp:1405)
+loading 'EntrainmentAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/EntrainmentAreas	(src/AK_Object.cpp:1405)
+loading 'SecondaryReleaseAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/SecondaryReleaseAreas	(src/AK_Object.cpp:1405)
+loading 'ResistanceAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/ResistanceAreas	(src/AK_Object.cpp:1405)
+loading 'WallLines' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/WallLines	(src/AK_Object.cpp:1405)
+loading 'SourceLines' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/SourceLines	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/FlowDepth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'FlowDepth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/FlowDepth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/PeakFlowDepth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'PeakFlowDepth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/PeakFlowDepth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Velocity/Colorbar	(src/AK_Object.cpp:1405)
+loading 'Velocity' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Velocity	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/DynamicPeakPressure/Colorbar	(src/AK_Object.cpp:1405)
+loading 'DynamicPeakPressure' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/DynamicPeakPressure	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/PeakForcePerWidth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'PeakForcePerWidth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/PeakForcePerWidth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/PeakTorquePerWidth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'PeakTorquePerWidth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/PeakTorquePerWidth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/FrontArrivalTime/Colorbar	(src/AK_Object.cpp:1405)
+loading 'FrontArrivalTime' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/FrontArrivalTime	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/EntrainmentMass/Colorbar	(src/AK_Object.cpp:1405)
+loading 'EntrainmentMass' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/EntrainmentMass	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/EntrainmentEnthalpy/Colorbar	(src/AK_Object.cpp:1405)
+loading 'EntrainmentEnthalpy' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/EntrainmentEnthalpy	(src/AK_Object.cpp:1405)
+loading 'Position' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/Position	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/Mass/Colorbar	(src/AK_Object.cpp:1405)
+loading 'Mass' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/Mass	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/Velocity/Colorbar	(src/AK_Object.cpp:1405)
+loading 'Velocity' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/Velocity	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/TotalEnthalpy/Colorbar	(src/AK_Object.cpp:1405)
+loading 'TotalEnthalpy' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/TotalEnthalpy	(src/AK_Object.cpp:1405)
+loading 'Particles' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles	(src/AK_Object.cpp:1405)
+loading 'release1HS_null_dfa' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa	(src/AK_Object.cpp:1405)
+initializing cell entrainment area weights...	(src/SW_Simulation.cpp:1479)
+updating cell entrainment area weights done	(src/SW_Simulation.cpp:1533)
+computing release depths in cells...	(src/SW_Simulation.cpp:1269)
+computing release depths in cells done	(src/SW_Simulation.cpp:1342)
+total mass:1.99393e+07 kg in 3304 cells	(src/SW_Simulation.cpp:1343)
+estimated number of particles:15951	(src/SW_Simulation.cpp:1373)
+estimated mass per particle:1250	(src/SW_Simulation.cpp:1374)
+generating 15877 particles...	(src/SW_Workspace.cpp:2764)
+15877 particles generated	(src/SW_Workspace.cpp:2799)
+total mass:1.98662e+07 kg	(src/SW_Workspace.cpp:2800)
+mass per particle corrected:1255.86	(src/SW_Simulation.cpp:1387)
+loading 'Simulations' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations	(src/AK_Object.cpp:1405)
+loading 'copyright' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Labels/copyright	(src/AK_Object.cpp:1405)
+loading 'Labels' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Labels	(src/AK_Object.cpp:1405)
+loading 'Project' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project	(src/AK_Object.cpp:1405)
+loading 'Viewer' from data/avaHockeyChannel/Work/com1DFA/release1HS	(src/AK_Object.cpp:1405)
+
+[BatchCom1DFA] Full ExpLog data/avaHockeyChannel/Work/com1DFA/ExpLog.txt
+
+[BatchCom1DFA] -------------------------
+
+[BatchCom1DFA] Computing Simulation: Project/Simulations/release1HS_entres_dfa
+syntax OK, using /home/anna/repos/github/com1DFA_Exe/files/AK_Attributes/rheology/samosAT_Standard.cint	(src/SW_Simulation.cpp:671)
+
+[BatchCom1DFA] Setting in Project/Simulations/release1HS_entres_dfa/EntrainmentAreas ent depth to 0.30000 m 
+saving Ent_0 to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/EntrainmentAreas/Ent_0	(src/AK_Object.cpp:1354)
+saving release1HS_entres_dfa to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa	(src/AK_Object.cpp:1354)
+saving FlowDepth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FlowDepth	(src/AK_Object.cpp:1354)
+saving PeakFlowDepth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakFlowDepth	(src/AK_Object.cpp:1354)
+saving Velocity to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Velocity	(src/AK_Object.cpp:1354)
+saving DynamicPeakPressure to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/DynamicPeakPressure	(src/AK_Object.cpp:1354)
+saving PeakForcePerWidth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakForcePerWidth	(src/AK_Object.cpp:1354)
+saving PeakTorquePerWidth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakTorquePerWidth	(src/AK_Object.cpp:1354)
+saving FrontArrivalTime to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FrontArrivalTime	(src/AK_Object.cpp:1354)
+saving EntrainmentMass to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentMass	(src/AK_Object.cpp:1354)
+saving EntrainmentEnthalpy to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentEnthalpy	(src/AK_Object.cpp:1354)
+saving Particles to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles	(src/AK_Object.cpp:1354)
+saving Position to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Position	(src/AK_Object.cpp:1354)
+saving Mass to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Mass	(src/AK_Object.cpp:1354)
+saving Velocity to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Velocity	(src/AK_Object.cpp:1354)
+saving TotalEnthalpy to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/TotalEnthalpy	(src/AK_Object.cpp:1354)
+saving FlowDepth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/FlowDepth	(src/AK_Object.cpp:1354)
+saving PeakFlowDepth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/PeakFlowDepth	(src/AK_Object.cpp:1354)
+saving Velocity to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Velocity	(src/AK_Object.cpp:1354)
+saving DynamicPeakPressure to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/DynamicPeakPressure	(src/AK_Object.cpp:1354)
+saving PeakForcePerWidth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/PeakForcePerWidth	(src/AK_Object.cpp:1354)
+saving PeakTorquePerWidth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/PeakTorquePerWidth	(src/AK_Object.cpp:1354)
+saving FrontArrivalTime to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/FrontArrivalTime	(src/AK_Object.cpp:1354)
+saving EntrainmentMass to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/EntrainmentMass	(src/AK_Object.cpp:1354)
+saving EntrainmentEnthalpy to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/EntrainmentEnthalpy	(src/AK_Object.cpp:1354)
+saving Particles to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles	(src/AK_Object.cpp:1354)
+saving Position to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/Position	(src/AK_Object.cpp:1354)
+saving Mass to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/Mass	(src/AK_Object.cpp:1354)
+saving Velocity to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/Velocity	(src/AK_Object.cpp:1354)
+saving TotalEnthalpy to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_null_dfa/Particles/TotalEnthalpy	(src/AK_Object.cpp:1354)
+loading 'Rel_Example' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/ReleaseAreas/Rel_Example	(src/AK_Object.cpp:1405)
+loading 'ReleaseAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/ReleaseAreas	(src/AK_Object.cpp:1405)
+loading 'Ent_0' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentAreas/Ent_0	(src/AK_Object.cpp:1405)
+loading 'EntrainmentAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentAreas	(src/AK_Object.cpp:1405)
+loading 'SecondaryReleaseAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/SecondaryReleaseAreas	(src/AK_Object.cpp:1405)
+loading 'ResistanceAreas' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/ResistanceAreas	(src/AK_Object.cpp:1405)
+loading 'WallLines' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/WallLines	(src/AK_Object.cpp:1405)
+loading 'SourceLines' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/SourceLines	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FlowDepth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'FlowDepth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FlowDepth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakFlowDepth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'PeakFlowDepth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakFlowDepth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Velocity/Colorbar	(src/AK_Object.cpp:1405)
+loading 'Velocity' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Velocity	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/DynamicPeakPressure/Colorbar	(src/AK_Object.cpp:1405)
+loading 'DynamicPeakPressure' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/DynamicPeakPressure	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakForcePerWidth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'PeakForcePerWidth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakForcePerWidth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakTorquePerWidth/Colorbar	(src/AK_Object.cpp:1405)
+loading 'PeakTorquePerWidth' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakTorquePerWidth	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FrontArrivalTime/Colorbar	(src/AK_Object.cpp:1405)
+loading 'FrontArrivalTime' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FrontArrivalTime	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentMass/Colorbar	(src/AK_Object.cpp:1405)
+loading 'EntrainmentMass' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentMass	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentEnthalpy/Colorbar	(src/AK_Object.cpp:1405)
+loading 'EntrainmentEnthalpy' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentEnthalpy	(src/AK_Object.cpp:1405)
+loading 'Position' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Position	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Mass/Colorbar	(src/AK_Object.cpp:1405)
+loading 'Mass' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Mass	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Velocity/Colorbar	(src/AK_Object.cpp:1405)
+loading 'Velocity' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Velocity	(src/AK_Object.cpp:1405)
+loading 'Colorbar' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/TotalEnthalpy/Colorbar	(src/AK_Object.cpp:1405)
+loading 'TotalEnthalpy' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/TotalEnthalpy	(src/AK_Object.cpp:1405)
+loading 'Particles' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles	(src/AK_Object.cpp:1405)
+loading 'release1HS_entres_dfa' from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa	(src/AK_Object.cpp:1405)
+syntax OK, using /home/anna/repos/github/com1DFA_Exe/files/AK_Attributes/rheology/samosAT_Standard.cint	(src/SW_Simulation.cpp:671)
+running simulation release1HS_entres_dfa...	(src/SW_Simulation.cpp:921)
+initializing cell entrainment area weights...	(src/SW_Simulation.cpp:1479)
+updating cell entrainment area weights done	(src/SW_Simulation.cpp:1533)
+computing release depths in cells...	(src/SW_Simulation.cpp:1269)
+computing release depths in cells done	(src/SW_Simulation.cpp:1342)
+total mass:1.99393e+07 kg in 3304 cells	(src/SW_Simulation.cpp:1343)
+estimated number of particles:15951	(src/SW_Simulation.cpp:1373)
+estimated mass per particle:1250	(src/SW_Simulation.cpp:1374)
+generating 15877 particles...	(src/SW_Workspace.cpp:2764)
+15877 particles generated	(src/SW_Workspace.cpp:2799)
+total mass:1.98662e+07 kg	(src/SW_Workspace.cpp:2800)
+mass per particle corrected:1255.86	(src/SW_Simulation.cpp:1387)
+updating cell resistances...	(src/SW_Simulation.cpp:1417)
+updating cell resistances done	(src/SW_Simulation.cpp:1430)
+0 of 400000 cells covered by wall lines	(src/SW_Simulation.cpp:1464)
+saving time step data to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/at_0000000.0000.TimeStep	(src/SW_Simulation.cpp:1743)
+saving time step data to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/at_0000000.0000.TimeStep done.	(src/SW_Simulation.cpp:1781)
+computing time step 0.1...	(src/SW_Simulation.cpp:2829)
+SPH kernel radius 5	(src/SW_Simulation.cpp:2912)
+	entrained DFA mass: 0	(src/SW_Simulation.cpp:3014)
+	total DFA mass: 1.99393e+07	(src/SW_Simulation.cpp:3186)
+computing time step 0.2...	(src/SW_Simulation.cpp:2829)
+	entrained DFA mass: 0	(src/SW_Simulation.cpp:3014)
+	total DFA mass: 1.99393e+07	(src/SW_Simulation.cpp:3186)
+computing time step 0.3...	(src/SW_Simulation.cpp:2829)
+	entrained DFA mass: 0	(src/SW_Simulation.cpp:3014)
+	total DFA mass: 1.99393e+07	(src/SW_Simulation.cpp:3186)
+computing time step 0.4...	(src/SW_Simulation.cpp:2829)
+	entrained DFA mass: 0	(src/SW_Simulation.cpp:3014)
+	total DFA mass: 1.99393e+07	(src/SW_Simulation.cpp:3186)
+computing time step 0.5...	(src/SW_Simulation.cpp:2829)
+	entrained DFA mass: 0	(src/SW_Simulation.cpp:3014)
+	total DFA mass: 1.99393e+07	(src/SW_Simulation.cpp:3186)
+computing time step 0.6...	(src/SW_Simulation.cpp:2829)
+	entrained DFA mass: 0	(src/SW_Simulation.cpp:3014)
+	total DFA mass: 1.99393e+07	(src/SW_Simulation.cpp:3186)
+simulation release1HS_entres_dfa STOPPED:
+Kinetische Energie DFA 0.998553  PSA 0 Prozent vom Maximum, beide unter Limit	(src/SW_Simulation.cpp:1091)
+computing time step 301.1...	(src/SW_Simulation.cpp:2829)
+	entrained DFA mass: 0	(src/SW_Simulation.cpp:3014)
+	total DFA mass: 2.02876e+07	(src/SW_Simulation.cpp:3186)
+saving time step data to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/at_0000301.1000.TimeStep	(src/SW_Simulation.cpp:1743)
+saving time step data to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/at_0000301.1000.TimeStep done.	(src/SW_Simulation.cpp:1781)
+simulation release1HS_entres_dfa terminated; CPU time 78.4059 sec	(src/SW_Simulation.cpp:1138)
+
+[BatchCom1DFA] Report is saved to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500 
+loading time step data from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/at_0000301.1000.TimeStep	(src/SW_Simulation.cpp:1799)
+loading time step data from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/at_0000301.1000.TimeStep done.	(src/SW_Simulation.cpp:1860)
+txt html file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa.html!release1HS_entres_dfa 
+In export var: PeakFlowDepth 
+writing field raster data to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_pfd.asc	(src/SW_Workspace.cpp:2167)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_pfd.asc written	(src/SW_Workspace.cpp:2204)
+writing contour lines to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz	(src/SW_Workspace.cpp:2135)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz written	(src/SW_Workspace.cpp:2149)
+SHPConv:  export  file:  data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz
+__0
+__0.5
+__1
+__1.5
+__2
+__3
+__4
+__5
+Convert to Shape data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz
+CMD: /home/anna/repos/github/com1DFA_Exe/SHPConv.exe -a export -i data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pfd.nxyz -s 'name=Rel_Example;ah=None;rho=200;sks=None;iso=None;d0=1;' 
+In export var: FlowDepth 
+writing field raster data to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_fd.asc	(src/SW_Workspace.cpp:2167)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_fd.asc written	(src/SW_Workspace.cpp:2204)
+writing contour lines to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_fd.nxyz	(src/SW_Workspace.cpp:2135)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_fd.nxyz written	(src/SW_Workspace.cpp:2149)
+SHPConv:  export  file:  data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_fd.nxyz
+__0
+__0.5
+__1
+__1.5
+__2
+__3
+__4
+__5
+Convert to Shape data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_fd.nxyz
+CMD: /home/anna/repos/github/com1DFA_Exe/SHPConv.exe -a export -i data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_fd.nxyz -s 'name=Rel_Example;ah=None;rho=200;sks=None;iso=None;d0=1;' 
+In export var: DynamicPeakPressure 
+writing field raster data to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_pv.asc	(src/SW_Workspace.cpp:2167)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_pv.asc written	(src/SW_Workspace.cpp:2204)
+writing contour lines to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pv.nxyz	(src/SW_Workspace.cpp:2135)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pv.nxyz written	(src/SW_Workspace.cpp:2149)
+SHPConv:  export  file:  data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pv.nxyz
+__0
+__1
+__5
+__10
+__12.5
+__15
+__17.5
+__20
+__22.5
+__25
+__27.5
+__30
+__35
+__40
+__50
+Convert to Shape data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pv.nxyz
+CMD: /home/anna/repos/github/com1DFA_Exe/SHPConv.exe -a export -i data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_pv.nxyz -s 'name=Rel_Example;ah=None;rho=200;sks=None;iso=None;d0=1;' 
+In export var: DynamicPeakPressure 
+writing field raster data to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_ppr.asc	(src/SW_Workspace.cpp:2167)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/raster/release1HS_entres_dfa_ppr.asc written	(src/SW_Workspace.cpp:2204)
+writing contour lines to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_ppr.nxyz	(src/SW_Workspace.cpp:2135)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_ppr.nxyz written	(src/SW_Workspace.cpp:2149)
+SHPConv:  export  file:  data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_ppr.nxyz
+__0
+__1
+__3
+__5
+__10
+__25
+__50
+Convert to Shape data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_ppr.nxyz
+CMD: /home/anna/repos/github/com1DFA_Exe/SHPConv.exe -a export -i data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa/shp/release1HS_entres_dfa_ppr.nxyz -s 'name=Rel_Example;ah=None;rho=200;sks=None;iso=None;d0=1;' 
+loading time step data from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/at_0000000.0000.TimeStep	(src/SW_Simulation.cpp:1799)
+loading time step data from data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/at_0000000.0000.TimeStep done.	(src/SW_Simulation.cpp:1860)
+writing field raster data to data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa_tFirst_fd.txt	(src/SW_Workspace.cpp:2167)
+file data/avaHockeyChannel/Work/com1DFA/FullOutput_Mu_0.15500/release1HS_entres_dfa_tFirst_fd.txt written	(src/SW_Workspace.cpp:2204)
+saving Viewer to data/avaHockeyChannel/Work/com1DFA/release1HS	(src/AK_Object.cpp:1354)
+saving DEM_HS_Topo_simulation to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/DHMs/DEM_HS_Topo_simulation	(src/AK_Object.cpp:1354)
+saving release1HS_entres_dfa to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa	(src/AK_Object.cpp:1354)
+saving FlowDepth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FlowDepth	(src/AK_Object.cpp:1354)
+saving Colorbar to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FlowDepth/Colorbar	(src/AK_Object.cpp:1354)
+saving PeakFlowDepth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakFlowDepth	(src/AK_Object.cpp:1354)
+saving Colorbar to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakFlowDepth/Colorbar	(src/AK_Object.cpp:1354)
+saving Velocity to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Velocity	(src/AK_Object.cpp:1354)
+saving Colorbar to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Velocity/Colorbar	(src/AK_Object.cpp:1354)
+saving DynamicPeakPressure to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/DynamicPeakPressure	(src/AK_Object.cpp:1354)
+saving Colorbar to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/DynamicPeakPressure/Colorbar	(src/AK_Object.cpp:1354)
+saving PeakForcePerWidth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakForcePerWidth	(src/AK_Object.cpp:1354)
+saving PeakTorquePerWidth to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/PeakTorquePerWidth	(src/AK_Object.cpp:1354)
+saving FrontArrivalTime to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FrontArrivalTime	(src/AK_Object.cpp:1354)
+saving Colorbar to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/FrontArrivalTime/Colorbar	(src/AK_Object.cpp:1354)
+saving EntrainmentMass to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentMass	(src/AK_Object.cpp:1354)
+saving Colorbar to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentMass/Colorbar	(src/AK_Object.cpp:1354)
+saving EntrainmentEnthalpy to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/EntrainmentEnthalpy	(src/AK_Object.cpp:1354)
+saving Particles to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles	(src/AK_Object.cpp:1354)
+saving Position to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Position	(src/AK_Object.cpp:1354)
+saving Mass to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Mass	(src/AK_Object.cpp:1354)
+saving Colorbar to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Mass/Colorbar	(src/AK_Object.cpp:1354)
+saving Velocity to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Velocity	(src/AK_Object.cpp:1354)
+saving Colorbar to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/Velocity/Colorbar	(src/AK_Object.cpp:1354)
+saving TotalEnthalpy to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/TotalEnthalpy	(src/AK_Object.cpp:1354)
+saving Colorbar to data/avaHockeyChannel/Work/com1DFA/release1HS/Project/Simulations/release1HS_entres_dfa/Particles/TotalEnthalpy/Colorbar	(src/AK_Object.cpp:1354)
+[BatchCom1DFA] Simulation #1 done

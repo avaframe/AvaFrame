@@ -12,6 +12,28 @@ from avaframe.log2Report import generateReport as gR
 
 import pytest
 import configparser
+import pathlib
+
+
+def test_addLineBlock(tmp_path):
+    """ test adding a line block """
+
+    # setup required input
+    reportDKey = {'type': 'class', 'name': 'TestName'}
+    testReport = pathlib.Path(tmp_path, 'testReport.md')
+    with open(testReport, 'w') as pfile:
+
+        # call function to be tested
+        gR.addLineBlock('##Hallo: ', reportDKey, pfile)
+        pfile.close()
+
+    reportFile = open(testReport, 'r')
+    lines = reportFile.readlines()
+    lineVals = []
+    for line in lines:
+        lineVals.append(line)
+
+    assert lineVals[0] == '##Hallo:  TestName \n'
 
 
 def test_writeReport(tmp_path):
