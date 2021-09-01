@@ -134,7 +134,7 @@ def test_makeColorMap():
     colormapDict6 = {'colors': ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"],
                     'levels': [1.0, 10.0, 25.0, 50.0]}
     cmap6, colorsNew6, levelsNew6, norm6 = pU.makeColorMap(colormapDict6, levMin, levMax, continuous=True)
-    assert colorsNew6 == ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]69"
+    assert colorsNew6 == ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
     assert levelsNew6 == None
 
     # call function to be tested
