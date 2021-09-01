@@ -119,8 +119,8 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
         Returns
         --------
         pathDict: dict
-            dictionary with paths to result and optionally mass files for matching simulations from two modules - matching in terms
-            of releaseScenario and simType
+            dictionary with paths to result and optionally mass files for matching simulations from
+            two modules - matching in terms of releaseScenario and simType
     """
 
     cfgSetup = cfg['AIMECSETUP']
@@ -141,13 +141,15 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
     for countRef, simNameShort in enumerate(refData['simName']):
         for countComp, simNameComp in enumerate(compData['simName']):
             if simSearch:
-                if refData['releaseArea'][countRef] == compData['releaseArea'][countComp] == rel and refData['simType'][countRef] == compData['simType'][countComp] == simType:
+                if (refData['releaseArea'][countRef] == compData['releaseArea'][countComp] == rel and
+                    refData['simType'][countRef] == compData['simType'][countComp] == simType):
                     refSimName = refData['simName'][countRef]
                     compSimName = compData['simName'][countComp]
                     log.info('Reference simulation: %s and to comparison simulation: %s ' % (refSimName, compSimName))
                     simSearch = False
     if simSearch == True:
-        message = 'No matching simulations found for reference and comparison simulation for releaseScenario: %s and simType: %s' % (rel, simType)
+        message = 'No matching simulations found for reference and comparison simulation \
+                   for releaseScenario: %s and simType: %s' % (rel, simType)
         log.error(message)
         raise FileNotFoundError(message)
 

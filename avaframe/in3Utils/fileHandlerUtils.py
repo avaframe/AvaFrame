@@ -139,7 +139,18 @@ def extractParameterInfo(avaDir, simName, reportD):
 
 
 def extractLogInfo(fileName):
-    """ read log file and extract info on time, mass stop criterion """
+    """ read log file and extract info on time, mass stop criterion
+
+        Parameters
+        -----------
+        fileName: str or pathlib path
+            path to log file
+
+        Returns
+        --------
+        logDict: dict
+            dictionary with arrays for mass entrained mass time step
+            and info on simulation run and stop criterion"""
 
     time = []
     mass = []
@@ -172,8 +183,18 @@ def extractLogInfo(fileName):
 
 
 def checkIfFileExists(filePath, fileType=''):
-    """ test if file exists if not throw error """
+    """ test if file exists if not throw error
 
+        Parameters
+        -----------
+        filePath: pathlib path
+            path to file
+        fileType: str
+            string for error message which kind of file is not found
+
+    """
+    if not isinstance(filePath, pathlib.PurePath):
+        filePath = pathlib.Path(filePath)
     if not filePath.is_file():
         message = 'No %s file found called: %s' % (fileType, str(filePath))
         log.error(message)

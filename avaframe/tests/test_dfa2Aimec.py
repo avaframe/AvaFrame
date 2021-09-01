@@ -32,7 +32,7 @@ def test_extractCom1DFAMBInfo():
     massFile = avaDir / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt'
     massTime = np.loadtxt(massFile, delimiter=',', skiprows=1)
     print('massTime', massTime[1:10, :])
-    print('ent mass', massTime[np.where(massTime[:, 0]==30.2)], np.where(massTime[:,0]==30.2))
+    print('ent mass', massTime[np.where(massTime[:, 0] == 30.2)], np.where(massTime[:, 0] == 30.2))
 
     assert str(pathDict['massBal'][0]) == str(massFile)
     assert np.where(massTime[:, 2] > 0.0)[0][0] == 301.0
@@ -80,7 +80,6 @@ def test_mainDfa2Aimec(tmp_path):
     for massName1, massName2 in zip(pathDict['massBal'], pathDTest['massBal']):
         assert str(massName1) == str(massName2)
 
-
     pathDict2 = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFAOrig', cfg)
 
     pathData = testPath / 'Outputs' / 'com1DFAOrig' / 'peakFiles'
@@ -114,11 +113,17 @@ def test_dfaComp2Aimec(tmp_path):
     pathDict = dfa2Aimec.dfaComp2Aimec(testPath, cfg, 'release1HS', 'ent')
 
     # get path dictionary for test
+    massNameRef = 'mass_release1HS_ent_dfa_0.15500.txt'
+    massNameSim = 'mass_release1HS_ent_dfa_67dc2dc10a.txt'
     pathDTest = {}
-    pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc', pathData2 / 'release1HS_ent_dfa_67dc2dc10a_ppr.asc']
-    pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_0.15500_pfd.asc', pathData2 / 'release1HS_ent_dfa_67dc2dc10a_pfd.asc']
-    pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc', pathData2 / 'release1HS_ent_dfa_67dc2dc10a_pfv.asc']
-    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / 'mass_release1HS_ent_dfa_0.15500.txt', testPath / 'Outputs' / 'com1DFA' / 'mass_release1HS_ent_dfa_67dc2dc10a.txt']
+    pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc',
+                        pathData2 / 'release1HS_ent_dfa_67dc2dc10a_ppr.asc']
+    pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_0.15500_pfd.asc',
+                        pathData2 / 'release1HS_ent_dfa_67dc2dc10a_pfd.asc']
+    pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc',
+                        pathData2 / 'release1HS_ent_dfa_67dc2dc10a_pfv.asc']
+    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / massNameRef,
+                            testPath / 'Outputs' / 'com1DFA' / massNameSim]
 
     assert pathDict['ppr'] == pathDTest['ppr']
     assert pathDict['pfd'] == pathDTest['pfd']
@@ -128,7 +133,7 @@ def test_dfaComp2Aimec(tmp_path):
 
     with pytest.raises(FileNotFoundError) as e:
         assert dfa2Aimec.dfaComp2Aimec(testPath, cfg, 'release3HS', 'ent')
-    assert 'No matching simulations found for reference and comparison simulation for releaseScenario:' in str(e.value)
+    assert 'No matching simulations found for reference and comparison simulation' in str(e.value)
 
 
 def test_getRefMB():

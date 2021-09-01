@@ -26,8 +26,10 @@ def test_writeReport(tmp_path):
         'Testing Parameters': {'release area': 'release1HS2', 'Mu': '0.155', 'type': 'list'},
         'Release area': {'release area scenario': 'my test release area', 'type': 'columns'},
         'Special Input': {'Additional snow-covered area': 'Area 1', 'type': 'columns'},
-        'Additional Info': {'type': 'text', 'Report Info': 'This simulations were performed with a developement version.'},
-        'Fancy plots': {'type': 'image', 'Peak Pressure Field of my test' : 'release1HS2_entres_dfa_0.750_pfd.png'}}
+        'Additional Info': {'type': 'text',
+                            'Report Info': 'This simulations were performed with a developement version.'},
+        'Fancy plots': {'type': 'image',
+                        'Peak Pressure Field of my test' : 'release1HS2_entres_dfa_0.750_pfd.png'}}
 
     # make a list of input dictionaries
     reportDictList = [testDict]
