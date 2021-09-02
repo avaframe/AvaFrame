@@ -163,8 +163,8 @@ def test_getScalVect(capfd):
         Lx0, Ly0, iCell, w0, w1, w2, w3 = DFAfunC.getCellAndWeights(xpExp, ypExp, ncols, nrows,
                                                                     csz, interpOption)
         zScalRes = DFAfunC.getScalar(Lx0, Ly0, w0, w1, w2, w3, ZZ)
-        xRes, yRes, zRes = DFAfunC.getVector(
-            Lx0, Ly0, w0, w1, w2, w3, ZZ, 2*ZZ, 3*ZZ)
+        xRes, yRes, zRes = DFAfunC.getVector(Lx0, Ly0, w0, w1, w2, w3, ZZ,
+                                             2*ZZ, 3*ZZ)
         res = -2*xpExp + 1000-ypExp + 500
         print(xRes, res)
         atol = 1e-10

@@ -386,7 +386,10 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell, double areaPart, double uMag, double tau, double entEroEnergy, double rhoEnt):
+cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
+                                              double areaPart, double uMag,
+                                              double tau, double entEroEnergy,
+                                              double rhoEnt):
   """ compute force component due to entrained mass
 
   Parameters
@@ -433,7 +436,8 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell, do
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef double computeResForce(double hRes, double h, double areaPart, double rho, double cResCell, double uMag, int explicitFriction):
+cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
+                             double cResCell, double uMag, int explicitFriction):
   """ compute force component due to resistance
 
   Parameters
