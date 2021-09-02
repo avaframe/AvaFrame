@@ -6,6 +6,7 @@
 # Load modules
 import os
 import logging
+import pathlib
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -26,7 +27,7 @@ def addLineBlock(titleString, reportDKey, pfile, italicFont=False, flagBreak=Fal
         italicFont: bool
             if True write value in italic
         flagBreak: bool
-            True break if if conidtion is met
+            if first item in reportDKey is added to pfile - break
     """
 
     for value in reportDKey:
@@ -143,7 +144,8 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
 
     if cfgFLAGS.getboolean('reportOneFile'):
         # Start writing markdown style report
-        with open(os.path.join(outDir, 'fullSimulationReport.md'), 'w') as pfile:
+        reportPath = pathlib.Path(outDir, 'fullSimulationReport.md')
+        with open(reportPath, 'w') as pfile:
 
             # Loop through all simulations
             for reportD in reportDictList:
@@ -166,7 +168,8 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
                 reportD['Simulation Results'].update({'type': 'image'})
 
             # Start writing markdown style report
-            with open(os.path.join(outDir, '%s.md' % reportD['simName']['name']), 'w') as pfile:
+            reportPath = pathlib.Path(outDir, ('%s.md' % reportD['simName']['name']))
+            with open(reportPath, 'w') as pfile:
 
                 # Write report file
                 writeReportFile(reportD, pfile)

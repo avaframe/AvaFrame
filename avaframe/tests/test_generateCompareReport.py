@@ -28,3 +28,22 @@ def test_makeLists():
     assert parameterList == ['maxP', 'minF', 'testKey']
     assert valuesSim == ['100.', 0.0, 10.]
     assert valuesBench == ['200.', 0.0, 'non existent']
+
+
+def test_copyQuickPlots(tmp_path):
+    """ test copy plots """
+
+    # setup required input
+    outDir = pathlib.Path(tmp_path)
+    dirPath = pathlib.Path(__file__).parents[0]
+    pathPlot = dirPath / 'data' / 'release1HX_ent_dfa_3f8d2d9327_pfd.png'
+    plotListRep = {'pfd': pathPlot}
+    avaName = 'avaTest'
+    testName = 'avaTestName'
+
+    # call function to be tested
+    plotPaths = gR.copyQuickPlots(avaName, testName, outDir, plotListRep, rel='')
+    testFile = outDir / 'avaTestName__pfd.png'
+
+    assert plotPaths['pfd'] == str(testFile)
+    assert len(plotPaths) == 1

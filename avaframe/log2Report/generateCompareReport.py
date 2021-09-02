@@ -8,6 +8,7 @@ import glob
 import logging
 import numpy as np
 import shutil
+import pathlib
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
@@ -20,7 +21,7 @@ def copyQuickPlots(avaName, testName, outDir, plotListRep, rel=''):
 
     plotPaths = {}
     for key in plotListRep:
-        plotName = os.path.join(outDir, '%s_%s_%s.png' % (testName, rel, key))
+        plotName = pathlib.Path(outDir, ('%s_%s_%s.png' % (testName, rel, key)))
         shutil.copy2(plotListRep[key], plotName)
         log.debug('Copied: %s to %s' % (plotListRep[key], plotName))
         plotPaths[key] = plotName
@@ -33,8 +34,8 @@ def copyAimecPlots(plotFiles, testName, outDir, plotPaths, rel=''):
 
     for pDict in plotFiles:
         for key in pDict:
-            name = os.path.basename(pDict[key])
-            plotName = os.path.join(outDir, '%s_%s_%s' % (testName, rel, name))
+            name = pathlib.Path(pDict[key]).name
+            plotName = pathlib.Path(outDir, ('%s_%s_%s' % (testName, rel, name)))
             shutil.copy2(pDict[key], plotName)
             log.debug('Copied: %s to %s' % (pDict[key], plotName))
             plotPaths[key] = plotName
