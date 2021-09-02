@@ -13,7 +13,6 @@ import pathlib
 log = logging.getLogger(__name__)
 
 
-
 def addLineBlock(titleString, reportDKey, pfile, italicFont=False, flagBreak=False):
     """ add lineblock to report
 

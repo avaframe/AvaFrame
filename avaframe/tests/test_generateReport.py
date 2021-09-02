@@ -51,7 +51,7 @@ def test_writeReport(tmp_path):
         'Additional Info': {'type': 'text',
                             'Report Info': 'This simulations were performed with a developement version.'},
         'Fancy plots': {'type': 'image',
-                        'Peak Pressure Field of my test' : 'release1HS2_entres_dfa_0.750_pfd.png'}}
+                        'Peak Pressure Field of my test': 'release1HS2_entres_dfa_0.750_pfd.png'}}
 
     # make a list of input dictionaries
     reportDictList = [testDict]
@@ -60,7 +60,7 @@ def test_writeReport(tmp_path):
     cfg = configparser.ConfigParser()
     cfg['FLAGS'] = {'reportOneFile': 'True'}
     plotDict = {'thisIsMySimulation1': {'pfd': 'testPath/pfd.png'},
-                                        'simulationNumber2': {'pfd': 'testPath/pfd.png'}}
+                'simulationNumber2': {'pfd': 'testPath/pfd.png'}}
     # Call function to be tested
     gR.writeReport(tmp_path, reportDictList, cfg['FLAGS'], plotDict)
 
@@ -83,7 +83,6 @@ def test_writeReport(tmp_path):
     assert lineVals[24] == '| ----------| \n'
     assert lineVals[-3] == '![pfd](testPath/pfd.png) \n'
     assert lineVals[37] == '![Peak Pressure Field of my test](release1HS2_entres_dfa_0.750_pfd.png) \n'
-
 
     # call function to be tested
     # make a list of input dictionaries
