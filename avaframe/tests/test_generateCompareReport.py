@@ -45,5 +45,5 @@ def test_copyQuickPlots(tmp_path):
     plotPaths = gR.copyQuickPlots(avaName, testName, outDir, plotListRep, rel='')
     testFile = outDir / 'avaTestName__pfd.png'
 
-    assert plotPaths['pfd'] == str(testFile)
+    assert str(plotPaths['pfd']) == str(testFile)
     assert len(plotPaths) == 1
