@@ -8,6 +8,7 @@ import glob
 import logging
 import numpy as np
 import shutil
+import pathlib
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
@@ -20,7 +21,7 @@ def copyQuickPlots(avaName, testName, outDir, plotListRep, rel=''):
 
     plotPaths = {}
     for key in plotListRep:
-        plotName = os.path.join(outDir, '%s_%s_%s.png' % (testName, rel, key))
+        plotName = pathlib.Path(outDir, ('%s_%s_%s.png' % (testName, rel, key)))
         shutil.copy2(plotListRep[key], plotName)
         log.debug('Copied: %s to %s' % (plotListRep[key], plotName))
         plotPaths[key] = plotName
@@ -33,8 +34,8 @@ def copyAimecPlots(plotFiles, testName, outDir, plotPaths, rel=''):
 
     for pDict in plotFiles:
         for key in pDict:
-            name = os.path.basename(pDict[key])
-            plotName = os.path.join(outDir, '%s_%s_%s' % (testName, rel, name))
+            name = pathlib.Path(pDict[key]).name
+            plotName = pathlib.Path(outDir, ('%s_%s_%s' % (testName, rel, name)))
             shutil.copy2(pDict[key], plotName)
             log.debug('Copied: %s to %s' % (pDict[key], plotName))
             plotPaths[key] = plotName
@@ -83,8 +84,8 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
     """
 
     # Set limit to produce warning for differences in peak fields
-    diffLim = float(cfgRep['GENERAL']['diffLim'])
-    perDiff = float(cfgRep['GENERAL']['perDiff'])
+    diffLim = cfgRep['GENERAL'].getfloat('diffLim')
+    perDiff = cfgRep['GENERAL'].getfloat('perDiff')
 
     # Start writing markdown style report
     with open(reportFile, 'a') as pfile:
@@ -96,7 +97,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
         pfile.write('### Simulation name: *%s* \n' % reportD['simName']['name'])
         if benchD['simName']['name'] != simName:
             textString = '<span style="color:red"> Reference simulation name is different: \
-                         %s  </span>' % benchD['simName']
+                         %s  </span>' % benchD['simName']['name']
             pfile.write('#### %s \n' % textString)
         pfile.write(' \n')
 

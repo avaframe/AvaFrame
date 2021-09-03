@@ -6,10 +6,38 @@
 # Load modules
 import os
 import logging
+import pathlib
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
+
+
+def addLineBlock(titleString, reportDKey, pfile, italicFont=False, onlyFirstLine=False):
+    """ add lineblock to report
+
+        Parameters
+        -----------
+        titleString: str
+            string that shall be added
+        reportDKey: dict
+            dictionary with info for string
+        pfile: file
+        italicFont: bool
+            if True write value in italic
+        onlyFirstLine: bool
+            if first item in reportDKey is added to pfile - break
+    """
+
+    for value in reportDKey:
+        if value != 'type':
+            if italicFont:
+                pfile.write('%s *%s* \n' % (titleString, reportDKey[value]))
+            else:
+                pfile.write('%s %s \n' % (titleString, reportDKey[value]))
+            pfile.write(' \n')
+            if onlyFirstLine:
+                break
 
 
 def writeReportFile(reportD, pfile):
@@ -30,32 +58,20 @@ def writeReportFile(reportD, pfile):
             # HEADER BLOCK
             # Title
             if reportD[key][subKey] == 'title':
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('# %s \n' % reportD[key][value])
-                        pfile.write(' \n')
-                        break
+                addLineBlock('#', reportD[key], pfile, onlyFirstLine=True)
 
             # Avalanche name
             if reportD[key][subKey] == 'avaName':
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('### Avalanche directory: *%s* \n' % reportD[key][value])
-                        pfile.write(' \n')
+                addLineBlock('### Avalanche directory:', reportD[key], pfile, italicFont=True)
 
             # Simulation name
             if reportD[key][subKey] == 'simName':
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('### Simulation name: *%s* \n' % reportD[key][value])
-                        pfile.write(' \n')
+                addLineBlock('### Simulation name:', reportD[key], pfile, italicFont=True)
+
             # Time info
             if reportD[key][subKey] == 'time':
-                for value in reportD[key]:
-                    if value != 'type':
-                        pfile.write('### Date: %s \n' % reportD[key][value])
-                        pfile.write(' \n')
-                        break
+                addLineBlock('### Date:', reportD[key], pfile, onlyFirstLine=True)
+
             # PARAMETER BLOCK
             # Table listing all the key : value pairs in rows
             if reportD[key][subKey] == 'list':
@@ -127,7 +143,8 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
 
     if cfgFLAGS.getboolean('reportOneFile'):
         # Start writing markdown style report
-        with open(os.path.join(outDir, 'fullSimulationReport.md'), 'w') as pfile:
+        reportPath = pathlib.Path(outDir, 'fullSimulationReport.md')
+        with open(reportPath, 'w') as pfile:
 
             # Loop through all simulations
             for reportD in reportDictList:
@@ -150,7 +167,8 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
                 reportD['Simulation Results'].update({'type': 'image'})
 
             # Start writing markdown style report
-            with open(os.path.join(outDir, '%s.md' % reportD['simName']), 'w') as pfile:
+            reportPath = pathlib.Path(outDir, ('%s.md' % reportD['simName']['name']))
+            with open(reportPath, 'w') as pfile:
 
                 # Write report file
                 writeReportFile(reportD, pfile)
