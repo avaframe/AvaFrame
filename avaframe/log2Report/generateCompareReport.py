@@ -19,9 +19,11 @@ log = logging.getLogger(__name__)
 def copyQuickPlots(avaName, testName, outDir, plotListRep, rel=''):
     """ copy the quick plots to report directory """
 
+    if not isinstance(outDir, pathlib.PurePath):
+        outDir = pathlib.Path(outDir)
     plotPaths = {}
     for key in plotListRep:
-        plotName = pathlib.Path(outDir, ('%s_%s_%s.png' % (testName, rel, key)))
+        plotName = outDir / ('%s_%s_%s.png' % (testName, rel, key))
         shutil.copy2(plotListRep[key], plotName)
         log.debug('Copied: %s to %s' % (plotListRep[key], plotName))
         plotPaths[key] = plotName
@@ -32,10 +34,12 @@ def copyQuickPlots(avaName, testName, outDir, plotListRep, rel=''):
 def copyAimecPlots(plotFiles, testName, outDir, plotPaths, rel=''):
     """ copy the aimec plots to report directory """
 
+    if not isinstance(outDir, pathlib.PurePath):
+        outDir = pathlib.Path(outDir)
     for pDict in plotFiles:
         for key in pDict:
             name = pathlib.Path(pDict[key]).name
-            plotName = pathlib.Path(outDir, ('%s_%s_%s' % (testName, rel, name)))
+            plotName = outDir / ('%s_%s_%s' % (testName, rel, name))
             shutil.copy2(pDict[key], plotName)
             log.debug('Copied: %s to %s' % (pDict[key], plotName))
             plotPaths[key] = plotName
