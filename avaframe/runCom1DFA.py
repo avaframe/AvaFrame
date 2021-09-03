@@ -17,7 +17,6 @@ import avaframe.com1DFA.deriveParameterSet as dP
 
 
 def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
-
     """ run com1DFA module """
 
     # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -52,7 +51,8 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
     # generate list of simulations from desired configuration
     if variationDict == '':
         # Load full configuration
-        modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
+        modCfg, modInfo = cfgUtils.getModuleConfig(
+            com1DFA, fileOverride=cfgFile, modInfo=True)
         variationDict = dP.getVariationDict(avalancheDir, modCfg, modInfo)
     else:
         # check if variationDict items exist and are provided in correct format
@@ -70,7 +70,8 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
     inputSimFiles = gI.getInputDataCom1DFA(avalancheDir, modCfg['FLAGS'])
 
     # write full configuration file to file
-    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName='sourceConfiguration')
+    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg,
+                          fileName='sourceConfiguration')
 
     # create a list of simulations
     # if need to reproduce exactely the hash - need to be strings with exactely the same number of digits!!
@@ -99,7 +100,8 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
 
         # +++++++++++++++++++++++++++++++++
         # ------------------------
-        particlesList, fieldsList, tSave, dem, reportDict, cfgFinal = com1DFA.com1DFAMain(cfg, avalancheDir, cuSim, inputSimFiles, outDir, relThField)
+        particlesList, fieldsList, tSave, dem, reportDict, cfgFinal = com1DFA.com1DFAMain(
+            cfg, avalancheDir, cuSim, inputSimFiles, outDir, relThField)
 
         # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
 
@@ -108,24 +110,29 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
         # export for visulation
         if cfg['VISUALISATION'].getboolean('writePartToCSV'):
             outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
-            com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+            com1DFA.savePartToCsv(
+                cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
         # create hash to check if config didnt change
         simHashFinal = cfgUtils.cfgHash(cfgFinal)
         if simHashFinal != simHash:
-            log.warning('simulation configuration has been changed since start')
-            cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
+            log.warning(
+                'simulation configuration has been changed since start')
+            cfgUtils.writeCfgFile(avalancheDir, com1DFA,
+                                  cfg, fileName='%s_butModified' % simHash)
 
     # Set directory for report
     reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
     # Generate plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
+    plotDict = oP.plotAllPeakFields(
+        avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
     # read all simulation configuration files and return dataFrame and write to csv
     standardCfg = cfgUtils.getDefaultModuleConfig(com1DFA, toPrint=False)
-    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg=standardCfg, writeCSV=True)
+    simDF = cfgUtils.createConfigurationInfo(
+        avalancheDir, standardCfg=standardCfg, writeCSV=True)
 
     return particlesList, fieldsList, tSave, dem, plotDict, reportDictList
 
