@@ -5,6 +5,7 @@
 # Load modules
 import logging
 import numpy as np
+import numbers
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
@@ -152,27 +153,35 @@ def getNormalMesh(dem, num):
         Nz = 6 * Nz
         # filling the first col of the matrix
         # (- 2*(Zr - Zp) + Zu - Zur ) / csz
-        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0]) + z[2:n, 0] - z[2:n, 1]) / csz
+        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0])
+                        + z[2:n, 0] - z[2:n, 1]) / csz
         # (Zd - Zu + Zr - Zur) / csz
-        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0] + z[1:n-1, 1] - z[2:n, 1]) / csz
+        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0]
+                        + z[1:n-1, 1] - z[2:n, 1]) / csz
         Nz[1:n-1, 0] = 3
         # filling the last col of the matrix
         # (2*(Zl - Zp) + Zdl - Zd) / csz
-        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2, m-2] - z[0:n-2, m-1]) / csz
+        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1])
+                          + z[0:n-2, m-2] - z[0:n-2, m-1]) / csz
         # (Zd - Zu + Zdl - Zl) / csz
-        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1] + z[0:n-2, m-2] - z[1:n-1, m-2]) / csz
+        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1]
+                          + z[0:n-2, m-2] - z[1:n-1, m-2]) / csz
         Nz[1:n-1, m-1] = 3
         # filling the first row of the matrix
         # (Zl - Zr + Zu - Zur) / csz
-        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m] + z[1, 1:m-1] - z[1, 2:m]) / csz
+        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m]
+                        + z[1, 1:m-1] - z[1, 2:m]) / csz
         # (-2*(Zu - Zp) + Zr - Zur) / csz
-        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m] - z[1, 2:m]) / csz
+        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1])
+                        + z[0, 2:m] - z[1, 2:m]) / csz
         Nz[0, 1:m-1] = 3
         # filling the last row of the matrix
         # (Zl - Zr + Zdl - Zd) / csz
-        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m] + z[n-2, 0:m-2] - z[n-2, 1:m-1]) / csz
+        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m]
+                          + z[n-2, 0:m-2] - z[n-2, 1:m-1]) / csz
         # (2*(Zd - Zp) + Zdl - Zl) / csz
-        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2] - z[n-1, 0:m-2]) / csz
+        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1])
+                          + z[n-2, 0:m-2] - z[n-1, 0:m-2]) / csz
         Nz[n-1, 1:m-1] = 3
         # filling the corners of the matrix
         Nx[0, 0] = (z[1, 0] - z[1, 1] - (z[0, 1] - z[0, 0])) / csz
@@ -184,8 +193,10 @@ def getNormalMesh(dem, num):
         Nx[0, m-1] = (z[0, m-2] - z[0, m-1]) / csz
         Ny[0, m-1] = -(z[1, m-1] - z[0, m-1]) / csz
         Nz[0, m-1] = 1
-        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1] + z[n-2, m-2] - z[n-2, m-1]) / csz
-        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1] + z[n-2, m-2] - z[n-1, m-2]) / csz
+        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1]
+                        + z[n-2, m-2] - z[n-2, m-1]) / csz
+        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1]
+                        + z[n-2, m-2] - z[n-1, m-2]) / csz
         Nz[n-1, m-1] = 2
 
     if num == 8:
@@ -202,27 +213,35 @@ def getNormalMesh(dem, num):
         Nz = 8 * Nz
         # filling the first col of the matrix
         # (- 2*(Zr - Zp) + Zu - Zur + Zd - Zdr) / csz
-        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0]) + z[2:n, 0] - z[2:n, 1] + z[0:n-2, 0] - z[0:n-2, 1]) / csz
+        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0])
+                        + z[2:n, 0] - z[2:n, 1] + z[0:n-2, 0] - z[0:n-2, 1]) / csz
         # (Zd - Zu + Zdr - Zur) / csz
-        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0] + z[0:n-2, 1] - z[2:n, 1]) / csz
+        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0]
+                        + z[0:n-2, 1] - z[2:n, 1]) / csz
         Nz[1:n-1, 0] = 4
         # filling the last col of the matrix
         # (2*(Zl - Zp) + Zdl - Zd + Zul - Zu) / csz
-        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2, m-2] - z[0:n-2, m-1] + z[2:n, m-2] - z[2:n, m-1]) / csz
+        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2,
+                                                                m-2] - z[0:n-2, m-1] + z[2:n, m-2] - z[2:n, m-1]) / csz
         # (Zd - Zu + Zdl - Zul) / csz
-        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1] + z[0:n-2, m-2] - z[2:n, m-2]) / csz
+        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1]
+                          + z[0:n-2, m-2] - z[2:n, m-2]) / csz
         Nz[1:n-1, m-1] = 4
         # filling the first row of the matrix
         # (Zl - Zr + Zul - Zur) / csz
-        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m] + z[1, 0:m-2] - z[1, 2:m]) / csz
+        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m]
+                        + z[1, 0:m-2] - z[1, 2:m]) / csz
         # (-2*(Zu - Zp) + Zr - Zur + Zl - Zul) / csz
-        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m] - z[1, 2:m] + z[0, 0:m-2] - z[1, 0:m-2]) / csz
+        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1])
+                        + z[0, 2:m] - z[1, 2:m] + z[0, 0:m-2] - z[1, 0:m-2]) / csz
         Nz[0, 1:m-1] = 4
         # filling the last row of the matrix
         # (Zl - Zr + Zdl - Zdr) / csz
-        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m] + z[n-2, 0:m-2] - z[n-2, 2:m]) / csz
+        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m]
+                          + z[n-2, 0:m-2] - z[n-2, 2:m]) / csz
         # (2*(Zd - Zp) + Zdl - Zl + Zdr - Zr) / csz
-        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2] - z[n-1, 0:m-2] + z[n-2, 2:m] - z[n-1, 2:m]) / csz
+        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2,
+                                                                0:m-2] - z[n-1, 0:m-2] + z[n-2, 2:m] - z[n-1, 2:m]) / csz
         Nz[n-1, 1:m-1] = 4
         # filling the corners of the matrix
         Nx[0, 0] = (z[1, 0] - z[1, 1] - (z[0, 1] - z[0, 0])) / csz
@@ -234,8 +253,10 @@ def getNormalMesh(dem, num):
         Nx[0, m-1] = (z[1, m-2] - z[1, m-1] + z[0, m-2] - z[0, m-1]) / csz
         Ny[0, m-1] = (-(z[1, m-1] - z[0, m-1]) + z[0, m-2] - z[1, m-2]) / csz
         Nz[0, m-1] = 2
-        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1] + z[n-2, m-2] - z[n-2, m-1]) / csz
-        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1] + z[n-2, m-2] - z[n-1, m-2]) / csz
+        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1]
+                        + z[n-2, m-2] - z[n-2, m-1]) / csz
+        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1]
+                        + z[n-2, m-2] - z[n-1, m-2]) / csz
         Nz[n-1, m-1] = 2
 
     if num == 1:
@@ -245,10 +266,10 @@ def getNormalMesh(dem, num):
         z2 = np.append(z1, z1[-2, :].reshape(1, m1), axis=0)
         n2, m2 = np.shape(z2)
 
-        Nx = - ((z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1]) +
-                (z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])) * csz
-        Ny = - ((z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1]) -
-                (z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])) * csz
+        Nx = - ((z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])
+                + (z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])) * csz
+        Ny = - ((z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])
+                - (z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])) * csz
         Nz = 2 * Nz * csz * csz
 
         # Nx = - (z2[0:n2-1, 1:m2] - z2[0:n2-1, 0:m2-1]) / csz
@@ -358,15 +379,21 @@ def splitPart(particles):
     if np.size(Ind) > 0:
         for ind in Ind:
             nPart = particles['Npart']
+            nID = particles['nID']
             mNew = m[ind] / nSplit[ind]
             nAdd = (nSplit[ind]-1).astype('int')
             particles['Npart'] = particles['Npart'] + nAdd
+            particles['nID'] = particles['nID'] + nAdd
             log.debug('Spliting particle %s in %s' % (ind, nAdd+1))
             for key in particles:
                 particles['m'][ind] = mNew
                 if type(particles[key]).__module__ == np.__name__:
-                    if np.size(particles[key]) == nPart:
-                        particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
+                    if key == 'ID':
+                        particles['ID'] = np.append(
+                            particles['ID'], np.arange(nID, nID + nAdd, 1))
+                    elif np.size(particles[key]) == nPart:
+                        particles[key] = np.append(
+                            particles[key], particles[key][ind]*np.ones((nAdd)))
 
     particles['mTot'] = np.sum(particles['m'])
     return particles
@@ -394,15 +421,53 @@ def mergeParticleDict(particles1, particles2):
         if key == 'Npart':
             particles['Npart'] = particles1['Npart'] + particles2['Npart']
         elif (key in particles2) and (type(particles1[key]).__module__ == np.__name__):
-            if np.size(particles1[key]) == nPart1:
+            if (key == 'ID') or (key == 'parentID'):
+                particles[key] = np.append(
+                    particles1[key], particles2[key] + particles1['nID'])
+            elif np.size(particles1[key]) == nPart1:
                 particles[key] = np.append(particles1[key], particles2[key])
             else:
                 particles[key] = particles1[key] + particles2[key]
+        elif (key in particles2) and (isinstance(particles1[key], numbers.Number)):
+            particles[key] = particles1[key] + particles2[key]
         else:
             particles[key] = particles1[key]
 
     particles['mTot'] = np.sum(particles['m'])
     return particles
+
+
+def findParticles(particles, center, radius):
+    '''Find particles within a circle arround a given point
+
+    Parameters
+    ----------
+    particles : dict
+        particles dictionary (with the 'parentID' array)
+    center : dict
+        point dictionary:
+            x : x coordinate
+            y : y coordinate
+            z : z coordinate
+    radius : float
+        radius of the circle around point
+
+    Returns
+    -------
+    particles2Track : numpy array
+        array with Parent ID of particles to track
+    '''
+    x = particles['x']
+    y = particles['y']
+    z = particles['z']
+    xc = center['x']
+    yc = center['y']
+    zc = center['z']
+    r = norm(x-xc, y-yc, z-zc)
+    index = np.where(r <= radius)
+    particles2Track = particles['parentID'][index]
+
+    return particles2Track
 
 ##############################################################################
 # ###################### Vectorial functions #################################
@@ -502,4 +567,5 @@ def scalProd(ux, uy, uz, vx, vy, vz):
     """
     scal = ux*vx + uy*vy + uz*vz
 
+    return scal
     return scal

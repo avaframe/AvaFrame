@@ -102,14 +102,14 @@ def test_getNormalMesh(capfd):
         print((np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
 
         atol = 1e-10
-        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-a*np.ones(np.shape(Y)) /
-                                                np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
+        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-a*np.ones(np.shape(Y))
+                                                / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
         assert TestNX
-        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-b*np.ones(np.shape(Y)) /
-                                                np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
+        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-b*np.ones(np.shape(Y))
+                                                / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
         assert TestNY
-        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (np.ones(np.shape(Y)) /
-                                                np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
+        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (np.ones(np.shape(Y))
+                                                / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1], atol=atol)
         assert TestNZ
 
         dem['rasterData'] = Z1
@@ -123,14 +123,14 @@ def test_getNormalMesh(capfd):
         print(Nz)
         print((1 / np.sqrt(1 + 4*a*a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1])
         atol = 1e-10
-        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-2*a*X / np.sqrt(1 + 4*a *
-                                                                 a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
+        TestNX = np.allclose(Nx[1:n-1, 1:m-1], (-2*a*X / np.sqrt(1 + 4*a
+                                                                 * a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNX
-        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-2*b*Y / np.sqrt(1 + 4*a *
-                                                                 a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
+        TestNY = np.allclose(Ny[1:n-1, 1:m-1], (-2*b*Y / np.sqrt(1 + 4*a
+                                                                 * a*X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNY
-        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (1 / np.sqrt(1 + 4*a*a *
-                                                            X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
+        TestNZ = np.allclose(Nz[1:n-1, 1:m-1], (1 / np.sqrt(1 + 4*a*a
+                                                            * X*X + 4*b*b*Y*Y))[1:n-1, 1:m-1], atol=atol)
         assert TestNZ
 
 
@@ -159,19 +159,23 @@ def test_getAreaMesh(capfd):
     print(np.sqrt((1+a*a+b*b)))
     print(Area)
     atol = 1e-10
-    TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a+b*b)) *
-                           np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
+    TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a+b*b))
+                           * np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
     assert TestArea
 
 
 def test_removePart(capfd):
     particles = {}
     particles['Npart'] = 10
+    particles['ID'] = np.arange(particles['Npart'])
+    particles['parentID'] = np.arange(particles['Npart'])
+    particles['nID'] = 10
     particles['m'] = np.linspace(0, 9, 10)
     particles['x'] = np.linspace(0, 9, 10)
     particles['ux'] = np.linspace(0, 9, 10)
     particles['mTot'] = np.sum(particles['m'])
-    mask = np.array([True, True, False, True, True, True, False, False, True, True])
+    mask = np.array([True, True, False, True, True,
+                     True, False, False, True, True])
     nRemove = 3
     particles = DFAtls.removePart(particles, mask, nRemove)
 
@@ -182,28 +186,41 @@ def test_removePart(capfd):
     assert np.allclose(particles['x'], res, atol=atol)
     assert np.allclose(particles['ux'], res, atol=atol)
     assert particles['mTot'] == np.sum(res)
+    assert particles['nID'] == 10
+    assert np.allclose(particles['parentID'], res, atol=atol)
+    assert np.allclose(particles['ID'], res, atol=atol)
 
 
 def test_splitPart(capfd):
     particles = {}
     particles['Npart'] = 10
     particles['massPerPart'] = 1
+    particles['ID'] = np.arange(particles['Npart'])
+    particles['parentID'] = np.arange(particles['Npart'])
     particles['m'] = np.array([1, 2, 1, 3.6, 1, 1, 5, 1, 1, 1])
     particles['x'] = np.linspace(0, 9, 10)
     particles['ux'] = np.linspace(0, 9, 10)
     particles['mTot'] = np.sum(particles['m'])
+    particles['nID'] = 10
     particles = DFAtls.splitPart(particles)
     print(particles)
-    massNew = np.array([1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1, 1, 0.9, 0.9, 0.9, 1, 1, 1, 1])
+    massNew = np.array([1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1,
+                        1, 0.9, 0.9, 0.9, 1, 1, 1, 1])
     res = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 3, 3, 3, 6, 6, 6, 6])
     print(particles['m'])
     print(massNew)
+    print(particles['nID'])
+    print(particles['parentID'])
+    print(particles['ID'])
     atol = 1e-10
     assert particles['Npart'] == 18
     assert np.allclose(particles['m'], massNew, atol=atol)
     assert np.allclose(particles['x'], res, atol=atol)
     assert np.allclose(particles['ux'], res, atol=atol)
     assert particles['mTot'] == np.sum(massNew)
+    assert particles['nID'] == 18
+    assert np.allclose(particles['parentID'], res, atol=atol)
+    assert np.allclose(particles['ID'], np.arange(18), atol=atol)
 
 
 def test_mergeParticleDict(capfd):
@@ -214,6 +231,9 @@ def test_mergeParticleDict(capfd):
     particles1['x'] = np.linspace(0, 4, 5)
     particles1['ux'] = np.linspace(0, 4, 5)
     particles1['mTot'] = np.sum(particles1['m'])
+    particles1['ID'] = np.arange(particles1['Npart'])
+    particles1['parentID'] = np.arange(particles1['Npart'])
+    particles1['nID'] = particles1['Npart']
 
     particles2 = {}
     particles2['Npart'] = 4
@@ -221,6 +241,9 @@ def test_mergeParticleDict(capfd):
     particles2['x'] = np.linspace(5, 8, 4)
     particles2['ux'] = np.linspace(5, 8, 4)
     particles2['mTot'] = np.sum(particles1['m'])
+    particles2['ID'] = np.arange(particles2['Npart'])
+    particles2['parentID'] = np.arange(particles2['Npart'])
+    particles2['nID'] = particles2['Npart']
 
     particles = DFAtls.mergeParticleDict(particles1, particles2)
     res = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8])
@@ -230,3 +253,6 @@ def test_mergeParticleDict(capfd):
     assert np.allclose(particles['x'], res, atol=atol)
     assert np.allclose(particles['ux'], res, atol=atol)
     assert particles['mTot'] == np.sum(res)
+    assert particles['nID'] == 9
+    assert np.allclose(particles['parentID'], res, atol=atol)
+    assert np.allclose(particles['ID'], np.arange(9), atol=atol)
