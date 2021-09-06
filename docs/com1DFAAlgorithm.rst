@@ -59,16 +59,18 @@ The mass per particle determination method can be chosen between:
     using the release thickness per particle ``deltaTh`` value given in the configuration and the area of
     the release mesh cell: :math:`\mbox{massPerPart} = \rho\times \mbox{cellArea} \times\mbox{deltaTh}`.
 
-.. Note::  If MPPDIR is used, consider adapting the mass per particle value when changing the mesh cell size from the default, as
-           the number of particles per cell will only be determined by the mass per particle value and the release snow mass within the cell.
-           So in the case of a smaller cell size, less particles per cell will be introduced in this case, whereas when using MPPDH,
-           the number of particles per cell is independent of the mesh cell size. 
+.. Note::  If MPPDIR is used, consider adapting the mass per particle value when changing the mesh cell size from the default.
+           This is important because, when using MPPDIR, the total number of particles is independent of the cell size. Hence,
+           reducing the cell size results in less particles per cell, whereas when using MPPDH,
+           the number of particles per cell is fixed (considering the respective release thickness and deltaTh value).
+           Therefore, reducing the cell size will increase 
+           the total number of particles but not the number of particles per cell.
 
 The number of particles placed in each release cell is computed according to the ``massPerPart``
 and the area and release thickness of the cell. The number should be an integer meaning that the
 float is rounded up or down with a probability corresponding to the decimal part (i.e. 5.7 will
 be rounded to 6 with a probability of 0.7 and 5 with a probability of 0.3). This ensures a better
-match with the desired ``massPerPart`` value. Particles are then place randomly within the
+match with the desired ``massPerPart`` value. Particles are then placed randomly within the
 mesh cell.
 Other particles properties velocity, cell number... are also initialized here.
 See :py:func:`com1DFA.com1DFA.initializeParticles`.
