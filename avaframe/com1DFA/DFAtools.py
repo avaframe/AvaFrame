@@ -221,8 +221,8 @@ def getNormalMesh(dem, num):
         Nz[1:n-1, 0] = 4
         # filling the last col of the matrix
         # (2*(Zl - Zp) + Zdl - Zd + Zul - Zu) / csz
-        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2,
-                                                                m-2] - z[0:n-2, m-1] + z[2:n, m-2] - z[2:n, m-1]) / csz
+        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2, m-2]
+                          - z[0:n-2, m-1] + z[2:n, m-2] - z[2:n, m-1]) / csz
         # (Zd - Zu + Zdl - Zul) / csz
         Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1]
                           + z[0:n-2, m-2] - z[2:n, m-2]) / csz
@@ -232,16 +232,16 @@ def getNormalMesh(dem, num):
         Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m]
                         + z[1, 0:m-2] - z[1, 2:m]) / csz
         # (-2*(Zu - Zp) + Zr - Zur + Zl - Zul) / csz
-        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1])
-                        + z[0, 2:m] - z[1, 2:m] + z[0, 0:m-2] - z[1, 0:m-2]) / csz
+        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m]
+                        - z[1, 2:m] + z[0, 0:m-2] - z[1, 0:m-2]) / csz
         Nz[0, 1:m-1] = 4
         # filling the last row of the matrix
         # (Zl - Zr + Zdl - Zdr) / csz
         Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m]
                           + z[n-2, 0:m-2] - z[n-2, 2:m]) / csz
         # (2*(Zd - Zp) + Zdl - Zl + Zdr - Zr) / csz
-        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2,
-                                                                0:m-2] - z[n-1, 0:m-2] + z[n-2, 2:m] - z[n-1, 2:m]) / csz
+        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2]
+                          - z[n-1, 0:m-2] + z[n-2, 2:m] - z[n-1, 2:m]) / csz
         Nz[n-1, 1:m-1] = 4
         # filling the corners of the matrix
         Nx[0, 0] = (z[1, 0] - z[1, 1] - (z[0, 1] - z[0, 0])) / csz
@@ -377,20 +377,28 @@ def splitPart(particles):
     nSplit = np.round(m/massPerPart)
     Ind = np.where(nSplit > 1)[0]
     if np.size(Ind) > 0:
+        # lop on particles to split
         for ind in Ind:
+            # get old values
             nPart = particles['Npart']
             nID = particles['nID']
+            # compute new mass and particles to add
             mNew = m[ind] / nSplit[ind]
             nAdd = (nSplit[ind]-1).astype('int')
+            # update particles number and ID
             particles['Npart'] = particles['Npart'] + nAdd
             particles['nID'] = particles['nID'] + nAdd
             log.debug('Spliting particle %s in %s' % (ind, nAdd+1))
             for key in particles:
+                # update splited particle mass
                 particles['m'][ind] = mNew
+                # add new particles at the end of the arrays
                 if type(particles[key]).__module__ == np.__name__:
+                    # create unique ID for the new particles
                     if key == 'ID':
                         particles['ID'] = np.append(
                             particles['ID'], np.arange(nID, nID + nAdd, 1))
+                    # and git them the splited particle properties
                     elif np.size(particles[key]) == nPart:
                         particles[key] = np.append(
                             particles[key], particles[key][ind]*np.ones((nAdd)))
@@ -437,7 +445,7 @@ def mergeParticleDict(particles1, particles2):
     return particles
 
 
-def findParticles(particles, center, radius):
+def findParticles2Track(particles, center, radius):
     '''Find particles within a circle arround a given point
 
     Parameters
@@ -468,6 +476,84 @@ def findParticles(particles, center, radius):
     particles2Track = particles['parentID'][index]
 
     return particles2Track
+
+
+def getTrackedParticles(ParticlesList, particles2Track):
+    '''Track particles along time given the parentID of the particles to track
+
+    Parameters
+    ----------
+    ParticlesList : list
+        list of particles dictionaries (with the 'parentID' array)
+    particles2Track : numpy array
+        array with the parentID of the particles to track
+
+    Returns
+    -------
+    ParticlesList : list
+        list of particles dictionaries updated with the 'trackedParticles'
+        array (in the array, the ones correspond to the particles that
+        are tracked)
+    nPartTracked : int
+        total number of tracked particles
+    '''
+    nPartTracked = np.size(particles2Track)
+    # add trackedParticles array to the particles dictionary for every saved time step
+    for particles in ParticlesList:
+        # find index of particles to track
+        index = [ind for ind, parent in enumerate(
+            particles['parentID']) if parent in particles2Track]
+        nPartTracked = max(nPartTracked, len(index))
+        trackedParticles = np.zeros(particles['Npart'])
+        trackedParticles[index] = 1
+        particles['trackedParticles'] = trackedParticles
+    return ParticlesList, nPartTracked
+
+
+def getTrackedParticlesProperties(ParticlesList, TimeStepInfo, nPartTracked,
+                                  properties):
+    '''Get the desired properties for the tracked particles
+
+    Parameters
+    ----------
+    ParticlesList : list
+        list of particles dictionaries (with the 'parentID' array)
+    TimeStepInfo : list
+        time list
+    nPartTracked : int
+        total number of tracked particles
+    properties : list
+        list of strings
+
+    Returns
+    -------
+    trackedPartProp : dict
+        dictionary with 2D numpy arrays corresponding to the time seried of the
+        properties for the trackes particles (for example if
+        properties = ['x', 'y'], the dictionary will have the keys 'time',
+        'x' and 'y'. trackedPartProp['x'] will be a 2D numpy array, each line
+        corresponds to the 'x' time serie of a tracked particle)
+    '''
+    # buid time series for desiered properties of tracked particles
+    nTimeSteps = len(TimeStepInfo)
+    trackedPartProp = {}
+    # initialize
+    for key in properties:
+        trackedPartProp[key] = np.zeros((nTimeSteps, nPartTracked))
+
+    # extract wanted properties and build the time series
+    trackedPartID = []
+    for particles, nTime in zip(ParticlesList, range(len(TimeStepInfo))):
+        trackedParticles = particles['trackedParticles']
+        index = np.where(trackedParticles == 1)
+        for ind, id in zip(index[0], particles['ID'][index]):
+            if id not in trackedPartID:
+                trackedPartID.append(id)
+            indCol = trackedPartID.index(id)
+            for key in properties:
+                trackedPartProp[key][nTime, indCol] = particles[key][ind]
+    trackedPartProp['time'] = np.array(TimeStepInfo)
+    return trackedPartProp
 
 ##############################################################################
 # ###################### Vectorial functions #################################
