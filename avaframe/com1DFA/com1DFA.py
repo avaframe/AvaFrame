@@ -1764,7 +1764,7 @@ def readPartFromPickle(inDir, flagAvaDir=False):
     return Particles, TimeStepInfo
 
 
-def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, properties):
+def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, particleProperties):
     """ track particles from initial area
 
         Find all particles in an initial area. Find the same particles in
@@ -1784,7 +1784,7 @@ def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, properties):
                 z : z coordinate
         radius : float
             radius of the circle around point
-        properties: list
+        particleProperties: list
             list of particles properties to extract ('x', 'y', 'ux', 'm'...)
 
         Returns
@@ -1796,6 +1796,7 @@ def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, properties):
             dictionary with time series of the wanted properties for tracked
             particles
     """
+
     # start by finding the particles to be tracked
     particles2Track = DFAtls.findParticles2Track(ParticlesList[0],
                                                  center, radius)
@@ -1808,7 +1809,7 @@ def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, properties):
     trackedPartProp = DFAtls.getTrackedParticlesProperties(ParticlesList,
                                                            TimeStepInfo,
                                                            nPartTracked,
-                                                           properties)
+                                                           particleProperties)
 
     return ParticlesList, trackedPartProp
 

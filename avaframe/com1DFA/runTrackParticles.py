@@ -57,24 +57,25 @@ def runTrackParticle():
     center, _ = geoTrans.projectOnRaster(dem, center)
     # properties to track
     # ToDo: put this in an ini file
-    properties = ['x', 'y', 'z', 'ux', 'uy', 'uz']
-
+    particleProperties = 'x|y|z|ux|uy|uz'
+    particleProperties = particleProperties.split('|')
     # get particles and related properties of particles to track
     Particles, trackedPartProp = com1DFA.mainTrackParticles(
-        Particles, TimeStepInfo, center, radius, properties)
+                              Particles, TimeStepInfo, center, radius, particleProperties)
 
     # do some ploting
     # ToDo: put this in a plotting folder (here just to demonstrate how this works)
     fig = plt.figure()
     ax = plt.subplot(121)
     ax.plot(trackedPartProp['time'], DFAtls.norm(
-        trackedPartProp['ux'], trackedPartProp['uy'], trackedPartProp['uz']))
+                              trackedPartProp['ux'], trackedPartProp['uy'], trackedPartProp['uz']))
 
     ax.set_xlabel('t [s]')
     ax.set_ylabel('v [m/s]')
 
     ax2 = plt.subplot(122)
-    circle1 = plt.Circle((center['x'], center['y']), radius, color='r')
+    circle1 = plt.Circle(
+                              (center['x'], center['y']), radius, color='r')
     ax2.plot(trackedPartProp['x'], trackedPartProp['y'])
     ax2.add_patch(circle1)
     ax2.set_xlabel('x [m]')
@@ -84,7 +85,8 @@ def runTrackParticle():
     fig2 = plt.figure()
     ax1 = plt.subplot(111)
     for count in range(len(Particles)):
-        update(count, Particles, xllc, yllc, ax1, XX, YY, dem)
+        update(count, Particles, xllc,
+               yllc, ax1, XX, YY, dem)
     plt.show()
 
     # ani = FuncAnimation(fig2, update, round(len(Particles)),
