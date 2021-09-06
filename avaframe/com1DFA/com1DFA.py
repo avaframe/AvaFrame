@@ -1775,8 +1775,6 @@ def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, particleProp
         -----------
         ParticlesList: list
             list of particle dictionary
-        TimeStepInfo : list
-            list of corresponding time steps
         center : dict
             point dictionary:
                 x : x coordinate
@@ -1807,7 +1805,6 @@ def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, particleProp
 
     # extract the wanted properties for the tracked particles
     trackedPartProp = DFAtls.getTrackedParticlesProperties(ParticlesList,
-                                                           TimeStepInfo,
                                                            nPartTracked,
                                                            particleProperties)
 

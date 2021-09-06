@@ -510,8 +510,7 @@ def getTrackedParticles(ParticlesList, particles2Track):
     return ParticlesList, nPartTracked
 
 
-def getTrackedParticlesProperties(ParticlesList, TimeStepInfo, nPartTracked,
-                                  properties):
+def getTrackedParticlesProperties(ParticlesList, nPartTracked, properties):
     '''Get the desired properties for the tracked particles
 
     Parameters
@@ -535,16 +534,18 @@ def getTrackedParticlesProperties(ParticlesList, TimeStepInfo, nPartTracked,
         corresponds to the 'x' time serie of a tracked particle)
     '''
     # buid time series for desiered properties of tracked particles
-    nTimeSteps = len(TimeStepInfo)
+    nTimeSteps = len(ParticlesList)
     trackedPartProp = {}
+    trackedPartProp['time'] = np.zeros(nTimeSteps)
     # initialize
     for key in properties:
         trackedPartProp[key] = np.zeros((nTimeSteps, nPartTracked))
 
     # extract wanted properties and build the time series
     trackedPartID = []
-    for particles, nTime in zip(ParticlesList, range(len(TimeStepInfo))):
+    for particles, nTime in zip(ParticlesList, range(nTimeSteps)):
         trackedParticles = particles['trackedParticles']
+        trackedPartProp['time'][nTime] = particles['t']
         index = np.where(trackedParticles == 1)
         for ind, id in zip(index[0], particles['ID'][index]):
             if id not in trackedPartID:
@@ -552,7 +553,7 @@ def getTrackedParticlesProperties(ParticlesList, TimeStepInfo, nPartTracked,
             indCol = trackedPartID.index(id)
             for key in properties:
                 trackedPartProp[key][nTime, indCol] = particles[key][ind]
-    trackedPartProp['time'] = np.array(TimeStepInfo)
+
     return trackedPartProp
 
 ##############################################################################
