@@ -59,6 +59,11 @@ The mass per particle determination method can be chosen between:
     using the release thickness per particle ``deltaTh`` value given in the configuration and the area of
     the release mesh cell: :math:`\mbox{massPerPart} = \rho\times \mbox{cellArea} \times\mbox{deltaTh}`.
 
+.. Note::  If MPPDIR is used, consider adapting the mass per particle value when changing the mesh cell size from the default, as
+           the number of particles per cell will only be determined by the mass per particle value and the release snow mass within the cell.
+           So in the case of a smaller cell size, less particles per cell will be introduced in this case, whereas when using MPPDH,
+           the number of particles per cell is independent of the mesh cell size. 
+
 The number of particles placed in each release cell is computed according to the ``massPerPart``
 and the area and release thickness of the cell. The number should be an integer meaning that the
 float is rounded up or down with a probability corresponding to the decimal part (i.e. 5.7 will
