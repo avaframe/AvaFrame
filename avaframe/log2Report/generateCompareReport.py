@@ -157,7 +157,8 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
             elif float(valuesBench[countValue]) == 0.0 or float(valuesSim[countValue]) == 0.0:
                 diffPercent = 'undefined'
             else:
-                diffPercent = (float(valuesBench[countValue]) - float(valuesSim[countValue])) / float(valuesBench[countValue])
+                diffPercent = ((float(valuesBench[countValue]) - float(valuesSim[countValue])) /
+                              float(valuesBench[countValue]))
             if diffPercent == 'undefined' or abs(diffPercent) < perDiff:
                 pfile.write('| %s | %.1f | %.1f | \n' % (value, valuesBench[countValue], valuesSim[countValue]))
                 countValue = countValue + 1
@@ -168,7 +169,6 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
 
         pfile.write(' \n')
         pfile.write(' \n')
-
 
         # IMAGE BLOCK
         pfile.write('#### Comparison Plots \n')
@@ -182,9 +182,14 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
                                   abs(float(reportD['Simulation Difference'][value][0])))
                     maxVal = float(reportD['Simulation Stats'][value][0])
                     if maxDiff < (-1.0*diffLim*maxVal) or maxDiff > (diffLim*maxVal):
-                        textString1 = '<span style="color:red"> Warning absolute difference exceeds the tolerance of %.0f percent of %s-max value (%.2f) </span>' % (100.*diffLim, value, maxVal)
-                        textString2 = '<span style="color:red"> Difference is: Max = %0.2f, Mean = %.02f and Min = %.02f </span>' % (reportD['Simulation Difference'][value][0],
-                                     reportD['Simulation Difference'][value][1], reportD['Simulation Difference'][value][2])
+                        textString1 = ('<span style="color:red"> Warning absolute difference \
+                                      exceeds the tolerance of %.0f percent of %s-max value (%.2f) \
+                                      </span>' % (100.*diffLim, value, maxVal))
+                        textString2 = ('<span style="color:red"> Difference is: Max = %0.2f, \
+                                      Mean = %.02f and Min = %.02f </span>' %
+                                      (reportD['Simulation Difference'][value][0],
+                                      reportD['Simulation Difference'][value][1],
+                                      reportD['Simulation Difference'][value][2]))
                         pfile.write(' %s \n' % textString1)
                         pfile.write(' %s \n' % textString2)
                         pfile.write(' \n')
