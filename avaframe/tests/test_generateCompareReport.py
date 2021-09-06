@@ -64,7 +64,7 @@ def test_copyAimecPlots(tmp_path):
     plotPaths = gR.copyAimecPlots(plotFiles, testName, outDir, plotPaths)
     testFile = outDir / 'avaTest__release1HX_ent_dfa_3f8d2d9327_pfd.png'
 
-    assert str(plotPaths['aimec plot 1']) ==  str(testFile)
+    assert str(plotPaths['aimec plot 1']) == str(testFile)
     assert len(plotPaths) == 2
 
 
@@ -113,10 +113,8 @@ def test_writeCompareReport(tmp_path):
         'Test Info': {'type': 'text',
                       'Test Info': 'Compare com1DFAOrig (Reference) to com1DFA (Simulation) results.'}}
 
-
     # call function to be tested
     gR.writeCompareReport(reportFile, reportD, benchD, avaName, cfg)
-
 
     # Load simulation report
     reportFile = open(os.path.join(tmp_path, 'reportTest.md'), 'r')
@@ -142,8 +140,11 @@ def test_writeCompareReport(tmp_path):
     assert lineVals[24] == '| max peak flow velocity [ms-1] | 42.0 | <span style="color:red"> 42.5 </span> | \n'
     assert lineVals[27] == '#### Comparison Plots \n'
     assert lineVals[29] == '##### Figure:   ppr \n'
-    assert lineVals[31] == ' <span style="color:red"> Warning absolute difference exceeds the tolerance of 1 percent of ppr-max value (364.00) </span> \n'
-    assert lineVals[32] == ' <span style="color:red"> Difference is: Max = 243.00, Mean = -2.20 and Min = -166.00 </span> \n'
+    assert ' <span style="color:red"> Warning absolute difference' in lineVals[31]
+    assert 'exceeds the tolerance of 1 percent of ppr-max value' in lineVals[31]
+    assert ' </span> \n' in lineVals[31]
+    assert ' <span style="color:red"> Difference is: Max = 243.00,' in lineVals[32]
+    assert 'Mean = -2.20 and Min = -166.00 </span> \n' in lineVals[32]
     assert lineVals[34] == '![ppr](testplot.png) \n'
     assert lineVals[37] == '##### Figure:   Aimec comparison of mean and max values along path \n'
     assert lineVals[39] == '![Aimec comparison of mean and max values along path](testplot.png) \n'
