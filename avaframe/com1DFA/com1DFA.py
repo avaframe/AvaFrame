@@ -1764,7 +1764,7 @@ def readPartFromPickle(inDir, flagAvaDir=False):
     return Particles, TimeStepInfo
 
 
-def mainTrackParticles(Particles, TimeStepInfo, center, radius, properties):
+def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, properties):
     """ track particles from initial area
 
         Find all particles in an initial area. Find the same particles in
@@ -1773,7 +1773,7 @@ def mainTrackParticles(Particles, TimeStepInfo, center, radius, properties):
 
         Parameters
         -----------
-        Particles: list
+        ParticlesList: list
             list of particle dictionary
         TimeStepInfo : list
             list of corresponding time steps
@@ -1790,46 +1790,27 @@ def mainTrackParticles(Particles, TimeStepInfo, center, radius, properties):
         Returns
         -------
         Particles : list
-            Particles list of dict updated with the 'trakedParticles'  array
+            Particles list of dict updated with the 'trackedParticles'  array
             (in the array, ones for particles that are tracked, zeros otherwise)
         trackedPartProp: dict
             dictionary with time series of the wanted properties for tracked
             particles
     """
     # start by finding the particles to be tracked
-    particles2Track = DFAtls.findParticles(Particles[0], center, radius)
-    nPartTracked = np.size(particles2Track)
+    particles2Track = DFAtls.findParticles2Track(ParticlesList[0],
+                                                 center, radius)
 
-    # add trakedParticles array to the particles dictionary for every saved time step
-    for particles in Particles:
-        # find index of particles to track
-        index = [ind for ind, parent in enumerate(
-            particles['parentID']) if parent in particles2Track]
-        nPartTracked = max(nPartTracked, len(index))
-        trakedParticles = np.zeros(particles['Npart'])
-        trakedParticles[index] = 1
-        particles['trakedParticles'] = trakedParticles
+    # find those same particles and their children in the ParticlesList
+    ParticlesList, nPartTracked = DFAtls.getTrackedParticles(ParticlesList,
+                                                             particles2Track)
 
-    # buid time series for desiered properties of tracked particles
-    nTimeSteps = len(TimeStepInfo)
-    trackedPartProp = {}
-    # initialize
-    for key in properties:
-        trackedPartProp[key] = np.zeros((nTimeSteps, nPartTracked))
+    # extract the wanted properties for the tracked particles
+    trackedPartProp = DFAtls.getTrackedParticlesProperties(ParticlesList,
+                                                           TimeStepInfo,
+                                                           nPartTracked,
+                                                           properties)
 
-    # extract wanted properties and build the time series
-    trackedPartID = []
-    for particles, nTime in zip(Particles, range(len(TimeStepInfo))):
-        trakedParticles = particles['trakedParticles']
-        index = np.where(trakedParticles == 1)
-        for ind, id in zip(index[0], particles['ID'][index]):
-            if id not in trackedPartID:
-                trackedPartID.append(id)
-            indCol = trackedPartID.index(id)
-            for key in properties:
-                trackedPartProp[key][nTime, indCol] = particles[key][ind]
-    trackedPartProp['time'] = np.array(TimeStepInfo)
-    return Particles, trackedPartProp
+    return ParticlesList, trackedPartProp
 
 
 def savePartToCsv(particleProperties, dictList, outDir):

@@ -103,7 +103,7 @@ def update(count, Particles, xllc, yllc, ax1, XX, YY, dem):
 
     ax1.clear()
     ax1.set_title('t=%.2f s' % particles['t'])
-    variable = particles['trakedParticles']
+    variable = particles['trackedParticles']
     cmap = pU.cmapGreys
     cmap.set_bad(color='white')
     ref0, im = pU.NonUnifIm(ax1, XX, YY, dem['Nz']/DFAtls.norm(dem['Nx'], dem['Ny'], dem['Nz']), 'x [m]', 'y [m]',
@@ -112,8 +112,8 @@ def update(count, Particles, xllc, yllc, ax1, XX, YY, dem):
                                     YY.min(), YY.max()],
                             cmap=cmap, norm=None)
     Cp1 = ax1.contour(XX, YY, dem['rasterData'], levels=10, colors='k')
-    cmap, _, ticks, norm = pU.makeColorMap(
-                                      pU.cmapPres, np.amin(variable), np.amax(variable), continuous=True)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapPres, np.amin(variable),
+                                           np.amax(variable), continuous=True)
     # set range and steps of colormap
     cc = np.where(variable == 1, True, False)
     sc = ax1.scatter(X, Y, c='b', cmap=None, marker='.')
