@@ -134,6 +134,7 @@ for avaName in testList:
             else:
                 cfgAimec['FLAGS']['flagMass'] = 'False'
             cfgAimec['AIMECSETUP']['comModules'] = 'com1DFAOrig|com1DFA'
+            cfgAimec['AIMECSETUP']['resType'] = 'ppr'
 
             # Setup input from com1DFA and com1DFAPy
             pathDict = []
