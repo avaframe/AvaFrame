@@ -3,12 +3,12 @@
    Adapted from the Python Packaging Authority template."""
 
 from setuptools import setup, find_packages  # Always prefer setuptools
+from pathlib import Path
+from distutils.core import setup
+from distutils.extension import Extension
+from Cython.Build import cythonize
+import numpy
 
-with open('README.md') as f:
-    readme = f.read()
-
-with open('LICENSE.txt') as f:
-    license = f.read()
 
 DISTNAME = 'avaframe'
 LICENSE = 'EUPL'
@@ -23,24 +23,36 @@ CLASSIFIERS = [
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ]
 
 DESCRIPTION = 'The Open Avalanche Framework'
 
-LONG_DESCRIPTION = readme
-
 req_packages = ['numpy',
+                'matplotlib',
+                'pyshp',
+                'scipy',
+                'cmcrameri',
+                'seaborn',
+                'cython',
+                'pandas'
                 ]
+
+
+# read the contents of your README file
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 setup(
     # Project info
     name=DISTNAME,
     description=DESCRIPTION,
-    long_description=LONG_DESCRIPTION,
-    version='0.5',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    version='0.5.2',
     # The project's main homepage.
     url=URL,
     # Author details
@@ -50,7 +62,7 @@ setup(
     license=LICENSE,
     classifiers=CLASSIFIERS,
     # We are a python 3 only shop
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     # Find packages automatically
     packages=find_packages(exclude=['docs']),
     # Include package data
@@ -62,4 +74,8 @@ setup(
     # Executable scripts
     entry_points={
     },
+    ext_modules=cythonize("avaframe/com1DFA/DFAfunctionsCython.pyx",
+                          compiler_directives={'linetrace': True},
+                          language_level=3),
+    include_dirs=[numpy.get_include()]
 )
