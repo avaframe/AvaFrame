@@ -40,13 +40,6 @@ jobs:
     - name: Test with pytest
       run: |
         pytest -rP --cov --cov-report=xml --cov-config=.coveragerc
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
-        name: codecov-umbrella
-        fail_ci_if_error: true
     - name: Test & publish code coverage
       uses: paambaati/codeclimate-action@v2.7.5
       env:
