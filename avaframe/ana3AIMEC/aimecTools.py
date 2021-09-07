@@ -48,7 +48,8 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     refDir = pathlib.Path(avalancheDir, 'Inputs', 'LINES')
     profileLayer = list(refDir.glob('*aimec*.shp'))
     try:
-        message = 'There should be exactly one path_aimec.shp file containing the avalanche path in %s/Inputs/LINES/' % avalancheDir
+        message = ('There should be exactly one path_aimec.shp file containing the avalanche path in %s/Inputs/LINES/' %
+            avalancheDir)
         assert len(profileLayer) == 1, message
     except AssertionError:
         raise
@@ -234,8 +235,7 @@ def makeDomainTransfo(pathDict, cfgSetup):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    angle, tmp, ds = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle,
-                                                         rasterTransfo)
+    angle, tmp, ds = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle, rasterTransfo)
     # find the runout point: first point under startOfRunoutAreaAngle
     indStartOfRunout = geoTrans.findAngleProfile(tmp, ds, cfgSetup.getfloat('dsMin'))
     rasterTransfo['indStartOfRunout'] = indStartOfRunout
@@ -243,7 +243,7 @@ def makeDomainTransfo(pathDict, cfgSetup):
     rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
     rasterTransfo['startOfRunoutAreaAngle'] = angle[indStartOfRunout]
     log.info('Start of run-out area at the %.2f ° point of coordinates (%.2f, %.2f)' %
-        (rasterTransfo['startOfRunoutAreaAngle'],rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
+        (rasterTransfo['startOfRunoutAreaAngle'], rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
 
     return rasterTransfo
 

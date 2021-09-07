@@ -27,7 +27,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 
 # load all benchmark info as dictionaries from description files
 # testList = ['avaInclinedPlane', 'avaParabola', 'avaBowl', 'avaHelix', 'avaHelixChannel', 'avaHockeySmall', 'avaAlr1', 'avaKot1', 'avaMal1', 'avaHit1', 'avaWog1', 'avaGar1']
-testList = ['avaParabola']
+testList = ['avaMBonvin']
 simType = 'null'
 simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
@@ -109,7 +109,8 @@ for avaName in testList:
                     log.info('Reference simulation: %s' % com1DFASimName)
                     break
                 else:
-                    log.error('No reference simulation found based on releaseScenario: %s and simType: %s' % (rel, simType))
+                    log.error('No reference simulation found based on releaseScenario: %s and simType: %s' %
+                        (rel, simType))
 
         simNameRef = reportDcom1DFAOrig['simName']['name']
         refDir = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'peakFiles')
@@ -117,12 +118,14 @@ for avaName in testList:
             com1DFASimName = reportDcom1DFAOrig['simName']['name']
             # Fetch corresponding com1DFA
             for dict in reportDictListcom1DFA:
-                if simTypeString in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel:
+                if (simTypeString in dict['simName']['name'] and
+                    dict['Simulation Parameters']['Release Area Scenario'] == rel):
                     reportDcom1DFA = dict
                     log.info('Comparison simulation: %s' % dict['simName']['name'])
                     break
                 else:
-                    log.error('No matching simulation found based on releaseScenario: %s and simType: %s' % (rel, simType))
+                    log.error('No matching simulation found based on releaseScenario: %s and simType: %s' %
+                        (rel, simType))
 
             simNameComp = reportDcom1DFA['simName']['name']
             compDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles')
@@ -149,7 +152,8 @@ for avaName in testList:
             rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
 
             # add aimec results to report dictionary
-            reportDcom1DFA, reportDcom1DFAOrig = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportDcom1DFA, reportDcom1DFAOrig, pathDict['referenceFile'])
+            reportDcom1DFA, reportDcom1DFAOrig = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportDcom1DFA,
+                reportDcom1DFAOrig, pathDict['referenceFile'])
 
             # Create plots for report
             # Load input parameters from configuration file
