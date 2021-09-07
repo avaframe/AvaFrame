@@ -26,8 +26,8 @@ Inputs
    the helper function :py:func:`ana3AIMEC.dfa2Aimec.mainDfa2Aimec` in :py:mod:`ana3AIMEC.dfa2Aimec` fetches and prepares the input for Aimec)
 
 .. Note:: The DEM file can have a different spatial resolution compared to the result files. However, the z coordinates
-          used to compute the location of the runout point and the runout length are derived from the provided dem data.
-          
+          used to compute the location of the runout point and the fall height (deltaH) are derived from the provided dem data.
+
 Outputs
 --------
 
