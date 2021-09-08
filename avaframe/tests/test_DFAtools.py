@@ -240,7 +240,7 @@ def test_mergeParticleDict(capfd):
     particles2['m'] = np.linspace(5, 8, 4)
     particles2['x'] = np.linspace(5, 8, 4)
     particles2['ux'] = np.linspace(5, 8, 4)
-    particles2['mTot'] = np.sum(particles1['m'])
+    particles2['mTot'] = np.sum(particles2['m'])
     particles2['ID'] = np.arange(particles2['Npart'])
     particles2['parentID'] = np.arange(particles2['Npart'])
     particles2['nID'] = particles2['Npart']

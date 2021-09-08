@@ -18,6 +18,7 @@ from itertools import product
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.timeDiscretizations as tD
+import avaframe.com1DFA.plotTrackParticles as plotTrackParticles
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
@@ -92,11 +93,22 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     tcpuDFA = '%.2f' % (time.time() - startTime)
     log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
+    cfgTrackPart = cfg['TRACKPARTICLES']
     if 'particles' in cfgGen['resType']:
         # export particles dictionaries of saving time steps
         outDirData = outDir / 'particles'
         fU.makeADir(outDirData)
+        # track particles
+        if cfgTrackPart.getboolean('trackParticles'):
+            particlesList, trackedPartProp, track = trackParticles(
+                cfgTrackPart, demOri, particlesList)
+            if (track) and cfg.getboolean('TRACKPARTICLES', 'plotTrackedPart'):
+                plotTrackParticles.plotTrackParticle(
+                    particlesList, trackedPartProp, cfgTrackPart, demOri, dem)
+
         savePartToPickle(particlesList, outDirData, cuSimName)
+    elif cfgTrackPart.getboolean('trackParticles'):
+        log.warning('You need to save the particles to be able to track them')
 
     # Result parameters to be exported
     exportFields(cfg, Tsave, fieldsList, demOri, outDir, cuSimName)
@@ -643,7 +655,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
 
         log.info('Initial particle distribution read from file!! %s' %
                  (inDirPart))
-        Particles, TimeStepInfo = readPartFromPickle(inDirPart)
+        Particles, timeStepInfo = readPartFromPickle(inDirPart)
         particles = Particles[0]
         Xpart = particles['x']
         Mpart = particles['m']
@@ -714,11 +726,13 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
         particles = checkParticlesInRelease(
             particles, releaseLine, cfg.getfloat('thresholdPointInPoly'))
 
-    # add a particles ID
+    # add a particles ID:
+    # integer ranging from 0 to nPart in the initialisation.
+    # Everytime that a new particle is created, it gets a new ID that is > nID
     # (enable tracking of particles even if particles are added or removed)
-    # unique identifyer for each particle
+    # unique identifier for each particle
     particles['ID'] = np.arange(particles['Npart'])
-    # keep track of the identiier (usefull to add identifier to newparticles)
+    # keep track of the identifier (usefull to add identifier to newparticles)
     particles['nID'] = particles['Npart']
     # keep track of parents (usefull for new particles created after splitting)
     particles['parentID'] = np.arange(particles['Npart'])
@@ -1755,16 +1769,16 @@ def readPartFromPickle(inDir, flagAvaDir=False):
 
     # initialise list of particle dictionaries
     Particles = []
-    TimeStepInfo = []
+    timeStepInfo = []
     for particles in PartDicts:
         particles = pickle.load(open(particles, "rb"))
         Particles.append(particles)
-        TimeStepInfo.append(particles['t'])
+        timeStepInfo.append(particles['t'])
 
-    return Particles, TimeStepInfo
+    return Particles, timeStepInfo
 
 
-def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, particleProperties):
+def trackParticles(cfgTrackPart, dem, particlesList):
     """ track particles from initial area
 
         Find all particles in an initial area. Find the same particles in
@@ -1773,55 +1787,75 @@ def mainTrackParticles(ParticlesList, TimeStepInfo, center, radius, particleProp
 
         Parameters
         -----------
-        ParticlesList: list
-            list of particle dictionary
-        center : dict
-            point dictionary:
-                x : x coordinate
-                y : y coordinate
-                z : z coordinate
-        radius : float
-            radius of the circle around point
-        particleProperties: list
-            list of particles properties to extract ('x', 'y', 'ux', 'm'...)
+        cfgTrackPart: configParser
+            center : str
+                center of the location of the particles to track (x|y coordinates)
+            radius : str
+                radius of the circle around point
+            particleProperties: str
+                list of particles properties to extract ('x', 'y', 'ux', 'm'...)
+        dem: dict
+            dem dictionary
+        particlesList: list
+            list of particles dictionary
 
         Returns
         -------
-        Particles : list
-            Particles list of dict updated with the 'trackedParticles'  array
+        particlesList : list
+            Particles list of dict updated with the 'trackedParticles' array
             (in the array, ones for particles that are tracked, zeros otherwise)
         trackedPartProp: dict
             dictionary with time series of the wanted properties for tracked
             particles
+        track: boolean
+            False if no particles are tracked
     """
 
+    # read particle properties to be extracted
+    particleProperties = cfgTrackPart['particleProperties']
+    particleProperties = particleProperties.split('|')
+    # read location of particle to be tracked
+    radius = cfgTrackPart.getfloat('radius')
+    centerList = cfgTrackPart['center']
+    centerList = centerList.split('|')
+    center = {'x': np.array([float(centerList[0])]),
+              'y': np.array([float(centerList[1])])}
+    center, _ = geoTrans.projectOnRaster(dem, center, interp='bilinear')
+    center['x'] = center['x'] - dem['header']['xllcenter']
+    center['y'] = center['y'] - dem['header']['yllcenter']
+
     # start by finding the particles to be tracked
-    particles2Track = DFAtls.findParticles2Track(ParticlesList[0],
-                                                 center, radius)
+    particles2Track, track = DFAtls.findParticles2Track(particlesList[0],
+                                                        center, radius)
+    if track:
+        # find those same particles and their children in the particlesList
+        particlesList, nPartTracked = DFAtls.getTrackedParticles(particlesList,
+                                                                 particles2Track)
 
-    # find those same particles and their children in the ParticlesList
-    ParticlesList, nPartTracked = DFAtls.getTrackedParticles(ParticlesList,
-                                                             particles2Track)
+        # extract the wanted properties for the tracked particles
+        trackedPartProp = DFAtls.getTrackedParticlesProperties(particlesList,
+                                                               nPartTracked,
+                                                               particleProperties)
+    else:
+        trackedPartProp = None
 
-    # extract the wanted properties for the tracked particles
-    trackedPartProp = DFAtls.getTrackedParticlesProperties(ParticlesList,
-                                                           nPartTracked,
-                                                           particleProperties)
-
-    return ParticlesList, trackedPartProp
+    return particlesList, trackedPartProp, track
 
 
 def savePartToCsv(particleProperties, dictList, outDir):
-    """ Save each particle dictionary from a list to a csv file; works also for one dictionary instead of list
+    """ Save each particle dictionary from a list to a csv file;
+        works also for one dictionary instead of list
 
         Parameters
         ---------
         particleProperties: str
-            all particle properties that shall be saved to csv file (e.g.: m, velocityMagnitude, ux,..)
+            all particle properties that shall be saved to csv file
+            (e.g.: m, velocityMagnitude, ux,..)
         dictList: list or dict
             list of dictionaries or single dictionary
         outDir: str
-            path to output directory; particlesCSV will be created in this outDir
+            path to output directory; particlesCSV will be created in this
+            outDir
     """
 
     # set output directory
@@ -2039,5 +2073,4 @@ def getSimTypeList(simTypeList, inputSimFiles):
             log.error(message)
             raise FileNotFoundError(message)
 
-    return simTypeList
     return simTypeList

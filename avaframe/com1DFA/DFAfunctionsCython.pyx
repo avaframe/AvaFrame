@@ -911,7 +911,6 @@ def updateFieldsC(cfg, particles, dem, fields):
     hbb = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], FDBilinear)
     hBB[j] = hbb
 
-  particles['hBilinearBilinear'] = np.asarray(hBB)
   particles['h'] = np.asarray(hBB)
 
   return particles, fields

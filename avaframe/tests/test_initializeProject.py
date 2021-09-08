@@ -15,7 +15,7 @@ def test_cleanModuleFiles(tmp_path):
 
     # - non string variable
     notAString = initProj.cleanModuleFiles(2, 'Module')
-    assert notAString == 'AvaDir is NOT a string'
+    assert notAString == 'AvaDir is NOT a string or PurePath'
 
     # create test directories
     # then delete and check again
@@ -59,7 +59,8 @@ def test_cleanSingleAvaDir(tmp_path):
 
     # - non string variable
     notAString = initProj.cleanSingleAvaDir(2)
-    assert notAString == 'AvaDir is NOT a string'
+    print(notAString)
+    assert notAString == 'AvaDir is NOT a string or PurePath'
 
     # create test directories and touch log files
     # then delete and check again
