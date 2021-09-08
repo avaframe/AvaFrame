@@ -302,7 +302,7 @@ def getAreaMesh(Nx, Ny, Nz, csz, num):
     return A
 
 
-def removePart(particles, mask, nRemove):
+def removePart(particles, mask, nRemove, reasonString=''):
     """ remove given particles
 
     Parameters
@@ -313,6 +313,8 @@ def removePart(particles, mask, nRemove):
         particles to keep
     nRemove : int
         number of particles removed
+    reasonString: str
+        reason why removing particles - for log message
 
     Returns
     -------
@@ -320,7 +322,7 @@ def removePart(particles, mask, nRemove):
         particles dictionary
     """
 
-    log.info('removed %s particles because they exited the domain' % (nRemove))
+    log.info('removed %s particles %s' % (nRemove, reasonString))
     nPart = particles['Npart']
     for key in particles:
         if key == 'Npart':
