@@ -118,7 +118,8 @@ for avaName in testList:
             com1DFASimName = reportDcom1DFAOrig['simName']['name']
             # Fetch corresponding com1DFA
             for dict in reportDictListcom1DFA:
-                if (simTypeString in dict['simName']['name'] and dict['Simulation Parameters']['Release Area Scenario'] == rel):
+                if (simTypeString in dict['simName']['name'] and
+                        dict['Simulation Parameters']['Release Area Scenario'] == rel):
                     reportDcom1DFA = dict
                     log.info('Comparison simulation: %s' % dict['simName']['name'])
                     break
