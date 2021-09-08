@@ -64,7 +64,7 @@ def runCom1DFA(avaDir='', cfgFile='', relThField='', variationDict=''):
             log.info('%s: %s' % (key, variationDict[key]))
 
     # add avalanche directory info to cfg
-    modCfg['GENERAL']['avalancheDir'] = avalancheDir
+    modCfg['GENERAL']['avalancheDir'] = str(avalancheDir)
 
     # fetch input data - dem, release-, entrainment- and resistance areas
     inputSimFiles = gI.getInputDataCom1DFA(avalancheDir, modCfg['FLAGS'])

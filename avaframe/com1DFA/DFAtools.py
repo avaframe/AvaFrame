@@ -377,7 +377,7 @@ def splitPart(particles):
     nSplit = np.round(m/massPerPart)
     Ind = np.where(nSplit > 1)[0]
     if np.size(Ind) > 0:
-        # lop on particles to split
+        # loop on particles to split
         for ind in Ind:
             # get old values
             nPart = particles['Npart']
@@ -385,12 +385,12 @@ def splitPart(particles):
             # compute new mass and particles to add
             mNew = m[ind] / nSplit[ind]
             nAdd = (nSplit[ind]-1).astype('int')
-            # update particles number and ID
+            # update total number of particles and number of IDs used so far
             particles['Npart'] = particles['Npart'] + nAdd
-            particles['nID'] = particles['nID'] + nAdd
+            particles['nID'] = nID + nAdd
             log.debug('Spliting particle %s in %s' % (ind, nAdd+1))
             for key in particles:
-                # update splited particle mass
+                # update splitted particle mass
                 particles['m'][ind] = mNew
                 # add new particles at the end of the arrays
                 if type(particles[key]).__module__ == np.__name__:
@@ -398,7 +398,7 @@ def splitPart(particles):
                     if key == 'ID':
                         particles['ID'] = np.append(
                             particles['ID'], np.arange(nID, nID + nAdd, 1))
-                    # and git them the splited particle properties
+                    # set the parent properties to new particles due to splitting
                     elif np.size(particles[key]) == nPart:
                         particles[key] = np.append(
                             particles[key], particles[key][ind]*np.ones((nAdd)))
@@ -425,23 +425,45 @@ def mergeParticleDict(particles1, particles2):
     """
     particles = {}
     nPart1 = particles1['Npart']
+    # loop on the keys from particles1 dicionary
     for key in particles1:
+        # deal with specific cases
+        # Npart: just sum them up
         if key == 'Npart':
             particles['Npart'] = particles1['Npart'] + particles2['Npart']
+        # massPerPart, should stay unchanged. If ever they are different take
+        # the minimum
+        # ToDo: are we sure we want the minimum?
+        elif key == 'massPerPart':
+            particles['massPerPart'] = min(
+                particles1['massPerPart'], particles2['massPerPart'])
+        # now if the value is a numpy array and this key is also in particles2
         elif (key in particles2) and (type(particles1[key]).__module__ == np.__name__):
+            # deal with the specific cases:
+            # in the case of ID or 'parentID' we assume that bot particles1 and
+            # particles2 were initialized with an ID and parentID starting at 0
+            # here whene we merge the 2 arrays we make sure to shift the value
+            # of particles2 so that the ID stays a unique identifier and
+            # that the parentID is consistent with this shift.
             if (key == 'ID') or (key == 'parentID'):
                 particles[key] = np.append(
                     particles1[key], particles2[key] + particles1['nID'])
+            # general case where the key value is an array with as many elements
+            # as particles
             elif np.size(particles1[key]) == nPart1:
                 particles[key] = np.append(particles1[key], particles2[key])
+            # if the array is of size one, (potential energy, mTot...) we just
+            # sum the 2 values
             else:
                 particles[key] = particles1[key] + particles2[key]
+        # the key is in both dictionaries, it is not an array but it is a
+        # number (int, double, float) then we sum the 2 values
         elif (key in particles2) and (isinstance(particles1[key], numbers.Number)):
             particles[key] = particles1[key] + particles2[key]
+        # finaly, if the key is only in particles1 then we give this value to
+        # the new particles
         else:
             particles[key] = particles1[key]
-
-    particles['mTot'] = np.sum(particles['m'])
     return particles
 
 
@@ -464,7 +486,10 @@ def findParticles2Track(particles, center, radius):
     -------
     particles2Track : numpy array
         array with Parent ID of particles to track
+    track: boolean
+        False if no particles are tracked
     '''
+    track = True
     x = particles['x']
     y = particles['y']
     z = particles['z']
@@ -474,23 +499,27 @@ def findParticles2Track(particles, center, radius):
     r = norm(x-xc, y-yc, z-zc)
     index = np.where(r <= radius)
     particles2Track = particles['parentID'][index]
+    log.info('Tracking %d particles' % len(index[0]))
+    if len(index[0]) < 1:
+        log.warning('Found particles to track ')
+        track = False
 
-    return particles2Track
+    return particles2Track, track
 
 
-def getTrackedParticles(ParticlesList, particles2Track):
+def getTrackedParticles(particlesList, particles2Track):
     '''Track particles along time given the parentID of the particles to track
 
     Parameters
     ----------
-    ParticlesList : list
+    particlesList : list
         list of particles dictionaries (with the 'parentID' array)
     particles2Track : numpy array
         array with the parentID of the particles to track
 
     Returns
     -------
-    ParticlesList : list
+    particlesList : list
         list of particles dictionaries updated with the 'trackedParticles'
         array (in the array, the ones correspond to the particles that
         are tracked)
@@ -499,7 +528,7 @@ def getTrackedParticles(ParticlesList, particles2Track):
     '''
     nPartTracked = np.size(particles2Track)
     # add trackedParticles array to the particles dictionary for every saved time step
-    for particles in ParticlesList:
+    for particles in particlesList:
         # find index of particles to track
         index = [ind for ind, parent in enumerate(
             particles['parentID']) if parent in particles2Track]
@@ -507,15 +536,15 @@ def getTrackedParticles(ParticlesList, particles2Track):
         trackedParticles = np.zeros(particles['Npart'])
         trackedParticles[index] = 1
         particles['trackedParticles'] = trackedParticles
-    return ParticlesList, nPartTracked
+    return particlesList, nPartTracked
 
 
-def getTrackedParticlesProperties(ParticlesList, nPartTracked, properties):
+def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     '''Get the desired properties for the tracked particles
 
     Parameters
     ----------
-    ParticlesList : list
+    particlesList : list
         list of particles dictionaries (with the 'parentID' array)
     TimeStepInfo : list
         time list
@@ -534,7 +563,7 @@ def getTrackedParticlesProperties(ParticlesList, nPartTracked, properties):
         corresponds to the 'x' time serie of a tracked particle)
     '''
     # buid time series for desiered properties of tracked particles
-    nTimeSteps = len(ParticlesList)
+    nTimeSteps = len(particlesList)
     trackedPartProp = {}
     trackedPartProp['time'] = np.zeros(nTimeSteps)
     # initialize
@@ -543,7 +572,7 @@ def getTrackedParticlesProperties(ParticlesList, nPartTracked, properties):
 
     # extract wanted properties and build the time series
     trackedPartID = []
-    for particles, nTime in zip(ParticlesList, range(nTimeSteps)):
+    for particles, nTime in zip(particlesList, range(nTimeSteps)):
         trackedParticles = particles['trackedParticles']
         trackedPartProp['time'][nTime] = particles['t']
         index = np.where(trackedParticles == 1)
@@ -654,5 +683,4 @@ def scalProd(ux, uy, uz, vx, vy, vz):
     """
     scal = ux*vx + uy*vy + uz*vz
 
-    return scal
     return scal

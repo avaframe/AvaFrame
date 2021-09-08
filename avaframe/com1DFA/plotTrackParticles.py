@@ -1,38 +1,21 @@
-import pathlib
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 
 # Local imports
-from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import logUtils
-from avaframe.in1Data import getInput as gI
-import avaframe.in2Trans.ascUtils as IOf
-import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
 
 
-def runTrackParticle():
-    # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
-    # log file name; leave empty to use default runLog.log
-    logName = 'runTrackParticles'
-    # Load avalanche directory from general configuration file
-    cfgMain = cfgUtils.getGeneralConfig()
-    avalancheDir = cfgMain['MAIN']['avalancheDir']
+def plotTrackParticle(Particles, trackedPartProp, cfgTrackPart, demOri, dem):
+    radius = cfgTrackPart.getfloat('radius')
+    centerList = cfgTrackPart['center']
+    centerList = centerList.split('|')
+    center = {'x': np.array([float(centerList[0])]),
+              'y': np.array([float(centerList[1])])}
+    center, _ = geoTrans.projectOnRaster(dem, center, interp='bilinear')
 
-    modCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
-
-    # Start logging
-    log = logUtils.initiateLogger(avalancheDir, logName)
-    log.info('MAIN SCRIPT Track Particles')
-    log.info('Current avalanche: %s', avalancheDir)
-
-    # get dem
-    inputSimFiles = gI.getInputDataCom1DFA(avalancheDir, modCfg['FLAGS'])
-    demOri = IOf.readRaster(inputSimFiles['demFile'], noDataToNan=True)
-    demOri, dem = com1DFA.initializeMesh(modCfg['GENERAL'], demOri, 1)
     header = demOri['header']
     ncols = header['ncols']
     nrows = header['nrows']
@@ -45,37 +28,23 @@ def runTrackParticle():
     XX = PointsX[0, :]
     YY = PointsY[:, 0]
 
-    # get particles
-    inDirPart = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'particles')
-    Particles, TimeStepInfo = com1DFA.readPartFromPickle(inDirPart)
-
-    # location of particles to track
-    # ToDo: put this in an ini file
-    radius = 5
-    # center = {'x': np.array([2800])-xllc, 'y': np.array([-4000])-yllc}
-    center = {'x': np.array([255865])-xllc, 'y': np.array([381383])-yllc}
-    center, _ = geoTrans.projectOnRaster(dem, center)
-    # properties to track
-    # ToDo: put this in an ini file
-    particleProperties = 'x|y|z|ux|uy|uz'
-    particleProperties = particleProperties.split('|')
-    # get particles and related properties of particles to track
-    Particles, trackedPartProp = com1DFA.mainTrackParticles(
-                              Particles, TimeStepInfo, center, radius, particleProperties)
-
     # do some ploting
     # ToDo: put this in a plotting folder (here just to demonstrate how this works)
     fig = plt.figure()
-    ax = plt.subplot(121)
+    ax = plt.subplot(131)
     ax.plot(trackedPartProp['time'], DFAtls.norm(
                               trackedPartProp['ux'], trackedPartProp['uy'], trackedPartProp['uz']))
 
     ax.set_xlabel('t [s]')
     ax.set_ylabel('v [m/s]')
+    ax1 = plt.subplot(132)
+    ax1.plot(trackedPartProp['time'], trackedPartProp['m'])
 
-    ax2 = plt.subplot(122)
-    circle1 = plt.Circle(
-                              (center['x'], center['y']), radius, color='r')
+    ax1.set_xlabel('t [s]')
+    ax1.set_ylabel('m [kg]')
+
+    ax2 = plt.subplot(133)
+    circle1 = plt.Circle((center['x'], center['y']), radius, color='r')
     ax2.plot(trackedPartProp['x'], trackedPartProp['y'])
     ax2.add_patch(circle1)
     ax2.set_xlabel('x [m]')
@@ -85,8 +54,7 @@ def runTrackParticle():
     fig2 = plt.figure()
     ax1 = plt.subplot(111)
     for count in range(len(Particles)):
-        update(count, Particles, xllc,
-               yllc, ax1, XX, YY, dem)
+        update(count, Particles, xllc, yllc, ax1, XX, YY, dem)
     plt.show()
 
     # ani = FuncAnimation(fig2, update, round(len(Particles)),
@@ -123,7 +91,3 @@ def update(count, Particles, xllc, yllc, ax1, XX, YY, dem):
                      c='r', cmap=None, marker='.', s=5)
 
     plt.pause(0.1)
-
-
-if __name__ == "__main__":
-    runTrackParticle()

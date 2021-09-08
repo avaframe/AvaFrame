@@ -7,6 +7,7 @@
 import os
 import logging
 import shutil
+import pathlib
 
 log = logging.getLogger(__name__)
 
@@ -29,9 +30,10 @@ def _checkAvaDirVariable(avaDir):
 
     # make sure avaDir is a string
     isString = isinstance(avaDir, str)
-    if not isString:
-        log.warning("AvaDir is not a string, returning")
-        return 'AvaDir is NOT a string'
+    isPurePath = isinstance(avaDir, pathlib.PurePath)
+    if not ((isString) or (isPurePath)):
+        log.warning("AvaDir is not a string or a PurePath, returning")
+        return 'AvaDir is NOT a string or PurePath'
 
     return 'SUCCESS'
 
