@@ -25,6 +25,11 @@ Inputs
 *  Results from avalanche simulation (when using results from com1DFA,
    the helper function :py:func:`ana3AIMEC.dfa2Aimec.mainDfa2Aimec` in :py:mod:`ana3AIMEC.dfa2Aimec` fetches and prepares the input for Aimec)
 
+.. Note:: If the results have been performed by remeshing the DEM to a different spatial resolution, it is still
+          possible to provide a DEM of a different spatial resolution compared to the result files to aimec.
+          However, the z coordinates used to compute the location of the runout point and the fall height (deltaH)
+          are then derived from the provided dem data.
+
 Outputs
 --------
 

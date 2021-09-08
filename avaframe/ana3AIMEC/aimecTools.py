@@ -48,7 +48,8 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     refDir = pathlib.Path(avalancheDir, 'Inputs', 'LINES')
     profileLayer = list(refDir.glob('*aimec*.shp'))
     try:
-        message = 'There should be exactly one path_aimec.shp file containing the avalanche path in %s/Inputs/LINES/' % avalancheDir
+        message = ('There should be exactly one path_aimec.shp file containing the avalanche path in %s/Inputs/LINES/' %
+            avalancheDir)
         assert len(profileLayer) == 1, message
     except AssertionError:
         raise
@@ -134,7 +135,7 @@ def makeDomainTransfo(pathDict, cfgSetup):
     cfgSetup : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
         regarding domain transformation (domain width w, startOfRunoutAreaAngle or
-        interpolation method)
+        interpolation method, resType and referenceFile to get header info)
 
     Returns
     -------
@@ -166,15 +167,19 @@ def makeDomainTransfo(pathDict, cfgSetup):
     w = float(cfgSetup['domainWidth'])
     startOfRunoutAreaAngle = float(cfgSetup['startOfRunoutAreaAngle'])
 
+    # get info on reference result file to be analysed - to get info on xllcenter, yllcenter, cellSize
+    nRef = pathDict['referenceFile']
+    rasterSource = pathDict[cfgSetup['resType']][nRef]
     log.debug('Data-file %s analysed and domain transformation done' % demSource)
-    # read data
-    # read dem data
+
+    # read data header from result file and dem data
     dem = IOf.readRaster(demSource)
-    header = dem['header']
+    rasterResult = IOf.readRaster(rasterSource)
+    header = rasterResult['header']
     xllc = header['xllcenter']
     yllc = header['yllcenter']
     cellSize = header['cellsize']
-    rasterdata = dem['rasterData']
+    rasterdata = rasterResult['rasterData']
     # Initialize transformation dictionary
     rasterTransfo = {}
     rasterTransfo['domainWidth'] = w
@@ -230,15 +235,15 @@ def makeDomainTransfo(pathDict, cfgSetup):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    angle, tmp, ds = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle,
-                                                         rasterTransfo)
+    angle, tmp, ds = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle, rasterTransfo)
     # find the runout point: first point under startOfRunoutAreaAngle
     indStartOfRunout = geoTrans.findAngleProfile(tmp, ds, cfgSetup.getfloat('dsMin'))
     rasterTransfo['indStartOfRunout'] = indStartOfRunout
     rasterTransfo['xBetaPoint'] = rasterTransfo['x'][indStartOfRunout]
     rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
     rasterTransfo['startOfRunoutAreaAngle'] = angle[indStartOfRunout]
-    log.info('Start of run-out area at the %.2f ° point of coordinates (%.2f, %.2f)' % (rasterTransfo['startOfRunoutAreaAngle'],rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
+    log.info('Start of run-out area at the %.2f ° point of coordinates (%.2f, %.2f)' %
+        (rasterTransfo['startOfRunoutAreaAngle'], rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
 
     return rasterTransfo
 
