@@ -1548,7 +1548,7 @@ def checkParticlesInRelease(particles, line, radius):
 
     nRemove = len(Mask)-np.sum(Mask)
     if nRemove > 0:
-        particles = DFAtls.removePart(particles, Mask, nRemove)
+        particles = DFAtls.removePart(particles, Mask, nRemove, 'because they are not within the release polygon')
         log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
 
     return particles

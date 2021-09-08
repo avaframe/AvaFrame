@@ -707,7 +707,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   # remove particles that are not located on the mesh any more
   if nRemove > 0:
       mask = np.array(np.asarray(keepParticle), dtype=bool)
-      particles = DFAtls.removePart(particles, mask, nRemove)
+      particles = DFAtls.removePart(particles, mask, nRemove, 'because they exited to domain')
 
   # split particles with too much mass
   particles = DFAtls.splitPart(particles)
