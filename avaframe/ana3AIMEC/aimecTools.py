@@ -490,7 +490,7 @@ def getSArea(rasterTransfo):
 def transform(fname, rasterTransfo, interpMethod):
     """ Transfer data from old raster to new raster
 
-    Affect value to the points of the new raster (after domain transormation)
+    Assign value to the points of the new raster (after domain transormation)
 
     Parameters
     ----------
@@ -869,16 +869,16 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict, cfgFlags)
         refMask = copy.deepcopy(data[nRef])
         # prepare mask for area resAnalysis
         refMask = np.where(np.isnan(refMask), 0, refMask)
-        refMask = np.where(refMask < thresholdValue, 0, refMask)
-        refMask = np.where(refMask >= thresholdValue, 1, refMask)
+        refMask = np.where(refMask <= thresholdValue, 0, refMask)
+        refMask = np.where(refMask > thresholdValue, 1, refMask)
         # comparison rasterdata with mask
         log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
             'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
         newRasterData = copy.deepcopy(rasterdata)
         # prepare mask for area resAnalysis
         newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
-        newRasterData = np.where(newRasterData < thresholdValue, 0, newRasterData)
-        newRasterData = np.where(newRasterData >= thresholdValue, 1, newRasterData)
+        newRasterData = np.where(newRasterData <= thresholdValue, 0, newRasterData)
+        newRasterData = np.where(newRasterData > thresholdValue, 1, newRasterData)
 
         tpInd = np.where((refMask[nStart:] == 1) &
                          (newRasterData[nStart:] == 1))
