@@ -19,6 +19,7 @@ General
     * :doc:`logging`
     * :doc:`develop`
     * :doc:`testing`
+    * :doc:`FAQ`
     * :doc:`releaseNotes`
     * :doc:`api`
 
