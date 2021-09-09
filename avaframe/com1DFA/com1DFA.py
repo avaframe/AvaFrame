@@ -18,7 +18,7 @@ from itertools import product
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.timeDiscretizations as tD
-import avaframe.com1DFA.plotTrackParticles as plotTrackParticles
+import avaframe.out3Plot.outCom1DFA as outCom1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
@@ -94,21 +94,18 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     log.info(('cpu time DFA = %s s' % (tcpuDFA)))
 
     cfgTrackPart = cfg['TRACKPARTICLES']
+    # track particles
+    if cfgTrackPart.getboolean('trackParticles'):
+        particlesList, trackedPartProp, track = trackParticles(
+            cfgTrackPart, demOri, particlesList)
+        if (track) and cfg.getboolean('TRACKPARTICLES', 'plotTrackedPart'):
+            outCom1DFA.plotTrackParticle(
+                particlesList, trackedPartProp, cfgTrackPart, demOri, dem)
     if 'particles' in cfgGen['resType']:
         # export particles dictionaries of saving time steps
         outDirData = outDir / 'particles'
         fU.makeADir(outDirData)
-        # track particles
-        if cfgTrackPart.getboolean('trackParticles'):
-            particlesList, trackedPartProp, track = trackParticles(
-                cfgTrackPart, demOri, particlesList)
-            if (track) and cfg.getboolean('TRACKPARTICLES', 'plotTrackedPart'):
-                plotTrackParticles.plotTrackParticle(
-                    particlesList, trackedPartProp, cfgTrackPart, demOri, dem)
-
         savePartToPickle(particlesList, outDirData, cuSimName)
-    elif cfgTrackPart.getboolean('trackParticles'):
-        log.warning('You need to save the particles to be able to track them')
 
     # Result parameters to be exported
     exportFields(cfg, Tsave, fieldsList, demOri, outDir, cuSimName)
@@ -729,6 +726,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     # add a particles ID:
     # integer ranging from 0 to nPart in the initialisation.
     # Everytime that a new particle is created, it gets a new ID that is > nID
+    # where nID is the number of already used IDs
     # (enable tracking of particles even if particles are added or removed)
     # unique identifier for each particle
     particles['ID'] = np.arange(particles['Npart'])
@@ -1011,6 +1009,9 @@ def DFAIterate(cfg, particles, fields, dem):
     log.debug('using sphOption %s:' % sphOption)
     # desired output fields
     resTypes = fU.splitIniValueToArraySteps(cfgGen['resType'])
+    # add particles to the results type if trackParticles option is activated
+    if cfg.getboolean('TRACKPARTICLES', 'trackParticles'):
+        resTypes = list(set(resTypes + ['particles']))
     # make sure to save all desiered resuts for first and last time step for
     # the report
     resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
@@ -1045,7 +1046,7 @@ def DFAIterate(cfg, particles, fields, dem):
     t = particles['t']
     log.debug('Saving results for time step t = %f s', t)
     fieldsList, particlesList = appendFieldsParticles(
-        fieldsList, particlesList, particles, fields, resTypes)
+        fieldsList, particlesList, particles, fields, resTypesLast)
     # add initial time step to Tsave array
     Tsave = [0]
     # derive time step for first iteration
@@ -1788,8 +1789,9 @@ def trackParticles(cfgTrackPart, dem, particlesList):
         Parameters
         -----------
         cfgTrackPart: configParser
-            center : str
-                center of the location of the particles to track (x|y coordinates)
+            centerTrackPartPoint : str
+                centerTrackPartPoint of the location of the particles to
+                track (x|y coordinates)
             radius : str
                 radius of the circle around point
             particleProperties: str
@@ -1813,20 +1815,24 @@ def trackParticles(cfgTrackPart, dem, particlesList):
 
     # read particle properties to be extracted
     particleProperties = cfgTrackPart['particleProperties']
-    particleProperties = particleProperties.split('|')
+    particleProperties = set(['x', 'y', 'z', 'ux', 'uy', 'uz', 'm', 'h']
+                             + particleProperties.split('|'))
     # read location of particle to be tracked
     radius = cfgTrackPart.getfloat('radius')
-    centerList = cfgTrackPart['center']
+    centerList = cfgTrackPart['centerTrackPartPoint']
     centerList = centerList.split('|')
-    center = {'x': np.array([float(centerList[0])]),
-              'y': np.array([float(centerList[1])])}
-    center, _ = geoTrans.projectOnRaster(dem, center, interp='bilinear')
-    center['x'] = center['x'] - dem['header']['xllcenter']
-    center['y'] = center['y'] - dem['header']['yllcenter']
+    centerTrackPartPoint = {'x': np.array([float(centerList[0])]),
+                            'y': np.array([float(centerList[1])])}
+    centerTrackPartPoint, _ = geoTrans.projectOnRaster(
+        dem, centerTrackPartPoint, interp='bilinear')
+    centerTrackPartPoint['x'] = (centerTrackPartPoint['x']
+                                 - dem['header']['xllcenter'])
+    centerTrackPartPoint['y'] = (centerTrackPartPoint['y']
+                                 - dem['header']['yllcenter'])
 
     # start by finding the particles to be tracked
-    particles2Track, track = DFAtls.findParticles2Track(particlesList[0],
-                                                        center, radius)
+    particles2Track, track = DFAtls.findParticles2Track(
+        particlesList[0], centerTrackPartPoint, radius)
     if track:
         # find those same particles and their children in the particlesList
         particlesList, nPartTracked = DFAtls.getTrackedParticles(particlesList,
@@ -1921,8 +1927,6 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
 
     resTypesGen = fU.splitIniValueToArraySteps(cfg['GENERAL']['resType'])
     resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
-    if resTypesGen == []:
-        resTypesGen = resTypesReport
     if 'particles' in resTypesGen:
         resTypesGen.remove('particles')
     numberTimes = len(Tsave)-1
@@ -1937,8 +1941,8 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
             resField = fieldsList[countTime][resType]
             if resType == 'ppr':
                 resField = resField * 0.001
-            dataName = logName + '_' + resType + '_' + \
-                't%.2f' % (Tsave[countTime]) + '.asc'
+            dataName = (logName + '_' + resType + '_'
+                        + 't%.2f' % (Tsave[countTime]) + '.asc')
             # create directory
             outDirPeak = outDir / 'peakFiles' / 'timeSteps'
             fU.makeADir(outDirPeak)
@@ -2016,9 +2020,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
             cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
             # create unique hash for simulation configuration
             simHash = cfgUtils.cfgHash(cfgSimObject)
-            simName = relNameSim + '_' + \
-                row._asdict()['simTypeList'] + '_' + \
-                cfgSim['GENERAL']['modelType'] + '_' + simHash
+            simName = (relNameSim + '_'
+                       + row._asdict()['simTypeList'] + '_'
+                       + cfgSim['GENERAL']['modelType'] + '_' + simHash)
             simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
                                 'simType': row._asdict()['simTypeList'], 'relFile': rel,
                                 'cfgSim': cfgSimObject}

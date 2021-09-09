@@ -14,6 +14,7 @@ import pathlib
 import copy
 import pickle
 import pandas as pd
+import shutil
 
 
 def test_prepareInputData():
@@ -1348,11 +1349,13 @@ def test_initializeSimulation():
     assert np.sum(particles2['secondaryReleaseInfo']['rasterData']) == 4.5
 
 
-def test_runCom1DFA():
+def test_runCom1DFA(tmp_path):
     """ Check that runCom1DFA produces the good outputs
     """
     testDir = pathlib.Path(__file__).parents[0]
-    avaDir = testDir / 'data' / 'testCom1DFA'
+    inputDir = testDir / 'data' / 'testCom1DFA'
+    avaDir = pathlib.Path(tmp_path, 'testCom1DFA')
+    shutil.copytree(inputDir, avaDir)
     cfgFile = avaDir / 'test_com1DFACfg.ini'
     modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile,
                                                modInfo=True)
