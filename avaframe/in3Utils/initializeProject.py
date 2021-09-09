@@ -32,8 +32,8 @@ def _checkAvaDirVariable(avaDir):
     isString = isinstance(avaDir, str)
     isPurePath = isinstance(avaDir, pathlib.PurePath)
     if not ((isString) or (isPurePath)):
-        log.warning("AvaDir is not a string or a PurePath, returning")
-        return 'AvaDir is NOT a string or PurePath'
+        log.warning("avaDir is not a string or a PurePath, returning")
+        return 'avaDir is NOT a string or PurePath'
 
     return 'SUCCESS'
 
@@ -69,8 +69,8 @@ def cleanModuleFiles(avaDir, module, alternativeName=''):
         modName = os.path.splitext(modName)[0]
 
     # output dir
-    outDir =  os.path.join(avaDir, 'Outputs')
-    workDir =  os.path.join(avaDir, 'Work')
+    outDir = os.path.join(avaDir, 'Outputs')
+    workDir = os.path.join(avaDir, 'Work')
 
     log.info("Cleaning module %s in folder: %s ", modName, outDir)
     _checkForFolderAndDelete(outDir, modName)

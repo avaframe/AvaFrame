@@ -501,7 +501,7 @@ def findParticles2Track(particles, center, radius):
     particles2Track = particles['parentID'][index]
     log.info('Tracking %d particles' % len(index[0]))
     if len(index[0]) < 1:
-        log.warning('Found particles to track ')
+        log.warning('Found No particles to track ')
         track = False
 
     return particles2Track, track
@@ -546,8 +546,6 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     ----------
     particlesList : list
         list of particles dictionaries (with the 'parentID' array)
-    TimeStepInfo : list
-        time list
     nPartTracked : int
         total number of tracked particles
     properties : list
@@ -556,13 +554,13 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     Returns
     -------
     trackedPartProp : dict
-        dictionary with 2D numpy arrays corresponding to the time seried of the
-        properties for the trackes particles (for example if
+        dictionary with 2D numpy arrays corresponding to the time series of the
+        properties for the tracked particles (for example if
         properties = ['x', 'y'], the dictionary will have the keys 'time',
         'x' and 'y'. trackedPartProp['x'] will be a 2D numpy array, each line
-        corresponds to the 'x' time serie of a tracked particle)
+        corresponds to the 'x' time series of a tracked particle)
     '''
-    # buid time series for desiered properties of tracked particles
+    # buid time series for desired properties of tracked particles
     nTimeSteps = len(particlesList)
     trackedPartProp = {}
     trackedPartProp['time'] = np.zeros(nTimeSteps)
