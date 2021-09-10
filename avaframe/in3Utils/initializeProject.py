@@ -25,8 +25,8 @@ def _checkAvaDirVariable(avaDir):
     '''Check for empty or nonString avaDir variable'''
     # check for empty avaDir name, abort if empty
     if not avaDir:
-        log.warning("AvaDir variable is undefined, returning. ")
-        return 'AvaDir is empty'
+        log.warning("avaDir variable is undefined, returning. ")
+        return 'avaDir is empty'
 
     # make sure avaDir is a string
     isString = isinstance(avaDir, str)
