@@ -11,11 +11,11 @@ def test_cleanModuleFiles(tmp_path):
     # Make sure cleanModuleFile catches:
     # - empty variable
     undefVar = initProj.cleanModuleFiles('', 'Module')
-    assert undefVar == 'AvaDir is empty'
+    assert undefVar == 'avaDir is empty'
 
     # - non string variable
     notAString = initProj.cleanModuleFiles(2, 'Module')
-    assert notAString == 'AvaDir is NOT a string or PurePath'
+    assert notAString == 'avaDir is NOT a string or PurePath'
 
     # create test directories
     # then delete and check again
@@ -55,12 +55,12 @@ def test_cleanSingleAvaDir(tmp_path):
     # Make sure cleanSingleAvaDir catches:
     # - empty variable
     undefVar = initProj.cleanSingleAvaDir('')
-    assert undefVar == 'AvaDir is empty'
+    assert undefVar == 'avaDir is empty'
 
     # - non string variable
     notAString = initProj.cleanSingleAvaDir(2)
     print(notAString)
-    assert notAString == 'AvaDir is NOT a string or PurePath'
+    assert notAString == 'avaDir is NOT a string or PurePath'
 
     # create test directories and touch log files
     # then delete and check again

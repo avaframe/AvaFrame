@@ -1138,13 +1138,13 @@ def test_exportFields(tmp_path):
 
     assert np.array_equal(fieldFinal, pprFinal)
     assert np.array_equal(field10, pfdt10)
-    assert len(fieldsListTest) == 16
+    assert len(fieldsListTest) == 17
 
     # call function to be tested
     outDir2 = pathlib.Path(tmp_path, 'testDir2')
     outDir2.mkdir()
     cfg['GENERAL']['resType'] = ''
-    cfg['REPORT'] = {'plotFields': 'ppr|pfd|pfv|particles'}
+    cfg['REPORT'] = {'plotFields': 'ppr|pfd|pfv'}
     com1DFA.exportFields(cfg, Tsave, fieldsList, dem, outDir2, logName)
 
     # read fields
@@ -1152,11 +1152,12 @@ def test_exportFields(tmp_path):
     fieldDirTSteps = outDir2 / 'peakFiles' / 'timeSteps'
     fieldFiles = list(fieldDirTSteps.glob('*.asc'))
     fieldsListTest2 = []
+    print('fields file', fieldFiles)
 
     for f in fieldFiles:
         fieldsListTest2.append(f.name)
 
-    assert len(fieldsListTest2) == 15
+    assert len(fieldsListTest2) == 6
 
 
 def test_initializeFields():
