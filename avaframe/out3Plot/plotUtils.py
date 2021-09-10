@@ -25,6 +25,10 @@ from avaframe.out3Plot import plotUtils
 # create local logger
 log = logging.getLogger(__name__)
 
+# read main configuration to get acces to the plotting flags
+cfgMain = cfgUtils.getGeneralConfig()
+cfgFlags = cfgMain['FLAGS']
+
 # Load all input Parameters from config file
 # get the configuration of an already imported module
 cfg = cfgUtils.getModuleConfig(plotUtils)
@@ -111,7 +115,8 @@ colorAvaframe = ['#0EF8EA', '#12E4E6', '#28D0DF', '#3CBCD5', '#4AA8C9',
 cmapAvaframe = mplCol.ListedColormap(colorAvaframe)
 cmapAvaframe.set_bad(color='k')
 # add a continuous version
-cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list('cmapAvaframeCont', colorAvaframe, N=256)
+cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list(
+    'cmapAvaframeCont', colorAvaframe, N=256)
 
 
 # for the choice of the colormaps, check https://www.fabiocrameri.ch/colourmaps/
@@ -131,7 +136,8 @@ cmapD = cmapCameri.lajolla
 # multi sequential colormap for speed
 levS = [1, 5, 10, 15, 20, 25, 30]
 # Batflow color map
-colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960', '#201158']
+colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
+           '#201158']
 cmapS = cmapCameri.batlow.reversed()
 
 # colormap used if no resType provided
@@ -173,8 +179,8 @@ cmapProb['cmap'] = cmapProbmap
 cmapProb['colors'] = colorsProb
 cmapProb['levels'] = levProb
 
-colorMaps = {'ppr' : cmapPres, 'pfv' : cmapSpeed, 'pfd' : cmapDepth, 'PR' : cmapPres,
-             'FV' : cmapSpeed, 'FD' : cmapDepth, 'prob': cmapProb}
+colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pfd': cmapDepth, 'PR': cmapPres,
+             'FV': cmapSpeed, 'FD': cmapDepth, 'prob': cmapProb}
 
 cmapDEM = cmapGreys
 
@@ -251,7 +257,8 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
         # check if list of colors is provided
         elif 'colors' in colormapDict.keys():
             colorsNew = colormapDict['colors']
-            cmap = mplCol.LinearSegmentedColormap.from_list('myCmap', colorsNew, N=256)
+            cmap = mplCol.LinearSegmentedColormap.from_list(
+                'myCmap', colorsNew, N=256)
         # Houston ve have a problem
         else:
             message = 'You need a `colors` list or a `cmap` to be able to create the colormap'
@@ -266,7 +273,8 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             levels = colormapDict['levels']
         else:
             if 'colors' in colormapDict:
-                levels = list(np.linspace(levMin, levMax, len(colormapDict['colors'])+1))
+                levels = list(np.linspace(levMin, levMax,
+                                          len(colormapDict['colors'])+1))
                 log.warning('No `levels` list is provided to generate a discrete colormap, \
                             creating %d levels ranging from %.2f to %.2f' %
                             (len(colormapDict['colors']), levMin, levMax))
@@ -326,7 +334,7 @@ def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
     return ref, im
 
 
-def saveAndOrPlot(pathDict, cfgFlags, outFileName, fig):
+def saveAndOrPlot(pathDict, outFileName, fig):
     """
     Receive a plot handle and config and check whether to save and or plot
     closes it afterwards
@@ -344,6 +352,7 @@ def saveAndOrPlot(pathDict, cfgFlags, outFileName, fig):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             fig.savefig(outname)
+            log.info('saved to : %s ' % outname)
 
     plt.close(fig)
 
@@ -401,7 +410,8 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''
-    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9)
+    cbar = ax2.figure.colorbar(
+        im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9)
     cbar.outline.set_visible(False)
     cbar.ax.set_title('[' + myUnit + ']')
     if title != '':
@@ -418,7 +428,7 @@ def putAvaNameOnPlot(ax, avaDir):
     if isinstance(avaDir, str) or isinstance(avaDir, pathlib.Path):
         avaName = pathlib.PurePath(avaDir).name
         infoText = datetime.datetime.now().strftime("%d.%m.%y") + \
-               '; ' + str(avaName)
+            '; ' + str(avaName)
     else:
         infoText = datetime.datetime.now().strftime("%d.%m.%y")
         for ava in avaDir:
