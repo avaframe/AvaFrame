@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 """Setup file for the avaframe package.
-   Adapted from the Python Packaging Authority template."""
+Adapted from the Python Packaging Authority template.
 
-from setuptools import setup, find_packages  # Always prefer setuptools
+important commands:
+python setup.py sdist
+python setup.py build_ext --inplace
+python setup.py bdist_wheel
+twine uploade dist/*
+
+"""
+
+# from setuptools import setup, find_packages  # Always prefer setuptools
+from setuptools import Extension, setup, find_packages
 from pathlib import Path
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Build import cythonize
+import sys
+import os
 import numpy
 
 
@@ -22,7 +30,6 @@ CLASSIFIERS = [
         # Indicate who your project is intended for
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)',
-        'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -46,13 +53,37 @@ req_packages = ['numpy',
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
+
+# Decide whether a cythonization of the pyx-file is required.
+# if build_ext is supplied -> use cython
+nos = (None, "0", "false")
+subcommand = sys.argv[1] if len(sys.argv) > 1 else None
+use_cython = ((subcommand == "build_ext")  # This is possibly a bit hacky.
+              )
+
+if use_cython:
+    print("Package is built with cythonization.")
+
+ext = '.pyx' if use_cython else '.c'
+
+extensions = [Extension("avaframe.com1DFA.DFAfunctionsCython",
+                        ["avaframe/com1DFA/DFAfunctionsCython"+ext],
+                        include_dirs=[numpy.get_include()]
+                        )]
+
+if use_cython:
+    from Cython.Build import cythonize
+    extensions = cythonize(extensions,
+                          compiler_directives={'linetrace': True},
+                          language_level=3)
+
 setup(
     # Project info
     name=DISTNAME,
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='0.5.2',
+    version='0.5.11',
     # The project's main homepage.
     url=URL,
     # Author details
@@ -74,8 +105,6 @@ setup(
     # Executable scripts
     entry_points={
     },
-    ext_modules=cythonize("avaframe/com1DFA/DFAfunctionsCython.pyx",
-                          compiler_directives={'linetrace': True},
-                          language_level=3),
-    include_dirs=[numpy.get_include()]
+    zip_safe = False,
+    ext_modules = extensions
 )
