@@ -98,9 +98,11 @@ def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     if cfgTrackPart.getboolean('trackParticles'):
         particlesList, trackedPartProp, track = trackParticles(
             cfgTrackPart, demOri, particlesList)
-        if (track) and cfg.getboolean('TRACKPARTICLES', 'plotTrackedPart'):
+        if track:
+            outDirData = outDir / 'particles'
+            fU.makeADir(outDirData)
             outCom1DFA.plotTrackParticle(
-                particlesList, trackedPartProp, cfgTrackPart, demOri, dem)
+                outDirData, particlesList, trackedPartProp, cfg, demOri, dem)
     if 'particles' in cfgGen['resType']:
         # export particles dictionaries of saving time steps
         outDirData = outDir / 'particles'
@@ -1929,6 +1931,8 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
     resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
     if 'particles' in resTypesGen:
         resTypesGen.remove('particles')
+    if 'particles' in resTypesReport:
+        resTypesReport.remove('particles')
     numberTimes = len(Tsave)-1
     countTime = 0
     for timeStep in Tsave:

@@ -3,14 +3,19 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 
 # Local imports
+from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
 
 
-def plotTrackParticle(Particles, trackedPartProp, cfgTrackPart, demOri, dem):
-    """ Plot time series of tracked partcles"""
+cfgMain = cfgUtils.getGeneralConfig()
+cfgFlags = cfgMain['FLAGS']
 
+
+def plotTrackParticle(outDirData, Particles, trackedPartProp, cfg, demOri, dem):
+    """ Plot time series of tracked partcles"""
+    cfgTrackPart = cfg['TRACKPARTICLES']
     radius = cfgTrackPart.getfloat('radius')
     centerList = cfgTrackPart['centerTrackPartPoint']
     centerList = centerList.split('|')
@@ -21,7 +26,7 @@ def plotTrackParticle(Particles, trackedPartProp, cfgTrackPart, demOri, dem):
 
     # do some ploting
     # ToDo: put this in a plotting folder (here just to demonstrate how this works)
-    fig = plt.figure()
+    fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
     # fig.suptitle('This is a somewhat long figure title')
     ax1 = plt.subplot(221)
     ax1 = addDem2Plot(ax1, dem, what='slope')
@@ -52,21 +57,25 @@ def plotTrackParticle(Particles, trackedPartProp, cfgTrackPart, demOri, dem):
     ax4.set_ylabel('h [m]')
     ax4.set_title('Tracked particles flow depth')
 
-    plt.show()
+    pathDict = {}
+    pathDict['pathResult'] = outDirData
+    outFileName = 'trackedParticles'
+    pU.saveAndOrPlot(pathDict, outFileName, fig)
 
-    fig2 = plt.figure()
-    ax1 = plt.subplot(111)
-    for count in range(len(Particles)):
-        update(count, Particles, ax1, dem)
-    plt.show()
+    if cfgFlags.getboolean('showPlot'):
+        fig2 = plt.figure()
+        ax1 = plt.subplot(111)
+        for count in range(len(Particles)):
+            update(count, Particles, ax1, dem)
+        plt.show()
 
-    # ani = FuncAnimation(fig2, update, round(len(Particles)),
-    #                     fargs=(Particles, xllc, yllc, ax1, XX, YY, dem))
-    # # plt.show()
-    #
-    # writer = PillowWriter(fps=4)
-    # # ani.save("MalSecRel.gif", writer=writer)
-    # ani.save("testTrackAlr1.gif", writer=writer)
+        # ani = FuncAnimation(fig2, update, round(len(Particles)),
+        #                     fargs=(Particles, xllc, yllc, ax1, XX, YY, dem))
+        # # plt.show()
+        #
+        # writer = PillowWriter(fps=4)
+        # # ani.save("MalSecRel.gif", writer=writer)
+        # ani.save("testTrackAlr1.gif", writer=writer)
 
 
 def update(count, Particles, ax, dem):
