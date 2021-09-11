@@ -114,6 +114,17 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
         pathDict['referenceFile'] = indexRef
         log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
                  (cfgSetup['varParList'].split('|')[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
+    elif cfgSetup['referenceSimName'] != '':
+        simFound = False
+        for fName in pathDict[cfgSetup['resType']]:
+            if cfgSetup['referenceSimName'] in str(fName):
+                pathDict['referenceFile'] = pathDict[cfgSetup['resType']].index(fName)
+                log.info('Reference Simulation is based on provided simName: %s' % cfgSetup['referenceSimName'])
+                simFound = True
+                break
+        if not simFound:
+            pathDict['referenceFile'] = 0
+            log.info('Reference Simulation is based on first simulation in folder')
     else:
         pathDict['referenceFile'] = 0
         log.info('Reference Simulation is based on first simulation in folder')
