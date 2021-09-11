@@ -3,7 +3,7 @@ Frequently Asked Questions
 
 .. Note::
    If you want to develop your own simulation workflow or develop new code we also suggest to have a look at the code
-   examples provided in the `runScripts` directory. 
+   examples provided in the `runScripts` directory.
 
 
 How to change spatial resolution of simulations performed with com1DFA (dense flow)?
@@ -20,9 +20,10 @@ We want to list a few things that are we strongly suggest to take into account w
   local copy of it), and consider changing the *sphKernelRadius* to match the new mesh cell size.
 
 - For the :ref:`DFAnumerics:SPH gradient`, required to compute the lateral forces, the number of particles
-  per cell has to be adjusted. If the *sphKernelRadius* (see first point) is smaller, the number of particles should 
-  increase to ensure a reasonable estimate of the gradient. There are two options for computing the mass per
-  particle (*massPerParticleDeterminationMethod*; see :ref:`com1DFAAlgorithm:Initialize particles`):
+  per cell has to be adjusted. If the *sphKernelRadius* (see first point) is decreased, the number of particles should
+  increase to ensure a reasonable estimate of the gradient. There are two options for setting the number of particles
+  which is computing from the mass per particle
+  (*massPerParticleDeterminationMethod*; see :ref:`com1DFAAlgorithm:Initialize particles`):
 
   - With the default setup *MPPDH* (mass per particle through release thickness), the number of particles per cell is
     independent of the mesh cell size. So no adjustment is necessary.
