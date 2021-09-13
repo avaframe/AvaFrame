@@ -131,3 +131,54 @@ Now, you are ready to go! Move to ``AvaFrame/avaframe`` and run: ::
 
 You can check out the markdown-style report of the comparison at:
 ``tests/reports/standardTestsReportPy.md``.
+
+
+Examples
+---------
+
+In :py:mod:`runScripts` we provide ready-to-use scripts for different applications of the modules provided within
+AvaFrame.
+
+
+Derive input data
+~~~~~~~~~~~~~~~~~~~
+- :py:mod:`runScripts.runComputeDist`
+
+Create a new project
+~~~~~~~~~~~~~~~~~~~~~~
+- :py:mod:`runScripts.runInitializeProject`
+
+
+Generate idealized/generic topography data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- :py:mod:`runScripts.runGenerateTopo`
+- :py:mod:`runScripts.runGenProjTopoRelease`
+
+
+Postprocessing
+~~~~~~~~~~~~~~~
+
+- :py:mod:`runScripts.runAna3AIMEC`
+- :py:mod:`runScripts.runAna3AIMECCompMods`
+- :py:mod:`runScripts.runAna3AIMECIndi`
+- :py:mod:`runScripts.runStatsExample`
+- :py:mod:`runScripts.runProbAna`
+
+
+Visualisation
+~~~~~~~~~~~~~~~
+- :py:mod:`runScripts.runQuickPlotSimple`
+- :py:mod:`runScripts.runQuickPlotOne`
+- :py:mod:`runScripts.runPlotTopo`
+- :py:mod:`runScripts.runExportToCsv`
+
+
+Testing
+~~~~~~~~
+- :py:mod:`runScripts.runDamBreak`
+- :py:mod:`runScripts.runSimilaritySol`
+- :py:mod:`runScripts.runTestFP`
+- :py:mod:`runScripts.runStandardTestsCom1DFAOrig`
+- :py:mod:`runScripts.runComparisonModules`
+- :py:mod:`runScripts.runFetchBench`
+- :py:mod:`runScripts.runWriteDesDict`
