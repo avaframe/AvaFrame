@@ -115,6 +115,8 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
         log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
                  (cfgSetup['varParList'].split('|')[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
     elif cfgSetup['referenceSimName'] != '':
+        # if no colorParameter info and refeenceSimValue available but referenceSimName is given - set
+        # simulation with referenceSimName in name as referene simulation
         simFound = False
         for fName in pathDict[cfgSetup['resType']]:
             if cfgSetup['referenceSimName'] in str(fName):
