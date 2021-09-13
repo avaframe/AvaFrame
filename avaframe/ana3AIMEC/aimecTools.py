@@ -49,7 +49,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     profileLayer = list(refDir.glob('*aimec*.shp'))
     try:
         message = ('There should be exactly one path_aimec.shp file containing the avalanche path in %s/Inputs/LINES/' %
-            avalancheDir)
+                   avalancheDir)
         assert len(profileLayer) == 1, message
     except AssertionError:
         raise
@@ -67,7 +67,8 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     refDir = pathlib.Path(avalancheDir, 'Inputs')
     demSource = list(refDir.glob('*.asc'))
     try:
-        assert len(demSource) == 1, 'There should be exactly one topography .asc file in %s/Inputs/' % avalancheDir
+        assert len(
+            demSource) == 1, 'There should be exactly one topography .asc file in %s/Inputs/' % avalancheDir
     except AssertionError:
         raise
     pathDict['demSource'] = demSource[0]
@@ -105,12 +106,15 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
         typeCP = type(pathDict['colorParameter'][0])
         if typeCP == str:
             colorValues = [x.lower() for x in pathDict['colorParameter']]
-            indexRef = colorValues.index(typeCP(cfgSetup['referenceSimValue'].lower()))
+            indexRef = colorValues.index(
+                typeCP(cfgSetup['referenceSimValue'].lower()))
         elif typeCP in [float, int]:
             colorValues = np.asarray(pathDict['colorParameter'])
-            indexRef = (np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
+            indexRef = (
+                np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
         else:
-            indexRef = pathDict['colorParameter'].index(typeCP(cfgSetup['referenceSimValue']))
+            indexRef = pathDict['colorParameter'].index(
+                typeCP(cfgSetup['referenceSimValue']))
         pathDict['referenceFile'] = indexRef
         log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
                  (cfgSetup['varParList'].split('|')[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
@@ -147,8 +151,9 @@ def makeDomainTransfo(pathDict, cfgSetup):
         dictionary with path to data to analyze
     cfgSetup : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
-        regarding domain transformation (domain width w, startOfRunoutAreaAngle or
-        interpolation method, resType and referenceFile to get header info)
+        regarding domain transformation (domain width w, and new cellsize,
+        startOfRunoutAreaAngle or interpolation method, resType and
+        referenceFile to get header info)
 
     Returns
     -------
@@ -177,28 +182,19 @@ def makeDomainTransfo(pathDict, cfgSetup):
     splitPointSource = pathDict['splitPointSource']
     DefaultName = pathDict['projectName']
 
-    w = float(cfgSetup['domainWidth'])
-    startOfRunoutAreaAngle = float(cfgSetup['startOfRunoutAreaAngle'])
+    w = cfgSetup.getfloat('domainWidth')
+    cellSize = cfgSetup.getfloat('cellSizeSL')
+    startOfRunoutAreaAngle = cfgSetup.getfloat('startOfRunoutAreaAngle')
 
-    # get info on reference result file to be analysed - to get info on xllcenter, yllcenter, cellSize
-    nRef = pathDict['referenceFile']
-    rasterSource = pathDict[cfgSetup['resType']][nRef]
     log.debug('Data-file %s analysed and domain transformation done' % demSource)
 
-    # read data header from result file and dem data
+    # read dem file
     dem = IOf.readRaster(demSource)
-    rasterResult = IOf.readRaster(rasterSource)
-    header = rasterResult['header']
-    xllc = header['xllcenter']
-    yllc = header['yllcenter']
-    cellSize = header['cellsize']
-    rasterdata = rasterResult['rasterData']
+
     # Initialize transformation dictionary
     rasterTransfo = {}
     rasterTransfo['domainWidth'] = w
-    rasterTransfo['xllc'] = xllc
-    rasterTransfo['yllc'] = yllc
-    rasterTransfo['cellSize'] = cellSize
+    rasterTransfo['cellSizeSL'] = cellSize
 
     # read avaPath
     avaPath = shpConv.readLine(ProfileLayer, DefaultName, dem)
@@ -222,18 +218,12 @@ def makeDomainTransfo(pathDict, cfgSetup):
     # calculate the real area of the new cells as well as the scoord
     rasterTransfo = getSArea(rasterTransfo)
 
-    log.debug('Size of rasterdata- old: %d x %d - new: %d x %d' % (
-        np.size(rasterdata, 0), np.size(rasterdata, 1),
-        np.size(rasterTransfo['gridx'], 0),
-        np.size(rasterTransfo['gridx'], 1)))
-
     ##########################################################################
-    rasterTransfo['header'] = header
-    # put back scale and origin
+    # put back the scale due to the desiered cellsize
     rasterTransfo['s'] = rasterTransfo['s']*cellSize
     rasterTransfo['l'] = rasterTransfo['l']*cellSize
-    rasterTransfo['gridx'] = rasterTransfo['gridx']*cellSize + xllc
-    rasterTransfo['gridy'] = rasterTransfo['gridy']*cellSize + yllc
+    rasterTransfo['gridx'] = rasterTransfo['gridx']*cellSize
+    rasterTransfo['gridy'] = rasterTransfo['gridy']*cellSize
     rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*cellSize*cellSize
     # (x,y) coordinates of the resamples avapth (centerline where l = 0)
     n = np.shape(rasterTransfo['l'])[0]
@@ -248,15 +238,17 @@ def makeDomainTransfo(pathDict, cfgSetup):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    angle, tmp, ds = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle, rasterTransfo)
+    angle, tmp, ds = geoTrans.prepareAngleProfile(
+        startOfRunoutAreaAngle, rasterTransfo)
     # find the runout point: first point under startOfRunoutAreaAngle
-    indStartOfRunout = geoTrans.findAngleProfile(tmp, ds, cfgSetup.getfloat('dsMin'))
+    indStartOfRunout = geoTrans.findAngleProfile(
+        tmp, ds, cfgSetup.getfloat('dsMin'))
     rasterTransfo['indStartOfRunout'] = indStartOfRunout
     rasterTransfo['xBetaPoint'] = rasterTransfo['x'][indStartOfRunout]
     rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
     rasterTransfo['startOfRunoutAreaAngle'] = angle[indStartOfRunout]
     log.info('Start of run-out area at the %.2f ° point of coordinates (%.2f, %.2f)' %
-        (rasterTransfo['startOfRunoutAreaAngle'], rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
+             (rasterTransfo['startOfRunoutAreaAngle'], rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
 
     return rasterTransfo
 
@@ -355,13 +347,13 @@ def makeTransfoMat(rasterTransfo):
                 new coord system in the cross direction
     """
     w = rasterTransfo['domainWidth']
-    cellSize = rasterTransfo['cellSize']
+    cellSize = rasterTransfo['cellSizeSL']
     # number of points describing the avaPath
     n_pnt = np.shape(rasterTransfo['DBXr'])[0]
     # Working with no dimentions
     # (the cellsize scaling will be readded at the end)
     # lcoord is the distance from the polyline (cross section)
-    # maximum step should be smaller then the cellsize
+    # the maximum step size should be smaller then the cellsize
     nTot = np.ceil(w/cellSize)
     # take the next odd integer. This ensures that the lcoord = 0 exists
     nTot = int(nTot+1) if ((nTot % 2) == 0) else int(nTot)
@@ -524,7 +516,7 @@ def transform(fname, rasterTransfo, interpMethod):
     Points, ioob = geoTrans.projectOnRaster(data, Points, interp=interpMethod)
     newData = Points['z'].reshape(n, m)
     log.debug('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
-             (name, iib-ioob, ioob))
+              (name, iib-ioob, ioob))
 
     return newData
 
@@ -622,7 +614,8 @@ def analyzeMass(fnameMass, resAnalysis):
         relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
         if not (releaseMass[i] == releaseMass[0]):
             massDiffers = True
-        log.info('{: <10} {:<10.4f} {:<10.4f}'.format(*[i+1, grIndex[i], grGrad[i]]))
+        log.info('{: <10} {:<10.4f} {:<10.4f}'.format(
+            *[i+1, grIndex[i], grGrad[i]]))
     if massDiffers:
         log.warning('Release masses differs between simulations!')
 
@@ -880,14 +873,10 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict, cfgFlags)
         newRasterData = np.where(newRasterData <= thresholdValue, 0, newRasterData)
         newRasterData = np.where(newRasterData > thresholdValue, 1, newRasterData)
 
-        tpInd = np.where((refMask[nStart:] == 1) &
-                         (newRasterData[nStart:] == 1))
-        fpInd = np.where((refMask[nStart:] == 0) &
-                         (newRasterData[nStart:] == 1))
-        fnInd = np.where((refMask[nStart:] == 1) &
-                         (newRasterData[nStart:] == 0))
-        tnInd = np.where((refMask[nStart:] == 0) &
-                         (newRasterData[nStart:] == 0))
+        tpInd = np.where((refMask[nStart:] == 1) & (newRasterData[nStart:] == 1))
+        fpInd = np.where((refMask[nStart:] == 0) & (newRasterData[nStart:] == 1))
+        fnInd = np.where((refMask[nStart:] == 1) & (newRasterData[nStart:] == 0))
+        tnInd = np.where((refMask[nStart:] == 0) & (newRasterData[nStart:] == 0))
 
         # subareas
         tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
@@ -918,11 +907,9 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict, cfgFlags)
         # only plot comparisons of simulations to reference
         if cfgFlags['savePlot']:
             if i != nRef:
-                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict,
-                                        cfgFlags)
+                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict, cfgFlags)
             elif pathDict['numSim'] == 1:
-                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict,
-                                        cfgFlags)
+                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict, cfgFlags)
                 log.warning('only one simulation, area comparison not meaningful')
 
     return TP, FN, FP, TN, compPlotPath

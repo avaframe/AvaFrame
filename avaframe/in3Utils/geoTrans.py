@@ -40,9 +40,8 @@ def projectOnRaster(dem, Points, interp='bilinear'):
     xcoor = Points['x']
     ycoor = Points['y']
 
-    zcoor, ioob = projectOnGrid(xcoor, ycoor, rasterdata,
-                                                csz=cellsize, xllc=xllc,
-                                                yllc=yllc, interp=interp)
+    zcoor, ioob = projectOnGrid(xcoor, ycoor, rasterdata, csz=cellsize, xllc=xllc,
+                                yllc=yllc, interp=interp)
     Points['z'] = zcoor
     return Points, ioob
 
@@ -210,8 +209,8 @@ def getMeshXY(rasterDict, cellSizeNew=None):
         nRowsNew = int(yExtent/cellSizeNew+1)
         xNew = np.linspace(0, (nColsNew-1)*cellSizeNew, nColsNew) + xllc
         yNew = np.linspace(0, (nRowsNew-1)*cellSizeNew, nRowsNew) + yllc
-        diffExtentX = xExtent -(nColsNew-1)*cellSizeNew
-        diffExtentY = yExtent -(nRowsNew-1)*cellSizeNew
+        diffExtentX = xExtent - (nColsNew-1)*cellSizeNew
+        diffExtentY = yExtent - (nRowsNew-1)*cellSizeNew
         return x, y, xNew, yNew, diffExtentX, diffExtentY
 
     else:
@@ -313,7 +312,8 @@ def remeshDEM(cfg, dem):
 
         dem['header'] = headerRemeshed
         xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
-        zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic', fill_value=headerDEM['noDataValue'])
+        zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid),
+                                       method='cubic', fill_value=headerDEM['noDataValue'])
         log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
         dem['rasterData'] = zNew
 
@@ -406,8 +406,7 @@ def findSplitPoint(AvaProfile, Points):
     Dist = np.empty((0))
     IndSplit = np.empty((0))
     for i in range(len(Points['x'])):
-        dist = np.sqrt((xcoor - Points['x'][i])**2 +
-                       (ycoor - Points['y'][i])**2)
+        dist = np.sqrt((xcoor - Points['x'][i]) ** 2 + (ycoor - Points['y'][i])**2)
         indSplit = np.argmin(dist)
         IndSplit = np.append(IndSplit, indSplit)
         Dist = np.append(Dist, dist[indSplit])
@@ -590,12 +589,8 @@ def path2domain(xyPath, rasterTransfo):
     rasterTransfo: dict
         rasterTransfo['w']: float
             Domain width
-        rasterTransfo['xllc']: float
-            xllc
-        rasterTransfo['yllc']: float
-            yllc
-        rasterTransfo['cellsize']: float
-            cellsize
+        rasterTransfo['cellSizeSL']: float
+            cellsize expected for the new raster
 
     Returns:
     ---------
@@ -618,15 +613,11 @@ def path2domain(xyPath, rasterTransfo):
     13. 1655-. 10.5194/nhess-13-1655-2013.
     Uwe Schlifkowitz/ BFW, June 2011
     """
-    xllc = rasterTransfo['xllc']
-    yllc = rasterTransfo['yllc']
-    csz = rasterTransfo['cellSize']
+    csz = rasterTransfo['cellSizeSL']
     x = xyPath['x']
     y = xyPath['y']
+    # compute the non dimentional width
     w = rasterTransfo['domainWidth']/2/csz
-    # Shift grid origin to (0,0)
-    x = x - xllc
-    y = y - yllc
     # remove scaling due to cellsize
     x = x/csz
     y = y/csz
@@ -715,10 +706,12 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
     if mask.any():
         if crop:
             toCheckRaster[mask] = 0
-            message = '%s area feature overlapping with %s area - removing the overlapping part' % (nameToCheck, nameRef)
+            message = '%s area feature overlapping with %s area - removing the overlapping part' % (
+                nameToCheck, nameRef)
             log.warning(message)
         else:
-            message = '%s area features overlapping with %s area - this is not allowed' % (nameToCheck, nameRef)
+            message = '%s area features overlapping with %s area - this is not allowed' % (
+                nameToCheck, nameRef)
             log.error(message)
             raise AssertionError(message)
 
