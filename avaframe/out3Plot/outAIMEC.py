@@ -36,23 +36,26 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict, cfgFlags):
     # read rasterdata
     slRaster = inputData['slRaster']
     xyRaster = inputData['xyRaster']
+    headerXY = inputData['xyHeader']
+    cellsize = headerXY['cellsize']
+    n = headerXY['nrows']
+    m = headerXY['ncols']
+    xllc = headerXY['xllcenter']
+    yllc = headerXY['yllcenter']
     # read avaPath with scale
     xPath = rasterTransfo['x']
     yPath = rasterTransfo['y']
     # read domain boundarries with scale
-    xllc = rasterTransfo['xllc']
-    yllc = rasterTransfo['yllc']
-    cellSize = rasterTransfo['cellSize']
-    DBXl = rasterTransfo['DBXl']*cellSize+xllc
-    DBXr = rasterTransfo['DBXr']*cellSize+xllc
-    DBYl = rasterTransfo['DBYl']*cellSize+yllc
-    DBYr = rasterTransfo['DBYr']*cellSize+yllc
+    cellSizeSL = rasterTransfo['cellSizeSL']
+    DBXl = rasterTransfo['DBXl']*cellSizeSL
+    DBXr = rasterTransfo['DBXr']*cellSizeSL
+    DBYl = rasterTransfo['DBYl']*cellSizeSL
+    DBYr = rasterTransfo['DBYr']*cellSizeSL
 
     ############################################
     # prepare for plot
-    n, m = np.shape(xyRaster)
-    x = np.arange(m)*cellSize+xllc
-    y = np.arange(n)*cellSize+yllc
+    x = np.arange(m)*cellsize + xllc
+    y = np.arange(n)*cellsize + yllc
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     xx = rasterTransfo['x'][indStartOfRunout]
     yy = rasterTransfo['y'][indStartOfRunout]
@@ -142,7 +145,8 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
     # Figure: Pressure depth speed
 
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
-    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
+    fig.subplots_adjust(left=0.05, bottom=0.05,
+                        right=0.95, top=0.95, hspace=0.3)
 
     for ax, maxVal, meanVal, titleVal, unitVal in zip(axes.flatten(), dataMax, dataMean, title, unit):
         ax.plot(maxVal[0, :], s, '--k', label='Max Reference')
@@ -162,7 +166,8 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
                             'thresholdValue', str(thresholdValue).replace('.', 'p'), 'slComparison'])
     pU.saveAndOrPlot(pathDict, cfgFlags, outFileName, fig)
 
-    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
+    outFilePath = os.path.join(
+        pathDict['pathResult'], 'pics', outFileName + '.png')
 
     return outFilePath
 
@@ -270,43 +275,51 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
     DataMass = np.array(([None] * 2))
     DataMass[0] = entMassFlowArray
     DataMass[1] = totalMassArray
-    ############################################
-    # Figure: Pressure depth speed
+    nSim = pathDict['numSim']
+    nRef = pathDict['referenceFile']
+    i = 0
+    while i < nSim:
+        if i == nRef:
+            i = i + 1
+        ############################################
+        # Figure: Pressure depth speed
+        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(pU.figW*2, pU.figH))
+        fig.subplots_adjust(left=0.05, bottom=0.05,
+                            right=0.95, top=0.95, hspace=0.3)
 
-    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(pU.figW*2, pU.figH))
-    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
+        for ax, dataMass, title, unit in zip(axes.flatten(), DataMass, Title, Unit):
+            ax.plot(time, dataMass[nRef, :], '-k', label='Reference')
+            ax.plot(time, dataMass[i, :], '-b', label='Simulation')
 
-    for ax, dataMass, title, unit in zip(axes.flatten(), DataMass, Title, Unit):
-        ax.plot(time, dataMass[0, :], '-k', label='Reference')
-        ax.plot(time, dataMass[1, :], '-b', label='Simulation')
+            ax.set_title(title + ' function of time')
+            ax.legend(loc=4)
+            ax.set_xlabel('t [s]')
+            ax.set_ylabel(unit)
 
-        ax.set_title(title + ' function of time')
-        ax.legend(loc=4)
-        ax.set_xlabel('t [s]')
-        ax.set_ylabel(unit)
+        ax2 = axes.flatten()[1].twinx()
+        # ax2.set_ylabel('z [m]')
+        ax2.spines['right'].set_color('r')
+        ax2.tick_params(axis='y', colors='r')
+        ax2.plot(time, (dataMass[1, :]-dataMass[0, :])
+                 / dataMass[0, :]*100, 'r', label='total mass')
 
-    ax2 = axes.flatten()[1].twinx()
-    # ax2.set_ylabel('z [m]')
-    ax2.spines['right'].set_color('r')
-    ax2.tick_params(axis='y', colors='r')
-    ax2.plot(time, (dataMass[1, :]-dataMass[0, :]) / dataMass[0, :]*100, 'r', label='total mass')
+        if np.any(entMass):
+            axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[0, :]) + np.nanmax(dataMass[0, :]))/2,
+                                   'Entrained Mass Difference : %.2f kg \n Relative to entrained mass : %.2f %% \n Relative to total mass : %.2f %% ' %
+                                   ((entMass[0]-entMass[1]), (entMass[0]-entMass[1]) / entMass[0]*100,
+                                   (entMass[0]-entMass[1])/finalMass[0]*100),
+                                   bbox=dict(boxstyle="square", ec='white', fc='white'),
+                                   horizontalalignment='left', verticalalignment='bottom')
 
-    if np.any(entMass):
-        axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[0, :])+np.nanmax(dataMass[0, :]))/2, 'Entrained Mass Difference : %.2f kg \n Relative to entrained mass : %.2f %% \n Relative to total mass : %.2f %% ' %
-                               ((entMass[0]-entMass[1]), (entMass[0]-entMass[1])
-                                / entMass[0]*100, (entMass[0]-entMass[1])/finalMass[0]*100),
-                               bbox=dict(boxstyle="square",
-                                         ec='white', fc='white'),
-                               horizontalalignment='left', verticalalignment='bottom')
+        ax2.set_ylabel(
+            'Entrained Mass Difference relative to total mass[%]', color='r')
 
-    ax2.set_ylabel(
-        'Entrained Mass Difference relative to total mass[%]', color='r')
+        outFileName = '_'.join([projectName, 'massAnalysis', str(i)])
+        pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
+        pU.saveAndOrPlot(pathDict, cfgFlags, outFileName, fig)
 
-    outFileName = '_'.join([projectName, 'massAnalysis'])
-    pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
-    pU.saveAndOrPlot(pathDict, outFileName, fig)
-
-    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
+        outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
+        i = i + 1
 
     return outFilePath
 
@@ -349,7 +362,8 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict, cfgFlags):
     # Figure: Pressure depth speed
 
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
-    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
+    fig.subplots_adjust(left=0.05, bottom=0.05,
+                        right=0.95, top=0.95, hspace=0.3)
 
     for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
         maskedArray = np.ma.masked_where(data == 0, data)
@@ -502,7 +516,8 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
         L, S = np.meshgrid(l, s[indStartOfRunout:])
         colorsP = pU.colorMaps['pfd']['colors'][1:]
         if (np.where(refData > thresholdArray[-1], True, False)).any():
-            contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
+            contourRef = ax2.contour(
+                L, S, refData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
             labels = [str(level) + unit for level in thresholdArray[:-1]]
             for j in range(len(contourRef.collections)):
                 contourRef.collections[j].set_label(labels[j])
@@ -548,7 +563,8 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
         '.', 'p'),  'sim', str(i), 'ContourComparisonToReference'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
-    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
+    outFilePath = os.path.join(
+        pathDict['pathResult'], 'pics', outFileName + '.png')
 
     return outFilePath
 
@@ -596,7 +612,8 @@ def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     TN = resAnalysis['TN']
     areaSum = TP[nRef] + FN[nRef]
     if areaSum == 0:
-        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
+        log.warning(
+            'Reference did not reach the run-out area. Not normalizing area indicators')
         areaSum = np.ones(np.shape(TP))
 
     ############################################
@@ -696,7 +713,8 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
     runout = resAnalysis['runout'][0]
     areaSum = resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef]
     if areaSum == 0:
-        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
+        log.warning(
+            'Reference did not reach the run-out area. Not normalizing area indicators')
         areaSum = 1
     rTP = resAnalysis['TP'] / areaSum
     rFP = resAnalysis['FP'] / areaSum
@@ -711,7 +729,8 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
 
     elif flag == 3:
         title = 'Visualizing max ' + name + ' data'
-        tipo = 'relMax' + resType + '_thresholdValue' + str(thresholdValue).replace('.', 'p')
+        tipo = 'relMax' + resType + '_thresholdValue' + \
+            str(thresholdValue).replace('.', 'p')
         data = maxMaxDPPR / maxMaxDPPR[nRef]
         yaxis_label = 'relative max ' + name + ' [-]'
 
@@ -730,7 +749,8 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
         if pathDict['colorParameter'] == []:
             nSamples = np.size(runout)
             colors = np.zeros(nSamples)
-            cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+            cmap, _, ticks, norm = pU.makeColorMap(
+                pU.cmapVar, None, None, continuous=True)
             displayColorBar = False
             dataFrame = False
         else:
@@ -754,7 +774,8 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
         dataFrame = False
         nSamples = np.size(runout)
         colors = np.zeros(nSamples)
-        cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+        cmap, _, ticks, norm = pU.makeColorMap(
+            pU.cmapVar, None, None, continuous=True)
     #######################################
     # Final result diagram - z_profile+data
 
@@ -790,7 +811,8 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
             sns.scatterplot('runout', 'data', marker=pU.markers,
                             data=df, hue='colorParameter', palette=cmap, ax=ax1)
         else:
-            sc = ax1.scatter(runout, data, marker=pU.markers, c=colors, cmap=cmap)
+            sc = ax1.scatter(runout, data, marker=pU.markers,
+                             c=colors, cmap=cmap)
             if displayColorBar:
                 pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
         ax1.plot(runout[nRef], data[nRef], color='g', label='Reference', marker='+',
@@ -822,7 +844,8 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
         cbar.ax.set_ylabel('hit rate density')
     else:
         if dataFrame:
-            sns.scatterplot('rFP', 'rTP', marker=pU.markers, data=df, hue='colorParameter', palette=cmap, ax=ax1)
+            sns.scatterplot('rFP', 'rTP', marker=pU.markers,
+                            data=df, hue='colorParameter', palette=cmap, ax=ax1)
         else:
             sc = ax1.scatter(rFP, rTP, marker=pU.markers, c=colors, cmap=cmap)
             if displayColorBar:

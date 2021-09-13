@@ -64,21 +64,17 @@ def AIMEC2Report(pathDict, cfg):
     newRasters = {}
     # assign pressure data
     log.debug("Assigning pressure data to deskewed raster")
-    newRasters['newRasterPPR'] = aT.assignData(pathDict['ppr'],
-                                                 rasterTransfo, interpMethod)
+    newRasters['newRasterPPR'] = aT.assignData(pathDict['ppr'],  rasterTransfo, interpMethod)
     # assign depth data
     log.debug("Assigning depth data to deskewed raster")
-    newRasters['newRasterPFD'] = aT.assignData(pathDict['pfd'],
-                                              rasterTransfo, interpMethod)
+    newRasters['newRasterPFD'] = aT.assignData(pathDict['pfd'], rasterTransfo, interpMethod)
     # assign speed data
     log.debug("Assigning speed data to deskewed raster")
-    newRasters['newRasterPFV'] = aT.assignData(pathDict['pfv'],
-                                              rasterTransfo, interpMethod)
+    newRasters['newRasterPFV'] = aT.assignData(pathDict['pfv'], rasterTransfo, interpMethod)
 
     # assign dem data
     log.debug("Assigning dem data to deskewed raster")
-    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo,
-                              interpMethod)
+    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo, interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
@@ -90,7 +86,8 @@ def AIMEC2Report(pathDict, cfg):
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
 
-    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags)
+    plotName = outAimec.visuRunoutComp(
+        rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags)
     resAnalysis['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
     if cfgFlags.getboolean('flagMass'):
         plotName = outAimec.visuMass(resAnalysis, pathDict, cfgFlags)
@@ -148,6 +145,7 @@ def mainAIMEC(pathDict, cfg):
     inputData = {}
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = raster['rasterData']
+    inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict, cfgFlags)
     #################################################################
 
@@ -155,22 +153,18 @@ def mainAIMEC(pathDict, cfg):
     newRasters = {}
     # assign pressure data
     log.debug("Assigning pressure data to deskewed raster")
-    newRasters['newRasterPPR'] = aT.assignData(pathDict['ppr'],
-                                                 rasterTransfo, interpMethod)
+    newRasters['newRasterPPR'] = aT.assignData(pathDict['ppr'], rasterTransfo, interpMethod)
     # assign depth data
     log.debug("Assigning depth data to deskewed raster")
-    newRasters['newRasterPFD'] = aT.assignData(pathDict['pfd'],
-                                              rasterTransfo, interpMethod)
+    newRasters['newRasterPFD'] = aT.assignData(pathDict['pfd'], rasterTransfo, interpMethod)
     # assign speed data
     if pathDict['pfv']:
         log.debug("Assigning speed data to deskewed raster")
-        newRasters['newRasterPFV'] = aT.assignData(pathDict['pfv'],
-                                                  rasterTransfo, interpMethod)
+        newRasters['newRasterPFV'] = aT.assignData(pathDict['pfv'], rasterTransfo, interpMethod)
 
     # assign dem data
     log.info("Assigning dem data to deskewed raster")
-    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo,
-                              interpMethod)
+    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo, interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
@@ -184,10 +178,11 @@ def mainAIMEC(pathDict, cfg):
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict, cfgFlags)
     if pathDict['numSim'] == 2:
         outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags)
-        if cfgFlags.getboolean('flagMass'):
-            outAimec.visuMass(resAnalysis, pathDict, cfgFlags)
     else:
         outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags)
+
+    if cfgFlags.getboolean('flagMass'):
+        outAimec.visuMass(resAnalysis, pathDict, cfgFlags)
     outAimec.resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis)
 
     # -----------------------------------------------------------
@@ -254,11 +249,10 @@ def AIMECIndi(pathDict, cfg):
     # assign pressure data
     log.debug("Assigning data to deskewed raster")
     newRasters['newRaster' + resType.upper()] = aT.assignData(pathDict[resType],
-                                                 rasterTransfo, interpMethod)
+                                                              rasterTransfo, interpMethod)
     # assign dem data
     log.debug("Assigning dem data to deskewed raster")
-    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo,
-                              interpMethod)
+    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo, interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM[0]
 
     # Analyze data
@@ -405,10 +399,12 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags):
     resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataSpeed, 'pfv', resultsAreaAnalysis)
 
     # compute runout based on resType
-    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
+    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(
+        rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
 
     runoutLength = runout[0]
-    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, resultsAreaAnalysis[resType]['transformedRasters'], cfgSetup, pathDict, cfgFlags)
+    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(
+        rasterTransfo, runoutLength, resultsAreaAnalysis[resType]['transformedRasters'], cfgSetup, pathDict, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}
@@ -481,10 +477,12 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags
     resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataResType, resType, resultsAreaAnalysis)
 
     # compute runout based on resType
-    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
+    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(
+        rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
 
     runoutLength = runout[0]
-    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, dataResType, cfgSetup, pathDict, cfgFlags)
+    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(
+        rasterTransfo, runoutLength, dataResType, cfgSetup, pathDict, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}
@@ -517,13 +515,15 @@ def aimecRes2ReportDict(resAnalysis, reportD, benchD, refSim):
     else:
         log.warning('Reference File out of range - needs to be 0 or 1')
 
-    reportD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][0][compSim],
-    'max peak pressure [kPa]': resAnalysis['MMPPR'][compSim], 'max peak flow depth [m]': resAnalysis['MMPFD'][compSim],
-    'max peak flow velocity [ms-1]': resAnalysis['MMPFV'][compSim]}
+    reportD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysis['runout'][0][compSim],
+                                 'max peak pressure [kPa]': resAnalysis['MMPPR'][compSim],
+                                 'max peak flow depth [m]': resAnalysis['MMPFD'][compSim],
+                                 'max peak flow velocity [ms-1]': resAnalysis['MMPFV'][compSim]}
 
-    benchD['Aimec analysis'] ={'type': 'list', 'runout [m]': resAnalysis['runout'][0][refSim],
-    'max peak pressure [kPa]': resAnalysis['MMPPR'][refSim], 'max peak flow depth [m]': resAnalysis['MMPFD'][refSim],
-    'max peak flow velocity [ms-1]': resAnalysis['MMPFV'][refSim]}
+    benchD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysis['runout'][0][refSim],
+                                'max peak pressure [kPa]': resAnalysis['MMPPR'][refSim],
+                                'max peak flow depth [m]': resAnalysis['MMPFD'][refSim],
+                                'max peak flow velocity [ms-1]': resAnalysis['MMPFV'][refSim]}
     # add mass info
     if "relMass" in resAnalysis:
         reportD['Aimec analysis'].update({'Initial mass [kg]': resAnalysis['relMass'][compSim]})
