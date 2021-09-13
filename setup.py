@@ -83,7 +83,7 @@ setup(
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='0.5.11',
+    version='0.5.12',
     # The project's main homepage.
     url=URL,
     # Author details
