@@ -76,6 +76,17 @@ def test_fetchReferenceSimNo(tmp_path):
     assert pathDict['referenceFile'] == 0
     assert pathDict[cfgSetup['GENERAL']['resType']][pathDict['referenceFile']] == test1PFV
 
+    cfgSetup['GENERAL'] = {'resType': 'pfd', 'referenceSimName': '', 'referenceSimValue': 'Coulomb'}
+    cfgSetup['GENERAL']['varParList'] = 'frictModel'
+    pathDict = {'ppr': [test1PPR, test2PPR],
+                'pfv': [test1PFV, test2PFV],
+                'pfd': [test1PFD, test2PFD]}
+    pathDict['colorParameter'] = ['samosAT', 'Coulomb']
+    pathDict = aT.fetchReferenceSimNo(pathDict, cfgSetup['GENERAL'])
+    print('pathDict test6', pathDict)
+    assert pathDict['referenceFile'] == 1
+    assert pathDict[cfgSetup['GENERAL']['resType']][pathDict['referenceFile']] == test2PFD
+
     cfgSetup['GENERAL'] = {'resType': 'pfv', 'referenceSimName': 'testSim_no4', 'referenceSimValue': '1.0'}
     cfgSetup['GENERAL']['varParList'] = ''
     pathDict = {'ppr': [test1PPR, test2PPR],
@@ -83,6 +94,6 @@ def test_fetchReferenceSimNo(tmp_path):
                 'pfd': [test1PFD, test2PFD]}
     pathDict['colorParameter'] = []
     pathDict = aT.fetchReferenceSimNo(pathDict, cfgSetup['GENERAL'])
-    print('pathDict test6', pathDict)
+    print('pathDict test7', pathDict)
     assert pathDict['referenceFile'] == 0
     assert pathDict[cfgSetup['GENERAL']['resType']][pathDict['referenceFile']] == test1PFV
