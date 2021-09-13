@@ -48,19 +48,16 @@ def getVariationDict(avaDir, fullCfg, modDict):
                 locValue = fU.splitIniValueToArraySteps(value)
                 variations[key] = locValue
                 defValue = modDict[section][key][1]
-                log.info('%s: %s (default value was: %s)' %
-                         (key, locValue, defValue))
+                log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
 
     # print modified parameters
     for sec in modDict:
         for value in modDict[sec]:
             if sec != section:
-                log.info('%s: %s (default value was: %s)' %
-                         (value, modDict[sec][value][0], modDict[sec][value][1]))
+                log.info('%s: %s (default value was: %s)' % (value, modDict[sec][value][0], modDict[sec][value][1]))
             else:
                 if value not in variations:
-                    log.info('%s: %s (default value was: %s)' % (
-                        value, modDict[sec][value][0], modDict[sec][value][1]))
+                    log.info('%s: %s (default value was: %s)' % (value, modDict[sec][value][0], modDict[sec][value][1]))
 
     return variations
 
@@ -90,8 +87,7 @@ def checkResType(fullCfg, section, key, value):
     # check that the resType asked actually exists
     if value != '':
         resType = value.split('|')
-        validResTypes = ['ppr', 'pfd', 'pfv',
-                         'FD', 'FV', 'P', 'particles']
+        validResTypes = ['ppr', 'pfd', 'pfv', 'FD', 'FV', 'P', 'particles']
         message = (
             'The parameter % s is not a valid resType. It will not be saved')
         newResType = []
@@ -133,8 +129,7 @@ def validateVarDict(variationDict, standardCfg):
             ignoredParameters.append(parameter)
 
     for ipar in ignoredParameters:
-        log.warning(
-            'Parameter %s does not exist in model configuration - parameter is ignored' % ipar)
+        log.warning('Parameter %s does not exist in model configuration - parameter is ignored' % ipar)
         del variationDict[ipar]
 
     return variationDict
