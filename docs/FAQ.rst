@@ -6,7 +6,7 @@ Frequently Asked Questions
    examples provided in the `runScripts` directory.
 
 
-How to change spatial resolution of simulations performed with com1DFA (dense flow)?
+Can the spatial resolution of simulations performed with com1DFA (dense flow) be changed?
 -----------------------------------------------------------
 
 The default setup of :py:mod:`com1DFA` is calibrated for medium to large dense flow snow avalanches in regards to hazard
