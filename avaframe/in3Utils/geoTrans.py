@@ -40,8 +40,7 @@ def projectOnRaster(dem, Points, interp='bilinear'):
     xcoor = Points['x']
     ycoor = Points['y']
 
-    zcoor, ioob = projectOnGrid(xcoor, ycoor, rasterdata, csz=cellsize, xllc=xllc,
-                                yllc=yllc, interp=interp)
+    zcoor, ioob = projectOnGrid(xcoor, ycoor, rasterdata, csz=cellsize, xllc=xllc, yllc=yllc, interp=interp)
     Points['z'] = zcoor
     return Points, ioob
 
@@ -312,8 +311,8 @@ def remeshDEM(cfg, dem):
 
         dem['header'] = headerRemeshed
         xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
-        zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid),
-                                       method='cubic', fill_value=headerDEM['noDataValue'])
+        zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic',
+                                       fill_value=headerDEM['noDataValue'])
         log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
         dem['rasterData'] = zNew
 
@@ -706,12 +705,10 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
     if mask.any():
         if crop:
             toCheckRaster[mask] = 0
-            message = '%s area feature overlapping with %s area - removing the overlapping part' % (
-                nameToCheck, nameRef)
+            message = '%s area feature overlapping with %s area - removing the overlapping part' % (nameToCheck, nameRef)
             log.warning(message)
         else:
-            message = '%s area features overlapping with %s area - this is not allowed' % (
-                nameToCheck, nameRef)
+            message = '%s area features overlapping with %s area - this is not allowed' % (nameToCheck, nameRef)
             log.error(message)
             raise AssertionError(message)
 

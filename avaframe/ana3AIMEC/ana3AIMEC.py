@@ -248,8 +248,7 @@ def AIMECIndi(pathDict, cfg):
     newRasters = {}
     # assign pressure data
     log.debug("Assigning data to deskewed raster")
-    newRasters['newRaster' + resType.upper()] = aT.assignData(pathDict[resType],
-                                                              rasterTransfo, interpMethod)
+    newRasters['newRaster' + resType.upper()] = aT.assignData(pathDict[resType], rasterTransfo, interpMethod)
     # assign dem data
     log.debug("Assigning dem data to deskewed raster")
     newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo, interpMethod)
@@ -399,8 +398,8 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags):
     resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataSpeed, 'pfv', resultsAreaAnalysis)
 
     # compute runout based on resType
-    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(
-        rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
+    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis,
+                                                           transformedDEMRasters)
 
     runoutLength = runout[0]
     TP, FN, FP, TN, compPlotPath = aT.analyzeArea(
@@ -477,12 +476,11 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags
     resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataResType, resType, resultsAreaAnalysis)
 
     # compute runout based on resType
-    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(
-        rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters)
+    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis,
+                                                           transformedDEMRasters)
 
     runoutLength = runout[0]
-    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(
-        rasterTransfo, runoutLength, dataResType, cfgSetup, pathDict, cfgFlags)
+    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, dataResType, cfgSetup, pathDict, cfgFlags)
 
     # affect values to output dictionary
     resAnalysis = {}
