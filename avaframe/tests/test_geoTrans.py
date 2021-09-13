@@ -224,38 +224,32 @@ def test_checkProfile(capfd):
 
 def test_path2domain(capfd):
     '''test_path2domain'''
-    xllc = 1
-    yllc = 2
     csz = 2
     w = 10
     xyPath = {}
     xyPath['x'] = np.array((0, 10, 20, 30, 40))
     xyPath['y'] = np.array((10, 20, 30, 40, 50))
     rasterTransfo = {}
-    rasterTransfo['xllc'] = xllc
-    rasterTransfo['yllc'] = yllc
-    rasterTransfo['cellSize'] = csz
+    rasterTransfo['cellSizeSL'] = csz
     rasterTransfo['domainWidth'] = w
 
     DB = geoTrans.path2domain(xyPath, rasterTransfo)
 
     atol = 1e-8
     # Compare result to reference solution
-    zSol = np.array([-2.26776695,  2.73223305,  7.73223305, 12.73223305,
-                    17.73223305])
-    testRes = np.allclose(DB['DBXl'], zSol, atol=atol)
+    zSol = xyPath['x'] - w / np.sqrt(2) / 2
+    print(zSol)
+    print(DB['DBXl']*csz)
+    testRes = np.allclose(DB['DBXl']*csz, zSol, atol=atol)
     assert (testRes == True)
-    zSol = np.array([1.26776695,  6.26776695, 11.26776695, 16.26776695,
-                    21.26776695])
-    testRes = np.allclose(DB['DBXr'], zSol, atol=atol)
+    zSol = xyPath['x'] + w / np.sqrt(2) / 2
+    testRes = np.allclose(DB['DBXr']*csz, zSol, atol=atol)
     assert (testRes == True)
-    zSol = np.array([5.76776695, 10.76776695, 15.76776695, 20.76776695,
-                    25.76776695])
-    testRes = np.allclose(DB['DBYl'], zSol, atol=atol)
+    zSol = xyPath['y'] + w / np.sqrt(2) / 2
+    testRes = np.allclose(DB['DBYl']*csz, zSol, atol=atol)
     assert (testRes == True)
-    zSol = np.array([2.23223305,  7.23223305, 12.23223305, 17.23223305,
-                    22.23223305])
-    testRes = np.allclose(DB['DBYr'], zSol, atol=atol)
+    zSol = xyPath['y'] - w / np.sqrt(2) / 2
+    testRes = np.allclose(DB['DBYr']*csz, zSol, atol=atol)
     assert (testRes == True)
 
 
