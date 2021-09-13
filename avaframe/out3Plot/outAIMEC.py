@@ -145,8 +145,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
     # Figure: Pressure depth speed
 
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
-    fig.subplots_adjust(left=0.05, bottom=0.05,
-                        right=0.95, top=0.95, hspace=0.3)
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, maxVal, meanVal, titleVal, unitVal in zip(axes.flatten(), dataMax, dataMean, title, unit):
         ax.plot(maxVal[0, :], s, '--k', label='Max Reference')
@@ -200,8 +199,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
     # prepare for plot
     pMean = np.mean(PPRCrossMax, axis=0)
     pMedian = np.median(PPRCrossMax, axis=0)
-    pPercentile = np.percentile(
-        PPRCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
+    pPercentile = np.percentile(PPRCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
 
@@ -214,10 +212,8 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
     fig = plt.figure(figsize=(pU.figW*2, pU.figH))
     ax1 = plt.subplot(121)
 
-    ax1.axhline(y=np.max(runout), color='k',
-                linestyle='-.', label='runout max')
-    ax1.axhline(y=np.average(runout), color='k',
-                linestyle='-', label='runout mean')
+    ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
+    ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean')
     ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
 
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
@@ -247,8 +243,8 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
     ax2.set_xlim(auto=True)
     ax2.set_xlabel('$P_{max}(s)$ [%s]' % unit)
 
-    outFileName = '_'.join([projectName, resType,
-                            'thresholdValue', str(thresholdValue).replace('.', 'p'), 'slComparisonStat'])
+    outFileName = '_'.join([projectName, resType, 'thresholdValue', str(thresholdValue).replace('.', 'p'),
+                           'slComparisonStat'])
 
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
@@ -284,8 +280,7 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
         ############################################
         # Figure: Pressure depth speed
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(pU.figW*2, pU.figH))
-        fig.subplots_adjust(left=0.05, bottom=0.05,
-                            right=0.95, top=0.95, hspace=0.3)
+        fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
         for ax, dataMass, title, unit in zip(axes.flatten(), DataMass, Title, Unit):
             ax.plot(time, dataMass[nRef, :], '-k', label='Reference')
@@ -300,8 +295,7 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
         # ax2.set_ylabel('z [m]')
         ax2.spines['right'].set_color('r')
         ax2.tick_params(axis='y', colors='r')
-        ax2.plot(time, (dataMass[1, :]-dataMass[0, :])
-                 / dataMass[0, :]*100, 'r', label='total mass')
+        ax2.plot(time, (dataMass[1, :]-dataMass[0, :]) / dataMass[0, :]*100, 'r', label='total mass')
 
         if np.any(entMass):
             axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[0, :]) + np.nanmax(dataMass[0, :]))/2,
@@ -311,8 +305,7 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
                                    bbox=dict(boxstyle="square", ec='white', fc='white'),
                                    horizontalalignment='left', verticalalignment='bottom')
 
-        ax2.set_ylabel(
-            'Entrained Mass Difference relative to total mass[%]', color='r')
+        ax2.set_ylabel('Entrained Mass Difference relative to total mass[%]', color='r')
 
         outFileName = '_'.join([projectName, 'massAnalysis', str(i)])
         pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
@@ -351,8 +344,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict, cfgFlags):
     # prepare for plot
     Cmap = [pU.cmapPres, pU.cmapDepth, pU.cmapSpeed]
     Title = ['Peak Pressure', 'Peak Flow Depth', 'Peak Speed']
-    Unit = [pU.cfgPlotUtils['unitppr'],
-            pU.cfgPlotUtils['unitpfd'], pU.cfgPlotUtils['unitpfv']]
+    Unit = [pU.cfgPlotUtils['unitppr'],pU.cfgPlotUtils['unitpfd'], pU.cfgPlotUtils['unitpfv']]
     Data = np.array(([None] * 3))
     Data[0] = rasterdataPres
     Data[1] = rasterdataDepth
@@ -362,8 +354,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict, cfgFlags):
     # Figure: Pressure depth speed
 
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
-    fig.subplots_adjust(left=0.05, bottom=0.05,
-                        right=0.95, top=0.95, hspace=0.3)
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
         maskedArray = np.ma.masked_where(data == 0, data)
@@ -455,13 +446,10 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
         ax2.text(.5, .5, 'No data in the run out area!', fontsize=18, color='red',
                  bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
     if pathDict['compType'][0] == 'comModules':
-        namePrint = 'refMod:' + \
-            pathDict['compType'][1] + '_' + \
-            'compMod:' + pathDict['compType'][2]
+        namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
 
-    ax2.set_title('Difference %s current - reference in runout area' %
-                  resType + '\n' + 'Blue = FN, Red = FP')
+    ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
 
     outFileName = '_'.join([projectName, 'thresholdValue', str(
         thresholdValue).replace('.', 'p'),  'sim', str(i), 'AreaComparisonToReference'])
@@ -516,8 +504,7 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
         L, S = np.meshgrid(l, s[indStartOfRunout:])
         colorsP = pU.colorMaps['pfd']['colors'][1:]
         if (np.where(refData > thresholdArray[-1], True, False)).any():
-            contourRef = ax2.contour(
-                L, S, refData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
+            contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
             labels = [str(level) + unit for level in thresholdArray[:-1]]
             for j in range(len(contourRef.collections)):
                 contourRef.collections[j].set_label(labels[j])
@@ -555,16 +542,14 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
         ax2.text(.5, .5, 'No data in the run out area!', fontsize=24, color='red',
                  bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
 
-    ax2.set_title(
-        '%s difference and contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
+    ax2.set_title('%s difference and contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(thresholdValue).replace(
         '.', 'p'),  'sim', str(i), 'ContourComparisonToReference'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
-    outFilePath = os.path.join(
-        pathDict['pathResult'], 'pics', outFileName + '.png')
+    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
 
     return outFilePath
 
@@ -612,8 +597,7 @@ def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     TN = resAnalysis['TN']
     areaSum = TP[nRef] + FN[nRef]
     if areaSum == 0:
-        log.warning(
-            'Reference did not reach the run-out area. Not normalizing area indicators')
+        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
         areaSum = np.ones(np.shape(TP))
 
     ############################################
@@ -637,8 +621,7 @@ def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
                       name, ' limit: ', str(thresholdValue), unit, '\n',
                       'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAreaAngle, 2)), ' °\n'])
 
-    outFileName = '_'.join(['Results', projectName, '', '', 'plim',
-                            str(thresholdValue), 'w', str(domainWidth)]) + '.txt'
+    outFileName = '_'.join(['Results', projectName, '', '', 'plim', str(thresholdValue), 'w', str(domainWidth)]) + '.txt'
     outname = os.path.join(pathResult, outFileName)
 
     # check if folder exists / create
@@ -713,8 +696,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
     runout = resAnalysis['runout'][0]
     areaSum = resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef]
     if areaSum == 0:
-        log.warning(
-            'Reference did not reach the run-out area. Not normalizing area indicators')
+        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
         areaSum = 1
     rTP = resAnalysis['TP'] / areaSum
     rFP = resAnalysis['FP'] / areaSum
@@ -729,8 +711,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
 
     elif flag == 3:
         title = 'Visualizing max ' + name + ' data'
-        tipo = 'relMax' + resType + '_thresholdValue' + \
-            str(thresholdValue).replace('.', 'p')
+        tipo = 'relMax' + resType + '_thresholdValue' + str(thresholdValue).replace('.', 'p')
         data = maxMaxDPPR / maxMaxDPPR[nRef]
         yaxis_label = 'relative max ' + name + ' [-]'
 
@@ -749,8 +730,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
         if pathDict['colorParameter'] == []:
             nSamples = np.size(runout)
             colors = np.zeros(nSamples)
-            cmap, _, ticks, norm = pU.makeColorMap(
-                pU.cmapVar, None, None, continuous=True)
+            cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
             displayColorBar = False
             dataFrame = False
         else:
@@ -774,8 +754,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
         dataFrame = False
         nSamples = np.size(runout)
         colors = np.zeros(nSamples)
-        cmap, _, ticks, norm = pU.makeColorMap(
-            pU.cmapVar, None, None, continuous=True)
+        cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
     #######################################
     # Final result diagram - z_profile+data
 
@@ -808,15 +787,12 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
 
     if not plotDensity:
         if dataFrame:
-            sns.scatterplot('runout', 'data', marker=pU.markers,
-                            data=df, hue='colorParameter', palette=cmap, ax=ax1)
+            sns.scatterplot('runout', 'data', marker=pU.markers, data=df, hue='colorParameter', palette=cmap, ax=ax1)
         else:
-            sc = ax1.scatter(runout, data, marker=pU.markers,
-                             c=colors, cmap=cmap)
+            sc = ax1.scatter(runout, data, marker=pU.markers, c=colors, cmap=cmap)
             if displayColorBar:
                 pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
-        ax1.plot(runout[nRef], data[nRef], color='g', label='Reference', marker='+',
-                 markersize=2*pU.ms, linestyle='None')
+        ax1.plot(runout[nRef], data[nRef], color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
         ax1.legend(loc=4)
 
     ax1.grid('on')
@@ -850,8 +826,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
             sc = ax1.scatter(rFP, rTP, marker=pU.markers, c=colors, cmap=cmap)
             if displayColorBar:
                 pU.addColorBar(sc, ax1, ticks, unit, title=paraVar)
-        ax1.plot(rFP[nRef], rTP[nRef], color='g', label='Reference', marker='+',
-                 markersize=2*pU.ms, linestyle='None')
+        ax1.plot(rFP[nRef], rTP[nRef], color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
         ax1.legend(loc=4)
 
     plt.xlim([-0.03, max(1, max(rFP)+0.03)])

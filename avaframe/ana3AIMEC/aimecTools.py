@@ -67,8 +67,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     refDir = pathlib.Path(avalancheDir, 'Inputs')
     demSource = list(refDir.glob('*.asc'))
     try:
-        assert len(
-            demSource) == 1, 'There should be exactly one topography .asc file in %s/Inputs/' % avalancheDir
+        assert len(demSource) == 1, 'There should be exactly one topography .asc file in %s/Inputs/' % avalancheDir
     except AssertionError:
         raise
     pathDict['demSource'] = demSource[0]
@@ -106,15 +105,12 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
         typeCP = type(pathDict['colorParameter'][0])
         if typeCP == str:
             colorValues = [x.lower() for x in pathDict['colorParameter']]
-            indexRef = colorValues.index(
-                typeCP(cfgSetup['referenceSimValue'].lower()))
+            indexRef = colorValues.index(typeCP(cfgSetup['referenceSimValue'].lower()))
         elif typeCP in [float, int]:
             colorValues = np.asarray(pathDict['colorParameter'])
-            indexRef = (
-                np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
+            indexRef = (np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
         else:
-            indexRef = pathDict['colorParameter'].index(
-                typeCP(cfgSetup['referenceSimValue']))
+            indexRef = pathDict['colorParameter'].index(typeCP(cfgSetup['referenceSimValue']))
         pathDict['referenceFile'] = indexRef
         log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
                  (cfgSetup['varParList'].split('|')[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
@@ -238,11 +234,9 @@ def makeDomainTransfo(pathDict, cfgSetup):
     projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
     rasterTransfo['indSplit'] = projPoint['indSplit']
     # prepare find start of runout area points
-    angle, tmp, ds = geoTrans.prepareAngleProfile(
-        startOfRunoutAreaAngle, rasterTransfo)
+    angle, tmp, ds = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle, rasterTransfo)
     # find the runout point: first point under startOfRunoutAreaAngle
-    indStartOfRunout = geoTrans.findAngleProfile(
-        tmp, ds, cfgSetup.getfloat('dsMin'))
+    indStartOfRunout = geoTrans.findAngleProfile(tmp, ds, cfgSetup.getfloat('dsMin'))
     rasterTransfo['indStartOfRunout'] = indStartOfRunout
     rasterTransfo['xBetaPoint'] = rasterTransfo['x'][indStartOfRunout]
     rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
@@ -515,8 +509,7 @@ def transform(fname, rasterTransfo, interpMethod):
     iib = len(Points['x'])
     Points, ioob = geoTrans.projectOnRaster(data, Points, interp=interpMethod)
     newData = Points['z'].reshape(n, m)
-    log.debug('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' %
-              (name, iib-ioob, ioob))
+    log.debug('Data-file: %s - %d raster values transferred - %d out of original raster bounds!' % (name, iib-ioob, ioob))
 
     return newData
 
@@ -614,8 +607,7 @@ def analyzeMass(fnameMass, resAnalysis):
         relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
         if not (releaseMass[i] == releaseMass[0]):
             massDiffers = True
-        log.info('{: <10} {:<10.4f} {:<10.4f}'.format(
-            *[i+1, grIndex[i], grGrad[i]]))
+        log.info('{: <10} {:<10.4f} {:<10.4f}'.format(*[i+1, grIndex[i], grGrad[i]]))
     if massDiffers:
         log.warning('Release masses differs between simulations!')
 
@@ -865,8 +857,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict, cfgFlags)
         refMask = np.where(refMask <= thresholdValue, 0, refMask)
         refMask = np.where(refMask > thresholdValue, 1, refMask)
         # comparison rasterdata with mask
-        log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format(
-            'Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
+        log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format('Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
         newRasterData = copy.deepcopy(rasterdata)
         # prepare mask for area resAnalysis
         newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
