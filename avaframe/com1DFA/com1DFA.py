@@ -336,21 +336,16 @@ def reportAddTimeMassInfo(reportDict, tcpuDFA, infoDict):
     """ Add time and mass info to report """
 
     # add mass info
-    reportDict['Simulation Parameters'].update(
-        {'Initial mass [kg]': ('%.2f' % infoDict['initial mass'])})
-    reportDict['Simulation Parameters'].update(
-        {'Final mass [kg]': ('%.2f' % infoDict['final mass'])})
-    reportDict['Simulation Parameters'].update(
-        {'Entrained mass [kg]': ('%.2f' % infoDict['entrained mass'])})
-    reportDict['Simulation Parameters'].update(
-        {'Entrained volume [m3]': ('%.2f' % infoDict['entrained volume'])})
+    reportDict['Simulation Parameters'].update({'Initial mass [kg]': ('%.2f' % infoDict['initial mass'])})
+    reportDict['Simulation Parameters'].update({'Final mass [kg]': ('%.2f' % infoDict['final mass'])})
+    reportDict['Simulation Parameters'].update({'Entrained mass [kg]': ('%.2f' % infoDict['entrained mass'])})
+    reportDict['Simulation Parameters'].update({'Entrained volume [m3]': ('%.2f' % infoDict['entrained volume'])})
 
     # add stop info
     reportDict['Simulation Parameters'].update(infoDict['stopInfo'])
 
     # add computation time to report dict
-    reportDict['Simulation Parameters'].update(
-        {'Computation time [s]': tcpuDFA})
+    reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
 
     return reportDict
 
@@ -378,8 +373,7 @@ def initializeMesh(cfg, demOri, num):
 
     demOri = geoTrans.remeshDEM(cfg, demOri)
     dem = setDEMoriginToZero(demOri)
-    dem['originOri'] = {'xllcenter': demOri['header']
-                        ['xllcenter'], 'yllcenter': demOri['header']['yllcenter']}
+    dem['originOri'] = {'xllcenter': demOri['header']['xllcenter'], 'yllcenter': demOri['header']['yllcenter']}
 
     # read dem header
     headerDEM = dem['header']
@@ -393,8 +387,7 @@ def initializeMesh(cfg, demOri, num):
     dem['Nx'] = np.where(np.isnan(Nx), 0., Nx)
     dem['Ny'] = np.where(np.isnan(Ny), 0., Ny)
     # build no data mask (used to find out of dem particles)
-    outOfDEM = np.where(np.isnan(dem['rasterData']), 1, 0).astype(
-        np.bool).flatten()
+    outOfDEM = np.where(np.isnan(dem['rasterData']), 1, 0).astype(np.bool).flatten()
     dem['Nz'] = Nz
     dem['outOfDEM'] = outOfDEM
 
@@ -482,8 +475,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
-        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['d0'],
-                                  combine=True, checkOverlap=False)
+        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['d0'], combine=True, checkOverlap=False)
     else:
         # if relTh provided - set release thickness with field or function
         releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True, checkOverlap=False)
@@ -514,8 +506,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
         secondaryReleaseInfo['header'] = demOri['header']
 
         # fetch secondary release areas
-        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2),
-                                           thList=secondaryReleaseInfo['d0'], combine=False)
+        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2), thList=secondaryReleaseInfo['d0'],
+                                           combine=False)
         # remove overlap with main release areas
         noOverlaprasterList = []
         for secRelRatser, secRelName in zip(secondaryReleaseInfo['rasterData'], secondaryReleaseInfo['Name']):
