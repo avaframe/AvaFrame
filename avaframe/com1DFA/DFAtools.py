@@ -153,35 +153,27 @@ def getNormalMesh(dem, num):
         Nz = 6 * Nz
         # filling the first col of the matrix
         # (- 2*(Zr - Zp) + Zu - Zur ) / csz
-        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0])
-                        + z[2:n, 0] - z[2:n, 1]) / csz
+        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0]) + z[2:n, 0] - z[2:n, 1]) / csz
         # (Zd - Zu + Zr - Zur) / csz
-        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0]
-                        + z[1:n-1, 1] - z[2:n, 1]) / csz
+        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0] + z[1:n-1, 1] - z[2:n, 1]) / csz
         Nz[1:n-1, 0] = 3
         # filling the last col of the matrix
         # (2*(Zl - Zp) + Zdl - Zd) / csz
-        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1])
-                          + z[0:n-2, m-2] - z[0:n-2, m-1]) / csz
+        Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2, m-2] - z[0:n-2, m-1]) / csz
         # (Zd - Zu + Zdl - Zl) / csz
-        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1]
-                          + z[0:n-2, m-2] - z[1:n-1, m-2]) / csz
+        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1] + z[0:n-2, m-2] - z[1:n-1, m-2]) / csz
         Nz[1:n-1, m-1] = 3
         # filling the first row of the matrix
         # (Zl - Zr + Zu - Zur) / csz
-        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m]
-                        + z[1, 1:m-1] - z[1, 2:m]) / csz
+        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m] + z[1, 1:m-1] - z[1, 2:m]) / csz
         # (-2*(Zu - Zp) + Zr - Zur) / csz
-        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1])
-                        + z[0, 2:m] - z[1, 2:m]) / csz
+        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m] - z[1, 2:m]) / csz
         Nz[0, 1:m-1] = 3
         # filling the last row of the matrix
         # (Zl - Zr + Zdl - Zd) / csz
-        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m]
-                          + z[n-2, 0:m-2] - z[n-2, 1:m-1]) / csz
+        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m] + z[n-2, 0:m-2] - z[n-2, 1:m-1]) / csz
         # (2*(Zd - Zp) + Zdl - Zl) / csz
-        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1])
-                          + z[n-2, 0:m-2] - z[n-1, 0:m-2]) / csz
+        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2] - z[n-1, 0:m-2]) / csz
         Nz[n-1, 1:m-1] = 3
         # filling the corners of the matrix
         Nx[0, 0] = (z[1, 0] - z[1, 1] - (z[0, 1] - z[0, 0])) / csz
@@ -193,55 +185,44 @@ def getNormalMesh(dem, num):
         Nx[0, m-1] = (z[0, m-2] - z[0, m-1]) / csz
         Ny[0, m-1] = -(z[1, m-1] - z[0, m-1]) / csz
         Nz[0, m-1] = 1
-        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1]
-                        + z[n-2, m-2] - z[n-2, m-1]) / csz
-        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1]
-                        + z[n-2, m-2] - z[n-1, m-2]) / csz
+        Nx[n-1, m-1] = (z[n-1, m-2] - z[n-1, m-1] + z[n-2, m-2] - z[n-2, m-1]) / csz
+        Ny[n-1, m-1] = (z[n-2, m-1] - z[n-1, m-1] + z[n-2, m-2] - z[n-1, m-2]) / csz
         Nz[n-1, m-1] = 2
 
     if num == 8:
         # filling the inside of the matrix
         # normal calculation with 8 triangles
         # (2*(Zl - Zr) + Zul - Zur + Zdl - Zdr) / csz
-        Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m])
-                            + z[2:n, 0:m-2] - z[2:n, 2:m]
+        Nx[1:n-1, 1:m-1] = (2 * (z[1:n-1, 0:m-2] - z[1:n-1, 2:m]) + z[2:n, 0:m-2] - z[2:n, 2:m]
                             + z[0:n-2, 0:m-2] - z[0:n-2, 2:m]) / csz
         # (2*(Zd - Zu) - Zul - Zur + Zdl + Zdr) / csz
-        Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1])
-                            - z[2:n, 0:m-2] - z[2:n, 2:m]
+        Ny[1:n-1, 1:m-1] = (2 * (z[0:n-2, 1:m-1] - z[2:n, 1:m-1]) - z[2:n, 0:m-2] - z[2:n, 2:m]
                             + z[0:n-2, 0:m-2] + z[0:n-2, 2:m]) / csz
         Nz = 8 * Nz
         # filling the first col of the matrix
         # (- 2*(Zr - Zp) + Zu - Zur + Zd - Zdr) / csz
-        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0])
-                        + z[2:n, 0] - z[2:n, 1] + z[0:n-2, 0] - z[0:n-2, 1]) / csz
+        Nx[1:n-1, 0] = (- 2*(z[1:n-1, 1] - z[1:n-1, 0]) + z[2:n, 0] - z[2:n, 1] + z[0:n-2, 0] - z[0:n-2, 1]) / csz
         # (Zd - Zu + Zdr - Zur) / csz
-        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0]
-                        + z[0:n-2, 1] - z[2:n, 1]) / csz
+        Ny[1:n-1, 0] = (z[0:n-2, 0] - z[2:n, 0] + z[0:n-2, 1] - z[2:n, 1]) / csz
         Nz[1:n-1, 0] = 4
         # filling the last col of the matrix
         # (2*(Zl - Zp) + Zdl - Zd + Zul - Zu) / csz
         Nx[1:n-1, m-1] = (2*(z[1:n-1, m-2] - z[1:n-1, m-1]) + z[0:n-2, m-2]
                           - z[0:n-2, m-1] + z[2:n, m-2] - z[2:n, m-1]) / csz
         # (Zd - Zu + Zdl - Zul) / csz
-        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1]
-                          + z[0:n-2, m-2] - z[2:n, m-2]) / csz
+        Ny[1:n-1, m-1] = (z[0:n-2, m-1] - z[2:n, m-1] + z[0:n-2, m-2] - z[2:n, m-2]) / csz
         Nz[1:n-1, m-1] = 4
         # filling the first row of the matrix
         # (Zl - Zr + Zul - Zur) / csz
-        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m]
-                        + z[1, 0:m-2] - z[1, 2:m]) / csz
+        Nx[0, 1:m-1] = (z[0, 0:m-2] - z[0, 2:m] + z[1, 0:m-2] - z[1, 2:m]) / csz
         # (-2*(Zu - Zp) + Zr - Zur + Zl - Zul) / csz
-        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m]
-                        - z[1, 2:m] + z[0, 0:m-2] - z[1, 0:m-2]) / csz
+        Ny[0, 1:m-1] = (- 2*(z[1, 1:m-1] - z[0, 1:m-1]) + z[0, 2:m] - z[1, 2:m] + z[0, 0:m-2] - z[1, 0:m-2]) / csz
         Nz[0, 1:m-1] = 4
         # filling the last row of the matrix
         # (Zl - Zr + Zdl - Zdr) / csz
-        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m]
-                          + z[n-2, 0:m-2] - z[n-2, 2:m]) / csz
+        Nx[n-1, 1:m-1] = (z[n-1, 0:m-2] - z[n-1, 2:m] + z[n-2, 0:m-2] - z[n-2, 2:m]) / csz
         # (2*(Zd - Zp) + Zdl - Zl + Zdr - Zr) / csz
-        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2]
-                          - z[n-1, 0:m-2] + z[n-2, 2:m] - z[n-1, 2:m]) / csz
+        Ny[n-1, 1:m-1] = (2*(z[n-2, 1:m-1] - z[n-1, 1:m-1]) + z[n-2, 0:m-2] - z[n-1, 0:m-2] + z[n-2, 2:m] - z[n-1, 2:m]) / csz
         Nz[n-1, 1:m-1] = 4
         # filling the corners of the matrix
         Nx[0, 0] = (z[1, 0] - z[1, 1] - (z[0, 1] - z[0, 0])) / csz
@@ -266,10 +247,8 @@ def getNormalMesh(dem, num):
         z2 = np.append(z1, z1[-2, :].reshape(1, m1), axis=0)
         n2, m2 = np.shape(z2)
 
-        Nx = - ((z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])
-                + (z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])) * csz
-        Ny = - ((z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])
-                - (z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])) * csz
+        Nx = - ((z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1]) + (z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1])) * csz
+        Ny = - ((z2[1:n2, 1:m2] - z2[0:n2-1, 0:m2-1]) - (z2[0:n2-1, 1:m2] - z2[1:n2, 0:m2-1])) * csz
         Nz = 2 * Nz * csz * csz
 
         # Nx = - (z2[0:n2-1, 1:m2] - z2[0:n2-1, 0:m2-1]) / csz
@@ -396,12 +375,10 @@ def splitPart(particles):
                 if type(particles[key]).__module__ == np.__name__:
                     # create unique ID for the new particles
                     if key == 'ID':
-                        particles['ID'] = np.append(
-                            particles['ID'], np.arange(nID, nID + nAdd, 1))
+                        particles['ID'] = np.append(particles['ID'], np.arange(nID, nID + nAdd, 1))
                     # set the parent properties to new particles due to splitting
                     elif np.size(particles[key]) == nPart:
-                        particles[key] = np.append(
-                            particles[key], particles[key][ind]*np.ones((nAdd)))
+                        particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
 
     particles['mTot'] = np.sum(particles['m'])
     return particles
@@ -435,8 +412,7 @@ def mergeParticleDict(particles1, particles2):
         # the minimum
         # ToDo: are we sure we want the minimum?
         elif key == 'massPerPart':
-            particles['massPerPart'] = min(
-                particles1['massPerPart'], particles2['massPerPart'])
+            particles['massPerPart'] = min(particles1['massPerPart'], particles2['massPerPart'])
         # now if the value is a numpy array and this key is also in particles2
         elif (key in particles2) and (type(particles1[key]).__module__ == np.__name__):
             # deal with the specific cases:
@@ -446,8 +422,7 @@ def mergeParticleDict(particles1, particles2):
             # of particles2 so that the ID stays a unique identifier and
             # that the parentID is consistent with this shift.
             if (key == 'ID') or (key == 'parentID'):
-                particles[key] = np.append(
-                    particles1[key], particles2[key] + particles1['nID'])
+                particles[key] = np.append(particles1[key], particles2[key] + particles1['nID'])
             # general case where the key value is an array with as many elements
             # as particles
             elif np.size(particles1[key]) == nPart1:
@@ -530,8 +505,7 @@ def getTrackedParticles(particlesList, particles2Track):
     # add trackedParticles array to the particles dictionary for every saved time step
     for particles in particlesList:
         # find index of particles to track
-        index = [ind for ind, parent in enumerate(
-            particles['parentID']) if parent in particles2Track]
+        index = [ind for ind, parent in enumerate(particles['parentID']) if parent in particles2Track]
         nPartTracked = max(nPartTracked, len(index))
         trackedParticles = np.zeros(particles['Npart'])
         trackedParticles[index] = 1
@@ -564,9 +538,14 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     nTimeSteps = len(particlesList)
     trackedPartProp = {}
     trackedPartProp['time'] = np.zeros(nTimeSteps)
+    newProperties = []
     # initialize
     for key in properties:
-        trackedPartProp[key] = np.zeros((nTimeSteps, nPartTracked))
+        if key in particlesList[0]:
+            trackedPartProp[key] = np.zeros((nTimeSteps, nPartTracked))
+            newProperties.append(key)
+        else:
+            log.warning('%s is not a particle property' % key)
 
     # extract wanted properties and build the time series
     trackedPartID = []
@@ -578,7 +557,7 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
             if id not in trackedPartID:
                 trackedPartID.append(id)
             indCol = trackedPartID.index(id)
-            for key in properties:
+            for key in newProperties:
                 trackedPartProp[key][nTime, indCol] = particles[key][ind]
 
     return trackedPartProp

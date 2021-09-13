@@ -115,8 +115,7 @@ colorAvaframe = ['#0EF8EA', '#12E4E6', '#28D0DF', '#3CBCD5', '#4AA8C9',
 cmapAvaframe = mplCol.ListedColormap(colorAvaframe)
 cmapAvaframe.set_bad(color='k')
 # add a continuous version
-cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list(
-    'cmapAvaframeCont', colorAvaframe, N=256)
+cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list('cmapAvaframeCont', colorAvaframe, N=256)
 
 
 # for the choice of the colormaps, check https://www.fabiocrameri.ch/colourmaps/
@@ -257,8 +256,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
         # check if list of colors is provided
         elif 'colors' in colormapDict.keys():
             colorsNew = colormapDict['colors']
-            cmap = mplCol.LinearSegmentedColormap.from_list(
-                'myCmap', colorsNew, N=256)
+            cmap = mplCol.LinearSegmentedColormap.from_list('myCmap', colorsNew, N=256)
         # Houston ve have a problem
         else:
             message = 'You need a `colors` list or a `cmap` to be able to create the colormap'
@@ -337,10 +335,20 @@ def NonUnifIm(ax, x, y, z, xlab, ylab, **kwargs):
 def saveAndOrPlot(pathDict, outFileName, fig):
     """
     Receive a plot handle and config and check whether to save and or plot
-    closes it afterwards
+    closes it afterwards.
+    If saved, the plot will be saved in pathDict['pathResult']/pics/outFileName.extention
+
+    Parameters
+    ----------
+        pathDict : dict
+            with field "pathResult" (path to output folder)
+        outFileName: str
+            output file name
+        fig: matplotlib figure
+
     """
 
-    if cfgFlags.getboolean('plotFigure'):
+    if cfgFlags.getboolean('showPlot'):
         plt.show()
     else:
         plt.ioff()
@@ -410,8 +418,7 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''
-    cbar = ax2.figure.colorbar(
-        im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9)
+    cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9)
     cbar.outline.set_visible(False)
     cbar.ax.set_title('[' + myUnit + ']')
     if title != '':
@@ -427,16 +434,14 @@ def putAvaNameOnPlot(ax, avaDir):
     # if avaDir is just a single avaDir or a list of avaDirs
     if isinstance(avaDir, str) or isinstance(avaDir, pathlib.Path):
         avaName = pathlib.PurePath(avaDir).name
-        infoText = datetime.datetime.now().strftime("%d.%m.%y") + \
-            '; ' + str(avaName)
+        infoText = datetime.datetime.now().strftime("%d.%m.%y") + '; ' + str(avaName)
     else:
         infoText = datetime.datetime.now().strftime("%d.%m.%y")
         for ava in avaDir:
             avaName = pathlib.PurePath(ava).name
             infoText = infoText + ';' + str(avaName)
 
-    plt.text(0, 0, infoText, fontsize=8, verticalalignment='bottom',
-             horizontalalignment='left', transform=ax.transAxes,
-             color='0.6')
+    plt.text(0, 0, infoText, fontsize=8, verticalalignment='bottom', horizontalalignment='left',
+             transform=ax.transAxes, color='0.6')
 
     return infoText

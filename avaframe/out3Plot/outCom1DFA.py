@@ -13,8 +13,23 @@ cfgMain = cfgUtils.getGeneralConfig()
 cfgFlags = cfgMain['FLAGS']
 
 
-def plotTrackParticle(outDirData, Particles, trackedPartProp, cfg, demOri, dem):
-    """ Plot time series of tracked partcles"""
+def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
+    """ Plot time series of tracked partcles
+    Parameters
+    ----------
+    outDirData: str
+        path to output directory
+    particlesList: list
+        list or particles dictionaries
+    trackedPartProp: dict
+        dictionary with time series of the wanted properties for tracked
+        particles
+    cfg : dict
+        configuration read from ini file
+    dem: dict
+        dem dictionary with normal information
+
+    """
     cfgTrackPart = cfg['TRACKPARTICLES']
     radius = cfgTrackPart.getfloat('radius')
     centerList = cfgTrackPart['centerTrackPartPoint']
@@ -25,9 +40,8 @@ def plotTrackParticle(outDirData, Particles, trackedPartProp, cfg, demOri, dem):
     time = trackedPartProp['time']
 
     # do some ploting
-    # ToDo: put this in a plotting folder (here just to demonstrate how this works)
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
-    # fig.suptitle('This is a somewhat long figure title')
+    fig.suptitle('Tracked particles')
     ax1 = plt.subplot(221)
     ax1 = addDem2Plot(ax1, dem, what='slope')
     circle1 = plt.Circle((center['x'], center['y']), radius, color='r')
@@ -35,13 +49,13 @@ def plotTrackParticle(outDirData, Particles, trackedPartProp, cfg, demOri, dem):
     ax1.add_patch(circle1)
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
-    ax1.set_title('Tracked particles trajectory')
+    ax1.set_title('Trajectory')
 
     ax2 = plt.subplot(222)
     ax2.plot(time, trackedPartProp['m'])
     ax2.set_xlabel('t [s]')
     ax2.set_ylabel('m [kg]')
-    ax2.set_title('Tracked particles mass')
+    ax2.set_title('Mass')
 
     ax3 = plt.subplot(223)
     velocity = DFAtls.norm(trackedPartProp['ux'], trackedPartProp['uy'],
@@ -49,13 +63,13 @@ def plotTrackParticle(outDirData, Particles, trackedPartProp, cfg, demOri, dem):
     ax3.plot(time, velocity)
     ax3.set_xlabel('t [s]')
     ax3.set_ylabel('v [m/s]')
-    ax3.set_title('Tracked particles velocity')
+    ax3.set_title('Velocity')
 
     ax4 = plt.subplot(224)
     ax4.plot(time, trackedPartProp['h'])
     ax4.set_xlabel('t [s]')
     ax4.set_ylabel('h [m]')
-    ax4.set_title('Tracked particles flow depth')
+    ax4.set_title('Flow depth')
 
     pathDict = {}
     pathDict['pathResult'] = outDirData
@@ -65,8 +79,11 @@ def plotTrackParticle(outDirData, Particles, trackedPartProp, cfg, demOri, dem):
     if cfgFlags.getboolean('showPlot'):
         fig2 = plt.figure()
         ax1 = plt.subplot(111)
-        for count in range(len(Particles)):
-            update(count, Particles, ax1, dem)
+        for count in range(len(particlesList)):
+            particles = particlesList[count]
+            ax1 = update(particles, ax1, dem)
+            ax1 = addDem2Plot(ax1, dem, what='slope')
+            plt.pause(0.1)
         plt.show()
 
         # ani = FuncAnimation(fig2, update, round(len(Particles)),
@@ -78,8 +95,9 @@ def plotTrackParticle(outDirData, Particles, trackedPartProp, cfg, demOri, dem):
         # ani.save("testTrackAlr1.gif", writer=writer)
 
 
-def update(count, Particles, ax, dem):
-    particles = Particles[count]
+def update(particles, ax, dem):
+    """Update axes with particles (tracked particles are highlighted in red)
+    """
 
     header = dem['header']
     xllc = header['xllcenter']
@@ -91,19 +109,26 @@ def update(count, Particles, ax, dem):
     ax.clear()
     ax.set_title('t=%.2f s' % particles['t'])
     variable = particles['trackedParticles']
-    ax = addDem2Plot(ax, dem, what='slope')
-    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapPres, np.amin(variable),
-                                           np.amax(variable), continuous=True)
     # set range and steps of colormap
     cc = np.where(variable == 1, True, False)
     ax.scatter(X, Y, c='b', cmap=None, marker='.')
     ax.scatter(X[cc], Y[cc], c='r', cmap=None, marker='.', s=5)
-
-    plt.pause(0.1)
+    return ax
 
 
 def addDem2Plot(ax, dem, what='slope'):
-    """ Add dem to the background of a plot"""
+    """ Add dem to the background of a plot
+
+    Parameters
+    ----------
+    ax: mathplotlix ax object
+    dem: dict
+        dem dictionary with normal information
+    what: str
+        what information abour the dem will be plotted?
+        slope: use the dem slope (computed from the normals) to color the plot
+        z : use the elevation to color the plot
+    """
     header = dem['header']
     ncols = header['ncols']
     nrows = header['nrows']

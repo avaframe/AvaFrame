@@ -142,8 +142,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
     # Figure: Pressure depth speed
 
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
-    fig.subplots_adjust(left=0.05, bottom=0.05,
-                        right=0.95, top=0.95, hspace=0.3)
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, maxVal, meanVal, titleVal, unitVal in zip(axes.flatten(), dataMax, dataMean, title, unit):
         ax.plot(maxVal[0, :], s, '--k', label='Max Reference')
@@ -163,8 +162,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
                             'thresholdValue', str(thresholdValue).replace('.', 'p'), 'slComparison'])
     pU.saveAndOrPlot(pathDict, cfgFlags, outFileName, fig)
 
-    outFilePath = os.path.join(
-        pathDict['pathResult'], 'pics', outFileName + '.png')
+    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
 
     return outFilePath
 
@@ -231,8 +229,8 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
 
     ax2 = plt.subplot(122)
 
-    ax2.fill_betweenx(s, pPercentile[2], pPercentile[0],
-                      facecolor=[.8, .8, .8], alpha=0.5, label=('[%.2f, %.2f]%% interval' % (percentile/2, 100-percentile/2)))
+    ax2.fill_betweenx(s, pPercentile[2], pPercentile[0], facecolor=[.8, .8, .8], alpha=0.5,
+                      label=('[%.2f, %.2f]%% interval' % (percentile/2, 100-percentile/2)))
     matplotlib.patches.Patch(alpha=0.5, color=[.8, .8, .8])
     ax2.plot(pMedian, s, color='r', label='median')
     ax2.plot(pMean, s, color='b', label='mean')
@@ -276,8 +274,7 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
     # Figure: Pressure depth speed
 
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(pU.figW*2, pU.figH))
-    fig.subplots_adjust(left=0.05, bottom=0.05,
-                        right=0.95, top=0.95, hspace=0.3)
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, dataMass, title, unit in zip(axes.flatten(), DataMass, Title, Unit):
         ax.plot(time, dataMass[0, :], '-k', label='Reference')
@@ -292,8 +289,7 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
     # ax2.set_ylabel('z [m]')
     ax2.spines['right'].set_color('r')
     ax2.tick_params(axis='y', colors='r')
-    ax2.plot(time, (dataMass[1, :]-dataMass[0, :])
-             / dataMass[0, :]*100, 'r', label='total mass')
+    ax2.plot(time, (dataMass[1, :]-dataMass[0, :]) / dataMass[0, :]*100, 'r', label='total mass')
 
     if np.any(entMass):
         axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[0, :])+np.nanmax(dataMass[0, :]))/2, 'Entrained Mass Difference : %.2f kg \n Relative to entrained mass : %.2f %% \n Relative to total mass : %.2f %% ' %
@@ -310,8 +306,7 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
     pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
-    outFilePath = os.path.join(
-        pathDict['pathResult'], 'pics', outFileName + '.png')
+    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
 
     return outFilePath
 
@@ -354,13 +349,12 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict, cfgFlags):
     # Figure: Pressure depth speed
 
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
-    fig.subplots_adjust(left=0.05, bottom=0.05,
-                        right=0.95, top=0.95, hspace=0.3)
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
     for ax, cmap, data, title, unit in zip(axes.flatten(), Cmap, Data, Title, Unit):
         maskedArray = np.ma.masked_where(data == 0, data)
-        cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(
-            maskedArray), np.nanmax(maskedArray), continuous=pU.contCmap)
+        cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(maskedArray), np.nanmax(maskedArray),
+                                               continuous=pU.contCmap)
         cmap.set_bad('w', 1.)
         ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
 
@@ -375,8 +369,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict, cfgFlags):
         pU.addColorBar(im, ax, ticks, unit)
         pU.putAvaNameOnPlot(ax, pathDict['projectName'])
 
-    outFileName = '_'.join([projectName, 'plim',
-                            str((plim)).replace('.', 'p'), 'referenceFields'])
+    outFileName = '_'.join([projectName, 'plim', str((plim)).replace('.', 'p'), 'referenceFields'])
 
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
@@ -485,8 +478,7 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
     refData = refData[indStartOfRunout:, :]
     dataDiff = compData - refData
     dataDiff = np.where((refData == 0) & (compData == 0), np.nan, dataDiff)
-    dataDiffPlot = np.where(
-        (refData < thresholdArray[-1]) & (compData < thresholdArray[-1]), np.nan, dataDiff)
+    dataDiffPlot = np.where((refData < thresholdArray[-1]) & (compData < thresholdArray[-1]), np.nan, dataDiff)
     dataDiffPlot = dataDiffPlot[np.isnan(dataDiffPlot) == False]
 
     if dataDiffPlot.size:
@@ -503,17 +495,14 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
         cmap.set_bad(color='w')
         elev_max = inputs['diffLim']
         ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
-                                 extent=[l.min(), l.max(),
-                                         s[indStartOfRunout], yLim],
-                                 cmap=cmap)
+                                 extent=[l.min(), l.max(), s[indStartOfRunout], yLim], cmap=cmap)
         im3.set_clim(vmin=-elev_max, vmax=elev_max)
 
         # print contour lines only if the thre threshold is reached
         L, S = np.meshgrid(l, s[indStartOfRunout:])
         colorsP = pU.colorMaps['pfd']['colors'][1:]
         if (np.where(refData > thresholdArray[-1], True, False)).any():
-            contourRef = ax2.contour(
-                L, S, refData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
+            contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
             labels = [str(level) + unit for level in thresholdArray[:-1]]
             for j in range(len(contourRef.collections)):
                 contourRef.collections[j].set_label(labels[j])
@@ -530,9 +519,7 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
 
         if pathDict['compType'][0] == 'comModules':
-            namePrint = 'refMod:' + \
-                pathDict['compType'][1] + '_' + \
-                'compMod:' + pathDict['compType'][2]
+            namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
             pU.putAvaNameOnPlot(ax2, namePrint)
 
         if indDiff.any():
@@ -561,8 +548,7 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
         '.', 'p'),  'sim', str(i), 'ContourComparisonToReference'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
-    outFilePath = os.path.join(
-        pathDict['pathResult'], 'pics', outFileName + '.png')
+    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
 
     return outFilePath
 
@@ -610,8 +596,7 @@ def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     TN = resAnalysis['TN']
     areaSum = TP[nRef] + FN[nRef]
     if areaSum == 0:
-        log.warning(
-            'Reference did not reach the run-out area. Not normalizing area indicators')
+        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
         areaSum = np.ones(np.shape(TP))
 
     ############################################
@@ -711,8 +696,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
     runout = resAnalysis['runout'][0]
     areaSum = resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef]
     if areaSum == 0:
-        log.warning(
-            'Reference did not reach the run-out area. Not normalizing area indicators')
+        log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
         areaSum = 1
     rTP = resAnalysis['TP'] / areaSum
     rFP = resAnalysis['FP'] / areaSum
@@ -727,8 +711,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
 
     elif flag == 3:
         title = 'Visualizing max ' + name + ' data'
-        tipo = 'relMax' + resType + '_thresholdValue' + \
-            str(thresholdValue).replace('.', 'p')
+        tipo = 'relMax' + resType + '_thresholdValue' + str(thresholdValue).replace('.', 'p')
         data = maxMaxDPPR / maxMaxDPPR[nRef]
         yaxis_label = 'relative max ' + name + ' [-]'
 
@@ -747,8 +730,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
         if pathDict['colorParameter'] == []:
             nSamples = np.size(runout)
             colors = np.zeros(nSamples)
-            cmap, _, ticks, norm = pU.makeColorMap(
-                pU.cmapVar, None, None, continuous=True)
+            cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
             displayColorBar = False
             dataFrame = False
         else:
@@ -772,8 +754,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
         dataFrame = False
         nSamples = np.size(runout)
         colors = np.zeros(nSamples)
-        cmap, _, ticks, norm = pU.makeColorMap(
-            pU.cmapVar, None, None, continuous=True)
+        cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
     #######################################
     # Final result diagram - z_profile+data
 
@@ -785,8 +766,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
     ax1.set_ylabel(yaxis_label, color=pU.cmapVar['colors'][-1])
     ax1.spines['left'].set_color(pU.cmapVar['colors'][-1])
     ax1.tick_params(axis='y', colors=pU.cmapVar['colors'][-1])
-    ax1.set_xlabel(''.join(['s [m] - runout with ', str(thresholdValue),
-                            ' kPa threshold']))
+    ax1.set_xlabel(''.join(['s [m] - runout with ', str(thresholdValue),' kPa threshold']))
     pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 10
@@ -810,8 +790,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
             sns.scatterplot('runout', 'data', marker=pU.markers,
                             data=df, hue='colorParameter', palette=cmap, ax=ax1)
         else:
-            sc = ax1.scatter(runout, data, marker=pU.markers,
-                             c=colors, cmap=cmap)
+            sc = ax1.scatter(runout, data, marker=pU.markers, c=colors, cmap=cmap)
             if displayColorBar:
                 pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
         ax1.plot(runout[nRef], data[nRef], color='g', label='Reference', marker='+',
@@ -843,8 +822,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
         cbar.ax.set_ylabel('hit rate density')
     else:
         if dataFrame:
-            sns.scatterplot('rFP', 'rTP', marker=pU.markers,
-                            data=df, hue='colorParameter', palette=cmap, ax=ax1)
+            sns.scatterplot('rFP', 'rTP', marker=pU.markers, data=df, hue='colorParameter', palette=cmap, ax=ax1)
         else:
             sc = ax1.scatter(rFP, rTP, marker=pU.markers, c=colors, cmap=cmap)
             if displayColorBar:
