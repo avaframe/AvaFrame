@@ -134,6 +134,17 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
     return pathDict
 
 
+def computeCellSizeSL(cfgSetup, demHeader):
+    if cfgSetup['cellSizeSL'] == '':
+        cellSizeSL = demHeader['cellsize']
+        log.info('cellSizeSL is read from the dem header and is : %.2f m' % cellSizeSL)
+    else:
+        cellSizeSL = cfgSetup.getfloat('cellSizeSL')
+        log.info('cellSizeSL is read from the configuration file and is : %.2f m' % cellSizeSL)
+
+    return cellSizeSL
+
+
 def makeDomainTransfo(pathDict, cfgSetup):
     """ Make domain transformation
 
@@ -179,7 +190,6 @@ def makeDomainTransfo(pathDict, cfgSetup):
     DefaultName = pathDict['projectName']
 
     w = cfgSetup.getfloat('domainWidth')
-    cellSize = cfgSetup.getfloat('cellSizeSL')
     startOfRunoutAreaAngle = cfgSetup.getfloat('startOfRunoutAreaAngle')
 
     log.debug('Data-file %s analysed and domain transformation done' % demSource)
@@ -187,10 +197,11 @@ def makeDomainTransfo(pathDict, cfgSetup):
     # read dem file
     dem = IOf.readRaster(demSource)
 
+    cellSizeSL = computeCellSizeSL(cfgSetup, dem['header'])
     # Initialize transformation dictionary
     rasterTransfo = {}
     rasterTransfo['domainWidth'] = w
-    rasterTransfo['cellSizeSL'] = cellSize
+    rasterTransfo['cellSizeSL'] = cellSizeSL
 
     # read avaPath
     avaPath = shpConv.readLine(ProfileLayer, DefaultName, dem)
@@ -216,11 +227,11 @@ def makeDomainTransfo(pathDict, cfgSetup):
 
     ##########################################################################
     # put back the scale due to the desiered cellsize
-    rasterTransfo['s'] = rasterTransfo['s']*cellSize
-    rasterTransfo['l'] = rasterTransfo['l']*cellSize
-    rasterTransfo['gridx'] = rasterTransfo['gridx']*cellSize
-    rasterTransfo['gridy'] = rasterTransfo['gridy']*cellSize
-    rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*cellSize*cellSize
+    rasterTransfo['s'] = rasterTransfo['s']*cellSizeSL
+    rasterTransfo['l'] = rasterTransfo['l']*cellSizeSL
+    rasterTransfo['gridx'] = rasterTransfo['gridx']*cellSizeSL
+    rasterTransfo['gridy'] = rasterTransfo['gridy']*cellSizeSL
+    rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*cellSizeSL*cellSizeSL
     # (x,y) coordinates of the resamples avapth (centerline where l = 0)
     n = np.shape(rasterTransfo['l'])[0]
     indCenter = int(np.floor(n/2))

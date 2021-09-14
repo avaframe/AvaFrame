@@ -163,7 +163,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
 
     outFileName = '_'.join([projectName, resType,
                             'thresholdValue', str(thresholdValue).replace('.', 'p'), 'slComparison'])
-    pU.saveAndOrPlot(pathDict, cfgFlags, outFileName, fig)
+    pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     outFilePath = os.path.join(
         pathDict['pathResult'], 'pics', outFileName + '.png')
@@ -283,8 +283,8 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
         fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
         for ax, dataMass, title, unit in zip(axes.flatten(), DataMass, Title, Unit):
-            ax.plot(time, dataMass[nRef, :], '-k', label='Reference')
-            ax.plot(time, dataMass[i, :], '-b', label='Simulation')
+            ax.plot(time, dataMass[nRef, :], '-k', label='Reference : %d ' % nRef)
+            ax.plot(time, dataMass[i, :], '-b', label='Simulation : %d ' % i)
 
             ax.set_title(title + ' function of time')
             ax.legend(loc=4)
@@ -309,7 +309,7 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
 
         outFileName = '_'.join([projectName, 'massAnalysis', str(i)])
         pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
-        pU.saveAndOrPlot(pathDict, cfgFlags, outFileName, fig)
+        pU.saveAndOrPlot(pathDict, outFileName, fig)
 
         outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
         i = i + 1
@@ -397,6 +397,7 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
     refRasterMask = inputs['refRasterMask']
     newRasterMask = inputs['newRasterMask']
     i = inputs['i']
+    nRef = pathDict['referenceFile']
     resType = inputs['resType']
     unit = pU.cfgPlotUtils['unit' + resType]
     name = pU.cfgPlotUtils['name' + resType]
@@ -406,7 +407,7 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
 
     ############################################
     # Figure: Raster comparison (mask for the pThreshold given in the ini file)
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+    fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
     ax1 = plt.subplot2grid((1, 2), (0, 0))
 
     # get color map
@@ -447,6 +448,9 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
                  bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
     if pathDict['compType'][0] == 'comModules':
         namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
+        pU.putAvaNameOnPlot(ax2, namePrint)
+    else:
+        namePrint = 'ref:' + str(nRef) + '_' + 'sim:' + str(i)
         pU.putAvaNameOnPlot(ax2, namePrint)
 
     ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
@@ -509,19 +513,24 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
             for j in range(len(contourRef.collections)):
                 contourRef.collections[j].set_label(labels[j])
         else:
-            log.warning('Reference did not reach the run out area!')
-            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference did not reach the run out area!', fontsize=24, color='red',
+            log.warning('Reference %d did not reach the run out area!' % nRef)
+            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference %d did not reach the run out area!' % nRef,
+                     fontsize=24, color='red',
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
         if (np.where(compData > thresholdArray[-1], True, False)).any():
             contourComp = ax2.contour(
                 L, S, compData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP, linestyles='dashed')
         else:
-            log.warning('Simulation did not reach the run out area!')
-            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Simulation did not reach the run out area!', fontsize=24, color='red',
+            log.warning('Simulation %d did not reach the run out area!' % i)
+            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Simulation %d did not reach the run out area!' % i,
+                         fontsize=24, color='red',
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
 
         if pathDict['compType'][0] == 'comModules':
             namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
+            pU.putAvaNameOnPlot(ax2, namePrint)
+        else:
+            namePrint = 'ref:' + str(nRef) + '_' + 'sim:' + str(i)
             pU.putAvaNameOnPlot(ax2, namePrint)
 
         if indDiff.any():
@@ -529,8 +538,8 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
             ax3 = plt.subplot2grid((3, 3), (2, 1))
             ax4 = plt.subplot2grid((3, 3), (2, 2))
             # there is data to compare in the run out area
-            centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False',
-                                             title=['%s diff histogram' % name, '%s diff CDF (95%% and 99%% centiles)' % name])
+            centiles = sPlot.plotHistCDFDiff(dataDiffPlot, ax4, ax3, insert='False', title=['%s diff histogram' % name,
+                                             '%s diff CDF (95%% and 99%% centiles)' % name])
 
         ax2.set_ylim([s[indStartOfRunout], yLim])
         ax2.legend(loc='lower right')
@@ -542,7 +551,10 @@ def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
         ax2.text(.5, .5, 'No data in the run out area!', fontsize=24, color='red',
                  bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
 
-    ax2.set_title('%s difference and contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
+    if pathDict['compType'][0] == 'comModules':
+        ax2.set_title('%s difference and contour lines' % name + '\n' + 'refMod = full, compMod = dashed line')
+    else:
+        ax2.set_title('%s difference and contour lines' % name + '\n' + 'ref = full, sim = dashed line')
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(thresholdValue).replace(
