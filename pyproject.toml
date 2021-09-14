@@ -1,5 +1,4 @@
 [build-system]
 # Cython dependency is optional, see setup.py for details.
 # For the package (run-time) dependencies, see setup.cfg.
-requires = ["setuptools", "wheel", "numpy"]
-build-backend = "setuptools.build_meta" 
+requires = ["setuptools", "numpy", "cython"]

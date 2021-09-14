@@ -18,11 +18,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy
-          pip install -e .
+          pip install numpy cython
+      # This compilation is necessary to have the .c file for the next step
+      # Alternative is to include the .c file in the repo
       - name: Compile cython code
         run: |
           if [ -f avaframe/com1DFA/DFAfunctionsCython.pyx ]; then python setup.py build_ext --inplace; fi
+      - name: Install avaframe 
+        run: |
+          pip install .
       - name: build manylinux wheels
         uses: RalfG/python-wheels-manylinux-build@v0.3.4-manylinux2014_x86_64
         with:
@@ -49,8 +53,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install numpy
-          pip install -e .
+          pip install numpy cython
+      - name: Compile cython code
+        run: |
+          if [ -f avaframe/com1DFA/DFAfunctionsCython.pyx ]; then python setup.py build_ext --inplace; fi
+      - name: Install avaframe 
+        run: |
+          pip install .
       - name: create source distribution
         run: python setup.py sdist
       - name: upload source distribution
@@ -78,7 +87,12 @@ jobs:
       - name: build wheel
         run: |
           pip install wheel
-          pip install numpy
+          pip install numpy cython
+      - name: Compile cython code
+        run: |
+          python setup.py build_ext --inplace
+      - name: build wheel
+        run: |
           python setup.py bdist_wheel
       - name: upload wheel
         run: |
