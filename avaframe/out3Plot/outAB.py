@@ -51,7 +51,6 @@ def writeABtoSHP(resAB):
     w.field('fid', 'N')
     w.field('Name', 'C', '60')
     w.field('Angle', 'F', 5, 1)
-    # w.field('Distance', 'F', '40')
 
     # loop through the profiles
     for i, profile in enumerate(avaPath['Name']):
@@ -63,21 +62,25 @@ def writeABtoSHP(resAB):
         w.point(cuProf['x'][cuProf['ids10Point']], cuProf['y'][cuProf['ids10Point']])
         w.record(i, pointName, cuProf['beta'])
 
-        pointName = profile + '_Alpha'
-        w.point(cuProf['x'][cuProf['ids_alpha']], cuProf['y'][cuProf['ids_alpha']])
-        w.record(i, pointName, cuProf['alpha'])
+        if cuProf['ids_alpha'] is not None:
+            pointName = profile + '_Alpha'
+            w.point(cuProf['x'][cuProf['ids_alpha']], cuProf['y'][cuProf['ids_alpha']])
+            w.record(i, pointName, cuProf['alpha'])
 
-        pointName = profile + '_AlphaPlus1SD'
-        w.point(cuProf['x'][cuProf['ids_alphaP1SD']], cuProf['y'][cuProf['ids_alphaP1SD']])
-        w.record(i, pointName, cuProf['alphaSD'][0])
+        if cuProf['ids_alphaP1SD'] is not None:
+            pointName = profile + '_AlphaPlus1SD'
+            w.point(cuProf['x'][cuProf['ids_alphaP1SD']], cuProf['y'][cuProf['ids_alphaP1SD']])
+            w.record(i, pointName, cuProf['alphaSD'][0])
 
-        pointName = profile + '_AlphaMinus1SD'
-        w.point(cuProf['x'][cuProf['ids_alphaM1SD']], cuProf['y'][cuProf['ids_alphaM1SD']])
-        w.record(i, pointName, cuProf['alphaSD'][1])
+        if cuProf['ids_alphaM1SD'] is not None:
+            pointName = profile + '_AlphaMinus1SD'
+            w.point(cuProf['x'][cuProf['ids_alphaM1SD']], cuProf['y'][cuProf['ids_alphaM1SD']])
+            w.record(i, pointName, cuProf['alphaSD'][1])
 
-        pointName = profile + '_AlphaMinus2SD'
-        w.point(cuProf['x'][cuProf['ids_alphaM2SD']], cuProf['y'][cuProf['ids_alphaM2SD']])
-        w.record(i, pointName, cuProf['alphaSD'][2])
+        if cuProf['ids_alphaM2SD'] is not None:
+            pointName = profile + '_AlphaMinus2SD'
+            w.point(cuProf['x'][cuProf['ids_alphaM2SD']], cuProf['y'][cuProf['ids_alphaM2SD']])
+            w.record(i, pointName, cuProf['alphaSD'][2])
 
     w.close()
 
