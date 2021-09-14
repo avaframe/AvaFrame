@@ -8,7 +8,7 @@ import numpy as np
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
-import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.com1DFA import com1DFA
 
 log = logging.getLogger(__name__)
 

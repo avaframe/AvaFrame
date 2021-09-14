@@ -17,7 +17,7 @@ import numpy as np
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI
-import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.ana1Tests.simiSol as simiSol

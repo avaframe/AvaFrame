@@ -7,7 +7,7 @@ import os
 import pathlib
 
 # Local imports
-import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.com1DFA import com1DFA
 from avaframe.com1DFAOrig import com1DFAOrig
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport

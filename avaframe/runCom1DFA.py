@@ -6,7 +6,7 @@ import pathlib
 
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
-import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
