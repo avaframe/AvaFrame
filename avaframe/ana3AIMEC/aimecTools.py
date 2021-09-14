@@ -6,6 +6,7 @@ import logging
 import pathlib
 import numpy as np
 import copy
+import numbers
 
 
 # Local imports
@@ -137,10 +138,15 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
 def computeCellSizeSL(cfgSetup, demHeader):
     if cfgSetup['cellSizeSL'] == '':
         cellSizeSL = demHeader['cellsize']
-        log.info('cellSizeSL is read from the dem header and is : %.2f m' % cellSizeSL)
-    else:
+        log.info('cellSizeSL is read from the refference header and is : %.2f m' % cellSizeSL)
+    elif isinstance(cfgSetup['cellSizeSL'], numbers.Number):
         cellSizeSL = cfgSetup.getfloat('cellSizeSL')
         log.info('cellSizeSL is read from the configuration file and is : %.2f m' % cellSizeSL)
+    else:
+        message = ('cellSizeSL is read from the configuration file but should be a number, you provided: %s'
+                   % cfgSetup['cellSizeSL'])
+        log.error(message)
+        raise ValueError(message)
 
     return cellSizeSL
 
@@ -185,6 +191,8 @@ def makeDomainTransfo(pathDict, cfgSetup):
     """
     # Read input parameters
     demSource = pathDict['demSource']
+    nRef = pathDict['referenceFile']
+    refResultSource = pathDict[cfgSetup['resType']][nRef]
     ProfileLayer = pathDict['profileLayer']
     splitPointSource = pathDict['splitPointSource']
     DefaultName = pathDict['projectName']
@@ -196,8 +204,9 @@ def makeDomainTransfo(pathDict, cfgSetup):
 
     # read dem file
     dem = IOf.readRaster(demSource)
+    refResult = IOf.readRaster(refResultSource)
 
-    cellSizeSL = computeCellSizeSL(cfgSetup, dem['header'])
+    cellSizeSL = computeCellSizeSL(cfgSetup, refResult['header'])
     # Initialize transformation dictionary
     rasterTransfo = {}
     rasterTransfo['domainWidth'] = w
@@ -792,7 +801,7 @@ def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysi
     return resultsAreaAnalysis
 
 
-def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict, cfgFlags):
+def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict):
     """Compare results to reference.
 
     Compute True positive, False negative... areas.
@@ -810,8 +819,6 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict, cfgFlags)
         as well as the levels for the contour line plot
     pathDict: dict
         path to data to analyse
-    cfgFlags: configparser
-        configparser with plot and write flags
 
     Returns
     -------
@@ -907,12 +914,11 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict, cfgFlags)
         inputs['i'] = i
 
         # only plot comparisons of simulations to reference
-        if cfgFlags['savePlot']:
-            if i != nRef:
-                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict, cfgFlags)
-            elif pathDict['numSim'] == 1:
-                compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict, cfgFlags)
-                log.warning('only one simulation, area comparison not meaningful')
+        if i != nRef:
+            compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
+        elif pathDict['numSim'] == 1:
+            compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
+            log.warning('only one simulation, area comparison not meaningfull')
 
     return TP, FN, FP, TN, compPlotPath
 

@@ -23,7 +23,7 @@ from avaframe.out3Plot import statsPlots as sPlot
 log = logging.getLogger(__name__)
 
 
-def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict, cfgFlags):
+def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict):
     """
     Plot and save the domain transformation figure
     """
@@ -106,7 +106,7 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict, cfgFlags):
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags):
+def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
     """
     Plot and save the Peak Fields distribution (max mean per cross section)
     after coordinate transformation
@@ -171,7 +171,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
     return outFilePath
 
 
-def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags):
+def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
     """
     Plot and save the Peak field  distribution after coord transfo
     used when more then 2 simulations are compared
@@ -249,7 +249,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, c
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def visuMass(resAnalysis, pathDict, cfgFlags):
+def visuMass(resAnalysis, pathDict):
     """
     Plot and save the results from mass analysis
     """
@@ -317,7 +317,7 @@ def visuMass(resAnalysis, pathDict, cfgFlags):
     return outFilePath
 
 
-def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict, cfgFlags):
+def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict):
     """
     Plot and save the Peak Pressure Peak Flow depth and Peak speed
     fields after coord transfo
@@ -379,7 +379,7 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict, cfgFlags):
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def visuComparison(rasterTransfo, inputs, pathDict, cfgFlags):
+def visuComparison(rasterTransfo, inputs, pathDict):
     """
     Plot and save the comparison between current simulation and Reference
     in the run-out area

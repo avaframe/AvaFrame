@@ -57,7 +57,7 @@ def AIMEC2Report(pathDict, cfg):
     inputData = {}
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = pressureRaster['rasterData']
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict, cfgFlags)
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
     #################################################################
 
     # transform pressure_data, depth_data and speed_data in new raster
@@ -86,11 +86,10 @@ def AIMEC2Report(pathDict, cfg):
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
 
-    plotName = outAimec.visuRunoutComp(
-        rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags)
+    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict)
     resAnalysis['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
     if cfgFlags.getboolean('flagMass'):
-        plotName = outAimec.visuMass(resAnalysis, pathDict, cfgFlags)
+        plotName = outAimec.visuMass(resAnalysis, pathDict)
         resAnalysis['massAnalysisPlot'] = {'Aimec mass analysis': plotName}
 
     return rasterTransfo, newRasters, resAnalysis
@@ -146,7 +145,7 @@ def mainAIMEC(pathDict, cfg):
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = raster['rasterData']
     inputData['xyHeader'] = raster['header']
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict, cfgFlags)
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
     #################################################################
 
     # transform pressure_data, depth_data and speed_data in new raster
@@ -175,14 +174,14 @@ def mainAIMEC(pathDict, cfg):
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
-    outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict, cfgFlags)
+    outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict)
     if pathDict['numSim'] == 2:
-        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags)
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict)
     else:
-        outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags)
+        outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict)
 
     if cfgFlags.getboolean('flagMass'):
-        outAimec.visuMass(resAnalysis, pathDict, cfgFlags)
+        outAimec.visuMass(resAnalysis, pathDict)
     outAimec.resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis)
 
     # -----------------------------------------------------------
@@ -241,7 +240,7 @@ def AIMECIndi(pathDict, cfg):
     inputData = {}
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = anaRaster['rasterData']
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict, cfgFlags)
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
     #################################################################
 
     # transform resType_data in new raster
@@ -256,14 +255,14 @@ def AIMECIndi(pathDict, cfg):
 
     # Analyze data
     log.debug('Analyzing data in path coordinate system')
-    resAnalysis = postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags)
+    resAnalysis = postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict)
 
     # -----------------------------------------------------------
     # result visualisation + report
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
 
-    outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict, cfgFlags)
+    outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict)
     outAimec.resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis)
 
     return rasterTransfo, newRasters, resAnalysis
@@ -403,7 +402,7 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags):
 
     runoutLength = runout[0]
     TP, FN, FP, TN, compPlotPath = aT.analyzeArea(
-        rasterTransfo, runoutLength, resultsAreaAnalysis[resType]['transformedRasters'], cfgSetup, pathDict, cfgFlags)
+        rasterTransfo, runoutLength, resultsAreaAnalysis[resType]['transformedRasters'], cfgSetup, pathDict)
 
     # affect values to output dictionary
     resAnalysis = {}
@@ -437,7 +436,7 @@ def postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags):
     return resAnalysis
 
 
-def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags):
+def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict):
     """ Analyse one peak field transformed data
 
     Analyse peak field set in resType e.g. ppr
@@ -455,8 +454,6 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags
         parameters for data analysis
     pathDict: dict
         path to data to analyse
-    cfgFlags: congfigParser object
-        configuration settings flagMass used
 
     Returns
     -------
@@ -480,7 +477,7 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags
                                                            transformedDEMRasters)
 
     runoutLength = runout[0]
-    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, dataResType, cfgSetup, pathDict, cfgFlags)
+    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, dataResType, cfgSetup, pathDict)
 
     # affect values to output dictionary
     resAnalysis = {}
