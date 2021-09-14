@@ -48,7 +48,6 @@ def test_analyzeArea(capfd):
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
-    cfgFlags['savePlot'] = 'True'
     cfgSetup['resType'] = 'ppr'
     cfgSetup['thresholdValue'] = '0.9'
     cfgSetup['contourLevels'] = '0.1|0.5|1'
@@ -134,7 +133,6 @@ def test_makeDomainTransfo(capfd):
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
-    cfgFlags['savePlot'] = 'False'
     cfgSetup['startOfRunoutAreaAngle'] = '0'
     cfgSetup['domainWidth'] = '160'
     cfgSetup['resType'] = 'ppr'
@@ -173,7 +171,7 @@ def test_makeDomainTransfo(capfd):
         assert error < 0.4
         assert np.abs(resAnalysis['runout'][0, i] - (240 + 10*(i+1))) < 5
 
-    resAnalysis = ana3AIMEC.postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags)
+    resAnalysis = ana3AIMEC.postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict)
     for i in range(5):
         rasterSource = pathDict['ppr'][i]
         sourceData = IOf.readRaster(rasterSource)

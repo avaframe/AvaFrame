@@ -6,7 +6,6 @@ import logging
 import pathlib
 import numpy as np
 import copy
-import numbers
 
 
 # Local imports
@@ -136,10 +135,12 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
 
 
 def computeCellSizeSL(cfgSetup, demHeader):
+    print(cfgSetup['cellSizeSL'])
+    print(cfgSetup['cellSizeSL'].isdigit())
     if cfgSetup['cellSizeSL'] == '':
         cellSizeSL = demHeader['cellsize']
         log.info('cellSizeSL is read from the refference header and is : %.2f m' % cellSizeSL)
-    elif isinstance(cfgSetup['cellSizeSL'], numbers.Number):
+    elif cfgSetup['cellSizeSL'].isdigit():
         cellSizeSL = cfgSetup.getfloat('cellSizeSL')
         log.info('cellSizeSL is read from the configuration file and is : %.2f m' % cellSizeSL)
     else:
