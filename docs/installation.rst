@@ -116,20 +116,13 @@ for AvaFrame, activate it and install pip in this environment::
 
   conda create --name avaframe_env
   conda activate avaframe_env
-  conda install pip
+  conda install pip numpy cython
 
 Clone the AvaFrame repository (in a directory of your choice: [YOURDIR]) and change into it::
 
   cd [YOURDIR]
   git clone https://github.com/avaframe/AvaFrame.git
   cd AvaFrame
-
-Install avaframe and its requirements::
-
-  pip install -e .
-
-This installs avaframe in editable mode, so every time you import avaframe the
-current (local) version will be used.
 
 Compile the cython com1DFA part. You might also have to install a c-compiler (gcc or similar) through your systems
 package manager::
@@ -138,6 +131,13 @@ package manager::
 
 .. Warning::
    You will have to do this compilation every time something changes in the cython code.
+
+Install avaframe and its requirements::
+
+  pip install -e .
+
+This installs avaframe in editable mode, so every time you import avaframe the
+current (local) version will be used.
 
 Test it by starting ``python`` and do an ``import avaframe``. If no error comes
 up, you are good to go.
