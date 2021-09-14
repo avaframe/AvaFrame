@@ -8,7 +8,7 @@ import numpy as np
 import pathlib
 
 # Local imports
-import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.ana1Tests import damBreak
 import avaframe.in3Utils.initializeProject as initProj

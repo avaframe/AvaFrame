@@ -13,7 +13,7 @@ import numpy as np
 
 # Local imports
 from avaframe.out3Plot import statsPlots as sPlot
-import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.com1DFA import com1DFA
 import avaframe.ana4Stats.probAna as probAna
 from avaframe.ana4Stats import getStats
 from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
