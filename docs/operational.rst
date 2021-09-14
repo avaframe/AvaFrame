@@ -52,3 +52,25 @@ Setup QGis and run
 
 #. Add the described data and run. Results will be loaded after a while
    (depending on the size of your DEM).
+
+Update Avaframe to a new release
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+#. Open the **OSGeo4W Shell** from your start menu
+
+#. Activate the python 3 environment:
+
+    .. code-block:: bash
+
+      py3_env
+
+#. Update AvaFrame
+
+    .. code-block::
+
+      python3 -m pip install -U --user avaframe
+
+   Note: sometimes it is necessary to run this command twice.
+
+
+
