@@ -16,7 +16,6 @@ from avaframe.out3Plot import statsPlots as sPlot
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.ana4Stats.probAna as probAna
 from avaframe.ana4Stats import getStats
-from avaframe.runCom1DFA import runCom1DFA
 from avaframe.ana3AIMEC import ana3AIMEC, dfa2Aimec, aimecTools
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
@@ -56,7 +55,8 @@ avaNameTest = avaName + 'StatsTest'
 statsSimCfg = os.path.join('..', 'benchmarks', avaNameTest, '%sStats_com1DFACfg.ini' % (avaName))
 
 # Run Standalone DFA
-particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = runCom1DFA(avaDir=avaDir, cfgFile=statsSimCfg, relThField='', variationDict='')
+particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avaDir, cfgMain,
+cfgFile=statsSimCfg, relThField='', variationDict='')
 
 if cfg.getboolean('aimec'):
 

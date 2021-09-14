@@ -9,7 +9,6 @@ import pathlib
 
 # Local imports
 import avaframe.com1DFA.com1DFA as com1DFA
-from avaframe import runCom1DFA
 from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.ana1Tests import damBreak
 import avaframe.in3Utils.initializeProject as initProj
@@ -45,7 +44,7 @@ xR = xR * np.cos(phi)  # projected on the horizontal plane
 dtAnalysis = cfg['DAMBREAK'].getfloat('dtStep')
 
 # call com1DFAPy to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile=damBreakCfg)
+Particles, Fields, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile=damBreakCfg)
 
 # create dataFrame of results
 inputDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')

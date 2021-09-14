@@ -10,7 +10,6 @@ import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFA.com1DFA as com1DFA
-from avaframe import runCom1DFA
 import avaframe.ana1Tests.FPtest as FPtest
 
 # from avaframe.DFAkernel.setParam import *
@@ -54,7 +53,8 @@ relDict = FPtest.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
 # call com1DFA to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avalancheDir, cfgFile=FPCfg, relThField=relTh)
+Particles, Fields, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=FPCfg,
+    relThField=relTh)
 relDict['dem'] = dem
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 # option for user interaction

@@ -18,7 +18,6 @@ import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI
 import avaframe.com1DFA.com1DFA as com1DFA
-from avaframe import runCom1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.ana1Tests.simiSol as simiSol
@@ -57,7 +56,8 @@ relDict = simiSol.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
 # call com1DFA to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(avaDir=avalancheDir, cfgFile=simiSolCfg, relThField=relTh)
+Particles, Fields, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg,
+relThField=relTh)
 
 # compute similartiy solution
 log.info('Computing similarity solution')

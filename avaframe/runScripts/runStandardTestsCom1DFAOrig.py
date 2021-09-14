@@ -92,7 +92,7 @@ for test in testList:
     log.info(('Took %s seconds to calculate.' % (timeNeeded)))
 
     # Generata plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avaDir, cfg, cfgMain['FLAGS'], modName)
+    plotDict = oP.plotAllPeakFields(avaDir, cfgMain['FLAGS'], modName)
 
     # Set directory for report
     reportDir = os.path.join(avaDir, 'Outputs', modName, 'reports')

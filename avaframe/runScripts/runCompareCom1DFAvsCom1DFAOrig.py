@@ -7,7 +7,7 @@ import os
 import pathlib
 
 # Local imports
-from avaframe import runCom1DFA
+import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.com1DFAOrig import com1DFAOrig
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
@@ -79,7 +79,7 @@ for avaName in testList:
     # ######################### Run Com1DFA #############################
     # Run python DFA
     # call com1DFA to perform simulation - provide configuration file and release thickness function
-    _, _, _, _, plotDictcom1DFA, reportDictListcom1DFA = runCom1DFA.runCom1DFA(avaDir=avaDir, cfgFile='', relThField='')
+    _, _, _, _, plotDictcom1DFA, reportDictListcom1DFA = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile='', relThField='')
 
     # Set directory for com1DFA report
     reportDir = os.path.join(outDir, 'com1DFA', 'reports')
