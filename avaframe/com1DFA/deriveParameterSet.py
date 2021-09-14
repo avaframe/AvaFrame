@@ -171,7 +171,7 @@ def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict):
             log.info('%s: %s' % (key, variationDict[key]))
 
     # add avalanche directory info to cfg
-    modCfg['GENERAL']['avalancheDir'] = avalancheDir
+    modCfg['GENERAL']['avalancheDir'] = str(avalancheDir)
 
 
     return modCfg, variationDict
