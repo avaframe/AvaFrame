@@ -2,6 +2,7 @@
 import numpy as np
 import pathlib
 import configparser
+import pytest
 
 # Local imports
 import avaframe.ana3AIMEC.aimecTools as aT
@@ -97,3 +98,27 @@ def test_fetchReferenceSimNo(tmp_path):
     print('pathDict test7', pathDict)
     assert pathDict['referenceFile'] == 0
     assert pathDict[cfgSetup['GENERAL']['resType']][pathDict['referenceFile']] == test1PFV
+
+
+def test_computeCellSizeSL(tmp_path):
+    """ test fetchReferenceSimNo"""
+    cfg = configparser.ConfigParser()
+    cfg['AIMECSETUP'] = {'cellSizeSL': ''}
+    cfgSetup = cfg['AIMECSETUP']
+    demHeader = {'cellsize': 1}
+
+    # read the cell size from the header
+    cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader)
+    assert cellSizeSL == 1
+
+    # read the cell size from the cfg
+    cfgSetup['cellSizeSL'] = '3'
+    cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader)
+    assert cellSizeSL == 3
+
+    # check error if no number provided but a character
+    cfgSetup['cellSizeSL'] = 'c'
+    message = ('cellSizeSL is read from the configuration file but should be a number, you provided: c')
+    with pytest.raises(ValueError) as e:
+        assert aT.computeCellSizeSL(cfgSetup, demHeader)
+    assert str(e.value) == message
