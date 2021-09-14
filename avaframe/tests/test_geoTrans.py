@@ -355,7 +355,7 @@ def test_isCounterClockWise(capfd):
     path = mpltPath.Path(polygon)
     is_ccw = geoTrans.isCounterClockWise(path)
 
-    assert is_ccw is False
+    assert is_ccw is not True
 
 
 def test_checkOverlap(capfd):
