@@ -241,16 +241,16 @@ def test_path2domain(capfd):
     print(zSol)
     print(DB['DBXl']*csz)
     testRes = np.allclose(DB['DBXl']*csz, zSol, atol=atol)
-    assert (testRes == True)
+    assert testRes
     zSol = xyPath['x'] + w / np.sqrt(2) / 2
     testRes = np.allclose(DB['DBXr']*csz, zSol, atol=atol)
-    assert (testRes == True)
+    assert testRes
     zSol = xyPath['y'] + w / np.sqrt(2) / 2
     testRes = np.allclose(DB['DBYl']*csz, zSol, atol=atol)
-    assert (testRes == True)
+    assert testRes
     zSol = xyPath['y'] - w / np.sqrt(2) / 2
     testRes = np.allclose(DB['DBYr']*csz, zSol, atol=atol)
-    assert (testRes == True)
+    assert testRes
 
 
 def test_areaPoly(capfd):
@@ -355,7 +355,7 @@ def test_isCounterClockWise(capfd):
     path = mpltPath.Path(polygon)
     is_ccw = geoTrans.isCounterClockWise(path)
 
-    assert is_ccw==False
+    assert is_ccw is False
 
 
 def test_checkOverlap(capfd):
