@@ -5,7 +5,6 @@
 #  Load modules
 import numpy as np
 from avaframe.com1DFA import com1DFA
-from avaframe import runCom1DFA
 import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 import pytest
@@ -1358,10 +1357,13 @@ def test_runCom1DFA(tmp_path):
     avaDir = pathlib.Path(tmp_path, 'testCom1DFA')
     shutil.copytree(inputDir, avaDir)
     cfgFile = avaDir / 'test_com1DFACfg.ini'
+    cfgMain = configparser.ConfigParser()
+    cfgMain['FLAGS'] = {'showPlot': 'False', 'savePlot': 'True', 'ReportDir': 'True', 'reportOneFile': 'True',
+        'debugPlot': 'False'}
     modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile,
                                                modInfo=True)
-    particlesList, fieldsList, tSave, dem, plotDict, reportDictList = runCom1DFA.runCom1DFA(
-        avaDir=avaDir, cfgFile=cfgFile, relThField='', variationDict='')
+    particlesList, fieldsList, tSave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(
+        avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
 
     dictKeys = ['Npart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'mTot',
                 'h', 'NPPC', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
