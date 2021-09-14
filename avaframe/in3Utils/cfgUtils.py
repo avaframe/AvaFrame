@@ -102,10 +102,14 @@ def getModuleConfig(module, fileOverride='', modInfo=False):
     else:
         raise FileNotFoundError('None of the provided cfg files exist ')
 
-    # Finally read it
-    cfg = compareConfig(iniFile, modName, compare, modInfo)
-
-    return cfg
+    if modInfo:
+        # Finally read it
+        cfg, modDict = compareConfig(iniFile, modName, compare, modInfo)
+        return cfg, modDict
+    else:
+        # Finally read it
+        cfg = compareConfig(iniFile, modName, compare, modInfo)
+        return cfg
 
 
 def getDefaultModuleConfig(module, toPrint=True):

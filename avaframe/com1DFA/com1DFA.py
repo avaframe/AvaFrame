@@ -25,6 +25,12 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 import avaframe.out3Plot.outDebugPlots as debPlot
+import avaframe.in3Utils.initialiseDirs as inDirs
+import avaframe.com1DFA.deriveParameterSet as dP
+import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.in1Data import getInput as gI
+from avaframe.out1Peak import outPlotAllPeak as oP
+from avaframe.log2Report import generateReport as gR
 
 #######################################
 # Set flags here
@@ -37,7 +43,106 @@ debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 featLF = False
 
 
-def com1DFAMain(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
+def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=''):
+    """ preprocess information from ini and run all desired simulations, create outputs and reports
+
+        Parameters
+        ------------
+        avalancheDir: str or pathlib Path
+            path to avalanche data
+        cfgFile: str or pathlib Path
+            path to configuration file if overwrite is desired
+        variationDict: dict
+            dictionary with parameter variation info if not provided via ini file
+
+        Returns
+        --------
+        particlesList: list
+            list of particles dictionaries for saving time steps
+        fieldsList: list
+            list of fields dictionaries for saving time steps
+        tSave: list
+            list of saving time steps
+        dem: dict
+            dictionary with dem header and raster data (that has been used for computations)
+        plotDict: dict
+            information on result plot paths
+        reportDictList: list
+            list of report dictionaries for all performed simulations
+    """
+
+    modName = 'com1DFA'
+    # Create output and work directories
+    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
+
+    # get information on simulations that shall be performed according to parameter variation
+    modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict)
+
+    # fetch input data - dem, release-, entrainment- and resistance areas
+    inputSimFiles = gI.getInputDataCom1DFA(avalancheDir, modCfg['FLAGS'])
+
+    # write full configuration file to file
+    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName='sourceConfiguration')
+
+    # create a list of simulations and generate an individual configuration object for each simulation
+    # if need to reproduce exactely the hash - need to be strings with exactely the same number of digits!!
+    simDict = com1DFA.prepareVarSimDict(modCfg, inputSimFiles, variationDict)
+
+    log.info('The following simulations will be performed')
+    for key in simDict:
+        log.info('Simulation: %s' % key)
+
+    reportDictList = []
+    # loop over all simulations
+    for cuSim in simDict:
+
+        # load configuration dictionary for cuSim
+        cfg = simDict[cuSim]['cfgSim']
+
+        # save configuration settings for each simulation
+        simHash = simDict[cuSim]['simHash']
+        cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName=cuSim)
+
+        # log simulation name
+        log.info('Run simulation: %s' % cuSim)
+
+        # set release area scenario
+        inputSimFiles['releaseScenario'] = simDict[cuSim]['relFile']
+
+        # +++++++++++++++++++++++++++++++++
+        # ------------------------
+        particlesList, fieldsList, tSave, dem, reportDict, cfgFinal = com1DFA.com1DFACore(cfg, avalancheDir, cuSim, inputSimFiles, outDir, relThField)
+
+        # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+
+        reportDictList.append(reportDict)
+
+        # export for visulation
+        if cfg['VISUALISATION'].getboolean('writePartToCSV'):
+            outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
+            com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+
+        # create hash to check if config didnt change
+        simHashFinal = cfgUtils.cfgHash(cfgFinal)
+        if simHashFinal != simHash:
+            log.warning('simulation configuration has been changed since start')
+            cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
+
+    # Set directory for report
+    reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
+    # Generate plots for all peakFiles
+    plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
+    # write report
+    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+
+    # read all simulation configuration files and return dataFrame and write to csv
+    standardCfg = cfgUtils.getDefaultModuleConfig(com1DFA, toPrint=False)
+    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg=standardCfg, writeCSV=True)
+
+    return particlesList, fieldsList, tSave, dem, plotDict, reportDictList
+
+
+def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     """ Run main com1DFA model
 
     This will compute a dense flow avalanche

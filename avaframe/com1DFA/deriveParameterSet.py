@@ -8,7 +8,7 @@ import numpy as np
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
-
+import avaframe.com1DFA.com1DFA as com1DFA
 
 log = logging.getLogger(__name__)
 
@@ -133,3 +133,45 @@ def validateVarDict(variationDict, standardCfg):
         del variationDict[ipar]
 
     return variationDict
+
+
+def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict):
+    """ read info on which simulations shall be performed according to parameter variation
+
+        Parameters
+        -----------
+        avalancheDir: str or pathlib Path
+            path to avalanche directory
+        cfgFile: str or pathlib Path
+            path to override configuration file
+        variationDict: dict
+            dictionary with parameter variation info
+
+        Returns
+        --------
+        modCfg: configparser object
+            configuration of simulations to be performed
+        variationDict: dict
+            dictionary with information on parameter variations
+
+    """
+
+    # generate list of simulations from desired configuration
+    if variationDict == '':
+        # Load full configuration
+        modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
+        variationDict = getVariationDict(avalancheDir, modCfg, modInfo)
+    else:
+        # check if variationDict items exist and are provided in correct format
+        # Load standard/ default configuration
+        modCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+        variationDict = validateVarDict(variationDict, modCfg)
+        log.info('Variations are performed for:')
+        for key in variationDict:
+            log.info('%s: %s' % (key, variationDict[key]))
+
+    # add avalanche directory info to cfg
+    modCfg['GENERAL']['avalancheDir'] = avalancheDir
+
+
+    return modCfg, variationDict
