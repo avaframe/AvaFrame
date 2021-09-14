@@ -61,3 +61,22 @@ def test_validateVarDict():
     assert variationDictTest['rhoEnt'] == ['200.']
     assert np.array_equal(variationDictTest['rho'], np.asarray([300, 400]))
     assert 'relThAA' not in variationDictTest.keys()
+
+
+
+def test_checkResType():
+    """ test checking if desired result type is in availble result types """
+
+    # setup required input
+    fullCfg = configparser.ConfigParser()
+    fullCfg['GENERAL'] = {'resType': 'pfd|ppr|pfv|particles|test1|test2'}
+    section = 'GENERAL'
+    key = 'resType'
+    value = 'pfd|ppr|pfv|particles|test1|test2'
+
+    # call function to be tested
+    fullCfg = dP.checkResType(fullCfg, section, key, value)
+
+    print('fullCfg', fullCfg)
+
+    assert fullCfg['GENERAL']['resType'] == 'pfd|ppr|pfv|particles'
