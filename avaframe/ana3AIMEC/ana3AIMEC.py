@@ -86,7 +86,7 @@ def AIMEC2Report(pathDict, cfg):
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
 
-    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict)
+    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, cfgSetup, pathDict)
     resAnalysis['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
     if cfgFlags.getboolean('flagMass'):
         plotName = outAimec.visuMass(resAnalysis, pathDict)
@@ -176,7 +176,7 @@ def mainAIMEC(pathDict, cfg):
     log.info('Visualisation of AIMEC results')
     outAimec.visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict)
     if pathDict['numSim'] == 2:
-        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict)
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysis, cfgSetup, pathDict)
     else:
         outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict)
 
