@@ -1,5 +1,5 @@
 """
-    Run script for running the standard tests
+    Run script for running the variations tests
 """
 
 # Load modules
@@ -9,7 +9,7 @@ import pathlib
 import glob
 
 # Local imports
-from avaframe.com1DFA import com1DFA
+from avaframe.com1DFAOrig import com1DFAOrig
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
@@ -22,6 +22,17 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from benchmarks import simParametersVar
 
+#+++++++++REQUIRED+++++++++++++
+# Which result types for comparison plots
+outputVariable = ['ppr', 'pfd', 'pfv']
+# aimec settings
+aimecResType = 'ppr'
+aimecThresholdValue = '1'
+aimecDiffLim = '5'
+aimecContourLevels = '1|3|5|10'
+aimecFlagMass = 'False'
+aimecComModules = 'benchmarkReference|com1DFAOrig'
+#++++++++++++++++++++++++++++++
 
 # log file name; leave empty to use default runLog.log
 logName = 'runVariationsTests'
@@ -70,22 +81,22 @@ for test in testList:
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # get path to executable
-    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFA)
+    cfgCom1DFA = cfgUtils.getModuleConfig(com1DFAOrig)
     com1Exe = cfgCom1DFA['GENERAL']['com1Exe']
 
     # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%sVarPar_com1DFACfg.ini' % test['AVANAME'])
-    cfg = cfgUtils.getModuleConfig(com1DFA, standardCfg)
+    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%sVarPar_com1DFAOrigCfg.ini' % test['AVANAME'])
+    cfg = cfgUtils.getModuleConfig(com1DFAOrig, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
     # Set timing
     startTime = time.time()
     # Run Standalone DFA
-    reportDictList = com1DFA.com1DFAMain(cfg, avaDir)
+    reportDictList = com1DFAOrig.com1DFAOrigMain(cfg, avaDir)
 
-    modName = 'com1DFA'
+    modName = 'com1DFAOrig'
 
     # Print time needed
     endTime = time.time()
@@ -93,10 +104,10 @@ for test in testList:
     log.info(('Took %s seconds to calculate.' % (timeNeeded)))
 
     # Generata plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avaDir, cfg, cfgMain['FLAGS'])
+    plotDict = oP.plotAllPeakFields(avaDir, cfgMain['FLAGS'], modName)
 
     # Set directory for report
-    reportDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'reports')
+    reportDir = os.path.join(avaDir, 'Outputs', modName, 'reports')
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
@@ -117,12 +128,12 @@ for test in testList:
     # load configuration
     aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' % test['AVANAME'])
     cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
-    cfgAimec['AIMECSETUP']['resType'] = 'ppr'
-    cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
-    cfgAimec['AIMECSETUP']['diffLim'] = '5'
-    cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
-    cfgAimec['FLAGS']['flagMass'] = 'False'
-    cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFA'
+    cfgAimec['AIMECSETUP']['resType'] = aimecResType
+    cfgAimec['AIMECSETUP']['thresholdValue'] = aimecThresholdValue
+    cfgAimec['AIMECSETUP']['diffLim'] = aimecDiffLim
+    cfgAimec['AIMECSETUP']['contourLevels'] = aimecContourLevels
+    cfgAimec['FLAGS']['flagMass'] = aimecFlagMass
+    cfgAimec['AIMECSETUP']['comModules'] = aimecComModules
     cfgAimec['AIMECSETUP']['testName'] = test['NAME']
 
     # Setup input from com1DFA and reference
@@ -145,25 +156,19 @@ for test in testList:
     # Load input parameters from configuration file
     cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
 
-    # REQUIRED+++++++++++++++++++
-    # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
-    # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
-    outputVariable = ['ppr', 'pfd', 'pfv']
     plotListRep = {}
     reportD['Simulation Difference'] = {}
     reportD['Simulation Stats'] = {}
-    # ++++++++++++++++++++++++++++
 
     # Plot data comparison for all output variables defined in suffix
     for var in outputVariable:
-        plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfgMain, cfgRep, var)
+        plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfgMain, var)
         for plot in plotDict['plots']:
             plotListRep.update({var: plot})
             reportD['Simulation Difference'].update({var: plotDict['difference']})
             reportD['Simulation Stats'].update({var: plotDict['stats']})
 
     # copy files to report directory
-    print('plots', plotListRep)
     plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep)
     aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
     plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, plotPaths)
