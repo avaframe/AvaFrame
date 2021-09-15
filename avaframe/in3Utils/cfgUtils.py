@@ -44,7 +44,7 @@ def getGeneralConfig():
         raise FileNotFoundError('None of the provided cfg files exist ')
 
     # Finally read it
-    cfg = compareConfig(iniFile, 'General', compare)
+    cfg,_ = compareConfig(iniFile, 'General', compare)
 
     return cfg
 
@@ -102,14 +102,13 @@ def getModuleConfig(module, fileOverride='', modInfo=False):
     else:
         raise FileNotFoundError('None of the provided cfg files exist ')
 
+    # Finally read it
+    cfg, modDict = compareConfig(iniFile, modName, compare, modInfo)
+
     if modInfo:
-        # Finally read it
-        cfg, modDict = compareConfig(iniFile, modName, compare, modInfo)
         return cfg, modDict
-    else:
-        # Finally read it
-        cfg = compareConfig(iniFile, modName, compare, modInfo)
-        return cfg
+
+    return cfg
 
 
 def getDefaultModuleConfig(module, toPrint=True):
@@ -137,7 +136,7 @@ def getDefaultModuleConfig(module, toPrint=True):
     log.debug('defaultFile: %s', defaultFile)
 
     # Finally read it
-    cfg = compareConfig(defaultFile, modName, compare=False, toPrint=toPrint)
+    cfg,_ = compareConfig(defaultFile, modName, compare=False, toPrint=toPrint)
 
     return cfg
 
@@ -224,10 +223,7 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
         if toPrint:
             logUtils.writeCfg2Log(cfg, modName)
 
-    if modInfo:
-        return cfg, modDict
-    else:
-        return cfg
+    return cfg, modDict
 
 
 def writeCfgFile(avaDir, module, cfg, fileName=''):
