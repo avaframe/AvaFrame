@@ -134,25 +134,25 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
     return pathDict
 
 
-def computeCellSizeSL(cfgSetup, refResulHeader):
+def computeCellSizeSL(cfgSetup, refResultHeader):
     """ Get the new (s, l) coordinate cell size
         read by default the reference result file cell size.
         If a 'cellSizeSL' is specified in cfgSetup then use this one
 
         Parameters
         -----------
-        refResulHeader: dict
-            dictionary wiht the dem header
+        refResultHeader: dict
+            dictionary wiht the raster header
         cfgSetup: configParser object
             configuration for aimec - with field cellSizeSL
 
         Returns
         --------
         cellSizeSL: float
-            cell site to be used for the (s, l) coordinates
+            cell size to be used for the (s, l) coordinates
     """
     if cfgSetup['cellSizeSL'] == '':
-        cellSizeSL = refResulHeader['cellsize']
+        cellSizeSL = refResultHeader['cellsize']
         log.info('cellSizeSL is read from the refference header and is : %.2f m' % cellSizeSL)
     else:
         try:
@@ -218,10 +218,10 @@ def makeDomainTransfo(pathDict, cfgSetup):
 
     log.debug('Data-file %s analysed and domain transformation done' % demSource)
 
-    # read dem file
+    # read dem and reference result file
     dem = IOf.readRaster(demSource)
     refResult = IOf.readRaster(refResultSource)
-
+    # get the cell size for the (s, l) raster
     cellSizeSL = computeCellSizeSL(cfgSetup, refResult['header'])
     # Initialize transformation dictionary
     rasterTransfo = {}
@@ -257,7 +257,7 @@ def makeDomainTransfo(pathDict, cfgSetup):
     rasterTransfo['gridx'] = rasterTransfo['gridx']*cellSizeSL
     rasterTransfo['gridy'] = rasterTransfo['gridy']*cellSizeSL
     rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*cellSizeSL*cellSizeSL
-    # (x,y) coordinates of the resamples avapth (centerline where l = 0)
+    # (x,y) coordinates of the resampled avapth (centerline where l = 0)
     n = np.shape(rasterTransfo['l'])[0]
     indCenter = int(np.floor(n/2))
     rasterTransfo['x'] = rasterTransfo['gridx'][:, indCenter]
@@ -892,16 +892,16 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict):
         refMask = np.where(refMask > thresholdValue, 1, refMask)
         # comparison rasterdata with mask
         log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format('Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
-        newRasterData = copy.deepcopy(rasterdata)
+        compRasterMask = copy.deepcopy(rasterdata)
         # prepare mask for area resAnalysis
-        newRasterData = np.where(np.isnan(newRasterData), 0, newRasterData)
-        newRasterData = np.where(newRasterData <= thresholdValue, 0, newRasterData)
-        newRasterData = np.where(newRasterData > thresholdValue, 1, newRasterData)
+        compRasterMask = np.where(np.isnan(compRasterMask), 0, compRasterMask)
+        compRasterMask = np.where(compRasterMask <= thresholdValue, 0, compRasterMask)
+        compRasterMask = np.where(compRasterMask > thresholdValue, 1, compRasterMask)
 
-        tpInd = np.where((refMask[nStart:] == 1) & (newRasterData[nStart:] == 1))
-        fpInd = np.where((refMask[nStart:] == 0) & (newRasterData[nStart:] == 1))
-        fnInd = np.where((refMask[nStart:] == 1) & (newRasterData[nStart:] == 0))
-        tnInd = np.where((refMask[nStart:] == 0) & (newRasterData[nStart:] == 0))
+        tpInd = np.where((refMask[nStart:] == 1) & (compRasterMask[nStart:] == 1))
+        fpInd = np.where((refMask[nStart:] == 0) & (compRasterMask[nStart:] == 1))
+        fnInd = np.where((refMask[nStart:] == 1) & (compRasterMask[nStart:] == 0))
+        tnInd = np.where((refMask[nStart:] == 0) & (compRasterMask[nStart:] == 0))
 
         # subareas
         tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
@@ -926,7 +926,7 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict):
         inputs['compData'] = rasterdata
         # masked data for the dataThreshold given in the ini file
         inputs['refRasterMask'] = refMask
-        inputs['newRasterMask'] = newRasterData
+        inputs['compRasterMask'] = compRasterMask
         inputs['i'] = i
 
         # only plot comparisons of simulations to reference

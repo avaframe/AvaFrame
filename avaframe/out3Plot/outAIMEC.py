@@ -29,6 +29,22 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict):
     The left subplot shows the reference result raster with the outline of the
     new domain. The second one shows this same data in the (s,l) coordinate
     system define by the outline in the first plot.
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        domain transformation information
+    inputData : dict
+        inputData dictionary:
+            slRaster: numpy array with (s,l) raster
+            xyRaster: numpy array with (x,y) raster
+            headerXY: header corresponding to xyRaster
+    cfgSetup : configparser
+        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
+        'resType'
+    pathDict : dict
+        dictionary with path to data to analyze
+
     """
     ####################################
     # Get input data
@@ -109,10 +125,24 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict):
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
+def visuRunoutComp(rasterTransfo, resAnalysis, cfgSetup, pathDict):
     """
     Plot and save the Peak Fields distribution (max mean per cross section)
     after coordinate transformation
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        domain transformation information
+    resAnalysis: dict
+        results from Aimec analysis (for ppr, pfd and pfv):
+            PPRCrossMax: numpy array with max peak field along path for each file to analyse
+            PPRCrossMean: numpy array with mean peak field along path for each file to analyse
+    cfgSetup : configparser
+        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
+        'resType' and 'thresholdValue'
+    pathDict : dict
+        dictionary with path to data to analyze
     """
     ####################################
     # Get input data
@@ -177,6 +207,22 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
     """
     Plot and save the Peak field  distribution after coord transfo
     used when more then 2 simulations are compared
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        domain transformation information
+    resAnalysis: dict
+        results from Aimec analysis:
+            numpy array with max peak field (of the 'resType') along path for each file to analyse
+            runout for 'resType'
+    newRasters: dict
+        dictionary with new (s, l) raster for the 'resType'
+    cfgSetup : configparser
+        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
+        'percentile', 'resType' and 'thresholdValue'
+    pathDict : dict
+        dictionary with path to data to analyze
     """
     ####################################
     # Get input data
@@ -211,7 +257,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
 
     ############################################
     # Figure: Analysis runout
-    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
+    fig = plt.figPPRCrossMaxure(figsize=(pU.figW*2, pU.figH))
     ax1 = plt.subplot(121)
 
     ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
@@ -254,6 +300,18 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
 def visuMass(resAnalysis, pathDict):
     """
     Plot and save the results from mass analysis
+
+    Parameters
+    ----------
+    resAnalysis: dict
+        mass results from Aimec analysis:
+            entMassFlowArray: entrained mass array corresponding to the time array for each simulation to analyse
+            totalMassArray: entrained mass array corresponding to the time array for each simulation to analyse
+            entMass: final entrained for each simulation
+            finalMass: final mass for each simulation
+            time: time array
+    pathDict : dict
+        dictionary with path to data to analyze
     """
     ####################################
     # Get input data
@@ -323,6 +381,18 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict):
     """
     Plot and save the Peak Pressure Peak Flow depth and Peak speed
     fields after coord transfo
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        domain transformation information
+    resAnalysis: dict
+        results from Aimec analysis:
+            numpy array with the 'runout' for each simulation and the 'thresholdValue'
+    newRasters: dict
+        dictionary with new (s, l) raster for ppr, pfd and pfd
+    pathDict : dict
+        dictionary with path to data to analyze
     """
     ####################################
     # Get input data
@@ -385,6 +455,21 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     """
     Plot and save the comparison between current simulation and Reference
     in the run-out area
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        domain transformation information
+    inputs: dict
+        input data for plot:
+            'refData' and 'compData' arrays
+            'refRasterMask' and 'compRasterMask' arrays
+            'thresholdArray'
+            'i' id of the simulation
+            'resType' result type analyzed
+            'diffLim'
+    pathDict : dict
+        dictionary with path to data to analyze
     """
     ####################################
     # Get input data
@@ -397,7 +482,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     refData = inputs['refData']
     compData = inputs['compData']
     refRasterMask = inputs['refRasterMask']
-    newRasterMask = inputs['newRasterMask']
+    compRasterMask = inputs['compRasterMask']
     i = inputs['i']
     nRef = pathDict['referenceFile']
     resType = inputs['resType']
@@ -438,9 +523,9 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     cmap.set_under(color='b')
     cmap.set_over(color='r')
     cmap.set_bad(alpha=0)
-    data = newRasterMask-refRasterMask
+    data = compRasterMask-refRasterMask
     data = np.ma.masked_where(data == 0.0, data)
-    if newRasterMask[indStartOfRunout:, :].any() or refRasterMask[indStartOfRunout:, :].any():
+    if compRasterMask[indStartOfRunout:, :].any() or refRasterMask[indStartOfRunout:, :].any():
         ref1, im1 = pU.NonUnifIm(ax2, l, s, data, 'l [m]', 's [m]',
                                  extent=[l.min(), l.max(), s[indStartOfRunout], yLim], cmap=cmap)
         im1.set_clim(vmin=-0.5, vmax=0.5)
