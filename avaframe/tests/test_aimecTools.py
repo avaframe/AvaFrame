@@ -116,6 +116,11 @@ def test_computeCellSizeSL(tmp_path):
     cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader)
     assert cellSizeSL == 3
 
+    # read the cell size from the cfg
+    cfgSetup['cellSizeSL'] = '3.1'
+    cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader)
+    assert cellSizeSL == 3.1
+
     # check error if no number provided but a character
     cfgSetup['cellSizeSL'] = 'c'
     message = ('cellSizeSL is read from the configuration file but should be a number, you provided: c')
