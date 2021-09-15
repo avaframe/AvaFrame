@@ -134,20 +134,35 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
     return pathDict
 
 
-def computeCellSizeSL(cfgSetup, demHeader):
-    print(cfgSetup['cellSizeSL'])
-    print(cfgSetup['cellSizeSL'].isdigit())
+def computeCellSizeSL(cfgSetup, refResulHeader):
+    """ Get the new (s, l) coordinate cell size
+        read by default the reference result file cell size.
+        If a 'cellSizeSL' is specified in cfgSetup then use this one
+
+        Parameters
+        -----------
+        refResulHeader: dict
+            dictionary wiht the dem header
+        cfgSetup: configParser object
+            configuration for aimec - with field cellSizeSL
+
+        Returns
+        --------
+        cellSizeSL: float
+            cell site to be used for the (s, l) coordinates
+    """
     if cfgSetup['cellSizeSL'] == '':
-        cellSizeSL = demHeader['cellsize']
+        cellSizeSL = refResulHeader['cellsize']
         log.info('cellSizeSL is read from the refference header and is : %.2f m' % cellSizeSL)
-    elif cfgSetup['cellSizeSL'].isdigit():
-        cellSizeSL = cfgSetup.getfloat('cellSizeSL')
-        log.info('cellSizeSL is read from the configuration file and is : %.2f m' % cellSizeSL)
     else:
-        message = ('cellSizeSL is read from the configuration file but should be a number, you provided: %s'
-                   % cfgSetup['cellSizeSL'])
-        log.error(message)
-        raise ValueError(message)
+        try:
+            cellSizeSL = cfgSetup.getfloat('cellSizeSL')
+            log.info('cellSizeSL is read from the configuration file and is : %.2f m' % cellSizeSL)
+        except ValueError:
+            message = ('cellSizeSL is read from the configuration file but should be a number, you provided: %s'
+                       % cfgSetup['cellSizeSL'])
+            log.error(message)
+            raise ValueError(message)
 
     return cellSizeSL
 
@@ -236,7 +251,7 @@ def makeDomainTransfo(pathDict, cfgSetup):
     rasterTransfo = getSArea(rasterTransfo)
 
     ##########################################################################
-    # put back the scale due to the desiered cellsize
+    # put back the scale due to the desired cellsize
     rasterTransfo['s'] = rasterTransfo['s']*cellSizeSL
     rasterTransfo['l'] = rasterTransfo['l']*cellSizeSL
     rasterTransfo['gridx'] = rasterTransfo['gridx']*cellSizeSL

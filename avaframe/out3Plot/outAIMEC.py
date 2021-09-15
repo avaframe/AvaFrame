@@ -26,6 +26,9 @@ log = logging.getLogger(__name__)
 def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict):
     """
     Plot and save the domain transformation figure
+    The left subplot shows the reference result raster with the outline of the
+    new domain. The second one shows this same data in the (s,l) coordinate
+    system define by the outline in the first plot.
     """
     ####################################
     # Get input data
@@ -165,8 +168,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
                             'thresholdValue', str(thresholdValue).replace('.', 'p'), 'slComparison'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
-    outFilePath = os.path.join(
-        pathDict['pathResult'], 'pics', outFileName + '.png')
+    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
 
     return outFilePath
 

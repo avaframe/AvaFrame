@@ -615,7 +615,7 @@ def path2domain(xyPath, rasterTransfo):
     csz = rasterTransfo['cellSizeSL']
     x = xyPath['x']
     y = xyPath['y']
-    # compute the non dimentional width
+    # compute the non dimensional width
     w = rasterTransfo['domainWidth']/2/csz
     # remove scaling due to cellsize
     x = x/csz
