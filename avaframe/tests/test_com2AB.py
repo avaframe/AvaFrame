@@ -107,6 +107,23 @@ def test_calcAB(capfd):
             alphaSD[1] == pytest.approx(alphaSDref[1], rel=tol)) and (
             alphaSD[2] == pytest.approx(alphaSDref[2], rel=tol))
 
+def test_writeABtoSHP(capfd):
+    '''test writing to shapefile'''
+
+    avaName = 'avaSlide'
+    dirname = pathlib.Path(__file__).parents[0]
+    avalancheDir = dirname / '..' / 'data' / avaName
+    cfg = cfgUtils.getModuleConfig(com2AB)
+
+    # run main routine
+    resAB = com2AB.com2ABMain(cfg, avalancheDir)
+    abShpFile = outAB.writeABtoSHP(resAB)
+    abShpFile = str(abShpFile) + '.shp'
+    file_name = pathlib.Path(abShpFile)
+
+    # check if file exists -No checks for correct content -
+    assert file_name.exists()
+
 
 # test complete routine
 def test_com2ABMain(capfd):
