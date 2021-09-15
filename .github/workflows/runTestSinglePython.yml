@@ -31,7 +31,7 @@ jobs:
     # Alternative is to include the .c file in the repo
     - name: Compile cython code
       run: |
-        python setup.py build_ext --inplace
+        python setup.py build_ext --inplace --define CYTHON_TRACE
     - name: Install avaframe 
       run: |
         pip install .
