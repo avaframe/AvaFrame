@@ -3,7 +3,7 @@
     configuration for com1DFAOrig and com1DFA is read from com1DFAOrigCfg.ini and com1DFACfg.ini or if available
     your local copy of them; for aimec the default configuration is read and some parameters are directly set
     within this runScript
-    avalancheDir has to be set as well as the symType that should be compared in the top section: 'required settings'
+    avalancheDir has to be set as well as the simType that should be compared in the top section: 'required settings'
 """
 
 # Load modules
@@ -26,7 +26,7 @@ from avaframe.in3Utils import logUtils
 
 #++++++REQUIRED SETTINGS+++++++++++
 # name of avalanche directory as list, multiple possible
-avaList = ['avaKotST']
+avaList = ['avaParabola']
 # simType that should be compared (options: null, ent, entres, res) -
 # must also be set in the ini files for the computational modules
 simType = 'null'
@@ -52,7 +52,7 @@ logName = 'runCompareCom1DFAOrigvsCom1DFA'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # Set directory for full standard test report
-outDirReport = pathlib.Path('tests', 'reportscom1DFAOrigvsCom1DFA')
+outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAOrigvsCom1DFA')
 fU.makeADir(outDirReport)
 
 # Start writing markdown style report for standard tests
