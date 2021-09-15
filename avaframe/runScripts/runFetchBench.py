@@ -24,7 +24,7 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
 # filter benchmarks for a tag
 type = 'TAGS'
-valuesList = ['pyVersion']
+valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 for test in testList:

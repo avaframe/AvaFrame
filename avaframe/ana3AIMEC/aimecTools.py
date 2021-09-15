@@ -153,7 +153,7 @@ def computeCellSizeSL(cfgSetup, refResultHeader):
     """
     if cfgSetup['cellSizeSL'] == '':
         cellSizeSL = refResultHeader['cellsize']
-        log.info('cellSizeSL is read from the refference header and is : %.2f m' % cellSizeSL)
+        log.info('cellSizeSL is read from the reference header and is : %.2f m' % cellSizeSL)
     else:
         try:
             cellSizeSL = cfgSetup.getfloat('cellSizeSL')
