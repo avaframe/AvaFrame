@@ -72,7 +72,7 @@ def postProcessFPcom1DFA(cfgGen, Particles, Fields, ind_t, relDict):
     force2 = {}
     particles, force2 = DFAfunC.computeForceSPHC(cfgGen, particles, force2, dem, gradient=1)
     gradNorm = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
-    x1, y1, z1, = DFAtls.normalize(x+xllc, y+yllc, 0)
+    x1, y1, z1, = DFAtls.normalize(x+xllc, y+yllc, 0*x)
     uMag = DFAtls.norm(ux, uy, 0)
     v = DFAtls.scalProd(ux, uy, 0, x1, y1, z1)
     grad = DFAtls.scalProd(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'], x1, y1, z1)

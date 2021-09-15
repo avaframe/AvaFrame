@@ -95,8 +95,7 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
         Lx = nx*cellSize
 
         # Figure  shows the result parameter data
-        fig = plt.figure(figsize=(pU.figW, pU.figH))
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         # choose colormap
         cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
         cmap.set_bad(alpha=0)
