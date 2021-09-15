@@ -107,6 +107,7 @@ def test_calcAB(capfd):
             alphaSD[1] == pytest.approx(alphaSDref[1], rel=tol)) and (
             alphaSD[2] == pytest.approx(alphaSDref[2], rel=tol))
 
+
 def test_writeABtoSHP(capfd):
     '''test writing to shapefile'''
 

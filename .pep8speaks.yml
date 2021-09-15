@@ -14,6 +14,7 @@ pycodestyle:  # Same as scanner.linter value. Other option is flake8
         - E741  # ambiguous variable name
         - E226  # space around arithmetic operator
         - E128  # continuation line under-indented for visual indent
+        - E126  # continuation line over-indented for visual indent
         - W503  # line break before binary operator
 
 no_blank_comment: False  # If True, no comment is made on PR without any errors.

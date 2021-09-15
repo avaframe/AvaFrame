@@ -105,6 +105,6 @@ setup(
     # Executable scripts
     entry_points={
     },
-    zip_safe = False,
-    ext_modules = extensions
+    zip_safe=False,
+    ext_modules=extensions
 )
