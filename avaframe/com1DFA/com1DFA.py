@@ -85,7 +85,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
     cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName='sourceConfiguration')
 
     # create a list of simulations and generate an individual configuration object for each simulation
-    # if need to reproduce exactely the hash - need to be strings with exactely the same number of digits!!
+    # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
     simDict = com1DFA.prepareVarSimDict(modCfg, inputSimFiles, variationDict)
 
     log.info('The following simulations will be performed')
@@ -616,7 +616,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
         # remove overlap with main release areas
         noOverlaprasterList = []
         for secRelRatser, secRelName in zip(secondaryReleaseInfo['rasterData'], secondaryReleaseInfo['Name']):
-            noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster,'Secondary release ' + secRelName,
+            noOverlaprasterList.append(geoTrans.checkOverlap(secRelRatser, relRaster, 'Secondary release ' + secRelName,
                                                              'Release', crop=True))
 
         secondaryReleaseInfo['flagSecondaryRelease'] = 'Yes'
@@ -720,8 +720,8 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
         inDirPart = list(searchDir.glob(
             ('*' + cfg['releaseScenario'] + '_' + '*' + cfg['simTypeActual'] + '*')))
         if inDirPart == []:
-            messagePart = 'Initialise particles from file - no particles file found for releaseScenario: %s and simType: %s' % \
-                          (cfg['releaseScenario'], cfg['simTypeActual'])
+            messagePart = ('Initialise particles from file - no particles file found for releaseScenario: %s and simType: %s' %
+                          (cfg['releaseScenario'], cfg['simTypeActual']))
             log.error(messagePart)
             raise FileNotFoundError(messagePart)
         elif len(inDirPart) > 1:
@@ -757,7 +757,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
             hCell = relRaster[indRely, indRelx]
             volCell = areaRaster[indRely, indRelx] * hCell
             massCell = volCell * rho
-            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz,massPerPart, rng,
+            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng,
                                                         cfg['initPartDistType'].lower())
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
@@ -1187,7 +1187,7 @@ def DFAIterate(cfg, particles, fields, dem):
     Tcpu['nIter'] = nIter
     log.info('Ending computation at time t = %f s', t-dt)
     log.debug('Saving results for time step t = %f s', t-dt)
-    log.info('MTot = %f kg, %s particles' %(particles['mTot'], particles['Npart']))
+    log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
     log.info('Computational performances:')
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
     log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
@@ -1890,10 +1890,10 @@ def trackParticles(cfgTrackPart, dem, particlesList):
     particles2Track, track = DFAtls.findParticles2Track(particlesList[0], centerTrackPartPoint, radius)
     if track:
         # find those same particles and their children in the particlesList
-        particlesList, nPartTracked = DFAtls.getTrackedParticles(particlesList,  particles2Track)
+        particlesList, nPartTracked = DFAtls.getTrackedParticles(particlesList, particles2Track)
 
         # extract the wanted properties for the tracked particles
-        trackedPartProp = DFAtls.getTrackedParticlesProperties(particlesList,  nPartTracked, particleProperties)
+        trackedPartProp = DFAtls.getTrackedParticlesProperties(particlesList, nPartTracked, particleProperties)
     else:
         trackedPartProp = None
 

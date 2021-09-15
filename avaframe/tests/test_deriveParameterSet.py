@@ -45,8 +45,8 @@ def test_validateVarDict():
                      'secRelAreA': ['False', 'True'], 'rhoEnt': '200.'}
     standardCfg = configparser.ConfigParser()
     standardCfg.optionxform = str
-    standardCfg['GENERAL'] = {'simTypeList' : 'available', 'modelType' : 'dfa', 'resType' : 'ppr|pfd|pfv',
-                  'tSteps' : '0:1', 'initPartDistType': 'random', 'initialiseParticlesFromFile': 'False',
+    standardCfg['GENERAL'] = {'simTypeList': 'available', 'modelType': 'dfa', 'resType': 'ppr|pfd|pfv',
+                  'tSteps': '0:1', 'initPartDistType': 'random', 'initialiseParticlesFromFile': 'False',
                   'particleFile': '', 'seed': '12345', 'rho': '300|400', 'rhoEnt': '100', 'relTh': '1.',
                   'secRelArea': 'True', 'secondaryRelTh': '0.5', 'dt': '0.05', 'tEnd': '400'}
 
@@ -61,7 +61,6 @@ def test_validateVarDict():
     assert variationDictTest['rhoEnt'] == ['200.']
     assert np.array_equal(variationDictTest['rho'], np.asarray([300, 400]))
     assert 'relThAA' not in variationDictTest.keys()
-
 
 
 def test_checkResType():
