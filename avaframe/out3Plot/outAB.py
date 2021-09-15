@@ -329,7 +329,7 @@ def WriteResults(resAB, name, flags):
     LABEL = ['alpha', 'beta', 'alphaM1SD', 'alphaM2SD', 'alphaP1SD']
 
     # write report and log
-    log.info('Profile: %s with %s parameter set',  name, ParameterSet)
+    log.info('Profile: %s with %s parameter set', name, ParameterSet)
     parameterName = ['k1', 'k2', 'k3', 'k4', 'SD']
     for paramName in parameterName:
         log.info('%s = %g' % (paramName, eqParameters[paramName]))
