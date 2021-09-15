@@ -20,8 +20,10 @@ from avaframe.in3Utils import logUtils
 # -----------Required settings-----------------
 # log file name; leave empty to use default runLog.log
 logName = 'runPrepareforVis'
-
+# which particle properties shall be exported
+particleProperties = 'velocityMagnitude|m'
 # ---------------------------------------------
+
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
@@ -34,7 +36,6 @@ particlesList, TimeStepInfo = com1DFA.readPartFromPickle(avalancheDir, flagAvaDi
 demInfo = gI.readDEM(avalancheDir)
 
 # save particle properties to csv
-particleProperties = 'velocityMagnitude|m'
 outDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAPy')
 fU.makeADir(outDir)
 com1DFA.savePartToCsv(particleProperties, particlesList, outDir)

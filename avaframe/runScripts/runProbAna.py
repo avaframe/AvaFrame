@@ -8,7 +8,7 @@ import glob
 import pathlib
 
 # Local imports
-from avaframe.runCom1DFA import runCom1DFA
+from avaframe.com1DFA import com1DFA
 from avaframe.out3Plot import statsPlots as sP
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.ana4Stats import probAna
@@ -16,12 +16,10 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.in3Utils.fileHandlerUtils as fU
-import avaframe.com1DFA.com1DFA as com1DFA
 
 
 # log file name; leave empty to use default runLog.log
 logName = 'runCom1DFAandProbAna'
-modName = 'com1DFA'
 
 # Load general configuration filee
 cfgMain = cfgUtils.getGeneralConfig()
@@ -46,7 +44,8 @@ for avaDir in avalancheDirectories:
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # Run Standalone DFA
-    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = runCom1DFA(avaDir=avaDir, cfgFile=probSimCfg, relThField='', variationDict='')
+    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avaDir, cfgMain,
+        cfgFile=probSimCfg, relThField='', variationDict='')
 
     # Load input parameters from configuration file
     cfgProb = cfgUtils.getModuleConfig(probAna)

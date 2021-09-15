@@ -1,5 +1,7 @@
 """
-    Run script for running the standard tests
+    Run script for running the standard tests with com1DFAOrig
+    in this test all the available tests tagged standardTests are performed
+
 """
 
 # Load modules
@@ -22,6 +24,17 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from benchmarks import simParametersDict
 
+#+++++++++REQUIRED+++++++++++++
+# Which result types for comparison plots
+outputVariable = ['ppr', 'pfd', 'pfv']
+# aimec settings
+aimecResType = 'ppr'
+aimecThresholdValue = '1'
+aimecDiffLim = '5'
+aimecContourLevels = '1|3|5|10'
+aimecFlagMass = 'False'
+aimecComModules = 'benchmarkReference|com1DFAOrig'
+#++++++++++++++++++++++++++++++
 
 # log file name; leave empty to use default runLog.log
 logName = 'runStandardTestsOrig'
@@ -114,14 +127,18 @@ for test in testList:
 
     # +++++++Aimec analysis
     # load configuration
-    aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' % test['AVANAME'])
-    cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
-    cfgAimec['AIMECSETUP']['resType'] = 'ppr'
-    cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
-    cfgAimec['AIMECSETUP']['diffLim'] = '5'
-    cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
-    cfgAimec['FLAGS']['flagMass'] = 'False'
-    cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFAOrig'
+    aimecCfg = pathlib.Path('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' % test['AVANAME'])
+    if aimecCfg.is_file():
+        cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
+        print('in AIMEC', cfgAimec['AIMECSETUP']['resType'])
+    else:
+        cfgAimec = cfgUtils.getDefaultModuleConfig(ana3AIMEC)
+    cfgAimec['AIMECSETUP']['resType'] = aimecResType
+    cfgAimec['AIMECSETUP']['thresholdValue'] = aimecThresholdValue
+    cfgAimec['AIMECSETUP']['diffLim'] = aimecDiffLim
+    cfgAimec['AIMECSETUP']['contourLevels'] = aimecContourLevels
+    cfgAimec['FLAGS']['flagMass'] = aimecFlagMass
+    cfgAimec['AIMECSETUP']['comModules'] = aimecComModules
     cfgAimec['AIMECSETUP']['testName'] = test['NAME']
 
     # Setup input from com1DFA and reference
@@ -144,14 +161,9 @@ for test in testList:
     # Load input parameters from configuration file
     cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
 
-    # REQUIRED+++++++++++++++++++
-    # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
-    # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
-    outputVariable = ['ppr', 'pfd', 'pfv']
     plotListRep = {}
     reportD['Simulation Difference'] = {}
     reportD['Simulation Stats'] = {}
-    # ++++++++++++++++++++++++++++
 
     # Plot data comparison for all output variables defined in suffix
     for var in outputVariable:
