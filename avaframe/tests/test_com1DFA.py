@@ -123,7 +123,7 @@ def test_prepareRelase(tmp_path):
     assert relName3 == 'release1PF_test'
     assert inputSimLines3['entResInfo']['flagSecondaryRelease'] == 'No'
     assert inputSimLines3['releaseLine']['d0'] == [1.78, 4.328]
-    assert inputSimLines3['secondaryReleaseLine'] == None
+    assert inputSimLines3['secondaryReleaseLine'] is None
     assert badName3 is True
 
 
@@ -1232,8 +1232,7 @@ def test_prepareVarSimDict():
     relPath = pathlib.Path('test', 'relTest_extended.shp')
     inputSimFiles = {'relFiles': [relPath], 'entResInfo': {
         'flagEnt': 'Yes', 'flagRes': 'Yes'}}
-    variationDict = {'rho': np.asarray([200., 150.]), 'simTypeList': [
-                                       'entres', 'ent']}
+    variationDict = {'rho': np.asarray([200., 150.]), 'simTypeList': ['entres', 'ent']}
     simDict2 = com1DFA.prepareVarSimDict(
         standardCfg, inputSimFiles, variationDict)
 
@@ -1284,8 +1283,9 @@ def test_initializeSimulation():
     # setup release line, entrainment line
     releaseLine = {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
                    'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0]}
-    entLine = {'fileName': 'test/entTest.shp', 'Name': ['testEnt'], 'Start': np.asarray([0.]), 'Length': np.asarray([5]),
-               'x': np.asarray([4, 5., 5.0, 4., 4.]), 'y': np.asarray([4., 4., 5.0, 5., 4.0])}
+    entLine = {'fileName': 'test/entTest.shp', 'Name': ['testEnt'], 'Start': np.asarray([0.]),
+               'Length': np.asarray([5]), 'x': np.asarray([4, 5., 5.0, 4., 4.]),
+               'y': np.asarray([4., 4., 5.0, 5., 4.0])}
     inputSimLines = {'releaseLine': releaseLine, 'entResInfo': {'flagSecondaryRelease': 'No'}, 'entLine': entLine,
                      'resLine': ''}
     # set release thickness read from file or not

@@ -89,8 +89,8 @@ def getModuleConfig(module, fileOverride='', modInfo=False):
             iniFile = [defaultFile, fileOverride]
             compare = True
         else:
-            raise FileNotFoundError('Provided fileOverride does not exist: '
-                                    + fileOverride)
+            raise FileNotFoundError('Provided fileOverride does not exist: ' +
+                                    fileOverride)
 
     elif localFile.is_file():
         iniFile = localFile
@@ -209,7 +209,8 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
                 cfg.add_section(section)
                 log.info('Additional section [\'%s\'] is added to the configuration.' % (section))
                 for key in locCfg.items(section):
-                    log.info('Additional Key [\'%s\'] in section [\'%s\'] is added to the configuration.' % (key[0], section))
+                    log.info('Additional Key [\'%s\'] in section [\'%s\'] is added to the configuration.' %
+                             (key[0], section))
                     cfg.set(section, key[0], key[1])
                     log.info('\t\t%s : %s', key[0], key[1])
 
@@ -494,6 +495,7 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
 
     return simNameList
 
+
 def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''):
     """ Filter simulations results using a list of parameters and a flag if in ascending or descending order
 
@@ -515,7 +517,6 @@ def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''
         dataDF: pandas dataFrame
             dataFrame of simulation results (fileName, ... and values for parameters in varParList)
     """
-
 
     # load dataFrame for all configurations
     simDF = createConfigurationInfo(avalancheDir)

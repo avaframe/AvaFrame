@@ -69,7 +69,6 @@ def postProcessFPcom1DFA(cfgGen, Particles, Fields, ind_t, relDict):
     uy = particles['uy']
     m = particles['m']
     h = particles['h']
-    hsph = particles['hSPH']
     force2 = {}
     particles, force2 = DFAfunC.computeForceSPHC(cfgGen, particles, force2, dem, gradient=1)
     gradNorm = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
@@ -86,7 +85,7 @@ def postProcessFPcom1DFA(cfgGen, Particles, Fields, ind_t, relDict):
     x = particles['x']+xllc
     y = particles['y']+yllc
     r = np.sqrt(x*x + y*y)
-    com1DFASol = {'x': x, 'y': y, 'r': r, 'h': h, 'hsph': hsph, 'v': v,
+    com1DFASol = {'x': x, 'y': y, 'r': r, 'h': h, 'v': v,
                     'gradNorm': gradNorm,
                     'grad': grad, 'Grad': Grad, 'uMag': uMag, 'fields': fields}
 
@@ -142,7 +141,6 @@ def plotProfilesFPtest(cfg, ind_time, relDict, comSol):
 
     ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][100,:], '--b', label='field flow depth')
     ax1.plot(r, h, color='b', marker='.', linestyle='None', label='particle flow depth')
-    # ax1.plot(r, hsph, color=col, marker='*', linestyle='None')
 
     # ax2.plot(r, grad, color='b', marker='.', linestyle='None')
     ax2.plot(r, gradNorm, color='k', marker='o', linestyle='None', label='SPH gradient used')
