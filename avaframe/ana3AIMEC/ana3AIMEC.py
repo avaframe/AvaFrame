@@ -41,7 +41,7 @@ def AIMEC2Report(pathDict, cfg):
     cfgFlags = cfg['FLAGS']
     interpMethod = cfgSetup['interpMethod']
 
-    log.info('Prepare data for post-ptocessing')
+    log.info('Prepare data for post-processing')
     # Make domain transformation
     log.info("Creating new deskewed raster and preparing new raster assignment function")
     rasterTransfo = aT.makeDomainTransfo(pathDict, cfgSetup)
@@ -50,13 +50,14 @@ def AIMEC2Report(pathDict, cfg):
     # TODO: needs to be moved somewhere else
     # read reference file
     nRef = pathDict['referenceFile']
-    rasterSource = pathDict['ppr'][nRef]
+    rasterSource = pathDict[cfgSetup['resType']][nRef]
 
-    pressureRaster = IOf.readRaster(rasterSource)
+    raster = IOf.readRaster(rasterSource)
     slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
     inputData = {}
     inputData['slRaster'] = slRaster
-    inputData['xyRaster'] = pressureRaster['rasterData']
+    inputData['xyRaster'] = raster['rasterData']
+    inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
     #################################################################
 
@@ -127,7 +128,7 @@ def mainAIMEC(pathDict, cfg):
     cfgFlags = cfg['FLAGS']
     interpMethod = cfgSetup['interpMethod']
 
-    log.info('Prepare data for post-ptocessing')
+    log.info('Prepare data for post-processing')
     # Make domain transformation
     log.info("Creating new deskewed raster and preparing new raster assignment function")
     rasterTransfo = aT.makeDomainTransfo(pathDict, cfgSetup)
