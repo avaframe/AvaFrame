@@ -1,5 +1,9 @@
 """
-    Run script for running the standard tests
+    Run script for comparing com1DFAOrig to com1DFA results
+    configuration for com1DFAOrig and com1DFA is read from com1DFAOrigCfg.ini and com1DFACfg.ini or if available
+    your local copy of them; for aimec the default configuration is read and some parameters are directly set
+    within this runScript
+    avalancheDir has to be set as well as the symType that should be compared in the top section: 'required settings'
 """
 
 # Load modules
@@ -19,38 +23,56 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
+
+#++++++REQUIRED SETTINGS+++++++++++
+# name of avalanche directory as list, multiple possible
+avaList = ['avaKotST']
+# simType that should be compared (options: null, ent, entres, res) -
+# must also be set in the ini files for the computational modules
+simType = 'null'
+# load configuration
+cfgAimec = cfgUtils.getDefaultModuleConfig(ana3AIMEC)
+cfgAimec['AIMECSETUP']['comModules'] = 'com1DFAOrig|com1DFA'
+cfgAimec['AIMECSETUP']['resType'] = 'ppr'
+cfgAimec['FLAGS']['flagMass'] = 'True'
+# Which parameter to filter data for creating plots, e.g. varPar = 'simType', values = ['null'] or
+# varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
+outputVariable = ['ppr', 'pfd', 'pfv']
+values = simType
+parameter = 'simType'
+#+++++++++++++++++++++++++++++++++++++
+
+# define simTypeString for finding simulations
+simTypeString = '_' + simType + '_'
+
 # log file name; leave empty to use default runLog.log
-logName = 'runComparisonModules'
+logName = 'runCompareCom1DFAOrigvsCom1DFA'
 
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 
-# load all benchmark info as dictionaries from description files
-# testList = ['avaInclinedPlane', 'avaParabola', 'avaBowl', 'avaHelix', 'avaHelixChannel', 'avaHockeySmall', 'avaAlr1', 'avaKot1', 'avaMal1', 'avaHit1', 'avaWog1', 'avaGar1']
-testList = ['avaParabola']
-simType = 'null'
-simTypeString = '_' + simType + '_'
 # Set directory for full standard test report
-outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAOrigvsPy')
+outDirReport = pathlib.Path('tests', 'reportscom1DFAOrigvsCom1DFA')
 fU.makeADir(outDirReport)
 
 # Start writing markdown style report for standard tests
-reportFile = os.path.join(outDirReport, 'com1DFAOrigvsPy.md')
+reportFile = outDirReport / 'com1DFAOrigvsCom1DFA.md'
 with open(reportFile, 'w') as pfile:
 
     # Write header
-    pfile.write('# Standard Tests Report \n')
+    pfile.write('# Comparison Report \n')
     pfile.write('## Compare com1DFAOrig simulation to com1DFA simulation results \n')
 
 # run Standard Tests sequentially
-for avaName in testList:
+for avaName in avaList:
 
+    # set avaDir
     avaDir = 'data' + os.sep + avaName
 
     # Start logging
     log = logUtils.initiateLogger(avaDir, logName)
     log.info('Current avalanche: %s', avaDir)
-    outDir = os.path.join(avaDir, 'Outputs')
+    outDir = pathlib.Path(avaDir, 'Outputs')
 
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
@@ -71,7 +93,7 @@ for avaName in testList:
     plotDictcom1DFAOrig = oP.plotAllPeakFields(avaDir, cfgMain['FLAGS'], modNameOrig)
 
     # Set directory for com1DFA report
-    reportDirOrig = os.path.join(outDir, 'com1DFAOrig', 'reports')
+    reportDirOrig = outDir / 'com1DFAOrig' / 'reports'
     # write report
     gR.writeReport(reportDirOrig, reportDictListcom1DFAOrig, cfgMain['FLAGS'], plotDictcom1DFAOrig)
 
@@ -82,16 +104,15 @@ for avaName in testList:
     _, _, _, _, plotDictcom1DFA, reportDictListcom1DFA = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile='', relThField='')
 
     # Set directory for com1DFA report
-    reportDir = os.path.join(outDir, 'com1DFA', 'reports')
+    reportDir = outDir / 'com1DFA' / 'reports'
     # write report
     gR.writeReport(reportDir, reportDictListcom1DFA, cfgMain['FLAGS'], plotDictcom1DFA)
 
     #######################################################
     # ########### Analyze results ##########################
     # Aimec analysis
-    # load configuration
-    cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
     initProj.cleanModuleFiles(avaDir, ana3AIMEC)
+
     # get release area scenarios
     relArea = []
     for dict in reportDictListcom1DFA:
@@ -132,12 +153,6 @@ for avaName in testList:
 
             # write configuration to file
             cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)
-            if 'ent' in simType:
-                cfgAimec['FLAGS']['flagMass'] = 'True'
-            else:
-                cfgAimec['FLAGS']['flagMass'] = 'False'
-            cfgAimec['AIMECSETUP']['comModules'] = 'com1DFAOrig|com1DFA'
-            cfgAimec['AIMECSETUP']['resType'] = 'ppr'
 
             # Setup input from com1DFA and com1DFAPy
             pathDict = []
@@ -160,16 +175,10 @@ for avaName in testList:
             cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
             cfgRep['PLOT']['refModel'] = 'dfa'
 
-            # REQUIRED+++++++++++++++++++
-            # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
-            # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
-            outputVariable = ['ppr', 'pfd', 'pfv']
-            values = simType
-            parameter = 'simType'
+            # initialize plot dict
             plotListRep = {}
             reportDcom1DFA['Simulation Difference'] = {}
             reportDcom1DFA['Simulation Stats'] = {}
-            # ++++++++++++++++++++++++++++
 
             # Plot data comparison for all output variables defined in suffix
             for var in outputVariable:
