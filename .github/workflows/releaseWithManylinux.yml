@@ -23,7 +23,7 @@ jobs:
       # Alternative is to include the .c file in the repo
       - name: Compile cython code
         run: |
-          if [ -f avaframe/com1DFA/DFAfunctionsCython.pyx ]; then python setup.py build_ext --inplace; fi
+          python setup.py build_ext --inplace
       - name: Install avaframe 
         run: |
           pip install .
@@ -56,7 +56,7 @@ jobs:
           pip install numpy cython
       - name: Compile cython code
         run: |
-          if [ -f avaframe/com1DFA/DFAfunctionsCython.pyx ]; then python setup.py build_ext --inplace; fi
+          python setup.py build_ext --inplace
       - name: Install avaframe 
         run: |
           pip install .
