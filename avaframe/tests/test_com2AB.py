@@ -2,6 +2,7 @@
 import numpy as np
 import pytest
 import pathlib
+import shutil
 
 # Local imports
 import avaframe.com2AB.com2AB as com2AB
@@ -108,12 +109,18 @@ def test_calcAB(capfd):
             alphaSD[2] == pytest.approx(alphaSDref[2], rel=tol))
 
 
-def test_writeABtoSHP(capfd):
+def test_writeABtoSHP(tmp_path):
     '''test writing to shapefile'''
 
     avaName = 'avaSlide'
     dirname = pathlib.Path(__file__).parents[0]
-    avalancheDir = dirname / '..' / 'data' / avaName
+    sourceDir = dirname / '..' / 'data' / avaName
+
+    avalancheDir = tmp_path / avaName
+
+    # Copy input to tmp dir 
+    shutil.copytree(sourceDir, avalancheDir)
+
     cfg = cfgUtils.getModuleConfig(com2AB)
 
     # run main routine
