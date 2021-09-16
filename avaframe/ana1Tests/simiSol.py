@@ -344,6 +344,11 @@ def mainSimilaritySol():
 
     return solSimi
 
+def normL2():
+    """ Compute L2 norm of the error between the analytic and numerical solution
+    """
+
+
 
 def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest):
     """Compare analytical and com1DFA results"""
