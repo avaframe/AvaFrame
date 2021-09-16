@@ -56,7 +56,7 @@ outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAOrigvsCom1DFA')
 fU.makeADir(outDirReport)
 
 # Start writing markdown style report for standard tests
-reportFile = outDirReport / 'com1DFAOrigvsCom1DFA.md'
+reportFile = os.path.join(outDirReport, 'com1DFAOrigvsCom1DFA.md')
 with open(reportFile, 'w') as pfile:
 
     # Write header
