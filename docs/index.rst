@@ -34,6 +34,7 @@ General
    logging.rst
    develop.rst
    testing.rst
+   FAQ.rst
    releaseNotes.rst
    api.rst
 
