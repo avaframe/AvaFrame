@@ -52,11 +52,11 @@ logName = 'runCompareCom1DFAOrigvsCom1DFA'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # Set directory for full standard test report
-outDirReport = os.path.join(os.getcwd(), 'tests', 'reportscom1DFAOrigvsCom1DFA')
+outDirReport = pathlib.Path.cwd() / 'tests' / 'reportscom1DFAOrigvsCom1DFA'
 fU.makeADir(outDirReport)
 
 # Start writing markdown style report for standard tests
-reportFile = os.path.join(outDirReport, 'com1DFAOrigvsCom1DFA.md')
+reportFile = outDirReport / 'com1DFAOrigvsCom1DFA.md'
 with open(reportFile, 'w') as pfile:
 
     # Write header
