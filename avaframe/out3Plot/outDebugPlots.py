@@ -178,11 +178,11 @@ def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last
 
 def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
     header = dem['header']
-    ncols = header.ncols
-    nrows = header.nrows
-    xllc = header.xllcenter
-    yllc = header.yllcenter
-    csz = header.cellsize
+    ncols = header['ncols']
+    nrows = header['nrows']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
     xgrid = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
     ygrid = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
     PointsX, PointsY = np.meshgrid(xgrid, ygrid)

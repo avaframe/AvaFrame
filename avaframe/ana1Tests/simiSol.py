@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 # local imports
 from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFA.com1DFA as com1DFA
+import avaframe.out3Plot.outDebugPlots as outDebugPlots
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
 
@@ -262,7 +263,7 @@ def xc(solSimi, x1, y1, i, L_x):
     return z
 
 
-def runSimilarity():
+def mainSimilaritySol():
     """ Compute similarity solution"""
 
     # Load configuration
@@ -341,6 +342,11 @@ def runSimilarity():
 
     return solSimi
 
+def normL2():
+    """ Compute L2 norm of the error between the analytic and numerical solution
+    """
+
+
 
 def getReleaseThickness(avaDir, cfg, demFile):
     """ Define release thickness for the similarity solution test
@@ -416,14 +422,14 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest):
         ind_time = np.searchsorted(solSimi['Time'], t)
         hSimi = h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
         hSimi = np.where(hSimi <= 0, 0, hSimi)
-        fig, ax, cmap, lev = com1DFA.plotContours(
+        fig, ax, cmap, lev = outDebugPlots.plotContours(
             fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm')
         CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                         linewidths=2, linestyles='dashed')
         plt.pause(1)
         fig.savefig(os.path.join(outDirTest, 'ContourSimiSol%f.%s' % (t, pU.outputFormat)))
 
-    fig, ax, cmap, lev = com1DFA.plotContours(
+    fig, ax, cmap, lev = outDebugPlots.plotContours(
         fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm', last=True)
     CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                     linewidths=2, linestyles='dashed')
@@ -589,27 +595,26 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
     X = relDict['X']
     Y = relDict['Y']
 
-
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
     ax2 = ax1.twinx()
     ax1.axvline(x=xCenter, linestyle=':')
 
     if axis == 'xaxis':
-        ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][indFinal,:], 'k', label='Field flow depth')
-        ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FV'][indFinal,:], 'g', label='Field flow velocity')
+        ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][indFinal, :], 'k', label='Field flow depth')
+        ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FV'][indFinal, :], 'g', label='Field flow velocity')
         ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
         ax2.plot(x, v, '.g', linestyle='None', label='Part flow velocity')
-        ax1.plot(X[indFinal,:], hSimi[indFinal,:], '--k', label='SimiSol flow depth')
-        ax2.plot(X[indFinal,:], vSimi[indFinal,:], '--g', label='SimiSol flow velocity')
+        ax1.plot(X[indFinal, :], hSimi[indFinal, :], '--k', label='SimiSol flow depth')
+        ax2.plot(X[indFinal, :], vSimi[indFinal, :], '--g', label='SimiSol flow velocity')
         ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
         ax1.set_xlabel('x in [m]')
     elif axis == 'yaxis':
-        ax1.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:,indFinal], 'k', label='Field flow depth')
-        ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FV'][:,indFinal], 'g', label='Field flow velocity')
+        ax1.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:, indFinal], 'k', label='Field flow depth')
+        ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FV'][:, indFinal], 'g', label='Field flow velocity')
         ax1.plot(y, h, '.k', linestyle='None', label='Part flow depth')
         ax2.plot(y, v, '.g', linestyle='None', label='Part flow velocity')
-        ax1.plot(Y[:,indFinal], hSimi[:,indFinal], '--k', label='SimiSol flow depth')
-        ax2.plot(Y[:,indFinal], vSimi[:,indFinal], '--g', label='SimiSol flow velocity')
+        ax1.plot(Y[:, indFinal], hSimi[:, indFinal], '--k', label='SimiSol flow depth')
+        ax2.plot(Y[:, indFinal], vSimi[:, indFinal], '--g', label='SimiSol flow velocity')
         ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
         ax1.set_xlabel('y in [m]')
 
