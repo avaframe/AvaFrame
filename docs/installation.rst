@@ -130,7 +130,8 @@ package manager::
   python setup.py build_ext --inplace
 
 .. Warning::
-   You will have to do this compilation every time something changes in the cython code.
+   You will have to do this compilation every time something changes in the cython code. We also suggest
+   to do this everytime updates from the repositories are pulled.
 
 Install avaframe and its requirements::
 
@@ -189,10 +190,11 @@ Some other options are:
 Workflow example
 ----------------
 
-The following example should make it easier for you to find your way in AvaFrame
-and setup your own AvaFrame workflow after you did the full setup.
+The following example should make it easier for you to find your way in AvaFrame and setup your own AvaFrame workflow
+after you did the full setup. There is also a directory with examples for different workflows, see more here:
+:ref:`develop:Examples`.
 
-Make sure you change to your ``AvaFrame`` direcotry by::
+Make sure you change to your ``AvaFrame`` directory by::
 
   cd [YOURDIR]/AvaFrame
 
@@ -242,4 +244,4 @@ template.
 We suggest you copy it and adjust it to your liking. There are annotations in
 the code that should help you to understand the structure.
 
-A lot more examples can be found in the ``runScripts`` directory.
+A lot more examples can be found in the ``runScripts`` directory (see also :ref:`develop:Examples`).
