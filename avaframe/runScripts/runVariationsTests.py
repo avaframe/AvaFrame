@@ -112,6 +112,7 @@ for test in testList:
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
     # Fetch correct reportDict according to flagEntRes
+    reportD = {}
     for dict in reportDictList:
         if simNameRefTest == dict['simName']['name']:
             reportD = dict
@@ -137,7 +138,7 @@ for test in testList:
     cfgAimec['AIMECSETUP']['testName'] = test['NAME']
 
     # Setup input from com1DFA and reference
-    pathDict = []
+    pathDict = {}
     pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfgAimec, simNameRef, simNameComp)
     pathDict['numSim'] = len(pathDict['ppr'])
     log.info('reference file comes from: %s' % pathDict['compType'][1])
