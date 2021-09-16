@@ -61,7 +61,7 @@ relThField=relTh)
 
 # compute similartiy solution
 log.info('Computing similarity solution')
-solSimi = simiSol.runSimilarity()
+solSimi = simiSol.mainSimilaritySol()
 
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 # -------------------------------
