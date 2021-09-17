@@ -22,7 +22,7 @@ from avaframe.in3Utils import logUtils
 from benchmarks import simParametersDict
 
 
-#+++++++++REQUIRED+++++++++++++
+# +++++++++REQUIRED+++++++++++++
 # Which result types for comparison plots
 outputVariable = ['ppr', 'pfd', 'pfv']
 # aimec settings
@@ -32,7 +32,7 @@ aimecDiffLim = '5'
 aimecContourLevels = '1|3|5|10'
 aimecFlagMass = 'False'
 aimecComModules = 'benchmarkReference|com1DFA'
-#++++++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++++++
 
 # log file name; leave empty to use default runLog.log
 logName = 'runStandardTestsCom1DFA'
@@ -78,7 +78,7 @@ for test in testList:
     rel = benchDict['Simulation Parameters']['Release Area Scenario']
 
     # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avaDir,  keep=logName)
+    initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # Load input parameters from configuration file for standard tests
     avaName = pathlib.Path(avaDir).name
@@ -170,7 +170,7 @@ for test in testList:
     # copy files to report directory
     plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep)
     aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
-    plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir,  plotPaths)
+    plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, plotPaths)
 
     # add plot info to general report Dict
     reportD['Simulation Results'] = plotPaths
