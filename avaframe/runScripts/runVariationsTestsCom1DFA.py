@@ -20,7 +20,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from benchmarks import simParametersVar
 
-#+++++++++REQUIRED+++++++++++++
+# +++++++++REQUIRED+++++++++++++
 # Which result types for comparison plots
 outputVariable = ['ppr', 'pfd', 'pfv']
 # aimec settings
@@ -30,7 +30,7 @@ aimecDiffLim = '5'
 aimecContourLevels = '1|3|5|10'
 aimecFlagMass = 'False'
 aimecComModules = 'benchmarkReference|com1DFA'
-#++++++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++++++
 
 # log file name; leave empty to use default runLog.log
 logName = 'runVariationsTestsCom1DFA'
@@ -78,7 +78,7 @@ for test in testList:
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
-        # Load input parameters from configuration file for standard tests
+    # Load input parameters from configuration file for standard tests
     # write config to log file
     avaName = pathlib.Path(avaDir).name
     standardCfg = refDir / ('%sVarPar_com1DFACfg.ini' % test['AVANAME'])

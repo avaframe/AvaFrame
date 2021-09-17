@@ -22,7 +22,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from benchmarks import simParametersDict
 
-#+++++++++REQUIRED+++++++++++++
+# +++++++++REQUIRED+++++++++++++
 # Which result types for comparison plots
 outputVariable = ['ppr', 'pfd', 'pfv']
 # aimec settings
@@ -32,7 +32,7 @@ aimecDiffLim = '5'
 aimecContourLevels = '1|3|5|10'
 aimecFlagMass = 'False'
 aimecComModules = 'benchmarkReference|com1DFAOrig'
-#++++++++++++++++++++++++++++++
+# ++++++++++++++++++++++++++++++
 
 # log file name; leave empty to use default runLog.log
 logName = 'runStandardTestsOrig'
