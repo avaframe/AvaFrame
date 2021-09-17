@@ -3,10 +3,8 @@
 """
 
 # Load modules
-import os
 import time
 import pathlib
-import glob
 
 # Local imports
 from avaframe.com1DFAOrig import com1DFAOrig
@@ -35,7 +33,7 @@ aimecComModules = 'benchmarkReference|com1DFAOrig'
 #++++++++++++++++++++++++++++++
 
 # log file name; leave empty to use default runLog.log
-logName = 'runVariationsTests'
+logName = 'runVariationsTestsCom1DFAOrig'
 
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
@@ -49,15 +47,15 @@ valuesList = ['varParTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
-outDir = os.path.join(os.getcwd(), 'tests', 'reportsVariations')
+outDir = pathlib.Path.cwd() / 'tests' / 'reportsVariationsCom1DFAOrig'
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
-reportFile = os.path.join(outDir, 'variationTestsReport.md')
+reportFile = outDir / 'variationTestsReportCom1DFAOrig.md'
 with open(reportFile, 'w') as pfile:
     # Write header
     pfile.write('# Variation Tests Report \n')
-    pfile.write('## Compare com1DFA simulations to benchmark results \n')
+    pfile.write('## Compare com1DFAOrig simulations to benchmark results \n')
 
 log = logUtils.initiateLogger(outDir, logName)
 log.info('The following benchmark tests will be fetched ')
@@ -86,8 +84,8 @@ for test in testList:
 
     # Load input parameters from configuration file for standard tests
     # write config to log file
-    avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%sVarPar_com1DFAOrigCfg.ini' % test['AVANAME'])
+    avaName = pathlib.Path(avaDir).name
+    standardCfg = refDir / ('%sVarPar_com1DFAOrigCfg.ini' % test['AVANAME'])
     cfg = cfgUtils.getModuleConfig(com1DFAOrig, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
 
@@ -127,7 +125,7 @@ for test in testList:
 
     # +++++++Aimec analysis
     # load configuration
-    aimecCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_AIMECCfg.ini' % test['AVANAME'])
+    aimecCfg = refDir / ('%s_AIMECCfg.ini' % test['AVANAME'])
     cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
     cfgAimec['AIMECSETUP']['resType'] = aimecResType
     cfgAimec['AIMECSETUP']['thresholdValue'] = aimecThresholdValue
