@@ -9,7 +9,7 @@ Calculations are based on the depth integrated governing equations and
 solved numerically using the smoothed particle hydrodynamics (sph) method.
 
 Dense flow avalanche simulations can be performed for different release area scenarios, with or without
-entrainment and/or resistance areas, and is controlled via a configuration file. 
+entrainment and/or resistance areas, and is controlled via a configuration file.
 The configration can be modified in order to change any of the default settings and also allows
 to perform simulations for varying parameters all at once.
 
@@ -42,6 +42,9 @@ In the directory ``Inputs``, the following files are required:
   -> use `ESRI grid format <https://desktop.arcgis.com/en/arcmap/10.3/manage-data/raster-and-images/esri-ascii-raster-format.htm>`_
 * release area scenario as shapefile (in Inputs/REL); multiple features are possible
   -> the release area name should not contain an underscore, if so '_AF' is added
+
+.. Note:: Release thickness can be specified in the shape file by adding an attribute called `d0` or via the
+          configuration file (see :ref:`moduleCom1DFA:Model configuration`.) -> in this case you need to set the flag `useRelThFromIni` to True!
 
 and the following files are optional:
 
