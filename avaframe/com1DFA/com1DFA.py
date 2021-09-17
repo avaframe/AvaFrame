@@ -253,11 +253,14 @@ def prepareRelase(cfg, rel, inputSimLines):
         log.warning('Release area scenario file name includes an underscore \
         the suffix _AF will be added for the simulation name')
     releaseLine = inputSimLines['releaseLine']
+    releaseLine['d0Source'] = [''] * len(releaseLine['d0'])
     for k in range(len(releaseLine['d0'])):
-        if releaseLine['d0'][k] == 'None':
+        if cfg['GENERAL'].getboolean('useRelThFromIni') or releaseLine['d0'][k] == 'None':
             releaseLine['d0'][k] = cfg['GENERAL'].getfloat('relTh')
+            releaseLine['d0Source'][k] = 'ini file'
         else:
             releaseLine['d0'][k] = float(releaseLine['d0'][k])
+            releaseLine['d0Source'][k] = 'shp file'
     inputSimLines['releaseLine'] = releaseLine
     log.debug('Release area scenario: %s - perform simulations' % (relName))
 
@@ -1547,7 +1550,7 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         avapath['Name'] = name
         # if relTh is given - set relTh
         if thList != '':
-            log.info('Release feature %s, relTh= %.2f' % (name, thList[i]))
+            log.info('Release feature %s, relTh= %.2f - read from %s' % (name, thList[i], line['d0Source'][i]))
             Raster = polygon2Raster(dem['header'], avapath, radius, th=thList[i])
         else:
             Raster = polygon2Raster(dem['header'], avapath, radius)
