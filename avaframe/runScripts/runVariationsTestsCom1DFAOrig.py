@@ -105,7 +105,7 @@ for test in testList:
     plotDict = oP.plotAllPeakFields(avaDir, cfgMain['FLAGS'], modName)
 
     # Set directory for report
-    reportDir = os.path.join(avaDir, 'Outputs', modName, 'reports')
+    reportDir = pathlib.Path(avaDir, 'Outputs', modName, 'reports')
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
