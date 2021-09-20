@@ -43,7 +43,7 @@ In the directory ``Inputs``, the following files are required:
 * release area scenario as shapefile (in Inputs/REL); multiple features are possible
   -> the release area name should not contain an underscore, if so '_AF' is added
 
-.. Note:: Release thickness can be specified in the shape file by adding an attribute called `d0` or via the
+.. Note:: Release thickness can be specified in the shape file by adding an attribute called `relTh` or via the
           configuration file (see :ref:`moduleCom1DFA:Model configuration`.) -> in this case you need to set the flag `useRelThFromIni` to True!
 
 and the following files are optional:
