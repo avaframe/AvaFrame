@@ -174,3 +174,22 @@ def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict):
     modCfg['GENERAL']['avalancheDir'] = str(avalancheDir)
 
     return modCfg, variationDict
+
+
+def checkRelEntThVariation(cfg, variationDict):
+    """ check if release or entrainment thickness variation is working - due to where it is read from
+
+        cfg: configparser object
+            configuration settings
+        variationDict: dict
+            dictionary with info on parameter variation
+
+    """
+
+    # if parameter variation for release or entrainment thickness, print warning if thickness read from shape file
+    if 'relTh' in variationDict and cfg['GENERAL'].getboolean('useRelThFromIni') is False:
+        log.warning('Parameter variation for release thickness not working as relTh read from shp file - \
+                     consider setting useRelThFromIni to True')
+    if 'entTh' in variationDict and cfg['GENERAL'].getboolean('useEntThFromIni') is False:
+        log.warning('Parameter variation for entrainment thickness not working as entTh read from shp file - \
+                     consider setting useEntThFromIni to True')
