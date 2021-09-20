@@ -15,6 +15,17 @@ jobs:
       TWINE_PASSWORD: ${{ secrets.TWINE_PASSWORD }}
     steps:
       - uses: actions/checkout@v2
+      - name: Autobump version
+        run: |
+          # from refs/tags/v1.2.3 get 1.2.3
+          VERSION=$(echo $GITHUB_REF | sed 's#.*/v##')
+          PLACEHOLDER='__version__ = "develop"'
+          VERSION_FILE='avaframe/__init__.py'
+          # ensure the placeholder is there. If grep doesn't find the placeholder
+          # it exits with exit code 1 and github actions aborts the build. 
+          grep "$PLACEHOLDER" "$VERSION_FILE"
+          sed -i "s/$PLACEHOLDER/__version__ = \"${VERSION}\"/g" "$VERSION_FILE"
+        shell: bash
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -50,6 +61,17 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.7
+      - name: Autobump version
+        run: |
+          # from refs/tags/v1.2.3 get 1.2.3
+          VERSION=$(echo $GITHUB_REF | sed 's#.*/v##')
+          PLACEHOLDER='__version__ = "develop"'
+          VERSION_FILE='avaframe/__init__.py'
+          # ensure the placeholder is there. If grep doesn't find the placeholder
+          # it exits with exit code 1 and github actions aborts the build. 
+          grep "$PLACEHOLDER" "$VERSION_FILE"
+          sed -i "s/$PLACEHOLDER/__version__ = \"${VERSION}\"/g" "$VERSION_FILE"
+        shell: bash
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -84,6 +106,17 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Autobump version
+        run: |
+          # from refs/tags/v1.2.3 get 1.2.3
+          VERSION=$(echo $GITHUB_REF | sed 's#.*/v##')
+          PLACEHOLDER='__version__ = "develop"'
+          VERSION_FILE='avaframe/__init__.py'
+          # ensure the placeholder is there. If grep doesn't find the placeholder
+          # it exits with exit code 1 and github actions aborts the build. 
+          grep "$PLACEHOLDER" "$VERSION_FILE"
+          sed -i "s/$PLACEHOLDER/__version__ = \"${VERSION}\"/g" "$VERSION_FILE"
+        shell: bash
       - name: build wheel
         run: |
           pip install wheel
