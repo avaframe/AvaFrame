@@ -18,6 +18,8 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
+from avaframe.out1Peak import outPlotAllPeak as oP
+from avaframe.log2Report import generateReport as gR
 
 # then depending on which computational module you want to use
 from avaframe.com1DFA import com1DFA
@@ -86,16 +88,16 @@ def runOperational(avalancheDir=''):
     # Collect results/plots/report  to a single directory
     # make simple plots (com1DFA, com2AB)
     # peak file plot
+    modName = 'com1DFA'
 
-    # # Generata plots for all peakFiles
-    # plotDict = oP.plotAllPeakFields(avalancheDir, cfg, cfgMain['FLAGS'])
-    # reportDictList = []
-    # reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
+    # Generata plots for all peakFiles
+    plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName)
+    reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
 
-    # # # Set directory for report
-    # reportDir = os.path.join(avalancheDir, 'Outputs')
-    # # # write report
-    # gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+    # Set directory for report
+    reportDir = avaDir / 'Outputs'
+    # write report
+    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
     # Print time needed
     endTime = time.time()
