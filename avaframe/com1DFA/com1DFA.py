@@ -256,15 +256,9 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         badName = True
         log.warning('Release area scenario file name includes an underscore \
         the suffix _AF will be added for the simulation name')
-    releaseLine = inputSimLines['releaseLine']
-    releaseLine['thicknessSource'] = [''] * len(releaseLine['thickness'])
-    for k in range(len(releaseLine['thickness'])):
-        if cfg['GENERAL'].getboolean('useRelThFromIni') or releaseLine['thickness'][k] == 'None':
-            releaseLine['thickness'][k] = cfg['GENERAL'].getfloat('relTh')
-            releaseLine['thicknessSource'][k] = 'ini file'
-        else:
-            releaseLine['thickness'][k] = float(releaseLine['thickness'][k])
-            releaseLine['thicknessSource'][k] = 'shp file'
+
+    # set release thickness
+    releaseLine = setThickness(cfg, inputSimLines['releaseLine'], 'useRelThFromIni', 'relTh')
     inputSimLines['releaseLine'] = releaseLine
     log.debug('Release area scenario: %s - perform simulations' % (relName))
 
@@ -273,35 +267,49 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
             message = 'No secondary release file found'
             log.error(message)
             raise FileNotFoundError(message)
-        secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
-        secondaryReleaseLine['thicknessSource'] = [''] * len(secondaryReleaseLine['thickness'])
-        for k in range(len(secondaryReleaseLine['thickness'])):
-            if cfg['GENERAL'].getboolean('useRelThFromIni') or secondaryReleaseLine['thickness'][k] == 'None':
-                secondaryReleaseLine['thickness'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
-                secondaryReleaseLine['thicknessSource'][k] = 'ini file'
-            else:
-                secondaryReleaseLine['thickness'][k] = float(secondaryReleaseLine['thickness'][k])
-                secondaryReleaseLine['thicknessSource'][k] = 'shp file'
+        secondaryReleaseLine = setThickness(cfg, inputSimLines['secondaryReleaseLine'], 'useRelThFromIni', 'secondaryRelTh')
     else:
         inputSimLines['entResInfo']['flagSecondaryRelease'] = 'No'
         secondaryReleaseLine = None
-
     inputSimLines['secondaryReleaseLine'] = secondaryReleaseLine
 
     if entResInfo['flagEnt'] == 'Yes':
         # set entrainment thickness
-        entLine = inputSimLines['entLine']
-        entLine['thicknessSource'] = [''] * len(entLine['thickness'])
-        for k in range(len(entLine['thickness'])):
-            if cfg['GENERAL'].getboolean('useEntThFromIni') or entLine['thickness'][k] == 'None':
-                entLine['thickness'][k] = cfg['GENERAL'].getfloat('entTh')
-                entLine['thicknessSource'][k] = 'ini file'
-            else:
-                entLine['thickness'][k] = float(entLine['thickness'][k])
-                entLine['thicknessSource'][k] = 'shp file'
+        entLine = setThickness(cfg, inputSimLines['entLine'], 'useEntThFromIni', 'entTh')
         inputSimLines['entLine'] = entLine
 
     return relName, inputSimLines, badName
+
+
+def setThickness(cfg, lineTh, flagTh, typeTh):
+    """ set thickness in line dictionary for release area, entrainment area
+
+    Parameters
+    -----------
+    lineTh: dict
+        dictionary with info on line (e.g. release area line)
+    flagTh: bool
+        True if thickness shall be set from ini file
+    typeTh: str
+        type of thickness to be set (e.g. relTh for release thickness -from ini)
+
+    Returns
+    --------
+    lineTh: dict
+        updated dictionary with new key: thickness and thicknessSource
+
+    """
+
+    lineTh['thicknessSource'] = [''] * len(lineTh['thickness'])
+    for k in range(len(lineTh['thickness'])):
+        if cfg['GENERAL'].getboolean(flagTh) or lineTh['thickness'][k] == 'None':
+            lineTh['thickness'][k] = cfg['GENERAL'].getfloat(typeTh)
+            lineTh['thicknessSource'][k] = 'ini file'
+        else:
+            lineTh['thickness'][k] = float(lineTh['thickness'][k])
+            lineTh['thicknessSource'][k] = 'shp file'
+
+    return lineTh
 
 
 def prepareInputData(inputSimFiles):
@@ -344,6 +352,7 @@ def prepareInputData(inputSimFiles):
         entResInfo : flag dict
             flag if Yes entrainment and/or resistance areas found and used for simulation
             flag True if a Secondary Release file found and activated
+            
     """
 
     # load data
