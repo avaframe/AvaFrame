@@ -173,11 +173,13 @@ def writeABpostOut(resAB, cfg, reportDictList):
     NameAva = AvaPath['Name']
     FileNamePlot_ext = [None] * len(NameAva)
     FileNameWrite_ext = [None] * len(NameAva)
+
     for i in range(len(NameAva)):
         name = NameAva[i]
         resAB = processABresults(resAB, name)
         # Plot the whole profile with beta, alpha ... points and lines
-        savename = name + '_AlphaBeta'
+        # TODO: use savefigFormat
+        savename = name + '_AlphaBeta.png'
         savePath = pathlib.Path(saveOutPath, savename)
         plotPath(resAB, name, flags)
         FileNamePlot_ext[i] = plotProfile(resAB, name, savePath, flags)
@@ -307,7 +309,7 @@ def WriteResults(resAB, name, flags):
     # prepare report dictionary
     # Create dictionary
     reportAB = {}
-    reportAB = {'headerLine': {'type': 'title', 'title': 'com1AB Simulation'},
+    reportAB = {'headerLine': {'type': 'title', 'title': 'com2AB Simulation'},
                 'avaPath': {'type': 'simName', 'name': name},
                 ParameterSet + 'setup': {'type': 'list',
                                          'k1': eqParameters['k1'],
