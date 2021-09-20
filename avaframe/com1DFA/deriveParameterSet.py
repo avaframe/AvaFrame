@@ -187,9 +187,9 @@ def checkRelEntThVariation(cfg, variationDict):
     """
 
     # if parameter variation for release or entrainment thickness, print warning if thickness read from shape file
-    if 'relTh' in variationDict and cfg['GENERAL'].getboolean('useRelThFromIni') is False:
-        log.warning('Parameter variation for release thickness not working as relTh read from shp file - \
-                     consider setting useRelThFromIni to True')
-    if 'entTh' in variationDict and cfg['GENERAL'].getboolean('useEntThFromIni') is False:
-        log.warning('Parameter variation for entrainment thickness not working as entTh read from shp file - \
-                     consider setting useEntThFromIni to True')
+    thicknessTypes = {'relTh': 'release', 'entTh': 'entrainment'}
+    for key, value in thicknessTypes.items():
+        flag = 'use' + key[0].upper() + key[1:] + 'FromIni'
+        if key in variationDict and cfg['GENERAL'].getboolean(flag) is False:
+            log.warning('Parameter variation for %s thickness not working as %s read from shp file - \
+                         consider setting %s to True' % (value, key, flag))

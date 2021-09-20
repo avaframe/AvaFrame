@@ -114,7 +114,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
 
         # +++++++++++++++++++++++++++++++++
         # ------------------------
-        particlesList, fieldsList, tSave, dem, reportDict, cfgFinal = com1DFA.com1DFACore(cfg, avalancheDir, cuSim, inputSimFiles, outDir, relThField)
+        particlesList, fieldsList, tSave, dem, reportDict, cfgFinal = com1DFA.com1DFACore(cfg, avalancheDir, cuSim,
+            inputSimFiles, outDir, relThField)
 
         # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
 
@@ -606,7 +607,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
-        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['thickness'], combine=True, checkOverlap=False)
+        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['thickness'],
+            combine=True, checkOverlap=False)
     else:
         # if relTh provided - set release thickness with field or function
         releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True, checkOverlap=False)
@@ -637,8 +639,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
         secondaryReleaseInfo['header'] = demOri['header']
 
         # fetch secondary release areas
-        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2), thList=secondaryReleaseInfo['thickness'],
-                                           combine=False)
+        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2),
+                                           thList=secondaryReleaseInfo['thickness'], combine=False)
         # remove overlap with main release areas
         noOverlaprasterList = []
         for secRelRatser, secRelName in zip(secondaryReleaseInfo['rasterData'], secondaryReleaseInfo['Name']):
@@ -665,7 +667,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # check for overlap with the secondary release area
     if secondaryReleaseInfo['flagSecondaryRelease'] == 'Yes':
         for secRelRaster in secondaryReleaseInfo['rasterList']:
-            entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ', crop=True)
+            entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ',
+                crop=True)
     # surfacic entrainment mass available (unit kg/m²)
     fields['entrMassRaster'] = entrMassRaster*rhoEnt*entTh
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
@@ -1573,7 +1576,8 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         avapath['Name'] = name
         # if relTh is given - set relTh
         if thList != '':
-            log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i], line['thicknessSource'][i]))
+            log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i],
+                     line['thicknessSource'][i]))
             Raster = polygon2Raster(dem['header'], avapath, radius, th=thList[i])
         else:
             Raster = polygon2Raster(dem['header'], avapath, radius)
