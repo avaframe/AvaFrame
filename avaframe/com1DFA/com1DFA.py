@@ -234,6 +234,8 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         configuration parameters - keys: relTh, secRelArea, secondaryRelTh
     rel : str
         path to release file
+    inputSimLines: dict
+        dictionary with dictionaries with input data infos (releaseLine, entLine, ...)
 
     Returns
     -------
@@ -301,13 +303,12 @@ def setThickness(cfg, lineTh, flagTh, typeTh):
     """
 
     lineTh['thicknessSource'] = [''] * len(lineTh['thickness'])
-    for k in range(len(lineTh['thickness'])):
-        if cfg['GENERAL'].getboolean(flagTh) or lineTh['thickness'][k] == 'None':
-            lineTh['thickness'][k] = cfg['GENERAL'].getfloat(typeTh)
-            lineTh['thicknessSource'][k] = 'ini file'
-        else:
-            lineTh['thickness'][k] = float(lineTh['thickness'][k])
-            lineTh['thicknessSource'][k] = 'shp file'
+    if cfg['GENERAL'].getboolean(flagTh):
+        lineTh['thickness'] = [cfg['GENERAL'].getfloat(typeTh)] * len(lineTh['thickness'])
+        lineTh['thicknessSource'] = ['ini file'] * len(lineTh['thickness'])
+    else:
+        lineTh['thicknessSource'] = ['ini file' if item == 'None' else 'shp file' for item in lineTh['thickness']]
+        lineTh['thickness'] = [cfg['GENERAL'].getfloat(typeTh) if item == 'None' else float(item) for item in lineTh['thickness']]
 
     return lineTh
 
@@ -352,7 +353,7 @@ def prepareInputData(inputSimFiles):
         entResInfo : flag dict
             flag if Yes entrainment and/or resistance areas found and used for simulation
             flag True if a Secondary Release file found and activated
-            
+
     """
 
     # load data
