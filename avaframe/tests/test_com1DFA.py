@@ -34,11 +34,11 @@ def test_prepareInputData():
 
     assert demOri['header']['ncols'] == 417
     assert demOri['header']['nrows'] == 915
-    assert inputSimLines['releaseLine']['d0'] == ['None']
+    assert inputSimLines['releaseLine']['relTh'] == ['None']
     assert inputSimLines['releaseLine']['Start'] == np.asarray([0.])
     assert inputSimLines['releaseLine']['Length'] == np.asarray([33.])
     assert inputSimLines['releaseLine']['Name'] == ['AlR']
-    assert inputSimLines['entLine']['d0'] == ['None']
+    assert inputSimLines['entLine']['relTh'] == ['None']
     assert inputSimLines['entLine']['Start'] == np.asarray([0.])
     assert inputSimLines['entLine']['Length'] == np.asarray([48.])
     assert inputSimLines['entLine']['Name'] == ['entAlr']
@@ -73,8 +73,8 @@ def test_prepareRelase(tmp_path):
                       'relTh': '1.32', 'secondaryRelTh': '2.5'}
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes'}
-    inputSimLines['releaseLine'] = {'d0': ['None', 'None']}
-    inputSimLines['secondaryReleaseLine'] = {'d0': ['1.789']}
+    inputSimLines['releaseLine'] = {'relTh': ['None', 'None']}
+    inputSimLines['secondaryReleaseLine'] = {'relTh': ['1.789']}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
 
     # call function to be tested
@@ -83,15 +83,15 @@ def test_prepareRelase(tmp_path):
 
     assert relName == 'release1PF_test'
     assert inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes'
-    assert inputSimLines['releaseLine']['d0'] == [1.32, 1.32]
-    assert inputSimLines['secondaryReleaseLine']['d0'] == [1.789]
+    assert inputSimLines['releaseLine']['relTh'] == [1.32, 1.32]
+    assert inputSimLines['secondaryReleaseLine']['relTh'] == [1.789]
     assert badName is True
 
     # setup required inputs
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes'}
-    inputSimLines['releaseLine'] = {'d0': ['1.78', '4.328']}
-    inputSimLines['secondaryReleaseLine'] = {'d0': ['None']}
+    inputSimLines['releaseLine'] = {'relTh': ['1.78', '4.328']}
+    inputSimLines['secondaryReleaseLine'] = {'relTh': ['None']}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
 
     # call function to be tested
@@ -100,14 +100,14 @@ def test_prepareRelase(tmp_path):
 
     assert relName2 == 'release1PF_test'
     assert inputSimLines2['entResInfo']['flagSecondaryRelease'] == 'Yes'
-    assert inputSimLines2['releaseLine']['d0'] == [1.78, 4.328]
-    assert inputSimLines2['secondaryReleaseLine']['d0'] == [2.5]
+    assert inputSimLines2['releaseLine']['relTh'] == [1.78, 4.328]
+    assert inputSimLines2['secondaryReleaseLine']['relTh'] == [2.5]
     assert badName2 is True
 
     # setup required inputs
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No'}
-    inputSimLines['releaseLine'] = {'d0': ['1.78', '4.328']}
+    inputSimLines['releaseLine'] = {'relTh': ['1.78', '4.328']}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
 
     # call function to be tested
@@ -122,7 +122,7 @@ def test_prepareRelase(tmp_path):
 
     assert relName3 == 'release1PF_test'
     assert inputSimLines3['entResInfo']['flagSecondaryRelease'] == 'No'
-    assert inputSimLines3['releaseLine']['d0'] == [1.78, 4.328]
+    assert inputSimLines3['releaseLine']['relTh'] == [1.78, 4.328]
     assert inputSimLines3['secondaryReleaseLine'] is None
     assert badName3 is True
 
@@ -135,7 +135,7 @@ def test_createReportDict():
     logName = 'testName'
     relName = 'relTest'
     inputSimLines = {'entrainmentArea': 'entTest', 'resistanceArea': 'resTest', 'releaseLine':
-                     {'Name': 'relTestFeature', 'd0': '1.45'}}
+                     {'Name': 'relTestFeature', 'relTh': '1.45'}}
     reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'Yes', 'Release area info':
                       {'Projected Area [m2]': 'm2'}}
     cfg = configparser.ConfigParser()
@@ -212,7 +212,7 @@ def test_prepareArea():
 
     # test 2
     releaseLine2 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
-                    'Length': np.asarray([5, 5]),
+                    'Length': np.asarray([5, 5]), 'relThSource': ['ini file', 'ini file'],
                     'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
                     'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
     line2 = com1DFA.prepareArea(
@@ -220,7 +220,7 @@ def test_prepareArea():
 
     # test 3
     releaseLine3 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
-                    'Length': np.asarray([5, 5]),
+                    'Length': np.asarray([5, 5]), 'relThSource': ['ini file', 'ini file'],
                     'x': np.asarray([0, 10., 10.0, 0., 0., 5, 15., 15., 5., 5]),
                     'y': np.asarray([0., 0., 10.0, 10., 0.0, 5, 5, 15., 15., 5.])}
 
@@ -236,6 +236,7 @@ def test_prepareArea():
 
     # test 4
     releaseLine4 = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]), 'Length': np.asarray([5, 5]),
+                    'relThSource': ['ini file', 'ini file'],
                     'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
                     'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.])}
     line4 = com1DFA.prepareArea(
@@ -769,7 +770,7 @@ def test_releaseSecRelArea():
     secondaryReleaseInfo = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5, 7.4, 8.5, 8.5, 7.4, 7.4, 9.5, 10.5, 10.5, 9.5, 9.5]),
                             'y': np.asarray([1.5, 1.5, 2.5, 2.5, 1.5, 7.4, 7.4, 8.5, 8.5, 7.4, 9.5, 9.5, 10.5, 10.5, 9.5]),
                             'Start': np.asarray([0, 5, 10]), 'Length': np.asarray([5, 5, 5]),
-                            'Name': ['secRel1', 'secRel2', 'secRel3'], 'd0': [0.5, 1.0, 0.5],
+                            'Name': ['secRel1', 'secRel2', 'secRel3'], 'relTh': [0.5, 1.0, 0.5],
                             'rasterData': [secRelRaster1, secRelRaster2, secRelRaster3]}
     secondaryReleaseInfo['header'] = demHeader
     secondaryReleaseInfo['header']['xllcenter'] = dem['originOri']['xllcenter']
@@ -851,7 +852,7 @@ def test_initializeParticles():
     relRaster = np.zeros((12, 12))
     relRaster[6:8, 6:8] = 1.0
     releaseLine = {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([6.9, 6.9, 8.5, 8.5, 6.9]),
-                   'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0],
+                   'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'relTh': [1.0],
                    'rasterData': relRaster}
 
     releaseLine['header'] = demHeader
@@ -1282,12 +1283,13 @@ def test_initializeSimulation():
 
     # setup release line, entrainment line
     releaseLine = {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
-                   'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'd0': [1.0]}
+                   'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'relTh': [1.0],
+                   'relThSource': ['ini File']}
     entLine = {'fileName': 'test/entTest.shp', 'Name': ['testEnt'], 'Start': np.asarray([0.]),
                'Length': np.asarray([5]), 'x': np.asarray([4, 5., 5.0, 4., 4.]),
                'y': np.asarray([4., 4., 5.0, 5., 4.0])}
     inputSimLines = {'releaseLine': releaseLine, 'entResInfo': {'flagSecondaryRelease': 'No'}, 'entLine': entLine,
-                     'resLine': ''}
+                     'resLine': '', 'relThSource': ['ini File']}
     # set release thickness read from file or not
     relThField = ''
     logName = 'simLog'
@@ -1325,7 +1327,7 @@ def test_initializeSimulation():
     inputSimLines['secondaryReleaseLine'] = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5]),
                                              'y': np.asarray([2.5, 2.5, 3.5, 3.5, 2.5]),
                                              'Start': np.asarray([0]), 'Length': np.asarray([5]),
-                                             'Name': ['secRel1'], 'd0': [0.5]}
+                                             'Name': ['secRel1'], 'relTh': [0.5], 'relThSource': ['ini File']}
     relThField = np.zeros((12, 12)) + 0.5
     particles2, fields2, dem2, reportAreaInfo2 = com1DFA.initializeSimulation(
         cfg, demOri, inputSimLines, logName, relThField)
