@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Setup file for the avaframe package.
-Adapted from the Python Packaging Authority template.
 
 important commands:
 python setup.py sdist
@@ -8,16 +7,19 @@ python setup.py build_ext --inplace
 python setup.py bdist_wheel
 twine uploade dist/*
 
+To create a release (with github):
+- update the version number below
+- push to github
+- create a release there
+- run releaseWithMany.. in the actions tab
+
 """
 
 # from setuptools import setup, find_packages  # Always prefer setuptools
 from setuptools import Extension, setup, find_packages
 from pathlib import Path
 import sys
-import os
 import numpy
-import avaframe
-
 
 DISTNAME = 'avaframe'
 LICENSE = 'EUPL'
@@ -84,7 +86,7 @@ setup(
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version=avaframe.__version__,
+    version='0.5.15',
     # The project's main homepage.
     url=URL,
     # Author details
