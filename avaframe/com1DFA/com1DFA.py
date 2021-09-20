@@ -283,14 +283,14 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
     return relName, inputSimLines, badName
 
 
-def setThickness(cfg, lineTh, flagTh, typeTh):
+def setThickness(cfg, lineTh, useThFromIni, typeTh):
     """ set thickness in line dictionary for release area, entrainment area
 
     Parameters
     -----------
     lineTh: dict
         dictionary with info on line (e.g. release area line)
-    flagTh: bool
+    useThFromIni: bool
         True if thickness shall be set from ini file
     typeTh: str
         type of thickness to be set (e.g. relTh for release thickness -from ini)
@@ -303,7 +303,7 @@ def setThickness(cfg, lineTh, flagTh, typeTh):
     """
 
     lineTh['thicknessSource'] = [''] * len(lineTh['thickness'])
-    if cfg['GENERAL'].getboolean(flagTh):
+    if cfg['GENERAL'].getboolean(useThFromIni):
         lineTh['thickness'] = [cfg['GENERAL'].getfloat(typeTh)] * len(lineTh['thickness'])
         lineTh['thicknessSource'] = ['ini file'] * len(lineTh['thickness'])
     else:
