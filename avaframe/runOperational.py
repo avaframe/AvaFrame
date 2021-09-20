@@ -20,7 +20,7 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
 
 # then depending on which computational module you want to use
-from avaframe import runCom1DFA
+from avaframe.com1DFA import com1DFA
 from avaframe.com2AB import com2AB
 from avaframe.out3Plot import outAB
 
@@ -69,7 +69,7 @@ def runOperational(avalancheDir=''):
 
     # ----------------
     # Run dense flow
-    _, _, _, _, _, reportDictList = runCom1DFA.runCom1DFA(avalancheDir)
+    _, _, _, _, _, reportDictList = com1DFA.com1DFAMain(avalancheDir, cfgMain)
 
     # Get peakfiles to return to QGIS
     avaDir = pathlib.Path(avalancheDir)
