@@ -24,6 +24,9 @@ Glossary
 
       snow thickness normal to surface in a release area.
 
+   entrainment thickness [*entTh*]
+      snow thickness normarl to surface in entrainment area
+
    avalanche
       The catchment, geographic...
 
