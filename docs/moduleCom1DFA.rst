@@ -44,7 +44,10 @@ In the directory ``Inputs``, the following files are required:
   -> the release area name should not contain an underscore, if so '_AF' is added
 
 .. Note:: Release thickness can be specified in the shape file by adding an attribute called `thickness` or via the
-          configuration file (see :ref:`moduleCom1DFA:Model configuration`.) -> in this case you need to set the flag `useRelThFromIni` to True!
+          configuration file (see :ref:`moduleCom1DFA:Model configuration`.) -> in this case you need to set the flag
+          `useRelThFromIni` to True! For backwards compatibility, the attribute 'd0' also works, but we suggest
+          to use `thickness` in new projects.
+
 
 and the following files are optional:
 
@@ -53,7 +56,8 @@ and the following files are optional:
 * secondary release area as shapefile (in Inputs/SECREL)
 
 .. Note:: Entrainment thickness can be specified in the shape file by adding an attribute called `thickness` or via the
-          configuration file (see :ref:`moduleCom1DFA:Model configuration`.) -> in this case you need to set the flag `useEntThFromIni` to True!
+          configuration file (see :ref:`moduleCom1DFA:Model configuration`.) -> in this case you need to set the flag
+          `useEntThFromIni` to True!
 
 Model configuration
 --------------------

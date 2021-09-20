@@ -61,7 +61,6 @@ def SHP2Array(infile, defname=None):
     rho = None
     sks = None
     iso = None
-    thickness1 = []
 
     # get coordinate system
     prjfile = infile.with_suffix('.prj')
@@ -77,6 +76,7 @@ def SHP2Array(infile, defname=None):
     SHPdata = {}
     SHPdata['sks'] = sks
     Name = []
+    thicknessList = []
     Length = np.empty((0))
     Start = np.empty((0))
     Coordx = np.empty((0))
@@ -116,7 +116,7 @@ def SHP2Array(infile, defname=None):
 
         Name.append(layername)
         log.debug('SHPConv: Found layer %s', layername)
-        thickness1.append(str(thickness))
+        thicknessList.append(str(thickness))
 
         Start = np.append(Start, start)
         length = len(pts)
@@ -129,7 +129,7 @@ def SHP2Array(infile, defname=None):
             Coordz = np.append(Coordz, z)
 
     SHPdata['Name'] = Name
-    SHPdata['thickness'] = thickness1
+    SHPdata['thickness'] = thicknessList
     SHPdata['Start'] = Start
     SHPdata['Length'] = Length
     SHPdata['x'] = Coordx
