@@ -57,11 +57,11 @@ def SHP2Array(infile, defname=None):
     infile = pathlib.Path(infile)
     # set defaults for variables
     layername = None
-    d0 = None
+    relTh = None
     rho = None
     sks = None
     iso = None
-    d01 = []
+    relTh1 = []
 
     # get coordinate system
     prjfile = infile.with_suffix('.prj')
@@ -96,8 +96,8 @@ def SHP2Array(infile, defname=None):
                 name = name.lower()
                 if (name == 'name'):
                     layername = str(value)
-                if (name == 'd0'):
-                    d0 = value
+                if (name == 'relTh') or (name == 'd0'):
+                    relTh = value
                 if (name == 'rho'):
                     rho = value
                 if (name == 'sks'):
@@ -116,7 +116,7 @@ def SHP2Array(infile, defname=None):
 
         Name.append(layername)
         log.debug('SHPConv: Found layer %s', layername)
-        d01.append(str(d0))
+        relTh1.append(str(relTh))
 
         Start = np.append(Start, start)
         length = len(pts)
@@ -129,7 +129,7 @@ def SHP2Array(infile, defname=None):
             Coordz = np.append(Coordz, z)
 
     SHPdata['Name'] = Name
-    SHPdata['d0'] = d01
+    SHPdata['relTh'] = relTh1
     SHPdata['Start'] = Start
     SHPdata['Length'] = Length
     SHPdata['x'] = Coordx
@@ -237,7 +237,7 @@ def removeFeature(featureIn, nFeature2Remove):
     """
     StartRel = featureIn['Start']
     LengthRel = featureIn['Length']
-    d0 = featureIn['d0']
+    relTh = featureIn['relTh']
     featureOut = copy.deepcopy(featureIn)
     start = StartRel[nFeature2Remove]
     end = start + LengthRel[nFeature2Remove]
@@ -252,7 +252,7 @@ def removeFeature(featureIn, nFeature2Remove):
     StartRel[nFeature2Remove:] = StartRel[nFeature2Remove:] - LengthRel[nFeature2Remove]
     featureOut['Start'] = np.delete(StartRel, nFeature2Remove)
     featureOut['Length'] = np.delete(LengthRel, nFeature2Remove)
-    featureOut['d0'] = np.delete(d0, nFeature2Remove)
+    featureOut['relTh'] = np.delete(relTh, nFeature2Remove)
 
     return featureOut
 
@@ -275,13 +275,13 @@ def extractFeature(featureIn, nFeature2Extract):
     NameRel = featureIn['Name']
     StartRel = featureIn['Start']
     LengthRel = featureIn['Length']
-    d0 = featureIn['d0']
+    relTh = featureIn['relTh']
     featureOut = copy.deepcopy(featureIn)
     # extract feature
     featureOut['Name'] = [NameRel[nFeature2Extract]]
     featureOut['Start'] = np.array([0])
     featureOut['Length'] = np.array([LengthRel[nFeature2Extract]])
-    featureOut['d0'] = np.array([d0[nFeature2Extract]])
+    featureOut['relTh'] = np.array([relTh[nFeature2Extract]])
     start = StartRel[nFeature2Extract]
     end = start + LengthRel[nFeature2Extract]
     featureOut['x'] = featureIn['x'][int(start):int(end)]

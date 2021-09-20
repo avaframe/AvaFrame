@@ -253,14 +253,14 @@ def prepareRelase(cfg, rel, inputSimLines):
         log.warning('Release area scenario file name includes an underscore \
         the suffix _AF will be added for the simulation name')
     releaseLine = inputSimLines['releaseLine']
-    releaseLine['d0Source'] = [''] * len(releaseLine['d0'])
-    for k in range(len(releaseLine['d0'])):
-        if cfg['GENERAL'].getboolean('useRelThFromIni') or releaseLine['d0'][k] == 'None':
-            releaseLine['d0'][k] = cfg['GENERAL'].getfloat('relTh')
-            releaseLine['d0Source'][k] = 'ini file'
+    releaseLine['relThSource'] = [''] * len(releaseLine['relTh'])
+    for k in range(len(releaseLine['relTh'])):
+        if cfg['GENERAL'].getboolean('useRelThFromIni') or releaseLine['relTh'][k] == 'None':
+            releaseLine['relTh'][k] = cfg['GENERAL'].getfloat('relTh')
+            releaseLine['relThSource'][k] = 'ini file'
         else:
-            releaseLine['d0'][k] = float(releaseLine['d0'][k])
-            releaseLine['d0Source'][k] = 'shp file'
+            releaseLine['relTh'][k] = float(releaseLine['relTh'][k])
+            releaseLine['relThSource'][k] = 'shp file'
     inputSimLines['releaseLine'] = releaseLine
     log.debug('Release area scenario: %s - perform simulations' % (relName))
 
@@ -270,11 +270,14 @@ def prepareRelase(cfg, rel, inputSimLines):
             log.error(message)
             raise FileNotFoundError(message)
         secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
-        for k in range(len(secondaryReleaseLine['d0'])):
-            if secondaryReleaseLine['d0'][k] == 'None':
-                secondaryReleaseLine['d0'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
+        secondaryReleaseLine['relThSource'] = [''] * len(secondaryReleaseLine['relTh'])
+        for k in range(len(secondaryReleaseLine['relTh'])):
+            if cfg['GENERAL'].getboolean('useRelThFromIni') or secondaryReleaseLine['relTh'][k] == 'None':
+                secondaryReleaseLine['relTh'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
+                secondaryReleaseLine['relThSource'][k] = 'ini file'
             else:
-                secondaryReleaseLine['d0'][k] = float(secondaryReleaseLine['d0'][k])
+                secondaryReleaseLine['relTh'][k] = float(secondaryReleaseLine['relTh'][k])
+                secondaryReleaseLine['relThSource'][k] = 'shp file'
     else:
         inputSimLines['entResInfo']['flagSecondaryRelease'] = 'No'
         secondaryReleaseLine = None
@@ -424,7 +427,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
                 'Density [kgm-3]': cfgGen['rho'],
                 'Friction model': cfgGen['frictModel']},
                 'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name'],
-                                 'Release thickness [m]': relDict['d0']}}
+                                 'Release thickness [m]': relDict['relTh']}}
 
     if entInfo == 'Yes':
         reportST.update({'Entrainment area':
@@ -583,7 +586,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
-        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['d0'], combine=True, checkOverlap=False)
+        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['relTh'], combine=True, checkOverlap=False)
     else:
         # if relTh provided - set release thickness with field or function
         releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True, checkOverlap=False)
@@ -614,7 +617,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
         secondaryReleaseInfo['header'] = demOri['header']
 
         # fetch secondary release areas
-        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2), thList=secondaryReleaseInfo['d0'],
+        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2), thList=secondaryReleaseInfo['relTh'],
                                            combine=False)
         # remove overlap with main release areas
         noOverlaprasterList = []
@@ -1550,7 +1553,7 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         avapath['Name'] = name
         # if relTh is given - set relTh
         if thList != '':
-            log.info('Release feature %s, relTh= %.2f - read from %s' % (name, thList[i], line['d0Source'][i]))
+            log.info('Release feature %s, relTh= %.2f - read from %s' % (name, thList[i], line['relThSource'][i]))
             Raster = polygon2Raster(dem['header'], avapath, radius, th=thList[i])
         else:
             Raster = polygon2Raster(dem['header'], avapath, radius)
