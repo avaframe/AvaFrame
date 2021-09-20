@@ -78,6 +78,9 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
     # get information on simulations that shall be performed according to parameter variation
     modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict)
 
+    # check if parameter variation on release or entrainment thickness is working - where thickness is read from
+    dP.checkRelEntThVariation(modCfg, variationDict)
+
     # fetch input data - dem, release-, entrainment- and resistance areas
     inputSimFiles = gI.getInputDataCom1DFA(avalancheDir, modCfg['FLAGS'])
 
@@ -176,7 +179,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     demOri, inputSimLines = prepareInputData(inputSimFiles)
 
     # find out which simulations to perform
-    relName, inputSimLines, badName = prepareRelase(cfg, inputSimFiles['releaseScenario'], inputSimLines)
+    relName, inputSimLines, badName = prepareReleaseEntrainment(cfg, inputSimFiles['releaseScenario'], inputSimLines)
 
     log.info('Perform %s simulation' % cuSimName)
 
@@ -220,7 +223,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     return particlesList, fieldsList, Tsave, dem, reportDict, cfg
 
 
-def prepareRelase(cfg, rel, inputSimLines):
+def prepareReleaseEntrainment(cfg, rel, inputSimLines):
     """ get Simulation to run for a given release
 
 
@@ -244,7 +247,7 @@ def prepareRelase(cfg, rel, inputSimLines):
     # load info
     entResInfo = inputSimLines['entResInfo']
 
-    # Set release areas and simulation name
+    # Set release areas and release thickness
     relName = rel.stem
     simName = relName
     badName = False
@@ -253,14 +256,14 @@ def prepareRelase(cfg, rel, inputSimLines):
         log.warning('Release area scenario file name includes an underscore \
         the suffix _AF will be added for the simulation name')
     releaseLine = inputSimLines['releaseLine']
-    releaseLine['relThSource'] = [''] * len(releaseLine['relTh'])
-    for k in range(len(releaseLine['relTh'])):
-        if cfg['GENERAL'].getboolean('useRelThFromIni') or releaseLine['relTh'][k] == 'None':
-            releaseLine['relTh'][k] = cfg['GENERAL'].getfloat('relTh')
-            releaseLine['relThSource'][k] = 'ini file'
+    releaseLine['thicknessSource'] = [''] * len(releaseLine['thickness'])
+    for k in range(len(releaseLine['thickness'])):
+        if cfg['GENERAL'].getboolean('useRelThFromIni') or releaseLine['thickness'][k] == 'None':
+            releaseLine['thickness'][k] = cfg['GENERAL'].getfloat('relTh')
+            releaseLine['thicknessSource'][k] = 'ini file'
         else:
-            releaseLine['relTh'][k] = float(releaseLine['relTh'][k])
-            releaseLine['relThSource'][k] = 'shp file'
+            releaseLine['thickness'][k] = float(releaseLine['thickness'][k])
+            releaseLine['thicknessSource'][k] = 'shp file'
     inputSimLines['releaseLine'] = releaseLine
     log.debug('Release area scenario: %s - perform simulations' % (relName))
 
@@ -270,19 +273,32 @@ def prepareRelase(cfg, rel, inputSimLines):
             log.error(message)
             raise FileNotFoundError(message)
         secondaryReleaseLine = inputSimLines['secondaryReleaseLine']
-        secondaryReleaseLine['relThSource'] = [''] * len(secondaryReleaseLine['relTh'])
-        for k in range(len(secondaryReleaseLine['relTh'])):
-            if cfg['GENERAL'].getboolean('useRelThFromIni') or secondaryReleaseLine['relTh'][k] == 'None':
-                secondaryReleaseLine['relTh'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
-                secondaryReleaseLine['relThSource'][k] = 'ini file'
+        secondaryReleaseLine['thicknessSource'] = [''] * len(secondaryReleaseLine['thickness'])
+        for k in range(len(secondaryReleaseLine['thickness'])):
+            if cfg['GENERAL'].getboolean('useRelThFromIni') or secondaryReleaseLine['thickness'][k] == 'None':
+                secondaryReleaseLine['thickness'][k] = cfg['GENERAL'].getfloat('secondaryRelTh')
+                secondaryReleaseLine['thicknessSource'][k] = 'ini file'
             else:
-                secondaryReleaseLine['relTh'][k] = float(secondaryReleaseLine['relTh'][k])
-                secondaryReleaseLine['relThSource'][k] = 'shp file'
+                secondaryReleaseLine['thickness'][k] = float(secondaryReleaseLine['thickness'][k])
+                secondaryReleaseLine['thicknessSource'][k] = 'shp file'
     else:
         inputSimLines['entResInfo']['flagSecondaryRelease'] = 'No'
         secondaryReleaseLine = None
 
     inputSimLines['secondaryReleaseLine'] = secondaryReleaseLine
+
+    if entResInfo['flagEnt'] == 'Yes':
+        # set entrainment thickness
+        entLine = inputSimLines['entLine']
+        entLine['thicknessSource'] = [''] * len(entLine['thickness'])
+        for k in range(len(entLine['thickness'])):
+            if cfg['GENERAL'].getboolean('useEntThFromIni') or entLine['thickness'][k] == 'None':
+                entLine['thickness'][k] = cfg['GENERAL'].getfloat('entTh')
+                entLine['thicknessSource'][k] = 'ini file'
+            else:
+                entLine['thickness'][k] = float(entLine['thickness'][k])
+                entLine['thicknessSource'][k] = 'shp file'
+        inputSimLines['entLine'] = entLine
 
     return relName, inputSimLines, badName
 
@@ -339,12 +355,14 @@ def prepareInputData(inputSimFiles):
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
     releaseLine['file'] = relFile
+    releaseLine['type'] = 'Release'
 
     # get line from secondary release area polygon
     if entResInfo['flagSecondaryRelease'] == 'Yes':
         secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
         secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
         secondaryReleaseLine['fileName'] = [secondaryReleaseFile]
+        secondaryReleaseLine['type'] = 'Secondary release'
     else:
         secondaryReleaseLine = None
 
@@ -354,6 +372,7 @@ def prepareInputData(inputSimFiles):
         entLine = shpConv.readLine(entFile, '', demOri)
         entrainmentArea = entFile.name
         entLine['fileName'] = entFile
+        entLine['type'] = 'Entrainment'
     else:
         entLine = None
         entrainmentArea = ''
@@ -364,6 +383,7 @@ def prepareInputData(inputSimFiles):
         resLine = shpConv.readLine(resFile, '', demOri)
         resistanceArea = resFile.name
         resLine['fileName'] = resFile
+        resLine['type'] = 'Resistance'
     else:
         resLine = None
         resistanceArea = ''
@@ -427,13 +447,13 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
                 'Density [kgm-3]': cfgGen['rho'],
                 'Friction model': cfgGen['frictModel']},
                 'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release Area': relDict['Name'],
-                                 'Release thickness [m]': relDict['relTh']}}
+                                 'Release thickness [m]': relDict['thickness']}}
 
     if entInfo == 'Yes':
         reportST.update({'Entrainment area':
                          {'type': 'columns',
                              'Entrainment area scenario': entrainmentArea,
-                             'Entrainment thickness [m]': cfgGen.getfloat('hEnt'),
+                             'Entrainment thickness [m]': cfgGen.getfloat('entTh'),
                              'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
     if resInfo == 'Yes':
         reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
@@ -586,7 +606,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
-        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['relTh'], combine=True, checkOverlap=False)
+        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['thickness'], combine=True, checkOverlap=False)
     else:
         # if relTh provided - set release thickness with field or function
         releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True, checkOverlap=False)
@@ -617,7 +637,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
         secondaryReleaseInfo['header'] = demOri['header']
 
         # fetch secondary release areas
-        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2), thList=secondaryReleaseInfo['relTh'],
+        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2), thList=secondaryReleaseInfo['thickness'],
                                            combine=False)
         # remove overlap with main release areas
         noOverlaprasterList = []
@@ -637,7 +657,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # get info of simType and whether or not to initialize resistance and entrainment
     simTypeActual = cfgGen['simTypeActual']
     rhoEnt = cfgGen.getfloat('rhoEnt')
-    hEnt = cfgGen.getfloat('hEnt')
+    entTh = cfgGen.getfloat('entTh')
     entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], reportAreaInfo,
                                                        thresholdPointInPoly)
     # check if entrainment and release overlap
@@ -647,7 +667,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
         for secRelRaster in secondaryReleaseInfo['rasterList']:
             entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ', crop=True)
     # surfacic entrainment mass available (unit kg/m²)
-    fields['entrMassRaster'] = entrMassRaster*rhoEnt*hEnt
+    fields['entrMassRaster'] = entrMassRaster*rhoEnt*entTh
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
 
@@ -988,7 +1008,7 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         entrainmentArea = entLine['fileName']
         log.info('Initializing entrainment area: %s' % (entrainmentArea))
         log.info('Entrainment area features: %s' % (entLine['Name']))
-        entLine = prepareArea(entLine, dem, thresholdPointInPoly)
+        entLine = prepareArea(entLine, dem, thresholdPointInPoly, thList=entLine['thickness'])
         entrMassRaster = entLine['rasterData']
         reportAreaInfo['entrainment'] = 'Yes'
     else:
@@ -1553,7 +1573,7 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         avapath['Name'] = name
         # if relTh is given - set relTh
         if thList != '':
-            log.info('Release feature %s, relTh= %.2f - read from %s' % (name, thList[i], line['relThSource'][i]))
+            log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i], line['thicknessSource'][i]))
             Raster = polygon2Raster(dem['header'], avapath, radius, th=thList[i])
         else:
             Raster = polygon2Raster(dem['header'], avapath, radius)

@@ -5,7 +5,7 @@ Glossary
 
 .. Note:: All definitions are considered as they are used within avaframe. However we
           try to follow common conventions used in other publications and
-          projects as best as possible.  
+          projects as best as possible.
 
 .. glossary::
    :sorted:
@@ -14,13 +14,13 @@ Glossary
    10 deg point
       The point along a topography profile at which the slope angle is 10
       degrees. Is usually considered to be the point after which the profile is
-      consistently below 10 degrees. 
+      consistently below 10 degrees.
 
    beta angle
-      Angle from the topmost point of a profile to the :term:`beta point`. 
+      Angle from the topmost point of a profile to the :term:`beta point`.
 
-   release thickness [*relTh*, *d0*]
-      TODO: which symbol 
+   release thickness [*relTh*]
+      TODO: which symbol
 
       snow thickness normal to surface in a release area.
 
@@ -42,9 +42,9 @@ Glossary
       The furthest point downslope an avalanche reaches. This can be defined
       either by the furthest particle, or could also be defined with
       pressure values, i.e. the furthest point where an avalanche is above 1
-      kPa, or similar. 
+      kPa, or similar.
 
-   runout distance 
+   runout distance
       The distance of the :term:`runout` from the first point of the (user
       provided) main :term:`avalanche path`. The distance is measured along the
       path. It does **not** provide an information about the actual distance
@@ -54,7 +54,7 @@ Glossary
 
    runout length
       The actual length the snow/material of a certain :term:`scenario` travels, i.e. the distance
-      from release area to the runout along the :term:`avalanche path`.  
+      from release area to the runout along the :term:`avalanche path`.
 
    runout area
       The area a :term:`scenario` covers with its runout inside the
@@ -65,4 +65,3 @@ Glossary
 
    scenario
       One or more ...
-   
