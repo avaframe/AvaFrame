@@ -85,7 +85,6 @@ for test in testList:
 
     # Load input parameters from configuration file for standard tests
     # write config to log file
-    avaName = pathlib.Path(avaDir).name
     standardCfg = refDir / ('%s_com1DFAOrigCfg.ini' % test['AVANAME'])
     cfg = cfgUtils.getModuleConfig(com1DFAOrig, standardCfg)
     cfg['GENERAL']['com1Exe'] = com1Exe
@@ -176,7 +175,7 @@ for test in testList:
             reportD['Simulation Stats'].update({var: plotDict['stats']})
 
     # copy files to report directory
-    plotPaths = generateCompareReport.copyQuickPlots(avaName, test['NAME'], outDir, plotListRep)
+    plotPaths = generateCompareReport.copyQuickPlots(test['AVANAME'], test['NAME'], outDir, plotListRep)
     aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
     plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, test['NAME'], outDir, plotPaths)
 
@@ -184,4 +183,4 @@ for test in testList:
     reportD['Simulation Results'] = plotPaths
 
     # write report
-    generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)
+    generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, test['AVANAME'], cfgRep)
