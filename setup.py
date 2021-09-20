@@ -16,6 +16,7 @@ from pathlib import Path
 import sys
 import os
 import numpy
+import avaframe
 
 
 DISTNAME = 'avaframe'
@@ -83,7 +84,7 @@ setup(
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='0.5.14',
+    version=avaframe.__version__,
     # The project's main homepage.
     url=URL,
     # Author details
