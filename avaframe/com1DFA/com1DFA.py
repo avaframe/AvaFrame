@@ -442,7 +442,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
     reportST = {}
     reportST = {}
     reportST = {'headerLine': {'type': 'title', 'title': 'com1DFA Simulation'},
-                'avaName': {'type': 'avaName', 'name': avaDir},
+                'avaName': {'type': 'avaName', 'name': str(avaDir)},
                 'simName': {'type': 'simName', 'name': logName},
                 'time': {'type': 'time', 'time': dateTimeInfo},
                 'Simulation Parameters': {

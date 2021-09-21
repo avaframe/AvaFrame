@@ -40,7 +40,8 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
         """
 
     # Load all infos on simulations
-    inputDir = os.path.join(avaDir, 'Outputs', modName, 'peakFiles')
+    avaDir = pathlib.Path(avaDir)
+    inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
     if demData == '':
@@ -54,10 +55,10 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
 
     # Output directory
     if cfgFLAGS.getboolean('ReportDir'):
-        outDir = os.path.join(avaDir, 'Outputs', modName, 'reports')
+        outDir = avaDir / 'Outputs' / modName / 'reports'
         fU.makeADir(outDir)
     else:
-        outDir = os.path.join(avaDir, 'Outputs', 'out1Peak')
+        outDir = avaDir / 'Outputs' / 'out1Peak'
         fU.makeADir(outDir)
 
     # Initialise plot dictionary with simulation names
@@ -112,14 +113,14 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
         ax.set_xlabel('x [m]')
         ax.set_ylabel('y [m]')
 
-        plotName = os.path.join(outDir, '%s.%s' % (name, pU.outputFormat))
+        plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
 
         pU.putAvaNameOnPlot(ax, avaDir)
 
         fig.savefig(plotName)
         if cfgFLAGS.getboolean('showPlot'):
             plt.show()
-        plotPath = os.path.join(os.getcwd(), plotName)
+        plotPath = pathlib.Path.cwd() / plotName
         plotDict[peakFilesDF['simName'][m]].update({peakFilesDF['resType'][m]: plotPath})
         plt.close(fig)
 
