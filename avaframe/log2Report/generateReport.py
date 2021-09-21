@@ -109,7 +109,7 @@ def writeReportFile(reportD, pfile):
                     if value != 'type':
                         pfile.write('##### Figure:   %s \n' % value)
                         pfile.write(' \n')
-                        pfile.write('![%s](%s) \n' % (value, reportD[key][value]))
+                        pfile.write('![%s](%s) \n' % (value, reportD[key][value].name))
                         pfile.write(' \n')
                         pfile.write(' \n')
 

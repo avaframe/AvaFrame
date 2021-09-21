@@ -193,7 +193,7 @@ def writeCompareReport(reportFile, reportD, benchD, avaName, cfgRep):
                         pfile.write(' %s \n' % textString1)
                         pfile.write(' %s \n' % textString2)
                         pfile.write(' \n')
-                pfile.write('![%s](%s) \n' % (value, reportD['Simulation Results'][value]))
+                pfile.write('![%s](%s) \n' % (value, reportD['Simulation Results'][value].name))
                 pfile.write(' \n')
                 pfile.write(' \n')
 
