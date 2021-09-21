@@ -303,6 +303,9 @@ def setThickness(cfg, lineTh, useThFromIni, typeTh):
     """
 
     lineTh['thicknessSource'] = [''] * len(lineTh['thickness'])
+    if cfg.has_option('GENERAL', useThFromIni) is False:
+        log.warning('Using thickness from ini file flag: %s not found, reading thickness from shp file and if not'
+            ' provided setting thickness to %s' % (useThFromIni, cfg['GENERAL'][typeTh]))
     if cfg['GENERAL'].getboolean(useThFromIni):
         lineTh['thickness'] = [cfg['GENERAL'].getfloat(typeTh)] * len(lineTh['thickness'])
         lineTh['thicknessSource'] = ['ini file'] * len(lineTh['thickness'])
