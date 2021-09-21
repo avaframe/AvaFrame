@@ -675,6 +675,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     entTh = cfgGen.getfloat('entTh')
     entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], reportAreaInfo,
                                                        thresholdPointInPoly)
+
     # check if entrainment and release overlap
     entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', 'Release', crop=True)
     # check for overlap with the secondary release area
@@ -683,7 +684,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
             entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ',
                 crop=True)
     # surfacic entrainment mass available (unit kg/m²)
-    fields['entrMassRaster'] = entrMassRaster*rhoEnt*entTh
+    fields['entrMassRaster'] = entrMassRaster*rhoEnt
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
 
