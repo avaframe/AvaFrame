@@ -74,6 +74,7 @@ def test_writeCompareReport(tmp_path):
     # setup required input
     reportFile = pathlib.Path(tmp_path, 'reportTest.md')
     avaName = 'avaTest'
+    plot1 = reportFile / 'testplot.png'
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'diffLim': '0.01', 'perDiff': '0.01'}
     reportD = {'avaName': {'type': 'avaName', 'name': 'data/avaKotST'},
@@ -83,8 +84,8 @@ def test_writeCompareReport(tmp_path):
                                   'Program version': 'development',
                                   'Mu': '0.15500',
                                   'Density [kgm-3]': '200'},
-        'Simulation Results': {'ppr': 'testplot.png',
-                               'Aimec comparison of mean and max values along path': 'testplot.png'},
+        'Simulation Results': {'ppr': plot1,
+                               'Aimec comparison of mean and max values along path': plot1},
         'Aimec analysis': {'type': 'list', 'runout [m]': 16.,
                            'max peak pressure [kPa]': 361.,
                            'max peak flow depth [m]': 5.4,
@@ -104,7 +105,7 @@ def test_writeCompareReport(tmp_path):
         'Release Area': {'type': 'columns', 'Release area scenario': 'relKot',
                          'Release features': ['KoT'],
                          'Release thickness [m]': [1.0]},
-        'Simulation Results': {'pfd': 'testplot.png',
+        'Simulation Results': {'pfd': plot1,
                                'type': 'image'},
         'Aimec analysis': {'type': 'list', 'runout [m]': 16.,
                            'max peak pressure [kPa]': 358.,
