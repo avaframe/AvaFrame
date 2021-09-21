@@ -69,7 +69,7 @@ def test_prepareReleaseEntrainment(tmp_path):
 
     # setup required inputs
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'secRelArea': 'True',
+    cfg['GENERAL'] = {'secRelArea': 'True', 'useRelThFromIni': 'False', 'useEntThFromIni': 'False',
                       'relTh': '1.32', 'secondaryRelTh': '2.5'}
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'False'}
@@ -125,6 +125,79 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert inputSimLines3['releaseLine']['thickness'] == [1.78, 4.328]
     assert inputSimLines3['secondaryReleaseLine'] is None
     assert badName3 is True
+
+    # setup required inputs
+    inputSimLines = {}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'False'}
+    inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release'}
+    rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
+    cfg['GENERAL']['useRelThFromIni'] = 'True'
+
+    # call function to test
+    relName4, inputSimLines4, badName4 = com1DFA.prepareReleaseEntrainment(
+        cfg, rel, inputSimLines)
+
+    assert relName4 == 'release1PF_test'
+    assert inputSimLines4['entResInfo']['flagSecondaryRelease'] == 'No'
+    assert inputSimLines4['releaseLine']['thickness'] == [1.32, 1.32]
+    assert inputSimLines4['secondaryReleaseLine'] is None
+
+
+def test_setThickness():
+    """ test setting thickness to line dicts """
+
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'useEntThFromIni': 'True', 'entTh': '1.0'}
+    lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
+              'Length': np.asarray([5, 5]), 'thickness': ['None', 'None'],
+              'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+              'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Entrainment'}
+
+    useThFromIni = 'useEntThFromIni'
+    typeTh = 'entTh'
+
+    # call function to be tested
+    lineTh = com1DFA.setThickness(cfg, lineTh, useThFromIni, typeTh)
+
+    assert lineTh['thickness'] == [1.0, 1.0]
+    assert lineTh['thicknessSource'] == ['ini file', 'ini file']
+    assert np.array_equal(lineTh['x'], np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]))
+
+    # call function to be tested
+    lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
+              'Length': np.asarray([5, 5]), 'thickness': ['None', '0.7'],
+              'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+              'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Entrainment'}
+    lineTh = com1DFA.setThickness(cfg, lineTh, useThFromIni, typeTh)
+
+    assert lineTh['thickness'] == [1.0, 1.0]
+    assert lineTh['thicknessSource'] == ['ini file', 'ini file']
+    assert np.array_equal(lineTh['x'], np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]))
+
+    # call function to be tested
+    cfg['GENERAL']['useEntThFromIni'] = 'False'
+    lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
+              'Length': np.asarray([5, 5]), 'thickness': ['None', '0.7'],
+              'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+              'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Entrainment'}
+    lineTh = com1DFA.setThickness(cfg, lineTh, useThFromIni, typeTh)
+
+    assert lineTh['thickness'] == [1.0, 0.7]
+    assert lineTh['thicknessSource'] == ['ini file', 'shp file']
+    assert np.array_equal(lineTh['x'], np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]))
+
+    # call function to be tested
+    cfg['GENERAL']['useEntThFromIni'] = 'False'
+    lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
+              'Length': np.asarray([5, 5]), 'thickness': ['1.2', '0.7'],
+              'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+              'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Entrainment'}
+    lineTh = com1DFA.setThickness(cfg, lineTh, useThFromIni, typeTh)
+
+    assert lineTh['thickness'] == [1.2, 0.7]
+    assert lineTh['thicknessSource'] == ['shp file', 'shp file']
+    assert np.array_equal(lineTh['x'], np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]))
 
 
 def test_createReportDict():
