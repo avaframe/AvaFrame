@@ -50,14 +50,14 @@ def test_plotAllPeakFields(tmp_path):
     plotPath = avaDirTmp / 'Outputs' / 'out1Peak' / 'relAlr_null_ref_0.15500_pfd.png'
 
     assert 'relAlr_null_ref_0.15500' in plotDict
-    assert plotDict['relAlr_null_ref_0.15500']['pfd'] == str(plotPath)
+    assert plotDict['relAlr_null_ref_0.15500']['pfd'] == plotPath
 
     # call function to be tested
     plotDict2 = oP.plotAllPeakFields(avaDirTmp, cfg['FLAGS'], modName, demData='')
     plotPath = avaDirTmp / 'Outputs' / 'out1Peak' / 'relAlr_null_ref_0.15500_pfd.png'
 
     assert 'relAlr_null_ref_0.15500' in plotDict2
-    assert plotDict2['relAlr_null_ref_0.15500']['pfd'] == str(plotPath)
+    assert plotDict2['relAlr_null_ref_0.15500']['pfd'] == plotPath
 
 
 def test_plotAllFields(tmp_path):

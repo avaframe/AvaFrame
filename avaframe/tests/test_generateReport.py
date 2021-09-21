@@ -40,6 +40,7 @@ def test_writeReport(tmp_path):
     """ Test generation markdown report file """
 
     # Initialise input dictionary
+    plot0 = pathlib.Path('release1HS2_entres_dfa_0.750_pfd.png')
     testDict = {'title info': {'name': 'This is my report title', 'type': 'title',
                 'testNo': 'this should not appear in the report if working fine!'},
         'avaName': {'type': 'avaName', 'name': 'data/avaTest'},
@@ -51,7 +52,7 @@ def test_writeReport(tmp_path):
         'Additional Info': {'type': 'text',
                             'Report Info': 'This simulations were performed with a developement version.'},
         'Fancy plots': {'type': 'image',
-                        'Peak Pressure Field of my test': 'release1HS2_entres_dfa_0.750_pfd.png'}}
+                        'Peak Pressure Field of my test': plot0}}
 
     # make a list of input dictionaries
     reportDictList = [testDict]
@@ -59,8 +60,9 @@ def test_writeReport(tmp_path):
     # initialise cfg object and test directory
     cfg = configparser.ConfigParser()
     cfg['FLAGS'] = {'reportOneFile': 'True'}
-    plotDict = {'thisIsMySimulation1': {'pfd': 'testPath/pfd.png'},
-                'simulationNumber2': {'pfd': 'testPath/pfd.png'}}
+    plot1 = pathlib.Path('testPath', 'pfd.png')
+    plotDict = {'thisIsMySimulation1': {'pfd': plot1},
+                'simulationNumber2': {'pfd': plot1}}
     # Call function to be tested
     gR.writeReport(tmp_path, reportDictList, cfg['FLAGS'], plotDict)
 
@@ -81,7 +83,7 @@ def test_writeReport(tmp_path):
     assert lineVals[12] == '| release area | release1HS2 | \n'
     assert lineVals[23] == '| Additional snow-covered area | \n'
     assert lineVals[24] == '| ----------| \n'
-    assert lineVals[-3] == '![pfd](testPath/pfd.png) \n'
+    assert lineVals[-3] == '![pfd](pfd.png) \n'
     assert lineVals[37] == '![Peak Pressure Field of my test](release1HS2_entres_dfa_0.750_pfd.png) \n'
 
     # call function to be tested
@@ -109,5 +111,5 @@ def test_writeReport(tmp_path):
     assert lineVals2[12] == '| release area | release1HS2 | \n'
     assert lineVals2[23] == '| Additional snow-covered area | \n'
     assert lineVals2[24] == '| ----------| \n'
-    assert lineVals2[-3] == '![pfd](testPath/pfd.png) \n'
+    assert lineVals2[-3] == '![pfd](pfd.png) \n'
     assert lineVals2[37] == '![Peak Pressure Field of my test](release1HS2_entres_dfa_0.750_pfd.png) \n'
