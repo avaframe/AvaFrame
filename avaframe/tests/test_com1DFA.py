@@ -72,7 +72,7 @@ def test_prepareReleaseEntrainment(tmp_path):
     cfg['GENERAL'] = {'secRelArea': 'True', 'useRelThFromIni': 'False', 'useEntThFromIni': 'False',
                       'relTh': '1.32', 'secondaryRelTh': '2.5'}
     inputSimLines = {}
-    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'False'}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'No'}
     inputSimLines['releaseLine'] = {'thickness': ['None', 'None'], 'type': 'Release'}
     inputSimLines['secondaryReleaseLine'] = {'thickness': ['1.789'], 'type': 'Secondary release'}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
@@ -85,11 +85,13 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes'
     assert inputSimLines['releaseLine']['thickness'] == [1.32, 1.32]
     assert inputSimLines['secondaryReleaseLine']['thickness'] == [1.789]
+    assert inputSimLines['releaseLine']['thicknessSource'] == ['ini file', 'ini file']
+    assert inputSimLines['secondaryReleaseLine']['thicknessSource'] == ['shp file']
     assert badName is True
 
     # setup required inputs
     inputSimLines = {}
-    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'False'}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'No'}
     inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release'}
     inputSimLines['secondaryReleaseLine'] = {'thickness': ['None'], 'type': 'Secondary release'}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
@@ -102,11 +104,13 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert inputSimLines2['entResInfo']['flagSecondaryRelease'] == 'Yes'
     assert inputSimLines2['releaseLine']['thickness'] == [1.78, 4.328]
     assert inputSimLines2['secondaryReleaseLine']['thickness'] == [2.5]
+    assert inputSimLines2['secondaryReleaseLine']['thicknessSource'] == ['ini file']
+    assert inputSimLines2['releaseLine']['thicknessSource'] == ['shp file', 'shp file']
     assert badName2 is True
 
     # setup required inputs
     inputSimLines = {}
-    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'False'}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'No'}
     inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release'}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
 
@@ -123,12 +127,13 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert relName3 == 'release1PF_test'
     assert inputSimLines3['entResInfo']['flagSecondaryRelease'] == 'No'
     assert inputSimLines3['releaseLine']['thickness'] == [1.78, 4.328]
+    assert inputSimLines3['releaseLine']['thicknessSource'] == ['shp file', 'shp file']
     assert inputSimLines3['secondaryReleaseLine'] is None
     assert badName3 is True
 
     # setup required inputs
     inputSimLines = {}
-    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'False'}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'No'}
     inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release'}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
     cfg['GENERAL']['useRelThFromIni'] = 'True'
@@ -141,6 +146,25 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert inputSimLines4['entResInfo']['flagSecondaryRelease'] == 'No'
     assert inputSimLines4['releaseLine']['thickness'] == [1.32, 1.32]
     assert inputSimLines4['secondaryReleaseLine'] is None
+    assert inputSimLines4['releaseLine']['thicknessSource'] == ['ini file', 'ini file']
+
+    # call function to test
+    cfg['GENERAL'] = {'secRelArea': 'False', 'useRelThFromIni': 'False', 'useEntThFromIni': 'False',
+                      'relTh': '1.32', 'secondaryRelTh': '2.5', 'entTh': '0.3'}
+    inputSimLines = {}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'Yes'}
+    inputSimLines['releaseLine'] = {'thickness': ['None', 'None'], 'type': 'Release'}
+    inputSimLines['entLine'] = {'thickness': ['0.4', 'None'], 'type': 'Entrainment'}
+    relName5, inputSimLines5, badName5 = com1DFA.prepareReleaseEntrainment(
+        cfg, rel, inputSimLines)
+
+    assert relName5 == 'release1PF_test'
+    assert inputSimLines5['entResInfo']['flagSecondaryRelease'] == 'No'
+    assert inputSimLines5['releaseLine']['thickness'] == [1.32, 1.32]
+    assert inputSimLines5['entLine']['thickness'] == [0.4, 0.3]
+    assert inputSimLines5['secondaryReleaseLine'] is None
+    assert inputSimLines5['entLine']['thicknessSource'] == ['shp file', 'ini file']
+    assert inputSimLines5['releaseLine']['thicknessSource'] == ['ini file', 'ini file']
 
 
 def test_setThickness():
