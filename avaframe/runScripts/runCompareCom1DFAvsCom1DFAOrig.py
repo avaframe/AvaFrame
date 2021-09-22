@@ -34,6 +34,7 @@ simType = 'null'
 cfgAimec = cfgUtils.getDefaultModuleConfig(ana3AIMEC)
 cfgAimec['AIMECSETUP']['comModules'] = 'com1DFAOrig|com1DFA'
 cfgAimec['AIMECSETUP']['resType'] = 'ppr'
+cfgAimec['AIMECSETUP']['startOfRunoutAreaAngle'] = '10'
 cfgAimec['FLAGS']['flagMass'] = 'True'
 # Which parameter to filter data for creating comparison plots, e.g. varPar = 'simType', values = ['null'] or
 # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value

@@ -121,11 +121,11 @@ def getSimulation(cfg, rel, entResInfo):
         the suffix _AF will be added')
         simName = relName + '_AF'
     relDict = sP.SHP2Array(rel)
-    for k in range(len(relDict['d0'])):
-        if relDict['d0'][k] == 'None':
-            relDict['d0'][k] = cfg['DEFVALUES'].getfloat('RelTh')
+    for k in range(len(relDict['thickness'])):
+        if relDict['thickness'][k] == 'None':
+            relDict['thickness'][k] = cfg['DEFVALUES'].getfloat('RelTh')
         else:
-            relDict['d0'][k] = float(relDict['d0'][k])
+            relDict['thickness'][k] = float(relDict['thickness'][k])
 
     log.info('Release area scenario: %s - perform simulations' % (relName))
 
@@ -318,10 +318,10 @@ def com1DFAOrigMain(cfg, avaDir):
                         reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
                         reportVar['Release area'].update({'Release thickness [m]': item})
                     elif cfgPar['varPar'] == 'Mu':
-                        reportVar['Simulation Parameters'].update({'Release thickness [m]': relDict['d0']})
+                        reportVar['Simulation Parameters'].update({'Release thickness [m]': relDict['thickness']})
                         reportVar['Simulation Parameters'].update({'Mu': item})
                         reportVar['Simulation Parameters'].update({'Entrainment thickness [m]': float(entrainmentTH)})
-                        reportVar['Release area'].update({'Release thickness [m]': relDict['d0']})
+                        reportVar['Release area'].update({'Release thickness [m]': relDict['thickness']})
 
                     if entInfo == 'Yes':
                         reportVar['Entrainment area'] = {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}
@@ -375,9 +375,9 @@ def com1DFAOrigMain(cfg, avaDir):
                         'Parameter variation on': '',
                         'Parameter value': '',
                         'Mu': defValues['Mu'],
-                        'Release thickness [m]': relDict['d0'],
+                        'Release thickness [m]': relDict['thickness'],
                         'Entrainment thickness [m]': float(entrainmentTH)},
-                    'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['d0']}}
+                    'Release Area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['thickness']}}
 
                 if entInfo == 'Yes':
                     reportST.update({'Entrainment area': {'type': 'columns', 'Entrainment area scenario': entrainmentArea, 'Entrainment thickness [m]': float(entrainmentTH)}})
@@ -438,9 +438,9 @@ def com1DFAOrigMain(cfg, avaDir):
                 'Parameter variation on': '',
                 'Parameter value': '',
                 'Mu': defValues['Mu'],
-                'Release thickness [m]': relDict['d0'],
+                'Release thickness [m]': relDict['thickness'],
                 'Entrainment thickness [m]': float(entrainmentTH)},
-            'Release area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['d0']}}
+            'Release area': {'type': 'columns', 'Release area scenario': relName, 'Release features': relDict['Name'], 'Release thickness [m]': relDict['thickness']}}
 
         endTime = time.time()
         timeNeeded = '%.2f' % (endTime - startTime)
