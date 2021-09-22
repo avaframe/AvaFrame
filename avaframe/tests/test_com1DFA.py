@@ -1361,7 +1361,8 @@ def test_initializeSimulation():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'methodMeshNormal': '1', 'thresholdPointInPoly': '0.001',
+    cfg['GENERAL'] = {'methodMeshNormal': '1', 'thresholdPointInPoly': '0.001', 'useRelThFromIni': 'False',
+                      'relTh': '1.0', 'useEntThFromIni': 'False',
                       'sphKernelRadius': '1.', 'meshCellSizeThreshold': '0.0001',
                       'meshCellSize': '1.', 'simTypeActual': 'ent', 'rhoEnt': '100.', 'entTh': '0.3',
                       'rho': '200.', 'gravAcc': '9.81', 'massPerParticleDeterminationMethod': 'MPPDH',
@@ -1383,7 +1384,8 @@ def test_initializeSimulation():
     releaseLine = {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([7.9, 7.9, 9.5, 9.5, 7.9]),
                    'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'thickness': [1.0],
                    'thicknessSource': ['ini File'], 'type': 'release'}
-    entLine = {'fileName': 'test/entTest.shp', 'Name': ['testEnt'], 'Start': np.asarray([0.]),
+    entLine = {'fileName': 'test/entTest.shp', 'Name': ['testEnt'], 'Start': np.asarray([0.]), 'thickness': [0.3, 0.3],
+               'thicknessSource': ['shp file', 'shp file'],
                'Length': np.asarray([5]), 'x': np.asarray([4, 5., 5.0, 4., 4.]), 'type': 'entrainment',
                'y': np.asarray([4., 4., 5.0, 5., 4.0]), 'thickness': [0.3], 'thicknessSource': ['ini File']}
     inputSimLines = {'releaseLine': releaseLine, 'entResInfo': {'flagSecondaryRelease': 'No'}, 'entLine': entLine,

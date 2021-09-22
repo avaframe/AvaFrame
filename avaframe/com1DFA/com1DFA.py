@@ -671,10 +671,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # initialize entrainment and resistance
     # get info of simType and whether or not to initialize resistance and entrainment
     simTypeActual = cfgGen['simTypeActual']
-    rhoEnt = cfgGen.getfloat('rhoEnt')
-    entTh = cfgGen.getfloat('entTh')
     entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], reportAreaInfo,
-                                                       thresholdPointInPoly)
+                                                       thresholdPointInPoly, cfgGen.getfloat('rhoEnt'))
 
     # check if entrainment and release overlap
     entrMassRaster = geoTrans.checkOverlap(entrMassRaster, relRaster, 'Entrainment', 'Release', crop=True)
@@ -684,7 +682,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
             entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ',
                 crop=True)
     # surfacic entrainment mass available (unit kg/m²)
-    fields['entrMassRaster'] = entrMassRaster*rhoEnt
+    fields['entrMassRaster'] = entrMassRaster#*rhoEnt
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
 
@@ -993,7 +991,7 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
     return xpart, ypart, mPart, nPart
 
 
-def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly):
+def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, rhoEnt):
     """ Initialize mass for entrainment
 
     Parameters
@@ -1009,6 +1007,8 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
     thresholdPointInPoly: float
         threshold val that decides if a point is in the polygon, on the line or
         very close but outside
+    rhoEnt: float
+        density of entrainment snow
 
     Returns
     -------
@@ -1031,6 +1031,8 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
     else:
         entrMassRaster = np.zeros((nrows, ncols))
         reportAreaInfo['entrainment'] = 'No'
+
+    entrMassRaster = entrMassRaster * rhoEnt
 
     return entrMassRaster, reportAreaInfo
 
