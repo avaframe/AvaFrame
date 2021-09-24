@@ -471,22 +471,22 @@ def test_initializeMassEnt():
 
     # call function to be tested
     entrMassRaster, reportAreaInfo = com1DFA.initializeMassEnt(
-        dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly)
+        dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, 200.)
     testData = np.zeros((nrows, ncols))
-    testData[0:11, 0:11] = 1.0
+    testData[0:11, 0:11] = 1.0 * 200.
 
     print('data', testData)
     print('ent', entrMassRaster, entLine)
 
     assert np.array_equal(entrMassRaster, testData)
-    assert np.sum(entrMassRaster) == 121
+    assert np.sum(entrMassRaster) == 24200.
     assert entrMassRaster.shape[0] == nrows
     assert reportAreaInfo['entrainment'] == 'Yes'
 
     # call function to be tested
     simTypeActual = 'res'
     entrMassRaster, reportAreaInfo = com1DFA.initializeMassEnt(
-        dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly)
+        dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, 200.)
 
     assert np.array_equal(entrMassRaster, np.zeros((nrows, ncols)))
     assert reportAreaInfo['entrainment'] == 'No'
