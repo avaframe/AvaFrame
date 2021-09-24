@@ -19,7 +19,9 @@ import matplotlib.pyplot as plt
 
 # local imports
 from avaframe.in3Utils import cfgUtils
+import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.com1DFA as com1DFA
+import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.out3Plot.outDebugPlots as outDebugPlots
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
@@ -342,10 +344,102 @@ def mainSimilaritySol():
 
     return solSimi
 
-def normL2():
+
+def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest):
+    """Compare analytical and com1DFA results"""
+
+    hErrorL2Array = np.zeros((len(particlesList)))
+    vErrorL2Array = np.zeros((len(particlesList)))
+    count = 0
+    # run the comparison routine for each saved time step
+    for particles, field in zip(particlesList, fieldsList):
+        t = particles['t']
+        # get similartiy solution h, u at required time step
+        ind_time = np.searchsorted(solSimi['Time'], t)
+        simiDict = getSimiSolParameters(solSimi, relDict, ind_time, cfg)
+        cellsize = relDict['dem']['header']['cellsize']
+        cosAngle = relDict['cos']
+        hSimi = simiDict['hSimi']
+        hNumerical = field['FD']
+        vSimi = {'fx': simiDict['vxSimi'], 'fy': simiDict['vySimi'], 'fz': simiDict['vzSimi']}
+        vNumerical = {'fx': field['Vx'], 'fy': field['Vy'], 'fz': field['Vz']}
+        hErrorL2 = normL2Scal(hSimi, hNumerical, cellsize, cosAngle)
+        hErrorL2Array[count] = hErrorL2
+        log.info("L2 error on the Flow Depth is : %.4f" % hErrorL2)
+        vErrorL2 = normL2Vect(vSimi, vNumerical, cellsize, cosAngle)
+        vErrorL2Array[count] = vErrorL2
+        log.info("L2 error on the Flow velocity is : %.4f" % vErrorL2)
+        count = count + 1
+    return hErrorL2Array, vErrorL2Array
+
+
+def normL2Vect(analyticalSol, numericalSol, cellsize, cosAngle):
     """ Compute L2 norm of the error between the analytic and numerical solution
     """
+    nonZeroIndex = np.where((np.abs(analyticalSol['fx']) > 0) & (np.abs(analyticalSol['fy']) > 0)
+                            & (np.abs(analyticalSol['fz']) > 0) & (np.abs(numericalSol['fz']) > 0)
+                            & (np.abs(numericalSol['fz']) > 0) & (np.abs(numericalSol['fz']) > 0))
+    dvx = analyticalSol['fx'] - numericalSol['fx']
+    dvy = analyticalSol['fy'] - numericalSol['fy']
+    dvz = analyticalSol['fz'] - numericalSol['fz']
+    dv = DFAtls.norm2(dvx, dvy, dvz)
+    localError = dv[nonZeroIndex]
+    error2 = cellsize * cellsize / cosAngle * np.nansum(localError)
+    error = np.sqrt(error2)
 
+    # # get info from dem
+    # dem = relDict['dem']
+    # ncols = dem['header']['ncols']
+    # nrows = dem['header']['nrows']
+    # xllc = dem['header']['xllcenter']
+    # yllc = dem['header']['yllcenter']
+    # csz = dem['header']['cellsize']
+    #
+    #
+    # cfgSimi = cfg['SIMISOL']
+    # L_x = cfgSimi.getfloat('L_x')
+    # cos = relDict['cos']
+    # X1 = relDict['X1']
+    # Y1 = relDict['Y1']
+    # xCenter = xc(solSimi, X1, Y1, ind_time, L_x)*cos
+    #
+    # fig1 = plt.figure(figsize=(pU.figW, pU.figH))
+    # ax1 = plt.subplot(121)
+    # indFinal = int(nrows * 0.5) -1
+    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), np.sqrt(dv)[indFinal, :], 'g', label='Field flow velocity')
+    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvx[indFinal, :], 'm', label='Field x velocity')
+    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvy[indFinal, :], 'b', label='Field y velocity')
+    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvz[indFinal, :], 'c', label='Field z velocity')
+    #
+    # ax1.set_title('Profile along flow at t=%.2f s' % (t))
+    # ax1.set_xlabel('velocity in [m/s]')
+    #
+    #
+    # ax2 = plt.subplot(122)
+    # indFinal = int(np.floor((xCenter - xllc)/csz))
+    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), np.sqrt(dv)[:, indFinal], 'g', label='Field flow velocity')
+    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvx[:, indFinal], 'm', label='Field x velocity')
+    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvy[:, indFinal], 'b', label='Field y velocity')
+    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvz[:, indFinal], 'c', label='Field z velocity')
+    # ax2.set_title('Profile across flow at t=%.2f s' % (t))
+    # ax2.set_xlabel('velocity in [m/s]')
+    #
+    # plt.show()
+
+    return error
+
+
+def normL2Scal(analyticalSol, numericalSol, cellsize, cosAngle):
+    """ Compute L2 norm of the error between the analytic and numerical solution
+    """
+    nonZeroIndex = np.where((analyticalSol > 0) & (numericalSol > 0))
+    localError = (analyticalSol[nonZeroIndex] - numericalSol[nonZeroIndex])
+    localError = localError * localError
+    # error = cellsize * cellsize / cosAngle * np.nansum(localError)
+    error2 = cellsize * cellsize / cosAngle * np.nansum(localError)
+    error = np.sqrt(error2)
+
+    return error
 
 
 def getReleaseThickness(avaDir, cfg, demFile):
@@ -373,11 +467,14 @@ def getReleaseThickness(avaDir, cfg, demFile):
 
     # Read dem
     demOri = IOf.readRaster(demFile)
-    nrows = demOri['header']['nrows']
-    ncols = demOri['header']['ncols']
+    cszNew = cfg.getfloat('GENERAL', 'meshCellSize')
+    x, y, xNew, yNew, diffExtentX, diffExtentY = geoTrans.getMeshXY(demOri, cellSizeNew=cszNew)
+
+    nrows = len(yNew)
+    ncols = len(xNew)
     xllc = demOri['header']['xllcenter']
     yllc = demOri['header']['yllcenter']
-    csz = demOri['header']['cellsize']
+    csz = cszNew
 
     # define release thickness distribution
     cfgSimi = cfg['SIMISOL']
@@ -413,8 +510,10 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest):
     Y1 = relDict['Y1']
     X = relDict['X']
     Y = relDict['Y']
+    dem = relDict['dem']
     demOri = relDict['demOri']
-
+    dem['header']['xllcenter'] = demOri['header']['xllcenter']
+    dem['header']['yllcenter'] = demOri['header']['yllcenter']
     # make plot
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     for part, field in zip(Particles, Fields):
@@ -423,14 +522,14 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest):
         hSimi = h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
         hSimi = np.where(hSimi <= 0, 0, hSimi)
         fig, ax, cmap, lev = outDebugPlots.plotContours(
-            fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm')
+            fig, ax, part, dem, field['FD'], pU.cmapDepth, 'm')
         CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                         linewidths=2, linestyles='dashed')
         plt.pause(1)
         fig.savefig(os.path.join(outDirTest, 'ContourSimiSol%f.%s' % (t, pU.outputFormat)))
 
     fig, ax, cmap, lev = outDebugPlots.plotContours(
-        fig, ax, part, demOri, field['FD'], pU.cmapDepth, 'm', last=True)
+        fig, ax, part, dem, field['FD'], pU.cmapDepth, 'm', last=True)
     CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                     linewidths=2, linestyles='dashed')
     ax.clabel(CS, inline=1, fontsize=8)
@@ -469,16 +568,17 @@ def prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, a
     fields = Fields[ind_t]
     particles = Particles[ind_t]
 
+    dem = relDict['dem']
     demOri = relDict['demOri']
     cos = relDict['cos']
     sin = relDict['sin']
     xCenter = simiDict['xCenter']
 
     # get info on DEM extent
-    nrows = demOri['header']['nrows']
+    nrows = dem['header']['nrows']
     xllc = demOri['header']['xllcenter']
     yllc = demOri['header']['yllcenter']
-    csz = demOri['header']['cellsize']
+    csz = dem['header']['cellsize']
 
     if axis == 'xaxis':
         ind = np.where(((particles['y']+yllc > -2.5) & (particles['y']+yllc < 2.5)))
@@ -493,9 +593,9 @@ def prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, a
     ux = particles['ux'][ind]
     uy = particles['uy'][ind]
     uz = particles['uz'][ind]
-    v = np.sqrt(ux*ux + uy*uy + uz*uz)
+    v = DFAtls.norm(ux, uy, uz)
 
-    com1DFASol = {'x': x, 'y': y, 'h': h, 'v': v, 'indFinal': indFinal, 'fields': fields}
+    com1DFASol = {'x': x, 'y': y, 'h': h, 'v': v, 'vx': ux, 'vy': uy, 'vz': uz, 'indFinal': indFinal, 'fields': fields}
 
     return com1DFASol
 
@@ -528,6 +628,7 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
     Hini = cfg['GENERAL'].getfloat('relTh')
     gravAcc = cfg['GENERAL'].getfloat('gravAcc')
     cos = relDict['cos']
+    sin = relDict['sin']
     X1 = relDict['X1']
     Y1 = relDict['Y1']
 
@@ -542,10 +643,11 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
     uxSimi = np.where(hSimi <= 0, 0, uxSimi)
     uySimi = v(solSimi, X1, Y1, ind_time, L_y, V)
     uySimi = np.where(hSimi <= 0, 0, uySimi)
-    vSimi = np.sqrt(uxSimi*uxSimi + uySimi*uySimi)
+    vSimi = DFAtls.norm(uxSimi, uySimi, 0*uySimi)
     xCenter = xc(solSimi, X1, Y1, ind_time, L_x)*cos
 
-    simiDict = {'hSimi': hSimi, 'vSimi': vSimi, 'xCenter': xCenter}
+    simiDict = {'hSimi': hSimi, 'vSimi': vSimi, 'vxSimi': uxSimi*cos, 'vySimi': uySimi, 'vzSimi': -uxSimi*sin,
+                'xCenter': xCenter}
 
     return simiDict
 
@@ -570,12 +672,13 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
     """
 
     # get info from dem
+    dem = relDict['dem']
     demOri = relDict['demOri']
-    ncols = demOri['header']['ncols']
-    nrows = demOri['header']['nrows']
+    ncols = dem['header']['ncols']
+    nrows = dem['header']['nrows']
     xllc = demOri['header']['xllcenter']
     yllc = demOri['header']['yllcenter']
-    csz = demOri['header']['cellsize']
+    csz = dem['header']['cellsize']
 
     # com1DFAPy results
     fields = comSol['fields']
@@ -583,6 +686,9 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
     y = comSol['y']
     h = comSol['h']
     v = comSol['v']
+    vx = comSol['vx']
+    vy = comSol['vy']
+    vz = comSol['vz']
     outDirTest = comSol['outDirTest']
     indFinal = comSol['indFinal']
     showPlot = comSol['showPlot']
@@ -590,6 +696,9 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
 
     # similarity solution results
     vSimi = simiDict['vSimi']
+    vxSimi = simiDict['vxSimi']
+    vySimi = simiDict['vySimi']
+    vzSimi = simiDict['vzSimi']
     hSimi = simiDict['hSimi']
     xCenter = simiDict['xCenter']
     X = relDict['X']
@@ -597,24 +706,36 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
 
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
     ax2 = ax1.twinx()
-    ax1.axvline(x=xCenter, linestyle=':')
 
     if axis == 'xaxis':
+        ax1.axvline(x=xCenter, linestyle=':')
         ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FD'][indFinal, :], 'k', label='Field flow depth')
         ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['FV'][indFinal, :], 'g', label='Field flow velocity')
+        ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['Vx'][indFinal, :], 'm', label='Field x velocity')
+        ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['Vy'][indFinal, :], 'b', label='Field y velocity')
+        ax2.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), fields['Vz'][indFinal, :], 'c', label='Field z velocity')
         ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
         ax2.plot(x, v, '.g', linestyle='None', label='Part flow velocity')
         ax1.plot(X[indFinal, :], hSimi[indFinal, :], '--k', label='SimiSol flow depth')
         ax2.plot(X[indFinal, :], vSimi[indFinal, :], '--g', label='SimiSol flow velocity')
+        ax2.plot(X[indFinal, :], vxSimi[indFinal, :], '--m', label='SimiSol x velocity')
+        ax2.plot(X[indFinal, :], vySimi[indFinal, :], '--b', label='SimiSol y velocity')
+        ax2.plot(X[indFinal, :], vzSimi[indFinal, :], '--c', label='SimiSol z velocity')
         ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
         ax1.set_xlabel('x in [m]')
     elif axis == 'yaxis':
         ax1.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:, indFinal], 'k', label='Field flow depth')
         ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FV'][:, indFinal], 'g', label='Field flow velocity')
+        ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['Vx'][:, indFinal], 'm', label='Field x velocity')
+        ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['Vy'][:, indFinal], 'b', label='Field y velocity')
+        ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['Vz'][:, indFinal], 'c', label='Field z velocity')
         ax1.plot(y, h, '.k', linestyle='None', label='Part flow depth')
         ax2.plot(y, v, '.g', linestyle='None', label='Part flow velocity')
         ax1.plot(Y[:, indFinal], hSimi[:, indFinal], '--k', label='SimiSol flow depth')
         ax2.plot(Y[:, indFinal], vSimi[:, indFinal], '--g', label='SimiSol flow velocity')
+        ax2.plot(Y[:, indFinal], vxSimi[:, indFinal], '--m', label='SimiSol x velocity')
+        ax2.plot(Y[:, indFinal], vySimi[:, indFinal], '--b', label='SimiSol y velocity')
+        ax2.plot(Y[:, indFinal], vzSimi[:, indFinal], '--c', label='SimiSol z velocity')
         ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
         ax1.set_xlabel('y in [m]')
 

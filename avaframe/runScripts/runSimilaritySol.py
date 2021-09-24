@@ -56,17 +56,20 @@ relDict = simiSol.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
 # call com1DFA to perform simulation - provide configuration file and release thickness function
-Particles, Fields, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg,
+particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg,
 relThField=relTh)
+relDict['dem'] = dem
 
 # compute similartiy solution
 log.info('Computing similarity solution')
 solSimi = simiSol.mainSimilaritySol()
 
+hErrorL2Array, vErrorL2Array = simiSol.analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
+
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 # -------------------------------
 if cfgMain['FLAGS'].getboolean('showPlot'):
-    simiSol.plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest)
+    simiSol.plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
 
 
 # TODO here is still user interaction
@@ -90,7 +93,7 @@ while isinstance(value, float):
     simiDict = simiSol.getSimiSolParameters(solSimi, relDict, ind_time, cfg)
 
     # get particle parameters
-    comSol = simiSol.prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, 'xaxis')
+    comSol = simiSol.prepareParticlesFieldscom1DFA(fieldsList, particlesList, ind_t, relDict, simiDict, 'xaxis')
     comSol['outDirTest'] = outDirTest
     comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
     comSol['Tsave'] = Tsave[ind_t]
@@ -99,7 +102,7 @@ while isinstance(value, float):
     simiSol.plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, 'xaxis')
 
     # get particle parameters
-    comSol = simiSol.prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, 'yaxis')
+    comSol = simiSol.prepareParticlesFieldscom1DFA(fieldsList, particlesList, ind_t, relDict, simiDict, 'yaxis')
     comSol['outDirTest'] = outDirTest
     comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
     comSol['Tsave'] = Tsave[ind_t]
