@@ -344,10 +344,102 @@ def mainSimilaritySol():
 
     return solSimi
 
-def normL2():
+
+def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest):
+    """Compare analytical and com1DFA results"""
+
+    hErrorL2Array = np.zeros((len(particlesList)))
+    vErrorL2Array = np.zeros((len(particlesList)))
+    count = 0
+    # run the comparison routine for each saved time step
+    for particles, field in zip(particlesList, fieldsList):
+        t = particles['t']
+        # get similartiy solution h, u at required time step
+        ind_time = np.searchsorted(solSimi['Time'], t)
+        simiDict = getSimiSolParameters(solSimi, relDict, ind_time, cfg)
+        cellsize = relDict['dem']['header']['cellsize']
+        cosAngle = relDict['cos']
+        hSimi = simiDict['hSimi']
+        hNumerical = field['FD']
+        vSimi = {'fx': simiDict['vxSimi'], 'fy': simiDict['vySimi'], 'fz': simiDict['vzSimi']}
+        vNumerical = {'fx': field['Vx'], 'fy': field['Vy'], 'fz': field['Vz']}
+        hErrorL2 = normL2Scal(hSimi, hNumerical, cellsize, cosAngle)
+        hErrorL2Array[count] = hErrorL2
+        log.info("L2 error on the Flow Depth is : %.4f" % hErrorL2)
+        vErrorL2 = normL2Vect(vSimi, vNumerical, cellsize, cosAngle)
+        vErrorL2Array[count] = vErrorL2
+        log.info("L2 error on the Flow velocity is : %.4f" % vErrorL2)
+        count = count + 1
+    return hErrorL2Array, vErrorL2Array
+
+
+def normL2Vect(analyticalSol, numericalSol, cellsize, cosAngle):
     """ Compute L2 norm of the error between the analytic and numerical solution
     """
+    nonZeroIndex = np.where((np.abs(analyticalSol['fx']) > 0) & (np.abs(analyticalSol['fy']) > 0)
+                            & (np.abs(analyticalSol['fz']) > 0) & (np.abs(numericalSol['fz']) > 0)
+                            & (np.abs(numericalSol['fz']) > 0) & (np.abs(numericalSol['fz']) > 0))
+    dvx = analyticalSol['fx'] - numericalSol['fx']
+    dvy = analyticalSol['fy'] - numericalSol['fy']
+    dvz = analyticalSol['fz'] - numericalSol['fz']
+    dv = DFAtls.norm2(dvx, dvy, dvz)
+    localError = dv[nonZeroIndex]
+    error2 = cellsize * cellsize / cosAngle * np.nansum(localError)
+    error = np.sqrt(error2)
 
+    # # get info from dem
+    # dem = relDict['dem']
+    # ncols = dem['header']['ncols']
+    # nrows = dem['header']['nrows']
+    # xllc = dem['header']['xllcenter']
+    # yllc = dem['header']['yllcenter']
+    # csz = dem['header']['cellsize']
+    #
+    #
+    # cfgSimi = cfg['SIMISOL']
+    # L_x = cfgSimi.getfloat('L_x')
+    # cos = relDict['cos']
+    # X1 = relDict['X1']
+    # Y1 = relDict['Y1']
+    # xCenter = xc(solSimi, X1, Y1, ind_time, L_x)*cos
+    #
+    # fig1 = plt.figure(figsize=(pU.figW, pU.figH))
+    # ax1 = plt.subplot(121)
+    # indFinal = int(nrows * 0.5) -1
+    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), np.sqrt(dv)[indFinal, :], 'g', label='Field flow velocity')
+    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvx[indFinal, :], 'm', label='Field x velocity')
+    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvy[indFinal, :], 'b', label='Field y velocity')
+    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvz[indFinal, :], 'c', label='Field z velocity')
+    #
+    # ax1.set_title('Profile along flow at t=%.2f s' % (t))
+    # ax1.set_xlabel('velocity in [m/s]')
+    #
+    #
+    # ax2 = plt.subplot(122)
+    # indFinal = int(np.floor((xCenter - xllc)/csz))
+    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), np.sqrt(dv)[:, indFinal], 'g', label='Field flow velocity')
+    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvx[:, indFinal], 'm', label='Field x velocity')
+    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvy[:, indFinal], 'b', label='Field y velocity')
+    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvz[:, indFinal], 'c', label='Field z velocity')
+    # ax2.set_title('Profile across flow at t=%.2f s' % (t))
+    # ax2.set_xlabel('velocity in [m/s]')
+    #
+    # plt.show()
+
+    return error
+
+
+def normL2Scal(analyticalSol, numericalSol, cellsize, cosAngle):
+    """ Compute L2 norm of the error between the analytic and numerical solution
+    """
+    nonZeroIndex = np.where((analyticalSol > 0) & (numericalSol > 0))
+    localError = (analyticalSol[nonZeroIndex] - numericalSol[nonZeroIndex])
+    localError = localError * localError
+    # error = cellsize * cellsize / cosAngle * np.nansum(localError)
+    error2 = cellsize * cellsize / cosAngle * np.nansum(localError)
+    error = np.sqrt(error2)
+
+    return error
 
 
 def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest):
