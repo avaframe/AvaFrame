@@ -1,12 +1,49 @@
 Release Notes
 =============
 
-current dev
------------
+v0.6 (24. September 2021)
+-------------------------
 
 ENHANCEMENTS
 
+- installation via pypi (pip install)
+- connection to QGis (via plugin manager) 
+- function to interpolate data on mesh of different cellSize using splinesp
+- testing via pytest extended
+- more pathlib usage 
+- ASCII header is read as dict
+- documentation contains FAQ page
+- reworked installation instructions
+- cleaner test reports/inis
+- github action to deploy to pypi
+- switch to codeclimate
+- use consistent thickness attributes (shapefiles etc)
+- read entrainment thickness
+- *com1DFA* any resolution is possible now 
+- *com1DFA* split the getWeight function in two: first get cell and then get weights. 
+- *com1DFA* avoid possibility of segfault because particles exit too quickly the domain.
+- *com1DFA* additional particles info: unique identifier for each particle and parent particles
+- *com1DFA* central time step calling
+- *com1DFA* additional options to set mass per particle directly or via release thickness
+- *com1DFA* interpolation option for initialization of Hpart 
+- *ana3AIMEC* override option for raster cellsize 
+- *ana3AIMEC* mass analysis plot even if more than 2 simulations
+
 FIX
+
+- getTimeIndex problem if dtSave < actual dt
+- better way to remove particles
+- track particles exiting the computation domain
+- fix issue save particles
+- read aimec grid info from result files and not from dem
+- add reasonString to removal of particles
+- fix correct module name in AIMEC 
+- com2AB write out to shp 
+
+Contributers:
+
+- **Code: core team**
+
 
 v0.5 (13. July 2021)
 --------------------
