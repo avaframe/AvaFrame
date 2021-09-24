@@ -3,7 +3,7 @@
 """
 
 # Load modules
-# importing general python modules 
+# importing general python modules
 import time
 import logging
 import pathlib
@@ -71,7 +71,7 @@ def runOperational(avalancheDir=''):
 
     # ----------------
     # Run dense flow
-    _, _, _, _, _, reportDictList = com1DFA.com1DFAMain(avalancheDir, cfgMain)
+    _, _, _, _, plotDict, reportDictList = com1DFA.com1DFAMain(avalancheDir, cfgMain)
 
     # Get peakfiles to return to QGIS
     avaDir = pathlib.Path(avalancheDir)
@@ -90,14 +90,14 @@ def runOperational(avalancheDir=''):
     # peak file plot
     modName = 'com1DFA'
 
-    # Generata plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName)
+    # Generate report info for com2AB
     reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
 
     # Set directory for report
-    reportDir = avaDir / 'Outputs'
+    reportDir = avaDir / 'Outputs' / 'reports'
+    fU.makeADir(reportDir)
     # write report
-    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict=plotDict, standaloneReport=True)
 
     # Print time needed
     endTime = time.time()

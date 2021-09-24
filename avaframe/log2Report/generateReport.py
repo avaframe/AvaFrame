@@ -7,10 +7,24 @@
 import os
 import logging
 import pathlib
+import shutil
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
+
+
+def copyPlots2ReportDir(reportDir, plotDict):
+    """ copy the plots to report directory """
+
+    if not isinstance(reportDir, pathlib.PurePath):
+        reportDir = pathlib.Path(reportDir)
+    for resType in plotDict:
+        if resType != 'type':
+            plotPath = plotDict[resType]
+            plotName = reportDir / plotPath.name
+            shutil.copy2(plotPath, plotName)
+            log.debug('Copied: %s to %s' % (plotPath, plotName))
 
 
 def addLineBlock(titleString, reportDKey, pfile, italicFont=False, onlyFirstLine=False):
@@ -125,7 +139,7 @@ def writeReportFile(reportD, pfile):
                         pfile.write(' \n')
 
 
-def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
+def writeReport(outDir, reportDictList, cfgFLAGS, plotDict='', standaloneReport=False):
     """ Write a report in markdown format for simulations, saved to outDir
 
         Parameters
@@ -138,6 +152,8 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
             configuration dictionary
         plotDict : dict
             optional dictionary with info on plots that shall be included in report
+        standaloneReport: bool
+            if True copy plots to reportDir
 
     """
 
@@ -153,6 +169,13 @@ def writeReport(outDir, reportDictList, cfgFLAGS, plotDict=''):
                     # add plot info to general report Dict
                     reportD['Simulation Results'] = plotDict[reportD['simName']['name']]
                     reportD['Simulation Results'].update({'type': 'image'})
+
+                # copy plots to reportDir 
+                if standaloneReport:
+                    for key in reportD:
+                        for subKey in reportD[key]:
+                            if reportD[key][subKey] == 'image':
+                                copyPlots2ReportDir(outDir, reportD[key])
                 # Write report file
                 writeReportFile(reportD, pfile)
 
