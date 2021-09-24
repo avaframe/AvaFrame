@@ -682,7 +682,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
             entrMassRaster = geoTrans.checkOverlap(entrMassRaster, secRelRaster, 'Entrainment', 'Secondary release ',
                 crop=True)
     # surfacic entrainment mass available (unit kg/m²)
-    fields['entrMassRaster'] = entrMassRaster#*rhoEnt
+    fields['entrMassRaster'] = entrMassRaster
     entreainableMass = np.nansum(fields['entrMassRaster']*dem['areaRaster'])
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
 
