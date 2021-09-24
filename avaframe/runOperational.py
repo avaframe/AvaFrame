@@ -18,7 +18,6 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
 
 # then depending on which computational module you want to use
@@ -84,11 +83,8 @@ def runOperational(avalancheDir=''):
     abShpFile = outAB.writeABtoSHP(resAB)
 
     # ----------------
-    # TODO: make report and feed info back (for QGis)
     # Collect results/plots/report  to a single directory
     # make simple plots (com1DFA, com2AB)
-    # peak file plot
-    modName = 'com1DFA'
 
     # Generate report info for com2AB
     reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
@@ -96,7 +92,7 @@ def runOperational(avalancheDir=''):
     # Set directory for report
     reportDir = avaDir / 'Outputs' / 'reports'
     fU.makeADir(reportDir)
-    # write report
+    # write report and copy plots to report dir
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict=plotDict, standaloneReport=True)
 
     # Print time needed

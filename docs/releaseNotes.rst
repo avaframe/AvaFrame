@@ -18,7 +18,6 @@ ENHANCEMENTS
 - github action to deploy to pypi
 - switch to codeclimate
 - use consistent thickness attributes (shapefiles etc)
-- read entrainment thickness
 - *com1DFA* any resolution is possible now 
 - *com1DFA* split the getWeight function in two: first get cell and then get weights. 
 - *com1DFA* avoid possibility of segfault because particles exit too quickly the domain.
@@ -26,6 +25,7 @@ ENHANCEMENTS
 - *com1DFA* central time step calling
 - *com1DFA* additional options to set mass per particle directly or via release thickness
 - *com1DFA* interpolation option for initialization of Hpart 
+- *com1DFA* read entrainment thickness
 - *ana3AIMEC* override option for raster cellsize 
 - *ana3AIMEC* mass analysis plot even if more than 2 simulations
 
