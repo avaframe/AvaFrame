@@ -50,7 +50,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
                     optional information about the data type compared ('ppr', 'pfd', 'pfv')
         avaName : str
             name of avalanche
-        outDir : str or pathlib path
+        outDir : pathlib path
             path to dictionary where plots shall be saved to
         cfg : configParser
             cfg['FLAGS'].getboolean('showPlot')
@@ -260,11 +260,11 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
 
         Parameters
         ----------
-        avaDir : str
+        avaDir : str or pathlib path
             path to avalanche directory
-        simNameRef: str
+        simNameRef: str or pathlib path
             name of reference simulation
-        simNameComp: str
+        simNameComp: str or pathlib path
             name of comparison simulation
         cfg : dict
             global configuration settings
@@ -329,7 +329,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
 
         Parameters
         ----------
-        avaDir : str
+        avaDir : str or pathlib path
             path to avalanche directory
         inputDir : str
             path to directory of input data (only 2 raster files allowed)
@@ -338,8 +338,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
 
     """
 
-    if not isinstance(avaDir, pathlib.PurePath):
-        avaDir = pathlib.Path(avaDir)
+    avaDir = fu.checkPathlib(avaDir)
     outDir = avaDir / 'Outputs' / 'out3Plot'
     fU.makeADir(outDir)
 
@@ -398,11 +397,11 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
 
     """
 
-    avaDir = fU.checkPath(avaDir)
+    avaDir = fU.checkPathlib(avaDir)
     outDir = avaDir / 'out3Plot'
     fU.makeADir(outDir)
 
-    datafile = fU.checkPath(datafile)
+    datafile = fU.checkPathlib(datafile)
     name1 = datafile.name
     log.info('input dataset #1 is %s' % name1)
 
