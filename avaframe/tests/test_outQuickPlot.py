@@ -107,3 +107,51 @@ def test_quickPlotBench(tmp_path):
     assert plotDict['plots'][0] == testPath
     assert plotDict['stats'][0] == 10.
     assert plotDict['stats'][1] == 0.
+
+
+def test_generateOnePlot(tmp_path):
+
+    # Initialise inputs
+    avaName = 'avaHockeyChannel'
+    avaTestDir = 'avaPlotPytest'
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
+    outDir = pathlib.Path(tmp_path)
+
+    data1File = avaDir / 'release1HS_entres_ref_0.15500_pfd.asc'
+    data1 = np.loadtxt(data1File, skiprows=6)
+    cellSize = 5.
+    cfg = configparser.ConfigParser()
+    cfg['FLAGS'] = {'showPlot': False}
+
+    dataDict = {'data1': data1, 'name1': 'release1HS_entres_ref_0.15500_pfd', 'cellSize': cellSize}
+
+    # Initialise plotList
+    plotDict = {'resType': 'pfd', 'axis': 'x', 'location': 25, 'plots': []}
+    plotDictNew = oP.generateOnePlot(dataDict, outDir, cfg, plotDict)
+
+    assert plotDictNew['plots'] == [outDir / 'Profiles_release1HS_entres_ref_0.15500_pfd.png']
+
+
+def test_quickPlotOne(tmp_path):
+    """ test creating one plot of raster data """
+
+    # setup inputs
+    avaName = 'avaHockeyChannel'
+    avaTestDir = 'avaPlotPytest'
+    dirPath = pathlib.Path(__file__).parents[0]
+    testDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
+    avaDir = pathlib.Path(tmp_path, 'avaPlot')
+    testFile = avaDir / 'release1HS_entres_ref_0.15500_pfd.asc'
+    data1File = testDir / 'release1HS_entres_ref_0.15500_pfd.asc'
+    fU.makeADir(avaDir)
+    shutil.copy(data1File, testFile)
+    cfg = configparser.ConfigParser()
+    cfg['FLAGS'] = {'showPlot': 'False'}
+    locVal = 25
+    axis = 'x'
+
+    # to test
+    plotDictNew = oP.quickPlotOne(avaDir, data1File, cfg, locVal, axis, resType='')
+
+    assert plotDictNew['plots'] == [avaDir / 'out3Plot' / 'Profiles_release1HS_entres_ref_0.15500_pfd.png']
