@@ -263,10 +263,14 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
         ----------
         avaDir : str or pathlib path
             path to avalanche directory
-        simNameRef: str or pathlib path
+        simNameRef: str
             name of reference simulation
-        simNameComp: str or pathlib path
+        simNameComp: str
             name of comparison simulation
+        refDir: str or pathlib path
+            path to reference file
+        compDir: str or pathlib path
+            path to comparison file
         cfg : dict
             global configuration settings
         suffix: str
@@ -332,7 +336,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
         ----------
         avaDir : str or pathlib path
             path to avalanche directory
-        inputDir : str
+        inputDir : str or pathlib path
             path to directory of input data (only 2 raster files allowed)
         cfg: configParser object
             global configuration settings
@@ -347,8 +351,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     avaName = avaDir.stem
 
     # Load input datasets from input directory
-    if not isinstance(inputDir, pathlib.PurePath):
-        inputDir = pathlib.Path(inputDir)
+    inputDir = fU.checkPathlib(inputDir)
     datafiles = list(inputDir.glob('*.asc'))
     datafiles.extend(list(inputDir.glob('*.txt')))
 
@@ -387,7 +390,7 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
         ----------
         avaDir : str or pathlib Path
             path to avalanche directory
-        datafile : str
+        datafile : str or pathlib path
             path to data file
         cfg : dict
             configuration including flags for plotting
@@ -432,8 +435,6 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
         ----------
         dataDict : dict
             dictionary with info of the dataset to be plotted
-        avaName : str
-            name of avalanche
         outDir : pathlib path
             path to dictionary where plots shall be saved to
         cfg : dict
