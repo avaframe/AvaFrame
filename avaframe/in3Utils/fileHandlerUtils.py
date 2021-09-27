@@ -47,13 +47,14 @@ def checkPathlib(checkPath):
 
         Returns
         -------
-        checkedPath: pathlib path
+        checkPath: pathlib path
             pathlib path version of checkPath
     """
 
     if not isinstance(checkPath, pathlib.PurePath):
-        checkedPath = pathlib.Path(checkPath)
-        return checkedPath
+        checkPath = pathlib.Path(checkPath)
+
+    return checkPath
 
 
 def readLogFile(logName, cfg=''):
