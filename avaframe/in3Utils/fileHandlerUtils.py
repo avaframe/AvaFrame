@@ -37,6 +37,25 @@ def makeADir(dirName):
     log.debug('Directory: %s created' % dirName)
 
 
+def checkPathlib(checkPath):
+    """ check if pathlib.PurePath if not convert to
+
+        Parameters
+        ----------
+        checkPath: str or pathlib path
+        path to be checked
+
+        Returns
+        -------
+        checkedPath: pathlib path
+            pathlib path version of checkPath
+    """
+
+    if not isinstance(checkPath, pathlib.PurePath):
+        checkedPath = pathlib.Path(checkPath)
+        return checkedPath
+
+
 def readLogFile(logName, cfg=''):
     """ Read experiment log file and make dictionary that contains general info on all simulations
 

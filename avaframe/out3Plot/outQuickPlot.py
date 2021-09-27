@@ -7,7 +7,7 @@ between two datasets of identical shape.
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
-import os
+import pathlib
 import logging
 import glob
 
@@ -50,7 +50,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
                     optional information about the data type compared ('ppr', 'pfd', 'pfv')
         avaName : str
             name of avalanche
-        outDir : str
+        outDir : str or pathlib path
             path to dictionary where plots shall be saved to
         cfg : configParser
             cfg['FLAGS'].getboolean('showPlot')
@@ -206,7 +206,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
                  (centiles[0], unit, centiles[1], unit),
                  horizontalalignment='left', verticalalignment='bottom', transform=ax4.transAxes)
 
-    fig.savefig(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
+    saveName1 = outDir / ('Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat))
+    fig.savefig(saveName1)
 
     # Fgiure 2 cross and lonprofile
     fig, ax = plt.subplots(ncols=2, figsize=(pU.figW*2, pU.figH))
@@ -223,14 +224,15 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax[1].set_title('Long profile at y =  %d' % nx_loc)
     ax[0].legend()
     ax[1].legend()
-    fig.savefig(os.path.join(outDir, 'Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
+    saveName2 = outDir / ('Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat))
+    fig.savefig(saveName2)
 
     log.info('Figures saved to: %s' % outDir)
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
 
-    plotDict['plots'].append(os.path.join(outDir, 'Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat)))
+    plotDict['plots'].append(saveName1)
     plotDict['difference'].append(diffMax)
     plotDict['difference'].append(diffMean)
     plotDict['difference'].append(diffMin)
@@ -278,7 +280,8 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
     """
 
     # Create required directories
-    outDir = os.path.join(avaDir, 'Outputs', 'out3Plot')
+    avaDir = fU.checkPathlib(avaDir)
+    outDir = avaDir / 'Outputs' / 'out3Plot'
     fU.makeADir(outDir)
 
     # Initialise plotDictList
@@ -287,10 +290,12 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
     # Initialise plotList
     plotDict = {'plots': [], 'difference': [], 'stats': []}
 
-    simRefFile = os.path.join(refDir, simNameRef + '_' + suffix + '.asc')
-    simCompFile = os.path.join(compDir, simNameComp + '_' + suffix + '.asc')
+    refDir = fU.checkPathlib(refDir)
+    compDir = fU.checkPathlib(compDir)
+    simRefFile = refDir / (simNameRef + '_' + suffix + '.asc')
+    simCompFile = compDir / (simNameComp + '_' + suffix + '.asc')
 
-    if os.path.isfile(simRefFile) == False or os.path.isfile(simCompFile) == False:
+    if not simRefFile.is_file() or not simCompFile.is_file() == False:
         log.error('File for result type: %s not found' % suffix)
 
     # Load data
@@ -304,7 +309,7 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
     unit = pU.cfgPlotUtils['unit%s' % suffix]
 
     # Get name of Avalanche
-    avaName = os.path.basename(avaDir)
+    avaName = avaDir.stem
     # Create dataDict to be passed to generatePlot
     dataDict = {'data1': data1, 'data2': data2, 'name1': simNameComp + '_' + suffix,
                 'name2': simNameRef + '_' + suffix, 'compareType': 'compToRef',
@@ -333,18 +338,22 @@ def quickPlotSimple(avaDir, inputDir, cfg):
 
     """
 
-    outDir = os.path.join(avaDir, 'Outputs', 'out3Plot')
+    if not isinstance(avaDir, pathlib.PurePath):
+        avaDir = pathlib.Path(avaDir)
+    outDir = avaDir / 'Outputs' / 'out3Plot'
     fU.makeADir(outDir)
 
     # Get name of Avalanche
-    avaName = os.path.basename(avaDir)
+    avaName = avaDir.stem
 
     # Load input datasets from input directory
-    datafiles = glob.glob(inputDir+os.sep + '*.asc')
-    datafiles.extend(glob.glob(inputDir+os.sep + '*.txt'))
+    if not isinstance(inputDir, pathlib.PurePath):
+        inputDir = pathlib.Path(inputDir)
+    datafiles = list(inputDir.glob('*.asc'))
+    datafiles.extend(list(inputDir.glob('*.txt')))
 
-    name1 = os.path.basename(datafiles[0])
-    name2 = os.path.basename(datafiles[1])
+    name1 = datafiles[0].name
+    name2 = datafiles[1].name
     log.info('input dataset #1 is %s' % name1)
     log.info('input dataset #2 is %s' % name2)
 
@@ -363,7 +372,9 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     plotDict = {'plots': [], 'difference': [], 'stats': []}
 
     # Create Plots
-    plotList = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
+    plotDictNew = generatePlot(dataDict, avaName, outDir, cfg, plotDict)
+
+    return plotDictNew
 
 
 def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
@@ -374,7 +385,7 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
 
         Parameters
         ----------
-        avaDir : str
+        avaDir : str or pathlib Path
             path to avalanche directory
         datafile : str
             path to data file
@@ -387,10 +398,12 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
 
     """
 
-    outDir = os.path.join(avaDir, 'out3Plot')
+    avaDir = fU.checkPath(avaDir)
+    outDir = avaDir / 'out3Plot'
     fU.makeADir(outDir)
 
-    name1 = os.path.basename(datafile)
+    datafile = fU.checkPath(datafile)
+    name1 = datafile.name
     log.info('input dataset #1 is %s' % name1)
 
     # Load data
@@ -419,7 +432,7 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
             dictionary with info of the dataset to be plotted
         avaName : str
             name of avalanche
-        outDir : str
+        outDir : pathlib path
             path to dictionary where plots shall be saved to
         cfg : dict
             main configuration settings
@@ -493,14 +506,15 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     else:
         ax3.set_title('Profile at y ~ %d [%s] (%d)' % (location, unit, ny_loc))
 
-    fig.savefig(os.path.join(outDir, 'Profiles_%s.%s' % (name1, pU.outputFormat)))
+    saveName1 = outDir / ('Profiles_%s.%s' % (name1, pU.outputFormat))
+    fig.savefig(saveName1)
 
     log.info('Figures saved to: %s' % outDir)
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
 
-    plotDict['plots'].append(os.path.join(outDir, 'Profiles_%s.%s' % (name1, pU.outputFormat)))
+    plotDict['plots'].append(saveName1)
 
     plt.close(fig)
 
