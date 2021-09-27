@@ -403,7 +403,7 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
     fU.makeADir(outDir)
 
     datafile = fU.checkPathlib(datafile)
-    name1 = datafile.name
+    name1 = datafile.stem
     log.info('input dataset #1 is %s' % name1)
 
     # Load data
@@ -421,6 +421,8 @@ def quickPlotOne(avaDir, datafile, cfg, locVal, axis, resType=''):
 
     # Create Plots
     plotList = generateOnePlot(dataDict, outDir, cfg, plotDict)
+
+    return plotDict
 
 
 def generateOnePlot(dataDict, outDir, cfg, plotDict):
