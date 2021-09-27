@@ -121,7 +121,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
-    title = str('%s' % name1)
+    title = str('%s - sim' % name1)
     ax1.set_title(title)
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
@@ -138,7 +138,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax2.set_ylim([rowsMinPlot, rowsMaxPlot])
     ax2.set_aspect('auto')
     ax2.set_xlabel('x [m]')
-    title = str('%s' % name2)
+    title = str('%s - ref' % name2)
     ax2.set_title(title)
 
     ax3 = fig.add_subplot(223)
@@ -155,7 +155,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
              horizontalalignment='left', verticalalignment='bottom', transform=ax3.transAxes)
     ax3.set_aspect('auto')
     ax3.set_xlabel('x [m]')
-    ax3.set_title('Difference ref-sim')
+    ax3.set_title('Difference sim-ref')
 
     # for difference histogramm - remove dataDiff == 0 values from array
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
@@ -236,6 +236,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     plotDict['difference'].append(diffMax)
     plotDict['difference'].append(diffMean)
     plotDict['difference'].append(diffMin)
+    # stats is the max and min value of the reference
     plotDict['stats'].append(np.amax(data2))
     plotDict['stats'].append(np.amin(data2))
     if 'differenceZoom' in plotDict:
@@ -301,7 +302,7 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
     # Load data
     raster = IOf.readRaster(simCompFile, noDataToNan=True)
     rasterRef = IOf.readRaster(simRefFile, noDataToNan=True)
-    data1, data2 = geoTrans.resizeData(raster, rasterRef)
+    dataComp, dataRef = geoTrans.resizeData(raster, rasterRef)
     log.debug('dataset1: %s' % simCompFile)
     log.debug('dataset2: %s' % simRefFile)
 
@@ -311,7 +312,7 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
     # Get name of Avalanche
     avaName = avaDir.stem
     # Create dataDict to be passed to generatePlot
-    dataDict = {'data1': data1, 'data2': data2, 'name1': simNameComp + '_' + suffix,
+    dataDict = {'data1': dataComp, 'data2': dataRef, 'name1': simNameComp + '_' + suffix,
                 'name2': simNameRef + '_' + suffix, 'compareType': 'compToRef',
                 'simName': simNameComp, 'suffix': suffix, 'cellSize': cellSize, 'unit': unit}
     # Create Plots
@@ -338,7 +339,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
 
     """
 
-    avaDir = fu.checkPathlib(avaDir)
+    avaDir = fU.checkPathlib(avaDir)
     outDir = avaDir / 'Outputs' / 'out3Plot'
     fU.makeADir(outDir)
 

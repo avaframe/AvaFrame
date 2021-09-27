@@ -72,7 +72,7 @@ as well as the statistical measures of the difference plots, such as mean, max a
 Details on the required inputs for this function can be found in :py:func:`out3Plot.outQuickPlot.generatePlot`.
 
 
-.. figure:: _static/Diff_avaAlr0_pfd.png
+.. figure:: _static/avaAlrNullTest__pfd.png
 
           Output plot from generatePlot on peak flow depth results
 
