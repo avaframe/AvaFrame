@@ -365,10 +365,10 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
         vNumerical = {'fx': field['Vx'], 'fy': field['Vy'], 'fz': field['Vz']}
         hErrorL2 = normL2Scal(hSimi, hNumerical, cellsize, cosAngle)
         hErrorL2Array[count] = hErrorL2
-        log.info("L2 error on the Flow Depth is : %.4f" % hErrorL2)
+        log.info("L2 error on the Flow Depth at t=%.2f s is : %.4f" % (t, hErrorL2))
         vErrorL2 = normL2Vect(vSimi, vNumerical, cellsize, cosAngle)
         vErrorL2Array[count] = vErrorL2
-        log.info("L2 error on the Flow velocity is : %.4f" % vErrorL2)
+        log.info("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
         count = count + 1
     return hErrorL2Array, vErrorL2Array
 
