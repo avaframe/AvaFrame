@@ -208,8 +208,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
                  (centiles[0], unit, centiles[1], unit),
                  horizontalalignment='left', verticalalignment='bottom', transform=ax4.transAxes)
 
-    saveName1 = outDir / ('Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat))
-    fig.savefig(saveName1)
+    saveNameDiff = outDir / ('Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat))
+    fig.savefig(saveNameDiff)
 
     # Fgiure 2 cross and lonprofile
     fig, ax = plt.subplots(ncols=2, figsize=(pU.figW*2, pU.figH))
@@ -226,15 +226,15 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax[1].set_title('Long profile at y =  %d' % nx_loc)
     ax[0].legend()
     ax[1].legend()
-    saveName2 = outDir / ('Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat))
-    fig.savefig(saveName2)
+    saveNameProfile = outDir / ('Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat))
+    fig.savefig(saveNameProfile)
 
     log.info('Figures saved to: %s' % outDir)
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
 
-    plotDict['plots'].append(saveName1)
+    plotDict['plots'].append(saveNameDiff)
     plotDict['difference'].append(diffMax)
     plotDict['difference'].append(diffMean)
     plotDict['difference'].append(diffMin)
@@ -511,15 +511,15 @@ def generateOnePlot(dataDict, outDir, cfg, plotDict):
     else:
         ax3.set_title('Profile at y ~ %d [%s] (%d)' % (location, unit, ny_loc))
 
-    saveName1 = outDir / ('Profiles_%s.%s' % (name1, pU.outputFormat))
-    fig.savefig(saveName1)
+    saveNameProfile = outDir / ('Profiles_%s.%s' % (name1, pU.outputFormat))
+    fig.savefig(saveNameProfile)
 
     log.info('Figures saved to: %s' % outDir)
 
     if cfg['FLAGS'].getboolean('showPlot'):
         plt.show()
 
-    plotDict['plots'].append(saveName1)
+    plotDict['plots'].append(saveNameProfile)
 
     plt.close(fig)
 
