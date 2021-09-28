@@ -26,10 +26,11 @@ log = logging.getLogger(__name__)
 def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     """ Create comparison plots of two ascii datasets
 
-        This function creates two plots, one plot with four panels with, first dataset, second dataset, the absolute difference of the two datasets
-        and the absolute difference capped to a smaller range of differences (ppr: +- 100kPa, pfd: +-1m, pfv:+- 10ms-1).
-        The difference plots also include an insert showing the histogram and the cumulative density function of the differences.
-        The second plot shows a cross- and along profile cut of the two datasets.
+        This function creates two plots, one plot with four panels with, first dataset, second dataset,
+        the absolute difference of the two datasets and the absolute difference capped to a smaller range
+        of differences (ppr: +- 100kPa, pfd: +-1m, pfv:+- 10ms-1).
+        The difference plots also include an insert showing the histogram and the cumulative density function
+        of the differences. The second plot shows a cross- and along profile cut of the two datasets.
         The folder and simulation name of the datasets has to be passed to the function.
 
         Parameters
@@ -100,7 +101,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     maxVal = max(np.nanmax(data1), np.nanmax(data2))
 
     # constrain data to where there is data
-    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, _ = pU.constrainPlotsToData(dataExtend, cellSize, extentOption=True)
+    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, _ = pU.constrainPlotsToData(dataExtend, cellSize,
+        extentOption=True)
 
     # Location of box
     nybox = 0.05
@@ -178,7 +180,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
         ax4.set_title('Difference capped at %.1f times max difference: +-%.2f' % (cutVal, elev_max))
 
     # for difference histogramm - remove dataDiff == 0 values from array
-    dataDiffZoom = np.where((dataDiffPlot <- elev_max) | (dataDiffPlot > elev_max), np.nan, dataDiffPlot)
+    dataDiffZoom = np.where((dataDiffPlot < -elev_max) | (dataDiffPlot > elev_max), np.nan, dataDiffPlot)
     diffMaxZoom = np.nanmax(dataDiffZoom)
     diffMinZoom = np.nanmin(dataDiffZoom)
     diffMeanZoom = np.nanmean(dataDiffZoom)
@@ -254,8 +256,8 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
         (two raster datasets of identical dimension) and save to
         Outputs/out3Plot within avalanche directoy
 
-        figure 1: plot raster data for dataset1, dataset2 and their difference, their difference limited to specified range,
-                  including a histogram and the cumulative density function of the differences
+        figure 1: plot raster data for dataset1, dataset2 and their difference, their difference limited to
+                  specified range, including a histogram and the cumulative density function of the differences
         figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
         -plots are saved to Outputs/out3Plot
 
@@ -300,7 +302,7 @@ def quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfg, suffix
     simRefFile = refDir / (simNameRef + '_' + suffix + '.asc')
     simCompFile = compDir / (simNameComp + '_' + suffix + '.asc')
 
-    if not simRefFile.is_file() or not simCompFile.is_file() == False:
+    if not simRefFile.is_file() or not simCompFile.is_file():
         log.error('File for result type: %s not found' % suffix)
 
     # Load data
