@@ -42,12 +42,12 @@ def test_generatePlot(tmp_path):
     plotDictNew = oP.generatePlot(dataDict, avaName, outDir, cfg, plotDict)
 
 
-    assert (plotDict['difference'][0] == 4.0)
-    assert (plotDict['difference'][1] == -0.5)
-    assert (plotDict['difference'][2] == -8.0)
-    assert (plotDict['differenceZoom'][0] == 0)
-    assert (plotDict['differenceZoom'][1] == -0.023255813953488372)
-    assert (plotDict['differenceZoom'][2] == -1.0)
+    assert (plotDictNew['difference'][0] == 4.0)
+    assert (plotDictNew['difference'][1] == -0.5)
+    assert (plotDictNew['difference'][2] == -8.0)
+    assert (plotDictNew['differenceZoom'][0] == 0)
+    assert (plotDictNew['differenceZoom'][1] == -0.023255813953488372)
+    assert (plotDictNew['differenceZoom'][2] == -1.0)
 
 
 def test_quickPlotSimple(tmp_path):
