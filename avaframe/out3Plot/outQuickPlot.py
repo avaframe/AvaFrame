@@ -123,7 +123,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     pU.addColorBar(im1, ax1, ticks, unit)
 
     ax1.set_aspect('auto')
-    title = str('%s - sim' % name1)
+    title = str('%s - simulation' % name1)
     ax1.set_title(title)
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('y [m]')
@@ -140,7 +140,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     ax2.set_ylim([rowsMinPlot, rowsMaxPlot])
     ax2.set_aspect('auto')
     ax2.set_xlabel('x [m]')
-    title = str('%s - ref' % name2)
+    title = str('%s - reference' % name2)
     ax2.set_title(title)
 
     ax3 = fig.add_subplot(223)
@@ -157,7 +157,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
              horizontalalignment='left', verticalalignment='bottom', transform=ax3.transAxes)
     ax3.set_aspect('auto')
     ax3.set_xlabel('x [m]')
-    ax3.set_title('Difference sim-ref')
+    ax3.set_title('Difference simulation-reference')
 
     # for difference histogramm - remove dataDiff == 0 values from array
     dataDiffPlot = dataDiff[np.isnan(dataDiff) == False]
