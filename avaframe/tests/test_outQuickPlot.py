@@ -38,9 +38,8 @@ def test_generatePlot(tmp_path):
 
     # Initialise plotList
     rel = 'release1HS'
-    plotDict = {'relArea' : rel, 'plots': [], 'difference': [], 'differenceZoom': [], 'stats': []}
+    plotDict = {'relArea': rel, 'plots': [], 'difference': [], 'differenceZoom': [], 'stats': []}
     plotDictNew = oP.generatePlot(dataDict, avaName, outDir, cfg, plotDict)
-
 
     assert (plotDictNew['difference'][0] == 4.0)
     assert (plotDictNew['difference'][1] == -0.5)
