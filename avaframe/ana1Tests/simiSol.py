@@ -186,9 +186,9 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y
     dx1 = 2*B/(g**2*f)
     dx2 = f_p
     if C == 0:
-        dx3 = 2*D/(2*f**2)
+        dx3 = 2*D/(g*f**2)
     else:
-        dx3 = 2*D/(2*f**2)-C*f_p/u_c
+        dx3 = 2*D/(g*f**2)-C*f_p/u_c
     F = [dx0, dx1, dx2, dx3]
 
     return F
@@ -365,10 +365,10 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
         vNumerical = {'fx': field['Vx'], 'fy': field['Vy'], 'fz': field['Vz']}
         hErrorL2 = normL2Scal(hSimi, hNumerical, cellsize, cosAngle)
         hErrorL2Array[count] = hErrorL2
-        log.info("L2 error on the Flow Depth is : %.4f" % hErrorL2)
+        log.info("L2 error on the Flow Depth at t=%.2f s is : %.4f" % (t, hErrorL2))
         vErrorL2 = normL2Vect(vSimi, vNumerical, cellsize, cosAngle)
         vErrorL2Array[count] = vErrorL2
-        log.info("L2 error on the Flow velocity is : %.4f" % vErrorL2)
+        log.info("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
         count = count + 1
     return hErrorL2Array, vErrorL2Array
 
@@ -581,11 +581,12 @@ def prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, a
     csz = dem['header']['cellsize']
 
     if axis == 'xaxis':
-        ind = np.where(((particles['y']+yllc > -2.5) & (particles['y']+yllc < 2.5)))
+        ind = np.where(((particles['y']+yllc > -csz/2) & (particles['y']+yllc < csz/2)))
         indFinal = int(nrows *0.5) -1
     elif axis == 'yaxis':
-         ind = np.where(((particles['x']+xllc > xCenter-2.5) & (particles['x']+xllc < xCenter+2.5)))
-         indFinal = int(np.floor((xCenter - xllc)/csz))
+         ind = np.where(((particles['x']+xllc > xCenter-csz/2) & (particles['x']+xllc < xCenter+csz/2)))
+         indFinal = int(np.round((xCenter - xllc)/csz) + 1)
+         print(xCenter, indFinal, xCenter - xllc)
 
     x = particles['x'][ind]+xllc
     y = particles['y'][ind]+yllc
