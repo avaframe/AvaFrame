@@ -1850,23 +1850,31 @@ def savePartToPickle(dictList, outDir, logName):
         pickle.dump(dictList, open(outDir / ("particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb"))
 
 
-def readPartFromPickle(inDir, flagAvaDir=False):
+def readPartFromPickle(inDir, simName='', flagAvaDir=False, comModule='com1DFA'):
     """ Read pickles within a directory and return List of dicionaries read from pickle
 
         Parameters
         -----------
         inDir: str
             path to input directory
+        simName : str
+            simulation name
         flagAvaDir: bool
             if True inDir corresponds to an avalanche directory and pickles are
             read from avaDir/Outputs/com1DFA/particles
+        comModule: str
+            module that computed the particles
     """
 
     if flagAvaDir:
-        inDir = pathlib.Path(inDir, 'Outputs', 'com1DFA', 'particles')
+        inDir = pathlib.Path(inDir, 'Outputs', comModule, 'particles')
 
     # search for all pickles within directory
-    PartDicts = sorted(list(inDir.glob('*.p')))
+    if simName:
+        name = '*' + simName + '*.p'
+    else:
+        name = '*.p'
+    PartDicts = sorted(list(inDir.glob(name)))
 
     # initialise list of particle dictionaries
     Particles = []
@@ -1998,6 +2006,48 @@ def savePartToCsv(particleProperties, dictList, outDir):
         particlesData = pds.DataFrame(data=csvData)
         particlesData.to_csv(outFile, index=False)
         count = count + 1
+
+
+def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA'):
+    """ Read pickles within a directory and return List of dicionaries read from pickle
+
+        Parameters
+        -----------
+        inDir: str
+            path to input directory
+        simName : str
+            simulation name
+        flagAvaDir: bool
+            if True inDir corresponds to an avalanche directory and pickles are
+            read from avaDir/Outputs/com1DFA/particles
+        comModule: str
+            module that computed the particles
+    """
+
+    if flagAvaDir:
+        inDir = pathlib.Path(inDir, 'Outputs', comModule, 'peakFiles', 'timeSteps')
+
+    # initialise list of fields dictionaries
+    fieldsList = []
+    first = True
+    for r in resType:
+        # search for all pickles within directory
+        if simName:
+            name = '*' + simName + '*' + r + '*.asc'
+        else:
+            name = '*' + r + '*.asc'
+        FieldsNameList = sorted(list(inDir.glob(name)))
+        count = 0
+        for fieldsName in FieldsNameList:
+            # initialize field Dict
+            if first:
+                fieldsList.append({})
+            field = IOf.readRaster(fieldsName)
+            fieldsList[count][r] = field['rasterData']
+            count = count + 1
+        first = False
+
+    return fieldsList, field['header']
 
 
 def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
