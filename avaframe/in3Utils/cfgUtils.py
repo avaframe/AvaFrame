@@ -4,13 +4,11 @@
 '''
 
 import configparser
-import os
 import logging
 import pathlib
 import hashlib
 import json
 import pandas as pd
-import glob
 import numpy as np
 
 # Local imports
@@ -85,12 +83,13 @@ def getModuleConfig(module, fileOverride='', modInfo=False):
 
     # Decide which one to take
     if fileOverride:
-        if os.path.isfile(fileOverride):
+        fileOverride = fU.checkPathlib(fileOverride)
+        if fileOverride.is_file():
             iniFile = [defaultFile, fileOverride]
             compare = True
         else:
             raise FileNotFoundError('Provided fileOverride does not exist: ' +
-                                    fileOverride)
+                                    str(fileOverride))
 
     elif localFile.is_file():
         iniFile = localFile
@@ -244,22 +243,22 @@ def writeCfgFile(avaDir, module, cfg, fileName=''):
     """
 
     # get filename of module
-    name = os.path.basename(module.__file__)
+    name = pathlib.Path(module.__file__).name
     modName = name.split('.')[0]
 
     # write to file
     if fileName != '':
         # set outputs
-        outDir = os.path.join(avaDir, 'Outputs', modName, 'configurationFiles')
+        outDir = pathlib.Path(avaDir, 'Outputs', modName, 'configurationFiles')
         fU.makeADir(outDir)
         cfg.optionxform = str
-        with open(os.path.join(outDir, '%s.ini' % (fileName)), 'w') as conf:
+        with open(pathlib.Path(outDir, '%s.ini' % (fileName)), 'w') as conf:
             cfg.write(conf)
     else:
         # set outputs
-        outDir = os.path.join(avaDir, 'Outputs')
+        outDir = pathlib.Path(avaDir, 'Outputs')
         cfg.optionxform = str
-        with open(os.path.join(outDir, '%s_settings.ini' % (modName)), 'w') as conf:
+        with open(pathlib.Path(outDir, '%s_settings.ini' % (modName)), 'w') as conf:
             cfg.write(conf)
 
 
@@ -288,10 +287,10 @@ def readCfgFile(avaDir, module='', fileName=''):
         inFile = fileName
     elif module != '':
         # get module name
-        name = os.path.basename(module.__file__)
+        name = pathlib.Path(module.__file__).name
         modName = name.split('.')[0]
         # set input file
-        inFile = os.path.join(avaDir, 'Outputs', '%s_settings.ini' % (modName))
+        inFile = pathlib.Path(avaDir, 'Outputs', '%s_settings.ini' % (modName))
     else:
         log.error('Please provide either a module or a fileName to read configuration from file')
         raise NameError
@@ -392,12 +391,12 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
 
     # collect all configuration files for this module from directory
     if specDir != '':
-        inDir = os.path.join(specDir, 'configurationFiles')
+        inDir = pathlib.Path(specDir, 'configurationFiles')
     else:
-        inDir = os.path.join(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
-    configFiles = glob.glob(inDir+os.sep+'*.ini')
+        inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
+    configFiles = inDir.glob('*.ini')
 
-    if not os.path.isdir(inDir):
+    if not inDir.is_dir():
         message = 'configuration file directory not found: %s' % (inDir)
         log.error(message)
         raise NotADirectoryError(message)
@@ -410,8 +409,8 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
     # append all dataFrames
     count = 0
     for cFile in configFiles:
-        if 'sourceConfiguration' not in cFile:
-            simName = os.path.splitext(os.path.basename(cFile))[0]
+        if 'sourceConfiguration' not in str(cFile):
+            simName = pathlib.Path(cFile).stem
             if '_AF_' in simName:
                 nameParts = simName.split('_AF_')
                 fNamePart = nameParts[0] + '_AF'
@@ -451,7 +450,7 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
 
     # if writeCSV, write dataFrame to csv file
     if writeCSV:
-        outFile = os.path.join(inDir, 'allConfigurations.csv')
+        outFile = pathlib.Path(inDir, 'allConfigurations.csv')
         simDF.to_csv(outFile)
 
     return simDF
