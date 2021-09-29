@@ -13,12 +13,13 @@ https://doi.org/10.1007/BF01176861
 import numpy as np
 from scipy.integrate import ode
 import math
-import os
+import pathlib
 import logging
 import matplotlib.pyplot as plt
 
 # local imports
 from avaframe.in3Utils import cfgUtils
+from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
@@ -265,11 +266,103 @@ def xc(solSimi, x1, y1, i, L_x):
     return z
 
 
+def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
+    """ Compute com1DFA sol, similarity solution and compare"""
+
+    cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
+    # Define release thickness distribution
+    demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfg['FLAGS'])
+    relDict = getReleaseThickness(avalancheDir, cfg, demFile)
+    relTh = relDict['relTh']
+
+    # call com1DFA to perform simulations - provide configuration file and release thickness function
+    # (may be multiple sims)
+    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg,
+    relThField=relTh)
+    relDict['dem'] = dem
+
+    # compute the similartiy solution (this corresponds to our reference)
+    log.info('Computing similarity solution')
+    solSimi = mainSimilaritySol()
+
+    # now compare the simulations to the reference
+    # first fetch info about all the simulations performed (and maybe order them)
+    varParList = cfg['ANALYSIS']['varParList']
+    ascendingOrder = cfg['ANALYSIS']['ascendingOrder']
+    # load data for all configurations
+    simDF = cfgUtils.createConfigurationInfo(avalancheDir)
+    # order it
+    simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
+    # loop on all the simulations and make the comparison to refernce
+    for simName in simDF['simName']:
+        # fetch the simulation results
+        simConfig = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFiles', simName + '.ini')
+        # ToDo: get this config frome the datahrame simDF
+        cfg = cfgUtils.getModuleConfig(com1DFA, simConfig)
+        particlesList, _ = com1DFA.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
+        fieldsList, fieldHeader = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
+        # analyze and compare results
+        hErrorL2Array, vErrorL2Array = analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
+
+        # +++++++++POSTPROCESS++++++++++++++++++++++++
+        # -------------------------------
+        if cfgMain['FLAGS'].getboolean('showPlot'):
+            plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
+
+        # TODO here is still user interaction
+        # option for user interaction
+        if cfg['SIMISOL'].getboolean('flagInteraction'):
+            value = input("give time step to plot (float in s):\n")
+        else:
+            value = cfg['SIMISOL'].getfloat('dtSol')
+
+        try:
+            value = float(value)
+        except ValueError:
+            value = 'n'
+        while isinstance(value, float):
+
+            # determine index for time step
+            ind_t = min(np.searchsorted(Tsave, value), len(Tsave)-1)
+            ind_time = np.searchsorted(solSimi['Time'], Tsave[ind_t])
+
+            # get similartiy solution h, u at reuired time step
+            simiDict = getSimiSolParameters(solSimi, relDict, ind_time, cfg)
+
+            # get particle parameters
+            comSol = prepareParticlesFieldscom1DFA(fieldsList, particlesList, ind_t, relDict, simiDict, 'xaxis')
+            comSol['outDirTest'] = outDirTest
+            comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
+            comSol['Tsave'] = Tsave[ind_t]
+
+            # make plot
+            plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, 'xaxis')
+
+            # get particle parameters
+            comSol = prepareParticlesFieldscom1DFA(fieldsList, particlesList, ind_t, relDict, simiDict, 'yaxis')
+            comSol['outDirTest'] = outDirTest
+            comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
+            comSol['Tsave'] = Tsave[ind_t]
+
+            # make plot
+            plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, 'yaxis')
+
+            # # option for user interaction
+            if cfg['SIMISOL'].getboolean('flagInteraction'):
+                value = input("give time step to plot (float in s):\n")
+                try:
+                    value = float(value)
+                except ValueError:
+                    value = 'n'
+            else:
+                value = 'n'
+
+
 def mainSimilaritySol():
     """ Compute similarity solution"""
 
     # Load configuration
-    simiSolCfg = os.path.join('data/avaSimilaritySol', 'Inputs', 'simiSol_com1DFACfg.ini')
+    simiSolCfg = pathlib.Path('data/avaSimilaritySol', 'Inputs', 'simiSol_com1DFACfg.ini')
     cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
     cfgGen = cfg['GENERAL']
     cfgSimi = cfg['SIMISOL']
@@ -351,9 +444,11 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
     hErrorL2Array = np.zeros((len(particlesList)))
     vErrorL2Array = np.zeros((len(particlesList)))
     count = 0
+    time = []
     # run the comparison routine for each saved time step
     for particles, field in zip(particlesList, fieldsList):
         t = particles['t']
+        time.append(t)
         # get similartiy solution h, u at required time step
         ind_time = np.searchsorted(solSimi['Time'], t)
         simiDict = getSimiSolParameters(solSimi, relDict, ind_time, cfg)
@@ -370,6 +465,21 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
         vErrorL2Array[count] = vErrorL2
         log.info("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
         count = count + 1
+
+    fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    ax2 = ax1.twinx()
+    ax1.plot(time, hErrorL2Array, 'k', label='Flow depth L2 error')
+    ax2.plot(time, vErrorL2Array, 'g', label='Velocity L2 error')
+    ax1.set_title('Error between similarity solution and com1DFA')
+    ax1.set_xlabel('time in [s]')
+
+    ax1.set_ylabel('error on flow depth')
+    color = 'tab:green'
+    ax2.tick_params(axis='y', labelcolor=color)
+    ax2.set_ylabel('error on velocity', color=color)
+    ax2.legend(loc='lower right')
+    ax1.legend(loc='upper left')
+    plt.show()
     return hErrorL2Array, vErrorL2Array
 
 
@@ -623,14 +733,14 @@ def plotContoursSimiSol(Particles, Fields, solSimi, relDict, cfg, outDirTest):
         CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                         linewidths=2, linestyles='dashed')
         plt.pause(1)
-        fig.savefig(os.path.join(outDirTest, 'ContourSimiSol%f.%s' % (t, pU.outputFormat)))
+        fig.savefig(pathlib.Path(outDirTest, 'ContourSimiSol%f.%s' % (t, pU.outputFormat)))
 
     fig, ax, cmap, lev = outDebugPlots.plotContours(
         fig, ax, part, dem, field['FD'], pU.cmapDepth, 'm', last=True)
     CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                     linewidths=2, linestyles='dashed')
     ax.clabel(CS, inline=1, fontsize=8)
-    fig.savefig(os.path.join(outDirTest, 'ContourSimiSolFinal.%s' % (pU.outputFormat)))
+    fig.savefig(pathlib.Path(outDirTest, 'ContourSimiSolFinal.%s' % (pU.outputFormat)))
 
 
 def prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, axis):
@@ -845,7 +955,7 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
     ax1.legend(loc='upper left')
 
 
-    fig1.savefig(os.path.join(outDirTest, '%sCutSol.%s' % (axis, pU.outputFormat)))
+    fig1.savefig(pathlib.Path(outDirTest, '%sCutSol.%s' % (axis, pU.outputFormat)))
     if showPlot:
         plt.show()
     else:
