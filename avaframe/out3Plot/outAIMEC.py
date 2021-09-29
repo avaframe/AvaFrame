@@ -257,7 +257,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
 
     ############################################
     # Figure: Analysis runout
-    fig = plt.figPPRCrossMaxure(figsize=(pU.figW*2, pU.figH))
+    fig = plt.figure(figsize=(pU.figW*2, pU.figH))
     ax1 = plt.subplot(121)
 
     ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
@@ -334,7 +334,7 @@ def visuMass(resAnalysis, pathDict):
     nSim = pathDict['numSim']
     nRef = pathDict['referenceFile']
     i = 0
-    while i < nSim:
+    while i < (nSim-1):
         if i == nRef:
             i = i + 1
         ############################################
