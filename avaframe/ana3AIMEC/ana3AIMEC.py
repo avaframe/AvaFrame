@@ -181,7 +181,7 @@ def mainAIMEC(pathDict, cfg):
     else:
         outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict)
 
-    if cfgFlags.getboolean('flagMass'):
+    if cfgFlags.getboolean('flagMass') and (pathDict['numSim'] > 1):
         outAimec.visuMass(resAnalysis, pathDict)
     outAimec.resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis)
 

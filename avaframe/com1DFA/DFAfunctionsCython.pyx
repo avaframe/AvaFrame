@@ -633,6 +633,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
     lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
+    # sNew = s + norm((xNew-x), (yNew-y), 0)
     sNew = s + nzNew*norm((xNew-x), (yNew-y), (zNew-z))
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
