@@ -549,7 +549,7 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
 
         Parameters
         -----------
-        ind_time: int
+        ind_time: integer
             time index for simiSol
         relDict: dict
             dictionary of release area info
