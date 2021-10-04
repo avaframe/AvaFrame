@@ -354,7 +354,7 @@ def saveAndOrPlot(pathDict, outFileName, fig):
         plt.ioff()
 
     if cfgFlags.getboolean('savePlot'):
-        outname = os.path.join(pathDict['pathResult'], 'pics', outFileName)
+        outname = os.path.join(pathDict['pathResult'], outFileName)
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
         with warnings.catch_warnings():

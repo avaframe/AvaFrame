@@ -9,7 +9,7 @@
     and compares it to the DFA kernel com1DFA
 """
 
-import os
+import pathlib
 from configupdater import ConfigUpdater
 
 # Local imports
@@ -38,10 +38,10 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # Load configuration for similarity solution test
-simiSolCfg = os.path.join(avalancheDir, 'Inputs', 'simiSol_com1DFACfg.ini')
+simiSolCfg = pathlib.Path(avalancheDir, 'Inputs', 'simiSol_com1DFACfg.ini')
 
 # create output directory for test result plots
-outDirTest = os.path.join(avalancheDir, 'Outputs', 'ana1Tests')
+outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
 fU.makeADir(outDirTest)
 
 simiSol.mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest)
