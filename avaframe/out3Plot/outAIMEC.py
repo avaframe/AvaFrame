@@ -334,11 +334,7 @@ def visuMass(resAnalysis, pathDict):
     nSim = pathDict['numSim']
     nRef = pathDict['referenceFile']
     i = 0
-    while i < (nSim-1):
-        if i == nRef:
-            i = i + 1
-        ############################################
-        # Figure: Pressure depth speed
+    while i < (nSim):
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(pU.figW*2, pU.figH))
         fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
@@ -355,13 +351,13 @@ def visuMass(resAnalysis, pathDict):
         # ax2.set_ylabel('z [m]')
         ax2.spines['right'].set_color('r')
         ax2.tick_params(axis='y', colors='r')
-        ax2.plot(time, (dataMass[1, :]-dataMass[0, :]) / dataMass[0, :]*100, 'r', label='total mass')
+        ax2.plot(time, (dataMass[i, :]-dataMass[nRef, :]) / dataMass[nRef, :]*100, 'r', label='total mass')
 
         if np.any(entMass):
-            axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[0, :]) + np.nanmax(dataMass[0, :]))/2,
+            axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[nRef, :]) + np.nanmax(dataMass[nRef, :]))/2,
                                    'Entrained Mass Difference : %.2f kg \n Relative to entrained mass : %.2f %% \n Relative to total mass : %.2f %% ' %
-                                   ((entMass[0]-entMass[1]), (entMass[0]-entMass[1]) / entMass[0]*100,
-                                   (entMass[0]-entMass[1])/finalMass[0]*100),
+                                   ((entMass[nRef]-entMass[i]), (entMass[nRef]-entMass[i]) / entMass[nRef]*100,
+                                   (entMass[nRef]-entMass[i])/finalMass[nRef]*100),
                                    bbox=dict(boxstyle="square", ec='white', fc='white'),
                                    horizontalalignment='left', verticalalignment='bottom')
 
