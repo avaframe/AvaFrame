@@ -958,6 +958,8 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         if rng.random(1) < proba:
             nPart = nPart + 1
         nPart = np.maximum(nPart, 1)
+        if (massCell / nPart) / massPerPart >= 1.5:
+            nPart = nPart + 1
     else:
         n = (np.ceil(np.sqrt(massCell / massPerPart))).astype('int')
         nPart = n*n
@@ -2036,7 +2038,10 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA')
             name = '*' + simName + '*' + r + '*.asc'
         else:
             name = '*' + r + '*.asc'
-        FieldsNameList = sorted(list(inDir.glob(name)))
+        FieldsNameList = list(inDir.glob(name))
+        timeList = [float(element.stem.split('_t')[-1]) for element in FieldsNameList]
+        FieldsNameList = [x for _, x in sorted(zip(timeList, FieldsNameList))]
+
         count = 0
         for fieldsName in FieldsNameList:
             # initialize field Dict

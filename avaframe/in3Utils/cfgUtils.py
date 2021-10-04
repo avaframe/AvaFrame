@@ -491,7 +491,7 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
     return simNameList
 
 
-def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''):
+def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir='', resFiles=False):
     """ Filter simulations results using a list of parameters and a flag if in ascending or descending order
 
         Parameters
@@ -514,20 +514,22 @@ def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''
     """
 
     # load dataFrame for all configurations
-    simDF = createConfigurationInfo(avalancheDir)
-    # create dataframe for simulation results in inputDir
-    dataDF = fU.makeSimDF(inputDir)
+    simDF = createConfigurationInfo(avalancheDir, specDir=specDir)
 
     # make sure that parameters used for ordering are provided as list
     if isinstance(varParList, str):
         varParList = [varParList]
 
-    # append 'simName' for merging of dataframes according to simNames
-    columnNames = ['simName'] + varParList
-
-    # merge varParList parameters as columns to dataDF for matching simNames
-    dataDFNew = dataDF.merge(simDF[columnNames], left_on='simName',
-                             right_on='simName')
+    if resFiles:
+        # create dataframe for simulation results in inputDir
+        dataDF = fU.makeSimDF(inputDir)
+        # append 'simName' for merging of dataframes according to simNames
+        columnNames = ['simName'] + varParList
+        # merge varParList parameters as columns to dataDF for matching simNames
+        dataDFNew = dataDF.merge(simDF[columnNames], left_on='simName',
+                                 right_on='simName')
+    else:
+        dataDFNew = simDF
 
     # sort according to varParList and ascendingOrder flag
     dataDFNew = dataDFNew.sort_values(by=varParList, ascending=ascendingOrder)

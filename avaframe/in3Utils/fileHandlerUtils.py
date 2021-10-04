@@ -404,7 +404,7 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
         varParList = cfg['varParList'].split('|')
 
         # create dataFrame with ordered paths to simulation results
-        dataDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfg['ascendingOrder'])
+        dataDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfg['ascendingOrder'], resFiles=True)
 
         for suf in suffix:
             # get paths for desired resType

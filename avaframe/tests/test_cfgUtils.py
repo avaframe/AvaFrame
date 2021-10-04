@@ -94,7 +94,7 @@ def test_orderSimFiles():
 
     varParList = 'releaseScenario'
 
-    simFilesDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, True, specDir='')
+    simFilesDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
 
     assert simFilesDF['simName'][0] == 'release1HS_ent_dfa_67dc2dc10a'
 

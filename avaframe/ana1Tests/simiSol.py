@@ -16,6 +16,7 @@ import math
 import pathlib
 import logging
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # local imports
 from avaframe.in3Utils import cfgUtils
@@ -31,6 +32,186 @@ import avaframe.out3Plot.plotUtils as pU
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
+
+
+def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
+    """ Compute com1DFA sol, similarity solution and compare"""
+
+    cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
+    # Define release thickness distribution
+    demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfg['FLAGS'])
+    relDict = getReleaseThickness(avalancheDir, cfg, demFile)
+    relTh = relDict['relTh']
+
+    # call com1DFA to perform simulations - provide configuration file and release thickness function
+    # (may be multiple sims)
+    _, _, Tsave, dem, _, _ = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
+    relDict['dem'] = dem
+
+    # compute the similartiy solution (this corresponds to our reference)
+    log.info('Computing similarity solution')
+    solSimi = mainSimilaritySol()
+
+    # now compare the simulations to the reference
+    # first fetch info about all the simulations performed (and maybe order them)
+    varParList = cfg['ANALYSIS']['varParList'].split('|')
+    ascendingOrder = cfg['ANALYSIS']['ascendingOrder']
+    # load info for all configurations and order them
+    simDF = cfgUtils.orderSimFiles(avalancheDir, '', varParList, ascendingOrder)
+    # loop on all the simulations and make the comparison to reference
+    for index, row in simDF.iterrows():
+        simName = row['simName']
+        # fetch the simulation results
+        particlesList, _ = com1DFA.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
+        fieldsList, fieldHeader = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
+        simDF.loc[index, 'Npart'] = particlesList[0]['Npart']
+        # analyze and compare results
+        hEL2Array, hELMaxArray, vEL2Array, vELMaxArray = analyzeResults(particlesList, fieldsList, solSimi, relDict,
+                                                                        cfg, outDirTest, index)
+        # add result of error analysis
+        # save results in the simDF
+        simDF.loc[index, 'hErrorL2'] = hEL2Array[-1]
+        simDF.loc[index, 'vErrorL2'] = vEL2Array[-1]
+        simDF.loc[index, 'hErrorLMax'] = hELMaxArray[-1]
+        simDF.loc[index, 'vErrorLMax'] = vELMaxArray[-1]
+        # +++++++++POSTPROCESS++++++++++++++++++++++++
+        # -------------------------------
+        if cfgMain['FLAGS'].getboolean('showPlot'):
+            plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
+
+        # TODO here is still user interaction
+        # option for user interaction
+        if cfg['SIMISOL'].getboolean('flagInteraction'):
+            value = input("give time step to plot (float in s):\n")
+        else:
+            value = cfg['SIMISOL'].getfloat('tSave')
+
+        try:
+            value = float(value)
+        except ValueError:
+            value = 'n'
+        while isinstance(value, float):
+
+            # determine index for time step
+            ind_t = min(np.searchsorted(Tsave, value), min(len(Tsave)-1, len(fieldsList)-1))
+            ind_time = np.searchsorted(solSimi['Time'], Tsave[ind_t])
+            # get similartiy solution h, u at reuired time step
+            simiDict = getSimiSolParameters(solSimi, relDict, ind_time, cfg)
+
+            # get particle parameters
+            comSol = prepareParticlesFieldscom1DFA(fieldsList, particlesList, ind_t, relDict, simiDict, 'xaxis')
+            comSol['outDirTest'] = outDirTest
+            comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
+            comSol['Tsave'] = Tsave[ind_t]
+
+            # make plot
+            plotProfilesSimiSol(ind_time, index, relDict, comSol, simiDict, solSimi, 'xaxis')
+
+            # get particle parameters
+            comSol = prepareParticlesFieldscom1DFA(fieldsList, particlesList, ind_t, relDict, simiDict, 'yaxis')
+            comSol['outDirTest'] = outDirTest
+            comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
+            comSol['Tsave'] = Tsave[ind_t]
+
+            # make plot
+            plotProfilesSimiSol(ind_time, index, relDict, comSol, simiDict, solSimi, 'yaxis')
+
+            # # option for user interaction
+            if cfg['SIMISOL'].getboolean('flagInteraction'):
+                value = input("give time step to plot (float in s):\n")
+                try:
+                    value = float(value)
+                except ValueError:
+                    value = 'n'
+            else:
+                value = 'n'
+
+    simDF.to_pickle(outDirTest / 'results.p')
+    plotError(simDF, outDirTest)
+
+
+def mainSimilaritySol():
+    """ Compute similarity solution"""
+
+    # Load configuration
+    simiSolCfg = pathlib.Path('data/avaSimilaritySol', 'Inputs', 'simiSol_com1DFACfg.ini')
+    cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
+    cfgGen = cfg['GENERAL']
+    cfgSimi = cfg['SIMISOL']
+    bedFrictionAngleDeg = cfgSimi.getfloat('bedFrictionAngle')
+    planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
+    internalFrictionAngleDeg = cfgSimi.getfloat('internalFrictionAngle')
+    # Dimensioning parameters L
+    L_x = cfgSimi.getfloat('L_x')
+    L_y = cfgSimi.getfloat('L_y')
+    H = cfgGen.getfloat('relTh')
+
+    # Set parameters
+    Pi = math.pi
+    gravAcc = cfgGen.getfloat('gravAcc')
+    zeta = planeinclinationAngleDeg * Pi /180       # plane inclination
+    delta = bedFrictionAngleDeg * Pi /180           # basal angle of friction
+    phi = internalFrictionAngleDeg * Pi /180        # internal angle of friction phi>delta
+
+    # Dimentioning parameters
+    U = np.sqrt(gravAcc*L_x)
+    V = np.sqrt(gravAcc*L_y)
+    T = np.sqrt(L_x/gravAcc)
+
+    # calculate aspect ratios
+    eps_x = H/L_x
+    eps_y = H/L_y
+    eps_xy = L_y/L_x
+
+    # Full scale end time
+    T_end = cfgGen.getfloat('tEnd') + cfgGen.getfloat('maxdT')
+
+    # Non dimentional time for similarity sim calculation
+    t_1 = 0.1           # start time for ode solvers
+    t_end = T_end/T     # end time
+    dt_early = 0.01     # time step for early sol
+    dt = 0.01           # time step for early sol
+
+    # Initial conditions [g0 g_p0 f0 f_p0]
+    x_0 = [1.0, 0.0, 1.0, 0.0]  # here a circle as start point
+
+    # compute earth pressure coefficients
+    flagEarth = cfgSimi.getboolean('flagEarth')
+    if flagEarth:
+        earthPressureCoefficients = defineEarthPressCoeff(phi, delta)
+    else:
+        earthPressureCoefficients = np.ones((6, 1))
+
+
+    # Early time solution
+    t_early = np.arange(0, t_1, dt_early)
+    solSimi = calcEarlySol(t_early, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y)
+
+    # Runge-Kutta integration away from the singularity
+    # initial conditions
+    t_start = t_1 - dt_early
+    x_1 = np.empty((4, 1))
+    x_1[0] = solSimi['g_sol'][-1]
+    x_1[1] = solSimi['g_p_sol'][-1]
+    x_1[2] = solSimi['f_sol'][-1]
+    x_1[3] = solSimi['f_p_sol'][-1]
+
+    # Create an `ode` instance to solve the system of differential
+    # equations defined by `fun`, and set the solver method to'dopri5' 'dop853'.
+    solver = ode(Ffunction)
+    solver.set_integrator('dopri5')
+    solver.set_f_params(earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y)
+    solver.set_initial_value(x_1, t_start)
+    solSimi = odeSolver(solver, dt, t_end, solSimi)
+
+    Time = solSimi['time']*T
+    solSimi['Time'] = Time
+
+    return solSimi
+
+#####################################
+# Compute similarity solution
+#####################################
 
 
 def defineEarthPressCoeff(phi, delta):
@@ -266,183 +447,69 @@ def xc(solSimi, x1, y1, i, L_x):
     return z
 
 
-def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
-    """ Compute com1DFA sol, similarity solution and compare"""
+def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
+    """ get flow depth, flow velocity and center location of flow mass of similarity solution
+        for required time step
 
-    cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
-    # Define release thickness distribution
-    demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(avalancheDir, cfg['FLAGS'])
-    relDict = getReleaseThickness(avalancheDir, cfg, demFile)
-    relTh = relDict['relTh']
+        Parameters
+        -----------
+        solSimi: dict
+            similarity solution
+        relDict: dict
+            dictionary with info of release
+        ind_time: int
+            index for required time step in similarity solution
+        cfg: dict
+            configuration
 
-    # call com1DFA to perform simulations - provide configuration file and release thickness function
-    # (may be multiple sims)
-    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg,
-    relThField=relTh)
-    relDict['dem'] = dem
+        Returns
+        --------
+        simiDict: dict
+            dictionary of similiarty solution with flow depth, flow velocity,
+            and center location in x for required time step
+        """
 
-    # compute the similartiy solution (this corresponds to our reference)
-    log.info('Computing similarity solution')
-    solSimi = mainSimilaritySol()
-
-    # now compare the simulations to the reference
-    # first fetch info about all the simulations performed (and maybe order them)
-    varParList = cfg['ANALYSIS']['varParList']
-    ascendingOrder = cfg['ANALYSIS']['ascendingOrder']
-    # load data for all configurations
-    simDF = cfgUtils.createConfigurationInfo(avalancheDir)
-    # order it
-    simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
-    # loop on all the simulations and make the comparison to refernce
-    for simName in simDF['simName']:
-        # fetch the simulation results
-        simConfig = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFiles', simName + '.ini')
-        # ToDo: get this config frome the datahrame simDF
-        cfg = cfgUtils.getModuleConfig(com1DFA, simConfig)
-        particlesList, _ = com1DFA.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
-        fieldsList, fieldHeader = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
-        # analyze and compare results
-        hErrorL2Array, vErrorL2Array = analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
-
-        # +++++++++POSTPROCESS++++++++++++++++++++++++
-        # -------------------------------
-        if cfgMain['FLAGS'].getboolean('showPlot'):
-            plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
-
-        # TODO here is still user interaction
-        # option for user interaction
-        if cfg['SIMISOL'].getboolean('flagInteraction'):
-            value = input("give time step to plot (float in s):\n")
-        else:
-            value = cfg['SIMISOL'].getfloat('dtSol')
-
-        try:
-            value = float(value)
-        except ValueError:
-            value = 'n'
-        while isinstance(value, float):
-
-            # determine index for time step
-            ind_t = min(np.searchsorted(Tsave, value), len(Tsave)-1)
-            ind_time = np.searchsorted(solSimi['Time'], Tsave[ind_t])
-
-            # get similartiy solution h, u at reuired time step
-            simiDict = getSimiSolParameters(solSimi, relDict, ind_time, cfg)
-
-            # get particle parameters
-            comSol = prepareParticlesFieldscom1DFA(fieldsList, particlesList, ind_t, relDict, simiDict, 'xaxis')
-            comSol['outDirTest'] = outDirTest
-            comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
-            comSol['Tsave'] = Tsave[ind_t]
-
-            # make plot
-            plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, 'xaxis')
-
-            # get particle parameters
-            comSol = prepareParticlesFieldscom1DFA(fieldsList, particlesList, ind_t, relDict, simiDict, 'yaxis')
-            comSol['outDirTest'] = outDirTest
-            comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
-            comSol['Tsave'] = Tsave[ind_t]
-
-            # make plot
-            plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, 'yaxis')
-
-            # # option for user interaction
-            if cfg['SIMISOL'].getboolean('flagInteraction'):
-                value = input("give time step to plot (float in s):\n")
-                try:
-                    value = float(value)
-                except ValueError:
-                    value = 'n'
-            else:
-                value = 'n'
-
-
-def mainSimilaritySol():
-    """ Compute similarity solution"""
-
-    # Load configuration
-    simiSolCfg = pathlib.Path('data/avaSimilaritySol', 'Inputs', 'simiSol_com1DFACfg.ini')
-    cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
-    cfgGen = cfg['GENERAL']
     cfgSimi = cfg['SIMISOL']
-    bedFrictionAngleDeg = cfgSimi.getfloat('bedFrictionAngle')
-    planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
-    internalFrictionAngleDeg = cfgSimi.getfloat('internalFrictionAngle')
-    # Dimensioning parameters L
     L_x = cfgSimi.getfloat('L_x')
     L_y = cfgSimi.getfloat('L_y')
-    H = cfgGen.getfloat('relTh')
+    Hini = cfg['GENERAL'].getfloat('relTh')
+    gravAcc = cfg['GENERAL'].getfloat('gravAcc')
+    cos = relDict['cos']
+    sin = relDict['sin']
+    X1 = relDict['X1']
+    Y1 = relDict['Y1']
 
-    # Set parameters
-    Pi = math.pi
-    gravAcc = cfgGen.getfloat('gravAcc')
-    zeta = planeinclinationAngleDeg * Pi /180       # plane inclination
-    delta = bedFrictionAngleDeg * Pi /180           # basal angle of friction
-    phi = internalFrictionAngleDeg * Pi /180        # internal angle of friction phi>delta
-
-    # Dimentioning parameters
+    # Dimensioning parameters
     U = np.sqrt(gravAcc*L_x)
     V = np.sqrt(gravAcc*L_y)
-    T = np.sqrt(L_x/gravAcc)
 
-    # calculate aspect ratios
-    eps_x = H/L_x
-    eps_y = H/L_y
-    eps_xy = L_y/L_x
+    # get simi sol
+    hSimi = h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
+    hSimi = np.where(hSimi <= 0, 0, hSimi)
+    uxSimi = u(solSimi, X1, Y1, ind_time, L_x, U)
+    uxSimi = np.where(hSimi <= 0, 0, uxSimi)
+    uySimi = v(solSimi, X1, Y1, ind_time, L_y, V)
+    uySimi = np.where(hSimi <= 0, 0, uySimi)
+    vSimi = DFAtls.norm(uxSimi, uySimi, 0*uySimi)
+    xCenter = xc(solSimi, X1, Y1, ind_time, L_x)*cos
 
-    # Full scale end time
-    T_end = cfgGen.getfloat('tEnd') + cfgGen.getfloat('maxdT')
+    simiDict = {'hSimi': hSimi, 'vSimi': vSimi, 'vxSimi': uxSimi*cos, 'vySimi': uySimi, 'vzSimi': -uxSimi*sin,
+                'xCenter': xCenter}
 
-    # Non dimentional time for similarity sim calculation
-    t_1 = 0.1           # start time for ode solvers
-    t_end = T_end/T     # end time
-    dt_early = 0.01     # time step for early sol
-    dt = 0.01           # time step for early sol
+    return simiDict
 
-    # Initial conditions [g0 g_p0 f0 f_p0]
-    x_0 = [1.0, 0.0, 1.0, 0.0]  # here a circle as start point
-
-    # compute earth pressure coefficients
-    flagEarth = cfgSimi.getboolean('flagEarth')
-    if flagEarth:
-        earthPressureCoefficients = defineEarthPressCoeff(phi, delta)
-    else:
-        earthPressureCoefficients = np.ones((6, 1))
+##########################
+# Analyze and compare analytic to numerical solution
+#########################
 
 
-    # Early time solution
-    t_early = np.arange(0, t_1, dt_early)
-    solSimi = calcEarlySol(t_early, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y)
-
-    # Runge-Kutta integration away from the singularity
-    # initial conditions
-    t_start = t_1 - dt_early
-    x_1 = np.empty((4, 1))
-    x_1[0] = solSimi['g_sol'][-1]
-    x_1[1] = solSimi['g_p_sol'][-1]
-    x_1[2] = solSimi['f_sol'][-1]
-    x_1[3] = solSimi['f_p_sol'][-1]
-
-    # Create an `ode` instance to solve the system of differential
-    # equations defined by `fun`, and set the solver method to'dopri5' 'dop853'.
-    solver = ode(Ffunction)
-    solver.set_integrator('dopri5')
-    solver.set_f_params(earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y)
-    solver.set_initial_value(x_1, t_start)
-    solSimi = odeSolver(solver, dt, t_end, solSimi)
-
-    Time = solSimi['time']*T
-    solSimi['Time'] = Time
-
-    return solSimi
-
-
-def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest):
+def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest, index):
     """Compare analytical and com1DFA results"""
 
     hErrorL2Array = np.zeros((len(particlesList)))
     vErrorL2Array = np.zeros((len(particlesList)))
+    hErrorLMaxArray = np.zeros((len(particlesList)))
+    vErrorLMaxArray = np.zeros((len(particlesList)))
     count = 0
     time = []
     # run the comparison routine for each saved time step
@@ -458,33 +525,23 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
         hNumerical = field['FD']
         vSimi = {'fx': simiDict['vxSimi'], 'fy': simiDict['vySimi'], 'fz': simiDict['vzSimi']}
         vNumerical = {'fx': field['Vx'], 'fy': field['Vy'], 'fz': field['Vz']}
-        hErrorL2 = normL2Scal(hSimi, hNumerical, cellsize, cosAngle)
+        hErrorL2, hErrorLmax = normL2Scal(hSimi, hNumerical, cellsize, cosAngle)
         hErrorL2Array[count] = hErrorL2
-        log.info("L2 error on the Flow Depth at t=%.2f s is : %.4f" % (t, hErrorL2))
-        vErrorL2 = normL2Vect(vSimi, vNumerical, cellsize, cosAngle)
+        hErrorLMaxArray[count] = hErrorLmax
+        log.debug("L2 error on the Flow Depth at t=%.2f s is : %.4f" % (t, hErrorL2))
+        vErrorL2, vErrorLmax = normL2Vect(vSimi, vNumerical, cellsize, cosAngle)
         vErrorL2Array[count] = vErrorL2
-        log.info("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
+        vErrorLMaxArray[count] = vErrorLmax
+        log.debug("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
         count = count + 1
 
-    fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    ax2 = ax1.twinx()
-    ax1.plot(time, hErrorL2Array, 'k', label='Flow depth L2 error')
-    ax2.plot(time, vErrorL2Array, 'g', label='Velocity L2 error')
-    ax1.set_title('Error between similarity solution and com1DFA')
-    ax1.set_xlabel('time in [s]')
+    plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, index)
 
-    ax1.set_ylabel('error on flow depth')
-    color = 'tab:green'
-    ax2.tick_params(axis='y', labelcolor=color)
-    ax2.set_ylabel('error on velocity', color=color)
-    ax2.legend(loc='lower right')
-    ax1.legend(loc='upper left')
-    plt.show()
-    return hErrorL2Array, vErrorL2Array
+    return hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray
 
 
 def normL2Vect(analyticalSol, numericalSol, cellsize, cosAngle):
-    """ Compute L2 norm of the error between the analytic and numerical solution
+    """ Compute relativ L2 and Lmax norm of the error between the analytic and numerical solution
     """
     nonZeroIndex = np.where((np.abs(analyticalSol['fx']) > 0) & (np.abs(analyticalSol['fy']) > 0)
                             & (np.abs(analyticalSol['fz']) > 0) & (np.abs(numericalSol['fz']) > 0)
@@ -493,160 +550,30 @@ def normL2Vect(analyticalSol, numericalSol, cellsize, cosAngle):
     dvy = analyticalSol['fy'] - numericalSol['fy']
     dvz = analyticalSol['fz'] - numericalSol['fz']
     dv = DFAtls.norm2(dvx, dvy, dvz)
+    vAnalyticalSol = DFAtls.norm2(analyticalSol['fx'], analyticalSol['fy'], analyticalSol['fz'])
     localError = dv[nonZeroIndex]
+    vAnalyticalSolL2 = cellsize * cellsize / cosAngle * np.nansum(vAnalyticalSol[nonZeroIndex])
+    vAnalyticalSolL2 = np.sqrt(vAnalyticalSolL2)
     error2 = cellsize * cellsize / cosAngle * np.nansum(localError)
-    error = np.sqrt(error2)
+    error = np.sqrt(error2) / vAnalyticalSolL2
+    errorMax = np.sqrt(np.nanmax(np.append(localError, 0))) / np.sqrt(np.nanmax(np.append(vAnalyticalSol[nonZeroIndex], 0)))
 
-    # # get info from dem
-    # dem = relDict['dem']
-    # ncols = dem['header']['ncols']
-    # nrows = dem['header']['nrows']
-    # xllc = dem['header']['xllcenter']
-    # yllc = dem['header']['yllcenter']
-    # csz = dem['header']['cellsize']
-    #
-    #
-    # cfgSimi = cfg['SIMISOL']
-    # L_x = cfgSimi.getfloat('L_x')
-    # cos = relDict['cos']
-    # X1 = relDict['X1']
-    # Y1 = relDict['Y1']
-    # xCenter = xc(solSimi, X1, Y1, ind_time, L_x)*cos
-    #
-    # fig1 = plt.figure(figsize=(pU.figW, pU.figH))
-    # ax1 = plt.subplot(121)
-    # indFinal = int(nrows * 0.5) -1
-    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), np.sqrt(dv)[indFinal, :], 'g', label='Field flow velocity')
-    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvx[indFinal, :], 'm', label='Field x velocity')
-    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvy[indFinal, :], 'b', label='Field y velocity')
-    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvz[indFinal, :], 'c', label='Field z velocity')
-    #
-    # ax1.set_title('Profile along flow at t=%.2f s' % (t))
-    # ax1.set_xlabel('velocity in [m/s]')
-    #
-    #
-    # ax2 = plt.subplot(122)
-    # indFinal = int(np.floor((xCenter - xllc)/csz))
-    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), np.sqrt(dv)[:, indFinal], 'g', label='Field flow velocity')
-    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvx[:, indFinal], 'm', label='Field x velocity')
-    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvy[:, indFinal], 'b', label='Field y velocity')
-    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvz[:, indFinal], 'c', label='Field z velocity')
-    # ax2.set_title('Profile across flow at t=%.2f s' % (t))
-    # ax2.set_xlabel('velocity in [m/s]')
-    #
-    # plt.show()
-
-    return error
+    return error, errorMax
 
 
 def normL2Scal(analyticalSol, numericalSol, cellsize, cosAngle):
-    """ Compute L2 norm of the error between the analytic and numerical solution
+    """ Compute relativ L2 and Lmax norm of the error between the analytic and numerical solution
     """
     nonZeroIndex = np.where((analyticalSol > 0) & (numericalSol > 0))
     localError = (analyticalSol[nonZeroIndex] - numericalSol[nonZeroIndex])
     localError = localError * localError
-    # error = cellsize * cellsize / cosAngle * np.nansum(localError)
+    hAnalyticalSolL2 = cellsize * cellsize / cosAngle * np.nansum(analyticalSol[nonZeroIndex])
+    hAnalyticalSolL2 = np.sqrt(hAnalyticalSolL2)
     error2 = cellsize * cellsize / cosAngle * np.nansum(localError)
-    error = np.sqrt(error2)
+    error = np.sqrt(error2) / hAnalyticalSolL2
+    errorMax = np.sqrt(np.nanmax(localError)) / np.sqrt(np.nanmax(analyticalSol[nonZeroIndex]))
 
-    return error
-
-
-def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest):
-    """Compare analytical and com1DFA results"""
-
-    hErrorL2Array = np.zeros((len(particlesList)))
-    vErrorL2Array = np.zeros((len(particlesList)))
-    count = 0
-    # run the comparison routine for each saved time step
-    for particles, field in zip(particlesList, fieldsList):
-        t = particles['t']
-        # get similartiy solution h, u at required time step
-        ind_time = np.searchsorted(solSimi['Time'], t)
-        simiDict = getSimiSolParameters(solSimi, relDict, ind_time, cfg)
-        cellsize = relDict['dem']['header']['cellsize']
-        cosAngle = relDict['cos']
-        hSimi = simiDict['hSimi']
-        hNumerical = field['FD']
-        vSimi = {'fx': simiDict['vxSimi'], 'fy': simiDict['vySimi'], 'fz': simiDict['vzSimi']}
-        vNumerical = {'fx': field['Vx'], 'fy': field['Vy'], 'fz': field['Vz']}
-        hErrorL2 = normL2Scal(hSimi, hNumerical, cellsize, cosAngle)
-        hErrorL2Array[count] = hErrorL2
-        log.info("L2 error on the Flow Depth at t=%.2f s is : %.4f" % (t, hErrorL2))
-        vErrorL2 = normL2Vect(vSimi, vNumerical, cellsize, cosAngle)
-        vErrorL2Array[count] = vErrorL2
-        log.info("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
-        count = count + 1
-    return hErrorL2Array, vErrorL2Array
-
-
-def normL2Vect(analyticalSol, numericalSol, cellsize, cosAngle):
-    """ Compute L2 norm of the error between the analytic and numerical solution
-    """
-    nonZeroIndex = np.where((np.abs(analyticalSol['fx']) > 0) & (np.abs(analyticalSol['fy']) > 0)
-                            & (np.abs(analyticalSol['fz']) > 0) & (np.abs(numericalSol['fz']) > 0)
-                            & (np.abs(numericalSol['fz']) > 0) & (np.abs(numericalSol['fz']) > 0))
-    dvx = analyticalSol['fx'] - numericalSol['fx']
-    dvy = analyticalSol['fy'] - numericalSol['fy']
-    dvz = analyticalSol['fz'] - numericalSol['fz']
-    dv = DFAtls.norm2(dvx, dvy, dvz)
-    localError = dv[nonZeroIndex]
-    error2 = cellsize * cellsize / cosAngle * np.nansum(localError)
-    error = np.sqrt(error2)
-
-    # # get info from dem
-    # dem = relDict['dem']
-    # ncols = dem['header']['ncols']
-    # nrows = dem['header']['nrows']
-    # xllc = dem['header']['xllcenter']
-    # yllc = dem['header']['yllcenter']
-    # csz = dem['header']['cellsize']
-    #
-    #
-    # cfgSimi = cfg['SIMISOL']
-    # L_x = cfgSimi.getfloat('L_x')
-    # cos = relDict['cos']
-    # X1 = relDict['X1']
-    # Y1 = relDict['Y1']
-    # xCenter = xc(solSimi, X1, Y1, ind_time, L_x)*cos
-    #
-    # fig1 = plt.figure(figsize=(pU.figW, pU.figH))
-    # ax1 = plt.subplot(121)
-    # indFinal = int(nrows * 0.5) -1
-    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), np.sqrt(dv)[indFinal, :], 'g', label='Field flow velocity')
-    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvx[indFinal, :], 'm', label='Field x velocity')
-    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvy[indFinal, :], 'b', label='Field y velocity')
-    # ax1.plot(np.linspace(xllc, xllc+(ncols-1)*csz, ncols), dvz[indFinal, :], 'c', label='Field z velocity')
-    #
-    # ax1.set_title('Profile along flow at t=%.2f s' % (t))
-    # ax1.set_xlabel('velocity in [m/s]')
-    #
-    #
-    # ax2 = plt.subplot(122)
-    # indFinal = int(np.floor((xCenter - xllc)/csz))
-    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), np.sqrt(dv)[:, indFinal], 'g', label='Field flow velocity')
-    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvx[:, indFinal], 'm', label='Field x velocity')
-    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvy[:, indFinal], 'b', label='Field y velocity')
-    # ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), dvz[:, indFinal], 'c', label='Field z velocity')
-    # ax2.set_title('Profile across flow at t=%.2f s' % (t))
-    # ax2.set_xlabel('velocity in [m/s]')
-    #
-    # plt.show()
-
-    return error
-
-
-def normL2Scal(analyticalSol, numericalSol, cellsize, cosAngle):
-    """ Compute L2 norm of the error between the analytic and numerical solution
-    """
-    nonZeroIndex = np.where((analyticalSol > 0) & (numericalSol > 0))
-    localError = (analyticalSol[nonZeroIndex] - numericalSol[nonZeroIndex])
-    localError = localError * localError
-    # error = cellsize * cellsize / cosAngle * np.nansum(localError)
-    error2 = cellsize * cellsize / cosAngle * np.nansum(localError)
-    error = np.sqrt(error2)
-
-    return error
+    return error, errorMax
 
 
 def getReleaseThickness(avaDir, cfg, demFile):
@@ -789,11 +716,10 @@ def prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, a
 
     if axis == 'xaxis':
         ind = np.where(((particles['y']+yllc > -csz/2) & (particles['y']+yllc < csz/2)))
-        indFinal = int(nrows *0.5) -1
+        indFinal = int(nrows * 0.5) -1
     elif axis == 'yaxis':
-         ind = np.where(((particles['x']+xllc > xCenter-csz/2) & (particles['x']+xllc < xCenter+csz/2)))
-         indFinal = int(np.round((xCenter - xllc)/csz) + 1)
-         print(xCenter, indFinal, xCenter - xllc)
+        ind = np.where(((particles['x']+xllc > xCenter-csz/2) & (particles['x']+xllc < xCenter+csz/2)))
+        indFinal = int(np.round((xCenter - xllc)/csz) + 1)
 
     x = particles['x'][ind]+xllc
     y = particles['y'][ind]+yllc
@@ -808,65 +734,15 @@ def prepareParticlesFieldscom1DFA(Fields, Particles, ind_t, relDict, simiDict, a
     return com1DFASol
 
 
-def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
-    """ get flow depth, flow velocity and center location of flow mass of similarity solution
-        for required time step
-
-        Parameters
-        -----------
-        solSimi: dict
-            similarity solution
-        relDict: dict
-            dictionary with info of release
-        ind_time: int
-            index for required time step in similarity solution
-        cfg: dict
-            configuration
-
-        Returns
-        --------
-        simiDict: dict
-            dictionary of similiarty solution with flow depth, flow velocity,
-            and center location in x for required time step
-        """
-
-    cfgSimi = cfg['SIMISOL']
-    L_x = cfgSimi.getfloat('L_x')
-    L_y = cfgSimi.getfloat('L_y')
-    Hini = cfg['GENERAL'].getfloat('relTh')
-    gravAcc = cfg['GENERAL'].getfloat('gravAcc')
-    cos = relDict['cos']
-    sin = relDict['sin']
-    X1 = relDict['X1']
-    Y1 = relDict['Y1']
-
-    # Dimensioning parameters
-    U = np.sqrt(gravAcc*L_x)
-    V = np.sqrt(gravAcc*L_y)
-
-    # get simi sol
-    hSimi = h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
-    hSimi = np.where(hSimi <= 0, 0, hSimi)
-    uxSimi = u(solSimi, X1, Y1, ind_time, L_x, U)
-    uxSimi = np.where(hSimi <= 0, 0, uxSimi)
-    uySimi = v(solSimi, X1, Y1, ind_time, L_y, V)
-    uySimi = np.where(hSimi <= 0, 0, uySimi)
-    vSimi = DFAtls.norm(uxSimi, uySimi, 0*uySimi)
-    xCenter = xc(solSimi, X1, Y1, ind_time, L_x)*cos
-
-    simiDict = {'hSimi': hSimi, 'vSimi': vSimi, 'vxSimi': uxSimi*cos, 'vySimi': uySimi, 'vzSimi': -uxSimi*sin,
-                'xCenter': xCenter}
-
-    return simiDict
-
-
-def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
+def plotProfilesSimiSol(ind_time, outputName, relDict, comSol, simiDict, solSimi, axis):
     """ Plot flow depth and velocity for similarity solution and simulation results
 
         Parameters
         -----------
         ind_time: int
             time index for simiSol
+        outputName: str
+            outputName
         relDict: dict
             dictionary of release area info
         comSol: dict
@@ -912,7 +788,7 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
     X = relDict['X']
     Y = relDict['Y']
 
-    fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    fig1, ax1 = plt.subplots(figsize=(2*pU.figW, pU.figH))
     ax2 = ax1.twinx()
 
     if axis == 'xaxis':
@@ -931,6 +807,9 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
         ax2.plot(X[indFinal, :], vzSimi[indFinal, :], '--c', label='SimiSol z velocity')
         ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
         ax1.set_xlabel('x in [m]')
+        indStart = first_nonzero(hSimi[indFinal, :], 0) - 2
+        indEnd = last_nonzero(hSimi[indFinal, :], 0) + 2
+        ax1.set_xlim([X[indFinal, indStart], X[indFinal, indEnd]])
     elif axis == 'yaxis':
         ax1.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FD'][:, indFinal], 'k', label='Field flow depth')
         ax2.plot(np.linspace(yllc, yllc+(nrows-1)*csz, nrows), fields['FV'][:, indFinal], 'g', label='Field flow velocity')
@@ -946,6 +825,9 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
         ax2.plot(Y[:, indFinal], vzSimi[:, indFinal], '--c', label='SimiSol z velocity')
         ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
         ax1.set_xlabel('y in [m]')
+        indStart = first_nonzero(hSimi[:, indFinal], 0) - 2
+        indEnd = last_nonzero(hSimi[:, indFinal], 0) + 2
+        ax1.set_xlim([Y[indStart, indFinal], Y[indEnd, indFinal]])
 
     ax1.set_ylabel('flow depth [m]')
     color = 'tab:green'
@@ -954,9 +836,53 @@ def plotProfilesSimiSol(ind_time, relDict, comSol, simiDict, solSimi, axis):
     ax2.legend(loc='upper right')
     ax1.legend(loc='upper left')
 
+    pU.saveAndOrPlot({'pathResult' : outDirTest / 'pics'}, 'profile_' + outputName + '_%sCutSol_T%.2f.' % (axis, Tsave) + pU.outputFormat, fig1)
 
-    fig1.savefig(pathlib.Path(outDirTest, '%sCutSol.%s' % (axis, pU.outputFormat)))
-    if showPlot:
-        plt.show()
-    else:
-        plt.close(fig1)
+
+def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, outputName):
+    fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    ax2 = ax1.twinx()
+    ax1.plot(time, hErrorL2Array, 'k-', label='Flow depth L2 error')
+    ax1.plot(time, hErrorLMaxArray, 'k--', label='Flow depth LMax error')
+    ax2.plot(time, vErrorL2Array, 'g-', label='Velocity L2 error')
+    ax2.plot(time, vErrorLMaxArray, 'g--', label='Velocity LMax error')
+    ax1.set_title('Error between similarity solution and com1DFA')
+    ax1.set_xlabel('time in [s]')
+
+    ax1.set_ylabel('error on flow depth')
+    color = 'tab:green'
+    ax2.tick_params(axis='y', labelcolor=color)
+    ax2.set_ylabel('error on velocity', color=color)
+    ax2.legend(loc='lower right')
+    ax1.legend(loc='upper left')
+    pU.saveAndOrPlot({'pathResult' : outDirTest / 'pics'}, 'Error_Time_' + outputName, fig1)
+
+
+def plotError(simDF, outDirTest):
+    fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
+    ax2 = ax1.twinx()
+    ax1 = sns.pointplot(x='Npart', y='hErrorL2', hue='dt', data=simDF, ax=ax1, markers=['o', 's', 'd', 'v', '^', '<', '>'], palette=['k'])
+    ax2 = sns.pointplot(x='Npart', y='vErrorL2', hue='dt', data=simDF, ax=ax2, markers=['o', 's', 'd', 'v', '^', '<', '>'], palette=['g'])
+    ax1 = sns.pointplot(x='Npart', y='hErrorLMax', hue='dt', data=simDF, ax=ax1, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>'], palette=['k'])
+    ax2 = sns.pointplot(x='Npart', y='vErrorLMax', hue='dt', data=simDF, ax=ax2, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>'], palette=['g'])
+    ax1.set_title('Error between similarity solution and com1DFA')
+    ax1.set_xlabel('Number of particles')
+
+    ax1.set_ylabel('error on flow depth')
+    color = 'tab:green'
+    ax2.tick_params(axis='y', labelcolor=color)
+    ax2.set_ylabel('error on velocity', color=color)
+    ax2.legend(loc='lower right')
+    ax1.legend(loc='upper left')
+    pU.saveAndOrPlot({'pathResult' : outDirTest / 'pics'}, 'Error', fig1)
+
+
+def last_nonzero(arr, axis, invalid_val=-1):
+    mask = arr != 0
+    val = arr.shape[axis] - np.flip(mask, axis=axis).argmax(axis=axis) - 1
+    return np.where(mask.any(axis=axis), val, invalid_val)
+
+
+def first_nonzero(arr, axis, invalid_val=-1):
+    mask = arr != 0
+    return np.where(mask.any(axis=axis), mask.argmax(axis=axis), invalid_val)
