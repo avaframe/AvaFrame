@@ -10,15 +10,13 @@
 """
 
 import pathlib
-from configupdater import ConfigUpdater
 
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
-from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-import avaframe.ana1Tests.simiSol as simiSol
+import avaframe.ana1Tests.simiSolTest as simiSolTest
 
 
 # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -44,4 +42,4 @@ simiSolCfg = pathlib.Path(avalancheDir, 'Inputs', 'simiSol_com1DFACfg.ini')
 outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
 fU.makeADir(outDirTest)
 
-simiSol.mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest)
+simiSolTest.mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest)
