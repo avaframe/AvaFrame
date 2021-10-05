@@ -23,7 +23,7 @@ from avaframe.out3Plot import statsPlots as sPlot
 log = logging.getLogger(__name__)
 
 
-def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
+def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
     """ Create comparison plots of two ascii datasets
 
         This function creates two plots, one plot with four panels with, first dataset, second dataset,
@@ -72,7 +72,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     cellSize = dataDict['cellSize']
     if dataDict['compareType'] == 'compToRef':
         simName = dataDict['simName'] + '_' + dataDict['suffix']
-        unit = dataDict['unit']
+        unit = pU.cfgPlotUtils['unit' + dataDict['suffix']]
         cmapType = pU.colorMaps[dataDict['suffix']]
     else:
         simName = 'compare'
@@ -145,8 +145,8 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
 
     ax3 = fig.add_subplot(223)
     cmap = pU.cmapdiv
-    elev_max = np.nanmax(np.abs(dataDiff))
-    im3 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
+    elevMax = np.nanmax(np.abs(dataDiff))
+    im3 = plt.imshow(dataDiff, cmap=cmap, clim=(-elevMax, elevMax),
                      extent=[0, Lx, 0, Ly],
                      origin='lower', aspect=nx/ny)
     ax3.set_xlim([colsMinPlot, colsMaxPlot])
@@ -166,26 +166,21 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     cmap = pU.cmapdiv
 
     if 'suffix' in dataDict:
-        if dataDict['suffix'] == 'pfd':
-            elev_max = 1
-        elif dataDict['suffix'] == 'ppr':
-            elev_max = 100
-        elif dataDict['suffix'] == 'pfv':
-            elev_max = 10
-        ax4.set_title('Difference capped at max difference in %s: +-%d %s' % (dataDict['suffix'], elev_max, unit))
+        elevMax = pU.cfgPlotUtils.getfloat('elevMax' + dataDict['suffix'])
+        ax4.set_title('Difference capped at max difference in %s: +-%.2g %s' % (dataDict['suffix'], elevMax, unit))
 
     else:
         cutVal = 0.5
-        elev_max = cutVal * elev_max
-        ax4.set_title('Difference capped at %.1f times max difference: +-%.2f' % (cutVal, elev_max))
+        elevMax = cutVal * elevMax
+        ax4.set_title('Difference capped at %.1f times max difference: +-%.2f' % (cutVal, elevMax))
 
     # for difference histogramm - remove dataDiff == 0 values from array
-    dataDiffZoom = np.where((dataDiffPlot < -elev_max) | (dataDiffPlot > elev_max), np.nan, dataDiffPlot)
+    dataDiffZoom = np.where((dataDiffPlot < -elevMax) | (dataDiffPlot > elevMax), np.nan, dataDiffPlot)
     diffMaxZoom = np.nanmax(dataDiffZoom)
     diffMinZoom = np.nanmin(dataDiffZoom)
     diffMeanZoom = np.nanmean(dataDiffZoom)
 
-    im4 = plt.imshow(dataDiff, cmap=cmap, clim=(-elev_max, elev_max),
+    im4 = plt.imshow(dataDiff, cmap=cmap, clim=(-elevMax, elevMax),
                      extent=[0, Lx, 0, Ly],
                      origin='lower', aspect=nx/ny)
     ax4.set_xlim([colsMinPlot, colsMaxPlot])
@@ -211,23 +206,24 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     saveNameDiff = outDir / ('Diff_%s_%s.%s' % (avaName, simName, pU.outputFormat))
     fig.savefig(saveNameDiff)
 
-    # Fgiure 2 cross and lonprofile
-    fig, ax = plt.subplots(ncols=2, figsize=(pU.figW*2, pU.figH))
-    suptitle = fig.suptitle(avaName, fontsize=14, color='0.5')
-    ax[0].plot(data1[:, ny_loc], 'k', label='Reference')
-    ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
-    ax[0].set_xlabel('Location across track [nrows]')
-    ax[0].set_ylabel('Result parameter')
-    ax[0].set_title('Cross profile at x =  %d' % ny_loc)
-    ax[1].plot(data1[nx_loc, :], 'k', label='Reference')
-    ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
-    ax[1].set_xlabel('Location along track [ncols]')
-    ax[1].set_ylabel('Result parameter')
-    ax[1].set_title('Long profile at y =  %d' % nx_loc)
-    ax[0].legend()
-    ax[1].legend()
-    saveNameProfile = outDir / ('Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat))
-    fig.savefig(saveNameProfile)
+    if crossProfile:
+        # Fgiure 2 cross and lonprofile
+        fig1, ax = plt.subplots(ncols=2, figsize=(pU.figW*2, pU.figH))
+        suptitle = fig1.suptitle(avaName, fontsize=14, color='0.5')
+        ax[0].plot(data1[:, ny_loc], 'k', label='Reference')
+        ax[0].plot(data2[:, ny_loc], 'b--', label='Simulation')
+        ax[0].set_xlabel('Location across track [nrows]')
+        ax[0].set_ylabel('Result parameter')
+        ax[0].set_title('Cross profile at x =  %d' % ny_loc)
+        ax[1].plot(data1[nx_loc, :], 'k', label='Reference')
+        ax[1].plot(data2[nx_loc, :], 'b--', label='Simulation')
+        ax[1].set_xlabel('Location along track [ncols]')
+        ax[1].set_ylabel('Result parameter')
+        ax[1].set_title('Long profile at y =  %d' % nx_loc)
+        ax[0].legend()
+        ax[1].legend()
+        saveNameProfile = outDir / ('Profiles_%s_%s.%s' % (avaName, simName, pU.outputFormat))
+        fig1.savefig(saveNameProfile)
 
     log.info('Figures saved to: %s' % outDir)
 
@@ -241,12 +237,13 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict):
     # stats is the max and min value of the reference
     plotDict['stats'].append(np.amax(data2))
     plotDict['stats'].append(np.amin(data2))
-    if 'differenceZoom' in plotDict:
-        plotDict['differenceZoom'].append(diffMaxZoom)
-        plotDict['differenceZoom'].append(diffMeanZoom)
-        plotDict['differenceZoom'].append(diffMinZoom)
+    plotDict['differenceZoom'].append(diffMaxZoom)
+    plotDict['differenceZoom'].append(diffMeanZoom)
+    plotDict['differenceZoom'].append(diffMinZoom)
 
     plt.close(fig)
+    if crossProfile:
+        plt.close(fig1)
 
     return plotDict
 

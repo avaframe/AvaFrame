@@ -2011,7 +2011,7 @@ def savePartToCsv(particleProperties, dictList, outDir):
 
 
 def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA'):
-    """ Read pickles within a directory and return List of dicionaries read from pickle
+    """ Read ascii files within a directory and return List of dicionaries
 
         Parameters
         -----------
