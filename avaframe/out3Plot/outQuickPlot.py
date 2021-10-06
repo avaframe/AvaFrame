@@ -236,9 +236,10 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
     # stats is the max and min value of the reference
     plotDict['stats'].append(np.amax(data2))
     plotDict['stats'].append(np.amin(data2))
-    plotDict['differenceZoom'].append(diffMaxZoom)
-    plotDict['differenceZoom'].append(diffMeanZoom)
-    plotDict['differenceZoom'].append(diffMinZoom)
+    if 'differenceZoom' in plotDict:
+        plotDict['differenceZoom'].append(diffMaxZoom)
+        plotDict['differenceZoom'].append(diffMeanZoom)
+        plotDict['differenceZoom'].append(diffMinZoom)
 
     plt.close(fig)
     if crossProfile:
