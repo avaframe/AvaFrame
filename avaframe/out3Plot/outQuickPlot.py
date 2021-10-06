@@ -9,7 +9,6 @@ import numpy as np
 import numpy.ma as ma
 import pathlib
 import logging
-import glob
 
 # Local imports
 import avaframe.in2Trans.ascUtils as IOf
@@ -48,7 +47,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
                 cellSize: float
                     cell size
                 suffix: str
-                    optional information about the data type compared ('ppr', 'pfd', 'pfv')
+                    optional information about the data type compared ('ppr', 'pfd', 'pfv', 'P', 'FV', 'FD', 'Vx'...)
         avaName : str
             name of avalanche
         outDir : pathlib path
@@ -70,7 +69,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
     name1 = dataDict['name1']
     name2 = dataDict['name2']
     cellSize = dataDict['cellSize']
-    if dataDict['compareType'] == 'compToRef':
+    if 'suffix' in dataDict:
         simName = dataDict['simName'] + '_' + dataDict['suffix']
         unit = pU.cfgPlotUtils['unit' + dataDict['suffix']]
         cmapType = pU.colorMaps[dataDict['suffix']]

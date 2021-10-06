@@ -1,6 +1,6 @@
 """
-    Run script for running python DFA kernel and similarity solution test
-    This script calculates the similarity solution for a gliding avalanche on
+    Run com1DFA kernel and compare it tothe similarity solution
+    This script computes the similarity solution for a gliding avalanche on
     a inclined plane according to similarity solution from :
     Hutter, K., Siegel, M., Savage, S.B. et al.
     Two-dimensional spreading of a granular avalanche down an inclined plane
