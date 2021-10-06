@@ -13,7 +13,6 @@ https://doi.org/10.1007/BF01176861
 import numpy as np
 from scipy.integrate import ode
 import math
-import pathlib
 import logging
 
 # local imports
@@ -61,7 +60,7 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
 
     # compute the similartiy solution (this corresponds to our reference)
     log.info('Computing similarity solution')
-    solSimi = mainSimilaritySol()
+    solSimi = mainSimilaritySol(simiSolCfg)
 
     # now compare the simulations to the reference
     # first fetch info about all the simulations performed (and maybe order them)
@@ -96,11 +95,26 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     outAna1Plots.plotError(simDF, outDirTest)
 
 
-def mainSimilaritySol():
-    """ Compute similarity solution"""
+def mainSimilaritySol(simiSolCfg):
+    """ Compute similarity solution
+    Parameters
+    -----------
+    simiSolCfg: pathlib path
+        path to simiSol configuration file
+    Returns
+    ---------
+    solSimi: dictionary
+        similarity solution:
+            time: time array (without dimention)
+            Time: time array (with dimention)
+            g_sol: g array
+            g_p_sol: first derivativ of g array
+            f_sol: f array
+            f_p_sol: first derivativ of f array
+
+    """
 
     # Load configuration
-    simiSolCfg = pathlib.Path('data/avaSimilaritySol', 'Inputs', 'simiSol_com1DFACfg.ini')
     cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
     cfgGen = cfg['GENERAL']
     cfgSimi = cfg['SIMISOL']
@@ -133,7 +147,7 @@ def mainSimilaritySol():
     T_end = cfgGen.getfloat('tEnd') + cfgGen.getfloat('maxdT')
 
     # Non dimensional time for similarity sim calculation
-    t_1 = 0.1/T         # start time for ode solvers
+    t_1 = 0.1         # start time for ode solvers, end time for early time sol (we need t_1<<1)
     t_end = T_end/T     # end time
     dt_early = 0.01/T   # time step for early sol
     dt = 0.01/T         # time step for early sol
@@ -150,11 +164,12 @@ def mainSimilaritySol():
 
     # Early time solution
     t_early = np.arange(0, t_1, dt_early)
+    t_early = np.append(t_early, t_1)
     solSimi = calcEarlySol(t_early, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y)
 
     # Runge-Kutta integration away from the singularity
     # initial conditions
-    t_start = t_1 - dt_early
+    t_start = t_1
     x_1 = np.empty((4, 1))
     x_1[0] = solSimi['g_sol'][-1]
     x_1[1] = solSimi['g_p_sol'][-1]
@@ -257,8 +272,28 @@ def computeEarthPressCoeff(x, earthPressureCoefficients):
     return K_x, K_y
 
 
-def computeFCoeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
+def computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
     """ Compute coefficients eq 3.2 for the function F
+        Parameters
+        -----------
+        K_x: float
+            Kx earth pressure coef
+        K_y: float
+            Ky earth pressure coef
+        zeta: float
+            slope angle
+        delta: float
+            friction angle
+        eps_x: float
+            scale in x dir
+        eps_xy: float
+            scale in x/y dir
+        eps_y: float
+            scale in y dir
+        Returns
+        ---------
+        A, B, C, D, E: floats
+            coefficients of eq 3.2
     """
 
     A = np.sin(zeta)
@@ -276,14 +311,42 @@ def computeFCoeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
 
 
 def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y):
-    """ Compute the early solution for 0<t<t_1 to avoid singularity in the
-        Runge-Kutta integration process
+    """ Compute the early solution for 0<t<t_1
+        to avoid singularity in the Runge-Kutta integration process
+        Parameters
+        -----------
+        t: numpy array
+            time array
+        earthPressureCoefficients: numpy array
+            earth Pressure Coefficients
+        x_0: numpy array
+            initial condition
+        zeta: float
+            slope angle
+        delta: float
+            friction angle
+        eps_x: float
+            scale in x dir
+        eps_xy: float
+            scale in x/y dir
+        eps_y: float
+            scale in y dir
+        Returns
+        ---------
+        solSimi: dictionary
+            similarity solution (for early times):
+                time: time array (without dimention)
+                g_sol: g array
+                g_p_sol: first derivativ of g array
+                f_sol: f array
+                f_p_sol: first derivativ of f array
+
     """
 
     # early solution exists only if first derivative of f at t=0 is zero
     assert x_0[3] == 0, "f'(t=0)=f_p0 must be equal to 0"
     K_x, K_y = computeEarthPressCoeff(x_0, earthPressureCoefficients)
-    A, B, C, D, E = computeFCoeff(x_0, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
+    A, B, C, D, E = computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
     g0 = x_0[0]
     g_p0 = x_0[1]
     f0 = x_0[2]
@@ -313,7 +376,19 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y
         t: float
             curent time
         x: numpy array
-            column vector of size 4
+            initial condition, column vector of size 4
+        earthPressureCoefficients: numpy array
+            earth Pressure Coefficients
+        zeta: float
+            slope angle
+        delta: float
+            friction angle
+        eps_x: float
+            scale in x dir
+        eps_xy: float
+            scale in x/y dir
+        eps_y: float
+            scale in y dir
 
         Returns:
         F: numpy array
@@ -322,7 +397,7 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y
 
     global A, C
     K_x, K_y = computeEarthPressCoeff(x, earthPressureCoefficients)
-    A, B, C, D, E = computeFCoeff(x, K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
+    A, B, C, D, E = computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
     u_c = (A - C)*t
     g = x[0]
     g_p = x[1]
@@ -343,6 +418,30 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y
 
 def odeSolver(solver, dt, t_end, solSimi):
     """ Solve the ODE using a Runge-Kutta method
+        Parameters
+        -----------
+        solver: `ode` instance
+            `ode` instance corresponding to out ODE
+        dt: float
+            time step
+        t_end: float
+            end time
+        solSimi: dictionary
+            similarity solution (for early times):
+                time: time array (without dimention)
+                g_sol: g array
+                g_p_sol: first derivativ of g array
+                f_sol: f array
+                f_p_sol: first derivativ of f array
+        Returns
+        ---------
+        solSimi: dictionary
+            similarity solution (copleted with all time steps):
+                time: time array (without dimention)
+                g_sol: g array
+                g_p_sol: first derivativ of g array
+                f_sol: f array
+                f_p_sol: first derivativ of f array
     """
     time = solSimi['time']
     g_sol = solSimi['g_sol']
@@ -369,47 +468,124 @@ def odeSolver(solver, dt, t_end, solSimi):
     return solSimi
 
 
-def h(solSimi, x1, y1, i, L_y, L_x, H):
+def h(solSimi, x1, y1, i, L_x, L_y, H):
     """ get flow depth from f and g solutions
+        Parameters
+        -----------
+        solSimi: dictionary
+            similarity solution
+        x1: numpy array
+            x coordinate location desiered for the solution
+        y1: numpy array
+            y coordinate location desiered for the solution
+        i: int
+            time index
+        L_x: float
+            scale in x dir
+        L_y: float
+            scale in y dir
+        H: float
+            scale in z dir
+
+        Returns
+        --------
+        h: numpy array
+            h similarity solution at (x1, y1)
+
     """
     time = solSimi['time']
     g_sol = solSimi['g_sol']
     f_sol = solSimi['f_sol']
     y1 = -(y1/L_y)**2/(f_sol[i])**2
     x1 = -(x1/L_x-(A-C)/2*(time[i])**2)**2/(g_sol[i])**2
-    z = H*(1+x1+y1)/(f_sol[i]*g_sol[i])
+    h = H*(1+x1+y1)/(f_sol[i]*g_sol[i])
 
-    return z
+    return h
 
 
 def u(solSimi, x1, y1, i, L_x, U):
     """ get flow velocity in x direction from f and g solutions
+        Parameters
+        -----------
+        solSimi: dictionary
+            similarity solution
+        x1: numpy array
+            x coordinate location desiered for the solution
+        y1: numpy array
+            y coordinate location desiered for the solution
+        i: int
+            time index
+        L_x: float
+            scale in x dir
+        U: float
+            x velocity component scale
+
+        Returns
+        --------
+        u: numpy array
+            u similarity solution at (x1, y1)
     """
     time = solSimi['time']
     g_sol = solSimi['g_sol']
     g_p_sol = solSimi['g_p_sol']
-    z = U*((A-C)*time[i]+(x1/L_x-(A-C)/2*(time[i])**2)*g_p_sol[i]/g_sol[i])
+    u = U*((A-C)*time[i]+(x1/L_x-(A-C)/2*(time[i])**2)*g_p_sol[i]/g_sol[i])
 
-    return z
+    return u
 
 
 def v(solSimi, x1, y1, i, L_y, V):
     """ get flow velocity in y direction from f and g solutions
+        Parameters
+        -----------
+        solSimi: dictionary
+            similarity solution
+        x1: numpy array
+            x coordinate location desiered for the solution
+        y1: numpy array
+            y coordinate location desiered for the solution
+        i: int
+            time index
+        L_y: float
+            scale in y dir
+        V: float
+            y velocity component scale
+
+        Returns
+        --------
+        v: numpy array
+            v similarity solution at (x1, y1)
     """
     f_sol = solSimi['f_sol']
     f_p_sol = solSimi['f_p_sol']
-    z = V*y1/L_y*f_p_sol[i]/f_sol[i]
+    v = V*y1/L_y*f_p_sol[i]/f_sol[i]
 
-    return z
+    return v
 
 
 def xc(solSimi, x1, y1, i, L_x):
     """ get center of mass location
+        Parameters
+        -----------
+        solSimi: dictionary
+            similarity solution
+        x1: numpy array
+            x coordinate location desiered for the solution
+        y1: numpy array
+            y coordinate location desiered for the solution
+        i: int
+            time index
+        L_x: float
+            scale in x dir
+
+        Returns
+        --------
+        xc: numpy array
+            x position of the center of the similarity solution pile
     """
     time = solSimi['time']
-    z = L_x*(A-C)/2*(time[i])**2
+    xc = L_x*(A-C)/2*(time[i])**2
 
-    return z
+    return xc
 
 
 def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
@@ -449,7 +625,7 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
     V = np.sqrt(gravAcc*L_y)
 
     # get simi sol
-    hSimi = h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
+    hSimi = h(solSimi, X1, Y1, ind_time, L_x, L_y, Hini)
     hSimi = np.where(hSimi <= 0, 0, hSimi)
     uxSimi = u(solSimi, X1, Y1, ind_time, L_x, U)
     uxSimi = np.where(hSimi <= 0, 0, uxSimi)
@@ -469,7 +645,42 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
 
 
 def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest, index):
-    """Compare analytical and com1DFA results"""
+    """Compare analytical and com1DFA results
+        Parameters
+        -----------
+        particlesList: list
+            list of particles dictionaries
+        fieldsList: list
+            list of fields dictionaries
+        solSimi: dictionary
+            similarity solution:
+                time: time array (without dimention)
+                Time: time array (with dimention)
+                g_sol: g array
+                g_p_sol: first derivativ of g array
+                f_sol: f array
+                f_p_sol: first derivativ of f array
+        relDict: dict
+            dictionary with info on release area
+        cfg: dict
+            confguration settings
+        outDirTest: pathlib path
+            path output directory (where to save the figures)
+        index: str
+            com1DFA simulation id
+
+        Returns
+        --------
+        hErrorL2Array: numpy array
+            L2 error on flow depth for saved time steps
+        hErrorLMaxArray: numpy array
+            LMax error on flow depth for saved time steps
+        vErrorL2Array: numpy array
+            L2 error on flow velocity for saved time steps
+        vErrorLMaxArray: numpy array
+            LMax error on flow velocity for saved time steps
+
+    """
 
     hErrorL2Array = np.zeros((len(particlesList)))
     vErrorL2Array = np.zeros((len(particlesList)))
@@ -490,11 +701,11 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest,
         hNumerical = field['FD']
         vSimi = {'fx': simiDict['vxSimi'], 'fy': simiDict['vySimi'], 'fz': simiDict['vzSimi']}
         vNumerical = {'fx': field['Vx'], 'fy': field['Vy'], 'fz': field['Vz']}
-        hErrorL2, hErrorLmax = anaTools.normL2Scal(hSimi, hNumerical, cellSize, cosAngle)
+        hErrorL2, hErrorL2Rel, hErrorLmax, hErrorLmaxRel = anaTools.normL2Scal(hSimi, hNumerical, cellSize, cosAngle)
         hErrorL2Array[count] = hErrorL2
         hErrorLMaxArray[count] = hErrorLmax
         log.debug("L2 error on the Flow Depth at t=%.2f s is : %.4f" % (t, hErrorL2))
-        vErrorL2, vErrorLmax = anaTools.normL2Vect(vSimi, vNumerical, cellSize, cosAngle)
+        vErrorL2, vErrorL2Rel, vErrorLmax, vErrorLmaxRel = anaTools.normL2Vect(vSimi, vNumerical, cellSize, cosAngle)
         vErrorL2Array[count] = vErrorL2
         vErrorLMaxArray[count] = vErrorLmax
         log.debug("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
@@ -529,14 +740,13 @@ def getReleaseThickness(avaDir, cfg, demFile):
 
     # Read dem
     demOri = IOf.readRaster(demFile)
-    cszNew = cfg.getfloat('GENERAL', 'meshCellSize')
-    x, y, xNew, yNew, diffExtentX, diffExtentY = geoTrans.getMeshXY(demOri, cellSizeNew=cszNew)
+    csz = cfg.getfloat('GENERAL', 'meshCellSize')
+    x, y, xNew, yNew, diffExtentX, diffExtentY = geoTrans.getMeshXY(demOri, cellSizeNew=csz)
 
     nrows = len(yNew)
     ncols = len(xNew)
     xllc = demOri['header']['xllcenter']
     yllc = demOri['header']['yllcenter']
-    csz = cszNew
 
     # define release thickness distribution
     cfgSimi = cfg['SIMISOL']
