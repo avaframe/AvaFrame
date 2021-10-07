@@ -557,12 +557,13 @@ def test_placeParticles():
     indy = 1
     csz = 5
     massPerPart = 2.
+    thresholdMassSplit = 1.5
     initPartDistType = 'uniform'
     rng = np.random.default_rng(12345)
 
     # call funciton to be tested - uniform
     xpart, ypart, mPart, nPart = com1DFA.placeParticles(
-        massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
+        massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit)
     xpartTest = np.asarray([-1.66666666, 0.0, 1.66666666, -1.66666666, 0., 1.66666666, -1.66666666,
                             0.0, 1.66666666])
     ypartTest = np.asarray([3.33333333, 3.33333333, 3.33333333, 5.0, 5., 5., 6.66666666, 6.66666666,
@@ -571,7 +572,7 @@ def test_placeParticles():
     # call funciton to be tested - uniform
     massCell = 8.
     xpart2, ypart2, mPart2, nPart2 = com1DFA.placeParticles(
-        massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
+        massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit)
     xpartTest2 = np.asarray([-1.25, 1.25, -1.25, 1.25])
     ypartTest2 = np.asarray([3.75, 3.75, 6.25, 6.25])
 
@@ -579,7 +580,7 @@ def test_placeParticles():
     massCell = 11.5
     initPartDistType = 'random'
     xpart3, ypart3, mPart3, nPart3 = com1DFA.placeParticles(
-        massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
+        massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit)
     xpartTest3 = np.asarray(
         [-0.9162083, 1.48682729, 0.88127335, -0.54445225, -0.83593036, 0.49154377])
     ypartTest3 = np.asarray(
@@ -603,7 +604,7 @@ def test_placeParticles():
     initPartDistType = 'semiRandom'
     csz = 4
     xpart4, ypart4, mPart4, nPart4 = com1DFA.placeParticles(
-        massCell, indx, indy, csz, massPerPart, rng, initPartDistType)
+        massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit)
 
     print('xpart4', xpart4)
     print('ypart4', ypart4)

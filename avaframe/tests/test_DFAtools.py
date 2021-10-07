@@ -197,30 +197,31 @@ def test_splitPart(capfd):
     particles['massPerPart'] = 1
     particles['ID'] = np.arange(particles['Npart'])
     particles['parentID'] = np.arange(particles['Npart'])
-    particles['m'] = np.array([1, 2, 1, 3.6, 1, 1, 5, 1, 1, 1])
+    particles['m'] = np.array([1, 2, 1.4, 3.6, 1, 1.6, 5, 1, 1, 1])
     particles['x'] = np.linspace(0, 9, 10)
     particles['ux'] = np.linspace(0, 9, 10)
     particles['mTot'] = np.sum(particles['m'])
     particles['nID'] = 10
-    particles = DFAtls.splitPart(particles)
+    thresholdMassSplit = 1.5
+    particles = DFAtls.splitPart(particles, thresholdMassSplit)
     print(particles)
-    massNew = np.array([1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1,
-                        1, 0.9, 0.9, 0.9, 1, 1, 1, 1])
-    res = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 3, 3, 3, 6, 6, 6, 6])
+    massNew = np.array([1, 1, 1.4, 1.2, 1, 0.8, 1.25, 1, 1, 1,
+                        1, 1.2, 1.2, 0.8, 1.25, 1.25, 1.25])
+    res = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 3, 3, 5, 6, 6, 6])
     print(particles['m'])
     print(massNew)
     print(particles['nID'])
     print(particles['parentID'])
     print(particles['ID'])
     atol = 1e-10
-    assert particles['Npart'] == 18
+    assert particles['Npart'] == 17
     assert np.allclose(particles['m'], massNew, atol=atol)
     assert np.allclose(particles['x'], res, atol=atol)
     assert np.allclose(particles['ux'], res, atol=atol)
     assert particles['mTot'] == np.sum(massNew)
-    assert particles['nID'] == 18
+    assert particles['nID'] == 17
     assert np.allclose(particles['parentID'], res, atol=atol)
-    assert np.allclose(particles['ID'], np.arange(18), atol=atol)
+    assert np.allclose(particles['ID'], np.arange(17), atol=atol)
 
 
 def test_mergeParticleDict(capfd):
