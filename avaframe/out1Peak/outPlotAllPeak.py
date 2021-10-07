@@ -76,53 +76,53 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
         resType = peakFilesDF['resType'][m]
         log.debug('now plot %s:' % (fileName))
 
-        # Load data
-        raster = IOf.readRaster(fileName, noDataToNan=True)
-        data = raster['rasterData']
-
-        # constrain data to where there is data
-        cellSize = peakFilesDF['cellSize'][m]
-        rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
-        dataConstrained = data[rowsMin:rowsMax+1, colsMin:colsMax+1]
-        demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
-
-        data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
-        unit = pU.cfgPlotUtils['unit%s' % resType]
-
-        # Set extent of peak file
-        ny = data.shape[0]
-        nx = data.shape[1]
-        Ly = ny*cellSize
-        Lx = nx*cellSize
-
-        # Figure  shows the result parameter data
-        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        # choose colormap
-        cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
-        cmap.set_bad(alpha=0)
-        rowsMinPlot = rowsMin*cellSize
-        rowsMaxPlot = (rowsMax+1)*cellSize
-        colsMinPlot = colsMin*cellSize
-        colsMaxPlot = (colsMax+1)*cellSize
-        im0 = ax.imshow(demConstrained, cmap='Greys', extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
-        im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
-        pU.addColorBar(im1, ax, ticks, unit)
-
-        title = str('%s' % name)
-        ax.set_title(title)
-        ax.set_xlabel('x [m]')
-        ax.set_ylabel('y [m]')
-
         plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
+        if not plotName.is_file():
+            # Load data
+            raster = IOf.readRaster(fileName, noDataToNan=True)
+            data = raster['rasterData']
 
-        pU.putAvaNameOnPlot(ax, avaDir)
+            # constrain data to where there is data
+            cellSize = peakFilesDF['cellSize'][m]
+            rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(data, cellSize)
+            dataConstrained = data[rowsMin:rowsMax+1, colsMin:colsMax+1]
+            demConstrained = demField[rowsMin:rowsMax+1, colsMin:colsMax+1]
 
-        fig.savefig(plotName)
-        if cfgFLAGS.getboolean('showPlot'):
-            plt.show()
-        plotPath = pathlib.Path.cwd() / plotName
-        plotDict[peakFilesDF['simName'][m]].update({peakFilesDF['resType'][m]: plotPath})
-        plt.close(fig)
+            data = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
+            unit = pU.cfgPlotUtils['unit%s' % resType]
+
+            # Set extent of peak file
+            ny = data.shape[0]
+            nx = data.shape[1]
+            Ly = ny*cellSize
+            Lx = nx*cellSize
+
+            # Figure  shows the result parameter data
+            fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+            # choose colormap
+            cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.amin(data), np.amax(data), continuous=pU.contCmap)
+            cmap.set_bad(alpha=0)
+            rowsMinPlot = rowsMin*cellSize
+            rowsMaxPlot = (rowsMax+1)*cellSize
+            colsMinPlot = colsMin*cellSize
+            colsMaxPlot = (colsMax+1)*cellSize
+            im0 = ax.imshow(demConstrained, cmap='Greys', extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
+            im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
+            pU.addColorBar(im1, ax, ticks, unit)
+
+            title = str('%s' % name)
+            ax.set_title(title)
+            ax.set_xlabel('x [m]')
+            ax.set_ylabel('y [m]')
+
+            pU.putAvaNameOnPlot(ax, avaDir)
+
+            fig.savefig(plotName)
+            if cfgFLAGS.getboolean('showPlot'):
+                plt.show()
+            plotPath = pathlib.Path.cwd() / plotName
+            plotDict[peakFilesDF['simName'][m]].update({peakFilesDF['resType'][m]: plotPath})
+            plt.close(fig)
 
     return plotDict
 

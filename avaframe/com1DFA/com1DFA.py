@@ -89,7 +89,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
 
     # create a list of simulations and generate an individual configuration object for each simulation
     # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
-    simDict = com1DFA.prepareVarSimDict(modCfg, inputSimFiles, variationDict)
+    simDFOld, simNameOld = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
+    simDict = com1DFA.prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
 
     log.info('The following simulations will be performed')
     for key in simDict:
@@ -2121,7 +2122,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
         countTime = countTime + 1
 
 
-def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
+def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     """ Prepare a dictionary with simulations that shall be run with varying parameters following the variation dict
 
         Parameters
@@ -2177,9 +2178,12 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict):
             simHash = cfgUtils.cfgHash(cfgSimObject)
             simName = (relNameSim + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' +
                        simHash)
-            simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
-                                'simType': row._asdict()['simTypeList'], 'relFile': rel,
-                                'cfgSim': cfgSimObject}
+            if simName not in simNameOld:
+                simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
+                                    'simType': row._asdict()['simTypeList'], 'relFile': rel,
+                                    'cfgSim': cfgSimObject}
+            else:
+                log.info('Simulation %s already exists, not repeating it' % simName)
 
     return simDict
 
