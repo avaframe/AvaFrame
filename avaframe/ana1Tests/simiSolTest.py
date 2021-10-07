@@ -68,31 +68,7 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     ascendingOrder = cfg['ANALYSIS']['ascendingOrder']
     # load info for all configurations and order them
     simDF = cfgUtils.orderSimFiles(avalancheDir, '', varParList, ascendingOrder)
-    # loop on all the simulations and make the comparison to reference
-    for index, row in simDF.iterrows():
-        simName = row['simName']
-        # fetch the simulation results
-        particlesList, _ = com1DFA.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
-        fieldsList, fieldHeader = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
-        simDF.loc[index, 'Npart'] = particlesList[0]['Npart']
-        # analyze and compare results
-        hEL2Array, hELMaxArray, vEL2Array, vELMaxArray = analyzeResults(particlesList, fieldsList, solSimi, relDict,
-                                                                        cfg, outDirTest, index)
-        # add result of error analysis
-        # save results in the simDF
-        simDF.loc[index, 'hErrorL2'] = hEL2Array[-1]
-        simDF.loc[index, 'vErrorL2'] = vEL2Array[-1]
-        simDF.loc[index, 'hErrorLMax'] = hELMaxArray[-1]
-        simDF.loc[index, 'vErrorLMax'] = vELMaxArray[-1]
-        # +++++++++POSTPROCESS++++++++++++++++++++++++
-        # -------------------------------
-        if cfgMain['FLAGS'].getboolean('showPlot'):
-            outAna1Plots.plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest)
-
-        outAna1Plots.showSaveTimeSteps(cfgMain, cfg, particlesList, fieldsList, solSimi, Tsave, relDict, outDirTest, index)
-
-    simDF.to_pickle(outDirTest / 'results.p')
-    outAna1Plots.plotError(simDF, outDirTest)
+    simDF = postProcessSimiSol(avalancheDir, cfgMain, cfg, simDF, solSimi, outDirTest)
 
 
 def mainSimilaritySol(simiSolCfg):
@@ -478,7 +454,7 @@ def computeH(solSimi, x1, y1, i, L_x, L_y, H, AminusC):
         y1: numpy array
             y coordinate location desiered for the solution
         i: int
-            time index
+            time simHash
         L_x: float
             scale in x dir
         L_y: float
@@ -515,7 +491,7 @@ def computeU(solSimi, x1, y1, i, L_x, U, AminusC):
         y1: numpy array
             y coordinate location desiered for the solution
         i: int
-            time index
+            time simHash
         L_x: float
             scale in x dir
         U: float
@@ -547,7 +523,7 @@ def computeV(solSimi, x1, y1, i, L_y, V):
         y1: numpy array
             y coordinate location desiered for the solution
         i: int
-            time index
+            time simHash
         L_y: float
             scale in y dir
         V: float
@@ -576,7 +552,7 @@ def computeXC(solSimi, x1, y1, i, L_x, AminusC):
         y1: numpy array
             y coordinate location desiered for the solution
         i: int
-            time index
+            time simHash
         L_x: float
             scale in x dir
         AminusC:
@@ -593,7 +569,7 @@ def computeXC(solSimi, x1, y1, i, L_x, AminusC):
     return xc
 
 
-def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
+def getSimiSolParameters(solSimi, header, ind_time, cfgSimi, Hini, gravAcc):
     """ get flow depth, flow velocity and center location of flow mass of similarity solution
         for required time step
 
@@ -601,12 +577,16 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
         -----------
         solSimi: dict
             similarity solution
-        relDict: dict
-            dictionary with info of release
+        header: dict
+            header dictionary with info about the extend and cell size
         ind_time: int
-            index for required time step in similarity solution
+            simHash for required time step in similarity solution
         cfg: dict
             configuration
+        Hini: float
+            initial release depth
+        gravAcc: float
+            gravity acceleration
 
         Returns
         --------
@@ -615,23 +595,30 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
             and center location in x for required time step
         """
 
-    cfgSimi = cfg['SIMISOL']
     L_x = cfgSimi.getfloat('L_x')
     L_y = cfgSimi.getfloat('L_y')
-    Hini = cfg['GENERAL'].getfloat('relTh')
-    gravAcc = cfg['GENERAL'].getfloat('gravAcc')
     bedFrictionAngleDeg = cfgSimi.getfloat('bedFrictionAngle')
     planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
-    
+
     # Set parameters
     Pi = math.pi
     zeta = planeinclinationAngleDeg * Pi /180       # plane inclination
     delta = bedFrictionAngleDeg * Pi /180           # basal angle of friction
 
-    cos = relDict['cos']
-    sin = relDict['sin']
-    X1 = relDict['X1']
-    Y1 = relDict['Y1']
+    cos = math.cos(zeta)
+    sin = math.sin(zeta)
+
+    # get info on DEM extent
+    ncols = header['ncols']
+    nrows = header['nrows']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
+    x = np.linspace(0, ncols-1, ncols)*csz+xllc
+    y = np.linspace(0, nrows-1, nrows)*csz+yllc
+    X, Y = np.meshgrid(x, y)
+    X1 = X/cos
+    Y1 = Y
 
     # Dimensioning parameters
     U = np.sqrt(gravAcc*L_x)
@@ -653,7 +640,7 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
     xCenter = computeXC(solSimi, X1, Y1, ind_time, L_x, AminusC)*cos
 
     simiDict = {'hSimi': hSimi, 'vSimi': vSimi, 'vxSimi': uxSimi*cos, 'vySimi': uySimi, 'vzSimi': -uxSimi*sin,
-                'xCenter': xCenter}
+                'xCenter': xCenter, 'cos': cos, 'sin': sin}
 
     return simiDict
 
@@ -662,7 +649,38 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
 #########################
 
 
-def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest, index):
+def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTest):
+    # loop on all the simulations and make the comparison to reference
+    for simHash, simDFrow in simDF.iterrows():
+        simName = simDFrow['simName']
+        # fetch the simulation results
+        particlesList, Tsave = com1DFA.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
+        fieldsList, fieldHeader = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
+        simDF.loc[simHash, 'Npart'] = particlesList[0]['Npart']
+        # analyze and compare results
+        hEL2Array, hELMaxArray, vEL2Array, vELMaxArray = analyzeResults(particlesList, fieldsList, solSimi, fieldHeader,
+                                                                        cfgSimi, outDirTest, simHash, simDFrow)
+        # add result of error analysis
+        # save results in the simDF
+        simDF.loc[simHash, 'hErrorL2'] = hEL2Array[-1]
+        simDF.loc[simHash, 'vErrorL2'] = vEL2Array[-1]
+        simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[-1]
+        simDF.loc[simHash, 'vErrorLMax'] = vELMaxArray[-1]
+        # +++++++++POSTPROCESS++++++++++++++++++++++++
+        # -------------------------------
+        if cfgMain['FLAGS'].getboolean('showPlot'):
+            outAna1Plots.plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, outDirTest)
+
+        outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
+                                       outDirTest, simHash, simDFrow)
+
+    simDF.to_pickle(outDirTest / 'results.p')
+    outAna1Plots.plotError(simDF, outDirTest)
+
+    return simDF
+
+
+def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, outDirTest, simHash, simDFrow):
     """Compare analytical and com1DFA results
         Parameters
         -----------
@@ -678,13 +696,13 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest,
                 g_p_sol: first derivativ of g array
                 f_sol: f array
                 f_p_sol: first derivativ of f array
-        relDict: dict
-            dictionary with info on release area
-        cfg: dict
-            confguration settings
+        fieldHeader: dict
+            header dictionary with info about the extend and cell size
+        cfgSimi: dict
+            simisol confguration section
         outDirTest: pathlib path
             path output directory (where to save the figures)
-        index: str
+        simHash: str
             com1DFA simulation id
 
         Returns
@@ -699,7 +717,8 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest,
             LMax error on flow velocity for saved time steps
 
     """
-
+    relTh = simDFrow['relTh']
+    gravAcc = simDFrow['gravAcc']
     hErrorL2Array = np.zeros((len(particlesList)))
     vErrorL2Array = np.zeros((len(particlesList)))
     hErrorLMaxArray = np.zeros((len(particlesList)))
@@ -712,9 +731,9 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest,
         time.append(t)
         # get similartiy solution h, u at required time step
         ind_time = np.searchsorted(solSimi['Time'], t)
-        simiDict = getSimiSolParameters(solSimi, relDict, ind_time, cfg)
-        cellSize = relDict['dem']['header']['cellsize']
-        cosAngle = relDict['cos']
+        simiDict = getSimiSolParameters(solSimi, fieldHeader, ind_time, cfgSimi, relTh, gravAcc)
+        cellSize = fieldHeader['cellsize']
+        cosAngle = simiDict['cos']
         hSimi = simiDict['hSimi']
         hNumerical = field['FD']
         vSimi = {'fx': simiDict['vxSimi'], 'fy': simiDict['vySimi'], 'fz': simiDict['vzSimi']}
@@ -728,7 +747,7 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest,
         vErrorLMaxArray[count] = vErrorLmaxRel
         log.debug("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
         count = count + 1
-    outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, index)
+    outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, simHash)
 
     return hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray
 
@@ -788,7 +807,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     return relDict
 
 
-def prepareParticlesFieldscom1DFA(fields, particles, relDict, simiDict, axis):
+def prepareParticlesFieldscom1DFA(fields, particles, header, simiDict, axis):
     """ get fields and particles dictionaries for given time step, for com1DFA domain origin is set to 0,0
         for particles - so info on domain is required
 
@@ -799,8 +818,8 @@ def prepareParticlesFieldscom1DFA(fields, particles, relDict, simiDict, axis):
             fields dictionary
         Particles: dictionary
             particles dictionary
-        relDict: dict
-            dictionary with info on release area
+        header: dict
+            header dictionary with info about the extend and cell size
         simiDict: dict
             dictionary with center location in x for similarity solution
         axis: str
@@ -810,21 +829,20 @@ def prepareParticlesFieldscom1DFA(fields, particles, relDict, simiDict, axis):
         --------
         com1DFASol: dict
             dictionary with location of particles, flow depth, flow velocity,
-            fields, and index for x or y cut of domain at the required time step
+            fields, and simHash for x or y cut of domain at the required time step
 
     """
 
-    dem = relDict['dem']
-    demOri = relDict['demOri']
-    cos = relDict['cos']
-    sin = relDict['sin']
     xCenter = simiDict['xCenter']
-
     # get info on DEM extent
-    nrows = dem['header']['nrows']
-    xllc = demOri['header']['xllcenter']
-    yllc = demOri['header']['yllcenter']
-    csz = dem['header']['cellsize']
+    ncols = header['ncols']
+    nrows = header['nrows']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
+
+    xArrayFields = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+    yArrayFields = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
 
     if axis == 'xaxis':
         ind = np.where(((particles['y']+yllc > -csz/2) & (particles['y']+yllc < csz/2)))
@@ -841,6 +859,7 @@ def prepareParticlesFieldscom1DFA(fields, particles, relDict, simiDict, axis):
     uz = particles['uz'][ind]
     v = DFAtls.norm(ux, uy, uz)
 
-    com1DFASol = {'x': x, 'y': y, 'h': h, 'v': v, 'vx': ux, 'vy': uy, 'vz': uz, 'indFinal': indFinal, 'fields': fields}
+    com1DFASol = {'x': x, 'y': y, 'h': h, 'v': v, 'vx': ux, 'vy': uy, 'vz': uz, 'indFinal': indFinal,
+                  'xArrayFields': xArrayFields, 'yArrayFields': yArrayFields, 'fields': fields}
 
     return com1DFASol

@@ -456,6 +456,42 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
     return simDF
 
 
+def readAllConfigurationInfo(avaDir, specDir=''):
+    """ Read allConfigurations.csv file as dataFrame from directory
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        specDir: str
+            path to a directory where simulation configuration files can be found - optional
+
+        Returns
+        --------
+        simDF: pandas DataFrame
+            DF with all the simulation configurations
+        simDFName: array
+            simName column of the dataframe
+    """
+
+    # collect all configuration files for this module from directory
+    if specDir != '':
+        inDir = pathlib.Path(specDir, 'configurationFiles')
+    else:
+        inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
+    configFiles = inDir / 'allConfigurations.csv'
+
+    if configFiles.is_file():
+        with open(configFiles, 'rb') as file:
+            simDF = pd.read_csv(file)
+        simDFName = simDF['simName'].to_numpy()
+    else:
+        simDF = None
+        simDFName = []
+
+    return simDF, simDFName
+
+
 def filterSims(avalancheDir, parametersDict, specDir=''):
     """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations
 
