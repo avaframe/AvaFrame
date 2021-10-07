@@ -1,4 +1,5 @@
 # imports
+import math
 import numpy as np
 import pathlib
 import matplotlib.pyplot as plt
@@ -237,6 +238,8 @@ def plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfg, outDir
 
     # load parameters
     cfgSimi = cfg['SIMISOL']
+    bedFrictionAngleDeg = cfgSimi.getfloat('bedFrictionAngle')
+    planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
     L_x = cfgSimi.getfloat('L_x')
     L_y = cfgSimi.getfloat('L_y')
     Hini = cfg['GENERAL'].getfloat('relTh')
@@ -248,12 +251,21 @@ def plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfg, outDir
     demOri = relDict['demOri']
     dem['header']['xllcenter'] = demOri['header']['xllcenter']
     dem['header']['yllcenter'] = demOri['header']['yllcenter']
+
+    # Set parameters
+    Pi = math.pi
+    zeta = planeinclinationAngleDeg * Pi /180       # plane inclination
+    delta = bedFrictionAngleDeg * Pi /180           # basal angle of friction
+    # A-C
+    A = np.sin(zeta)
+    C = np.cos(zeta) * np.tan(delta)
+    AminusC = A - C
     # make plot
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     for part, field in zip(particlesList, fieldsList):
         t = part['t']
         ind_time = np.searchsorted(solSimi['Time'], t)
-        hSimi = simiSolTest.h(solSimi, X1, Y1, ind_time, L_y, L_x, Hini)
+        hSimi = simiSolTest.computeH(solSimi, X1, Y1, ind_time, L_y, L_x, Hini, AminusC)
         hSimi = np.where(hSimi <= 0, 0, hSimi)
         fig, ax, cmap, lev = outDebugPlots.plotContours(
             fig, ax, part, dem, field['FD'], pU.cmapDepth, 'm')

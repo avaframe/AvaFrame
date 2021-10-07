@@ -506,6 +506,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double rho = cfg.getfloat('rho')
+  cdef double thresholdMassSplit = cfg.getfloat('thresholdMassSplit')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
   cdef int distReproj = cfg.getint('distReproj')
@@ -710,7 +711,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
       particles = DFAtls.removePart(particles, mask, nRemove, 'because they exited the domain')
 
   # split particles with too much mass
-  particles = DFAtls.splitPart(particles)
+  particles = DFAtls.splitPart(particles, thresholdMassSplit)
   return particles
 
 
