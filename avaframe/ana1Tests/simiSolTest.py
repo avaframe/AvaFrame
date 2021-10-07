@@ -395,7 +395,6 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y
             column vector of size 4
     """
 
-    global A, C
     K_x, K_y = computeEarthPressCoeff(x, earthPressureCoefficients)
     A, B, C, D, E = computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
     u_c = (A - C)*t
@@ -468,7 +467,7 @@ def odeSolver(solver, dt, t_end, solSimi):
     return solSimi
 
 
-def h(solSimi, x1, y1, i, L_x, L_y, H):
+def computeH(solSimi, x1, y1, i, L_x, L_y, H, AminusC):
     """ get flow depth from f and g solutions
         Parameters
         -----------
@@ -486,6 +485,8 @@ def h(solSimi, x1, y1, i, L_x, L_y, H):
             scale in y dir
         H: float
             scale in z dir
+        AminusC:
+            A-C coefficient
 
         Returns
         --------
@@ -497,13 +498,13 @@ def h(solSimi, x1, y1, i, L_x, L_y, H):
     g_sol = solSimi['g_sol']
     f_sol = solSimi['f_sol']
     y1 = -(y1/L_y)**2/(f_sol[i])**2
-    x1 = -(x1/L_x-(A-C)/2*(time[i])**2)**2/(g_sol[i])**2
+    x1 = -(x1/L_x-AminusC/2*(time[i])**2)**2/(g_sol[i])**2
     h = H*(1+x1+y1)/(f_sol[i]*g_sol[i])
 
     return h
 
 
-def u(solSimi, x1, y1, i, L_x, U):
+def computeU(solSimi, x1, y1, i, L_x, U, AminusC):
     """ get flow velocity in x direction from f and g solutions
         Parameters
         -----------
@@ -519,6 +520,8 @@ def u(solSimi, x1, y1, i, L_x, U):
             scale in x dir
         U: float
             x velocity component scale
+        AminusC:
+            A-C coefficient
 
         Returns
         --------
@@ -528,12 +531,12 @@ def u(solSimi, x1, y1, i, L_x, U):
     time = solSimi['time']
     g_sol = solSimi['g_sol']
     g_p_sol = solSimi['g_p_sol']
-    u = U*((A-C)*time[i]+(x1/L_x-(A-C)/2*(time[i])**2)*g_p_sol[i]/g_sol[i])
+    u = U*(AminusC*time[i]+(x1/L_x-AminusC/2*(time[i])**2)*g_p_sol[i]/g_sol[i])
 
     return u
 
 
-def v(solSimi, x1, y1, i, L_y, V):
+def computeV(solSimi, x1, y1, i, L_y, V):
     """ get flow velocity in y direction from f and g solutions
         Parameters
         -----------
@@ -562,7 +565,7 @@ def v(solSimi, x1, y1, i, L_y, V):
     return v
 
 
-def xc(solSimi, x1, y1, i, L_x):
+def computeXC(solSimi, x1, y1, i, L_x, AminusC):
     """ get center of mass location
         Parameters
         -----------
@@ -576,6 +579,8 @@ def xc(solSimi, x1, y1, i, L_x):
             time index
         L_x: float
             scale in x dir
+        AminusC:
+            A-C coefficient
 
         Returns
         --------
@@ -583,7 +588,7 @@ def xc(solSimi, x1, y1, i, L_x):
             x position of the center of the similarity solution pile
     """
     time = solSimi['time']
-    xc = L_x*(A-C)/2*(time[i])**2
+    xc = L_x*AminusC/2*(time[i])**2
 
     return xc
 
@@ -615,6 +620,14 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
     L_y = cfgSimi.getfloat('L_y')
     Hini = cfg['GENERAL'].getfloat('relTh')
     gravAcc = cfg['GENERAL'].getfloat('gravAcc')
+    bedFrictionAngleDeg = cfgSimi.getfloat('bedFrictionAngle')
+    planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
+    
+    # Set parameters
+    Pi = math.pi
+    zeta = planeinclinationAngleDeg * Pi /180       # plane inclination
+    delta = bedFrictionAngleDeg * Pi /180           # basal angle of friction
+
     cos = relDict['cos']
     sin = relDict['sin']
     X1 = relDict['X1']
@@ -624,15 +637,20 @@ def getSimiSolParameters(solSimi, relDict, ind_time, cfg):
     U = np.sqrt(gravAcc*L_x)
     V = np.sqrt(gravAcc*L_y)
 
+    # A-C
+    A = np.sin(zeta)
+    C = np.cos(zeta) * np.tan(delta)
+    AminusC = A - C
+
     # get simi sol
-    hSimi = h(solSimi, X1, Y1, ind_time, L_x, L_y, Hini)
+    hSimi = computeH(solSimi, X1, Y1, ind_time, L_x, L_y, Hini, AminusC)
     hSimi = np.where(hSimi <= 0, 0, hSimi)
-    uxSimi = u(solSimi, X1, Y1, ind_time, L_x, U)
+    uxSimi = computeU(solSimi, X1, Y1, ind_time, L_x, U, AminusC)
     uxSimi = np.where(hSimi <= 0, 0, uxSimi)
-    uySimi = v(solSimi, X1, Y1, ind_time, L_y, V)
+    uySimi = computeV(solSimi, X1, Y1, ind_time, L_y, V)
     uySimi = np.where(hSimi <= 0, 0, uySimi)
     vSimi = DFAtls.norm(uxSimi, uySimi, 0*uySimi)
-    xCenter = xc(solSimi, X1, Y1, ind_time, L_x)*cos
+    xCenter = computeXC(solSimi, X1, Y1, ind_time, L_x, AminusC)*cos
 
     simiDict = {'hSimi': hSimi, 'vSimi': vSimi, 'vxSimi': uxSimi*cos, 'vySimi': uySimi, 'vzSimi': -uxSimi*sin,
                 'xCenter': xCenter}

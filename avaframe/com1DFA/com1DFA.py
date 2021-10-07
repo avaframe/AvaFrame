@@ -723,6 +723,8 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     avaDir = cfg['avalancheDir']
     massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
     interpOption = cfg.getfloat('interpOption')
+    thresholdMassSplit = cfg.getfloat('thresholdMassSplit')
+    initPartDistType = cfg['initPartDistType'].lower()
 
     # read dem header
     header = dem['header']
@@ -799,7 +801,7 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
             volCell = areaRaster[indRely, indRelx] * hCell
             massCell = volCell * rho
             xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng,
-                                                        cfg['initPartDistType'].lower())
+                                                        initPartDistType, thresholdMassSplit)
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
             # initialize particles position, mass, height...
@@ -913,7 +915,7 @@ def initializeFields(cfg, dem, particles):
     return particles, fields
 
 
-def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType):
+def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit):
     """ Create particles in given cell
 
     Compute number of particles to create in a given cell.
@@ -958,7 +960,8 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         if rng.random(1) < proba:
             nPart = nPart + 1
         nPart = np.maximum(nPart, 1)
-        if (massCell / nPart) / massPerPart >= 1.5:
+        # make sure we do not violate the (massCell / nPart) < thresholdMassSplit x massPerPart rule
+        if (massCell / nPart) / massPerPart >= thresholdMassSplit:
             nPart = nPart + 1
     else:
         n = (np.ceil(np.sqrt(massCell / massPerPart))).astype('int')

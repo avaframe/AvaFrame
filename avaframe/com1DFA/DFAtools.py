@@ -335,7 +335,7 @@ def removePart(particles, mask, nRemove, reasonString=''):
     return particles
 
 
-def splitPart(particles):
+def splitPart(particles, thresholdMassSplit):
     """Split big particles
 
     Split particles bigger than 1.5 times the massPerPart
@@ -353,7 +353,7 @@ def splitPart(particles):
     """
     massPerPart = particles['massPerPart']
     m = particles['m']
-    nSplit = np.round(m/massPerPart)
+    nSplit = np.ceil(m/(massPerPart*thresholdMassSplit))
     Ind = np.where(nSplit > 1)[0]
     if np.size(Ind) > 0:
         # loop on particles to split
