@@ -233,6 +233,24 @@ def plotError(simDF, outDirTest):
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error', fig1)
 
 
+def plotErrorLog(simDF, outDirTest):
+    # fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
+    # ax2 = ax1.twinx()
+    # g = sns.relplot(data=simDF, x="Npart", y="hErrorL2", hue="sphKernelRadius", style="dt",  # hue="dt",
+    #                 markers=['o', 's'], palette=['k', 'b', 'r'])
+    # g.set(xscale="log", yscale="log")
+    # g.ax.xaxis.grid(True, "minor", linewidth=.25)
+    # g.ax.yaxis.grid(True, "minor", linewidth=.25)
+    # # g.despine(left=True, bottom=True)
+
+    ax = simDF.plot.scatter(x="Npart", y="hErrorL2", c="sphKernelRadius", cmap="viridis", s=simDF["dt"] * 200)
+    ax.set_yscale('log')
+    ax.set_xscale('log')
+    plt.show()
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog', g)
+
+
+
 def plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest):
     """ Make a contour plot of flow depth for analytical solution and simulation result """
 

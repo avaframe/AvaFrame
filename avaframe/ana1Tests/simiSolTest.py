@@ -720,12 +720,12 @@ def analyzeResults(particlesList, fieldsList, solSimi, relDict, cfg, outDirTest,
         vSimi = {'fx': simiDict['vxSimi'], 'fy': simiDict['vySimi'], 'fz': simiDict['vzSimi']}
         vNumerical = {'fx': field['Vx'], 'fy': field['Vy'], 'fz': field['Vz']}
         hErrorL2, hErrorL2Rel, hErrorLmax, hErrorLmaxRel = anaTools.normL2Scal(hSimi, hNumerical, cellSize, cosAngle)
-        hErrorL2Array[count] = hErrorL2
-        hErrorLMaxArray[count] = hErrorLmax
+        hErrorL2Array[count] = hErrorL2Rel
+        hErrorLMaxArray[count] = hErrorLmaxRel
         log.debug("L2 error on the Flow Depth at t=%.2f s is : %.4f" % (t, hErrorL2))
         vErrorL2, vErrorL2Rel, vErrorLmax, vErrorLmaxRel = anaTools.normL2Vect(vSimi, vNumerical, cellSize, cosAngle)
-        vErrorL2Array[count] = vErrorL2
-        vErrorLMaxArray[count] = vErrorLmax
+        vErrorL2Array[count] = vErrorL2Rel
+        vErrorLMaxArray[count] = vErrorLmaxRel
         log.debug("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
         count = count + 1
     outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, index)
