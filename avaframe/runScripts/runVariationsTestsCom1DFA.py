@@ -87,7 +87,7 @@ for test in testList:
     # Set timing
     startTime = time.time()
     # call com1DFA run
-    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(avaDir, cfgMain,
+    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
         cfgFile=standardCfg, relThField='', variationDict='')
     endTime = time.time()
     timeNeeded = endTime - startTime
