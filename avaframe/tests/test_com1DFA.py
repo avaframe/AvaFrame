@@ -1466,7 +1466,7 @@ def test_runCom1DFA(tmp_path):
         'debugPlot': 'False'}
     modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile,
                                                modInfo=True)
-    particlesList, fieldsList, tSave, dem, plotDict, reportDictList = com1DFA.com1DFAMain(
+    particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
         avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
 
     dictKeys = ['Npart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'mTot',
