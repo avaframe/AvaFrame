@@ -31,13 +31,13 @@ log = logUtils.initiateLogger(avalancheDir, logName)
 
 # create output directory for test result plots
 outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
-with open(outDirTest / 'results10.p', 'rb') as file:
+with open(outDirTest / 'results.p', 'rb') as file:
     simDF10 = pickle.load(file)
-with open(outDirTest / 'results5.p', 'rb') as file:
-    simDF5 = pickle.load(file)
-with open(outDirTest / 'results2.p', 'rb') as file:
-    simDF2 = pickle.load(file)
-simDF10 = simDF10.append(simDF5)
-simDF10 = simDF10.append(simDF2)
-print(simDF10[['Npart', 'hErrorL2', 'dt', 'sphKernelRadius']])
+# with open(outDirTest / 'results5.p', 'rb') as file:
+#     simDF5 = pickle.load(file)
+# with open(outDirTest / 'results2.p', 'rb') as file:
+#     simDF2 = pickle.load(file)
+# simDF10 = simDF10.append(simDF5)
+# simDF10 = simDF10.append(simDF2)
+# print(simDF10[['Npart', 'hErrorL2', 'dt', 'sphKernelRadius']])
 outAna1Plots.plotErrorLog(simDF10, outDirTest)

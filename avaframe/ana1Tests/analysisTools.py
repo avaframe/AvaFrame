@@ -125,8 +125,15 @@ def computeErrorAndNorm(localError, analyticalSol2, cellSize, cosAngle):
     # compute the LMax norm of the reference
     vAnalyticalSolLMax = np.sqrt(np.nanmax(np.append(analyticalSol2, 0)))
     # compute relativ error
-    errorL2Rel = errorL2 / analyticalSolL2
-    errorMaxRel = errorMax / vAnalyticalSolLMax
+    if analyticalSolL2 > 0:
+        errorL2Rel = errorL2 / analyticalSolL2
+    else:
+        errorL2Rel = errorL2
+
+    if vAnalyticalSolLMax > 0:
+        errorMaxRel = errorMax / vAnalyticalSolLMax
+    else:
+        errorMaxRel = errorMax
 
     return errorL2, errorL2Rel, errorMax, errorMaxRel
 

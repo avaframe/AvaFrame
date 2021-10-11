@@ -48,15 +48,16 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     """
 
     cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
-    # Define release thickness distribution
-    demFile = gI.getDEMPath(avalancheDir)
-    relDict = getReleaseThickness(avalancheDir, cfg, demFile)
-    relTh = relDict['relTh']
 
-    # call com1DFA to perform simulations - provide configuration file and release thickness function
-    # (may be multiple sims)
-    _, _, Tsave, dem, _, _ = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
-    relDict['dem'] = dem
+    # # Define release thickness distribution
+    # demFile = gI.getDEMPath(avalancheDir)
+    # relDict = getReleaseThickness(avalancheDir, cfg, demFile)
+    # relTh = relDict['relTh']
+    # # call com1DFA to perform simulations - provide configuration file and release thickness function
+    # # (may be multiple sims)
+    # _, _, Tsave, dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
+
+    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
 
     # compute the similartiy solution (this corresponds to our reference)
     log.info('Computing similarity solution')
@@ -67,8 +68,11 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     varParList = cfg['ANALYSIS']['varParList'].split('|')
     ascendingOrder = cfg['ANALYSIS']['ascendingOrder']
     # load info for all configurations and order them
-    simDF = cfgUtils.orderSimFiles(avalancheDir, '', varParList, ascendingOrder)
-    simDF = postProcessSimiSol(avalancheDir, cfgMain, cfg, simDF, solSimi, outDirTest)
+    # simDF = cfgUtils.orderSimFiles(avalancheDir, '', varParList, ascendingOrder)
+    simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
+    simDF = postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
+    outAna1Plots.plotError(simDF, outDirTest)
+    outAna1Plots.plotErrorLog(simDF, outDirTest)
 
 
 def mainSimilaritySol(simiSolCfg):
@@ -668,14 +672,13 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         simDF.loc[simHash, 'vErrorLMax'] = vELMaxArray[-1]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
-        if cfgMain['FLAGS'].getboolean('showPlot'):
-            outAna1Plots.plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, outDirTest)
+        # if cfgMain['FLAGS'].getboolean('showPlot'):
+        #     outAna1Plots.plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, outDirTest)
 
-        outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
-                                       outDirTest, simHash, simDFrow)
+        # outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
+        #                                outDirTest, simHash, simDFrow)
 
     simDF.to_pickle(outDirTest / 'results.p')
-    outAna1Plots.plotError(simDF, outDirTest)
 
     return simDF
 

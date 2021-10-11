@@ -69,6 +69,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
             information on result plot paths
         reportDictList: list
             list of report dictionaries for all performed simulations
+        simDF: pandas dataFrame
+            configuration dataFrame of the simulations computed
     """
 
     modName = 'com1DFA'
@@ -97,6 +99,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
         log.info('Simulation: %s' % key)
 
     reportDictList = []
+    simDF = ''
     # loop over all simulations
     for cuSim in simDict:
 
@@ -106,6 +109,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
         # save configuration settings for each simulation
         simHash = simDict[cuSim]['simHash']
         cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName=cuSim)
+        # append configuration to dataframe
+        simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
 
         # log simulation name
         log.info('Run simulation: %s' % cuSim)
@@ -141,10 +146,11 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
     # read all simulation configuration files and return dataFrame and write to csv
-    standardCfg = cfgUtils.getDefaultModuleConfig(com1DFA, toPrint=False)
-    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg=standardCfg, writeCSV=True)
+    simDF = cfgUtils.convertDF2numerics(simDF)
+    simDFNew = simDF.append(simDFOld)
+    cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
-    return particlesList, fieldsList, tSave, dem, plotDict, reportDictList
+    return particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF
 
 
 def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
