@@ -170,8 +170,10 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
         ax1.set_xlim([yArrayFields[indStart], yArrayFields[indEnd]])
 
     ax1.set_ylabel('flow depth [m]')
+    ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     color = 'tab:green'
     ax2.tick_params(axis='y', labelcolor=color)
+    ax2.grid(color='tab:green', linestyle='-', linewidth=0.25, alpha=0.5)
     ax2.set_ylabel('flow velocity [ms-1]', color=color)
     ax2.legend(loc='upper right')
     ax1.legend(loc='upper left')
@@ -191,6 +193,7 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMa
     ax1.set_xlabel('time in [s]')
     ax1.set_ylabel('error on flow depth')
     ax1.legend(loc='upper left')
+    ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
 
     color = 'tab:green'
     ax2.plot(time, vErrorL2Array, 'g-', label='Velocity L2 error')
@@ -198,6 +201,7 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMa
     ax2.tick_params(axis='y', labelcolor=color)
     ax2.set_ylabel('error on velocity', color=color)
     ax2.legend(loc='lower right')
+    ax2.grid(color='tab:green', linestyle='-', linewidth=0.25, alpha=0.5)
 
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_Time_' + str(outputName), fig1)
 
@@ -247,6 +251,8 @@ def plotErrorLog(simDF, outDirTest):
     kw = dict(prop="sizes", color=scatter.cmap(0.7),
           func=lambda s: s/200)
     legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title="dt")
+    ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
+    ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
     plt.show()
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog', fig1)
 
