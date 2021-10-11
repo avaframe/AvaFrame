@@ -29,7 +29,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = 'data/avaSimilaritySol'
 
 # Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
+# initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 # initProj.cleanModuleFiles(avalancheDir, module=com1DFA)
 
 # Start logging

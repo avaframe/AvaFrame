@@ -369,7 +369,7 @@ def writeDictToJson(inDict, outFilePath):
     f.close()
 
 
-def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
+def createConfigurationInfo(avaDir, simHashList='', standardCfg='', writeCSV=False, specDir=''):
     """ Read configurations from all simulations configuration ini files from directory
 
         Parameters
@@ -407,32 +407,50 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
 
     # create confiparser object, convert to json object, write to dataFrame
     # append all dataFrames
-    count = 0
+    simDF = ''
     for cFile in configFiles:
         if 'sourceConfiguration' not in str(cFile):
             simName = pathlib.Path(cFile).stem
             if '_AF_' in simName:
                 nameParts = simName.split('_AF_')
-                fNamePart = nameParts[0] + '_AF'
                 infoParts = nameParts[1].split('_')
 
             else:
                 nameParts = simName.split('_')
-                fNamePart = nameParts[0]
                 infoParts = nameParts[1:]
             simHash = infoParts[2]
             cfgObject = readCfgFile(avaDir, fileName=cFile)
-            indexItem = [simHash]
-            cfgDict = convertConfigParserToDict(cfgObject)
-            simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
-            simItemDF = simItemDF.assign(simName=simName)
-            if count == 0:
-                simDF = simItemDF
-            else:
-                simDF = pd.concat([simDF, simItemDF], axis=0)
-            count = count + 1
+            simDF = appendCgf2DF(simHash, simName, cfgObject, simDF)
 
     # convert numeric parameters to numerics
+    simDF = convertDF2numerics(simDF)
+
+    # add default configuration
+    if standardCfg != '':
+        # read default configuration of this module
+        simDF = appendCgf2DF('current standard', 'current standard', standardCfg, simDF)
+
+    # if writeCSV, write dataFrame to csv file
+    if writeCSV:
+        outFile = pathlib.Path(inDir, 'allConfigurations.csv')
+        simDF.to_csv(outFile)
+
+    return simDF
+
+
+def appendCgf2DF(simHash, simName, cfgObject, simDF):
+    indexItem = [simHash]
+    cfgDict = convertConfigParserToDict(cfgObject)
+    simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
+    simItemDF = simItemDF.assign(simName=simName)
+    if isinstance(simDF, str):
+        simDF = simItemDF
+    else:
+        simDF = pd.concat([simDF, simItemDF], axis=0)
+    return simDF
+
+
+def convertDF2numerics(simDF):
     for name, values in simDF.iteritems():
         simDFTest = simDF[name].str.replace('.', '', regex=True)
         if simDFTest.str.isdigit()[0]:
@@ -440,19 +458,6 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
             log.debug('Converted to numeric %s' % name)
         else:
             log.debug('Not converted to numeric: %s' % name)
-
-    # add default configuration
-    if standardCfg != '':
-        # read default configuration of this module
-        standardCfgDict = convertConfigParserToDict(standardCfg)
-        simDFCS = pd.DataFrame(data=standardCfgDict['GENERAL'], index=['current standard'])
-        simDF = pd.concat([simDF, simDFCS], axis=0)
-
-    # if writeCSV, write dataFrame to csv file
-    if writeCSV:
-        outFile = pathlib.Path(inDir, 'allConfigurations.csv')
-        simDF.to_csv(outFile)
-
     return simDF
 
 
@@ -483,13 +488,43 @@ def readAllConfigurationInfo(avaDir, specDir=''):
 
     if configFiles.is_file():
         with open(configFiles, 'rb') as file:
-            simDF = pd.read_csv(file)
+            simDF = pd.read_csv(file, index_col=0, keep_default_na=False)
         simDFName = simDF['simName'].to_numpy()
     else:
         simDF = None
         simDFName = []
 
     return simDF, simDFName
+
+
+def writeAllConfigurationInfo(avaDir, simDF, specDir=''):
+    """ Write cfg configuration to allConfigurations.csv
+
+        Parameters
+        -----------
+        avaDir: str
+            path to avalanche directory
+        simDF: pandas dataFrame
+            daaframe of the configuration
+        specDir: str
+            path to a directory where simulation configuration shal be saved - optional
+
+        Returns
+        --------
+        configFiles: pathlib Path
+            path where the configuration dataframe was saved
+    """
+
+    # collect all configuration files for this module from directory
+    if specDir != '':
+        inDir = pathlib.Path(specDir, 'configurationFiles')
+    else:
+        inDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'configurationFiles')
+    configFiles = inDir / 'allConfigurations.csv'
+
+    simDF.to_csv(configFiles)
+
+    return configFiles
 
 
 def filterSims(avalancheDir, parametersDict, specDir=''):

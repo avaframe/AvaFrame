@@ -176,7 +176,7 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
     ax2.legend(loc='upper right')
     ax1.legend(loc='upper left')
 
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'profile_' + outputName + '_%sCutSol_T%.2f.' % (axis, Tsave) + pU.outputFormat, fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'profile_' + str(outputName) + '_%sCutSol_T%.2f.' % (axis, Tsave) + pU.outputFormat, fig1)
 
 
 def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, outputName):
@@ -199,7 +199,7 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMa
     ax2.set_ylabel('error on velocity', color=color)
     ax2.legend(loc='lower right')
 
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_Time_' + outputName, fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_Time_' + str(outputName), fig1)
 
 
 def plotError(simDF, outDirTest):
@@ -225,20 +225,30 @@ def plotError(simDF, outDirTest):
 
 
 def plotErrorLog(simDF, outDirTest):
-    # fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
-    # ax2 = ax1.twinx()
-    # g = sns.relplot(data=simDF, x="Npart", y="hErrorL2", hue="sphKernelRadius", style="dt",  # hue="dt",
-    #                 markers=['o', 's'], palette=['k', 'b', 'r'])
-    # g.set(xscale="log", yscale="log")
-    # g.ax.xaxis.grid(True, "minor", linewidth=.25)
-    # g.ax.yaxis.grid(True, "minor", linewidth=.25)
-    # # g.despine(left=True, bottom=True)
+    """plot error between all com1DFA sol and analytic sol
+    function of nParts for all dt
+    """
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF["sphKernelRadius"])*0.25, max(simDF["sphKernelRadius"])*2, continuous=pU.contCmap)
+    fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
+    ax2 = ax1.twinx()
+    scatter = ax1.scatter(simDF["Npart"], simDF["hErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o')
+    scatte2 = ax2.scatter(simDF["Npart"], simDF["vErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s')
+    ax1.set_yscale('log')
+    ax2.set_yscale('log')
+    ax1.set_xscale('log')
+    ax1.set_title('Convergence of DFA simulation for the similarity solution test')
+    ax1.set_xlabel('number of particles')
+    ax1.set_ylabel(r'Relative L2 error on flow depth ($\bullet$)')
+    ax2.set_ylabel(r'Relative L2 error on flow velocity ($\blacksquare$)')
+    legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title="sphKernelRadius")
+    ax1.add_artist(legend1)
 
-    ax = simDF.plot.scatter(x="Npart", y="hErrorL2", c="sphKernelRadius", cmap="viridis", s=simDF["dt"] * 200)
-    ax.set_yscale('log')
-    ax.set_xscale('log')
+    # produce a legend with a cross section of sizes from the scatter
+    kw = dict(prop="sizes", color=scatter.cmap(0.7),
+          func=lambda s: s/200)
+    legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title="dt")
     plt.show()
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog', g)
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog', fig1)
 
 
 def plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, Hini, outDirTest):
