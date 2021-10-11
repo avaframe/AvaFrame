@@ -102,7 +102,7 @@ for avaName in avaList:
     # ######################### Run Com1DFA #############################
     # Run python DFA
     # call com1DFA to perform simulation - provide configuration file and release thickness function
-    _, _, _, _, plotDictcom1DFA, reportDictListcom1DFA = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile='', relThField='')
+    _, _, _, _, plotDictcom1DFA, reportDictListcom1DFA, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile='', relThField='')
 
     # Set directory for com1DFA report
     reportDir = outDir / 'com1DFA' / 'reports'
