@@ -848,10 +848,10 @@ def prepareParticlesFieldscom1DFA(fields, particles, header, simiDict, axis):
     yArrayFields = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
 
     if axis == 'xaxis':
-        ind = np.where(((particles['y']+yllc > -csz/2) & (particles['y']+yllc < csz/2)))
+        ind = np.where(((particles['y']+yllc > -csz) & (particles['y']+yllc < csz)))
         indFinal = int(nrows * 0.5) -1
     elif axis == 'yaxis':
-        ind = np.where(((particles['x']+xllc > xCenter-csz/2) & (particles['x']+xllc < xCenter+csz/2)))
+        ind = np.where(((particles['x']+xllc > xCenter-csz) & (particles['x']+xllc < xCenter+csz)))
         indFinal = int(np.round((xCenter - xllc)/csz) + 1)
 
     x = particles['x'][ind]+xllc
