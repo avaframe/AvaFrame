@@ -49,15 +49,15 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
 
     cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
 
-    # # Define release thickness distribution
-    # demFile = gI.getDEMPath(avalancheDir)
-    # relDict = getReleaseThickness(avalancheDir, cfg, demFile)
-    # relTh = relDict['relTh']
-    # # call com1DFA to perform simulations - provide configuration file and release thickness function
-    # # (may be multiple sims)
-    # _, _, Tsave, dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
+    # Define release thickness distribution
+    demFile = gI.getDEMPath(avalancheDir)
+    relDict = getReleaseThickness(avalancheDir, cfg, demFile)
+    relTh = relDict['relTh']
+    # call com1DFA to perform simulations - provide configuration file and release thickness function
+    # (may be multiple sims)
+    _, _, Tsave, dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
 
-    simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
+    # simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
 
     # compute the similartiy solution (this corresponds to our reference)
     log.info('Computing similarity solution')
@@ -675,8 +675,8 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         # if cfgMain['FLAGS'].getboolean('showPlot'):
         #     outAna1Plots.plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, outDirTest)
 
-        # outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
-        #                                outDirTest, simHash, simDFrow)
+        outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
+                                       outDirTest, simHash, simDFrow)
 
     simDF.to_pickle(outDirTest / 'results.p')
 
