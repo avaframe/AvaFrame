@@ -145,7 +145,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
     # write report
     gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
-    # read all simulation configuration files and return dataFrame and write to csv
+    # append new simulations configuration to old ones (if they exist), return  total dataFrame and write it to csv
     simDF = cfgUtils.convertDF2numerics(simDF)
     simDFNew = simDF.append(simDFOld)
     cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
@@ -2139,6 +2139,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             info dict on available input data
         variationDict: dict
             dictionary with parameter to be varied as key and list of it's values
+        simNameOld: list
+            list of simulation names that already exist (optional). If provided,
+            only cary on simulation that do not exist
 
 
         Returns
@@ -2184,6 +2187,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             simHash = cfgUtils.cfgHash(cfgSimObject)
             simName = (relNameSim + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' +
                        simHash)
+            # check if simulation exists. If yes do not append it
             if simName not in simNameOld:
                 simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
                                     'simType': row._asdict()['simTypeList'], 'relFile': rel,
