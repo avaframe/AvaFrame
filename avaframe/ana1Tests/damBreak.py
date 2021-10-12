@@ -102,7 +102,7 @@ def _plotMultVariables(x, y, nx_loc, dtAnalysis, data1, data2, xR, dataR, tR, la
     return fig
 
 
-def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
+def plotComparison(fields0, fieldsT, header, hL, xR, hR, uR, dtAnalysis, cfgMain):
     """ Generate plots that compare the simulation results to the analytical solution
 
         Parameters
@@ -124,32 +124,13 @@ def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
             main configuration for AvaFrame
 
     """
-
-    # load results
-    for m in range(len(dataComSol['files'])):
-        if dataComSol['resType'][m] == 'FD' and 't5.' in dataComSol['timeStep'][m]:
-            data1FD = dataComSol['files'][m]
-            name1FD = dataComSol['names'][m]
-        elif dataComSol['resType'][m] == 'FV' and 't5.' in dataComSol['timeStep'][m]:
-            data1V = dataComSol['files'][m]
-            name1V = dataComSol['names'][m]
-        elif dataComSol['resType'][m] == 'FD' and 't0.0' in dataComSol['timeStep'][m]:
-            data2FD = dataComSol['files'][m]
-        elif dataComSol['resType'][m] == 'FV' and 't0.0' in dataComSol['timeStep'][m]:
-            data2V = dataComSol['files'][m]
-
-
     # Load data
-    dataIniFD = np.loadtxt(data2FD, skiprows=6)
-    dataAnaFD = np.loadtxt(data1FD, skiprows=6)
-    dataIniV = np.loadtxt(data2V, skiprows=6)
-    dataAnaV = np.loadtxt(data1V, skiprows=6)
-
-    log.info('File for flow depth: %s' % name1FD)
-    log.info('File for flow velocity: %s' % name1V)
+    dataIniFD = fields0['FD']
+    dataAnaFD = fieldsT['FD']
+    dataIniV = fields0['FV']
+    dataAnaV = fieldsT['FV']
 
     # Location of Profiles
-    header = IOf.readASCheader(data1FD)
     cellSize = header['cellsize']
     ny = dataAnaFD.shape[0]
     nx = dataAnaFD.shape[1]
@@ -175,7 +156,7 @@ def plotComparison(dataComSol, hL, xR, hR, uR, dtAnalysis, cfgMain):
     y = np.zeros(len(x))
     fig = _plotMultVariables(x, y, nx_loc, dtAnalysis, dataIniV, dataAnaV, xR, uR, tR, 'Flow velocity', 'm')
     fig.savefig(os.path.join(outDir, 'CompareDamBreakVel.%s' % (pU.outputFormat)))
-
+    plt.show()
     if cfgMain['FLAGS'].getboolean('showPlot'):
         plt.show()
     else:
@@ -222,8 +203,7 @@ def damBreakSol(avaDir, cfg, cfgC):
 
     # Define time [0-1] seconds and space [-2,2] meters domains multiplied times 100
     t = np.linspace(0, 10, 1000)
-    x = np.linspace(-200, 200, 1000)
-    y = np.linspace(0, 1, 1000)
+    x = np.linspace(-200, 200, 1000)/np.cos(phi)
     nt = len(t)
     nx = len(x)
     # Initialise flow depth solution and velocity
