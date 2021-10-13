@@ -336,7 +336,7 @@ def saveAndOrPlot(pathDict, outFileName, fig):
     """
     Receive a plot handle and config and check whether to save and or plot
     closes it afterwards.
-    If saved, the plot will be saved in pathDict['pathResult']/pics/outFileName.extention
+    If saved, the plot will be saved in pathDict['pathResult']/outFileName.extension and the path will be returned
 
     Parameters
     ----------
@@ -364,7 +364,9 @@ def saveAndOrPlot(pathDict, outFileName, fig):
 
     plt.close(fig)
 
-    return
+    outPath = outname + '.' + outputFormat
+
+    return outPath
 
 
 def constrainPlotsToData(inputData, cellSize, extentOption=False):

@@ -196,9 +196,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, cfgSetup, pathDict):
 
     outFileName = '_'.join([projectName, resType,
                             'thresholdValue', str(thresholdValue).replace('.', 'p'), 'slComparison'])
-    pU.saveAndOrPlot(pathDict, outFileName, fig)
-
-    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
+    outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath
 
@@ -365,9 +363,8 @@ def visuMass(resAnalysis, pathDict):
 
         outFileName = '_'.join([projectName, 'massAnalysis', str(i)])
         pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
-        pU.saveAndOrPlot(pathDict, outFileName, fig)
+        outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
-        outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
         i = i + 1
 
     return outFilePath
@@ -642,9 +639,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(thresholdValue).replace(
         '.', 'p'),  'sim', str(i), 'ContourComparisonToReference'])
-    pU.saveAndOrPlot(pathDict, outFileName, fig)
-
-    outFilePath = os.path.join(pathDict['pathResult'], 'pics', outFileName + '.png')
+    outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath
 
