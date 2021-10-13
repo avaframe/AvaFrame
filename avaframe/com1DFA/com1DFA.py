@@ -4,6 +4,7 @@
 
 import logging
 import time
+import datetime
 import pathlib
 import numpy as np
 import copy
@@ -70,7 +71,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
         reportDictList: list
             list of report dictionaries for all performed simulations
         simDF: pandas dataFrame
-            configuration dataFrame of the simulations computed
+            configuration dataFrame of the simulations computed (if no simulation computed, configuration dataFrame
+            of the already existing ones)
     """
 
     modName = 'com1DFA'
@@ -86,71 +88,79 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
     # fetch input data - dem, release-, entrainment- and resistance areas
     inputSimFiles = gI.getInputDataCom1DFA(avalancheDir, modCfg['FLAGS'])
 
-    # write full configuration file to file
-    cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName='sourceConfiguration')
-
     # create a list of simulations and generate an individual configuration object for each simulation
     # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
+    # first get already existing simulations
     simDFOld, simNameOld = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
-    simDict = com1DFA.prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
+    # prepare simulation to run (only the new ones)
+    simDict = prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
 
-    log.info('The following simulations will be performed')
-    for key in simDict:
-        log.info('Simulation: %s' % key)
+    # is there any simulation to run?
+    if bool(simDict):
+        log.info('The following simulations will be performed')
+        for key in simDict:
+            log.info('Simulation: %s' % key)
 
-    reportDictList = []
-    simDF = ''
-    # loop over all simulations
-    for cuSim in simDict:
+        reportDictList = []
+        simDF = ''
+        # loop over all simulations
+        for cuSim in simDict:
 
-        # load configuration dictionary for cuSim
-        cfg = simDict[cuSim]['cfgSim']
+            # load configuration dictionary for cuSim
+            cfg = simDict[cuSim]['cfgSim']
 
-        # save configuration settings for each simulation
-        simHash = simDict[cuSim]['simHash']
-        cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName=cuSim)
-        # append configuration to dataframe
-        simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
+            # save configuration settings for each simulation
+            simHash = simDict[cuSim]['simHash']
+            cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName=cuSim)
+            # append configuration to dataframe
+            simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
 
-        # log simulation name
-        log.info('Run simulation: %s' % cuSim)
+            # log simulation name
+            log.info('Run simulation: %s' % cuSim)
 
-        # set release area scenario
-        inputSimFiles['releaseScenario'] = simDict[cuSim]['relFile']
+            # set release area scenario
+            inputSimFiles['releaseScenario'] = simDict[cuSim]['relFile']
 
-        # +++++++++++++++++++++++++++++++++
-        # ------------------------
-        particlesList, fieldsList, tSave, dem, reportDict, cfgFinal = com1DFA.com1DFACore(cfg, avalancheDir, cuSim,
-            inputSimFiles, outDir, relThField)
+            # +++++++++++++++++++++++++++++++++
+            # ------------------------
+            particlesList, fieldsList, tSave, dem, reportDict, cfgFinal, Tcpu = com1DFA.com1DFACore(cfg, avalancheDir,
+                    cuSim, inputSimFiles, outDir, relThField)
 
-        # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+            # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
 
-        reportDictList.append(reportDict)
+            reportDictList.append(reportDict)
 
-        # export for visulation
-        if cfg['VISUALISATION'].getboolean('writePartToCSV'):
-            outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
-            com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+            # export for visulation
+            if cfg['VISUALISATION'].getboolean('writePartToCSV'):
+                outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
+                com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
-        # create hash to check if config didnt change
-        simHashFinal = cfgUtils.cfgHash(cfgFinal)
-        if simHashFinal != simHash:
-            log.warning('simulation configuration has been changed since start')
-            cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
+            # create hash to check if config didnt change
+            simHashFinal = cfgUtils.cfgHash(cfgFinal)
+            if simHashFinal != simHash:
+                log.warning('simulation configuration has been changed since start')
+                cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
 
-    # Set directory for report
-    reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
-    # Generate plots for all peakFiles
-    plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
-    # write report
-    gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
+        # Set directory for report
+        reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
+        # Generate plots for all peakFiles
+        plotDict = oP.plotAllPeakFields(avalancheDir, cfgMain['FLAGS'], modName, demData=dem)
+        # write report
+        gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
-    # append new simulations configuration to old ones (if they exist), return  total dataFrame and write it to csv
-    simDF = cfgUtils.convertDF2numerics(simDF)
-    simDFNew = simDF.append(simDFOld)
-    cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
+        # append new simulations configuration to old ones (if they exist), return  total dataFrame and write it to csv
+        simDF = cfgUtils.convertDF2numerics(simDF)
+        simDFNew = simDF.append(simDFOld)
+        cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
-    return particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF
+        # write full configuration file to file
+        date = datetime.today()
+        fileName = 'sourceConfiguration_' + '{:%d_%m_%Y_%H_%M_%S}'.format(date)
+        cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
+        return particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF
+    else:
+        log.warning('There is no simulation to be performed')
+        return [], [], [], 0, {}, [], simDFOld
 
 
 def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
@@ -228,7 +238,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     # add time and mass info to report
     reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, infoDict)
 
-    return particlesList, fieldsList, Tsave, dem, reportDict, cfg
+    return particlesList, fieldsList, Tsave, dem, reportDict, cfg, infoDict['Tcpu']
 
 
 def prepareReleaseEntrainment(cfg, rel, inputSimLines):
@@ -2141,7 +2151,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             dictionary with parameter to be varied as key and list of it's values
         simNameOld: list
             list of simulation names that already exist (optional). If provided,
-            only cary on simulation that do not exist
+            only carry on simulation that do not exist
 
 
         Returns

@@ -77,6 +77,10 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
         log.debug('now plot %s:' % (fileName))
 
         plotName = outDir / ('%s.%s' % (name, pU.outputFormat))
+
+        # only produce a plot if it does not already exists
+        # make sure to remove the outpu folder if you want to regenerate the plot
+        # this enables to append simulations to an already existing output without regenerating all plits
         if not plotName.is_file():
             # Load data
             raster = IOf.readRaster(fileName, noDataToNan=True)
