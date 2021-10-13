@@ -42,7 +42,7 @@ def getGeneralConfig():
         raise FileNotFoundError('None of the provided cfg files exist ')
 
     # Finally read it
-    cfg,_ = compareConfig(iniFile, 'General', compare)
+    cfg, _ = compareConfig(iniFile, 'General', compare)
 
     return cfg
 
@@ -135,7 +135,7 @@ def getDefaultModuleConfig(module, toPrint=True):
     log.debug('defaultFile: %s', defaultFile)
 
     # Finally read it
-    cfg,_ = compareConfig(defaultFile, modName, compare=False, toPrint=toPrint)
+    cfg, _ = compareConfig(defaultFile, modName, compare=False, toPrint=toPrint)
 
     return cfg
 
@@ -369,7 +369,7 @@ def writeDictToJson(inDict, outFilePath):
     f.close()
 
 
-def createConfigurationInfo(avaDir, simHashList='', standardCfg='', writeCSV=False, specDir=''):
+def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
     """ Read configurations from all simulations configuration ini files from directory
 
         Parameters
@@ -432,13 +432,30 @@ def createConfigurationInfo(avaDir, simHashList='', standardCfg='', writeCSV=Fal
 
     # if writeCSV, write dataFrame to csv file
     if writeCSV:
-        outFile = pathlib.Path(inDir, 'allConfigurations.csv')
-        simDF.to_csv(outFile)
+        writeAllConfigurationInfo(avaDir, simDF, specDir=specDir)
 
     return simDF
 
 
 def appendCgf2DF(simHash, simName, cfgObject, simDF):
+    """ append simulation configuration to the simulation dataframe
+
+        Parameters
+        -----------
+        simHash: str
+            hash of the simulation to append
+        simName: str
+            name of the simulation
+        cfgObject: configParser
+            configuration coresponding to the simulation
+        simDF: pandas dataFrame
+            configuration dataframe
+
+        Returns
+        --------
+        simDF: pandas DataFrame
+            DFappended with the new simulation configuration
+    """
     indexItem = [simHash]
     cfgDict = convertConfigParserToDict(cfgObject)
     simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
@@ -451,6 +468,17 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
 
 
 def convertDF2numerics(simDF):
+    """ convert a string DF to a numerical one
+
+        Parameters
+        -----------
+        simDF: pandas dataFrame
+            dataframe
+
+        Returns
+        --------
+        simDF: pandas DataFrame
+    """
     for name, values in simDF.iteritems():
         simDFTest = simDF[name].str.replace('.', '', regex=True)
         if simDFTest.str.isdigit()[0]:

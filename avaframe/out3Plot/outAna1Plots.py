@@ -4,6 +4,7 @@ import numpy as np
 import pathlib
 import matplotlib.pyplot as plt
 import seaborn as sns
+import logging
 
 # local imports
 import avaframe.com1DFA.DFAtools as DFAtls
@@ -11,6 +12,10 @@ import avaframe.ana1Tests.simiSolTest as simiSolTest
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.out3Plot.outQuickPlot as outQuickPlot
 import avaframe.out3Plot.outDebugPlots as outDebugPlots
+
+# create local logger
+# change log level in calling module to DEBUG to see log messages
+log = logging.getLogger(__name__)
 
 
 def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, header, outDirTest, simHash, simDFrow):
@@ -21,7 +26,7 @@ def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsav
     gravAcc = simDFrow['gravAcc']
 
     # user interaction?
-    if cfgSimi.getboolean('flagInteraction'):
+    if cfgSimi.getboolean('interaction'):
         value = input("give time step to plot (float in s):\n")
     else:
         value = cfgSimi.getfloat('tSave')
@@ -48,6 +53,9 @@ def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsav
             comSol['outDirTest'] = outDirTest
             comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
             comSol['Tsave'] = Tsave[ind_t]
+            comSol['dt'] = simDFrow['dt']
+            comSol['deltaTh'] = simDFrow['deltaTh']
+            comSol['sphKernelRadius'] = simDFrow['sphKernelRadius']
 
             # make plot
             plotProfilesSimiSol(ind_time, simHash, comSol, simiDict, solSimi, axis)
@@ -70,7 +78,7 @@ def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsav
                                   'differenceZoom': []}, crossProfile=False)
 
         # # option for user interaction
-        if cfgSimi.getboolean('flagInteraction'):
+        if cfgSimi.getboolean('interaction'):
             value = input("give time step to plot (float in s):\n")
             try:
                 value = float(value)
@@ -114,6 +122,9 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
     outDirTest = comSol['outDirTest']
     indFinal = comSol['indFinal']
     Tsave = comSol['Tsave']
+    dt = comSol['dt']
+    deltaTh = comSol['deltaTh']
+    sphKernelRadius = comSol['sphKernelRadius']
 
     # similarity solution results
     vSimi = simiDict['vSimi']
@@ -122,6 +133,7 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
     vzSimi = simiDict['vzSimi']
     hSimi = simiDict['hSimi']
     xCenter = simiDict['xCenter']
+    Time = solSimi['Time']
 
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, pU.figH))
     ax2 = ax1.twinx()
@@ -142,7 +154,8 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
         ax2.plot(xArrayFields, vxSimi[indFinal, :], '--m', label='SimiSol x velocity')
         ax2.plot(xArrayFields, vySimi[indFinal, :], '--b', label='SimiSol y velocity')
         ax2.plot(xArrayFields, vzSimi[indFinal, :], '--c', label='SimiSol z velocity')
-        ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
+        ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
+                      % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
         ax1.set_xlabel('x in [m]')
         indStart = min(first_nonzero(hSimi[indFinal, :], 0), first_nonzero(fields['FD'][indFinal, :], 0)) - 2
         indEnd = max(last_nonzero(hSimi[indFinal, :], 0), last_nonzero(fields['FD'][indFinal, :], 0)) + 2
@@ -163,7 +176,8 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
         ax2.plot(yArrayFields, vxSimi[:, indFinal], '--m', label='SimiSol x velocity')
         ax2.plot(yArrayFields, vySimi[:, indFinal], '--b', label='SimiSol y velocity')
         ax2.plot(yArrayFields, vzSimi[:, indFinal], '--c', label='SimiSol z velocity')
-        ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol)' % (Tsave, solSimi['Time'][ind_time]))
+        ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
+                      % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
         ax1.set_xlabel('y in [m]')
         indStart = min(first_nonzero(hSimi[:, indFinal], 0), first_nonzero(fields['FD'][:, indFinal], 0)) - 2
         indEnd = max(last_nonzero(hSimi[:, indFinal], 0), last_nonzero(fields['FD'][:, indFinal], 0)) + 2
@@ -181,15 +195,21 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'profile_' + str(outputName) + '_%sCutSol_T%.2f.' % (axis, Tsave) + pU.outputFormat, fig1)
 
 
-def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, outputName):
+def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, outputName, simDFrow):
     """plot error between given com1DFA sol and analytic sol
     function of time
     """
+
+    dt = simDFrow['dt']
+    deltaTh = simDFrow['deltaTh']
+    sphKernelRadius = simDFrow['sphKernelRadius']
+
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
     ax2 = ax1.twinx()
     ax1.plot(time, hErrorL2Array, 'k-', label='Flow depth L2 error')
     ax1.plot(time, hErrorLMaxArray, 'k--', label='Flow depth LMax error')
-    ax1.set_title('Error between similarity solution and com1DFA')
+    ax1.set_title('Error between similarity solution and com1DFA \n(csz = %s m, dt = %s s, deltaTh = %s m)'
+                  % (sphKernelRadius, dt, deltaTh))
     ax1.set_xlabel('time in [s]')
     ax1.set_ylabel('error on flow depth')
     ax1.legend(loc='upper left')
@@ -212,10 +232,10 @@ def plotError(simDF, outDirTest):
     """
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
-    ax1 = sns.pointplot(x='Npart', y='hErrorL2', hue='dt', data=simDF, ax=ax1, markers=['o', 's', 'd', 'v', '^', '<', '>'], palette=['k'])
-    ax2 = sns.pointplot(x='Npart', y='vErrorL2', hue='dt', data=simDF, ax=ax2, markers=['o', 's', 'd', 'v', '^', '<', '>'], palette=['g'])
-    ax1 = sns.pointplot(x='Npart', y='hErrorLMax', hue='dt', data=simDF, ax=ax1, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>'], palette=['k'])
-    ax2 = sns.pointplot(x='Npart', y='vErrorLMax', hue='dt', data=simDF, ax=ax2, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>'], palette=['g'])
+    ax1 = sns.pointplot(x='Npart', y='hErrorL2', hue='dt', data=simDF, ax=ax1, markers=['o', 's', 'd', 'v', '^', '<', '>', '.'], palette=['k'])
+    ax2 = sns.pointplot(x='Npart', y='vErrorL2', hue='dt', data=simDF, ax=ax2, markers=['o', 's', 'd', 'v', '^', '<', '>', '.'], palette=['g'])
+    ax1 = sns.pointplot(x='Npart', y='hErrorLMax', hue='dt', data=simDF, ax=ax1, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.'], palette=['k'])
+    ax2 = sns.pointplot(x='Npart', y='vErrorLMax', hue='dt', data=simDF, ax=ax2, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.'], palette=['g'])
     ax1.set_title('Error between similarity solution and com1DFA')
     ax1.set_xlabel('Number of particles')
 
@@ -228,19 +248,38 @@ def plotError(simDF, outDirTest):
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error', fig1)
 
 
-def plotErrorLog(simDF, outDirTest):
+def plotErrorLog(simDF, outDirTest, cfgSimi):
     """plot error between all com1DFA sol and analytic sol
     function of nParts for all dt
     """
+    sphKernelRadiusList = simDF["sphKernelRadius"].unique()
+    dt = simDF["dt"].unique()[0]
+    tSave = cfgSimi.getfloat('tSave')
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF["sphKernelRadius"])*0.25, max(simDF["sphKernelRadius"])*2, continuous=pU.contCmap)
+    cmap = 'viridis'
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
-    scatter = ax1.scatter(simDF["Npart"], simDF["hErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o')
-    scatte2 = ax2.scatter(simDF["Npart"], simDF["vErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s')
+    scatter = ax1.scatter(simDF["Npart"], simDF["hErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o', alpha=1, edgecolors='k')
+    scatte2 = ax2.scatter(simDF["Npart"], simDF["vErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=0.8, edgecolors='k')
+    for sphKernelRadius in sphKernelRadiusList:
+        simDFNew = simDF[(simDF['sphKernelRadius'] == sphKernelRadius) & (simDF['dt'] == dt)]
+        Npart = simDFNew["Npart"]
+        hErrorL2 = simDFNew["hErrorL2"]
+        vErrorL2 = simDFNew["vErrorL2"]
+        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(hErrorL2), deg=1)
+        p1H = p[0]
+        p0H = np.exp(p[1])
+        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(vErrorL2), deg=1)
+        p1U = p[0]
+        p0U = np.exp(p[1])
+        ax1.plot(Npart, p0H*Npart**p1H, 'r')
+        ax2.plot(Npart, p0U*Npart**p1U, 'g')
+        log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0H, p1H))
+        log.info('power law fit sphKernelRadius = %.2f m: vErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0U, p1U))
     ax1.set_yscale('log')
     ax2.set_yscale('log')
     ax1.set_xscale('log')
-    ax1.set_title('Convergence of DFA simulation for the similarity solution test')
+    ax1.set_title('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
     ax1.set_xlabel('number of particles')
     ax1.set_ylabel(r'Relative L2 error on flow depth ($\bullet$)')
     ax2.set_ylabel(r'Relative L2 error on flow velocity ($\blacksquare$)')
@@ -254,7 +293,7 @@ def plotErrorLog(simDF, outDirTest):
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
     plt.show()
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog', fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
 
 
 def plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, Hini, outDirTest):

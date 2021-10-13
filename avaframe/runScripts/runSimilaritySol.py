@@ -17,7 +17,6 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.ana1Tests.simiSolTest as simiSolTest
-import avaframe.com1DFA.com1DFA as com1DFA
 
 
 # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -29,8 +28,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = 'data/avaSimilaritySol'
 
 # Clean input directory(ies) of old work and output files
-# initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
-# initProj.cleanModuleFiles(avalancheDir, module=com1DFA)
+initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)

@@ -55,7 +55,7 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     relTh = relDict['relTh']
     # call com1DFA to perform simulations - provide configuration file and release thickness function
     # (may be multiple sims)
-    _, _, Tsave, dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
+    _, _, _, _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
 
     # simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
 
@@ -68,11 +68,10 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     varParList = cfg['ANALYSIS']['varParList'].split('|')
     ascendingOrder = cfg['ANALYSIS']['ascendingOrder']
     # load info for all configurations and order them
-    # simDF = cfgUtils.orderSimFiles(avalancheDir, '', varParList, ascendingOrder)
     simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
     simDF = postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
     outAna1Plots.plotError(simDF, outDirTest)
-    outAna1Plots.plotErrorLog(simDF, outDirTest)
+    outAna1Plots.plotErrorLog(simDF, outDirTest, cfg['SIMISOL'])
 
 
 def mainSimilaritySol(simiSolCfg):
@@ -666,17 +665,19 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
                                                                         cfgSimi, outDirTest, simHash, simDFrow)
         # add result of error analysis
         # save results in the simDF
-        simDF.loc[simHash, 'hErrorL2'] = hEL2Array[-1]
-        simDF.loc[simHash, 'vErrorL2'] = vEL2Array[-1]
-        simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[-1]
-        simDF.loc[simHash, 'vErrorLMax'] = vELMaxArray[-1]
+        tSave = cfgSimi.getfloat('tSave')
+        ind_t = min(np.searchsorted(Tsave, tSave), min(len(Tsave)-1, len(fieldsList)-1))
+        simDF.loc[simHash, 'hErrorL2'] = hEL2Array[ind_t]
+        simDF.loc[simHash, 'vErrorL2'] = vEL2Array[ind_t]
+        simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[ind_t]
+        simDF.loc[simHash, 'vErrorLMax'] = vELMaxArray[ind_t]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
         # if cfgMain['FLAGS'].getboolean('showPlot'):
         #     outAna1Plots.plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, outDirTest)
 
-        outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
-                                       outDirTest, simHash, simDFrow)
+        # outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
+        #                                outDirTest, simHash, simDFrow)
 
     simDF.to_pickle(outDirTest / 'results.p')
 
@@ -750,7 +751,8 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
         vErrorLMaxArray[count] = vErrorLmaxRel
         log.debug("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
         count = count + 1
-    outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, simHash)
+    # outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest,
+    #                            simHash, simDFrow)
 
     return hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray
 
