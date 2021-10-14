@@ -70,7 +70,7 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     # load info for all configurations and order them
     simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
     simDF = postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
-    outAna1Plots.plotError(simDF, outDirTest)
+    outAna1Plots.plotError(simDF, outDirTest, cfg['SIMISOL'])
     outAna1Plots.plotErrorLog(simDF, outDirTest, cfg['SIMISOL'])
 
 
@@ -581,7 +581,7 @@ def getSimiSolParameters(solSimi, header, ind_time, cfgSimi, Hini, gravAcc):
         solSimi: dict
             similarity solution
         header: dict
-            header dictionary with info about the extend and cell size
+            header dictionary with info about the extent and cell size
         ind_time: int
             simHash for required time step in similarity solution
         cfg: dict
@@ -653,6 +653,28 @@ def getSimiSolParameters(solSimi, header, ind_time, cfgSimi, Hini, gravAcc):
 
 
 def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTest):
+    """ loop on all DFA simulations and compare then to the anlytic solution
+
+    Parameters
+    -----------
+    avalancheDir: str or pathlib path
+        avalanche directory
+    cfgMain: confiparser
+        avaframeCfg configuration
+    cfgSimi: dict
+        configuration for similarity sol
+    simDF: pandas dataFrame
+        configuration DF
+    solSimi: dict
+        similarity solution
+    outDirTest: pathlib path
+        path to output directory
+
+    Returns
+    --------
+    simDF: pandas dataFrame
+        configuration DF appended with the analysis results
+    """
     # loop on all the simulations and make the comparison to reference
     for simHash, simDFrow in simDF.iterrows():
         simName = simDFrow['simName']
@@ -661,16 +683,16 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         fieldsList, fieldHeader = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
         simDF.loc[simHash, 'Npart'] = particlesList[0]['Npart']
         # analyze and compare results
-        hEL2Array, hELMaxArray, vEL2Array, vELMaxArray = analyzeResults(particlesList, fieldsList, solSimi, fieldHeader,
+        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(particlesList, fieldsList, solSimi, fieldHeader,
                                                                         cfgSimi, outDirTest, simHash, simDFrow)
         # add result of error analysis
         # save results in the simDF
         tSave = cfgSimi.getfloat('tSave')
         ind_t = min(np.searchsorted(Tsave, tSave), min(len(Tsave)-1, len(fieldsList)-1))
         simDF.loc[simHash, 'hErrorL2'] = hEL2Array[ind_t]
-        simDF.loc[simHash, 'vErrorL2'] = vEL2Array[ind_t]
+        simDF.loc[simHash, 'vhErrorL2'] = vhEL2Array[ind_t]
         simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[ind_t]
-        simDF.loc[simHash, 'vErrorLMax'] = vELMaxArray[ind_t]
+        simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[ind_t]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
         # if cfgMain['FLAGS'].getboolean('showPlot'):
@@ -724,9 +746,9 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
     relTh = simDFrow['relTh']
     gravAcc = simDFrow['gravAcc']
     hErrorL2Array = np.zeros((len(particlesList)))
-    vErrorL2Array = np.zeros((len(particlesList)))
+    vhErrorL2Array = np.zeros((len(particlesList)))
     hErrorLMaxArray = np.zeros((len(particlesList)))
-    vErrorLMaxArray = np.zeros((len(particlesList)))
+    vhErrorLMaxArray = np.zeros((len(particlesList)))
     count = 0
     time = []
     # run the comparison routine for each saved time step
@@ -740,21 +762,28 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
         cosAngle = simiDict['cos']
         hSimi = simiDict['hSimi']
         hNumerical = field['FD']
-        vSimi = {'fx': simiDict['vxSimi'], 'fy': simiDict['vySimi'], 'fz': simiDict['vzSimi']}
-        vNumerical = {'fx': field['Vx'], 'fy': field['Vy'], 'fz': field['Vz']}
+        vhSimi = {'fx': hSimi*simiDict['vxSimi'], 'fy': hSimi*simiDict['vySimi'], 'fz': hSimi*simiDict['vzSimi']}
+        vhNumerical = {'fx': hNumerical*field['Vx'], 'fy': hNumerical*field['Vy'], 'fz': hNumerical*field['Vz']}
         hErrorL2, hErrorL2Rel, hErrorLmax, hErrorLmaxRel = anaTools.normL2Scal(hSimi, hNumerical, cellSize, cosAngle)
-        hErrorL2Array[count] = hErrorL2Rel
-        hErrorLMaxArray[count] = hErrorLmaxRel
-        log.debug("L2 error on the Flow Depth at t=%.2f s is : %.4f" % (t, hErrorL2))
-        vErrorL2, vErrorL2Rel, vErrorLmax, vErrorLmaxRel = anaTools.normL2Vect(vSimi, vNumerical, cellSize, cosAngle)
-        vErrorL2Array[count] = vErrorL2Rel
-        vErrorLMaxArray[count] = vErrorLmaxRel
-        log.debug("L2 error on the Flow velocity at t=%.2f s is : %.4f" % (t, vErrorL2))
+        vhErrorL2, vhErrorL2Rel, vhErrorLmax, vhErrorLmaxRel = anaTools.normL2Vect(vhSimi, vhNumerical, cellSize, cosAngle)
+        if cfgSimi.getboolean('relativError'):
+            hErrorL2Array[count] = hErrorL2Rel
+            hErrorLMaxArray[count] = hErrorLmaxRel
+            vhErrorL2Array[count] = vhErrorL2Rel
+            vhErrorLMaxArray[count] = vhErrorLmaxRel
+        else:
+            hErrorL2Array[count] = hErrorL2
+            hErrorLMaxArray[count] = hErrorLmax
+            vhErrorL2Array[count] = vhErrorL2
+            vhErrorLMaxArray[count] = vhErrorLmax
+        title = outAna1Plots.getTitleError(cfgSimi.getboolean('relativError'))
+        log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hErrorL2))
+        log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
         count = count + 1
     # outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest,
-    #                            simHash, simDFrow)
+    #                            simHash, simDFrow, cfgSimi.getboolean('relativError'))
 
-    return hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray
+    return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
 
 
 def getReleaseThickness(avaDir, cfg, demFile):

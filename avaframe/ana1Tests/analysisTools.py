@@ -34,20 +34,14 @@ def normL2Vect(analyticalSol, numericalSol, cellSize, cosAngle):
         errorMaxRel: float
             Relativ LMax error
     """
-    # only compare location where both solutions are non zero
-    nonZeroIndex = np.where((np.abs(analyticalSol['fx']) > 0) & (np.abs(analyticalSol['fy']) > 0)
-                            & (np.abs(analyticalSol['fz']) > 0) & (np.abs(numericalSol['fz']) > 0)
-                            & (np.abs(numericalSol['fz']) > 0) & (np.abs(numericalSol['fz']) > 0))
     # compute difference in all 3 directions
     dvx = analyticalSol['fx'] - numericalSol['fx']
     dvy = analyticalSol['fy'] - numericalSol['fy']
     dvz = analyticalSol['fz'] - numericalSol['fz']
     # compute the norm2 of the difference
-    dv = DFAtls.norm2(dvx, dvy, dvz)
-    localError = dv[nonZeroIndex]
+    localError = DFAtls.norm2(dvx, dvy, dvz)
     # compute the norm2 of the reference
     analyticalSol2 = DFAtls.norm2(analyticalSol['fx'], analyticalSol['fy'], analyticalSol['fz'])
-    analyticalSol2 = analyticalSol2[nonZeroIndex]
 
     # compute error L2, LMax and relativ errors
     errorL2, errorL2Rel, errorMax, errorMaxRel = computeErrorAndNorm(localError, analyticalSol2, cellSize, cosAngle)
@@ -78,14 +72,11 @@ def normL2Scal(analyticalSol, numericalSol, cellSize, cosAngle):
         errorMaxRel: float
             Relativ LMax error
     """
-    # only compare location where both solutions are non zero
-    nonZeroIndex = np.where((analyticalSol > 0) & (numericalSol > 0))
     # compute the norm2 of the difference
-    localError = (analyticalSol[nonZeroIndex] - numericalSol[nonZeroIndex])
+    localError = (analyticalSol - numericalSol)
     localError = localError * localError
     # compute the norm2 of the reference
     analyticalSol2 = analyticalSol*analyticalSol
-    analyticalSol2 = analyticalSol2[nonZeroIndex]
 
     # compute error L2, LMax and relativ errors
     errorL2, errorL2Rel, errorMax, errorMaxRel = computeErrorAndNorm(localError, analyticalSol2, cellSize, cosAngle)

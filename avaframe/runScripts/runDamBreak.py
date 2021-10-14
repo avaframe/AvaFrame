@@ -25,7 +25,7 @@ avaDir = 'data/avaDamBreak'
 cfgMain['MAIN']['avalancheDir'] = avaDir
 
 # Clean input directory(ies) of old work and output files
-initProj.cleanModuleFiles(avaDir, com1DFA, 'com1DFA')
+initProj.cleanModuleFiles(avaDir, com1DFA)
 
 # Start logging
 log = logUtils.initiateLogger(avaDir, logName)

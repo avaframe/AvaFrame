@@ -97,10 +97,6 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
 
     # is there any simulation to run?
     if bool(simDict):
-        log.info('The following simulations will be performed')
-        for key in simDict:
-            log.info('Simulation: %s' % key)
-
         reportDictList = []
         simDF = ''
         # loop over all simulations
@@ -153,7 +149,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
         simDFNew = simDF.append(simDFOld)
         cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
-        # write full configuration file to file
+        # write full configuration (.ini file) to file
         date = datetime.today()
         fileName = 'sourceConfiguration_' + '{:%d_%m_%Y_%H_%M_%S}'.format(date)
         cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
@@ -2204,6 +2200,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
                                     'cfgSim': cfgSimObject}
             else:
                 log.info('Simulation %s already exists, not repeating it' % simName)
+    log.info('The following simulations will be performed')
+    for key in simDict:
+        log.info('Simulation: %s' % key)
 
     return simDict
 
