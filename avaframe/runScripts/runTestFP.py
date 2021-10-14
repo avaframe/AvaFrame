@@ -23,10 +23,9 @@ logName = 'runFlatPlaneTest'
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = 'data/avaFPtest'
-modName = 'com1DFA'
 
 # Clean input directory(ies) of old work and output files
-initProj.cleanModuleFiles(avalancheDir, com1DFA, modName)
+initProj.cleanModuleFiles(avalancheDir, com1DFA)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)

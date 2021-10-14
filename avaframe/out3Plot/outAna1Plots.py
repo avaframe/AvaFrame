@@ -142,18 +142,18 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
         ax1.axvline(x=xCenter, linestyle=':')
         # DFA simulation
         ax1.plot(xArrayFields, fields['FD'][indFinal, :], 'k', label='Field flow depth')
-        ax2.plot(xArrayFields, fields['FV'][indFinal, :], 'g', label='Field flow velocity')
-        ax2.plot(xArrayFields, fields['Vx'][indFinal, :], 'm', label='Field x velocity')
-        ax2.plot(xArrayFields, fields['Vy'][indFinal, :], 'b', label='Field y velocity')
-        ax2.plot(xArrayFields, fields['Vz'][indFinal, :], 'c', label='Field z velocity')
+        ax2.plot(xArrayFields, fields['FD'][indFinal, :]*fields['FV'][indFinal, :], 'g', label='Field flow velocity')
+        ax2.plot(xArrayFields, fields['FD'][indFinal, :]*fields['Vx'][indFinal, :], 'm', label='Field x velocity')
+        ax2.plot(xArrayFields, fields['FD'][indFinal, :]*fields['Vy'][indFinal, :], 'b', label='Field y velocity')
+        ax2.plot(xArrayFields, fields['FD'][indFinal, :]*fields['Vz'][indFinal, :], 'c', label='Field z velocity')
         ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
-        ax2.plot(x, v, '.g', linestyle='None', label='Part flow velocity')
+        ax2.plot(x, h*v, '.g', linestyle='None', label='Part flow velocity')
         # similarity solution
         ax1.plot(xArrayFields, hSimi[indFinal, :], '--k', label='SimiSol flow depth')
-        ax2.plot(xArrayFields, vSimi[indFinal, :], '--g', label='SimiSol flow velocity')
-        ax2.plot(xArrayFields, vxSimi[indFinal, :], '--m', label='SimiSol x velocity')
-        ax2.plot(xArrayFields, vySimi[indFinal, :], '--b', label='SimiSol y velocity')
-        ax2.plot(xArrayFields, vzSimi[indFinal, :], '--c', label='SimiSol z velocity')
+        ax2.plot(xArrayFields, hSimi[indFinal, :]*vSimi[indFinal, :], '--g', label='SimiSol flow velocity')
+        ax2.plot(xArrayFields, hSimi[indFinal, :]*vxSimi[indFinal, :], '--m', label='SimiSol x velocity')
+        ax2.plot(xArrayFields, hSimi[indFinal, :]*vySimi[indFinal, :], '--b', label='SimiSol y velocity')
+        ax2.plot(xArrayFields, hSimi[indFinal, :]*vzSimi[indFinal, :], '--c', label='SimiSol z velocity')
         ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
                       % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
         ax1.set_xlabel('x in [m]')
@@ -164,18 +164,18 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
     elif axis == 'yaxis':
         # DFA simulation
         ax1.plot(yArrayFields, fields['FD'][:, indFinal], 'k', label='Field flow depth')
-        ax2.plot(yArrayFields, fields['FV'][:, indFinal], 'g', label='Field flow velocity')
-        ax2.plot(yArrayFields, fields['Vx'][:, indFinal], 'm', label='Field x velocity')
-        ax2.plot(yArrayFields, fields['Vy'][:, indFinal], 'b', label='Field y velocity')
-        ax2.plot(yArrayFields, fields['Vz'][:, indFinal], 'c', label='Field z velocity')
+        ax2.plot(yArrayFields, fields['FD'][:, indFinal]*fields['FV'][:, indFinal], 'g', label='Field flow velocity')
+        ax2.plot(yArrayFields, fields['FD'][:, indFinal]*fields['Vx'][:, indFinal], 'm', label='Field x velocity')
+        ax2.plot(yArrayFields, fields['FD'][:, indFinal]*fields['Vy'][:, indFinal], 'b', label='Field y velocity')
+        ax2.plot(yArrayFields, fields['FD'][:, indFinal]*fields['Vz'][:, indFinal], 'c', label='Field z velocity')
         ax1.plot(y, h, '.k', linestyle='None', label='Part flow depth')
-        ax2.plot(y, v, '.g', linestyle='None', label='Part flow velocity')
+        ax2.plot(y, h*v, '.g', linestyle='None', label='Part flow velocity')
         # similarity solution
         ax1.plot(yArrayFields, hSimi[:, indFinal], '--k', label='SimiSol flow depth')
-        ax2.plot(yArrayFields, vSimi[:, indFinal], '--g', label='SimiSol flow velocity')
-        ax2.plot(yArrayFields, vxSimi[:, indFinal], '--m', label='SimiSol x velocity')
-        ax2.plot(yArrayFields, vySimi[:, indFinal], '--b', label='SimiSol y velocity')
-        ax2.plot(yArrayFields, vzSimi[:, indFinal], '--c', label='SimiSol z velocity')
+        ax2.plot(yArrayFields, hSimi[:, indFinal]*vSimi[:, indFinal], '--g', label='SimiSol flow velocity')
+        ax2.plot(yArrayFields, hSimi[:, indFinal]*vxSimi[:, indFinal], '--m', label='SimiSol x velocity')
+        ax2.plot(yArrayFields, hSimi[:, indFinal]*vySimi[:, indFinal], '--b', label='SimiSol y velocity')
+        ax2.plot(yArrayFields, hSimi[:, indFinal]*vzSimi[:, indFinal], '--c', label='SimiSol z velocity')
         ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
                       % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
         ax1.set_xlabel('y in [m]')
@@ -195,54 +195,57 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'profile_' + str(outputName) + '_%sCutSol_T%.2f.' % (axis, Tsave) + pU.outputFormat, fig1)
 
 
-def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest, outputName, simDFrow):
+def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, outputName,
+                  simDFrow, relativ):
     """plot error between given com1DFA sol and analytic sol
     function of time
     """
-
     dt = simDFrow['dt']
     deltaTh = simDFrow['deltaTh']
     sphKernelRadius = simDFrow['sphKernelRadius']
-
+    title = (' between similarity solution and com1DFA \n(csz = %s m, dt = %s s, deltaTh = %s m)'
+                     % (sphKernelRadius, dt, deltaTh))
+    title = getTitleError(relativ, title)
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
     ax2 = ax1.twinx()
     ax1.plot(time, hErrorL2Array, 'k-', label='Flow depth L2 error')
     ax1.plot(time, hErrorLMaxArray, 'k--', label='Flow depth LMax error')
-    ax1.set_title('Error between similarity solution and com1DFA \n(csz = %s m, dt = %s s, deltaTh = %s m)'
-                  % (sphKernelRadius, dt, deltaTh))
+    ax1.set_title(title)
     ax1.set_xlabel('time in [s]')
-    ax1.set_ylabel('error on flow depth')
+    ax1.set_ylabel(getTitleError(relativ, ' on flow depth'))
     ax1.legend(loc='upper left')
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
 
     color = 'tab:green'
-    ax2.plot(time, vErrorL2Array, 'g-', label='Velocity L2 error')
-    ax2.plot(time, vErrorLMaxArray, 'g--', label='Velocity LMax error')
+    ax2.plot(time, vhErrorL2Array, 'g-', label='Momentum L2 error')
+    ax2.plot(time, vhErrorLMaxArray, 'g--', label='Momentum LMax error')
     ax2.tick_params(axis='y', labelcolor=color)
-    ax2.set_ylabel('error on velocity', color=color)
+    ax2.set_ylabel(getTitleError(relativ, ' on momentum'), color=color)
     ax2.legend(loc='lower right')
     ax2.grid(color='tab:green', linestyle='-', linewidth=0.25, alpha=0.5)
 
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_Time_' + str(outputName), fig1)
 
 
-def plotError(simDF, outDirTest):
+def plotError(simDF, outDirTest, cfgSimi):
     """plot error between all com1DFA sol and analytic sol
     function of nParts for all dt
     """
+    relativ = cfgSimi.getboolean('relativError')
+    title = getTitleError(relativ, ' between similarity solution and com1DFA')
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
-    ax1 = sns.pointplot(x='Npart', y='hErrorL2', hue='dt', data=simDF, ax=ax1, markers=['o', 's', 'd', 'v', '^', '<', '>', '.'], palette=['k'])
-    ax2 = sns.pointplot(x='Npart', y='vErrorL2', hue='dt', data=simDF, ax=ax2, markers=['o', 's', 'd', 'v', '^', '<', '>', '.'], palette=['g'])
-    ax1 = sns.pointplot(x='Npart', y='hErrorLMax', hue='dt', data=simDF, ax=ax1, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.'], palette=['k'])
-    ax2 = sns.pointplot(x='Npart', y='vErrorLMax', hue='dt', data=simDF, ax=ax2, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.'], palette=['g'])
-    ax1.set_title('Error between similarity solution and com1DFA')
+    ax1 = sns.pointplot(x='Npart', y='hErrorL2', hue='dt', data=simDF, ax=ax1, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
+    ax2 = sns.pointplot(x='Npart', y='vhErrorL2', hue='dt', data=simDF, ax=ax2, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
+    ax1 = sns.pointplot(x='Npart', y='hErrorLMax', hue='dt', data=simDF, ax=ax1, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
+    ax2 = sns.pointplot(x='Npart', y='vhErrorLMax', hue='dt', data=simDF, ax=ax2, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
+    ax1.set_title(title)
     ax1.set_xlabel('Number of particles')
 
-    ax1.set_ylabel('error on flow depth')
+    ax1.set_ylabel(getTitleError(relativ, ' on flow depth'))
     color = 'tab:green'
     ax2.tick_params(axis='y', labelcolor=color)
-    ax2.set_ylabel('error on velocity', color=color)
+    ax2.set_ylabel(getTitleError(relativ, ' on momentum'), color=color)
     ax2.legend(loc='lower right')
     ax1.legend(loc='upper left')
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error', fig1)
@@ -255,17 +258,18 @@ def plotErrorLog(simDF, outDirTest, cfgSimi):
     sphKernelRadiusList = simDF["sphKernelRadius"].unique()
     dt = simDF["dt"].unique()[0]
     tSave = cfgSimi.getfloat('tSave')
+    relativ = cfgSimi.getboolean('relativError')
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF["sphKernelRadius"])*0.25, max(simDF["sphKernelRadius"])*2, continuous=pU.contCmap)
     cmap = 'viridis'
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
     scatter = ax1.scatter(simDF["Npart"], simDF["hErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o', alpha=1, edgecolors='k')
-    scatte2 = ax2.scatter(simDF["Npart"], simDF["vErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=0.8, edgecolors='k')
+    scatte2 = ax2.scatter(simDF["Npart"], simDF["vhErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=0.8, edgecolors='k')
     for sphKernelRadius in sphKernelRadiusList:
         simDFNew = simDF[(simDF['sphKernelRadius'] == sphKernelRadius) & (simDF['dt'] == dt)]
         Npart = simDFNew["Npart"]
         hErrorL2 = simDFNew["hErrorL2"]
-        vErrorL2 = simDFNew["vErrorL2"]
+        vErrorL2 = simDFNew["vhErrorL2"]
         p = np.polyfit(np.log(simDFNew["Npart"]), np.log(hErrorL2), deg=1)
         p1H = p[0]
         p0H = np.exp(p[1])
@@ -275,14 +279,14 @@ def plotErrorLog(simDF, outDirTest, cfgSimi):
         ax1.plot(Npart, p0H*Npart**p1H, 'r')
         ax2.plot(Npart, p0U*Npart**p1U, 'g')
         log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0H, p1H))
-        log.info('power law fit sphKernelRadius = %.2f m: vErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0U, p1U))
+        log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0U, p1U))
     ax1.set_yscale('log')
     ax2.set_yscale('log')
     ax1.set_xscale('log')
     ax1.set_title('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
     ax1.set_xlabel('number of particles')
-    ax1.set_ylabel(r'Relative L2 error on flow depth ($\bullet$)')
-    ax2.set_ylabel(r'Relative L2 error on flow velocity ($\blacksquare$)')
+    ax1.set_ylabel(getTitleError(relativ, r' L2 on flow depth ($\bullet$)'))
+    ax2.set_ylabel(getTitleError(relativ, r' L2 on momentum ($\blacksquare$)'))
     legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title="sphKernelRadius")
     ax1.add_artist(legend1)
 
@@ -292,6 +296,10 @@ def plotErrorLog(simDF, outDirTest, cfgSimi):
     legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title="dt")
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
+    b1, t1 = ax1.get_ylim()
+    b2, t2 = ax2.get_ylim()
+    ax1.set_ylim([min(b1, b2), max(t1, t2)])
+    ax2.set_ylim([min(b1, b2), max(t1, t2)])
     plt.show()
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
 
@@ -341,6 +349,14 @@ def plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, Hi
                     linewidths=2, linestyles='dashed')
     ax.clabel(CS, inline=1, fontsize=8)
     fig.savefig(pathlib.Path(outDirTest, 'ContourSimiSolFinal.%s' % (pU.outputFormat)))
+
+
+def getTitleError(relativ, ending=''):
+    """Get error plot title (relativ error or not?)"""
+    if relativ:
+        return 'Relativ error' + ending
+    else:
+        return 'Error between' + ending
 
 
 def last_nonzero(arr, axis, invalid_val=-1):
