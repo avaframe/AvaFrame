@@ -1491,3 +1491,16 @@ def test_runCom1DFA(tmp_path):
     assert all(key in dictKeys for key in particlesList[-1])
 
     assert len(particlesList) == 6
+
+    print(simDF['simName'])
+    outDir = avaDir / 'Outputs' / 'com1DFA'
+    for ext in ['ppr', 'pfd', 'pfv']:
+        assert (outDir / 'peakFiles' / ('%s_%s.asc' % (simDF['simName'][0], ext))).is_file()
+        assert (outDir / 'peakFiles' / ('%s_%s.asc' % (simDF['simName'][1], ext))).is_file()
+
+    assert (outDir / 'configurationFiles' / ('%s.ini' % (simDF['simName'][0]))).is_file()
+    assert (outDir / 'configurationFiles' / ('%s.ini' % (simDF['simName'][1]))).is_file()
+    assert (outDir / 'configurationFiles' / ('allConfigurations.csv')).is_file()
+    # ppr|pfd|pfv
+    # particles
+    # all configuation

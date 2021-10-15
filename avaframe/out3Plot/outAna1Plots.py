@@ -60,6 +60,7 @@ def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsav
             # make plot
             plotProfilesSimiSol(ind_time, simHash, comSol, simiDict, solSimi, axis)
 
+        # create flow depth raster difference plot
         cellSize = header['cellsize']
         hSimi = simiDict['hSimi']
         hNumerical = fields['FD']
@@ -69,11 +70,12 @@ def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsav
         outQuickPlot.generatePlot(dataDict, avaName, outDirTest / 'pics', cfgMain, {'plots': [], 'difference': [], 'stats': [],
                                   'differenceZoom': []}, crossProfile=False)
 
-        vSimi = DFAtls.norm(simiDict['vxSimi'], simiDict['vySimi'], simiDict['vzSimi'])
-        vNumerical = DFAtls.norm(fields['Vx'], fields['Vy'], fields['Vz'])
-        dataDict = {'name2': 'solAnalytic', 'name1': simHash, 'data2': vSimi, 'data1': vNumerical, 'cellSize': cellSize,
-                    'suffix': 'FV', 'compareType': 'compToRef', 'simName': simHash}
-        avaName = 'FVComparison' + simHash
+        # create flow momentum per surface unit raster difference plot
+        vhSimi = simiDict['vSimi'] * hSimi
+        vhNumerical = fields['FV'] * hNumerical
+        dataDict = {'name2': 'solAnalytic', 'name1': simHash, 'data2': vhSimi, 'data1': vhNumerical, 'cellSize': cellSize,
+                    'suffix': 'FDV', 'compareType': 'compToRef', 'simName': simHash}
+        avaName = 'FDVComparison' + simHash
         outQuickPlot.generatePlot(dataDict, avaName, outDirTest / 'pics', cfgMain, {'plots': [], 'difference': [], 'stats': [],
                                   'differenceZoom': []}, crossProfile=False)
 
@@ -140,47 +142,51 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
 
     if axis == 'xaxis':
         ax1.axvline(x=xCenter, linestyle=':')
+        FD = fields['FD'][indFinal, :]
+        hSimi = hSimi[indFinal, :]
         # DFA simulation
-        ax1.plot(xArrayFields, fields['FD'][indFinal, :], 'k', label='Field flow depth')
-        ax2.plot(xArrayFields, fields['FD'][indFinal, :]*fields['FV'][indFinal, :], 'g', label='Field flow velocity')
-        ax2.plot(xArrayFields, fields['FD'][indFinal, :]*fields['Vx'][indFinal, :], 'm', label='Field x velocity')
-        ax2.plot(xArrayFields, fields['FD'][indFinal, :]*fields['Vy'][indFinal, :], 'b', label='Field y velocity')
-        ax2.plot(xArrayFields, fields['FD'][indFinal, :]*fields['Vz'][indFinal, :], 'c', label='Field z velocity')
+        ax1.plot(xArrayFields, FD, 'k', label='Field flow depth')
+        ax2.plot(xArrayFields, FD*fields['FV'][indFinal, :], 'g', label='Field flow velocity')
+        ax2.plot(xArrayFields, FD*fields['Vx'][indFinal, :], 'm', label='Field x velocity')
+        ax2.plot(xArrayFields, FD*fields['Vy'][indFinal, :], 'b', label='Field y velocity')
+        ax2.plot(xArrayFields, FD*fields['Vz'][indFinal, :], 'c', label='Field z velocity')
         ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
         ax2.plot(x, h*v, '.g', linestyle='None', label='Part flow velocity')
         # similarity solution
-        ax1.plot(xArrayFields, hSimi[indFinal, :], '--k', label='SimiSol flow depth')
-        ax2.plot(xArrayFields, hSimi[indFinal, :]*vSimi[indFinal, :], '--g', label='SimiSol flow velocity')
-        ax2.plot(xArrayFields, hSimi[indFinal, :]*vxSimi[indFinal, :], '--m', label='SimiSol x velocity')
-        ax2.plot(xArrayFields, hSimi[indFinal, :]*vySimi[indFinal, :], '--b', label='SimiSol y velocity')
-        ax2.plot(xArrayFields, hSimi[indFinal, :]*vzSimi[indFinal, :], '--c', label='SimiSol z velocity')
+        ax1.plot(xArrayFields, hSimi, '--k', label='SimiSol flow depth')
+        ax2.plot(xArrayFields, hSimi*vSimi[indFinal, :], '--g', label='SimiSol flow velocity')
+        ax2.plot(xArrayFields, hSimi*vxSimi[indFinal, :], '--m', label='SimiSol x velocity')
+        ax2.plot(xArrayFields, hSimi*vySimi[indFinal, :], '--b', label='SimiSol y velocity')
+        ax2.plot(xArrayFields, hSimi*vzSimi[indFinal, :], '--c', label='SimiSol z velocity')
         ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
                       % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
         ax1.set_xlabel('x in [m]')
-        indStart = min(first_nonzero(hSimi[indFinal, :], 0), first_nonzero(fields['FD'][indFinal, :], 0)) - 2
-        indEnd = max(last_nonzero(hSimi[indFinal, :], 0), last_nonzero(fields['FD'][indFinal, :], 0)) + 2
+        indStart = min(first_nonzero(hSimi, 0), first_nonzero(FD, 0)) - 2
+        indEnd = max(last_nonzero(hSimi, 0), last_nonzero(FD, 0)) + 2
         ax1.set_xlim([xArrayFields[indStart], xArrayFields[indEnd]])
 
     elif axis == 'yaxis':
+        FD = fields['FD'][:, indFinal]
+        hSimi = hSimi[:, indFinal]
         # DFA simulation
-        ax1.plot(yArrayFields, fields['FD'][:, indFinal], 'k', label='Field flow depth')
-        ax2.plot(yArrayFields, fields['FD'][:, indFinal]*fields['FV'][:, indFinal], 'g', label='Field flow velocity')
-        ax2.plot(yArrayFields, fields['FD'][:, indFinal]*fields['Vx'][:, indFinal], 'm', label='Field x velocity')
-        ax2.plot(yArrayFields, fields['FD'][:, indFinal]*fields['Vy'][:, indFinal], 'b', label='Field y velocity')
-        ax2.plot(yArrayFields, fields['FD'][:, indFinal]*fields['Vz'][:, indFinal], 'c', label='Field z velocity')
+        ax1.plot(yArrayFields, FD, 'k', label='Field flow depth')
+        ax2.plot(yArrayFields, FD*fields['FV'][:, indFinal], 'g', label='Field flow velocity')
+        ax2.plot(yArrayFields, FD*fields['Vx'][:, indFinal], 'm', label='Field x velocity')
+        ax2.plot(yArrayFields, FD*fields['Vy'][:, indFinal], 'b', label='Field y velocity')
+        ax2.plot(yArrayFields, FD*fields['Vz'][:, indFinal], 'c', label='Field z velocity')
         ax1.plot(y, h, '.k', linestyle='None', label='Part flow depth')
         ax2.plot(y, h*v, '.g', linestyle='None', label='Part flow velocity')
         # similarity solution
-        ax1.plot(yArrayFields, hSimi[:, indFinal], '--k', label='SimiSol flow depth')
-        ax2.plot(yArrayFields, hSimi[:, indFinal]*vSimi[:, indFinal], '--g', label='SimiSol flow velocity')
-        ax2.plot(yArrayFields, hSimi[:, indFinal]*vxSimi[:, indFinal], '--m', label='SimiSol x velocity')
-        ax2.plot(yArrayFields, hSimi[:, indFinal]*vySimi[:, indFinal], '--b', label='SimiSol y velocity')
-        ax2.plot(yArrayFields, hSimi[:, indFinal]*vzSimi[:, indFinal], '--c', label='SimiSol z velocity')
+        ax1.plot(yArrayFields, hSimi, '--k', label='SimiSol flow depth')
+        ax2.plot(yArrayFields, hSimi*vSimi[:, indFinal], '--g', label='SimiSol flow velocity')
+        ax2.plot(yArrayFields, hSimi*vxSimi[:, indFinal], '--m', label='SimiSol x velocity')
+        ax2.plot(yArrayFields, hSimi*vySimi[:, indFinal], '--b', label='SimiSol y velocity')
+        ax2.plot(yArrayFields, hSimi*vzSimi[:, indFinal], '--c', label='SimiSol z velocity')
         ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
                       % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
         ax1.set_xlabel('y in [m]')
-        indStart = min(first_nonzero(hSimi[:, indFinal], 0), first_nonzero(fields['FD'][:, indFinal], 0)) - 2
-        indEnd = max(last_nonzero(hSimi[:, indFinal], 0), last_nonzero(fields['FD'][:, indFinal], 0)) + 2
+        indStart = min(first_nonzero(hSimi, 0), first_nonzero(FD, 0)) - 2
+        indEnd = max(last_nonzero(hSimi, 0), last_nonzero(FD, 0)) + 2
         ax1.set_xlim([yArrayFields[indStart], yArrayFields[indEnd]])
 
     ax1.set_ylabel('flow depth [m]')

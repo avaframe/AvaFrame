@@ -156,7 +156,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
         return particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF
     else:
         log.warning('There is no simulation to be performed')
-        return [], [], [], 0, {}, [], simDFOld
+        return [], [], [], 0, {}, [], ''
 
 
 def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):

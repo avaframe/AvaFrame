@@ -114,6 +114,41 @@ def test_createConfigurationInfo(tmp_path):
     assert simDF.loc['872f0101a4']['relTh'] == 1.
 
 
+def test_appendCgf2DF(tmp_path):
+    """ test appendCgf2DF """
+
+    avaTestDir = 'avaHockeyChannelPytest'
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
+
+    simDF = ''
+    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release1HS_ent_dfa_67dc2dc10a.ini'
+    simName = pathlib.Path(cFile).stem
+    simHash = '67dc2dc10a'
+    cfgObject = cfgUtils.readCfgFile(avaDir, fileName=cFile)
+    simDF = cfgUtils.appendCgf2DF(simHash, simName, cfgObject, simDF)
+
+    assert simDF.loc['67dc2dc10a']['releaseScenario'] == 'release1HS'
+    assert simDF.loc['67dc2dc10a']['mu'] == '0.15500'
+
+    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release2HS_ent_dfa_872f0101a4.ini'
+    simName = pathlib.Path(cFile).stem
+    simHash = '872f0101a4'
+    cfgObject = cfgUtils.readCfgFile(avaDir, fileName=cFile)
+    simDF = cfgUtils.appendCgf2DF(simHash, simName, cfgObject, simDF)
+
+    assert simDF.loc['67dc2dc10a']['releaseScenario'] == 'release1HS'
+    assert simDF.loc['67dc2dc10a']['mu'] == '0.15500'
+    assert simDF.loc['872f0101a4']['releaseScenario'] != 'release1HS'
+    assert simDF.loc['872f0101a4']['relTh'] == '1.'
+    simDF = cfgUtils.convertDF2numerics(simDF)
+
+    assert simDF.loc['67dc2dc10a']['releaseScenario'] == 'release1HS'
+    assert simDF.loc['67dc2dc10a']['mu'] == 0.155
+    assert simDF.loc['872f0101a4']['releaseScenario'] != 'release1HS'
+    assert simDF.loc['872f0101a4']['relTh'] == 1.
+
+
 def test_filterSims(tmp_path):
     """ test filtering of simulations using configuration files """
 
