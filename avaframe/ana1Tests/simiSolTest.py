@@ -57,7 +57,8 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     # (may be multiple sims)
     _, _, _, _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
 
-    # simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
+    if isinstance(simDF, str):
+        simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
 
     # compute the similartiy solution (this corresponds to our reference)
     log.info('Computing similarity solution')
@@ -698,8 +699,8 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         # if cfgMain['FLAGS'].getboolean('showPlot'):
         #     outAna1Plots.plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, outDirTest)
 
-        # outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
-        #                                outDirTest, simHash, simDFrow)
+        outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
+                                       outDirTest, simHash, simDFrow)
 
     simDF.to_pickle(outDirTest / 'results.p')
 
