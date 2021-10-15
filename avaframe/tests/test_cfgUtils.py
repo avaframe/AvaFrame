@@ -114,6 +114,19 @@ def test_createConfigurationInfo(tmp_path):
     assert simDF.loc['872f0101a4']['relTh'] == 1.
 
 
+def test_readAllConfigurationInfo():
+    """ test readAllConfigurationInfo as DF """
+
+    dirPath = pathlib.Path(__file__).parents[0]
+    configDir = dirPath / 'data' / 'testCfgUtils'
+
+    simDF, simDFName = cfgUtils.readAllConfigurationInfo(configDir, specDir=configDir)
+    print(simDF)
+    print(simDFName)
+    for simHash, simDFrow in simDF.iterrows():
+        assert simHash in ['88cfde04b5', '1adb9373f1']
+
+
 def test_appendCgf2DF(tmp_path):
     """ test appendCgf2DF """
 
