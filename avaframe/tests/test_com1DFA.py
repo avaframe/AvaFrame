@@ -4,16 +4,20 @@
 
 #  Load modules
 import numpy as np
-from avaframe.com1DFA import com1DFA
-import avaframe.in2Trans.ascUtils as IOf
-from avaframe.in3Utils import cfgUtils
+import logging
 import pytest
 import configparser
 import pathlib
+import os
 import copy
 import pickle
 import pandas as pd
 import shutil
+
+
+from avaframe.com1DFA import com1DFA
+import avaframe.in2Trans.ascUtils as IOf
+from avaframe.in3Utils import cfgUtils
 
 
 def test_prepareInputData():
@@ -1292,7 +1296,7 @@ def test_initializeFields():
     assert np.sum(fields['FD']) != 0.0
 
 
-def test_prepareVarSimDict():
+def test_prepareVarSimDict(caplog):
     """ test prepare variation sim dictionary """
 
     # setup required input
@@ -1355,6 +1359,12 @@ def test_prepareVarSimDict():
         for key in testCfg2[section]:
             print('section', section, 'key', key)
             assert simDict2[simName2]['cfgSim'][section][key] == testCfg2[section][key]
+
+    # What if a simulation already exists
+    with caplog.at_level(logging.WARNING):
+        simDict2 = com1DFA.prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=[simName2])
+    assert ('Simulation %s already exists, not repeating it' % simName2) in caplog.text
+    assert simName2 not in simDict2
 
 
 def test_initializeSimulation():
@@ -1453,7 +1463,7 @@ def test_initializeSimulation():
     assert np.sum(particles2['secondaryReleaseInfo']['rasterData']) == 4.5
 
 
-def test_runCom1DFA(tmp_path):
+def test_runCom1DFA(tmp_path, caplog):
     """ Check that runCom1DFA produces the good outputs
     """
     testDir = pathlib.Path(__file__).parents[0]
@@ -1501,6 +1511,9 @@ def test_runCom1DFA(tmp_path):
     assert (outDir / 'configurationFiles' / ('%s.ini' % (simDF['simName'][0]))).is_file()
     assert (outDir / 'configurationFiles' / ('%s.ini' % (simDF['simName'][1]))).is_file()
     assert (outDir / 'configurationFiles' / ('allConfigurations.csv')).is_file()
-    # ppr|pfd|pfv
-    # particles
-    # all configuation
+
+
+    with caplog.at_level(logging.WARNING):
+        particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
+        avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
+    assert 'There is no simulation to be performed' in caplog.text
