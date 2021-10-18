@@ -451,7 +451,7 @@ def computeH(solSimi, x1, y1, i, L_x, L_y, H, AminusC):
         y1: numpy array
             y coordinate location desiered for the solution
         i: int
-            time simHash
+            time index
         L_x: float
             scale in x dir
         L_y: float
@@ -488,7 +488,7 @@ def computeU(solSimi, x1, y1, i, L_x, U, AminusC):
         y1: numpy array
             y coordinate location desiered for the solution
         i: int
-            time simHash
+            time index
         L_x: float
             scale in x dir
         U: float
@@ -520,7 +520,7 @@ def computeV(solSimi, x1, y1, i, L_y, V):
         y1: numpy array
             y coordinate location desiered for the solution
         i: int
-            time simHash
+            time index
         L_y: float
             scale in y dir
         V: float
@@ -549,7 +549,7 @@ def computeXC(solSimi, x1, y1, i, L_x, AminusC):
         y1: numpy array
             y coordinate location desiered for the solution
         i: int
-            time simHash
+            time index
         L_x: float
             scale in x dir
         AminusC:
@@ -577,7 +577,7 @@ def getSimiSolParameters(solSimi, header, ind_time, cfgSimi, Hini, gravAcc):
         header: dict
             header dictionary with info about the extent and cell size
         ind_time: int
-            simHash for required time step in similarity solution
+            index for required time step in similarity solution
         cfg: dict
             configuration
         Hini: float
@@ -854,7 +854,7 @@ def prepareParticlesFieldscom1DFA(fields, particles, header, simiDict, axis):
         --------
         com1DFASol: dict
             dictionary with location of particles, flow depth, flow velocity,
-            fields, and simHash for x or y cut of domain at the required time step
+            fields, and index for x or y cut of domain at the required time step
 
     """
 
