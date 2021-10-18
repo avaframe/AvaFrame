@@ -146,18 +146,18 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
         hSimi = hSimi[indFinal, :]
         # DFA simulation
         ax1.plot(xArrayFields, FD, 'k', label='Field flow depth')
-        ax2.plot(xArrayFields, FD*fields['FV'][indFinal, :], 'g', label='Field flow velocity')
-        ax2.plot(xArrayFields, FD*fields['Vx'][indFinal, :], 'm', label='Field x velocity')
-        ax2.plot(xArrayFields, FD*fields['Vy'][indFinal, :], 'b', label='Field y velocity')
-        ax2.plot(xArrayFields, FD*fields['Vz'][indFinal, :], 'c', label='Field z velocity')
+        ax2.plot(xArrayFields, FD*fields['FV'][indFinal, :], 'g', label=getLabel('Field', dir=''))
+        ax2.plot(xArrayFields, FD*fields['Vx'][indFinal, :], 'm', label=getLabel('Field', dir='x'))
+        ax2.plot(xArrayFields, FD*fields['Vy'][indFinal, :], 'b', label=getLabel('Field', dir='y'))
+        ax2.plot(xArrayFields, FD*fields['Vz'][indFinal, :], 'c', label=getLabel('Field', dir='z'))
         ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
-        ax2.plot(x, h*v, '.g', linestyle='None', label='Part flow velocity')
+        ax2.plot(x, h*v, '.g', linestyle='None', label=getLabel('Part', dir=''))
         # similarity solution
         ax1.plot(xArrayFields, hSimi, '--k', label='SimiSol flow depth')
-        ax2.plot(xArrayFields, hSimi*vSimi[indFinal, :], '--g', label='SimiSol flow velocity')
-        ax2.plot(xArrayFields, hSimi*vxSimi[indFinal, :], '--m', label='SimiSol x velocity')
-        ax2.plot(xArrayFields, hSimi*vySimi[indFinal, :], '--b', label='SimiSol y velocity')
-        ax2.plot(xArrayFields, hSimi*vzSimi[indFinal, :], '--c', label='SimiSol z velocity')
+        ax2.plot(xArrayFields, hSimi*vSimi[indFinal, :], '--g', label=getLabel('SimiSol', dir=''))
+        ax2.plot(xArrayFields, hSimi*vxSimi[indFinal, :], '--m', label=getLabel('SimiSol', dir='x'))
+        ax2.plot(xArrayFields, hSimi*vySimi[indFinal, :], '--b', label=getLabel('SimiSol', dir='y'))
+        ax2.plot(xArrayFields, hSimi*vzSimi[indFinal, :], '--c', label=getLabel('SimiSol', dir='z'))
         ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
                       % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
         ax1.set_xlabel('x in [m]')
@@ -170,18 +170,18 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
         hSimi = hSimi[:, indFinal]
         # DFA simulation
         ax1.plot(yArrayFields, FD, 'k', label='Field flow depth')
-        ax2.plot(yArrayFields, FD*fields['FV'][:, indFinal], 'g', label='Field flow velocity')
-        ax2.plot(yArrayFields, FD*fields['Vx'][:, indFinal], 'm', label='Field x velocity')
-        ax2.plot(yArrayFields, FD*fields['Vy'][:, indFinal], 'b', label='Field y velocity')
-        ax2.plot(yArrayFields, FD*fields['Vz'][:, indFinal], 'c', label='Field z velocity')
+        ax2.plot(yArrayFields, FD*fields['FV'][:, indFinal], 'g', label=getLabel('Field', dir=''))
+        ax2.plot(yArrayFields, FD*fields['Vx'][:, indFinal], 'm', label=getLabel('Field', dir='x'))
+        ax2.plot(yArrayFields, FD*fields['Vy'][:, indFinal], 'b', label=getLabel('Field', dir='y'))
+        ax2.plot(yArrayFields, FD*fields['Vz'][:, indFinal], 'c', label=getLabel('Field', dir='z'))
         ax1.plot(y, h, '.k', linestyle='None', label='Part flow depth')
-        ax2.plot(y, h*v, '.g', linestyle='None', label='Part flow velocity')
+        ax2.plot(y, h*v, '.g', linestyle='None', label=getLabel('Part', dir=''))
         # similarity solution
         ax1.plot(yArrayFields, hSimi, '--k', label='SimiSol flow depth')
-        ax2.plot(yArrayFields, hSimi*vSimi[:, indFinal], '--g', label='SimiSol flow velocity')
-        ax2.plot(yArrayFields, hSimi*vxSimi[:, indFinal], '--m', label='SimiSol x velocity')
-        ax2.plot(yArrayFields, hSimi*vySimi[:, indFinal], '--b', label='SimiSol y velocity')
-        ax2.plot(yArrayFields, hSimi*vzSimi[:, indFinal], '--c', label='SimiSol z velocity')
+        ax2.plot(yArrayFields, hSimi*vSimi[:, indFinal], '--g', label=getLabel('SimiSol', dir=''))
+        ax2.plot(yArrayFields, hSimi*vxSimi[:, indFinal], '--m', label=getLabel('SimiSol', dir='x'))
+        ax2.plot(yArrayFields, hSimi*vySimi[:, indFinal], '--b', label=getLabel('SimiSol', dir='y'))
+        ax2.plot(yArrayFields, hSimi*vzSimi[:, indFinal], '--c', label=getLabel('SimiSol', dir='z'))
         ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
                       % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
         ax1.set_xlabel('y in [m]')
@@ -194,7 +194,7 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
     color = 'tab:green'
     ax2.tick_params(axis='y', labelcolor=color)
     ax2.grid(color='tab:green', linestyle='-', linewidth=0.25, alpha=0.5)
-    ax2.set_ylabel('flow velocity [ms-1]', color=color)
+    ax2.set_ylabel(getLabel('', dir='') + '[ms-1]', color=color)
     ax2.legend(loc='upper right')
     ax1.legend(loc='upper left')
 
@@ -223,10 +223,10 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
 
     color = 'tab:green'
-    ax2.plot(time, vhErrorL2Array, 'g-', label='Momentum L2 error')
-    ax2.plot(time, vhErrorLMaxArray, 'g--', label='Momentum LMax error')
+    ax2.plot(time, vhErrorL2Array, 'g-', label=r'$\vert h \mathbf{ \bar u} \vert $ L2 error')
+    ax2.plot(time, vhErrorLMaxArray, 'g--', label=r'$\vert h \mathbf{ \bar u} \vert $ LMax error')
     ax2.tick_params(axis='y', labelcolor=color)
-    ax2.set_ylabel(getTitleError(relativ, ' on momentum'), color=color)
+    ax2.set_ylabel(getTitleError(relativ, r' on $\vert h \mathbf{ \bar u} \vert $'), color=color)
     ax2.legend(loc='lower right')
     ax2.grid(color='tab:green', linestyle='-', linewidth=0.25, alpha=0.5)
 
@@ -251,7 +251,7 @@ def plotError(simDF, outDirTest, cfgSimi):
     ax1.set_ylabel(getTitleError(relativ, ' on flow depth'))
     color = 'tab:green'
     ax2.tick_params(axis='y', labelcolor=color)
-    ax2.set_ylabel(getTitleError(relativ, ' on momentum'), color=color)
+    ax2.set_ylabel(getTitleError(relativ, r' on $\vert h \mathbf{ \bar u} \vert $'), color=color)
     ax2.legend(loc='lower right')
     ax1.legend(loc='upper left')
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error', fig1)
@@ -292,7 +292,7 @@ def plotErrorLog(simDF, outDirTest, cfgSimi):
     ax1.set_title('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
     ax1.set_xlabel('number of particles')
     ax1.set_ylabel(getTitleError(relativ, r' L2 on flow depth ($\bullet$)'))
-    ax2.set_ylabel(getTitleError(relativ, r' L2 on momentum ($\blacksquare$)'))
+    ax2.set_ylabel(getTitleError(relativ, r' L2 on $\vert h \mathbf{ \bar u} \vert (\blacksquare)$'))
     legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title="sphKernelRadius")
     ax1.add_artist(legend1)
 
@@ -362,7 +362,15 @@ def getTitleError(relativ, ending=''):
     if relativ:
         return 'Relativ error' + ending
     else:
-        return 'Error between' + ending
+        return 'Error' + ending
+
+
+def getLabel(start, dir=''):
+    """Get error plot title (relativ error or not?)"""
+    if dir:
+        return start + r' $h \bar{u}_' + dir + r'$'
+    else:
+        return start + r' $\vert h \mathbf{\bar{u}} \vert$'
 
 
 def last_nonzero(arr, axis, invalid_val=-1):

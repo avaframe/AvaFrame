@@ -85,7 +85,7 @@ def normL2Scal(analyticalSol, numericalSol, cellSize, cosAngle):
 
 
 def computeErrorAndNorm(localError, analyticalSol2, cellSize, cosAngle):
-    """ Compute error between two functions given their norme 2
+    """ Compute error between two functions given their norm 2
         Parameters
         -----------
         localError: numpy array
