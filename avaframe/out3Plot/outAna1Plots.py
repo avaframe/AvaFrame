@@ -306,7 +306,6 @@ def plotErrorLog(simDF, outDirTest, cfgSimi):
     b2, t2 = ax2.get_ylim()
     ax1.set_ylim([min(b1, b2), max(t1, t2)])
     ax2.set_ylim([min(b1, b2), max(t1, t2)])
-    plt.show()
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
 
 
