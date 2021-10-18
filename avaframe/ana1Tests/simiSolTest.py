@@ -121,7 +121,6 @@ def mainSimilaritySol(simiSolCfg):
     # calculate aspect ratios
     eps_x = H/L_x
     eps_y = H/L_y
-    eps_xy = L_y/L_x
 
     # Full scale end time
     T_end = cfgGen.getfloat('tEnd') + cfgGen.getfloat('maxdT')
@@ -145,7 +144,7 @@ def mainSimilaritySol(simiSolCfg):
     # Early time solution
     t_early = np.arange(0, t_1, dt_early)
     t_early = np.append(t_early, t_1)
-    solSimi = calcEarlySol(t_early, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y)
+    solSimi = calcEarlySol(t_early, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_y)
 
     # Runge-Kutta integration away from the singularity
     # initial conditions
@@ -160,7 +159,7 @@ def mainSimilaritySol(simiSolCfg):
     # equations defined by `fun`, and set the solver method to'dopri5' 'dop853'.
     solver = ode(Ffunction)
     solver.set_integrator('dopri5')
-    solver.set_f_params(earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y)
+    solver.set_f_params(earthPressureCoefficients, zeta, delta, eps_x, eps_y)
     solver.set_initial_value(x_1, t_start)
     solSimi = odeSolver(solver, dt, t_end, solSimi)
 
@@ -252,7 +251,7 @@ def computeEarthPressCoeff(x, earthPressureCoefficients):
     return K_x, K_y
 
 
-def computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
+def computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_y):
     """ Compute coefficients eq 3.2 for the function F
         Parameters
         -----------
@@ -266,8 +265,6 @@ def computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
             friction angle
         eps_x: float
             scale in x dir
-        eps_xy: float
-            scale in x/y dir
         eps_y: float
             scale in y dir
         Returns
@@ -279,7 +276,7 @@ def computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
     A = np.sin(zeta)
     B = eps_x * np.cos(zeta) * K_x
     C = np.cos(zeta) * np.tan(delta)
-    D = eps_y / eps_xy * np.cos(zeta) * K_y
+    D = eps_y * eps_y / eps_x * np.cos(zeta) * K_y
     if A == 0:
         E = 1
         C = 0
@@ -290,7 +287,7 @@ def computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y):
     return A, B, C, D, E
 
 
-def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, eps_y):
+def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_y):
     """ Compute the early solution for 0<t<t_1
         to avoid singularity in the Runge-Kutta integration process
         Parameters
@@ -307,8 +304,6 @@ def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, 
             friction angle
         eps_x: float
             scale in x dir
-        eps_xy: float
-            scale in x/y dir
         eps_y: float
             scale in y dir
         Returns
@@ -326,7 +321,7 @@ def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, 
     # early solution exists only if first derivative of f at t=0 is zero
     assert x_0[3] == 0, "f'(t=0)=f_p0 must be equal to 0"
     K_x, K_y = computeEarthPressCoeff(x_0, earthPressureCoefficients)
-    A, B, C, D, E = computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
+    A, B, C, D, E = computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_y)
     g0 = x_0[0]
     g_p0 = x_0[1]
     f0 = x_0[2]
@@ -347,7 +342,7 @@ def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_xy, 
     return solSimi
 
 
-def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y):
+def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_y):
     """ Calculate right hand side of the differential equation :
         dx/dt = F(x,t) F is discribed in Hutter 1993.
 
@@ -365,8 +360,6 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y
             friction angle
         eps_x: float
             scale in x dir
-        eps_xy: float
-            scale in x/y dir
         eps_y: float
             scale in y dir
 
@@ -376,7 +369,7 @@ def Ffunction(t, x, earthPressureCoefficients, zeta, delta, eps_x, eps_xy, eps_y
     """
 
     K_x, K_y = computeEarthPressCoeff(x, earthPressureCoefficients)
-    A, B, C, D, E = computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_xy, eps_y)
+    A, B, C, D, E = computeFCoeff(K_x, K_y, zeta, delta, eps_x, eps_y)
     u_c = (A - C)*t
     g = x[0]
     g_p = x[1]
@@ -696,9 +689,6 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[ind_t]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
-        # if cfgMain['FLAGS'].getboolean('showPlot'):
-        #     outAna1Plots.plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, outDirTest)
-
         outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
                                        outDirTest, simHash, simDFrow)
 
@@ -781,8 +771,8 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
         log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hErrorL2))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
         count = count + 1
-    # outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vErrorL2Array, vErrorLMaxArray, outDirTest,
-    #                            simHash, simDFrow, cfgSimi.getboolean('relativError'))
+    outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
+                               simHash, simDFrow, cfgSimi.getboolean('relativError'))
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
 

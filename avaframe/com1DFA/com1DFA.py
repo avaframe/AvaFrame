@@ -2194,8 +2194,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             simName = (relNameSim + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' +
                        simHash)
             # check if simulation exists. If yes do not append it
-
-            print(simName, simNameOld)
             if simName not in simNameOld:
                 simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
                                     'simType': row._asdict()['simTypeList'], 'relFile': rel,
