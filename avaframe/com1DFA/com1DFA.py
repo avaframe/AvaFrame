@@ -950,16 +950,19 @@ def initializeFields(cfg, dem, particles):
     PFV = np.zeros((nrows, ncols))
     PP = np.zeros((nrows, ncols))
     FD = np.zeros((nrows, ncols))
+    TA = np.zeros((nrows, ncols))
     fields = {}
     fields['pfv'] = PFV
     fields['ppr'] = PP
     fields['pfd'] = FD
+    fields['pta'] = TA
     fields['FV'] = PFV
     fields['P'] = PP
     fields['FD'] = FD
     fields['Vx'] = PFV
     fields['Vy'] = PFV
     fields['Vz'] = PFV
+    fields['TA'] = TA
 
     particles = DFAfunC.getNeighborsC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
@@ -1137,6 +1140,7 @@ def DFAIterate(cfg, particles, fields, dem):
     t = particles['t']
     log.debug('Saving results for time step t = %f s', t)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
+    particles0 = copy.deepcopy(particles)
     # add initial time step to Tsave array
     Tsave = [0]
     # derive time step for first iteration
@@ -1155,6 +1159,9 @@ def DFAIterate(cfg, particles, fields, dem):
         log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
         particles, fields, tCPU = computeEulerTimeStep(cfgGen, particles, fields, dt, dem, tCPU, frictType)
+
+        # if cfgGen['travelAngle']:
+        fields = computeTravelAngle(cfgGen, dem, particles, particles0, fields)
 
         tCPU['nSave'] = nSave
         particles['t'] = t

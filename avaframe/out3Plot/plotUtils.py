@@ -133,7 +133,8 @@ colorsD = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
 cmapD = cmapCameri.lajolla.copy()
 
 # multi sequential colormap for speed
-levS = [1, 5, 10, 15, 20, 25, 30]
+# levS = [1, 5, 10, 15, 20, 25, 30]
+levS = [19, 20, 21, 22, 25, 30, 40]
 # Batflow color map
 colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
            '#201158']
@@ -179,7 +180,8 @@ cmapProb['colors'] = colorsProb
 cmapProb['levels'] = levProb
 
 colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pfd': cmapDepth, 'P': cmapPres, 'FV': cmapSpeed,
-             'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FDV': cmapSpeed ,'FD': cmapDepth, 'prob': cmapProb}
+             'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FDV': cmapSpeed ,'FD': cmapDepth, 'prob': cmapProb,
+             'pta': cmapSpeed, 'TA': cmapSpeed}
 
 cmapDEM = cmapGreys
 

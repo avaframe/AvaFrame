@@ -592,6 +592,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   cdef double[:] mass = particles['m']
   cdef double[:] idFixed = particles['idFixed']
   cdef double[:] S = particles['s']
+  cdef double[:] SCor = particles['s']
   cdef double[:] L = particles['l']
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
@@ -627,7 +628,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   # declare intermediate step variables
   cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
-  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
+  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, sCorNew, lNew, uN, uMag, uMagNew
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
   cdef double massEntrained = 0, massFlowing = 0
   cdef int j
@@ -646,6 +647,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
     uy = uyArray[j]
     uz = uzArray[j]
     s = S[j]
+    sCor = SCor[j]
     l = L[j]
     idfixed = idFixed[j]
 
@@ -706,9 +708,11 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
     # compute the distance traveled by the particle
     lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
+    # compute the horizontal distance traveled by the particle
+    sNew = s + norm((xNew-x), (yNew-y), 0)
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
-    sNew = s + nzNew*norm((xNew-x), (yNew-y), (zNew-z))
+    sCorNew = sCor + nzNew*norm((xNew-x), (yNew-y), (zNew-z))
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity
@@ -761,7 +765,9 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   particles['ux'] = np.asarray(uxArrayNew)
   particles['uy'] = np.asarray(uyArrayNew)
   particles['uz'] = np.asarray(uzArrayNew)
+  particles['l'] = np.asarray(lNewArray)
   particles['s'] = np.asarray(sNewArray)
+  particles['sCor'] = np.asarray(sCorNewArray)
   particles['m'] = np.asarray(mNewArray)
   particles['mTot'] = np.sum(particles['m'])
   particles['x'] = np.asarray(xNewArray)
@@ -1024,6 +1030,71 @@ def updateFieldsC(cfg, particles, dem, fields):
   particles['h'] = np.asarray(hBB)
 
   return particles, fields
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def travelAngleFieldsC(cfg, particles, dem, fields):
+  """ update travelAngle field
+
+  Cython implementation
+
+ Parameters
+ ----------
+ cfg: configparser
+     configuration for DFA simulation
+ particles : dict
+     particles dictionary
+ dem : dict
+     dictionary with dem information
+ fields : dict
+     fields dictionary
+ Returns
+ -------
+
+ fields : dict
+     fields dictionary
+ """
+  # read input parameters
+  cdef int interpOption = cfg.getint('interpOption')
+  header = dem['header']
+  cdef int nrows = header['nrows']
+  cdef int ncols = header['ncols']
+  cdef double csz = header['cellsize']
+  cdef int Npart = np.size(particles['x'])
+  # read particles and fields
+  cdef double[:] travelAngleArray = particles['travelAngle']
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:, :] PTA = fields['pta']
+  # initialize outputs
+  cdef double[:, :] travelAngleField = np.zeros((nrows, ncols))
+  # declare intermediate step variables
+  cdef double travelAngle, x, y
+  cdef int j, i
+  cdef int indx, indy
+
+  for j in range(Npart):
+    x = xArray[j]
+    y = yArray[j]
+    travelAngle = travelAngleArray[j]
+    # find coordinates of the nearest cell
+    indx = <int>math.round(x / csz)
+    indy = <int>math.round(y / csz)
+    travelAngleField[indy, indx] = max(travelAngleField[indy, indx], travelAngle)
+
+
+  for i in range(ncols):
+    for j in range(nrows):
+      if travelAngleField[j, i] > PTA[j, i]:
+          PTA[j, i] = travelAngleField[j, i]
+
+  fields['TA'] = np.asarray(travelAngleField)
+  fields['pta'] = np.asarray(PTA)
+
+
+  return fields
 
 
 @cython.boundscheck(False)
