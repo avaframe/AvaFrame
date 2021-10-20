@@ -467,6 +467,32 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
     return simDF
 
 
+def appendTcpu2DF(simHash, tCPU, tCPUDF):
+    """ append Tcpu dictionary to the dataframe
+
+        Parameters
+        -----------
+        simHash: str
+            hash of the simulation corresponding to the tCPU dict to append
+        tCPU: dict
+            cpu time dict of the simulation
+        tCPUDF: pandas dataFrame
+            tCPU dataframe
+
+        Returns
+        --------
+        simDF: pandas DataFrame
+            DFappended with the new simulation configuration
+    """
+    indexItem = [simHash]
+    tCPUItemDF = pd.DataFrame(data=tCPU, index=indexItem)
+    if isinstance(tCPUDF, str):
+        tCPUDF = tCPUItemDF
+    else:
+        tCPUDF = pd.concat([tCPUDF, tCPUItemDF], axis=0)
+    return tCPUDF
+
+
 def convertDF2numerics(simDF):
     """ convert a string DF to a numerical one
 
