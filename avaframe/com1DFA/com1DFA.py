@@ -4,7 +4,6 @@
 
 import logging
 import time
-import datetime
 import pathlib
 import numpy as np
 import pandas as pd
@@ -101,6 +100,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
     if bool(simDict):
         reportDictList = []
         simDF = ''
+        tCPUDF = ''
         # loop over all simulations
         for cuSim in simDict:
 
@@ -121,9 +121,10 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
 
             # +++++++++++++++++++++++++++++++++
             # ------------------------
-            particlesList, fieldsList, tSave, dem, reportDict, cfgFinal, Tcpu = com1DFA.com1DFACore(cfg, avalancheDir,
-                    cuSim, inputSimFiles, outDir, relThField=relThField)
+            particlesList, fieldsList, tSave, dem, reportDict, cfgFinal, tCPU = com1DFA.com1DFACore(cfg, avalancheDir,
+                    cuSim, inputSimFiles, outDir, relThField)
 
+            tCPUDF = cfgUtils.appendTcpu2DF(simHash, tCPU, tCPUDF)
             # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
 
             reportDictList.append(reportDict)
@@ -146,8 +147,10 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
         # write report
         gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
-        # append new simulations configuration to old ones (if they exist), return  total dataFrame and write it to csv
         simDF = cfgUtils.convertDF2numerics(simDF)
+        # add cpu time info to the dataframe
+        simDF = simDF.join(tCPUDF)
+        # append new simulations configuration to old ones (if they exist), return  total dataFrame and write it to csv
         simDFNew = simDF.append(simDFOld)
         cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
@@ -216,8 +219,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
     # write mass balance to File
     writeMBFile(infoDict, avaDir, cuSimName)
 
-    tcpuDFA = '%.2f' % (time.time() - startTime)
-    log.info(('cpu time DFA = %s s' % (tcpuDFA)))
+    tCPUDFA = '%.2f' % (time.time() - startTime)
+    log.info(('cpu time DFA = %s s' % (tCPUDFA)))
 
     cfgTrackPart = cfg['TRACKPARTICLES']
     # track particles
@@ -239,9 +242,9 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
     # write report dictionary
     reportDict = createReportDict(avaDir, cuSimName, relName, inputSimLines, cfgGen, reportAreaInfo)
     # add time and mass info to report
-    reportDict = reportAddTimeMassInfo(reportDict, tcpuDFA, infoDict)
+    reportDict = reportAddTimeMassInfo(reportDict, tCPUDFA, infoDict)
 
-    return particlesList, fieldsList, Tsave, dem, reportDict, cfg, infoDict['Tcpu']
+    return particlesList, fieldsList, Tsave, dem, reportDict, cfg, infoDict['tCPU']
 
 
 def prepareReleaseEntrainment(cfg, rel, inputSimLines):
@@ -499,7 +502,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
     return reportST
 
 
-def reportAddTimeMassInfo(reportDict, tcpuDFA, infoDict):
+def reportAddTimeMassInfo(reportDict, tCPUDFA, infoDict):
     """ Add time and mass info to report """
 
     # add mass info
@@ -512,7 +515,7 @@ def reportAddTimeMassInfo(reportDict, tcpuDFA, infoDict):
     reportDict['Simulation Parameters'].update(infoDict['stopInfo'])
 
     # add computation time to report dict
-    reportDict['Simulation Parameters'].update({'Computation time [s]': tcpuDFA})
+    reportDict['Simulation Parameters'].update({'Computation time [s]': tCPUDFA})
 
     return reportDict
 
@@ -1079,7 +1082,7 @@ def DFAIterate(cfg, particles, fields, dem):
         list of particles dictionary
     fieldsList : list
         list of fields dictionary (for each time step saved)
-    Tcpu : dict
+    tCPU : dict
         computation time dictionary
     infoDict : dict
         Dictionary of all simulations carried out
@@ -1087,13 +1090,13 @@ def DFAIterate(cfg, particles, fields, dem):
 
     cfgGen = cfg['GENERAL']
     # Initialise cpu timing
-    Tcpu = {}
-    Tcpu['TimeLoop'] = 0
-    Tcpu['Force'] = 0.
-    Tcpu['ForceSPH'] = 0.
-    Tcpu['Pos'] = 0.
-    Tcpu['Neigh'] = 0.
-    Tcpu['Field'] = 0.
+    tCPU = {}
+    tCPU['timeLoop'] = 0
+    tCPU['timeForce'] = 0.
+    tCPU['timeForceSPH'] = 0.
+    tCPU['timePos'] = 0.
+    tCPU['timeNeigh'] = 0.
+    tCPU['timeField'] = 0.
 
     # Load configuration settings
     tEnd = cfgGen.getfloat('tEnd')
@@ -1127,7 +1130,7 @@ def DFAIterate(cfg, particles, fields, dem):
     log.debug('Use standard time stepping')
     # Initialize time and counters
     nSave = 1
-    Tcpu['nSave'] = nSave
+    tCPU['nSave'] = nSave
     nIter = 1
     nIter0 = 1
     particles['iterate'] = True
@@ -1151,9 +1154,9 @@ def DFAIterate(cfg, particles, fields, dem):
         startTime = time.time()
         log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
-        particles, fields, Tcpu = computeEulerTimeStep(cfgGen, particles, fields, dt, dem, Tcpu, frictType)
+        particles, fields, tCPU = computeEulerTimeStep(cfgGen, particles, fields, dt, dem, tCPU, frictType)
 
-        Tcpu['nSave'] = nSave
+        tCPU['nSave'] = nSave
         particles['t'] = t
 
         # write mass balance info
@@ -1166,12 +1169,12 @@ def DFAIterate(cfg, particles, fields, dem):
         if t >= dtSave[0]:
             Tsave.append(t)
             log.debug('Saving results for time step t = %f s', t)
-            log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
-            log.debug(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
-            log.debug(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
-            log.debug(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
-            log.debug(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
-            log.debug(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
+            log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+            log.debug(('cpu time Force = %s s' % (tCPU['timeForce'] / nIter)))
+            log.debug(('cpu time ForceSPH = %s s' % (tCPU['timeForceSPH'] / nIter)))
+            log.debug(('cpu time Position = %s s' % (tCPU['timePos'] / nIter)))
+            log.debug(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
+            log.debug(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
             fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
             if dtSave.size == 1:
                 dtSave = [2*cfgGen.getfloat('tEnd')]
@@ -1190,27 +1193,27 @@ def DFAIterate(cfg, particles, fields, dem):
         t = t + dt
         nIter = nIter + 1
         nIter0 = nIter0 + 1
-        tcpuTimeLoop = time.time() - startTime
-        Tcpu['TimeLoop'] = Tcpu['TimeLoop'] + tcpuTimeLoop
+        tCPUtimeLoop = time.time() - startTime
+        tCPU['timeLoop'] = tCPU['timeLoop'] + tCPUtimeLoop
 
-    Tcpu['nIter'] = nIter
+    tCPU['nIter'] = nIter
     log.info('Ending computation at time t = %f s', t-dt)
     log.debug('Saving results for time step t = %f s', t-dt)
     log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
     log.info('Computational performances:')
-    log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
-    log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
-    log.info(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
-    log.info(('cpu time Neighbour = %s s' % (Tcpu['Neigh'] / nIter)))
-    log.info(('cpu time Fields = %s s' % (Tcpu['Field'] / nIter)))
-    log.info(('cpu time TimeLoop = %s s' % (Tcpu['TimeLoop'] / nIter)))
-    log.info(('cpu time total other = %s s' % ((Tcpu['Force'] + Tcpu['ForceSPH'] + Tcpu['Pos'] + Tcpu['Neigh'] +
-                                               Tcpu['Field']) / nIter)))
+    log.info(('cpu time Force = %s s' % (tCPU['timeForce'] / nIter)))
+    log.info(('cpu time ForceSPH = %s s' % (tCPU['timeForceSPH'] / nIter)))
+    log.info(('cpu time Position = %s s' % (tCPU['timePos'] / nIter)))
+    log.info(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
+    log.info(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
+    log.info(('cpu time timeLoop = %s s' % (tCPU['timeLoop'] / nIter)))
+    log.info(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH'] + tCPU['timePos'] + tCPU['timeNeigh'] +
+                                               tCPU['timeField']) / nIter)))
     Tsave.append(t-dt)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
     # create infoDict for report and mass log file
-    infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'Tcpu': Tcpu,
+    infoDict = {'massEntrained': massEntrained, 'timeStep': timeM, 'massTotal': massTotal, 'tCPU': tCPU,
                 'final mass': massTotal[-1], 'initial mass': massTotal[0], 'entrained mass': np.sum(massEntrained),
                 'entrained volume': (np.sum(massEntrained)/cfgGen.getfloat('rhoEnt'))}
 
@@ -1286,7 +1289,7 @@ def writeMBFile(infoDict, avaDir, logName):
             mFile.write('%.02f,    %.06f,    %.06f\n' % (t[m], massTotal[m], massEntrained[m]))
 
 
-def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
+def computeEulerTimeStep(cfg, particles, fields, dt, dem, tCPU, frictType):
     """ compute next time step using an euler forward scheme
 
     Parameters
@@ -1301,7 +1304,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
         time step
     dem : dict
         dictionary with dem information
-    Tcpu : dict
+    tCPU : dict
         computation time dictionary
     frictType: int
         indicator for chosen type of friction model
@@ -1312,7 +1315,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
         particles dictionary at t + dt
     fields : dict
         fields dictionary at t + dt
-    Tcpu : dict
+    tCPU : dict
         computation time dictionary
     """
     # get forces
@@ -1321,8 +1324,8 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     # loop version of the compute force
     log.debug('Compute Force C')
     particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, dt, frictType)
-    tcpuForce = time.time() - startTime
-    Tcpu['Force'] = Tcpu['Force'] + tcpuForce
+    tCPUForce = time.time() - startTime
+    tCPU['timeForce'] = tCPU['timeForce'] + tCPUForce
 
     # compute lateral force (SPH component of the calculation)
     startTime = time.time()
@@ -1333,16 +1336,16 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     else:
         log.debug('Compute Force SPH C')
         particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, cfg.getint('sphOption'), gradient=0)
-    tcpuForceSPH = time.time() - startTime
-    Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
+    tCPUForceSPH = time.time() - startTime
+    tCPU['timeForceSPH'] = tCPU['timeForceSPH'] + tCPUForceSPH
 
     # update velocity and particle position
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
     log.debug('Update position C')
     particles = DFAfunC.updatePositionC(cfg, particles, dem, force, dt, typeStop=0)
-    tcpuPos = time.time() - startTime
-    Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
+    tCPUPos = time.time() - startTime
+    tCPU['timePos'] = tCPU['timePos'] + tCPUPos
 
     # Split particles
     if cfg.getint('splitOption') == 0:
@@ -1370,18 +1373,19 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     startTime = time.time()
     log.debug('get Neighbours C')
     particles = DFAfunC.getNeighborsC(particles, dem)
-    tcpuNeigh = time.time() - startTime
-    Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
+
+    tCPUNeigh = time.time() - startTime
+    tCPU['timeNeigh'] = tCPU['timeNeigh'] + tCPUNeigh
 
     # update fields (compute grid values)
     startTime = time.time()
     log.debug('update Fields C')
     # particles, fields = updateFields(cfg, particles, force, dem, fields)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
-    tcpuField = time.time() - startTime
-    Tcpu['Field'] = Tcpu['Field'] + tcpuField
+    tCPUField = time.time() - startTime
+    tCPU['timeField'] = tCPU['timeField'] + tCPUField
 
-    return particles, fields, Tcpu
+    return particles, fields, tCPU
 
 
 def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
