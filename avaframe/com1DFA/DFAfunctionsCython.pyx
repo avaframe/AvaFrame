@@ -219,28 +219,31 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       nx, ny, nz = normalize(nx, ny, nz)
 
       # add artificial viscosity
-      vMeanx, vMeany, vMeanz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], VX, VY, VZ)
+      #vMeanx, vMeany, vMeanz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], VX, VY, VZ)
       # compute normal component of the velocity
-      vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
+      #vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
       # remove normal component (make sure vMean is in the tangent plane)
-      vMeanx = vMeanx - vMeanNorm * nx
-      vMeany = vMeany - vMeanNorm * ny
-      vMeanz = vMeanz - vMeanNorm * nz
+      #vMeanx = vMeanx - vMeanNorm * nx
+      #vMeany = vMeany - vMeanNorm * ny
+      #vMeanz = vMeanz - vMeanNorm * nz
       # compute particle to field velocity difference
-      dvX = vMeanx - ux
-      dvY = vMeany - uy
-      dvZ = vMeanz - uz
-      dvMag = norm(dvX, dvY, dvZ)
-      Alat = 2.0 * math.sqrt((m * h) / rho)
-      fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
+      #dvX = vMeanx - ux
+      #dvY = vMeany - uy
+      #dvZ = vMeanz - uz
+      #dvMag = norm(dvX, dvY, dvZ)
+      #Alat = 2.0 * math.sqrt((m * h) / rho)
+      #fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
 
       # update velocity with artificial viscosity - implicit method
-      ux = ux + fDrag * vMeanx
-      uy = uy + fDrag * vMeany
-      uz = uz + fDrag * vMeanz
-      ux = ux / (1.0 + fDrag)
-      uy = uy / (1.0 + fDrag)
-      uz = uz / (1.0 + fDrag)
+      #ux = ux + fDrag * vMeanx
+      #uy = uy + fDrag * vMeany
+      #uz = uz + fDrag * vMeanz
+      #ux = ux / (1.0 + fDrag)
+      #uy = uy / (1.0 + fDrag)
+      #uz = uz / (1.0 + fDrag)
+
+      # update velocity with artificial viscosity - Amaury
+
 
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
@@ -1116,7 +1119,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double K1 = 1
   cdef double K2 = 1
   cdef double gravAcc3
-  cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr
+  cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr, lapluX, lapluY, lapluZ
   cdef double g1, g2, g11, g12, g22, g33
   cdef double m11, m12, m22, GG1, GG2
   cdef double x, y, z, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
@@ -1127,12 +1130,16 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef int indx, indy
   cdef int j, ic, n, p, l, imax, imin, iPstart, iPend
   cdef int grad = gradient
+  cdef double epsilon = 0.001
 
   # loop on particles
   for j in range(N):
     gradhX = 0
     gradhY = 0
     gradhZ = 0
+    lapluX = 0
+    lapluY = 0
+    lapluZ = 0
     G1 = 0
     G2 = 0
     m11 = 0
@@ -1206,10 +1213,14 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
-                      mdwdrr = mass[l] * dwdr / r
+                      ml = mass[l]
+                      mdwdrr = ml * dwdr / r
                       gradhX = gradhX + mdwdrr*dx
                       gradhY = gradhY + mdwdrr*dy
                       gradhZ = gradhZ + mdwdrr*dz
+                      lapluX += ml*dfacKernel*r*(2*dx*dx/(r*r) + hr*(1/r - dx*dx/(r*r*r))) * uxArray[l]
+                      lapluY += ml*dfacKernel*r*(2*dy*dy/(r*r) + hr*(1/r - dy*dy/(r*r*r))) * uyArray[l]
+                      lapluZ += ml*dfacKernel*r*(2*dz*dz/(r*r) + hr*(1/r - dz*dz/(r*r*r))) * uzArray[l]
                       gravAcc3 = gravAcc
 
                 if SPHoption == 2:
@@ -1339,9 +1350,10 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         GHY[j] = GHY[j] - gradhY / rho * mass[j] * gravAcc3
         GHZ[j] = GHZ[j] - gradhZ / rho * mass[j] * gravAcc3
       else:
-        GHX[j] = GHX[j] + gradhX / rho* mass[j] * gravAcc3
-        GHY[j] = GHY[j] + gradhY / rho* mass[j] * gravAcc3
-        GHZ[j] = GHZ[j] + gradhZ / rho* mass[j] * gravAcc3
+        mass_j = mass[j]
+        GHX[j] = GHX[j] + (gradhX*gravAcc3 + epsilon*lapluX)  / rho* mass_j
+        GHY[j] = GHY[j] + (gradhX*gravAcc3 + epsilon*lapluX)  / rho* mass_j
+        GHZ[j] = GHZ[j] + (gradhX*gravAcc3 + epsilon*lapluX)  / rho* mass_j
 
   return GHX, GHY, GHZ
 
