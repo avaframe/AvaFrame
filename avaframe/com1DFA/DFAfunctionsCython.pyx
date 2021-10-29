@@ -1506,13 +1506,13 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
   cdef int lInd, rInd
   cdef int indx, indy
   cdef int k, ic, n, p, l, imax, imin, iPstart, iPend
-  cdef double hk, ck,
+  cdef double hk, ck
 
   # loop on particles
   for k in range(N):
     # Hk: SPH computed flow depth
-    Hk = 0
-    Ck = 0
+    hk = 0
+    ck = 0
     x = xArray[k]
     y = yArray[k]
     z = zArray[k]
