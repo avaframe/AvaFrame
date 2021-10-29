@@ -154,3 +154,57 @@ def addDem2Plot(ax, dem, what='slope'):
                             cmap=cmap, norm=None)
     ax.contour(xArray, yArray, dem['rasterData'], levels=10, colors='k')
     return ax
+
+
+def plotParticles(particlesList, cfg, dem):
+    """ Plot time series of tracked partcles
+    Parameters
+    ----------
+    particlesList: list
+        list or particles dictionaries
+    cfg : dict
+        configuration read from ini file
+    dem: dict
+        dem dictionary with normal information
+
+    """
+    if cfgFlags.getboolean('showPlot'):
+        for count in range(len(particlesList)):
+            fig2 = plt.figure()
+            ax1 = plt.subplot(111)
+            particles = particlesList[count]
+            ax1 = updatePlot(particles, ax1, dem)
+            ax1 = addDem2Plot(ax1, dem, what='slope')
+            # plt.pause(0.1)
+            plt.show()
+
+        # ani = FuncAnimation(fig2, update, round(len(Particles)),
+        #                     fargs=(Particles, xllc, yllc, ax1, XX, YY, dem))
+        # # plt.show()
+        #
+        # writer = PillowWriter(fps=4)
+        # # ani.save("MalSecRel.gif", writer=writer)
+        # ani.save("testTrackAlr1.gif", writer=writer)
+
+
+def updatePlot(particles, ax, dem):
+    """Update axes with particles (tracked particles are highlighted in red)
+    """
+
+    header = dem['header']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+
+    X = particles['x'] + xllc
+    Y = particles['y'] + yllc
+    cmap = pU.cmapSpeed
+    ax.clear()
+    ax.set_title('t=%.2f s' % particles['t'])
+    variableC = particles['m']
+    print(np.nanmin(variableC), np.nanmax(variableC))
+    variableS = (particles['m']/100)**1.5
+    cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(variableC), np.nanmax(variableC), continuous=pU.contCmap)
+    # set range and steps of colormap
+    sc = ax.scatter(X, Y, c=variableC, s=variableS, cmap=cmap, marker='.')
+    pU.addColorBar(sc, ax, ticks, 'kg')
+    return ax
