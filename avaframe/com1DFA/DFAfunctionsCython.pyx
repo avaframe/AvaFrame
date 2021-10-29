@@ -1101,6 +1101,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   # particle information
   cdef double[:] mass = particles['m']
   cdef double[:] h = particles['h']
+  cdef double[:] hSPH, cKernel
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
   cdef double[:] zArray = particles['z']
@@ -1128,11 +1129,13 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef int k, ic, n, p, l, imax, imin, iPstart, iPend
   cdef int grad = gradient
   # artificial viscosity parameters
-  cdef double dwdrr, vol, volr
+  cdef double dwdrr, vol, volr, wkl
   cdef double lapluX, lapluY, lapluZ, viscX, viscY, viscZ, pikl
   cdef double epsilon = 100
   cdef double hk, hl, ck, cl, lambdakl
+  cdef double hSPHk, hSPHl, cKernelk, cKernell
 
+  hSPH, cKernel = computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid)
   # loop on particles
   for k in range(N):
     gradhX = 0
@@ -1157,7 +1160,11 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
     ux = uxArray[k]
     uy = uyArray[k]
     uz = uzArray[k]
+    # bilinear computed flow depth
     hk = h[k]
+    # SPH computed flow depth
+    hSPHk = hSPH[k]
+    cKernelk = cKernel[k]
     # locate particle in SPH grid
     indx = <int>math.round(x / cszNeighbourGrid)
     indy = <int>math.round(y / cszNeighbourGrid)
@@ -1217,6 +1224,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   #dz = 0
                   # get norm of r = xk - xl
                   r = norm(dx, dy, dz)
+                  gravAcc3 = gravAcc
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
                       dx = minRKern * rKernel * dx
@@ -1227,7 +1235,14 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
                       ml = mass[l]
+                      # bilinear computed flow depth
                       hl = h[l]
+                      # SPH computed flow depth
+                      hSPHl = hSPH[l]
+                      # SPH corrected kernel
+                      cKernell = cKernel[l]
+
+#-----------------------SPH gradient computation--------------------------------
 
                       # standard SPH formulation
                       mdwdrr = ml * dwdr / r
@@ -1236,20 +1251,24 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                       gradhZ = gradhZ + mdwdrr*dz
 
                       # symetric SPH formulation
-                      # mdwdrr = ml*(1 + hk/hl) * dwdr / r
+                      # bilinear flow depth interpolation
+                      #mdwdrr = ml*(1 + hk/hl) * dwdr / r
+                      # SPH flow depth interpolation
+                      # mdwdrr = ml*(1 + hSPHk/hSPHl) * dwdr / r
                       # gradhX = gradhX + mdwdrr*dx
                       # gradhY = gradhY + mdwdrr*dy
                       # gradhZ = gradhZ + mdwdrr*dz
 
                       # kernel correction
-                      # mdwdrr = ml*(1 + hk/hl) * dwdr / r
-                      # gradhX = gradhX + mdwdrr * () * dx
-                      # gradhY = gradhY + mdwdrr*dy
-                      # gradhZ = gradhZ + mdwdrr*dz
+                      # cKernell = cKernel[l]
+                      # wkl = facKernel * hr * hr * hr
+                      # mdwdrr = ml*(1 + hSPHk/hSPHl) * dwdr / r
+                      # corrKernel = mdwdrr * (cKernelk + cKernell*cKernell*wkl)
+                      # gradhX = gradhX + corrKernel*dx
+                      # gradhY = gradhY + corrKernel*dy
+                      # gradhZ = gradhZ + corrKernel*dz
 
-                      gravAcc3 = gravAcc
-
-                      #-Computation of the artificial viscosity-----------------
+#-----------------------artificial viscosity computation------------------------
 
                       # artificial 2nd order viscous term - SPH computed
                       #lapluX = lapluX + ml*dfacKernel*r*(2*dx*dx/(r*r) + hr*(1/r - dx*dx/(r*r*r))) * uxArray[l]
@@ -1265,6 +1284,9 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                       # lapluZ = lapluZ + duz * volr * dwdrr * dz
 
                       # ATA artificial viscosity
+                      # mhdwdrr = ml/hSPHl * dwdr / r
+                      # ck = math.sqrt(gravAcc*hSPHk)
+                      # cl = math.sqrt(gravAcc*hSPHl)
                       mhdwdrr = ml/hl * dwdr / r
                       ck = math.sqrt(gravAcc*hk)
                       cl = math.sqrt(gravAcc*hl)
@@ -1420,6 +1442,139 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         GHZ[k] = GHZ[k] + (gradhZ*gravAcc3  + viscZ) / rho * mk
 
   return GHX, GHY, GHZ
+
+
+@cython.boundscheck(False)  # Deactivate bounds checking
+@cython.wraparound(False)   # Deactivate negative indexing.
+@cython.cdivision(True)
+def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
+  """ compute lateral forces acting on the particles (SPH component)
+
+  Cython implementation
+
+  Parameters
+  ----------
+  cfg: configparser
+      configuration for DFA simulation
+  particles : dict
+      particles dictionary at t
+  headerNeighbourGrid : dict
+      neighbour search header dictionary (information about SPH grid)
+  headerNormalGrid : double
+      normal grid header dictionary (information about the DEM grid)
+  Returns
+  -------
+  H : 1D numpy array
+      SPH computed flow depth
+  C : 1D numpy array
+      SPH kernel correction
+  """
+  # get all inputs
+  cdef double rho = cfg.getfloat('rho')
+  # configuration parameters
+  cdef double minRKern = cfg.getfloat('minRKern')
+  cdef int interpOption = cfg.getint('interpOption')
+  cdef int SPHoption = cfg.getint('sphOption')
+  # grid normal raster information
+  cdef double cszNormal = headerNormalGrid['cellsize']
+  cdef int nRowsNormal = headerNormalGrid['nrows']
+  cdef int nColsNormal = headerNormalGrid['ncols']
+  # neighbour search grid information and neighbour information
+  cdef double cszNeighbourGrid = headerNeighbourGrid['cellsize']
+  cdef int nRowsNeighbourGrid = headerNeighbourGrid['nrows']
+  cdef int nColsNeighbourGrid = headerNeighbourGrid['ncols']
+  cdef int[:] indPartInCell = particles['indPartInCell']
+  cdef int[:] partInCell = particles['partInCell']
+  # SPH kernel
+  # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
+  cdef double rKernel = cszNeighbourGrid
+  cdef double facKernel = 10.0 / (math.pi * rKernel * rKernel * rKernel * rKernel * rKernel)
+  # particle information
+  cdef double[:] mass = particles['m']
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] zArray = particles['z']
+  cdef int N = xArray.shape[0]
+
+  # initialize variables and outputs
+  cdef double[:] H = np.zeros(N, dtype=np.float64)
+  cdef double[:] C = np.zeros(N, dtype=np.float64)
+  cdef double[:] DWL = np.zeros(N, dtype=np.float64)
+  cdef double mwkl, ml
+  cdef double x, y, z
+  cdef double dx, dy, dz, r, hr, wkl
+  cdef int lInd, rInd
+  cdef int indx, indy
+  cdef int k, ic, n, p, l, imax, imin, iPstart, iPend
+  cdef double hk, ck,
+
+  # loop on particles
+  for k in range(N):
+    # Hk: SPH computed flow depth
+    Hk = 0
+    Ck = 0
+    x = xArray[k]
+    y = yArray[k]
+    z = zArray[k]
+    # locate particle in SPH grid
+    indx = <int>math.round(x / cszNeighbourGrid)
+    indy = <int>math.round(y / cszNeighbourGrid)
+
+    # check if we are on the bottom ot top row!!!
+    lInd = -1
+    rInd = 2
+    if indy == 0:
+        lInd = 0
+    if indy == nRowsNeighbourGrid - 1:
+        rInd = 1
+    for n in range(lInd, rInd):
+        ic = (indx - 1) + nColsNeighbourGrid * (indy + n)
+        # make sure not to take particles from the other edge
+        imax = max(ic, nColsNeighbourGrid * (indy + n))
+        imin = min(ic+3, nColsNeighbourGrid * (indy + n + 1))
+        iPstart = indPartInCell[imax]
+        iPend = indPartInCell[imin]
+        # loop on all particles in neighbour boxes
+        for p in range(iPstart, iPend):
+            # index of particle in neighbour box
+            l = partInCell[p]
+            if k != l:
+                dx = xArray[l] - x
+                dy = yArray[l] - y
+                dz = zArray[l] - z
+                if SPHoption == 1:
+                  # like option 2 with dz!=0
+                  #dz = 0
+                  # get norm of r = xk - xl
+                  r = norm(dx, dy, dz)
+                  if r < minRKern * rKernel:
+                      # impose a minimum distance between particles
+                      dx = minRKern * rKernel * dx
+                      dy = minRKern * rKernel * dy
+                      dz = minRKern * rKernel * dz
+                      r = minRKern * rKernel
+                  if r < rKernel:
+                      hr = rKernel - r
+                      wkl = facKernel * hr * hr * hr
+                      ml = mass[l]
+
+                      # standard SPH formulation
+                      mwkl = ml * wkl
+                      hk = hk + mwkl
+                      ck = ck + ml/rho*wkl
+
+                      #symetric SPH formulation
+                      # mwkl = ml*(1 + hk/hl)*wkl
+                      # hk = ck + mwkl
+
+                      #kernel correction
+                      # mwkl = ml*(1 + hk/hl)*wkl
+                      # Hk = Hk + mwkl
+
+    H[k] = H[k] + hk
+    C[k] = ck
+
+  return H, C
 
 
 cpdef double norm(double x, double y, double z):
