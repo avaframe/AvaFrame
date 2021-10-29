@@ -178,7 +178,7 @@ cmapProb['cmap'] = cmapProbmap
 cmapProb['colors'] = colorsProb
 cmapProb['levels'] = levProb
 
-colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pfd': cmapDepth, 'PR': cmapPres, 'FV': cmapSpeed,
+colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pfd': cmapDepth, 'P': cmapPres, 'FV': cmapSpeed,
              'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FDV': cmapSpeed ,'FD': cmapDepth, 'prob': cmapProb}
 
 cmapDEM = cmapGreys

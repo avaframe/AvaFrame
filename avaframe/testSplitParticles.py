@@ -15,7 +15,7 @@ def runSplitPartTest():
     # pattern 2: same as pattern 1 without the particle in the center
     splittingPattern = 2
     # numper of particles after splitting
-    nPartSplit = 7
+    nPartSplit = 2
     # initialize C, b and Q
     Ch = 0
     bh = np.zeros((nPartSplit, 1))
@@ -38,8 +38,8 @@ def runSplitPartTest():
 
     N = 50
     M = 50
-    EPSILON = np.linspace(0.1, 0.8, M)
-    R0NewList = np.linspace(0.3, 1, N)
+    EPSILON = np.linspace(0.05, 0.7, M)
+    R0NewList = np.linspace(-1, 1, N)
     errorHEps = np.zeros((N, M))
     errorgradHEps = np.zeros((N, M))
     M0 = np.zeros((N, M))
@@ -59,6 +59,7 @@ def runSplitPartTest():
                 yPart[1:] = yEps
             elif splittingPattern == 2:
                 alpha = 2*math.pi/nPartSplit*np.arange(nPartSplit)
+                alpha[nPartSplit-1] = 2*math.pi/nPartSplit * (nPartSplit - 1 + R0New)
                 xPart = eps*np.cos(alpha)
                 yPart = eps*np.sin(alpha)
                 zPart = np.zeros(nPartSplit)
@@ -77,7 +78,7 @@ def runSplitPartTest():
                 rkx = xGrid - xPart[k]
                 rky = yGrid - yPart[k]
                 rkz = zGrid - zPart[k]
-                hk, gradkX, gradkY, gradkZ = getGradW(R0New, minRKern, rkx, rky, rkz)
+                hk, gradkX, gradkY, gradkZ = getGradW(R0, minRKern, rkx, rky, rkz)
                 gradiGradk = DFAtls.scalProd(gradiX, gradiY, gradiZ, gradkX, gradkY, gradkZ)
                 bh[k] = np.sum(hk*hi)
                 bgradH[k] = np.sum(gradiGradk)
@@ -85,7 +86,7 @@ def runSplitPartTest():
                     rlx = xGrid - xPart[l]
                     rly = yGrid - yPart[l]
                     rlz = zGrid - zPart[l]
-                    hl, gradlX, gradlY, gradlZ = getGradW(R0New, minRKern, rlx, rly, rlz)
+                    hl, gradlX, gradlY, gradlZ = getGradW(R0, minRKern, rlx, rly, rlz)
                     gradkGradl = DFAtls.scalProd(gradkX, gradkY, gradkZ, gradlX, gradlY, gradlZ)
                     sum = np.sum(gradkGradl)
                     Qh[k, l] = np.sum(hl*hk)
@@ -98,7 +99,7 @@ def runSplitPartTest():
                 # constraint: sum of lambda should be 1
                 cons = ({'type': 'eq', 'fun': lambda x:  x[0] + (nPartSplit-1)*x[1] - 1})
                 x0 = np.ones((2, 1)) / nPartSplit
-                bnds = ((0.001, None), (0.1369, None))
+                bnds = ((0.001, None), (0.01, None))
                 res = minimize(error2, x0, args=(Ch, bh, Qh, nPartSplit), method='SLSQP', bounds=bnds, constraints=cons, tol=None)
                 errH = error2(res.x, Ch, bh, Qh, nPartSplit)
                 errgradH = error2(res.x, CgradH, bgradH, QgradH, nPartSplit)
@@ -138,7 +139,7 @@ def runSplitPartTest():
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapDepth, np.nanmin(M0), np.nanmax(M0), continuous=True)
 
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-    ref0, im = pU.NonUnifIm(ax1, EPSILON, R0NewList , M0, 'epsilon', 'R0',
+    ref0, im = pU.NonUnifIm(ax1, EPSILON, R0NewList, M0, 'epsilon', 'R0',
                             extent=[EPSILON.min(), EPSILON.max(), R0NewList.min(), R0NewList.max()],
                             cmap=cmap, norm=None)
     Cp1 = ax1.contour(EPSILON, R0NewList, M0, levels=20, colors='k')

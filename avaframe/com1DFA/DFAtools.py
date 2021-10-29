@@ -6,6 +6,7 @@
 import logging
 import numpy as np
 import numbers
+import math
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
@@ -381,6 +382,173 @@ def splitPart(particles, thresholdMassSplit):
                         particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
 
     particles['mTot'] = np.sum(particles['m'])
+    return particles
+
+
+def testSplitPart(particles, cfg, dem):
+    """Split big particles
+
+    Split particles bigger than 1.5 times the massPerPart
+
+    Parameters
+    ----------
+    particles : dict
+        particles dictionary
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary
+
+    """
+    # get cfg info
+    rho = cfg.getfloat('rho')
+    sphKernelRadius = cfg.getfloat('sphKernelRadius')
+    detlaTH = cfg.getfloat('deltaTh')
+    rng = np.random.default_rng(int(cfg['seed']))
+    minPartCoeff = 0.25  # cfg['minPartCoeff']
+    minMassCoeff = 10  # cfg['minMassCoeff']
+    h0 = 1  # cfg['h0']
+    nSplit = 2
+    # get dem info
+    csz = dem['header']['cellsize']
+    Nx = dem['Nx']
+    Ny = dem['Ny']
+    Nz = dem['Nz']
+    #
+    aMax = sphKernelRadius**2 * detlaTH / (minPartCoeff * h0)
+    mMin = rho * sphKernelRadius**2 * detlaTH / minMassCoeff
+    mPart = particles['m']
+    hPart = particles['h']
+    ux = particles['ux']
+    uy = particles['uy']
+    uz = particles['uz']
+    aPart = mPart/(rho*hPart)
+    tooBig = np.where((aPart > aMax) & (mPart/nSplit > mMin))[0]
+    nNewPart = 0
+    if np.size(tooBig) > 0:
+        # loop on particles to split
+        for ind in tooBig:
+            # get old values
+            nPart = particles['Npart']
+            nID = particles['nID']
+            # compute new mass and particles to add
+            mNew = mPart[ind] / nSplit
+            nAdd = nSplit-1
+            nNewPart = nNewPart + nAdd
+            # get position of new particles
+            rNew = np.sqrt(aPart[ind] / (math.pi * nSplit))
+            alpha = 2*math.pi*(np.arange(nSplit)/nSplit + rng.random(1))
+            cos = rNew*np.cos(alpha)
+            sin = rNew*np.sin(alpha)
+            nx, ny, nz = getNormalArray(np.array([particles['x'][ind]]), np.array([particles['y'][ind]]), Nx, Ny, Nz, csz)
+            e2x, e2y, e2z = crossProd(nx, ny, nz, ux[ind], uy[ind], uz[ind])
+            e2x, e2y, e2z = normalize(e2x, e2y, e2z)
+            velMag = norm(ux[ind], uy[ind], uz[ind])
+            xNew = particles['x'][ind] + cos * ux[ind] / velMag + sin * e2x
+            yNew = particles['y'][ind] + cos * uy[ind] / velMag + sin * e2y
+            zNew = particles['z'][ind] + cos * uz[ind] / velMag + sin * e2z
+            # update total number of particles and number of IDs used so far
+            particles['Npart'] = particles['Npart'] + nAdd
+            particles['nID'] = nID + nAdd
+            # log.info('Spliting particle %s in %s' % (ind, nSplit))
+            for key in particles:
+                # update splitted particle mass
+                particles['m'][ind] = mNew
+                particles['x'][ind] = xNew[0]
+                particles['y'][ind] = yNew[0]
+                particles['z'][ind] = zNew[0]
+                # add new particles at the end of the arrays
+                if type(particles[key]).__module__ == np.__name__:
+                    # create unique ID for the new particles
+                    if key == 'ID':
+                        particles['ID'] = np.append(particles['ID'], np.arange(nID, nID + nAdd, 1))
+                    elif key == 'x':
+                        particles[key] = np.append(particles[key], xNew[1])
+                    elif key == 'y':
+                        particles[key] = np.append(particles[key], yNew[1])
+                    elif key == 'z':
+                        particles[key] = np.append(particles[key], zNew[1])
+                    # set the parent properties to new particles due to splitting
+                    elif np.size(particles[key]) == nPart:
+                        particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
+        log.info('Added %s because of splitting' % (nNewPart))
+
+    particles['mTot'] = np.sum(particles['m'])
+    return particles
+
+
+def testMergePart(particles, cfg, dem):
+    """Split big particles
+
+    Split particles bigger than 1.5 times the massPerPart
+
+    Parameters
+    ----------
+    particles : dict
+        particles dictionary
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary
+
+    """
+    # get cfg info
+    rho = cfg.getfloat('rho')
+    sphKernelRadius = cfg.getfloat('sphKernelRadius')
+    detlaTH = cfg.getfloat('deltaTh')
+    minPartCoeff = 0.25  # cfg['minPartCoeff']
+    maxPartCoeff = 2.5  # cfg['minPartCoeff']
+    h0 = 1  # cfg['h0']
+    #
+    aMin = sphKernelRadius**2 * detlaTH / (maxPartCoeff * h0)
+    mPart = particles['m']
+    hPart = particles['h']
+    xPart = particles['x']
+    yPart = particles['y']
+    zPart = particles['z']
+    ux = particles['ux']
+    uy = particles['uy']
+    uz = particles['uz']
+    aPart = mPart/(rho*hPart)
+    tooSmall = np.where(aPart < aMin)[0]
+    keepParticle = np.ones((particles['Npart']), dtype=bool)
+    nRemoved = 0
+    if np.size(tooSmall) > 0:
+        # loop on particles to merge
+        for ind in tooSmall:
+            if keepParticle[ind]:
+                # find nearest particle
+                r = norm(xPart-xPart[ind], yPart-yPart[ind], zPart-zPart[ind])
+                r[ind] = 2*sphKernelRadius
+                r[~keepParticle] = 2*sphKernelRadius
+                neighbourInd = np.argmin(r)
+                rMerge = r[neighbourInd]
+                if rMerge < sphKernelRadius:
+                    # remove neighbourInd from tooSmall if possible
+                    keepParticle[neighbourInd] = False
+                    nRemoved = nRemoved + 1
+                    # compute new mass and particles to add
+                    mNew = mPart[ind] + mPart[neighbourInd]
+                    uxNew = (mPart[ind]*ux[ind] + mPart[neighbourInd]*ux[neighbourInd]) / mNew
+                    uyNew = (mPart[ind]*uy[ind] + mPart[neighbourInd]*uy[neighbourInd]) / mNew
+                    uzNew = (mPart[ind]*uz[ind] + mPart[neighbourInd]*uz[neighbourInd]) / mNew
+                    xPartNew = (mPart[ind]*xPart[ind] + mPart[neighbourInd]*xPart[neighbourInd]) / mNew
+                    yPartNew = (mPart[ind]*yPart[ind] + mPart[neighbourInd]*yPart[neighbourInd]) / mNew
+                    zPartNew = (mPart[ind]*zPart[ind] + mPart[neighbourInd]*zPart[neighbourInd]) / mNew
+                    for key in particles:
+                        # update splitted particle mass
+                        particles['m'][ind] = mNew
+                        particles['x'][ind] = xPartNew
+                        particles['y'][ind] = yPartNew
+                        particles['z'][ind] = zPartNew
+                        particles['ux'][ind] = uxNew
+                        particles['uy'][ind] = uyNew
+                        particles['uz'][ind] = uzNew
+                        # ToDo: mabe also update h
+
+        particles = removePart(particles, keepParticle, nRemoved, reasonString='because of colocation')
     return particles
 
 

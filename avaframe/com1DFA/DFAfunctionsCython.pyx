@@ -711,7 +711,9 @@ def updatePositionC(cfg, particles, dem, force, DT):
       particles = DFAtls.removePart(particles, mask, nRemove, 'because they exited the domain')
 
   # split particles with too much mass
-  particles = DFAtls.splitPart(particles, thresholdMassSplit)
+  # particles = DFAtls.splitPart(particles, thresholdMassSplit)
+  particles = DFAtls.testSplitPart(particles, cfg, dem)
+  particles = DFAtls.testMergePart(particles, cfg, dem)
   return particles
 
 
