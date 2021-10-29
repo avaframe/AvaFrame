@@ -219,31 +219,28 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       nx, ny, nz = normalize(nx, ny, nz)
 
       # add artificial viscosity
-      #vMeanx, vMeany, vMeanz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], VX, VY, VZ)
+      vMeanx, vMeany, vMeanz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], VX, VY, VZ)
       # compute normal component of the velocity
-      #vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
+      vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
       # remove normal component (make sure vMean is in the tangent plane)
-      #vMeanx = vMeanx - vMeanNorm * nx
-      #vMeany = vMeany - vMeanNorm * ny
-      #vMeanz = vMeanz - vMeanNorm * nz
+      vMeanx = vMeanx - vMeanNorm * nx
+      vMeany = vMeany - vMeanNorm * ny
+      vMeanz = vMeanz - vMeanNorm * nz
       # compute particle to field velocity difference
-      #dvX = vMeanx - ux
-      #dvY = vMeany - uy
-      #dvZ = vMeanz - uz
-      #dvMag = norm(dvX, dvY, dvZ)
-      #Alat = 2.0 * math.sqrt((m * h) / rho)
-      #fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
+      dvX = vMeanx - ux
+      dvY = vMeany - uy
+      dvZ = vMeanz - uz
+      dvMag = norm(dvX, dvY, dvZ)
+      Alat = 2.0 * math.sqrt((m * h) / rho)
+      fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
 
       # update velocity with artificial viscosity - implicit method
-      #ux = ux + fDrag * vMeanx
-      #uy = uy + fDrag * vMeany
-      #uz = uz + fDrag * vMeanz
-      #ux = ux / (1.0 + fDrag)
-      #uy = uy / (1.0 + fDrag)
-      #uz = uz / (1.0 + fDrag)
-
-      # update velocity with artificial viscosity - Amaury
-
+      ux = ux + fDrag * vMeanx
+      uy = uy + fDrag * vMeany
+      uz = uz + fDrag * vMeanz
+      ux = ux / (1.0 + fDrag)
+      uy = uy / (1.0 + fDrag)
+      uz = uz / (1.0 + fDrag)
 
       # get normal at the particle estimated end location
       xEnd = x + dt * ux
@@ -1119,38 +1116,48 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double K1 = 1
   cdef double K2 = 1
   cdef double gravAcc3
-  cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr, lapluX, lapluY, lapluZ
+  cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr
   cdef double g1, g2, g11, g12, g22, g33
-  cdef double m11, m12, m22, GG1, GG2
+  cdef double m11, m12, m22, GG1, GG2, mk, ml
   cdef double x, y, z, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
-  cdef double dx, dy, dz, dn, r, hr, dwdr, wKernel
+  cdef double dx, dy, dz, dux, duy, duz, dn, r, hr, dwdr, wKernel
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
   cdef int lInd, rInd
   cdef int indx, indy
-  cdef int j, ic, n, p, l, imax, imin, iPstart, iPend
+  cdef int k, ic, n, p, l, imax, imin, iPstart, iPend
   cdef int grad = gradient
-  cdef double epsilon = 0.001
+  # artificial viscosity parameters
+  cdef double dwdrr, vol, volr
+  cdef double lapluX, lapluY, lapluZ, viscX, viscY, viscZ, pikl
+  cdef double epsilon = 100
+  cdef double hk, hl, ck, cl, lambdakl
 
   # loop on particles
-  for j in range(N):
+  for k in range(N):
     gradhX = 0
     gradhY = 0
     gradhZ = 0
-    lapluX = 0
-    lapluY = 0
-    lapluZ = 0
+    # adding an artificial second order viscosity term
+    # lapluX = 0
+    # lapluY = 0
+    # lapluZ = 0
+    # adding artificial viscosity
+    viscX = 0
+    viscY = 0
+    viscZ = 0
     G1 = 0
     G2 = 0
     m11 = 0
     m12 = 0
     m22 = 0
-    x = xArray[j]
-    y = yArray[j]
-    z = zArray[j]
-    ux = uxArray[j]
-    uy = uyArray[j]
-    uz = uzArray[j]
+    x = xArray[k]
+    y = yArray[k]
+    z = zArray[k]
+    ux = uxArray[k]
+    uy = uyArray[k]
+    uz = uzArray[k]
+    hk = h[k]
     # locate particle in SPH grid
     indx = <int>math.round(x / cszNeighbourGrid)
     indy = <int>math.round(y / cszNeighbourGrid)
@@ -1197,38 +1204,82 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         for p in range(iPstart, iPend):
             # index of particle in neighbour box
             l = partInCell[p]
-            if j != l:
+            if k != l:
                 dx = xArray[l] - x
                 dy = yArray[l] - y
                 dz = zArray[l] - z
+                # need speed difference for ATA artificial viscosity
+                dux = uxArray[l] - ux
+                duy = uyArray[l] - uy
+                duz = uzArray[l] - uz
                 if SPHoption == 1:
-                  dz = 0
-                  # get norm of r = xj - xl
+                  # like option 2 with dz!=0
+                  #dz = 0
+                  # get norm of r = xk - xl
                   r = norm(dx, dy, dz)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
-                      # dx = minRKern * rKernel * dx
-                      # dy = minRKern * rKernel * dy
+                      dx = minRKern * rKernel * dx
+                      dy = minRKern * rKernel * dy
+                      dz = minRKern * rKernel * dz
                       r = minRKern * rKernel
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
                       ml = mass[l]
+                      hl = h[l]
+
+                      # standard SPH formulation
                       mdwdrr = ml * dwdr / r
                       gradhX = gradhX + mdwdrr*dx
                       gradhY = gradhY + mdwdrr*dy
                       gradhZ = gradhZ + mdwdrr*dz
-                      lapluX += ml*dfacKernel*r*(2*dx*dx/(r*r) + hr*(1/r - dx*dx/(r*r*r))) * uxArray[l]
-                      lapluY += ml*dfacKernel*r*(2*dy*dy/(r*r) + hr*(1/r - dy*dy/(r*r*r))) * uyArray[l]
-                      lapluZ += ml*dfacKernel*r*(2*dz*dz/(r*r) + hr*(1/r - dz*dz/(r*r*r))) * uzArray[l]
+
+                      # symetric SPH formulation
+                      # mdwdrr = ml*(1 + hk/hl) * dwdr / r
+                      # gradhX = gradhX + mdwdrr*dx
+                      # gradhY = gradhY + mdwdrr*dy
+                      # gradhZ = gradhZ + mdwdrr*dz
+
+                      # kernel correction
+                      # mdwdrr = ml*(1 + hk/hl) * dwdr / r
+                      # gradhX = gradhX + mdwdrr * () * dx
+                      # gradhY = gradhY + mdwdrr*dy
+                      # gradhZ = gradhZ + mdwdrr*dz
+
                       gravAcc3 = gravAcc
+
+                      #-Computation of the artificial viscosity-----------------
+
+                      # artificial 2nd order viscous term - SPH computed
+                      #lapluX = lapluX + ml*dfacKernel*r*(2*dx*dx/(r*r) + hr*(1/r - dx*dx/(r*r*r))) * uxArray[l]
+                      #lapluY = lapluY + ml*dfacKernel*r*(2*dy*dy/(r*r) + hr*(1/r - dy*dy/(r*r*r))) * uyArray[l]
+                      #lapluZ = lapluZ + ml*dfacKernel*r*(2*dz*dz/(r*r) + hr*(1/r - dz*dz/(r*r*r))) * uzArray[l]
+
+                      # artificial 2nd order viscous term - semi SPH computed
+                      # dwdrr = dwdr/r
+                      # vol = ml/(rho*hk)
+                      # volr = vol/r
+                      # lapluX = lapluX + dux * volr * dwdrr * dx
+                      # lapluY = lapluY + duy * volr * dwdrr * dy
+                      # lapluZ = lapluZ + duz * volr * dwdrr * dz
+
+                      # ATA artificial viscosity
+                      mhdwdrr = ml/hl * dwdr / r
+                      ck = math.sqrt(gravAcc*hk)
+                      cl = math.sqrt(gravAcc*hl)
+                      lamdbakl = (ck+cl)/2
+                      pikl = - lamdbakl * scalProd(dux, duy, duz, dx, dy, dz) / r
+                      viscX = viscX + pikl * mhdwdrr * dx
+                      viscY = viscY + pikl * mhdwdrr * dy
+                      viscZ = viscZ + pikl * mhdwdrr * dz
 
                 if SPHoption == 2:
                   # get coordinates in local coord system
                   r1 = scalProd(dx, dy, dz, ux, uy, uz)
                   r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
                   # impse r3=0 even if the particle is not exactly on the tengent plane
-                  # get norm of r = xj - xl
+                  # get norm of r = xk - xl
                   r = norm(r1, r2, 0)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
@@ -1252,7 +1303,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   r1 = scalProd(dx, dy, dz, ux, uy, uz)
                   r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
                   # impse r3=0 even if the particle is not exactly on the tengent plane
-                  # get norm of r = xj - xl
+                  # get norm of r = xk - xl
                   r = norm(r1, r2, 0)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
@@ -1262,7 +1313,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
-                      mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
+                      mdwdrr = mass[l] * (1 - h[k]/h[l]) * dwdr / r
                       G1 = mdwdrr * K1*r1
                       G2 = mdwdrr * K2*r2
 
@@ -1276,7 +1327,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   r1 = scalProd(dx, dy, dz, ux, uy, uz)
                   r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
                   # impse r3=0 even if the particle is not exactly on the tengent plane
-                  # get norm of r = xj - xl
+                  # get norm of r = xk - xl
                   r = norm(r1, r2, 0)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
@@ -1286,7 +1337,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
-                      mdwdrr = mass[l] * (1 - h[j]/h[l]) * dwdr / r
+                      mdwdrr = mass[l] * (1 - h[k]/h[l]) * dwdr / r
                       m11 = m11 + mass[l] / h[l] * dwdr / r * r1 * r1 / rho
                       m12 = m12 + mass[l] / h[l] * dwdr / r * r1 * r2 / rho
                       m22 = m22 + mass[l] / h[l] * dwdr / r * r2 * r2 / rho
@@ -1299,7 +1350,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   r1 = scalProd(dx, dy, dz, ux, uy, uz)
                   r2 = scalProd(dx, dy, dz, uxOrtho, uyOrtho, uzOrtho)
                   # impse r3=0 even if the particle is not exactly on the tengent plane
-                  # get norm of r = xj - xl
+                  # get norm of r = xk - xl
                   r = norm(r1, r2, 0)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
@@ -1312,8 +1363,8 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                       m11 = m11 + mass[l] / h[l] * wKernel * r1 * r1 / rho
                       m12 = m12 + mass[l] / h[l] * wKernel * r1 * r2 / rho
                       m22 = m22 + mass[l] / h[l] * wKernel * r2 * r2 / rho
-                      G1 = G1 + mass[l] * (1 - h[j]/h[l]) * wKernel * K1*r1
-                      G2 = G2 + mass[l] * (1 - h[j]/h[l]) * wKernel * K2*r2
+                      G1 = G1 + mass[l] * (1 - h[k]/h[l]) * wKernel * K1*r1
+                      G2 = G2 + mass[l] * (1 - h[k]/h[l]) * wKernel * K2*r2
 
     if grad == 1:
       if SPHoption >= 4:
@@ -1327,13 +1378,13 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         gradhX = ux*GG1 + uxOrtho*GG2
         gradhY = uy*GG1 + uyOrtho*GG2
         gradhZ = (- g1*(ux*GG1 + uxOrtho*GG2) - g2*(uy*GG1 + uyOrtho*GG2))
-        GHX[j] = GHX[j] + gradhX / rho
-        GHY[j] = GHY[j] + gradhY / rho
-        GHZ[j] = GHZ[j] + gradhZ / rho
+        GHX[k] = GHX[k] + gradhX / rho
+        GHY[k] = GHY[k] + gradhY / rho
+        GHZ[k] = GHZ[k] + gradhZ / rho
       else:
-        GHX[j] = GHX[j] - gradhX / rho
-        GHY[j] = GHY[j] - gradhY / rho
-        GHZ[j] = GHZ[j] - gradhZ / rho
+        GHX[k] = GHX[k] - gradhX / rho
+        GHY[k] = GHY[k] - gradhY / rho
+        GHZ[k] = GHZ[k] - gradhZ / rho
     else:
       if SPHoption >= 4:
           # check that M is invertible
@@ -1346,14 +1397,27 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         gradhX = ux*GG1 + uxOrtho*GG2
         gradhY = uy*GG1 + uyOrtho*GG2
         gradhZ = (- g1*(ux*GG1 + uxOrtho*GG2) - g2*(uy*GG1 + uyOrtho*GG2))
-        GHX[j] = GHX[j] - gradhX / rho * mass[j] * gravAcc3
-        GHY[j] = GHY[j] - gradhY / rho * mass[j] * gravAcc3
-        GHZ[j] = GHZ[j] - gradhZ / rho * mass[j] * gravAcc3
+        GHX[k] = GHX[k] - gradhX / rho * mass[k] * gravAcc3
+        GHY[k] = GHY[k] - gradhY / rho * mass[k] * gravAcc3
+        GHZ[k] = GHZ[k] - gradhZ / rho * mass[k] * gravAcc3
       else:
-        mass_j = mass[j]
-        GHX[j] = GHX[j] + (gradhX*gravAcc3 + epsilon*lapluX)  / rho* mass_j
-        GHY[j] = GHY[j] + (gradhX*gravAcc3 + epsilon*lapluX)  / rho* mass_j
-        GHZ[j] = GHZ[j] + (gradhX*gravAcc3 + epsilon*lapluX)  / rho* mass_j
+
+        mk = mass[k]
+
+        #-without viscosity-----------------------------------------------------
+        # GHX[k] = GHX[k] + gradhX*gravAcc3 / rho* mk
+        # GHY[k] = GHY[k] + gradhY*gravAcc3 / rho* mk
+        # GHZ[k] = GHZ[k] + gradhZ*gravAcc3 / rho* mk
+
+        #-with viscosity--------------------------------------------------------
+        # artificial 2nd order viscous term
+        # GHX[k] = GHX[k] + (gradhX*gravAcc3 + epsilon*lapluX)  / rho* mk
+        # GHY[k] = GHY[k] + (gradhY*gravAcc3 + epsilon*lapluY)  / rho* mk
+        # GHZ[k] = GHZ[k] + (gradhZ*gravAcc3 + epsilon*lapluZ)  / rho* mk
+        # ATA viscosity
+        GHX[k] = GHX[k] + (gradhX*gravAcc3  + viscX) / rho * mk
+        GHY[k] = GHY[k] + (gradhY*gravAcc3  + viscY) / rho * mk
+        GHZ[k] = GHZ[k] + (gradhZ*gravAcc3  + viscZ) / rho * mk
 
   return GHX, GHY, GHZ
 
