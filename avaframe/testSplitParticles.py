@@ -13,9 +13,9 @@ def runSplitPartTest():
     # splitting pattern
     # pattern 1: particle in the center and others arrond at distance alpha * R0
     # pattern 2: same as pattern 1 without the particle in the center
-    splittingPattern = 2
+    splittingPattern = 1
     # numper of particles after splitting
-    nPartSplit = 2
+    nPartSplit = 7
     # initialize C, b and Q
     Ch = 0
     bh = np.zeros((nPartSplit, 1))
@@ -38,8 +38,8 @@ def runSplitPartTest():
 
     N = 50
     M = 50
-    EPSILON = np.linspace(0.05, 0.7, M)
-    R0NewList = np.linspace(-1, 1, N)
+    EPSILON = np.linspace(0, 0.7, M)
+    R0NewList = np.linspace(0.3, 1, N)
     errorHEps = np.zeros((N, M))
     errorgradHEps = np.zeros((N, M))
     M0 = np.zeros((N, M))
@@ -59,7 +59,7 @@ def runSplitPartTest():
                 yPart[1:] = yEps
             elif splittingPattern == 2:
                 alpha = 2*math.pi/nPartSplit*np.arange(nPartSplit)
-                alpha[nPartSplit-1] = 2*math.pi/nPartSplit * (nPartSplit - 1 + R0New)
+                alpha[nPartSplit-1] = 2*math.pi/nPartSplit * (nPartSplit - 1)
                 xPart = eps*np.cos(alpha)
                 yPart = eps*np.sin(alpha)
                 zPart = np.zeros(nPartSplit)
@@ -78,7 +78,7 @@ def runSplitPartTest():
                 rkx = xGrid - xPart[k]
                 rky = yGrid - yPart[k]
                 rkz = zGrid - zPart[k]
-                hk, gradkX, gradkY, gradkZ = getGradW(R0, minRKern, rkx, rky, rkz)
+                hk, gradkX, gradkY, gradkZ = getGradW(R0New, minRKern, rkx, rky, rkz)
                 gradiGradk = DFAtls.scalProd(gradiX, gradiY, gradiZ, gradkX, gradkY, gradkZ)
                 bh[k] = np.sum(hk*hi)
                 bgradH[k] = np.sum(gradiGradk)
@@ -86,7 +86,7 @@ def runSplitPartTest():
                     rlx = xGrid - xPart[l]
                     rly = yGrid - yPart[l]
                     rlz = zGrid - zPart[l]
-                    hl, gradlX, gradlY, gradlZ = getGradW(R0, minRKern, rlx, rly, rlz)
+                    hl, gradlX, gradlY, gradlZ = getGradW(R0New, minRKern, rlx, rly, rlz)
                     gradkGradl = DFAtls.scalProd(gradkX, gradkY, gradkZ, gradlX, gradlY, gradlZ)
                     sum = np.sum(gradkGradl)
                     Qh[k, l] = np.sum(hl*hk)

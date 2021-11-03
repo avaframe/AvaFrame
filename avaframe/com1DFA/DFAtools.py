@@ -322,8 +322,8 @@ def removePart(particles, mask, nRemove, reasonString=''):
     particles : dict
         particles dictionary
     """
-
-    log.info('removed %s particles %s' % (nRemove, reasonString))
+    if reasonString != '':
+        log.info('removed %s particles %s' % (nRemove, reasonString))
     nPart = particles['Npart']
     for key in particles:
         if key == 'Npart':
@@ -336,15 +336,19 @@ def removePart(particles, mask, nRemove, reasonString=''):
     return particles
 
 
-def splitPart(particles, thresholdMassSplit):
+def splitPart(particles, cfg):
     """Split big particles
 
-    Split particles bigger than 1.5 times the massPerPart
+    Split particles bigger than thresholdMassSplit x massPerPart
+    place the new particle in the flow direction at distance epsilon x rPart
+    (this means splitting happens only if particles grow -> entrainment)
 
     Parameters
     ----------
     particles : dict
         particles dictionary
+    cfg : configParser
+        GENERAL configuration for com1DFA
 
     Returns
     -------
@@ -352,9 +356,19 @@ def splitPart(particles, thresholdMassSplit):
         particles dictionary
 
     """
+    rho = cfg.getfloat('rho')
+    thresholdMassSplit = cfg.getfloat('thresholdMassSplit')
+    distSplitPart = cfg.getfloat('distSplitPart')
     massPerPart = particles['massPerPart']
-    m = particles['m']
-    nSplit = np.ceil(m/(massPerPart*thresholdMassSplit))
+    mPart = particles['m']
+    xPart = particles['x']
+    yPart = particles['y']
+    zPart = particles['z']
+    ux = particles['ux']
+    uy = particles['uy']
+    uz = particles['uz']
+    # decide which particles to split
+    nSplit = np.ceil(mPart/(massPerPart*thresholdMassSplit))
     Ind = np.where(nSplit > 1)[0]
     if np.size(Ind) > 0:
         # loop on particles to split
@@ -362,9 +376,14 @@ def splitPart(particles, thresholdMassSplit):
             # get old values
             nPart = particles['Npart']
             nID = particles['nID']
-            # compute new mass and particles to add
-            mNew = m[ind] / nSplit[ind]
-            nAdd = (nSplit[ind]-1).astype('int')
+            # compute new mass (split particle in 2)
+            mNew = mPart[ind] / 2  # nSplit[ind]
+            # compute velocity mag to get the direction of the flow (e_1)
+            uMag = norm(ux[ind], uy[ind], uz[ind])
+            # get the area of the particle as well as the distance expected between the old and new particle
+            aPart = mPart[ind]/(rho*particles['h'][ind])
+            rNew = distSplitPart * np.sqrt(aPart/math.pi)
+            nAdd = 1  # (nSplit[ind]-1).astype('int')
             # update total number of particles and number of IDs used so far
             particles['Npart'] = particles['Npart'] + nAdd
             particles['nID'] = nID + nAdd
@@ -377,6 +396,12 @@ def splitPart(particles, thresholdMassSplit):
                     # create unique ID for the new particles
                     if key == 'ID':
                         particles['ID'] = np.append(particles['ID'], np.arange(nID, nID + nAdd, 1))
+                    elif key == 'x':
+                        particles[key] = np.append(particles[key], xPart[ind] + rNew*ux[ind]/uMag)
+                    elif key == 'y':
+                        particles[key] = np.append(particles[key], yPart[ind] + rNew*uy[ind]/uMag)
+                    elif key == 'z':
+                        particles[key] = np.append(particles[key], zPart[ind] + rNew*uz[ind]/uMag)
                     # set the parent properties to new particles due to splitting
                     elif np.size(particles[key]) == nPart:
                         particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
@@ -388,7 +413,8 @@ def splitPart(particles, thresholdMassSplit):
 def testSplitPart(particles, cfg, dem):
     """Split big particles
 
-    Split particles bigger than 1.5 times the massPerPart
+    Split particles to keep enough particles within the kernel radius.
+    place the new particle in the flow direction at distance epsilon x rPart
 
     Parameters
     ----------
@@ -406,8 +432,8 @@ def testSplitPart(particles, cfg, dem):
     sphKernelRadius = cfg.getfloat('sphKernelRadius')
     detlaTH = cfg.getfloat('deltaTh')
     rng = np.random.default_rng(int(cfg['seed']))
-    minPartCoeff = 0.25  # cfg['minPartCoeff']
-    minMassCoeff = 10  # cfg['minMassCoeff']
+    cMinNPPK = cfg.getfloat('cMinNPPK')
+    cMinMass = cfg.getfloat('cMinMass')
     h0 = 1  # cfg['h0']
     nSplit = 2
     # get dem info
@@ -416,8 +442,8 @@ def testSplitPart(particles, cfg, dem):
     Ny = dem['Ny']
     Nz = dem['Nz']
     #
-    aMax = sphKernelRadius**2 * detlaTH / (minPartCoeff * h0)
-    mMin = rho * sphKernelRadius**2 * detlaTH / minMassCoeff
+    aMax = sphKernelRadius**2 * detlaTH / (cMinNPPK * h0)
+    mMin = rho * sphKernelRadius**2 * detlaTH * cMinMass
     mPart = particles['m']
     hPart = particles['h']
     ux = particles['ux']
@@ -464,15 +490,15 @@ def testSplitPart(particles, cfg, dem):
                     if key == 'ID':
                         particles['ID'] = np.append(particles['ID'], np.arange(nID, nID + nAdd, 1))
                     elif key == 'x':
-                        particles[key] = np.append(particles[key], xNew[1])
+                        particles[key] = np.append(particles[key], xNew[1:])
                     elif key == 'y':
-                        particles[key] = np.append(particles[key], yNew[1])
+                        particles[key] = np.append(particles[key], yNew[1:])
                     elif key == 'z':
-                        particles[key] = np.append(particles[key], zNew[1])
+                        particles[key] = np.append(particles[key], zNew[1:])
                     # set the parent properties to new particles due to splitting
                     elif np.size(particles[key]) == nPart:
                         particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
-        log.info('Added %s because of splitting' % (nNewPart))
+        log.debug('Added %s because of splitting' % (nNewPart))
 
     particles['mTot'] = np.sum(particles['m'])
     return particles
@@ -498,11 +524,10 @@ def testMergePart(particles, cfg, dem):
     rho = cfg.getfloat('rho')
     sphKernelRadius = cfg.getfloat('sphKernelRadius')
     detlaTH = cfg.getfloat('deltaTh')
-    minPartCoeff = 0.25  # cfg['minPartCoeff']
-    maxPartCoeff = 2.5  # cfg['minPartCoeff']
+    cMaxNPPK = cfg.getfloat('cMaxNPPK')
     h0 = 1  # cfg['h0']
     #
-    aMin = sphKernelRadius**2 * detlaTH / (maxPartCoeff * h0)
+    aMin = sphKernelRadius**2 * detlaTH / (cMaxNPPK * h0)
     mPart = particles['m']
     hPart = particles['h']
     xPart = particles['x']
@@ -548,7 +573,7 @@ def testMergePart(particles, cfg, dem):
                         particles['uz'][ind] = uzNew
                         # ToDo: mabe also update h
 
-        particles = removePart(particles, keepParticle, nRemoved, reasonString='because of colocation')
+        particles = removePart(particles, keepParticle, nRemoved, reasonString='')  # 'because of colocation')
     return particles
 
 

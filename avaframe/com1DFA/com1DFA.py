@@ -762,6 +762,8 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
         massPerPart = rho * ds * ds * deltaTh
         log.debug('Number of particles defined by: release thickness per particle: %s' % cfg['deltaTh'])
         log.debug('mass per particle is %.2f' % massPerPart)
+    elif massPerParticleDeterminationMethod == 'MPPKR':
+
 
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
@@ -1398,6 +1400,23 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     particles = DFAfunC.updatePositionC(cfg, particles, dem, force, dt)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
+
+    if cfg.getint('splitOption') == 0:
+        # split particles with too much mass
+        # this only splits particles that grew because of entrainment
+        particles = DFAtls.splitPart(particles, cfg)
+    elif cfg.getint('splitOption') == 1:
+        # split merge operation
+        # first update fields (compute grid values)
+        startTime = time.time()
+        log.debug('update Fields C')
+        # particles, fields = updateFields(cfg, particles, force, dem, fields)
+        particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
+        tcpuField = time.time() - startTime
+        Tcpu['Field'] = Tcpu['Field'] + tcpuField
+        # Then split merge particles
+        particles = DFAtls.testSplitPart(particles, cfg, dem)
+        particles = DFAtls.testMergePart(particles, cfg, dem)
 
     # release secondary release area?
     if particles['secondaryReleaseInfo']['flagSecondaryRelease'] == 'Yes':

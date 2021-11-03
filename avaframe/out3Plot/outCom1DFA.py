@@ -200,7 +200,7 @@ def updatePlot(particles, ax, dem):
     cmap = pU.cmapSpeed
     ax.clear()
     ax.set_title('t=%.2f s' % particles['t'])
-    variableC = particles['m']
+    variableC = particles['h']
     print(np.nanmin(variableC), np.nanmax(variableC))
     variableS = (particles['m']/100)**1.5
     cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(variableC), np.nanmax(variableC), continuous=pU.contCmap)
