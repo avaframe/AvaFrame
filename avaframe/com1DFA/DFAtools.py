@@ -661,3 +661,17 @@ def scalProd(ux, uy, uz, vx, vy, vz):
     scal = ux*vx + uy*vy + uz*vz
 
     return scal
+
+def det2(a, b, c, d):
+    """ Returns the determinent of a 2x2 matrix
+    """
+    det = a*d-c*b
+
+    return det
+
+def det3(a, b, c, d, e, f, g, h, i):
+    """ Returns the determinent of a 3x3 matrix
+    """
+    det = a*det2(e, f, h, i) - b*det2(d, f, g, i) + c*det2(d, e, g, h)
+
+    return det
