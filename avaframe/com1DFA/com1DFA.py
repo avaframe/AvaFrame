@@ -1372,11 +1372,15 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     """
 
     flowDepthOption = cfg.getint('flowDepthOption')
+    corrOption = cfg.getint('corrOption')
     headerNeighbourGrid = dem['headerNeighbourGrid']
     headerNormalGrid = dem['header']
 
     if flowDepthOption==1:
         particles = DFAfunC.computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid)
+
+    if corrOption==1:
+        particles = DFAfunC.getCorrKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid)
 
     # get forces
     startTime = time.time()

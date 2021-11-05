@@ -1155,11 +1155,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double epsilon = 100
   cdef double hk, hl, ck, cl, lambdakl
   # corrected kernel parameters
-  cdef double cKernelk, cKernell
-  cdef double wkl
-
-
-
+  cdef double wkl, cKernell, gradCxl, gradCyl, gradCzl, gradCorrX, gradCorrY, gradCorrZ
 
   # loop on particles
   for k in range(N):
@@ -1256,8 +1252,12 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                       dwdr = dfacKernel * hr * hr
                       ml = mass[l]
                       hl = hArray[l]
-                      # SPH corrected kernel
-                      # cKernell = cArray[l]
+                      if corrOption==1:
+                        # SPH corrected kernel
+                        cKernell = cArray[l]
+                        gradCxl = gradCxArray[l]
+                        gradCyl = gradCyArray[l]
+                        gradCzl = gradCzArray[l]
 
 #-----------------------SPH gradient computation--------------------------------
 
@@ -1276,25 +1276,18 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                       elif corrOption==1:
                         # kernel correction
                         wkl = facKernel * hr * hr * hr
+                        gradCorrX = cKernell*mdwdrr*dx + gradCxl*wkl
+                        gradCorrY = cKernell*mdwdrr*dy + gradCyl*wkl
+                        gradCorrZ = cKernell*mdwdrr*dz + gradCzl*wkl
+                        gradhX = gradhX + gradCorrX
+                        gradhY = gradhY + gradCorrY
+                        gradhZ = gradhZ + gradCorrZ
 
 #-----------------------artificial viscosity computation------------------------
 
                       dux = uxArray[l] - ux
                       duy = uyArray[l] - uy
                       duz = uzArray[l] - uz
-
-                      # artificial 2nd order viscous term - SPH computed
-                      #lapluX = lapluX + ml*dfacKernel*r*(2*dx*dx/(r*r) + hr*(1/r - dx*dx/(r*r*r))) * uxArray[l]
-                      #lapluY = lapluY + ml*dfacKernel*r*(2*dy*dy/(r*r) + hr*(1/r - dy*dy/(r*r*r))) * uyArray[l]
-                      #lapluZ = lapluZ + ml*dfacKernel*r*(2*dz*dz/(r*r) + hr*(1/r - dz*dz/(r*r*r))) * uzArray[l]
-
-                      # artificial 2nd order viscous term - semi SPH computed
-                      # dwdrr = dwdr/r
-                      # vol = ml/(rho*hk)
-                      # volr = vol/r
-                      # lapluX = lapluX + dux * volr * dwdrr * dx
-                      # lapluY = lapluY + duy * volr * dwdrr * dy
-                      # lapluZ = lapluZ + duz * volr * dwdrr * dz
 
                       # ATA artificial viscosity
                       if viscOption == 2:
@@ -1308,6 +1301,11 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                           viscX = viscX + pikl * mhdwdrr * dx
                           viscY = viscY + pikl * mhdwdrr * dy
                           viscZ = viscZ + pikl * mhdwdrr * dz
+                        elif corrOption==1:
+                          # corrected kernel SPH formulation
+                          viscX = viscX + pikl * gradCorrX / hl
+                          viscY = viscY + pikl * gradCorrY / hl
+                          viscZ = viscZ + pikl * gradCorrZ / hl
 
                 if SPHoption == 2:
                   # get coordinates in local coord system
@@ -1450,16 +1448,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
           GHX[k] = GHX[k] + (gradhX*gravAcc3  + viscX) / rho * mk
           GHY[k] = GHY[k] + (gradhY*gravAcc3  + viscY) / rho * mk
           GHZ[k] = GHZ[k] + (gradhZ*gravAcc3  + viscZ) / rho * mk
-          # print('without')
-          # print(GHX[k] + gradhX*gravAcc3 / rho* mk)
-          # print('Ata')
-          # print(GHX[k] + (gradhX*gravAcc3  + viscX) / rho * mk)
-
-
-        # artificial 2nd order viscous term
-        # GHX[k] = GHX[k] + (gradhX*gravAcc3 + epsilon*lapluX)  / rho* mk
-        # GHY[k] = GHY[k] + (gradhY*gravAcc3 + epsilon*lapluY)  / rho* mk
-        # GHZ[k] = GHZ[k] + (gradhZ*gravAcc3 + epsilon*lapluZ)  / rho* mk
 
   return GHX, GHY, GHZ
 
@@ -1484,22 +1472,15 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
       normal grid header dictionary (information about the DEM grid)
   Returns
   -------
-  hArray : 1D numpy array
-      SPH computed flow depth
-  cArray : 1D numpy array
-      SPH kernel correction
-  gradCxArray : 1D numpy array
-      Grad(Ck) in x direction
-  gradCyArray : 1D numpy array
-      Grad(Ck) in y direction
-  gradCzArray : 1D numpy array
-      Grad(Ck) in z direction
+  particles: dict
+      particles dictionnary at t
   """
   # get all inputs
   cdef double rho = cfg.getfloat('rho')
   # configuration parameters
   cdef double minRKern = cfg.getfloat('minRKern')
   cdef int interpOption = cfg.getint('interpOption')
+
   cdef int SPHoption = cfg.getint('sphOption')
   cdef int viscOption = cfg.getint('viscOption')
   cdef int corrOption = cfg.getint('corrOption')
@@ -1532,10 +1513,6 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
 
   # initialize variables and outputs
   cdef double[:] hSPHArray = np.zeros(N, dtype=np.float64)
-  # cdef double[:] cArray = np.zeros(N, dtype=np.float64)
-  # cdef double[:] gradCxArray = np.zeros(N, dtype=np.float64)
-  # cdef double[:] gradCyArray = np.zeros(N, dtype=np.float64)
-  # cdef double[:] gradCzArray = np.zeros(N, dtype=np.float64)
 
   cdef double mwkl, ml
   cdef double x, y, z
@@ -1550,10 +1527,6 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
   for k in range(N):
     # hSPHk: SPH computed flow depth
     hSPHk = 0
-    # invCk = 0
-    # sumGradX = 0
-    # sumGradY = 0
-    # sumGradZ = 0
     x = xArray[k]
     y = yArray[k]
     z = zArray[k]
@@ -1603,44 +1576,20 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
                       mwkl = ml * wkl
                       hSPHk = hSPHk + mwkl/rho
 
-                      # if corrOption==1:
-                      #   # diviser C par h bilineiare
-                      #   invCk = invCk + ml/rho*wkl
-                      #   hr = rKernel - r
-                      #   dwdr = dfacKernel * hr * hr
-                      #   mrhodwdrr = ml /rho * dwdr / r
-                      #   sumGradX = sumGradX + mrhodwdrr*dx
-                      #   #diviser par h bili
-                      #   sumGradY = sumGradY + mrhodwdrr*dy
-                      #   sumGradZ = sumGradZ + mrhodwdrr*dz
-
     if hSPHk>hmin:
       hSPHArray[k] = hSPHk
     else:
       hSPHArray[k] = hmin
-    # if corrOption==1:
-    #   if invCk != 0:
-    #     cArray[k] = 1/invCk
-    #     gradCxArray[k] = sumGradX / invCk / invCk
-    #     gradCyArray[k] = sumGradY / invCk / invCk
-    #     gradCzArray[k] = sumGradZ / invCk / invCk
 
   particles['hSPH']=np.asarray(hSPHArray)
 
-  # if corrOption==1:
-  #   particles['cArray']=np.asarray(cArray)
-  #   particles['gradCxArray']=np.asarray(gradCxArray)
-  #   particles['gradCyArray']=np.asarray(gradCyArray)
-  #   particles['gradCzArray']=np.asarray(gradCzArray)
-
   return particles
-
 
 
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def getCorrectedKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid):
+def getCorrKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid):
     """ compute lateral forces acting on the particles (SPH component)
 
     Cython implementation
@@ -1657,17 +1606,9 @@ def getCorrectedKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid):
         normal grid header dictionary (information about the DEM grid)
     Returns
     -------
-    cArray : 1D numpy array
-        SPH kernel correction
-    gradCxArray : 1D numpy array
-        Grad(Ck) in x direction
-    gradCyArray : 1D numpy array
-        Grad(Ck) in y direction
-    gradCzArray : 1D numpy array
-        Grad(Ck) in z direction
+    particles: dict
+        particles dictionnary at t
     """
-    # get all inputs
-    cdef double rho = cfg.getfloat('rho')
     # configuration parameters
     cdef double minRKern = cfg.getfloat('minRKern')
     cdef int interpOption = cfg.getint('interpOption')
@@ -1713,7 +1654,7 @@ def getCorrectedKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid):
     cdef double[:] gradCyArray = np.zeros(N, dtype=np.float64)
     cdef double[:] gradCzArray = np.zeros(N, dtype=np.float64)
 
-    cdef double mwkl, ml
+    cdef double mwkl, ml, mdwdrr, dwdr
     cdef double x, y, z
     cdef double dx, dy, dz, r, hr, wkl
     cdef int lInd, rInd
@@ -1770,25 +1711,27 @@ def getCorrectedKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid):
                     if r < rKernel:
                         hr = rKernel - r
                         wkl = facKernel * hr * hr * hr
+                        dwdr = dfacKernel * hr * hr
+                        mdwdrr = ml * dwdr / r
+
                         ml = mass[l]
                         hl = hArray[l]
 
-                        mwklrhohl = ml * wkl / rho / hl
-                        # diviser C par h bilineiare
-                        invCk = invCk + mwklrhohl
-                        hr = rKernel - r
-                        dwdr = dfacKernel * hr * hr
-                        mdwdrrrhohl = ml * dwdr / rho / hl / r
-                        sumGradX = sumGradX + mdwdrrrhohl*dx
-                        sumGradY = sumGradY + mdwdrrrhohl*dy
-                        sumGradZ = sumGradZ + mdwdrrrhohl*dz
+                        invCk = invCk + ml / hl * wkl
 
+                        sumGradX = sumGradX + mdwdrr*dx / hl
+                        sumGradY = sumGradY + mdwdrr*dy / hl
+                        sumGradZ = sumGradZ + mdwdrr*dz / hl
 
-      if invCk != 0:
-        cArray[k] = 1/invCk
-        gradCxArray[k] = - sumGradX / invCk / invCk
-        gradCyArray[k] = - sumGradY / invCk / invCk
-        gradCzArray[k] = - sumGradZ / invCk / invCk
+      cArray[k] = 1/invCk
+      gradCxArray[k] = - sumGradX / invCk / invCk
+      gradCyArray[k] = - sumGradY / invCk / invCk
+      gradCzArray[k] = - sumGradZ / invCk / invCk
+
+      # gradCxArray[k] = - 1/sumGradX
+      # gradCyArray[k] = - 1/sumGradY
+      # gradCzArray[k] = - 1/sumGradZ
+
 
     particles['cArray']=np.asarray(cArray)
     particles['gradCxArray']=np.asarray(gradCxArray)
