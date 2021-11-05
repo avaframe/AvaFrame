@@ -420,6 +420,10 @@ def testSplitPart(particles, cfg, dem):
     ----------
     particles : dict
         particles dictionary
+    cfg : configParser
+        GENERAL configuration for com1DFA
+    dem : dict
+        dem dictionary
 
     Returns
     -------
@@ -430,20 +434,20 @@ def testSplitPart(particles, cfg, dem):
     # get cfg info
     rho = cfg.getfloat('rho')
     sphKernelRadius = cfg.getfloat('sphKernelRadius')
-    detlaTH = cfg.getfloat('deltaTh')
     rng = np.random.default_rng(int(cfg['seed']))
     cMinNPPK = cfg.getfloat('cMinNPPK')
     cMinMass = cfg.getfloat('cMinMass')
-    h0 = 1  # cfg['h0']
     nSplit = 2
     # get dem info
     csz = dem['header']['cellsize']
     Nx = dem['Nx']
     Ny = dem['Ny']
     Nz = dem['Nz']
-    #
-    aMax = sphKernelRadius**2 * detlaTH / (cMinNPPK * h0)
-    mMin = rho * sphKernelRadius**2 * detlaTH * cMinMass
+    # get the threshold area over which we split the particle
+    massPerPart = particles['massPerPart']
+    nPPK = particles['nPPK']
+    aMax = math.pi * sphKernelRadius**2 / (cMinNPPK * nPPK)
+    mMin = massPerPart * cMinMass
     mPart = particles['m']
     hPart = particles['h']
     ux = particles['ux']
@@ -505,14 +509,20 @@ def testSplitPart(particles, cfg, dem):
 
 
 def testMergePart(particles, cfg, dem):
-    """Split big particles
+    """merge small particles
 
-    Split particles bigger than 1.5 times the massPerPart
+    merge particles to avoid too many particles within the kernel radius.
+    place the new merge particle between the two old ones. The new position and velocity are the
+    mass averaged ones
 
     Parameters
     ----------
     particles : dict
         particles dictionary
+    cfg : configParser
+        GENERAL configuration for com1DFA
+    dem : dict
+        dem dictionary
 
     Returns
     -------
@@ -523,19 +533,15 @@ def testMergePart(particles, cfg, dem):
     # get cfg info
     rho = cfg.getfloat('rho')
     sphKernelRadius = cfg.getfloat('sphKernelRadius')
-    detlaTH = cfg.getfloat('deltaTh')
     cMaxNPPK = cfg.getfloat('cMaxNPPK')
-    h0 = 1  # cfg['h0']
-    #
-    aMin = sphKernelRadius**2 * detlaTH / (cMaxNPPK * h0)
+    # get the threshold area under which we merge the particle
+    nPPK = particles['nPPK']
+    aMin = math.pi * sphKernelRadius**2 / (cMaxNPPK * nPPK)
     mPart = particles['m']
     hPart = particles['h']
     xPart = particles['x']
     yPart = particles['y']
     zPart = particles['z']
-    ux = particles['ux']
-    uy = particles['uy']
-    uz = particles['uz']
     aPart = mPart/(rho*hPart)
     tooSmall = np.where(aPart < aMin)[0]
     keepParticle = np.ones((particles['Npart']), dtype=bool)
@@ -556,22 +562,12 @@ def testMergePart(particles, cfg, dem):
                     nRemoved = nRemoved + 1
                     # compute new mass and particles to add
                     mNew = mPart[ind] + mPart[neighbourInd]
-                    uxNew = (mPart[ind]*ux[ind] + mPart[neighbourInd]*ux[neighbourInd]) / mNew
-                    uyNew = (mPart[ind]*uy[ind] + mPart[neighbourInd]*uy[neighbourInd]) / mNew
-                    uzNew = (mPart[ind]*uz[ind] + mPart[neighbourInd]*uz[neighbourInd]) / mNew
-                    xPartNew = (mPart[ind]*xPart[ind] + mPart[neighbourInd]*xPart[neighbourInd]) / mNew
-                    yPartNew = (mPart[ind]*yPart[ind] + mPart[neighbourInd]*yPart[neighbourInd]) / mNew
-                    zPartNew = (mPart[ind]*zPart[ind] + mPart[neighbourInd]*zPart[neighbourInd]) / mNew
-                    for key in particles:
-                        # update splitted particle mass
-                        particles['m'][ind] = mNew
-                        particles['x'][ind] = xPartNew
-                        particles['y'][ind] = yPartNew
-                        particles['z'][ind] = zPartNew
-                        particles['ux'][ind] = uxNew
-                        particles['uy'][ind] = uyNew
-                        particles['uz'][ind] = uzNew
-                        # ToDo: mabe also update h
+                    # compute mass averaged value
+                    for key in ['x', 'y', 'z', 'ux', 'uy', 'uz']:
+                        particles[key][ind] = (mPart[ind]*particles[key][ind] +
+                                               mPart[neighbourInd]*particles[key][neighbourInd]) / mNew
+                    particles['m'][ind] = mNew
+                    # ToDo: mabe also update h
 
         particles = removePart(particles, keepParticle, nRemoved, reasonString='')  # 'because of colocation')
     return particles
