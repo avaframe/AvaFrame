@@ -7,6 +7,7 @@ import time
 import datetime
 import pathlib
 import numpy as np
+import math
 import copy
 import pickle
 from datetime import datetime
@@ -736,8 +737,6 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     avaDir = cfg['avalancheDir']
     massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
     interpOption = cfg.getfloat('interpOption')
-    thresholdMassSplit = cfg.getfloat('thresholdMassSplit')
-    initPartDistType = cfg['initPartDistType'].lower()
 
     # read dem header
     header = dem['header']
@@ -763,7 +762,10 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
         log.debug('Number of particles defined by: release thickness per particle: %s' % cfg['deltaTh'])
         log.debug('mass per particle is %.2f' % massPerPart)
     elif massPerParticleDeterminationMethod == 'MPPKR':
-
+        nPPK = cfg.getfloat('nPPK')
+        relTh = cfg.getfloat('relTh')
+        ds = min(csz, cfg.getfloat('sphKernelRadius'))
+        massPerPart = rho * math.pi * ds * ds * relTh / nPPK
 
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
@@ -792,62 +794,61 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
                  (inDirPart))
         Particles, timeStepInfo = readPartFromPickle(inDirPart)
         particles = Particles[0]
-        Xpart = particles['x']
-        Mpart = particles['m']
-        Hpart = np.ones(len(Xpart))
-        NPPC = np.ones(len(Xpart))
-        particles['Npart'] = len(Xpart)
-        particles['s'] = np.zeros(np.shape(Xpart))
-        particles['l'] = np.zeros(np.shape(Xpart))
+        xPart = particles['x']
+        mPart = particles['m']
+        hPart = np.ones(len(xPart))
+        NPPC = np.ones(len(xPart))
+        particles['Npart'] = len(xPart)
+        particles['s'] = np.zeros(np.shape(xPart))
+        particles['l'] = np.zeros(np.shape(xPart))
     else:
         # initialize random generator
         rng = np.random.default_rng(int(cfg['seed']))
 
         Npart = 0
         NPPC = np.empty(0)
-        Xpart = np.empty(0)
-        Ypart = np.empty(0)
-        Mpart = np.empty(0)
-        Hpart = np.empty(0)
+        xPartArray = np.empty(0)
+        yPartArray = np.empty(0)
+        mPartArray = np.empty(0)
+        hPartArray = np.empty(0)
         # loop on non empty cells
         for indRelx, indRely in zip(indRelX, indRelY):
             # compute number of particles for this cell
             hCell = relRaster[indRely, indRelx]
-            volCell = areaRaster[indRely, indRelx] * hCell
-            massCell = volCell * rho
-            xpart, ypart, mPart, nPart = placeParticles(massCell, indRelx, indRely, csz, massPerPart, rng,
-                                                        initPartDistType, thresholdMassSplit)
+            aCell = areaRaster[indRely, indRelx]
+            xPart, yPart, mPart, nPart = placeParticles(hCell, aCell, indRelx, indRely, csz, massPerPart, rng, cfg)
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
             # initialize particles position, mass, height...
             NPPC = np.append(NPPC, nPart*np.ones(nPart))
-            Xpart = np.append(Xpart, xpart)
-            Ypart = np.append(Ypart, ypart)
-            Mpart = np.append(Mpart, mPart * np.ones(nPart))
+            xPartArray = np.append(xPartArray, xPart)
+            yPartArray = np.append(yPartArray, yPart)
+            mPartArray = np.append(mPartArray, mPart * np.ones(nPart))
 
-        Hpart = DFAfunC.projOnRaster(Xpart, Ypart, relRaster, csz, ncols, nrows, interpOption)
+        hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
+        hPartArray = np.asarray(hPartArray)
         # create dictionnary to store particles properties
         particles = {}
         particles['Npart'] = Npart
-        particles['x'] = Xpart
-        particles['y'] = Ypart
-        particles['s'] = np.zeros(np.shape(Xpart))
-        particles['l'] = np.zeros(np.shape(Xpart))
+        particles['x'] = xPartArray
+        particles['y'] = yPartArray
+        particles['s'] = np.zeros(np.shape(xPartArray))
+        particles['l'] = np.zeros(np.shape(xPartArray))
         # adding z component
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
-        particles['m'] = Mpart
+        particles['m'] = mPartArray
 
     particles['massPerPart'] = massPerPart
     particles['mTot'] = np.sum(particles['m'])
-    particles['h'] = Hpart
+    particles['h'] = hPartArray
     particles['NPPC'] = NPPC
-    particles['ux'] = np.zeros(np.shape(Xpart))
-    particles['uy'] = np.zeros(np.shape(Xpart))
-    particles['uz'] = np.zeros(np.shape(Xpart))
+    particles['ux'] = np.zeros(np.shape(xPartArray))
+    particles['uy'] = np.zeros(np.shape(xPartArray))
+    particles['uz'] = np.zeros(np.shape(xPartArray))
     particles['stoppCriteria'] = False
-    kineticEne = np.sum(0.5 * Mpart * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
+    kineticEne = np.sum(0.5 * mPartArray * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
     particles['kineticEne'] = kineticEne
-    particles['potentialEne'] = np.sum(gravAcc * Mpart * particles['z'])
+    particles['potentialEne'] = np.sum(gravAcc * mPartArray * particles['z'])
     particles['peakKinEne'] = kineticEne
     particles['peakMassFlowing'] = 0
     particles['simName'] = logName
@@ -875,6 +876,13 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
 
     relCells = np.size(indRelY)
     partPerCell = particles['Npart']/relCells
+
+    if massPerParticleDeterminationMethod != 'MPPKR':
+        # we need to set the nPPK
+        aTot = np.sum(particles['m'] / (rho * particles['h']))
+        # average number of particles per kernel radius
+        nPPK = particles['Npart'] * math.pi * csz**2 / aTot
+    particles['nPPK'] = nPPK
 
     log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
              (particles['mTot'], particles['Npart'], relCells))
@@ -930,7 +938,7 @@ def initializeFields(cfg, dem, particles):
     return particles, fields
 
 
-def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit):
+def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
     """ Create particles in given cell
 
     Compute number of particles to create in a given cell.
@@ -939,8 +947,10 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
 
     Parameters
     ----------
-    massCell: float
-        mass of snow in cell
+    hCell: float
+        snow depth in cell
+    aCell: float
+        cell area
     indx: int
         column index of the cell
     indy: int
@@ -949,14 +959,13 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         cellsize
     massPerPart : float
         maximum mass per particle
-    initPartDistType: str
-        initial particle distribution: random, semiRandom, uniform
-
+    cfg: configParser
+        com1DFA general configParser
     Returns
     -------
-    xpart : 1D numpy array
+    xPart : 1D numpy array
         x position of particles
-    ypart : 1D numpy array
+    yPart : 1D numpy array
         y position of particles
     mPart : 1D numpy array
         mass of particles
@@ -964,11 +973,20 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
         number of particles created
     """
 
-    initPartDistType = initPartDistType.lower()
-
+    rho = cfg.getfloat('rho')
+    thresholdMassSplit = cfg.getfloat('thresholdMassSplit')
+    initPartDistType = cfg['initPartDistType'].lower()
+    massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
+    volCell = aCell * hCell
+    massCell = volCell * rho
     if initPartDistType == 'random':
-        # number of particles needed (floating number)
-        nFloat = massCell / massPerPart
+        if massPerParticleDeterminationMethod == 'MPPKR':
+            # impose a numper of particles within a kernel radius so impose number of particles in a cell
+            nFloat = cfg.getint('nPPK') * aCell / (math.pi * csz**2)
+        else:
+            # number of particles needed (floating number)
+            nFloat = massCell / massPerPart
+
         nPart = int(np.floor(nFloat))
         # adding 1 with a probability of the residual proba
         proba = nFloat - nPart
@@ -994,21 +1012,21 @@ def placeParticles(massCell, indx, indy, csz, massPerPart, rng, initPartDistType
     # start ###############
     if initPartDistType == 'semirandom':
         # place particles equaly distributed with a small variation
-        xpart = csz * (- 0.5 + indx) + x + (rng.random(nPart) - 0.5) * d
-        ypart = csz * (- 0.5 + indy) + y + (rng.random(nPart) - 0.5) * d
+        xPart = csz * (- 0.5 + indx) + x + (rng.random(nPart) - 0.5) * d
+        yPart = csz * (- 0.5 + indy) + y + (rng.random(nPart) - 0.5) * d
     elif initPartDistType == 'random':
         # place particles randomly in the cell
-        xpart = csz * (rng.random(nPart) - 0.5 + indx)
-        ypart = csz * (rng.random(nPart) - 0.5 + indy)
+        xPart = csz * (rng.random(nPart) - 0.5 + indx)
+        yPart = csz * (rng.random(nPart) - 0.5 + indy)
     else:
         # place particles equaly distributed
-        xpart = csz * (- 0.5 + indx) + x
-        ypart = csz * (- 0.5 + indy) + y
+        xPart = csz * (- 0.5 + indx) + x
+        yPart = csz * (- 0.5 + indy) + y
         if initPartDistType != 'uniform':
             log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
                         initPartDistType)
 
-    return xpart, ypart, mPart, nPart
+    return xPart, yPart, mPart, nPart
 
 
 def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, rhoEnt):
@@ -1407,7 +1425,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
         particles = DFAtls.splitPart(particles, cfg)
     elif cfg.getint('splitOption') == 1:
         # split merge operation
-        # first update fields (compute grid values)
+        # first update fields (compute grid values) because we need the h of the particles to get the aPart
         startTime = time.time()
         log.debug('update Fields C')
         # particles, fields = updateFields(cfg, particles, force, dem, fields)
