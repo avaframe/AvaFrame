@@ -1121,15 +1121,25 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   elif flowDepthOption==1:
     hArray = particles['hSPH']
 
-  cdef double[:] cArray = np.zeros(N, dtype=np.float64)
-  cdef double[:] gradCxArray = np.zeros(N, dtype=np.float64)
-  cdef double[:] gradCyArray = np.zeros(N, dtype=np.float64)
-  cdef double[:] gradCzArray = np.zeros(N, dtype=np.float64)
+  cdef double[:] LxxArray = np.zeros(N, dtype=np.float64)
+  cdef double[:] LxyArray = np.zeros(N, dtype=np.float64)
+  cdef double[:] LxzArray = np.zeros(N, dtype=np.float64)
+  cdef double[:] LyxArray = np.zeros(N, dtype=np.float64)
+  cdef double[:] LyyArray = np.zeros(N, dtype=np.float64)
+  cdef double[:] LyzArray = np.zeros(N, dtype=np.float64)
+  cdef double[:] LzxArray = np.zeros(N, dtype=np.float64)
+  cdef double[:] LzyArray = np.zeros(N, dtype=np.float64)
+  cdef double[:] LzzArray = np.zeros(N, dtype=np.float64)
   if corrOption==1:
-    cArray = particles['cArray']
-    gradCxArray = particles['gradCxArray']
-    gradCyArray = particles['gradCyArray']
-    gradCzArray = particles['gradCzArray']
+    LxxArray = particles['LxxArray']
+    LxyArray = particles['LxyArray']
+    LxzArray = particles['LxzArray']
+    LyxArray = particles['LyxArray']
+    LyyArray = particles['LyyArray']
+    LyzArray = particles['LyzArray']
+    LzxArray = particles['LzxArray']
+    LzyArray = particles['LzyArray']
+    LzzArray = particles['LzzArray']
 
   # initialize variables and outputs
   cdef double[:] GHX = np.zeros(N, dtype=np.float64)
@@ -1151,21 +1161,19 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef int grad = gradient
   # artificial viscosity parameters
   cdef double dwdrr, vol, volr
-  cdef double lapluX, lapluY, lapluZ, viscX, viscY, viscZ, pikl
+  cdef double viscX, viscY, viscZ, pikl
   cdef double epsilon = 100
   cdef double hk, hl, ck, cl, lambdakl
   # corrected kernel parameters
-  cdef double wkl, cKernell, gradCxl, gradCyl, gradCzl, gradCorrX, gradCorrY, gradCorrZ
+  cdef double gradCorrX, gradCorrY, gradCorrZ
+  cdef double Lxxl, Lxyl, Lxzl, Lyxl, Lyyl, Lyzl, Lzxl, Lzyl, Lzzl
+  cdef double xx, xy, xz, yx, yy, yz, zx, zy, zz
 
   # loop on particles
   for k in range(N):
     gradhX = 0
     gradhY = 0
     gradhZ = 0
-    # adding an artificial second order viscosity term
-    # lapluX = 0
-    # lapluY = 0
-    # lapluZ = 0
     # adding Atartificial viscosity
     if viscOption == 2:
       viscX = 0
@@ -1183,19 +1191,18 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
     uy = uyArray[k]
     uz = uzArray[k]
     hk = hArray[k]
-    # cKernelk = cArray[k]
 
     # locate particle in SPH grid
     indx = <int>math.round(x / cszNeighbourGrid)
     indy = <int>math.round(y / cszNeighbourGrid)
 
+    # get normal vector
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
+    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+    nx, ny, nz = normalize(nx, ny, nz)
+    # projection of gravity on normal vector
+    gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
     if SPHoption > 1:
-      # get normal vector
-      Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
-      nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-      nx, ny, nz = normalize(nx, ny, nz)
-      # projection of gravity on normal vector
-      gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
       uMag = norm(ux, uy, uz)
       if uMag < velMagMin:
           ux = 1
@@ -1240,7 +1247,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   # dz = 0
                   # get norm of r = xk - xl
                   r = norm(dx, dy, dz)
-                  gravAcc3 = gravAcc
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
                       dx = minRKern * rKernel * dx
@@ -1252,12 +1258,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                       dwdr = dfacKernel * hr * hr
                       ml = mass[l]
                       hl = hArray[l]
-                      if corrOption==1:
-                        # SPH corrected kernel
-                        cKernell = cArray[l]
-                        gradCxl = gradCxArray[l]
-                        gradCyl = gradCyArray[l]
-                        gradCzl = gradCzArray[l]
 
 #-----------------------SPH gradient computation--------------------------------
 
@@ -1274,11 +1274,39 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                         gradhY = gradhY + mdwdrr*dy
                         gradhZ = gradhZ + mdwdrr*dz
                       elif corrOption==1:
-                        # kernel correction
-                        wkl = facKernel * hr * hr * hr
-                        gradCorrX = cKernell*mdwdrr*dx + gradCxl*wkl
-                        gradCorrY = cKernell*mdwdrr*dy + gradCyl*wkl
-                        gradCorrZ = cKernell*mdwdrr*dz + gradCzl*wkl
+                        # SPH corrected Kernel
+                        Lxxl=LxxArray[l]
+                        Lxyl=LxyArray[l]
+                        Lxzl=LxzArray[l]
+                        Lyxl=LyxArray[l]
+                        Lyyl=LyyArray[l]
+                        Lyzl=LyzArray[l]
+                        Lzxl=LzxArray[l]
+                        Lzyl=LzyArray[l]
+                        Lzzl=LzzArray[l]
+
+                        detL = DFAtls.det3(Lxxl, Lxyl, Lxzl, Lyxl, Lyyl, Lyzl, Lzxl, Lzyl, Lzzl)
+                        print(detL)
+
+                        if detL==0:
+                          # standard SPH formulation
+                          gradCorrX = mdwdrr*dx
+                          gradCorrY = mdwdrr*dy
+                          gradCorrZ = mdwdrr*dz
+                        else:
+                          xx = DFAtls.det2(Lyyl, Lyzl, Lzyl, Lzzl) / detL
+                          xy = DFAtls.det2(Lxzl, Lxyl, Lzzl, Lzyl) / detL
+                          xz = DFAtls.det2(Lxyl, Lxzl, Lyyl, Lyzl) / detL
+                          yx = DFAtls.det2(Lyzl, Lyxl, Lzzl, Lzxl) / detL
+                          yy = DFAtls.det2(Lxxl, Lxzl, Lzxl, Lzzl) / detL
+                          yz = DFAtls.det2(Lxzl, Lxxl, Lyzl, Lyxl) / detL
+                          zx = DFAtls.det2(Lyxl, Lyyl, Lzxl, Lzyl) / detL
+                          zy = DFAtls.det2(Lxyl, Lxxl, Lzyl, Lzxl) / detL
+                          zz = DFAtls.det2(Lxxl, Lxyl, Lyxl, Lyyl) / detL
+                          gradCorrX = mdwdrr * (xx*dx + xy*dy + xz*dz)
+                          gradCorrY = mdwdrr * (yx*dx + yy*dy + yz*dz)
+                          gradCorrZ = mdwdrr * (zx*dx + zy*dy + zz*dz)
+
                         gradhX = gradhX + gradCorrX
                         gradhY = gradhY + gradCorrY
                         gradhZ = gradhZ + gradCorrZ
@@ -1291,8 +1319,8 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
 
                       # ATA artificial viscosity
                       if viscOption == 2:
-                        ck = math.sqrt(gravAcc*hk)
-                        cl = math.sqrt(gravAcc*hl)
+                        ck = math.sqrt(gravAcc3*hk)
+                        cl = math.sqrt(gravAcc3*hl)
                         lamdbakl = (ck+cl)/2
                         pikl = - lamdbakl * scalProd(dux, duy, duz, dx, dy, dz) / r
                         if corrOption==0:
@@ -1303,9 +1331,9 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                           viscZ = viscZ + pikl * mhdwdrr * dz
                         elif corrOption==1:
                           # corrected kernel SPH formulation
-                          viscX = viscX + pikl * gradCorrX / hl
-                          viscY = viscY + pikl * gradCorrY / hl
-                          viscZ = viscZ + pikl * gradCorrZ / hl
+                          viscX = viscX - pikl * gradCorrX / hl
+                          viscY = viscY - pikl * gradCorrY / hl
+                          viscZ = viscZ - pikl * gradCorrZ / hl
 
                 if SPHoption == 2:
                   # get coordinates in local coord system
@@ -1589,35 +1617,33 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def getCorrKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid):
+def getLr(cfg, particles, headerNeighbourGrid, headerNormalGrid):
     """ compute lateral forces acting on the particles (SPH component)
 
-    Cython implementation
+      Cython implementation
 
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    particles : dict
-        particles dictionary at t
-    headerNeighbourGrid : dict
-        neighbour search header dictionary (information about SPH grid)
-    headerNormalGrid : double
-        normal grid header dictionary (information about the DEM grid)
-    Returns
-    -------
-    particles: dict
-        particles dictionnary at t
+      Parameters
+      ----------
+      cfg: configparser
+          configuration for DFA simulation
+      particles : dict
+          particles dictionary at t
+      headerNeighbourGrid : dict
+          neighbour search header dictionary (information about SPH grid)
+      headerNormalGrid : double
+          normal grid header dictionary (information about the DEM grid)
+      Returns
+      -------
+      particles: dict
+          particles dictionnary at t
     """
+
+    cdef double rho = cfg.getfloat('rho')
+
     # configuration parameters
-    cdef double minRKern = cfg.getfloat('minRKern')
-    cdef int interpOption = cfg.getint('interpOption')
     cdef int SPHoption = cfg.getint('sphOption')
-    cdef int viscOption = cfg.getint('viscOption')
-    cdef int corrOption = cfg.getint('corrOption')
     cdef int flowDepthOption = cfg.getint('flowDepthOption')
-    cdef int symetryOption = cfg.getint('symetryOption')
-    cdef double hmin = cfg.getfloat('hmin')
+    cdef double minRKern = cfg.getfloat('minRKern')
 
     # grid normal raster information
     cdef double cszNormal = headerNormalGrid['cellsize']
@@ -1649,25 +1675,36 @@ def getCorrKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid):
     elif flowDepthOption==1:
       hArray = particles['hSPH']
 
-    cdef double[:] cArray = np.zeros(N, dtype=np.float64)
-    cdef double[:] gradCxArray = np.zeros(N, dtype=np.float64)
-    cdef double[:] gradCyArray = np.zeros(N, dtype=np.float64)
-    cdef double[:] gradCzArray = np.zeros(N, dtype=np.float64)
+    cdef double[:] LxxArray = np.zeros(N, dtype=np.float64)
+    cdef double[:] LxyArray = np.zeros(N, dtype=np.float64)
+    cdef double[:] LxzArray = np.zeros(N, dtype=np.float64)
+    cdef double[:] LyxArray = np.zeros(N, dtype=np.float64)
+    cdef double[:] LyyArray = np.zeros(N, dtype=np.float64)
+    cdef double[:] LyzArray = np.zeros(N, dtype=np.float64)
+    cdef double[:] LzxArray = np.zeros(N, dtype=np.float64)
+    cdef double[:] LzyArray = np.zeros(N, dtype=np.float64)
+    cdef double[:] LzzArray = np.zeros(N, dtype=np.float64)
 
     cdef double mwkl, ml, mdwdrr, dwdr
     cdef double x, y, z
-    cdef double dx, dy, dz, r, hr, wkl
+    cdef double dx, dy, dz, r, hr
     cdef int lInd, rInd
     cdef int indx, indy
     cdef int k, ic, n, p, l, imax, imin, iPstart, iPend
-    cdef double hl, invCk, sumGradX, sumGradY, sumGradZ
+    cdef double hl, dk, al
+    cdef double sumLxx, sumLxy, sumLxz, sumLyx, sumLyy, sumLyz, sumLzx, sumLzy, sumLzz
 
     # loop on particles
     for k in range(N):
-      invCk = 0
-      sumGradX = 0
-      sumGradY = 0
-      sumGradZ = 0
+      sumLxx=0
+      sumLxy=0
+      sumLxz=0
+      sumLyx=0
+      sumLyy=0
+      sumLyz=0
+      sumLzx=0
+      sumLzy=0
+      sumLzz=0
       x = xArray[k]
       y = yArray[k]
       z = zArray[k]
@@ -1709,36 +1746,196 @@ def getCorrKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid):
                         dz = minRKern * rKernel * dz
                         r = minRKern * rKernel
                     if r < rKernel:
-                        hr = rKernel - r
-                        wkl = facKernel * hr * hr * hr
-                        dwdr = dfacKernel * hr * hr
-                        mdwdrr = ml * dwdr / r
-
                         ml = mass[l]
                         hl = hArray[l]
+                        al = ml / (hl*rho)
+                        hr = rKernel - r
+                        dwdr = dfacKernel * hr * hr
+                        adwdrr = al * dwdr / r
 
-                        invCk = invCk + ml / hl * wkl
+                        sumLxx = sumLxx - dx*adwdrr*dx
+                        sumLxy = sumLxy - dx*adwdrr*dy
+                        sumLxz = sumLxz - dx*adwdrr*dz
+                        sumLyx = sumLyx - dy*adwdrr*dx
+                        sumLyy = sumLyy - dy*adwdrr*dy
+                        sumLyz = sumLyz - dy*adwdrr*dz
+                        sumLzx = sumLzx - dz*adwdrr*dx
+                        sumLzy = sumLzy - dz*adwdrr*dy
+                        sumLzz = sumLzz - dz*adwdrr*dz
 
-                        sumGradX = sumGradX + mdwdrr*dx / hl
-                        sumGradY = sumGradY + mdwdrr*dy / hl
-                        sumGradZ = sumGradZ + mdwdrr*dz / hl
+      LxxArray[k] = sumLxx
+      LxyArray[k] = sumLxy
+      LxzArray[k] = sumLxz
+      LyxArray[k] = sumLyx
+      LyyArray[k] = sumLyy
+      LyzArray[k] = sumLyz
+      LzxArray[k] = sumLzx
+      LzyArray[k] = sumLzy
+      LzzArray[k] = sumLzz
 
-      cArray[k] = 1/invCk
-      gradCxArray[k] = - sumGradX / invCk / invCk
-      gradCyArray[k] = - sumGradY / invCk / invCk
-      gradCzArray[k] = - sumGradZ / invCk / invCk
-
-      # gradCxArray[k] = - 1/sumGradX
-      # gradCyArray[k] = - 1/sumGradY
-      # gradCzArray[k] = - 1/sumGradZ
-
-
-    particles['cArray']=np.asarray(cArray)
-    particles['gradCxArray']=np.asarray(gradCxArray)
-    particles['gradCyArray']=np.asarray(gradCyArray)
-    particles['gradCzArray']=np.asarray(gradCzArray)
+    particles['LxxArray']=np.asarray(LxxArray)
+    particles['LxyArray']=np.asarray(LxyArray)
+    particles['LxzArray']=np.asarray(LxzArray)
+    particles['LyxArray']=np.asarray(LyxArray)
+    particles['LyyArray']=np.asarray(LyyArray)
+    particles['LyzArray']=np.asarray(LyzArray)
+    particles['LzxArray']=np.asarray(LzxArray)
+    particles['LzyArray']=np.asarray(LzyArray)
+    particles['LzzArray']=np.asarray(LzzArray)
 
     return particles
+
+# @cython.boundscheck(False)  # Deactivate bounds checking
+# @cython.wraparound(False)   # Deactivate negative indexing.
+# @cython.cdivision(True)
+# def getCorrKernel(cfg, particles, headerNeighbourGrid, headerNormalGrid):
+#     """ compute lateral forces acting on the particles (SPH component)
+#
+#     Cython implementation
+#
+#     Parameters
+#     ----------
+#     cfg: configparser
+#         configuration for DFA simulation
+#     particles : dict
+#         particles dictionary at t
+#     headerNeighbourGrid : dict
+#         neighbour search header dictionary (information about SPH grid)
+#     headerNormalGrid : double
+#         normal grid header dictionary (information about the DEM grid)
+#     Returns
+#     -------
+#     particles: dict
+#         particles dictionnary at t
+#     """
+#
+#     cdef double rho = cfg.getfloat('rho')
+#
+#     # configuration parameters
+#     cdef double minRKern = cfg.getfloat('minRKern')
+#     cdef int interpOption = cfg.getint('interpOption')
+#     cdef int SPHoption = cfg.getint('sphOption')
+#     cdef int viscOption = cfg.getint('viscOption')
+#     cdef int corrOption = cfg.getint('corrOption')
+#     cdef int flowDepthOption = cfg.getint('flowDepthOption')
+#     cdef int symetryOption = cfg.getint('symetryOption')
+#
+#     # grid normal raster information
+#     cdef double cszNormal = headerNormalGrid['cellsize']
+#     cdef int nRowsNormal = headerNormalGrid['nrows']
+#     cdef int nColsNormal = headerNormalGrid['ncols']
+#     # neighbour search grid information and neighbour information
+#     cdef double cszNeighbourGrid = headerNeighbourGrid['cellsize']
+#     cdef int nRowsNeighbourGrid = headerNeighbourGrid['nrows']
+#     cdef int nColsNeighbourGrid = headerNeighbourGrid['ncols']
+#     cdef int[:] indPartInCell = particles['indPartInCell']
+#     cdef int[:] partInCell = particles['partInCell']
+#     # SPH kernel
+#     # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
+#     cdef double rKernel = cszNeighbourGrid
+#     cdef double facKernel = 10.0 / (math.pi * rKernel * rKernel * rKernel * rKernel * rKernel)
+#     cdef double dfacKernel = - 3.0 * facKernel
+#     # particle information
+#     cdef double[:] mass = particles['m']
+#     #cdef double[:] hSPHArrayOld = particles['hSPH']
+#     cdef double[:] xArray = particles['x']
+#     cdef double[:] yArray = particles['y']
+#     cdef double[:] zArray = particles['z']
+#     cdef int N = xArray.shape[0]
+#
+#     # initialize variables and outputs
+#     cdef double[:] hArray = np.zeros(N, dtype=np.float64)
+#     if flowDepthOption==0:
+#       hArray = particles['h']
+#     elif flowDepthOption==1:
+#       hArray = particles['hSPH']
+#
+#     cdef double[:] dArray = np.zeros(N, dtype=np.float64)
+#     cdef double[:] gradDxArray = np.zeros(N, dtype=np.float64)
+#     cdef double[:] gradDyArray = np.zeros(N, dtype=np.float64)
+#     cdef double[:] gradDzArray = np.zeros(N, dtype=np.float64)
+#
+#     cdef double mwkl, ml, mdwdrr, dwdr
+#     cdef double x, y, z
+#     cdef double dx, dy, dz, r, hr, wkl
+#     cdef int lInd, rInd
+#     cdef int indx, indy
+#     cdef int k, ic, n, p, l, imax, imin, iPstart, iPend
+#     cdef double hl, dk, sumGradX, sumGradY, sumGradZ, al
+#
+#     # loop on particles
+#     for k in range(N):
+#       dk = 0
+#       sumGradX = 0
+#       sumGradY = 0
+#       sumGradZ = 0
+#       x = xArray[k]
+#       y = yArray[k]
+#       z = zArray[k]
+#       # locate particle in SPH grid
+#       indx = <int>math.round(x / cszNeighbourGrid)
+#       indy = <int>math.round(y / cszNeighbourGrid)
+#
+#       # check if we are on the bottom ot top row!!!
+#       lInd = -1
+#       rInd = 2
+#       if indy == 0:
+#           lInd = 0
+#       if indy == nRowsNeighbourGrid - 1:
+#           rInd = 1
+#       for n in range(lInd, rInd):
+#           ic = (indx - 1) + nColsNeighbourGrid * (indy + n)
+#           # make sure not to take particles from the other edge
+#           imax = max(ic, nColsNeighbourGrid * (indy + n))
+#           imin = min(ic+3, nColsNeighbourGrid * (indy + n + 1))
+#           iPstart = indPartInCell[imax]
+#           iPend = indPartInCell[imin]
+#           # loop on all particles in neighbour boxes
+#           for p in range(iPstart, iPend):
+#               # index of particle in neighbour box
+#               l = partInCell[p]
+#               if k != l:
+#                   dx = xArray[l] - x
+#                   dy = yArray[l] - y
+#                   dz = zArray[l] - z
+#                   if SPHoption == 1:
+#                     # like option 2 with dz!=0
+#                     # dz = 0
+#                     # get norm of r = xk - xl
+#                     r = norm(dx, dy, dz)
+#                     if r < minRKern * rKernel:
+#                         # impose a minimum distance between particles
+#                         dx = minRKern * rKernel * dx
+#                         dy = minRKern * rKernel * dy
+#                         dz = minRKern * rKernel * dz
+#                         r = minRKern * rKernel
+#                     if r < rKernel:
+#                         ml = mass[l]
+#                         hl = hArray[l]
+#                         al = ml / (hl*rho)
+#                         hr = rKernel - r
+#                         wkl = facKernel * hr * hr * hr
+#                         dwdr = dfacKernel * hr * hr
+#                         mdwdrr = al * dwdr / r
+#
+#                         dk = dk + al * wkl
+#
+#                         sumGradX = sumGradX - mdwdrr*dx
+#                         sumGradY = sumGradY - mdwdrr*dy
+#                         sumGradZ = sumGradZ - mdwdrr*dz
+#
+#       dArray[k] = dk
+#       gradDxArray[k] = sumGradX
+#       gradDyArray[k] = sumGradY
+#       gradDzArray[k] = sumGradZ
+#
+#
+#     particles['dArray']=np.asarray(dArray)
+#     particles['gradDxArray']=np.asarray(gradDxArray)
+#     particles['gradDyArray']=np.asarray(gradDyArray)
+#     particles['gradDzArray']=np.asarray(gradDzArray)
+#
+#     return particles
 
 
 
