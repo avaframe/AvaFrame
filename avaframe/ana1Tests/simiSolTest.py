@@ -14,6 +14,7 @@ import numpy as np
 from scipy.integrate import ode
 import math
 import logging
+import shapefile
 
 # local imports
 from avaframe.in3Utils import cfgUtils
@@ -675,7 +676,7 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         # fetch the simulation results
         particlesList, Tsave = com1DFA.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
         fieldsList, fieldHeader = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
-        simDF.loc[simHash, 'Npart'] = particlesList[0]['Npart']
+        simDF.loc[simHash, 'Npart'] = particlesList[-1]['Npart']
         # analyze and compare results
         hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(particlesList, fieldsList, solSimi, fieldHeader,
                                                                         cfgSimi, outDirTest, simHash, simDFrow)
@@ -689,8 +690,8 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[ind_t]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
-        outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
-                                       outDirTest, simHash, simDFrow)
+        # outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
+        #                                outDirTest, simHash, simDFrow)
 
     simDF.to_pickle(outDirTest / 'results.p')
 
@@ -771,8 +772,8 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
         log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hErrorL2))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
         count = count + 1
-    outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
-                               simHash, simDFrow, cfgSimi.getboolean('relativError'))
+    # outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
+    #                            simHash, simDFrow, cfgSimi.getboolean('relativError'))
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
 
@@ -824,12 +825,25 @@ def getReleaseThickness(avaDir, cfg, demFile):
     X1 = X/cos
     Y1 = Y
     relTh = Hini * (1 - X1*X1/(L_x*L_x) - Y*Y/(L_y*L_y))
-    relTh = np.where(relTh < 0, 0, relTh)
+    # relTh = np.where(relTh < 0, 0, relTh)
 
     relDict = {'relTh': relTh, 'X1': X1, 'Y1': Y1, 'demOri': demOri, 'X': X, 'Y': Y,
                'cos': cos, 'sin': sin}
-
+    alpha = np.linspace(0, 2*math.pi, 200)
+    polyline = np.zeros((200, 2))
+    polyline[:, 0] = L_x*np.cos(alpha)*cos
+    polyline[:, 1] = L_x*np.sin(alpha)
+    relFileName = demFile.parent / 'REL' / 'rel1.shp'
+    writeLine2SHPfile(polyline, 'rel1', str(relFileName))
     return relDict
+
+
+def writeLine2SHPfile(part, lineName, fileName):
+    w = shapefile.Writer(fileName)
+    w.field('name', 'C')
+    w.line([part])
+    w.record(lineName)
+    w.close()
 
 
 def prepareParticlesFieldscom1DFA(fields, particles, header, simiDict, axis):

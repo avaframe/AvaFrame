@@ -810,13 +810,14 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
         xPartArray = np.empty(0)
         yPartArray = np.empty(0)
         mPartArray = np.empty(0)
+        aPartArray = np.empty(0)
         hPartArray = np.empty(0)
         # loop on non empty cells
         for indRelx, indRely in zip(indRelX, indRelY):
             # compute number of particles for this cell
             hCell = relRaster[indRely, indRelx]
             aCell = areaRaster[indRely, indRelx]
-            xPart, yPart, mPart, nPart = placeParticles(hCell, aCell, indRelx, indRely, csz, massPerPart, rng, cfg)
+            xPart, yPart, mPart, nPart, aPart = placeParticles(hCell, aCell, indRelx, indRely, csz, massPerPart, rng, cfg)
             Npart = Npart + nPart
             partPerCell[indRely, indRelx] = nPart
             # initialize particles position, mass, height...
@@ -824,9 +825,13 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
             xPartArray = np.append(xPartArray, xPart)
             yPartArray = np.append(yPartArray, yPart)
             mPartArray = np.append(mPartArray, mPart * np.ones(nPart))
+            aPartArray = np.append(aPartArray, aPart * np.ones(nPart))
 
         hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
+        # for the MPPKR option use hPart and aPart to define the mass of the particle (this means, within )
+        if massPerParticleDeterminationMethod == 'MPPKR':
+            mPartArray = rho * aPartArray * hPartArray
         # create dictionnary to store particles properties
         particles = {}
         particles['Npart'] = Npart
@@ -1006,6 +1011,7 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
         y = y.flatten()
 
     mPart = massCell / nPart
+    aPart = aCell / nPart
 
     # TODO make this an independent function
     #######################
@@ -1026,7 +1032,7 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
             log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
                         initPartDistType)
 
-    return xPart, yPart, mPart, nPart
+    return xPart, yPart, mPart, nPart, aPart
 
 
 def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, rhoEnt):
@@ -1780,6 +1786,9 @@ def checkParticlesInRelease(particles, line, radius):
         mask = pointInPolygon(line['header'], particles, avapath, radius)
         Mask = np.logical_or(Mask, mask)
 
+    # also remove particles with negative mass
+    mask = np.where(particles['m'] <= 0, False, True)
+    Mask = np.logical_and(Mask, mask)
     nRemove = len(Mask)-np.sum(Mask)
     if nRemove > 0:
         particles = DFAtls.removePart(particles, Mask, nRemove, 'because they are not within the release polygon')
