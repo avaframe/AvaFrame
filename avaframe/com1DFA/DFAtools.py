@@ -434,10 +434,9 @@ def testSplitPart(particles, cfg, dem):
     # get cfg info
     rho = cfg.getfloat('rho')
     sphKernelRadius = cfg.getfloat('sphKernelRadius')
-    rng = np.random.default_rng(int(cfg['seed']))
     cMinNPPK = cfg.getfloat('cMinNPPK')
     cMinMass = cfg.getfloat('cMinMass')
-    nSplit = 2
+    nSplit = cfg.getint('nSplit')
     # get dem info
     csz = dem['header']['cellsize']
     Nx = dem['Nx']
@@ -448,13 +447,13 @@ def testSplitPart(particles, cfg, dem):
     nPPK = particles['nPPK']
     aMax = math.pi * sphKernelRadius**2 / (cMinNPPK * nPPK)
     mMin = massPerPart * cMinMass
+    # get particle area
     mPart = particles['m']
     hPart = particles['h']
-    ux = particles['ux']
-    uy = particles['uy']
-    uz = particles['uz']
     aPart = mPart/(rho*hPart)
+    # find particles to split
     tooBig = np.where((aPart > aMax) & (mPart/nSplit > mMin))[0]
+    # count new particles
     nNewPart = 0
     if np.size(tooBig) > 0:
         # loop on particles to split
@@ -467,17 +466,7 @@ def testSplitPart(particles, cfg, dem):
             nAdd = nSplit-1
             nNewPart = nNewPart + nAdd
             # get position of new particles
-            rNew = np.sqrt(aPart[ind] / (math.pi * nSplit))
-            alpha = 2*math.pi*(np.arange(nSplit)/nSplit + rng.random(1))
-            cos = rNew*np.cos(alpha)
-            sin = rNew*np.sin(alpha)
-            nx, ny, nz = getNormalArray(np.array([particles['x'][ind]]), np.array([particles['y'][ind]]), Nx, Ny, Nz, csz)
-            e2x, e2y, e2z = crossProd(nx, ny, nz, ux[ind], uy[ind], uz[ind])
-            e2x, e2y, e2z = normalize(e2x, e2y, e2z)
-            velMag = norm(ux[ind], uy[ind], uz[ind])
-            xNew = particles['x'][ind] + cos * ux[ind] / velMag + sin * e2x
-            yNew = particles['y'][ind] + cos * uy[ind] / velMag + sin * e2y
-            zNew = particles['z'][ind] + cos * uz[ind] / velMag + sin * e2z
+            xNew, yNew, zNew = getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind)
             # update total number of particles and number of IDs used so far
             particles['Npart'] = particles['Npart'] + nAdd
             particles['nID'] = nID + nAdd
@@ -502,6 +491,7 @@ def testSplitPart(particles, cfg, dem):
                     # set the parent properties to new particles due to splitting
                     elif np.size(particles[key]) == nPart:
                         particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
+                    # ToDo: maybe also update the h smartly
         log.debug('Added %s because of splitting' % (nNewPart))
 
     particles['mTot'] = np.sum(particles['m'])
@@ -750,6 +740,116 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
                 trackedPartProp[key][nTime, indCol] = particles[key][ind]
 
     return trackedPartProp
+
+
+def getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind):
+    """Compute the new particle potion due to splitting
+
+    Parameters
+    ----------
+    cfg : configParser
+        GENERAL configuration for com1DFA
+    particles : dict
+        particles dictionary
+    dem : dict
+        dem dictionary
+    ny : float
+        y component of the normal vector
+    nz : float
+        z component of the normal vector
+    ux : float
+        x component of the velocity vector
+    uy : float
+        y component of the velocity vector
+    uz : float
+        z component of the velocity vector
+
+    Returns
+    -------
+    e1x : float
+        x component of the first tangent vector
+    e1y : float
+        y component of the first tangent vector
+    e1z : float
+        z component of the first tangent vector
+    e2x : float
+        x component of the second tangent vector
+    e2y : float
+        y component of the second tangent vector
+    e2z : float
+        z component of the second tangent vector
+    """
+    rng = np.random.default_rng(int(cfg['seed']))
+    x = particles['x']
+    y = particles['y']
+    z = particles['z']
+    ux = particles['ux']
+    uy = particles['uy']
+    uz = particles['uz']
+    rNew = np.sqrt(aPart[ind] / (math.pi * nSplit))
+    alpha = 2*math.pi*(np.arange(nSplit)/nSplit + rng.random(1))
+    cos = rNew*np.cos(alpha)
+    sin = rNew*np.sin(alpha)
+    # nx, ny, nz = getNormalArray(np.array([particles['x'][ind]]), np.array([particles['y'][ind]]), Nx, Ny, Nz, csz)
+    nx, ny, nz = getNormalArray(np.array([x[ind]]), np.array([y[ind]]), Nx, Ny, Nz, csz)
+    e1x, e1y, e1z, e2x, e2y, e2z = getTangenVectors(nx, ny, nz, np.array([ux[ind]]), np.array([uy[ind]]), np.array([uz[ind]]))
+    xNew = x[ind] + cos * e1x + sin * e2x
+    yNew = y[ind] + cos * e1y + sin * e2y
+    zNew = z[ind] + cos * e1z + sin * e2z
+    return xNew, yNew, zNew
+
+
+def getTangenVectors(nx, ny, nz, ux, uy, uz):
+    """Compute the tangent vector to the surface
+    If possible, e1 is in the velocity direction, if not possible,
+    use the tangent vector in x direction for e1
+    Parameters
+    ----------
+    nx : float
+        x component of the normal vector
+    ny : float
+        y component of the normal vector
+    nz : float
+        z component of the normal vector
+    ux : float
+        x component of the velocity vector
+    uy : float
+        y component of the velocity vector
+    uz : float
+        z component of the velocity vector
+
+    Returns
+    -------
+    e1x : float
+        x component of the first tangent vector
+    e1y : float
+        y component of the first tangent vector
+    e1z : float
+        z component of the first tangent vector
+    e2x : float
+        x component of the second tangent vector
+    e2y : float
+        y component of the second tangent vector
+    e2z : float
+        z component of the second tangent vector
+    """
+    # compute the velocity magnitude
+    velMag = norm(ux, uy, uz)
+    if velMag > 0:
+        e1x = ux / velMag
+        e1y = uy / velMag
+        e1z = uz / velMag
+    else:
+        # if vector u is zero use the tengent vector in x direction for e1
+        e1x = np.array([1])
+        e1y = np.array([0])
+        e1z = -nx/nz
+        e1x, e1y, e1z = normalize(e1x, e1y, e1z)
+    # compute the othe tengent vector
+    e2x, e2y, e2z = crossProd(nx, ny, nz, e1x, e1y, e1z)
+    e2x, e2y, e2z = normalize(e2x, e2y, e2z)
+    return e1x, e1y, e1z, e2x, e2y, e2z
+
 
 ##############################################################################
 # ###################### Vectorial functions #################################
