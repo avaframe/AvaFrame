@@ -690,8 +690,8 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[ind_t]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
-        # outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
-        #                                outDirTest, simHash, simDFrow)
+        outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
+                                       outDirTest, simHash, simDFrow)
 
     simDF.to_pickle(outDirTest / 'results.p')
 
@@ -772,8 +772,8 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
         log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hErrorL2))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
         count = count + 1
-    # outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
-    #                            simHash, simDFrow, cfgSimi.getboolean('relativError'))
+    outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
+                               simHash, simDFrow, cfgSimi.getboolean('relativError'))
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
 
