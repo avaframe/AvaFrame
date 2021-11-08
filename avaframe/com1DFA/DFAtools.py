@@ -381,6 +381,7 @@ def splitPart(particles, cfg):
             # compute velocity mag to get the direction of the flow (e_1)
             uMag = norm(ux[ind], uy[ind], uz[ind])
             # get the area of the particle as well as the distance expected between the old and new particle
+            # note that if we did not update the particles FD, we use here the h from the previous time step
             aPart = mPart[ind]/(rho*particles['h'][ind])
             rNew = distSplitPart * np.sqrt(aPart/math.pi)
             nAdd = 1  # (nSplit[ind]-1).astype('int')
@@ -397,6 +398,8 @@ def splitPart(particles, cfg):
                     if key == 'ID':
                         particles['ID'] = np.append(particles['ID'], np.arange(nID, nID + nAdd, 1))
                     elif key == 'x':
+                        # ToDo: will fail if uMag is zero. Probelm is, if we want another vector we need to access
+                        # the normal which will cost more
                         particles[key] = np.append(particles[key], xPart[ind] + rNew*ux[ind]/uMag)
                     elif key == 'y':
                         particles[key] = np.append(particles[key], yPart[ind] + rNew*uy[ind]/uMag)
@@ -473,6 +476,7 @@ def testSplitPart(particles, cfg, dem):
             # log.info('Spliting particle %s in %s' % (ind, nSplit))
             for key in particles:
                 # update splitted particle mass
+                # first update the middle particle
                 particles['m'][ind] = mNew
                 particles['x'][ind] = xNew[0]
                 particles['y'][ind] = yNew[0]
@@ -527,12 +531,14 @@ def testMergePart(particles, cfg, dem):
     # get the threshold area under which we merge the particle
     nPPK = particles['nPPK']
     aMin = math.pi * sphKernelRadius**2 / (cMaxNPPK * nPPK)
+    # get particle area
     mPart = particles['m']
     hPart = particles['h']
     xPart = particles['x']
     yPart = particles['y']
     zPart = particles['z']
     aPart = mPart/(rho*hPart)
+    # find particles to merge
     tooSmall = np.where(aPart < aMin)[0]
     keepParticle = np.ones((particles['Npart']), dtype=bool)
     nRemoved = 0
@@ -542,17 +548,21 @@ def testMergePart(particles, cfg, dem):
             if keepParticle[ind]:
                 # find nearest particle
                 r = norm(xPart-xPart[ind], yPart-yPart[ind], zPart-zPart[ind])
+                # make sure you don't find the particle itself
                 r[ind] = 2*sphKernelRadius
+                # make sure you don't find a particle that has already been merged
                 r[~keepParticle] = 2*sphKernelRadius
+                # find nearest particle
                 neighbourInd = np.argmin(r)
                 rMerge = r[neighbourInd]
+                # only merge a particle if it is closer thant the kernel radius
                 if rMerge < sphKernelRadius:
                     # remove neighbourInd from tooSmall if possible
                     keepParticle[neighbourInd] = False
                     nRemoved = nRemoved + 1
                     # compute new mass and particles to add
                     mNew = mPart[ind] + mPart[neighbourInd]
-                    # compute mass averaged value
+                    # compute mass averaged values
                     for key in ['x', 'y', 'z', 'ux', 'uy', 'uz']:
                         particles[key][ind] = (mPart[ind]*particles[key][ind] +
                                                mPart[neighbourInd]*particles[key][neighbourInd]) / mNew
@@ -796,13 +806,16 @@ def getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind):
     xNew = x[ind] + cos * e1x + sin * e2x
     yNew = y[ind] + cos * e1y + sin * e2y
     zNew = z[ind] + cos * e1z + sin * e2z
+    # toDo: do we need to reproject the particles on the dem?
     return xNew, yNew, zNew
 
 
 def getTangenVectors(nx, ny, nz, ux, uy, uz):
     """Compute the tangent vector to the surface
+
     If possible, e1 is in the velocity direction, if not possible,
-    use the tangent vector in x direction for e1
+    use the tangent vector in x direction for e1 (not that any other u vector could be provided,
+    it does not need to be the velocity vector, it only needs to be in the tangent plane)
     Parameters
     ----------
     nx : float
@@ -840,7 +853,7 @@ def getTangenVectors(nx, ny, nz, ux, uy, uz):
         e1y = uy / velMag
         e1z = uz / velMag
     else:
-        # if vector u is zero use the tengent vector in x direction for e1
+        # if vector u is zero use the tangent vector in x direction for e1
         e1x = np.array([1])
         e1y = np.array([0])
         e1z = -nx/nz

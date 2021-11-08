@@ -829,7 +829,8 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
 
         hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
-        # for the MPPKR option use hPart and aPart to define the mass of the particle (this means, within )
+        # for the MPPKR option use hPart and aPart to define the mass of the particle (this means, within a cell
+        # partticles have the same area but may have different flow depth which means a different mass)
         if massPerParticleDeterminationMethod == 'MPPKR':
             mPartArray = rho * aPartArray * hPartArray
         # create dictionnary to store particles properties
@@ -976,6 +977,8 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
         mass of particles
     nPart : int
         number of particles created
+    aPart : int
+        particle area
     """
 
     rho = cfg.getfloat('rho')
