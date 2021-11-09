@@ -133,12 +133,18 @@ colorsD = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
 cmapD = cmapCameri.lajolla.copy()
 
 # multi sequential colormap for speed
-# levS = [1, 5, 10, 15, 20, 25, 30]
-levS = [19, 20, 21, 22, 25, 30, 40]
+levS = [1, 5, 10, 15, 20, 25, 30]
 # Batflow color map
 colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
            '#201158']
 cmapS = copy.copy(cmapCameri.batlow.reversed())
+
+# multi sequential colormap for Travel Angle
+levTA = [19, 20, 21, 22, 25, 30, 40]
+# Batflow color map
+colorsTA = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
+           '#201158']
+cmapTA = cmapCameri.batlow.reversed()
 
 # colormap used if no resType provided
 cmapNN = copy.copy(cmapCameri.imola.reversed())
@@ -173,6 +179,11 @@ cmapSpeed['cmap'] = cmapS
 cmapSpeed['colors'] = colorsS
 cmapSpeed['levels'] = levS
 
+cmapTravelAngle = {}
+cmapTravelAngle['cmap'] = cmapTA
+cmapTravelAngle['colors'] = colorsTA
+cmapTravelAngle['levels'] = levTA
+
 
 cmapProb = {}
 cmapProb['cmap'] = cmapProbmap
@@ -181,7 +192,7 @@ cmapProb['levels'] = levProb
 
 colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pfd': cmapDepth, 'P': cmapPres, 'FV': cmapSpeed,
              'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FDV': cmapSpeed ,'FD': cmapDepth, 'prob': cmapProb,
-             'pta': cmapSpeed, 'TA': cmapSpeed}
+             'pta': cmapTravelAngle, 'TA': cmapTravelAngle}
 
 cmapDEM = cmapGreys
 
