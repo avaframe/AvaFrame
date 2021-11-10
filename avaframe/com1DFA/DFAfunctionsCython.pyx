@@ -28,10 +28,8 @@ log = logging.getLogger(__name__)
 @cython.cdivision(True)
 def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, double csz=1, double xllc=0, double yllc=0):
     """ Interpolate from unstructured points to grid
-
     Interpolate unstructured points on a structured grid using bilinear interpolation
     The (x, y) points have to be on the extend of the DEM!!
-
     Parameters
       ----------
       x: 1D numpy array
@@ -48,7 +46,6 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
           x coord of the lower left center
       yllc : float
           y coord of the lower left center
-
       Returns
       -------
       Z1: 2D numpy array
@@ -107,9 +104,7 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
 @cython.cdivision(True)
 def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   """ compute forces acting on the particles (without the SPH component)
-
   Cython implementation implementation
-
   Parameters
   ----------
   cfg: configparser
@@ -120,7 +115,6 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       dictionary with dem information
   dT : float
       time step
-
   Returns
   -------
   force : dict
@@ -370,7 +364,6 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
                                               double tau, double entEroEnergy,
                                               double rhoEnt):
   """ compute force component due to entrained mass
-
   Parameters
   ----------
   entrMassCell : float
@@ -381,7 +374,6 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
       particle speed (velocity magnitude)
   tau : float
       bottom shear stress
-
   Returns
   -------
   dm : float
@@ -418,7 +410,6 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
 cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
                              double cResCell, double uMag, int explicitFriction):
   """ compute force component due to resistance
-
   Parameters
   ----------
   hRes: float
@@ -435,7 +426,6 @@ cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
       particle speed (velocity magnitude)
   explicitFriction: int
     if 1 add resistance with an explicit method. Implicit otherwise
-
   Returns
   -------
   cResPart : float
@@ -535,9 +525,7 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
 @cython.cdivision(True)
 def updatePositionC(cfg, particles, dem, force, DT):
   """ update particle position using euler forward scheme
-
   Cython implementation
-
   Parameters
   ----------
   cfg: configparser
@@ -777,7 +765,6 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
                                                             double dt, double forceFrict,
                                                             double uMag, int explicitFriction):
   """ update velocity with friction force
-
   Parameters
   ----------
   ux: float
@@ -796,7 +783,6 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
       particle speed (velocity magnitude)
   explicitFriction: int
     if 1 add resistance with an explicit method. Implicit otherwise
-
   Returns
   -------
   uxNew: float
@@ -846,9 +832,7 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
 @cython.cdivision(True)
 def updateFieldsC(cfg, particles, dem, fields):
   """ update fields and particles fow depth
-
   Cython implementation
-
  Parameters
  ----------
  cfg: configparser
@@ -976,18 +960,15 @@ def updateFieldsC(cfg, particles, dem, fields):
 @cython.cdivision(True)
 def getNeighborsC(particles, dem):
     """ Locate particles on DEM and neighbour search grid
-
     Ĺocate each particle in a grid cell (both DEM and neighbour search grid) and build the
     indPartInCell and partInCell arrays for SPH neighbourSearch and
     InCell, IndX and IndY arrays location on the DEM grid.
     See issue #200 and documentation for details
-
     Parameters
     ----------
     particles : dict
     dem : dict
       dem dict with neighbour search grid header (information about neighbour search grid)
-
     Returns
     -------
     particles : dict
@@ -1056,7 +1037,6 @@ def computeForceSPHC(cfg, particles, force, dem, gradient=0):
   """ Prepare data for C computation of lateral forces (SPH component)
 
   acting on the particles (SPH component)
-
   Parameters
   ----------
   cfg: configparser
@@ -1101,9 +1081,7 @@ def computeForceSPHC(cfg, particles, force, dem, gradient=0):
 def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
                  double[:, :] nxArray, double[:, :] nyArray, double[:, :] nzArray, gradient):
   """ compute lateral forces acting on the particles (SPH component)
-
   Cython implementation
-
   Parameters
   ----------
   cfg: configparser
@@ -1170,6 +1148,12 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
   cdef double[:] uzArray = particles['uz']
   cdef int N = xArray.shape[0]
 
+  cdef double[:] hArray = np.zeros(N, dtype=np.float64)
+  if flowDepthOption==0:
+    hArray = particles['h']
+  elif flowDepthOption==1:
+    hArray = particles['hSPH']
+
   # initialize variables and outputs
   cdef double[:] GHX = np.zeros(N, dtype=np.float64)
   cdef double[:] GHY = np.zeros(N, dtype=np.float64)
@@ -1217,6 +1201,13 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
     indx = <int>math.round(x / cszNeighbourGrid)
     indy = <int>math.round(y / cszNeighbourGrid)
 
+
+    # get normal vector
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
+    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+    nx, ny, nz = normalize(nx, ny, nz)
+    # projection of gravity on normal vector
+    gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
     if SPHoption > 1:
         # get normal vector
         Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
@@ -1367,11 +1358,135 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
   return GHX, GHY, GHZ
 
 
+@cython.boundscheck(False)  # Deactivate bounds checking
+@cython.wraparound(False)   # Deactivate negative indexing.
+@cython.cdivision(True)
+def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
+  """ compute lateral forces acting on the particles (SPH component)
+  Cython implementation
+  Parameters
+  ----------
+  cfg: configparser
+      configuration for DFA simulation
+  particles : dict
+      particles dictionary at t
+  headerNeighbourGrid : dict
+      neighbour search header dictionary (information about SPH grid)
+  headerNormalGrid : double
+      normal grid header dictionary (information about the DEM grid)
+  Returns
+  -------
+  hArray : 1D numpy array
+      SPH computed flow depth
+  """
+  # get all inputs
+  cdef double rho = cfg.getfloat('rho')
+  # configuration parameters
+  cdef double minRKern = cfg.getfloat('minRKern')
+  cdef int interpOption = cfg.getint('interpOption')
+  cdef int SPHoption = cfg.getint('sphOption')
+  cdef int symetryOption = cfg.getint('symetryOption')
+  cdef double hmin = cfg.getfloat('hmin')
+
+  # grid normal raster information
+  cdef double cszNormal = headerNormalGrid['cellsize']
+  cdef int nRowsNormal = headerNormalGrid['nrows']
+  cdef int nColsNormal = headerNormalGrid['ncols']
+  # neighbour search grid information and neighbour information
+  cdef double cszNeighbourGrid = headerNeighbourGrid['cellsize']
+  cdef int nRowsNeighbourGrid = headerNeighbourGrid['nrows']
+  cdef int nColsNeighbourGrid = headerNeighbourGrid['ncols']
+  cdef int[:] indPartInCell = particles['indPartInCell']
+  cdef int[:] partInCell = particles['partInCell']
+  # SPH kernel
+  # use "spiky" kernel: w = (rKernel - r)**3 * 10/(pi*rKernel**5)
+  cdef double rKernel = cszNeighbourGrid
+  cdef double facKernel = 10.0 / (math.pi * rKernel * rKernel * rKernel * rKernel * rKernel)
+  cdef double dfacKernel = - 3.0 * facKernel
+  # particle information
+  cdef double[:] mass = particles['m']
+  #cdef double[:] hSPHArrayOld = particles['hSPH']
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] zArray = particles['z']
+  cdef int N = xArray.shape[0]
+
+  # initialize variables and outputs
+  cdef double[:] hSPHArray = np.zeros(N, dtype=np.float64)
+
+  cdef double mrhowkl, ml, al
+  cdef double x, y, z
+  cdef double dx, dy, dz, r, hr, wkl
+  cdef int lInd, rInd
+  cdef int indx, indy
+  cdef int k, ic, n, p, l, imax, imin, iPstart, iPend
+  cdef double hSPHk
+
+  # loop on particles
+  for k in range(N):
+    # hSPHk: SPH computed flow depth
+    hSPHk = 0
+    x = xArray[k]
+    y = yArray[k]
+    z = zArray[k]
+    # locate particle in SPH grid
+    indx = <int>math.round(x / cszNeighbourGrid)
+    indy = <int>math.round(y / cszNeighbourGrid)
+
+    # check if we are on the bottom ot top row!!!
+    lInd = -1
+    rInd = 2
+    if indy == 0:
+        lInd = 0
+    if indy == nRowsNeighbourGrid - 1:
+        rInd = 1
+    for n in range(lInd, rInd):
+        ic = (indx - 1) + nColsNeighbourGrid * (indy + n)
+        # make sure not to take particles from the other edge
+        imax = max(ic, nColsNeighbourGrid * (indy + n))
+        imin = min(ic+3, nColsNeighbourGrid * (indy + n + 1))
+        iPstart = indPartInCell[imax]
+        iPend = indPartInCell[imin]
+        # loop on all particles in neighbour boxes
+        for p in range(iPstart, iPend):
+            # index of particle in neighbour box
+            l = partInCell[p]
+            if k != l:
+                dx = xArray[l] - x
+                dy = yArray[l] - y
+                dz = zArray[l] - z
+                if SPHoption == 1:
+                  # like option 2 with dz!=0
+                  #dz = 0
+                  # get norm of r = xk - xl
+                  r = norm(dx, dy, dz)
+                  if r < minRKern * rKernel:
+                      # impose a minimum distance between particles
+                      dx = minRKern * rKernel * dx
+                      dy = minRKern * rKernel * dy
+                      dz = minRKern * rKernel * dz
+                      r = minRKern * rKernel
+                  if r < rKernel:
+                      hr = rKernel - r
+                      wkl = facKernel * hr * hr * hr
+                      ml = mass[l]
+                      mrhowkl = ml/rho * wkl
+                      # standard SPH formulation
+                      hSPHk = hSPHk + mrhowkl
+
+    if hSPHk>hmin:
+      hSPHArray[k] = hSPHk
+    else:
+      hSPHArray[k] = hmin
+
+  particles['hSPH']=np.asarray(hSPHArray)
+
+  return particles
+
+
 cpdef double norm(double x, double y, double z):
   """ Compute the Euclidean norm of the vector (x, y, z).
-
   (x, y, z) can be numpy arrays.
-
   Parameters
   ----------
       x: numpy array
@@ -1380,7 +1495,6 @@ cpdef double norm(double x, double y, double z):
           y component of the vector
       z: numpy array
           z component of the vector
-
   Returns
   -------
       norme: numpy array
@@ -1390,9 +1504,7 @@ cpdef double norm(double x, double y, double z):
 
 cpdef double norm2(double x, double y, double z):
   """ Compute the Euclidean norm of the vector (x, y, z).
-
   (x, y, z) can be numpy arrays.
-
   Parameters
   ----------
       x: numpy array
@@ -1401,7 +1513,6 @@ cpdef double norm2(double x, double y, double z):
           y component of the vector
       z: numpy array
           z component of the vector
-
   Returns
   -------
       norme: numpy array
@@ -1413,9 +1524,7 @@ cpdef double norm2(double x, double y, double z):
 @cython.cdivision(True)
 cpdef (double, double, double) normalize(double x, double y, double z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
-
   (x, y, z) can be np arrays.
-
   Parameters
   ----------
       x: numpy array
@@ -1424,7 +1533,6 @@ cpdef (double, double, double) normalize(double x, double y, double z):
           y component of the vector
       z: numpy array
           z component of the vector
-
   Returns
   -------
       xn: numpy array
@@ -1466,7 +1574,6 @@ cpdef double scalProd(double ux, double uy, double uz, double vx, double vy, dou
 @cython.cdivision(True)
 cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
   """ Locate point on grid.
-
   Parameters
   ----------
       x: float
@@ -1479,7 +1586,6 @@ cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
           number of rows
       csz: float
           cellsize of the grid
-
   Returns
   -------
       iCell: int
@@ -1508,11 +1614,9 @@ cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
 @cython.cdivision(True)
 cpdef (double, double, double, double) getWeights(double x, double y, int iCell, double csz, int ncols, int interpOption):
   """ Get weight for interpolation from grid to single point location
-
   3 Options available : -0: nearest neighbour interpolation
                         -1: equal weights interpolation
                         -2: bilinear interpolation
-
   Parameters
   ----------
     x: float
@@ -1529,7 +1633,6 @@ cpdef (double, double, double, double) getWeights(double x, double y, int iCell,
         -0: nearest neighbour interpolation
         -1: equal weights interpolation
         -2: bilinear interpolation
-
   Returns
   -------
       w00, w10, w01, w11: floats
@@ -1588,7 +1691,6 @@ cpdef (double, double, int, int, int, double, double, double, double) normalProj
   double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption,
   int reprojectionIterations, double threshold):
   """ Find the orthogonal projection of a point on a mesh
-
   Iterative method to find the projection of a point on a surface defined by its mesh
 
   Parameters
@@ -1689,7 +1791,6 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
   double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
   double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption, int reprojectionIterations):
   """ Find the projection of a point on a mesh (comes from samos)
-
   Iterative method to find the projection of a point on a surface defined by its mesh
 
   Parameters
@@ -1793,7 +1894,6 @@ cpdef (double, double, double, int, int, int, double, double, double, double) di
   int reprojectionIterations, double threshold):
   """ Find the projection of a point on a mesh conserving the distance
   with the previous time step position
-
   Iterative method to find the projection of a point on a surface defined by its mesh
 
   Parameters
@@ -1932,12 +2032,10 @@ cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vA
 @cython.boundscheck(False)
 cpdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double w3, double[:, :] V):
   """ Interpolate vector field from grid to single point location
-
   Originaly created to get the normal vector at location (x,y) given the
   normal vector field on the grid. Grid has its origin in (0,0).
   Can be used to interpolate any vector field.
   Interpolation using a bilinear interpolation
-
   Parameters
   ----------
     Lx0: int
@@ -1948,7 +2046,6 @@ cpdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double
         corresponding weights
     V: 2D numpy array
         scalar field at the grid nodes
-
   Returns
   -------
       v: float
@@ -1968,11 +2065,9 @@ cpdef (double, double, double) getVector(
   int Lx0, int Ly0, double w0, double w1, double w2, double w3,
   double[:, :] Nx, double[:, :] Ny, double[:, :] Nz):
   """ Interpolate vector field from grid to single point location
-
   Originaly created to get the normal vector at location (x,y) given the
   normal vector field on the grid. Grid has its origin in (0,0).
   Can be used to interpolate any vector field.
-
   Parameters
   ----------
       Lx0: int
@@ -1988,7 +2083,6 @@ cpdef (double, double, double) getVector(
           y component of the vector field at the grid nodes
       Nz: 2D numpy array
           z component of the vector field at the grid nodes
-
   Returns
   -------
       nx: float
