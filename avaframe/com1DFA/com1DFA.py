@@ -1269,7 +1269,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
 
     # get forces
     startTime = time.time()
-
     # loop version of the compute force
     log.debug('Compute Force C')
     particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, dt, frictType)
@@ -1329,6 +1328,8 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     startTime = time.time()
     log.debug('update Fields C')
     # particles, fields = updateFields(cfg, particles, force, dem, fields)
+
+    #if flowDepthOption!=1 or viscOption !=2 :
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tcpuField = time.time() - startTime
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
