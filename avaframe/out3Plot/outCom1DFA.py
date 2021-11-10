@@ -206,5 +206,5 @@ def updatePlot(particles, ax, dem):
     cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(variableC), np.nanmax(variableC), continuous=pU.contCmap)
     # set range and steps of colormap
     sc = ax.scatter(X, Y, c=variableC, s=variableS, cmap=cmap, marker='.')
-    pU.addColorBar(sc, ax, ticks, 'kg')
+    pU.addColorBar(sc, ax, ticks, 'm')
     return ax

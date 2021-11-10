@@ -336,6 +336,63 @@ def removePart(particles, mask, nRemove, reasonString=''):
     return particles
 
 
+def addParticles(particles, nAdd, ind, mNew, xNew, yNew, zNew):
+    """ add particles
+
+    Parameters
+    ----------
+    particles : dict
+        particles dictionary
+    nAdd : int
+        number of particles added (on particles is modified, nAdd are added)
+    ind : int
+        index of particle modified
+    mNew: float
+        new mass of the particles
+    xNew: numpy array
+        new x position of the particles
+    yNew: numpy array
+        new y position of the particles
+    zNew: numpy array
+        new z position of the particles
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary with modified particle and new ones
+    """
+    # get old values
+    nPart = particles['Npart']
+    nID = particles['nID']
+    # update total number of particles and number of IDs used so far
+    particles['Npart'] = particles['Npart'] + nAdd
+    particles['nID'] = nID + nAdd
+    # log.info('Spliting particle %s in %s' % (ind, nSplit))
+    for key in particles:
+        # update splitted particle mass
+        # first update the middle particle
+        particles['m'][ind] = mNew
+        particles['x'][ind] = xNew[0]
+        particles['y'][ind] = yNew[0]
+        particles['z'][ind] = zNew[0]
+        # add new particles at the end of the arrays
+        if type(particles[key]).__module__ == np.__name__:
+            # create unique ID for the new particles
+            if key == 'ID':
+                particles['ID'] = np.append(particles['ID'], np.arange(nID, nID + nAdd, 1))
+            elif key == 'x':
+                particles[key] = np.append(particles[key], xNew[1:])
+            elif key == 'y':
+                particles[key] = np.append(particles[key], yNew[1:])
+            elif key == 'z':
+                particles[key] = np.append(particles[key], zNew[1:])
+            # set the parent properties to new particles due to splitting
+            elif np.size(particles[key]) == nPart:
+                particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
+            # ToDo: maybe also update the h smartly
+    return particles
+
+
 def splitPart(particles, cfg):
     """Split big particles
 
@@ -361,53 +418,17 @@ def splitPart(particles, cfg):
     distSplitPart = cfg.getfloat('distSplitPart')
     massPerPart = particles['massPerPart']
     mPart = particles['m']
-    xPart = particles['x']
-    yPart = particles['y']
-    zPart = particles['z']
-    ux = particles['ux']
-    uy = particles['uy']
-    uz = particles['uz']
     # decide which particles to split
     nSplit = np.ceil(mPart/(massPerPart*thresholdMassSplit))
     Ind = np.where(nSplit > 1)[0]
-    if np.size(Ind) > 0:
-        # loop on particles to split
-        for ind in Ind:
-            # get old values
-            nPart = particles['Npart']
-            nID = particles['nID']
-            # compute new mass (split particle in 2)
-            mNew = mPart[ind] / 2  # nSplit[ind]
-            # compute velocity mag to get the direction of the flow (e_1)
-            uMag = norm(ux[ind], uy[ind], uz[ind])
-            # get the area of the particle as well as the distance expected between the old and new particle
-            # note that if we did not update the particles FD, we use here the h from the previous time step
-            aPart = mPart[ind]/(rho*particles['h'][ind])
-            rNew = distSplitPart * np.sqrt(aPart/math.pi)
-            nAdd = 1  # (nSplit[ind]-1).astype('int')
-            # update total number of particles and number of IDs used so far
-            particles['Npart'] = particles['Npart'] + nAdd
-            particles['nID'] = nID + nAdd
-            log.debug('Spliting particle %s in %s' % (ind, nAdd+1))
-            for key in particles:
-                # update splitted particle mass
-                particles['m'][ind] = mNew
-                # add new particles at the end of the arrays
-                if type(particles[key]).__module__ == np.__name__:
-                    # create unique ID for the new particles
-                    if key == 'ID':
-                        particles['ID'] = np.append(particles['ID'], np.arange(nID, nID + nAdd, 1))
-                    elif key == 'x':
-                        # ToDo: will fail if uMag is zero. Probelm is, if we want another vector we need to access
-                        # the normal which will cost more
-                        particles[key] = np.append(particles[key], xPart[ind] + rNew*ux[ind]/uMag)
-                    elif key == 'y':
-                        particles[key] = np.append(particles[key], yPart[ind] + rNew*uy[ind]/uMag)
-                    elif key == 'z':
-                        particles[key] = np.append(particles[key], zPart[ind] + rNew*uz[ind]/uMag)
-                    # set the parent properties to new particles due to splitting
-                    elif np.size(particles[key]) == nPart:
-                        particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
+    # loop on particles to split
+    for ind in Ind:
+        # compute new mass (split particle in 2)
+        mNew = mPart[ind] / 2  # nSplit[ind]
+        nAdd = 1  # (nSplit[ind]-1).astype('int')
+        xNew, yNew, zNew = getSplitPartPositionSimple(particles, rho, distSplitPart, ind)
+        # add new particles
+        particles = addParticles(particles, nAdd, ind, mNew, xNew, yNew, zNew)
 
     particles['mTot'] = np.sum(particles['m'])
     return particles
@@ -458,45 +479,17 @@ def testSplitPart(particles, cfg, dem):
     tooBig = np.where((aPart > aMax) & (mPart/nSplit > mMin))[0]
     # count new particles
     nNewPart = 0
-    if np.size(tooBig) > 0:
-        # loop on particles to split
-        for ind in tooBig:
-            # get old values
-            nPart = particles['Npart']
-            nID = particles['nID']
-            # compute new mass and particles to add
-            mNew = mPart[ind] / nSplit
-            nAdd = nSplit-1
-            nNewPart = nNewPart + nAdd
-            # get position of new particles
-            xNew, yNew, zNew = getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind)
-            # update total number of particles and number of IDs used so far
-            particles['Npart'] = particles['Npart'] + nAdd
-            particles['nID'] = nID + nAdd
-            # log.info('Spliting particle %s in %s' % (ind, nSplit))
-            for key in particles:
-                # update splitted particle mass
-                # first update the middle particle
-                particles['m'][ind] = mNew
-                particles['x'][ind] = xNew[0]
-                particles['y'][ind] = yNew[0]
-                particles['z'][ind] = zNew[0]
-                # add new particles at the end of the arrays
-                if type(particles[key]).__module__ == np.__name__:
-                    # create unique ID for the new particles
-                    if key == 'ID':
-                        particles['ID'] = np.append(particles['ID'], np.arange(nID, nID + nAdd, 1))
-                    elif key == 'x':
-                        particles[key] = np.append(particles[key], xNew[1:])
-                    elif key == 'y':
-                        particles[key] = np.append(particles[key], yNew[1:])
-                    elif key == 'z':
-                        particles[key] = np.append(particles[key], zNew[1:])
-                    # set the parent properties to new particles due to splitting
-                    elif np.size(particles[key]) == nPart:
-                        particles[key] = np.append(particles[key], particles[key][ind]*np.ones((nAdd)))
-                    # ToDo: maybe also update the h smartly
-        log.debug('Added %s because of splitting' % (nNewPart))
+    # loop on particles to split
+    for ind in tooBig:
+        # compute new mass and particles to add
+        mNew = mPart[ind] / nSplit
+        nAdd = nSplit-1
+        nNewPart = nNewPart + nAdd
+        # get position of new particles
+        xNew, yNew, zNew = getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind)
+        # add new particles
+        particles = addParticles(particles, nAdd, ind, mNew, xNew, yNew, zNew)
+    log.debug('Added %s because of splitting' % (nNewPart))
 
     particles['mTot'] = np.sum(particles['m'])
     return particles
@@ -542,35 +535,63 @@ def testMergePart(particles, cfg, dem):
     tooSmall = np.where(aPart < aMin)[0]
     keepParticle = np.ones((particles['Npart']), dtype=bool)
     nRemoved = 0
-    if np.size(tooSmall) > 0:
-        # loop on particles to merge
-        for ind in tooSmall:
-            if keepParticle[ind]:
-                # find nearest particle
-                r = norm(xPart-xPart[ind], yPart-yPart[ind], zPart-zPart[ind])
-                # make sure you don't find the particle itself
-                r[ind] = 2*sphKernelRadius
-                # make sure you don't find a particle that has already been merged
-                r[~keepParticle] = 2*sphKernelRadius
-                # find nearest particle
-                neighbourInd = np.argmin(r)
-                rMerge = r[neighbourInd]
-                # only merge a particle if it is closer thant the kernel radius
-                if rMerge < sphKernelRadius:
-                    # remove neighbourInd from tooSmall if possible
-                    keepParticle[neighbourInd] = False
-                    nRemoved = nRemoved + 1
-                    # compute new mass and particles to add
-                    mNew = mPart[ind] + mPart[neighbourInd]
-                    # compute mass averaged values
-                    for key in ['x', 'y', 'z', 'ux', 'uy', 'uz']:
-                        particles[key][ind] = (mPart[ind]*particles[key][ind] +
-                                               mPart[neighbourInd]*particles[key][neighbourInd]) / mNew
-                    particles['m'][ind] = mNew
-                    # ToDo: mabe also update h
+    # loop on particles to merge
+    for ind in tooSmall:
+        if keepParticle[ind]:
+            # find nearest particle
+            rMerge, neighbourInd = getClosestNeighbour(xPart, yPart, zPart, ind, sphKernelRadius, keepParticle)
+            # only merge a particle if it is closer thant the kernel radius
+            if rMerge < sphKernelRadius:
+                # remove neighbourInd from tooSmall if possible
+                keepParticle[neighbourInd] = False
+                nRemoved = nRemoved + 1
+                # compute new mass and particles to add
+                mNew = mPart[ind] + mPart[neighbourInd]
+                # compute mass averaged values
+                for key in ['x', 'y', 'z', 'ux', 'uy', 'uz']:
+                    particles[key][ind] = (mPart[ind]*particles[key][ind] +
+                                           mPart[neighbourInd]*particles[key][neighbourInd]) / mNew
+                particles['m'][ind] = mNew
+                # ToDo: mabe also update h
 
-        particles = removePart(particles, keepParticle, nRemoved, reasonString='')  # 'because of colocation')
+    particles = removePart(particles, keepParticle, nRemoved, reasonString='')  # 'because of colocation')
     return particles
+
+
+def getClosestNeighbour(xPartArray, yPartArray, zPartArray, ind, sphKernelRadius, keepParticle):
+    """ find closest neighbour
+
+    Parameters
+    ----------
+    xPartArray: numpy array
+        x position of the particles
+    yPartArray: numpy array
+        y position of the particles
+    zPartArray: numpy array
+        z position of the particles
+    ind : int
+        index of particle modified
+    sphKernelRadius: float
+        kernel radius
+    keepParticle: numpy array
+        boolean array telling if particles are kept or merged
+
+    Returns
+    -------
+    rMerge : float
+        distance to the closest neighbour
+    neighbourInd : int
+        index of closest neighbour
+    """
+    r = norm(xPartArray-xPartArray[ind], yPartArray-yPartArray[ind], zPartArray-zPartArray[ind])
+    # make sure you don't find the particle itself
+    r[ind] = 2*sphKernelRadius
+    # make sure you don't find a particle that has already been merged
+    r[~keepParticle] = 2*sphKernelRadius
+    # find nearest particle
+    neighbourInd = np.argmin(r)
+    rMerge = r[neighbourInd]
+    return rMerge, neighbourInd
 
 
 def mergeParticleDict(particles1, particles2):
@@ -761,33 +782,29 @@ def getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind):
         GENERAL configuration for com1DFA
     particles : dict
         particles dictionary
-    dem : dict
-        dem dictionary
-    ny : float
-        y component of the normal vector
-    nz : float
-        z component of the normal vector
-    ux : float
-        x component of the velocity vector
-    uy : float
-        y component of the velocity vector
-    uz : float
-        z component of the velocity vector
+    aPart : numpy array
+        particle area array
+    Nx : numpy 2D array
+        x component of the normal vector on the grid
+    Ny : numpy 2D array
+        y component of the normal vector on the grid
+    Nz : numpy 2D array
+        z component of the normal vector on the grid
+    csz : float
+        grid cell size
+    nSplit : int
+        in how many particles do we split?
+    ind : int
+        index of the particle to split
 
     Returns
     -------
-    e1x : float
-        x component of the first tangent vector
-    e1y : float
-        y component of the first tangent vector
-    e1z : float
-        z component of the first tangent vector
-    e2x : float
-        x component of the second tangent vector
-    e2y : float
-        y component of the second tangent vector
-    e2z : float
-        z component of the second tangent vector
+    xNew : numpy array
+        x components of the splitted particles
+    yNew : numpy array
+        y components of the splitted particles
+    zNew : numpy array
+        z components of the splitted particles
     """
     rng = np.random.default_rng(int(cfg['seed']))
     x = particles['x']
@@ -806,6 +823,50 @@ def getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind):
     xNew = x[ind] + cos * e1x + sin * e2x
     yNew = y[ind] + cos * e1y + sin * e2y
     zNew = z[ind] + cos * e1z + sin * e2z
+    # toDo: do we need to reproject the particles on the dem?
+    return xNew, yNew, zNew
+
+
+def getSplitPartPositionSimple(particles, rho, distSplitPart, ind):
+    """Compute the new particle potion due to splitting
+
+    Parameters
+    ----------
+    particles : dict
+        particles dictionary
+    rho : float
+        density
+    distSplitPart : float
+        distance coefficient
+    ind : int
+        index of the particle to split
+
+    Returns
+    -------
+    xNew : numpy array
+        x components of the splitted particles
+    yNew : numpy array
+        y components of the splitted particles
+    zNew : numpy array
+        z components of the splitted particles
+    """
+    mPart = particles['m'][ind]
+    xPart = particles['x'][ind]
+    yPart = particles['y'][ind]
+    zPart = particles['z'][ind]
+    uxPart = particles['ux'][ind]
+    uyPart = particles['uy'][ind]
+    uzPart = particles['uz'][ind]
+    # get the area of the particle as well as the distance expected between the old and new particle
+    # note that if we did not update the particles FD, we use here the h from the previous time step
+    aPart = mPart[ind]/(rho*particles['h'][ind])
+    rNew = distSplitPart * np.sqrt(aPart/math.pi)
+    cos = rNew*np.array([-1, 1])
+    # compute velocity mag to get the direction of the flow (e_1)
+    uMag = norm(uxPart, uyPart, uzPart)
+    xNew = xPart + cos * uxPart/uMag
+    yNew = yPart + cos * uyPart/uMag
+    zNew = zPart + cos * uzPart/uMag
     # toDo: do we need to reproject the particles on the dem?
     return xNew, yNew, zNew
 
