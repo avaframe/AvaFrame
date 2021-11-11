@@ -859,6 +859,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         particles['x'] = xPartArray
         particles['y'] = yPartArray
         particles['s'] = np.zeros(np.shape(xPartArray))
+        particles['sCor'] = np.zeros(np.shape(xPartArray))
         particles['l'] = np.zeros(np.shape(xPartArray))
         # adding z component
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')

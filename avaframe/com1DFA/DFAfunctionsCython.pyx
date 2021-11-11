@@ -591,9 +591,9 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   # read particles and fields
   cdef double[:] mass = particles['m']
   cdef double[:] idFixed = particles['idFixed']
-  cdef double[:] S = particles['s']
-  cdef double[:] SCor = particles['s']
-  cdef double[:] L = particles['l']
+  cdef double[:] sArray = particles['s']
+  cdef double[:] sCorArray = particles['sCor']
+  cdef double[:] lArray = particles['l']
   cdef double[:] xArray = particles['x']
   cdef double[:] yArray = particles['y']
   cdef double[:] zArray = particles['z']
@@ -646,9 +646,9 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
     ux = uxArray[j]
     uy = uyArray[j]
     uz = uzArray[j]
-    s = S[j]
-    sCor = SCor[j]
-    l = L[j]
+    s = sArray[j]
+    sCor = sCorArray[j]
+    l = lArray[j]
     idfixed = idFixed[j]
 
     # Force magnitude (without friction)

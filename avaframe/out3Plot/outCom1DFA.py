@@ -207,3 +207,43 @@ def updatePlot(particles, ax, dem):
     sc = ax.scatter(X, Y, c=variableC, s=variableS, cmap=cmap, marker='.')
     pU.addColorBar(sc, ax, ticks, 'm')
     return ax
+
+
+def addResult2Plot(ax, dem, rasterData, resType):
+    """ Add dem to the background of a plot
+
+    Parameters
+    ----------
+    ax: mathplotlix ax object
+    dem: dict
+        dem dictionary with normal information
+    what: str
+        what information abour the dem will be plotted?
+        slope: use the dem slope (computed from the normals) to color the plot
+        z : use the elevation to color the plot
+    """
+    header = dem['header']
+    ncols = header['ncols']
+    nrows = header['nrows']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
+    xArray = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+    yArray = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+    unit = pU.cfgPlotUtils['unit%s' % resType]
+    maxValContour = pU.cfgPlotUtils.getfloat('elevMax%s' % resType)
+    thresholdArray = np.linspace(0, maxValContour, 10)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin(rasterData), np.nanmax(rasterData),
+                                           continuous=pU.contCmap)
+    cmap.set_bad(color='white')
+    rasterData = np.ma.masked_where(rasterData == 0, rasterData)
+
+    ref0, im = pU.NonUnifIm(ax, xArray, yArray, rasterData, 'x [m]', 'y [m]',
+                            # extent=[2400, 2700, YY.min(), YY.max()],
+                            extent=[xArray.min(), xArray.max(),
+                                    yArray.min(), yArray.max()],
+                            cmap=cmap, norm=None)
+    CS = ax.contour(xArray, yArray, rasterData, levels=thresholdArray, colors='k')
+    ax.clabel(CS, inline=1, fontsize=8)
+    pU.addColorBar(im, ax, ticks, unit)
+    return ax
