@@ -5,7 +5,6 @@
 
 import pathlib
 import shapefile
-import sys
 import copy
 import numpy as np
 import logging
@@ -290,3 +289,31 @@ def extractFeature(featureIn, nFeature2Extract):
         featureOut['z'] = featureIn['z'][int(start):int(end)]
 
     return featureOut
+
+
+def writeLine2SHPfile(lineDict, lineName, fileName):
+    """ write a line to shapefile
+
+    Parameters
+    ----------
+    lineDict: dict
+        line dict
+    lineName: str
+        line name
+    fileName: str or pathlib path
+        path where the line will be saved
+    Returns
+    -------
+    fileName : str
+        path where the line has been saved
+    """
+    fileName = str(fileName)
+    line = np.zeros((np.size(lineDict['x']), 2))
+    line[:, 0] = lineDict['x']
+    line[:, 1] = lineDict['y']
+    w = shapefile.Writer(fileName)
+    w.field('name', 'C')
+    w.line([line])
+    w.record(lineName)
+    w.close()
+    return fileName

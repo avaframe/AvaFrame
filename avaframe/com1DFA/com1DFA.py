@@ -22,6 +22,7 @@ import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.timeDiscretizations as tD
 import avaframe.out3Plot.outCom1DFA as outCom1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.particleTools as particleTools
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -1431,7 +1432,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     if cfg.getint('splitOption') == 0:
         # split particles with too much mass
         # this only splits particles that grew because of entrainment
-        particles = DFAtls.splitPart(particles, cfg)
+        particles = particleTools.splitPart(particles, cfg)
     elif cfg.getint('splitOption') == 1:
         # split merge operation
         # first update fields (compute grid values) because we need the h of the particles to get the aPart
@@ -1442,8 +1443,8 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
         tcpuField = time.time() - startTime
         Tcpu['Field'] = Tcpu['Field'] + tcpuField
         # Then split merge particles
-        particles = DFAtls.testSplitPart(particles, cfg, dem)
-        particles = DFAtls.testMergePart(particles, cfg, dem)
+        particles = particleTools.testSplitPart(particles, cfg, dem)
+        particles = particleTools.testMergePart(particles, cfg, dem)
 
     # release secondary release area?
     if particles['secondaryReleaseInfo']['flagSecondaryRelease'] == 'Yes':
@@ -1590,7 +1591,7 @@ def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
     # this is dangerous!!!!!!!!!!!!!!
     ###############################################################
     # remove particles that are not located on the mesh any more
-    particles = DFAtls.removeOutPart(particles, dem, dt)
+    particles = particleTools.removeOutPart(particles, dem, dt)
 
     # ++++++++++++++GET particles location (neighbours for sph)
     startTime = time.time()
@@ -1794,7 +1795,7 @@ def checkParticlesInRelease(particles, line, radius):
     Mask = np.logical_and(Mask, mask)
     nRemove = len(Mask)-np.sum(Mask)
     if nRemove > 0:
-        particles = DFAtls.removePart(particles, Mask, nRemove, 'because they are not within the release polygon')
+        particles = particleTools.removePart(particles, Mask, nRemove, 'because they are not within the release polygon')
         log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
 
     return particles
@@ -1876,7 +1877,7 @@ def releaseSecRelArea(cfg, particles, fields, dem):
             secRelParticles = initializeParticles(cfg, secRelInfo, dem)
             # release secondary release area by just appending the particles
             log.info('Releasing secondary release area %s at t = %.2f s' % (secRelRasterName, particles['t']))
-            particles = DFAtls.mergeParticleDict(particles, secRelParticles)
+            particles = particleTools.mergeParticleDict(particles, secRelParticles)
             # save index of secRel feature
             indexRel.append(secRelRasterName)
         count = count + 1
@@ -2008,13 +2009,13 @@ def trackParticles(cfgTrackPart, dem, particlesList):
                                  - dem['header']['yllcenter'])
 
     # start by finding the particles to be tracked
-    particles2Track, track = DFAtls.findParticles2Track(particlesList[0], centerTrackPartPoint, radius)
+    particles2Track, track = particleTools.findParticles2Track(particlesList[0], centerTrackPartPoint, radius)
     if track:
         # find those same particles and their children in the particlesList
-        particlesList, nPartTracked = DFAtls.getTrackedParticles(particlesList, particles2Track)
+        particlesList, nPartTracked = particleTools.getTrackedParticles(particlesList, particles2Track)
 
         # extract the wanted properties for the tracked particles
-        trackedPartProp = DFAtls.getTrackedParticlesProperties(particlesList, nPartTracked, particleProperties)
+        trackedPartProp = particleTools.getTrackedParticlesProperties(particlesList, nPartTracked, particleProperties)
     else:
         trackedPartProp = None
 

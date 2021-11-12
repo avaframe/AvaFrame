@@ -556,73 +556,76 @@ def test_placeParticles():
     """ test placing of particles """
 
     # setup required inputs
-    massCell = 10.
     indx = 0
     indy = 1
     csz = 5
+    aCell = csz * csz
+    hCell = 10/25
     massPerPart = 2.
     thresholdMassSplit = 1.5
     initPartDistType = 'uniform'
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'rho': '1', 'thresholdMassSplit': '0.5', 'initPartDistType': 'uniform',
+                      'massPerParticleDeterminationMethod': 'MPPDH'}
     rng = np.random.default_rng(12345)
-
     # call funciton to be tested - uniform
-    xpart, ypart, mPart, nPart = com1DFA.placeParticles(
-        massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit)
+    xpart, ypart, mPart, nPart, aPart = com1DFA.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg['GENERAL'])
     xpartTest = np.asarray([-1.66666666, 0.0, 1.66666666, -1.66666666, 0., 1.66666666, -1.66666666,
                             0.0, 1.66666666])
     ypartTest = np.asarray([3.33333333, 3.33333333, 3.33333333, 5.0, 5., 5., 6.66666666, 6.66666666,
                             6.66666666])
 
-    # call funciton to be tested - uniform
-    massCell = 8.
-    xpart2, ypart2, mPart2, nPart2 = com1DFA.placeParticles(
-        massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit)
-    xpartTest2 = np.asarray([-1.25, 1.25, -1.25, 1.25])
-    ypartTest2 = np.asarray([3.75, 3.75, 6.25, 6.25])
-
-    # call funciton to be tested - random
-    massCell = 11.5
-    initPartDistType = 'random'
-    xpart3, ypart3, mPart3, nPart3 = com1DFA.placeParticles(
-        massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit)
-    xpartTest3 = np.asarray(
-        [-0.9162083, 1.48682729, 0.88127335, -0.54445225, -0.83593036, 0.49154377])
-    ypartTest3 = np.asarray(
-        [3.43367093, 5.86378022, 7.20901433, 3.74122857, 7.24440576, 5.83618727])
-
     assert nPart == 9.0
     assert np.isclose(mPart, 1.111111)
     assert np.allclose(xpart, xpartTest)
     assert np.allclose(ypart, ypartTest)
-    assert nPart2 == 4.0
-    assert mPart2 == 2.
-    assert np.allclose(xpart2, xpartTest2)
-    assert np.allclose(ypart2, ypartTest2)
-    assert nPart3 == 6.0
-    assert np.isclose(mPart3, 1.9166666666666)
-    assert np.allclose(xpart3, xpartTest3)
-    assert np.allclose(ypart3, ypartTest3)
+
+    # call funciton to be tested - uniform
+    hCell = 8/25
+    xpart, ypart, mPart, nPart, aPart = com1DFA.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg['GENERAL'])
+    xpartTest = np.asarray([-1.25, 1.25, -1.25, 1.25])
+    ypartTest = np.asarray([3.75, 3.75, 6.25, 6.25])
+
+    assert nPart == 4.0
+    assert mPart == 2.
+    assert np.allclose(xpart, xpartTest)
+    assert np.allclose(ypart, ypartTest)
 
     # call funciton to be tested - random
-    massCell = 8
-    initPartDistType = 'semiRandom'
+    hCell = 11.5/25
+    cfg['GENERAL']['initPartDistType'] = 'random'
+    xpart, ypart, mPart, nPart, aPart = com1DFA.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg['GENERAL'])
+    xpartTest = np.asarray(
+        [-0.9162083, 1.48682729, 0.88127335, -0.54445225, -0.83593036, 0.49154377, -1.56632907])
+    ypartTest = np.asarray(
+        [5.86378022, 7.20901433, 3.74122857, 7.24440576, 5.83618727, 2.97948968, 4.70919833])
+
+    print('xpart', xpart)
+    print('ypart', ypart)
+    assert nPart == 7.0
+    assert np.isclose(mPart, 1.6428571428571428)
+    assert np.allclose(xpart, xpartTest)
+    assert np.allclose(ypart, ypartTest)
+
+    # call funciton to be tested - random
     csz = 4
-    xpart4, ypart4, mPart4, nPart4 = com1DFA.placeParticles(
-        massCell, indx, indy, csz, massPerPart, rng, initPartDistType, thresholdMassSplit)
+    aCell = csz * csz
+    hCell = 8/16
+    cfg['GENERAL']['initPartDistType'] = 'semiRandom'
+    xpart, ypart, mPart, nPart, aPart = com1DFA.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg['GENERAL'])
 
-    print('xpart4', xpart4)
-    print('ypart4', ypart4)
+    print('xpart', xpart)
+    print('ypart', ypart)
 
-    assert nPart4 == 4.0
-    assert mPart2 == 2.
-    assert -2.0 < xpart4[0] < 0.0
-    assert 2.0 < ypart4[0] < 4.0
-    assert 0.0 < xpart4[1] < 2.0
-    assert 2.0 < ypart4[1] < 4.0
-    assert -2.0 < xpart4[2] < 0.0
-    assert 4.0 < ypart4[2] < 6.0
-    assert 0.0 < xpart4[3] < 2.0
-    assert 4.0 < ypart4[3] < 6.0
+    assert nPart == 4.0
+    assert -2.0 < xpart[0] < 0.0
+    assert 2.0 < ypart[0] < 4.0
+    assert 0.0 < xpart[1] < 2.0
+    assert 2.0 < ypart[1] < 4.0
+    assert -2.0 < xpart[2] < 0.0
+    assert 4.0 < ypart[2] < 6.0
+    assert 0.0 < xpart[3] < 2.0
+    assert 4.0 < ypart[3] < 6.0
 
 
 def test_initializeMesh():
@@ -962,7 +965,7 @@ def test_initializeParticles():
     releaseLine['header']['xllcenter'] = dem['originOri']['xllcenter']
     releaseLine['header']['yllcenter'] = dem['originOri']['yllcenter']
 
-    dictKeys = ['Npart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'mTot',
+    dictKeys = ['Npart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
                 'h', 'NPPC', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
@@ -976,18 +979,19 @@ def test_initializeParticles():
     particles['iterate'] = True
     particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
     # check keys
-    # are we missing any keys?
     missing = set(dictKeys) - particles.keys()
     if len(missing) > 0:
         print('there is an missing key in particles: ',
               set(dictKeys) - particles.keys())
-    assert all(key in dictKeys for key in particles)
-
-    # do we have too any keys?
     extra = particles.keys() - set(dictKeys)
     if len(extra) > 0:
         print('there is an extra key in particles: ',
               particles.keys() - set(dictKeys))
+
+    # are we missing any keys?
+    assert all(key in dictKeys for key in particles)
+
+    # do we have too any keys?
     assert all(key in particles for key in dictKeys)
 
     assert particles['Npart'] == 9
@@ -1479,7 +1483,7 @@ def test_runCom1DFA(tmp_path, caplog):
     particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
         avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
 
-    dictKeys = ['Npart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'mTot',
+    dictKeys = ['Npart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
                 'h', 'NPPC', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
