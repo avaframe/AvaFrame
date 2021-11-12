@@ -14,7 +14,6 @@ import numpy as np
 from scipy.integrate import ode
 import math
 import logging
-import shapefile
 
 # local imports
 from avaframe.in3Utils import cfgUtils
@@ -25,6 +24,7 @@ import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
+import avaframe.in2Trans.shpConversion as shpConv
 
 
 # create local logger
@@ -830,20 +830,12 @@ def getReleaseThickness(avaDir, cfg, demFile):
     relDict = {'relTh': relTh, 'X1': X1, 'Y1': Y1, 'demOri': demOri, 'X': X, 'Y': Y,
                'cos': cos, 'sin': sin}
     alpha = np.linspace(0, 2*math.pi, 200)
-    polyline = np.zeros((200, 2))
-    polyline[:, 0] = L_x*np.cos(alpha)*cos
-    polyline[:, 1] = L_x*np.sin(alpha)
+    polyline = {}
+    polyline['x'] = L_x*np.cos(alpha)*cos
+    polyline['y'] = L_x*np.sin(alpha)
     relFileName = demFile.parent / 'REL' / 'rel1.shp'
-    writeLine2SHPfile(polyline, 'rel1', str(relFileName))
+    shpConv.writeLine2SHPfile(polyline, 'rel1', str(relFileName))
     return relDict
-
-
-def writeLine2SHPfile(part, lineName, fileName):
-    w = shapefile.Writer(fileName)
-    w.field('name', 'C')
-    w.line([part])
-    w.record(lineName)
-    w.close()
 
 
 def prepareParticlesFieldscom1DFA(fields, particles, header, simiDict, axis):
