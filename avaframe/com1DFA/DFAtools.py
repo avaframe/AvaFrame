@@ -5,8 +5,6 @@
 # Load modules
 import logging
 import numpy as np
-import numbers
-import math
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans

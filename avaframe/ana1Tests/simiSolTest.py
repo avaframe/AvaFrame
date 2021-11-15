@@ -676,7 +676,7 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         # fetch the simulation results
         particlesList, Tsave = com1DFA.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
         fieldsList, fieldHeader = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
-        simDF.loc[simHash, 'Npart'] = particlesList[-1]['Npart']
+        simDF.loc[simHash, 'nPart'] = particlesList[-1]['nPart']
         # analyze and compare results
         hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(particlesList, fieldsList, solSimi, fieldHeader,
                                                                         cfgSimi, outDirTest, simHash, simDFrow)

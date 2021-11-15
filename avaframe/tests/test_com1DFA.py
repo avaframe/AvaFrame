@@ -393,25 +393,25 @@ def test_checkParticlesInRelease():
     demHeader['ncols'] = 5
     releaseLine['header'] = demHeader
     particles = {'x': np.asarray([2.4, 9.7, 10.02, 11.5]), 'y': np.asarray([2.4, 9.7, 10.2, 11.5]),
-                 'Npart': 4, 'm': np.asarray([1.4, 1.7, 1.4, 1.8])}
+                 'nPart': 4, 'm': np.asarray([1.4, 1.7, 1.4, 1.8])}
     radius = np.sqrt(2)
 
     # call function to be tested
     particles = com1DFA.checkParticlesInRelease(particles, releaseLine, radius)
     # call function to be tested
     particles2 = {'x': np.asarray([2.4, 9.7, 9.997, 10.09, 0.0]), 'y': np.asarray([2.4, 9.7, 9.994, 10.8, 0.0]),
-                  'Npart': 5, 'm': np.asarray([1.4, 1.7, 1.4, 1.8, 1.1])}
+                  'nPart': 5, 'm': np.asarray([1.4, 1.7, 1.4, 1.8, 1.1])}
     particles2 = com1DFA.checkParticlesInRelease(particles2, releaseLine, 0.01)
 
     print('particles', particles, particles2)
     assert np.array_equal(particles['x'], np.asarray([2.4, 9.7, 10.02]))
     assert np.array_equal(particles['y'], np.asarray([2.4, 9.7, 10.2]))
     assert particles['mTot'] == (1.4+1.7+1.4)
-    assert particles['Npart'] == 3
+    assert particles['nPart'] == 3
     assert np.array_equal(particles2['x'], np.asarray([2.4, 9.7, 9.997, 0.0]))
     assert np.array_equal(particles2['y'], np.asarray([2.4, 9.7, 9.994, 0.0]))
     assert particles2['mTot'] == (1.4+1.7+1.4+1.1)
-    assert particles2['Npart'] == 4
+    assert particles2['nPart'] == 4
 
 
 def test_pointInPolygon():
@@ -888,7 +888,7 @@ def test_releaseSecRelArea():
     particlesIn['m'] = np.asarray([1250., 1250.])
     particlesIn['mTot'] = np.sum(particlesIn['m'])
     particlesIn['t'] = 1.0
-    particlesIn['Npart'] = 2.
+    particlesIn['nPart'] = 2.
     fieldsFD = np.zeros((demHeader['nrows'], demHeader['ncols']))
     fieldsFD[7:9, 7:9] = 1.0
     fields = {'FD': fieldsFD}
@@ -905,7 +905,7 @@ def test_releaseSecRelArea():
     particlesIn2['m'] = np.asarray([1250., 1250., 1250.])
     particlesIn2['mTot'] = np.sum(particlesIn2['m'])
     particlesIn2['t'] = 1.0
-    particlesIn2['Npart'] = 3
+    particlesIn2['nPart'] = 3
     fieldsFD2 = np.zeros((demHeader['nrows'], demHeader['ncols']))
     fieldsFD2[7:9, 7:9] = 1.0
     fieldsFD2[9, 9] = 0.4
@@ -916,7 +916,7 @@ def test_releaseSecRelArea():
 
     print('particles IN pytest socond', particles2)
 
-    assert particles['Npart'] == 6
+    assert particles['nPart'] == 6
     assert np.array_equal(particles['x'], np.asarray(
         [6., 7., 6.75, 7.25, 6.75, 7.25]))
     assert np.array_equal(particles['y'], np.asarray(
@@ -924,7 +924,7 @@ def test_releaseSecRelArea():
     assert np.array_equal(particles['m'], np.asarray(
         [1250., 1250., 50., 50., 50., 50.]))
     assert particles['mTot'] == 2700.0
-    assert particles2['Npart'] == 11
+    assert particles2['nPart'] == 11
     assert np.array_equal(particles2['x'], np.asarray(
         [6., 7., 9.1, 6.75, 7.25, 6.75, 7.25, 8.75, 9.25, 8.75, 9.25]))
     assert np.array_equal(particles2['y'], np.asarray(
@@ -965,7 +965,7 @@ def test_initializeParticles():
     releaseLine['header']['xllcenter'] = dem['originOri']['xllcenter']
     releaseLine['header']['yllcenter'] = dem['originOri']['yllcenter']
 
-    dictKeys = ['Npart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
+    dictKeys = ['nPart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
                 'h', 'NPPC', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
@@ -994,7 +994,7 @@ def test_initializeParticles():
     # do we have too any keys?
     assert all(key in particles for key in dictKeys)
 
-    assert particles['Npart'] == 9
+    assert particles['nPart'] == 9
     assert np.array_equal(particles['x'], np.asarray(
         [6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
     assert np.array_equal(particles['y'], np.asarray(
@@ -1028,7 +1028,7 @@ def test_initializeParticles():
 
     print('particles', particles2)
 
-    assert particles2['Npart'] == 9
+    assert particles2['nPart'] == 9
     assert np.array_equal(particles2['x'], np.asarray(
         [6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
     assert np.array_equal(particles2['y'], np.asarray(
@@ -1275,7 +1275,7 @@ def test_initializeFields():
     areaRaster = np.ones((11, 12))
     dem = {'header': demHeader, 'headerNeighbourGrid': demHeader,
            'areaRaster': areaRaster}
-    particles = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 2., 3.]), 'Npart': 3,
+    particles = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 2., 3.]), 'nPart': 3,
                  'ux': np.asarray([0., 0., 0.]), 'uy': np.asarray([0., 0., 0.]),
                  'uz': np.asarray([0., 0., 0.]), 'm': np.asarray([10., 10., 10.])}
     cfg = configparser.ConfigParser()
@@ -1426,7 +1426,7 @@ def test_initializeSimulation():
     assert dem['header']['yllcenter'] == 0.0
     assert dem['originOri']['xllcenter'] == 1.0
     assert dem['originOri']['yllcenter'] == 2.0
-    assert particles['Npart'] == 9
+    assert particles['nPart'] == 9
     assert np.array_equal(particles['x'], np.asarray(
         [6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
     assert np.array_equal(particles['m'], np.asarray(
@@ -1458,7 +1458,7 @@ def test_initializeSimulation():
     assert dem2['header']['yllcenter'] == 0.0
     assert dem2['originOri']['xllcenter'] == 1.0
     assert dem2['originOri']['yllcenter'] == 2.0
-    assert particles2['Npart'] == 9
+    assert particles2['nPart'] == 9
     assert particles2['mTot'] == 225.
     assert np.sum(particles['ux']) == 0.0
     assert reportAreaInfo['Release area info']['Projected Area [m2]'] == '9.00'
@@ -1483,7 +1483,7 @@ def test_runCom1DFA(tmp_path, caplog):
     particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
         avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
 
-    dictKeys = ['Npart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
+    dictKeys = ['nPart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
                 'h', 'NPPC', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',

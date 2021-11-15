@@ -7,6 +7,8 @@ import logging
 import numpy as np
 import numbers
 import math
+import pathlib
+import pickle
 
 # Local imports
 import avaframe.com1DFA.DFAtools as DFAtls
@@ -16,6 +18,138 @@ import avaframe.com1DFA.DFAtools as DFAtls
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
+
+# ############### Initializing particles
+
+def initialiseParticlesFromFile(cfg, avaDir):
+    # TODO: this is for development purposes, change or remove in the future
+    # If initialisation from file
+    if cfg['particleFile']:
+        inDirPart = pathlib.Path(cfg['particleFile'])
+    else:
+        inDirPart = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
+
+    searchDir = inDirPart / 'particles'
+    inDirPart = list(searchDir.glob(
+        ('*' + cfg['releaseScenario'] + '_' + '*' + cfg['simTypeActual'] + '*')))
+    if inDirPart == []:
+        messagePart = ('Initialise particles from file - no particles file found for releaseScenario: %s and simType: %s' %
+                      (cfg['releaseScenario'], cfg['simTypeActual']))
+        log.error(messagePart)
+        raise FileNotFoundError(messagePart)
+    elif len(inDirPart) > 1:
+        log.warning('More than one file found for Initialise particle from file: took %s' % inDirPart[0])
+        inDirPart = inDirPart[0]
+    else:
+        inDirPart = inDirPart[0]
+
+    log.info('Initial particle distribution read from file!! %s' %
+             (inDirPart))
+    Particles, timeStepInfo = readPartFromPickle(inDirPart)
+    particles = Particles[0]
+    xPartArray = particles['x']
+    hPartArray = np.ones(len(xPartArray))
+    particles['nPart'] = len(xPartArray)
+    particles['s'] = np.zeros(np.shape(xPartArray))
+    particles['l'] = np.zeros(np.shape(xPartArray))
+    return particles, hPartArray
+
+
+def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
+    """ Create particles in given cell
+
+    Compute number of particles to create in a given cell.
+    Place particles in cell according to the chosen pattern (random semirandom
+    or ordered)
+
+    Parameters
+    ----------
+    hCell: float
+        snow depth in cell
+    aCell: float
+        cell area
+    indx: int
+        column index of the cell
+    indy: int
+        row index of the cell
+    csz : float
+        cellsize
+    massPerPart : float
+        maximum mass per particle
+    cfg: configParser
+        com1DFA general configParser
+    Returns
+    -------
+    xPart : 1D numpy array
+        x position of particles
+    yPart : 1D numpy array
+        y position of particles
+    mPart : 1D numpy array
+        mass of particles
+    n : int
+        number of particles created
+    aPart : int
+        particle area
+    """
+
+    rho = cfg.getfloat('rho')
+    thresholdMassSplit = cfg.getfloat('thresholdMassSplit')
+    initPartDistType = cfg['initPartDistType'].lower()
+    massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
+    volCell = aCell * hCell
+    massCell = volCell * rho
+    if initPartDistType == 'random':
+        if massPerParticleDeterminationMethod == 'MPPKR':
+            # impose a numper of particles within a kernel radius so impose number of particles in a cell
+            nFloat = cfg.getint('nPPK') * aCell / (math.pi * csz**2)
+        else:
+            # number of particles needed (floating number)
+            nFloat = massCell / massPerPart
+
+        n = int(np.floor(nFloat))
+        # adding 1 with a probability of the residual proba
+        proba = nFloat - n
+        if rng.random(1) < proba:
+            n = n + 1
+        n = np.maximum(n, 1)
+        # make sure we do not violate the (massCell / n) < thresholdMassSplit x massPerPart rule
+        if (massCell / n) / massPerPart >= thresholdMassSplit:
+            n = n + 1
+    else:
+        n1 = (np.ceil(np.sqrt(massCell / massPerPart))).astype('int')
+        n = n1*n1
+        d = csz/n1
+        pos = np.linspace(0., csz-d, n1) + d/2.
+        x, y = np.meshgrid(pos, pos)
+        x = x.flatten()
+        y = y.flatten()
+
+    mPart = massCell / n
+    aPart = aCell / n
+
+    # TODO make this an independent function
+    #######################
+    # start ###############
+    if initPartDistType == 'random':
+        # place particles randomly in the cell
+        xPart = csz * (rng.random(n) - 0.5 + indx)
+        yPart = csz * (rng.random(n) - 0.5 + indy)
+    else:
+        # place particles equaly distributed
+        xPart = csz * (- 0.5 + indx) + x
+        yPart = csz * (- 0.5 + indy) + y
+        if initPartDistType == 'semirandom':
+            # place particles equaly distributed with a small variation
+            xPart = xPart + (rng.random(n) - 0.5) * d
+            yPart = yPart + (rng.random(n) - 0.5) * d
+        elif initPartDistType != 'uniform':
+            log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
+                        initPartDistType)
+
+    return xPart, yPart, mPart, n, aPart
+
+
+# ############### Split and remove merge particles
 
 def removePart(particles, mask, nRemove, reasonString=''):
     """ remove given particles
@@ -38,10 +172,10 @@ def removePart(particles, mask, nRemove, reasonString=''):
     """
     if reasonString != '':
         log.info('removed %s particles %s' % (nRemove, reasonString))
-    nPart = particles['Npart']
+    nPart = particles['nPart']
     for key in particles:
-        if key == 'Npart':
-            particles['Npart'] = particles['Npart'] - nRemove
+        if key == 'nPart':
+            particles['nPart'] = particles['nPart'] - nRemove
         elif type(particles[key]).__module__ == np.__name__:
             if np.size(particles[key]) == nPart:
                 particles[key] = particles[key][mask]
@@ -76,10 +210,10 @@ def addParticles(particles, nAdd, ind, mNew, xNew, yNew, zNew):
         particles dictionary with modified particle and new ones
     """
     # get old values
-    nPart = particles['Npart']
+    nPart = particles['nPart']
     nID = particles['nID']
     # update total number of particles and number of IDs used so far
-    particles['Npart'] = particles['Npart'] + nAdd
+    particles['nPart'] = particles['nPart'] + nAdd
     particles['nID'] = nID + nAdd
     # log.info('Spliting particle %s in %s' % (ind, nSplit))
     for key in particles:
@@ -247,7 +381,7 @@ def testMergePart(particles, cfg, dem):
     aPart = mPart/(rho*hPart)
     # find particles to merge
     tooSmall = np.where(aPart < aMin)[0]
-    keepParticle = np.ones((particles['Npart']), dtype=bool)
+    keepParticle = np.ones((particles['nPart']), dtype=bool)
     nRemoved = 0
     # loop on particles to merge
     for ind in tooSmall:
@@ -325,13 +459,13 @@ def mergeParticleDict(particles1, particles2):
 
     """
     particles = {}
-    nPart1 = particles1['Npart']
+    nPart1 = particles1['nPart']
     # loop on the keys from particles1 dicionary
     for key in particles1:
         # deal with specific cases
-        # Npart: just sum them up
-        if key == 'Npart':
-            particles['Npart'] = particles1['Npart'] + particles2['Npart']
+        # nPart: just sum them up
+        if key == 'nPart':
+            particles['nPart'] = particles1['nPart'] + particles2['nPart']
         # massPerPart, should stay unchanged. If ever they are different take
         # the minimum
         # ToDo: are we sure we want the minimum?
@@ -584,7 +718,7 @@ def getTrackedParticles(particlesList, particles2Track):
         # find index of particles to track
         index = [ind for ind, parent in enumerate(particles['parentID']) if parent in particles2Track]
         nPartTracked = max(nPartTracked, len(index))
-        trackedParticles = np.zeros(particles['Npart'])
+        trackedParticles = np.zeros(particles['nPart'])
         trackedParticles[index] = 1
         particles['trackedParticles'] = trackedParticles
     return particlesList, nPartTracked
@@ -638,3 +772,40 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
                 trackedPartProp[key][nTime, indCol] = particles[key][ind]
 
     return trackedPartProp
+
+
+def readPartFromPickle(inDir, simName='', flagAvaDir=False, comModule='com1DFA'):
+    """ Read pickles within a directory and return List of dicionaries read from pickle
+
+        Parameters
+        -----------
+        inDir: str
+            path to input directory
+        simName : str
+            simulation name
+        flagAvaDir: bool
+            if True inDir corresponds to an avalanche directory and pickles are
+            read from avaDir/Outputs/com1DFA/particles
+        comModule: str
+            module that computed the particles
+    """
+
+    if flagAvaDir:
+        inDir = pathlib.Path(inDir, 'Outputs', comModule, 'particles')
+
+    # search for all pickles within directory
+    if simName:
+        name = '*' + simName + '*.p'
+    else:
+        name = '*.p'
+    PartDicts = sorted(list(inDir.glob(name)))
+
+    # initialise list of particle dictionaries
+    Particles = []
+    timeStepInfo = []
+    for particles in PartDicts:
+        particles = pickle.load(open(particles, "rb"))
+        Particles.append(particles)
+        timeStepInfo.append(particles['t'])
+
+    return Particles, timeStepInfo

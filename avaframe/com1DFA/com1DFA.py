@@ -22,6 +22,7 @@ import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.timeDiscretizations as tD
 import avaframe.out3Plot.outCom1DFA as outCom1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.com1DFATools as com1DFATools
 import avaframe.com1DFA.particleTools as particleTools
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
@@ -747,6 +748,8 @@ def initializeParticles(cfg, releaseLine, dem, relThField='', logName=''):
     ncols = header['ncols']
     nrows = header['nrows']
     csz = header['cellsize']
+    # if the release is not constant but given by a varying function, we need both the mask giving the cells
+    # to be initialized and the raster giving the flow depth value
     relRasterMask = releaseLine['rasterData']
     if relThField != '':
         relRaster = relThField
@@ -754,67 +757,21 @@ def initializeParticles(cfg, releaseLine, dem, relThField='', logName=''):
         relRaster = releaseLine['rasterData']
     areaRaster = dem['areaRaster']
 
+    # get the initialization method used
+    massPerPart, nPPK = com1DFATools. getPartInitMethod(cfg, csz)
+
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     # find all non empty cells (meaning release area)
     indRelY, indRelX = np.nonzero(relRasterMask)
-
-    # derive mass per particle to define number of particles per cell:
-    if massPerParticleDeterminationMethod == 'MPPDIR':
-        massPerPart = cfg.getfloat('massPerPart')
-        log.debug('Number of particles defined by: mass per particle %s' % cfg['massPerPart'])
-    elif massPerParticleDeterminationMethod == 'MPPDH':
-        deltaTh = cfg.getfloat('deltaTh')
-        ds = min(csz, cfg.getfloat('sphKernelRadius'))
-        massPerPart = rho * ds * ds * deltaTh
-        log.debug('Number of particles defined by: release thickness per particle: %s' % cfg['deltaTh'])
-        log.debug('mass per particle is %.2f' % massPerPart)
-    elif massPerParticleDeterminationMethod == 'MPPKR':
-        nPPK = cfg.getfloat('nPPK')
-        relTh = cfg.getfloat('relTh')
-        ds = min(csz, cfg.getfloat('sphKernelRadius'))
-        massPerPart = rho * math.pi * ds * ds * relTh / nPPK
-
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
-        # TODO: this is for development purposes, change or remove in the future
-        # If initialisation from file
-        if cfg['particleFile']:
-            inDirPart = pathlib.Path(cfg['particleFile'])
-        else:
-            inDirPart = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig')
-
-        searchDir = inDirPart / 'particles'
-        inDirPart = list(searchDir.glob(
-            ('*' + cfg['releaseScenario'] + '_' + '*' + cfg['simTypeActual'] + '*')))
-        if inDirPart == []:
-            messagePart = ('Initialise particles from file - no particles file found for releaseScenario: %s and simType: %s' %
-                          (cfg['releaseScenario'], cfg['simTypeActual']))
-            log.error(messagePart)
-            raise FileNotFoundError(messagePart)
-        elif len(inDirPart) > 1:
-            log.warning('More than one file found for Initialise particle from file: took %s' % inDirPart[0])
-            inDirPart = inDirPart[0]
-        else:
-            inDirPart = inDirPart[0]
-
-        log.info('Initial particle distribution read from file!! %s' %
-                 (inDirPart))
-        Particles, timeStepInfo = readPartFromPickle(inDirPart)
-        particles = Particles[0]
-        xPart = particles['x']
-        mPart = particles['m']
-        hPart = np.ones(len(xPart))
-        NPPC = np.ones(len(xPart))
-        particles['Npart'] = len(xPart)
-        particles['s'] = np.zeros(np.shape(xPart))
-        particles['l'] = np.zeros(np.shape(xPart))
+        particles, hPartArray = particleTools.initialiseParticlesFromFile(cfg, avaDir)
     else:
         # initialize random generator
         rng = np.random.default_rng(int(cfg['seed']))
 
-        Npart = 0
-        NPPC = np.empty(0)
+        nPart = 0
         xPartArray = np.empty(0)
         yPartArray = np.empty(0)
         mPartArray = np.empty(0)
@@ -825,15 +782,15 @@ def initializeParticles(cfg, releaseLine, dem, relThField='', logName=''):
             # compute number of particles for this cell
             hCell = relRaster[indRely, indRelx]
             aCell = areaRaster[indRely, indRelx]
-            xPart, yPart, mPart, nPart, aPart = placeParticles(hCell, aCell, indRelx, indRely, csz, massPerPart, rng, cfg)
-            Npart = Npart + nPart
-            partPerCell[indRely, indRelx] = nPart
+            xPart, yPart, mPart, n, aPart = particleTools.placeParticles(hCell, aCell, indRelx, indRely, csz,
+                                                                         massPerPart, rng, cfg)
+            nPart = nPart + n
+            partPerCell[indRely, indRelx] = n
             # initialize particles position, mass, height...
-            NPPC = np.append(NPPC, nPart*np.ones(nPart))
             xPartArray = np.append(xPartArray, xPart)
             yPartArray = np.append(yPartArray, yPart)
-            mPartArray = np.append(mPartArray, mPart * np.ones(nPart))
-            aPartArray = np.append(aPartArray, aPart * np.ones(nPart))
+            mPartArray = np.append(mPartArray, mPart * np.ones(n))
+            aPartArray = np.append(aPartArray, aPart * np.ones(n))
 
         hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
@@ -843,7 +800,7 @@ def initializeParticles(cfg, releaseLine, dem, relThField='', logName=''):
             mPartArray = rho * aPartArray * hPartArray
         # create dictionnary to store particles properties
         particles = {}
-        particles['Npart'] = Npart
+        particles['nPart'] = nPart
         particles['x'] = xPartArray
         particles['y'] = yPartArray
         particles['s'] = np.zeros(np.shape(xPartArray))
@@ -855,7 +812,6 @@ def initializeParticles(cfg, releaseLine, dem, relThField='', logName=''):
     particles['massPerPart'] = massPerPart
     particles['mTot'] = np.sum(particles['m'])
     particles['h'] = hPartArray
-    particles['NPPC'] = NPPC
     particles['ux'] = np.zeros(np.shape(xPartArray))
     particles['uy'] = np.zeros(np.shape(xPartArray))
     particles['uz'] = np.zeros(np.shape(xPartArray))
@@ -869,6 +825,7 @@ def initializeParticles(cfg, releaseLine, dem, relThField='', logName=''):
     particles['xllcenter'] = dem['originOri']['xllcenter']
     particles['yllcenter'] = dem['originOri']['yllcenter']
 
+    # remove particles that might lay outside of the release polygon
     if not cfg.getboolean('initialiseParticlesFromFile'):
         particles = checkParticlesInRelease(particles, releaseLine, cfg.getfloat('thresholdPointInPoly'))
 
@@ -878,30 +835,30 @@ def initializeParticles(cfg, releaseLine, dem, relThField='', logName=''):
     # where nID is the number of already used IDs
     # (enable tracking of particles even if particles are added or removed)
     # unique identifier for each particle
-    particles['ID'] = np.arange(particles['Npart'])
+    particles['ID'] = np.arange(particles['nPart'])
     # keep track of the identifier (usefull to add identifier to newparticles)
-    particles['nID'] = particles['Npart']
+    particles['nID'] = particles['nPart']
     # keep track of parents (usefull for new particles created after splitting)
-    particles['parentID'] = np.arange(particles['Npart'])
+    particles['parentID'] = np.arange(particles['nPart'])
 
     # initialize time
     t = 0
     particles['t'] = t
 
     relCells = np.size(indRelY)
-    partPerCell = particles['Npart']/relCells
+    partPerCell = particles['nPart']/relCells
 
     if massPerParticleDeterminationMethod != 'MPPKR':
         # we need to set the nPPK
         aTot = np.sum(particles['m'] / (rho * particles['h']))
         # average number of particles per kernel radius
-        nPPK = particles['Npart'] * math.pi * csz**2 / aTot
+        nPPK = particles['nPart'] * math.pi * csz**2 / aTot
     particles['nPPK'] = nPPK
 
     log.info('Initialized particles. MTot = %.2f kg, %s particles in %.2f cells.' %
-             (particles['mTot'], particles['Npart'], relCells))
+             (particles['mTot'], particles['nPart'], relCells))
     log.info('Mass per particle = %.2f kg and particles per cell = %.2f.' %
-             (particles['mTot']/particles['Npart'], partPerCell))
+             (particles['mTot']/particles['nPart'], partPerCell))
 
     if debugPlot:
         debPlot.plotPartIni(particles, dem)
@@ -950,100 +907,6 @@ def initializeFields(cfg, dem, particles):
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
 
     return particles, fields
-
-
-def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
-    """ Create particles in given cell
-
-    Compute number of particles to create in a given cell.
-    Place particles in cell according to the chosen pattern (random semirandom
-    or ordered)
-
-    Parameters
-    ----------
-    hCell: float
-        snow depth in cell
-    aCell: float
-        cell area
-    indx: int
-        column index of the cell
-    indy: int
-        row index of the cell
-    csz : float
-        cellsize
-    massPerPart : float
-        maximum mass per particle
-    cfg: configParser
-        com1DFA general configParser
-    Returns
-    -------
-    xPart : 1D numpy array
-        x position of particles
-    yPart : 1D numpy array
-        y position of particles
-    mPart : 1D numpy array
-        mass of particles
-    nPart : int
-        number of particles created
-    aPart : int
-        particle area
-    """
-
-    rho = cfg.getfloat('rho')
-    thresholdMassSplit = cfg.getfloat('thresholdMassSplit')
-    initPartDistType = cfg['initPartDistType'].lower()
-    massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
-    volCell = aCell * hCell
-    massCell = volCell * rho
-    if initPartDistType == 'random':
-        if massPerParticleDeterminationMethod == 'MPPKR':
-            # impose a numper of particles within a kernel radius so impose number of particles in a cell
-            nFloat = cfg.getint('nPPK') * aCell / (math.pi * csz**2)
-        else:
-            # number of particles needed (floating number)
-            nFloat = massCell / massPerPart
-
-        nPart = int(np.floor(nFloat))
-        # adding 1 with a probability of the residual proba
-        proba = nFloat - nPart
-        if rng.random(1) < proba:
-            nPart = nPart + 1
-        nPart = np.maximum(nPart, 1)
-        # make sure we do not violate the (massCell / nPart) < thresholdMassSplit x massPerPart rule
-        if (massCell / nPart) / massPerPart >= thresholdMassSplit:
-            nPart = nPart + 1
-    else:
-        n = (np.ceil(np.sqrt(massCell / massPerPart))).astype('int')
-        nPart = n*n
-        d = csz/n
-        pos = np.linspace(0., csz-d, n) + d/2.
-        x, y = np.meshgrid(pos, pos)
-        x = x.flatten()
-        y = y.flatten()
-
-    mPart = massCell / nPart
-    aPart = aCell / nPart
-
-    # TODO make this an independent function
-    #######################
-    # start ###############
-    if initPartDistType == 'semirandom':
-        # place particles equaly distributed with a small variation
-        xPart = csz * (- 0.5 + indx) + x + (rng.random(nPart) - 0.5) * d
-        yPart = csz * (- 0.5 + indy) + y + (rng.random(nPart) - 0.5) * d
-    elif initPartDistType == 'random':
-        # place particles randomly in the cell
-        xPart = csz * (rng.random(nPart) - 0.5 + indx)
-        yPart = csz * (rng.random(nPart) - 0.5 + indy)
-    else:
-        # place particles equaly distributed
-        xPart = csz * (- 0.5 + indx) + x
-        yPart = csz * (- 0.5 + indy) + y
-        if initPartDistType != 'uniform':
-            log.warning('Chosen value for initial particle distribution type not available: %s uniform is used instead' %
-                        initPartDistType)
-
-    return xPart, yPart, mPart, nPart, aPart
 
 
 def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, rhoEnt):
@@ -1257,7 +1120,7 @@ def DFAIterate(cfg, particles, fields, dem):
         if t >= dtSave[0]:
             Tsave.append(t)
             log.debug('Saving results for time step t = %f s', t)
-            log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+            log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
             log.debug(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
             log.debug(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
             log.debug(('cpu time Position = %s s' % (Tcpu['Pos'] / nIter)))
@@ -1287,7 +1150,7 @@ def DFAIterate(cfg, particles, fields, dem):
     Tcpu['nIter'] = nIter
     log.info('Ending computation at time t = %f s', t-dt)
     log.debug('Saving results for time step t = %f s', t-dt)
-    log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+    log.info('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
     log.info('Computational performances:')
     log.info(('cpu time Force = %s s' % (Tcpu['Force'] / nIter)))
     log.info(('cpu time ForceSPH = %s s' % (Tcpu['ForceSPH'] / nIter)))
@@ -1923,43 +1786,6 @@ def savePartToPickle(dictList, outDir, logName):
             pickle.dump(dict, open(outDir / ("particles_%s_%09.4f.p" % (logName, dict['t'])), "wb"))
     else:
         pickle.dump(dictList, open(outDir / ("particles_%s_%09.4f.p" % (logName, dictList['t'])), "wb"))
-
-
-def readPartFromPickle(inDir, simName='', flagAvaDir=False, comModule='com1DFA'):
-    """ Read pickles within a directory and return List of dicionaries read from pickle
-
-        Parameters
-        -----------
-        inDir: str
-            path to input directory
-        simName : str
-            simulation name
-        flagAvaDir: bool
-            if True inDir corresponds to an avalanche directory and pickles are
-            read from avaDir/Outputs/com1DFA/particles
-        comModule: str
-            module that computed the particles
-    """
-
-    if flagAvaDir:
-        inDir = pathlib.Path(inDir, 'Outputs', comModule, 'particles')
-
-    # search for all pickles within directory
-    if simName:
-        name = '*' + simName + '*.p'
-    else:
-        name = '*.p'
-    PartDicts = sorted(list(inDir.glob(name)))
-
-    # initialise list of particle dictionaries
-    Particles = []
-    timeStepInfo = []
-    for particles in PartDicts:
-        particles = pickle.load(open(particles, "rb"))
-        Particles.append(particles)
-        timeStepInfo.append(particles['t'])
-
-    return Particles, timeStepInfo
 
 
 def trackParticles(cfgTrackPart, dem, particlesList):
