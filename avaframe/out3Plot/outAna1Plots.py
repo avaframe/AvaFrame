@@ -241,10 +241,10 @@ def plotError(simDF, outDirTest, cfgSimi):
     title = getTitleError(relativ, ' between similarity solution and com1DFA')
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
-    ax1 = sns.pointplot(x='Npart', y='hErrorL2', hue='dt', data=simDF, ax=ax1, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
-    ax2 = sns.pointplot(x='Npart', y='vhErrorL2', hue='dt', data=simDF, ax=ax2, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
-    ax1 = sns.pointplot(x='Npart', y='hErrorLMax', hue='dt', data=simDF, ax=ax1, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
-    ax2 = sns.pointplot(x='Npart', y='vhErrorLMax', hue='dt', data=simDF, ax=ax2, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
+    ax1 = sns.pointplot(x='nPart', y='hErrorL2', hue='dt', data=simDF, ax=ax1, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
+    ax2 = sns.pointplot(x='nPart', y='vhErrorL2', hue='dt', data=simDF, ax=ax2, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
+    ax1 = sns.pointplot(x='nPart', y='hErrorLMax', hue='dt', data=simDF, ax=ax1, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
+    ax2 = sns.pointplot(x='nPart', y='vhErrorLMax', hue='dt', data=simDF, ax=ax2, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
     ax1.set_title(title)
     ax1.set_xlabel('Number of particles')
 
@@ -269,23 +269,23 @@ def plotErrorLog(simDF, outDirTest, cfgSimi):
     cmap = 'viridis'
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
-    scatter = ax1.scatter(simDF["Npart"], simDF["hErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o', alpha=1, edgecolors='k')
-    scatte2 = ax2.scatter(simDF["Npart"], simDF["vhErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=0.8, edgecolors='k')
+    scatter = ax1.scatter(simDF["nPart"], simDF["hErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o', alpha=1, edgecolors='k')
+    scatte2 = ax2.scatter(simDF["nPart"], simDF["vhErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=0.8, edgecolors='k')
     for sphKernelRadius in sphKernelRadiusList:
         simDFNew = simDF[(simDF['sphKernelRadius'] == sphKernelRadius) & (simDF['dt'] == dt)]
-        Npart = simDFNew["Npart"]
+        nPart = simDFNew["nPart"]
         hErrorL2 = simDFNew["hErrorL2"]
         vErrorL2 = simDFNew["vhErrorL2"]
-        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(hErrorL2), deg=1)
+        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(hErrorL2), deg=1)
         p1H = p[0]
         p0H = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(vErrorL2), deg=1)
+        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(vErrorL2), deg=1)
         p1U = p[0]
         p0U = np.exp(p[1])
-        ax1.plot(Npart, p0H*Npart**p1H, 'r')
-        ax2.plot(Npart, p0U*Npart**p1U, 'g')
-        log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0H, p1H))
-        log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0U, p1U))
+        ax1.plot(nPart, p0H*nPart**p1H, 'r')
+        ax2.plot(nPart, p0U*nPart**p1U, 'g')
+        log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * nPart^{%.2f}' % (sphKernelRadius, p0H, p1H))
+        log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * nPart^{%.2f}' % (sphKernelRadius, p0U, p1U))
     ax1.set_yscale('log')
     ax2.set_yscale('log')
     ax1.set_xscale('log')

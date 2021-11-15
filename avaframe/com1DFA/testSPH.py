@@ -60,7 +60,7 @@ slopeAngley = 30*math.pi/180
 NDX = 5
 # choose the number of particles per DX and DY
 # if you choose 3, you will have 3*3 = 9 particles per grid cell
-NPartPerD = [16]
+nPartPerD = [16]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
@@ -75,7 +75,7 @@ def definePart(dx, dy, Lx, Ly):
     # define particles
     nx = np.int(Lx/dx)-1
     ny = np.int(Ly/dy)-1
-    Npart = nx*ny
+    nPart = nx*ny
     x = np.linspace(dx, Lx-dx, nx)
     y = np.linspace(dy, Ly-dy, ny)
     xx, yy = np.meshgrid(x, y)
@@ -83,9 +83,9 @@ def definePart(dx, dy, Lx, Ly):
     yy = yy.flatten()
     # Xpart = np.array([50., 54.])
     # Ypart = np.array([51., 53.])
-    # Npart = 2
-    Xpart = xx + (np.random.rand(Npart) - 0.5) * dx * coef
-    Ypart = yy + (np.random.rand(Npart) - 0.5) * dy * coef
+    # nPart = 2
+    Xpart = xx + (np.random.rand(nPart) - 0.5) * dx * coef
+    Ypart = yy + (np.random.rand(nPart) - 0.5) * dy * coef
     # adding z component
     Zpart, sx, sy, area = Sfunction(Xpart, Ypart, Lx, Ly)
     Hpart, _, _, _ = Hfunction(Xpart, Ypart, Zpart)
@@ -93,7 +93,7 @@ def definePart(dx, dy, Lx, Ly):
     # Mpart = np.array([2000., 3000.])
     # create dictionary to store particles properties
     particles = {}
-    particles['Npart'] = Npart
+    particles['nPart'] = nPart
     particles['mTot'] = np.sum(Mpart)
     particles['x'] = Xpart
     particles['y'] = Ypart
@@ -214,7 +214,7 @@ nCells = 30
 Lx = nCells*csz
 Ly = nCells*csz
 
-for nPartPerD in NPartPerD:
+for nPartPerD in nPartPerD:
     dx = csz/nPartPerD
     dy = csz/nPartPerD
 

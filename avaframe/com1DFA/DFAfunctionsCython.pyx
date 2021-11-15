@@ -62,10 +62,10 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
     cdef int Lx0, Ly0, Lx1, Ly1
     cdef double Lx, Ly, x, y, z
     cdef double[:] zRaster = Z0.flatten()
-    cdef int Npart = len(xArray)
+    cdef int nPart = len(xArray)
     cdef int j, ic
 
-    for j in range(Npart):
+    for j in range(nPart):
       x = xArray[j]
       y = yArray[j]
       z = zArray[j]
@@ -151,7 +151,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef double dt = dT
   cdef double mu = cfg.getfloat('mu')
-  cdef int Npart = particles['Npart']
+  cdef int nPart = particles['nPart']
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
   cdef int ncols = dem['header']['ncols']
@@ -177,12 +177,12 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
   # initialize outputs
-  cdef double[:] Fnormal = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] forceX = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] forceY = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] forceZ = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] forceFrict = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] dM = np.zeros(Npart, dtype=np.float64)
+  cdef double[:] Fnormal = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] forceX = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] forceY = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] forceZ = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
   # declare intermediate step variables
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
@@ -197,7 +197,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   cdef int j
   force = {}
   # loop on particles
-  for j in range(Npart):
+  for j in range(nPart):
       m = mass[j]
       x = xArray[j]
       y = yArray[j]
@@ -367,7 +367,7 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
 
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
-  for j in range(Npart):
+  for j in range(nPart):
     indCellX = indXDEM[j]
     indCellY = indYDEM[j]
     entrMassCell = entrMassRaster[indCellY, indCellX]
@@ -514,7 +514,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
   cdef int ncols = dem['header']['ncols']
-  cdef int Npart = particles['Npart']
+  cdef int nPart = particles['nPart']
   cdef double[:, :] nxArray = dem['Nx']
   cdef double[:, :] nyArray = dem['Ny']
   cdef double[:, :] nzArray = dem['Nz']
@@ -545,15 +545,15 @@ def updatePositionC(cfg, particles, dem, force, DT):
   # initialize outputs
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
-  cdef double[:] mNewArray = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] xNewArray = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] yNewArray = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] zNewArray = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] sNewArray = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] uxArrayNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] uyArrayNew = np.zeros(Npart, dtype=np.float64)
-  cdef double[:] uzArrayNew = np.zeros(Npart, dtype=np.float64)
-  cdef int[:] keepParticle = np.ones(Npart, dtype=np.int32)
+  cdef double[:] mNewArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] xNewArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] yNewArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] zNewArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] sNewArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] uxArrayNew = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] uyArrayNew = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] uzArrayNew = np.zeros(nPart, dtype=np.float64)
+  cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   # declare intermediate step variables
   cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
@@ -566,7 +566,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double w[4]
   cdef double wNew[4]
   # loop on particles
-  for j in range(Npart):
+  for j in range(nPart):
     m = mass[j]
     x = xArray[j]
     y = yArray[j]
@@ -819,7 +819,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double xllc = 0
   cdef double yllc = 0
   cdef double csz = header['cellsize']
-  cdef int Npart = np.size(particles['x'])
+  cdef int nPart = np.size(particles['x'])
   cdef double[:, :] areaRaster = dem['areaRaster']
   # read particles and fields
   cdef double[:] mass = particles['m']
@@ -842,7 +842,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] VYBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VZBilinear = np.zeros((nrows, ncols))
   # declare intermediate step variables
-  cdef double[:] hBB = np.zeros((Npart))
+  cdef double[:] hBB = np.zeros((nPart))
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart
   cdef int j, i
   cdef int indx, indy
@@ -850,7 +850,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
 
-  for j in range(Npart):
+  for j in range(nPart):
     x = xArray[j]
     y = yArray[j]
     ux = uxArray[j]
@@ -902,7 +902,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['pfd'] = np.asarray(PFD)
 
 
-  for j in range(Npart):
+  for j in range(nPart):
     x = xArray[j]
     y = yArray[j]
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
@@ -949,7 +949,7 @@ def getNeighborsC(particles, dem):
     cdef int nRowsNeighbourGrid = headerNeighbourGrid['nrows']
     cdef float cszNeighbourGrid = headerNeighbourGrid['cellsize']
     # get particle location
-    cdef int Npart = particles['Npart']
+    cdef int nPart = particles['nPart']
     cdef int j
     cdef double[:] xArray = particles['x']
     cdef double[:] yArray = particles['y']
@@ -958,13 +958,13 @@ def getNeighborsC(particles, dem):
     cdef int nCellsNeighbourGrid = nColsNeighbourGrid*nRowsNeighbourGrid
     cdef int[:] indPartInCell = np.zeros(nCellsNeighbourGrid + 1).astype('intc')
     cdef int[:] indPartInCell2 = np.zeros(nCellsNeighbourGrid + 1).astype('intc')
-    cdef int[:] partInCell = np.zeros(Npart).astype('intc')
-    cdef int[:] indXDEM = np.zeros(Npart).astype('intc')
-    cdef int[:] indYDEM = np.zeros(Npart).astype('intc')
-    cdef int[:] inCellDEM = np.zeros(Npart).astype('intc')
+    cdef int[:] partInCell = np.zeros(nPart).astype('intc')
+    cdef int[:] indXDEM = np.zeros(nPart).astype('intc')
+    cdef int[:] indYDEM = np.zeros(nPart).astype('intc')
+    cdef int[:] inCellDEM = np.zeros(nPart).astype('intc')
     # Count number of particles in each SPH grid cell
     cdef int indx, indy, ic
-    for j in range(Npart):
+    for j in range(nPart):
       indx = <int>math.round(xArray[j] / cszNeighbourGrid)
       indy = <int>math.round(yArray[j] / cszNeighbourGrid)
       # get index of cell containing the particle
@@ -975,7 +975,7 @@ def getNeighborsC(particles, dem):
       indPartInCell2[j+1] = indPartInCell[j+1]
 
     # make the list of which particles are in which cell
-    for j in range(Npart):
+    for j in range(nPart):
         indx = <int>math.round(xArray[j] / cszNeighbourGrid)
         indy = <int>math.round(yArray[j] / cszNeighbourGrid)
         ic = indx + nColsNeighbourGrid * indy

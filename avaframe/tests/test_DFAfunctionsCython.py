@@ -314,7 +314,7 @@ def test_getNeighborsC(capfd):
     dem['header'] = header
     dem['headerNeighbourGrid'] = header
     particles = {}
-    particles['Npart'] = 18
+    particles['nPart'] = 18
     particles['x'] = np.array(
         [1.6, 0.4, 1, 2, 1, 2, 0, 1, 0, 2, 0, 2, 1, 2, 3, 3, 4, 0])
     particles['y'] = np.array(
