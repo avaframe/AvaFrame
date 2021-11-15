@@ -640,7 +640,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     else:
         # if relTh provided - set release thickness with field or function
         releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True, checkOverlap=False)
-        releaseLine['rasterData'] = releaseLine['rasterData'] * relThField
+    releaseLine['rasterData'] = releaseLine['rasterData']
+    releaseLine['rasterData'] = relThField
 
     # compute release area
     header = dem['header']
@@ -709,7 +710,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     return particles, fields, dem, reportAreaInfo
 
 
-def initializeParticles(cfg, releaseLine, dem, logName=''):
+def initializeParticles(cfg, releaseLine, dem, relThField='', logName=''):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -723,6 +724,8 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
         release depth raster
     dem : dict
         dictionary with dem information
+    relThField: 2D numpy array
+        if the release depth is not uniform, give here the releaseRaster
 
     Returns
     -------
@@ -744,13 +747,17 @@ def initializeParticles(cfg, releaseLine, dem, logName=''):
     ncols = header['ncols']
     nrows = header['nrows']
     csz = header['cellsize']
-    relRaster = releaseLine['rasterData']
+    relRasterMask = releaseLine['rasterData']
+    if relThField != '':
+        relRaster = relThField
+    else:
+        relRaster = releaseLine['rasterData']
     areaRaster = dem['areaRaster']
 
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     # find all non empty cells (meaning release area)
-    indRelY, indRelX = np.nonzero(relRaster)
+    indRelY, indRelX = np.nonzero(relRasterMask)
 
     # derive mass per particle to define number of particles per cell:
     if massPerParticleDeterminationMethod == 'MPPDIR':
