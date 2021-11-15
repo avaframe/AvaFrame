@@ -1201,13 +1201,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
     indx = <int>math.round(x / cszNeighbourGrid)
     indy = <int>math.round(y / cszNeighbourGrid)
 
-
-    # get normal vector
-    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
-    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-    nx, ny, nz = normalize(nx, ny, nz)
-    # projection of gravity on normal vector
-    gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
     if SPHoption > 1:
         # get normal vector
         Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
@@ -1252,6 +1245,8 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
             # index of particle in neighbour box
             l = partInCell[p]
             if k != l:
+                hl = hArray[l]
+                ml = mass[l]
                 dx = xArray[l] - x
                 dy = yArray[l] - y
                 dz = zArray[l] - z
@@ -1325,7 +1320,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
-                      mdwdrr = mass[l] * dwdr / r
+                      mdwdrr = ml * dwdr / r
                       G1 = mdwdrr * K1*r1
                       G2 = mdwdrr * K2*r2
 
@@ -1362,7 +1357,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
 def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
-  """ compute lateral forces acting on the particles (SPH component)
+  """ compute SPH flow depth
   Cython implementation
   Parameters
   ----------
@@ -1385,7 +1380,7 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
   cdef double minRKern = cfg.getfloat('minRKern')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int SPHoption = cfg.getint('sphOption')
-  cdef int symetryOption = cfg.getint('symetryOption')
+  cdef int symmetryOption = cfg.getint('symmetryOption')
   cdef double hmin = cfg.getfloat('hmin')
 
   # grid normal raster information
@@ -1455,10 +1450,26 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
                 dx = xArray[l] - x
                 dy = yArray[l] - y
                 dz = zArray[l] - z
+
                 if SPHoption == 1:
-                  # like option 2 with dz!=0
-                  #dz = 0
-                  # get norm of r = xk - xl
+                  dz = 0
+                  # get norm of r = xj - xl
+                  if r < minRKern * rKernel:
+                      # impose a minimum distance between particles
+                      dx = minRKern * rKernel * dx
+                      dy = minRKern * rKernel * dy
+                      dz = minRKern * rKernel * dz
+                      r = minRKern * rKernel
+                  if r < rKernel:
+                      hr = rKernel - r
+                      wkl = facKernel * hr * hr * hr
+                      ml = mass[l]
+                      mrhowkl = ml/rho * wkl
+                      # standard SPH formulation
+                      hSPHk = hSPHk + mrhowkl
+
+                if SPHoption == 2:
+                  # get norm of r = xj - xl
                   r = norm(dx, dy, dz)
                   if r < minRKern * rKernel:
                       # impose a minimum distance between particles
