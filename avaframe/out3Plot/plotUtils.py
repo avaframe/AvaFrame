@@ -242,7 +242,10 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             continuous colormaps)
     """
 
-    if type(colormapDict) is matplotlib.colors.LinearSegmentedColormap:
+    print(type(colormapDict))
+
+    if type(colormapDict) in [matplotlib.colors.LinearSegmentedColormap,
+                              matplotlib.colors.ListedColormap]:
         cmap = colormapDict
         colorsNew = None
         norm = mplCol.Normalize(vmin=levMin, vmax=levMax, clip=False)

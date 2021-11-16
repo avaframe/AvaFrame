@@ -545,7 +545,7 @@ def initializeMesh(cfg, demOri, num):
     dem['Nx'] = np.where(np.isnan(Nx), 0., Nx)
     dem['Ny'] = np.where(np.isnan(Ny), 0., Ny)
     # build no data mask (used to find out of dem particles)
-    outOfDEM = np.where(np.isnan(dem['rasterData']), 1, 0).astype(np.bool).flatten()
+    outOfDEM = np.where(np.isnan(dem['rasterData']), 1, 0).astype(bool).flatten()
     dem['Nz'] = Nz
     dem['outOfDEM'] = outOfDEM
 
