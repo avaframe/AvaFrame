@@ -872,6 +872,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     particles['ux'] = np.zeros(np.shape(xPartArray))
     particles['uy'] = np.zeros(np.shape(xPartArray))
     particles['uz'] = np.zeros(np.shape(xPartArray))
+    particles['travelAngle'] = np.zeros(np.shape(xPartArray))
     particles['stoppCriteria'] = False
     kineticEne = np.sum(0.5 * mPartArray * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
     particles['kineticEne'] = kineticEne
@@ -1106,10 +1107,6 @@ def DFAIterate(cfg, particles, fields, dem):
     # add particles to the results type if trackParticles option is activated
     if cfg.getboolean('TRACKPARTICLES', 'trackParticles'):
         resTypes = list(set(resTypes + ['particles']))
-    # compute the travel angle if needed
-    travelAngle = False
-    if ('pta' in resTypes) or ('TA' in resTypes):
-        travelAngle = True
     # make sure to save all desiered resuts for first and last time step for
     # the report
     resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
@@ -1149,7 +1146,7 @@ def DFAIterate(cfg, particles, fields, dem):
     else:
         # get time step
         dt = cfgGen.getfloat('dt')
-
+    particles['dt'] = dt
     t = t + dt
 
     # Start time step computation
@@ -1157,7 +1154,7 @@ def DFAIterate(cfg, particles, fields, dem):
         startTime = time.time()
         log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
-        particles, fields, tCPU = computeEulerTimeStep(cfgGen, particles, fields, dt, dem, tCPU, frictType)
+        particles, fields, tCPU = computeEulerTimeStep(cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType)
 
         if travelAngle:
             particles, fields = computeTravelAngle(cfgGen, dem, particles, zPartArray0, fields)
@@ -1195,6 +1192,7 @@ def DFAIterate(cfg, particles, fields, dem):
         else:
             # get time step
             dt = cfgGen.getfloat('dt')
+        particles['dt'] = dt
 
         t = t + dt
         nIter = nIter + 1
@@ -1216,9 +1214,6 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH'] + tCPU['timePos'] + tCPU['timeNeigh'] +
                                                tCPU['timeField']) / nIter)))
     Tsave.append(t-dt)
-
-    if ('pta' in resTypesLast) or ('TA' in resTypesLast):
-        particles, fields = computeTravelAngle(cfgGen, dem, particles, zPartArray0, fields)
 
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
@@ -1299,7 +1294,7 @@ def writeMBFile(infoDict, avaDir, logName):
             mFile.write('%.02f,    %.06f,    %.06f\n' % (t[m], massTotal[m], massEntrained[m]))
 
 
-def computeEulerTimeStep(cfg, particles, fields, dt, dem, tCPU, frictType):
+def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictType):
     """ compute next time step using an euler forward scheme
 
     Parameters
@@ -1310,8 +1305,8 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, tCPU, frictType):
         particles dictionary at t
     fields : dict
         fields dictionary at t
-    dt : float
-        time step
+    zPartArray0 : dict
+        z coordinate of particles at t=0s
     dem : dict
         dictionary with dem information
     tCPU : dict
@@ -1333,7 +1328,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, tCPU, frictType):
 
     # loop version of the compute force
     log.debug('Compute Force C')
-    particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, dt, frictType)
+    particles, force, fields = DFAfunC.computeForceC(cfg, particles, fields, dem, frictType)
     tCPUForce = time.time() - startTime
     tCPU['timeForce'] = tCPU['timeForce'] + tCPUForce
 
@@ -1353,7 +1348,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, tCPU, frictType):
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
     log.debug('Update position C')
-    particles = DFAfunC.updatePositionC(cfg, particles, dem, force, dt, typeStop=0)
+    particles = DFAfunC.updatePositionC(cfg, particles, dem, force, typeStop=0)
     tCPUPos = time.time() - startTime
     tCPU['timePos'] = tCPU['timePos'] + tCPUPos
 
@@ -1390,13 +1385,45 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, tCPU, frictType):
     # update fields (compute grid values)
     startTime = time.time()
     log.debug('update Fields C')
-    # particles, fields = updateFields(cfg, particles, force, dem, fields)
+    particles = computeTravelAngle(cfg, dem, particles, zPartArray0)
     particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
     tCPUField = time.time() - startTime
     tCPU['timeField'] = tCPU['timeField'] + tCPUField
 
     return particles, fields, tCPU
 
+
+def computeTravelAngle(cfgGen, dem, particles, zPartArray0):
+    """Compute the travel angle associated to the particles
+
+    Parameters
+    ----------
+    cfgGen: configparser
+        configuration for DFA simulation
+    dem : dict
+        dictionary with dem information
+    particles : dict
+        particles dictionary at t
+    zPartArray0 : dict
+        z coordinate of particles at t=0s
+
+    Returns
+    -------
+    particles : dict
+        particles dictionary updated with the travel angle
+    """
+    # first compute travel angle for each particle
+    # get parent Id in order to  get the first z position
+    parentID = particles['parentID']
+    # get z0
+    Z0 = zPartArray0[parentID]
+    # compute tan of the travel angle
+    tanGamma = (Z0 - particles['z']) / (particles['s'])
+    tanGamma = np.where(particles['s'] == 0, 0, tanGamma)
+    # get the travel angle
+    gamma = np.degrees(np.arctan(tanGamma))
+    particles['travelAngle'] = gamma
+    return particles
 
 def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
     """ convert shape file polygon to raster
