@@ -1094,13 +1094,7 @@ def DFAIterate(cfg, particles, fields, dem):
 
     cfgGen = cfg['GENERAL']
     # Initialise cpu timing
-    tCPU = {}
-    tCPU['timeLoop'] = 0
-    tCPU['timeForce'] = 0.
-    tCPU['timeForceSPH'] = 0.
-    tCPU['timePos'] = 0.
-    tCPU['timeNeigh'] = 0.
-    tCPU['timeField'] = 0.
+    tCPU = {'timeLoop': 0, 'timeForce': 0., 'timeForceSPH': 0., 'timePos': 0., 'timeNeigh': 0., 'timeField': 0.}
 
     # Load configuration settings
     tEnd = cfgGen.getfloat('tEnd')
@@ -1112,6 +1106,10 @@ def DFAIterate(cfg, particles, fields, dem):
     # add particles to the results type if trackParticles option is activated
     if cfg.getboolean('TRACKPARTICLES', 'trackParticles'):
         resTypes = list(set(resTypes + ['particles']))
+    # compute the travel angle if needed
+    travelAngle = False
+    if ('pta' in resTypes) or ('TA' in resTypes):
+        travelAngle = True
     # make sure to save all desiered resuts for first and last time step for
     # the report
     resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
@@ -1141,7 +1139,7 @@ def DFAIterate(cfg, particles, fields, dem):
     t = particles['t']
     log.debug('Saving results for time step t = %f s', t)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
-    particles0 = copy.deepcopy(particles)
+    zPartArray0 = copy.deepcopy(particles['z'])
     # add initial time step to Tsave array
     Tsave = [0]
     # derive time step for first iteration
@@ -1161,8 +1159,8 @@ def DFAIterate(cfg, particles, fields, dem):
         # Perform computations
         particles, fields, tCPU = computeEulerTimeStep(cfgGen, particles, fields, dt, dem, tCPU, frictType)
 
-        # if cfgGen['travelAngle']:
-        fields = computeTravelAngle(cfgGen, dem, particles, particles0, fields)
+        if travelAngle:
+            particles, fields = computeTravelAngle(cfgGen, dem, particles, zPartArray0, fields)
 
         tCPU['nSave'] = nSave
         particles['t'] = t
@@ -1218,6 +1216,10 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH'] + tCPU['timePos'] + tCPU['timeNeigh'] +
                                                tCPU['timeField']) / nIter)))
     Tsave.append(t-dt)
+
+    if ('pta' in resTypesLast) or ('TA' in resTypesLast):
+        particles, fields = computeTravelAngle(cfgGen, dem, particles, zPartArray0, fields)
+
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
 
     # create infoDict for report and mass log file
