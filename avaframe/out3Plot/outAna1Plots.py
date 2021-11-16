@@ -256,49 +256,59 @@ def plotError(simDF, outDirTest, cfgSimi):
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error', fig1)
 
 
-def plotErrorLog(simDF, outDirTest, cfgSimi):
+def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, sizedBy, logScale=False):
     """plot error between all com1DFA sol and analytic sol
     function of nParts for all dt
     """
-    sphKernelRadiusList = simDF["sphKernelRadius"].unique()
-    dt = simDF["dt"].unique()[0]
+    sizeList = simDF[sizedBy].unique()
     tSave = cfgSimi.getfloat('tSave')
     relativ = cfgSimi.getboolean('relativError')
-    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF["sphKernelRadius"])*0.25, max(simDF["sphKernelRadius"])*2, continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy])*0.25, max(simDF[coloredBy])*2, continuous=pU.contCmap)
     cmap = 'viridis'
+    minSize = np.nanmin(sizeList)
+    maxSize = np.nanmax(sizeList)
+    sizeList = (simDF[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
-    scatter = ax1.scatter(simDF["nPart"], simDF["hErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o', alpha=1, edgecolors='k')
-    scatte2 = ax2.scatter(simDF["nPart"], simDF["vhErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=0.8, edgecolors='k')
-    for sphKernelRadius in sphKernelRadiusList:
-        simDFNew = simDF[(simDF['sphKernelRadius'] == sphKernelRadius) & (simDF['dt'] == dt)]
-        nPart = simDFNew["nPart"]
-        hErrorL2 = simDFNew["hErrorL2"]
-        vErrorL2 = simDFNew["vhErrorL2"]
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(hErrorL2), deg=1)
-        p1H = p[0]
-        p0H = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(vErrorL2), deg=1)
-        p1U = p[0]
-        p0U = np.exp(p[1])
-        ax1.plot(nPart, p0H*nPart**p1H, 'r')
-        ax2.plot(nPart, p0U*nPart**p1U, 'g')
-        log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * nPart^{%.2f}' % (sphKernelRadius, p0H, p1H))
-        log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * nPart^{%.2f}' % (sphKernelRadius, p0U, p1U))
-    ax1.set_yscale('log')
-    ax2.set_yscale('log')
-    ax1.set_xscale('log')
+    # ax1.plot(simDF[xAxis], simDF["hErrorL2"])
+    scatter = ax1.scatter(simDF[xField], simDF[yFieldArray[0]], c=simDF[coloredBy], s=sizeList, cmap=cmap,
+                          marker=pU.markers[0], alpha=1, edgecolors='k')
+    scatter2 = ax2.scatter(simDF[xField], simDF[yFieldArray[1]], c=simDF[coloredBy], s=sizeList, cmap=cmap,
+                           marker=pU.markers[1], alpha=1, edgecolors='k')
+
+    # sphKernelRadiusList = simDF[coloredBy].unique()
+    # dt = simDF[sizedBy].unique()[0]
+    # for sphKernelRadius in sphKernelRadiusList:
+    #     simDFNew = simDF[(simDF['sphKernelRadius'] == sphKernelRadius) & (simDF['dt'] == dt)]
+    #     Npart = simDFNew["Npart"]
+    #     hErrorL2 = simDFNew["hErrorL2"]
+    #     vErrorL2 = simDFNew["vhErrorL2"]
+    #     p = np.polyfit(np.log(simDFNew["Npart"]), np.log(hErrorL2), deg=1)
+    #     p1H = p[0]
+    #     p0H = np.exp(p[1])
+    #     p = np.polyfit(np.log(simDFNew["Npart"]), np.log(vErrorL2), deg=1)
+    #     p1U = p[0]
+    #     p0U = np.exp(p[1])
+    #     ax1.plot(Npart, p0H*Npart**p1H, 'r')
+    #     ax2.plot(Npart, p0U*Npart**p1U, 'g')
+    #     log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0H, p1H))
+    #     log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0U, p1U))
+
+    if logScale:
+        ax1.set_yscale('log')
+        ax2.set_yscale('log')
+        ax1.set_xscale('log')
     ax1.set_title('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
     ax1.set_xlabel('number of particles')
     ax1.set_ylabel(getTitleError(relativ, r' L2 on flow depth ($\bullet$)'))
     ax2.set_ylabel(getTitleError(relativ, getLabel(' L2 on', r'$(\blacksquare)$', dir='')))
-    legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title="sphKernelRadius")
+    legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title=coloredBy)
     ax1.add_artist(legend1)
 
     # produce a legend with a cross section of sizes from the scatter
     kw = dict(prop="sizes", color=scatter.cmap(0.7),
-          func=lambda s: s/200)
-    legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title="dt")
+          func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
+    legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title=sizedBy)
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
     b1, t1 = ax1.get_ylim()

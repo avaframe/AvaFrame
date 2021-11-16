@@ -16,6 +16,8 @@ import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.in1Data import getInput as gI
 import avaframe.ana1Tests.simiSolTest as simiSolTest
 
 
@@ -42,4 +44,12 @@ simiSolCfg = pathlib.Path(avalancheDir, 'Inputs', 'simiSol_com1DFACfg.ini')
 outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
 fU.makeADir(outDirTest)
 
-simiSolTest.mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest)
+cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
+
+# Define release thickness distribution
+demFile = gI.getDEMPath(avalancheDir)
+relDict = simiSolTest.getReleaseThickness(avalancheDir, cfg, demFile)
+relTh = relDict['relTh']
+# call com1DFA to perform simulations - provide configuration file and release thickness function
+# (may be multiple sims)
+_, _, _, _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
