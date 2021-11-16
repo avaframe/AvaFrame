@@ -17,9 +17,10 @@ log = logging.getLogger(__name__)
 def getPartInitMethod(cfg, csz):
     rho = cfg.getfloat('rho')
     massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
-    nPPK =  0
+    nPPK = 0
     # derive mass per particle to define number of particles per cell:
     if massPerParticleDeterminationMethod == 'MPPDIR':
+        massPerPart = cfg.getfloat('massPerPart')
         log.debug('Number of particles defined by: mass per particle %s' % cfg['massPerPart'])
     elif massPerParticleDeterminationMethod == 'MPPDH':
         deltaTh = cfg.getfloat('deltaTh')

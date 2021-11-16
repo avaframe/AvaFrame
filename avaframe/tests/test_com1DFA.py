@@ -552,82 +552,6 @@ def test_setDEMOriginToZero():
     assert demTest['header']['yllcenter'] == 0.0
 
 
-def test_placeParticles():
-    """ test placing of particles """
-
-    # setup required inputs
-    indx = 0
-    indy = 1
-    csz = 5
-    aCell = csz * csz
-    hCell = 10/25
-    massPerPart = 2.
-    thresholdMassSplit = 1.5
-    initPartDistType = 'uniform'
-    cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'rho': '1', 'thresholdMassSplit': '0.5', 'initPartDistType': 'uniform',
-                      'massPerParticleDeterminationMethod': 'MPPDH'}
-    rng = np.random.default_rng(12345)
-    # call funciton to be tested - uniform
-    xpart, ypart, mPart, nPart, aPart = com1DFA.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg['GENERAL'])
-    xpartTest = np.asarray([-1.66666666, 0.0, 1.66666666, -1.66666666, 0., 1.66666666, -1.66666666,
-                            0.0, 1.66666666])
-    ypartTest = np.asarray([3.33333333, 3.33333333, 3.33333333, 5.0, 5., 5., 6.66666666, 6.66666666,
-                            6.66666666])
-
-    assert nPart == 9.0
-    assert np.isclose(mPart, 1.111111)
-    assert np.allclose(xpart, xpartTest)
-    assert np.allclose(ypart, ypartTest)
-
-    # call funciton to be tested - uniform
-    hCell = 8/25
-    xpart, ypart, mPart, nPart, aPart = com1DFA.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg['GENERAL'])
-    xpartTest = np.asarray([-1.25, 1.25, -1.25, 1.25])
-    ypartTest = np.asarray([3.75, 3.75, 6.25, 6.25])
-
-    assert nPart == 4.0
-    assert mPart == 2.
-    assert np.allclose(xpart, xpartTest)
-    assert np.allclose(ypart, ypartTest)
-
-    # call funciton to be tested - random
-    hCell = 11.5/25
-    cfg['GENERAL']['initPartDistType'] = 'random'
-    xpart, ypart, mPart, nPart, aPart = com1DFA.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg['GENERAL'])
-    xpartTest = np.asarray(
-        [-0.9162083, 1.48682729, 0.88127335, -0.54445225, -0.83593036, 0.49154377, -1.56632907])
-    ypartTest = np.asarray(
-        [5.86378022, 7.20901433, 3.74122857, 7.24440576, 5.83618727, 2.97948968, 4.70919833])
-
-    print('xpart', xpart)
-    print('ypart', ypart)
-    assert nPart == 7.0
-    assert np.isclose(mPart, 1.6428571428571428)
-    assert np.allclose(xpart, xpartTest)
-    assert np.allclose(ypart, ypartTest)
-
-    # call funciton to be tested - random
-    csz = 4
-    aCell = csz * csz
-    hCell = 8/16
-    cfg['GENERAL']['initPartDistType'] = 'semiRandom'
-    xpart, ypart, mPart, nPart, aPart = com1DFA.placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg['GENERAL'])
-
-    print('xpart', xpart)
-    print('ypart', ypart)
-
-    assert nPart == 4.0
-    assert -2.0 < xpart[0] < 0.0
-    assert 2.0 < ypart[0] < 4.0
-    assert 0.0 < xpart[1] < 2.0
-    assert 2.0 < ypart[1] < 4.0
-    assert -2.0 < xpart[2] < 0.0
-    assert 4.0 < ypart[2] < 6.0
-    assert 0.0 < xpart[3] < 2.0
-    assert 4.0 < ypart[3] < 6.0
-
-
 def test_initializeMesh():
     """ test mesh initialization """
 
@@ -956,7 +880,7 @@ def test_initializeParticles():
     dem['originOri'] = {'xllcenter': 1.0, 'yllcenter': 1.0}
 
     relRaster = np.zeros((12, 12))
-    relRaster[6:8, 6:8] = 1.0
+    relRaster[5:9, 5:9] = 1.0
     releaseLine = {'x': np.asarray([6.9, 8.5, 8.5, 6.9, 6.9]), 'y': np.asarray([6.9, 6.9, 8.5, 8.5, 6.9]),
                    'Start': np.asarray([0]), 'Length': np.asarray([5]), 'Name': [''], 'thickness': [1.0],
                    'rasterData': relRaster}
@@ -966,7 +890,7 @@ def test_initializeParticles():
     releaseLine['header']['yllcenter'] = dem['originOri']['yllcenter']
 
     dictKeys = ['nPart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
-                'h', 'NPPC', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
+                'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
@@ -974,8 +898,7 @@ def test_initializeParticles():
 
     # call function to be tested
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
-    particles, fields = com1DFA.initializeFields(
-        cfg['GENERAL'], dem, particles)
+    particles, fields = com1DFA.initializeFields(cfg['GENERAL'], dem, particles)
     particles['iterate'] = True
     particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
     # check keys
@@ -1006,37 +929,70 @@ def test_initializeParticles():
 
     cfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPDIR'
     cfg['GENERAL'].update({'massPerPart': '60.'})
-    particles2 = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
-    particles2, fields = com1DFA.initializeFields(
-        cfg['GENERAL'], dem, particles)
-    particles2['iterate'] = True
-    particles2['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
+    particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
+    particles, fields = com1DFA.initializeFields(cfg['GENERAL'], dem, particles)
+    particles['iterate'] = True
+    particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
     # check keys
     # are we missing any keys?
-    missing = set(dictKeys) - particles2.keys()
+    missing = set(dictKeys) - particles.keys()
     if len(missing) > 0:
         print('there is an missing key in particles: ',
-              set(dictKeys) - particles2.keys())
-    assert all(key in dictKeys for key in particles2)
+              set(dictKeys) - particles.keys())
+    assert all(key in dictKeys for key in particles)
 
     # do we have too any keys?
-    extra = particles2.keys() - set(dictKeys)
+    extra = particles.keys() - set(dictKeys)
     if len(extra) > 0:
         print('there is an extra key in particles: ',
-              particles2.keys() - set(dictKeys))
-    assert all(key in particles2 for key in dictKeys)
+              particles.keys() - set(dictKeys))
+    assert all(key in particles for key in dictKeys)
 
-    print('particles', particles2)
+    print('particles', particles)
 
-    assert particles2['nPart'] == 9
-    assert np.array_equal(particles2['x'], np.asarray(
+    assert particles['nPart'] == 9
+    assert np.array_equal(particles['x'], np.asarray(
         [6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
-    assert np.array_equal(particles2['y'], np.asarray(
+    assert np.array_equal(particles['y'], np.asarray(
         [6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
-    assert np.array_equal(particles2['m'], np.asarray(
+    assert np.array_equal(particles['m'], np.asarray(
         [50., 50., 50., 50., 50., 50., 50., 50., 50.]))
-    assert particles2['mTot'] == 450.0
-    assert np.sum(particles2['ux']) == 0.0
+    assert particles['mTot'] == 450.0
+    assert np.sum(particles['ux']) == 0.0
+
+    cfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPKR'
+    cfg['GENERAL'].update({'nPPK': '5'})
+    cfg['GENERAL'].update({'relTh': '1.'})
+    particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
+    particles, fields = com1DFA.initializeFields(cfg['GENERAL'], dem, particles)
+    particles['iterate'] = True
+    particles['secondaryReleaseInfo'] = {'flagSecondaryRelease': 'No'}
+    # check keys
+    # are we missing any keys?
+    missing = set(dictKeys) - particles.keys()
+    if len(missing) > 0:
+        print('there is an missing key in particles: ',
+              set(dictKeys) - particles.keys())
+    assert all(key in dictKeys for key in particles)
+
+    # do we have too any keys?
+    extra = particles.keys() - set(dictKeys)
+    if len(extra) > 0:
+        print('there is an extra key in particles: ',
+              particles.keys() - set(dictKeys))
+    assert all(key in particles for key in dictKeys)
+
+    print('particles', particles)
+
+    assert particles['nPart'] == 9
+    assert np.array_equal(particles['x'], np.asarray(
+        [6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
+    assert np.array_equal(particles['y'], np.asarray(
+        [6.25, 6.25, 6.25, 6.75, 7.25, 6.75, 6.75, 7.25, 7.25]))
+    assert np.array_equal(particles['m'], np.asarray(
+        [50., 50., 50., 50., 50., 50., 50., 50., 50.]))
+    assert particles['mTot'] == 450.0
+    assert np.sum(particles['ux']) == 0.0
 
 
 def test_writeMBFile(tmp_path):
@@ -1114,80 +1070,6 @@ def test_savePartToPickle(tmp_path):
     assert np.array_equal(particlesRead3['y'], particles1['y'])
     assert np.array_equal(particlesRead3['m'], particles1['m'])
     assert particlesRead3['t'] == 0.
-
-
-def test_readPartFromPickle(tmp_path):
-    """ test reading particle properties from pickle """
-
-    # setup required inputs
-    inDir = pathlib.Path(tmp_path, 'avaTest')
-    inDir.mkdir()
-    particlesTestDict = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
-                         'm': np.asarray([10., 11., 11.]), 't': 0.}
-    pickle.dump(particlesTestDict, open(inDir / 'test.p', "wb"))
-    testDir = inDir / 'Outputs' / 'com1DFA' / 'particles'
-    testDir.mkdir(parents=True)
-    pickle.dump(particlesTestDict, open(testDir / 'test.p', "wb"))
-
-    # call function to be tested
-    Particles, TimeStepInfo = com1DFA.readPartFromPickle(
-        inDir, flagAvaDir=False)
-    # call function to be tested
-    Particles2, TimeStepInfo2 = com1DFA.readPartFromPickle(
-        inDir, flagAvaDir=True)
-
-    print('Particles', Particles)
-    print('TimeStepInfo', TimeStepInfo)
-
-    assert np.array_equal(Particles[0]['x'], particlesTestDict['x'])
-    assert TimeStepInfo == [0.]
-    assert np.array_equal(Particles2[0]['x'], particlesTestDict['x'])
-    assert TimeStepInfo2 == [0.]
-
-
-def test_savePartToCsv(tmp_path):
-    """ test saving particle infos to csv file """
-
-    # setup required input
-    particleProperties = 'm|x|y|velocityMagnitude|test'
-    particles1 = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 4., 5.]),
-                  'z': np.asarray([1., 4., 5.]),
-                  'm': np.asarray([10., 11., 11.]), 't': 0., 'simName': 'simNameTest',
-                  'xllcenter': 11., 'yllcenter': 12., 'ux': np.asarray([0., 0., 0.]),
-                  'uy': np.asarray([0., 0., 0.]), 'uz': np.asarray([0., 0., 0.])}
-    particles2 = {'x': np.asarray([10., 20., 30.]), 'y': np.asarray([10., 40., 50.]),
-                  'z': np.asarray([1., 4., 5.]),
-                  'm': np.asarray([100., 110., 110.]), 't': 2., 'simName': 'simNameTest',
-                  'xllcenter': 4., 'yllcenter': 2., 'ux': np.asarray([4., 4., 4.]),
-                  'uy': np.asarray([4., 4., 4.]), 'uz': np.asarray([4., 4., 4.])}
-    dictList = [particles1, particles2]
-    outDir = pathlib.Path(tmp_path, 'testDir')
-    outDir.mkdir()
-
-    # call function to be tested
-    com1DFA.savePartToCsv(particleProperties, dictList, outDir)
-
-    # read csv file
-    partCsv1 = outDir / 'particlesCSV' / 'particlessimNameTest.csv.0'
-    DF1 = pd.read_csv(partCsv1)
-    partCsv2 = outDir / 'particlesCSV' / 'particlessimNameTest.csv.1'
-    DF2 = pd.read_csv(partCsv2)
-    velMag = np.sqrt(4**2 + 4**2 + 4**2)
-
-    print('csv df1', DF1.to_string())
-    print('csv df2', DF2.to_string())
-
-    assert np.array_equal(DF1['X'], (np.asarray([12., 13., 14.])))
-    assert np.array_equal(DF1['Y'], (np.asarray([13., 16., 17.])))
-    assert np.array_equal(DF1['m'], np.asarray([10., 11., 11.]))
-    assert np.array_equal(DF1['velocityMagnitude'], np.asarray([0., 0., 0.]))
-    assert DF1['time'][0] == 0.0
-    assert np.array_equal(DF2['X'], (np.asarray([14., 24., 34.])))
-    assert np.array_equal(DF2['Y'], (np.asarray([12., 42., 52.])))
-    assert np.array_equal(DF2['m'], np.asarray([100., 110., 110.]))
-    assert np.array_equal(DF2['velocityMagnitude'],
-                          np.asarray([velMag, velMag, velMag]))
-    assert DF2['time'][0] == 2.0
 
 
 def test_exportFields(tmp_path):
@@ -1484,7 +1366,7 @@ def test_runCom1DFA(tmp_path, caplog):
         avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
 
     dictKeys = ['nPart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
-                'h', 'NPPC', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
+                'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
