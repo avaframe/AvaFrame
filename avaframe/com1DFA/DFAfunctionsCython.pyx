@@ -1148,12 +1148,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
   cdef double[:] uzArray = particles['uz']
   cdef int N = xArray.shape[0]
 
-  cdef double[:] hArray = np.zeros(N, dtype=np.float64)
-  if flowDepthOption==0:
-    hArray = particles['h']
-  elif flowDepthOption==1:
-    hArray = particles['hSPH']
-
   # initialize variables and outputs
   cdef double[:] GHX = np.zeros(N, dtype=np.float64)
   cdef double[:] GHY = np.zeros(N, dtype=np.float64)
@@ -1245,8 +1239,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
             # index of particle in neighbour box
             l = partInCell[p]
             if k != l:
-                hl = hArray[l]
-                ml = mass[l]
                 dx = xArray[l] - x
                 dy = yArray[l] - y
                 dz = zArray[l] - z
@@ -1409,7 +1401,7 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
   # initialize variables and outputs
   cdef double[:] hSPHArray = np.zeros(N, dtype=np.float64)
 
-  cdef double mrhowkl, ml, al
+  cdef double mrhowkl
   cdef double x, y, z
   cdef double dx, dy, dz, r, hr, wkl
   cdef int lInd, rInd
@@ -1463,8 +1455,7 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
                   if r < rKernel:
                       hr = rKernel - r
                       wkl = facKernel * hr * hr * hr
-                      ml = mass[l]
-                      mrhowkl = ml/rho * wkl
+                      mrhowkl = mass[l]/rho * wkl
                       # standard SPH formulation
                       hSPHk = hSPHk + mrhowkl
 
@@ -1480,8 +1471,7 @@ def computeFlowDepthSPH(cfg, particles, headerNeighbourGrid, headerNormalGrid):
                   if r < rKernel:
                       hr = rKernel - r
                       wkl = facKernel * hr * hr * hr
-                      ml = mass[l]
-                      mrhowkl = ml/rho * wkl
+                      mrhowkl = mass[l]/rho * wkl
                       # standard SPH formulation
                       hSPHk = hSPHk + mrhowkl
 
