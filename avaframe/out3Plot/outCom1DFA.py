@@ -157,7 +157,7 @@ def addDem2Plot(ax, dem, what='slope'):
 
 
 def plotParticles(particlesList, cfg, dem):
-    """ Plot time series of tracked partcles
+    """ Plot particles on dem
     Parameters
     ----------
     particlesList: list
@@ -175,20 +175,19 @@ def plotParticles(particlesList, cfg, dem):
             particles = particlesList[count]
             ax1 = updatePlot(particles, ax1, dem)
             ax1 = addDem2Plot(ax1, dem, what='slope')
-            # plt.pause(0.1)
             plt.show()
-
-        # ani = FuncAnimation(fig2, update, round(len(Particles)),
-        #                     fargs=(Particles, xllc, yllc, ax1, XX, YY, dem))
-        # # plt.show()
-        #
-        # writer = PillowWriter(fps=4)
-        # # ani.save("MalSecRel.gif", writer=writer)
-        # ani.save("testTrackAlr1.gif", writer=writer)
 
 
 def updatePlot(particles, ax, dem):
-    """Update axes with particles (tracked particles are highlighted in red)
+    """Update axes with particles
+
+    Parameters
+    ----------
+    particles: dict
+        particles dictionary
+    ax: mathplotlix ax object
+    dem: dict
+        dem dictionary with normal information
     """
 
     header = dem['header']

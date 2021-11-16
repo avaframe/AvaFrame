@@ -5,12 +5,14 @@
 # Load modules
 import logging
 import numpy as np
+import pandas as pd
 import numbers
 import math
 import pathlib
 import pickle
 
 # Local imports
+import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.com1DFA.DFAtools as DFAtls
 
 
@@ -100,7 +102,7 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
     massCell = volCell * rho
     if initPartDistType == 'random':
         if massPerParticleDeterminationMethod == 'MPPKR':
-            # impose a numper of particles within a kernel radius so impose number of particles in a cell
+            # impose a number of particles within a kernel radius so impose number of particles in a cell
             nFloat = cfg.getint('nPPK') * aCell / (math.pi * csz**2)
         else:
             # number of particles needed (floating number)
@@ -176,6 +178,7 @@ def removePart(particles, mask, nRemove, reasonString=''):
     for key in particles:
         if key == 'nPart':
             particles['nPart'] = particles['nPart'] - nRemove
+        # for all keys in particles that are arrays of size nPart do:
         elif type(particles[key]).__module__ == np.__name__:
             if np.size(particles[key]) == nPart:
                 particles[key] = particles[key][mask]
@@ -224,6 +227,7 @@ def addParticles(particles, nAdd, ind, mNew, xNew, yNew, zNew):
         particles['y'][ind] = yNew[0]
         particles['z'][ind] = zNew[0]
         # add new particles at the end of the arrays
+        # for all keys in particles that are arrays of size nPart do:
         if type(particles[key]).__module__ == np.__name__:
             # create unique ID for the new particles
             if key == 'ID':
@@ -241,7 +245,7 @@ def addParticles(particles, nAdd, ind, mNew, xNew, yNew, zNew):
     return particles
 
 
-def splitPart(particles, cfg):
+def splitPartMass(particles, cfg):
     """Split big particles
 
     Split particles bigger than thresholdMassSplit x massPerPart
@@ -282,7 +286,7 @@ def splitPart(particles, cfg):
     return particles
 
 
-def testSplitPart(particles, cfg, dem):
+def splitPartArea(particles, cfg, dem):
     """Split big particles
 
     Split particles to keep enough particles within the kernel radius.
@@ -343,7 +347,7 @@ def testSplitPart(particles, cfg, dem):
     return particles
 
 
-def testMergePart(particles, cfg, dem):
+def mergePartArea(particles, cfg, dem):
     """merge small particles
 
     merge particles to avoid too many particles within the kernel radius.
@@ -474,9 +478,9 @@ def mergeParticleDict(particles1, particles2):
         # now if the value is a numpy array and this key is also in particles2
         elif (key in particles2) and (type(particles1[key]).__module__ == np.__name__):
             # deal with the specific cases:
-            # in the case of ID or 'parentID' we assume that bot particles1 and
+            # in the case of ID or 'parentID' we assume that both particles1 and
             # particles2 were initialized with an ID and parentID starting at 0
-            # here whene we merge the 2 arrays we make sure to shift the value
+            # here when we merge the 2 arrays we make sure to shift the value
             # of particles2 so that the ID stays a unique identifier and
             # that the parentID is consistent with this shift.
             if (key == 'ID') or (key == 'parentID'):
@@ -501,7 +505,7 @@ def mergeParticleDict(particles1, particles2):
 
 
 def getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind):
-    """Compute the new particle potion due to splitting
+    """Compute the new particle position due to splitting
 
     Parameters
     ----------
@@ -544,7 +548,6 @@ def getSplitPartPosition(cfg, particles, aPart, Nx, Ny, Nz, csz, nSplit, ind):
     alpha = 2*math.pi*(np.arange(nSplit)/nSplit + rng.random(1))
     cos = rNew*np.cos(alpha)
     sin = rNew*np.sin(alpha)
-    # nx, ny, nz = getNormalArray(np.array([particles['x'][ind]]), np.array([particles['y'][ind]]), Nx, Ny, Nz, csz)
     nx, ny, nz = DFAtls.getNormalArray(np.array([x[ind]]), np.array([y[ind]]), Nx, Ny, Nz, csz)
     e1x, e1y, e1z, e2x, e2y, e2z = getTangenVectors(nx, ny, nz, np.array([ux[ind]]), np.array([uy[ind]]), np.array([uz[ind]]))
     xNew = x[ind] + cos * e1x + sin * e2x
@@ -809,3 +812,57 @@ def readPartFromPickle(inDir, simName='', flagAvaDir=False, comModule='com1DFA')
         timeStepInfo.append(particles['t'])
 
     return Particles, timeStepInfo
+
+
+def savePartToCsv(particleProperties, dictList, outDir):
+    """ Save each particle dictionary from a list to a csv file;
+        works also for one dictionary instead of list
+
+        Parameters
+        ---------
+        particleProperties: str
+            all particle properties that shall be saved to csv file
+            (e.g.: m, velocityMagnitude, ux,..)
+        dictList: list or dict
+            list of dictionaries or single dictionary
+        outDir: str
+            path to output directory; particlesCSV will be created in this
+            outDir
+    """
+
+    # set output directory
+    outDir = outDir / 'particlesCSV'
+    fU.makeADir(outDir)
+
+    # read particle properties to be saved
+    particleProperties = particleProperties.split('|')
+
+    # write particles locations and properties to csv file
+    nParticles = len(dictList)
+    count = 0
+    for m in range(nParticles):
+        particles = dictList[count]
+        simName = particles['simName']
+        csvData = {}
+        csvData['X'] = particles['x'] + particles['xllcenter']
+        csvData['Y'] = particles['y'] + particles['yllcenter']
+        csvData['Z'] = particles['z']
+
+        for partProp in particleProperties:
+            if partProp == 'velocityMagnitude':
+                ux = particles['ux']
+                uy = particles['uy']
+                uz = particles['uz']
+                csvData[partProp] = DFAtls.norm(ux, uy, uz)
+            else:
+                if partProp in particles:
+                    csvData[partProp] = particles[partProp]
+                else:
+                    log.warning('Particle property %s does not exist' % (partProp))
+        csvData['time'] = particles['t']
+
+        # create pandas dataFrame and save to csv
+        outFile = outDir / ('particles%s.csv.%d' % (simName, count))
+        particlesData = pd.DataFrame(data=csvData)
+        particlesData.to_csv(outFile, index=False)
+        count = count + 1

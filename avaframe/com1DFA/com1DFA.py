@@ -7,13 +7,12 @@ import time
 import datetime
 import pathlib
 import numpy as np
+import pandas as pd
 import math
 import copy
 import pickle
 from datetime import datetime
-import pandas as pd
 import matplotlib.path as mpltPath
-import pandas as pds
 from itertools import product
 
 # Local imports
@@ -123,7 +122,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
             # +++++++++++++++++++++++++++++++++
             # ------------------------
             particlesList, fieldsList, tSave, dem, reportDict, cfgFinal, Tcpu = com1DFA.com1DFACore(cfg, avalancheDir,
-                    cuSim, inputSimFiles, outDir, relThField)
+                    cuSim, inputSimFiles, outDir, relThField=relThField)
 
             # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
 
@@ -162,7 +161,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
         return [], [], [], 0, {}, [], ''
 
 
-def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
+def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
     """ Run main com1DFA model
 
     This will compute a dense flow avalanche
@@ -203,7 +202,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField):
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # for timing the sims
     startTime = time.time()
-    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName, relThField)
+    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName,
+                                                                  relThField=relThField)
 
     # ------------------------
     #  Start time step computation
@@ -584,7 +584,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
+def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     """ create simulaton report dictionary
 
     Parameters
@@ -641,8 +641,6 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     else:
         # if relTh provided - set release thickness with field or function
         releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True, checkOverlap=False)
-    releaseLine['rasterData'] = releaseLine['rasterData']
-    releaseLine['rasterData'] = relThField
 
     # compute release area
     header = dem['header']
@@ -658,7 +656,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # initialize simulation
     # create primary release area particles and fields
     releaseLine['header'] = demOri['header']
-    particles = initializeParticles(cfgGen, releaseLine, dem, logName=logName)
+    particles = initializeParticles(cfgGen, releaseLine, dem, logName=logName, relThField=relThField)
     particles, fields = initializeFields(cfgGen, dem, particles)
 
     # ------------------------
@@ -711,7 +709,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     return particles, fields, dem, reportAreaInfo
 
 
-def initializeParticles(cfg, releaseLine, dem, relThField='', logName=''):
+def initializeParticles(cfg, releaseLine, dem, logName='', relThField=''):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -1299,13 +1297,16 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 
+    # Split particles
     if cfg.getint('splitOption') == 0:
         # split particles with too much mass
         # this only splits particles that grew because of entrainment
-        particles = particleTools.splitPart(particles, cfg)
+        particles = particleTools.splitPartMass(particles, cfg)
     elif cfg.getint('splitOption') == 1:
         # split merge operation
         # first update fields (compute grid values) because we need the h of the particles to get the aPart
+        # ToDo: we could skip the update field and directly do the split merge. This means we would use the old
+        # h. No big deal I think
         startTime = time.time()
         log.debug('update Fields C')
         # particles, fields = updateFields(cfg, particles, force, dem, fields)
@@ -1313,8 +1314,8 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
         tcpuField = time.time() - startTime
         Tcpu['Field'] = Tcpu['Field'] + tcpuField
         # Then split merge particles
-        particles = particleTools.testSplitPart(particles, cfg, dem)
-        particles = particleTools.testMergePart(particles, cfg, dem)
+        particles = particleTools.splitPartArea(particles, cfg, dem)
+        particles = particleTools.mergePartArea(particles, cfg, dem)
 
     # release secondary release area?
     if particles['secondaryReleaseInfo']['flagSecondaryRelease'] == 'Yes':
@@ -1324,7 +1325,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     startTime = time.time()
     log.debug('get Neighbours C')
     particles = DFAfunC.getNeighborsC(particles, dem)
-
     tcpuNeigh = time.time() - startTime
     Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
 
@@ -1853,60 +1853,6 @@ def trackParticles(cfgTrackPart, dem, particlesList):
         trackedPartProp = None
 
     return particlesList, trackedPartProp, track
-
-
-def savePartToCsv(particleProperties, dictList, outDir):
-    """ Save each particle dictionary from a list to a csv file;
-        works also for one dictionary instead of list
-
-        Parameters
-        ---------
-        particleProperties: str
-            all particle properties that shall be saved to csv file
-            (e.g.: m, velocityMagnitude, ux,..)
-        dictList: list or dict
-            list of dictionaries or single dictionary
-        outDir: str
-            path to output directory; particlesCSV will be created in this
-            outDir
-    """
-
-    # set output directory
-    outDir = outDir / 'particlesCSV'
-    fU.makeADir(outDir)
-
-    # read particle properties to be saved
-    particleProperties = particleProperties.split('|')
-
-    # write particles locations and properties to csv file
-    nParticles = len(dictList)
-    count = 0
-    for m in range(nParticles):
-        particles = dictList[count]
-        simName = particles['simName']
-        csvData = {}
-        csvData['X'] = particles['x'] + particles['xllcenter']
-        csvData['Y'] = particles['y'] + particles['yllcenter']
-        csvData['Z'] = particles['z']
-
-        for partProp in particleProperties:
-            if partProp == 'velocityMagnitude':
-                ux = particles['ux']
-                uy = particles['uy']
-                uz = particles['uz']
-                csvData[partProp] = DFAtls.norm(ux, uy, uz)
-            else:
-                if partProp in particles:
-                    csvData[partProp] = particles[partProp]
-                else:
-                    log.warning('Particle property %s does not exist' % (partProp))
-        csvData['time'] = particles['t']
-
-        # create pandas dataFrame and save to csv
-        outFile = outDir / ('particles%s.csv.%d' % (simName, count))
-        particlesData = pds.DataFrame(data=csvData)
-        particlesData.to_csv(outFile, index=False)
-        count = count + 1
 
 
 def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA'):
