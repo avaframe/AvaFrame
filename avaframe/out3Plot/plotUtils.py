@@ -314,7 +314,7 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             levelsNew = [0] + levelsNew
         norm = mplCol.BoundaryNorm(levelsNew, cmap.N)
 
-    return cmap, colorsNew, levelsNew, norm
+    return cmap.copy(), colorsNew, levelsNew, norm
 
 
 ###################################
