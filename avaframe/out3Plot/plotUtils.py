@@ -124,29 +124,29 @@ cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list('cmapAvaframeCont', 
 levP = [1.0, 10.0, 25.0, 50.0]
 # Hawaii color map
 colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
-cmapP = cmapCameri.hawaii.reversed()
+cmapP = copy.copy(cmapCameri.hawaii.reversed())
 
 # multi sequential colormap for flow depth
 levD = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
 # Lajolla color map
 colorsD = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
-cmapD = cmapCameri.lajolla
+cmapD = cmapCameri.lajolla.copy()
 
 # multi sequential colormap for speed
 levS = [1, 5, 10, 15, 20, 25, 30]
 # Batflow color map
 colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
            '#201158']
-cmapS = cmapCameri.batlow.reversed()
+cmapS = copy.copy(cmapCameri.batlow.reversed())
 
 # colormap used if no resType provided
-cmapNN = cmapCameri.imola.reversed()
+cmapNN = copy.copy(cmapCameri.imola.reversed())
 
 # colormap for probabilities
 levProb = [0, 0.25, 0.50, 0.75, 1.]
 # lapaz color map
 colorsProb = ['#FEF1F1', '#B2AB96', '#5B8BA3', '#2D5393', '#1A0C64']
-cmapProbmap = cmapCameri.lapaz.reversed()
+cmapProbmap = copy.copy(cmapCameri.lapaz.reversed())
 
 ###############################################
 # Set colormaps to use
