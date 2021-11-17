@@ -15,7 +15,6 @@ import matplotlib.path as mpltPath
 import pandas as pds
 from itertools import product
 from shapely.geometry import Polygon
-import matplotlib.pyplot as plt
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
