@@ -106,7 +106,7 @@ cmapViridis = copy.copy(matplotlib.cm.viridis)
 cmapViridis.set_bad(color='k')
 
 # divergent color map
-cmapdiv = cmapCameri.broc
+cmapdiv = cmapCameri.broc.copy()
 
 # custom colomaps
 # cmap based on avaframe logo colors
