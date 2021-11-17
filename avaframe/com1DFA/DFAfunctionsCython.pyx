@@ -1344,25 +1344,17 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
 
 
     if grad == 1:
-      GHX[k] = GHX[k] - gradhX / rho
-      GHY[k] = GHY[k] - gradhY / rho
-      GHZ[k] = GHZ[k] - gradhZ / rho
-    else:
-      if SPHoption >= 4:
-          # check that M is invertible
-        if (m11*m22-m12*m12)>0:
-          GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
-          GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)
-        else:
-          GG1 = G1
-          GG2 = G2
-        gradhX = ux*GG1 + uxOrtho*GG2
-        gradhY = uy*GG1 + uyOrtho*GG2
-        gradhZ = (- g1*(ux*GG1 + uxOrtho*GG2) - g2*(uy*GG1 + uyOrtho*GG2))
-        GHX[k] = GHX[k] - gradhX / rho * mk * gravAcc3
-        GHY[k] = GHY[k] - gradhY / rho * mk * gravAcc3
-        GHZ[k] = GHZ[k] - gradhZ / rho * mk * gravAcc3
-      elif SPHoption == 2:
+      if SPHoption == 2:
+        GHX[k] = GHX[k] + gradhX / gravAcc3
+        GHY[k] = GHY[k] + gradhY / gravAcc3
+        GHZ[k] = GHZ[k] + gradhZ / gravAcc3
+      else:
+        GHX[k] = GHX[k] - gradhX / rho
+        GHY[k] = GHY[k] - gradhY / rho
+        GHZ[k] = GHZ[k] - gradhZ / rho
+    elif grad == 0:
+      if SPHoption == 2:
+        # grad here is g*grad(h)
         GHX[k] = GHX[k] + gradhX * mk
         GHY[k] = GHY[k] + gradhY * mk
         GHZ[k] = GHZ[k] + gradhZ * mk
