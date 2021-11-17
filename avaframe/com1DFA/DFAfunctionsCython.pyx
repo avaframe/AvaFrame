@@ -31,7 +31,7 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
 
     Interpolate unstructured points on a structured grid using bilinear interpolation
     The (x, y) points have to be on the extend of the DEM!!
-    
+
     Parameters
       ----------
       x: 1D numpy array
@@ -1188,8 +1188,8 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
   cdef int k, ic, n, p, l, imax, imin, iPstart, iPend
   cdef int grad = gradient
   # artificial viscosity parameters
-  cdef double dwdrr, vol, volr
-  cdef double viscX, viscY, viscZ, pikl
+  cdef double dwdrr, area
+  cdef double pikl, flux
   cdef double epsilon = 100
   cdef double hk, hl, ck, cl, lambdakl
 
@@ -1198,11 +1198,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
     gradhX = 0
     gradhY = 0
     gradhZ = 0
-    # adding Ata artificial viscosity
-    if viscOption==2:
-      viscX = 0
-      viscY = 0
-      viscZ = 0
+    pikl
     G1 = 0
     G2 = 0
     m11 = 0
@@ -1302,17 +1298,10 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
                     if r < rKernel:
                         hl = hArray[l]
                         hr = rKernel - r
-                        dwdr = dfacKernel * hr * hr
-                        #-SPH gradient computation------------------------------
-                        # standard SPH formulation
-                        mdwdrr = mass[l] * dwdr / r
-                        if symmetryOption==1:
-                            # symmetric SPH formulation
-                            mdwdrr = (1 + hk/hl) * mdwdrr
-                        gradhX = gradhX + mdwdrr*dx
-                        gradhY = gradhY + mdwdrr*dy
-                        gradhZ = gradhZ + mdwdrr*dz
-                        #-artificial viscosity computation----------------------
+                        dwdrr = dfacKernel * hr * hr / r
+                        ml = mass[l]
+                        area = ml/(rho*hl)
+                        flux = gravAcc3*hl
                         if viscOption == 2:
                             # ATA artificial viscosity
                             dux = uxArray[l] - ux
@@ -1322,11 +1311,11 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
                             cl = math.sqrt(gravAcc3*hl)
                             lamdbakl = (ck+cl)/2
                             pikl = - lamdbakl * scalProd(dux, duy, duz, dx, dy, dz) / r
-                            pikl = pikl * mdwdrr/hl
-                            # standard SPH formulation
-                            viscX = viscX + pikl * dx
-                            viscY = viscY + pikl * dy
-                            viscZ = viscZ + pikl * dz
+                        # SPH gradient computation - standard SPH formulation
+                        gradhX = gradhX + (flux + pikl)*dwdrr*dx*area
+                        gradhY = gradhY + (flux + pikl)*dwdrr*dy*area
+                        gradhZ = gradhZ + (flux + pikl)*dwdrr*dz*area
+
 
 #----------------------------SPHOPTION = 3--------------------------------------
 
@@ -1359,16 +1348,29 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
       GHY[k] = GHY[k] - gradhY / rho
       GHZ[k] = GHZ[k] - gradhZ / rho
     else:
-      if viscOption < 2:
-        # without artificial viscosity or with SAMOS artificial viscosity
+      if SPHoption >= 4:
+          # check that M is invertible
+        if (m11*m22-m12*m12)>0:
+          GG1 = 1/(m11*m22-m12*m12)*(m22*G1-m12*G2)
+          GG2 = 1/(m11*m22-m12*m12)*(m11*G2-m12*G1)
+        else:
+          GG1 = G1
+          GG2 = G2
+        gradhX = ux*GG1 + uxOrtho*GG2
+        gradhY = uy*GG1 + uyOrtho*GG2
+        gradhZ = (- g1*(ux*GG1 + uxOrtho*GG2) - g2*(uy*GG1 + uyOrtho*GG2))
+        GHX[k] = GHX[k] - gradhX / rho * mk * gravAcc3
+        GHY[k] = GHY[k] - gradhY / rho * mk * gravAcc3
+        GHZ[k] = GHZ[k] - gradhZ / rho * mk * gravAcc3
+      elif SPHoption == 2:
+        GHX[k] = GHX[k] + gradhX * mk
+        GHY[k] = GHY[k] + gradhY * mk
+        GHZ[k] = GHZ[k] + gradhZ * mk
+      else :
         GHX[k] = GHX[k] + gradhX*gravAcc3 / rho* mk
         GHY[k] = GHY[k] + gradhY*gravAcc3 / rho* mk
         GHZ[k] = GHZ[k] + gradhZ*gravAcc3 / rho* mk
-      else:
-        # with Ata artificial viscosity
-        GHX[k] = GHX[k] + (gradhX*gravAcc3  + viscX) / rho * mk
-        GHY[k] = GHY[k] + (gradhY*gravAcc3  + viscY) / rho * mk
-        GHZ[k] = GHZ[k] + (gradhZ*gravAcc3  + viscZ) / rho * mk
+
 
   return GHX, GHY, GHZ
 
