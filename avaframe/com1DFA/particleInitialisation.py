@@ -67,7 +67,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
 
         particlesList.append(particles.copy())
 
-        # compute neighbours and update fields 
+        # compute neighbours and update fields
         particles = DFAfunC.getNeighborsC(particles, dem)
         particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields, resetPVals=1)
 
@@ -198,8 +198,10 @@ def createReleaseBuffer(cfg, inputSimLines):
     for m in range(len(lengthRels)):
 
         # get coordinates of release line for each feature
-        xRel = inputSimLines['releaseLine']['x'][int(startLines[count]):int(startLines[count] + lengthRels[count])]
-        yRel = inputSimLines['releaseLine']['y'][int(startLines[count]):int(startLines[count] + lengthRels[count])]
+        indStart = int(startLines[count])
+        indStop = int(startLines[count] + lengthRels[count])
+        xRel = inputSimLines['releaseLine']['x'][indStart:indStop]
+        yRel = inputSimLines['releaseLine']['y'][indStart:indStop]
         # create list of point tuples
         points = []
         for m in range(len(xRel)):
