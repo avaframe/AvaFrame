@@ -42,8 +42,6 @@ from avaframe.log2Report import generateReport as gR
 log = logging.getLogger(__name__)
 cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
-# set feature leapfrog time stepping
-featLF = False
 
 
 def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=''):
@@ -1063,11 +1061,8 @@ def DFAIterate(cfg, particles, fields, dem):
     massEntrained = []
     massTotal = []
 
-    # time stepping scheme info
-    if featLF:
-        log.debug('Use LeapFrog time stepping')
-    else:
-        log.debug('Use standard time stepping')
+    # TODO: add here different time stepping options
+    log.debug('Use standard time stepping')
     # Initialize time and counters
     nSave = 1
     Tcpu['nSave'] = nSave
@@ -1095,10 +1090,7 @@ def DFAIterate(cfg, particles, fields, dem):
         startTime = time.time()
         log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
-        if featLF:
-            particles, fields, Tcpu, dt = computeLeapFrogTimeStep(cfgGen, particles, fields, dt, dem, Tcpu)
-        else:
-            particles, fields, Tcpu = computeEulerTimeStep(cfgGen, particles, fields, dt, dem, Tcpu, frictType)
+        particles, fields, Tcpu = computeEulerTimeStep(cfgGen, particles, fields, dt, dem, Tcpu, frictType)
 
         Tcpu['nSave'] = nSave
         particles['t'] = t
@@ -1330,146 +1322,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     Tcpu['Field'] = Tcpu['Field'] + tcpuField
 
     return particles, fields, Tcpu
-
-
-def computeLeapFrogTimeStep(cfg, particles, fields, dt, dem, Tcpu):
-    """ compute next time step using a Leap Frog scheme
-
-    Parameters
-    ----------
-    cfg: configparser
-        configuration for DFA simulation
-    particles : dict
-        particles dictionary at t
-    fields : dict
-        fields dictionary at t
-    dt : float
-        time step
-    dem : dict
-        dictionary with dem information
-    Ment : 2D numpy array
-        entrained mass raster
-    Cres : 2D numpy array
-        resistance raster
-    Tcpu : dict
-        computation time dictionary
-
-    Returns
-    -------
-    particles : dict
-        particles dictionary at t + dt
-    fields : dict
-        fields dictionary at t + dt
-    Tcpu : dict
-        computation time dictionary
-    dt : float
-        time step
-    """
-
-    # start timing
-    startTime = time.time()
-    tcpuForce = time.time() - startTime
-    Tcpu['Force'] = Tcpu['Force'] + tcpuForce
-
-    # dtK5 is half time step
-    dtK5 = 0.5 * dt
-    # cfg['dt'] = str(dtK5)
-    log.debug('dt used now is %f' % dt)
-
-    # load required DEM and mesh info
-    csz = dem['header']['cellsize']
-    Nx = dem['Nx']
-    Ny = dem['Ny']
-    Nz = dem['Nz']
-
-    # particle properties
-    mass = particles['m']
-    xK = particles['x']
-    yK = particles['y']
-    zK = particles['z']
-    uxK = particles['ux']
-    uyK = particles['uy']
-    uzK = particles['uz']
-
-    # +++++++++++++Time integration using leapfrog 'Drift-Kick-Drif' scheme+++++
-    # first predict position at time t_(k+0.5)
-    # 'DRIFT'
-    xK5 = xK + dt * 0.5 * uxK
-    yK5 = yK + dt * 0.5 * uyK
-    zK5 = zK + dt * 0.5 * uzK
-    # update position from particles
-    particles['x'] = xK5
-    particles['y'] = yK5
-    # For now z-position is taken from DEM - no detachment enforces...
-    particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
-    # TODO: do we need to update also h from particles?? I think yes! also mass, ent, res
-    # particles['h'] = ?
-
-    # 'KICK'
-    # compute velocity at t_(k+0.5)
-    # first compute force at t_(k+0.5)
-    startTime = time.time()
-    # TODO check  effect of artificial viscosity - update of velocity works here too
-    particles, force = DFAfunC.computeForceC(cfg, particles, fields, dem, dtK5)
-    tcpuForce = time.time() - startTime
-    Tcpu['Force'] = Tcpu['Force'] + tcpuForce
-    startTime = time.time()
-    particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem)
-    tcpuForceSPH = time.time() - startTime
-    Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
-    # particles, force = computeForceSPH(cfg, particles, force, dem)
-    mass = particles['m']
-    uxNew = uxK + (force['forceX'] + force['forceSPHX']) * dt / mass
-    uyNew = uyK + (force['forceY'] + force['forceSPHY']) * dt / mass
-    uzNew = uzK + (force['forceZ'] + force['forceSPHZ']) * dt / mass
-
-    # 'DRIF'
-    # now update position at t_(k+ 1)
-    xNew = xK5 + dtK5 * uxNew
-    yNew = yK5 + dtK5 * uyNew
-    zNew = zK5 + dtK5 * uzNew
-
-    # ++++++++++++++UPDATE Particle Properties
-    # update mass required if entrainment
-    massNew = mass + force['dM']
-    particles['mTot'] = np.sum(massNew)
-    particles['x'] = xNew
-    particles['y'] = yNew
-    particles['s'] = particles['s'] + np.sqrt((xNew-xK)*(xNew-xK) + (yNew-yK)*(yNew-yK))
-    # make sure particle is on the mesh (recompute the z component)
-    particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
-
-    nx, ny, nz = DFAtls.getNormalArray(xNew, yNew, Nx, Ny, Nz, csz)
-    nx, ny, nz = DFAtls.normalize(nx, ny, nz)
-    particles['m'] = massNew
-    # normal component of the velocity
-    uN = uxNew*nx + uyNew*ny + uzNew*nz
-    # remove normal component of the velocity
-    particles['ux'] = uxNew - uN * nx
-    particles['uy'] = uyNew - uN * ny
-    particles['uz'] = uzNew - uN * nz
-
-    #################################################################
-    # this is dangerous!!!!!!!!!!!!!!
-    ###############################################################
-    # remove particles that are not located on the mesh any more
-    particles = particleTools.removeOutPart(particles, dem, dt)
-
-    # ++++++++++++++GET particles location (neighbours for sph)
-    startTime = time.time()
-    particles = DFAfunC.getNeighborsC(particles, dem)
-    tcpuNeigh = time.time() - startTime
-    Tcpu['Neigh'] = Tcpu['Neigh'] + tcpuNeigh
-
-    # ++++++++++++++UPDATE FIELDS (compute grid values)
-    # update fields (compute grid values)
-    startTime = time.time()
-    # particles, fields = updateFields(cfg, particles, force, dem, fields)
-    particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
-    tcpuField = time.time() - startTime
-    Tcpu['Field'] = Tcpu['Field'] + tcpuField
-
-    return particles, fields, Tcpu, dt
 
 
 def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
