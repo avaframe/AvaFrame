@@ -575,7 +575,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
         else:
             ax2 = plt.subplot2grid((3, 3), (0, 1), rowspan=3, colspan=3)
 
-        cmap = pU.cmapdiv
+        cmap = pU.cmapdiv.copy()
         cmap.set_bad(color='w')
         elev_max = inputs['diffLim']
         ref0, im3 = pU.NonUnifIm(ax2, l, s[indStartOfRunout:], (dataDiff), 'l [m]', 's [m]',
