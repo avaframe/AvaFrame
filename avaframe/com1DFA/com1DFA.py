@@ -688,7 +688,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     # create primary release area particles and fields
     releaseLine['header'] = demOri['header']
     inputSimLines['releaseLine']['header'] = demOri['header']
-    particles = initializeParticles(cfgGen, inputSimLines, dem, relThField, logName=logName)
+    particles = initializeParticles(cfgGen, releaseLine, dem, inputSimLines, relThField=relThField, logName=logName)
     particles, fields = initializeFields(cfgGen, dem, particles)
 
     # perform initialisation step for redistributing particles
@@ -748,7 +748,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField):
     return particles, fields, dem, reportAreaInfo
 
 
-def initializeParticles(cfg, inputSimLines, dem, relThField, logName=''):
+def initializeParticles(cfg, releaseLine, dem, inputSimLines='', relThField='', logName=''):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -758,8 +758,8 @@ def initializeParticles(cfg, inputSimLines, dem, relThField, logName=''):
     ----------
     cfg: configparser
         configuration for DFA simulation
-    relRaster: 2D numpy array
-        release depth raster
+    releaseLine : dict
+        dictionary with info on release area
     dem : dict
         dictionary with dem information
 
@@ -772,11 +772,6 @@ def initializeParticles(cfg, inputSimLines, dem, relThField, logName=''):
     """
 
     # get simulation parameters
-    if cfg.getboolean('iniStep'):
-        releaseLine = inputSimLines['releaseLineBuffer']
-    else:
-        releaseLine = inputSimLines['releaseLine']
-
     rho = cfg.getfloat('rho')
     gravAcc = cfg.getfloat('gravAcc')
     avaDir = cfg['avalancheDir']
@@ -797,7 +792,10 @@ def initializeParticles(cfg, inputSimLines, dem, relThField, logName=''):
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     # find all non empty cells (meaning release area)
     indRelY, indRelX = np.nonzero(relRaster)
-    indRelYReal, indRelXReal = np.nonzero(inputSimLines['releaseLine']['rasterData'])
+    if inputSimLines != '':
+        indRelYReal, indRelXReal = np.nonzero(inputSimLines['releaseLine']['rasterData'])
+    else:
+        indRelYReal, indRelXReal = np.nonzero(relRaster)
     iReal = list(zip(indRelYReal, indRelXReal))
 
     # derive mass per particle to define number of particles per cell:
