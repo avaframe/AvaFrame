@@ -241,9 +241,6 @@ def makeColorMap(colormapDict, levMin, levMax, continuous=False):
             norm associated to the levels and the colors (includes the vmin and vmax for
             continuous colormaps)
     """
-
-    print(type(colormapDict))
-
     if type(colormapDict) in [matplotlib.colors.LinearSegmentedColormap,
                               matplotlib.colors.ListedColormap]:
         cmap = colormapDict
@@ -425,7 +422,12 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05):
     '''
     cbar = ax2.figure.colorbar(im, ax=ax2, ticks=ticks, extend=extend, pad=pad, shrink=0.9)
     cbar.outline.set_visible(False)
-    cbar.ax.set_title('[' + myUnit + ']')
+    # make sure the cbar title does not overlap with the cbar itself
+    if extend in ['both', 'max']:
+        pad = 15
+    else:
+        pad = 0
+    cbar.ax.set_title('[' + myUnit + ']', pad=pad)
     if title != '':
         cbar.set_label(title)
 

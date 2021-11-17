@@ -511,8 +511,6 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     pU.putAvaNameOnPlot(ax1, projectName)
 
     ax2 = plt.subplot2grid((1, 2), (0, 1))
-    colorsList = [[0, 0, 1], [1, 1, 1], [1, 0, 0]]
-    cmap = matplotlib.colors.ListedColormap(colorsList)
     cmap.set_under(color='b')
     cmap.set_over(color='r')
     cmap.set_bad(alpha=0)
@@ -589,9 +587,13 @@ def visuComparison(rasterTransfo, inputs, pathDict):
         colorsP = pU.colorMaps['pfd']['colors'][1:]
         if (np.where(refData > thresholdArray[-1], True, False)).any():
             contourRef = ax2.contour(L, S, refData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP)
-            labels = [str(level) + unit for level in thresholdArray[:-1]]
-            for j in range(len(contourRef.collections)):
-                contourRef.collections[j].set_label(labels[j])
+            # generate corresponding labels
+            labels = [str(level) for level in thresholdArray[:-1]]
+            labels = labels[0:len(contourRef.collections)]
+            # add legend associated to the contour plot
+            handles, _ = contourRef.legend_elements()
+            legend2 = ax2.legend(title=name + '\ncontour lines\n[' + unit + ']', handles=handles, labels=labels)
+            plt.setp(legend2.get_title(), multialignment='center')
         else:
             log.warning('Reference %d did not reach the run out area!' % nRef)
             ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference %d did not reach the run out area!' % nRef,
@@ -622,7 +624,6 @@ def visuComparison(rasterTransfo, inputs, pathDict):
                                              '%s diff CDF (95%% and 99%% centiles)' % name])
 
         ax2.set_ylim([s[indStartOfRunout], yLim])
-        ax2.legend(loc='lower right')
         pU.addColorBar(im3, ax2, None, unit, title=name, extend='both')
     else:
         # if no avalanche reached the run out area print a warning on the second plot
