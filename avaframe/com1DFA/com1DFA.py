@@ -855,7 +855,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', relThField='', 
         Mpart = np.empty(0)
         Hpart = np.empty(0)
         IDRel = np.empty(0)
-        if len(relThField) != 0:
+        if len(relThField) != 0 and cfg.getboolean('iniStep'):
             # set release thickness to a constant value for initialisation
             relRaster = np.where(relRaster > 0., cfg.getfloat('relTh'), 0.)
             log.info('relTh!= 0, but relRaster set to relTh values here so that uniform number of particles created')

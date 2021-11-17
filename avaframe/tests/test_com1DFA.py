@@ -1450,6 +1450,7 @@ def test_initializeSimulation():
     print('particles', particles2)
     print('fields', fields2['pfd'])
 
+
     assert np.sum(fields2['pfv']) == 0.0
     assert np.sum(fields2['pfd']) != np.sum(fields['pfd'])
     assert dem2['header']['xllcenter'] == 0.0
