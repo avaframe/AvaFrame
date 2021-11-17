@@ -31,7 +31,7 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
 
     Interpolate unstructured points on a structured grid using bilinear interpolation
     The (x, y) points have to be on the extend of the DEM!!
-    
+
     Parameters
       ----------
       x: 1D numpy array
@@ -1142,7 +1142,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
   cdef int interpOption = cfg.getint('interpOption')
   cdef int SPHoption = cfg.getint('sphOption')
   cdef int viscOption = cfg.getint('viscOption')
-  cdef int symmetryOption = cfg.getint('symmetryOption')
 
   # grid normal raster information
   cdef double cszNormal = headerNormalGrid['cellsize']
@@ -1198,7 +1197,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
     gradhX = 0
     gradhY = 0
     gradhZ = 0
-    pikl
+    pikl = 0
     G1 = 0
     G2 = 0
     m11 = 0
