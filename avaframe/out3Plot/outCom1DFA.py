@@ -7,6 +7,7 @@ from avaframe.in3Utils import cfgUtils
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 
 cfgMain = cfgUtils.getGeneralConfig()
@@ -113,6 +114,33 @@ def update(particles, ax, dem):
     cc = np.where(variable == 1, True, False)
     ax.scatter(X, Y, c='b', cmap=None, marker='.')
     ax.scatter(X[cc], Y[cc], c='r', cmap=None, marker='.', s=5)
+    return ax
+
+
+def addParticles2Plot(particles, ax, dem, whatS='h', whatC='m'):
+    """Update axes with particles
+    Parameters
+    ----------
+    particles: dict
+        particles dictionary
+    ax: mathplotlix ax object
+    dem: dict
+        dem dictionary with normal information
+    """
+
+    header = dem['header']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+
+    X = particles['x'] + xllc
+    Y = particles['y'] + yllc
+    cmap = pU.cmapD
+    variableC = particles[whatS]
+    variableS = (particles[whatC]/100)**1.5
+    cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(variableC), np.nanmax(variableC), continuous=pU.contCmap)
+    # set range and steps of colormap
+    sc = ax.scatter(X, Y, c=variableC, cmap=cmap, marker='.')
+    pU.addColorBar(sc, ax, ticks, 'm')
     return ax
 
 
@@ -231,8 +259,8 @@ def addResult2Plot(ax, dem, rasterData, resType):
     xArray = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
     yArray = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
     unit = pU.cfgPlotUtils['unit%s' % resType]
-    maxValContour = pU.cfgPlotUtils.getfloat('elevMax%s' % resType)
-    thresholdArray = np.linspace(0, maxValContour, 10)
+    contourLevels = pU.cfgPlotUtils['contourLevels%s' % resType]
+    contourLevels = fU.splitIniValueToArraySteps(contourLevels)
     cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin(rasterData), np.nanmax(rasterData),
                                            continuous=pU.contCmap)
     cmap.set_bad(color='white')
@@ -243,7 +271,7 @@ def addResult2Plot(ax, dem, rasterData, resType):
                             extent=[xArray.min(), xArray.max(),
                                     yArray.min(), yArray.max()],
                             cmap=cmap, norm=None)
-    CS = ax.contour(xArray, yArray, rasterData, levels=thresholdArray, colors='k')
+    CS = ax.contour(xArray, yArray, rasterData, levels=contourLevels, colors='k')
     ax.clabel(CS, inline=1, fontsize=8)
     pU.addColorBar(im, ax, ticks, unit)
     return ax

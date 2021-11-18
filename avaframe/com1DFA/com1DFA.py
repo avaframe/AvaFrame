@@ -1172,7 +1172,7 @@ def DFAIterate(cfg, particles, fields, dem):
         if t >= dtSave[0]:
             Tsave.append(t)
             log.debug('Saving results for time step t = %f s', t)
-            log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['Npart']))
+            log.debug('MTot = %f kg, %s particles' % (particles['mTot'], particles['nPart']))
             log.debug(('cpu time Force = %s s' % (tCPU['timeForce'] / nIter)))
             log.debug(('cpu time ForceSPH = %s s' % (tCPU['timeForceSPH'] / nIter)))
             log.debug(('cpu time Position = %s s' % (tCPU['timePos'] / nIter)))
@@ -1415,11 +1415,13 @@ def computeTravelAngle(cfgGen, dem, particles, zPartArray0):
     # first compute travel angle for each particle
     # get parent Id in order to  get the first z position
     parentID = particles['parentID']
+    nPart = particles['nPart']
     # get z0
     Z0 = zPartArray0[parentID]
     # compute tan of the travel angle
-    tanGamma = (Z0 - particles['z']) / (particles['s'])
-    tanGamma = np.where(particles['s'] == 0, 0, tanGamma)
+    nonZeroSInd = np.nonzero(particles['s'])
+    tanGamma = np.zeros((nPart))
+    tanGamma[nonZeroSInd] = (Z0 - particles['z'])[nonZeroSInd] / (particles['s'][nonZeroSInd])
     # get the travel angle
     gamma = np.degrees(np.arctan(tanGamma))
     particles['travelAngle'] = gamma

@@ -620,6 +620,8 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   cdef double[:] yNewArray = np.zeros(nPart, dtype=np.float64)
   cdef double[:] zNewArray = np.zeros(nPart, dtype=np.float64)
   cdef double[:] sNewArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] sCorNewArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] lNewArray = np.zeros(nPart, dtype=np.float64)
   cdef double[:] uxArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef double[:] uyArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef double[:] uzArrayNew = np.zeros(nPart, dtype=np.float64)
@@ -961,7 +963,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] VZBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] travelAngleField = np.zeros((nrows, ncols))
   # declare intermediate step variables
-  cdef double[:] hBB = np.zeros((Npart))
+  cdef double[:] hBB = np.zeros((nPart))
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, travelAngle
   cdef int j, i
   cdef int indx, indy

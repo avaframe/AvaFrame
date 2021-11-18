@@ -317,51 +317,51 @@ def plotTimeCPULog(simDF, outDirTest, cfgSimi):
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF["sphKernelRadius"])*0.25, max(simDF["sphKernelRadius"])*2, continuous=pU.contCmap)
     cmap = 'viridis'
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
-    scatter = ax1.scatter(simDF["Npart"], simDF["timeLoop"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["Npart"], simDF["timeForce"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["Npart"], simDF["timeForceSPH"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='d', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["Npart"], simDF["timePos"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='^', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["Npart"], simDF["timeNeigh"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='>', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["Npart"], simDF["timeField"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='<', alpha=1, edgecolors='k')
+    scatter = ax1.scatter(simDF["nPart"], simDF["timeLoop"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o', alpha=1, edgecolors='k')
+    scatter = ax1.scatter(simDF["nPart"], simDF["timeForce"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=1, edgecolors='k')
+    scatter = ax1.scatter(simDF["nPart"], simDF["timeForceSPH"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='d', alpha=1, edgecolors='k')
+    scatter = ax1.scatter(simDF["nPart"], simDF["timePos"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='^', alpha=1, edgecolors='k')
+    scatter = ax1.scatter(simDF["nPart"], simDF["timeNeigh"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='>', alpha=1, edgecolors='k')
+    scatter = ax1.scatter(simDF["nPart"], simDF["timeField"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='<', alpha=1, edgecolors='k')
     for sphKernelRadius in sphKernelRadiusList:
         simDFNew = simDF[(simDF['sphKernelRadius'] == sphKernelRadius) & (simDF['dt'] == dt)]
-        Npart = simDFNew["Npart"]
+        nPart = simDFNew["nPart"]
         timeLoop = simDFNew["timeLoop"]
         timeForce = simDFNew["timeForce"]
         timeForceSPH = simDFNew["timeForceSPH"]
         timePos = simDFNew["timePos"]
         timeNeigh = simDFNew["timeNeigh"]
         timeField = simDFNew["timeField"]
-        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(timeLoop), deg=1)
+        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeLoop), deg=1)
         p11 = p[0]
         p01 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(timeForce), deg=1)
+        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeForce), deg=1)
         p12 = p[0]
         p02 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(timeForceSPH), deg=1)
+        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeForceSPH), deg=1)
         p13 = p[0]
         p03 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(timePos), deg=1)
+        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timePos), deg=1)
         p14 = p[0]
         p04 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(timeNeigh), deg=1)
+        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeNeigh), deg=1)
         p15 = p[0]
         p05 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["Npart"]), np.log(timeField), deg=1)
+        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeField), deg=1)
         p16 = p[0]
         p06 = np.exp(p[1])
-        ax1.plot(Npart, p01*Npart**p11, 'k')
-        ax1.plot(Npart, p02*Npart**p12, 'g')
-        ax1.plot(Npart, p03*Npart**p13, 'r')
-        ax1.plot(Npart, p04*Npart**p14, 'b')
-        ax1.plot(Npart, p05*Npart**p15, 'm')
-        ax1.plot(Npart, p06*Npart**p16, 'c')
-        log.info('power law fit sphKernelRadius = %.2f m: timeLoop = %.1f * Npart^{%.2f}' % (sphKernelRadius, p01, p11))
-        log.info('power law fit sphKernelRadius = %.2f m: timeForce = %.1f * Npart^{%.2f}' % (sphKernelRadius, p02, p12))
-        log.info('power law fit sphKernelRadius = %.2f m: timeForceSPH = %.1f * Npart^{%.2f}' % (sphKernelRadius, p03, p13))
-        log.info('power law fit sphKernelRadius = %.2f m: timePos = %.1f * Npart^{%.2f}' % (sphKernelRadius, p04, p14))
-        log.info('power law fit sphKernelRadius = %.2f m: timeNeigh = %.1f * Npart^{%.2f}' % (sphKernelRadius, p05, p15))
-        log.info('power law fit sphKernelRadius = %.2f m: timeField = %.1f * Npart^{%.2f}' % (sphKernelRadius, p06, p16))
+        ax1.plot(nPart, p01*nPart**p11, 'k')
+        ax1.plot(nPart, p02*nPart**p12, 'g')
+        ax1.plot(nPart, p03*nPart**p13, 'r')
+        ax1.plot(nPart, p04*nPart**p14, 'b')
+        ax1.plot(nPart, p05*nPart**p15, 'm')
+        ax1.plot(nPart, p06*nPart**p16, 'c')
+        log.info('power law fit sphKernelRadius = %.2f m: timeLoop = %.1f * nPart^{%.2f}' % (sphKernelRadius, p01, p11))
+        log.info('power law fit sphKernelRadius = %.2f m: timeForce = %.1f * nPart^{%.2f}' % (sphKernelRadius, p02, p12))
+        log.info('power law fit sphKernelRadius = %.2f m: timeForceSPH = %.1f * nPart^{%.2f}' % (sphKernelRadius, p03, p13))
+        log.info('power law fit sphKernelRadius = %.2f m: timePos = %.1f * nPart^{%.2f}' % (sphKernelRadius, p04, p14))
+        log.info('power law fit sphKernelRadius = %.2f m: timeNeigh = %.1f * nPart^{%.2f}' % (sphKernelRadius, p05, p15))
+        log.info('power law fit sphKernelRadius = %.2f m: timeField = %.1f * nPart^{%.2f}' % (sphKernelRadius, p06, p16))
     ax1.set_yscale('log')
     ax1.set_xscale('log')
     ax1.set_title('CPU time')
