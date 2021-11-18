@@ -831,7 +831,7 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def updateFieldsC(cfg, particles, dem, fields, int resetPVals=0):
+def updateFieldsC(cfg, particles, dem, fields):
   """ update fields and particles fow depth
 
   Cython implementation
@@ -944,12 +944,6 @@ def updateFieldsC(cfg, particles, dem, fields, int resetPVals=0):
   fields['pfv'] = np.asarray(PFV)
   fields['ppr'] = np.asarray(PP)
   fields['pfd'] = np.asarray(PFD)
-
-  if resetPVals == 1:
-    fields['pfv'] = np.asarray(VBilinear)
-    fields['ppr'] = np.asarray(PBilinear)
-    fields['pfd'] = np.asarray(FDBilinear)
-
 
   for j in range(Npart):
     x = xArray[j]

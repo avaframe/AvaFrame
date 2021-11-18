@@ -69,7 +69,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
 
         # compute neighbours and update fields
         particles = DFAfunC.getNeighborsC(particles, dem)
-        particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields, resetPVals=1)
+        particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
 
         iterate = particles['iterate']
 
@@ -117,7 +117,11 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
 
     # for final configuration get neighbors and update fields
     particles = DFAfunC.getNeighborsC(particles, dem)
-    particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields, resetPVals=1)
+    particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
+
+    fields['pfv'] = fields['FD']
+    fields['ppr'] = fields['P']
+    fields['pfd'] = fields['FV']
 
     # save particles to file for visualisation
     avaDir = pathlib.Path(cfg['GENERAL']['avalancheDir'])
