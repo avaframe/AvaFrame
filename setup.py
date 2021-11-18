@@ -48,7 +48,8 @@ req_packages = ['numpy',
                 'cmcrameri',
                 'seaborn',
                 'cython',
-                'pandas'
+                'pandas',
+                'shapely'
                 ]
 
 

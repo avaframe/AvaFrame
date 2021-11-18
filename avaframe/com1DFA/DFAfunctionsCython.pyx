@@ -535,7 +535,7 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def updatePositionC(cfg, particles, dem, force, DT):
+def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   """ update particle position using euler forward scheme
 
   Cython implementation
@@ -550,7 +550,8 @@ def updatePositionC(cfg, particles, dem, force, DT):
       dictionary with dem information
   force : dict
       force dictionary
-
+  typeStop: int
+    0 if standard stopping criterion, if 1 stopping criterion based on SPHforce - used for iniStep
   Returns
   -------
   particles : dict
@@ -560,6 +561,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   # read input parameters
   cdef double dt = DT
   cdef double stopCrit = cfg.getfloat('stopCrit')
+  cdef double stopCritIni = cfg.getfloat('stopCritIni')
   cdef double uFlowingThreshold = cfg.getfloat('uFlowingThreshold')
   log.debug('dt used now is %f' % DT)
   cdef double gravAcc = cfg.getfloat('gravAcc')
@@ -582,6 +584,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   outOfDEM = np.array(dem['outOfDEM'], dtype=bool)
   # read particles and fields
   cdef double[:] mass = particles['m']
+  cdef double[:] IDRel = particles['IDRel']
   cdef double[:] S = particles['s']
   cdef double[:] L = particles['l']
   cdef double[:] xArray = particles['x']
@@ -601,9 +604,12 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double TotkinEne = particles['kineticEne']
   cdef double TotpotEne = particles['potentialEne']
   cdef double peakKinEne = particles['peakKinEne']
+  cdef double peakForceSPH = particles['peakForceSPH']
+  cdef double TotkForceSPH = particles['forceSPHIni']
   # initialize outputs
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
+  cdef double TotForceSPHNew = 0
   cdef double[:] mNewArray = np.zeros(nPart, dtype=np.float64)
   cdef double[:] xNewArray = np.zeros(nPart, dtype=np.float64)
   cdef double[:] yNewArray = np.zeros(nPart, dtype=np.float64)
@@ -614,7 +620,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
   cdef double[:] uzArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   # declare intermediate step variables
-  cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop
+  cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop, idrel
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
   cdef double massEntrained = 0, massFlowing = 0
@@ -635,6 +641,7 @@ def updatePositionC(cfg, particles, dem, force, DT):
     uz = uzArray[j]
     s = S[j]
     l = L[j]
+    idrel = IDRel[j]
 
     # Force magnitude (without friction)
     ForceDriveX = forceX[j] + forceSPHX[j]
@@ -652,7 +659,10 @@ def updatePositionC(cfg, particles, dem, force, DT):
     uzNew = uz + ForceDriveZ * dt / m
 
     # take friction force into account
-    uxNew, uyNew, uzNew, dtStop = account4FrictionForce(uxNew, uyNew, uzNew, m, dt, forceFrict[j], uMag, explicitFriction)
+    if typeStop != 1:
+      uxNew, uyNew, uzNew, dtStop = account4FrictionForce(uxNew, uyNew, uzNew, m, dt, forceFrict[j], uMag, explicitFriction)
+    else:
+      dtStop = dt
 
     # update mass (already done un computeForceC)
     mNew = m
@@ -719,15 +729,27 @@ def updatePositionC(cfg, particles, dem, force, DT):
 
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
+    TotForceSPHNew = TotForceSPHNew + mNew * norm(forceSPHX[j], forceSPHY[j], forceSPHZ[j])
 
-    xNewArray[j] = xNew
-    yNewArray[j] = yNew
-    zNewArray[j] = zNew
-    uxArrayNew[j] = uxNew
-    uyArrayNew[j] = uyNew
-    uzArrayNew[j] = uzNew
-    sNewArray[j] = sNew
-    mNewArray[j] = mNew
+    if idrel == 0:
+      xNewArray[j] = x
+      yNewArray[j] = y
+      zNewArray[j] = z
+      uxArrayNew[j] = ux
+      uyArrayNew[j] = uy
+      uzArrayNew[j] = uz
+      sNewArray[j] = s
+      mNewArray[j] = m
+    else:
+      xNewArray[j] = xNew
+      yNewArray[j] = yNew
+      zNewArray[j] = zNew
+      uxArrayNew[j] = uxNew
+      uyArrayNew[j] = uyNew
+      uzArrayNew[j] = uzNew
+      sNewArray[j] = sNew
+      mNewArray[j] = mNew
+
   particles['ux'] = np.asarray(uxArrayNew)
   particles['uy'] = np.asarray(uyArrayNew)
   particles['uz'] = np.asarray(uzArrayNew)
@@ -741,27 +763,48 @@ def updatePositionC(cfg, particles, dem, force, DT):
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew
-  if peakKinEne < TotkinEneNew:
-    particles['peakKinEne'] = TotkinEneNew
-  if particles['peakMassFlowing'] < massFlowing:
-    particles['peakMassFlowing'] = massFlowing
 
-  if cfg['stopCritType'] == 'massFlowing':
-    value = massFlowing
-    peakValue = particles['peakMassFlowing']
-    stop = (value <= stopCrit*peakValue) and peakValue > 0
-  elif cfg['stopCritType'] == 'kinEnergy':
-    value = TotkinEneNew
-    peakValue = particles['peakKinEne']
-    stop = value <= stopCrit*peakValue
+  if typeStop == 1:
+    value = TotForceSPHNew
+    peakValue = particles['peakForceSPH']
+    oldValue = particles['forceSPHIni']
+    particles['forceSPHIni'] = TotForceSPHNew
+    if oldValue == 0.0:
+      stop = False
+    elif value < 1.:
+      stop = oldValue/value < 1.001
+    else:
+      stop = value <= stopCritIni*peakValue
+      log.info('SPHFORCE value %f and stop value %f' % (TotForceSPHNew, stopCritIni*peakValue))
+    if peakForceSPH < TotForceSPHNew:
+      particles['peakForceSPH'] = TotForceSPHNew
   else:
-    message = 'stopCritType %s is not defined' % cfg['stopCritType']
-    log.error(message)
-    raise AssertionError(message)
+
+    if peakKinEne < TotkinEneNew:
+      particles['peakKinEne'] = TotkinEneNew
+    if particles['peakMassFlowing'] < massFlowing:
+      particles['peakMassFlowing'] = massFlowing
+
+    if cfg['stopCritType'] == 'massFlowing':
+      value = massFlowing
+      peakValue = particles['peakMassFlowing']
+      stop = (value <= stopCrit*peakValue) and peakValue > 0
+    elif cfg['stopCritType'] == 'kinEnergy':
+      value = TotkinEneNew
+      peakValue = particles['peakKinEne']
+      stop = value <= stopCrit*peakValue
+    else:
+      message = 'stopCritType %s is not defined' % cfg['stopCritType']
+      log.error(message)
+      raise AssertionError(message)
+
 
   if stop:
     particles['iterate'] = False
-    log.info('stopping because of %s stopCriterion.' % (cfg['stopCritType']))
+    if typeStop == 1:
+      log.info('stopping initial particle distribution')
+    else:
+      log.info('stopping because of %s stopCriterion.' % (cfg['stopCritType']))
 
   # remove particles that are not located on the mesh any more
   if nRemove > 0:
@@ -1054,7 +1097,7 @@ def getNeighborsC(particles, dem):
     return particles
 
 
-def computeForceSPHC(cfg, particles, force, dem, gradient=0):
+def computeForceSPHC(cfg, particles, force, dem, int sphOption, gradient=0):
   """ Prepare data for C computation of lateral forces (SPH component)
 
   acting on the particles (SPH component)
@@ -1069,7 +1112,8 @@ def computeForceSPHC(cfg, particles, force, dem, gradient=0):
       force dictionary
   dem : dict
       dictionary with dem information
-
+  sphOption: int
+      which sphOption should be use
   Returns
   -------
   particles : dict
@@ -1085,8 +1129,7 @@ def computeForceSPHC(cfg, particles, force, dem, gradient=0):
   nyArray = dem['Ny']
   nzArray = dem['Nz']
 
-  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
-                                                 nxArray, nyArray, nzArray, gradient)
+  forceSPHX, forceSPHY, forceSPHZ = computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, nxArray, nyArray, nzArray, gradient, sphOption)
   forceSPHX = np.asarray(forceSPHX)
   forceSPHY = np.asarray(forceSPHY)
   forceSPHZ = np.asarray(forceSPHZ)
@@ -1100,8 +1143,8 @@ def computeForceSPHC(cfg, particles, force, dem, gradient=0):
 @cython.boundscheck(False)  # Deactivate bounds checking
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
-def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
-                 double[:, :] nxArray, double[:, :] nyArray, double[:, :] nzArray, gradient):
+def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:, :] nxArray, double[:, :] nyArray,
+                 double[:, :] nzArray, gradient, sphOption):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -1142,7 +1185,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef int interpOption = cfg.getint('interpOption')
-  cdef int SPHoption = cfg.getint('sphOption')
   cdef int viscOption = cfg.getint('viscOption')
 
   # grid normal raster information
@@ -1192,6 +1234,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
   cdef double dwdrr, area
   cdef double pikl, flux
   cdef double hk, hl, ck, cl, lambdakl
+  cdef int SPHoption = sphOption
 
   # loop on particles
   for k in range(N):
@@ -2024,3 +2067,116 @@ cpdef double SamosATfric(double rho, double Rs0, double mu, double kappa, double
   div = math.log(div) / kappa + B
   cdef double tau = p * mu * (1.0 + Rs0 / (Rs0 + Rs)) + rho * v * v / (div * div)
   return tau
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def computeIniMovement(cfg, particles, dem, dT, fields):
+  """ compute artificial viscosity only """
+
+  cdef int interpOption = cfg.getint('interpOption')
+  cdef double rho = cfg.getfloat('rho')
+  cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactorIni')
+  cdef double dt = dT
+  cdef int nPart = particles['nPart']
+  cdef double csz = dem['header']['cellsize']
+  cdef int nrows = dem['header']['nrows']
+  cdef int ncols = dem['header']['ncols']
+  cdef double[:, :] ZDEM = dem['rasterData']
+  cdef double[:, :] nxArray = dem['Nx']
+  cdef double[:, :] nyArray = dem['Ny']
+  cdef double[:, :] nzArray = dem['Nz']
+  cdef double[:, :] areaRatser = dem['areaRaster']
+  cdef double[:] mass = particles['m']
+  cdef double[:] hArray = particles['h']
+  cdef double[:] xArray = particles['x']
+  cdef double[:] yArray = particles['y']
+  cdef double[:] zArray = particles['z']
+  cdef double[:] uxArray = particles['ux']
+  cdef double[:] uyArray = particles['uy']
+  cdef double[:] uzArray = particles['uz']
+  cdef int[:] indXDEM = particles['indXDEM']
+  cdef int[:] indYDEM = particles['indYDEM']
+  cdef double[:, :] VX = fields['Vx']
+  cdef double[:, :] VY = fields['Vy']
+  cdef double[:, :] VZ = fields['Vz']
+  cdef double[:] forceX = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] forceY = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] forceZ = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
+
+  cdef int indCellX, indCellY
+  cdef double areaPart, uMag, m, h
+  cdef double vMeanx, vMeany, vMeanz, vMeanNorm, dvX, dvY, dvZ
+  cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir
+  cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
+  # variables for interpolation
+  cdef int Lx0, Ly0, LxEnd0, LyEnd0, iCell, iCellEnd
+  cdef double w[4]
+  cdef double wEnd[4]
+  cdef int j
+  force = {}
+
+  for j in range(nPart):
+      m = mass[j]
+      x = xArray[j]
+      y = yArray[j]
+      z = zArray[j]
+      h = hArray[j]
+      ux = uxArray[j]
+      uy = uyArray[j]
+      uz = uzArray[j]
+      indCellX = indXDEM[j]
+      indCellY = indYDEM[j]
+
+      # deduce area
+      areaPart = m / (h * rho)
+      # get cell and weights
+      Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+
+      # get normal at the particle location
+      nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+      nx, ny, nz = normalize(nx, ny, nz)
+
+      # add artificial viscosity
+      vMeanx, vMeany, vMeanz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], VX, VY, VZ)
+      # compute normal component of the velocity
+      vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
+      # remove normal component (make sure vMean is in the tangent plane)
+      vMeanx = vMeanx - vMeanNorm * nx
+      vMeany = vMeany - vMeanNorm * ny
+      vMeanz = vMeanz - vMeanNorm * nz
+      # compute particle to field velocity difference
+      dvX = vMeanx - ux
+      dvY = vMeany - uy
+      dvZ = vMeanz - uz
+      dvMag = norm(dvX, dvY, dvZ)
+      Alat = 2.0 * np.sqrt((m * h) / rho)
+      fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
+
+      # update velocity with artificial viscosity - implicit method
+      ux = ux + fDrag * vMeanx
+      uy = uy + fDrag * vMeany
+      uz = uz + fDrag * vMeanz
+      ux = ux / (1.0 + fDrag)
+      uy = uy / (1.0 + fDrag)
+      uz = uz / (1.0 + fDrag)
+
+      uxArray[j] = ux
+      uyArray[j] = uy
+      uzArray[j] = uz
+
+  # save results
+  force['dM'] = np.asarray(dM)
+  force['forceX'] = np.asarray(forceX)
+  force['forceY'] = np.asarray(forceY)
+  force['forceZ'] = np.asarray(forceZ)
+  force['forceFrict'] = np.asarray(forceFrict)
+  particles['ux'] = np.asarray(uxArray)
+  particles['uy'] = np.asarray(uyArray)
+  particles['uz'] = np.asarray(uzArray)
+  particles['m'] = np.asarray(mass)
+
+  return particles, force
