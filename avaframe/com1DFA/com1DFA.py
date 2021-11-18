@@ -1305,11 +1305,9 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     elif cfg.getint('splitOption') == 1:
         # split merge operation
         # first update fields (compute grid values) because we need the h of the particles to get the aPart
-        # ToDo: we could skip the update field and directly do the split merge. This means we would use the old
-        # h. No big deal I think
+        # ToDo: we could skip the update field and directly do the split merge. This means we would use the old h
         startTime = time.time()
         log.debug('update Fields C')
-        # particles, fields = updateFields(cfg, particles, force, dem, fields)
         particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
         tcpuField = time.time() - startTime
         Tcpu['Field'] = Tcpu['Field'] + tcpuField
