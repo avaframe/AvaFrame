@@ -15,6 +15,24 @@ log = logging.getLogger(__name__)
 
 
 def getPartInitMethod(cfg, csz):
+    """ Get particle initialization parameters
+
+    Get the massPerPart and nPPK corresponding to the desired initialization method
+
+    Parameters
+    ----------
+    cfg: configparser
+        configuration for DFA simulation
+    csz: float
+        cell size
+
+    Returns
+    -------
+    massPerPart : float
+        mass per particle desired
+    nPPK : int
+        number of particles per kernel radius desired
+    """
     rho = cfg.getfloat('rho')
     massPerParticleDeterminationMethod = cfg['massPerParticleDeterminationMethod']
     nPPK = 0
