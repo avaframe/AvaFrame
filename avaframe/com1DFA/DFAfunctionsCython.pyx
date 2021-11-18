@@ -463,6 +463,8 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
                                                      double nx, double ny, double nz):
   """ add artificial viscosity
 
+  Add the artificial viscosity in an implicit way and this before adding the other forces.
+
   Parameters
   ----------
   m : float
@@ -1189,7 +1191,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
   # artificial viscosity parameters
   cdef double dwdrr, area
   cdef double pikl, flux
-  cdef double epsilon = 100
   cdef double hk, hl, ck, cl, lambdakl
 
   # loop on particles
@@ -1265,7 +1266,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
                 dz = zArray[l] - z
 
 #----------------------------SPHOPTION = 1--------------------------------------
-
+                # SamosAT style (no reprojecion on the surface, dz = 0 and gz is used)
                 if SPHoption == 1:
                     dz = 0
                     # get norm of r = xj - xl
@@ -1283,7 +1284,9 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
                         gravAcc3 = gravAcc
 
 #----------------------------SPHOPTION = 2--------------------------------------
-
+                # Compute the gradient in the cartesian coord system with reprojecion on the surface
+                # and dz != 0 and g3 are used
+                # It is here also possible to add the artificial viscosity comming from the Ata theory
                 elif SPHoption == 2:
                     # like option 1 but with dz!=0
                     # get norm of r = xk - xl
@@ -1317,7 +1320,8 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid,
 
 
 #----------------------------SPHOPTION = 3--------------------------------------
-
+                # Compute the gradient in the local coord system (will allow us to add the earth pressure coef)
+                # and this time reprojecion on the surface, dz != 0 and g3 are used
                 if SPHoption == 3:
                   # get coordinates in local coord system
                   r1 = scalProd(dx, dy, dz, ux, uy, uz)

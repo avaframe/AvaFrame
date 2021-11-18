@@ -746,10 +746,10 @@ def initializeParticles(cfg, releaseLine, dem, logName='', relThField=''):
     # if the release is not constant but given by a varying function, we need both the mask giving the cells
     # to be initialized and the raster giving the flow depth value
     relRasterMask = releaseLine['rasterData']
-    if relThField != '':
-        relRaster = relThField
-    else:
+    if len(relThField) == 0:
         relRaster = releaseLine['rasterData']
+    else:
+        relRaster = relThField
     areaRaster = dem['areaRaster']
 
     # get the initialization method used
@@ -1263,10 +1263,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     Tcpu : dict
         computation time dictionary
     """
-
-    headerNeighbourGrid = dem['headerNeighbourGrid']
-    headerNormalGrid = dem['header']
-
     # get forces
     startTime = time.time()
 
