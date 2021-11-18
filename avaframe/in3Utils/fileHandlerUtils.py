@@ -418,7 +418,8 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
 
         # add value of first parameter used for ordering for colorcoding in plots
         pathDict['colorParameter'] = dataDF[dataDF['resType']==suf][varParList[0]].to_list()
-
+        # also build the simID array
+        pathDict['simID'].append(set(pathDict['simID']))
     else:
         # do not apply ordering
         log.warning('Did not apply ordering')
@@ -427,6 +428,10 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
             for suf in suffix:
                 if dataDF['resType'][m] == suf:
                     pathDict[suf].append(dataDF['files'][m])
+                    # also build the simID array
+                    newSimID = dataDF['simID'][m]
+                    if newSimID not in pathDict['simID']:
+                        pathDict['simID'].append(newSimID)
                     log.info('Added to pathDict: %s' % (dataDF['files'][m]))
 
     for suf in suffix:
