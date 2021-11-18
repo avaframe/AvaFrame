@@ -60,7 +60,7 @@ slopeAngley = 30*math.pi/180
 NDX = 5
 # choose the number of particles per DX and DY
 # if you choose 3, you will have 3*3 = 9 particles per grid cell
-nPartPerD = [16]
+nPartPerDList = [16]
 
 # choose if the particles should be randomly distributed.
 # 0 no random part, up to 1, random fluctuation of dx/2 and dy/2
@@ -140,7 +140,7 @@ def plotFD(ax, x, xx, h, particles, ind, mark, count):
     if count == 1:
         ax.plot(xx, h, color='r', linestyle='-', label='real flow depth')
     ax.plot(particles[x][ind], particles['h2'][ind], color='b',
-             marker=mark, linestyle='None', label='corrected flow depth N = ' + str(nPartPerD*nPartPerD))
+             marker=mark, linestyle='None', label='corrected flow depth N = ' + str(nPartPerDList*nPartPerDList))
     ax.plot(particles[x][ind], particles['h1'][ind], color='g',
              marker=mark, linestyle='None', label='flow depth')
     # ax.plot(particles[x][ind], particles['h2'][ind], color='c',
@@ -157,25 +157,25 @@ def plotGrad(ax, x, xx, particles, ind, mark, count):
     #     ax.plot(xx, gz, color='k', linestyle='-', label='real gradHZ')
 
     ax.plot(particles[x][ind], GHX[ind], color='m', marker=mark, markersize=5,
-             linestyle='None', label='SPH N = ' + str(nPartPerD*nPartPerD))
+             linestyle='None', label='SPH N = ' + str(nPartPerDList*nPartPerDList))
     ax.plot(particles[x][ind], GHY[ind], color='m', marker=mark, markersize=5,
              linestyle='None')
     ax.plot(particles[x][ind], GHZ[ind], color='m', marker=mark, markersize=5,
              linestyle='None')
     ax.plot(particles[x][ind], GHX2[ind], color='c', marker=mark, markersize=5,
-             linestyle='None', label='Corrected 1 SPH N = ' + str(nPartPerD*nPartPerD))
+             linestyle='None', label='Corrected 1 SPH N = ' + str(nPartPerDList*nPartPerDList))
     ax.plot(particles[x][ind], GHY2[ind], color='c', marker=mark, markersize=5,
              linestyle='None')
     ax.plot(particles[x][ind], GHZ2[ind], color='c', marker=mark, markersize=5,
              linestyle='None')
     # ax.plot(particles[x][ind], GHX4[ind], color='y', marker=mark, markersize=5,
-    #          linestyle='None', label='Corrected 2 SPH N = ' + str(nPartPerD*nPartPerD))
+    #          linestyle='None', label='Corrected 2 SPH N = ' + str(nPartPerDList*nPartPerDList))
     # ax.plot(particles[x][ind], GHY4[ind], color='y', marker=mark, markersize=5,
     #          linestyle='None')
     # ax.plot(particles[x][ind], GHZ4[ind], color='y', marker=mark, markersize=5,
     #          linestyle='None')
     # ax.plot(particles[x][ind], GHX5[ind], color='b', marker=mark, markersize=5,
-    #          linestyle='None', label='Corrected 3 SPH N = ' + str(nPartPerD*nPartPerD))
+    #          linestyle='None', label='Corrected 3 SPH N = ' + str(nPartPerDList*nPartPerDList))
     # ax.plot(particles[x][ind], GHY5[ind], color='b', marker=mark, markersize=5,
     #          linestyle='None')
     # ax.plot(particles[x][ind], GHZ5[ind], color='b', marker=mark, markersize=5,
@@ -214,7 +214,7 @@ nCells = 30
 Lx = nCells*csz
 Ly = nCells*csz
 
-for nPartPerD in nPartPerD:
+for nPartPerD in nPartPerDList:
     dx = csz/nPartPerD
     dy = csz/nPartPerD
 
