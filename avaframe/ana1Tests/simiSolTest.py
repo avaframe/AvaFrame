@@ -21,6 +21,7 @@ from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.particleTools as particleTools
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.out3Plot.outAna1Plots as outAna1Plots

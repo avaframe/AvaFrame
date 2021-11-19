@@ -271,6 +271,11 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
     # ax1.plot(simDF[xAxis], simDF["hErrorL2"])
+    # count = 0
+    # for ax, yField in zip([ax1, ax2], yFieldArray):
+    #     scatter = ax.scatter(simDF[xField], simDF[yField], c=simDF[coloredBy], s=sizeList, cmap=cmap,
+    #                           marker=pU.markers[count], alpha=1, edgecolors='k')
+    #     count = count + 1
     scatter = ax1.scatter(simDF[xField], simDF[yFieldArray[0]], c=simDF[coloredBy], s=sizeList, cmap=cmap,
                           marker=pU.markers[0], alpha=1, edgecolors='k')
     scatter2 = ax2.scatter(simDF[xField], simDF[yFieldArray[1]], c=simDF[coloredBy], s=sizeList, cmap=cmap,
