@@ -627,8 +627,9 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   cdef double[:] uzArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   # declare intermediate step variables
-  cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
-  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, sCorNew, lNew, uN, uMag, uMagNew
+  cdef double m, h, x, y, z, sCor, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
+  cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew
+  cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
   cdef double massEntrained = 0, massFlowing = 0
   cdef int j
@@ -707,12 +708,14 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
     nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
     # compute the distance traveled by the particle
-    lNew = l + norm((xNew-x), (yNew-y), (zNew-z))
+    dl = norm((xNew-x), (yNew-y), (zNew-z))
+    lNew = l + dl
     # compute the horizontal distance traveled by the particle
-    sNew = s + norm((xNew-x), (yNew-y), 0)
+    ds = norm((xNew-x), (yNew-y), 0)
+    sNew = s + ds
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
-    sCorNew = sCor + nzNew*norm((xNew-x), (yNew-y), (zNew-z))
+    sCorNew = sCor + nzNew*dl
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity

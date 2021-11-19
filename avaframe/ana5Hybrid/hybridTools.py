@@ -92,6 +92,10 @@ def elongateCom1DFAPath(dem, particlesIni, avaProfilePart, avaProfileMass, avaPr
     for profile in [avaProfilePart, avaProfileMass, avaProfileKE]:
         # project the profile on the dem
         profile, _ = geoTrans.projectOnRaster(dem, profile, interp='bilinear')
+        indNotNan = np.where(~np.isnan(profile['z']))
+        profile['x'] = profile['x'][indNotNan]
+        profile['y'] = profile['y'][indNotNan]
+        profile['z'] = profile['z'][indNotNan]
         # resample the profile
         profile, _ = geoTrans.prepareLine(dem, profile, distance=dem['header']['cellsize']*5, Point=None)
         profile = extendProfileTop(dem, particlesIni, profile)
@@ -150,15 +154,15 @@ def extendProfileTop(dem, particlesIni, profile):
     # # make sure the s coordinate starts at 0
     # profile['s'] = profile['s'] - profile['s'][0]
 
-    fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-    ax.set_title('Extend path')
-    ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.k')
-    ax.plot(xHighest, yHighest, '.r')
-    ax.plot(profile['x'], profile['y'], '.b')
-    ax.plot(profile['x'][pointsOfInterestFirst], profile['y'][pointsOfInterestFirst], '.m')
-    ax.plot(profile['x'][0], profile['y'][0], '.g')
-    plt.legend()
-    plt.show()
+    # fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+    # ax.set_title('Extend path')
+    # ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.k')
+    # ax.plot(xHighest, yHighest, '.r')
+    # ax.plot(profile['x'], profile['y'], '.b')
+    # ax.plot(profile['x'][pointsOfInterestFirst], profile['y'][pointsOfInterestFirst], '.m')
+    # ax.plot(profile['x'][0], profile['y'][0], '.g')
+    # plt.legend()
+    # plt.show()
     return profile
 
 
@@ -216,13 +220,13 @@ def extendProfileBottom(dem, profile):
     profile['z'] = np.append(profile['z'], zExtBottom)
     # profile['s'] = np.append(profile['s'], sExtBottom)
 
-    fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-    ax.set_title('Extend path')
-    ax.plot(profile['x'], profile['y'], '.b')
-    ax.plot(profile['x'][pointsOfInterestLast], profile['y'][pointsOfInterestLast], '.m')
-    ax.plot(profile['x'][-1], profile['y'][-1], '.g')
-    plt.legend()
-    plt.show()
+    # fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+    # ax.set_title('Extend path')
+    # ax.plot(profile['x'], profile['y'], '.b')
+    # ax.plot(profile['x'][pointsOfInterestLast], profile['y'][pointsOfInterestLast], '.m')
+    # ax.plot(profile['x'][-1], profile['y'][-1], '.g')
+    # plt.legend()
+    # plt.show()
     return profile
 
 
@@ -249,8 +253,10 @@ def plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTr
     # fAB = resAB[name]['f']
     # splitPoint = resAB[name]['splitPoint']
 
-    xABNew = resABNew[name]['x'][ids_alpha]
-    yABNew = resABNew[name]['y'][ids_alpha]
+    alphaNew = resABNew[name]['alpha']
+    ids_alphaNew = resABNew[name]['ids_alpha']
+    xABNew = resABNew[name]['x'][ids_alphaNew]
+    yABNew = resABNew[name]['y'][ids_alphaNew]
 
     g = 9.81
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
@@ -314,15 +320,3 @@ def plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTr
     plt.show()
     path = pathlib.Path(avalancheDir, 'Outputs')
     pU.saveAndOrPlot({'pathResult': path}, title, fig2)
-
-
-def writeLine2SHPfile(avaProfile, lineName, fileName):
-    nPnts = np.size(avaProfile['x'])
-    lineArray = np.zeros((nPnts, 3))
-    for ind, x, y, z in zip(range(nPnts), avaProfile['x'], avaProfile['y'], avaProfile['z']):
-        lineArray[ind, :] = np.array([x, y, z])
-    w = shapefile.Writer(str(fileName))
-    w.field('name', 'C')
-    w.line([lineArray])
-    w.record(lineName)
-    w.close()

@@ -12,6 +12,7 @@ import numpy as np
 
 # Local imports
 # import config and init tools
+import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
@@ -56,7 +57,7 @@ initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
 hybridModelDFACfg = pathlib.Path('ana5Hybrid', 'hybridModel_com1DFACfg.ini')
 updater = ConfigUpdater()
 updater.read(hybridModelDFACfg)
-updater['GENERAL']['mu'].value = str(0.6)
+updater['GENERAL']['mu'].value = str(0.3)
 # updater['GENERAL']['mu'].value = str(np.tan(np.radians(20)))
 updater.update_file()
 # ----------------
@@ -70,7 +71,7 @@ avaProfilePart, avaProfileMass, avaProfileKE = hybridTools.elongateCom1DFAPath(d
 
 pathAB = pathlib.Path(avalancheDir, 'Inputs', 'LINES', 'pathAB_aimec')
 name = 'massAvaPath'
-hybridTools.writeLine2SHPfile(avaProfileMass, name, pathAB)
+shpConv.writeLine2SHPfile(avaProfileMass, name, pathAB)
 
 # Run Alpha Beta
 hybridModelABCfg = pathlib.Path('ana5Hybrid', 'hybridModel_com2ABCfg.ini')
@@ -101,7 +102,7 @@ _, avaProfileMassNewExtended, _ = hybridTools.elongateCom1DFAPath(demOri, partic
 
 pathAB = pathlib.Path(avalancheDir, 'Inputs', 'LINES', 'pathAB_aimec')
 name = 'massAvaPath'
-hybridTools.writeLine2SHPfile(avaProfileMassNewExtended, name, pathAB)
+shpConv.writeLine2SHPfile(avaProfileMassNewExtended, name, pathAB)
 
 # Run Alpha Beta
 hybridModelABCfg = pathlib.Path('ana5Hybrid', 'hybridModel_com2ABCfg.ini')
