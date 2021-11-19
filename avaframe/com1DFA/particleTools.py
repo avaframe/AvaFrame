@@ -182,7 +182,7 @@ def removePart(particles, mask, nRemove, reasonString=''):
         # for all keys in particles that are arrays of size nPart do:
         elif type(particles[key]).__module__ == np.__name__:
             if np.size(particles[key]) == nPart:
-                particles[key] = particles[key][mask]
+                particles[key] = particles[key][mask].asarray()
 
     particles['mTot'] = np.sum(particles['m'])
     return particles
