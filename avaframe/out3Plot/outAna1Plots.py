@@ -260,26 +260,23 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     """plot error between all com1DFA sol and analytic sol
     function of nParts for all dt
     """
-    sizeList = simDF[sizedBy].unique()
     tSave = cfgSimi.getfloat('tSave')
     relativ = cfgSimi.getboolean('relativError')
-    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy])*0.25, max(simDF[coloredBy])*2, continuous=pU.contCmap)
-    cmap = 'viridis'
-    minSize = np.nanmin(sizeList)
-    maxSize = np.nanmax(sizeList)
-    sizeList = (simDF[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
-    # ax1.plot(simDF[xAxis], simDF["hErrorL2"])
-    # count = 0
-    # for ax, yField in zip([ax1, ax2], yFieldArray):
-    #     scatter = ax.scatter(simDF[xField], simDF[yField], c=simDF[coloredBy], s=sizeList, cmap=cmap,
-    #                           marker=pU.markers[count], alpha=1, edgecolors='k')
-    #     count = count + 1
-    scatter = ax1.scatter(simDF[xField], simDF[yFieldArray[0]], c=simDF[coloredBy], s=sizeList, cmap=cmap,
-                          marker=pU.markers[0], alpha=1, edgecolors='k')
-    scatter2 = ax2.scatter(simDF[xField], simDF[yFieldArray[1]], c=simDF[coloredBy], s=sizeList, cmap=cmap,
-                           marker=pU.markers[1], alpha=1, edgecolors='k')
+    simDFScatter = simDF[simDF['viscOption'] == 1]
+    sizeList = simDFScatter[sizedBy].unique()
+    minSize = np.nanmin(sizeList)
+    maxSize = np.nanmax(sizeList)
+    if len(sizeList) > 1:
+        sizeList = (simDFScatter[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
+    else:
+        sizeList = np.array([20])
+    scatter = ax1.scatter(simDFScatter[xField], simDFScatter[yFieldArray[0]], c=simDFScatter[coloredBy], s=sizeList, cmap=cmap,
+                          marker=pU.markers[0], alpha=1)#, edgecolors='k')
+    scatter2 = ax2.scatter(simDFScatter[xField], simDFScatter[yFieldArray[1]], c=simDFScatter[coloredBy], s=sizeList, cmap=cmap,
+                           marker=pU.markers[1], alpha=1)#, edgecolors='k')
 
     # sphKernelRadiusList = simDF[coloredBy].unique()
     # dt = simDF[sizedBy].unique()[0]
@@ -299,6 +296,19 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     #     log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0H, p1H))
     #     log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0U, p1U))
 
+    simDFhline = simDF[simDF['viscOption'] == 2]
+    simDFhline = simDFhline.sort_values(by=coloredBy, ascending=True)
+    handles1 = []
+    # handles2 = []
+    for simHash, simDFrow in simDFhline.iterrows():
+        hl = ax1.axhline(simDFrow[yFieldArray[0]], color=cmap(norm(simDFrow[coloredBy])), label='Ata, nPart = %d, csz = %.2f' % (simDFrow['nPart'], simDFrow['sphKernelRadius']))
+        handles1.append(hl)
+        hl = ax2.axhline(simDFrow[yFieldArray[1]], color=cmap(norm(simDFrow[coloredBy])), linestyle='--', label='Ata, nPart = %d, csz = %.2f' % (simDFrow['nPart'], simDFrow['sphKernelRadius']))
+        # handles1.append(hl)
+    legend = ax1.legend(handles=handles1, loc="upper left")
+    ax1.add_artist(legend)
+    # legend = ax2.legend(handles=handles2, loc="upper left")
+    # ax2.add_artist(legend)
     if logScale:
         ax1.set_yscale('log')
         ax2.set_yscale('log')
@@ -307,7 +317,7 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     ax1.set_xlabel('number of particles')
     ax1.set_ylabel(getTitleError(relativ, r' L2 on flow depth ($\bullet$)'))
     ax2.set_ylabel(getTitleError(relativ, getLabel(' L2 on', r'$(\blacksquare)$', dir='')))
-    legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title=coloredBy)
+    legend1 = ax1.legend(*scatter.legend_elements(), loc="upper center", title=coloredBy)
     ax1.add_artist(legend1)
 
     # produce a legend with a cross section of sizes from the scatter
@@ -320,7 +330,9 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     b2, t2 = ax2.get_ylim()
     ax1.set_ylim([min(b1, b2), max(t1, t2)])
     ax2.set_ylim([min(b1, b2), max(t1, t2)])
+    plt.show()
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
+    return fig1, ax1, ax2
 
 
 def plotTimeCPULog(simDF, outDirTest, cfgSimi):
