@@ -12,6 +12,14 @@ import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.out3Plot.plotUtils as pU
 
 
+def plotBufferRelease(inputSimLines, xBuffered, yBuffered):
+
+    plt.plot(inputSimLines['releaseLine']['x'], inputSimLines['releaseLine']['y'], 'g')
+    plt.plot(xBuffered, yBuffered, 'b')
+    plt.title('Buffered release polygon')
+    plt.show()
+
+
 def plotPartIni(particles, dem):
     header = dem['header']
     x = np.arange(header['ncols']) * header['cellsize']

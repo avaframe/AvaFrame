@@ -116,10 +116,14 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       configuration for DFA simulation
   particles : dict
       particles dictionary at t
+  fields: dict
+    fields dictionary
   dem : dict
       dictionary with dem information
   dT : float
       time step
+  frictType: int
+    identifier for friction law to be used
 
   Returns
   -------
@@ -584,7 +588,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   outOfDEM = np.array(dem['outOfDEM'], dtype=bool)
   # read particles and fields
   cdef double[:] mass = particles['m']
-  cdef double[:] IDRel = particles['IDRel']
+  cdef double[:] idRel = particles['idRel']
   cdef double[:] S = particles['s']
   cdef double[:] L = particles['l']
   cdef double[:] xArray = particles['x']
@@ -605,11 +609,11 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   cdef double TotpotEne = particles['potentialEne']
   cdef double peakKinEne = particles['peakKinEne']
   cdef double peakForceSPH = particles['peakForceSPH']
-  cdef double TotkForceSPH = particles['forceSPHIni']
+  cdef double totKForceSPH = particles['forceSPHIni']
   # initialize outputs
   cdef double TotkinEneNew = 0
   cdef double TotpotEneNew = 0
-  cdef double TotForceSPHNew = 0
+  cdef double totForceSPHNew = 0
   cdef double[:] mNewArray = np.zeros(nPart, dtype=np.float64)
   cdef double[:] xNewArray = np.zeros(nPart, dtype=np.float64)
   cdef double[:] yNewArray = np.zeros(nPart, dtype=np.float64)
@@ -641,7 +645,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
     uz = uzArray[j]
     s = S[j]
     l = L[j]
-    idrel = IDRel[j]
+    idrel = idRel[j]
 
     # Force magnitude (without friction)
     ForceDriveX = forceX[j] + forceSPHX[j]
@@ -729,9 +733,9 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
 
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
-    TotForceSPHNew = TotForceSPHNew + mNew * norm(forceSPHX[j], forceSPHY[j], forceSPHZ[j])
 
     if idrel == 0:
+      # idrel = 0 if particles belong to 'fixed' boundary particles - so zero velocity and fixed position
       xNewArray[j] = x
       yNewArray[j] = y
       zNewArray[j] = z
@@ -741,6 +745,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
       sNewArray[j] = s
       mNewArray[j] = m
     else:
+      # idrel = 1 particles belong to the actual releae area
       xNewArray[j] = xNew
       yNewArray[j] = yNew
       zNewArray[j] = zNew
@@ -765,21 +770,24 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   particles['potentialEne'] = TotpotEneNew
 
   if typeStop == 1:
-    value = TotForceSPHNew
+    totForceSPHNew = totForceSPHNew + mNew * norm(forceSPHX[j], forceSPHY[j], forceSPHZ[j])
+    # typeStop = 1 for initialisation step where particles are redistributed to reduce SPH force
+    # here stop criterion based on SPHForce
+    value = totForceSPHNew
     peakValue = particles['peakForceSPH']
     oldValue = particles['forceSPHIni']
-    particles['forceSPHIni'] = TotForceSPHNew
+    particles['forceSPHIni'] = totForceSPHNew
     if oldValue == 0.0:
       stop = False
     elif value < 1.:
       stop = oldValue/value < 1.001
     else:
       stop = value <= stopCritIni*peakValue
-      log.info('SPHFORCE value %f and stop value %f' % (TotForceSPHNew, stopCritIni*peakValue))
-    if peakForceSPH < TotForceSPHNew:
-      particles['peakForceSPH'] = TotForceSPHNew
+      log.info('SPHFORCE value %f and stop value %f' % (totForceSPHNew, stopCritIni*peakValue))
+    if peakForceSPH < totForceSPHNew:
+      particles['peakForceSPH'] = totForceSPHNew
   else:
-
+    # avalanche computation stop criterion based on kinetic energy or massFlowing
     if peakKinEne < TotkinEneNew:
       particles['peakKinEne'] = TotkinEneNew
     if particles['peakMassFlowing'] < massFlowing:
@@ -2073,7 +2081,29 @@ cpdef double SamosATfric(double rho, double Rs0, double mu, double kappa, double
 @cython.wraparound(False)
 @cython.cdivision(True)
 def computeIniMovement(cfg, particles, dem, dT, fields):
-  """ compute artificial viscosity only """
+  """ add artifical viscosity effect on velocity for splitIniValueToArraySteps
+
+      Parameters
+      ------------
+      cfg: configparser
+          configuration for DFA simulation
+      particles : dict
+          particles dictionary at t
+      dem : dict
+          dictionary with dem information
+      dT : float
+          time step
+      fields: dict
+        fields dictionary
+
+      Returns
+      --------
+      particles: dict
+        updated particle dictionary
+      force: dict
+        force dictionary
+
+  """
 
   cdef int interpOption = cfg.getint('interpOption')
   cdef double rho = cfg.getfloat('rho')
@@ -2141,29 +2171,11 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
       nx, ny, nz = normalize(nx, ny, nz)
 
       # add artificial viscosity
-      vMeanx, vMeany, vMeanz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], VX, VY, VZ)
-      # compute normal component of the velocity
-      vMeanNorm = scalProd(vMeanx, vMeany, vMeanz, nx, ny, nz)
-      # remove normal component (make sure vMean is in the tangent plane)
-      vMeanx = vMeanx - vMeanNorm * nx
-      vMeany = vMeany - vMeanNorm * ny
-      vMeanz = vMeanz - vMeanNorm * nz
-      # compute particle to field velocity difference
-      dvX = vMeanx - ux
-      dvY = vMeany - uy
-      dvZ = vMeanz - uz
-      dvMag = norm(dvX, dvY, dvZ)
-      Alat = 2.0 * np.sqrt((m * h) / rho)
-      fDrag = (subgridMixingFactor * 0.5 * rho * dvMag * Alat * dt) / m
+      ux, uy, uz = addArtificialViscosity(m, h, dt, rho, ux, uy, uz, subgridMixingFactor, Lx0, Ly0,
+                                          w[0], w[1], w[2], w[3], VX, VY, VZ, nx, ny, nz)
 
-      # update velocity with artificial viscosity - implicit method
-      ux = ux + fDrag * vMeanx
-      uy = uy + fDrag * vMeany
-      uz = uz + fDrag * vMeanz
-      ux = ux / (1.0 + fDrag)
-      uy = uy / (1.0 + fDrag)
-      uz = uz / (1.0 + fDrag)
 
+      # update velocity
       uxArray[j] = ux
       uyArray[j] = uy
       uzArray[j] = uz

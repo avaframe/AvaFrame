@@ -690,7 +690,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
         startTimeIni = time.time()
         particles, fields = pI.getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField)
         tIni = time.time() - startTimeIni
-        log.info('time needed for initialisation %.2f' % tIni)
+        log.debug('time needed for initialisation %.2f' % tIni)
 
     # ------------------------
     # process secondary release info to get it as a list of rasters
@@ -816,7 +816,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         mPartArray = np.empty(0)
         aPartArray = np.empty(0)
         hPartArray = np.empty(0)
-        IDRel = np.empty(0)
+        idRel = np.empty(0)
         if len(relThField) != 0 and cfg.getboolean('iniStep'):
             # set release thickness to a constant value for initialisation
             relRaster = np.where(relRaster > 0., cfg.getfloat('relTh'), 0.)
@@ -836,9 +836,9 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
             mPartArray = np.append(mPartArray, mPart * np.ones(n))
             aPartArray = np.append(aPartArray, aPart * np.ones(n))
             if (indRely, indRelx) in iReal:
-                IDRel = np.append(IDRel, np.ones(n))
+                idRel = np.append(idRel, np.ones(n))
             else:
-                IDRel = np.append(IDRel, np.zeros(n))
+                idRel = np.append(idRel, np.zeros(n))
 
         hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
@@ -856,7 +856,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         # adding z component
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         particles['m'] = mPartArray
-        particles['IDRel'] = IDRel
+        particles['idRel'] = idRel
 
     particles['massPerPart'] = massPerPart
     particles['mTot'] = np.sum(particles['m'])
@@ -1126,8 +1126,7 @@ def DFAIterate(cfg, particles, fields, dem):
     Tcpu['nSave'] = nSave
     nIter = 1
     nIter0 = 1
-    iterate = True
-    particles['iterate'] = iterate
+    particles['iterate'] = True
     t = particles['t']
     log.debug('Saving results for time step t = %f s', t)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
@@ -1144,7 +1143,7 @@ def DFAIterate(cfg, particles, fields, dem):
     t = t + dt
 
     # Start time step computation
-    while t <= tEnd*(1.+1.e-13) and iterate:
+    while t <= tEnd*(1.+1.e-13) and particles['iterate']:
         startTime = time.time()
         log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
@@ -1152,7 +1151,6 @@ def DFAIterate(cfg, particles, fields, dem):
 
         Tcpu['nSave'] = nSave
         particles['t'] = t
-        iterate = particles['iterate']
 
         # write mass balance info
         massEntrained.append(particles['massEntrained'])
