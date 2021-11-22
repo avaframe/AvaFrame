@@ -878,9 +878,9 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
 
     if not plotDensity:
         if dataFrame:
-            sns.scatterplot('runout', 'data', marker=pU.markers, data=df, hue='colorParameter', palette=cmap, ax=ax1)
+            sns.scatterplot('runout', 'data', marker=pU.markers[0], data=df, hue='colorParameter', palette=cmap, ax=ax1)
         else:
-            sc = ax1.scatter(runout, data, marker=pU.markers, c=colors, cmap=cmap)
+            sc = ax1.scatter(runout, data, marker=pU.markers[0], c=colors, cmap=cmap)
             if displayColorBar:
                 pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
         ax1.plot(runout[nRef], data[nRef], color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
@@ -911,10 +911,10 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
         cbar.ax.set_ylabel('hit rate density')
     else:
         if dataFrame:
-            sns.scatterplot('rFP', 'rTP', marker=pU.markers,
+            sns.scatterplot('rFP', 'rTP', marker=pU.markers[0],
                             data=df, hue='colorParameter', palette=cmap, ax=ax1)
         else:
-            sc = ax1.scatter(rFP, rTP, marker=pU.markers, c=colors, cmap=cmap)
+            sc = ax1.scatter(rFP, rTP, marker=pU.markers[0], c=colors, cmap=cmap)
             if displayColorBar:
                 pU.addColorBar(sc, ax1, ticks, unit, title=paraVar)
         ax1.plot(rFP[nRef], rTP[nRef], color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
