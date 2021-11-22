@@ -776,7 +776,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   particles['x'] = np.asarray(xNewArray)
   particles['y'] = np.asarray(yNewArray)
   particles['z'] = np.asarray(zNewArray)
-  particles['massEntrained'] = np.asarray(massEntrained)
+  particles['massEntrained'] = massEntrained
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew
