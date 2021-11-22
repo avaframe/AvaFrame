@@ -131,7 +131,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
             # export for visulation
             if cfg['VISUALISATION'].getboolean('writePartToCSV'):
                 outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
-                com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+                particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
             # create hash to check if config didnt change
             simHashFinal = cfgUtils.cfgHash(cfgFinal)

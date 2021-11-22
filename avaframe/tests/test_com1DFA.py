@@ -894,7 +894,7 @@ def test_initializeParticles():
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
-                'partInCell', 'secondaryReleaseInfo', 'iterate', 'IDRel',
+                'partInCell', 'secondaryReleaseInfo', 'iterate', 'idRel',
                 'peakForceSPH', 'forceSPHIni']
 
     # call function to be tested
@@ -1372,7 +1372,7 @@ def test_runCom1DFA(tmp_path, caplog):
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
                 'partInCell', 'secondaryReleaseInfo', 'iterate',
-                'massEntrained', 'IDRel', 'peakForceSPH', 'forceSPHIni']
+                'massEntrained', 'idRel', 'peakForceSPH', 'forceSPHIni']
     # are we missing any keys?
     missing = set(dictKeys) - particlesList[-1].keys()
     if len(missing) > 0:
