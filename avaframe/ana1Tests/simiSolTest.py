@@ -693,7 +693,7 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[ind_t]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
-        # outAna1Plots.showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
+        # outAna1Plots.showSaveTimeStepsSimiSol(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
         #                                outDirTest, simHash, simDFrow)
 
     simDF.to_pickle(outDirTest / 'results.p')

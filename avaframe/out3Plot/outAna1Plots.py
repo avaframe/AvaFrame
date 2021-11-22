@@ -17,7 +17,7 @@ import avaframe.out3Plot.outDebugPlots as outDebugPlots
 log = logging.getLogger(__name__)
 
 
-def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, header, outDirTest, simHash, simDFrow):
+def showSaveTimeStepsSimiSol(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, header, outDirTest, simHash, simDFrow):
     """ Generate plots of the comparison of DFA solution and simiSol
     """
 
@@ -232,40 +232,37 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_Time_' + str(outputName), fig1)
 
 
-def plotError(simDF, outDirTest, cfgSimi):
-    """plot error between all com1DFA sol and analytic sol
-    function of nParts for all dt
-    """
-    relativ = cfgSimi.getboolean('relativError')
-    title = getTitleError(relativ, ' between similarity solution and com1DFA')
-    fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
-    ax2 = ax1.twinx()
-    ax1 = sns.pointplot(x='nPart', y='hErrorL2', hue='dt', data=simDF, ax=ax1, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
-    ax2 = sns.pointplot(x='nPart', y='vhErrorL2', hue='dt', data=simDF, ax=ax2, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
-    ax1 = sns.pointplot(x='nPart', y='hErrorLMax', hue='dt', data=simDF, ax=ax1, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
-    ax2 = sns.pointplot(x='nPart', y='vhErrorLMax', hue='dt', data=simDF, ax=ax2, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
-    ax1.set_title(title)
-    ax1.set_xlabel('Number of particles')
-
-    ax1.set_ylabel(getTitleError(relativ, ' on flow depth'))
-    color = 'tab:green'
-    ax2.tick_params(axis='y', labelcolor=color)
-    ax2.set_ylabel(getTitleError(relativ, getLabel(' on', '', dir='')), color=color)
-    ax2.legend(loc='lower right')
-    ax1.legend(loc='upper left')
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error', fig1)
-
-
 def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, sizedBy, logScale=False):
     """plot error between all com1DFA sol and analytic sol
-    function of nParts for all dt
+    function of whatever you want
+
+    Parameters
+    -----------
+    simDF: dataFrame
+        the simulation data with the postprocessing results
+    outDirTest: str or pathlib
+        output directory
+    cfgSimi: configparser
+        the cfg
+    xField: str
+        column of the simDF to use for the x axis
+    yFieldArray: list
+        list of max 2 column of the simDF to use for the y axis
+    coloredBy: str
+        column of the simDF to use for the colors
+    sizedBy: str
+        column of the simDF to use for the marker size
+    logScale: boolean
+        If you want a loglog scale
     """
     tSave = cfgSimi.getfloat('tSave')
     relativ = cfgSimi.getboolean('relativError')
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
+    # for the scater plot (new filtering)
     simDFScatter = simDF[simDF['viscOption'] == 1]
+    # get the sizing function
     sizeList = simDFScatter[sizedBy].unique()
     minSize = np.nanmin(sizeList)
     maxSize = np.nanmax(sizeList)
@@ -273,11 +270,14 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
         sizeList = (simDFScatter[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
     else:
         sizeList = np.array([20])
+    # make the scatter plot
     scatter = ax1.scatter(simDFScatter[xField], simDFScatter[yFieldArray[0]], c=simDFScatter[coloredBy], s=sizeList, cmap=cmap,
                           marker=pU.markers[0], alpha=1)#, edgecolors='k')
     scatter2 = ax2.scatter(simDFScatter[xField], simDFScatter[yFieldArray[1]], c=simDFScatter[coloredBy], s=sizeList, cmap=cmap,
                            marker=pU.markers[1], alpha=1)#, edgecolors='k')
 
+    # #########################################
+    # If you want to add some regression lines
     # sphKernelRadiusList = simDF[coloredBy].unique()
     # dt = simDF[sizedBy].unique()[0]
     # for sphKernelRadius in sphKernelRadiusList:
@@ -296,6 +296,8 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     #     log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0H, p1H))
     #     log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * Npart^{%.2f}' % (sphKernelRadius, p0U, p1U))
 
+    # ######################################
+    # Add the horizontal lines for the atta viscosity
     simDFhline = simDF[simDF['viscOption'] == 2]
     simDFhline = simDFhline.sort_values(by=coloredBy, ascending=True)
     handles1 = []
@@ -305,6 +307,9 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
         handles1.append(hl)
         hl = ax2.axhline(simDFrow[yFieldArray[1]], color=cmap(norm(simDFrow[coloredBy])), linestyle='--', label='Ata, nPart = %d, csz = %.2f' % (simDFrow['nPart'], simDFrow['sphKernelRadius']))
         # handles1.append(hl)
+
+    # #########################################
+    # Adding legend and titles
     legend = ax1.legend(handles=handles1, loc="upper left")
     ax1.add_artist(legend)
     # legend = ax2.legend(handles=handles2, loc="upper left")
@@ -314,7 +319,7 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
         ax2.set_yscale('log')
         ax1.set_xscale('log')
     ax1.set_title('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
-    ax1.set_xlabel('number of particles')
+    ax1.set_xlabel(xField)
     ax1.set_ylabel(getTitleError(relativ, r' L2 on flow depth ($\bullet$)'))
     ax2.set_ylabel(getTitleError(relativ, getLabel(' L2 on', r'$(\blacksquare)$', dir='')))
     legend1 = ax1.legend(*scatter.legend_elements(), loc="upper center", title=coloredBy)
@@ -330,7 +335,6 @@ def plotErrorLog(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     b2, t2 = ax2.get_ylim()
     ax1.set_ylim([min(b1, b2), max(t1, t2)])
     ax2.set_ylim([min(b1, b2), max(t1, t2)])
-    plt.show()
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
     return fig1, ax1, ax2
 
