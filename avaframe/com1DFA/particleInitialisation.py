@@ -15,6 +15,7 @@ import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.out3Plot.outDebugPlots as debPlot
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.particleTools as particleTools
+import avaframe.out3Plot.outDebugPlots as debPlot
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -45,7 +46,6 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
             updated fields dictionary
         """
 
-    iterate = True
     particles['iterate'] = True
     particlesList = [particles.copy()]
     countIterations = 0
@@ -53,7 +53,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     relRaster = inputSimLines['releaseLineBuffer']['rasterData']
 
     # redistribute particles to reduce SPH force
-    while iterate and countIterations < cfg['GENERAL'].getint('maxIterations'):
+    while particles['iterate'] and countIterations < cfg['GENERAL'].getint('maxIterations'):
 
         # compute artificial viscosity effect on velocity
         particles, force = DFAfunC.computeIniMovement(cfg['GENERAL'], particles, dem, cfg['GENERAL'].getfloat('dtIni'),
@@ -72,8 +72,6 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
         # compute neighbours and update fields
         particles = DFAfunC.getNeighborsC(particles, dem)
         particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
-
-        iterate = particles['iterate']
 
         # count iterations
         countIterations = countIterations + 1
@@ -198,7 +196,6 @@ def createReleaseBuffer(cfg, inputSimLines):
     # get start indices and lengths of release polygons
     lengthRels = inputSimLines['releaseLine']['Length']
     startLines = inputSimLines['releaseLine']['Start']
-    count = 0
     xBuffered = np.empty(0)
     yBuffered = np.empty(0)
     lengthArray = []
@@ -206,14 +203,14 @@ def createReleaseBuffer(cfg, inputSimLines):
     for m in range(len(lengthRels)):
 
         # get coordinates of release line for each feature
-        indStart = int(startLines[count])
-        indStop = int(startLines[count] + lengthRels[count])
+        indStart = int(startLines[m])
+        indStop = int(startLines[m] + lengthRels[m])
         xRel = inputSimLines['releaseLine']['x'][indStart:indStop]
         yRel = inputSimLines['releaseLine']['y'][indStart:indStop]
         # create list of point tuples
         points = []
-        for m in range(len(xRel)):
-            pointsT = xRel[m], yRel[m]
+        for k in range(len(xRel)):
+            pointsT = xRel[k], yRel[k]
             points.append(pointsT)
 
         # create polygon
@@ -228,7 +225,6 @@ def createReleaseBuffer(cfg, inputSimLines):
         yBuffered = np.append(yBuffered, ynew)
         lengthArray.append(len(xnew))
         startArray.append(int(startArray[-1]+len(xnew)))
-        count = count + 1
 
     # add buffered release lines to dictionary
     releaseLineBuffer = inputSimLines['releaseLine'].copy()
@@ -239,8 +235,7 @@ def createReleaseBuffer(cfg, inputSimLines):
     releaseLineBuffer['z'] = np.zeros(len(xBuffered))
     inputSimLines['releaseLineBuffer'] = releaseLineBuffer
 
-    # plt.plot(inputSimLines['releaseLine']['x'], inputSimLines['releaseLine']['y'], 'g')
-    # plt.plot(xBuffered, yBuffered, 'b')
-    # plt.show()
+    if debugPlot:
+        debPlot.plotBufferRelease(inputSimLines, xBuffered, yBuffered)
 
     return inputSimLines

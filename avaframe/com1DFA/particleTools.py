@@ -54,7 +54,7 @@ def initialiseParticlesFromFile(cfg, avaDir):
     particles['nPart'] = len(xPartArray)
     particles['s'] = np.zeros(np.shape(xPartArray))
     particles['l'] = np.zeros(np.shape(xPartArray))
-    particles['IDRel'] = np.ones(np.shape(xPartArray))
+    particles['idRel'] = np.ones(np.shape(xPartArray))
     return particles, hPartArray
 
 
