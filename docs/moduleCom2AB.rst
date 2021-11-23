@@ -23,7 +23,7 @@ To run
 -------
 
 * go to ``AvaFrame/avaframe``
-* copy ``com2AB/com2ABCfg.py`` to ``com2AB/local_com2ABCfg.py`` and edit (if not, default values are used)
+* copy ``com2AB/com2ABCfg.ini`` to ``com2AB/local_com2ABCfg.ini`` and edit (if not, default values are used)
 * make sure all the required inputs are available in the avalanche directory
 * enter the path to the desired dataset in ``local_avaframeCfg.ini``
 * run::
