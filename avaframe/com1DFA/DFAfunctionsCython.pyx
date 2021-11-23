@@ -16,6 +16,7 @@ cimport cython
 
 # Local imports
 import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.particleTools as particleTools
 import avaframe.in3Utils.geoTrans as geoTrans
 
 
@@ -817,7 +818,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   # remove particles that are not located on the mesh any more
   if nRemove > 0:
       mask = np.array(np.asarray(keepParticle), dtype=bool)
-      particles = DFAtls.removePart(particles, mask, nRemove, 'because they exited the domain')
+      particles = particleTools.removePart(particles, mask, nRemove, 'because they exited the domain')
 
   return particles
 
