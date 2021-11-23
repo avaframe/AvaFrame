@@ -14,7 +14,7 @@ Installation and first run
     - have results in a short amount of time 
     - use the latest release 
 
-  Experiment
+  Experiment **-Does not work at the moment; still under development-**
     If you want to build your own workflows and experiment with all modules,
     head over to the :ref:`installation:Experiment setup and run` section.
     Use this if you:
@@ -47,7 +47,8 @@ Experiment setup and run
 ------------------------
 
 .. Warning::
-   This section is currently under development and incomplete!
+   This section is currently under development and incomplete! It does not provide the 
+   option to adjust configurations. Please use the develop installation for now. 
 
 This is a quick guide on how to install AvaFrame
 and the required dependencies on your machine. AvaFrame is developed on **Linux
