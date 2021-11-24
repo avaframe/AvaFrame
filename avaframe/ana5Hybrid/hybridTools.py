@@ -128,7 +128,7 @@ def extendProfileTop(dem, particlesIni, profile):
     # sFirst = profile['s'][0]
     # compute distance from first point:
     r = DFAtls.norm(profile['x']-xFirst, profile['y']-yFirst, profile['z']-zFirst)
-    pointsOfInterestFirst = np.where(r <= 10 * csz)[0]
+    pointsOfInterestFirst = np.where(r <= 30 * csz)[0]
     xInterest = profile['x'][pointsOfInterestFirst]
     yInterest = profile['y'][pointsOfInterestFirst]
     zInterest = profile['z'][pointsOfInterestFirst]
@@ -155,12 +155,14 @@ def extendProfileTop(dem, particlesIni, profile):
     # profile['s'] = profile['s'] - profile['s'][0]
 
     # fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-    # ax.set_title('Extend path')
-    # ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.k')
-    # ax.plot(xHighest, yHighest, '.r')
-    # ax.plot(profile['x'], profile['y'], '.b')
-    # ax.plot(profile['x'][pointsOfInterestFirst], profile['y'][pointsOfInterestFirst], '.m')
-    # ax.plot(profile['x'][0], profile['y'][0], '.g')
+    # ax.set_title('Extend path towards the top')
+    # ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.c', label='particles at t=0s')
+    # ax.plot(xHighest, yHighest, '.r', label='highest particle at t=0s')
+    # ax.plot(profile['x'][1:], profile['y'][1:], '.k', label='mass averaged path')
+    # ax.plot(xInterest[1:], yInterest[1:], '.m', markersize=10, label='points considered to find drection')
+    # ax.plot(xInterest[0], yInterest[0], '.b', markersize=10, label='top point of the mass averaged path')
+    # ax.plot(profile['x'][0], profile['y'][0], '.g', label='point at the same hight as the highest point in the release \n and in the extention direction')
+    # ax.plot(profile['x'][0:2], profile['y'][0:2], 'k--', label='extended path')
     # plt.legend()
     # plt.show()
     return profile
@@ -221,10 +223,12 @@ def extendProfileBottom(dem, profile):
     # profile['s'] = np.append(profile['s'], sExtBottom)
 
     # fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-    # ax.set_title('Extend path')
-    # ax.plot(profile['x'], profile['y'], '.b')
-    # ax.plot(profile['x'][pointsOfInterestLast], profile['y'][pointsOfInterestLast], '.m')
-    # ax.plot(profile['x'][-1], profile['y'][-1], '.g')
+    # ax.set_title('Extend path towards the bottom')
+    # ax.plot(profile['x'][:-1], profile['y'][:-1], '.k', label='mass averaged path')
+    # ax.plot(xInterest, yInterest, '.m', markersize=10, label='points considered to find drection')
+    # ax.plot(xInterest[-1], yInterest[-1], '.b', markersize=10, label='bottom point of the mass averaged path')
+    # ax.plot(profile['x'][0], profile['y'][0], '.g', label='point in the extention direction at distance \n 0.2 x path length from the bottom point')
+    # ax.plot(profile['x'][-2:], profile['y'][-2:], 'k--', label='extended path')
     # plt.legend()
     # plt.show()
     return profile

@@ -1156,9 +1156,6 @@ def DFAIterate(cfg, particles, fields, dem):
         # Perform computations
         particles, fields, tCPU = computeEulerTimeStep(cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType)
 
-        if travelAngle:
-            particles, fields = computeTravelAngle(cfgGen, dem, particles, zPartArray0, fields)
-
         tCPU['nSave'] = nSave
         particles['t'] = t
 
@@ -1426,6 +1423,7 @@ def computeTravelAngle(cfgGen, dem, particles, zPartArray0):
     gamma = np.degrees(np.arctan(tanGamma))
     particles['travelAngle'] = gamma
     return particles
+
 
 def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
     """ convert shape file polygon to raster
