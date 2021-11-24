@@ -6,6 +6,7 @@ import pathlib
 
 # Local imports
 from avaframe.com1DFA import com1DFA
+from avaframe.com1DFA import particleTools
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.out3Plot.outCom1DFA as outCom1DFA
