@@ -816,7 +816,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         mPartArray = np.empty(0)
         aPartArray = np.empty(0)
         hPartArray = np.empty(0)
-        idRel = np.empty(0)
+        idFixed = np.empty(0)
         if len(relThField) != 0 and cfg.getboolean('iniStep'):
             # set release thickness to a constant value for initialisation
             relRaster = np.where(relRaster > 0., cfg.getfloat('relTh'), 0.)
@@ -836,9 +836,9 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
             mPartArray = np.append(mPartArray, mPart * np.ones(n))
             aPartArray = np.append(aPartArray, aPart * np.ones(n))
             if (indRely, indRelx) in iReal:
-                idRel = np.append(idRel, np.ones(n))
+                idFixed = np.append(idFixed, np.zeros(n))
             else:
-                idRel = np.append(idRel, np.zeros(n))
+                idFixed = np.append(idFixed, np.ones(n))
 
         hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
@@ -856,7 +856,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         # adding z component
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         particles['m'] = mPartArray
-        particles['idRel'] = idRel
+        particles['idFixed'] = idFixed
 
     particles['massPerPart'] = massPerPart
     particles['mTot'] = np.sum(particles['m'])
