@@ -119,6 +119,8 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     particles['potentialEne'] = np.sum(cfg['GENERAL'].getfloat('gravAcc') * particles['m'] * particles['z'])
     particles['peakForceSPH'] = 0.0
     particles['forceSPHIni'] = 0.0
+    # delete mIni key from dict
+    particles.pop('mIni')
     # TODO: note particle flow depth is not updated- this is done in updateFieldsC in the next step as the flow
     # depth is currently computed from the mass and an interpolation on the grid
 

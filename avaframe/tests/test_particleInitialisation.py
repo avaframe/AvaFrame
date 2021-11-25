@@ -154,3 +154,4 @@ def test_getIniPosition(tmp_path):
     assert particles['peakForceSPH'] == 0.0
     assert particles['forceSPHIni'] == 0.0
     assert particles['peakMassFlowing'] == 0
+    assert 'mIni' not in particles

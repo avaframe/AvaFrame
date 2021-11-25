@@ -589,7 +589,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   outOfDEM = np.array(dem['outOfDEM'], dtype=bool)
   # read particles and fields
   cdef double[:] mass = particles['m']
-  cdef double[:] idRel = particles['idRel']
+  cdef double[:] idFixed = particles['idFixed']
   cdef double[:] S = particles['s']
   cdef double[:] L = particles['l']
   cdef double[:] xArray = particles['x']
@@ -625,7 +625,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   cdef double[:] uzArrayNew = np.zeros(nPart, dtype=np.float64)
   cdef int[:] keepParticle = np.ones(nPart, dtype=np.int32)
   # declare intermediate step variables
-  cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop, idrel
+  cdef double m, h, x, y, z, s, l, ux, uy, uz, nx, ny, nz, dtStop, idfixed
   cdef double mNew, xNew, yNew, zNew, uxNew, uyNew, uzNew, sNew, lNew, uN, uMag, uMagNew
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
   cdef double massEntrained = 0, massFlowing = 0
@@ -646,7 +646,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
     uz = uzArray[j]
     s = S[j]
     l = L[j]
-    idrel = idRel[j]
+    idfixed = idFixed[j]
 
     # Force magnitude (without friction)
     ForceDriveX = forceX[j] + forceSPHX[j]
@@ -734,9 +734,10 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
 
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
+    totForceSPHNew = totForceSPHNew + mNew * norm(forceSPHX[j], forceSPHY[j], forceSPHZ[j])
 
-    if idrel == 0:
-      # idrel = 0 if particles belong to 'fixed' boundary particles - so zero velocity and fixed position
+    if idfixed == 1:
+      # idfixed = 1 if particles belong to 'fixed' boundary particles - so zero velocity and fixed position
       xNewArray[j] = x
       yNewArray[j] = y
       zNewArray[j] = z
@@ -746,7 +747,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
       sNewArray[j] = s
       mNewArray[j] = m
     else:
-      # idrel = 1 particles belong to the actual releae area
+      # idfixed = 0 particles belong to the actual releae area
       xNewArray[j] = xNew
       yNewArray[j] = yNew
       zNewArray[j] = zNew
@@ -771,7 +772,6 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   particles['potentialEne'] = TotpotEneNew
 
   if typeStop == 1:
-    totForceSPHNew = totForceSPHNew + mNew * norm(forceSPHX[j], forceSPHY[j], forceSPHZ[j])
     # typeStop = 1 for initialisation step where particles are redistributed to reduce SPH force
     # here stop criterion based on SPHForce
     value = totForceSPHNew
@@ -1153,7 +1153,7 @@ def computeForceSPHC(cfg, particles, force, dem, int sphOption, gradient=0):
 @cython.wraparound(False)   # Deactivate negative indexing.
 @cython.cdivision(True)
 def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:, :] nxArray, double[:, :] nyArray,
-                 double[:, :] nzArray, gradient, sphOption):
+                 double[:, :] nzArray, gradient, int SPHoption):
   """ compute lateral forces acting on the particles (SPH component)
 
   Cython implementation
@@ -1243,7 +1243,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double dwdrr, area
   cdef double pikl, flux
   cdef double hk, hl, ck, cl, lambdakl
-  cdef int SPHoption = sphOption
 
   # loop on particles
   for k in range(N):
@@ -2082,7 +2081,7 @@ cpdef double SamosATfric(double rho, double Rs0, double mu, double kappa, double
 @cython.wraparound(False)
 @cython.cdivision(True)
 def computeIniMovement(cfg, particles, dem, dT, fields):
-  """ add artifical viscosity effect on velocity for splitIniValueToArraySteps
+  """ add artifical viscosity effect on velocity
 
       Parameters
       ------------
