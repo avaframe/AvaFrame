@@ -145,3 +145,12 @@ def test_getIniPosition(tmp_path):
     assert len(np.where((particles['y']+particles['yllcenter']) < 5.)[0]) == 0
     assert len(np.where((particles['y']+particles['yllcenter']) > 10.)[0]) == 0
     assert len(np.where(particles['m'] != 1250.)[0]) == 0
+    assert particles['nPart'] == 16
+    assert particles['mTot'] == 20000.0
+    assert particles['peakKinEne'] == 0.0
+    assert particles['kineticEne'] == 0.0
+    assert particles['potentialEne'] == np.sum(9.81 * particles['m'] * particles['z'])
+    assert particles['peakKinEne'] == 0.0
+    assert particles['peakForceSPH'] == 0.0
+    assert particles['forceSPHIni'] == 0.0
+    assert particles['peakMassFlowing'] == 0
