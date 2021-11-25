@@ -82,7 +82,7 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
         ax1 = plt.subplot(111)
         for count in range(len(particlesList)):
             particles = particlesList[count]
-            ax1 = update(particles, ax1, dem)
+            ax1 = updateTrackPart(particles, ax1, dem)
             ax1 = addDem2Plot(ax1, dem, what='slope')
             plt.pause(0.1)
         plt.show()
@@ -96,7 +96,7 @@ def plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem):
         # ani.save("testTrackAlr1.gif", writer=writer)
 
 
-def update(particles, ax, dem):
+def updateTrackPart(particles, ax, dem):
     """Update axes with particles (tracked particles are highlighted in red)
     """
 
@@ -117,15 +117,20 @@ def update(particles, ax, dem):
     return ax
 
 
-def addParticles2Plot(particles, ax, dem, whatS='h', whatC='m'):
+def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h'):
     """Update axes with particles
     Parameters
     ----------
     particles: dict
         particles dictionary
-    ax: mathplotlix ax object
+    ax: mathplotlib ax object
     dem: dict
         dem dictionary with normal information
+    whatS: str
+        which particle property should be used for the markersize
+    whatC: str
+        which particle property should be used for the marker color
+
     """
 
     header = dem['header']
@@ -135,8 +140,13 @@ def addParticles2Plot(particles, ax, dem, whatS='h', whatC='m'):
     X = particles['x'] + xllc
     Y = particles['y'] + yllc
     cmap = pU.cmapD
-    variableC = particles[whatS]
-    variableS = (particles[whatC]/100)**1.5
+    variableC = particles[whatC]
+    variableS = particles[whatS]
+    minMax = np.nanmax(variableS)-np.nanmin(variableS)
+    if minMax>0:
+        variableS = ((variableS-np.nanmin(variableS))/(np.nanmax(variableS)-np.nanmin(variableS)) + 1)*pU.ms
+    else:
+        variableS = pU.ms
     cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(variableC), np.nanmax(variableC), continuous=pU.contCmap)
     # set range and steps of colormap
     sc = ax.scatter(X, Y, c=variableC, cmap=cmap, marker='.')
@@ -149,11 +159,11 @@ def addDem2Plot(ax, dem, what='slope'):
 
     Parameters
     ----------
-    ax: mathplotlix ax object
+    ax: mathplotlib ax object
     dem: dict
         dem dictionary with normal information
     what: str
-        what information abour the dem will be plotted?
+        what information about the dem will be plotted?
         slope: use the dem slope (computed from the normals) to color the plot
         z : use the elevation to color the plot
     """
@@ -200,55 +210,28 @@ def plotParticles(particlesList, cfg, dem):
         for count in range(len(particlesList)):
             fig2 = plt.figure()
             ax1 = plt.subplot(111)
+            ax1.clear()
             particles = particlesList[count]
-            ax1 = updatePlot(particles, ax1, dem)
+            ax1.set_title('t=%.2f s' % particles['t'])
+            ax1 = addParticles2Plot(particles, ax1, dem, whatS='h', whatC='m')
             ax1 = addDem2Plot(ax1, dem, what='slope')
             plt.show()
 
 
-def updatePlot(particles, ax, dem):
-    """Update axes with particles
+def addResult2Plot(ax, dem, rasterData, resType, colorbar=True):
+    """ Add raster data to a plot
 
     Parameters
     ----------
-    particles: dict
-        particles dictionary
-    ax: mathplotlix ax object
+    ax: mathplotlib ax object
     dem: dict
         dem dictionary with normal information
-    """
-
-    header = dem['header']
-    xllc = header['xllcenter']
-    yllc = header['yllcenter']
-
-    X = particles['x'] + xllc
-    Y = particles['y'] + yllc
-    cmap = pU.cmapSpeed
-    ax.clear()
-    ax.set_title('t=%.2f s' % particles['t'])
-    variableC = particles['h']
-    print(np.nanmin(particles['m']), np.nanmax(particles['m']))
-    variableS = (particles['m']/100)**1.5
-    cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(variableC), np.nanmax(variableC), continuous=pU.contCmap)
-    # set range and steps of colormap
-    sc = ax.scatter(X, Y, c=variableC, s=variableS, cmap=cmap, marker='.')
-    pU.addColorBar(sc, ax, ticks, 'm')
-    return ax
-
-
-def addResult2Plot(ax, dem, rasterData, resType):
-    """ Add dem to the background of a plot
-
-    Parameters
-    ----------
-    ax: mathplotlix ax object
-    dem: dict
-        dem dictionary with normal information
-    what: str
-        what information abour the dem will be plotted?
-        slope: use the dem slope (computed from the normals) to color the plot
-        z : use the elevation to color the plot
+    rasterData: 2D numpy array
+        data to plot
+    resType: str
+        what kinf of result is it? ppr, pfd...
+    colorbar: bool
+        If true add the colorbar
     """
     header = dem['header']
     ncols = header['ncols']
@@ -273,5 +256,6 @@ def addResult2Plot(ax, dem, rasterData, resType):
                             cmap=cmap, norm=None)
     CS = ax.contour(xArray, yArray, rasterData, levels=contourLevels, colors='k')
     ax.clabel(CS, inline=1, fontsize=8)
-    pU.addColorBar(im, ax, ticks, unit)
+    if colorbar:
+        pU.addColorBar(im, ax, ticks, unit)
     return ax

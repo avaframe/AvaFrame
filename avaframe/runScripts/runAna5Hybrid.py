@@ -65,8 +65,8 @@ updater.update_file()
 particlesList, fieldsList, tSaveList, dem, plotDict, reportDictList, simDF0 = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=hybridModelDFACfg)
 # postprocess to extract path and energy line# read DEM
 demOri = getInput.readDEM(avalancheDir)
-avaProfilePart, avaProfileMass, avaProfileKE, _, _ = hybridTools.getCom1DFAPath(particlesList, tSaveList, demOri)
-avaProfilePart, avaProfileMass, avaProfileKE = hybridTools.elongateCom1DFAPath(demOri, particlesList[0], avaProfilePart, avaProfileMass, avaProfileKE)
+avaProfilePart, avaProfileMass, avaProfileKE = hybridTools.getCom1DFAPath(particlesList, demOri)
+avaProfilePart, avaProfileMass, avaProfileKE = hybridTools.extendCom1DFAPath(demOri, particlesList[0], avaProfilePart, avaProfileMass, avaProfileKE)
 # save profile as AB profile in Inputs
 
 pathAB = pathlib.Path(avalancheDir, 'Inputs', 'LINES', 'pathAB_aimec')
@@ -95,8 +95,8 @@ updater.update_file()
 
 particlesList, fieldsList, tSaveList, _, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=hybridModelDFACfg)
 simID = simDF.index[0]
-avaProfilePartNew, avaProfileMassNew, avaProfileKENew, V2Path, EkinPath = hybridTools.getCom1DFAPath(particlesList, tSaveList, demOri)
-_, avaProfileMassNewExtended, _ = hybridTools.elongateCom1DFAPath(demOri, particlesList[0], avaProfilePartNew.copy(),
+avaProfilePartNew, avaProfileMassNew, avaProfileKENew = hybridTools.getCom1DFAPath(particlesList, demOri)
+_, avaProfileMassNewExtended, _ = hybridTools.extendCom1DFAPath(demOri, particlesList[0], avaProfilePartNew.copy(),
                                                                   avaProfileMassNew.copy(), avaProfileKENew.copy())
 # save profile as AB profile in Inputs
 
@@ -143,4 +143,4 @@ log.info("Running ana3AIMEC model on test case DEM: \n %s \n with profile: \n %s
 # Run AIMEC postprocessing
 rasterTransfo, newRasters, resAnalysis = ana3AIMEC.mainAIMEC(pathDict, cfgAIMEC)
 hybridTools.plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTransfo, resAnalysis, dem, demOri,
-                          particlesList, fieldsList, avaProfileMass, avaProfileMassNew, V2Path, EkinPath)
+                          particlesList, fieldsList, avaProfileMass, avaProfileMassNew)

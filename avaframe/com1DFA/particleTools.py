@@ -486,7 +486,7 @@ def mergeParticleDict(particles1, particles2):
             # of particles2 so that the ID stays a unique identifier and
             # that the parentID is consistent with this shift.
             if (key == 'ID') or (key == 'parentID'):
-                particles[key] = np.append(particles1[key], particles2[key] + particles1['nID'])
+                particles[key] = np.append(particles1[key], (particles2[key] + particles1['nID']))
             # general case where the key value is an array with as many elements
             # as particles
             elif np.size(particles1[key]) == nPart1:
