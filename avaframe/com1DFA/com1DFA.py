@@ -1154,7 +1154,7 @@ def DFAIterate(cfg, particles, fields, dem):
         startTime = time.time()
         log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
-        particles, fields, tCPU = computeEulerTimeStep(cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType)
+        particles, fields, zPartArray0, tCPU = computeEulerTimeStep(cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType)
 
         tCPU['nSave'] = nSave
         particles['t'] = t
@@ -1369,7 +1369,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
 
     # release secondary release area?
     if particles['secondaryReleaseInfo']['flagSecondaryRelease'] == 'Yes':
-        particles = releaseSecRelArea(cfg, particles, fields, dem)
+        particles, zPartArray0 = releaseSecRelArea(cfg, particles, fields, dem, zPartArray0)
 
     # get particles location (neighbours for sph)
     startTime = time.time()
@@ -1387,7 +1387,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
     tCPUField = time.time() - startTime
     tCPU['timeField'] = tCPU['timeField'] + tCPUField
 
-    return particles, fields, tCPU
+    return particles, fields, zPartArray0, tCPU
 
 
 def computeTravelAngle(cfgGen, dem, particles, zPartArray0):
@@ -1414,7 +1414,7 @@ def computeTravelAngle(cfgGen, dem, particles, zPartArray0):
     parentID = particles['parentID']
     nPart = particles['nPart']
     # get z0
-    Z0 = zPartArray0[parentID]
+    Z0 = zPartArray0[parentID.astype(int)]
     # compute tan of the travel angle
     nonZeroSInd = np.nonzero(particles['s'])
     tanGamma = np.zeros((nPart))
@@ -1666,7 +1666,7 @@ def pointInPolygon(demHeader, points, Line, radius):
     return mask
 
 
-def releaseSecRelArea(cfg, particles, fields, dem):
+def releaseSecRelArea(cfg, particles, fields, dem, zPartArray0):
     """ Release secondary release area if trigered
     Initialize particles of the trigured secondary release area and add them
     to the simulation (particles dictionary)
@@ -1693,6 +1693,8 @@ def releaseSecRelArea(cfg, particles, fields, dem):
             particles = particleTools.mergeParticleDict(particles, secRelParticles)
             # save index of secRel feature
             indexRel.append(secRelRasterName)
+            # save initial z position for travel angle computation
+            zPartArray0 = np.append(zPartArray0, copy.deepcopy(secRelParticles['z']))
         count = count + 1
 
     secondaryReleaseInfo['rasterData'] = secRelRasterList
@@ -1708,7 +1710,7 @@ def releaseSecRelArea(cfg, particles, fields, dem):
     secondaryReleaseInfo['rasterData'] = secRelRasterList
     particles['secondaryReleaseInfo'] = secondaryReleaseInfo
 
-    return particles
+    return particles, zPartArray0
 
 
 def savePartToPickle(dictList, outDir, logName):

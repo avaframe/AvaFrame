@@ -361,7 +361,7 @@ def indiDfa2Aimec(avaDir, suffix, cfg, inputDir=''):
      """
 
     # path dictionary for Aimec
-    pathDict = {suffix: [], 'colorParameter': []}
+    pathDict = {'simID': [], suffix: [], 'colorParameter': []}
 
     # Setup input from com1DFA and save file paths to dictionary
     comModule = cfg['anaMod']

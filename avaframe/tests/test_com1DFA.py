@@ -799,6 +799,7 @@ def test_releaseSecRelArea():
     secRelRaster1[1, 1] = 0.5
     secondaryReleaseInfo = {'x': np.asarray([1.5, 2.5, 2.5, 1.5, 1.5, 7.4, 8.5, 8.5, 7.4, 7.4, 9.5, 10.5, 10.5, 9.5, 9.5]),
                             'y': np.asarray([1.5, 1.5, 2.5, 2.5, 1.5, 7.4, 7.4, 8.5, 8.5, 7.4, 9.5, 9.5, 10.5, 10.5, 9.5]),
+                            'z': np.asarray([1.5, 1.5, 2.5, 2.5, 1.5, 7.4, 7.4, 8.5, 8.5, 7.4, 9.5, 9.5, 10.5, 10.5, 9.5]),
                             'Start': np.asarray([0, 5, 10]), 'Length': np.asarray([5, 5, 5]),
                             'Name': ['secRel1', 'secRel2', 'secRel3'], 'thickness': [0.5, 1.0, 0.5],
                             'rasterData': [secRelRaster1, secRelRaster2, secRelRaster3]}
@@ -809,6 +810,7 @@ def test_releaseSecRelArea():
     particlesIn = {'secondaryReleaseInfo': secondaryReleaseInfo}
     particlesIn['x'] = np.asarray([6., 7.])
     particlesIn['y'] = np.asarray([6., 7.])
+    particlesIn['z'] = np.asarray([1., 2.])
     particlesIn['m'] = np.asarray([1250., 1250.])
     particlesIn['mTot'] = np.sum(particlesIn['m'])
     particlesIn['t'] = 1.0
@@ -816,16 +818,18 @@ def test_releaseSecRelArea():
     fieldsFD = np.zeros((demHeader['nrows'], demHeader['ncols']))
     fieldsFD[7:9, 7:9] = 1.0
     fields = {'FD': fieldsFD}
+    zPartArray0 = np.asarray([2., 3.])
 
     # call function to be tested
-    particles = com1DFA.releaseSecRelArea(
-        cfg['GENERAL'], particlesIn, fields, dem)
+    particles, zPartArray0New = com1DFA.releaseSecRelArea(
+        cfg['GENERAL'], particlesIn, fields, dem, zPartArray0)
     print('particles IN pytest 1', particles)
 
     # call function to be tested test 2
     particlesIn2 = {'secondaryReleaseInfo': secondaryReleaseInfo2}
     particlesIn2['x'] = np.asarray([6., 7., 9.1])
     particlesIn2['y'] = np.asarray([6., 7., 9.1])
+    particlesIn2['z'] = np.asarray([6., 7., 9.1])
     particlesIn2['m'] = np.asarray([1250., 1250., 1250.])
     particlesIn2['mTot'] = np.sum(particlesIn2['m'])
     particlesIn2['t'] = 1.0
@@ -834,17 +838,19 @@ def test_releaseSecRelArea():
     fieldsFD2[7:9, 7:9] = 1.0
     fieldsFD2[9, 9] = 0.4
     fields2 = {'FD': fieldsFD2}
+    zPartArray0 = np.asarray([1., 2., 3])
 
-    particles2 = com1DFA.releaseSecRelArea(
-        cfg['GENERAL'], particlesIn2, fields2, dem)
+    particles2, zPartArray0New2 = com1DFA.releaseSecRelArea(
+        cfg['GENERAL'], particlesIn2, fields2, dem, zPartArray0)
 
     print('particles IN pytest socond', particles2)
-
     assert particles['nPart'] == 6
     assert np.array_equal(particles['x'], np.asarray(
         [6., 7., 6.75, 7.25, 6.75, 7.25]))
     assert np.array_equal(particles['y'], np.asarray(
         [6., 7., 6.75, 6.75, 7.25, 7.25]))
+    assert np.array_equal(zPartArray0New, np.asarray(
+        [2, 3, 1., 1., 1., 1.]))
     assert np.array_equal(particles['m'], np.asarray(
         [1250., 1250., 50., 50., 50., 50.]))
     assert particles['mTot'] == 2700.0
@@ -853,6 +859,8 @@ def test_releaseSecRelArea():
         [6., 7., 9.1, 6.75, 7.25, 6.75, 7.25, 8.75, 9.25, 8.75, 9.25]))
     assert np.array_equal(particles2['y'], np.asarray(
         [6., 7., 9.1, 6.75, 6.75, 7.25, 7.25, 8.75, 8.75, 9.25, 9.25]))
+    assert np.array_equal(zPartArray0New2, np.asarray(
+        [1, 2, 3, 1, 1, 1, 1, 1, 1, 1, 1]))
     assert np.array_equal(particles2['m'], np.asarray(
         [1250., 1250., 1250., 50., 50., 50., 50., 25., 25., 25., 25.]))
     assert particles2['mTot'] == 4050.0
@@ -889,8 +897,8 @@ def test_initializeParticles():
     releaseLine['header']['xllcenter'] = dem['originOri']['xllcenter']
     releaseLine['header']['yllcenter'] = dem['originOri']['yllcenter']
 
-    dictKeys = ['nPart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
-                'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
+    dictKeys = ['nPart', 'x', 'y', 's', 'sCor', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
+                'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne', 'travelAngle',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
@@ -1160,7 +1168,7 @@ def test_initializeFields():
            'areaRaster': areaRaster}
     particles = {'x': np.asarray([1., 2., 3.]), 'y': np.asarray([1., 2., 3.]), 'nPart': 3,
                  'ux': np.asarray([0., 0., 0.]), 'uy': np.asarray([0., 0., 0.]),
-                 'uz': np.asarray([0., 0., 0.]), 'm': np.asarray([10., 10., 10.])}
+                 'uz': np.asarray([0., 0., 0.]), 'm': np.asarray([10., 10., 10.]), 'travelAngle': np.asarray([0., 0., 0.])}
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'rho': '200.', 'interpOption': '2'}
 
@@ -1171,11 +1179,13 @@ def test_initializeFields():
     print('particles', particles)
     print('fields', fields)
 
-    assert len(fields) == 9
+    assert len(fields) == 11
     assert np.sum(fields['pfv']) == 0.0
+    assert np.sum(fields['pta']) == 0.0
     assert np.sum(fields['ppr']) == 0.0
     assert np.sum(fields['FV']) == 0.0
     assert np.sum(fields['P']) == 0.0
+    assert np.sum(fields['TA']) == 0.0
     assert np.sum(fields['Vx']) == 0.0
     assert np.sum(fields['Vy']) == 0.0
     assert np.sum(fields['Vz']) == 0.0
@@ -1366,8 +1376,8 @@ def test_runCom1DFA(tmp_path, caplog):
     particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
         avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
 
-    dictKeys = ['nPart', 'x', 'y', 's', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
-                'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne',
+    dictKeys = ['nPart', 'x', 'y', 's', 'sCor', 'l', 'z', 'm', 'dt', 'massPerPart', 'nPPK', 'mTot',
+                'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne', 'travelAngle',
                 'potentialEne', 'peakKinEne', 'peakMassFlowing', 'simName',
                 'xllcenter', 'yllcenter', 'ID', 'nID', 'parentID', 't',
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',

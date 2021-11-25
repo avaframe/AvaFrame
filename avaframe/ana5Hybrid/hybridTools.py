@@ -9,86 +9,116 @@ from avaframe.in3Utils import geoTrans
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.out3Plot.outCom1DFA as outCom1DFA
 
+debug = False
 
-def getCom1DFAPath(particlesList, tSaveList, dem):
+
+def getCom1DFAPath(particlesList, dem):
+    """ compute part, mass and energy averaged path from particles
+
+    Also returns the averaged velocity ant kinetik energy associated
+
+    Parameters
+    -----------
+    particlesList: list
+        list of particles dict
+    dem: dict
+        dem dict
+
+    Returns
+    --------
+    avaProfilePart: dict
+        particle averaged profile
+    avaProfileMass: dict
+        mass averaged profile
+    avaProfileKE: dict
+        kinetic energy averaged profile
+    """
     # get DEM Path
     header = dem['header']
-    ncols = header['ncols']
-    nrows = header['nrows']
     xllc = header['xllcenter']
     yllc = header['yllcenter']
-    csz = header['cellsize']
 
-    relField = np.zeros((nrows, ncols))
-    V2Path = np.empty((0, 1))
-    EkinPath = np.empty((0, 1))
-    # EpotPath = np.empty((0, 1))
-    # ax = plt.subplot(111)
-    part_p = np.empty((0, 5))
-    part_m = np.empty((0, 5))
-    part_kE = np.empty((0, 5))
-    count = 0
-    for t in tSaveList:
-        particles = particlesList[count]
-        m = particles['m']
-        x = particles['x'] + xllc
-        y = particles['y'] + yllc
-        z = particles['z']
-        ux = particles['ux']
-        uy = particles['uy']
-        uz = particles['uz']
-        s = particles['s']
-        sCor = particles['sCor']
-        u = DFAtls.norm(ux, uy, uz)
-        U2 = u*u
-        nPart = particles['nPart']
-        kineticEne = 0.5*m*u*u
-        kineticEneSum = np.sum(kineticEne)
-        # mass-averaged path
-        if kineticEneSum <= 100:
-            pond = np.ones(np.shape(kineticEne))
-            pondSum = nPart
-        else:
-            pond = kineticEne
-            pondSum = kineticEneSum
+    proList = ['x', 'y', 'z', 's', 'sCor']
+    avaProfilePart = {'x': np.empty((0, 1)), 'y': np.empty((0, 1)), 'z': np.empty((0, 1)), 's': np.empty((0, 1)),
+                      'sCor': np.empty((0, 1)), 'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    avaProfileMass = {'x': np.empty((0, 1)), 'y': np.empty((0, 1)), 'z': np.empty((0, 1)), 's': np.empty((0, 1)),
+                      'sCor': np.empty((0, 1)), 'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    avaProfileKE = {'x': np.empty((0, 1)), 'y': np.empty((0, 1)), 'z': np.empty((0, 1)), 's': np.empty((0, 1)),
+                    'sCor': np.empty((0, 1)), 'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    # loop on each particle dictionary (ie each time step saved)
+    for particles in particlesList:
+        if particles['nPart'] > 0:
+            m = particles['m']
+            ux = particles['ux']
+            uy = particles['uy']
+            uz = particles['uz']
+            u = DFAtls.norm(ux, uy, uz)
+            U2 = u*u
+            kineticEne = 0.5*m*u*u
+            kineticEneSum = np.nansum(kineticEne)
 
-        pond = m
-        pondSum = np.sum(m)
-        v2coE = np.sum(pond*U2)/pondSum
-        V2Path = np.append(V2Path, v2coE)
+            # kinetic energy-averaged path
+            if kineticEneSum > 0:
+                w = kineticEne
+                for prop in proList:
+                    avaProfileKE[prop] = np.append(avaProfileKE[prop], np.average(particles[prop], weights=w))
+                avaProfileKE['v2'] = np.append(avaProfileKE['v2'], np.average(U2, weights=w))
+                avaProfileKE['ekin'] = np.append(avaProfileKE['ekin'], kineticEneSum)
+            else:
+                w = m
+                for prop in proList:
+                    avaProfileKE[prop] = np.append(avaProfileKE[prop], np.average(particles[prop], weights=w))
+                avaProfileKE['v2'] = np.append(avaProfileKE['v2'], np.average(U2, weights=w))
+                avaProfileKE['ekin'] = np.append(avaProfileKE['ekin'], kineticEneSum)
 
-        # update energy
-        EkinPath = np.append(EkinPath, kineticEneSum)
-        # kinetic energy-averaged path
-        if kineticEneSum > 0:
-            temp_kE = np.array([[np.sum(kineticEne*x)/kineticEneSum, np.sum(kineticEne*y)/kineticEneSum,
-                    np.sum(kineticEne*z)/kineticEneSum, np.sum(kineticEne*s)/kineticEneSum,
-                    np.sum(kineticEne*sCor)/kineticEneSum]])
-        else:
-            temp_kE = np.array([[np.sum(m*x)/np.sum(m), np.sum(m*y)/np.sum(m),
-                    np.sum(m*z)/np.sum(m), np.sum(m*s)/np.sum(m),
-                    np.sum(m*sCor)/np.sum(m)]])
-        # mass-averaged path
-        temp_m = np.array([[np.sum(m*x)/np.sum(m), np.sum(m*y)/np.sum(m),
-                np.sum(m*z)/np.sum(m), np.sum(m*s)/np.sum(m),
-                    np.sum(m*sCor)/np.sum(m)]])
-        # particle-averaged path
-        temp_p = np.array([[np.sum(x)/nPart, np.sum(y)/nPart, np.sum(z)/nPart,
-                np.sum(s)/nPart, np.sum(sCor)/nPart]])
-        # add a line to part
-        part_p = np.append(part_p, temp_p, axis=0)
-        part_m = np.append(part_m, temp_m, axis=0)
-        part_kE = np.append(part_kE, temp_kE, axis=0)
-        count = count + 1
+            # mass-averaged path
+            w = m
+            for prop in proList:
+                avaProfileMass[prop] = np.append(avaProfileMass[prop], np.average(particles[prop], weights=w))
+            avaProfileMass['v2'] = np.append(avaProfileMass['v2'], np.average(U2, weights=w))
+            avaProfileMass['ekin'] = np.append(avaProfileMass['ekin'], kineticEneSum)
 
-        avaProfilePart = {'x': part_p[:, 0], 'y': part_p[:, 1], 'z': part_p[:, 2], 's': part_p[:, 3], 'sCor': part_p[:, 4]}
-        avaProfileMass = {'x': part_m[:, 0], 'y': part_m[:, 1], 'z': part_m[:, 2], 's': part_m[:, 3], 'sCor': part_m[:, 4]}
-        avaProfileKE = {'x': part_kE[:, 0], 'y': part_kE[:, 1], 'z': part_kE[:, 2], 's': part_kE[:, 3], 'sCor': part_kE[:, 4]}
-    return avaProfilePart, avaProfileMass, avaProfileKE, V2Path, EkinPath
+            # particle-averaged path
+            w = None
+            for prop in proList:
+                avaProfilePart[prop] = np.append(avaProfilePart[prop], np.average(particles[prop], weights=w))
+            avaProfilePart['v2'] = np.append(avaProfilePart['v2'], np.average(U2, weights=w))
+            avaProfilePart['ekin'] = np.append(avaProfilePart['ekin'], kineticEneSum)
+
+    avaProfilePart['x'] = avaProfilePart['x'] + xllc
+    avaProfilePart['y'] = avaProfilePart['y'] + yllc
+    avaProfileMass['x'] = avaProfileMass['x'] + xllc
+    avaProfileMass['y'] = avaProfileMass['y'] + yllc
+    avaProfileKE['x'] = avaProfileKE['x'] + xllc
+    avaProfileKE['y'] = avaProfileKE['y'] + yllc
+    return avaProfilePart, avaProfileMass, avaProfileKE
 
 
-def elongateCom1DFAPath(dem, particlesIni, avaProfilePart, avaProfileMass, avaProfileKE):
+def extendCom1DFAPath(dem, particlesIni, avaProfilePart, avaProfileMass, avaProfileKE):
+    """ extend the DFA path at the top and bottom
 
+    Parameters
+    -----------
+    dem: dict
+        dem dict
+    particlesIni: dict
+        initial particles dict
+    avaProfilePart: dict
+        particle averaged profile
+    avaProfileMass: dict
+        mass averaged profile
+    avaProfileKE: dict
+        kinetic energy averaged profile
+
+    Returns
+    --------
+    avaProfilePart: dict
+        extended particle averaged profile
+    avaProfileMass: dict
+        extended mass averaged profile
+    avaProfileKE: dict
+        extended kinetic energy averaged profile
+    """
     for profile in [avaProfilePart, avaProfileMass, avaProfileKE]:
         # project the profile on the dem
         profile, _ = geoTrans.projectOnRaster(dem, profile, interp='bilinear')
@@ -99,9 +129,12 @@ def elongateCom1DFAPath(dem, particlesIni, avaProfilePart, avaProfileMass, avaPr
         # resample the profile
         profile, _ = geoTrans.prepareLine(dem, profile, distance=dem['header']['cellsize']*5, Point=None)
         profile = extendProfileTop(dem, particlesIni, profile)
+        # resample the profile
         profile, _ = geoTrans.prepareLine(dem, profile, distance=dem['header']['cellsize']*5, Point=None)
         profile = extendProfileBottom(dem, profile)
+        # resample the profile
         profile, _ = geoTrans.prepareLine(dem, profile, distance=dem['header']['cellsize']*5, Point=None)
+        # remove points that lay outside of the dem
         isNotNan = ~(np.isnan(profile['z']))
         profile['x'] = profile['x'][isNotNan]
         profile['y'] = profile['y'][isNotNan]
@@ -111,6 +144,26 @@ def elongateCom1DFAPath(dem, particlesIni, avaProfilePart, avaProfileMass, avaPr
 
 
 def extendProfileTop(dem, particlesIni, profile):
+    """ extend the DFA path at the top
+
+    Find the direction in which to extend considerind the first point of the profile
+    and a few following ones (distFromFirt <= 30 * csz). Extend in this diretion until
+    the z of the highest particle in the release is reached.
+
+    Parameters
+    -----------
+    dem: dict
+        dem dict
+    particlesIni: dict
+        initial particles dict
+    profile: dict
+        profile to extend
+
+    Returns
+    --------
+    profile: dict
+        extended profile
+    """
     header = dem['header']
     xllc = header['xllcenter']
     yllc = header['yllcenter']
@@ -121,18 +174,17 @@ def extendProfileTop(dem, particlesIni, profile):
     xHighest = particlesIni['x'][indHighest] + xllc
     yHighest = particlesIni['y'][indHighest] + yllc
     zHighest = particlesIni['z'][indHighest]
-
+    # get first particle of the path
     xFirst = profile['x'][0]
     yFirst = profile['y'][0]
     zFirst = profile['z'][0]
-    # sFirst = profile['s'][0]
     # compute distance from first point:
     r = DFAtls.norm(profile['x']-xFirst, profile['y']-yFirst, profile['z']-zFirst)
+    # find the following first points
     pointsOfInterestFirst = np.where(r <= 30 * csz)[0]
     xInterest = profile['x'][pointsOfInterestFirst]
     yInterest = profile['y'][pointsOfInterestFirst]
     zInterest = profile['z'][pointsOfInterestFirst]
-
     # find the direction in which we need to extend the path
     vDirX = xInterest - xFirst
     vDirY = yInterest - yFirst
@@ -142,33 +194,48 @@ def extendProfileTop(dem, particlesIni, profile):
     vDirY = np.sum(vDirY)
     vDirZ = np.sum(vDirZ)
     vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
-
-    # find the point in this direction that has the same z as the highest
+    # find the point in this direction that has the same z as the highest particle
     xExtTop, yExtTop, zExtTop = findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst)
-    # sExtTop = np.array([sFirst - gamma**2 * np.sqrt(vDirX**2 + vDirY**2)])
     zExtTop, _ = geoTrans.projectOnGrid(xExtTop, yExtTop, zRaster, csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')
+    # extend profile
     profile['x'] = np.append(xExtTop, profile['x'])
     profile['y'] = np.append(yExtTop, profile['y'])
     profile['z'] = np.append(zExtTop, profile['z'])
-    # profile['s'] = np.append(sExtTop, profile['s'])
-    # # make sure the s coordinate starts at 0
-    # profile['s'] = profile['s'] - profile['s'][0]
 
-    # fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-    # ax.set_title('Extend path towards the top')
-    # ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.c', label='particles at t=0s')
-    # ax.plot(xHighest, yHighest, '.r', label='highest particle at t=0s')
-    # ax.plot(profile['x'][1:], profile['y'][1:], '.k', label='mass averaged path')
-    # ax.plot(xInterest[1:], yInterest[1:], '.m', markersize=10, label='points considered to find drection')
-    # ax.plot(xInterest[0], yInterest[0], '.b', markersize=10, label='top point of the mass averaged path')
-    # ax.plot(profile['x'][0], profile['y'][0], '.g', label='point at the same hight as the highest point in the release \n and in the extention direction')
-    # ax.plot(profile['x'][0:2], profile['y'][0:2], 'k--', label='extended path')
-    # plt.legend()
-    # plt.show()
+    if debug:
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        ax.set_title('Extend path towards the top')
+        ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.c', label='particles at t=0s')
+        ax.plot(xHighest, yHighest, '.r', label='highest particle at t=0s')
+        ax.plot(profile['x'][1:], profile['y'][1:], '.k', label='mass averaged path')
+        ax.plot(xInterest[1:], yInterest[1:], '.m', markersize=10, label='points considered to find drection')
+        ax.plot(xInterest[0], yInterest[0], '.b', markersize=10, label='top point of the mass averaged path')
+        ax.plot(profile['x'][0], profile['y'][0], '.g', label='point at the same hight as the highest point in the release \n and in the extention direction')
+        ax.plot(profile['x'][0:2], profile['y'][0:2], 'k--', label='extended path')
+        plt.legend()
+        plt.show()
     return profile
 
 
 def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):
+    """ find point on dem given a direction and a z value to reach
+
+    Parameters
+    -----------
+    dem: dict
+        dem dict
+    vDirX, vDirY, vDirZ: floats
+        x, y and z components of the direction in which to extend
+    zHighest: float
+        z value to reach
+    xFirst, yFirst, zFirst: floats
+        x, y and z coordinates of the starting point
+
+    Returns
+    --------
+    xExtTop, yExtTop, zExtTop:floats
+        x, y and z coordinates of the point found
+    """
     header = dem['header']
     xllc = header['xllcenter']
     yllc = header['yllcenter']
@@ -186,23 +253,42 @@ def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):
 
 
 def extendProfileBottom(dem, profile):
+    """ extend the DFA path at the bottom
+
+    Find the direction in which to extend considerind the last point of the profile
+    and a few previous ones but discardings the one that are too close ( 2* csz < distFromLast <= 30 * csz).
+    Extend in this diretion for a distance 0.2 * length of the path.
+
+    Parameters
+    -----------
+    dem: dict
+        dem dict
+    profile: dict
+        profile to extend
+
+    Returns
+    --------
+    profile: dict
+        extended profile
+    """
     header = dem['header']
     xllc = header['xllcenter']
     yllc = header['yllcenter']
     csz = header['cellsize']
     zRaster = dem['rasterData']
-
+    # get last point
     xLast = profile['x'][-1]
     yLast = profile['y'][-1]
     zLast = profile['z'][-1]
     sLast = profile['s'][-1]
-    # compute distance from first point:
+    # compute distance from last point:
     r = DFAtls.norm(profile['x']-xLast, profile['y']-yLast, profile['z']-zLast)
+    # find the previous points
     pointsOfInterestLast = np.where((r < 20 * csz) & (r > 2* csz))[0]
     xInterest = profile['x'][pointsOfInterestLast]
     yInterest = profile['y'][pointsOfInterestLast]
     zInterest = profile['z'][pointsOfInterestLast]
-
+    # find the direction in which we need to extend the path
     vDirX = xLast - xInterest
     vDirY = yLast - yInterest
     vDirZ = zLast - zInterest
@@ -211,31 +297,32 @@ def extendProfileBottom(dem, profile):
     vDirY = np.sum(vDirY)
     vDirZ = np.sum(vDirZ)
     vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
+    # extend in this direction
     gamma = 0.2 * sLast / np.sqrt(vDirX**2 + vDirY**2)
     xExtBottom = np.array([xLast + gamma * vDirX])
     yExtBottom = np.array([yLast + gamma * vDirY])
-    zExtBottom = np.array([zLast + gamma * vDirZ])
-    # sExtBottom = np.array([sLast + gamma**2 * np.sqrt(vDirX**2 + vDirY**2)])
+    # project on cszDEM
     zExtBottom, _ = geoTrans.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')
+    # extend profile
     profile['x'] = np.append(profile['x'], xExtBottom)
     profile['y'] = np.append(profile['y'], yExtBottom)
     profile['z'] = np.append(profile['z'], zExtBottom)
-    # profile['s'] = np.append(profile['s'], sExtBottom)
 
-    # fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-    # ax.set_title('Extend path towards the bottom')
-    # ax.plot(profile['x'][:-1], profile['y'][:-1], '.k', label='mass averaged path')
-    # ax.plot(xInterest, yInterest, '.m', markersize=10, label='points considered to find drection')
-    # ax.plot(xInterest[-1], yInterest[-1], '.b', markersize=10, label='bottom point of the mass averaged path')
-    # ax.plot(profile['x'][0], profile['y'][0], '.g', label='point in the extention direction at distance \n 0.2 x path length from the bottom point')
-    # ax.plot(profile['x'][-2:], profile['y'][-2:], 'k--', label='extended path')
-    # plt.legend()
-    # plt.show()
+    if debug:
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        ax.set_title('Extend path towards the bottom')
+        ax.plot(profile['x'][:-1], profile['y'][:-1], '.k', label='mass averaged path')
+        ax.plot(xInterest, yInterest, '.m', markersize=10, label='points considered to find drection')
+        ax.plot(xInterest[-1], yInterest[-1], '.b', markersize=10, label='bottom point of the mass averaged path')
+        ax.plot(profile['x'][0], profile['y'][0], '.g', label='point in the extention direction at distance \n 0.2 x path length from the bottom point')
+        ax.plot(profile['x'][-2:], profile['y'][-2:], 'k--', label='extended path')
+        plt.legend()
+        plt.show()
     return profile
 
 
 def plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTransfo, resAnalysis, dem, demOri,
-                  particlesList, fieldsList, avaProfileMass, avaProfileMassNew, V2Path, EkinPath):
+                  particlesList, fieldsList, avaProfileMass, avaProfileMassNew):
 
     headerOri = demOri['header']
     xllcOri = headerOri['xllcenter']
@@ -261,6 +348,9 @@ def plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTr
     ids_alphaNew = resABNew[name]['ids_alpha']
     xABNew = resABNew[name]['x'][ids_alphaNew]
     yABNew = resABNew[name]['y'][ids_alphaNew]
+
+    V2Path = avaProfileMassNew['v2']
+    EkinPath = avaProfileMassNew['ekin']
 
     g = 9.81
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
