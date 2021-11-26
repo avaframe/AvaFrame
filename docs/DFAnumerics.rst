@@ -552,7 +552,7 @@ Lateral force
 
 The SPH method is introduced when expressing the flow depth gradient for each
 particle as a weighted sum of its neighbors
-(:cite:`LiLi2010,Sa2007`). From now on the :math:`p` for particles in math:`p_k` is dropped
+(:cite:`LiLi2010,Sa2007`). From now on the :math:`p` for particles in :math:`p_k` is dropped
 (same applies for :math:`p_l`).
 
 The lateral pressure forces on each particle are calculated from the compression
