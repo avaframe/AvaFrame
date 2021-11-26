@@ -643,7 +643,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
         releaseLineReal = inputSimLines['releaseLine']
         # check if release features overlap between features
         prepareArea(releaseLineReal, demOri, thresholdPointInPoly, combine=True, checkOverlap=True)
-        buffer1 = cfg['GENERAL'].getfloat('sphKernelRadius') * 0.275 * cfg['GENERAL'].getfloat('bufferZoneFactor')
+        buffer1 = cfg['GENERAL'].getfloat('sphKernelRadius') * cfg['GENERAL'].getfloat('additionallyFixedFactor') * cfg['GENERAL'].getfloat('bufferZoneFactor')
         if len(relThField) == 0:
             # if no release thickness field or function - set release according to shapefile or ini file
             # this is a list of release rasters that we want to combine
@@ -686,7 +686,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     particles, fields = initializeFields(cfgGen, dem, particles)
 
     # perform initialisation step for redistributing particles
-    if cfg['GENERAL'].getboolean('iniStep') and not cfg['GENERAL'].getboolean('initialiseParticlesFromFile'):
+    if cfg['GENERAL'].getboolean('iniStep'):
         startTimeIni = time.time()
         particles, fields = pI.getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField)
         tIni = time.time() - startTimeIni
@@ -805,6 +805,10 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
 
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
+        if cfg.getboolean('iniStep'):
+            message = 'If initialiseParticlesFromFile is used, iniStep cannot be performed - chose only one option'
+            log.error(message)
+            raise AssertionError(message)
         particles, hPartArray = particleTools.initialiseParticlesFromFile(cfg, avaDir)
     else:
         # initialize random generator
@@ -820,7 +824,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         if len(relThField) != 0 and cfg.getboolean('iniStep'):
             # set release thickness to a constant value for initialisation
             relRaster = np.where(relRaster > 0., cfg.getfloat('relTh'), 0.)
-            log.info('relTh!= 0, but relRaster set to relTh values here so that uniform number of particles created')
+            log.warning('relThField!= 0, but relRaster set to relTh value (from ini) here so that uniform number of particles created')
         # loop on non empty cells
         for indRelx, indRely in zip(indRelX, indRelY):
             # compute number of particles for this cell

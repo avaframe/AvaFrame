@@ -98,7 +98,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
         oldMass = np.sum(particles['m'])
         particles['m'] = particles['m'] * (newMass / oldMass)
         particles['mTot'] = np.sum(particles['m'])
-        log.info('oldMass: %.2f and newMass: %.2f - mass factor: %.2f - total mass: %.2f' %
+        log.debug('oldMass: %.2f and newMass: %.2f - mass factor: %.2f - total mass: %.2f' %
                 (oldMass, newMass, newMass/oldMass, particles['mTot']))
 
     # reset particles IDs
