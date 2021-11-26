@@ -567,6 +567,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   cdef double dt = DT
   cdef double stopCrit = cfg.getfloat('stopCrit')
   cdef double stopCritIni = cfg.getfloat('stopCritIni')
+  cdef double stopCritIniSmall = cfg.getfloat('stopCritIniSmall')
   cdef double uFlowingThreshold = cfg.getfloat('uFlowingThreshold')
   log.debug('dt used now is %f' % DT)
   cdef double gravAcc = cfg.getfloat('gravAcc')
@@ -781,10 +782,10 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
     if oldValue == 0.0:
       stop = False
     elif value < 1.:
-      stop = oldValue/value < 1.001
+      stop = oldValue/value < stopCritIniSmall
     else:
       stop = value <= stopCritIni*peakValue
-      log.info('SPHFORCE value %f and stop value %f' % (totForceSPHNew, stopCritIni*peakValue))
+      log.debug('SPHFORCE value %f and stop value %f' % (totForceSPHNew, stopCritIni*peakValue))
     if peakForceSPH < totForceSPHNew:
       particles['peakForceSPH'] = totForceSPHNew
   else:
@@ -811,7 +812,7 @@ def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   if stop:
     particles['iterate'] = False
     if typeStop == 1:
-      log.info('stopping initial particle distribution')
+      log.debug('stopping initial particle distribution')
     else:
       log.info('stopping because of %s stopCriterion.' % (cfg['stopCritType']))
 

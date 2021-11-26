@@ -13,6 +13,7 @@ import avaframe.out3Plot.plotUtils as pU
 
 
 def plotBufferRelease(inputSimLines, xBuffered, yBuffered):
+    """ plot release lines with added bufferLine """
 
     plt.plot(inputSimLines['releaseLine']['x'], inputSimLines['releaseLine']['y'], 'g')
     plt.plot(xBuffered, yBuffered, 'b')
