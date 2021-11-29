@@ -241,7 +241,7 @@ finding the adjacent cells is also easily done.
         :width: 90%
 
         The particles are located in the cells using
-        tow arrays. indPartInCell of size number of cells + 1
+        two arrays. indPartInCell of size number of cells + 1
         which keeps track of the number of particles in each cell
         and partInCell of size number of particles + 1 which lists
         the particles contained in the cells.
@@ -349,10 +349,10 @@ and
 which leads to the following expression for the gradient:
 
 .. math::
-   \mathbf{\nabla}W_{ij} = -3\frac{10}{\pi r_0^5}\left\{
+   \mathbf{\nabla}W_{kl} = -3\frac{10}{\pi r_0^5}\left\{
    \begin{aligned}
-   & (r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert)^2\frac{\mathbf{r_{ij}}}{r_{ij}}, \quad &0\leq \left\Vert \mathbf{r_{lj}}\right\Vert \leq  r_0\\
-   & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
+   & (r_0 - \left\Vert \mathbf{r_{kl}}\right\Vert)^2\frac{\mathbf{r_{kl}}}{r_{kl}}, \quad &0\leq \left\Vert \mathbf{r_{kl}}\right\Vert \leq  r_0\\
+   & 0 , & r_0 <\left\Vert \mathbf{r_{kl}}\right\Vert
    \end{aligned}
    \right.
    :label: kernel function gradient
@@ -594,7 +594,7 @@ The bottom friction forces on each particle depend on the chose friction model. 
 reads:
 
 .. math::
-    F_{k,i}^{\text{bot}} = -\frac{\mathbf{u}_k}{\|\mathbf{u}_k\|}\,A_{k}\,\tau^{(b)}_{k}
+    F_{k,i}^{\text{bot}} = -\frac{\overline{u}_{k,i}}{\|\mathbf{u}_k\|}\,A_{k}\,\tau^{(b)}_{k}
     = -\delta_{k1}\,A_{k}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{k}
      + \frac{\rho_0\,\mathbf{\overline{u}}_{k}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
     :label: bottom force
@@ -607,9 +607,12 @@ is a function of the average flow depth :math:`\overline{h}_{k}`):
 
 .. math::
     F_{k,i}^{\text{res}}
-    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{k}\|\,\overline{u}_{k,i}
+    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{k}\|^2\,\frac{\overline{u}_{k,i}}{|\overline{\mathbf{u}}_{k}\|}
     :label: resistance force
 
+Both the bottom friction and added resistance force are friction forces. The expression above represent the maximal
+friction force that can be added. This maximal force is added if the particles are flowing (if not, the friction force
+equals the driving forces) as described in :cite:`MaVi2003`.
 
 Entrainment force
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -650,15 +653,27 @@ Adding forces
 The different components are added following an operator splitting method.
 This means, the velocity of the particles are updated successively with the different forces.
 
+
+Artificial viscosity
+~~~~~~~~~~~~~~~~~~~~~
 If the viscosity option (``viscOption``) is set to 1, the artificial viscosity term is added first as described
 in :ref:`artificial-viscosity`.
 
+
+Entrainment
+~~~~~~~~~~~~~
 Then, the entrainment is taken into account by adding first the component representing the loss of momentum due to
 the need to accelerate the entrained mass (:math:`- \overline{u}_{k,i}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`) followed by adding the force due to the need to break and compact the
 entrained mass (:math:`F_{k,i}^{\text{ent}}`) as described in :ref:`entrainment-force`.
 
+
+Driving forces
+~~~~~~~~~~~~~~~~~~~~~
 The driving forces (gravity force and lateral forces) are then taken into account. The velocity is updated explicitly.
 
+
+Friction forces
+~~~~~~~~~~~~~~~~~~~~~
 Both the bottom friction and resistance forces act against the flow. There are two methods available to add these
 forces in com1DFA.
 An implicit method:
@@ -685,15 +700,15 @@ with:
 .. math::
   \|\mathbf{F}_{k}^{\text{fric}}\| \leq \|\mathbf{F}_{k}^{\text{fric}}\|_{max}
 
-If the velocity of the particle ``k`` reads :math:`\tilde{\mathbf{u}}_k` after adding the driving forces, adding the
+If the velocity of the particle ``k`` reads :math:`\mathbf{u}_k^{old}` after adding the driving forces, adding the
 fiction force leads to :
 
 .. math::
-  \mathbf{u}_{k} = \tilde{\mathbf{u}}_k (1 - \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|}{\|\tilde{\mathbf{u}}_k\|}),
+  \mathbf{u}_{k} = \mathbf{u}_k^{old} (1 - \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|}{\|\mathbf{u}^{old}_k\|}),
   \quad \|\mathbf{F}_{k}^{\text{fric}}\| = \|\mathbf{F}_{k}^{\text{fric}}\|_{max}
 
 
-at the condition that  :math:`1 \geq \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|_{max}}{\|\tilde{\mathbf{u}}_k\|}`.
-If on the contrary :math:`1 \leq \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|_{max}}{\|\tilde{\mathbf{u}}_k\|}`,
+at the condition that  :math:`1 \geq \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|_{max}}{\|\mathbf{u}^{old}_k\|}`.
+If on the contrary :math:`1 \leq \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|_{max}}{\|\mathbf{u}^{old}_k\|}`,
 the friction would change the velocity direction which is nonphysical. In this case, the particle will stop
 before the end of the time step. This allows the particles to start and stop flowing properly.
