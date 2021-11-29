@@ -99,7 +99,8 @@ Go back to :ref:`com1DFAAlgorithm:Algorithm graph`
 Time scheme and iterations:
 ------------------------------
 The mass and momentum equations described in :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche` are solved numerically
-in time using an operator splitting method. The different forces involved are sequently added to update the velocity.
+in time using an operator splitting method. The different forces involved are sequentially added to update the velocity
+(see :ref:`DFAnumerics:Adding forces`).
 Position is then updated using a centered Euler scheme.
 The time step can either be fixed or dynamically computed using the Courant–Friedrichs–Lewy (CFL) condition
 (in the second case one must set ``cflTimeStepping`` to ``True`` and set the desired CFL coefficient).
