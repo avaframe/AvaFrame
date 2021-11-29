@@ -21,12 +21,16 @@ We want to list a few things that are we strongly suggest to take into account w
 
 - For the :ref:`DFAnumerics:SPH gradient`, required to compute the lateral forces, the number of particles
   per cell has to be adjusted. If the *sphKernelRadius* (see first point) is decreased, the number of particles should
-  increase to ensure a reasonable estimate of the gradient. There are two options for setting the number of particles
+  increase to ensure a reasonable estimate of the gradient. There are three options for setting the number of particles
   which is computing from the mass per particle
   (*massPerParticleDeterminationMethod*; see :ref:`com1DFAAlgorithm:Initialize particles`):
 
   - With the default setup *MPPDH* (mass per particle through release thickness), the number of particles per cell is
     independent of the mesh cell size. So no adjustment is necessary.
+
+  - If *MPPKR* (mass per particles through number of particles per kernel radius) is chosen, the size of particles is
+    adjusted to get a constant number of particles within an *sphKernelRadius*. This ensures a reasonable amount of
+    particles for the gradient computation.
 
   - If *MPPDIR* (mass per particle set directly) is chosen, the number of particles per cell depends on the release snow
     mass within a cell. The number of particles is computed using the cell area and the release thickness. To ensure a
