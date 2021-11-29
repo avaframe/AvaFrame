@@ -654,26 +654,27 @@ The different components are added following an operator splitting method.
 This means, the velocity of the particles are updated successively with the different forces.
 
 
-Artificial viscosity
-~~~~~~~~~~~~~~~~~~~~~
+Adding artificial viscosity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 If the viscosity option (``viscOption``) is set to 1, the artificial viscosity term is added first as described
-in :ref:`artificial-viscosity`.
+in :ref:`DFAnumerics:Artificial viscosity`. With ``viscOption`` set to 0, no viscosity is added. Finally, if
+``viscOption`` is set to 2, the artificial viscosity is added together with computing the SPH force (add link to description)
 
 
-Entrainment
-~~~~~~~~~~~~~
+Adding entrainment
+~~~~~~~~~~~~~~~~~~~
 Then, the entrainment is taken into account by adding first the component representing the loss of momentum due to
 the need to accelerate the entrained mass (:math:`- \overline{u}_{k,i}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`) followed by adding the force due to the need to break and compact the
-entrained mass (:math:`F_{k,i}^{\text{ent}}`) as described in :ref:`entrainment-force`.
+entrained mass (:math:`F_{k,i}^{\text{ent}}`) as described in :ref:`DFAnumerics:Entrainment force`.
 
 
-Driving forces
-~~~~~~~~~~~~~~~~~~~~~
+Adding driving forces
+~~~~~~~~~~~~~~~~~~~~~~~~
 The driving forces (gravity force and lateral forces) are then taken into account. The velocity is updated explicitly.
 
 
-Friction forces
-~~~~~~~~~~~~~~~~~~~~~
+Adding friction forces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Both the bottom friction and resistance forces act against the flow. There are two methods available to add these
 forces in com1DFA.
 An implicit method:
