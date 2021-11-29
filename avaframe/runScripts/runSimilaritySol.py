@@ -25,7 +25,7 @@ logName = 'runSimilarityTest'
 
 # Load general configuration
 cfgMain = cfgUtils.getGeneralConfig()
-avalancheDir = 'data/avaSimilaritySol'
+avalancheDir = '../data/avaSimilaritySol'
 
 # Clean input directory(ies) of old work and output files
 initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)

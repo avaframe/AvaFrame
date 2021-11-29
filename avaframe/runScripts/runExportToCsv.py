@@ -3,19 +3,15 @@
 """
 
 # Load modules
-import time
 import os
 
 # Local imports
 from avaframe.com1DFAPy import com1DFA
-import avaframe.com1DFAPy.DFAtools as DFAtls
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in1Data.getInput as gI
-from avaframe.log2Report import generateReport as gR
-from avaframe.out1Peak import outPlotAllPeak as oP
-from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
+import avaframe.com1DFA.particleTools as particleTools
 
 # -----------Required settings-----------------
 # log file name; leave empty to use default runLog.log
@@ -32,7 +28,7 @@ avalancheDir = cfgMain['MAIN']['avalancheDir']
 log = logUtils.initiateLogger(avalancheDir, logName)
 
 # load particles and DEM Info
-particlesList, TimeStepInfo = com1DFA.readPartFromPickle(avalancheDir, flagAvaDir=True)
+particlesList, TimeStepInfo = particleTools.readPartFromPickle(avalancheDir, flagAvaDir=True)
 demInfo = gI.readDEM(avalancheDir)
 
 # save particle properties to csv
