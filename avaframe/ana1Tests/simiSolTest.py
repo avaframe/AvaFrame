@@ -25,6 +25,7 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
 import avaframe.in2Trans.shpConversion as shpConv
+import avaframe.com1DFA.particleTools as particleTools
 
 
 # create local logger
@@ -110,9 +111,9 @@ def mainSimilaritySol(simiSolCfg):
     # Set parameters
     Pi = math.pi
     gravAcc = cfgGen.getfloat('gravAcc')
-    zeta = planeinclinationAngleDeg * Pi /180       # plane inclination
-    delta = bedFrictionAngleDeg * Pi /180           # basal angle of friction
-    phi = internalFrictionAngleDeg * Pi /180        # internal angle of friction phi>delta
+    zeta = planeinclinationAngleDeg * Pi / 180       # plane inclination
+    delta = bedFrictionAngleDeg * Pi / 180           # basal angle of friction
+    phi = internalFrictionAngleDeg * Pi / 180        # internal angle of friction phi>delta
 
     # Dimensioning parameters
     U = np.sqrt(gravAcc*L_x)
@@ -674,7 +675,7 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
     for simHash, simDFrow in simDF.iterrows():
         simName = simDFrow['simName']
         # fetch the simulation results
-        particlesList, Tsave = com1DFA.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
+        particlesList, Tsave = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
         fieldsList, fieldHeader = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
         simDF.loc[simHash, 'nPart'] = particlesList[-1]['nPart']
         # analyze and compare results
