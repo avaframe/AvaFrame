@@ -1,6 +1,7 @@
 import pathlib
 import numpy as np
 import shapefile
+import math
 import matplotlib.pyplot as plt
 
 # Local imports
@@ -39,12 +40,17 @@ def getCom1DFAPath(particlesList, dem):
     yllc = header['yllcenter']
 
     proList = ['x', 'y', 'z', 's', 'sCor']
-    avaProfilePart = {'x': np.empty((0, 1)), 'y': np.empty((0, 1)), 'z': np.empty((0, 1)), 's': np.empty((0, 1)),
-                      'sCor': np.empty((0, 1)), 'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
-    avaProfileMass = {'x': np.empty((0, 1)), 'y': np.empty((0, 1)), 'z': np.empty((0, 1)), 's': np.empty((0, 1)),
-                      'sCor': np.empty((0, 1)), 'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
-    avaProfileKE = {'x': np.empty((0, 1)), 'y': np.empty((0, 1)), 'z': np.empty((0, 1)), 's': np.empty((0, 1)),
-                    'sCor': np.empty((0, 1)), 'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    avaProfilePart = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    avaProfileMass = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    avaProfileKE = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    for prop in proList:
+        avaProfilePart[prop] = np.empty((0, 1))
+        avaProfilePart[prop + 'std'] = np.empty((0, 1))
+        avaProfileMass[prop] = np.empty((0, 1))
+        avaProfileMass[prop + 'std'] = np.empty((0, 1))
+        avaProfileKE[prop] = np.empty((0, 1))
+        avaProfileKE[prop + 'std'] = np.empty((0, 1))
+
     # loop on each particle dictionary (ie each time step saved)
     for particles in particlesList:
         if particles['nPart'] > 0:
@@ -61,27 +67,35 @@ def getCom1DFAPath(particlesList, dem):
             if kineticEneSum > 0:
                 w = kineticEne
                 for prop in proList:
-                    avaProfileKE[prop] = np.append(avaProfileKE[prop], np.average(particles[prop], weights=w))
+                    avg, std = weighted_avg_and_std(particles[prop], w)
+                    avaProfileKE[prop] = np.append(avaProfileKE[prop], avg)
+                    avaProfileKE[prop + 'std'] = np.append(avaProfileKE[prop + 'std'], std)
                 avaProfileKE['v2'] = np.append(avaProfileKE['v2'], np.average(U2, weights=w))
                 avaProfileKE['ekin'] = np.append(avaProfileKE['ekin'], kineticEneSum)
             else:
                 w = m
                 for prop in proList:
-                    avaProfileKE[prop] = np.append(avaProfileKE[prop], np.average(particles[prop], weights=w))
+                    avg, std = weighted_avg_and_std(particles[prop], w)
+                    avaProfileKE[prop] = np.append(avaProfileKE[prop], avg)
+                    avaProfileKE[prop + 'std'] = np.append(avaProfileKE[prop + 'std'], std)
                 avaProfileKE['v2'] = np.append(avaProfileKE['v2'], np.average(U2, weights=w))
                 avaProfileKE['ekin'] = np.append(avaProfileKE['ekin'], kineticEneSum)
 
             # mass-averaged path
             w = m
             for prop in proList:
-                avaProfileMass[prop] = np.append(avaProfileMass[prop], np.average(particles[prop], weights=w))
+                avg, std = weighted_avg_and_std(particles[prop], w)
+                avaProfileMass[prop] = np.append(avaProfileMass[prop], avg)
+                avaProfileMass[prop + 'std'] = np.append(avaProfileMass[prop + 'std'], std)
             avaProfileMass['v2'] = np.append(avaProfileMass['v2'], np.average(U2, weights=w))
             avaProfileMass['ekin'] = np.append(avaProfileMass['ekin'], kineticEneSum)
 
             # particle-averaged path
             w = None
             for prop in proList:
-                avaProfilePart[prop] = np.append(avaProfilePart[prop], np.average(particles[prop], weights=w))
+                avg, std = weighted_avg_and_std(particles[prop], w)
+                avaProfilePart[prop] = np.append(avaProfilePart[prop], avg)
+                avaProfilePart[prop + 'std'] = np.append(avaProfilePart[prop + 'std'], std)
             avaProfilePart['v2'] = np.append(avaProfilePart['v2'], np.average(U2, weights=w))
             avaProfilePart['ekin'] = np.append(avaProfilePart['ekin'], kineticEneSum)
 
@@ -92,6 +106,18 @@ def getCom1DFAPath(particlesList, dem):
     avaProfileKE['x'] = avaProfileKE['x'] + xllc
     avaProfileKE['y'] = avaProfileKE['y'] + yllc
     return avaProfilePart, avaProfileMass, avaProfileKE
+
+
+def weighted_avg_and_std(values, weights):
+    """
+    Return the weighted average and standard deviation.
+
+    values, weights -- Numpy ndarrays with the same shape.
+    """
+    average = np.average(values, weights=weights)
+    # Fast and numerically precise:
+    variance = np.average((values-average)**2, weights=weights)
+    return (average, math.sqrt(variance))
 
 
 def extendCom1DFAPath(dem, particlesIni, avaProfilePart, avaProfileMass, avaProfileKE):
@@ -385,9 +411,15 @@ def plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTr
     cbar2.ax.set_ylabel('kinetische Energie [J]')
 
     ax2.plot(avaProfileMassNew['s'], avaProfileMassNew['z'], 'b-', label='Z_av(s_real)')
-    ax2.plot(avaProfileMassNew['sCor'], avaProfileMassNew['z'], 'b-.', label='Z_av(s_mod)')
-    ax2.plot(avaProfileMassNew['s'], avaProfileMassNew['z'], 'k-', label='Z_true(s_real)')
-    ax2.plot(avaProfileMassNew['sCor'], avaProfileMassNew['z'], 'k-.', label='Z_true(s_mod)')
+    # ax2.plot(avaProfileMassNew['s'], avaProfileMassNew['z'] + 2*avaProfileMassNew['zstd'], 'b:')
+    # ax2.plot(avaProfileMassNew['s'], avaProfileMassNew['z'] - 2*avaProfileMassNew['zstd'], 'b:')
+    # ax2.plot(avaProfileMassNew['s'] + 2*avaProfileMassNew['sstd'], avaProfileMassNew['z'], 'b--')
+    # ax2.plot(avaProfileMassNew['s'] - 2*avaProfileMassNew['sstd'], avaProfileMassNew['z'], 'b--')
+    ax2.plot(avaProfileMassNew['sCor'], avaProfileMassNew['z'], 'k-', label='Z_av(s_mod)')
+    # ax2.plot(avaProfileMassNew['sCor'], avaProfileMassNew['z'] + 2*avaProfileMassNew['zstd'], 'k:')
+    # ax2.plot(avaProfileMassNew['sCor'], avaProfileMassNew['z'] - 2*avaProfileMassNew['zstd'], 'k:')
+    # ax2.plot(avaProfileMassNew['sCor'] + 2*avaProfileMassNew['sstd'], avaProfileMassNew['z'], 'k--')
+    # ax2.plot(avaProfileMassNew['sCor'] - 2*avaProfileMassNew['sstd'], avaProfileMassNew['z'], 'k--')
     # ax2.plot(part_aimec[:, 3], z_aimec, 'k--', label='lin. extrapol. Lp_m_projZ')
     # ax2.plot(part_aimec[:, 3], part_aimec[:, 2], 'k-.', label='lin. extrapol. Lp_m')
     GK = avaProfileMassNew['sCor'][-1] * np.tan(alpha*np.pi/180)
