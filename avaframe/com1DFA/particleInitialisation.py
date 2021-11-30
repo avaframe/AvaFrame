@@ -50,6 +50,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
         """
 
     particles['iterate'] = True
+    particles['dt'] = cfg['GENERAL'].getfloat('dtIni')
     particlesList = [particles.copy()]
     countIterations = 0
     # load relRaster from buffered release line
@@ -67,8 +68,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
             cfg['GENERAL'].getint('sphOptionIni'), gradient=0)
 
         # update position as a result of SPH force and artifical viscosity
-        particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, cfg['GENERAL'].getfloat('dtIni'),
-            typeStop=1)
+        particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=1)
 
         particlesList.append(particles.copy())
 

@@ -999,7 +999,6 @@ def updateFieldsC(cfg, particles, dem, fields):
       MomBilinearX[indy, indx] = MomBilinearX[indy, indx] + m * ux * w[i]
       MomBilinearY[indy, indx] = MomBilinearY[indy, indx] + m * uy * w[i]
       MomBilinearZ[indy, indx] = MomBilinearZ[indy, indx] + m * uz * w[i]
-      # travelAngleField[indy, indx] = travelAngleField[indy, indx] + m * travelAngle * w[i])
 
   for i in range(ncols):
     for j in range(nrows):
@@ -1013,7 +1012,6 @@ def updateFieldsC(cfg, particles, dem, fields):
         VZBilinear[j, i] = MomBilinearZ[j, i]/m
         VBilinear[j, i] = norm(VXBilinear[j, i], VYBilinear[j, i], VZBilinear[j, i])
         PBilinear[j, i] = VBilinear[j, i] * VBilinear[j, i] * rho
-        # travelAngleField[j, i] = travelAngleField[j, i]/m
       if VBilinear[j, i] > PFV[j, i]:
         PFV[j, i] = VBilinear[j, i]
       if PBilinear[j, i] > PP[j, i]:

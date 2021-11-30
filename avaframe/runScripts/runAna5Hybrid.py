@@ -93,6 +93,7 @@ updater.read(hybridModelDFACfg)
 updater['GENERAL']['mu'].value = str(np.tan(np.radians(alpha)))
 updater.update_file()
 
+cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=hybridModelDFACfg)
 particlesList, fieldsList, tSaveList, _, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=hybridModelDFACfg)
 simID = simDF.index[0]
 avaProfilePartNew, avaProfileMassNew, avaProfileKENew = hybridTools.getCom1DFAPath(particlesList, demOri)
@@ -142,5 +143,5 @@ log.info("Running ana3AIMEC model on test case DEM: \n %s \n with profile: \n %s
          pathDict['demSource'], pathDict['profileLayer'])
 # Run AIMEC postprocessing
 rasterTransfo, newRasters, resAnalysis = ana3AIMEC.mainAIMEC(pathDict, cfgAIMEC)
-hybridTools.plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTransfo, resAnalysis, dem, demOri,
+hybridTools.plotHybridRes(avalancheDir, cfgDFA, resAB, resABNew, name, pathDict, simID, rasterTransfo, resAnalysis, dem, demOri,
                           particlesList, fieldsList, avaProfileMass, avaProfileMassNew)

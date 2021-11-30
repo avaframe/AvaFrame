@@ -123,7 +123,7 @@ def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h'):
     ----------
     particles: dict
         particles dictionary
-    ax: mathplotlib ax object
+    ax: matplotlib ax object
     dem: dict
         dem dictionary with normal information
     whatS: str
@@ -159,7 +159,7 @@ def addDem2Plot(ax, dem, what='slope'):
 
     Parameters
     ----------
-    ax: mathplotlib ax object
+    ax: matplotlib ax object
     dem: dict
         dem dictionary with normal information
     what: str
@@ -223,7 +223,7 @@ def addResult2Plot(ax, dem, rasterData, resType, colorbar=True):
 
     Parameters
     ----------
-    ax: mathplotlib ax object
+    ax: matplotlib ax object
     dem: dict
         dem dictionary with normal information
     rasterData: 2D numpy array

@@ -1414,11 +1414,11 @@ def computeTravelAngle(cfgGen, dem, particles, zPartArray0):
     parentID = particles['parentID']
     nPart = particles['nPart']
     # get z0
-    Z0 = zPartArray0[parentID.astype(int)]
+    z0 = zPartArray0[parentID.astype(int)]
     # compute tan of the travel angle
     nonZeroSInd = np.nonzero(particles['s'])
     tanGamma = np.zeros((nPart))
-    tanGamma[nonZeroSInd] = (Z0 - particles['z'])[nonZeroSInd] / (particles['s'][nonZeroSInd])
+    tanGamma[nonZeroSInd] = (z0 - particles['z'])[nonZeroSInd] / (particles['s'][nonZeroSInd])
     # get the travel angle
     gamma = np.degrees(np.arctan(tanGamma))
     particles['travelAngle'] = gamma
