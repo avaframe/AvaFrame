@@ -16,7 +16,7 @@ from matplotlib.image import NonUniformImage
 from matplotlib import pyplot as plt
 from matplotlib import colors as mplCol
 import logging
-from cmcrameri import cm as cmapCameri
+from cmcrameri import cm as cmapCrameri
 
 from avaframe.in3Utils import cfgUtils
 from avaframe.out3Plot import plotUtils
@@ -106,7 +106,7 @@ cmapViridis = copy.copy(matplotlib.cm.viridis)
 cmapViridis.set_bad(color='k')
 
 # divergent color map
-cmapdiv = cmapCameri.broc.copy()
+cmapdiv = cmapCrameri.broc.copy()
 
 # custom colomaps
 # cmap based on avaframe logo colors
@@ -124,36 +124,36 @@ cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list('cmapAvaframeCont', 
 levP = [1.0, 10.0, 25.0, 50.0]
 # Hawaii color map
 colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
-cmapP = copy.copy(cmapCameri.hawaii.reversed())
+cmapP = copy.copy(cmapCrameri.hawaii.reversed())
 
 # multi sequential colormap for flow depth
 levD = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
 # Lajolla color map
 colorsD = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
-cmapD = cmapCameri.lajolla.copy()
+cmapD = copy.copy(cmapCrameri.lajolla.copy())
 
 # multi sequential colormap for speed
 levS = [1, 5, 10, 15, 20, 25, 30]
 # Batflow color map
 colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
            '#201158']
-cmapS = copy.copy(cmapCameri.batlow.reversed())
+cmapS = copy.copy(cmapCrameri.batlow.reversed())
 
 # multi sequential colormap for Travel Angle
 levTA = [19, 20, 21, 22, 25, 30, 40]
 # Batflow color map
 colorsTA = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
            '#201158']
-cmapTA = cmapCameri.batlow.reversed()
+cmapTA = copy.copy(cmapCrameri.lapaz.reversed())
 
 # colormap used if no resType provided
-cmapNN = copy.copy(cmapCameri.imola.reversed())
+cmapNN = copy.copy(cmapCrameri.imola.reversed())
 
 # colormap for probabilities
 levProb = [0, 0.25, 0.50, 0.75, 1.]
 # lapaz color map
 colorsProb = ['#FEF1F1', '#B2AB96', '#5B8BA3', '#2D5393', '#1A0C64']
-cmapProbmap = copy.copy(cmapCameri.lapaz.reversed())
+cmapProbmap = copy.copy(cmapCrameri.lapaz.reversed())
 
 ###############################################
 # Set colormaps to use

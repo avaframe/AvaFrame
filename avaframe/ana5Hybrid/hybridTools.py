@@ -16,7 +16,7 @@ debug = False
 def getCom1DFAPath(particlesList, dem):
     """ compute part, mass and energy averaged path from particles
 
-    Also returns the averaged velocity ant kinetik energy associated
+    Also returns the averaged velocity ant kinetic energy associated
 
     Parameters
     -----------
@@ -347,7 +347,7 @@ def extendProfileBottom(dem, profile):
     return profile
 
 
-def plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTransfo, resAnalysis, dem, demOri,
+def plotHybridRes(avalancheDir, cfg, resAB, resABNew, name, pathDict, simID, rasterTransfo, resAnalysis, dem, demOri,
                   particlesList, fieldsList, avaProfileMass, avaProfileMassNew):
 
     headerOri = demOri['header']
@@ -378,7 +378,7 @@ def plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTr
     V2Path = avaProfileMassNew['v2']
     EkinPath = avaProfileMassNew['ekin']
 
-    g = 9.81
+    g = cfg['GENERAL'].getfloat('gravAcc')
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
     ax1 = outCom1DFA.addDem2Plot(ax1, dem, what='slope')
     ax1 = outCom1DFA.addResult2Plot(ax1, dem, fieldsList[-1]['pta'], 'pta')
@@ -390,7 +390,7 @@ def plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTr
     # ax1 = outCom1DFA.addParticles2Plot(particlesList[0], ax1, dem, whatS='h')
     ax1 = outCom1DFA.addParticles2Plot(particlesList[-1], ax1, dem, whatS='h')
     # set titel of output png
-    title = ('myTitle1')
+    title = ('ana5HybRasterPlot')
     ax1.legend(loc='lower left')
     plt.show()
     path = pathlib.Path(avalancheDir, 'Outputs')
@@ -441,7 +441,7 @@ def plotHybridRes(avalancheDir, resAB, resABNew, name, pathDict, simID, rasterTr
     ax2.legend(loc='lower left')
 
     # set titel of output png
-    title = ('myTitle')
+    title = ('ana5HybProfilePlot')
 
     plt.show()
     path = pathlib.Path(avalancheDir, 'Outputs')
