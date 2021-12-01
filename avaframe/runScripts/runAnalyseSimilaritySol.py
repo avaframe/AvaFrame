@@ -10,7 +10,6 @@
 """
 
 import pathlib
-import pickle
 import pandas as pd
 
 # Local imports
