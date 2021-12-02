@@ -19,9 +19,10 @@ logName = 'runAnaInfluenceTest'
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
+cfgDir = 'anaInfluenceTest'
 
 # Clean input directory of old work and output files from module
-initProj.cleanModuleFiles(avalancheDir, anaInfluenceTest)
+initProj.cleanModuleFiles(avalancheDir, com1DFA)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
@@ -30,5 +31,8 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # Load configuration for similarity solution test
 influenceTestCfg = pathlib.Path('anaInfluenceTest', 'anaInfluenceTestDFACfg.ini')
-DFACfg = cfgUtils.getModuleConfig(com1DFA, influenceTestCfg)
 ABCfg = cfgUtils.getModuleConfig(com2AB)
+
+# Run anaInfluenceTest -> have to decide if it returns a data frame or not
+#simDF = anaInfluenceTest.mainAnaInfluenceTest(avalancheDir, cfgMain, DFACfg, ABCfg)
+anaInfluenceTest.mainAnaInfluenceTest(avalancheDir, cfgMain, influenceTestCfg, ABCfg)
