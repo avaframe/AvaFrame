@@ -331,6 +331,9 @@ def quickPlotSimple(avaDir, inputDir, cfg):
         figure 2: plot cross and longprofiles for both datasets (ny_loc and nx_loc define location of profiles)
         -plots are saved to Outputs/out3Plot
 
+        Be aware: files are being sorted after getting them from the directory! 
+        (Important for the differences)
+
         Parameters
         ----------
         avaDir : str or pathlib path
@@ -351,14 +354,13 @@ def quickPlotSimple(avaDir, inputDir, cfg):
 
     # Load input datasets from input directory
     inputDir = fU.checkPathlib(inputDir)
-    datafiles = list(inputDir.glob('*.asc'))
+    datafiles = sorted(list(inputDir.glob('*.asc')))
     datafiles.extend(list(inputDir.glob('*.txt')))
 
     name1 = datafiles[0].name
     name2 = datafiles[1].name
     log.info('input dataset #1 is %s' % name1)
     log.info('input dataset #2 is %s' % name2)
-    print('this is name1 and name2', name1, name2)
 
     # Load data
     raster = IOf.readRaster(datafiles[0], noDataToNan=True)
