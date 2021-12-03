@@ -14,6 +14,7 @@ import pickle
 from datetime import datetime
 import matplotlib.path as mpltPath
 from itertools import product
+from shapely.geometry import Polygon
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
@@ -34,6 +35,7 @@ import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in1Data import getInput as gI
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
+from avaframe.com1DFA import particleInitialisation as pI
 
 #######################################
 # Set flags here
@@ -129,7 +131,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
             # export for visulation
             if cfg['VISUALISATION'].getboolean('writePartToCSV'):
                 outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
-                com1DFA.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+                particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
             # create hash to check if config didnt change
             simHashFinal = cfgUtils.cfgHash(cfgFinal)
@@ -191,6 +193,10 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
 
     # create required input from files
     demOri, inputSimLines = prepareInputData(inputSimFiles)
+
+    if cfgGen.getboolean('iniStep'):
+        # append buffered release Area
+        inputSimLines = pI.createReleaseBuffer(cfg, inputSimLines)
 
     # find out which simulations to perform
     relName, inputSimLines, badName = prepareReleaseEntrainment(cfg, inputSimFiles['releaseScenario'], inputSimLines)
@@ -276,6 +282,11 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
     releaseLine = setThickness(cfg, inputSimLines['releaseLine'], 'useRelThFromIni', 'relTh')
     inputSimLines['releaseLine'] = releaseLine
     log.debug('Release area scenario: %s - perform simulations' % (relName))
+
+    if cfg['GENERAL'].getboolean('iniStep'):
+        # set release thickness for buffer
+        releaseLineBuffer = setThickness(cfg, inputSimLines['releaseLineBuffer'], 'useRelThFromIni', 'relTh')
+        inputSimLines['releaseLineBuffer'] = releaseLineBuffer
 
     if cfg.getboolean('GENERAL', 'secRelArea'):
         if entResInfo['flagSecondaryRelease'] == 'No':
@@ -591,6 +602,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     inputSimLines : dict
         releaseLine : dict
             release line dictionary
+        releaseLineBuffer: dict
+            release line buffer dictionary - optional if iniStep True
         secondaryReleaseLine : dict
             secondary release line dictionary
         entLine : dict
@@ -625,9 +638,26 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     # ------------------------
     log.debug('Initializing main release area')
     # process release info to get it as a raster
-    releaseLine = inputSimLines['releaseLine']
-    # check if release features overlap between features
-    prepareArea(releaseLine, demOri, thresholdPointInPoly, combine=True, checkOverlap=True)
+    if cfg['GENERAL'].getboolean('iniStep'):
+        releaseLine = inputSimLines['releaseLineBuffer']
+        releaseLineReal = inputSimLines['releaseLine']
+        # check if release features overlap between features
+        prepareArea(releaseLineReal, demOri, thresholdPointInPoly, combine=True, checkOverlap=True)
+        buffer1 = cfg['GENERAL'].getfloat('sphKernelRadius') * cfg['GENERAL'].getfloat('additionallyFixedFactor') * cfg['GENERAL'].getfloat('bufferZoneFactor')
+        if len(relThField) == 0:
+            # if no release thickness field or function - set release according to shapefile or ini file
+            # this is a list of release rasters that we want to combine
+            releaseLineReal = prepareArea(releaseLineReal, demOri, buffer1, thList=releaseLineReal['thickness'],
+                combine=True, checkOverlap=False)
+        else:
+            # if relTh provided - set release thickness with field or function
+            releaseLineReal = prepareArea(releaseLineReal, demOri, buffer1, combine=True, checkOverlap=False)
+
+    else:
+        releaseLine = inputSimLines['releaseLine']
+        # check if release features overlap between features
+        prepareArea(releaseLine, demOri, thresholdPointInPoly, combine=True, checkOverlap=True)
+
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
@@ -651,8 +681,16 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     # initialize simulation
     # create primary release area particles and fields
     releaseLine['header'] = demOri['header']
-    particles = initializeParticles(cfgGen, releaseLine, dem, logName=logName, relThField=relThField)
+    inputSimLines['releaseLine']['header'] = demOri['header']
+    particles = initializeParticles(cfgGen, releaseLine, dem, inputSimLines=inputSimLines, logName=logName, relThField=relThField)
     particles, fields = initializeFields(cfgGen, dem, particles)
+
+    # perform initialisation step for redistributing particles
+    if cfg['GENERAL'].getboolean('iniStep'):
+        startTimeIni = time.time()
+        particles, fields = pI.getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField)
+        tIni = time.time() - startTimeIni
+        log.debug('time needed for initialisation %.2f' % tIni)
 
     # ------------------------
     # process secondary release info to get it as a list of rasters
@@ -704,7 +742,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     return particles, fields, dem, reportAreaInfo
 
 
-def initializeParticles(cfg, releaseLine, dem, logName='', relThField=''):
+def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', relThField=''):
     """ Initialize DFA simulation
 
     Create particles and fields dictionary according to config parameters
@@ -714,10 +752,12 @@ def initializeParticles(cfg, releaseLine, dem, logName='', relThField=''):
     ----------
     cfg: configparser
         configuration for DFA simulation
-    relRaster: 2D numpy array
-        release depth raster
+    releaseLine: dict
+        dictionary with info on release
     dem : dict
         dictionary with dem information
+    inputSimLines: dictionary
+        info on input files; real releaseline info required for iniStep
     relThField: 2D numpy array
         if the release depth is not uniform, give here the releaseRaster
 
@@ -757,8 +797,18 @@ def initializeParticles(cfg, releaseLine, dem, logName='', relThField=''):
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)
     # find all non empty cells (meaning release area)
     indRelY, indRelX = np.nonzero(relRasterMask)
+    if inputSimLines != '':
+        indRelYReal, indRelXReal = np.nonzero(inputSimLines['releaseLine']['rasterData'])
+    else:
+        indRelYReal, indRelXReal = np.nonzero(relRaster)
+    iReal = list(zip(indRelYReal, indRelXReal))
+
     # make option available to read initial particle distribution from file
     if cfg.getboolean('initialiseParticlesFromFile'):
+        if cfg.getboolean('iniStep'):
+            message = 'If initialiseParticlesFromFile is used, iniStep cannot be performed - chose only one option'
+            log.error(message)
+            raise AssertionError(message)
         particles, hPartArray = particleTools.initialiseParticlesFromFile(cfg, avaDir)
     else:
         # initialize random generator
@@ -770,6 +820,11 @@ def initializeParticles(cfg, releaseLine, dem, logName='', relThField=''):
         mPartArray = np.empty(0)
         aPartArray = np.empty(0)
         hPartArray = np.empty(0)
+        idFixed = np.empty(0)
+        if len(relThField) != 0 and cfg.getboolean('iniStep'):
+            # set release thickness to a constant value for initialisation
+            relRaster = np.where(relRaster > 0., cfg.getfloat('relTh'), 0.)
+            log.warning('relThField!= 0, but relRaster set to relTh value (from ini) here so that uniform number of particles created')
         # loop on non empty cells
         for indRelx, indRely in zip(indRelX, indRelY):
             # compute number of particles for this cell
@@ -784,6 +839,10 @@ def initializeParticles(cfg, releaseLine, dem, logName='', relThField=''):
             yPartArray = np.append(yPartArray, yPart)
             mPartArray = np.append(mPartArray, mPart * np.ones(n))
             aPartArray = np.append(aPartArray, aPart * np.ones(n))
+            if (indRely, indRelx) in iReal:
+                idFixed = np.append(idFixed, np.zeros(n))
+            else:
+                idFixed = np.append(idFixed, np.ones(n))
 
         hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
@@ -801,6 +860,7 @@ def initializeParticles(cfg, releaseLine, dem, logName='', relThField=''):
         # adding z component
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         particles['m'] = mPartArray
+        particles['idFixed'] = idFixed
 
     particles['massPerPart'] = massPerPart
     particles['mTot'] = np.sum(particles['m'])
@@ -813,13 +873,15 @@ def initializeParticles(cfg, releaseLine, dem, logName='', relThField=''):
     particles['kineticEne'] = kineticEne
     particles['potentialEne'] = np.sum(gravAcc * mPartArray * particles['z'])
     particles['peakKinEne'] = kineticEne
+    particles['peakForceSPH'] = 0.0
+    particles['forceSPHIni'] = 0.0
     particles['peakMassFlowing'] = 0
     particles['simName'] = logName
     particles['xllcenter'] = dem['originOri']['xllcenter']
     particles['yllcenter'] = dem['originOri']['yllcenter']
 
     # remove particles that might lay outside of the release polygon
-    if not cfg.getboolean('initialiseParticlesFromFile'):
+    if not cfg.getboolean('iniStep') and not cfg.getboolean('initialiseParticlesFromFile'):
         particles = checkParticlesInRelease(particles, releaseLine, cfg.getfloat('thresholdPointInPoly'))
 
     # add a particles ID:
@@ -1068,8 +1130,7 @@ def DFAIterate(cfg, particles, fields, dem):
     Tcpu['nSave'] = nSave
     nIter = 1
     nIter0 = 1
-    iterate = True
-    particles['iterate'] = iterate
+    particles['iterate'] = True
     t = particles['t']
     log.debug('Saving results for time step t = %f s', t)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
@@ -1086,7 +1147,7 @@ def DFAIterate(cfg, particles, fields, dem):
     t = t + dt
 
     # Start time step computation
-    while t <= tEnd*(1.+1.e-13) and iterate:
+    while t <= tEnd*(1.+1.e-13) and particles['iterate']:
         startTime = time.time()
         log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
@@ -1094,7 +1155,6 @@ def DFAIterate(cfg, particles, fields, dem):
 
         Tcpu['nSave'] = nSave
         particles['t'] = t
-        iterate = particles['iterate']
 
         # write mass balance info
         massEntrained.append(particles['massEntrained'])
@@ -1272,7 +1332,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
         force['forceSPHZ'] = np.zeros(np.shape(force['forceZ']))
     else:
         log.debug('Compute Force SPH C')
-        particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, gradient=0)
+        particles, force = DFAfunC.computeForceSPHC(cfg, particles, force, dem, cfg.getint('sphOption'), gradient=0)
     tcpuForceSPH = time.time() - startTime
     Tcpu['ForceSPH'] = Tcpu['ForceSPH'] + tcpuForceSPH
 
@@ -1280,7 +1340,7 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     startTime = time.time()
     # particles = updatePosition(cfg, particles, dem, force)
     log.debug('Update position C')
-    particles = DFAfunC.updatePositionC(cfg, particles, dem, force, dt)
+    particles = DFAfunC.updatePositionC(cfg, particles, dem, force, dt, typeStop=0)
     tcpuPos = time.time() - startTime
     Tcpu['Pos'] = Tcpu['Pos'] + tcpuPos
 

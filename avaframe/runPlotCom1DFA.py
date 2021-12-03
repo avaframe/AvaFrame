@@ -5,13 +5,13 @@
 import pathlib
 
 # Local imports
-import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com1DFA import com1DFA
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.out3Plot.outCom1DFA as outCom1DFA
 from avaframe.in1Data import getInput as gI
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.com1DFA.particleTools as particleTools
 
 
 """ run com1DFA module """
@@ -33,7 +33,7 @@ cfg = cfgUtils.getModuleConfig(com1DFA)
 # Create output and work directories
 outputDir = pathlib.Path(avalancheDir, 'Outputs', modName)
 inDirPart = outputDir / 'particles'
-particlesList, timeStepInfo = com1DFA.readPartFromPickle(inDirPart)
+particlesList, timeStepInfo = particleTools.readPartFromPickle(inDirPart)
 demFile = gI.getDEMPath(avalancheDir)
 demOri = IOf.readRaster(demFile, noDataToNan=True)
 cfgGen = cfg['GENERAL']
