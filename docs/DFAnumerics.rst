@@ -519,8 +519,8 @@ Where the velocity difference reads :math:`\mathbf{du}_k = \mathbf{u}_k - \mathb
 (:math:`\mathbf{\bar{u}}` is the mesh velocity interpolated at the particle position).
 :math:`C_{Lat}` is a coefficient that rules the viscous force. It would be the
 equivalent of :math:`C_{Drag}` in the case of the drag force. The :math:`C_{Lat}`
-is a numerical parameter that depends on the mesh size. Its value is set to 100
-and should be discussed and further tested.
+is a numerical parameter that depends on the mesh size. Its value is set in the configuration (``subgridMixingFactor``) to 100
+by default (ToDo: and should be discussed and further tested).
 
 Adding the viscous force
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -610,9 +610,9 @@ is a function of the average flow depth :math:`\overline{h}_{k}`):
     = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{k}\|^2\,\frac{\overline{u}_{k,i}}{|\overline{\mathbf{u}}_{k}\|}
     :label: resistance force
 
-Both the bottom friction and added resistance force are friction forces. The expression above represent the maximal
-friction force that can be added. This maximal force is added if the particles are flowing (if not, the friction force
-equals the driving forces) as described in :cite:`MaVi2003`.
+Both the bottom friction and resistance force are friction forces. The expression above represent the maximal
+friction force that can be added. This maximal force is added if the particles are flowing. If not, the friction force
+equals the driving forces. See :cite:`MaVi2003` for more information.
 
 Entrainment force
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -651,47 +651,48 @@ Finaly, the entrainment force reads:
 Adding forces
 --------------
 The different components are added following an operator splitting method.
-This means, the velocity of the particles are updated successively with the different forces.
+This means particle velocities are updated successively with the different forces.
 
 
 Adding artificial viscosity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-If the viscosity option (``viscOption``) is set to 1, the artificial viscosity term is added first as described
-in :ref:`DFAnumerics:Artificial viscosity`. With ``viscOption`` set to 0, no viscosity is added. Finally, if
-``viscOption`` is set to 2, the artificial viscosity is added together with computing the SPH force (add link to description)
-
+If the viscosity option (``viscOption``) is set to 1, artificial viscosity is added first, as described
+in :ref:`DFAnumerics:Artificial viscosity` (this is the default option). With ``viscOption`` set to 0, no viscosity is added. Finally, if
+``viscOption`` is set to 2, artificial viscosity is added during SPH force computation. (TODO add link to description)
 
 Adding entrainment
 ~~~~~~~~~~~~~~~~~~~
-Then, the entrainment is taken into account by adding first the component representing the loss of momentum due to
-the need to accelerate the entrained mass (:math:`- \overline{u}_{k,i}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`) followed by adding the force due to the need to break and compact the
+Entrainment is taken into account by first adding the component representing the loss of momentum due to
+acceleration of the entrained mass :math:`- \overline{u}_{k,i}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`.
+Second by adding the force due to the need to break and compact the
 entrained mass (:math:`F_{k,i}^{\text{ent}}`) as described in :ref:`DFAnumerics:Entrainment force`.
 
 
 Adding driving forces
 ~~~~~~~~~~~~~~~~~~~~~~~~
-The driving forces (gravity force and lateral forces) are then taken into account. The velocity is updated explicitly.
+The driving forces -gravity force and lateral forces- are taken into account next. The velocity is updated explicitly.
 
 
 Adding friction forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Both the bottom friction and resistance forces act against the flow. There are two methods available to add these
+Both the bottom friction and resistance forces act against the flow. Two methods are available to add these
 forces in com1DFA.
 An implicit method:
 
 .. math::
   \mathbf{u}_k^{new} = \frac{\mathbf{u}_k^{old}}{1 + \frac{C_{k}^{\text{fric}}\Delta t}{m_k}}
 
-where :math:`F_{k,i}^{\text{fric}} = C_{k}^{\text{fric}} u_{k,i}^{new} = F_{k,i}^{\text{res}} + F_{k,i}^{\text{bot}}`.
+where :math:`F_{k,i}^{\text{fric}} = C_{k}^{\text{fric}} u_{k,i}^{new} = F_{k,i}^{\text{res}} + F_{k,i}^{\text{bot}}`
+(the two forces are discribed in :ref:`DFAnumerics:Bottom friction force` and :ref:`DFAnumerics:Added resistance force`).
 
 This implicit method has a few draw-backs. First the flow does not start properly if the
 friction angle :math:`\delta` is too close to the slope angle. Second, the flow never properly stops, even if the
-particles physically should (particles keep oscillating back and force around their end position).
+particles physically should, i.e. particles keep oscillating back and force around their end position.
 
-The method based on :cite:`MaVi2003` should address these two issues.
-The idea is that the friction forces only modify the magnitude of velocity, not the direction (dissipation, the friction
-force can not become a driving force). Moreover, the magnitude of the friction force depends on the state of the
-particle (if it is flowing or at rest).
+The method based on :cite:`MaVi2003` addresses these two issues.
+The idea is that the friction forces only modify the magnitude of velocity and not the direction. This means dissipation,
+so the friction force can not become a driving force. Moreover, the friction force magnitude depends on the particle state,
+i.e. if it is flowing or at rest.
 The friction force is expressed:
 
 .. math::
