@@ -753,6 +753,7 @@ def updatePositionC(cfg, particles, dem, force, typeStop=0):
       uyArrayNew[j] = uy
       uzArrayNew[j] = uz
       sNewArray[j] = s
+      sCorNewArray[j] = s
       mNewArray[j] = m
     else:
       # idfixed = 0 particles belong to the actual releae area
@@ -763,6 +764,7 @@ def updatePositionC(cfg, particles, dem, force, typeStop=0):
       uyArrayNew[j] = uyNew
       uzArrayNew[j] = uzNew
       sNewArray[j] = sNew
+      sCorNewArray[j] = sCorNew
       mNewArray[j] = mNew
 
   particles['ux'] = np.asarray(uxArrayNew)

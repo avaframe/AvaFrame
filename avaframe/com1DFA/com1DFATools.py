@@ -5,13 +5,18 @@
 # Load modules
 import logging
 import math
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Local imports
-
+import avaframe.com1DFA.DFAtools as DFAtls
+from avaframe.in3Utils import geoTrans
+import avaframe.out3Plot.plotUtils as pU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
+debug = False
 
 
 def getPartInitMethod(cfg, csz):
@@ -53,3 +58,202 @@ def getPartInitMethod(cfg, csz):
         massPerPart = rho * math.pi * ds * ds * relTh / nPPK
 
     return massPerPart, nPPK
+
+
+def extendCom1DFAPath(cfg, dem, particlesIni, avaProfile):
+    """ extend the DFA path at the top and bottom
+    Only returns the x, y, z path (if an s or sCor was provided..., it is removed)
+
+    Parameters
+    -----------
+    dem: dict
+        dem dict
+    particlesIni: dict
+        initial particles dict
+    avaProfileExt: dict
+        profile
+
+    Returns
+    --------
+    avaProfile: dict
+        extended profile
+    """
+    avaProfileExt = {key: avaProfile[key] for key in ['x', 'y', 'z']}
+    # resample the profile
+    resampleDistance = cfg.getfloat('PATH', 'nCellsResample') * dem['header']['cellsize']
+    avaProfileExt, _ = geoTrans.prepareLine(dem, avaProfileExt, distance=resampleDistance, Point=None)
+    avaProfileExt = extendProfileTop(cfg, dem, particlesIni, avaProfileExt)
+    avaProfileExt = extendProfileBottom(cfg, dem, avaProfileExt)
+    avaProfileExt, _ = geoTrans.prepareLine(dem, avaProfileExt, distance=resampleDistance, Point=None)
+    # remove points that lay outside of the dem# project the profile on the dem
+    avaProfileExt, _ = geoTrans.projectOnRaster(dem, avaProfileExt, interp='bilinear')
+    isNotNan = ~(np.isnan(avaProfileExt['z']))
+    avaProfileExt['x'] = avaProfileExt['x'][isNotNan]
+    avaProfileExt['y'] = avaProfileExt['y'][isNotNan]
+    avaProfileExt['z'] = avaProfileExt['z'][isNotNan]
+    return avaProfileExt
+
+
+def extendProfileTop(cfg, dem, particlesIni, profile):
+    """ extend the DFA path at the top
+
+    Find the direction in which to extend considerind the first point of the profile
+    and a few following ones (distFromFirt <= 30 * csz). Extend in this diretion until
+    the z of the highest particle in the release is reached.
+
+    Parameters
+    -----------
+    dem: dict
+        dem dict
+    particlesIni: dict
+        initial particles dict
+    profile: dict
+        profile to extend
+
+    Returns
+    --------
+    profile: dict
+        extended profile
+    """
+    header = dem['header']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
+    zRaster = dem['rasterData']
+    # get highest particle
+    indHighest = np.argmax(particlesIni['z'])
+    xHighest = particlesIni['x'][indHighest] + xllc
+    yHighest = particlesIni['y'][indHighest] + yllc
+    zHighest = particlesIni['z'][indHighest]
+    # get first particle of the path
+    xFirst = profile['x'][0]
+    yFirst = profile['y'][0]
+    zFirst = profile['z'][0]
+    if cfg.getint('PATH', 'extTopOption') == 1:
+        # compute distance from first point:
+        r = DFAtls.norm(profile['x']-xFirst, profile['y']-yFirst, profile['z']-zFirst)
+        # find the following first points
+        extendMinDistance = cfg.getfloat('PATH', 'nCellsMinExtend') * csz
+        extendMaxDistance = cfg.getfloat('PATH', 'nCellsMaxExtend') * csz
+        pointsOfInterestFirst = np.where((r < extendMaxDistance) & (r > extendMinDistance))[0]
+        xInterest = profile['x'][pointsOfInterestFirst]
+        yInterest = profile['y'][pointsOfInterestFirst]
+        zInterest = profile['z'][pointsOfInterestFirst]
+        # find the direction in which we need to extend the path
+        vDirX = xInterest - xFirst
+        vDirY = yInterest - yFirst
+        vDirZ = zInterest - zFirst
+        vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
+        vDirX = np.sum(vDirX)
+        vDirY = np.sum(vDirY)
+        vDirZ = np.sum(vDirZ)
+        vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
+        # find the point in this direction that has the same z as the highest particle
+        xExtTop, yExtTop, zExtTop = geoTrans.findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst)
+        zExtTop, _ = geoTrans.projectOnGrid(xExtTop, yExtTop, zRaster, csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')
+    else:
+        xExtTop = xHighest
+        yExtTop = yHighest
+        zExtTop = zHighest
+    # extend profile
+    profile['x'] = np.append(xExtTop, profile['x'])
+    profile['y'] = np.append(yExtTop, profile['y'])
+    profile['z'] = np.append(zExtTop, profile['z'])
+
+    if debug:
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        ax.set_title('Extend path towards the top')
+        ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.c', label='particles at t=0s')
+        ax.plot(xHighest, yHighest, '.r', label='highest particle at t=0s')
+        ax.plot(profile['x'][1:], profile['y'][1:], '.k', label='mass averaged path')
+        if cfg.getint('PATH', 'extTopOption') == 1:
+            ax.plot(xInterest[1:], yInterest[1:], '.m', markersize=10, label='points considered to find drection')
+        ax.plot(xFirst, yFirst, '.b', markersize=10, label='top point of the mass averaged path')
+        ax.plot(profile['x'][0], profile['y'][0], '.g', label='point at the same hight as the highest point in the release \n and in the extention direction')
+        ax.plot(profile['x'][0:2], profile['y'][0:2], 'k--', label='extended path')
+        plt.legend()
+
+        fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+        ax1.set_title('Extend path towards the top')
+        ax1.plot(particlesIni['x'] + xllc, particlesIni['z'], '.c', label='particles at t=0s')
+        ax1.plot(xHighest, zHighest, '.r', label='highest particle at t=0s')
+        ax1.plot(profile['x'][1:], profile['z'][1:], '.k', label='mass averaged path')
+        if cfg.getint('PATH', 'extTopOption') == 1:
+            ax1.plot(xInterest[1:], zInterest[1:], '.m', markersize=10, label='points considered to find drection')
+        ax1.plot(xFirst, zFirst, '.b', markersize=10, label='top point of the mass averaged path')
+        ax1.plot(profile['x'][0], profile['z'][0], '.g', label='point at the same hight as the highest point in the release \n and in the extention direction')
+        ax1.plot(profile['x'][0:2], profile['z'][0:2], 'k--', label='extended path')
+        plt.legend()
+        plt.show()
+    return profile
+
+
+def extendProfileBottom(cfg, dem, profile):
+    """ extend the DFA path at the bottom
+
+    Find the direction in which to extend considerind the last point of the profile
+    and a few previous ones but discardings the one that are too close ( 2* csz < distFromLast <= 30 * csz).
+    Extend in this diretion for a distance 0.2 * length of the path.
+
+    Parameters
+    -----------
+    dem: dict
+        dem dict
+    profile: dict
+        profile to extend
+
+    Returns
+    --------
+    profile: dict
+        extended profile
+    """
+    header = dem['header']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
+    zRaster = dem['rasterData']
+    # get last point
+    xLast = profile['x'][-1]
+    yLast = profile['y'][-1]
+    zLast = profile['z'][-1]
+    sLast = profile['s'][-1]
+    # compute distance from last point:
+    r = DFAtls.norm(profile['x']-xLast, profile['y']-yLast, profile['z']-zLast)
+    # find the previous points
+    extendMinDistance = cfg.getfloat('PATH', 'nCellsMinExtend') * csz
+    extendMaxDistance = cfg.getfloat('PATH', 'nCellsMaxExtend') * csz
+    pointsOfInterestLast = np.where((r < extendMaxDistance) & (r > extendMinDistance))[0]
+    xInterest = profile['x'][pointsOfInterestLast]
+    yInterest = profile['y'][pointsOfInterestLast]
+    zInterest = profile['z'][pointsOfInterestLast]
+    # find the direction in which we need to extend the path
+    vDirX = xLast - xInterest
+    vDirY = yLast - yInterest
+    vDirZ = zLast - zInterest
+    vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
+    vDirX = np.sum(vDirX)
+    vDirY = np.sum(vDirY)
+    vDirZ = np.sum(vDirZ)
+    vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
+    # extend in this direction
+    gamma = 0.2 * sLast / np.sqrt(vDirX**2 + vDirY**2)
+    xExtBottom = np.array([xLast + gamma * vDirX])
+    yExtBottom = np.array([yLast + gamma * vDirY])
+    # project on cszDEM
+    zExtBottom, _ = geoTrans.projectOnGrid(xExtBottom, yExtBottom, zRaster, csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')
+    # extend profile
+    profile['x'] = np.append(profile['x'], xExtBottom)
+    profile['y'] = np.append(profile['y'], yExtBottom)
+    profile['z'] = np.append(profile['z'], zExtBottom)
+
+    if debug:
+        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
+        ax.set_title('Extend path towards the bottom')
+        ax.plot(profile['x'][:-1], profile['y'][:-1], '.k', label='mass averaged path')
+        ax.plot(xInterest, yInterest, '.m', markersize=10, label='points considered to find drection')
+        ax.plot(xLast, yLast, '.b', markersize=10, label='bottom point of the mass averaged path')
+        ax.plot(profile['x'][0], profile['y'][0], '.g', label='point in the extention direction at distance \n 0.2 x path length from the bottom point')
+        ax.plot(profile['x'][-2:], profile['y'][-2:], 'k--', label='extended path')
+        plt.legend()
+        plt.show()
+    return profile

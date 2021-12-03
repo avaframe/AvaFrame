@@ -149,12 +149,12 @@ def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h'):
         variableS = pU.ms
     cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(variableC), np.nanmax(variableC), continuous=pU.contCmap)
     # set range and steps of colormap
-    sc = ax.scatter(X, Y, c=variableC, cmap=cmap, marker='.')
+    sc = ax.scatter(X, Y, c=variableC, cmap=cmap, marker='.', zorder=15)
     pU.addColorBar(sc, ax, ticks, 'm')
     return ax
 
 
-def addDem2Plot(ax, dem, what='slope'):
+def addDem2Plot(ax, dem, what='slope', extent=''):
     """ Add dem to the background of a plot
 
     Parameters
@@ -184,13 +184,14 @@ def addDem2Plot(ax, dem, what='slope'):
         value = dem['rasterData']
     else:
         value = dem['rasterData']
+    if extent == '':
+        extent = [xArray.min(), xArray.max(), yArray.min(), yArray.max()]
 
     ref0, im = pU.NonUnifIm(ax, xArray, yArray, value, 'x [m]', 'y [m]',
                             # extent=[2400, 2700, YY.min(), YY.max()],
-                            extent=[xArray.min(), xArray.max(),
-                                    yArray.min(), yArray.max()],
-                            cmap=cmap, norm=None)
-    ax.contour(xArray, yArray, dem['rasterData'], levels=10, colors='k')
+                            extent=extent,
+                            cmap=cmap, norm=None, zorder=0)
+    ax.contour(xArray, yArray, dem['rasterData'], levels=10, colors='k', zorder=1)
     return ax
 
 
@@ -234,28 +235,29 @@ def addResult2Plot(ax, dem, rasterData, resType, colorbar=True):
         If true add the colorbar
     """
     header = dem['header']
-    ncols = header['ncols']
-    nrows = header['nrows']
     xllc = header['xllcenter']
     yllc = header['yllcenter']
     csz = header['cellsize']
-    xArray = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
-    yArray = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+
+    rowsMin, rowsMax, colsMin, colsMax, rasterData = pU.constrainPlotsToData(rasterData, csz, extentOption=False, constrainedData=True)
+
+    xArray = np.linspace(xllc+colsMin*csz, xllc+colsMax*csz, colsMax-colsMin+1)
+    yArray = np.linspace(yllc+rowsMin*csz, yllc+rowsMax*csz, rowsMax-rowsMin+1)
+    extent = [xArray.min(), xArray.max(), yArray.min(), yArray.max()]
     unit = pU.cfgPlotUtils['unit%s' % resType]
     contourLevels = pU.cfgPlotUtils['contourLevels%s' % resType]
     contourLevels = fU.splitIniValueToArraySteps(contourLevels)
     cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin(rasterData), np.nanmax(rasterData),
                                            continuous=pU.contCmap)
-    cmap.set_bad(color='white')
+    cmap.set_bad(color='white', alpha=0)
     rasterData = np.ma.masked_where(rasterData == 0, rasterData)
 
     ref0, im = pU.NonUnifIm(ax, xArray, yArray, rasterData, 'x [m]', 'y [m]',
                             # extent=[2400, 2700, YY.min(), YY.max()],
-                            extent=[xArray.min(), xArray.max(),
-                                    yArray.min(), yArray.max()],
-                            cmap=cmap, norm=None)
+                            extent=extent,
+                            cmap=cmap, norm=None, zorder=9)
     CS = ax.contour(xArray, yArray, rasterData, levels=contourLevels, colors='k')
-    ax.clabel(CS, inline=1, fontsize=8)
+    ax.clabel(CS, inline=1, fontsize=8, zorder=10)
     if colorbar:
         pU.addColorBar(im, ax, ticks, unit)
-    return ax
+    return ax, extent
