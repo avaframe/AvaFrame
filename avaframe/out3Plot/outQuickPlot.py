@@ -358,6 +358,7 @@ def quickPlotSimple(avaDir, inputDir, cfg):
     name2 = datafiles[1].name
     log.info('input dataset #1 is %s' % name1)
     log.info('input dataset #2 is %s' % name2)
+    print('this is name1 and name2', name1, name2)
 
     # Load data
     raster = IOf.readRaster(datafiles[0], noDataToNan=True)
