@@ -14,7 +14,9 @@ import logging
 # local imports
 from avaframe.in3Utils import cfgUtils
 from avaframe.in1Data import getInput as gI
+from avaframe.out3Plot import outAB
 import avaframe.com1DFA.com1DFA as com1DFA
+import avaframe.com2AB.com2AB as com2AB
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.ana3AIMEC.ana3AIMEC as ana3AIMEC
 
@@ -45,6 +47,13 @@ def mainAnaInfluenceTest(avalancheDir, cfgMain, influenceTestCfg, ABCfg):
     log.info('call to com2AB to compute the runout reference')
     resAB = com2AB.com2ABMain(ABCfg, avalancheDir)
 
+    # Analyse/ plot/ write results #
+    reportDictList = []
+    _, plotFile, writeFile = outAB.writeABpostOut(resAB, ABCfg, reportDictList)
+
+    log.info('Plotted to: %s' % [str(plotFileName) for plotFileName in plotFile])
+    log.info('Data written: %s' % [str(writeFileName) for writeFileName in writeFile])
+
     # call com1DFA to perform simulations - provide configuration file and release thickness function
     # (may be multiple sims)
     log.info('call com1DFA to perform simulations')
@@ -52,5 +61,48 @@ def mainAnaInfluenceTest(avalancheDir, cfgMain, influenceTestCfg, ABCfg):
     if isinstance(simDF, str):
         simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
 
-    # compute the similartiy solution (this corresponds to our reference)
-    log.info('Bite')
+    # Get the alpha-beta runout
+    abRunout = getABRunout()
+    # Get each DFA runout
+    DFARunouts = getDFARunout()
+    # Plot and compare and analyze the results
+    analyzeResults(abRunout, DFARunouts)
+
+    # Check if last line is computed
+    log.info('Main Function well computed')
+
+def getABRunout():
+    """ Get alpha-beta runout
+    Parameters
+    ----------
+    ...
+    Returns
+    -------
+    abRunout: float
+    """
+    abRunout = 0
+    return abRunout
+
+def getDFARunout():
+    """ Get DFA runout
+    Parameters
+    ----------
+    ...
+    Returns
+    -------
+    DFARunouts: dictionary
+        dfaRunout: float array
+    """
+    abRunout = 0
+    return DFARunouts
+
+def analyzeResults(abRunout, DFARunout):
+    """ Plot different runouts and store results in a data frame
+    Parameters
+    ----------
+    abRunout
+    DFARunout
+    Returns
+    -------
+        dfaRunout: float array
+    """
