@@ -62,26 +62,33 @@ def mainAnaInfluenceTest(avalancheDir, cfgMain, influenceTestCfg, ABCfg):
         simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
 
     # Get the alpha-beta runout
-    abRunout = getABRunout()
+#    abRunout = getABRunout()
     # Get each DFA runout
-    DFARunouts = getDFARunout()
+#    DFARunouts = getDFARunout()
     # Plot and compare and analyze the results
-    analyzeResults(abRunout, DFARunouts)
+#    analyzeResults(abRunout, DFARunouts)
 
     # Check if last line is computed
     log.info('Main Function well computed')
 
-def getABRunout():
+def getABRunout(resAB):
     """ Get alpha-beta runout
     Parameters
     ----------
-    ...
+    resAB : dict
+        dict with com2AB results
     Returns
     -------
     abRunout: float
     """
-    abRunout = 0
-    return abRunout
+    AvaPath = resAB['AvaPath']
+    NameAva = AvaPath['Name']
+    print('STOOOOOOOOOOOOOOOOOOOOOOP')
+    print(len(NameAva))
+#    for i in range(len(NameAva)):
+#        name = NameAva[i]
+#        abRunout = resAB[name]['x']
+#    return abRunout
 
 def getDFARunout():
     """ Get DFA runout
