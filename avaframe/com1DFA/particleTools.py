@@ -657,6 +657,9 @@ def getTangenVectors(nx, ny, nz, ux, uy, uz):
     return e1x, e1y, e1z, e2x, e2y, e2z
 
 
+# #############################
+# Particle tracking
+# ##############################
 def findParticles2Track(particles, center, radius):
     '''Find particles within a circle arround a given point
 
@@ -778,6 +781,9 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     return trackedPartProp
 
 
+# ################################
+# read write particles
+#################################
 def readPartFromPickle(inDir, simName='', flagAvaDir=False, comModule='com1DFA'):
     """ Read pickles within a directory and return List of dicionaries read from pickle
 
@@ -867,3 +873,121 @@ def savePartToCsv(particleProperties, dictList, outDir):
         particlesData = pd.DataFrame(data=csvData)
         particlesData.to_csv(outFile, index=False)
         count = count + 1
+
+
+# ###########################
+# Extract path from particles
+# ###########################
+def getCom1DFAPath(particlesList, dem):
+    """ compute part, mass and energy averaged path from particles
+
+    Also returns the averaged velocity ant kinetic energy associated
+
+    Parameters
+    -----------
+    particlesList: list
+        list of particles dict
+    dem: dict
+        dem dict
+
+    Returns
+    --------
+    avaProfilePart: dict
+        particle averaged profile
+    avaProfileMass: dict
+        mass averaged profile
+    avaProfileKE: dict
+        kinetic energy averaged profile
+    """
+    # get DEM Path
+    header = dem['header']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+
+    proList = ['x', 'y', 'z', 's', 'sCor']
+    avaProfilePart = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    avaProfileMass = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    avaProfileKE = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    for prop in proList:
+        avaProfilePart[prop] = np.empty((0, 1))
+        avaProfilePart[prop + 'std'] = np.empty((0, 1))
+        avaProfileMass[prop] = np.empty((0, 1))
+        avaProfileMass[prop + 'std'] = np.empty((0, 1))
+        avaProfileKE[prop] = np.empty((0, 1))
+        avaProfileKE[prop + 'std'] = np.empty((0, 1))
+
+    # loop on each particle dictionary (ie each time step saved)
+    for particles in particlesList:
+        if particles['nPart'] > 0:
+            m = particles['m']
+            ux = particles['ux']
+            uy = particles['uy']
+            uz = particles['uz']
+            u = DFAtls.norm(ux, uy, uz)
+            U2 = u*u
+            kineticEne = 0.5*m*u*u
+            kineticEneSum = np.nansum(kineticEne)
+
+            # kinetic energy-averaged path
+            if kineticEneSum > 0:
+                avaProfileKE = appendAverageStd(proList, avaProfileKE, particles, U2, kineticEneSum, kineticEne)
+            else:
+                avaProfileKE = appendAverageStd(proList, avaProfileKE, particles, U2, kineticEneSum, m)
+
+            # mass-averaged path
+            avaProfileMass = appendAverageStd(proList, avaProfileMass, particles, U2, kineticEneSum, m)
+
+            # particle-averaged path
+            avaProfilePart = appendAverageStd(proList, avaProfilePart, particles, U2, kineticEneSum, None)
+
+    avaProfilePart['x'] = avaProfilePart['x'] + xllc
+    avaProfilePart['y'] = avaProfilePart['y'] + yllc
+    avaProfileMass['x'] = avaProfileMass['x'] + xllc
+    avaProfileMass['y'] = avaProfileMass['y'] + yllc
+    avaProfileKE['x'] = avaProfileKE['x'] + xllc
+    avaProfileKE['y'] = avaProfileKE['y'] + yllc
+    return avaProfilePart, avaProfileMass, avaProfileKE
+
+
+def weighted_avg_and_std(values, weights):
+    """
+    Return the weighted average and standard deviation.
+
+    values, weights -- Numpy ndarrays with the same shape.
+    """
+    average = np.average(values, weights=weights)
+    # Fast and numerically precise:
+    variance = np.average((values-average)**2, weights=weights)
+    return (average, math.sqrt(variance))
+
+
+def appendAverageStd(proList, avaProfile, particles, U2, kineticEneSum, weights):
+    """ append averaged to path
+
+    Parameters
+    -----------
+    proList: list
+        list of properties to average and append
+    avaProfile: dict
+        path
+    particles: dict
+        particles dict
+    U2: numpy array
+        array of particles squared velocities (same size as particles)
+    kineticEneSum: numpy array
+        array of particles kinetic energy (same size as particles)
+    weights: numpy array
+        array of weights (same size as particles)
+
+    Returns
+    --------
+    avaProfile: dict
+        averaged profile
+    """
+    for prop in proList:
+        avg, std = weighted_avg_and_std(particles[prop], weights)
+        avaProfile[prop] = np.append(avaProfile[prop], avg)
+        avaProfile[prop + 'std'] = np.append(avaProfile[prop + 'std'], std)
+    avaProfile['v2'] = np.append(avaProfile['v2'], np.average(U2, weights=weights))
+    avaProfile['ekin'] = np.append(avaProfile['ekin'], kineticEneSum)
+    return avaProfile

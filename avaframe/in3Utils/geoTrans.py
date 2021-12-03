@@ -382,6 +382,41 @@ def prepareLine(dem, avapath, distance=10, Point=None):
     return AvaProfile, projPoint
 
 
+def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):
+    """ find point on dem given a direction and a z value to reach
+
+    Parameters
+    -----------
+    dem: dict
+        dem dict
+    vDirX, vDirY, vDirZ: floats
+        x, y and z components of the direction in which to extend
+    zHighest: float
+        z value to reach
+    xFirst, yFirst, zFirst: floats
+        x, y and z coordinates of the starting point
+
+    Returns
+    --------
+    xExtTop, yExtTop, zExtTop:floats
+        x, y and z coordinates of the point found
+    """
+    header = dem['header']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
+    zRaster = dem['rasterData']
+    gamma = (zHighest - zFirst) / vDirZ * np.linspace(0.25, 2, 100)
+    xArray = xFirst + gamma * vDirX
+    yArray = yFirst + gamma * vDirY
+    zArray, _ = projectOnGrid(xArray, yArray, zRaster, csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')
+    idx = np.nanargmin(np.abs(zArray - np.array([zHighest])))
+    xExtTop = np.array([xFirst + gamma[idx] * vDirX])
+    yExtTop = np.array([yFirst + gamma[idx] * vDirY])
+    zExtTop = np.array([zArray[idx]])
+    return xExtTop, yExtTop, zExtTop
+
+
 def findSplitPoint(AvaProfile, Points):
     """ Finds the closest point in Points to the AvaProfile and returns
     its projection on AvaProfile.
