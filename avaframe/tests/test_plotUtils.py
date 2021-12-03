@@ -30,7 +30,8 @@ def test_constrainPlotsToData():
     # call function to be tested
     rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataConstrained = pU.constrainPlotsToData(
                                                                           inputData, cellSize,
-                                                                          extentOption=True)
+                                                                          extentOption=True,
+                                                                          constrainedData=True)
 
     print('rows', rowsMinPlot, rowsMaxPlot)
     print('cols', colsMinPlot, colsMaxPlot)
