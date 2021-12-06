@@ -60,21 +60,20 @@ The mass per particle determination method can be chosen between:
     using the release thickness per particle ``deltaTh`` value given in the configuration and the area of
     the release mesh cell: :math:`\mbox{massPerPart} = \rho\times \mbox{cellArea} \times\mbox{deltaTh}`.
 
-  - MPPKR= mass per particles through number of particles per kernel radius. There is not ``massPerPart`` since it can
-  vary from one cell to another depending on the release thickness of the cells. The aim of this method is to ensure a
-  constant density of particles within the snow domain (``nPPK`` particles per kernel radius is the target value).
-  This is related to the SPH method that is used for computing the flow thickness gradient. This method requires a
-  sufficient number of particles to approximate properly the flow thickness gradient. It makes the most sense to combine
-  the MPPKR particle initialization method with the `splitOption` 1. In this combination, the particles will be merged
-  or splitted to keep a rather constant density of particles per kernel radius (:ref:`DFAnumerics:Splitting and merging`).
-
+    - MPPKR= mass per particles through number of particles per kernel radius. There is no ``massPerPart`` since it can
+    vary from one cell to another depending on the release thickness of the cells. The aim of this method is to ensure a
+    constant density of particles within the snow domain (``nPPK`` particles per kernel radius is the target value).
+    This is related to the SPH method used for computing the flow thickness gradient. It requires a
+    sufficient number of particles to properly approximate the flow thickness gradient. It makes the most sense to combine
+    the MPPKR particle initialization method with the `splitOption` 1. In this combination, the particles will be merged
+    or split to keep a constant density of particles per kernel radius (:ref:`DFAnumerics:Splitting and merging`).
 
 .. Note::  If MPPDIR is used, consider adapting the mass per particle value when changing the mesh cell size from the default.
            This is important because, when using MPPDIR, the total number of particles is independent of the cell size. Hence,
            reducing the cell size results in less particles per cell, whereas when using MPPDH,
            the number of particles per cell is fixed (considering the respective release thickness and deltaTh value).
-           Therefore, reducing the cell size will increase the total number of particles but not the number of
-           particles per cell. Finally, the with the MPPKR method the number of particles per cell is independent from
+           Reducing the cell size will increase the total number of particles but not the number of
+           particles per cell. Finally, using the MPPKR method, the number of particles per cell is independent from
            both cell size and release thickness (``nPPK`` particles per kernel radius is the target value).
 
 The number of particles placed in each release cell is computed according to the ``massPerPart`` or ``nPPK`` depending
