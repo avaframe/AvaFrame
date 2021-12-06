@@ -49,7 +49,8 @@ req_packages = ['numpy',
                 'seaborn',
                 'cython',
                 'pandas',
-                'shapely'
+                'shapely',
+                'configUpdater'
                 ]
 
 
