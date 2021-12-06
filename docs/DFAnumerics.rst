@@ -460,6 +460,43 @@ differently.
         Tangent plane and local coordinate system used to apply the SPH method
 
 
+Particle splitting and merging
+-------------------------------
+There are two different approaches treating splitting of particles in com1DFA.
+The first one only deals with splitting of particles with too much mass('split only'). The second approach,
+"split/merge" approach aims at keeping a stable amount of particles within a given range. This is done in order to
+guaranty a sufficient accuracy of the sph flow thickness gradient computation.
+
+Split (**default**)
+~~~~~~~~~~~~~~~~~~~~
+If the ``splitOption`` is set to 0, particles are split because of snow entrainment. In this case,
+particles that entrain snow grow, i.e. their mass increases. At one point the mass of the particles is considered to be
+too big and this particle is split in two. The splitting operation happens if the mass of the
+particle exceeds a threshold value (:math:`mPart > massPerPart \times thresholdMassSplit`), where ``thresholdMassSplit``
+is specified in the configuration file and ``massPerPart`` depends on the chosen ``massPerParticleDeterminationMethod``
+as defined here: :ref:`com1DFAAlgorithm:Initialize particles`.
+When a particle is split a new child particle is created with the same properties as the parent apart from
+mass and position. Both parent and child get half of the parent mass. The parent and child's position are
+adjusted: the first / second is placed forward / backward in the direction of the velocity
+vector at a distance :math:`distSplitPart \times rPart` of the initial parent position. Particles are considered to
+have a circular basal surface :math:`A = \frac{m}{\rho} = \pi r^2`.
+
+Split and merge
+~~~~~~~~~~~~~~~
+If the ``splitOption`` is set to 1 particles are split or merged in order to keep the particle count
+as constant as possible within the kernel radius.
+Assessing the number of particles within one kernel radius is done based on the particle area. Particles
+are assumed to be cylindrical, i.e the base is a circle. For particle ``k`` we have :math:`A_k = \frac{m_k}{\rho}`. The area
+of the support domain of the sph kernel function is :math:`\pi r_0^2`. The aim is to keep ``nPPK`` particles within
+the kernel radius. The particles are split if the estimated number of particles per kernel radius :math:`\frac{\pi r_0^2}{A_k}`
+falls below a given value of :math:`n_{PPK}^{min} = C_{n_{PPK}}^{min}n_{PPK}`. Particles are split using the same
+method as in :ref:`DFAnumerics:Only split approach`. Similarly, particles are merged if the estimated
+number of particles per kernel radius exceeds a given value :math:`n_{PPK}^{max} = C_{n_{PPK}}^{max}n_{PPK}`.
+In this case particles are merged with their closest neighbor. The new position and velocity is the mass
+averaged one. The new mass is the sum. Here, two coefficients ``C_{n_{PPK}}^{min}`` and ``C_{n_{PPK}}^{max}`` were
+introduced. A good balance needs to be found for the coefficients so that the particles are not constantly split or
+merged but also not too seldom. The split and merge steps happen only once per time step and per particle. 
+
 Artificial viscosity
 ---------------------
 

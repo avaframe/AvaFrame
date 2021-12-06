@@ -1,6 +1,7 @@
 """Tests for module com1DFAtools"""
 import numpy as np
 import matplotlib.pyplot as plt
+import configparser
 import pytest
 
 # Local imports
@@ -484,3 +485,161 @@ def test_SamosATfric(capfd):
     tau = DFAfunC.SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
     print(tau)
     assert tau == 1.9128193823277053
+
+
+def test_updatePositionC():
+    """ test updating the position of particles """
+
+    # TODO: make test also if velocity in z not zero!! - so to test also when reprojecting onto surface
+
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'stopCrit': '0.01', 'stopCritIni': '0.1', 'stopCritIniSmall': '1.001', 'stopCritType': 'kinEnergy',
+                      'uFlowingThreshold': '0.1', 'gravAcc': '9.81', 'velMagMin': '1.e-6',  'rho': '100.',
+                      'interpOption': '2',   'explicitFriction': '0',  'distReproj': '0', 'reprojectionIterations': '5',
+                      'thresholdProjection': '0.001' }
+
+    particles = {'m': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
+                  'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+                  'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
+                  'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 0.0,
+                  'peakForceSPH': 0.0, 'forceSPHIni': 0.0, 'nPart': 3,
+                  'peakMassFlowing': 0.0, 'iterate': True}
+    particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
+
+    demHeader = {}
+    demHeader['xllcenter'] = 0.0
+    demHeader['yllcenter'] = 0.0
+    demHeader['cellsize'] = 5.0
+    demHeader['noDataValue'] = -9999
+    demHeader['nrows'] = 10
+    demHeader['ncols'] = 10
+    dem = {'header': demHeader}
+    dem['rasterData'] = np.ones((demHeader['nrows'], demHeader['ncols']))
+    dem['outOfDEM'] = np.zeros((demHeader['nrows'], demHeader['ncols'])).flatten()
+    dem['Nx'] = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    dem['Ny'] = np.zeros((demHeader['nrows'], demHeader['ncols']))
+    dem['Nz'] = np.ones((demHeader['nrows'], demHeader['ncols']))
+
+    force = {'forceZ': np.asarray([0., 0., 0.]), 'forceFrict': np.asarray([10., 10., 10.]),
+             'dM': np.asarray([0., 0., 0.]),
+             'forceX': np.asarray([50., 50., 50.]), 'forceY': np.asarray([50., 50., 50.]),
+             'forceSPHX': np.asarray([50., 50., 50.]),
+             'forceSPHY': np.asarray([50., 50., 50.]), 'forceSPHZ': np.asarray([0., 0., 0.])}
+    dt = 1.0
+    typeStop = 0
+
+    # kinetic energy new
+    kinEneNew = 0.0
+    potEneNew = 0.0
+    for k in range(3):
+        kinEneNew = kinEneNew + particles['m'][k] * np.sqrt(5.5**2 +5.5**2 + 0**2)**2 * 0.5
+        potEneNew = potEneNew + particles['m'][k] * 9.81 + 0.0
+
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, dt, typeStop=typeStop)
+
+    assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
+    assert np.array_equal(particles['x'], np.array([3.25, 4.25, 5.25]))
+    assert np.array_equal(particles['y'], np.asarray([5.25, 6.25, 7.25]))
+    assert np.array_equal(particles['z'], np.asarray([1., 1., 1.]))
+    assert np.allclose(particles['ux'], np.asarray([5.5, 5.5, 5.5]), atol=1.e-4)
+    assert np.allclose(particles['uy'], np.asarray([5.5, 5.5, 5.5]), atol=1.e-4)
+    assert np.array_equal(particles['uz'], np.asarray([0., 0., 0.]))
+    assert particles['massEntrained'] == 0.0
+    assert particles['nPart'] == 3
+    assert (kinEneNew- 1.e-4) < particles['kineticEne'] < (kinEneNew+1.e-4)
+    assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
+    assert particles['iterate'] == True
+
+
+    particles = {'m': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
+                  'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+                  'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
+                  'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 100000.0,
+                  'peakForceSPH': 0.0, 'forceSPHIni': 0.0, 'nPart': 3,
+                  'peakMassFlowing': 0.0, 'iterate': True}
+    particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
+
+    # call function to be tested
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, dt, typeStop=typeStop)
+
+    assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
+    assert np.array_equal(particles['x'], np.array([3.25, 4.25, 5.25]))
+    assert np.array_equal(particles['y'], np.asarray([5.25, 6.25, 7.25]))
+    assert np.array_equal(particles['z'], np.asarray([1., 1., 1.]))
+    assert np.allclose(particles['ux'], np.asarray([5.5, 5.5, 5.5]), atol=1.e-4)
+    assert np.allclose(particles['uy'], np.asarray([5.5, 5.5, 5.5]), atol=1.e-4)
+    assert np.array_equal(particles['uz'], np.asarray([0., 0., 0.]))
+    assert particles['massEntrained'] == 0.0
+    assert particles['nPart'] == 3
+    assert (kinEneNew- 1.e-4) < particles['kineticEne'] < (kinEneNew+1.e-4)
+    assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
+    assert particles['iterate'] == False
+
+    particles = {'m': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
+                  'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+                  'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
+                  'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 10000.0,
+                  'peakForceSPH': 100000.0, 'forceSPHIni': 1.e5, 'nPart': 3,
+                  'peakMassFlowing': 0.0, 'iterate': True}
+    particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
+    typeStop = 1
+
+    sphForceNew = 0.0
+    kinEneNew = 0.0
+    potEneNew = 0.0
+    for k in range(3):
+        sphForceNew = sphForceNew + particles['m'][k] * np.sqrt(50.**2 +50.**2 + 0.**2)**2.
+        kinEneNew = kinEneNew + particles['m'][k] * np.sqrt(11.**2 +11.**2 + 0**2)**2 * 0.5
+        potEneNew = potEneNew + particles['m'][k] * 9.81 + 0.0
+
+    # call function to be tested
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, dt, typeStop=typeStop)
+    print('sph', particles['peakForceSPH'], sphForceNew)
+
+    assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
+    assert np.array_equal(particles['x'], np.array([6., 7., 8.]))
+    assert np.array_equal(particles['y'], np.asarray([8., 9., 10.]))
+    assert np.array_equal(particles['z'], np.asarray([1., 1., 1.]))
+    assert np.allclose(particles['ux'], np.asarray([11., 11., 11.]), atol=1.e-4)
+    assert np.allclose(particles['uy'], np.asarray([11., 11., 11.]), atol=1.e-4)
+    assert np.array_equal(particles['uz'], np.asarray([0., 0., 0.]))
+    assert particles['massEntrained'] == 0.0
+    assert particles['nPart'] == 3
+    assert (kinEneNew- 1.e-4) < particles['kineticEne'] < (kinEneNew+1.e-4)
+    assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
+    assert particles['iterate'] == False
+
+    particles = {'m': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
+                  'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+                  'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
+                  'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 10000.0,
+                  'peakForceSPH': 1000.0, 'forceSPHIni': 1.e5, 'nPart': 3,
+                  'peakMassFlowing': 0.0, 'iterate': True}
+    particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
+    typeStop = 1
+
+    sphForceNew = 0.0
+    kinEneNew = 0.0
+    potEneNew = 0.0
+    for k in range(3):
+        sphForceNew = sphForceNew + particles['m'][k] * np.sqrt(50.**2 +50.**2 + 0.**2)**2.
+        kinEneNew = kinEneNew + particles['m'][k] * np.sqrt(11.**2 +11.**2 + 0**2)**2 * 0.5
+        potEneNew = potEneNew + particles['m'][k] * 9.81 + 0.0
+
+    # call function to be tested
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, dt, typeStop=typeStop)
+    print('sph', particles['peakForceSPH'], sphForceNew)
+
+    assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
+    assert np.array_equal(particles['x'], np.array([6., 7., 8.]))
+    assert np.array_equal(particles['y'], np.asarray([8., 9., 10.]))
+    assert np.array_equal(particles['z'], np.asarray([1., 1., 1.]))
+    assert np.allclose(particles['ux'], np.asarray([11., 11., 11.]), atol=1.e-4)
+    assert np.allclose(particles['uy'], np.asarray([11., 11., 11.]), atol=1.e-4)
+    assert np.array_equal(particles['uz'], np.asarray([0., 0., 0.]))
+    assert particles['massEntrained'] == 0.0
+    assert particles['nPart'] == 3
+    assert (kinEneNew- 1.e-4) < particles['kineticEne'] < (kinEneNew+1.e-4)
+    assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
+    assert particles['iterate'] == True

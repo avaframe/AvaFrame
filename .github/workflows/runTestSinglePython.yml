@@ -44,7 +44,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest -rP --cov --cov-report=xml --cov-config=.coveragerc
+        pytest -ra --cov --cov-report=xml --cov-config=.coveragerc
     - name: Test & publish code coverage
       uses: paambaati/codeclimate-action@v2.7.5
       env:
