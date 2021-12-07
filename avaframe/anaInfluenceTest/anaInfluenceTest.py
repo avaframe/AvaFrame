@@ -17,8 +17,9 @@ from avaframe.in1Data import getInput as gI
 from avaframe.out3Plot import outAB
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com2AB.com2AB as com2AB
-import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.ana3AIMEC.ana3AIMEC as ana3AIMEC
+import avaframe.runScripts.runAna3AIMEC as runAna3AIMEC
+import avaframe.com1DFA.DFAtools as DFAtls
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -41,35 +42,48 @@ def mainAnaInfluenceTest(avalancheDir, cfgMain, influenceTestCfg, ABCfg):
 
     """
 
-    cfgAIMEC = cfgUtils.getModuleConfig(ana3AIMEC)
+    # Run COM2AB to get a runout reference
+    resAB = getResAB(ABCfg, avalancheDir)
+    # Get the alpha-beta runout
+    abRunout = getABRunout(resAB)
 
-    # Call to com2AB to compute the runout reference
-    log.info('call to com2AB to compute the runout reference')
-    resAB = com2AB.com2ABMain(ABCfg, avalancheDir)
+    # Run all DFA simulations
+    simDF = getResDFA(avalancheDir, cfgMain, influenceTestCfg)
+    # Get each DFA simulation runout
+    DFARunouts = getDFARunout(simDF)
 
-    # Analyse/ plot/ write results #
-    reportDictList = []
-    _, plotFile, writeFile = outAB.writeABpostOut(resAB, ABCfg, reportDictList)
 
-    log.info('Plotted to: %s' % [str(plotFileName) for plotFileName in plotFile])
-    log.info('Data written: %s' % [str(writeFileName) for writeFileName in writeFile])
+    # Plot and compare and analyze the results
+    #analyzeResults(abRunout, DFARunouts)
 
+    # Check if last line is computed
+    log.info('Main Function well computed')
+
+
+
+def getResDFA(avalancheDir, cfgMain, influenceTestCfg):
     # call com1DFA to perform simulations - provide configuration file and release thickness function
     # (may be multiple sims)
     log.info('call com1DFA to perform simulations')
     _, _, _, _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=influenceTestCfg, relThField='', variationDict='')
     if isinstance(simDF, str):
         simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
+    return simDF
 
-    # Get the alpha-beta runout
-#    abRunout = getABRunout()
-    # Get each DFA runout
-#    DFARunouts = getDFARunout()
-    # Plot and compare and analyze the results
-#    analyzeResults(abRunout, DFARunouts)
 
-    # Check if last line is computed
-    log.info('Main Function well computed')
+
+def getResAB(ABCfg, avalancheDir):
+    # Call to com2AB to compute the runout reference
+    log.info('call to com2AB to compute the runout reference')
+    resAB = com2AB.com2ABMain(ABCfg, avalancheDir)
+    # Analyse/ plot/ write results #
+    #reportDictList = []
+    #_, plotFile, writeFile = outAB.writeABpostOut(resAB, ABCfg, reportDictList)
+    #log.info('Plotted to: %s' % [str(plotFileName) for plotFileName in plotFile])
+    #log.info('Data written: %s' % [str(writeFileName) for writeFileName in writeFile])
+    return resAB
+
+
 
 def getABRunout(resAB):
     """ Get alpha-beta runout
@@ -83,14 +97,19 @@ def getABRunout(resAB):
     """
     AvaPath = resAB['AvaPath']
     NameAva = AvaPath['Name']
-    print('STOOOOOOOOOOOOOOOOOOOOOOP')
-    print(len(NameAva))
-#    for i in range(len(NameAva)):
-#        name = NameAva[i]
-#        abRunout = resAB[name]['x']
-#    return abRunout
+    abRunout=[]
+    for i in range(len(NameAva)):
+        name = NameAva[i]
+        resAB = outAB.processABresults(resAB, name)
+        ids_alpha = resAB[name]['ids_alpha']
+        abRunout.append(resAB[name]['s'])
+        sAB = resAB[name]['s'][ids_alpha]
+        print(sAB)
+    return abRunout
 
-def getDFARunout():
+
+
+def getDFARunout(simDF):
     """ Get DFA runout
     Parameters
     ----------
@@ -100,8 +119,11 @@ def getDFARunout():
     DFARunouts: dictionary
         dfaRunout: float array
     """
-    abRunout = 0
+    runAna3AIMEC.runAna3AIMEC()
+    DFARunouts = []
     return DFARunouts
+
+
 
 def analyzeResults(abRunout, DFARunout):
     """ Plot different runouts and store results in a data frame

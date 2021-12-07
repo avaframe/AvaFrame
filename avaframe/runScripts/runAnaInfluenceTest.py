@@ -21,8 +21,8 @@ cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 cfgDir = 'anaInfluenceTest'
 
-# Clean input directory of old work and output files from module
-initProj.cleanModuleFiles(avalancheDir, com1DFA)
+# Clean input directory(ies) of old work and output files
+initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
