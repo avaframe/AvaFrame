@@ -85,7 +85,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     # remove particles that lie outside of release polygons
     if len(relThField) != 0:
         relRaster = relThField
-    particles = resetMassPerParticle(cfg, particles, dem, relRaster)
+    particles = resetMassPerParticle(cfg, particles, dem, relRaster, relThField)
     particles = com1DFA.checkParticlesInRelease(particles, inputSimLines['releaseLine'],
             cfg['GENERAL'].getfloat('thresholdPointInPoly'))
 
@@ -99,7 +99,10 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
         particles['m'] = particles['m'] * (newMass / oldMass)
         particles['mTot'] = np.sum(particles['m'])
         log.debug('oldMass: %.2f and newMass: %.2f - mass factor: %.2f - total mass: %.2f' %
-                (oldMass, newMass, newMass/oldMass, particles['mTot']))
+                  (oldMass, newMass, newMass/oldMass, particles['mTot']))
+
+    # save particles to file for visualisation
+    particlesList.append(particles.copy())
 
     # reset particles IDs
     particles['ID'] = np.arange(particles['nPart'])
@@ -121,6 +124,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     particles['forceSPHIni'] = 0.0
     # delete mIni key from dict
     particles.pop('mIni')
+    particles.pop('areaIni')
     # TODO: note particle flow depth is not updated- this is done in updateFieldsC in the next step as the flow
     # depth is currently computed from the mass and an interpolation on the grid
 
@@ -128,9 +132,9 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     particles = DFAfunC.getNeighborsC(particles, dem)
     particles, fields = DFAfunC.updateFieldsC(cfg['GENERAL'], particles, dem, fields)
 
-    fields['pfv'] = fields['FD']
+    fields['pfd'] = fields['FD']
     fields['ppr'] = fields['P']
-    fields['pfd'] = fields['FV']
+    fields['pfv'] = fields['FV']
 
     # save particles to file for visualisation
     avaDir = pathlib.Path(cfg['GENERAL']['avalancheDir'])
@@ -141,7 +145,7 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     return particles, fields
 
 
-def resetMassPerParticle(cfg, particles, dem, relRaster):
+def resetMassPerParticle(cfg, particles, dem, relRaster, relThField):
     """ recompute mass of particles according to their location with respect to relRaster
 
         Parameters
@@ -169,6 +173,9 @@ def resetMassPerParticle(cfg, particles, dem, relRaster):
 
     indRelY, indRelX = np.nonzero(relRaster)
     particles['mIni'] = np.zeros(particles['nPart'])
+    particles['areaIni'] = np.zeros(particles['nPart'])
+    aParticles = np.empty(0)
+
     for indRelx, indRely in zip(indRelX, indRelY):
         # compute number of particles for this cell
         hCell = relRaster[indRely, indRelx]
@@ -180,6 +187,21 @@ def resetMassPerParticle(cfg, particles, dem, relRaster):
         indParts = partInCell[iStart:iStop]
         mNew = massCell / len(indParts)
         particles['mIni'][indParts] = mNew
+        # compute area of particles assuming they are all located entirely within one cell
+        aPart = dem['areaRaster'][indRely, indRelx] / len(indParts)
+        particles['areaIni'][indParts] = aPart
+
+    if len(relThField) != 0 and cfg['GENERAL'].getboolean('fdOptionIni'):
+
+        hParticles = np.empty(0)
+        mParticles = np.empty(0)
+        # add option to get new mass of particles from bilinear interpolation of flow depth
+        hParticles = DFAfunC.projOnRaster(particles['x'], particles['y'], relRaster, dem['header']['cellsize'], ncols,
+                     nrows, cfg['GENERAL'].getint('interpOption'))
+        hParticles = np.asarray(hParticles)
+        particles['h'] = hParticles
+        mParticles = rho * particles['areaIni'] * particles['h']
+        particles['mIni'] = mParticles
 
     return particles
 
