@@ -538,7 +538,7 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def updatePositionC(cfg, particles, dem, force, typeStop=0):
+def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   """ update particle position using euler forward scheme
 
   Cython implementation

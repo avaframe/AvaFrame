@@ -499,8 +499,8 @@ def test_updatePositionC():
                       'interpOption': '2',   'explicitFriction': '0',  'distReproj': '0', 'reprojectionIterations': '5',
                       'thresholdProjection': '0.001' }
 
-    particles = {'m': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
-                  'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
+                  'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 0.0,
                   'peakForceSPH': 0.0, 'forceSPHIni': 0.0, 'nPart': 3,
@@ -526,7 +526,7 @@ def test_updatePositionC():
              'forceX': np.asarray([50., 50., 50.]), 'forceY': np.asarray([50., 50., 50.]),
              'forceSPHX': np.asarray([50., 50., 50.]),
              'forceSPHY': np.asarray([50., 50., 50.]), 'forceSPHZ': np.asarray([0., 0., 0.])}
-    dt = 1.0
+
     typeStop = 0
 
     # kinetic energy new
@@ -536,7 +536,7 @@ def test_updatePositionC():
         kinEneNew = kinEneNew + particles['m'][k] * np.sqrt(5.5**2 +5.5**2 + 0**2)**2 * 0.5
         potEneNew = potEneNew + particles['m'][k] * 9.81 + 0.0
 
-    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, dt, typeStop=typeStop)
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=typeStop)
 
     assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
     assert np.array_equal(particles['x'], np.array([3.25, 4.25, 5.25]))
@@ -551,9 +551,8 @@ def test_updatePositionC():
     assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
     assert particles['iterate'] == True
 
-
-    particles = {'m': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
-                  'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
+                  'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 100000.0,
                   'peakForceSPH': 0.0, 'forceSPHIni': 0.0, 'nPart': 3,
@@ -561,7 +560,7 @@ def test_updatePositionC():
     particles['potentialEne'] = np.sum(9.81 * particles['z'] * particles['m'])
 
     # call function to be tested
-    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, dt, typeStop=typeStop)
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=typeStop)
 
     assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
     assert np.array_equal(particles['x'], np.array([3.25, 4.25, 5.25]))
@@ -576,8 +575,8 @@ def test_updatePositionC():
     assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
     assert particles['iterate'] == False
 
-    particles = {'m': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
-                  'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
+                  'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 10000.0,
                   'peakForceSPH': 100000.0, 'forceSPHIni': 1.e5, 'nPart': 3,
@@ -594,7 +593,7 @@ def test_updatePositionC():
         potEneNew = potEneNew + particles['m'][k] * 9.81 + 0.0
 
     # call function to be tested
-    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, dt, typeStop=typeStop)
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=typeStop)
     print('sph', particles['peakForceSPH'], sphForceNew)
 
     assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
@@ -610,8 +609,8 @@ def test_updatePositionC():
     assert (potEneNew-1.e-4) < particles['potentialEne'] < (potEneNew +1.e-4)
     assert particles['iterate'] == False
 
-    particles = {'m': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
-                  'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
+    particles = {'dt': 1.0, 'm': np.asarray([10., 10., 10.]), 'idFixed': np.asarray([0., 0., 0.]), 's': np.asarray([0., 0., 0.]),
+                  'sCor': np.asarray([0., 0., 0.]), 'l': np.asarray([0., 0., 0.]), 'x': np.asarray([0., 1., 2.]), 'y': np.asarray([2., 3., 4.]),
                   'z': np.asarray([1., 1., 1.]), 'ux': np.asarray([1., 1., 1.]), 'uy': np.asarray([1., 1., 1.]),
                   'uz': np.asarray([0., 0., 0.]), 'kineticEne': 0.0, 'peakKinEne': 10000.0,
                   'peakForceSPH': 1000.0, 'forceSPHIni': 1.e5, 'nPart': 3,
@@ -628,7 +627,7 @@ def test_updatePositionC():
         potEneNew = potEneNew + particles['m'][k] * 9.81 + 0.0
 
     # call function to be tested
-    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, dt, typeStop=typeStop)
+    particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=typeStop)
     print('sph', particles['peakForceSPH'], sphForceNew)
 
     assert np.array_equal(particles['m'], np.asarray([10., 10., 10.]))
