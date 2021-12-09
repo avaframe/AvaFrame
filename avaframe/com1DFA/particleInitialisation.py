@@ -140,7 +140,6 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     avaDir = pathlib.Path(cfg['GENERAL']['avalancheDir'])
     outDir = avaDir / 'Outputs' / 'com1DFA' / 'particlesIni'
     particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
-    log.info('Initialising particles finalized, total mass: %.2f, number of particles: %d' % (np.sum(particles['m']), particles['nPart']))
 
     return particles, fields
 
