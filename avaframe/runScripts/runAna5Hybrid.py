@@ -1,6 +1,6 @@
 """
-Run a combination of the DFA kernel to get an alphaBeta path
-to run alphaBeta model to get the alpha angle
+Run a combination of the DFA kernel (com1DFA) to get an alphaBeta path
+to run alphaBeta model (com2AB) to get the alpha angle
 and run the DFA kernel again
 """
 import time
@@ -17,7 +17,7 @@ from avaframe.ana5Hybrid import ana5Hybrid
 startTime = time.time()
 
 # log file name; leave empty to use default runLog.log
-logName = 'runSuperSmartANDFastModel'
+logName = 'runAna5Hybrid'
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()

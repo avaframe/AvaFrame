@@ -122,7 +122,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
             # +++++++++++++++++++++++++++++++++
             # ------------------------
             particlesList, fieldsList, tSave, dem, reportDict, cfgFinal, tCPU = com1DFA.com1DFACore(cfg, avalancheDir,
-                    cuSim, inputSimFiles, outDir, relThField)
+                    cuSim, inputSimFiles, outDir, relThField=relThField)
 
             tCPUDF = cfgUtils.appendTcpu2DF(simHash, tCPU, tCPUDF)
             # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++

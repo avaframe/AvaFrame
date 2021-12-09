@@ -12,11 +12,14 @@ import matplotlib.pyplot as plt
 import avaframe.com1DFA.DFAtools as DFAtls
 from avaframe.in3Utils import geoTrans
 import avaframe.out3Plot.plotUtils as pU
+from avaframe.in3Utils import cfgUtils
+import avaframe.out3Plot.outDebugPlots as debPlot
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
-debug = False
+cfgAVA = cfgUtils.getGeneralConfig()
+debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
 def getPartInitMethod(cfg, csz):
@@ -97,8 +100,8 @@ def extendCom1DFAPath(cfg, dem, particlesIni, avaProfile):
 def extendProfileTop(cfg, dem, particlesIni, profile):
     """ extend the DFA path at the top
 
-    Find the direction in which to extend considerind the first point of the profile
-    and a few following ones (distFromFirt <= 30 * csz). Extend in this diretion until
+    Find the direction in which to extend considering the first point of the profile
+    and a few following ones (distFromFirt <= 30 * csz). Extend in this direction until
     the z of the highest particle in the release is reached.
 
     Parameters
@@ -159,8 +162,7 @@ def extendProfileTop(cfg, dem, particlesIni, profile):
     profile['x'] = np.append(xExtTop, profile['x'])
     profile['y'] = np.append(yExtTop, profile['y'])
     profile['z'] = np.append(zExtTop, profile['z'])
-
-    if debug:
+    if debugPlot:
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         ax.set_title('Extend path towards the top')
         ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.c', label='particles at t=0s')
@@ -191,8 +193,8 @@ def extendProfileTop(cfg, dem, particlesIni, profile):
 def extendProfileBottom(cfg, dem, profile):
     """ extend the DFA path at the bottom
 
-    Find the direction in which to extend considerind the last point of the profile
-    and a few previous ones but discardings the one that are too close ( 2* csz < distFromLast <= 30 * csz).
+    Find the direction in which to extend considering the last point of the profile
+    and a few previous ones but discarding the ones that are too close ( 2* csz < distFromLast <= 30 * csz).
     Extend in this diretion for a distance 0.2 * length of the path.
 
     Parameters
@@ -246,7 +248,7 @@ def extendProfileBottom(cfg, dem, profile):
     profile['y'] = np.append(profile['y'], yExtBottom)
     profile['z'] = np.append(profile['z'], zExtBottom)
 
-    if debug:
+    if debugPlot:
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
         ax.set_title('Extend path towards the bottom')
         ax.plot(profile['x'][:-1], profile['y'][:-1], '.k', label='mass averaged path')
