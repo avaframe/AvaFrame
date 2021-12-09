@@ -147,7 +147,7 @@ def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h'):
         variableS = ((variableS-np.nanmin(variableS))/(np.nanmax(variableS)-np.nanmin(variableS)) + 1)*pU.ms
     else:
         variableS = pU.ms
-    cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(variableC), np.nanmax(variableC), continuous=pU.contCmap)
+    cmap, _, ticks, norm = pU.makeColorMap(cmap, np.amin(variableC), np.amax(variableC), continuous=pU.contCmap)
     # set range and steps of colormap
     sc = ax.scatter(X, Y, c=variableC, cmap=cmap, marker='.', zorder=15)
     pU.addColorBar(sc, ax, ticks, 'm')
@@ -238,26 +238,23 @@ def addResult2Plot(ax, dem, rasterData, resType, colorbar=True):
     xllc = header['xllcenter']
     yllc = header['yllcenter']
     csz = header['cellsize']
-
     rowsMin, rowsMax, colsMin, colsMax, rasterData = pU.constrainPlotsToData(rasterData, csz, extentOption=False, constrainedData=True)
-
     xArray = np.linspace(xllc+colsMin*csz, xllc+colsMax*csz, colsMax-colsMin+1)
     yArray = np.linspace(yllc+rowsMin*csz, yllc+rowsMax*csz, rowsMax-rowsMin+1)
     extent = [xArray.min(), xArray.max(), yArray.min(), yArray.max()]
     unit = pU.cfgPlotUtils['unit%s' % resType]
     contourLevels = pU.cfgPlotUtils['contourLevels%s' % resType]
     contourLevels = fU.splitIniValueToArraySteps(contourLevels)
-    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin(rasterData), np.nanmax(rasterData),
+    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.amin(rasterData), np.amax(rasterData),
                                            continuous=pU.contCmap)
-    cmap.set_bad(color='white', alpha=0)
+    cmap.set_bad(alpha=0)
     rasterData = np.ma.masked_where(rasterData == 0, rasterData)
 
     ref0, im = pU.NonUnifIm(ax, xArray, yArray, rasterData, 'x [m]', 'y [m]',
-                            # extent=[2400, 2700, YY.min(), YY.max()],
                             extent=extent,
-                            cmap=cmap, norm=None, zorder=9)
-    CS = ax.contour(xArray, yArray, rasterData, levels=contourLevels, colors='k')
-    ax.clabel(CS, inline=1, fontsize=8, zorder=10)
+                            cmap=cmap, norm=norm, zorder=9)
     if colorbar:
         pU.addColorBar(im, ax, ticks, unit)
+    CS = ax.contour(xArray, yArray, rasterData, levels=contourLevels, colors='k')
+    ax.clabel(CS, inline=1, fontsize=8, zorder=10)
     return ax, extent

@@ -1,4 +1,9 @@
+"""
+Hybrid model module
 
+This module contains the core function of the hybrid model.
+This hybrid model combines the DFA simulation and the alpha beta model
+"""
 import pathlib
 import logging
 from configupdater import ConfigUpdater
@@ -28,6 +33,13 @@ log = logging.getLogger(__name__)
 
 
 def mainAna5Hybrid(cfgMain, cfgHybrid):
+    """This is the core function of the Ana5Hybrid module
+
+    Here the DFA and AB models are run one after the other to first produce (from com1DFA)
+    the avalanche path, then get the friction angle corresponding to the topography (from com2AB)
+    and finally run the DFA simultaion one last time with the correct friction angle and get a 3D
+    output of the avalanche
+    """
     avalancheDir = cfgMain['MAIN']['avalancheDir']
     demOri = getInput.readDEM(avalancheDir)
     # get comDFA configuration path for hybrid model
@@ -93,7 +105,7 @@ def mainAna5Hybrid(cfgMain, cfgHybrid):
 
     hybridModelDFACfg = pathlib.Path('ana5Hybrid', 'hybridModel_com1DFACfg.ini')
     cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=hybridModelDFACfg)
-    outAna5Plots.plotHybridRes(avalancheDir, cfgDFA, resAB, name, simID, demOri, avaProfileMass)
+    outAna5Plots.plotEnergyProfile(avalancheDir, cfgDFA, resAB, name, simID, demOri, avaProfileMass)
 
 
 def keepIterating(cfgHybrid, alphaArray):

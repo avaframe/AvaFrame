@@ -18,8 +18,10 @@ from matplotlib import colors as mplCol
 import logging
 from cmcrameri import cm as cmapCrameri
 
+# Local imports
 from avaframe.in3Utils import cfgUtils
 from avaframe.out3Plot import plotUtils
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 
 # create local logger
@@ -54,7 +56,7 @@ fs = float(cfg['fontSize'])
 matplotlib.rcParams['figure.titlesize'] = cfg['titleSize']
 matplotlib.rcParams['figure.dpi'] = float(cfg['figResolution'])
 matplotlib.rcParams['figure.autolayout'] = True
-
+ls = ['-', '--', '-.']
 matplotlib.rcParams['axes.labelsize'] = cfg['labelSize']
 matplotlib.rcParams['axes.linewidth'] = 1.0
 matplotlib.rcParams['axes.edgecolor'] = 'lightgrey'
@@ -121,27 +123,27 @@ cmapAvaframeCont = mplCol.LinearSegmentedColormap.from_list('cmapAvaframeCont', 
 # for the choice of the colormaps, check https://www.fabiocrameri.ch/colourmaps/
 # and http://hclwizard.org:3000/hclwizard/
 # multi sequential colormap for pressure
-levP = [1.0, 10.0, 25.0, 50.0]
+
+levP = list(fU.splitIniValueToArraySteps(cfgPlotUtils['pressureColorLevels']))
 # Hawaii color map
 colorsP = ["#B0F4FA", "#75C165", "#A96C00", "#8B0069"]
 cmapP = copy.copy(cmapCrameri.hawaii.reversed())
 
 # multi sequential colormap for flow depth
-levD = [0.5, 1.0, 2.0, 3.0, 4.0, 5.0]
+levD = list(fU.splitIniValueToArraySteps(cfgPlotUtils['thicknessColorLevels']))
 # Lajolla color map
 colorsD = ["#FCFFC9", "#EBCE7B", "#DE9529", "#BE5A32", "#7F2B3F", "#1D0B14"]
 cmapD = copy.copy(cmapCrameri.lajolla)
 
 # multi sequential colormap for speed
-levS = [1, 5, 10, 15, 20, 25, 30]
+levS = list(fU.splitIniValueToArraySteps(cfgPlotUtils['speedColorLevels']))
 # Batflow color map
 colorsS = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
            '#201158']
 cmapS = copy.copy(cmapCrameri.batlow.reversed())
 
 # multi sequential colormap for Travel Angle
-# levTA = [18, 19, 20, 21, 22, 22, 23]
-levTA = [28, 29, 30, 31, 32, 33, 34]
+levTA = list(fU.splitIniValueToArraySteps(cfgPlotUtils['travelAngleColorLevels']))
 # Batflow color map
 colorsTA = ['#FFCEF4', '#FFA7A8', '#C19A1B', '#578B21', '#007054', '#004960',
            '#201158']
@@ -151,7 +153,7 @@ cmapTA = copy.copy(cmapCrameri.lapaz)
 cmapNN = copy.copy(cmapCrameri.imola.reversed())
 
 # colormap for probabilities
-levProb = [0, 0.25, 0.50, 0.75, 1.]
+levProb = list(fU.splitIniValueToArraySteps(cfgPlotUtils['probaColorLevels']))
 # lapaz color map
 colorsProb = ['#FEF1F1', '#B2AB96', '#5B8BA3', '#2D5393', '#1A0C64']
 cmapProbmap = copy.copy(cmapCrameri.lapaz.reversed())
@@ -409,9 +411,9 @@ def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedDat
     if len(ind[0]) > 0:
         plotBuffer = int(cfg.getfloat('plotBuffer') / cellSize)
         rowsMin = max(np.amin(ind[0])-plotBuffer, 0)
-        rowsMax = min(np.amax(ind[0])+plotBuffer, inputData.shape[0])
+        rowsMax = min(np.amax(ind[0])+plotBuffer, inputData.shape[0]-1)
         colsMin = max(np.amin(ind[1])-plotBuffer, 0)
-        colsMax = min(np.amax(ind[1])+plotBuffer, inputData.shape[1])
+        colsMax = min(np.amax(ind[1])+plotBuffer, inputData.shape[1]-1)
     else:
         rowsMin = 0
         rowsMax = inputData.shape[0]
@@ -468,7 +470,6 @@ def putAvaNameOnPlot(ax, avaDir):
             avaName = pathlib.PurePath(ava).name
             infoText = infoText + ';' + str(avaName)
 
-    plt.text(0, 0, infoText, fontsize=8, verticalalignment='bottom', horizontalalignment='left',
-             transform=ax.transAxes, color='0.6')
+    ax.annotate(infoText, fontsize=8, xy = (-0.1, -0.1), xycoords='axes fraction')
 
     return infoText
