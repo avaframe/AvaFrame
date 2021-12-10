@@ -21,8 +21,6 @@ import avaframe.com1DFA.DFAtools as DFAtls
 log = logging.getLogger(__name__)
 
 
-# ############### Initializing particles
-
 def initialiseParticlesFromFile(cfg, avaDir):
     # TODO: this is for development purposes, change or remove in the future
     # If initialisation from file
@@ -151,8 +149,6 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
 
     return xPart, yPart, mPart, n, aPart
 
-
-# ############### Split and remove merge particles
 
 def removePart(particles, mask, nRemove, reasonString=''):
     """ remove given particles
@@ -657,9 +653,6 @@ def getTangenVectors(nx, ny, nz, ux, uy, uz):
     return e1x, e1y, e1z, e2x, e2y, e2z
 
 
-# #############################
-# Particle tracking
-# ##############################
 def findParticles2Track(particles, center, radius):
     '''Find particles within a circle arround a given point
 
@@ -781,9 +774,6 @@ def getTrackedParticlesProperties(particlesList, nPartTracked, properties):
     return trackedPartProp
 
 
-# ################################
-# read write particles
-#################################
 def readPartFromPickle(inDir, simName='', flagAvaDir=False, comModule='com1DFA'):
     """ Read pickles within a directory and return List of dicionaries read from pickle
 
@@ -875,13 +865,10 @@ def savePartToCsv(particleProperties, dictList, outDir):
         count = count + 1
 
 
-# ###########################
-# Extract path from particles
-# ###########################
 def getCom1DFAPath(particlesList, dem):
     """ compute part, mass and energy averaged path from particles
 
-    Also returns the averaged velocity ant kinetic energy associated
+    Also returns the averaged velocity and kinetic energy associated
 
     Parameters
     -----------
@@ -949,7 +936,7 @@ def getCom1DFAPath(particlesList, dem):
     return avaProfilePart, avaProfileMass, avaProfileKE
 
 
-def weighted_avg_and_std(values, weights):
+def weightedAvgAndStd(values, weights):
     """
     Return the weighted average and standard deviation.
 
@@ -985,7 +972,7 @@ def appendAverageStd(proList, avaProfile, particles, U2, kineticEneSum, weights)
         averaged profile
     """
     for prop in proList:
-        avg, std = weighted_avg_and_std(particles[prop], weights)
+        avg, std = weightedAvgAndStd(particles[prop], weights)
         avaProfile[prop] = np.append(avaProfile[prop], avg)
         avaProfile[prop + 'std'] = np.append(avaProfile[prop + 'std'], std)
     avaProfile['v2'] = np.append(avaProfile['v2'], np.average(U2, weights=weights))

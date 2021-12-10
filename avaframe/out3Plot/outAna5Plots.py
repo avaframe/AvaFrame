@@ -9,6 +9,7 @@ import avaframe.out3Plot.outCom1DFA as outCom1DFA
 
 
 def initializeFigures():
+    """ Initialize the two figure from ana5Hybrid main loop"""
     figPath, axPath = plt.subplots(figsize=(1.5*pU.figW, 1*pU.figH))
     # figPath = plt.figure(figsize=(1.5*pU.figW, 1*pU.figH))
     # axPath = plt.subplot(111)
@@ -19,7 +20,7 @@ def initializeFigures():
 
 
 def updateProfilePlot(resAB, name, figDict, iteration):
-    """ Plot and save results depending on flags options"""
+    """Update profile plot with result of curent iteration"""
     fig = figDict['figProf']
     ax = figDict['axProf']
     s = resAB[name]['s']
@@ -38,7 +39,7 @@ def updateProfilePlot(resAB, name, figDict, iteration):
 
 
 def updatePathPlot(demOri, avaProfile, resAB, name, figDict, iteration):
-    """ Plot and save results depending on flags options"""
+    """Update path plot with result of curent iteration"""
     fig = figDict['figPath']
     ax = figDict['axPath']
     headerOri = demOri['header']
@@ -58,6 +59,7 @@ def updatePathPlot(demOri, avaProfile, resAB, name, figDict, iteration):
 
 
 def finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, particles, fields):
+    """ Add title ... and save path plot"""
     headerOri = demOri['header']
     xllcOri = headerOri['xllcenter']
     yllcOri = headerOri['yllcenter']
@@ -86,6 +88,7 @@ def finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, pa
 
 
 def finalizeProfilePlot(avalancheDir, figDict, resAnalysis, indSim):
+    """Add title ... and save profile plot"""
     sAIMEC = resAnalysis['runout'][0][indSim]
 
     fig = figDict['figProf']
@@ -106,7 +109,7 @@ def finalizeProfilePlot(avalancheDir, figDict, resAnalysis, indSim):
 
 
 def plotEnergyProfile(avalancheDir, cfg, resAB, name, simID, demOri, avaProfileMassNew):
-
+    """ Make energy line profile plot"""
     alpha = resAB[name]['alpha']
 
     V2Path = avaProfileMassNew['v2']
@@ -121,7 +124,7 @@ def plotEnergyProfile(avalancheDir, cfg, resAB, name, simID, demOri, avaProfileM
     ax2.set_title(titleText)
     cmap = pU.cmapPlasma
     cmap.set_under(color='w')
-    projectedZ = 'yes'
+    projectedZ = 'no'
     if projectedZ == 'yes':
         avaProfileMassNew, _ = geoTrans.projectOnRaster(demOri, avaProfileMassNew, interp='bilinear')
     Zene = avaProfileMassNew['z'] + V2Path/(2*g)
@@ -132,15 +135,7 @@ def plotEnergyProfile(avalancheDir, cfg, resAB, name, simID, demOri, avaProfileM
     cbar2.ax.set_ylabel('kinetic energy [J]')
 
     ax2.plot(avaProfileMassNew['s'], avaProfileMassNew['z'], 'b-', label='Z_av(s_real)')
-    # ax2.plot(avaProfileMassNew['s'], avaProfileMassNew['z'] + 2*avaProfileMassNew['zstd'], 'b:')
-    # ax2.plot(avaProfileMassNew['s'], avaProfileMassNew['z'] - 2*avaProfileMassNew['zstd'], 'b:')
-    # ax2.plot(avaProfileMassNew['s'] + 2*avaProfileMassNew['sstd'], avaProfileMassNew['z'], 'b--')
-    # ax2.plot(avaProfileMassNew['s'] - 2*avaProfileMassNew['sstd'], avaProfileMassNew['z'], 'b--')
     ax2.plot(avaProfileMassNew['sCor'], avaProfileMassNew['z'], 'k-', label='Z_av(s_mod)')
-    # ax2.plot(avaProfileMassNew['sCor'], avaProfileMassNew['z'] + 2*avaProfileMassNew['zstd'], 'k:')
-    # ax2.plot(avaProfileMassNew['sCor'], avaProfileMassNew['z'] - 2*avaProfileMassNew['zstd'], 'k:')
-    # ax2.plot(avaProfileMassNew['sCor'] + 2*avaProfileMassNew['sstd'], avaProfileMassNew['z'], 'k--')
-    # ax2.plot(avaProfileMassNew['sCor'] - 2*avaProfileMassNew['sstd'], avaProfileMassNew['z'], 'k--')
     GK = 1.05*avaProfileMassNew['s'][-1] * np.tan(alpha*np.pi/180)
     z_end = avaProfileMassNew['z'][0] - GK
     s_geomL = [avaProfileMassNew['s'][0], 1.05*avaProfileMassNew['s'][-1]]
@@ -151,6 +146,7 @@ def plotEnergyProfile(avalancheDir, cfg, resAB, name, simID, demOri, avaProfileM
     ax2.set_ylabel('z [m]', fontsize=pU.fs)
     ax2.legend(loc='lower left')
     pU.putAvaNameOnPlot(ax2, avalancheDir)
+    plt.show()
 
     # set titel of output png
     title = ('ana5HybEnergyProfilePlot')

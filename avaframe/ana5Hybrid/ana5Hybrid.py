@@ -47,9 +47,11 @@ def mainAna5Hybrid(cfgMain, cfgHybrid):
 
     # prepare plots
     figDict = outAna5Plots.initializeFigures()
+
     # get initial mu value
     muArray = np.array([cfgHybrid.getfloat('DFA', 'mu')])
     alphaArray = np.array([np.degrees(np.arctan(muArray[0]))])
+
     # prepare for iterating
     nIterMax = cfgHybrid.getint('GENERAL', 'nIterMax')
     iteration = 0
@@ -60,7 +62,7 @@ def mainAna5Hybrid(cfgMain, cfgHybrid):
         updater.read(hybridModelDFACfg)
         updater['GENERAL']['mu'].value = muArray[-1]
         updater.update_file()
-        # ----------------
+
         # Run dense flow with coulomb friction
         particlesList, fieldsList, _, dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=hybridModelDFACfg)
         # postprocess to extract path and energy line
@@ -89,11 +91,13 @@ def mainAna5Hybrid(cfgMain, cfgHybrid):
         figDict = outAna5Plots.updateProfilePlot(resAB, name, figDict, iteration)
         figDict = outAna5Plots.updatePathPlot(demOri, avaProfileMassExt, resAB, name, figDict, iteration)
 
-        # updat alpha (result from AB model on new profile)
+        # update alpha (result from AB model on new profile)
         alpha = resAB[name]['alpha']
         log.info('Alpha is %.2f' % alpha)
+        # append new alpha and corresponding mu value to the list
         alphaArray = np.append(muArray, alpha)
         muArray = np.append(muArray, np.tan(np.radians(alpha)))
+        # keep iterating if the change in alpha is too big
         iterate = keepIterating(cfgHybrid, alphaArray)
         iteration = iteration + 1
 
@@ -109,6 +113,10 @@ def mainAna5Hybrid(cfgMain, cfgHybrid):
 
 
 def keepIterating(cfgHybrid, alphaArray):
+    """Check the change in alpha between two iterations
+
+    If this change is bigger than the alphaThreshold, keep iterationg and return True
+    """
     alphaThreshold = cfgHybrid.getfloat('GENERAL', 'alphaThreshold')
     iterate = np.abs(alphaArray[-1] - alphaArray[-2]) >= alphaThreshold
     return iterate
