@@ -690,8 +690,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
         startTimeIni = time.time()
         particles, fields = pI.getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField)
         tIni = time.time() - startTimeIni
-        log.info('Ini step for initialising particles finalized, total mass: %.2f, number of particles: %d in %.2f s' % (np.sum(particles['m']), particles['nPart'], tIni))
-
+        log.info('Ini step for initialising particles finalized, total mass: %.2f, number of particles: %d' % (np.sum(particles['m']), particles['nPart']))
+        log.debug('Time needed for ini step: %.2f s' % (tIni))
     # ------------------------
     # process secondary release info to get it as a list of rasters
     if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
