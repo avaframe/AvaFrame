@@ -495,10 +495,13 @@ number of particles per kernel radius exceeds a given value :math:`n_{PPK}^{max}
 In this case particles are merged with their closest neighbor. The new position and velocity is the mass
 averaged one. The new mass is the sum. Here, two coefficients ``C_{n_{PPK}}^{min}`` and ``C_{n_{PPK}}^{max}`` were
 introduced. A good balance needs to be found for the coefficients so that the particles are not constantly split or
-merged but also not too seldom. The split and merge steps happen only once per time step and per particle. 
+merged but also not too seldom. The split and merge steps happen only once per time step and per particle.
 
 Artificial viscosity
 ---------------------
+
+SAMOS Artificial viscosity
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche`, the governing
 equations for the DFA were derived and all first order or smaller terms where neglected.
@@ -523,7 +526,7 @@ is a numerical parameter that depends on the mesh size. Its value is set to 100
 and should be discussed and further tested.
 
 Adding the viscous force
-~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""
 
 The viscous force is added implicitly:
 
@@ -542,6 +545,37 @@ mean mesh velocity and then the implicit term which leads to:
   \mathbf{u}^{new} = \frac{\mathbf{u}^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
 
 With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}\frac{dt}{m}`
+
+
+Ata Artificial viscosity
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+An upwinding method based on Lax-Friedrichs scheme
+""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Shallow Water Equations are well known for being hyperbolic transport equations.
+They have the particularity of carrying a discontinuity which makes them numerically unstable.
+Thus a decentering in time allows to better capture the discontinuity.
+This can be done in the manner of the Lax-Friedrich scheme.
+This decentering in time is formally the same as adding a viscous force.
+Transposed to the SPH method, this viscous force aplied on a given particle :math:`k`
+can be expressed as follows:
+
+.. math::
+  \mathbf{F_{{viscosity}_k}} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl}
+
+with :math:`Pi_{kl} = \lambda_{kl}(\mathbf{u}_j - \mathbf{u}_i) \cdot \mathbf{n}_{ij}`
+
+where :math:`\mathbf{u}_{ij} = \mathbf{u}_i - \mathbf{u}_j` is the relative velocity
+between particle i and j, and :math:`\lambda_{ij} = \frac{c_i+c_j}{2}` with
+:math:`c_i = \sqrt{gh_i}`, the wave speed. The :math:`\lambda_{ij}` is obtained as
+turning expressions related to time and spacial discretization parameters
+into an expression on maximal speed between both particles in the Lax Friedrich
+scheme.
+
+CFL condition
+"""""""""""""
+
 
 
 Forces discretization
