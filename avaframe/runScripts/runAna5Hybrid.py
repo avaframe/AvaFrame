@@ -30,7 +30,7 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # ----------------
 # Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avalancheDir, keep=logName)
+initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
 # Load configuration for hybrid model
 cfgHybrid = cfgUtils.getModuleConfig(ana5Hybrid)
