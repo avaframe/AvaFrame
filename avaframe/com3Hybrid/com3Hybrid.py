@@ -26,14 +26,14 @@ from avaframe.out3Plot import outAB
 from avaframe.runScripts import runAna3AIMEC
 
 # import plotting tools
-from avaframe.out3Plot import outAna5Plots
+from avaframe.out3Plot import outCom3Plots
 
 # create local logger
 log = logging.getLogger(__name__)
 
 
-def mainAna5Hybrid(cfgMain, cfgHybrid):
-    """This is the core function of the Ana5Hybrid module
+def maincom3Hybrid(cfgMain, cfgHybrid):
+    """This is the core function of the com3Hybrid module
 
     Here the DFA and AB models are run one after the other to first produce (from com1DFA)
     the avalanche path, then get the friction angle corresponding to the topography (from com2AB)
@@ -43,10 +43,10 @@ def mainAna5Hybrid(cfgMain, cfgHybrid):
     avalancheDir = cfgMain['MAIN']['avalancheDir']
     demOri = getInput.readDEM(avalancheDir)
     # get comDFA configuration path for hybrid model
-    hybridModelDFACfg = pathlib.Path('ana5Hybrid', 'hybridModel_com1DFACfg.ini')
+    hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
 
     # prepare plots
-    figDict = outAna5Plots.initializeFigures()
+    figDict = outCom3Plots.initializeFigures()
 
     # get initial mu value
     muArray = np.array([cfgHybrid.getfloat('DFA', 'mu')])
@@ -73,12 +73,12 @@ def mainAna5Hybrid(cfgMain, cfgHybrid):
         name = 'massAvaPath'
         shpConv.writeLine2SHPfile(avaProfileMassExt, name, pathAB)
         # also save it to work
-        pathAB = pathlib.Path(avalancheDir, 'Work', 'ana5Hybrid', 'pathAB_aimec' + str(iteration))
+        pathAB = pathlib.Path(avalancheDir, 'Work', 'com3Hybrid', 'pathAB_aimec' + str(iteration))
         name = 'massAvaPath'
         shpConv.writeLine2SHPfile(avaProfileMassExt, name, pathAB)
 
         # Run Alpha Beta
-        hybridModelABCfg = pathlib.Path('ana5Hybrid', 'hybridModel_com2ABCfg.ini')
+        hybridModelABCfg = pathlib.Path('com3Hybrid', 'hybridModel_com2ABCfg.ini')
         cfgAB = cfgUtils.getModuleConfig(com2AB, fileOverride=hybridModelABCfg)
         # take the path extracted from the DFA model as input
         resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
@@ -86,10 +86,10 @@ def mainAna5Hybrid(cfgMain, cfgHybrid):
         reportDictList = []
         _, plotFile, writeFile = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
 
-        # make custom ana5 profile plot
+        # make custom com3 profile plot
         resAB = outAB.processABresults(resAB, name)
-        figDict = outAna5Plots.updateProfilePlot(resAB, name, figDict, iteration)
-        figDict = outAna5Plots.updatePathPlot(demOri, avaProfileMassExt, resAB, name, figDict, iteration)
+        figDict = outCom3Plots.updateProfilePlot(resAB, name, figDict, iteration)
+        figDict = outCom3Plots.updatePathPlot(demOri, avaProfileMassExt, resAB, name, figDict, iteration)
 
         # update alpha (result from AB model on new profile)
         alpha = resAB[name]['alpha']
@@ -104,12 +104,12 @@ def mainAna5Hybrid(cfgMain, cfgHybrid):
     pathDict, rasterTransfo, newRasters, resAnalysis = runAna3AIMEC.runAna3AIMEC(avalancheDir=avalancheDir)
     simID = simDF.index[0]
     indSim = pathDict['simID'].index(simID)
-    outAna5Plots.finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, particlesList[-1], fieldsList[-1])
-    outAna5Plots.finalizeProfilePlot(avalancheDir, figDict, resAnalysis, indSim)
+    outCom3Plots.finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, particlesList[-1], fieldsList[-1])
+    outCom3Plots.finalizeProfilePlot(avalancheDir, figDict, resAnalysis, indSim)
 
-    hybridModelDFACfg = pathlib.Path('ana5Hybrid', 'hybridModel_com1DFACfg.ini')
+    hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
     cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=hybridModelDFACfg)
-    outAna5Plots.plotEnergyProfile(avalancheDir, cfgDFA, resAB, name, simID, demOri, avaProfileMass)
+    outCom3Plots.plotEnergyProfile(avalancheDir, cfgDFA, resAB, name, simID, demOri, avaProfileMass)
 
 
 def keepIterating(cfgHybrid, alphaArray):

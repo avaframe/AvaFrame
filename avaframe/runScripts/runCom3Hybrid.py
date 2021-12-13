@@ -10,14 +10,14 @@ import time
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
-from avaframe.ana5Hybrid import ana5Hybrid
+from avaframe.com3Hybrid import com3Hybrid
 
 
 # Time the whole routine
 startTime = time.time()
 
 # log file name; leave empty to use default runLog.log
-logName = 'runAna5Hybrid'
+logName = 'runcom3Hybrid'
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
@@ -33,5 +33,5 @@ log.info('Current avalanche: %s', avalancheDir)
 initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
 # Load configuration for hybrid model
-cfgHybrid = cfgUtils.getModuleConfig(ana5Hybrid)
-ana5Hybrid.mainAna5Hybrid(cfgMain, cfgHybrid)
+cfgHybrid = cfgUtils.getModuleConfig(com3Hybrid)
+com3Hybrid.maincom3Hybrid(cfgMain, cfgHybrid)

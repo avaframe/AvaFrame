@@ -9,7 +9,7 @@ import avaframe.out3Plot.outCom1DFA as outCom1DFA
 
 
 def initializeFigures():
-    """ Initialize the two figure from ana5Hybrid main loop"""
+    """ Initialize the two figure from com3Hybrid main loop"""
     figPath, axPath = plt.subplots(figsize=(1.5*pU.figW, 1*pU.figH))
     # figPath = plt.figure(figsize=(1.5*pU.figW, 1*pU.figH))
     # axPath = plt.subplot(111)
@@ -79,11 +79,11 @@ def finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, pa
             label='Runout point com1DFA (AIMEC pfd=0m)', zorder=40)
     ax.set_ylim(extent[2:])
     ax.set_xlim(extent[:2])
-    title = ('ana5HybRasterPlot')
+    title = ('com3HybRasterPlot')
     l = ax.legend(loc='lower left')
     l.set_zorder(40)
     pU.putAvaNameOnPlot(ax, avalancheDir)
-    path = pathlib.Path(avalancheDir, 'Outputs', 'ana5Hybrid')
+    path = pathlib.Path(avalancheDir, 'Outputs', 'com3Hybrid')
     pU.saveAndOrPlot({'pathResult': path}, title, fig)
 
 
@@ -100,11 +100,11 @@ def finalizeProfilePlot(avalancheDir, figDict, resAnalysis, indSim):
     ax.set_aspect('equal', adjustable='box')
     ax.grid(linestyle=':', color='0.9')
     ax.legend(frameon=False)
-    title = ('ana5HybProfPlot')
+    title = ('com3HybProfPlot')
     l = ax.legend(loc='lower left')
     l.set_zorder(40)
     pU.putAvaNameOnPlot(ax, avalancheDir)
-    path = pathlib.Path(avalancheDir, 'Outputs', 'ana5Hybrid')
+    path = pathlib.Path(avalancheDir, 'Outputs', 'com3Hybrid')
     pU.saveAndOrPlot({'pathResult': path}, title, fig)
 
 
@@ -149,6 +149,6 @@ def plotEnergyProfile(avalancheDir, cfg, resAB, name, simID, demOri, avaProfileM
     plt.show()
 
     # set titel of output png
-    title = ('ana5HybEnergyProfilePlot')
-    path = pathlib.Path(avalancheDir, 'Outputs', 'ana5Hybrid')
+    title = ('com3HybEnergyProfilePlot')
+    path = pathlib.Path(avalancheDir, 'Outputs', 'com3Hybrid')
     pU.saveAndOrPlot({'pathResult': path}, title, fig2)
