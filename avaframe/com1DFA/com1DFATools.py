@@ -6,7 +6,6 @@
 import logging
 import math
 import numpy as np
-import matplotlib.pyplot as plt
 
 # Local imports
 import avaframe.com1DFA.DFAtools as DFAtls
@@ -163,30 +162,8 @@ def extendProfileTop(cfg, dem, particlesIni, profile):
     profile['y'] = np.append(yExtTop, profile['y'])
     profile['z'] = np.append(zExtTop, profile['z'])
     if debugPlot:
-        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        ax.set_title('Extend path towards the top')
-        ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.c', label='particles at t=0s')
-        ax.plot(xHighest, yHighest, '.r', label='highest particle at t=0s')
-        ax.plot(profile['x'][1:], profile['y'][1:], '.k', label='mass averaged path')
-        if cfg.getint('PATH', 'extTopOption') == 1:
-            ax.plot(xInterest[1:], yInterest[1:], '.m', markersize=10, label='points considered to find drection')
-        ax.plot(xFirst, yFirst, '.b', markersize=10, label='top point of the mass averaged path')
-        ax.plot(profile['x'][0], profile['y'][0], '.g', label='point at the same hight as the highest point in the release \n and in the extention direction')
-        ax.plot(profile['x'][0:2], profile['y'][0:2], 'k--', label='extended path')
-        plt.legend()
-
-        fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
-        ax1.set_title('Extend path towards the top')
-        ax1.plot(particlesIni['x'] + xllc, particlesIni['z'], '.c', label='particles at t=0s')
-        ax1.plot(xHighest, zHighest, '.r', label='highest particle at t=0s')
-        ax1.plot(profile['x'][1:], profile['z'][1:], '.k', label='mass averaged path')
-        if cfg.getint('PATH', 'extTopOption') == 1:
-            ax1.plot(xInterest[1:], zInterest[1:], '.m', markersize=10, label='points considered to find drection')
-        ax1.plot(xFirst, zFirst, '.b', markersize=10, label='top point of the mass averaged path')
-        ax1.plot(profile['x'][0], profile['z'][0], '.g', label='point at the same hight as the highest point in the release \n and in the extention direction')
-        ax1.plot(profile['x'][0:2], profile['z'][0:2], 'k--', label='extended path')
-        plt.legend()
-        plt.show()
+        debPlot.plotPathExtTop(cfg, profile, xHighest, yHighest, zHighest, xInterest, yInterest, zInterest,
+                                     particlesIni, xllc, yllc, xFirst, yFirst, zFirst)
     return profile
 
 
@@ -249,13 +226,5 @@ def extendProfileBottom(cfg, dem, profile):
     profile['z'] = np.append(profile['z'], zExtBottom)
 
     if debugPlot:
-        fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        ax.set_title('Extend path towards the bottom')
-        ax.plot(profile['x'][:-1], profile['y'][:-1], '.k', label='mass averaged path')
-        ax.plot(xInterest, yInterest, '.m', markersize=10, label='points considered to find drection')
-        ax.plot(xLast, yLast, '.b', markersize=10, label='bottom point of the mass averaged path')
-        ax.plot(profile['x'][0], profile['y'][0], '.g', label='point in the extention direction at distance \n 0.2 x path length from the bottom point')
-        ax.plot(profile['x'][-2:], profile['y'][-2:], 'k--', label='extended path')
-        plt.legend()
-        plt.show()
+        debPlot.plotPathExtBot(cfg, profile, xInterest, yInterest, zInterest, xllc, yllc, xLast, yLast)
     return profile
