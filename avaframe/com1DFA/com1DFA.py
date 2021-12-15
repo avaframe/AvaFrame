@@ -1362,7 +1362,7 @@ def computeEulerTimeStep(cfg, particles, fields, zPartArray0, dem, tCPU, frictTy
         log.debug('update Fields C')
         particles, fields = DFAfunC.updateFieldsC(cfg, particles, dem, fields)
         tcpuField = time.time() - startTime
-        tCPU['Field'] = tCPU['Field'] + tcpuField
+        tCPU['timeField'] = tCPU['timeField'] + tcpuField
         # Then split merge particles
         particles = particleTools.splitPartArea(particles, cfg, dem)
         particles = particleTools.mergePartArea(particles, cfg, dem)
