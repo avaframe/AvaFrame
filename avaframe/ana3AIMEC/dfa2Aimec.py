@@ -62,14 +62,14 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
     return pathDict
 
 
-def getMBInfo(avaDir, pathDict, comMod, simName=''):
+def getMBInfo(avaDir, inputsDF, comMod, simName=''):
     """ Get mass balance info """
 
     # Get info from ExpLog
     if simName != '':
         mbFile = pathlib.Path(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
         fU.checkIfFileExists(mbFile, fileType='mass')
-        pathDict['massBal'].append(mbFile)
+        inputsDF['massBal'].append(mbFile)
         log.info('Added to pathDict[massBal] %s' % (mbFile))
 
     else:
@@ -82,10 +82,12 @@ def getMBInfo(avaDir, pathDict, comMod, simName=''):
         mbNames = sorted(set(mbFiles), key=lambda s: (str(s).split("_")[1], str(s).split("_")[2], str(s).split("_")[4]))
 
         for mFile in mbNames:
-            pathDict['massBal'].append(mFile)
+            name = mFile.stem
+            nameParts = name.split('_')
+            simName = ('_'.join(nameParts[1:]))
+            inputsDF.loc[simName, 'massBal'] = mFile
             log.debug('Added to pathDict[massBal] %s' % (mFile))
-
-    return pathDict
+    return inputsDF
 
 
 def getRefMB(testName, pathDict, simName):
@@ -316,27 +318,17 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
             and if configuration for ordering is provided, key: colorParameter with values for color coding results
     """
 
-    # path dictionary for Aimec
-    pathDict = {'simID': [], 'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
-
-    # Setup input from com1DFA and save file paths to dictionary
-    suffix = ['pfd', 'ppr', 'pfv']
-    cfgSetup = cfg['AIMECSETUP']
-    pathDict = fU.getDFADataPaths(avaDir, pathDict, cfgSetup, suffix, comModule)
+    inputsDF = fU.makeSimDF2(avaDir, comModule)
 
     if cfg['FLAGS'].getboolean('flagMass'):
         # Extract mb info
         if comModule == 'com1DFAOrig':
+            # path dictionary for Aimec
+            pathDict = {'simID': [], 'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
             pathDict = extractCom1DFAMBInfo(avaDir, pathDict)
         else:
-            pathDict = getMBInfo(avaDir, pathDict, comModule)
-
-    pathDict['compType'] = ['singleModule', comModule]
-
-    # info about colormap
-    pathDict['contCmap'] = pU.contCmap
-
-    return pathDict
+            inputsDF = getMBInfo(avaDir, inputsDF, comModule)
+    return inputsDF
 
 
 def indiDfa2Aimec(avaDir, suffix, cfg, inputDir=''):

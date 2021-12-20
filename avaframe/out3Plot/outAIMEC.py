@@ -125,7 +125,7 @@ def visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict):
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def visuRunoutComp(rasterTransfo, resAnalysis, cfgSetup, pathDict):
+def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     """
     Plot and save the Peak Fields distribution (max mean per cross section)
     after coordinate transformation
@@ -150,29 +150,17 @@ def visuRunoutComp(rasterTransfo, resAnalysis, cfgSetup, pathDict):
     thresholdValue = cfgSetup['thresholdValue']
     # read paths
     projectName = pathDict['projectName']
+    refSimName = pathDict['refSimulation']
+    simName = pathDict['refSimulation']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
-    PPRCrossMax = resAnalysis['PPRCrossMax']
-    PPRCrossMean = resAnalysis['PPRCrossMean']
-    PFDCrossMax = resAnalysis['PFDCrossMax']
-    PFDCrossMean = resAnalysis['PFDCrossMean']
-    PFVCrossMax = resAnalysis['PFVCrossMax']
-    PFVCrossMean = resAnalysis['PFVCrossMean']
 
     ############################################
     # prepare for plot
     title = ['Pressure ', 'Flow Depth ', 'Flow Velocity ']
     unit = ['$P(s)$ [kPa]', '$fd(s)$ [m]', '$v(s) [m.s^{-1}]$']
-    dataMax = np.array(([None] * 3))
-    dataMax[0] = PPRCrossMax
-    dataMax[1] = PFDCrossMax
-    dataMax[2] = PFVCrossMax
-
-    dataMean = np.array(([None] * 3))
-    dataMean[0] = PPRCrossMean
-    dataMean[1] = PFDCrossMean
-    dataMean[2] = PFVCrossMean
+    peakList = ['PPR', 'PFD', 'PFV']
 
     ############################################
     # Figure: Pressure depth speed
@@ -180,11 +168,11 @@ def visuRunoutComp(rasterTransfo, resAnalysis, cfgSetup, pathDict):
     fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(pU.figW*3, pU.figH))
     fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
-    for ax, maxVal, meanVal, titleVal, unitVal in zip(axes.flatten(), dataMax, dataMean, title, unit):
-        ax.plot(maxVal[0, :], s, '--k', label='Max Reference')
-        ax.plot(meanVal[0, :], s, '-k', label='Mean Reference')
-        ax.plot(maxVal[1, :], s, '--b', label='Max Simulation')
-        ax.plot(meanVal[1, :], s, '-b', label='Mean Simulation')
+    for ax, peak, titleVal, unitVal in zip(axes.flatten(), peakList, title, unit):
+        ax.plot(resAnalysisDF.loc[refSimName, peak + 'CrossMax'], s, '--k', label='Max Reference')
+        ax.plot(resAnalysisDF.loc[refSimName, peak + 'CrossMean'], s, '-k', label='Mean Reference')
+        ax.plot(resAnalysisDF.loc[simName, peak + 'CrossMax'], s, '--b', label='Max Simulation')
+        ax.plot(resAnalysisDF.loc[simName, peak + 'CrossMean'], s, '-b', label='Mean Simulation')
 
         ax.set_title(titleVal + 'distribution along path')
         ax.legend(loc='best')
@@ -201,7 +189,7 @@ def visuRunoutComp(rasterTransfo, resAnalysis, cfgSetup, pathDict):
     return outFilePath
 
 
-def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
+def visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict):
     """
     Plot and save the Peak field  distribution after coord transfo
     used when more then 2 simulations are compared
@@ -231,16 +219,14 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
     name = pU.cfgPlotUtils['name' + resType]
     # read paths
     projectName = pathDict['projectName']
-    nRef = pathDict['referenceFile']
+    refSimName = pathDict['refSimulation']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    dataPressure = newRasters['newRaster' + resType.upper()]
-    rasterdataPres = dataPressure[nRef]
-    runout = resAnalysis['runout'][0]
-    PPRCrossMax = resAnalysis[resType.upper() + 'CrossMax']
-
+    rasterdataPres = newRasters['newRefRaster' + resType.upper()]
+    runout = resAnalysisDF['sRunout'].to_numpy()
+    PPRCrossMax = np.stack(resAnalysisDF[resType.lower() + 'CrossMax'].to_numpy())
     ############################################
     # prepare for plot
     pMean = np.mean(PPRCrossMax, axis=0)
@@ -263,7 +249,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
     ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
 
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                label='start of run-out area point : %.1f °' % resAnalysis['startOfRunoutAreaAngle'])
+                label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
     ref5, im = pU.NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
                             extent=[l.min(), l.max(), s.min(), s.max()],
                             cmap=cmap, norm=norm)
@@ -295,7 +281,7 @@ def visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict):
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def visuMass(resAnalysis, pathDict):
+def visuMass(resAnalysisDF, pathDict, timeMass):
     """
     Plot and save the results from mass analysis
 
@@ -316,11 +302,10 @@ def visuMass(resAnalysis, pathDict):
     # read paths
     projectName = pathDict['projectName']
     # read data
-    entMassFlowArray = resAnalysis['entMassFlowArray']
-    totalMassArray = resAnalysis['totalMassArray']
-    entMass = resAnalysis['entMass']
-    finalMass = resAnalysis['finalMass']
-    time = resAnalysis['time']
+    entMassFlowArray = np.stack(resAnalysisDF['entMassFlowArray'].to_numpy())
+    totalMassArray = np.stack(resAnalysisDF['totalMassArray'].to_numpy())
+    entMass = resAnalysisDF['entMass'].to_numpy()
+    finalMass = resAnalysisDF['finalMass'].to_numpy()
 
     ############################################
     # prepare for plot
@@ -337,8 +322,8 @@ def visuMass(resAnalysis, pathDict):
         fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
         for ax, dataMass, title, unit in zip(axes.flatten(), DataMass, Title, Unit):
-            ax.plot(time, dataMass[nRef, :], '-k', label='Reference : %d ' % nRef)
-            ax.plot(time, dataMass[i, :], '-b', label='Simulation : %d ' % i)
+            ax.plot(timeMass, dataMass[nRef, :], '-k', label='Reference : %d ' % nRef)
+            ax.plot(timeMass, dataMass[i, :], '-b', label='Simulation : %d ' % i)
 
             ax.set_title(title + ' function of time')
             ax.legend(loc=4)
@@ -349,10 +334,10 @@ def visuMass(resAnalysis, pathDict):
         # ax2.set_ylabel('z [m]')
         ax2.spines['right'].set_color('r')
         ax2.tick_params(axis='y', colors='r')
-        ax2.plot(time, (dataMass[i, :]-dataMass[nRef, :]) / dataMass[nRef, :]*100, 'r', label='total mass')
+        ax2.plot(timeMass, (dataMass[i, :]-dataMass[nRef, :]) / dataMass[nRef, :]*100, 'r', label='total mass')
 
         if np.any(entMass):
-            axes.flatten()[1].text(time[-1]/4, (np.nanmin(dataMass[nRef, :]) + np.nanmax(dataMass[nRef, :]))/2,
+            axes.flatten()[1].text(timeMass[-1]/4, (np.nanmin(dataMass[nRef, :]) + np.nanmax(dataMass[nRef, :]))/2,
                                    'Entrained Mass Difference : %.2f kg \n Relative to entrained mass : %.2f %% \n Relative to total mass : %.2f %% ' %
                                    ((entMass[nRef]-entMass[i]), (entMass[nRef]-entMass[i]) / entMass[nRef]*100,
                                    (entMass[nRef]-entMass[i])/finalMass[nRef]*100),
@@ -370,7 +355,7 @@ def visuMass(resAnalysis, pathDict):
     return outFilePath
 
 
-def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict):
+def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     """
     Plot and save the Peak Pressure Peak Flow depth and Peak speed
     fields after coord transfo
@@ -391,19 +376,16 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict):
     # Get input data
     # read paths
     projectName = pathDict['projectName']
-    nRef = pathDict['referenceFile']
+    refSimulationName = pathDict['refSimulation']
     # read data
-    plim = resAnalysis['thresholdValue']
+    plim = cfgSetup['thresholdValue']
     s = rasterTransfo['s']
     l = rasterTransfo['l']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
-    dataPressure = newRasters['newRasterPPR']
-    rasterdataPres = dataPressure[nRef]
-    dataDepth = newRasters['newRasterPFD']
-    rasterdataDepth = dataDepth[nRef]
-    dataSpeed = newRasters['newRasterPFV']
-    rasterdataSpeed = dataSpeed[nRef]
-    runout = resAnalysis['runout'][0]
+    rasterdataPres = newRasters['newRefRasterPPR']
+    rasterdataDepth = newRasters['newRefRasterPFD']
+    rasterdataSpeed = newRasters['newRefRasterPFV']
+    runout = resAnalysisDF.loc[refSimulationName, 'sRunout']
 
     ############################################
     # prepare for plot
@@ -426,10 +408,10 @@ def visuSimple(rasterTransfo, resAnalysis, newRasters, pathDict):
         cmap, _, ticks, norm = pU.makeColorMap(cmap, np.nanmin(maskedArray), np.nanmax(maskedArray),
                                                continuous=pU.contCmap)
         cmap.set_bad('w', 1.)
-        ax.axhline(y=runout[0], color='k', linestyle='-', label='runout')
+        ax.axhline(y=runout, color='k', linestyle='-', label='runout')
 
         ax.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
-                   label='Start or run-out point : %.1f °' % resAnalysis['startOfRunoutAreaAngle'])
+                   label='Start or run-out point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
         ref3, im = pU.NonUnifIm(ax, l, s, maskedArray, 'l [m]', 's [m]',
                                 extent=[l.min(), l.max(), s.min(), s.max()],
                                 cmap=cmap, norm=norm)
@@ -476,14 +458,13 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     compData = inputs['compData']
     refRasterMask = inputs['refRasterMask']
     compRasterMask = inputs['compRasterMask']
-    i = inputs['i']
-    nRef = pathDict['referenceFile']
+    simName = inputs['simName']
+    refSimulation = pathDict['refSimulation']
     resType = inputs['resType']
     unit = pU.cfgPlotUtils['unit' + resType]
     name = pU.cfgPlotUtils['name' + resType]
     thresholdArray = inputs['thresholdArray']
     thresholdValue = thresholdArray[-1]
-    contCmap = pathDict['contCmap']
 
     ############################################
     # Figure: Raster comparison (mask for the pThreshold given in the ini file)
@@ -492,7 +473,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
 
     # get color map
     cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin(
-        (refData)), np.nanmax((refData)), continuous=contCmap)
+        (refData)), np.nanmax((refData)), continuous=pU.contCmap)
     cmap.set_bad(color='w')
     refDataPlot = np.ma.masked_where(refData == 0.0, refData)
     ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',
@@ -528,13 +509,13 @@ def visuComparison(rasterTransfo, inputs, pathDict):
         namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
         pU.putAvaNameOnPlot(ax2, namePrint)
     else:
-        namePrint = 'ref:' + str(nRef) + '_' + 'sim:' + str(i)
+        namePrint = 'ref:' + str(refSimulation) + '_' + 'sim:' + str(simName)
         pU.putAvaNameOnPlot(ax2, namePrint)
 
     ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
 
     outFileName = '_'.join([projectName, 'thresholdValue', str(
-        thresholdValue).replace('.', 'p'),  'sim', str(i), 'AreaComparisonToReference'])
+        thresholdValue).replace('.', 'p'),  'sim', str(simName), 'AreaComparisonToReference'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     ############################################
@@ -595,16 +576,16 @@ def visuComparison(rasterTransfo, inputs, pathDict):
             legend2 = ax2.legend(title=name + '\ncontour lines\n[' + unit + ']', handles=handles, labels=labels)
             plt.setp(legend2.get_title(), multialignment='center')
         else:
-            log.warning('Reference %d did not reach the run out area!' % nRef)
-            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference %d did not reach the run out area!' % nRef,
+            log.warning('Reference %s did not reach the run out area!' % refSimulation)
+            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Reference %s did not reach the run out area!' % refSimulation,
                      fontsize=24, color='red',
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
         if (np.where(compData > thresholdArray[-1], True, False)).any():
             contourComp = ax2.contour(
                 L, S, compData, levels=thresholdArray[:-1], linewidths=2, colors=colorsP, linestyles='dashed')
         else:
-            log.warning('Simulation %d did not reach the run out area!' % i)
-            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Simulation %d did not reach the run out area!' % i,
+            log.warning('Simulation %d did not reach the run out area!' % simName)
+            ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Simulation %d did not reach the run out area!' % simName,
                          fontsize=24, color='red',
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
 
@@ -612,7 +593,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
             namePrint = 'refMod:' + pathDict['compType'][1] + '_' + 'compMod:' + pathDict['compType'][2]
             pU.putAvaNameOnPlot(ax2, namePrint)
         else:
-            namePrint = 'ref:' + str(nRef) + '_' + 'sim:' + str(i)
+            namePrint = 'ref:' + str(refSimulation) + '_' + 'sim:' + str(simName)
             pU.putAvaNameOnPlot(ax2, namePrint)
 
         if indDiff.any():
@@ -639,7 +620,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(thresholdValue).replace(
-        '.', 'p'),  'sim', str(i), 'ContourComparisonToReference'])
+        '.', 'p'),  'sim', str(simName), 'ContourComparisonToReference'])
     outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath
@@ -655,7 +636,6 @@ def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     projectName = pathDict['projectName']
     pathResult = pathDict['pathResult']
     pathName = pathDict['pathName']
-    nRef = pathDict['referenceFile']
     demName = os.path.basename(pathDict['demSource'])
     dataName = [os.path.basename(name) for name in pathDict['ppr']]
     domainWidth = cfgSetup['domainWidth']
@@ -762,7 +742,7 @@ def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     log.info('File written: %s' % outname)
 
 
-def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
+def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysisDF):
     """
     Visualize results in a nice way
     """
@@ -772,38 +752,44 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
     unit = cfgSetup['unit']
     paraVar = cfgSetup['varParList'].split('|')[0]
     name = pU.cfgPlotUtils['name' + resType]
-    fnames = pathDict[resType]
-    maxMaxDPPR = resAnalysis['MM' + resType.upper()]
+    nSim = len(resAnalysisDF.index)
+    refSimName = pathDict['refSimulation']
+    maxMaxDPPRRef = resAnalysisDF.loc[refSimName, 'max' + resType.lower() + 'CrossMax']
+    maxMaxDPPR = resAnalysisDF['max' + resType.lower() + 'CrossMax'].to_numpy()
 
     thresholdValue = cfgSetup['thresholdValue']
 
-    nRef = pathDict['referenceFile']
 
     flag = float(cfgFlags['typeFlag'])
 
     zPath = rasterTransfo['z']
     sPath = rasterTransfo['s']
 
-    runout = resAnalysis['runout'][0]
-    areaSum = resAnalysis['TP'][nRef] + resAnalysis['FN'][nRef]
+    runout = resAnalysisDF['sRunout'].to_numpy()
+    runoutRef = resAnalysisDF.loc[refSimName, 'sRunout']
+    areaSum = resAnalysisDF.loc[refSimName, 'TP'] + resAnalysisDF.loc[refSimName, 'FN']
     if areaSum == 0:
         log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
         areaSum = 1
-    rTP = resAnalysis['TP'] / areaSum
-    rFP = resAnalysis['FP'] / areaSum
+    rTP = resAnalysisDF['TP'].to_numpy() / areaSum
+    rFP = resAnalysisDF['FP'].to_numpy() / areaSum
+    rTPRef = resAnalysisDF.loc[refSimName, 'TP'] / areaSum
+    rFPRef = resAnalysisDF.loc[refSimName, 'FP'] / areaSum
 
     # prepare for plot
     if flag == 2:
         title = 'Visualizing EGU growth index data'
         tipo = 'growthInd'
-        GI = resAnalysis['growthIndex']
+        GI = resAnalysisDF['growthIndex'].to_numpy()
         data = GI
+        dataRef = resAnalysisDF.loc[refSimName, 'growthIndex']
         yaxis_label = 'growth index [GI]'
 
     elif flag == 3:
         title = 'Visualizing max ' + name + ' data'
         tipo = 'relMax' + resType + '_thresholdValue' + str(thresholdValue).replace('.', 'p')
-        data = maxMaxDPPR / maxMaxDPPR[nRef]
+        data = maxMaxDPPR / maxMaxDPPRRef
+        dataRef = maxMaxDPPRRef / maxMaxDPPRRef
         yaxis_label = 'relative max ' + name + ' [-]'
 
     else:
@@ -814,7 +800,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
 
     # If more than 100 files are provided, add a density plot
     plotDensity = 0
-    if (len(fnames) > 100):
+    if (nSim > 100):
         plotDensity = 1
 
     if 'colorParameter' in pathDict:
@@ -883,7 +869,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
             sc = ax1.scatter(runout, data, marker=pU.markers[0], c=colors, cmap=cmap)
             if displayColorBar:
                 pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
-        ax1.plot(runout[nRef], data[nRef], color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
+        ax1.plot(runoutRef, dataRef, color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
         ax1.legend(loc=4)
 
     ax1.grid('on')
@@ -917,7 +903,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis):
             sc = ax1.scatter(rFP, rTP, marker=pU.markers[0], c=colors, cmap=cmap)
             if displayColorBar:
                 pU.addColorBar(sc, ax1, ticks, unit, title=paraVar)
-        ax1.plot(rFP[nRef], rTP[nRef], color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
+        ax1.plot(rFPRef, rTPRef, color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
         ax1.legend(loc=4)
 
     plt.xlim([-0.03, max(1, max(rFP)+0.03)])

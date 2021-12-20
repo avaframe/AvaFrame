@@ -11,6 +11,7 @@ import copy
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.ascUtils as IOf
+from avaframe.in3Utils import cfgUtils
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.out3Plot.outAIMEC as outAimec
@@ -83,7 +84,7 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
     return pathDict
 
 
-def fetchReferenceSimNo(pathDict, cfgSetup):
+def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
     """ Define reference simulation used for aimec analysis from configuration file,
         if no ordering is performed - set simulation 0 as reference simulation
 
@@ -100,38 +101,57 @@ def fetchReferenceSimNo(pathDict, cfgSetup):
         pathDict: dict
             updated pathDict with key: referenceFile to define reference simulation for aimec
     """
+    inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
+    if inputDir.is_dir()==False:
+        message = 'Input directory %s does not exist - check anaMod' % inputDir
+        log.error(message)
+        raise FileNotFoundError(message)
+    # if the simulations come from com1DFA, it is possible to order the files and define a reference
+    # if com1DFA check for configuration files to fetch paramerter values for ordering
+    if comModule == 'com1DFA' and cfgSetup['varParList'] != '':
+        # fetch parameters that shall be used for ordering
+        varParList = cfgSetup['varParList'].split('|')
 
-    if pathDict['colorParameter'] != [] and cfgSetup['referenceSimValue'] != '':
-        typeCP = type(pathDict['colorParameter'][0])
-        if typeCP == str:
-            colorValues = [x.lower() for x in pathDict['colorParameter']]
-            indexRef = colorValues.index(typeCP(cfgSetup['referenceSimValue'].lower()))
-        elif typeCP in [float, int]:
-            colorValues = np.asarray(pathDict['colorParameter'])
-            indexRef = (np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
+        # create dataFrame with ordered configurations
+        configurationDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfgSetup.getboolean('ascendingOrder'), resFiles=False)
+
+        # add value of first parameter used for ordering for colorcoding in plots
+        colorParameter = configurationDF[varParList[0]].to_list()
+        if cfgSetup['referenceSimValue'] != '':
+            typeCP = type(colorParameter[0])
+            if typeCP == str:
+                colorValues = [x.lower() for x in colorParameter]
+                indexRef = colorValues.index(typeCP(cfgSetup['referenceSimValue'].lower()))
+            elif typeCP in [float, int]:
+                colorValues = np.asarray(colorParameter)
+                indexRef = (np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
+            else:
+                indexRef = colorParameter.index(typeCP(cfgSetup['referenceSimValue']))
+            log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
+                     (varParList[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
+            refSimulation = configurationDF[configurationDF[varParList[0]]==colorValues[indexRef]]['simName'].to_list()[0]
         else:
-            indexRef = pathDict['colorParameter'].index(typeCP(cfgSetup['referenceSimValue']))
-        pathDict['referenceFile'] = indexRef
-        log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
-                 (cfgSetup['varParList'].split('|')[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
+            # reference simulation
+            refSimulation = configurationDF.iloc[0]['simName']  # configurationDF.head(1)['simName'].values[0]
+
     elif cfgSetup['referenceSimName'] != '':
         # if no colorParameter info and refeenceSimValue available but referenceSimName is given - set
         # simulation with referenceSimName in name as referene simulation
         simFound = False
-        for fName in pathDict[cfgSetup['resType']]:
-            if cfgSetup['referenceSimName'] in str(fName):
-                pathDict['referenceFile'] = pathDict[cfgSetup['resType']].index(fName)
+        for inputIndex, inputsDFrow in inputsDF.iterrows():
+            if cfgSetup['referenceSimName'] in str(inputsDFrow['simName']):
+                refSimulation = inputsDFrow['simName']
                 log.info('Reference Simulation is based on provided simName: %s' % cfgSetup['referenceSimName'])
                 simFound = True
                 break
         if not simFound:
-            pathDict['referenceFile'] = 0
+            refSimulation = inputsDF.iloc[0]['simName']
             log.info('Reference Simulation is based on first simulation in folder')
     else:
-        pathDict['referenceFile'] = 0
+        refSimulation = inputsDF.iloc[0]['simName']
         log.info('Reference Simulation is based on first simulation in folder')
 
-    return pathDict
+    return refSimulation
 
 
 def computeCellSizeSL(cfgSetup, refResultHeader):
@@ -167,7 +187,7 @@ def computeCellSizeSL(cfgSetup, refResultHeader):
     return cellSizeSL
 
 
-def makeDomainTransfo(pathDict, cfgSetup):
+def makeDomainTransfo(pathDict, inputsDF, cfgSetup):
     """ Make domain transformation
 
     This function returns the information about the domain transformation
@@ -207,8 +227,8 @@ def makeDomainTransfo(pathDict, cfgSetup):
     """
     # Read input parameters
     demSource = pathDict['demSource']
-    nRef = pathDict['referenceFile']
-    refResultSource = pathDict[cfgSetup['resType']][nRef]
+    refSimulation = pathDict['refSimulation']
+    refResultSource = inputsDF[inputsDF['simName']==refSimulation][cfgSetup['resType']].to_list()[0]
     ProfileLayer = pathDict['profileLayer']
     splitPointSource = pathDict['splitPointSource']
     DefaultName = pathDict['projectName']
@@ -584,7 +604,7 @@ def assignData(fnames, rasterTransfo, interpMethod):
     return avalData
 
 
-def analyzeMass(fnameMass, resAnalysis):
+def analyzeMass(fnameMass, simName, refSimName, resAnalysisDF, time=0):
     """ Analyse Mass data
 
     Parameters
@@ -617,50 +637,37 @@ def analyzeMass(fnameMass, resAnalysis):
                 containing for each simulation analyzed the
                 growth gradient
     """
-    # initialize Arrays
-    nTopo = len(fnameMass)
-    massDiffers = False
-    grIndex = np.empty((nTopo))
-    grGrad = np.empty((nTopo))
-    releaseMass = np.empty((nTopo))
-    entrainedMass = np.empty((nTopo))
-    finalMass = np.empty((nTopo))
-    relativMassDiff = np.empty((nTopo))
-    time = 0
-
     log.debug('Analyzing mass')
     log.debug('{: <10} {: <10} {: <10}'.format('Sim number ', 'GI ', 'GR '))
-    # For each data set
-    for i in range(nTopo):
-        # analyze mass
-        releaseMass[i], entrainedMass[i], finalMass[i], grIndex[i], grGrad[i], entMassFlow, totalMass, time = readWrite(
-            fnameMass[i], time)
-        if i == 0:
-            entMassFlowArray = np.zeros((nTopo, np.size(time)))
-            totalMassArray = np.zeros((nTopo, np.size(time)))
-        entMassFlowArray[i] = entMassFlow
-        totalMassArray[i] = totalMass
-        relativMassDiff[i] = (finalMass[i]-finalMass[0])/finalMass[0]*100
-        if not (releaseMass[i] == releaseMass[0]):
-            massDiffers = True
-        log.info('{: <10} {:<10.4f} {:<10.4f}'.format(*[i+1, grIndex[i], grGrad[i]]))
-    if massDiffers:
+    # analyze mass
+    releasedMass, entrainedMass, finalMass, grIndex, grGrad, entMassFlow, totalMass, time = readWrite(fnameMass, time)
+
+    resAnalysisDF.loc[simName, 'relMass'] = releasedMass
+    resAnalysisDF.loc[simName, 'finalMass'] = finalMass
+    resAnalysisDF.loc[simName, 'entMass'] = entrainedMass
+    resAnalysisDF.loc[simName, 'growthIndex'] = grIndex
+    resAnalysisDF.loc[simName, 'growthGrad'] = grGrad
+
+    releasedMassRef = resAnalysisDF.loc[refSimName, 'relMass']
+    finalMassRef = resAnalysisDF.loc[refSimName, 'finalMass']
+    relativMassDiff = (finalMass-finalMassRef)/finalMassRef*100
+    if not (releasedMass == releasedMassRef):
         log.warning('Release masses differs between simulations!')
+    log.info('{: <10} {:<10.4f} {:<10.4f}'.format(*[simName, grIndex, grGrad]))
+    resAnalysisDF.loc[simName, 'relativMassDiff'] = relativMassDiff
 
-    resAnalysis['relMass'] = releaseMass
-    resAnalysis['entMass'] = entrainedMass
-    resAnalysis['entMassFlowArray'] = entMassFlowArray
-    resAnalysis['totalMassArray'] = totalMassArray
-    resAnalysis['time'] = time
-    resAnalysis['finalMass'] = finalMass
-    resAnalysis['relativMassDiff'] = relativMassDiff
-    resAnalysis['growthIndex'] = grIndex
-    resAnalysis['growthGrad'] = grGrad
+    if simName == refSimName:
+        resAnalysisDF['entMassFlowArray'] = np.nan
+        resAnalysisDF['entMassFlowArray'] = resAnalysisDF['entMassFlowArray'].astype(object)
+        resAnalysisDF.at[simName, 'entMassFlowArray'] = entMassFlow
+        resAnalysisDF['totalMassArray'] = np.nan
+        resAnalysisDF['totalMassArray'] = resAnalysisDF['totalMassArray'].astype(object)
+        resAnalysisDF.at[simName, 'entMassFlowArray'] = totalMass
 
-    return resAnalysis
+    return resAnalysisDF, time
 
 
-def computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transformedDEMRasters):
+def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedDEMRasters, simName):
     """ Compute runout based on peak field results
 
     Parameters
@@ -707,59 +714,100 @@ def computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis, transforme
     x = rasterTransfo['x']
     y = rasterTransfo['y']
 
-    resType = resultsAreaAnalysis['resType']
-    PResCrossMax = resultsAreaAnalysis[resType]['aCrossMax']
-    PResCrossMean = resultsAreaAnalysis[resType]['aCrossMean']
-
-    # initialize Arrays
-    nTopo = len(PResCrossMax)
-    runout = np.empty((3, nTopo))
-    runoutMean = np.empty((3, nTopo))
-    elevRel = np.empty((nTopo))
-    deltaH = np.empty((nTopo))
+    resType = cfgSetup['resType']
+    thresholdValue = cfgSetup.getfloat('thresholdValue')
+    PResCrossMax = resAnalysisDF.loc[simName, resType + 'CrossMax']
+    PResCrossMean = resAnalysisDF.loc[simName, resType + 'CrossMean']
 
     log.debug('Computig runout')
-    # For each data set
-    for i in range(nTopo):
-        lindex = np.nonzero(PResCrossMax[i] > thresholdValue)[0]
-        if lindex.any():
-            cupper = min(lindex)
-            clower = max(lindex)
-        else:
-            log.error('No max values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
-            cupper = 0
-            clower = 0
-        # search in mean values
-        lindex = np.nonzero(PResCrossMean[i] > thresholdValue)[0]
-        if lindex.any():
-            cupperm = min(lindex)
-            clowerm = max(lindex)
-        else:
-            log.error('No average values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
-            cupperm = 0
-            clowerm = 0
-        cInd = {}
-        cInd['cupper'] = cupper
-        cInd['clower'] = clower
-        cInd['cupperm'] = cupperm
-        cInd['clowerm'] = clowerm
-        #    Runout
-        cupper = cInd['cupper']
-        clower = cInd['clower']
-        clowerm = cInd['clowerm']
-        runout[0, i] = scoord[clower]
-        runout[1, i] = x[clower]
-        runout[2, i] = y[clower]
-        runoutMean[0, i] = scoord[clowerm]
-        runoutMean[1, i] = x[clower]
-        runoutMean[2, i] = y[clower]
-        elevRel[i] = transformedDEMRasters[cupper, n]
-        deltaH[i] = transformedDEMRasters[cupper, n] - transformedDEMRasters[clower, n]
+    lindex = np.nonzero(PResCrossMax > thresholdValue)[0]
+    if lindex.any():
+        cupper = min(lindex)
+        clower = max(lindex)
+    else:
+        log.error('No max values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
+        cupper = 0
+        clower = 0
+    # search in mean values
+    lindex = np.nonzero(PResCrossMean > thresholdValue)[0]
+    if lindex.any():
+        cupperm = min(lindex)
+        clowerm = max(lindex)
+    else:
+        log.error('No average values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
+        cupperm = 0
+        clowerm = 0
+    cInd = {}
+    cInd['cupper'] = cupper
+    cInd['clower'] = clower
+    cInd['cupperm'] = cupperm
+    cInd['clowerm'] = clowerm
+    #    Runout
+    cupper = cInd['cupper']
+    clower = cInd['clower']
+    clowerm = cInd['clowerm']
+    resAnalysisDF.loc[simName, 'sRunout'] = scoord[clower]
+    resAnalysisDF.loc[simName, 'xRunout'] = x[clower]
+    resAnalysisDF.loc[simName, 'yRunout'] = y[clower]
+    resAnalysisDF.loc[simName, 'sMeanRunout'] = scoord[clowerm]
+    resAnalysisDF.loc[simName, 'xMeanRunout'] = x[clowerm]
+    resAnalysisDF.loc[simName, 'yMeanRunout'] = y[clowerm]
+    resAnalysisDF.loc[simName, 'elevRel'] = transformedDEMRasters[cupper, n]
+    resAnalysisDF.loc[simName, 'deltaH'] = transformedDEMRasters[cupper, n] - transformedDEMRasters[clower, n]
 
-    return runout, runoutMean, elevRel, deltaH
+    return resAnalysisDF
 
 
-def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysis):
+def analyzeField(simName, rasterTransfo, rasterData, dataType, resAnalysisDF):
+    """ Analyse transformed field
+
+    Analyse transformed rasters in transformedRasters and for each one, compute
+    the Max and Mean values in each cross section, as well as the
+    overall maximum
+
+    Parameters
+    ----------
+    rasterTransfo: dict
+        transformation information
+    transformedRasters: list
+        list containing rasters after transformation
+    dataType: str
+        type of the data to analyze ('ppr', 'pfd' or 'pfv')
+    resultsAreaAnalysis: dict
+        result dictionary to be updated
+
+    Returns
+    -------
+    Updates the resultsAreaAnalysis input dictionary with a sub dictionary
+    of the name dataType containing:
+        -maxaCrossMax: 1D numpy array
+            containing for each simulation analyzed the overall maximum
+        -aCrossMax: 2D numpy array
+            containing for each simulation analyzed the
+            max of the field in each cross section
+        -aCrossMean: 2D numpy array
+            containing for each simulation analyzed the
+            mean of the field in each cross section
+    """
+    # read inputs
+    rasterArea = rasterTransfo['rasterArea']
+
+    # initialize Arrays
+    log.debug('Analyzing %s' % (dataType))
+    log.debug('{: <10} {: <10}'.format('Sim number ', 'maxCrossMax '))
+
+    # Max Mean in each Cross-Section for each field
+    maxaCrossMax, aCrossMax, aCrossMean = getMaxMeanValues(rasterData, rasterArea)
+    log.debug('{: <10} {:<10.4f}'.format(*[simName, maxaCrossMax]))
+
+    resAnalysisDF.loc[simName, 'max' + dataType + 'CrossMax'] = maxaCrossMax
+    resAnalysisDF.at[simName, dataType + 'CrossMax'] = aCrossMax
+    resAnalysisDF.at[simName, dataType + 'CrossMean'] = aCrossMean
+
+    return resAnalysisDF
+
+
+def analyzeField2(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysis):
     """ Analyse transformed field
 
     Analyse transformed rasters in transformedRasters and for each one, compute
@@ -817,7 +865,7 @@ def analyzeField(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysi
     return resultsAreaAnalysis
 
 
-def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict):
+def analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pathDict):
     """Compare results to reference.
 
     Compute True positive, False negative... areas.
@@ -847,96 +895,85 @@ def analyzeArea(rasterTransfo, runoutLength, data, cfgSetup, pathDict):
     TN: float
         ref = False sim2 = False
     """
-    nRef = pathDict['referenceFile']
+    resType = cfgSetup['resType']
+    refSimulationName = pathDict['refSimulation']
     cellarea = rasterTransfo['rasterArea']
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     thresholdValue = cfgSetup.getfloat('thresholdValue')
     contourLevels = fU.splitIniValueToArraySteps(cfgSetup['contourLevels'])
 
-    # initialize Arrays
-    nTopo = len(data)
-    TP = np.empty((nTopo))
-    FN = np.empty((nTopo))
-    FP = np.empty((nTopo))
-    TN = np.empty((nTopo))
-
     # rasterinfo
     nStart = indStartOfRunout
     # inputs for plot
     inputs = {}
-    inputs['runoutLength'] = runoutLength
-    inputs['refData'] = data[nRef]
+    inputs['runoutLength'] = resAnalysisDF.loc[refSimulationName, 'sRunout']
+    inputs['refData'] = newRasters['newRefRaster' + resType.upper()]
     inputs['nStart'] = nStart
-    inputs['resType'] = cfgSetup['resType']
+    inputs['resType'] = resType
 
     thresholdArray = contourLevels
     thresholdArray = np.append(thresholdArray, thresholdValue)
     inputs['thresholdArray'] = thresholdArray
     inputs['diffLim'] = cfgSetup.getfloat('diffLim')
 
-    for i in range(nTopo):
-        rasterdata = data[i]
+    rasterdata = newRasters['newRaster' + resType.upper()]
+    """
+    area
+    # true positive: result1(mask)=1, result2(rasterdata)=1
+    # false negative: result1(mask)=1, result2(rasterdata)=0
+    # false positive: result1(mask)=0, result2(rasterdata)=1
+    # true negative: result1(mask)=0, result2(rasterdata)=0
+    """
+    # take first simulation as reference
+    refMask = copy.deepcopy(inputs['refData'])
+    # prepare mask for area resAnalysis
+    refMask = np.where(np.isnan(refMask), 0, refMask)
+    refMask = np.where(refMask <= thresholdValue, 0, refMask)
+    refMask = np.where(refMask > thresholdValue, 1, refMask)
+    # comparison rasterdata with mask
+    log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format('Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
+    compRasterMask = copy.deepcopy(rasterdata)
+    # prepare mask for area resAnalysis
+    compRasterMask = np.where(np.isnan(compRasterMask), 0, compRasterMask)
+    compRasterMask = np.where(compRasterMask <= thresholdValue, 0, compRasterMask)
+    compRasterMask = np.where(compRasterMask > thresholdValue, 1, compRasterMask)
 
-        """
-        area
-        # true positive: result1(mask)=1, result2(rasterdata)=1
-        # false negative: result1(mask)=1, result2(rasterdata)=0
-        # false positive: result1(mask)=0, result2(rasterdata)=1
-        # true negative: result1(mask)=0, result2(rasterdata)=0
-        """
-        # take first simulation as reference
-        refMask = copy.deepcopy(data[nRef])
-        # prepare mask for area resAnalysis
-        refMask = np.where(np.isnan(refMask), 0, refMask)
-        refMask = np.where(refMask <= thresholdValue, 0, refMask)
-        refMask = np.where(refMask > thresholdValue, 1, refMask)
-        # comparison rasterdata with mask
-        log.debug('{: <15} {: <15} {: <15} {: <15} {: <15}'.format('Sim number ', 'TP ', 'FN ', 'FP ', 'TN'))
-        compRasterMask = copy.deepcopy(rasterdata)
-        # prepare mask for area resAnalysis
-        compRasterMask = np.where(np.isnan(compRasterMask), 0, compRasterMask)
-        compRasterMask = np.where(compRasterMask <= thresholdValue, 0, compRasterMask)
-        compRasterMask = np.where(compRasterMask > thresholdValue, 1, compRasterMask)
+    tpInd = np.where((refMask[nStart:] == 1) & (compRasterMask[nStart:] == 1))
+    fpInd = np.where((refMask[nStart:] == 0) & (compRasterMask[nStart:] == 1))
+    fnInd = np.where((refMask[nStart:] == 1) & (compRasterMask[nStart:] == 0))
+    tnInd = np.where((refMask[nStart:] == 0) & (compRasterMask[nStart:] == 0))
 
-        tpInd = np.where((refMask[nStart:] == 1) & (compRasterMask[nStart:] == 1))
-        fpInd = np.where((refMask[nStart:] == 0) & (compRasterMask[nStart:] == 1))
-        fnInd = np.where((refMask[nStart:] == 1) & (compRasterMask[nStart:] == 0))
-        tnInd = np.where((refMask[nStart:] == 0) & (compRasterMask[nStart:] == 0))
+    # subareas
+    tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
+    fp = np.nansum(cellarea[fpInd[0] + nStart, fpInd[1]])
+    fn = np.nansum(cellarea[fnInd[0] + nStart, fnInd[1]])
+    tn = np.nansum(cellarea[tnInd[0] + nStart, tnInd[1]])
 
-        # subareas
-        tp = np.nansum(cellarea[tpInd[0] + nStart, tpInd[1]])
-        fp = np.nansum(cellarea[fpInd[0] + nStart, fpInd[1]])
-        fn = np.nansum(cellarea[fnInd[0] + nStart, fnInd[1]])
-        tn = np.nansum(cellarea[tnInd[0] + nStart, tnInd[1]])
+    # take reference (first simulation) as normalizing area
+    areaSum = tp + fn
 
-        # take reference (first simulation) as normalizing area
-        areaSum = tp + fn
+    if areaSum > 0:
+        log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
+                  *[simName, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
+    if tp + fp == 0:
+        log.warning('Simulation %s did not reach the run-out area for threshold %.2f %s' %
+                    (simName, thresholdValue, pU.cfgPlotUtils['unit' + cfgSetup['resType']]))
 
-        TP[i] = tp
-        FN[i] = fn
-        FP[i] = fp
-        TN[i] = tn
-        if areaSum > 0:
-            log.debug('{: <15} {:<15.4f} {:<15.4f} {:<15.4f} {:<15.4f}'.format(
-                      *[i+1, tp/areaSum, fn/areaSum, fp/areaSum, tn/areaSum]))
-        if tp + fp == 0:
-            log.warning('Simulation %s did not reach the run-out area for threshold %.2f %s' %
-                        (i, thresholdValue, pU.cfgPlotUtils['unit' + cfgSetup['resType']]))
-        # inputs for plot
-        inputs['compData'] = rasterdata
-        # masked data for the dataThreshold given in the ini file
-        inputs['refRasterMask'] = refMask
-        inputs['compRasterMask'] = compRasterMask
-        inputs['i'] = i
+    resAnalysisDF.loc[simName, 'TP'] = tp
+    resAnalysisDF.loc[simName, 'TN'] = tn
+    resAnalysisDF.loc[simName, 'FP'] = fp
+    resAnalysisDF.loc[simName, 'FN'] = fn
+    # inputs for plot
+    inputs['compData'] = rasterdata
+    # masked data for the dataThreshold given in the ini file
+    inputs['refRasterMask'] = refMask
+    inputs['compRasterMask'] = compRasterMask
+    inputs['simName'] = simName
 
-        # only plot comparisons of simulations to reference
-        if i != nRef:
-            compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
-        elif pathDict['numSim'] == 1:
-            compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
-            log.warning('only one simulation, area comparison not meaningfull')
+    # only plot comparisons of simulations to reference
+    compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
 
-    return TP, FN, FP, TN, compPlotPath
+    return resAnalysisDF, compPlotPath
 
 
 def readWrite(fname_ent, time):
