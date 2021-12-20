@@ -625,3 +625,72 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
     dataDF = pd.DataFrame.from_dict(data)
 
     return dataDF
+
+
+def makeSimDF2(avaDir, comModule, inputDir=''):
+    """ Create a  dataFrame that contains all info on simulations in output/comModule/peakFiles
+
+        Parameters
+        ----------
+        inputDir : str
+            path to directory of simulation results
+        avaDir : str
+            optional - path to avalanche directory
+        simID : str
+            optional - simulation identification, depending on the computational module:
+            com1DFA: simHash
+            com1DFAOrig: Mu or parameter that has been used in parameter variation
+
+        Returns
+        -------
+        dataDF : dataFrame
+            dataframe with full file path, file name, release area scenario, simulation type (null, entres, etc.),
+            model type (dfa, ref, etc.), simID, result type (ppr, pfd, etc.), simulation name,
+            cell size and optional name of avalanche, optional time step
+    """
+
+    # get path to folder containing the raster files
+    if inputDir == '':
+        inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
+        if inputDir.is_dir() == False:
+            message = 'Input directory %s does not exist - check anaMod' % inputDir
+            log.error(message)
+            raise FileNotFoundError(message)
+
+    # Load input datasets from input directory
+    if isinstance(inputDir, pathlib.Path) == False:
+        inputDir = pathlib.Path(inputDir)
+    datafiles = list(inputDir.glob('*.asc'))
+
+    # build the result data frame
+    inputsDF = pd.DataFrame(columns=['simName'])
+    for file in datafiles:
+        name = file.stem
+        if '_AF_' in name:
+            nameParts = name.split('_AF_')
+            fNamePart = nameParts[0] + '_AF'
+            relNameSim = nameParts[0]
+            infoParts = nameParts[1].split('_')
+            resType = infoParts[-1]
+
+        else:
+            nameParts = name.split('_')
+            fNamePart = nameParts[0]
+            relNameSim = nameParts[0]
+            infoParts = nameParts[1:]
+            resType = infoParts[-1]
+        simName = fNamePart + '_' + ('_'.join(infoParts[0:-1]))
+        # add line in the DF if the simulation does not exsist yet
+        if simName not in inputsDF.simName.values:
+            newLine = pd.DataFrame([[simName]], columns=['simName'], index=[simName])
+            inputsDF = inputsDF.append(newLine)
+            inputsDF.loc[simName, 'releaseArea'] = relNameSim
+            inputsDF.loc[simName, 'simType'] = infoParts[0]
+            inputsDF.loc[simName, 'modelType'] = infoParts[1]
+            # add info about the cell size
+            header = IOf.readASCheader(file)
+            inputsDF.loc[simName, 'cellSize'] = header['cellsize']
+        # add full path to resType
+        inputsDF.loc[simName, resType] = file
+
+    return inputsDF
