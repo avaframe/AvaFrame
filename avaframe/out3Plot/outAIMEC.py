@@ -281,7 +281,7 @@ def visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
 
-def visuMass(resAnalysisDF, pathDict, timeMass):
+def visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass):
     """
     Plot and save the results from mass analysis
 
@@ -302,55 +302,48 @@ def visuMass(resAnalysisDF, pathDict, timeMass):
     # read paths
     projectName = pathDict['projectName']
     # read data
-    entMassFlowArray = np.stack(resAnalysisDF['entMassFlowArray'].to_numpy())
-    totalMassArray = np.stack(resAnalysisDF['totalMassArray'].to_numpy())
-    entMass = resAnalysisDF['entMass'].to_numpy()
-    finalMass = resAnalysisDF['finalMass'].to_numpy()
+    entMassRef = resAnalysisDF.loc[refSimulationName, 'entMass']
+    finalMassRef = resAnalysisDF.loc[refSimulationName, 'finalMass']
+    entMass = resAnalysisDF.loc[simName, 'entMass']
+    finalMass = resAnalysisDF.loc[simName, 'finalMass']
 
     ############################################
     # prepare for plot
     Title = ['Entrained Mass Flow', 'Total Mass']
     Unit = ['Entrained Mass Flow [$kg.s{^-1}$]', 'Total Mass [kg]']
-    DataMass = np.array(([None] * 2))
-    DataMass[0] = entMassFlowArray
-    DataMass[1] = totalMassArray
-    nSim = pathDict['numSim']
-    nRef = pathDict['referenceFile']
-    i = 0
-    while i < (nSim):
-        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(pU.figW*2, pU.figH))
-        fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
+    fieldList = ['entMassFlowArray', 'totalMassArray']
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(pU.figW*2, pU.figH))
+    fig.subplots_adjust(left=0.05, bottom=0.05, right=0.95, top=0.95, hspace=0.3)
 
-        for ax, dataMass, title, unit in zip(axes.flatten(), DataMass, Title, Unit):
-            ax.plot(timeMass, dataMass[nRef, :], '-k', label='Reference : %d ' % nRef)
-            ax.plot(timeMass, dataMass[i, :], '-b', label='Simulation : %d ' % i)
+    for ax, field, title, unit in zip(axes.flatten(), fieldList, Title, Unit):
+        refArray = resAnalysisDF.loc[refSimulationName, field]
+        simArray = resAnalysisDF.loc[simName, field]
+        ax.plot(timeMass, refArray, '-k', label='Reference : %s ' % refSimulationName)
+        ax.plot(timeMass, simArray, '-b', label='Simulation : %s ' % simName)
 
-            ax.set_title(title + ' function of time')
-            ax.legend(loc=4)
-            ax.set_xlabel('t [s]')
-            ax.set_ylabel(unit)
+        ax.set_title(title + ' function of time')
+        ax.legend(loc=1)
+        ax.set_xlabel('t [s]')
+        ax.set_ylabel(unit)
 
-        ax2 = axes.flatten()[1].twinx()
-        # ax2.set_ylabel('z [m]')
-        ax2.spines['right'].set_color('r')
-        ax2.tick_params(axis='y', colors='r')
-        ax2.plot(timeMass, (dataMass[i, :]-dataMass[nRef, :]) / dataMass[nRef, :]*100, 'r', label='total mass')
+    ax2 = axes.flatten()[1].twinx()
+    # ax2.set_ylabel('z [m]')
+    ax2.spines['right'].set_color('r')
+    ax2.tick_params(axis='y', colors='r')
+    ax2.plot(timeMass, (simArray-refArray) / refArray*100, 'r', label='total mass')
 
-        if np.any(entMass):
-            axes.flatten()[1].text(timeMass[-1]/4, (np.nanmin(dataMass[nRef, :]) + np.nanmax(dataMass[nRef, :]))/2,
-                                   'Entrained Mass Difference : %.2f kg \n Relative to entrained mass : %.2f %% \n Relative to total mass : %.2f %% ' %
-                                   ((entMass[nRef]-entMass[i]), (entMass[nRef]-entMass[i]) / entMass[nRef]*100,
-                                   (entMass[nRef]-entMass[i])/finalMass[nRef]*100),
-                                   bbox=dict(boxstyle="square", ec='white', fc='white'),
-                                   horizontalalignment='left', verticalalignment='bottom')
+    if np.any(entMass):
+        axes.flatten()[1].text(timeMass[-1]/4, (np.nanmin(refArray) + np.nanmax(refArray))/2,
+                               'Entrained Mass Difference : %.2f kg \n Relative to total mass : %.2f %% ' %
+                               ((entMassRef-entMass), (entMassRef-entMass)/finalMassRef*100),
+                               bbox=dict(boxstyle="square", ec='white', fc='white'),
+                               horizontalalignment='left', verticalalignment='bottom')
 
-        ax2.set_ylabel('Entrained Mass Difference relative to total mass[%]', color='r')
+    ax2.set_ylabel('Entrained Mass Difference relative to total mass[%]', color='r')
 
-        outFileName = '_'.join([projectName, 'massAnalysis', str(i)])
-        pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
-        outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
-
-        i = i + 1
+    outFileName = '_'.join([projectName, 'massAnalysis', str(simName)])
+    pU.putAvaNameOnPlot(ax2, pathDict['projectName'])
+    outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath
 
@@ -626,7 +619,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     return outFilePath
 
 
-def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
+def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
     """
     This function writes the main Aimec results to a file (outputFile)
     in pathDict
@@ -636,53 +629,34 @@ def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
     projectName = pathDict['projectName']
     pathResult = pathDict['pathResult']
     pathName = pathDict['pathName']
+    refSimName = pathDict['refSimulation']
     demName = os.path.basename(pathDict['demSource'])
-    dataName = [os.path.basename(name) for name in pathDict['ppr']]
+    # dataName = [os.path.basename(name) for name in pathDict['ppr']]
+    cfgSetup = cfg['AIMECSETUP']
+    cfgFlags = cfg['FLAGS']
+    flagMass = cfgFlags.getboolean('flagMass')
     domainWidth = cfgSetup['domainWidth']
     thresholdValue = cfgSetup['thresholdValue']
     resType = cfgSetup['resType']
     unit = pU.cfgPlotUtils['unit' + resType]
     name = pU.cfgPlotUtils['name' + resType]
 
-    startOfRunoutAreaAngle = resAnalysis['startOfRunoutAreaAngle']
-    indStartOfRunout = rasterTransfo['indStartOfRunout']
-    s = rasterTransfo['s']
-    sStart = s[indStartOfRunout]
-    runoutFromMid = resAnalysis['runout'][0] - sStart
-    runout = resAnalysis['runout']
-    MMPPR = resAnalysis['MMPPR']
-    MMPFD = resAnalysis['MMPFD']
-    MMPFV = resAnalysis['MMPFV']
-    deltaH = resAnalysis['deltaH']
-    elevRel = resAnalysis['elevRel']
-    if flagMass:
-        relMass = resAnalysis['relMass']
-        entMass = resAnalysis['entMass']
-        relativMassDiff = resAnalysis['relativMassDiff']
-        finalMass = resAnalysis['finalMass']
-        GI = resAnalysis['growthIndex']
-        GR = resAnalysis['growthGrad']
-    TP = resAnalysis['TP']
-    FN = resAnalysis['FN']
-    FP = resAnalysis['FP']
-    TN = resAnalysis['TN']
-    areaSum = TP[nRef] + FN[nRef]
+    startOfRunoutAreaAngle = rasterTransfo['startOfRunoutAreaAngle']
+    areaSum = resAnalysisDF.loc[refSimName, 'TP'] + resAnalysisDF.loc[refSimName, 'FN']
     if areaSum == 0:
         log.warning('Reference did not reach the run-out area. Not normalizing area indicators')
-        areaSum = np.ones(np.shape(TP))
-
-    ############################################
-    # prepare for writing
-    legend = ['fileNr', 'Xrunout', 'Yrunout', 'Lrunout', 'runoutFromSROA', 'elevRel', 'deltaH',
-              'MMPPR', 'MMPFD', 'MMPFV', 'TP ', 'FN ', 'FP ', 'TN']
-    resfile = [runout[1], runout[2], runout[0], runoutFromMid, elevRel, deltaH, MMPPR,
-               MMPFD, MMPFV, TP/areaSum, FN/areaSum, FP/areaSum, TN/areaSum]
-
+    else:
+        resAnalysisDF['TP'] = resAnalysisDF['TP'] / areaSum
+        resAnalysisDF['FN'] = resAnalysisDF['FN'] / areaSum
+        resAnalysisDF['FP'] = resAnalysisDF['FP'] / areaSum
+        resAnalysisDF['TN'] = resAnalysisDF['TN'] / areaSum
+    # do some statistics
+    forStats = ['xRunout', 'yRunout', 'sRunout','elevRel', 'deltaH', 'maxpprCrossMax', 'maxpfdCrossMax',
+                'maxpfvCrossMax', 'TP', 'FN', 'FP', 'TN']
     if flagMass:
-        legend = legend + ['relMass', 'entMass',
-                           'finalMass', 'rMassDif', 'GI', 'GR']
-        resfile = resfile + [relMass, entMass,
-                             finalMass, relativMassDiff, GI, GR]
+        forStats = forStats + ['relMass', 'entMass', 'finalMass', 'relativMassDiff', 'growthIndex', 'growthGrad']
+    # compute som statistics
+    resAnalysisStatsDF = resAnalysisDF[forStats].describe(percentiles=None)
 
     header = ''.join(['projectName: ', projectName, '\n',
                       'path: ', pathName, '\n',
@@ -692,63 +666,32 @@ def resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysis):
                       name, ' limit: ', str(thresholdValue), unit, '\n',
                       'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAreaAngle, 2)), ' °\n'])
 
-    outFileName = '_'.join(['Results', projectName, '', '', 'plim', str(thresholdValue), 'w', str(domainWidth)]) + '.txt'
+    outFileName = '_'.join(['Results', projectName, str(resType), 'lim', str(thresholdValue), 'w', str(domainWidth)]) + '.csv'
     outname = os.path.join(pathResult, outFileName)
+    outFileNameStats = '_'.join(['Results', projectName, str(resType), 'lim', str(thresholdValue), 'w', str(domainWidth)]) + 'stats.csv'
+    outnameStats = os.path.join(pathResult, outFileNameStats)
 
     # check if folder exists / create
     if not os.path.exists(os.path.dirname(outname)):
         os.makedirs(os.path.dirname(outname))
+    resAnalysisDF.to_csv(outname)
 
-    ############################################
-    # write results to file
-    output = resfile
-    log.info('write output file: %s' % outname)
-    fid = open(outname, 'w')
-    fid.write(header)
-    # write table legend
-    for j in range(len(legend)):
-        fid.write('{:<15s}'.format(legend[j]))
-    fid.write('\n')
-    # write table values
-    for i in range(np.shape(output)[1]):
-        fid.write('{:<15d}'.format(i))
-        for j in range(np.shape(output)[0]):
-            try:
-                fid.write('{:<15.3f}'.format(output[j][i]))
-            except:
-                fid.write('{:<15}'.format('NaN'))
-        fid.write('\n')
-    # compute and write min, max, mean, std to file
-    fid.write('Range of the output parameters\n')
-    for j in range(len(legend)):
-        fid.write('{:<15s}'.format(legend[j]))
-    fid.write('\n')
-
-    names = ['Minimum', 'Maximum', 'Mean', 'STD']
-    operators = ['nanmin', 'nanmax', 'nanmean', 'nanstd']
-    for name, operator in zip(names, operators):
-        fid.write('{:<15s}'.format(name))
-        for j in range(np.shape(output)[0]):
-            fid.write('{:<15.3f}'.format(
-                getattr(np, operator)(output[j][:], axis=0)))
-        fid.write('\n')
-
-    for i in range(np.shape(output)[1]):
-        tmp = os.path.basename(dataName[i])
-        name = os.path.splitext(tmp)[0]
-        fid.write('file number: %d = %s \n' % (i, name))
-    fid.close()
+    if not os.path.exists(os.path.dirname(outnameStats)):
+        os.makedirs(os.path.dirname(outnameStats))
+    resAnalysisStatsDF.to_csv(outnameStats)
 
     log.info('File written: %s' % outname)
+    log.info('File written: %s' % outnameStats)
 
 
-def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysisDF):
+def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF):
     """
     Visualize results in a nice way
     """
     ####################################
     # Get input data
     resType = cfgSetup['resType']
+    varParList = cfgSetup['varParList'].split('|')
     unit = cfgSetup['unit']
     paraVar = cfgSetup['varParList'].split('|')[0]
     name = pU.cfgPlotUtils['name' + resType]
@@ -779,7 +722,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysisDF):
     # prepare for plot
     if flag == 2:
         title = 'Visualizing EGU growth index data'
-        tipo = 'growthInd'
+        tipo = 'growthIndex'
         GI = resAnalysisDF['growthIndex'].to_numpy()
         data = GI
         dataRef = resAnalysisDF.loc[refSimName, 'growthIndex']
@@ -804,16 +747,16 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysisDF):
         plotDensity = 1
 
     if 'colorParameter' in pathDict:
-        if pathDict['colorParameter'] == []:
+        if pathDict['colorParameter'] is False:
             nSamples = np.size(runout)
             colors = np.zeros(nSamples)
             cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
             displayColorBar = False
             dataFrame = False
         else:
-            typeCP = type(pathDict['colorParameter'][0])
+            typeCP = inputsDF[varParList[0]].dtypes
             if typeCP == str:
-                keys = list(set(pathDict['colorParameter']))
+                keys = list(set(inputsDF[varParList[0]].to_numpy()))
                 nKeys = len(keys)
                 cmap = pU.cmapAimec(np.linspace(0, 1, nKeys, dtype=float))
                 df = pd.DataFrame(dict(runout=runout, data=data, rFP=rFP,
@@ -821,9 +764,8 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysisDF):
                 dataFrame = True
                 displayColorBar = False
             else:
-                colors = pathDict['colorParameter']
-                cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, np.nanmin(
-                    pathDict['colorParameter']), np.nanmax(pathDict['colorParameter']), continuous=True)
+                colors = inputsDF[varParList[0]].to_numpy()
+                cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, np.nanmin(colors), np.nanmax(colors), continuous=True)
                 displayColorBar = True
                 dataFrame = False
     else:
@@ -864,7 +806,7 @@ def resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysisDF):
 
     if not plotDensity:
         if dataFrame:
-            sns.scatterplot('runout', 'data', marker=pU.markers[0], data=df, hue='colorParameter', palette=cmap, ax=ax1)
+            scatter = ax1.scatter(resAnalysisDF['sRunout'], resAnalysisDF['tipo'], c=inputsDF[varParList[0]], cmap=cmap, norm=norm, marker=pU.markers[0])
         else:
             sc = ax1.scatter(runout, data, marker=pU.markers[0], c=colors, cmap=cmap)
             if displayColorBar:

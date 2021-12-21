@@ -38,7 +38,7 @@ def _checkAvaDirVariable(avaDir):
     return 'SUCCESS'
 
 
-def cleanModuleFiles(avaDir, module, alternativeName=''):
+def cleanModuleFiles(avaDir, module, alternativeName='', deleteOutput=True):
     '''Cleans all generated files from the provided module in the outputs
     folder and work folder
 
@@ -53,6 +53,7 @@ def cleanModuleFiles(avaDir, module, alternativeName=''):
         whereas
         from avaframe.com2AB import com2AB as c2
         leads to cleanModuleFiles(c2)
+        Boolean to be able to avoid deletion of Outputs (true by default)
     '''
 
     # check for empty or non string variable
@@ -72,8 +73,9 @@ def cleanModuleFiles(avaDir, module, alternativeName=''):
     outDir = os.path.join(avaDir, 'Outputs')
     workDir = os.path.join(avaDir, 'Work')
 
-    log.info("Cleaning module %s in folder: %s ", modName, outDir)
-    _checkForFolderAndDelete(outDir, modName)
+    if deleteOutput:
+        log.info("Cleaning module %s in folder: %s ", modName, outDir)
+        _checkForFolderAndDelete(outDir, modName)
     _checkForFolderAndDelete(workDir, modName)
 
     return 'SUCCESS'

@@ -49,16 +49,12 @@ def runAna3AIMEC(avalancheDir=''):
 
     # Setup input from com1DFA
     inputsDF = dfa2Aimec.mainDfa2Aimec(avalancheDir, anaMod, cfg)
-    print(inputsDF['simName'])
-    # TODO: define referenceFile
-    # pathDict['numSim'] = len(pathDict['ppr'])
 
     # define reference simulation
-    refSimulation = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod, cfgSetup)
-    pathDict = {'refSimulation': refSimulation, 'compType': ['singleModule', anaMod]}
+    refSimulation, inputsDF, colorParameter = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod, cfgSetup)
+    pathDict = {'refSimulation': refSimulation, 'compType': ['singleModule', anaMod], 'colorParameter': colorParameter}
     pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
-    print(pathDict)
-    print(inputsDF.columns)
+
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])
     # Run AIMEC postprocessing
