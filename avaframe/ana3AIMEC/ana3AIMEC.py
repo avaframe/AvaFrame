@@ -135,28 +135,43 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     log.info("Creating new deskewed raster and preparing new raster assignment function")
     rasterTransfo = aT.makeDomainTransfo(pathDict, inputsDF, cfgSetup)
 
-    # transform pressure_data, depth_data and speed_data in new raster
-    # assign data to reference
-    newRasters, resAnalysisDF, timeMass = postProcessAIMECRef(cfg, pathDict, inputsDF, rasterTransfo)
+    # read reference file
+    refSimulationName = pathDict['refSimulation']
+    refSimulation = inputsDF[inputsDF['simName'] == refSimulationName]
 
-    # Analyze data
+    # ####################################################
+    # visualisation
+    # TODO: needs to be moved somewhere else
+
+    rasterSource = refSimulation.iloc[0][cfgSetup['resType']]
+    raster = IOf.readRaster(rasterSource)
+    slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
+    newRasters = {}
+    log.info("Assigning dem data to deskewed raster")
+    newRasters['newRasterDEM'] = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
+
+    inputData = {}
+    inputData['slRaster'] = slRaster
+    inputData['xyRaster'] = raster['rasterData']
+    inputData['xyHeader'] = raster['header']
+    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
+    # ###########################################################
+
+    # postprocess reference
+    inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
+    timeMass = 0
+    resAnalysisDF = inputsDF[['simName']].copy()
+    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, refSimulationName, resAnalysisDF)
+
+    # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         simName = inputsDFrow['simName']
-        if simName!=refSimulationName:
-            log.info('Analyzing data in path coordinate system')
-            log.debug("Assigning pressure data to deskewed raster")
-            inputFiles = inputsDFrow['ppr']
-            newRasters['newRasterPPR'] = aT.transform(inputFiles, rasterTransfo, interpMethod)
-            log.debug("Assigning thickness data to deskewed raster")
-            inputFiles = inputsDFrow['pfd']
-            newRasters['newRasterPFD'] = aT.transform(inputFiles, rasterTransfo, interpMethod)
-            log.debug("Assigning velocity data to deskewed raster")
-            inputFiles = inputsDFrow['pfv']
-            newRasters['newRasterPFV'] = aT.transform(inputFiles, rasterTransfo, interpMethod)
+        if simName != refSimulationName:
+            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF)
 
-            resAnalysisDF, timeMass = postProcessAIMEC(cfg, pathDict, inputsDF, simName, resAnalysisDF, newRasters, rasterTransfo, cfgFlags, timeMass)
     # -----------------------------------------------------------
     # result visualisation + report
+    # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
     outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
@@ -165,18 +180,174 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     else:
         outAimec.visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
 
-    # if cfgFlags.getboolean('flagMass') and (len(resAnalysisDF.index) > 1):
-    #     outAimec.visuMass(resAnalysisDF, pathDict)
-    outAimec.resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
+    outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
 
     # -----------------------------------------------------------
     # write results to file
     # -----------------------------------------------------------
     log.info('Writing results to file')
-    flagMass = cfgFlags.getboolean('flagMass')
-    outAimec.resultWrite(pathDict, cfgSetup, flagMass, rasterTransfo, resAnalysisDF)
+    outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
 
     return rasterTransfo, newRasters, resAnalysisDF
+
+
+def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF):
+    """ Apply domain transformation and analyse pressure, thickness and velocity data
+
+    Apply the domain tranformation to peak results
+    Analyse pressure thickness and speed.
+    Calculate runout, Max Peak Pressure, Average PP...
+    Get mass and entrainement
+
+    Parameters
+    ----------
+    cfg: configParser objec
+        parameters for AIMEC analysis
+    rasterTransfo: dict
+        transformation information
+    pathDict: dict
+        path to dem, lines...
+    inputsDF: dataFrame
+        path to simulation data to analyze
+    newRasters: dict
+        dictionary containing pressure, velocity and flow depth rasters after
+        transformation for the reference and the current simulation
+    timeMass: 1D numpy array
+        time array for mass analysis (if flagMass=True, otherwise None)
+    simName: str
+        name of the curent simulation to analyze
+    resAnalysisDF: dataFrame
+        results from Aimec Analysis
+
+    Returns
+    -------
+    resAnalysisDF: dataFrame
+        results from Aimec Analysis updated with results from curent simulation:
+            -maxpprCrossMax: float
+                    max max peak pressure
+            -pprCrossMax: 1D numpy array
+                    max peak pressure in each cross section
+            -pprCrossMean: 1D numpy array
+                    mean peak pressure in each cross section
+            -maxpfdCrossMax: float
+                    max max peak flow depth
+            -pfdCrossMax: 1D numpy array
+                    max peak flow depth in each cross section
+            -pfdCrossMean: 1D numpy array
+                    mean peak flow depth in each cross section
+            -maxpfvCrossMax: float
+                    max max peak flow velocity
+            -pfvCrossMax: 1D numpy array
+                    max peak flow velocity in each cross section
+            -pfvCrossMean: 1D numpy array
+                    mean peak flow velocity in each cross section
+            -xRunout: float
+                    x coord of the runout point calculated from the
+                    MAX peak result in each cross section (resType provided in the ini file)
+            -yRunout: float
+                    y coord of the runout point calculated from the
+                    MAX peak result in each cross section (resType provided in the ini file)
+            -sRunout: float
+                    projected runout distance calculated from the
+                    MAX peak result in each cross section (resType provided in the ini file)
+            -xMeanRunout: float
+                    x coord of the runout point calculated from the
+                    MEAN peak result in each cross section (resType provided in the ini file)
+            -yMeanRunout: float
+                    y coord of the runout point calculated from the
+                    MEAN peak result in each cross section (resType provided in the ini file)
+            -sMeanRunout: float
+                    projected runout distance calculated from the
+                    MEAN peak result in each cross section (resType provided in the ini file)
+            -elevRel: float
+                    elevation of the release area (based on first point with
+                    peak field > thresholdValue)
+            -deltaH: float
+                    elevation fall difference between elevRel and altitude of
+                    run-out point
+
+            -TP: float
+                    ref = True sim2 = True
+            -FN: float
+                    ref = False sim2 = True
+            -FP: float
+                    ref = True sim2 = False
+            -TN: float
+                    ref = False sim2 = False
+
+            if mass analysis is performed
+            -relMass: float
+                    release mass
+            -entMass: float
+                    entrained mass
+            -finalMass: float
+                    final mass
+            -relativMassDiff: float
+                    the final mass diff with ref (in %)
+            -growthIndex: float
+                    growth index
+            -growthGrad: float
+                    growth gradient
+    """
+    cfgSetup = cfg['AIMECSETUP']
+    cfgFlags = cfg['FLAGS']
+    interpMethod = cfgSetup['interpMethod']
+    flagMass = cfgFlags.getboolean('flagMass')
+    refSimName = pathDict['refSimulation']
+    # apply domain transformation
+
+    refSimulationName = pathDict['refSimulation']
+    log.info('Analyzing data in path coordinate system')
+    log.debug("Assigning pressure data to deskewed raster")
+    inputFiles = inputsDFrow['ppr']
+    print(inputFiles)
+    newRasterPPR = aT.transform(inputFiles, rasterTransfo, interpMethod)
+    newRasters['newRasterPPR'] = newRasterPPR
+    log.debug("Assigning thickness data to deskewed raster")
+    inputFiles = inputsDFrow['pfd']
+    newRasterPFD = aT.transform(inputFiles, rasterTransfo, interpMethod)
+    newRasters['newRefRasterPFD'] = newRasterPFD
+    log.debug("Assigning velocity data to deskewed raster")
+    inputFiles = inputsDFrow['pfv']
+    newRasterPFV = aT.transform(inputFiles, rasterTransfo, interpMethod)
+    newRasters['newRasterPFV'] = newRasterPFV
+
+    if simName == refSimName:
+        newRasters['newRefRasterPPR'] = newRasterPPR
+        newRasters['newRasterPFD'] = newRasterPFD
+        newRasters['newRefRasterPFV'] = newRasterPFV
+        dataTypeList = ['ppr', 'pfd', 'pfv']
+        for dataType in dataTypeList:
+            resAnalysisDF[dataType + 'CrossMax'] = np.nan
+            resAnalysisDF[dataType + 'CrossMax'] = resAnalysisDF[dataType + 'CrossMax'].astype(object)
+            resAnalysisDF[dataType + 'CrossMean'] = np.nan
+            resAnalysisDF[dataType + 'CrossMean'] = resAnalysisDF[dataType + 'CrossMax'].astype(object)
+
+    # analyize all fields
+    dataPressure = newRasters['newRasterPPR']
+    dataThickness = newRasters['newRasterPFD']
+    dataSpeed = newRasters['newRasterPFV']
+    resAnalysisDF = aT.analyzeField(simName, rasterTransfo, dataPressure, 'ppr', resAnalysisDF)
+    resAnalysisDF = aT.analyzeField(simName, rasterTransfo, dataThickness, 'pfd', resAnalysisDF)
+    resAnalysisDF = aT.analyzeField(simName, rasterTransfo, dataSpeed, 'pfv', resAnalysisDF)
+
+    # compute runout based on resType
+    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters['newRasterDEM'], simName)
+
+    if flagMass:
+        # perform mass analysis
+        fnameMass = inputsDFrow['massBal']
+        if simName == refSimName:
+            timeMass = 0
+        resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simName, refSimulationName, resAnalysisDF, time=timeMass)
+        outAimec.visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass)
+    else:
+        timeMass = None
+
+    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pathDict)
+
+    resAnalysisDF.loc[simName, 'areasPlot'] = compPlotPath
+    return resAnalysisDF, newRasters, timeMass
 
 
 def AIMECIndi(pathDict, cfg):
@@ -253,217 +424,6 @@ def AIMECIndi(pathDict, cfg):
     return rasterTransfo, newRasters, resAnalysis
 
 
-# -----------------------------------------------------------
-# Aimec analysis tools
-# -----------------------------------------------------------
-def postProcessAIMECRef(cfg, pathDict, inputsDF, rasterTransfo):
-    cfgSetup = cfg['AIMECSETUP']
-    cfgFlags = cfg['FLAGS']
-    flagMass = cfgFlags.getboolean('flagMass')
-    interpMethod = cfgSetup['interpMethod']
-    ###########################################################################
-    # visualisation
-    # TODO: needs to be moved somewhere else
-    # read reference file
-    refSimulationName = pathDict['refSimulation']
-    refSimulation = inputsDF[inputsDF['simName']==refSimulationName]
-
-    rasterSource = refSimulation.iloc[0][cfgSetup['resType']]
-    raster = IOf.readRaster(rasterSource)
-    slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
-    inputData = {}
-    inputData['slRaster'] = slRaster
-    inputData['xyRaster'] = raster['rasterData']
-    inputData['xyHeader'] = raster['header']
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
-    #################################################################
-    newRasters = {}
-    log.debug("Assigning pressure reference data to deskewed raster")
-    inputFiles = refSimulation.iloc[0]['ppr']
-    newRasters['newRefRasterPPR'] = aT.transform(inputFiles, rasterTransfo, interpMethod)
-    log.debug("Assigning thickness reference data to deskewed raster")
-    inputFiles = refSimulation.iloc[0]['pfd']
-    newRasters['newRefRasterPFD'] = aT.transform(inputFiles, rasterTransfo, interpMethod)
-    log.debug("Assigning velocity reference data to deskewed raster")
-    inputFiles = refSimulation.iloc[0]['pfv']
-    newRasters['newRefRasterPFV'] = aT.transform(inputFiles, rasterTransfo, interpMethod)
-    # assign dem data
-    log.info("Assigning dem data to deskewed raster")
-    newRasters['newRasterDEM'] = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
-
-    # analyize all fields
-    dataPressure = newRasters['newRefRasterPPR']
-    dataThickness = newRasters['newRefRasterPFD']
-    dataSpeed = newRasters['newRefRasterPFV']
-    resAnalysisDF = inputsDF[['simName']].copy()
-    dataTypeList = ['ppr', 'pfd', 'pfv']
-    for dataType in dataTypeList:
-        resAnalysisDF[dataType + 'CrossMax'] = np.nan
-        resAnalysisDF[dataType + 'CrossMax'] = resAnalysisDF[dataType + 'CrossMax'].astype(object)
-        resAnalysisDF[dataType + 'CrossMean'] = np.nan
-        resAnalysisDF[dataType + 'CrossMean'] = resAnalysisDF[dataType + 'CrossMax'].astype(object)
-    resAnalysisDF = aT.analyzeField(refSimulationName, rasterTransfo, dataPressure, 'ppr', resAnalysisDF)
-    resAnalysisDF = aT.analyzeField(refSimulationName, rasterTransfo, dataThickness, 'pfd', resAnalysisDF)
-    resAnalysisDF = aT.analyzeField(refSimulationName, rasterTransfo, dataSpeed, 'pfv', resAnalysisDF)
-
-    # compute runout based on resType
-    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters['newRasterDEM'], refSimulationName)
-
-    if flagMass:
-        # perform mass analysis
-        fnameMass = refSimulation.iloc[0]['massBal']
-        resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, refSimulationName, refSimulationName, resAnalysisDF)
-    return newRasters, resAnalysisDF, timeMass
-
-
-def postProcessAIMEC(cfg, pathDict, inputsDF, simName, resAnalysisDF, newRasters, rasterTransfo, cfgFlags, timeMass):
-    """ Analyse pressure and depth transformed data
-
-    Analyse pressure depth and speed.
-    Calculate runout, Max Peak Pressure, Average PP...
-    Get mass and entrainement
-
-    Parameters
-    ----------
-    rasterTransfo: dict
-        transformation information
-    newRasters: dict
-        dictionary containing pressure, velocity and flow depth rasters after
-        transformation
-    cfgSetup: configParser objec
-        parameters for data analysis
-    pathDict: dict
-        path to data to analyse
-    cfgFlags: congfigParser object
-        configuration settings flagMass used
-
-    Returns
-    -------
-    resAnalysis: dict
-        resAnalysis dictionary containing all results:
-            -MMPPR: 1D numpy array
-                    containing for each simulation analyzed the max max
-                    peak pressure
-            -PPRCrossMax: 2D numpy array
-                    containing for each simulation analyzed the
-                    max peak pressure in each cross section
-            -PPRCrossMean: 2D numpy array
-                    containing for each simulation analyzed the
-                    mean peak pressure in each cross section
-            -MMPFD: 1D numpy array
-                    containing for each simulation analyzed the max max
-                    peak flow depth
-            -PFDCrossMax: 2D numpy array
-                    containing for each simulation analyzed the
-                    max peak flow depth in each cross section
-            -PFDCrossMean: 2D numpy array
-                    containing for each simulation analyzed the
-                    mean peak flow depth in each cross section
-            -MMPFV: 1D numpy array
-                    containing for each simulation analyzed the max max
-                    peak flow velocity
-            -PFVCrossMax: 2D numpy array
-                    containing for each simulation analyzed the
-                    max peak flow velocity in each cross section
-            -PFVCrossMean: 2D numpy array
-                    containing for each simulation analyzed the
-                    mean peak flow velocity in each cross section
-
-            -thresholdValue: float
-                    threshold value for runout analysis
-            -startOfRunoutAreaAngle: float
-                    angle of the slope at the beginning of the run-out
-                    area (given in input)
-
-            -runout: 2D numpy array
-                    containing for each simulation analyzed the x and
-                    y coord of the runout point as well as the runout distance
-                    measured from the begining of the path. run-out
-                    calculated with the MAX pressure in each cross section
-            -runoutMean: 2D numpy array
-                    containing for each simulation analyzed the x
-                    and y coord of the runout point as well as the runout
-                    distance measured from the begining of the path.
-                    run-out calculated with the MEAN pressure in each cross
-                    section
-            -elevRel: 1D numpy array
-                    containing for each simulation analyzed the
-                    elevation of the release area (based on first point with
-                    peak field > thresholdValue)
-            -deltaH: 1D numpy array
-                    containing for each simulation analyzed the
-                    elevation fall difference between elevRel and altitude of
-                    run-out point
-
-            -TP: float
-                    ref = True sim2 = True
-            -FN: float
-                    ref = False sim2 = True
-            -FP: float
-                    ref = True sim2 = False
-            -TN: float
-                    ref = False sim2 = False
-
-            if mass analysis is performed
-            -relMass: 1D numpy array
-                    containing for each simulation analyzed the
-                    release mass
-            -entMass: 1D numpy array
-                    containing for each simulation analyzed the
-                    entrained mass
-            -finalMass: 1D numpy array
-                    containing for each simulation analyzed the
-                    final mass
-            -relativMassDiff: 1D numpy array
-                    containing for each simulation analyzed
-                    the final mass diff with ref (in %)
-            -growthIndex: 1D numpy array
-                    containing for each simulation analyzed the
-                    growth index
-            -growthGrad: 1D numpy array
-                    containing for each simulation analyzed the
-                    growth gradient
-    """
-    cfgSetup = cfg['AIMECSETUP']
-    cfgFlags = cfg['FLAGS']
-    flagMass = cfgFlags.getboolean('flagMass')
-    interpMethod = cfgSetup['interpMethod']
-    refSimulationName = pathDict['refSimulation']
-    # analyize all fields
-    dataPressure = newRasters['newRasterPPR']
-    dataThickness = newRasters['newRasterPFD']
-    dataSpeed = newRasters['newRasterPFV']
-    resAnalysisDF = aT.analyzeField(simName, rasterTransfo, dataPressure, 'ppr', resAnalysisDF)
-    resAnalysisDF = aT.analyzeField(simName, rasterTransfo, dataThickness, 'pfd', resAnalysisDF)
-    resAnalysisDF = aT.analyzeField(simName, rasterTransfo, dataSpeed, 'pfv', resAnalysisDF)
-
-    # compute runout based on resType
-    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters['newRasterDEM'], simName)
-
-    if flagMass:
-        # perform mass analysis
-        fnameMass = inputsDF.loc[simName, 'massBal']
-        resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, refSimulationName, refSimulationName, resAnalysisDF)
-
-    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pathDict)
-
-    # affect values to output dictionary
-    # resAnalysis = {}
-    # resAnalysis['MMPPR'] = resultsAreaAnalysis['ppr']['maxaCrossMax']
-    # resAnalysis['MMPFD'] = resultsAreaAnalysis['pfd']['maxaCrossMax']
-    # resAnalysis['MMPFV'] = resultsAreaAnalysis['pfv']['maxaCrossMax']
-    # resAnalysis['PPRCrossMax'] = resultsAreaAnalysis['ppr']['aCrossMax']
-    # resAnalysis['PPRCrossMean'] = resultsAreaAnalysis['ppr']['aCrossMean']
-    # resAnalysis['PFDCrossMax'] = resultsAreaAnalysis['pfd']['aCrossMax']
-    # resAnalysis['PFDCrossMean'] = resultsAreaAnalysis['pfd']['aCrossMean']
-    # resAnalysis['PFVCrossMax'] = resultsAreaAnalysis['pfv']['aCrossMax']
-    # resAnalysis['PFVCrossMean'] = resultsAreaAnalysis['pfv']['aCrossMean']
-    # resAnalysis['thresholdValue'] = thresholdValue
-    # resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
-    resAnalysisDF.loc[simName, 'areasPlot'] = compPlotPath
-    return resAnalysisDF, timeMass
-
-
 def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict):
     """ Analyse one peak field transformed data
 
@@ -481,7 +441,7 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict):
     cfgSetup: dict
         parameters for data analysis
     pathDict: dict
-        path to data to analyse
+        path to dem, lines...
 
     Returns
     -------

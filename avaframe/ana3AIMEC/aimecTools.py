@@ -5,6 +5,7 @@
 import logging
 import pathlib
 import numpy as np
+import pandas as pd
 import copy
 
 
@@ -114,6 +115,8 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
 
         # create dataFrame with ordered configurations
         configurationDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfgSetup.getboolean('ascendingOrder'), resFiles=False)
+        # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
+        inputsDF = inputsDF.reset_index().merge(configurationDF, on='simName').set_index('index')
 
         # add value of first parameter used for ordering for colorcoding in plots
         colorParameter = configurationDF[varParList[0]].to_list()
@@ -130,11 +133,13 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
                      (varParList[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
             refSimulation = configurationDF[configurationDF[varParList[0]]==colorValues[indexRef]]['simName'].to_list()[0]
+            colorParameter = True
         else:
             # reference simulation
             refSimulation = configurationDF.iloc[0]['simName']  # configurationDF.head(1)['simName'].values[0]
 
     elif cfgSetup['referenceSimName'] != '':
+        colorParameter = False
         # if no colorParameter info and refeenceSimValue available but referenceSimName is given - set
         # simulation with referenceSimName in name as referene simulation
         simFound = False
@@ -151,7 +156,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         refSimulation = inputsDF.iloc[0]['simName']
         log.info('Reference Simulation is based on first simulation in folder')
 
-    return refSimulation
+    return refSimulation, inputsDF, colorParameter
 
 
 def computeCellSizeSL(cfgSetup, refResultHeader):
@@ -659,11 +664,11 @@ def analyzeMass(fnameMass, simName, refSimName, resAnalysisDF, time=0):
     if simName == refSimName:
         resAnalysisDF['entMassFlowArray'] = np.nan
         resAnalysisDF['entMassFlowArray'] = resAnalysisDF['entMassFlowArray'].astype(object)
-        resAnalysisDF.at[simName, 'entMassFlowArray'] = entMassFlow
         resAnalysisDF['totalMassArray'] = np.nan
         resAnalysisDF['totalMassArray'] = resAnalysisDF['totalMassArray'].astype(object)
-        resAnalysisDF.at[simName, 'entMassFlowArray'] = totalMass
 
+    resAnalysisDF.at[simName, 'entMassFlowArray'] = entMassFlow
+    resAnalysisDF.at[simName, 'totalMassArray'] = totalMass
     return resAnalysisDF, time
 
 

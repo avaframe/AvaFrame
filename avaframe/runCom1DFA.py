@@ -2,8 +2,6 @@
     Run script for running python DFA kernel
 """
 
-import pathlib
-
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com1DFA import com1DFA
@@ -22,8 +20,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 
 # Clean input directory of old work and output files from module
-initProj.cleanModuleFiles(avalancheDir, com1DFA)
-
+initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=False)
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')

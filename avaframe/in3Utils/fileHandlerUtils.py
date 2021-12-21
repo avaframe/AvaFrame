@@ -632,14 +632,12 @@ def makeSimDF2(avaDir, comModule, inputDir=''):
 
         Parameters
         ----------
-        inputDir : str
-            path to directory of simulation results
         avaDir : str
-            optional - path to avalanche directory
-        simID : str
-            optional - simulation identification, depending on the computational module:
-            com1DFA: simHash
-            com1DFAOrig: Mu or parameter that has been used in parameter variation
+            path to avalanche directory
+        comModule : str
+            module used to create the results
+        inputDir : str
+            optional - path to directory of simulation results
 
         Returns
         -------
