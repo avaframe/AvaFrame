@@ -277,8 +277,8 @@ def plotProbMap(avaDir, inDir, cfgFull):
         Lx = nx*cellSize
 
         # constrain plot to where there is data
-        rowsMin, rowsMax, colsMin, colsMax, dataConstrained = pU.constrainPlotsToData(dataPlot,
-                                                                        cellSize, extentOption=True)
+        rowsMin, rowsMax, colsMin, colsMax, dataConstrained = pU.constrainPlotsToData(dataPlot, cellSize,
+            extentOption=True, constrainedData=True)
         dataPlot = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
 
         # create figure

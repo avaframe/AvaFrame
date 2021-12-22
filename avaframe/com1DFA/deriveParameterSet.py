@@ -122,6 +122,10 @@ def validateVarDict(variationDict, standardCfg):
     # check if parameters exist in model configuration
     ignoredParameters = []
     for parameter in variationDict:
+        if isinstance(variationDict[parameter], str):
+            if '|' in variationDict[parameter] or ':' in variationDict[parameter]:
+                items = fU.splitIniValueToArraySteps(variationDict[parameter], returnList=False)
+                variationDict[parameter] = items
         if parameter in standardCfg['GENERAL']:
             if not isinstance(variationDict[parameter], (list, np.ndarray)):
                 variationDict[parameter] = [variationDict[parameter]]

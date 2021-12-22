@@ -608,7 +608,11 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
             if not isinstance(value, (list, np.ndarray)):
                 value = [value]
             if value != '' and value != []:
-                simDF = simDF[simDF[key].isin(value)]
+                if '~' in key:
+                    keyNew = key.replace("~", "")
+                    simDF = simDF[~simDF[keyNew].isin(value)]
+                else:
+                    simDF = simDF[simDF[key].isin(value)]
 
     # list of simNames after filtering
     simNameList = simDF['simName'].tolist()
