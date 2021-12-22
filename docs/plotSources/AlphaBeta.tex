@@ -1,8 +1,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ensure gnuplot is installed
 % Compile with
 % pdflatex --shell-escape -synctex=1 -interaction=nonstopmode AlphaBeta.tex
 % to convert it to png use:
-% convert -density 300 -transparent white "\image.pdf" "\image.png"},
+% convert -density 200 -transparent white "\image.pdf" "\image.png"},
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \documentclass{standalone}
@@ -79,14 +80,14 @@
 
 
 \tkzDefPoints{0/\c/H, \xb/0.8/B, \xb/\yb/BB, \xa/0.8/A, \xa/\ya/AA, \xai/\yai/AI, \xao/\yao/AO, \xbi/\ybi/BI, \xbo/\ybo/BO, \xs/0.8/S, \xs/\ys/SS, \xf/\yf/F, \xp/\yp/P, 4/\yhh/H0, 4/\yh/HH, 0/\yhh/HHH, \xh/\yh/HHHH, \xaa/0.8/A1, \xaa/\yaa/AA1, \xaai/\yaai/AI1, \xaao/\yaao/AO1}
-\draw [thick,dotted, black] (BB) -- (B) node [below] {$x_{\beta}$};
-\draw [thick,dotted, black] (AA) -- (A) node [below] {$x_{\alpha}$};
-\draw [thick,dotted, black] (SS) -- (S) node [below] {$x_{split}$};
+\draw [thick,dotted, black] (BB) -- (B) node [below] {$s_{\beta}$};
+\draw [thick,dotted, black] (AA) -- (A) node [below] {$s_{\alpha}$};
+\draw [thick,dotted, black] (SS) -- (S) node [below] {$s_{split}$};
 \draw [thick, AFMiddle] (BB) -- (H);
 \draw [thick, AFDark] (AA) -- (H);
 \draw [thick,dotted, AFDark] (AI) -- (AO);
 \pic[draw,AFDark,angle radius=0.8cm,"$\alpha$" ,pic text options={shift={(18pt,-5pt)}}]{angle=AA--AI--AO};
-\draw [thick,dotted, black] (AA1) -- (A1) node [below] {$x_{\alpha_{-1}}$};
+\draw [thick,dotted, black] (AA1) -- (A1) node [below] {$s_{\alpha_{-1}}$};
 \draw [thick,dashed, AFDark] (AA1) -- (H);
 \draw [thick,dotted, AFDark] (AI1) -- (AO1);
 \pic[draw,AFDark,angle radius=0.8cm,"$\alpha_{-1}$" ,pic text options={shift={(22pt,-5pt)}}]{angle=AA1--AI1--AO1};
@@ -94,7 +95,7 @@
 \draw [thick,dotted, AFMiddle] (BI) -- (BO);
 \pic[draw,AFMiddle,angle radius=0.8cm,"$\beta$" ,pic text options={shift={(18pt,-5pt)}}]{angle=BB--BI--BO};
 
-\node[text width=2.5cm, fill=none,below,black] at (1,0.45) {$y=ax^2+bx+c$\\$y'=2ax+b$\\$y''=2a$};
+\node[text width=2.5cm, fill=none,below,black] at (1,0.45) {$z=as^2+bs+c$\\$z'=2as+b$\\$z''=2a$};
 \draw [>={Triangle},thick,dotted, ->] (1,0.45) -- (F);
 \node[text width=2.5cm, fill=none,above,black] at (1,2) {$\mbox{Avalanche profile}$};
 \draw [>={Triangle},thick, ->] (1,2) -- (P);
