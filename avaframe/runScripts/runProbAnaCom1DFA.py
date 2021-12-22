@@ -27,7 +27,7 @@ logName = 'runCom1DFAandProbAna'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # Define avalanche directories for tests
-avaDir = 'data/avaKotST'
+avaDir = 'data/avaParabola'
 avaDir = pathlib.Path(avaDir)
 avaName = avaDir.name
 
