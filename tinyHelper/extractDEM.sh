@@ -1,9 +1,13 @@
 #!/bin/bash
 
 # location of the folder containing the contours (AlrExtend.shp file for each avalanche in a seperate folder naved after the avalanche: Alr for exmple)
-folder="/home/matthias/Documents/Exctract_DEM2/"
+folder="tmp/topo/"
 # location of the initial GEOtiff data
-DEM="${folder}DGM_Tirol_5m_epsg31287.tiff"
+DEM="${folder}DGM_Tirol_5m_epsg31287.tif"
+
+# move files to correct location
+dest="tmp/topo/"
+
 # Note that both .shp and geotiff should be in the same coord sys: epsg31287
 
 # loop and extract tif from initial GEOtiff data and contours
@@ -34,8 +38,6 @@ for j in ${folder}**/*.tif;do
         # rm "${j%.tif}.tif.aux.xml"
     done
 
-# move files to correct location
-dest="/home/matthias/Documents/github/AvaFrame/avaframe/data/"
 # copy files to ava directory,
 for j in ${folder}**/*.asc;do
 	echo "moving file: $j"
