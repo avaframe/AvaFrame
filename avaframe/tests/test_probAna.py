@@ -68,3 +68,89 @@ def test_probAna(tmp_path):
 
     # Test
     assert (testRes2 == True)
+
+
+def test_createComModConfig(tmp_path):
+    """ test creatig a config file """
+
+    # set input directory
+    avaName = 'avaParabola'
+    avaDir = pathlib.Path(tmp_path, avaName)
+
+    cfgProb = configparser.ConfigParser()
+    cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'muRange': '0.055', 'muSteps': '2', 'mu': '0.155', 'relTh': '1.',
+        'relThRange': '0.5', 'relThSteps': '3', 'defaultSetup': 'True'}
+
+    # call function to be tested
+    cfgFiles = pA.createComModConfig(cfgProb, avaDir, com1DFA)
+
+    # load cfg from file
+    cfgMu = configparser.ConfigParser()
+    cfgRelTh = configparser.ConfigParser()
+
+    cfgMu.read(cfgFiles['mu']['cfgFile'])
+    cfgRelTh.read(cfgFiles['relTh']['cfgFile'])
+
+    print(cfgMu['GENERAL']['mu'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['mu'], cfgRelTh['GENERAL']['relTh'])
+
+    assert cfgMu['GENERAL']['mu'] == '0.1:0.21:2&0.155'
+    assert cfgMu['GENERAL']['relTh'] == '1.'
+    assert cfgRelTh['GENERAL']['mu'] == '0.155'
+    assert cfgRelTh['GENERAL']['relTh'] == '0.5:1.5:3'
+    assert cfgRelTh['GENERAL']['useRelThFromIni'] == 'True'
+    assert cfgMu['GENERAL']['useRelThFromIni'] == 'True'
+
+    testDir = pathlib.Path(__file__).parents[0]
+    inputDir = testDir / 'data' / 'testCom1DFA'
+    avaDirNew = pathlib.Path(tmp_path, 'testCom1DFA')
+    shutil.copytree(inputDir, avaDirNew)
+    cfgFileNew = avaDirNew / 'test_com1DFACfg.ini'
+
+    cfgProb['PROBRUN']['defaultSetup'] = 'False'
+
+    # call function to be tested
+    cfgFiles = pA.createComModConfig(cfgProb, avaDirNew, com1DFA)
+
+    # load cfg from file
+    cfgMu1 = configparser.ConfigParser()
+    cfgRelTh1 = configparser.ConfigParser()
+
+    cfgMu1.read(cfgFiles['mu']['cfgFile'])
+    cfgRelTh1.read(cfgFiles['relTh']['cfgFile'])
+
+    assert cfgMu1['GENERAL']['simTypeList'] == 'entres'
+    assert cfgMu1['GENERAL']['mu'] == '0.1:0.21:2&0.155'
+    assert cfgMu1['GENERAL']['relTh'] == '1.'
+    assert cfgRelTh1['GENERAL']['mu'] == '0.155'
+    assert cfgRelTh1['GENERAL']['relTh'] == '0.5:1.5:3'
+    assert cfgRelTh1['GENERAL']['useRelThFromIni'] == 'True'
+    assert cfgMu1['GENERAL']['useRelThFromIni'] == 'True'
+
+
+def test_updateCfgRange():
+    """ test updating cfg values """
+
+    # setup inputs
+    cfg = configparser.ConfigParser()
+    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'muRange': '0.055', 'muSteps': '2', 'mu': '0.155', 'relTh': '2.',
+        'relThRange': '0.5', 'relThSteps': '3', 'defaultSetup': 'True'}
+
+    com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+    varName = 'mu'
+
+    # call function
+    cfgNew, refIn = pA.updateCfgRange(com1DFACfg, cfg, varName)
+
+    assert refIn == True
+    assert cfgNew['GENERAL']['mu'] == '0.1:0.21:2&0.155'
+    assert cfgNew['GENERAL']['relTh'] == '2.'
+
+    com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+    varName = 'relTh'
+
+    # call function
+    cfgNew, refIn = pA.updateCfgRange(com1DFACfg, cfg, varName)
+
+    assert refIn == False
+    assert cfgNew['GENERAL']['mu'] == '0.155'
+    assert cfgNew['GENERAL']['relTh'] == '1.5:2.5:3'
