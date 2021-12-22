@@ -283,6 +283,7 @@ def getFilterDict(cfg, section):
 def splitIniValueToArraySteps(cfgValues, returnList=False):
     """ read values in ini file and return numpy array or list if the items are strings;
         values can either be separated by | or provided in start:end:numberOfSteps format
+        if separated by : also optional add one additional value using & 
 
         Parameters
         ----------
@@ -298,8 +299,14 @@ def splitIniValueToArraySteps(cfgValues, returnList=False):
     """
 
     if ':' in cfgValues:
-        itemsInput = cfgValues.split(':')
+        if '&' in cfgValues:
+            itemsInputBig = cfgValues.split('&')
+            itemsInput = itemsInputBig[0].split(':')
+        else:
+            itemsInput = cfgValues.split(':')
         items = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
+        if '&' in cfgValues:
+            items = np.append(items, float(itemsInputBig[1]))
     elif cfgValues == '':
         items = []
     else:
