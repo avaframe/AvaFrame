@@ -45,10 +45,10 @@ based on data collected for real avalanches
 fitted to the data:
 
 .. math::
-    \alpha_j = k_1 \beta + k_2 y'' + k_3 H_0 + k_4 + j SD
+    \alpha_j = k_1 \beta + k_2 z'' + k_3 H_0 + k_4 + j SD
 
 where :math:`H_0` is the elevation loss of the quadratic fit of the avalanche
-profile. :math:`y''` is the curvature of this same quadratic fit. :math:`\beta`
+profile. :math:`z''` is the curvature of this same quadratic fit. :math:`\beta`
 is the angle of the line between the :math:`10^\circ` point (first point where
 the avalanche profiles slope is under :math:`10^\circ`) and the starting point.
 The coefficients :math:`(k_1, k_2, k_3, k_4)` and the standard deviation
@@ -61,7 +61,7 @@ process. The values of the SD used are based on normal distribution. It is
 important to note that a bigger runout angle leads to a shorter runout
 distance. This means that :math:`\alpha_{-1}= \alpha - SD` leads to a longer
 runout. In other words, the probability of the runout being shorter than
-:math:`x_{\alpha_{-1}}` corresponding to :math:`\alpha_{-1}` is approximately
+:math:`s_{\alpha_{-1}}` corresponding to :math:`\alpha_{-1}` is approximately
 83%.
 
 
