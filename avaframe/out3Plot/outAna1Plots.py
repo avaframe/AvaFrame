@@ -279,9 +279,11 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, colore
     # #########################################
     # If you want to add some regression lines
     colorValueListList = simDF[coloredBy].unique()
-    sizeValue = simDF[sizedBy].unique()[0]
     for colorValue in colorValueListList:
-        simDFNew = simDF[(simDF[coloredBy] == colorValue) & (simDF[sizedBy] == sizeValue)]
+        simDFNew = simDF[simDF[coloredBy] == colorValue]
+        sizeValue = min(simDFNew[sizedBy].unique())
+        simDFNew = simDFNew[simDFNew[sizedBy] == sizeValue]
+
         xArray = simDFNew[xField]
         hErrorL2 = simDFNew["hErrorL2"]
         vErrorL2 = simDFNew["vhErrorL2"]
@@ -423,7 +425,7 @@ def plotErrorRef(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     b2, t2 = ax2.get_ylim()
     ax1.set_ylim([min(b1, b2), max(t1, t2)])
     ax2.set_ylim([min(b1, b2), max(t1, t2)])
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorRef%ds' % int(tSave), fig1)
     return fig1, ax1, ax2
 
 
@@ -431,7 +433,6 @@ def plotTimeCPULog(simDF, outDirTest, cfgSimi):
     """plot computation time function of nParts for all dt and kernel radius
     """
     sphKernelRadiusList = simDF["sphKernelRadius"].unique()
-    dt = simDF["dt"].unique()[0]
     tSave = cfgSimi.getfloat('tSave')
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF["sphKernelRadius"])*0.25, max(simDF["sphKernelRadius"])*2, continuous=pU.contCmap)
     cmap = 'viridis'
@@ -443,7 +444,9 @@ def plotTimeCPULog(simDF, outDirTest, cfgSimi):
     scatter = ax1.scatter(simDF["nPart"], simDF["timeNeigh"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='>', alpha=1, edgecolors='k')
     scatter = ax1.scatter(simDF["nPart"], simDF["timeField"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='<', alpha=1, edgecolors='k')
     for sphKernelRadius in sphKernelRadiusList:
-        simDFNew = simDF[(simDF['sphKernelRadius'] == sphKernelRadius) & (simDF['dt'] == dt)]
+        simDFNew = simDF[simDF['sphKernelRadius'] == sphKernelRadius]
+        dt = min(simDFNew["dt"].unique())
+        simDFNew = simDFNew[simDFNew['dt'] == dt]
         nPart = simDFNew["nPart"]
         timeLoop = simDFNew["timeLoop"]
         timeForce = simDFNew["timeForce"]
