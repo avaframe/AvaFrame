@@ -110,7 +110,9 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     Parameters
     ----------
     pathDict : dict
-        dictionary with paths to data to analyze
+        dictionary with paths to dem and lines for Aimec analysis
+    inputsDF : dataFrame
+        dataframe with simulations to analyze and associated path to raster data
     cfg : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
 
@@ -118,9 +120,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     -------
     rasterTransfo: dict
         domain transformation information
-    newRasters: dict
-        raster data expressed in the new coordinates
-    resAnalysis: dict
+    resAnalysisDF: dataFrame
         results of ana3AIMEC analysis
     """
 
@@ -188,7 +188,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     log.info('Writing results to file')
     outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
 
-    return rasterTransfo, newRasters, resAnalysisDF
+    return rasterTransfo, resAnalysisDF
 
 
 def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF):
@@ -205,10 +205,10 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
         parameters for AIMEC analysis
     rasterTransfo: dict
         transformation information
-    pathDict: dict
-        path to dem, lines...
-    inputsDF: dataFrame
-        path to simulation data to analyze
+    pathDict : dict
+        dictionary with paths to dem and lines for Aimec analysis
+    inputsDF : dataFrame
+        dataframe with simulations to analyze and associated path to raster data
     newRasters: dict
         dictionary containing pressure, velocity and flow depth rasters after
         transformation for the reference and the current simulation
@@ -300,7 +300,6 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     log.info('Analyzing data in path coordinate system')
     log.debug("Assigning pressure data to deskewed raster")
     inputFiles = inputsDFrow['ppr']
-    print(inputFiles)
     newRasterPPR = aT.transform(inputFiles, rasterTransfo, interpMethod)
     newRasters['newRasterPPR'] = newRasterPPR
     log.debug("Assigning thickness data to deskewed raster")

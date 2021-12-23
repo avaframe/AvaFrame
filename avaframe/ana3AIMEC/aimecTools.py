@@ -91,16 +91,27 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
 
         Parameters
         -----------
-        pathDict: dict
-            dictionary wiht paths to result files for given result types (ppr, pfd, ..)
+        avaDir : str
+            path to avalanche directory
+        inputsDF: dataFrame
+            dataFrame with simulations to analyze and path to result files
             optional key colorParameter - gives ordering of simulations
+        comModule: str
+            computational module used to produce the results to analyze
         cfgSetup: configParser object
             configuration for aimec - referenceSimValue, varParList used here
 
         Returns
         --------
-        pathDict: dict
-            updated pathDict with key: referenceFile to define reference simulation for aimec
+        refSimulation: str
+            name of the simulation used as reference
+        inputsDF:dataFrame
+            dataFrame with simulations to analyze and path to result files
+            optional key colorParameter - gives ordering of simulations
+            If com1DFA = comModule and a variation parameter was specified, the
+            com1DFA configuration is merged to the inputsDF
+        colorParameter: boolean
+            True if a color variation should be applied in the plots
     """
     inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
     if inputDir.is_dir()==False:
@@ -137,6 +148,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         else:
             # reference simulation
             refSimulation = configurationDF.iloc[0]['simName']  # configurationDF.head(1)['simName'].values[0]
+            colorParameter = False
 
     elif cfgSetup['referenceSimName'] != '':
         colorParameter = False
@@ -153,6 +165,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             refSimulation = inputsDF.iloc[0]['simName']
             log.info('Reference Simulation is based on first simulation in folder')
     else:
+        colorParameter = False
         refSimulation = inputsDF.iloc[0]['simName']
         log.info('Reference Simulation is based on first simulation in folder')
 
@@ -202,7 +215,9 @@ def makeDomainTransfo(pathDict, inputsDF, cfgSetup):
     Parameters
     ----------
     pathDict : dict
-        dictionary with path to data to analyze
+        dictionary with paths to dem and lines for Aimec analysis
+    inputsDF : dataFrame
+        dataframe with simulations to analyze and associated path to raster data
     cfgSetup : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
         regarding domain transformation (domain width w, and new cellsize,
@@ -614,33 +629,40 @@ def analyzeMass(fnameMass, simName, refSimName, resAnalysisDF, time=0):
 
     Parameters
     ----------
-    fnameMass: list
-        list of path to mass data to analyse
-    resAnalysis: dict
-        resAnalysis dictionary to update with mass inifo
+    fnameMass: str
+        path to mass data to analyse
+    simName: str
+        simulation Name
+    refSimName: str
+        reference simulation Name
+    resAnalysisDF: dataFrame
+        results from Aimec Analysis to update with mass inifo
+    time: float or 1D numpy array
+        0 by default for the first mass data analyzed then a 1D array that
+        will be used to analyze all other mass results
 
     Returns
     -------
-    resAnalysis: dict
-        resAnalysis dictionary to updated with mass inifo:
-            relMass: 1D numpy array
-                containing for each simulation analyzed the
+    resAnalysisDF: dataFrame
+        results from Aimec Analysis updated with mass inifo:
+            relMass: float
                 release mass
-            entMass: 1D numpy array
-                containing for each simulation analyzed the
+            entMass: float
                 entrained mass
-            finalMass: 1D numpy array
-                containing for each simulation analyzed the
+            finalMass: float
                 final mass
-            relativMassDiff: 1D numpy array
-                containing for each simulation analyzed
+            relativMassDiff: float
                 the final mass diff with ref (in %)
-            growthIndex: 1D numpy array
-                containing for each simulation analyzed the
+            growthIndex: float
                 growth index
-            growthGrad: 1D numpy array
-                containing for each simulation analyzed the
+            growthGrad: float
                 growth gradient
+            entMassFlowArray: 1D numpy array
+                entrained mass function of time
+            totalMassArray: 1D numpy array
+                total mass function of time
+        time: 1D numpy array
+            time array for mass analysis
     """
     log.debug('Analyzing mass')
     log.debug('{: <10} {: <10} {: <10}'.format('Sim number ', 'GI ', 'GR '))
@@ -677,39 +699,51 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedDEMRasters,
 
     Parameters
     ----------
+    cfgSetup: confiParser
+        aimec analysis configuration
     rasterTransfo: dict
         transformation information
     thresholdValue: float
         numerical value of the threshold limit to use
-    resultsAreaAnalysis : dict
-        PResCrossMax: 2D numpy array
-            containing for each simulation analyzed the
+    resAnalysisDF : dataFrame
+        analysis results from aimec containing:
+        PResCrossMax: 1D numpy array
             max of the peak result in each cross section
-        PResCrossMean: 2D numpy array
-            containing for each simulation analyzed the
+        PResCrossMean: 1D numpy array
             mean of the peak result in each cross section
 
     Returns
     -------
-    runout: 2D numpy array
-        containing for each simulation analyzed the x and
-        y coord of the runout point as well as the runout distance
-        measured from the begining of the path. run-out
-        calculated with the MAX result in each cross section
-    runoutMean: 2D numpy array
-        containing for each simulation analyzed the x
-        and y coord of the runout point as well as the runout
-        distance measured from the begining of the path.
-        run-out calculated with the MEAN result in each cross
-        section
-    elevRel: 1D numpy array
-        containing for each simulation analyzed the
-        elevation of the release area (based on first point with
-        peak field > thresholdValue)
-    deltaH: 1D numpy array
-        containing for each simulation analyzed the
-        elevation fall difference between elevRel and altitude of
-        run-out point
+    resAnalysisDF : dataFrame
+        result dataFrame updated withfor each simulation the:
+            xRunout: float
+                x coord of the runout point
+                measured from the begining of the path. run-out
+                calculated with the MAX result in each cross section
+            yRunout: float
+                y coord of the runout point
+                measured from the begining of the path. run-out
+                calculated with the MAX result in each cross section
+            sRunout: float
+                runout distance measured from the begining of the path.
+                run-out calculated with the MAX result in each cross section
+            xMeanRunout: float
+                x coord of the runout point
+                measured from the begining of the path. run-out
+                calculated with the MEAN result in each cross section
+            yMeanRunout: float
+                y coord of the runout point
+                measured from the begining of the path. run-out
+                calculated with the MEAN result in each cross section
+            sMeanRunout: float
+                runout distance measured from the begining of the path.
+                run-out calculated with the MEAN result in each cross section
+            elevRel: float
+                elevation of the release area (based on first point with
+                peak field > thresholdValue)
+            deltaH: float
+                elevation fall difference between elevRel and altitude of
+                run-out point
     """
     # read inputs
     scoord = rasterTransfo['s']
@@ -763,36 +797,34 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedDEMRasters,
     return resAnalysisDF
 
 
-def analyzeField(simName, rasterTransfo, rasterData, dataType, resAnalysisDF):
+def analyzeField(simName, rasterTransfo, transformedRaster, dataType, resAnalysisDF):
     """ Analyse transformed field
 
-    Analyse transformed rasters in transformedRasters and for each one, compute
-    the Max and Mean values in each cross section, as well as the
-    overall maximum
+    Analyse transformed raster: compute the Max and Mean values in each cross section
+    as well as the overall maximum
 
     Parameters
     ----------
+    simName: str
+        simulation name
     rasterTransfo: dict
         transformation information
-    transformedRasters: list
-        list containing rasters after transformation
+    transformedRaster: 2D numpy array
+        raster after transformation
     dataType: str
         type of the data to analyze ('ppr', 'pfd' or 'pfv')
-    resultsAreaAnalysis: dict
-        result dictionary to be updated
+    resAnalysisDF: dataFrame
+        result dataFrame to be updated
 
     Returns
     -------
-    Updates the resultsAreaAnalysis input dictionary with a sub dictionary
-    of the name dataType containing:
-        -maxaCrossMax: 1D numpy array
-            containing for each simulation analyzed the overall maximum
-        -aCrossMax: 2D numpy array
-            containing for each simulation analyzed the
-            max of the field in each cross section
-        -aCrossMean: 2D numpy array
-            containing for each simulation analyzed the
-            mean of the field in each cross section
+    Updates the resAnalysisDF input dataFrame with:
+        -maxaCrossMax: float
+            overall maximum
+        -aCrossMax: 1D numpy array
+            containing the max of the field in each cross section
+        -aCrossMean: 1D numpy array
+            containing the mean of the field in each cross section
     """
     # read inputs
     rasterArea = rasterTransfo['rasterArea']
@@ -802,7 +834,7 @@ def analyzeField(simName, rasterTransfo, rasterData, dataType, resAnalysisDF):
     log.debug('{: <10} {: <10}'.format('Sim number ', 'maxCrossMax '))
 
     # Max Mean in each Cross-Section for each field
-    maxaCrossMax, aCrossMax, aCrossMean = getMaxMeanValues(rasterData, rasterArea)
+    maxaCrossMax, aCrossMax, aCrossMean = getMaxMeanValues(transformedRaster, rasterArea)
     log.debug('{: <10} {:<10.4f}'.format(*[simName, maxaCrossMax]))
 
     resAnalysisDF.loc[simName, 'max' + dataType + 'CrossMax'] = maxaCrossMax
@@ -879,26 +911,30 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pat
     ----------
     rasterTransfo: dict
         transformation information
-    resAnalysis: dict
-        resAnalysis dictionary containing all results to update
-    data: list
-        list of transformed rasters
-    cfgSetup: dict
+    resAnalysisDF: dataFrame
+        dataFrame containing Aimec results to update
+    simName: str
+        simulation Name
+    newRasters: dict
+        dict with tranformed raster for reference and curent simulation
+    cfgSetup: confiParser
         numerical value of the limit to use for the runout computation
         as well as the levels for the contour line plot
     pathDict: dict
-        path to data to analyse
+        path to data dem data and lines for aimec analysis
 
     Returns
     -------
-    TP: float
-        ref = True sim2 = True
-    FN: float
-        ref = False sim2 = True
-    FP: float
-        ref = True sim2 = False
-    TN: float
-        ref = False sim2 = False
+    resAnalysisDF: dataFrame
+        dataFrame containing Aimec results updated with:
+            TP: float
+                ref = True sim2 = True
+            FN: float
+                ref = False sim2 = True
+            FP: float
+                ref = True sim2 = False
+            TN: float
+                ref = False sim2 = False
     """
     resType = cfgSetup['resType']
     refSimulationName = pathDict['refSimulation']

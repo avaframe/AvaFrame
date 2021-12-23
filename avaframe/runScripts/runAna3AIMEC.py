@@ -58,8 +58,8 @@ def runAna3AIMEC(avalancheDir=''):
     log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
              pathDict['demSource'], pathDict['profileLayer'])
     # Run AIMEC postprocessing
-    rasterTransfo, newRasters, resAnalysis = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
-    return pathDict, rasterTransfo, newRasters, resAnalysis
+    rasterTransfo, resAnalysisDF = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
+    return pathDict, rasterTransfo, resAnalysisDF
 
 
 if __name__ == '__main__':

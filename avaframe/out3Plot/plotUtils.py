@@ -370,8 +370,11 @@ def saveAndOrPlot(pathDict, outFileName, fig):
     else:
         plt.ioff()
 
+    outPath = None
     if cfgFlags.getboolean('savePlot'):
+        outFileName = outFileName.replace(".", "_")
         outname = os.path.join(pathDict['pathResult'], outFileName)
+        outPath = outname + '.' + outputFormat
         if not os.path.exists(os.path.dirname(outname)):
             os.makedirs(os.path.dirname(outname))
         with warnings.catch_warnings():
@@ -381,7 +384,6 @@ def saveAndOrPlot(pathDict, outFileName, fig):
 
     plt.close(fig)
 
-    outPath = outname + '.' + outputFormat
 
     return outPath
 

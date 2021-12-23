@@ -16,7 +16,7 @@ import avaframe.out3Plot.plotUtils as pU
 log = logging.getLogger(__name__)
 
 
-def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
+def extractCom1DFAMBInfo(avaDir, inputsDF, simNameInput=''):
     """ Extract the mass balance info from the log file """
 
     if simNameInput != '':
@@ -32,7 +32,6 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
         simNames = sorted(set(names), key=lambda s: (s.split("_")[0], s.split("_")[1], s.split("_")[3]))
 
     # Read mass data from log and save to file for each simulation run
-    countFile = 0
     for simName in simNames:
         log.debug('This is the simulation name %s for mod com1DFAOrig ' % (simName))
 
@@ -51,15 +50,11 @@ def extractCom1DFAMBInfo(avaDir, pathDict, simNameInput=''):
                 for m in range(indRun[k], indRun[k] + indRun[k+1] - indRun[k]-1):
                     MBFile.write('%.02f,    %.06f,    %.06f\n' %
                                  (logDict['time'][m], logDict['mass'][m], logDict['entrMass'][m]))
-            if simNameInput != '':
-                pathDict['massBal'].append(saveName)
-            else:
-                pathDict['massBal'].append(saveName)
+            inputsDF.loc[simName, 'massBal'] = saveName
             log.debug('Mass file saved to %s ' % (saveName))
             log.info('Added to pathDict[massBal] %s ' % (saveName))
-            countFile = countFile + 1
 
-    return pathDict
+    return inputsDF
 
 
 def getMBInfo(avaDir, inputsDF, comMod, simName=''):
@@ -300,7 +295,7 @@ def getCompDirs(avaDir, cfgSetup, pathDict):
 
 
 def mainDfa2Aimec(avaDir, comModule, cfg):
-    """ Exports the required data from com1DFA to be used by Aimec
+    """ Fetch available raster results path from com1DFA to be used by Aimec
 
         Parameters
         -----------
@@ -313,9 +308,8 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
 
         Returns
         --------
-        pathDict: dict
-            dictionary with path to simulation results for result types - keys: ppr, pfd, pfv
-            and if configuration for ordering is provided, key: colorParameter with values for color coding results
+        inputsDF: dataFrame
+            with a line for each simulation available and the corresponding simulation results: ppr, pfd, pfv
     """
 
     inputsDF = fU.makeSimDF2(avaDir, comModule)
@@ -324,8 +318,7 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
         # Extract mb info
         if comModule == 'com1DFAOrig':
             # path dictionary for Aimec
-            pathDict = {'simID': [], 'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
-            pathDict = extractCom1DFAMBInfo(avaDir, pathDict)
+            inputsDF = extractCom1DFAMBInfo(avaDir, inputsDF)
         else:
             inputsDF = getMBInfo(avaDir, inputsDF, comModule)
     return inputsDF
