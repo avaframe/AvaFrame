@@ -99,33 +99,7 @@ def test_createComModConfig(tmp_path):
     assert cfgRelTh['GENERAL']['relTh'] == '0.5:1.5:3'
     assert cfgRelTh['GENERAL']['useRelThFromIni'] == 'True'
     assert cfgMu['GENERAL']['useRelThFromIni'] == 'True'
-
-    testDir = pathlib.Path(__file__).parents[0]
-    inputDir = testDir / 'data' / 'testCom1DFA'
-    avaDirNew = pathlib.Path(tmp_path, 'testCom1DFA')
-    shutil.copytree(inputDir, avaDirNew)
-    cfgFileNew = avaDirNew / 'test_com1DFACfg.ini'
-
-    cfgProb['PROBRUN']['defaultSetup'] = 'False'
-
-    # call function to be tested
-    cfgFiles = pA.createComModConfig(cfgProb, avaDirNew, com1DFA)
-
-    # load cfg from file
-    cfgMu1 = configparser.ConfigParser()
-    cfgRelTh1 = configparser.ConfigParser()
-
-    cfgMu1.read(cfgFiles['mu']['cfgFile'])
-    cfgRelTh1.read(cfgFiles['relTh']['cfgFile'])
-
-    assert cfgMu1['GENERAL']['simTypeList'] == 'entres'
-    assert cfgMu1['GENERAL']['mu'] == '0.1:0.21:2&0.155'
-    assert cfgMu1['GENERAL']['relTh'] == '1.'
-    assert cfgRelTh1['GENERAL']['mu'] == '0.155'
-    assert cfgRelTh1['GENERAL']['relTh'] == '0.5:1.5:3'
-    assert cfgRelTh1['GENERAL']['useRelThFromIni'] == 'True'
-    assert cfgMu1['GENERAL']['useRelThFromIni'] == 'True'
-
+    
 
 def test_updateCfgRange():
     """ test updating cfg values """
