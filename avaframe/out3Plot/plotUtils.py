@@ -22,6 +22,7 @@ from cmcrameri import cm as cmapCrameri
 from avaframe.in3Utils import cfgUtils
 from avaframe.out3Plot import plotUtils
 import avaframe.in3Utils.fileHandlerUtils as fU
+import avaframe.in1Data.getInput as gI
 
 
 # create local logger
@@ -385,7 +386,7 @@ def saveAndOrPlot(pathDict, outFileName, fig):
     return outPath
 
 
-def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedData=False):
+def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedData=False, buffer=''):
     """ constrain inut raster dataset to where there is data plus buffer zone
 
         Parameters
@@ -396,6 +397,8 @@ def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedDat
             cellsize of raster data
         extentOption: bool
             if True rows and columns limits converted to acutal extent in meters
+        buffer: float
+            buffer for constraining data in meters - optional if not provided read from ini file
 
         Returns
         --------
@@ -406,6 +409,12 @@ def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedDat
         dataConstrained: numpy array
             constrained array where there is data
         """
+
+    # check if buffer is given as input or needs to be read from ini file 
+    if buffer != '':
+        plotBuffer = buffer
+    else:
+        plotBuffer = int(cfg.getfloat('plotBuffer') / cellSize)
 
     ind = np.where(inputData > 0)
     if len(ind[0]) > 0:
@@ -473,3 +482,51 @@ def putAvaNameOnPlot(ax, avaDir):
     ax.annotate(infoText, fontsize=8, xy = (-0.1, -0.1), xycoords='axes fraction')
 
     return infoText
+
+
+def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False):
+    """ constrain data array to bufferzone around min elevation of dem where there is data in data array
+
+        Parameters
+        -----------
+        avaDir: pathlib path of str
+            path to avalanche directory
+        data: numpy array
+            data array of equal shape as dem data
+        cfg: configparser object
+            configuration settings for buffer zone
+        extentOption: bool
+            if True in meters if False in rows and cols
+
+        Returns
+        --------
+        dataCut : numpy array
+            data constrained to a bufferzone
+        xOrigin: float
+            origin of x axis
+        yOrigin: float
+            origin of y axis
+    """
+
+    # load dem to identify runout area according to min elevation where peak result != 0
+    dem = gI.readDEM(avaDir)
+
+    # mask dem to where there is data in result file
+    demCut = np.where(data > 0, dem['rasterData'], np.nan)
+
+    # identify min elevation and cut data to buffer zone around min elevation
+    indMin = np.where(demCut == np.nanmin(demCut))
+    nrowsMin = indMin[0][0]
+    ncolsMin = indMin[1][0]
+    rangePlot = int(cfg.getfloat('zoomBuffer') / cellSize)
+    dataCut = data[nrowsMin-rangePlot:nrowsMin+rangePlot, ncolsMin-rangePlot:ncolsMin+rangePlot]
+
+    # to determine the extent for plotting
+    if extentOption:
+        yOrigin = (nrowsMin-rangePlot) * cellSize
+        xOrigin = (ncolsMin-rangePlot) * cellSize
+    else:
+        yOrigin = nrowsMin-rangePlot
+        xOrigin = ncolsMin-rangePlot
+
+    return dataCut, xOrigin, yOrigin
