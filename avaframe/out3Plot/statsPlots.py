@@ -17,6 +17,8 @@ import pathlib
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in1Data.getInput as gI
+
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -282,14 +284,13 @@ def plotProbMap(avaDir, inDir, cfgFull):
         dataPlot = np.ma.masked_where(dataConstrained == 0.0, dataConstrained)
 
         # create figure
-        fig = plt.figure(figsize=(pU.figW, pU.figH))
+        fig = plt.figure(figsize=(pU.figW*2, pU.figH))
         suptitle = fig.suptitle(cfg['name'], fontsize=14, color='0.5')
-        ax1 = fig.add_subplot(111)
+        ax1 = fig.add_subplot(121)
         # for now continuous color map is desired
         cmap, _, ticks, norm = pU.makeColorMap(cmapType, np.nanmin(dataPlot), np.nanmax(dataPlot), continuous=True)
         cmap.set_bad(colorBackGround)
-        data1P = ma.masked_where(dataPlot == 0.0, dataPlot)
-        im1 = plt.imshow(data1P, cmap=cmap, extent=[colsMin, colsMax, rowsMin, rowsMax],
+        im1 = ax1.imshow(dataPlot, cmap=cmap, extent=[colsMin, colsMax, rowsMin, rowsMax],
                          origin='lower', aspect=nx/ny, norm=norm)
 
         # create meshgrid for contour plot also constrained to where there is data
@@ -299,9 +300,9 @@ def plotProbMap(avaDir, inDir, cfgFull):
 
         # add contourlines for levels
         if multLabel:
-            CS = ax1.contour(X, Y, data1P, levels=levels, cmap=pU.cmapD.reversed(), linewidths=1)
+            CS = ax1.contour(X, Y, dataPlot, levels=levels, cmap=pU.cmapD.reversed(), linewidths=1)
         else:
-            CS = ax1.contour(X, Y, data1P, levels=levels, colors=colorsP, linewidths=1)
+            CS = ax1.contour(X, Y, dataPlot, levels=levels, colors=colorsP, linewidths=1)
         for i in range(len(labels)):
             CS.collections[i].set_label(labels[i])
 
@@ -310,7 +311,47 @@ def plotProbMap(avaDir, inDir, cfgFull):
         ax1.set_title(title)
         ax1.set_xlabel('x [m]')
         ax1.set_ylabel('y [m]')
+
+        # add zoom plot of runout area
+        ax2 = fig.add_subplot(122)
+
+        # determine zoom in runout area
+        dataCut, xOrigin, yOrigin = pU.constrainToMinElevation(avaDir, raster['rasterData'], cfg, cellSize,
+            extentOption=True)
+
+        # constrain to where there is data
+        rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, dataCutConstrained = pU.constrainPlotsToData(dataCut,
+            cellSize, extentOption=True, constrainedData=True, buffer=cfg.getfloat('constrainBuffer'))
+        dataCutConstrained = np.ma.masked_where(dataCutConstrained==0.0, dataCutConstrained)
+
+        # set extent of zoom Plot
+        x0 = xOrigin + colsMinPlot
+        x1 = xOrigin + colsMaxPlot
+        y0 = yOrigin + rowsMinPlot
+        y1 = yOrigin + rowsMaxPlot
+
+        # add plot
+        im2 = ax2.imshow(dataCutConstrained, cmap=cmap, extent=[x0, x1, y0, y1],
+                         origin='lower', aspect=nx/ny, norm=norm)
+
+        # create meshgrid for contour plot also constrained to where there is data
+        xx2 = np.arange(x0, x1, cellSize)
+        yy2 = np.arange(y0, y1, cellSize)
+        X2, Y2 = np.meshgrid(xx2, yy2)
+
+        # add contourlines for levels
+        if multLabel:
+            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels, cmap=pU.cmapD.reversed(), linewidths=1)
+        else:
+            CS2 = ax2.contour(X2, Y2, dataCutConstrained, levels=levels, colors=colorsP, linewidths=1)
+        for i in range(len(labels)):
+            CS2.collections[i].set_label(labels[i])
+
+        pU.addColorBar(im2, ax2, ticks, unit)
+        ax2.set_xlabel('x [m]')
+        ax2.set_ylabel('y [m]')
         plt.legend(facecolor='black', framealpha=0.04)
+
         outDir = inDir / 'plots'
         fU.makeADir(outDir)
         avaName = pathlib.PurePath(avaDir).name
