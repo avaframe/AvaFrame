@@ -583,6 +583,8 @@ def writeAllConfigurationInfo(avaDir, simDF, specDir=''):
 
 def filterSims(avalancheDir, parametersDict, specDir=''):
     """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations
+        if ~ is used as a prefix for a parameter - it is filtered according to values that do NOT match the value
+        provided with the ~Parameter
 
         Parameters
         -----------
@@ -609,9 +611,11 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
                 value = [value]
             if value != '' and value != []:
                 if '~' in key:
+                    # only add simulations that do not match the value of ~key
                     keyNew = key.replace("~", "")
                     simDF = simDF[~simDF[keyNew].isin(value)]
                 else:
+                    # add all simulations that match the value of the key
                     simDF = simDF[simDF[key].isin(value)]
 
     # list of simNames after filtering
