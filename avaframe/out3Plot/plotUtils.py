@@ -410,15 +410,14 @@ def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedDat
             constrained array where there is data
         """
 
-    # check if buffer is given as input or needs to be read from ini file 
+    # check if buffer is given as input or needs to be read from ini file
     if buffer != '':
-        plotBuffer = buffer
+        plotBuffer = int(buffer / cellSize)
     else:
         plotBuffer = int(cfg.getfloat('plotBuffer') / cellSize)
 
     ind = np.where(inputData > 0)
     if len(ind[0]) > 0:
-        plotBuffer = int(cfg.getfloat('plotBuffer') / cellSize)
         rowsMin = max(np.amin(ind[0])-plotBuffer, 0)
         rowsMax = min(np.amax(ind[0])+plotBuffer, inputData.shape[0]-1)
         colsMin = max(np.amin(ind[1])-plotBuffer, 0)
