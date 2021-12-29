@@ -26,8 +26,8 @@ logName = 'runCom1DFAandProbAna'
 # Load general configuration filee
 cfgMain = cfgUtils.getGeneralConfig()
 
-# Define avalanche directories for tests
-avaDir = 'data/avaParabola'
+# Read avalanche directory
+avaDir = cfgMain['MAIN']['avalancheDir']
 avaDir = pathlib.Path(avaDir)
 avaName = avaDir.name
 
@@ -35,7 +35,7 @@ avaName = avaDir.name
 initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
 # Load configuration file for probabilistic run and analysis
-cfgProb = cfgUtils.getDefaultModuleConfig(probAna)
+cfgProb = cfgUtils.getModuleConfig(probAna)
 
 # create configuration files for com1DFA simulations including parameter variation - defined in the probabilistic config
 cfgFiles = probAna.createComModConfig(cfgProb, avaDir, com1DFA)
