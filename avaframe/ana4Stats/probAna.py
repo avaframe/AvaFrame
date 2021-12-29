@@ -33,7 +33,7 @@ def createComModConfig(cfgProb, avaDir, modName):
         Returns
         -------
         cfgFiles: dict
-            dictionary of paths to newly generated configuration files for com module for all parameters 
+            dictionary of paths to newly generated configuration files for com module for all parameters
 
     """
 
@@ -46,19 +46,21 @@ def createComModConfig(cfgProb, avaDir, modName):
     cfgFiles = {}
     for varName in varParList:
         # define configuration files
-        cfgFile = outDir / ('probRuncom1DFACfg%s.ini' % varName)
+        # get filename of module
+        modNameString = str(pathlib.Path(modName.__file__).stem)
+        cfgFile = outDir / ('probRun%sCfg%s.ini' % (modNameString, varName))
 
         # use default com module settings or local settings
         if cfgProb['PROBRUN'].getboolean('defaultSetup'):
-            com1DFACfg = cfgUtils.getDefaultModuleConfig(modName)
-            com1DFACfg, refIn = updateCfgRange(com1DFACfg, cfgProb, varName)
+            modCfg = cfgUtils.getDefaultModuleConfig(modName)
+            modCfg, refIn = updateCfgRange(modCfg, cfgProb, varName)
             with open(cfgFile, 'w') as configfile:
-                com1DFACfg.write(configfile)
+                modCfg.write(configfile)
         else:
-            com1DFACfg = cfgUtils.getModuleConfig(modName)
-            com1DFACfg, refIn = updateCfgRange(com1DFACfg, cfgProb, varName)
+            modCfg = cfgUtils.getModuleConfig(modName)
+            modCfg, refIn = updateCfgRange(modCfg, cfgProb, varName)
             with open(cfgFile, 'w') as configfile:
-                com1DFACfg.write(configfile)
+                modCfg.write(configfile)
         # append cfgFiles to list
         cfgFiles[varName] = {'cfgFile': cfgFile, 'referenceIncluded': refIn}
 
@@ -90,7 +92,10 @@ def updateCfgRange(cfg1, cfgProb, varName):
     varParList = cfgProb['PROBRUN']['varParList'].split('|')
     # also for the other parameters that are varied subsequently
     for varPar in varParList:
-        cfg1['GENERAL'][varPar] = cfgProb['PROBRUN'][varPar]
+        if any(chars in cfg1['GENERAL'][varPar] for chars in ['|', '$', ':']):
+            message = 'Only one reference values is allowed for %s: but %s is given' % (varPar, cfg1['GENERAL'][varPar])
+            log.error(message)
+            raise AssertionError(message)
         if varPar == 'relTh':
             cfg1['GENERAL']['useRelThFromIni'] = 'True'
         elif varPar == 'entTh':
