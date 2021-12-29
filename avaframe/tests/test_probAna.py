@@ -67,7 +67,7 @@ def test_probAna(tmp_path):
     testRes2 = np.allclose(probTest2, probSol, atol=1.e-6)
 
     # Test
-    assert (testRes2 == True)
+    assert (testRes2 is True)
 
 
 def test_createComModConfig(tmp_path):
@@ -115,7 +115,7 @@ def test_updateCfgRange():
     # call function
     cfgNew, refIn = pA.updateCfgRange(com1DFACfg, cfg, varName)
 
-    assert refIn == True
+    assert refIn is True
     assert cfgNew['GENERAL']['mu'] == '0.1:0.21:2&0.155'
     assert cfgNew['GENERAL']['relTh'] == '1.'
 
@@ -125,6 +125,6 @@ def test_updateCfgRange():
     # call function
     cfgNew, refIn = pA.updateCfgRange(com1DFACfg, cfg, varName)
 
-    assert refIn == False
+    assert refIn is False
     assert cfgNew['GENERAL']['mu'] == '0.15500'
     assert cfgNew['GENERAL']['relTh'] == '0.5:1.5:3'
