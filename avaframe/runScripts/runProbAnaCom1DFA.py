@@ -1,5 +1,6 @@
 """
-    Run script for performing an avalanche simulation with parameter variation and performing a probability analysis with the simulation results
+    Run script for performing an avalanche simulation with parameter variation and performing a
+    probability analysis with the simulation results
     Define settings in ana4Stats/probAnaCfg.ini or your local copy - local_probAnaCfg.ini
 """
 
@@ -42,8 +43,8 @@ cfgFiles = probAna.createComModConfig(cfgProb, avaDir, com1DFA)
 
 # -------USER INPUT ------------
 # probability configurations
-probabilityConfigurations = {'testAll': {}, 'testRelTh': {'mu': cfgProb['PROBRUN'].getfloat('mu'), 'simTypeActual': 'null'},
-    'testMu': {'relTh': cfgProb['PROBRUN'].getfloat('relTh'), 'simTypeActual': 'null'}}
+probabilityConfigurations = {'testAll': {}, 'testRelTh': {'mu': cfgProb['PROBRUN'].getfloat('mu'),
+    'simTypeActual': 'null'}, 'testMu': {'relTh': cfgProb['PROBRUN'].getfloat('relTh'), 'simTypeActual': 'null'}}
 # -----------------------------
 
 # Start logging

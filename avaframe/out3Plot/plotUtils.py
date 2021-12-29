@@ -195,7 +195,7 @@ cmapProb['colors'] = colorsProb
 cmapProb['levels'] = levProb
 
 colorMaps = {'ppr': cmapPres, 'pfv': cmapSpeed, 'pfd': cmapDepth, 'P': cmapPres, 'FV': cmapSpeed,
-             'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FDV': cmapSpeed ,'FD': cmapDepth, 'prob': cmapProb,
+             'Vx': cmapSpeed, 'Vy': cmapSpeed, 'Vz': cmapSpeed, 'FDV': cmapSpeed, 'FD': cmapDepth, 'prob': cmapProb,
              'pta': cmapTravelAngle, 'TA': cmapTravelAngle}
 
 cmapDEM = cmapGreys
@@ -478,7 +478,7 @@ def putAvaNameOnPlot(ax, avaDir):
             avaName = pathlib.PurePath(ava).name
             infoText = infoText + ';' + str(avaName)
 
-    ax.annotate(infoText, fontsize=8, xy = (-0.1, -0.1), xycoords='axes fraction')
+    ax.annotate(infoText, fontsize=8, xy=(-0.1, -0.1), xycoords='axes fraction')
 
     return infoText
 
