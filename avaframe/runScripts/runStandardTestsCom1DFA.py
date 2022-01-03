@@ -89,7 +89,7 @@ for test in testList:
     startTime = time.time()
     # call com1DFA run
     particlesList, fieldsList, Tsave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
-        cfgFile=standardCfg, relThField='', variationDict='')
+        cfgFile=standardCfg, relThField='')
     endTime = time.time()
     timeNeeded = endTime - startTime
     log.info(('Took %s seconds to calculate.' % (timeNeeded)))

@@ -1386,7 +1386,7 @@ def test_runCom1DFA(tmp_path, caplog):
     modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile,
                                                modInfo=True)
     dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
-        avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
+        avaDir, cfgMain, cfgFile=cfgFile, relThField='')
 
     dictKeys = ['nPart', 'x', 'y', 's', 'sCor', 'l', 'z', 'm', 'dt', 'massPerPart', 'nPPK', 'mTot',
                 'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne', 'travelAngle',
@@ -1435,5 +1435,5 @@ def test_runCom1DFA(tmp_path, caplog):
 
     with caplog.at_level(logging.WARNING):
         dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
-        avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
+        avaDir, cfgMain, cfgFile=cfgFile, relThField='')
     assert 'There is no simulation to be performed' in caplog.text

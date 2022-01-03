@@ -140,7 +140,7 @@ def validateVarDict(variationDict, standardCfg):
     return variationDict
 
 
-def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict):
+def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile):
     """ read info on which simulations shall be performed according to parameter variation
 
         Parameters
@@ -149,8 +149,6 @@ def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict):
             path to avalanche directory
         cfgFile: str or pathlib Path
             path to override configuration file
-        variationDict: dict
-            dictionary with parameter variation info
 
         Returns
         --------
@@ -162,18 +160,9 @@ def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict):
     """
 
     # generate list of simulations from desired configuration
-    if variationDict == '':
-        # Load full configuration
-        modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
-        variationDict = getVariationDict(avalancheDir, modCfg, modInfo)
-    else:
-        # check if variationDict items exist and are provided in correct format
-        # Load standard/ default configuration
-        modCfg = cfgUtils.getDefaultModuleConfig(com1DFA)
-        variationDict = validateVarDict(variationDict, modCfg)
-        log.info('Variations are performed for:')
-        for key in variationDict:
-            log.info('%s: %s' % (key, variationDict[key]))
+    # Load full configuration
+    modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, modInfo=True)
+    variationDict = getVariationDict(avalancheDir, modCfg, modInfo)
 
     # add avalanche directory info to cfg
     modCfg['GENERAL']['avalancheDir'] = str(avalancheDir)

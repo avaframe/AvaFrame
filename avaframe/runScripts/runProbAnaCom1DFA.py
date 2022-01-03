@@ -55,7 +55,7 @@ log.info('Current avalanche: %s', avaDir)
 # perform com1DFA simulations
 for varPar in cfgFiles:
     particlesList, fieldsList, Tsave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
-    cfgFile=cfgFiles[varPar]['cfgFile'], relThField='', variationDict='')
+    cfgFile=cfgFiles[varPar]['cfgFile'], relThField='')
 
 # perform pobability analysis
 for probConf in probabilityConfigurations:
