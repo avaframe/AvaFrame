@@ -233,7 +233,7 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
     if cfg['GENERAL'].getboolean(thFlag):
         # if at least one but not all features in a shapefile have a thickness value - error
         if ('None' in thicknessList):
-            message = 'Not all features in shape file have a thickness value - check shape file attributes: %s' % infile
+            message = 'Not all features in shape file have a thickness value - check shape file attributes: %s' % fName
             log.error(message)
             raise AssertionError(message)
         else:

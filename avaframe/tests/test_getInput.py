@@ -104,12 +104,6 @@ def test_getInputData(tmp_path):
     assert entResInfo3['flagRes'] == "No"
     assert rels3 == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp')]
 
-    # fourth option
-    dem5, rels5, ent5, res5, entResInfo5 = getInput.getInputData(avaDir, cfgGen, flagDev=True)
-    assert str(ent5) == str(os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp'))
-    assert entResInfo5['flagEnt'] == "Yes"
-    assert entResInfo5['flagRes'] == "No"
-    assert rels5 == []
 
     # call function to be tested
     cfg['GENERAL']['releaseScenario'] = 'release4HS'
@@ -174,12 +168,6 @@ def test_getInputDataCom1DFA(tmp_path):
     inputSimFiles3 = getInput.getInputDataCom1DFA(avaDir, cfg['GENERAL'])
 
     assert inputSimFiles2['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp']
-
-    # call function to be tested
-    cfg['GENERAL']['flagDev'] = 'True'
-    inputSimFiles4 = getInput.getInputDataCom1DFA(avaDir, cfg['GENERAL'])
-
-    assert inputSimFiles4['relFiles'] == []
 
     # call function to be tested
     cfg['GENERAL']['releaseScenario'] = 'release4HS'
