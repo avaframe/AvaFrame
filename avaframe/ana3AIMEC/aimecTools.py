@@ -624,7 +624,7 @@ def assignData(fnames, rasterTransfo, interpMethod):
     return avalData
 
 
-def analyzeMass(fnameMass, simName, refSimName, resAnalysisDF, time=0):
+def analyzeMass(fnameMass, simName, refSimName, resAnalysisDF, time=None):
     """ Analyse Mass data
 
     Parameters
@@ -636,10 +636,10 @@ def analyzeMass(fnameMass, simName, refSimName, resAnalysisDF, time=0):
     refSimName: str
         reference simulation Name
     resAnalysisDF: dataFrame
-        results from Aimec Analysis to update with mass inifo
-    time: float or 1D numpy array
-        0 by default for the first mass data analyzed then a 1D array that
-        will be used to analyze all other mass results
+        results from Aimec Analysis to update with mass info
+    time: None or 1D numpy array
+        None at the first call of the function, then a 1D array
+        that will be used to analyze all other mass results
 
     Returns
     -------
@@ -758,41 +758,32 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedDEMRasters,
     PResCrossMax = resAnalysisDF.loc[simName, resType + 'CrossMax']
     PResCrossMean = resAnalysisDF.loc[simName, resType + 'CrossMean']
 
-    log.debug('Computig runout')
+    log.debug('Computing runout')
     lindex = np.nonzero(PResCrossMax > thresholdValue)[0]
     if lindex.any():
-        cupper = min(lindex)
-        clower = max(lindex)
+        cUpper = min(lindex)
+        cLower = max(lindex)
     else:
         log.error('No max values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
-        cupper = 0
-        clower = 0
+        cUpper = 0
+        cLower = 0
     # search in mean values
     lindex = np.nonzero(PResCrossMean > thresholdValue)[0]
     if lindex.any():
-        cupperm = min(lindex)
-        clowerm = max(lindex)
+        cUpperm = min(lindex)
+        cLowerm = max(lindex)
     else:
         log.error('No average values > threshold found. threshold = %4.2f, too high?' % thresholdValue)
-        cupperm = 0
-        clowerm = 0
-    cInd = {}
-    cInd['cupper'] = cupper
-    cInd['clower'] = clower
-    cInd['cupperm'] = cupperm
-    cInd['clowerm'] = clowerm
-    #    Runout
-    cupper = cInd['cupper']
-    clower = cInd['clower']
-    clowerm = cInd['clowerm']
-    resAnalysisDF.loc[simName, 'sRunout'] = scoord[clower]
-    resAnalysisDF.loc[simName, 'xRunout'] = x[clower]
-    resAnalysisDF.loc[simName, 'yRunout'] = y[clower]
-    resAnalysisDF.loc[simName, 'sMeanRunout'] = scoord[clowerm]
-    resAnalysisDF.loc[simName, 'xMeanRunout'] = x[clowerm]
-    resAnalysisDF.loc[simName, 'yMeanRunout'] = y[clowerm]
-    resAnalysisDF.loc[simName, 'elevRel'] = transformedDEMRasters[cupper, n]
-    resAnalysisDF.loc[simName, 'deltaH'] = transformedDEMRasters[cupper, n] - transformedDEMRasters[clower, n]
+        cUpperm = 0
+        cLowerm = 0
+    resAnalysisDF.loc[simName, 'sRunout'] = scoord[cLower]
+    resAnalysisDF.loc[simName, 'xRunout'] = x[cLower]
+    resAnalysisDF.loc[simName, 'yRunout'] = y[cLower]
+    resAnalysisDF.loc[simName, 'sMeanRunout'] = scoord[cLowerm]
+    resAnalysisDF.loc[simName, 'xMeanRunout'] = x[cLowerm]
+    resAnalysisDF.loc[simName, 'yMeanRunout'] = y[cLowerm]
+    resAnalysisDF.loc[simName, 'elevRel'] = transformedDEMRasters[cUpper, n]
+    resAnalysisDF.loc[simName, 'deltaH'] = transformedDEMRasters[cUpper, n] - transformedDEMRasters[cLower, n]
 
     return resAnalysisDF
 
@@ -812,7 +803,7 @@ def analyzeField(simName, rasterTransfo, transformedRaster, dataType, resAnalysi
     transformedRaster: 2D numpy array
         raster after transformation
     dataType: str
-        type of the data to analyze ('ppr', 'pfd' or 'pfv')
+        type of the data to analyze ('ppr', 'pfd', 'pfv', ...)
     resAnalysisDF: dataFrame
         result dataFrame to be updated
 
@@ -1046,7 +1037,7 @@ def readWrite(fname_ent, time):
     timeResults = [massTime[0, 0], massTime[-1, 0]]
     totMassResults = [massTime[0, 1], massTime[-1, 1]]
     relMass = totMassResults[0]
-    if np.size(time) == 1:
+    if time is None:
         time = np.arange(0, int(timeResults[1]), 0.1)
     entMassFlow = np.interp(time, massTime[1:, 0], massTime[1:, 2]/dt)
     totalMass = np.interp(time, massTime[:, 0], massTime[:, 1])
