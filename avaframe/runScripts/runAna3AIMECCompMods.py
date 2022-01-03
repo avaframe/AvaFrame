@@ -44,7 +44,7 @@ def runAna3AIMECCompMods(avalancheDir=''):
     # write configuration to file
     cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
 
-    compList = [['relAlr', 'null'], ['relAlr', 'ent']]
+    compList = [['relAlr1', 'null']]  # , ['relAlr', 'ent']]
 
     for comp in compList:
 
@@ -53,11 +53,10 @@ def runAna3AIMECCompMods(avalancheDir=''):
         simType = comp[1]
 
         # Setup input from com1DFA
-        pathDict = dfa2Aimec.dfaComp2Aimec(avalancheDir, cfg, rel, simType)
+        inputsDF, pathDict = dfa2Aimec.dfaComp2Aimec(avalancheDir, cfg, rel, simType)
 
         # TODO: define referenceFile
-        pathDict['numSim'] = len(pathDict['ppr'])
-        pathDict['referenceFile'] = 0
+        pathDict['refSimulation'] = inputsDF.index[0]
 
         # Extract input file locations
         pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=rel+'_'+simType)
@@ -67,7 +66,8 @@ def runAna3AIMECCompMods(avalancheDir=''):
         log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
                  pathDict['demSource'], pathDict['profileLayer'])
         # Run AIMEC postprocessing
-        ana3AIMEC.mainAIMEC(pathDict, cfg)
+        rasterTransfo, resAnalysisDF = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfg)
+        # ana3AIMEC.mainAIMEC(pathDict, cfg)
 
         endTime = time.time()
 

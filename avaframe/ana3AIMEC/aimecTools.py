@@ -1002,8 +1002,10 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pat
     inputs['compRasterMask'] = compRasterMask
     inputs['simName'] = simName
 
-    # only plot comparisons of simulations to reference
-    compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
+    compPlotPath = None
+    if simName != refSimulationName:
+        # only plot comparisons of simulations to reference
+        compPlotPath = outAimec.visuComparison(rasterTransfo, inputs, pathDict)
 
     return resAnalysisDF, compPlotPath
 

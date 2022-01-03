@@ -14,7 +14,7 @@ import avaframe.out3Plot.outAIMEC as outAimec
 log = logging.getLogger(__name__)
 
 
-def AIMEC2Report(pathDict, cfg):
+def AIMEC2Report(pathDict, inputsDF, cfg):
     """ perform AIMEC analysis and generate plots for reports
 
     Reads the required files location for ana3AIMEC postpocessing
@@ -45,56 +45,55 @@ def AIMEC2Report(pathDict, cfg):
     log.info('Prepare data for post-processing')
     # Make domain transformation
     log.info("Creating new deskewed raster and preparing new raster assignment function")
-    rasterTransfo = aT.makeDomainTransfo(pathDict, cfgSetup)
-    ###########################################################################
+    rasterTransfo = aT.makeDomainTransfo(pathDict, inputsDF, cfgSetup)
+    # read reference file
+    refSimulationName = pathDict['refSimulation']
+    refSimulation = inputsDF[inputsDF['simName'] == refSimulationName]
+
+    # ####################################################
     # visualisation
     # TODO: needs to be moved somewhere else
-    # read reference file
-    nRef = pathDict['referenceFile']
-    rasterSource = pathDict[cfgSetup['resType']][nRef]
 
+    rasterSource = refSimulation.iloc[0][cfgSetup['resType']]
     raster = IOf.readRaster(rasterSource)
     slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
+    newRasters = {}
+    log.info("Assigning dem data to deskewed raster")
+    newRasters['newRasterDEM'] = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
+
     inputData = {}
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = raster['rasterData']
     inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
-    #################################################################
+    # ###########################################################
 
-    # transform pressure_data, depth_data and speed_data in new raster
-    newRasters = {}
-    # assign pressure data
-    log.debug("Assigning pressure data to deskewed raster")
-    newRasters['newRasterPPR'] = aT.assignData(pathDict['ppr'],  rasterTransfo, interpMethod)
-    # assign depth data
-    log.debug("Assigning depth data to deskewed raster")
-    newRasters['newRasterPFD'] = aT.assignData(pathDict['pfd'], rasterTransfo, interpMethod)
-    # assign speed data
-    log.debug("Assigning speed data to deskewed raster")
-    newRasters['newRasterPFV'] = aT.assignData(pathDict['pfv'], rasterTransfo, interpMethod)
+    # postprocess reference
+    inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
+    timeMass = None
+    resAnalysisDF = inputsDF[['simName']].copy()
+    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, refSimulationName, resAnalysisDF)
 
-    # assign dem data
-    log.debug("Assigning dem data to deskewed raster")
-    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo, interpMethod)
-    newRasters['newRasterDEM'] = newRasterDEM[0]
-
-    # Analyze data
-    log.debug('Analyzing data in path coordinate system')
-    resAnalysis = postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags)
+    # postprocess other simulations
+    for index, inputsDFrow in inputsDF.iterrows():
+        simName = inputsDFrow['simName']
+        if simName != refSimulationName:
+            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF)
 
     # -----------------------------------------------------------
     # result visualisation + report
+    # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside
     # -----------------------------------------------------------
+    plotDict = {}
     log.info('Visualisation of AIMEC results')
+    outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
+    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
+    plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
+    plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF['areasPlot'][1]}
+    if cfgFlags.getboolean('flagMass'):
+        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF['massPlotName'][1]}
 
-    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysis, cfgSetup, pathDict)
-    resAnalysis['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
-    if cfgFlags.getboolean('flagMass') and (pathDict['numSim'] > 1):
-        plotName = outAimec.visuMass(resAnalysis, pathDict)
-        resAnalysis['massAnalysisPlot'] = {'Aimec mass analysis': plotName}
-
-    return rasterTransfo, newRasters, resAnalysis
+    return rasterTransfo, resAnalysisDF, plotDict
 
 
 def mainAIMEC(pathDict, inputsDF, cfg):
@@ -158,7 +157,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
 
     # postprocess reference
     inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
-    timeMass = 0
+    timeMass = None
     resAnalysisDF = inputsDF[['simName']].copy()
     resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, refSimulationName, resAnalysisDF)
 
@@ -336,10 +335,10 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     if flagMass:
         # perform mass analysis
         fnameMass = inputsDFrow['massBal']
-        if simName == refSimulationName:
-            timeMass = None
         resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simName, refSimulationName, resAnalysisDF, time=timeMass)
-        outAimec.visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass)
+        if simName != refSimulationName:
+            massPlotName = outAimec.visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass)
+            resAnalysisDF.loc[simName, 'massPlotName'] = massPlotName
     else:
         timeMass = None
 
@@ -487,32 +486,26 @@ def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict):
     return resAnalysis
 
 
-def aimecRes2ReportDict(resAnalysis, reportD, benchD, refSim):
+def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, refSimName):
     """ gather aimec results and append them to report dictionary """
+    resAnalysisDFRef = resAnalysisDF[resAnalysisDF['simName']==refSimName]
+    resAnalysisDFComp = resAnalysisDF[resAnalysisDF['simName']!=refSimName]
+    reportD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFComp['sRunout'][0],
+                                 'max peak pressure [kPa]': resAnalysisDFComp['maxpprCrossMax'][0],
+                                 'max peak flow depth [m]': resAnalysisDFComp['maxpfdCrossMax'][0],
+                                 'max peak flow velocity [ms-1]': resAnalysisDFComp['maxpfvCrossMax'][0]}
 
-    if refSim == 0:
-        compSim = 1
-    elif refSim == 1:
-        compSim = 0
-    else:
-        log.warning('Reference File out of range - needs to be 0 or 1')
-
-    reportD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysis['runout'][0][compSim],
-                                 'max peak pressure [kPa]': resAnalysis['MMPPR'][compSim],
-                                 'max peak flow depth [m]': resAnalysis['MMPFD'][compSim],
-                                 'max peak flow velocity [ms-1]': resAnalysis['MMPFV'][compSim]}
-
-    benchD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysis['runout'][0][refSim],
-                                'max peak pressure [kPa]': resAnalysis['MMPPR'][refSim],
-                                'max peak flow depth [m]': resAnalysis['MMPFD'][refSim],
-                                'max peak flow velocity [ms-1]': resAnalysis['MMPFV'][refSim]}
+    benchD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFRef['sRunout'][0],
+                                'max peak pressure [kPa]': resAnalysisDFRef['maxpprCrossMax'][0],
+                                'max peak flow depth [m]': resAnalysisDFRef['maxpfdCrossMax'][0],
+                                'max peak flow velocity [ms-1]': resAnalysisDFRef['maxpfvCrossMax'][0]}
     # add mass info
-    if "relMass" in resAnalysis:
-        reportD['Aimec analysis'].update({'Initial mass [kg]': resAnalysis['relMass'][compSim]})
-        reportD['Aimec analysis'].update({'Final mass [kg]': resAnalysis['finalMass'][compSim]})
-        reportD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysis['entMass'][compSim]})
-        benchD['Aimec analysis'].update({'Initial mass [kg]': resAnalysis['relMass'][refSim]})
-        benchD['Aimec analysis'].update({'Final mass [kg]': resAnalysis['finalMass'][refSim]})
-        benchD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysis['entMass'][refSim]})
+    if "relMass" in resAnalysisDF.columns:
+        reportD['Aimec analysis'].update({'Initial mass [kg]': resAnalysisDFComp['relMass'][0]})
+        reportD['Aimec analysis'].update({'Final mass [kg]': resAnalysisDFComp['finalMass'][0]})
+        reportD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysisDFComp['entMass'][0]})
+        benchD['Aimec analysis'].update({'Initial mass [kg]': resAnalysisDFRef['relMass'][0]})
+        benchD['Aimec analysis'].update({'Final mass [kg]': resAnalysisDFRef['finalMass'][0]})
+        benchD['Aimec analysis'].update({'Entrained mass [kg]': resAnalysisDFRef['entMass'][0]})
 
     return reportD, benchD

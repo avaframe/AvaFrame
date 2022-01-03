@@ -941,9 +941,6 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         particles['nPart'] = nPart
         particles['x'] = xPartArray
         particles['y'] = yPartArray
-        particles['s'] = np.zeros(np.shape(xPartArray))
-        particles['sCor'] = np.zeros(np.shape(xPartArray))
-        particles['l'] = np.zeros(np.shape(xPartArray))
         # adding z component
         particles, _ = geoTrans.projectOnRaster(dem, particles, interp='bilinear')
         particles['m'] = mPartArray
@@ -952,11 +949,15 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     particles['massPerPart'] = massPerPart
     particles['mTot'] = np.sum(particles['m'])
     particles['h'] = hPartArray
-    particles['ux'] = np.zeros(np.shape(xPartArray))
-    particles['uy'] = np.zeros(np.shape(xPartArray))
-    particles['uz'] = np.zeros(np.shape(xPartArray))
-    particles['travelAngle'] = np.zeros(np.shape(xPartArray))
+    particles['ux'] = np.zeros(np.shape(hPartArray))
+    particles['uy'] = np.zeros(np.shape(hPartArray))
+    particles['uz'] = np.zeros(np.shape(hPartArray))
+    particles['s'] = np.zeros(np.shape(hPartArray))
+    particles['sCor'] = np.zeros(np.shape(hPartArray))
+    particles['l'] = np.zeros(np.shape(hPartArray))
+    particles['travelAngle'] = np.zeros(np.shape(hPartArray))
     particles['stoppCriteria'] = False
+    mPartArray = particles['m']
     kineticEne = np.sum(0.5 * mPartArray * DFAtls.norm2(particles['ux'], particles['uy'], particles['uz']))
     particles['kineticEne'] = kineticEne
     particles['potentialEne'] = np.sum(gravAcc * mPartArray * particles['z'])

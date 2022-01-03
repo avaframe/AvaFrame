@@ -64,7 +64,7 @@ def getMBInfo(avaDir, inputsDF, comMod, simName=''):
     if simName != '':
         mbFile = pathlib.Path(avaDir, 'Outputs', comMod, 'mass_%s.txt' % simName)
         fU.checkIfFileExists(mbFile, fileType='mass')
-        inputsDF['massBal'].append(mbFile)
+        inputsDF.loc[simName, 'massBal'] = mbFile
         log.info('Added to pathDict[massBal] %s' % (mbFile))
 
     else:
@@ -121,39 +121,47 @@ def dfaComp2Aimec(avaDir, cfg, rel, simType):
     """
 
     cfgSetup = cfg['AIMECSETUP']
-
-    # initialise empty pathDict for all required files
-    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
+    comModules = cfg['AIMECSETUP']['comModules'].split('|')
     # get directories where simulation results can be found for both modules
-    inputDirRef, inputDirComp, pathDict, refModule = getCompDirs(avaDir, cfgSetup, pathDict)
+    inputDirRef, inputDirComp, pathDict = getCompDirs(avaDir, cfgSetup)
 
     # Load all infos on reference simulations
-    refData = fU.makeSimDF(inputDirRef)
+    refData = fU.makeSimDF2(avaDir, None, inputDir=inputDirRef)
 
     # Load all infos on comparison module simulations
-    compData = fU.makeSimDF(inputDirComp)
+    compData = fU.makeSimDF2(avaDir, None, inputDir=inputDirComp)
 
-    # identify names of simulations that match criteria for both cases
-    simSearch = True
-    for countRef, simNameShort in enumerate(refData['simName']):
-        for countComp, simNameComp in enumerate(compData['simName']):
-            if simSearch:
-                if (refData['releaseArea'][countRef] == compData['releaseArea'][countComp] == rel and
-                    refData['simType'][countRef] == compData['simType'][countComp] == simType):
-                    refSimName = refData['simName'][countRef]
-                    compSimName = compData['simName'][countComp]
-                    log.info('Reference simulation: %s and to comparison simulation: %s ' % (refSimName, compSimName))
-                    simSearch = False
-    if simSearch == True:
+    # merge dataFrames and locate the rows with common releaseArea ans simType
+    dfMerged = refData[['simName', 'releaseArea','simType']].merge(compData[['simName', 'releaseArea','simType']], on=['releaseArea','simType'],
+                   how='inner', indicator=True, suffixes=('Ref', 'Comp'))
+    dfMerged = dfMerged[dfMerged['_merge'] == 'both']
+    if dfMerged.shape[0] > 0:
+        refSimName = dfMerged.loc[0, 'simNameRef']
+        compSimName = dfMerged.loc[0, 'simNameComp']
+        log.info('Reference simulation: %s and to comparison simulation: %s ' % (refSimName, compSimName))
+    else:
         message = 'No matching simulations found for reference and comparison simulation \
                    for releaseScenario: %s and simType: %s' % (rel, simType)
         log.error(message)
         raise FileNotFoundError(message)
 
-    # fill pathDict
-    pathDict = getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, refSimName, inputDirComp, compSimName)
+    # build input dataFrame
+    inputsDF = refData[refData['simName'] == refSimName]
+    inputsDF = inputsDF.append(compData[compData['simName'] == compSimName])
 
-    return pathDict
+    # if desired set path to mass log files
+    comModules = pathDict['compType']
+    sims = {comModules[1]: refSimName, comModules[2]: compSimName}
+    if cfg['FLAGS'].getboolean('flagMass'):
+        for comMod, sim in sims.items():
+            log.info('mass file for comMod: %s and sim: %s' % (comMod, sim))
+            if comMod == 'benchmarkReference':
+                inputsDF = getRefMB(cfg['AIMECSETUP']['testName'], inputsDF, sim)
+            elif comMod == 'com1DFAOrig':
+                inputsDF = extractCom1DFAMBInfo(avaDir, inputsDF, simNameInput=sim)
+            else:
+                inputsDF = getMBInfo(avaDir, inputsDF, comMod, simName=sim)
+    return inputsDF, pathDict
 
 
 def getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp):
@@ -234,19 +242,35 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
     """
 
     cfgSetup = cfg['AIMECSETUP']
-
-    # initialise empty pathDict for all required files
-    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
+    comModules = cfg['AIMECSETUP']['comModules'].split('|')
     # get directories where simulation results can be found for both modules
-    inputDirRef, inputDirComp, pathDict, refModule = getCompDirs(avaDir, cfgSetup, pathDict)
+    inputDirRef, inputDirComp, pathDict = getCompDirs(avaDir, cfgSetup)
 
-    # fill pathDict
-    pathDict = getPathsFromSimName(pathDict, avaDir, cfg, inputDirRef, simNameRef, inputDirComp, simNameComp)
+    # Load all infos on reference simulations
+    refData = fU.makeSimDF2(avaDir, None, inputDir=inputDirRef, simName=simNameRef)
 
-    return pathDict
+    # Load all infos on comparison module simulations
+    compData = fU.makeSimDF2(avaDir, None, inputDir=inputDirComp, simName=simNameComp)
+
+    # build input dataFrame
+    inputsDF = refData.append(compData)
+
+    # if desired set path to mass log files
+    comModules = pathDict['compType']
+    sims = {comModules[1]: simNameRef, comModules[2]: simNameComp}
+    if cfg['FLAGS'].getboolean('flagMass'):
+        for comMod, sim in sims.items():
+            log.info('mass file for comMod: %s and sim: %s' % (comMod, sim))
+            if comMod == 'benchmarkReference':
+                inputsDF = getRefMB(cfg['AIMECSETUP']['testName'], inputsDF, sim)
+            elif comMod == 'com1DFAOrig':
+                inputsDF = extractCom1DFAMBInfo(avaDir, inputsDF, simNameInput=sim)
+            else:
+                inputsDF = getMBInfo(avaDir, inputsDF, comMod, simName=sim)
+    return inputsDF, pathDict
 
 
-def getCompDirs(avaDir, cfgSetup, pathDict):
+def getCompDirs(avaDir, cfgSetup):
     """ Determine dictionaries where simulation results can be found
 
         Parameters
@@ -255,8 +279,6 @@ def getCompDirs(avaDir, cfgSetup, pathDict):
             path to avalanche directory
         cfgSetup: configParser object
             configuration settings for aimec
-        pathDict: dict
-            dictionary for paths for aimec
 
         Returns
         --------
@@ -285,13 +307,12 @@ def getCompDirs(avaDir, cfgSetup, pathDict):
         inputDirRef = pathlib.Path(avaDir, 'Outputs', refModule, 'peakFiles')
 
     inputDirComp = pathlib.Path(avaDir, 'Outputs', compModule, 'peakFiles')
-
+    pathDict = {}
     pathDict['compType'] = ['comModules', refModule, compModule]
-    pathDict['referenceFile'] = 0
     # info about colourmap
     pathDict['contCmap'] = True
 
-    return inputDirRef, inputDirComp, pathDict, refModule
+    return inputDirRef, inputDirComp, pathDict
 
 
 def mainDfa2Aimec(avaDir, comModule, cfg):

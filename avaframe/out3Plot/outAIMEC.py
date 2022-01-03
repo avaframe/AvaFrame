@@ -160,7 +160,7 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     # prepare for plot
     title = ['Pressure ', 'Flow Depth ', 'Flow Velocity ']
     unit = ['$P(s)$ [kPa]', '$fd(s)$ [m]', '$v(s) [m.s^{-1}]$']
-    peakList = ['PPR', 'PFD', 'PFV']
+    peakList = ['ppr', 'pfd', 'pfv']
 
     ############################################
     # Figure: Pressure depth speed
@@ -226,12 +226,12 @@ def visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
     indStartOfRunout = rasterTransfo['indStartOfRunout']
     rasterdataPres = newRasters['newRefRaster' + resType.upper()]
     runout = resAnalysisDF['sRunout'].to_numpy()
-    PPRCrossMax = np.stack(resAnalysisDF[resType.lower() + 'CrossMax'].to_numpy())
+    pprCrossMax = np.stack(resAnalysisDF[resType.lower() + 'CrossMax'].to_numpy())
     ############################################
     # prepare for plot
-    pMean = np.mean(PPRCrossMax, axis=0)
-    pMedian = np.median(PPRCrossMax, axis=0)
-    pPercentile = np.percentile(PPRCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
+    pMean = np.mean(pprCrossMax, axis=0)
+    pMedian = np.median(pprCrossMax, axis=0)
+    pPercentile = np.percentile(pprCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
 
     maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
 
