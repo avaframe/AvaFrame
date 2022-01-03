@@ -197,7 +197,7 @@ def com1DFAOrigMain(cfg, avaDir):
     workDir, outDir = iD.initialiseRunDirs(avaDir, modName)
 
     # Load input data
-    dem, rels, ent, res, entResInfo = gI.getInputData(avaDir, cfgGen, flagDev=False)
+    dem, rels, ent, res, entResInfo = gI.getInputData(avaDir, cfgGen)
 
     # Parameter variation
     if cfgPar.getboolean('parameterVar'):

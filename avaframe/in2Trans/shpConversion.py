@@ -48,6 +48,8 @@ def SHP2Array(infile, defname=None):
             arrays (as many indexes as features)
         thickness (optional) : 1D numpy array
             np array with the (release or entrainment) thickness of each feature (as many values as features)
+        id : list
+            list of oid as string for each feature
 
 
     """
@@ -60,6 +62,7 @@ def SHP2Array(infile, defname=None):
     rho = None
     sks = None
     iso = None
+    id = None
 
     # get coordinate system
     prjfile = infile.with_suffix('.prj')
@@ -76,6 +79,7 @@ def SHP2Array(infile, defname=None):
     SHPdata['sks'] = sks
     Name = []
     thicknessList = []
+    idList = []
     Length = np.empty((0))
     Start = np.empty((0))
     Coordx = np.empty((0))
@@ -127,6 +131,11 @@ def SHP2Array(infile, defname=None):
             Coordy = np.append(Coordy, pt[1])
             Coordz = np.append(Coordz, z)
 
+    # get unique ID of features in shapefile
+    for rec in sf.records():
+        id = rec.oid
+        idList.append(str(id))
+
     SHPdata['Name'] = Name
     SHPdata['thickness'] = thicknessList
     SHPdata['Start'] = Start
@@ -134,10 +143,73 @@ def SHP2Array(infile, defname=None):
     SHPdata['x'] = Coordx
     SHPdata['y'] = Coordy
     SHPdata['z'] = Coordz
+    SHPdata['id'] = idList
 
     sf.close()
 
     return SHPdata
+
+def readThickness(infile, defname=None):
+    """ Read shapefile and convert it to a python dictionary
+
+    The dictionary contains the name of the paths in the shape file, the np array with
+    the coordinates of the feature points (all stacked in the same array)
+    and information about the starting index and length of each feature
+
+    Parameters
+    ----------
+    infile: str
+        path to shape file
+    defname: str
+        name to give to the feature in the shape file
+
+    Returns
+    -------
+    thickness: list
+        list of strings with the (release or entrainment) thickness of each feature (as many values as features)
+    id : list
+        list of strings for oid of each feature in shp file
+
+
+    """
+    #  Input shapefile
+    sf = shapefile.Reader(str(infile))
+    infile = pathlib.Path(infile)
+
+    thickness = None
+    id = None
+
+    # Start reading the shapefile
+    records = sf.shapeRecords()
+    shps = sf.shapes()
+
+    thicknessList = []
+    idList = []
+
+
+    for n, item in enumerate(shps):
+        pts = item.points
+        zs = [0.0] * len(pts)
+
+        # check if records are available and extract
+        if records:
+            # loop through fields
+            for (name, typ, size, deci), value in zip(sf.fields[1:], records[n].record):
+                # get entity name
+                name = name.lower()
+                if (name == 'thickness') or (name == 'd0'):
+                    thickness = value
+
+        thicknessList.append(str(thickness))
+
+    # get unique ID of features in shapefile
+    for rec in sf.records():
+        id = rec.oid
+        idList.append(str(id))
+
+    sf.close()
+
+    return thicknessList, idList
 
 
 def readLine(fname, defname, dem):

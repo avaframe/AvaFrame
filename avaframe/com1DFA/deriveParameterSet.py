@@ -41,10 +41,11 @@ def getVariationDict(avaDir, fullCfg, modDict):
         if key == 'resType':
             fullCfg = checkResType(fullCfg, section, key, value)
         # output saving options not relevant for parameter variation!
-        if key not in ['resType', 'tSteps']:
+        # percent variation info already used for updating thickness values
+        if key not in ['resType', 'tSteps', 'relThPercentVariation', 'entThPercentVariation', 'secondaryRelThPercentVariation']:
             # if yes and if this value is different add this key to
             # the parameter variation dict
-            if ':' in value or '|' in value:
+            if ':' in value or '|' in value or '$' in value:
                 locValue = fU.splitIniValueToArraySteps(value)
                 variations[key] = locValue
                 defValue = modDict[section][key][1]
@@ -197,3 +198,98 @@ def checkRelEntThVariation(cfg, variationDict):
         if key in variationDict and cfg['GENERAL'].getboolean(flag) is False:
             log.warning('Parameter variation for %s thickness not working as %s read from shp file - \
                          consider setting %s to True' % (value, key, flag))
+
+
+def getThicknessValue(cfg, inputSimFiles, fName, thType):
+    """ define thickness values according to settings chosen
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration settings
+        inputSimFiles: dict
+            dictionary with info on input files and attributes (id and thickness)
+        fName: str
+            name of scenario shp file (entrainment, release, ...)
+        thType: str
+            thickness parameter name (entTh, relTh, ...)
+
+        Returns
+        -------
+        cfg: configparser object
+            updated configuration settings with info on actual thickness values to be used for simulations
+
+        """
+
+    # fetch thickness values from shapefile
+    thicknessList = inputSimFiles[fName]['thickness']
+    idList = inputSimFiles[fName]['id']
+
+    # create key names for flags and parameter variation info
+    thFlag = thType + 'FromShp'
+    thPercent = thType + 'PercentVariation'
+
+    # if thickness should be read from shape file
+    if cfg['GENERAL'].getboolean(thFlag):
+        # if at least one but not all features in a shapefile have a thickness value - error
+        if ('None' in thicknessList):
+            message = 'Not all features in shape file have a thickness value - check shape file attributes: %s' % infile
+            log.error(message)
+            raise AssertionError(message)
+        else:
+            # set thickness value in ini file from info of shape file and potential parameter variation
+            for count, id in enumerate(idList):
+                thName = thType + id
+                if cfg['GENERAL'][thPercent] != '':
+                    cfg['GENERAL'][thName] = thicknessList[count] + '$' + cfg['GENERAL'][thPercent]
+                else:
+                    cfg['GENERAL'][thName] = thicknessList[count]
+
+    else:
+        # if thickness should be read from ini file
+        if '$' in cfg['GENERAL'][thType] and len(cfg['GENERAL'][thType].split('$')) != 3:
+            message = 'Format of relTh value in ini file is not correct - for variation from ini use refValue$percent$numberOfSteps'
+            log.error(message)
+            raise AssertionError(message)
+        elif cfg['GENERAL'][thPercent] != '':
+            # add parameter variation
+            cfg['GENERAL'][thType] = cfg['GENERAL'][thType] + '$' + cfg['GENERAL'][thPercent]
+
+    # clear parameter variation info from cfg for individual cfg of one simulation - otherwise simHash is influenced
+    cfg['GENERAL'][thPercent] = ''
+
+    return cfg
+
+
+def checkThicknessSettings(cfg, thName):
+    """ check if relTh setting format is correct
+
+        Parameters
+        ------------
+        cfg: configparser
+            configuration settings
+        thName: str
+            thickness parameter name (entTh, ...)
+
+    """
+
+    # create key name for thickness flag
+    thFlag = thName + 'FromShp'
+
+    # check if flag is set correctly and thickness parameter has correct format
+    if cfg['GENERAL'][thFlag] == 'True' or cfg['GENERAL'][thFlag] == 'False':
+        if cfg['GENERAL'].getboolean(thFlag):
+            if cfg['GENERAL'][thName] != '':
+                message = 'If %s is set to True - it is not allowed to set a value for %s' % (thFlag, thName)
+                log.error(message)
+                raise AssertionError(message)
+        else:
+            if cfg['GENERAL'][thName] == '':
+                message = 'If %s is set to False - it is required to set a value for %s' % (thFlag, thName)
+                log.error(message)
+                raise AssertionError(message)
+
+    else:
+        message = 'Check %s - needs to be True or False' % (thFlag)
+        log.error(message)
+        raise AssertionError(message)

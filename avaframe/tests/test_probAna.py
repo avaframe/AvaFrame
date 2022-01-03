@@ -54,7 +54,7 @@ def test_probAna(tmp_path):
     testRes = np.allclose(probTest, probSol, atol=1.e-6)
 
     # Test
-    assert (testRes == True)
+    assert (testRes is True)
 
     # call function to test
     testInputDir = avaDir / 'Outputs' / 'com1DFA'
