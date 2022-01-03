@@ -327,7 +327,6 @@ def visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass):
         ax.set_ylabel(unit)
 
     ax2 = axes.flatten()[1].twinx()
-    # ax2.set_ylabel('z [m]')
     ax2.spines['right'].set_color('r')
     ax2.tick_params(axis='y', colors='r')
     ax2.plot(timeMass, (simArray-refArray) / refArray*100, 'r', label='total mass')
@@ -702,7 +701,6 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
 
     thresholdValue = cfgSetup['thresholdValue']
 
-
     flag = float(cfgFlags['typeFlag'])
 
     zPath = rasterTransfo['z']
@@ -743,7 +741,7 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
 
     # If more than 100 files are provided, add a density plot
     plotDensity = 0
-    if (nSim > 100):
+    if (nSim > cfgFlags.getfloat('nDensityPlot')):
         plotDensity = 1
 
     if 'colorParameter' in pathDict:

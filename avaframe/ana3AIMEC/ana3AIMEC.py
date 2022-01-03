@@ -128,7 +128,6 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
     interpMethod = cfgSetup['interpMethod']
-    refSimulationName = pathDict['refSimulation']
 
     log.info('Prepare data for post-processing')
     # Make domain transformation
@@ -293,25 +292,26 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     cfgFlags = cfg['FLAGS']
     interpMethod = cfgSetup['interpMethod']
     flagMass = cfgFlags.getboolean('flagMass')
-    refSimName = pathDict['refSimulation']
+    refSimulationName = pathDict['refSimulation']
     # apply domain transformation
 
-    refSimulationName = pathDict['refSimulation']
     log.info('Analyzing data in path coordinate system')
     log.debug("Assigning pressure data to deskewed raster")
     inputFiles = inputsDFrow['ppr']
     newRasterPPR = aT.transform(inputFiles, rasterTransfo, interpMethod)
     newRasters['newRasterPPR'] = newRasterPPR
+
     log.debug("Assigning thickness data to deskewed raster")
     inputFiles = inputsDFrow['pfd']
     newRasterPFD = aT.transform(inputFiles, rasterTransfo, interpMethod)
     newRasters['newRefRasterPFD'] = newRasterPFD
     log.debug("Assigning velocity data to deskewed raster")
     inputFiles = inputsDFrow['pfv']
+
     newRasterPFV = aT.transform(inputFiles, rasterTransfo, interpMethod)
     newRasters['newRasterPFV'] = newRasterPFV
 
-    if simName == refSimName:
+    if simName == refSimulationName:
         newRasters['newRefRasterPPR'] = newRasterPPR
         newRasters['newRasterPFD'] = newRasterPFD
         newRasters['newRefRasterPFV'] = newRasterPFV
@@ -322,7 +322,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
             resAnalysisDF[dataType + 'CrossMean'] = np.nan
             resAnalysisDF[dataType + 'CrossMean'] = resAnalysisDF[dataType + 'CrossMax'].astype(object)
 
-    # analyize all fields
+    # analyze all fields
     dataPressure = newRasters['newRasterPPR']
     dataThickness = newRasters['newRasterPFD']
     dataSpeed = newRasters['newRasterPFV']
@@ -336,8 +336,8 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     if flagMass:
         # perform mass analysis
         fnameMass = inputsDFrow['massBal']
-        if simName == refSimName:
-            timeMass = 0
+        if simName == refSimulationName:
+            timeMass = None
         resAnalysisDF, timeMass = aT.analyzeMass(fnameMass, simName, refSimulationName, resAnalysisDF, time=timeMass)
         outAimec.visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass)
     else:
