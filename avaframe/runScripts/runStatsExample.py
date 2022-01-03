@@ -56,7 +56,7 @@ statsSimCfg = os.path.join('..', 'benchmarks', avaNameTest, '%sStats_com1DFACfg.
 
 # Run Standalone DFA
 particlesList, fieldsList, Tsave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
-cfgFile=statsSimCfg, relThField='', variationDict='')
+cfgFile=statsSimCfg, relThField='')
 
 if cfg.getboolean('aimec'):
 

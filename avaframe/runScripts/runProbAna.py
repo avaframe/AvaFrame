@@ -45,7 +45,7 @@ for avaDir in avalancheDirectories:
 
     # Run Standalone DFA
     particlesList, fieldsList, Tsave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
-        cfgFile=probSimCfg, relThField='', variationDict='')
+        cfgFile=probSimCfg, relThField='')
 
     # Load input parameters from configuration file
     cfgProb = cfgUtils.getModuleConfig(probAna)

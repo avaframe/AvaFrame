@@ -81,7 +81,7 @@ def setRelThIni(avaDir, modName, cfgFile=''):
     return inputSimFilesAll, cfgFilesRels
 
 
-def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=''):
+def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField=''):
     """ preprocess information from ini and run all desired simulations, create outputs and reports
 
         Parameters
@@ -90,8 +90,6 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
             path to avalanche data
         cfgFile: str or pathlib Path
             path to configuration file if overwrite is desired
-        variationDict: dict
-            dictionary with parameter variation info if not provided via ini file
 
         Returns
         --------
@@ -129,7 +127,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
         variationDict = ''
 
         # get information on simulations that shall be performed according to parameter variation
-        modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgFileRel, variationDict)
+        modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgFileRel)
 
         # select release input data according to chosen release scenario
         inputSimFiles = gI.selectReleaseScenario(inputSimFiles, modCfg['INPUT'])
