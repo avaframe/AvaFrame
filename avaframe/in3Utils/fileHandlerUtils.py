@@ -283,7 +283,8 @@ def getFilterDict(cfg, section):
 def splitIniValueToArraySteps(cfgValues, returnList=False):
     """ read values in ini file and return numpy array or list if the items are strings;
         values can either be separated by | or provided in start:end:numberOfSteps format
-        if separated by : also optional add one additional value using & 
+        if separated by : also optional add one additional value using &
+        if format of refVal$percent$steps is used - an array is created with +- percent of refVal in nsteps
 
         Parameters
         ----------
@@ -309,6 +310,10 @@ def splitIniValueToArraySteps(cfgValues, returnList=False):
             items = np.append(items, float(itemsInputBig[1]))
     elif cfgValues == '':
         items = []
+    elif '$' in cfgValues:
+        itemsP = cfgValues.split('$')
+        itemsPRange = (float(itemsP[1]) / 100.) * float(itemsP[0])
+        items = np.linspace(float(itemsP[0])-itemsPRange, float(itemsP[0])+itemsPRange, int(itemsP[2]))
     else:
         itemsL = cfgValues.split('|')
         if returnList:

@@ -45,6 +45,42 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
+def setRelThIni(avaDir, modName, cfgFile=''):
+    """ Adjust thickness values in configuration file according to thickness flags, ini settings or shapefile attributes
+        and create one cfgFile for each releaseScenario
+
+        Parameters
+        -----------
+        modName: module
+            computational module
+        cfgFile: str or pathlib path
+            path to cfgFile to read overall configuration - optional if not provided the local or default config is used
+
+        Returns
+        --------
+        inputSimFilesAll: dict
+            dictionary with infos about input data file paths and flags for entrainment, resistance
+        cfgFilesRels: list
+            list of paths to one cfgFile for each releaseScenario with updated thickness values
+
+    """
+
+    # get initial configuration
+    cfgInitial = cfgUtils.getModuleConfig(modName, fileOverride=cfgFile, toPrint=False)
+
+    # check thickness settings in ini file
+    for thType in ['entTh', 'relTh', 'secondaryRelTh']:
+        dP.checkThicknessSettings(cfgInitial, thType)
+
+    # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
+    inputSimFilesAll = gI.getInputDataCom1DFA(avaDir, cfgInitial['INPUT'])
+
+    # get thickness of release and entrainment areas (and secondary release areas)
+    inputSimFilesAll, cfgFilesRels = gI.getThickness(inputSimFilesAll, avaDir, modName, cfgFile)
+
+    return inputSimFilesAll, cfgFilesRels
+
+
 def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=''):
     """ preprocess information from ini and run all desired simulations, create outputs and reports
 
@@ -59,12 +95,6 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
 
         Returns
         --------
-        particlesList: list
-            list of particles dictionaries for saving time steps
-        fieldsList: list
-            list of fields dictionaries for saving time steps
-        tSave: list
-            list of saving time steps
         dem: dict
             dictionary with dem header and raster data (that has been used for computations)
         plotDict: dict
@@ -80,66 +110,105 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
     # Create output and work directories
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
 
-    # get information on simulations that shall be performed according to parameter variation
-    modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict)
+    # create cfgFiles for all releaseScenarios
+    inputSimFilesAll, cfgFilesRels = setRelThIni(avalancheDir, com1DFA, cfgFile=cfgFile)
 
-    # check if parameter variation on release or entrainment thickness is working - where thickness is read from
-    dP.checkRelEntThVariation(modCfg, variationDict)
+    # initialise reportDictList and flag if simulations have been performed
+    reportDictList = []
+    simsPerformed = False
 
-    # fetch input data - dem, release-, entrainment- and resistance areas
-    inputSimFiles = gI.getInputDataCom1DFA(avalancheDir, modCfg['FLAGS'])
+    # loop over cfg files for all release scenarios
+    for cfgFileRel in cfgFilesRels:
 
-    # create a list of simulations and generate an individual configuration object for each simulation
-    # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
-    # first get already existing simulations
-    simDFOld, simNameOld = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
-    # prepare simulation to run (only the new ones)
-    simDict = prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
+        log.debug('Full cfg file %s' % cfgFileRel)
 
-    # is there any simulation to run?
-    if bool(simDict):
-        reportDictList = []
-        simDF = ''
-        tCPUDF = ''
-        # loop over all simulations
-        for cuSim in simDict:
+        # copy inputSimFilesAll
+        inputSimFiles = inputSimFilesAll.copy()
 
-            # load configuration dictionary for cuSim
-            cfg = simDict[cuSim]['cfgSim']
+        # reset variationDict
+        variationDict = ''
 
-            # save configuration settings for each simulation
-            simHash = simDict[cuSim]['simHash']
-            cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName=cuSim)
-            # append configuration to dataframe
-            simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
+        # get information on simulations that shall be performed according to parameter variation
+        modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgFileRel, variationDict)
 
-            # log simulation name
-            log.info('Run simulation: %s' % cuSim)
+        # select release input data according to chosen release scenario
+        inputSimFiles = gI.selectReleaseScenario(inputSimFiles, modCfg['INPUT'])
 
-            # set release area scenario
-            inputSimFiles['releaseScenario'] = simDict[cuSim]['relFile']
+        # create a list of simulations and generate an individual configuration object for each simulation
+        # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
+        # first get already existing simulations
+        simDFOld, simNameOld = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
 
-            # +++++++++++++++++++++++++++++++++
-            # ------------------------
-            particlesList, fieldsList, tSave, dem, reportDict, cfgFinal, tCPU = com1DFA.com1DFACore(cfg, avalancheDir,
-                    cuSim, inputSimFiles, outDir, relThField=relThField)
+        # prepare simulation to run (only the new ones)
+        simDict = prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
 
-            tCPUDF = cfgUtils.appendTcpu2DF(simHash, tCPU, tCPUDF)
-            # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+        # is there any simulation to run?
+        if bool(simDict):
 
-            reportDictList.append(reportDict)
+            # reset simDF and timing
+            simDF = ''
+            tCPUDF = ''
 
-            # export for visulation
-            if cfg['VISUALISATION'].getboolean('writePartToCSV'):
-                outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
-                particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+            # loop over all simulations
+            for cuSim in simDict:
 
-            # create hash to check if config didnt change
-            simHashFinal = cfgUtils.cfgHash(cfgFinal)
-            if simHashFinal != simHash:
-                log.warning('simulation configuration has been changed since start')
-                cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
+                # load configuration dictionary for cuSim
+                cfg = simDict[cuSim]['cfgSim']
 
+                # save configuration settings for each simulation
+                simHash = simDict[cuSim]['simHash']
+                cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName=cuSim)
+                # append configuration to dataframe
+                simDF = cfgUtils.appendCgf2DF(simHash, cuSim, cfg, simDF)
+
+                # log simulation name
+                log.info('Run simulation: %s' % cuSim)
+
+                # set release area scenario
+                inputSimFiles['releaseScenario'] = simDict[cuSim]['relFile']
+
+                # +++++++++++++++++++++++++++++++++
+                # ------------------------
+                particlesList, fieldsList, tSave, dem, reportDict, cfgFinal, tCPU = com1DFA.com1DFACore(cfg, avalancheDir,
+                        cuSim, inputSimFiles, outDir, relThField=relThField)
+
+                tCPUDF = cfgUtils.appendTcpu2DF(simHash, tCPU, tCPUDF)
+                # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
+
+                # add report dict to list for report generation
+                reportDictList.append(reportDict)
+
+                # export for visulation
+                if cfg['VISUALISATION'].getboolean('writePartToCSV'):
+                    outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
+                    particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+
+                # create hash to check if config didnt change
+                simHashFinal = cfgUtils.cfgHash(cfgFinal)
+                if simHashFinal != simHash:
+                    log.warning('simulation configuration has been changed since start')
+                    cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
+
+
+
+            simDF = cfgUtils.convertDF2numerics(simDF)
+            # add cpu time info to the dataframe
+            simDF = simDF.join(tCPUDF)
+
+            # append new simulations configuration to old ones (if they exist), return  total dataFrame and write it to csv
+            simDFNew = simDF.append(simDFOld)
+            cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
+
+            # write full configuration (.ini file) to file
+            date = datetime.today()
+            fileName = 'sourceConfiguration_' + cfg['INPUT']['releaseScenario'] + '_' + '{:%d_%m_%Y_%H_%M_%S}'.format(date)
+            cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
+            simsPerformed = True
+
+        else:
+            log.warning('There is no simulation to be performed for releaseScenario')
+
+    if simsPerformed:
         # Set directory for report
         reportDir = pathlib.Path(avalancheDir, 'Outputs', modName, 'reports')
         # Generate plots for all peakFiles
@@ -147,21 +216,10 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
         # write report
         gR.writeReport(reportDir, reportDictList, cfgMain['FLAGS'], plotDict)
 
-        simDF = cfgUtils.convertDF2numerics(simDF)
-        # add cpu time info to the dataframe
-        simDF = simDF.join(tCPUDF)
-        # append new simulations configuration to old ones (if they exist), return  total dataFrame and write it to csv
-        simDFNew = simDF.append(simDFOld)
-        cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
-
-        # write full configuration (.ini file) to file
-        date = datetime.today()
-        fileName = 'sourceConfiguration_' + '{:%d_%m_%Y_%H_%M_%S}'.format(date)
-        cfgUtils.writeCfgFile(avalancheDir, com1DFA, modCfg, fileName=fileName)
-        return particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF
+        return dem, plotDict, reportDictList, simDFNew
     else:
-        log.warning('There is no simulation to be performed')
-        return [], [], [], 0, {}, [], ''
+
+        return 0, {}, [], ''
 
 
 def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
@@ -282,13 +340,13 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         the suffix _AF will be added for the simulation name')
 
     # set release thickness
-    releaseLine = setThickness(cfg, inputSimLines['releaseLine'], 'useRelThFromIni', 'relTh')
+    releaseLine = setThickness(cfg, inputSimLines['releaseLine'], 'relTh')
     inputSimLines['releaseLine'] = releaseLine
     log.debug('Release area scenario: %s - perform simulations' % (relName))
 
     if cfg['GENERAL'].getboolean('iniStep'):
         # set release thickness for buffer
-        releaseLineBuffer = setThickness(cfg, inputSimLines['releaseLineBuffer'], 'useRelThFromIni', 'relTh')
+        releaseLineBuffer = setThickness(cfg, inputSimLines['releaseLineBuffer'], 'relTh')
         inputSimLines['releaseLineBuffer'] = releaseLineBuffer
 
     if cfg.getboolean('GENERAL', 'secRelArea'):
@@ -296,7 +354,7 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
             message = 'No secondary release file found'
             log.error(message)
             raise FileNotFoundError(message)
-        secondaryReleaseLine = setThickness(cfg, inputSimLines['secondaryReleaseLine'], 'useRelThFromIni', 'secondaryRelTh')
+        secondaryReleaseLine = setThickness(cfg, inputSimLines['secondaryReleaseLine'], 'secondaryRelTh')
     else:
         inputSimLines['entResInfo']['flagSecondaryRelease'] = 'No'
         secondaryReleaseLine = None
@@ -304,23 +362,23 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
 
     if entResInfo['flagEnt'] == 'Yes':
         # set entrainment thickness
-        entLine = setThickness(cfg, inputSimLines['entLine'], 'useEntThFromIni', 'entTh')
+        entLine = setThickness(cfg, inputSimLines['entLine'], 'entTh')
         inputSimLines['entLine'] = entLine
 
     return relName, inputSimLines, badName
 
 
-def setThickness(cfg, lineTh, useThFromIni, typeTh):
-    """ set thickness in line dictionary for release area, entrainment area
+def setThickness(cfg, lineTh, typeTh):
+    """ set thickness in line dictionary of release, entrainment, second. release
 
     Parameters
     -----------
+    cfg: config parser
+        configuration settings
     lineTh: dict
         dictionary with info on line (e.g. release area line)
-    useThFromIni: bool
-        True if thickness shall be set from ini file
     typeTh: str
-        type of thickness to be set (e.g. relTh for release thickness -from ini)
+        type of thickness to be set (e.g. relTh for release thickness)
 
     Returns
     --------
@@ -328,16 +386,22 @@ def setThickness(cfg, lineTh, useThFromIni, typeTh):
         updated dictionary with new key: thickness and thicknessSource
     """
 
-    lineTh['thicknessSource'] = [''] * len(lineTh['thickness'])
-    if cfg.has_option('GENERAL', useThFromIni) is False:
-        log.warning('Using thickness from ini file flag: %s not found, reading thickness from shp file and if not'
-            ' provided setting thickness to %s' % (useThFromIni, cfg['GENERAL'][typeTh]))
-    if cfg['GENERAL'].getboolean(useThFromIni):
-        lineTh['thickness'] = [cfg['GENERAL'].getfloat(typeTh)] * len(lineTh['thickness'])
-        lineTh['thicknessSource'] = ['ini file'] * len(lineTh['thickness'])
+    # create thickness flag name
+    thFlag = typeTh + 'FromShp'
+
+    # set thickness source info
+    if cfg['GENERAL'].getboolean(thFlag):
+        lineTh['thicknessSource'] = ['shp file'] * len(lineTh['thickness'])
     else:
-        lineTh['thicknessSource'] = ['ini file' if item == 'None' else 'shp file' for item in lineTh['thickness']]
-        lineTh['thickness'] = [cfg['GENERAL'].getfloat(typeTh) if item == 'None' else float(item) for item in lineTh['thickness']]
+        lineTh['thicknessSource'] = ['ini file'] * len(lineTh['thickness'])
+
+    # set thickness value info read from ini file that has been updated from shp or ini previously
+    for count, id in enumerate(lineTh['id']):
+        if cfg['GENERAL'].getboolean(thFlag):
+            thName = typeTh + id
+        else:
+            thName = typeTh
+        lineTh['thickness'][count] = cfg['GENERAL'].getfloat(thName)
 
     return lineTh
 
@@ -489,10 +553,11 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
                                  'Release thickness [m]': relDict['thickness']}}
 
     if entInfo == 'Yes':
+        entDict = inputSimLines['entLine']
         reportST.update({'Entrainment area':
                          {'type': 'columns',
                              'Entrainment area scenario': entrainmentArea,
-                             'Entrainment thickness [m]': cfgGen.getfloat('entTh'),
+                             'Entrainment thickness [m]': entDict['thickness'],
                              'Entrainment density [kgm-3]': cfgGen['rhoEnt']}})
     if resInfo == 'Yes':
         reportST.update({'Resistance area': {'type': 'columns', 'Resistance area scenario': resistanceArea}})
@@ -1957,6 +2022,21 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
                 cfgSim['GENERAL'][parameter] = row._asdict()[parameter]
             cfgSim['GENERAL']['simTypeActual'] = row._asdict()['simTypeList']
             cfgSim['GENERAL']['releaseScenario'] = relName
+
+            # if cfgSim['GENERAL']['useRelThFromIni'] == 'True':
+            #     cfgSim['GENERAL']['relThSource'] = 'ini File'
+            # else:
+            #     print('thicknessList', inputSimFiles[relName])
+            #     if all(th is None for th in inputSimFiles[relName]):
+            #         cfgSim['GENERAL']['relThSource'] = 'ini File'
+            #
+            #     else:
+            #         cfgSim['GENERAL']['relThSource'] = 'shp File'
+            #         cfgSim['GENERAL']['relTh'] = inputSimFiles[relName]
+            # print('cfg thi', cfgSim['GENERAL']['relThSource'] , cfgSim['GENERAL']['relTh'],
+            #     cfgSim['GENERAL']['useRelThFromIni'])
+            # print('relTh value', cfgSim['GENERAL']['relTh'] )
+
             # convert back to configParser object
             cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
             # create unique hash for simulation configuration

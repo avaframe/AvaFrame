@@ -47,7 +47,7 @@ def getGeneralConfig():
     return cfg
 
 
-def getModuleConfig(module, fileOverride='', modInfo=False):
+def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True):
     ''' Returns the configuration for a given module
     returns a configParser object
 
@@ -102,7 +102,7 @@ def getModuleConfig(module, fileOverride='', modInfo=False):
         raise FileNotFoundError('None of the provided cfg files exist ')
 
     # Finally read it
-    cfg, modDict = compareConfig(iniFile, modName, compare, modInfo)
+    cfg, modDict = compareConfig(iniFile, modName, compare, modInfo, toPrint)
 
     if modInfo:
         return cfg, modDict
@@ -202,7 +202,18 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
         for section in locCfg.sections():
             if defCfg.has_section(section):
                 for key in locCfg.items(section):
-                    log.warning('Additional Key [\'%s\'] in section [\'%s\'] is ignored.' % (key[0], section))
+                    # an exception is made for thickness values that are added for the features of a releaseScenario,
+                    # entrainment Scenario or secondar. release scenario 
+                    # these are added to the configuration and also to the modDict if variation is applied
+                    if 'relTh' in key[0] or 'entTh' in key[0] or 'secondaryRelTh' in key[0]:
+                        locValue = locCfg.get(section, key[0])
+                        cfg.set(section, key[0], locValue)
+                        log.info('\t\t%s : %s added to %s' % (key[0], locValue, section))
+                        if '$' in locValue:
+                            modString = [locValue, locValue.split('$')[0]]
+                            modDict[section][key[0]] = modString
+                    else:
+                        log.warning('Additional Key [\'%s\'] in section [\'%s\'] is ignored.' % (key[0], section))
             else:
                 cfg.add_section(section)
                 log.info('Additional section [\'%s\'] is added to the configuration.' % (section))

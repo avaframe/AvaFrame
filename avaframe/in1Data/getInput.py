@@ -9,7 +9,11 @@ import pathlib
 import logging
 
 # Local imports
+from avaframe.in3Utils import cfgUtils
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in2Trans.shpConversion as shpConv
+import avaframe.com1DFA.deriveParameterSet as dP
+
 
 
 # create local logger
@@ -65,7 +69,7 @@ def getDEMPath(avaDir):
     return demFile[0]
 
 
-def getInputData(avaDir, cfg, flagDev=False):
+def getInputData(avaDir, cfg):
     """ Fetch input datasets required for simulation, duplicated function because
         simulation type set differently in com1DFAOrig compared to com1DFA:
         TODO: remove duplicate once it is not required anymore
@@ -76,8 +80,6 @@ def getInputData(avaDir, cfg, flagDev=False):
         path to avalanche directory
     cfg : dict
         configuration read from com1DFA simulation ini file
-    flagDev : bool
-        optional - if True: use for devREL folder to get release area scenarios
 
     Returns
     -------
@@ -100,10 +102,7 @@ def getInputData(avaDir, cfg, flagDev=False):
     entResInfo= {'flagEnt': 'No', 'flagRes': 'No'}
 
     # Initialise release areas, default is to look for shapefiles
-    if flagDev is True:
-        releaseDir = 'devREL'
-        relFiles = glob.glob(inputDir+os.sep + releaseDir+os.sep + '*.shp')
-    elif cfg['releaseScenario'] != '':
+    if cfg['releaseScenario'] != '':
         releaseDir = 'REL'
         relFiles = []
         releaseFiles = cfg['releaseScenario'].split('|')
@@ -175,11 +174,7 @@ def getInputDataCom1DFA(avaDir, cfg):
     entResInfo= {'flagEnt': 'No', 'flagRes': 'No'}
 
     # Initialise release areas, default is to look for shapefiles
-    if cfg.getboolean('flagDev'):
-        releaseDir = 'devREL'
-        releaseDir = inputDir / 'devREL'
-        relFiles = list(releaseDir.glob('*.shp'))
-    elif cfg['releaseScenario'] != '':
+    if cfg['releaseScenario'] != '':
         releaseDir = 'REL'
         relFiles = []
         releaseFiles = cfg['releaseScenario'].split('|')
@@ -215,6 +210,8 @@ def getInputDataCom1DFA(avaDir, cfg):
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {'demFile': demFile, 'relFiles': relFiles, 'secondaryReleaseFile': secondaryReleaseFile,
                      'entFile': entFile, 'resFile': resFile, 'entResInfo': entResInfo}
+
+
     return inputSimFiles
 
 
@@ -254,3 +251,98 @@ def getAndCheckInputFiles(inputDir, folder, inputType):
         OutputFile = OutputFile[0]
 
     return OutputFile, available
+
+
+def getThickness(inputSimFiles, avaDir, modName, cfgFile):
+    """ add thickness of shapefiles to dictionary, create one ini file per releaseScenario and
+        set thickness values in ini files
+
+        Parameters
+        -----------
+        inputSimFiles: dict
+            dictionary with info on release and entrainment file paths
+        avaDir: str or pathlib path
+            path to avalanche directory
+        modName : computational module
+            computational module
+        cfgFile: str
+            path to cfgFile for reading overall config of comModule - if empty read local or default ini file
+
+        Returns
+        --------
+        inputSimFiles: dict
+            updated dictionary with thickness info read from shapefile attributes
+        cfgFilesRels: list
+            list of updated ini files - one for each release Scenario
+
+    """
+
+    # create pathlib Path
+    avaDir = pathlib.Path(avaDir)
+
+    # get name of module as string
+    modNameString = str(pathlib.Path(modName.__file__).stem)
+
+    # initialise list for cfgFiles
+    cfgFilesRels = []
+
+    # fetch thickness attribute of entrainment area and secondary release
+    for thType in ['entFile', 'secondaryReleaseFile']:
+        if inputSimFiles[thType] != None:
+            thicknessList, idList = shpConv.readThickness(inputSimFiles[thType])
+            inputSimFiles[inputSimFiles[thType].stem] = {'thickness': thicknessList, 'id': idList}
+
+    # fetch thickness attribute of release areas
+    for releaseA in inputSimFiles['relFiles']:
+        cfgInitial = cfgUtils.getModuleConfig(modName, fileOverride=cfgFile, toPrint=False)
+        thicknessList, idList = shpConv.readThickness(releaseA)
+        inputSimFiles[releaseA.stem] = {'thickness': thicknessList, 'id': idList}
+
+        # update configuration with thickness value to be used for simulations
+        cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA.stem, 'relTh')
+
+        # set input data info
+        cfgInitial['INPUT'] = {'DEM': inputSimFiles['demFile'].stem , 'releaseScenario': releaseA.stem}
+        # set entrainment and secondary release thickness  and input data info
+        if inputSimFiles['entFile'] != None:
+            cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles['entFile'].stem, 'entTh')
+            cfgInitial['INPUT']['entrainmentScenario'] =inputSimFiles['entFile'].stem
+        if inputSimFiles['secondaryReleaseFile'] != None:
+            cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles['secondaryReleaseFile'].stem, 'secondaryRelTh')
+            cfgInitial['INPUT']['secondaryReleaseScenario'] =inputSimFiles['secondaryReleaseFile'].stem
+
+        # create new ini file for each release scenario with updated info on thickness values (and parameter variation)
+        cfgFileRelease = avaDir / 'Outputs' / modNameString / ('%s_com1DFACfg.ini' % releaseA.stem)
+        with open(cfgFileRelease, 'w') as configfile:
+            cfgInitial.write(configfile)
+        cfgFilesRels.append(cfgFileRelease)
+
+
+    return inputSimFiles, cfgFilesRels
+
+
+def selectReleaseScenario(inputSimFiles, cfg):
+    """ select release scenario and remove other release files in inputSimFiles dictionary
+
+        Parameters
+        -----------
+        inputSimFiles: dict
+            dictionary with info on input data
+        cfg: conigparser object
+            configuration, here Flag releaseScenario is used
+
+        Returns
+        -------
+        inputSimFiles: dict
+            updated dictionary with only one releaseScenario
+    """
+
+    relFiles = inputSimFiles['relFiles']
+
+    for relF in relFiles:
+        if relF.stem == cfg['releaseScenario']:
+            releaseScenario = relF
+
+    inputSimFiles['relFiles'] = [releaseScenario]
+
+    return inputSimFiles
