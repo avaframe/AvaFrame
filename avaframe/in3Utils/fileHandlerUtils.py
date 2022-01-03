@@ -276,7 +276,6 @@ def getFilterDict(cfg, section):
     else:
         log.warning('No section %s in configuration file found - cannot create dict for filtering' % section)
 
-
     return parametersDict
 
 
@@ -384,83 +383,6 @@ def splitTimeValueToArrayInterval(cfgGen):
     return items
 
 
-def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
-    """ Determine the paths of the required data from comModule output for Aimec
-
-        Parameters
-        ----------
-        avaDir : str
-            path to avalanche directory
-        pathDict: dict
-            dictionary with paths to simulation results
-        cfg: configParser object
-            configuration for aimec, here 'varPar' and 'ascendingOrder' used
-        suffix : str or list
-            result parameter abbreviation (e.g. 'ppr')
-        comModule : str
-            optional - name of computational module
-        inputDir: str
-            optional - path to a different input directory
-    """
-
-    # Lead all infos on simulations
-    if inputDir == '':
-        inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
-        if inputDir.is_dir() == False:
-            message = 'Input directory %s does not exist - check anaMod' % inputDir
-            log.error(message)
-            raise FileNotFoundError(message)
-
-    # check if is string - then convert to list
-    if isinstance(suffix, str):
-        suffix = [suffix]
-
-    # if com1DFA check for configuration files to fetch paramerter values for ordering
-    if comModule == 'com1DFA' and cfg['varParList'] != '':
-
-        # fetch parameters that shall be used for ordering
-        varParList = cfg['varParList'].split('|')
-
-        # create dataFrame with ordered paths to simulation results
-        dataDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfg.getboolean('ascendingOrder'), resFiles=True)
-
-        for suf in suffix:
-            # get paths for desired resType
-            dataFiles = dataDF[dataDF['resType']==suf]['files'].to_list()
-
-            # add result file paths to pathDict
-            pathDict[suf] = dataFiles
-
-            for pathVal in dataFiles:
-                log.info('Added to pathDict: %s' % (pathVal))
-
-        # add value of first parameter used for ordering for colorcoding in plots
-        pathDict['colorParameter'] = dataDF[dataDF['resType']==suf][varParList[0]].to_list()
-        # also build the simID array
-        pathDict['simID'].append(set(pathDict['simID']))
-    else:
-        # do not apply ordering
-        log.warning('Did not apply ordering')
-        dataDF = makeSimDF(inputDir)
-        for m in range(len(dataDF['files'])):
-            for suf in suffix:
-                if dataDF['resType'][m] == suf:
-                    pathDict[suf].append(dataDF['files'][m])
-                    # also build the simID array
-                    newSimID = dataDF['simID'][m]
-                    if newSimID not in pathDict['simID']:
-                        pathDict['simID'].append(newSimID)
-                    log.info('Added to pathDict: %s' % (dataDF['files'][m]))
-
-    for suf in suffix:
-        if pathDict[suf] == []:
-            message = 'No files found for %s in directory: %s' % (suf, inputDir)
-            log.error(message)
-            raise FileNotFoundError(message)
-
-    return pathDict
-
-
 def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     """ Export the simulation results from com1DFA output to desired location
 
@@ -545,6 +467,7 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     shutil.copy2(pathlib.Path('%s' % inputDir, 'ExpLog.txt'), outDir)
 
 
+# ToDo Maybe try to use makeSimDF2 instead of makeSimDF
 def makeSimDF(inputDir, avaDir='', simID='simID'):
     """ Create a  dataFrame that contains all info on simulations
 
@@ -627,9 +550,11 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
     return dataDF
 
 
-def makeSimDF2(avaDir, comModule, inputDir=''):
+def makeSimDF2(avaDir, comModule, inputDir='', simName=''):
     """ Create a  dataFrame that contains all info on simulations in output/comModule/peakFiles
 
+        One line for each simulation - so all peakfiles that belong to one simulation are listed in one line
+        that corresponds to that simulation
         Parameters
         ----------
         avaDir : str
@@ -643,7 +568,7 @@ def makeSimDF2(avaDir, comModule, inputDir=''):
         -------
         dataDF : dataFrame
             dataframe with full file path, file name, release area scenario, simulation type (null, entres, etc.),
-            model type (dfa, ref, etc.), simID, result type (ppr, pfd, etc.), simulation name,
+            model type (dfa, ref, etc.), simID, path to result files (ppr, pfd, etc.), simulation name,
             cell size and optional name of avalanche, optional time step
     """
 
@@ -658,7 +583,7 @@ def makeSimDF2(avaDir, comModule, inputDir=''):
     # Load input datasets from input directory
     if isinstance(inputDir, pathlib.Path) == False:
         inputDir = pathlib.Path(inputDir)
-    datafiles = list(inputDir.glob('*.asc'))
+    datafiles = list(inputDir.glob('*' + simName + '*.asc'))
 
     # build the result data frame
     inputsDF = pd.DataFrame(columns=['simName'])
