@@ -73,12 +73,12 @@ def test_prepareReleaseEntrainment(tmp_path):
 
     # setup required inputs
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'secRelArea': 'True', 'useRelThFromIni': 'False', 'useEntThFromIni': 'False',
-                      'relTh': '1.32', 'secondaryRelTh': '2.5'}
+    cfg['GENERAL'] = {'secRelArea': 'True', 'relThFromShp': 'False', 'secondaryRelThFromShp': 'True',
+                      'relTh': '1.32', 'secondaryRelTh0': '1.789'}
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'No'}
-    inputSimLines['releaseLine'] = {'thickness': ['None', 'None'], 'type': 'Release'}
-    inputSimLines['secondaryReleaseLine'] = {'thickness': ['1.789'], 'type': 'Secondary release'}
+    inputSimLines['releaseLine'] = {'thickness': ['None', 'None'], 'type': 'Release', 'id': ['0', '1']}
+    inputSimLines['secondaryReleaseLine'] = {'thickness': ['1.789'], 'type': 'Secondary release', 'id': ['0']}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
 
     # call function to be tested
@@ -94,10 +94,17 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert badName is True
 
     # setup required inputs
+    cfg['GENERAL']['secondaryRelThFromShp'] = 'False'
+    cfg['GENERAL']['relThFromShp'] = 'True'
+    cfg['GENERAL']['secondaryRelTh'] = '2.5'
+    cfg['GENERAL']['relTh'] = ''
+    cfg['GENERAL']['relTh0'] = '1.78'
+    cfg['GENERAL']['relTh1'] = '4.328'
+
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'No'}
-    inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release'}
-    inputSimLines['secondaryReleaseLine'] = {'thickness': ['None'], 'type': 'Secondary release'}
+    inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release', 'id': ['0', '1']}
+    inputSimLines['secondaryReleaseLine'] = {'thickness': ['None'], 'type': 'Secondary release', 'id': ['0']}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
 
     # call function to be tested
@@ -115,7 +122,7 @@ def test_prepareReleaseEntrainment(tmp_path):
     # setup required inputs
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'No'}
-    inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release'}
+    inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release', 'id': ['0', '1']}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
 
     # call function to be tested
@@ -138,9 +145,10 @@ def test_prepareReleaseEntrainment(tmp_path):
     # setup required inputs
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'No'}
-    inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release'}
+    inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release', 'id': ['0', '1']}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
-    cfg['GENERAL']['useRelThFromIni'] = 'True'
+    cfg['GENERAL']['relThFromShp'] = 'False'
+    cfg['GENERAL']['relTh'] = '1.32'
 
     # call function to test
     relName4, inputSimLines4, badName4 = com1DFA.prepareReleaseEntrainment(
@@ -153,12 +161,12 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert inputSimLines4['releaseLine']['thicknessSource'] == ['ini file', 'ini file']
 
     # call function to test
-    cfg['GENERAL'] = {'secRelArea': 'False', 'useRelThFromIni': 'False', 'useEntThFromIni': 'False',
-                      'relTh': '1.32', 'secondaryRelTh': '2.5', 'entTh': '0.3'}
+    cfg['GENERAL'] = {'secRelArea': 'False', 'relThFromShp': 'False', 'entThFromShp': 'True',
+                      'relTh': '1.32', 'secondaryRelTh': '2.5', 'entTh0': '0.4', 'entTh1': '0.3', 'entTh': ''}
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'Yes'}
-    inputSimLines['releaseLine'] = {'thickness': ['None', 'None'], 'type': 'Release'}
-    inputSimLines['entLine'] = {'thickness': ['0.4', 'None'], 'type': 'Entrainment'}
+    inputSimLines['releaseLine'] = {'thickness': ['None', 'None'], 'type': 'Release', 'id': ['0', '1']}
+    inputSimLines['entLine'] = {'thickness': ['0.4', '0.3'], 'type': 'Entrainment', 'id': ['0', '1']}
     relName5, inputSimLines5, badName5 = com1DFA.prepareReleaseEntrainment(
         cfg, rel, inputSimLines)
 
@@ -167,7 +175,7 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert inputSimLines5['releaseLine']['thickness'] == [1.32, 1.32]
     assert inputSimLines5['entLine']['thickness'] == [0.4, 0.3]
     assert inputSimLines5['secondaryReleaseLine'] is None
-    assert inputSimLines5['entLine']['thicknessSource'] == ['shp file', 'ini file']
+    assert inputSimLines5['entLine']['thicknessSource'] == ['shp file', 'shp file']
     assert inputSimLines5['releaseLine']['thicknessSource'] == ['ini file', 'ini file']
 
 
@@ -176,17 +184,17 @@ def test_setThickness():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'useEntThFromIni': 'True', 'entTh': '1.0'}
+    cfg['GENERAL'] = {'entThFromShp': 'False', 'entTh': '1.0'}
     lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
               'Length': np.asarray([5, 5]), 'thickness': ['None', 'None'],
               'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
-              'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Entrainment'}
+              'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Entrainment',
+              'id': ['0', '1']}
 
-    useThFromIni = 'useEntThFromIni'
     typeTh = 'entTh'
 
     # call function to be tested
-    lineTh = com1DFA.setThickness(cfg, lineTh, useThFromIni, typeTh)
+    lineTh = com1DFA.setThickness(cfg, lineTh, typeTh)
 
     assert lineTh['thickness'] == [1.0, 1.0]
     assert lineTh['thicknessSource'] == ['ini file', 'ini file']
@@ -195,33 +203,37 @@ def test_setThickness():
     # call function to be tested
     lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
               'Length': np.asarray([5, 5]), 'thickness': ['None', '0.7'],
-              'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+              'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]), 'id': ['0', '1'],
               'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Entrainment'}
-    lineTh = com1DFA.setThickness(cfg, lineTh, useThFromIni, typeTh)
+    lineTh = com1DFA.setThickness(cfg, lineTh, typeTh)
 
     assert lineTh['thickness'] == [1.0, 1.0]
     assert lineTh['thicknessSource'] == ['ini file', 'ini file']
     assert np.array_equal(lineTh['x'], np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]))
 
     # call function to be tested
-    cfg['GENERAL']['useEntThFromIni'] = 'False'
+    cfg['GENERAL']['entThFromShp'] = 'True'
+    cfg['GENERAL']['entTh0'] = '1.0'
+    cfg['GENERAL']['entTh1'] = '0.7'
     lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
-              'Length': np.asarray([5, 5]), 'thickness': ['None', '0.7'],
-              'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
+              'Length': np.asarray([5, 5]), 'thickness': ['1.0', '0.7'],
+              'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]), 'id': ['0', '1'],
               'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Entrainment'}
-    lineTh = com1DFA.setThickness(cfg, lineTh, useThFromIni, typeTh)
+    lineTh = com1DFA.setThickness(cfg, lineTh, typeTh)
 
     assert lineTh['thickness'] == [1.0, 0.7]
-    assert lineTh['thicknessSource'] == ['ini file', 'shp file']
+    assert lineTh['thicknessSource'] == ['shp file', 'shp file']
     assert np.array_equal(lineTh['x'], np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]))
 
     # call function to be tested
-    cfg['GENERAL']['useEntThFromIni'] = 'False'
+    cfg['GENERAL']['entThFromShp'] = 'True'
+    cfg['GENERAL']['entTh0'] = '1.2'
+    cfg['GENERAL']['entTh1'] = '0.7'
     lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
-              'Length': np.asarray([5, 5]), 'thickness': ['1.2', '0.7'],
+              'Length': np.asarray([5, 5]), 'thickness': ['1.2', '0.7'], 'id': ['0', '1'],
               'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
               'y': np.asarray([0., 0., 10.0, 10., 0.0, 21., 21., 27., 27., 21.]), 'type': 'Entrainment'}
-    lineTh = com1DFA.setThickness(cfg, lineTh, useThFromIni, typeTh)
+    lineTh = com1DFA.setThickness(cfg, lineTh, typeTh)
 
     assert lineTh['thickness'] == [1.2, 0.7]
     assert lineTh['thicknessSource'] == ['shp file', 'shp file']
@@ -236,7 +248,7 @@ def test_createReportDict():
     logName = 'testName'
     relName = 'relTest'
     inputSimLines = {'entrainmentArea': 'entTest', 'resistanceArea': 'resTest', 'releaseLine':
-                     {'Name': 'relTestFeature', 'thickness': '1.45'}}
+                     {'Name': 'relTestFeature', 'thickness': ['1.45']}, 'entLine': {'Name': ['entTest'], 'thickness': ['1.1']}}
     reportAreaInfo = {'entrainment': 'Yes', 'resistance': 'Yes', 'Release area info':
                       {'Projected Area [m2]': 'm2'}}
     cfg = configparser.ConfigParser()
@@ -259,7 +271,7 @@ def test_createReportDict():
     assert reportST['Simulation Parameters']['Friction model'] == 'samosAT'
     assert reportST['Release Area']['Release area scenario'] == relName
     assert reportST['Release Area']['Release Area'] == 'relTestFeature'
-    assert reportST['Release Area']['Release thickness [m]'] == '1.45'
+    assert reportST['Release Area']['Release thickness [m]'] == ['1.45']
     assert reportST['Entrainment area']['Entrainment area scenario'] == 'entTest'
     assert 'Projected Area [m2]' in reportST['Release Area']
 
@@ -1373,7 +1385,7 @@ def test_runCom1DFA(tmp_path, caplog):
         'debugPlot': 'False'}
     modCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile,
                                                modInfo=True)
-    particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
         avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
 
     dictKeys = ['nPart', 'x', 'y', 's', 'sCor', 'l', 'z', 'm', 'dt', 'massPerPart', 'nPPK', 'mTot',
@@ -1383,6 +1395,17 @@ def test_runCom1DFA(tmp_path, caplog):
                 'inCellDEM', 'indXDEM', 'indYDEM', 'indPartInCell',
                 'partInCell', 'secondaryReleaseInfo', 'iterate',
                 'massEntrained', 'idFixed', 'peakForceSPH', 'forceSPHIni']
+
+    # read one particles dictionary
+    inDir = avaDir / 'Outputs' / 'com1DFA' / 'particles'
+    PartDicts = sorted(list(inDir.glob('*.p')))
+    particlesList = []
+    timeStepInfo = []
+    for particles in PartDicts:
+        particles = pickle.load(open(particles, "rb"))
+        particlesList.append(particles)
+        timeStepInfo.append(particles['t'])
+
     # are we missing any keys?
     missing = set(dictKeys) - particlesList[-1].keys()
     if len(missing) > 0:
@@ -1397,7 +1420,7 @@ def test_runCom1DFA(tmp_path, caplog):
               particlesList[-1].keys() - set(dictKeys))
     assert all(key in dictKeys for key in particlesList[-1])
 
-    assert len(particlesList) == 6
+    assert len(particlesList) == 12
 
     print(simDF['simName'])
     outDir = avaDir / 'Outputs' / 'com1DFA'
@@ -1411,6 +1434,6 @@ def test_runCom1DFA(tmp_path, caplog):
 
 
     with caplog.at_level(logging.WARNING):
-        particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
+        dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(
         avaDir, cfgMain, cfgFile=cfgFile, relThField='', variationDict='')
     assert 'There is no simulation to be performed' in caplog.text
