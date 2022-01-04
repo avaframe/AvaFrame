@@ -1,5 +1,6 @@
 ''' Tests for module ana3AIMEC '''
 import numpy as np
+import pandas as pd
 import pathlib
 
 # Local imports
@@ -35,14 +36,18 @@ def test_analyzeArea(capfd):
     dataMass1 = dirname / 'data' / '000001.txt'
     pathDict = {}
     pathDict['projectName'] = 'NameOfAvalanche'
-    pathDict['ppr'] = [dataRef, dataSim]
-    pathDict['massBal'] = [dataMass, dataMass1]
+    d = {}
+    d['simName'] = ['refTestAimecTopo', 'simTestAimecTopo']
+    d['ppr'] = [dataRef, dataSim]
+    d['pfd'] = [dataRef, dataSim]
+    d['pfv'] = [dataRef, dataSim]
+    d['massBal'] = [dataMass, dataMass1]
+    inputsDF = pd.DataFrame(data=d, index=['refTestAimecTopo', 'simTestAimecTopo'])
     pathResult = dirname / 'data'
     pathDict['pathResult'] = pathResult
     pathDict['dirName'] = 'testAIMEC'
-    pathDict['referenceFile'] = 0
+    pathDict['refSimulation'] = 'refTestAimecTopo'
     pathDict['compType'] = ['singleModule', 'com1DFA']
-    pathDict['numSim'] = 2
     pathDict['contCmap'] = True
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
@@ -61,30 +66,47 @@ def test_analyzeArea(capfd):
     avalData[1] = np.transpose(data['rasterData'])
 
     newRasters = {}
-    newRasters['newRasterPPR'] = avalData
-    newRasters['newRasterPFD'] = avalData
-    newRasters['newRasterPFV'] = avalData
     newRasters['newRasterDEM'] = np.transpose(data['rasterData'])
     rasterTransfo = {}
     rasterTransfo['s'] = np.linspace(0, 499, 500)
     rasterTransfo['l'] = np.linspace(0, 99, 100)
+    gridy, gridx = np.meshgrid(rasterTransfo['l'], rasterTransfo['s'])
     rasterTransfo['x'] = rasterTransfo['s']
     rasterTransfo['y'] = 50*np.ones(np.shape(rasterTransfo['s']))
+    rasterTransfo['gridx'] = gridx
+    rasterTransfo['gridy'] = gridy
     rasterTransfo['rasterArea'] = np.ones((500, 100))
     rasterTransfo['indStartOfRunout'] = 400
     rasterTransfo['startOfRunoutAreaAngle'] = 10
 
-    # testing analyzeFields function
-    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags)
+    # Analyze data
+    # postprocess reference
+    inputsDFrow = inputsDF.loc[inputsDF['simName'] == pathDict['refSimulation']].squeeze()
+    timeMass = None
+    resAnalysisDF = inputsDF[['simName']].copy()
+    resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
+        newRasters, timeMass, pathDict['refSimulation'], resAnalysisDF)
 
-    assert (resAnalysis['runout'][0][0] == 449) and (
-            resAnalysis['runout'][1][1] == 419) and (
-            resAnalysis['runout'][2][0] == 50) and (
-            resAnalysis['MMPPR'][1] == 1)
-
-    assert (resAnalysis['TP'][1] == 800) and (
-            resAnalysis['FN'][1] == 1700) and (
-            resAnalysis['FP'][1] == 200) and (resAnalysis['TN'][1] == 7300)
+    # postprocess other simulations
+    for index, inputsDFrow in inputsDF.iterrows():
+        simName = inputsDFrow['simName']
+        if simName != pathDict['refSimulation']:
+            resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF)
+    print(resAnalysisDF['sRunout'])
+    print(resAnalysisDF['xRunout'])
+    print(resAnalysisDF['yRunout'])
+    assert (resAnalysisDF['sRunout'][0] == 449) and (
+            resAnalysisDF['xRunout'][1] == 419) and (
+            resAnalysisDF['yRunout'][0] == 50) and (
+            resAnalysisDF['maxpprCrossMax'][1] == 1)
+    print(resAnalysisDF['TP'])
+    print(resAnalysisDF['FN'])
+    print(resAnalysisDF['FP'])
+    print(resAnalysisDF['TN'])
+    print(resAnalysisDF['TN']+resAnalysisDF['FP']+resAnalysisDF['FN']+resAnalysisDF['TP'])
+    assert (resAnalysisDF['TP'][1] == 780) and (
+            resAnalysisDF['FN'][1] == 1670) and (
+            resAnalysisDF['FP'][1] == 200) and (resAnalysisDF['TN'][1] == 7350)
 
 
 def test_makeDomainTransfo(capfd):
@@ -106,18 +128,19 @@ def test_makeDomainTransfo(capfd):
     demSource = list(dirname.glob('*.asc'))
     pathDict['demSource'] = demSource[0]
 
-    pathDict['ppr'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+    d = {}
+    d['simName'] = ['testAimec_0', 'testAimec_1', 'testAimec_2', 'testAimec_3', 'testAimec_4']
+    d['ppr'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
                       pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
                       pathData / 'testAimec_4.asc']
-    pathDict['pfd'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+    d['pfd'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
                       pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
                       pathData / 'testAimec_4.asc']
-    pathDict['pfv'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
+    d['pfv'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
                       pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
                       pathData / 'testAimec_4.asc']
-
-    pathDict['massBal'] = [dirname / '000001.txt']*5
-
+    d['massBal'] = [dirname / '000001.txt']*5
+    inputsDF = pd.DataFrame(data=d, index=['testAimec_0', 'testAimec_1', 'testAimec_2', 'testAimec_3', 'testAimec_4'])
     pathDict['contCmap'] = True
 
     pathResult = dirname / 'results'
@@ -127,7 +150,7 @@ def test_makeDomainTransfo(capfd):
     pathName = profileLayer[0].stem
     pathDict['pathName'] = pathName
     pathDict['dirName'] = 'com1DFA'
-    pathDict['referenceFile'] = 0
+    pathDict['refSimulation'] = 'testAimec_0'
     pathDict['compType'] = ['singleModule', 'com1DFA']
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
@@ -138,9 +161,8 @@ def test_makeDomainTransfo(capfd):
     cfgSetup['resType'] = 'ppr'
     cfgSetup['thresholdValue'] = '0.9'
     cfgSetup['contourLevels'] = '0.1|0.5|1'
-    pathDict['numSim'] = 5
 
-    rasterTransfo = aT.makeDomainTransfo(pathDict, cfgSetup)
+    rasterTransfo = aT.makeDomainTransfo(pathDict, inputsDF, cfgSetup)
 
     assert rasterTransfo['gridx'][-1, 0] == 60
     assert rasterTransfo['gridx'][-1, -1] == 220
@@ -152,31 +174,39 @@ def test_makeDomainTransfo(capfd):
     newRasters = {}
     # assign pressure data
     interpMethod = cfgSetup['interpMethod']
-    newRasters['newRasterPPR'] = aT.assignData(pathDict['ppr'], rasterTransfo, interpMethod)
-    newRasters['newRasterPFD'] = newRasters['newRasterPPR']
-    newRasters['newRasterPFV'] = newRasters['newRasterPPR']
-    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo,
-                                        interpMethod)
-    newRasters['newRasterDEM'] = newRasterDEM[0]
+    newRasterDEM = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
+    newRasters['newRasterDEM'] = newRasterDEM
 
     # Analyze data
-    resAnalysis = ana3AIMEC.postProcessAIMEC(rasterTransfo, newRasters, cfgSetup, pathDict, cfgFlags)
+    # postprocess reference
+    inputsDFrow = inputsDF.loc[inputsDF['simName'] == pathDict['refSimulation']].squeeze()
+    timeMass = None
+    resAnalysisDF = inputsDF[['simName']].copy()
+    resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
+        newRasters, timeMass, pathDict['refSimulation'], resAnalysisDF)
+
+    # postprocess other simulations
+    for index, inputsDFrow in inputsDF.iterrows():
+        simName = inputsDFrow['simName']
+        if simName != pathDict['refSimulation']:
+            resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF)
+
 
     for i in range(5):
-        rasterSource = pathDict['ppr'][i]
+        rasterSource = inputsDF['ppr'][i]
         sourceData = IOf.readRaster(rasterSource)
         rasterdata = sourceData['rasterData']
-        error = (resAnalysis['TP'][i]+resAnalysis['FP'][i]-np.nansum(rasterdata))/(
+        error = (resAnalysisDF['TP'][i]+resAnalysisDF['FP'][i]-np.nansum(rasterdata))/(
                 np.nansum(rasterdata)*100)
         assert error < 0.4
-        assert np.abs(resAnalysis['runout'][0, i] - (240 + 10*(i+1))) < 5
+        assert np.abs(resAnalysisDF['sRunout'][i] - (240 + 10*(i+1))) < 5
 
-    resAnalysis = ana3AIMEC.postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict)
-    for i in range(5):
-        rasterSource = pathDict['ppr'][i]
-        sourceData = IOf.readRaster(rasterSource)
-        rasterdata = sourceData['rasterData']
-        error = (resAnalysis['TP'][i]+resAnalysis['FP'][i]-np.nansum(rasterdata))/(
-                np.nansum(rasterdata)*100)
-        assert error < 0.4
-        assert np.abs(resAnalysis['runout'][0, i] - (240 + 10*(i+1))) < 5
+    # resAnalysis = ana3AIMEC.postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict)
+    # for i in range(5):
+    #     rasterSource = pathDict['ppr'][i]
+    #     sourceData = IOf.readRaster(rasterSource)
+    #     rasterdata = sourceData['rasterData']
+    #     error = (resAnalysis['TP'][i]+resAnalysis['FP'][i]-np.nansum(rasterdata))/(
+    #             np.nansum(rasterdata)*100)
+    #     assert error < 0.4
+    #     assert np.abs(resAnalysis['runout'][0, i] - (240 + 10*(i+1))) < 5
