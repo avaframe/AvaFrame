@@ -583,7 +583,11 @@ def makeSimDF2(avaDir, comModule, inputDir='', simName=''):
     # Load input datasets from input directory
     if isinstance(inputDir, pathlib.Path) == False:
         inputDir = pathlib.Path(inputDir)
-    datafiles = list(inputDir.glob('*' + simName + '*.asc'))
+    if simName != '':
+        name = '*' + simName + '*.asc'
+    else:
+        name = '*.asc'
+    datafiles = list(inputDir.glob(name))
 
     # build the result data frame
     inputsDF = pd.DataFrame(columns=['simName'])
@@ -614,6 +618,6 @@ def makeSimDF2(avaDir, comModule, inputDir='', simName=''):
             header = IOf.readASCheader(file)
             inputsDF.loc[simName, 'cellSize'] = header['cellsize']
         # add full path to resType
-        inputsDF.loc[simName, resType] = file
+        inputsDF.loc[simName, resType] = pathlib.Path(file)
 
     return inputsDF

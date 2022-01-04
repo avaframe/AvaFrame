@@ -132,6 +132,28 @@ def test_makeSimDF():
     assert dataDF['test'][0] == '0.888'
 
 
+def test_makeSimDF2():
+    """ Test if simulation dataFrame is generated correctly """
+
+    # Test function
+    dirPath = os.path.dirname(__file__)
+    inputDir = os.path.join(dirPath, 'data', 'testSim')
+    dataDF = fU.makeSimDF2(inputDir, 'comModule', inputDir=inputDir)
+    print(dataDF.columns)
+    print(dataDF.index)
+    assert dataDF['simName'][0] == 'releaseTest1_entres_dfa_0.888'
+    assert dataDF['releaseArea'][0] == 'releaseTest1'
+    assert dataDF['simType'][0] == 'entres'
+    assert dataDF['cellSize'][0] == 5.0
+
+    inputDir = os.path.join(dirPath, 'data', 'testSim1')
+    dataDF = fU.makeSimDF2(inputDir, 'comModule', inputDir=inputDir)
+    assert dataDF['simName'][0] == 'releaseTest1_test_AF_entres_dfa_0.888'
+    assert dataDF['releaseArea'][0] == 'releaseTest1_test'
+    assert dataDF['simType'][0] == 'entres'
+    assert dataDF['cellSize'][0] == 5.0
+
+
 def test_exportcom1DFAOrigOutput(tmp_path):
     """ Test if export of result files works """
 
@@ -296,45 +318,3 @@ def test_getFilterDict():
     parametersDict = fU.getFilterDict(cfg, 'TESTS')
 
     assert parametersDict == {}
-
-
-def test_getDFADataPaths():
-    """ test generating pathDict for aimec """
-
-    # define input directory
-    dirPath = os.path.dirname(__file__)
-    avaName = 'avaHockeyChannel'
-    avaNameTest = 'avaHockeyChannelPytest'
-    avaDir = os.path.join(dirPath, '..', '..', 'benchmarks', avaNameTest)
-
-    cfg = configparser.ConfigParser()
-    cfg['AIMECSETUP'] = {'varParList': 'releaseScenario', 'ascendingOrder': True}
-    cfgSetup = cfg['AIMECSETUP']
-    suffix = ['ppr', 'pfd', 'pfv']
-    comModule = 'com1DFA'
-    pathDict = {'simID': [], 'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
-
-    # return pathDict for comModule=com1DFA
-    pathDict = fU.getDFADataPaths(avaDir, pathDict, cfgSetup, suffix, comModule=comModule, inputDir='')
-
-    # return pathDict for given inputDir
-    pathDict2 = {'simID': [], 'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
-    inputDir = pathlib.Path(avaDir, 'Outputs' , 'com1DFA', 'peakFiles')
-    suffix = 'ppr'
-    pathDict2 = fU.getDFADataPaths(avaDir, pathDict2, cfgSetup, suffix, comModule='', inputDir=inputDir)
-
-    # define paths
-    path1 = 'benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release1HS_ent_dfa_d10bdc1e81_ppr.asc'
-    path2 = 'benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release2HS_ent_dfa_e2145362b7_ppr.asc'
-
-    assert pathDict['colorParameter'] == ['release1HS', 'release2HS']
-    assert path1 in str(pathDict['ppr'][0])
-    assert path2 in str(pathDict['ppr'][1])
-    assert pathDict2['colorParameter'] == []
-    assert path1 in str(pathDict2['ppr'][0])
-    assert path2 in str(pathDict2['ppr'][1])
-
-    # call function to be tested
-    with pytest.raises(FileNotFoundError) as e:
-        assert fU.getDFADataPaths(avaDir, pathDict2, cfgSetup, suffix, comModule='test', inputDir='')
-    assert 'Input directory' in str(e.value)
