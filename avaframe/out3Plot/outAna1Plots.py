@@ -298,24 +298,6 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, colore
         log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}' % (colorValue, p0H, p1H))
         log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * Npart^{%.2f}' % (colorValue, p0U, p1U))
 
-    # # ######################################
-    # # Add the horizontal lines for the atta viscosity
-    # simDFhline = simDF[simDF['viscOption'] == 2]
-    # simDFhline = simDFhline.sort_values(by=coloredBy, ascending=True)
-    # handles1 = []
-    # # handles2 = []
-    # for simHash, simDFrow in simDFhline.iterrows():
-    #     hl = ax1.axhline(simDFrow[yFieldArray[0]], color=cmap(norm(simDFrow[coloredBy])), label='Ata, nPart = %d, csz = %.2f' % (simDFrow['nPart'], simDFrow['sphKernelRadius']))
-    #     handles1.append(hl)
-    #     hl = ax2.axhline(simDFrow[yFieldArray[1]], color=cmap(norm(simDFrow[coloredBy])), linestyle='--', label='Ata, nPart = %d, csz = %.2f' % (simDFrow['nPart'], simDFrow['sphKernelRadius']))
-    #     # handles1.append(hl)
-    #
-    # # #########################################
-    # # Adding legend and titles
-    # legend = ax1.legend(handles=handles1, loc="upper left")
-    # ax1.add_artist(legend)
-    # # legend = ax2.legend(handles=handles2, loc="upper left")
-    # # ax2.add_artist(legend)
     if logScale:
         ax1.set_yscale('log')
         ax2.set_yscale('log')
@@ -472,12 +454,19 @@ def plotTimeCPULog(simDF, outDirTest, cfgSimi):
         p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeField), deg=1)
         p16 = p[0]
         p06 = np.exp(p[1])
-        ax1.plot(nPart, p01*nPart**p11, 'k')
-        ax1.plot(nPart, p02*nPart**p12, 'g')
-        ax1.plot(nPart, p03*nPart**p13, 'r')
-        ax1.plot(nPart, p04*nPart**p14, 'b')
-        ax1.plot(nPart, p05*nPart**p15, 'm')
-        ax1.plot(nPart, p06*nPart**p16, 'c')
+        handles1 = []
+        hl = ax1.plot(nPart, p01*nPart**p11, 'k', label='timeLoop')
+        handles1.append(hl[0])
+        hl = ax1.plot(nPart, p02*nPart**p12, 'g', label='timeForce')
+        handles1.append(hl[0])
+        hl = ax1.plot(nPart, p03*nPart**p13, 'r', label='timeForceSPH')
+        handles1.append(hl[0])
+        hl = ax1.plot(nPart, p04*nPart**p14, 'b', label='timePos')
+        handles1.append(hl[0])
+        hl = ax1.plot(nPart, p05*nPart**p15, 'm', label='timeNeigh')
+        handles1.append(hl[0])
+        hl = ax1.plot(nPart, p06*nPart**p16, 'c', label='timeField')
+        handles1.append(hl[0])
         log.info('power law fit sphKernelRadius = %.2f m: timeLoop = %.1f * nPart^{%.2f}' % (sphKernelRadius, p01, p11))
         log.info('power law fit sphKernelRadius = %.2f m: timeForce = %.1f * nPart^{%.2f}' % (sphKernelRadius, p02, p12))
         log.info('power law fit sphKernelRadius = %.2f m: timeForceSPH = %.1f * nPart^{%.2f}' % (sphKernelRadius, p03, p13))
@@ -489,6 +478,9 @@ def plotTimeCPULog(simDF, outDirTest, cfgSimi):
     ax1.set_title('CPU time')
     ax1.set_xlabel('number of particles')
     ax1.set_ylabel('Time [s]')
+    # Adding legend and titles
+    legend = ax1.legend(handles=handles1, loc="upper left")
+    ax1.add_artist(legend)
     legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title="sphKernelRadius")
     ax1.add_artist(legend1)
 

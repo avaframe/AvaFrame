@@ -65,9 +65,9 @@ solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 
 # if the analysis already exists and you only want to replot uncoment this
 pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results.p')
-# if pathToResults.is_file():
-#     simDF = pd.read_pickle(pathToResults)
-simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
+if pathToResults.is_file():
+    simDF = pd.read_pickle(pathToResults)
+# simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
 
 # select the simulations you want to plot
 simDF = simDF[simDF['subgridMixingFactor'].isin([10])]
