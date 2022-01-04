@@ -95,7 +95,6 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             path to avalanche directory
         inputsDF: dataFrame
             dataFrame with simulations to analyze and path to result files
-            optional key colorParameter - gives ordering of simulations
         comModule: str
             computational module used to produce the results to analyze
         cfgSetup: configParser object
@@ -107,10 +106,9 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             name of the simulation used as reference
         inputsDF:dataFrame
             dataFrame with simulations to analyze and path to result files
-            optional key colorParameter - gives ordering of simulations
             If com1DFA = comModule and a variation parameter was specified, the
             com1DFA configuration is merged to the inputsDF
-        colorParameter: boolean
+        colorVariation: boolean
             True if a color variation should be applied in the plots
     """
     inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
@@ -130,29 +128,29 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         inputsDF = inputsDF.reset_index().merge(configurationDF, on='simName').set_index('index')
 
         # add value of first parameter used for ordering for colorcoding in plots
-        colorParameter = configurationDF[varParList[0]].to_list()
+        sortingParameter = configurationDF[varParList[0]].to_list()
         if cfgSetup['referenceSimValue'] != '':
-            typeCP = type(colorParameter[0])
+            typeCP = type(sortingParameter[0])
             if typeCP == str:
-                colorValues = [x.lower() for x in colorParameter]
-                indexRef = colorValues.index(typeCP(cfgSetup['referenceSimValue'].lower()))
+                sortingValues = [x.lower() for x in sortingParameter]
+                indexRef = sortingValues.index(typeCP(cfgSetup['referenceSimValue'].lower()))
             elif typeCP in [float, int]:
-                colorValues = np.asarray(colorParameter)
+                colorValues = np.asarray(sortingParameter)
                 indexRef = (np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
             else:
-                indexRef = colorParameter.index(typeCP(cfgSetup['referenceSimValue']))
+                indexRef = sortingParameter.index(typeCP(cfgSetup['referenceSimValue']))
             log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
                      (varParList[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
             refSimulation = configurationDF[configurationDF[varParList[0]]==colorValues[indexRef]]['simName'].to_list()[0]
-            colorParameter = True
+            colorVariation = True
         else:
             # reference simulation
             refSimulation = configurationDF.iloc[0]['simName']  # configurationDF.head(1)['simName'].values[0]
-            colorParameter = False
+            colorVariation = False
 
     elif cfgSetup['referenceSimName'] != '':
-        colorParameter = False
-        # if no colorParameter info and refeenceSimValue available but referenceSimName is given - set
+        colorVariation = False
+        # if no colorVariation info and refeenceSimValue available but referenceSimName is given - set
         # simulation with referenceSimName in name as referene simulation
         simFound = False
         for inputIndex, inputsDFrow in inputsDF.iterrows():
@@ -165,11 +163,11 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             refSimulation = inputsDF.iloc[0]['simName']
             log.info('Reference Simulation is based on first simulation in folder')
     else:
-        colorParameter = False
+        colorVariation = False
         refSimulation = inputsDF.iloc[0]['simName']
         log.info('Reference Simulation is based on first simulation in folder')
 
-    return refSimulation, inputsDF, colorParameter
+    return refSimulation, inputsDF, colorVariation
 
 
 def computeCellSizeSL(cfgSetup, refResultHeader):

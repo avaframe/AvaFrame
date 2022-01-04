@@ -563,26 +563,29 @@ def makeSimDF2(avaDir, comModule, inputDir='', simName=''):
             module used to create the results
         inputDir : str
             optional - path to directory of simulation results
+        simName : str
+            optional - key phrase to be found in the simulation result name
 
         Returns
         -------
         dataDF : dataFrame
-            dataframe with full file path, file name, release area scenario, simulation type (null, entres, etc.),
-            model type (dfa, ref, etc.), simID, path to result files (ppr, pfd, etc.), simulation name,
+            dataframe with for each simulation, the full file path, file name, release area scenario,
+            simulation type (null, entres, etc.), model type (dfa, ref, etc.), simID,
+            path to result files (ppr, pfd, etc.), simulation name,
             cell size and optional name of avalanche, optional time step
     """
 
     # get path to folder containing the raster files
     if inputDir == '':
         inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
-        if inputDir.is_dir() == False:
-            message = 'Input directory %s does not exist - check anaMod' % inputDir
-            log.error(message)
-            raise FileNotFoundError(message)
-
-    # Load input datasets from input directory
     if isinstance(inputDir, pathlib.Path) == False:
         inputDir = pathlib.Path(inputDir)
+    if inputDir.is_dir() == False:
+        message = 'Input directory %s does not exist - check anaMod' % inputDir
+        log.error(message)
+        raise FileNotFoundError(message)
+
+    # Load input datasets from input directory
     if simName != '':
         name = '*' + simName + '*.asc'
     else:
@@ -590,7 +593,7 @@ def makeSimDF2(avaDir, comModule, inputDir='', simName=''):
     datafiles = list(inputDir.glob(name))
 
     # build the result data frame
-    inputsDF = pd.DataFrame(columns=['simName'])
+    dataDF = pd.DataFrame(columns=['simName'])
     for file in datafiles:
         name = file.stem
         if '_AF_' in name:
@@ -608,16 +611,16 @@ def makeSimDF2(avaDir, comModule, inputDir='', simName=''):
             resType = infoParts[-1]
         simName = fNamePart + '_' + ('_'.join(infoParts[0:-1]))
         # add line in the DF if the simulation does not exsist yet
-        if simName not in inputsDF.simName.values:
+        if simName not in dataDF.simName.values:
             newLine = pd.DataFrame([[simName]], columns=['simName'], index=[simName])
-            inputsDF = inputsDF.append(newLine)
-            inputsDF.loc[simName, 'releaseArea'] = relNameSim
-            inputsDF.loc[simName, 'simType'] = infoParts[0]
-            inputsDF.loc[simName, 'modelType'] = infoParts[1]
+            dataDF = dataDF.append(newLine)
+            dataDF.loc[simName, 'releaseArea'] = relNameSim
+            dataDF.loc[simName, 'simType'] = infoParts[0]
+            dataDF.loc[simName, 'modelType'] = infoParts[1]
             # add info about the cell size
             header = IOf.readASCheader(file)
-            inputsDF.loc[simName, 'cellSize'] = header['cellsize']
+            dataDF.loc[simName, 'cellSize'] = header['cellsize']
         # add full path to resType
-        inputsDF.loc[simName, resType] = pathlib.Path(file)
+        dataDF.loc[simName, resType] = pathlib.Path(file)
 
-    return inputsDF
+    return dataDF
