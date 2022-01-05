@@ -43,8 +43,8 @@ cfgFiles = probAna.createComModConfig(cfgProb, avaDir, com1DFA)
 
 # -------USER INPUT ------------
 # probability configurations
-probabilityConfigurations = {'testAll': {}, 'testRelTh': {'mu': cfgProb['PROBRUN'].getfloat('mu'),
-    'simTypeActual': 'null'}, 'testMu': {'relTh': cfgProb['PROBRUN'].getfloat('relTh'), 'simTypeActual': 'null'}}
+probabilityConfigurations = {'testAll': {}, 'testRelTh': {'mu': '0.15500',
+    'simTypeActual': 'null'}, 'testMu': {'relTh': '1.', 'simTypeActual': 'null'}}
 # -----------------------------
 
 # Start logging
@@ -54,7 +54,7 @@ log.info('Current avalanche: %s', avaDir)
 
 # perform com1DFA simulations
 for varPar in cfgFiles:
-    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
     cfgFile=cfgFiles[varPar]['cfgFile'], relThField='')
 
 # perform pobability analysis
@@ -67,8 +67,9 @@ for probConf in probabilityConfigurations:
     parametersDict = fU.getFilterDict(cfgProb, 'FILTER')
 
     # perform probability analysis
-    probAna.probAnalysis(avaDir, cfgProb, com1DFA, parametersDict=parametersDict)
-
+    analysisPerformed = probAna.probAnalysis(avaDir, cfgProb, com1DFA, parametersDict=parametersDict)
+    if analysisPerformed is False:
+        log.warning('No files found for configuration: %s' % probConf)
     # make a plot of the map
     inputDir = pathlib.Path(avaDir, 'Outputs', 'ana4Stats')
     sP.plotProbMap(avaDir, inputDir, cfgProb)
