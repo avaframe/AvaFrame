@@ -150,11 +150,7 @@ def SHP2Array(infile, defname=None):
     return SHPdata
 
 def readThickness(infile, defname=None):
-    """ Read shapefile and convert it to a python dictionary
-
-    The dictionary contains the name of the paths in the shape file, the np array with
-    the coordinates of the feature points (all stacked in the same array)
-    and information about the starting index and length of each feature
+    """ Read shapefile and fetch info on features' ids and thickness values
 
     Parameters
     ----------

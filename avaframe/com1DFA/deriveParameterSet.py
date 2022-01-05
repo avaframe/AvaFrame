@@ -15,8 +15,7 @@ log = logging.getLogger(__name__)
 
 def getVariationDict(avaDir, fullCfg, modDict):
     """ Create a dictionary with all the parameters that shall be varied from the standard configuration;
-        either provide a cfgFile that contains info on parameters to be varied,
-        or the local_ cfg file is used
+        ONLY takes care of variations in section GENERAL
 
         Parameters
         -----------
@@ -42,14 +41,22 @@ def getVariationDict(avaDir, fullCfg, modDict):
             fullCfg = checkResType(fullCfg, section, key, value)
         # output saving options not relevant for parameter variation!
         # percent variation info already used for updating thickness values
-        if key not in ['resType', 'tSteps', 'relThPercentVariation', 'entThPercentVariation', 'secondaryRelThPercentVariation']:
+        if key not in ['resType', 'tSteps']:
             # if yes and if this value is different add this key to
             # the parameter variation dict
-            if ':' in value or '|' in value or '$' in value:
-                locValue = fU.splitIniValueToArraySteps(value)
+            if key in ['relThPercentVariation', 'entThPercentVariation', 'secondaryRelThPercentVariation'] and value != '':
+                # here the factor for changing thValues is added to the variationDict instead of the
+                # values directly
+                locValue = splitVariationToArraySteps(value, key)
                 variations[key] = locValue
                 defValue = modDict[section][key][1]
                 log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
+            else:
+                if ':' in value or '|' in value or '$' in value:
+                    locValue = fU.splitIniValueToArraySteps(value)
+                    variations[key] = locValue
+                    defValue = modDict[section][key][1]
+                    log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
 
     # print modified parameters
     for sec in modDict:
@@ -190,7 +197,9 @@ def checkRelEntThVariation(cfg, variationDict):
 
 
 def getThicknessValue(cfg, inputSimFiles, fName, thType):
-    """ define thickness values according to settings chosen
+    """ set thickness values according to settings chosen and add info to cfg
+        if thFromShp = True - add in INPUT section thickness and id info
+        if thFromShp = False - check format of thickness value in GENERAL section
 
         Parameters
         -----------
@@ -226,32 +235,29 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
             log.error(message)
             raise AssertionError(message)
         else:
-            # set thickness value in ini file from info of shape file and potential parameter variation
-            for count, id in enumerate(idList):
-                thName = thType + id
-                if cfg['GENERAL'][thPercent] != '':
-                    cfg['GENERAL'][thName] = thicknessList[count] + '$' + cfg['GENERAL'][thPercent]
-                else:
-                    cfg['GENERAL'][thName] = thicknessList[count]
+            # set thickness value in ini file from info of shape file
+            thId = idList[0]
+            thThickness = thicknessList[0]
+            for count, id in enumerate(idList[1:]):
+                thId = thId +'|' + id
+                thThickness = thThickness + '|'+ thicknessList[count+1]
+
+            # add in INPUT section
+            cfg['INPUT'][thType + 'Id'] = thId
+            cfg['INPUT'][thType + 'Thickness'] = thThickness
 
     else:
-        # if thickness should be read from ini file
+        # if thickness should be read from ini file - check if format is correct
         if '$' in cfg['GENERAL'][thType] and len(cfg['GENERAL'][thType].split('$')) != 3:
             message = 'Format of relTh value in ini file is not correct - for variation from ini use refValue$percent$numberOfSteps'
             log.error(message)
             raise AssertionError(message)
-        elif cfg['GENERAL'][thPercent] != '':
-            # add parameter variation
-            cfg['GENERAL'][thType] = cfg['GENERAL'][thType] + '$' + cfg['GENERAL'][thPercent]
-
-    # clear parameter variation info from cfg for individual cfg of one simulation - otherwise simHash is influenced
-    cfg['GENERAL'][thPercent] = ''
 
     return cfg
 
 
 def checkThicknessSettings(cfg, thName):
-    """ check if relTh setting format is correct
+    """ check if thickness setting format is correct
 
         Parameters
         ------------
@@ -282,3 +288,101 @@ def checkThicknessSettings(cfg, thName):
         message = 'Check %s - needs to be True or False' % (thFlag)
         log.error(message)
         raise AssertionError(message)
+
+
+def splitVariationToArraySteps(value, key):
+    """ split variation in percent to create a list of factors to set paramerter value for variations
+        or if a rangeVariation is given in absolute values
+
+        Parameters
+        -----------
+        value: str
+            value read from configuration
+        key: str
+            name of parameter
+
+        Returns
+        --------
+        itemsArray: numpy array
+            factor to change parameter values by multiplication (Percent) or addition (Range)
+    """
+
+    # check if positive or negative or both way variation
+    itemsL = value.split('$')
+    if 'Percent' in key:
+        if '-' in itemsL[0]:
+            itemsP = itemsL[0].split('-')[1]
+            percentsStart = 1. - float(itemsP) / 100.
+            percentsStop = 1. - float(itemsP) / 100.
+        elif '+' in itemsL[0]:
+            itemsP = itemsL[0].split('+')[1]
+            percentsStart = 1. + float(itemsP) / 100.
+            percentsStop = 1. + float(itemsP) / 100.
+        else:
+            percentsStart = 1. - float(itemsL[0]) / 100.
+            percentsStop = 1. + float(itemsL[0]) / 100.
+        # get number of steps
+        steps = int(itemsL[1])
+        # create array with variation factor
+        itemsArray = np.linspace(percentsStart, percentsStop, steps)
+    elif 'Range' in key:
+        itemsArray = np.linspace(-1.*itemsL[0], itemsL[0], itemsL[1])
+
+    return itemsArray
+
+
+def setThicknessValueFromVariation(key, cfg, simType, row):
+    """ set thickness value for thickness parameter for all features if multiple according to
+        desired variation
+
+        Parameters
+        ------------
+        key: str
+            thickness variation info
+
+        Returns
+        --------
+        cfg: dict
+            updated dict with info on thickness
+
+    """
+
+    # only add entries to cfg if appropriate for chosen simType (e.g. entTh if ent or entres run)
+    entCondition = (key == 'entThPercentVariation' and 'ent' in simType)
+    secRelCondition = (key == 'secondaryRelThPercentVariation' and cfg['GENERAL']['secRelArea'] == 'True')
+    relCondition = (key == 'relThPercentVariation')
+
+    # fetch variation factor
+    variationFactor = float(row._asdict()[key])
+
+    # update thickness values accoridng to variation
+    if entCondition or secRelCondition or relCondition:
+        thType = key.split('Percent')[0]
+        thFlag = thType + 'FromShp'
+
+        # add thickness values for all features if thFromShape = True
+        if cfg['GENERAL'][thFlag] == 'True':
+            thId = thType + 'Id'
+            thThickness = thType + 'Thickness'
+            thicknessList = cfg['INPUT'][thThickness].split('|')
+            idList = cfg['INPUT'][thId].split('|')
+            for count, id in enumerate(idList):
+                thNameId = thType + id
+                cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
+
+            # set percentVaration parameter to actual variation in percent$steps
+            if variationFactor <= 1:
+                variationIni = '-' + str((1. - variationFactor) * 100) + '$1'
+            else:
+                variationIni = '+' + str((variationFactor - 1.) * 100) + '$1'
+
+            # update parameter value
+            cfg['GENERAL'][key] = variationIni
+
+        else:
+            # update ini thValue if thFromShape=False
+            cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
+            # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
+            cfg['GENERAL'][key] = ''
+
+    return cfg

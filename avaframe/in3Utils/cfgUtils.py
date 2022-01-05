@@ -203,9 +203,10 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
             if defCfg.has_section(section):
                 for key in locCfg.items(section):
                     # an exception is made for thickness values that are added for the features of a releaseScenario,
-                    # entrainment Scenario or secondar. release scenario 
+                    # entrainment Scenario or secondar. release scenario
                     # these are added to the configuration and also to the modDict if variation is applied
-                    if 'relTh' in key[0] or 'entTh' in key[0] or 'secondaryRelTh' in key[0]:
+                    validItems = ['entrainmentScenario', 'DEM', 'secondaryReleaseScenario']
+                    if 'relTh' in key[0] or 'entTh' in key[0] or 'secondaryRelTh' in key[0] or key[0] in validItems:
                         locValue = locCfg.get(section, key[0])
                         cfg.set(section, key[0], locValue)
                         log.info('\t\t%s : %s added to %s' % (key[0], locValue, section))

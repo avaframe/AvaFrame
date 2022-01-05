@@ -272,6 +272,8 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile):
         --------
         inputSimFiles: dict
             updated dictionary with thickness info read from shapefile attributes
+            now includes one separate dictionary for each release, entrainment or secondary release
+            scenario with a thickness and id value for each feature (given as list)
         cfgFilesRels: list
             list of updated ini files - one for each release Scenario
 
@@ -292,21 +294,24 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile):
             thicknessList, idList = shpConv.readThickness(inputSimFiles[thType])
             inputSimFiles[inputSimFiles[thType].stem] = {'thickness': thicknessList, 'id': idList}
 
-    # fetch thickness attribute of release areas
+    # fetch thickness attribute of release areas and create cfg file for each release scenario
     for releaseA in inputSimFiles['relFiles']:
-        cfgInitial = cfgUtils.getModuleConfig(modName, fileOverride=cfgFile, toPrint=False)
+        # fetch thickness and id info from input data
         thicknessList, idList = shpConv.readThickness(releaseA)
         inputSimFiles[releaseA.stem] = {'thickness': thicknessList, 'id': idList}
 
+        # load configuration
+        cfgInitial = cfgUtils.getModuleConfig(modName, fileOverride=cfgFile, toPrint=False)
+        # add input data info
+        cfgInitial['INPUT'] = {'DEM': inputSimFiles['demFile'].stem , 'releaseScenario': releaseA.stem}
         # update configuration with thickness value to be used for simulations
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA.stem, 'relTh')
 
-        # set input data info
-        cfgInitial['INPUT'] = {'DEM': inputSimFiles['demFile'].stem , 'releaseScenario': releaseA.stem}
-        # set entrainment and secondary release thickness  and input data info
+        # add entrainment and secondary release thickness in input data info
         if inputSimFiles['entFile'] != None:
             cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles['entFile'].stem, 'entTh')
-            cfgInitial['INPUT']['entrainmentScenario'] =inputSimFiles['entFile'].stem
+            cfgInitial['INPUT']['entrainmentScenario'] = inputSimFiles['entFile'].stem
+
         if inputSimFiles['secondaryReleaseFile'] != None:
             cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles['secondaryReleaseFile'].stem, 'secondaryRelTh')
             cfgInitial['INPUT']['secondaryReleaseScenario'] =inputSimFiles['secondaryReleaseFile'].stem
@@ -344,5 +349,7 @@ def selectReleaseScenario(inputSimFiles, cfg):
             releaseScenario = relF
 
     inputSimFiles['relFiles'] = [releaseScenario]
+    # add release area scenario
+    inputSimFiles['releaseScenario'] = releaseScenario
 
     return inputSimFiles
