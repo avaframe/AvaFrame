@@ -32,9 +32,11 @@ def test_prepareInputData():
     inputSimFiles['releaseScenario'] = relFile
     inputSimFiles['demFile'] = avaDir / 'Inputs' / 'avaAlr.asc'
     inputSimFiles['entFile'] = avaDir / 'Inputs' / 'ENT' / 'entAlr.shp'
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'ent'}
 
     # call function to be tested
-    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles)
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg['GENERAL'])
 
     assert demOri['header']['ncols'] == 417
     assert demOri['header']['nrows'] == 915
@@ -58,7 +60,8 @@ def test_prepareInputData():
     inputSimFiles['releaseScenario'] = relFile
     inputSimFiles['demFile'] = avaDir / 'Inputs' / 'DEM_PF_Topo.asc'
     inputSimFiles['resFile'] = avaDir / 'Inputs' / 'RES' / 'resistance1PF.shp'
-    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles)
+    cfg['GENERAL']['simTypeActual'] = 'res'
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg['GENERAL'])
 
     print('inputSimLines', inputSimLines)
 
@@ -74,11 +77,13 @@ def test_prepareReleaseEntrainment(tmp_path):
     # setup required inputs
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'secRelArea': 'True', 'relThFromShp': 'False', 'secondaryRelThFromShp': 'True',
-                      'relTh': '1.32', 'secondaryRelTh0': '1.789'}
+                      'relTh': '1.32', 'secondaryRelTh0': '1.789', 'secondaryRelThPercentVariation': '0.7', 'simTypeActual': 'null'}
+    cfg['INPUT'] = {'secondaryRelThThickness': '1.2523', 'secondaryRelThId': '0'}
+
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'No'}
     inputSimLines['releaseLine'] = {'thickness': ['None', 'None'], 'type': 'Release', 'id': ['0', '1']}
-    inputSimLines['secondaryReleaseLine'] = {'thickness': ['1.789'], 'type': 'Secondary release', 'id': ['0']}
+    inputSimLines['secondaryReleaseLine'] = {'thickness': ['1.2523'], 'type': 'Secondary release', 'id': ['0']}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
 
     # call function to be tested
@@ -98,8 +103,9 @@ def test_prepareReleaseEntrainment(tmp_path):
     cfg['GENERAL']['relThFromShp'] = 'True'
     cfg['GENERAL']['secondaryRelTh'] = '2.5'
     cfg['GENERAL']['relTh'] = ''
-    cfg['GENERAL']['relTh0'] = '1.78'
-    cfg['GENERAL']['relTh1'] = '4.328'
+    cfg['GENERAL']['secondaryRelThPercentVariation'] = ''
+    cfg['GENERAL']['relThPercentVariation'] = ''
+    cfg['INPUT'] = {'relThThickness': '1.78|4.328', 'relThId': '0|1'}
 
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'No'}
@@ -120,15 +126,36 @@ def test_prepareReleaseEntrainment(tmp_path):
     assert badName2 is True
 
     # setup required inputs
+    cfg['GENERAL']['secondaryRelThFromShp'] = 'True'
+    cfg['GENERAL']['relThFromShp'] = 'True'
+    cfg['GENERAL']['secondaryRelTh'] = ''
+    cfg['INPUT']['secondaryRelThThickness'] = '2.7'
+    cfg['INPUT']['secondaryRelThId'] = '0'
+    cfg['GENERAL']['relTh'] = ''
+    cfg['GENERAL']['relTh0'] = '0.5'
+    cfg['GENERAL']['relTh1'] = '1.'
+    cfg['GENERAL']['secondaryRelThPercentVariation'] = ''
+    cfg['GENERAL']['relThPercentVariation'] = '0.5'
+    cfg['INPUT']['relThThickness'] = '1|2'
+    cfg['INPUT']['relThId'] = '0|1'
+
     inputSimLines = {}
-    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'No'}
-    inputSimLines['releaseLine'] = {'thickness': ['1.78', '4.328'], 'type': 'release', 'id': ['0', '1']}
+    inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'No'}
+    inputSimLines['releaseLine'] = {'thickness': ['1.', '2.'], 'type': 'release', 'id': ['0', '1']}
+    inputSimLines['secondaryReleaseLine'] = {'thickness': ['2.7'], 'type': 'Secondary release', 'id': ['0']}
     rel = pathlib.Path(tmp_path, 'release1PF_test.shp')
 
     # call function to be tested
-    with pytest.raises(FileNotFoundError) as e:
-        assert com1DFA.prepareReleaseEntrainment(cfg, rel, inputSimLines)
-    assert str(e.value) == "No secondary release file found"
+    relName2, inputSimLines2, badName2 = com1DFA.prepareReleaseEntrainment(
+        cfg, rel, inputSimLines)
+
+    assert relName2 == 'release1PF_test'
+    assert inputSimLines2['entResInfo']['flagSecondaryRelease'] == 'Yes'
+    assert inputSimLines2['releaseLine']['thickness'] == [0.5, 1.]
+    assert inputSimLines2['secondaryReleaseLine']['thickness'] == [2.7]
+    assert inputSimLines2['secondaryReleaseLine']['thicknessSource'] == ['shp file']
+    assert inputSimLines2['releaseLine']['thicknessSource'] == ['shp file', 'shp file']
+    assert badName2 is True
 
     # call function to be tested
     cfg['GENERAL']['secRelArea'] = 'False'
@@ -137,7 +164,7 @@ def test_prepareReleaseEntrainment(tmp_path):
 
     assert relName3 == 'release1PF_test'
     assert inputSimLines3['entResInfo']['flagSecondaryRelease'] == 'No'
-    assert inputSimLines3['releaseLine']['thickness'] == [1.78, 4.328]
+    assert inputSimLines3['releaseLine']['thickness'] == [0.5, 1.]
     assert inputSimLines3['releaseLine']['thicknessSource'] == ['shp file', 'shp file']
     assert inputSimLines3['secondaryReleaseLine'] is None
     assert badName3 is True
@@ -162,11 +189,12 @@ def test_prepareReleaseEntrainment(tmp_path):
 
     # call function to test
     cfg['GENERAL'] = {'secRelArea': 'False', 'relThFromShp': 'False', 'entThFromShp': 'True',
-                      'relTh': '1.32', 'secondaryRelTh': '2.5', 'entTh0': '0.4', 'entTh1': '0.3', 'entTh': ''}
+                      'relTh': '1.32', 'secondaryRelTh': '2.5', 'entTh0': '0.4', 'entTh1': '0.3',
+                      'entTh': '', 'simTypeActual': 'ent', 'entThPercentVariation': '1.5'}
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'No', 'flagEnt': 'Yes'}
     inputSimLines['releaseLine'] = {'thickness': ['None', 'None'], 'type': 'Release', 'id': ['0', '1']}
-    inputSimLines['entLine'] = {'thickness': ['0.4', '0.3'], 'type': 'Entrainment', 'id': ['0', '1']}
+    inputSimLines['entLine'] = {'thickness': ['1.20', '0.9'], 'type': 'Entrainment', 'id': ['0', '1']}
     relName5, inputSimLines5, badName5 = com1DFA.prepareReleaseEntrainment(
         cfg, rel, inputSimLines)
 
@@ -184,7 +212,9 @@ def test_setThickness():
 
     # setup required input
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'entThFromShp': 'False', 'entTh': '1.0'}
+    cfg['GENERAL'] = {'entThFromShp': 'False', 'entTh': '1.0', 'entThPercentVariation': ''}
+    cfg['INPUT'] = {}
+
     lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
               'Length': np.asarray([5, 5]), 'thickness': ['None', 'None'],
               'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]),
@@ -215,6 +245,10 @@ def test_setThickness():
     cfg['GENERAL']['entThFromShp'] = 'True'
     cfg['GENERAL']['entTh0'] = '1.0'
     cfg['GENERAL']['entTh1'] = '0.7'
+    cfg['GENERAL']['entThPercentVariation'] = '0.5'
+    cfg['INPUT']['entThId'] = '0|1'
+    cfg['INPUT']['entThThickness'] = '2|1.4'
+
     lineTh = {'Name': ['testRel', 'test2'], 'Start': np.asarray([0., 5]),
               'Length': np.asarray([5, 5]), 'thickness': ['1.0', '0.7'],
               'x': np.asarray([0, 10., 10.0, 0., 0., 20., 26., 26., 20., 20.]), 'id': ['0', '1'],
@@ -1212,7 +1246,9 @@ def test_prepareVarSimDict(caplog):
     standardCfg = configparser.ConfigParser()
     standardCfg.optionxform = str
     standardCfg['GENERAL'] = {'simTypeList': 'entres|null',
-                              'modelType': 'dfa', 'simTypeActual': 'entres'}
+                              'modelType': 'dfa', 'simTypeActual': 'entres', 'secRelArea': 'False'}
+    standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
+
     relPath = pathlib.Path('test', 'relTest.shp')
     inputSimFiles = {'relFiles': [relPath], 'entResInfo': {
         'flagEnt': 'Yes', 'flagRes': 'Yes'}}
@@ -1225,6 +1261,7 @@ def test_prepareVarSimDict(caplog):
     testCfg.optionxform = str
     testCfg['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa', 'rho': '200.0',
                           'simTypeActual': 'entres', 'releaseScenario': 'relTest'}
+    testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
     simHash = cfgUtils.cfgHash(testCfg)
     simName1 = 'relTest_entres_dfa_' + simHash
     testDict = {'relTest_entres_dfa_f466369a03': {'simHash': 'f466369a03', 'releaseScenario': 'relTest',

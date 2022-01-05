@@ -1,6 +1,7 @@
 """
 
-This is a simple function for computing a probability map of all peak files of one parameter that exceed a particular threshold
+This is a simple function for computing a probability map of all peak files of one parameter that
+exceed a particular threshold
 
 """
 
@@ -211,6 +212,5 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
         outFile = outDir / outFileName
         IOf.writeResultToAsc(header, probMap, outFile)
         analysisPerformed = True
-
 
     return analysisPerformed

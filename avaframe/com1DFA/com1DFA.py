@@ -256,7 +256,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
     cfgGen = cfg['GENERAL']
 
     # create required input from files
-    demOri, inputSimLines = prepareInputData(inputSimFiles, cfg['GENERAL'].getboolean('secRelArea'))
+    demOri, inputSimLines = prepareInputData(inputSimFiles, cfg['GENERAL'])
 
     if cfgGen.getboolean('iniStep'):
         # append buffered release Area
@@ -359,7 +359,7 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         secondaryReleaseLine = None
     inputSimLines['secondaryReleaseLine'] = secondaryReleaseLine
 
-    if entResInfo['flagEnt'] == 'Yes':
+    if cfg['GENERAL']['simTypeActual'] in  ['ent', 'entres']:
         # set entrainment thickness
         entLine = setThickness(cfg, inputSimLines['entLine'], 'entTh')
         inputSimLines['entLine'] = entLine
@@ -402,7 +402,8 @@ def setThickness(cfg, lineTh, typeTh):
             thName = typeTh + id
             # if thFromShp - but no variation - read thValues from INPUT cfg section
             if cfg['GENERAL'][thVariation] == '':
-                lineTh['thickness'][count] = cfg['INPUT'].getfloat(typeTh+'Thickness')
+                thicknessId = cfg['INPUT'][(typeTh+'Thickness')].split('|')
+                lineTh['thickness'][count] = float(thicknessId[count])
             else:
                 lineTh['thickness'][count] = cfg['GENERAL'].getfloat(thName)
 
@@ -413,7 +414,7 @@ def setThickness(cfg, lineTh, typeTh):
     return lineTh
 
 
-def prepareInputData(inputSimFiles, secRelArea):
+def prepareInputData(inputSimFiles, cfg):
     """ Fetch input data
 
     Parameters
@@ -432,8 +433,8 @@ def prepareInputData(inputSimFiles, secRelArea):
         entResInfo : flag dict
             flag if Yes entrainment and/or resistance areas found and used for simulation
             flag True if a Secondary Release file found and activated
-    secRelArea: bool
-        if True secondary release area is initialised
+    cfg: configparser object
+        configuration for simType and secondary rel
 
     Returns
     -------
@@ -470,7 +471,7 @@ def prepareInputData(inputSimFiles, secRelArea):
     releaseLine['type'] = 'Release'
 
     # get line from secondary release area polygon
-    if secRelArea:
+    if cfg.getboolean('secRelArea'):
         if entResInfo['flagSecondaryRelease'] == 'Yes':
             secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
             secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
@@ -486,7 +487,7 @@ def prepareInputData(inputSimFiles, secRelArea):
         entResInfo['flagSecondaryRelease'] = 'No'
 
     # get line from entrainement area polygon
-    if entResInfo['flagEnt'] == 'Yes':
+    if cfg['simTypeActual'] in ['ent', 'entres']:
         entFile = inputSimFiles['entFile']
         entLine = shpConv.readLine(entFile, '', demOri)
         entrainmentArea = entFile.name
@@ -497,7 +498,7 @@ def prepareInputData(inputSimFiles, secRelArea):
         entrainmentArea = ''
 
     # get line from resistance area polygon
-    if entResInfo['flagRes'] == 'Yes':
+    if cfg['simTypeActual'] in ['entres', 'res']:
         resFile = inputSimFiles['resFile']
         resLine = shpConv.readLine(resFile, '', demOri)
         resistanceArea = resFile.name
@@ -766,7 +767,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     # create primary release area particles and fields
     releaseLine['header'] = demOri['header']
     inputSimLines['releaseLine']['header'] = demOri['header']
-    particles = initializeParticles(cfgGen, releaseLine, dem, inputSimLines=inputSimLines, logName=logName, relThField=relThField)
+    particles = initializeParticles(cfgGen, releaseLine, dem, inputSimLines=inputSimLines,
+        logName=logName, relThField=relThField)
     particles, fields = initializeFields(cfgGen, dem, particles)
 
     # perform initialisation step for redistributing particles
@@ -774,7 +776,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
         startTimeIni = time.time()
         particles, fields = pI.getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField)
         tIni = time.time() - startTimeIni
-        log.info('Ini step for initialising particles finalized, total mass: %.2f, number of particles: %d' % (np.sum(particles['m']), particles['nPart']))
+        log.info('Ini step for initialising particles finalized, total mass: %.2f, number of particles: %d' %
+            (np.sum(particles['m']), particles['nPart']))
         log.debug('Time needed for ini step: %.2f s' % (tIni))
     # ------------------------
     # process secondary release info to get it as a list of rasters
@@ -1289,7 +1292,8 @@ def DFAIterate(cfg, particles, fields, dem):
     log.info(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
     log.info(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
     log.info(('cpu time timeLoop = %s s' % (tCPU['timeLoop'] / nIter)))
-    log.info(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH'] + tCPU['timePos'] + tCPU['timeNeigh'] +
+    log.info(('cpu time total other = %s s' % ((tCPU['timeForce'] + tCPU['timeForceSPH'] +
+                                               tCPU['timePos'] + tCPU['timeNeigh'] +
                                                tCPU['timeField']) / nIter)))
     Tsave.append(t-dt)
 
@@ -1690,7 +1694,8 @@ def checkParticlesInRelease(particles, line, radius):
     Mask = np.logical_and(Mask, mask)
     nRemove = len(Mask)-np.sum(Mask)
     if nRemove > 0:
-        particles = particleTools.removePart(particles, Mask, nRemove, 'because they are not within the release polygon')
+        particles = particleTools.removePart(particles, Mask, nRemove,
+            'because they are not within the release polygon')
         log.debug('removed %s particles because they are not within the release polygon' % (nRemove))
 
     return particles
@@ -2045,8 +2050,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             # add simType
             cfgSim['GENERAL']['simTypeActual'] = row._asdict()['simTypeList']
             # update parameter value - now only single value for each parameter
-            if parameter in ['relThPercentVariation', 'entThPercentVariation',
-                'secondaryRelThPercentVariation']:
+            if parameter in ['relThPercentVariation', 'entThPercentVariation', 'secondaryRelThPercentVariation']:
                 # set thickness value according to percent variation info
                 cfgSim = dP.setThicknessValueFromVariation(parameter, cfgSim,
                     cfgSim['GENERAL']['simTypeActual'], row)

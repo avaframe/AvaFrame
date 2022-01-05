@@ -149,6 +149,7 @@ def SHP2Array(infile, defname=None):
 
     return SHPdata
 
+
 def readThickness(infile, defname=None):
     """ Read shapefile and fetch info on features' ids and thickness values
 
@@ -181,7 +182,6 @@ def readThickness(infile, defname=None):
 
     thicknessList = []
     idList = []
-
 
     for n, item in enumerate(shps):
         pts = item.points
