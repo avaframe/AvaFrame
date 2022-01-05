@@ -96,75 +96,6 @@ def getRefMB(testName, pathDict, simName):
     return pathDict
 
 
-def dfaComp2Aimec(avaDir, cfg, rel, simType):
-    """ Create a pathDict where the paths to all the files required by aimec are saved for two modules -
-        in order to compare always two simulations at a time
-
-        for now matching simulations are identified via releaseScenario and simType
-
-        Parameters
-        -----------
-        avaDir: str
-            path to avalanche directory
-        cfgSetup: configParser object
-            configuration for aimec
-        rel: str
-            releaseScenario
-        simType: str
-            simulation type (null, ent, entres, ..)
-
-        Returns
-        --------
-        pathDict: dict
-            dictionary with paths to result and optionally mass files for matching simulations from
-            two modules - matching in terms of releaseScenario and simType
-    """
-
-    cfgSetup = cfg['AIMECSETUP']
-    comModules = cfg['AIMECSETUP']['comModules'].split('|')
-    # get directories where simulation results can be found for both modules
-    inputDirRef, inputDirComp, pathDict = getCompDirs(avaDir, cfgSetup)
-
-    # Load all infos on reference simulations
-    refData = fU.makeSimDF2(avaDir, None, inputDir=inputDirRef)
-    refData = refData[(refData['releaseArea']==rel) & (refData['simType']==simType)]
-    # Load all infos on comparison module simulations
-    compData = fU.makeSimDF2(avaDir, None, inputDir=inputDirComp)
-    compData = compData[(compData['releaseArea']==rel) & (compData['simType']==simType)]
-
-    # merge dataFrames and locate the rows with common releaseArea ans simType
-    dfMerged = refData[['simName', 'releaseArea','simType']].merge(compData[['simName', 'releaseArea','simType']], on=['releaseArea','simType'],
-                   how='inner', indicator=True, suffixes=('Ref', 'Comp'))
-    dfMerged = dfMerged[dfMerged['_merge'] == 'both']
-    if dfMerged.shape[0] > 0:
-        refSimName = dfMerged.loc[0, 'simNameRef']
-        compSimName = dfMerged.loc[0, 'simNameComp']
-        log.info('Reference simulation: %s and to comparison simulation: %s ' % (refSimName, compSimName))
-    else:
-        message = 'No matching simulations found for reference and comparison simulation \
-                   for releaseScenario: %s and simType: %s' % (rel, simType)
-        log.error(message)
-        raise FileNotFoundError(message)
-
-    # build input dataFrame
-    inputsDF = refData[refData['simName'] == refSimName]
-    inputsDF = inputsDF.append(compData[compData['simName'] == compSimName])
-
-    # if desired set path to mass log files
-    comModules = pathDict['compType']
-    sims = {comModules[1]: refSimName, comModules[2]: compSimName}
-    if cfg['FLAGS'].getboolean('flagMass'):
-        for comMod, sim in sims.items():
-            log.info('mass file for comMod: %s and sim: %s' % (comMod, sim))
-            if comMod == 'benchmarkReference':
-                inputsDF = getRefMB(cfg['AIMECSETUP']['testName'], inputsDF, sim)
-            elif comMod == 'com1DFAOrig':
-                inputsDF = extractCom1DFAMBInfo(avaDir, inputsDF, simNameInput=sim)
-            else:
-                inputsDF = getMBInfo(avaDir, inputsDF, comMod, simName=sim)
-    return inputsDF, pathDict
-
-
 def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
     """ Exports the required data from com1DFA to be used by Aimec
 
@@ -175,9 +106,9 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
         cfg: confiParser object
             configuration settings for aimec
         simNameRef: str
-            name of reference simulation results
+            name of reference simulation results (or part of the name)
         simNameComp: str
-            name of comparison simulation results
+            name of comparison simulation results (or part of the name)
 
         Returns
         --------
@@ -192,17 +123,32 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
     inputDirRef, inputDirComp, pathDict = getCompDirs(avaDir, cfgSetup)
 
     # Load all infos on reference simulations
-    refData = fU.makeSimDF2(avaDir, None, inputDir=inputDirRef, simName=simNameRef)
+    refData = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirRef, simName=simNameRef)
 
     # Load all infos on comparison module simulations
-    compData = fU.makeSimDF2(avaDir, None, inputDir=inputDirComp, simName=simNameComp)
-
+    compData = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirComp, simName=simNameComp)
+    # check outputs
+    try:
+        simNameRef = refData['simName'][0]
+    except IndexError:
+        message = ('Did not find the reference simulation : %s'
+                   % simNameRef)
+        log.error(message)
+        raise FileNotFoundError(message)
+    try:
+        simNameComp = compData['simName'][0]
+    except IndexError:
+        message = ('Did not find the comparison simulation : %s'
+                   % simNameComp)
+        log.error(message)
+        raise FileNotFoundError(message)
     # build input dataFrame
     inputsDF = refData.append(compData)
 
     # if desired set path to mass log files
     comModules = pathDict['compType']
     sims = {comModules[1]: simNameRef, comModules[2]: simNameComp}
+    print(sims)
     if cfg['FLAGS'].getboolean('flagMass'):
         for comMod, sim in sims.items():
             log.info('mass file for comMod: %s and sim: %s' % (comMod, sim))
@@ -278,7 +224,7 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
             with a line for each simulation available and the corresponding simulation results: ppr, pfd, pfv
     """
 
-    inputsDF = fU.makeSimDF2(avaDir, comModule)
+    inputsDF = fU.makeSimFromResDF(avaDir, comModule)
 
     if cfg['FLAGS'].getboolean('flagMass'):
         # Extract mb info
