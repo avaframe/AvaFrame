@@ -348,16 +348,22 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     return resAnalysisDF, newRasters, timeMass
 
 
-def AIMECIndi(pathDict, cfg):
-    """ perform AIMEC analysis and generate plots for reports
+def AIMECIndi(pathDict, inputsDF, cfg):
+    """ Main logic for AIMEC postprocessing
 
     Reads the required files location for ana3AIMEC postpocessing
-    given a path dictionary to the input files
+    given an avalanche directory
+    Make the domain transformation corresponding to the input avalanche path
+    Transform 2D resType field provided in the configuration
+    Analyze transformed raster
+    Produce plots and report
 
     Parameters
     ----------
     pathDict : dict
-        dictionary with paths to data to analyze
+        dictionary with paths to dem and lines for Aimec analysis
+    inputsDF : dataFrame
+        dataframe with simulations to analyze and associated path to raster data
     cfg : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
 
@@ -365,9 +371,7 @@ def AIMECIndi(pathDict, cfg):
     -------
     rasterTransfo: dict
         domain transformation information
-    newRasters: dict
-        raster data expressed in the new coordinates
-    resAnalysis: dict
+    resAnalysisDF: dataFrame
         results of ana3AIMEC analysis
     """
 
@@ -375,115 +379,165 @@ def AIMECIndi(pathDict, cfg):
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
     interpMethod = cfgSetup['interpMethod']
-    resType = cfgSetup['resType']
 
-    log.info('Prepare data for post-ptocessing')
+    log.info('Prepare data for post-processing')
     # Make domain transformation
     log.info("Creating new deskewed raster and preparing new raster assignment function")
-    rasterTransfo = aT.makeDomainTransfo(pathDict, cfgSetup)
+    rasterTransfo = aT.makeDomainTransfo(pathDict, inputsDF, cfgSetup)
 
-    ###########################################################################
+    # read reference file
+    refSimulationName = pathDict['refSimulation']
+    refSimulation = inputsDF[inputsDF['simName'] == refSimulationName]
+
+    # ####################################################
     # visualisation
     # TODO: needs to be moved somewhere else
-    # read reference file
-    nRef = pathDict['referenceFile']
-    rasterSource = pathDict[resType][nRef]
 
-    anaRaster = IOf.readRaster(rasterSource)
+    rasterSource = refSimulation.iloc[0][cfgSetup['resType']]
+    raster = IOf.readRaster(rasterSource)
     slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
+    newRasters = {}
+    log.info("Assigning dem data to deskewed raster")
+    newRasters['newRasterDEM'] = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
+
     inputData = {}
     inputData['slRaster'] = slRaster
-    inputData['xyRaster'] = anaRaster['rasterData']
+    inputData['xyRaster'] = raster['rasterData']
+    inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
-    #################################################################
+    # ###########################################################
 
-    # transform resType_data in new raster
-    newRasters = {}
-    # assign pressure data
-    log.debug("Assigning data to deskewed raster")
-    newRasters['newRaster' + resType.upper()] = aT.assignData(pathDict[resType], rasterTransfo, interpMethod)
-    # assign dem data
-    log.debug("Assigning dem data to deskewed raster")
-    newRasterDEM = aT.assignData([pathDict['demSource']], rasterTransfo, interpMethod)
-    newRasters['newRasterDEM'] = newRasterDEM[0]
+    # postprocess reference
+    inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
+    resAnalysisDF = inputsDF[['simName']].copy()
+    resAnalysisDF, newRasters = postProcessAIMECIndi(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, refSimulationName, resAnalysisDF)
 
-    # Analyze data
-    log.debug('Analyzing data in path coordinate system')
-    resAnalysis = postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict)
+    # postprocess other simulations
+    for index, inputsDFrow in inputsDF.iterrows():
+        simName = inputsDFrow['simName']
+        if simName != refSimulationName:
+            resAnalysisDF, newRasters = postProcessAIMECIndi(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, simName, resAnalysisDF)
 
     # -----------------------------------------------------------
     # result visualisation + report
+    # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside
     # -----------------------------------------------------------
     log.info('Visualisation of AIMEC results')
+    if len(resAnalysisDF.index) == 2:
+        outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
+    else:
+        outAimec.visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
 
-    outAimec.visuRunoutStat(rasterTransfo, resAnalysis, newRasters, cfgSetup, pathDict)
-    outAimec.resultVisu(cfgSetup, pathDict, cfgFlags, rasterTransfo, resAnalysis)
+    outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
 
-    return rasterTransfo, newRasters, resAnalysis
+    # -----------------------------------------------------------
+    # write results to file
+    # -----------------------------------------------------------
+    log.info('Writing results to file')
+    outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
+
+    return rasterTransfo, resAnalysisDF
 
 
-def postProcessAIMECIndi(rasterTransfo, newRasters, cfgSetup, pathDict):
-    """ Analyse one peak field transformed data
+def postProcessAIMECIndi(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, simName, resAnalysisDF):
+    """ Apply domain transformation and analyse resType data
 
-    Analyse peak field set in resType e.g. ppr
-    Calculate runout, Max Peak Value, Average PP...
-    Mass is currently not included
+    Apply the domain tranformation to the chosen peak result
+    Analyse it.
+    Calculate runout, Max Peak, Average P...
 
     Parameters
     ----------
+    cfg: configParser objec
+        parameters for AIMEC analysis
     rasterTransfo: dict
         transformation information
+    pathDict : dict
+        dictionary with paths to dem and lines for Aimec analysis
+    inputsDF : dataFrame
+        dataframe with simulations to analyze and associated path to raster data
     newRasters: dict
         dictionary containing pressure, velocity and flow depth rasters after
-        transformation
-    cfgSetup: dict
-        parameters for data analysis
-    pathDict: dict
-        path to dem, lines...
+        transformation for the reference and the current simulation
+    simName: str
+        name of the curent simulation to analyze
+    resAnalysisDF: dataFrame
+        results from Aimec Analysis
 
     Returns
     -------
-    resAnalysis: dict
-        resAnalysis dictionary containing all results:
+    resAnalysisDF: dataFrame
+        results from Aimec Analysis updated with results from curent simulation:
+            -maxpACrossMax: float
+                    max max peak A
+            -pACrossMax: 1D numpy array
+                    max peak A in each cross section
+            -pACrossMean: 1D numpy array
+                    mean peak A in each cross section
+            -xRunout: float
+                    x coord of the runout point calculated from the
+                    MAX peak result in each cross section (resType provided in the ini file)
+            -yRunout: float
+                    y coord of the runout point calculated from the
+                    MAX peak result in each cross section (resType provided in the ini file)
+            -sRunout: float
+                    projected runout distance calculated from the
+                    MAX peak result in each cross section (resType provided in the ini file)
+            -xMeanRunout: float
+                    x coord of the runout point calculated from the
+                    MEAN peak result in each cross section (resType provided in the ini file)
+            -yMeanRunout: float
+                    y coord of the runout point calculated from the
+                    MEAN peak result in each cross section (resType provided in the ini file)
+            -sMeanRunout: float
+                    projected runout distance calculated from the
+                    MEAN peak result in each cross section (resType provided in the ini file)
+            -elevRel: float
+                    elevation of the release area (based on first point with
+                    peak field > thresholdValue)
+            -deltaH: float
+                    elevation fall difference between elevRel and altitude of
+                    run-out point
 
+            -TP: float
+                    ref = True sim2 = True
+            -FN: float
+                    ref = False sim2 = True
+            -FP: float
+                    ref = True sim2 = False
+            -TN: float
+                    ref = False sim2 = False
     """
-    # read inputs
+    cfgSetup = cfg['AIMECSETUP']
     resType = cfgSetup['resType']
-    thresholdValue = cfgSetup.getfloat('thresholdValue')
-    dataResType = newRasters['newRaster' + resType.upper()]
-    transformedDEMRasters = newRasters['newRasterDEM']
+    interpMethod = cfgSetup['interpMethod']
+    refSimulationName = pathDict['refSimulation']
+    # apply domain transformation
 
-    resultsAreaAnalysis = {}
-    resultsAreaAnalysis['resType'] = resType
-    # get max and mean values along path for cross profiles
-    resultsAreaAnalysis = aT.analyzeField(rasterTransfo, dataResType, resType, resultsAreaAnalysis)
+    log.info('Analyzing data in path coordinate system')
+    log.debug("Assigning pressure data to deskewed raster")
+    inputFiles = inputsDFrow[resType]
+    newRaster = aT.transform(inputFiles, rasterTransfo, interpMethod)
+    newRasters['newRaster' + resType.upper()] = newRaster
+
+    if simName == refSimulationName:
+        newRasters['newRefRaster' + resType.upper()] = newRaster
+        resAnalysisDF[resType + 'CrossMax'] = np.nan
+        resAnalysisDF[resType + 'CrossMax'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
+        resAnalysisDF[resType + 'CrossMean'] = np.nan
+        resAnalysisDF[resType + 'CrossMean'] = resAnalysisDF[resType + 'CrossMax'].astype(object)
+
+    # analyze all fields
+    dataPressure = newRasters['newRaster' + resType.upper()]
+    resAnalysisDF = aT.analyzeField(simName, rasterTransfo, dataPressure, resType, resAnalysisDF)
 
     # compute runout based on resType
-    runout, runoutMean, elevRel, deltaH = aT.computeRunOut(rasterTransfo, thresholdValue, resultsAreaAnalysis,
-                                                           transformedDEMRasters)
+    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters['newRasterDEM'], simName)
 
-    runoutLength = runout[0]
-    TP, FN, FP, TN, compPlotPath = aT.analyzeArea(rasterTransfo, runoutLength, dataResType, cfgSetup, pathDict)
+    resAnalysisDF, compPlotPath = aT.analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pathDict)
 
-    # affect values to output dictionary
-    resAnalysis = {}
-    resAnalysis['resType'] = resType
-    resAnalysis['runout'] = runout
-    resAnalysis['runoutMean'] = runoutMean
-    resAnalysis['MM' + resType.upper()] = resultsAreaAnalysis[resType]['maxaCrossMax']
-    resAnalysis['elevRel'] = elevRel
-    resAnalysis['deltaH'] = deltaH
-    resAnalysis[resType.upper() + 'CrossMax'] = resultsAreaAnalysis[resType]['aCrossMax']
-    resAnalysis[resType.upper() + 'CrossMean'] = resultsAreaAnalysis[resType]['aCrossMean']
-    resAnalysis['thresholdValue'] = thresholdValue
-    resAnalysis['startOfRunoutAreaAngle'] = rasterTransfo['startOfRunoutAreaAngle']
-    resAnalysis['TP'] = TP
-    resAnalysis['FN'] = FN
-    resAnalysis['FP'] = FP
-    resAnalysis['TN'] = TN
-    resAnalysis['areasPlot'] = {'Aimec area analysis': compPlotPath}
-
-    return resAnalysis
+    resAnalysisDF.loc[simName, 'areasPlot'] = compPlotPath
+    return resAnalysisDF, newRasters
 
 
 def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, refSimName):
