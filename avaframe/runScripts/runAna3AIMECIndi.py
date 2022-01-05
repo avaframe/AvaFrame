@@ -9,8 +9,9 @@
 import time
 
 # Local imports
-from avaframe.ana3AIMEC import dfa2Aimec, ana3AIMEC, aimecTools
+from avaframe.ana3AIMEC import ana3AIMEC, aimecTools
 from avaframe.in3Utils import initializeProject as iP
+from avaframe.in3Utils import fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 
@@ -37,28 +38,26 @@ iP.cleanModuleFiles(avalancheDir, ana3AIMEC)
 
 # write configuration to file
 cfgUtils.writeCfgFile(avalancheDir, ana3AIMEC, cfg)
+cfg['FLAGS']['flagMass'] = 'False'
 
 cfgSetup = cfg['AIMECSETUP']
 anaMod = cfgSetup['anaMod']
 resType = cfgSetup['resType']
 
 
-# Setup input from com1DFA
-pathDict = dfa2Aimec.indiDfa2Aimec(avalancheDir, resType, cfgSetup, inputDir='')
-
-# TODO: define referenceFile
-pathDict['numSim'] = len(pathDict[resType])
+# Load all infos on all simulations
+inputsDF = fU.makeSimDF2(avalancheDir, anaMod, inputDir='')
 # define reference simulation
-pathDict = aimecTools.fetchReferenceSimNo(pathDict, cfgSetup)
-
-pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName='test')
+refSimulation, inputsDF, colorParameter = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod, cfgSetup)
+pathDict = {'refSimulation': refSimulation, 'compType': ['singleModule', anaMod], 'colorParameter': colorParameter}
+pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
 
 startTime = time.time()
 
 log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
          pathDict['demSource'], pathDict['profileLayer'])
 # Run AIMEC postprocessing
-ana3AIMEC.AIMECIndi(pathDict, cfg)
+ana3AIMEC.AIMECIndi(pathDict, inputsDF, cfg)
 
 endTime = time.time()
 

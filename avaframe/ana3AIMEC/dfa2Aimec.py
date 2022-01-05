@@ -288,39 +288,3 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
         else:
             inputsDF = getMBInfo(avaDir, inputsDF, comModule)
     return inputsDF
-
-
-def indiDfa2Aimec(avaDir, suffix, cfg, inputDir=''):
-    """ Exports the required data from com1DFA to be used by Aimec for only one results parameter
-        and with an option to specify the input directory
-
-        Parameters
-        -----------
-        avaDir: str
-            path to avalanche directory
-        cfg: configParser object
-            configuration for aimec
-        inputDir: str
-            optional - path to an input directory where simulation results can be found
-
-        Returns
-        --------
-        pathDict: dict
-            dictionary with path to simulation results for result types - keys: suffix
-            and if configuration for ordering is provided, key: colorParameter with values for color coding results
-
-     """
-
-    # path dictionary for Aimec
-    pathDict = {'simID': [], suffix: [], 'colorParameter': []}
-
-    # Setup input from com1DFA and save file paths to dictionary
-    comModule = cfg['anaMod']
-    pathDict = fU.getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule, inputDir=inputDir)
-
-    pathDict['compType'] = ['singleModule', comModule]
-
-    # info about colormap
-    pathDict['contCmap'] = pU.contCmap
-
-    return pathDict
