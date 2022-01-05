@@ -96,25 +96,30 @@ def updateCfgRange(cfg1, cfgProb, varName):
             message = 'Only one reference values is allowed for %s: but %s is given' % (varPar, cfg1['GENERAL'][varPar])
             log.error(message)
             raise AssertionError(message)
-        if varPar == 'relTh':
-            cfg1['GENERAL']['useRelThFromIni'] = 'True'
-        elif varPar == 'entTh':
-            cfg1['GENERAL']['useEntThFromIni'] = 'True'
 
     # get range, steps and reference value of parameter to perform variations
-    valRange = cfgProb['PROBRUN'].getfloat('%sRange' % varName)
-    valSteps = cfgProb['PROBRUN'].getint('%sSteps' % varName)
-    valVal = cfg1['GENERAL'].getfloat(varName)
+    valVariation = cfgProb['PROBRUN']['%sVariation' % varName]
+    valSteps = cfgProb['PROBRUN']['%sSteps' % varName]
+    valVal = cfg1['GENERAL'][varName]
+
+    refIn = False
 
     # set variation in configuration
-    cfg1['GENERAL'][varName] = '%s:%s:%s' % (str(valVal-valRange), str(valVal+valRange), str(valSteps))
-
-    # if reference value is not in this list - add reference values
-    valValues = np.linspace(valVal-valRange, valVal+valRange, valSteps)
-    refIn = False
-    if valVal not in valValues:
-        cfg1['GENERAL'][varName] = '%s:%s:%s&%s' % (str(valVal-valRange), str(valVal+valRange), str(valSteps), str(valVal))
-        refIn = True
+    if varName in ['relTh', 'entTh', 'secondaryRelTh']:
+        if cfgProb['PROBRUN'].getboolean('percentVariation'):
+            parName = varName + 'PercentVariation'
+            cfg1['GENERAL'][parName] = valVariation + '$' + valSteps
+        else:
+            parName = varPar + 'rangeVariation'
+            cfg1['GENERAL'][parName] = valVariation + '$' + valSteps
+    else:
+        # set variation
+        if cfgProb['PROBRUN'].getboolean('percentVariation'):
+            cfg1['GENERAL'][varName] = '%s$%s$%s' % (valVal, valVariation, valSteps)
+        else:
+            valStart = str(float(valVal) - float(valVariation))
+            valStop = str(float(valVal) + float(valVariation))
+            cfg1['GENERAL'][varName] = '%s:%s:%s' % (valStart, valStop, valSteps)
 
     return cfg1, refIn
 
@@ -148,55 +153,64 @@ def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
 
     # fetch all result files and filter simulations according to parametersDict
     simNameList = cfgUtils.filterSims(avaDir, parametersDict, specDir=inputDir)
-    if inputDir == '':
-        inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
-        flagStandard = True
-        peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
-    else:
-        inputDirPF = inputDir / 'peakFiles'
-        peakFilesDF = fU.makeSimDF(inputDirPF, avaDir=avaDir)
 
-    # get header info from peak files - this should be the same for all peakFiles
-    header = IOf.readASCheader(peakFilesDF['files'][0])
-    cellSize = header['cellsize']
-    nRows = header['nrows']
-    nCols = header['ncols']
-    xllcenter = header['xllcenter']
-    yllcenter = header['yllcenter']
-    noDataValue = header['noDataValue']
+    # initialize flag if analysis has been performed or e.g. no matching files found
+    analysisPerformed = False
+    if simNameList != []:
 
-    # Initialise array for computations
-    probSum = np.zeros((nRows, nCols))
-    count = 0
+        if inputDir == '':
+            inputDir = avaDir / 'Outputs' / modName / 'peakFiles'
+            flagStandard = True
+            peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
+        else:
+            inputDirPF = inputDir / 'peakFiles'
+            peakFilesDF = fU.makeSimDF(inputDirPF, avaDir=avaDir)
 
-    # Loop through peakFiles and compute probability
-    for m in range(len(peakFilesDF['names'])):
+        # get header info from peak files - this should be the same for all peakFiles
+        header = IOf.readASCheader(peakFilesDF['files'][0])
+        cellSize = header['cellsize']
+        nRows = header['nrows']
+        nCols = header['ncols']
+        xllcenter = header['xllcenter']
+        yllcenter = header['yllcenter']
+        noDataValue = header['noDataValue']
 
-        # only take simulations that match filter criteria from parametersDict
-        if peakFilesDF['simName'][m] in simNameList:
-            # Load peak field for desired peak field parameter
-            if peakFilesDF['resType'][m] == cfg['GENERAL']['peakVar']:
+        # Initialise array for computations
+        probSum = np.zeros((nRows, nCols))
+        count = 0
 
-                # Load data
-                fileName = peakFilesDF['files'][m]
-                data = np.loadtxt(fileName, skiprows=6)
-                dataLim = np.zeros((nRows, nCols))
+        # Loop through peakFiles and compute probability
+        for m in range(len(peakFilesDF['names'])):
 
-                log.info('File Name: %s , simulation parameter %s ' % (fileName, cfg['GENERAL']['peakVar']))
+            # only take simulations that match filter criteria from parametersDict
+            if peakFilesDF['simName'][m] in simNameList:
+                # Load peak field for desired peak field parameter
+                if peakFilesDF['resType'][m] == cfg['GENERAL']['peakVar']:
 
-                # Check if peak values exceed desired threshold
-                dataLim[data > float(cfg['GENERAL']['peakLim'])] = 1.0
-                probSum = probSum + dataLim
-                count = count + 1
+                    # Load data
+                    fileName = peakFilesDF['files'][m]
+                    data = np.loadtxt(fileName, skiprows=6)
+                    dataLim = np.zeros((nRows, nCols))
 
-    # Create probability map ranging from 0-1
-    probMap = probSum / count
-    unit = pU.cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
-    log.info('probability analysis performed for peak parameter: %s and a peak value threshold of: %s %s' % (cfg['GENERAL']['peakVar'], cfg['GENERAL']['peakLim'], unit))
-    log.info('%s peak fields added to analysis' % count)
+                    log.info('File Name: %s , simulation parameter %s ' % (fileName, cfg['GENERAL']['peakVar']))
 
-    # # Save to .asc file
-    avaName = avaDir.name
-    outFileName = '%s_probMap%s.asc' % (avaName, cfg['GENERAL']['peakLim'])
-    outFile = outDir / outFileName
-    IOf.writeResultToAsc(header, probMap, outFile)
+                    # Check if peak values exceed desired threshold
+                    dataLim[data > float(cfg['GENERAL']['peakLim'])] = 1.0
+                    probSum = probSum + dataLim
+                    count = count + 1
+
+        # Create probability map ranging from 0-1
+        probMap = probSum / count
+        unit = pU.cfgPlotUtils['unit%s' % cfg['GENERAL']['peakVar']]
+        log.info('probability analysis performed for peak parameter: %s and a peak value threshold of: %s %s' % (cfg['GENERAL']['peakVar'], cfg['GENERAL']['peakLim'], unit))
+        log.info('%s peak fields added to analysis' % count)
+
+        # # Save to .asc file
+        avaName = avaDir.name
+        outFileName = '%s_probMap%s.asc' % (avaName, cfg['GENERAL']['peakLim'])
+        outFile = outDir / outFileName
+        IOf.writeResultToAsc(header, probMap, outFile)
+        analysisPerformed = True
+
+
+    return analysisPerformed
