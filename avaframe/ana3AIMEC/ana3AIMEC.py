@@ -44,7 +44,7 @@ def AIMEC2Report(pathDict, inputsDF, cfg):
 
     log.info('Prepare data for post-processing')
     # Make domain transformation
-    log.info("Creating new deskewed raster and preparing new raster assignment function")
+    log.debug("Creating new deskewed raster and preparing new raster assignment function")
     rasterTransfo = aT.makeDomainTransfo(pathDict, inputsDF, cfgSetup)
     # read reference file
     refSimulationName = pathDict['refSimulation']
@@ -58,7 +58,7 @@ def AIMEC2Report(pathDict, inputsDF, cfg):
     raster = IOf.readRaster(rasterSource)
     slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
     newRasters = {}
-    log.info("Assigning dem data to deskewed raster")
+    log.debug("Assigning dem data to deskewed raster")
     newRasters['newRasterDEM'] = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
 
     inputData = {}
@@ -137,7 +137,6 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     refSimulationName = pathDict['refSimulation']
     refSimulation = inputsDF[inputsDF['simName'] == refSimulationName]
 
-    # ####################################################
     # visualisation
     # TODO: needs to be moved somewhere else
 
@@ -145,7 +144,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     raster = IOf.readRaster(rasterSource)
     slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
     newRasters = {}
-    log.info("Assigning dem data to deskewed raster")
+    log.debug("Assigning dem data to deskewed raster")
     newRasters['newRasterDEM'] = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
 
     inputData = {}
@@ -153,7 +152,6 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     inputData['xyRaster'] = raster['rasterData']
     inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
-    # ###########################################################
 
     # postprocess reference
     inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
@@ -348,7 +346,7 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     return resAnalysisDF, newRasters, timeMass
 
 
-def AIMECIndi(pathDict, inputsDF, cfg):
+def AIMECIndividual(pathDict, inputsDF, cfg):
     """ Main logic for AIMEC postprocessing
 
     Reads the required files location for ana3AIMEC postpocessing
@@ -389,7 +387,6 @@ def AIMECIndi(pathDict, inputsDF, cfg):
     refSimulationName = pathDict['refSimulation']
     refSimulation = inputsDF[inputsDF['simName'] == refSimulationName]
 
-    # ####################################################
     # visualisation
     # TODO: needs to be moved somewhere else
 
@@ -405,18 +402,17 @@ def AIMECIndi(pathDict, inputsDF, cfg):
     inputData['xyRaster'] = raster['rasterData']
     inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
-    # ###########################################################
 
     # postprocess reference
     inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
     resAnalysisDF = inputsDF[['simName']].copy()
-    resAnalysisDF, newRasters = postProcessAIMECIndi(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, refSimulationName, resAnalysisDF)
+    resAnalysisDF, newRasters = postProcessAIMECIndividual(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, refSimulationName, resAnalysisDF)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         simName = inputsDFrow['simName']
         if simName != refSimulationName:
-            resAnalysisDF, newRasters = postProcessAIMECIndi(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, simName, resAnalysisDF)
+            resAnalysisDF, newRasters = postProcessAIMECIndividual(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, simName, resAnalysisDF)
 
     # -----------------------------------------------------------
     # result visualisation + report
@@ -439,7 +435,7 @@ def AIMECIndi(pathDict, inputsDF, cfg):
     return rasterTransfo, resAnalysisDF
 
 
-def postProcessAIMECIndi(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, simName, resAnalysisDF):
+def postProcessAIMECIndividual(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, simName, resAnalysisDF):
     """ Apply domain transformation and analyse resType data
 
     Apply the domain tranformation to the chosen peak result

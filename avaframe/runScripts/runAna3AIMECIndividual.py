@@ -46,7 +46,7 @@ resType = cfgSetup['resType']
 
 
 # Load all infos on all simulations
-inputsDF = fU.makeSimDF2(avalancheDir, anaMod, inputDir='')
+inputsDF = fU.makeSimFromResDF(avalancheDir, anaMod, inputDir='')
 # define reference simulation
 refSimulation, inputsDF, colorParameter = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod, cfgSetup)
 pathDict = {'refSimulation': refSimulation, 'compType': ['singleModule', anaMod], 'colorParameter': colorParameter}
@@ -57,7 +57,7 @@ startTime = time.time()
 log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",
          pathDict['demSource'], pathDict['profileLayer'])
 # Run AIMEC postprocessing
-ana3AIMEC.AIMECIndi(pathDict, inputsDF, cfg)
+ana3AIMEC.AIMECIndividual(pathDict, inputsDF, cfg)
 
 endTime = time.time()
 

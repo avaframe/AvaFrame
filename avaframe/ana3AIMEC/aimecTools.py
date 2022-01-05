@@ -86,8 +86,14 @@ def readAIMECinputs(avalancheDir, pathDict, dirName='com1DFA'):
 
 
 def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
-    """ Define reference simulation used for aimec analysis from configuration file,
-        if no ordering is performed - set simulation 0 as reference simulation
+    """ Define reference simulation used for aimec analysis.
+
+        if com1DFA is used and a varParList is provided, the simulations
+        are ordered and the referenceSimValue is used to define the reference.
+
+        otherwise, if a referenceSimName is provided, the reference is based on this name
+
+        otherwise, the first file found is used as reference
 
         Parameters
         -----------
@@ -117,7 +123,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         log.error(message)
         raise FileNotFoundError(message)
     # if the simulations come from com1DFA, it is possible to order the files and define a reference
-    # if com1DFA check for configuration files to fetch paramerter values for ordering
+    # if com1DFA check for configuration files to fetch parameter values for ordering
     if comModule == 'com1DFA' and cfgSetup['varParList'] != '':
         # fetch parameters that shall be used for ordering
         varParList = cfgSetup['varParList'].split('|')
@@ -677,7 +683,7 @@ def analyzeMass(fnameMass, simName, refSimName, resAnalysisDF, time=None):
     finalMassRef = resAnalysisDF.loc[refSimName, 'finalMass']
     relativMassDiff = (finalMass-finalMassRef)/finalMassRef*100
     if not (releasedMass == releasedMassRef):
-        log.warning('Release masses differs between simulations!')
+        log.warning('Release masses differ between simulations!')
     log.info('{: <10} {:<10.4f} {:<10.4f}'.format(*[simName, grIndex, grGrad]))
     resAnalysisDF.loc[simName, 'relativMassDiff'] = relativMassDiff
 
@@ -947,13 +953,7 @@ def analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pat
     inputs['diffLim'] = cfgSetup.getfloat('diffLim')
 
     rasterdata = newRasters['newRaster' + resType.upper()]
-    """
-    area
-    # true positive: result1(mask)=1, result2(rasterdata)=1
-    # false negative: result1(mask)=1, result2(rasterdata)=0
-    # false positive: result1(mask)=0, result2(rasterdata)=1
-    # true negative: result1(mask)=0, result2(rasterdata)=0
-    """
+
     # take first simulation as reference
     refMask = copy.deepcopy(inputs['refData'])
     # prepare mask for area resAnalysis

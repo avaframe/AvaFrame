@@ -118,7 +118,7 @@ def test_dfaComp2Aimec(tmp_path):
     cfg = configparser.ConfigParser()
     cfg['AIMECSETUP'] = {'comModules': 'com1DFAOrig|com1DFA'}
     cfg['FLAGS'] = {'flagMass': 'True'}
-    inputDF, pathDict = dfa2Aimec.dfaComp2Aimec(testPath, cfg, 'release1HS', 'ent')
+    inputDF, pathDict = dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release1HS_ent', 'release1HS_ent')
 
     # get path dictionary for test
     massNameRef = 'mass_release1HS_ent_dfa_0.15500.txt'
@@ -144,8 +144,8 @@ def test_dfaComp2Aimec(tmp_path):
     assert not diff
 
     with pytest.raises(FileNotFoundError) as e:
-        assert dfa2Aimec.dfaComp2Aimec(testPath, cfg, 'release3HS', 'ent')
-    assert 'No matching simulations found for reference and comparison simulation' in str(e.value)
+        assert dfa2Aimec.dfaBench2Aimec(testPath, cfg, 'release3HS_ent', 'release3HS_ent')
+    assert 'Did not find the reference simulation : release3HS_ent' in str(e.value)
 
 
 def test_getRefMB():

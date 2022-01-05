@@ -467,7 +467,7 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     shutil.copy2(pathlib.Path('%s' % inputDir, 'ExpLog.txt'), outDir)
 
 
-# ToDo Maybe try to use makeSimDF2 instead of makeSimDF
+# ToDo Maybe try to use makeSimFromResDF instead of makeSimDF
 def makeSimDF(inputDir, avaDir='', simID='simID'):
     """ Create a  dataFrame that contains all info on simulations
 
@@ -550,7 +550,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
     return dataDF
 
 
-def makeSimDF2(avaDir, comModule, inputDir='', simName=''):
+def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
     """ Create a  dataFrame that contains all info on simulations in output/comModule/peakFiles
 
         One line for each simulation - so all peakfiles that belong to one simulation are listed in one line

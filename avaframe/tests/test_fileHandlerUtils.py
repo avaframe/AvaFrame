@@ -132,13 +132,13 @@ def test_makeSimDF():
     assert dataDF['test'][0] == '0.888'
 
 
-def test_makeSimDF2():
+def test_makeSimFromResDF():
     """ Test if simulation dataFrame is generated correctly """
 
     # Test function
     dirPath = os.path.dirname(__file__)
     inputDir = os.path.join(dirPath, 'data', 'testSim')
-    dataDF = fU.makeSimDF2(inputDir, 'comModule', inputDir=inputDir)
+    dataDF = fU.makeSimFromResDF(inputDir, 'comModule', inputDir=inputDir)
     print(dataDF.columns)
     print(dataDF.index)
     assert dataDF['simName'][0] == 'releaseTest1_entres_dfa_0.888'
@@ -147,7 +147,7 @@ def test_makeSimDF2():
     assert dataDF['cellSize'][0] == 5.0
 
     inputDir = os.path.join(dirPath, 'data', 'testSim1')
-    dataDF = fU.makeSimDF2(inputDir, 'comModule', inputDir=inputDir)
+    dataDF = fU.makeSimFromResDF(inputDir, 'comModule', inputDir=inputDir)
     assert dataDF['simName'][0] == 'releaseTest1_test_AF_entres_dfa_0.888'
     assert dataDF['releaseArea'][0] == 'releaseTest1_test'
     assert dataDF['simType'][0] == 'entres'
