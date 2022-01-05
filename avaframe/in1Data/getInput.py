@@ -196,7 +196,8 @@ def getInputDataCom1DFA(avaDir, cfg):
     log.info('Release area files are: %s' % [str(relFilestr) for relFilestr in relFiles])
 
     # Initialise secondary release areas
-    secondaryReleaseFile, entResInfo['flagSecondaryRelease'] = getAndCheckInputFiles(inputDir, 'SECREL', 'Secondary release')
+    secondaryReleaseFile, entResInfo['flagSecondaryRelease'] = getAndCheckInputFiles(inputDir,
+        'SECREL', 'Secondary release')
 
     # Initialise resistance areas
     resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance')
@@ -210,7 +211,6 @@ def getInputDataCom1DFA(avaDir, cfg):
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {'demFile': demFile, 'relFiles': relFiles, 'secondaryReleaseFile': secondaryReleaseFile,
                      'entFile': entFile, 'resFile': resFile, 'entResInfo': entResInfo}
-
 
     return inputSimFiles
 
@@ -303,7 +303,7 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile):
         # load configuration
         cfgInitial = cfgUtils.getModuleConfig(modName, fileOverride=cfgFile, toPrint=False)
         # add input data info
-        cfgInitial['INPUT'] = {'DEM': inputSimFiles['demFile'].stem , 'releaseScenario': releaseA.stem}
+        cfgInitial['INPUT'] = {'DEM': inputSimFiles['demFile'].stem, 'releaseScenario': releaseA.stem}
         # update configuration with thickness value to be used for simulations
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA.stem, 'relTh')
 
@@ -313,15 +313,15 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile):
             cfgInitial['INPUT']['entrainmentScenario'] = inputSimFiles['entFile'].stem
 
         if inputSimFiles['secondaryReleaseFile'] != None:
-            cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles['secondaryReleaseFile'].stem, 'secondaryRelTh')
-            cfgInitial['INPUT']['secondaryReleaseScenario'] =inputSimFiles['secondaryReleaseFile'].stem
+            cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles,
+                inputSimFiles['secondaryReleaseFile'].stem, 'secondaryRelTh')
+            cfgInitial['INPUT']['secondaryReleaseScenario'] = inputSimFiles['secondaryReleaseFile'].stem
 
         # create new ini file for each release scenario with updated info on thickness values (and parameter variation)
         cfgFileRelease = avaDir / 'Outputs' / modNameString / ('%s_com1DFACfg.ini' % releaseA.stem)
         with open(cfgFileRelease, 'w') as configfile:
             cfgInitial.write(configfile)
         cfgFilesRels.append(cfgFileRelease)
-
 
     return inputSimFiles, cfgFilesRels
 
