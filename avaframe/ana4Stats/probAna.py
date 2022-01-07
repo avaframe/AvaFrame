@@ -94,9 +94,17 @@ def updateCfgRange(cfg1, cfgProb, varName):
     # also for the other parameters that are varied subsequently
     for varPar in varParList:
         if any(chars in cfg1['GENERAL'][varPar] for chars in ['|', '$', ':']):
-            message = 'Only one reference values is allowed for %s: but %s is given' % (varPar, cfg1['GENERAL'][varPar])
+            message = ('Only one reference value is allowed for %s: but %s is given' %
+                (varPar, cfg1['GENERAL'][varPar]))
             log.error(message)
             raise AssertionError(message)
+        elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
+            thPercentVariation = varPar + 'PercentVariation'
+            if cfg1['GENERAL'][thPercentVariation] != '':
+                message = ('Only one reference value is allowed for %s: but %s %s is given' %
+                    (varPar, thPercentVariation, cfg1['GENERAL'][thPercentVariation]))
+                log.error(message)
+                raise AssertionError(message)
 
     # get range, steps and reference value of parameter to perform variations
     valVariation = cfgProb['PROBRUN']['%sVariation' % varName]
