@@ -4,6 +4,7 @@
 
 import logging
 import numpy as np
+import pandas as pd
 
 # Local imports
 import avaframe.in3Utils.fileHandlerUtils as fU
@@ -386,3 +387,107 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
             cfg['GENERAL'][key] = ''
 
     return cfg
+
+
+def appendShpThickness(cfg, variationDict):
+    """ append thickness values to GENERAL section if read from shp and not varied
+
+        Parameters
+        -----------
+        cfg: dict
+            configuration settings
+
+        Returns
+        --------
+        cfg: dict
+            updated configuartion settings
+
+    """
+
+    # first create which type of thickness settings are relevant for the current cfg dict
+    thTypes = ['relTh']
+    if cfg['GENERAL']['simTypeActual'] in ['ent', 'entres']:
+        thTypes.append('entTh')
+    if cfg['GENERAL']['secRelArea'] == 'True':
+        thTypes.append('secondaryRelTh')
+
+    # loop over all types and if thickness value read from shp file and no variation has been applied
+    # (in this case already added to GENERAL section) - add to section GENERAL
+    for thType in thTypes:
+        thFlag = thType + 'FromShp'
+        thPV = thType + 'PercentVariation'
+        if cfg['GENERAL'][thFlag] == 'True' and cfg['GENERAL'][thPV] == '':
+            thThickness = thType + 'Thickness'
+            thId = thType + 'Id'
+            thicknessList = cfg['INPUT'][thThickness].split('|')
+            idList = cfg['INPUT'][thId].split('|')
+            for count, id in enumerate(idList):
+                thNameId = thType + id
+                cfg['GENERAL'][thNameId] = str(float(thicknessList[count]))
+
+    return cfg
+
+
+
+def filterCom1DFAThicknessValues(key, value, simDF):
+    """ thickness settings different if read from shpfile - requires more complex filtering
+
+        Parameters
+        -----------
+        key: str
+            name of parameter
+        value: list
+            list of values used for filtering
+        simDF: pandas dataframe
+            configuration info for each simulation
+
+        Returns
+        --------
+        simDF: pandas data frame
+            updated dataframe
+    """
+
+    # check if filter for values not included
+    notIn = False
+    if '~' in key:
+        key = key.split('~')[1]
+        notIn = True
+
+    # create required parameters for searching
+    thFlag = key + 'FromShp'
+    thId = key + 'Id'
+    thThickness = key + 'Thickness'
+    thPercentVariation = key + 'PercentVariation'
+
+    # check if thickness values are potentially provided per feature - if so add these keys
+    simDFTest = simDF[simDF[thFlag] == 'True']
+    thIdFullList = list(set(simDFTest[thId].to_list()))
+    newKeyList = [key]
+    for thIdItems in thIdFullList:
+        thIdList = thIdItems.split('|')
+        newKeyList = newKeyList + [(key + id) for id in thIdList]
+
+    # append thickness parameter names and remove duplicates
+    newKeyList = list(set(newKeyList))
+
+    # filter simulations for thickness values
+    simDFList = []
+    for newKey in newKeyList:
+        if notIn:
+             # if non-matching simulations are wanted - remove sims with matching thickness values
+            simDF = simDF[~simDF[newKey].isin(value)]
+        else:
+             # look for sims with matching simulations and append them to list
+            simDFList.append(simDF[simDF[newKey].isin(value)])
+
+    # merge dataFrames from list
+    if notIn is False:
+        simDF = simDFList[0]
+        for si in simDFList[1:]:
+            simDF = pd.concat([simDF, si], axis=0)
+
+    # remove duplicate rows
+    simDF = simDF.drop_duplicates()
+    log.info('simulations for %s found with values: %s' % (key, simDF[newKeyList]))
+
+    return simDF

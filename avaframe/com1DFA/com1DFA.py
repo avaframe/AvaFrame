@@ -2067,6 +2067,9 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             cfgSim['INPUT'].pop('secondaryRelThId', None)
             cfgSim['INPUT'].pop('secondaryRelThThickness', None)
 
+        # add thickness values if read from shp and not varied
+        cfgSim = dP.appendShpThickness(cfgSim, variationDict)
+
         # convert back to configParser object
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration

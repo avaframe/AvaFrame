@@ -15,6 +15,7 @@ import numpy as np
 import avaframe as avaf
 from avaframe.in3Utils import logUtils
 from avaframe.in3Utils import fileHandlerUtils as fU
+import avaframe.com1DFA.deriveParameterSet as dP
 
 
 log = logging.getLogger(__name__)
@@ -451,6 +452,7 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
 
 def appendCgf2DF(simHash, simName, cfgObject, simDF):
     """ append simulation configuration to the simulation dataframe
+        only account for sections GENERAL and INPUT
 
         Parameters
         -----------
@@ -470,7 +472,9 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
     """
     indexItem = [simHash]
     cfgDict = convertConfigParserToDict(cfgObject)
-    simItemDF = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
+    simItemDFGeneral = pd.DataFrame(data=cfgDict['GENERAL'], index=indexItem)
+    simItemDFInput = pd.DataFrame(data=cfgDict['INPUT'], index=indexItem)
+    simItemDF = pd.concat([simItemDFGeneral, simItemDFInput], axis=1)
     simItemDF = simItemDF.assign(simName=simName)
     if isinstance(simDF, str):
         simDF = simItemDF
@@ -517,9 +521,11 @@ def convertDF2numerics(simDF):
         --------
         simDF: pandas DataFrame
     """
+
     for name, values in simDF.iteritems():
         simDFTest = simDF[name].str.replace('.', '', regex=True)
-        if simDFTest.str.isdigit()[0]:
+        # also include columns where nan is in first row - so check for any row
+        if simDFTest.str.isdigit().any():
             simDF[name] = pd.to_numeric(simDF[name])
             log.debug('Converted to numeric %s' % name)
         else:
@@ -622,13 +628,16 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
             if not isinstance(value, (list, np.ndarray)):
                 value = [value]
             if value != '' and value != []:
-                if '~' in key:
-                    # only add simulations that do not match the value of ~key
-                    keyNew = key.replace("~", "")
-                    simDF = simDF[~simDF[keyNew].isin(value)]
+                if key in ['relTh', 'entTh', 'secondaryRelTh', '~relTh', '~entTh', '~secondaryRelTh']:
+                    simDF = dP.filterCom1DFAThicknessValues(key, value, simDF)
                 else:
-                    # add all simulations that match the value of the key
-                    simDF = simDF[simDF[key].isin(value)]
+                    if '~' in key:
+                        # only add simulations that do not match the value of ~key
+                        keyNew = key.replace("~", "")
+                        simDF = simDF[~simDF[keyNew].isin(value)]
+                    else:
+                        # add all simulations that match the value of the key
+                        simDF = simDF[simDF[key].isin(value)]
 
     # list of simNames after filtering
     simNameList = simDF['simName'].tolist()
