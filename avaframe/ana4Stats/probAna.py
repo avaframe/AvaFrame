@@ -54,16 +54,16 @@ def createComModConfig(cfgProb, avaDir, modName):
         # use default com module settings or local settings
         if cfgProb['PROBRUN'].getboolean('defaultSetup'):
             modCfg = cfgUtils.getDefaultModuleConfig(modName)
-            modCfg, refIn = updateCfgRange(modCfg, cfgProb, varName)
+            modCfg = updateCfgRange(modCfg, cfgProb, varName)
             with open(cfgFile, 'w') as configfile:
                 modCfg.write(configfile)
         else:
             modCfg = cfgUtils.getModuleConfig(modName)
-            modCfg, refIn = updateCfgRange(modCfg, cfgProb, varName)
+            modCfg = updateCfgRange(modCfg, cfgProb, varName)
             with open(cfgFile, 'w') as configfile:
                 modCfg.write(configfile)
         # append cfgFiles to list
-        cfgFiles[varName] = {'cfgFile': cfgFile, 'referenceIncluded': refIn}
+        cfgFiles[varName] = {'cfgFile': cfgFile}
 
     return cfgFiles
 
@@ -84,8 +84,6 @@ def updateCfgRange(cfg1, cfgProb, varName):
         --------
         cfg1: configParser
             updated configuration object
-        refIn: bool
-            True if the reference value had to be added to parameter variation
 
     """
 
@@ -111,8 +109,6 @@ def updateCfgRange(cfg1, cfgProb, varName):
     valSteps = cfgProb['PROBRUN']['%sSteps' % varName]
     valVal = cfg1['GENERAL'][varName]
 
-    refIn = False
-
     # set variation in configuration
     if varName in ['relTh', 'entTh', 'secondaryRelTh']:
         if cfgProb['PROBRUN'].getboolean('percentVariation'):
@@ -121,16 +117,23 @@ def updateCfgRange(cfg1, cfgProb, varName):
         else:
             parName = varPar + 'rangeVariation'
             cfg1['GENERAL'][parName] = valVariation + '$' + valSteps
+        cfg1['GENERAL']['addStandardConfig'] = 'True'
     else:
         # set variation
         if cfgProb['PROBRUN'].getboolean('percentVariation'):
             cfg1['GENERAL'][varName] = '%s$%s$%s' % (valVal, valVariation, valSteps)
+            valValues = fU.splitIniValueToArraySteps(cfg1['GENERAL'][varName])
         else:
             valStart = str(float(valVal) - float(valVariation))
             valStop = str(float(valVal) + float(valVariation))
             cfg1['GENERAL'][varName] = '%s:%s:%s' % (valStart, valStop, valSteps)
+            valValues = np.linspace(float(valStart), float(valStop), int(valSteps))
 
-    return cfg1, refIn
+        # if reference value is not in variation - add reference values
+        if valVal not in valValues:
+            cfg1['GENERAL'][varName] = cfg1['GENERAL'][varName] + '&' + str(valVal)
+
+    return cfg1
 
 
 def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):

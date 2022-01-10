@@ -94,9 +94,9 @@ def test_createComModConfig(tmp_path):
 
     print(cfgMu['GENERAL']['mu'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['mu'], cfgRelTh['GENERAL']['relTh'])
 
-    assert cfgMu['GENERAL']['mu'] == '0.15500$60$2'
+    assert cfgMu['GENERAL']['mu'] == '0.155$60$2&0.155'
     assert cfgMu['GENERAL']['relTh'] == ''
-    assert cfgRelTh['GENERAL']['mu'] == '0.15500'
+    assert cfgRelTh['GENERAL']['mu'] == '0.155'
     assert cfgRelTh['GENERAL']['relTh'] == ''
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'True'
     assert cfgRelTh['GENERAL']['relThPercentVariation'] == '50$3'
@@ -110,16 +110,15 @@ def test_updateCfgRange():
     # setup inputs
     cfg = configparser.ConfigParser()
     cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'percentVariation': 'True', 'muVariation': '60',
-        'muSteps': '2', 'relThVariation': '50', 'relThSteps': '3', 'defaultSetup': 'True'}
+        'muSteps': '2', 'relThVariation': '50', 'relThSteps': '2', 'defaultSetup': 'True'}
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'mu'
 
     # call function
-    cfgNew, refIn = pA.updateCfgRange(com1DFACfg, cfg, varName)
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName)
 
-    assert refIn is False
-    assert cfgNew['GENERAL']['mu'] == '0.15500$60$2'
+    assert cfgNew['GENERAL']['mu'] == '0.155$60$2&0.155'
     assert cfgNew['GENERAL']['relTh'] == ''
     assert cfgNew['GENERAL']['relThFromShp'] == 'True'
     assert cfgNew['GENERAL']['relThPercentVariation'] == ''
@@ -129,9 +128,10 @@ def test_updateCfgRange():
     varName = 'relTh'
 
     # call function
-    cfgNew, refIn = pA.updateCfgRange(com1DFACfg, cfg, varName)
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName)
 
-    assert cfgNew['GENERAL']['mu'] == '0.15500'
+    assert cfgNew['GENERAL']['mu'] == '0.155'
     assert cfgNew['GENERAL']['relTh'] == ''
     assert cfgNew['GENERAL']['relThFromShp'] == 'True'
-    assert cfgNew['GENERAL']['relThPercentVariation'] == '50$3'
+    assert cfgNew['GENERAL']['relThPercentVariation'] == '50$2'
+    assert cfgNew['GENERAL']['addStandardConfig'] == 'True'

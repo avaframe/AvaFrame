@@ -313,7 +313,7 @@ def splitIniValueToArraySteps(cfgValues, returnList=False):
     elif '$' in cfgValues:
         if '&' in cfgValues:
             itemsPBig = cfgValues.split('&')
-            itemsP = itemsInputBig[0].split('$')
+            itemsP = itemsPBig[0].split('$')
         else:
             itemsP = cfgValues.split('$')
         itemsPRange = (float(itemsP[1]) / 100.) * float(itemsP[0])

@@ -625,6 +625,8 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
     # load dataFrame for all configurations
     simDF = createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
 
+    simDFFile = pathlib.Path(avalancheDir, 'simDFFile.csv')
+    simDF.to_csv(simDFFile)
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
         for key, value in parametersDict.items():
@@ -644,7 +646,6 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
 
     # list of simNames after filtering
     simNameList = simDF['simName'].tolist()
-
     return simNameList
 
 
@@ -696,6 +697,9 @@ def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir=''
 
 def filterCom1DFAThicknessValues(key, value, simDF):
     """ thickness settings different if read from shpfile - requires more complex filtering
+        if read from shp - thickness values are provided per feature!!
+        for example relTh = '' but relTh0 = 1 is appended for feature with id 0, relTh1 for feature
+        with id 1, etc.
 
         Parameters
         -----------
@@ -712,7 +716,7 @@ def filterCom1DFAThicknessValues(key, value, simDF):
             updated dataframe
     """
 
-    # check if filter for values not included
+    # check if filter for values that do NOT match criteria
     notIn = False
     if '~' in key:
         key = key.split('~')[1]
@@ -724,36 +728,40 @@ def filterCom1DFAThicknessValues(key, value, simDF):
     thThickness = key + 'Thickness'
     thPercentVariation = key + 'PercentVariation'
 
-    # check if thickness values are potentially provided per feature - if so add these keys
-    simDFTest = simDF[simDF[thFlag] == 'True']
-    newKeyList = [key]
-    if simDFTest.empty is False:
-        thIdFullList = list(set(simDFTest[thId].to_list()))
-        for thIdItems in thIdFullList:
-            thIdList = thIdItems.split('|')
-            newKeyList = newKeyList + [(key + id) for id in thIdList]
-
-        # append thickness parameter names and remove duplicates
-        newKeyList = list(set(newKeyList))
-
-    # filter simulations for thickness values
-    simDFList = []
-    for newKey in newKeyList:
-        if notIn:
-             # if non-matching simulations are wanted - remove sims with matching thickness values
-            simDF = simDF[~simDF[newKey].isin(value)]
+    # append identifier if simulation matches thickness filter criteria
+    simDF['toBeAdded'] = 'False'
+    # initialize list for thickness parameter names (according to thickness configuration -
+    # e.g. mutiple features)
+    allThNames = []
+    # loop over simDF and set identifier if filter criteria are matched
+    for simHash, simDFrow in simDF.iterrows():
+        if simDFrow[thFlag] == 'True':
+            # inititialise thickness ids and thickness parameter names if thickness read from shp
+            thIdList = str(simDFrow[thId]).split('|')
+            thNames = [(key + id) for id in thIdList]
+            allThNames = allThNames + thNames
+            log.warning('Filtering applied for %s - multiple features found as %s was read \
+                from shp file - only simulations where all features match %s will be added' %
+                (key, key, value))
         else:
-             # look for sims with matching simulations and append them to list
-            simDFList.append(simDF[simDF[newKey].isin(value)])
+            # if thickness read from ini add thickness parameter name
+            thIdList = [0]
+            thNames = [key]
+            allThNames = allThNames + [key]
+        # check if filter criteria are met by thickness parameters for the sim in simDFrow
+        for val in value:
+            if (simDFrow[thNames].values == [val] * len(thIdList)).all():
+                simDF.loc[simHash,'toBeAdded'] = 'True'
 
-    # merge dataFrames from list
-    if notIn is False:
-        simDF = simDFList[0]
-        for si in simDFList[1:]:
-            simDF = pd.concat([simDF, si], axis=0)
+    # get a list with all thickness parameters included in search
+    allThNames = list(set(allThNames))
+    if notIn:
+        # return all sims that do not match filter criteria
+        simDF = simDF[simDF['toBeAdded'] == 'False']
+    else:
+        # return all sims that do match filter criteria
+        simDF = simDF[simDF['toBeAdded'] == 'True']
 
-    # remove duplicate rows
-    simDF = simDF.drop_duplicates()
-    log.info('simulations for %s found with values: %s' % (key, simDF[newKeyList]))
+    log.info('simulations for %s found with values: %s' % (key, simDF[allThNames]))
 
     return simDF
