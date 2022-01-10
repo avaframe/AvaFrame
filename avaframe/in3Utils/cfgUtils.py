@@ -529,9 +529,9 @@ def convertDF2numerics(simDF):
             simDFTest = simDF[name].str.replace('|', '§', regex=True)
             if simDFTest.str.contains('§').any() == False:
                 simDF[name] = pd.to_numeric(simDF[name])
-                log.info('Converted to numeric %s' % name)
+                log.debug('Converted to numeric %s' % name)
         else:
-            log.info('Not converted to numeric: %s' % name)
+            log.debug('Not converted to numeric: %s' % name)
 
     return simDF
 
@@ -726,14 +726,15 @@ def filterCom1DFAThicknessValues(key, value, simDF):
 
     # check if thickness values are potentially provided per feature - if so add these keys
     simDFTest = simDF[simDF[thFlag] == 'True']
-    thIdFullList = list(set(simDFTest[thId].to_list()))
     newKeyList = [key]
-    for thIdItems in thIdFullList:
-        thIdList = thIdItems.split('|')
-        newKeyList = newKeyList + [(key + id) for id in thIdList]
+    if simDFTest.empty is False:
+        thIdFullList = list(set(simDFTest[thId].to_list()))
+        for thIdItems in thIdFullList:
+            thIdList = thIdItems.split('|')
+            newKeyList = newKeyList + [(key + id) for id in thIdList]
 
-    # append thickness parameter names and remove duplicates
-    newKeyList = list(set(newKeyList))
+        # append thickness parameter names and remove duplicates
+        newKeyList = list(set(newKeyList))
 
     # filter simulations for thickness values
     simDFList = []
