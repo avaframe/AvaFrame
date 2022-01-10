@@ -46,12 +46,12 @@ resType = cfgSetup['resType']
 
 
 # Load all infos on all simulations
-inputsDF = fU.makeSimFromResDF(avalancheDir, anaMod, inputDir='')
+inputsDF, _ = fU.makeSimFromResDF(avalancheDir, anaMod, inputDir='')
 # define reference simulation
 refSimulation, inputsDF, colorParameter = aimecTools.fetchReferenceSimNo(avalancheDir, inputsDF, anaMod, cfgSetup)
 pathDict = {'refSimulation': refSimulation, 'compType': ['singleModule', anaMod], 'colorParameter': colorParameter}
 pathDict = aimecTools.readAIMECinputs(avalancheDir, pathDict, dirName=anaMod)
-
+pathDict['resTypeList'] = [resType]
 startTime = time.time()
 
 log.info("Running ana3AIMEC model on test case DEM \n %s \n with profile \n %s ",

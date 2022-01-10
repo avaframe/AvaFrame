@@ -573,6 +573,8 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
             simulation type (null, entres, etc.), model type (dfa, ref, etc.), simID,
             path to result files (ppr, pfd, etc.), simulation name,
             cell size and optional name of avalanche, optional time step
+        resTypeList: list
+            list of res types available
     """
 
     # get path to folder containing the raster files
@@ -594,6 +596,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
 
     # build the result data frame
     dataDF = pd.DataFrame(columns=['simName'])
+    resTypeList = []
     for file in datafiles:
         name = file.stem
         if '_AF_' in name:
@@ -622,5 +625,6 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
             dataDF.loc[simName, 'cellSize'] = header['cellsize']
         # add full path to resType
         dataDF.loc[simName, resType] = pathlib.Path(file)
-
-    return dataDF
+        if resType not in resTypeList:
+            resTypeList.append(resType)
+    return dataDF, resTypeList

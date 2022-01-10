@@ -123,10 +123,13 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
     inputDirRef, inputDirComp, pathDict = getCompDirs(avaDir, cfgSetup)
 
     # Load all infos on reference simulations
-    refData = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirRef, simName=simNameRef)
+    refData, resTypeRefList = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirRef, simName=simNameRef)
 
     # Load all infos on comparison module simulations
-    compData = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirComp, simName=simNameComp)
+    compData, resTypeCompList = fU.makeSimFromResDF(avaDir, None, inputDir=inputDirComp, simName=simNameComp)
+
+    resTypeList = list(set(resTypeRefList).intersection(resTypeCompList))
+    pathDict['resTypeList'] = resTypeList
     # check outputs
     try:
         simNameRef = refData['simName'][0]
@@ -148,7 +151,7 @@ def dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp):
     # if desired set path to mass log files
     comModules = pathDict['compType']
     sims = {comModules[1]: simNameRef, comModules[2]: simNameComp}
-    print(sims)
+
     if cfg['FLAGS'].getboolean('flagMass'):
         for comMod, sim in sims.items():
             log.info('mass file for comMod: %s and sim: %s' % (comMod, sim))
@@ -224,7 +227,7 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
             with a line for each simulation available and the corresponding simulation results: ppr, pfd, pfv
     """
 
-    inputsDF = fU.makeSimFromResDF(avaDir, comModule)
+    inputsDF, resTypeList = fU.makeSimFromResDF(avaDir, comModule)
 
     if cfg['FLAGS'].getboolean('flagMass'):
         # Extract mb info
@@ -233,4 +236,4 @@ def mainDfa2Aimec(avaDir, comModule, cfg):
             inputsDF = extractCom1DFAMBInfo(avaDir, inputsDF)
         else:
             inputsDF = getMBInfo(avaDir, inputsDF, comModule)
-    return inputsDF
+    return inputsDF, resTypeList
