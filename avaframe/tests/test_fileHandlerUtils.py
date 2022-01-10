@@ -324,8 +324,8 @@ def test_getDFADataPaths():
     pathDict2 = fU.getDFADataPaths(avaDir, pathDict2, cfgSetup, suffix, comModule='', inputDir=inputDir)
 
     # define paths
-    path1 = 'benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_ppr.asc'
-    path2 = 'benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release2HS_ent_dfa_872f0101a4_ppr.asc'
+    path1 = 'benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release1HS_ent_dfa_d10bdc1e81_ppr.asc'
+    path2 = 'benchmarks/avaHockeyChannelPytest/Outputs/com1DFA/peakFiles/release2HS_ent_dfa_e2145362b7_ppr.asc'
 
     assert pathDict['colorParameter'] == ['release1HS', 'release2HS']
     assert path1 in str(pathDict['ppr'][0])

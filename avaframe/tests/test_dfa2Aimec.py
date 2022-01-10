@@ -65,14 +65,14 @@ def test_mainDfa2Aimec(tmp_path):
     print('path', dirPath)
     # get path dictionary for test
     pathDTest = {}
-    pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_67dc2dc10a_ppr.asc',
-                        pathData / 'release2HS_ent_dfa_872f0101a4_ppr.asc']
-    pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_67dc2dc10a_pfd.asc',
-                        pathData / 'release2HS_ent_dfa_872f0101a4_pfd.asc']
-    pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_67dc2dc10a_pfv.asc',
-                        pathData / 'release2HS_ent_dfa_872f0101a4_pfv.asc']
-    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFA' / 'mass_release1HS_ent_dfa_67dc2dc10a.txt',
-                            testPath / 'Outputs' / 'com1DFA' / 'mass_release2HS_ent_dfa_872f0101a4.txt']
+    pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_d10bdc1e81_ppr.asc',
+                        pathData / 'release2HS_ent_dfa_e2145362b7_ppr.asc']
+    pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_d10bdc1e81_pfd.asc',
+                        pathData / 'release2HS_ent_dfa_e2145362b7_pfd.asc']
+    pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_d10bdc1e81_pfv.asc',
+                        pathData / 'release2HS_ent_dfa_e2145362b7_pfv.asc']
+    pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFA' / 'mass_release1HS_ent_dfa_d10bdc1e81.txt',
+                            testPath / 'Outputs' / 'com1DFA' / 'mass_release2HS_ent_dfa_e2145362b7.txt']
 
     assert pathDict['ppr'] == pathDTest['ppr']
     assert pathDict['pfd'] == pathDTest['pfd']
@@ -114,14 +114,14 @@ def test_dfaComp2Aimec(tmp_path):
 
     # get path dictionary for test
     massNameRef = 'mass_release1HS_ent_dfa_0.15500.txt'
-    massNameSim = 'mass_release1HS_ent_dfa_67dc2dc10a.txt'
+    massNameSim = 'mass_release1HS_ent_dfa_d10bdc1e81.txt'
     pathDTest = {}
     pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc',
-                        pathData2 / 'release1HS_ent_dfa_67dc2dc10a_ppr.asc']
+                        pathData2 / 'release1HS_ent_dfa_d10bdc1e81_ppr.asc']
     pathDTest['pfd'] = [pathData / 'release1HS_ent_dfa_0.15500_pfd.asc',
-                        pathData2 / 'release1HS_ent_dfa_67dc2dc10a_pfd.asc']
+                        pathData2 / 'release1HS_ent_dfa_d10bdc1e81_pfd.asc']
     pathDTest['pfv'] = [pathData / 'release1HS_ent_dfa_0.15500_pfv.asc',
-                        pathData2 / 'release1HS_ent_dfa_67dc2dc10a_pfv.asc']
+                        pathData2 / 'release1HS_ent_dfa_d10bdc1e81_pfv.asc']
     pathDTest['massBal'] = [testPath / 'Outputs' / 'com1DFAOrig' / massNameRef,
                             testPath / 'Outputs' / 'com1DFA' / massNameSim]
 
@@ -177,16 +177,16 @@ def test_getMBInfo():
     pathDict = dfa2Aimec.getMBInfo(avaDir, pathDict, comMod, simName=simName)
 
     print('pathDict', pathDict)
-    assert 'mass_release1HS_ent_dfa_67dc2dc10a' in str(pathDict['massBal'][0])
-    assert 'mass_release2HS_ent_dfa_872f0101a4' in str(pathDict['massBal'][1])
+    assert 'mass_release1HS_ent_dfa_d10bdc1e81' in str(pathDict['massBal'][0])
+    assert 'mass_release2HS_ent_dfa_e2145362b7' in str(pathDict['massBal'][1])
 
     # call fucntion to be tested
-    simName = 'release1HS_ent_dfa_67dc2dc10a'
+    simName = 'release1HS_ent_dfa_d10bdc1e81'
     pathDict2 = dfa2Aimec.getMBInfo(avaDir, pathDict, comMod, simName=simName)
 
     print('pathDict2', pathDict2)
-    assert 'mass_release1HS_ent_dfa_67dc2dc10a' in str(pathDict['massBal'][0])
-    assert 'mass_release2HS_ent_dfa_872f0101a4' not in str(pathDict['massBal'][0])
+    assert 'mass_release1HS_ent_dfa_d10bdc1e81' in str(pathDict['massBal'][0])
+    assert 'mass_release2HS_ent_dfa_e2145362b7' not in str(pathDict['massBal'][0])
 
 
 def test_getPathsFromSimName():
@@ -202,7 +202,7 @@ def test_getPathsFromSimName():
     inputDirRef = avaDir / 'Outputs' / 'com1DFAOrig' / 'peakFiles'
     simNameRef = 'release1HS_ent_dfa_0.15500'
     inputDirComp = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
-    simNameComp = 'release1HS_ent_dfa_67dc2dc10a'
+    simNameComp = 'release1HS_ent_dfa_d10bdc1e81'
     pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
 
     # call function to be tested
@@ -210,10 +210,10 @@ def test_getPathsFromSimName():
 
     print('pathDict', pathDict)
 
-    assert 'com1DFA/mass_release1HS_ent_dfa_67dc2dc10a' in str(pathDict['massBal'][1])
-    assert 'com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_pfd' in str(pathDict['pfd'][1])
-    assert 'com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_ppr' in str(pathDict['ppr'][1])
-    assert 'com1DFA/peakFiles/release1HS_ent_dfa_67dc2dc10a_pfv' in str(pathDict['pfv'][1])
+    assert 'com1DFA/mass_release1HS_ent_dfa_d10bdc1e81' in str(pathDict['massBal'][1])
+    assert 'com1DFA/peakFiles/release1HS_ent_dfa_d10bdc1e81_pfd' in str(pathDict['pfd'][1])
+    assert 'com1DFA/peakFiles/release1HS_ent_dfa_d10bdc1e81_ppr' in str(pathDict['ppr'][1])
+    assert 'com1DFA/peakFiles/release1HS_ent_dfa_d10bdc1e81_pfv' in str(pathDict['pfv'][1])
     assert 'com1DFAOrig/mass_release1HS_ent_dfa_0.15500' in str(pathDict['massBal'][0])
     assert 'com1DFAOrig/peakFiles/release1HS_ent_dfa_0.15500_pfd' in str(pathDict['pfd'][0])
     assert 'release1HS_ent_dfa_0.15500_ppr' in str(pathDict['ppr'][0])
@@ -231,9 +231,9 @@ def test_getPathsFromSimName():
     print('pathDict2', pathDict2)
 
     assert pathDict2['massBal'] == []
-    assert 'release1HS_ent_dfa_67dc2dc10a_pfd' in str(pathDict2['pfd'][1])
-    assert 'release1HS_ent_dfa_67dc2dc10a_ppr' in str(pathDict2['ppr'][1])
-    assert 'release1HS_ent_dfa_67dc2dc10a_pfv' in str(pathDict2['pfv'][1])
+    assert 'release1HS_ent_dfa_d10bdc1e81_pfd' in str(pathDict2['pfd'][1])
+    assert 'release1HS_ent_dfa_d10bdc1e81_ppr' in str(pathDict2['ppr'][1])
+    assert 'release1HS_ent_dfa_d10bdc1e81_pfv' in str(pathDict2['pfv'][1])
     assert 'avaHockeyChannelEntTest/release1HS_ent_ref_0.15500_pfd' in str(pathDict2['pfd'][0])
     assert 'avaHockeyChannelEntTest/release1HS_ent_ref_0.15500_ppr' in str(pathDict2['ppr'][0])
     assert 'avaHockeyChannelEntTest/release1HS_ent_ref_0.15500_pfv' in str(pathDict2['pfv'][0])
@@ -252,7 +252,7 @@ def test_getPathsFromSimName():
     assert ('No reference simulation file found called: %s' % str(refFileTest))  in str(e.value)
 
     simNameRef = 'release1HS_ent_ref_0.15500'
-    simNameComp = 'release1HS_null_dfa_67dc2dc10a'
+    simNameComp = 'release1HS_null_dfa_d10bdc1e81'
     compFileTest = inputDirComp / simNameComp
     pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': []}
     with pytest.raises(FileNotFoundError) as e:
@@ -271,17 +271,17 @@ def test_dfaBench2Aimec():
     avaTestName = 'avaHockeyChannelPytest'
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestName
     simNameRef = 'release1HS_ent_dfa_0.15500'
-    simNameComp = 'release1HS_ent_dfa_67dc2dc10a'
+    simNameComp = 'release1HS_ent_dfa_d10bdc1e81'
 
     # call function to be tested
     pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfg, simNameRef, simNameComp)
 
     print('pathDict', pathDict)
 
-    assert 'mass_release1HS_ent_dfa_67dc2dc10a' in str(pathDict['massBal'][1])
-    assert 'release1HS_ent_dfa_67dc2dc10a_pfd' in str(pathDict['pfd'][1])
-    assert 'release1HS_ent_dfa_67dc2dc10a_ppr' in str(pathDict['ppr'][1])
-    assert 'release1HS_ent_dfa_67dc2dc10a_pfv' in str(pathDict['pfv'][1])
+    assert 'mass_release1HS_ent_dfa_d10bdc1e81' in str(pathDict['massBal'][1])
+    assert 'release1HS_ent_dfa_d10bdc1e81_pfd' in str(pathDict['pfd'][1])
+    assert 'release1HS_ent_dfa_d10bdc1e81_ppr' in str(pathDict['ppr'][1])
+    assert 'release1HS_ent_dfa_d10bdc1e81_pfv' in str(pathDict['pfv'][1])
     assert 'mass_release1HS_ent_dfa_0.15500' in str(pathDict['massBal'][0])
     assert 'release1HS_ent_dfa_0.15500_pfd' in str(pathDict['pfd'][0])
     assert 'release1HS_ent_dfa_0.15500_ppr' in str(pathDict['ppr'][0])
@@ -347,7 +347,7 @@ def test_indiDfa2Aimec():
     print('pathDict', pathDict)
 
     assert 'pfv' not in pathDict.keys()
-    assert 'release1HS_ent_dfa_67dc2dc10a_ppr' in str(pathDict['ppr'][0])
+    assert 'release1HS_ent_dfa_d10bdc1e81_ppr' in str(pathDict['ppr'][0])
     assert 'pfd' not in pathDict.keys()
     assert pathDict['compType'] == ['singleModule', 'com1DFA']
     assert pathDict['colorParameter'] == ['release1HS', 'release2HS']

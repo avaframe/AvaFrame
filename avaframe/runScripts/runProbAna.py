@@ -44,7 +44,7 @@ for avaDir in avalancheDirectories:
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # Run Standalone DFA
-    particlesList, fieldsList, Tsave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain,
         cfgFile=probSimCfg, relThField='')
 
     # Load input parameters from configuration file
