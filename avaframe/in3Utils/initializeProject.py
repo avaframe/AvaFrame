@@ -58,7 +58,7 @@ def cleanModuleFiles(avaDir, module, alternativeName='', deleteOutput=True):
 
     # check for empty or non string variable
     result = _checkAvaDirVariable(avaDir)
-    if not 'SUCCESS' in result:
+    if 'SUCCESS' not in result:
         return result
 
     # get filename of module
@@ -92,7 +92,7 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
 
     # check for empty or non string variable
     result = _checkAvaDirVariable(avaDir)
-    if not 'SUCCESS' in result:
+    if 'SUCCESS' not in result:
         return result
 
     # Info to user

@@ -72,13 +72,15 @@ def AIMEC2Report(pathDict, inputsDF, cfg):
     inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
     timeMass = None
     resAnalysisDF = inputsDF[['simName']].copy()
-    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, refSimulationName, resAnalysisDF)
+    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters,
+                                                           timeMass, refSimulationName, resAnalysisDF)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         simName = inputsDFrow['simName']
         if simName != refSimulationName:
-            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF)
+            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
+                                                                   newRasters, timeMass, simName, resAnalysisDF)
 
     # -----------------------------------------------------------
     # result visualisation + report
@@ -157,13 +159,15 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
     timeMass = None
     resAnalysisDF = inputsDF[['simName']].copy()
-    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, refSimulationName, resAnalysisDF)
+    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters,
+                                                           timeMass, refSimulationName, resAnalysisDF)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         simName = inputsDFrow['simName']
         if simName != refSimulationName:
-            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF)
+            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
+                                                                   newRasters, timeMass, simName, resAnalysisDF)
 
     # -----------------------------------------------------------
     # result visualisation + report
@@ -406,13 +410,15 @@ def AIMECIndividual(pathDict, inputsDF, cfg):
     # postprocess reference
     inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
     resAnalysisDF = inputsDF[['simName']].copy()
-    resAnalysisDF, newRasters = postProcessAIMECIndividual(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, refSimulationName, resAnalysisDF)
+    resAnalysisDF, newRasters = postProcessAIMECIndividual(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters,
+                                                           refSimulationName, resAnalysisDF)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         simName = inputsDFrow['simName']
         if simName != refSimulationName:
-            resAnalysisDF, newRasters = postProcessAIMECIndividual(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, simName, resAnalysisDF)
+            resAnalysisDF, newRasters = postProcessAIMECIndividual(cfg, rasterTransfo, pathDict, inputsDFrow,
+                                                                   newRasters, simName, resAnalysisDF)
 
     # -----------------------------------------------------------
     # result visualisation + report

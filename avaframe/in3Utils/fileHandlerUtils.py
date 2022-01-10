@@ -85,7 +85,7 @@ def readLogFile(logName, cfg=''):
         varPar = 'Mu'
 
     # Save info to dictionary, add all result parameters that are saved in com1DFA Outputs
-    logDict = {'noSim' : [], 'simName' : [], varPar: [], 'fullName' : []}
+    logDict = {'noSim': [], 'simName': [], varPar: [], 'fullName': []}
 
     lines = logFile.readlines()[1:]
     countSims = 1
@@ -224,7 +224,7 @@ def checkIfFileExists(filePath, fileType=''):
 def checkCommonSims(logName, localLogName):
     """ Check which files are common between local and full ExpLog """
 
-    if os.path.isfile(localLogName) == False:
+    if os.path.isfile(localLogName) is False:
         localLogName = logName
 
     # Read log files and extract info
@@ -421,7 +421,7 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     # Path to com1DFA results
     resPath = inputDir / ('FullOutput_%s_' % varPar)
 
-    if addTSteps == True:
+    if addTSteps is True:
         timeStepDir = outDirPF / 'timeSteps'
         makeADir(timeStepDir)
 
@@ -432,7 +432,7 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
                                 '%s_pfd.asc' % logDict['simName'][k])
         pathTo = outDirPF / ('%s_%.05f_pfd.asc' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
-        if addTSteps == True:
+        if addTSteps is True:
             pathFrom = pathlib.Path('%s%.05f' % (resPath, logDict[varPar][k]),
                                     logDict['simName'][k], 'raster',
                                     '%s_fd.asc' % logDict['simName'][k])
@@ -453,7 +453,7 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
         pathTo = outDirRep / ('%s_%.05f.html' % (logDict['simName'][k], logDict[varPar][k]))
         shutil.copy(pathFrom, pathTo)
 
-    if addTSteps == True:
+    if addTSteps is True:
 
         # Export peak files and reports
         for k in range(sNo):
@@ -493,7 +493,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
     """
 
     # Load input datasets from input directory
-    if isinstance(inputDir, pathlib.Path) == False:
+    if isinstance(inputDir, pathlib.Path) is False:
         inputDir = pathlib.Path(inputDir)
     datafiles = list(inputDir.glob('*.asc'))
 
@@ -502,7 +502,7 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
 
     # Set name of avalanche if avaDir is given
     # Make dictionary of input data info
-    data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'simName' : [],
+    data = {'files': [], 'names': [], 'resType': [], 'simType': [], 'simName': [],
             'modelType': [], 'releaseArea': [], 'cellSize': [], simID: [], 'timeStep': []}
 
     # Set name of avalanche if avaDir is given
@@ -578,9 +578,9 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
     # get path to folder containing the raster files
     if inputDir == '':
         inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
-    if isinstance(inputDir, pathlib.Path) == False:
+    if isinstance(inputDir, pathlib.Path) is False:
         inputDir = pathlib.Path(inputDir)
-    if inputDir.is_dir() == False:
+    if inputDir.is_dir() is False:
         message = 'Input directory %s does not exist - check anaMod' % inputDir
         log.error(message)
         raise FileNotFoundError(message)
