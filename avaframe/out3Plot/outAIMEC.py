@@ -536,7 +536,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     dataDiff = compData - refData
     dataDiff = np.where((refData == 0) & (compData == 0), np.nan, dataDiff)
     dataDiffPlot = np.where((refData < thresholdArray[-1]) & (compData < thresholdArray[-1]), np.nan, dataDiff)
-    dataDiffPlot = dataDiffPlot[np.isnan(dataDiffPlot) is False]
+    dataDiffPlot = dataDiffPlot[~np.isnan(dataDiffPlot)]
 
     if dataDiffPlot.size:
         # only add the second axis if one of the two avalanches reached the run out area
