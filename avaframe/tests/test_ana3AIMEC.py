@@ -85,13 +85,16 @@ def test_analyzeArea(capfd):
     timeMass = None
     resAnalysisDF = inputsDF[['simName']].copy()
     resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
-        newRasters, timeMass, pathDict['refSimulation'], resAnalysisDF)
+                                                                     newRasters, timeMass, pathDict['refSimulation'],
+                                                                     resAnalysisDF)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         simName = inputsDFrow['simName']
         if simName != pathDict['refSimulation']:
-            resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF)
+            resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
+                                                                             newRasters, timeMass, simName,
+                                                                             resAnalysisDF)
     print(resAnalysisDF['sRunout'])
     print(resAnalysisDF['xRunout'])
     print(resAnalysisDF['yRunout'])
@@ -131,14 +134,14 @@ def test_makeDomainTransfo(capfd):
     d = {}
     d['simName'] = ['testAimec_0', 'testAimec_1', 'testAimec_2', 'testAimec_3', 'testAimec_4']
     d['ppr'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
-                      pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
-                      pathData / 'testAimec_4.asc']
+                pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
+                pathData / 'testAimec_4.asc']
     d['pfd'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
-                      pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
-                      pathData / 'testAimec_4.asc']
+                pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
+                pathData / 'testAimec_4.asc']
     d['pfv'] = [pathData / 'testAimec_0.asc', pathData / 'testAimec_1.asc',
-                      pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
-                      pathData / 'testAimec_4.asc']
+                pathData / 'testAimec_2.asc', pathData / 'testAimec_3.asc',
+                pathData / 'testAimec_4.asc']
     d['massBal'] = [dirname / '000001.txt']*5
     inputsDF = pd.DataFrame(data=d, index=['testAimec_0', 'testAimec_1', 'testAimec_2', 'testAimec_3', 'testAimec_4'])
     pathDict['contCmap'] = True
@@ -183,14 +186,16 @@ def test_makeDomainTransfo(capfd):
     timeMass = None
     resAnalysisDF = inputsDF[['simName']].copy()
     resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
-        newRasters, timeMass, pathDict['refSimulation'], resAnalysisDF)
+                                                                     newRasters, timeMass, pathDict['refSimulation'],
+                                                                     resAnalysisDF)
 
     # postprocess other simulations
     for index, inputsDFrow in inputsDF.iterrows():
         simName = inputsDFrow['simName']
         if simName != pathDict['refSimulation']:
-            resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF)
-
+            resAnalysisDF, newRasters, timeMass = ana3AIMEC.postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
+                                                                             newRasters, timeMass, simName,
+                                                                             resAnalysisDF)
 
     for i in range(5):
         rasterSource = inputsDF['ppr'][i]

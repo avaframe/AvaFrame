@@ -727,7 +727,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
         releaseLineReal = inputSimLines['releaseLine']
         # check if release features overlap between features
         prepareArea(releaseLineReal, demOri, thresholdPointInPoly, combine=True, checkOverlap=True)
-        buffer1 = cfg['GENERAL'].getfloat('sphKernelRadius') * cfg['GENERAL'].getfloat('additionallyFixedFactor') * cfg['GENERAL'].getfloat('bufferZoneFactor')
+        buffer1 = (cfg['GENERAL'].getfloat('sphKernelRadius') * cfg['GENERAL'].getfloat('additionallyFixedFactor') *
+                   cfg['GENERAL'].getfloat('bufferZoneFactor'))
         if len(relThField) == 0:
             # if no release thickness field or function - set release according to shapefile or ini file
             # this is a list of release rasters that we want to combine
@@ -1238,7 +1239,8 @@ def DFAIterate(cfg, particles, fields, dem):
         startTime = time.time()
         log.debug('Computing time step t = %f s, dt = %f s' % (t, dt))
         # Perform computations
-        particles, fields, zPartArray0, tCPU = computeEulerTimeStep(cfgGen, particles, fields, zPartArray0, dem, tCPU, frictType)
+        particles, fields, zPartArray0, tCPU = computeEulerTimeStep(cfgGen, particles, fields, zPartArray0, dem, tCPU,
+                                                                    frictType)
 
         tCPU['nSave'] = nSave
         particles['t'] = t

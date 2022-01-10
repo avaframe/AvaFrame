@@ -140,7 +140,7 @@ def test_inclinedplane():
     testRes = np.allclose(z, zSol, atol=1.e-6)
 
     # Test
-    assert (testRes == True)
+    assert (testRes is True)
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
@@ -160,7 +160,7 @@ def test_inclinedplane():
     testRes = np.allclose(z, zSol, atol=1.e-6)
 
     # Test
-    assert (testRes == True)
+    assert (testRes is True)
 
 
 def test_hockey():
@@ -186,7 +186,7 @@ def test_hockey():
     testRes = np.allclose(z, zSol, atol=5.e-6)
 
     # Test
-    assert (testRes == True)
+    assert (testRes is True)
 
 
 def test_parabola():
@@ -211,7 +211,7 @@ def test_parabola():
     testRes = np.allclose(z, zSol, atol=1.e-6)
 
     # Test
-    assert (testRes == True)
+    assert (testRes is True)
 
 
 def test_helix():
@@ -236,7 +236,7 @@ def test_helix():
     testRes = np.allclose(z, zSol, atol=1.e-6)
 
     # Test
-    assert (testRes == True)
+    assert (testRes is True)
 
 
 def test_bowl():
@@ -259,4 +259,4 @@ def test_bowl():
     testRes = np.allclose(z, zSol, atol=1.e-6)
 
     # Test
-    assert (testRes == True)
+    assert (testRes is True)

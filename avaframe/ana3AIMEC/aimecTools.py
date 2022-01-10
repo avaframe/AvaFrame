@@ -118,7 +118,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             True if a color variation should be applied in the plots
     """
     inputDir = pathlib.Path(avaDir, 'Outputs', comModule, 'peakFiles')
-    if inputDir.is_dir()==False:
+    if inputDir.is_dir() == False:
         message = 'Input directory %s does not exist - check anaMod' % inputDir
         log.error(message)
         raise FileNotFoundError(message)
@@ -129,7 +129,8 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         varParList = cfgSetup['varParList'].split('|')
 
         # create dataFrame with ordered configurations
-        configurationDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfgSetup.getboolean('ascendingOrder'), resFiles=False)
+        configurationDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfgSetup.getboolean('ascendingOrder'),
+                                                 resFiles=False)
         # Merge inputsDF with the configurationDF. Make sure to keep the indexing from inputs and to merge on 'simName'
         inputsDF = inputsDF.reset_index().merge(configurationDF, on='simName').set_index('index')
 
@@ -147,7 +148,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
                 indexRef = sortingParameter.index(typeCP(cfgSetup['referenceSimValue']))
             log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
                      (varParList[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
-            refSimulation = configurationDF[configurationDF[varParList[0]]==colorValues[indexRef]]['simName'].to_list()[0]
+            refSimulation = configurationDF[configurationDF[varParList[0]] == colorValues[indexRef]]['simName'].to_list()[0]
             colorVariation = True
         else:
             # reference simulation

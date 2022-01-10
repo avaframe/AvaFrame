@@ -383,7 +383,7 @@ def visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict):
     # prepare for plot
     Cmap = [pU.cmapPres, pU.cmapDepth, pU.cmapSpeed]
     Title = ['Peak Pressure', 'Peak Flow Depth', 'Peak Speed']
-    Unit = [pU.cfgPlotUtils['unitppr'],pU.cfgPlotUtils['unitpfd'], pU.cfgPlotUtils['unitpfv']]
+    Unit = [pU.cfgPlotUtils['unitppr'], pU.cfgPlotUtils['unitpfd'], pU.cfgPlotUtils['unitpfv']]
     Data = np.array(([None] * 3))
     Data[0] = rasterdataPres
     Data[1] = rasterdataDepth
@@ -507,7 +507,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     ax2.set_title('Difference %s current - reference in runout area' % resType + '\n' + 'Blue = FN, Red = FP')
 
     outFileName = '_'.join([projectName, 'thresholdValue', str(
-        thresholdValue).replace('.', 'p'),  'sim', str(simName), 'AreaComparisonToReference'])
+                  thresholdValue).replace('.', 'p'),  'sim', str(simName), 'AreaComparisonToReference'])
     pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     ############################################
@@ -536,7 +536,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     dataDiff = compData - refData
     dataDiff = np.where((refData == 0) & (compData == 0), np.nan, dataDiff)
     dataDiffPlot = np.where((refData < thresholdArray[-1]) & (compData < thresholdArray[-1]), np.nan, dataDiff)
-    dataDiffPlot = dataDiffPlot[np.isnan(dataDiffPlot) == False]
+    dataDiffPlot = dataDiffPlot[np.isnan(dataDiffPlot) is False]
 
     if dataDiffPlot.size:
         # only add the second axis if one of the two avalanches reached the run out area
@@ -578,7 +578,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
         else:
             log.warning('Simulation %d did not reach the run out area!' % simName)
             ax2.text(0, (s[indStartOfRunout] + yLim)/2, 'Simulation %d did not reach the run out area!' % simName,
-                         fontsize=24, color='red',
+                     fontsize=24, color='red',
                      bbox=dict(facecolor='none', edgecolor='red', boxstyle='round,pad=1'), ha='center', va='center')
 
         if pathDict['compType'][0] == 'comModules':
@@ -612,7 +612,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
 
     fig.subplots_adjust(hspace=0.3, wspace=0.3)
     outFileName = '_'.join([projectName, 'plim', str(thresholdValue).replace(
-        '.', 'p'),  'sim', str(simName), 'ContourComparisonToReference'])
+                  '.', 'p'),  'sim', str(simName), 'ContourComparisonToReference'])
     outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
 
     return outFilePath
@@ -650,7 +650,7 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
         resAnalysisDF['FP'] = resAnalysisDF['FP'] / areaSum
         resAnalysisDF['TN'] = resAnalysisDF['TN'] / areaSum
     # do some statistics
-    forStats = ['xRunout', 'yRunout', 'sRunout','elevRel', 'deltaH', 'maxpprCrossMax', 'maxpfdCrossMax',
+    forStats = ['xRunout', 'yRunout', 'sRunout', 'elevRel', 'deltaH', 'maxpprCrossMax', 'maxpfdCrossMax',
                 'maxpfvCrossMax', 'TP', 'FN', 'FP', 'TN']
     if flagMass:
         forStats = forStats + ['relMass', 'entMass', 'finalMass', 'relativMassDiff', 'growthIndex', 'growthGrad']
@@ -666,9 +666,11 @@ def resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF):
                       name, ' limit: ', str(thresholdValue), unit, '\n',
                       'start of runout area Angle (SROA angle): ', str(round(startOfRunoutAreaAngle, 2)), ' °\n'])
 
-    outFileName = '_'.join(['Results', projectName, str(resType), 'lim', str(thresholdValue), 'w', str(domainWidth)]) + '.csv'
+    outFileName = '_'.join(['Results', projectName, str(resType), 'lim', str(thresholdValue), 'w',
+                           str(domainWidth)]) + '.csv'
     outname = os.path.join(pathResult, outFileName)
-    outFileNameStats = '_'.join(['Results', projectName, str(resType), 'lim', str(thresholdValue), 'w', str(domainWidth)]) + 'stats.csv'
+    outFileNameStats = '_'.join(['Results', projectName, str(resType), 'lim', str(thresholdValue), 'w',
+                                str(domainWidth)]) + 'stats.csv'
     outnameStats = os.path.join(pathResult, outFileNameStats)
 
     # check if folder exists / create
@@ -784,7 +786,7 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     ax1.set_ylabel(yaxis_label, color=pU.cmapVar['colors'][-1])
     ax1.spines['left'].set_color(pU.cmapVar['colors'][-1])
     ax1.tick_params(axis='y', colors=pU.cmapVar['colors'][-1])
-    ax1.set_xlabel(''.join(['s [m] - runout with ', str(thresholdValue),' kPa threshold']))
+    ax1.set_xlabel(''.join(['s [m] - runout with ', str(thresholdValue), ' kPa threshold']))
     pU.putAvaNameOnPlot(ax1, pathDict['projectName'])
     if plotDensity:  # estimate 2D histogram --> create pcolormesh
         nbins = 10
@@ -805,7 +807,8 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
 
     if not plotDensity:
         if dataFrame:
-            scatter = ax1.scatter(resAnalysisDF['sRunout'], resAnalysisDF['tipo'], c=inputsDF[varParList[0]], cmap=cmap, norm=norm, marker=pU.markers[0])
+            scatter = ax1.scatter(resAnalysisDF['sRunout'], resAnalysisDF['tipo'], c=inputsDF[varParList[0]],
+                                  cmap=cmap, norm=norm, marker=pU.markers[0])
         else:
             sc = ax1.scatter(runout, data, marker=pU.markers[0], c=colors, cmap=cmap)
             if displayColorBar:
