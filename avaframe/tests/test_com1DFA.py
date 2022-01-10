@@ -1246,7 +1246,9 @@ def test_prepareVarSimDict(caplog):
     standardCfg = configparser.ConfigParser()
     standardCfg.optionxform = str
     standardCfg['GENERAL'] = {'simTypeList': 'entres|null',
-                              'modelType': 'dfa', 'simTypeActual': 'entres', 'secRelArea': 'False'}
+                              'modelType': 'dfa', 'simTypeActual': 'entres', 'secRelArea': 'False',
+                              'relThFromShp': 'False', 'entThFromShp': 'True',
+                              'entThPercentVariation': '', 'relThPercentVariation': ''}
     standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
 
     relPath = pathlib.Path('test', 'relTest.shp')
@@ -1259,12 +1261,17 @@ def test_prepareVarSimDict(caplog):
         standardCfg, inputSimFiles, variationDict)
     testCfg = configparser.ConfigParser()
     testCfg.optionxform = str
-    testCfg['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa', 'rho': '200.0',
-                          'simTypeActual': 'entres', 'releaseScenario': 'relTest'}
+    testCfg['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa', 'simTypeActual': 'entres',
+                          'secRelArea': 'False', 'relThFromShp': 'False', 'entThFromShp': 'True',
+                          'entThPercentVariation': '', 'relThPercentVariation': '', 'rho': '200.0',
+                          'entTh0': '1.0'}
+
     testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
+
     simHash = cfgUtils.cfgHash(testCfg)
+    print('simHAhs', simHash)
     simName1 = 'relTest_entres_dfa_' + simHash
-    testDict = {'relTest_entres_dfa_f466369a03': {'simHash': 'f466369a03', 'releaseScenario': 'relTest',
+    testDict = {'relTest_entres_dfa_90c9ad49e9': {'simHash': '90c9ad49e9', 'releaseScenario': 'relTest',
                                                   'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
 
     print('simDict', simDict)
@@ -1288,8 +1295,12 @@ def test_prepareVarSimDict(caplog):
 
     testCfg2 = configparser.ConfigParser()
     testCfg2.optionxform = str
-    testCfg2['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa', 'rho': '200.0',
-                           'simTypeActual': 'entres', 'releaseScenario': 'relTest_extended'}
+    testCfg2['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa',
+                           'simTypeActual': 'entres', 'secRelArea': 'False',
+                           'relThFromShp': 'False', 'entThFromShp': 'True',
+                           'entThPercentVariation': '', 'relThPercentVariation': '',
+                           'rho': '150.0', 'entTh0': '1.0'}
+    testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
     simHash2 = cfgUtils.cfgHash(testCfg2)
     simName2 = 'relTest_extended_AF_entres_dfa_' + simHash2
     testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relTest_extended',

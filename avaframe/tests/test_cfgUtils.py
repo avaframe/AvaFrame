@@ -96,7 +96,7 @@ def test_orderSimFiles():
 
     simFilesDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, True, specDir='', resFiles=True)
 
-    assert simFilesDF['simName'][0] == 'release1HS_ent_dfa_67dc2dc10a'
+    assert simFilesDF['simName'][0] == 'release1HS_ent_dfa_d10bdc1e81'
 
 
 def test_createConfigurationInfo(tmp_path):
@@ -108,10 +108,10 @@ def test_createConfigurationInfo(tmp_path):
 
     simDF = cfgUtils.createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir='')
 
-    assert simDF.loc['67dc2dc10a']['releaseScenario'] == 'release1HS'
-    assert simDF.loc['67dc2dc10a']['mu'] == 0.155
-    assert simDF.loc['872f0101a4']['releaseScenario'] != 'release1HS'
-    assert simDF.loc['872f0101a4']['relTh'] == 1.
+    assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
+    assert simDF.loc['d10bdc1e81']['mu'] == 0.155
+    assert simDF.loc['e2145362b7']['releaseScenario'] != 'release1HS'
+    assert simDF.loc['e2145362b7']['relTh0'] == 1.
 
 
 def test_readAllConfigurationInfo():
@@ -135,31 +135,31 @@ def test_appendCgf2DF(tmp_path):
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
 
     simDF = ''
-    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release1HS_ent_dfa_67dc2dc10a.ini'
+    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release1HS_ent_dfa_d10bdc1e81.ini'
     simName = pathlib.Path(cFile).stem
-    simHash = '67dc2dc10a'
+    simHash = 'd10bdc1e81'
     cfgObject = cfgUtils.readCfgFile(avaDir, fileName=cFile)
     simDF = cfgUtils.appendCgf2DF(simHash, simName, cfgObject, simDF)
 
-    assert simDF.loc['67dc2dc10a']['releaseScenario'] == 'release1HS'
-    assert simDF.loc['67dc2dc10a']['mu'] == '0.15500'
+    assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
+    assert simDF.loc['d10bdc1e81']['mu'] == '0.15500'
 
-    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release2HS_ent_dfa_872f0101a4.ini'
+    cFile = avaDir / 'Outputs' / 'com1DFA' / 'configurationFiles' / 'release2HS_ent_dfa_e2145362b7.ini'
     simName = pathlib.Path(cFile).stem
-    simHash = '872f0101a4'
+    simHash = 'e2145362b7'
     cfgObject = cfgUtils.readCfgFile(avaDir, fileName=cFile)
     simDF = cfgUtils.appendCgf2DF(simHash, simName, cfgObject, simDF)
 
-    assert simDF.loc['67dc2dc10a']['releaseScenario'] == 'release1HS'
-    assert simDF.loc['67dc2dc10a']['mu'] == '0.15500'
-    assert simDF.loc['872f0101a4']['releaseScenario'] != 'release1HS'
-    assert simDF.loc['872f0101a4']['relTh'] == '1.'
+    assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
+    assert simDF.loc['d10bdc1e81']['mu'] == '0.15500'
+    assert simDF.loc['e2145362b7']['releaseScenario'] != 'release1HS'
+    assert simDF.loc['e2145362b7']['relTh0'] == '1.0'
     simDF = cfgUtils.convertDF2numerics(simDF)
 
-    assert simDF.loc['67dc2dc10a']['releaseScenario'] == 'release1HS'
-    assert simDF.loc['67dc2dc10a']['mu'] == 0.155
-    assert simDF.loc['872f0101a4']['releaseScenario'] != 'release1HS'
-    assert simDF.loc['872f0101a4']['relTh'] == 1.
+    assert simDF.loc['d10bdc1e81']['releaseScenario'] == 'release1HS'
+    assert simDF.loc['d10bdc1e81']['mu'] == 0.155
+    assert simDF.loc['e2145362b7']['releaseScenario'] != 'release1HS'
+    assert simDF.loc['e2145362b7']['relTh0'] == 1.
 
 
 def test_filterSims(tmp_path):
@@ -188,8 +188,8 @@ def test_filterSims(tmp_path):
     simNames2 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
     simNames2 = sorted(simNames2)
     assert len(simNames2) == 2
-    assert simNames2[0] == 'release1HS_ent_dfa_67dc2dc10a'
-    assert simNames2[1] == 'release2HS_ent_dfa_872f0101a4'
+    assert simNames2[0] == 'release1HS_ent_dfa_d10bdc1e81'
+    assert simNames2[1] == 'release2HS_ent_dfa_e2145362b7'
 
     parametersDict = {'~relTh': 1.}
     simNames3 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
@@ -200,4 +200,4 @@ def test_filterSims(tmp_path):
     simNames4 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
 
     assert len(simNames4) == 1
-    assert simNames4[0] == 'release2HS_ent_dfa_872f0101a4'
+    assert simNames4[0] == 'release2HS_ent_dfa_e2145362b7'
