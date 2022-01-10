@@ -47,7 +47,7 @@ def getVariationDict(avaDir, fullCfg, modDict):
             if key in ['relThPercentVariation', 'entThPercentVariation', 'secondaryRelThPercentVariation'] and value != '':
                 # here the factor for changing thValues is added to the variationDict instead of the
                 # values directly
-                locValue = splitVariationToArraySteps(value, key)
+                locValue = splitVariationToArraySteps(value, key, fullCfg)
                 variations[key] = locValue
                 defValue = modDict[section][key][1]
                 log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
@@ -290,7 +290,7 @@ def checkThicknessSettings(cfg, thName):
         raise AssertionError(message)
 
 
-def splitVariationToArraySteps(value, key):
+def splitVariationToArraySteps(value, key, fullCfg):
     """ split variation in percent to create a list of factors to set paramerter value for variations
         or if a rangeVariation is given in absolute values
 
@@ -300,6 +300,8 @@ def splitVariationToArraySteps(value, key):
             value read from configuration
         key: str
             name of parameter
+        fullCfg: configparser
+            full configuration settings
 
         Returns
         --------
@@ -325,8 +327,14 @@ def splitVariationToArraySteps(value, key):
         steps = int(itemsL[1])
         # create array with variation factor
         itemsArray = np.linspace(percentsStart, percentsStop, steps)
+    # TODO add standard value to range
     elif 'Range' in key:
         itemsArray = np.linspace(-1.*itemsL[0], itemsL[0], itemsL[1])
+
+    if fullCfg['GENERAL'].getboolean('addStandardConfig'):
+        if 1 not in itemsArray:
+            itemsArray = np.append(itemsArray, 1.)
+            log.info('Standard configuration value added for %s' % (key))
 
     return itemsArray
 
@@ -371,9 +379,12 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
                 cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
 
             # set percentVaration parameter to actual variation in percent$steps
-            if variationFactor <= 1:
+            if variationFactor == 1.:
+                # if variation is 0% set percentVaration = ''
+                variationIni = ''
+            elif variationFactor < 1:
                 variationIni = '-' + str((1. - variationFactor) * 100) + '$1'
-            else:
+            elif  variationFactor > 1:
                 variationIni = '+' + str((variationFactor - 1.) * 100) + '$1'
 
             # update parameter value
