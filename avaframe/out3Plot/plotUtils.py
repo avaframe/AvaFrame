@@ -446,7 +446,7 @@ def constrainPlotsToData(inputData, cellSize, extentOption=False, constrainedDat
             return rowsMin, rowsMax, colsMin, colsMax
 
 
-def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05):
+def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, tickLabelsList=''):
     '''
     Adds, styles and labels a colorbar to the given image and axes
     '''
@@ -460,6 +460,8 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05):
     cbar.ax.set_title('[' + myUnit + ']', pad=pad)
     if title != '':
         cbar.set_label(title)
+    if len(tickLabelsList) > 0:
+        cbar.ax.set_yticklabels(tickLabelsList)
 
 
 def putAvaNameOnPlot(ax, avaDir):
@@ -529,3 +531,38 @@ def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False):
         xOrigin = ncolsMin-rangePlot
 
     return dataCut, xOrigin, yOrigin
+
+
+def getColorbarTicksForStrings(varVal):
+    """ if values for colorbar are strings convert to numbers and provide labels
+
+        Parameters
+        -----------
+        varVal: list
+            list of strings
+
+        Returns
+        --------
+        itemsList: list
+            list of unique parameter values (strings)
+        ticksList: numpy array
+            array of unique parameter values (floats)
+        varValV: numpy array
+            array with parameter values (floats)
+    """
+
+    countItems = 0
+    itemsList = []
+    itemDict = {}
+    for index, item in enumerate(varVal):
+        if item not in varVal[:index]:
+            countItems = countItems + 1
+            itemDict[item] = countItems
+            itemsList.append(item)
+
+    varValV = np.array([])
+    for item in varVal:
+        varValV = np.append(varValV, itemDict[item])
+    ticksList = np.linspace(1, countItems, countItems)
+
+    return itemsList, ticksList, varValV

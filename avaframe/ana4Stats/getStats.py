@@ -8,6 +8,7 @@ import numpy as np
 import logging
 import pathlib
 from matplotlib import pyplot as plt
+import pandas as pd
 
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
@@ -90,16 +91,31 @@ def extractMaxValues(inputDir, avaDir, varPar, restrictType='', nameScenario='',
             peakValues[simName].update({peakFilesDF['resType'][m]: statVals})
 
             # fetch varPar value and nameScenario
-            varParVal = simDF[simDF['simName'] == simName][varPar]
-            peakValues[simName].update({'varPar': float(varParVal)})
+            varParVal = simDF[simDF['simName'] == simName][varPar].iloc[0]
+
+            # if varParVal is empty or nan check if thickness value
+            # if so - read from shp thickness value for each feature need to be found
+            if (varParVal == '' or pd.isna(varParVal)) and varPar in ['relTh', 'entTh', 'secondaryRelTh']:
+                # fetch id of thickness features
+                varParId = varPar + 'Id'
+                varParIds = str(simDF[simDF['simName'] == simName][varParId].iloc[0])
+                varParIdList = varParIds.split('|')
+                # create feature thickness parameter names
+                varParFirstName = varPar + varParIdList[0]
+                # chose value from first feature found!
+                varParVal = simDF[simDF['simName'] == simName][varParFirstName].iloc[0]
+                if len(varParIdList) > 1:
+                    log.warning('%s value - there are multiple features - %s value used from first feature only!' % (varPar, varPar))
+            # cadd varPar value to dictionary
+            peakValues[simName].update({'varPar': varParVal})
             if nameScenario != '':
                 nameScenarioVal = simDF[simDF['simName'] == simName][nameScenario]
                 peakValues[simName].update({'scenario': nameScenarioVal[0]})
                 log.info('Simulation parameter %s= %s for resType: %s and name %s' %
-                        (varPar, varParVal[0], peakFilesDF['resType'][m], nameScenarioVal[0]))
+                        (varPar, str(varParVal), peakFilesDF['resType'][m], nameScenarioVal[0]))
             else:
                 log.info('Simulation parameter %s= %s for resType: %s' %
-                        (varPar, varParVal[0], peakFilesDF['resType'][m]))
+                        (varPar, str(varParVal), peakFilesDF['resType'][m]))
         else:
             peakValues.pop(peakFilesDF['simName'][m], None)
 
