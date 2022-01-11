@@ -207,16 +207,18 @@ def test_filterSims(tmp_path):
     parametersDict = {'relTh': 1.}
 
     simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
+    simNames = sorted(simNames)
 
     print('simNames', simNames)
 
     assert len(simNames) == 2
-    assert simNames == ['relGar_null_dfa_6f35cbd808', 'relGar_ent_dfa_b9b17dd019']
+    assert simNames == ['relGar_ent_dfa_b9b17dd019', 'relGar_null_dfa_6f35cbd808']
 
     parametersDict = {'relTh': [1., 1.5]}
 
     simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
+    simNames =sorted(simNames)
 
     assert len(simNames) == 4
-    assert simNames == ['relGar_null_dfa_6f35cbd808', 'relGar_null_dfa_1022880a70',
-        'relGar_null_dfa_c4337e50ac', 'relGar_ent_dfa_b9b17dd019']
+    assert simNames == ['relGar_ent_dfa_b9b17dd019', 'relGar_null_dfa_1022880a70',
+        'relGar_null_dfa_6f35cbd808', 'relGar_null_dfa_c4337e50ac']
