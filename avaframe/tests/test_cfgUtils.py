@@ -168,6 +168,7 @@ def test_filterSims(tmp_path):
     avaTestDir = 'avaHockeyChannelPytest'
     dirPath = pathlib.Path(__file__).parents[0]
     avaDir = dirPath / '..' / '..' / 'benchmarks' / avaTestDir
+    avaDir2 = dirPath / 'data' / 'avaFilterTest' / 'com1DFA'
 
     parametersDict = {'releaseScenario': 'release1HS'}
 
@@ -201,3 +202,21 @@ def test_filterSims(tmp_path):
 
     assert len(simNames4) == 1
     assert simNames4[0] == 'release2HS_ent_dfa_e2145362b7'
+
+
+    parametersDict = {'relTh': 1.}
+
+    simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
+
+    print('simNames', simNames)
+
+    assert len(simNames) == 2
+    assert simNames == ['relGar_null_dfa_6f35cbd808', 'relGar_ent_dfa_b9b17dd019']
+
+    parametersDict = {'relTh': [1., 1.5]}
+
+    simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
+
+    assert len(simNames) == 4
+    assert simNames == ['relGar_null_dfa_6f35cbd808', 'relGar_null_dfa_1022880a70',
+        'relGar_null_dfa_c4337e50ac', 'relGar_ent_dfa_b9b17dd019']
