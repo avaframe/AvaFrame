@@ -64,10 +64,18 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMe
     unit2 = pU.cfgPlotUtils['unit%s' % resType2]
     nameVar = cfg['varParName']
     unitVar = cfg['varParUnit']
-    varValV = np.array(varVal)
+
+    # if the varied parameter used for colorcoding is a string
+    if isinstance(varVal[0], str):
+        itemsList, ticksList, varValV = pU.getColorbarTicksForStrings(varVal)
+    else:
+        varValV = np.array(varVal)
+        itemsList = ''
 
     # load variation colormap
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, np.amin(varValV), np.amax(varValV), continuous=True)
+    if isinstance(varVal[0], str):
+        ticks = ticksList
 
     fig, ax = plt.subplots()
     plt.title('%s vs. %s' % (name1, name2))
@@ -76,7 +84,7 @@ def plotValuesScatter(peakValues, resType1, resType2, cfg, avalancheDir, statsMe
     sc = ax.scatter(values1, values2, c=cc, cmap=cmap)
     ax.set_xlabel('%s %s [%s]' % (statsMeasure, name1, unit1))
     ax.set_ylabel('%s %s [%s]' % (statsMeasure, name2, unit2))
-    pU.addColorBar(sc, ax, ticks, unitVar, nameVar)
+    pU.addColorBar(sc, ax, ticks, unitVar, nameVar, tickLabelsList=itemsList)
     pU.putAvaNameOnPlot(ax, avalancheDir)
 
     # shpw plot
