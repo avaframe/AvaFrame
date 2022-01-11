@@ -624,9 +624,7 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
 
     # load dataFrame for all configurations
     simDF = createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
-
-    simDFFile = pathlib.Path(avalancheDir, 'simDFFile.csv')
-    simDF.to_csv(simDFFile)
+    
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
         for key, value in parametersDict.items():
