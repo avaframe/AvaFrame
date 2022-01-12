@@ -45,3 +45,21 @@ def getcflTimeStep(particles, dem, cfg):
 
     # return stable time step
     return dtStable
+
+
+def getMoussaTimeStep(dem, cfg):
+    """ Compute cfl time step  """
+    # get cell size
+    cszDEM = dem['header']['cellsize']
+    cszNeighbourGrid = dem['headerNeighbourGrid']['cellsize']
+    # use the smallest of those two values
+    csz = min(cszDEM, cszNeighbourGrid)
+
+    # courant number
+    cMax = float(cfg['cMax'])
+
+    dtStable = cMax * csz
+    log.debug('dtStable is with cMAX=%.1f is: %.4f' % (cMax, dtStable))
+
+    # return stable time step
+    return dtStable

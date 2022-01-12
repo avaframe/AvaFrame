@@ -56,10 +56,14 @@ def getPartInitMethod(cfg, csz):
         log.debug('Number of particles defined by: release thickness per particle: %s' % cfg['deltaTh'])
         log.debug('mass per particle is %.2f' % massPerPart)
     elif massPerParticleDeterminationMethod == 'MPPKR':
-        nPPK = cfg.getfloat('nPPK')
+        sphKernelRadius = cfg.getfloat('sphKernelRadius')
+        cszMin = min(csz, sphKernelRadius)
+        cPPK = cfg.getfloat('cPPK')
+        aPPK = cfg.getfloat('aPPK')
+        nPPK = round(cPPK * cszMin**aPPK)
+        # nPPK = cfg.getfloat('nPPK')
         relTh = cfg.getfloat('relTh')
-        ds = min(csz, cfg.getfloat('sphKernelRadius'))
-        massPerPart = rho * math.pi * ds * ds * relTh / nPPK
+        massPerPart = rho * math.pi * cszMin * cszMin * relTh / nPPK
 
     return massPerPart, nPPK
 

@@ -10,6 +10,7 @@
 """
 
 import pathlib
+from configupdater import ConfigUpdater
 
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
@@ -44,12 +45,18 @@ simiSolCfg = pathlib.Path(avalancheDir, 'Inputs', 'simiSol_com1DFACfg.ini')
 outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
 fU.makeADir(outDirTest)
 
-cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
+for sphKernelRadius in [10, 8, 6, 5, 4, 3]:
+    updater = ConfigUpdater()
+    updater.read(simiSolCfg)
+    updater['GENERAL']['sphKernelRadius'].value = sphKernelRadius
+    updater['GENERAL']['meshCellSize'].value = sphKernelRadius
+    updater.update_file()
 
-# Define release thickness distribution
-demFile = gI.getDEMPath(avalancheDir)
-relDict = simiSolTest.getReleaseThickness(avalancheDir, cfg, demFile)
-relTh = relDict['relTh']
-# call com1DFA to perform simulations - provide configuration file and release thickness function
-# (may be multiple sims)
-_, _, _, _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
+    cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
+    # Define release thickness distribution
+    demFile = gI.getDEMPath(avalancheDir)
+    relDict = simiSolTest.getReleaseThickness(avalancheDir, cfg, demFile)
+    relTh = relDict['relTh']
+    # call com1DFA to perform simulations - provide configuration file and release thickness function
+    # (may be multiple sims)
+    _, _, _, _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)

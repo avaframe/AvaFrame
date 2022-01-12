@@ -71,18 +71,19 @@ if pathToResults.is_file():
 
 # select the simulations you want to plot
 simDF = simDF[simDF['subgridMixingFactor'].isin([10])]
-# simDF = simDF[simDF['viscOption'].isin([1])]
+simDF = simDF[simDF['cMax'].isin([0.01])]
+# simDF = simDF[simDF['aPPK']==-3.5]
 # simDF = simDF[simDF['sphKernelRadius'].isin([5])]
-# simDF = simDF[simDF['deltaTh'].isin([0.25, 0.1, 0.05])]#, 0.1, 0.05
-
+# simDF = simDF[simDF['nPPK']>10]#, 0.1, 0.05
+simDF['refN'] = round(simDF['cPPK'] * 5 **(simDF['aPPK']))
+simDF = simDF[simDF['refN']==40]
 # now do some plotting
 # compare the simulations to the reference
 # outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', ['hErrorL2', 'vhErrorL2'],
 #                           'deltaTh', 'dt', logScale=False)
 
 # make convergence plot
-outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
-                          'sphKernelRadius', 'dt', logScale=True)
+fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
+                          'aPPK', 'refN', logScale=True)
 
-
-outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'])
+outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'refN')
