@@ -1,15 +1,12 @@
 """
-    Run script for running module anaInfluenceTest
+    Run script to run the script influenceTest.py from module ana1Test
 """
 
 import pathlib
-<<<<<<< HEAD
-=======
 import configparser
 config = configparser.RawConfigParser()
 config.optionxform = str
 
->>>>>>> 9a90d146dffefa782288a4aac669d72c1178e220
 
 # local imports
 import avaframe.in3Utils.initializeProject as initProj
@@ -17,52 +14,28 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.com1DFA import com1DFA
 from avaframe.com2AB import com2AB
-<<<<<<< HEAD
-from avaframe.anaInfluenceTest import anaInfluenceTest
-
-
-# log file name; leave empty to use default runLog.log
-logName = 'runAnaInfluenceTest'
-=======
 import avaframe.runScripts.runAna3AIMEC as runAna3AIMEC
 from avaframe.out3Plot import outAB
-from avaframe.ana1Tests import anaInfluenceTest
+from avaframe.ana1Tests import influenceTest
 
 
 # log file name; leave empty to use default runLog.log
-logName = 'runAnalyzeInfluenceTest'
->>>>>>> 9a90d146dffefa782288a4aac669d72c1178e220
+logName = 'runAna1InfluenceTest'
 
 # Load avalanche directory from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
-<<<<<<< HEAD
-cfgDir = 'anaInfluenceTest'
-
-# Clean input directory(ies) of old work and output files
-initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
-=======
 
 # Clean input directory of old work and output files from module
 initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
->>>>>>> 9a90d146dffefa782288a4aac669d72c1178e220
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
-<<<<<<< HEAD
-# Load configuration for similarity solution test
-influenceTestCfg = pathlib.Path('anaInfluenceTest', 'anaInfluenceTestDFACfg.ini')
-ABCfg = cfgUtils.getModuleConfig(com2AB)
-
-# Run anaInfluenceTest -> have to decide if it returns a data frame or not
-#simDF = anaInfluenceTest.mainAnaInfluenceTest(avalancheDir, cfgMain, DFACfg, ABCfg)
-anaInfluenceTest.mainAnaInfluenceTest(avalancheDir, cfgMain, influenceTestCfg, ABCfg)
-=======
 # Load configuration for influence test
-influenceTestCfg = pathlib.Path('ana1Tests', 'anaInfluenceTestCfg.ini')
+influenceTestCfg = pathlib.Path('ana1Tests', 'influenceTestCfg.ini')
 # ABCfg = cfgUtils.getModuleConfig(com2AB)
 ataCfg = pathlib.Path('ana1Tests', 'ataCfg.ini')
 
@@ -79,7 +52,7 @@ print(visc2Study)
 
 # Generate an .ini file and run visc2Study simulation(s)
 log.info("Generate " + visc2Study + " '.ini' file")
-anaInfluenceTest.generateAutoIniFile(influenceTestCfg, visc2Study)
+influenceTest.generateAutoIniFile(influenceTestCfg, visc2Study)
 visc2StudyCfg = pathlib.Path('ana1Tests', visc2Study + 'Cfg.ini')
 # Run simulations themselves
 log.info('Run com1DFA with SAMOS viscosity')
@@ -93,7 +66,7 @@ if ref=='dfa':
     # Clean input directory of old work and output files from module
     initProj.cleanSingleAvaDir(avalancheDir, deleteOutput=False)
     log.info("Generate REF '.ini' file")
-    anaInfluenceTest.generateAutoIniFile(influenceTestCfg, 'ref')
+    influenceTest.generateAutoIniFile(influenceTestCfg, 'ref')
     refCfg = pathlib.Path('ana1Tests', 'refCfg.ini')
     log.info('Run Com1DFA with ref solution')
     _, _, _, _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=refCfg, relThField='', variationDict='')
@@ -112,6 +85,5 @@ simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=
 log.info('Run AIMEC on all DFA simulations')
 pathDict, _, _, resAIMEC = runAna3AIMEC.runAna3AIMEC(avalancheDir)
 
-# Run anaInfluenceTest
-simDF = anaInfluenceTest.mainAnaInfluenceTest(avalancheDir, influenceTestCfg, simDF, resAIMEC, pathDict)
->>>>>>> 9a90d146dffefa782288a4aac669d72c1178e220
+# Run influenceTest
+simDF = influenceTest.mainInfluenceTest(avalancheDir, influenceTestCfg, simDF, resAIMEC, pathDict)

@@ -36,7 +36,7 @@ log = logging.getLogger(__name__)
 
 
 
-def mainAnaInfluenceTest(avalancheDir, influenceTestCfg, simDF, resAIMEC, pathDict):
+def mainInfluenceTest(avalancheDir, influenceTestCfg, simDF, resAIMEC, pathDict):
     """ Get simulation data frame, and AIMEC results to compare the runout, mmpr and mmpfd of different simulations
     while varying inifiles parameters
     Parameters
@@ -296,7 +296,7 @@ def plotResults(parameter2Study, visc2Study, otherParamNameList, otherParamValue
             plt.plot(xAxisArray,  runoutArray[iV], label=visc2Study + ' viscosity, ' + paramN + ' = ' + paramV)
         plt.plot(xAxisArray,  refArray[0], label='ref')
         plt.legend()
-        plt.savefig('data/anaInfluenceTest/Runout_' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
+        plt.savefig('data/ana1InfluenceTest/Runout_' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
         plt.show()
 
         plt.xlabel(parameter2Study)
@@ -306,7 +306,7 @@ def plotResults(parameter2Study, visc2Study, otherParamNameList, otherParamValue
             plt.plot(xAxisArray,  MMPPRArray[iV], label=visc2Study + ' viscosity, ' + paramN + ' = ' + paramV)
         plt.plot(xAxisArray,  refArray[1], label='ref')
         plt.legend()
-        plt.savefig('data/anaInfluenceTest/MMPPR' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
+        plt.savefig('data/ana1InfluenceTest/MMPPR' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
         plt.show()
 
         plt.xlabel(parameter2Study)
@@ -316,13 +316,13 @@ def plotResults(parameter2Study, visc2Study, otherParamNameList, otherParamValue
             plt.plot(xAxisArray,  MMPFDArray[iV], label=visc2Study + ' viscosity, ' + paramN + ' = ' + paramV)
         plt.plot(xAxisArray,  refArray[2], label='ref')
         plt.legend()
-        plt.savefig('data/anaInfluenceTest/MMPFD' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
+        plt.savefig('data/ana1InfluenceTest/MMPFD' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
         plt.show()
-        
+
 
 
 def generateAutoIniFile(cfg, viscName):
-    """ generates .ini files starting from anaInfluencetest/anaInfluencetestCfg.ini and combining datas with the section
+    """ generates .ini files starting from ana1Tests/InfluencetestCfg.ini and combining datas with the section
     related to the viscosity to study.
     Parameters
     ----------
