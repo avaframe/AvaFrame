@@ -29,6 +29,7 @@ import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com2AB.com2AB as com2AB
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.deriveParameterSet as dP
+from avaframe.in3Utils import fileHandlerUtils as fU
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -72,7 +73,7 @@ def mainInfluenceTest(avalancheDir, influenceTestCfg, simDF, resAIMEC, pathDict)
 
     # analyze and plot the results
     runoutArray, MMPPRArray, MMPFDArray, refArray = analyzeResults(simDF, avalancheDir, IDList, refID, parameter2Study, visc2Study, otherParamValueList, otherParamNameList, xAxisArray)
-    plotResults(parameter2Study, visc2Study, otherParamNameList, otherParamValueList, xAxisArray, runoutArray, MMPPRArray, MMPFDArray, refArray)
+    plotResults(avalancheDir, parameter2Study, visc2Study, otherParamNameList, otherParamValueList, xAxisArray, runoutArray, MMPPRArray, MMPFDArray, refArray)
 
 
     # Check if last line is computed
@@ -278,13 +279,18 @@ def analyzeResults(simDF, avalancheDir, IDList, refID, parameter2Study, visc2Stu
 
 
 
-def plotResults(parameter2Study, visc2Study, otherParamNameList, otherParamValueList, xAxisArray, runoutArray, MMPPRArray, MMPFDArray, refArray):
+def plotResults(avalancheDir, parameter2Study, visc2Study, otherParamNameList, otherParamValueList, xAxisArray, runoutArray, MMPPRArray, MMPFDArray, refArray):
     """ generate Plots contained in xAxisArray, runoutArray, MMPPRArray, MMPFDArray and refArray lists
     Parameters
     ----------
     parameter2Study, visc2Study, otherParamNameList, otherParamValueList, xAxisArray, runoutArray, MMPPRArray, MMPFDArray
         all described in previous functions
     """
+
+    # If needed, create folders to store the simResults
+    outDir = avalancheDir +'/Outputs/ana1Test/influenceTest'
+    log.info(outDir)
+    fU.makeADir(outDir)
 
     for iN in range(len(otherParamNameList)):
         paramN = otherParamNameList[iN]
@@ -296,7 +302,7 @@ def plotResults(parameter2Study, visc2Study, otherParamNameList, otherParamValue
             plt.plot(xAxisArray,  runoutArray[iV], label=visc2Study + ' viscosity, ' + paramN + ' = ' + paramV)
         plt.plot(xAxisArray,  refArray[0], label='ref')
         plt.legend()
-        plt.savefig('data/ana1InfluenceTest/Runout_' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
+        plt.savefig(outDir + '/Runout_' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
         plt.show()
 
         plt.xlabel(parameter2Study)
@@ -306,7 +312,7 @@ def plotResults(parameter2Study, visc2Study, otherParamNameList, otherParamValue
             plt.plot(xAxisArray,  MMPPRArray[iV], label=visc2Study + ' viscosity, ' + paramN + ' = ' + paramV)
         plt.plot(xAxisArray,  refArray[1], label='ref')
         plt.legend()
-        plt.savefig('data/ana1InfluenceTest/MMPPR' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
+        plt.savefig(outDir + '/MMPPR' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
         plt.show()
 
         plt.xlabel(parameter2Study)
@@ -316,7 +322,7 @@ def plotResults(parameter2Study, visc2Study, otherParamNameList, otherParamValue
             plt.plot(xAxisArray,  MMPFDArray[iV], label=visc2Study + ' viscosity, ' + paramN + ' = ' + paramV)
         plt.plot(xAxisArray,  refArray[2], label='ref')
         plt.legend()
-        plt.savefig('data/ana1InfluenceTest/MMPFD' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
+        plt.savefig(outDir + '/MMPFD' + visc2Study + 'Viscosity_param2Study_' + parameter2Study + '_' + paramN + '_' + paramV + '.png')
         plt.show()
 
 
