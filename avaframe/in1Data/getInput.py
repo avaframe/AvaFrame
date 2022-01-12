@@ -253,7 +253,7 @@ def getAndCheckInputFiles(inputDir, folder, inputType):
     return OutputFile, available
 
 
-def getThickness(inputSimFiles, avaDir, modName, cfgFile):
+def getThickness(inputSimFiles, avaDir, modName, cfgFile, cfg):
     """ add thickness of shapefiles to dictionary, create one ini file per releaseScenario and
         set thickness values in ini files
 
@@ -288,6 +288,14 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile):
     # initialise list for cfgFiles
     cfgFilesRels = []
 
+    # check if thickness info is required from entrainment and secondary release according to simType
+    simTypeList = cfg['GENERAL']['simTypeList'].split('|')
+    thTypeList = []
+    if any(simType in ['ent', 'available'] for simType in simTypeList):
+        thTypeList.append('entFile')
+    if cfg['GENERAL'].getboolean('secRelArea'):
+        thTypeList.append('secondaryReleaseFile')
+
     # fetch thickness attribute of entrainment area and secondary release
     for thType in ['entFile', 'secondaryReleaseFile']:
         if inputSimFiles[thType] != None:
@@ -308,11 +316,11 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile):
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA.stem, 'relTh')
 
         # add entrainment and secondary release thickness in input data info
-        if inputSimFiles['entFile'] != None:
+        if inputSimFiles['entFile'] != None and 'entFile' in thTypeList:
             cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, inputSimFiles['entFile'].stem, 'entTh')
             cfgInitial['INPUT']['entrainmentScenario'] = inputSimFiles['entFile'].stem
 
-        if inputSimFiles['secondaryReleaseFile'] != None:
+        if inputSimFiles['secondaryReleaseFile'] != None and 'secondaryReleaseFile' in thTypeList:
             cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles,
                 inputSimFiles['secondaryReleaseFile'].stem, 'secondaryRelTh')
             cfgInitial['INPUT']['secondaryReleaseScenario'] = inputSimFiles['secondaryReleaseFile'].stem

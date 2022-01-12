@@ -206,7 +206,8 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
                     # entrainment Scenario or secondar. release scenario
                     # these are added to the configuration and also to the modDict if variation is applied
                     validItems = ['entrainmentScenario', 'DEM', 'secondaryReleaseScenario']
-                    if 'relTh' in key[0] or 'entTh' in key[0] or 'secondaryRelTh' in key[0] or key[0] in validItems:
+                    searchItems = ['relTh', 'entTh', 'secondaryRelTh']
+                    if any(s in key[0] for s in searchItems) or key[0] in validItems:
                         locValue = locCfg.get(section, key[0])
                         cfg.set(section, key[0], locValue)
                         log.debug('\t\t%s : %s added to %s' % (key[0], locValue, section))
