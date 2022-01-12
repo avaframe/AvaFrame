@@ -917,7 +917,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         aPartArray = np.empty(0)
         hPartArray = np.empty(0)
         idFixed = np.empty(0)
-        if len(relThField) != 0 and cfg.getboolean('iniStep'):
+        if len(relThField) != 0 or cfg.getboolean('iniStep'):
             # set release thickness to a constant value for initialisation
             relRaster = np.where(relRaster > 0., cfg.getfloat('relTh'), 0.)
             log.warning('relThField!= 0, but relRaster set to relTh value (from ini) here so that uniform number of particles created')
@@ -940,7 +940,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
             else:
                 idFixed = np.append(idFixed, np.ones(n))
 
-        hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
+        hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relThField, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
         # for the MPPKR option use hPart and aPart to define the mass of the particle (this means, within a cell
         # partticles have the same area but may have different flow depth which means a different mass)
