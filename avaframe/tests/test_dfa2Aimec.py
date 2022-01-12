@@ -62,7 +62,7 @@ def test_mainDfa2Aimec(tmp_path):
     cfg = configparser.ConfigParser()
     cfg['AIMECSETUP'] = {'varParList': 'releaseScenario', 'ascendingOrder': 'True'}
     cfg['FLAGS'] = {'flagMass': 'True'}
-    inputDF = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFA', cfg)
+    inputDF, resTypeList = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFA', cfg)
     print('path', dirPath)
     # get path dictionary for test
     pathDTest = {}
@@ -85,7 +85,7 @@ def test_mainDfa2Aimec(tmp_path):
     diff = set(inputDF['massBal'].to_list()) ^ set(pathDTest['massBal'])
     assert not diff
 
-    inputDF = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFAOrig', cfg)
+    inputDF, resTypeList = dfa2Aimec.mainDfa2Aimec(testPath, 'com1DFAOrig', cfg)
 
     pathData = testPath / 'Outputs' / 'com1DFAOrig' / 'peakFiles'
     pathDTest['ppr'] = [pathData / 'release1HS_ent_dfa_0.15500_ppr.asc',

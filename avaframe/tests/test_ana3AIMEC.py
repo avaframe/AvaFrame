@@ -49,6 +49,7 @@ def test_analyzeArea(capfd):
     pathDict['refSimulation'] = 'refTestAimecTopo'
     pathDict['compType'] = ['singleModule', 'com1DFA']
     pathDict['contCmap'] = True
+    pathDict['resTypeList'] = ['ppr', 'pfd', 'pfv']
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
@@ -155,6 +156,7 @@ def test_makeDomainTransfo(capfd):
     pathDict['dirName'] = 'com1DFA'
     pathDict['refSimulation'] = 'testAimec_0'
     pathDict['compType'] = ['singleModule', 'com1DFA']
+    pathDict['resTypeList'] = ['ppr', 'pfd', 'pfv']
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
