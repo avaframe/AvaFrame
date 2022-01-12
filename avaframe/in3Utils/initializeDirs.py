@@ -14,7 +14,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 log = logging.getLogger(__name__)
 
 
-def initialiseRunDirs(avaDir, modName):
+def initializeRunDirs(avaDir, modName):
     """ Initialise Simulation run with input data
 
         Parameters

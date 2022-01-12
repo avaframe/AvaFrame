@@ -5,7 +5,7 @@
 
 #  Load modules
 import pathlib
-from avaframe.in3Utils import initialiseDirs as iD
+from avaframe.in3Utils import initializeDirs as iD
 
 
 def test_initialiseRunDirs(tmp_path):
@@ -21,7 +21,7 @@ def test_initialiseRunDirs(tmp_path):
     outputDirTest = avaDirtmp / 'Outputs' / modName
 
     # call function to be tested
-    workDir, outputDir = iD.initialiseRunDirs(avaDirtmp, modName)
+    workDir, outputDir = iD.initializeRunDirs(avaDirtmp, modName)
 
     assert workDir == workDirTest
     assert outputDir == outputDirTest

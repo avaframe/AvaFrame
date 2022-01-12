@@ -29,7 +29,7 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 import avaframe.out3Plot.outDebugPlots as debPlot
-import avaframe.in3Utils.initialiseDirs as inDirs
+import avaframe.in3Utils.initializeDirs as inDirs
 import avaframe.com1DFA.deriveParameterSet as dP
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in1Data import getInput as gI

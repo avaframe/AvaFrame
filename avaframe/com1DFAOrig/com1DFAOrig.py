@@ -14,7 +14,7 @@ from datetime import datetime
 
 # Local imports
 from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.in3Utils import initialiseDirs as iD
+from avaframe.in3Utils import initializeDirs as iD
 from avaframe.in1Data import getInput as gI
 from avaframe.in2Trans import shpConversion as sP
 import avaframe.in2Trans.ascUtils as IOf
