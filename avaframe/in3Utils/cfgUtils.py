@@ -209,7 +209,7 @@ def compareConfig(iniFile, modName, compare, modInfo=False, toPrint=True):
                     if 'relTh' in key[0] or 'entTh' in key[0] or 'secondaryRelTh' in key[0] or key[0] in validItems:
                         locValue = locCfg.get(section, key[0])
                         cfg.set(section, key[0], locValue)
-                        log.info('\t\t%s : %s added to %s' % (key[0], locValue, section))
+                        log.debug('\t\t%s : %s added to %s' % (key[0], locValue, section))
                         if '$' in locValue:
                             modString = [locValue, locValue.split('$')[0]]
                             modDict[section][key[0]] = modString
@@ -624,7 +624,7 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
 
     # load dataFrame for all configurations
     simDF = createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
-    
+
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
         for key, value in parametersDict.items():
@@ -727,7 +727,8 @@ def filterCom1DFAThicknessValues(key, value, simDF):
     thPercentVariation = key + 'PercentVariation'
 
     # append identifier if simulation matches thickness filter criteria
-    simDF['toBeAdded'] = 'False'
+    simDF['toBeAdded'] = False
+
     # initialize list for thickness parameter names (according to thickness configuration -
     # e.g. mutiple features)
     allThNames = []
@@ -749,16 +750,16 @@ def filterCom1DFAThicknessValues(key, value, simDF):
         # check if filter criteria are met by thickness parameters for the sim in simDFrow
         for val in value:
             if (simDFrow[thNames].values == [val] * len(thIdList)).all():
-                simDF.loc[simHash,'toBeAdded'] = 'True'
+                simDF.loc[simHash,'toBeAdded'] = True
 
     # get a list with all thickness parameters included in search
     allThNames = list(set(allThNames))
     if notIn:
         # return all sims that do not match filter criteria
-        simDF = simDF[simDF['toBeAdded'] == 'False']
+        simDF = simDF[simDF['toBeAdded'] == False]
     else:
         # return all sims that do match filter criteria
-        simDF = simDF[simDF['toBeAdded'] == 'True']
+        simDF = simDF[simDF['toBeAdded'] == True]
 
     log.info('simulations for %s found with values: %s' % (key, simDF[allThNames]))
 
