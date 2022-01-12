@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 
 def getVariationDict(avaDir, fullCfg, modDict):
     """ Create a dictionary with all the parameters that shall be varied from the standard configuration;
-        ONLY takes care of variations in section GENERAL
+        ONLY accounts for variations in section GENERAL
 
         Parameters
         -----------
@@ -52,7 +52,7 @@ def getVariationDict(avaDir, fullCfg, modDict):
                 defValue = modDict[section][key][1]
                 log.info('%s: %s (default value was: %s)' % (key, locValue, defValue))
             else:
-                if ':' in value or '|' in value or '$' in value:
+                if any(c in value for c in [':', '|', '$']):
                     locValue = fU.splitIniValueToArraySteps(value)
                     variations[key] = locValue
                     defValue = modDict[section][key][1]

@@ -78,7 +78,7 @@ def setRelThIni(avaDir, modName, cfgFile=''):
     inputSimFilesAll = gI.getInputDataCom1DFA(avaDir, cfgInitial['INPUT'])
 
     # get thickness of release and entrainment areas (and secondary release areas) -if thFromShp = True
-    inputSimFilesAll, cfgFilesRels = gI.getThickness(inputSimFilesAll, avaDir, modName, cfgFile)
+    inputSimFilesAll, cfgFilesRels = gI.getThickness(inputSimFilesAll, avaDir, modName, cfgFile, cfgInitial)
 
     return inputSimFilesAll, cfgFilesRels
 
@@ -181,11 +181,6 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField=''):
                 # +++++++++EXPORT RESULTS AND PLOTS++++++++++++++++++++++++
                 # add report dict to list for report generation
                 reportDictList.append(reportDict)
-
-                # export particles properties for visulation
-                if cfg['VISUALISATION'].getboolean('writePartToCSV'):
-                    outDir = pathlib.Path(avalancheDir, 'Outputs', modName)
-                    particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
                 # create hash to check if configuration didn't change
                 simHashFinal = cfgUtils.cfgHash(cfgFinal)
@@ -296,6 +291,10 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
         outDirData = outDir / 'particles'
         fU.makeADir(outDirData)
         savePartToPickle(particlesList, outDirData, cuSimName)
+
+    # export particles properties for visulation
+    if cfg['VISUALISATION'].getboolean('writePartToCSV'):
+        particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
     # Result parameters to be exported
     exportFields(cfg, Tsave, fieldsList, demOri, outDir, cuSimName)
