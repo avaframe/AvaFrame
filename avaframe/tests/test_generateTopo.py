@@ -57,7 +57,7 @@ def test_getParabolaParams():
     assert(fLen == fLenTest1)
     assert A2 - ATest2 == pytest.approx(0.0, abs=1.e-12)
     assert B2 - BTest2 == pytest.approx(0.0, abs=1.e-12)
-    assert(fLen2 == fLenTest2)
+    assert(fLen2 - fLenTest2 == pytest.approx(0.0, abs=1.e-12))
 
 
 def test_getGridDefs():
