@@ -480,7 +480,8 @@ def putAvaNameOnPlot(ax, avaDir):
             avaName = pathlib.PurePath(ava).name
             infoText = infoText + ';' + str(avaName)
 
-    ax.annotate(infoText, fontsize=8, xy=(-0.1, -0.1), xycoords='axes fraction')
+    ax.annotate(infoText, fontsize=8, xy=(0.01, 0.01), xycoords='axes fraction',
+        bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.5))
 
     return infoText
 
