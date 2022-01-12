@@ -564,7 +564,7 @@ can be expressed as follows:
 .. math::
   \mathbf{F_{{viscosity}_k}} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl}
 
-with :math:`Pi_{kl} = \lambda_{kl}(\mathbf{u}_j - \mathbf{u}_i) \cdot \mathbf{n}_{ij}`
+with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_j - \mathbf{u}_i) \cdot \mathbf{n}_{ij}`
 
 where :math:`\mathbf{u}_{ij} = \mathbf{u}_i - \mathbf{u}_j` is the relative velocity
 between particle i and j, and :math:`\lambda_{ij} = \frac{c_i+c_j}{2}` with
