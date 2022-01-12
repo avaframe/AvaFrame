@@ -77,7 +77,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
 
     modName = 'com1DFA'
     # Create output and work directories
-    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
+    workDir, outDir = inDirs.initializeRunDirs(avalancheDir, modName)
 
     # get information on simulations that shall be performed according to parameter variation
     modCfg, variationDict = dP.getParameterVariationInfo(avalancheDir, com1DFA, cfgFile, variationDict)
