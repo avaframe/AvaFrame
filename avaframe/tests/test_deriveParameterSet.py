@@ -62,6 +62,23 @@ def test_validateVarDict():
     assert np.array_equal(variationDictTest['rho'], np.asarray([300, 400]))
     assert 'relThAA' not in variationDictTest.keys()
 
+    variationDict = {'simTypeList': ['null', 'ent'], 'rho': np.asarray([300, 400]), 'relThAA': np.asarray([1.0, 2.0]),
+                     'secRelAreA': ['False', 'True'], 'rhoEnt': '100:200:2&400'}
+    # call function to be tested
+    variationDictTest = dP.validateVarDict(variationDict, standardCfg)
+
+    print('variationDictTest', variationDictTest)
+
+    assert len(variationDictTest.keys()) == 3
+    assert variationDictTest['simTypeList'][0] == 'null'
+    assert variationDictTest['simTypeList'][1] == 'ent'
+    assert variationDictTest['rhoEnt'][0] == 100.
+    assert variationDictTest['rhoEnt'][1] == 200.
+    assert variationDictTest['rhoEnt'][2] == 400.
+    assert len(variationDictTest['rhoEnt']) == 3
+    assert np.array_equal(variationDictTest['rho'], np.asarray([300, 400]))
+    assert 'relThAA' not in variationDictTest.keys()
+
 
 def test_checkResType():
     """ test checking if desired result type is in availble result types """

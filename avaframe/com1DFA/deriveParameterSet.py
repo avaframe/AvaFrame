@@ -87,7 +87,7 @@ def checkResType(fullCfg, section, key, value):
     # check that the resType asked actually exists
     if value != '':
         resType = value.split('|')
-        validResTypes = ['ppr', 'pfd', 'pfv', 'FD', 'FV', 'Vx', 'Vy', 'Vz', 'P', 'particles']
+        validResTypes = ['ppr', 'pfd', 'pfv', 'pta', 'FD', 'FV', 'Vx', 'Vy', 'Vz', 'P', 'TA', 'particles']
         message = (
             'The parameter % s is not a valid resType. It will not be saved')
         newResType = []
@@ -122,6 +122,10 @@ def validateVarDict(variationDict, standardCfg):
     # check if parameters exist in model configuration
     ignoredParameters = []
     for parameter in variationDict:
+        if isinstance(variationDict[parameter], str):
+            if '|' in variationDict[parameter] or ':' in variationDict[parameter]:
+                items = fU.splitIniValueToArraySteps(variationDict[parameter], returnList=False)
+                variationDict[parameter] = items
         if parameter in standardCfg['GENERAL']:
             if not isinstance(variationDict[parameter], (list, np.ndarray)):
                 variationDict[parameter] = [variationDict[parameter]]

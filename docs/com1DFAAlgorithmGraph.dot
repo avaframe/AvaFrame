@@ -45,7 +45,7 @@ digraph "com1DFA algorithm graph" {
   href="../com1DFAAlgorithm.html#take-entrainment-into-account" tooltip="Go to: Add entrained mass" target="_top"];
 
   computeSPHForce [label="Compute lateral pressure force using SPH",
-  href="../DFAnumerics.html#sph-gradient" title="Go to: Add lateral pressure force" target="_top"];
+  href="../com1DFAAlgorithm.html#compute-lateral-pressure-forces" title="Go to: Add lateral pressure force" target="_top"];
 
   updateVelocityDrive [label="Update velocity with driving force component",
   href="../com1DFAAlgorithm.html#update-position" tooltip="Go to: Update Position" target="_top"];

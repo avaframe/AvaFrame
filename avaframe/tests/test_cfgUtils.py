@@ -183,3 +183,21 @@ def test_filterSims(tmp_path):
     assert testRel
     assert testRel2 == False
     assert len(simNames) == 1
+
+    parametersDict = {'relTh': 1.}
+    simNames2 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
+    simNames2 = sorted(simNames2)
+    assert len(simNames2) == 2
+    assert simNames2[0] == 'release1HS_ent_dfa_67dc2dc10a'
+    assert simNames2[1] == 'release2HS_ent_dfa_872f0101a4'
+
+    parametersDict = {'~relTh': 1.}
+    simNames3 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
+
+    assert len(simNames3) == 0
+
+    parametersDict = {'~releaseScenario': 'release1HS'}
+    simNames4 = cfgUtils.filterSims(avaDir, parametersDict, specDir='')
+
+    assert len(simNames4) == 1
+    assert simNames4[0] == 'release2HS_ent_dfa_872f0101a4'

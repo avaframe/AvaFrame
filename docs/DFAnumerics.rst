@@ -241,7 +241,7 @@ finding the adjacent cells is also easily done.
         :width: 90%
 
         The particles are located in the cells using
-        tow arrays. indPartInCell of size number of cells + 1
+        two arrays. indPartInCell of size number of cells + 1
         which keeps track of the number of particles in each cell
         and partInCell of size number of particles + 1 which lists
         the particles contained in the cells.
@@ -349,10 +349,10 @@ and
 which leads to the following expression for the gradient:
 
 .. math::
-   \mathbf{\nabla}W_{ij} = -3\frac{10}{\pi r_0^5}\left\{
+   \mathbf{\nabla}W_{kl} = -3\frac{10}{\pi r_0^5}\left\{
    \begin{aligned}
-   & (r_0 - \left\Vert \mathbf{r_{ij}}\right\Vert)^2\frac{\mathbf{r_{ij}}}{r_{ij}}, \quad &0\leq \left\Vert \mathbf{r_{lj}}\right\Vert \leq  r_0\\
-   & 0 , & r_0 <\left\Vert \mathbf{r_{ij}}\right\Vert
+   & (r_0 - \left\Vert \mathbf{r_{kl}}\right\Vert)^2\frac{\mathbf{r_{kl}}}{r_{kl}}, \quad &0\leq \left\Vert \mathbf{r_{kl}}\right\Vert \leq  r_0\\
+   & 0 , & r_0 <\left\Vert \mathbf{r_{kl}}\right\Vert
    \end{aligned}
    \right.
    :label: kernel function gradient
@@ -513,17 +513,17 @@ take this phenomena into account. The following viscosity force is added:
 
 .. math::
     \begin{aligned}
-    \mathbf{F_{viscosity}} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\|^2 A_{Lat}
-    \frac{\mathbf{du}}{\|\mathbf{du}\|}\\
-    = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\| A_{Lat} \mathbf{du}
+    \mathbf{F_k^{viscosity}} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k\|^2 A_{Lat}
+    \frac{\mathbf{du}_k}{\|\mathbf{du}_k\|}\\
+    = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k\| A_{Lat} \mathbf{du}_k
     \end{aligned}
 
-Where the velocity difference reads :math:`\mathbf{du} = \mathbf{u} - \mathbf{\bar{u}}`
+Where the velocity difference reads :math:`\mathbf{du}_k = \mathbf{u}_k - \mathbf{\bar{u}}`
 (:math:`\mathbf{\bar{u}}` is the mesh velocity interpolated at the particle position).
 :math:`C_{Lat}` is a coefficient that rules the viscous force. It would be the
 equivalent of :math:`C_{Drag}` in the case of the drag force. The :math:`C_{Lat}`
-is a numerical parameter that depends on the mesh size. Its value is set to 100
-and should be discussed and further tested.
+is a numerical parameter that depends on the mesh size. Its value is set in the configuration (``subgridMixingFactor``) to 100
+by default (ToDo: and should be discussed and further tested).
 
 Adding the viscous force
 """"""""""""""""""""""""
@@ -532,19 +532,19 @@ The viscous force is added implicitly:
 
 .. math::
   \begin{aligned}
-  \mathbf{F_{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}
-  \mathbf{du}^{new}\\
-  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}^{old} - \mathbf{\bar{u}}^{old}\| A_{Lat}
-  (\mathbf{u}^{new} - \mathbf{\bar{u}}^{old})
+  \mathbf{F_k^{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}
+  \mathbf{du}_k^{new}\\
+  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}_k^{old} - \mathbf{\bar{u}}^{old}\| A_{Lat}
+  (\mathbf{u}_k^{new} - \mathbf{\bar{u}}^{old})
   \end{aligned}
 
 Updating the velocity is done in two steps. First adding the explcit term related to the
 mean mesh velocity and then the implicit term which leads to:
 
 .. math::
-  \mathbf{u}^{new} = \frac{\mathbf{u}^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
+  \mathbf{u}_k^{new} = \frac{\mathbf{u}_k^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
 
-With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}\frac{dt}{m}`
+With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}\frac{dt}{m}`
 
 
 Ata Artificial viscosity
@@ -586,7 +586,7 @@ Lateral force
 
 The SPH method is introduced when expressing the flow depth gradient for each
 particle as a weighted sum of its neighbors
-(:cite:`LiLi2010,Sa2007`). From now on the :math:`p` for particles in math:`p_k` is dropped
+(:cite:`LiLi2010,Sa2007`). From now on the :math:`p` for particles in :math:`p_k` is dropped
 (same applies for :math:`p_l`).
 
 The lateral pressure forces on each particle are calculated from the compression
@@ -628,7 +628,7 @@ The bottom friction forces on each particle depend on the chose friction model. 
 reads:
 
 .. math::
-    F_{k,i}^{\text{bot}} = -\delta_{k1}\,A_{k}\,\tau^{(b)}_{k}
+    F_{k,i}^{\text{bot}} = -\frac{\overline{u}_{k,i}}{\|\mathbf{u}_k\|}\,A_{k}\,\tau^{(b)}_{k}
     = -\delta_{k1}\,A_{k}\,\left(\tau_0 + \tan{\delta}\,\left(1+\frac{R_s^0}{R_s^0+R_s}\right)\,\sigma^{(b)}_{k}
      + \frac{\rho_0\,\mathbf{\overline{u}}_{k}^2}{\left(\frac{1}{\kappa}\,\ln\frac{\overline{h}}{R} + B\right)^2}\right)
     :label: bottom force
@@ -641,9 +641,12 @@ is a function of the average flow depth :math:`\overline{h}_{k}`):
 
 .. math::
     F_{k,i}^{\text{res}}
-    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{k}\|\,\overline{u}_{k,i}
+    = - \rho_0\,A_{k}\,h^{\text{eff}}_{k}\,C_{\text{res}}\,\|\overline{\mathbf{u}}_{k}\|^2\,\frac{\overline{u}_{k,i}}{|\overline{\mathbf{u}}_{k}\|}
     :label: resistance force
 
+Both the bottom friction and resistance force are friction forces. The expression above represent the maximal
+friction force that can be added. This maximal force is added if the particles are flowing. If not, the friction force
+equals the driving forces. See :cite:`MaVi2003` for more information.
 
 Entrainment force
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -678,3 +681,70 @@ Finaly, the entrainment force reads:
 
 .. math::
     F_{k,i}^{\text{ent}} = -w_f\,(e_s+\,q_{k}^{\text{ent}}\,e_d)
+
+Adding forces
+--------------
+The different components are added following an operator splitting method.
+This means particle velocities are updated successively with the different forces.
+
+
+Adding artificial viscosity
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If the viscosity option (``viscOption``) is set to 1, artificial viscosity is added first, as described
+in :ref:`DFAnumerics:Artificial viscosity` (this is the default option). With ``viscOption`` set to 0, no viscosity is added. Finally, if
+``viscOption`` is set to 2, artificial viscosity is added during SPH force computation. (TODO add link to description)
+
+Adding entrainment
+~~~~~~~~~~~~~~~~~~~
+Entrainment is taken into account by first adding the component representing the loss of momentum due to
+acceleration of the entrained mass :math:`- \overline{u}_{k,i}\,A^{\text{ent}}_{k}\,q^{\text{ent}}_{k}`.
+Second by adding the force due to the need to break and compact the
+entrained mass (:math:`F_{k,i}^{\text{ent}}`) as described in :ref:`DFAnumerics:Entrainment force`.
+
+
+Adding driving forces
+~~~~~~~~~~~~~~~~~~~~~~~~
+The driving forces -gravity force and lateral forces- are taken into account next. The velocity is updated explicitly.
+
+
+Adding friction forces
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Both the bottom friction and resistance forces act against the flow. Two methods are available to add these
+forces in com1DFA.
+An implicit method:
+
+.. math::
+  \mathbf{u}_k^{new} = \frac{\mathbf{u}_k^{old}}{1 + \frac{C_{k}^{\text{fric}}\Delta t}{m_k}}
+
+where :math:`F_{k,i}^{\text{fric}} = C_{k}^{\text{fric}} u_{k,i}^{new} = F_{k,i}^{\text{res}} + F_{k,i}^{\text{bot}}`
+(the two forces are discribed in :ref:`DFAnumerics:Bottom friction force` and :ref:`DFAnumerics:Added resistance force`).
+
+This implicit method has a few draw-backs. First the flow does not start properly if the
+friction angle :math:`\delta` is too close to the slope angle. Second, the flow never properly stops, even if the
+particles physically should, i.e. particles keep oscillating back and force around their end position.
+
+The method based on :cite:`MaVi2003` addresses these two issues.
+The idea is that the friction forces only modify the magnitude of velocity and not the direction. This means dissipation,
+so the friction force can not become a driving force. Moreover, the friction force magnitude depends on the particle state,
+i.e. if it is flowing or at rest.
+The friction force is expressed:
+
+.. math::
+  F_{k,i}^{\text{fric}} = -\|\mathbf{F}_{k}^{\text{fric}}\| \frac{\mathbf{u}_k}{\|\mathbf{u}_k\|}
+with:
+
+.. math::
+  \|\mathbf{F}_{k}^{\text{fric}}\| \leq \|\mathbf{F}_{k}^{\text{fric}}\|_{max}
+
+If the velocity of the particle ``k`` reads :math:`\mathbf{u}_k^{old}` after adding the driving forces, adding the
+fiction force leads to :
+
+.. math::
+  \mathbf{u}_{k} = \mathbf{u}_k^{old} (1 - \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|}{\|\mathbf{u}^{old}_k\|}),
+  \quad \|\mathbf{F}_{k}^{\text{fric}}\| = \|\mathbf{F}_{k}^{\text{fric}}\|_{max}
+
+
+at the condition that  :math:`1 \geq \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|_{max}}{\|\mathbf{u}^{old}_k\|}`.
+If on the contrary :math:`1 \leq \frac{\Delta t}{m} \frac{\|\mathbf{F}_{k}^{\text{fric}}\|_{max}}{\|\mathbf{u}^{old}_k\|}`,
+the friction would change the velocity direction which is nonphysical. In this case, the particle will stop
+before the end of the time step. This allows the particles to start and stop flowing properly.

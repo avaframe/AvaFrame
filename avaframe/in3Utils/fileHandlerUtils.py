@@ -283,6 +283,7 @@ def getFilterDict(cfg, section):
 def splitIniValueToArraySteps(cfgValues, returnList=False):
     """ read values in ini file and return numpy array or list if the items are strings;
         values can either be separated by | or provided in start:end:numberOfSteps format
+        if separated by : also optional add one additional value using & 
 
         Parameters
         ----------
@@ -298,8 +299,14 @@ def splitIniValueToArraySteps(cfgValues, returnList=False):
     """
 
     if ':' in cfgValues:
-        itemsInput = cfgValues.split(':')
+        if '&' in cfgValues:
+            itemsInputBig = cfgValues.split('&')
+            itemsInput = itemsInputBig[0].split(':')
+        else:
+            itemsInput = cfgValues.split(':')
         items = np.linspace(float(itemsInput[0]), float(itemsInput[1]), int(itemsInput[2]))
+        if '&' in cfgValues:
+            items = np.append(items, float(itemsInputBig[1]))
     elif cfgValues == '':
         items = []
     else:
@@ -404,7 +411,7 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
         varParList = cfg['varParList'].split('|')
 
         # create dataFrame with ordered paths to simulation results
-        dataDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfg['ascendingOrder'], resFiles=True)
+        dataDF = cfgUtils.orderSimFiles(avaDir, inputDir, varParList, cfg.getboolean('ascendingOrder'), resFiles=True)
 
         for suf in suffix:
             # get paths for desired resType
@@ -418,7 +425,8 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
 
         # add value of first parameter used for ordering for colorcoding in plots
         pathDict['colorParameter'] = dataDF[dataDF['resType']==suf][varParList[0]].to_list()
-
+        # also build the simID array
+        pathDict['simID'].append(set(pathDict['simID']))
     else:
         # do not apply ordering
         log.warning('Did not apply ordering')
@@ -427,6 +435,10 @@ def getDFADataPaths(avaDir, pathDict, cfg, suffix, comModule='', inputDir=''):
             for suf in suffix:
                 if dataDF['resType'][m] == suf:
                     pathDict[suf].append(dataDF['files'][m])
+                    # also build the simID array
+                    newSimID = dataDF['simID'][m]
+                    if newSimID not in pathDict['simID']:
+                        pathDict['simID'].append(newSimID)
                     log.info('Added to pathDict: %s' % (dataDF['files'][m]))
 
     for suf in suffix:

@@ -60,7 +60,7 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     _, _, _, _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
 
     if isinstance(simDF, str):
-        simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False)
+        simDF, simName = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
 
     # compute the similartiy solution (this corresponds to our reference)
     log.info('Computing similarity solution')
@@ -75,6 +75,7 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     simDF = postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
     outAna1Plots.plotError(simDF, outDirTest, cfg['SIMISOL'])
     outAna1Plots.plotErrorLog(simDF, outDirTest, cfg['SIMISOL'])
+    outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'])
 
 
 def mainSimilaritySol(simiSolCfg):

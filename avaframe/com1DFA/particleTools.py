@@ -21,8 +21,6 @@ import avaframe.com1DFA.DFAtools as DFAtls
 log = logging.getLogger(__name__)
 
 
-# ############### Initializing particles
-
 def initialiseParticlesFromFile(cfg, avaDir):
     # TODO: this is for development purposes, change or remove in the future
     # If initialisation from file
@@ -152,8 +150,6 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
     return xPart, yPart, mPart, n, aPart
 
 
-# ############### Split and remove merge particles
-
 def removePart(particles, mask, nRemove, reasonString=''):
     """ remove given particles
 
@@ -182,7 +178,7 @@ def removePart(particles, mask, nRemove, reasonString=''):
         # for all keys in particles that are arrays of size nPart do:
         elif type(particles[key]).__module__ == np.__name__:
             if np.size(particles[key]) == nPart:
-                particles[key] = particles[key][mask]
+                particles[key] = np.extract(mask, particles[key])
 
     particles['mTot'] = np.sum(particles['m'])
     return particles
@@ -485,7 +481,7 @@ def mergeParticleDict(particles1, particles2):
             # of particles2 so that the ID stays a unique identifier and
             # that the parentID is consistent with this shift.
             if (key == 'ID') or (key == 'parentID'):
-                particles[key] = np.append(particles1[key], particles2[key] + particles1['nID'])
+                particles[key] = np.append(particles1[key], (particles2[key] + particles1['nID']))
             # general case where the key value is an array with as many elements
             # as particles
             elif np.size(particles1[key]) == nPart1:
@@ -867,3 +863,118 @@ def savePartToCsv(particleProperties, dictList, outDir):
         particlesData = pd.DataFrame(data=csvData)
         particlesData.to_csv(outFile, index=False)
         count = count + 1
+
+
+def getCom1DFAPath(particlesList, dem):
+    """ compute part, mass and energy averaged path from particles
+
+    Also returns the averaged velocity and kinetic energy associated
+
+    Parameters
+    -----------
+    particlesList: list
+        list of particles dict
+    dem: dict
+        dem dict
+
+    Returns
+    --------
+    avaProfilePart: dict
+        particle averaged profile
+    avaProfileMass: dict
+        mass averaged profile
+    avaProfileKE: dict
+        kinetic energy averaged profile
+    """
+    # get DEM Path
+    header = dem['header']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+
+    proList = ['x', 'y', 'z', 's', 'sCor']
+    avaProfilePart = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    avaProfileMass = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    avaProfileKE = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
+    for prop in proList:
+        avaProfilePart[prop] = np.empty((0, 1))
+        avaProfilePart[prop + 'std'] = np.empty((0, 1))
+        avaProfileMass[prop] = np.empty((0, 1))
+        avaProfileMass[prop + 'std'] = np.empty((0, 1))
+        avaProfileKE[prop] = np.empty((0, 1))
+        avaProfileKE[prop + 'std'] = np.empty((0, 1))
+
+    # loop on each particle dictionary (ie each time step saved)
+    for particles in particlesList:
+        if particles['nPart'] > 0:
+            m = particles['m']
+            ux = particles['ux']
+            uy = particles['uy']
+            uz = particles['uz']
+            u = DFAtls.norm(ux, uy, uz)
+            U2 = u*u
+            kineticEne = 0.5*m*u*u
+            kineticEneSum = np.nansum(kineticEne)
+
+            # kinetic energy-averaged path
+            if kineticEneSum > 0:
+                avaProfileKE = appendAverageStd(proList, avaProfileKE, particles, U2, kineticEneSum, kineticEne)
+            else:
+                avaProfileKE = appendAverageStd(proList, avaProfileKE, particles, U2, kineticEneSum, m)
+
+            # mass-averaged path
+            avaProfileMass = appendAverageStd(proList, avaProfileMass, particles, U2, kineticEneSum, m)
+
+            # particle-averaged path
+            avaProfilePart = appendAverageStd(proList, avaProfilePart, particles, U2, kineticEneSum, None)
+
+    avaProfilePart['x'] = avaProfilePart['x'] + xllc
+    avaProfilePart['y'] = avaProfilePart['y'] + yllc
+    avaProfileMass['x'] = avaProfileMass['x'] + xllc
+    avaProfileMass['y'] = avaProfileMass['y'] + yllc
+    avaProfileKE['x'] = avaProfileKE['x'] + xllc
+    avaProfileKE['y'] = avaProfileKE['y'] + yllc
+    return avaProfilePart, avaProfileMass, avaProfileKE
+
+
+def weightedAvgAndStd(values, weights):
+    """
+    Return the weighted average and standard deviation.
+
+    values, weights -- Numpy ndarrays with the same shape.
+    """
+    average = np.average(values, weights=weights)
+    # Fast and numerically precise:
+    variance = np.average((values-average)**2, weights=weights)
+    return (average, math.sqrt(variance))
+
+
+def appendAverageStd(proList, avaProfile, particles, U2, kineticEneSum, weights):
+    """ append averaged to path
+
+    Parameters
+    -----------
+    proList: list
+        list of properties to average and append
+    avaProfile: dict
+        path
+    particles: dict
+        particles dict
+    U2: numpy array
+        array of particles squared velocities (same size as particles)
+    kineticEneSum: numpy array
+        array of particles kinetic energy (same size as particles)
+    weights: numpy array
+        array of weights (same size as particles)
+
+    Returns
+    --------
+    avaProfile: dict
+        averaged profile
+    """
+    for prop in proList:
+        avg, std = weightedAvgAndStd(particles[prop], weights)
+        avaProfile[prop] = np.append(avaProfile[prop], avg)
+        avaProfile[prop + 'std'] = np.append(avaProfile[prop + 'std'], std)
+    avaProfile['v2'] = np.append(avaProfile['v2'], np.average(U2, weights=weights))
+    avaProfile['ekin'] = np.append(avaProfile['ekin'], kineticEneSum)
+    return avaProfile

@@ -100,8 +100,7 @@ def generatePlot(dataDict, avaName, outDir, cfg, plotDict, crossProfile=True):
     maxVal = max(np.nanmax(data1), np.nanmax(data2))
 
     # constrain data to where there is data
-    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot, _ = pU.constrainPlotsToData(dataExtend, cellSize,
-        extentOption=True)
+    rowsMinPlot, rowsMaxPlot, colsMinPlot, colsMaxPlot = pU.constrainPlotsToData(dataExtend, cellSize, extentOption=True)
 
     # Location of box
     nybox = 0.05

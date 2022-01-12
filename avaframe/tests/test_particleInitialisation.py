@@ -38,9 +38,10 @@ def test_resetMassPerParticle():
     relRaster = np.zeros((5, 6))
     relRaster[2, 2] = 2.
     relRaster[2, 3] = 0.5
+    relThField = ''
 
     # call function to be tested
-    particles = pI.resetMassPerParticle(cfg, particles, dem, relRaster)
+    particles = pI.resetMassPerParticle(cfg, particles, dem, relRaster, relThField)
 
     print('particles new mass', particles['mIni'])
     testMass = np.ones(16)

@@ -29,10 +29,8 @@ log = logging.getLogger(__name__)
 @cython.cdivision(True)
 def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, double csz=1, double xllc=0, double yllc=0):
     """ Interpolate from unstructured points to grid
-
     Interpolate unstructured points on a structured grid using bilinear interpolation
     The (x, y) points have to be on the extend of the DEM!!
-
     Parameters
       ----------
       x: 1D numpy array
@@ -49,7 +47,6 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
           x coord of the lower left center
       yllc : float
           y coord of the lower left center
-
       Returns
       -------
       Z1: 2D numpy array
@@ -108,9 +105,7 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
 @cython.cdivision(True)
 def computeForceC(cfg, particles, fields, dem, dT, int frictType):
   """ compute forces acting on the particles (without the SPH component)
-
   Cython implementation implementation
-
   Parameters
   ----------
   cfg: configparser
@@ -125,7 +120,6 @@ def computeForceC(cfg, particles, fields, dem, dT, int frictType):
       time step
   frictType: int
     identifier for friction law to be used
-
   Returns
   -------
   force : dict
@@ -375,7 +369,6 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
                                               double tau, double entEroEnergy,
                                               double rhoEnt):
   """ compute force component due to entrained mass
-
   Parameters
   ----------
   entrMassCell : float
@@ -386,7 +379,6 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
       particle speed (velocity magnitude)
   tau : float
       bottom shear stress
-
   Returns
   -------
   dm : float
@@ -423,7 +415,6 @@ cpdef (double, double) computeEntMassAndForce(double dt, double entrMassCell,
 cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
                              double cResCell, double uMag, int explicitFriction):
   """ compute force component due to resistance
-
   Parameters
   ----------
   hRes: float
@@ -440,7 +431,6 @@ cpdef double computeResForce(double hRes, double h, double areaPart, double rho,
       particle speed (velocity magnitude)
   explicitFriction: int
     if 1 add resistance with an explicit method. Implicit otherwise
-
   Returns
   -------
   cResPart : float
@@ -467,9 +457,7 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
                                                      double[:, :] VX, double[:, :] VY, double[:, :] VZ,
                                                      double nx, double ny, double nz):
   """ add artificial viscosity
-
   Add the artificial viscosity in an implicit way and this before adding the other forces.
-
   Parameters
   ----------
   m : float
@@ -501,7 +489,6 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
       y component of the interpolated vector field at particle position
   nz: float
       z component of the interpolated vector field at particle position
-
   Returns
   -------
   ux: float
@@ -542,9 +529,7 @@ cdef (double, double, double) addArtificialViscosity(double m, double h, double 
 @cython.cdivision(True)
 def updatePositionC(cfg, particles, dem, force, DT, typeStop=0):
   """ update particle position using euler forward scheme
-
   Cython implementation
-
   Parameters
   ----------
   cfg: configparser
@@ -832,7 +817,6 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
                                                             double dt, double forceFrict,
                                                             double uMag, int explicitFriction):
   """ update velocity with friction force
-
   Parameters
   ----------
   ux: float
@@ -851,7 +835,6 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
       particle speed (velocity magnitude)
   explicitFriction: int
     if 1 add resistance with an explicit method. Implicit otherwise
-
   Returns
   -------
   uxNew: float
@@ -901,9 +884,7 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
 @cython.cdivision(True)
 def updateFieldsC(cfg, particles, dem, fields):
   """ update fields and particles fow depth
-
   Cython implementation
-
  Parameters
  ----------
  cfg: configparser
@@ -914,7 +895,6 @@ def updateFieldsC(cfg, particles, dem, fields):
      dictionary with dem information
  fields : dict
      fields dictionary
-
  Returns
  -------
  particles : dict
@@ -1031,18 +1011,15 @@ def updateFieldsC(cfg, particles, dem, fields):
 @cython.cdivision(True)
 def getNeighborsC(particles, dem):
     """ Locate particles on DEM and neighbour search grid
-
     Ĺocate each particle in a grid cell (both DEM and neighbour search grid) and build the
     indPartInCell and partInCell arrays for SPH neighbourSearch and
     InCell, IndX and IndY arrays location on the DEM grid.
     See issue #200 and documentation for details
-
     Parameters
     ----------
     particles : dict
     dem : dict
       dem dict with neighbour search grid header (information about neighbour search grid)
-
     Returns
     -------
     particles : dict
@@ -1109,9 +1086,7 @@ def getNeighborsC(particles, dem):
 
 def computeForceSPHC(cfg, particles, force, dem, int sphOption, gradient=0):
   """ Prepare data for C computation of lateral forces (SPH component)
-
   acting on the particles (SPH component)
-
   Parameters
   ----------
   cfg: configparser
@@ -1156,9 +1131,7 @@ def computeForceSPHC(cfg, particles, force, dem, int sphOption, gradient=0):
 def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:, :] nxArray, double[:, :] nyArray,
                  double[:, :] nzArray, gradient, int SPHoption):
   """ compute lateral forces acting on the particles (SPH component)
-
   Cython implementation
-
   Parameters
   ----------
   cfg: configparser
@@ -1178,7 +1151,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
       row index of the location of the particles
   gradient : int
     Return the gradient (if 1) or the force associated (if 0, default)
-
   Returns
   -------
   GHX : 1D numpy array
@@ -1244,6 +1216,12 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double dwdrr, area
   cdef double pikl, flux
   cdef double hk, hl, ck, cl, lambdakl
+
+  if viscOption == 2 and SPHoption != 2:
+    print('========================================================================================================')
+    print('!!!                         IF VISCOPTION==2, SPHOPTION HAS TO BE EQUAL TO 2                         !!!')
+    print('========================================================================================================')
+    n = input()
 
   # loop on particles
   for k in range(N):
@@ -1424,9 +1402,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
 
 cpdef double norm(double x, double y, double z):
   """ Compute the Euclidean norm of the vector (x, y, z).
-
   (x, y, z) can be numpy arrays.
-
   Parameters
   ----------
       x: numpy array
@@ -1435,7 +1411,6 @@ cpdef double norm(double x, double y, double z):
           y component of the vector
       z: numpy array
           z component of the vector
-
   Returns
   -------
       norme: numpy array
@@ -1445,9 +1420,7 @@ cpdef double norm(double x, double y, double z):
 
 cpdef double norm2(double x, double y, double z):
   """ Compute the Euclidean norm of the vector (x, y, z).
-
   (x, y, z) can be numpy arrays.
-
   Parameters
   ----------
       x: numpy array
@@ -1456,7 +1429,6 @@ cpdef double norm2(double x, double y, double z):
           y component of the vector
       z: numpy array
           z component of the vector
-
   Returns
   -------
       norme: numpy array
@@ -1468,9 +1440,7 @@ cpdef double norm2(double x, double y, double z):
 @cython.cdivision(True)
 cpdef (double, double, double) normalize(double x, double y, double z):
   """ Normalize vector (x, y, z) for the Euclidean norm.
-
   (x, y, z) can be np arrays.
-
   Parameters
   ----------
       x: numpy array
@@ -1479,7 +1449,6 @@ cpdef (double, double, double) normalize(double x, double y, double z):
           y component of the vector
       z: numpy array
           z component of the vector
-
   Returns
   -------
       xn: numpy array
@@ -1521,7 +1490,6 @@ cpdef double scalProd(double ux, double uy, double uz, double vx, double vy, dou
 @cython.cdivision(True)
 cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
   """ Locate point on grid.
-
   Parameters
   ----------
       x: float
@@ -1534,7 +1502,6 @@ cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
           number of rows
       csz: float
           cellsize of the grid
-
   Returns
   -------
       iCell: int
@@ -1563,11 +1530,9 @@ cpdef (int) getCells(double x, double y, int ncols, int nrows, double csz):
 @cython.cdivision(True)
 cpdef (double, double, double, double) getWeights(double x, double y, int iCell, double csz, int ncols, int interpOption):
   """ Get weight for interpolation from grid to single point location
-
   3 Options available : -0: nearest neighbour interpolation
                         -1: equal weights interpolation
                         -2: bilinear interpolation
-
   Parameters
   ----------
     x: float
@@ -1584,7 +1549,6 @@ cpdef (double, double, double, double) getWeights(double x, double y, int iCell,
         -0: nearest neighbour interpolation
         -1: equal weights interpolation
         -2: bilinear interpolation
-
   Returns
   -------
       w00, w10, w01, w11: floats
@@ -1643,9 +1607,7 @@ cpdef (double, double, int, int, int, double, double, double, double) normalProj
   double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption,
   int reprojectionIterations, double threshold):
   """ Find the orthogonal projection of a point on a mesh
-
   Iterative method to find the projection of a point on a surface defined by its mesh
-
   Parameters
   ----------
       xOld: float
@@ -1673,7 +1635,6 @@ cpdef (double, double, int, int, int, double, double, double, double) normalProj
       threshold: double
           stop criterion for reprojection, stops when the distance between two iterations
           is smaller than threshold * csz
-
     Returns
     -------
     xNew: float
@@ -1744,9 +1705,7 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
   double xOld, double yOld, double zOld, double[:,:] ZDEM, double[:,:] nxArray, double[:,:] nyArray,
   double[:,:] nzArray, double csz, int ncols, int nrows, int interpOption, int reprojectionIterations):
   """ Find the projection of a point on a mesh (comes from samos)
-
   Iterative method to find the projection of a point on a surface defined by its mesh
-
   Parameters
   ----------
       xOld: float
@@ -1771,7 +1730,6 @@ cpdef (double, double, int, int, int, double, double, double, double) samosProje
           -2: bilinear interpolation
       reprojectionIterations: int
           maximum number or iterations
-
     Returns
     -------
     xNew: float
@@ -1848,9 +1806,7 @@ cpdef (double, double, double, int, int, int, double, double, double, double) di
   int reprojectionIterations, double threshold):
   """ Find the projection of a point on a mesh conserving the distance
   with the previous time step position
-
   Iterative method to find the projection of a point on a surface defined by its mesh
-
   Parameters
   ----------
       xPrev: float
@@ -1884,7 +1840,6 @@ cpdef (double, double, double, int, int, int, double, double, double, double) di
       threshold: double
           stop criterion for reprojection, stops when the error on the distance after projection
           is smaller than threshold * (dist + csz)
-
     Returns
     -------
     xNew: float
@@ -1987,12 +1942,10 @@ cpdef double[:] projOnRaster(double[:] xArray, double[:] yArray, double[:, :] vA
 @cython.boundscheck(False)
 cpdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double w3, double[:, :] V):
   """ Interpolate vector field from grid to single point location
-
   Originaly created to get the normal vector at location (x,y) given the
   normal vector field on the grid. Grid has its origin in (0,0).
   Can be used to interpolate any vector field.
   Interpolation using a bilinear interpolation
-
   Parameters
   ----------
     Lx0: int
@@ -2003,7 +1956,6 @@ cpdef double getScalar(int Lx0, int Ly0, double w0, double w1, double w2, double
         corresponding weights
     V: 2D numpy array
         scalar field at the grid nodes
-
   Returns
   -------
       v: float
@@ -2023,11 +1975,9 @@ cpdef (double, double, double) getVector(
   int Lx0, int Ly0, double w0, double w1, double w2, double w3,
   double[:, :] Nx, double[:, :] Ny, double[:, :] Nz):
   """ Interpolate vector field from grid to single point location
-
   Originaly created to get the normal vector at location (x,y) given the
   normal vector field on the grid. Grid has its origin in (0,0).
   Can be used to interpolate any vector field.
-
   Parameters
   ----------
       Lx0: int
@@ -2043,7 +1993,6 @@ cpdef (double, double, double) getVector(
           y component of the vector field at the grid nodes
       Nz: 2D numpy array
           z component of the vector field at the grid nodes
-
   Returns
   -------
       nx: float
@@ -2083,7 +2032,6 @@ cpdef double SamosATfric(double rho, double Rs0, double mu, double kappa, double
 @cython.cdivision(True)
 def computeIniMovement(cfg, particles, dem, dT, fields):
   """ add artifical viscosity effect on velocity
-
       Parameters
       ------------
       cfg: configparser
@@ -2096,14 +2044,12 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
           time step
       fields: dict
         fields dictionary
-
       Returns
       --------
       particles: dict
         updated particle dictionary
       force: dict
         force dictionary
-
   """
 
   cdef int interpOption = cfg.getint('interpOption')

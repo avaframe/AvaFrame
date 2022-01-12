@@ -312,13 +312,13 @@ def test_getDFADataPaths():
     cfgSetup = cfg['AIMECSETUP']
     suffix = ['ppr', 'pfd', 'pfv']
     comModule = 'com1DFA'
-    pathDict = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
+    pathDict = {'simID': [], 'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
 
     # return pathDict for comModule=com1DFA
     pathDict = fU.getDFADataPaths(avaDir, pathDict, cfgSetup, suffix, comModule=comModule, inputDir='')
 
     # return pathDict for given inputDir
-    pathDict2 = {'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
+    pathDict2 = {'simID': [], 'ppr': [], 'pfd': [], 'pfv': [], 'massBal': [], 'colorParameter': []}
     inputDir = pathlib.Path(avaDir, 'Outputs' , 'com1DFA', 'peakFiles')
     suffix = 'ppr'
     pathDict2 = fU.getDFADataPaths(avaDir, pathDict2, cfgSetup, suffix, comModule='', inputDir=inputDir)

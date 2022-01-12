@@ -48,7 +48,6 @@ debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=''):
     """ preprocess information from ini and run all desired simulations, create outputs and reports
-
         Parameters
         ------------
         avalancheDir: str or pathlib Path
@@ -57,7 +56,6 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
             path to configuration file if overwrite is desired
         variationDict: dict
             dictionary with parameter variation info if not provided via ini file
-
         Returns
         --------
         particlesList: list
@@ -95,7 +93,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
     # first get already existing simulations
     simDFOld, simNameOld = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
     # prepare simulation to run (only the new ones)
-    simDict = prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
+    _, simDict = prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
 
     # is there any simulation to run?
     if bool(simDict):
@@ -163,9 +161,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
 
 def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
     """ Run main com1DFA model
-
     This will compute a dense flow avalanche
-
     Parameters
     ----------
     cfg : dict
@@ -181,7 +177,6 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
     relThField: 2D array
         release thickness field with varying release thickness if '', release thickness is taken from
         (a) shapefile or (b) configuration file
-
     Returns
     -------
     reportDictList : list
@@ -246,7 +241,6 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
 
 def prepareReleaseEntrainment(cfg, rel, inputSimLines):
     """ get Simulation to run for a given release
-
     Parameters
     ----------
     cfg : dict
@@ -255,7 +249,6 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         path to release file
     inputSimLines: dict
         dictionary with dictionaries with input data infos (releaseLine, entLine, ...)
-
     Returns
     -------
     relName : str
@@ -309,7 +302,6 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
 
 def setThickness(cfg, lineTh, useThFromIni, typeTh):
     """ set thickness in line dictionary for release area, entrainment area
-
     Parameters
     -----------
     lineTh: dict
@@ -318,7 +310,6 @@ def setThickness(cfg, lineTh, useThFromIni, typeTh):
         True if thickness shall be set from ini file
     typeTh: str
         type of thickness to be set (e.g. relTh for release thickness -from ini)
-
     Returns
     --------
     lineTh: dict
@@ -341,7 +332,6 @@ def setThickness(cfg, lineTh, useThFromIni, typeTh):
 
 def prepareInputData(inputSimFiles):
     """ Fetch input data
-
     Parameters
     ----------
     relFiles : str
@@ -358,7 +348,6 @@ def prepareInputData(inputSimFiles):
         entResInfo : flag dict
             flag if Yes entrainment and/or resistance areas found and used for simulation
             flag True if a Secondary Release file found and activated
-
     Returns
     -------
     demOri : dict
@@ -433,7 +422,6 @@ def prepareInputData(inputSimFiles):
 
 def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportAreaInfo):
     """ create simulaton report dictionary
-
     Parameters
     ----------
     logName : str
@@ -448,7 +436,6 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
         entrainment file name
     resistanceArea : str
         resistance file name
-
     Returns
     -------
     reportST : dict
@@ -519,10 +506,8 @@ def reportAddTimeMassInfo(reportDict, tcpuDFA, infoDict):
 
 def initializeMesh(cfg, demOri, num):
     """ Create rectangular mesh
-
     Reads the DEM information, computes the normal vector field and
     boundries to the DEM. Also generates the grid for the neighbour search
-
     Parameters
     ----------
     demOri : dict
@@ -530,7 +515,6 @@ def initializeMesh(cfg, demOri, num):
     num : int
         chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
         1 to use the simple cross product method
-
     Returns
     -------
     dem : dict
@@ -592,7 +576,6 @@ def setDEMoriginToZero(demOri):
 
 def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     """ create simulaton report dictionary
-
     Parameters
     ----------
     cfg : str
@@ -615,7 +598,6 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     relThField : 2D numpy array
         inhomogeneous release thickness if wanted (relThField='' by default  - in this case
         release thickness from (a) shapefile or if not provided (b) configuration file is used)
-
     Returns
     -------
     particles : dict
@@ -744,10 +726,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
 
 def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', relThField=''):
     """ Initialize DFA simulation
-
     Create particles and fields dictionary according to config parameters
     release raster and dem
-
     Parameters
     ----------
     cfg: configparser
@@ -760,7 +740,6 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         info on input files; real releaseline info required for iniStep
     relThField: 2D numpy array
         if the release depth is not uniform, give here the releaseRaster
-
     Returns
     -------
     particles : dict
@@ -923,7 +902,6 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
 
 def initializeFields(cfg, dem, particles):
     """Initialize fields and update particles flow depth
-
     Parameters
     ----------
     cfg: configparser
@@ -932,7 +910,6 @@ def initializeFields(cfg, dem, particles):
         dictionary with dem information
     particles : dict
         particles dictionary at initial time step
-
     Returns
     -------
     particles : dict
@@ -966,7 +943,6 @@ def initializeFields(cfg, dem, particles):
 
 def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPointInPoly, rhoEnt):
     """ Initialize mass for entrainment
-
     Parameters
     ----------
     dem: dict
@@ -982,7 +958,6 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         very close but outside
     rhoEnt: float
         density of entrainment snow
-
     Returns
     -------
     entrMassRaster : 2D numpy array
@@ -1012,7 +987,6 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
 
 def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly):
     """ Initialize resistance matrix
-
     Parameters
     ----------
     dem: dict
@@ -1026,7 +1000,6 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     thresholdPointInPoly: float
         threshold val that decides if a point is in the polygon, on the line or
         very close but outside
-
     Returns
     -------
     cResRaster : 2D numpy array
@@ -1059,7 +1032,6 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
 def DFAIterate(cfg, particles, fields, dem):
     """ Perform time loop for DFA simulation
      Save results at desired intervals
-
     Parameters
     ----------
     cfg: configparser
@@ -1072,7 +1044,6 @@ def DFAIterate(cfg, particles, fields, dem):
         fields dictionary at initial time step
     dem : dict
         dictionary with dem information
-
     Returns
     -------
     particlesList : list
@@ -1231,7 +1202,6 @@ def DFAIterate(cfg, particles, fields, dem):
 
 def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes):
     """ append fields and optionally particle dictionaries to list for export
-
         Parameters
         ------------
         particles: dict
@@ -1240,7 +1210,6 @@ def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes
             dictionary with all result type fields
         resTypes: list
             list with all result types that shall be exported
-
         Returns
         -------
         Fields: list
@@ -1262,7 +1231,6 @@ def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes
 
 def writeMBFile(infoDict, avaDir, logName):
     """ write mass balance info to file
-
         Parameters
         -----------
         infoDict: dict
@@ -1288,7 +1256,6 @@ def writeMBFile(infoDict, avaDir, logName):
 
 def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
     """ compute next time step using an euler forward scheme
-
     Parameters
     ----------
     cfg: configparser
@@ -1305,7 +1272,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
         computation time dictionary
     frictType: int
         indicator for chosen type of friction model
-
     Returns
     -------
     particles : dict
@@ -1386,7 +1352,6 @@ def computeEulerTimeStep(cfg, particles, fields, dt, dem, Tcpu, frictType):
 
 def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
     """ convert shape file polygon to raster
-
     Parameters
     ----------
     line: dict
@@ -1404,7 +1369,6 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
     checkOverlap : Boolean
         if True check if features are overlaping and return an error if it is the case
         if False check if features are overlaping and average the value for overlaping areas
-
     Returns
     -------
     updates the line dictionary with the rasterData: Either
@@ -1467,7 +1431,6 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
 
 def polygon2Raster(demHeader, Line, radius, th=''):
     """ convert line to raster
-
     Parameters
     ----------
     demHeader: dict
@@ -1478,7 +1441,6 @@ def polygon2Raster(demHeader, Line, radius, th=''):
         include all cells which center is in the polygon or close enough
     th: float
         thickness value ot the line feature
-
     Returns
     -------
     Mask : 2D numpy array
@@ -1532,7 +1494,6 @@ def polygon2Raster(demHeader, Line, radius, th=''):
 
 def checkParticlesInRelease(particles, line, radius):
     """ remove particles laying outside the polygon
-
     Parameters
     ----------
     particles : dict
@@ -1542,7 +1503,6 @@ def checkParticlesInRelease(particles, line, radius):
     radius: float
         threshold val that decides if a point is in the polygon, on the line or
         very close but outside
-
     Returns
     -------
     particles : dict
@@ -1576,7 +1536,6 @@ def checkParticlesInRelease(particles, line, radius):
 
 def pointInPolygon(demHeader, points, Line, radius):
     """ find particles within a polygon
-
     Parameters
     ----------
     demHeader: dict
@@ -1588,7 +1547,6 @@ def pointInPolygon(demHeader, points, Line, radius):
     radius: float
         threshold val that decides if a point is in the polygon, on the line or
         very close but outside
-
     Returns
     -------
     Mask : 1D numpy array
@@ -1672,7 +1630,6 @@ def releaseSecRelArea(cfg, particles, fields, dem):
 
 def savePartToPickle(dictList, outDir, logName):
     """ Save each dictionary from a list to a pickle in outDir; works also for one dictionary instead of list
-
         Parameters
         ---------
         dictList: list or dict
@@ -1692,11 +1649,9 @@ def savePartToPickle(dictList, outDir, logName):
 
 def trackParticles(cfgTrackPart, dem, particlesList):
     """ track particles from initial area
-
         Find all particles in an initial area. Find the same particles in
         the other time steps (+ the children if they were splitted).
         Extract time series of given properties of the tracked particles
-
         Parameters
         -----------
         cfgTrackPart: configParser
@@ -1711,7 +1666,6 @@ def trackParticles(cfgTrackPart, dem, particlesList):
             dem dictionary
         particlesList: list
             list of particles dictionary
-
         Returns
         -------
         particlesList : list
@@ -1759,7 +1713,6 @@ def trackParticles(cfgTrackPart, dem, particlesList):
 
 def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA'):
     """ Read ascii files within a directory and return List of dicionaries
-
         Parameters
         -----------
         inDir: str
@@ -1805,7 +1758,6 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA')
 def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
     """ export result fields to Outputs directory according to result parameters and time step
         that can be specified in the configuration file
-
         Parameters
         -----------
         cfg: dict
@@ -1816,7 +1768,6 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
             list of Fields for each dtSave
         outDir: str
             outputs Directory
-
         Returns
         --------
         exported peak fields are saved in Outputs/com1DFA/peakFiles
@@ -1865,7 +1816,6 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
 
 def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     """ Prepare a dictionary with simulations that shall be run with varying parameters following the variation dict
-
         Parameters
         -----------
         standardCfg : configParser object
@@ -1877,7 +1827,6 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
         simNameOld: list
             list of simulation names that already exist (optional). If provided,
             only carry on simulation that do not exist
-
         Returns
         -------
         simDict: dict
@@ -1902,6 +1851,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     # generate a list of full simulation info for all release area scenarios and simTypes
     # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
     simDict = {}
+    IDList = []
     for rel in inputSimFiles['relFiles']:
         relName = rel.stem
         if '_' in relName:
@@ -1918,6 +1868,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
             # create unique hash for simulation configuration
             simHash = cfgUtils.cfgHash(cfgSimObject)
+            IDList.append(simHash)
             simName = (relNameSim + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' +
                        simHash)
             # check if simulation exists. If yes do not append it
@@ -1931,19 +1882,17 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     for key in simDict:
         log.info('Simulation: %s' % key)
 
-    return simDict
+    return IDList, simDict
 
 
 def getSimTypeList(simTypeList, inputSimFiles):
     """ Define available simulation types of requested types
-
         Parameters
         -----------
         standardCfg : configParser object
             default configuration or local configuration
         inputSimFiles: dict
             info dict on available input data
-
         Returns
         --------
         simTypeList: list

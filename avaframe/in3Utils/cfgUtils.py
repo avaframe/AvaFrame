@@ -467,6 +467,32 @@ def appendCgf2DF(simHash, simName, cfgObject, simDF):
     return simDF
 
 
+def appendTcpu2DF(simHash, tCPU, tCPUDF):
+    """ append Tcpu dictionary to the dataframe
+
+        Parameters
+        -----------
+        simHash: str
+            hash of the simulation corresponding to the tCPU dict to append
+        tCPU: dict
+            cpu time dict of the simulation
+        tCPUDF: pandas dataFrame
+            tCPU dataframe
+
+        Returns
+        --------
+        simDF: pandas DataFrame
+            DFappended with the new simulation configuration
+    """
+    indexItem = [simHash]
+    tCPUItemDF = pd.DataFrame(data=tCPU, index=indexItem)
+    if isinstance(tCPUDF, str):
+        tCPUDF = tCPUItemDF
+    else:
+        tCPUDF = pd.concat([tCPUDF, tCPUItemDF], axis=0)
+    return tCPUDF
+
+
 def convertDF2numerics(simDF):
     """ convert a string DF to a numerical one
 
@@ -557,6 +583,8 @@ def writeAllConfigurationInfo(avaDir, simDF, specDir=''):
 
 def filterSims(avalancheDir, parametersDict, specDir=''):
     """ Filter simulations using a list of parameters and a pandas dataFrame of simulation configurations
+        if ~ is used as a prefix for a parameter - it is filtered according to values that do NOT match the value
+        provided with the ~Parameter
 
         Parameters
         -----------
@@ -582,7 +610,13 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
             if not isinstance(value, (list, np.ndarray)):
                 value = [value]
             if value != '' and value != []:
-                simDF = simDF[simDF[key].isin(value)]
+                if '~' in key:
+                    # only add simulations that do not match the value of ~key
+                    keyNew = key.replace("~", "")
+                    simDF = simDF[~simDF[keyNew].isin(value)]
+                else:
+                    # add all simulations that match the value of the key
+                    simDF = simDF[simDF[key].isin(value)]
 
     # list of simNames after filtering
     simNameList = simDF['simName'].tolist()

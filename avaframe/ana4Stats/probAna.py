@@ -6,7 +6,6 @@ This is a simple function for computing a probability map of all peak files of o
 
 import numpy as np
 import logging
-from matplotlib import pyplot as plt
 import pathlib
 
 import avaframe.out3Plot.plotUtils as pU
@@ -17,6 +16,107 @@ import avaframe.in2Trans.ascUtils as IOf
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
+
+
+def createComModConfig(cfgProb, avaDir, modName):
+    """ create configuration file for performing sims with modName com module
+
+        Parameters
+        -----------
+        cfgProb: configParser object
+            configuration settings
+        avaDir: pathlib path
+            path to avalanche directory
+        modName: module
+            computational module
+
+        Returns
+        -------
+        cfgFiles: dict
+            dictionary of paths to newly generated configuration files for com module for all parameters
+
+    """
+
+    # setup where configuration file is saved
+    outDir = avaDir / 'Outputs'
+    fU.makeADir(outDir)
+
+    # loop over all parameters for performing parameter variation
+    varParList = cfgProb['PROBRUN']['varParList'].split('|')
+    cfgFiles = {}
+    for varName in varParList:
+        # define configuration files
+        # get filename of module
+        modNameString = str(pathlib.Path(modName.__file__).stem)
+        cfgFile = outDir / ('probRun%sCfg%s.ini' % (modNameString, varName))
+
+        # use default com module settings or local settings
+        if cfgProb['PROBRUN'].getboolean('defaultSetup'):
+            modCfg = cfgUtils.getDefaultModuleConfig(modName)
+            modCfg, refIn = updateCfgRange(modCfg, cfgProb, varName)
+            with open(cfgFile, 'w') as configfile:
+                modCfg.write(configfile)
+        else:
+            modCfg = cfgUtils.getModuleConfig(modName)
+            modCfg, refIn = updateCfgRange(modCfg, cfgProb, varName)
+            with open(cfgFile, 'w') as configfile:
+                modCfg.write(configfile)
+        # append cfgFiles to list
+        cfgFiles[varName] = {'cfgFile': cfgFile, 'referenceIncluded': refIn}
+
+    return cfgFiles
+
+
+def updateCfgRange(cfg1, cfgProb, varName):
+    """ update cfg with a range for parameters in cfgProb
+
+        Parameters
+        -----------
+        cfg1: configparser object
+            configuration object to update
+        cfgProb: configParser object
+            configparser object with info on update
+        varName: str
+            name of parameter used for variation
+
+        Returns
+        --------
+        cfg1: configParser
+            updated configuration object
+        refIn: bool
+            True if the reference value had to be added to parameter variation
+
+    """
+
+    # set reference values of parameters - override values in com module configurations
+    varParList = cfgProb['PROBRUN']['varParList'].split('|')
+    # also for the other parameters that are varied subsequently
+    for varPar in varParList:
+        if any(chars in cfg1['GENERAL'][varPar] for chars in ['|', '$', ':']):
+            message = 'Only one reference values is allowed for %s: but %s is given' % (varPar, cfg1['GENERAL'][varPar])
+            log.error(message)
+            raise AssertionError(message)
+        if varPar == 'relTh':
+            cfg1['GENERAL']['useRelThFromIni'] = 'True'
+        elif varPar == 'entTh':
+            cfg1['GENERAL']['useEntThFromIni'] = 'True'
+
+    # get range, steps and reference value of parameter to perform variations
+    valRange = cfgProb['PROBRUN'].getfloat('%sRange' % varName)
+    valSteps = cfgProb['PROBRUN'].getint('%sSteps' % varName)
+    valVal = cfg1['GENERAL'].getfloat(varName)
+
+    # set variation in configuration
+    cfg1['GENERAL'][varName] = '%s:%s:%s' % (str(valVal-valRange), str(valVal+valRange), str(valSteps))
+
+    # if reference value is not in this list - add reference values
+    valValues = np.linspace(valVal-valRange, valVal+valRange, valSteps)
+    refIn = False
+    if valVal not in valValues:
+        cfg1['GENERAL'][varName] = '%s:%s:%s&%s' % (str(valVal-valRange), str(valVal+valRange), str(valSteps), str(valVal))
+        refIn = True
+
+    return cfg1, refIn
 
 
 def probAnalysis(avaDir, cfg, module, parametersDict='', inputDir=''):
