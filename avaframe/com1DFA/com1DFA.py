@@ -72,7 +72,7 @@ def setRelThIni(avaDir, modName, cfgFile=''):
 
     # check if thickness settings in ini file are valid
     for thType in ['entTh', 'relTh', 'secondaryRelTh']:
-        dP.checkThicknessSettings(cfgInitial, thType)
+        thicknessSettingsCorrect = dP.checkThicknessSettings(cfgInitial, thType)
 
     # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
     inputSimFilesAll = gI.getInputDataCom1DFA(avaDir, cfgInitial['INPUT'])

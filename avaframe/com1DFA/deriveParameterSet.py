@@ -266,6 +266,11 @@ def checkThicknessSettings(cfg, thName):
         thName: str
             thickness parameter name (entTh, ...)
 
+        Returns
+        -------
+        thicknessSettingsCorrect: bool
+            True if settings are provided in the correct format
+
     """
 
     # create key name for thickness flag
@@ -289,9 +294,13 @@ def checkThicknessSettings(cfg, thName):
         log.error(message)
         raise AssertionError(message)
 
+    # if no error ocurred - thickness settings are correct
+    thicknessSettingsCorrect = True
+
+    return thicknessSettingsCorrect
 
 def splitVariationToArraySteps(value, key, fullCfg):
-    """ split variation in percent to create a list of factors to set paramerter value for variations
+    """ split variation in percent to create a list of factors to set parameter value for variations
         or if a rangeVariation is given in absolute values
 
         Parameters
@@ -363,7 +372,7 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
     # fetch variation factor
     variationFactor = float(row._asdict()[key])
 
-    # update thickness values accoridng to variation
+    # update thickness values according to variation
     if entCondition or secRelCondition or relCondition:
         thType = key.split('Percent')[0]
         thFlag = thType + 'FromShp'
