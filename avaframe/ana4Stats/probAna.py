@@ -19,7 +19,7 @@ import avaframe.in2Trans.ascUtils as IOf
 log = logging.getLogger(__name__)
 
 
-def createComModConfig(cfgProb, avaDir, modName):
+def createComModConfig(cfgProb, avaDir, modName, cfgFileMod=''):
     """ create configuration file for performing sims with modName com module
 
         Parameters
@@ -30,6 +30,8 @@ def createComModConfig(cfgProb, avaDir, modName):
             path to avalanche directory
         modName: module
             computational module
+        cfgFileMod: str
+            path to cfgFile for computational module name - optional
 
         Returns
         -------
@@ -51,17 +53,11 @@ def createComModConfig(cfgProb, avaDir, modName):
         modNameString = str(pathlib.Path(modName.__file__).stem)
         cfgFile = outDir / ('probRun%sCfg%s.ini' % (modNameString, varName))
 
-        # use default com module settings or local settings
-        if cfgProb['PROBRUN'].getboolean('defaultSetup'):
-            modCfg = cfgUtils.getDefaultModuleConfig(modName)
-            modCfg = updateCfgRange(modCfg, cfgProb, varName)
-            with open(cfgFile, 'w') as configfile:
-                modCfg.write(configfile)
-        else:
-            modCfg = cfgUtils.getModuleConfig(modName)
-            modCfg = updateCfgRange(modCfg, cfgProb, varName)
-            with open(cfgFile, 'w') as configfile:
-                modCfg.write(configfile)
+        # use cfgFile, local com module settings or default settings if local not available
+        modCfg = cfgUtils.getModuleConfig(modName, fileOverride=cfgFileMod)
+        modCfg = updateCfgRange(modCfg, cfgProb, varName)
+        with open(cfgFile, 'w') as configfile:
+            modCfg.write(configfile)
         # append cfgFiles to list
         cfgFiles[varName] = {'cfgFile': cfgFile}
 
