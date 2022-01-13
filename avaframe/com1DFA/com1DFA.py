@@ -169,7 +169,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField=''):
                 log.info('Run simulation: %s' % cuSim)
 
                 # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
-                particlesList, fieldsList, tSave, dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW = com1DFA.com1DFACore(cfg, avalancheDir,
+                dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg, avalancheDir,
                         cuSim, inputSimFiles, outDir, relThField=relThField)
 
                 # TODO check if inputSimFiles not changed within sim
@@ -304,7 +304,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
     # add time and mass info to report
     reportDict = reportAddTimeMassInfo(reportDict, tCPUDFA, infoDict)
 
-    return particlesList, fieldsList, Tsave, dem, reportDict, cfg, infoDict['tCPU'], inputSimFiles
+    return dem, reportDict, cfg, infoDict['tCPU'], inputSimFiles, particlesList, fieldsList, Tsave
 
 
 def prepareReleaseEntrainment(cfg, rel, inputSimLines):
