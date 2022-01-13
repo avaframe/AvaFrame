@@ -73,7 +73,8 @@ def mainInfluenceTest(avalancheDir, influenceTestCfg, simDF, resAIMEC, pathDict)
 
     # analyze and plot the results
     runoutArray, MMPPRArray, MMPFDArray, refArray = analyzeResults(simDF, avalancheDir, IDList, refID, parameter2Study, visc2Study, otherParamValueList, otherParamNameList, xAxisArray)
-    plotResults(avalancheDir, parameter2Study, visc2Study, otherParamNameList, otherParamValueList, xAxisArray, runoutArray, MMPPRArray, MMPFDArray, refArray)
+    plotResults(avalancheDir, parameter2Study, visc2Study, otherParamNameList,
+                otherParamValueList, xAxisArray, runoutArray, MMPPRArray, MMPFDArray, refArray)
 
 
     # Check if last line is computed

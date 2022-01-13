@@ -43,13 +43,6 @@ ataCfg = pathlib.Path('ana1Tests', 'ataCfg.ini')
 # Collect data from config file
 config.read(influenceTestCfg)
 visc2Study = config['INFLUENCETEST']['visc2Study']
-if config['GENERAL']['sphOption'] != '2':
-    print('========================================================================================================')
-    print('!!!                                   PLEASE SET SPHOPTION TO 2                                      !!!')
-    print('========================================================================================================')
-    print('sphOption = ', config['GENERAL']['sphOption'])
-    n = input()
-print(visc2Study)
 
 # Generate an .ini file and run visc2Study simulation(s)
 log.info("Generate " + visc2Study + " '.ini' file")

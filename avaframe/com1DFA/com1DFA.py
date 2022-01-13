@@ -36,6 +36,7 @@ from avaframe.in1Data import getInput as gI
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
 from avaframe.com1DFA import particleInitialisation as pI
+from avaframe.com1DFA.checkIniFiles import checkIniFiles
 
 #######################################
 # Set flags here
@@ -104,6 +105,9 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField='', variationDict=
 
             # load configuration dictionary for cuSim
             cfg = simDict[cuSim]['cfgSim']
+
+            # check if .ini files are well parametered
+            checkIniFiles(cfg)
 
             # save configuration settings for each simulation
             simHash = simDict[cuSim]['simHash']

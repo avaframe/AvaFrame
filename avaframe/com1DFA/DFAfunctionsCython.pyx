@@ -1217,12 +1217,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double pikl, flux
   cdef double hk, hl, ck, cl, lambdakl
 
-  if viscOption == 2 and SPHoption != 2:
-    print('========================================================================================================')
-    print('!!!                         IF VISCOPTION==2, SPHOPTION HAS TO BE EQUAL TO 2                         !!!')
-    print('========================================================================================================')
-    n = input()
-
   # loop on particles
   for k in range(N):
     gradhX = 0
