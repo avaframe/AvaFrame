@@ -840,64 +840,6 @@ def analyzeField(simName, rasterTransfo, transformedRaster, dataType, resAnalysi
     return resAnalysisDF
 
 
-def analyzeField2(rasterTransfo, transformedRasters, dataType, resultsAreaAnalysis):
-    """ Analyse transformed field
-
-    Analyse transformed rasters in transformedRasters and for each one, compute
-    the Max and Mean values in each cross section, as well as the
-    overall maximum
-
-    Parameters
-    ----------
-    rasterTransfo: dict
-        transformation information
-    transformedRasters: list
-        list containing rasters after transformation
-    dataType: str
-        type of the data to analyze ('ppr', 'pfd' or 'pfv')
-    resultsAreaAnalysis: dict
-        result dictionary to be updated
-
-    Returns
-    -------
-    Updates the resultsAreaAnalysis input dictionary with a sub dictionary
-    of the name dataType containing:
-        -maxaCrossMax: 1D numpy array
-            containing for each simulation analyzed the overall maximum
-        -aCrossMax: 2D numpy array
-            containing for each simulation analyzed the
-            max of the field in each cross section
-        -aCrossMean: 2D numpy array
-            containing for each simulation analyzed the
-            mean of the field in each cross section
-    """
-    # read inputs
-    scoord = rasterTransfo['s']
-    rasterArea = rasterTransfo['rasterArea']
-
-    # initialize Arrays
-    nTopo = len(transformedRasters)
-    maxaCrossMax = np.empty((nTopo))
-    aCrossMax = np.zeros((nTopo, len(scoord)))
-    aCrossMean = np.zeros((nTopo, len(scoord)))
-    log.debug('Analyzing %s' % (dataType))
-    log.debug('{: <10} {: <10}'.format('Sim number ', 'maxCrossMax '))
-    # For each data set
-    for i in range(nTopo):
-        rasterData = transformedRasters[i]
-
-        # Max Mean in each Cross-Section for each field
-        maxaCrossMax[i], aCrossMax[i], aCrossMean[i] = getMaxMeanValues(rasterData, rasterArea)
-        log.debug('{: <10} {:<10.4f}'.format(*[i+1, maxaCrossMax[i]]))
-
-    resultsAreaAnalysis[dataType] = {'transformedRasters': transformedRasters,
-                                     'maxaCrossMax': maxaCrossMax,
-                                     'aCrossMax': aCrossMax,
-                                     'aCrossMean': aCrossMean}
-
-    return resultsAreaAnalysis
-
-
 def analyzeArea(rasterTransfo, resAnalysisDF, simName, newRasters, cfgSetup, pathDict):
     """Compare results to reference.
 
