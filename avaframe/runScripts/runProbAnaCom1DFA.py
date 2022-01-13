@@ -39,7 +39,7 @@ initProj.cleanSingleAvaDir(avaDir, keep=logName)
 cfgProb = cfgUtils.getModuleConfig(probAna)
 
 # create configuration files for com1DFA simulations including parameter variation - defined in the probabilistic config
-cfgFiles = probAna.createComModConfig(cfgProb, avaDir, com1DFA)
+cfgFiles = probAna.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
 
 # -------USER INPUT ------------
 # probability configurations
