@@ -3,7 +3,6 @@
 """
 
 import logging
-import sys
 
 # create local logger
 log = logging.getLogger(__name__)
