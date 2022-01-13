@@ -195,7 +195,8 @@ def test_getMBInfo():
 
     # call fucntion to be tested
     simName = 'release1HS_ent_dfa_d10bdc1e81'
-    inputsDF = dfa2Aimec.getMBInfo(avaDir, pathDict, comMod, simName=simName)
+    inputsDF = pd.DataFrame()
+    inputsDF = dfa2Aimec.getMBInfo(avaDir, inputsDF, comMod, simName=simName)
 
     print('pathDict2', inputsDF)
     assert 'mass_release1HS_ent_dfa_d10bdc1e81' in str(inputsDF['massBal'][0])
