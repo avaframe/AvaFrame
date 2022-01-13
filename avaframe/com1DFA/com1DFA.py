@@ -75,7 +75,7 @@ def setRelThIni(avaDir, modName, cfgFile=''):
         thicknessSettingsCorrect = dP.checkThicknessSettings(cfgInitial, thType)
 
     # fetch input data - dem, release-, entrainment- and resistance areas (and secondary release areas)
-    inputSimFilesAll = gI.getInputDataCom1DFA(avaDir, cfgInitial['INPUT'])
+    inputSimFilesAll = gI.getInputDataCom1DFA(avaDir, cfgInitial)
 
     # get thickness of release and entrainment areas (and secondary release areas) -if thFromShp = True
     inputSimFilesAll, cfgFilesRels = gI.getThickness(inputSimFilesAll, avaDir, modName, cfgFile, cfgInitial)
@@ -83,15 +83,17 @@ def setRelThIni(avaDir, modName, cfgFile=''):
     return inputSimFilesAll, cfgFilesRels
 
 
-def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField=''):
+def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
     """ preprocess information from ini and run all desired simulations, create outputs and reports
 
         Parameters
         ------------
         avalancheDir: str or pathlib Path
             path to avalanche data
+        cfgMain: configparser object
+            main configuration of AvaFrame
         cfgFile: str or pathlib Path
-            path to configuration file if overwrite is desired
+            path to configuration file if overwrite is desired - optional
 
         Returns
         --------
@@ -170,7 +172,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField=''):
 
                 # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
                 dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg, avalancheDir,
-                        cuSim, inputSimFiles, outDir, relThField=relThField)
+                        cuSim, inputSimFiles, outDir)
 
                 # TODO check if inputSimFiles not changed within sim
                 if inputSimFilesNEW != inputSimFilesTest:
@@ -222,7 +224,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField=''):
         return 0, {}, [], ''
 
 
-def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
+def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
     """ Run main com1DFA model
 
     This will compute a dense flow avalanche
@@ -239,9 +241,6 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
         path to avalanche directory
     outDir: str or pathlib object
         path to Outputs
-    relThField: 2D array
-        release thickness field with varying release thickness if '', release thickness is taken from
-        (a) shapefile or (b) configuration file
 
     Returns
     -------
@@ -267,8 +266,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, relThField=''):
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # for timing the sims
     startTime = time.time()
-    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName,
-                                                                  relThField=relThField)
+    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName)
 
     # ------------------------
     #  Start time step computation
@@ -344,8 +342,9 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         the suffix _AF will be added for the simulation name')
 
     # set release thickness
-    releaseLine = setThickness(cfg, inputSimLines['releaseLine'], 'relTh')
-    inputSimLines['releaseLine'] = releaseLine
+    if cfg['GENERAL'].getboolean('relThFile') is False:
+        releaseLine = setThickness(cfg, inputSimLines['releaseLine'], 'relTh')
+        inputSimLines['releaseLine'] = releaseLine
     log.debug('Release area scenario: %s - perform simulations' % (relName))
 
     if cfg['GENERAL'].getboolean('iniStep'):
@@ -462,6 +461,11 @@ def prepareInputData(inputSimFiles, cfg):
     # load data
     entResInfo = inputSimFiles['entResInfo'].copy()
     relFile = inputSimFiles['releaseScenario']
+    relThFile = inputSimFiles['relThFile']
+
+    # read data from relThFile
+    if relThFile != '':
+        relThField = IOf.readRaster(relThFile)['rasterData']
 
     # get dem information
     demOri = IOf.readRaster(inputSimFiles['demFile'], noDataToNan=True)
@@ -511,7 +515,8 @@ def prepareInputData(inputSimFiles, cfg):
 
     inputSimLines = {'releaseLine': releaseLine, 'secondaryReleaseLine': secondaryReleaseLine,
                      'entLine': entLine, 'resLine': resLine, 'entrainmentArea': entrainmentArea,
-                     'resistanceArea': resistanceArea, 'entResInfo': entResInfo}
+                     'resistanceArea': resistanceArea, 'entResInfo': entResInfo,
+                     'relThField': relThField}
 
     return demOri, inputSimLines
 
@@ -676,7 +681,7 @@ def setDEMoriginToZero(demOri):
     return dem
 
 
-def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
+def initializeSimulation(cfg, demOri, inputSimLines, logName):
     """ create simulaton report dictionary
 
     Parameters
@@ -698,9 +703,6 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
             resistance line dictionary
     logName : str
         simulation scenario name
-    relThField : 2D numpy array
-        inhomogeneous release thickness if wanted (relThField='' by default  - in this case
-        release thickness from (a) shapefile or if not provided (b) configuration file is used)
 
     Returns
     -------
@@ -715,6 +717,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName, relThField=''):
     cfgGen = cfg['GENERAL']
     methodMeshNormal = cfg.getfloat('GENERAL', 'methodMeshNormal')
     thresholdPointInPoly = cfgGen.getfloat('thresholdPointInPoly')
+    relThField = inputSimLines['relThField']
 
     # -----------------------
     # Initialize mesh
