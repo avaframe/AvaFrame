@@ -64,7 +64,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         updater.update_file()
 
         # Run dense flow with coulomb friction
-        particlesList, fieldsList, _, dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=hybridModelDFACfg)
+        dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=hybridModelDFACfg)
         # postprocess to extract path and energy line
         avaProfilePart, avaProfileMass, avaProfileKE = particleTools.getCom1DFAPath(particlesList, demOri)
         avaProfileMassExt = com1DFATools.extendCom1DFAPath(cfgHybrid, demOri, particlesList[0], avaProfileMass.copy())
