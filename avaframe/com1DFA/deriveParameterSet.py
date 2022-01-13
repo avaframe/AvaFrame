@@ -275,6 +275,7 @@ def checkThicknessSettings(cfg, thName):
 
     # create key name for thickness flag
     thFlag = thName + 'FromShp'
+    thFile = thName + 'FromFile'
 
     # check if flag is set correctly and thickness parameter has correct format
     if cfg['GENERAL'][thFlag] == 'True' or cfg['GENERAL'][thFlag] == 'False':
@@ -284,7 +285,7 @@ def checkThicknessSettings(cfg, thName):
                 log.error(message)
                 raise AssertionError(message)
         else:
-            if cfg['GENERAL'][thName] == '':
+            if cfg['GENERAL'][thName] == '' and cfg['GENERAL'].getboolean(thFile) is False:
                 message = 'If %s is set to False - it is required to set a value for %s' % (thFlag, thName)
                 log.error(message)
                 raise AssertionError(message)
@@ -293,6 +294,13 @@ def checkThicknessSettings(cfg, thName):
         message = 'Check %s - needs to be True or False' % (thFlag)
         log.error(message)
         raise AssertionError(message)
+
+    # if release thickness should be read from file check other parameters
+    if thName == 'relTh':
+        if cfg['GENERAL'].getboolean(thFile) and (cfg['GENERAL'].getboolean(thFlag) != False or cfg['GENERAL'][thName] != ''):
+            message = 'If %s is set to True - it is not allowed to set %s to True or provide a value in %s' % (thFile, thFlag, thName)
+            log.error(message)
+            raise AssertionError(message)
 
     # if no error ocurred - thickness settings are correct
     thicknessSettingsCorrect = True
