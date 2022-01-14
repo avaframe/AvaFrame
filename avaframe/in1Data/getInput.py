@@ -190,7 +190,7 @@ def getInputDataCom1DFA(avaDir, cfg):
     if cfg['INPUT']['releaseScenario'] != '':
         releaseDir = 'REL'
         relFiles = []
-        releaseFiles = cfg['releaseScenario'].split('|')
+        releaseFiles = cfg['INPUT']['releaseScenario'].split('|')
         for rel in releaseFiles:
             if '.shp' in rel:
                 relf = inputDir / releaseDir / rel

@@ -79,14 +79,13 @@ def test_getInputData(tmp_path):
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'flagEnt': 'True', 'flagRes': 'True', 'flagDev': 'False', 'releaseScenario': ''}
-    cfgGen = cfg['GENERAL']
+    cfg['INPUT'] = {'releaseScenario': ''}
 
     # call function to be tested
-    dem, rels, ent, res, entResInfo = getInput.getInputData(avaDir, cfgGen)
+    dem, rels, ent, res, entResInfo = getInput.getInputData(avaDir, cfg['INPUT'])
     # second option
-    cfg['GENERAL']['releaseScenario'] = 'release1HS'
-    dem2, rels2, ent2, res2, entResInfo2 = getInput.getInputData(avaDir, cfgGen)
+    cfg['INPUT']['releaseScenario'] = 'release1HS'
+    dem2, rels2, ent2, res2, entResInfo2 = getInput.getInputData(avaDir, cfg['INPUT'])
     # Test
     assert str(dem) == str(pathlib.Path(avaDir, 'Inputs', 'DEM_HS_Topo.asc'))
     assert rels == [os.path.join(avaDir, 'Inputs', 'REL', 'release1HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release2HS.shp'), os.path.join(avaDir, 'Inputs', 'REL', 'release3HS.shp')]
@@ -97,8 +96,8 @@ def test_getInputData(tmp_path):
     assert entResInfo['flagRes'] == "No"
 
     # third option
-    cfg['GENERAL']['releaseScenario'] = 'release1HS.shp'
-    dem3, rels3, ent3, res3, entResInfo3 = getInput.getInputData(avaDir, cfg['GENERAL'])
+    cfg['INPUT']['releaseScenario'] = 'release1HS.shp'
+    dem3, rels3, ent3, res3, entResInfo3 = getInput.getInputData(avaDir, cfg['INPUT'])
     assert str(ent3) == str(os.path.join(avaDir, 'Inputs', 'ENT', 'entrainment1HS.shp'))
     assert entResInfo3['flagEnt'] == "Yes"
     assert entResInfo3['flagRes'] == "No"
@@ -106,21 +105,20 @@ def test_getInputData(tmp_path):
 
 
     # call function to be tested
-    cfg['GENERAL']['releaseScenario'] = 'release4HS'
+    cfg['INPUT']['releaseScenario'] = 'release4HS'
     releaseF = os.path.join(avaDir, 'Inputs', 'REL', 'release4HS.shp')
     with pytest.raises(FileNotFoundError) as e:
-        assert getInput.getInputData(avaDir, cfg['GENERAL'])
+        assert getInput.getInputData(avaDir, cfg['INPUT'])
     assert str(e.value) == ("No release scenario called: %s" % releaseF)
 
     # fifth option
-    cfg['GENERAL']['flagDev'] = 'False'
-    cfg['GENERAL']['releaseScenario'] = 'release1BL.shp'
+    cfg['INPUT']['releaseScenario'] = 'release1BL.shp'
     avaName = 'avaBowl'
     avaDir = os.path.join(tmp_path, avaName)
     avaInputs = os.path.join(avaDir, 'Inputs')
     avaData = os.path.join(dirPath, '..', 'data', avaName, 'Inputs')
     shutil.copytree(avaData, avaInputs)
-    dem6, rels6, ent6, res6, entResInfo6 = getInput.getInputData(avaDir, cfg['GENERAL'])
+    dem6, rels6, ent6, res6, entResInfo6 = getInput.getInputData(avaDir, cfg['INPUT'])
     assert ent6 == ''
     assert res6 == ''
     assert entResInfo6['flagEnt'] == "No"
@@ -140,14 +138,14 @@ def test_getInputDataCom1DFA(tmp_path):
 
     # Initialise input in correct format
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'flagEnt': 'True', 'flagRes': 'True', 'flagDev': 'False', 'releaseScenario': ''}
-    cfgGen = cfg['GENERAL']
+    cfg['GENERAL'] = {'relThFromFile': 'False'}
+    cfg['INPUT'] = {'releaseScenario': ''}
 
     # call function to be tested
-    inputSimFiles = getInput.getInputDataCom1DFA(avaDir, cfgGen)
+    inputSimFiles = getInput.getInputDataCom1DFA(avaDir, cfg)
     # second option
-    cfg['GENERAL']['releaseScenario'] = 'release1HS'
-    inputSimFiles2 = getInput.getInputDataCom1DFA(avaDir, cfgGen)
+    cfg['INPUT']['releaseScenario'] = 'release1HS'
+    inputSimFiles2 = getInput.getInputDataCom1DFA(avaDir, cfg)
     # Test
     print(inputSimFiles['demFile'])
     print(avaDir / 'Inputs' / 'DEM_HS_Topo.asc')
@@ -164,17 +162,16 @@ def test_getInputDataCom1DFA(tmp_path):
     assert inputSimFiles['entResInfo']['flagRes'] == "No"
 
     # call function to be tested
-    cfg['GENERAL']['releaseScenario'] = 'release1HS.shp'
-    inputSimFiles3 = getInput.getInputDataCom1DFA(avaDir, cfg['GENERAL'])
+    cfg['INPUT']['releaseScenario'] = 'release1HS.shp'
+    inputSimFiles3 = getInput.getInputDataCom1DFA(avaDir, cfg)
 
     assert inputSimFiles2['relFiles'] == [avaDir / 'Inputs' / 'REL' / 'release1HS.shp']
 
     # call function to be tested
-    cfg['GENERAL']['releaseScenario'] = 'release4HS'
-    cfg['GENERAL']['flagDev'] = 'False'
+    cfg['INPUT']['releaseScenario'] = 'release4HS'
     releaseF = avaDir / 'Inputs' / 'REL' / 'release4HS.shp'
     with pytest.raises(FileNotFoundError) as e:
-        assert getInput.getInputDataCom1DFA(avaDir, cfg['GENERAL'])
+        assert getInput.getInputDataCom1DFA(avaDir, cfg)
     assert str(e.value) == ("No release scenario called: %s" % releaseF)
 
 
@@ -193,7 +190,7 @@ def test_getAndCheckInputFiles(tmp_path):
     inputType = 'entrainment'
 
     # call function to be tested
-    outFile, available = getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType)
+    outFile, available = getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType, 'shp')
 
     print('outfile', outFile)
     print('available', available)
@@ -206,6 +203,6 @@ def test_getAndCheckInputFiles(tmp_path):
     testFile = avaTestDirInputs / 'ENT' / 'entrainment1HS2.shp'
     shutil.copyfile(inputFile, testFile)
     with pytest.raises(AssertionError) as e:
-        assert getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType)
+        assert getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType, 'shp')
     assert str(e.value) == ("More than one %s .shp file in %s/%s/ not allowed" %
                            (inputType, avaTestDirInputs, folder))
