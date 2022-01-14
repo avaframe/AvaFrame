@@ -9,7 +9,8 @@ import numpy as np
 import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI
-from avaframe.com1DFA import com1DFA
+from avaframe.com1DFA import com1DFA, particleTools
+import avaframe.com1DFA.com1DFATools as cT
 import avaframe.ana1Tests.FPtest as FPtest
 
 # from avaframe.DFAkernel.setParam import *
@@ -46,13 +47,14 @@ fU.makeADir(outDirTest)
 
 # Define release thickness distribution
 demFile, relFiles, entFiles, resFile, flagEntRes = gI.getInputData(
-    avalancheDir, cfg['FLAGS'])
+    avalancheDir, cfg['INPUT'])
 relDict = FPtest.getReleaseThickness(avalancheDir, cfg, demFile)
 relTh = relDict['relTh']
 
 # call com1DFA to perform simulation - provide configuration file and release thickness function
 dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=FPCfg,
     relThField=relTh)
+Particles, Tsave = particleTools.readPartFromPickle(avalancheDir, simName='', flagAvaDir=True, comModule='com1DFA')
 relDict['dem'] = dem
 # +++++++++POSTPROCESS++++++++++++++++++++++++
 # option for user interaction
@@ -69,8 +71,12 @@ except ValueError:
 while isinstance(value, float):
     ind_t = min(np.searchsorted(Tsave, value), len(Tsave)-1)
 
+    # fetch fields for desired time step
+    timeSteps = [Tsave[ind_t]]
+    fields = cT.fetchField(timeSteps, 'FD', avalancheDir, inputDir='')
+
     # get particle parameters
-    comSol = FPtest.postProcessFPcom1DFA(cfgGen, Particles, Fields, ind_t, relDict)
+    comSol = FPtest.postProcessFPcom1DFA(cfgGen, Particles[ind_t], fields[0], ind_t, relDict)
     comSol['outDirTest'] = outDirTest
     comSol['showPlot'] = showPlot
     comSol['Tsave'] = Tsave[ind_t]
