@@ -49,11 +49,8 @@ def getReleaseThickness(avaDir, cfg, demFile):
     return relDict
 
 
-def postProcessFPcom1DFA(cfgGen, Particles, Fields, ind_t, relDict):
+def postProcessFPcom1DFA(cfgGen, particles, fields, ind_t, relDict):
     """ get fields and particles dictionaries for given time step """
-
-    fields = Fields[ind_t]
-    particles = Particles[ind_t]
 
     demOri = relDict['demOri']
     nrows = demOri['header']['nrows']
@@ -70,7 +67,7 @@ def postProcessFPcom1DFA(cfgGen, Particles, Fields, ind_t, relDict):
     m = particles['m']
     h = particles['h']
     force2 = {}
-    particles, force2 = DFAfunC.computeForceSPHC(cfgGen, particles, force2, dem, gradient=1)
+    particles, force2 = DFAfunC.computeForceSPHC(cfgGen, particles, force2, dem, cfgGen.getint('sphOption'), gradient=1)
     gradNorm = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
     x1, y1, z1, = DFAtls.normalize(x+xllc, y+yllc, 0*x)
     uMag = DFAtls.norm(ux, uy, 0)
