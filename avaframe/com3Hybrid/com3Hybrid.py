@@ -65,6 +65,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
 
         # Run dense flow with coulomb friction
         dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=hybridModelDFACfg)
+        particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName='', flagAvaDir=True, comModule='com1DFA')
         # postprocess to extract path and energy line
         avaProfilePart, avaProfileMass, avaProfileKE = particleTools.getCom1DFAPath(particlesList, demOri)
         avaProfileMassExt = com1DFATools.extendCom1DFAPath(cfgHybrid, demOri, particlesList[0], avaProfileMass.copy())
@@ -101,7 +102,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         iterate = keepIterating(cfgHybrid, alphaArray)
         iteration = iteration + 1
 
-    pathDict, rasterTransfo, newRasters, resAnalysis = runAna3AIMEC.runAna3AIMEC(avalancheDir=avalancheDir)
+    pathDict, rasterTransfo, resAnalysis = runAna3AIMEC.runAna3AIMEC(avalancheDir=avalancheDir)
     simID = simDF.index[0]
     indSim = pathDict['simID'].index(simID)
     outCom3Plots.finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, particlesList[-1], fieldsList[-1])
