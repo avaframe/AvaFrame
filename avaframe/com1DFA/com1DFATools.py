@@ -7,6 +7,7 @@ import logging
 import math
 import pathlib
 import numpy as np
+import pathlib
 
 # Local imports
 import avaframe.com1DFA.DFAtools as DFAtls
@@ -230,3 +231,34 @@ def extendProfileBottom(cfg, dem, profile):
     if debugPlot:
         debPlot.plotPathExtBot(cfg, profile, xInterest, yInterest, zInterest, xllc, yllc, xLast, yLast)
     return profile
+
+
+def fetchField(timeSteps, resType, avaDir, inputDir=''):
+    """ fetch a field from an asc file
+        Parameters
+        -----------
+        timeSteps: float or list
+            time step info
+        avaDir: str or pathlib path
+            path to avalanche directory
+        inputDir: str or pathlib Path
+            path to asc files - optional
+        Returns
+        --------
+        fields: list
+            list of fields dictionaries for timeSteps
+    """
+
+    if inputDir == '':
+        inputDir = pathlib.Path(avaDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')
+    else:
+        inputDir = pathlib.Path(inputDir)
+
+    for tStep in timeSteps:
+        tFiles = sorted(list(inputDir.glob('*%s_t%.2f*' % (resType, tStep))))
+
+    fieldsList = []
+    for tFile in tFiles:
+        fieldsList.append({resType: IOf.readRaster(str(tFile))['rasterData']})
+
+    return fieldsList
