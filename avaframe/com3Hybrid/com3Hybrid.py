@@ -105,7 +105,10 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     pathDict, rasterTransfo, resAnalysis = runAna3AIMEC.runAna3AIMEC(avalancheDir=avalancheDir)
     simID = simDF.index[0]
     indSim = pathDict['simID'].index(simID)
-    outCom3Plots.finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, particlesList[-1], fieldsList[-1])
+    # fetch fields for desired time step
+    timeSteps = [timeStepInfo[-1]]
+    fields = cT.fetchField(timeSteps, 'pta', avalancheDir, inputDir='')
+    outCom3Plots.finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, particlesList[-1], fields[0])
     outCom3Plots.finalizeProfilePlot(avalancheDir, figDict, resAnalysis, indSim)
 
     hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
