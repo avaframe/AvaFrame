@@ -185,8 +185,10 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile='', relThField=''):
                 # create hash to check if configuration didn't change
                 simHashFinal = cfgUtils.cfgHash(cfgFinal)
                 if simHashFinal != simHash:
-                    log.warning('simulation configuration has been changed since start')
                     cfgUtils.writeCfgFile(avalancheDir, com1DFA, cfg, fileName='%s_butModified' % simHash)
+                    message = 'Simulation configuration has been changed since start'
+                    log.error(message)
+                    raise AssertionError(message)
 
             # prepare for writing configuration info
             simDF = cfgUtils.convertDF2numerics(simDF)
