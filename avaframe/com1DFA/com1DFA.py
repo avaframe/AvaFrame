@@ -876,6 +876,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     if len(relThField) == 0:
         relRaster = releaseLine['rasterData']
     else:
+        log.info('Release thickness read from relThFile')
         relRaster = relThField
     areaRaster = dem['areaRaster']
 
