@@ -136,11 +136,11 @@ def getInputData(avaDir, cfg):
     log.info('Release area files are: %s' % relFiles)
 
     # Initialise resistance areas
-    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance')
+    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', 'shp')
     if resFile==None:
         resFile = ''
     # Initialise entrainment areas
-    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment')
+    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', 'shp')
     if entFile==None:
         entFile = ''
     # Initialise DEM
