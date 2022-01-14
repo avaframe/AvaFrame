@@ -107,7 +107,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     indSim = pathDict['simID'].index(simID)
     # fetch fields for desired time step
     timeSteps = [timeStepInfo[-1]]
-    fields = cT.fetchField(timeSteps, 'pta', avalancheDir, inputDir='')
+    fields = com1DFATools.fetchField(timeSteps, 'pta', avalancheDir, inputDir='')
     outCom3Plots.finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, particlesList[-1], fields[0])
     outCom3Plots.finalizeProfilePlot(avalancheDir, figDict, resAnalysis, indSim)
 
