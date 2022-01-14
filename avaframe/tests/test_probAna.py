@@ -76,6 +76,8 @@ def test_createComModConfig(tmp_path):
     # set input directory
     avaName = 'avaParabola'
     avaDir = pathlib.Path(tmp_path, avaName)
+    dirPath = pathlib.Path(__file__).parents[0]
+    cfgFile = dirPath / 'data' / 'testCom1DFA' / 'probA_com1DFACfg.ini'
 
     cfgProb = configparser.ConfigParser()
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'percentVariation': 'True',
@@ -83,7 +85,7 @@ def test_createComModConfig(tmp_path):
                           'relThVariation': '50', 'relThSteps': '3', 'defaultSetup': 'True'}
 
     # call function to be tested
-    cfgFiles = pA.createComModConfig(cfgProb, avaDir, com1DFA)
+    cfgFiles = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod=cfgFile)
 
     # load cfg from file
     cfgMu = configparser.ConfigParser()

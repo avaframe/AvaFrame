@@ -342,7 +342,7 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         the suffix _AF will be added for the simulation name')
 
     # set release thickness
-    if cfg['GENERAL'].getboolean('relThFile') is False:
+    if cfg['GENERAL'].getboolean('relThFromFile') is False:
         releaseLine = setThickness(cfg, inputSimLines['releaseLine'], 'relTh')
         inputSimLines['releaseLine'] = releaseLine
     log.debug('Release area scenario: %s - perform simulations' % (relName))
@@ -466,6 +466,8 @@ def prepareInputData(inputSimFiles, cfg):
     # read data from relThFile
     if relThFile != '':
         relThField = IOf.readRaster(relThFile)['rasterData']
+    else:
+        relThField = ''
 
     # get dem information
     demOri = IOf.readRaster(inputSimFiles['demFile'], noDataToNan=True)
