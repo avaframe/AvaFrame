@@ -283,20 +283,3 @@ def generateAutoIniFile(cfg, viscName):
 
     # Close config file
     f.close()
-
-
-
-# def tri(IDList, simDF, param2Study):
-#     """ sorts a list by increasing order, and reorder label list
-#     """
-#     param2StudyList = []
-#     for label in IDList:
-#         param2StudyList.append(simDF.loc[label][param2Study])
-#     param2StudyList.sort()
-#     IDListSorted = []
-#     for param in param2StudyList:
-#         for label in IDList:
-#             if simDF.loc[label][param2Study] == param:
-#                 IDListSorted.append(label)
-#
-#     IDList = IDListSorted

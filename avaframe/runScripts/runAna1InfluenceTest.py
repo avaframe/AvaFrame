@@ -64,12 +64,6 @@ if ref=='dfa':
     refCfg = pathlib.Path('ana1Tests', 'refCfg.ini')
     log.info('Run Com1DFA with ref solution')
     _, _, _, _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=refCfg, relThField='', variationDict='')
-# resAB = com2AB.com2ABMain(ABCfg, avalancheDir)
-# # Analyse/ plot/ write results #
-# reportDictList = []
-# _, plotFile, writeFile = outAB.writeABpostOut(resAB, ABCfg, reportDictList)
-# log.info('Plotted to: %s' % [str(plotFileName) for plotFileName in plotFile])
-# log.info('Data written: %s' % [str(writeFileName) for writeFileName in writeFile])
 
 # Get all simulation Data Frame
 log.info('Get all simulation Data Frame')
