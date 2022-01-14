@@ -899,7 +899,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
             message = 'If initialiseParticlesFromFile is used, iniStep cannot be performed - chose only one option'
             log.error(message)
             raise AssertionError(message)
-        particles, hPartArray = particleTools.initialiseParticlesFromFile(cfg, avaDir)
+        particles, hPartArray = particleTools.initialiseParticlesFromFile(cfg, avaDir, releaseLine['file'].stem)
     else:
         # initialize random generator
         rng = np.random.default_rng(int(cfg['seed']))
