@@ -21,9 +21,11 @@ import avaframe.com1DFA.DFAtools as DFAtls
 log = logging.getLogger(__name__)
 
 
-def initialiseParticlesFromFile(cfg, avaDir):
+def initialiseParticlesFromFile(cfg, avaDir, releaseScenario):
     # TODO: this is for development purposes, change or remove in the future
     # If initialisation from file
+
+    print('RELEASE ', releaseScenario)
     if cfg['particleFile']:
         inDirPart = pathlib.Path(cfg['particleFile'])
     else:
@@ -31,10 +33,10 @@ def initialiseParticlesFromFile(cfg, avaDir):
 
     searchDir = inDirPart / 'particles'
     inDirPart = list(searchDir.glob(
-        ('*' + cfg['releaseScenario'] + '_' + '*' + cfg['simTypeActual'] + '*')))
+        ('*' + releaseScenario + '_' + '*' + cfg['simTypeActual'] + '*')))
     if inDirPart == []:
         messagePart = ('Initialise particles from file - no particles file found for releaseScenario: %s and simType: %s' %
-                      (cfg['releaseScenario'], cfg['simTypeActual']))
+                      (releaseScenario, cfg['simTypeActual']))
         log.error(messagePart)
         raise FileNotFoundError(messagePart)
     elif len(inDirPart) > 1:
