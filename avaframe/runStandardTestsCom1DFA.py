@@ -74,7 +74,7 @@ for test in testList:
     avaName = os.path.basename(avaDir)
     standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfg.ini' % test['AVANAME'])
 
-    particlesList, fieldsList, tSave, dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile=standardCfg, relThField='', variationDict='')
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile=standardCfg, relThField='')
 
     modName = 'com1DFA'
 
