@@ -232,13 +232,15 @@ def extendProfileBottom(cfg, dem, profile):
     return profile
 
 
-def fetchField(timeSteps, resType, avaDir, inputDir=''):
-    """ fetch a field from an asc file
+def fetchField(timeStep, resType, avaDir, inputDir=''):
+    """ fetch a field from an asc file for given resType and time step
 
         Parameters
         -----------
-        timeSteps: float or list
+        timeStep: float or list
             time step info
+        resType: str
+            name of result type (ppr, FD, ...)
         avaDir: str or pathlib path
             path to avalanche directory
         inputDir: str or pathlib Path
@@ -256,8 +258,11 @@ def fetchField(timeSteps, resType, avaDir, inputDir=''):
     else:
         inputDir = pathlib.Path(inputDir)
 
-    for tStep in timeSteps:
-        tFiles = sorted(list(inputDir.glob('*%s_t%.2f*' % (resType, tStep))))
+    if isinstance(timeStep, list) is False:
+            timeStep = [timeStep]
+    tFiles = []
+    for tStep in timeStep:
+        tFiles = tFiles + sorted(list(inputDir.glob('*%s_t%.2f*' % (resType, tStep))))
 
     fieldsList = []
     for tFile in tFiles:
