@@ -177,25 +177,6 @@ def getParameterVariationInfo(avalancheDir, com1DFA, cfgFile):
     return modCfg, variationDict
 
 
-def checkRelEntThVariation(cfg, variationDict):
-    """ check if release or entrainment thickness variation is working - due to where it is read from
-
-        cfg: configparser object
-            configuration settings
-        variationDict: dict
-            dictionary with info on parameter variation
-
-    """
-
-    # if parameter variation for release or entrainment thickness, print warning if thickness read from shape file
-    thicknessTypes = {'relTh': 'release', 'entTh': 'entrainment'}
-    for key, value in thicknessTypes.items():
-        flag = 'use' + key[0].upper() + key[1:] + 'FromIni'
-        if key in variationDict and cfg['GENERAL'].getboolean(flag) is False:
-            log.warning('Parameter variation for %s thickness not working as %s read from shp file - \
-                         consider setting %s to True' % (value, key, flag))
-
-
 def getThicknessValue(cfg, inputSimFiles, fName, thType):
     """ set thickness values according to settings chosen and add info to cfg
         if thFromShp = True - add in INPUT section thickness and id info
@@ -408,6 +389,7 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
             cfg['GENERAL'][key] = variationIni
 
         else:
+            print('VAR', variationFactor, cfg['GENERAL'][thType],  str(float(cfg['GENERAL'][thType]) * variationFactor))
             # update ini thValue if thFromShape=False
             cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
             # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
@@ -416,7 +398,7 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
     return cfg
 
 
-def appendShpThickness(cfg, variationDict):
+def appendShpThickness(cfg):
     """ append thickness values to GENERAL section if read from shp and not varied
 
         Parameters
