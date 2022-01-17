@@ -2103,7 +2103,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             cfgSim['INPUT'].pop('secondaryRelThThickness', None)
 
         # add thickness values if read from shp and not varied
-        cfgSim = dP.appendShpThickness(cfgSim, variationDict)
+        cfgSim = dP.appendShpThickness(cfgSim)
 
         # convert back to configParser object
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
