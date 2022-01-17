@@ -58,13 +58,13 @@ def updatePathPlot(demOri, avaProfile, resAB, name, figDict, iteration):
     return figDict
 
 
-def finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, particles, fields):
+def finalizePathPlot(avalancheDir, figDict, resAnalysisDF, refSimulation, dem, demOri, particles, fields):
     """ Add title ... and save path plot"""
     headerOri = demOri['header']
     xllcOri = headerOri['xllcenter']
     yllcOri = headerOri['yllcenter']
-    xAIMEC = resAnalysis['runout'][1][indSim]
-    yAIMEC = resAnalysis['runout'][2][indSim]
+    xAIMEC = resAnalysisDF[refSimulation, 'xRunout']
+    yAIMEC = resAnalysisDF[refSimulation, 'yRunout']
 
     fig = figDict['figPath']
     ax = figDict['axPath']
@@ -87,9 +87,9 @@ def finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, pa
     pU.saveAndOrPlot({'pathResult': path}, title, fig)
 
 
-def finalizeProfilePlot(avalancheDir, figDict, resAnalysis, indSim):
+def finalizeProfilePlot(avalancheDir, figDict, resAnalysisDF, refSimulation):
     """Add title ... and save profile plot"""
-    sAIMEC = resAnalysis['runout'][0][indSim]
+    sAIMEC = resAnalysisDF[refSimulation, 'sRunout']
 
     fig = figDict['figProf']
     ax = figDict['axProf']
