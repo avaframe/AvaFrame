@@ -49,22 +49,26 @@ and the following files are optional:
 * resistance area as shapefile (in Inputs/RES)
 * secondary release area as shapefile (in Inputs/SECREL)
 
-.. Note:: Release, entrainment and secondary release thickness can be specified in two different ways.
-          For one, thickness can be specified in the shape file by adding an attribute called
-          `thickness` -> in this case you need to set the flag `thicknessFromShp` to True in the
-          configuration file (which is the default setting). For backwards compatibility,
-          the attribute 'd0' also works, but we suggest to use `thickness` in new projects. If this
-          setting is chosen - ALL features in a shape file have to provide a thickness value.
-          Parameter variation can be added in the `PercentVariation` parameter in the configuration file,
-          using ``+-percentage$numberOfSteps``. If you provide `+` a positive variation will be performed,
-          if `-` is given, only a negative variation is performed, whereas if no sign is prefixed, variation
-          will be performed in both directions in the given number of steps.
-          Secondly, the thickness can be read directly from the configuration file -> in this case you
-          need to set the flag 'thicknessFromShp' to False and provide your desired thickness value
-          in the respective thickness parameter (relTh, entTh or secondaryRelth). Regarding parameter
-          variations, in addition to the `PercentVariation` option, the standard variation options in
-          :ref:`configuration:Configuration`, you can also directly set e.g. `relTh = 1.$50$2`,
-          which would result in a variation of relTh from 0.5 to 1.5m in two steps.
+Thickness inputs
+^^^^^^^^^^^^^^^^
+
+Release, entrainment and secondary release thickness can be specified in two different ways:
+
+1. Via **shape file**: 
+  - add an attribute called `thickness` for each feature 
+  - important: ALL features have to have a single thickness value, which can differ between features
+  - for backwards compatibility, the attribute 'd0' also works, but we suggest to use `thickness` in new projects
+  - set the flag `thicknessFromShp` to True in the configuration file (default is True)
+  - a parameter variation can be added with the `PercentVariation` parameter in the configuration file in the
+    form of ``+-percentage$numberOfSteps``. Provided a `+` a positive variation will be performed,
+    if `-` is given, only a negative variation is performed. If no sign is given: both directions will be used.
+          
+2. Via **configuration file (ini)**:
+  - set the flag 'thicknessFromShp' to False 
+  - provide your desired thickness value in the respective thickness parameter (relTh, entTh or secondaryRelth)
+  - in addition to the `PercentVariation` option (see option 1) and the standard variation options in
+    :ref:`configuration:Configuration`, you can also directly set e.g. `relTh = 1.$50$2`, TODO @AW: provide description,
+    resulting in a variation of relTh from 0.5 to 1.5m in two steps.
 
 
 Model configuration
