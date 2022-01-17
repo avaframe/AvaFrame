@@ -102,14 +102,12 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         iterate = keepIterating(cfgHybrid, alphaArray)
         iteration = iteration + 1
 
-    pathDict, rasterTransfo, resAnalysis = runAna3AIMEC.runAna3AIMEC(avalancheDir=avalancheDir)
+    pathDict, rasterTransfo, resAnalysisDF = runAna3AIMEC.runAna3AIMEC(avalancheDir=avalancheDir)
     simID = simDF.index[0]
-    indSim = pathDict['simID'].index(simID)
+    refSimulation = pathDict['refSimulation']
     # fetch fields for desired time step
     fields, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pta'], simName='',
         flagAvaDir=True, comModule='com1DFA', timeStep=timeStepInfo[-1])
-    outCom3Plots.finalizePathPlot(avalancheDir, figDict, resAnalysis, indSim, dem, demOri, particlesList[-1], fields[0])
-    outCom3Plots.finalizeProfilePlot(avalancheDir, figDict, resAnalysis, indSim)
 
     hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
     cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=hybridModelDFACfg)
