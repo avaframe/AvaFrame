@@ -73,6 +73,29 @@ def test_prepareInputData():
     assert inputSimLines['resLine']['Name'] == ['']
 
 
+    # call function to be tested
+    inputSimFiles = {'entResInfo': {'flagEnt': 'No',
+                                    'flagRes': 'Yes', 'flagSecondaryRelease': 'No'}}
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / '..' / 'data' / 'avaParabola'
+    relFile = avaDir / 'Inputs' / 'REL' / 'release1PF.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['demFile'] = avaDir / 'Inputs' / 'DEM_PF_Topo.asc'
+    inputSimFiles['resFile'] = avaDir / 'Inputs' / 'RES' / 'resistance1PF.shp'
+    inputSimFiles['relThFile'] = dirName / 'data' / 'relThFieldTestFile.asc'
+    cfg['GENERAL']['simTypeActual'] = 'res'
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg['GENERAL'])
+
+    print('inputSimLines', inputSimLines)
+
+    assert inputSimLines['entLine'] is None
+    assert inputSimLines['resLine']['Start'] == np.asarray([0.])
+    assert inputSimLines['resLine']['Length'] == np.asarray([5.])
+    assert inputSimLines['resLine']['Name'] == ['']
+    assert inputSimLines['relThField'].shape[0] == 401
+    assert inputSimLines['relThField'].shape[1] == 1001
+
+
 def test_prepareReleaseEntrainment(tmp_path):
     """ test preparing release areas """
 

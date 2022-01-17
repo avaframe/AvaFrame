@@ -374,9 +374,16 @@ def selectReleaseScenario(inputSimFiles, cfg):
 
     relFiles = inputSimFiles['relFiles']
 
+    foundScenario = False
     for relF in relFiles:
         if relF.stem == cfg['releaseScenario']:
             releaseScenario = relF
+            foundScenario = True
+
+    if foundScenario is False:
+        message = 'Release area scenario %s not found - check input data' % (cfg['releaseScenario'])
+        log.error(message)
+        raise FileNotFoundError(message)
 
     inputSimFiles['relFiles'] = [releaseScenario]
     # add release area scenario
