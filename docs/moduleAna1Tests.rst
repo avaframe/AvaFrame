@@ -160,3 +160,47 @@ The simulation results are plotted alongside the analytical solution for the giv
             :width: 90%
 
             Pile after 19.8s
+
+anaInfluenceTest: Influence of parameters analysis tools
+=======================================================
+
+InfluenceTest is a post-processing module to analyze and compare results from avalanche simulations.
+This module generates plots to compare runouts, MMPR and MMPFD between differents simulations, while varying
+one (or many) parameter(s)
+
+The module runs first all DFA simulations specified in ``AvaFrame/avaframe/ana1Tests/influenceTestCfg.ini``
+and extract quantitative results as runing AIMEC modules on the Data-Frame in wich the simulations results are stored.
+Then thoses results are compared and ploted according to the way it is specified in the .ini file.
+
+
+To run
+-------
+
+*  first go to ``AvaFrame/avaframe``
+*  enter path to the desired ``NameOfAvalanche/`` folder in your local copy of ``avaframeCfg.ini``
+*  open ``AvaFrame/avaframe/ana1Tests/influenceTestCfg.ini``
+*  specify in ['INFLUENCETEST'] section the viscosity you wanna study, and the main parameter you want to focus on.
+   In the ['samos'] and ['ata'] section, please enter the parameters you want to see vary, and the values you want them
+   to take.
+   You can play only on 2 parameters in each simulation:
+   - The first one will be the axis parameter. It means that the plots you will see, will be drawn according the values and the stepping chosen for this parameter
+   - The second one will allow you to plot different curves on the same plot, for a different value of the same parameter.
+
+*  run::
+
+      python3 runScripts/runAna1Influencetest.py
+
+Outputs
+--------
+
+*  output figures in ``AvaFrame/avaframe/data/avalancheDir/Outputs/ana1Tests/influenceTest``
+*  txt files aren't yet generated
+
+An Investigation Tool
+----------------------
+
+This module aims to be as polyvalent as possible.
+As being developped, it main objective was to give some experimental results, which would help to chose between ATA or SAMOS viscosity.
+We let the reader refer to the :ref:`DFAnumerics:Ata Artificial viscosity`. section to see the results of the investigation.
+Nevertheless, while the previous utilisation of influenceTest was made in the SAMOS viscosity point of view, one could use it in the ATA viscosity point of view.
+It is a way to check the validity of our CFL condition.
