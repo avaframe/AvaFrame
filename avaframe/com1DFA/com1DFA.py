@@ -463,14 +463,20 @@ def prepareInputData(inputSimFiles, cfg):
     relFile = inputSimFiles['releaseScenario']
     relThFile = inputSimFiles['relThFile']
 
-    # read data from relThFile
-    if relThFile != '':
-        relThField = IOf.readRaster(relThFile)['rasterData']
-    else:
-        relThField = ''
-
     # get dem information
     demOri = IOf.readRaster(inputSimFiles['demFile'], noDataToNan=True)
+
+    # read data from relThFile
+    if relThFile != '':
+        relThField = IOf.readRaster(relThFile)
+        relThFieldData = relThField['rasterData']
+        if demOri['header']['ncols'] != relThField['header']['ncols'] or demOri['header']['ncols'] != relThField['header']['ncols']:
+            message = ('Release thickness field read from %s does not match the number of rows \
+                       and columns of the dem' % inputSimFiles['relThFile'])
+            log.error(message)
+            raise AssertionError(message)
+    else:
+        relThFieldData = ''
 
     # get line from release area polygon
     releaseLine = shpConv.readLine(relFile, 'release1', demOri)
@@ -518,7 +524,7 @@ def prepareInputData(inputSimFiles, cfg):
     inputSimLines = {'releaseLine': releaseLine, 'secondaryReleaseLine': secondaryReleaseLine,
                      'entLine': entLine, 'resLine': resLine, 'entrainmentArea': entrainmentArea,
                      'resistanceArea': resistanceArea, 'entResInfo': entResInfo,
-                     'relThField': relThField}
+                     'relThField': relThFieldData}
 
     return demOri, inputSimLines
 

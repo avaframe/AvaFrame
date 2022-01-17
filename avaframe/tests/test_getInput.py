@@ -14,6 +14,8 @@ import pytest
 import shutil
 import numpy as np
 from scipy.interpolate import interp1d
+from avaframe.com1DFA import com1DFA
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 
 def test_readDEM():
@@ -160,6 +162,7 @@ def test_getInputDataCom1DFA(tmp_path):
     assert inputSimFiles['entFile'] == avaDir / 'Inputs' / 'ENT' / 'entrainment1HS.shp'
     assert inputSimFiles['entResInfo']['flagEnt'] == "Yes"
     assert inputSimFiles['entResInfo']['flagRes'] == "No"
+    assert inputSimFiles['relThFile'] == ''
 
     # call function to be tested
     cfg['INPUT']['releaseScenario'] = 'release1HS.shp'
@@ -206,3 +209,101 @@ def test_getAndCheckInputFiles(tmp_path):
         assert getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType, 'shp')
     assert str(e.value) == ("More than one %s .shp file in %s/%s/ not allowed" %
                            (inputType, avaTestDirInputs, folder))
+
+
+def test_getThickness(tmp_path):
+    """ test fetching thickness from shapefiles attributes """
+
+    # setup required input
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = 'avaHockeyChannel'
+    avaDir = dirPath / '..' / 'data' / avaName
+    avaDirInputs =  avaDir / 'Inputs'
+    avaTestDir = pathlib.Path(tmp_path, avaName)
+    avaTestDirInputs = avaTestDir / 'Inputs'
+    shutil.copytree(avaDirInputs, avaTestDirInputs)
+    outDir = avaTestDir / 'Outputs' / 'com1DFA'
+    fU.makeADir(outDir)
+
+    cfgFile = ''
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'relThFromFile': 'False', 'simTypeList': 'null|ent', 'secRelAra': 'False'}
+    cfg['INPUT'] = {'releaseScenario': ''}
+
+    demFile = avaTestDirInputs / 'DEM_HS_Topo.asc'
+    relFile1 = avaTestDirInputs / 'REL' / 'release1HS.shp'
+    relFile2 = avaTestDirInputs / 'REL' / 'release2HS.shp'
+    entFile = avaTestDirInputs / 'ENT' / 'entrainment1HS.shp'
+    inputSimFiles = {'demFile': demFile, 'relFiles': [relFile1, relFile2], 'entFile': entFile,
+        'secondaryReleaseFile': None, 'entResInfo': {'flagRes': 'No', 'flagEnt': 'Yes',
+        'flagSecondaryRelease': 'No'}}
+
+    inputSimFiles, cfgFilesRels = getInput.getThickness(inputSimFiles, avaTestDir, com1DFA, cfgFile, cfg)
+
+    print('inputSimFiles', inputSimFiles)
+    print('cfgFilesRels', sorted(cfgFilesRels))
+
+    assert inputSimFiles['release1HS']['thickness'] == ['1.0']
+    assert inputSimFiles['release2HS']['thickness'] == ['1.0', '1.0']
+    assert inputSimFiles['release1HS']['id'] == ['0']
+    assert inputSimFiles['release2HS']['id'] == ['0', '1']
+    assert inputSimFiles['entrainment1HS']['thickness'] == ['0.3']
+    assert inputSimFiles['entrainment1HS']['id'] == ['0']
+    assert cfgFilesRels[0].name == 'release1HS_com1DFACfg.ini'
+    assert cfgFilesRels[1].name == 'release2HS_com1DFACfg.ini'
+    assert len(cfgFilesRels) == 2
+
+    cfgTest1 = configparser.ConfigParser()
+    cfgTest1.read(cfgFilesRels[1])
+
+    assert cfgTest1['GENERAL']['relTh'] == ''
+    assert cfgTest1['GENERAL'].getboolean('relThFromShp') == True
+    assert cfgTest1['GENERAL'].getboolean('relThFromFile') == False
+    assert cfgTest1['GENERAL']['entTh'] == ''
+    assert cfgTest1['GENERAL'].getboolean('entThFromShp') == True
+    assert cfgTest1['INPUT']['releaseScenario'] == 'release2HS'
+    assert cfgTest1['INPUT']['relThId'] == '0|1'
+    assert cfgTest1['INPUT']['relThThickness'] == '1.0|1.0'
+    assert cfgTest1['INPUT']['entrainmentScenario'] == 'entrainment1HS'
+    assert cfgTest1['INPUT']['entThId'] == '0'
+    assert cfgTest1['INPUT']['entThThickness'] == '0.3'
+
+
+def test_selectReleaseScenario(tmp_path):
+    """ testing selecting a release area scenario according to configuration settings """
+
+    # setup the required inputs
+    testPath = pathlib.Path(tmp_path, 'avaTest', 'Inputs', 'REL')
+    rel1 = testPath / 'rel1.shp'
+    rel2 = testPath / 'rel2.shp'
+
+    inputSimFiles = {'relFiles': [rel1, rel2]}
+    cfg = configparser.ConfigParser()
+    cfg['INPUT'] = {'releaseScenario': 'rel1'}
+
+    # call function to be tested
+    inputSimFiles = getInput.selectReleaseScenario(inputSimFiles, cfg['INPUT'])
+
+    assert inputSimFiles['relFiles'][0].name == 'rel1.shp'
+    assert len(inputSimFiles['relFiles']) == 1
+
+    cfg = configparser.ConfigParser()
+    cfg['INPUT'] = {'releaseScenario': 'rel2'}
+    inputSimFiles = {'relFiles': [rel1, rel2]}
+
+    # call function to be tested
+    inputSimFiles = getInput.selectReleaseScenario(inputSimFiles, cfg['INPUT'])
+
+
+    assert inputSimFiles['relFiles'][0].name == 'rel2.shp'
+    assert len(inputSimFiles['relFiles']) == 1
+
+
+    cfg = configparser.ConfigParser()
+    cfg['INPUT'] = {'releaseScenario': 'rel2'}
+    inputSimFiles = {'relFiles': [rel1]}
+
+
+    with pytest.raises(FileNotFoundError) as e:
+        assert getInput.selectReleaseScenario(inputSimFiles, cfg['INPUT'])
+    assert str(e.value) == ("Release area scenario %s not found - check input data" % ('rel2'))
