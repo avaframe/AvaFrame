@@ -234,7 +234,7 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_Time_' + str(outputName), fig1)
 
 
-def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, sizedBy, logScale=False):
+def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, sizedBy, logScale=False, fit=False):
     """plot error between all com1DFA sol and analytic sol
     function of whatever you want
 
@@ -261,46 +261,50 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, colore
     relativ = cfgSimi.getboolean('relativError')
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
     fig1, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(4*pU.figW, 2*pU.figH))
-    # for the scater plot (new filtering)
-    simDFScatter = simDF  # [simDF['viscOption'] == 1]
     # get the sizing function
-    sizeList = simDFScatter[sizedBy].unique()
+    sizeList = simDF[sizedBy].unique()
+    lenSize = len(sizeList)
     minSize = np.nanmin(sizeList)
     maxSize = np.nanmax(sizeList)
-    if len(sizeList) > 1:
-        sizeList = (simDFScatter[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
+    if lenSize > 1:
+        sizeList = (simDF[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
     else:
         sizeList = np.array([100])
     # make the scatter plot
-    scatter = ax1.scatter(simDFScatter[xField], simDFScatter[yFieldArray[0]], c=simDFScatter[coloredBy], s=sizeList, cmap=cmap,
+    scatter1 = ax1.scatter(simDF[xField], simDF[yFieldArray[0]], c=simDF[coloredBy], s=sizeList, cmap=cmap, norm=norm,
                           marker=pU.markers[0], alpha=1)#, edgecolors='k')
-    scatter2 = ax2.scatter(simDFScatter[xField], simDFScatter[yFieldArray[1]], c=simDFScatter[coloredBy], s=sizeList, cmap=cmap,
+    scatter2 = ax2.scatter(simDF[xField], simDF[yFieldArray[1]], c=simDF[coloredBy], s=sizeList, cmap=cmap, norm=norm,
                            marker=pU.markers[0], alpha=1)#, edgecolors='k')
 
     # #########################################
     # If you want to add some regression lines
     slopeU = pd.DataFrame()
     slopeH = pd.DataFrame()
-    colorValueListList = simDF[coloredBy].unique()
-    for colorValue in colorValueListList:
-        simDFNew = simDF[simDF[coloredBy] == colorValue]
-        for sizeValue in simDFNew[sizedBy].unique():
-            simDFNewNew = simDFNew[simDFNew[sizedBy] == sizeValue]
-            xArray = simDFNewNew[xField]
-            hErrorL2 = simDFNewNew["hErrorL2"]
-            vErrorL2 = simDFNewNew["vhErrorL2"]
-            p = np.polyfit(np.log(simDFNewNew[xField]), np.log(hErrorL2), deg=1)
-            p1H = p[0]
-            p0H = np.exp(p[1])
-            p = np.polyfit(np.log(simDFNewNew[xField]), np.log(vErrorL2), deg=1)
-            p1U = p[0]
-            p0U = np.exp(p[1])
-            slopeU.loc[sizeValue, colorValue] = p1U
-            slopeH.loc[sizeValue, colorValue] = p1H
-            ax1.plot(xArray, p0H*xArray**p1H, 'r')
-            ax2.plot(xArray, p0U*xArray**p1U, 'g')
-            log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}' % (colorValue, p0H, p1H))
-            log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * Npart^{%.2f}' % (colorValue, p0U, p1U))
+    colorValueList = simDF[coloredBy].unique()
+    lenColor = len(colorValueList)
+    if fit:
+        for colorValue in colorValueList:
+            simDFNew = simDF[simDF[coloredBy] == colorValue]
+            for sizeValue in simDFNew[sizedBy].unique():
+                simDFNewNew = simDFNew[simDFNew[sizedBy] == sizeValue]
+                xArray = simDFNewNew[xField]
+                hErrorL2 = simDFNewNew["hErrorL2"]
+                vErrorL2 = simDFNewNew["vhErrorL2"]
+                p, rSquaredH, _, _, _ = np.polyfit(np.log(xArray), np.log(hErrorL2), deg=1, full=True)
+                p1H = p[0]
+                p0H = np.exp(p[1])
+                p, rSquaredU, _, _, _ = np.polyfit(np.log(xArray), np.log(vErrorL2), deg=1, full=True)
+                p1U = p[0]
+                p0U = np.exp(p[1])
+                slopeU.loc[sizeValue, colorValue] = p1U
+                slopeH.loc[sizeValue, colorValue] = p1H
+                ax1.plot(xArray, p0H*xArray**p1H, 'r')
+                ax2.plot(xArray, p0U*xArray**p1U, 'g')
+                if np.size(rSquaredH) == 0:
+                    rSquaredU = np.nan
+                    rSquaredH = np.nan
+                log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}, r=%.2f' % (colorValue, p0H, p1H, rSquaredH))
+                log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * Npart^{%.2f}, r=%.2f' % (colorValue, p0U, p1U, rSquaredU))
 
     if logScale:
         ax1.set_yscale('log')
@@ -315,16 +319,21 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, colore
     ax2.set_xlabel(xField)
     ax1.set_ylabel(getTitleError(relativ, r' L2 on flow thickness'))
     ax2.set_ylabel(getTitleError(relativ, r' L2 on $\vert h \mathbf{ \bar u} \vert$'))
-    legend1 = ax1.legend(*scatter.legend_elements(), loc="upper center", title=coloredBy)
+    legend1 = ax1.legend(*scatter1.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
     ax1.add_artist(legend1)
-    legend2 = ax2.legend(*scatter.legend_elements(), loc="upper center", title=coloredBy)
+    legend2 = ax2.legend(*scatter2.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
     ax2.add_artist(legend2)
+    # plt.legend(handles=scatter1.legend_elements()[0],
+    #        labels=sp_names,
+    #        title="species")
 
     # produce a legend with a cross section of sizes from the scatter
-    kw = dict(prop="sizes", color=scatter.cmap(0.7),
+    kw = dict(prop="sizes", color=scatter1.cmap(0.7),
           func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
-    legend3 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title=sizedBy)
-    ax2.legend(*scatter.legend_elements(**kw), loc="upper right", title=sizedBy)
+    legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
+    kw = dict(prop="sizes", color=scatter2.cmap(0.7),
+          func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
+    ax2.legend(*scatter2.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
     ax2.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)

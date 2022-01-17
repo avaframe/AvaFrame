@@ -58,9 +58,10 @@ def getPartInitMethod(cfg, csz):
     elif massPerParticleDeterminationMethod == 'MPPKR':
         sphKernelRadius = cfg.getfloat('sphKernelRadius')
         cszMin = min(csz, sphKernelRadius)
-        cPPK = cfg.getfloat('cPPK')
+        nPPK0 = cfg.getfloat('nPPK0')
+        sphKR0 = cfg.getfloat('sphKR0')
         aPPK = cfg.getfloat('aPPK')
-        nPPK = round(cPPK * cszMin**aPPK)
+        nPPK = round(nPPK0 * (cszMin/sphKR0)**aPPK)
         # nPPK = cfg.getfloat('nPPK')
         relTh = cfg.getfloat('relTh')
         massPerPart = rho * math.pi * cszMin * cszMin * relTh / nPPK

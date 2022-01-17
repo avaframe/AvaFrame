@@ -681,16 +681,16 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         fieldsList, fieldHeader, _ = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
         simDF.loc[simHash, 'nPart'] = particlesList[-1]['nPart']
         # analyze and compare results
-        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(particlesList, fieldsList, solSimi, fieldHeader,
+        tSave = cfgSimi.getfloat('tSave')
+        ind_t = min(np.searchsorted(Tsave, tSave), min(len(Tsave)-1, len(fieldsList)-1))
+        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults([particlesList[ind_t]], [fieldsList[ind_t]], solSimi, fieldHeader,
                                                                         cfgSimi, outDirTest, simHash, simDFrow)
         # add result of error analysis
         # save results in the simDF
-        tSave = cfgSimi.getfloat('tSave')
-        ind_t = min(np.searchsorted(Tsave, tSave), min(len(Tsave)-1, len(fieldsList)-1))
-        simDF.loc[simHash, 'hErrorL2'] = hEL2Array[ind_t]
-        simDF.loc[simHash, 'vhErrorL2'] = vhEL2Array[ind_t]
-        simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[ind_t]
-        simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[ind_t]
+        simDF.loc[simHash, 'hErrorL2'] = hEL2Array[0]
+        simDF.loc[simHash, 'vhErrorL2'] = vhEL2Array[0]
+        simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[0]
+        simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[0]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
         # outAna1Plots.showSaveTimeStepsSimiSol(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
