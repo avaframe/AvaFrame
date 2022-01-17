@@ -105,6 +105,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     pathDict, rasterTransfo, resAnalysisDF = runAna3AIMEC.runAna3AIMEC(avalancheDir=avalancheDir)
     simID = simDF.index[0]
     refSimulation = pathDict['refSimulation']
+
     # fetch fields for desired time step
     fields, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pta'], simName='',
         flagAvaDir=True, comModule='com1DFA', timeStep=timeStepInfo[-1])

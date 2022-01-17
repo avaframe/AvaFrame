@@ -63,8 +63,8 @@ def finalizePathPlot(avalancheDir, figDict, resAnalysisDF, refSimulation, dem, d
     headerOri = demOri['header']
     xllcOri = headerOri['xllcenter']
     yllcOri = headerOri['yllcenter']
-    xAIMEC = resAnalysisDF[refSimulation, 'xRunout']
-    yAIMEC = resAnalysisDF[refSimulation, 'yRunout']
+    xAIMEC = resAnalysisDF.loc[refSimulation, 'xRunout']
+    yAIMEC = resAnalysisDF.loc[refSimulation, 'yRunout']
 
     fig = figDict['figPath']
     ax = figDict['axPath']
@@ -89,7 +89,7 @@ def finalizePathPlot(avalancheDir, figDict, resAnalysisDF, refSimulation, dem, d
 
 def finalizeProfilePlot(avalancheDir, figDict, resAnalysisDF, refSimulation):
     """Add title ... and save profile plot"""
-    sAIMEC = resAnalysisDF[refSimulation, 'sRunout']
+    sAIMEC = resAnalysisDF.loc[refSimulation, 'sRunout']
 
     fig = figDict['figProf']
     ax = figDict['axProf']
