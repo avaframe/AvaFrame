@@ -941,7 +941,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
             else:
                 idFixed = np.append(idFixed, np.ones(n))
 
-        hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relThField, csz, ncols, nrows, interpOption)
+        hPartArray = DFAfunC.projOnRaster(xPartArray, yPartArray, relRaster, csz, ncols, nrows, interpOption)
         hPartArray = np.asarray(hPartArray)
         # for the MPPKR option use hPart and aPart to define the mass of the particle (this means, within a cell
         # partticles have the same area but may have different flow depth which means a different mass)
