@@ -1919,7 +1919,7 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
     fieldsList = []
     first = True
     for r in resType:
-        # search for all pickles within directory
+        # search for all files within directory
         if simName:
             name = '*' + simName + '*' + r + '*.asc'
         else:
@@ -1930,7 +1930,6 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
 
         count = 0
         for fieldsName in FieldsNameList:
-            print('timeStep', timeStep, float(fieldsName.stem.split('_t')[-1]))
             if timeStep == '' or np.isclose(timeStep, float(fieldsName.stem.split('_t')[-1])):
                 # initialize field Dict
                 if first:
@@ -1938,10 +1937,12 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
                 field = IOf.readRaster(fieldsName)
                 fieldsList[count][r] = field['rasterData']
                 count = count + 1
-                first = False
-    if first:
+        first = False
+
+    if count == 0:
         log.warning('No matching fields found in %s' % inDir)
         fieldHeader = None
+        fieldsList = []
     else:
         fieldHeader = field['header']
 
