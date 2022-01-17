@@ -1891,13 +1891,15 @@ def trackParticles(cfgTrackPart, dem, particlesList):
     return particlesList, trackedPartProp, track
 
 
-def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA'):
-    """ Read ascii files within a directory and return List of dicionaries
+def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA', timeStep=''):
+    """ Read ascii files within a directory and return List of dictionaries
 
         Parameters
         -----------
         inDir: str
             path to input directory
+        resType: list
+            list of desired result types
         simName : str
             simulation name
         flagAvaDir: bool
@@ -1905,6 +1907,9 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA')
             read from avaDir/Outputs/com1DFA/particles
         comModule: str
             module that computed the particles
+        timeStep: float
+            desired time step - optional
+
     """
 
     if flagAvaDir:
@@ -1925,15 +1930,27 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA')
 
         count = 0
         for fieldsName in FieldsNameList:
-            # initialize field Dict
-            if first:
-                fieldsList.append({})
-            field = IOf.readRaster(fieldsName)
-            fieldsList[count][r] = field['rasterData']
-            count = count + 1
-        first = False
+            print('timeStep', timeStep, float(fieldsName.stem.split('_t')[-1]))
+            if timeStep == '' or np.isclose(timeStep, float(fieldsName.stem.split('_t')[-1])):
+                # initialize field Dict
+                if first:
+                    fieldsList.append({})
+                field = IOf.readRaster(fieldsName)
+                fieldsList[count][r] = field['rasterData']
+                count = count + 1
+                first = False
+    if first:
+        log.warning('No matching fields found in %s' % inDir)
+        fieldHeader = None
+    else:
+        fieldHeader = field['header']
 
-    return fieldsList, field['header']
+    if timeStep != '':
+        timeList = timeStep
+    else:
+        timeList = sorted(timeList)
+
+    return fieldsList, fieldHeader, timeList
 
 
 def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):

@@ -10,7 +10,6 @@ import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in1Data import getInput as gI
 from avaframe.com1DFA import com1DFA, particleTools
-import avaframe.com1DFA.com1DFATools as cT
 import avaframe.ana1Tests.FPtest as FPtest
 
 # from avaframe.DFAkernel.setParam import *
@@ -72,8 +71,9 @@ while isinstance(value, float):
     ind_t = min(np.searchsorted(Tsave, value), len(Tsave)-1)
 
     # fetch fields for desired time step
-    timeSteps = [Tsave[ind_t]]
-    fields = cT.fetchField(timeSteps, 'FD', avalancheDir, inputDir='')
+    timeStep = Tsave[ind_t]
+    fields, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD'], simName='',
+        flagAvaDir=True, comModule='com1DFA', timeStep=timeStep)
 
     # get particle parameters
     comSol = FPtest.postProcessFPcom1DFA(cfgGen, Particles[ind_t], fields[0], ind_t, relDict)
