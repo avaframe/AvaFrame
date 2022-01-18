@@ -49,25 +49,25 @@ and the following files are optional:
 * resistance area as shapefile (in Inputs/RES)
 * secondary release area as shapefile (in Inputs/SECREL)
 
-Thickness inputs
-^^^^^^^^^^^^^^^^
+Release-, entrainment thickness settings
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Release, entrainment and secondary release thickness can be specified in two different ways:
 
-1. Via **shape file**: 
-  - add an attribute called `thickness` for each feature 
+1. Via **shape file**:
+  - add an attribute called `thickness` for each feature
   - important: ALL features have to have a single thickness value, which can differ between features
   - for backwards compatibility, the attribute 'd0' also works, but we suggest to use `thickness` in new projects
-  - set the flag `thicknessFromShp` to True in the configuration file (default is True)
-  - a parameter variation can be added with the `PercentVariation` parameter in the configuration file in the
+  - set the flag `THICKNESSFromShp` (i.e. relThFromShp, entThFromShp, secondaryRelthFromShp) to True in the configuration file (default is True)
+  - a parameter variation can be added with the `THICKNESSPercentVariation` parameter in the configuration file in the
     form of ``+-percentage$numberOfSteps``. Provided a `+` a positive variation will be performed,
     if `-` is given, only a negative variation is performed. If no sign is given: both directions will be used.
-          
+
 2. Via **configuration file (ini)**:
-  - set the flag 'thicknessFromShp' to False 
-  - provide your desired thickness value in the respective thickness parameter (relTh, entTh or secondaryRelth)
-  - in addition to the `PercentVariation` option (see option 1) and the standard variation options in
-    :ref:`configuration:Configuration`, you can also directly set e.g. `relTh = 1.$50$2`, TODO @AW: provide description,
+  - set the flag 'THICKNESSFromShp' to False
+  - provide your desired thickness value in the respective THICKNESS parameter (i.e. relTh, entTh or secondaryRelth)
+  - in addition to the `THICKNESSPercentVariation` option (see option 1) and the standard variation options in
+    :ref:`configuration:Configuration`, you can also directly set e.g. `relTh = 1.$50$2`, ``referenceValue$+-percentage$numberOfSteps``,
     resulting in a variation of relTh from 0.5 to 1.5m in two steps.
 
 
