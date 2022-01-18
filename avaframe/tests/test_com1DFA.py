@@ -1016,7 +1016,9 @@ def test_initializeParticles():
     assert np.sum(particles['ux']) == 0.0
 
     cfg['GENERAL']['massPerParticleDeterminationMethod'] = 'MPPKR'
-    cfg['GENERAL'].update({'nPPK': '5'})
+    cfg['GENERAL'].update({'nPPK0': '5'})
+    cfg['GENERAL'].update({'sphKR0': '1'})
+    cfg['GENERAL'].update({'aPPK': '-1'})
     cfg['GENERAL'].update({'relTh': '1.'})
     particles = com1DFA.initializeParticles(cfg['GENERAL'], releaseLine, dem)
     particles, fields = com1DFA.initializeFields(cfg['GENERAL'], dem, particles)
