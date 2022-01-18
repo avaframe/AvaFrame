@@ -1908,7 +1908,8 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
         comModule: str
             module that computed the particles
         timeStep: float
-            desired time step - optional
+            desired time step if difference to time step of field file is smaller than 1.e-6
+            field is found - optional
 
     """
 
@@ -1930,7 +1931,7 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
 
         count = 0
         for fieldsName in FieldsNameList:
-            if timeStep == '' or np.isclose(timeStep, float(fieldsName.stem.split('_t')[-1])):
+            if timeStep == '' or np.isclose(timeStep, float(fieldsName.stem.split('_t')[-1]), atol=1.e-6):
                 # initialize field Dict
                 if first:
                     fieldsList.append({})
