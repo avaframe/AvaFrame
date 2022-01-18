@@ -18,6 +18,7 @@ from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in1Data import getInput as gI
 import avaframe.ana1Tests.simiSolTest as simiSolTest
+import avaframe.out3Plot.outAna1Plots as outAna1Plots
 
 
 def test_mainCompareSimSolCom1DFA(tmp_path):
@@ -27,7 +28,6 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
     avalancheDir = tmp_path / 'avaSimilaritySol'
 
     shutil.copytree(sourceDir, avalancheDir)
-
 
     outDirTest = avalancheDir / 'Outputs' / 'ana1Tests'
     fU.makeADir(outDirTest)
@@ -42,6 +42,16 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
     # (may be multiple sims)
     _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
 
+    simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
     solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 
     simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
+
+    outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', ['hErrorL2', 'vhErrorL2'],
+                              'aPPK', 'cMax', logScale=False)
+
+    # make convergence plot
+    fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
+                              'aPPK', 'cMax', logScale=True)
+
+    outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
