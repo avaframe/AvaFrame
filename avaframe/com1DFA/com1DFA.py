@@ -895,7 +895,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     if len(relThField) != 0:
         relThForPart = np.amax(relThField)
     elif cfg.getboolean('relThFromShp'):
-        relThForPart = np.amax(np.asarray(releaseLine[thickness], dtype=float))
+        relThForPart = np.amax(np.asarray(releaseLine['thickness'], dtype=float))
     else:
         relThForPart = cfg.getfloat('relTh')
 
