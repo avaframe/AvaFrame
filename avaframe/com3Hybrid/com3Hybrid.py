@@ -109,7 +109,8 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     # fetch fields for desired time step
     fields, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pta'], simName='',
         flagAvaDir=True, comModule='com1DFA', timeStep=timeStepInfo[-1])
-
+    outCom3Plots.finalizePathPlot(avalancheDir, figDict, resAnalysisDF, refSimulation, dem, demOri, particlesList[-1], fields[0])
+    outCom3Plots.finalizeProfilePlot(avalancheDir, figDict, resAnalysisDF, refSimulation)
     hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
     cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=hybridModelDFACfg)
     outCom3Plots.plotEnergyProfile(avalancheDir, cfgDFA, resAB, name, simID, demOri, avaProfileMass)
