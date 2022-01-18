@@ -25,7 +25,6 @@ def initialiseParticlesFromFile(cfg, avaDir, releaseScenario):
     # TODO: this is for development purposes, change or remove in the future
     # If initialisation from file
 
-    print('RELEASE ', releaseScenario)
     if cfg['particleFile']:
         inDirPart = pathlib.Path(cfg['particleFile'])
     else:
