@@ -29,7 +29,7 @@ clone the repository::
 Rename the executables according to your operating system, i.e. for Linux do::
 
   mv com1DFA_Exe/com1DFA_x86_64.exe com1DFA_Exe/com1DFA.exe
-  mv com1DFA_Exe/SHPConv_Linux.exe com1DFA_Exe/SHPConv.exe
+  mv com1DFA_Exe/SHPConv_linux.exe com1DFA_Exe/SHPConv.exe
 
 for Windows do::
 
