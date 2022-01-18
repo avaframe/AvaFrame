@@ -892,7 +892,14 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     areaRaster = dem['areaRaster']
 
     # get the initialization method used
-    massPerPart, nPPK = com1DFATools. getPartInitMethod(cfg, csz)
+    if len(relThField) != 0:
+        relThForPart = np.amax(relThField)
+    elif cfg.getboolean('relThFromShp'):
+        relThForPart = np.amax(np.asarray(releaseLine[thickness], dtype=float))
+    else:
+        relThForPart = cfg.getfloat('relTh')
+
+    massPerPart, nPPK = com1DFATools.getPartInitMethod(cfg, csz, relThForPart)
 
     # initialize arrays
     partPerCell = np.zeros(np.shape(relRaster), dtype=np.int64)

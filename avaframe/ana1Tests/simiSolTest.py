@@ -738,7 +738,8 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
             LMax error on flow velocity for saved time steps
 
     """
-    relTh = simDFrow['relTh']
+    # relTh = simDFrow['relTh']
+    relTh = cfgSimi.getfloat('relTh')
     gravAcc = simDFrow['gravAcc']
     hErrorL2Array = np.zeros((len(particlesList)))
     vhErrorL2Array = np.zeros((len(particlesList)))

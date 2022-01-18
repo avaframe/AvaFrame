@@ -22,7 +22,7 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def getPartInitMethod(cfg, csz):
+def getPartInitMethod(cfg, csz, relThForPart):
     """ Get particle initialization parameters
 
     Get the massPerPart and nPPK corresponding to the desired initialization method
@@ -33,6 +33,8 @@ def getPartInitMethod(cfg, csz):
         configuration for DFA simulation
     csz: float
         cell size
+    relThForPart: float
+        relTh value
 
     Returns
     -------
@@ -56,9 +58,8 @@ def getPartInitMethod(cfg, csz):
         log.debug('mass per particle is %.2f' % massPerPart)
     elif massPerParticleDeterminationMethod == 'MPPKR':
         nPPK = cfg.getfloat('nPPK')
-        relTh = cfg.getfloat('relTh')
         ds = min(csz, cfg.getfloat('sphKernelRadius'))
-        massPerPart = rho * math.pi * ds * ds * relTh / nPPK
+        massPerPart = rho * math.pi * ds * ds * relThForPart / nPPK
 
     return massPerPart, nPPK
 
