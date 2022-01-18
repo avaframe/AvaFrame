@@ -1,14 +1,14 @@
 """
-    Run script for running the standard tests
+    Run script for running the standard tests with com1DFA
+    in this test all the available tests tagged standardTest are performed
 """
 
 # Load modules
-import os
 import time
 import pathlib
-import glob
 
 # Local imports
+from avaframe.com1DFA import com1DFA
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
 from avaframe.log2Report import generateCompareReport
@@ -20,33 +20,42 @@ from avaframe.in3Utils import initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from benchmarks import simParametersDict
-import avaframe.com1DFA.com1DFA as com1DFA
 
+
+# +++++++++REQUIRED+++++++++++++
+# Which result types for comparison plots
+outputVariable = ['ppr', 'pfd', 'pfv']
+# aimec settings
+aimecResType = 'ppr'
+aimecThresholdValue = '1'
+aimecDiffLim = '5'
+aimecContourLevels = '1|3|5|10'
+aimecFlagMass = 'False'
+aimecComModules = 'benchmarkReference|com1DFA'
+# ++++++++++++++++++++++++++++++
 
 # log file name; leave empty to use default runLog.log
-logName = 'runStandardTests'
+logName = 'runStandardTestsCom1DFA'
 
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
 
-# set desired filter criteria to filter individual simulations
-parametersDict = {'simTypeActual': [], 'releaseScenario': []}
-
 # load all benchmark info as dictionaries from description files
 testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
-# filter benchmarks for a tag
+# filter benchmarks for tag standardTest
 type = 'TAGS'
 valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
-outDir = os.path.join(os.getcwd(), 'tests', 'reportsCom1DFA')
+outDir = pathlib.Path.cwd() / 'tests' / 'reportsCom1DFA'
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
-reportFile = os.path.join(outDir, 'standardTestsReportPy.md')
+reportFile = outDir / 'standardTestsReportCom1DFA.md'
 with open(reportFile, 'w') as pfile:
+
     # Write header
     pfile.write('# Standard Tests Report \n')
     pfile.write('## Compare com1DFA simulations to benchmark results \n')
@@ -56,62 +65,83 @@ log.info('The following benchmark tests will be fetched ')
 for test in testList:
     log.info('%s' % test['NAME'])
 
+# run Standard Tests sequentially
 for test in testList:
 
-    # Start logging
     avaDir = test['AVADIR']
 
     # Fetch benchmark test info
     benchDict = simParametersDict.fetchBenchParameters(test['NAME'])
     simNameRef = test['simNameRef']
     refDir = pathlib.Path('..', 'benchmarks', test['NAME'])
+    simType = benchDict['simType']
+    rel = benchDict['Simulation Parameters']['Release Area Scenario']
 
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
     # Load input parameters from configuration file for standard tests
-    # write config to log file
-    avaName = os.path.basename(avaDir)
-    standardCfg = os.path.join('..', 'benchmarks', test['NAME'], '%s_com1DFACfg.ini' % test['AVANAME'])
-
-    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile=standardCfg, relThField='')
-
+    avaName = pathlib.Path(avaDir).name
+    standardCfg = refDir / ('%s_com1DFACfg.ini' % test['AVANAME'])
     modName = 'com1DFA'
 
-    # Fetch correct reportDict according to parametersDict
+    # Set timing
+    startTime = time.time()
+    # call com1DFA run
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile=standardCfg)
+    endTime = time.time()
+    timeNeeded = endTime - startTime
+    log.info(('Took %s seconds to calculate.' % (timeNeeded)))
+
+    # Fetch correct reportDict according to simType and release area scenario
+    # read all simulation configuration files and return dataFrame and write to csv
+    parametersDict = {'simTypeActual': simType, 'releaseScenario': rel}
     simNameComp = cfgUtils.filterSims(avaDir, parametersDict)
     if len(simNameComp) > 1:
         log.error('more than one matching simulation found for criteria! ')
     else:
         simNameComp = simNameComp[0]
 
+    # find report dictionary corresponding to comparison simulation
+    reportD = {}
     for dict in reportDictList:
-        if simNameComp == dict['simName']['name']:
+        if simNameComp in dict['simName']['name']:
             reportD = dict
+    if reportD == {}:
+        message = 'No matching simulation found for reference simulation: %s' % simNameRef
+        log.error(message)
+        raise ValueError(message)
+    log.info('Reference simulation %s and comparison simulation %s ' % (simNameRef, simNameComp))
 
     # set result files directory
     compDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
 
+    # Add info on run time
+    reportD['runTime'] = timeNeeded
+
     # +++++++Aimec analysis
     # load configuration
-    cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC)
-    cfgAimec['AIMECSETUP']['resType'] = 'ppr'
-    cfgAimec['AIMECSETUP']['thresholdValue'] = '1'
-    cfgAimec['AIMECSETUP']['diffLim'] = '5'
-    cfgAimec['AIMECSETUP']['contourLevels'] = '1|3|5|10'
-    cfgAimec['FLAGS']['flagMass'] = 'False'
-    cfgAimec['AIMECSETUP']['comModules'] = 'benchmarkReference|com1DFA'
+    aimecCfg = refDir / ('%s_AIMECCfg.ini' % test['AVANAME'])
+    if aimecCfg.is_file():
+        cfgAimec = cfgUtils.getModuleConfig(ana3AIMEC, aimecCfg)
+    else:
+        cfgAimec = cfgUtils.getDefaultModuleConfig(ana3AIMEC)
+    cfgAimec['AIMECSETUP']['resType'] = aimecResType
+    cfgAimec['AIMECSETUP']['thresholdValue'] = aimecThresholdValue
+    cfgAimec['AIMECSETUP']['diffLim'] = aimecDiffLim
+    cfgAimec['AIMECSETUP']['contourLevels'] = aimecContourLevels
+    cfgAimec['FLAGS']['flagMass'] = aimecFlagMass
+    cfgAimec['AIMECSETUP']['comModules'] = aimecComModules
     cfgAimec['AIMECSETUP']['testName'] = test['NAME']
 
     # Setup input from com1DFA and reference
     pathDict = []
     inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfgAimec, simNameRef, simNameComp)
     pathDict['refSimulation'] = inputsDF.index[0]
-    log.info('reference file comes from: %s' % pathDict['compType'][1])
-    log.info('reference file is: %s' % pathDict['refSimulation'])
+    log.info('reference file comes from: %s' % pathDict['refSimulation'])
 
     # Extract input file locations
-    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=simNameComp)
+    pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
 
     # perform analysis
     rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.AIMEC2Report(pathDict, inputsDF, cfgAimec)
@@ -124,16 +154,11 @@ for test in testList:
     # Load input parameters from configuration file
     cfgRep = cfgUtils.getModuleConfig(generateCompareReport)
 
-    # REQUIRED+++++++++++++++++++
-    # Which parameter to filter data, e.g. varPar = 'simType', values = ['null'] or
-    # varPar = 'Mu', values = ['0.055', '0.155']; values need to be given as list, also if only one value
-    outputVariable = ['ppr', 'pfd', 'pfv']
     plotListRep = {}
     reportD['Simulation Difference'] = {}
     reportD['Simulation Stats'] = {}
-    # ++++++++++++++++++++++++++++
 
-    # Plot data comparison for all output variables defined in suffix
+    # Plot data comparison for all output variables defined in outputVariable
     for var in outputVariable:
         plotDict = outQuickPlot.quickPlotBench(avaDir, simNameRef, simNameComp, refDir, compDir, cfgMain, var)
         for plot in plotDict['plots']:
