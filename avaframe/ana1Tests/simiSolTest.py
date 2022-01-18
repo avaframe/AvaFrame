@@ -696,7 +696,8 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         # outAna1Plots.showSaveTimeStepsSimiSol(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
         #                                outDirTest, simHash, simDFrow)
 
-    simDF.to_pickle(outDirTest / 'results.p')
+    name = 'results' + str(round(tSave)) + '.p'
+    simDF.to_pickle(outDirTest / name)
 
     return simDF
 

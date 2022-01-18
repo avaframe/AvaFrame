@@ -319,15 +319,16 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, colore
     ax2.set_xlabel(xField)
     ax1.set_ylabel(getTitleError(relativ, r' L2 on flow thickness'))
     ax2.set_ylabel(getTitleError(relativ, r' L2 on $\vert h \mathbf{ \bar u} \vert$'))
+    if lenColor<=10:
+        lenColor = None
     legend1 = ax1.legend(*scatter1.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
     ax1.add_artist(legend1)
     legend2 = ax2.legend(*scatter2.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
     ax2.add_artist(legend2)
-    # plt.legend(handles=scatter1.legend_elements()[0],
-    #        labels=sp_names,
-    #        title="species")
 
     # produce a legend with a cross section of sizes from the scatter
+    if lenSize<=10:
+        lenSize = None
     kw = dict(prop="sizes", color=scatter1.cmap(0.7),
           func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
     legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)

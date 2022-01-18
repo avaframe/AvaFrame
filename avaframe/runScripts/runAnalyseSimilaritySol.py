@@ -56,27 +56,20 @@ simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 log.info('Computing similarity solution')
 solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 
-# If you need to do the analysis, uncoment this
-# first fetch info about all the simulations performed (and maybe order them)
-# varParList = cfg['ANALYSIS']['varParList'].split('|')
-# ascendingOrder = cfg['ANALYSIS']['ascendingOrder']
-# # load info for all configurations and order them
-# simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
-
 # if the analysis already exists and you only want to replot uncoment this
-pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results.p')
-if pathToResults.is_file():
-    simDF = pd.read_pickle(pathToResults)
-# simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
+# pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results10.p')
+# if pathToResults.is_file():
+#     simDF = pd.read_pickle(pathToResults)
+simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
 
 # select the simulations you want to plot
 simDF = simDF[simDF['subgridMixingFactor'].isin([10])]
-# simDF = simDF[simDF['cMax'].isin([0.01])]
-# simDF = simDF[simDF['aPPK']==-3.5]
+simDF = simDF[simDF['cMax'].isin([0.01])]
+# simDF = simDF[simDF['aPPK']==-2]
 simDF = simDF[simDF['sphKernelRadius']<=10]
 # simDF = simDF[simDF['nPPK']>10]#, 0.1, 0.05
 # simDF['refN'] = round(simDF['cPPK'] * 5 **(simDF['aPPK']))
-simDF = simDF[simDF['nPPK0']==30]
+# simDF = simDF[simDF['nPPK0']==15]
 # now do some plotting
 # compare the simulations to the reference
 # outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', ['hErrorL2', 'vhErrorL2'],
@@ -84,6 +77,6 @@ simDF = simDF[simDF['nPPK0']==30]
 
 # make convergence plot
 fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
-                          'aPPK', 'cMax', logScale=True)
+                          'aPPK', 'nPPK0', logScale=True, fit=True)
 
 outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
