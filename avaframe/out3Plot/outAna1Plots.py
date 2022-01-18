@@ -369,9 +369,6 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, colore
     ax1.add_artist(legend1)
     legend2 = ax2.legend(*scatter2.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
     ax2.add_artist(legend2)
-    # plt.legend(handles=scatter1.legend_elements()[0],
-    #        labels=sp_names,
-    #        title="species")
 
     # produce a legend with a cross section of sizes from the scatter
     if lenSize<=10:
