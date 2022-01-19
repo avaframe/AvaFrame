@@ -67,6 +67,26 @@ def test_getDEMPath(tmp_path):
         assert getInput.getDEMPath(avaTestDir)
     assert str(e.value) == "There should be exactly one topography .asc file in %s/Inputs/" % (avaTestDir)
 
+    # call function to be tested
+    avaDirTest2 = pathlib.Path(tmp_path, 'avaTest')
+    avaDirTest2Inputs = avaDirTest2 / 'Inputs'
+    fU.makeADir(avaDirTest2Inputs)
+    inputFile = avaDirInputs / 'DEM_HS_Topo.asc'
+    testFile = avaDirTest2Inputs / 'DEM_HS_Topo2.txt'
+    shutil.copyfile(inputFile, testFile)
+
+    with pytest.raises(AssertionError) as e:
+        assert getInput.getDEMPath(avaDirTest2)
+    assert str(e.value) == "DEM file format not correct in %s/Inputs/ - only .asc is allowed but %s is provided" % (avaDirTest2, testFile.name)
+
+    # call function to be tested
+    avaDirTest3 = pathlib.Path(tmp_path, 'avaTest2')
+
+
+    with pytest.raises(FileNotFoundError) as e:
+        assert getInput.getDEMPath(avaDirTest3)
+    assert str(e.value) == "No topography .asc file in %s/Inputs/" % (avaDirTest3)
+
 
 def test_getInputData(tmp_path):
     """ test check for input data """
@@ -193,7 +213,8 @@ def test_getAndCheckInputFiles(tmp_path):
     inputType = 'entrainment'
 
     # call function to be tested
-    outFile, available = getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType, 'shp')
+    outFile, available = getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType,
+        fileExt='shp')
 
     print('outfile', outFile)
     print('available', available)
@@ -206,7 +227,7 @@ def test_getAndCheckInputFiles(tmp_path):
     testFile = avaTestDirInputs / 'ENT' / 'entrainment1HS2.shp'
     shutil.copyfile(inputFile, testFile)
     with pytest.raises(AssertionError) as e:
-        assert getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType, 'shp')
+        assert getInput.getAndCheckInputFiles(avaTestDirInputs, folder, inputType, fileExt='shp')
     assert str(e.value) == ("More than one %s .shp file in %s/%s/ not allowed" %
                            (inputType, avaTestDirInputs, folder))
 

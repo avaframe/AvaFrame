@@ -20,7 +20,7 @@ import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 
 
-def test_prepareInputData():
+def test_prepareInputData(tmp_path):
     """ test preparing input data """
 
     # setup requuired input data
@@ -94,6 +94,27 @@ def test_prepareInputData():
     assert inputSimLines['resLine']['Name'] == ['']
     assert inputSimLines['relThField'].shape[0] == 401
     assert inputSimLines['relThField'].shape[1] == 1001
+
+    # call function to be tested
+    inputSimFiles = {'entResInfo': {'flagEnt': 'No',
+                                    'flagRes': 'Yes', 'flagSecondaryRelease': 'No'}}
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / '..' / 'data' / 'avaParabola'
+    relFile = avaDir / 'Inputs' / 'REL' / 'release1PF.shp'
+    inputSimFiles['releaseScenario'] = relFile
+    inputSimFiles['demFile'] = avaDir / 'Inputs' / 'DEM_PF_Topo.asc'
+    inputSimFiles['resFile'] = avaDir / 'Inputs' / 'RES' / 'resistance1PF.shp'
+    testField = np.zeros((10, 10))
+    testFile = pathlib.Path(tmp_path, 'testFile2.asc')
+    testHeader = {'ncols': 10, 'nrows': 10, 'cellsize': 5, 'xllcenter': 0.0, 'yllcenter': 0.0,
+        'noDataValue': 0.0}
+    IOf.writeResultToAsc(testHeader, testField, testFile, flip=True)
+    inputSimFiles['relThFile'] = testFile
+    cfg['GENERAL']['simTypeActual'] = 'res'
+
+    with pytest.raises(AssertionError) as e:
+        assert com1DFA.prepareInputData(inputSimFiles, cfg['GENERAL'])
+    assert str(e.value) == ("Release thickness field read from %s does not match the number of rows and columns of the dem" % inputSimFiles['relThFile'])
 
 
 def test_prepareReleaseEntrainment(tmp_path):
@@ -939,6 +960,42 @@ def test_releaseSecRelArea():
     assert np.array_equal(particles2['m'], np.asarray(
         [1250., 1250., 1250., 50., 50., 50., 50., 25., 25., 25., 25.]))
     assert particles2['mTot'] == 4050.0
+
+
+def test_getRelThFromPart():
+    """ test fetching max value of release thickness used """
+
+    # setup required input
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'relThFromShp': 'True', 'relThFromFile': 'False', 'relTh': ''}
+    inputSimLines = {'releaseLine': {'thickness': ['1.2', '1.5'], 'id': ['0', '1']}}
+    relThField = ''
+
+    # call function to be tested
+    relThFromPart = com1DFA.getRelThFromPart(cfg['GENERAL'], inputSimLines['releaseLine'],
+        relThField)
+
+    assert relThFromPart == 1.5
+
+    cfg['GENERAL']['relThFromShp'] = 'False'
+    cfg['GENERAL']['relThFromFile'] = 'False'
+    cfg['GENERAL']['relTh'] = '2.0'
+    # call function to be tested
+    relThFromPart = com1DFA.getRelThFromPart(cfg['GENERAL'], inputSimLines['releaseLine'],
+        relThField)
+
+    assert relThFromPart == 2.
+
+    cfg['GENERAL']['relThFromShp'] = 'False'
+    cfg['GENERAL']['relThFromFile'] = 'True'
+    cfg['GENERAL']['relTh'] = ''
+    relThField = np.zeros((10, 10))
+    relThField[0:10,1] = 10.0
+    # call function to be tested
+    relThFromPart = com1DFA.getRelThFromPart(cfg['GENERAL'], inputSimLines['releaseLine'],
+        relThField)
+
+    assert relThFromPart == 10.0
 
 
 def test_initializeParticles():
