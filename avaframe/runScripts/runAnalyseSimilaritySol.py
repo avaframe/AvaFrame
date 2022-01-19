@@ -63,13 +63,13 @@ solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
 
 # select the simulations you want to plot
-simDF = simDF[simDF['subgridMixingFactor'].isin([10])]
-simDF = simDF[simDF['cMax'].isin([0.01])]
-# simDF = simDF[simDF['aPPK']==-2]
-simDF = simDF[simDF['sphKernelRadius']<=10]
-# simDF = simDF[simDF['nPPK']>10]#, 0.1, 0.05
-# simDF['refN'] = round(simDF['cPPK'] * 5 **(simDF['aPPK']))
+# filter on viscosity parameter
+# simDF = simDF[simDF['subgridMixingFactor'].isin([10])]
+# filter on time stepping parameter
+# simDF = simDF[simDF['cMax'].isin([0.01])]
+# filter on nPPK0
 # simDF = simDF[simDF['nPPK0']==15]
+
 # now do some plotting
 # compare the simulations to the reference
 # outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', ['hErrorL2', 'vhErrorL2'],
