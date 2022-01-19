@@ -471,8 +471,7 @@ def prepareInputData(inputSimFiles, cfg):
         relThField = IOf.readRaster(relThFile)
         relThFieldData = relThField['rasterData']
         if demOri['header']['ncols'] != relThField['header']['ncols'] or demOri['header']['ncols'] != relThField['header']['ncols']:
-            message = ('Release thickness field read from %s does not match the number of rows \
-                       and columns of the dem' % inputSimFiles['relThFile'])
+            message = ('Release thickness field read from %s does not match the number of rows and columns of the dem' % inputSimFiles['relThFile'])
             log.error(message)
             raise AssertionError(message)
     else:
@@ -892,13 +891,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     areaRaster = dem['areaRaster']
 
     # get the initialization method used
-    if len(relThField) != 0:
-        relThForPart = np.amax(relThField)
-    elif cfg.getboolean('relThFromShp'):
-        relThForPart = np.amax(np.asarray(releaseLine['thickness'], dtype=float))
-    else:
-        relThForPart = cfg.getfloat('relTh')
-
+    relThForPart = getRelThFromPart(cfg, releaseLine, relThField)
     massPerPart, nPPK = com1DFATools.getPartInitMethod(cfg, csz, relThForPart)
 
     # initialize arrays
@@ -1030,6 +1023,35 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         debPlot.plotPartIni(particles, dem)
 
     return particles
+
+
+def getRelThFromPart(cfg, releaseLine, relThField):
+    """ get release thickness for initialising particles - use max value
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration settings
+        releaseLine: dict
+            info on releaseline (thickness)
+        relThField: numpy array or str
+            release thickness field if used, else empty string
+
+        Returns
+        --------
+        relThForPart: float
+            max value of release thickness
+    """
+
+
+    if len(relThField) != 0:
+        relThForPart = np.amax(relThField)
+    elif cfg.getboolean('relThFromShp'):
+        relThForPart = np.amax(np.asarray(releaseLine['thickness'], dtype=float))
+    else:
+        relThForPart = cfg.getfloat('relTh')
+
+    return relThForPart
 
 
 def initializeFields(cfg, dem, particles):

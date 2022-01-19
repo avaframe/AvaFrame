@@ -136,11 +136,11 @@ def getInputData(avaDir, cfg):
     log.info('Release area files are: %s' % relFiles)
 
     # Initialise resistance areas
-    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', 'shp')
+    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', fileExt='shp')
     if resFile==None:
         resFile = ''
     # Initialise entrainment areas
-    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', 'shp')
+    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', fileExt='shp')
     if entFile==None:
         entFile = ''
     # Initialise DEM
@@ -211,7 +211,7 @@ def getInputDataCom1DFA(avaDir, cfg):
     # check for release thickness file if relThFromFile
     if cfg['GENERAL'].getboolean('relThFromFile'):
         relThFile, entResInfo['releaseThicknessFile'] = getAndCheckInputFiles(inputDir,
-            'RELTH', 'release thickness data', 'asc')
+            'RELTH', 'release thickness data', fileExt='asc')
     else:
         relThFile = ''
 
@@ -220,10 +220,10 @@ def getInputDataCom1DFA(avaDir, cfg):
         'SECREL', 'Secondary release', 'shp')
 
     # Initialise resistance areas
-    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', 'shp')
+    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', fileExt='shp')
 
     # Initialise entrainment areas
-    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', 'shp')
+    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', fileExt='shp')
 
     # Initialise DEM
     demFile = getDEMPath(avaDir)
@@ -235,7 +235,7 @@ def getInputDataCom1DFA(avaDir, cfg):
     return inputSimFiles
 
 
-def getAndCheckInputFiles(inputDir, folder, inputType, fileExt):
+def getAndCheckInputFiles(inputDir, folder, inputType, fileExt='shp'):
     """Fetch fileExt files and check if they exist and if it is not more than one
 
     Raises error if there is more than one fileExt file.

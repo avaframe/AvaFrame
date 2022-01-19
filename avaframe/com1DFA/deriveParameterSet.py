@@ -389,7 +389,6 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
             cfg['GENERAL'][key] = variationIni
 
         else:
-            print('VAR', variationFactor, cfg['GENERAL'][thType],  str(float(cfg['GENERAL'][thType]) * variationFactor))
             # update ini thValue if thFromShape=False
             cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
             # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
