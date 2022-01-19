@@ -102,7 +102,7 @@ for avaName in avaList:
     # ######################### Run Com1DFA #############################
     # Run python DFA
     # call com1DFA to perform simulation - provide configuration file and release thickness function
-    _, _, _, _, plotDictcom1DFA, reportDictListcom1DFA, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile='', relThField='')
+    _, plotDictcom1DFA, reportDictListcom1DFA, simDF = com1DFA.com1DFAMain(avaDir, cfgMain, cfgFile='')
 
     # Set directory for com1DFA report
     reportDir = outDir / 'com1DFA' / 'reports'
@@ -157,19 +157,19 @@ for avaName in avaList:
 
             # Setup input from com1DFA and com1DFAPy
             pathDict = []
-            pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfgAimec, simNameRef, simNameComp)
-            pathDict['numSim'] = len(pathDict['ppr'])
-            log.info('reference file comes from: %s' % pathDict['compType'][1])
+            inputsDF, pathDict = dfa2Aimec.dfaBench2Aimec(avaDir, cfgAimec, simNameRef, simNameComp)
+            pathDict['refSimulation'] = inputsDF.index[0]
+            log.info('reference file comes from: %s' % pathDict['refSimulation'])
 
             # Extract input file locations
             pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportDcom1DFAOrig['simName']['name'])
 
             # perform analysis
-            rasterTransfo, newRasters, resAnalysis = ana3AIMEC.AIMEC2Report(pathDict, cfgAimec)
+            rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.AIMEC2Report(pathDict, inputsDF, cfgAimec)
 
             # add aimec results to report dictionary
-            reportDcom1DFA, reportDcom1DFAOrig = ana3AIMEC.aimecRes2ReportDict(resAnalysis, reportDcom1DFA,
-                reportDcom1DFAOrig, pathDict['referenceFile'])
+            reportDcom1DFA, reportDcom1DFAOrig = ana3AIMEC.aimecRes2ReportDict(resAnalysisDF, reportDcom1DFA,
+                reportDcom1DFAOrig, pathDict['refSimulation'])
 
             # Create plots for report
             # Load input parameters from configuration file
@@ -191,9 +191,9 @@ for avaName in avaList:
 
             # copy files to report directory
             plotPaths = generateCompareReport.copyQuickPlots(avaName, avaName, outDirReport, plotListRep, rel=rel)
-            aimecPlots = [resAnalysis['slCompPlot'], resAnalysis['areasPlot']]
+            aimecPlots = [aimecPlotDict['slCompPlot'], aimecPlotDict['areasPlot']]
             if cfgAimec.getboolean('FLAGS', 'flagMass'):
-                aimecPlots.append(resAnalysis['massAnalysisPlot'])
+                aimecPlots.append(aimecPlotDict['massAnalysisPlot'])
             plotPaths = generateCompareReport.copyAimecPlots(aimecPlots, avaName, outDirReport, plotPaths, rel=rel)
 
             # add plot info to general report Dict
