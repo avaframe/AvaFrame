@@ -3,10 +3,10 @@
 """
 
 # Load modules
-import os
+import pathlib
 
 # Local imports
-from avaframe.com1DFAPy import com1DFA
+from avaframe.com1DFA import com1DFA
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import cfgUtils
@@ -32,6 +32,6 @@ particlesList, TimeStepInfo = particleTools.readPartFromPickle(avalancheDir, fla
 demInfo = gI.readDEM(avalancheDir)
 
 # save particle properties to csv
-outDir = os.path.join(avalancheDir, 'Outputs', 'com1DFAPy')
+outDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA')
 fU.makeADir(outDir)
-com1DFA.savePartToCsv(particleProperties, particlesList, outDir)
+particleTools.savePartToCsv(particleProperties, particlesList, outDir)
