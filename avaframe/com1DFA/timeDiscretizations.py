@@ -45,3 +45,34 @@ def getcflTimeStep(particles, dem, cfg):
 
     # return stable time step
     return dtStable
+
+
+def getSphKernelRadiusTimeStep(dem, cfg):
+    """ Compute the time step  given the sph kernel radius and the cMax coefficient
+    This is based on the article from Ben Moussa et Vila
+    https://www.researchgate.net/publication/243096302_Convergence_of_SPH_Method_for_Scalar_Nonlinear_Conservation_Laws
+    Parameters
+    -----------
+    dem: dict
+        dem dictionary (with info about sph kernel radius and mesh size)
+    cfg: configparser
+        the cfg cith cMax
+    Returns
+    --------
+    dtStable: float
+        corresponding time step
+    """
+    # get cell size
+    cszDEM = dem['header']['cellsize']
+    cszNeighbourGrid = dem['headerNeighbourGrid']['cellsize']
+    # use the smallest of those two values
+    csz = min(cszDEM, cszNeighbourGrid)
+
+    # courant number
+    cMax = float(cfg['cMax'])
+
+    dtStable = cMax * csz
+    log.debug('dtStable is with cMAX=%.1f is: %.4f' % (cMax, dtStable))
+
+    # return stable time step
+    return dtStable

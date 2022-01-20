@@ -57,7 +57,7 @@ def initialiseParticlesFromFile(cfg, avaDir, releaseScenario):
     return particles, hPartArray
 
 
-def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
+def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg):
     """ Create particles in given cell
 
     Compute number of particles to create in a given cell.
@@ -103,7 +103,7 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, rng, cfg):
     if initPartDistType == 'random':
         if massPerParticleDeterminationMethod == 'MPPKR':
             # impose a number of particles within a kernel radius so impose number of particles in a cell
-            nFloat = cfg.getint('nPPK') * aCell / (math.pi * csz**2)
+            nFloat = nPPK * aCell / (math.pi * csz**2)
         else:
             # number of particles needed (floating number)
             nFloat = massCell / massPerPart

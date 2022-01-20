@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pathlib
 import matplotlib.pyplot as plt
-import seaborn as sns
+import pandas as pd
 import logging
 
 # local imports
@@ -17,7 +17,7 @@ import avaframe.out3Plot.outDebugPlots as outDebugPlots
 log = logging.getLogger(__name__)
 
 
-def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, header, outDirTest, simHash, simDFrow):
+def showSaveTimeStepsSimiSol(cfgMain, cfgSimi, fieldsList, solSimi, timeList, header, outDirTest, simHash, simDFrow):
     """ Generate plots of the comparison of DFA solution and simiSol
     """
 
@@ -29,7 +29,9 @@ def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsav
     if cfgSimi.getboolean('interaction'):
         value = input("give time step to plot (float in s):\n")
     else:
-        value = cfgSimi.getfloat('tSave')
+        value = cfgSimi['tSave']
+        if value == '':
+            value = timeList[-1]
 
     try:
         value = float(value)
@@ -38,24 +40,35 @@ def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsav
     while isinstance(value, float):
 
         # determine index for time step
-        ind_t = min(np.searchsorted(Tsave, value), min(len(Tsave)-1, len(fieldsList)-1))
-        ind_time = np.absolute(solSimi['Time'] - Tsave[ind_t]).argmin()
+        ind_t = min(np.searchsorted(timeList, value), min(len(timeList)-1, len(fieldsList)-1))
+        ind_time = np.absolute(solSimi['Time'] - timeList[ind_t]).argmin()
         # get similartiy solution h, u at reuired time step
         simiDict = simiSolTest.getSimiSolParameters(solSimi, header, ind_time, cfgSimi, relTh, gravAcc)
 
         # get DFA simulation
         # load fields and particles of required time step described by ind_t
         fields = fieldsList[ind_t]
-        particles = particlesList[ind_t]
         for axis in ['xaxis', 'yaxis']:
             # get particle parameters
-            comSol = simiSolTest.prepareParticlesFieldscom1DFA(fields, particles, header, simiDict, axis)
+            xCenter = simiDict['xCenter']
+            # get info on DEM extent
+            ncols = header['ncols']
+            nrows = header['nrows']
+            xllc = header['xllcenter']
+            yllc = header['yllcenter']
+            csz = header['cellsize']
+
+            xArrayFields = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+            yArrayFields = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+            if axis == 'xaxis':
+                indFinal = int(nrows * 0.5) -1
+            elif axis == 'yaxis':
+                indFinal = int(np.round((xCenter - xllc)/csz) + 1)
+
+            comSol = {'indFinal': indFinal, 'xArrayFields': xArrayFields, 'yArrayFields': yArrayFields, 'fields': fields}
             comSol['outDirTest'] = outDirTest
             comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
-            comSol['Tsave'] = Tsave[ind_t]
-            comSol['dt'] = simDFrow['dt']
-            comSol['deltaTh'] = simDFrow['deltaTh']
-            comSol['sphKernelRadius'] = simDFrow['sphKernelRadius']
+            comSol['Tsave'] = timeList[ind_t]
 
             # make plot
             plotProfilesSimiSol(ind_time, simHash, comSol, simiDict, solSimi, axis)
@@ -90,7 +103,7 @@ def showSaveTimeSteps(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsav
             value = 'n'
 
 
-def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
+def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis, particles=False):
     """ Plot flow depth and velocity for similarity solution and simulation results
 
         Parameters
@@ -114,19 +127,14 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
     xArrayFields = comSol['xArrayFields']
     yArrayFields = comSol['yArrayFields']
     # particle properties
-    x = comSol['x']
-    y = comSol['y']
-    h = comSol['h']
-    v = comSol['v']
-    vx = comSol['vx']
-    vy = comSol['vy']
-    vz = comSol['vz']
+    if particles:
+        x = comSol['x']
+        y = comSol['y']
+        h = comSol['h']
+        v = comSol['v']
     outDirTest = comSol['outDirTest']
     indFinal = comSol['indFinal']
     Tsave = comSol['Tsave']
-    dt = comSol['dt']
-    deltaTh = comSol['deltaTh']
-    sphKernelRadius = comSol['sphKernelRadius']
 
     # similarity solution results
     vSimi = simiDict['vSimi']
@@ -150,16 +158,17 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
         ax2.plot(xArrayFields, FD*fields['Vx'][indFinal, :], 'm', label=getLabel('Field', '', dir='x'))
         ax2.plot(xArrayFields, FD*fields['Vy'][indFinal, :], 'b', label=getLabel('Field', '', dir='y'))
         ax2.plot(xArrayFields, FD*fields['Vz'][indFinal, :], 'c', label=getLabel('Field', '', dir='z'))
-        ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
-        ax2.plot(x, h*v, '.g', linestyle='None', label=getLabel('Part', '', dir='', vert=True))
+        if particles:
+            ax1.plot(x, h, '.k', linestyle='None', label='Part flow depth')
+            ax2.plot(x, h*v, '.g', linestyle='None', label=getLabel('Part', '', dir='', vert=True))
         # similarity solution
         ax1.plot(xArrayFields, hSimi, '--k', label='SimiSol flow depth')
         ax2.plot(xArrayFields, hSimi*vSimi[indFinal, :], '--g', label=getLabel('SimiSol', '', dir='', vert=True))
         ax2.plot(xArrayFields, hSimi*vxSimi[indFinal, :], '--m', label=getLabel('SimiSol', '', dir='x'))
         ax2.plot(xArrayFields, hSimi*vySimi[indFinal, :], '--b', label=getLabel('SimiSol', '', dir='y'))
         ax2.plot(xArrayFields, hSimi*vzSimi[indFinal, :], '--c', label=getLabel('SimiSol', '', dir='z'))
-        ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
-                      % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
+        ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol) (simulation %s)'
+                      % (Tsave, Time[ind_time], outputName))
         ax1.set_xlabel('x in [m]')
         indStart = min(first_nonzero(hSimi, 0), first_nonzero(FD, 0)) - 2
         indEnd = max(last_nonzero(hSimi, 0), last_nonzero(FD, 0)) + 2
@@ -174,16 +183,17 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
         ax2.plot(yArrayFields, FD*fields['Vx'][:, indFinal], 'm', label=getLabel('Field', '', dir='x'))
         ax2.plot(yArrayFields, FD*fields['Vy'][:, indFinal], 'b', label=getLabel('Field', '', dir='y'))
         ax2.plot(yArrayFields, FD*fields['Vz'][:, indFinal], 'c', label=getLabel('Field', '', dir='z'))
-        ax1.plot(y, h, '.k', linestyle='None', label='Part flow depth')
-        ax2.plot(y, h*v, '.g', linestyle='None', label=getLabel('Part', '', dir='', vert=True))
+        if particles:
+            ax1.plot(y, h, '.k', linestyle='None', label='Part flow depth')
+            ax2.plot(y, h*v, '.g', linestyle='None', label=getLabel('Part', '', dir='', vert=True))
         # similarity solution
         ax1.plot(yArrayFields, hSimi, '--k', label='SimiSol flow depth')
         ax2.plot(yArrayFields, hSimi*vSimi[:, indFinal], '--g', label=getLabel('SimiSol', '', dir='', vert=True))
         ax2.plot(yArrayFields, hSimi*vxSimi[:, indFinal], '--m', label=getLabel('SimiSol', '', dir='x'))
         ax2.plot(yArrayFields, hSimi*vySimi[:, indFinal], '--b', label=getLabel('SimiSol', '', dir='y'))
         ax2.plot(yArrayFields, hSimi*vzSimi[:, indFinal], '--c', label=getLabel('SimiSol', '', dir='z'))
-        ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol) (csz = %s m, dt = %s s, deltaTh = %s m)'
-                      % (Tsave, Time[ind_time], sphKernelRadius, dt, deltaTh))
+        ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol) (simulation %s)'
+                      % (Tsave, Time[ind_time], outputName))
         ax1.set_xlabel('y in [m]')
         indStart = min(first_nonzero(hSimi, 0), first_nonzero(FD, 0)) - 2
         indEnd = max(last_nonzero(hSimi, 0), last_nonzero(FD, 0)) + 2
@@ -203,14 +213,30 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis):
 
 def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, outputName,
                   simDFrow, relativ):
-    """plot error between given com1DFA sol and analytic sol
+    """plot error between a given com1DFA sol and the analytic sol
     function of time
+    Parameters
+    -----------
+    time: 1D numpy array
+        time array
+    hErrorL2Array: 1D numpy array
+        flow thickness L2 error array
+    hErrorLMaxArray: 1D numpy array
+        flow thickness LMax error array
+    vhErrorL2Array: 1D numpy array
+        flow momentum L2 error array
+    vhErrorLMaxArray: 1D numpy array
+        flow momentum LMax error array
+    outDirTest: pathlib path
+        path to outpute folder
+    outputName: str
+        oupute file name
+    simDFrow: dataFrame
+        simDF row corresponding to the curent simulation analyzed
+    relativ: str
     """
-    dt = simDFrow['dt']
-    deltaTh = simDFrow['deltaTh']
-    sphKernelRadius = simDFrow['sphKernelRadius']
-    title = (' between similarity solution and com1DFA \n(csz = %s m, dt = %s s, deltaTh = %s m)'
-                     % (sphKernelRadius, dt, deltaTh))
+    title = (' between similarity solution and com1DFA \n(simulation %s)'
+                     % (outputName))
     title = getTitleError(relativ, title)
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
     ax2 = ax1.twinx()
@@ -233,152 +259,329 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_Time_' + str(outputName), fig1)
 
 
-def plotError(simDF, outDirTest, cfgSimi):
+def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, sizedBy, logScale=False, fit=False):
     """plot error between all com1DFA sol and analytic sol
-    function of nParts for all dt
+    function of whatever you want
+
+    Parameters
+    -----------
+    simDF: dataFrame
+        the simulation data with the postprocessing results
+    outDirTest: str or pathlib
+        output directory
+    cfgSimi: configparser
+        the cfg
+    xField: str
+        column of the simDF to use for the x axis
+    yFieldArray: list
+        list of max 2 column of the simDF to use for the y axis
+    coloredBy: str
+        column of the simDF to use for the colors
+    sizedBy: str
+        column of the simDF to use for the marker size
+    logScale: boolean
+        If you want a loglog scale
     """
-    relativ = cfgSimi.getboolean('relativError')
-    title = getTitleError(relativ, ' between similarity solution and com1DFA')
-    fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
-    ax2 = ax1.twinx()
-    ax1 = sns.pointplot(x='nPart', y='hErrorL2', hue='dt', data=simDF, ax=ax1, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
-    ax2 = sns.pointplot(x='nPart', y='vhErrorL2', hue='dt', data=simDF, ax=ax2, markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
-    ax1 = sns.pointplot(x='nPart', y='hErrorLMax', hue='dt', data=simDF, ax=ax1, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['k'])
-    ax2 = sns.pointplot(x='nPart', y='vhErrorLMax', hue='dt', data=simDF, ax=ax2, linestyles='--', markers=['o', 's', 'd', 'v', '^', '<', '>', '.', '+', '*'], palette=['g'])
-    ax1.set_title(title)
-    ax1.set_xlabel('Number of particles')
-
-    ax1.set_ylabel(getTitleError(relativ, ' on flow depth'))
-    color = 'tab:green'
-    ax2.tick_params(axis='y', labelcolor=color)
-    ax2.set_ylabel(getTitleError(relativ, getLabel(' on', '', dir='')), color=color)
-    ax2.legend(loc='lower right')
-    ax1.legend(loc='upper left')
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error', fig1)
-
-
-def plotErrorLog(simDF, outDirTest, cfgSimi):
-    """plot error between all com1DFA sol and analytic sol
-    function of nParts for all dt
-    """
-    sphKernelRadiusList = simDF["sphKernelRadius"].unique()
-    dt = simDF["dt"].unique()[0]
     tSave = cfgSimi.getfloat('tSave')
     relativ = cfgSimi.getboolean('relativError')
-    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF["sphKernelRadius"])*0.25, max(simDF["sphKernelRadius"])*2, continuous=pU.contCmap)
-    cmap = 'viridis'
-    fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
-    ax2 = ax1.twinx()
-    scatter = ax1.scatter(simDF["nPart"], simDF["hErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o', alpha=1, edgecolors='k')
-    scatte2 = ax2.scatter(simDF["nPart"], simDF["vhErrorL2"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=0.8, edgecolors='k')
-    for sphKernelRadius in sphKernelRadiusList:
-        simDFNew = simDF[(simDF['sphKernelRadius'] == sphKernelRadius) & (simDF['dt'] == dt)]
-        nPart = simDFNew["nPart"]
-        hErrorL2 = simDFNew["hErrorL2"]
-        vErrorL2 = simDFNew["vhErrorL2"]
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(hErrorL2), deg=1)
-        p1H = p[0]
-        p0H = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(vErrorL2), deg=1)
-        p1U = p[0]
-        p0U = np.exp(p[1])
-        ax1.plot(nPart, p0H*nPart**p1H, 'r')
-        ax2.plot(nPart, p0U*nPart**p1U, 'g')
-        log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * nPart^{%.2f}' % (sphKernelRadius, p0H, p1H))
-        log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * nPart^{%.2f}' % (sphKernelRadius, p0U, p1U))
-    ax1.set_yscale('log')
-    ax2.set_yscale('log')
-    ax1.set_xscale('log')
-    ax1.set_title('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
-    ax1.set_xlabel('number of particles')
-    ax1.set_ylabel(getTitleError(relativ, r' L2 on flow depth ($\bullet$)'))
-    ax2.set_ylabel(getTitleError(relativ, getLabel(' L2 on', r'$(\blacksquare)$', dir='')))
-    legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title="sphKernelRadius")
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
+    fig1, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(4*pU.figW, 2*pU.figH))
+    # get the sizing function
+    sizeList = simDF[sizedBy].unique()
+    lenSize = len(sizeList)
+    minSize = np.nanmin(sizeList)
+    maxSize = np.nanmax(sizeList)
+    if lenSize > 1:
+        sizeList = (simDF[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
+    else:
+        sizeList = np.array([100])
+    # make the scatter plot
+    scatter1 = ax1.scatter(simDF[xField], simDF[yFieldArray[0]], c=simDF[coloredBy], s=sizeList, cmap=cmap, norm=norm,
+                          marker=pU.markers[0], alpha=1)#, edgecolors='k')
+    scatter2 = ax2.scatter(simDF[xField], simDF[yFieldArray[1]], c=simDF[coloredBy], s=sizeList, cmap=cmap, norm=norm,
+                           marker=pU.markers[0], alpha=1)#, edgecolors='k')
+
+    # #########################################
+    # If you want to add some regression lines
+    slopeU = pd.DataFrame()
+    slopeH = pd.DataFrame()
+    colorValueList = simDF[coloredBy].unique()
+    lenColor = len(colorValueList)
+    if fit:
+        for colorValue in colorValueList:
+            simDFNew = simDF[simDF[coloredBy] == colorValue]
+            for sizeValue in simDFNew[sizedBy].unique():
+                simDFNewNew = simDFNew[simDFNew[sizedBy] == sizeValue]
+                xArray = simDFNewNew[xField]
+                hErrorL2 = simDFNewNew["hErrorL2"]
+                vErrorL2 = simDFNewNew["vhErrorL2"]
+                p, rSquaredH, _, _, _ = np.polyfit(np.log(xArray), np.log(hErrorL2), deg=1, full=True)
+                p1H = p[0]
+                p0H = np.exp(p[1])
+                p, rSquaredU, _, _, _ = np.polyfit(np.log(xArray), np.log(vErrorL2), deg=1, full=True)
+                p1U = p[0]
+                p0U = np.exp(p[1])
+                slopeU.loc[sizeValue, colorValue] = p1U
+                slopeH.loc[sizeValue, colorValue] = p1H
+                ax1.plot(xArray, p0H*xArray**p1H, 'r')
+                ax2.plot(xArray, p0U*xArray**p1U, 'g')
+                if np.size(rSquaredH) == 0:
+                    rSquaredU = np.nan
+                    rSquaredH = np.nan
+                log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}, r=%.2f' % (colorValue, p0H, p1H, rSquaredH))
+                log.info('power law fit sphKernelRadius = %.2f m: vhErrorL2 = %.1f * Npart^{%.2f}, r=%.2f' % (colorValue, p0U, p1U, rSquaredU))
+
+    if logScale:
+        ax1.set_yscale('log')
+        ax2.set_yscale('log')
+        ax1.set_xscale('log')
+        ax2.set_xscale('log')
+
+    fig1.suptitle('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
+    ax1.set_title(getTitleError(relativ, r' L2 on flow thickness'))
+    ax2.set_title(getTitleError(relativ, r' L2 on $\vert h \mathbf{ \bar u} \vert$'))
+    ax1.set_xlabel(xField)
+    ax2.set_xlabel(xField)
+    ax1.set_ylabel(getTitleError(relativ, r' L2 on flow thickness'))
+    ax2.set_ylabel(getTitleError(relativ, r' L2 on $\vert h \mathbf{ \bar u} \vert$'))
+    if lenColor<=10:
+        lenColor = None
+    legend1 = ax1.legend(*scatter1.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
     ax1.add_artist(legend1)
+    legend2 = ax2.legend(*scatter2.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
+    ax2.add_artist(legend2)
 
     # produce a legend with a cross section of sizes from the scatter
-    kw = dict(prop="sizes", color=scatter.cmap(0.7),
-          func=lambda s: s/200)
-    legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title="dt")
+    if lenSize<=10:
+        lenSize = None
+    kw = dict(prop="sizes", color=scatter1.cmap(0.7),
+          func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
+    legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
+    kw = dict(prop="sizes", color=scatter2.cmap(0.7),
+          func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
+    ax2.legend(*scatter2.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
+    ax2.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
+    ax2.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
     b1, t1 = ax1.get_ylim()
     b2, t2 = ax2.get_ylim()
     ax1.set_ylim([min(b1, b2), max(t1, t2)])
     ax2.set_ylim([min(b1, b2), max(t1, t2)])
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
 
+    fig2, ax = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
+    for sizeValue, simDFrow in slopeU.iterrows():
+        ax.scatter(slopeU.columns, simDFrow, label=sizeValue)
+    plt.legend(title=sizedBy)
+    ax.set_xlabel(coloredBy)
+    ax.set_ylabel('Slope')
+    ax.set_title('Speed of convergence of the DFA solution based on' + getTitleError(relativ, r' L2 on flow thickness'))
+    plt.show()
+    return fig1, ax1, ax2, slopeU, slopeH
 
-def plotTimeCPULog(simDF, outDirTest, cfgSimi):
-    """plot computation time function of nParts for all dt and kernel radius
+
+def plotErrorRef(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, sizedBy, logScale=False):
+    """plot error between all com1DFA sol and analytic sol
+    function of whatever (ini parameter given in the simDF) you want
+
+    Parameters
+    -----------
+    simDF: dataFrame
+        the simulation data with the postprocessing results
+    outDirTest: str or pathlib
+        output directory
+    cfgSimi: configparser
+        the cfg
+    xField: str
+        column of the simDF to use for the x axis
+    yFieldArray: list
+        list of max 2 column of the simDF to use for the y axis
+    coloredBy: str
+        column of the simDF to use for the colors
+    sizedBy: str
+        column of the simDF to use for the marker size
+    logScale: boolean
+        If you want a loglog scale
     """
-    sphKernelRadiusList = simDF["sphKernelRadius"].unique()
-    dt = simDF["dt"].unique()[0]
     tSave = cfgSimi.getfloat('tSave')
-    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF["sphKernelRadius"])*0.25, max(simDF["sphKernelRadius"])*2, continuous=pU.contCmap)
-    cmap = 'viridis'
+    relativ = cfgSimi.getboolean('relativError')
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
-    scatter = ax1.scatter(simDF["nPart"], simDF["timeLoop"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='o', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["nPart"], simDF["timeForce"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='s', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["nPart"], simDF["timeForceSPH"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='d', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["nPart"], simDF["timePos"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='^', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["nPart"], simDF["timeNeigh"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='>', alpha=1, edgecolors='k')
-    scatter = ax1.scatter(simDF["nPart"], simDF["timeField"], c=simDF["sphKernelRadius"], s=simDF["dt"]*200, cmap=cmap, marker='<', alpha=1, edgecolors='k')
-    for sphKernelRadius in sphKernelRadiusList:
-        simDFNew = simDF[(simDF['sphKernelRadius'] == sphKernelRadius) & (simDF['dt'] == dt)]
-        nPart = simDFNew["nPart"]
-        timeLoop = simDFNew["timeLoop"]
-        timeForce = simDFNew["timeForce"]
-        timeForceSPH = simDFNew["timeForceSPH"]
-        timePos = simDFNew["timePos"]
-        timeNeigh = simDFNew["timeNeigh"]
-        timeField = simDFNew["timeField"]
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeLoop), deg=1)
-        p11 = p[0]
-        p01 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeForce), deg=1)
-        p12 = p[0]
-        p02 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeForceSPH), deg=1)
-        p13 = p[0]
-        p03 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timePos), deg=1)
-        p14 = p[0]
-        p04 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeNeigh), deg=1)
-        p15 = p[0]
-        p05 = np.exp(p[1])
-        p = np.polyfit(np.log(simDFNew["nPart"]), np.log(timeField), deg=1)
-        p16 = p[0]
-        p06 = np.exp(p[1])
-        ax1.plot(nPart, p01*nPart**p11, 'k')
-        ax1.plot(nPart, p02*nPart**p12, 'g')
-        ax1.plot(nPart, p03*nPart**p13, 'r')
-        ax1.plot(nPart, p04*nPart**p14, 'b')
-        ax1.plot(nPart, p05*nPart**p15, 'm')
-        ax1.plot(nPart, p06*nPart**p16, 'c')
-        log.info('power law fit sphKernelRadius = %.2f m: timeLoop = %.1f * nPart^{%.2f}' % (sphKernelRadius, p01, p11))
-        log.info('power law fit sphKernelRadius = %.2f m: timeForce = %.1f * nPart^{%.2f}' % (sphKernelRadius, p02, p12))
-        log.info('power law fit sphKernelRadius = %.2f m: timeForceSPH = %.1f * nPart^{%.2f}' % (sphKernelRadius, p03, p13))
-        log.info('power law fit sphKernelRadius = %.2f m: timePos = %.1f * nPart^{%.2f}' % (sphKernelRadius, p04, p14))
-        log.info('power law fit sphKernelRadius = %.2f m: timeNeigh = %.1f * nPart^{%.2f}' % (sphKernelRadius, p05, p15))
-        log.info('power law fit sphKernelRadius = %.2f m: timeField = %.1f * nPart^{%.2f}' % (sphKernelRadius, p06, p16))
+    ax2 = ax1.twinx()
+    # for the scater plot (new filtering)
+    simDFScatter = simDF[simDF['viscOption'] == 1]
+    # get the sizing function
+    sizeList = simDFScatter[sizedBy].unique()
+    minSize = np.nanmin(sizeList)
+    maxSize = np.nanmax(sizeList)
+    if len(sizeList) > 1:
+        sizeList = (simDFScatter[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
+    else:
+        sizeList = np.array([100])
+    # make the scatter plot
+    scatter = ax1.scatter(simDFScatter[xField], simDFScatter[yFieldArray[0]], c=simDFScatter[coloredBy], s=sizeList, cmap=cmap,
+                          marker=pU.markers[0], alpha=1)#, edgecolors='k')
+    scatter2 = ax2.scatter(simDFScatter[xField], simDFScatter[yFieldArray[1]], c=simDFScatter[coloredBy], s=sizeList, cmap=cmap,
+                           marker=pU.markers[1], alpha=1)#, edgecolors='k')
+
+    # ######################################
+    # plot the reference as lines here
+    # Add the horizontal lines for the atta viscosity
+    simDFhline = simDF[simDF['viscOption'] == 2]
+    simDFhline = simDFhline.sort_values(by=coloredBy, ascending=True)
+    handles1 = []
+    # handles2 = []
+    for simHash, simDFrow in simDFhline.iterrows():
+        hl = ax1.axhline(simDFrow[yFieldArray[0]], color=cmap(norm(simDFrow[coloredBy])), label='Ata, nPart = %d, csz = %.2f' % (simDFrow['nPart'], simDFrow['sphKernelRadius']))
+        handles1.append(hl)
+        hl = ax2.axhline(simDFrow[yFieldArray[1]], color=cmap(norm(simDFrow[coloredBy])), linestyle='--', label='Ata, nPart = %d, csz = %.2f' % (simDFrow['nPart'], simDFrow['sphKernelRadius']))
+        # handles1.append(hl)
+
+    # #########################################
+    # Adding legend and titles
+    legend = ax1.legend(handles=handles1, loc="upper left")
+    ax1.add_artist(legend)
+    # legend = ax2.legend(handles=handles2, loc="upper left")
+    # ax2.add_artist(legend)
+    if logScale:
+        ax1.set_yscale('log')
+        ax2.set_yscale('log')
+        ax1.set_xscale('log')
+    ax1.set_title('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
+    ax1.set_xlabel(xField)
+    ax1.set_ylabel(getTitleError(relativ, r' L2 on flow depth ($\bullet$)'))
+    ax2.set_ylabel(getTitleError(relativ, getLabel(' L2 on', r'$(\blacksquare)$', dir='')))
+    legend1 = ax1.legend(*scatter.legend_elements(), loc="upper center", title=coloredBy)
+    ax1.add_artist(legend1)
+
+    # produce a legend with a cross section of sizes from the scatter
+    kw = dict(prop="sizes", color=scatter.cmap(0.7),
+          func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
+    legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title=sizedBy)
+    ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
+    ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
+    b1, t1 = ax1.get_ylim()
+    b2, t2 = ax2.get_ylim()
+    ax1.set_ylim([min(b1, b2), max(t1, t2)])
+    ax2.set_ylim([min(b1, b2), max(t1, t2)])
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorRef%ds' % int(tSave), fig1)
+    return fig1, ax1, ax2
+
+
+def plotTimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logScale=False):
+    """plot computation time function of nParts
+    function of whatever (ini parameter given in the simDF) you want
+    Parameters
+    -----------
+    simDF: dataFrame
+        the simulation data with the postprocessing results
+    outDirTest: str or pathlib
+        output directory
+    cfgSimi: configparser
+        the cfg
+    xField: str
+        column of the simDF to use for the x axis
+    coloredBy: str
+        column of the simDF to use for the colors
+    sizedBy: str
+        column of the simDF to use for the marker size
+    logScale: boolean
+        If you want a loglog scale
+    """
+    colorList = simDF[coloredBy].unique()
+    tSave = cfgSimi.getfloat('tSave')
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
+    # get the sizing function
+    sizeList = simDF[sizedBy].unique()
+    minSize = np.nanmin(sizeList)
+    maxSize = np.nanmax(sizeList)
+    if len(sizeList) > 1:
+        sizeList = (simDF[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
+    else:
+        sizeList = np.array([100])
+    fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
+    nameList = ['timeLoop', 'timeForce', 'timeForceSPH', 'timePos', 'timeNeigh', 'timeField']
+    for count, name in enumerate(nameList):
+        scatter = ax1.scatter(simDF[xField], simDF[name], c=simDF[coloredBy], s=sizeList, cmap=cmap,
+                              marker=pU.markers[count], alpha=1, edgecolors='k')
+
+    slopeTsph = pd.DataFrame()
+    for colorValue in colorList:
+        simDFNew = simDF[simDF[coloredBy] == colorValue]
+        sizeValue = max(simDFNew[sizedBy].unique())
+        for sizeValue in simDFNew[sizedBy].unique():
+            simDFNewNew = simDFNew[simDFNew[sizedBy] == sizeValue]
+            nPart = simDFNewNew[xField]
+            timeLoop = simDFNewNew["timeLoop"]
+            timeForce = simDFNewNew["timeForce"]
+            timeForceSPH = simDFNewNew["timeForceSPH"]
+            timePos = simDFNewNew["timePos"]
+            timeNeigh = simDFNewNew["timeNeigh"]
+            timeField = simDFNewNew["timeField"]
+            p = np.polyfit(np.log(simDFNewNew[xField]), np.log(timeLoop), deg=1)
+            p11 = p[0]
+            p01 = np.exp(p[1])
+            p = np.polyfit(np.log(simDFNewNew[xField]), np.log(timeForce), deg=1)
+            p12 = p[0]
+            p02 = np.exp(p[1])
+            p = np.polyfit(np.log(simDFNewNew[xField]), np.log(timeForceSPH), deg=1)
+            p13 = p[0]
+            p03 = np.exp(p[1])
+            p = np.polyfit(np.log(simDFNewNew[xField]), np.log(timePos), deg=1)
+            p14 = p[0]
+            p04 = np.exp(p[1])
+            p = np.polyfit(np.log(simDFNewNew[xField]), np.log(timeNeigh), deg=1)
+            p15 = p[0]
+            p05 = np.exp(p[1])
+            p = np.polyfit(np.log(simDFNewNew[xField]), np.log(timeField), deg=1)
+            p16 = p[0]
+            p06 = np.exp(p[1])
+            slopeTsph.loc[sizeValue, colorValue] = p13
+            handles1 = []
+            hl = ax1.plot(nPart, p01*nPart**p11, 'k', label='timeLoop')
+            handles1.append(hl[0])
+            hl = ax1.plot(nPart, p02*nPart**p12, 'g', label='timeForce')
+            handles1.append(hl[0])
+            hl = ax1.plot(nPart, p03*nPart**p13, 'r', label='timeForceSPH')
+            handles1.append(hl[0])
+            hl = ax1.plot(nPart, p04*nPart**p14, 'b', label='timePos')
+            handles1.append(hl[0])
+            hl = ax1.plot(nPart, p05*nPart**p15, 'm', label='timeNeigh')
+            handles1.append(hl[0])
+            hl = ax1.plot(nPart, p06*nPart**p16, 'c', label='timeField')
+            handles1.append(hl[0])
+            log.info('power law fit sphKernelRadius = %.2f m: timeLoop = %.1f * nPart^{%.2f}' % (colorValue, p01, p11))
+            log.info('power law fit sphKernelRadius = %.2f m: timeForce = %.1f * nPart^{%.2f}' % (colorValue, p02, p12))
+            log.info('power law fit sphKernelRadius = %.2f m: timeForceSPH = %.1f * nPart^{%.2f}' % (colorValue, p03, p13))
+            log.info('power law fit sphKernelRadius = %.2f m: timePos = %.1f * nPart^{%.2f}' % (colorValue, p04, p14))
+            log.info('power law fit sphKernelRadius = %.2f m: timeNeigh = %.1f * nPart^{%.2f}' % (colorValue, p05, p15))
+            log.info('power law fit sphKernelRadius = %.2f m: timeField = %.1f * nPart^{%.2f}' % (colorValue, p06, p16))
+
     ax1.set_yscale('log')
     ax1.set_xscale('log')
     ax1.set_title('CPU time')
     ax1.set_xlabel('number of particles')
     ax1.set_ylabel('Time [s]')
-    legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title="sphKernelRadius")
+    # Adding legend and titles
+    legend = ax1.legend(handles=handles1, loc="upper left")
+    ax1.add_artist(legend)
+    legend1 = ax1.legend(*scatter.legend_elements(), loc="lower left", title=coloredBy)
     ax1.add_artist(legend1)
 
     # produce a legend with a cross section of sizes from the scatter
     kw = dict(prop="sizes", color=scatter.cmap(0.7),
-          func=lambda s: s/200)
-    legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title="dt")
+          func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
+    legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title=sizedBy)
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
     plt.show()
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'timeCPU%ds' % int(tSave), fig1)
+    fig2, ax = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
+    for sizeValue, simDFrow in slopeTsph.iterrows():
+        ax.scatter(slopeTsph.columns, simDFrow, label=sizeValue)
+    plt.legend()
+    plt.show()
 
 
 def plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, Hini, outDirTest):
