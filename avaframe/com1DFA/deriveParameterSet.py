@@ -44,7 +44,10 @@ def getVariationDict(avaDir, fullCfg, modDict):
         if key not in ['resType', 'tSteps']:
             # if yes and if this value is different add this key to
             # the parameter variation dict
-            if key in ['relThPercentVariation', 'entThPercentVariation', 'secondaryRelThPercentVariation'] and value != '':
+            keyList = ['relThPercentVariation', 'entThPercentVariation',
+                        'secondaryRelThPercentVariation', 'relThRangeVariation',
+                        'entThRangeVariation', 'secondaryRelThRangeVariation']
+            if key in keyList and value != '':
                 # here the factor for changing thValues is added to the variationDict instead of the
                 # values directly
                 locValue = splitVariationToArraySteps(value, key, fullCfg)
@@ -204,9 +207,8 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
     thicknessList = inputSimFiles[fName]['thickness']
     idList = inputSimFiles[fName]['id']
 
-    # create key names for flags and parameter variation info
+    # create key name for flag
     thFlag = thType + 'FromShp'
-    thPercent = thType + 'PercentVariation'
 
     # if thickness should be read from shape file
     if cfg['GENERAL'].getboolean(thFlag):
@@ -283,6 +285,15 @@ def checkThicknessSettings(cfg, thName):
             log.error(message)
             raise AssertionError(message)
 
+    thRV = thName + 'RangeVariation'
+    thPV = thName + 'PercentVariation'
+
+    if cfg['GENERAL'][thRV] != '' and cfg['GENERAL'][thPV] != '':
+        message = 'Only one variation type is allowed - check %s and %s' % (thRV, thPV)
+        log.error(message)
+        raise AssertionError(message)
+
+
     # if no error ocurred - thickness settings are correct
     thicknessSettingsCorrect = True
 
@@ -327,11 +338,14 @@ def splitVariationToArraySteps(value, key, fullCfg):
         itemsArray = np.linspace(percentsStart, percentsStop, steps)
     # TODO add standard value to range
     elif 'Range' in key:
-        itemsArray = np.linspace(-1.*itemsL[0], itemsL[0], itemsL[1])
+        itemsArray = np.linspace(-1.*float(itemsL[0]), float(itemsL[0]), int(itemsL[1]))
 
     if fullCfg['GENERAL'].getboolean('addStandardConfig'):
-        if 1 not in itemsArray:
+        if 'Percent' in key and (1 not in itemsArray):
             itemsArray = np.append(itemsArray, 1.)
+            log.info('Standard configuration value added for %s' % (key))
+        if 'Range' in key and (0 not in itemsArray):
+            itemsArray = np.append(itemsArray, 0.)
             log.info('Standard configuration value added for %s' % (key))
 
     return itemsArray
@@ -354,45 +368,58 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
     """
 
     # only add entries to cfg if appropriate for chosen simType (e.g. entTh if ent or entres run)
-    entCondition = (key == 'entThPercentVariation' and 'ent' in simType)
-    secRelCondition = (key == 'secondaryRelThPercentVariation' and cfg['GENERAL']['secRelArea'] == 'True')
-    relCondition = (key == 'relThPercentVariation')
+    for varType in ['Range', 'Percent']:
+        entCondition = (key == ('entTh%sVariation' % varType) and 'ent' in simType)
+        secRelCondition = (key == ('secondaryRelTh%sVariation' % varType) and cfg['GENERAL']['secRelArea'] == 'True')
+        relCondition = (key == ('relTh%sVariation' % varType))
 
-    # fetch variation factor
-    variationFactor = float(row._asdict()[key])
+        # fetch variation factor
+        variationFactor = float(row._asdict()[key])
 
-    # update thickness values according to variation
-    if entCondition or secRelCondition or relCondition:
-        thType = key.split('Percent')[0]
-        thFlag = thType + 'FromShp'
+        # update thickness values according to variation
+        if entCondition or secRelCondition or relCondition:
+            thType = key.split(varType)[0]
+            thFlag = thType + 'FromShp'
 
-        # add thickness values for all features if thFromShape = True
-        if cfg['GENERAL'][thFlag] == 'True':
-            thId = thType + 'Id'
-            thThickness = thType + 'Thickness'
-            thicknessList = cfg['INPUT'][thThickness].split('|')
-            idList = cfg['INPUT'][thId].split('|')
-            for count, id in enumerate(idList):
-                thNameId = thType + id
-                cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
+            # add thickness values for all features if thFromShape = True
+            if cfg['GENERAL'][thFlag] == 'True':
+                thId = thType + 'Id'
+                thThickness = thType + 'Thickness'
+                thicknessList = cfg['INPUT'][thThickness].split('|')
+                idList = cfg['INPUT'][thId].split('|')
+                for count, id in enumerate(idList):
+                    thNameId = thType + id
 
-            # set percentVaration parameter to actual variation in percent$steps
-            if variationFactor == 1.:
-                # if variation is 0% set percentVaration = ''
-                variationIni = ''
-            elif variationFactor < 1:
-                variationIni = '-' + str((1. - variationFactor) * 100) + '$1'
-            elif  variationFactor > 1:
-                variationIni = '+' + str((variationFactor - 1.) * 100) + '$1'
+                if varType == 'Percent':
+                    cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
+                    # set percentVaration parameter to actual variation in percent$steps
+                    if variationFactor == 1.:
+                        # if variation is 0% set percentVaration = ''
+                        variationIni = ''
+                    elif variationFactor < 1:
+                        variationIni = '-' + str((1. - variationFactor) * 100) + '$1'
+                    elif  variationFactor > 1:
+                        variationIni = '+' + str((variationFactor - 1.) * 100) + '$1'
+                elif varType == 'Range':
+                    cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
+                    # set percentVaration parameter to actual variation in percent$steps
+                    if variationFactor == 0.:
+                        # if variation is 0 set RangeVaration = ''
+                        variationIni = ''
+                    else:
+                        variationIni = str(variationFactor) + '$1'
 
-            # update parameter value
-            cfg['GENERAL'][key] = variationIni
+                # update parameter value
+                cfg['GENERAL'][key] = variationIni
 
-        else:
-            # update ini thValue if thFromShape=False
-            cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
-            # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
-            cfg['GENERAL'][key] = ''
+            else:
+                # update ini thValue if thFromShape=False
+                if varType == 'Range':
+                    cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) + variationFactor)
+                elif varType == 'Percent':
+                    cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
+                # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
+                cfg['GENERAL'][key] = ''
 
     return cfg
 
@@ -424,7 +451,8 @@ def appendShpThickness(cfg):
     for thType in thTypes:
         thFlag = thType + 'FromShp'
         thPV = thType + 'PercentVariation'
-        if cfg['GENERAL'][thFlag] == 'True' and cfg['GENERAL'][thPV] == '':
+        thRV = thType + 'RangeVariation'
+        if cfg['GENERAL'][thFlag] == 'True' and cfg['GENERAL'][thPV] == '' and cfg['GENERAL'][thRV] == '':
             thThickness = thType + 'Thickness'
             thId = thType + 'Id'
             thicknessList = cfg['INPUT'][thThickness].split('|')
