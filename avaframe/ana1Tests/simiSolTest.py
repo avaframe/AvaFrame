@@ -26,6 +26,7 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
 import avaframe.in2Trans.shpConversion as shpConv
+from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.com1DFA.particleTools as particleTools
 
 
@@ -58,7 +59,7 @@ def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
     relTh = relDict['relTh']
     # call com1DFA to perform simulations - provide configuration file and release thickness function
     # (may be multiple sims)
-    _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
+    _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg)
 
     if isinstance(simDF, str):
         simDF, simName = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
@@ -108,7 +109,7 @@ def mainSimilaritySol(simiSolCfg):
     # Dimensioning parameters L
     L_x = cfgSimi.getfloat('L_x')
     L_y = cfgSimi.getfloat('L_y')
-    H = cfgGen.getfloat('relTh')
+    H = cfgSimi.getfloat('relTh')
 
     # Set parameters
     Pi = math.pi
@@ -739,7 +740,8 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
             LMax error on flow velocity for saved time steps
 
     """
-    relTh = simDFrow['relTh']
+    # relTh = simDFrow['relTh']
+    relTh = cfgSimi.getfloat('relTh')
     gravAcc = simDFrow['gravAcc']
     hErrorL2Array = np.zeros((len(particlesList)))
     vhErrorL2Array = np.zeros((len(particlesList)))
@@ -819,7 +821,7 @@ def getReleaseThickness(avaDir, cfg, demFile):
     cfgSimi = cfg['SIMISOL']
     L_x = cfgSimi.getfloat('L_x')
     L_y = cfgSimi.getfloat('L_y')
-    Hini = cfg['GENERAL'].getfloat('relTh')
+    Hini = cfg['SIMISOL'].getfloat('relTh')
     planeinclinationAngleDeg = cfgSimi.getfloat('planeinclinationAngle')
     x = np.linspace(0, ncols-1, ncols)*csz+xllc
     y = np.linspace(0, nrows-1, nrows)*csz+yllc
@@ -839,6 +841,12 @@ def getReleaseThickness(avaDir, cfg, demFile):
     polyline['y'] = L_x*np.sin(alpha)
     relFileName = demFile.parent / 'REL' / 'rel1.shp'
     shpConv.writeLine2SHPfile(polyline, 'rel1', str(relFileName))
+
+    # write relTh to file
+    relThPath = demFile.parent / 'RELTH'
+    fU.makeADir(relThPath)
+    relThFileName = relThPath / 'releaseThickness.asc'
+    IOf.writeResultToAsc(demOri['header'], relTh, relThFileName, flip=True)
     return relDict
 
 

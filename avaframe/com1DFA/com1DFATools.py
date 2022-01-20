@@ -14,7 +14,6 @@ from avaframe.in3Utils import geoTrans
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.in3Utils import cfgUtils
 import avaframe.out3Plot.outDebugPlots as debPlot
-import avaframe.in2Trans.ascUtils as IOf
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -23,7 +22,7 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def getPartInitMethod(cfg, csz):
+def getPartInitMethod(cfg, csz, relThForPart):
     """ Get particle initialization parameters
 
     Get the massPerPart and nPPK corresponding to the desired initialization method
@@ -34,6 +33,8 @@ def getPartInitMethod(cfg, csz):
         configuration for DFA simulation
     csz: float
         cell size
+    relThForPart: float
+        relTh value
 
     Returns
     -------
@@ -62,9 +63,7 @@ def getPartInitMethod(cfg, csz):
         sphKR0 = cfg.getfloat('sphKR0')
         aPPK = cfg.getfloat('aPPK')
         nPPK = round(nPPK0 * (cszMin/sphKR0)**aPPK)
-        # nPPK = cfg.getfloat('nPPK')
-        relTh = cfg.getfloat('relTh')
-        massPerPart = rho * math.pi * cszMin * cszMin * relTh / nPPK
+        massPerPart = rho * math.pi * cszMin * cszMin * relThForPart / nPPK
 
     return massPerPart, nPPK
 

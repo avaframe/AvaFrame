@@ -7,12 +7,14 @@ import numpy as np
 import os
 import logging
 import matplotlib.pyplot as plt
+import pathlib
 
 # local imports
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.out3Plot.plotUtils as pU
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 
 # create local logger
@@ -46,6 +48,12 @@ def getReleaseThickness(avaDir, cfg, demFile):
 
     relDict = {'relTh': relTh, 'demOri': demOri, 'X': X, 'Y': Y}
 
+    # save release thickness field to file
+    relThPath = pathlib.Path(avaDir, 'Inputs', 'RELTH')
+    fU.makeADir(relThPath)
+    relThFile = relThPath / 'releaseThickness.asc'
+    IOf.writeResultToAsc(demOri['header'], relTh, relThFile, flip=True)
+
     return relDict
 
 
@@ -67,7 +75,8 @@ def postProcessFPcom1DFA(cfgGen, particles, fields, ind_t, relDict):
     m = particles['m']
     h = particles['h']
     force2 = {}
-    particles, force2 = DFAfunC.computeForceSPHC(cfgGen, particles, force2, dem, cfgGen.getint('sphOption'), gradient=1)
+    particles, force2 = DFAfunC.computeForceSPHC(cfgGen, particles, force2, dem,
+        cfgGen.getint('sphOption'), gradient=1)
     gradNorm = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
     x1, y1, z1, = DFAtls.normalize(x+xllc, y+yllc, 0*x)
     uMag = DFAtls.norm(ux, uy, 0)

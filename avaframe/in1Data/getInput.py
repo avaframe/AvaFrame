@@ -59,12 +59,25 @@ def getDEMPath(avaDir):
         full path to DEM .asc file
     """
 
+    # if more than one .asc file found throw error
     inputDir = pathlib.Path(avaDir, 'Inputs')
     demFile = list(inputDir.glob('*.asc'))
-    if not len(demFile) == 1:
+    if len(demFile) > 1:
         message = 'There should be exactly one topography .asc file in %s/Inputs/' % (avaDir)
         log.error(message)
         raise AssertionError(message)
+
+    # if is no .asc file found - throw error
+    filesFound = list(inputDir.glob('*.*'))
+    if len(demFile) == 0 and len(filesFound):
+        for fileF in filesFound:
+            message = 'DEM file format not correct in %s/Inputs/ - only .asc is allowed but %s is provided' % (avaDir, fileF.name)
+            log.error(message)
+            raise AssertionError(message)
+    elif len(demFile) == 0:
+        message = 'No topography .asc file in %s/Inputs/' % (avaDir)
+        log.error(message)
+        raise FileNotFoundError(message)
 
     return demFile[0]
 
@@ -123,11 +136,11 @@ def getInputData(avaDir, cfg):
     log.info('Release area files are: %s' % relFiles)
 
     # Initialise resistance areas
-    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance')
+    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', fileExt='shp')
     if resFile==None:
         resFile = ''
     # Initialise entrainment areas
-    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment')
+    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', fileExt='shp')
     if entFile==None:
         entFile = ''
     # Initialise DEM
@@ -174,10 +187,10 @@ def getInputDataCom1DFA(avaDir, cfg):
     entResInfo= {'flagEnt': 'No', 'flagRes': 'No'}
 
     # Initialise release areas, default is to look for shapefiles
-    if cfg['releaseScenario'] != '':
+    if cfg['INPUT']['releaseScenario'] != '':
         releaseDir = 'REL'
         relFiles = []
-        releaseFiles = cfg['releaseScenario'].split('|')
+        releaseFiles = cfg['INPUT']['releaseScenario'].split('|')
         for rel in releaseFiles:
             if '.shp' in rel:
                 relf = inputDir / releaseDir / rel
@@ -195,30 +208,37 @@ def getInputDataCom1DFA(avaDir, cfg):
         relFiles = sorted(list(releaseDir.glob('*.shp')))
     log.info('Release area files are: %s' % [str(relFilestr) for relFilestr in relFiles])
 
+    # check for release thickness file if relThFromFile
+    if cfg['GENERAL'].getboolean('relThFromFile'):
+        relThFile, entResInfo['releaseThicknessFile'] = getAndCheckInputFiles(inputDir,
+            'RELTH', 'release thickness data', fileExt='asc')
+    else:
+        relThFile = ''
+
     # Initialise secondary release areas
     secondaryReleaseFile, entResInfo['flagSecondaryRelease'] = getAndCheckInputFiles(inputDir,
-        'SECREL', 'Secondary release')
+        'SECREL', 'Secondary release', 'shp')
 
     # Initialise resistance areas
-    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance')
+    resFile, entResInfo['flagRes'] = getAndCheckInputFiles(inputDir, 'RES', 'Resistance', fileExt='shp')
 
     # Initialise entrainment areas
-    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment')
+    entFile, entResInfo['flagEnt'] = getAndCheckInputFiles(inputDir, 'ENT', 'Entrainment', fileExt='shp')
 
     # Initialise DEM
     demFile = getDEMPath(avaDir)
 
     # return DEM, first item of release, entrainment and resistance areas
     inputSimFiles = {'demFile': demFile, 'relFiles': relFiles, 'secondaryReleaseFile': secondaryReleaseFile,
-                     'entFile': entFile, 'resFile': resFile, 'entResInfo': entResInfo}
+                     'entFile': entFile, 'resFile': resFile, 'entResInfo': entResInfo, 'relThFile': relThFile}
 
     return inputSimFiles
 
 
-def getAndCheckInputFiles(inputDir, folder, inputType):
-    """Fetch shape files and check if they exist and if it is not more than one
+def getAndCheckInputFiles(inputDir, folder, inputType, fileExt='shp'):
+    """Fetch fileExt files and check if they exist and if it is not more than one
 
-    Raises error if there is more than one shape file.
+    Raises error if there is more than one fileExt file.
 
     Parameters
     ----------
@@ -228,6 +248,8 @@ def getAndCheckInputFiles(inputDir, folder, inputType):
         subfolder name where the shape file should be located (SECREL, ENT or RES)
     inputType : str
         type of input (used for the logging messages). Secondary release or Entrainment or Resistance
+    fileExt: str
+        file extension e.g. shp, asc - optional default is shp
 
     Returns
     -------
@@ -239,11 +261,11 @@ def getAndCheckInputFiles(inputDir, folder, inputType):
     available = 'No'
     # Initialise secondary release areas
     dir = pathlib.Path(inputDir, folder)
-    OutputFile = list(dir.glob('*.shp'))
+    OutputFile = list(dir.glob('*.%s' % fileExt))
     if len(OutputFile) < 1:
         OutputFile = None
     elif len(OutputFile) > 1:
-        message = 'More than one %s .shp file in %s/%s/ not allowed' % (inputType, inputDir, folder)
+        message = 'More than one %s .%s file in %s/%s/ not allowed' % (inputType, fileExt, inputDir, folder)
         log.error(message)
         raise AssertionError(message)
     else:
@@ -352,9 +374,16 @@ def selectReleaseScenario(inputSimFiles, cfg):
 
     relFiles = inputSimFiles['relFiles']
 
+    foundScenario = False
     for relF in relFiles:
         if relF.stem == cfg['releaseScenario']:
             releaseScenario = relF
+            foundScenario = True
+
+    if foundScenario is False:
+        message = 'Release area scenario %s not found - check input data' % (cfg['releaseScenario'])
+        log.error(message)
+        raise FileNotFoundError(message)
 
     inputSimFiles['relFiles'] = [releaseScenario]
     # add release area scenario

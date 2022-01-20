@@ -27,5 +27,4 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # call com1DFA and perform simulations
-dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain,
-    cfgFile='', relThField='')
+dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile='')

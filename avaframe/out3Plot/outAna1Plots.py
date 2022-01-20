@@ -21,7 +21,8 @@ def showSaveTimeStepsSimiSol(cfgMain, cfgSimi, particlesList, fieldsList, solSim
     """ Generate plots of the comparison of DFA solution and simiSol
     """
 
-    relTh = simDFrow['relTh']
+    # relTh = simDFrow['relTh']
+    relTh = cfgSimi.getfloat('relTh')
     gravAcc = simDFrow['gravAcc']
 
     # user interaction?
