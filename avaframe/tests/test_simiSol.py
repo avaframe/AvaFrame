@@ -40,7 +40,7 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
     relTh = relDict['relTh']
     # call com1DFA to perform simulations - provide configuration file and release thickness function
     # (may be multiple sims)
-    _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg, relThField=relTh)
+    _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg)
 
     simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
     solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)

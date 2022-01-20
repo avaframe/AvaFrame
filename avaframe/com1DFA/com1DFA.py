@@ -173,7 +173,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
                 # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
                 dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg, avalancheDir,
                         cuSim, inputSimFiles, outDir)
-
+                simDF.at[simHash, 'nPart'] = str(int(particlesList[0]['nPart']))
                 # TODO check if inputSimFiles not changed within sim
                 if inputSimFilesNEW != inputSimFilesTest:
                     log.error('InputFilesDict has changed')
@@ -1271,8 +1271,8 @@ def DFAIterate(cfg, particles, fields, dem):
     if cfgGen.getboolean('cflTimeStepping') and nIter > cfgGen.getfloat('cflIterConstant'):
         # overwrite the dt value in the cfg
         dt = tD.getcflTimeStep(particles, dem, cfgGen)
-    elif cfgGen.getboolean('moussaTimeStepping'):
-        dt = tD.getMoussaTimeStep(dem, cfgGen)
+    elif cfgGen.getboolean('sphKernelRadiusTimeStepping'):
+        dt = tD.getSphKernelRadiusTimeStep(dem, cfgGen)
     else:
         # get time step
         dt = cfgGen.getfloat('dt')
@@ -1317,8 +1317,8 @@ def DFAIterate(cfg, particles, fields, dem):
         if cfgGen.getboolean('cflTimeStepping') and nIter > cfgGen.getfloat('cflIterConstant'):
             # overwrite the dt value in the cfg
             dt = tD.getcflTimeStep(particles, dem, cfgGen)
-        elif cfgGen.getboolean('moussaTimeStepping'):
-            dt = tD.getMoussaTimeStep(dem, cfgGen)
+        elif cfgGen.getboolean('sphKernelRadiusTimeStepping'):
+            dt = tD.getSphKernelRadiusTimeStep(dem, cfgGen)
         else:
             # get time step
             dt = cfgGen.getfloat('dt')

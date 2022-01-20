@@ -1,5 +1,5 @@
 """
-    Run com1DFA kernel and compare it tothe similarity solution
+    Compare the com1DFA kernel results to the similarity solution
     This script computes the similarity solution for a gliding avalanche on
     a inclined plane according to similarity solution from :
     Hutter, K., Siegel, M., Savage, S.B. et al.

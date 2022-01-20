@@ -35,51 +35,6 @@ import avaframe.com1DFA.particleTools as particleTools
 log = logging.getLogger(__name__)
 
 
-def mainCompareSimSolCom1DFA(avalancheDir, cfgMain, simiSolCfg, outDirTest):
-    """ Compute com1DFA sol, similarity solution and compare
-    Main script for the comparison of DFA simulations to the analytic similarity solution
-    Parameters
-    -----------
-    avalancheDir: str or pathlib path
-        avalanche directory
-    cfgMain: confiparser
-        avaframeCfg configuration
-    simiSolCfg: pathlib path
-        path to simiSol configuration file
-    outDirTest: pathlib path
-        path to output directory
-
-    """
-
-    cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
-
-    # Define release thickness distribution
-    demFile = gI.getDEMPath(avalancheDir)
-    relDict = getReleaseThickness(avalancheDir, cfg, demFile)
-    relTh = relDict['relTh']
-    # call com1DFA to perform simulations - provide configuration file and release thickness function
-    # (may be multiple sims)
-    _, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=simiSolCfg)
-
-    if isinstance(simDF, str):
-        simDF, simName = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
-
-    # compute the similartiy solution (this corresponds to our reference)
-    log.info('Computing similarity solution')
-    solSimi = mainSimilaritySol(simiSolCfg)
-
-    # now compare the simulations to the reference
-    # first fetch info about all the simulations performed (and maybe order them)
-    varParList = cfg['ANALYSIS']['varParList'].split('|')
-    ascendingOrder = cfg['ANALYSIS']['ascendingOrder']
-    # load info for all configurations and order them
-    simDF = simDF.sort_values(by=varParList, ascending=ascendingOrder)
-    simDF = postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
-    outAna1Plots.plotError(simDF, outDirTest, cfg['SIMISOL'])
-    outAna1Plots.plotErrorLog(simDF, outDirTest, cfg['SIMISOL'])
-    outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'])
-
-
 def mainSimilaritySol(simiSolCfg):
     """ Compute similarity solution
     Parameters
@@ -678,24 +633,31 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
     for simHash, simDFrow in simDF.iterrows():
         simName = simDFrow['simName']
         # fetch the simulation results
-        particlesList, Tsave = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True, comModule='com1DFA')
-        fieldsList, fieldHeader, _ = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
-        simDF.loc[simHash, 'nPart'] = particlesList[-1]['nPart']
+        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
         # analyze and compare results
-        tSave = cfgSimi.getfloat('tSave')
-        ind_t = min(np.searchsorted(Tsave, tSave), min(len(Tsave)-1, len(fieldsList)-1))
-        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults([particlesList[ind_t]], [fieldsList[ind_t]], solSimi, fieldHeader,
+        if cfgSimi['tSave'] == '':
+            ind_t = -1
+            tSave = timeList[-1]
+        else:
+            tSave = cfgSimi.getfloat('tSave')
+            ind_t = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
+            fieldsList = [fieldsList[ind_t]]
+            timeList = [timeList[ind_t]]
+            ind_t = 0
+
+        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(fieldsList, timeList, solSimi, fieldHeader,
                                                                         cfgSimi, outDirTest, simHash, simDFrow)
         # add result of error analysis
         # save results in the simDF
-        simDF.loc[simHash, 'hErrorL2'] = hEL2Array[0]
-        simDF.loc[simHash, 'vhErrorL2'] = vhEL2Array[0]
-        simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[0]
-        simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[0]
+        simDF.loc[simHash, 'hErrorL2'] = hEL2Array[ind_t]
+        simDF.loc[simHash, 'vhErrorL2'] = vhEL2Array[ind_t]
+        simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[ind_t]
+        simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[ind_t]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
-        # outAna1Plots.showSaveTimeStepsSimiSol(cfgMain, cfgSimi, particlesList, fieldsList, solSimi, Tsave, fieldHeader,
-        #                                outDirTest, simHash, simDFrow)
+        if cfgSimi.getboolean('plotIntermediate'):
+            outAna1Plots.showSaveTimeStepsSimiSol(cfgMain, cfgSimi, fieldsList, solSimi, timeList, fieldHeader,
+                                                  outDirTest, simHash, simDFrow)
 
     name = 'results' + str(round(tSave)) + '.p'
     simDF.to_pickle(outDirTest / name)
@@ -703,12 +665,10 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
     return simDF
 
 
-def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, outDirTest, simHash, simDFrow):
+def analyzeResults(fieldsList, timeList, solSimi, fieldHeader, cfgSimi, outDirTest, simHash, simDFrow):
     """Compare analytical and com1DFA results
         Parameters
         -----------
-        particlesList: list
-            list of particles dictionaries
         fieldsList: list
             list of fields dictionaries
         solSimi: dictionary
@@ -743,16 +703,13 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
     # relTh = simDFrow['relTh']
     relTh = cfgSimi.getfloat('relTh')
     gravAcc = simDFrow['gravAcc']
-    hErrorL2Array = np.zeros((len(particlesList)))
-    vhErrorL2Array = np.zeros((len(particlesList)))
-    hErrorLMaxArray = np.zeros((len(particlesList)))
-    vhErrorLMaxArray = np.zeros((len(particlesList)))
+    hErrorL2Array = np.zeros((len(fieldsList)))
+    vhErrorL2Array = np.zeros((len(fieldsList)))
+    hErrorLMaxArray = np.zeros((len(fieldsList)))
+    vhErrorLMaxArray = np.zeros((len(fieldsList)))
     count = 0
-    time = []
     # run the comparison routine for each saved time step
-    for particles, field in zip(particlesList, fieldsList):
-        t = particles['t']
-        time.append(t)
+    for t, field in zip(timeList, fieldsList):
         # get similartiy solution h, u at required time step
         ind_time = np.searchsorted(solSimi['Time'], t)
         simiDict = getSimiSolParameters(solSimi, fieldHeader, ind_time, cfgSimi, relTh, gravAcc)
@@ -778,8 +735,9 @@ def analyzeResults(particlesList, fieldsList, solSimi, fieldHeader, cfgSimi, out
         log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hErrorL2))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
         count = count + 1
-    # outAna1Plots.plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
-    #                            simHash, simDFrow, cfgSimi.getboolean('relativError'))
+    if cfgSimi.getboolean('plotIntermediate') and len(timeList)>1:
+        outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
+                                   simHash, simDFrow, cfgSimi.getboolean('relativError'))
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
 
