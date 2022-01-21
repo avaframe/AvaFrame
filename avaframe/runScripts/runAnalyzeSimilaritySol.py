@@ -1,5 +1,6 @@
 """
     Compare the com1DFA kernel results to the similarity solution
+    (to get com1DFA simulations first run runScripts/runSimilaritySol.py)
     This script computes the similarity solution for a gliding avalanche on
     a inclined plane according to similarity solution from :
     Hutter, K., Siegel, M., Savage, S.B. et al.
@@ -31,7 +32,7 @@ logName = 'runSimilarityTest'
 cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = 'data/avaSimilaritySol'
 
-# Clean input directory(ies) of old work and output files
+# Clean avalancheDir directory of old work and output files
 initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=False)
 
 # Start logging
@@ -41,22 +42,20 @@ log.info('Current avalanche: %s', avalancheDir)
 
 # Load configuration for similarity solution test
 simiSolCfg = pathlib.Path(avalancheDir, 'Inputs', 'simiSol_com1DFACfg.ini')
+cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
 
 # create output directory for test result plots
 outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
 fU.makeADir(outDirTest)
 
-cfg = cfgUtils.getModuleConfig(com1DFA, simiSolCfg)
-
-# Define release thickness distribution
-demFile = gI.getDEMPath(avalancheDir)
+# Load configuration info of all com1DFA simulations
 simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
 # compute the similartiy solution (this corresponds to our reference)
 log.info('Computing similarity solution')
 solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 
-# if the analysis already exists and you only want to replot uncoment this
+# if the analysis already exists and you only want to replot uncomment this
 # pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results10.p')
 # if pathToResults.is_file():
 #     simDF = pd.read_pickle(pathToResults)

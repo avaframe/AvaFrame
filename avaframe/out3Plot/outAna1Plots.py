@@ -19,9 +19,28 @@ log = logging.getLogger(__name__)
 
 def showSaveTimeStepsSimiSol(cfgMain, cfgSimi, fieldsList, solSimi, timeList, header, outDirTest, simHash, simDFrow):
     """ Generate plots of the comparison of DFA solution and simiSol
+    Parameters
+    -----------
+    cfgMain: configparser
+        main cfg
+    cfgSimi: configparser
+        simiSol cfg
+    fieldsList: list
+        list of fields Dictionaries
+    solSimi: dict
+        dictionary with similiarty solution
+    timeList: list
+        time coresponding to fields in fieldsList
+    header: dict
+        field header dictionary
+    outDirTest: str or pathlib
+        output directory
+    simHash: str
+        hash of the curent simulation
+    simDFrow: dataFrame
+        row of the simDF dataFrame coresponding to simHash
     """
 
-    # relTh = simDFrow['relTh']
     relTh = cfgSimi.getfloat('relTh')
     gravAcc = simDFrow['gravAcc']
 
@@ -409,7 +428,7 @@ def plotErrorRef(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
     fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
-    # for the scater plot (new filtering)
+    # for the scatter plot (new filtering)
     simDFScatter = simDF[simDF['viscOption'] == 1]
     # get the sizing function
     sizeList = simDFScatter[sizedBy].unique()

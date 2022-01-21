@@ -78,6 +78,8 @@ def placeParticles(hCell, aCell, indx, indy, csz, massPerPart, nPPK, rng, cfg):
         cellsize
     massPerPart : float
         maximum mass per particle
+    nPPK: int
+        number of particles per kernel radius (used only if massPerParticleDeterminationMethod = MPPKR)
     cfg: configParser
         com1DFA general configParser
     Returns
