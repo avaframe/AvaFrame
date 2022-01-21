@@ -44,11 +44,16 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
 
     simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
 
-    # outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', ['hErrorL2', 'vhErrorL2'],
-    #                           'aPPK', 'cMax', logScale=False)
-    #
-    # # make convergence plot
-    # fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
-    #                           'aPPK', 'cMax', logScale=True)
-    #
-    # outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
+    outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', ['hErrorL2', 'vhErrorL2'],
+                              'aPPK', 'cMax', logScale=False)
+
+    # make convergence plot
+    fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
+                              'aPPK', 'cMax', logScale=True)
+
+    outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
+
+    simDF = simDF[simDF['nPPK0']==15]
+    simDF = simDF[simDF['aPPK']==-0.5]
+    cfg['SIMISOL']['plotIntermediate'] = 'True'
+    simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
