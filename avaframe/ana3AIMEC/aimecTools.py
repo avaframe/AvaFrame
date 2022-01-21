@@ -135,7 +135,8 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
         inputsDF = inputsDF.reset_index().merge(configurationDF, on='simName').set_index('index')
 
         # add value of first parameter used for ordering for colorcoding in plots
-        sortingParameter = configurationDF[varParList[0]].to_list()
+        sortingParameter = inputsDF[varParList[0]].to_list()
+        typeCP = type(sortingParameter[0])
         if cfgSetup['referenceSimValue'] != '':
             typeCP = type(sortingParameter[0])
             if typeCP == str:
@@ -150,12 +151,12 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
                 indexRef = sortingParameter.index(typeCP(cfgSetup['referenceSimValue']))
                 valRef = sortingParameter[indexRef]
             log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
-                     (varParList[0], cfgSetup['referenceSimValue'], str(valRef)))
-            refSimulation = configurationDF[configurationDF[varParList[0]] == valRef]['simName'].to_list()[0]
-            colorVariation = True
+                (varParList[0], cfgSetup['referenceSimValue'], str(valRef)))
+            refSimulation = inputsDF[inputsDF[varParList[0]] == valRef]['simName'].to_list()[0]
+
         else:
             # reference simulation
-            refSimulation = configurationDF.iloc[0]['simName']  # configurationDF.head(1)['simName'].values[0]
+            refSimulation = inputsDF.iloc[0]['simName']  # inputsDF.head(1)['simName'].values[0]
             colorVariation = False
 
     elif cfgSetup['referenceSimName'] != '':

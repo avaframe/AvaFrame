@@ -523,16 +523,18 @@ def convertDF2numerics(simDF):
     """
 
     for name, values in simDF.iteritems():
-        simDFTest = simDF[name].str.replace('.', '', regex=True)
-        # also include columns where nan is in first row - so check for any row
-        if simDFTest.str.isdigit().any():
-            # problem here is that it finds even if not present in | although not in ini
-            simDFTest = simDF[name].str.replace('|', '§', regex=True)
-            if simDFTest.str.contains('§').any() == False:
-                simDF[name] = pd.to_numeric(simDF[name])
-                log.debug('Converted to numeric %s' % name)
-        else:
-            log.debug('Not converted to numeric: %s' % name)
+        if type(values[0]) == str:
+            simDFTest = simDF[name].str.replace('.', '', regex=True)
+            simDFTest = simDFTest.replace('-', '', regex=True)
+            # also include columns where nan is in first row - so check for any row
+            if simDFTest.str.isdigit().any():
+                # problem here is that it finds even if not present in | although not in ini
+                simDFTest = simDF[name].str.replace('|', '§', regex=True)
+                if simDFTest.str.contains('§').any() == False:
+                    simDF[name] = pd.to_numeric(simDF[name])
+                    log.debug('Converted to numeric %s' % name)
+            else:
+                log.debug('Not converted to numeric: %s' % name)
 
     return simDF
 
