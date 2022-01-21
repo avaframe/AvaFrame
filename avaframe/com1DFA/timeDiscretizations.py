@@ -50,7 +50,7 @@ def getcflTimeStep(particles, dem, cfg):
 def getSphKernelRadiusTimeStep(dem, cfg):
     """ Compute the time step  given the sph kernel radius and the cMax coefficient
     This is based on the article from Ben Moussa et Vila
-    https://www.researchgate.net/publication/243096302_Convergence_of_SPH_Method_for_Scalar_Nonlinear_Conservation_Laws
+    DOI:10.1137/S0036142996307119
     Parameters
     -----------
     dem: dict
@@ -65,7 +65,7 @@ def getSphKernelRadiusTimeStep(dem, cfg):
     # get cell size
     cszDEM = dem['header']['cellsize']
     cszNeighbourGrid = dem['headerNeighbourGrid']['cellsize']
-    # use the smallest of those two values
+    # use the minimum of those two values
     csz = min(cszDEM, cszNeighbourGrid)
 
     # courant number
