@@ -400,11 +400,6 @@ def setThickness(cfg, lineTh, typeTh):
         sectionTh = 'GENERAL'
         if cfg['GENERAL'].getboolean(thFlag):
             thName = typeTh + id
-            # # if thFromShp - but no variation - read thValues from INPUT cfg section
-            # if cfg['GENERAL'][thVariation] == '':
-            #     thicknessId = cfg['INPUT'][(typeTh+'Thickness')].split('|')
-            #     lineTh['thickness'][count] = float(thicknessId[count])
-            # else:
             lineTh['thickness'][count] = cfg['GENERAL'].getfloat(thName)
 
         else:
