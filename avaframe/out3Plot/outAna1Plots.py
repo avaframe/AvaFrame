@@ -332,8 +332,8 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yFieldArray, colore
             for sizeValue in simDFNew[sizedBy].unique():
                 simDFNewNew = simDFNew[simDFNew[sizedBy] == sizeValue]
                 xArray = simDFNewNew[xField]
-                hErrorL2 = simDFNewNew["hErrorL2"]
-                vErrorL2 = simDFNewNew["vhErrorL2"]
+                hErrorL2 = simDFNewNew[yFieldArray[0]]
+                vErrorL2 = simDFNewNew[yFieldArray[1]]
                 p, rSquaredH, _, _, _ = np.polyfit(np.log(xArray), np.log(hErrorL2), deg=1, full=True)
                 p1H = p[0]
                 p0H = np.exp(p[1])
