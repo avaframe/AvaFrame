@@ -2,6 +2,9 @@
     Run script for running python DFA kernel
 """
 
+import pathlib
+from configupdater import ConfigUpdater
+
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.com1DFA import com1DFA
@@ -25,6 +28,15 @@ initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=False)
 log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
+localCfg = pathlib.Path('com1DFA', 'local_com1DFACfg.ini')
 
-# call com1DFA and perform simulations
-dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile='')
+
+for sphKernelRadius in [6]:
+    updater = ConfigUpdater()
+    updater.read(localCfg)
+    updater['GENERAL']['sphKernelRadius'].value = sphKernelRadius
+    updater['GENERAL']['meshCellSize'].value = sphKernelRadius
+    updater.update_file()
+
+    # call com1DFA and perform simulations
+    dem, plotDict, reportDictList, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile='')
