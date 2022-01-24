@@ -5,6 +5,7 @@ import pathlib
 import matplotlib.pyplot as plt
 import pandas as pd
 import logging
+import copy
 
 # local imports
 import avaframe.ana1Tests.simiSolTest as simiSolTest
@@ -486,6 +487,112 @@ def plotErrorRef(simDF, outDirTest, cfgSimi, xField, yFieldArray, coloredBy, siz
     ax2.set_ylim([min(b1, b2), max(t1, t2)])
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorRef%ds' % int(tSave), fig1)
     return fig1, ax1, ax2
+
+
+def plotPresentation(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, sizedBy, logScale=False, fit=False):
+    """plot error between all com1DFA sol and analytic sol
+    function of whatever you want
+
+    Parameters
+    -----------
+    simDF: dataFrame
+        the simulation data with the postprocessing results
+    outDirTest: str or pathlib
+        output directory
+    cfgSimi: configparser
+        the cfg
+    xField: str
+        column of the simDF to use for the x axis
+    yField: str
+        column of the simDF to use for the y axis
+    coloredBy: str
+        column of the simDF to use for the colors
+    sizedBy: str
+        column of the simDF to use for the marker size
+    logScale: boolean
+        If you want a loglog scale
+    """
+    tSave = cfgSimi.getfloat('tSave')
+    relativ = cfgSimi.getboolean('relativError')
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
+    fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(4*pU.figW, 2*pU.figH))
+    if logScale:
+        ax1.set_yscale('log')
+        ax1.set_xscale('log')
+    # get the sizing function
+    sizeList = simDF[sizedBy].unique()
+    lenSize = len(sizeList)
+    minSize = np.nanmin(sizeList)
+    maxSize = np.nanmax(sizeList)
+    if lenSize > 1:
+        sizeList = (simDF[sizedBy].to_numpy() - minSize) / (maxSize - minSize) * 70 + 10
+    else:
+        sizeList = np.array([100])
+
+    # #########################################
+    # If you want to add some regression lines
+    slopeH = pd.DataFrame()
+    colorValueList = -np.sort(-simDF[coloredBy].unique())
+    lenColor = len(colorValueList)
+    if lenColor<=10:
+        lenColor = None
+    if lenSize<=10:
+        lenSize = None
+    count = 0
+    if fit:
+        for colorValue in colorValueList:
+            simDFNew = simDF[simDF[coloredBy] == colorValue]
+            for sizeValue in simDFNew[sizedBy].unique():
+                simDFNewNew = simDFNew[simDFNew[sizedBy] == sizeValue]
+                xArray = simDFNewNew[xField]
+                hErrorL2 = simDFNewNew[yField]
+                if count >= 1:
+                    simDFNewNew = simDFNewNew.append(simDFOld)
+                colorList = simDFNewNew[coloredBy].unique()
+                lenColor = len(colorList)
+                if lenColor<=10:
+                    lenColor = None
+                # make the scatter plot
+                scatter1 = ax1.scatter(simDFNewNew[xField], simDFNewNew[yField], c=simDFNewNew[coloredBy], s=sizeList, cmap=cmap, norm=norm,
+                                       marker=pU.markers[0], alpha=1)#, edgecolors='k')
+                fig1.suptitle('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
+                ax1.set_title(getTitleError(relativ, r' L2 on flow thickness'))
+                ax1.set_xlabel(xField)
+                ax1.set_ylabel(getTitleError(relativ, r' L2 on flow thickness'))
+                legend1 = ax1.legend(*scatter1.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
+                ax1.add_artist(legend1)
+
+                # produce a legend with a cross section of sizes from the scatter
+                kw = dict(prop="sizes", color=scatter1.cmap(0.7),
+                      func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
+                legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
+                ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
+                ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
+                pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorPresentation%d' % count, fig1)
+                p, rSquaredH, _, _, _ = np.polyfit(np.log(xArray), np.log(hErrorL2), deg=1, full=True)
+                p1H = p[0]
+                p0H = np.exp(p[1])
+                slopeH.loc[sizeValue, colorValue] = p1H
+                ax1.plot(xArray, p0H*xArray**p1H, 'r')
+                if np.size(rSquaredH) == 0:
+                    rSquaredH = np.nan
+                log.info('power law fit sphKernelRadius = %.2f m: hErrorL2 = %.1f * Npart^{%.2f}, r=%.2f' % (colorValue, p0H, p1H, rSquaredH))
+
+                pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorPresentation%dFit' % count, fig1)
+                count = count + 1
+                simDFOld = copy.deepcopy(simDFNewNew)
+                legend1.remove()
+
+
+    # fig2, ax = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
+    # for sizeValue, simDFrow in slopeU.iterrows():
+    #     ax.scatter(slopeU.columns, simDFrow, label=sizeValue)
+    # plt.legend(title=sizedBy)
+    # ax.set_xlabel(coloredBy)
+    # ax.set_ylabel('Slope')
+    # ax.set_title('Speed of convergence of the DFA solution based on' + getTitleError(relativ, r' L2 on flow thickness'))
+    # plt.show()
+    return fig1, ax1
 
 
 def plotTimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logScale=False):
