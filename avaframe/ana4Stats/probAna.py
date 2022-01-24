@@ -94,9 +94,11 @@ def updateCfgRange(cfg, cfgProb, varName):
             raise AssertionError(message)
         elif varPar in ['entTh', 'relTh', 'secondaryRelTh']:
             thPercentVariation = varPar + 'PercentVariation'
-            if cfg['GENERAL'][thPercentVariation] != '':
-                message = ('Only one reference value is allowed for %s: but %s %s is given' %
-                    (varPar, thPercentVariation, cfg['GENERAL'][thPercentVariation]))
+            thRangeVariation = varPar + 'RangeVariation'
+            if cfg['GENERAL'][thPercentVariation] != '' or cfg['GENERAL'][thRangeVariation] != '':
+                message = ('Only one reference value is allowed for %s: but %s %s or %s %s is given' %
+                    (varPar, thPercentVariation, cfg['GENERAL'][thPercentVariation],
+                     thRangeVariation, cfg['GENERAL'][thRangeVariation]))
                 log.error(message)
                 raise AssertionError(message)
 
@@ -111,7 +113,7 @@ def updateCfgRange(cfg, cfgProb, varName):
             parName = varName + 'PercentVariation'
             cfg['GENERAL'][parName] = valVariation + '$' + valSteps
         else:
-            parName = varPar + 'rangeVariation'
+            parName = varPar + 'RangeVariation'
             cfg['GENERAL'][parName] = valVariation + '$' + valSteps
         cfg['GENERAL']['addStandardConfig'] = 'True'
     else:

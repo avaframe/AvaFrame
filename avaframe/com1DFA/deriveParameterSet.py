@@ -390,24 +390,24 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
                 for count, id in enumerate(idList):
                     thNameId = thType + id
 
-                if varType == 'Percent':
-                    cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
-                    # set percentVaration parameter to actual variation in percent$steps
-                    if variationFactor == 1.:
-                        # if variation is 0% set percentVaration = ''
-                        variationIni = ''
-                    elif variationFactor < 1:
-                        variationIni = '-' + str((1. - variationFactor) * 100) + '$1'
-                    elif  variationFactor > 1:
-                        variationIni = '+' + str((variationFactor - 1.) * 100) + '$1'
-                elif varType == 'Range':
-                    cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
-                    # set percentVaration parameter to actual variation in percent$steps
-                    if variationFactor == 0.:
-                        # if variation is 0 set RangeVaration = ''
-                        variationIni = ''
-                    else:
-                        variationIni = str(variationFactor) + '$1'
+                    if varType == 'Percent':
+                        cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
+                        # set percentVaration parameter to actual variation in percent$steps
+                        if variationFactor == 1.:
+                            # if variation is 0% set percentVaration = ''
+                            variationIni = ''
+                        elif variationFactor < 1:
+                            variationIni = '-' + str((1. - variationFactor) * 100) + '$1'
+                        elif  variationFactor > 1:
+                            variationIni = '+' + str((variationFactor - 1.) * 100) + '$1'
+                    elif varType == 'Range':
+                        cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
+                        # set percentVaration parameter to actual variation in percent$steps
+                        if variationFactor == 0.:
+                            # if variation is 0 set RangeVaration = ''
+                            variationIni = ''
+                        else:
+                            variationIni = str(variationFactor) + '$1'
 
                 # update parameter value
                 cfg['GENERAL'][key] = variationIni

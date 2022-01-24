@@ -154,6 +154,8 @@ def test_prepareReleaseEntrainment(tmp_path):
     cfg['GENERAL']['secondaryRelThPercentVariation'] = ''
     cfg['GENERAL']['relThPercentVariation'] = ''
     cfg['INPUT'] = {'relThThickness': '1.78|4.328', 'relThId': '0|1'}
+    cfg['GENERAL']['relTh0'] = '1.78'
+    cfg['GENERAL']['relTh1'] = '4.328'
 
     inputSimLines = {}
     inputSimLines['entResInfo'] = {'flagSecondaryRelease': 'Yes', 'flagEnt': 'No'}
@@ -180,6 +182,7 @@ def test_prepareReleaseEntrainment(tmp_path):
     cfg['GENERAL']['secondaryRelTh'] = ''
     cfg['INPUT']['secondaryRelThThickness'] = '2.7'
     cfg['INPUT']['secondaryRelThId'] = '0'
+    cfg['GENERAL']['secondaryRelTh0'] = '2.7'
     cfg['GENERAL']['relTh'] = ''
     cfg['GENERAL']['relTh0'] = '0.5'
     cfg['GENERAL']['relTh1'] = '1.'
@@ -198,6 +201,9 @@ def test_prepareReleaseEntrainment(tmp_path):
     relName2, inputSimLines2, badName2 = com1DFA.prepareReleaseEntrainment(
         cfg, rel, inputSimLines)
 
+
+    print('Test', cfg['GENERAL']['secondaryRelTh'], cfg['GENERAL']['secondaryRelThFromShp'],cfg['GENERAL']['secondaryRelTh0'],)
+    print('inputSimLines', inputSimLines2)
     assert relName2 == 'release1PF_test'
     assert inputSimLines2['entResInfo']['flagSecondaryRelease'] == 'Yes'
     assert inputSimLines2['releaseLine']['thickness'] == [0.5, 1.]
@@ -1334,7 +1340,8 @@ def test_prepareVarSimDict(caplog):
     standardCfg['GENERAL'] = {'simTypeList': 'entres|null',
                               'modelType': 'dfa', 'simTypeActual': 'entres', 'secRelArea': 'False',
                               'relThFromShp': 'False', 'entThFromShp': 'True',
-                              'entThPercentVariation': '', 'relThPercentVariation': ''}
+                              'entThPercentVariation': '', 'relThPercentVariation': '',
+                              'entThRangeVariation': '', 'relThRangeVariation': ''}
     standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
 
     relPath = pathlib.Path('test', 'relTest.shp')
@@ -1350,14 +1357,14 @@ def test_prepareVarSimDict(caplog):
     testCfg['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa', 'simTypeActual': 'entres',
                           'secRelArea': 'False', 'relThFromShp': 'False', 'entThFromShp': 'True',
                           'entThPercentVariation': '', 'relThPercentVariation': '', 'rho': '200.0',
-                          'entTh0': '1.0'}
+                          'entTh0': '1.0',  'entThRangeVariation': '', 'relThRangeVariation': ''}
 
     testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
 
     simHash = cfgUtils.cfgHash(testCfg)
     print('simHAhs', simHash)
     simName1 = 'relTest_entres_dfa_' + simHash
-    testDict = {'relTest_entres_dfa_90c9ad49e9': {'simHash': '90c9ad49e9', 'releaseScenario': 'relTest',
+    testDict = {simName1: {'simHash': simHash, 'releaseScenario': 'relTest',
                                                   'simType': 'entres', 'relFile': relPath, 'cfgSim': testCfg}}
 
     print('simDict', simDict)
@@ -1385,7 +1392,8 @@ def test_prepareVarSimDict(caplog):
                            'simTypeActual': 'entres', 'secRelArea': 'False',
                            'relThFromShp': 'False', 'entThFromShp': 'True',
                            'entThPercentVariation': '', 'relThPercentVariation': '',
-                           'rho': '150.0', 'entTh0': '1.0'}
+                           'rho': '150.0', 'entTh0': '1.0', 'entThRangeVariation': '',
+                           'relThRangeVariation': ''}
     testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
     simHash2 = cfgUtils.cfgHash(testCfg2)
     simName2 = 'relTest_extended_AF_entres_dfa_' + simHash2
