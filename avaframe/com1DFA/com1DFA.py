@@ -1239,7 +1239,8 @@ def DFAIterate(cfg, particles, fields, dem):
     # make sure to save all desiered resuts for first and last time step for
     # the report
     resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
-    resTypesLast = list(set(resTypes + resTypesReport))
+    # always add particles to first and last time step 
+    resTypesLast = list(set(resTypes + resTypesReport + ['particles']))
     # derive friction type
     # turn friction model into integer
     frictModelsList = ['samosat', 'coulomb', 'voellmy']

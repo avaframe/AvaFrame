@@ -313,7 +313,7 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile, cfg):
     # check if thickness info is required from entrainment and secondary release according to simType
     simTypeList = cfg['GENERAL']['simTypeList'].split('|')
     thTypeList = []
-    if any(simType in ['ent', 'available'] for simType in simTypeList):
+    if any(simType in ['ent', 'entres', 'available'] for simType in simTypeList):
         thTypeList.append('entFile')
     if cfg['GENERAL'].getboolean('secRelArea'):
         thTypeList.append('secondaryReleaseFile')
