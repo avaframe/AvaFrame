@@ -75,7 +75,9 @@ simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], si
 #                           'deltaTh', 'dt', logScale=False)
 
 # make convergence plot
-fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
+fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
                           'aPPK', 'nPPK0', logScale=True, fit=True)
+# fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
+#                           'aPPK', 'nPPK0', logScale=True, fit=True)
 
-outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
+# outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
