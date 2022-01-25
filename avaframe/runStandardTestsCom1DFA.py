@@ -30,7 +30,7 @@ aimecResType = 'ppr'
 aimecThresholdValue = '1'
 aimecDiffLim = '5'
 aimecContourLevels = '1|3|5|10'
-aimecFlagMass = 'False'
+aimecFlagMass = 'True'
 aimecComModules = 'benchmarkReference|com1DFA'
 # ++++++++++++++++++++++++++++++
 
@@ -45,11 +45,11 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
 # filter benchmarks for tag standardTest
 type = 'TAGS'
-valuesList = ['standardTest']
+valuesList = ['standardTest', 'entrainment']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
-outDir = pathlib.Path.cwd() / 'tests' / 'reportsCom1DFA'
+outDir = pathlib.Path.cwd() / 'tests' / 'reportsCom1DFAEnt'
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests
