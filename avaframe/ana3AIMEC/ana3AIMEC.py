@@ -81,6 +81,7 @@ def AIMEC2Report(pathDict, inputsDF, cfg):
         if simName != refSimulationName:
             resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
                                                                    newRasters, timeMass, simName, resAnalysisDF)
+            pathDict['compSimulation'] = simName
 
     # -----------------------------------------------------------
     # result visualisation + report
@@ -168,7 +169,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
         if simName != refSimulationName:
             resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
                                                                    newRasters, timeMass, simName, resAnalysisDF)
-
+            pathDict['compSimulation'] = simName
     # -----------------------------------------------------------
     # result visualisation + report
     # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside
@@ -261,7 +262,7 @@ def AIMECIndividual(pathDict, inputsDF, cfg):
         if simName != refSimulationName:
             resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters,
                                                                    timeMass, simName, resAnalysisDF)
-
+            pathDict['compSimulation'] = simName
     # -----------------------------------------------------------
     # result visualisation + report
     # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside

@@ -1265,7 +1265,7 @@ def DFAIterate(cfg, particles, fields, dem):
     particles['iterate'] = True
     t = particles['t']
     log.debug('Saving results for time step t = %f s', t)
-    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
+    fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast + ['particles'])
     zPartArray0 = copy.deepcopy(particles['z'])
     # add initial time step to Tsave array
     Tsave = [0]
