@@ -45,11 +45,11 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
 # filter benchmarks for tag standardTest
 type = 'TAGS'
-valuesList = ['standardTest', 'entrainment']
+valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
-outDir = pathlib.Path.cwd() / 'tests' / 'reportsCom1DFAEnt'
+outDir = pathlib.Path.cwd() / 'tests' / 'reportsCom1DFA'
 fU.makeADir(outDir)
 
 # Start writing markdown style report for standard tests

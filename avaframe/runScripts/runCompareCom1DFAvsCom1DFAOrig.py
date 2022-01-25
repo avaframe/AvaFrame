@@ -26,8 +26,6 @@ from avaframe.in3Utils import logUtils
 
 # +++++++++REQUIRED+++++++++++++
 # name of avalanche directory as list, multiple possible
-# ['avaAlr1', 'avaHelixChannel', 'avaHit1', 'avaHockeyChannel', 'avaInclinedPlane', 'avaKot1',
-#            'avaMal1', 'avaWog1']
 avaList = ['avaParabola']
 # simType that should be compared (options: null, ent, entres, res) -
 # must also be set in the ini files for the computational modules
