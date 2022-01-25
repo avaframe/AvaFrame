@@ -26,11 +26,12 @@ from avaframe.in3Utils import logUtils
 
 # +++++++++REQUIRED+++++++++++++
 # name of avalanche directory as list, multiple possible
-avaList = ['avaAlr1', 'avaHelixChannel', 'avaHit1', 'avaHockeyChannel', 'avaInclinedPlane', 'avaKot1',
-           'avaMal1', 'avaWog1']
+# ['avaAlr1', 'avaHelixChannel', 'avaHit1', 'avaHockeyChannel', 'avaInclinedPlane', 'avaKot1',
+#            'avaMal1', 'avaWog1']
+avaList = ['avaParabola']
 # simType that should be compared (options: null, ent, entres, res) -
 # must also be set in the ini files for the computational modules
-simType = 'ent'
+simType = 'null'
 values = simType
 parameter = 'simType'
 # Which result types for comparison plots
@@ -40,16 +41,16 @@ aimecResType = 'ppr'
 aimecThresholdValue = '1'
 aimecDiffLim = '5'
 aimecContourLevels = '1|3|5|10'
-aimecFlagMass = 'True'
+aimecFlagMass = 'False'
 aimecComModules = 'com1DFAOrig|com1DFA'
-startOfRunoutAreaAngle = '20'
+startOfRunoutAreaAngle = '10'
 # ++++++++++++++++++++++++++++++
 
 # define simTypeString for finding simulations
 simTypeString = '_' + simType + '_'
 
 # log file name; leave empty to use default runLog.log
-logName = 'runCompareCom1DFAOrigvsCom1DFAEnt'
+logName = 'runCompareCom1DFAOrigvsCom1DFA'
 
 # Load settings from general configuration file
 cfgMain = cfgUtils.getGeneralConfig()
@@ -163,7 +164,7 @@ for avaName in avaList:
             cfgAimec['AIMECSETUP']['contourLevels'] = aimecContourLevels
             cfgAimec['FLAGS']['flagMass'] = aimecFlagMass
             cfgAimec['AIMECSETUP']['comModules'] = aimecComModules
-            cfgAimec['AIMECSETUP']['startOfRunoutAreaAngle'] = '10'
+            cfgAimec['AIMECSETUP']['startOfRunoutAreaAngle'] = startOfRunoutAreaAngle
 
             # write configuration to file
             cfgUtils.writeCfgFile(avaDir, ana3AIMEC, cfgAimec)
