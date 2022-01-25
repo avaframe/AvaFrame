@@ -44,10 +44,10 @@ reportDictList = com1DFAOrig.com1DFAOrigMain(cfg, avalancheDir)
 endTime = time.time()
 log.info(('Took %s seconds to calculate.' % (endTime - startTime)))
 
-# append parameters from logFil
+# append parameters from logFile
 for reportD in reportDictList:
     simName = reportD['simName']['name']
-    parameterDict, reportD1 = fU.extractParameterInfo(avalancheDir, simName, reportD)
+    parameterDict, reportD = fU.extractParameterInfo(avalancheDir, simName, reportD)
 
 
 # Generate plots for all peakFiles

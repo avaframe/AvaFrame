@@ -131,7 +131,6 @@ def extractParameterInfo(avaDir, simName, reportD):
     # Initialise parameter dictionary
     parameterDict = {}
 
-    # Initialise fields
     # Read log file
     fileName = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
     logDict = extractLogInfo(fileName)
