@@ -30,7 +30,7 @@ aimecResType = 'ppr'
 aimecThresholdValue = '1'
 aimecDiffLim = '5'
 aimecContourLevels = '1|3|5|10'
-aimecFlagMass = 'True'
+aimecFlagMass = 'False'
 aimecComModules = 'benchmarkReference|com1DFA'
 # ++++++++++++++++++++++++++++++
 
