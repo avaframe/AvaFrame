@@ -36,6 +36,7 @@ import avaframe.out3Plot.plotUtils as pU
 
 
 def plotAimecRes(simDF, outDirTest, xField, yField, coloredBy, sizedBy, ABRes, logScaleX=False, logScaleY=False, fit=False):
+
     """plot error between all com1DFA sol and analytic sol
     function of whatever you want
 
@@ -60,6 +61,7 @@ def plotAimecRes(simDF, outDirTest, xField, yField, coloredBy, sizedBy, ABRes, l
     """
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(2*pU.figW, 1.5*pU.figH))
+
     # get the sizing function
     sizeList = simDF[sizedBy].unique()
     lenSize = len(sizeList)
@@ -100,7 +102,6 @@ def plotAimecRes(simDF, outDirTest, xField, yField, coloredBy, sizedBy, ABRes, l
 
 
 # def plotPartAvgRunout():
-
 
 
 
