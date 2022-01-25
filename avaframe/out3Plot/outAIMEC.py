@@ -151,7 +151,7 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     # read paths
     projectName = pathDict['projectName']
     refSimName = pathDict['refSimulation']
-    simName = pathDict['refSimulation']
+    simName = pathDict['compSimulation']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
