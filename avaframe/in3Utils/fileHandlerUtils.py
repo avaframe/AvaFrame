@@ -132,14 +132,10 @@ def extractParameterInfo(avaDir, simName, reportD):
     parameterDict = {}
 
     # Initialise fields
-    time = []
-    mass = []
-    entrMass = []
-    stopCrit = ''
-    flagNoStop = True
     # Read log file
     fileName = pathlib.Path(avaDir, 'Outputs', 'com1DFAOrig', 'start%s.log' % (simName))
     logDict = extractLogInfo(fileName)
+    stopCrit = logDict['stopCrit']
 
     # Set values in dictionary
     parameterDict['release mass [kg]'] = logDict['mass'][0]
@@ -154,6 +150,8 @@ def extractParameterInfo(avaDir, simName, reportD):
 
     reportD['Simulation Parameters'].update({'Stop criterion': parameterDict['stop criterion']})
     reportD['Simulation Parameters'].update({'Avalanche run time [s]': parameterDict['final time step [s]']})
+    reportD['Simulation Parameters'].update({'Initial mass [kg]': ('%.2f' % parameterDict['release mass [kg]'])})
+    reportD['Simulation Parameters'].update({'Final mass [kg]': ('%.2f' % parameterDict['current mass [kg]'])})
 
     return parameterDict, reportD
 
