@@ -31,7 +31,7 @@ log.info('Current avalanche: %s', avalancheDir)
 localCfg = pathlib.Path('com1DFA', 'local_com1DFACfg.ini')
 
 
-for sphKernelRadius in [6]:
+for sphKernelRadius in [10, 8, 6, 5, 4]:
     updater = ConfigUpdater()
     updater.read(localCfg)
     updater['GENERAL']['sphKernelRadius'].value = sphKernelRadius
