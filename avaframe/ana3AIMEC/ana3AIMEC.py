@@ -96,6 +96,12 @@ def AIMEC2Report(pathDict, inputsDF, cfg):
     if cfgFlags.getboolean('flagMass'):
         plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF['massPlotName'][1]}
 
+    # -----------------------------------------------------------
+    # write results to file
+    # -----------------------------------------------------------
+    log.info('Writing results to file')
+    outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
+
     return rasterTransfo, resAnalysisDF, plotDict
 
 
