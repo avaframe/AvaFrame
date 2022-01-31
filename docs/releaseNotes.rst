@@ -1,6 +1,46 @@
 Release Notes
 =============
 
+v1.0_rc1 (31. January 2022)
+---------------------------
+
+ENHANCEMENTS
+
+- update the pytest github action to version 3.9
+- Add ana5Hybrid, module that combines statistical module com2AB with the DFA module com1DFA
+- new requirement shapely
+- add release area info to benchmark ini files
+- *com1DFA* new flags/system for release thickness and entrainment thickness settings and options
+- *com1DFA* add travel angle computation
+- *com1DFA* release thickness percent variation option 
+- *com1DFA* unique simHash including info on release scenario with correct thickness
+- *com1DFA* removed return parameters from com1DFAMain
+- *com1DFA* update benchmark ini files 
+- *com1DFA* documentation for bottom friction and operator splitting
+- *com1DFA* option to redistribute particles after initialisation in order to reduce SPH force
+- *com1DFA* Implement Ata Viscosity and an SPH flow depth computation
+- *com1DFA* new splitting/merging of particles
+- *com1DFA* enable to initialize particles with a non constant flow depth
+- *com1DFA* remove unmaintained leap frog time stepping scheme 
+- *ana4Prob* add example for performing a parameter variation run with prob analysis
+- *ana4Prob* use default com module setup or specified in local - add variation for prob run
+- *ana4Prob* perform analysis using probabilityConfiguration in runScript
+
+FIX
+
+- errors in com2AB documentation
+- tcpu field in com1DFA
+- ordering of dict for analysisAdd 
+- pytest errors related to matplotlib colors and legend
+- particle splitting issue
+
+
+
+Contributors:
+
+Code: core team, M. v. Busse (UIBK), M. Winkler (UIBK)
+
+
 v0.6 (24. September 2021)
 -------------------------
 
@@ -40,7 +80,7 @@ FIX
 - fix correct module name in AIMEC 
 - com2AB write out to shp 
 
-Contributers:
+Contributors:
 
 - **Code: core team**
 
@@ -67,7 +107,7 @@ FIX
 - AIMEC produces warning on empty runout area
 - adapt quickplot to new naming scheme
 
-Contributers:
+Contributors:
 
 - **Code: core team**
 - **Colormaps: C.Tollinger**
@@ -99,7 +139,7 @@ Module com2AB (AlphaBeta) recieved an update allowing for custom parameters.
 Simulation naming and identification also recieved a major change, we introduced
 unique ID's for each individual configuration.
 
-Contributers:
+Contributors:
 
 - **Code: core team**
 
@@ -119,7 +159,7 @@ to cython to speed up computation times.
 Documentation regarding our testing is included, see more at the
 `testing <https://docs.avaframe.org/en/latest/testing.html>`_ page. 
 
-Contributers:
+Contributors:
 
 - **Code: core team**
 
@@ -146,7 +186,7 @@ This release also is the first to include `API documentation
 <https://docs.avaframe.org/en/latest/api.html>`_ for our modules and functions.
 However not all functions are included yet.
 
-Contributers:
+Contributors:
 
 - **Data: M.Granig, C. Tollinger**
 - **Data: Land Tirol**
