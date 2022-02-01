@@ -338,7 +338,12 @@ def splitVariationToArraySteps(value, key, fullCfg):
         itemsArray = np.linspace(percentsStart, percentsStop, steps)
     # TODO add standard value to range
     elif 'Range' in key:
-        itemsArray = np.linspace(-1.*float(itemsL[0]), float(itemsL[0]), int(itemsL[1]))
+        if '-' in itemsL[0]:
+            itemsArray = np.linspace(float(itemsL[0]), 0.0, int(itemsL[1]))
+        elif '+' in itemsL[0]:
+            itemsArray = np.linspace(0.0, float(itemsL[0]), int(itemsL[1]))
+        else:
+            itemsArray = np.linspace(-1.*float(itemsL[0]), float(itemsL[0]), int(itemsL[1]))
 
     if fullCfg['GENERAL'].getboolean('addStandardConfig'):
         if 'Percent' in key and (1 not in itemsArray):
@@ -452,7 +457,7 @@ def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
         elif varType == 'Range':
             # set thickness value in in file for the feature with id Id
             cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
-            variationIni = setRangeVariation(cfg, variationFactor, thNameId, thType)
+            variationIni = setRangeVariation(cfg, variationFactor, thNameId)
 
     # update variation parameter value in config file
     cfg['GENERAL'][key] = variationIni

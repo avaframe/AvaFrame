@@ -62,11 +62,14 @@ Release, entrainment and secondary release thickness can be specified in two dif
   - a parameter variation can be added with the `THICKNESSPercentVariation` parameter in the configuration file in the
     form of ``+-percentage$numberOfSteps``. Provided a `+` a positive variation will be performed,
     if `-` is given, only a negative variation is performed. If no sign is given: both directions will be used.
+    Additionally, a variation can be added with the `THICKNESSRangeVariation` parameter in the configuration file in the
+    form of ``+-range$numberOfSteps``. Provided a `+` a positive variation will be performed,
+    if `-` is given, only a negative variation is performed. If no sign is given: both directions will be used.
 
 2. Via **configuration file (ini)**:
   - set the flag 'THICKNESSFromShp' to False
   - provide your desired thickness value in the respective THICKNESS parameter (i.e. relTh, entTh or secondaryRelth)
-  - in addition to the `THICKNESSPercentVariation` option (see option 1) and the standard variation options in
+  - in addition to the `THICKNESSPercentVariation` and `THICKNESSRangeVariation` options (see option 1) and the standard variation options in
     :ref:`configuration:Configuration`, you can also directly set e.g. `relTh = 1.$50$2`, ``referenceValue$+-percentage$numberOfSteps``,
     resulting in a variation of relTh from 0.5 to 1.5m in two steps.
 
