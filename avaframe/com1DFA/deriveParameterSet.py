@@ -351,7 +351,7 @@ def splitVariationToArraySteps(value, key, fullCfg):
     return itemsArray
 
 
-def setThicknessValueFromVariation(key, cfg, simType, row):
+def setThicknessValueFromVariation(key, cfg, simType, row, varType):
     """ set thickness value for thickness parameter for all features if multiple according to
         desired variation
 
@@ -359,6 +359,14 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
         ------------
         key: str
             thickness variation info
+        cfg: configparser object
+            configuration settings of comModule
+        simType: str
+            simulation type (null, ent, entres, ..)
+        row: pandas row
+            info on variation of parameters
+        varType: str
+            type of variation (range or percent)
 
         Returns
         --------
@@ -368,50 +376,79 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
     """
 
     # only add entries to cfg if appropriate for chosen simType (e.g. entTh if ent or entres run)
-    for varType in ['Range', 'Percent']:
-        entCondition = (key == ('entTh%sVariation' % varType) and 'ent' in simType)
-        secRelCondition = (key == ('secondaryRelTh%sVariation' % varType) and cfg['GENERAL']['secRelArea'] == 'True')
-        relCondition = (key == ('relTh%sVariation' % varType))
+    entCondition = (key == ('entTh%sVariation' % varType) and 'ent' in simType)
+    secRelCondition = (key == ('secondaryRelTh%sVariation' % varType) and cfg['GENERAL']['secRelArea'] == 'True')
+    relCondition = (key == ('relTh%sVariation' % varType))
 
-        # fetch variation factor
-        variationFactor = float(row._asdict()[key])
+    # fetch variation factor
+    variationFactor = float(row._asdict()[key])
 
-        # update thickness values according to variation
-        if entCondition or secRelCondition or relCondition:
-            thType = key.split(varType)[0]
-            thFlag = thType + 'FromShp'
+    # update thickness values according to variation
+    if entCondition or secRelCondition or relCondition:
+        thType = key.split(varType)[0]
+        thFlag = thType + 'FromShp'
 
-            # add thickness values for all features if thFromShape = True
-            if cfg['GENERAL'][thFlag] == 'True':
-                thId = thType + 'Id'
-                thThickness = thType + 'Thickness'
-                thicknessList = cfg['INPUT'][thThickness].split('|')
-                idList = cfg['INPUT'][thId].split('|')
-                for count, id in enumerate(idList):
-                    thNameId = thType + id
+        # add thickness values for all features if thFromShape = True
+        if cfg['GENERAL'][thFlag] == 'True':
+            cfg = setVariationForAllFeatures(cfg, key, thType, varType, variationFactor)
 
-                    # set thickness value per feature and fetch value for updating percent/range varation
-                    if varType == 'Percent':
-                        # set thickness value in in file for the feature with id Id
-                        cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
-                        variationIni = setPercentVariation(cfg, variationFactor, thNameId)
+        else:
+            # update ini thValue if thFromShape=False
+            if varType == 'Range':
+                cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) + variationFactor)
+            elif varType == 'Percent':
+                cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
+            # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
+            cfg['GENERAL'][key] = ''
 
-                    elif varType == 'Range':
-                        # set thickness value in in file for the feature with id Id
-                        cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
-                        variationIni = setRangeVariation(cfg, variationFactor, thNameId)
+    return cfg
 
-                # update variation parameter value in config file
-                cfg['GENERAL'][key] = variationIni
 
-            else:
-                # update ini thValue if thFromShape=False
-                if varType == 'Range':
-                    cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) + variationFactor)
-                elif varType == 'Percent':
-                    cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
-                # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
-                cfg['GENERAL'][key] = ''
+def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
+    """ set thickness value for all features according to varType variation
+
+        Parameters
+        ----------
+        cfg: configparser
+            configuration settings of comModule for thickness
+        key: str
+            name of parameter
+        thType: str
+            thickness type (e.g. relTh, entTh, ...)
+        varType: str
+            type of variation (range or percent)
+        variationFactor: float
+            value used for variation
+
+        Returns
+        --------
+        cfg: configparser
+            updated configuration settings regarding thickness settings
+    """
+
+
+    # fetch thickness feature ids
+    idList = cfg['INPUT'][thType + 'Id'].split('|')
+    # fetch thickness list
+    thicknessList = cfg['INPUT'][thType + 'Thickness'].split('|')
+
+    # loop over all features
+    for count, id in enumerate(idList):
+        thNameId = thType + id
+
+        # set thickness value per feature and fetch value for updating percent/range varation
+        if varType == 'Percent':
+            # set thickness value in in file for the feature with id Id
+            cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
+            variationIni = setPercentVariation(cfg, variationFactor, thNameId)
+
+        elif varType == 'Range':
+            # set thickness value in in file for the feature with id Id
+            cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
+            variationIni = setRangeVariation(cfg, variationFactor, thNameId, thType)
+
+    # update variation parameter value in config file
+    cfg['GENERAL'][key] = variationIni
 
     return cfg
 
@@ -439,7 +476,6 @@ def setPercentVariation(cfg, variationFactor, thNameId):
         variationIni: str
             percentVariation parameter value for this sim to be added in cfg file
     """
-
 
     # set percentVaration parameter to actual variation in percent$steps
     if variationFactor == 1.:

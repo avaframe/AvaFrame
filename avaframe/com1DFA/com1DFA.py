@@ -2120,8 +2120,12 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
                        'entThRangeVariation', 'secondaryRelThRangeVariation']
             if parameter in keyList:
                 # set thickness value according to percent variation info
+                if 'Range' in parameter:
+                    typeVar = 'Range'
+                else:
+                    typeVar = 'Percent'
                 cfgSim = dP.setThicknessValueFromVariation(parameter, cfgSim,
-                    cfgSim['GENERAL']['simTypeActual'], row)
+                    cfgSim['GENERAL']['simTypeActual'], row, typeVar)
             else:
                 cfgSim['GENERAL'][parameter] = row._asdict()[parameter]
 
