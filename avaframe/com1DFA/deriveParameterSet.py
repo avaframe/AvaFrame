@@ -351,7 +351,7 @@ def splitVariationToArraySteps(value, key, fullCfg):
     return itemsArray
 
 
-def setThicknessValueFromVariation(key, cfg, simType, row, varType):
+def setThicknessValueFromVariation(key, cfg, simType, row):
     """ set thickness value for thickness parameter for all features if multiple according to
         desired variation
 
@@ -365,8 +365,6 @@ def setThicknessValueFromVariation(key, cfg, simType, row, varType):
             simulation type (null, ent, entres, ..)
         row: pandas row
             info on variation of parameters
-        varType: str
-            type of variation (range or percent)
 
         Returns
         --------
@@ -374,6 +372,12 @@ def setThicknessValueFromVariation(key, cfg, simType, row, varType):
             updated dict with info on thickness
 
     """
+
+    # fetch info if variation is performed based on a given range or percentage
+    if 'Range' in key:
+        varType = 'Range'
+    else:
+        varType = 'Percent'
 
     # only add entries to cfg if appropriate for chosen simType (e.g. entTh if ent or entres run)
     entCondition = (key == ('entTh%sVariation' % varType) and 'ent' in simType)
@@ -400,6 +404,9 @@ def setThicknessValueFromVariation(key, cfg, simType, row, varType):
                 cfg['GENERAL'][thType] = str(float(cfg['GENERAL'][thType]) * variationFactor)
             # set parameter to '' as new thickness value is set for cfg['GENERAL'][thType] and read from here
             cfg['GENERAL'][key] = ''
+
+    else:
+        log.debug('%s set but simType is: %s so it is not relevant' % (key, simType))
 
     return cfg
 
