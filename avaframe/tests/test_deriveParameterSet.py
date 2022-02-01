@@ -271,20 +271,20 @@ def test_setThicknessValueFromVariation():
 
     for row in simDF.itertuples():
         if row._asdict()['ind'] == 0:
-            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row)
+            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row, 'Percent')
 
             assert cfg['GENERAL']['relThPercentVariation'] == '-40.0$1'
             assert cfg['GENERAL']['relTh0'] == '0.72'
             assert cfg['GENERAL']['relTh1'] == '0.84'
         elif row._asdict()['ind'] == 1:
-            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row)
+            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row, 'Percent')
 
             assert cfg['GENERAL']['relThPercentVariation'] == ''
             assert cfg['GENERAL']['relTh0'] == '1.2'
             assert cfg['GENERAL']['relTh1'] == '1.4'
 
         elif row._asdict()['ind'] == 2:
-            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row)
+            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row, 'Percent')
 
             assert cfg['GENERAL']['relThPercentVariation'] == '+39.99999999999999$1'
             assert cfg['GENERAL']['relTh0'] == '1.68'
@@ -301,21 +301,21 @@ def test_setThicknessValueFromVariation():
     for row in simDF.itertuples():
         if row._asdict()['ind'] == 0:
             cfg['GENERAL']['relTh'] = '1.'
-            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row)
+            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row, 'Percent')
 
             assert cfg['GENERAL']['relThPercentVariation'] == ''
             assert cfg['GENERAL']['relTh'] == '0.6'
 
         elif row._asdict()['ind'] == 1:
             cfg['GENERAL']['relTh'] = '1.'
-            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row)
+            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row, 'Percent')
 
             assert cfg['GENERAL']['relThPercentVariation'] == ''
             assert cfg['GENERAL']['relTh'] == '1.0'
 
         elif row._asdict()['ind'] == 2:
             cfg['GENERAL']['relTh'] = '1.'
-            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row)
+            cfg = dP.setThicknessValueFromVariation(key, cfg, 'null', row, 'Percent')
 
             assert cfg['GENERAL']['relThPercentVariation'] == ''
             assert cfg['GENERAL']['relTh'] == '1.4'
