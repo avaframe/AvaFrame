@@ -390,26 +390,18 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
                 for count, id in enumerate(idList):
                     thNameId = thType + id
 
+                    # set thickness value per feature and fetch value for updating percent/range varation
                     if varType == 'Percent':
+                        # set thickness value in in file for the feature with id Id
                         cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) * variationFactor)
-                        # set percentVaration parameter to actual variation in percent$steps
-                        if variationFactor == 1.:
-                            # if variation is 0% set percentVaration = ''
-                            variationIni = ''
-                        elif variationFactor < 1:
-                            variationIni = '-' + str((1. - variationFactor) * 100) + '$1'
-                        elif  variationFactor > 1:
-                            variationIni = '+' + str((variationFactor - 1.) * 100) + '$1'
-                    elif varType == 'Range':
-                        cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
-                        # set percentVaration parameter to actual variation in percent$steps
-                        if variationFactor == 0.:
-                            # if variation is 0 set RangeVaration = ''
-                            variationIni = ''
-                        else:
-                            variationIni = str(variationFactor) + '$1'
+                        variationIni = setPercentVariation(cfg, variationFactor, thNameId)
 
-                # update parameter value
+                    elif varType == 'Range':
+                        # set thickness value in in file for the feature with id Id
+                        cfg['GENERAL'][thNameId] = str(float(thicknessList[count]) + variationFactor)
+                        variationIni = setRangeVariation(cfg, variationFactor, thNameId)
+
+                # update variation parameter value in config file
                 cfg['GENERAL'][key] = variationIni
 
             else:
@@ -422,6 +414,77 @@ def setThicknessValueFromVariation(key, cfg, simType, row):
                 cfg['GENERAL'][key] = ''
 
     return cfg
+
+
+def setPercentVariation(cfg, variationFactor, thNameId):
+    """ determine thickness value if set from percentVariation and set from shp file and update
+        percentVariation value that is used for exactely this sim
+
+        this is required for reproducing this sim when using its configuration file - so that in the
+        percentVariation parameter it is only one value e.g. +50$1 so +50% in 1 step
+
+        Parameters
+        -----------
+        cfg: configparser object
+            comModule configuration file with info on thickness settings
+        variationFactor: float
+            value of percent variation in terms of required multiplication of reference value
+            (e.g. variationFactor= 0.5 - a variation of 50% performed by multiplication of reference
+            value times variationFactor)
+        thNameId: str
+            name of thickness feature (e.g. relTh0 if release thickness and feature with id 0)
+
+        Returns
+        ---------
+        variationIni: str
+            percentVariation parameter value for this sim to be added in cfg file
+    """
+
+
+    # set percentVaration parameter to actual variation in percent$steps
+    if variationFactor == 1.:
+        # if variation is 0% set percentVaration = ''
+        variationIni = ''
+    elif variationFactor < 1:
+        variationIni = '-' + str((1. - variationFactor) * 100) + '$1'
+    elif  variationFactor > 1:
+        variationIni = '+' + str((variationFactor - 1.) * 100) + '$1'
+
+    return variationIni
+
+
+def setRangeVariation(cfg, variationFactor, thNameId):
+    """ determine thickness value if set from rangeVariation and set from shp file and update
+        rangeVariation value that is used for exactely this sim
+
+        this is required for reproducing this sim when using its configuration file - so that in the
+        rangeVariation parameter it is only one value e.g. +0.5$1 so +0.5m in 1 step
+
+        Parameters
+        -----------
+        cfg: configparser object
+            comModule configuration file with info on thickness settings
+        variationFactor: float
+            value of range variation in terms of required addition to the reference value
+            (e.g. variationFactor= +0.5 - a variation of +0.5m performed by addition of reference
+            value + variationFactor)
+        thNameId: str
+            name of thickness feature (e.g. relTh0 if release thickness and feature with id 0)
+
+        Returns
+        ---------
+        variationIni: str
+            rangeVariation parameter value for this sim to be added in cfg file
+    """
+
+    # set rangeVaration parameter to actual variation in range$steps
+    if variationFactor == 0.:
+        # if variation is 0 set RangeVaration = ''
+        variationIni = ''
+    else:
+        variationIni = str(variationFactor) + '$1'
+
+    return variationIni
 
 
 def appendShpThickness(cfg):
