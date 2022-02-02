@@ -185,7 +185,7 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     if len(resAnalysisDF.index) == 2:
         outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
     else:
-        outAimec.visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
+        outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
 
     outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
 
@@ -277,7 +277,7 @@ def AIMECIndividual(pathDict, inputsDF, cfg):
     if len(resAnalysisDF.index) == 2:
         outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
     else:
-        outAimec.visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
+        outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
 
     outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
 
@@ -413,10 +413,8 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
         # analyze all fields
         resAnalysisDF = aT.analyzeField(simName, rasterTransfo, newRaster, resType, resAnalysisDF)
 
-
     # compute runout based on resType
-    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters['newRasterDEM'], simName)
-
+    resAnalysisDF = aT.computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, simName)
     if flagMass:
         # perform mass analysis
         fnameMass = inputsDFrow['massBal']
