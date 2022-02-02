@@ -35,6 +35,7 @@ from avaframe.in1Data import getInput as gI
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
 from avaframe.com1DFA import particleInitialisation as pI
+from avaframe.com1DFA.checkIniFiles import checkIniFiles
 
 #######################################
 # Set flags here
@@ -146,7 +147,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
         simDFOld, simNameOld = cfgUtils.readAllConfigurationInfo(avalancheDir, specDir='')
 
         # prepare simulations to run (only the new ones)
-        simDict = prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
+        _, simDict = prepareVarSimDict(modCfg, inputSimFiles, variationDict, simNameOld=simNameOld)
 
         # is there any simulation to run?
         if bool(simDict):
@@ -160,6 +161,9 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
 
                 # load configuration dictionary for cuSim
                 cfg = simDict[cuSim]['cfgSim']
+
+                # Check if .ini files are were parametered.
+                checkIniFiles(cfg)
 
                 # save configuration settings for each simulation
                 simHash = simDict[cuSim]['simHash']
@@ -1234,7 +1238,7 @@ def DFAIterate(cfg, particles, fields, dem):
     # make sure to save all desiered resuts for first and last time step for
     # the report
     resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
-    # always add particles to first and last time step 
+    # always add particles to first and last time step
     resTypesLast = list(set(resTypes + resTypesReport + ['particles']))
     # derive friction type
     # turn friction model into integer
@@ -2096,6 +2100,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     # generate a dictionary of full simulation info for all simulations to be performed
     # simulation info must contain: simName, releaseScenario, relFile, configuration as dictionary
     simDict = {}
+    IDList = []
 
     # create release scenario name for simulation name
     rel = inputSimFiles['relFiles'][0]
@@ -2142,6 +2147,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
+        IDList.append(simHash)
         simName = (relNameSim + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' +
                    simHash)
         # check if simulation exists. If yes do not append it
@@ -2156,7 +2162,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     for key in simDict:
         log.info('Simulation: %s' % key)
 
-    return simDict
+    return IDList, simDict
 
 
 def getSimTypeList(simTypeList, inputSimFiles):
