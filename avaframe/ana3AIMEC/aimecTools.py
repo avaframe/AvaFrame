@@ -141,14 +141,17 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             if typeCP == str:
                 sortingValues = [x.lower() for x in sortingParameter]
                 indexRef = sortingValues.index(typeCP(cfgSetup['referenceSimValue'].lower()))
+                valRef = sortingParameter[indexRef]
             elif typeCP in [float, int]:
                 colorValues = np.asarray(sortingParameter)
                 indexRef = (np.abs(colorValues - typeCP(cfgSetup['referenceSimValue']))).argmin()
+                valRef = colorValues[indexRef]
             else:
                 indexRef = sortingParameter.index(typeCP(cfgSetup['referenceSimValue']))
+                valRef = sortingParameter[indexRef]
             log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
-                     (varParList[0], cfgSetup['referenceSimValue'], str(colorValues[indexRef])))
-            refSimulation = configurationDF[configurationDF[varParList[0]] == colorValues[indexRef]]['simName'].to_list()[0]
+                     (varParList[0], cfgSetup['referenceSimValue'], str(valRef)))
+            refSimulation = configurationDF[configurationDF[varParList[0]] == valRef]['simName'].to_list()[0]
             colorVariation = True
         else:
             # reference simulation
@@ -699,7 +702,7 @@ def analyzeMass(fnameMass, simName, refSimName, resAnalysisDF, time=None):
     return resAnalysisDF, time
 
 
-def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedDEMRasters, simName):
+def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, simName):
     """ Compute runout based on peak field results
 
     Parameters
@@ -708,14 +711,16 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedDEMRasters,
         aimec analysis configuration
     rasterTransfo: dict
         transformation information
-    thresholdValue: float
-        numerical value of the threshold limit to use
     resAnalysisDF : dataFrame
         analysis results from aimec containing:
         PResCrossMax: 1D numpy array
             max of the peak result in each cross section
         PResCrossMean: 1D numpy array
             mean of the peak result in each cross section
+    transformedRasters: dict
+        dict with transformed dem and peak results
+    simName: str
+        dimulation ID
 
     Returns
     -------
@@ -757,9 +762,13 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedDEMRasters,
     n = int(np.floor(n/2)+1)
     x = rasterTransfo['x']
     y = rasterTransfo['y']
+    gridx = rasterTransfo['gridx']
+    gridy = rasterTransfo['gridy']
 
     resType = cfgSetup['resType']
     thresholdValue = cfgSetup.getfloat('thresholdValue')
+    transformedDEMRasters = transformedRasters['newRasterDEM']
+    PResRasters = transformedRasters['newRaster' + resType.upper()]
     PResCrossMax = resAnalysisDF.loc[simName, resType + 'CrossMax']
     PResCrossMean = resAnalysisDF.loc[simName, resType + 'CrossMean']
 
@@ -782,8 +791,10 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedDEMRasters,
         cUpperm = 0
         cLowerm = 0
     resAnalysisDF.loc[simName, 'sRunout'] = scoord[cLower]
-    resAnalysisDF.loc[simName, 'xRunout'] = x[cLower]
-    resAnalysisDF.loc[simName, 'yRunout'] = y[cLower]
+    index = np.nanargmax(PResRasters[cLower, :])
+    resAnalysisDF.loc[simName, 'lRunout'] = lcoord[index]
+    resAnalysisDF.loc[simName, 'xRunout'] = gridx[cLower, index]
+    resAnalysisDF.loc[simName, 'yRunout'] = gridy[cLower, index]
     resAnalysisDF.loc[simName, 'sMeanRunout'] = scoord[cLowerm]
     resAnalysisDF.loc[simName, 'xMeanRunout'] = x[cLowerm]
     resAnalysisDF.loc[simName, 'yMeanRunout'] = y[cLowerm]

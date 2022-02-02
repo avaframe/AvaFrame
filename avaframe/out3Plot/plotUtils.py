@@ -456,9 +456,9 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, ti
     cbar.outline.set_visible(False)
     # make sure the cbar title does not overlap with the cbar itself
     if extend in ['both', 'max']:
-        pad = 15
+        pad = 25
     else:
-        pad = 0
+        pad = 5
     cbar.ax.set_title('[' + myUnit + ']', pad=pad)
     if title != '':
         cbar.set_label(title)
@@ -558,7 +558,7 @@ def getColorbarTicksForStrings(varVal):
     itemsList = []
     itemDict = {}
     for index, item in enumerate(varVal):
-        if item not in varVal[:index]:
+        if item not in itemsList:
             countItems = countItems + 1
             itemDict[item] = countItems
             itemsList.append(item)

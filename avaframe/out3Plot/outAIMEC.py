@@ -18,6 +18,7 @@ from matplotlib import cm
 # Local imports
 import avaframe.out3Plot.plotUtils as pU
 from avaframe.out3Plot import statsPlots as sPlot
+from avaframe.in3Utils import cfgUtils
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -189,7 +190,7 @@ def visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict):
     return outFilePath
 
 
-def visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict):
+def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict):
     """
     Plot and save the Peak field  distribution after coord transfo
     used when more then 2 simulations are compared
@@ -198,7 +199,9 @@ def visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
     ----------
     rasterTransfo: dict
         domain transformation information
-    resAnalysis: dict
+    inputsDF: dataFrame
+        aimec inputs DF
+    resAnalysis: dataFrame
         results from Aimec analysis:
             numpy array with max peak field (of the 'resType') along path for each file to analyse
             runout for 'resType'
@@ -212,6 +215,8 @@ def visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
     """
     ####################################
     # Get input data
+    varParList = cfgSetup['varParList'].split('|')
+    paraVar = varParList[0]
     percentile = cfgSetup.getfloat('percentile')
     resType = cfgSetup['resType']
     thresholdValue = cfgSetup['thresholdValue']
@@ -219,7 +224,6 @@ def visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
     name = pU.cfgPlotUtils['name' + resType]
     # read paths
     projectName = pathDict['projectName']
-    refSimName = pathDict['refSimulation']
     # read data
     s = rasterTransfo['s']
     l = rasterTransfo['l']
@@ -232,28 +236,70 @@ def visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
     pMean = np.mean(pprCrossMax, axis=0)
     pMedian = np.median(pprCrossMax, axis=0)
     pPercentile = np.percentile(pprCrossMax, [percentile/2, 50, 100-percentile/2], axis=0)
+    maskedArray = np.ma.masked_where(rasterdataPres <= float(thresholdValue), rasterdataPres)
 
-    maskedArray = np.ma.masked_where(rasterdataPres == 0, rasterdataPres)
+    # get plots limits
+    indYMin = max(0, indStartOfRunout-5)
+    yMin = s[indYMin]
+    yMax = max(runout) + 25
+    indXMin = max(0, np.min(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0])-5)
+    xMin = l[indXMin]
+    indXMax = min(np.max(np.nonzero(np.any(maskedArray[indStartOfRunout:, :] > 0, axis=0))[0])+5, len(l)-1)
+    xMax = l[indXMax]
 
+    # get colormap for raster plot
     cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps[resType], np.nanmin(
-        maskedArray), np.nanmax(maskedArray), continuous=pU.contCmap)
+        maskedArray[indYMin:, indXMin:indXMax]), np.nanmax(maskedArray[indYMin:, indXMin:indXMax]), continuous=pU.contCmap)
     cmap.set_bad('w', 1.)
+
+    # Get colors for scatter
+    itemsList = ''
+    unitSC = cfgSetup['unit']
+    if 'colorParameter' in pathDict:
+        if pathDict['colorParameter'] is False:
+            displayColorBar = False
+            nSamples = np.size(runout)
+            colorSC = 0.5 * np.ones(nSamples)
+            cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+        else:
+            # newDF = cfgUtils.convertDF2numerics(inputsDF[varParList[0]])
+            typeCP = type(inputsDF[varParList[0]][0])
+            if typeCP == str:
+                itemsList, ticksSC, colorSC = pU.getColorbarTicksForStrings(inputsDF[varParList[0]])
+                cmapSC, _, _, normSC = pU.makeColorMap(pU.cmapVar, np.amin(colorSC), np.amax(colorSC), continuous=True)
+                displayColorBar = True
+                unitSC = '-'
+            else:
+                colorSC = inputsDF[varParList[0]].to_numpy()
+                cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, np.nanmin(colorSC), np.nanmax(colorSC), continuous=True)
+                displayColorBar = True
+    else:
+        displayColorBar = False
+        nSamples = np.size(runout)
+        colorSC = 0.5 * np.ones(nSamples)
+        cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
 
     ############################################
     # Figure: Analysis runout
     fig = plt.figure(figsize=(pU.figW*2, pU.figH))
     ax1 = plt.subplot(121)
 
-    ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max')
-    ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean')
-    ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min')
+    ax1.axhline(y=np.max(runout), color='k', linestyle='-.', label='runout max %.0f m' % np.max(runout))
+    ax1.axhline(y=np.average(runout), color='k', linestyle='-', label='runout mean %.0f m' % np.mean(runout))
+    ax1.axhline(y=np.min(runout), color='k', linestyle=':', label='runout min %.0f m' % np.min(runout))
 
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
     ref5, im = pU.NonUnifIm(ax1, l, s, maskedArray, 'l [m]', 's [m]',
-                            extent=[l.min(), l.max(), s.min(), s.max()],
+                            extent=[xMin, xMax, yMin, yMax],
                             cmap=cmap, norm=norm)
+    sc = ax1.scatter(resAnalysisDF['lRunout'], resAnalysisDF['sRunout'],
+                     c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0], label='runout points')
 
+    if displayColorBar:
+        pU.addColorBar(sc, ax1, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
+    ax1.set_xlim([xMin, xMax])
+    ax1.set_ylim([yMin, yMax])
     ax1.set_title('Peak Pressure 2D plot for the reference')
     ax1.legend(loc=4)
     pU.putAvaNameOnPlot(ax1, projectName)
@@ -269,7 +315,7 @@ def visuRunoutStat(rasterTransfo, resAnalysisDF, newRasters, cfgSetup, pathDict)
     ax2.plot(pMean, s, color='b', label='mean')
 
     ax2.set_title('%s distribution along the path between runs' % name)
-    ax2.legend(loc=4)
+    ax2.legend(loc='upper right')
     ax2.set_ylabel('s [m]')
     ax2.set_ylim([s.min(), s.max()])
     ax2.set_xlim(auto=True)
@@ -720,25 +766,11 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     rTPRef = resAnalysisDF.loc[refSimName, 'TP'] / areaSum
     rFPRef = resAnalysisDF.loc[refSimName, 'FP'] / areaSum
 
-    # prepare for plot
-    if flag == 2:
-        title = 'Visualizing EGU growth index data'
-        tipo = 'growthIndex'
-        GI = resAnalysisDF['growthIndex'].to_numpy()
-        data = GI
-        dataRef = resAnalysisDF.loc[refSimName, 'growthIndex']
-        yaxis_label = 'growth index [GI]'
-
-    elif flag == 3:
-        title = 'Visualizing max ' + name + ' data'
-        tipo = 'relMax' + resType + '_thresholdValue' + str(thresholdValue).replace('.', 'p')
-        data = maxMaxDPPR / maxMaxDPPRRef
-        dataRef = maxMaxDPPRRef / maxMaxDPPRRef
-        yaxis_label = 'relative max ' + name + ' [-]'
-
-    else:
-        log.error('Wrong flag')
-        return None
+    title = 'Visualizing max ' + name + ' data'
+    tipo = 'relMax' + resType + '_thresholdValue' + str(thresholdValue).replace('.', 'p')
+    data = maxMaxDPPR / maxMaxDPPRRef
+    dataRef = maxMaxDPPRRef / maxMaxDPPRRef
+    yaxis_label = 'relative max ' + name + ' [-]'
 
     log.info(title)
 
@@ -746,35 +778,33 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     plotDensity = 0
     if (nSim > cfgFlags.getfloat('nDensityPlot')):
         plotDensity = 1
-
+    # Get colors for scatter
+    itemsList = ''
+    unitSC = cfgSetup['unit']
     if 'colorParameter' in pathDict:
         if pathDict['colorParameter'] is False:
-            nSamples = np.size(runout)
-            colors = np.zeros(nSamples)
-            cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
             displayColorBar = False
-            dataFrame = False
+            nSamples = np.size(runout)
+            colorSC = 0.5 * np.ones(nSamples)
+            cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
         else:
-            typeCP = inputsDF[varParList[0]].dtypes
+            # newDF = cfgUtils.convertDF2numerics(inputsDF[varParList[0]])
+            typeCP = type(inputsDF[varParList[0]][0])
             if typeCP == str:
-                keys = list(set(inputsDF[varParList[0]].to_numpy()))
-                nKeys = len(keys)
-                cmap = pU.cmapAimec(np.linspace(0, 1, nKeys, dtype=float))
-                df = pd.DataFrame(dict(runout=runout, data=data, rFP=rFP,
-                                       rTP=rTP, colorParameter=pathDict['colorParameter']))
-                dataFrame = True
-                displayColorBar = False
-            else:
-                colors = inputsDF[varParList[0]].to_numpy()
-                cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, np.nanmin(colors), np.nanmax(colors), continuous=True)
+                itemsList, ticksSC, colorSC = pU.getColorbarTicksForStrings(inputsDF[varParList[0]])
+                cmapSC, _, _, normSC = pU.makeColorMap(pU.cmapVar, np.amin(colorSC), np.amax(colorSC), continuous=True)
                 displayColorBar = True
-                dataFrame = False
+                unitSC = '-'
+            else:
+                colorSC = inputsDF[varParList[0]].to_numpy()
+                cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, np.nanmin(colorSC), np.nanmax(colorSC), continuous=True)
+                displayColorBar = True
     else:
         displayColorBar = False
-        dataFrame = False
         nSamples = np.size(runout)
-        colors = np.zeros(nSamples)
-        cmap, _, ticks, norm = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+        colorSC = 0.5 * np.ones(nSamples)
+        cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+
     #######################################
     # Final result diagram - z_profile+data
 
@@ -806,13 +836,12 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     plt.ylim([math.floor(min(zPath)/10)*10, math.ceil(max(zPath)/10)*10])
 
     if not plotDensity:
-        if dataFrame:
-            scatter = ax1.scatter(resAnalysisDF['sRunout'], resAnalysisDF['tipo'], c=inputsDF[varParList[0]],
-                                  cmap=cmap, norm=norm, marker=pU.markers[0])
-        else:
-            sc = ax1.scatter(runout, data, marker=pU.markers[0], c=colors, cmap=cmap)
-            if displayColorBar:
-                pU.addColorBar(sc, ax2, ticks, unit, title=paraVar, pad=0.08)
+        sc = ax1.scatter(resAnalysisDF['sRunout'], data, c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0],
+                         label='runout points')
+
+        if displayColorBar:
+            pU.addColorBar(sc, ax1, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
+
         ax1.plot(runoutRef, dataRef, color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
         ax1.legend(loc=4)
 
@@ -840,13 +869,11 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
         cbar = plt.colorbar(dataDensity, orientation='horizontal')
         cbar.ax.set_ylabel('hit rate density')
     else:
-        if dataFrame:
-            sns.scatterplot('rFP', 'rTP', marker=pU.markers[0],
-                            data=df, hue='colorParameter', palette=cmap, ax=ax1)
-        else:
-            sc = ax1.scatter(rFP, rTP, marker=pU.markers[0], c=colors, cmap=cmap)
-            if displayColorBar:
-                pU.addColorBar(sc, ax1, ticks, unit, title=paraVar)
+        sc = ax1.scatter(rFP, rTP, c=colorSC, cmap=cmapSC, norm=normSC, marker=pU.markers[0], label='runout points')
+
+        if displayColorBar:
+            pU.addColorBar(sc, ax1, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
+
         ax1.plot(rFPRef, rTPRef, color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
         ax1.legend(loc=4)
 
