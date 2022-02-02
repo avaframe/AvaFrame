@@ -101,7 +101,7 @@ def test_analyzeArea(capfd):
     print(resAnalysisDF['yRunout'])
     assert (resAnalysisDF['sRunout'][0] == 449) and (
             resAnalysisDF['xRunout'][1] == 419) and (
-            resAnalysisDF['yRunout'][0] == 50) and (
+            resAnalysisDF['yRunout'][0] == 31) and (
             resAnalysisDF['maxpprCrossMax'][1] == 1)
     print(resAnalysisDF['TP'])
     print(resAnalysisDF['FN'])
