@@ -149,3 +149,50 @@ def test_makeColorMap():
     with pytest.raises(FileNotFoundError) as e:
         assert pU.makeColorMap(colormapDict6, levMin, levMax, continuous=True)
     assert str(e.value) == 'You need a `colors` list or a `cmap` to be able to create the colormap'
+
+
+def test_getColors4Scatter(tmp_path):
+    """ test put avaName on a plot """
+
+    # no parameter variation, feed a none to the function
+    values = None
+    nSamples = np.size(values)
+    unitSC = ''
+    cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
+    print('colorSC', colorSC)
+    print('displayColorBar', displayColorBar)
+
+    assert np.allclose(colorSC, np.array([0.5, 0.5, 0.5, 0.5, 0.5]))
+    assert displayColorBar is False
+
+    # parameter variation, feed stings
+    values = ['a', 'b', 'c', 'c', 'b', 'b']
+    nSamples = np.size(values)
+    unitSC = ''
+    cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
+    print('itemsList', itemsList)
+    print('colorSC', colorSC)
+    print('ticksSC', ticksSC)
+    print('normSC', normSC)
+    print('displayColorBar', displayColorBar)
+
+    assert np.allclose(colorSC, np.array([1., 2., 3., 3., 2., 2.]))
+    assert itemsList == ['a', 'b', 'c']
+    assert np.allclose(ticksSC, np.array([1., 2., 3.]))
+    assert displayColorBar is True
+
+    # parameter variation, feed floats
+    values = np.array([1, 2, 3, -1, 0, 5])
+    nSamples = np.size(values)
+    unitSC = 'm'
+    cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
+    print('itemsList', itemsList)
+    print('colorSC', colorSC)
+    print('ticksSC', ticksSC)
+    print('normSC', normSC)
+    print('displayColorBar', displayColorBar)
+
+    assert np.allclose(colorSC, np.array([1,  2,  3, -1,  0,  5]))
+    assert itemsList == ''
+    assert ticksSC is None
+    assert displayColorBar is True

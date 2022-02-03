@@ -253,31 +253,16 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     cmap.set_bad('w', 1.)
 
     # Get colors for scatter
-    itemsList = ''
     unitSC = cfgSetup['unit']
+    nSamples = np.size(runout)
     if 'colorParameter' in pathDict:
         if pathDict['colorParameter'] is False:
-            displayColorBar = False
-            nSamples = np.size(runout)
-            colorSC = 0.5 * np.ones(nSamples)
-            cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+            values = None
         else:
             values = inputsDF[varParList[0]]
-            typeCP = type(values[0])
-            if typeCP == str:
-                itemsList, ticksSC, colorSC = pU.getColorbarTicksForStrings(values)
-                cmapSC, _, _, normSC = pU.makeColorMap(pU.cmapVar, np.amin(colorSC), np.amax(colorSC), continuous=True)
-                displayColorBar = True
-                unitSC = '-'
-            else:
-                colorSC = values.to_numpy()
-                cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, np.nanmin(colorSC), np.nanmax(colorSC), continuous=True)
-                displayColorBar = True
     else:
-        displayColorBar = False
-        nSamples = np.size(runout)
-        colorSC = 0.5 * np.ones(nSamples)
-        cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+        values = None
+    cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
 
     ############################################
     # Figure: Analysis runout
@@ -504,6 +489,9 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     thresholdArray = inputs['thresholdArray']
     thresholdValue = thresholdArray[-1]
 
+    yLimRef = s[np.max(np.nonzero(np.any(refData > 0, axis=1))[0])] + 20
+    yLim = s[max(np.max(np.nonzero(np.any(refData > 0, axis=1))[0]),
+              np.max(np.nonzero(np.any(compData > 0, axis=1))[0]))] + 20
     ############################################
     # Figure: Raster comparison (mask for the pThreshold given in the ini file)
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
@@ -515,7 +503,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     cmap.set_bad(color='w')
     refDataPlot = np.ma.masked_where(refData == 0.0, refData)
     ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',
-                            extent=[l.min(), l.max(), s.min(), s.max()],
+                            extent=[l.min(), l.max(), 0, yLimRef],
                             cmap=cmap, norm=norm)
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
@@ -523,9 +511,7 @@ def visuComparison(rasterTransfo, inputs, pathDict):
                   + '\n' + '%s threshold: %.1f %s' % (name, thresholdValue, unit))
     pU.addColorBar(im, ax1, ticks, unit)
 
-    yLim = s[max(np.max(np.nonzero(np.any(refData > 0, axis=1))[0]),
-                 np.max(np.nonzero(np.any(compData > 0, axis=1))[0]))]
-    ax1.set_ylim([0, yLim])
+    ax1.set_ylim([0, yLimRef])
     ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
 
@@ -567,13 +553,13 @@ def visuComparison(rasterTransfo, inputs, pathDict):
     cmap.set_bad(color='w')
     refDataPlot = np.ma.masked_where(refData == 0.0, refData)
     ref0, im = pU.NonUnifIm(ax1, l, s, refDataPlot, 'l [m]', 's [m]',
-                            extent=[l.min(), l.max(), 0, yLim],
+                            extent=[l.min(), l.max(), 0, yLimRef],
                             cmap=cmap, norm=norm)
     ax1.axhline(y=s[indStartOfRunout], color='k', linestyle='--',
                 label='start of run-out area point : %.1f °' % rasterTransfo['startOfRunoutAreaAngle'])
     ax1.set_title('Reference %s' % name)
     pU.addColorBar(im, ax1, ticks, unit)
-    ax1.set_ylim([0, yLim])
+    ax1.set_ylim([0, yLimRef])
     ax1.legend(loc='lower right')
     pU.putAvaNameOnPlot(ax1, projectName)
 
@@ -779,32 +765,16 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
     if (nSim > cfgFlags.getfloat('nDensityPlot')):
         plotDensity = 1
     # Get colors for scatter
-    itemsList = ''
     unitSC = cfgSetup['unit']
+    nSamples = np.size(runout)
     if 'colorParameter' in pathDict:
         if pathDict['colorParameter'] is False:
-            displayColorBar = False
-            nSamples = np.size(runout)
-            colorSC = 0.5 * np.ones(nSamples)
-            cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
+            values = None
         else:
-            # newDF = cfgUtils.convertDF2numerics(inputsDF[varParList[0]])
-            typeCP = type(inputsDF[varParList[0]][0])
-            if typeCP == str:
-                itemsList, ticksSC, colorSC = pU.getColorbarTicksForStrings(inputsDF[varParList[0]])
-                cmapSC, _, _, normSC = pU.makeColorMap(pU.cmapVar, np.amin(colorSC), np.amax(colorSC), continuous=True)
-                displayColorBar = True
-                unitSC = '-'
-            else:
-                colorSC = inputsDF[varParList[0]].to_numpy()
-                cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, np.nanmin(colorSC), np.nanmax(colorSC), continuous=True)
-                displayColorBar = True
+            values = inputsDF[varParList[0]]
     else:
-        displayColorBar = False
-        nSamples = np.size(runout)
-        colorSC = 0.5 * np.ones(nSamples)
-        cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
-
+        values = None
+    cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar = pU.getColors4Scatter(values, nSamples, unitSC)
     #######################################
     # Final result diagram - z_profile+data
 
@@ -840,7 +810,7 @@ def resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysi
                          label='runout points')
 
         if displayColorBar:
-            pU.addColorBar(sc, ax1, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
+            pU.addColorBar(sc, ax2, ticksSC, unitSC, title=paraVar, pad=0.08, tickLabelsList=itemsList)
 
         ax1.plot(runoutRef, dataRef, color='g', label='Reference', marker='+', markersize=2*pU.ms, linestyle='None')
         ax1.legend(loc=4)
