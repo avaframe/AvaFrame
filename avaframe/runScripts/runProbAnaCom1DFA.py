@@ -21,6 +21,16 @@ from avaframe.in3Utils import logUtils
 import avaframe.in3Utils.fileHandlerUtils as fU
 
 
+# -------USER INPUT ------------
+# set for mu and relTh your reference values (from your local_com1DFACfg.ini file)
+# also other parameters can be used for filtering, here for example only null simulations are taken into account
+# for testRelTh and testMu
+# probability configurations
+probabilityConfigurations = {'testAll': {}, 'testRelTh': {'mu': '0.15500',
+    'simTypeActual': 'null'}, 'testMu': {'relTh': '1.', 'simTypeActual': 'null'}}
+# -----------------------------
+
+
 # log file name; leave empty to use default runLog.log
 logName = 'runCom1DFAandProbAna'
 
@@ -32,6 +42,11 @@ avaDir = cfgMain['MAIN']['avalancheDir']
 avaDir = pathlib.Path(avaDir)
 avaName = avaDir.name
 
+# Start logging
+log = logUtils.initiateLogger(avaDir, logName)
+log.info('MAIN SCRIPT')
+log.info('Current avalanche: %s', avaDir)
+
 # Clean input directory(ies) of old work and output files
 initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
@@ -40,17 +55,6 @@ cfgProb = cfgUtils.getModuleConfig(probAna)
 
 # create configuration files for com1DFA simulations including parameter variation - defined in the probabilistic config
 cfgFiles = probAna.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod='')
-
-# -------USER INPUT ------------
-# probability configurations
-probabilityConfigurations = {'testAll': {}, 'testRelTh': {'mu': '0.15500',
-    'simTypeActual': 'null'}, 'testMu': {'relTh': '1.', 'simTypeActual': 'null'}}
-# -----------------------------
-
-# Start logging
-log = logUtils.initiateLogger(avaDir, logName)
-log.info('MAIN SCRIPT')
-log.info('Current avalanche: %s', avaDir)
 
 # perform com1DFA simulations
 for varPar in cfgFiles:
