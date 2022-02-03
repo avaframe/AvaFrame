@@ -129,7 +129,7 @@ def updateCfgRange(cfg, cfgProb, varName):
 
         # if reference value is not in variation - add reference values
         if cfgProb['PROBRUN'].getboolean('addStandardConfig'):
-            if np.isclose(valValues, float(valVal), atol=1.e-9).any():
+            if np.isclose(valValues, float(valVal), atol=1.e-7, rtol=1.e-8).any():
                 log.info('Reference value is in variation for %s' % (varName))
             else:
                 log.info('Reference value of %s: %s is added' % (varName, str(valVal)))
