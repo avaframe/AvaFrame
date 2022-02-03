@@ -115,7 +115,7 @@ def updateCfgRange(cfg, cfgProb, varName):
         else:
             parName = varPar + 'RangeVariation'
             cfg['GENERAL'][parName] = valVariation + '$' + valSteps
-        cfg['GENERAL']['addStandardConfig'] = 'True'
+        cfg['GENERAL']['addStandardConfig'] = cfgProb['PROBRUN']['addStandardConfig']
     else:
         # set variation
         if cfgProb['PROBRUN'].getboolean('percentVariation'):
@@ -128,8 +128,12 @@ def updateCfgRange(cfg, cfgProb, varName):
             valValues = np.linspace(float(valStart), float(valStop), int(valSteps))
 
         # if reference value is not in variation - add reference values
-        if valVal not in valValues:
-            cfg['GENERAL'][varName] = cfg['GENERAL'][varName] + '&' + str(valVal)
+        if cfgProb['PROBRUN'].getboolean('addStandardConfig'):
+            if np.isclose(valValues, float(valVal), atol=1.e-9).any():
+                log.info('Reference value is in variation for %s' % (varName))
+            else:
+                log.info('Reference value of %s: %s is added' % (varName, str(valVal)))
+                cfg['GENERAL'][varName] = cfg['GENERAL'][varName] + '&' + str(valVal)
 
     return cfg
 

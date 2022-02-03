@@ -638,10 +638,16 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
                     if '~' in key:
                         # only add simulations that do not match the value of ~key
                         keyNew = key.replace("~", "")
-                        simDF = simDF[~simDF[keyNew].isin(value)]
+                        if isinstance(value[0], str):
+                            simDF = simDF[~simDF[keyNew].isin(value)]
+                        else:
+                            simDF = simDF[~np.isclose(simDF[keyNew].values.reshape(-1,1), value, atol=1.e-7, rtol=1.e-8).any(axis=1)]
                     else:
                         # add all simulations that match the value of the key
-                        simDF = simDF[simDF[key].isin(value)]
+                        if isinstance(value[0], str):
+                            simDF = simDF[simDF[key].isin(value)]
+                        else:
+                            simDF = simDF[np.isclose(simDF[key].values.reshape(-1,1), value, atol=1.e-7, rtol=1.e-8).any(axis=1)]
 
     # list of simNames after filtering
     simNameList = simDF['simName'].tolist()
