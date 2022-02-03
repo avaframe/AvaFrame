@@ -262,15 +262,15 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
             colorSC = 0.5 * np.ones(nSamples)
             cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, None, None, continuous=True)
         else:
-            # newDF = cfgUtils.convertDF2numerics(inputsDF[varParList[0]])
-            typeCP = type(inputsDF[varParList[0]][0])
+            values = inputsDF[varParList[0]]
+            typeCP = type(values[0])
             if typeCP == str:
-                itemsList, ticksSC, colorSC = pU.getColorbarTicksForStrings(inputsDF[varParList[0]])
+                itemsList, ticksSC, colorSC = pU.getColorbarTicksForStrings(values)
                 cmapSC, _, _, normSC = pU.makeColorMap(pU.cmapVar, np.amin(colorSC), np.amax(colorSC), continuous=True)
                 displayColorBar = True
                 unitSC = '-'
             else:
-                colorSC = inputsDF[varParList[0]].to_numpy()
+                colorSC = values.to_numpy()
                 cmapSC, _, ticksSC, normSC = pU.makeColorMap(pU.cmapVar, np.nanmin(colorSC), np.nanmax(colorSC), continuous=True)
                 displayColorBar = True
     else:

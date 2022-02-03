@@ -720,7 +720,7 @@ def computeRunOut(cfgSetup, rasterTransfo, resAnalysisDF, transformedRasters, si
     transformedRasters: dict
         dict with transformed dem and peak results
     simName: str
-        dimulation ID
+        simulation ID
 
     Returns
     -------
