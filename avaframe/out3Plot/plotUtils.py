@@ -569,3 +569,53 @@ def getColorbarTicksForStrings(varVal):
     ticksList = np.linspace(1, countItems, countItems)
 
     return itemsList, ticksList, varValV
+
+
+def getColors4Scatter(values, nSamples, unitSC):
+    """ provide cMap, colors, ticks... for a scatter plot
+
+
+
+        Parameters
+        -----------
+        values: list
+            list of strings
+        nSamples: int
+            number of samples in the scatter
+        unitSC: str
+            unit for the colorbar
+
+        Returns
+        --------
+        cmapSC: matplotlib colormap
+            color map
+        colorSC: numpy array
+            values for coding the color of each sample
+        ticksSC: list
+            ticks levels for the colorbar
+        normSC: matplotlib norm
+            norm associated to the levels and the colors
+        unitSC: str
+            unit for the values displayed in the colorbar
+        itemsList: list
+            list of unique parameter values (strings). In case the color variation is done for strig values
+        displayColorBar: boolean
+            True if the colorBar should be displayed (if a color variation is applied)
+    """
+    itemsList = ''
+    if values is None:
+        displayColorBar = False
+        colorSC = 0.5 * np.ones(nSamples)
+        cmapSC, _, ticksSC, normSC = makeColorMap(cmapVar, None, None, continuous=True)
+    else:
+        typeCP = type(values[0])
+        if typeCP == str:
+            itemsList, ticksSC, colorSC = getColorbarTicksForStrings(values)
+            cmapSC, _, _, normSC = makeColorMap(cmapVar, np.amin(colorSC), np.amax(colorSC), continuous=True)
+            displayColorBar = True
+            unitSC = '-'
+        else:
+            colorSC = values
+            cmapSC, _, ticksSC, normSC = makeColorMap(cmapVar, np.nanmin(colorSC), np.nanmax(colorSC), continuous=True)
+            displayColorBar = True
+    return cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar
