@@ -81,7 +81,7 @@ def test_createComModConfig(tmp_path):
 
     cfgProb = configparser.ConfigParser()
     cfgProb['PROBRUN'] = {'varParList': 'mu|relTh', 'percentVariation': 'True',
-                          'muVariation': '60', 'muSteps': '2',
+                          'muVariation': '60', 'muSteps': '2', 'addStandardConfig': 'True',
                           'relThVariation': '50', 'relThSteps': '3', 'defaultSetup': 'True'}
 
     # call function to be tested
@@ -104,6 +104,31 @@ def test_createComModConfig(tmp_path):
     assert cfgRelTh['GENERAL']['relThPercentVariation'] == '50$3'
     assert cfgRelTh['GENERAL']['relThFromShp'] == 'True'
     assert cfgMu['GENERAL']['relThFromShp'] == 'True'
+    assert cfgRelTh['GENERAL']['addStandardConfig'] == 'True'
+
+
+    cfgProb['PROBRUN']['addStandardConfig'] = 'False'
+    # call function to be tested
+    cfgFiles = pA.createComModConfig(cfgProb, avaDir, com1DFA, cfgFileMod=cfgFile)
+
+    # load cfg from file
+    cfgMu = configparser.ConfigParser()
+    cfgRelTh = configparser.ConfigParser()
+
+    cfgMu.read(cfgFiles['mu']['cfgFile'])
+    cfgRelTh.read(cfgFiles['relTh']['cfgFile'])
+
+    print(cfgMu['GENERAL']['mu'], cfgMu['GENERAL']['relTh'], cfgRelTh['GENERAL']['mu'], cfgRelTh['GENERAL']['relTh'])
+
+    assert cfgMu['GENERAL']['mu'] == '0.155$60$2'
+    assert cfgMu['GENERAL']['relTh'] == ''
+    assert cfgRelTh['GENERAL']['mu'] == '0.155'
+    assert cfgRelTh['GENERAL']['relTh'] == ''
+    assert cfgRelTh['GENERAL']['relThFromShp'] == 'True'
+    assert cfgRelTh['GENERAL']['relThPercentVariation'] == '50$3'
+    assert cfgRelTh['GENERAL']['relThFromShp'] == 'True'
+    assert cfgMu['GENERAL']['relThFromShp'] == 'True'
+    assert cfgRelTh['GENERAL']['addStandardConfig'] == 'False'
 
 
 def test_updateCfgRange():
@@ -111,8 +136,9 @@ def test_updateCfgRange():
 
     # setup inputs
     cfg = configparser.ConfigParser()
-    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'percentVariation': 'True', 'muVariation': '60',
-        'muSteps': '2', 'relThVariation': '50', 'relThSteps': '2', 'defaultSetup': 'True'}
+    cfg['PROBRUN'] = {'varParList': 'mu|relTh', 'percentVariation': 'True','addStandardConfig': 'True',
+                      'muVariation': '60', 'muSteps': '2', 'relThVariation': '50',
+                      'relThSteps': '2', 'defaultSetup': 'True'}
 
     com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
     varName = 'mu'
@@ -137,3 +163,30 @@ def test_updateCfgRange():
     assert cfgNew['GENERAL']['relThFromShp'] == 'True'
     assert cfgNew['GENERAL']['relThPercentVariation'] == '50$2'
     assert cfgNew['GENERAL']['addStandardConfig'] == 'True'
+
+
+    cfg['PROBRUN']['addStandardConfig'] = 'False'
+
+    com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+    varName = 'mu'
+
+    # call function
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName)
+
+    assert cfgNew['GENERAL']['mu'] == '0.155$60$2'
+    assert cfgNew['GENERAL']['relTh'] == ''
+    assert cfgNew['GENERAL']['relThFromShp'] == 'True'
+    assert cfgNew['GENERAL']['relThPercentVariation'] == ''
+
+
+    com1DFACfg = cfgUtils.getDefaultModuleConfig(com1DFA)
+    varName = 'relTh'
+
+    # call function
+    cfgNew = pA.updateCfgRange(com1DFACfg, cfg, varName)
+
+    assert cfgNew['GENERAL']['mu'] == '0.155'
+    assert cfgNew['GENERAL']['relTh'] == ''
+    assert cfgNew['GENERAL']['relThFromShp'] == 'True'
+    assert cfgNew['GENERAL']['relThPercentVariation'] == '50$2'
+    assert cfgNew['GENERAL']['addStandardConfig'] == 'False'
