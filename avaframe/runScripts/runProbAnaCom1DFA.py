@@ -22,10 +22,10 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 
 
 # -------USER INPUT ------------
+# probability configurations are used to filter simulations for creating probability maps:
 # set for mu and relTh your reference values (from your local_com1DFACfg.ini file)
 # also other parameters can be used for filtering, here for example only null simulations are taken into account
 # for testRelTh and testMu
-# probability configurations
 probabilityConfigurations = {'testAll': {}, 'testRelTh': {'mu': '0.15500',
     'simTypeActual': 'null'}, 'testMu': {'relTh': '1.', 'simTypeActual': 'null'}}
 # -----------------------------

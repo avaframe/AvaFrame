@@ -629,29 +629,65 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
         for key, value in parametersDict.items():
-            if not isinstance(value, (list, np.ndarray)):
-                value = [value]
+            # first check if values are valid
             if value != '' and value != []:
+                # convert values to list
+                if not isinstance(value, (list, np.ndarray)):
+                    value = [value]
+
+                # remove non matching simulations from simDF
                 if key in ['relTh', 'entTh', 'secondaryRelTh', '~relTh', '~entTh', '~secondaryRelTh']:
                     simDF = filterCom1DFAThicknessValues(key, value, simDF)
                 else:
-                    if '~' in key:
-                        # only add simulations that do not match the value of ~key
-                        keyNew = key.replace("~", "")
-                        if isinstance(value[0], str):
-                            simDF = simDF[~simDF[keyNew].isin(value)]
-                        else:
-                            simDF = simDF[~np.isclose(simDF[keyNew].values.reshape(-1,1), value, atol=1.e-7, rtol=1.e-8).any(axis=1)]
-                    else:
-                        # add all simulations that match the value of the key
-                        if isinstance(value[0], str):
-                            simDF = simDF[simDF[key].isin(value)]
-                        else:
-                            simDF = simDF[np.isclose(simDF[key].values.reshape(-1,1), value, atol=1.e-7, rtol=1.e-8).any(axis=1)]
+                    simDF = removeSimsNotMatching(simDF, key, value)
+            else:
+                log.debug('Paramter %s is not used for filtering as no valid value is provided: %s' % (key, value))
 
     # list of simNames after filtering
     simNameList = simDF['simName'].tolist()
     return simNameList
+
+
+def removeSimsNotMatching(simDF, key, value):
+    """ remove simulations from simDF that do not match filtering critera
+
+        Parameters
+        -----------
+        simDF: pandas dataframe
+            dataframe with one row per simulation and info on its characteristics, parameters used,..
+        key: str
+            name of parameter that shall be used for filtering
+        value: list
+            list of parameter values used for filtering
+
+        Returns
+        ---------
+        simDF: pandas dataframe
+            updated dataframe with only those simulations that match filtering criteria
+    """
+
+    # check if negation in filtering criteria
+    notIn = False
+    if '~' in key:
+        # only add simulations that do not match the value of ~key
+        key = key.replace("~", "")
+        notIn = True
+
+    # only keep simulations in simDF that match filtering criteria
+    if isinstance(value[0], str):
+        if notIn:
+            simDF = simDF[~simDF[key].isin(value)]
+        else:
+            simDF = simDF[simDF[key].isin(value)]
+    else:
+        # if float comparison allow for tolerance
+        filterMask = np.isclose(simDF[key].values.reshape(-1,1), value, atol=1.e-7, rtol=1.e-8).any(axis=1)
+        if notIn:
+            simDF = simDF[~filterMask]
+        else:
+            simDF = simDF[filterMask]
+
+    return simDF
 
 
 def orderSimFiles(avalancheDir, inputDir, varParList, ascendingOrder, specDir='', resFiles=False):
