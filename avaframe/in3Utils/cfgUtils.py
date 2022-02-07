@@ -641,7 +641,7 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
                 else:
                     simDF = removeSimsNotMatching(simDF, key, value)
             else:
-                log.debug('Paramter %s is not used for filtering as no valid value is provided: %s' % (key, value))
+                log.debug('Parameter %s is not used for filtering as no valid value is provided: %s' % (key, value))
 
     # list of simNames after filtering
     simNameList = simDF['simName'].tolist()
