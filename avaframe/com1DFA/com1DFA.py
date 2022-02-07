@@ -268,7 +268,11 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
     # for timing the sims
     startTime = time.time()
     particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName)
-
+    outFileName = pathlib.Path(avaDir, 'Inputs' , 'DEM' , 'DEM_PF_Topo' + str(round(dem['header']['cellsize'])) + '.asc')
+    header = dem['header']
+    header['xllcenter'] = demOri['header']['xllcenter']
+    header['yllcenter'] = demOri['header']['yllcenter']
+    IOf.writeResultToAsc(header, dem['rasterData'], outFileName, flip=False)
     # ------------------------
     #  Start time step computation
     Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)

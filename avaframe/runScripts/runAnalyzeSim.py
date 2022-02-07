@@ -18,6 +18,8 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.com1DFA.com1DFA as com1DFA
+from avaframe.com2AB import com2AB
+from avaframe.out3Plot import outAB
 from avaframe.in1Data import getInput as gI
 import avaframe.ana1Tests.simiSolTest as simiSolTest
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
@@ -31,7 +33,7 @@ import matplotlib.pyplot as plt
 import avaframe.out3Plot.plotUtils as pU
 
 
-def plotAimecRes(simDF, outDirTest, xField, yFieldArray, coloredBy, sizedBy, logScaleX=False, logScaleY=False, fit=False):
+def plotAimecRes(simDF, outDirTest, xField, yField, coloredBy, sizedBy, ABRes, logScaleX=False, logScaleY=False, fit=False):
     """plot error between all com1DFA sol and analytic sol
     function of whatever you want
 
@@ -45,8 +47,8 @@ def plotAimecRes(simDF, outDirTest, xField, yFieldArray, coloredBy, sizedBy, log
         the cfg
     xField: str
         column of the simDF to use for the x axis
-    yFieldArray: list
-        list of max 2 column of the simDF to use for the y axis
+    yField: str
+        column of the simDF to use for the y axis
     coloredBy: str
         column of the simDF to use for the colors
     sizedBy: str
@@ -56,7 +58,6 @@ def plotAimecRes(simDF, outDirTest, xField, yFieldArray, coloredBy, sizedBy, log
     """
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapAvaframeCont, min(simDF[coloredBy]), max(simDF[coloredBy]), continuous=pU.contCmap)
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(2*pU.figW, 1.5*pU.figH))
-    # fig1, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(4*pU.figW, 2*pU.figH))
     # get the sizing function
     sizeList = simDF[sizedBy].unique()
     lenSize = len(sizeList)
@@ -67,45 +68,31 @@ def plotAimecRes(simDF, outDirTest, xField, yFieldArray, coloredBy, sizedBy, log
     else:
         sizeList = np.array([100])
     # make the scatter plot
-    scatter1 = ax1.scatter(simDF[xField], simDF[yFieldArray[0]], c=simDF[coloredBy], s=sizeList, cmap=cmap, norm=norm,
+    scatter1 = ax1.scatter(simDF[xField], simDF[yField]-ABRes, c=simDF[coloredBy], s=sizeList, cmap=cmap, norm=norm,
                           marker=pU.markers[0], alpha=1)#, edgecolors='k')
-    # scatter2 = ax2.scatter(simDF[xField], simDF[yFieldArray[1]], c=simDF[coloredBy], s=sizeList, cmap=cmap, norm=norm,
-    #                        marker=pU.markers[0], alpha=1)#, edgecolors='k')
-
+    # legend = ax1.legend(loc='lower right')
     if logScaleX:
         ax1.set_xscale('log')
-        # ax2.set_xscale('log')
     if logScaleY:
         ax1.set_yscale('log')
-        # ax2.set_yscale('log')
 
-    ax1.set_title(yFieldArray[0])
-    # ax2.set_title(yFieldArray[1])
+    ax1.set_title(yField)
     ax1.set_xlabel(xField)
-    # ax2.set_xlabel(xField)
-    ax1.set_ylabel(yFieldArray[0])
-    # ax2.set_ylabel(yFieldArray[1])
+    ax1.set_ylabel(yField)
     if len(simDF[sizedBy].unique())<=10:
         lenColor = None
-    legend1 = ax1.legend(*scatter1.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
+    legend1 = ax1.legend(*scatter1.legend_elements(num=lenColor), loc="lower center", title=coloredBy)
     ax1.add_artist(legend1)
-    # legend2 = ax2.legend(*scatter2.legend_elements(num=lenColor), loc="upper center", title=coloredBy)
-    # ax2.add_artist(legend2)
 
     # produce a legend with a cross section of sizes from the scatter
     if lenSize<=10:
         lenSize = None
     kw = dict(prop="sizes", color=scatter1.cmap(0.7),
           func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
-    legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
-    # kw = dict(prop="sizes", color=scatter2.cmap(0.7),
-          # func=lambda s: (s-10)*(maxSize - minSize)/70 + minSize)
-    # ax2.legend(*scatter2.legend_elements(num=lenSize, **kw), loc="upper right", title=sizedBy)
+    legend3 = ax1.legend(*scatter1.legend_elements(num=lenSize, **kw), loc="lower right", title=sizedBy)
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
-    # ax2.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
-    # ax2.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'aimecResPlot', fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'aimecResPlot%s_%s' % (xField, yField), fig1)
 
     return fig1, ax1
 
@@ -138,28 +125,63 @@ simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 # Define release thickness distribution
 pathToAimecRes = pathlib.Path(avalancheDir, 'Outputs', 'ana3AIMEC', 'com1DFA')
 configFiles = list(pathToAimecRes.glob('*.csv'))
-with open(configFiles[1], 'rb') as file:
+if str(configFiles[0]).find('stat')>-1:
+    configFiles = configFiles[1]
+else:
+    configFiles = configFiles[0]
+with open(configFiles, 'rb') as file:
     resultDF = pd.read_csv(file, index_col=0, keep_default_na=False)
 
 simDF = simDF.reset_index().merge(resultDF, on='simName').set_index('index')
 
-# filter on viscosity parameter
-# simDF = simDF[simDF['subgridMixingFactor'].isin([10])]
-# filter on time stepping parameter
-simDF = simDF[simDF['cMax'].isin([0.01])]
-# filter on nPPK0
-# simDF = simDF[simDF['aPPK']==-2]
-simDF = simDF[simDF['nPPK0']==15]
-simDF = simDF[simDF['distReproj']==0]
-simDF = simDF[simDF['massPerParticleDeterminationMethod']=='MPPKR']
-
 # now do some plotting
 # compare the simulations to the reference
-# outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', ['hErrorL2', 'vhErrorL2'],
-#                           'deltaTh', 'dt', logScale=False)
+cfgAB = cfgUtils.getModuleConfig(com2AB)
+# take the path extracted from the DFA model as input
+resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
+# make AB plot
+reportDictList = []
+A, plotFile, writeFile = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
+s = resAB['avaParabola']['s']
+ids_alpha = resAB['avaParabola']['ids_alpha']
+ABRes = s[ids_alpha]
 
 # make convergence plot
-plotAimecRes(simDF, outDirTest, 'nPart', ['maxpfvCrossMax', 'sRunout'],
-                          'aPPK', 'nPPK0', logScaleX=True, logScaleY=False, fit=False)
+simDFPlot = simDF[simDF['viscOption'].isin([1])]
+# simDFPlot = simDFPlot[simDFPlot['sphOption']==2]
+# simDFPlot = simDFPlot[simDFPlot['explicitFriction']==1]
+simDFPlot = simDFPlot[simDFPlot['cMax']==0.01]
+simDFPlot = simDFPlot[simDFPlot['nPPK0']==30]
+simDFPlot = simDFPlot[simDFPlot['aPPK'].isin([-2])]
+simDFPlot = simDFPlot[simDFPlot['subgridMixingFactor'].isin([10])]
+# with pd.option_context('display.max_rows', None,
+#                        'display.max_columns', None,
+#                        'display.precision', 3,
+#                        ):
+#     print(simDFPlot)
+plotAimecRes(simDFPlot, outDirTest, 'nPart', 'sRunout',
+                          'explicitFriction', 'sphOption', ABRes, logScaleX=False, logScaleY=False, fit=False)
 
-outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['MAIN'], 'nPart', 'aPPK', 'nPPK0')
+plotAimecRes(simDFPlot, outDirTest, 'nPart', 'maxpfvCrossMax',
+                          'explicitFriction', 'sphOption', 0, logScaleX=False, logScaleY=False, fit=False)
+
+
+# simDFPlot = simDF[simDF['cMax']==0.01]
+# simDFPlot = simDFPlot[simDFPlot['nPPK0']==30]
+# simDFPlot = simDFPlot[simDFPlot['subgridMixingFactor'].isin([10])]
+# plotAimecRes(simDFPlot, outDirTest, 'nPart', 'sRunout',
+#                           'viscOption', 'sphOption', ABRes, logScaleX=False, logScaleY=False, fit=False)
+# plotAimecRes(simDFPlot, outDirTest, 'nPart', 'maxpfvCrossMax',
+#                           'viscOption', 'sphOption', 0, logScaleX=False, logScaleY=False, fit=False)
+
+
+simDFPlot = simDF[simDF['cMax']==0.01]
+simDFPlot = simDFPlot[simDFPlot['nPPK0']==30]
+simDFPlot = simDFPlot[simDFPlot['sphOption']==2]
+simDFPlot = simDFPlot[simDFPlot['explicitFriction']==1]
+# simDFPlot = simDFPlot[simDFPlot['sphOption']==2]
+plotAimecRes(simDFPlot, outDirTest, 'subgridMixingFactor', 'sRunout',
+                          'sphKernelRadius', 'viscOption', ABRes, logScaleX=False, logScaleY=False, fit=False)
+
+plotAimecRes(simDFPlot, outDirTest, 'subgridMixingFactor', 'maxpfvCrossMax',
+                          'sphKernelRadius', 'viscOption', 0, logScaleX=False, logScaleY=False, fit=False)
