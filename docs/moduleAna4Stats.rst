@@ -10,7 +10,7 @@ probAna
 probAna is used to derive simple probability maps for a set of simulations for one avalanche track.
 These maps show for each point in space the probability for a chosen parameter to exceed a given threshold.
 For example, it is possible to compute the probability map of an avalanche to exceed a
-peak pressure of 1kPa.
+peak pressure of 1kPa, but is also possible to chose other paramters and threshold values.
 
 A set of multiple avalanche simulations is required to generate these maps. The simulations can be generated with :py:mod:`com1DFA`
 using a parameter variation, different release-, entrainment- or resistance scenarios.
@@ -21,8 +21,8 @@ in this point in space. 1 on the contrary means that all simulations exceeded th
 Details on this function, as for example required inputs can be found in: :py:mod:`ana4Stats.probAna`.
 
 
-To run
--------
+To run - example run scripts
+-------------------------
 An example on how to generate probability maps for avalanche simulations performed with :py:mod:`com1DFA`
 is given in :py:mod:`runScripts.runProbAna`, where for *avaHockeyChannel* simulations are performed with
 varying release thickness values ranging from 0.75 to 1.75 meters in steps of 0.05 meters.
@@ -40,10 +40,20 @@ In order to run this example:
       python3 runScripts/runProbAna.py
 
 
-.. figure:: _static/avaHockeyChannel_probMap.png
+.. figure:: _static/avaHockeyChannel_probMap_lim1.0.png
     :width: 90%
 
       Probability map example.
+
+Another example is given in :py:mod:`runScripts.runProbAnaCom1DFA.py`, but here only
+one parameter is varied at a time.
+Avalanche simulations are performed with the settings defined in the configuration file of
+:py:mod:`com1DFA` and in addition a parameter variation is performed according to the parameters
+set in ``ana4Stats/probAnaCfg.ini`` in the section PROBRUN. All the parameters set in PROBRUN are
+varied on at a time, i.e. simulations are performed for the standard settings of all parameters,
+except the one parameter to be varied, subsequently the other variations are performed.
+In the beginning of the script, the filtering criteria for generating probability maps can be set.
+
 
 .. _Theory:
 
