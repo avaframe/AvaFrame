@@ -10,7 +10,7 @@ probAna
 probAna is used to derive simple probability maps for a set of simulations for one avalanche track.
 These maps show for each point in space the probability for a chosen parameter to exceed a given threshold.
 For example, it is possible to compute the probability map of an avalanche to exceed a
-peak pressure of 1kPa, but is also possible to chose other paramters and threshold values.
+peak pressure of 1kPa, but is also possible to chose other parameters and threshold values.
 
 A set of multiple avalanche simulations is required to generate these maps. The simulations can be generated with :py:mod:`com1DFA`
 using a parameter variation, different release-, entrainment- or resistance scenarios.
