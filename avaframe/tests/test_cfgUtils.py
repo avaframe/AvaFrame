@@ -203,7 +203,6 @@ def test_filterSims(tmp_path):
     assert len(simNames4) == 1
     assert simNames4[0] == 'release2HS_ent_dfa_e2145362b7'
 
-
     parametersDict = {'relTh': 1.}
 
     simNames = cfgUtils.filterSims(avaDir2, parametersDict, specDir=avaDir2)
