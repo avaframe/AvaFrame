@@ -18,12 +18,14 @@ import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.com1DFA.com1DFA as com1DFA
+import avaframe.com1DFA.particleTools as particleTools
 from avaframe.com2AB import com2AB
 from avaframe.out3Plot import outAB
 from avaframe.in1Data import getInput as gI
 import avaframe.ana1Tests.simiSolTest as simiSolTest
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
 import avaframe.ana4Stats.anaCompare as anaCompare
+import avaframe.in2Trans.ascUtils as IOf
 
 
 import numpy as np
@@ -97,6 +99,10 @@ def plotAimecRes(simDF, outDirTest, xField, yField, coloredBy, sizedBy, ABRes, l
     return fig1, ax1
 
 
+# def plotPartAvgRunout():
+
+
+
 
 
 # +++++++++SETUP CONFIGURATION++++++++++++++++++++++++
@@ -122,7 +128,7 @@ fU.makeADir(outDirTest)
 
 simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
-# Define release thickness distribution
+# Read aimec results
 pathToAimecRes = pathlib.Path(avalancheDir, 'Outputs', 'ana3AIMEC', 'com1DFA')
 configFiles = list(pathToAimecRes.glob('*.csv'))
 if str(configFiles[0]).find('stat')>-1:
@@ -134,54 +140,119 @@ with open(configFiles, 'rb') as file:
 
 simDF = simDF.reset_index().merge(resultDF, on='simName').set_index('index')
 
-# now do some plotting
+
+# Compute the runout based on center of mass
+# friction angle
+alpha = np.deg2rad(25)
+dem = gI.readDEM(avalancheDir)
+header = dem['header']
+xllc = header['xllcenter']
+yllc = header['yllcenter']
+# read last particles dictionnary and extrace mass average position
+for simDFIndex, simDFrow in simDF.iterrows():
+    particlesList, _ = particleTools.readPartFromPickle(avalancheDir, simName=simDFIndex, flagAvaDir=True)
+    proList = ['x', 'y', 'z', 's']
+    avaProfileMass = {}
+    for prop in proList:
+        avaProfileMass[prop] = np.empty((0, 1))
+    # loop on each particle dictionary (ie each time step saved)
+    for particles in particlesList:
+        if particles['nPart'] > 0:
+            m = particles['m']
+
+            # mass-averaged path
+            for prop in proList:
+                average = np.average(particles[prop], weights=m)
+                avaProfileMass[prop] = np.append(avaProfileMass[prop], average)
+    avaProfileMass['x'] = avaProfileMass['x'] + xllc
+    avaProfileMass['y'] = avaProfileMass['y'] + yllc
+    # Compute geometrical runout
+    sRunOutGeo = (avaProfileMass['z'][0] - avaProfileMass['z'][-1]) / np.tan(alpha)
+    alphaMassAvgRunOut = np.arctan((avaProfileMass['z'][0] - avaProfileMass['z'][-1]) / (avaProfileMass['s'][-1] - avaProfileMass['s'][0]))
+    simDF.loc[simDFIndex, 'xMassAvgRunOut'] = avaProfileMass['x'][-1]
+    simDF.loc[simDFIndex, 'yMassAvgRunOut'] = avaProfileMass['y'][-1]
+    simDF.loc[simDFIndex, 'zMassAvgRunOut'] = avaProfileMass['z'][-1]
+    simDF.loc[simDFIndex, 'sMassAvgRunOut'] = avaProfileMass['s'][-1]-sRunOutGeo
+    simDF.loc[simDFIndex, 'alphaMassAvgRunOut'] = np.rad2deg(alphaMassAvgRunOut)
+    simDF.loc[simDFIndex, 'xMassAvgStart'] = avaProfileMass['x'][0]
+    simDF.loc[simDFIndex, 'yMassAvgStart'] = avaProfileMass['y'][0]
+    simDF.loc[simDFIndex, 'zMassAvgStart'] = avaProfileMass['z'][0]
+
+    simDF.loc[simDFIndex, 'sRunOutGeo'] = sRunOutGeo
+sRunOutGeo = 0
 # compare the simulations to the reference
 cfgAB = cfgUtils.getModuleConfig(com2AB)
-# take the path extracted from the DFA model as input
+# Run the Alpha model using the friction angle from com1DFA and the path starting from the top of the release area.
+# this gives us a runout point that we can compare with the runout from AIMEC
 resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
 # make AB plot
 reportDictList = []
 A, plotFile, writeFile = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
-s = resAB['avaParabola']['s']
-ids_alpha = resAB['avaParabola']['ids_alpha']
+name = 'avaParabolaTest'
+x = resAB[name]['x']
+y = resAB[name]['y']
+z = resAB[name]['z']
+s = resAB[name]['s']
+ids_alpha = resAB[name]['ids_alpha']
+xABRes = x[ids_alpha]
+yABRes = y[ids_alpha]
 ABRes = s[ids_alpha]
+print(xABRes, yABRes)
 
 # make convergence plot
-simDFPlot = simDF[simDF['viscOption'].isin([1])]
+simDFPlot = simDF[simDF['viscOption'].isin([1, 2])]
+simDFPlot = simDFPlot[simDFPlot['seed'].isin([12345])]
+# simDFPlot = simDF[simDF['seed'].isin(np.arange(10))]
 # simDFPlot = simDFPlot[simDFPlot['sphOption']==2]
-# simDFPlot = simDFPlot[simDFPlot['explicitFriction']==1]
-simDFPlot = simDFPlot[simDFPlot['cMax']==0.01]
-simDFPlot = simDFPlot[simDFPlot['nPPK0']==30]
-simDFPlot = simDFPlot[simDFPlot['aPPK'].isin([-2])]
+simDFPlot = simDFPlot[simDFPlot['explicitFriction']==1]
+# simDFPlot = simDFPlot[simDFPlot['cMax']==0.01]
+# simDFPlot = simDFPlot[simDFPlot['nPPK0']==20]
+simDFPlot = simDFPlot[simDFPlot['aPPK'].isin([-1, -2])]
 simDFPlot = simDFPlot[simDFPlot['subgridMixingFactor'].isin([10])]
-# with pd.option_context('display.max_rows', None,
-#                        'display.max_columns', None,
-#                        'display.precision', 3,
-#                        ):
-#     print(simDFPlot)
+
+
+colorVar = 'nPPK0'
+sizeVar = 'sphOption'
+plotAimecRes(simDFPlot, outDirTest, 'xMassAvgRunOut', 'yMassAvgRunOut',
+                          colorVar, sizeVar, 0, logScaleX=False, logScaleY=False, fit=False)
+plotAimecRes(simDFPlot, outDirTest, 'sMassAvgRunOut', 'maxpfvCrossMax',
+                          colorVar, sizeVar, 0, logScaleX=False, logScaleY=False, fit=False)
+plotAimecRes(simDFPlot, outDirTest, 'sMassAvgRunOut', 'maxpfdCrossMax',
+                          colorVar, sizeVar, 0, logScaleX=False, logScaleY=False, fit=False)
+
+plotAimecRes(simDFPlot, outDirTest, 'nPart', 'sMassAvgRunOut',
+                          colorVar, sizeVar, sRunOutGeo, logScaleX=True, logScaleY=False, fit=False)
+plotAimecRes(simDFPlot, outDirTest, 'nPart', 'zMassAvgRunOut',
+                          colorVar, sizeVar, 0, logScaleX=True, logScaleY=False, fit=False)
+plotAimecRes(simDFPlot, outDirTest, 'nPart', 'alphaMassAvgRunOut',
+                          colorVar, sizeVar, 25, logScaleX=True, logScaleY=False, fit=False)
+
 plotAimecRes(simDFPlot, outDirTest, 'nPart', 'sRunout',
-                          'explicitFriction', 'sphOption', ABRes, logScaleX=False, logScaleY=False, fit=False)
+                          colorVar, sizeVar, ABRes, logScaleX=True, logScaleY=False, fit=False)
+plotAimecRes(simDFPlot, outDirTest, 'xRunout', 'yRunout',
+                          colorVar, sizeVar, 0, logScaleX=False, logScaleY=False, fit=False)
 
 plotAimecRes(simDFPlot, outDirTest, 'nPart', 'maxpfvCrossMax',
-                          'explicitFriction', 'sphOption', 0, logScaleX=False, logScaleY=False, fit=False)
-
-
-# simDFPlot = simDF[simDF['cMax']==0.01]
-# simDFPlot = simDFPlot[simDFPlot['nPPK0']==30]
-# simDFPlot = simDFPlot[simDFPlot['subgridMixingFactor'].isin([10])]
-# plotAimecRes(simDFPlot, outDirTest, 'nPart', 'sRunout',
-#                           'viscOption', 'sphOption', ABRes, logScaleX=False, logScaleY=False, fit=False)
-# plotAimecRes(simDFPlot, outDirTest, 'nPart', 'maxpfvCrossMax',
-#                           'viscOption', 'sphOption', 0, logScaleX=False, logScaleY=False, fit=False)
+                          colorVar, sizeVar, 0, logScaleX=True, logScaleY=False, fit=False)
 
 
 simDFPlot = simDF[simDF['cMax']==0.01]
-simDFPlot = simDFPlot[simDFPlot['nPPK0']==30]
-simDFPlot = simDFPlot[simDFPlot['sphOption']==2]
+simDFPlot = simDFPlot[simDFPlot['nPPK0']==20]
+simDFPlot = simDFPlot[simDFPlot['viscOption']==1]
 simDFPlot = simDFPlot[simDFPlot['explicitFriction']==1]
+simDFPlot = simDFPlot[simDFPlot['aPPK'].isin([-2])]
+simDFPlot = simDFPlot[simDFPlot['seed'].isin([12345])]
 # simDFPlot = simDFPlot[simDFPlot['sphOption']==2]
-plotAimecRes(simDFPlot, outDirTest, 'subgridMixingFactor', 'sRunout',
-                          'sphKernelRadius', 'viscOption', ABRes, logScaleX=False, logScaleY=False, fit=False)
+plotAimecRes(simDFPlot, outDirTest, 'subgridMixingFactor', 'sMassAvgRunOut',
+                          'sphOption', 'sphKernelRadius', sRunOutGeo, logScaleX=True, logScaleY=False, fit=False)
 
 plotAimecRes(simDFPlot, outDirTest, 'subgridMixingFactor', 'maxpfvCrossMax',
-                          'sphKernelRadius', 'viscOption', 0, logScaleX=False, logScaleY=False, fit=False)
+                          'sphOption', 'sphKernelRadius', 0, logScaleX=True, logScaleY=False, fit=False)
+
+
+# plotAimecRes(simDFPlot, outDirTest, 'xMassAvgRunOut', 'yMassAvgRunOut',
+#                           'subgridMixingFactor', 'sphOption', 0, logScaleX=False, logScaleY=False, fit=False)
+# plotAimecRes(simDFPlot, outDirTest, 'xMassAvgRunOut', 'maxpfvCrossMax',
+#                           'subgridMixingFactor', 'sphOption', 0, logScaleX=False, logScaleY=False, fit=False)
+# plotAimecRes(simDFPlot, outDirTest, 'xMassAvgRunOut', 'maxpfdCrossMax',
+#                           'subgridMixingFactor', 'sphOption', 0, logScaleX=False, logScaleY=False, fit=False)

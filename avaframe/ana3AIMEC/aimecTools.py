@@ -153,7 +153,7 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
             log.info('Reference Simulation is based on %s = %s - closest value found is: %s' %
                 (varParList[0], cfgSetup['referenceSimValue'], str(valRef)))
             refSimulation = inputsDF[inputsDF[varParList[0]] == valRef]['simName'].to_list()[0]
-
+            colorVariation = True
         else:
             # reference simulation
             refSimulation = inputsDF.iloc[0]['simName']  # inputsDF.head(1)['simName'].values[0]

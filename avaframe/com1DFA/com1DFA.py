@@ -268,11 +268,6 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
     # for timing the sims
     startTime = time.time()
     particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName)
-    outFileName = pathlib.Path(avaDir, 'Inputs' , 'DEM' , 'DEM_PF_Topo' + str(round(dem['header']['cellsize'])) + '.asc')
-    header = dem['header']
-    header['xllcenter'] = demOri['header']['xllcenter']
-    header['yllcenter'] = demOri['header']['yllcenter']
-    IOf.writeResultToAsc(header, dem['rasterData'], outFileName, flip=False)
     # ------------------------
     #  Start time step computation
     Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
@@ -291,11 +286,11 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
             outDirData = outDir / 'particles'
             fU.makeADir(outDirData)
             outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
-    if 'particles' in cfgGen['resType']:
-        # export particles dictionaries of saving time steps
-        outDirData = outDir / 'particles'
-        fU.makeADir(outDirData)
-        savePartToPickle(particlesList, outDirData, cuSimName)
+    # if 'particles' in cfgGen['resType']:
+    # export particles dictionaries of saving time steps
+    outDirData = outDir / 'particles'
+    fU.makeADir(outDirData)
+    savePartToPickle(particlesList, outDirData, cuSimName)
 
     # export particles properties for visulation
     if cfg['VISUALISATION'].getboolean('writePartToCSV'):
@@ -913,7 +908,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         particles, hPartArray = particleTools.initialiseParticlesFromFile(cfg, avaDir, releaseLine['file'].stem)
     else:
         # initialize random generator
-        rng = np.random.default_rng(int(cfg['seed']))
+        rng = np.random.default_rng(int(float(cfg['seed'])))
 
         nPart = 0
         xPartArray = np.empty(0)
