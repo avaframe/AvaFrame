@@ -287,11 +287,12 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
             outDirData = outDir / 'particles'
             fU.makeADir(outDirData)
             outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
-    if 'particles' in cfgGen['resType']:
-        # export particles dictionaries of saving time steps
-        outDirData = outDir / 'particles'
-        fU.makeADir(outDirData)
-        savePartToPickle(particlesList, outDirData, cuSimName)
+
+    # export particles dictionaries of saving time steps
+    # (if particles is not in resType, only first and last time step are saved)
+    outDirData = outDir / 'particles'
+    fU.makeADir(outDirData)
+    savePartToPickle(particlesList, outDirData, cuSimName)
 
     # export particles properties for visulation
     if cfg['VISUALISATION'].getboolean('writePartToCSV'):
@@ -909,7 +910,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         particles, hPartArray = particleTools.initialiseParticlesFromFile(cfg, avaDir, releaseLine['file'].stem)
     else:
         # initialize random generator
-        rng = np.random.default_rng(int(cfg['seed']))
+        rng = np.random.default_rng(int(float(cfg['seed'])))
 
         nPart = 0
         xPartArray = np.empty(0)
@@ -1234,7 +1235,7 @@ def DFAIterate(cfg, particles, fields, dem):
     # make sure to save all desiered resuts for first and last time step for
     # the report
     resTypesReport = fU.splitIniValueToArraySteps(cfg['REPORT']['plotFields'])
-    # always add particles to first and last time step 
+    # always add particles to first and last time step
     resTypesLast = list(set(resTypes + resTypesReport + ['particles']))
     # derive friction type
     # turn friction model into integer
