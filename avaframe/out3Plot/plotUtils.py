@@ -464,6 +464,7 @@ def addColorBar(im, ax2, ticks, myUnit, title='', extend='neither', pad=0.05, ti
         cbar.set_label(title)
     if len(tickLabelsList) > 0:
         cbar.ax.set_yticklabels(tickLabelsList)
+    return cbar
 
 
 def putAvaNameOnPlot(ax, avaDir):

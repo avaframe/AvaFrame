@@ -150,8 +150,8 @@ def addParticles2Plot(particles, ax, dem, whatS='m', whatC='h'):
     cmap, _, ticks, norm = pU.makeColorMap(cmap, np.amin(variableC), np.amax(variableC), continuous=pU.contCmap)
     # set range and steps of colormap
     sc = ax.scatter(X, Y, c=variableC, cmap=cmap, marker='.', zorder=15)
-    pU.addColorBar(sc, ax, ticks, 'm')
-    return ax
+    cb = pU.addColorBar(sc, ax, ticks, 'm')
+    return ax, cb
 
 
 def addDem2Plot(ax, dem, what='slope', extent=''):
@@ -219,7 +219,7 @@ def plotParticles(particlesList, cfg, dem):
             plt.show()
 
 
-def addResult2Plot(ax, dem, rasterData, resType, colorbar=True):
+def addResult2Plot(ax, dem, rasterData, resType, colorbar=True, contour=False):
     """ Add raster data to a plot
 
     Parameters
@@ -254,7 +254,12 @@ def addResult2Plot(ax, dem, rasterData, resType, colorbar=True):
                             extent=extent,
                             cmap=cmap, norm=norm, zorder=9)
     if colorbar:
-        pU.addColorBar(im, ax, ticks, unit)
-    CS = ax.contour(xArray, yArray, rasterData, levels=contourLevels, colors='k')
-    ax.clabel(CS, inline=1, fontsize=8, zorder=10)
-    return ax, extent
+        cb = pU.addColorBar(im, ax, ticks, unit)
+    else:
+        cb = None
+    if contour:
+        CS = ax.contour(xArray, yArray, rasterData, levels=contourLevels, colors='k')
+        ax.clabel(CS, inline=1, fontsize=8, zorder=10)
+    else:
+        CS = None
+    return ax, extent, cb, CS
