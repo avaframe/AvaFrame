@@ -160,3 +160,7 @@ The simulation results are plotted alongside the analytical solution for the giv
             :width: 90%
 
             Pile after 19.8s
+
+
+Energy line test
+==================
