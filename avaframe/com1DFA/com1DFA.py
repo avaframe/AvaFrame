@@ -910,7 +910,7 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
         particles, hPartArray = particleTools.initialiseParticlesFromFile(cfg, avaDir, releaseLine['file'].stem)
     else:
         # initialize random generator
-        rng = np.random.default_rng(int(float(cfg['seed'])))
+        rng = np.random.default_rng(getint(cfg['seed']))
 
         nPart = 0
         xPartArray = np.empty(0)
