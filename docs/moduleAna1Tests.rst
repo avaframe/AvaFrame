@@ -164,3 +164,113 @@ The simulation results are plotted alongside the analytical solution for the giv
 
 Energy line test
 ==================
+The Energy line test compares the results of the DFA simulation to the geometrical solution that is related
+to the total energy of the system. Solely considering coulomb friction this solution is motivated by the first principle
+of energy conservation along a simplified topography. Here friction force only depends on the slope angle.
+The analytical run-out is the intersection of the path profile with the so-called alpha line defined by the friction angle.
+It is also possible to extract from this alpha line information about the flow mass averaged velocity at any time or
+position along the path profile.
+
+
+Theory
+-------
+Applying the energy conservation law to a material bloc flowing down a slope and obeying to Coulomb friction
+between two infinitesimally close time steps reads:
+
+.. math::
+    \begin{aligned}
+    E^{tot}_{t + dt} - E^{tot}_{t} & = E^{kin}_{t + dt} + E^{pot}_{t + dt}  - (E^{kin}_{t} + E^{pot}_{t})
+    = \delta E_{fric} \\
+    & = \frac{1}{2} m v^2_{t+dt} + m g z_{t+dt} - \frac{1}{2} m v^2_{t} - m g z_{t} \\
+    &= \mathbf{F}_{fric} . \mathbf{dl} =
+    - \mu \vert \vert \mathbf{N}\vert \vert \frac{\mathbf{dl}}{dl}. \mathbf{dl} =
+    - \mu mg (\mathbf{e_z}.\mathbf{n}) dl
+    \end{aligned}
+
+where :math:`\mathbf{N}` represents the normal (to the slope surface) component of the gravity force,
+:math:`\mathbf{n}` the normal vector to the slope surface and :math:`\mathbf{dl}` is the vector representing
+the distanced traveled by the material between :math:`t` and :math:`t+dt`.
+The normal vector reads :math:`\mathbf{e_z}.\mathbf{n} = cos(\theta)`, where :math:`\theta` is the slope angle.
+Finally, in the 2D case,
+:math:`dl = \frac{ds}{cos(\theta)}`, which means that
+the material is flowing in the steepest slope direction (:math:`\mathbf{ds}` is the horizontal component of
+:math:`\mathbf{dl}`).
+Integrating the energy conservation between the start and a time t reads:
+
+.. math::
+    \begin{aligned}
+    E^{tot}_{t} - E^{tot}_{t=0} & = \frac{1}{2} m v^2_{t} + m g z_{t}
+    - \frac{1}{2} m \cancelto{0}{v^2_{t=0}} - m g \cancelto{z_0}{z_{t=0}} \\
+    &= \int_{t'=0}^{t'=t}\delta E_{fric} dt' = -\int_{s'=s_0}^{s'=s_t}\mu mg ds' = -\mu mg (s_t-\cancelto{0}{s_0})
+    \end{aligned}
+
+Speaking in terms of altitude the energy conservation equation can be rewritten:
+
+.. math::
+    z_0 = z_{t} + \frac{v^2_{t}}{2g} + tan\alpha s_t
+   :label: altitude-energy-conservation
+
+This result is illustrated in the following figure.
+
+.. figure:: _static/energyLineTheory.png
+    :width: 90%
+
+
+Let us consider a system of material blocks flowing down a slope and obeying to Coulomb friction.
+We can sum the previous equation :numref:`altitude-energy-conservation` of each block after weighting it by the
+block mass. This leads to the mass average energy conservation equation:
+
+.. math::
+    \bar{z}_0 = \bar{z}_{t} + \frac{\overline{v^2}_{t}}{2g} + tan\alpha \bar{s}_t
+   :label: altitude-energy-conservation-avg
+
+where the mass average :math:`\bar{a}` value of a quantity :math:`a` is:
+
+.. math::
+    \bar{a} = \frac{\sum_k m_k a_k}{\sum_k m_k}
+
+.. list-table::
+
+
+    * -
+
+        .. figure:: _static/energyLinePath.png
+            :width: 90%
+
+            View of the avalanche simulation and extracted path
+
+
+      -
+
+        .. figure:: _static/energyLine.png
+            :width: 90%
+
+            Simulation path profile with run-out line, :math:`\alpha` line and energy points
+
+
+Limitations
+~~~~~~~~~~~~~
+
+We finally explore and explain the limitations of this approach.
+For example, the geometrical energy solution appears to only coincide with the DFA solution when the flow direction is
+in line with the steepest descent.
+
+Procedure
+----------
+First, the DFA simulation is ran (in our case using the com1DFA module) on the desired avalanche, saving the particles
+(at least the initial and end particles dictionaries).
+Then, the particles mass average quantities are computed (:math:`\bar{x}, \bar{y}, \bar{z}, \bar{s}, \bar{v^2}`)
+to extract a path and path profile.
+Finally, the mass averaged path profile, the corresponding run-out line and the expected :math:`\alpha` are displayed
+and the run-out angle and distance errors as well as the velocity height error are computed.
+
+.. figure:: _static/EnergyLineTestExample.png
+    :width: 90%
+
+    Results from the ana1EnergyLineTest for the avaParabola
+
+
+To run
+-------
+
+A workflow example is given in :py:mod:`runScripts.runAna1EnergyLineTest.py`.

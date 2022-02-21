@@ -1,0 +1,120 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Compile with
+% pdflatex --shell-escape -synctex=1 -interaction=nonstopmode energyLineTheory.tex
+% to convert it to png use:
+% convert -density 300 -transparent white energyLineTheory.pdf energyLineTheory.png
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{standalone}
+
+\input{GeneralPlotHeader.tex}
+
+\begin{document}
+
+\tikzset{
+   name plot/.style={every path/.style={name path global=#1}}
+}
+
+
+\begin{tikzpicture}[scale=3]
+
+
+\def\a{0.2222222222}
+\def\b{-1.3333}
+\def\c{2.2}
+
+\def\aa{0.215}
+\def\bb{-1.38}
+\def\cc{3.15}
+\def\alp{-30}
+\def\gam{-36}
+\def\sincoef{0.1}
+
+\pgfmathsetmacro\sinprop{9.5*180/3.14}
+
+% center of mass path end
+\pgfmathsetmacro\xa{(tan(\gam)-\b)/\a}
+\pgfmathsetmacro\ya{\a*\xa*\xa+\b*\xa+\c+\sincoef*sin(\sinprop)*sin(\sinprop)}
+
+% run out line angle
+\pgfmathsetmacro\xai{0.8*\xa}
+\pgfmathsetmacro\yai{\c-(\c-\ya)/\xa*\xai}
+\pgfmathsetmacro\yaii{\a*\xa*\xa+\b*\xa+\c+\sincoef*sin(\sinprop)*sin(\sinprop)}
+\pgfmathsetmacro\xao{1*\xa}
+\pgfmathsetmacro\yao{\yai}
+
+% alpha line angle
+\pgfmathsetmacro\xaa{(tan(\alp)-\b)/\a}
+\pgfmathsetmacro\yaa{\ya+(2*\a*\xa+\b)*(\xaa-\xa)}
+\pgfmathsetmacro\xaai{0.85*\xaa}
+\pgfmathsetmacro\yaai{\c-(\c-\yaa)/\xaa*\xaai}
+\pgfmathsetmacro\xaao{1*\xaa}
+\pgfmathsetmacro\yaao{\yaai}
+
+
+% center of mass path name
+\pgfmathsetmacro\xp{0.2*\xa}
+\pgfmathsetmacro\yp{\a*\xp*\xp+\b*\xp+\c+\sincoef*sin(\xp/\xa*\sinprop)*sin(\xp/\xa*\sinprop}
+% alpha line name
+\pgfmathsetmacro\xal{0.6*\xa}
+\pgfmathsetmacro\yal{\c-(\c-\yaa)/\xaa*\xal}
+% gamma line name
+\pgfmathsetmacro\xg{0.7*\xa}
+\pgfmathsetmacro\yg{\c-(\c-\yai)/\xai*\xg}
+% extended profile name
+\pgfmathsetmacro\xep{1.1*\xaa}
+\pgfmathsetmacro\yep{\ya+(2*\a*\xa+\b)*(\xep-\xa)}
+
+% point somewhere on the way
+\pgfmathsetmacro\xb{0.5*\xa}
+\pgfmathsetmacro\yb{\a*\xb*\xb+\b*\xb+\c+\sincoef*sin(\xb/\xa*\sinprop)*sin(\xb/\xa*\sinprop)}
+\pgfmathsetmacro\ybi{\c-(\c-\ya)/\xa*\xb}
+\pgfmathsetmacro\ybii{\c}
+
+\tkzInit[xmin=0,xmax=3.5,ymin=0,ymax=3]
+% Draw coordinates
+\draw [>={Triangle[open]},thin, ->] (0,0) --  (0,2.5) node[left] {$\bar{z}$};
+\draw[>={Triangle[open]},thin, ->]  (0,0) --  (3,0) node[right] {$\bar{s}$};
+% Draw center of mass path line and points
+\tkzFct[thick,color=AFDark,domain=0:\xa]{(\a*x*x+\b*x+\c+\sincoef*sin(x/\xa*\sinprop*3.14/180)*sin(x/\xa*\sinprop*3.14/180))}
+
+\tkzFct[thick, dotted, color=AFLight,domain=0:\xa]{\c}
+
+\foreach \i in {0.0,0.05,...,1.1} {
+    \pgfmathsetmacro{\j}{(1-sin(\i*180)*sin(\i*180))*100}
+    \pgfmathsetmacro{\xx}{(-0.5*cos(\i*180) + 0.5 )*\xa}
+    \pgfmathsetmacro{\yy}{\c-(\c-\ya)/\xa*\xx }
+    \pgfmathsetmacro{\yyy}{(\sincoef*sin(\xx/\xa*\sinprop)*sin(\xx/\xa*\sinprop) + \a*\xx*\xx+\b*\xx+\c)}
+
+   \draw [color=AFLight!\j!AFDark] plot [only marks, mark size=0.4, mark=square*] coordinates {(\xx, \yy)};
+   \draw [color=AFDark] plot [only marks, mark size=0.4, mark=*] coordinates {(\xx, \yyy)};
+}
+
+\tkzDefPoints{0/\c/H, \xa/0/A, \xa/\ya/AA, \xai/\yai/AI, \xao/\yao/AO, \xp/\yp/P, \xaa/0/A1, \xaa/\yaa/AA1, \xaai/\yaai/AI1, \xaao/\yaao/AO1, \xb/\yb/B, 0/\yb/BB, \xb/0/B0, \xb/\ybi/BI1, 0/\ybi/BI2, \xb/\ybii/BII1, 0/\ybii/BII2, \xg/\yg/G, \xal/\yal/AL, \xep/\yep/EP}
+% alpha line
+\draw [thick,dotted, AFMiddle] (AA) -- (A) node [below] {$\bar{s}_{\alpha}$};
+\draw [thick, AFMiddle] (AA) -- (H);
+\draw [thick,dotted, AFMiddle] (AI) -- (AO);
+\pic[draw,AFMiddle,angle radius=0.8cm,"$\alpha$" ,pic text options={shift={(18pt,-5pt)}}]{angle=AA--AI--AO};
+
+% some point on the way
+\draw [thick,dotted, black] (BII1) -- (B0) node [below] {$\bar{s}_{t}$};
+\draw [thick,dotted, black] (B) -- (BB) node [left] {$\bar{z}_{t}$};
+\draw [thick,dotted, black] (BI1) -- (BI2) node [below] {};
+\node[fill=none, left, AFLight] at (BII2) {$\bar{z}_0$};
+
+
+\draw [>={Triangle},thick, <->] (BB) -- (BI2) node [midway,right,black] {$\frac{\overline{v^2_t}}{2g}$};
+
+\draw [>={Triangle},thick, <->] (0,0) -- (BB) node [midway,right,black] {$\bar{z}_t$};
+
+\draw [>={Triangle},thick, <->] (BI1) -- (BII1) node [midway,right,black] {$\Delta E_{fric}$};
+
+\node[text width=2.5cm, fill=none,above right,AFDark] at (1,2.2) {Center of mass\\ profile path};
+\draw [>={Triangle},thick, ->, AFDark] (1,2.2) -- (P);
+\node[text width=2.5cm, fill=none,above right,AFMiddle] at (2.5,1) {$\alpha$ line};
+\draw [>={Triangle},thick, ->, AFMiddle] (2.5,1) -- (G);
+
+\end{tikzpicture}
+
+\end{document
