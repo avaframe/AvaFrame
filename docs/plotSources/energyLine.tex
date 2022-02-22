@@ -89,14 +89,16 @@
    \draw [color=AFDark] plot [only marks, mark size=0.4, mark=*] coordinates {(\xx, \yyy)};
 }
 
-\tkzDefPoints{0/\c/H, \xa/0/A, \xa/\ya/AA, \xai/\yai/AI, \xao/\yao/AO, \xp/\yp/P, \xaa/0/A1, \xaa/\yaa/AA1, \xaai/\yaai/AI1, \xaao/\yaao/AO1, \xb/\yb/B, 0/\yb/BB, \xb/0/B0, \xb/\ybi/BI1, 0/\ybi/BI2, \xb/\ybii/BII1, 0/\ybii/BII2, \xg/\yg/G, \xal/\yal/AL, \xep/\yep/EP}
+\tkzDefPoints{0/\c/H, \xa/0/A, \xa/\ya/AA, 0/\ya/AAA, \xai/\yai/AI, \xao/\yao/AO, \xp/\yp/P, \xaa/0/A1, \xaa/\yaa/AA1, 0/\yaa/AAA1, \xaai/\yaai/AI1, \xaao/\yaao/AO1, \xb/\yb/B, 0/\yb/BB, \xb/0/B0, \xb/\ybi/BI1, 0/\ybi/BI2, \xb/\ybii/BII1, 0/\ybii/BII2, \xg/\yg/G, \xal/\yal/AL, \xep/\yep/EP}
 % gamma line/ run out line
 \draw [thick,dotted, AFDark] (AA) -- (A) node [below] {$\bar{s}_{\gamma}$};
+\draw [thick,dotted, AFDark] (AA) -- (AAA) node [above left] {$\bar{z}_{\gamma}$};
 \draw [thick, AFDark] (AA) -- (H);
 \draw [thick,dotted, AFDark] (AI) -- (AO);
 \pic[draw,AFDark,angle radius=0.8cm,"$\gamma$" ,pic text options={shift={(18pt,-5pt)}}]{angle=AA--AI--AO};
 % alpha line
 \draw [thick,dotted, AFMiddle] (AA1) -- (A1) node [below] {$\bar{s}_{\alpha}$};
+\draw [thick,dotted, AFMiddle] (AA1) -- (AAA1) node [below left] {$\bar{z}_{\alpha}$};
 \draw [thick,thick, AFMiddle] (AA1) -- (H);
 \draw [thick,dotted, AFMiddle] (AI1) -- (AO1);
 \pic[draw,AFMiddle,angle radius=0.8cm,"$\alpha$" ,pic text options={shift={(22pt,-5pt)}}]{angle=AA1--AI1--AO1};
@@ -110,7 +112,9 @@
 
 \draw [>={Triangle},thick, <->] (BB) -- (BI2) node [midway,right,black] {$\frac{\overline{v^2_n}}{2g}$};
 \draw [>={Triangle},thick, <->] (BI2) -- (BII2) node [midway,right,black] {$\epsilon_{\overline{v^2_n}}$};
-\draw [>={Triangle},thick, <->] (A) -- (A1) node [midway,below,black] {$\epsilon_r$};
+\draw [>={Triangle},thick, <->] (A) -- (A1) node [midway,below,black] {$\epsilon_{\bar{s}}$};
+\draw [>={Triangle},thick, ->] (AAA) + (0,0.01) -- (AAA) node [midway,above right,black] {$\epsilon_{\bar{z}}$};
+\draw [>={Triangle},thick, ->] (AAA1) + (0,-0.01) -- (AAA1) node [black] {};
 
 
 \node[text width=2.5cm, fill=none,above right,AFDark] at (1,2) {Center of mass\\ profile path};
@@ -121,9 +125,6 @@
 \draw [>={Triangle},thick, ->, AFDark] (2.5,1) -- (G);
 \node[text width=2.5cm, fill=none,above,AFDark] at (4,0.5) {extended\\profile path};
 \draw [>={Triangle},thick, ->, AFDark] (4,0.5) -- (EP);
-
-%\node[text width=2.5cm, fill=none,below,black] at (2,-0.2) {$\mbox{run-out point}$};
-%\draw [>={Triangle},thick, ->] (2,-0.2) -- (AA);
 \end{tikzpicture}
 
 \end{document}
