@@ -174,37 +174,45 @@ position along the path profile.
 
 Theory
 -------
-Applying the energy conservation law to a material bloc flowing down a slope and obeying to Coulomb friction
-between two infinitesimally close time steps reads:
+Applying the energy conservation law to a material bloc flowing down
+a slope and obeying to Coulomb friction and this between two
+infinitesimally close time steps reads:
 
 .. math::
     \begin{aligned}
-    E^{tot}_{t + dt} - E^{tot}_{t} & = E^{kin}_{t + dt} + E^{pot}_{t + dt}  - (E^{kin}_{t} + E^{pot}_{t})
-    = \delta E_{fric} \\
-    & = \frac{1}{2} m v^2_{t+dt} + m g z_{t+dt} - \frac{1}{2} m v^2_{t} - m g z_{t} \\
+    E^{tot}_{t + dt} - E^{tot}_{t} & = E^{kin}_{t + dt} + E^{pot}_{t + dt}
+    - (E^{kin}_{t} + E^{pot}_{t}) = \delta E_{fric} \\
+    & = \frac{1}{2} m v^2_{t+dt} + m g z_{t+dt}
+    - \frac{1}{2} m v^2_{t} - m g z_{t} \\
     &= \mathbf{F}_{fric} . \mathbf{dl} =
-    - \mu \vert \vert \mathbf{N}\vert \vert \frac{\mathbf{dl}}{dl}. \mathbf{dl} =
-    - \mu mg (\mathbf{e_z}.\mathbf{n}) dl
+    - \mu \vert \vert \mathbf{N}\vert \vert \frac{\mathbf{dl}}{dl}. \mathbf{dl}
+    = - \mu mg (\mathbf{e_z}.\mathbf{n}) dl
     \end{aligned}
 
-where :math:`\mathbf{N}` represents the normal (to the slope surface) component of the gravity force,
-:math:`\mathbf{n}` the normal vector to the slope surface and :math:`\mathbf{dl}` is the vector representing
-the distanced traveled by the material between :math:`t` and :math:`t+dt`.
-The normal vector reads :math:`\mathbf{e_z}.\mathbf{n} = cos(\theta)`, where :math:`\theta` is the slope angle.
-Finally, in the 2D case,
-:math:`dl = \frac{ds}{cos(\theta)}`, which means that
-the material is flowing in the steepest slope direction (:math:`\mathbf{ds}` is the horizontal component of
-:math:`\mathbf{dl}`).
+where :math:`\delta E_{fric}` is the energy dissipation due to friction,
+:math:`\mathbf{N}` represents the normal (to the slope surface) component
+of the gravity force, :math:`\mathbf{n}` the normal vector to the slope surface
+and :math:`\mathbf{dl}` is the vector representing the distanced traveled by
+the material between :math:`t` and :math:`t+dt`.
+The normal vector reads :math:`\mathbf{e_z}.\mathbf{n} = cos(\theta)`,
+where :math:`\theta` is the slope angle.
+Finally, in the 2D case, :math:`dl = \frac{ds}{cos(\theta)}`, which means that
+the material is flowing in the steepest slope direction (:math:`\mathbf{ds}`
+is the horizontal component of :math:`\mathbf{dl}`).
+
 Integrating the energy conservation between the start and a time t reads:
 
 .. math::
     \begin{aligned}
     E^{tot}_{t} - E^{tot}_{t=0} & = \frac{1}{2} m v^2_{t} + m g z_{t}
     - \frac{1}{2} m \cancelto{0}{v^2_{t=0}} - m g \cancelto{z_0}{z_{t=0}} \\
-    &= \int_{t'=0}^{t'=t}\delta E_{fric} dt' = -\int_{s'=s_0}^{s'=s_t}\mu mg ds' = -\mu mg (s_t-\cancelto{0}{s_0})
+    &= \int_{t'=0}^{t'=t}\delta E_{fric} dt' =
+    -\int_{s'=s_0}^{s'=s_t}\mu mg ds' =
+    -\mu mg (s_t-\cancelto{0}{s_0})
     \end{aligned}
 
-Speaking in terms of altitude the energy conservation equation can be rewritten:
+Speaking in terms of altitude, the energy conservation equation can be
+rewritten:
 
 .. math::
     z_0 = z_{t} + \frac{v^2_{t}}{2g} + tan\alpha s_t
@@ -216,12 +224,15 @@ This result is illustrated in the following figure.
     :width: 90%
 
 
-Let us consider a system of material blocks flowing down a slope and obeying to Coulomb friction.
-We can sum the previous equation :numref:`altitude-energy-conservation` of each block after weighting it by the
-block mass. This leads to the mass average energy conservation equation:
+Let us now consider a system of material blocks flowing down a slope
+and obeying to Coulomb friction. We can sum the previous equation
+:numref:`altitude-energy-conservation` of each block after weighting
+it by the block mass. This leads to the mass average energy
+conservation equation:
 
 .. math::
-    \bar{z}_0 = \bar{z}_{t} + \frac{\overline{v^2}_{t}}{2g} + tan\alpha \bar{s}_t
+    \bar{z}_0 = \bar{z}_{t} + \frac{\overline{v^2}_{t}}{2g}
+    + tan\alpha \bar{s}_t
    :label: altitude-energy-conservation-avg
 
 where the mass average :math:`\bar{a}` value of a quantity :math:`a` is:
@@ -229,8 +240,19 @@ where the mass average :math:`\bar{a}` value of a quantity :math:`a` is:
 .. math::
     \bar{a} = \frac{\sum_k m_k a_k}{\sum_k m_k}
 
-.. list-table::
+This means that the mass averaged quantities also follow the same energy
+conservation law when express in terms of altitude. The same figure as in
+:numref:`altitude-energy-conservation` can be drawn for the center of mass
+profile path.
 
+The aim is now to take advantage of this energy conservation line to evaluate
+the DFA simulation. If we compute for the particles in the simulation, the
+mass averaged path profile and compare it to the :math:`\alpha` line,
+we will be able to compute the error compared to the run-out predicted
+by the energy line as well as the error on the velocity altitude. The following
+figures illustrate the problem.
+
+.. list-table::
 
     * -
 
@@ -245,15 +267,39 @@ where the mass average :math:`\bar{a}` value of a quantity :math:`a` is:
         .. figure:: _static/energyLine.png
             :width: 90%
 
-            Simulation path profile with run-out line, :math:`\alpha` line and energy points
+            Simulation path profile with run-out line, :math:`\alpha`
+            line and energy points
+
+From the different mass averaged simulation quantities and the theoretical
+:math:`\alpha` line it is possible to extract four error indicators.
+The three first ones are related to the run-out. The intersection between
+the :math:`\alpha` line and the mass averaged path profile (or its extrapolation
+if the profile is too short) defines the theoretical run-out point.
+The horizontal and vertical distance between this point and the end of the path
+profile defines a run-out error in meters. The angle difference between
+the :math:`\alpha` line angle and the DFA simulation run-out line defines
+the run-out angle error.
+Finally, the Root Mean Square Error (RMSE) between the :math:`\alpha` line
+and the DFA simulation energy points defines an error on the velocity altitude
+:math:`\frac{\overline{v^2}}{2g}`.
 
 
 Limitations
 ~~~~~~~~~~~~~
 
-We finally explore and explain the limitations of this approach.
-For example, the geometrical energy solution appears to only coincide with the DFA solution when the flow direction is
-in line with the steepest descent.
+We now have to pay attention to stay in the good range of application of
+this test. Indeed, one of the important hypothesis when developing
+the energy solution, is that the material is flowing in the steepest
+slope direction. If this hypothesis fails, then it is not possible to develop
+the analytic energy solution anymore. In the 3D case, the distance vector
+:math:`\mathbf{dl}` traveled by the particles reads
+:math:`dl = \frac{ds}{cos(\gamma)}`, where :math:`\gamma` is the angle
+between the :math:`\mathbf{dl}` vector and the horizontal plane
+which can differ from the slope angle :math:`\theta`. If this happens
+it is not possible to differentiate anymore the DFA simulation error from
+hypothesis fail error. The test looses from its meaning.
+
+
 
 Procedure
 ----------
