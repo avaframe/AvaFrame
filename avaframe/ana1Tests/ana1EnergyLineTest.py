@@ -29,12 +29,10 @@ log = logging.getLogger(__name__)
 
 
 def mainEnergyLineTest(cfgMain):
-    """This is the core function of the com3Hybrid module
+    """This is the core function of the ana1EnergyLineTest module
 
-    Here the DFA and AB models are run one after the other to first produce (from com1DFA)
-    the avalanche path, then get the friction angle corresponding to the topography (from com2AB)
-    and finally run the DFA simultaion one last time with the correct friction angle and get a 3D
-    output of the avalanche
+    This module runs a DFA simulation extracts the center of mass path
+    and compares it to he analytic geometric/alpha line solution
     """
     avalancheDir = cfgMain['MAIN']['avalancheDir']
     demOri = getInput.readDEM(avalancheDir)
