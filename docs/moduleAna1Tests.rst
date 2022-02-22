@@ -284,8 +284,8 @@ and the DFA simulation energy points defines an error on the velocity altitude
 :math:`\frac{\overline{v^2}}{2g}`.
 
 
-Limitations
-~~~~~~~~~~~~~
+Limitations and remarks
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 We now have to pay attention to stay in the good range of application of
 this test. Indeed, one of the important hypothesis when developing
@@ -297,9 +297,18 @@ the analytic energy solution anymore. In the 3D case, the distance vector
 between the :math:`\mathbf{dl}` vector and the horizontal plane
 which can differ from the slope angle :math:`\theta`. If this happens
 it is not possible to differentiate anymore the DFA simulation error from
-hypothesis fail error. The test looses from its meaning.
+the hypothesis fail error. The test has then to be used more qualitatively
+to compare different DFA simulations.
 
-
+It is also possible with this test to observe the effect of terms
+such as curvature acceleration, artificial viscosity or pressure gradients.
+The curvature acceleration modifies the friction term (depending on topography
+curvature and particle velocity). This leads to a mismatch between the
+energy solution and the DFA simulation.
+The artificial viscosity can lead to viscous dissipation. This should lead
+to shorter run-outs then what the energy solution predicts.
+Finally, the effect of the pressure force can be studied, especially the
+effect of the computation options.
 
 Procedure
 ----------

@@ -686,7 +686,6 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
       xNew, yNew, zNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = distConservProjectionIteratrive(
         x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, ncols, nrows, interpOption, reprojectionIterations, thresholdProjection)
     else:
-
       xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = samosProjectionIteratrive(
         xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
       zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
@@ -704,8 +703,15 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
       keepParticle[j] = 0
       nRemove = nRemove + 1
 
-
+    # get cell and weights at old position
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+    # get normal at the old particle location
+    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+    # get normal at the new particle location
     nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
+    # get average normal between old and new position
+    nx, ny, nz = normalize(nx+nxNew, ny+nyNew, nz+nzNew)
+    # normalize new normal
     nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
     # compute the distance traveled by the particle
     dl = norm((xNew-x), (yNew-y), (zNew-z))
@@ -715,7 +721,7 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
     sNew = s + ds
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
-    sCorNew = sCor + nzNew*dl
+    sCorNew = sCor + nz*dl
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
     # normal component of the velocity

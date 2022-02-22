@@ -126,7 +126,7 @@ def mainEnergyLineTest(cfgMain):
     ax2 = plt.subplot2grid((2, 2), (0, 0), colspan=2)
     # plot mass averaged center of mass
     ax2.plot(avaProfileMass['s'], avaProfileMass['z'], '-k.', label='Center of mass altitude')
-    # ax2.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
+    ax2.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
     # extend this curve towards the bottom using a linear regression on the last x points
     ax2.plot(avaProfileMass['s'][-1]*np.array([1, 1.05]), avaProfileMass['z'][-1] + p1[0]*avaProfileMass['s'][-1]*np.array([0, 0.05]),
              ':k', label='Center of mass altitude extrapolation')
@@ -150,6 +150,7 @@ def mainEnergyLineTest(cfgMain):
     # same plot as on ax2 but zoomed in
     # plot mass averaged center of mass
     ax3.plot(avaProfileMass['s'], avaProfileMass['z'], '-k.', label='Center of mass altitude')
+    ax3.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
     # extend this curve towards the bottom using a linear gegression on the last x points
     ax3.plot(avaProfileMass['s'][-1]*np.array([1, 1.05]), avaProfileMass['z'][-1] + p1[0]*avaProfileMass['s'][-1]*np.array([0, 0.05]),
              ':k', label='Center of mass altitude extrapolation')
