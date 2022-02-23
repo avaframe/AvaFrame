@@ -220,13 +220,14 @@ rewritten:
 
 This result is illustrated in the following figure.
 
+.. _fig-altitude-energy-conservation:
 .. figure:: _static/energyLineTheory.png
     :width: 90%
 
 
 Let us now consider a system of material blocks flowing down a slope
 and obeying to Coulomb friction. We can sum the previous equation
-:numref:`altitude-energy-conservation` of each block after weighting
+:numref:`fig-altitude-energy-conservation` of each block after weighting
 it by the block mass. This leads to the mass average energy
 conservation equation:
 
@@ -242,7 +243,7 @@ where the mass average :math:`\bar{a}` value of a quantity :math:`a` is:
 
 This means that the mass averaged quantities also follow the same energy
 conservation law when express in terms of altitude. The same figure as in
-:numref:`altitude-energy-conservation` can be drawn for the center of mass
+:numref:`fig-altitude-energy-conservation` can be drawn for the center of mass
 profile path.
 
 The aim is now to take advantage of this energy conservation line to evaluate
