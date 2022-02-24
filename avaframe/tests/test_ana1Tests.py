@@ -151,19 +151,18 @@ def test_mainEnegyLineTest(tmp_path):
     dirname = pathlib.Path(__file__).parents[0]
     energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
     sourceDir = dirname / '..' / 'data' / 'avaParabola' / 'Inputs'
-    avalancheDir = tmp_path / 'avaParabola' / 'Inputs'
+    targetDir = tmp_path / 'avaParabola' / 'Inputs'
+    avalancheDir = tmp_path / 'avaParabola'
 
-    shutil.copytree(sourceDir, avalancheDir)
+    shutil.copytree(sourceDir, targetDir)
 
     # log file name; leave empty to use default runLog.log
     logName = 'runenergyLineTest'
 
     # Load avalanche directory from general configuration file
     cfgMain = cfgUtils.getGeneralConfig()
-    avalancheDir = cfgMain['MAIN']['avalancheDir']
+    cfgMain['MAIN']['avalancheDir'] = str(avalancheDir)
     # ----------------
-    # Clean input directory(ies) of old work and output files
-    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=True)
 
     errorEnergyTest = energyLineTest.mainEnergyLineTest(cfgMain, energyLineTestCfgFile)
     print(errorEnergyTest)
