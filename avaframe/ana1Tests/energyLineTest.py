@@ -244,15 +244,13 @@ def getAlphaProfileIntersection(avaProfileMass, mu):
     # get slope of the last profile points to extend the profile
     p1 = np.polyfit(avaProfileMass['s'][-3:], avaProfileMass['z'][-3:], 1)
     slopeExt = p1[0]
-    sExt = avaProfileMass['s']
-    zExt = avaProfileMass['z']
     # extend profile
     sIntersection = 0
     coefExt = 0
-    while sIntersection == 0:
+    while sIntersection == 0 and coefExt<2:
         coefExt = coefExt + 0.05
-        sExt = np.append(sExt, (1+coefExt)*avaProfileMass['s'][-1])
-        zExt = np.append(zExt, zExt[-1] + slopeExt*avaProfileMass['s'][-1]*coefExt)
+        sExt = np.append(avaProfileMass['s'], (1+coefExt)*avaProfileMass['s'][-1])
+        zExt = np.append(avaProfileMass['z'], avaProfileMass['z'][-1] + slopeExt*avaProfileMass['s'][-1]*coefExt)
         # find intersection between alpha line and profile
         alphaLine = zExt[0] - sExt * mu
         # find the intersection segment
