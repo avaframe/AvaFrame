@@ -150,7 +150,7 @@ def test_getEnergyInfo(capfd):
 def test_mainEnegyLineTest(tmp_path):
     dirname = pathlib.Path(__file__).parents[0]
     energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
-    sourceDir = dirname / '..' / 'data' / 'avaParabolaStats' / 'Inputs'
+    sourceDir = dirname / '..' / 'data' / 'avaParabola' / 'Inputs'
     avalancheDir = tmp_path / 'avaParabola' / 'Inputs'
 
     shutil.copytree(sourceDir, avalancheDir)
