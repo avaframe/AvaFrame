@@ -164,18 +164,18 @@ The simulation results are plotted alongside the analytical solution for the giv
 
 Energy line test
 ==================
-The Energy line test compares the results of the DFA simulation to the geometrical solution that is related
+The Energy line test compares the results of the DFA simulation to a geometrical solution that is related
 to the total energy of the system. Solely considering coulomb friction this solution is motivated by the first principle
 of energy conservation along a simplified topography. Here friction force only depends on the slope angle.
-The analytical run-out is the intersection of the path profile with the so-called alpha line defined by the friction angle.
-It is also possible to extract from this alpha line information about the flow mass averaged velocity at any time or
+The analytical run-out is the intersection of the path profile with the alpha line defined by the friction angle.
+From the alpha line it is also possible to extract information about the flow mass averaged velocity at any time or
 position along the path profile.
 
 
 Theory
 -------
-Applying the energy conservation law to a material bloc flowing down
-a slope and obeying to Coulomb friction and this between two
+Applying the energy conservation law to a material block flowing down
+a slope with Coulomb friction and this between two
 infinitesimally close time steps reads:
 
 .. math::
@@ -195,7 +195,10 @@ of the gravity force, :math:`\mathbf{n}` the normal vector to the slope surface
 and :math:`\mathbf{dl}` is the vector representing the distanced traveled by
 the material between :math:`t` and :math:`t+dt`.
 The normal vector reads :math:`\mathbf{e_z}.\mathbf{n} = cos(\theta)`,
-where :math:`\theta` is the slope angle.
+where :math:`\theta` is the slope angle. :math:`m` represents the mass of the material,
+:math:`g` the gravity, :math:`\mu = \tan{\delta}` the friction coefficient and
+friction angle and :math:`z`, receptively :math:`v` the elevation receptively velocity
+of the material block.
 Finally, in the 2D case, :math:`dl = \frac{ds}{cos(\theta)}`, which means that
 the material is flowing in the steepest slope direction (:math:`\mathbf{ds}`
 is the horizontal component of :math:`\mathbf{dl}`).
@@ -221,13 +224,18 @@ rewritten:
 This result is illustrated in the following figure.
 
 .. _fig-altitude-energy-conservation:
+
 .. figure:: _static/energyLineTheory.png
     :width: 90%
 
+    Center of mass profile (dark blue line with the dots)
+    with on top, the energy line (light blue) and the
+    velocity altitude points (colored squared)
 
-Let us now consider a system of material blocks flowing down a slope
-and obeying to Coulomb friction. We can sum the previous equation
-:numref:`fig-altitude-energy-conservation` of each block after weighting
+
+Considering a system of material blocks flowing down a slope
+with to Coulomb friction: we can sum the previous equation
+:eq:`altitude-energy-conservation` of each block after weighting
 it by the block mass. This leads to the mass average energy
 conservation equation:
 
@@ -242,16 +250,16 @@ where the mass average :math:`\bar{a}` value of a quantity :math:`a` is:
     \bar{a} = \frac{\sum_k m_k a_k}{\sum_k m_k}
 
 This means that the mass averaged quantities also follow the same energy
-conservation law when express in terms of altitude. The same figure as in
+conservation law when expressed in terms of altitude. The same figure as in
 :numref:`fig-altitude-energy-conservation` can be drawn for the center of mass
 profile path.
 
-The aim is now to take advantage of this energy conservation line to evaluate
-the DFA simulation. If we compute for the particles in the simulation, the
-mass averaged path profile and compare it to the :math:`\alpha` line,
-we will be able to compute the error compared to the run-out predicted
-by the energy line as well as the error on the velocity altitude. The following
-figures illustrate the problem.
+The aim is to take advantage of this energy conservation line to evaluate
+the DFA simulation. Computing the
+mass averaged path profile for the particles in the simulation and comparing
+it to the :math:`\alpha` line allows to compute the error compared to the
+energy line run-out. This also applies to the error on the velocity altitude.
+The following figures illustrate the concept.
 
 .. list-table::
 
@@ -268,27 +276,33 @@ figures illustrate the problem.
         .. figure:: _static/energyLine.png
             :width: 90%
 
-            Simulation path profile with run-out line, :math:`\alpha`
-            line and energy points
+            Simulation path profile (dark blue curve and dots)
+            with the run-out line (dark blue line and velocity altitude
+            squares), :math:`\alpha` line and energy points
 
 From the different mass averaged simulation quantities and the theoretical
-:math:`\alpha` line it is possible to extract four error indicators.
-The three first ones are related to the run-out. The intersection between
-the :math:`\alpha` line and the mass averaged path profile (or its extrapolation
-if the profile is too short) defines the theoretical run-out point.
-The horizontal and vertical distance between this point and the end of the path
-profile defines a run-out error in meters. The angle difference between
-the :math:`\alpha` line angle and the DFA simulation run-out line defines
-the run-out angle error.
-Finally, the Root Mean Square Error (RMSE) between the :math:`\alpha` line
-and the DFA simulation energy points defines an error on the velocity altitude
-:math:`\frac{\overline{v^2}}{2g}`.
+:math:`\alpha` line it is possible to extract four error indicators,
+three related to the run-out and the last one to the velocity :
+
+  * The intersection between the :math:`\alpha` line and the
+    mass averaged path profile (or its extrapolation if the profile
+    is too short) defines the theoretical run-out point.
+
+  * The horizontal and vertical distance between this point and
+    the end of the path profile defines a run-out error in meters.
+
+  * The angle difference between the :math:`\alpha` line angle and
+    the DFA simulation run-out line defines the run-out angle error.
+
+  * Root Mean Square Error (RMSE) between the :math:`\alpha` line
+    and the DFA simulation energy points defines an error on the
+    velocity altitude :math:`\frac{\overline{v^2}}{2g}`.
 
 
 Limitations and remarks
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-We now have to pay attention to stay in the good range of application of
+It is essential to stay in the applicable range of
 this test. Indeed, one of the important hypothesis when developing
 the energy solution, is that the material is flowing in the steepest
 slope direction. If this hypothesis fails, then it is not possible to develop
@@ -296,17 +310,21 @@ the analytic energy solution anymore. In the 3D case, the distance vector
 :math:`\mathbf{dl}` traveled by the particles reads
 :math:`dl = \frac{ds}{cos(\gamma)}`, where :math:`\gamma` is the angle
 between the :math:`\mathbf{dl}` vector and the horizontal plane
-which can differ from the slope angle :math:`\theta`. If this happens
-it is not possible to differentiate anymore the DFA simulation error from
-the hypothesis fail error. The test has then to be used more qualitatively
-to compare different DFA simulations.
+which can differ from the slope angle :math:`\theta`. In this case,
+the energy solution is not anymore the solution of the problem considered
+and can not be used as reference.
+
+.. If this happens
+  it is not possible to differentiate anymore, in the energy plot,
+  the potential error related to the DFA simulation  from
+  the hypothesis fail error.
 
 It is also possible with this test to observe the effect of terms
 such as curvature acceleration, artificial viscosity or pressure gradients.
 The curvature acceleration modifies the friction term (depending on topography
 curvature and particle velocity). This leads to a mismatch between the
 energy solution and the DFA simulation.
-The artificial viscosity can lead to viscous dissipation. This should lead
+Artificial viscosity can lead to viscous dissipation leading
 to shorter run-outs then what the energy solution predicts.
 Finally, the effect of the pressure force can be studied, especially the
 effect of the computation options.
@@ -314,7 +332,7 @@ effect of the computation options.
 Procedure
 ----------
 First, the DFA simulation is ran (in our case using the com1DFA module) on the desired avalanche, saving the particles
-(at least the initial and end particles dictionaries).
+(at least the initial and final particles information).
 Then, the particles mass average quantities are computed (:math:`\bar{x}, \bar{y}, \bar{z}, \bar{s}, \bar{v^2}`)
 to extract a path and path profile.
 Finally, the mass averaged path profile, the corresponding run-out line and the expected :math:`\alpha` are displayed
