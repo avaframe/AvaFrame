@@ -165,7 +165,7 @@ The simulation results are plotted alongside the analytical solution for the giv
 Energy line test
 ==================
 The Energy line test compares the results of the DFA simulation to a geometrical solution that is related
-to the total energy of the system. Solely considering coulomb friction this solution is motivated by the first principle
+to the total energy of the system. Solely considering Coulomb friction this solution is motivated by the first principle
 of energy conservation along a simplified topography. Here friction force only depends on the slope angle.
 The analytical run-out is the intersection of the path profile with the alpha line defined by the friction angle.
 From the alpha line it is also possible to extract information about the flow mass averaged velocity at any time or
@@ -197,7 +197,7 @@ the material between :math:`t` and :math:`t+dt`.
 The normal vector reads :math:`\mathbf{e_z}.\mathbf{n} = cos(\theta)`,
 where :math:`\theta` is the slope angle. :math:`m` represents the mass of the material,
 :math:`g` the gravity, :math:`\mu = \tan{\delta}` the friction coefficient and
-friction angle and :math:`z`, receptively :math:`v` the elevation receptively velocity
+friction angle, :math:`z`, respectively :math:`v` the elevation respectively velocity
 of the material block.
 Finally, in the 2D case, :math:`dl = \frac{ds}{cos(\theta)}`, which means that
 the material is flowing in the steepest slope direction (:math:`\mathbf{ds}`
@@ -302,10 +302,11 @@ three related to the run-out and the last one to the velocity :
 Limitations and remarks
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is essential to stay in the applicable range of
-this test. Indeed, one of the important hypothesis when developing
+It is essential to stay where the assumptions of this test holds.
+Indeed, one of the important hypotheses when developing
 the energy solution, is that the material is flowing in the steepest
-slope direction. If this hypothesis fails, then it is not possible to develop
+slope direction (i.e. where :math:`dl = \frac{ds}{cos(\theta)}` theta holds).
+If this hypothesis fails, then it is not possible to develop
 the analytic energy solution anymore. In the 3D case, the distance vector
 :math:`\mathbf{dl}` traveled by the particles reads
 :math:`dl = \frac{ds}{cos(\gamma)}`, where :math:`\gamma` is the angle
@@ -333,10 +334,10 @@ Procedure
 ----------
 First, the DFA simulation is ran (in our case using the com1DFA module) on the desired avalanche, saving the particles
 (at least the initial and final particles information).
-Then, the particles mass average quantities are computed (:math:`\bar{x}, \bar{y}, \bar{z}, \bar{s}, \bar{v^2}`)
+Then, the particles mass averaged quantities are computed (:math:`\bar{x}, \bar{y}, \bar{z}, \bar{s}, \bar{v^2}`)
 to extract a path and path profile.
 Finally, the mass averaged path profile, the corresponding run-out line and the expected :math:`\alpha` are displayed
-and the run-out angle and distance errors as well as the velocity height error are computed.
+and the run-out angle and distance errors as well as the velocity altitude error are computed.
 
 .. figure:: _static/EnergyLineTestExample.png
     :width: 90%

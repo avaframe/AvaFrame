@@ -1,11 +1,15 @@
 """Tests for module ana1Tests"""
 import numpy as np
 import math
+import pathlib
+import shutil
 import pytest
 
 # Local imports
+from avaframe.in3Utils import cfgUtils
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.ana1Tests.energyLineTest as energyLineTest
+import avaframe.in3Utils.initializeProject as initProj
 
 
 # ############# Test analysis tools ##########
@@ -123,13 +127,14 @@ def test_getEnergyInfo(capfd):
     alphaDeg = 30
     mu = np.tan(np.radians(alphaDeg))
 
-    avaProfileMass = {'s': np.array([0, 2, 4, 6, 8, 10]), 'z': np.array([10, 4, 3, 2, 1, 0]), 'v2': 2*g * np.array([0, 4, 3, 2, 1, 0])}
+    avaProfileMass = {'s': np.array([0, 2, 4, 6, 8, 10]), 'z': np.array([10, 4, 3, 2, 1, 0]),
+    'v2': 2*g * np.array([0, 4, 3, 2, 1, 0])}
 
     runOutAngleRad, runOutAngleDeg = energyLineTest.getRunOutAngle(avaProfileMass)
     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(avaProfileMass, mu)
 
-    zEne, v2Path, sGeomL, zGeomL, errorEnergyTest = energyLineTest.getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection,
-                                                                    runOutAngleDeg, alphaDeg)
+    zEne, v2Path, sGeomL, zGeomL, errorEnergyTest = energyLineTest.getEnergyInfo(avaProfileMass, g, mu, sIntersection,
+                                                                                 zIntersection, runOutAngleDeg, alphaDeg)
     print(zEne)
     print(v2Path)
     print(sGeomL)
@@ -140,3 +145,29 @@ def test_getEnergyInfo(capfd):
     assert errorEnergyTest['runOutSError'] == pytest.approx(10, abs=atol)
     assert errorEnergyTest['runOutAngleError'] == pytest.approx(15, abs=atol)
     assert errorEnergyTest['rmseVelocityElevation'] == pytest.approx(2.559271214294478, abs=atol)
+
+
+def test_mainEnegyLineTest(tmp_path):
+    dirname = pathlib.Path(__file__).parents[0]
+    energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
+    sourceDir = dirname / '..' / 'data' / 'avaParabolaStats' / 'Inputs'
+    avalancheDir = tmp_path / 'avaParabola' / 'Inputs'
+
+    shutil.copytree(sourceDir, avalancheDir)
+
+    # log file name; leave empty to use default runLog.log
+    logName = 'runenergyLineTest'
+
+    # Load avalanche directory from general configuration file
+    cfgMain = cfgUtils.getGeneralConfig()
+    avalancheDir = cfgMain['MAIN']['avalancheDir']
+    # ----------------
+    # Clean input directory(ies) of old work and output files
+    initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=True)
+
+    errorEnergyTest = energyLineTest.mainEnergyLineTest(cfgMain, energyLineTestCfgFile)
+    print(errorEnergyTest)
+    assert abs(errorEnergyTest['runOutSError']) < 0.01
+    assert abs(errorEnergyTest['runOutZError']) < 0.01
+    assert abs(errorEnergyTest['rmseVelocityElevation']) < 0.01
+    assert abs(errorEnergyTest['runOutAngleError']) < 0.0001

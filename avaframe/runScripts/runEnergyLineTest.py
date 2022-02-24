@@ -2,7 +2,7 @@
 Run a the energy line test
 Compare the DFA simulation result to the energy solution
 """
-import time
+import pathlib
 
 # Local imports
 import avaframe.in3Utils.initializeProject as initProj
@@ -10,9 +10,6 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 from avaframe.ana1Tests import energyLineTest
 
-
-# Time the whole routine
-startTime = time.time()
 
 # log file name; leave empty to use default runLog.log
 logName = 'runenergyLineTest'
@@ -30,4 +27,6 @@ log.info('Current avalanche: %s', avalancheDir)
 # Clean input directory(ies) of old work and output files
 initProj.cleanSingleAvaDir(avalancheDir, keep=logName, deleteOutput=True)
 
-energyLineTest.mainEnergyLineTest(cfgMain)
+# get path to com1DFA configuration file used for the energy line test
+energyLineTestCfgFile = pathlib.Path('ana1Tests', 'energyLineTest_com1DFACfg.ini')
+energyLineTest.mainEnergyLineTest(cfgMain, energyLineTestCfgFile)

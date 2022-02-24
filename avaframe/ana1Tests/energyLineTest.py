@@ -2,7 +2,7 @@
 Energy line test
 
 This module runs a DFA simulation extracts the center of mass path
-and compares it to he analytic geometric/alpha line solution
+and compares it to the analytic geometric/alpha line solution
 """
 import pathlib
 import logging
@@ -27,7 +27,7 @@ import avaframe.out3Plot.outCom1DFA as outCom1DFA
 log = logging.getLogger(__name__)
 
 
-def mainEnergyLineTest(cfgMain):
+def mainEnergyLineTest(cfgMain, energyLineTestCfgFile):
     """This is the core function of the energyLineTest module
 
     This module runs a DFA simulation extracts the center of mass path
@@ -35,8 +35,6 @@ def mainEnergyLineTest(cfgMain):
     """
     avalancheDir = cfgMain['MAIN']['avalancheDir']
     demOri = getInput.readDEM(avalancheDir)
-    # get comDFA configuration path for the energy line test
-    energyLineTestCfgFile = pathlib.Path('ana1Tests', 'energyLineTest_com1DFACfg.ini')
     # Run dense flow with coulomb friction
     energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=energyLineTestCfgFile, modInfo=True)
     dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=energyLineTestCfgFile)
@@ -50,8 +48,8 @@ def mainEnergyLineTest(cfgMain):
     fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
                                                            comModule='com1DFA')
 
-    generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, particlesList, fieldsList, simName)
-
+    errorEnergyTest = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, particlesList, fieldsList, simName)
+    return errorEnergyTest
 
 def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, particlesList, fieldsList, simName):
     """ Make energy test analysis and plot results
@@ -63,23 +61,26 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     energyLineTestCfg: configParser
         com1DFA energy test config
     avaProfileMass: dict
-        particle mass average properties
+        particle mass averaged properties
     dem: dict
-        com1DFA simulation dictionnary
+        com1DFA simulation dictionary
     particlesList: list
         particles dictionary list
     fieldsList: list
         field dictionary list
     simName: str
-        sime name
+        simulation name
     """
     # read physical parameters from DFA configuration
     g = energyLineTestCfg['GENERAL'].getfloat('gravAcc')
     mu = energyLineTestCfg['GENERAL'].getfloat('mu')
     alphaRad = np.arctan(mu)
     alphaDeg = np.rad2deg(alphaRad)
+    # compute simulation run out angle
     runOutAngleRad, runOutAngleDeg = getRunOutAngle(avaProfileMass)
+    # extend path profile and find intersection between the alpha line and the profile
     slopeExt, sIntersection, zIntersection, coefExt = getAlphaProfileIntersection(avaProfileMass, mu)
+    # compute errors on runout and veloctity altitude
     zEne, v2Path, sGeomL, zGeomL, errorEnergyTest = getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection,
                                                                     runOutAngleDeg, alphaDeg)
     z0 = avaProfileMass['z'][0]
@@ -192,6 +193,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     outDir = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
     pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
 
+    return errorEnergyTest
+
 
 def getRunOutAngle(avaProfileMass):
     """Compute the center of mass runout angle
@@ -221,6 +224,9 @@ def getAlphaProfileIntersection(avaProfileMass, mu):
     """Extend the  profile path and compute the intersection
     between the theoretical energy line and the path profile
 
+    The profile is extended by a line. The line slope is computed
+    from the slope of the regression on the las points of the profile
+
     Parameters
     -----------
     avaProfileMass: dict
@@ -242,9 +248,10 @@ def getAlphaProfileIntersection(avaProfileMass, mu):
         coefficient saying how long the path was extended to find the intersection
     """
     # get slope of the last profile points to extend the profile
-    p1 = np.polyfit(avaProfileMass['s'][-3:], avaProfileMass['z'][-3:], 1)
+    nPointsExtra = 2
+    p1 = np.polyfit(avaProfileMass['s'][-nPointsExtra:], avaProfileMass['z'][-nPointsExtra:], 1)
     slopeExt = p1[0]
-    # extend profile
+    # extend profile (extend until the intersection is found)
     sIntersection = 0
     coefExt = 0
     while sIntersection == 0 and coefExt<2:
