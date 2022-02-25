@@ -32,8 +32,26 @@
 from subprocess import Popen, PIPE
 import os
 import subprocess
+import sys
 
-def callGitDescribe():
+def getProjectPath():
+    """Determine absolute path to the top-level of the catch project.
+
+    This is assumed to be the parent of the directory containing this script.
+
+    Returns:
+        path (string) to top-level of the catch project
+    """
+    # abspath converts relative to absolute path; expanduser interprets ~
+    path = __file__  # path to this script
+    path = os.path.expanduser(path)  # interpret ~
+    path = os.path.abspath(path)  # convert to absolute path
+    path = os.path.dirname(path)  # containing directory
+    path = os.path.dirname(path)  # containing directory: project dir
+    return path
+
+
+def getVersionFromGitDescribe():
     """Determine a version according to git.
 
     This calls `git describe`, if git is available.
@@ -42,8 +60,9 @@ def callGitDescribe():
         version from `git describe --tags --always --dirty` if git is
         available; otherwise, None
     """
+    cwd = os.getcwd()
     try:
-        #  os.chdir(get_project_path())
+        os.chdir(getProjectPath())
         cmd = ['git', 'describe', '--tags', '--always', '--dirty']
         out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL)
         if not isinstance(out, str):
@@ -51,36 +70,49 @@ def callGitDescribe():
         ver = out.strip()
     except Exception:
         ver = None
+    os.chdir(cwd)
     return ver
 
+
+def releaseFile():
+    """Obtain path to file storing version, according to git.
+
+    Returns:
+        path to RELEASE-VERSION file
+    """
+    return os.path.join(getProjectPath(), 'RELEASE-VERSION')
+
+
 def readReleaseVersion():
-    '''Read version from text file RELEASE-VERSION'''
+    """Read RELEASE-VERSION file, containing git version.
+
+    Returns:
+        if RELEASE-VERSION file exists, version stored in it; otherwise, None
+    """
     try:
-        f = open("RELEASE-VERSION", "r")
+        with open(releaseFile(), 'rt') as inf:
+            version = inf.readlines()[0].strip()
+    except Exception:
+        version = None
+    return version
 
-        try:
-            version = f.readlines()[0]
-            return version.strip()
-
-        finally:
-            f.close()
-
-    except:
-        return None
 
 def writeReleaseVersion(version):
-    '''write version to text file RELEASE-VERSION'''
-    f = open("RELEASE-VERSION", "w")
-    f.write("%s\n" % version)
-    f.close()
+    """Save version, according to git, into VERSION file.
 
-def getGitVersion():
+    Args:
+        version: version to save
+    """
+    with open(releaseFile(), 'wt') as outf:
+        outf.write(version + '\n')
+
+def getVersion():
 
     # Read in the version that's currently in RELEASE-VERSION.
     releaseVersion = readReleaseVersion()
 
     # First try to get the current version using “git describe”.
-    version = callGitDescribe()
+    version = getVersionFromGitDescribe()
 
     # If that doesn't work, fall back on the value that's in
     # RELEASE-VERSION.
@@ -101,4 +133,4 @@ def getGitVersion():
 
 
 if __name__ == "__main__":
-    print (getGitVersion())
+    print (getVersion())
