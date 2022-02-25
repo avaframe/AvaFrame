@@ -91,8 +91,8 @@ setup(
     long_description_content_type='text/markdown',
     #  version=getGitVersion(),
 
-    #  use_scm_version=True,
-    use_scm_version={'version_scheme': 'post-release'}, 
+    use_scm_version=True,
+    #  use_scm_version={'version_scheme': 'post-release'},
     setup_requires=['setuptools_scm'],
     # The project's main homepage.
     url=URL,
