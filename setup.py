@@ -17,10 +17,10 @@ To create a release (with github):
 
 # from setuptools import setup, find_packages  # Always prefer setuptools
 from setuptools import Extension, setup, find_packages
-from version import getGitVersion
 from pathlib import Path
 import sys
 import numpy
+from avaframe.version import getVersion
 
 DISTNAME = 'avaframe'
 LICENSE = 'EUPL'
@@ -89,11 +89,7 @@ setup(
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    #  version=getGitVersion(),
-
-    use_scm_version=True,
-    #  use_scm_version={'version_scheme': 'post-release'},
-    setup_requires=['setuptools_scm'],
+    version=getVersion(),
     # The project's main homepage.
     url=URL,
     # Author details

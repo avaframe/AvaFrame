@@ -8,6 +8,7 @@ import logging.config
 import os
 from pathlib import Path, PureWindowsPath
 from datetime import datetime
+import avaframe.version as gv
 
 
 def writeCfg2Log(cfg, cfgName='Unspecified'):
@@ -53,5 +54,6 @@ def initiateLogger(targetDir, logName='runLog'):
     # datetime object containing current date and time
     log.info('Started logging at: %s', dtString)
     log.info('Also logging to: %s', logFileName)
+    log.info('AvaFrame Version: %s', gv.getVersion())
 
     return log
