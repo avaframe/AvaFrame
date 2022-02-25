@@ -314,7 +314,7 @@ the distance vector :math:`\mathbf{dl}` traveled by the particles reads
 :math:`dl = \frac{ds}{cos(\gamma)}`, where :math:`\gamma` is the angle
 between the :math:`\mathbf{dl}` vector and the horizontal plane
 which can differ from the slope angle :math:`\theta`. In this case,
-the energy solution is not anymore the solution of the problem considered
+the energy solution is not the solution of the problem anymore
 and can not be used as reference.
 
 
