@@ -1,3 +1,5 @@
+include RELEASE-VERSION
+include version.py
 include avaframe/in3Utils/logging.conf
 recursive-include avaframe *Cfg.ini
 global-exclude local_*Cfg.ini
