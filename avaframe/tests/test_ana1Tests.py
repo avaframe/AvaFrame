@@ -9,7 +9,7 @@ import pytest
 from avaframe.in3Utils import cfgUtils
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.ana1Tests.energyLineTest as energyLineTest
-import avaframe.in3Utils.initializeProject as initProj
+import avaframe.com1DFA.com1DFA as com1DFA
 
 
 # ############# Test analysis tools ##########
@@ -65,9 +65,14 @@ def test_ErrorNorm(capfd):
 # ############################################
 def test_getIntersection(capfd):
     '''test find intersection '''
+    dirname = pathlib.Path(__file__).parents[0]
+    energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
+
+    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile), modInfo=True)
+
     mu = 1
     avaProfileMass = {'s':np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]), 'z':np.array([5.1, 0, -0.5, -1, -1.5, -2, -2.5])}
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
     print(sIntersection)
     print(zIntersection)
     print(slopeExt)
@@ -79,7 +84,7 @@ def test_getIntersection(capfd):
     assert coefExt == pytest.approx(1, abs=atol)
 
     avaProfileMass = {'s':np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]), 'z':np.array([2.6, 0, -0.5, -1, -1.5, -2, -2.5])}
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
     print(sIntersection)
     print(zIntersection)
     print(slopeExt)
@@ -91,7 +96,7 @@ def test_getIntersection(capfd):
     assert coefExt == pytest.approx(0.05, abs=atol)
 
     avaProfileMass = {'s':np.array([0, 0.1, 1.1, 2.1, 3.1, 4.1, 5.1]), 'z':np.array([2.45, 0, -0.5, -1, -1.5, -2, -2.5])}
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
     print(sIntersection)
     print(zIntersection)
     print(slopeExt)
@@ -123,6 +128,11 @@ def test_getRunOutAngle(capfd):
 
 def test_getEnergyInfo(capfd):
     '''test find intersection '''
+    dirname = pathlib.Path(__file__).parents[0]
+    energyLineTestCfgFile = dirname / '..' / 'tests' / 'data' / 'testEnergyLine' / 'energyLineTest_com1DFACfg.ini'
+
+    energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=str(energyLineTestCfgFile), modInfo=True)
+
     g = 9.81
     alphaDeg = 30
     mu = np.tan(np.radians(alphaDeg))
@@ -131,7 +141,7 @@ def test_getEnergyInfo(capfd):
     'v2': 2*g * np.array([0, 4, 3, 2, 1, 0])}
 
     runOutAngleRad, runOutAngleDeg = energyLineTest.getRunOutAngle(avaProfileMass)
-    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
 
     zEne, v2Path, sGeomL, zGeomL, errorEnergyTest = energyLineTest.getEnergyInfo(avaProfileMass, g, mu, sIntersection,
                                                                                  zIntersection, runOutAngleDeg, alphaDeg)
