@@ -96,7 +96,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax1 = outCom1DFA.addDem2Plot(ax1, dem, what='slope', extent=extent)
     ax1, cbar1 = outCom1DFA.addParticles2Plot(particlesList[-1], ax1, dem, whatS='h')
     cbar1.ax.set_ylabel('final particle flow thickness')
-    ax1.plot(avaProfileMass['x'], avaProfileMass['y'], '-y', zorder = 20, label='Center of mass path')
+    ax1.plot(avaProfileMass['x'], avaProfileMass['y'], '-y.', zorder = 20, label='Center of mass path')
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(fieldsList[-1]['pfv'], 5, extentOption=True,
                                                                  constrainedData=False, buffer='')
     ax1.set_ylim([rowsMin, rowsMax])
@@ -116,18 +116,30 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax2.plot(avaProfileMass['s'][-1]*np.array([1, 1+coefExt]), avaProfileMass['z'][-1] +
              slopeExt*avaProfileMass['s'][-1]*np.array([0, coefExt]), ':k', label='Center of mass altitude extrapolation')
 
-    # add center of mass velocity points and run-out line
+    # add center of mass velocity points and runout line
     ax2.plot(avaProfileMass['s'][[0, -1]], zEne[[0, -1]], '-r', label='com1dfa energy line (%.2f°)' % runOutAngleDeg)
-    scat = ax2.scatter(avaProfileMass['s'], zEne, marker='s', cmap=cmap, s=2*pU.ms, c=v2Path/(2*g),
+    scat = ax2.scatter(avaProfileMass['s'], zEne, marker='s', cmap=cmap, s=8*pU.ms, c=v2Path/(2*g),
                        label='Center of mass velocity altitude')
     cbar2 = ax2.figure.colorbar(scat, ax=ax2, use_gridspec=True)
     cbar2.ax.set_ylabel('Center of mass velocity altitude [m]')
 
     # add alpha line
     ax2.plot(sGeomL, zGeomL, 'b-', label=r'$\alpha$ line (%.2f°)' % alphaDeg)
+    zLim = ax2.get_ylim()
+    sLim = ax2.get_xlim()
+    zMin = zLim[0]
+    ax2.vlines(x=avaProfileMass['s'][-1], ymin=zMin, ymax=avaProfileMass['z'][-1],
+               color='r', linestyle='--')
+    ax2.vlines(x=sIntersection, color='b', ymin=zMin, ymax=zIntersection, linestyle='--')
+
+    ax2.hlines(y=avaProfileMass['z'][-1], xmin=0, xmax=avaProfileMass['s'][-1],
+               color='r', linestyle='--')
+    ax2.hlines(y=zIntersection, color='b', xmin=0, xmax=sIntersection, linestyle='--')
 
     ax2.set_xlabel('s [m]')
     ax2.set_ylabel('z [m]')
+    ax2.set_xlim(sLim)
+    ax2.set_ylim(zLim)
     ax2.legend(loc='upper right')
     ax2.set_title('Energy line test')
 
@@ -141,10 +153,10 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
              slopeExt*avaProfileMass['s'][-1]*np.array([0, coefExt])-z0, ':k',
              label='Center of mass altitude extrapolation')
 
-    # add center of mass velocity points and run-out line
+    # add center of mass velocity points and runout line
     ax3.plot(avaProfileMass['s'][[0, -1]], zEne[[0, -1]]-z0, '-r',
              label='com1dfa energy line (%.2f°)' % runOutAngleDeg)
-    scat = ax3.scatter(avaProfileMass['s'], zEne-z0, marker='s', cmap=cmap, s=2*pU.ms, c=v2Path/(2*g),
+    scat = ax3.scatter(avaProfileMass['s'], zEne-z0, marker='s', cmap=cmap, s=8*pU.ms, c=v2Path/(2*g),
                        label='Center of mass velocity altitude extrapolation')
     cbar3 = ax3.figure.colorbar(scat, ax=ax3, use_gridspec=True)
     cbar3.ax.set_ylabel('Center of mass velocity altitude [m]')
@@ -178,15 +190,16 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax3.yaxis.set_label_coords(0, 0.9)
     ax3.set_xlim([sMin, sMax])
     ax3.set_ylim([zMin, zMax])
-    ax3.tick_params(axis='x', which='major', labelsize=8, rotation=45)
-    ax3.tick_params(axis='y', which='major', labelsize=8, rotation=45)
+    ax3.tick_params(axis='x', which='major', rotation=45)
+    ax3.tick_params(axis='y', which='major', rotation=45)
     ax3.set_xticks([avaProfileMass['s'][-1], sIntersection])
     ax3.set_yticks([avaProfileMass['z'][-1]-z0, zIntersection-z0])
     ax3.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     ax3.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    text = ('Run-out s diff : %.2f m \nRun-out z diff : %.2f m \nRun-out angle diff : %.4f° \nvelocity height rmse : %.2f m \n(energy line - alpha line)' %
+    text = ('Runout s diff : %.2f m \nRunout z diff : %.2f m \nRunout angle diff : %.4f° \nvelocity height rmse : %.2f m \n(energy line - alpha line)' %
             (runOutSError, runOutZError, runOutAngleError, rmseVelocityElevation))
-    text_box = AnchoredText(text, frameon=False, loc=1, pad=0.5)
+    text_box = AnchoredText(text, frameon=False, loc=1, pad=0.5,
+                            prop=dict(fontsize=pU.fs))
     plt.setp(text_box.patch, facecolor='white', alpha=0.5)
     ax3.add_artist(text_box)
     outFileName = '_'.join([simName, 'EnergyTest'])
@@ -214,7 +227,7 @@ def getRunOutAngle(avaProfileMass):
     # compute horizontal and vertical traveled distance
     deltaS = avaProfileMass['s'][-1] - avaProfileMass['s'][0]
     deltaZ = avaProfileMass['z'][-1] - avaProfileMass['z'][0]
-    # extract simulation run-out
+    # extract simulation runout
     runOutAngleRad = np.arctan(np.abs(deltaZ/deltaS))
     runOutAngleDeg = np.rad2deg(runOutAngleRad)
     return runOutAngleRad, runOutAngleDeg

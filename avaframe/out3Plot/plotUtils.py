@@ -78,6 +78,7 @@ matplotlib.rcParams['savefig.format'] = outputFormat
 matplotlib.rcParams['savefig.bbox'] = 'tight'
 
 matplotlib.rcParams['legend.edgecolor'] = 'None'
+matplotlib.rcParams['legend.fontsize'] = cfg['fontSize']
 matplotlib.rcParams['text.usetex'] = cfg.getboolean('usetex')
 
 matplotlib.rcParams['grid.color'] = 'whitesmoke'
