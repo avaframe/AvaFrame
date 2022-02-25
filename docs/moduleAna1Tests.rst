@@ -308,7 +308,7 @@ It is essential to stay where the assumptions of this test hold.
 Indeed, one of the important hypotheses when developing
 the energy solution, is that the material is flowing in the steepest
 slope direction (i.e. where :math:`dl = \frac{ds}{cos(\theta)}` theta holds).
-If this hypothesis fails (as illustrared in :ref:`fig-non-steppest-descent`), then it is not possible
+If this hypothesis fails (as illustrared in :numref:`fig-non-steppest-descent`), then it is not possible
 to develop the analytic energy solution anymore. In the 3D case,
 the distance vector :math:`\mathbf{dl}` traveled by the particles reads
 :math:`dl = \frac{ds}{cos(\gamma)}`, where :math:`\gamma` is the angle
