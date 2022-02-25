@@ -17,6 +17,7 @@ To create a release (with github):
 
 # from setuptools import setup, find_packages  # Always prefer setuptools
 from setuptools import Extension, setup, find_packages
+from version import getGitVersion
 from pathlib import Path
 import sys
 import numpy
@@ -88,7 +89,7 @@ setup(
     description=DESCRIPTION,
     long_description=long_description,
     long_description_content_type='text/markdown',
-    version='1.0_rc1',
+    version=getGitVersion(),
     # The project's main homepage.
     url=URL,
     # Author details
