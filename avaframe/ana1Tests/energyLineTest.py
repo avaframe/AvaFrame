@@ -71,6 +71,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     simName: str
         simulation name
     """
+    plotScor = energyLineTestCfg['ENERGYLINETEST'].getboolean('plotScor')
     # read physical parameters from DFA configuration
     g = energyLineTestCfg['GENERAL'].getfloat('gravAcc')
     mu = energyLineTestCfg['GENERAL'].getfloat('mu')
@@ -79,7 +80,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     # compute simulation run out angle
     runOutAngleRad, runOutAngleDeg = getRunOutAngle(avaProfileMass)
     # extend path profile and find intersection between the alpha line and the profile
-    slopeExt, sIntersection, zIntersection, coefExt = getAlphaProfileIntersection(avaProfileMass, mu)
+    slopeExt, sIntersection, zIntersection, coefExt = getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
     # compute errors on runout and veloctity altitude
     zEne, v2Path, sGeomL, zGeomL, errorEnergyTest = getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection,
                                                                     runOutAngleDeg, alphaDeg)
@@ -111,7 +112,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax2 = plt.subplot2grid((2, 2), (0, 0), colspan=2)
     # plot mass averaged center of mass
     ax2.plot(avaProfileMass['s'], avaProfileMass['z'], '-k.', label='Center of mass altitude')
-    # ax2.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
+    if plotScor:
+        ax2.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
     # extend this curve towards the bottom using a linear regression on the last x points
     ax2.plot(avaProfileMass['s'][-1]*np.array([1, 1+coefExt]), avaProfileMass['z'][-1] +
              slopeExt*avaProfileMass['s'][-1]*np.array([0, coefExt]), ':k', label='Center of mass altitude extrapolation')
@@ -147,7 +149,8 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax3 = plt.subplot2grid((2, 2), (1, 1))
     # plot mass averaged center of mass
     ax3.plot(avaProfileMass['s'], avaProfileMass['z']-z0, '-k.', label='Center of mass altitude')
-    # ax3.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
+    if plotScor:
+        ax3.plot(avaProfileMass['sCor'], avaProfileMass['z'], '--k.', label='Center of mass altitude (corrected s)')
     # extend this curve towards the bottom using a linear gegression on the last x points
     ax3.plot(avaProfileMass['s'][-1]*np.array([1, 1+coefExt]), avaProfileMass['z'][-1] +
              slopeExt*avaProfileMass['s'][-1]*np.array([0, coefExt])-z0, ':k',
@@ -233,7 +236,7 @@ def getRunOutAngle(avaProfileMass):
     return runOutAngleRad, runOutAngleDeg
 
 
-def getAlphaProfileIntersection(avaProfileMass, mu):
+def getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu):
     """Extend the  profile path and compute the intersection
     between the theoretical energy line and the path profile
 
@@ -242,6 +245,8 @@ def getAlphaProfileIntersection(avaProfileMass, mu):
 
     Parameters
     -----------
+    energyLineTestCfg: configParser
+        energy test config
     avaProfileMass: dict
         particle mass average properties
     mu: float
@@ -260,15 +265,17 @@ def getAlphaProfileIntersection(avaProfileMass, mu):
     coefExt: float
         coefficient saying how long the path was extended to find the intersection
     """
+
+    extrapolationStepSize = energyLineTestCfg['ENERGYLINETEST'].getfloat('extrapolationStepSize')
     # get slope of the last profile points to extend the profile
-    nPointsExtra = 2
+    nPointsExtra = energyLineTestCfg['ENERGYLINETEST'].getint('nPointsExtrapolation')
     p1 = np.polyfit(avaProfileMass['s'][-nPointsExtra:], avaProfileMass['z'][-nPointsExtra:], 1)
     slopeExt = p1[0]
     # extend profile (extend until the intersection is found)
     sIntersection = 0
     coefExt = 0
     while sIntersection == 0 and coefExt<2:
-        coefExt = coefExt + 0.05
+        coefExt = coefExt + extrapolationStepSize
         sExt = np.append(avaProfileMass['s'], (1+coefExt)*avaProfileMass['s'][-1])
         zExt = np.append(avaProfileMass['z'], avaProfileMass['z'][-1] + slopeExt*avaProfileMass['s'][-1]*coefExt)
         # find intersection between alpha line and profile
