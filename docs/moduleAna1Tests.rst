@@ -167,8 +167,8 @@ Energy line test
 The Energy line test compares the results of the DFA simulation to a geometrical solution that is related
 to the total energy of the system. Solely considering Coulomb friction this solution is motivated by the first principle
 of energy conservation along a simplified topography. Here friction force only depends on the slope angle.
-The analytical run-out is the intersection of the path profile with the alpha line defined by the friction angle.
-From the alpha line it is also possible to extract information about the flow mass averaged velocity at any time or
+The analytical run-out is the intersection of the path profile with the :math:`\alpha` line defined by the friction angle.
+From the :math:`\alpha` line it is also possible to extract information about the flow mass averaged velocity at any time or
 position along the path profile.
 
 
@@ -281,20 +281,22 @@ The following figures illustrate the concept.
             squares), :math:`\alpha` line and energy points
 
 From the different mass averaged simulation quantities and the theoretical
-:math:`\alpha` line it is possible to extract four error indicators,
-three related to the run-out and the last one to the velocity :
+:math:`\alpha` line it is possible to extract four error indicators.
+The first three related to the run-out point defined by the intersection
+between the :math:`\alpha` line and the mass averaged path profile
+(or its extrapolation if the profile is too short) and the
+last one is related to the velocity :
 
-  * The intersection between the :math:`\alpha` line and the
-    mass averaged path profile (or its extrapolation if the profile
-    is too short) defines the theoretical run-out point.
+  * The horizontal distance between the run-out point and the end
+    of the path profile defines the :math:`\epsilon_s` error in meters.
 
-  * The horizontal and vertical distance between this point and
-    the end of the path profile defines a run-out error in meters.
+  * The vertical distance between the run-out point and the end
+    of the path profile defines the :math:`\epsilon_z` error in meters.
 
-  * The angle difference between the :math:`\alpha` line angle and
-    the DFA simulation run-out line defines the run-out angle error.
+  * The angle difference between the :math:`\alpha` line angle and the DFA
+    simulation run-out line defines the :math:`\epsilon_{\alpha}` angle error.
 
-  * Root Mean Square Error (RMSE) between the :math:`\alpha` line
+  * The Root Mean Square Error (RMSE) between the :math:`\alpha` line
     and the DFA simulation energy points defines an error on the
     velocity altitude :math:`\frac{\overline{v^2}}{2g}`.
 
@@ -302,18 +304,32 @@ three related to the run-out and the last one to the velocity :
 Limitations and remarks
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-It is essential to stay where the assumptions of this test holds.
+It is essential to stay where the assumptions of this test hold.
 Indeed, one of the important hypotheses when developing
 the energy solution, is that the material is flowing in the steepest
 slope direction (i.e. where :math:`dl = \frac{ds}{cos(\theta)}` theta holds).
-If this hypothesis fails, then it is not possible to develop
-the analytic energy solution anymore. In the 3D case, the distance vector
-:math:`\mathbf{dl}` traveled by the particles reads
+If this hypothesis fails (as illustrared in :ref:`fig-non-steppest-descent`), then it is not possible
+to develop the analytic energy solution anymore. In the 3D case,
+the distance vector :math:`\mathbf{dl}` traveled by the particles reads
 :math:`dl = \frac{ds}{cos(\gamma)}`, where :math:`\gamma` is the angle
 between the :math:`\mathbf{dl}` vector and the horizontal plane
 which can differ from the slope angle :math:`\theta`. In this case,
 the energy solution is not anymore the solution of the problem considered
 and can not be used as reference.
+
+
+.. _fig-non-steppest-descent:
+
+.. figure:: _static/2D3Dstep.png
+    :width: 90%
+
+    Example of trajectory where the steepest descent path hypothesis
+    fails. The mass point is traveling from :math:`\mathbf{x}(t)` to
+    :math:`\mathbf{x}(t+dt)`. The slope angle :math:`\theta` and
+    travel angle :math:`\gamma` are also illustrated. Here
+    :math:`(\mathbf{e_z}.\mathbf{n}) dl = cos\theta \frac{ds}{cos\gamma} \neq
+    ds`.
+
 
 .. If this happens
   it is not possible to differentiate anymore, in the energy plot,

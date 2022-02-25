@@ -1,0 +1,80 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Compile with
+% pdflatex --shell-escape -synctex=1 -interaction=nonstopmode 2D3Dstep.tex
+% to convert it to png use:
+% convert -density 300 -transparent white 2D3Dstep.pdf 2D3Dstep.png
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{standalone}
+
+\input{GeneralPlotHeader.tex}
+
+\begin{document}
+
+\tikzset{
+   name plot/.style={every path/.style={name path global=#1}}
+}
+
+
+\tdplotsetmaincoords{60}{30}
+\begin{tikzpicture}[scale=1, tdplot_main_coords,axis/.style={->},thick]
+
+
+% define our plane
+\pgfmathsetmacro\slope{30}
+\pgfmathsetmacro\tanSlope{tan(\slope)}
+\pgfmathsetmacro\cosSlope{cos(\slope)}
+\pgfmathsetmacro\sinSlope{sin(\slope)}
+\pgfmathsetmacro\extX{2}
+\pgfmathsetmacro\extY{2}
+\pgfmathsetmacro\extZ{\tanSlope*\extX}
+\pgfmathsetmacro\mag{2}
+
+% define my ellipse
+\pgfmathsetmacro\rx{5}
+\pgfmathsetmacro\ry{3}
+\pgfmathsetmacro\rz{2}
+
+% Draw inclined plane
+%\draw[axis] (0, 0, 0) -- (\mag, 0, 0) node [right] {$X$};
+%\draw[axis] (0, 0, 0) -- (0, \mag, 0) node [above] {$Y=Y1$};
+\draw[axis, dashed] (0, 0, 0) -- (0, 0, \mag) node [above] {$\mathbf{e_z}$};
+%\draw[axis] (0, 0, 0) -- (\mag*\cosSlope, 0, -\mag*\sinSlope) node [right] {$X1$};
+\draw[axis, AFLight] (0, 0, 0) -- (\mag*\sinSlope, 0, \mag*\cosSlope) node [above] {$\mathbf{n}$};
+
+\coordinate  (O) at (0,0,0){};
+\coordinate  (ez) at (0, 0, \mag){};
+\coordinate  (e3) at (\mag*\sinSlope, 0, \mag*\cosSlope){};
+\coordinate  (d1) at (-\extX,-\extY,\extZ){};
+\coordinate  (d2) at (\extX,-\extY,-\extZ){};
+\coordinate  (d3) at (\extX,\extY,-\extZ){};
+\coordinate  (d4) at (-\extX,\extY,\extZ){};
+\coordinate  (d5) at (-\extX,-\extY,-\extZ){};
+\coordinate  (d6) at (-\extX,\extY,-\extZ){};
+\coordinate  (m1) at (-\extX,0,\extZ){};
+\coordinate  (m2) at (\extX,0,-\extZ){};
+\coordinate  (m3) at (0,-\extY,0){};
+\coordinate  (m4) at (0,\extY,0){};
+% fill gray color with opacity
+\fill[gray!80,opacity=0.4] (d1) -- (d2) -- (d3)-- (d4)--cycle;
+\fill[gray!80,opacity=0.2] (d1) -- (d2) -- (d5)-- cycle;
+\fill[gray!80,opacity=0.3] (d1)--(d5)--(d6)--(d4)-- cycle;
+% draw frames
+\draw []       (d1)--(d2)--(d3)--(d4)--(d1);
+\draw [dashed] (d1)--(d5)--(d6)--(d4)--(d1);
+\draw [dashed] (d3)--(d4)--(d6)--(d3);
+\draw []       (d1)--(d2)--(d5)--(d1);
+
+\draw[AFDark] (d1) node[left] {$\mathbf{x}(t)$};
+\draw [AFDark] plot [only marks, mark size=2, mark=*] coordinates {(d1)};
+\draw[AFDark] (d3) node[right] {$\mathbf{x}(t+dt)$};
+\draw [AFDark] plot [only marks, mark size=2, mark=*] coordinates {(d3)};
+\draw [->,thick, AFDark] (d1)--(d3) node[midway, below] {$\mathbf{dl}$};
+\draw [->,thick, dashed, AFMiddle] (d5)--(d3) node[midway, below] {$\mathbf{ds}$};
+
+\pic[draw,AFDark,angle radius=2cm,"$\gamma$" ]{angle=d1--d3--d5};
+\pic[draw,AFLight,angle radius=1cm,"$\theta$"]{angle=e3--O--ez};
+\pic[draw,AFLight,angle radius=2cm,"$\theta$"]{angle=d1--d2--d5};
+
+\end{tikzpicture}
+\end{document}
