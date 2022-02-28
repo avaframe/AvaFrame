@@ -321,7 +321,7 @@ def test_remeshDEM(tmp_path):
     dataDict['rasterData'] = data
     dataDict['header'] = headerInfo
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'meshCellSizeThreshold': '0.0001', 'meshCellSize': '2.'}
+    cfg['GENERAL'] = {'meshCellSizeThreshold': '0.0001', 'meshCellSize': '2.', 'avalancheDir': tmp_path}
 
     # call function
     dataNew = geoTrans.remeshDEM(cfg['GENERAL'], dataDict)

@@ -1458,7 +1458,7 @@ def test_initializeSimulation():
     logName = 'simLog'
 
     # call function to be tested
-    particles, fields, dem, reportAreaInfo = com1DFA.initializeSimulation(
+    particles, fields, dem, reportAreaInfo, demOri = com1DFA.initializeSimulation(
         cfg, demOri, inputSimLines, logName)
 
     print('particles', particles)
@@ -1499,7 +1499,7 @@ def test_initializeSimulation():
     cfg['GENERAL']['relThFromFile'] = 'True'
     inputSimLines['relThField'] = relThField
 
-    particles2, fields2, dem2, reportAreaInfo2 = com1DFA.initializeSimulation(
+    particles2, fields2, dem2, reportAreaInfo2, demOri2 = com1DFA.initializeSimulation(
         cfg, demOri, inputSimLines, logName)
 
     print('secRel', particles2['secondaryReleaseInfo'])

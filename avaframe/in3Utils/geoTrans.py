@@ -289,19 +289,14 @@ def remeshDEM(cfg, dem):
     # read dem header
     headerDEM = dem['header']
     cszDEM = headerDEM['cellsize']
-    remesh = False
-    # remesh if input DEM size does not correspond to the computational cellSize
-    if np.abs(cszNew - cszDEM) > cszThreshold:
-        remesh = True
-        if cfg.getboolean('forceRemesh') is False:
-            # first check if remeshed DEM is available
-            remeshedDEM, DEMFound = searchRemeshedDEM(cfg, dem)
-            if DEMFound:
-                remesh = False
-        else:
-            log.info('Forcing remeshing')
+    remesh = True
+    if cfg.getboolean('forceRemesh') is False:
+        # first check if remeshed DEM is available
+        remeshedDEM, DEMFound = searchRemeshedDEM(cfg, dem)
+        if DEMFound:
+            remesh = False
     else:
-        remeshedDEM = dem
+        log.info('Forcing remeshing')
 
     if remesh:
         log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszNew))
