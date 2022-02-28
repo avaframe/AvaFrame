@@ -368,12 +368,13 @@ def searchRemeshedDEM(cfg, dem):
         # look for dems and check if cellSize within tolerance and origin matches
         demFiles = list(pathToDem.glob('*.asc'))
         for demF in demFiles:
-            demDict = IOf.readRaster(demF)
-            if abs(cellSize - demDict['header']['cellsize']) < cellSizeThreshold:
-                if ('%.2f' % demDict['header']['xllcenter']) == ('%.2f' % dem['header']['xllcenter']) and ('%.2f' % demDict['header']['yllcenter']) == ('%.2f' % dem['header']['yllcenter']):
-                    log.info('Remeshed DEM found: %s cellSize: %.5f' % (demF.name, demDict['header']['cellsize']))
+            headerDEM = IOf.readASCheader(demF)
+            # demDict = IOf.readRaster(demF)
+            if abs(cellSize - headerDEM['cellsize']) < cellSizeThreshold:
+                if ('%.2f' % headerDEM['xllcenter']) == ('%.2f' % dem['header']['xllcenter']) and ('%.2f' % headerDEM['yllcenter']) == ('%.2f' % dem['header']['yllcenter']):
+                    remeshedDEM = IOf.readRaster(demF)
+                    log.info('Remeshed DEM found: %s cellSize: %.5f' % (demF.name, remeshedDEM['header']['cellsize']))
                     DEMFound = True
-                    remeshedDEM = demDict
                     continue
                 else:
                     log.warning('Remeshed dem found with cellSize %.2f but origin not matching' % cellSize)
