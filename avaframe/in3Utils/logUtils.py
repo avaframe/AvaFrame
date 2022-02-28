@@ -38,8 +38,11 @@ def initiateLogger(targetDir, logName='runLog'):
         log : logging object
 
     """
+
+    # datetime object containing current date and time
     now = datetime.now()
     dtString = now.strftime("%d.%m.%Y_%H:%M:%S")
+
     logFileName = os.path.join(targetDir, logName+'_'+dtString+'.log')
 
     # get path of module and generate logging.conf file path
@@ -51,9 +54,8 @@ def initiateLogger(targetDir, logName='runLog'):
                               disable_existing_loggers=False)
     log = logging.getLogger('avaframe')
 
-    # datetime object containing current date and time
     log.info('Started logging at: %s', dtString)
     log.info('Also logging to: %s', logFileName)
     log.info('AvaFrame Version: %s', gv.getVersion())
 
-    return log
+    return log, logFileName
