@@ -300,6 +300,8 @@ def remeshDEM(cfg, dem):
                 remesh = False
         else:
             log.info('Forcing remeshing')
+    else:
+        remeshedDEM = dem
 
     if remesh:
         log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszNew))
