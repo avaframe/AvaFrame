@@ -103,7 +103,7 @@ def _plotMultVariables(x, y, nx_loc, dtAnalysis, data1, data2, xR, dataR, tR, la
     return fig
 
 
-def plotComparison(fields0, fieldsT, header, hL, xR, hR, uR, dtAnalysis, cfgMain):
+def plotComparison(cfg, fields0, fieldsT, header, hL, xR, hR, uR, dtAnalysis, cfgMain):
     """ Generate plots that compare the simulation results to the analytical solution
 
         Parameters
@@ -125,6 +125,7 @@ def plotComparison(fields0, fieldsT, header, hL, xR, hR, uR, dtAnalysis, cfgMain
             main configuration for AvaFrame
 
     """
+    phi = cfg['DAMBREAK'].getfloat('phi')
     # Load data
     dataIniFD = fields0['FD']
     dataAnaFD = fieldsT['FD']
@@ -134,8 +135,9 @@ def plotComparison(fields0, fieldsT, header, hL, xR, hR, uR, dtAnalysis, cfgMain
     dataAnaVx = fieldsT['Vx']
     dataAnaVy = fieldsT['Vy']
     dataAnaVz = fieldsT['Vz']
-    dataIniV = DFAtools.scalProd(dataIniVx, dataIniVy, dataIniVz, np.cos(np.radians(24)), 0, -np.sin(np.radians(24)))
-    dataAnaV = DFAtools.scalProd(dataAnaVx, dataAnaVy, dataAnaVz, np.cos(np.radians(24)), 0, -np.sin(np.radians(24)))
+    # project velocity on inclined plane
+    dataIniV = DFAtools.scalProd(dataIniVx, dataIniVy, dataIniVz, np.cos(np.radians(phi)), 0, -np.sin(np.radians(phi)))
+    dataAnaV = DFAtools.scalProd(dataAnaVx, dataAnaVy, dataAnaVz, np.cos(np.radians(phi)), 0, -np.sin(np.radians(phi)))
 
     # Location of Profiles
     cellSize = header['cellsize']
@@ -162,7 +164,8 @@ def plotComparison(fields0, fieldsT, header, hL, xR, hR, uR, dtAnalysis, cfgMain
     fig.savefig(os.path.join(outDir, 'CompareDamBreakH.%s' % (pU.outputFormat)))
 
     y = np.zeros(len(x))
-    fig = _plotMultVariables(x, y, nx_loc, dtAnalysis, dataIniV, dataAnaV, xR, uR, tR, 'Flow velocity', 'm')
+    fig = _plotMultVariables(x, y, nx_loc, dtAnalysis, dataIniV, dataAnaV, xR, uR, tR,
+                             'Flow velocity in slope directrion', 'm/s')
     fig.savefig(os.path.join(outDir, 'CompareDamBreakVel.%s' % (pU.outputFormat)))
     plt.show()
     if cfgMain['FLAGS'].getboolean('showPlot'):
@@ -212,7 +215,6 @@ def damBreakSol(avaDir, cfg, cfgC):
     cR = np.sqrt(gz * hR)
     x0R = -120 / np.cos(phi)                           # wave celeritiy
     dtStep = cfgC['DAMBREAK'].getfloat('dtStep')
-    print(2*cR/m0)
     # Define time [0-1] seconds and space [-2,2] meters domains multiplied times 100
     t = np.linspace(0, 20, 2000)
     x = np.linspace(-200, 200, 1000)
