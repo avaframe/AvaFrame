@@ -331,7 +331,7 @@ def remeshDEM(cfg, dem):
             IOf.writeResultToAsc(remeshedDem['header'], remeshedDem['rasterData'], outFile, flip=True)
 
         return remeshedDem
-    else: 
+    else:
         return dem
 
 
@@ -357,19 +357,21 @@ def searchRemeshedDEM(cfg):
 
     # path to remeshed DEM folder
     pathToDem = pathlib.Path(cfg['avalancheDir'], 'Inputs', 'DEMremeshed')
-    fU.makeADir(pathToDem)
-
-    # look for dems
-    demFiles = list(pathToDem.glob('*.asc'))
     DEMFound = False
     dem = {}
-    for demF in demFiles:
-        demDict = IOf.readRaster(demF)
-        if abs(cellSize - demDict['header']['cellsize']) < cellSizeThreshold:
-            log.info('Remeshed DEM found: %s cellSize: %.5f' % (demF.name, demDict['header']['cellsize']))
-            DEMFound = True
-            dem = demDict
-            continue
+    if pathToDem.is_dir():
+
+        # look for dems
+        demFiles = list(pathToDem.glob('*.asc'))
+        for demF in demFiles:
+            demDict = IOf.readRaster(demF)
+            if abs(cellSize - demDict['header']['cellsize']) < cellSizeThreshold:
+                log.info('Remeshed DEM found: %s cellSize: %.5f' % (demF.name, demDict['header']['cellsize']))
+                DEMFound = True
+                dem = demDict
+                continue
+    else:
+        log.debug('Directory %s does not exist' % pathToDem)
 
     return dem, DEMFound
 
