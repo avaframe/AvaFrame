@@ -330,7 +330,9 @@ def remeshDEM(cfg, dem):
             outFile = pathToDem / ('remeshedDEM%.2f.asc' % remeshedDem['header']['cellsize'])
             IOf.writeResultToAsc(remeshedDem['header'], remeshedDem['rasterData'], outFile, flip=True)
 
-    return remeshedDem
+        return remeshedDem
+    else: 
+        return dem
 
 
 def searchRemeshedDEM(cfg):
