@@ -632,7 +632,7 @@ def initializeMesh(cfg, demOri, num):
         boundaries as well as neighbour search grid information
     """
 
-    # if desired cellSize within tolerance of dem meshsize - remesh or look for remeshed DEMS 
+    # if desired meshCellSize not within tolerance of dem meshsize - remesh or look for remeshed DEMS
     if np.abs(cfg.getfloat('meshCellSize') - demOri['header']['cellsize']) > cfg.getfloat('meshCellSizeThreshold'):
         # first check if DEM is available for computational mesh cell size if not remesh
         demOri = geoTrans.remeshDEM(cfg, demOri)

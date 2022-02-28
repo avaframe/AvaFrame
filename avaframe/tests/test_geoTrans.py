@@ -4,6 +4,8 @@ import math
 import pytest
 import logging
 import matplotlib.path as mpltPath
+import pathlib
+import shutil
 import os
 import configparser
 
@@ -321,7 +323,8 @@ def test_remeshDEM(tmp_path):
     dataDict['rasterData'] = data
     dataDict['header'] = headerInfo
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'meshCellSizeThreshold': '0.0001', 'meshCellSize': '2.', 'avalancheDir': tmp_path}
+    cfg['GENERAL'] = {'meshCellSizeThreshold': '0.0001', 'meshCellSize': '2.',
+        'forceRemesh': 'False', 'avalancheDir': tmp_path}
 
     # call function
     dataNew = geoTrans.remeshDEM(cfg['GENERAL'], dataDict)
@@ -332,7 +335,8 @@ def test_remeshDEM(tmp_path):
     yExtent = (headerNew['nrows']-1) * headerNew['cellsize']
 
     # compute solution
-    dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
+    dataSol = getIPZ(z0, xExtent, yExtent, 2.)
+    # dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
 
     # compare solution to result from function
     testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)
@@ -342,6 +346,59 @@ def test_remeshDEM(tmp_path):
     assert len(indNoData[0]) == 0
     assert testRes
     assert np.isclose(dataRaster[0,0], 10.)
+
+    # copy data
+    avaName = 'avaParabola'
+    dirPath = pathlib.Path(__file__).parents[0]
+    inputDir1 = dirPath / '..' / 'data' / avaName
+    inputDEM = dirPath / 'data' / 'remeshedDEM8.00.asc'
+    avaDir1 = pathlib.Path(tmp_path, avaName)
+    avaDEM = avaDir1 / 'Inputs' / 'DEMremeshed' / 'remeshedDEM8.00.asc'
+    shutil.copytree(inputDir1, avaDir1)
+    shutil.copy(inputDEM, avaDEM)
+    cfg['GENERAL']['avalancheDir'] = str(avaDir1)
+
+
+    # call function
+    dataNew2 = geoTrans.remeshDEM(cfg['GENERAL'], dataDict)
+    dataRaster2 = dataNew2['rasterData']
+    # compare solution to result from function
+    testRes2 = np.allclose(dataRaster2, dataSol, atol=1.e-6)
+
+    assert dataNew2['rasterData'].shape[0] == 11
+    assert dataNew2['rasterData'].shape[1] == 8
+    assert testRes
+    assert np.isclose(dataRaster2[0,0], 10.)
+
+    demData = IOf.readRaster(avaDEM)
+    demData['header']['cellsize'] = 10.
+    IOf.writeResultToAsc(demData['header'], demData['rasterData'], avaDEM)
+
+    # call function
+    dataNew3 = geoTrans.remeshDEM(cfg['GENERAL'], dataDict)
+    dataRaster3 = dataNew3['rasterData']
+    # compare solution to result from function
+    testRes3 = np.allclose(dataRaster3, dataSol, atol=1.e-6)
+
+    assert dataNew3['rasterData'].shape[0] == 11
+    assert dataNew3['rasterData'].shape[1] == 8
+    assert testRes
+    assert np.isclose(dataRaster3[0,0], 10.)
+
+    demData = IOf.readRaster(avaDEM)
+    demData['header']['yllcenter'] = 10.
+    IOf.writeResultToAsc(demData['header'], demData['rasterData'], avaDEM)
+
+    # call function
+    dataNew4 = geoTrans.remeshDEM(cfg['GENERAL'], dataDict)
+    dataRaster4 = dataNew3['rasterData']
+    # compare solution to result from function
+    testRes4 = np.allclose(dataRaster4, dataSol, atol=1.e-6)
+
+    assert dataNew4['rasterData'].shape[0] == 11
+    assert dataNew4['rasterData'].shape[1] == 8
+    assert testRes
+    assert np.isclose(dataRaster4[0,0], 10.)
 
 
 def test_isCounterClockWise(capfd):

@@ -339,7 +339,7 @@ def remeshDEM(cfg, dem):
 
 
 def searchRemeshedDEM(cfg, dem):
-    """ search if remeshed DEM already available
+    """ search if remeshed DEM already available and check if cellSize and origin are correct
 
         Parameters
         -----------
@@ -369,7 +369,6 @@ def searchRemeshedDEM(cfg, dem):
         demFiles = list(pathToDem.glob('*.asc'))
         for demF in demFiles:
             headerDEM = IOf.readASCheader(demF)
-            # demDict = IOf.readRaster(demF)
             if abs(cellSize - headerDEM['cellsize']) < cellSizeThreshold:
                 if ('%.2f' % headerDEM['xllcenter']) == ('%.2f' % dem['header']['xllcenter']) and ('%.2f' % headerDEM['yllcenter']) == ('%.2f' % dem['header']['yllcenter']):
                     remeshedDEM = IOf.readRaster(demF)
