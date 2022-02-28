@@ -289,59 +289,67 @@ def remeshDEM(cfg, dem):
     # read dem header
     headerDEM = dem['header']
     cszDEM = headerDEM['cellsize']
+    remesh = False
     # remesh if input DEM size does not correspond to the computational cellSize
     if np.abs(cszNew - cszDEM) > cszThreshold:
-        # first check if remeshed DEM is available
-        remeshedDem, DEMFound = searchRemeshedDEM(cfg)
-        if DEMFound:
-            log.debug('remeshed DEM found')
+        remesh = True
+        if cfg.getboolean('forceRemesh') is False:
+            # first check if remeshed DEM is available
+            remeshedDEM, DEMFound = searchRemeshedDEM(cfg, dem)
+            if DEMFound:
+                remesh = False
         else:
-            log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszNew))
-            x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(dem, cellSizeNew=cszNew)
-            xGrid, yGrid = np.meshgrid(x, y)
-            xGrid = xGrid.flatten()
-            yGrid = yGrid.flatten()
-            z = dem['rasterData']
-            zCopy = np.copy(z)
-            zCopy = zCopy.flatten()
-            mask = np.where(~np.isnan(zCopy))
-            xGrid = xGrid[mask]
-            yGrid = yGrid[mask]
-            z = zCopy[mask]
+            log.info('Forcing remeshing')
 
-            headerRemeshed = {}
-            headerRemeshed['cellsize'] = cszNew
-            headerRemeshed['ncols'] = len(xNew)
-            headerRemeshed['nrows'] = len(yNew)
-            headerRemeshed['xllcenter'] = headerDEM['xllcenter']
-            headerRemeshed['yllcenter'] = headerDEM['yllcenter']
-            headerRemeshed['noDataValue'] = headerDEM['noDataValue']
+    if remesh:
+        log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszNew))
+        x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(dem, cellSizeNew=cszNew)
+        xGrid, yGrid = np.meshgrid(x, y)
+        xGrid = xGrid.flatten()
+        yGrid = yGrid.flatten()
+        z = dem['rasterData']
+        zCopy = np.copy(z)
+        zCopy = zCopy.flatten()
+        mask = np.where(~np.isnan(zCopy))
+        xGrid = xGrid[mask]
+        yGrid = yGrid[mask]
+        z = zCopy[mask]
 
-            remeshedDem = {'header': headerRemeshed}
-            xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
-            zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic',
-                                           fill_value=headerDEM['noDataValue'])
-            log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
-            remeshedDem['rasterData'] = zNew
+        headerRemeshed = {}
+        headerRemeshed['cellsize'] = cszNew
+        headerRemeshed['ncols'] = len(xNew)
+        headerRemeshed['nrows'] = len(yNew)
+        headerRemeshed['xllcenter'] = headerDEM['xllcenter']
+        headerRemeshed['yllcenter'] = headerDEM['yllcenter']
+        headerRemeshed['noDataValue'] = headerDEM['noDataValue']
 
-            # save remeshed DEM
-            pathToDem = pathlib.Path(cfg['avalancheDir'], 'Inputs', 'DEMremeshed')
-            fU.makeADir(pathToDem)
-            outFile = pathToDem / ('remeshedDEM%.2f.asc' % remeshedDem['header']['cellsize'])
-            IOf.writeResultToAsc(remeshedDem['header'], remeshedDem['rasterData'], outFile, flip=True)
+        # write new DEM dictionary
+        remeshedDEM = {'header': headerRemeshed}
+        xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
+        zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic',
+                                       fill_value=headerDEM['noDataValue'])
+        log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
+        remeshedDEM['rasterData'] = zNew
 
-        return remeshedDem
-    else:
-        return dem
+        # save remeshed DEM
+        pathToDem = pathlib.Path(cfg['avalancheDir'], 'Inputs', 'DEMremeshed')
+        fU.makeADir(pathToDem)
+        outFile = pathToDem / ('remeshedDEM%.2f.asc' % remeshedDEM['header']['cellsize'])
+        IOf.writeResultToAsc(remeshedDEM['header'], remeshedDEM['rasterData'], outFile, flip=True)
+        log.info('Saved remeshed DEM to %s' % outFile)
+
+    return remeshedDEM
 
 
-def searchRemeshedDEM(cfg):
+def searchRemeshedDEM(cfg, dem):
     """ search if remeshed DEM already available
 
         Parameters
         -----------
         cfg: configparser object
             configuration settings: avaDir, meshCellSize, meshCellSizeThreshold
+        dem: dict
+            dictionary of DEM in Inputs
 
         Returns
         --------
@@ -358,22 +366,25 @@ def searchRemeshedDEM(cfg):
     # path to remeshed DEM folder
     pathToDem = pathlib.Path(cfg['avalancheDir'], 'Inputs', 'DEMremeshed')
     DEMFound = False
-    dem = {}
+    remeshedDEM = {}
     if pathToDem.is_dir():
-
-        # look for dems
+        # look for dems and check if cellSize within tolerance and origin matches
         demFiles = list(pathToDem.glob('*.asc'))
         for demF in demFiles:
             demDict = IOf.readRaster(demF)
             if abs(cellSize - demDict['header']['cellsize']) < cellSizeThreshold:
-                log.info('Remeshed DEM found: %s cellSize: %.5f' % (demF.name, demDict['header']['cellsize']))
-                DEMFound = True
-                dem = demDict
-                continue
+                if ('%.2f' % demDict['header']['xllcenter']) == ('%.2f' % dem['header']['xllcenter']) and ('%.2f' % demDict['header']['yllcenter']) == ('%.2f' % dem['header']['yllcenter']):
+                    log.info('Remeshed DEM found: %s cellSize: %.5f' % (demF.name, demDict['header']['cellsize']))
+                    DEMFound = True
+                    remeshedDEM = demDict
+                    continue
+                else:
+                    log.warning('Remeshed dem found with cellSize %.2f but origin not matching' % cellSize)
+
     else:
         log.debug('Directory %s does not exist' % pathToDem)
 
-    return dem, DEMFound
+    return remeshedDEM, DEMFound
 
 
 def prepareLine(dem, avapath, distance=10, Point=None):

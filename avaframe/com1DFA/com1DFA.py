@@ -267,8 +267,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
     # +++++++++PERFORM SIMULAITON++++++++++++++++++++++
     # for timing the sims
     startTime = time.time()
-    particles, fields, dem, reportAreaInfo = initializeSimulation(cfg, demOri, inputSimLines, cuSimName)
-
+    particles, fields, dem, reportAreaInfo, demOri = initializeSimulation(cfg, demOri, inputSimLines, cuSimName)
     # ------------------------
     #  Start time step computation
     Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
@@ -837,7 +836,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
                                                       reportAreaInfo, thresholdPointInPoly)
     fields['cResRaster'] = cResRaster
 
-    return particles, fields, dem, reportAreaInfo
+    return particles, fields, dem, reportAreaInfo, demOri
 
 
 def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', relThField=''):
@@ -2052,8 +2051,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 outDirPeakAll = outDir / 'peakFiles'
                 fU.makeADir(outDirPeakAll)
                 outFile = outDirPeakAll / dataName
-                IOf.writeResultToAsc(
-                    demOri['header'], resField, outFile, flip=True)
+                IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             else:
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' %
                           (resType, Tsave[countTime]))
