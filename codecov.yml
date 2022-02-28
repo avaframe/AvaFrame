@@ -1,16 +1,16 @@
 github_checks:
-    annotations: false
+    annotations: true
 
 coverage:
   status:
     project:
       default:
-        informational: false 
+        informational: true 
         target: auto
         threshold: 0%
     patch:
       default:
-        informational: false
+        informational: true
         target: auto
         threshold: 0%
 
