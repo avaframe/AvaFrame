@@ -263,7 +263,7 @@ def remeshData(rasterFile, cellSize):
 def remeshDEM(cfg, dem):
     """ change DEM cell size by reprojecting on a new grid - first check if remeshed DEM available
 
-    the new DEM is as big or smaller as the original DEM and saved to Inputs/DEM as remeshedDEMcellSize
+    the new DEM is as big or smaller as the original DEM and saved to Inputs/DEMremshed as remeshedDEMcellSize
 
     Interpolation is based on griddata with a cubic method. Here would be the place
     to change the order of the interpolation or to switch to another interpolation method.
