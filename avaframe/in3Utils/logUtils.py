@@ -6,6 +6,7 @@
 import logging
 import logging.config
 import os
+import pathlib
 from pathlib import Path, PureWindowsPath
 from datetime import datetime
 import avaframe.version as gv
@@ -43,14 +44,14 @@ def initiateLogger(targetDir, logName='runLog'):
     now = datetime.now()
     dtString = now.strftime("%d.%m.%Y_%H:%M:%S")
 
-    logFileName = os.path.join(targetDir, logName+'_'+dtString+'.log')
+    logFileName = pathlib.Path(targetDir, logName+'_'+dtString+'.log')
 
     # get path of module and generate logging.conf file path
-    logConfPath = os.path.dirname(__file__)
-    logConfFile = os.path.join(logConfPath, 'logging.conf')
+    logConfPath = pathlib.Path(__file__).parents[0]
+    logConfFile = logConfPath / 'logging.conf'
 
     logging.config.fileConfig(fname=logConfFile,
-                              defaults={'logfilename': logFileName.replace('\\', '/')},
+                              defaults={'logfilename': str(logFileName).replace('\\', '/')},
                               disable_existing_loggers=False)
     log = logging.getLogger('avaframe')
 
@@ -58,4 +59,4 @@ def initiateLogger(targetDir, logName='runLog'):
     log.info('Also logging to: %s', logFileName)
     log.info('AvaFrame Version: %s', gv.getVersion())
 
-    return log, logFileName
+    return log
