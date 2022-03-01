@@ -268,6 +268,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
     # for timing the sims
     startTime = time.time()
     particles, fields, dem, reportAreaInfo, demOri = initializeSimulation(cfg, demOri, inputSimLines, cuSimName)
+
     # ------------------------
     #  Start time step computation
     Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
@@ -632,11 +633,10 @@ def initializeMesh(cfg, demOri, num):
         boundaries as well as neighbour search grid information
     """
 
-    # if desired cellSize within tolerance of dem meshsize - if not remesh or look for remeshed DEMs
+    # if desired mesh size not within tolerance of dem mesh size - look for remeshed or remesh
     if np.abs(cfg.getfloat('meshCellSize') - demOri['header']['cellsize']) > cfg.getfloat('meshCellSizeThreshold'):
-        # first check if DEM is available for computational mesh cell size if not remesh
         demOri = geoTrans.remeshDEM(cfg, demOri)
-    # set origin to 0,0 for computations, store original origin
+    # set origin to 0, 0 for computations, store original origin
     dem = setDEMoriginToZero(demOri)
     dem['originOri'] = {'xllcenter': demOri['header']['xllcenter'], 'yllcenter': demOri['header']['yllcenter']}
 
