@@ -21,7 +21,10 @@ def test_writeCfg2Log(tmp_path):
     dirname = os.path.dirname(__file__)
     avalancheDir = dirname
     logName = 'testCFG'
-    log, logFileName = logUtils.initiateLogger(tmp_path, logName)
+    log = logUtils.initiateLogger(tmp_path, logName)
+    logFileName = log.handlers[-1].baseFilename
+
+    
     cfg = cfgUtils.getModuleConfig(test_logUtils)
     logFileNameRef = os.path.join(avalancheDir, 'data', 'testCFGRef.tog')
 
