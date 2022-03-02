@@ -24,7 +24,6 @@ def test_writeCfg2Log(tmp_path):
     log = logUtils.initiateLogger(tmp_path, logName)
     logFileName = log.handlers[-1].baseFilename
 
-    
     cfg = cfgUtils.getModuleConfig(test_logUtils)
     logFileNameRef = os.path.join(avalancheDir, 'data', 'testCFGRef.tog')
 
