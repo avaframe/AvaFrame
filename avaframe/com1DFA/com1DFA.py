@@ -1940,7 +1940,7 @@ def trackParticles(cfgTrackPart, dem, particlesList):
     return particlesList, trackedPartProp, track
 
 
-def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA', timeStep=''):
+def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA', timeStep='', atol=1.e-6):
     """ Read ascii files within a directory and return List of dictionaries
 
         Parameters
@@ -1956,7 +1956,7 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
             read from avaDir/Outputs/com1DFA/particles
         comModule: str
             module that computed the particles
-        timeStep: float
+        timeStep: float or list of floats
             desired time step if difference to time step of field file is smaller than 1.e-6
             field is found - optional
 
@@ -1967,6 +1967,7 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
 
     # initialise list of fields dictionaries
     fieldsList = []
+    timeList = []
     first = True
     for r in resType:
         # search for all files within directory
@@ -1975,15 +1976,16 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
         else:
             name = '*' + r + '*.asc'
         FieldsNameList = list(inDir.glob(name))
-        timeList = [float(element.stem.split('_t')[-1]) for element in FieldsNameList]
-        FieldsNameList = [x for _, x in sorted(zip(timeList, FieldsNameList))]
-
+        timeListTemp = [float(element.stem.split('_t')[-1]) for element in FieldsNameList]
+        FieldsNameList = [x for _, x in sorted(zip(timeListTemp, FieldsNameList))]
         count = 0
         for fieldsName in FieldsNameList:
-            if timeStep == '' or np.isclose(timeStep, float(fieldsName.stem.split('_t')[-1]), atol=1.e-6):
+            t = float(fieldsName.stem.split('_t')[-1])
+            if timeStep == '' or np.isclose(timeStep, t, atol=atol).any():
                 # initialize field Dict
                 if first:
                     fieldsList.append({})
+                    timeList.append(t)
                 field = IOf.readRaster(fieldsName)
                 fieldsList[count][r] = field['rasterData']
                 count = count + 1
@@ -1995,11 +1997,6 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
         fieldsList = []
     else:
         fieldHeader = field['header']
-
-    if timeStep != '':
-        timeList = timeStep
-    else:
-        timeList = sorted(timeList)
 
     return fieldsList, fieldHeader, timeList
 
