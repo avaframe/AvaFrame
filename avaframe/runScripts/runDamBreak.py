@@ -27,7 +27,7 @@ avalancheDir = 'data/avaDamBreak'
 cfgMain['MAIN']['avalancheDir'] = avalancheDir
 
 # Clean input directory(ies) of old work and output files
-initProj.cleanModuleFiles(avalancheDir, com1DFA)
+# initProj.cleanModuleFiles(avalancheDir, com1DFA)
 
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
@@ -37,7 +37,7 @@ log.info('Current avalanche: %s', avalancheDir)
 # Load configuration
 damBreakCfg = pathlib.Path(avalancheDir, 'Inputs', 'damBreak_com1DFACfg.ini')
 
-for sphKernelRadius in [1]:
+for sphKernelRadius in [8, 6, 5, 4, 3, 2]:
     updater = ConfigUpdater()
     updater.read(damBreakCfg)
     updater['GENERAL']['sphKernelRadius'].value = sphKernelRadius
