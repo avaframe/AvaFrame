@@ -1,5 +1,5 @@
 github_checks:
-    annotations: true
+    annotations: false
 
 coverage:
   status:

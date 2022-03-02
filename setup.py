@@ -28,17 +28,17 @@ AUTHOR = 'AvaFrame Contributors'
 AUTHOR_EMAIL = 'felix@avaframe.org'
 URL = 'http://avaframe.org'
 CLASSIFIERS = [
-        # How mature is this project? Common values are
-        # 3 - Alpha  4 - Beta  5 - Production/Stable
-        'Development Status :: 4 - Beta',
-        # Indicate who your project is intended for
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        ]
+                # How mature is this project? Common values are
+                # 3 - Alpha  4 - Beta  5 - Production/Stable
+                'Development Status :: 4 - Beta',
+                # Indicate who your project is intended for
+                'Intended Audience :: Science/Research',
+                'License :: OSI Approved :: European Union Public Licence 1.2 (EUPL 1.2)',
+                'Programming Language :: Python :: 3.6',
+                'Programming Language :: Python :: 3.7',
+                'Programming Language :: Python :: 3.8',
+                'Programming Language :: Python :: 3.9',
+               ]
 
 DESCRIPTION = 'The Open Avalanche Framework'
 
