@@ -136,9 +136,10 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
     fields['pfv'] = fields['FV']
 
     # save particles to file for visualisation
-    avaDir = pathlib.Path(cfg['GENERAL']['avalancheDir'])
-    outDir = avaDir / 'Outputs' / 'com1DFA' / 'particlesIni'
-    particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
+    if cfg['GENERAL'].getboolean('saveParticlesIni'):
+        avaDir = pathlib.Path(cfg['GENERAL']['avalancheDir'])
+        outDir = avaDir / 'Outputs' / 'com1DFA' / 'particlesIni'
+        particleTools.savePartToCsv(cfg['VISUALISATION']['particleProperties'], particlesList, outDir)
 
     return particles, fields
 

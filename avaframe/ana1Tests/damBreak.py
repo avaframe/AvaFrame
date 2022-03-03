@@ -279,7 +279,8 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest)
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
         if cfgDam.getboolean('plotIntermediate'):
-            plotComparison(cfgDam, simName, fieldsList[0], fieldsList[indTime], fieldHeader, solDam, tSave, outDirTest)
+            for time, field in zip(timeList, fieldsList):
+                plotComparison(cfgDam, simName, fieldsList[0], field, fieldHeader, solDam, time, outDirTest)
     name = 'results' + str(round(tSave)) + '.p'
     simDF.to_pickle(outDirTest / name)
 
