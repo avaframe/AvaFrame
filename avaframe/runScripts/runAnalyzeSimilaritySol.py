@@ -56,28 +56,27 @@ log.info('Computing similarity solution')
 solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 
 # if the analysis already exists and you only want to replot uncomment this
-# pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results10.p')
-# if pathToResults.is_file():
-#     simDF = pd.read_pickle(pathToResults)
-simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
+pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results5.p')
+if pathToResults.is_file():
+    simDF = pd.read_pickle(pathToResults)
+# simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
 
 # select the simulations you want to plot
 # filter on viscosity parameter
-# simDF = simDF[simDF['subgridMixingFactor'].isin([10])]
+simDF = simDF[simDF['subgridMixingFactor'].isin([10])]
 # filter on time stepping parameter
-# simDF = simDF[simDF['cMax'].isin([0.01])]
+simDF = simDF[simDF['cMax'].isin([0.01])]
 # filter on nPPK0
-# simDF = simDF[simDF['nPPK0']==15]
+simDF = simDF[simDF['nPPK0']==20]
 
 # now do some plotting
-# compare the simulations to the reference
-# outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', ['hErrorL2', 'vhErrorL2'],
-#                           'deltaTh', 'dt', logScale=False)
 
 # make convergence plot
 fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
                           'aPPK', 'nPPK0', logScale=True, fit=True)
-# fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
-#                           'aPPK', 'nPPK0', logScale=True, fit=True)
+
+
+fig1, ax1, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
+                          'aPPK', 'nPPK0', logScale=True, fit=True)
 
 # outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
