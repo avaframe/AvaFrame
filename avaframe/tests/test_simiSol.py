@@ -22,10 +22,11 @@ import avaframe.out3Plot.outAna1Plots as outAna1Plots
 def test_mainCompareSimSolCom1DFA(tmp_path):
     dirname = pathlib.Path(__file__).parents[0]
     simiSolCfg = dirname / '..' / 'tests' / 'data' / 'testSimiSol' / 'simiSol_com1DFACfg.ini'
-    sourceDir = dirname / '..' / 'data' / 'avaSimilaritySol'
+    sourceDir = dirname / '..' / 'data' / 'avaSimilaritySol' / 'Inputs'
+    destDir = tmp_path / 'avaSimilaritySol' / 'Inputs'
     avalancheDir = tmp_path / 'avaSimilaritySol'
 
-    shutil.copytree(sourceDir, avalancheDir)
+    shutil.copytree(sourceDir, destDir)
 
     outDirTest = avalancheDir / 'Outputs' / 'ana1Tests'
     fU.makeADir(outDirTest)
@@ -48,12 +49,14 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
                               'aPPK', 'cMax', logScale=False)
 
     # make convergence plot
-    fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', ['hErrorL2', 'vhErrorL2'],
+    fig1, ax1, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
                               'aPPK', 'cMax', logScale=True)
 
     outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
 
     simDF = simDF[simDF['nPPK0']==15]
+    fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
+                              'aPPK', 'nPPK0', logScale=True, fit=True)
     simDF = simDF[simDF['aPPK']==-0.5]
     cfg['SIMISOL']['plotIntermediate'] = 'True'
     simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
