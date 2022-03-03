@@ -37,7 +37,7 @@ log.info('Current avalanche: %s', avalancheDir)
 # Load configuration
 damBreakCfg = pathlib.Path(avalancheDir, 'Inputs', 'damBreak_com1DFACfg.ini')
 
-for sphKernelRadius in [8, 6, 5, 4, 3, 2]:
+for sphKernelRadius in [2]:
     updater = ConfigUpdater()
     updater.read(damBreakCfg)
     updater['GENERAL']['sphKernelRadius'].value = sphKernelRadius

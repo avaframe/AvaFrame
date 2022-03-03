@@ -1418,6 +1418,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
+                      ml = mass[l]
                       mdwdrr = ml * dwdr / r
                       G1 = mdwdrr * K1*r1
                       G2 = mdwdrr * K2*r2

@@ -45,13 +45,13 @@ solDam = damBreak.damBreakSol(avalancheDir, cfgMain, cfg, outDirTest)
 # create dataFrame of results
 simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
-pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'damBreak', 'results10.p')
-if pathToResults.is_file():
-    simDF = pd.read_pickle(pathToResults)
-# simDF = damBreak.postProcessSimiSol(avalancheDir, cfgMain, cfg['DAMBREAK'], simDF, solDam, outDirTest)
+# pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'damBreak', 'results10.p')
+# if pathToResults.is_file():
+#     simDF = pd.read_pickle(pathToResults)
+simDF = damBreak.postProcessSimiSol(avalancheDir, cfgMain, cfg['DAMBREAK'], simDF, solDam, outDirTest)
 
-simDF = simDF[simDF['iniStep']==True]
+# simDF = simDF[simDF['iniStep']==True]
 
 # make convergence plot
 fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', ['hErrorL2', 'vhErrorL2'],
-                          'aPPK', 'nPPK0', logScale=True, fit=True)
+                          'iniStep', 'sphOption', logScale=True, fit=True)
