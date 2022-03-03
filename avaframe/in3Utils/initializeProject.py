@@ -123,6 +123,30 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     return 'Cleaned directory'
 
 
+def cleanDEMremeshedDir(avaDirInputs):
+    """ clean DEMremeshed folder in avaDir Inputs
+
+        Parameters
+        ------------
+        avaDirInputs: str or pathlib patch
+            path to avalanche directory Inputs
+    """
+
+    avaDirInputsString = str(avaDirInputs)
+
+    # check for empty or non string variable
+    result = _checkAvaDirVariable(avaDirInputsString)
+    if 'SUCCESS' not in result:
+        return result
+
+    # clean directory
+    folderName = 'DEMremeshed'
+    _checkForFolderAndDelete(avaDirInputsString, folderName)
+    log.info('Cleaned %s/%s directory' % (avaDirInputsString,folderName))
+
+    return 'SUCCESS'
+
+
 def initializeFolderStruct(pathAvaName, removeExisting=False):
     ''' Initialize the standard folder structure. If removeExisting is true,
     deletes any existing folders! BEWARE!

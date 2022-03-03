@@ -804,7 +804,9 @@ def getReleaseThickness(avaDir, cfg, demFile):
     relThPath = demFile.parent / 'RELTH'
     fU.makeADir(relThPath)
     relThFileName = relThPath / 'releaseThickness.asc'
-    IOf.writeResultToAsc(demOri['header'], relTh, relThFileName, flip=True)
+    headerRelTh = {'nrows': nrows, 'ncols': ncols, 'xllcenter': xllc, 'yllcenter': yllc,
+        'noDataValue': demOri['header']['noDataValue'], 'cellsize': csz}
+    IOf.writeResultToAsc(headerRelTh, relTh, relThFileName, flip=True)
     return relDict
 
 

@@ -129,7 +129,7 @@ def test_getIniPosition(tmp_path):
     inputSimLines['releaseLineBuffer']['rasterData'] = relRaster2
 
     # get mesh
-    demOri, dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, 1)
+    dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, 1)
 
     # initialize particles
     particles = com1DFA.initializeParticles(cfg['GENERAL'], inputSimLines['releaseLineBuffer'], dem, inputSimLines=inputSimLines,

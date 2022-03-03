@@ -356,6 +356,31 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile, cfg):
     return inputSimFiles, cfgFilesRels
 
 
+def initializeDEM(cfg):
+    """ check for dem and load to dict
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration settings here used INPUT DEM
+
+        Returns
+        --------
+        demOri: dict
+            dem dictionary with header and data
+    """
+
+    # fetch location of DEM
+    pathToDem = cfg['INPUT']['DEM']
+    avaDir = cfg['GENERAL']['avalancheDir']
+
+    # build full path and load data to dict
+    demFile = pathlib.Path(avaDir, 'Inputs', pathToDem)
+    dem = IOf.readRaster(demFile, noDataToNan=True)
+
+    return dem
+
+
 def selectReleaseScenario(inputSimFiles, cfg):
     """ select release scenario and remove other release files in inputSimFiles dictionary
 

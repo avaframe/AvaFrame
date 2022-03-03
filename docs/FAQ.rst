@@ -14,7 +14,7 @@ mapping. To provide calibrated results, new simulations with DEM cell sizes othe
 remeshed by com1DFA to **5 meters** for computation.
 
 It is possible to change the cell size, but keep in mind there are no tested/calibrated setups available.
-We want to list a few things that are we strongly suggest to take into account when changing the mesh cell size:
+We want to list a few things that we strongly suggest to take into account when changing the mesh cell size:
 
 - Start by changing the *meshCellSize* in the configuration file of :py:mod:`com1DFA` (``com1DFACfg.ini`` or rather your
   local copy of it), and consider changing the *sphKernelRadius* to match the new mesh cell size.
@@ -36,3 +36,8 @@ We want to list a few things that are we strongly suggest to take into account w
     mass within a cell. The number of particles is computed using the cell area and the release thickness. To ensure a
     reasonable amount of particles for decreased mesh size and *sphKernelRadius*, the *massPerParticle* value should be
     decreased accordingly. This ensures a reasonable amount of particles for the gradient computation.
+
+Regarding the DEM data, if a cell size different than 5 meters is chosen and the provided DEM in Inputs is of different
+mesh cell size than the chosen one, for the default settings, the DEM in Inputs is remeshed to the chosen cell size.
+However, there is also the possibility to search for suitable DEMs in the subdirectory DEMremeshed (further details
+are provided in :ref:`moduleCom1DFA:DEM input data`)
