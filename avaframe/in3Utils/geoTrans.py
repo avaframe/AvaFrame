@@ -6,7 +6,7 @@ import math
 import pathlib
 import numpy as np
 import scipy as sp
-import scipy.interpolate 
+import scipy.interpolate
 import copy
 
 # Local imports
@@ -263,7 +263,7 @@ def remeshData(rasterFile, cellSize):
 
 
 def remeshDEM(demFile, cfgSim):
-    """ change DEM cell size by reprojecting on a new grid - if cleanDEMremeshed false first check if remeshed DEM available
+    """ change DEM cell size by reprojecting on a new grid - first check if remeshed DEM available
 
     the new DEM is as big or smaller as the original DEM and saved to Inputs/DEMremshed as remeshedDEMcellSize
 
@@ -347,14 +347,13 @@ def remeshDEM(demFile, cfgSim):
 
 def searchRemeshedDEM(demName, cfgSim):
     """ search if remeshed DEM with correct name and cell size already available
-        if cleanDEMremeshed first clean directory to ensure new remeshing
 
         Parameters
         -----------
-        cfg: configparser object
+        demName: str
+            name of DEM file in Inputs/
+        cfgSim: configparser object
             configuration settings: avaDir, meshCellSize, meshCellSizeThreshold
-        dem: dict
-            dictionary of DEM in Inputs
 
         Returns
         --------
@@ -362,6 +361,8 @@ def searchRemeshedDEM(demName, cfgSim):
             dictionary of remeshed DEM if not found empty dict
         DEMFound: bool
             flag if dem is found
+        allDEMNames: list
+            list of all names of dems found in Inputs/DEMremeshed
     """
 
     # path to remeshed DEM folder
