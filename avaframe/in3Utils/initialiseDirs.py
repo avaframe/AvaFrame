@@ -25,7 +25,7 @@ def initialiseRunDirs(avaDir, modName, cleanDEMremeshed=None):
         modName : str
             name of module
         cleanDEMremeshed: str or pathlib path
-            path to Inputs directory where subdir DEMremeshed shall be cleaned
+            path to Inputs directory where director DEMremeshed shall be cleaned
 
         Returns
         -------
