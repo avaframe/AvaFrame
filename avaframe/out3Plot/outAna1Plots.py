@@ -514,6 +514,7 @@ def plotPresentation(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, size
     if lenSize<=10:
         lenSize = None
     count = 0
+    simDFOld = ''
     for colorValue in colorValueList:
         simDFNew = simDF[simDF[coloredBy] == colorValue]
         for sizeValue in simDFNew[sizedBy].unique():
