@@ -45,7 +45,7 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def setRelThIni(avaDir, modName, cfgFile=''):
+def setRelThIni(avaDir, modName, cfgInitial, cfgFile=''):
     """ Add thickness values in configuration file according to thickness flags, ini settings or shapefile attributes
         and create one cfgFile for each releaseScenario
 
@@ -55,6 +55,8 @@ def setRelThIni(avaDir, modName, cfgFile=''):
             path to avalanche directory
         modName: module
             computational module
+        cfgInitial: configparser object
+            full configuration settings of com Module
         cfgFile: str or pathlib path
             path to cfgFile to read overall configuration - optional if not provided the local or default config is used
 
@@ -66,9 +68,6 @@ def setRelThIni(avaDir, modName, cfgFile=''):
             list of paths to one cfgFile for each releaseScenario with updated thickness values
 
     """
-
-    # get initial configuration
-    cfgInitial = cfgUtils.getModuleConfig(modName, fileOverride=cfgFile, toPrint=False)
 
     # check if thickness settings in ini file are valid
     for thType in ['entTh', 'relTh', 'secondaryRelTh']:
@@ -109,11 +108,21 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
     """
 
     modName = 'com1DFA'
+
+    # read initial configuration
+    cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, toPrint=False)
+    # check if directory shall be cleaned
+    if cfgStart['GENERAL'].getboolean('cleanDEMremeshed') is True:
+         cleanDEMremeshed = pathlib.Path(avalancheDir, 'Inputs')
+    else:
+        cleanDEMremeshed = None
+
     # Create output and work directories
-    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName)
+    workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
+        cleanDEMremeshed=cleanDEMremeshed)
 
     # create one cfg files for each releaseScenarios and fetch input data
-    inputSimFilesAll, cfgFilesRels = setRelThIni(avalancheDir, com1DFA, cfgFile=cfgFile)
+    inputSimFilesAll, cfgFilesRels = setRelThIni(avalancheDir, com1DFA, cfgStart, cfgFile=cfgFile)
 
     # initialise reportDictList and flag indicating whether simulations have been performed
     reportDictList = []
@@ -139,6 +148,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
         # TODO: once it is confirmed that inputSimFiles is not changed within sim
         # keep for now for testing
         inputSimFilesTest = inputSimFiles.copy()
+        # first remove demFile entry as this is removed once the simulation DEMs are set
+        inputSimFilesTest.pop('demFile')
 
         # create a list of simulations and generate an individual configuration object for each simulation
         # if need to reproduce exactly the hash - need to be strings with exactely the same number of digits!!
@@ -253,7 +264,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
     cfgGen = cfg['GENERAL']
 
     # create required input from files
-    demOri, inputSimLines = prepareInputData(inputSimFiles, cfg['GENERAL'])
+    demOri, inputSimLines = prepareInputData(inputSimFiles, cfg)
 
     if cfgGen.getboolean('iniStep'):
         # append buffered release Area
@@ -286,7 +297,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
         if track:
             outDirData = outDir / 'particles'
             fU.makeADir(outDirData)
-            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, dem)
+            outCom1DFA.plotTrackParticle(outDirData, particlesList, trackedPartProp, cfg, demOri)
 
     # export particles dictionaries of saving time steps
     # (if particles is not in resType, only first and last time step are saved)
@@ -420,7 +431,7 @@ def prepareInputData(inputSimFiles, cfg):
         relFile : str
         path to release area file
         demFile : str
-            path to dem file
+            path to dem file in Inputs/
         secondaryReleaseFile : str
             path to secondaryRelease file
         entFiles : str
@@ -436,7 +447,9 @@ def prepareInputData(inputSimFiles, cfg):
     Returns
     -------
     demOri : dict
-        dictionary with original dem
+        dictionary with dem info (header original origin), raster data correct mesh cell size
+        this dem has been remeshed/read from remeshed if chosen cell size is not equal to cell size
+        of DEM in Inputs/
     inputSimLines : dict
         releaseLine : dict
             release line dictionary
@@ -460,8 +473,8 @@ def prepareInputData(inputSimFiles, cfg):
     relFile = inputSimFiles['releaseScenario']
     relThFile = inputSimFiles['relThFile']
 
-    # get dem information
-    demOri = IOf.readRaster(inputSimFiles['demFile'], noDataToNan=True)
+    # get dem dictionary - already read DEM with correct mesh cell size
+    demOri = gI.initializeDEM(cfg)
 
     # read data from relThFile
     if relThFile != '':
@@ -480,7 +493,7 @@ def prepareInputData(inputSimFiles, cfg):
     releaseLine['type'] = 'Release'
 
     # get line from secondary release area polygon
-    if cfg.getboolean('secRelArea'):
+    if cfg['GENERAL'].getboolean('secRelArea'):
         if entResInfo['flagSecondaryRelease'] == 'Yes':
             secondaryReleaseFile = inputSimFiles['secondaryReleaseFile']
             secondaryReleaseLine = shpConv.readLine(secondaryReleaseFile, '', demOri)
@@ -496,7 +509,7 @@ def prepareInputData(inputSimFiles, cfg):
         entResInfo['flagSecondaryRelease'] = 'No'
 
     # get line from entrainement area polygon
-    if cfg['simTypeActual'] in ['ent', 'entres']:
+    if cfg['GENERAL']['simTypeActual'] in ['ent', 'entres']:
         entFile = inputSimFiles['entFile']
         entLine = shpConv.readLine(entFile, '', demOri)
         entrainmentArea = entFile.name
@@ -507,7 +520,7 @@ def prepareInputData(inputSimFiles, cfg):
         entrainmentArea = ''
 
     # get line from resistance area polygon
-    if cfg['simTypeActual'] in ['entres', 'res']:
+    if cfg['GENERAL']['simTypeActual'] in ['entres', 'res']:
         resFile = inputSimFiles['resFile']
         resLine = shpConv.readLine(resFile, '', demOri)
         resistanceArea = resFile.name
@@ -633,9 +646,9 @@ def initializeMesh(cfg, demOri, num):
         boundaries as well as neighbour search grid information
     """
 
-    demOri = geoTrans.remeshDEM(cfg, demOri)
+    # set origin to 0, 0 for computations, store original origin
     dem = setDEMoriginToZero(demOri)
-    dem['originOri'] = {'xllcenter': demOri['header']['xllcenter'], 'yllcenter': demOri['header']['yllcenter']}
+    dem['originalHeader'] = demOri['header'].copy()
 
     # read dem header
     headerDEM = dem['header']
@@ -672,7 +685,7 @@ def initializeMesh(cfg, demOri, num):
     log.debug('Projected Area : %.2f' % projArea)
     log.debug('Total Area : %.2f' % actualArea)
 
-    return demOri, dem
+    return dem
 
 
 def setDEMoriginToZero(demOri):
@@ -726,7 +739,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     # -----------------------
     # Initialize mesh
     log.debug('Initializing Mesh')
-    demOri, dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
+    dem = initializeMesh(cfgGen, demOri, methodMeshNormal)
 
     # ------------------------
     log.debug('Initializing main release area')
@@ -735,31 +748,31 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
         releaseLine = inputSimLines['releaseLineBuffer']
         releaseLineReal = inputSimLines['releaseLine']
         # check if release features overlap between features
-        prepareArea(releaseLineReal, demOri, thresholdPointInPoly, combine=True, checkOverlap=True)
+        prepareArea(releaseLineReal, dem, thresholdPointInPoly, combine=True, checkOverlap=True)
         buffer1 = (cfg['GENERAL'].getfloat('sphKernelRadius') * cfg['GENERAL'].getfloat('additionallyFixedFactor') *
                    cfg['GENERAL'].getfloat('bufferZoneFactor'))
         if len(relThField) == 0:
             # if no release thickness field or function - set release according to shapefile or ini file
             # this is a list of release rasters that we want to combine
-            releaseLineReal = prepareArea(releaseLineReal, demOri, buffer1, thList=releaseLineReal['thickness'],
+            releaseLineReal = prepareArea(releaseLineReal, dem, buffer1, thList=releaseLineReal['thickness'],
                 combine=True, checkOverlap=False)
         else:
             # if relTh provided - set release thickness with field or function
-            releaseLineReal = prepareArea(releaseLineReal, demOri, buffer1, combine=True, checkOverlap=False)
+            releaseLineReal = prepareArea(releaseLineReal, dem, buffer1, combine=True, checkOverlap=False)
 
     else:
         releaseLine = inputSimLines['releaseLine']
         # check if release features overlap between features
-        prepareArea(releaseLine, demOri, thresholdPointInPoly, combine=True, checkOverlap=True)
+        prepareArea(releaseLine, dem, thresholdPointInPoly, combine=True, checkOverlap=True)
 
     if len(relThField) == 0:
         # if no release thickness field or function - set release according to shapefile or ini file
         # this is a list of release rasters that we want to combine
-        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), thList=releaseLine['thickness'],
+        releaseLine = prepareArea(releaseLine, dem, np.sqrt(2), thList=releaseLine['thickness'],
             combine=True, checkOverlap=False)
     else:
         # if relTh provided - set release thickness with field or function
-        releaseLine = prepareArea(releaseLine, demOri, np.sqrt(2), combine=True, checkOverlap=False)
+        releaseLine = prepareArea(releaseLine, dem, np.sqrt(2), combine=True, checkOverlap=False)
 
     # compute release area
     header = dem['header']
@@ -774,8 +787,8 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     # ------------------------
     # initialize simulation
     # create primary release area particles and fields
-    releaseLine['header'] = demOri['header']
-    inputSimLines['releaseLine']['header'] = demOri['header']
+    releaseLine['header'] = dem['originalHeader']
+    inputSimLines['releaseLine']['header'] = dem['originalHeader']
     particles = initializeParticles(cfgGen, releaseLine, dem, inputSimLines=inputSimLines,
         logName=logName, relThField=relThField)
     particles, fields = initializeFields(cfgGen, dem, particles)
@@ -793,10 +806,10 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     if inputSimLines['entResInfo']['flagSecondaryRelease'] == 'Yes':
         log.info('Initializing secondary release area')
         secondaryReleaseInfo = inputSimLines['secondaryReleaseLine']
-        secondaryReleaseInfo['header'] = demOri['header']
+        secondaryReleaseInfo['header'] = dem['originalHeader']
 
         # fetch secondary release areas
-        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, demOri, np.sqrt(2),
+        secondaryReleaseInfo = prepareArea(secondaryReleaseInfo, dem, np.sqrt(2),
                                            thList=secondaryReleaseInfo['thickness'], combine=False)
         # remove overlap with main release areas
         noOverlaprasterList = []
@@ -815,7 +828,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     # initialize entrainment and resistance
     # get info of simType and whether or not to initialize resistance and entrainment
     simTypeActual = cfgGen['simTypeActual']
-    entrMassRaster, reportAreaInfo = initializeMassEnt(demOri, simTypeActual, inputSimLines['entLine'], reportAreaInfo,
+    entrMassRaster, reportAreaInfo = initializeMassEnt(dem, simTypeActual, inputSimLines['entLine'], reportAreaInfo,
                                                        thresholdPointInPoly, cfgGen.getfloat('rhoEnt'))
 
     # check if entrainment and release overlap
@@ -831,7 +844,7 @@ def initializeSimulation(cfg, demOri, inputSimLines, logName):
     log.info('Mass available for entrainment: %.2f kg' % (entreainableMass))
 
     log.debug('Initializing resistance area')
-    cResRaster, reportAreaInfo = initializeResistance(cfgGen, demOri, simTypeActual, inputSimLines['resLine'],
+    cResRaster, reportAreaInfo = initializeResistance(cfgGen, dem, simTypeActual, inputSimLines['resLine'],
                                                       reportAreaInfo, thresholdPointInPoly)
     fields['cResRaster'] = cResRaster
 
@@ -978,8 +991,8 @@ def initializeParticles(cfg, releaseLine, dem, inputSimLines='', logName='', rel
     particles['forceSPHIni'] = 0.0
     particles['peakMassFlowing'] = 0
     particles['simName'] = logName
-    particles['xllcenter'] = dem['originOri']['xllcenter']
-    particles['yllcenter'] = dem['originOri']['yllcenter']
+    particles['xllcenter'] = dem['originalHeader']['xllcenter']
+    particles['yllcenter'] = dem['originalHeader']['yllcenter']
 
     # remove particles that might lay outside of the release polygon
     if not cfg.getboolean('iniStep') and not cfg.getboolean('initialiseParticlesFromFile'):
@@ -1124,7 +1137,7 @@ def initializeMassEnt(dem, simTypeActual, entLine, reportAreaInfo, thresholdPoin
         simulation area information dictionary completed with entrainment area info
     """
     # read dem header
-    header = dem['header']
+    header = dem['originalHeader']
     ncols = header['ncols']
     nrows = header['nrows']
     if 'ent' in simTypeActual:
@@ -1171,7 +1184,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     cw = cfg.getfloat('cw')
     sres = cfg.getfloat('sres')
     # read dem header
-    header = dem['header']
+    header = dem['originalHeader']
     ncols = header['ncols']
     nrows = header['nrows']
     if simTypeActual in ['entres', 'res']:
@@ -1606,9 +1619,9 @@ def prepareArea(line, dem, radius, thList='', combine=True, checkOverlap=True):
         if thList != '':
             log.info('%s feature %s, thickness: %.2f - read from %s' % (line['type'], name, thList[i],
                      line['thicknessSource'][i]))
-            Raster = polygon2Raster(dem['header'], avapath, radius, th=thList[i])
+            Raster = polygon2Raster(dem['originalHeader'], avapath, radius, th=thList[i])
         else:
-            Raster = polygon2Raster(dem['header'], avapath, radius)
+            Raster = polygon2Raster(dem['originalHeader'], avapath, radius)
         RasterList.append(Raster)
 
     # if RasterList not empty check for overlap between features
@@ -1915,9 +1928,9 @@ def trackParticles(cfgTrackPart, dem, particlesList):
     centerTrackPartPoint, _ = geoTrans.projectOnRaster(
         dem, centerTrackPartPoint, interp='bilinear')
     centerTrackPartPoint['x'] = (centerTrackPartPoint['x']
-                                 - dem['header']['xllcenter'])
+                                 - dem['originalHeader']['xllcenter'])
     centerTrackPartPoint['y'] = (centerTrackPartPoint['y']
-                                 - dem['header']['yllcenter'])
+                                 - dem['originalHeader']['yllcenter'])
 
     # start by finding the particles to be tracked
     particles2Track, track = particleTools.findParticles2Track(particlesList[0], centerTrackPartPoint, radius)
@@ -2050,8 +2063,7 @@ def exportFields(cfg, Tsave, fieldsList, demOri, outDir, logName):
                 outDirPeakAll = outDir / 'peakFiles'
                 fU.makeADir(outDirPeakAll)
                 outFile = outDirPeakAll / dataName
-                IOf.writeResultToAsc(
-                    demOri['header'], resField, outFile, flip=True)
+                IOf.writeResultToAsc(demOri['header'], resField, outFile, flip=True)
             else:
                 log.debug('Results parameter: %s has been exported to Outputs/peakFiles for time step: %.2f ' %
                           (resType, Tsave[countTime]))
@@ -2136,6 +2148,10 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             cfgSim['INPUT'].pop('secondaryRelThId', None)
             cfgSim['INPUT'].pop('secondaryRelThThickness', None)
 
+        # check if DEM in Inputs has desired mesh size
+        pathToDem = dP.checkDEM(cfgSim, inputSimFiles['demFile'])
+        cfgSim['INPUT']['DEM'] = pathToDem
+
         # add thickness values if read from shp and not varied
         cfgSim = dP.appendShpThickness(cfgSim)
 
@@ -2156,6 +2172,8 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
     log.info('The following simulations will be performed')
     for key in simDict:
         log.info('Simulation: %s' % key)
+
+    inputSimFiles.pop('demFile')
 
     return simDict
 

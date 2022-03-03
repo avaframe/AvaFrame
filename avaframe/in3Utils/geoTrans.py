@@ -3,13 +3,17 @@
 
 import logging
 import math
+import pathlib
 import numpy as np
 import scipy as sp
 import scipy.interpolate 
 import copy
 
 # Local imports
+import avaframe.in3Utils.initializeProject as initProj
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.fileHandlerUtils as fU
+
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -258,66 +262,138 @@ def remeshData(rasterFile, cellSize):
     return raster
 
 
-def remeshDEM(cfg, dem):
-    """ change DEM cell size by reprojecting on a new grid
+def remeshDEM(demFile, cfgSim):
+    """ change DEM cell size by reprojecting on a new grid - if cleanDEMremeshed false first check if remeshed DEM available
 
-    the new DEM is as big or smaller as the original DEM
+    the new DEM is as big or smaller as the original DEM and saved to Inputs/DEMremshed as remeshedDEMcellSize
 
     Interpolation is based on griddata with a cubic method. Here would be the place
     to change the order of the interpolation or to switch to another interpolation method.
 
     Parameters
     ----------
-    cfg : configParser
+    demFile: str or pathlib path
+        path to DEM in Inputs/
+    cfgSim : configParser
         meshCellSizeThreshold : threshold under which no remeshing is done
         meshCellSize : desired cell size
 
-    dem : dict
-        dem dictionary
-
     Returns
     -------
-    dem : dict
-        reprojected dem dictionary
+    pathDem : str
+        path of DEM with desired cell size relative to Inputs/
 
     """
 
-    cszThreshold = cfg.getfloat('meshCellSizeThreshold')
-    cszNew = cfg.getfloat('meshCellSize')
-    # read dem header
+    # fetch info on dem file
+    dem = IOf.readRaster(demFile)
     headerDEM = dem['header']
+
+    # fetch info on desired meshCellSize
+    meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])
+    meshCellSizeThreshold = float( cfgSim['GENERAL']['meshCellSizeThreshold'])
+
+    # read dem header info
     cszDEM = headerDEM['cellsize']
-    # remesh if input DEM size does not correspond to the computational cellSize
-    if np.abs(cszNew - cszDEM) > cszThreshold:
-        log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, cszNew))
-        x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(dem, cellSizeNew=cszNew)
-        xGrid, yGrid = np.meshgrid(x, y)
-        xGrid = xGrid.flatten()
-        yGrid = yGrid.flatten()
-        z = dem['rasterData']
-        zCopy = np.copy(z)
-        zCopy = zCopy.flatten()
-        mask = np.where(~np.isnan(zCopy))
-        xGrid = xGrid[mask]
-        yGrid = yGrid[mask]
-        z = zCopy[mask]
+    # first check if remeshed DEM is available
+    pathDem, DEMFound, allDEMNames = searchRemeshedDEM(demFile.stem, cfgSim)
+    if DEMFound:
+        return pathDem
 
-        headerRemeshed = {}
-        headerRemeshed['cellsize'] = cszNew
-        headerRemeshed['ncols'] = len(xNew)
-        headerRemeshed['nrows'] = len(yNew)
-        headerRemeshed['xllcenter'] = headerDEM['xllcenter']
-        headerRemeshed['yllcenter'] = headerDEM['yllcenter']
-        headerRemeshed['noDataValue'] = headerDEM['noDataValue']
 
-        dem['header'] = headerRemeshed
-        xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
-        zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic',
-                                       fill_value=headerDEM['noDataValue'])
-        log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
-        dem['rasterData'] = zNew
+    # if no remeshed DEM found - remesh
+    log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, meshCellSize))
+    x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(dem, cellSizeNew=meshCellSize)
+    xGrid, yGrid = np.meshgrid(x, y)
+    xGrid = xGrid.flatten()
+    yGrid = yGrid.flatten()
+    z = dem['rasterData']
+    zCopy = np.copy(z)
+    zCopy = zCopy.flatten()
+    mask = np.where(~np.isnan(zCopy))
+    xGrid = xGrid[mask]
+    yGrid = yGrid[mask]
+    z = zCopy[mask]
 
-    return dem
+    # create header of remeshed DEM
+    headerRemeshed = {}
+    headerRemeshed['cellsize'] = meshCellSize
+    headerRemeshed['ncols'] = len(xNew)
+    headerRemeshed['nrows'] = len(yNew)
+    headerRemeshed['xllcenter'] = headerDEM['xllcenter']
+    headerRemeshed['yllcenter'] = headerDEM['yllcenter']
+    headerRemeshed['noDataValue'] = headerDEM['noDataValue']
+
+    # write new DEM dictionary
+    remeshedDEM = {'header': headerRemeshed}
+    xNewGrid, yNewGrid = np.meshgrid(xNew, yNew)
+    zNew = sp.interpolate.griddata((xGrid, yGrid), z, (xNewGrid, yNewGrid), method='cubic',
+                                   fill_value=headerDEM['noDataValue'])
+    log.info('Remeshed data extent difference x: %f and y %f' % (diffExtentX, diffExtentY))
+    remeshedDEM['rasterData'] = zNew
+
+    # save remeshed DEM
+    pathToDem = pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', 'DEMremeshed')
+    fU.makeADir(pathToDem)
+    outFile = pathToDem / ('%s_remeshedDEM%.2f.asc' % (demFile.stem, remeshedDEM['header']['cellsize']))
+    if outFile.name in allDEMNames:
+        log.error('Name for saving remeshedDEM already used: %s' % outFile.name)
+    IOf.writeResultToAsc(remeshedDEM['header'], remeshedDEM['rasterData'], outFile, flip=True)
+    log.info('Saved remeshed DEM to %s' % outFile)
+    pathDem = str(outFile).split('Inputs/')[1]
+
+    return pathDem
+
+
+def searchRemeshedDEM(demName, cfgSim):
+    """ search if remeshed DEM with correct name and cell size already available
+        if cleanDEMremeshed first clean directory to ensure new remeshing
+
+        Parameters
+        -----------
+        cfg: configparser object
+            configuration settings: avaDir, meshCellSize, meshCellSizeThreshold
+        dem: dict
+            dictionary of DEM in Inputs
+
+        Returns
+        --------
+        remshedDEM: dict
+            dictionary of remeshed DEM if not found empty dict
+        DEMFound: bool
+            flag if dem is found
+    """
+
+    # path to remeshed DEM folder
+    pathToDems = pathlib.Path(cfgSim['GENERAL']['avalancheDir'], 'Inputs', 'DEMremeshed')
+    DEMFound = False
+    pathDem = ''
+    allDEMNames = []
+
+    # fetch info on desired meshCellSize
+    meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])
+    meshCellSizeThreshold = float( cfgSim['GENERAL']['meshCellSizeThreshold'])
+
+    # check if DEM is available
+    if pathToDems.is_dir():
+        # look for dems and check if cellSize within tolerance and origin matches
+        demFiles = list(pathToDems.glob('*.asc'))
+        allDEMNames = [d.name for d in demFiles]
+        for demF in demFiles:
+            headerDEM = IOf.readASCheader(demF)
+            if abs(meshCellSize - headerDEM['cellsize']) < meshCellSizeThreshold and demName in demF.stem:
+                log.info('Remeshed DEM found: %s cellSize: %.5f' % (demF.name, headerDEM['cellsize']))
+                DEMFound = True
+                pathDem = str(demF).split('Inputs/')[1]
+                continue
+            else:
+                log.debug('Remeshed dem found %s with cellSize %.2f - not used' %
+                    (demF, headerDEM['cellsize']))
+
+    else:
+        log.debug('Directory %s does not exist' % pathToDems)
+
+    return pathDem, DEMFound, allDEMNames
 
 
 def prepareLine(dem, avapath, distance=10, Point=None):

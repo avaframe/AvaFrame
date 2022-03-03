@@ -8,21 +8,24 @@ import logging
 
 # Local imports
 from avaframe.in3Utils import fileHandlerUtils as fU
+import avaframe.in3Utils.initializeProject as initProj
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
 
-def initialiseRunDirs(avaDir, modName):
+def initialiseRunDirs(avaDir, modName, cleanDEMremeshed=None):
     """ Initialise Simulation run with input data
 
         Parameters
         ----------
         avaDir : str
-            path to avalanche directoy
+            path to avalanche directory
         modName : str
             name of module
+        cleanDEMremeshed: str or pathlib path
+            path to directory that shall be cleaned
 
         Returns
         -------
@@ -42,5 +45,8 @@ def initialiseRunDirs(avaDir, modName):
     else:
         workDir.mkdir(parents=True, exist_ok=False)
     log.debug('Directory: %s created' % workDir)
+
+    if cleanDEMremeshed is not None:
+        initProj.cleanDEMremeshedDir(cleanDEMremeshed)
 
     return workDir, outputDir

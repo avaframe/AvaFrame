@@ -4,12 +4,15 @@ import math
 import pytest
 import logging
 import matplotlib.path as mpltPath
+import pathlib
+import shutil
 import os
 import configparser
 
 # Local imports
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.in3Utils.fileHandlerUtils as fU
 
 
 log = logging.getLogger(__name__)
@@ -317,14 +320,21 @@ def test_remeshDEM(tmp_path):
     z0 = 10
     data = getIPZ(z0, 15, 20, 5)
 
-    dataDict = {}
-    dataDict['rasterData'] = data
-    dataDict['header'] = headerInfo
+    avaDir = pathlib.Path(tmp_path, 'avaTest')
+    fU.makeADir(avaDir)
+    fU.makeADir((avaDir / 'Inputs'))
+    avaDEM = avaDir / 'Inputs' / 'avaAlr.asc'
+    IOf.writeResultToAsc(headerInfo, data, avaDEM, flip=True)
+
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'meshCellSizeThreshold': '0.0001', 'meshCellSize': '2.'}
+    cfg['GENERAL'] = {'meshCellSizeThreshold': '0.0001', 'meshCellSize': '2.',
+        'forceRemesh': 'False', 'avalancheDir': str(avaDir)}
 
     # call function
-    dataNew = geoTrans.remeshDEM(cfg['GENERAL'], dataDict)
+    pathDem = geoTrans.remeshDEM(avaDEM, cfg)
+    fullP = avaDir / 'Inputs'/ pathDem
+    dataNew = IOf.readRaster(fullP)
+
     dataRaster = dataNew['rasterData']
     indNoData = np.where(dataRaster == -9999)
     headerNew = dataNew['header']
@@ -332,7 +342,8 @@ def test_remeshDEM(tmp_path):
     yExtent = (headerNew['nrows']-1) * headerNew['cellsize']
 
     # compute solution
-    dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
+    dataSol = getIPZ(z0, xExtent, yExtent, 2.)
+    # dataSol = getIPZ(z0, xExtent, yExtent, headerNew['cellsize'])
 
     # compare solution to result from function
     testRes = np.allclose(dataRaster, dataSol, atol=1.e-6)
@@ -342,6 +353,50 @@ def test_remeshDEM(tmp_path):
     assert len(indNoData[0]) == 0
     assert testRes
     assert np.isclose(dataRaster[0,0], 10.)
+
+    # copy data
+    avaName = 'avaParabola'
+    dirPath = pathlib.Path(__file__).parents[0]
+    inputDir1 = dirPath / '..' / 'data' / avaName
+    inputDEM = dirPath / 'data' / 'remeshedDEM8.00.asc'
+    avaDir1 = pathlib.Path(tmp_path, avaName)
+    avaDEM = avaDir1 / 'Inputs' / 'DEMremeshed' / 'DEM_PF_Topo_remeshedDEM8.00.asc'
+    shutil.copytree(inputDir1, avaDir1)
+    shutil.copy(inputDEM, avaDEM)
+    inputDEM1 = inputDir1 / 'Inputs' / 'DEM_PF_Topo.asc'
+    avaDEM1 = avaDir1 / 'Inputs' / 'DEM_PF_Topo.asc'
+    shutil.copy(inputDEM1, avaDEM1)
+    cfg['GENERAL']['avalancheDir'] = str(avaDir1)
+    cfg['GENERAL']['meshCellSize'] = '8.'
+
+    # call function
+    pathDem2 = geoTrans.remeshDEM(avaDEM1, cfg)
+    fullP2 = avaDir1 / 'Inputs'  / pathDem2
+    dataNew2 = IOf.readRaster(fullP2)
+    dataRaster2 = dataNew2['rasterData']
+    dataSol = IOf.readRaster(inputDEM)
+    # compare solution to result from function
+    testRes2 = np.allclose(dataRaster2, dataSol['rasterData'], atol=1.e-6)
+
+    assert dataNew2['rasterData'].shape[0] == dataSol['header']['nrows']
+    assert dataNew2['rasterData'].shape[1] == dataSol['header']['ncols']
+    assert testRes2
+
+    dataMod = IOf.readRaster(inputDEM)
+    dataMod['header']['cellsize'] = 9.0
+    IOf.writeResultToAsc(dataMod['header'], dataMod['rasterData'], avaDEM, flip=True)
+
+    # call function
+    pathDem3 = geoTrans.remeshDEM(avaDEM1, cfg)
+    fullP3 = avaDir1 / 'Inputs'/ pathDem3
+    dataNew3 = IOf.readRaster(fullP3)
+    dataRaster3 = dataNew3['rasterData']
+    # compare solution to result from function
+    testRes3 = np.allclose(dataRaster3, dataSol['rasterData'], atol=1.e-6)
+
+    assert dataNew3['rasterData'].shape[0] == dataSol['header']['nrows']
+    assert dataNew3['rasterData'].shape[1] == dataSol['header']['ncols']
+    assert testRes3
 
 
 def test_isCounterClockWise(capfd):

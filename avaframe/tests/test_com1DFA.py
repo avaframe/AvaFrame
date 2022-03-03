@@ -34,10 +34,11 @@ def test_prepareInputData(tmp_path):
     inputSimFiles['entFile'] = avaDir / 'Inputs' / 'ENT' / 'entAlr.shp'
     inputSimFiles['relThFile'] = ''
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'ent'}
+    cfg['GENERAL'] = {'secRelArea': 'False', 'simTypeActual': 'ent', 'avalancheDir': str(avaDir)}
+    cfg['INPUT'] = {'DEM': 'avaAlr.asc'}
 
     # call function to be tested
-    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg['GENERAL'])
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
     assert demOri['header']['ncols'] == 417
     assert demOri['header']['nrows'] == 915
@@ -63,7 +64,9 @@ def test_prepareInputData(tmp_path):
     inputSimFiles['resFile'] = avaDir / 'Inputs' / 'RES' / 'resistance1PF.shp'
     inputSimFiles['relThFile'] = ''
     cfg['GENERAL']['simTypeActual'] = 'res'
-    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg['GENERAL'])
+    cfg['GENERAL']['avalancheDir'] = str(avaDir)
+    cfg['INPUT'] = {'DEM': 'DEM_PF_Topo.asc'}
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
     print('inputSimLines', inputSimLines)
 
@@ -84,7 +87,7 @@ def test_prepareInputData(tmp_path):
     inputSimFiles['resFile'] = avaDir / 'Inputs' / 'RES' / 'resistance1PF.shp'
     inputSimFiles['relThFile'] = dirName / 'data' / 'relThFieldTestFile.asc'
     cfg['GENERAL']['simTypeActual'] = 'res'
-    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg['GENERAL'])
+    demOri, inputSimLines = com1DFA.prepareInputData(inputSimFiles, cfg)
 
     print('inputSimLines', inputSimLines)
 
@@ -113,7 +116,7 @@ def test_prepareInputData(tmp_path):
     cfg['GENERAL']['simTypeActual'] = 'res'
 
     with pytest.raises(AssertionError) as e:
-        assert com1DFA.prepareInputData(inputSimFiles, cfg['GENERAL'])
+        assert com1DFA.prepareInputData(inputSimFiles, cfg)
     assert str(e.value) == ("Release thickness field read from %s does not match the number of rows and columns of the dem" % inputSimFiles['relThFile'])
 
 
@@ -407,7 +410,9 @@ def test_prepareArea():
     thList = [1.234, 7.8]
     combine = True
     checkOverlap = True
-
+    dem['originalHeader'] = dem['header']
+    dem['header']['xllcenter'] = 0.0
+    dem['header']['yllcenter'] = 0.0
     # call function to be tested
     # test 1
     line = com1DFA.prepareArea(releaseLine, dem, radius, thList='',
@@ -565,6 +570,9 @@ def test_initializeMassEnt():
     demHeader['ncols'] = ncols
     dem = {'header': demHeader}
     dem['rasterData'] = np.ones((nrows, ncols))
+    dem['originalHeader'] = dem['header']
+    dem['header']['xllcenter'] = 0.0
+    dem['header']['yllcenter'] = 0.0
 
     simTypeActual = 'entres'
     dirName = pathlib.Path(__file__).parents[0]
@@ -625,6 +633,9 @@ def test_initializeResistance():
     thresholdPointInPoly = 0.01
 
     # call function to be tested
+    dem['originalHeader'] = dem['header']
+    dem['header']['xllcenter'] = 0.0
+    dem['header']['yllcenter'] = 0.0
     cResRaster, reportAreaInfo = com1DFA.initializeResistance(
         cfg['GENERAL'], dem, simTypeActual, resLine, reportAreaInfo, thresholdPointInPoly)
     testArray = np.zeros((nrows, ncols))
@@ -688,7 +699,7 @@ def test_initializeMesh():
     demNewHeader['nrows'] = 5
     demNewHeader['ncols'] = 5
     demTest = {'header': demNewHeader}
-    demTest['originOri'] = {'xllcenter': 101.23, 'yllcenter': 24.54}
+    demTest['originalHeader'] = demTest['header']
     demTest['outOfDEM'] = np.asarray([[False, False, False, False, True],
                                       [False, False, False, False, True],
                                       [False, False, False, False, True],
@@ -723,7 +734,7 @@ def test_initializeMesh():
     demTest['rasterData'] = demData
 
     # call function to be tested
-    demOri, dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, num)
+    dem = com1DFA.initializeMesh(cfg['GENERAL'], demOri, num)
 
     assert dem['header']['xllcenter'] == demTest['header']['xllcenter']
     assert dem['header']['yllcenter'] == demTest['header']['yllcenter']
@@ -887,12 +898,15 @@ def test_releaseSecRelArea():
     demHeader['cellsize'] = 1
     demHeader['ncols'] = 12
     demHeader['nrows'] = 12
-    demHeader['xllcenter'] = 0
-    demHeader['yllcenter'] = 0
+    demHeader['xllcenter'] = 1.
+    demHeader['yllcenter'] = 1.
     demRaster = np.ones((demHeader['nrows'], demHeader['ncols']))
     areaRaster = np.ones((demHeader['nrows'], demHeader['ncols']))
     dem = {'header': demHeader, 'rasterData': demRaster, 'areaRaster': areaRaster}
-    dem['originOri'] = {'xllcenter': 1.0, 'yllcenter': 1.0}
+    dem['originalHeader'] = dem['header'].copy()
+    dem['header']['xllcenter'] = 0.0
+    dem['header']['yllcenter'] = 0.0
+    print('dem', dem)
     secRelRaster2 = np.zeros((demHeader['nrows'], demHeader['ncols']))
     secRelRaster2[6:8, 7] = 1.0
     secRelRaster3 = np.zeros((demHeader['nrows'], demHeader['ncols']))
@@ -906,8 +920,8 @@ def test_releaseSecRelArea():
                             'Name': ['secRel1', 'secRel2', 'secRel3'], 'thickness': [0.5, 1.0, 0.5],
                             'rasterData': [secRelRaster1, secRelRaster2, secRelRaster3]}
     secondaryReleaseInfo['header'] = demHeader
-    secondaryReleaseInfo['header']['xllcenter'] = dem['originOri']['xllcenter']
-    secondaryReleaseInfo['header']['yllcenter'] = dem['originOri']['yllcenter']
+    secondaryReleaseInfo['header']['xllcenter'] = dem['originalHeader']['xllcenter']
+    secondaryReleaseInfo['header']['yllcenter'] = dem['originalHeader']['yllcenter']
     secondaryReleaseInfo2 = copy.deepcopy(secondaryReleaseInfo)
     particlesIn = {'secondaryReleaseInfo': secondaryReleaseInfo}
     particlesIn['x'] = np.asarray([6., 7.])
@@ -1016,14 +1030,16 @@ def test_initializeParticles():
     demHeader['cellsize'] = 1
     demHeader['ncols'] = 12
     demHeader['nrows'] = 12
-    demHeader['xllcenter'] = 0
-    demHeader['yllcenter'] = 0
+    demHeader['xllcenter'] = 0.
+    demHeader['yllcenter'] = 0.
     headerNeighbourGrid = copy.deepcopy(demHeader)
     demRaster = np.ones((demHeader['nrows'], demHeader['ncols']))
     areaRaster = np.ones((demHeader['nrows'], demHeader['ncols']))
     dem = {'header': demHeader, 'rasterData': demRaster,
            'areaRaster': areaRaster, 'headerNeighbourGrid': headerNeighbourGrid}
-    dem['originOri'] = {'xllcenter': 1.0, 'yllcenter': 1.0}
+    dem['originalHeader'] = dem['header'].copy()
+    dem['originalHeader']['xllcenter'] = 1.0
+    dem['originalHeader']['yllcenter'] = 1.0
 
     relRaster = np.zeros((12, 12))
     relRaster[5:9, 5:9] = 1.0
@@ -1032,8 +1048,8 @@ def test_initializeParticles():
                    'rasterData': relRaster}
 
     releaseLine['header'] = demHeader
-    releaseLine['header']['xllcenter'] = dem['originOri']['xllcenter']
-    releaseLine['header']['yllcenter'] = dem['originOri']['yllcenter']
+    releaseLine['header']['xllcenter'] = dem['originalHeader']['xllcenter']
+    releaseLine['header']['yllcenter'] = dem['originalHeader']['yllcenter']
 
     dictKeys = ['nPart', 'x', 'y', 's', 'sCor', 'l', 'z', 'm', 'massPerPart', 'nPPK', 'mTot',
                 'h', 'ux', 'uy', 'uz', 'stoppCriteria', 'kineticEne', 'travelAngle',
@@ -1312,6 +1328,10 @@ def test_initializeFields():
     cfg = configparser.ConfigParser()
     cfg['GENERAL'] = {'rho': '200.', 'interpOption': '2'}
 
+    dem['originalHeader'] = dem['header']
+    dem['header']['xllcenter'] = 0.0
+    dem['header']['yllcenter'] = 0.0
+
     # call function to be tested
     particles, fields = com1DFA.initializeFields(
         cfg['GENERAL'], dem, particles)
@@ -1343,13 +1363,20 @@ def test_prepareVarSimDict(caplog):
                               'modelType': 'dfa', 'simTypeActual': 'entres', 'secRelArea': 'False',
                               'relThFromShp': 'False', 'entThFromShp': 'True',
                               'entThPercentVariation': '', 'relThPercentVariation': '',
-                              'entThRangeVariation': '', 'relThRangeVariation': ''}
+                              'entThRangeVariation': '', 'relThRangeVariation': '',
+                              'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001'}
     standardCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
+
+    dirName = pathlib.Path(__file__).parents[0]
+    avaDir = dirName / '..' / 'data' / 'avaAlr'
+    avaDEM = avaDir / 'Inputs' / 'avaAlr.asc'
+    standardCfg['INPUT']['DEM'] = 'avaAlr.asc'
 
     relPath = pathlib.Path('test', 'relTest.shp')
     inputSimFiles = {'relFiles': [relPath], 'entResInfo': {
-        'flagEnt': 'Yes', 'flagRes': 'Yes'}}
+        'flagEnt': 'Yes', 'flagRes': 'Yes'}, 'demFile': avaDEM}
     variationDict = {'rho': np.asarray([200., 150.])}
+
 
     # call function to be tested
     simDict = com1DFA.prepareVarSimDict(
@@ -1359,9 +1386,11 @@ def test_prepareVarSimDict(caplog):
     testCfg['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa', 'simTypeActual': 'entres',
                           'secRelArea': 'False', 'relThFromShp': 'False', 'entThFromShp': 'True',
                           'entThPercentVariation': '', 'relThPercentVariation': '', 'rho': '200.0',
-                          'entTh0': '1.0',  'entThRangeVariation': '', 'relThRangeVariation': ''}
+                          'entTh0': '1.0',  'entThRangeVariation': '', 'relThRangeVariation': '',
+                          'meshCellSize': '5.', 'meshCellSizeThreshold': '0.001'}
 
     testCfg['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
+    testCfg['INPUT']['DEM'] = 'avaAlr.asc'
 
     simHash = cfgUtils.cfgHash(testCfg)
     print('simHAhs', simHash)
@@ -1371,6 +1400,11 @@ def test_prepareVarSimDict(caplog):
 
     print('simDict', simDict)
     print('simName1', simName1)
+    simCfg1 = simDict['relTest_entres_dfa_2fe95b65e3']['cfgSim']
+    for section in simCfg1.sections():
+        for key in simCfg1[section]:
+            print('section', section, 'key', key,  simCfg1[section][key])
+
 
     for key in testDict[simName1]:
         assert simDict[simName1][key] == testDict[simName1][key]
@@ -1383,11 +1417,13 @@ def test_prepareVarSimDict(caplog):
     # call function to be tested
     relPath = pathlib.Path('test', 'relTest_extended.shp')
     inputSimFiles = {'relFiles': [relPath], 'entResInfo': {
-        'flagEnt': 'Yes', 'flagRes': 'Yes'}}
+        'flagEnt': 'Yes', 'flagRes': 'Yes'}, 'demFile': avaDEM}
     variationDict = {'rho': np.asarray([200., 150.]), 'simTypeList': ['entres', 'ent']}
     simDict2 = com1DFA.prepareVarSimDict(
         standardCfg, inputSimFiles, variationDict)
 
+    inputSimFiles = {'relFiles': [relPath], 'entResInfo': {
+        'flagEnt': 'Yes', 'flagRes': 'Yes'}, 'demFile': avaDEM}
     testCfg2 = configparser.ConfigParser()
     testCfg2.optionxform = str
     testCfg2['GENERAL'] = {'simTypeList': 'entres', 'modelType': 'dfa',
@@ -1395,8 +1431,10 @@ def test_prepareVarSimDict(caplog):
                            'relThFromShp': 'False', 'entThFromShp': 'True',
                            'entThPercentVariation': '', 'relThPercentVariation': '',
                            'rho': '150.0', 'entTh0': '1.0', 'entThRangeVariation': '',
-                           'relThRangeVariation': ''}
+                           'relThRangeVariation': '', 'meshCellSize': '5.',
+                           'meshCellSizeThreshold': '0.001'}
     testCfg2['INPUT'] = {'entThThickness': '1.', 'entThId': '0'}
+    testCfg2['INPUT']['DEM'] = 'avaAlr.asc'
     simHash2 = cfgUtils.cfgHash(testCfg2)
     simName2 = 'relTest_extended_AF_entres_dfa_' + simHash2
     testDict2 = {simName2: {'simHash': simHash2, 'releaseScenario': 'relTest_extended',
@@ -1472,8 +1510,8 @@ def test_initializeSimulation():
     assert np.sum(fields['pfd']) != 0.0
     assert dem['header']['xllcenter'] == 0.0
     assert dem['header']['yllcenter'] == 0.0
-    assert dem['originOri']['xllcenter'] == 1.0
-    assert dem['originOri']['yllcenter'] == 2.0
+    assert dem['originalHeader']['xllcenter'] == 1.0
+    assert dem['originalHeader']['yllcenter'] == 2.0
     assert particles['nPart'] == 9
     assert np.array_equal(particles['x'], np.asarray(
         [6.25, 6.75, 7.25, 6.25, 6.25, 6.75, 7.25, 6.75, 7.25]))
@@ -1510,8 +1548,8 @@ def test_initializeSimulation():
     assert np.sum(fields2['pfd']) != np.sum(fields['pfd'])
     assert dem2['header']['xllcenter'] == 0.0
     assert dem2['header']['yllcenter'] == 0.0
-    assert dem2['originOri']['xllcenter'] == 1.0
-    assert dem2['originOri']['yllcenter'] == 2.0
+    assert dem2['originalHeader']['xllcenter'] == 1.0
+    assert dem2['originalHeader']['yllcenter'] == 2.0
     assert particles2['nPart'] == 9
     assert particles2['mTot'] == 225.
     assert np.sum(particles['ux']) == 0.0

@@ -9,6 +9,8 @@ import numpy as np
 import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.com1DFA import com1DFA
+import avaframe.in2Trans.ascUtils as IOf
+from avaframe.in3Utils import geoTrans
 
 log = logging.getLogger(__name__)
 
@@ -573,3 +575,40 @@ def appendShpThickness(cfg):
                 cfg['GENERAL'][thNameId] = str(float(thicknessList[count]))
 
     return cfg
+
+
+def checkDEM(cfgSim, demFile):
+    """ check if cell size of DEM in Inputs/ is same as desired meshCellSize
+        if not - check for remeshed DEM or remesh the DEM
+
+        Parameters
+        -----------
+        cfgSim: configparser object
+            configuration settings of com module
+        demFile: str or pathlib path
+            path to dem in Inputs/
+
+        Returns
+        --------
+        pathToDem: str
+            path to DEM with correct cellSize relative to Inputs/
+    """
+
+
+    # lead header of DEM file
+    headerDEM = IOf.readASCheader(demFile)
+
+    # fetch info on desired meshCellSize
+    meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])
+    meshCellSizeThreshold = float( cfgSim['GENERAL']['meshCellSizeThreshold'])
+
+    # if cell size of DEM is different from desired meshCellSize - look for remeshed DEM or remesh
+    if np.abs(meshCellSize - headerDEM['cellsize']) > meshCellSizeThreshold:
+        pathToDem = geoTrans.remeshDEM(demFile, cfgSim)
+    else:
+        log.info('DEM taken from Inputs/')
+        pathToDem = demFile.name
+
+    log.info('path to DEM is: %s' % pathToDem)
+
+    return pathToDem

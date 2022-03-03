@@ -73,6 +73,37 @@ Release, entrainment and secondary release thickness can be specified in two dif
     :ref:`configuration:Configuration`, you can also directly set e.g. `relTh = 1.$50$2`, ``referenceValue$+-percentage$numberOfSteps``,
     resulting in a variation of relTh from 0.5 to 1.5m in two steps.
 
+Only available for release thickness:
+
+3. Via **release thickness file**:
+  - set the flag 'relThFromShp' to False
+  - set the flag 'relThFromFile' to True
+  - save a raster file with info on release thickness as .asc file in ``Inputs/RELTH``
+    the number of rows and columns must match the DEM raster with desired meshCellSize
+
+
+
+DEM input data
+^^^^^^^^^^^^^^^^
+Regarding the DEM data, if the DEM in ``Inputs`` is not of cell size 5 meters, it is remeshed to a
+cell size of 5 meters. However, it is also possible to specify a desired cell size in the
+configuration file (parameter `meshCellSize`). In this case, also consider reading :ref:`FAQ:Can the spatial resolution of simulations performed with com1DFA (dense flow) be changed?`.
+If the cell size of the DEM in ``Inputs`` is equal
+to the desired mesh cell size, the DEM is used without modification, if the cell sizes do not match,
+several options are available:
+
+    - cleanDEMremeshed = True, directory ``Inputs/DEMremeshed`` is cleaned, and the DEM in Inputs/
+      is remeshed to the desired cell size - this is the default setting
+
+    - cleanDEMremeshed = False and a DEM including the name of the DEM in Inputs/ and the desired cell size is found
+      in Inputs/DEMremeshed - this DEM is used without modification
+
+    - cleanDEMremeshed = False no matching DEM is found in Inputs/DEMremeshed - the DEM in Inputs/ is remeshed
+      to the desired cell size
+
+If the DEM in Inputs/ is remeshed, it is then saved to ``Inputs/DEMremeshed` and available for subsequent
+simulations.
+
 
 Model configuration
 --------------------
