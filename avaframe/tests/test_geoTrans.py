@@ -361,6 +361,8 @@ def test_remeshDEM(tmp_path):
     avaDir1 = pathlib.Path(tmp_path, avaName)
     avaDEM = avaDir1 / 'Inputs' / 'DEMremeshed' / 'DEM_PF_Topo_remeshedDEM8.00.asc'
     shutil.copytree(inputDir1, avaDir1)
+    inputsAVA = avaDir1 / 'Inputs' / 'DEMremeshed'
+    fU.makeADir(inputsAVA)
     shutil.copy(inputDEM, avaDEM)
     inputDEM1 = inputDir1 / 'Inputs' / 'DEM_PF_Topo.asc'
     avaDEM1 = avaDir1 / 'Inputs' / 'DEM_PF_Topo.asc'
@@ -385,17 +387,10 @@ def test_remeshDEM(tmp_path):
     dataMod['header']['cellsize'] = 9.0
     IOf.writeResultToAsc(dataMod['header'], dataMod['rasterData'], avaDEM, flip=True)
 
-    # call function
-    pathDem3 = geoTrans.remeshDEM(avaDEM1, cfg)
-    fullP3 = avaDir1 / 'Inputs'/ pathDem3
-    dataNew3 = IOf.readRaster(fullP3)
-    dataRaster3 = dataNew3['rasterData']
-    # compare solution to result from function
-    testRes3 = np.allclose(dataRaster3, dataSol['rasterData'], atol=1.e-6)
+    with pytest.raises(FileExistsError) as e:
+        assert geoTrans.remeshDEM(avaDEM1, cfg)
+    assert str(e.value) == ("Name for saving remeshedDEM already used: %s" % avaDEM.name)
 
-    assert dataNew3['rasterData'].shape[0] == dataSol['header']['nrows']
-    assert dataNew3['rasterData'].shape[1] == dataSol['header']['ncols']
-    assert testRes3
 
 
 def test_isCounterClockWise(capfd):

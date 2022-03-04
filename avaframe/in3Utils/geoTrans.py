@@ -337,7 +337,10 @@ def remeshDEM(demFile, cfgSim):
     fU.makeADir(pathToDem)
     outFile = pathToDem / ('%s_remeshedDEM%.2f.asc' % (demFile.stem, remeshedDEM['header']['cellsize']))
     if outFile.name in allDEMNames:
-        log.error('Name for saving remeshedDEM already used: %s' % outFile.name)
+        message = 'Name for saving remeshedDEM already used: %s' % outFile.name
+        log.error(message)
+        raise FileExistsError(message)
+        
     IOf.writeResultToAsc(remeshedDEM['header'], remeshedDEM['rasterData'], outFile, flip=True)
     log.info('Saved remeshed DEM to %s' % outFile)
     pathDem = str(outFile).split('Inputs/')[1]
