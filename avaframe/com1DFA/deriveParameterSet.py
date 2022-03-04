@@ -47,8 +47,8 @@ def getVariationDict(avaDir, fullCfg, modDict):
             # if yes and if this value is different add this key to
             # the parameter variation dict
             keyList = ['relThPercentVariation', 'entThPercentVariation',
-                        'secondaryRelThPercentVariation', 'relThRangeVariation',
-                        'entThRangeVariation', 'secondaryRelThRangeVariation']
+                'secondaryRelThPercentVariation', 'relThRangeVariation',
+                'entThRangeVariation', 'secondaryRelThRangeVariation']
             if key in keyList and value != '':
                 # here the factor for changing thValues is added to the variationDict instead of the
                 # values directly
@@ -224,8 +224,8 @@ def getThicknessValue(cfg, inputSimFiles, fName, thType):
             thId = idList[0]
             thThickness = thicknessList[0]
             for count, id in enumerate(idList[1:]):
-                thId = thId +'|' + id
-                thThickness = thThickness + '|'+ thicknessList[count+1]
+                thId = thId + '|' + id
+                thThickness = thThickness + '|' + thicknessList[count+1]
 
             # add in INPUT section
             cfg['INPUT'][thType + 'Id'] = thId
@@ -295,11 +295,11 @@ def checkThicknessSettings(cfg, thName):
         log.error(message)
         raise AssertionError(message)
 
-
     # if no error ocurred - thickness settings are correct
     thicknessSettingsCorrect = True
 
     return thicknessSettingsCorrect
+
 
 def splitVariationToArraySteps(value, key, fullCfg):
     """ split variation in percent to create a list of factors to set parameter value for variations
@@ -440,7 +440,6 @@ def setVariationForAllFeatures(cfg, key, thType, varType, variationFactor):
             updated configuration settings regarding thickness settings
     """
 
-
     # fetch thickness feature ids
     idList = cfg['INPUT'][thType + 'Id'].split('|')
     # fetch thickness list
@@ -497,7 +496,7 @@ def setPercentVariation(cfg, variationFactor, thNameId):
         variationIni = ''
     elif variationFactor < 1:
         variationIni = '-' + str((1. - variationFactor) * 100) + '$1'
-    elif  variationFactor > 1:
+    elif variationFactor > 1:
         variationIni = '+' + str((variationFactor - 1.) * 100) + '$1'
 
     return variationIni
@@ -594,13 +593,12 @@ def checkDEM(cfgSim, demFile):
             path to DEM with correct cellSize relative to Inputs/
     """
 
-
     # lead header of DEM file
     headerDEM = IOf.readASCheader(demFile)
 
     # fetch info on desired meshCellSize
     meshCellSize = float(cfgSim['GENERAL']['meshCellSize'])
-    meshCellSizeThreshold = float( cfgSim['GENERAL']['meshCellSizeThreshold'])
+    meshCellSizeThreshold = float(cfgSim['GENERAL']['meshCellSizeThreshold'])
 
     # if cell size of DEM is different from desired meshCellSize - look for remeshed DEM or remesh
     if np.abs(meshCellSize - headerDEM['cellsize']) > meshCellSizeThreshold:

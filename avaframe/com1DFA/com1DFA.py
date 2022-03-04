@@ -113,7 +113,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
     cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, toPrint=False)
     # check if directory with remeshed DEMs shall be cleaned
     if cfgStart['GENERAL'].getboolean('cleanDEMremeshed') is True:
-         cleanDEMremeshed = pathlib.Path(avalancheDir, 'Inputs')
+        cleanDEMremeshed = pathlib.Path(avalancheDir, 'Inputs')
     else:
         cleanDEMremeshed = None
 
@@ -209,7 +209,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
             # add cpu time info to the dataframe
             simDF = simDF.join(tCPUDF)
 
-            # append new simulations configuration to old ones (if they exist), return total dataFrame and write it to csv
+            # append new simulations configuration to old ones (if they exist),
+            # return total dataFrame and write it to csv
             simDFNew = simDF.append(simDFOld)
             cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
@@ -372,7 +373,7 @@ def prepareReleaseEntrainment(cfg, rel, inputSimLines):
         secondaryReleaseLine = None
     inputSimLines['secondaryReleaseLine'] = secondaryReleaseLine
 
-    if cfg['GENERAL']['simTypeActual'] in  ['ent', 'entres']:
+    if cfg['GENERAL']['simTypeActual'] in ['ent', 'entres']:
         # set entrainment thickness
         entLine = setThickness(cfg, inputSimLines['entLine'], 'entTh')
         inputSimLines['entLine'] = entLine
@@ -1052,7 +1053,6 @@ def getRelThFromPart(cfg, releaseLine, relThField):
         relThForPart: float
             max value of release thickness
     """
-
 
     if len(relThField) != 0:
         relThForPart = np.amax(relThField)
@@ -2129,7 +2129,7 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
             cfgSim['GENERAL']['simTypeActual'] = row._asdict()['simTypeList']
             # update parameter value - now only single value for each parameter
             keyList = ['relThPercentVariation', 'entThPercentVariation',
-                       'secondaryRelThPercentVariation',  'relThRangeVariation',
+                       'secondaryRelThPercentVariation', 'relThRangeVariation',
                        'entThRangeVariation', 'secondaryRelThRangeVariation']
             if parameter in keyList:
                 # set thickness value according to percent variation info
