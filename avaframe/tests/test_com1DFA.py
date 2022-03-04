@@ -1400,11 +1400,6 @@ def test_prepareVarSimDict(caplog):
 
     print('simDict', simDict)
     print('simName1', simName1)
-    simCfg1 = simDict['relTest_entres_dfa_2fe95b65e3']['cfgSim']
-    for section in simCfg1.sections():
-        for key in simCfg1[section]:
-            print('section', section, 'key', key,  simCfg1[section][key])
-
 
     for key in testDict[simName1]:
         assert simDict[simName1][key] == testDict[simName1][key]
