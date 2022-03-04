@@ -301,6 +301,8 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, 
         column of the simDF to use for the marker size
     logScale: boolean
         If you want a loglog scale
+    fit: boolean
+        if True add power law regression
     """
     tSave = cfgSimi.getfloat('tSave')
     relativ = cfgSimi.getboolean('relativError')
@@ -478,6 +480,8 @@ def plotPresentation(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, size
         column of the simDF to use for the marker size
     logScale: boolean
         If you want a loglog scale
+    fit: boolean
+        if True add power law regression
     """
     tSave = cfgSimi.getfloat('tSave')
     relativ = cfgSimi.getboolean('relativError')
