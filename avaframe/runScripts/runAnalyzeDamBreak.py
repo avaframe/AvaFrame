@@ -45,13 +45,18 @@ solDam = damBreak.damBreakSol(avalancheDir, cfgMain, cfg, outDirTest)
 # create dataFrame of results
 simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
-# pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'damBreak', 'results10.p')
+# pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'damBreak', 'results15.p')
 # if pathToResults.is_file():
 #     simDF = pd.read_pickle(pathToResults)
-simDF = damBreak.postProcessSimiSol(avalancheDir, cfgMain, cfg['DAMBREAK'], simDF, solDam, outDirTest)
+simDF = damBreak.postProcessDamBreak(avalancheDir, cfgMain, cfg, simDF, solDam, outDirTest)
 
 # simDF = simDF[simDF['iniStep']==True]
+# simDF = simDF[simDF['sphOption']==1]
 
 # make convergence plot
-fig1, ax1, ax2, slopeU, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', ['hErrorL2', 'vhErrorL2'],
-                          'iniStep', 'sphOption', logScale=True, fit=True)
+# fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'hErrorL2',
+#                           'sphOption', 'subgridMixingFactor', logScale=True, fit=True)
+
+# make convergence plot
+fig1, ax1, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'vhErrorL2',
+                          'sphKernelRadius', 'nPPK0', logScale=True, fit=True)

@@ -21,9 +21,14 @@ import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.com1DFA.DFAtools as DFAtls
+import avaframe.com1DFA.DFAfunctionsCython as DFAfunC
+import avaframe.com1DFA.particleTools as particleTools
 from avaframe.com1DFA import DFAtools
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
+import avaframe.out3Plot.outCom1DFA as outCom1DFA
+from avaframe.in1Data import getInput as gI
 
 # create local logger
 # change log level in calling module to DEBUG to see log messages
@@ -76,7 +81,7 @@ def _plotMultVariables(x, y, nx_loc, dtAnalysis, data1, data2, xR, dataR, tR, la
     plt.legend()
     ax.set_title('%s at time step %.02f s' % (label, dtAnalysis))
 
-    return fig
+    return fig, ax
 
 
 def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, outDirTest):
@@ -130,19 +135,21 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, outDir
     y[x<-120] = 0.0
 
     # setup index for time of analyitcal solution
-    t = np.searchsorted(solDam['tAna'], tSave)
+    indTime = np.searchsorted(solDam['tAna'], tSave)
+    t = solDam['tAna'][indTime]
 
-    fig = _plotMultVariables(x, y, nx_loc, tSave, dataIniFD, dataAnaFD, solDam['xAna'], solDam['hAna'],
-                             t, 'Flow depth', 'm')
+    fig, ax1 = _plotMultVariables(x, y, nx_loc, tSave, dataIniFD, dataAnaFD, solDam['xAna'], solDam['hAna'],
+                             indTime, 'Flow depth', 'm')
     outputName = 'CompareDamBreakH%s_%.02f' % (simName, tSave)
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     y = np.zeros(len(x))
-    fig = _plotMultVariables(x, y, nx_loc, tSave, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
-                             solDam['hAna']*solDam['uAna'], t, 'Flow momentum in slope directrion', 'm/s')
+    fig, ax2 = _plotMultVariables(x, y, nx_loc, tSave, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
+                             solDam['hAna']*solDam['uAna'], indTime, 'Flow momentum in slope directrion', 'm/s')
     outputName = 'CompareDamBreakHVel%s_%.02f' % (simName, tSave)
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
+    return ax1, ax2
 
 def damBreakSol(avaDir, cfg, cfgC, outDirTest):
     """ Compute flow depth for dam break for granular flow over a dry rough sloping bed with the Savage Hutter model
@@ -202,13 +209,13 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
             cond2R = x0R + ((m0*t[m]) / 2.0 + cR) * t[m]
             cond1 = ((m0*t[m]) / 2.0 - cL) * t[m]
             cond2 = (2.0 *cL + ((m0*t[m]) / 2.0)) * t[m]
-            if x[k] <= cond1R:
-                u[k,m] = 0
-                h[k,m] = 0
-            elif cond1R < x[k] <= cond2R:
-                u[k,m] = (2./3.) * (-cR + ((x[k]-x0R) / t[m]) + m0 * t[m])
-                h[k,m] = ((2.* cR + ((x[k]-x0R) / t[m]) - ((m0 * t[m]) / 2.))**2) / (9. * gz)
-            elif cond2R < x[k] <= cond1:
+                # if x[k] <= cond1R:
+                #     u[k,m] = 0
+                #     h[k,m] = 0
+                # elif cond1R < x[k] <= cond2R:
+                #     u[k,m] = (2./3.) * (-cR + ((x[k]-x0R) / t[m]) + m0 * t[m])
+                #     h[k,m] = ((2.* cR + ((x[k]-x0R) / t[m]) - ((m0 * t[m]) / 2.))**2) / (9. * gz)
+            if x[k] <= cond1:
                 u[k,m] = m0 * t[m]
                 h[k,m] = hL
             elif cond1 < x[k] <= cond2:
@@ -217,7 +224,7 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
             elif x[k] > cond2:
                 u[k,m] = 0
                 h[k,m] = 0.0
-        xMiddle[m] = (cond1 + cond2R) / 2
+        xMiddle[m] = (2*cond2R + cond1)/3
     #-----------------------------Plot results --------------
     # Reproduce figure 6, case 1.2.1 - Test 2
     plotResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest)
@@ -228,7 +235,7 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
     return solDam
 
 
-def postProcessSimiSol(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest):
+def postProcessDamBreak(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest):
     """ loop on all DFA simulations and compare then to the anlytic solution
 
     Parameters
@@ -255,20 +262,22 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest)
     for simHash, simDFrow in simDF.iterrows():
         simName = simDFrow['simName']
         # fetch the simulation results
+        # particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simHash, flagAvaDir=True, comModule='com1DFA')
         fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'],
                                                             simName=simName, flagAvaDir=True, comModule='com1DFA')
         # analyze and compare results
-        if cfgDam['tSave'] == '':
+        if cfgDam['DAMBREAK']['tSave'] == '':
             indTime = -1
             tSave = timeList[-1]
         else:
-            tSave = cfgDam.getfloat('tSave')
+            tSave = cfgDam['DAMBREAK'].getfloat('tSave')
             indTime = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
-            fieldsList = [fieldsList[indTime]]
-            timeList = [timeList[indTime]]
-            indTime = 0
+            # fieldsList = [fieldsList[indTime]]
+            # timeList = [timeList[indTime]]
+            # indTime = 0
 
-        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(fieldsList, timeList, solDam, fieldHeader,
+        # computeAndPlotGradient(avalancheDir, particlesList, timeList, solDam, cfgDam, outDirTest, simHash, simDFrow)
+        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader,
                                                                           cfgDam, outDirTest, simHash, simDFrow)
         # add result of error analysis
         # save results in the simDF
@@ -278,16 +287,13 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest)
         simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[indTime]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
-        if cfgDam.getboolean('plotIntermediate'):
-            for time, field in zip(timeList, fieldsList):
-                plotComparison(cfgDam, simName, fieldsList[0], field, fieldHeader, solDam, time, outDirTest)
     name = 'results' + str(round(tSave)) + '.p'
     simDF.to_pickle(outDirTest / name)
 
     return simDF
 
 
-def analyzeResults(fieldsList, timeList, solDam, fieldHeader, cfgDam, outDirTest, simHash, simDFrow):
+def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgDam, outDirTest, simHash, simDFrow):
     """Compare analytical and com1DFA results
         Parameters
         -----------
@@ -322,7 +328,7 @@ def analyzeResults(fieldsList, timeList, solDam, fieldHeader, cfgDam, outDirTest
             LMax error on flow velocity for saved time steps
 
     """
-    phi = cfgDam.getfloat('phi')
+    phi = cfgDam['DAMBREAK'].getfloat('phi')
     cellSize = fieldHeader['cellsize']
     xMiddle = solDam['xMidAna']
     tAna = solDam['tAna']
@@ -340,25 +346,24 @@ def analyzeResults(fieldsList, timeList, solDam, fieldHeader, cfgDam, outDirTest
         indTime = np.searchsorted(tAna, t)
         xM = xMiddle[indTime]
         # get extend where the sol should be compared
-        xDamMin, xDamPlus, nColMin, nColMid, nColMax, nRowMin, nRowMax = getDamExtend(fieldHeader, xM, cfgDam)
+        xDamPlus, nColMid, nColMax, nRowMin, nRowMax = getDamExtend(fieldHeader, xM, cfgDam['DAMBREAK'])
         # get analytical solution (in same format as the simulation results)
-        hDamMin = np.interp(xDamMin, xAna, hAna[:, indTime])
         hDamPlus = np.interp(xDamPlus, xAna, hAna[:, indTime])
-        uDamMin = np.interp(xDamMin, xAna, uAna[:, indTime])
         uDamPlus = np.interp(xDamPlus, xAna, uAna[:, indTime])
         # get numirical sol on good interval
-        hNumMin = field['FD'][nRowMin:nRowMax, nColMin:nColMid]
         hNumPlus = field['FD'][nRowMin:nRowMax, nColMid:nColMax]
         dataNumV = DFAtools.scalProd(field['Vx'], field['Vy'], field['Vz'], np.cos(np.radians(phi)), 0, -np.sin(np.radians(phi)))
-        uNumMin = dataNumV[nRowMin:nRowMax, nColMin:nColMid]
         uNumPlus = dataNumV[nRowMin:nRowMax, nColMid:nColMax]
 
+        # make analytical results 2D
+        nrows, ncols = np.shape(hNumPlus)
+        O = np.ones((nrows, ncols))
+        hDamPlus = O*hDamPlus
+        uDamPlus = O*uDamPlus
 
-        hEL2Min, hL2RelMin, hLmaxMin, hLmaxRelMin = anaTools.normL2Scal(hDamMin, hNumMin, cellSize, np.cos(np.radians(phi)))
-        vhL2Min, vhL2RelMin, vhLmaxMin, vhLmaxRelMin = anaTools.normL2Scal(hDamMin*uDamMin, hNumMin*uNumMin, cellSize, np.cos(np.radians(phi)))
         hEL2Plus, hL2RelPlus, hLmaxPlus, hLmaxRelPlus = anaTools.normL2Scal(hDamPlus, hNumPlus, cellSize, np.cos(np.radians(phi)))
         vhL2Plus, vhL2RelPlus, vhLmaxPlus, vhLmaxRelPlus = anaTools.normL2Scal(hDamPlus*uDamPlus, hNumPlus*uNumPlus, cellSize, np.cos(np.radians(phi)))
-        if cfgDam.getboolean('relativError'):
+        if cfgDam['DAMBREAK'].getboolean('relativError'):
             hErrorL2Array[count] = hL2RelPlus
             hErrorLMaxArray[count] = hLmaxRelPlus
             vhErrorL2Array[count] = vhL2RelPlus
@@ -368,13 +373,18 @@ def analyzeResults(fieldsList, timeList, solDam, fieldHeader, cfgDam, outDirTest
             hErrorLMaxArray[count] = hLmaxPlus
             vhErrorL2Array[count] = vhL2Plus
             vhErrorLMaxArray[count] = vhLmaxPlus
-        title = outAna1Plots.getTitleError(cfgDam.getboolean('relativError'))
+        title = outAna1Plots.getTitleError(cfgDam['DAMBREAK'].getboolean('relativError'))
         log.info("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hEL2Plus))
         log.info("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhL2Plus))
+        # if cfgDam['DAMBREAK'].getboolean('plotIntermediate'):
+        #     plotComparison(cfgDam['DAMBREAK'], simHash, fieldsList[0], field, fieldHeader, solDam, t, outDirTest)
+
         count = count + 1
-    if cfgDam.getboolean('plotIntermediate') and len(timeList)>1:
+    if cfgDam['DAMBREAK'].getboolean('plotIntermediate') and len(timeList)>1:
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
-                                   simHash, simDFrow, cfgDam.getboolean('relativError'))
+                                   simHash, simDFrow, cfgDam['DAMBREAK'].getboolean('relativError'))
+        plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
+                            simHash, simDFrow, cfgDam)
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
 
@@ -389,13 +399,176 @@ def getDamExtend(fieldHeader, xM, cfgDam):
     yStart = cfgDam.getfloat('yStart')
     yEnd = cfgDam.getfloat('yEnd')
     xArray = np.arange(nCols)*cellSize + xllc
-    nColMin = round((xStart-xllc)/cellSize)
     nColMid = round((xM-xllc)/cellSize)
     nColMax = round((xEnd-xllc)/cellSize)
     nRowMin = round((yStart-yllc)/cellSize)
     nRowMax = round((yEnd-yllc)/cellSize)
 
-    xDamMin = xArray[nColMin:nColMid]
     xDamPlus = xArray[nColMid:nColMax]
 
-    return xDamMin, xDamPlus, nColMin, nColMid, nColMax, nRowMin, nRowMax
+    return xDamPlus, nColMid, nColMax, nRowMin, nRowMax
+
+
+def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
+                        simHash, simDFrow, cfgDam):
+
+    # Initialise DEM
+    demFile = gI.getDEMPath(avalancheDir)
+    demOri = IOf.readRaster(demFile, noDataToNan=True)
+    demOri, dem = com1DFA.initializeMesh(cfgDam['GENERAL'], demOri, cfgDam['GENERAL'].getint('methodMeshNormal'))
+    dem['header']['xllcenter'] = demOri['header']['xllcenter']
+    dem['header']['yllcenter'] = demOri['header']['yllcenter']
+
+    phi = cfgDam['DAMBREAK'].getfloat('phi')
+    tSave = cfgDam['DAMBREAK'].getfloat('tSave')
+    relativ = cfgDam['DAMBREAK'].getboolean('relativError')
+    indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
+    tSave = timeList[indT]
+    # Load data
+    fields0 = fieldsList[0]
+    fieldsT = fieldsList[indT]
+    dataIniFD = fields0['FD']
+    dataFD = fieldsT['FD']
+    dataIniVx = fields0['Vx']
+    dataIniVy = fields0['Vy']
+    dataIniVz = fields0['Vz']
+    dataVx = fieldsT['Vx']
+    dataVy = fieldsT['Vy']
+    dataVz = fieldsT['Vz']
+    # project velocity on inclined plane
+    dataIniV = DFAtools.scalProd(dataIniVx, dataIniVy, dataIniVz, np.cos(np.radians(phi)), 0, -np.sin(np.radians(phi)))
+    dataV = DFAtools.scalProd(dataVx, dataVy, dataVz, np.cos(np.radians(phi)), 0, -np.sin(np.radians(phi)))
+
+    # Location of Profiles
+    cellSize = fieldHeader['cellsize']
+    ny = dataFD.shape[0]
+    nx = dataFD.shape[1]
+    xllc = fieldHeader['xllcenter']
+    yllc = fieldHeader['yllcenter']
+    nx_loc = int(ny *0.5)
+
+    # set x Vector
+    x = np.arange(xllc, xllc + nx*cellSize, cellSize)
+    y = np.zeros(len(x))
+    y[x<0] = solDam['h0']
+    y[x>=0] = 0.0
+    y[x<-120] = 0.0
+
+    # setup index for time of analyitcal solution
+    indTime = np.searchsorted(solDam['tAna'], tSave)
+
+    # create figures and plots
+    fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
+    fig.suptitle('Simulation %s, t = %.2f s' % (simHash, tSave), fontsize=30)
+    # make flow thickness comparison plot
+    ax1 = plt.subplot2grid((2, 2), (0, 0))
+    ax1.plot(x, y, 'grey', linestyle='--')
+    ax1.plot(x, dataIniFD[nx_loc, :], 'k--', label='init')
+    ax1.plot(x, dataFD[nx_loc, :], 'b', label='simulation')
+    ax1.plot(solDam['xAna'], solDam['hAna'][:,indTime], 'r-', label='analytic')
+    ax1.set_xlabel('x [m]')
+    ax1.set_ylabel('Flow thickness [m]')
+    ax1.set_xlim([-200, 200])
+    plt.legend()
+    ax1.set_title('Flow thickness')
+
+    # make flow momentum comparison
+    ax2 = plt.subplot2grid((2, 2), (0, 1))
+    ax2.plot(x, dataIniV[nx_loc, :], 'k--', label='init')
+    ax2.plot(x, dataFD[nx_loc, :]*dataV[nx_loc, :], 'b', label='simulation')
+    ax2.plot(solDam['xAna'], solDam['uAna'][:,indTime]*solDam['hAna'][:,indTime], 'r-', label='analytic')
+    ax2.set_xlabel('x [m]')
+    ax2.set_ylabel(outAna1Plots.getLabel('Flow momentum', '[m²/s]', dir='', vert=True))
+    ax2.set_xlim([-200, 200])
+    plt.legend()
+    ax2.set_title(outAna1Plots.getLabel('Flow momentum', '', dir='', vert=True))
+
+    # make bird view plot
+    ax3 = plt.subplot2grid((2, 2), (1, 0))
+    ax3, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax3, dem, fieldsList[-1]['FD'], 'FD')
+    cbar0.ax.set_ylabel('flow thickness')
+    ax3 = outCom1DFA.addDem2Plot(ax3, dem, what='slope', extent=extent)
+    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(fieldsList[-1]['FD'], dem['header']['cellsize'],
+                                                                 extentOption=True, constrainedData=False, buffer='')
+    ax3.set_ylim([rowsMin+yllc, rowsMax+yllc])
+    ax3.set_xlim([colsMin+xllc, colsMax+xllc])
+    ax3.set_xlabel('x [m]')
+    ax3.set_ylabel('y [m]')
+    # ax3.set_title('Flow thickness')
+    pU.putAvaNameOnPlot(ax3, avalancheDir)
+
+    # make error plot
+    ax4 = plt.subplot2grid((2, 2), (1, 1))
+    title = ' between analytical solution and com1DFA'
+    title = outAna1Plots.getTitleError(relativ, title)
+    ax5 = ax4.twinx()
+    ax4.plot(timeList, hErrorL2Array, 'k-', label='Flow thickness L2 error')
+    ax4.plot(timeList, hErrorLMaxArray, 'k--', label='Flow thickness LMax error')
+    ax4.set_title(title)
+    ax4.set_xlabel('time in [s]')
+    ax4.set_ylabel(outAna1Plots.getTitleError(relativ, ' on flow thickness'))
+    ax4.legend(loc='upper left')
+    ax4.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
+
+    color = 'tab:green'
+    ax5.plot(timeList, vhErrorL2Array, 'g-', label=outAna1Plots.getLabel('L2 error', '', dir=''))
+    ax5.plot(timeList, vhErrorLMaxArray, 'g--', label=outAna1Plots.getLabel('LMax error', '', dir=''))
+    ax5.tick_params(axis='y', labelcolor=color)
+    ax5.set_ylabel(outAna1Plots.getTitleError(relativ, outAna1Plots.getLabel(' on', '', dir='')), color=color)
+    ax5.legend(loc='lower right')
+    ax5.grid(color='tab:green', linestyle='-', linewidth=0.25, alpha=0.5)
+    ax4.set_yscale('log')
+    ax5.set_yscale('log')
+
+    outFileName = '_'.join([simHash, 'DamBreakTest'])
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outFileName, fig)
+
+
+
+def computeAndPlotGradient(avalancheDir, particlesList, timeList, solDam, cfgDam, outDirTest, simHash, simDFrow):
+
+    phi = cfgDam['DAMBREAK'].getfloat('phi')
+    # Initialise DEM
+    demFile = gI.getDEMPath(avalancheDir)
+    demOri = IOf.readRaster(demFile, noDataToNan=True)
+    xllc = demOri['header']['xllcenter']
+    yllc = demOri['header']['yllcenter']
+    demOri, dem = com1DFA.initializeMesh(cfgDam['GENERAL'], demOri, cfgDam['GENERAL'].getint('methodMeshNormal'))
+    for t, particles in zip(timeList, particlesList):
+        x = particles['x'] + xllc
+        y = particles['y'] + yllc
+        z = particles['z']
+        ux = particles['ux']
+        uy = particles['uy']
+        uz = particles['uz']
+        force2 = {}
+        particles, force2 = DFAfunC.computeForceSPHC(cfgDam['GENERAL'], particles, force2, dem,
+            cfgDam.getint('GENERAL', 'sphOption'), gradient=1)
+        gradNorm = DFAtls.norm(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'])
+        uMag = DFAtls.norm(ux, uy, uz)
+        v = DFAtls.scalProd(ux, uy, uz, np.cos(np.radians(phi)), 0, -np.sin(np.radians(phi)))
+        grad = DFAtls.scalProd(force2['forceSPHX'], force2['forceSPHY'], force2['forceSPHZ'], np.cos(np.radians(phi)), 0, -np.sin(np.radians(phi)))
+
+        fig = plt.figure(figsize=(pU.figW, pU.figH))
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+        indPartOfInterest = np.where(np.abs(y)<20)
+        xPart = x[indPartOfInterest]
+        vPart = v[indPartOfInterest]
+        gradPart = grad[indPartOfInterest]
+        indPartRest = np.where(gradPart<-0.06136465)
+        indPartBack = np.where(gradPart<-0.82909272)
+        ax1.plot(xPart, vPart, color='b', marker='.', linestyle='None', label='particle flow depth')
+        ax2.plot(xPart, gradPart, color='b', marker='o', linestyle='None', label='SPH gradient used')
+        ax1.plot(xPart[indPartRest], vPart[indPartRest], color='k', marker='.', linestyle='None', label='particle flow depth')
+        ax2.plot(xPart[indPartRest], gradPart[indPartRest], color='k', marker='o', linestyle='None', label='SPH gradient used')
+        ax1.plot(xPart[indPartBack], vPart[indPartBack], color='r', marker='.', linestyle='None', label='particle flow depth')
+        ax2.plot(xPart[indPartBack], gradPart[indPartBack], color='r', marker='o', linestyle='None', label='SPH gradient used')
+        # ax2.plot(r, v, color='b', marker='.', linestyle='None')
+
+        ax1.set_xlabel('r in [m]')
+        ax2.set_xlabel('r in [m]')
+        ax2.set_title('Gradient of the flow depth')
+        ax1.legend()
+        ax2.legend()
+        plt.show()
