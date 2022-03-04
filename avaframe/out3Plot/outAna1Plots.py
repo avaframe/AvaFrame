@@ -258,7 +258,7 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
     title = (' between similarity solution and com1DFA \n(simulation %s)'
                      % (outputName))
     title = getTitleError(relativ, title)
-    fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
+    fig1, ax1 = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
     ax2 = ax1.twinx()
     ax1.plot(time, hErrorL2Array, 'k-', label='Flow depth L2 error')
     ax1.plot(time, hErrorLMaxArray, 'k--', label='Flow depth LMax error')
@@ -276,6 +276,8 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
     ax2.legend(loc='lower right')
     ax2.grid(color='tab:green', linestyle='-', linewidth=0.25, alpha=0.5)
 
+    ax1.set_yscale('log')
+    ax2.set_yscale('log')
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_Time_' + str(outputName), fig1)
 
 
