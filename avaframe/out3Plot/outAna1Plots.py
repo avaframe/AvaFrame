@@ -365,14 +365,6 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, 
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
 
-    # fig2, ax = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
-    # for sizeValue, simDFrow in slopeU.iterrows():
-    #     ax.scatter(slopeU.columns, simDFrow, label=sizeValue)
-    # plt.legend(title=sizedBy)
-    # ax.set_xlabel(coloredBy)
-    # ax.set_ylabel('Slope')
-    # ax.set_title('Speed of convergence of the DFA solution based on' + getTitleError(relativ, r' L2 on flow thickness'))
-    # plt.show()
     return fig1, ax1, slopeH
 
 
@@ -529,7 +521,7 @@ def plotPresentation(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, size
                 lenColor = None
             # make the scatter plot
             scatter1 = ax1.scatter(simDFNewNew[xField], simDFNewNew[yField], c=simDFNewNew[coloredBy], s=sizeList, cmap=cmap, norm=norm,
-                                   marker=pU.markers[0], alpha=1)#, edgecolors='k')
+                                   marker=pU.markers[0], alpha=1)
             fig1.suptitle('Convergence of DFA simulation for the similarity solution test at t = %.2fs' % tSave)
             ax1.set_title(getTitleError(relativ, r' L2 on flow thickness'))
             ax1.set_xlabel(xField)
