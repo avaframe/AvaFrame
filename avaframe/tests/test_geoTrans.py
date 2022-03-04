@@ -327,8 +327,7 @@ def test_remeshDEM(tmp_path):
     IOf.writeResultToAsc(headerInfo, data, avaDEM, flip=True)
 
     cfg = configparser.ConfigParser()
-    cfg['GENERAL'] = {'meshCellSizeThreshold': '0.0001', 'meshCellSize': '2.',
-        'forceRemesh': 'False', 'avalancheDir': str(avaDir)}
+    cfg['GENERAL'] = {'meshCellSizeThreshold': '0.0001', 'meshCellSize': '2.', 'avalancheDir': str(avaDir)}
 
     # call function
     pathDem = geoTrans.remeshDEM(avaDEM, cfg)
