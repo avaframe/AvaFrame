@@ -9,7 +9,7 @@ In order to start analysing particle data of :py:mod:`com1DFA`, follow these ste
 
 in your local copy of ``com1DFA/com1DFACfg.ini``:
 
-* in section [GENERAL] add `particles` to the `resType`
+* *section [GENERAL]*: add `particles` to the `resType`
 
 * in section [GENERAL] set which time steps you want to save at `tSteps`
 
