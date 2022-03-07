@@ -37,7 +37,10 @@ We want to list a few things that we strongly suggest to take into account when 
     reasonable amount of particles for decreased mesh size and *sphKernelRadius*, the *massPerParticle* value should be
     decreased accordingly. This ensures a reasonable amount of particles for the gradient computation.
 
-Regarding the DEM data, if a cell size different than 5 meters is chosen and the provided DEM in Inputs is of different
-mesh cell size than the chosen one, there is the possibility to search for suitable DEMs in the subdirectory DEMremeshed.
-Using the default settings, this subdirectory is cleaned when starting simulations, to ensure remeshing, but this can be
-changed in the configuration file (further details are provided in :ref:`moduleCom1DFA:DEM input data`).
+Regarding DEM cell sizes: 
+- if a cell size XX different than the default 5 meters is chosen 
+- and the provided DEM in Inputs is of different mesh cell size than XX
+- the folder `DEMremeshed` will be checked for a matching DEM.
+- if no matching DEM is found -> remeshing takes place
+
+Using the default settings, the subdirectory 'DEMremeshed' is cleaned when starting simulations, to ensure remeshing. This can be changed in the configuration file (further details are provided in :ref:`moduleCom1DFA:DEM input data`).
