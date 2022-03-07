@@ -123,15 +123,16 @@ def cleanSingleAvaDir(avaDir, keep=None, deleteOutput=True):
     return 'Cleaned directory'
 
 
-def cleanDEMremeshedDir(avaDirInputs):
+def cleanDEMremeshedDir(avaDir):
     """ clean DEMremeshed folder in avaDir Inputs
 
         Parameters
         ------------
-        avaDirInputs: str or pathlib patch
-            path to avalanche directory Inputs
+        avaDir: str or pathlib patch
+            path to avalanche directory
     """
 
+    avaDirInputs = pathlib.Path(avaDir, 'Inputs')
     avaDirInputsString = str(avaDirInputs)
 
     # check for empty or non string variable

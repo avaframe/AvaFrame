@@ -285,6 +285,13 @@ def remeshDEM(demFile, cfgSim):
 
     """
 
+    # first check if remeshed DEM is available
+    pathDem, DEMFound, allDEMNames = searchRemeshedDEM(demFile.stem, cfgSim)
+    if DEMFound:
+        return pathDem
+
+    #-------- if no remeshed DEM found - remesh
+
     # fetch info on dem file
     dem = IOf.readRaster(demFile)
     headerDEM = dem['header']
@@ -295,13 +302,8 @@ def remeshDEM(demFile, cfgSim):
 
     # read dem header info
     cszDEM = headerDEM['cellsize']
-    # first check if remeshed DEM is available
-    pathDem, DEMFound, allDEMNames = searchRemeshedDEM(demFile.stem, cfgSim)
-    if DEMFound:
-        return pathDem
 
-
-    # if no remeshed DEM found - remesh
+    # start remesh
     log.info('Remeshing the input DEM (of cell size %.4g m) to a cell size of %.4g m' % (cszDEM, meshCellSize))
     x, y, xNew, yNew, diffExtentX, diffExtentY = getMeshXY(dem, cellSizeNew=meshCellSize)
     xGrid, yGrid = np.meshgrid(x, y)
@@ -340,10 +342,10 @@ def remeshDEM(demFile, cfgSim):
         message = 'Name for saving remeshedDEM already used: %s' % outFile.name
         log.error(message)
         raise FileExistsError(message)
-        
+
     IOf.writeResultToAsc(remeshedDEM['header'], remeshedDEM['rasterData'], outFile, flip=True)
     log.info('Saved remeshed DEM to %s' % outFile)
-    pathDem = str(outFile).split('Inputs/')[1]
+    pathDem = str(pathlib.Path('DEMremeshed', outFile.name))
 
     return pathDem
 
@@ -388,7 +390,7 @@ def searchRemeshedDEM(demName, cfgSim):
             if abs(meshCellSize - headerDEM['cellsize']) < meshCellSizeThreshold and demName in demF.stem:
                 log.info('Remeshed DEM found: %s cellSize: %.5f' % (demF.name, headerDEM['cellsize']))
                 DEMFound = True
-                pathDem = str(demF).split('Inputs/')[1]
+                pathDem = str(pathlib.Path('DEMremeshed', demF.name))
                 continue
             else:
                 log.debug('Remeshed dem found %s with cellSize %.2f - not used' %

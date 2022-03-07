@@ -593,7 +593,7 @@ def checkDEM(cfgSim, demFile):
             path to DEM with correct cellSize relative to Inputs/
     """
 
-    # lead header of DEM file
+    # read header of DEM file
     headerDEM = IOf.readASCheader(demFile)
 
     # fetch info on desired meshCellSize
