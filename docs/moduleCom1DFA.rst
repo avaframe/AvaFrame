@@ -96,7 +96,7 @@ If the cell size of the DEM in ``Inputs`` is equal to the desired mesh cell size
     - cleanDEMremeshed = False and a DEM including the name of the DEM in Inputs/ and the desired cell size is found
       in Inputs/DEMremeshed - this DEM is used without modification
 
-    - cleanDEMremeshed = False no matching DEM is found in Inputs/DEMremeshed - the DEM in Inputs/ is remeshed
+    - cleanDEMremeshed = False and no matching DEM is found in Inputs/DEMremeshed - the DEM in Inputs/ is remeshed
       to the desired cell size
 
 If the DEM in Inputs/ is remeshed, it is then saved to ``Inputs/DEMremeshed` and available for subsequent
