@@ -52,7 +52,7 @@ Experiment setup and run
 
 This is a quick guide on how to install AvaFrame
 and the required dependencies on your machine. AvaFrame is developed on **Linux
-machines** (Ubuntu/Manjaro/Arch) with recent Python versions 3.8/3.9.
+machines** (Ubuntu/Manjaro/Arch) with recent Python versions 3.8/3.9/3.10.
 These instructions assume you are familiar with working in a terminal. This
 guide is currently described for *Linux* only, but expert users should be able
 to adapt it to *Windows*.
@@ -79,7 +79,11 @@ Install avaframe and its requirements::
 
   pip install avaframe
 
-This installs the latest release of avaframe.
+This installs the latest stable release of avaframe.
+
+To install a prerelease, e.g. a release candiate, use::
+
+  pip install avaframe --pre
 
 Test it by starting ``python`` and do an ``import avaframe``. If no error comes
 up, you are good to go.
