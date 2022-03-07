@@ -23,7 +23,7 @@ in ParaView
 
 * apply the filter **TableToPoints** and set X, Y, Z for the X, Y, Z columns
 
-* switching to the **RenderView** you can now look at all the different particle properties you have saved
+* switch to the **RenderView**:  you can look at all the different particle properties you have saved
   for all exported time steps
 
-* there is also the option to save an animation over all time steps
+* it is also possible to save an animation over all time steps
