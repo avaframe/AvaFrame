@@ -111,15 +111,10 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
 
     # read initial configuration
     cfgStart = cfgUtils.getModuleConfig(com1DFA, fileOverride=cfgFile, toPrint=False)
-    # check if directory with remeshed DEMs shall be cleaned
-    if cfgStart['GENERAL'].getboolean('cleanDEMremeshed') is True:
-        cleanDEMremeshed = pathlib.Path(avalancheDir, 'Inputs')
-    else:
-        cleanDEMremeshed = None
 
     # Create output and work directories
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
-        cleanDEMremeshed=cleanDEMremeshed)
+        cleanDEMremeshed=cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
 
     # create one cfg files for each releaseScenarios and fetch input data
     inputSimFilesAll, cfgFilesRels = setRelThIni(avalancheDir, com1DFA, cfgStart, cfgFile=cfgFile)
