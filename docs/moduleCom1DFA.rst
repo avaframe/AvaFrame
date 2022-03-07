@@ -85,12 +85,10 @@ Only available for release thickness:
 
 DEM input data
 ^^^^^^^^^^^^^^^^
-Regarding the DEM data, if the DEM in ``Inputs`` is not of cell size 5 meters, it is remeshed to a
+Regarding the DEM data: if the DEM in ``Inputs`` is not of cell size 5 meters, it is remeshed to a
 cell size of 5 meters. However, it is also possible to specify a desired cell size in the
 configuration file (parameter `meshCellSize`). In this case, also consider reading :ref:`FAQ:Can the spatial resolution of simulations performed with com1DFA (dense flow) be changed?`.
-If the cell size of the DEM in ``Inputs`` is equal
-to the desired mesh cell size, the DEM is used without modification, if the cell sizes do not match,
-several options are available:
+If the cell size of the DEM in ``Inputs`` is equal to the desired mesh cell size, the DEM is used without modification. If the cell sizes do not match, several options are available:
 
     - cleanDEMremeshed = True, directory ``Inputs/DEMremeshed`` is cleaned, and the DEM in Inputs/
       is remeshed to the desired cell size - this is the default setting
