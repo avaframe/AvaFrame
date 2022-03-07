@@ -59,6 +59,7 @@ matplotlib.rcParams['figure.titlesize'] = cfg['titleSize']
 matplotlib.rcParams['figure.dpi'] = float(cfg['figResolution'])
 matplotlib.rcParams['figure.autolayout'] = True
 ls = ['-', '--', '-.']
+matplotlib.rcParams['axes.titlesize'] = cfg['axesTitleSize']
 matplotlib.rcParams['axes.labelsize'] = cfg['labelSize']
 matplotlib.rcParams['axes.linewidth'] = 1.0
 matplotlib.rcParams['axes.edgecolor'] = 'lightgrey'
