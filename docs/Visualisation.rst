@@ -11,9 +11,9 @@ in your local copy of ``com1DFA/com1DFACfg.ini``:
 
 * *section [GENERAL]*: add `particles` to the `resType`
 
-* in section [GENERAL] set which time steps you want to save at `tSteps`
+* *section [GENERAL]*: set which time steps you want to save at `tSteps`
 
-* in section [VISUALISATION] set `writePartToCSV = True` and add the particles' properties
+* *section [VISUALISATION]*: set `writePartToCSV = True` and add the particles' properties
   you are interested in to the `particleProperties`
 
 in ParaView
