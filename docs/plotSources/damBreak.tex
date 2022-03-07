@@ -1,0 +1,73 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Compile with
+% pdflatex --shell-escape -synctex=1 -interaction=nonstopmode damBreak.tex
+% to convert it to png use:
+% convert -density 300 -transparent white damBreak.pdf damBreak.png
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{standalone}
+
+\input{GeneralPlotHeader.tex}
+
+\begin{document}
+
+\tikzset{
+   name plot/.style={every path/.style={name path global=#1}}
+}
+
+
+\begin{tikzpicture}[scale=2]
+
+\def\xStart{-2.5}
+\def\xEnd{4}
+
+\def\coefT{0.6}
+\def\hIni{2}
+\def\g{9.81}
+\def\phi{24}
+\def\delta{21}
+\pgfmathsetmacro\gz{\g*cos(\phi)}
+\pgfmathsetmacro\m{\gz*(tan(\phi)-tan(\delta))}
+\pgfmathsetmacro\cL{sqrt(\gz*\hIni)}
+\pgfmathsetmacro\cosPhi{cos(\phi)}
+\pgfmathsetmacro\sinPhi{sin(\phi)}
+
+
+\begin{scope} [rotate=-\phi]
+\tkzInit[xmin=\xStart,xmax=\xEnd,ymin=0,ymax=3]
+% Draw local coordinates
+\draw [>={Triangle[open]}, dotted, ->] (0,0) --  (0,2.5) node[left] {$\mathbf{e_3}$};
+\draw[>={Triangle[open]},thin, ->]  (\xStart,0) --  (\xEnd,0) node[right] {$\mathbf{e_1}$};
+
+% Draw Iitial condition
+\tkzFct[thick, color=AFDark,domain=\xStart:0]{\hIni}
+\draw [thick, AFDark] (0, 0) -- (0, \hIni);
+\tkzFct[thick, color=AFDark,domain=0:\xEnd]{0}
+
+\foreach \i in {1, 2, 3, 4} {
+    \pgfmathsetmacro{\j}{\i/4*100}
+    \pgfmathsetmacro{\t}{\i/4*\coefT}
+    \pgfmathsetmacro{\xm}{(\m*\t/2.0 - \cL) * \t}
+    \pgfmathsetmacro{\xmm}{(2.0*\cL + (\m*\t/2.0)) * \t}
+    \tkzFct[thick, color=AFLight!\j!AFDark,domain=\xStart:\xm]{\hIni}
+    \tkzFct[thick, color=AFLight!\j!AFDark,domain=\xm:\xmm]{((2.*\cL-(\x/\t)+((\m*\t)/2.))**2)/(9.*\gz)}
+    \tkzFct[thick, color=AFLight!\j!AFDark,domain=\xmm:\xEnd]{0}
+    \node[fill=none,below left, AFLight!\j!AFDark] at (\xm,\hIni) {$t_{\i}$};
+}
+
+\node[text width=2.5cm, fill=none,above right, AFDark] at (1,2.2) {Initial condition};
+%\draw [>={Triangle},thick, ->, AFDark] (1,2.2) -- (0,1.5);
+\end{scope}
+
+% Draw coordinates
+\draw [>={Triangle[open]}, dotted, ->] (0,0) --  (0,2.5) node[left] {$\mathbf{e_z}$};
+\draw[>={Triangle[open]}, dotted, thin, ->]  (\xStart,0) --  (\xEnd,0) node[right] {$\mathbf{e_x}$};
+
+
+\tkzDefPoints{0/0/O, -1/0/A, -\cosPhi/\sinPhi/B}
+\pic[draw,angle radius=2cm,"$\Phi$" ]{angle=B--O--A};
+
+
+\end{tikzpicture}
+
+\end{document}

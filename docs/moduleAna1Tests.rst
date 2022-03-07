@@ -2,13 +2,32 @@
 ana1Tests: Testing
 ##################################
 
+Dambreak test
+===============
+
+The Dambreak test compares the results of the DFA simulation to the analytical solution of the "dam break" problem.
+In this test, a granular mass (Coulomb material) is suddenly released from rest on an inclined plane.
+In the case of a depth integrated model as derived by Savage and Hutter, an analytical solution exists.
+This solution is described in :cite:`FaMa2012` and corresponds to a Riemann problem.
+
+The problem considered has the following initial conditions:
+
+.. math::
+    (h, \mathbf{u})(x, t=0) = \left\{
+    \begin{aligned}
+    (&h_0,\mathbf{0}),\quad &\mbox{if } x \leq 0\\
+    (&0\,\,\,,\mathbf{0}),\quad &\mbox{if } x > 0
+    \end{aligned}
+    \right.
 
 
-Dambreak
-=========
+.. _fig-damBreak:
 
-This function is used to reproduce the exact solution for a dam break problem based on the Savage Hutter model and was described in :cite:`FaMa2012`.
-In this test a release mass in suddenly released over an inclined plane.
+.. figure:: _static/damBreak.png
+      :width: 90%
+
+      Dam break theoretical evolution
+
 This function also provides its own plotting routines that can be used to generate plots of the
 analytical results and also to compare simulation results to the exact solutions.
 An example is given in runDamBreak.py, where the analytical solution is computed and
@@ -24,7 +43,8 @@ Details can be found here: :py:mod:`ana1Tests.damBreak`.
 
 To run
 ------
-An example on how to apply this test to :py:mod:`com1DFA` is provided in :py:mod:`runScripts/runDamBreak`.
+An example on how to apply this test is provided in :py:mod:`runScripts/runDamBreak` and
+:py:mod:`runScripts/runAnalyzeDamBreak`.
 The required input files are located in ``data/avaDamBreak``, where the model configuration file can
 be found (``data/avaDamBreak/Inputs/damBreak_com1DFACfg.ini``). In this configuration file, there
 is a specific section ``'DAMBREAK'`` providing the required input parameters to compute the analytical solution.
@@ -33,27 +53,19 @@ In order to run the test example:
 * in ``AvaFrame/avaframe`` run::
 
     python3 runScripts/runDamBreak.py
-
-Analytical solution of dam break problem, flow depth and flow velocity at 0.5 s.
-
-.. list-table::
-    :widths: 50 50
+    python3 runScripts/runAnalyzeDamBreak.py
 
 
-    * -
 
-        .. figure:: _static/damBreakFlowDepth.png
-            :width: 100%
+.. _fig-damBreak:
 
-            Flow depth in x direction after 5s
+.. figure:: _static/damBreakTestExample.png
+          :width: 90%
 
 
-      -
-
-        .. figure:: _static/damBreakFlowVelocity.png
-            :width: 100%
-
-            Flow velocity magnitude in x direction after 5s
+.. image:: _static/CompareDamBreakH8da2add5e5_Animation.gif
+.. image:: _static/CompareDamBreakVel8da2add5e5_Animation.gif
+.. image:: _static/CompareDamBreakHVel8da2add5e5_Animation.gif
 
 Similarity solution
 ====================

@@ -219,14 +219,14 @@ def plotParticles(particlesList, cfg, dem):
             plt.show()
 
 
-def addResult2Plot(ax, dem, rasterData, resType, colorbar=True, contour=False):
+def addResult2Plot(ax, header, rasterData, resType, colorbar=True, contour=False):
     """ Add raster data to a plot
 
     Parameters
     ----------
     ax: matplotlib ax object
-    dem: dict
-        dem dictionary with normal information
+    header: dict
+        raster header dictionary 
     rasterData: 2D numpy array
         data to plot
     resType: str
@@ -234,7 +234,6 @@ def addResult2Plot(ax, dem, rasterData, resType, colorbar=True, contour=False):
     colorbar: bool
         If true add the colorbar
     """
-    header = dem['header']
     xllc = header['xllcenter']
     yllc = header['yllcenter']
     csz = header['cellsize']

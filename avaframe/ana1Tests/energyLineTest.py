@@ -92,7 +92,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     cmap.set_under(color='w')
     # make the bird view plot
     ax1 = plt.subplot2grid((2, 2), (1, 0))
-    ax1, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax1, dem, fieldsList[-1]['pfv'], 'pfv')
+    ax1, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax1, dem['header'], fieldsList[-1]['pfv'], 'pfv')
     cbar0.ax.set_ylabel('peak flow velocity')
     ax1 = outCom1DFA.addDem2Plot(ax1, dem, what='slope', extent=extent)
     ax1, cbar1 = outCom1DFA.addParticles2Plot(particlesList[-1], ax1, dem, whatS='h')
