@@ -1,6 +1,25 @@
 Release Notes
 =============
 
+1.0rc2 (7. March 2022)
+---------------------------
+ENHANCEMENTS
+
+- adds avaframe version to log
+- appends date to logfile name
+- update similarity solution plots
+- re-add codecov
+- add in addition to vary thickness values if read from shp - not just in percent but also in absolute value
+- *ana1Test* energy line test
+- *documentation* info on visualisation options (Paraview)
+
+FIX
+
+Contributors:
+
+Code: core team
+
+
 v1.0_rc1 (31. January 2022)
 ---------------------------
 
