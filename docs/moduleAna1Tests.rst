@@ -7,11 +7,15 @@ Deviation/difference/error computation
 =======================================
 
 In order to either assess the accuracy of a numerical method or to compare results
-it will be necessary to compute errors. The methods used to compute errors are described
+it will be necessary to compute errors. The methods used to compute deviations are described
 in this section.
 
-Two error measurement are used. The first one is based on the :math:`\mathcal{L}_{max}` norm (uniform norm),
-the second on the Euclidean norm (:math:`\mathcal{L}_{2}` norm).
+Two deviation/difference/error measurement are used. The first one is based on the :math:`\mathcal{L}_{max}`
+norm (uniform norm), the second on the Euclidean norm (:math:`\mathcal{L}_{2}` norm). In both cases,
+the aim is to measure the deviation between a numerical solution and reference solution on an interval
+(one or two dimensional). Let be :math:`f_{num}` the numerical solution and
+:math:`f_{ref}` the reference solutions defined on an interval :math:`\Omega`.
+The deviation is defined by :math:`\epsilon(x) = f_{num}(x) - f_{ref}(x)`
 
 
 Uniform norm
@@ -20,22 +24,40 @@ Uniform norm
 The :math:`\mathcal{L}_{max}` norm measures the largest absolute value:
 
 .. math::
-    \mathcal{L}_{max}(f(x)) = \sup_{x\in \Omega}(\vert f \vert)
+    \mathcal{L}_{max}(\epsilon(x)) = \sup_{x\in \Omega}(\vert \epsilon(x) \vert)
 
 This will give an idea of the largest difference between the two solutions.
 It can be applied to one or two dimensional results.
 
-It can also be normalized by dividing the uniform norm of the difference
-by the uniform norm of the reference.
+It can also be normalized by dividing the uniform norm of the deviation
+by the uniform norm of the reference:
+
+.. math::
+    \frac{\mathcal{L}_{max}(\epsilon(x))}{\mathcal{L}_{max}(f_{ref}(x))}
+
 
 Euclidean norm
 ---------------
 
-The :math:`\mathcal{L}_{2}` norm measures :
+The :math:`\mathcal{L}_{2}` norm is defined by:
 
 .. math::
-    \mathcal{L}_{2}(f) = \int_{x\in \Omega}\vert\vert f(x) \vert\vert^2\,dx
+    \mathcal{L}_{2}(\epsilon) = \int_{x\in \Omega}\vert\vert \epsilon(x) \vert\vert^2\,dx
 
+This norm will give an overall measure of the deviations. It is then useful to
+normalize the norm either by dividing the norm of the deviation by either
+the norm of the reference solution:
+
+.. math::
+    \frac{\mathcal{L}_{2}(\epsilon(x))}{\mathcal{L}_{2}(f_{ref}(x))}
+
+or by the measure of the interval (:math:`\mathcal{L}_{2}(1) = \int_{x\in \Omega}\,dx`):
+
+.. math::
+    \sqrt{\frac{\mathcal{L}_{2}(\epsilon(x))}{\mathcal{L}_{2}(1)}}
+
+The first normalization approach will give a relative deviation in % whereas the second
+will give an average deviation of :math:`f` on  :math:`\Omega`.
 
 Dambreak test
 ===============
@@ -74,9 +96,14 @@ shown in :numref:`fig-damBreak`.
 .. _fig-damBreak:
 
 .. figure:: _static/damBreakTestExample.png
-          :width: 90%
+        :width: 90%
 
-Another optional result are the comparison cross cut figures for all saved time steps
+        Summary figure produced by the damBreak test (here for a cell size of 2m)
+
+        .. ,
+        .. and an initialization process as described in :ref:`theoryCom1DFA:Friction Model` )
+
+Another optional result is the comparison cross cut figure for all saved time steps
 as shown in the following figure.
 
 .. image:: _static/CompareDamBreak8da2add5e5_Animation.gif
@@ -112,9 +139,22 @@ In this problem, we consider an avalanche governed by a dry friction law (Coulom
 The released mass is initially distributed in an ellipse with a parabolic depth shape.
 This mass is suddenly released at :math:`t=0` and flows down the inclined plane.
 
-The :py:mod:`ana1Tests.simiSol` module provides functions to compute the analytic solution and some plotting routines
-to visualize this solution and to compare it to the output from the DFA computational module.
+The :py:mod:`ana1Tests.simiSol` module provides functions to compute the analytic solution and
+to compare it to the output from the DFA computational module as well as some plotting routines
+to visualize this solution in :py:mod:`out3Plot.outAna1Plots`.
 
+
+Comparing the results from the DFA module to the similarity solution leads to the following plots:
+
+.. _fig-simiSol:
+
+.. figure:: _static/SimiSolTestExample.png
+          :width: 90%
+
+
+.. figure:: _static/SimiSol_0d20abd8ca_xyaxisCutSol_Animation.gif
+
+    Time evolution of the profile in and across flow direction
 
 To run
 ------
@@ -124,68 +164,9 @@ avalanche simulations are performed and both results are then compared.
 The input data for this example can be found in ``data/avaSimilaritySol`` with the
 configuration settings of com1DFA including a section 'SIMISOL' (see ``data/avaSimilaritySol/Inputs/simiSol_com1DFACfg.ini``).
 
-The plotResults function generates profile plots for the flow depth and velocity
-in both slope and cross slope directions. The simulation results are plotted alongside the
+The :py:mod:`out3Plot.outAna1Plots` function generate profile plots for the flow thickness and momentum
+in both flow and cross flow directions. The simulation results are plotted alongside the
 analytical solution for the given time step.
-
-Comparing the results from the DFA module to the similarity solution leads to the following plots:
-
-.. _fig-simiSol:
-
-.. figure:: _static/0d20abd8ca_SimiSolTest.png
-          :width: 90%
-
-
-.. figure:: _static/SimiSol_0d20abd8ca_xyaxisCutSol_Animation.gif
-
-    Time evolution of the profile in and across flow direction
-
-
-
-
-
-Flat plane test
-====================
-
-In this test, the behavior of a conical pile of material placed on a flat plane
-and ruled by Coulomb friction is studied. The pile starts at rest and depending
-on the steepness of the slope and the value of the bed friction angle will start to flow. The idea behind this test
-is to check the implementation of the bottom shear stress in the DFA module as well as the gradient
-computation (SPH method).
-
-The :py:mod:`ana1Tests.FPtest` module provides functions to compute the analytic solution and some plotting routines
-for visualizing the pile and for comparison to the output from the DFA computational module.
-
-
-To run
-------
-
-A workflow example is given in :py:mod:`runScripts.runTestFP`.
-The input data for this example can be found in ``data/avaFPtest`` with the
-configuration settings of com1DFA including a section ``'FPSOL'`` (see ``data/avaFPtest/Inputs/FlatPlane_com1DFACfg.ini``).
-
-
-The :py:func:`ana1Tests.FPtest.plotProfilesFPtest` function generates a profile plot of the flow depth in the radial direction.
-The simulation results are plotted alongside the analytical solution for the given time step.
-
-
-.. list-table::
-
-
-    * -
-
-        .. figure:: _static/flatPlaneTest.png
-            :width: 90%
-
-            Pile at initial time step
-
-
-      -
-
-        .. figure:: _static/flatPlaneTest20s.png
-            :width: 90%
-
-            Pile after 19.8s
 
 
 Energy line test
@@ -193,8 +174,9 @@ Energy line test
 The Energy line test compares the results of the DFA simulation to a geometrical solution that is related
 to the total energy of the system. Solely considering Coulomb friction this solution is motivated by the first principle
 of energy conservation along a simplified topography. Here friction force only depends on the slope angle.
-The analytical runout is the intersection of the path profile with the :math:`\alpha` line defined by the friction angle.
-From the :math:`\alpha` line it is also possible to extract information about the flow mass averaged velocity at any time or
+The analytical runout is the intersection of the path profile with the geometrical (:math:`\alpha`) line defined
+by the friction angle (:math:`\delta`) .
+From the geometrical line it is also possible to extract information about the flow mass averaged velocity at any time or
 position along the path profile.
 
 
@@ -244,7 +226,7 @@ Speaking in terms of altitude, the energy conservation equation can be
 rewritten:
 
 .. math::
-    z_0 = z_{t} + \frac{v^2_{t}}{2g} + tan\alpha s_t
+    z_0 = z_{t} + \frac{v^2_{t}}{2g} + s_t\tan{\alpha}
    :label: altitude-energy-conservation
 
 This result is illustrated in the following figure.
@@ -267,7 +249,7 @@ conservation equation:
 
 .. math::
     \bar{z}_0 = \bar{z}_{t} + \frac{\overline{v^2}_{t}}{2g}
-    + tan\alpha \bar{s}_t
+    + \bar{s}_t\tan{\alpha}
    :label: altitude-energy-conservation-avg
 
 where the mass average :math:`\bar{a}` value of a quantity :math:`a` is:
@@ -314,13 +296,16 @@ between the :math:`\alpha` line and the mass averaged path profile
 last one is related to the velocity :
 
   * The horizontal distance between the runout point and the end
-    of the path profile defines the :math:`\epsilon_s` error in meters.
+    of the path profile defines the :math:`\epsilon_s=\bar{s}_{\gamma}-\bar{s}_{\alpha}`
+    error in meters.
 
   * The vertical distance between the runout point and the end
-    of the path profile defines the :math:`\epsilon_z` error in meters.
+    of the path profile defines the :math:`\epsilon_z=\bar{z}_{\gamma}-\bar{z}_{\alpha}`
+    error in meters.
 
   * The angle difference between the :math:`\alpha` line angle and the DFA
-    simulation runout line defines the :math:`\epsilon_{\alpha}` angle error.
+    simulation runout line defines the :math:`\epsilon_{\alpha}=\gamma-\alpha`
+    angle error.
 
   * The Root Mean Square Error (RMSE) between the :math:`\alpha` line
     and the DFA simulation energy points defines an error on the
@@ -391,3 +376,48 @@ To run
 -------
 
 A workflow example is given in :py:mod:`runScripts.runAna1EnergyLineTest.py`.
+
+
+
+.. Flat plane test
+.. ====================
+
+.. In this test, the behavior of a conical pile of material placed on a flat plane
+.. and ruled by Coulomb friction is studied. The pile starts at rest and depending
+.. on the steepness of the slope and the value of the bed friction angle will start to flow. The idea behind this test
+.. is to check the implementation of the bottom shear stress in the DFA module as well as the gradient
+.. computation (SPH method).
+..
+.. The :py:mod:`ana1Tests.FPtest` module provides functions to compute the analytic solution and some plotting routines
+.. for visualizing the pile and for comparison to the output from the DFA computational module.
+..
+..
+.. To run
+.. ------
+..
+.. A workflow example is given in :py:mod:`runScripts.runTestFP`.
+.. The input data for this example can be found in ``data/avaFPtest`` with the
+.. configuration settings of com1DFA including a section ``'FPSOL'`` (see ``data/avaFPtest/Inputs/FlatPlane_com1DFACfg.ini``).
+..
+..
+.. The :py:func:`ana1Tests.FPtest.plotProfilesFPtest` function generates a profile plot of the flow thickness in the radial direction.
+.. The simulation results are plotted alongside the analytical solution for the given time step.
+..
+..
+.. .. list-table::
+..
+..
+..     * -
+..
+..         .. figure:: _static/flatPlaneTest.png
+..             :width: 90%
+..
+..             Pile at initial time step
+..
+..
+..       -
+..
+..         .. figure:: _static/flatPlaneTest20s.png
+..             :width: 90%
+..
+..             Pile after 19.8s

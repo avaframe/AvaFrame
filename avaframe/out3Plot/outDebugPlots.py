@@ -185,8 +185,7 @@ def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last
     return fig, ax
 
 
-def plotContours(fig, ax, t, dem, data, Cmap, unit, last=False):
-    header = dem['header']
+def plotContours(fig, ax, t, header, data, Cmap, unit, last=False):
     ncols = header['ncols']
     nrows = header['nrows']
     xllc = header['xllcenter']
@@ -197,7 +196,6 @@ def plotContours(fig, ax, t, dem, data, Cmap, unit, last=False):
     PointsX, PointsY = np.meshgrid(xgrid, ygrid)
     X = PointsX[0, :]
     Y = PointsY[:, 0]
-    Z = dem['rasterData']
     try:
         # Get the images on an axis
         cb = ax.images[-1].colorbar
@@ -219,8 +217,6 @@ def plotContours(fig, ax, t, dem, data, Cmap, unit, last=False):
         # pU.addColorBar(im, ax, ticks, unit, 'Flow Depth')
         CB = fig.colorbar(CS)
         ax.clabel(CS, inline=1, fontsize=8)
-
-    plt.pause(0.1)
     return fig, ax, cmap, lev
 
 
