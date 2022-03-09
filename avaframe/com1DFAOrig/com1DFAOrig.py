@@ -194,7 +194,7 @@ def com1DFAOrigMain(cfg, avaDir):
     log.debug('Your current avalanche name: %s' % avaDir)
 
     # Create output and work directories
-    workDir, outDir = iD.initialiseRunDirs(avaDir, modName)
+    workDir, outDir = iD.initialiseRunDirs(avaDir, modName, True)
 
     # Load input data
     dem, rels, ent, res, entResInfo = gI.getInputData(avaDir, cfgGen)
