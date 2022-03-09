@@ -58,21 +58,21 @@ def plotResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
 
-def _plotMultVariables(x, y, nx_loc, dtAnalysis, data1, data2, xR, dataR, tR, label, unit):
+def _plotMultVariables(ax, x, y, nx_loc, yMax, data1, data2, xR, dataR, tR, label, unit):
     """ generate plots """
 
-    fig, ax = plt.subplots(nrows=1, sharex=True, figsize=(pU.figW*3, pU.figH*2))
+
     ax.plot(x, y, 'grey', linestyle='--')
     ax.plot(x, data1[nx_loc, :], 'k--', label='init')
     ax.plot(x, data2[nx_loc, :], 'b', label='com1DFAPy')
     ax.plot(xR, dataR[:,tR], 'r-', label='analyt')
-    ax.set_xlabel('Along track [ncols]')
+    ax.set_xlabel('x [m]')
     ax.set_ylabel('%s [%s]' % (label, unit))
-    ax.set_xlim([-200, 200])
-    plt.legend()
-    ax.set_title('%s at time step %.02f s' % (label, dtAnalysis))
+    ax.set_xlim([-200, 220])
+    ax.set_ylim([-0.05, yMax])
+    plt.legend(loc='upper left')
 
-    return fig, ax
+    return ax
 
 
 def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, outDirTest):
@@ -140,22 +140,25 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, outDir
 
     # setup index for time of analyitcal solution
     indTime = np.searchsorted(solDam['tAna'], tSave)
-
-    fig, ax1 = _plotMultVariables(x, y, nx_loc, tSave, dataIniFD, dataAnaFD, solDam['xAna'], solDam['hAna'],
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
+    ax1 = _plotMultVariables(ax1, x, y, nx_loc, 1.1, dataIniFD, dataAnaFD, solDam['xAna'], solDam['hAna'],
                              indTime, 'Flow depth', 'm')
-    outputName = 'CompareDamBreakH%s_%.02f' % (simName, tSave)
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
+    # outputName = 'CompareDamBreakH%s_%.02f' % (simName, tSave)
+    # pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     y = np.zeros(len(x))
-    fig, ax2 = _plotMultVariables(x, y, nx_loc, tSave, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
+    ax2 = _plotMultVariables(ax2, x, y, nx_loc, 12, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
                              solDam['hAna']*solDam['uAna'], indTime, 'Flow momentum in slope directrion', 'm²/s')
-    outputName = 'CompareDamBreakHVel%s_%.02f' % (simName, tSave)
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
+    # outputName = 'CompareDamBreakHVel%s_%.02f' % (simName, tSave)
+    # pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     y = np.zeros(len(x))
-    fig, ax2 = _plotMultVariables(x, y, nx_loc, tSave, dataIniV, dataAnaV, solDam['xAna'],
+    ax3 = _plotMultVariables(ax3, x, y, nx_loc, 18, dataIniV, dataAnaV, solDam['xAna'],
                              solDam['uAna'], indTime, 'Flow velocity in slope directrion', 'm/s')
-    outputName = 'CompareDamBreakVel%s_%.02f' % (simName, tSave)
+
+
+    fig.suptitle('Simulation %s, t = %.2f s' % (simName, tSave), fontsize=30)
+    outputName = 'CompareDamBreak%s_%.02f' % (simName, tSave)
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     return ax1, ax2
