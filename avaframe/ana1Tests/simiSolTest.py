@@ -738,10 +738,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
             outAna1Plots.showSavetimeStepsSimiSol(cfgMain, cfgSimi['SIMISOL'], field, simiDict, t, fieldHeader, outDirTest, simHash)
         count = count + 1
 
-    if cfgSimi['SIMISOL'].getboolean('plotErrortime') and len(timeList)>1:
-        outAna1Plots.plotErrortime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
-                                   outDirTest, simHash, simDFrow, cfgSimi['SIMISOL'].getboolean('relativError'))
-
+    # Create result plots
     tSave = cfgSimi['SIMISOL'].getfloat('tSave')
     indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
     tSave = timeList[indT]
@@ -749,6 +746,9 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
     simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi['SIMISOL'], relTh, gravAcc)
     outAna1Plots.plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array, hErrorLMaxArray,
                         vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, simDFrow, cfgSimi)
+    if cfgSimi['SIMISOL'].getboolean('plotErrorTime') and len(timeList)>1:
+        outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
+                                   outDirTest, simHash, simDFrow, cfgSimi['SIMISOL'].getboolean('relativError'), tSave)
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
 

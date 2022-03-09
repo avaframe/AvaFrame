@@ -143,19 +143,21 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, outDir
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
     ax1 = _plotMultVariables(ax1, x, y, nx_loc, 1.1, dataIniFD, dataAnaFD, solDam['xAna'], solDam['hAna'],
                              indTime, 'Flow depth', 'm')
+    ax1.set_title('Flow thickness profile')
     # outputName = 'CompareDamBreakH%s_%.02f' % (simName, tSave)
     # pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     y = np.zeros(len(x))
     ax2 = _plotMultVariables(ax2, x, y, nx_loc, 12, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
                              solDam['hAna']*solDam['uAna'], indTime, 'Flow momentum in slope directrion', 'm²/s')
+    ax2.set_title('Flow velocity in slope direction profile')
     # outputName = 'CompareDamBreakHVel%s_%.02f' % (simName, tSave)
     # pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     y = np.zeros(len(x))
     ax3 = _plotMultVariables(ax3, x, y, nx_loc, 18, dataIniV, dataAnaV, solDam['xAna'],
                              solDam['uAna'], indTime, 'Flow velocity in slope directrion', 'm/s')
-
+    ax3.set_title('Flow momentum in slope direction profile')
 
     fig.suptitle('Simulation %s, t = %.2f s' % (simName, tSave), fontsize=30)
     outputName = 'CompareDamBreak%s_%.02f' % (simName, tSave)
@@ -414,7 +416,8 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgD
 
     if cfgDam['DAMBREAK'].getboolean('plotErrorTime') and len(timeList)>1:
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
-                                   outDirTest, simHash, simDFrow, cfgDam['DAMBREAK'].getboolean('relativError'))
+                                   outDirTest, simHash, simDFrow, cfgDam['DAMBREAK'].getboolean('relativError'),
+                                   cfgDam['DAMBREAK'].getfloat('tSave'))
 
     outAna1Plots.plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam, hErrorL2Array, hErrorLMaxArray,
                         vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, simDFrow, cfgDam)
