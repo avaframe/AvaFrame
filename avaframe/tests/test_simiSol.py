@@ -43,9 +43,9 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
     simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
     solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 
-    simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
+    simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg, simDF, solSimi, outDirTest)
 
-    outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', ['hErrorL2', 'vhErrorL2'],
+    outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', 'hErrorL2',
                               'aPPK', 'cMax', logScale=False)
 
     # make convergence plot
@@ -58,5 +58,7 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
     fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
                               'aPPK', 'nPPK0', logScale=True, fit=True)
     simDF = simDF[simDF['aPPK']==-0.5]
-    cfg['SIMISOL']['plotIntermediate'] = 'True'
-    simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
+    cfg['SIMISOL']['plotErrorTime'] = 'True'
+    cfg['SIMISOL']['plotSequence'] = 'True'
+    cfg['SIMISOL']['onlyLast'] = 'False'
+    simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg, simDF, solSimi, outDirTest)
