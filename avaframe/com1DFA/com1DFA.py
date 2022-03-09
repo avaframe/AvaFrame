@@ -114,7 +114,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
 
     # Create output and work directories
     workDir, outDir = inDirs.initialiseRunDirs(avalancheDir, modName,
-        cleanDEMremeshed=cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
+        cfgStart['GENERAL'].getboolean('cleanDEMremeshed'))
 
     # create one cfg files for each releaseScenarios and fetch input data
     inputSimFilesAll, cfgFilesRels = setRelThIni(avalancheDir, com1DFA, cfgStart, cfgFile=cfgFile)
