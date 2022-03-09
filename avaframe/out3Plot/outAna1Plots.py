@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 
 # Simi Sol plots
-def showSaveTimeStepsSimiSol(cfgMain, cfgSimi, fieldsList, solSimi, timeList, header, outDirTest, simHash, simDFrow):
+def showSavetimeStepsSimiSol(cfgMain, cfgSimi, fields, simiDict, tSave, header, outDirTest, simHash):
     """ Generate plots of the comparison of DFA solution and simiSol
     Parameters
     -----------
@@ -36,118 +36,84 @@ def showSaveTimeStepsSimiSol(cfgMain, cfgSimi, fieldsList, solSimi, timeList, he
         list of fields Dictionaries
     solSimi: dict
         dictionary with similiarty solution
-    timeList: list
-        time coresponding to fields in fieldsList
+    tSave: float
+        time coresponding to fields
     header: dict
         field header dictionary
     outDirTest: str or pathlib
         output directory
     simHash: str
         hash of the curent simulation
-    simDFrow: dataFrame
-        row of the simDF dataFrame coresponding to simHash
     """
+    # get particle parameters
+    xCenter = simiDict['xCenter']
+    # get info on DEM extent
+    ncols = header['ncols']
+    nrows = header['nrows']
+    xllc = header['xllcenter']
+    yllc = header['yllcenter']
+    csz = header['cellsize']
 
-    relTh = cfgSimi.getfloat('relTh')
-    gravAcc = simDFrow['gravAcc']
+    xArrayFields = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+    yArrayFields = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
 
-    # user interaction?
-    if cfgSimi.getboolean('interaction'):
-        value = input("give time step to plot (float in s):\n")
-    else:
-        value = cfgSimi['tSave']
-        if value == '':
-            value = timeList[-1]
+    comSol = {'xArrayFields': xArrayFields, 'yArrayFields': yArrayFields, 'fields': fields}
+    comSol['outDirTest'] = outDirTest
+    comSol['tSave'] = tSave
 
-    try:
-        value = float(value)
-    except ValueError:
-        value = 'n'
-    while isinstance(value, float):
+    # profile in flow direction
+    fig1 = plt.figure(figsize=(4*pU.figW, 2*pU.figH))
+    fig1.suptitle('Similarty solution test, t = %.2f s (simulation %s)' % (tSave, simHash), fontsize=20)
+    ax1 = plt.subplot2grid((1, 2), (0, 0))
+    comSol['indFinal'] = int(nrows * 0.5) -1
+    ax1, ax11 = _plotVariable(ax1, simiDict, comSol, 'xaxis')
+    ax1.set_title('Profile in flow direction')
 
-        # determine index for time step
-        ind_t = min(np.searchsorted(timeList, value), min(len(timeList)-1, len(fieldsList)-1))
-        ind_time = np.absolute(solSimi['Time'] - timeList[ind_t]).argmin()
-        # get similartiy solution h, u at reuired time step
-        simiDict = simiSolTest.getSimiSolParameters(solSimi, header, ind_time, cfgSimi, relTh, gravAcc)
+    # profile across flow direction
+    comSol['indFinal'] = int(np.round((xCenter - xllc)/csz) + 1)
+    ax2 = plt.subplot2grid((1, 2), (0, 1))
+    ax2, ax22 = _plotVariable(ax2, simiDict, comSol, 'yaxis')
+    ax2.set_title('Profile across flow direction')
 
-        # get DFA simulation
-        # load fields and particles of required time step described by ind_t
-        fields = fieldsList[ind_t]
-        for axis in ['xaxis', 'yaxis']:
-            # get particle parameters
-            xCenter = simiDict['xCenter']
-            # get info on DEM extent
-            ncols = header['ncols']
-            nrows = header['nrows']
-            xllc = header['xllcenter']
-            yllc = header['yllcenter']
-            csz = header['cellsize']
-
-            xArrayFields = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
-            yArrayFields = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
-            if axis == 'xaxis':
-                indFinal = int(nrows * 0.5) -1
-            elif axis == 'yaxis':
-                indFinal = int(np.round((xCenter - xllc)/csz) + 1)
-
-            comSol = {'indFinal': indFinal, 'xArrayFields': xArrayFields, 'yArrayFields': yArrayFields, 'fields': fields}
-            comSol['outDirTest'] = outDirTest
-            comSol['showPlot'] = cfgMain['FLAGS'].getboolean('showPlot')
-            comSol['Tsave'] = timeList[ind_t]
-
-            # make plot
-            plotProfilesSimiSol(ind_time, simHash, comSol, simiDict, solSimi, axis)
-
-        # create flow depth raster difference plot
-        cellSize = header['cellsize']
-        hSimi = simiDict['hSimi']
-        hNumerical = fields['FD']
-        dataDict = {'name2': 'solAnalytic', 'name1': simHash, 'data2': hSimi, 'data1': hNumerical, 'cellSize': cellSize,
-                    'suffix': 'FD', 'compareType': 'compToRef', 'simName': simHash}
-        avaName = 'FDComparison' + simHash
-        outQuickPlot.generatePlot(dataDict, avaName, outDirTest / 'pics', cfgMain, {'plots': [], 'difference': [], 'stats': [],
-                                  'differenceZoom': []}, crossProfile=False)
-
-        # create flow momentum per surface unit raster difference plot
-        vhSimi = simiDict['vSimi'] * hSimi
-        vhNumerical = fields['FV'] * hNumerical
-        dataDict = {'name2': 'solAnalytic', 'name1': simHash, 'data2': vhSimi, 'data1': vhNumerical, 'cellSize': cellSize,
-                    'suffix': 'FDV', 'compareType': 'compToRef', 'simName': simHash}
-        avaName = 'FDVComparison' + simHash
-        outQuickPlot.generatePlot(dataDict, avaName, outDirTest / 'pics', cfgMain, {'plots': [], 'difference': [], 'stats': [],
-                                  'differenceZoom': []}, crossProfile=False)
-
-        # # option for user interaction
-        if cfgSimi.getboolean('interaction'):
-            value = input("give time step to plot (float in s):\n")
-            try:
-                value = float(value)
-            except ValueError:
-                value = 'n'
-        else:
-            value = 'n'
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'profile_' + str(simHash) + '_xyaxisCutSol_T%.2f.' % (tSave) + pU.outputFormat, fig1)
 
 
-def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis, particles=False):
-    """ Plot flow depth and velocity for similarity solution and simulation results
+    # # create flow depth raster difference plot
+    # cellSize = header['cellsize']
+    # hSimi = simiDict['hSimi']
+    # hNumerical = fields['FD']
+    # dataDict = {'name2': 'solAnalytic', 'name1': simHash, 'data2': hSimi, 'data1': hNumerical, 'cellSize': cellSize,
+    #             'suffix': 'FD', 'compareType': 'compToRef', 'simName': simHash}
+    # avaName = 'FDComparison' + simHash
+    # outQuickPlot.generatePlot(dataDict, avaName, outDirTest / 'pics', cfgMain, {'plots': [], 'difference': [], 'stats': [],
+    #                           'differenceZoom': []}, crossProfile=False)
+    #
+    # # create flow momentum per surface unit raster difference plot
+    # vhSimi = simiDict['vSimi'] * hSimi
+    # vhNumerical = fields['FV'] * hNumerical
+    # dataDict = {'name2': 'solAnalytic', 'name1': simHash, 'data2': vhSimi, 'data1': vhNumerical, 'cellSize': cellSize,
+    #             'suffix': 'FDV', 'compareType': 'compToRef', 'simName': simHash}
+    # avaName = 'FDVComparison' + simHash
+    # outQuickPlot.generatePlot(dataDict, avaName, outDirTest / 'pics', cfgMain, {'plots': [], 'difference': [], 'stats': [],
+    #                           'differenceZoom': []}, crossProfile=False)
+
+
+def _plotVariable(ax1, simiDict, comSol, axis, particles=False):
+    """ Plot flow depth and velocity for similarity solution and simulation results in axis direction
 
         Parameters
         -----------
-        ind_time: int
-            time index for simiSol
+        ax1: matplotlib axis object
         outputName: str
             outputName
-        comSol: dict
-            dictionary of simulation results and info (particles, fields, indices, time step)
         simiDict: dict
             dictionary with similiarty solution for h, u, and xCenter at required time step
-        solSimi: dict
-            dictionary with similiarty solution
+        comSol: dict
+            dictionary of simulation results and info (particles, fields, indices, time step)
         axis: str
+            xaxis or yaxis
 
     """
-
     # com1DFA results
     fields = comSol['fields']
     xArrayFields = comSol['xArrayFields']
@@ -158,10 +124,7 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis, p
         y = comSol['y']
         h = comSol['h']
         v = comSol['v']
-    outDirTest = comSol['outDirTest']
     indFinal = comSol['indFinal']
-    Tsave = comSol['Tsave']
-
     # similarity solution results
     vSimi = simiDict['vSimi']
     vxSimi = simiDict['vxSimi']
@@ -169,9 +132,6 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis, p
     vzSimi = simiDict['vzSimi']
     hSimi = simiDict['hSimi']
     xCenter = simiDict['xCenter']
-    Time = solSimi['Time']
-
-    fig1, ax1 = plt.subplots(figsize=(2*pU.figW, pU.figH))
     ax2 = ax1.twinx()
 
     if axis == 'xaxis':
@@ -193,12 +153,13 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis, p
         ax2.plot(xArrayFields, hSimi*vxSimi[indFinal, :], '--m', label=getLabel('SimiSol', '', dir='x'))
         ax2.plot(xArrayFields, hSimi*vySimi[indFinal, :], '--b', label=getLabel('SimiSol', '', dir='y'))
         ax2.plot(xArrayFields, hSimi*vzSimi[indFinal, :], '--c', label=getLabel('SimiSol', '', dir='z'))
-        ax1.set_title('Profile along flow at t=%.2f (com1DFA), %.2f s (simiSol) (simulation %s)'
-                      % (Tsave, Time[ind_time], outputName))
         ax1.set_xlabel('x in [m]')
-        indStart = min(first_nonzero(hSimi, 0), first_nonzero(FD, 0)) - 2
-        indEnd = max(last_nonzero(hSimi, 0), last_nonzero(FD, 0)) + 2
-        ax1.set_xlim([xArrayFields[indStart], xArrayFields[indEnd]])
+        indStart = max(min(first_nonzero(hSimi, 0), first_nonzero(FD, 0)) - 2, 0)
+        indEnd = min(max(last_nonzero(hSimi, 0), last_nonzero(FD, 0)) + 2, len(xArrayFields)-1)
+        # ax1.set_xlim([xArrayFields[indStart], xArrayFields[indEnd]])
+        ax1.set_xlim([xCenter-150, xCenter+200])
+        ax1.set_ylim([-0.05, 4.5])
+        ax2.set_ylim([-30, 50])
 
     elif axis == 'yaxis':
         FD = fields['FD'][:, indFinal]
@@ -218,12 +179,13 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis, p
         ax2.plot(yArrayFields, hSimi*vxSimi[:, indFinal], '--m', label=getLabel('SimiSol', '', dir='x'))
         ax2.plot(yArrayFields, hSimi*vySimi[:, indFinal], '--b', label=getLabel('SimiSol', '', dir='y'))
         ax2.plot(yArrayFields, hSimi*vzSimi[:, indFinal], '--c', label=getLabel('SimiSol', '', dir='z'))
-        ax1.set_title('Profile across flow at t=%.2f (com1DFA), %.2f s (simiSol) (simulation %s)'
-                      % (Tsave, Time[ind_time], outputName))
         ax1.set_xlabel('y in [m]')
         indStart = min(first_nonzero(hSimi, 0), first_nonzero(FD, 0)) - 2
         indEnd = max(last_nonzero(hSimi, 0), last_nonzero(FD, 0)) + 2
-        ax1.set_xlim([yArrayFields[indStart], yArrayFields[indEnd]])
+        # ax1.set_xlim([yArrayFields[indStart], yArrayFields[indEnd]])
+        ax1.set_xlim([-120, 120])
+        ax1.set_ylim([-0.05, 4.5])
+        ax2.set_ylim([-30, 50])
 
     ax1.set_ylabel('flow depth [m]')
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
@@ -234,9 +196,137 @@ def plotProfilesSimiSol(ind_time, outputName, comSol, simiDict, solSimi, axis, p
     ax2.legend(loc='upper right')
     ax1.legend(loc='upper left')
 
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'profile_' + str(outputName) + '_%sCutSol_T%.2f.' % (axis, Tsave) + pU.outputFormat, fig1)
+    return ax1, ax2
+
+def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array, hErrorLMaxArray,
+                        vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, simDFrow, cfgSimi):
+    """ Plot sumary figure of the damnreak test
+
+    Parameters
+    -----------
+    avalancheDir: pathlib path
+        path to avalanche directory
+    timeList: list
+        list of time steps
+    fieldsList: list
+        list of fields dictionaries
+    timeList: list
+        list of time steps
+    fieldHeader: dict
+        header dictionary with info about the extend and cell size
+    simiDict: dict
+        analytic solution dictionary
+    fieldHeader: dict
+        header dictionary with info about the extend and cell size
+    hErrorL2Array: numpy array
+        L2 error on flow depth for saved time steps
+    hErrorLMaxArray: numpy array
+        LMax error on flow depth for saved time steps
+    vErrorL2Array: numpy array
+        L2 error on flow velocity for saved time steps
+    vErrorLMaxArray: numpy array
+        LMax error on flow velocity for saved time steps
+    outDirTest: pathlib path
+        path output directory (where to save the figures)
+    simHash: str
+        com1DFA simulation id
+    simDFrow: pandas object
+        com1DFA simulation rox coresponding to simHash
+    cfgSimi: configParser object
+        configuration setting for avalanche simulation including DAMBREAK section
+
+    """
+    # Initialise DEM
+    demFile = gI.getDEMPath(avalancheDir)
+    demOri = IOf.readRaster(demFile, noDataToNan=True)
+    demOri, dem = com1DFA.initializeMesh(cfgSimi['GENERAL'], demOri, cfgSimi['GENERAL'].getint('methodMeshNormal'))
+    dem['header']['xllcenter'] = demOri['header']['xllcenter']
+    dem['header']['yllcenter'] = demOri['header']['yllcenter']
+
+    tSave = cfgSimi['SIMISOL'].getfloat('tSave')
+    relativ = cfgSimi['SIMISOL'].getboolean('relativError')
+    indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
+    tSave = timeList[indT]
+
+    xCenter = simiDict['xCenter']
+
+    # get info on DEM extent
+    ncols = fieldHeader['ncols']
+    nrows = fieldHeader['nrows']
+    xllc = fieldHeader['xllcenter']
+    yllc = fieldHeader['yllcenter']
+    csz = fieldHeader['cellsize']
+
+    xArrayFields = np.linspace(xllc, xllc+(ncols-1)*csz, ncols)
+    yArrayFields = np.linspace(yllc, yllc+(nrows-1)*csz, nrows)
+
+    comSol = {'xArrayFields': xArrayFields, 'yArrayFields': yArrayFields, 'fields': fieldsList[indT]}
+    comSol['outDirTest'] = outDirTest
+    comSol['tSave'] = tSave
 
 
+    # create figures and plots
+    fig = plt.figure(figsize=(pU.figW*4, pU.figH*2))
+    fig.suptitle('Similarty solution test, t = %.2f s (simulation %s)' % (tSave, simHash), fontsize=30)
+    # make comparison profile plot in flow direction
+    ax1 = plt.subplot2grid((2, 2), (0, 0))
+    comSol['indFinal'] = int(nrows * 0.5) -1
+    ax1, ax11 = _plotVariable(ax1, simiDict, comSol, 'xaxis')
+    ax1.set_title('Profile in flow direction')
+
+    # make flow momentum comparison plot
+    ax2 = plt.subplot2grid((2, 2), (0, 1))
+    comSol['indFinal'] = int(np.round((xCenter - xllc)/csz) + 1)
+    ax2, ax22 = _plotVariable(ax2, simiDict, comSol, 'yaxis')
+    ax2.set_title('Profile across flow direction')
+
+    # make bird view plot
+    ax3 = plt.subplot2grid((2, 2), (1, 0))
+    ax3, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax3, fieldHeader, fieldsList[-1]['FD'], 'FD')
+    cbar0.ax.set_ylabel('flow thickness')
+    ax3 = outCom1DFA.addDem2Plot(ax3, dem, what='slope', extent=extent)
+    rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(fieldsList[-1]['FD'], fieldHeader['cellsize'],
+                                                                 extentOption=True, constrainedData=False, buffer='')
+
+    # fig, ax3, cmap, lev = outDebugPlots.plotContours(fig, ax3, tSave, dem, fieldsList[-1], pU.cmapDepth, 'm')
+    # CS = ax3.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
+    #                 linewidths=2, linestyles='dashed')
+
+    ax3.set_ylim([rowsMin+yllc, rowsMax+yllc])
+    ax3.set_xlim([colsMin+xllc, colsMax+xllc])
+    ax3.set_xlabel('x [m]')
+    ax3.set_ylabel('y [m]')
+    # ax3.set_title('Flow thickness')
+    pU.putAvaNameOnPlot(ax3, avalancheDir)
+
+    # make error plot
+    ax4 = plt.subplot2grid((2, 2), (1, 1))
+    title = ' between analytical solution and com1DFA'
+    title = getTitleError(relativ, title)
+    ax5 = ax4.twinx()
+    ax4.plot(timeList, hErrorL2Array, 'k-', label='Flow thickness L2 error')
+    ax4.plot(timeList, hErrorLMaxArray, 'k--', label='Flow thickness LMax error')
+    ax4.set_title(title)
+    ax4.set_xlabel('time in [s]')
+    ax4.set_ylabel(getTitleError(relativ, ' on h'))
+    ax4.legend(loc='upper left')
+    ax4.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
+
+    color = 'tab:green'
+    ax5.plot(timeList, vhErrorL2Array, 'g-', label=getLabel('L2 error', '', dir=''))
+    ax5.plot(timeList, vhErrorLMaxArray, 'g--', label=getLabel('LMax error', '', dir=''))
+    ax5.tick_params(axis='y', labelcolor=color)
+    ax5.set_ylabel(getTitleError(relativ, getLabel(' on', '', dir='')), color=color)
+    ax5.legend(loc='upper right')
+    ax5.grid(color='tab:green', linestyle='-', linewidth=0.25, alpha=0.5)
+    ax4.set_yscale('log')
+    ax5.set_yscale('log')
+
+    outFileName = '_'.join([simHash, 'SimiSolTest'])
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outFileName, fig)
+
+
+# Dam Break plots
 def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam, hErrorL2Array, hErrorLMaxArray,
                         vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, simDFrow, cfgDam):
     """ Plot sumary figure of the damnreak test
@@ -320,7 +410,7 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     y[x<-120] = 0.0
 
     # setup index for time of analyitcal solution
-    indTime = np.searchsorted(solDam['tAna'], tSave)
+    indtime = np.searchsorted(solDam['tAna'], tSave)
 
     # create figures and plots
     fig = plt.figure(figsize=(pU.figW*4, pU.figH*2))
@@ -329,9 +419,9 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     ax1 = plt.subplot2grid((2, 6), (0, 0), colspan=2)
     ax1.plot(x, dataIniFD[nx_loc, :], 'k--', label='init')
     ax1.plot(x, dataFD[nx_loc, :], 'b', label='simulation')
-    ax1.plot(solDam['xAna'], solDam['hAna'][:,indTime], 'r-', label='analytic')
-    ax1.axvline(solDam['xMidAna'][indTime], color='grey', linestyle='--')
-    ax1.axvspan(solDam['xMidAna'][indTime], xEnd, color='grey', alpha=0.3, lw=0)
+    ax1.plot(solDam['xAna'], solDam['hAna'][:,indtime], 'r-', label='analytic')
+    ax1.axvline(solDam['xMidAna'][indtime], color='grey', linestyle='--')
+    ax1.axvspan(solDam['xMidAna'][indtime], xEnd, color='grey', alpha=0.3, lw=0)
     ax1.set_xlabel('x [m]')
     ax1.set_ylabel('Flow thickness [m]')
     ax1.set_xlim([-200, 200])
@@ -342,9 +432,9 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     ax2 = plt.subplot2grid((2, 6), (0, 4), colspan=2)
     ax2.plot(x, dataIniV[nx_loc, :], 'k--', label='init')
     ax2.plot(x, dataFD[nx_loc, :]*dataV[nx_loc, :], 'b', label='simulation')
-    ax2.plot(solDam['xAna'], solDam['uAna'][:,indTime]*solDam['hAna'][:,indTime], 'r-', label='analytic')
-    ax2.axvline(solDam['xMidAna'][indTime], color='grey', linestyle='--')
-    ax2.axvspan(solDam['xMidAna'][indTime], xEnd, color='grey', alpha=0.3, lw=0)
+    ax2.plot(solDam['xAna'], solDam['uAna'][:,indtime]*solDam['hAna'][:,indtime], 'r-', label='analytic')
+    ax2.axvline(solDam['xMidAna'][indtime], color='grey', linestyle='--')
+    ax2.axvspan(solDam['xMidAna'][indtime], xEnd, color='grey', alpha=0.3, lw=0)
     ax2.set_xlabel('x [m]')
     ax2.set_ylabel(getLabel('Flow momentum', '[m²/s]', dir='', vert=True))
     ax2.set_xlim([-200, 200])
@@ -355,9 +445,9 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     ax3 = plt.subplot2grid((2, 6), (0, 2), colspan=2)
     ax3.plot(x, dataIniV[nx_loc, :], 'k--', label='init')
     ax3.plot(x, dataV[nx_loc, :], 'b', label='simulation')
-    ax3.plot(solDam['xAna'], solDam['uAna'][:,indTime] , 'r-', label='analytic')
-    # ax3.axvline(solDam['xMidAna'][indTime], color='grey', linestyle='--')
-    # ax3.axvspan(solDam['xMidAna'][indTime], xEnd, color='grey', alpha=0.3, lw=0)
+    ax3.plot(solDam['xAna'], solDam['uAna'][:,indtime] , 'r-', label='analytic')
+    # ax3.axvline(solDam['xMidAna'][indtime], color='grey', linestyle='--')
+    # ax3.axvspan(solDam['xMidAna'][indtime], xEnd, color='grey', alpha=0.3, lw=0)
     ax3.set_xlabel('x [m]')
     ax3.set_ylabel('Flow velocity [m/s]')
     ax3.set_xlim([-200, 200])
@@ -406,7 +496,7 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
 
 
 # Genaral plots
-def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, outputName,
+def plotErrortime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, outputName,
                   simDFrow, relativ):
     """plot error between a given com1DFA sol and the analytic sol
     function of time
@@ -453,7 +543,7 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
 
     ax1.set_yscale('log')
     ax2.set_yscale('log')
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_Time_' + str(outputName), fig1)
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'Error_time_' + str(outputName), fig1)
 
 
 def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, sizedBy, logScale=False, fit=False):
@@ -731,7 +821,7 @@ def plotPresentation(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, size
     return fig1, ax1
 
 
-def plotTimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logScale=False):
+def plottimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logScale=False):
     """plot computation time function of nParts
     function of whatever (ini parameter given in the simDF) you want
     Parameters
@@ -825,7 +915,7 @@ def plotTimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logSc
     ax1.set_xscale('log')
     ax1.set_title('CPU time')
     ax1.set_xlabel('number of particles')
-    ax1.set_ylabel('Time [s]')
+    ax1.set_ylabel('time [s]')
     # Adding legend and titles
     legend = ax1.legend(handles=handles1, loc="upper left")
     ax1.add_artist(legend)
@@ -876,18 +966,18 @@ def plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, Hi
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     for part, field in zip(particlesList, fieldsList):
         t = part['t']
-        ind_time = np.searchsorted(solSimi['Time'], t)
-        hSimi = simiSolTest.computeH(solSimi, X1, Y1, ind_time, L_y, L_x, Hini, AminusC)
+        indTime = np.searchsorted(solSimi['time'], t)
+        hSimi = simiSolTest.computeH(solSimi, X1, Y1, indTime, L_y, L_x, Hini, AminusC)
         hSimi = np.where(hSimi <= 0, 0, hSimi)
         fig, ax, cmap, lev = outDebugPlots.plotContours(
-            fig, ax, part, dem, field['FD'], pU.cmapDepth, 'm')
+            fig, ax, t, dem, field['FD'], pU.cmapDepth, 'm')
         CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                         linewidths=2, linestyles='dashed')
         plt.pause(1)
         fig.savefig(pathlib.Path(outDirTest, 'ContourSimiSol%f.%s' % (t, pU.outputFormat)))
 
     fig, ax, cmap, lev = outDebugPlots.plotContours(
-        fig, ax, part, dem, field['FD'], pU.cmapDepth, 'm', last=True)
+        fig, ax, part['t'], dem, field['FD'], pU.cmapDepth, 'm', last=True)
     CS = ax.contour(X, Y, hSimi, levels=lev, origin='lower', cmap=cmap,
                     linewidths=2, linestyles='dashed')
     ax.clabel(CS, inline=1, fontsize=8)

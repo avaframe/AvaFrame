@@ -2,6 +2,41 @@
 ana1Tests: Testing
 ##################################
 
+
+Deviation/difference/error computation
+=======================================
+
+In order to either assess the accuracy of a numerical method or to compare results
+it will be necessary to compute errors. The methods used to compute errors are described
+in this section.
+
+Two error measurement are used. The first one is based on the :math:`\mathcal{L}_{max}` norm (uniform norm),
+the second on the Euclidean norm (:math:`\mathcal{L}_{2}` norm).
+
+
+Uniform norm
+--------------
+
+The :math:`\mathcal{L}_{max}` norm measures the largest absolute value:
+
+.. math::
+    \mathcal{L}_{max}(f(x)) = \sup_{x\in \Omega}(\vert f \vert)
+
+This will give an idea of the largest difference between the two solutions.
+It can be applied to one or two dimensional results.
+
+It can also be normalized by dividing the uniform norm of the difference
+by the uniform norm of the reference.
+
+Euclidean norm
+---------------
+
+The :math:`\mathcal{L}_{2}` norm measures :
+
+.. math::
+    \mathcal{L}_{2}(f) = \int_{x\in \Omega}\vert\vert f(x) \vert\vert^2\,dx
+
+
 Dambreak test
 ===============
 
@@ -28,18 +63,23 @@ The problem considered has the following initial conditions:
 
       Dam break theoretical evolution
 
-This function also provides its own plotting routines that can be used to generate plots of the
-analytical results and also to compare simulation results to the exact solutions.
-An example is given in runDamBreak.py, where the analytical solution is computed and
-avalanche simulations are performed and both results are then compared.
-The input data for this example can be found in ``data/avaDamBreak``.
+The functions computing the analytical solution and comparing it to the simulation results are to be
+found in :py:mod:`ana1Tests.damBreak` and :py:mod:`ana1Tests.analysisTools`. Plotting routines are
+located in :py:mod:`out3Plot.outAna1Plots`. The input data for this example can be found in ``data/avaDamBreak``.
 
-The :py:func:`ana1Tests.damBreak.plotResults` function generates profile plots for the flow depth and velocity and
-an animation of the flow depth evolution.
-With the :py:func:`ana1Tests.damBreak.plotComparison` function, the simulation results are plotted alongside the
-analytical solution for the given time step for both, flow depth and velocity.
-Details can be found here: :py:mod:`ana1Tests.damBreak`.
+This test produces a summary figure combining a comparison between the analytic and simulation
+result (cross cut along the flow direction) as well as a bird view and an error measure plot as
+shown in :numref:`fig-damBreak`.
 
+.. _fig-damBreak:
+
+.. figure:: _static/damBreakTestExample.png
+          :width: 90%
+
+Another optional result are the comparison cross cut figures for all saved time steps
+as shown in the following figure.
+
+.. image:: _static/CompareDamBreak8da2add5e5_Animation.gif
 
 To run
 ------
@@ -56,16 +96,6 @@ In order to run the test example:
     python3 runScripts/runAnalyzeDamBreak.py
 
 
-
-.. _fig-damBreak:
-
-.. figure:: _static/damBreakTestExample.png
-          :width: 90%
-
-
-.. image:: _static/CompareDamBreakH8da2add5e5_Animation.gif
-.. image:: _static/CompareDamBreakVel8da2add5e5_Animation.gif
-.. image:: _static/CompareDamBreakHVel8da2add5e5_Animation.gif
 
 Similarity solution
 ====================
@@ -100,31 +130,15 @@ analytical solution for the given time step.
 
 Comparing the results from the DFA module to the similarity solution leads to the following plots:
 
+.. _fig-simiSol:
 
-.. list-table::
-    :widths: 50 50
-
-
-    * -
-
-        .. figure:: _static/simiSol_x.png
-            :width: 100%
-
-            Along slope flow depth and velocity of the DFA solution and similarity solution
+.. figure:: _static/0d20abd8ca_SimiSolTest.png
+          :width: 90%
 
 
-      -
+.. figure:: _static/SimiSol_0d20abd8ca_xyaxisCutSol_Animation.gif
 
-        .. figure:: _static/simiSol_y.png
-            :width: 100%
-
-            Cross slope flow depth and velocity of the DFA solution and similarity solution
-
-
-.. figure:: _static/simiSol_2D.png
-    :width: 90%
-
-    2D flow depth of the DFA solution (full lines) and similarity solution (dashed lines) in meters
+    Time evolution of the profile in and across flow direction
 
 
 

@@ -59,7 +59,7 @@ solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 # pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results5.p')
 # if pathToResults.is_file():
 #     simDF = pd.read_pickle(pathToResults)
-simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg['SIMISOL'], simDF, solSimi, outDirTest)
+simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg, simDF, solSimi, outDirTest)
 
 # select the simulations you want to plot
 # filter on viscosity parameter

@@ -185,7 +185,7 @@ def plotPosition(fig, ax, particles, dem, data, Cmap, unit, plotPart=False, last
     return fig, ax
 
 
-def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
+def plotContours(fig, ax, t, dem, data, Cmap, unit, last=False):
     header = dem['header']
     ncols = header['ncols']
     nrows = header['nrows']
@@ -207,7 +207,7 @@ def plotContours(fig, ax, particles, dem, data, Cmap, unit, last=False):
         pass
 
     ax.clear()
-    ax.set_title('t=%.2f s' % particles['t'])
+    ax.set_title('t=%.2f s' % t)
     cmap, _, ticks, norm = pU.makeColorMap(Cmap, np.nanmin(data), np.nanmax(data), continuous=True)
     cmap.set_under(color='w')
 

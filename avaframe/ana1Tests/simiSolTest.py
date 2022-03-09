@@ -45,8 +45,8 @@ def mainSimilaritySol(simiSolCfg):
     ---------
     solSimi: dictionary
         similarity solution:
-            time: time array (without dimention)
-            Time: time array (with dimention)
+            timeAdim: time array (without dimention)
+            time: time array (with dimention)
             g_sol: g array
             g_p_sol: first derivativ of g array
             f_sol: f array
@@ -123,8 +123,8 @@ def mainSimilaritySol(simiSolCfg):
     solver.set_initial_value(x_1, t_start)
     solSimi = odeSolver(solver, dt, t_end, solSimi)
 
-    Time = solSimi['time']*T
-    solSimi['Time'] = Time
+    time = solSimi['timeAdim']*T
+    solSimi['time'] = time
 
     return solSimi
 
@@ -293,7 +293,7 @@ def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_y):
     f_p = f_p0 + 2*D*E/(g0*f0**2)*t
 
     solSimi = {}
-    solSimi['time'] = t
+    solSimi['timeAdim'] = t
     solSimi['g_sol'] = g
     solSimi['g_p_sol'] = g_p
     solSimi['f_sol'] = f
@@ -375,7 +375,7 @@ def odeSolver(solver, dt, t_end, solSimi):
                 f_sol: f array
                 f_p_sol: first derivativ of f array
     """
-    time = solSimi['time']
+    timeAdim = solSimi['timeAdim']
     g_sol = solSimi['g_sol']
     g_p_sol = solSimi['g_p_sol']
     f_sol = solSimi['f_sol']
@@ -385,13 +385,13 @@ def odeSolver(solver, dt, t_end, solSimi):
         solver.integrate(solver.t+dt, step=True)
         x_sol = solver.y
         t_sol = solver.t
-        time = np.append(time, t_sol)
+        timeAdim = np.append(timeAdim, t_sol)
         g_sol = np.append(g_sol, x_sol[0])
         g_p_sol = np.append(g_p_sol, x_sol[1])
         f_sol = np.append(f_sol, x_sol[2])
         f_p_sol = np.append(f_p_sol, x_sol[3])
 
-    solSimi['time'] = time
+    solSimi['timeAdim'] = timeAdim
     solSimi['g_sol'] = g_sol
     solSimi['g_p_sol'] = g_p_sol
     solSimi['f_sol'] = f_sol
@@ -427,11 +427,11 @@ def computeH(solSimi, x1, y1, i, L_x, L_y, H, AminusC):
             h similarity solution at (x1, y1)
 
     """
-    time = solSimi['time']
+    timeAdim = solSimi['timeAdim']
     g_sol = solSimi['g_sol']
     f_sol = solSimi['f_sol']
     y1 = -(y1/L_y)**2/(f_sol[i])**2
-    x1 = -(x1/L_x-AminusC/2*(time[i])**2)**2/(g_sol[i])**2
+    x1 = -(x1/L_x-AminusC/2*(timeAdim[i])**2)**2/(g_sol[i])**2
     h = H*(1+x1+y1)/(f_sol[i]*g_sol[i])
 
     return h
@@ -461,10 +461,10 @@ def computeU(solSimi, x1, y1, i, L_x, U, AminusC):
         u: numpy array
             u similarity solution at (x1, y1)
     """
-    time = solSimi['time']
+    timeAdim = solSimi['timeAdim']
     g_sol = solSimi['g_sol']
     g_p_sol = solSimi['g_p_sol']
-    u = U*(AminusC*time[i]+(x1/L_x-AminusC/2*(time[i])**2)*g_p_sol[i]/g_sol[i])
+    u = U*(AminusC*timeAdim[i]+(x1/L_x-AminusC/2*(timeAdim[i])**2)*g_p_sol[i]/g_sol[i])
 
     return u
 
@@ -520,13 +520,13 @@ def computeXC(solSimi, x1, y1, i, L_x, AminusC):
         xc: numpy array
             x position of the center of the similarity solution pile
     """
-    time = solSimi['time']
-    xc = L_x*AminusC/2*(time[i])**2
+    timeAdim = solSimi['timeAdim']
+    xc = L_x*AminusC/2*(timeAdim[i])**2
 
     return xc
 
 
-def getSimiSolParameters(solSimi, header, ind_time, cfgSimi, Hini, gravAcc):
+def getSimiSolParameters(solSimi, header, indTime, cfgSimi, Hini, gravAcc):
     """ get flow depth, flow velocity and center location of flow mass of similarity solution
         for required time step
 
@@ -536,7 +536,7 @@ def getSimiSolParameters(solSimi, header, ind_time, cfgSimi, Hini, gravAcc):
             similarity solution
         header: dict
             header dictionary with info about the extent and cell size
-        ind_time: int
+        indTime: int
             index for required time step in similarity solution
         cfg: dict
             configuration
@@ -587,14 +587,14 @@ def getSimiSolParameters(solSimi, header, ind_time, cfgSimi, Hini, gravAcc):
     AminusC = A - C
 
     # get simi sol
-    hSimi = computeH(solSimi, X1, Y1, ind_time, L_x, L_y, Hini, AminusC)
+    hSimi = computeH(solSimi, X1, Y1, indTime, L_x, L_y, Hini, AminusC)
     hSimi = np.where(hSimi <= 0, 0, hSimi)
-    uxSimi = computeU(solSimi, X1, Y1, ind_time, L_x, U, AminusC)
+    uxSimi = computeU(solSimi, X1, Y1, indTime, L_x, U, AminusC)
     uxSimi = np.where(hSimi <= 0, 0, uxSimi)
-    uySimi = computeV(solSimi, X1, Y1, ind_time, L_y, V)
+    uySimi = computeV(solSimi, X1, Y1, indTime, L_y, V)
     uySimi = np.where(hSimi <= 0, 0, uySimi)
     vSimi = DFAtls.norm(uxSimi, uySimi, 0*uySimi)
-    xCenter = computeXC(solSimi, X1, Y1, ind_time, L_x, AminusC)*cos
+    xCenter = computeXC(solSimi, X1, Y1, indTime, L_x, AminusC)*cos
 
     simiDict = {'hSimi': hSimi, 'vSimi': vSimi, 'vxSimi': uxSimi*cos, 'vySimi': uySimi, 'vzSimi': -uxSimi*sin,
                 'xCenter': xCenter, 'cos': cos, 'sin': sin}
@@ -635,29 +635,26 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
         # fetch the simulation results
         fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
         # analyze and compare results
-        if cfgSimi['tSave'] == '':
+        if cfgSimi['SIMISOL']['tSave'] == '':
             ind_t = -1
             tSave = timeList[-1]
         else:
-            tSave = cfgSimi.getfloat('tSave')
+            tSave = cfgSimi['SIMISOL'].getfloat('tSave')
             ind_t = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
-            fieldsList = [fieldsList[ind_t]]
-            timeList = [timeList[ind_t]]
-            ind_t = 0
+            if cfgSimi['SIMISOL'].getboolean('onlyLast'):
+                fieldsList = [fieldsList[ind_t]]
+                timeList = [timeList[ind_t]]
+                ind_t = 0
 
-        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(fieldsList, timeList, solSimi, fieldHeader,
-                                                                        cfgSimi, outDirTest, simHash, simDFrow)
+        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(avalancheDir, fieldsList, timeList, solSimi,
+                                                                          fieldHeader, cfgMain, cfgSimi, outDirTest,
+                                                                          simHash, simDFrow)
         # add result of error analysis
         # save results in the simDF
         simDF.loc[simHash, 'hErrorL2'] = hEL2Array[ind_t]
         simDF.loc[simHash, 'vhErrorL2'] = vhEL2Array[ind_t]
         simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[ind_t]
         simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[ind_t]
-        # +++++++++POSTPROCESS++++++++++++++++++++++++
-        # -------------------------------
-        if cfgSimi.getboolean('plotIntermediate'):
-            outAna1Plots.showSaveTimeStepsSimiSol(cfgMain, cfgSimi, fieldsList, solSimi, timeList, fieldHeader,
-                                                  outDirTest, simHash, simDFrow)
 
     name = 'results' + str(round(tSave)) + '.p'
     simDF.to_pickle(outDirTest / name)
@@ -665,16 +662,18 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
     return simDF
 
 
-def analyzeResults(fieldsList, timeList, solSimi, fieldHeader, cfgSimi, outDirTest, simHash, simDFrow):
+def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfgMain, cfgSimi, outDirTest, simHash, simDFrow):
     """Compare analytical and com1DFA results
         Parameters
         -----------
+        avalancheDir: pathlib path
+            path to avalanche directory
         fieldsList: list
             list of fields dictionaries
         solSimi: dictionary
             similarity solution:
                 time: time array (without dimention)
-                Time: time array (with dimention)
+                time: time array (with dimention)
                 g_sol: g array
                 g_p_sol: first derivativ of g array
                 f_sol: f array
@@ -701,7 +700,7 @@ def analyzeResults(fieldsList, timeList, solSimi, fieldHeader, cfgSimi, outDirTe
 
     """
     # relTh = simDFrow['relTh']
-    relTh = cfgSimi.getfloat('relTh')
+    relTh = cfgSimi['SIMISOL'].getfloat('relTh')
     gravAcc = simDFrow['gravAcc']
     hErrorL2Array = np.zeros((len(fieldsList)))
     vhErrorL2Array = np.zeros((len(fieldsList)))
@@ -711,8 +710,8 @@ def analyzeResults(fieldsList, timeList, solSimi, fieldHeader, cfgSimi, outDirTe
     # run the comparison routine for each saved time step
     for t, field in zip(timeList, fieldsList):
         # get similartiy solution h, u at required time step
-        ind_time = np.searchsorted(solSimi['Time'], t)
-        simiDict = getSimiSolParameters(solSimi, fieldHeader, ind_time, cfgSimi, relTh, gravAcc)
+        indTime = np.searchsorted(solSimi['time'], t)
+        simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi['SIMISOL'], relTh, gravAcc)
         cellSize = fieldHeader['cellsize']
         cosAngle = simiDict['cos']
         hSimi = simiDict['hSimi']
@@ -721,7 +720,7 @@ def analyzeResults(fieldsList, timeList, solSimi, fieldHeader, cfgSimi, outDirTe
         vhNumerical = {'fx': hNumerical*field['Vx'], 'fy': hNumerical*field['Vy'], 'fz': hNumerical*field['Vz']}
         hErrorL2, hErrorL2Rel, hErrorLmax, hErrorLmaxRel = anaTools.normL2Scal(hSimi, hNumerical, cellSize, cosAngle)
         vhErrorL2, vhErrorL2Rel, vhErrorLmax, vhErrorLmaxRel = anaTools.normL2Vect(vhSimi, vhNumerical, cellSize, cosAngle)
-        if cfgSimi.getboolean('relativError'):
+        if cfgSimi['SIMISOL'].getboolean('relativError'):
             hErrorL2Array[count] = hErrorL2Rel
             hErrorLMaxArray[count] = hErrorLmaxRel
             vhErrorL2Array[count] = vhErrorL2Rel
@@ -731,13 +730,25 @@ def analyzeResults(fieldsList, timeList, solSimi, fieldHeader, cfgSimi, outDirTe
             hErrorLMaxArray[count] = hErrorLmax
             vhErrorL2Array[count] = vhErrorL2
             vhErrorLMaxArray[count] = vhErrorLmax
-        title = outAna1Plots.getTitleError(cfgSimi.getboolean('relativError'))
+        title = outAna1Plots.getTitleError(cfgSimi['SIMISOL'].getboolean('relativError'))
         log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hErrorL2))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
+        # Make all individual time step comparison plot
+        if cfgSimi['SIMISOL'].getboolean('plotSequence'):
+            outAna1Plots.showSavetimeStepsSimiSol(cfgMain, cfgSimi['SIMISOL'], field, simiDict, t, fieldHeader, outDirTest, simHash)
         count = count + 1
-    if cfgSimi.getboolean('plotIntermediate') and len(timeList)>1:
-        outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest,
-                                   simHash, simDFrow, cfgSimi.getboolean('relativError'))
+
+    if cfgSimi['SIMISOL'].getboolean('plotErrortime') and len(timeList)>1:
+        outAna1Plots.plotErrortime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
+                                   outDirTest, simHash, simDFrow, cfgSimi['SIMISOL'].getboolean('relativError'))
+
+    tSave = cfgSimi['SIMISOL'].getfloat('tSave')
+    indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
+    tSave = timeList[indT]
+    indTime = np.searchsorted(solSimi['time'], tSave)
+    simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi['SIMISOL'], relTh, gravAcc)
+    outAna1Plots.plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array, hErrorLMaxArray,
+                        vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, simDFrow, cfgSimi)
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
 
