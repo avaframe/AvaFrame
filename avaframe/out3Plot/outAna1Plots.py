@@ -664,6 +664,7 @@ def plotErrorConvergence(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, 
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'ErrorLog%ds' % int(tSave), fig1)
+    return fig1, ax1, slopeH
 
 
 def plotErrorRef(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, sizedBy, logScale=False):
@@ -852,7 +853,7 @@ def plotPresentation(simDF, outDirTest, cfgSimi, xField, yField, coloredBy, size
     return fig1, ax1
 
 
-def plottimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logScale=False):
+def plotTimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logScale=False):
     """plot computation time function of nParts
     function of whatever (ini parameter given in the simDF) you want
     Parameters
@@ -959,13 +960,7 @@ def plottimeCPULog(simDF, outDirTest, cfgSimi, xField, coloredBy, sizedBy, logSc
     legend2 = ax1.legend(*scatter.legend_elements(**kw), loc="upper right", title=sizedBy)
     ax1.grid(color='grey', linestyle='-', linewidth=0.25, alpha=0.5)
     ax1.grid(color='grey', which='minor', linestyle='--', linewidth=0.25, alpha=0.5)
-    plt.show()
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, 'timeCPU%ds' % int(tSave), fig1)
-    fig2, ax = plt.subplots(figsize=(2*pU.figW, 2*pU.figH))
-    for sizeValue, simDFrow in slopeTsph.iterrows():
-        ax.scatter(slopeTsph.columns, simDFrow, label=sizeValue)
-    plt.legend()
-    plt.show()
 
 
 def plotContoursSimiSol(particlesList, fieldsList, solSimi, relDict, cfgSimi, Hini, outDirTest):
