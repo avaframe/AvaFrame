@@ -15,7 +15,7 @@ import avaframe.in3Utils.initializeProject as initProj
 log = logging.getLogger(__name__)
 
 
-def initialiseRunDirs(avaDir, modName, cleanDEMremeshed=False):
+def initialiseRunDirs(avaDir, modName, cleanDEMremeshed=True):
     """ Initialise Simulation run with input data
 
         Parameters
