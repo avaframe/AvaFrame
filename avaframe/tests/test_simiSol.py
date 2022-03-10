@@ -1,5 +1,5 @@
 """
-    Pytest for module in1Data
+    Pytest for similarity solution test
     This file is part of Avaframe.
  """
 
