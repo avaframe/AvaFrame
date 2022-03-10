@@ -4,7 +4,8 @@ Data Visualisation
 
 Main functions for creating visualisations of AvaFrame simulation results can be found in
 :py:mod:`out3Plot` and :py:mod:`out1Peak`.
-:py:mod:`com1DFA` also offers the possibility to export data on particle properties for visualisation using the open-source  application `**ParaView**<https://www.paraview.org/>`_.
+:py:mod:`com1DFA` also offers the possibility to export data on particle properties for visualisation
+using the open-source  application `ParaView <https://www.paraview.org/>`_.
 In order to start analysing particle data of :py:mod:`com1DFA`, follow these steps:
 
 in your local copy of ``com1DFA/com1DFACfg.ini``:
