@@ -50,7 +50,6 @@ def getProjectPath():
     path = os.path.expanduser(path)  # interpret ~
     path = os.path.abspath(path)  # convert to absolute path
     path = os.path.dirname(path)  # containing directory
-    path = os.path.dirname(path)  # containing directory: project dir
     return path
 
 
