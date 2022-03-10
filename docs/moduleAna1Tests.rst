@@ -153,6 +153,7 @@ Comparing the results from the DFA module to the similarity solution leads to th
 
 
 .. figure:: _static/SimiSol_0d20abd8ca_xyaxisCutSol_Animation.gif
+          :width: 90%
 
     Time evolution of the profile in and across flow direction
 
