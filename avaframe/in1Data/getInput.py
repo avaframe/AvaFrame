@@ -336,6 +336,8 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile, cfg):
         cfgInitial['INPUT'] = {'DEM': inputSimFiles['demFile'].stem, 'releaseScenario': releaseA.stem}
         # update configuration with thickness value to be used for simulations
         cfgInitial = dP.getThicknessValue(cfgInitial, inputSimFiles, releaseA.stem, 'relTh')
+        if cfgInitial['GENERAL'].getboolean('relThFromFile'):
+            cfgInitial['INPUT']['relThFile'] = str(pathlib.Path('RELTH', inputSimFiles['relThFile'].name))
 
         # add entrainment and secondary release thickness in input data info
         if inputSimFiles['entFile'] != None and 'entFile' in thTypeList:
