@@ -52,7 +52,7 @@ Avalanche simulations are performed with the settings defined in the configurati
 set in ``ana4Stats/probAnaCfg.ini`` in the section PROBRUN. All the parameters set in PROBRUN are
 varied on at a time, i.e. simulations are performed for the standard settings of all parameters,
 except the one parameter to be varied, subsequently the other variations are performed.
-In the beginning of the scrip filtering criteria for the probability maps can be set.
+In the beginning of the script, filtering criteria for the probability maps can be set.
 
 
 .. _Theory:
