@@ -39,6 +39,8 @@ Setup AvaFrame
 
      python3 -m pip install --user --upgrade numpy pandas
 
+   and restart QGis.
+
 
 
 Setup QGis and run
