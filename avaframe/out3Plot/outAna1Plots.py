@@ -237,13 +237,6 @@ def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict
         configuration setting for avalanche simulation including DAMBREAK section
 
     """
-    # Initialise DEM
-    demFile = gI.getDEMPath(avalancheDir)
-    demOri = IOf.readRaster(demFile, noDataToNan=True)
-    demOri, dem = com1DFA.initializeMesh(cfgSimi['GENERAL'], demOri, cfgSimi['GENERAL'].getint('methodMeshNormal'))
-    dem['header']['xllcenter'] = demOri['header']['xllcenter']
-    dem['header']['yllcenter'] = demOri['header']['yllcenter']
-
     tSave = cfgSimi['SIMISOL'].getfloat('tSave')
     relativ = cfgSimi['SIMISOL'].getboolean('relativError')
     indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
@@ -391,9 +384,9 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     # Initialise DEM
     demFile = gI.getDEMPath(avalancheDir)
     demOri = IOf.readRaster(demFile, noDataToNan=True)
-    demOri, dem = com1DFA.initializeMesh(cfgDam['GENERAL'], demOri, cfgDam['GENERAL'].getint('methodMeshNormal'))
-    dem['header']['xllcenter'] = demOri['header']['xllcenter']
-    dem['header']['yllcenter'] = demOri['header']['yllcenter']
+    dem = com1DFA.initializeMesh(cfgDam['GENERAL'], demOri, cfgDam['GENERAL'].getint('methodMeshNormal'))
+    dem['header']['xllcenter'] = dem['originalHeader']['xllcenter']
+    dem['header']['yllcenter'] = dem['originalHeader']['yllcenter']
 
     phi = cfgDam['DAMBREAK'].getfloat('phi')
     phiRad = np.radians(phi)
