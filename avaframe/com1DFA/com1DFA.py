@@ -13,7 +13,6 @@ import pickle
 from datetime import datetime
 import matplotlib.path as mpltPath
 from itertools import product
-from shapely.geometry import Polygon
 
 # Local imports
 import avaframe.in2Trans.shpConversion as shpConv

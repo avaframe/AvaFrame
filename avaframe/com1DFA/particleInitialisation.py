@@ -7,7 +7,6 @@ import time
 import pathlib
 import numpy as np
 import copy
-from shapely.geometry import Polygon
 import matplotlib.pyplot as plt
 
 # Local imports
@@ -220,6 +219,9 @@ def createReleaseBuffer(cfg, inputSimLines):
         inputSimLines: dict
             updated inputSimLines with releaseLineBuffer
     """
+    # Note on this import: it is purely a quickfix for github issue
+    # https://github.com/avaframe/QGisAF/issues/9
+    from shapely.geometry import Polygon
 
     # get start indices and lengths of release polygons
     lengthRels = inputSimLines['releaseLine']['Length']
