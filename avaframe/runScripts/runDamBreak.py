@@ -3,16 +3,11 @@
 """
 
 # Load modules
-import os
-import numpy as np
 import pathlib
 from configupdater import ConfigUpdater
 
 # Local imports
 from avaframe.com1DFA import com1DFA
-from avaframe.in3Utils import fileHandlerUtils as fU
-from avaframe.in1Data import getInput as gI
-from avaframe.ana1Tests import damBreak
 import avaframe.in3Utils.initializeProject as initProj
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
@@ -37,7 +32,7 @@ log.info('Current avalanche: %s', avalancheDir)
 # Load configuration
 damBreakCfg = pathlib.Path(avalancheDir, 'Inputs', 'damBreak_com1DFACfg.ini')
 
-for sphKernelRadius in [2]:
+for sphKernelRadius in [5,4,3]:
     updater = ConfigUpdater()
     updater.read(damBreakCfg)
     updater['GENERAL']['sphKernelRadius'].value = sphKernelRadius

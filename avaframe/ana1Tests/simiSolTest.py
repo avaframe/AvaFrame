@@ -45,8 +45,8 @@ def mainSimilaritySol(simiSolCfg):
     ---------
     solSimi: dictionary
         similarity solution:
-            timeAdim: time array (without dimention)
-            time: time array (with dimention)
+            timeAdim: time array (without dimension)
+            time: time array (with dimension)
             g_sol: g array
             g_p_sol: first derivativ of g array
             f_sol: f array
@@ -270,7 +270,7 @@ def calcEarlySol(t, earthPressureCoefficients, x_0, zeta, delta, eps_x, eps_y):
         ---------
         solSimi: dictionary
             similarity solution (for early times):
-                time: time array (without dimention)
+                time: time array (without dimension)
                 g_sol: g array
                 g_p_sol: first derivativ of g array
                 f_sol: f array
@@ -360,7 +360,7 @@ def odeSolver(solver, dt, t_end, solSimi):
             end time
         solSimi: dictionary
             similarity solution (for early times):
-                time: time array (without dimention)
+                time: time array (without dimension)
                 g_sol: g array
                 g_p_sol: first derivativ of g array
                 f_sol: f array
@@ -369,7 +369,7 @@ def odeSolver(solver, dt, t_end, solSimi):
         ---------
         solSimi: dictionary
             similarity solution (copleted with all time steps):
-                time: time array (without dimention)
+                time: time array (without dimension)
                 g_sol: g array
                 g_p_sol: first derivativ of g array
                 f_sol: f array
@@ -672,8 +672,8 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
             list of fields dictionaries
         solSimi: dictionary
             similarity solution:
-                time: time array (without dimention)
-                time: time array (with dimention)
+                time: time array (without dimension)
+                time: time array (with dimension)
                 g_sol: g array
                 g_p_sol: first derivativ of g array
                 f_sol: f array
@@ -736,6 +736,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
         # Make all individual time step comparison plot
         if cfgSimi['SIMISOL'].getboolean('plotSequence'):
             outAna1Plots.showSavetimeStepsSimiSol(cfgMain, cfgSimi['SIMISOL'], field, simiDict, t, fieldHeader, outDirTest, simHash)
+            outAna1Plots.makeContourSimiPlot(avalancheDir, simHash, hNumerical, simiDict, fieldHeader, t, outDirTest)
         count = count + 1
 
     # Create result plots
@@ -748,7 +749,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
                         vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, simDFrow, cfgSimi)
     if cfgSimi['SIMISOL'].getboolean('plotErrorTime') and len(timeList)>1:
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
-                                   outDirTest, simHash, simDFrow, cfgSimi['SIMISOL'].getboolean('relativError'), tSave)
+                                   simDFrow, cfgSimi['SIMISOL'].getboolean('relativError'), tSave, simHash, outDirTest)
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
 
