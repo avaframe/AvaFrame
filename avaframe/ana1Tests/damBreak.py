@@ -30,9 +30,8 @@ def _plotVariable(var, x, xMiddle, dtInd, dtStep, label):
 
     fig = plt.figure(figsize=(pU.figW, pU.figH))
     plt.title('Dry-Bed')
-    plt.plot(x, var[:,0], 'k--', label='t_init')
+    plt.plot(x, var[:,0], 'k--', label='t = 0s')
     plt.plot(x, var[:,dtInd], label='t = %.1fs' % dtStep)
-    plt.vlines(xMiddle[dtInd], ymin=0, ymax=max(var[:,0]), color='r', linestyles='--')
     plt.xlabel('x-coordinate [m]')
     plt.ylabel(label)
     plt.legend()
@@ -40,7 +39,7 @@ def _plotVariable(var, x, xMiddle, dtInd, dtStep, label):
     return fig
 
 
-def plotResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
+def plotDamAnaResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
     """ Create plots of the analytical solution for the given settings,
         including an animation
 
@@ -58,24 +57,7 @@ def plotResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
 
-def _plotMultVariables(ax, x, y, nx_loc, yMax, data1, data2, xR, dataR, tR, label, unit):
-    """ generate plots """
-
-
-    ax.plot(x, y, 'grey', linestyle='--')
-    ax.plot(x, data1[nx_loc, :], 'k--', label='init')
-    ax.plot(x, data2[nx_loc, :], 'b', label='com1DFAPy')
-    ax.plot(xR, dataR[:,tR], 'r-', label='analyt')
-    ax.set_xlabel('x [m]')
-    ax.set_ylabel('%s [%s]' % (label, unit))
-    ax.set_xlim([-200, 220])
-    ax.set_ylim([-0.05, yMax])
-    plt.legend(loc='upper left')
-
-    return ax
-
-
-def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, outDirTest):
+def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, tMax, outDirTest):
     """ Generate plots that compare the simulation results to the analytical solution
 
         Parameters
@@ -103,6 +85,8 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, outDir
             tSave field dictionary
         tSave: float
             time step of analaysis
+        tMax: float
+            max time for com1DFA results
         header: dict
             fields header dictionary
         outDirTest: pathli path
@@ -140,30 +124,29 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, outDir
 
     # setup index for time of analyitcal solution
     indTime = np.searchsorted(solDam['tAna'], tSave)
+    indTimeMax = np.searchsorted(solDam['tAna'], tMax)
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
-    ax1 = _plotMultVariables(ax1, x, y, nx_loc, 1.1, dataIniFD, dataAnaFD, solDam['xAna'], solDam['hAna'],
-                             indTime, 'Flow depth', 'm')
+    ax1 = outAna1Plots._plotDamProfile(ax1, x, y, nx_loc, cfg, dataIniFD, dataAnaFD, solDam['xAna'], solDam['xMidAna'],
+                             solDam['hAna'], indTime, indTimeMax,  'Flow depth', 'm')
     ax1.set_title('Flow thickness profile')
-    # outputName = 'CompareDamBreakH%s_%.02f' % (simName, tSave)
-    # pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     y = np.zeros(len(x))
-    ax2 = _plotMultVariables(ax2, x, y, nx_loc, 12, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
-                             solDam['hAna']*solDam['uAna'], indTime, 'Flow momentum in slope directrion', 'm²/s')
+    ax2 = outAna1Plots._plotDamProfile(ax2, x, y, nx_loc, cfg, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
+                             solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, indTimeMax,
+                             'Flow momentum in slope directrion', 'm²/s')
     ax2.set_title('Flow velocity in slope direction profile')
-    # outputName = 'CompareDamBreakHVel%s_%.02f' % (simName, tSave)
-    # pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     y = np.zeros(len(x))
-    ax3 = _plotMultVariables(ax3, x, y, nx_loc, 18, dataIniV, dataAnaV, solDam['xAna'],
-                             solDam['uAna'], indTime, 'Flow velocity in slope directrion', 'm/s')
+    ax3 = outAna1Plots._plotDamProfile(ax3, x, y, nx_loc, cfg, dataIniV, dataAnaV, solDam['xAna'], solDam['xMidAna'],
+                             solDam['uAna'], indTime, indTimeMax,  'Flow velocity in slope directrion', 'm/s')
     ax3.set_title('Flow momentum in slope direction profile')
+    plt.legend(loc='upper left')
 
     fig.suptitle('Simulation %s, t = %.2f s' % (simName, tSave), fontsize=30)
     outputName = 'CompareDamBreak%s_%.02f' % (simName, tSave)
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
-    return ax1, ax2
+    return ax1, ax2, ax3
 
 def damBreakSol(avaDir, cfg, cfgC, outDirTest):
     """ Compute analytical flow depth and velocity for dam break test case
@@ -212,13 +195,14 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
     hL = cfgC['GENERAL'].getfloat('relTh')        # initial height [m] in Riemann problem in state 1 (x<0), hR (x>0)=0
     cL = np.sqrt(gz * hL)
     hR = cfgC['GENERAL'].getfloat('relTh')        # initial height [m] in Riemann problem in state 1 (x<0), hR (x>0)=0
-    cR = np.sqrt(gz * hR)
-    x0R = -120 / np.cos(phi)                           # wave celeritiy
+    cR = np.sqrt(gz * hR) # wave celeritiy
+    x0R = cfgC['DAMBREAK'].getfloat('xBack') / np.cos(phi)
     tSave = cfgC['DAMBREAK'].getfloat('tSave')
     # Define time [0-1] seconds and space [-2,2] meters domains multiplied times 100
-    t = np.linspace(0, 30, 3000)
-    x = np.linspace(-200 / np.cos(phi) , 200 / np.cos(phi) , 800)
-    nt = len(t)
+    tAna = np.arange(0, cfgC['DAMBREAK'].getfloat('tEnd'), cfgC['DAMBREAK'].getfloat('dt'))
+    x = np.arange(cfgC['DAMBREAK'].getfloat('xStart') / np.cos(phi) , cfgC['DAMBREAK'].getfloat('xEnd') / np.cos(phi),
+                  cfgC['DAMBREAK'].getfloat('dx'))
+    nt = len(tAna)
     nx = len(x)
     # Initialise flow depth solution and velocity
     h = np.zeros((nx, nt))
@@ -227,25 +211,26 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
 
     # Compute exact solution for case: 'dry bed' - including three different states
     for m in range(nt):
-        cond1R = x0R + ((m0*t[m]) / 2.0 - 2*cR) * t[m]
-        cond2R = x0R + ((m0*t[m]) / 2.0 + cR) * t[m]
-        cond1 = ((m0*t[m]) / 2.0 - cL) * t[m]
-        cond2 = (2.0 *cL + ((m0*t[m]) / 2.0)) * t[m]
+        cond1R = x0R + ((m0*tAna[m]) / 2.0 - 2*cR) * tAna[m]
+        cond2R = x0R + ((m0*tAna[m]) / 2.0 + cR) * tAna[m]
+        cond1 = ((m0*tAna[m]) / 2.0 - cL) * tAna[m]
+        cond2 = (2.0 *cL + ((m0*tAna[m]) / 2.0)) * tAna[m]
         # elif x[k] > cond2:
         u[:, m] = 0
         h[:, m] = 0
         # elif cond1 < x[k] <= cond2:
-        if t[m] > 0:
-            u[:, m] = np.where(cond2 >= x, (2./3.) * (cL + (x / t[m]) + m0 * t[m]), u[:, m])
-            h[:, m] = np.where(cond2 >= x, ((2.* cL - (x / t[m]) + ((m0 * t[m]) / 2.))**2) / (9. * gz), h[:, m])
+        if tAna[m] > 0:
+            u[:, m] = np.where(cond2 >= x, (2./3.) * (cL + (x / tAna[m]) + m0 * tAna[m]), u[:, m])
+            h[:, m] = np.where(cond2 >= x, ((2.* cL - (x / tAna[m]) + ((m0 * tAna[m]) / 2.))**2) / (9. * gz), h[:, m])
         # if x[k] <= cond1:
-        u[:, m] = np.where(cond1 >= x, m0 * t[m], u[:, m])
+        u[:, m] = np.where(cond1 >= x, m0 * tAna[m], u[:, m])
         h[:, m] = np.where(cond1 >= x, hL, h[:, m])
+        # uncomment this if you also want the rear part of the dam break
         # to get the analytical solution on the back part (not working very well, theory is probably wrong)
         # # elif cond1R < x[k] <= cond2R:
-        # if t[m] > 0:
-        #     u[:, m] = np.where(cond2R >= x, (2./3.) * (-cR + ((x-x0R) / t[m]) + m0 * t[m]), u[:, m])
-        #     h[:, m] = np.where(cond2R >= x, ((2.* cR + ((x-x0R) / t[m]) - ((m0 * t[m]) / 2.))**2) / (9. * gz), h[:, m])
+        # if tAna[m] > 0:
+        #     u[:, m] = np.where(cond2R >= x, (2./3.) * (-cR + ((x-x0R) / tAna[m]) + m0 * tAna[m]), u[:, m])
+        #     h[:, m] = np.where(cond2R >= x, ((2.* cR + ((x-x0R) / tAna[m]) - ((m0 * tAna[m]) / 2.))**2) / (9. * gz), h[:, m])
         # # if x[k] <= cond1R:
         # u[:, m] = np.where(cond1R >= x, 0, u[:, m])
         # h[:, m] = np.where(cond1R >= x, 0, h[:, m])
@@ -255,11 +240,11 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
 
     #-----------------------------Plot results --------------
     # Reproduce figure 6, case 1.2.1 - Test 2
-    plotResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest)
+    plotDamAnaResults(tAna, x, xMiddle, h, u, tSave, cfg, outDirTest)
 
     x = x * np.cos(phi)  # projected on the horizontal plane
     xMiddle = xMiddle * np.cos(phi)  # projected on the horizontal plane
-    solDam = {'tAna': t, 'h0': hL, 'xAna': x, 'hAna': h, 'uAna': u, 'xMidAna': xMiddle}
+    solDam = {'tAna': tAna, 'h0': hL, 'xAna': x, 'hAna': h, 'uAna': u, 'xMidAna': xMiddle}
     return solDam
 
 
@@ -376,7 +361,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgD
         # get similartiy solution h, u at required time step
         indTime = np.searchsorted(tAna, t)
         xM = xMiddle[indTime]
-        # get extend where the sol should be compared
+        # get extent where the sol should be compared
         xDamPlus, nColMid, nColMax, nRowMin, nRowMax = getDamExtend(fieldHeader, xM, cfgDam['DAMBREAK'])
         # get analytical solution (in same format as the simulation results)
         hDamPlus = np.interp(xDamPlus, xAna, hAna[:, indTime])
@@ -407,17 +392,19 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgD
             vhErrorL2Array[count] = vhL2Plus
             vhErrorLMaxArray[count] = vhLmaxPlus
         title = outAna1Plots.getTitleError(cfgDam['DAMBREAK'].getboolean('relativError'))
-        log.info("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hEL2Plus))
-        log.info("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhL2Plus))
+        log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hEL2Plus))
+        log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhL2Plus))
         # Make all individual time step comparison plot
         if cfgDam['DAMBREAK'].getboolean('plotSequence'):
-            plotComparison(cfgDam['DAMBREAK'], simHash, fieldsList[0], field, fieldHeader, solDam, t, outDirTest)
+            plotComparison(cfgDam['DAMBREAK'], simHash, fieldsList[0], field, fieldHeader, solDam, t, timeList[-1],
+            outDirTest)
         count = count + 1
 
     if cfgDam['DAMBREAK'].getboolean('plotErrorTime') and len(timeList)>1:
+
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
-                                   outDirTest, simHash, simDFrow, cfgDam['DAMBREAK'].getboolean('relativError'),
-                                   cfgDam['DAMBREAK'].getfloat('tSave'))
+                                   simDFrow, cfgDam['DAMBREAK'].getboolean('relativError'),
+                                   cfgDam['DAMBREAK'].getfloat('tSave'), simHash, outDirTest)
 
     outAna1Plots.plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam, hErrorL2Array, hErrorLMaxArray,
                         vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, simDFrow, cfgDam)
