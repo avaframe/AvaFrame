@@ -495,10 +495,18 @@ number of particles per kernel radius exceeds a given value :math:`n_{PPK}^{max}
 In this case particles are merged with their closest neighbor. The new position and velocity is the mass
 averaged one. The new mass is the sum. Here, two coefficients ``C_{n_{PPK}}^{min}`` and ``C_{n_{PPK}}^{max}`` were
 introduced. A good balance needs to be found for the coefficients so that the particles are not constantly split or
-merged but also not too seldom. The split and merge steps happen only once per time step and per particle. 
+merged but also not too seldom. The split and merge steps happen only once per time step and per particle.
 
 Artificial viscosity
 ---------------------
+
+Two options are available to add viscosity to stabilize the numerics. The first option
+consists in adding artificial viscosity (``viscOption`` = 1). The second option attempts
+to adapt the mesh Lax-Friedrich scheme to the particle method (``viscOption`` = 2).
+Finally, ``viscOption`` = 0 deactivates any viscosity force.
+
+SAMOS Artificial viscosity
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In :ref:`theoryCom1DFA:Governing Equations for the Dense Flow Avalanche`, the governing
 equations for the DFA were derived and all first order or smaller terms where neglected.
@@ -507,41 +515,71 @@ the homogenization of the velocity field. It means that two neighbor elements
 of fluid should have similar velocities. The aim behind adding artificial viscosity is to
 take this phenomena into account. The following viscosity force is added:
 
-
 .. math::
     \begin{aligned}
-    \mathbf{F_k^{viscosity}} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k\|^2 A_{Lat}
-    \frac{\mathbf{du}_k}{\|\mathbf{du}_k\|}\\
-    = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k\| A_{Lat} \mathbf{du}_k
+    \mathbf{F_{viscosity}} = &- \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\|^2 A_{Lat}
+    \frac{\mathbf{du}}{\|\mathbf{du}\|}\\
+    = & - \frac{1}{2}\rho C_{Lat}\|\mathbf{du}\| A_{Lat} \mathbf{du}
     \end{aligned}
 
-Where the velocity difference reads :math:`\mathbf{du}_k = \mathbf{u}_k - \mathbf{\bar{u}}`
+Where the velocity difference reads :math:`\mathbf{du} = \mathbf{u} - \mathbf{\bar{u}}`
 (:math:`\mathbf{\bar{u}}` is the mesh velocity interpolated at the particle position).
 :math:`C_{Lat}` is a coefficient that rules the viscous force. It would be the
 equivalent of :math:`C_{Drag}` in the case of the drag force. The :math:`C_{Lat}`
-is a numerical parameter that depends on the mesh size. Its value is set in the configuration (``subgridMixingFactor``) to 100
-by default (ToDo: and should be discussed and further tested).
+is a numerical parameter that depends on the mesh size. Its value is set to 100
+and should be discussed and further tested.
 
 Adding the viscous force
-~~~~~~~~~~~~~~~~~~~~~~~~~
+""""""""""""""""""""""""
 
 The viscous force is added implicitly:
 
 .. math::
   \begin{aligned}
-  \mathbf{F_k^{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}
-  \mathbf{du}_k^{new}\\
-  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}_k^{old} - \mathbf{\bar{u}}^{old}\| A_{Lat}
-  (\mathbf{u}_k^{new} - \mathbf{\bar{u}}^{old})
+  \mathbf{F_{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}
+  \mathbf{du}^{new}\\
+  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}^{old} - \mathbf{\bar{u}}^{old}\| A_{Lat}
+  (\mathbf{u}^{new} - \mathbf{\bar{u}}^{old})
   \end{aligned}
-
 Updating the velocity is done in two steps. First adding the explcit term related to the
 mean mesh velocity and then the implicit term which leads to:
 
 .. math::
-  \mathbf{u}_k^{new} = \frac{\mathbf{u}_k^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
+  \mathbf{u}^{new} = \frac{\mathbf{u}^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
 
-With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}\frac{dt}{m}`
+With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}\frac{dt}{m}`
+
+
+Ata Artificial viscosity
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+An up-winding method based on Lax-Friedrichs scheme
+"""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Shallow Water Equations are well known for being hyperbolic transport equations.
+They have the particularity of carrying discontinuities or shocks which makes them
+numerically unstable.
+Thus a decentering in time allows to better capture the discontinuity.
+This can be done in the manner of the Lax-Friedrich scheme as described in :cite:`AtSo2005`.
+This decentering in time is formally the same as adding a viscous force.
+Transposed to the SPH method, this viscous force applied on a given particle :math:`k`
+can be expressed as follows:
+
+.. math::
+  \mathbf{F_{{viscosity}_k}} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl}
+with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_l - \mathbf{u}_k) \cdot \mathbf{n}_{kl}`
+
+where :math:`\mathbf{u}_{kl} = \mathbf{u}_k - \mathbf{u}_l` is the relative velocity
+between particle k and l, and :math:`\lambda_{kl} = \frac{c_k+c_l}{2}` with
+:math:`c_k = \sqrt{gh_l}`, the wave speed. The :math:`\lambda_{kl}` is obtained as
+turning expressions related to time and spacial discretization parameters
+into an expression on maximal speed between both particles in the Lax Friedrich
+scheme.
+
+Due to the expression of the viscosity force, it makes sense to
+compute it and add it with the SPH pressure force (for this reason, the
+``viscOption`` = 2 corresponding to the "Ata" viscosity option is only available
+in combination with the ``sphOption`` = 2).
 
 
 Forces discretization
