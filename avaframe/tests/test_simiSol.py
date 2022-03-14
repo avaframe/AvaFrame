@@ -45,11 +45,8 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
 
     simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg, simDF, solSimi, outDirTest)
 
-    outAna1Plots.plotErrorRef(simDF, outDirTest, cfg['SIMISOL'], 'subgridMixingFactor', 'hErrorL2',
-                              'aPPK', 'cMax', logScale=False)
-
     # make convergence plot
-    fig1, ax1, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
+    fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
                               'aPPK', 'cMax', logScale=True)
 
     outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')

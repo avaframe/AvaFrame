@@ -61,22 +61,19 @@ solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 #     simDF = pd.read_pickle(pathToResults)
 simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg, simDF, solSimi, outDirTest)
 
-# select the simulations you want to plot
-# filter on viscosity parameter
-# simDF = simDF[simDF['subgridMixingFactor'].isin([10])]
-# filter on time stepping parameter
-# simDF = simDF[simDF['cMax'].isin([0.01])]
-# filter on nPPK0
-# simDF = simDF[simDF['nPPK0']==20]
 
-# now do some plotting
+# make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
+fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'vhErrorL2',
+                          'aPPK', 'nPPK0', logScale=True, fit=False)
 
 # make convergence plot
+outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'sphKernelRadius', 'nPPK0')
+
+# do some filtering for the presentation plot
+simDF = simDF[simDF['sphKernelRadius']==3]
+
+# make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
 fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
                           'aPPK', 'nPPK0', logScale=True, fit=True)
 
-
-fig1, ax1, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
-                          'aPPK', 'nPPK0', logScale=True, fit=True)
-
-# outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
+outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
