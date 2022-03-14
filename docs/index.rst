@@ -85,6 +85,7 @@ Analysis/helper modules
     * :doc:`moduleAna1Tests`
     * :doc:`moduleAna3AIMEC`
     * :doc:`moduleAna4Stats`
+    * :doc:`moduleAna5Utils`
     * :doc:`moduleOut1Peak`
     * :doc:`moduleOut3Plot`
     * :doc:`moduleLog2Report`
@@ -97,6 +98,7 @@ Analysis/helper modules
    moduleAna1Tests.rst
    moduleAna3AIMEC.rst
    moduleAna4Stats.rst
+   moduleAna5Utils.rst
    moduleOut1Peak.rst
    moduleOut3Plot.rst
    moduleLog2Report.rst
