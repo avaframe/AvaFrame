@@ -106,7 +106,12 @@ shown in :numref:`fig-damBreakExample`.
 Another optional result is the comparison cross cut figure for all saved time steps
 as shown in the following figure.
 
-.. image:: _static/compareDamBreak28c6370dbe_Animation.gif
+.. _fig-damBreakProfile:
+
+.. figure:: _static/compareDamBreak28c6370dbe_Animation.gif
+          :width: 90%
+
+          Time evolution of the dam thickness velocity and momentum in the flow direction
 
 To run
 ------
@@ -148,7 +153,7 @@ Comparing the results from the DFA module to the similarity solution leads to th
 
 .. _fig-simiSol:
 
-.. figure:: _static/SimiSolTestExample.png
+.. figure:: _static/simiSolTestExample.png
           :width: 90%
 
 
