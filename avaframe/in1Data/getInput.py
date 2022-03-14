@@ -358,13 +358,15 @@ def getThickness(inputSimFiles, avaDir, modName, cfgFile, cfg):
     return inputSimFiles, cfgFilesRels
 
 
-def initializeDEM(cfg):
+def initializeDEM(avaDir, demPath=''):
     """ check for dem and load to dict
 
         Parameters
         -----------
-        cfg: configparser object
-            configuration settings here used INPUT DEM
+        avaDir: str or pathlib path
+            path to avalanche directory
+        demPath: str or pathlib Path
+            path to dem relative to Inputs - optional if not provided read DEM from Inputs
 
         Returns
         --------
@@ -372,13 +374,12 @@ def initializeDEM(cfg):
             dem dictionary with header and data
     """
 
-    # fetch location of DEM
-    pathToDem = cfg['INPUT']['DEM']
-    avaDir = cfg['GENERAL']['avalancheDir']
-
-    # build full path and load data to dict
-    demFile = pathlib.Path(avaDir, 'Inputs', pathToDem)
-    dem = IOf.readRaster(demFile, noDataToNan=True)
+    if demPath == '':
+        dem = readDEM(avaDir)
+    else:
+        # build full path and load data to dict
+        demFile = pathlib.Path(avaDir, 'Inputs', demPath)
+        dem = IOf.readRaster(demFile, noDataToNan=True)
 
     return dem
 

@@ -34,6 +34,8 @@ from avaframe.in1Data import getInput as gI
 from avaframe.out1Peak import outPlotAllPeak as oP
 from avaframe.log2Report import generateReport as gR
 from avaframe.com1DFA import particleInitialisation as pI
+from avaframe.ana5Utils import distanceTimeAnalysis as dtAna
+import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 
 #######################################
 # Set flags here
@@ -177,7 +179,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
 
                 # ++++++++++PERFORM com1DFA SIMULAITON++++++++++++++++
                 dem, reportDict, cfgFinal, tCPU, inputSimFilesNEW, particlesList, fieldsList, tSave = com1DFA.com1DFACore(cfg, avalancheDir,
-                        cuSim, inputSimFiles, outDir)
+                        cuSim, inputSimFiles, outDir, simHash=simHash)
                 simDF.at[simHash, 'nPart'] = str(int(particlesList[0]['nPart']))
 
                 # TODO check if inputSimFiles not changed within sim
@@ -203,9 +205,8 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
             # add cpu time info to the dataframe
             simDF = simDF.join(tCPUDF)
 
-            # append new simulations configuration to old ones (if they exist),
-            # return total dataFrame and write it to csv
-            simDFNew = simDF.append(simDFOld)
+            # append new simulations configuration to old ones (if they exist), return total dataFrame and write it to csv
+            simDFNew = pd.concat([simDF, simDFOld], axis=0)
             cfgUtils.writeAllConfigurationInfo(avalancheDir, simDFNew, specDir='')
 
             # write full configuration (.ini file) to file
@@ -231,7 +232,7 @@ def com1DFAMain(avalancheDir, cfgMain, cfgFile=''):
         return 0, {}, [], ''
 
 
-def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
+def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir, simHash=''):
     """ Run main com1DFA model
 
     This will compute a dense flow avalanche
@@ -248,6 +249,8 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
         path to avalanche directory
     outDir: str or pathlib object
         path to Outputs
+    simHash: str
+        unique sim ID
 
     Returns
     -------
@@ -277,7 +280,7 @@ def com1DFACore(cfg, avaDir, cuSimName, inputSimFiles, outDir):
 
     # ------------------------
     #  Start time step computation
-    Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem)
+    Tsave, particlesList, fieldsList, infoDict = DFAIterate(cfg, particles, fields, dem, simHash=simHash)
 
     # write mass balance to File
     writeMBFile(infoDict, avaDir, cuSimName)
@@ -469,7 +472,7 @@ def prepareInputData(inputSimFiles, cfg):
     relThFile = inputSimFiles['relThFile']
 
     # get dem dictionary - already read DEM with correct mesh cell size
-    demOri = gI.initializeDEM(cfg)
+    demOri = gI.initializeDEM(cfg['GENERAL']['avalancheDir'], cfg['INPUT']['DEM'])
 
     # read data from relThFile
     if relThFile != '':
@@ -1196,7 +1199,7 @@ def initializeResistance(cfg, dem, simTypeActual, resLine, reportAreaInfo, thres
     return cResRaster, reportAreaInfo
 
 
-def DFAIterate(cfg, particles, fields, dem):
+def DFAIterate(cfg, particles, fields, dem, simHash=''):
     """ Perform time loop for DFA simulation
      Save results at desired intervals
 
@@ -1284,6 +1287,12 @@ def DFAIterate(cfg, particles, fields, dem):
     particles['dt'] = dt
     t = t + dt
 
+    ######## create range time diagram #####################
+    # check if range-time diagram should be performed, if yes - initialize
+    if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
+        mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, dem, simHash)
+    #########################################################
+
     # Start time step computation
     while t <= tEnd*(1.+1.e-13) and particles['iterate']:
         startTime = time.time()
@@ -1301,6 +1310,14 @@ def DFAIterate(cfg, particles, fields, dem):
         timeM.append(t)
         # print progress to terminal
         print("time step t = %f s\r" % t, end="")
+
+        ######## create range time diagram #####################
+        # determine avalanche front and flow characteristics in respective coodrinate system
+        if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram') and t >= dtRangeTime[0]:
+            mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, dem,
+                fields, mtiInfo)
+        #########################################################
+
         # make sure the array is not empty
         if t >= dtSave[0]:
             Tsave.append(t)
@@ -1312,11 +1329,9 @@ def DFAIterate(cfg, particles, fields, dem):
             log.debug(('cpu time Neighbour = %s s' % (tCPU['timeNeigh'] / nIter)))
             log.debug(('cpu time Fields = %s s' % (tCPU['timeField'] / nIter)))
             fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes)
-            if dtSave.size == 1:
-                dtSave = [2*cfgGen.getfloat('tEnd')]
-            else:
-                indSave = np.where(dtSave > t)
-                dtSave = dtSave[indSave]
+
+            # remove saving time steps that have already been saved
+            dtSave = updateSavingTimeStep(dtSave, cfg['GENERAL'], t)
 
         # derive time step
         if cfgGen.getboolean('cflTimeStepping') and nIter > cfgGen.getfloat('cflIterConstant'):
@@ -1370,7 +1385,41 @@ def DFAIterate(cfg, particles, fields, dem):
         infoDict.update({'stopInfo': {'Stop criterion': '< %.2f percent of PKE' % stopCritPer,
                                       'Avalanche run time [s]': '%.2f' % avaTime}})
 
+    ######## create range time diagram #####################
+    # plot range-time diagram
+    if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
+        dtAnaPlots.plotMTI(mtiInfo, cfgRangeTime['GENERAL'])
+    #########################################################
+
     return Tsave, particlesList, fieldsList, infoDict
+
+
+def updateSavingTimeStep(dtSave, cfg, t):
+    """ update saving time step list
+
+        Parameters
+        -----------
+        dtSave: list
+            list of time steps that shall be saved
+        cfg: configparser object
+            configuration settings, end time step
+        t: float
+            actual time step
+
+        Returns
+        --------
+        dtSave: list
+            updated list of saving time steps
+
+    """
+
+    if dtSave.size == 1:
+        dtSave = [2*cfg.getfloat('tEnd')]
+    else:
+        indSave = np.where(dtSave > t)
+        dtSave = dtSave[indSave]
+
+    return dtSave
 
 
 def appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypes):
