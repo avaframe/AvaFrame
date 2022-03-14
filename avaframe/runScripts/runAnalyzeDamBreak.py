@@ -31,7 +31,7 @@ log.info('MAIN SCRIPT')
 log.info('Current avalanche: %s', avalancheDir)
 
 # create output directory for test result plots
-outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'damBreak')
+outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
 fU.makeADir(outDirTest)
 
 # Load configuration
@@ -45,18 +45,21 @@ solDam = damBreak.damBreakSol(avalancheDir, cfgMain, cfg, outDirTest)
 # create dataFrame of results
 simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
-# pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'damBreak', 'results15.p')
-# if pathToResults.is_file():
-#     simDF = pd.read_pickle(pathToResults)
-simDF = damBreak.postProcessDamBreak(avalancheDir, cfgMain, cfg, simDF, solDam, outDirTest)
+pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results5.p')
+if pathToResults.is_file():
+    simDF = pd.read_pickle(pathToResults)
+# simDF = damBreak.postProcessDamBreak(avalancheDir, cfgMain, cfg, simDF, solDam, outDirTest)
 
-# simDF = simDF[simDF['iniStep']==True]
-# simDF = simDF[simDF['sphOption']==1]
-
-# make convergence plot
-# fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'hErrorL2',
-#                           'sphOption', 'subgridMixingFactor', logScale=True, fit=True)
+# make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
+fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'vhErrorL2',
+                          'aPPK', 'nPPK0', logScale=True, fit=False)
 
 # make convergence plot
-fig1, ax1, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'vhErrorL2',
-                          'sphKernelRadius', 'nPPK0', logScale=True, fit=True)
+outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'aPPK', 'nPPK0')
+
+# do some filtering for the presentation plot
+simDF = simDF[simDF['sphKernelRadius']==3]
+
+# make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
+fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'hErrorL2',
+                          'aPPK', 'nPPK0', logScale=True, fit=True)

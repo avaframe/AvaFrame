@@ -646,17 +646,18 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
                 timeList = [timeList[ind_t]]
                 ind_t = 0
 
-        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(avalancheDir, fieldsList, timeList, solSimi,
+        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray, t = analyzeResults(avalancheDir, fieldsList, timeList, solSimi,
                                                                           fieldHeader, cfgMain, cfgSimi, outDirTest,
                                                                           simHash, simDFrow)
         # add result of error analysis
         # save results in the simDF
+        simDF.loc[simHash, 'timeError'] = t
         simDF.loc[simHash, 'hErrorL2'] = hEL2Array[ind_t]
         simDF.loc[simHash, 'vhErrorL2'] = vhEL2Array[ind_t]
         simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[ind_t]
         simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[ind_t]
 
-    name = 'results' + str(round(tSave)) + '.p'
+    name = 'results' + str(round(t)) + '.p'
     simDF.to_pickle(outDirTest / name)
 
     return simDF
@@ -670,6 +671,8 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
             path to avalanche directory
         fieldsList: list
             list of fields dictionaries
+        timeList: list
+            list of time steps
         solSimi: dictionary
             similarity solution:
                 time: time array (without dimension)
@@ -680,8 +683,10 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
                 f_p_sol: first derivativ of f array
         fieldHeader: dict
             header dictionary with info about the extend and cell size
+        cfgMain: dict
+            main confguration
         cfgSimi: dict
-            simisol confguration section
+            simisol confguration including SIMISOL section
         outDirTest: pathlib path
             path output directory (where to save the figures)
         simHash: str
@@ -697,6 +702,8 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
             L2 error on flow velocity for saved time steps
         vErrorLMaxArray: numpy array
             LMax error on flow velocity for saved time steps
+        tSave: float
+            time corresponding the errors
 
     """
     # relTh = simDFrow['relTh']
@@ -706,6 +713,8 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
     vhErrorL2Array = np.zeros((len(fieldsList)))
     hErrorLMaxArray = np.zeros((len(fieldsList)))
     vhErrorLMaxArray = np.zeros((len(fieldsList)))
+    # get plots limits
+    limits = outAna1Plots.getPlotLimits(cfgSimi['SIMISOL'], fieldsList, fieldHeader)
     count = 0
     # run the comparison routine for each saved time step
     for t, field in zip(timeList, fieldsList):
@@ -735,8 +744,10 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhErrorL2))
         # Make all individual time step comparison plot
         if cfgSimi['SIMISOL'].getboolean('plotSequence'):
-            outAna1Plots.showSavetimeStepsSimiSol(cfgMain, cfgSimi['SIMISOL'], field, simiDict, t, fieldHeader, outDirTest, simHash)
-            outAna1Plots.makeContourSimiPlot(avalancheDir, simHash, hNumerical, simiDict, fieldHeader, t, outDirTest)
+            outAna1Plots.saveSimiSolProfile(cfgMain, cfgSimi['SIMISOL'], field, limits, simiDict, t,
+                                            fieldHeader, outDirTest, simHash)
+            outAna1Plots.makeContourSimiPlot(avalancheDir, simHash, hNumerical, limits, simiDict, fieldHeader, t,
+                                             outDirTest)
         count = count + 1
 
     # Create result plots
@@ -746,12 +757,12 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
     indTime = np.searchsorted(solSimi['time'], tSave)
     simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi['SIMISOL'], relTh, gravAcc)
     outAna1Plots.plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array, hErrorLMaxArray,
-                        vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, simDFrow, cfgSimi)
+                                    vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, cfgSimi['SIMISOL'])
     if cfgSimi['SIMISOL'].getboolean('plotErrorTime') and len(timeList)>1:
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
-                                   simDFrow, cfgSimi['SIMISOL'].getboolean('relativError'), tSave, simHash, outDirTest)
+                                   cfgSimi['SIMISOL'].getboolean('relativError'), tSave, simHash, outDirTest)
 
-    return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
+    return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, tSave
 
 
 def getReleaseThickness(avaDir, cfg, demFile):

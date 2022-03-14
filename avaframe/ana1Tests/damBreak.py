@@ -143,7 +143,7 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, tMax, 
     plt.legend(loc='upper left')
 
     fig.suptitle('Simulation %s, t = %.2f s' % (simName, tSave), fontsize=30)
-    outputName = 'CompareDamBreak%s_%.02f' % (simName, tSave)
+    outputName = 'compareDamBreak%s_%.02f' % (simName, tSave)
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
     return ax1, ax2, ax3
@@ -291,23 +291,24 @@ def postProcessDamBreak(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest
                 indTime = 1
 
         # computeAndPlotGradient(avalancheDir, particlesList, timeList, solDam, cfgDam, outDirTest, simHash, simDFrow)
-        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray = analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader,
+        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray, t = analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader,
                                                                           cfgDam, outDirTest, simHash, simDFrow)
         # add result of error analysis
         # save results in the simDF
+        simDF.loc[simHash, 'timeError'] = t
         simDF.loc[simHash, 'hErrorL2'] = hEL2Array[indTime]
         simDF.loc[simHash, 'vhErrorL2'] = vhEL2Array[indTime]
         simDF.loc[simHash, 'hErrorLMax'] = hELMaxArray[indTime]
         simDF.loc[simHash, 'vhErrorLMax'] = vhELMaxArray[indTime]
         # +++++++++POSTPROCESS++++++++++++++++++++++++
         # -------------------------------
-    name = 'results' + str(round(tSave)) + '.p'
+    name = 'results' + str(round(t)) + '.p'
     simDF.to_pickle(outDirTest / name)
 
     return simDF
 
 
-def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgDam, outDirTest, simHash, simDFrow):
+def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg, outDirTest, simHash, simDFrow):
     """Compare analytical and com1DFA results, compute error
 
         Parameters
@@ -322,7 +323,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgD
             analytic solution dictionary
         fieldHeader: dict
             header dictionary with info about the extend and cell size
-        cfgDam: configParser object
+        cfg: configParser object
             configuration setting for avalanche simulation including DAMBREAK section
         outDirTest: pathlib path
             path output directory (where to save the figures)
@@ -341,9 +342,12 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgD
             L2 error on flow velocity for saved time steps
         vErrorLMaxArray: numpy array
             LMax error on flow velocity for saved time steps
+        tSave: float
+            time corresponding the errors
 
     """
-    phi = cfgDam['DAMBREAK'].getfloat('phi')
+    cfgDam = cfg['DAMBREAK']
+    phi = cfgDam.getfloat('phi')
     phiRad = np.radians(phi)
     cellSize = fieldHeader['cellsize']
     xMiddle = solDam['xMidAna']
@@ -362,7 +366,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgD
         indTime = np.searchsorted(tAna, t)
         xM = xMiddle[indTime]
         # get extent where the sol should be compared
-        xDamPlus, nColMid, nColMax, nRowMin, nRowMax = getDamExtend(fieldHeader, xM, cfgDam['DAMBREAK'])
+        xDamPlus, nColMid, nColMax, nRowMin, nRowMax = getDamExtend(fieldHeader, xM, cfgDam)
         # get analytical solution (in same format as the simulation results)
         hDamPlus = np.interp(xDamPlus, xAna, hAna[:, indTime])
         uDamPlus = np.interp(xDamPlus, xAna, uAna[:, indTime])
@@ -381,7 +385,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgD
                                                                             np.cos(phiRad))
         vhL2Plus, vhL2RelPlus, vhLmaxPlus, vhLmaxRelPlus = anaTools.normL2Scal(hDamPlus*uDamPlus, hNumPlus*uNumPlus,
                                                                                cellSize, np.cos(phiRad))
-        if cfgDam['DAMBREAK'].getboolean('relativError'):
+        if cfgDam.getboolean('relativError'):
             hErrorL2Array[count] = hL2RelPlus
             hErrorLMaxArray[count] = hLmaxRelPlus
             vhErrorL2Array[count] = vhL2RelPlus
@@ -391,25 +395,28 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfgD
             hErrorLMaxArray[count] = hLmaxPlus
             vhErrorL2Array[count] = vhL2Plus
             vhErrorLMaxArray[count] = vhLmaxPlus
-        title = outAna1Plots.getTitleError(cfgDam['DAMBREAK'].getboolean('relativError'))
+        title = outAna1Plots.getTitleError(cfgDam.getboolean('relativError'))
         log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hEL2Plus))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhL2Plus))
         # Make all individual time step comparison plot
-        if cfgDam['DAMBREAK'].getboolean('plotSequence'):
-            plotComparison(cfgDam['DAMBREAK'], simHash, fieldsList[0], field, fieldHeader, solDam, t, timeList[-1],
-            outDirTest)
+        if cfgDam.getboolean('plotSequence'):
+            plotComparison(cfgDam, simHash, fieldsList[0], field, fieldHeader, solDam, t, timeList[-1],
+                           outDirTest)
         count = count + 1
 
-    if cfgDam['DAMBREAK'].getboolean('plotErrorTime') and len(timeList)>1:
+    tSave = cfgDam.getfloat('tSave')
+    indT = min(np.searchsorted(timeList, tSave), min(len(timeList)-1, len(fieldsList)-1))
+    tSave = timeList[indT]
+    if cfgDam.getboolean('plotErrorTime') and len(timeList)>1:
+        # Create result plots
 
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
-                                   simDFrow, cfgDam['DAMBREAK'].getboolean('relativError'),
-                                   cfgDam['DAMBREAK'].getfloat('tSave'), simHash, outDirTest)
+                                   cfgDam.getboolean('relativError'), tSave, simHash, outDirTest)
 
-    outAna1Plots.plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam, hErrorL2Array, hErrorLMaxArray,
-                        vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, simDFrow, cfgDam)
+    outAna1Plots.plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam, hErrorL2Array,
+                                     hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, cfg)
 
-    return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray
+    return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, tSave
 
 
 def getDamExtend(fieldHeader, xM, cfgDam):

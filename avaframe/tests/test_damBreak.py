@@ -43,7 +43,7 @@ def test_mainCompareSimSolCom1DFA(tmp_path):
     simDF = damBreak.postProcessDamBreak(avalancheDir, cfgMain, cfg, simDF, solDam, outDirTest)
 
     # make convergence plot
-    fig1, ax1, slopeH = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'hErrorL2',
+    fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'hErrorL2',
                               'aPPK', 'nPPK0', logScale=True)
 
     outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'aPPK', 'nPPK0')

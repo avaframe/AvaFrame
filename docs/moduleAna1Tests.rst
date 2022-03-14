@@ -10,10 +10,10 @@ In order to either assess the accuracy of a numerical method or to compare resul
 it will be necessary to compute errors. The methods used to compute deviations are described
 in this section.
 
-Two deviation/difference/error measurement are used. The first one is based on the :math:`\mathcal{L}_{max}`
+Two deviation/difference/error measures are used. The first one is based on the :math:`\mathcal{L}_{max}`
 norm (uniform norm), the second on the Euclidean norm (:math:`\mathcal{L}_{2}` norm). In both cases,
 the aim is to measure the deviation between a numerical solution and reference solution on an interval
-(one or two dimensional). Let be :math:`f_{num}` the numerical solution and
+(one or two dimensional). Let :math:`f_{num}` be the numerical solution and
 :math:`f_{ref}` the reference solutions defined on an interval :math:`\Omega`.
 The deviation is defined by :math:`\epsilon(x) = f_{num}(x) - f_{ref}(x)`
 
@@ -45,8 +45,8 @@ The :math:`\mathcal{L}_{2}` norm is defined by:
     \mathcal{L}_{2}(\epsilon) = \int_{x\in \Omega}\vert\vert \epsilon(x) \vert\vert^2\,dx
 
 This norm will give an overall measure of the deviations. It is then useful to
-normalize the norm either by dividing the norm of the deviation by either
-the norm of the reference solution:
+normalize the norm either by dividing the norm of the deviation by the norm of
+the reference solution:
 
 .. math::
     \frac{\mathcal{L}_{2}(\epsilon(x))}{\mathcal{L}_{2}(f_{ref}(x))}
@@ -91,9 +91,9 @@ located in :py:mod:`out3Plot.outAna1Plots`. The input data for this example can 
 
 This test produces a summary figure combining a comparison between the analytic and simulation
 result (cross cut along the flow direction) as well as a bird view and an error measure plot as
-shown in :numref:`fig-damBreak`.
+shown in :numref:`fig-damBreakExample`.
 
-.. _fig-damBreak:
+.. _fig-damBreakExample:
 
 .. figure:: _static/damBreakTestExample.png
         :width: 90%
@@ -106,7 +106,7 @@ shown in :numref:`fig-damBreak`.
 Another optional result is the comparison cross cut figure for all saved time steps
 as shown in the following figure.
 
-.. image:: _static/CompareDamBreak8da2add5e5_Animation.gif
+.. image:: _static/compareDamBreak28c6370dbe_Animation.gif
 
 To run
 ------
@@ -127,7 +127,7 @@ In order to run the test example:
 Similarity solution
 ====================
 
-The similarity solution is one of the few cases where an semi-analytic solution can be derived for solving the depth integrated equations.
+The similarity solution is one of the few cases where a semi-analytic solution can be derived for solving the depth integrated equations.
 It is therefore a very useful test case for validating simulation results coming from the dense flow avalanche computation module.
 This semi-analytic solution can be derived under very strict conditions and making one major assumption on the shape of the solution.
 The full development of the conditions and assumptions as well as the derivation of the solution is presented in details in :cite:`HuSiSaNo1993`.
@@ -139,7 +139,7 @@ In this problem, we consider an avalanche governed by a dry friction law (Coulom
 The released mass is initially distributed in an ellipse with a parabolic depth shape.
 This mass is suddenly released at :math:`t=0` and flows down the inclined plane.
 
-The :py:mod:`ana1Tests.simiSol` module provides functions to compute the analytic solution and
+The :py:mod:`ana1Tests.simiSol` module provides functions to compute the semi-analytic solution and
 to compare it to the output from the DFA computational module as well as some plotting routines
 to visualize this solution in :py:mod:`out3Plot.outAna1Plots`.
 
@@ -152,16 +152,21 @@ Comparing the results from the DFA module to the similarity solution leads to th
           :width: 90%
 
 
-.. figure:: _static/SimiSol_0d20abd8ca_xyaxisCutSol_Animation.gif
+.. figure:: _static/compareContourSimiSol0d20abd8ca_Animation.gif
           :width: 90%
 
-    Time evolution of the profile in and across flow direction
+          Time evolution of the flow thickness contours in the x, y domain
+
+.. figure:: _static/compareProfileSimiSol0d20abd8ca_Animation.gif
+          :width: 90%
+
+          Time evolution of the profile in and across flow direction
 
 To run
 ------
 
-A workflow example is given in :py:mod:`runScripts/runSimilaritySol`, where the analytical solution is computed and
-avalanche simulations are performed and both results are then compared.
+A workflow example is given in :py:mod:`runScripts/runSimilaritySol`, where the semi-analytical solution
+is computed and avalanche simulations are performed and both results are then compared.
 The input data for this example can be found in ``data/avaSimilaritySol`` with the
 configuration settings of com1DFA including a section 'SIMISOL' (see ``data/avaSimilaritySol/Inputs/simiSol_com1DFACfg.ini``).
 
