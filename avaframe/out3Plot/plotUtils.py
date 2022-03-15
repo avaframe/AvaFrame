@@ -154,6 +154,12 @@ cmapTA = copy.copy(cmapCrameri.lapaz)
 # colormap used if no resType provided
 cmapNN = copy.copy(cmapCrameri.imola.reversed())
 
+# colormap used for range time diagram - continuous
+cmapRangeTime = copy.copy(cmapCrameri.batlowW_r)
+
+# colormap used for radar field of view plot
+cmapRadarFOV = copy.copy(cmapCrameri.davos)
+
 # colormap for probabilities
 levProb = list(fU.splitIniValueToArraySteps(cfgPlotUtils['probaColorLevels']))
 # lapaz color map
@@ -374,10 +380,11 @@ def saveAndOrPlot(pathDict, outFileName, fig):
     outPath = None
     if cfgFlags.getboolean('savePlot'):
         outFileName = outFileName.replace(".", "_")
-        outname = os.path.join(pathDict['pathResult'], outFileName)
-        outPath = outname + '.' + outputFormat
-        if not os.path.exists(os.path.dirname(outname)):
-            os.makedirs(os.path.dirname(outname))
+        outDir = pathlib.Path(pathDict['pathResult'])
+        outPath = outDir / (outFileName + '.' + outputFormat)
+        outname = outDir / outFileName
+        if not outDir.is_dir():
+            fU.makeADir(outDir)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             fig.savefig(outname)
@@ -485,6 +492,40 @@ def putAvaNameOnPlot(ax, avaDir):
             infoText = infoText + ';' + str(avaName)
 
     ax.annotate(infoText, fontsize=8, xy=(0.01, 0.01), xycoords='axes fraction',
+        bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.5))
+
+    return infoText
+
+
+def putInfoBox(ax, infoText, location='lowerRight', color='black'):
+    '''
+    Puts the  in the lower right or upper left or upper right corner of the given
+    matplotlib axes
+
+    Parameters
+    ----------
+    ax: matplotlib axes
+    infoText: str
+        text of infobox
+    location: str
+        default: lowerRight, options: upperRight, upperLeft
+    color: str
+        color of font
+    '''
+
+    # if avaDir is just a single avaDir or a list of avaDirs
+    if isinstance(infoText, str) is False:
+        log.warning('Info text to be added to plot is not a string - ignored')
+
+    if location == 'upperRight':
+        xy=(0.99, 0.99)
+    elif location == 'upperLeft':
+        xy=(0.01, 0.99)
+    else:
+        xy=(0.99, 0.01)
+
+    ax.annotate(infoText, xy=xy, xycoords='axes fraction', fontsize=8, horizontalalignment='right',
+        verticalalignment='bottom', color=color, alpha=0.5,
         bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.5))
 
     return infoText
