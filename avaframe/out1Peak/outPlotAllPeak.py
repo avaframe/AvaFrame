@@ -8,11 +8,13 @@ import logging
 import numpy as np
 from matplotlib import pyplot as plt
 import pathlib
+from matplotlib.colors import LightSource
 
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.out3Plot.outTopo as oP
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -110,15 +112,28 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             rowsMaxPlot = (rowsMax+1)*cellSize
             colsMinPlot = colsMin*cellSize
             colsMaxPlot = (colsMax+1)*cellSize
-            im0 = ax.imshow(demConstrained, cmap='Greys', extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
+
+            # add DEM hillshade with contour lines
+            ls = LightSource(azdeg=315, altdeg=45)
+            im0 = ax.imshow(ls.hillshade(demConstrained, vert_exag=10, dx=demConstrained.shape[1],
+                dy=demConstrained.shape[0]), cmap='gray', extent=[colsMinPlot, colsMaxPlot,
+                rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
+            X, Y = oP._setCoordinateGrid(colsMinPlot, rowsMinPlot, cellSize, demConstrained)
+            CS =  ax.contour(X, Y, demConstrained, colors=['saddlebrown'], levels=15, alpha=0.75,
+                linewidths=0.5)
+            ax.clabel(CS, CS.levels, inline=True, fontsize=8)
+            pU.putInfoBox(ax, '- elevation [m]', location='lowerRight', color='saddlebrown')
+
+            # add peak field data
+            #im0 = ax.imshow(demConstrained, cmap='Greys', extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
             im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
             pU.addColorBar(im1, ax, ticks, unit)
 
+            # add title, labels and ava Info
             title = str('%s' % name)
             ax.set_title(title)
             ax.set_xlabel('x [m]')
             ax.set_ylabel('y [m]')
-
             pU.putAvaNameOnPlot(ax, avaDir)
 
             fig.savefig(plotName)
