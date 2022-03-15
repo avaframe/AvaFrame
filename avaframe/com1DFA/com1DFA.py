@@ -1388,7 +1388,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
     ######## create range time diagram #####################
     # plot range-time diagram
     if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
-        dtAnaPlots.plotMTI(mtiInfo, cfgRangeTime['GENERAL'])
+        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime['GENERAL'])
     #########################################################
 
     return Tsave, particlesList, fieldsList, infoDict
