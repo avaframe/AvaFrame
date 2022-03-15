@@ -2214,8 +2214,10 @@ def prepareVarSimDict(standardCfg, inputSimFiles, variationDict, simNameOld=''):
         cfgSimObject = cfgUtils.convertDictToConfigParser(cfgSim)
         # create unique hash for simulation configuration
         simHash = cfgUtils.cfgHash(cfgSimObject)
-        simName = (relNameSim + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' +
-                   simHash)
+        #simName = (relNameSim + '_' + row._asdict()['simTypeList'] + '_' + cfgSim['GENERAL']['modelType'] + '_' +
+    #               simHash)
+        simName = (relNameSim + '_' + row._asdict()['simTypeList'] + '_' + simHash + '_' +
+                   cfgSim['GENERAL']['modelType'])
         # check if simulation exists. If yes do not append it
         if simName not in simNameOld:
             simDict[simName] = {'simHash': simHash, 'releaseScenario': relName,
