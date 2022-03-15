@@ -45,10 +45,10 @@ solDam = damBreak.damBreakSol(avalancheDir, cfgMain, cfg, outDirTest)
 # create dataFrame of results
 simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 
-pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results5.p')
-if pathToResults.is_file():
-    simDF = pd.read_pickle(pathToResults)
-# simDF = damBreak.postProcessDamBreak(avalancheDir, cfgMain, cfg, simDF, solDam, outDirTest)
+# pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results5.p')
+# if pathToResults.is_file():
+#     simDF = pd.read_pickle(pathToResults)
+simDF = damBreak.postProcessDamBreak(avalancheDir, cfgMain, cfg, simDF, solDam, outDirTest)
 
 # make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
 fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'vhErrorL2',
