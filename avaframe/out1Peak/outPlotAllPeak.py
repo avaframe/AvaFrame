@@ -117,16 +117,16 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             ls = LightSource(azdeg=315, altdeg=45)
             im0 = ax.imshow(ls.hillshade(demConstrained, vert_exag=10, dx=demConstrained.shape[1],
                 dy=demConstrained.shape[0]), cmap='gray', extent=[colsMinPlot, colsMaxPlot,
-                rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
+                rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal', zorder=1)
             X, Y = oP._setCoordinateGrid(colsMinPlot, rowsMinPlot, cellSize, demConstrained)
-            CS =  ax.contour(X, Y, demConstrained, colors=['saddlebrown'], levels=15, alpha=0.75,
-                linewidths=0.5)
-            ax.clabel(CS, CS.levels, inline=True, fontsize=8)
-            pU.putInfoBox(ax, '- elevation [m]', location='lowerRight', color='saddlebrown')
+            CS =  ax.contour(X, Y, demConstrained, colors=['lightgrey'], levels=15, alpha=0.75,
+                linewidths=0.5, zorder=2)
+            ax.clabel(CS, CS.levels, inline=True, fontsize=8,zorder=3)
+            pU.putInfoBox(ax, '- elevation [m]', location='lowerRight', color='lightgrey')
 
             # add peak field data
             #im0 = ax.imshow(demConstrained, cmap='Greys', extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
-            im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal')
+            im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal', zorder=4)
             pU.addColorBar(im1, ax, ticks, unit)
 
             # add title, labels and ava Info
