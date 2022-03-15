@@ -433,7 +433,7 @@ def createConfigurationInfo(avaDir, standardCfg='', writeCSV=False, specDir=''):
             else:
                 nameParts = simName.split('_')
                 infoParts = nameParts[1:]
-            simHash = infoParts[2]
+            simHash = infoParts[1]
             cfgObject = readCfgFile(avaDir, fileName=cFile)
             simDF = appendCgf2DF(simHash, simName, cfgObject, simDF)
 
@@ -629,7 +629,7 @@ def filterSims(avalancheDir, parametersDict, specDir=''):
 
     # load dataFrame for all configurations
     simDF = createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir=specDir)
-
+    
     # filter simulations all conditions in the parametersDict have to be met
     if parametersDict != '':
         for key, value in parametersDict.items():

@@ -570,8 +570,8 @@ def makeSimDF(inputDir, avaDir='', simID='simID'):
 
         data['releaseArea'].append(relNameSim)
         data['simType'].append(infoParts[0])
-        data['modelType'].append(infoParts[1])
-        data[simID].append(infoParts[2])
+        data[simID].append(infoParts[1])
+        data['modelType'].append(infoParts[2])
         data['resType'].append(infoParts[3])
         data['simName'].append(fNamePart + '_' + ('_'.join(infoParts[0:3])))
 
@@ -660,7 +660,7 @@ def makeSimFromResDF(avaDir, comModule, inputDir='', simName=''):
             dataDF = dataDF.append(newLine)
             dataDF.loc[simName, 'releaseArea'] = relNameSim
             dataDF.loc[simName, 'simType'] = infoParts[0]
-            dataDF.loc[simName, 'modelType'] = infoParts[1]
+            dataDF.loc[simName, 'modelType'] = infoParts[2]
             # add info about the cell size
             header = IOf.readASCheader(file)
             dataDF.loc[simName, 'cellSize'] = header['cellsize']
