@@ -48,16 +48,16 @@ def plotDamAnaResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
     # index of time steps
     dtInd = np.searchsorted(t, tSave)
 
-    fig = _plotVariable(h, x, xMiddle, dtInd, tSave, 'Flow depth [m]')
+    fig = _plotVariable(h, x, xMiddle, dtInd, tSave, pU.cfgPlotUtils['nameFD'] + '[' + pU.cfgPlotUtils['unitFD'] + ']')
     outputName = 'damBreakFlowDepth'
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
-    fig = _plotVariable(u, x, xMiddle, dtInd, tSave, 'Flow velocity [ms-1]')
+    fig = _plotVariable(u, x, xMiddle, dtInd, tSave, pU.cfgPlotUtils['nameFV'] + '[' + pU.cfgPlotUtils['unitFV'] + ']')
     outputName = 'damBreakFlowVelocity'
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
 
 
-def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, tMax, outDirTest):
+def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, limits, outDirTest):
     """ Generate plots that compare the simulation results to the analytical solution
 
         Parameters
@@ -71,7 +71,7 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, tMax, 
                 h0: float
                     release thickness
                 hAna: 2D numpy array
-                    flow depth (rows for x and columns for time)
+                    Flow thickness (rows for x and columns for time)
                 uAna: 2D numpy array
                     flow velocity (rows for x and columns for time)
                 xAna: 2D numpy array
@@ -85,8 +85,8 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, tMax, 
             tSave field dictionary
         tSave: float
             time step of analaysis
-        tMax: float
-            max time for com1DFA results
+        limits: dict
+            y extend for profile plots
         header: dict
             fields header dictionary
         outDirTest: pathli path
@@ -121,26 +121,25 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, tMax, 
     y[x<0] = solDam['h0']
     y[x>=0] = 0.0
     y[x<-120] = 0.0
-
     # setup index for time of analyitcal solution
     indTime = np.searchsorted(solDam['tAna'], tSave)
-    indTimeMax = np.searchsorted(solDam['tAna'], tMax)
+
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
     ax1 = outAna1Plots._plotDamProfile(ax1, x, y, nx_loc, cfg, dataIniFD, dataAnaFD, solDam['xAna'], solDam['xMidAna'],
-                             solDam['hAna'], indTime, indTimeMax,  'Flow depth', 'm')
-    ax1.set_title('Flow thickness profile')
+                             solDam['hAna'], indTime, limits['maxFD'],  pU.cfgPlotUtils['nameFD'], pU.cfgPlotUtils['unitFD'])
+    ax1.set_title(pU.cfgPlotUtils['nameFD'] + ' profile')
 
     y = np.zeros(len(x))
-    ax2 = outAna1Plots._plotDamProfile(ax2, x, y, nx_loc, cfg, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
-                             solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, indTimeMax,
-                             'Flow momentum in slope directrion', 'm²/s')
-    ax2.set_title('Flow velocity in slope direction profile')
+    ax2 = outAna1Plots._plotDamProfile(ax2, x, y, nx_loc, cfg, dataIniV, dataAnaV, solDam['xAna'], solDam['xMidAna'],
+                             solDam['uAna'], indTime, limits['maxFV'], pU.cfgPlotUtils['nameFV'] + ' in slope directrion', pU.cfgPlotUtils['unitFV'])
+    ax2.set_title(pU.cfgPlotUtils['nameFV'] + ' in slope direction profile')
+    ax2.legend(loc='upper left')
 
     y = np.zeros(len(x))
-    ax3 = outAna1Plots._plotDamProfile(ax3, x, y, nx_loc, cfg, dataIniV, dataAnaV, solDam['xAna'], solDam['xMidAna'],
-                             solDam['uAna'], indTime, indTimeMax,  'Flow velocity in slope directrion', 'm/s')
-    ax3.set_title('Flow momentum in slope direction profile')
-    plt.legend(loc='upper left')
+    ax3 = outAna1Plots._plotDamProfile(ax3, x, y, nx_loc, cfg, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
+                             solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, limits['maxFM'],
+                             pU.cfgPlotUtils['nameFDV'] + ' in slope directrion', pU.cfgPlotUtils['unitFDV'])
+    ax3.set_title(pU.cfgPlotUtils['nameFDV'] + '  in slope direction profile')
 
     fig.suptitle('Simulation %s, t = %.2f s' % (simName, tSave), fontsize=30)
     outputName = 'compareDamBreak%s_%.02f' % (simName, tSave)
@@ -149,7 +148,7 @@ def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, tMax, 
     return ax1, ax2, ax3
 
 def damBreakSol(avaDir, cfg, cfgC, outDirTest):
-    """ Compute analytical flow depth and velocity for dam break test case
+    """ Compute analytical Flow thickness and velocity for dam break test case
 
         for a granular flow over a dry rough sloping bed with the Savage Hutter model
 
@@ -173,7 +172,7 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
                 h0: float
                     release thickness
                 hAna: 2D numpy array
-                    flow depth (rows for x and columns for time)
+                    Flow thickness (rows for x and columns for time)
                 uAna: 2D numpy array
                     flow velocity (rows for x and columns for time)
                 xAna: 2D numpy array
@@ -204,7 +203,7 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
                   cfgC['DAMBREAK'].getfloat('dx'))
     nt = len(tAna)
     nx = len(x)
-    # Initialise flow depth solution and velocity
+    # Initialise Flow thickness solution and velocity
     h = np.zeros((nx, nt))
     u = np.zeros((nx, nt))
     xMiddle = np.zeros(nt)
@@ -335,9 +334,9 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
         Returns
         --------
         hErrorL2Array: numpy array
-            L2 error on flow depth for saved time steps
+            L2 error on Flow thickness for saved time steps
         hErrorLMaxArray: numpy array
-            LMax error on flow depth for saved time steps
+            LMax error on Flow thickness for saved time steps
         vErrorL2Array: numpy array
             L2 error on flow velocity for saved time steps
         vErrorLMaxArray: numpy array
@@ -355,6 +354,8 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
     xAna = solDam['xAna']
     hAna = solDam['hAna']
     uAna = solDam['uAna']
+    # get plots limits
+    limits = outAna1Plots.getPlotLimits(cfgDam, fieldsList, fieldHeader)
     hErrorL2Array = np.zeros((len(fieldsList)))
     vhErrorL2Array = np.zeros((len(fieldsList)))
     hErrorLMaxArray = np.zeros((len(fieldsList)))
@@ -396,11 +397,11 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
             vhErrorL2Array[count] = vhL2Plus
             vhErrorLMaxArray[count] = vhLmaxPlus
         title = outAna1Plots.getTitleError(cfgDam.getboolean('relativError'))
-        log.debug("L2 %s error on the Flow Depth at t=%.2f s is : %.4f" % (title, t, hEL2Plus))
+        log.debug("L2 %s error on the Flow thickness at t=%.2f s is : %.4f" % (title, t, hEL2Plus))
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhL2Plus))
         # Make all individual time step comparison plot
         if cfgDam.getboolean('plotSequence'):
-            plotComparison(cfgDam, simHash, fieldsList[0], field, fieldHeader, solDam, t, timeList[-1],
+            plotComparison(cfgDam, simHash, fieldsList[0], field, fieldHeader, solDam, t, limits,
                            outDirTest)
         count = count + 1
 
@@ -414,7 +415,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
                                    cfgDam.getboolean('relativError'), tSave, simHash, outDirTest)
 
     outAna1Plots.plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam, hErrorL2Array,
-                                     hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, cfg)
+                                     hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash, cfg)
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, tSave
 

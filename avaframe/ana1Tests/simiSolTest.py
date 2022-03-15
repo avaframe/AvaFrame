@@ -757,7 +757,7 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
     indTime = np.searchsorted(solSimi['time'], tSave)
     simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi['SIMISOL'], relTh, gravAcc)
     outAna1Plots.plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array, hErrorLMaxArray,
-                                    vhErrorL2Array, vhErrorLMaxArray, outDirTest, simHash, cfgSimi['SIMISOL'])
+                                    vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash, cfgSimi['SIMISOL'])
     if cfgSimi['SIMISOL'].getboolean('plotErrorTime') and len(timeList)>1:
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
                                    cfgSimi['SIMISOL'].getboolean('relativError'), tSave, simHash, outDirTest)
