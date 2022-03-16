@@ -502,8 +502,8 @@ Artificial viscosity
 
 Two options are available to add viscosity to stabilize the numerics. The first option
 consists in adding artificial viscosity (``viscOption`` = 1). The second option attempts
-to adapt the mesh Lax-Friedrich scheme to the particle method (``viscOption`` = 2).
-Finally, ``viscOption`` = 0 deactivates any viscosity force.
+to adapt the Lax-Friedrich scheme (usually applied to meshes) to the particle method
+(``viscOption`` = 2). Finally, ``viscOption`` = 0 deactivates any viscosity force.
 
 SAMOS Artificial viscosity
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -532,52 +532,58 @@ and should be discussed and further tested.
 Adding the viscous force
 """"""""""""""""""""""""
 
-The viscous force is added implicitly:
+The viscous force acting on particle :math:`k` reads:
 
 .. math::
   \begin{aligned}
-  \mathbf{F_{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}
-  \mathbf{du}^{new}\\
-  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}^{old} - \mathbf{\bar{u}}^{old}\| A_{Lat}
-  (\mathbf{u}^{new} - \mathbf{\bar{u}}^{old})
+  \mathbf{F_k^{viscosity}} = &-\frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}
+  \mathbf{du}_k^{new}\\
+  = &  -\frac{1}{2}\rho C_{Lat}\|\mathbf{u}_k^{old} - \mathbf{\bar{u}}_k^{old}\| A_{Lat}
+  (\mathbf{u}_k^{new} - \mathbf{\bar{u}}_k^{old})
   \end{aligned}
-Updating the velocity is done in two steps. First adding the explcit term related to the
+
+Updating the velocity is done in two steps. First adding the explicit term related to the
 mean mesh velocity and then the implicit term which leads to:
 
 .. math::
-  \mathbf{u}^{new} = \frac{\mathbf{u}^{old} - C_{vis}\mathbf{\bar{u}}^{old}}{1 + C_{vis}}
+  \mathbf{u}_k^{new} = \frac{\mathbf{u}_k^{old} - C_{vis}\mathbf{\bar{u}}_k^{old}}{1 + C_{vis}}
 
-With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}^{old}\| A_{Lat}\frac{dt}{m}`
+With :math:`C_{vis} = \frac{1}{2}\rho C_{Lat}\|\mathbf{du}_k^{old}\| A_{Lat}\frac{dt}{m}`
 
 
 Ata Artificial viscosity
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-An up-winding method based on Lax-Friedrichs scheme
+An upwind method based on Lax-Friedrichs scheme
 """""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Shallow Water Equations are well known for being hyperbolic transport equations.
-They have the particularity of carrying discontinuities or shocks which makes them
-numerically unstable.
-Thus a decentering in time allows to better capture the discontinuity.
-This can be done in the manner of the Lax-Friedrich scheme as described in :cite:`AtSo2005`.
-This decentering in time is formally the same as adding a viscous force.
-Transposed to the SPH method, this viscous force applied on a given particle :math:`k`
-can be expressed as follows:
+They have the particularity of carrying discontinuities or shocks which will cause
+numerical instabilities.
+
+A decentering in time allows to better capture the discontinuities.
+This can be done in the manner of the Lax-Friedrich scheme as described in :cite:`AtSo2005`,
+which is formally the same as adding a viscous force. Implementing it for the SPH method,
+this viscous force applied on a given particle :math:`k` can be expressed as follows:
 
 .. math::
-  \mathbf{F_{{viscosity}_k}} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl}
-with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_l - \mathbf{u}_k) \cdot \mathbf{n}_{kl}`
+  \mathbf{F_k^{viscosity} = \sum_{l} \frac{m_l}{\rho_l} \Pi_{kl} \mathbf{\nabla}W_{kl}
 
-where :math:`\mathbf{u}_{kl} = \mathbf{u}_k - \mathbf{u}_l` is the relative velocity
-between particle k and l, and :math:`\lambda_{kl} = \frac{c_k+c_l}{2}` with
-:math:`c_k = \sqrt{gh_l}`, the wave speed. The :math:`\lambda_{kl}` is obtained as
-turning expressions related to time and spacial discretization parameters
-into an expression on maximal speed between both particles in the Lax Friedrich
-scheme.
+with :math:`\Pi_{kl} = \lambda_{kl}(\mathbf{u}_l - \mathbf{u}_k) \cdot
+\frac{\mathbf{r}_{kl}}{\vert\vert \mathbf{r}_{kl} \vert\vert}`, and
+:math:`\mathbf{\nabla}W_{kl}` is the gradient of the kernel function and
+is described in :ref:`DFAnumerics:SPH gradient`.
+
+:math:`\mathbf{u}_{kl} = \mathbf{u}_k - \mathbf{u}_l` is the relative velocity
+between particle k and l, :math:`\mathbf{r}_{kl} = \mathbf{x}_k - \mathbf{x}_l` is
+the vector going from particles :math:`l` to particle :math:`k` and
+:math:`\lambda_{kl} = \frac{c_k+c_l}{2}` with :math:`c_k = \sqrt{gh_l}`
+the wave speed. The :math:`\lambda_{kl}` is obtained by turning expressions
+related to time and spatial discretization parameters into an expression
+on maximal speed between both particles in the Lax Friedrich scheme.
 
 Due to the expression of the viscosity force, it makes sense to
-compute it and add it with the SPH pressure force (for this reason, the
+compute it at the same place where the SPH pressure force are computed (for this reason, the
 ``viscOption`` = 2 corresponding to the "Ata" viscosity option is only available
 in combination with the ``sphOption`` = 2).
 
@@ -715,17 +721,23 @@ Adding friction forces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Both the bottom friction and resistance forces act against the flow. Two methods are available to add these
 forces in com1DFA.
+
 An implicit method:
+""""""""""""""""""""
 
 .. math::
   \mathbf{u}_k^{new} = \frac{\mathbf{u}_k^{old}}{1 + \frac{C_{k}^{\text{fric}}\Delta t}{m_k}}
 
 where :math:`F_{k,i}^{\text{fric}} = C_{k}^{\text{fric}} u_{k,i}^{new} = F_{k,i}^{\text{res}} + F_{k,i}^{\text{bot}}`
-(the two forces are discribed in :ref:`DFAnumerics:Bottom friction force` and :ref:`DFAnumerics:Added resistance force`).
+(the two forces are described in :ref:`DFAnumerics:Bottom friction force` and :ref:`DFAnumerics:Added resistance force`).
 
 This implicit method has a few draw-backs. First the flow does not start properly if the
 friction angle :math:`\delta` is too close to the slope angle. Second, the flow never properly stops, even if the
 particles physically should, i.e. particles keep oscillating back and force around their end position.
+
+
+An explicit method:
+""""""""""""""""""""
 
 The method based on :cite:`MaVi2003` addresses these two issues.
 The idea is that the friction forces only modify the magnitude of velocity and not the direction. This means dissipation,
@@ -734,7 +746,7 @@ i.e. if it is flowing or at rest.
 The friction force is expressed:
 
 .. math::
-  F_{k,i}^{\text{fric}} = -\|\mathbf{F}_{k}^{\text{fric}}\| \frac{\mathbf{u}_k}{\|\mathbf{u}_k\|}
+  \mathbf{F}^{\text{fric}} = -\|\mathbf{F}_{k}^{\text{fric}}\| \frac{\mathbf{u}_k}{\|\mathbf{u}_k\|}
 with:
 
 .. math::
