@@ -388,13 +388,13 @@ def saveAndOrPlot(pathDict, outFileName, fig):
         outFileName = outFileName.replace(".", "_")
         outDir = pathlib.Path(pathDict['pathResult'])
         outPath = outDir / (outFileName + '.' + outputFormat)
-        outname = outDir / outFileName
+        outName = outDir / outFileName
         if not outDir.is_dir():
             fU.makeADir(outDir)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            fig.savefig(outname)
-            log.info('saved to : %s ' % outname)
+            fig.savefig(outName)
+            log.info('saved to : %s ' % outName)
 
     plt.close(fig)
 
@@ -676,7 +676,7 @@ def getColors4Scatter(values, nSamples, unitSC):
 
 
 
-def addHillShadeContours(ax, data, x0, y0, cellSize, extent=''):
+def addHillShadeContours(ax, data, cellSize, extent):
     """ add hillshade and contours for given DEM data
 
         Parameters
@@ -685,12 +685,10 @@ def addHillShadeContours(ax, data, x0, y0, cellSize, extent=''):
             axes of plot
         data: numpy array
             dem data
-        x0, y0: floats
-            lower left corner coordinate
         cellSize: float
             cell size of data
         extent: list
-            optional extent parameter for imshow plot
+            extent [x0, x1, y0, y1] x0, y0 lower left corner and extent for imshow plot
     """
 
 
@@ -702,7 +700,7 @@ def addHillShadeContours(ax, data, x0, y0, cellSize, extent=''):
         dy=data.shape[0]), cmap='gray', extent=extent, origin='lower', aspect='equal', zorder=1)
 
     # create x,y coors for data array
-    X, Y = oP._setCoordinateGrid(x0, y0, cellSize, data)
+    X, Y = oP._setCoordinateGrid(extent[0], extent[2], cellSize, data)
 
     # add contour lines
     CS =  ax.contour(X, Y, data, colors=['gray'], levels=hillshadeContLevs, alpha=1.,
