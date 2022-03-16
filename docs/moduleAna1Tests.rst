@@ -44,7 +44,7 @@ The :math:`\mathcal{L}_{2}` norm is defined by:
 .. math::
     \mathcal{L}_{2}(\epsilon) = \int_{x\in \Omega}\vert\vert \epsilon(x) \vert\vert^2\,dx
 
-This norm will give an overall measure of the deviations. It is then useful to
+This norm will give an overall measure of the deviations. It is useful to
 normalize the norm either by dividing the norm of the deviation by the norm of
 the reference solution:
 
@@ -62,7 +62,7 @@ will give an average deviation of :math:`f` on  :math:`\Omega`.
 Dambreak test
 ===============
 
-The Dambreak test compares the results of the DFA simulation to the analytical solution of the "dam break" problem.
+The Dambreak test compares the results of DFA simulations to the analytical solution of the "dam break" problem.
 In this test, a granular mass (Coulomb material) is suddenly released from rest on an inclined plane.
 In the case of a depth integrated model as derived by Savage and Hutter, an analytical solution exists.
 This solution is described in :cite:`FaMa2012` and corresponds to a Riemann problem.
@@ -132,13 +132,16 @@ In order to run the test example:
 Similarity solution
 ====================
 
-The similarity solution is one of the few cases where a semi-analytic solution can be derived for solving the depth integrated equations.
-It is therefore a very useful test case for validating simulation results coming from the dense flow avalanche computation module.
-This semi-analytic solution can be derived under very strict conditions and making one major assumption on the shape of the solution.
-The full development of the conditions and assumptions as well as the derivation of the solution is presented in details in :cite:`HuSiSaNo1993`.
-The term semi-analytic is here used because the method enables to transform the PDE (partial differential equation) of the problem
-into an ODE using a similarity analysis method. Solving the ODE still requires a numerical integration but this last one is way
-more accurate (when conducted properly) and requires less computation power than solving the PDE.
+The similarity solution is one of the few cases where a semi-analytic solution can be derived for solving the depth
+integrated equations.
+It is a useful test case for validating simulation results coming from the dense flow avalanche computation module.
+This semi-analytic solution can be derived under very strict conditions and making one major assumption on the shape
+of the solution (symmetry/anti-symmetry of the solution around the x and y axis).
+The full development of the conditions and assumptions as well as the derivation of the solution is presented in
+details in :cite:`HuSiSaNo1993`.
+The term semi-analytic is here used because the method enables to transform the PDE (partial differential equation)
+of the problem into an ODE using a similarity analysis method. Solving the ODE still requires a numerical integration
+but this last one is more accurate (when conducted properly) and requires less computation power than solving the PDE.
 
 In this problem, we consider an avalanche governed by a dry friction law (Coulomb friction) flowing down an inclined plane.
 The released mass is initially distributed in an ellipse with a parabolic depth shape.

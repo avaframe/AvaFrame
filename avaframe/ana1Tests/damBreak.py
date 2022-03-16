@@ -59,16 +59,14 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
     # Set Parameters
     # Coordinate system chosen in the direction of the inclined plane
     g = cfgC['GENERAL'].getfloat('gravAcc')       # acceleration due to gravity [ms-2]
-    phiDeg = cfgC['DAMBREAK'].getfloat('phi')       # acceleration due to gravity [ms-2]
-    deltaDeg = cfgC['DAMBREAK'].getfloat('delta')       # acceleration due to gravity [ms-2]
-    phi = np.radians(phiDeg)                          # slope angle [°]
-    delta = np.radians(deltaDeg)                        # bed friction angle [°]
+    phiDeg = cfgC['DAMBREAK'].getfloat('phi')       # slope angle [°]
+    deltaDeg = cfgC['DAMBREAK'].getfloat('delta')       # friction angle [°]
+    phi = np.radians(phiDeg)                          # slope angle [rad]
+    delta = np.radians(deltaDeg)                        # bed friction angle [rad]
     gz = g * np.cos(phi)                          # projection of g perpendicular to the inclined plane
     m0 = gz * (np.tan(phi) - np.tan(delta))       # constant x-acceleration resulting from gravity and friction force
     hL = cfgC['GENERAL'].getfloat('relTh')        # initial height [m] in Riemann problem in state 1 (x<0), hR (x>0)=0
     cL = np.sqrt(gz * hL)
-    hR = cfgC['GENERAL'].getfloat('relTh')        # initial height [m] in Riemann problem in state 1 (x<0), hR (x>0)=0
-    cR = np.sqrt(gz * hR) # wave celeritiy
     x0R = cfgC['DAMBREAK'].getfloat('xBack') / np.cos(phi)
     tSave = cfgC['DAMBREAK'].getfloat('tSave')
     # Define time [0-1] seconds and space [-2,2] meters domains multiplied times 100
@@ -84,8 +82,8 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
 
     # Compute exact solution for case: 'dry bed' - including three different states
     for m in range(nt):
-        cond1R = x0R + ((m0*tAna[m]) / 2.0 - 2*cR) * tAna[m]
-        cond2R = x0R + ((m0*tAna[m]) / 2.0 + cR) * tAna[m]
+        cond1R = x0R + ((m0*tAna[m]) / 2.0 - 2*cL) * tAna[m]
+        cond2R = x0R + ((m0*tAna[m]) / 2.0 + cL) * tAna[m]
         cond1 = ((m0*tAna[m]) / 2.0 - cL) * tAna[m]
         cond2 = (2.0 *cL + ((m0*tAna[m]) / 2.0)) * tAna[m]
         # elif x[k] > cond2:
@@ -102,8 +100,8 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
         # to get the analytical solution on the back part (not working very well, theory is probably wrong)
         # # elif cond1R < x[k] <= cond2R:
         # if tAna[m] > 0:
-        #     u[:, m] = np.where(cond2R >= x, (2./3.) * (-cR + ((x-x0R) / tAna[m]) + m0 * tAna[m]), u[:, m])
-        #     h[:, m] = np.where(cond2R >= x, ((2.* cR + ((x-x0R) / tAna[m]) -
+        #     u[:, m] = np.where(cond2R >= x, (2./3.) * (-cL + ((x-x0R) / tAna[m]) + m0 * tAna[m]), u[:, m])
+        #     h[:, m] = np.where(cond2R >= x, ((2.* cL + ((x-x0R) / tAna[m]) -
         #                        ((m0 * tAna[m]) / 2.))**2) / (9. * gz), h[:, m])
         # # if x[k] <= cond1R:
         # u[:, m] = np.where(cond1R >= x, 0, u[:, m])
@@ -149,8 +147,6 @@ def postProcessDamBreak(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest
     for simHash, simDFrow in simDF.iterrows():
         simName = simDFrow['simName']
         # fetch the simulation results
-        # particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simHash,
-        #                                                                flagAvaDir=True, comModule='com1DFA')
         fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'],
                                                                simName=simName, flagAvaDir=True, comModule='com1DFA')
         # analyze and compare results
