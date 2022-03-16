@@ -1,22 +1,17 @@
 """
-
 Simple python script to reproduce analytic solution for a Riemann problem,
 following the derivations in Faccanoni and Mangeney (2012), Test 2, Case 1.2.
 but scaled up in size.
 
 Here the instantanous release of fluid from rest is described using incompressible,
 depth-avaeraged mass and momentum conservation equations and a Coulomb-tpye friction law.
-
-
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
 import logging
 
 # local imports
 import avaframe.com1DFA.com1DFA as com1DFA
-import avaframe.out3Plot.plotUtils as pU
 from avaframe.com1DFA import DFAtools
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
@@ -25,127 +20,6 @@ import avaframe.out3Plot.outAna1Plots as outAna1Plots
 # change log level in calling module to DEBUG to see log messages
 log = logging.getLogger(__name__)
 
-
-def _plotVariable(var, x, xMiddle, dtInd, dtStep, label):
-
-    fig = plt.figure(figsize=(pU.figW, pU.figH))
-    plt.title('Dry-Bed')
-    plt.plot(x, var[:,0], 'k--', label='t = 0s')
-    plt.plot(x, var[:,dtInd], label='t = %.1fs' % dtStep)
-    plt.xlabel('x-coordinate [m]')
-    plt.ylabel(label)
-    plt.legend()
-
-    return fig
-
-
-def plotDamAnaResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
-    """ Create plots of the analytical solution for the given settings,
-        including an animation
-
-    """
-
-    # index of time steps
-    dtInd = np.searchsorted(t, tSave)
-
-    fig = _plotVariable(h, x, xMiddle, dtInd, tSave, pU.cfgPlotUtils['nameFD'] + '[' + pU.cfgPlotUtils['unitFD'] + ']')
-    outputName = 'damBreakFlowDepth'
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
-
-    fig = _plotVariable(u, x, xMiddle, dtInd, tSave, pU.cfgPlotUtils['nameFV'] + '[' + pU.cfgPlotUtils['unitFV'] + ']')
-    outputName = 'damBreakFlowVelocity'
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
-
-
-def plotComparison(cfg, simName, fields0, fieldsT, header, solDam, tSave, limits, outDirTest):
-    """ Generate plots that compare the simulation results to the analytical solution
-
-        Parameters
-        -----------
-        cfgC: configParser object
-            configuration setting for avalanche simulation including DAMBREAK section
-        solDam: dict
-            analytic solution dictionary:
-                tAna: 1D numpy array
-                    time array
-                h0: float
-                    release thickness
-                hAna: 2D numpy array
-                    Flow thickness (rows for x and columns for time)
-                uAna: 2D numpy array
-                    flow velocity (rows for x and columns for time)
-                xAna: 2D numpy array
-                    extent of domain in the horizontal plane coordinate system (rows for x and columns for time)
-                xMidAna: 1D numpy array
-                    middle of the material in x dir in the horizontal plane coordinate system
-                    (used to compute the error)
-        fields0: dict
-            initial time step field dictionary
-        fieldsT: dict
-            tSave field dictionary
-        tSave: float
-            time step of analaysis
-        limits: dict
-            y extend for profile plots
-        header: dict
-            fields header dictionary
-        outDirTest: pathli path
-            path to output directory
-
-    """
-    phi = cfg.getfloat('phi')
-    phiRad = np.radians(phi)
-    # Load data
-    dataIniFD = fields0['FD']
-    dataAnaFD = fieldsT['FD']
-    dataIniVx = fields0['Vx']
-    dataIniVy = fields0['Vy']
-    dataIniVz = fields0['Vz']
-    dataAnaVx = fieldsT['Vx']
-    dataAnaVy = fieldsT['Vy']
-    dataAnaVz = fieldsT['Vz']
-    # project velocity on inclined plane
-    dataIniV = DFAtools.scalProd(dataIniVx, dataIniVy, dataIniVz, np.cos(phiRad), 0, -np.sin(phiRad))
-    dataAnaV = DFAtools.scalProd(dataAnaVx, dataAnaVy, dataAnaVz, np.cos(phiRad), 0, -np.sin(phiRad))
-
-    # Location of Profiles
-    cellSize = header['cellsize']
-    ny = dataAnaFD.shape[0]
-    nx = dataAnaFD.shape[1]
-    xllc = header['xllcenter']
-    nx_loc = int(ny *0.5)
-
-    # set x Vector
-    x = np.arange(xllc, xllc + nx*cellSize, cellSize)
-    y = np.zeros(len(x))
-    y[x<0] = solDam['h0']
-    y[x>=0] = 0.0
-    y[x<-120] = 0.0
-    # setup index for time of analyitcal solution
-    indTime = np.searchsorted(solDam['tAna'], tSave)
-
-    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
-    ax1 = outAna1Plots._plotDamProfile(ax1, x, y, nx_loc, cfg, dataIniFD, dataAnaFD, solDam['xAna'], solDam['xMidAna'],
-                             solDam['hAna'], indTime, limits['maxFD'],  pU.cfgPlotUtils['nameFD'], pU.cfgPlotUtils['unitFD'])
-    ax1.set_title(pU.cfgPlotUtils['nameFD'] + ' profile')
-
-    y = np.zeros(len(x))
-    ax2 = outAna1Plots._plotDamProfile(ax2, x, y, nx_loc, cfg, dataIniV, dataAnaV, solDam['xAna'], solDam['xMidAna'],
-                             solDam['uAna'], indTime, limits['maxFV'], pU.cfgPlotUtils['nameFV'] + ' in slope directrion', pU.cfgPlotUtils['unitFV'])
-    ax2.set_title(pU.cfgPlotUtils['nameFV'] + ' in slope direction profile')
-    ax2.legend(loc='upper left')
-
-    y = np.zeros(len(x))
-    ax3 = outAna1Plots._plotDamProfile(ax3, x, y, nx_loc, cfg, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
-                             solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, limits['maxFM'],
-                             pU.cfgPlotUtils['nameFDV'] + ' in slope directrion', pU.cfgPlotUtils['unitFDV'])
-    ax3.set_title(pU.cfgPlotUtils['nameFDV'] + '  in slope direction profile')
-
-    fig.suptitle('Simulation %s, t = %.2f s' % (simName, tSave), fontsize=30)
-    outputName = 'compareDamBreak%s_%.02f' % (simName, tSave)
-    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
-
-    return ax1, ax2, ax3
 
 def damBreakSol(avaDir, cfg, cfgC, outDirTest):
     """ Compute analytical Flow thickness and velocity for dam break test case
@@ -229,7 +103,8 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
         # # elif cond1R < x[k] <= cond2R:
         # if tAna[m] > 0:
         #     u[:, m] = np.where(cond2R >= x, (2./3.) * (-cR + ((x-x0R) / tAna[m]) + m0 * tAna[m]), u[:, m])
-        #     h[:, m] = np.where(cond2R >= x, ((2.* cR + ((x-x0R) / tAna[m]) - ((m0 * tAna[m]) / 2.))**2) / (9. * gz), h[:, m])
+        #     h[:, m] = np.where(cond2R >= x, ((2.* cR + ((x-x0R) / tAna[m]) -
+        #                        ((m0 * tAna[m]) / 2.))**2) / (9. * gz), h[:, m])
         # # if x[k] <= cond1R:
         # u[:, m] = np.where(cond1R >= x, 0, u[:, m])
         # h[:, m] = np.where(cond1R >= x, 0, h[:, m])
@@ -239,7 +114,7 @@ def damBreakSol(avaDir, cfg, cfgC, outDirTest):
 
     #-----------------------------Plot results --------------
     # Reproduce figure 6, case 1.2.1 - Test 2
-    plotDamAnaResults(tAna, x, xMiddle, h, u, tSave, cfg, outDirTest)
+    outAna1Plots.plotDamAnaResults(tAna, x, xMiddle, h, u, tSave, cfg, outDirTest)
 
     x = x * np.cos(phi)  # projected on the horizontal plane
     xMiddle = xMiddle * np.cos(phi)  # projected on the horizontal plane
@@ -274,7 +149,8 @@ def postProcessDamBreak(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest
     for simHash, simDFrow in simDF.iterrows():
         simName = simDFrow['simName']
         # fetch the simulation results
-        # particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simHash, flagAvaDir=True, comModule='com1DFA')
+        # particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simHash,
+        #                                                                flagAvaDir=True, comModule='com1DFA')
         fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'],
                                                                simName=simName, flagAvaDir=True, comModule='com1DFA')
         # analyze and compare results
@@ -290,8 +166,9 @@ def postProcessDamBreak(avalancheDir, cfgMain, cfgDam, simDF, solDam, outDirTest
                 indTime = 1
 
         # computeAndPlotGradient(avalancheDir, particlesList, timeList, solDam, cfgDam, outDirTest, simHash, simDFrow)
-        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray, t = analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader,
-                                                                          cfgDam, outDirTest, simHash, simDFrow)
+        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray, t = analyzeResults(avalancheDir, fieldsList, timeList, solDam,
+                                                                             fieldHeader, cfgDam, outDirTest, simHash,
+                                                                             simDFrow)
         # add result of error analysis
         # save results in the simDF
         simDF.loc[simHash, 'timeError'] = t
@@ -401,8 +278,8 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
         log.debug("L2 %s error on the momentum at t=%.2f s is : %.4f" % (title, t, vhL2Plus))
         # Make all individual time step comparison plot
         if cfgDam.getboolean('plotSequence'):
-            plotComparison(cfgDam, simHash, fieldsList[0], field, fieldHeader, solDam, t, limits,
-                           outDirTest)
+            outAna1Plots.plotComparisonDam(cfgDam, simHash, fieldsList[0], field, fieldHeader, solDam, t, limits,
+                                           outDirTest)
         count = count + 1
 
     tSave = cfgDam.getfloat('tSave')
@@ -415,7 +292,8 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solDam, fieldHeader, cfg,
                                    cfgDam.getboolean('relativError'), tSave, simHash, outDirTest)
 
     outAna1Plots.plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam, hErrorL2Array,
-                                     hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash, cfg)
+                                     hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash,
+                                     cfg)
 
     return hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, tSave
 

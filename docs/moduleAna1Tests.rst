@@ -111,7 +111,7 @@ as shown in the following figure.
 .. figure:: _static/compareDamBreak28c6370dbe_Animation.gif
           :width: 90%
 
-          Time evolution of the dam thickness velocity and momentum in the flow direction
+          Time evolution of the dam thickness, velocity and momentum
 
 To run
 ------
