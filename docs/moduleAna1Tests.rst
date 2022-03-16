@@ -2,6 +2,9 @@
 ana1Tests: Testing
 ##################################
 
+In this module we gather tests with analytical or semi-analytical solution.
+These tests are used to evaluate the precision and accuracy of the com1DFA
+numerical solution.
 
 Deviation/difference/error computation
 =======================================
@@ -14,7 +17,7 @@ Two deviation/difference/error measures are used. The first one is based on the 
 norm (uniform norm), the second on the Euclidean norm (:math:`\mathcal{L}_{2}` norm). In both cases,
 the aim is to measure the deviation between a numerical solution and reference solution on an interval
 (one or two dimensional). Let :math:`f_{num}` be the numerical solution and
-:math:`f_{ref}` the reference solutions defined on an interval :math:`\Omega`.
+:math:`f_{ref}` the reference solution defined on an interval :math:`\Omega`.
 The deviation is defined by :math:`\epsilon(x) = f_{num}(x) - f_{ref}(x)`
 
 
@@ -44,9 +47,8 @@ The :math:`\mathcal{L}_{2}` norm is defined by:
 .. math::
     \mathcal{L}_{2}(\epsilon) = \int_{x\in \Omega}\vert\vert \epsilon(x) \vert\vert^2\,dx
 
-This norm will give an overall measure of the deviations. It is useful to
-normalize the norm either by dividing the norm of the deviation by the norm of
-the reference solution:
+This norm will give an overall measure of the deviations. It is useful to normalize the norm
+of the deviation either by dividing with the norm of the reference solution:
 
 .. math::
     \frac{\mathcal{L}_{2}(\epsilon(x))}{\mathcal{L}_{2}(f_{ref}(x))}
@@ -64,7 +66,8 @@ Dambreak test
 
 The Dambreak test compares the results of DFA simulations to the analytical solution of the "dam break" problem.
 In this test, a granular mass (Coulomb material) is suddenly released from rest on an inclined plane.
-In the case of a depth integrated model as derived by Savage and Hutter, an analytical solution exists.
+In the case of a depth integrated model as derived by Savage and Hutter (e.g. in :cite:`HuSiSaNo1993`),
+an analytical solution exists.
 This solution is described in :cite:`FaMa2012` and corresponds to a Riemann problem.
 
 The problem considered has the following initial conditions:
@@ -85,13 +88,13 @@ The problem considered has the following initial conditions:
 
       Dam break theoretical evolution
 
-The functions computing the analytical solution and comparing it to the simulation results are to be
+The functions computing the analytical solution and comparing it to the simulation results can be
 found in :py:mod:`ana1Tests.damBreak` and :py:mod:`ana1Tests.analysisTools`. Plotting routines are
-located in :py:mod:`out3Plot.outAna1Plots`. The input data for this example can be found in ``data/avaDamBreak``.
+located in :py:mod:`out3Plot.outAna1Plots`. The input data for this test case can be found in ``data/avaDamBreak``.
 
-This test produces a summary figure combining a comparison between the analytic and simulation
-result (cross cut along the flow direction) as well as a bird view and an error measure plot as
-shown in :numref:`fig-damBreakExample`.
+This test produces a summary figure combining a comparison between the analytical solution and
+simulation result result (cross cut along the flow direction) as well as a map view and an
+error measure plot as shown in :numref:`fig-damBreakExample`.
 
 .. _fig-damBreakExample:
 
@@ -104,23 +107,23 @@ shown in :numref:`fig-damBreakExample`.
         .. and an initialization process as described in :ref:`theoryCom1DFA:Friction Model` )
 
 Another optional result is the comparison cross cut figure for all saved time steps
-as shown in the following figure.
+as shown in the following animated figure.
 
 .. _fig-damBreakProfile:
 
 .. figure:: _static/compareDamBreak28c6370dbe_Animation.gif
           :width: 90%
 
-          Time evolution of the dam thickness, velocity and momentum
+          Time evolution of the flow thickness, velocity and momentum
 
 To run
 ------
 An example on how to apply this test is provided in :py:mod:`runScripts/runDamBreak` and
 :py:mod:`runScripts/runAnalyzeDamBreak`.
-The required input files are located in ``data/avaDamBreak``, where the model configuration file can
-be found (``data/avaDamBreak/Inputs/damBreak_com1DFACfg.ini``). In this configuration file, there
-is a specific section ``'DAMBREAK'`` providing the required input parameters to compute the analytical solution.
-In order to run the test example:
+The required input files are located in ``data/avaDamBreak`` (including the configuration file
+``data/avaDamBreak/Inputs/damBreak_com1DFACfg.ini``). In this configuration file, there is a
+specific section ``'DAMBREAK'`` providing the required input parameters to compute the
+analytical solution. In order to run the test example:
 
 * in ``AvaFrame/avaframe`` run::
 
@@ -134,7 +137,7 @@ Similarity solution
 
 The similarity solution is one of the few cases where a semi-analytic solution can be derived for solving the depth
 integrated equations.
-It is a useful test case for validating simulation results coming from the dense flow avalanche computation module.
+It is a useful test case for validating simulation results coming from the dense flow avalanche computational module.
 This semi-analytic solution can be derived under very strict conditions and making one major assumption on the shape
 of the solution (symmetry/anti-symmetry of the solution around the x and y axis).
 The full development of the conditions and assumptions as well as the derivation of the solution is presented in
@@ -158,6 +161,8 @@ Comparing the results from the DFA module to the similarity solution leads to th
 
 .. figure:: _static/simiSolTestExample.png
           :width: 90%
+
+          Summary figure produced by the simiSol test (here for a cell size of 2m)
 
 
 .. figure:: _static/compareContourSimiSol0d20abd8ca_Animation.gif
