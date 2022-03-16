@@ -1183,7 +1183,7 @@ def findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint):
 
     return rasterTransfo
 
-def makeDomainTransfoOnTheGo(avaDir, demSims, cfgSetup, pathDict):
+def makeDomainTransfoOnTheGo(avaDir, dem, cfgSetup, pathDict):
     """ Make domain transformation
 
     This function returns the information about the domain transformation
@@ -1231,10 +1231,6 @@ def makeDomainTransfoOnTheGo(avaDir, demSims, cfgSetup, pathDict):
     # read input parameters from AIMEC secton in configuration
     w = cfgSetup.getfloat('domainWidth')
 
-    # simulation dem has not original origin - reset origin but use cellSize and data from simulation dem
-    # set header that corresponds to dem and result fields
-    dem = setDemOrigin(demSims)
-
     # get the cell size for the (s, l) raster
     cellSizeSL = computeCellSizeSL(cfgSetup, dem['header'])
     # Initialize transformation dictionary
@@ -1262,24 +1258,5 @@ def makeDomainTransfoOnTheGo(avaDir, demSims, cfgSetup, pathDict):
     # add info on start of runout area
     rasterTransfo = findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint)
 
-    return rasterTransfo, dem
-
-def setDemOrigin(demSims):
-    """ reset original origin to simulation DEM - required if for ava sim is set to something different
-
-        Parameters
-        ------------
-        demSims: dict
-            dictionary with header and data of DEM used to run ava simulations
-
-        Returns
-        --------
-        demOriginal: dict
-            updated DEM with xllcenter and yllcenter set to original origin
-            cellsize and nrows and columns kept from simulation DEM
-    """
-
-    # fetch dem data and header - use simulation dem data but xllcenter und yllcenter from original dem
-    demOriginal = {'header': demSims['originalHeader'], 'rasterData': demSims['rasterData']}
-
-    return demOriginal
+    return rasterTransfo
+    
