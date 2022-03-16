@@ -42,7 +42,7 @@ def initiateLogger(targetDir, logName='runLog'):
 
     # datetime object containing current date and time
     now = datetime.now()
-    dtString = now.strftime("%d.%m.%Y_%H:%M:%S")
+    dtString = now.strftime("%Y%m%d_%Hh%Mm%Ss")
 
     logFileName = pathlib.Path(targetDir, logName+'_'+dtString+'.log')
 
