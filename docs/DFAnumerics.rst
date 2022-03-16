@@ -746,7 +746,7 @@ i.e. if it is flowing or at rest.
 The friction force is expressed:
 
 .. math::
-  \mathbf{F}^{\text{fric}} = -\|\mathbf{F}_{k}^{\text{fric}}\| \frac{\mathbf{u}_k}{\|\mathbf{u}_k\|}
+  \mathbf{F}_k^{\text{fric}} = -\|\mathbf{F}_{k}^{\text{fric}}\| \frac{\mathbf{u}_k}{\|\mathbf{u}_k\|}
 with:
 
 .. math::
