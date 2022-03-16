@@ -51,10 +51,13 @@ def initiateLogger(targetDir, logName='runLog'):
     logConfFile = logConfPath / 'logging.conf'
 
     # clean logFileName for special characters
-    cleanName = str("%r" % str(logFileName))
-
+    # very hacky way, but no better way found working for both linux and windows
+    # Add further special characters here as needed...
+    cleanName = str(logFileName)
+    cleanName = cleanName.replace('\'','\\\'')
+    
     logging.config.fileConfig(fname=logConfFile,
-                              defaults={'logfilename': repr(cleanName)},
+                              defaults={'logfilename': cleanName},
                               disable_existing_loggers=False)
     log = logging.getLogger('avaframe')
 
