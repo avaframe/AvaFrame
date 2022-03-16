@@ -77,17 +77,27 @@ def runOperational(avalancheDir=''):
     inputDir = avaDir / 'Outputs' / 'com1DFA' / 'peakFiles'
     peakFilesDF = fU.makeSimDF(inputDir, avaDir=avaDir)
 
-    # Run Alpha Beta
-    cfgAB = cfgUtils.getModuleConfig(com2AB)
-    resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
-    abShpFile = outAB.writeABtoSHP(resAB)
+    # Check if profile and splitpoint exist, and only run if available
+    try:
+        # See if reading AB inputs throws errors
+        com2AB.readABinputs(avalancheDir)
 
+        # if not: Run Alpha Beta
+        cfgAB = cfgUtils.getModuleConfig(com2AB)
+        resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
+        abShpFile = outAB.writeABtoSHP(resAB)
+
+        # Generate report info for com2AB
+        reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
+
+    except AssertionError as e:
+        log.info(e)
+        log.info('No Alpha Beta info, skipping')
+        abShpFile = None
+    
     # ----------------
     # Collect results/plots/report  to a single directory
     # make simple plots (com1DFA, com2AB)
-
-    # Generate report info for com2AB
-    reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
 
     # Set directory for report
     reportDir = avaDir / 'Outputs' / 'reports'
