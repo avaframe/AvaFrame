@@ -55,7 +55,7 @@ simDF, _ = cfgUtils.readAllConfigurationInfo(avalancheDir)
 log.info('Computing similarity solution')
 solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 
-# if the analysis already exists and you only want to replot uncomment this
+# if the analysis already exists and you only want to replot uncomment this (and put the good result name)
 # pathToResults = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests', 'results5.p')
 # if pathToResults.is_file():
 #     simDF = pd.read_pickle(pathToResults)
@@ -73,6 +73,8 @@ outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'sphKern
 simDF = simDF[simDF['sphKernelRadius']==3]
 
 # make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
+# same as plotErrorConvergence but adds the points corresponding to different coloredBy values one after the others
+# and saves itermediate plots
 fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
                           'aPPK', 'nPPK0', logScale=True, fit=True)
 

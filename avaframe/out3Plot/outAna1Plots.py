@@ -1,10 +1,7 @@
 # imports
-import math
 import numpy as np
-import pathlib
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import pandas as pd
 import logging
 import copy
 
@@ -13,10 +10,7 @@ import avaframe.in2Trans.ascUtils as IOf
 import avaframe.com1DFA.DFAtools as DFAtls
 import avaframe.com1DFA.com1DFA as com1DFA
 from avaframe.in1Data import getInput as gI
-import avaframe.ana1Tests.simiSolTest as simiSolTest
 import avaframe.out3Plot.plotUtils as pU
-import avaframe.out3Plot.outQuickPlot as outQuickPlot
-import avaframe.out3Plot.outDebugPlots as outDebugPlots
 import avaframe.out3Plot.outCom1DFA as outCom1DFA
 
 # create local logger
@@ -85,7 +79,7 @@ def makeContourSimiPlot(avalancheDir, simHash, fieldFD, limits, simiDict, fieldH
     fig, ax1 = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
     # make flow momentum comparison plot
     ax1 = plt.subplot2grid((1, 1), (0, 0))
-    ax1 = addContour2Plot(ax1, fieldFD, simiDict, fieldHeader, limits)
+    ax1 = addContour2Plot(ax1, fieldFD, simiDict, fieldHeader, limits, nLevels=16)
 
     ax1.set_title(pU.cfgPlotUtils['nameFD'] + ' contours at t = %.2f s' % tSave)
     pU.putAvaNameOnPlot(ax1, avalancheDir)
@@ -197,10 +191,11 @@ def _plotVariable(ax1, cfg, simiDict, comSol, limits, axis, particles=False):
     ax2.set_ylabel(getLabel('', '', dir='') + ' [' + pU.cfgPlotUtils['unitFDV'] + ']', color=color)
 
     props = dict(boxstyle='round', alpha=0)
-    ax1.text(0.05, 0.95, 'analytical solution (dashed line) \n numerical solution (full line) ', transform=ax1.transAxes,
-        verticalalignment='top', bbox=props)
+    text = 'analytical solution (dashed line) \n numerical solution (full line)'
+    ax1.text(0.05, 0.95, text, transform=ax1.transAxes, verticalalignment='top', bbox=props)
 
     return ax1, ax2
+
 
 def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array, hErrorLMaxArray,
                         vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash, cfgSimi):
@@ -307,8 +302,138 @@ def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict
     pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outFileName, fig)
 
 
-
 # Dam Break plots
+def _plotVariableDamBreak(var, x, xMiddle, dtInd, dtStep, label):
+
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
+    plt.title('Dry-Bed')
+    plt.plot(x, var[:,0], 'k--', label='t = 0s')
+    plt.plot(x, var[:,dtInd], label='t = %.1fs' % dtStep)
+    plt.xlabel('x-coordinate [m]')
+    plt.ylabel(label)
+    plt.legend()
+
+    return fig
+
+
+def plotDamAnaResults(t, x, xMiddle, h, u, tSave, cfg, outDirTest):
+    """ Create plots of the analytical solution for the given settings,
+        including an animation
+
+    """
+
+    # index of time steps
+    dtInd = np.searchsorted(t, tSave)
+    name = pU.cfgPlotUtils['nameFD'] + '[' + pU.cfgPlotUtils['unitFD'] + ']'
+    fig = _plotVariableDamBreak(h, x, xMiddle, dtInd, tSave, name)
+    outputName = 'damBreakFlowDepth'
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
+
+    name = pU.cfgPlotUtils['nameFV'] + '[' + pU.cfgPlotUtils['unitFV'] + ']'
+    fig = _plotVariableDamBreak(u, x, xMiddle, dtInd, tSave, name)
+    outputName = 'damBreakFlowVelocity'
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
+
+
+def plotComparisonDam(cfg, simHash, fields0, fieldsT, header, solDam, tSave, limits, outDirTest):
+    """ Generate plots that compare the simulation results to the analytical solution
+
+        Parameters
+        -----------
+        cfgC: configParser object
+            configuration setting for avalanche simulation including DAMBREAK section
+        simHash: str
+            simulation hash
+        fields0: dict
+            initial time step field dictionary
+        fieldsT: dict
+            tSave field dictionary
+        header: dict
+            fields header dictionary
+        solDam: dict
+            analytic solution dictionary:
+                tAna: 1D numpy array
+                    time array
+                h0: float
+                    release thickness
+                hAna: 2D numpy array
+                    Flow thickness (rows for x and columns for time)
+                uAna: 2D numpy array
+                    flow velocity (rows for x and columns for time)
+                xAna: 2D numpy array
+                    extent of domain in the horizontal plane coordinate system (rows for x and columns for time)
+                xMidAna: 1D numpy array
+                    middle of the material in x dir in the horizontal plane coordinate system
+                    (used to compute the error)
+        tSave: float
+            time step of analaysis
+        limits: dict
+            y extend for profile plots
+        outDirTest: pathli path
+            path to output directory
+
+    """
+    phi = cfg.getfloat('phi')
+    phiRad = np.radians(phi)
+    # Load data
+    dataIniFD = fields0['FD']
+    dataAnaFD = fieldsT['FD']
+    dataIniVx = fields0['Vx']
+    dataIniVy = fields0['Vy']
+    dataIniVz = fields0['Vz']
+    dataAnaVx = fieldsT['Vx']
+    dataAnaVy = fieldsT['Vy']
+    dataAnaVz = fieldsT['Vz']
+    if cfg.getboolean('projectVelocity'):
+        # project velocity on inclined plane
+        dataIniV = DFAtls.scalProd(dataIniVx, dataIniVy, dataIniVz, np.cos(phiRad), 0, -np.sin(phiRad))
+        dataAnaV = DFAtls.scalProd(dataAnaVx, dataAnaVy, dataAnaVz, np.cos(phiRad), 0, -np.sin(phiRad))
+    else:
+        dataIniV = DFAtls.norm(dataIniVx, dataIniVy, dataIniVz)
+        dataAnaV = DFAtls.norm(dataAnaVx, dataAnaVy, dataAnaVz)
+
+    # Location of Profiles
+    cellSize = header['cellsize']
+    ny = dataAnaFD.shape[0]
+    nx = dataAnaFD.shape[1]
+    xllc = header['xllcenter']
+    nx_loc = int(ny *0.5)
+
+    # set x Vector
+    x = np.arange(xllc, xllc + nx*cellSize, cellSize)
+    y = np.zeros(len(x))
+    y[x<0] = solDam['h0']
+    y[x>=0] = 0.0
+    y[x<-120] = 0.0
+    # setup index for time of analyitcal solution
+    indTime = np.searchsorted(solDam['tAna'], tSave)
+
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=1, ncols=3, sharex=True, figsize=(pU.figW*4, pU.figH*2))
+    ax1 = _plotDamProfile(ax1, x, y, nx_loc, cfg, dataIniFD, dataAnaFD, solDam['xAna'], solDam['xMidAna'],
+                                       solDam['hAna'], indTime, limits['maxFD'],  pU.cfgPlotUtils['nameFD'],
+                                       pU.cfgPlotUtils['unitFD'])
+    ax1.set_title(pU.cfgPlotUtils['nameFD'] + ' profile')
+
+    y = np.zeros(len(x))
+    ax2 = _plotDamProfile(ax2, x, y, nx_loc, cfg, dataIniV, dataAnaV, solDam['xAna'], solDam['xMidAna'],
+                                       solDam['uAna'], indTime, limits['maxFV'], pU.cfgPlotUtils['nameFV'],
+                                       pU.cfgPlotUtils['unitFV'])
+    ax2.set_title(pU.cfgPlotUtils['nameFV'] + ' profile')
+    ax2.legend(loc='upper left')
+
+    y = np.zeros(len(x))
+    ax3 = _plotDamProfile(ax3, x, y, nx_loc, cfg, dataIniFD*dataIniV, dataAnaFD*dataAnaV, solDam['xAna'],
+                             solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, limits['maxFM'],
+                             pU.cfgPlotUtils['nameFDV'], pU.cfgPlotUtils['unitFDV'])
+    ax3.set_title(getLabel(pU.cfgPlotUtils['nameFDV'] + ' profile', '', dir='', vert=True))
+
+    fig.suptitle('Simulation %s, t = %.2f s' % (simHash, tSave), fontsize=30)
+    outputName = 'compareDamBreak%s_%.02f' % (simHash, tSave)
+    pU.saveAndOrPlot({'pathResult': outDirTest / 'pics'}, outputName, fig)
+
+    return ax1, ax2, ax3
+
+
 def _plotDamProfile(ax, x, y, nx_loc, cfg, data1, data2, xAna, xMidAna, yAna, indT, yMax, label, unit):
     """ generate plots """
     scaleCoef = cfg.getfloat('scaleCoef')
@@ -390,9 +515,13 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     dataVx = fieldsT['Vx']
     dataVy = fieldsT['Vy']
     dataVz = fieldsT['Vz']
-    # project velocity on inclined plane
-    dataIniV = DFAtls.scalProd(dataIniVx, dataIniVy, dataIniVz, np.cos(phiRad), 0, -np.sin(phiRad))
-    dataV = DFAtls.scalProd(dataVx, dataVy, dataVz, np.cos(phiRad), 0, -np.sin(phiRad))
+    if cfgDam.getboolean('projectVelocity'):
+        # project velocity on inclined plane
+        dataIniV = DFAtls.scalProd(dataIniVx, dataIniVy, dataIniVz, np.cos(phiRad), 0, -np.sin(phiRad))
+        dataV = DFAtls.scalProd(dataVx, dataVy, dataVz, np.cos(phiRad), 0, -np.sin(phiRad))
+    else:
+        dataIniV = DFAtls.norm(dataIniVx, dataIniVy, dataIniVz)
+        dataV = DFAtls.norm(dataVx, dataVy, dataVz)
 
     # Location of Profiles
     cellSize = fieldHeader['cellsize']
@@ -416,28 +545,31 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     # setup index for time of analyitcal solution
     indTime = np.searchsorted(solDam['tAna'], tSave)
     # get plots limits
-    limits = getPlotLimits(cfgDam, fieldsList[:indTime], fieldHeader)
+    limits = getPlotLimits(cfgDam, fieldsList[:indT], fieldHeader)
 
     # create figures and plots
     fig = plt.figure(figsize=(pU.figW*4, pU.figH*2))
     fig.suptitle('DamBreak test, t = %.2f s (simulation %s)' % (tSave, simHash), fontsize=30)
     # make flow thickness comparison plot
     ax1 = plt.subplot2grid((2, 6), (0, 0), colspan=2)
-    ax1 = _plotDamProfile(ax1, x, y, nx_loc, cfgDam, dataIniFD, dataFD, solDam['xAna'], solDam['xMidAna'], solDam['hAna'],
-                          indTime, limits['maxFD'],  pU.cfgPlotUtils['nameFD'], pU.cfgPlotUtils['unitFD'])
+    ax1 = _plotDamProfile(ax1, x, y, nx_loc, cfgDam, dataIniFD, dataFD, solDam['xAna'], solDam['xMidAna'],
+                          solDam['hAna'], indTime, limits['maxFD'],  pU.cfgPlotUtils['nameFD'],
+                          pU.cfgPlotUtils['unitFD'])
     ax1.set_title(pU.cfgPlotUtils['nameFD'] + ' profile')
 
     # make flow momentum comparison plot
     ax2 = plt.subplot2grid((2, 6), (0, 4), colspan=2)
     y = y * 0
-    ax2 = _plotDamProfile(ax2, x, y, nx_loc, cfgDam, dataIniFD*dataIniV, dataFD*dataV, solDam['xAna'], solDam['xMidAna'],
-                          solDam['hAna']*solDam['uAna'], indTime, limits['maxFM'],  pU.cfgPlotUtils['nameFDV'], pU.cfgPlotUtils['unitFDV'])
-    ax2.set_title(getLabel(pU.cfgPlotUtils['nameFDV'] + ' profie', '', dir='', vert=True))
+    ax2 = _plotDamProfile(ax2, x, y, nx_loc, cfgDam, dataIniFD*dataIniV, dataFD*dataV, solDam['xAna'],
+                          solDam['xMidAna'], solDam['hAna']*solDam['uAna'], indTime, limits['maxFM'],
+                          pU.cfgPlotUtils['nameFDV'], pU.cfgPlotUtils['unitFDV'])
+    ax2.set_title(getLabel(pU.cfgPlotUtils['nameFDV'] + ' profile', '', dir='', vert=True))
 
     # make flow velocity comparison plot
     ax3 = plt.subplot2grid((2, 6), (0, 2), colspan=2)
     ax3 = _plotDamProfile(ax3, x, y, nx_loc, cfgDam, dataIniV, dataV, solDam['xAna'], solDam['xMidAna'],
-                          solDam['uAna'], indTime, limits['maxFV'],  pU.cfgPlotUtils['nameFV'], pU.cfgPlotUtils['unitFV'])
+                          solDam['uAna'], indTime, limits['maxFV'],  pU.cfgPlotUtils['nameFV'],
+                          pU.cfgPlotUtils['unitFV'])
     ax3.set_title(pU.cfgPlotUtils['nameFV'] + ' profile')
     plt.legend(loc='upper left')
 
@@ -451,15 +583,15 @@ def plotDamBreakSummary(avalancheDir, timeList, fieldsList, fieldHeader, solDam,
     # draw rectangle corresponding to the error measurement domain
     # Create a Rectangle patch
     rect = patches.Rectangle((solDam['xMidAna'][indTime], yStart), xEnd-solDam['xMidAna'][indTime], yEnd-yStart,
-                             linewidth=3, linestyle='dashed', edgecolor='None', facecolor='gray', alpha=0.2, zorder=200,
-                             label='error computation \n domain')
+                             linewidth=3, linestyle='dashed', edgecolor='None', facecolor='gray', alpha=0.2,
+                             zorder=200, label='error computation domain')
     # Add the patch to the Axes
     ax6.add_patch(rect)
     ax6.set_ylim([rowsMin+yllc, rowsMax+yllc])
     ax6.set_xlim([colsMin+xllc, colsMax+xllc])
     ax6.set_xlabel('x [m]')
     ax6.set_ylabel('y [m]')
-    leg = ax6.legend(loc='lower right')
+    leg = ax6.legend(loc='upper right')
     leg.set(zorder=200)
     # ax3.set_title(pU.cfgPlotUtils['nameFD'])
     pU.putAvaNameOnPlot(ax6, avalancheDir)
@@ -530,7 +662,8 @@ def addErrorTime(ax1, time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhEr
     return ax1, ax2
 
 
-def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, relativ, t, outputName, outDirTest):
+def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, relativ, t, outputName,
+                  outDirTest):
     """plot and save error between a given com1DFA sol and the analytic sol
     function of time
     Parameters
@@ -565,7 +698,7 @@ def plotErrorTime(time, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorL
     return fig1
 
 
-def addContour2Plot(ax1, fieldFD, simiDict, fieldHeader, limits):
+def addContour2Plot(ax1, fieldFD, simiDict, fieldHeader, limits, nLevels=9):
     """ Make a contour plot of flow thickness for analytical solution and simulation result """
     # get info on DEM extent
     ncols = fieldHeader['ncols']
@@ -582,14 +715,17 @@ def addContour2Plot(ax1, fieldFD, simiDict, fieldHeader, limits):
     # get limits
     widthX = limits['widthX']
     widthY = limits['widthY']
+    contourLevels = np.linspace(0, limits['maxFD'], nLevels)
+    contourLevels = contourLevels[:-1]
     # make plot
     cmap, _, ticks, norm = pU.makeColorMap(pU.cmapDepth, np.nanmin(fieldFD),
                                            np.nanmax(fieldFD), continuous=True)
     cmap.set_under(color='w')
-    cs1 = ax1.contour(X, Y, fieldFD, levels=8, origin='lower', cmap=cmap, linewidths=2)
-    lev = cs1.levels
-    cs2 = ax1.contour(X, Y, simiDict['hSimi'], levels=lev, origin='lower', cmap=cmap, linewidths=2, linestyles='dashed')
-    CB = pU.addColorBar(cs1, ax1, ticks, pU.cfgPlotUtils['unitFD'], title=pU.cfgPlotUtils['nameFD'], extend='both', pad=0.05, tickLabelsList='')
+    cs1 = ax1.contour(X, Y, fieldFD, levels=contourLevels, origin='lower', cmap=cmap, linewidths=2)
+    cs2 = ax1.contour(X, Y, simiDict['hSimi'], levels=contourLevels, origin='lower', cmap=cmap, linewidths=2,
+                      linestyles='dashed')
+    CB = pU.addColorBar(cs1, ax1, ticks, pU.cfgPlotUtils['unitFD'], title=pU.cfgPlotUtils['nameFD'], extend='both',
+                        pad=0.05, tickLabelsList='')
     # make colorbar lines thicker
     lines1 = CB.ax.get_children()
     lines1[1].set_linewidths(5)

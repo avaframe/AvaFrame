@@ -17,17 +17,14 @@ import logging
 
 # local imports
 from avaframe.in3Utils import cfgUtils
-from avaframe.in1Data import getInput as gI
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.com1DFA as com1DFA
 import avaframe.com1DFA.DFAtools as DFAtls
-import avaframe.com1DFA.particleTools as particleTools
 import avaframe.in2Trans.ascUtils as IOf
 import avaframe.ana1Tests.analysisTools as anaTools
 import avaframe.out3Plot.outAna1Plots as outAna1Plots
 import avaframe.in2Trans.shpConversion as shpConv
 from avaframe.in3Utils import fileHandlerUtils as fU
-import avaframe.com1DFA.particleTools as particleTools
 
 
 # create local logger
@@ -633,7 +630,8 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
     for simHash, simDFrow in simDF.iterrows():
         simName = simDFrow['simName']
         # fetch the simulation results
-        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'], simName=simName, flagAvaDir=True, comModule='com1DFA')
+        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'Vx', 'Vy', 'Vz'],
+                                                               simName=simName, flagAvaDir=True, comModule='com1DFA')
         # analyze and compare results
         if cfgSimi['SIMISOL']['tSave'] == '':
             ind_t = -1
@@ -646,9 +644,9 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
                 timeList = [timeList[ind_t]]
                 ind_t = 0
 
-        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray, t = analyzeResults(avalancheDir, fieldsList, timeList, solSimi,
-                                                                          fieldHeader, cfgMain, cfgSimi, outDirTest,
-                                                                          simHash, simDFrow)
+        hEL2Array, hELMaxArray, vhEL2Array, vhELMaxArray, t = analyzeResults(avalancheDir, fieldsList, timeList,
+                                                                             solSimi, fieldHeader, cfgMain, cfgSimi,
+                                                                             outDirTest, simHash, simDFrow)
         # add result of error analysis
         # save results in the simDF
         simDF.loc[simHash, 'timeError'] = t
@@ -663,7 +661,8 @@ def postProcessSimiSol(avalancheDir, cfgMain, cfgSimi, simDF, solSimi, outDirTes
     return simDF
 
 
-def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfgMain, cfgSimi, outDirTest, simHash, simDFrow):
+def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfgMain, cfgSimi, outDirTest, simHash,
+                   simDFrow):
     """Compare analytical and com1DFA results
         Parameters
         -----------
@@ -728,7 +727,8 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
         vhSimi = {'fx': hSimi*simiDict['vxSimi'], 'fy': hSimi*simiDict['vySimi'], 'fz': hSimi*simiDict['vzSimi']}
         vhNumerical = {'fx': hNumerical*field['Vx'], 'fy': hNumerical*field['Vy'], 'fz': hNumerical*field['Vz']}
         hErrorL2, hErrorL2Rel, hErrorLmax, hErrorLmaxRel = anaTools.normL2Scal(hSimi, hNumerical, cellSize, cosAngle)
-        vhErrorL2, vhErrorL2Rel, vhErrorLmax, vhErrorLmaxRel = anaTools.normL2Vect(vhSimi, vhNumerical, cellSize, cosAngle)
+        vhErrorL2, vhErrorL2Rel, vhErrorLmax, vhErrorLmaxRel = anaTools.normL2Vect(vhSimi, vhNumerical, cellSize,
+                                                                                   cosAngle)
         if cfgSimi['SIMISOL'].getboolean('relativError'):
             hErrorL2Array[count] = hErrorL2Rel
             hErrorLMaxArray[count] = hErrorLmaxRel
@@ -756,8 +756,9 @@ def analyzeResults(avalancheDir, fieldsList, timeList, solSimi, fieldHeader, cfg
     tSave = timeList[indT]
     indTime = np.searchsorted(solSimi['time'], tSave)
     simiDict = getSimiSolParameters(solSimi, fieldHeader, indTime, cfgSimi['SIMISOL'], relTh, gravAcc)
-    outAna1Plots.plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array, hErrorLMaxArray,
-                                    vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash, cfgSimi['SIMISOL'])
+    outAna1Plots.plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array,
+                                    hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash,
+                                    cfgSimi['SIMISOL'])
     if cfgSimi['SIMISOL'].getboolean('plotErrorTime') and len(timeList)>1:
         outAna1Plots.plotErrorTime(timeList, hErrorL2Array, hErrorLMaxArray, vhErrorL2Array, vhErrorLMaxArray,
                                    cfgSimi['SIMISOL'].getboolean('relativError'), tSave, simHash, outDirTest)

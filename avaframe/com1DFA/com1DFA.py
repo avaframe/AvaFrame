@@ -1957,8 +1957,19 @@ def readFields(inDir, resType, simName='', flagAvaDir=True, comModule='com1DFA',
         comModule: str
             module that computed the particles
         timeStep: float or list of floats
-            desired time step if difference to time step of field file is smaller than 1.e-6
+            desired time step if difference to time step of field file is smaller than atol
             field is found - optional
+        atol: float
+            look for matching time steps with atol tolerance - default is atol=1.e-6
+
+    Returns
+    -------
+    fieldsList : list
+        list of fields dictionaries
+    fieldHeader: dict
+        raster header corresponding to first element in fieldsList
+    timeList: list
+        tme corresponding to elements in fieldsList
 
     """
 
