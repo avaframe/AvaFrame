@@ -93,7 +93,7 @@ found in :py:mod:`ana1Tests.damBreak` and :py:mod:`ana1Tests.analysisTools`. Plo
 located in :py:mod:`out3Plot.outAna1Plots`. The input data for this test case can be found in ``data/avaDamBreak``.
 
 This test produces a summary figure combining a comparison between the analytical solution and
-simulation result result (cross cut along the flow direction) as well as a map view and an
+simulation result (cross cut along the flow direction) as well as a map view and an
 error measure plot as shown in :numref:`fig-damBreakExample`.
 
 .. _fig-damBreakExample:
