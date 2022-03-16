@@ -43,8 +43,7 @@ sns.set(font_scale=1)
 sns.set_style("ticks", {'axes.linewidth': 1, 'axes.edgecolor': 'black',
                         'font.family': [cfg['fontFamily']]})
 
-
-# define figure dimentions
+# define figure dimensions
 figW = float(cfg['figW'])
 figH = float(cfg['figH'])
 # define lines and marker properties
@@ -85,6 +84,11 @@ matplotlib.rcParams['grid.color'] = 'whitesmoke'
 matplotlib.rcParams['grid.linestyle'] = ':'
 matplotlib.rcParams['grid.linewidth'] = 0.3
 
+# for hillshade
+azimuthDegree = cfg.getfloat('azimuthDegree')
+elevationDegree = cfg.getfloat('elevationDegree')
+vertExag = cfg.getfloat('vertExag')
+hillshadeContLevs = cfg.getint('hillshadeContLevs')
 
 # define settings for colormaps creation
 discreteLevels = cfg.getint('discreteLevels')
@@ -497,9 +501,9 @@ def putAvaNameOnPlot(ax, avaDir):
     return infoText
 
 
-def putInfoBox(ax, infoText, location='lowerRight', color='black'):
+def putInfoBox(ax, infoText, location='lowerRight', color='black', hAlignment='right', alphaF=0.5):
     '''
-    Puts the  in the lower right or upper left or upper right corner of the given
+    Puts the  in the lower right or upper left or upper right or lowerLeft corner of the given
     matplotlib axes
 
     Parameters
@@ -518,14 +522,16 @@ def putInfoBox(ax, infoText, location='lowerRight', color='black'):
         log.warning('Info text to be added to plot is not a string - ignored')
 
     if location == 'upperRight':
-        xy=(0.99, 0.99)
+        xy=(0.97, 0.99)
     elif location == 'upperLeft':
-        xy=(0.01, 0.99)
+        xy=(0.01, 0.97)
+    elif location == 'lowerLeft':
+        xy=(0.01, 0.01)
     else:
         xy=(0.99, 0.01)
 
-    ax.annotate(infoText, xy=xy, xycoords='axes fraction', fontsize=8, horizontalalignment='right',
-        verticalalignment='bottom', color=color, alpha=0.5,
+    ax.annotate(infoText, xy=xy, xycoords='axes fraction', fontsize=8, horizontalalignment=hAlignment,
+        verticalalignment='bottom', color=color, alpha=alphaF,
         bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.5))
 
     return infoText
