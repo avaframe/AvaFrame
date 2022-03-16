@@ -199,7 +199,7 @@ def _plotVariable(ax1, cfg, simiDict, comSol, limits, axis, particles=False):
 
 def plotSimiSolSummary(avalancheDir, timeList, fieldsList, fieldHeader, simiDict, hErrorL2Array, hErrorLMaxArray,
                         vhErrorL2Array, vhErrorLMaxArray, outDirTest, simDFrow, simHash, cfgSimi):
-    """ Plot sumary figure of the damnreak test
+    """ Plot sumary figure of the similarity solution test
 
     Parameters
     -----------
