@@ -110,13 +110,13 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             rowsMaxPlot = (rowsMax+1)*cellSize
             colsMinPlot = colsMin*cellSize
             colsMaxPlot = (colsMax+1)*cellSize
+            extent = [colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot]
 
             # add DEM hillshade with contour lines
-            ls, CS = pU.addHillShadeContours(ax, demConstrained, colsMinPlot, rowsMinPlot, cellSize,
-                extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot])
+            ls, CS = pU.addHillShadeContours(ax, demConstrained, cellSize, extent)
 
             # add peak field data
-            im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal', zorder=4)
+            im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=extent, origin='lower', aspect='equal', zorder=4)
             pU.addColorBar(im1, ax, ticks, unit)
 
             # add title, labels and ava Info
