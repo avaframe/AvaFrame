@@ -1290,7 +1290,8 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
     ######## create range time diagram #####################
     # check if range-time diagram should be performed, if yes - initialize
     if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
-        mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, dem, simHash)
+        demRT = dtAna.setDemOrigin(dem)
+        mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, demRT, simHash)
     #########################################################
 
     # Start time step computation
@@ -1314,7 +1315,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         ######## create range time diagram #####################
         # determine avalanche front and flow characteristics in respective coodrinate system
         if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram') and t >= dtRangeTime[0]:
-            mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, dem,
+            mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, demRT['header'],
                 fields, mtiInfo)
         #########################################################
 
