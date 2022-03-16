@@ -17,12 +17,14 @@ from matplotlib import pyplot as plt
 from matplotlib import colors as mplCol
 import logging
 from cmcrameri import cm as cmapCrameri
+from matplotlib.colors import LightSource
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
 from avaframe.out3Plot import plotUtils
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in1Data.getInput as gI
+import avaframe.out3Plot.outTopo as oP
 
 
 # create local logger
@@ -503,7 +505,7 @@ def putAvaNameOnPlot(ax, avaDir):
 
 def putInfoBox(ax, infoText, location='lowerRight', color='black', hAlignment='right', alphaF=0.5):
     '''
-    Puts the  in the lower right or upper left or upper right or lowerLeft corner of the given
+    Puts the infoBox in the lower right or upper left or upper right or lowerLeft corner of the given
     matplotlib axes
 
     Parameters
@@ -515,6 +517,11 @@ def putInfoBox(ax, infoText, location='lowerRight', color='black', hAlignment='r
         default: lowerRight, options: upperRight, upperLeft
     color: str
         color of font
+    hAlignment: str
+        horizontal alignment
+    alphaF: float
+        alpha value of text
+
     '''
 
     # if avaDir is just a single avaDir or a list of avaDirs
@@ -533,8 +540,6 @@ def putInfoBox(ax, infoText, location='lowerRight', color='black', hAlignment='r
     ax.annotate(infoText, xy=xy, xycoords='axes fraction', fontsize=8, horizontalalignment=hAlignment,
         verticalalignment='bottom', color=color, alpha=alphaF,
         bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.5))
-
-    return infoText
 
 
 def constrainToMinElevation(avaDir, data, cfg, cellSize, extentOption=False):
@@ -668,3 +673,46 @@ def getColors4Scatter(values, nSamples, unitSC):
             cmapSC, _, ticksSC, normSC = makeColorMap(cmapVar, np.nanmin(colorSC), np.nanmax(colorSC), continuous=True)
             displayColorBar = True
     return cmapSC, colorSC, ticksSC, normSC, unitSC, itemsList, displayColorBar
+
+
+
+def addHillShadeContours(ax, data, x0, y0, cellSize, extent=''):
+    """ add hillshade and contours for given DEM data
+
+        Parameters
+        -----------
+        ax: matplotlib axes
+            axes of plot
+        data: numpy array
+            dem data
+        x0, y0: floats
+            lower left corner coordinate
+        cellSize: float
+            cell size of data
+        extent: list
+            optional extent parameter for imshow plot
+    """
+
+
+    # create lightSource
+    ls = LightSource(azdeg=azimuthDegree, altdeg=elevationDegree)
+
+    # add hillshade to axes
+    im0 = ax.imshow(ls.hillshade(data, vert_exag=vertExag, dx=data.shape[1],
+        dy=data.shape[0]), cmap='gray', extent=extent, origin='lower', aspect='equal', zorder=1)
+
+    # create x,y coors for data array
+    X, Y = oP._setCoordinateGrid(x0, y0, cellSize, data)
+
+    # add contour lines
+    CS =  ax.contour(X, Y, data, colors=['gray'], levels=hillshadeContLevs, alpha=1.,
+        linewidths=0.5, zorder=2)
+
+    # add labels
+    ax.clabel(CS, CS.levels, inline=True, fontsize=8, zorder=3)
+
+    # add info box with indication of label meaning
+    putInfoBox(ax, '- elevation [m]', location='upperLeft', color='gray',
+        hAlignment='left', alphaF=1.0)
+
+    return ls, CS

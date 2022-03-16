@@ -8,13 +8,11 @@ import logging
 import numpy as np
 from matplotlib import pyplot as plt
 import pathlib
-from matplotlib.colors import LightSource
 
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.in1Data.getInput as gI
 from avaframe.in3Utils import fileHandlerUtils as fU
 import avaframe.in2Trans.ascUtils as IOf
-import avaframe.out3Plot.outTopo as oP
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -114,16 +112,8 @@ def plotAllPeakFields(avaDir, cfgFLAGS, modName, demData=''):
             colsMaxPlot = (colsMax+1)*cellSize
 
             # add DEM hillshade with contour lines
-            ls = LightSource(azdeg=pU.azimuthDegree, altdeg=pU.elevationDegree)
-            im0 = ax.imshow(ls.hillshade(demConstrained, vert_exag=pU.vertExag, dx=demConstrained.shape[1],
-                dy=demConstrained.shape[0]), cmap='gray', extent=[colsMinPlot, colsMaxPlot,
-                rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal', zorder=1)
-            X, Y = oP._setCoordinateGrid(colsMinPlot, rowsMinPlot, cellSize, demConstrained)
-            CS =  ax.contour(X, Y, demConstrained, colors=['gray'], levels=pU.hillshadeContLevs, alpha=1.,
-                linewidths=0.5, zorder=2)
-            ax.clabel(CS, CS.levels, inline=True, fontsize=8,zorder=3)
-            pU.putInfoBox(ax, '- elevation [m]', location='upperLeft', color='gray',
-                hAlignment='left', alphaF=1.0)
+            ls, CS = pU.addHillShadeContours(ax, demConstrained, colsMinPlot, rowsMinPlot, cellSize,
+                extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot])
 
             # add peak field data
             im1 = ax.imshow(data, cmap=cmap, norm=norm, extent=[colsMinPlot, colsMaxPlot, rowsMinPlot, rowsMaxPlot], origin='lower', aspect='equal', zorder=4)
