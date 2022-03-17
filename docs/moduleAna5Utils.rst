@@ -20,7 +20,7 @@ of view. In this manner, simulation results can be directly compared to radar me
 of front position and inferred approach velocity. The colorcoding of the simulated
 **range-time** diagrams refers to average values of the chosen flow parameter
 (e.g. flow depth, flow velocity) at specified range gates. This colorcoding is not directly
-comparable to the intensity given in the range-time diagram from radar measurements. 
+comparable to the intensity given in the range-time diagram from radar measurements.
 
 .. Note::
   The **tt-diagram** and the **range-time diagram** can be produced *during run time* of
@@ -50,7 +50,7 @@ As a postprocessing step:
 The resulting figures can be found in ``avalancheDirectory/Outputs/ana5Utils``.
 
 
-.. figure:: _static/thalwegTime_FD_50c6c830b7.png
+.. figure:: _static/thalwegTime_FD.png
     :width: 90%
 
     Thalweg-time diagram example. Maximum approach velocity is computed as the ratio of the
