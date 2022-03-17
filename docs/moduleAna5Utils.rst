@@ -49,7 +49,8 @@ The resulting figures can be found in ``avalancheDirectory/Outputs/ana5Utils``.
 .. figure:: _static/thalwegTime_FD_50c6c830b7.png
     :width: 90%
 
-    Thalweg-time diagram example.
+    Thalweg-time diagram example. Maximum approach velocity is computed as the ratio of the
+    distance travelled by the front and the respective time needed for two increments along the path. 
 
 
 .. Note::

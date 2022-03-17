@@ -373,7 +373,11 @@ def fetchFlowFields(flowFieldsDir, suffix=''):
     if isinstance(flowFieldsDir, pathlib.PurePath):
         flowFieldsDir = pathlib.Path(flowFieldsDir)
 
-    flowFields = list(flowFieldsDir.glob('*%s*.asc' % suffix))
+    if suffix == '':
+        searchString = '*.asc'
+    else:
+        searchString = '*%s*.asc' % suffix
+    flowFields = list(flowFieldsDir.glob(searchString))
 
     return flowFields
 
