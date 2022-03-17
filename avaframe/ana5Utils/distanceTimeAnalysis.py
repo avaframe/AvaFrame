@@ -595,12 +595,12 @@ def extractFrontAndMeanValues(cfgRangeTime, flowF, demHeader, mtiInfo):
     rasterArea = rasterTransfo['rasterArea']
     maxaCrossMax, aCrossMax, aCrossMean = aT.getMaxMeanValues(slRaster, rasterArea)
 
-    # add max values for each cross-section for actual time step to mean values array
+    # add mean values for each cross-section for actual time step to mean values array
     # reshape is required as rows- mean values for each crossprofile and cols: time steps
     if mtiInfo['timeList'] == []:
-        mtiInfo['mti'] = aCrossMax.reshape(-1,1)
+        mtiInfo['mti'] = aCrossMean.reshape(-1,1)
     else:
-        mtiInfo['mti'] = np.hstack((mtiInfo['mti'], aCrossMax.reshape(-1,1)))
+        mtiInfo['mti'] = np.hstack((mtiInfo['mti'], aCrossMean.reshape(-1,1)))
 
     # extract avalanche front distance to reference point in path following coordinate system
     indStartOfRunout = rasterTransfo['indStartOfRunout']

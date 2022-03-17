@@ -15,8 +15,12 @@ This is based on the ideas presented in :cite:`FiFrGaSo2013` and :cite:`RaKo2019
 avalanche simulation results have been transformed into the radar coordinate system to facilitate
 direct comparison.
 In addition to the **tt-diagram**, :py:mod:`ana5RangeTime` also offers the possibility to
-produce simulated **range-time diagrams** of the flow parameters with respect to a radar's field of view.
-Hence, simulation results can be directly compared to radar measurements.
+produce simulated **range-time diagrams** of the flow parameters with respect to a radar's field
+of view. In this manner, simulation results can be directly compared to radar measurements in terms
+of front position and inferred approach velocity. The colorcoding of the simulated
+**range-time** diagrams refers to average values of the chosen flow parameter
+(e.g. flow depth, flow velocity) at specified range gates. This colorcoding is not directly
+comparable to the intensity given in the range-time diagram from radar measurements. 
 
 .. Note::
   The **tt-diagram** and the **range-time diagram** can be produced *during run time* of
@@ -50,7 +54,7 @@ The resulting figures can be found in ``avalancheDirectory/Outputs/ana5Utils``.
     :width: 90%
 
     Thalweg-time diagram example. Maximum approach velocity is computed as the ratio of the
-    distance travelled by the front and the respective time needed for two increments along the path. 
+    distance travelled by the front and the respective time needed for two increments along the path.
 
 
 .. Note::
