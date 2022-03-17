@@ -61,7 +61,7 @@ def test_rotate():
     assert rotatedLine[0][0] == 0.
     assert -sL - 1.e-12 < rotatedLine[0][1] < -sL+1.e-12
     assert rotatedLine[1][0] == 0.
-    assert rotatedLine[1][1] == sL
+    assert sL - 1.e-12 < rotatedLine[1][1] < sL+1.e-12
     assert isinstance(rotatedLine, list)
     assert len(rotatedLine) == 2
     assert len(rotatedLine[0]) == 2
