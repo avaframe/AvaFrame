@@ -11,7 +11,7 @@ With the functions gathered in this module, flow parameters of avalanche simulat
 visualized in a distance versus time diagram, the so called **thalweg-time diagram**.
 The **tt-diagram** provides a new way to identify main features of the temporal evolution of
 a flow parameter along the :term:`avalanche path`.
-This is based on the ideas presented in :cite:`FiFrGaSo2013` and :cite:`RaKo2019`, where
+This is based on the ideas presented in :cite:`FiFrGaSo2013` and :cite:`RaKo2020`, where
 avalanche simulation results have been transformed into the radar coordinate system to facilitate
 direct comparison.
 In addition to the **tt-diagram**, :py:mod:`ana5RangeTime` also offers the possibility to
