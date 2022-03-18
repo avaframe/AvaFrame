@@ -55,6 +55,7 @@ def initiateLogger(targetDir, logName='runLog'):
     # Add further special characters here as needed...
     cleanName = str(logFileName)
     cleanName = cleanName.replace('\'','\\\'')
+    cleanName = cleanName.replace('\\', '/')
     
     logging.config.fileConfig(fname=logConfFile,
                               defaults={'logfilename': cleanName},
