@@ -68,7 +68,7 @@ def setDemOrigin(demSims):
             updated DEM with xllcenter and yllcenter set to original origin
             cellsize and nrows and columns kept from simulation DEM
     """
-    if 'key' not in demSims:
+    if 'originalHeader' not in demSims:
         message = 'DEM dictionary does not have originalHeader key - required to get original origin'
         log.error(message)
         raise KeyError(message)
