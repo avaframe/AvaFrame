@@ -332,7 +332,7 @@ def test_fetchFlowFields():
     suffix = 'ppr'
 
     # call function to be tested
-    flowFields = dtAna.fetchFlowFields(flowFieldsDir, suffix=suffix)
+    flowFields = fU.fetchFlowFields(flowFieldsDir, suffix=suffix)
     flowFields = sorted(flowFields)
     print('flowFields', flowFields, sorted(flowFields))
 
@@ -341,7 +341,7 @@ def test_fetchFlowFields():
     assert len(flowFields) == 2
 
     # call function to be tested
-    flowFields = dtAna.fetchFlowFields(flowFieldsDir)
+    flowFields = fU.fetchFlowFields(flowFieldsDir)
     flowFields = sorted(flowFields)
     print('flowFields', flowFields, sorted(flowFields))
 

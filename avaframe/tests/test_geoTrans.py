@@ -471,7 +471,7 @@ def test_cartToSpherical():
     Z = np.sqrt(10.**2 + 10.**2)
 
     # call function to be tested
-    r, phi, theta = dtAna.cartToSpherical(X, Y, Z)
+    r, phi, theta = geoTrans.cartToSpherical(X, Y, Z)
 
     assert r == np.sqrt(10.**2 + 10.**2 + Z**2)
     assert phi == 45.
@@ -484,7 +484,7 @@ def test_cartToSpherical():
     Z = 20
 
     # call function to be tested
-    r, phi, theta = dtAna.cartToSpherical(X, Y, Z)
+    r, phi, theta = geoTrans.cartToSpherical(X, Y, Z)
 
     print('r', r, 'phi', phi, 'theta', theta)
 
@@ -502,7 +502,7 @@ def test_rotate():
     deg = True
 
     # call function to be tested
-    rotatedLine = dtAna.rotate(locationPoints, theta, deg=deg)
+    rotatedLine = geoTrans.rotate(locationPoints, theta, deg=deg)
 
     sL = np.sqrt(50.)
     assert rotatedLine[0][0] == 0.
@@ -518,7 +518,7 @@ def test_rotate():
     deg = True
 
     # call function to be tested
-    rotatedLine = dtAna.rotate(locationPoints, theta, deg=deg)
+    rotatedLine = geoTrans.rotate(locationPoints, theta, deg=deg)
     print('rotated line', rotatedLine)
 
     sLX = np.sqrt(10.)

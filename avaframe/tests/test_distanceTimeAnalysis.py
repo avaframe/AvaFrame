@@ -22,9 +22,9 @@ def test_getRadarLocation():
     # call function to be tested
     radarFov = dtAna.getRadarLocation(cfg)
 
-    assert radarFov[0] == [10., 25.]
-    assert radarFov[1] == [40., 57.]
-    assert radarFov == [[10., 25.],[40., 57.]]
+    assert radarFov[0][0] == 10.
+    assert radarFov[1][1] == 57.
+    assert np.array_equal(radarFov, np.asarray([[10., 25.],[40., 57.]]))
 
 
 def test_setDEMOrigin():
