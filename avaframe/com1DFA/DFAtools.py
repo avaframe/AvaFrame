@@ -77,12 +77,16 @@ def getNormalMesh(dem, num):
 
         Returns
         -------
-            Nx: 2D numpy array
-                x component of the normal vector field on grid points
-            Ny: 2D numpy array
-                y component of the normal vector field on grid points
-            Nz: 2D numpy array
-                z component of the normal vector field on grid points
+        den: dict
+            dem dict updated with:
+                Nx: 2D numpy array
+                    x component of the normal vector field on grid points
+                Ny: 2D numpy array
+                    y component of the normal vector field on grid points
+                Nz: 2D numpy array
+                    z component of the normal vector field on grid points
+                outOfDEM: 2D boolean numpy array
+                    True if the cell is out the dem, False otherwise
     """
     # read dem header
     header = dem['header']
@@ -270,35 +274,52 @@ def getNormalMesh(dem, num):
         NzCenter = np.where(np.isnan(Nx), Nz, NzCenter)
         Nz = NzCenter
 
-    return 0.5*Nx, 0.5*Ny, 0.5*Nz
+    # if no normal available, put 0 for Nx and Ny and 1 for Nz
+    dem['Nx'] = np.where(np.isnan(Nx), 0., 0.5*Nx)
+    dem['Ny'] = np.where(np.isnan(Ny), 0., 0.5*Ny)
+    dem['Nz'] = 0.5*Nz
+    # build no data mask (used to find out of dem particles)
+    outOfDEM = np.where(np.isnan(dem['rasterData']), 1, 0).astype(bool).flatten()
+    dem['outOfDEM'] = outOfDEM
+    return dem
 
 
-def getAreaMesh(Nx, Ny, Nz, csz, num):
+def getAreaMesh(dem, num):
     """ Get area of grid cells.
 
         Parameters
         ----------
+        dem dict updated with:
             Nx: 2D numpy array
                 x component of the normal vector field on grid points
             Ny: 2D numpy array
                 y component of the normal vector field on grid points
             Nz: 2D numpy array
                 z component of the normal vector field on grid points
-            csz: float
-                cellsize of the grid
+            header : dict
+                dem header (cellsize)
+        num: int
+            chose between 4, 6 or 8 (using then 4, 6 or 8 triangles) or
+            1 to use the simple cross product method (with the diagonals)
 
         Returns
         -------
+        dem dict updated with:
             A: 2D numpy array
                 Area of grid cells
     """
+    csz = dem['header']['cellsize']
+    Nx = dem['Nx']
+    Ny = dem['Ny']
+    Nz = dem['Nz']
     # see documentation and issue 202
     if num == 1:
         A = norm(Nx, Ny, Nz)
     else:
         _, _, NzNormed = normalize(Nx, Ny, Nz)
         A = csz * csz / NzNormed
-    return A
+    dem['areaRaster'] = A
+    return dem
 
 
 ##############################################################################

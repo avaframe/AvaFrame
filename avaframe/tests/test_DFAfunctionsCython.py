@@ -204,7 +204,10 @@ def test_reprojectionC(capfd):
     threshold = 0.001
 
     # build normals corresponding to dem
-    Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
+    dem = DFAtls.getNormalMesh(dem, num)
+    Nx = dem['Nx']
+    Ny = dem['Ny']
+    Nz = dem['Nz']
 
     # expected normal projection
     xpExpected = 242

@@ -10,10 +10,10 @@ import avaframe.out3Plot.outCom1DFA as outCom1DFA
 
 def initializeFigures():
     """ Initialize the two figure from com3Hybrid main loop"""
-    figPath, axPath = plt.subplots(figsize=(1.5*pU.figW, 1*pU.figH))
+    figPath, axPath = plt.subplots(figsize=(3*pU.figW, 2*pU.figH))
     # figPath = plt.figure(figsize=(1.5*pU.figW, 1*pU.figH))
     # axPath = plt.subplot(111)
-    figProf = plt.figure(figsize=(1.5*pU.figW, 1*pU.figH))
+    figProf = plt.figure(figsize=(3*pU.figW, 2*pU.figH))
     axProf = plt.subplot(111)
     figDict = {'figPath': figPath, 'axPath': axPath, 'figProf': figProf, 'axProf': axProf}
     return figDict
@@ -51,8 +51,10 @@ def updatePathPlot(demOri, avaProfile, resAB, name, figDict, iteration):
     xAB = resAB[name]['x'][ids_alpha]
     yAB = resAB[name]['y'][ids_alpha]
 
-    ax.plot(xAB - xllcOri, yAB - yllcOri, 'X', color=str(0.8-(iteration+1)/4), markersize=8, label=r'com2AB $\alpha$ point iteration %d' % iteration, zorder = 20)
-    ax.plot(avaProfile['x'] - xllcOri, avaProfile['y'] - yllcOri, color=str(0.8-(iteration+1)/4), linestyle=pU.ls[iteration], label='Center of mass path iteration %d' % iteration, zorder = 20)
+    ax.plot(xAB - xllcOri, yAB - yllcOri, 'X', color=str(0.8-(iteration+1)/4), markersize=8,
+            label=r'com2AB $\alpha$ point iteration %d' % iteration, zorder = 20)
+    ax.plot(avaProfile['x'] - xllcOri, avaProfile['y'] - yllcOri, color=str(0.8-(iteration+1)/4),
+            linestyle=pU.ls[iteration], label='Center of mass path iteration %d' % iteration, zorder = 20)
     figDict['figPath'] = fig
     figDict['axPath'] = ax
     return figDict
@@ -72,9 +74,9 @@ def finalizePathPlot(avalancheDir, figDict, resAnalysisDF, refSimulation, dem, d
     ax.set_title(titleText)
     ax.set_ylabel('x [m]')
     ax.set_ylabel('y [m]')
-    ax, extent = outCom1DFA.addResult2Plot(ax, dem, fields['pta'], 'pta')
+    ax, extent, cb, CS = outCom1DFA.addResult2Plot(ax, dem['header'], fields['pta'], 'pta')
     ax = outCom1DFA.addDem2Plot(ax, dem, what='slope', extent=extent)
-    ax = outCom1DFA.addParticles2Plot(particles, ax, dem, whatS='h')
+    ax, cb2 = outCom1DFA.addParticles2Plot(particles, ax, dem, whatS='h')
     ax.plot(xAIMEC - xllcOri, yAIMEC - yllcOri, 'P', markersize=8, color='r',
             label='Runout point com1DFA (AIMEC pfd=0m)', zorder=40)
     ax.set_ylim(extent[2:])

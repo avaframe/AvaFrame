@@ -92,7 +92,10 @@ def test_getNormalMesh(capfd):
     Z1 = a * X * X + b * Y * Y
     for num in [4, 6, 8]:
         dem['rasterData'] = Z
-        Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
+        dem = DFAtls.getNormalMesh(dem, num)
+        Nx = dem['Nx']
+        Ny = dem['Ny']
+        Nz = dem['Nz']
         Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
         print(Nx)
         print((-a*np.ones(np.shape(Y)) / np.sqrt(1 + a*a + b*b))[1:n-1, 1:m-1])
@@ -113,7 +116,10 @@ def test_getNormalMesh(capfd):
         assert TestNZ
 
         dem['rasterData'] = Z1
-        Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
+        dem = DFAtls.getNormalMesh(dem, num)
+        Nx = dem['Nx']
+        Ny = dem['Ny']
+        Nz = dem['Nz']
         Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
 
         print(Nx)
@@ -153,12 +159,13 @@ def test_getAreaMesh(capfd):
     dem = {}
     dem['header'] = header
     dem['rasterData'] = Z
-    Nx, Ny, Nz = DFAtls.getNormalMesh(dem, 4)
-    Nx, Ny, Nz = DFAtls.normalize(Nx, Ny, Nz)
-    Area = DFAtls.getAreaMesh(Nx, Ny, Nz, csz, 4)
-    print(np.sqrt((1+a*a+b*b)))
-    print(Area)
-    atol = 1e-10
-    TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a+b*b))
-                           * np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
-    assert TestArea
+    for num in [1, 4, 6, 8]:
+        dem = DFAtls.getNormalMesh(dem, num)
+        dem = DFAtls.getAreaMesh(dem, num)
+        Area = dem['areaRaster']
+        print(np.sqrt((1+a*a+b*b)))
+        print(Area)
+        atol = 1e-10
+        TestArea = np.allclose(Area[1:n-1, 1:m-1], np.sqrt((1+a*a+b*b))
+                               * np.ones(np.shape(Y[1:n-1, 1:m-1])), atol=atol)
+        assert TestArea

@@ -220,36 +220,40 @@ def plotContours(fig, ax, t, header, data, Cmap, unit, last=False):
     return fig, ax, cmap, lev
 
 
-def plotPathExtTop(cfg, profile, xHighest, yHighest, zHighest, xInterest, yInterest, zInterest, particlesIni,
-                   xllc, yllc, xFirst, yFirst, zFirst):
+def plotPathExtTop(profile, particlesIni, xFirst, yFirst, zFirst, dz1):
     """Plot the extended path towards the top of the release"""
+    # get highest particle
+    indHighest = np.argmax(particlesIni['z'])
+    xHighest = particlesIni['x'][indHighest]
+    yHighest = particlesIni['y'][indHighest]
+    zHighest = particlesIni['z'][indHighest]
+    cmap, _, ticks, norm = pU.makeColorMap(pU.cmapDepth, np.nanmin(dz1), np.nanmax(dz1), continuous=True)
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     ax.set_title('Extend path towards the top')
-    ax.plot(particlesIni['x'] + xllc, particlesIni['y'] + yllc, '.c', label='particles at t=0s')
+    ax.tricontour(particlesIni['x'], particlesIni['y'], dz1, levels=14, linewidths=0.5, colors='k')
+    # cntr2 = ax.tricontourf(particlesIni['x'], particlesIni['y'], dz1, levels=14, cmap=cmap, norm=norm)
+    sc = ax.scatter(particlesIni['x'], particlesIni['y'], c=dz1, cmap=cmap, norm=norm, label='particles at t=0s')
     ax.plot(xHighest, yHighest, '.r', label='highest particle at t=0s')
     ax.plot(profile['x'][1:], profile['y'][1:], '.k', label='mass averaged path')
-    if cfg.getint('PATH', 'extTopOption') == 1:
-        ax.plot(xInterest[1:], yInterest[1:], '.m', markersize=10, label='points considered to find drection')
     ax.plot(xFirst, yFirst, '.b', markersize=10, label='top point of the mass averaged path')
-    ax.plot(profile['x'][0], profile['y'][0], '.g', label='point at the same hight as the highest point in the release \n and in the extention direction')
+    ax.plot(profile['x'][0], profile['y'][0], '.g', label='point leading to longest runout')
     ax.plot(profile['x'][0:2], profile['y'][0:2], 'k--', label='extended path')
+    pU.addColorBar(sc, ax, ticks, 'm', title='energy height')
     plt.legend()
 
     fig1, ax1 = plt.subplots(figsize=(pU.figW, pU.figH))
     ax1.set_title('Extend path towards the top')
-    ax1.plot(particlesIni['x'] + xllc, particlesIni['z'], '.c', label='particles at t=0s')
+    ax1.plot(particlesIni['x'], particlesIni['z'], '.c', label='particles at t=0s')
     ax1.plot(xHighest, zHighest, '.r', label='highest particle at t=0s')
     ax1.plot(profile['x'][1:], profile['z'][1:], '.k', label='mass averaged path')
-    if cfg.getint('PATH', 'extTopOption') == 1:
-        ax1.plot(xInterest[1:], zInterest[1:], '.m', markersize=10, label='points considered to find drection')
     ax1.plot(xFirst, zFirst, '.b', markersize=10, label='top point of the mass averaged path')
-    ax1.plot(profile['x'][0], profile['z'][0], '.g', label='point at the same hight as the highest point in the release \n and in the extention direction')
+    ax1.plot(profile['x'][0], profile['z'][0], '.g', label='point leading to longest runout')
     ax1.plot(profile['x'][0:2], profile['z'][0:2], 'k--', label='extended path')
     plt.legend()
     plt.show()
 
 
-def plotPathExtBot(cfg, profile, xInterest, yInterest, zInterest, xllc, yllc, xLast, yLast):
+def plotPathExtBot(profile, xInterest, yInterest, zInterest, xLast, yLast):
     """Plot the extended path towards the bottom of the avalanche"""
     fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
     ax.set_title('Extend path towards the bottom')

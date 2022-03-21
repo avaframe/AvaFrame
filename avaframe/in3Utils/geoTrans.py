@@ -402,6 +402,34 @@ def searchRemeshedDEM(demName, cfgSim):
     return pathDem, DEMFound, allDEMNames
 
 
+
+def computeS(avaPath):
+    """ compute s coordinate given a path (x, y)
+
+    Parameters
+    -----------
+    avaPath: dict
+        path dictionary with x and y coordinates as 1D numpy arrays
+
+    Returns
+    --------
+    avaPath: dict
+        path dictionary updated with s coordinate
+    """
+    xcoord = avaPath['x']
+    ycoord = avaPath['y']
+    n = np.size((xcoord))
+    # compute s
+    dxs = xcoord[1:n]-xcoord[0:n-1]
+    dys = ycoord[1:n]-ycoord[0:n-1]
+    # deduce the distance in s direction
+    ds2 = (dxs*dxs + dys*dys)
+    ds = np.sqrt(ds2)
+    scoord = np.cumsum(ds)
+    avaPath['s'] = np.insert(scoord, 0, 0)
+    return avaPath
+
+
 def prepareLine(dem, avapath, distance=10, Point=None):
     """Resample and project line on dem
     1- Resample the avapath line with a max intervall of distance=10m
@@ -909,3 +937,16 @@ def rotate(locationPoints, theta, deg=True):
           ]
 
     return rotatedLine
+
+    
+def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
+    """get a Coordinate Grid for plotting"""
+
+    xEnd = ncols * csz
+    yEnd = nrows * csz
+
+    xp = np.linspace(xllc, xllc + xEnd, ncols)
+    yp = np.linspace(yllc, yllc + yEnd, nrows)
+
+    X, Y = np.meshgrid(xp, yp)
+    return(X, Y)

@@ -655,14 +655,7 @@ def initializeMesh(cfg, demOri, num):
     cszDEM = headerDEM['cellsize']
 
     # get normal vector of the grid mesh
-    Nx, Ny, Nz = DFAtls.getNormalMesh(dem, num)
-    # if no normal available, put 0 for Nx and Ny and 1 for Nz
-    dem['Nx'] = np.where(np.isnan(Nx), 0., Nx)
-    dem['Ny'] = np.where(np.isnan(Ny), 0., Ny)
-    # build no data mask (used to find out of dem particles)
-    outOfDEM = np.where(np.isnan(dem['rasterData']), 1, 0).astype(bool).flatten()
-    dem['Nz'] = Nz
-    dem['outOfDEM'] = outOfDEM
+    dem = DFAtls.getNormalMesh(dem, num)
 
     # Prepare SPH grid
     headerNeighbourGrid = {}
@@ -675,13 +668,12 @@ def initializeMesh(cfg, demOri, num):
     dem['headerNeighbourGrid'] = headerNeighbourGrid
 
     # get real Area
-    areaRaster = DFAtls.getAreaMesh(Nx, Ny, Nz, cszDEM, num)
-    dem['areaRaster'] = areaRaster
+    dem = DFAtls.getAreaMesh(dem, num)
     projArea = nColsDEM * nRowsDEM * cszDEM * cszDEM
-    actualArea = np.nansum(areaRaster)
+    areaRaster = dem['areaRaster']
     log.debug('Largest cell area: %.2f m²' % (np.nanmax(areaRaster)))
     log.debug('Projected Area : %.2f' % projArea)
-    log.debug('Total Area : %.2f' % actualArea)
+    log.debug('Total Area : %.2f' % np.nansum(areaRaster))
 
     return dem
 
@@ -1096,6 +1088,7 @@ def initializeFields(cfg, dem, particles):
     fields['FV'] = PFV
     fields['P'] = PP
     fields['FD'] = FD
+    fields['FM'] = FD
     fields['Vx'] = PFV
     fields['Vy'] = PFV
     fields['Vz'] = PFV
