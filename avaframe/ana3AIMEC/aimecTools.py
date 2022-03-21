@@ -566,7 +566,7 @@ def transform(fname, rasterTransfo, interpMethod):
     Parameters
     ----------
     fname: str, dict
-        path to rasterfile to transform- or already read to dict with data as np nd array
+        path to rasterfile to transform- or already read to dict with data as numpy nd array
     rasterTransfo: dict
         transformation information
     interpMethod: str
@@ -1086,12 +1086,12 @@ def setAvaPath(pathDict, dem):
     """
 
     # fetch input parameters
-    ProfileLayer = pathDict['profileLayer']
+    profileLayer = pathDict['profileLayer']
     splitPointSource = pathDict['splitPointSource']
-    DefaultName = pathDict['projectName']
+    defaultName = pathDict['projectName']
 
     # read avaPath
-    avaPath = shpConv.readLine(ProfileLayer, DefaultName, dem)
+    avaPath = shpConv.readLine(profileLayer, defaultName, dem)
     # read split point
     splitPoint = shpConv.readPoints(splitPointSource, dem)
     # add 'z' coordinate to the avaPath
@@ -1099,7 +1099,7 @@ def setAvaPath(pathDict, dem):
     # reverse avaPath if necessary
     _, avaPath = geoTrans.checkProfile(avaPath, projSplitPoint=None)
 
-    log.debug('Creating new raster along polyline: %s' % ProfileLayer)
+    log.debug('Creating new raster along polyline: %s' % profileLayer)
 
     return avaPath, splitPoint
 
@@ -1108,10 +1108,12 @@ def scalePathWithCellSize(rasterTransfo, cellSizeSL):
     """ use desired cellsize to scale ava path and create s, l coordinates
         and coordinates of the resampled polyline in the old coord systems x, y
 
-        Paramters
+        Parameters
         ----------
         rasterTransfo: dict
             domain transformation info
+        cellSizeSL: float
+            desired cell size of sl raster
 
         Returns
         --------
@@ -1259,4 +1261,3 @@ def makeDomainTransfoOnTheGo(avaDir, dem, cfgSetup, pathDict):
     rasterTransfo = findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint)
 
     return rasterTransfo
-    

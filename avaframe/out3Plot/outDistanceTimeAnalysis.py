@@ -13,6 +13,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
+import avaframe.in3Utils.geoTrans as gT
 
 log = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     mti = mti[:, timeIndex]
 
     # create plot
-    fig = plt.figure()
+    fig = plt.figure(figsize=(pU.figW, pU.figH))
     ax = fig.add_subplot(1, 1, 1)
     plt.title(mtiInfo['plotTitle'])
     pc = plt.pcolormesh(timeListNew, rangeGates, mti, cmap=pU.cmapRangeTime)
@@ -84,8 +85,8 @@ def radarFieldOfViewPlot(radarFov, aperture, radarRange, X, Y, cfgRangeTime, ran
 
         Parameters
         -----------
-        radarFov: list
-            list with radar location and end point of field of view
+        radarFov: numpy array
+            list with radar location and end point of field of view, x and y coors
         aperture: float
             aperture angle [degree]
         radarRange: masked array
@@ -104,8 +105,8 @@ def radarFieldOfViewPlot(radarFov, aperture, radarRange, X, Y, cfgRangeTime, ran
     gateContours = cfgRangeTime.getint('gateContours')
 
     # get field of view with radar location and aperture angle
-    xR = dtAna.rotate(radarFov, aperture)
-    xL = dtAna.rotate(radarFov, -aperture)
+    xR = gT.rotate(radarFov, aperture)
+    xL = gT.rotate(radarFov, -aperture)
     radarFovArrow = np.diff(radarFov)*0.2
 
     # create plot of radar range values and field of view

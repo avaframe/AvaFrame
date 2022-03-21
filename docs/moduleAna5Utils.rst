@@ -9,15 +9,15 @@ distanceTimeAnalysis: Visualizing the temporal evolution of flow variables
 
 With the functions gathered in this module, flow variables of avalanche simulation results can be
 visualized in a distance versus time diagram, the so called **thalweg-time diagram**.
-The **tt-diagram** provides a new way to identify main features of the temporal evolution of
-a flow variables along the :term:`avalanche path`.
+The **tt-diagram** provides a way to identify main features of the temporal evolution of
+flow variables along the :term:`avalanche path`.
 This is based on the ideas presented in :cite:`FiFrGaSo2013` and :cite:`RaKo2020`, where
 avalanche simulation results have been transformed into the radar coordinate system to facilitate
 direct comparison, combined with the attempt to analyze simulation results in an avalanche path
 dependent coordinate system (:cite:`Fi2013`).
 In addition to the **tt-diagram**, :py:mod:`ana5RangeTime` also offers the possibility to
 produce simulated **range-time diagrams** of the flow variables with respect to a radar's field
-of view. In this manner, simulation results can be directly compared to radar measurements in terms
+of view. With this, simulation results can be directly compared to radar measurements in terms
 of front position and inferred approach velocity. The colorcoding of the simulated
 **range-time** diagrams refers to average values of the chosen flow parameter
 (e.g. flow depth, flow velocity) at specified range gates. This colorcoding is not directly

@@ -460,3 +460,72 @@ def getIPZ(z0, xEnd, yEnd, dx):
     zv = z0 - np.tan(np.radians(meanAlpha)) * x
 
     return zv
+
+
+def test_cartToSpherical():
+    """ test converting to spherical coordinates """
+
+    # setup required inputs
+    X = 10.
+    Y = 10.
+    Z = np.sqrt(10.**2 + 10.**2)
+
+    # call function to be tested
+    r, phi, theta = dtAna.cartToSpherical(X, Y, Z)
+
+    assert r == np.sqrt(10.**2 + 10.**2 + Z**2)
+    assert phi == 45.
+    assert theta == 45.
+
+
+    # setup required inputs
+    X = np.sqrt(10.)
+    Y = 3*np.sqrt(10.)
+    Z = 20
+
+    # call function to be tested
+    r, phi, theta = dtAna.cartToSpherical(X, Y, Z)
+
+    print('r', r, 'phi', phi, 'theta', theta)
+
+    assert r == np.sqrt(X**2 + Y**2 + Z**2)
+    assert phi == np.rad2deg(np.arctan(2)) - 45
+    assert theta == 90. - np.rad2deg(np.arctan(2))
+
+
+def test_rotate():
+    """ test rotate a vector by an angle """
+
+    # setup required data
+    locationPoints = [[0., 0.], [0., 10.]]
+    theta = 45.
+    deg = True
+
+    # call function to be tested
+    rotatedLine = dtAna.rotate(locationPoints, theta, deg=deg)
+
+    sL = np.sqrt(50.)
+    assert rotatedLine[0][0] == 0.
+    assert -sL - 1.e-12 < rotatedLine[0][1] < -sL+1.e-12
+    assert rotatedLine[1][0] == 0.
+    assert sL - 1.e-12 < rotatedLine[1][1] < sL+1.e-12
+    assert isinstance(rotatedLine, list)
+    assert len(rotatedLine) == 2
+    assert len(rotatedLine[0]) == 2
+
+    locationPoints = [[0., 0.], [0., 10.]]
+    theta = np.rad2deg(np.arctan(2)) - 45
+    deg = True
+
+    # call function to be tested
+    rotatedLine = dtAna.rotate(locationPoints, theta, deg=deg)
+    print('rotated line', rotatedLine)
+
+    sLX = np.sqrt(10.)
+    assert rotatedLine[0][0] == 0.
+    assert -sLX - 1.e-12 < rotatedLine[0][1] < -sLX+1.e-12
+    assert rotatedLine[1][0] == 0.
+    assert 3*sLX - 1.e-12 < rotatedLine[1][1] < 3*sLX+1.e-12
+    assert isinstance(rotatedLine, list)
+    assert len(rotatedLine) == 2
+    assert len(rotatedLine[0]) == 2
