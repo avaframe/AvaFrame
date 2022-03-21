@@ -38,8 +38,8 @@ def getRadarLocation(cfg):
 
         Returns
         --------
-        radarFov: list
-            list with x and y coordinates of radar location and point in direction of field of view
+        radarFov: numpy array
+            array with x and y coordinates of radar location and point in direction of field of view
 
     """
 
@@ -47,8 +47,8 @@ def getRadarLocation(cfg):
     locationInfo = cfg['GENERAL']['radarLocation'].split('|')
 
     # set radar location and point in direction of field of view as list
-    radarFov = [[float(locationInfo[0]), float(locationInfo[1])], [float(locationInfo[2]),
-        float(locationInfo[3])]]
+    radarFov = np.asarray([[float(locationInfo[0]), float(locationInfo[1])], [float(locationInfo[2]),
+        float(locationInfo[3])]])
 
     return radarFov
 
@@ -68,6 +68,10 @@ def setDemOrigin(demSims):
             updated DEM with xllcenter and yllcenter set to original origin
             cellsize and nrows and columns kept from simulation DEM
     """
+    if 'key' not in demSims:
+        message = 'DEM dictionary does not have originalHeader key - required to get original origin'
+        log.error(message)
+        raise KeyError(message)
 
     # fetch dem data and header - use simulation dem data but xllcenter und yllcenter from original dem
     demOriginal = {'header': demSims['originalHeader'], 'rasterData': demSims['rasterData']}
@@ -102,12 +106,8 @@ def setupRangeTimeDiagram(dem, cfgRangeTime):
     rangeMasked, rangeGates = radarMask(dem, radarFov, cfgRangeTime['GENERAL'].getfloat('aperture'),
         cfgRangeTime)
 
-    # setup time and distance to radar from avalanche front lists
-    timeList = []
-    rList = []
-
     # create range gates and initialise mti array
-    Rarray = np.ma.getdata(rangeMasked)
+    rArray = np.ma.getdata(rangeMasked)
     nRangeGate = len(rangeGates)
     mti = np.zeros((nRangeGate, 1))
 
@@ -115,95 +115,11 @@ def setupRangeTimeDiagram(dem, cfgRangeTime):
     bmaskRadar = np.ma.getmask(rangeMasked)
 
     # add all info to mti dict
-    mtiInfo = {'mti': mti, 'rangeGates': rangeGates, 'Rarray': Rarray, 'bmaskRadar': bmaskRadar,
+    mtiInfo = {'mti': mti, 'rangeGates': rangeGates, 'rArray': rArray, 'bmaskRadar': bmaskRadar,
         'rangeList': [], 'timeList': [], 'rangeMasked': rangeMasked,
         'demOriginal': dem, 'type': 'rangeTime', 'referencePointName': 'radar'}
 
     return mtiInfo
-
-
-def rotate(locationPoints, theta, deg=True):
-    """ rotate a vector provided as start and end point with theta angle
-
-        Parameters
-        -----------
-        locationPoints: list
-            list of lists with x,y coordinate of start and end point of a line
-        theta: float
-            rotation angle of the vector from start point to end point - degree default
-        deg: bool
-            if true theta is converted to rad from degree
-
-        Returns
-        --------
-        rotatedLine: list
-            list of lists of x,y coordinates of start and end point of rotated vector
-    """
-
-    # convert to rad if provided as degree
-    if deg:
-        theta = np.radians(theta)
-
-    # create vector with origin 0,0
-    vector = np.diff(locationPoints)
-
-    # create rotation matrix
-    # counterclockwise rotation
-    rotationMatrix = np.array([
-        [np.cos(theta), -np.sin(theta)],
-        [np.sin(theta), np.cos(theta)],
-        ])
-
-    # rotate vector
-    vectorRot = np.dot(rotationMatrix, vector)
-
-    # create rotated line as list of start and end point
-    rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0]+vectorRot[0])], # x
-           [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1])] #y
-          ]
-
-    # check if rotation worked correctly
-    lenVector = np.sqrt(vector[0]**2 + vector[1]**2)
-    lenVectorRot = np.sqrt(vectorRot[0]**2 + vectorRot[1]**2)
-    vecDiff = abs(lenVector - lenVectorRot)
-    if vecDiff > 1.e-7:
-        log.warning('rotated vectors are not of same length %.2f vs %.2f' % (lenVector, lenVectorRot))
-
-    return rotatedLine
-
-
-def cartToSpherical(X, Y, Z):
-    """ convert from cartesian to spherical coordinates
-
-        Parameters
-        -----------
-        X: float
-            x coordinate
-        Y: float
-            y coordinate
-        Z: float
-            z coordinate
-
-        Returns
-        ---------
-        r: float
-            radius
-        phi: float
-            azimuth angle [degrees]
-        theta: float
-            for elevation angle defined from Z-axis down [degrees]
-    """
-
-    xy = X** 2 + Y**2
-    r = np.sqrt(xy + Z**2)
-     # for elevation angle defined from Z-axis down
-    theta = np.arctan2(np.sqrt(xy), Z)
-    theta = np.degrees(theta)
-    # azimuth: 0 degree is south
-    phi = np.arctan2(X, Y)
-    phi = np.degrees(phi)
-
-    return r, phi, theta
 
 
 def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
@@ -213,10 +129,10 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
         -----------
         dem: dict
             DEM dictionary with header info and rasterData
-        radarFov: list
+        radarFov: numpy array
             radars field of view min and max points
         aperture: float
-            opening angle?
+            aperature angle
         cfgRangeTime: configparser object
             configuration settings here used: avalancheDir info
 
@@ -237,6 +153,13 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
     # Set coordinate grid with given origin
     X, Y = oP._setCoordinateGrid(xllc, yllc, cellSize, rasterdata)
 
+    if (np.any(radarFov[0] < np.amin(X)) or np.any(radarFov[0] > np.amax(X))  or
+        np.any(radarFov[1] < np.amin(Y))  or np.any(radarFov[1] > np.amax(Y))):
+        message = 'Radar location outside of DEM, x= %.2f, %.2f, y= %.2f, %.2f' % (radarFov[0][0],
+            radarFov[0][1], radarFov[1][0], radarFov[1][1])
+        log.error(message)
+        raise AssertionError(message)
+
     # define radar field of view as dict
     radarpath = {'x': np.asarray(radarFov[0]),
                  'y': np.asarray(radarFov[1])}
@@ -253,10 +176,10 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
     rDz = radarProfile[0]['z'][1]
 
     # convert centerline of radar field of view to spherical coordinates
-    rD, phiD, thetaD = cartToSpherical(X=rDx-rX, Y=rDy-rY, Z=rDz-rZ)
+    rD, phiD, thetaD = gT.cartToSpherical(X=rDx-rX, Y=rDy-rY, Z=rDz-rZ)
 
     # domain in spherical coordinates with center beeing radar position
-    r, phi, theta = cartToSpherical(X=X-rX, Y=Y-rY, Z=rasterdata-rZ)
+    r, phi, theta = gT.cartToSpherical(X=X-rX, Y=Y-rY, Z=rasterdata-rZ)
 
     # create mask where in spherical coordinates azimuth angle is bigger than field of view of radar
     # this is defined by the radar position where it is looking and the aperature angle
@@ -265,11 +188,6 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
     # compute radar range field (distance from radar -masked with field of view)
     # TODO: check if we need to mask also where there are nans in dem
     radarRange = np.ma.array(r, mask=maskPhi)
-
-    # demOriginal['header']['noDataValue'] = -9999
-    # radarRangeNew = np.where(maskPhi == False , radarRange, -9999)
-    # outFile = pathlib.Path(cfgRangeTime['GENERAL']['avalancheDir'], 'radarRange.asc')
-    # IOf.writeResultToAsc(demOriginal['header'], radarRangeNew, outFile, flip=True)
 
     # create range gates
     minR = int(np.floor(np.nanmin(radarRange)))
@@ -282,30 +200,6 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
         rangeGates, demOriginal)
 
     return radarRange, rangeGates
-
-
-def avalancheMask(resData, threshold):
-    """ mask resData where data is smaller than threshold
-
-        Parameters
-        ------------
-        resData: numpy nd array
-            flow parameter result field
-        threshold: float
-            threshold value - below this do mask array
-
-        Returns
-        --------
-        maskResType: numpy array
-            flow parameter result field masked array
-
-    """
-
-    # create mask where data below threshold and mask array
-    bmaskRes = resData < threshold
-    maskResType = np.ma.array(resData, mask=bmaskRes)
-
-    return maskResType
 
 
 def minRangeSimulation(flowF, rangeMasked, threshold):
@@ -322,8 +216,6 @@ def minRangeSimulation(flowF, rangeMasked, threshold):
             used to create mask for getting line of sight range,
             data below threshold not taken into account
 
-        outfn:
-
         Returns
         --------
         losRange: float
@@ -333,7 +225,7 @@ def minRangeSimulation(flowF, rangeMasked, threshold):
     """
 
     # fetch mask where result field smaller than threshold
-    maskAva = avalancheMask(flowF, threshold)
+    maskAva = np.ma.masked_where(flowF < threshold, flowF)
     bmaskAva = np.ma.getmask(maskAva)
     # fetch mask of radar field of view
     maskPhi = np.ma.getmask(rangeMasked)
@@ -352,36 +244,6 @@ def minRangeSimulation(flowF, rangeMasked, threshold):
     return losRange
 
 
-def fetchFlowFields(flowFieldsDir, suffix=''):
-    """ fetch paths to all desired flow fields within folder
-
-        Parameters
-        ------------
-        flowFieldsDir: str or pathlib path
-            path to flow field ascii files
-        suffix: str
-            suffix in flow field name to be searched for
-
-        Returns
-        --------
-        flowFields: list
-            list of pathlib paths to flow fields
-
-    """
-
-    # check if pathlib path
-    if isinstance(flowFieldsDir, pathlib.PurePath):
-        flowFieldsDir = pathlib.Path(flowFieldsDir)
-
-    if suffix == '':
-        searchString = '*.asc'
-    else:
-        searchString = '*%s*.asc' % suffix
-    flowFields = list(flowFieldsDir.glob(searchString))
-
-    return flowFields
-
-
 def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
     """ extract average values of flow parameter result at certain distance intervals (range gates)
         add info to be used for colorcoding range-time diagram
@@ -393,7 +255,7 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
         flowF: numpy array
             flow parameter result field
         mtiInfo: dict
-            info here used: Rarray, bmaskRadar rangeMasked, rangeGates, mti, timeList
+            info here used: rArray, bmaskRadar rangeMasked, rangeGates, mti, timeList
 
         Returns
         --------
@@ -407,14 +269,14 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
     # is avalanche flow
     threshold = cfgRangeTime['GENERAL'].getfloat('thresholdResult')
     rangeGates = mtiInfo['rangeGates']
-    Rarray = mtiInfo['Rarray']
+    rArray = mtiInfo['rArray']
     bmaskRadar = mtiInfo['bmaskRadar']
     rangeMasked = mtiInfo['rangeMasked']
     mti = mtiInfo['mti']
     mtiNew = np.zeros((len(rangeGates), 1))
 
     # get mask of results below threshold
-    maskAva = avalancheMask(flowF, threshold)
+    maskAva = np.ma.masked_where(flowF < threshold, flowF)
     bmaskAva = np.ma.getmask(maskAva)
     # and join to a mask with "visible part of avalanche" - mask where not field of view and not
     # ava result above threshold
@@ -432,13 +294,14 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
         minRAva = np.amin(rangeGates)
         maxRAva = np.amax(rangeGates)
 
-    # loop over each range gate to populate mti array
-    for indexRI, rI in enumerate(rangeGates):
-        if rI < minRAva or rI > maxRAva:
-            # do not expect to see data for this range
-            continue
+    # create array of capped range gates
+    smallRangeGatesIndex = np.where((rangeGates > minRAva) & (rangeGates < maxRAva))[0]
+
+    # loop over each range gate within visible part to populate mti array
+    for indexRI in smallRangeGatesIndex:
         # create mask for range slice within range gate
-        bmaskRange = ~np.logical_and(Rarray > rI-rgWidth/2, Rarray < rI+rgWidth/2)
+        bmaskRange = ~np.logical_and(rArray > rangeGates[indexRI]-rgWidth/2,
+            rArray < rangeGates[indexRI]+rgWidth/2)
         bmaskAvaRadarRangeslice = ~np.logical_and(~bmaskRange, ~bmaskAvaRadar)
         if np.any(~bmaskAvaRadarRangeslice):
             # only update if range_slice mask is not empty
@@ -639,7 +502,7 @@ def initializeRangeTime(modName, cfg, dem, simHash):
         --------
         mtiInfo: dict
             info on time steps (timeList) and distance (rangeList) of avalanche front
-            averaged values of result parameter (mti) for each range gate (rangeGates) for colorcodig
+            averaged values of result parameter (mti) for each range gate (rangeGates) for colorcoding
             x, y origin of DEM, cellSize and plotTitle
             optional info on masks for radar field of view (rangeMasked), etc.
     """
@@ -776,14 +639,12 @@ def approachVelocity(mtiInfo):
     # to get correct distance increments for velocity computation
     # nanmin required as if FV is zero range is nan
     rangeListSorted = np.asarray(rangeList)[np.argsort(timeList)] + abs(np.nanmin(np.asarray(rangeList)))
-    approachVelocity = []
     maxVel = 0.0
     rangeVel = 0.0
     # compute deltaDistance/deltaTime to get approach velocity
     # use interval of 2*dtSave for little smmoothing
     for index, range in enumerate(rangeListSorted[1:-1]):
         vel = (rangeListSorted[index+1] - rangeListSorted[index-1]) / (timeListSorted[index+1] - timeListSorted[index-1])
-        approachVelocity.append(np.abs(vel))
         if abs(vel) > maxVel:
             maxVel = abs(vel)
             rangeVel = rangeListSorted[index] - abs(np.nanmin(np.asarray(rangeList)))

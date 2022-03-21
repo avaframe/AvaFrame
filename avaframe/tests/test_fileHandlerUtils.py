@@ -319,3 +319,31 @@ def test_getFilterDict():
     parametersDict = fU.getFilterDict(cfg, 'TESTS')
 
     assert parametersDict == {}
+
+
+def test_fetchFlowFields():
+    """ test fetching fields in a folder """
+
+    # setup required input
+    # get input data
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaName = 'avaHockeyChannelPytest'
+    flowFieldsDir = dirPath / '..'/ '..' / 'benchmarks' / avaName / 'Outputs' / 'com1DFA' / 'peakFiles'
+    suffix = 'ppr'
+
+    # call function to be tested
+    flowFields = dtAna.fetchFlowFields(flowFieldsDir, suffix=suffix)
+    flowFields = sorted(flowFields)
+    print('flowFields', flowFields, sorted(flowFields))
+
+    assert flowFields[0].stem == 'release1HS_ent_dfa_d10bdc1e81_ppr'
+    assert flowFields[1].stem == 'release2HS_ent_dfa_e2145362b7_ppr'
+    assert len(flowFields) == 2
+
+    # call function to be tested
+    flowFields = dtAna.fetchFlowFields(flowFieldsDir)
+    flowFields = sorted(flowFields)
+    print('flowFields', flowFields, sorted(flowFields))
+
+    assert flowFields[0].stem == 'release1HS_ent_dfa_d10bdc1e81_pfd'
+    assert len(flowFields) == 6

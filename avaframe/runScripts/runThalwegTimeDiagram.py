@@ -11,8 +11,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 # Local imports
-from avaframe.com2AB import com2AB
-from avaframe.out3Plot import outAB
+import avaframe.in3Utils.fileHandlerUtils as fU
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
@@ -69,7 +68,7 @@ for index, simDFrow in simDF.iterrows():
     # fetch all flow parameter result fields
     flowFieldsDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'peakFiles', 'timeSteps')
     simNameSuffix = index + '_' + cfgRangeTime['GENERAL']['rangeTimeResType']
-    flowFields =  dtAna.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
+    flowFields =  fU.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
 
     for flowField in flowFields:
 

@@ -464,6 +464,36 @@ def exportcom1DFAOrigOutput(avaDir, cfg='', addTSteps=False):
     shutil.copy2(pathlib.Path('%s' % inputDir, 'ExpLog.txt'), outDir)
 
 
+def fetchFlowFields(flowFieldsDir, suffix=''):
+    """ fetch paths to all desired flow fields within folder
+
+        Parameters
+        ------------
+        flowFieldsDir: str or pathlib path
+            path to flow field ascii files
+        suffix: str
+            suffix in flow field name to be searched for
+
+        Returns
+        --------
+        flowFields: list
+            list of pathlib paths to flow fields
+
+    """
+
+    # check if pathlib path
+    if isinstance(flowFieldsDir, pathlib.PurePath):
+        flowFieldsDir = pathlib.Path(flowFieldsDir)
+
+    if suffix == '':
+        searchString = '*.asc'
+    else:
+        searchString = '*%s*.asc' % suffix
+    flowFields = list(flowFieldsDir.glob(searchString))
+
+    return flowFields
+
+
 # ToDo Maybe try to use makeSimFromResDF instead of makeSimDF
 def makeSimDF(inputDir, avaDir='', simID='simID'):
     """ Create a  dataFrame that contains all info on simulations

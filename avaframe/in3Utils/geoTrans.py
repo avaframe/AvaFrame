@@ -831,3 +831,87 @@ def checkOverlap(toCheckRaster, refRaster, nameToCheck, nameRef, crop=False):
             raise AssertionError(message)
 
     return toCheckRaster
+
+
+def cartToSpherical(X, Y, Z):
+    """ convert from cartesian to spherical coordinates
+
+        Parameters
+        -----------
+        X: float
+            x coordinate
+        Y: float
+            y coordinate
+        Z: float
+            z coordinate
+
+        Returns
+        ---------
+        r: float
+            radius
+        phi: float
+            azimuth angle [degrees]
+        theta: float
+            for elevation angle defined from Z-axis down [degrees]
+    """
+
+    xy = X** 2 + Y**2
+    r = np.sqrt(xy + Z**2)
+     # for elevation angle defined from Z-axis down
+    theta = np.arctan2(np.sqrt(xy), Z)
+    theta = np.degrees(theta)
+    # azimuth: 0 degree is south
+    phi = np.arctan2(X, Y)
+    phi = np.degrees(phi)
+
+    return r, phi, theta
+
+
+def rotate(locationPoints, theta, deg=True):
+    """ rotate a vector provided as start and end point with theta angle
+
+        Parameters
+        -----------
+        locationPoints: list
+            list of lists with x,y coordinate of start and end point of a line
+        theta: float
+            rotation angle of the vector from start point to end point - degree default
+        deg: bool
+            if true theta is converted to rad from degree
+
+        Returns
+        --------
+        rotatedLine: list
+            list of lists of x,y coordinates of start and end point of rotated vector
+    """
+
+    # convert to rad if provided as degree
+    if deg:
+        theta = np.radians(theta)
+
+    # create vector with origin 0,0
+    vector = np.diff(locationPoints)
+
+    # create rotation matrix
+    # counterclockwise rotation
+    rotationMatrix = np.array([
+        [np.cos(theta), -np.sin(theta)],
+        [np.sin(theta), np.cos(theta)],
+        ])
+
+    # rotate vector
+    vectorRot = np.dot(rotationMatrix, vector)
+
+    # create rotated line as list of start and end point
+    rotatedLine = [[locationPoints[0][0], float(locationPoints[0][0]+vectorRot[0])], # x
+           [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1])] #y
+          ]
+
+    # check if rotation worked correctly
+    lenVector = np.sqrt(vector[0]**2 + vector[1]**2)
+    lenVectorRot = np.sqrt(vectorRot[0]**2 + vectorRot[1]**2)
+    vecDiff = abs(lenVector - lenVectorRot)
+    if vecDiff > 1.e-7:
+        log.warning('rotated vectors are not of same length %.2f vs %.2f' % (lenVector, lenVectorRot))
+
+    return rotatedLine
