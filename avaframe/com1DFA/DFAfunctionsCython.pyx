@@ -964,6 +964,7 @@ def updateFieldsC(cfg, particles, dem, fields):
   cdef double[:, :] PFD = fields['pfd']
   cdef double[:, :] PTA = fields['pta']
   # initialize outputs
+  cdef double[:, :] MassBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] VBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] PBilinear = np.zeros((nrows, ncols))
   cdef double[:, :] FDBilinear = np.zeros((nrows, ncols))
@@ -1004,14 +1005,14 @@ def updateFieldsC(cfg, particles, dem, fields):
     for i in range(4):
       indx = Lx0 + i%2 # + 0 1 0 1
       indy = Ly0 + i/2 # + 0 0 1 1
-      FDBilinear[indy, indx] = FDBilinear[indy, indx] + m * w[i]
+      MassBilinear[indy, indx] = MassBilinear[indy, indx] + m * w[i]
       MomBilinearX[indy, indx] = MomBilinearX[indy, indx] + m * ux * w[i]
       MomBilinearY[indy, indx] = MomBilinearY[indy, indx] + m * uy * w[i]
       MomBilinearZ[indy, indx] = MomBilinearZ[indy, indx] + m * uz * w[i]
 
   for i in range(ncols):
     for j in range(nrows):
-      m = FDBilinear[j, i]
+      m = MassBilinear[j, i]
       if m > 0:
         # TODO: here we devide by the area of the vertex, would it not make
         # more sense to devide by the area of the cell in the previous loop?
@@ -1031,6 +1032,7 @@ def updateFieldsC(cfg, particles, dem, fields):
         PTA[j, i] = travelAngleField[j, i]
 
 
+  fields['FM'] = np.asarray(MassBilinear)
   fields['FV'] = np.asarray(VBilinear)
   fields['Vx'] = np.asarray(VXBilinear)
   fields['Vy'] = np.asarray(VYBilinear)

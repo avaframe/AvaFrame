@@ -9,7 +9,6 @@ import logging
 from configupdater import ConfigUpdater
 import numpy as np
 import copy
-import matplotlib.pyplot as plt
 
 # Local imports
 # import config and init tools
@@ -18,7 +17,8 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.in1Data import getInput
 
 # import computation modules
-from avaframe.com1DFA import com1DFA, particleTools, com1DFATools
+from avaframe.com1DFA import com1DFA, particleTools
+import avaframe.ana5Utils.DFAPathGeneration as DFAPath
 from avaframe.com2AB import com2AB
 
 # import analysis tools
@@ -65,18 +65,23 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
 
         # Run dense flow with coulomb friction
         dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=hybridModelDFACfg)
-        particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName='', flagAvaDir=True, comModule='com1DFA')
+        simID = simDF.index[0]
+        particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simID, flagAvaDir=True,
+                                                                       comModule='com1DFA')
         # postprocess to extract path and energy line
-        avaProfilePart, avaProfileMass, avaProfileKE = particleTools.getCom1DFAPath(particlesList, demOri)
-        avaProfileMassExt = com1DFATools.extendCom1DFAPath(cfgHybrid, demOri, particlesList[0], avaProfileMass.copy())
+        avaProfileMass = DFAPath.getCom1DFAPath(particlesList, dem)
+        avaProfileMassExt = DFAPath.extendCom1DFAPath(cfgHybrid['PATH'], dem, particlesList[0], avaProfileMass.copy())
         # save profile as AB profile in Inputs
         pathAB = pathlib.Path(avalancheDir, 'Inputs', 'LINES', 'pathAB_aimec')
         name = 'massAvaPath'
-        shpConv.writeLine2SHPfile(avaProfileMassExt, name, pathAB)
+        avaProfileMassExtOri = copy.deepcopy(avaProfileMassExt)
+        avaProfileMassExtOri['x'] = avaProfileMassExtOri['x'] + demOri['header']['xllcenter']
+        avaProfileMassExtOri['y'] = avaProfileMassExtOri['y'] + demOri['header']['yllcenter']
+        shpConv.writeLine2SHPfile(avaProfileMassExtOri, name, pathAB)
         # also save it to work
         pathAB = pathlib.Path(avalancheDir, 'Work', 'com3Hybrid', 'pathAB_aimec' + str(iteration))
         name = 'massAvaPath'
-        shpConv.writeLine2SHPfile(avaProfileMassExt, name, pathAB)
+        shpConv.writeLine2SHPfile(avaProfileMassExtOri, name, pathAB)
 
         # Run Alpha Beta
         hybridModelABCfg = pathlib.Path('com3Hybrid', 'hybridModel_com2ABCfg.ini')
@@ -103,7 +108,6 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         iteration = iteration + 1
 
     pathDict, rasterTransfo, resAnalysisDF = runAna3AIMEC.runAna3AIMEC(avalancheDir=avalancheDir)
-    simID = simDF.index[0]
     refSimulation = pathDict['refSimulation']
 
     # fetch fields for desired time step

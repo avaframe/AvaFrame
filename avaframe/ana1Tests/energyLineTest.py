@@ -14,10 +14,10 @@ from matplotlib.ticker import FormatStrFormatter
 # Local imports
 # import config and init tools
 from avaframe.in3Utils import cfgUtils
-from avaframe.in1Data import getInput
 
 # import computation modules
 from avaframe.com1DFA import com1DFA, particleTools
+import avaframe.ana5Utils.DFAPathGeneration as DFAPath
 
 # import plotting tools
 import avaframe.out3Plot.plotUtils as pU
@@ -34,24 +34,27 @@ def mainEnergyLineTest(cfgMain, energyLineTestCfgFile):
     and compares it to he analytic geometric/alpha line solution
     """
     avalancheDir = cfgMain['MAIN']['avalancheDir']
-    demOri = getInput.readDEM(avalancheDir)
     # Run dense flow with coulomb friction
+    # here is an example with com1DFA but another DFA computational module can be used
+    # as long as it produces some FV, FD and FM results
     energyLineTestCfg, modInfo = cfgUtils.getModuleConfig(com1DFA, fileOverride=energyLineTestCfgFile, modInfo=True)
     dem, _, _, simDF = com1DFA.com1DFAMain(avalancheDir, cfgMain, cfgFile=energyLineTestCfgFile)
-    particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName='', flagAvaDir=True,
-                                                                   comModule='com1DFA')
-    # postprocess to extract path and energy line
-    _, avaProfileMass, _ = particleTools.getCom1DFAPath(particlesList, dem)
 
-    # read peak field
+    # generate mass averaged path profile
     simName = simDF.index[0]
+    pathFromPart = energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart')
+    avaProfileMass = DFAPath.generateAvragePath(avalancheDir, pathFromPart, simName, dem)
+
+    # read pfv for plot
     fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
                                                            comModule='com1DFA')
-
-    errorEnergyTest = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, particlesList, fieldsList, simName)
+    # make analysis and generate plots
+    errorEnergyTest = generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList,
+                                                simName)
     return errorEnergyTest
 
-def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, particlesList, fieldsList, simName):
+
+def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, dem, fieldsList, simName):
     """ Make energy test analysis and plot results
 
     Parameters
@@ -64,8 +67,6 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
         particle mass averaged properties
     dem: dict
         com1DFA simulation dictionary
-    particlesList: list
-        particles dictionary list
     fieldsList: list
         field dictionary list
     simName: str
@@ -95,8 +96,11 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     ax1, extent, cbar0, cs1 = outCom1DFA.addResult2Plot(ax1, dem['header'], fieldsList[-1]['pfv'], 'pfv')
     cbar0.ax.set_ylabel('peak flow velocity')
     ax1 = outCom1DFA.addDem2Plot(ax1, dem, what='slope', extent=extent)
-    ax1, cbar1 = outCom1DFA.addParticles2Plot(particlesList[-1], ax1, dem, whatS='h')
-    cbar1.ax.set_ylabel('final particle flow thickness')
+    if energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart'):
+        particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True,
+                                                                       comModule='com1DFA')
+        ax1, cbar1 = outCom1DFA.addParticles2Plot(particlesList[-1], ax1, dem, whatS='h')
+        cbar1.ax.set_ylabel('final particle flow thickness')
     ax1.plot(avaProfileMass['x'], avaProfileMass['y'], '-y.', zorder = 20, label='Center of mass path')
     rowsMin, rowsMax, colsMin, colsMax = pU.constrainPlotsToData(fieldsList[-1]['pfv'], 5, extentOption=True,
                                                                  constrainedData=False, buffer='')
