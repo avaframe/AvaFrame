@@ -31,11 +31,13 @@ def projectOnRaster(dem, Points, interp='bilinear'):
         Points dictionary (x,y)
     interp: str
         interpolation option, between nearest or bilinear
+
     Returns
     -------
     Points: dict
         Points dictionary with z coordinate added or updated
-
+    ioob: int
+        number of out of bounds indexes
     """
     header = dem['header']
     rasterdata = dem['rasterData']

@@ -69,8 +69,9 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simID, flagAvaDir=True,
                                                                        comModule='com1DFA')
         # postprocess to extract path and energy line
-        avaProfileMass = DFAPath.getCom1DFAPath(particlesList, dem)
-        avaProfileMassExt = DFAPath.extendCom1DFAPath(cfgHybrid['PATH'], dem, particlesList[0], avaProfileMass.copy())
+        avaProfileMass = DFAPath.getDFAPathFromPart(particlesList, dem, addVelocityInfo=True)
+        # make a copy because extendDFAPathKernel might modify avaProfileMass
+        avaProfileMassExt = DFAPath.extendDFAPathKernel(cfgHybrid['PATH'], avaProfileMass.copy(), dem, particlesList[0])
         # save profile as AB profile in Inputs
         pathAB = pathlib.Path(avalancheDir, 'Inputs', 'LINES', 'pathAB_aimec')
         name = 'massAvaPath'

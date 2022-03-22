@@ -21,7 +21,7 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def generateAvragePath(avalancheDir, pathFromPart, simName, dem):
+def generateAvragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=False):
     """ extract path from fileds or particles
 
     Parameters
@@ -34,32 +34,43 @@ def generateAvragePath(avalancheDir, pathFromPart, simName, dem):
         simulation name
     dem: dict
         com1DFA simulation dictionary
+    addVelocityInfo: boolean
+        True to add (u2, ekin, totEKin) to result
+        Will only work if the particles (ux, uy, uz) exist or if 'FV' exists
 
     Returns
     --------
     avaProfileMass: dict
-        mass averaged profile
+        mass averaged profile (x, y, z, 's')
+        if addVelocityInfo is True, kinetic energy and velocity information are added to
+        the avaProfileMass dict (u2, ekin, totEKin)
     """
     if pathFromPart:
         particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True,
                                                                        comModule='com1DFA')
+        log.info('Using particles to generate avalanche path profile')
         # postprocess to extract path and energy line
-        avaProfileMass = getDFAPathFromPart(particlesList, dem)
+        avaProfileMass = getDFAPathFromPart(particlesList, dem, addVelocityInfo=addVelocityInfo)
     else:
         particlesList = ''
         # read field
-        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'FM'], simName=simName,
+        fieldName = ['FD', 'FM']
+        if addVelocityInfo:
+            fieldName.append['FV']
+        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, fieldName, simName=simName,
                                                                flagAvaDir=True, comModule='com1DFA')
+        log.info('Using fields to generate avalanche path profile')
         # postprocess to extract path and energy line
         avaProfileMass = getDFAPathFromField(fieldsList, fieldHeader, dem)
 
     return avaProfileMass
 
 
-def getDFAPathFromPart(particlesList, dem):
+def getDFAPathFromPart(particlesList, dem, addVelocityInfo=False):
     """ compute mass averaged path from particles
 
     Also returns the averaged velocity and kinetic energy associated
+    If addVelocityInfo is True, information about velocity and kinetic energy is not computed
 
     Parameters
     -----------
@@ -67,15 +78,26 @@ def getDFAPathFromPart(particlesList, dem):
         list of particles dict
     dem: dict
         dem dict
+    addVelocityInfo: boolean
+        True to add (u2, ekin, totEKin) to result
 
     Returns
     --------
     avaProfileMass: dict
-        mass averaged profile
+        mass averaged profile (x, y, z, 's', 'sCor')
+        if addVelocityInfo is True, kinetic energy and velocity information are added to
+        the avaProfileMass dict (u2, ekin, totEKin)
     """
-    proList = ['x', 'y', 'z', 's', 'sCor']
-    avaProfileMass = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
-    for prop in proList:
+
+    propList = ['x', 'y', 'z', 's', 'sCor']
+    avaProfileMass = {}
+    # do we have velocity info?
+    if addVelocityInfo:
+        propList.append('u2')
+        propList.append('ekin')
+        avaProfileMass['totEKin'] = np.empty((0, 1))
+    # initialize other properties
+    for prop in propList:
         avaProfileMass[prop] = np.empty((0, 1))
         avaProfileMass[prop + 'std'] = np.empty((0, 1))
 
@@ -83,16 +105,22 @@ def getDFAPathFromPart(particlesList, dem):
     for particles in particlesList:
         if particles['nPart'] > 0:
             m = particles['m']
-            ux = particles['ux']
-            uy = particles['uy']
-            uz = particles['uz']
-            u = DFAtls.norm(ux, uy, uz)
-            U2 = u*u
-            kineticEne = 0.5*m*u*u
-            kineticEneSum = np.nansum(kineticEne)
+            if addVelocityInfo:
+                ux = particles['ux']
+                uy = particles['uy']
+                uz = particles['uz']
+                u = DFAtls.norm(ux, uy, uz)
+                u2Array = u*u
+                kineticEneArray = 0.5*m*u2Array
+                particles['u2'] = u2Array
+                particles['ekin'] = kineticEneArray
 
             # mass-averaged path
-            avaProfileMass = appendAverageStd(proList, avaProfileMass, particles, U2, kineticEneSum, m)
+            avaProfileMass = appendAverageStd(propList, avaProfileMass, particles, m)
+
+            if addVelocityInfo:
+                kineticEne = np.nansum(kineticEneArray)
+                avaProfileMass['totEKin'] = np.append(avaProfileMass['totEKin'], kineticEne)
 
     return avaProfileMass
 
@@ -102,6 +130,7 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
 
     Also returns the averaged velocity and kinetic energy associated
     The dem and fieldsList (FD, FV and FM) need to have identical dimentions and cell size.
+    If FV is not provided, information about velocity and kinetic energy is not computed
 
     Parameters
     -----------
@@ -115,7 +144,9 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
     Returns
     --------
     avaProfileMass: dict
-        mass averaged profile
+        mass averaged profile (x, y, z, 's')
+        if 'FV' in fieldsList, kinetic energy and velocity information are added to
+        the avaProfileMass dict (u2, ekin, totEKin)
     """
     # get DEM
     demRaster = dem['rasterData']
@@ -127,32 +158,44 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
     csz = fieldHeader['cellsize']
     X, Y = gT.makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
 
-    # get normal vector of the grid mesh
-
-    proList = ['x', 'y', 'z', 'm']
-    avaProfileMass = {'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
-    for prop in proList:
+    propList = ['x', 'y', 'z']
+    avaProfileMass = {}
+    # do we have velocity info?
+    addVelocityInfo = False
+    if 'FV' in fieldsList[0]:
+        propList.append('u2')
+        propList.append('ekin')
+        avaProfileMass['totEKin'] = np.empty((0, 1))
+        addVelocityInfo = True
+    # initialize other properties
+    for prop in propList:
         avaProfileMass[prop] = np.empty((0, 1))
         avaProfileMass[prop + 'std'] = np.empty((0, 1))
-
-    # loop on each particle dictionary (ie each time step saved)
+    # loop on each field dictionary (ie each time step saved)
     for field in fieldsList:
+        # find cells with snow
         nonZeroIndex = np.where(field['FD'] > 0)
         xArray = X[nonZeroIndex]
         yArray = Y[nonZeroIndex]
-        zArray, _ = gT.projectOnGrid(xArray, yArray, demRaster, csz=csz, xllc=xllc, yllc=yllc, interp='bilinear')
+        zArray, _ = gT.projectOnGrid(xArray, yArray, demRaster, csz=csz, xllc=xllc, yllc=yllc)
         mArray = field['FM'][nonZeroIndex]
-        uArray = field['FV'][nonZeroIndex]
-        u2Array = uArray*uArray
-        kineticEneArray = 0.5*mArray*u2Array
-        kineticEne = np.nansum(kineticEneArray)
-        particles = {'m': mArray, 'x': xArray, 'y': yArray, 'z': zArray}
+        particles = {'x': xArray, 'y': yArray, 'z': zArray}
+        if addVelocityInfo:
+            uArray = field['FV'][nonZeroIndex]
+            u2Array = uArray*uArray
+            kineticEneArray = 0.5*mArray*u2Array
+            particles['u2'] = u2Array
+            particles['ekin'] = kineticEneArray
 
         # mass-averaged path
-        avaProfileMass = appendAverageStd(proList, avaProfileMass, particles, u2Array, kineticEne, mArray)
+        avaProfileMass = appendAverageStd(propList, avaProfileMass, particles, mArray)
 
-    avaProfileMass['x'] = avaProfileMass['x']
-    avaProfileMass['y'] = avaProfileMass['y']
+        if addVelocityInfo:
+            kineticEne = np.nansum(kineticEneArray)
+            avaProfileMass['totEKin'] = np.append(avaProfileMass['totEKin'], kineticEne)
+
+    avaProfileMass['x'] = avaProfileMass['x'] - xllc
+    avaProfileMass['y'] = avaProfileMass['y'] - yllc
 
     # compute s
     avaProfileMass = gT.computeS(avaProfileMass)
@@ -161,68 +204,129 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
 
 def extendDFAPath(avalancheDir, cfg, dem, simName, avaProfile):
     """ extend the DFA path at the top and bottom
-    Only returns the x, y, z path (if an s or sCor was provided..., it is removed)
+    cfg['pathFromPart'] decides if the path is extended from particles dict or fields
+    Once dicided, call extendDFAPathKernel for extending the path
+    avaProfile with x, y, z, s information
 
     Parameters
     -----------
+    avalancheDir: str or pathlib path
+        path to avalanche directory
+    cfg: configParser
+        configuration object with:
+        pathFromPart: boolean
+            read information from particles file or fields file
+        extTopOption: int
+        how to extend towards the top?
+            0 for heighst point method
+            a for largest runout method
+        nCellsResample: int
+            resampling length is given by nCellsResample*demCellSize
+        nCellsMinExtend: int
+            when extending towards the bottom, take points at more than nCellsMinExtend*demCellSize
+            from last point to get the direction
+        nCellsMaxExtend: int
+            when extending towards the bottom, take points at less than nCellsMaxExtend*demCellSize
+            from last point to get the direction
+        factBottomExt: float
+            extend the profile from factBottomExt*sMax
     dem: dict
         dem dict
-    particlesIni: dict
-        initial particles dict
-    avaProfileExt: dict
-        profile
-
+    simName: str
+        simHash or name
+    avaProfile: dict
+        profile to be extended
     Returns
     --------
-    avaProfile: dict
-        extended profile
+    avaProfileExt: dict
+        extended profile at top and bottom (x, y, z).
     """
     if cfg.getboolean('pathFromPart'):
         # read particles
         particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True,
                                                                        comModule='com1DFA')
         particlesIni = particlesList[0]
+        log.info('Using particles to generate avalanche path profile')
     else:
         # read field
-        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD', 'FV', 'FM'], simName=simName,
+        fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['FD'], simName=simName,
                                                                flagAvaDir=True, comModule='com1DFA', timeStep=0)
         # get fields header
         ncols = fieldHeader['ncols']
         nrows = fieldHeader['nrows']
-        xllc = fieldHeader['xllcenter']
-        yllc = fieldHeader['yllcenter']
         csz = fieldHeader['cellsize']
-        X, Y = gT.makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
-        particlesIni = {'x': np.flatten(X), 'y':np.flatten(Y)}
-        particlesIni = gT.projectOnRaster(dem, particlesIni)
+        # we want the origin to be in (0, 0) as it is in the avaProfile that comes in
+        X, Y = gT.makeCoordinateGrid(0, 0, csz, ncols, nrows)
+        indNonZero = np.where(fieldsList[0]['FD'] > 0)
+        particlesIni = {'x': X[indNonZero], 'y': Y[indNonZero]}
+        particlesIni, _ = gT.projectOnRaster(dem, particlesIni)
+        log.info('Using fields to generate avalanche path profile')
 
-    avaProfileExt = {key: avaProfile[key] for key in ['x', 'y', 'z']}
+    avaProfileExt = extendDFAPathKernel(cfg, avaProfile, dem, particlesIni)
+    return avaProfileExt
+
+
+def extendDFAPathKernel(cfg, avaProfile, dem, particlesIni):
+    """ extend the DFA path at the top and bottom
+    avaProfile with x, y, z, s information
+
+    Parameters
+    -----------
+    cfg: configParser
+        configuration object with:
+        extTopOption: int
+        how to extend towards the top?
+            0 for heighst point method
+            a for largest runout method
+        nCellsResample: int
+            resampling length is given by nCellsResample*demCellSize
+        nCellsMinExtend: int
+            when extending towards the bottom, take points at more than nCellsMinExtend*demCellSize
+            from last point to get the direction
+        nCellsMaxExtend: int
+            when extending towards the bottom, take points at less than nCellsMaxExtend*demCellSize
+            from last point to get the direction
+        factBottomExt: float
+            extend the profile from factBottomExt*sMax
+    avaProfile: dict
+        profile to be extended
+    dem: dict
+        dem dict
+    particlesIni: dict
+        initial particles dict
+
+    Returns
+    --------
+    avaProfileExt: dict
+        extended profile at top and bottom (x, y, z).
+    """
     # resample the profile
     resampleDistance = cfg.getfloat('nCellsResample') * dem['header']['cellsize']
-    avaProfileExt, _ =  gT.prepareLine(dem, avaProfileExt, distance=resampleDistance, Point=None)
-    avaProfileExt = extendProfileTop(cfg.getint('extTopOption'), particlesIni, avaProfileExt)
-    avaProfileExt = extendProfileBottom(cfg, dem, avaProfileExt)
-    avaProfileExt, _ =  gT.prepareLine(dem, avaProfileExt, distance=resampleDistance, Point=None)
-    # remove points that lay outside of the dem# project the profile on the dem
-    avaProfileExt, _ =  gT.projectOnRaster(dem, avaProfileExt, interp='bilinear')
-    isNotNan = ~(np.isnan(avaProfileExt['z']))
-    avaProfileExt['x'] = avaProfileExt['x'][isNotNan]
-    avaProfileExt['y'] = avaProfileExt['y'][isNotNan]
-    avaProfileExt['z'] = avaProfileExt['z'][isNotNan]
+    avaProfile = extendProfileTop(cfg.getint('extTopOption'), particlesIni, avaProfile)
+    avaProfile, _ =  gT.prepareLine(dem, avaProfile, distance=resampleDistance, Point=None)
+    avaProfile = extendProfileBottom(cfg, dem, avaProfile)
+    avaProfile, _ =  gT.prepareLine(dem, avaProfile, distance=resampleDistance, Point=None)
+    # project the profile on the dem
+    avaProfile, _ =  gT.projectOnRaster(dem, avaProfile, interp='bilinear')
+    # remove points that lay outside of the dem
+    isNotNan = ~(np.isnan(avaProfile['z']))
+    avaProfileExt = {}
+    avaProfileExt['x'] = avaProfile['x'][isNotNan]
+    avaProfileExt['y'] = avaProfile['y'][isNotNan]
+    avaProfileExt['z'] = avaProfile['z'][isNotNan]
     return avaProfileExt
 
 
 def extendProfileTop(extTopOption, particlesIni, profile):
     """ extend the DFA path at the top
 
-    Find the direction in which to extend considering the first point of the profile
-    and a few following ones (distFromFirt <= 30 * csz). Extend in this direction until
-    the z of the highest particle in the release is reached.
+    Either towards the highest point in particlesIni (extTopOption = 0)
+    or the point leading to the longest runout (extTopOption = 1)
 
     Parameters
     -----------
     extTopOption: boolean
-        decid how to extend towards the top
+        decide how to extend towards the top
     particlesIni: dict
         initial particles dict
     profile: dict
@@ -281,11 +385,21 @@ def extendProfileBottom(cfg, dem, profile):
     """ extend the DFA path at the bottom
 
     Find the direction in which to extend considering the last point of the profile
-    and a few previous ones but discarding the ones that are too close ( 2* csz < distFromLast <= 30 * csz).
-    Extend in this diretion for a distance 0.2 * length of the path.
+    and a few previous ones but discarding the ones that are too close
+    (nCellsMinExtend* csz < distFromLast <= nCellsMaxExtend * csz).
+    Extend in this diretion for a distance factBottomExt * length of the path.
 
     Parameters
     -----------
+    cfg: configParser
+        nCellsMinExtend: int
+            when extending towards the bottom, take points at more than nCellsMinExtend*demCellSize
+            from last point to get the direction
+        nCellsMaxExtend: int
+            when extending towards the bottom, take points at less than nCellsMaxExtend*demCellSize
+            from last point to get the direction
+        factBottomExt: float
+            extend the profile from factBottomExt*sMax
     dem: dict
         dem dict
     profile: dict
@@ -302,22 +416,19 @@ def extendProfileBottom(cfg, dem, profile):
     # get last point
     xLast = profile['x'][-1]
     yLast = profile['y'][-1]
-    zLast = profile['z'][-1]
     sLast = profile['s'][-1]
     # compute distance from last point:
-    r = DFAtls.norm(profile['x']-xLast, profile['y']-yLast, profile['z']-zLast)
+    r = DFAtls.norm(profile['x']-xLast, profile['y']-yLast, 0)
     # find the previous points
     extendMinDistance = cfg.getfloat('nCellsMinExtend') * csz
     extendMaxDistance = cfg.getfloat('nCellsMaxExtend') * csz
     pointsOfInterestLast = np.where((r < extendMaxDistance) & (r > extendMinDistance))[0]
     xInterest = profile['x'][pointsOfInterestLast]
     yInterest = profile['y'][pointsOfInterestLast]
-    zInterest = profile['z'][pointsOfInterestLast]
     # find the direction in which we need to extend the path
     vDirX = xLast - xInterest
     vDirY = yLast - yInterest
-    vDirZ = zLast - zInterest
-    vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), np.array([vDirZ]))
+    vDirX, vDirY, vDirZ = DFAtls.normalize(np.array([vDirX]), np.array([vDirY]), 0*np.array([vDirY]))
     vDirX = np.sum(vDirX)
     vDirY = np.sum(vDirY)
     vDirZ = np.sum(vDirZ)
@@ -334,7 +445,7 @@ def extendProfileBottom(cfg, dem, profile):
     profile['z'] = np.append(profile['z'], zExtBottom)
 
     if debugPlot:
-        debPlot.plotPathExtBot(profile, xInterest, yInterest, zInterest, xLast, yLast)
+        debPlot.plotPathExtBot(profile, xInterest, yInterest, 0*yInterest, xLast, yLast)
     return profile
 
 
@@ -350,21 +461,17 @@ def weightedAvgAndStd(values, weights):
     return (average, math.sqrt(variance))
 
 
-def appendAverageStd(proList, avaProfile, particles, U2, kineticEneSum, weights):
+def appendAverageStd(propList, avaProfile, particles, weights):
     """ append averaged to path
 
     Parameters
     -----------
-    proList: list
+    propList: list
         list of properties to average and append
     avaProfile: dict
         path
     particles: dict
         particles dict
-    U2: numpy array
-        array of particles squared velocities (same size as particles)
-    kineticEneSum: numpy array
-        array of particles kinetic energy (same size as particles)
     weights: numpy array
         array of weights (same size as particles)
 
@@ -373,10 +480,8 @@ def appendAverageStd(proList, avaProfile, particles, U2, kineticEneSum, weights)
     avaProfile: dict
         averaged profile
     """
-    for prop in proList:
+    for prop in propList:
         avg, std = weightedAvgAndStd(particles[prop], weights)
         avaProfile[prop] = np.append(avaProfile[prop], avg)
         avaProfile[prop + 'std'] = np.append(avaProfile[prop + 'std'], std)
-    avaProfile['v2'] = np.append(avaProfile['v2'], np.average(U2, weights=weights))
-    avaProfile['ekin'] = np.append(avaProfile['ekin'], kineticEneSum)
     return avaProfile
