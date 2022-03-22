@@ -267,29 +267,6 @@ def test_savePartToCsv(tmp_path):
                           np.asarray([velMag, velMag, velMag]))
     assert DF2['time'][0] == 2.0
 
-
-def test_getCom1DFAPath():
-    values = np.array([1, 2, 3, 4, 5])
-    weights = np.array([2, 1, 2, 1, 2])
-    average, std = particleTools.weightedAvgAndStd(values, weights)
-    assert average == 3
-    assert std == 1.5
-    proList = ['x', 'y']
-    particles = {'x': values, 'y': values}
-    U2 = np.array([0, 2, 2, 4, 4])
-    kineticEneSum = 9
-    avaProfile = {'x': np.empty((0, 1)), 'y': np.empty((0, 1)), 'xstd': np.empty((0, 1)), 'ystd': np.empty((0, 1)),
-                  'v2': np.empty((0, 1)), 'ekin': np.empty((0, 1))}
-    avaProfile = particleTools.appendAverageStd(proList, avaProfile, particles, U2, kineticEneSum, weights)
-    print(avaProfile)
-    assert avaProfile['x'] == 3
-    assert avaProfile['xstd'] == 1.5
-    assert avaProfile['y'] == 3
-    assert avaProfile['ystd'] == 1.5
-    assert avaProfile['v2'] == 2.25
-    assert avaProfile['ekin'] == 9
-
-
     dem = {'header': {'xllcenter': 0, 'yllcenter': 0}}
     values = np.array([1, 2, 3, 4, 5])
     weights = np.array([2, 1, 2, 1, 2])
