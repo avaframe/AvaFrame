@@ -114,8 +114,8 @@ def plotEnergyProfile(avalancheDir, cfg, resAB, name, simID, demOri, avaProfileM
     """ Make energy line profile plot"""
     alpha = resAB[name]['alpha']
 
-    V2Path = avaProfileMassNew['v2']
-    EkinPath = avaProfileMassNew['ekin']
+    V2Path = avaProfileMassNew['u2']
+    EkinPath = avaProfileMassNew['totEKin']
 
     g = cfg['GENERAL'].getfloat('gravAcc')
 

@@ -43,7 +43,7 @@ def mainEnergyLineTest(cfgMain, energyLineTestCfgFile):
     # generate mass averaged path profile
     simName = simDF.index[0]
     pathFromPart = energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart')
-    avaProfileMass = DFAPath.generateAvragePath(avalancheDir, pathFromPart, simName, dem)
+    avaProfileMass = DFAPath.generateAvragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
 
     # read pfv for plot
     fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
@@ -336,7 +336,7 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
         between theoretical solution and simulation result
     """
     # read mass average quantities
-    v2Path = avaProfileMass['v2']
+    v2Path = avaProfileMass['u2']
     # compute mass average velocity elevation
     # extract energy altitude
     zEne = avaProfileMass['z'] + v2Path/(2*g)
