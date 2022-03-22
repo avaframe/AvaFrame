@@ -50,7 +50,7 @@ def generateAvragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo
                                                                        comModule='com1DFA')
         log.info('Using particles to generate avalanche path profile')
         # postprocess to extract path and energy line
-        avaProfileMass = getDFAPathFromPart(particlesList, dem, addVelocityInfo=addVelocityInfo)
+        avaProfileMass = getDFAPathFromPart(particlesList, addVelocityInfo=addVelocityInfo)
     else:
         particlesList = ''
         # read field
@@ -66,7 +66,7 @@ def generateAvragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo
     return avaProfileMass
 
 
-def getDFAPathFromPart(particlesList, dem, addVelocityInfo=False):
+def getDFAPathFromPart(particlesList, addVelocityInfo=False):
     """ compute mass averaged path from particles
 
     Also returns the averaged velocity and kinetic energy associated
@@ -76,8 +76,6 @@ def getDFAPathFromPart(particlesList, dem, addVelocityInfo=False):
     -----------
     particlesList: list
         list of particles dict
-    dem: dict
-        dem dict
     addVelocityInfo: boolean
         True to add (u2, ekin, totEKin) to result
 

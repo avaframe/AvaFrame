@@ -138,7 +138,7 @@ def test_getEnergyInfo(capfd):
     mu = np.tan(np.radians(alphaDeg))
 
     avaProfileMass = {'s': np.array([0, 2, 4, 6, 8, 10]), 'z': np.array([10, 4, 3, 2, 1, 0]),
-    'v2': 2*g * np.array([0, 4, 3, 2, 1, 0])}
+    'u2': 2*g * np.array([0, 4, 3, 2, 1, 0])}
 
     runOutAngleRad, runOutAngleDeg = energyLineTest.getRunOutAngle(avaProfileMass)
     slopeExt, sIntersection, zIntersection, coefExt = energyLineTest.getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
