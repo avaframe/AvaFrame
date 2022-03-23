@@ -266,14 +266,3 @@ def test_savePartToCsv(tmp_path):
     assert np.array_equal(DF2['velocityMagnitude'],
                           np.asarray([velMag, velMag, velMag]))
     assert DF2['time'][0] == 2.0
-
-    dem = {'header': {'xllcenter': 0, 'yllcenter': 0}}
-    values = np.array([1, 2, 3, 4, 5])
-    weights = np.array([2, 1, 2, 1, 2])
-    particles = {'nPart': 5, 'x': values, 'y': values, 'z': values, 'sCor': values, 's': values, 'ux': values, 'uy': values, 'uz': values, 'm':weights}
-    particles1 = {'nPart': 5, 'x': 2*values, 'y': 2*values, 'sCor': 2*values, 's': 2*values, 'z': 2*values, 'ux': 2*values, 'uy': 2*values, 'uz': 2*values, 'm':weights}
-    particlesList = [particles, particles1]
-    avaProfilePart, avaProfileMass, avaProfileKE = particleTools.getCom1DFAPath(particlesList, dem)
-    print(avaProfilePart)
-    print(avaProfileMass)
-    print(avaProfileKE)
