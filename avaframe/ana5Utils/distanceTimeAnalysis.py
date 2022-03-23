@@ -48,6 +48,12 @@ def getRadarLocation(cfg):
     # fetch coordinate info
     locationInfo = cfg['GENERAL']['radarLocation'].split('|')
 
+    if len(locationInfo) != 4:
+        message = ('Radar location is not valid, required format x0|x1|y0|y1 not: %s' %
+            cfg['GENERAL']['radarLocation'])
+        log.error(message)
+        raise AssertionError(message)
+
     # set radar location and point in direction of field of view as list
     radarFov = np.asarray([[float(locationInfo[0]), float(locationInfo[1])], [float(locationInfo[2]),
         float(locationInfo[3])]])
@@ -270,6 +276,7 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
     rangeMasked = mtiInfo['rangeMasked']
     mti = mtiInfo['mti']
     mtiNew = np.zeros((len(rangeGates), 1))
+
 
     # get mask of results not above threshold
     maskAva = np.ma.masked_where(~(flowF > threshold), flowF)
@@ -563,7 +570,7 @@ def fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, demHeader, fields, mti
     rangeTimeResType = cfgRangeTime['GENERAL']['rangeTimeResType']
 
     # log info
-    log.info('Processing frame %d of time step: %.2f for range-time plot' % (len(mtiInfo['timeList'])+1, t))
+    log.debug('Processing frame %d of time step: %.2f for range-time plot' % (len(mtiInfo['timeList'])+1, t))
 
     # extract front and average values of result parameter
     if cfg['VISUALISATION'].getboolean('TTdiagram'):
