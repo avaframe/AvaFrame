@@ -24,9 +24,9 @@ of front position and inferred approach velocity. The colorcoding of the simulat
 comparable to the intensity given in the range-time diagram from radar measurements.
 
 .. Note::
-  The data processing for the **tt-diagram** and the **range-time diagram** can be produced
+  The data processing for the **tt-diagram** and the **range-time diagram** can be done
   *during run time* of :py:mod:`com1DFA`, or as a postprocessing step. However, the second option
-  requires saving all the required time steps of the flow parameter fields, which is much more
+  requires saving all the required time steps of the flow variable fields, which is much more
   computationally expensive compared to the first option.
 
 To run
