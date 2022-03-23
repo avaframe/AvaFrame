@@ -9,7 +9,9 @@ import numpy as np
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 import logging
+import pickle
 import pathlib
+import configparser
 
 # Local imports
 from avaframe.in3Utils import cfgUtils
@@ -116,8 +118,8 @@ def setupRangeTimeDiagram(dem, cfgRangeTime):
 
     # add all info to mti dict
     mtiInfo = {'mti': mti, 'rangeGates': rangeGates, 'rArray': rArray, 'bmaskRadar': bmaskRadar,
-        'rangeList': [], 'timeList': [], 'rangeMasked': rangeMasked,
-        'demOriginal': dem, 'type': 'rangeTime', 'referencePointName': 'radar'}
+        'rangeList': [], 'timeList': [], 'rangeMasked': rangeMasked, 'radarFov': radarFov,
+        'demOriginal': dem, 'type': 'rangeTime', 'referencePointName': 'radar', 'DEM': dem}
 
     return mtiInfo
 
@@ -195,10 +197,6 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
     rgWidth = cfgRangeTime['GENERAL'].getfloat('rgWidth')
     rangeGates= np.arange(minR+rgWidth/2, maxR+rgWidth/2, rgWidth)
 
-    # create plot of range distance already masked with radar field of view
-    dtAnaPlots.radarFieldOfViewPlot(radarFov, aperture, radarRange, X, Y, cfgRangeTime['GENERAL'],
-        rangeGates, demOriginal)
-
     return radarRange, rangeGates
 
 
@@ -214,7 +212,7 @@ def minRangeSimulation(flowF, rangeMasked, threshold):
             masked array of radar range
         threshold: float
             used to create mask for getting line of sight range,
-            data below threshold not taken into account
+            only data above threshold taken into account
 
         Returns
         --------
@@ -224,18 +222,18 @@ def minRangeSimulation(flowF, rangeMasked, threshold):
 
     """
 
-    # fetch mask where result field smaller than threshold
-    maskAva = np.ma.masked_where(flowF < threshold, flowF)
+    # fetch mask where result field not above threshold
+    maskAva = np.ma.masked_where(~(flowF > threshold), flowF)
     bmaskAva = np.ma.getmask(maskAva)
     # fetch mask of radar field of view
     maskPhi = np.ma.getmask(rangeMasked)
 
-    # merge masks of result field smaller threshold and outside radar field of view
+    # merge masks of result field not above threshold and outside radar field of view
     maskFull = ~np.logical_and(~maskPhi, ~bmaskAva)
 
     # first get full data of the masked radar range array
     r = np.ma.getdata(rangeMasked)
-    # mask this with full mask (result below threshold and outside field of view)
+    # mask this with full mask (result not above threshold and outside field of view)
     radarRange = np.ma.array(r, mask=maskFull)
 
     # line of sight min of masked array
@@ -265,8 +263,6 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
 
     # load parameters from configuration file and mtiInfo
     rgWidth = cfgRangeTime['GENERAL'].getfloat('rgWidth')
-    # if threshold = 0.0 mean over all cells - if threshold > 0.0 mean only over all cells where there
-    # is avalanche flow
     threshold = cfgRangeTime['GENERAL'].getfloat('thresholdResult')
     rangeGates = mtiInfo['rangeGates']
     rArray = mtiInfo['rArray']
@@ -275,8 +271,8 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
     mti = mtiInfo['mti']
     mtiNew = np.zeros((len(rangeGates), 1))
 
-    # get mask of results below threshold
-    maskAva = np.ma.masked_where(flowF < threshold, flowF)
+    # get mask of results not above threshold
+    maskAva = np.ma.masked_where(~(flowF > threshold), flowF)
     bmaskAva = np.ma.getmask(maskAva)
     # and join to a mask with "visible part of avalanche" - mask where not field of view and not
     # ava result above threshold
@@ -285,31 +281,31 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
     rmaskAva_radar= np.ma.array(np.ma.getdata(rangeMasked), mask=bmaskAvaRadar) # masked ranges
 
     # min and max radar range of masked radar range
-    # if no data in masked array
     if not rmaskAva_radar.mask.all():
         #TODO why int?
-        minRAva = int(np.floor(rmaskAva_radar.min()))
-        maxRAva = int(np.ceil(rmaskAva_radar.max()))
+        #minRAva = int(np.floor(rmaskAva_radar.min()))
+        #maxRAva = int(np.ceil(rmaskAva_radar.max()))
+        minRAva = rmaskAva_radar.min()
+        maxRAva = rmaskAva_radar.max()
+
+        # create array of capped range gates
+        smallRangeGatesIndex = np.where((rangeGates >= minRAva) & (rangeGates <= maxRAva))[0]
+
+        # loop over each range gate within visible part to populate mti array
+        for indexRI in smallRangeGatesIndex:
+            # create mask for range slice within range gate
+            bmaskRange = ~np.logical_and(rArray > rangeGates[indexRI]-rgWidth/2,
+                rArray < rangeGates[indexRI]+rgWidth/2)
+            bmaskAvaRadarRangeslice = ~np.logical_and(~bmaskRange, ~bmaskAvaRadar)
+            if np.any(~bmaskAvaRadarRangeslice):
+                # only update if range_slice mask is not empty
+                mtiValue = np.mean(np.ma.array(np.ma.getdata(maskAva), mask=bmaskAvaRadarRangeslice))
+                mtiNew[indexRI] = mtiValue
+                if cfgRangeTime['PLOTS'].getboolean('debugPlot'):
+                    dtAnaPlots.plotMaskForMTI(cfgRangeTime['GENERAL'], bmaskRange, bmaskAvaRadar,
+                    bmaskAvaRadarRangeslice, mtiInfo)
     else:
-        minRAva = np.amin(rangeGates)
-        maxRAva = np.amax(rangeGates)
-
-    # create array of capped range gates
-    smallRangeGatesIndex = np.where((rangeGates > minRAva) & (rangeGates < maxRAva))[0]
-
-    # loop over each range gate within visible part to populate mti array
-    for indexRI in smallRangeGatesIndex:
-        # create mask for range slice within range gate
-        bmaskRange = ~np.logical_and(rArray > rangeGates[indexRI]-rgWidth/2,
-            rArray < rangeGates[indexRI]+rgWidth/2)
-        bmaskAvaRadarRangeslice = ~np.logical_and(~bmaskRange, ~bmaskAvaRadar)
-        if np.any(~bmaskAvaRadarRangeslice):
-            # only update if range_slice mask is not empty
-            mtiValue = np.mean(np.ma.array(np.ma.getdata(maskAva), mask=bmaskAvaRadarRangeslice))
-            mtiNew[indexRI] = mtiValue
-            if cfgRangeTime['GENERAL'].getboolean('debugPlot'):
-                dtAnaPlots.plotMaskForMTI(cfgRangeTime['GENERAL'], bmaskRange, bmaskAvaRadar,
-                bmaskAvaRadarRangeslice, mtiInfo)
+        log.debug('No avalanche data bigger threshold in masked radar range array')
 
     # add average values of this time step to full mti array
     if mtiInfo['timeList'] == []:
@@ -334,7 +330,7 @@ def extractFrontInSim(flowF, mtiInfo, threshold):
             info on here used: rangeList, demOriginal, rangeMasked
         threshold: float
             used to create mask for getting line of sight range,
-            data below threshold not taken into account
+            only data above threshold not taken into account
 
         Returns
         --------
@@ -477,7 +473,7 @@ def extractFrontAndMeanValues(cfgRangeTime, flowF, demHeader, mtiInfo):
         mtiInfo['rangeList'].append(np.nan)
 
     # plot avalanche front and transformed raster field
-    if cfgRangeTime['GENERAL'].getboolean('debugPlot'):
+    if cfgRangeTime['PLOTS'].getboolean('debugPlot'):
         dtAnaPlots.plotRangeRaster(slRaster, rasterTransfo, cfgRangeTime['GENERAL'],
             mtiInfo['rangeRaster'], cLower)
 
@@ -527,6 +523,7 @@ def initializeRangeTime(modName, cfg, dem, simHash):
     mtiInfo['xOrigin'] = dem['header']['xllcenter']
     mtiInfo['yOrigin'] = dem['header']['yllcenter']
     mtiInfo['cellSize'] = dem['header']['cellsize']
+    mtiInfo['dem'] = dem
 
     return mtiInfo, dtRangeTime, cfgRangeTime
 
@@ -585,6 +582,79 @@ def fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, demHeader, fields, mti
     dtRangeTime = com1DFA.updateSavingTimeStep(dtRangeTime, cfgRangeTime['GENERAL'], t)
 
     return mtiInfo, dtRangeTime
+
+
+def exportData(mtiInfo, cfgRangeTime, modName):
+    """ save all info about range, time steps, average values to pickle for producing plots
+
+        Parameters
+        ------------
+        mtiInfo: dict
+            dictionary with rangeList, timeList, mti (average values along range gates or
+            cross profiles)
+        cfgRangeTime: configparser
+            configuration settings of distance time
+        modName: str
+            name of computational module
+    """
+
+    # create path for saving
+    dictPath = pathlib.Path(cfgRangeTime['GENERAL']['avalancheDir'], 'Outputs', modName,
+        'distanceTimeAnalysis')
+    fU.makeADir(dictPath)
+    outDict = dictPath / ('mtiInfo_%s.p' % cfgRangeTime['GENERAL']['simHash'])
+
+    # append configuration info to dict
+    cfgDict = cfgUtils.convertConfigParserToDict(cfgRangeTime)
+    mtiInfo['configurationSettings'] = cfgDict
+
+    # write dictionary to pickle
+    with open(outDict, 'wb') as dictRangeTime:
+        pickle.dump(mtiInfo, dictRangeTime)
+
+
+def importMTIData(avaDir, modName, inputDir='', simHash=''):
+    """ import mtiInfo data for creating range time plots, if no inputDir is provided,
+        pickles are fetched from avaDir/Outputs/modName/distanceTimeAnalysis
+        multiple pickles allowed- these carry also configuration info for distanceTimeAnalysis
+
+        Parameters
+        -----------
+        avaDir: pathlib path or str
+            path to avalanche directory
+        modName: str
+            name of computational module that has been used to produce flow variable fields
+        inputDir: pathlib path or str
+            optional: path to pickle location
+        simHash: str
+            optional simulation ID
+
+        Returns
+        --------
+        mtiInfoDicts: list
+            list of mtiInfo dictionaries where key name has been added with file Path
+    """
+    if inputDir == '':
+        inputDir = pathlib.Path(avaDir, 'Outputs', modName, 'distanceTimeAnalysis')
+    else:
+        # make sure it is a pathlib path
+        inputDir = pathlib.Path(inputDir)
+
+    # fetch all files
+    if simHash == '':
+        mtiInfoPickles = list(inputDir.glob('*.p'))
+    else:
+        mtiInfoPickles = list(inputDir.glob('*%s.p' % simHash))
+
+    # create list of all mtiInfo dicts found
+    mtiInfoDicts = []
+    for infoD in mtiInfoPickles:
+        with open(infoD, 'rb') as infoDict:
+            mtiDict = pickle.load(infoDict)
+            mtiDict['name'] = infoD
+            mtiInfoDicts.append(mtiDict)
+
+    return mtiInfoDicts
 
 
 def fetchTimeStepFromName(pathNames):

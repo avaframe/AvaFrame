@@ -16,7 +16,7 @@ avalanche simulation results have been transformed into the radar coordinate sys
 direct comparison, combined with the attempt to analyze simulation results in an avalanche path
 dependent coordinate system (:cite:`Fi2013`).
 In addition to the **tt-diagram**, :py:mod:`ana5RangeTime` also offers the possibility to
-produce simulated **range-time diagrams** of the flow variables with respect to a radar's field
+produce simulated **range-time diagrams** of the flow variables with respect to a radar field
 of view. With this, simulation results can be directly compared to radar measurements in terms
 of front position and inferred approach velocity. The colorcoding of the simulated
 **range-time** diagrams refers to average values of the chosen flow parameter
@@ -24,10 +24,10 @@ of front position and inferred approach velocity. The colorcoding of the simulat
 comparable to the intensity given in the range-time diagram from radar measurements.
 
 .. Note::
-  The **tt-diagram** and the **range-time diagram** can be produced *during run time* of
-  :py:mod:`com1DFA`, or as a postprocessing step. However, the second option requires saving all the
-  required time steps of the flow parameter fields, which is much more computationally expensive
-  compared to the first option.
+  The data processing for the **tt-diagram** and the **range-time diagram** can be produced
+  *during run time* of :py:mod:`com1DFA`, or as a postprocessing step. However, the second option
+  requires saving all the required time steps of the flow parameter fields, which is much more
+  computationally expensive compared to the first option.
 
 To run
 ~~~~~~~
@@ -40,6 +40,9 @@ During run-time of :py:mod:`com1DFA`:
 
 * in your local copy of ``ana5Utils/distanceTimeAnalysisCfg.ini`` you can adjust the default settings
   for the generation of the diagrams
+
+* run  :py:mod:`runScripts.runThalwegTimeDiagram.py` or :py:mod:`runScripts.runRangeTimeDiagram.py`
+  and set the `preProcessedData` flag to `True`
 
 As a postprocessing step:
 
@@ -61,7 +64,7 @@ The resulting figures can be found in ``avalancheDirectory/Outputs/ana5Utils``.
   The **tt-diagram** requires info on an avalanche path (see :ref:`moduleAna3AIMEC:ana3AIMEC: Aimec`).
   The simulated **range-time diagram** requires info on the x, y coordinate of the radar location, a point
   in the direction of the field of view, the aperture angle and the width of the range gates.
-  The maximum approach velocity indicatd in the diagrams is computed as the ratio of the
+  The maximum approach velocity indicated in the diagrams is computed as the ratio of the
   distance travelled by the front and the respective time needed for two increments along the path/
   radar's field of view.
 

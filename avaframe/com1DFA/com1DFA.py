@@ -1273,6 +1273,18 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
     log.debug('Saving results for time step t = %f s', t)
     fieldsList, particlesList = appendFieldsParticles(fieldsList, particlesList, particles, fields, resTypesLast)
     zPartArray0 = copy.deepcopy(particles['z'])
+
+    ######## create range time diagram #####################
+    # check if range-time diagram should be performed, if yes - initialize
+    if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
+        demRT = dtAna.setDemOrigin(dem)
+        mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, demRT, simHash)
+        # fetch initial time step too
+        mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t,
+            demRT['header'], fields, mtiInfo)
+    #########################################################
+
+
     # add initial time step to Tsave array
     Tsave = [0]
     # derive time step for first iteration
@@ -1286,13 +1298,6 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
         dt = cfgGen.getfloat('dt')
     particles['dt'] = dt
     t = t + dt
-
-    ######## create range time diagram #####################
-    # check if range-time diagram should be performed, if yes - initialize
-    if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
-        demRT = dtAna.setDemOrigin(dem)
-        mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, demRT, simHash)
-    #########################################################
 
     # Start time step computation
     while t <= tEnd*(1.+1.e-13) and particles['iterate']:
@@ -1387,9 +1392,13 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
                                       'Avalanche run time [s]': '%.2f' % avaTime}})
 
     ######## create range time diagram #####################
-    # plot range-time diagram
+    # export data for range-time diagram
     if cfg['VISUALISATION'].getboolean('createRangeTimeDiagram'):
-        dtAnaPlots.plotRangeTime(mtiInfo, cfgRangeTime['GENERAL'])
+        lastTimeStep = t - dt
+        # first append final time step
+        mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, lastTimeStep, demRT['header'],
+            fields, mtiInfo)
+        dtAna.exportData(mtiInfo, cfgRangeTime, 'com1DFA')
     #########################################################
 
     return Tsave, particlesList, fieldsList, infoDict

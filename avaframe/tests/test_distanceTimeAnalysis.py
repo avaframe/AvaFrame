@@ -54,7 +54,7 @@ def test_radarMask(tmp_path):
     headerDEM = {'xllcenter': 0.0, 'yllcenter': 0.0, 'cellsize': 1., 'ncols': 11, 'nrows': 11}
     demOriginal = {'header': headerDEM, 'rasterData': np.zeros((11, 11))}
     radarFov = [[1., 10.0], [5., 5.]]
-    aperture = 45.
+    aperture = 40.5
     cfgRangeTime = configparser.ConfigParser()
     cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'avalancheDir': testAvaDir, 'simHash': 'test123',
         'gateContours': 20}
