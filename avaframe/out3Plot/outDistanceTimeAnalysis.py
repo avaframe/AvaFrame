@@ -14,6 +14,7 @@ from avaframe.in3Utils import logUtils
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 import avaframe.in3Utils.geoTrans as gT
+import avaframe.out3Plot.outTopo as oP
 
 log = logging.getLogger(__name__)
 
@@ -80,29 +81,38 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
 
 
-def radarFieldOfViewPlot(radarFov, aperture, radarRange, X, Y, cfgRangeTime, rangeGates, dem):
+def radarFieldOfViewPlot(radarFov, radarRange, cfgRangeTime, rangeGates, dem):
     """ Create radar field of view plot
 
         Parameters
         -----------
         radarFov: numpy array
             list with radar location and end point of field of view, x and y coors
-        aperture: float
-            aperture angle [degree]
         radarRange: masked array
             masked array of DEM with radar field of view - showing distance to radar
-        X, Y: numpy arrays
-            grid coordinates for raster
-        cfgRadarRange: configparser object
-            configuration settings section - here used avalancheDir, simHash
+        cfgRangeTime: configparser object
+            configuration settings section - here used avalancheDir, simHash,
+                aperture angle [degree]
         rangeGates: numpy array
             range gates of radar field of view
         dem: dict
             dictionary with dem header and data
     """
 
+    # get input parameters
+    aperture = cfgRangeTime['GENERAL'].getfloat('aperture')
+
+    # fetch header info - required for creating coordinate grid
+    xllc = dem['header']['xllcenter']
+    yllc = dem['header']['yllcenter']
+    cellSize = dem['header']['cellsize']
+    rasterdata = dem['rasterData']
+
+    # Set coordinate grid with given origin
+    X, Y = oP._setCoordinateGrid(xllc, yllc, cellSize, rasterdata)
+
     # load required input parameters for contour plot
-    gateContours = cfgRangeTime.getint('gateContours')
+    gateContours = cfgRangeTime['PLOTS'].getint('gateContours')
 
     # get field of view with radar location and aperture angle
     xR = gT.rotate(radarFov, aperture)
@@ -130,7 +140,7 @@ def radarFieldOfViewPlot(radarFov, aperture, radarRange, X, Y, cfgRangeTime, ran
     unit = 'm'
     cName = 'range'
     pU.addColorBar(pc, ax1, None, unit, title=cName)
-    pU.putAvaNameOnPlot(ax1, cfgRangeTime['avalancheDir'])
+    pU.putAvaNameOnPlot(ax1, cfgRangeTime['GENERAL']['avalancheDir'])
     pU.putInfoBox(ax1, '- range gates [%d]' % gateContours, location='lowerRight', color='brown')
 
     # create plot of DEM and radar field of view
@@ -153,15 +163,15 @@ def radarFieldOfViewPlot(radarFov, aperture, radarRange, X, Y, cfgRangeTime, ran
     ax2.set_ylabel('y [m]')
     plt.xticks(rotation=45)
     # add infoboxes
-    pU.putAvaNameOnPlot(ax2, cfgRangeTime['avalancheDir'])
+    pU.putAvaNameOnPlot(ax2, cfgRangeTime['GENERAL']['avalancheDir'])
     pU.putInfoBox(ax2, '- elevation [m]', location='lowerRight', color='brown')
     ax2.clabel(CS, CS.levels, inline=True, fontsize=10)
 
     # set path for saving figure
-    outDir = pathlib.Path(cfgRangeTime['avalancheDir'], 'Outputs', 'ana5Utils')
-    outFileName = 'radarFieldOfViewPlot_%s' % cfgRangeTime['simHash']
+    outDir = pathlib.Path(cfgRangeTime['GENERAL']['avalancheDir'], 'Outputs', 'ana5Utils')
+    outFileName = 'radarFieldOfViewPlot_%s' % cfgRangeTime['GENERAL']['simHash']
     plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig)
-    outFileName = 'radarFieldOfViewPlotDEM_%s' % cfgRangeTime['simHash']
+    outFileName = 'radarFieldOfViewPlotDEM_%s' % cfgRangeTime['GENERAL']['simHash']
     plotPath = pU.saveAndOrPlot({'pathResult': outDir}, outFileName, fig2)
 
 
