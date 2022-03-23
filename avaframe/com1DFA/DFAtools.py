@@ -77,7 +77,7 @@ def getNormalMesh(dem, num):
 
         Returns
         -------
-        den: dict
+        dem: dict
             dem dict updated with:
                 Nx: 2D numpy array
                     x component of the normal vector field on grid points
@@ -305,8 +305,8 @@ def getAreaMesh(dem, num):
         Returns
         -------
         dem dict updated with:
-            A: 2D numpy array
-                Area of grid cells
+            areaRaster: 2D numpy array
+                real area of grid cells
     """
     csz = dem['header']['cellsize']
     Nx = dem['Nx']
