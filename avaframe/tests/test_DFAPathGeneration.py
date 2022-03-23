@@ -79,7 +79,7 @@ def test_extendDFAPathKernel():
                                    [50, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0]])}
 
     particlesIni, _ =  gT.projectOnRaster(dem, particlesIni, interp='bilinear')
-    
+
     # using the longest runout method
     avaProfileExt = DFAPathGeneration.extendDFAPathKernel(cfg['PATH'], avaProfile, dem, particlesIni)
     print(avaProfileExt)

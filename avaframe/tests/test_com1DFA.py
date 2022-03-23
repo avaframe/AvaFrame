@@ -1339,7 +1339,7 @@ def test_initializeFields():
     print('particles', particles)
     print('fields', fields)
 
-    assert len(fields) == 11
+    assert len(fields) == 12
     assert np.sum(fields['pfv']) == 0.0
     assert np.sum(fields['pta']) == 0.0
     assert np.sum(fields['ppr']) == 0.0
@@ -1351,6 +1351,7 @@ def test_initializeFields():
     assert np.sum(fields['Vz']) == 0.0
     assert np.sum(fields['pfd']) != 0.0
     assert np.sum(fields['FD']) != 0.0
+    assert np.sum(fields['FM']) != 0.0
 
 
 def test_prepareVarSimDict(caplog):
