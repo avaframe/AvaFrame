@@ -712,13 +712,17 @@ def fetchTimeStepFromName(pathNames):
     return timeSteps, indexTime
 
 
-def approachVelocity(mtiInfo):
+def approachVelocity(mtiInfo, minVelTimeStep):
     """ compute approach velocity based on front location and time step
+        performed for a min time difference of minVelTimeStep - max velocity location is at the
+        center index location
 
         Parameters
         -----------
         mtiInfo: dict
             info on distance to front and time steps
+        minVelTimeStep: float
+            min time step difference for computing approach velocity
 
         Returns
         --------
@@ -738,13 +742,17 @@ def approachVelocity(mtiInfo):
     rangeListSorted = np.asarray(rangeList)[np.argsort(timeList)] + abs(np.nanmin(np.asarray(rangeList)))
     maxVel = 0.0
     rangeVel = 0.0
-    # compute deltaDistance/deltaTime to get approach velocity
-    # use interval of 2*dtSave for little smmoothing
-    for index, range in enumerate(rangeListSorted[1:-1]):
-        vel = (rangeListSorted[index+1] - rangeListSorted[index-1]) / (timeListSorted[index+1] - timeListSorted[index-1])
-        if abs(vel) > maxVel:
-            maxVel = abs(vel)
-            rangeVel = rangeListSorted[index] - abs(np.nanmin(np.asarray(rangeList)))
-            timeVel = timeListSorted[index]
+
+    # use minimum time step for computing approach velocity
+    for i in range(len(timeListSorted)):
+        for k in range(i+1, len(timeListSorted+1)):
+            if abs(timeListSorted[i] - timeListSorted[k]) >= minVelTimeStep:
+                appVel = ((rangeListSorted[i] -rangeListSorted[k]) / (timeListSorted[i] - timeListSorted[k]))
+                if abs(appVel) > maxVel:
+                    maxVel = abs(appVel)
+                    locationIndex = int(i + 0.5*(k-i))
+                    rangeVel = rangeListSorted[locationIndex] - abs(np.nanmin(np.asarray(rangeList)))
+                    timeVel = timeListSorted[locationIndex]
+                break
 
     return maxVel, rangeVel, timeVel
