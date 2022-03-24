@@ -1,5 +1,5 @@
 """
-    Tools for generating an avalanche simulation from a DFA simulation
+    Tools for generating an avalanche path from a DFA simulation
 """
 
 # Load modules
@@ -21,7 +21,8 @@ cfgAVA = cfgUtils.getGeneralConfig()
 debugPlot = cfgAVA['FLAGS'].getboolean('debugPlot')
 
 
-def generateAvragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=False):
+def generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=False, flagAvaDir=True,
+                        comModule='com1DFA'):
     """ extract path from fileds or particles
 
     Parameters
@@ -29,7 +30,7 @@ def generateAvragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo
     avalancheDir: pathlib
         avalanche directory pathlib path
     pathFromPart: boolean
-        should the path be extracted from particles?
+        compute path from particles if True, from fields (FD, FM, FV) if False
     simName: str
         simulation name
     dem: dict
@@ -37,6 +38,11 @@ def generateAvragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo
     addVelocityInfo: boolean
         True to add (u2, ekin, totEKin) to result
         Will only work if the particles (ux, uy, uz) exist or if 'FV' exists
+    flagAvaDir: bool
+        if True avalancheDir corresponds to an avalanche directory and pickles are
+        read from avaDir/Outputs/comModule/particles or avaDir/Outputs/comModule/peakFiles
+    comModule: str
+        module that computed the particles or fields
 
     Returns
     --------
@@ -117,8 +123,7 @@ def getDFAPathFromPart(particlesList, addVelocityInfo=False):
             avaProfileMass = appendAverageStd(propList, avaProfileMass, particles, m)
 
             if addVelocityInfo:
-                kineticEne = np.nansum(kineticEneArray)
-                avaProfileMass['totEKin'] = np.append(avaProfileMass['totEKin'], kineticEne)
+                avaProfileMass['totEKin'] = np.append(avaProfileMass['totEKin'], np.nansum(kineticEneArray))
 
     return avaProfileMass
 
@@ -189,8 +194,7 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
         avaProfileMass = appendAverageStd(propList, avaProfileMass, particles, mArray)
 
         if addVelocityInfo:
-            kineticEne = np.nansum(kineticEneArray)
-            avaProfileMass['totEKin'] = np.append(avaProfileMass['totEKin'], kineticEne)
+            avaProfileMass['totEKin'] = np.append(avaProfileMass['totEKin'], np.nansum(kineticEneArray))
 
     avaProfileMass['x'] = avaProfileMass['x'] - xllc
     avaProfileMass['y'] = avaProfileMass['y'] - yllc
@@ -201,10 +205,9 @@ def getDFAPathFromField(fieldsList, fieldHeader, dem):
 
 
 def extendDFAPath(avalancheDir, cfg, dem, simName, avaProfile):
-    """ extend the DFA path at the top and bottom
+    """ extend the DFA path at the top (release) and bottom (runout area)
     cfg['pathFromPart'] decides if the path is extended from particles dict or fields
-    Once dicided, call extendDFAPathKernel for extending the path
-    avaProfile with x, y, z, s information
+    Call extendDFAPathKernel for extending the path avaProfile with x, y, z, s information
 
     Parameters
     -----------
@@ -216,7 +219,7 @@ def extendDFAPath(avalancheDir, cfg, dem, simName, avaProfile):
             read information from particles file or fields file
         extTopOption: int
         how to extend towards the top?
-            0 for heighst point method
+            0 for highest point method
             a for largest runout method
         nCellsResample: int
             resampling length is given by nCellsResample*demCellSize
@@ -239,6 +242,7 @@ def extendDFAPath(avalancheDir, cfg, dem, simName, avaProfile):
     avaProfileExt: dict
         extended profile at top and bottom (x, y, z).
     """
+    # read inputs from particles or fields
     if cfg.getboolean('pathFromPart'):
         # read particles
         particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simName, flagAvaDir=True,
@@ -256,6 +260,7 @@ def extendDFAPath(avalancheDir, cfg, dem, simName, avaProfile):
         # we want the origin to be in (0, 0) as it is in the avaProfile that comes in
         X, Y = gT.makeCoordinateGrid(0, 0, csz, ncols, nrows)
         indNonZero = np.where(fieldsList[0]['FD'] > 0)
+        # convert this data in a particles style (dict with x, y, z info)
         particlesIni = {'x': X[indNonZero], 'y': Y[indNonZero]}
         particlesIni, _ = gT.projectOnRaster(dem, particlesIni)
         log.info('Using fields to generate avalanche path profile')
@@ -316,7 +321,7 @@ def extendDFAPathKernel(cfg, avaProfile, dem, particlesIni):
 
 
 def extendProfileTop(extTopOption, particlesIni, profile):
-    """ extend the DFA path at the top
+    """ extend the DFA path at the top (release)
 
     Either towards the highest point in particlesIni (extTopOption = 0)
     or the point leading to the longest runout (extTopOption = 1)
@@ -338,13 +343,9 @@ def extendProfileTop(extTopOption, particlesIni, profile):
     if extTopOption == 0:
         # get highest particle
         indHighest = np.argmax(particlesIni['z'])
-        xHighest = particlesIni['x'][indHighest]
-        yHighest = particlesIni['y'][indHighest]
-        zHighest = particlesIni['z'][indHighest]
-        # get highest point
-        xExtTop = xHighest
-        yExtTop = yHighest
-        zExtTop = zHighest
+        xExtTop = particlesIni['x'][indHighest]
+        yExtTop = particlesIni['y'][indHighest]
+        zExtTop = particlesIni['z'][indHighest]
     elif extTopOption == 1:
         # get point with the most important runout gain
         # get first particle of the path
@@ -380,7 +381,7 @@ def extendProfileTop(extTopOption, particlesIni, profile):
 
 
 def extendProfileBottom(cfg, dem, profile):
-    """ extend the DFA path at the bottom
+    """ extend the DFA path at the bottom (runout area)
 
     Find the direction in which to extend considering the last point of the profile
     and a few previous ones but discarding the ones that are too close

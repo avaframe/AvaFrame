@@ -114,7 +114,7 @@ def plotEnergyProfile(avalancheDir, cfg, resAB, name, simID, demOri, avaProfileM
     """ Make energy line profile plot"""
     alpha = resAB[name]['alpha']
 
-    V2Path = avaProfileMassNew['u2']
+    u2Path = avaProfileMassNew['u2']
     EkinPath = avaProfileMassNew['totEKin']
 
     g = cfg['GENERAL'].getfloat('gravAcc')
@@ -129,7 +129,7 @@ def plotEnergyProfile(avalancheDir, cfg, resAB, name, simID, demOri, avaProfileM
     projectedZ = 'no'
     if projectedZ == 'yes':
         avaProfileMassNew, _ = geoTrans.projectOnRaster(demOri, avaProfileMassNew, interp='bilinear')
-    Zene = avaProfileMassNew['z'] + V2Path/(2*g)
+    Zene = avaProfileMassNew['z'] + u2Path/(2*g)
     # Colorbar: kinietische Energie [J]
     scat = ax2.scatter(avaProfileMassNew['sCor'], Zene, marker='s', cmap=cmap, s=2*pU.ms, c=EkinPath, label='Energy altitude(s_mod)')
     scat = ax2.scatter(avaProfileMassNew['s'], Zene, marker='o', cmap=cmap, s=2*pU.ms, c=EkinPath, label='Energy altitude(s_real)')

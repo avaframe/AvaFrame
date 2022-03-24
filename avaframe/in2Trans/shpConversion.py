@@ -8,7 +8,6 @@ import shapefile
 import copy
 import numpy as np
 import logging
-import os
 
 # create local logger
 log = logging.getLogger(__name__)
