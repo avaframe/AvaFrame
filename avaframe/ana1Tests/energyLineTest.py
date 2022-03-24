@@ -43,7 +43,7 @@ def mainEnergyLineTest(cfgMain, energyLineTestCfgFile):
     # generate mass averaged path profile
     simName = simDF.index[0]
     pathFromPart = energyLineTestCfg['ENERGYLINETEST'].getboolean('pathFromPart')
-    avaProfileMass = DFAPath.generateAvragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
+    avaProfileMass = DFAPath.generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInfo=True)
 
     # read pfv for plot
     fieldsList, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pfv'], simName=simName, flagAvaDir=True,
@@ -83,12 +83,12 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     # extend path profile and find intersection between the alpha line and the profile
     slopeExt, sIntersection, zIntersection, coefExt = getAlphaProfileIntersection(energyLineTestCfg, avaProfileMass, mu)
     # compute errors on runout and veloctity altitude
-    zEne, v2Path, sGeomL, zGeomL, errorEnergyTest = getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection,
+    zEne, u2Path, sGeomL, zGeomL, errorEnergyTest = getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection,
                                                                     runOutAngleDeg, alphaDeg)
     z0 = avaProfileMass['z'][0]
     # create figures and plots
     fig = plt.figure(figsize=(pU.figW*3, pU.figH*2))
-    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps['pfv'], np.amin(v2Path/(2*g)), np.amax(v2Path/(2*g)),
+    cmap, _, ticks, norm = pU.makeColorMap(pU.colorMaps['pfv'], np.amin(u2Path/(2*g)), np.amax(u2Path/(2*g)),
                                            continuous=pU.contCmap)
     cmap.set_under(color='w')
     # make the bird view plot
@@ -124,7 +124,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
 
     # add center of mass velocity points and runout line
     ax2.plot(avaProfileMass['s'][[0, -1]], zEne[[0, -1]], '-r', label='com1dfa energy line (%.2f°)' % runOutAngleDeg)
-    scat = ax2.scatter(avaProfileMass['s'], zEne, marker='s', cmap=cmap, s=8*pU.ms, c=v2Path/(2*g),
+    scat = ax2.scatter(avaProfileMass['s'], zEne, marker='s', cmap=cmap, s=8*pU.ms, c=u2Path/(2*g),
                        label='Center of mass velocity altitude')
     cbar2 = ax2.figure.colorbar(scat, ax=ax2, use_gridspec=True)
     cbar2.ax.set_ylabel('Center of mass velocity altitude [m]')
@@ -163,7 +163,7 @@ def generateCom1DFAEnergyPlot(avalancheDir, energyLineTestCfg, avaProfileMass, d
     # add center of mass velocity points and runout line
     ax3.plot(avaProfileMass['s'][[0, -1]], zEne[[0, -1]]-z0, '-r',
              label='com1dfa energy line (%.2f°)' % runOutAngleDeg)
-    scat = ax3.scatter(avaProfileMass['s'], zEne-z0, marker='s', cmap=cmap, s=8*pU.ms, c=v2Path/(2*g),
+    scat = ax3.scatter(avaProfileMass['s'], zEne-z0, marker='s', cmap=cmap, s=8*pU.ms, c=u2Path/(2*g),
                        label='Center of mass velocity altitude extrapolation')
     cbar3 = ax3.figure.colorbar(scat, ax=ax3, use_gridspec=True)
     cbar3.ax.set_ylabel('Center of mass velocity altitude [m]')
@@ -325,7 +325,7 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
     --------
     zEne: numpy 1D array
         energy height of the particle averaged time steps
-    v2Path: numpy 1D array
+    u2Path: numpy 1D array
         kinetic energy of the particle averaged time steps
     sGeomL: 2 element list
         s coord (start and end) of the run out angle line
@@ -336,10 +336,10 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
         between theoretical solution and simulation result
     """
     # read mass average quantities
-    v2Path = avaProfileMass['u2']
+    u2Path = avaProfileMass['u2']
     # compute mass average velocity elevation
     # extract energy altitude
-    zEne = avaProfileMass['z'] + v2Path/(2*g)
+    zEne = avaProfileMass['z'] + u2Path/(2*g)
 
     # Create the alpha line
     GK = sIntersection * mu
@@ -358,4 +358,4 @@ def getEnergyInfo(avaProfileMass, g, mu, sIntersection, zIntersection, runOutAng
     runOutAngleError = runOutAngleDeg - alphaDeg
     errorEnergyTest = {'rmseVelocityElevation': rmseVelocityElevation, 'runOutSError': runOutSError,
                        'runOutZError': runOutZError, 'runOutAngleError': runOutAngleError}
-    return zEne, v2Path, sGeomL, zGeomL, errorEnergyTest
+    return zEne, u2Path, sGeomL, zGeomL, errorEnergyTest
