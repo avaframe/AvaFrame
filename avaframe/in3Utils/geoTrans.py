@@ -869,6 +869,7 @@ def cartToSpherical(X, Y, Z):
 
 def rotate(locationPoints, theta, deg=True):
     """ rotate a vector provided as start and end point with theta angle
+        rotation counter-clockwise
 
         Parameters
         -----------
