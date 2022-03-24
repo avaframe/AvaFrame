@@ -908,11 +908,4 @@ def rotate(locationPoints, theta, deg=True):
            [locationPoints[1][0], float(locationPoints[1][0]+vectorRot[1])] #y
           ]
 
-    # check if rotation worked correctly
-    lenVector = np.sqrt(vector[0]**2 + vector[1]**2)
-    lenVectorRot = np.sqrt(vectorRot[0]**2 + vectorRot[1]**2)
-    vecDiff = abs(lenVector - lenVectorRot)
-    if vecDiff > 1.e-7:
-        log.warning('rotated vectors are not of same length %.2f vs %.2f' % (lenVector, lenVectorRot))
-
     return rotatedLine
