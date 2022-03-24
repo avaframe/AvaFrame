@@ -39,7 +39,7 @@ def plotRangeTime(mtiInfo, cfgRangeTime):
     timeList = mtiInfo['timeList']
     rangeList = mtiInfo['rangeList']
     rangeTimeResType = cfgRangeTime['rangeTimeResType']
-    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo)
+    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo, cfgRangeTime.getfloat('minVelTimeStep'))
 
     # in case time steps are not ordered - the colormesh x and y need to be ordered
     timeIndex = np.argsort(np.array(timeList))

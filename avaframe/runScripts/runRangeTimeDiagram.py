@@ -45,6 +45,8 @@ cfgRangeTime = cfgUtils.getModuleConfig(dtAna)
 cfgRangeTime['GENERAL']['avalancheDir'] = avalancheDir
 
 if preProcessedData:
+
+    log.info('Distance -time analysis performed with preprocessed data')
     # fetch preprocesses mtiInfo dicts
     mtiInfoDicts = dtAna.importMTIData(avalancheDir, 'com1DFA', inputDir='', simHash='')
 
