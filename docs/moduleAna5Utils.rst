@@ -82,7 +82,8 @@ Theory
 Thalweg-time diagram
 ~~~~~~~~~~~~~~~~~~~~~~
 
-First, the flow variable result field is transformed into a path-following coordinate system.
+First, the flow variable result field is transformed into a path-following coordinate system, of
+which the centerline is the :term:`avalanche path`.
 For this step, functions from :py:mod:`ana3AIMEC` are used.
 The distance to the *start of runout area point* is determined using a user defined threshold
 of the flow variable, giving the avalanche front position. The front positions defined with this
@@ -90,19 +91,22 @@ method for all the time steps are shown as black dots in the **tt-diagram**.
 The mean values of the flow variable are computed at cross profiles along the avalanche path for
 each time step and included in the **tt-diagram** as colored field.
 For this analysis, all available flow variables can be chosen, but the interpretation of the
-tt-diagram structures and the corresponding meaning of avalanche front changes comparing flow thickness or flow velocity.
+tt-diagram structures and the corresponding meaning of avalanche front may be different for
+flow thickness or flow velocity.
 
 Simulated Range-Time diagram
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The radar's field of view is determined using its location, a point in the direction of the field of
-view and the aperture angle. The distance of every point in the simulation results to the radar
-location is computed. The simulation results which lie outside the radar's field of view are masked.
+view and the horizontal (azimuth) aperture angle of the antenna. The elevation or vertical aperture
+angle is not yet included. The line-of-sight distance of every grid point in the simulation results
+to the radar location is computed. The simulation results which lie outside the radar's field of
+view are masked.
 The distance of the avalanche front with respect to the radar location is determined for a user
-defined threshold in the flow variable and the average values of range gates along the radar's line
-of sight are computed from the result field.
+defined threshold in the flow variable and the average values of the result field for each
+range gate along the radar's line of sight are computed.
 This data is plotted in a range-time diagram, where the black dots indicate the avalanche front,
-and the colored field indicates the mean values of the flow parameter for the range gates for each
+and the colored field indicates the mean values of the flow variable for the range gates at each
 time step.
 
 
