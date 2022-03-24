@@ -529,3 +529,12 @@ def test_rotate():
     assert isinstance(rotatedLine, list)
     assert len(rotatedLine) == 2
     assert len(rotatedLine[0]) == 2
+
+    vector = np.diff(locationPoints)
+    vectorRot = np.diff(rotatedLine)
+
+    # check if rotation worked correctly
+    lenVector = np.sqrt(vector[0]**2 + vector[1]**2)
+    lenVectorRot = np.sqrt(vectorRot[0]**2 + vectorRot[1]**2)
+
+    assert np.isclose(lenVector, lenVectorRot)

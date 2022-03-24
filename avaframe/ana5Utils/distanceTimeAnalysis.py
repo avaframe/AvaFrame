@@ -49,7 +49,7 @@ def getRadarLocation(cfg):
     locationInfo = cfg['GENERAL']['radarLocation'].split('|')
 
     if len(locationInfo) != 4:
-        message = ('Radar location is not valid, required format x0|x1|y0|y1 not: %s' %
+        message = ('Radar location is invalid, required format x0|x1|y0|y1 not: %s' %
             cfg['GENERAL']['radarLocation'])
         log.error(message)
         raise AssertionError(message)
@@ -228,22 +228,11 @@ def minRangeSimulation(flowF, rangeMasked, threshold):
 
     """
 
-    # fetch mask where result field not above threshold
-    maskAva = np.ma.masked_where(~(flowF > threshold), flowF)
-    bmaskAva = np.ma.getmask(maskAva)
-    # fetch mask of radar field of view
-    maskPhi = np.ma.getmask(rangeMasked)
-
-    # merge masks of result field not above threshold and outside radar field of view
-    maskFull = ~np.logical_and(~maskPhi, ~bmaskAva)
-
-    # first get full data of the masked radar range array
-    r = np.ma.getdata(rangeMasked)
-    # mask this with full mask (result not above threshold and outside field of view)
-    radarRange = np.ma.array(r, mask=maskFull)
+    # mask range with radar field of view and treshold of flow variable result
+    _, _, rMaskedAvaRadar = maskRangeFull(flowF, threshold, rangeMasked)
 
     # line of sight min of masked array
-    losRange = radarRange.min()
+    losRange = rMaskedAvaRadar.min()
 
     return losRange
 
@@ -277,23 +266,16 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
     mti = mtiInfo['mti']
     mtiNew = np.zeros((len(rangeGates), 1))
 
-
-    # get mask of results not above threshold
-    maskAva = np.ma.masked_where(~(flowF > threshold), flowF)
-    bmaskAva = np.ma.getmask(maskAva)
-    # and join to a mask with "visible part of avalanche" - mask where not field of view and not
-    # ava result above threshold
-    bmaskAvaRadar = ~np.logical_and(~bmaskRadar, ~bmaskAva)
-    # mask range with this mask to obtain 'visible part of avalanche' ranges
-    rmaskAva_radar= np.ma.array(np.ma.getdata(rangeMasked), mask=bmaskAvaRadar) # masked ranges
+    # mask range with radar field of view and treshold of flow variable result
+    maskAva, bmaskAvaRadar, rMaskedAvaRadar = maskRangeFull(flowF, threshold, rangeMasked)
 
     # min and max radar range of masked radar range
-    if not rmaskAva_radar.mask.all():
+    if not rMaskedAvaRadar.mask.all():
         #TODO why int?
         #minRAva = int(np.floor(rmaskAva_radar.min()))
         #maxRAva = int(np.ceil(rmaskAva_radar.max()))
-        minRAva = rmaskAva_radar.min()
-        maxRAva = rmaskAva_radar.max()
+        minRAva = rMaskedAvaRadar.min()
+        maxRAva = rMaskedAvaRadar.max()
 
         # create array of capped range gates
         smallRangeGatesIndex = np.where((rangeGates >= minRAva) & (rangeGates <= maxRAva))[0]
@@ -324,6 +306,44 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
     mtiInfo['mti'] = mti
 
     return mtiInfo
+
+def maskRangeFull(flowF, threshold, rangeMasked):
+    """ mask range (already masked with radar field of view) also with avalanche result field
+        where NOT above threshold
+
+        Parameters
+        ------------
+        flowF: numpy array
+            flow variable result field
+        threshold: float
+            threshold of result field - masked where values NOT above this threshold
+        rangeMasked: numpy masked array
+            range to radar location masked with radar field of view
+
+        Returns
+        --------
+        maskAva: numpy mask
+            mask where result field NOT above threshold
+        bmaskAvaRadar: numpy mask
+            mask where result field NOT above threshold and NOT in radar field of view
+        rMaskedAvaRadar: numpy masked array
+            masked range array with NOT in radar field of view and result field NOT above threshold
+    """
+
+    # get mask of results not above threshold
+    maskAva = np.ma.masked_where(~(flowF > threshold), flowF)
+    bmaskAva = np.ma.getmask(maskAva)
+
+    # get mask of radar field of view
+    maskRadarFOV = np.ma.getmask(rangeMasked)
+
+    # and join to a mask with "visible part of avalanche" - mask where not field of view and not
+    # ava result above threshold
+    bmaskAvaRadar = ~np.logical_and(~maskRadarFOV, ~bmaskAva)
+    # mask range with this mask to obtain 'visible part of avalanche' ranges
+    rMaskedAvaRadar= np.ma.array(np.ma.getdata(rangeMasked), mask=bmaskAvaRadar) # masked ranges
+
+    return maskAva, bmaskAvaRadar, rMaskedAvaRadar
 
 
 def extractFrontInSim(flowF, mtiInfo, threshold):
