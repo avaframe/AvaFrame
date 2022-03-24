@@ -15,19 +15,20 @@ This is based on the ideas presented in :cite:`FiFrGaSo2013` and :cite:`RaKo2020
 avalanche simulation results have been transformed into the radar coordinate system to facilitate
 direct comparison, combined with the attempt to analyze simulation results in an avalanche path
 dependent coordinate system (:cite:`Fi2013`).
-In addition to the **tt-diagram**, :py:mod:`ana5RangeTime` also offers the possibility to
+In addition to the **tt-diagram**, :py:mod:`ana5Utils.distanceTimeAnalysis` also offers the possibility to
 produce simulated **range-time diagrams** of the flow variables with respect to a radar field
-of view. With this, simulation results can be directly compared to radar measurements in terms
+of view. With this, simulation results can be directly compared to radar measurements (for
+example moving-target-identification (MTI) images from :cite:`KoMeSo2018`) in terms
 of front position and inferred approach velocity. The colorcoding of the simulated
-**range-time** diagrams refers to average values of the chosen flow parameter
-(e.g. flow depth, flow velocity) at specified range gates. This colorcoding is not directly
-comparable to the intensity given in the range-time diagram from radar measurements.
+**range-time** diagrams show the average values of the chosen flow parameter
+(e.g. flow depth (FD), flow velocity (FV)) at specified range gates. This colorcoding is not directly
+comparable to the MTI intensity given in the range-time diagram from radar measurements.
 
 .. Note::
   The data processing for the **tt-diagram** and the **range-time diagram** can be done
   *during run time* of :py:mod:`com1DFA`, or as a postprocessing step. However, the second option
-  requires saving all the required time steps of the flow variable fields, which is much more
-  computationally expensive compared to the first option.
+  requires first saving and then reading all the required time steps of the flow variable fields,
+  which is much more computationally expensive compared to the first option.
 
 To run
 ~~~~~~~
@@ -35,7 +36,7 @@ To run
 During run-time of :py:mod:`com1DFA`:
 
 * in your local copy of ``com1DFA/com1DFACfg.ini`` in [VISUALISATION] set `createRangeTimeDiagram`
-  to True and chose if you want a *TTdiagram* by setting this flag to True or in the case of a
+  to True and choose if you want a *TTdiagram* by setting this flag to True or in the case of a
   simulated range-time diagram to False
 
 * in your local copy of ``ana5Utils/distanceTimeAnalysisCfg.ini`` you can adjust the default settings
@@ -45,6 +46,10 @@ During run-time of :py:mod:`com1DFA`:
   and set the `preProcessedData` flag to `True`
 
 As a postprocessing step:
+
+* first you need to run :py:mod:`com1DFA` to produce fields of the desired flow variable (e.g. FD, FV)
+  of sufficient temporal resolution (every second), for this in your local copy of `com1DFACfg.ini`
+  add e.g. FD to the `resType` and change the `tSteps` to `0:1`
 
 * have a look at :py:mod:`runScripts.runThalwegTimeDiagram.py` and :py:mod:`runScripts.runRangeTimeDiagram.py`
 
@@ -57,16 +62,18 @@ The resulting figures can be found in ``avalancheDirectory/Outputs/ana5Utils``.
 .. figure:: _static/thalwegTime_FD.png
     :width: 90%
 
-    Thalweg-time diagram example.
+    Thalweg-time diagram example: : The y-axis contains the distance from the beta point along
+    the avalanche path, e.g. the thalweg. Dots represent the avalanche front with the slope being
+    the approach velocity. Red star marks the maximal approach velocity.
 
 
 .. Note::
   The **tt-diagram** requires info on an avalanche path (see :ref:`moduleAna3AIMEC:ana3AIMEC: Aimec`).
-  The simulated **range-time diagram** requires info on the x, y coordinate of the radar location, a point
-  in the direction of the field of view, the aperture angle and the width of the range gates.
-  The maximum approach velocity indicated in the diagrams is computed as the ratio of the
-  distance travelled by the front and the respective time needed for two increments along the path/
-  radar's field of view.
+  The simulated **range-time diagram** requires info on the coordinates of the radar location
+  (x0, y0), a point in the direction of the field of view (x1, y1), the aperture angle and the width of
+  the range gates. The maximum approach velocity is indicated in the distance-time diagrams with a
+  red star and is computed as the ratio of the distance travelled by the front and the respective
+  time needed for two increments along the path/  radar's field of view.
 
 
 Theory
