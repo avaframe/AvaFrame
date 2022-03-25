@@ -621,10 +621,8 @@ def importMTIData(avaDir, modName, inputDir='', simHash=''):
         mtiInfoPickles = list(inputDir.glob('*%s.p' % simHash))
 
     if len(mtiInfoPickles) == 0:
-        message = ('No mtiInfo dictionary found in %s - consider first running avalanche simulations' %
-            inputDir)
-        log.error(message)
-        raise FileNotFoundError(message)
+        fU.fileNotFoundMessage(('No mtiInfo dictionary found in %s - consider first running avalanche simulations' %
+            inputDir))
 
     # create list of all mtiInfo dicts found
     mtiInfoDicts = []
