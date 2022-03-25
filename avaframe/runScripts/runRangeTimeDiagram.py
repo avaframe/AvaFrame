@@ -80,6 +80,15 @@ else:
     # fetch dem data
     demInputs = gI.readDEM(avalancheDir)
 
+    # fetch all flow parameter result fields
+    configDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFiles')
+    if (configDir.is_dir() is False):
+        fU.fileNotFoundMessage(('No configuration files found in %s - consider first running avalanche simulations' %
+            configDir))
+    elif len(list(configDir.glob('*.ini'))) == 0:
+        fU.fileNotFoundMessage(('No configuration files found in %s - consider first running avalanche simulations' %
+            configDir))
+
     # fetch info on available simulations
     simDF = cfgUtils.createConfigurationInfo(avalancheDir, standardCfg='', writeCSV=False, specDir='')
     for index, simDFrow in simDF.iterrows():
@@ -110,18 +119,19 @@ else:
         simNameSuffix = index + '_' + cfgRangeTime['GENERAL']['rangeTimeResType']
         flowFields =  fU.fetchFlowFields(flowFieldsDir, suffix=simNameSuffix)
 
+        # check if simulation results are available
+        if len(flowFields) == 0:
+            fU.fileNotFoundMessage(('No flow variable results found in %s - consider first running avalanche simulations' %
+                flowFieldsDir))
+
         for flowField in flowFields:
 
             # read flow field data
             flowFieldDict = IOf.readRaster(flowField)
             flowF = flowFieldDict['rasterData']
 
-            # extract avalanche front distance to radar
-            mtiInfo = dtAna.extractFrontInSim(flowF, mtiInfo,
-                cfgRangeTime['GENERAL'].getfloat('thresholdResult'))
-
-            # extract average values of range gates for mti plot
-            mtiInfo = dtAna.extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo)
+            # extract avalanche front distance to radar and average values of range gates for mti plot
+            mtiInfo = dtAna.extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo)
             timeStep, _ = dtAna.fetchTimeStepFromName(flowField)
             mtiInfo['timeList'].append(timeStep[0])
 
