@@ -69,6 +69,22 @@ def test_radarMask(tmp_path):
     assert np.array_equal(rangeGates, np.asarray([2., 4., 6., 8., 10., 12.]))
 
 
+def setupRangeTimeDiagram():
+    """ test setting up range time diagram """
+
+    # setup required inputs
+    headerDEM = {'xllcenter': 0.0, 'yllcenter': 0.0, 'cellsize': 1., 'ncols': 11, 'nrows': 11}
+    demOriginal = {'header': headerDEM, 'rasterData': np.zeros((11, 11))}
+
+    cfgRangeTime = configparser.ConfigParser()
+    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'avalancheDir': testAvaDir, 'simHash': 'test123',
+        'gateContours': 20, 'aperture': 40.5}
+
+    # call function to be tested
+    mtiInfo = dtAna.setupRangeTimeDiagram(dem, cfgRangeTime)
+
+    assert np.array_equal(mtiInfo['rangeGates'], np.asarray([2., 4., 6., 8., 10., 12.]))
+
 # def test_minRangeSimulation():
 #     """ test if min range is found in simulation results """
 #
@@ -193,3 +209,33 @@ def test_maskRangeFull():
 
     assert np.array_equal(maskSol, maskFull)
     assert np.array_equal(maskAvaSol, maskAva.mask)
+
+def test_extractFrontAndMeanValuesRadar():
+    """ test extracting front and mean values """
+
+    # setup required input
+    cfgRangeTime = configparser.ConfigParser()
+    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'thresholdResult': 3.1}
+    cfgRangeTime['PLOTS'] = {'debugPlot': False}
+    flowF = np.asarray([[2., 2., 2., 2.],
+                        [3., 4., 5., 6.],
+                        [7., 2., 0., 0.],
+                        [6., 7., 8., 10.],
+                        [2., 4., 5., 7.]])
+    threshold = 3.1
+    range = np.arange(4)
+    range = np.repeat([range], 5, axis=0)
+    rangeMasked = np.ma.masked_where(range < 2., range)
+    mtiInfo = {'rangeGates': np.arange(4), 'rangeMasked': rangeMasked, 'rArray': range,
+    'mti': np.zeros(5), 'rangeList': [], 'timeList': []}
+
+    # call function to be tested
+    mtiInfo = dtAna.extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo)
+    print('mtiInfo', mtiInfo)
+
+    assert mtiInfo['timeList'] == []
+    assert mtiInfo['rangeList'] == [2]
+    assert mtiInfo['mti'][0] == 0
+    assert mtiInfo['mti'][1] == 0
+    assert mtiInfo['mti'][2] == 6.
+    assert mtiInfo['mti'][3] == 23./3
