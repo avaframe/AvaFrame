@@ -82,10 +82,7 @@ else:
 
     # fetch all flow parameter result fields
     configDir = pathlib.Path(avalancheDir, 'Outputs', 'com1DFA', 'configurationFiles')
-    if (configDir.is_dir() is False):
-        fU.fileNotFoundMessage(('No configuration files found in %s - consider first running avalanche simulations' %
-            configDir))
-    elif len(list(configDir.glob('*.ini'))) == 0:
+    if (configDir.is_dir() is False) or ( len(list(configDir.glob('*.ini'))) == 0):
         fU.fileNotFoundMessage(('No configuration files found in %s - consider first running avalanche simulations' %
             configDir))
 
