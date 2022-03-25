@@ -230,7 +230,6 @@ def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
     threshold = cfgRangeTime['GENERAL'].getfloat('thresholdResult')
     rangeGates = mtiInfo['rangeGates']
     rArray = mtiInfo['rArray']
-    bmaskRadar = mtiInfo['bmaskRadar']
     rangeMasked = mtiInfo['rangeMasked']
     mti = mtiInfo['mti']
     mtiNew = np.zeros((len(rangeGates), 1))
