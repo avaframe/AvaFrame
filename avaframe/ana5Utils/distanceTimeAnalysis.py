@@ -206,38 +206,7 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
     return radarRange, rangeGates
 
 
-def minRangeSimulation(flowF, rangeMasked, threshold):
-    """ fetch info on the min range of simulation with respect to masked range array
-        the masked range array gives info what the visible range is
-
-        Parameters
-        -------------
-        flowF: numpy nd array
-            flow parameter result field
-        rangeMasked: masked numpy array
-            masked array of radar range
-        threshold: float
-            used to create mask for getting line of sight range,
-            only data above threshold taken into account
-
-        Returns
-        --------
-        losRange: float
-            minimum distance in line of sight to avalanche front
-            defined by the flowF
-
-    """
-
-    # mask range with radar field of view and treshold of flow variable result
-    _, _, rMaskedAvaRadar = maskRangeFull(flowF, threshold, rangeMasked)
-
-    # line of sight min of masked array
-    losRange = rMaskedAvaRadar.min()
-
-    return losRange
-
-
-def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
+def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
     """ extract average values of flow parameter result at certain distance intervals (range gates)
         add info to be used for colorcoding range-time diagram
 
@@ -269,6 +238,15 @@ def extractMeanValuesAtRangeGates(cfgRangeTime, flowF, mtiInfo):
     # mask range with radar field of view and treshold of flow variable result
     maskAva, bmaskAvaRadar, rMaskedAvaRadar = maskRangeFull(flowF, threshold, rangeMasked)
 
+    #++++++++Eextract front location with respect to radar ++++++++++++++
+    # get line of sight distance to identify front, use threshold to mask flowF
+    # line of sight min of masked array
+    losDistance = rMaskedAvaRadar.min()
+
+    # update lists of time step and front location
+    mtiInfo['rangeList'].append(losDistance)
+
+    #+++++++Extract average values at range gates +++++++++
     # min and max radar range of masked radar range
     if not rMaskedAvaRadar.mask.all():
         #TODO why int?
@@ -346,35 +324,6 @@ def maskRangeFull(flowF, threshold, rangeMasked):
     return maskAva, bmaskAvaRadar, rMaskedAvaRadar
 
 
-def extractFrontInSim(flowF, mtiInfo, threshold):
-    """ extract front in simulation result raster with respect to radar and add range info
-
-        Parameters
-        -----------
-        flowF: numpy array
-            simulation result of flow parameter
-        mtiInfo: dict
-            info on here used: rangeList, demOriginal, rangeMasked
-        threshold: float
-            used to create mask for getting line of sight range,
-            only data above threshold not taken into account
-
-        Returns
-        --------
-        mtiInfo: dict
-            updated dictionary new info on rangeList - list of front distance to radar
-            for respective time step
-    """
-
-    # get line of sight distance to identify front, use threshold to mask flowF
-    los = minRangeSimulation(flowF, mtiInfo['rangeMasked'], threshold)
-
-    # update lists of time step and front location
-    mtiInfo['rangeList'].append(los)
-
-    return mtiInfo
-
-
 def setupThalwegTimeDiagram(dem, cfgRangeTime):
     """ initialize parameters and prerequisites for generating thalweg-time diagrams
 
@@ -439,7 +388,7 @@ def setupThalwegTimeDiagram(dem, cfgRangeTime):
     return mtiInfo
 
 
-def extractFrontAndMeanValues(cfgRangeTime, flowF, demHeader, mtiInfo):
+def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     """ extract avalanche front and mean values of flow parameter result field
         used for colorcoding range-time diagram
 
@@ -594,13 +543,11 @@ def fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, t, demHeader, fields, mti
 
     # extract front and average values of result parameter
     if cfg['VISUALISATION'].getboolean('TTdiagram'):
-        mtiInfo = extractFrontAndMeanValues(cfgRangeTime, fields[rangeTimeResType], demHeader, mtiInfo)
+        mtiInfo = extractFrontAndMeanValuesTT(cfgRangeTime, fields[rangeTimeResType], demHeader, mtiInfo)
     else:
-        # extract front in simulation result for each time step
-        mtiInfo = extractFrontInSim(fields[rangeTimeResType], mtiInfo,
-             cfgRangeTime['GENERAL'].getfloat('thresholdResult'))
-        # extract average values along range gates for coloring range-time plot
-        mtiInfo = extractMeanValuesAtRangeGates(cfgRangeTime, fields[rangeTimeResType], mtiInfo)
+        # extract front in simulation result for each time step and average values along range gates
+        # for colorcoding range time plot
+        mtiInfo = extractFrontAndMeanValuesRadar(cfgRangeTime, fields[rangeTimeResType], mtiInfo)
 
     # append time step info
     mtiInfo['timeList'].append(t)
@@ -672,6 +619,12 @@ def importMTIData(avaDir, modName, inputDir='', simHash=''):
         mtiInfoPickles = list(inputDir.glob('*.p'))
     else:
         mtiInfoPickles = list(inputDir.glob('*%s.p' % simHash))
+
+    if len(mtiInfoPickles) == 0:
+        message = ('No mtiInfo dictionary found in %s - consider first running avalanche simulations' %
+            inputDir)
+        log.error(message)
+        raise FileNotFoundError(message)
 
     # create list of all mtiInfo dicts found
     mtiInfoDicts = []

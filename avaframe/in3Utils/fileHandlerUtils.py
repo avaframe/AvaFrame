@@ -494,6 +494,20 @@ def fetchFlowFields(flowFieldsDir, suffix=''):
     return flowFields
 
 
+def fileNotFoundMessage(messageName):
+    """ throw error if file not found with message and path
+
+        Parameters
+        -----------
+        messageName: str
+            error message
+
+    """
+
+    log.error(messageName)
+    raise FileNotFoundError(messageName)
+    
+
 # ToDo Maybe try to use makeSimFromResDF instead of makeSimDF
 def makeSimDF(inputDir, avaDir='', simID='simID'):
     """ Create a  dataFrame that contains all info on simulations

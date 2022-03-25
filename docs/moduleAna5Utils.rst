@@ -42,6 +42,10 @@ During run-time of :py:mod:`com1DFA`:
 * in your local copy of ``ana5Utils/distanceTimeAnalysisCfg.ini`` you can adjust the default settings
   for the generation of the diagrams
 
+* run :py:mod:`runCom1DFA.py` to calculate mtiInfo dictionary (saved as pickle in
+  ``avalancheDir/Outputs/com1DFA/distanceTimeAnalysis/mtiInfo_simHash.p``) that contains the required
+  data for producing the **tt-diagram** or **range-time diagram**
+
 * run  :py:mod:`runScripts.runThalwegTimeDiagram.py` or :py:mod:`runScripts.runRangeTimeDiagram.py`
   and set the `preProcessedData` flag to `True`
 
@@ -56,7 +60,7 @@ As a postprocessing step:
 * in your local copy of ``ana5Utils/distanceTimeAnalysisCfg.ini`` you can adjust the default settings
   for the generation of the diagrams
 
-The resulting figures can be found in ``avalancheDirectory/Outputs/ana5Utils``.
+The resulting figures are saved to ``avalancheDirectory/Outputs/ana5Utils``.
 
 
 .. figure:: _static/thalwegTime_FD.png
