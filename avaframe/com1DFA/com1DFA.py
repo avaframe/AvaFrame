@@ -1234,7 +1234,7 @@ def DFAIterate(cfg, particles, fields, dem, simHash=''):
 
     # Load configuration settings
     tEnd = cfgGen.getfloat('tEnd')
-    dtSave = fU.splitTimeValueToArrayInterval(cfgGen)
+    dtSave = fU.splitTimeValueToArrayInterval(cfgGen['tSteps'], tEnd)
     sphOption = cfgGen.getint('sphOption')
     log.debug('using sphOption %s:' % sphOption)
     # desired output fields

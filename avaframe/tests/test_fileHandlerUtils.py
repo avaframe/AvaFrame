@@ -268,17 +268,17 @@ def test_splitTimeValueToArrayInterval():
 
     # call function to be tested
     cfgGen['tSteps'] = cfgValues
-    items = fU.splitTimeValueToArrayInterval(cfgGen)
+    items = fU.splitTimeValueToArrayInterval(cfgGen['tSteps'], cfgGen.getfloat('tEnd'))
     cfgGen['tSteps'] = cfgValues1
-    items1 = fU.splitTimeValueToArrayInterval(cfgGen)
+    items1 = fU.splitTimeValueToArrayInterval(cfgGen['tSteps'], cfgGen.getfloat('tEnd'))
     cfgGen['tSteps'] = cfgValues2
-    items2 = fU.splitTimeValueToArrayInterval(cfgGen)
+    items2 = fU.splitTimeValueToArrayInterval(cfgGen['tSteps'], cfgGen.getfloat('tEnd'))
     cfgGen['tSteps'] = cfgValues3
-    items3 = fU.splitTimeValueToArrayInterval(cfgGen)
+    items3 = fU.splitTimeValueToArrayInterval(cfgGen['tSteps'], cfgGen.getfloat('tEnd'))
     cfgGen['tSteps'] = cfgValues4
-    items4 = fU.splitTimeValueToArrayInterval(cfgGen)
+    items4 = fU.splitTimeValueToArrayInterval(cfgGen['tSteps'], cfgGen.getfloat('tEnd'))
     cfgGen['tSteps'] = cfgValues5
-    items5 = fU.splitTimeValueToArrayInterval(cfgGen)
+    items5 = fU.splitTimeValueToArrayInterval(cfgGen['tSteps'], cfgGen.getfloat('tEnd'))
 
     assert len(items) == len(cfgValuesList)
     assert items[0] == cfgValuesList[0]

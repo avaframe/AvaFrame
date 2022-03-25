@@ -485,7 +485,8 @@ def initializeRangeTime(modName, cfg, dem, simHash):
     cfgRangeTime['GENERAL']['avalancheDir'] = cfg['GENERAL']['avalancheDir']
     cfgRangeTime['GENERAL']['simHash'] = simHash
     # fetch time steps for creating range time diagram
-    dtRangeTime = fU.splitTimeValueToArrayInterval(cfgRangeTime['GENERAL'])
+    dtRangeTime = fU.splitTimeValueToArrayInterval(cfgRangeTime['GENERAL']['distanceTimeSteps'],
+        cfg['GENERAL'].getfloat('tEnd'))
 
     if cfg['VISUALISATION'].getboolean('TTdiagram'):
         mtiInfo = setupThalwegTimeDiagram(dem, cfgRangeTime)
