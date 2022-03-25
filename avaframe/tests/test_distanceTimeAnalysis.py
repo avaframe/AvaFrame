@@ -81,7 +81,7 @@ def setupRangeTimeDiagram():
         'gateContours': 20, 'aperture': 40.5}
 
     # call function to be tested
-    mtiInfo = dtAna.setupRangeTimeDiagram(dem, cfgRangeTime)
+    mtiInfo = dtAna.setupRangeTimeDiagram(demOriginal, cfgRangeTime)
 
     assert np.array_equal(mtiInfo['rangeGates'], np.asarray([2., 4., 6., 8., 10., 12.]))
 
