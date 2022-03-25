@@ -77,7 +77,8 @@ The resulting figures are saved to ``avalancheDirectory/Outputs/ana5Utils``.
   (x0, y0), a point in the direction of the field of view (x1, y1), the aperture angle and the width of
   the range gates. The maximum approach velocity is indicated in the distance-time diagrams with a
   red star and is computed as the ratio of the distance travelled by the front and the respective
-  time needed for two increments along the path/  radar's field of view.
+  time needed for a time step difference of at least `minVelTimeStep` which is set to 2 seconds as
+  default.
 
 
 Theory
@@ -89,11 +90,12 @@ Thalweg-time diagram
 First, the flow variable result field is transformed into a path-following coordinate system, of
 which the centerline is the :term:`avalanche path`.
 For this step, functions from :py:mod:`ana3AIMEC` are used.
-The distance to the *start of runout area point* is determined using a user defined threshold
-of the flow variable, giving the avalanche front position. The front positions defined with this
+The distance of the avalanche front to the *start of runout area point* is determined using a user
+defined threshold of the flow variable. The front positions defined with this
 method for all the time steps are shown as black dots in the **tt-diagram**.
 The mean values of the flow variable are computed at cross profiles along the avalanche path for
-each time step and included in the **tt-diagram** as colored field.
+each time step and included in the **tt-diagram** as colored field. When computing the mean values,
+all the area where the flow variable is bigger than zero is taken into account.
 For this analysis, all available flow variables can be chosen, but the interpretation of the
 tt-diagram structures and the corresponding meaning of avalanche front may be different for
 flow thickness or flow velocity.

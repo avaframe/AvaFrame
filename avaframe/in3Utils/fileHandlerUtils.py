@@ -338,15 +338,17 @@ def splitIniValueToArraySteps(cfgValues, returnList=False):
     return items
 
 
-def splitTimeValueToArrayInterval(cfgGen):
+def splitTimeValueToArrayInterval(cfgValues, endTime):
     """ read save time step info from ini file and return numpy array of values
 
         values can either be separated by | or provided in start:interval format
 
         Parameters
         ----------
-        cfgGen: configParser object
-            configuration settings, here 'tSteps' used
+        cfgValues: str
+            time steps info
+        endTime: float
+            end time
 
         Returns
         --------
@@ -354,8 +356,6 @@ def splitTimeValueToArrayInterval(cfgGen):
             time step values as 1D numpy array
     """
 
-    cfgValues = cfgGen['tSteps']
-    endTime = cfgGen.getfloat('tEnd')
     if ':' in cfgValues:
         itemsInput = cfgValues.split(':')
         if float(endTime - float(itemsInput[0])) < float(itemsInput[1]):
@@ -506,7 +506,7 @@ def fileNotFoundMessage(messageName):
 
     log.error(messageName)
     raise FileNotFoundError(messageName)
-    
+
 
 # ToDo Maybe try to use makeSimFromResDF instead of makeSimDF
 def makeSimDF(inputDir, avaDir='', simID='simID'):
