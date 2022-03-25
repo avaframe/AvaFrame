@@ -77,7 +77,7 @@ def setupRangeTimeDiagram():
     demOriginal = {'header': headerDEM, 'rasterData': np.zeros((11, 11))}
 
     cfgRangeTime = configparser.ConfigParser()
-    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'avalancheDir': testAvaDir, 'simHash': 'test123',
+    cfgRangeTime['GENERAL'] = {'rgWidth': 2., 'simHash': 'test123',
         'gateContours': 20, 'aperture': 40.5}
 
     # call function to be tested
