@@ -86,18 +86,96 @@ def test_avalancheMask():
     assert np.all(maskResType.mask[0,:])
 
 
-def test_minRangeSimulation():
-    """ test if min range is found in simulation results """
+# def test_minRangeSimulation():
+#     """ test if min range is found in simulation results """
+#
+#     # setup required inputs
+#     flowF = np.zeros((10, 12))
+#     flowF[4,4:6] = 4.5
+#     flowF[5,4:6] = 4.2
+#     threshold = 4.19
+#     rangeMasked = np.arange(12)
+#     rangeMasked = np.repeat([rangeMasked], 10, axis=0)
+#
+#     # call function to be tested
+#     losRange = dtAna.minRangeSimulation(flowF, rangeMasked, threshold)
+#
+#     assert losRange == 4.
+
+
+def test_appraoachVelocity():
+    """ test computing approach velocity """
 
     # setup required inputs
-    flowF = np.zeros((10, 12))
-    flowF[4,4:6] = 4.5
-    flowF[5,4:6] = 4.2
-    threshold = 4.19
-    rangeMasked = np.arange(12)
-    rangeMasked = np.repeat([rangeMasked], 10, axis=0)
+    mtiInfo = {'timeList': [0., 2., 3., 7., 8., 9., 10.],
+        'rangeList': [0., 2., 4., 6., 8., 10., 12]}
+    minVelTimeStep = 2.
 
     # call function to be tested
-    losRange = dtAna.minRangeSimulation(flowF, rangeMasked, threshold)
+    maxVel, rangeVel, timeVel = dtAna.approachVelocity(mtiInfo, minVelTimeStep)
 
-    assert losRange == 4.
+    assert maxVel == 2.
+    assert rangeVel == 8.
+    assert timeVel == 8.
+
+def test_fetchTimeStepFromName():
+    """ test fetching time step from name """
+
+    # setup required inpu
+    pathNames = pathlib.Path('tests', 'testName_t0.5.asc')
+
+    # call function to be tested
+    timeSteps, indexTime = dtAna.fetchTimeStepFromName(pathNames)
+
+    assert timeSteps == [0.5]
+    assert indexTime == [0]
+
+    # setup required inpu
+    pathNames = [pathlib.Path('tests', 'testName_t0.5.asc'),
+        pathlib.Path('tests', 'testName_t0.15.asc')]
+
+    # call function to be tested
+    timeSteps, indexTime = dtAna.fetchTimeStepFromName(pathNames)
+
+    assert timeSteps == [0.5, 0.15]
+    assert indexTime[0] == 1
+    assert indexTime[1] == 0
+
+
+def test_importMTIData():
+    """ testing importing data pickle """
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = 'data/avaTest'
+    modName = 'com1DFA'
+    inputDir = dirPath / 'data' / 'avaTest'
+    simHash = 'simTestID'
+
+    # call function to be tested
+    mtiInfoDicts = dtAna.importMTIData(avaDir, modName, inputDir=inputDir)
+
+    assert len(mtiInfoDicts) == 2
+
+    # call function to be tested
+    mtiInfoDicts2 = dtAna.importMTIData(avaDir, modName, inputDir=inputDir, simHash=simHash)
+
+    assert len(mtiInfoDicts2) == 1
+    assert mtiInfoDicts2[0]['name'] == (inputDir / 'testpickle_simTestID.p')
+
+
+def test_exportData(tmp_path):
+    """ test exporting pickle """
+
+    # setup require inputs
+    mtiInfo = {'name': 'testName', 'testArray': np.arange(10)}
+    cfg = configparser.ConfigParser()
+    testDir = pathlib.Path(tmp_path)
+    cfg['GENERAL'] = {'avalancheDir': testDir, 'simHash': 'simTestID'}
+    modName = 'com1DFA'
+
+    # call function to be tested
+    dtAna.exportData(mtiInfo, cfg, modName)
+
+    testPath = testDir / 'Outputs' / modName / 'distanceTimeAnalysis' / 'mtiInfo_simTestID.p'
+    assert testPath.is_file()
