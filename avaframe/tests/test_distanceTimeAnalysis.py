@@ -69,23 +69,6 @@ def test_radarMask(tmp_path):
     assert np.array_equal(rangeGates, np.asarray([2., 4., 6., 8., 10., 12.]))
 
 
-def test_avalancheMask():
-    """ test creating avalanche mask """
-
-    # setup required input parameters
-    resData = np.zeros((10, 12))
-    resData[4,4:6] = 4.5
-    resData[5,4:6] = 4.2
-    threshold = 4.19
-
-    # call function to be tested
-    maskResType = np.ma.masked_where(resData < threshold, resData)
-
-    assert np.all(maskResType.mask[4,4:6]) == False
-    assert np.all(maskResType.mask[5,4:6]) == False
-    assert np.all(maskResType.mask[0,:])
-
-
 # def test_minRangeSimulation():
 #     """ test if min range is found in simulation results """
 #
@@ -179,3 +162,34 @@ def test_exportData(tmp_path):
 
     testPath = testDir / 'Outputs' / modName / 'distanceTimeAnalysis' / 'mtiInfo_simTestID.p'
     assert testPath.is_file()
+
+
+def test_maskRangeFull():
+    """ test creating full mask """
+
+    # setup required input parameters
+    flowF = np.asarray([[2., 2., 2., 2.],
+                        [3., 4., 5., 6.],
+                        [7., 2., 0., 0.],
+                        [6., 7., 8., 10.],
+                        [2., 4., 5., 7.]])
+    threshold = 3.1
+    range = np.arange(4)
+    range = np.repeat([range], 5, axis=0)
+    rangeMasked = np.ma.masked_where(range < 2., range)
+
+    # call function to be tested
+    maskAva, maskFull, maskFullRange = dtAna.maskRangeFull(flowF, threshold, rangeMasked)
+    maskSol = np.asarray([[True, True, True, True],
+                          [True, True, False, False],
+                          [True, True, True, True],
+                          [True, True, False, False],
+                          [True, True, False, False]])
+    maskAvaSol = np.asarray([[True, True, True, True],
+                          [True, False, False, False],
+                          [False, True, True, True],
+                          [False, False, False, False],
+                          [True, False, False, False]])
+
+    assert np.array_equal(maskSol, maskFull)
+    assert np.array_equal(maskAvaSol, maskAva.mask)
