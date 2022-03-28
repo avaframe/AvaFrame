@@ -28,7 +28,8 @@ log.info('Initializing Project: %s', avalancheDir)
 # Initialize project
 initializeProject.initializeFolderStruct(avalancheDir)
 
-logOrigin = os.path.join('.', logName + '.log')
+
+logOrigin = log.handlers[-1].baseFilename 
 
 logDest = os.path.join(avalancheDir, logName + '.log')
 
