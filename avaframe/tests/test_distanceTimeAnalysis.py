@@ -117,6 +117,7 @@ def test_appraoachVelocity():
     assert rangeVel == 8.
     assert timeVel == 8.
 
+
 def test_fetchTimeStepFromName():
     """ test fetching time step from name """
 
@@ -239,3 +240,32 @@ def test_extractFrontAndMeanValuesRadar():
     assert mtiInfo['mti'][1] == 0
     assert mtiInfo['mti'][2] == 6.
     assert mtiInfo['mti'][3] == 23./3
+
+
+def test_setupThalwegTimeDiagram():
+    """ setting up info for tt diagram """
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = 'data/avaInclinedPlane'
+    modName = 'com1DFA'
+    inputDir = dirPath / '..' / avaDir / 'Inputs'
+    demPath = inputDir / 'DEM_IP_Topo.asc'
+    dem = IOf.readRaster(demPath)
+
+    cfgRangeTime = configparser.ConfigParser()
+    cfgRangeTime['GENERAL'] = {'startOfRunoutAreaAngle': 40., 'avalancheDir': avaDir,
+        'rangeTimeResType': 'FD', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
+        'dsMin': 30}
+
+    # call function to be tested
+    mtiInfo = dtAna.setupThalwegTimeDiagram(dem, cfgRangeTime)
+
+    print('mtiInfo', mtiInfo['betaPoint'], mtiInfo['betaPointAngle'],
+    mtiInfo['type'], np.amin(mtiInfo['rangeGates']), np.amax(mtiInfo['rangeGates']))
+
+    assert len(mtiInfo['rangeGates']) == len(mtiInfo['s'])
+    assert np.isclose(mtiInfo['betaPoint'][1], -4000.)
+    assert np.isclose(mtiInfo['betaPointAngle'], 34.)
+    assert np.isclose(np.amin(mtiInfo['rangeGates']), -1550)
+    assert np.isclose(np.amax(mtiInfo['rangeGates']), 3395)
