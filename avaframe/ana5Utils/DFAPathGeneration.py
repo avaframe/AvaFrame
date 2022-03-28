@@ -39,8 +39,9 @@ def generateAveragePath(avalancheDir, pathFromPart, simName, dem, addVelocityInf
         True to add (u2, ekin, totEKin) to result
         Will only work if the particles (ux, uy, uz) exist or if 'FV' exists
     flagAvaDir: bool
-        if True avalancheDir corresponds to an avalanche directory and pickles are
+        if True avalancheDir corresponds to an avalanche directory and data is
         read from avaDir/Outputs/comModule/particles or avaDir/Outputs/comModule/peakFiles
+        depending on if pathFromPart is True or False
     comModule: str
         module that computed the particles or fields
 
@@ -76,7 +77,7 @@ def getDFAPathFromPart(particlesList, addVelocityInfo=False):
     """ compute mass averaged path from particles
 
     Also returns the averaged velocity and kinetic energy associated
-    If addVelocityInfo is True, information about velocity and kinetic energy is not computed
+    If addVelocityInfo is True, information about velocity and kinetic energy is computed
 
     Parameters
     -----------
@@ -328,8 +329,10 @@ def extendProfileTop(extTopOption, particlesIni, profile):
 
     Parameters
     -----------
-    extTopOption: boolean
+    extTopOption: int
         decide how to extend towards the top
+        if 0, extrapolate towards the highest point in the release
+        if 1, extrapolate towards the point leading to the lonest runout
     particlesIni: dict
         initial particles dict
     profile: dict
