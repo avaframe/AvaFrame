@@ -130,6 +130,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       force dictionary
   """
   # read input parameters
+  cdef double tau0 = cfg.getfloat('tau0')
   cdef double Rs0 = cfg.getfloat('Rs0')
   cdef double kappa = cfg.getfloat('kappa')
   cdef double B = cfg.getfloat('B')
@@ -284,7 +285,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
           sigmaB = - effAccNorm * rho * h
           if frictType == 1:
             # SamosAT friction type (bottom shear stress)
-            tau = SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+            tau = SamosATfric(rho, tau0, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
           elif frictType == 2:
             # coulomb friction type (bottom shear stress)
             tau = mu * sigmaB
@@ -2098,13 +2099,14 @@ cpdef (double, double, double) getVector(
   return nx, ny, nz
 
 @cython.cdivision(True)
-cpdef double SamosATfric(double rho, double Rs0, double mu, double kappa, double B, double R, double v, double p, double h):
+cpdef double SamosATfric(double rho, double tau0, double Rs0, double mu, double kappa, double B, double R,
+                         double v, double p, double h):
   cdef double Rs = rho * v * v / (p + 0.001)
   cdef double div = h / R
   if div < 1.0:
     div = 1.0
   div = math.log(div) / kappa + B
-  cdef double tau = p * mu * (1.0 + Rs0 / (Rs0 + Rs)) + rho * v * v / (div * div)
+  cdef double tau = tau0 + p * mu * (1.0 + Rs0 / (Rs0 + Rs)) + rho * v * v / (div * div)
   return tau
 
 

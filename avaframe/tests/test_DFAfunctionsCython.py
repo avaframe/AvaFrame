@@ -473,6 +473,7 @@ def test_account4FrictionForce(capfd):
 
 def test_SamosATfric(capfd):
     """ Test the account4FrictionForce function"""
+    tau0 = 0
     Rs0 = 0.222
     kappa = 0.43
     R = 0.05
@@ -482,9 +483,13 @@ def test_SamosATfric(capfd):
     uMag = 10
     sigmaB = 10
     h = 1
-    tau = DFAfunC.SamosATfric(rho, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+    tau = DFAfunC.SamosATfric(rho, tau0, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
     print(tau)
     assert tau == 1.9128193823277053
+    tau0 = 2
+    tau = DFAfunC.SamosATfric(rho, tau0, Rs0, mu, kappa, B, R, uMag, sigmaB, h)
+    print(tau)
+    assert tau == 3.9128193823277053
 
 
 def test_updatePositionC():
