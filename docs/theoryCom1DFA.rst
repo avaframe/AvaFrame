@@ -130,6 +130,14 @@ the flow-depth,
     \overline{u}_i = \frac{1}{V(t)}\int\limits_{V(t)} u_i(\mathbf{x})\,\mathrm{d}V
     :label: hmean-umean
 
+
+.. _small-lagrange:
+
+.. figure:: _static/smallLagrange.png
+        :width: 90%
+
+        Small Lagrangian prism-like Control volume
+
 Entrainment:
 """""""""""""
 

@@ -119,7 +119,66 @@ and the colored field indicates the mean values of the flow variable for the ran
 time step.
 
 
+Automated path generation
+---------------------------
+
+Computational modules like :math:`\alpha\beta` (:ref:`moduleCom2AB`) or analysis modules like
+the Thalweg-time diagram (:ref:`moduleAna5Utils`) or Aimec (:ref:`moduleAna3AIMEC`) require
+an avalanche path as input. This avalanche path is usually based on an experts opinion.
+This makes it constraining and difficult to reproduce or automate. The objective of this
+module is o automatically generate an avalanche path from a dense flow avalanche (DFA) simulation.
+The path is generated from the center of mass position of the dense material (we talk of mass
+averaged path). This path is then extended towards the top (of the release area) and bottom (runout).
 
 
+Mass average path
+~~~~~~~~~~~~~~~~~~
+Any DFA simulation should be able to produce information about mass distribution for different
+time steps of the simulation (either flow thickness, mass , velocities... rasters or particles).
+This information is used to compute time dependent mass average quantities such as position
+(center of mass), velocity... For a flow quantity :math:`\mathbf{a}(\mathbf{x}, t)`,
+the associated mass averaged quantity is defined by:
 
--
+.. math::
+    \bar{\mathbf{a}}(t) = \int\limits_V \rho \mathbf{a}(\mathbf{x}, t)\,dV
+    \approx \sum\limits_k m_k \mathbf{a}_k(t)
+
+where :math:`m_k` respectively :math:`\mathbf{a}_k(t)` defines the mass respectively flow quantity
+of particle or raster cell :math:`k`.
+Applying this to :math:`(x, y, z)` gives the mass average path profile.
+
+.. Note::
+    The mass average path profiles does not necessarily lie on the topography
+
+It is also possible to compute the mass averaged velocity squared :math:`\overline{\mathbf{u^2}}(t)`,
+kinetic energy :math:`\overline{\frac{1}{2}m\mathbf{u^2}}(t)` or travel distance :math:`s`
+(which are used in the :ref:`ana1Tests:Energy line test`).
+
+The path needs to be extended towards the top (in the release area), in order to produce
+meaningful results when used in the com2AB module. Indeed, the result from the :math:`\alpha\beta`
+analysis depends on where the path profile starts. Moving the starting point of the profile
+will shift the :math:`\alpha` upwards or downwards and affect the runout value.
+
+Extending path towards the top (release)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+There are two options available to extend the mass averaged path profile in the release :
+
+* Extend the path up to the highest point in the release
+  (highest particle or highest cell depending on if particles or rasters are available).
+
+* Extend the path towards the point that will lead to the longest runout.
+  This point does not necessarily coincide with the highest point in the
+  release and and corresponds to the point for which
+  :math:`(\Delta z - \Delta s \tan{\alpha})` is maximum. :math:`\alpha` corresponds
+  to the angle of the runout lime going from first to last point of the mass averaged
+  line. :math:`\Delta z` and :math:`\Delta s` represent the vertical and horizontal
+  distance between a point in the release and the first point of the mass averaged
+  path profile.
+
+Extending path towards the bottom (runout)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+It is also necessary to extend the profile in the runout area. This is done by finding the
+direction of the path given by the few last points in the path (in (x,y)) and extending in
+this direction for a given percentage of the total length of the path :math:`s`.
