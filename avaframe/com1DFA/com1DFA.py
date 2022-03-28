@@ -1424,7 +1424,7 @@ def updateSavingTimeStep(dtSave, cfg, t):
     """
 
     if dtSave.size == 1:
-        dtSave = [2*cfg.getfloat('tEnd')]
+        dtSave = np.asarray([2*cfg.getfloat('tEnd')])
     else:
         indSave = np.where(dtSave > t)
         dtSave = dtSave[indSave]
