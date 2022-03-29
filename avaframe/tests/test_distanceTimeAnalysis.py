@@ -276,9 +276,9 @@ def test_initializeRangeTime():
 
     # setup required inputs
     dirPath = pathlib.Path(__file__).parents[0]
-    avaDir = dirPath / '..' / 'data/avaInclinedPlane'
+    avaDir = dirPath / '..' / 'data/avaParabola'
     inputDir = avaDir / 'Inputs'
-    demPath = inputDir / 'DEM_IP_Topo.asc'
+    demPath = inputDir / 'DEM_PF_Topo.asc'
     dem = IOf.readRaster(demPath)
 
     cfg = configparser.ConfigParser()
@@ -290,9 +290,9 @@ def test_initializeRangeTime():
     mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, dem, simHash)
 
     #print('mtiInfo', mtiInfo)
-    print('dtRa', dtRangeTime)
+    print('dtRa', dtRangeTime, mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'])
 
-    assert np.isclose(mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'], 34.)
+    assert np.isclose(mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'], 9.95742856)
     assert np.amax(dtRangeTime) <= 40.
     assert cfgRangeTime['GENERAL']['simHash'] == simHash
 
@@ -302,9 +302,9 @@ def test_fetchRangeTimeInfo():
 
     # setup required inputs
     dirPath = pathlib.Path(__file__).parents[0]
-    avaDir = dirPath / '..' / 'data/avaInclinedPlane'
+    avaDir = dirPath / '..' / 'data/avaParabola'
     inputDir = avaDir / 'Inputs'
-    demPath = inputDir / 'DEM_IP_Topo.asc'
+    demPath = inputDir / 'DEM_PF_Topo.asc'
     dem = IOf.readRaster(demPath)
     simHash = 'testsimID'
 
