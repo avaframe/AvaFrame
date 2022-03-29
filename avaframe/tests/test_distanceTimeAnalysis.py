@@ -325,3 +325,39 @@ def test_fetchRangeTimeInfo():
     print('mtiInfo', type(dtRangeTime))
 
     assert np.array_equal(dtRangeTime, np.arange(2,40,1))
+
+
+def test_extractFrontAndMeanValuesTT():
+    """ test extracting ava front and mean values """
+
+    # setup required inputs
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / 'data/avaHockeySmall'
+    inputDir = avaDir / 'Inputs'
+    demPath = inputDir / 'DEM_HS_Topo.asc'
+    dem = IOf.readRaster(demPath)
+
+    cfgRangeTime = configparser.ConfigParser()
+    cfgRangeTime['GENERAL'] = {'startOfRunoutAreaAngle': 10., 'avalancheDir': avaDir,
+        'rangeTimeResType': 'FD', 'domainWidth': 200, 'cellSizeSL': '', 'interpMethod': 'bilinear',
+        'dsMin': 30, 'thresholdResult': 0.001, 'simHash': 'simDI'}
+    cfgRangeTime['PLOTS'] = {'debugPlot': False}
+
+    # call function to created further inputs
+    mtiInfo = dtAna.setupThalwegTimeDiagram(dem, cfgRangeTime)
+
+    # create flow field
+    flowF = np.ones((dem['rasterData'].shape))
+
+    # call function to be tested
+    mtiInfo = dtAna.extractFrontAndMeanValuesTT(cfgRangeTime, flowF, dem['header'], mtiInfo)
+
+
+    print('mtiInfo', mtiInfo['rangeList'], mtiInfo['mti'])
+    print('raster', mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'])
+    print('mti', mtiInfo['s'][mtiInfo['rasterTransfo']['indStartOfRunout']])
+    print('s', mtiInfo['s'])
+
+    assert np.array_equal(mtiInfo['mti'], np.ones((len(mtiInfo['rangeGates']),1)))
+    assert mtiInfo['rangeList'] == [np.amax(mtiInfo['s'] - mtiInfo['s'][mtiInfo['rasterTransfo']['indStartOfRunout']])]
