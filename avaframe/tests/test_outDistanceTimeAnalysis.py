@@ -38,9 +38,12 @@ def test_radarFieldOfViewPlot(tmp_path):
     radarFov = np.asarray([[0.,10.], [5., 5.]])
     radarRange = np.repeat([np.arange(50)], 45, axis=0)
     cfgRangeTime = configparser.ConfigParser()
-    cfgRangeTime['GENERAL'] = {'avalancheDir': avaDir, 'aperture': 5.}
-    cfgRangeTime['VISUALISATION']: {'gateContours': 5}
+    cfgRangeTime['GENERAL'] = {'avalancheDir': avaDir, 'aperture': 5., 'simHash': 'simDI'}
+    cfgRangeTime['PLOTS'] = {'gateContours': 5}
+
 
     rangeGates = np.arange(45)
     demData = np.zeros((45, 50))
-    dem = {'header': {'nrows': 45, 'ncols': 50, 'cellSize': 5., 'xllcenter': 0.0, 'yllcenter': 0.0}, 'rasterData': demData}
+    dem = {'header': {'nrows': 45, 'ncols': 50, 'cellsize': 5., 'xllcenter': 0.0, 'yllcenter': 0.0}, 'rasterData': demData}
+
+    oAna.radarFieldOfViewPlot(radarFov, radarRange, cfgRangeTime, rangeGates, dem)
