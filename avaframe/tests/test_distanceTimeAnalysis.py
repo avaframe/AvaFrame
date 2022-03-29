@@ -247,7 +247,7 @@ def test_setupThalwegTimeDiagram():
 
     # setup required inputs
     dirPath = pathlib.Path(__file__).parents[0]
-    avaDir = 'data/avaInclinedPlane'
+    avaDir = dirPath / '..' / 'data/avaInclinedPlane'
     modName = 'com1DFA'
     inputDir = dirPath / '..' / avaDir / 'Inputs'
     demPath = inputDir / 'DEM_IP_Topo.asc'
