@@ -269,3 +269,59 @@ def test_setupThalwegTimeDiagram():
     assert np.isclose(mtiInfo['betaPointAngle'], 34.)
     assert np.isclose(np.amin(mtiInfo['rangeGates']), -1550)
     assert np.isclose(np.amax(mtiInfo['rangeGates']), 3395)
+
+
+def test_initializeRangeTime():
+    """ test initializing range time diagram setup """
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / 'data/avaInclinedPlane'
+    inputDir = avaDir / 'Inputs'
+    demPath = inputDir / 'DEM_IP_Topo.asc'
+    dem = IOf.readRaster(demPath)
+
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'tEnd': 40., 'avalancheDir': avaDir}
+    cfg['VISUALISATION'] = {'createRangeTimeDiagram': True, 'TTdiagram': True}
+    simHash = 'testsimID'
+
+    # call function to be tested
+    mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, dem, simHash)
+
+    #print('mtiInfo', mtiInfo)
+    print('dtRa', dtRangeTime)
+
+    assert np.isclose(mtiInfo['rasterTransfo']['startOfRunoutAreaAngle'], 34.)
+    assert np.amax(dtRangeTime) <= 40.
+    assert cfgRangeTime['GENERAL']['simHash'] == simHash
+
+
+def test_fetchRangeTimeInfo():
+    """ test fetching range time info """
+
+    # setup required inputs
+    dirPath = pathlib.Path(__file__).parents[0]
+    avaDir = dirPath / '..' / 'data/avaInclinedPlane'
+    inputDir = avaDir / 'Inputs'
+    demPath = inputDir / 'DEM_IP_Topo.asc'
+    dem = IOf.readRaster(demPath)
+    simHash = 'testsimID'
+
+    cfg = configparser.ConfigParser()
+    cfg['GENERAL'] = {'tEnd': 40., 'avalancheDir': avaDir}
+    cfg['VISUALISATION'] = {'createRangeTimeDiagram': True, 'TTdiagram': True}
+
+    # call function to created further inputs
+    mtiInfo, dtRangeTime, cfgRangeTime = dtAna.initializeRangeTime(dtAna, cfg, dem, simHash)
+
+    fieldTest = np.ones((dem['rasterData'].shape))
+    fields = {'FD': fieldTest}
+
+    # call function to be tested
+    mtiInfo, dtRangeTime = dtAna.fetchRangeTimeInfo(cfgRangeTime, cfg, dtRangeTime, 1., dem['header'], fields,
+        mtiInfo)
+
+    print('mtiInfo', type(dtRangeTime))
+
+    assert np.array_equal(dtRangeTime, np.arange(2,40,1))
