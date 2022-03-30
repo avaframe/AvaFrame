@@ -45,9 +45,6 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     # get comDFA configuration path for hybrid model
     hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
 
-    # prepare plots
-    figDict = outCom3Plots.initializeFigures()
-
     # get initial mu value
     muArray = np.array([cfgHybrid.getfloat('DFA', 'mu')])
     alphaArray = np.array([np.degrees(np.arctan(muArray[0]))])
@@ -56,6 +53,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
     nIterMax = cfgHybrid.getint('GENERAL', 'nIterMax')
     iteration = 0
     iterate = True
+    resultsHybrid = {}
     while iteration < nIterMax and iterate:
         # update the com1DFA mu value
         updater = ConfigUpdater()
@@ -69,7 +67,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         particlesList, timeStepInfo = particleTools.readPartFromPickle(avalancheDir, simName=simID, flagAvaDir=True,
                                                                        comModule='com1DFA')
         # postprocess to extract path and energy line
-        avaProfileMass = DFAPath.getDFAPathFromPart(particlesList, dem, addVelocityInfo=True)
+        avaProfileMass = DFAPath.getDFAPathFromPart(particlesList, addVelocityInfo=True)
         # make a copy because extendDFAPathKernel might modify avaProfileMass
         avaProfileMassExt = DFAPath.extendDFAPathKernel(cfgHybrid['PATH'], avaProfileMass.copy(), dem, particlesList[0])
         # save profile as AB profile in Inputs
@@ -80,7 +78,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         avaProfileMassExtOri['y'] = avaProfileMassExtOri['y'] + demOri['header']['yllcenter']
         shpConv.writeLine2SHPfile(avaProfileMassExtOri, name, pathAB)
         # also save it to work
-        pathAB = pathlib.Path(avalancheDir, 'Work', 'com3Hybrid', 'pathAB_aimec' + str(iteration))
+        pathAB = pathlib.Path(avalancheDir, 'Outputs', 'com3Hybrid', 'pathAB_aimec' + str(iteration))
         name = 'massAvaPath'
         shpConv.writeLine2SHPfile(avaProfileMassExtOri, name, pathAB)
 
@@ -95,31 +93,37 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
 
         # make custom com3 profile plot
         resAB = outAB.processABresults(resAB, name)
-        figDict = outCom3Plots.updateProfilePlot(resAB, name, figDict, iteration)
-        figDict = outCom3Plots.updatePathPlot(demOri, avaProfileMassExt, resAB, name, figDict, iteration)
+        alpha = resAB[name]['alpha']
+        ids_alpha = resAB[name]['ids_alpha']
+        ids10Point = resAB[name]['ids10Point']
+        sBetaPoint = resAB[name]['s'][ids10Point]
+        xAB = resAB[name]['x'][ids_alpha]
+        yAB = resAB[name]['y'][ids_alpha]
+        resultsHybrid['iterration' + str(iteration)] = {'path': avaProfileMassExt, 'alpha': alpha,
+                                                        'xAB': xAB, 'yAB': yAB, 'sBetaPoint': sBetaPoint}
 
         # update alpha (result from AB model on new profile)
         alpha = resAB[name]['alpha']
         log.info('Alpha is %.2f' % alpha)
         # append new alpha and corresponding mu value to the list
-        alphaArray = np.append(muArray, alpha)
+        alphaArray = np.append(alphaArray, alpha)
         muArray = np.append(muArray, np.tan(np.radians(alpha)))
         # keep iterating if the change in alpha is too big
         iterate = keepIterating(cfgHybrid, alphaArray)
         iteration = iteration + 1
 
-    pathDict, rasterTransfo, resAnalysisDF = runAna3AIMEC.runAna3AIMEC(avalancheDir=avalancheDir)
-    refSimulation = pathDict['refSimulation']
-
     # fetch fields for desired time step
-    fields, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pta'], simName='',
+    fields, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pta'], simName=simID,
         flagAvaDir=True, comModule='com1DFA', timeStep=timeStepInfo[-1])
-    outCom3Plots.finalizePathPlot(avalancheDir, figDict, resAnalysisDF, refSimulation, dem, demOri, particlesList[-1], fields[0])
-    outCom3Plots.finalizeProfilePlot(avalancheDir, figDict, resAnalysisDF, refSimulation)
-    hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
-    cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=hybridModelDFACfg)
-    outCom3Plots.plotEnergyProfile(avalancheDir, cfgDFA, resAB, name, simID, demOri, avaProfileMass)
+    outCom3Plots.hybridProfilePlot(avalancheDir, resultsHybrid)
+    outCom3Plots.hybridPathPlot(avalancheDir, dem, resultsHybrid, fields[0], particlesList[-1], muArray)
+    # Make energy line plot
+    # hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
+    # cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=hybridModelDFACfg)
+    # outCom3Plots.plotEnergyProfile(avalancheDir, cfgDFA, resAB, name, simID, demOri, avaProfileMass)
 
+    log.info('Alpha array is %s' % alphaArray)
+    log.info('mu array is %s' % muArray)
 
 def keepIterating(cfgHybrid, alphaArray):
     """Check the change in alpha between two iterations
