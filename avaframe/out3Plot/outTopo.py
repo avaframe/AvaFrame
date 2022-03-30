@@ -13,6 +13,7 @@ from matplotlib import cm
 from scipy.interpolate import griddata
 # local imports
 from avaframe.in1Data import getInput
+from avaframe.in3Utils import geoTrans
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -71,6 +72,8 @@ def plotDEM3D(cfg, showPlot = False):
     header = dem['header']
     xl = header['xllcenter']
     yl = header['yllcenter']
+    ncols = header['ncols']
+    nrows = header['nrows']
     dx = header['cellsize']
     z = dem['rasterData']
 
@@ -78,7 +81,7 @@ def plotDEM3D(cfg, showPlot = False):
     z[np.isnan(z)] = np.nanmin(z)
 
     # Set coordinate grid with given origin
-    X, Y = _setCoordinateGrid(xl, yl, dx, z)
+    X, Y = geoTrans.makeCoordinateGrid(xl, yl, dx, ncols, nrows)
 
     ax = _generateDEMPlot(X, Y, z, avaName)
 
@@ -107,7 +110,7 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
     demName = cfgDEM['demName']
 
     # Set coordinate grid with given origin
-    X, Y = _setCoordinateGrid(xl ,yl ,dx, z)
+    X, Y = geoTrans._setCoordinateGrid(xl ,yl ,dx, z)
 
     topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'PF': 'parabola flat',
                  'HS': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix', 'PY': 'Pyramid'}
@@ -141,16 +144,3 @@ def plotReleasePoints(xv, yv, xyPoints, demType):
     plt.ylabel('across valley [m]')
 
     plt.show()
-
-
-def _setCoordinateGrid(xl, yl, dx, z):
-    """get a Coordinate Grid for plotting"""
-
-    xEnd = z.shape[1] * dx
-    yEnd = z.shape[0] * dx
-
-    xp = np.linspace(xl, xl + xEnd, z.shape[1])
-    yp = np.linspace(yl, yl + yEnd, z.shape[0])
-
-    X, Y = np.meshgrid(xp, yp)
-    return(X, Y)

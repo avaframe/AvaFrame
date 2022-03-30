@@ -24,7 +24,7 @@ from avaframe.in3Utils import cfgUtils
 from avaframe.out3Plot import plotUtils
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in1Data.getInput as gI
-import avaframe.out3Plot.outTopo as oP
+import avaframe.in3Utils.geoTrans as gT
 
 
 # create local logger
@@ -701,7 +701,7 @@ def addHillShadeContours(ax, data, cellSize, extent):
         dy=data.shape[0]), cmap='gray', extent=extent, origin='lower', aspect='equal', zorder=1)
 
     # create x,y coors for data array
-    X, Y = oP._setCoordinateGrid(extent[0], extent[2], cellSize, data)
+    X, Y = gT._setCoordinateGrid(extent[0], extent[2], cellSize, data)
 
     # add contour lines
     CS =  ax.contour(X, Y, data, colors=['gray'], levels=hillshadeContLevs, alpha=1.,
