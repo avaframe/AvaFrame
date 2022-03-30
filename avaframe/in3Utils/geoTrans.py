@@ -944,11 +944,19 @@ def rotate(locationPoints, theta, deg=True):
 def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
     """get a Coordinate Grid for plotting"""
 
-    xEnd = ncols * csz
-    yEnd = nrows * csz
+    xEnd = (ncols-1) * csz
+    yEnd = (nrows-1) * csz
 
     xp = np.linspace(xllc, xllc + xEnd, ncols)
     yp = np.linspace(yllc, yllc + yEnd, nrows)
 
     X, Y = np.meshgrid(xp, yp)
+    return(X, Y)
+
+
+
+def _setCoordinateGrid(xllc, yllc, csz, z):
+    """get a Coordinate Grid for plotting"""
+    nrows, ncols = z.shape
+    X, Y = makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
     return(X, Y)

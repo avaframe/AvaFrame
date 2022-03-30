@@ -445,6 +445,45 @@ def test_checkOverlap(capfd):
     assert np.allclose(checkedRaster2, toCheckRaster, atol=atol)
 
 
+def test_computeS(capfd):
+    avaPath = {}
+    avaPath['x'] = np.array([1, 4, 0, 3])
+    avaPath['y'] = np.array([0, 4, 1, -3])
+    avaPath = geoTrans.computeS(avaPath)
+    print(avaPath)
+    atol = 1e-10
+    assert len(avaPath['s']) == 4
+    assert np.allclose(avaPath['s'], np.array([0, 5, 10, 15]), atol=atol)
+
+
+def test_makeCoordinateGrid(capfd):
+    xllc = 1
+    yllc = -1
+    csz = 2
+    ncols = 3
+    nrows = 4
+    x, y = geoTrans.makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
+    print(x)
+    print(y)
+
+    assert x[0, 0] == 1
+    assert x[0, 1] == 3
+    assert x[0, 2] == 5
+    assert y[0, 1] == -1
+    assert y[1, 1] == 1
+    assert y[3, 1] == 5
+
+    x, y = geoTrans._setCoordinateGrid(xllc, yllc, csz, x)
+    print(x)
+    print(y)
+
+    assert x[0, 0] == 1
+    assert x[0, 1] == 3
+    assert x[0, 2] == 5
+    assert y[0, 1] == -1
+    assert y[1, 1] == 1
+    assert y[3, 1] == 5
+
 def getIPZ(z0, xEnd, yEnd, dx):
 
     meanAlpha = 30.
