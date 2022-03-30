@@ -51,6 +51,7 @@ Computational modules
     * :doc:`moduleCom1DFA`
     * :doc:`moduleCom1DFAOrig`
     * :doc:`moduleCom2AB`
+    * :doc:`moduleCom3Hybrid`
 
 .. toctree::
    :maxdepth: 3
@@ -60,6 +61,7 @@ Computational modules
    moduleCom1DFA.rst
    moduleCom1DFAOrig.rst
    moduleCom2AB.rst
+   moduleCom3Hybrid.rst
 
 Input/transformation modules
 ============================
