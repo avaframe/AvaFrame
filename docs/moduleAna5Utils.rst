@@ -66,9 +66,11 @@ The resulting figures are saved to ``avalancheDirectory/Outputs/ana5Utils``.
 .. figure:: _static/thalwegTime_FD.png
     :width: 90%
 
-    Thalweg-time diagram example: : The y-axis contains the distance from the beta point along
-    the avalanche path, e.g. the thalweg. Dots represent the avalanche front with the slope being
-    the approach velocity. Red star marks the maximal approach velocity.
+    Thalweg-time diagram example: The y-axis contains the distance from the beta point along
+    the avalanche path (projected on the horizontal plane), e.g. the thalweg. Dots represent
+    the avalanche front with the slope being the approach velocity.
+    Red star marks the maximal approach velocity (this approach velocity is also projected on
+    the horizontal plane).
 
 
 .. Note::
@@ -76,9 +78,10 @@ The resulting figures are saved to ``avalancheDirectory/Outputs/ana5Utils``.
   The simulated **range-time diagram** requires info on the coordinates of the radar location
   (x0, y0), a point in the direction of the field of view (x1, y1), the aperture angle and the width of
   the range gates. The maximum approach velocity is indicated in the distance-time diagrams with a
-  red star and is computed as the ratio of the distance travelled by the front and the respective
+  red star and is computed as the ratio of the distance traveled by the front and the respective
   time needed for a time step difference of at least `minVelTimeStep` which is set to 2 seconds as
-  default.
+  default. The approach velocity is a projection on the horizontal plane since the distance traveled
+  by the front is also measured in this same plane.
 
 
 Theory
