@@ -10,7 +10,8 @@ avalanche profile and compute a runout angle).
 The idea here is to determine the avalanche path in an automated way by running a DFA simulation. The path is
 then used to compute the runout angle corresponding to this specific avalanche. The runout is then related to the
 friction parameter :math:`\mu` (using a coulomb friction method). This :math:`\mu` is finally used as input parameter to
-run a new DFA simulation.
+run a new DFA simulation. This iteration can be repeated multiple times until "convergence", this means until
+the :math:`\mu` or :math:`\alpha` value stops varying.
 
 
 Input
@@ -27,7 +28,6 @@ Outputs
 * the :math:`\mu` value (:math:`\alpha` travel angle) specific for the input topography
 * results from the DFA simulation for the input topography
 * a combined plot showing the results of the DFA simulation and Alpha-Beta model
-* the energy line plot
 
 To run
 -------
@@ -43,65 +43,38 @@ To run
       python3 runScripts/runCom3Hybrid.py
 
 
-Path finding
--------------
-The avalanche path is extracted from the DFA simulation.
-The first step consists in extracting a path by averaging the trajectory of all particles.
-The averaging is weighed by the mass of the particles, it is possible to talk of a mass averaged pass.
-The path is then resampled.
-The path is extended towards the top of the release. Indeed this input path for the Alpha-Beta model
-needs to be consistent with how it was calibrated.
-
-
-
 Procedure
 -----------
 
-Preprocessing :
+1. A first com1DFA simulation is run using the ``com3Hybrid/hybridModel_com1DFACfg.ini``
+   configuration and the :math:`\mu` provided in ``com3Hybrid/local_com3HybridCfg.ini``.
 
-* The avalanche path (x,y) is first resampled. Default value for resampling is distance=10m (maximal horizontal distance between two points).
-  Note that it does not make much sense to decrease this value to be smaller than the raster grid resolution.
-  We then introduce the curvilinear coordinate s which represents the projected horizontal distance along the path.
+2. The mass averaged path is computed from the DFA simulation using the :py:mod:`ana5Utils.DFAPathGeneration`.
+   From this we obtain the (x,y,z) and (s,z) coordinates of the avalanche profile (the path is extended towards
+   the relase and in the runout). This path is saved to ``avalancheDir/Inputs/LINES`` and
+   replaces the old path. A copy is also saved to ``avalancheDir/Outputs/com3Hybrid``.
 
-* The avalanche path is projected on the DEM to generate the profile using a bi-linear interpolation on the DEM to the point of interest.
-* The split point (which is not necessarily given on the avalanche path) is projected on the avalanche path.
+3. com2AB module is run using the ``com3Hybrid/hybridModel_com2ABCfg.ini`` to compute
+   the :math:`\mu = \tan{\alpha}` friction parameter corresponding to this specific avalanche and area.
 
-From this we obtain the (x,y,z) and (s,z) coordinates of the avalanche profile.
+4. The ``com3Hybrid/hybridModel_com1DFACfg.ini`` is updated with the new :math:`\mu = \tan{\alpha}`
+   value and com1DFA simulation is run again.
 
-AlphaBeta Model:
+5. Steps 2. and 3. are repeated to get the new avalanche path and :math:`\mu = \tan{\alpha}` value.
 
-* Find the :math:`10^\circ` point from (s,z).
-* Calculate :math:`\beta`.
-* Calculate the :math:`\alpha_j` angles using the adequate standard, small avalanche or custom parameter set.
+This process is repeated as long as the :math:`\alpha = \arctan{\mu}` value varies from more than
+``alphaThreshold`` which you can specify in ``com3Hybrid/local_com3HybridCfg.ini``
+(this is a value in degrees) and this for a maximum of ``nIterMax`` iterations.
 
-Postprocessing:
-
-* Plot and save results.
 
 Configuration parameters
 ---------------------------------
 
-:distance: resampling distance. The given avalanche path is resampled with a step <= 10m (default).
+The parameters for path generation (section ``PATH`` of ``com3Hybrid/local_com3HybridCfg.ini``)
+are described in :ref:`moduleAna5Utils:Automated path generation`.
 
-:dsMin: float. Threshold distance [m]. When looking for the beta point make sure at least dsMin meters after the beta point also have an angle bellow 10° (dsMin=30m as default).
+The parameters for the DFA simulation are to be specified in ``com3Hybrid/hybridModel_com1DFACfg.ini``.
+This file replaces the ``local_com1DFACfg.ini`` that is usually used to run a com1DFA simulation.
 
-:smallAva: boolean (False as default) if True apply :math:`(k_1, k_2, k_3, k_4, SD)` set of small avalanches or False, standard avalanches
-
-:customParam: boolean (False as default). Enables to choose custom :math:`(k_1, k_2, k_3, k_4, SD)``. If True,
-  the values from the configuration file are used
-
-:k1: float. Use this value if ``customParam=True``
-
-:k2: float. Use this value if ``customParam=True``
-
-:k3: float. Use this value if ``customParam=True``
-
-:k4: float. Use this value if ``customParam=True``
-
-:SD: float. Use this value if ``customParam=True``
-
-
-:PlotPath: Plot Avalanche path on raster; default False
-:PlotProfile: Plot profile; default False
-:SaveProfile: Save profile to file; default True
-:WriteRes: Write result to file: default True
+The parameters for the :math:`\alpha-\beta` model are to be specified in ``com3Hybrid/hybridModel_com2ABCfg.ini``.
+This file replaces the ``local_com2ABCfg.ini`` that is usually used to run a com2AB simulation.

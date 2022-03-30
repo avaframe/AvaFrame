@@ -47,7 +47,7 @@ def getGeneralConfig():
     return cfg
 
 
-def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True):
+def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True, onlyDefault=False):
     ''' Returns the configuration for a given module
     returns a configParser object
 
@@ -63,6 +63,8 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True):
 
     modInfo: bool
         true if dictionary with info on differences to standard config
+    onlyDefault: bool
+        if True, only use the default configuration
 
     Order is as follows:
     fileOverride -> local_MODULECfg.ini -> MODULECfg.ini
@@ -91,7 +93,7 @@ def getModuleConfig(module, fileOverride='', modInfo=False, toPrint=True):
             raise FileNotFoundError('Provided fileOverride does not exist: ' +
                                     str(fileOverride))
 
-    elif localFile.is_file():
+    elif localFile.is_file() and not onlyDefault:
         iniFile = localFile
         iniFile = [defaultFile, localFile]
         compare = True
