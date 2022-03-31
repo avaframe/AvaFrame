@@ -120,7 +120,7 @@ time step.
 
 
 Automated path generation
-==========================
+--------------------------
 
 Computational modules like :math:`\alpha\beta` (:ref:`moduleCom2AB`) or analysis modules like
 the Thalweg-time diagram (:ref:`moduleAna5Utils`) or Aimec (:ref:`moduleAna3AIMEC`) require
@@ -131,7 +131,7 @@ The path is generated from the center of mass position of the dense material (we
 averaged path). This path is then extended towards the top (of the release area) and bottom (runout).
 
 Input
------
+=====
 
 There are two options her. Either you already have DFA simulation results and in this case
 you want to provide these as inputs to the path generation function. Or you don't and in this
@@ -153,13 +153,13 @@ in :py:mod:`runComputeDFAPath` to True. The default configuration for com1DFA is
 the ``tSteps`` saved, the ``resType`` and ``simTypeList`` are modified before running com1DFA.
 
 Outputs
---------
+========
 
 A mass averaged path is produced for each com1DFA simulation. The path is/are saved in
 ``avalancheDir/Outputs/DFAPath``
 
 To run
--------
+=========
 
 * go to ``AvaFrame/avaframe``
 * copy ``ana5Utils/DFAPathGenerationCfg.ini`` to ``ana5Utils/local_DFAPathGenerationCfg.ini``
@@ -170,7 +170,7 @@ To run
 
 
 Theory
---------
+========
 
 Mass average path
 ~~~~~~~~~~~~~~~~~~

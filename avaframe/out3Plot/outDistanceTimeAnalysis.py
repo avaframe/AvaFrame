@@ -2,19 +2,16 @@
 
 import numpy as np
 from matplotlib import pyplot as plt
-import glob
 import logging
 import pathlib
 from cmcrameri import cm
 from matplotlib.colors import LightSource
 
 # Local imports
-from avaframe.in3Utils import cfgUtils
-from avaframe.in3Utils import logUtils
+
 import avaframe.out3Plot.plotUtils as pU
 import avaframe.ana5Utils.distanceTimeAnalysis as dtAna
 import avaframe.in3Utils.geoTrans as gT
-import avaframe.out3Plot.outTopo as oP
 
 log = logging.getLogger(__name__)
 
@@ -105,11 +102,12 @@ def radarFieldOfViewPlot(radarFov, radarRange, cfgRangeTime, rangeGates, dem):
     # fetch header info - required for creating coordinate grid
     xllc = dem['header']['xllcenter']
     yllc = dem['header']['yllcenter']
+    ncols = dem['header']['ncols']
+    nrows = dem['header']['nrows']
     cellSize = dem['header']['cellsize']
-    rasterdata = dem['rasterData']
 
     # Set coordinate grid with given origin
-    X, Y = oP._setCoordinateGrid(xllc, yllc, cellSize, rasterdata)
+    X, Y = gT.makeCoordinateGrid(xllc, yllc, cellSize, ncols, nrows)
 
     # load required input parameters for contour plot
     gateContours = cfgRangeTime['PLOTS'].getint('gateContours')

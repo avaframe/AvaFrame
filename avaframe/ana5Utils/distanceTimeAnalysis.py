@@ -17,7 +17,6 @@ import configparser
 from avaframe.in3Utils import cfgUtils
 from avaframe.in3Utils import logUtils
 import avaframe.in2Trans.ascUtils as IOf
-import avaframe.out3Plot.outTopo as oP
 import avaframe.in3Utils.geoTrans as gT
 import avaframe.out3Plot.outDistanceTimeAnalysis as dtAnaPlots
 import avaframe.ana3AIMEC.aimecTools as aT
@@ -155,11 +154,13 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
     # fetch header info - required for creating coordinate grid
     xllc = demOriginal['header']['xllcenter']
     yllc = demOriginal['header']['yllcenter']
+    ncols = demOriginal['header']['ncols']
+    nrows = demOriginal['header']['nrows']
     cellSize = demOriginal['header']['cellsize']
     rasterdata = demOriginal['rasterData']
 
     # Set coordinate grid with given origin
-    X, Y = oP._setCoordinateGrid(xllc, yllc, cellSize, rasterdata)
+    X, Y = gT.makeCoordinateGrid(xllc, yllc, cellSize, ncols, nrows)
 
     if (np.any(radarFov[0] < np.amin(X)) or np.any(radarFov[0] > np.amax(X))  or
         np.any(radarFov[1] < np.amin(Y))  or np.any(radarFov[1] > np.amax(Y))):
