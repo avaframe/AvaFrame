@@ -124,33 +124,28 @@ Automated path generation
 
 Computational modules like :math:`\alpha\beta` (:ref:`moduleCom2AB`) or analysis modules like
 the Thalweg-time diagram (:ref:`moduleAna5Utils`) or Aimec (:ref:`moduleAna3AIMEC`) require
-an avalanche path as input. This avalanche path is usually based on an experts opinion.
-This makes it constraining and difficult to reproduce or automate. The objective of this
-module is to automatically generate an avalanche path from a dense flow avalanche (DFA) simulation.
-The path is generated from the center of mass position of the dense material (we talk of mass
-averaged path). This path is then extended towards the top (of the release area) and bottom (runout).
+an avalanche path as input. This avalanche path is usually created manually based on an expert opinion.
+The objective of this module is to automatically generate an avalanche path from a dense flow avalanche (DFA) simulation.
+The path is generated from the center of mass position of the dense material, so it is called the mass
+averaged path. It is extended towards the top of the release area and at the bottom. Therefore it covers
+the entire length of the avalanche with some buffer in the runout area.
 
 Input
 =====
+The automatic path generation needs dense flow simulation results as input.
+These can be flow mass and flow thickness or particles for multiple time steps. com1DFA provides these already
+in the correct way.
 
-There are two options her. Either you already have DFA simulation results and in this case
-you want to provide these as inputs to the path generation function. Or you don't and in this
-case you can use com1DFA to generate some DFA simulation results before generating a path.
+We provide :py:mod:`runComputeDFAPath`, in which two options exist:
 
-In the first case (default case), the flag ``runDFAModule`` in :py:mod:`runComputeDFAPath` is
-set to ``False``. You only need to provide the avalanche directory in your ``local_avaframeCfg.ini``
-file. This avalanche directory should already have in ``Outputs/com1DFA`` one or multiple simulation results
-The simulation DEM is also required.
-
-.. Note::
-
-  The run script will work if the results were produces by com1DFA module. If the DFA
-  results come frome another source, you will need to adapt the run script and provide
-  flow mass and flow thickness or particles for multiple times steps.
-
-In the second case, if you do not have DFA results, you need to change the ``runDFAModule`` flag
-in :py:mod:`runComputeDFAPath` to True. The default configuration for com1DFA is read and
-the ``tSteps`` saved, the ``resType`` and ``simTypeList`` are modified before running com1DFA.
+1. DFA simulation results already exist: in this case, you want to provide these as inputs to the
+   path generation function. The flag ``runDFAModule`` in :py:mod:`runComputeDFAPath` is set to ``False``.
+   You need to provide the avalanche directory in your ``local_avaframeCfg.ini`` file.
+   This avalanche directory should already have ``Outputs/com1DFA``  with one or multiple simulation results.
+   The simulation DEM is also required.
+2. No DFA simulation results exist: use com1DFA to generate the simulation results before generating a path.
+   Change the ``runDFAModule`` flag in :py:mod:`runComputeDFAPath` to True. The default configuration for
+   com1DFA is read. ``tSteps`` are adjusted, ``resType`` and ``simTypeList`` are modified before running com1DFA.
 
 Outputs
 ========
@@ -195,24 +190,24 @@ It is also possible to compute the mass averaged velocity squared :math:`\overli
 kinetic energy :math:`\overline{\frac{1}{2}m\mathbf{u^2}}(t)` or travel distance :math:`s`
 (which are used in the :ref:`ana1Tests:Energy line test`).
 
-The path is resampled at ``nCellsResample`` x cellsize and needs to be extended towards the top
-(in the release area), in order to produce meaningful results when used in the com2AB module.
-Indeed, the result from the :math:`\alpha\beta` analysis depends on where the path profile starts.
-Moving the starting point of the profile will shift the :math:`\alpha` upwards or downwards and
+The path is resampled at ``nCellsResample`` x cellsize and is extended towards the release area top
+to produce meaningful results when used in the com2AB module.
+Since results from the :math:`\alpha\beta` analysis depend on the path profile start,
+moving the starting point of the profile will shift the :math:`\alpha` upwards or downwards and
 affect the runout value.
 
 Extending path towards the top (release)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are two options available to extend the mass averaged path profile in the release
+There are two options available to extend the mass averaged path profile in the release area
 (``extTopOption`` in the configuration file):
 
 0. Extend the path up to the highest point in the release
-   (highest particle or highest cell depending on if particles or rasters are available).
+   (highest particle or highest cell depending on which particles or rasters are available).
 
 1. Extend the path towards the point that will lead to the longest runout.
    This point does not necessarily coincide with the highest point in the
-   release and and corresponds to the point for which
+   release area and corresponds to the point for which
    :math:`(\Delta z - \Delta s \tan{\alpha})` is maximum. :math:`\alpha` corresponds
    to the angle of the runout line going from first to last point of the mass averaged
    line. :math:`\Delta z` and :math:`\Delta s` represent the vertical and horizontal

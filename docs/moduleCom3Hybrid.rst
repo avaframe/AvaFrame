@@ -1,25 +1,29 @@
 com3Hybrid: Hybrid modeling
 ============================
 
-:py:mod:`com3Hybrid` is a computational module that combines the Dense Flow Avalanche (DFA) simulation
-model and the Alpha-Beta statistical one and takes advantage
-of their strength and try to reduce their weaknesses.
-The weakness of the DFA simulation lies in its inputs. It requires, among other a friction parameter :math:`\mu`.
-The weakness of the statistical model lies in the path finding (path which will be then used to extract an
-avalanche profile and compute a runout angle).
-The idea here is to determine the avalanche path in an automated way by running a DFA simulation. The path is
-then used to compute the runout angle corresponding to this specific avalanche. The runout is then related to the
-friction parameter :math:`\mu` (using a coulomb friction method). This :math:`\mu` is finally used as input parameter to
-run a new DFA simulation. This iteration can be repeated multiple times until "convergence", this means until
-the :math:`\mu` or :math:`\alpha` value stops varying.
+:py:mod:`com3Hybrid` is a computational module that combines the dense flow avalanche (DFA) simulation
+model (com1DFA) and the Alpha-Beta statistical one (com2AB),  taking advantage
+of their strength and trying to reduce their weaknesses.
+The weakness of the DFA simulation lies in its required inputs, among which is the friction parameter :math:`\mu`.
+The disadvantage of the statistical model lies in the necessary path, which is used to extract an
+avalanche profile and compute a runout angle.
+The idea here is to determine the avalanche path in an automated way by:
 
+- first, running a DFA simulation
+- computing a mass averaged path from the results
+- use the path to compute the runout angle corresponding to this specific avalanche
+- using a coulomb friction method, the friction parameter :math:`\mu` is extracted from the runout
+- the resulting :math:`\mu` is used in the input for a new DFA simulation.
+
+This iteration process can be repeated multiple times until "convergence", which means until
+the :math:`\mu` or :math:`\alpha` value stops varying.
 
 Input
 -----
 
 * raster of the DEM (.asc file)
 * a release feature (shapefile) in ``Inputs/REL``
-* Split point (shapefile). The ultimate goal will be to find the beta point without the need of a split point
+* Split point (shapefile). This requirement is planned to be automated as well.
 
 Outputs
 --------

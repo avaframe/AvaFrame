@@ -110,7 +110,7 @@ def plotGeneratedDEM(z, nameExt, cfg, outDir, cfgMain):
     demName = cfgDEM['demName']
 
     # Set coordinate grid with given origin
-    X, Y = geoTrans._setCoordinateGrid(xl ,yl ,dx, z)
+    X, Y = geoTrans.setCoordinateGrid(xl ,yl ,dx, z)
 
     topoNames = {'IP': 'inclined Plane', 'FP': 'flat plane', 'PF': 'parabola flat',
                  'HS': 'Hockeystick smoothed', 'BL': 'bowl', 'HX': 'Helix', 'PY': 'Pyramid'}

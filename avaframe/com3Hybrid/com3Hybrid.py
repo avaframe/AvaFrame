@@ -117,13 +117,9 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         flagAvaDir=True, comModule='com1DFA', timeStep=timeStepInfo[-1])
     outCom3Plots.hybridProfilePlot(avalancheDir, resultsHybrid)
     outCom3Plots.hybridPathPlot(avalancheDir, dem, resultsHybrid, fields[0], particlesList[-1], muArray)
-    # Make energy line plot
-    # hybridModelDFACfg = pathlib.Path('com3Hybrid', 'hybridModel_com1DFACfg.ini')
-    # cfgDFA = cfgUtils.getModuleConfig(com1DFA, fileOverride=hybridModelDFACfg)
-    # outCom3Plots.plotEnergyProfile(avalancheDir, cfgDFA, resAB, name, simID, demOri, avaProfileMass)
 
-    log.info('Alpha array is %s' % alphaArray)
-    log.info('mu array is %s' % muArray)
+    log.debug('Alpha array is %s' % alphaArray)
+    log.debug('mu array is %s' % muArray)
 
 def keepIterating(cfgHybrid, alphaArray):
     """Check the change in alpha between two iterations
