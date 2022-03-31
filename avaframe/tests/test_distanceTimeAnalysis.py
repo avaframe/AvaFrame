@@ -51,8 +51,8 @@ def test_radarMask(tmp_path):
 
     # setup required input
     testAvaDir = pathlib.Path(tmp_path, 'testAva')
-    headerDEM = {'xllcenter': 0.0, 'yllcenter': 0.0, 'cellsize': 1., 'ncols': 11, 'nrows': 11}
-    demOriginal = {'header': headerDEM, 'rasterData': np.zeros((11, 11))}
+    headerDEM = {'xllcenter': 0.0, 'yllcenter': 0.0, 'cellsize': 1., 'ncols': 11, 'nrows': 12}
+    demOriginal = {'header': headerDEM, 'rasterData': np.zeros((12, 11))}
     radarFov = [[1., 10.0], [5., 5.]]
     aperture = 40.5
     cfgRangeTime = configparser.ConfigParser()
@@ -66,7 +66,7 @@ def test_radarMask(tmp_path):
     print('rangeGates', rangeGates)
 
 
-    assert np.array_equal(rangeGates, np.asarray([2., 4., 6., 8., 10., 12.]))
+    assert np.array_equal(rangeGates, np.asarray([2., 4., 6., 8., 10.]))
 
 
 def setupRangeTimeDiagram():
