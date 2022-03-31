@@ -473,7 +473,7 @@ def test_makeCoordinateGrid(capfd):
     assert y[1, 1] == 1
     assert y[3, 1] == 5
 
-    x, y = geoTrans._setCoordinateGrid(xllc, yllc, csz, x)
+    x, y = geoTrans.setCoordinateGrid(xllc, yllc, csz, x)
     print(x)
     print(y)
 

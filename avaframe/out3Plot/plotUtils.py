@@ -701,7 +701,7 @@ def addHillShadeContours(ax, data, cellSize, extent):
         dy=data.shape[0]), cmap='gray', extent=extent, origin='lower', aspect='equal', zorder=1)
 
     # create x,y coors for data array
-    X, Y = gT._setCoordinateGrid(extent[0], extent[2], cellSize, data)
+    X, Y = gT.setCoordinateGrid(extent[0], extent[2], cellSize, data)
 
     # add contour lines
     CS =  ax.contour(X, Y, data, colors=['gray'], levels=hillshadeContLevs, alpha=1.,

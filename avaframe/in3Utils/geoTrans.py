@@ -940,7 +940,7 @@ def rotate(locationPoints, theta, deg=True):
 
     return rotatedLine
 
-    
+
 def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
     """get a Coordinate Grid for plotting"""
 
@@ -955,7 +955,7 @@ def makeCoordinateGrid(xllc, yllc, csz, ncols, nrows):
 
 
 
-def _setCoordinateGrid(xllc, yllc, csz, z):
+def setCoordinateGrid(xllc, yllc, csz, z):
     """get a Coordinate Grid for plotting"""
     nrows, ncols = z.shape
     X, Y = makeCoordinateGrid(xllc, yllc, csz, ncols, nrows)
