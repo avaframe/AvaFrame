@@ -1,5 +1,5 @@
 Logging
-========
+-------
 
 In order to generate simulation logs and to control what is prompted to the
 terminal, we use the python module `logging

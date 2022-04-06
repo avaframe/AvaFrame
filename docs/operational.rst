@@ -1,5 +1,5 @@
-Standard setup and run
-----------------------
+Standard / Operational Installation 
+===================================
 
 This is the quick start for the operational AvaFrame setup with QGis as
 frontend. Currently described for **Windows** only (Linux user can use any terminal to go through the same steps below)

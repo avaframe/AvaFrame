@@ -1,5 +1,5 @@
 Configuration
-=============
+-------------
 
 In order to set the configurations required by all the modules within Avaframe, the python module
 `configparser <https://docs.python.org/3/library/configparser.html>`_ is used.

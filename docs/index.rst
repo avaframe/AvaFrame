@@ -15,14 +15,15 @@ General
 
     * :doc:`introduction`
     * :doc:`installation`
-    * :doc:`configuration`
-    * :doc:`logging`
-    * :doc:`develop`
+    * :doc:`operational`
+    * :doc:`developinstall`
+    * :doc:`gettingstarted`
     * :doc:`testing`
-    * :doc:`visualisation`
+    * :doc:`Visualisation`
     * :doc:`FAQ`
     * :doc:`releaseNotes`
     * :doc:`api`
+    * :doc:`develop`
 
 .. toctree::
    :maxdepth: 3
@@ -31,14 +32,15 @@ General
 
    introduction.rst
    installation.rst
-   configuration.rst
-   logging.rst
-   develop.rst
+   operational.rst
+   developinstall.rst
+   gettingstarted.rst
    testing.rst
    Visualisation.rst
    FAQ.rst
    releaseNotes.rst
    api.rst
+   develop.rst
 
 
 Computational modules
