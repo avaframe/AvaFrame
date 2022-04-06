@@ -1,5 +1,5 @@
-Develop AvaFrame
-================
+Notes to Developers 
+===================
 
 Here you can find notes on design principles and how to contribute to AvaFrame.
 
