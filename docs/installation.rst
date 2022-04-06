@@ -110,6 +110,8 @@ Install `git <https://github.com/git-guides/install-git>`_ and python, we
 suggest to work with miniconda/anaconda. For installation see `miniconda
 <https://docs.conda.io/en/latest/miniconda.html>`_ or
 `anaconda <https://docs.anaconda.com/anaconda/install/linux/>`_.
+Some operating systems might require the python headers (e.g python-dev on ubuntu) or other supporting
+libraries/packages (e.g. Visual Studio on Windows). 
 
 
 Setup AvaFrame
