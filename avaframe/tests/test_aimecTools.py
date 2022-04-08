@@ -47,22 +47,22 @@ def test_computeCellSizeSL(tmp_path):
     demHeader = {'cellsize': 1}
 
     # read the cell size from the header
-    cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader)
+    cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader['cellsize'])
     assert cellSizeSL == 1
 
     # read the cell size from the cfg
     cfgSetup['cellSizeSL'] = '3'
-    cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader)
+    cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader['cellsize'])
     assert cellSizeSL == 3
 
     # read the cell size from the cfg
     cfgSetup['cellSizeSL'] = '3.1'
-    cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader)
+    cellSizeSL = aT.computeCellSizeSL(cfgSetup, demHeader['cellsize'])
     assert cellSizeSL == 3.1
 
     # check error if no number provided but a character
     cfgSetup['cellSizeSL'] = 'c'
     message = ('cellSizeSL is read from the configuration file but should be a number, you provided: c')
     with pytest.raises(ValueError) as e:
-        assert aT.computeCellSizeSL(cfgSetup, demHeader)
+        assert aT.computeCellSizeSL(cfgSetup, demHeader['cellsize'])
     assert str(e.value) == message

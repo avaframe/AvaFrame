@@ -49,13 +49,13 @@ def getRadarLocation(cfg):
 
     if len(locationInfo) != 4:
         message = ('Radar location is invalid, required format x0|x1|y0|y1 not: %s' %
-            cfg['GENERAL']['radarLocation'])
+                   cfg['GENERAL']['radarLocation'])
         log.error(message)
         raise AssertionError(message)
 
     # set radar location and point in direction of field of view as list
     radarFov = np.asarray([[float(locationInfo[0]), float(locationInfo[1])], [float(locationInfo[2]),
-        float(locationInfo[3])]])
+                                                                              float(locationInfo[3])]])
 
     return radarFov
 
@@ -111,7 +111,7 @@ def setupRangeTimeDiagram(dem, cfgRangeTime):
 
     # create masked array of radar range with DEM extent using radar field of view and range gates
     rangeMasked, rangeGates = radarMask(dem, radarFov, cfgRangeTime['GENERAL'].getfloat('aperture'),
-        cfgRangeTime)
+                                        cfgRangeTime)
 
     # create range gates and initialise mti array
     rArray = np.ma.getdata(rangeMasked)
@@ -123,8 +123,8 @@ def setupRangeTimeDiagram(dem, cfgRangeTime):
 
     # add all info to mti dict
     mtiInfo = {'mti': mti, 'rangeGates': rangeGates, 'rArray': rArray, 'bmaskRadar': bmaskRadar,
-        'rangeList': [], 'timeList': [], 'rangeMasked': rangeMasked, 'radarFov': radarFov,
-        'demOriginal': dem, 'type': 'rangeTime', 'referencePointName': 'radar', 'DEM': dem}
+               'rangeList': [], 'timeList': [], 'rangeMasked': rangeMasked, 'radarFov': radarFov,
+               'demOriginal': dem, 'type': 'rangeTime', 'referencePointName': 'radar', 'DEM': dem}
 
     return mtiInfo
 
@@ -162,10 +162,10 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
     # Set coordinate grid with given origin
     X, Y = gT.makeCoordinateGrid(xllc, yllc, cellSize, ncols, nrows)
 
-    if (np.any(radarFov[0] < np.amin(X)) or np.any(radarFov[0] > np.amax(X))  or
-        np.any(radarFov[1] < np.amin(Y))  or np.any(radarFov[1] > np.amax(Y))):
+    if (np.any(radarFov[0] < np.amin(X)) or np.any(radarFov[0] > np.amax(X))
+            or np.any(radarFov[1] < np.amin(Y)) or np.any(radarFov[1] > np.amax(Y))):
         message = 'Radar location outside of DEM, x= %.2f, %.2f, y= %.2f, %.2f' % (radarFov[0][0],
-            radarFov[0][1], radarFov[1][0], radarFov[1][1])
+                                                                                   radarFov[0][1], radarFov[1][0], radarFov[1][1])
         log.error(message)
         raise AssertionError(message)
 
@@ -202,7 +202,7 @@ def radarMask(demOriginal, radarFov, aperture, cfgRangeTime):
     minR = int(np.floor(np.nanmin(radarRange)))
     maxR = int(np.ceil(np.nanmax(radarRange)))
     rgWidth = cfgRangeTime['GENERAL'].getfloat('rgWidth')
-    rangeGates= np.arange(minR+rgWidth/2, maxR+rgWidth/2, rgWidth)
+    rangeGates = np.arange(minR+rgWidth/2, maxR+rgWidth/2, rgWidth)
 
     return radarRange, rangeGates
 
@@ -262,7 +262,7 @@ def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
         for indexRI in smallRangeGatesIndex:
             # create mask for range slice within range gate
             bmaskRange = ~np.logical_and(rArray > rangeGates[indexRI]-rgWidth/2,
-                rArray < rangeGates[indexRI]+rgWidth/2)
+                                         rArray < rangeGates[indexRI]+rgWidth/2)
             bmaskAvaRadarRangeslice = ~np.logical_and(~bmaskRange, ~bmaskAvaRadar)
             if np.any(~bmaskAvaRadarRangeslice):
                 # only update if range_slice mask is not empty
@@ -270,7 +270,7 @@ def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
                 mtiNew[indexRI] = mtiValue
                 if cfgRangeTime['PLOTS'].getboolean('debugPlot'):
                     dtAnaPlots.plotMaskForMTI(cfgRangeTime['GENERAL'], bmaskRange, bmaskAvaRadar,
-                    bmaskAvaRadarRangeslice, mtiInfo)
+                                              bmaskAvaRadarRangeslice, mtiInfo)
     else:
         log.debug('No avalanche data bigger threshold in masked radar range array')
 
@@ -284,6 +284,7 @@ def extractFrontAndMeanValuesRadar(cfgRangeTime, flowF, mtiInfo):
     mtiInfo['mti'] = mti
 
     return mtiInfo
+
 
 def maskRangeFull(flowF, threshold, rangeMasked):
     """ mask range (already masked with radar field of view) also with avalanche result field
@@ -319,7 +320,7 @@ def maskRangeFull(flowF, threshold, rangeMasked):
     # ava result above threshold
     bmaskAvaRadar = ~np.logical_and(~maskRadarFOV, ~bmaskAva)
     # mask range with this mask to obtain 'visible part of avalanche' ranges
-    rMaskedAvaRadar= np.ma.array(np.ma.getdata(rangeMasked), mask=bmaskAvaRadar) # masked ranges
+    rMaskedAvaRadar = np.ma.array(np.ma.getdata(rangeMasked), mask=bmaskAvaRadar)  # masked ranges
 
     return maskAva, bmaskAvaRadar, rMaskedAvaRadar
 
@@ -358,11 +359,11 @@ def setupThalwegTimeDiagram(dem, cfgRangeTime):
     pathDict = aT.readAIMECinputs(avaDir, pathDict, dirName='com1DFA')
 
     # generate data required to perform domain tranformation
-    rasterTransfo = aT.makeDomainTransfoOnTheGo(avaDir, dem, cfgSetup, pathDict)
+    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, dem['header']['cellsize'], cfgSetup)
 
     # tranform DEM data
     log.debug("Assigning dem data to deskewed raster")
-    newRasterDEM = aT.transform(dem, rasterTransfo, cfgSetup['interpMethod'])
+    newRasterDEM = aT.transform(dem, 'dem', rasterTransfo, cfgSetup['interpMethod'])
 
     # create raster with info on distance from beta point
     # fetch info on distance of runout area start point index in s array
@@ -423,19 +424,19 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     fieldFull = {'header': demHeader, 'rasterData': flowF}
 
     # transorm result field into avalanche path following coordinate system
-    slRaster = aT.transform(fieldFull, rasterTransfo, cfgRangeTime['GENERAL']['interpMethod'])
+    slRaster = aT.transform(fieldFull, 'field', rasterTransfo, cfgRangeTime['GENERAL']['interpMethod'])
 
     # fetch raster area and compute mean, max values for each cross-profile
-    # TODO: average over cells – weighted will cell area but only projected area (aimec function)
+    # TODO: average over cells – weighted with cell area (aimec function)
     rasterArea = rasterTransfo['rasterArea']
     maxaCrossMax, aCrossMax, aCrossMean = aT.getMaxMeanValues(slRaster, rasterArea)
 
     # add mean values for each cross-section for actual time step to mean values array
     # reshape is required as rows- mean values for each crossprofile and cols: time steps
     if mtiInfo['timeList'] == []:
-        mtiInfo['mti'] = aCrossMean.reshape(-1,1)
+        mtiInfo['mti'] = aCrossMean.reshape(-1, 1)
     else:
-        mtiInfo['mti'] = np.hstack((mtiInfo['mti'], aCrossMean.reshape(-1,1)))
+        mtiInfo['mti'] = np.hstack((mtiInfo['mti'], aCrossMean.reshape(-1, 1)))
 
     # extract avalanche front distance to reference point in path following coordinate system
     indStartOfRunout = rasterTransfo['indStartOfRunout']
@@ -451,7 +452,7 @@ def extractFrontAndMeanValuesTT(cfgRangeTime, flowF, demHeader, mtiInfo):
     # plot avalanche front and transformed raster field
     if cfgRangeTime['PLOTS'].getboolean('debugPlot'):
         dtAnaPlots.plotRangeRaster(slRaster, rasterTransfo, cfgRangeTime['GENERAL'],
-            mtiInfo['rangeRaster'], cLower)
+                                   mtiInfo['rangeRaster'], cLower)
 
     return mtiInfo
 
@@ -486,13 +487,13 @@ def initializeRangeTime(modName, cfg, dem, simHash):
     cfgRangeTime['GENERAL']['simHash'] = simHash
     # fetch time steps for creating range time diagram
     dtRangeTime = fU.splitTimeValueToArrayInterval(cfgRangeTime['GENERAL']['distanceTimeSteps'],
-        cfg['GENERAL'].getfloat('tEnd'))
+                                                   cfg['GENERAL'].getfloat('tEnd'))
 
     if cfg['VISUALISATION'].getboolean('TTdiagram'):
         mtiInfo = setupThalwegTimeDiagram(dem, cfgRangeTime)
         mtiInfo['plotTitle'] = 'thalweg-time diagram %s' % simHash
         mtiInfo['textbox'] = 'beta point: %.2f, %.2f' % (mtiInfo['betaPoint'][0],
-            mtiInfo['betaPoint'][1])
+                                                         mtiInfo['betaPoint'][1])
     else:
         mtiInfo = setupRangeTimeDiagram(dem, cfgRangeTime)
         mtiInfo['plotTitle'] = 'range-time diagram %s' % simHash
@@ -575,7 +576,7 @@ def exportData(mtiInfo, cfgRangeTime, modName):
 
     # create path for saving
     dictPath = pathlib.Path(cfgRangeTime['GENERAL']['avalancheDir'], 'Outputs', modName,
-        'distanceTimeAnalysis')
+                            'distanceTimeAnalysis')
     fU.makeADir(dictPath)
     outDict = dictPath / ('mtiInfo_%s.p' % cfgRangeTime['GENERAL']['simHash'])
 
@@ -623,7 +624,7 @@ def importMTIData(avaDir, modName, inputDir='', simHash=''):
 
     if len(mtiInfoPickles) == 0:
         fU.fileNotFoundMessage(('No mtiInfo dictionary found in %s - consider first running avalanche simulations' %
-            inputDir))
+                                inputDir))
 
     # create list of all mtiInfo dicts found
     mtiInfoDicts = []
@@ -699,7 +700,7 @@ def approachVelocity(mtiInfo, minVelTimeStep):
     for i in range(len(timeListSorted)):
         for k in range(i+1, len(timeListSorted+1)):
             if abs(timeListSorted[i] - timeListSorted[k]) >= minVelTimeStep:
-                appVel = ((rangeListSorted[i] -rangeListSorted[k]) / (timeListSorted[i] - timeListSorted[k]))
+                appVel = ((rangeListSorted[i] - rangeListSorted[k]) / (timeListSorted[i] - timeListSorted[k]))
                 if abs(appVel) > maxVel:
                     maxVel = abs(appVel)
                     locationIndex = int(i + 0.5*(k-i))

@@ -15,6 +15,7 @@ import avaframe.in2Trans.ascUtils as IOf
 from avaframe.in3Utils import cfgUtils
 import avaframe.in3Utils.fileHandlerUtils as fU
 import avaframe.in3Utils.geoTrans as geoTrans
+import avaframe.com1DFA.DFAtools as DFAtools
 import avaframe.out3Plot.outAIMEC as outAimec
 import avaframe.out3Plot.plotUtils as pU
 
@@ -181,15 +182,15 @@ def fetchReferenceSimNo(avaDir, inputsDF, comModule, cfgSetup):
     return refSimulation, inputsDF, colorVariation
 
 
-def computeCellSizeSL(cfgSetup, refResultHeader):
+def computeCellSizeSL(cfgSetup, refCellSize):
     """ Get the new (s, l) coordinate cell size
         read by default the reference result file cell size.
         If a 'cellSizeSL' is specified in cfgSetup then use this one
 
         Parameters
         -----------
-        refResultHeader: dict
-            dictionary wiht the raster header
+        refCellSize: float
+            cell size of reference simulation
         cfgSetup: configParser object
             configuration for aimec - with field cellSizeSL
 
@@ -199,7 +200,7 @@ def computeCellSizeSL(cfgSetup, refResultHeader):
             cell size to be used for the (s, l) coordinates
     """
     if cfgSetup['cellSizeSL'] == '':
-        cellSizeSL = refResultHeader['cellsize']
+        cellSizeSL = float(refCellSize)
         log.info('cellSizeSL is read from the reference header and is : %.2f m' % cellSizeSL)
     else:
         try:
@@ -214,7 +215,7 @@ def computeCellSizeSL(cfgSetup, refResultHeader):
     return cellSizeSL
 
 
-def makeDomainTransfo(pathDict, inputsDF, cfgSetup):
+def makeDomainTransfo(pathDict, dem, refCellSize, cfgSetup):
     """ Make domain transformation
 
     This function returns the information about the domain transformation
@@ -225,8 +226,10 @@ def makeDomainTransfo(pathDict, inputsDF, cfgSetup):
     ----------
     pathDict : dict
         dictionary with paths to dem and lines for Aimec analysis
-    inputsDF : dataFrame
-        dataframe with simulations to analyze and associated path to raster data
+    dem: dict
+        dem dictionary with header and raster data
+    refCellSize: float
+        cell-size corresponding to reference
     cfgSetup : configparser
         configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
         regarding domain transformation (domain width w, and new cellsize,
@@ -254,39 +257,15 @@ def makeDomainTransfo(pathDict, inputsDF, cfgSetup):
             indStartOfRunout: int
                 index for start of the runout area (in s)
     """
-    # Read input parameters
-    demSource = pathDict['demSource']
-    refSimulation = pathDict['refSimulation']
-    refResultSource = inputsDF[inputsDF['simName']==refSimulation][cfgSetup['resType']].to_list()[0]
-    ProfileLayer = pathDict['profileLayer']
-    splitPointSource = pathDict['splitPointSource']
-    DefaultName = pathDict['projectName']
-
     w = cfgSetup.getfloat('domainWidth')
-    startOfRunoutAreaAngle = cfgSetup.getfloat('startOfRunoutAreaAngle')
-
-    log.debug('Data-file %s analysed and domain transformation done' % demSource)
-
-    # read dem and reference result file
-    dem = IOf.readRaster(demSource)
-    refResult = IOf.readRaster(refResultSource)
     # get the cell size for the (s, l) raster
-    cellSizeSL = computeCellSizeSL(cfgSetup, refResult['header'])
+    cellSizeSL = computeCellSizeSL(cfgSetup, refCellSize)
     # Initialize transformation dictionary
     rasterTransfo = {}
     rasterTransfo['domainWidth'] = w
     rasterTransfo['cellSizeSL'] = cellSizeSL
-
     # read avaPath
-    avaPath = shpConv.readLine(ProfileLayer, DefaultName, dem)
-    # read split point
-    splitPoint = shpConv.readPoints(splitPointSource, dem)
-    # add 'z' coordinate to the avaPath
-    avaPath, _ = geoTrans.projectOnRaster(dem, avaPath)
-    # reverse avaPath if necessary
-    _, avaPath = geoTrans.checkProfile(avaPath, projSplitPoint=None)
-
-    log.debug('Creating new raster along polyline: %s' % ProfileLayer)
+    avaPath, splitPoint = setAvaPath(pathDict, dem)
 
     # Get new Domain Boundaries DB
     # input: ava path
@@ -297,37 +276,15 @@ def makeDomainTransfo(pathDict, inputsDF, cfgSetup):
     rasterTransfo = makeTransfoMat(rasterTransfo)
 
     # calculate the real area of the new cells as well as the scoord
-    rasterTransfo = getSArea(rasterTransfo)
+    dem = DFAtools.getNormalMesh(dem, 1)
+    dem = DFAtools.getAreaMesh(dem, 1)
+    rasterTransfo = getSArea(rasterTransfo, dem)
 
-    ##########################################################################
-    # put back the scale due to the desired cellsize
-    rasterTransfo['s'] = rasterTransfo['s']*cellSizeSL
-    rasterTransfo['l'] = rasterTransfo['l']*cellSizeSL
-    rasterTransfo['gridx'] = rasterTransfo['gridx']*cellSizeSL
-    rasterTransfo['gridy'] = rasterTransfo['gridy']*cellSizeSL
-    rasterTransfo['rasterArea'] = rasterTransfo['rasterArea']*cellSizeSL*cellSizeSL
-    # (x,y) coordinates of the resampled avapth (centerline where l = 0)
-    n = np.shape(rasterTransfo['l'])[0]
-    indCenter = int(np.floor(n/2))
-    rasterTransfo['x'] = rasterTransfo['gridx'][:, indCenter]
-    rasterTransfo['y'] = rasterTransfo['gridy'][:, indCenter]
+    # put back the scale due to the desired cellsize and get x,y of resample avapath
+    rasterTransfo = scalePathWithCellSize(rasterTransfo, cellSizeSL)
 
-    #################################################################
-    # add 'z' coordinate to the centerline
-    rasterTransfo, _ = geoTrans.projectOnRaster(dem, rasterTransfo)
-    # find projection of split point on the centerline centerline
-    projPoint = geoTrans.findSplitPoint(rasterTransfo, splitPoint)
-    rasterTransfo['indSplit'] = projPoint['indSplit']
-    # prepare find start of runout area points
-    angle, tmp, ds = geoTrans.prepareAngleProfile(startOfRunoutAreaAngle, rasterTransfo)
-    # find the runout point: first point under startOfRunoutAreaAngle
-    indStartOfRunout = geoTrans.findAngleProfile(tmp, ds, cfgSetup.getfloat('dsMin'))
-    rasterTransfo['indStartOfRunout'] = indStartOfRunout
-    rasterTransfo['xBetaPoint'] = rasterTransfo['x'][indStartOfRunout]
-    rasterTransfo['yBetaPoint'] = rasterTransfo['y'][indStartOfRunout]
-    rasterTransfo['startOfRunoutAreaAngle'] = angle[indStartOfRunout]
-    log.info('Start of run-out area at the %.2f ° point of coordinates (%.2f, %.2f)' %
-             (rasterTransfo['startOfRunoutAreaAngle'], rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
+    # add info on start of runout area
+    rasterTransfo = findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint)
 
     return rasterTransfo
 
@@ -475,7 +432,7 @@ def makeTransfoMat(rasterTransfo):
     return rasterTransfo
 
 
-def getSArea(rasterTransfo):
+def getSArea(rasterTransfo, dem):
     """ Get the s curvilinear coordinate and area on the new raster
 
     Find the scoord corresponding to the transformation and the Area of
@@ -491,6 +448,8 @@ def getSArea(rasterTransfo):
                 x coord of the new raster points in old coord system
             gridy: 2D numpy array
                 y coord of the new raster points in old coord system
+    dem: dict
+        dem dictionnary with normal and area information
 
     Returns
     -------
@@ -513,8 +472,8 @@ def getSArea(rasterTransfo):
     ycoord = np.append(ycoord, ycoord[-2, :].reshape(1, m), axis=0)
     n, m = np.shape(xcoord)
     # calculate dx and dy for each point in the l direction
-    dxl = xcoord[0:n-1, 1:m]-xcoord[0:n-1, 0:m-1]
-    dyl = ycoord[0:n-1, 1:m]-ycoord[0:n-1, 0:m-1]
+    # dxl = xcoord[0:n-1, 1:m]-xcoord[0:n-1, 0:m-1]
+    # dyl = ycoord[0:n-1, 1:m]-ycoord[0:n-1, 0:m-1]
     # # deduce the distance in l direction
     # Vl2 = (dxl*dxl + dyl*dyl)
     # Vl = np.sqrt(Vl2)
@@ -543,13 +502,17 @@ def getSArea(rasterTransfo):
 
     area = np.abs(x1*y2-y1*x2 + x2*y3-y2*x3 + x3*y4-y3*x4 + x4*y1-y4*x1)/2
 
-    # Method 2
-    # calculate area of each cell assuming they are parallelogramms
-    # (which is wrong)
-    # newAreaRaster = np.abs(dxl*dys - dxs*dyl)
-
     # save Area matrix
-    rasterTransfo['rasterArea'] = area
+    demCellSize = dem['header']['cellsize']
+    # area corection coef due to slope (1 if cell is horizontal, >1 if sloped)
+    demAreaCoef = dem['areaRaster']/(demCellSize*demCellSize)
+    # project on ney grid
+    areaCoef, _ = geoTrans.projectOnGrid(rasterTransfo['gridx'], rasterTransfo['gridy'], demAreaCoef, csz=demCellSize)
+    newRasterRealArea = area * areaCoef
+    # projected area
+    # rasterTransfo['rasterArea'] = area
+    # real area
+    rasterTransfo['rasterArea'] = newRasterRealArea
     # get scoord
     ds = Vs[:, int(np.floor(m/2))-1]
     scoord = np.cumsum(ds)-ds[0]
@@ -558,15 +521,17 @@ def getSArea(rasterTransfo):
     return rasterTransfo
 
 
-def transform(fname, rasterTransfo, interpMethod):
+def transform(data, name, rasterTransfo, interpMethod):
     """ Transfer data from old raster to new raster
 
     Assign value to the points of the new raster (after domain transormation)
 
     Parameters
     ----------
-    fname: str, dict
-        path to rasterfile to transform- or already read to dict with data as numpy nd array
+    data: dict
+        raster dictionary to transform
+    name: str
+        name of data to transform
     rasterTransfo: dict
         transformation information
     interpMethod: str
@@ -578,14 +543,6 @@ def transform(fname, rasterTransfo, interpMethod):
         new_data = z, pressure or depth... corresponding to fname on
         the new raster
     """
-
-    if isinstance(fname, dict):
-        data = fname
-        name = 'simulation'
-    else:
-        name = fname.name
-        data = IOf.readRaster(fname)
-
     # read tranformation info
     newGridRasterX = rasterTransfo['gridx']
     newGridRasterY = rasterTransfo['gridy']
@@ -633,7 +590,9 @@ def assignData(fnames, rasterTransfo, interpMethod):
     log.debug('Transfer data of %d file(s) from old to new raster' % maxtopo)
     for i in range(maxtopo):
         fname = fnames[i]
-        avalData[i] = transform(fname, rasterTransfo, interpMethod)
+        name = fname.name
+        data = IOf.readRaster(fname)
+        avalData[i] = transform(data, name, rasterTransfo, interpMethod)
 
     return avalData
 
@@ -1182,82 +1141,5 @@ def findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint):
 
     log.info('Start of run-out area at the %.2f ° point of coordinates (%.2f, %.2f)' %
              (rasterTransfo['startOfRunoutAreaAngle'], rasterTransfo['xBetaPoint'], rasterTransfo['yBetaPoint']))
-
-    return rasterTransfo
-
-def makeDomainTransfoOnTheGo(avaDir, dem, cfgSetup, pathDict):
-    """ Make domain transformation
-
-    This function returns the information about the domain transformation
-    Data given on a regular grid is projected on a nonuniform grid following
-    a polyline to end up with "straightend raster"
-
-    Parameters
-    ----------
-    avaDir: pathlib path or str
-        path to avalanche directory
-    dem: dict
-        dictionary with header and raster data
-    pathDict : dict
-        dictionary with paths to lines for Aimec analysis
-    cfgSetup : configparser
-        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
-        regarding domain transformation (domain width w, and new cellsize,
-        startOfRunoutAreaAngle or interpolation method, resType and
-        referenceFile to get header info)
-    pathDict: dict
-        dictionary with info on avalanche path, splitPoint, project name
-
-    Returns
-    -------
-    rasterTransfo: dict
-        domain transformation information:
-            gridx: 2D numpy array
-                x coord of the new raster points in old coord system
-            gridy: 2D numpy array
-                y coord of the new raster points in old coord system
-            s: 1D numpy array
-                new coord system in the polyline direction
-            l: 1D numpy array
-                new coord system in the cross direction
-            x: 1D numpy array
-                coord of the resampled polyline in old coord system
-            y: 1D numpy array
-                coord of the resampled polyline in old coord system
-            rasterArea: 2D numpy array
-                real area of the cells of the new raster
-            indStartOfRunout: int
-                index for start of the runout area (in s)
-    """
-
-    # read input parameters from AIMEC secton in configuration
-    w = cfgSetup.getfloat('domainWidth')
-
-    # get the cell size for the (s, l) raster
-    cellSizeSL = computeCellSizeSL(cfgSetup, dem['header'])
-    # Initialize transformation dictionary
-    rasterTransfo = {}
-    rasterTransfo['domainWidth'] = w
-    rasterTransfo['cellSizeSL'] = cellSizeSL
-
-    # read avaPath
-    avaPath, splitPoint = setAvaPath(pathDict, dem)
-
-    # Get new Domain Boundaries DB
-    # input: ava path
-    # output: Left and right side points for the domain
-    rasterTransfo = geoTrans.path2domain(avaPath, rasterTransfo)
-
-    # Make transformation matrix
-    rasterTransfo = makeTransfoMat(rasterTransfo)
-
-    # calculate the real area of the new cells as well as the scoord
-    rasterTransfo = getSArea(rasterTransfo)
-
-    # put back the scale due to the desired cellsize and get x,y of resample avapath
-    rasterTransfo = scalePathWithCellSize(rasterTransfo, cellSizeSL)
-
-    # add info on start of runout area
-    rasterTransfo = findStartOfRunoutArea(dem, rasterTransfo, cfgSetup, splitPoint)
 
     return rasterTransfo
