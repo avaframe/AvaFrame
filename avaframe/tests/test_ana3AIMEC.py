@@ -131,6 +131,8 @@ def test_makeDomainTransfo(capfd):
 
     demSource = list(dirname.glob('*.asc'))
     pathDict['demSource'] = demSource[0]
+    demSource = pathDict['demSource']
+    dem = IOf.readRaster(demSource)
 
     d = {}
     d['simName'] = ['testAimec_0', 'testAimec_1', 'testAimec_2', 'testAimec_3', 'testAimec_4']
@@ -160,14 +162,17 @@ def test_makeDomainTransfo(capfd):
 
     cfg = cfgUtils.getModuleConfig(ana3AIMEC)
     cfgSetup = cfg['AIMECSETUP']
-    cfgFlags = cfg['FLAGS']
     cfgSetup['startOfRunoutAreaAngle'] = '0'
     cfgSetup['domainWidth'] = '160'
     cfgSetup['resType'] = 'ppr'
     cfgSetup['thresholdValue'] = '0.9'
     cfgSetup['contourLevels'] = '0.1|0.5|1'
 
-    rasterTransfo = aT.makeDomainTransfo(pathDict, inputsDF, cfgSetup)
+    refSimulationName = pathDict['refSimulation']
+    refResultSource = inputsDF[inputsDF['simName'] == refSimulationName][cfgSetup['resType']].to_list()[0]
+    refRaster = IOf.readRaster(refResultSource)
+    refHeader = refRaster['header']
+    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
 
     assert rasterTransfo['gridx'][-1, 0] == 60
     assert rasterTransfo['gridx'][-1, -1] == 220
@@ -179,7 +184,7 @@ def test_makeDomainTransfo(capfd):
     newRasters = {}
     # assign pressure data
     interpMethod = cfgSetup['interpMethod']
-    newRasterDEM = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
+    newRasterDEM = aT.transform(dem, pathDict['demSource'], rasterTransfo, interpMethod)
     newRasters['newRasterDEM'] = newRasterDEM
 
     # Analyze data

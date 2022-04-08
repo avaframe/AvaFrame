@@ -36,30 +36,36 @@ def AIMEC2Report(pathDict, inputsDF, cfg):
     resAnalysis: dict
         results of ana3AIMEC analysis
     """
-
     # Extract input config parameters
     cfgSetup = cfg['AIMECSETUP']
     cfgFlags = cfg['FLAGS']
     interpMethod = cfgSetup['interpMethod']
 
     log.info('Prepare data for post-processing')
+    # Read input dem
+    demSource = pathDict['demSource']
+    dem = IOf.readRaster(demSource)
+    # read reference file and raster and config
+    refSimulationName = pathDict['refSimulation']
+    refResultSource = inputsDF[inputsDF['simName'] == refSimulationName][cfgSetup['resType']].to_list()[0]
+    refRaster = IOf.readRaster(refResultSource)
+    refHeader = refRaster['header']
+
+    log.debug('Data-file %s analysed and domain transformation done' % demSource)
+
     # Make domain transformation
     log.debug("Creating new deskewed raster and preparing new raster assignment function")
-    rasterTransfo = aT.makeDomainTransfo(pathDict, inputsDF, cfgSetup)
-    # read reference file
-    refSimulationName = pathDict['refSimulation']
-    refSimulation = inputsDF[inputsDF['simName'] == refSimulationName]
+    log.debug('Analyze and make domain transformation on Data-file %s' % demSource)
+    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
 
     # ####################################################
     # visualisation
     # TODO: needs to be moved somewhere else
-
-    rasterSource = refSimulation.iloc[0][cfgSetup['resType']]
-    raster = IOf.readRaster(rasterSource)
-    slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
+    slRaster = aT.transform(refRaster, refResultSource, rasterTransfo, interpMethod)
     newRasters = {}
     log.debug("Assigning dem data to deskewed raster")
-    newRasters['newRasterDEM'] = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
+    raster = IOf.readRaster(refResultSource)
+    newRasters['newRasterDEM'] = aT.transform(dem, demSource, rasterTransfo, interpMethod)
 
     inputData = {}
     inputData['slRaster'] = slRaster
@@ -138,29 +144,37 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     interpMethod = cfgSetup['interpMethod']
 
     log.info('Prepare data for post-processing')
-    # Make domain transformation
-    log.info("Creating new deskewed raster and preparing new raster assignment function")
-    rasterTransfo = aT.makeDomainTransfo(pathDict, inputsDF, cfgSetup)
-
-    # read reference file
+    # Read input dem
+    demSource = pathDict['demSource']
+    dem = IOf.readRaster(demSource)
+    # read reference file and raster and config
     refSimulationName = pathDict['refSimulation']
-    refSimulation = inputsDF[inputsDF['simName'] == refSimulationName]
+    refResultSource = inputsDF[inputsDF['simName'] == refSimulationName][cfgSetup['resType']].to_list()[0]
+    refRaster = IOf.readRaster(refResultSource)
+    refHeader = refRaster['header']
 
+    log.debug('Data-file %s analysed and domain transformation done' % demSource)
+
+    # Make domain transformation
+    log.debug("Creating new deskewed raster and preparing new raster assignment function")
+    log.debug('Analyze and make domain transformation on Data-file %s' % demSource)
+    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
+
+    # ####################################################
     # visualisation
     # TODO: needs to be moved somewhere else
-
-    rasterSource = refSimulation.iloc[0][cfgSetup['resType']]
-    raster = IOf.readRaster(rasterSource)
-    slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
+    slRaster = aT.transform(refRaster, refResultSource, rasterTransfo, interpMethod)
     newRasters = {}
     log.debug("Assigning dem data to deskewed raster")
-    newRasters['newRasterDEM'] = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
+    raster = IOf.readRaster(refResultSource)
+    newRasters['newRasterDEM'] = aT.transform(dem, demSource, rasterTransfo, interpMethod)
 
     inputData = {}
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = raster['rasterData']
     inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
+    # ###########################################################
 
     # postprocess reference
     inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
@@ -231,29 +245,37 @@ def AIMECIndividual(pathDict, inputsDF, cfg):
     interpMethod = cfgSetup['interpMethod']
 
     log.info('Prepare data for post-processing')
-    # Make domain transformation
-    log.info("Creating new deskewed raster and preparing new raster assignment function")
-    rasterTransfo = aT.makeDomainTransfo(pathDict, inputsDF, cfgSetup)
-
-    # read reference file
+    # Read input dem
+    demSource = pathDict['demSource']
+    dem = IOf.readRaster(demSource)
+    # read reference file and raster and config
     refSimulationName = pathDict['refSimulation']
-    refSimulation = inputsDF[inputsDF['simName'] == refSimulationName]
+    refResultSource = inputsDF[inputsDF['simName'] == refSimulationName][cfgSetup['resType']].to_list()[0]
+    refRaster = IOf.readRaster(refResultSource)
+    refHeader = refRaster['header']
 
+    log.debug('Data-file %s analysed and domain transformation done' % demSource)
+
+    # Make domain transformation
+    log.debug("Creating new deskewed raster and preparing new raster assignment function")
+    log.debug('Analyze and make domain transformation on Data-file %s' % demSource)
+    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
+
+    # ####################################################
     # visualisation
     # TODO: needs to be moved somewhere else
-
-    rasterSource = refSimulation.iloc[0][cfgSetup['resType']]
-    raster = IOf.readRaster(rasterSource)
-    slRaster = aT.transform(rasterSource, rasterTransfo, interpMethod)
+    slRaster = aT.transform(refRaster, refResultSource, rasterTransfo, interpMethod)
     newRasters = {}
-    log.info("Assigning dem data to deskewed raster")
-    newRasters['newRasterDEM'] = aT.transform(pathDict['demSource'], rasterTransfo, interpMethod)
+    log.debug("Assigning dem data to deskewed raster")
+    raster = IOf.readRaster(refResultSource)
+    newRasters['newRasterDEM'] = aT.transform(dem, demSource, rasterTransfo, interpMethod)
 
     inputData = {}
     inputData['slRaster'] = slRaster
     inputData['xyRaster'] = raster['rasterData']
     inputData['xyHeader'] = raster['header']
     outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
+    # ###########################################################
 
     # postprocess reference
     inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
@@ -401,7 +423,8 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
     for resType in resTypeList:
         log.debug("Assigning %s data to deskewed raster" % resType)
         inputFiles = inputsDFrow[resType]
-        newRaster = aT.transform(inputFiles, rasterTransfo, interpMethod)
+        rasterData = IOf.readRaster(inputFiles)
+        newRaster = aT.transform(rasterData, inputFiles, rasterTransfo, interpMethod)
         newRasters['newRaster' + resType.upper()] = newRaster
         if simName == refSimulationName:
             newRasters['newRefRaster' + resType.upper()] = newRaster
@@ -433,8 +456,8 @@ def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, time
 
 def aimecRes2ReportDict(resAnalysisDF, reportD, benchD, refSimName):
     """ gather aimec results and append them to report dictionary """
-    resAnalysisDFRef = resAnalysisDF[resAnalysisDF['simName']==refSimName]
-    resAnalysisDFComp = resAnalysisDF[resAnalysisDF['simName']!=refSimName]
+    resAnalysisDFRef = resAnalysisDF[resAnalysisDF['simName'] == refSimName]
+    resAnalysisDFComp = resAnalysisDF[resAnalysisDF['simName'] != refSimName]
     reportD['Aimec analysis'] = {'type': 'list', 'runout [m]': resAnalysisDFComp['sRunout'][0],
                                  'max peak pressure [kPa]': resAnalysisDFComp['maxpprCrossMax'][0],
                                  'max peak flow depth [m]': resAnalysisDFComp['maxpfdCrossMax'][0],
