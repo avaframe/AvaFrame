@@ -42,6 +42,7 @@ def hybridProfilePlot(avalancheDir, resultsHybrid):
     path = pathlib.Path(avalancheDir, 'Outputs', 'com3Hybrid')
     pU.saveAndOrPlot({'pathResult': path}, title, fig)
 
+
 def hybridPathPlot(avalancheDir, dem, resultsHybrid, fields, particles, muArray):
     """Update path plot with result of curent iteration"""
     headerOri = dem['originalHeader']

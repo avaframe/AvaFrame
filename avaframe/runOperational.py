@@ -84,17 +84,17 @@ def runOperational(avalancheDir=''):
 
         # if not: Run Alpha Beta
         cfgAB = cfgUtils.getModuleConfig(com2AB)
-        resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
-        abShpFile = outAB.writeABtoSHP(resAB)
+        pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
+        abShpFile = outAB.writeABtoSHP(pathDict, resAB)
 
         # Generate report info for com2AB
-        reportDictList, _, _ = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
+        reportDictList, _, _ = outAB.writeABpostOut(pathDict, dem, splitPoint, eqParams, resAB, cfgMain, reportDictList)
 
     except AssertionError as e:
         log.info(e)
         log.info('No Alpha Beta info, skipping')
         abShpFile = None
-    
+
     # ----------------
     # Collect results/plots/report  to a single directory
     # make simple plots (com1DFA, com2AB)

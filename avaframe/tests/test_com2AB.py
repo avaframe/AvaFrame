@@ -15,7 +15,7 @@ def test_setEqParameters(capfd):
     cfg = cfgUtils.getModuleConfig(com2AB)
     # small avalanche
     eqParamRef = {}
-    eqParamRef['ParameterSet'] = 'Small avalanches'
+    eqParamRef['parameterSet'] = 'Small avalanches'
     eqParamRef['k1'] = 0.933
     eqParamRef['k2'] = 0.0
     eqParamRef['k3'] = 0.0088
@@ -27,7 +27,7 @@ def test_setEqParameters(capfd):
         assert eqParamRef[key] == eqParams[key]
 
     eqParamRef = {}
-    eqParamRef['ParameterSet'] = 'Standard'
+    eqParamRef['parameterSet'] = 'Standard'
     eqParamRef['k1'] = 1.05
     eqParamRef['k2'] = -3130.0
     eqParamRef['k3'] = 0.0
@@ -46,7 +46,7 @@ def test_setEqParameters(capfd):
     cfg['ABSETUP']['SD'] = '5'
 
     eqParamRef = {}
-    eqParamRef['ParameterSet'] = 'Custom'
+    eqParamRef['parameterSet'] = 'Custom'
     eqParamRef['k1'] = cfg.getfloat('ABSETUP', 'k1')
     eqParamRef['k2'] = cfg.getfloat('ABSETUP', 'k2')
     eqParamRef['k3'] = cfg.getfloat('ABSETUP', 'k3')
@@ -58,8 +58,8 @@ def test_setEqParameters(capfd):
         assert eqParamRef[key] == eqParams[key]
 
 
-def test_calcAB(capfd):
-    '''Simple test for function calcAB'''
+def test_calcABAngles(capfd):
+    '''Simple test for function calcABAngles'''
 
     cfg = cfgUtils.getModuleConfig(com2AB)
     # Make a reference quadratic profile
@@ -97,7 +97,7 @@ def test_calcAB(capfd):
     eqIn['z'] = z  # z coordinate of the path (projection of x,y on the raster)
     eqIn['indSplit'] = 2  # index of split point
     eqParams = com2AB.setEqParameters(cfg, smallAva=False)
-    eqOut = com2AB.calcAB(eqIn, eqParams, 30)
+    eqOut = com2AB.calcABAngles(eqIn, eqParams, 30)
     alpha = eqOut['alpha']
     alphaSD = eqOut['alphaSD']
 
@@ -118,14 +118,14 @@ def test_writeABtoSHP(tmp_path):
 
     avalancheDir = tmp_path / avaName
 
-    # Copy input to tmp dir 
+    # Copy input to tmp dir
     shutil.copytree(sourceDir, avalancheDir)
 
     cfg = cfgUtils.getModuleConfig(com2AB)
 
     # run main routine
-    resAB = com2AB.com2ABMain(cfg, avalancheDir)
-    abShpFile = outAB.writeABtoSHP(resAB)
+    pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfg, avalancheDir)
+    abShpFile = outAB.writeABtoSHP(pathDict, resAB)
     abShpFile = str(abShpFile) + '.shp'
     file_name = pathlib.Path(abShpFile)
 
@@ -145,14 +145,12 @@ def test_com2ABMain(capfd):
         cfg = cfgUtils.getModuleConfig(com2AB)
         flags = cfg['FLAGS']
         # run main routine
-        resAB = com2AB.com2ABMain(cfg, avalancheDir)
-        eqParams = resAB['eqParams']
+        pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfg, avalancheDir)
         eqOut = resAB[name]
 
         # open ref data
         flags['fullOut'] = 'True'
         eqParamsRef, eqOutRef = outAB.readABresults(saveOutPathRef, name, flags)
-
         for key in eqParamsRef.keys():
             assert eqParamsRef[key] == eqParams[key]
 
@@ -175,22 +173,19 @@ def test_QGISAB(capfd):
     avalancheDir = dirname / '..' / 'data' / avaName
     cfg = cfgUtils.getModuleConfig(com2AB)
     # run main routine
-    resAB = com2AB.com2ABMain(cfg, avalancheDir)
+    pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfg, avalancheDir)
     # process data to get results
-    AvaPath = resAB['AvaPath']
-    NameAva = AvaPath['Name']
-    for i in range(len(NameAva)):
-        name = NameAva[i]
-        resAB = outAB.processABresults(resAB, name)
-        beta = resAB[name]['beta']
-        alpha = resAB[name]['alpha']
-        alphaSD = resAB[name]['alphaSD']
-        s = resAB[name]['s']
-        ids_alpha = resAB[name]['ids_alpha']
-        ids10Point = resAB[name]['ids10Point']
-        ids_alphaP1SD = resAB[name]['ids_alphaP1SD']
-        ids_alphaM1SD = resAB[name]['ids_alphaM1SD']
-        ids_alphaM2SD = resAB[name]['ids_alphaM2SD']
+    for i, name in enumerate(resAB):
+        avaProfile = resAB[name]
+        beta = avaProfile['beta']
+        alpha = avaProfile['alpha']
+        alphaSD = avaProfile['alphaSD']
+        s = avaProfile['s']
+        indAlpha = avaProfile['indAlpha']
+        indBetaPoint = avaProfile['indBetaPoint']
+        indAlphaP1SD = avaProfile['indAlphaP1SD']
+        indAlphaM1SD = avaProfile['indAlphaM1SD']
+        indAlphaM2SD = avaProfile['indAlphaM2SD']
         # get ref results
         nameRef = name + '_AB_QGIS.txt'
         nameRefpath = pathlib.Path(dirname, '..', '..', 'benchmarks', avaName + 'ABPytest',
@@ -203,8 +198,8 @@ def test_QGISAB(capfd):
                 alphaSD[1] == pytest.approx(data[2, 4], rel=tolAngle)) and (
                 alphaSD[2] == pytest.approx(data[3, 4], rel=tolAngle)) and (
                 alphaSD[0] == pytest.approx(data[4, 4], rel=tolAngle))
-        assert (s[ids_alpha] == pytest.approx(data[0, 3], abs=tolDist)) and (
-                s[ids10Point] == pytest.approx(data[1, 3], rel=tolDist)) and (
-                s[ids_alphaM1SD] == pytest.approx(data[2, 3], rel=tolDist)) and (
-                s[ids_alphaM2SD] == pytest.approx(data[3, 3], rel=tolDist)) and (
-                s[ids_alphaP1SD] == pytest.approx(data[4, 3], rel=tolDist))
+        assert (s[indAlpha] == pytest.approx(data[0, 3], abs=tolDist)) and (
+                s[indBetaPoint] == pytest.approx(data[1, 3], rel=tolDist)) and (
+                s[indAlphaM1SD] == pytest.approx(data[2, 3], rel=tolDist)) and (
+                s[indAlphaM2SD] == pytest.approx(data[3, 3], rel=tolDist)) and (
+                s[indAlphaP1SD] == pytest.approx(data[4, 3], rel=tolDist))

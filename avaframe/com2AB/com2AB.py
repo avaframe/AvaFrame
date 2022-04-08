@@ -13,6 +13,7 @@ import pathlib
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in2Trans.ascUtils as IOf
+import avaframe.out3Plot.outDebugPlots as debPlot
 
 # create local logger
 log = logging.getLogger(__name__)
@@ -52,7 +53,7 @@ def setEqParameters(cfg, smallAva):
         eqParameters['k4'] = -5.02
         eqParameters['SD'] = 2.36
 
-        ParameterSet = "Small avalanches"
+        parameterSet = "Small avalanches"
 
     elif cfgsetup.getboolean('customParam'):
         log.debug('Using custom Avalanche Setup:')
@@ -65,7 +66,7 @@ def setEqParameters(cfg, smallAva):
                 log.error(message)
                 raise KeyError(message)
 
-        ParameterSet = "Custom"
+        parameterSet = "Custom"
 
     else:
         log.debug('Using standard Avalanche Setup')
@@ -75,9 +76,9 @@ def setEqParameters(cfg, smallAva):
         eqParameters['k4'] = -2.38
         eqParameters['SD'] = 1.25
 
-        ParameterSet = "Standard"
+        parameterSet = "Standard"
 
-    eqParameters['ParameterSet'] = ParameterSet
+    eqParameters['parameterSet'] = parameterSet
     return eqParameters
 
 
@@ -95,114 +96,110 @@ def com2ABMain(cfg, avalancheDir):
 
     Returns
     -------
+    pathDict : dict
+        dictionary with AlphaBeta inputs
     resAB : dict
         dictionary with AlphaBeta model results
     """
     abVersion = '4.1'
     cfgsetup = cfg['ABSETUP']
     smallAva = cfgsetup.getboolean('smallAva')
+    resampleDistance = cfgsetup.getfloat('distance')
+    betaThresholdDistance = cfgsetup.getfloat('dsMin')
     resAB = {}
     # Extract input file locations
-    pathDict = readABinputs(avalancheDir)
+    pathDict = readABinputs(avalancheDir, path2Line=cfgsetup['path2Line'], path2SplitPoint=cfgsetup['path2SplitPoint'])
 
     log.info("Running com2ABMain model on DEM \n \t %s \n \t with profile \n \t %s ",
              pathDict['demSource'], pathDict['profileLayer'])
-
-    resAB['saveOutPath'] = pathDict['saveOutPath']
     # Read input data for ALPHABETA
     dem = IOf.readRaster(pathDict['demSource'])
-    resAB['dem'] = dem
-    AvaPath = shpConv.readLine(pathDict['profileLayer'], pathDict['defaultName'],
-                               dem)
-    resAB['AvaPath'] = AvaPath
-    resAB['splitPoint'] = shpConv.readPoints(pathDict['splitPointSource'], dem)
+    # read line (may contain multiple lines)
+    fullAvaPath = shpConv.readLine(pathDict['profileLayer'], pathDict['defaultName'], dem)
+    splitPoint = shpConv.readPoints(pathDict['splitPointSource'], dem)
 
     # Read input setup
     eqParams = setEqParameters(cfg, smallAva)
-    resAB['eqParams'] = eqParams
 
-    NameAva = AvaPath['Name']
-    StartAva = AvaPath['Start']
-    LengthAva = AvaPath['Length']
+    NameAva = fullAvaPath['Name']
+    StartAva = fullAvaPath['Start']
+    LengthAva = fullAvaPath['Length']
 
     for i in range(len(NameAva)):
         name = NameAva[i]
         start = StartAva[i]
         end = start + LengthAva[i]
-        avapath = {}
-        avapath['x'] = AvaPath['x'][int(start):int(end)]
-        avapath['y'] = AvaPath['y'][int(start):int(end)]
-        avapath['Name'] = name
+        # extract individual line
+        avaPath = {'sks': fullAvaPath['sks']}
+        avaPath['x'] = fullAvaPath['x'][int(start):int(end)]
+        avaPath['y'] = fullAvaPath['y'][int(start):int(end)]
+        avaPath['name'] = name
         log.info('Running Alpha Beta %s on: %s ', abVersion, name)
-        resAB = com2ABKern(avapath, resAB, cfgsetup.getfloat('distance'), cfgsetup.getfloat('dsMin'))
-
+        avaProfile = com2ABKern(avaPath, splitPoint, dem, eqParams, resampleDistance, betaThresholdDistance)
+        resAB[name] = avaProfile
         if cfg.getboolean('FLAGS', 'fullOut'):
             # saving results to pickle saveABResults(resAB, name)
             savename = name + '_com2AB_eqparam.pickle'
             save_file = pathlib.Path(pathDict['saveOutPath'], savename)
-            pickle.dump(resAB['eqParams'], open(save_file, "wb"))
+            pickle.dump(eqParams, open(save_file, "wb"))
             log.info('Saving intermediate results to: %s' % (save_file))
-            savename = name + '_com2AB_eqout.pickle'
+            savename = name + '_com2AB_avaProfile.pickle'
             save_file = pathlib.Path(pathDict['saveOutPath'], savename)
-            pickle.dump(resAB[name], open(save_file, "wb"))
+            pickle.dump(avaProfile, open(save_file, "wb"))
             log.info('Saving intermediate results to: %s' % (save_file))
 
-    return resAB
+    return pathDict, dem, splitPoint, eqParams, resAB
 
 
-def com2ABKern(avapath, resAB, distance, dsMin):
+def com2ABKern(avaPath, splitPoint, dem, eqParams, distance, dsMin):
     """ Compute AlpahBeta model for a given avapath
 
-    Call calcAB to compute the AlphaBeta model given an input raster (of the dem),
+    Call calcABAngles to compute the AlphaBeta model given an input raster (of the dem),
     an avalanche path and split points
 
     Parameters
     ----------
-    avapath : dict
+    avaPath : dict
         dictionary with the name of the avapath, the x and y coordinates of the
         path
-    resAB : dict
-        dictionary with AlphaBeta model intput parameters as well as the
-        results of already computed avapath.
+    splitPoint : dict
+        dictionary split points
     distance: float
         line resampling distance
     dsMin: float
-        threshold distance [m] for looking for the 10° point
+        threshold distance [m] when looking for the beta point
 
     Returns
     -------
-    resAB : dict
-        dictionary with AlphaBeta model results
+    avaProfile : dict
+        avaPath dictionary with AlphaBeta model results (path became a profile adding the z and s arrays.
+        AB runout angles and distances)
     """
-    dem = resAB['dem']
-    splitPoint = resAB['splitPoint']
-    name = avapath['Name']
-    eqParams = resAB['eqParams']
+    name = avaPath['name']
 
     # read inputs, ressample ava path
     # make pofile and project split point on path
-    AvaProfile, projSplitPoint = geoTrans.prepareLine(
-        dem, avapath, distance, splitPoint)
+    avaProfile, projSplitPoint = geoTrans.prepareLine(dem, avaPath, distance, splitPoint)
 
-    if np.isnan(np.sum(AvaProfile['z'])):
-        raise ValueError('The resampled avalanche path exceeds the dem extent.'
-                         + 'Try with another path')
+    if np.isnan(np.sum(avaProfile['z'])):
+        raise ValueError('The resampled avalanche path exceeds the dem extent. Try with another path')
 
-    # Sanity check if first element of AvaProfile[3,:]
+    # Sanity check if first element of avaProfile[3,:]
     # (i.e z component) is highest:
     # if not, flip all arrays
-    projSplitPoint, AvaProfile = geoTrans.checkProfile(AvaProfile,
-                                                       projSplitPoint)
+    projSplitPoint, avaProfile = geoTrans.checkProfile(avaProfile, projSplitPoint)
 
-    AvaProfile['indSplit'] = projSplitPoint['indSplit']  # index of split point
+    avaProfile['indSplit'] = projSplitPoint['indSplit']  # index of split point
 
-    eqOut = calcAB(AvaProfile, eqParams, dsMin)
-    resAB[name] = eqOut
+    # run AB model and get angular results
+    avaProfile = calcABAngles(avaProfile, eqParams, dsMin)
+    # convert the angular results in distances
+    avaProfile = calcABDistances(avaProfile, name)
 
-    return resAB
+    return avaProfile
 
 
-def readABinputs(avalancheDir):
+def readABinputs(avalancheDir, path2Line='', path2SplitPoint=''):
     """ Fetch inputs for AlpahBeta model
 
     Get path to AlphaBeta model inputs (dem raster, avalanche path and split points)
@@ -211,6 +208,10 @@ def readABinputs(avalancheDir):
     ----------
     avalancheDir : str
         path to directory of avalanche to analyze
+    path2Line : pathlib path
+        pathlib path to altrnative line
+    path2SplitPoint : pathlib path
+        pathlib path to altrnative splitPoint
 
     Returns
     -------
@@ -220,14 +221,24 @@ def readABinputs(avalancheDir):
     pathDict = {}
     avalancheDir = pathlib.Path(avalancheDir)
     # read avalanche paths for AB
-    refDir = avalancheDir / 'Inputs' / 'LINES'
-    profileLayer = list(refDir.glob('*AB*.shp'))
-    try:
-        message = 'There should be exactly one pathAB.shp file containing (multiple) avalanche paths in %s /Inputs/LINES/' % avalancheDir
-        assert len(profileLayer) == 1, message
-    except AssertionError:
-        raise
-    pathDict['profileLayer'] = profileLayer[0]
+    if path2Line == '':
+        refDir = avalancheDir / 'Inputs' / 'LINES'
+        profileLayer = list(refDir.glob('*AB*.shp'))
+        try:
+            message = ('There should be exactly one pathAB.shp file containing (multiple)'
+                       + 'avalanche paths in %s /Inputs/LINES/' % avalancheDir)
+            assert len(profileLayer) == 1, message
+        except AssertionError:
+            log.error(message)
+            raise
+        pathDict['profileLayer'] = profileLayer[0]
+    else:
+        path2Line = pathlib.Path(path2Line)
+        if not path2Line.is_file():
+            message = 'No line called: %s' % (path2Line)
+            log.error(message)
+            raise FileNotFoundError(message)
+        pathDict['profileLayer'] = path2Line
 
     # read DEM
     refDir = avalancheDir / 'Inputs'
@@ -239,14 +250,22 @@ def readABinputs(avalancheDir):
     pathDict['demSource'] = demSource[0]
 
     # read split points
-    refDir = avalancheDir / 'Inputs' / 'POINTS'
-    splitPointSource = list(refDir.glob('*.shp'))
-    try:
-        message = 'There should be exactly one .shp file containing the split points in %s /Inputs/POINTS/' %  avalancheDir
-        assert len(splitPointSource) == 1, message
-    except AssertionError:
-        raise
-    pathDict['splitPointSource'] = splitPointSource[0]
+    if path2SplitPoint == '':
+        refDir = avalancheDir / 'Inputs' / 'POINTS'
+        splitPointSource = list(refDir.glob('*.shp'))
+        try:
+            message = 'There should be exactly one .shp file containing the split points in %s /Inputs/POINTS/' %  avalancheDir
+            assert len(splitPointSource) == 1, message
+        except AssertionError:
+            raise
+        pathDict['splitPointSource'] = splitPointSource[0]
+    else:
+        path2SplitPoint = pathlib.Path(path2SplitPoint)
+        if not path2SplitPoint.is_file():
+            message = 'No line called: %s' % (path2SplitPoint)
+            log.error(message)
+            raise FileNotFoundError(message)
+        pathDict['splitPointSource'] = path2SplitPoint
 
     # make output path
     saveOutPath = avalancheDir / 'Outputs' / 'com2AB'
@@ -261,24 +280,24 @@ def readABinputs(avalancheDir):
     return pathDict
 
 
-def calcAB(AvaProfile, eqParameters, dsMin):
-    """ Kernel function that computes the AlphaBeta model
-    for a given AvaProfile and eqParameters
+def calcABAngles(avaProfile, eqParameters, dsMin):
+    """ Kernel function that computes the AlphaBeta model (angular results)
+    for a given avaProfile and eqParameters
 
     Parameters
     ----------
-    AvaProfile : dict
+    avaProfile : dict
         dictionary with the name of the avapath, the x, y and z coordinates of
         the path
     eqParameters: dict
         AB parameter dictionary
     dsMin: float
-        threshold distance [m] for looking for the 10° point
+        threshold distance [m] when looking for the Beta point
 
     Returns
     -------
-    AvaProfile : dict
-        updated AvaProfile with alpha, beta and other values resulting from the
+    avaProfile : dict
+        updated avaProfile with alpha, beta and other values resulting from the
         AlphaBeta model computation
     """
     log.debug("Calculating alpha beta")
@@ -288,37 +307,27 @@ def calcAB(AvaProfile, eqParameters, dsMin):
     k4 = eqParameters['k4']
     SD = eqParameters['SD']
 
-    s = AvaProfile['s']
-    z = AvaProfile['z']
+    s = avaProfile['s']
+    z = avaProfile['z']
 
     # prepare find Beta points
     betaValue = 10
-    angle, tmp, ds = geoTrans.prepareAngleProfile(betaValue, AvaProfile)
-    # find the beta point: first point under 10°
-    # (make sure that the 30 next meters are also under 10°)
-    ids10Point = geoTrans.findAngleProfile(tmp, ds, dsMin)
+    angle, tmp, ds = geoTrans.prepareAngleProfile(betaValue, avaProfile)
+    # find the beta point: first point under the beta angle
+    # (make sure that the dsMin next meters are also under te beta angle)
+    indBetaPoint = geoTrans.findAngleProfile(tmp, ds, dsMin)
     if debugPlot:
-        plt.figure(figsize=(10, 6))
-        plt.plot(s, angle, '.k')
-        plt.plot(s[ids10Point], angle[ids10Point], 'or')
-        plt.axhline(y=10, color='0.8',
-                    linewidth=1, linestyle='-.', label='10° line')
+        debPlot.plotSlopeAngle(s, angle, indBetaPoint)
+        debPlot.plotProfile(s, z, indBetaPoint)
 
-        plt.figure(figsize=(10, 6))
-        plt.plot(s, z)
-        plt.axvline(x=s[ids10Point], color='0.8',
-                    linewidth=1, linestyle='-.')
-        plt.show()
-        plt.close()
-
-    # Do a quadtratic fit and get the polynom for 2nd derivative later
+    # Do a quadtratic fit and get the polycom2ABKernnom for 2nd derivative later
     zQuad = np.polyfit(s, z, 2)
     poly = np.poly1d(zQuad)
     # Get H0: max - min for parabola
     H0 = max(poly(s)) - min(poly(s))
     # get beta
-    dzBeta = z[0] - z[ids10Point]
-    beta = np.rad2deg(np.arctan2(dzBeta, s[ids10Point]))
+    dzBeta = z[0] - z[indBetaPoint]
+    beta = np.rad2deg(np.arctan2(dzBeta, s[indBetaPoint]))
     # get Alpha
     alpha = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4
 
@@ -326,11 +335,67 @@ def calcAB(AvaProfile, eqParameters, dsMin):
     SDs = [SD, -1*SD, -2*SD]
     alphaSD = k1 * beta + k2 * poly.deriv(2)[0] + k3 * H0 + k4 + SDs
 
-    AvaProfile['CuSplit'] = s[AvaProfile['indSplit']]
-    AvaProfile['ids10Point'] = ids10Point
-    AvaProfile['poly'] = poly
-    AvaProfile['beta'] = beta
-    AvaProfile['alpha'] = alpha
-    AvaProfile['SDs'] = SDs
-    AvaProfile['alphaSD'] = alphaSD
-    return AvaProfile
+    avaProfile['sSplit'] = s[avaProfile['indSplit']]
+    avaProfile['indBetaPoint'] = indBetaPoint
+    avaProfile['poly'] = poly
+    avaProfile['beta'] = beta
+    avaProfile['alpha'] = alpha
+    avaProfile['SDs'] = SDs
+    avaProfile['alphaSD'] = alphaSD
+    return avaProfile
+
+
+def calcABDistances(avaProfile, name):
+    """ Compute runout distances and points from angles computed in calcABAngles"""
+    s = avaProfile['s']
+    z = avaProfile['z']
+    sSplit = avaProfile['sSplit']
+    alpha = avaProfile['alpha']
+    alphaSD = avaProfile['alphaSD']
+
+    # Line down to alpha
+    f = z[0] + np.tan(np.deg2rad(-alpha)) * s
+    fplus1SD = z[0] + np.tan(np.deg2rad(-alphaSD[0])) * s
+    fminus1SD = z[0] + np.tan(np.deg2rad(-alphaSD[1])) * s
+    fminus2SD = z[0] + np.tan(np.deg2rad(-alphaSD[2])) * s
+
+    # First it calculates f - g and the corresponding signs
+    # using np.sign. Applying np.diff reveals all
+    # the positions, where the sign changes (e.g. the lines cross).
+    indAlpha = np.argwhere(np.diff(np.sign(f - z))).flatten()
+    indAlphaP1SD = np.argwhere(np.diff(np.sign(fplus1SD - z))).flatten()
+    indAlphaM1SD = np.argwhere(np.diff(np.sign(fminus1SD - z))).flatten()
+    indAlphaM2SD = np.argwhere(np.diff(np.sign(fminus2SD - z))).flatten()
+
+    # Only get the first index past the splitpoint
+    try:
+        indAlpha = indAlpha[s[indAlpha] > sSplit][0]
+    except IndexError:
+        log.warning('Alpha out of profile')
+        indAlpha = None
+
+    try:
+        indAlphaP1SD = indAlphaP1SD[s[indAlphaP1SD] > sSplit][0]
+    except IndexError:
+        log.warning('+1 SD above beta point')
+        indAlphaP1SD = None
+
+    try:
+        indAlphaM1SD = indAlphaM1SD[s[indAlphaM1SD] > sSplit][0]
+    except IndexError:
+        log.warning('-1 SD out of profile')
+        indAlphaM1SD = None
+
+    try:
+        indAlphaM2SD = indAlphaM2SD[s[indAlphaM2SD] > sSplit][0]
+    except IndexError:
+        log.warning('-2 SD out of profile')
+        indAlphaM2SD = None
+
+    avaProfile['f'] = f
+    avaProfile['indAlpha'] = indAlpha
+    avaProfile['indAlphaP1SD'] = indAlphaP1SD
+    avaProfile['indAlphaM1SD'] = indAlphaM1SD
+    avaProfile['indAlphaM2SD'] = indAlphaM2SD
+
+    return avaProfile

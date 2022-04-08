@@ -399,7 +399,6 @@ def saveAndOrPlot(pathDict, outFileName, fig):
 
     plt.close(fig)
 
-
     return outPath
 
 

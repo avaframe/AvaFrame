@@ -39,7 +39,7 @@ if runDFAModule:
     initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=True)
     # create com1DFA configuration
     # read the default one (and only this one, no local is read)
-    com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', toPrint=False, onlyDefault=True)
+    com1DFACfg = cfgUtils.getModuleConfig(com1DFA, fileOverride='', toPrint=False, onlyDefault=False)
     # and adapt setting (especially time steps saved and outpus)
     com1DFACfg['GENERAL']['tSteps'] = '0:5'
     com1DFACfg['GENERAL']['resType'] = 'particles'
