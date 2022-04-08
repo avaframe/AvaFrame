@@ -27,11 +27,12 @@ log.info('Current avalanche: %s', avalancheDir)
 cfg = cfgUtils.getModuleConfig(com2AB)
 
 # Calculate ALPHABETA
-resAB = com2AB.com2ABMain(cfg, avalancheDir)
+pathDict, dem, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfg, avalancheDir)
+abShpFile = outAB.writeABtoSHP(pathDict, resAB)
 
 # Analyse/ plot/ write results #
 reportDictList = []
-_, plotFile, writeFile = outAB.writeABpostOut(resAB, cfg, reportDictList)
+_, plotFile, writeFile = outAB.writeABpostOut(pathDict, dem, splitPoint, eqParams, resAB, cfgMain, reportDictList)
 
 log.info('Plotted to: %s' % [str(plotFileName) for plotFileName in plotFile])
 log.info('Data written: %s' % [str(writeFileName) for writeFileName in writeFile])

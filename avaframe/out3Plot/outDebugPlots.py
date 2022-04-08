@@ -2,7 +2,7 @@ import numpy as np
 import pathlib
 import copy
 import matplotlib
-matplotlib.use('agg')
+# matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -264,3 +264,24 @@ def plotPathExtBot(profile, xInterest, yInterest, zInterest, xLast, yLast):
     ax.plot(profile['x'][-2:], profile['y'][-2:], 'k--', label='extended path')
     plt.legend()
     plt.show()
+
+
+def plotSlopeAngle(s, angle, idsBetaPoint):
+    """plot slope angle along a profile, add beta info"""
+    plt.figure(figsize=(10, 6))
+    plt.plot(s, angle, '.k')
+    plt.plot(s[idsBetaPoint], angle[idsBetaPoint], 'or')
+    plt.axhline(y=10, color='0.8',
+                linewidth=1, linestyle='-.', label='Beta angle line')
+    plt.show()
+    plt.close()
+
+
+def plotProfile(s, z, idsBetaPoint):
+    """plot profile, add beta info"""
+    plt.figure(figsize=(10, 6))
+    plt.plot(s, z)
+    plt.axvline(x=s[idsBetaPoint], color='0.8',
+                linewidth=1, linestyle='-.')
+    plt.show()
+    plt.close()

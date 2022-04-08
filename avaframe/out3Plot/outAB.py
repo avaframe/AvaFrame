@@ -23,7 +23,7 @@ colors = ["#393955", "#8A8A9B", "#E9E940"]
 mpl.rcParams['axes.prop_cycle'] = mpl.cycler(color=colors)
 
 
-def writeABtoSHP(resAB):
+def writeABtoSHP(pathDict, resAB):
     """ Write com2AB results to shapefile
 
     Parameters
@@ -37,12 +37,7 @@ def writeABtoSHP(resAB):
         path to shapefile
     """
 
-    saveOutFile = pathlib.Path(resAB['saveOutPath']) / 'com2AB_Results'
-    avaPath = resAB['AvaPath']
-
-    # write projection information file
-    with open(str(saveOutFile)+'.prj', 'w') as prjf:
-        prjf.write(avaPath['sks'])
+    saveOutFile = pathlib.Path(pathDict['saveOutPath']) / 'com2AB_Results'
 
     # open shapefile writer with point shapetype
     w = shapefile.Writer(str(saveOutFile), shapeType=1)
@@ -53,37 +48,36 @@ def writeABtoSHP(resAB):
     w.field('Angle', 'F', 5, 1)
 
     # loop through the profiles
-    for i, profile in enumerate(avaPath['Name']):
+    for i, profileName in enumerate(resAB):
+        cuProf = resAB[profileName]
 
-        resAB = processABresults(resAB, profile)
-        cuProf = resAB[profile]
-
-        pointName = profile + '_Beta'
-        w.point(cuProf['x'][cuProf['ids10Point']], cuProf['y'][cuProf['ids10Point']])
+        pointName = profileName + '_Beta'
+        w.point(cuProf['x'][cuProf['indBetaPoint']], cuProf['y'][cuProf['indBetaPoint']])
         w.record(i, pointName, cuProf['beta'])
 
-        if cuProf['ids_alpha'] is not None:
-            pointName = profile + '_Alpha'
-            w.point(cuProf['x'][cuProf['ids_alpha']], cuProf['y'][cuProf['ids_alpha']])
+        if cuProf['indAlpha'] is not None:
+            pointName = profileName + '_Alpha'
+            w.point(cuProf['x'][cuProf['indAlpha']], cuProf['y'][cuProf['indAlpha']])
             w.record(i, pointName, cuProf['alpha'])
 
-        if cuProf['ids_alphaP1SD'] is not None:
-            pointName = profile + '_AlphaPlus1SD'
-            w.point(cuProf['x'][cuProf['ids_alphaP1SD']], cuProf['y'][cuProf['ids_alphaP1SD']])
+        if cuProf['indAlphaP1SD'] is not None:
+            pointName = profileName + '_AlphaPlus1SD'
+            w.point(cuProf['x'][cuProf['indAlphaP1SD']], cuProf['y'][cuProf['indAlphaP1SD']])
             w.record(i, pointName, cuProf['alphaSD'][0])
 
-        if cuProf['ids_alphaM1SD'] is not None:
-            pointName = profile + '_AlphaMinus1SD'
-            w.point(cuProf['x'][cuProf['ids_alphaM1SD']], cuProf['y'][cuProf['ids_alphaM1SD']])
+        if cuProf['indAlphaM1SD'] is not None:
+            pointName = profileName + '_AlphaMinus1SD'
+            w.point(cuProf['x'][cuProf['indAlphaM1SD']], cuProf['y'][cuProf['indAlphaM1SD']])
             w.record(i, pointName, cuProf['alphaSD'][1])
 
-        if cuProf['ids_alphaM2SD'] is not None:
-            pointName = profile + '_AlphaMinus2SD'
-            w.point(cuProf['x'][cuProf['ids_alphaM2SD']], cuProf['y'][cuProf['ids_alphaM2SD']])
+        if cuProf['indAlphaM2SD'] is not None:
+            pointName = profileName + '_AlphaMinus2SD'
+            w.point(cuProf['x'][cuProf['indAlphaM2SD']], cuProf['y'][cuProf['indAlphaM2SD']])
             w.record(i, pointName, cuProf['alphaSD'][2])
-
     w.close()
-
+    # write projection information file
+    with open(str(saveOutFile)+'.prj', 'w') as prjf:
+        prjf.write(cuProf['sks'])
     log.info('Writing com2AB to shapefile: %s.shp', saveOutFile)
 
     return saveOutFile
@@ -97,115 +91,49 @@ def readABresults(saveOutPath, name, flags):
         eqParams = pickle.load(handle)
     if not flags.getboolean('fullOut'):
         save_file.unlink()
-    savename = name + '_com2AB_eqout.pickle'
+    savename = name + '_com2AB_avaProfile.pickle'
     save_file = pathlib.Path(saveOutPath, savename)
     with open(save_file, 'rb') as handle:
-        eqOut = pickle.load(handle)
+        avaProfile = pickle.load(handle)
     if not flags.getboolean('fullOut'):
         save_file.unlink()
 
-    return eqParams, eqOut
+    return eqParams, avaProfile
 
 
-def processABresults(resAB, name):
-    """ prepare AlphaBeta results for plotting and writing results """
-    s = resAB[name]['s']
-    z = resAB[name]['z']
-    CuSplit = resAB[name]['CuSplit']
-    alpha = resAB[name]['alpha']
-    alphaSD = resAB[name]['alphaSD']
-
-    # Line down to alpha
-    f = z[0] + np.tan(np.deg2rad(-alpha)) * s
-    fplus1SD = z[0] + np.tan(np.deg2rad(-alphaSD[0])) * s
-    fminus1SD = z[0] + np.tan(np.deg2rad(-alphaSD[1])) * s
-    fminus2SD = z[0] + np.tan(np.deg2rad(-alphaSD[2])) * s
-
-    # First it calculates f - g and the corresponding signs
-    # using np.sign. Applying np.diff reveals all
-    # the positions, where the sign changes (e.g. the lines cross).
-    ids_alpha = np.argwhere(np.diff(np.sign(f - z))).flatten()
-    ids_alphaP1SD = np.argwhere(np.diff(np.sign(fplus1SD - z))).flatten()
-    ids_alphaM1SD = np.argwhere(np.diff(np.sign(fminus1SD - z))).flatten()
-    ids_alphaM2SD = np.argwhere(np.diff(np.sign(fminus2SD - z))).flatten()
-
-    # Only get the first index past the splitpoint
-    try:
-        ids_alpha = ids_alpha[s[ids_alpha] > CuSplit][0]
-    except IndexError:
-        log.warning('Alpha out of profile')
-        ids_alpha = None
-
-    try:
-        ids_alphaP1SD = ids_alphaP1SD[s[ids_alphaP1SD] > CuSplit][0]
-    except IndexError:
-        log.warning('+1 SD above beta point')
-        ids_alphaP1SD = None
-
-    try:
-        ids_alphaM1SD = ids_alphaM1SD[s[ids_alphaM1SD] > CuSplit][0]
-    except IndexError:
-        log.warning('-1 SD out of profile')
-        ids_alphaM1SD = None
-
-    try:
-        ids_alphaM2SD = ids_alphaM2SD[s[ids_alphaM2SD] > CuSplit][0]
-    except IndexError:
-        log.warning('-2 SD out of profile')
-        ids_alphaM2SD = None
-
-    resAB[name]['f'] = f
-    resAB[name]['ids_alpha'] = ids_alpha
-    resAB[name]['ids_alphaP1SD'] = ids_alphaP1SD
-    resAB[name]['ids_alphaM1SD'] = ids_alphaM1SD
-    resAB[name]['ids_alphaM2SD'] = ids_alphaM2SD
-
-    return resAB
-
-
-def writeABpostOut(resAB, cfg, reportDictList):
+def writeABpostOut(pathDict, dem, splitPoint, eqParams, resAB, cfgMain, reportDictList):
     """ Loops on the given Avapath, runs AlpahBeta Postprocessing
     plots Results and Write Results
     """
-    saveOutPath = resAB['saveOutPath']
-    flags = cfg['FLAGS']
-    AvaPath = resAB['AvaPath']
-    NameAva = AvaPath['Name']
-    FileNamePlot_ext = [None] * len(NameAva)
-    FileNameWrite_ext = [None] * len(NameAva)
-
-    for i in range(len(NameAva)):
-        name = NameAva[i]
-        resAB = processABresults(resAB, name)
+    saveOutPath = pathDict['saveOutPath']
+    flags = cfgMain['FLAGS']
+    FileNamePlot_ext = [None] * len(resAB.keys())
+    FileNameWrite_ext = [None] * len(resAB.keys())
+    for i, name in enumerate(resAB):
+        avaProfile = resAB[name]
         # Plot the whole profile with beta, alpha ... points and lines
         # TODO: use savefigFormat
-        savename = name + '_AlphaBeta.png'
-        savePath = pathlib.Path(saveOutPath, savename)
-        plotPath(resAB, name, flags)
-        FileNamePlot_ext[i] = plotProfile(resAB, name, savePath, flags)
-        reportAB, FileNameWrite_ext[i] = WriteResults(resAB, name, flags)
-        reportAB['AlphaBeta plots'][name] = savePath
+        plotPath(avaProfile, dem, splitPoint, flags)
+        FileNamePlot_ext[i] = plotProfile(avaProfile, eqParams, saveOutPath)
+        reportAB, FileNameWrite_ext[i] = WriteResults(avaProfile, eqParams, saveOutPath)
+        reportAB['AlphaBeta plots'][name] = FileNamePlot_ext[i]
         # Add to report dictionary list
         reportDictList.append(reportAB)
-    if flags.getboolean('plotPath') or flags.getboolean('plotProfile'):
-        plt.pause(0.001)
-        input("Press [enter] to continue.")
     return reportDictList, FileNamePlot_ext, FileNameWrite_ext
 
 
-def plotPath(resAB, name, flags):
+def plotPath(avaProfile, dem, splitPoint, flags):
     """ Plot and save results depending on flags options"""
-    splitPoint = resAB['splitPoint']
-    header = resAB['dem']['header']
-    rasterdata = resAB['dem']['rasterData']
-    x = resAB[name]['x']
-    y = resAB[name]['y']
-    indSplit = resAB[name]['indSplit']
+    header = dem['header']
+    rasterdata = dem['rasterData']
+    x = avaProfile['x']
+    y = avaProfile['y']
+    indSplit = avaProfile['indSplit']
 
-    if flags.getboolean('plotPath'):
+    if flags.getboolean('debugPlot'):
         # Plot raster and path
         fig, ax = plt.subplots(figsize=(pU.figW, pU.figH))
-        titleText = name
+        titleText = avaProfile['name']
         plt.title(titleText)
         cmap = copy.copy(mpl.cm.get_cmap("Greys"))
         cmap.set_bad(color='white')
@@ -213,38 +141,36 @@ def plotPath(resAB, name, flags):
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.1)
         fig.colorbar(im, cax=cax)
-        # path1 = ax1.plot((x-header['xllcorner'])/header['cellsize'],
-        #                  (y-header['yllcorner'])/header['cellsize'])
-        ax.plot((x-header['xllcorner'])/header['cellsize'],
-                (y-header['yllcorner'])/header['cellsize'], 'k',
+        ax.plot((x-header['xllcenter'])/header['cellsize'],
+                (y-header['yllcenter'])/header['cellsize'], 'k',
                 label='avapath')
-        ax.plot((splitPoint['x']-header['xllcorner'])/header['cellsize'],
-                (splitPoint['y']-header['yllcorner'])/header['cellsize'], '.',
+        ax.plot((splitPoint['x']-header['xllcenter'])/header['cellsize'],
+                (splitPoint['y']-header['yllcenter'])/header['cellsize'], '.',
                 color='0.3', label='Split points')
-        ax.plot((x[indSplit]-header['xllcorner'])/header['cellsize'],
-                (y[indSplit]-header['yllcorner'])/header['cellsize'], '.',
+        ax.plot((x[indSplit]-header['xllcenter'])/header['cellsize'],
+                (y[indSplit]-header['yllcenter'])/header['cellsize'], '.',
                 color='0.6', label='Projection of Split Point on ava path')
         fig.legend(frameon=False, loc='lower center')
-        pU.putAvaNameOnPlot(ax, name)
-        plt.show(block=False)
+        pU.putAvaNameOnPlot(ax, avaProfile['name'])
+        plt.show()
 
 
-def plotProfile(resAB, name, save_file, flags):
-    """ Plot and save results depending on flags options"""
-    s = resAB[name]['s']
-    z = resAB[name]['z']
-    ids10Point = resAB[name]['ids10Point']
-    poly = resAB[name]['poly']
-    beta = resAB[name]['beta']
-    alpha = resAB[name]['alpha']
-    f = resAB[name]['f']
-    ids_alphaM1SD = resAB[name]['ids_alphaM1SD']
-    ids_alphaM2SD = resAB[name]['ids_alphaM2SD']
-    indSplit = resAB[name]['indSplit']
-    ParameterSet = resAB['eqParams']['ParameterSet']
+def plotProfile(avaProfile, eqParams, saveOutPath):
+    """ Plot and or save profile results depending on plotting options"""
+    s = avaProfile['s']
+    z = avaProfile['z']
+    indBetaPoint = avaProfile['indBetaPoint']
+    poly = avaProfile['poly']
+    beta = avaProfile['beta']
+    alpha = avaProfile['alpha']
+    f = avaProfile['f']
+    indAlphaM1SD = avaProfile['indAlphaM1SD']
+    indAlphaM2SD = avaProfile['indAlphaM2SD']
+    indSplit = avaProfile['indSplit']
+    parameterSet = eqParams['parameterSet']
     # Plot the whole profile with beta, alpha ... points and lines
-    fig_prof = plt.figure(figsize=(1.5*pU.figW, 1*pU.figH))
-    titleText = name
+    fig = plt.figure(figsize=(1.5*pU.figW, 1*pU.figH))
+    titleText = avaProfile['name']
     plt.title(titleText)
     xlabelText = 'Distance [m]\nBeta: ' + str(round(beta, 1)) + \
         '°' + '  Alpha: ' + str(round(alpha, 1)) + '°'
@@ -254,20 +180,20 @@ def plotProfile(resAB, name, save_file, flags):
     plt.plot(s, poly(s), ':', label='QuadFit')
     plt.axvline(x=s[indSplit], color='0.7',
                 linewidth=1, linestyle='--', label='Split point')
-    plt.axvline(x=s[ids10Point], color='0.8',
+    plt.axvline(x=s[indBetaPoint], color='0.8',
                 linewidth=1, linestyle='-.', label='Beta')
     plt.plot(s, f, '-', label='AlphaLine')
-    if ids_alphaM1SD:
-        plt.plot(s[ids_alphaM1SD], z[ids_alphaM1SD], 'x', markersize=8,
+    if indAlphaM1SD:
+        plt.plot(s[indAlphaM1SD], z[indAlphaM1SD], 'x', markersize=8,
                  label='Alpha - 1SD')
-    if ids_alphaM2SD:
-        plt.plot(s[ids_alphaM2SD], z[ids_alphaM2SD], 'x', markersize=8,
+    if indAlphaM2SD:
+        plt.plot(s[indAlphaM2SD], z[indAlphaM2SD], 'x', markersize=8,
                  label='Alpha - 2SD')
 
     ax = plt.gca()
-    fig_prof.tight_layout()
+    fig.tight_layout()
     versionText = datetime.datetime.now().strftime("%d.%m.%y") + \
-        '; ' + 'AlphaBeta ' + ParameterSet
+        '; ' + 'AlphaBeta ' + parameterSet
     plt.text(00, 0, versionText, fontsize=8, verticalalignment='bottom',
              horizontalalignment='left', transform=ax.transAxes,
              color='0.5')
@@ -277,46 +203,39 @@ def plotProfile(resAB, name, save_file, flags):
     plt.gca().set_aspect('equal', adjustable='box')
     plt.grid(linestyle=':', color='0.9')
     plt.legend(frameon=False)
-    plt.draw()
-    if flags.getboolean('plotProfile'):
-        plt.show(block=False)
-    if flags.getboolean('saveProfile'):
-        log.debug('Saving profile figure to: %s', save_file)
-        fig_prof.savefig(save_file)
+    savename = avaProfile['name'] + '_AlphaBeta'
+    outputFileName = pU.saveAndOrPlot({'pathResult': saveOutPath}, savename, fig)
 
-    plt.close("all")
-
-    return save_file
+    return outputFileName
 
 
-def WriteResults(resAB, name, flags):
+def WriteResults(avaProfile, eqParams, saveOutPath):
     """ Write AB results to file """
-    saveOutPath = resAB['saveOutPath']
-    s = resAB[name]['s']
-    x = resAB[name]['x']
-    y = resAB[name]['y']
-    z = resAB[name]['z']
-    ids10Point = resAB[name]['ids10Point']
-    beta = resAB[name]['beta']
-    alpha = resAB[name]['alpha']
-    alphaSD = resAB[name]['alphaSD']
-    ids_alpha = resAB[name]['ids_alpha']
-    ids_alphaP1SD = resAB[name]['ids_alphaP1SD']
-    ids_alphaM1SD = resAB[name]['ids_alphaM1SD']
-    ids_alphaM2SD = resAB[name]['ids_alphaM2SD']
-    eqParameters = resAB['eqParams']
-    ParameterSet = eqParameters['ParameterSet']
+    name = avaProfile['name']
+    s = avaProfile['s']
+    x = avaProfile['x']
+    y = avaProfile['y']
+    z = avaProfile['z']
+    indBetaPoint = avaProfile['indBetaPoint']
+    beta = avaProfile['beta']
+    alpha = avaProfile['alpha']
+    alphaSD = avaProfile['alphaSD']
+    indAlpha = avaProfile['indAlpha']
+    indAlphaP1SD = avaProfile['indAlphaP1SD']
+    indAlphaM1SD = avaProfile['indAlphaM1SD']
+    indAlphaM2SD = avaProfile['indAlphaM2SD']
+    parameterSet = eqParams['parameterSet']
     # prepare report dictionary
     # Create dictionary
     reportAB = {}
     reportAB = {'headerLine': {'type': 'title', 'title': 'com2AB Simulation'},
                 'avaPath': {'type': 'simName', 'name': name},
-                ParameterSet + 'setup': {'type': 'list',
-                                         'k1': eqParameters['k1'],
-                                         'k2': eqParameters['k2'],
-                                         'k3': eqParameters['k3'],
-                                         'k4': eqParameters['k4'],
-                                         'SD': eqParameters['SD']},
+                parameterSet + 'setup': {'type': 'list',
+                                         'k1': eqParams['k1'],
+                                         'k2': eqParams['k2'],
+                                         'k3': eqParams['k3'],
+                                         'k4': eqParams['k4'],
+                                         'SD': eqParams['SD']},
                 'AlphaBeta results': {'type': 'list',
                                       'beta': '',
                                       'alpha': '',
@@ -325,16 +244,16 @@ def WriteResults(resAB, name, flags):
                                       'alphaP1SD': ''},
                 'AlphaBeta plots': {'type': 'image'}}
 
-    IND = [ids_alpha, ids10Point, ids_alphaM1SD, ids_alphaM2SD,
-           ids_alphaP1SD]
+    IND = [indAlpha, indBetaPoint, indAlphaM1SD, indAlphaM2SD,
+           indAlphaP1SD]
     ANGLE = [alpha, beta, alphaSD[1], alphaSD[2], alphaSD[0]]
     LABEL = ['alpha', 'beta', 'alphaM1SD', 'alphaM2SD', 'alphaP1SD']
 
     # write report and log
-    log.info('Profile: %s with %s parameter set', name, ParameterSet)
+    log.info('Profile: %s with %s parameter set', name, parameterSet)
     parameterName = ['k1', 'k2', 'k3', 'k4', 'SD']
     for paramName in parameterName:
-        log.info('%s = %g' % (paramName, eqParameters[paramName]))
+        log.info('%s = %g' % (paramName, eqParams[paramName]))
     log.info(('{:<13s}'*6).format(
         ' ', 'x [m]', 'y [m]', 'z [m]', 's [m]', 'angle [°]'))
     for ind, label, angle in zip(IND, LABEL, ANGLE):
@@ -342,18 +261,17 @@ def WriteResults(resAB, name, flags):
 
     # write results to txt file
     FileName_ext = ''
-    if flags.getboolean('writeRes'):
-        FileName_ext = pathlib.Path(saveOutPath, name + '_AB_results.txt')
-        with open(FileName_ext, 'w') as outfile:
-            outfile.write('Profile name %s\n' % name)
-            outfile.write('Parameter Set %s\n' % ParameterSet)
-            for paramName in parameterName:
-                outfile.write('%s = %g\n' % (paramName, eqParameters[paramName]))
-            outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
-            outfile.write(('{:<13s}'*5 + '\n').format(
-                'x', 'y', 'z', 's', 'angle'))
-            for ind, angle in zip(IND, ANGLE):
-                writeLine(ind, outfile, x, y, z, s, angle)
+    FileName_ext = pathlib.Path(saveOutPath, name + '_AB_results.txt')
+    with open(FileName_ext, 'w') as outfile:
+        outfile.write('Profile name %s\n' % name)
+        outfile.write('Parameter Set %s\n' % parameterSet)
+        for paramName in parameterName:
+            outfile.write('%s = %g\n' % (paramName, eqParams[paramName]))
+        outfile.write('Alpha Beta AlMinus1SD AlMinus2SD AlPlus1SD\n')
+        outfile.write(('{:<13s}'*5 + '\n').format(
+            'x', 'y', 'z', 's', 'angle'))
+        for ind, angle in zip(IND, ANGLE):
+            writeLine(ind, outfile, x, y, z, s, angle)
 
     return reportAB, FileName_ext
 

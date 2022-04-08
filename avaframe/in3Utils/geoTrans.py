@@ -452,7 +452,7 @@ def prepareLine(dem, avapath, distance=10, Point=None):
 
     Returns
     -------
-    AvaProfile: dict
+    avaProfile: dict
         the resampled avapath with the z coordinate
     projPoint: dict
         point dictionary projected on the profile (if several points
@@ -480,19 +480,19 @@ def prepareLine(dem, avapath, distance=10, Point=None):
             ycoornew = np.append(ycoornew, yn)
             s = np.append(s, S0 + D * j / nd)
 
-    ResampAvaPath = avapath
-    ResampAvaPath['x'] = xcoornew
-    ResampAvaPath['y'] = ycoornew
-    ResampAvaPath, _ = projectOnRaster(dem, ResampAvaPath)
-    ResampAvaPath['s'] = s
-    AvaProfile = ResampAvaPath
+    resampAvaPath = avapath
+    resampAvaPath['x'] = xcoornew
+    resampAvaPath['y'] = ycoornew
+    resampAvaPath, _ = projectOnRaster(dem, resampAvaPath)
+    resampAvaPath['s'] = s
+    avaProfile = resampAvaPath
     # find split point by computing the distance to the line
     if Point:
-        projPoint = findSplitPoint(AvaProfile, Point)
+        projPoint = findSplitPoint(avaProfile, Point)
     else:
         projPoint = None
 
-    return AvaProfile, projPoint
+    return avaProfile, projPoint
 
 
 def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):
@@ -530,13 +530,13 @@ def findPointOnDEM(dem, vDirX, vDirY, vDirZ, zHighest, xFirst, yFirst, zFirst):
     return xExtTop, yExtTop, zExtTop
 
 
-def findSplitPoint(AvaProfile, Points):
-    """ Finds the closest point in Points to the AvaProfile and returns
-    its projection on AvaProfile.
+def findSplitPoint(avaProfile, Points):
+    """ Finds the closest point in Points to the avaProfile and returns
+    its projection on avaProfile.
 
     Parameters
     -----------
-    AvaProfile: dict
+    avaProfile: dict
         line dictionary with x and y coordinates
     Point: dict
         a point dictionary
@@ -548,8 +548,8 @@ def findSplitPoint(AvaProfile, Points):
         were give in input, only the closest point to the profile
         is projected)
     """
-    xcoor = AvaProfile['x']
-    ycoor = AvaProfile['y']
+    xcoor = avaProfile['x']
+    ycoor = avaProfile['y']
     Dist = np.empty((0))
     IndSplit = np.empty((0))
     for i in range(len(Points['x'])):
@@ -561,54 +561,54 @@ def findSplitPoint(AvaProfile, Points):
     ind = np.argmin(Dist)
     indSplit = int(IndSplit[ind])
     projPoint = {}
-    projPoint['x'] = AvaProfile['x'][indSplit]
-    projPoint['y'] = AvaProfile['y'][indSplit]
-    projPoint['z'] = AvaProfile['z'][indSplit]
-    projPoint['s'] = AvaProfile['s'][indSplit]
+    projPoint['x'] = avaProfile['x'][indSplit]
+    projPoint['y'] = avaProfile['y'][indSplit]
+    projPoint['z'] = avaProfile['z'][indSplit]
+    projPoint['s'] = avaProfile['s'][indSplit]
     projPoint['indSplit'] = indSplit
     return projPoint
 
 
-def checkProfile(AvaProfile, projSplitPoint=None):
+def checkProfile(avaProfile, projSplitPoint=None):
     """ check that the avalanche profiles goes from top to bottom
     flip it if not and adjust the splitpoint in consequence
 
     Parameters
     -----------
-    AvaProfile: dict
+    avaProfile: dict
         line dictionary with x and y coordinates
     projSplitPoint: dict
-        a point dictionary already projected on the AvaProfile
+        a point dictionary already projected on the avaProfile
 
     Returns
     -------
-    AvaProfile: dict
-        avaprofile, fliped if needed
+    avaProfile: dict
+        avaProfile, fliped if needed
     projSplitPoint: dict
         point dictionary
     """
     if projSplitPoint:
         indSplit = projSplitPoint['indSplit']
-    if AvaProfile['z'][-1] > AvaProfile['z'][0]:
+    if avaProfile['z'][-1] > avaProfile['z'][0]:
         log.info('Profile reversed')
-        AvaProfile['x'] = np.flip(AvaProfile['x'])
-        AvaProfile['y'] = np.flip(AvaProfile['y'])
-        AvaProfile['z'] = np.flip(AvaProfile['z'])
+        avaProfile['x'] = np.flip(avaProfile['x'])
+        avaProfile['y'] = np.flip(avaProfile['y'])
+        avaProfile['z'] = np.flip(avaProfile['z'])
         try:
-            L = AvaProfile['s'][-1]
-            AvaProfile['s'] = L - np.flip(AvaProfile['s'])
+            L = avaProfile['s'][-1]
+            avaProfile['s'] = L - np.flip(avaProfile['s'])
         except KeyError:
             pass
 
         if projSplitPoint:
-            indSplit = len(AvaProfile['x']) - indSplit - 1
+            indSplit = len(avaProfile['x']) - indSplit - 1
             projSplitPoint['indSplit'] = indSplit
-            AvaProfile['indSplit'] = indSplit
+            avaProfile['indSplit'] = indSplit
         else:
             projSplitPoint = None
-            AvaProfile['indSplit'] = None
+            avaProfile['indSplit'] = None
 
-    return projSplitPoint, AvaProfile
+    return projSplitPoint, avaProfile
 
 
 def findAngleProfile(tmp, ds, dsMin):
@@ -659,7 +659,7 @@ def findAngleProfile(tmp, ds, dsMin):
     return idsAnglePoint
 
 
-def prepareAngleProfile(beta, AvaProfile):
+def prepareAngleProfile(beta, avaProfile):
     """Prepare inputs for findAngleProfile function
     Read profile (s, z), compute the slope Angle
     look for points for which the slope is under the given Beta value and
@@ -669,7 +669,7 @@ def prepareAngleProfile(beta, AvaProfile):
     ----------
     beta: float
         beta angle in degrees
-    AvaProfile: dict
+    avaProfile: dict
         profile dictionary, s, z and a split point(optional)
     Returns
     -------
@@ -682,24 +682,24 @@ def prepareAngleProfile(beta, AvaProfile):
         distance between points discribed in tmp
     """
 
-    s = AvaProfile['s']
-    z = AvaProfile['z']
+    s = avaProfile['s']
+    z = avaProfile['z']
     try:
-        indSplit = AvaProfile['indSplit']
-        CuSplit = s[indSplit]
+        indSplit = avaProfile['indSplit']
+        sSplit = s[indSplit]
     except KeyError:
         log.warning('No split Point given!')
-        CuSplit = 0
+        sSplit = 0
     ds = np.abs(s - np.roll(s, 1))
     dz = np.roll(z, 1) - z
     ds[0] = 0.0
     dz[0] = 0.0
     angle = np.rad2deg(np.arctan2(dz, ds))
-    # get all values where Angle < 10 but >0
+    # get all values where Angle < beta but >0
     # get index of first occurance and go one back to get previous value
-    # (i.e. last value above 10 deg)
-    # tmp = x[(angle < 10.0) & (angle > 0.0) & (x > 450)]
-    tmp = np.where((angle <= beta) & (s > CuSplit))
+    # (i.e. last value above beta)
+    # tmp = x[(angle < beta) & (angle > 0.0) & (x > 450)]
+    tmp = np.where((angle <= beta) & (s > sSplit))
     tmp = np.asarray(tmp).flatten()
     ds = ds[tmp]
     return angle, tmp, ds
