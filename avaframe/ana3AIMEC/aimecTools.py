@@ -504,10 +504,13 @@ def getSArea(rasterTransfo, dem):
 
     # save Area matrix
     demCellSize = dem['header']['cellsize']
+    xllcenter = dem['header']['xllcenter']
+    yllcenter = dem['header']['yllcenter']
     # area corection coef due to slope (1 if cell is horizontal, >1 if sloped)
     demAreaCoef = dem['areaRaster']/(demCellSize*demCellSize)
     # project on ney grid
-    areaCoef, _ = geoTrans.projectOnGrid(rasterTransfo['gridx'], rasterTransfo['gridy'], demAreaCoef, csz=demCellSize)
+    areaCoef, _ = geoTrans.projectOnGrid(rasterTransfo['gridx']*demCellSize, rasterTransfo['gridy']*demCellSize,
+                                            demAreaCoef, csz=demCellSize, xllc=xllcenter, yllc=yllcenter)
     newRasterRealArea = area * areaCoef
     # projected area
     # rasterTransfo['rasterArea'] = area
