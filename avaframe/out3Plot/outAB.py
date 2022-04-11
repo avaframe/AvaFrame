@@ -8,7 +8,6 @@ import logging
 import copy
 import datetime
 import shapefile
-import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -28,6 +27,8 @@ def writeABtoSHP(pathDict, resAB):
 
     Parameters
     ----------
+    pathDict : dict
+        dictionary with saveOutPath (path to output directory)
     resAB : dict
         dict with com2AB results
 

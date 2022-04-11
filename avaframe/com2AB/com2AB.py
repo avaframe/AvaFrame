@@ -98,6 +98,12 @@ def com2ABMain(cfg, avalancheDir):
     -------
     pathDict : dict
         dictionary with AlphaBeta inputs
+    dem: dict
+        dem dictionary used to get the avaProfile from the avaPath
+    splitPoint: dict
+        split point dict
+    eqParams: dict
+        dict containing the AB model parameters (produced by setEqParameters and depends on the com2ABCfg.ini)
     resAB : dict
         dictionary with AlphaBeta model results
     """
@@ -124,7 +130,7 @@ def com2ABMain(cfg, avalancheDir):
     NameAva = fullAvaPath['Name']
     StartAva = fullAvaPath['Start']
     LengthAva = fullAvaPath['Length']
-
+    # loop on each feature in the shape file
     for i in range(len(NameAva)):
         name = NameAva[i]
         start = StartAva[i]
@@ -160,10 +166,14 @@ def com2ABKern(avaPath, splitPoint, dem, eqParams, distance, dsMin):
     Parameters
     ----------
     avaPath : dict
-        dictionary with the name of the avapath, the x and y coordinates of the
+        dictionary with the name of the avaPath, the x and y coordinates of the
         path
     splitPoint : dict
         dictionary split points
+    dem: dict
+        dem dictionary used to get the avaProfile from the avaPath
+    eqParams: dict
+        dict containing the AB model parameters (produced by setEqParameters and depends on the com2ABCfg.ini)
     distance: float
         line resampling distance
     dsMin: float
@@ -346,7 +356,21 @@ def calcABAngles(avaProfile, eqParameters, dsMin):
 
 
 def calcABDistances(avaProfile, name):
-    """ Compute runout distances and points from angles computed in calcABAngles"""
+    """ Compute runout distances and points from angles computed in calcABAngles
+
+    Parameters
+    ----------
+    avaProfile : dict
+        dictionary with the name of the avapath, the x, y and z coordinates of
+        the path
+    name: str
+        profile name
+
+    Returns
+    -------
+    avaProfile : dict
+        updated avaProfile with s index of alpha, and alphaSD points
+    """
     s = avaProfile['s']
     z = avaProfile['z']
     sSplit = avaProfile['sSplit']
