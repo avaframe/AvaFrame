@@ -309,7 +309,8 @@ def visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup,
     outFileName = '_'.join([projectName, resType, 'thresholdValue', str(thresholdValue).replace('.', 'p'),
                            'slComparisonStat'])
 
-    pU.saveAndOrPlot(pathDict, outFileName, fig)
+    outFilePath = pU.saveAndOrPlot(pathDict, outFileName, fig)
+    return outFilePath
 
 
 def visuMass(resAnalysisDF, pathDict, simName, refSimulationName, timeMass):
