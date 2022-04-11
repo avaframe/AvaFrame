@@ -144,7 +144,7 @@ for test in testList:
     pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportD['simName']['name'])
 
     # perform analysis
-    rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.AIMEC2Report(pathDict, inputsDF, cfgAimec)
+    rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfgAimec)
 
     # add aimec results to report dictionary
     reportD, benchDict = ana3AIMEC.aimecRes2ReportDict(resAnalysisDF, reportD, benchDict, pathDict['refSimulation'])

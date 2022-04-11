@@ -14,103 +14,6 @@ import avaframe.out3Plot.outAIMEC as outAimec
 log = logging.getLogger(__name__)
 
 
-def AIMEC2Report(pathDict, inputsDF, cfg):
-    """ perform AIMEC analysis and generate plots for reports
-
-    Reads the required files location for ana3AIMEC postpocessing
-    given a path dictionary to the input files
-
-    Parameters
-    ----------
-    pathDict : dict
-        dictionary with paths to data to analyze
-    cfg : configparser
-        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
-
-    Returns
-    -------
-    rasterTransfo: dict
-        domain transformation information
-    newRasters: dict
-        raster data expressed in the new coordinates
-    resAnalysis: dict
-        results of ana3AIMEC analysis
-    """
-    # Extract input config parameters
-    cfgSetup = cfg['AIMECSETUP']
-    cfgFlags = cfg['FLAGS']
-    interpMethod = cfgSetup['interpMethod']
-
-    log.info('Prepare data for post-processing')
-    # Read input dem
-    demSource = pathDict['demSource']
-    dem = IOf.readRaster(demSource)
-    # read reference file and raster and config
-    refSimulationName = pathDict['refSimulation']
-    refResultSource = inputsDF[inputsDF['simName'] == refSimulationName][cfgSetup['resType']].to_list()[0]
-    refRaster = IOf.readRaster(refResultSource)
-    refHeader = refRaster['header']
-
-    log.debug('Data-file %s analysed and domain transformation done' % demSource)
-
-    # Make domain transformation
-    log.debug("Creating new deskewed raster and preparing new raster assignment function")
-    log.debug('Analyze and make domain transformation on Data-file %s' % demSource)
-    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
-
-    # ####################################################
-    # visualisation
-    # TODO: needs to be moved somewhere else
-    slRaster = aT.transform(refRaster, refResultSource, rasterTransfo, interpMethod)
-    newRasters = {}
-    log.debug("Assigning dem data to deskewed raster")
-    raster = IOf.readRaster(refResultSource)
-    newRasters['newRasterDEM'] = aT.transform(dem, demSource, rasterTransfo, interpMethod)
-
-    inputData = {}
-    inputData['slRaster'] = slRaster
-    inputData['xyRaster'] = raster['rasterData']
-    inputData['xyHeader'] = raster['header']
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
-    # ###########################################################
-
-    # postprocess reference
-    inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
-    timeMass = None
-    resAnalysisDF = inputsDF[['simName']].copy()
-    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters,
-                                                           timeMass, refSimulationName, resAnalysisDF)
-
-    # postprocess other simulations
-    for index, inputsDFrow in inputsDF.iterrows():
-        simName = inputsDFrow['simName']
-        if simName != refSimulationName:
-            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow,
-                                                                   newRasters, timeMass, simName, resAnalysisDF)
-            pathDict['compSimulation'] = simName
-
-    # -----------------------------------------------------------
-    # result visualisation + report
-    # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside
-    # -----------------------------------------------------------
-    plotDict = {}
-    log.info('Visualisation of AIMEC results')
-    outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
-    plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
-    plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
-    plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF['areasPlot'][1]}
-    if cfgFlags.getboolean('flagMass'):
-        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF['massPlotName'][1]}
-
-    # -----------------------------------------------------------
-    # write results to file
-    # -----------------------------------------------------------
-    log.info('Writing results to file')
-    outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
-
-    return rasterTransfo, resAnalysisDF, plotDict
-
-
 def mainAIMEC(pathDict, inputsDF, cfg):
     """ Main logic for AIMEC postprocessing
 
@@ -136,6 +39,8 @@ def mainAIMEC(pathDict, inputsDF, cfg):
         domain transformation information
     resAnalysisDF: dataFrame
         results of ana3AIMEC analysis
+    plotDict: dict
+        dictionary for report
     """
 
     # Extract input config parameters
@@ -194,122 +99,24 @@ def mainAIMEC(pathDict, inputsDF, cfg):
     # result visualisation + report
     # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside
     # -----------------------------------------------------------
+    plotDict = {}
     log.info('Visualisation of AIMEC results')
     outAimec.visuSimple(cfgSetup, rasterTransfo, resAnalysisDF, newRasters, pathDict)
     if len(resAnalysisDF.index) == 2:
-        outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
+        plotName = outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
     else:
-        outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
+        plotName = outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
 
     outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
+    plotDict['slCompPlot'] = {'Aimec comparison of mean and max values along path': plotName}
+    plotDict['areasPlot'] = {'Aimec area analysis': resAnalysisDF['areasPlot'][1]}
+    if cfgFlags.getboolean('flagMass'):
+        plotDict['massAnalysisPlot'] = {'Aimec mass analysis': resAnalysisDF['massPlotName'][1]}
 
-    # -----------------------------------------------------------
-    # write results to file
-    # -----------------------------------------------------------
     log.info('Writing results to file')
     outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
 
-    return rasterTransfo, resAnalysisDF
-
-
-def AIMECIndividual(pathDict, inputsDF, cfg):
-    """ Main logic for AIMEC postprocessing
-
-    Reads the required files location for ana3AIMEC postpocessing
-    given an avalanche directory
-    Make the domain transformation corresponding to the input avalanche path
-    Transform 2D resType field provided in the configuration
-    Analyze transformed raster
-    Produce plots and report
-
-    Parameters
-    ----------
-    pathDict : dict
-        dictionary with paths to dem and lines for Aimec analysis
-    inputsDF : dataFrame
-        dataframe with simulations to analyze and associated path to raster data
-    cfg : configparser
-        configparser with ana3AIMEC settings defined in ana3AIMECCfg.ini
-
-    Returns
-    -------
-    rasterTransfo: dict
-        domain transformation information
-    resAnalysisDF: dataFrame
-        results of ana3AIMEC analysis
-    """
-
-    # Extract input config parameters
-    cfgSetup = cfg['AIMECSETUP']
-    cfgFlags = cfg['FLAGS']
-    interpMethod = cfgSetup['interpMethod']
-
-    log.info('Prepare data for post-processing')
-    # Read input dem
-    demSource = pathDict['demSource']
-    dem = IOf.readRaster(demSource)
-    # read reference file and raster and config
-    refSimulationName = pathDict['refSimulation']
-    refResultSource = inputsDF[inputsDF['simName'] == refSimulationName][cfgSetup['resType']].to_list()[0]
-    refRaster = IOf.readRaster(refResultSource)
-    refHeader = refRaster['header']
-
-    log.debug('Data-file %s analysed and domain transformation done' % demSource)
-
-    # Make domain transformation
-    log.debug("Creating new deskewed raster and preparing new raster assignment function")
-    log.debug('Analyze and make domain transformation on Data-file %s' % demSource)
-    rasterTransfo = aT.makeDomainTransfo(pathDict, dem, refHeader['cellsize'], cfgSetup)
-
-    # ####################################################
-    # visualisation
-    # TODO: needs to be moved somewhere else
-    slRaster = aT.transform(refRaster, refResultSource, rasterTransfo, interpMethod)
-    newRasters = {}
-    log.debug("Assigning dem data to deskewed raster")
-    raster = IOf.readRaster(refResultSource)
-    newRasters['newRasterDEM'] = aT.transform(dem, demSource, rasterTransfo, interpMethod)
-
-    inputData = {}
-    inputData['slRaster'] = slRaster
-    inputData['xyRaster'] = raster['rasterData']
-    inputData['xyHeader'] = raster['header']
-    outAimec.visuTransfo(rasterTransfo, inputData, cfgSetup, pathDict)
-    # ###########################################################
-
-    # postprocess reference
-    inputsDFrow = inputsDF.loc[inputsDF['simName'] == refSimulationName].squeeze()
-    timeMass = None
-    resAnalysisDF = inputsDF[['simName']].copy()
-    resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters,
-                                                           timeMass, refSimulationName, resAnalysisDF)
-
-    # postprocess other simulations
-    for index, inputsDFrow in inputsDF.iterrows():
-        simName = inputsDFrow['simName']
-        if simName != refSimulationName:
-            resAnalysisDF, newRasters, timeMass = postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters,
-                                                                   timeMass, simName, resAnalysisDF)
-            pathDict['compSimulation'] = simName
-    # -----------------------------------------------------------
-    # result visualisation + report
-    # ToDo: should we move this somewere else, this is now just plotting, it should be accessible from outside
-    # -----------------------------------------------------------
-    log.info('Visualisation of AIMEC results')
-    if len(resAnalysisDF.index) == 2:
-        outAimec.visuRunoutComp(rasterTransfo, resAnalysisDF, cfgSetup, pathDict)
-    else:
-        outAimec.visuRunoutStat(rasterTransfo, inputsDF, resAnalysisDF, newRasters, cfgSetup, pathDict)
-
-    outAimec.resultVisu(cfgSetup, inputsDF, pathDict, cfgFlags, rasterTransfo, resAnalysisDF)
-
-    # -----------------------------------------------------------
-    # write results to file
-    # -----------------------------------------------------------
-    log.info('Writing results to file')
-    outAimec.resultWrite(pathDict, cfg, rasterTransfo, resAnalysisDF)
-
-    return rasterTransfo, resAnalysisDF
+    return rasterTransfo, resAnalysisDF, plotDict
 
 
 def postProcessAIMEC(cfg, rasterTransfo, pathDict, inputsDFrow, newRasters, timeMass, simName, resAnalysisDF):

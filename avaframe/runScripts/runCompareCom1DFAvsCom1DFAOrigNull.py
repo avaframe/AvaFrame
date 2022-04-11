@@ -176,7 +176,7 @@ for avaName in avaList:
             pathDict = aimecTools.readAIMECinputs(avaDir, pathDict, dirName=reportDcom1DFAOrig['simName']['name'])
 
             # perform analysis
-            rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.AIMEC2Report(pathDict, inputsDF, cfgAimec)
+            rasterTransfo, resAnalysisDF, aimecPlotDict = ana3AIMEC.mainAIMEC(pathDict, inputsDF, cfgAimec)
 
             # add aimec results to report dictionary
             reportDcom1DFA, reportDcom1DFAOrig = ana3AIMEC.aimecRes2ReportDict(resAnalysisDF, reportDcom1DFA,
