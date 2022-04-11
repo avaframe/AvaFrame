@@ -23,7 +23,6 @@ from avaframe.com2AB import com2AB
 
 # import analysis tools
 from avaframe.out3Plot import outAB
-from avaframe.runScripts import runAna3AIMEC
 
 # import plotting tools
 from avaframe.out3Plot import outCom3Plots
@@ -71,12 +70,12 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         # make a copy because extendDFAPathKernel might modify avaProfileMass
         avaProfileMassExt = DFAPath.extendDFAPathKernel(cfgHybrid['PATH'], avaProfileMass.copy(), dem, particlesList[0])
         # save profile as AB profile in Inputs
-        pathAB = pathlib.Path(avalancheDir, 'Inputs', 'LINES', 'pathAB_aimec')
-        name = 'massAvaPath'
+        # pathAB = pathlib.Path(avalancheDir, 'Inputs', 'LINES', 'hybrid', 'pathAB_aimec')
+        # name = 'massAvaPath'
         avaProfileMassExtOri = copy.deepcopy(avaProfileMassExt)
         avaProfileMassExtOri['x'] = avaProfileMassExtOri['x'] + demOri['header']['xllcenter']
         avaProfileMassExtOri['y'] = avaProfileMassExtOri['y'] + demOri['header']['yllcenter']
-        shpConv.writeLine2SHPfile(avaProfileMassExtOri, name, pathAB)
+        # shpConv.writeLine2SHPfile(avaProfileMassExtOri, name, pathAB)
         # also save it to work
         pathAB = pathlib.Path(avalancheDir, 'Outputs', 'com3Hybrid', 'pathAB_aimec' + str(iteration))
         name = 'massAvaPath'
@@ -85,20 +84,20 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         # Run Alpha Beta
         hybridModelABCfg = pathlib.Path('com3Hybrid', 'hybridModel_com2ABCfg.ini')
         cfgAB = cfgUtils.getModuleConfig(com2AB, fileOverride=hybridModelABCfg)
+        cfgAB['ABSETUP']['path2Line'] = str(pathAB) + '.shp'
         # take the path extracted from the DFA model as input
-        resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
+        pathDict, demAB, splitPoint, eqParams, resAB = com2AB.com2ABMain(cfgAB, avalancheDir)
         # make AB plot
         reportDictList = []
-        _, plotFile, writeFile = outAB.writeABpostOut(resAB, cfgAB, reportDictList)
+        _, plotFile, writeFile = outAB.writeABpostOut(pathDict, demAB, splitPoint, eqParams, resAB, cfgAB, reportDictList)
 
         # make custom com3 profile plot
-        resAB = outAB.processABresults(resAB, name)
         alpha = resAB[name]['alpha']
-        ids_alpha = resAB[name]['ids_alpha']
-        ids10Point = resAB[name]['ids10Point']
-        sBetaPoint = resAB[name]['s'][ids10Point]
-        xAB = resAB[name]['x'][ids_alpha]
-        yAB = resAB[name]['y'][ids_alpha]
+        indAlpha = resAB[name]['indAlpha']
+        indBetaPoint = resAB[name]['indBetaPoint']
+        sBetaPoint = resAB[name]['s'][indBetaPoint]
+        xAB = resAB[name]['x'][indAlpha]
+        yAB = resAB[name]['y'][indAlpha]
         resultsHybrid['iterration' + str(iteration)] = {'path': avaProfileMassExt, 'alpha': alpha,
                                                         'xAB': xAB, 'yAB': yAB, 'sBetaPoint': sBetaPoint}
 
@@ -114,12 +113,13 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
 
     # fetch fields for desired time step
     fields, fieldHeader, timeList = com1DFA.readFields(avalancheDir, ['pta'], simName=simID,
-        flagAvaDir=True, comModule='com1DFA', timeStep=timeStepInfo[-1])
+                                                       flagAvaDir=True, comModule='com1DFA', timeStep=timeStepInfo[-1])
     outCom3Plots.hybridProfilePlot(avalancheDir, resultsHybrid)
     outCom3Plots.hybridPathPlot(avalancheDir, dem, resultsHybrid, fields[0], particlesList[-1], muArray)
 
     log.debug('Alpha array is %s' % alphaArray)
     log.debug('mu array is %s' % muArray)
+
 
 def keepIterating(cfgHybrid, alphaArray):
     """Check the change in alpha between two iterations
