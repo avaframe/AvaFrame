@@ -64,10 +64,10 @@ def pointsToRasterC(double[:] xArray, double[:] yArray, double[:] zArray, Z0, do
     cdef int nPart = len(xArray)
     cdef int j, ic
 
-    for j in range(nPart):
-      x = xArray[j]
-      y = yArray[j]
-      z = zArray[j]
+    for k in range(nPart):
+      x = xArray[k]
+      y = yArray[k]
+      z = zArray[k]
       # find coordinates in normalized ref (origin (0,0) and cellsize 1)
       Lx = (x - xllc) / csz
       Ly = (y - yllc) / csz
@@ -152,6 +152,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
   cdef int viscOption = cfg.getint('viscOption')
+  cdef int inLocalCoordSys = cfg.getint('inLocalCoordSys')
+  cdef int curvAccInGradient = cfg.getint('curvAccInGradient')
   cdef double dt = particles['dt']
   cdef double mu = cfg.getfloat('mu')
   cdef int nPart = particles['nPart']
@@ -184,32 +186,37 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double[:] forceX = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceY = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceZ = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] uxDirArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] uyDirArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] uzDirArray = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] gEff = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
   # declare intermediate step variables
   cdef int indCellX, indCellY
   cdef double areaPart, areaCell, araEntrPart, cResCell, cResPart, uMag, m, dm, h, entrMassCell, dEnergyEntr, dis
-  cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir
+  cdef double x, y, z, xEnd, yEnd, zEnd, ux, uy, uz, uxDir, uyDir, uzDir, uxOrtho, uyOrtho, uzOrtho
   cdef double nx, ny, nz, nxEnd, nyEnd, nzEnd, nxAvg, nyAvg, nzAvg
   cdef double gravAccNorm, accNormCurv, effAccNorm, gravAccTangX, gravAccTangY, gravAccTangZ, forceBotTang, sigmaB, tau
   # variables for interpolation
   cdef int Lx0, Ly0, LxEnd0, LyEnd0, iCell, iCellEnd
   cdef double w[4]
   cdef double wEnd[4]
-  cdef int j
+  cdef int k
   force = {}
   # loop on particles
-  for j in range(nPart):
-      m = mass[j]
-      x = xArray[j]
-      y = yArray[j]
-      z = zArray[j]
-      h = hArray[j]
-      ux = uxArray[j]
-      uy = uyArray[j]
-      uz = uzArray[j]
-      indCellX = indXDEM[j]
-      indCellY = indYDEM[j]
+  for k in range(nPart):
+      m = mass[k]
+      x = xArray[k]
+      y = yArray[k]
+      z = zArray[k]
+      h = hArray[k]
+      ux = uxArray[k]
+      uy = uyArray[k]
+      uz = uzArray[k]
+      indCellX = indXDEM[k]
+      indCellY = indYDEM[k]
       # deduce area
       areaPart = m / (h * rho)
 
@@ -220,8 +227,31 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
       nx, ny, nz = normalize(nx, ny, nz)
 
+      # get the local coordinate system if needed (do this before we start updating the velocity)
+      if inLocalCoordSys == 1:
+        # first get the local coordinate system
+        uMag = norm(ux, uy, uz)
+        if uMag < velMagMin:
+          # in this case we cant get the NCS from the velocity because it is too small
+          # we define an arbitrary NCS aligned in the eX direction
+          uxDir = 1
+          uyDir = 0
+          uzDir = -(1*nx + 0*ny) / nz
+          uxDir, uyDir, uzDir = normalize(uxDir, uyDir, uzDir)
+        else:
+          # Otherwise we use the velocity to define the direction
+          uxDir, uyDir, uzDir = normalize(ux, uy, uz)
+        # save velocity direction vector
+        uxDirArray[k] = uxDir
+        uyDirArray[k] = uyDir
+        uzDirArray[k] = uzDir
+        # now compute the other tangent vector to create the NCS
+        uxOrtho, uyOrtho, uzOrtho = crossProd(nx, ny, nz, uxDir, uyDir, uzDir)
+        uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+
       if viscOption == 1:
-        # add artificial viscosity
+        # add artificial viscosity.
+        # ToDo: this is changing the velocity direction!!! are we sure that the velocity is still in the tangent plane?
         ux, uy, uz = addArtificialViscosity(m, h, dt, rho, ux, uy, uz, subgridMixingFactor, Lx0, Ly0,
                                             w[0], w[1], w[2], w[3], VX, VY, VZ, nx, ny, nz)
 
@@ -256,21 +286,56 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
 
       # acceleration due to curvature
       accNormCurv = (ux*(nxEnd-nx) + uy*(nyEnd-ny) + uz*(nzEnd-nz)) / dt
-      # normal component of the acceleration of gravity
-      gravAccNorm = - gravAcc * nzAvg
+      # normal component of the acceleration of gravity (using the upward normal)
+      if inLocalCoordSys == 1:
+        # it is important to use the same NCS in the whole process meaning using the same uxDir, uyDir, uzDir and
+        # nxDir, nyDir, nzDir
+        gravAccNorm = - gravAcc * nz
+      else:
+        gravAccNorm = - gravAcc * nzAvg  # use nzAvg because we want the average gNorm on the time step
       # turn off curvature with the  curvAcceleration coefficient
       effAccNorm = gravAccNorm + curvAcceleration * accNormCurv
-      if(effAccNorm < 0.0):
-          Fnormal[j] = m * effAccNorm
+      # save the normal component of the gravity (plus the curvature term if desiered)
+      # this is needed to compute the pressure gradient
+      # save the norm of the gEff, because we know in which direction it goes (minus the normal vector)
+      if curvAccInGradient == 1:
+        # use gravity plus curvature (if the effAccNorm > 0, material is detatched, then gEff = 0)
+        if(effAccNorm <= 0.0):
+          gEff[k] = -effAccNorm
+        else:
+          gEff[k] = 0
+      else:
+        # only use gravity
+        gEff[k] = -gravAccNorm
 
-      # body forces (tangential component of acceleration of gravity)
-      gravAccTangX = - gravAccNorm * nxAvg
-      gravAccTangY = - gravAccNorm * nyAvg
-      gravAccTangZ = -gravAcc - gravAccNorm * nzAvg
-      # adding gravity force contribution
-      forceX[j] = forceX[j] + gravAccTangX * m
-      forceY[j] = forceY[j] + gravAccTangY * m
-      forceZ[j] = forceZ[j] + gravAccTangZ * m
+      # ToDo: this is never used
+      if(effAccNorm < 0.0):
+          Fnormal[k] = m * effAccNorm
+
+      # here either use the old samos method where forces are computed in the fixed cartesian coordinate system
+      # or compute the forces in the local NCS (in this case, forceX is the froce in v1 direction,
+      # forceY is the froce in v2 direction and forceZ is the froce in v3 direction and is 0)
+      if inLocalCoordSys == 1:
+        # adding gravity force contribution (here in the local coord system, x is 1 and y is 2)
+        # make sure to use the same uDir uOrtho and n vecors everywhere
+        forceX[k] = forceX[k] - gravAcc * uzDir * m
+        forceY[k] = forceY[k] - gravAcc * uzOrtho * m
+        forceZ[k] = 0
+        # Also save the curvAcc (needed when solving equation in NCS)
+        if uMag<velMagMin:
+          # if uMag is too small, accNormCurv should also be small
+          curvAcc[k] = accNormCurv / velMagMin
+        else:
+          curvAcc[k] = accNormCurv / uMag
+      else:
+        # body forces (tangential component of acceleration of gravity)
+        gravAccTangX = - gravAccNorm * nxAvg
+        gravAccTangY = - gravAccNorm * nyAvg
+        gravAccTangZ = - gravAcc - gravAccNorm * nzAvg
+        # adding gravity force contribution
+        forceX[k] = forceX[k] + gravAccTangX * m
+        forceY[k] = forceY[k] + gravAccTangY * m
+        forceZ[k] = forceZ[k] + gravAccTangZ * m
 
       # Calculating bottom shear and normal stress
       # get new velocity magnitude (leave 0 if uMag is 0)
@@ -296,15 +361,16 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
             tau = 0.0
 
       # adding bottom shear resistance contribution
-      # make sure uMag is not 0
-      if uMag<velMagMin:
-        uMag = velMagMin
-      forceBotTang = - areaPart * tau
+      # norm of the friction force >=0 (if 0 -> detatchment)
+      forceBotTang = areaPart * tau
       if explicitFriction == 1:
         # explicit formulation
-        forceFrict[j] = forceFrict[j] - forceBotTang
+        forceFrict[k] = forceFrict[k] + forceBotTang
       elif explicitFriction == 0:
-        forceFrict[j] = forceFrict[j] - forceBotTang/uMag
+        # make sure uMag is not 0
+        if uMag<velMagMin:
+          uMag = velMagMin
+        forceFrict[k] = forceFrict[k] + forceBotTang/uMag
 
       # compute entrained mass
       entrMassCell = entrMassRaster[indCellY, indCellX]
@@ -315,8 +381,8 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       uz = uz * m / (m + dm)
       # update mass
       m = m + dm
-      mass[j] = m
-      dM[j] = dm
+      mass[k] = m
+      dM[k] = dm
 
       # speed loss due to energy loss due to entrained mass
       dEnergyEntr = areaEntrPart * entShearResistance + dm * entDefResistance
@@ -331,11 +397,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       # adding resistance force due to obstacles
       cResCell = cResRaster[indCellY][indCellX]
       cResPart = computeResForce(hRes, h, areaPart, rho, cResCell, uMag, explicitFriction)
-      forceFrict[j] = forceFrict[j] - cResPart
+      forceFrict[k] = forceFrict[k] - cResPart
 
-      uxArray[j] = ux
-      uyArray[j] = uy
-      uzArray[j] = uz
+      uxArray[k] = ux
+      uyArray[k] = uy
+      uzArray[k] = uz
 
   # save results
   force['dM'] = np.asarray(dM)
@@ -346,16 +412,21 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   particles['ux'] = np.asarray(uxArray)
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
+  particles['uxDir'] = np.asarray(uxDirArray)
+  particles['uyDir'] = np.asarray(uyDirArray)
+  particles['uzDir'] = np.asarray(uzDirArray)
   particles['m'] = np.asarray(mass)
+  particles['gEff'] = np.asarray(gEff)
+  particles['curvAcc'] = np.asarray(curvAcc)
 
   # update mass available for entrainement
   # TODO: this allows to entrain more mass then available...
-  for j in range(nPart):
-    indCellX = indXDEM[j]
-    indCellY = indYDEM[j]
+  for k in range(nPart):
+    indCellX = indXDEM[k]
+    indCellY = indYDEM[k]
     entrMassCell = entrMassRaster[indCellY, indCellX]
     areaCell = areaRatser[indCellY, indCellX]
-    dm = dM[j]
+    dm = dM[k]
     # update surface entrainment mass available
     entrMassCell = entrMassCell - dm/areaCell
     if entrMassCell < 0:
@@ -577,6 +648,7 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef int distReproj = cfg.getint('distReproj')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
+  cdef double inLocalCoordSys = cfg.getfloat('inLocalCoordSys')
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
   cdef int ncols = dem['header']['ncols']
@@ -599,6 +671,10 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double[:] uxDirArray = particles['uxDir']
+  cdef double[:] uyDirArray = particles['uyDir']
+  cdef double[:] uzDirArray = particles['uzDir']
+  cdef double[:] curvAcc = particles['curvAcc']
   cdef double[:] forceX = force['forceX']
   cdef double[:] forceY = force['forceY']
   cdef double[:] forceZ = force['forceZ']
@@ -633,50 +709,113 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef double sCorNew, sNew, lNew, ds, dl, uN, uMag, uMagNew
   cdef double ForceDriveX, ForceDriveY, ForceDriveZ
   cdef double massEntrained = 0, massFlowing = 0
-  cdef int j
+  cdef int k
   cdef int nRemove = 0
   # variables for interpolation
   cdef int Lx0, Ly0, LxNew0, LyNew0, iCell, iCellNew
   cdef double w[4]
   cdef double wNew[4]
   # loop on particles
-  for j in range(nPart):
-    m = mass[j]
-    x = xArray[j]
-    y = yArray[j]
-    z = zArray[j]
-    ux = uxArray[j]
-    uy = uyArray[j]
-    uz = uzArray[j]
-    s = sArray[j]
-    sCor = sCorArray[j]
-    l = lArray[j]
-    idfixed = idFixed[j]
+  for k in range(nPart):
+    m = mass[k]
+    x = xArray[k]
+    y = yArray[k]
+    z = zArray[k]
+    ux = uxArray[k]
+    uy = uyArray[k]
+    uz = uzArray[k]
+    s = sArray[k]
+    sCor = sCorArray[k]
+    l = lArray[k]
+    idfixed = idFixed[k]
+
+    # get cell and weights at old position
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
+    # get normal at the old particle location
+    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
 
     # Force magnitude (without friction)
-    ForceDriveX = forceX[j] + forceSPHX[j]
-    ForceDriveY = forceY[j] + forceSPHY[j]
-    ForceDriveZ = forceZ[j] + forceSPHZ[j]
+    ForceDriveX = forceX[k] + forceSPHX[k]
+    ForceDriveY = forceY[k] + forceSPHY[k]
+    ForceDriveZ = forceZ[k] + forceSPHZ[k]
 
     # velocity magnitude
     uMag = norm(ux, uy, uz)
 
-    # procede to time integration
-    # operator splitting
-    # estimate new velocity due to driving force
-    uxNew = ux + ForceDriveX * dt / m
-    uyNew = uy + ForceDriveY * dt / m
-    uzNew = uz + ForceDriveZ * dt / m
+    if inLocalCoordSys == 1:
+      # calling it new just not to change (nx, ny, nz) which needs to stay unnormalized
+      nxNew = nx
+      nyNew = ny
+      nzNew = nz
+      nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
+      uxDir = uxDirArray[k]
+      uyDir = uyDirArray[k]
+      uzDir = uzDirArray[k]
+      if uMag <= velMagMin:
+        # the particle was at rest, the direction vector is given by the forces
+        # first get our arbitrary coordinate system
+        uxOrtho, uyOrtho, uzOrtho = crossProd(nxNew, nyNew, nzNew, uxDir, uyDir, uzDir)
+        uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+        # now get the driving force direction v1
+        uxDir = uxDir * ForceDriveX + uxOrtho * ForceDriveY
+        uyDir = uyDir * ForceDriveX + uyOrtho * ForceDriveY
+        uzDir = uzDir * ForceDriveX + uzOrtho * ForceDriveY
+        # normalize
+        uxDir, uyDir, uzDir = normalize(uxDir, uyDir, uzDir)
+        # recompute the ForceDrive components (now all in the v1 dir and nothing in 2)
+        # ForceDriveZ should be 0 here
+        ForceDriveX = norm(ForceDriveX, ForceDriveY, ForceDriveZ)
+        ForceDriveY = 0
+        ForceDriveZ = 0
+      else:
+        uxOrtho, uyOrtho, uzOrtho = crossProd(nxNew, nyNew, nzNew, uxDir, uyDir, uzDir)
+        uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
 
-    # take friction force into account
-    if typeStop != 1:
-      uxNew, uyNew, uzNew, dtStop = account4FrictionForce(uxNew, uyNew, uzNew, m, dt, forceFrict[j], uMag, explicitFriction)
+      # we are here in the local coordinate system and want to solve the dif eq of motion on uMag
+      # ForceDriveX is here the force in the v1 direction (Fsph + Fg)
+      uMagNew = uMag + ForceDriveX * dt / m
+      # take friction force into account
+      if typeStop != 1:
+        # add 0 to the other velocity components (dummys)
+        uMagNew, _, _, dtStop = account4FrictionForce(uMagNew, 0, 0, m, dt, forceFrict[k], uMag, explicitFriction)
+      else:
+        dtStop = dt
+      # we have to convert the uMagNew back to cartesian coord system
+      if uMagNew > 0:
+        # only do this if the particle is flowing, otherwise velocity is 0 and we can not update the direction
+        # note that if uMag=0, the ForceDriveY = 0 so alpha2 = 0
+        alpha2 = ForceDriveY / (m * uMagNew)
+        # here too, if uMag=0, curvAcc=0
+        alpha3 = -curvAcc[k]
+        # now update the velocity direction
+        uxDir = uxDir + dt * (alpha2*uxOrtho + alpha3*nxNew)
+        uyDir = uyDir + dt * (alpha2*uyOrtho + alpha3*nyNew)
+        uzDir = uzDir + dt * (alpha2*uzOrtho + alpha3*nzNew)
+        # normalize
+        uxDir, uyDir, uzDir = normalize(uxDir, uyDir, uzDir)
+        uxNew = uMagNew * uxDir
+        uyNew = uMagNew * uyDir
+        uzNew = uMagNew * uzDir
+      else:
+        uxNew = 0
+        uyNew = 0
+        uzNew = 0
     else:
-      dtStop = dt
+      # procede to time integration
+      # operator splitting
+      # estimate new velocity due to driving force
+      uxNew = ux + ForceDriveX * dt / m
+      uyNew = uy + ForceDriveY * dt / m
+      uzNew = uz + ForceDriveZ * dt / m
+      # take friction force into account
+      if typeStop != 1:
+        uxNew, uyNew, uzNew, dtStop = account4FrictionForce(uxNew, uyNew, uzNew, m, dt, forceFrict[k], uMag, explicitFriction)
+      else:
+        dtStop = dt
 
     # update mass (already done un computeForceC)
     mNew = m
-    massEntrained = massEntrained + dM[j]
+    massEntrained = massEntrained + dM[k]
     # update position
     xNew = x + dtStop * 0.5 * (ux + uxNew)
     yNew = y + dtStop * 0.5 * (uy + uyNew)
@@ -693,7 +832,7 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
 
     if iCellNew < 0:
       # if the particle is not on the DEM, memorize it and remove it at the next update
-      keepParticle[j] = 0
+      keepParticle[k] = 0
       LxNew0 = 0
       LyNew0 = 0
       wNew = [0, 0, 0, 0]
@@ -701,13 +840,9 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
     elif outOfDEM[iCellNew]:
       # if the particle is on the DEM but in a noData area,
       # memorize it and remove it at the next update
-      keepParticle[j] = 0
+      keepParticle[k] = 0
       nRemove = nRemove + 1
 
-    # get cell and weights at old position
-    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
-    # get normal at the old particle location
-    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
     # get normal at the new particle location
     nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
     # get average normal between old and new position
@@ -749,30 +884,30 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
 
     TotkinEneNew = TotkinEneNew + 0.5 * m * uMag * uMag
     TotpotEneNew = TotpotEneNew + mNew * gravAcc * zNew
-    totForceSPHNew = totForceSPHNew + mNew * norm(forceSPHX[j], forceSPHY[j], forceSPHZ[j])
+    totForceSPHNew = totForceSPHNew + mNew * norm(forceSPHX[k], forceSPHY[k], forceSPHZ[k])
 
     if idfixed == 1:
       # idfixed = 1 if particles belong to 'fixed' boundary particles - so zero velocity and fixed position
-      xNewArray[j] = x
-      yNewArray[j] = y
-      zNewArray[j] = z
-      uxArrayNew[j] = ux
-      uyArrayNew[j] = uy
-      uzArrayNew[j] = uz
-      sNewArray[j] = s
-      sCorNewArray[j] = s
-      mNewArray[j] = m
+      xNewArray[k] = x
+      yNewArray[k] = y
+      zNewArray[k] = z
+      uxArrayNew[k] = ux
+      uyArrayNew[k] = uy
+      uzArrayNew[k] = uz
+      sNewArray[k] = s
+      sCorNewArray[k] = s
+      mNewArray[k] = m
     else:
       # idfixed = 0 particles belong to the actual releae area
-      xNewArray[j] = xNew
-      yNewArray[j] = yNew
-      zNewArray[j] = zNew
-      uxArrayNew[j] = uxNew
-      uyArrayNew[j] = uyNew
-      uzArrayNew[j] = uzNew
-      sNewArray[j] = sNew
-      sCorNewArray[j] = sCorNew
-      mNewArray[j] = mNew
+      xNewArray[k] = xNew
+      yNewArray[k] = yNew
+      zNewArray[k] = zNew
+      uxArrayNew[k] = uxNew
+      uyArrayNew[k] = uyNew
+      uzArrayNew[k] = uzNew
+      sNewArray[k] = sNew
+      sCorNewArray[k] = sCorNew
+      mNewArray[k] = mNew
 
   particles['ux'] = np.asarray(uxArrayNew)
   particles['uy'] = np.asarray(uyArrayNew)
@@ -978,20 +1113,20 @@ def updateFieldsC(cfg, particles, dem, fields):
   # declare intermediate step variables
   cdef double[:] hBB = np.zeros((nPart))
   cdef double m, h, x, y, z, s, ux, uy, uz, nx, ny, nz, hbb, hLim, areaPart, travelAngle
-  cdef int j, i
+  cdef int k, j, i
   cdef int indx, indy
   # variables for interpolation
   cdef int Lx0, Ly0, iCell
   cdef double w[4]
 
-  for j in range(nPart):
-    x = xArray[j]
-    y = yArray[j]
-    ux = uxArray[j]
-    uy = uyArray[j]
-    uz = uzArray[j]
-    m = mass[j]
-    travelAngle = travelAngleArray[j]
+  for k in range(nPart):
+    x = xArray[k]
+    y = yArray[k]
+    ux = uxArray[k]
+    uy = uyArray[k]
+    uz = uzArray[k]
+    m = mass[k]
+    travelAngle = travelAngleArray[k]
     # find coordinates in normalized ref (origin (0,0) and cellsize 1)
     # find coordinates of the 4 nearest cornes on the raster
     # prepare for bilinear interpolation
@@ -1046,12 +1181,12 @@ def updateFieldsC(cfg, particles, dem, fields):
   fields['pta'] = np.asarray(PTA)
 
 
-  for j in range(nPart):
-    x = xArray[j]
-    y = yArray[j]
+  for k in range(nPart):
+    x = xArray[k]
+    y = yArray[k]
     Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, ncols, nrows, csz, interpOption)
     hbb = getScalar(Lx0, Ly0, w[0], w[1], w[2], w[3], FDBilinear)
-    hBB[j] = hbb
+    hBB[k] = hbb
 
   particles['h'] = np.asarray(hBB)
 
@@ -1094,7 +1229,7 @@ def getNeighborsC(particles, dem):
     cdef float cszNeighbourGrid = headerNeighbourGrid['cellsize']
     # get particle location
     cdef int nPart = particles['nPart']
-    cdef int j
+    cdef int k, j
     cdef double[:] xArray = particles['x']
     cdef double[:] yArray = particles['y']
 
@@ -1108,9 +1243,9 @@ def getNeighborsC(particles, dem):
     cdef int[:] inCellDEM = np.zeros(nPart).astype('intc')
     # Count number of particles in each SPH grid cell
     cdef int indx, indy, ic
-    for j in range(nPart):
-      indx = <int>math.round(xArray[j] / cszNeighbourGrid)
-      indy = <int>math.round(yArray[j] / cszNeighbourGrid)
+    for k in range(nPart):
+      indx = <int>math.round(xArray[k] / cszNeighbourGrid)
+      indy = <int>math.round(yArray[k] / cszNeighbourGrid)
       # get index of cell containing the particle
       ic = indx + nColsNeighbourGrid * indy
       indPartInCell[ic+1] = indPartInCell[ic+1] + 1
@@ -1119,16 +1254,16 @@ def getNeighborsC(particles, dem):
       indPartInCell2[j+1] = indPartInCell[j+1]
 
     # make the list of which particles are in which cell
-    for j in range(nPart):
-        indx = <int>math.round(xArray[j] / cszNeighbourGrid)
-        indy = <int>math.round(yArray[j] / cszNeighbourGrid)
+    for k in range(nPart):
+        indx = <int>math.round(xArray[k] / cszNeighbourGrid)
+        indy = <int>math.round(yArray[k] / cszNeighbourGrid)
         ic = indx + nColsNeighbourGrid * indy
-        partInCell[indPartInCell2[ic+1]-1] = j
+        partInCell[indPartInCell2[ic+1]-1] = k
         indPartInCell2[ic+1] = indPartInCell2[ic+1] - 1
-        indXDEM[j] = <int>math.round(xArray[j] / cszDEM)
-        indYDEM[j] = <int>math.round(yArray[j] / cszDEM)
+        indXDEM[k] = <int>math.round(xArray[k] / cszDEM)
+        indYDEM[k] = <int>math.round(yArray[k] / cszDEM)
         # get index of cell containing the particle
-        inCellDEM[j] = indXDEM[j] + nColsDEM * indYDEM[j]
+        inCellDEM[k] = indXDEM[k] + nColsDEM * indYDEM[k]
 
     particles['inCellDEM'] = np.asarray(inCellDEM)
     particles['indXDEM'] = np.asarray(indXDEM)
@@ -1245,6 +1380,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double facKernel = 10.0 / (math.pi * rKernel * rKernel * rKernel * rKernel * rKernel)
   cdef double dfacKernel = - 3.0 * facKernel
   # particle information
+  cdef double[:] gEff = particles['gEff']
   cdef double[:] mass = particles['m']
   cdef double[:] hArray = particles['h']
   cdef double[:] xArray = particles['x']
@@ -1253,6 +1389,9 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double[:] uxArray = particles['ux']
   cdef double[:] uyArray = particles['uy']
   cdef double[:] uzArray = particles['uz']
+  cdef double[:] uxDirArray = particles['uxDir']
+  cdef double[:] uyDirArray = particles['uyDir']
+  cdef double[:] uzDirArray = particles['uzDir']
   cdef int N = xArray.shape[0]
 
   # initialize variables and outputs
@@ -1306,25 +1445,17 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
         nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
         nx, ny, nz = normalize(nx, ny, nz)
-        # projection of gravity on normal vector
-        gravAcc3 = scalProd(nx, ny, nz, 0, 0, gravAcc)
+        # projection of gravity on normal vector or use the effective gravity (gravity + curvature acceleration part)
+        gravAcc3 = gEff[k] # scalProd(nx, ny, nz, 0, 0, gravAcc)
         if SPHoption > 2:
-            uMag = norm(ux, uy, uz)
-            if uMag < velMagMin:
-                ux = 1
-                uy = 0
-                uz = -(1*nx + 0*ny) / nz
-                ux, uy, uz = normalize(ux, uy, uz)
-                K1 = 1
-                K2 = 1
-            else:
-                ux, uy, uz = normalize(ux, uy, uz)
+            ux = uxDirArray[k]
+            uy = uyDirArray[k]
+            uz = uzDirArray[k]
+            uxOrtho, uyOrtho, uzOrtho = crossProd(nx, ny, nz, ux, uy, uz)
+            uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
 
-                uxOrtho, uyOrtho, uzOrtho = crossProd(nx, ny, nz, ux, uy, uz)
-                uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
-
-                g1 = nx/(nz)
-                g2 = ny/(nz)
+            g1 = nx/(nz)
+            g2 = ny/(nz)
 
     # check if we are on the bottom ot top row!!!
     lInd = -1
@@ -1425,10 +1556,14 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                       mdwdrr = ml * dwdr / r
                       G1 = mdwdrr * K1*r1
                       G2 = mdwdrr * K2*r2
+                      # compute the gradient in the local coord system so gradhX is in v1 and gradhÝ in v2
+                      gradhX = gradhX + G1
+                      gradhY = gradhY + G2
+                      gradhZ = gradhZ + 0
 
-                      gradhX = gradhX + ux*G1 + uxOrtho*G2
-                      gradhY = gradhY + uy*G1 + uyOrtho*G2
-                      gradhZ = gradhZ + (- g1*(ux*G1 + uxOrtho*G2) - g2*(uy*G1 + uyOrtho*G2))
+                      # gradhX = gradhX + ux*G1 + uxOrtho*G2
+                      # gradhY = gradhY + uy*G1 + uyOrtho*G2
+                      # gradhZ = gradhZ + (- g1*(ux*G1 + uxOrtho*G2) - g2*(uy*G1 + uyOrtho*G2))
 
 
     if grad == 1:
@@ -2184,17 +2319,17 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   cdef int j
   force = {}
 
-  for j in range(nPart):
-      m = mass[j]
-      x = xArray[j]
-      y = yArray[j]
-      z = zArray[j]
-      h = hArray[j]
-      ux = uxArray[j]
-      uy = uyArray[j]
-      uz = uzArray[j]
-      indCellX = indXDEM[j]
-      indCellY = indYDEM[j]
+  for k in range(nPart):
+      m = mass[k]
+      x = xArray[k]
+      y = yArray[k]
+      z = zArray[k]
+      h = hArray[k]
+      ux = uxArray[k]
+      uy = uyArray[k]
+      uz = uzArray[k]
+      indCellX = indXDEM[k]
+      indCellY = indYDEM[k]
 
       # deduce area
       areaPart = m / (h * rho)
@@ -2211,9 +2346,9 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
 
 
       # update velocity
-      uxArray[j] = ux
-      uyArray[j] = uy
-      uzArray[j] = uz
+      uxArray[k] = ux
+      uyArray[k] = uy
+      uzArray[k] = uz
 
   # save results
   force['dM'] = np.asarray(dM)
