@@ -45,7 +45,7 @@ simiSolCfg = pathlib.Path(avalancheDir, 'Inputs', 'simiSol_com1DFACfg.ini')
 outDirTest = pathlib.Path(avalancheDir, 'Outputs', 'ana1Tests')
 fU.makeADir(outDirTest)
 
-for sphKernelRadius in [5, 3]:
+for sphKernelRadius in [10, 8, 6, 5, 4, 3]:
     updater = ConfigUpdater()
     updater.read(simiSolCfg)
     updater['GENERAL']['sphKernelRadius'].value = sphKernelRadius

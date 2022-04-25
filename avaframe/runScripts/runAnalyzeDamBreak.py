@@ -54,16 +54,16 @@ simDF = damBreak.postProcessDamBreak(avalancheDir, cfgMain, cfg, simDF, solDam, 
 
 # make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
 fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'vhErrorL2',
-                          'aPPK', 'nPPK0', logScale=True, fit=False)
+                          'subgridMixingFactor', 'sphOption', logScale=True, fit=False)
 
 # make convergence plot
-outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'aPPK', 'nPPK0')
+outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'subgridMixingFactor', 'sphOption')
 
-# do some filtering for the presentation plot
-simDF = simDF[simDF['sphKernelRadius']==3]
-
-# make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
-# same as plotErrorConvergence but adds the points corresponding to different coloredBy values one after the others
-# and saves itermediate plots
-fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'hErrorL2',
-                          'aPPK', 'nPPK0', logScale=True, fit=True)
+# # do some filtering for the presentation plot
+# simDF = simDF[simDF['sphKernelRadius']==3]
+#
+# # make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
+# # same as plotErrorConvergence but adds the points corresponding to different coloredBy values one after the others
+# # and saves itermediate plots
+# fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['DAMBREAK'], 'nPart', 'hErrorL2',
+#                           'aPPK', 'nPPK0', logScale=True, fit=True)

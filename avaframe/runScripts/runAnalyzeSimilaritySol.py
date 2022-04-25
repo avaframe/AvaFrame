@@ -62,20 +62,23 @@ solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg, simDF, solSimi, outDirTest)
 
 
+simDF = simDF[simDF['sphOption']==3]
+simDF = simDF[simDF['subgridMixingFactor']==10]
+
 # make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
 fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'vhErrorL2',
-                          'aPPK', 'nPPK0', logScale=True, fit=False)
+                          'aPPK', 'sphOption', logScale=True, fit=True)
 
 # make convergence plot
-outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'sphKernelRadius', 'nPPK0')
-
-# do some filtering for the presentation plot
-simDF = simDF[simDF['sphKernelRadius']==3]
-
-# make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
-# same as plotErrorConvergence but adds the points corresponding to different coloredBy values one after the others
-# and saves itermediate plots
-fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
-                          'aPPK', 'nPPK0', logScale=True, fit=True)
-
-outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')
+outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'subgridMixingFactor', 'sphOption')
+#
+# # do some filtering for the presentation plot
+# simDF = simDF[simDF['sphKernelRadius']==3]
+#
+# # make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
+# # same as plotErrorConvergence but adds the points corresponding to different coloredBy values one after the others
+# # and saves itermediate plots
+# fig1, ax1 = outAna1Plots.plotPresentation(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'hErrorL2',
+#                           'aPPK', 'nPPK0', logScale=True, fit=True)
+#
+# outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'aPPK', 'nPPK0')

@@ -147,7 +147,7 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
-  cdef int distReproj = cfg.getint('distReproj')
+  cdef int reprojMethod = cfg.getint('reprojMethod')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
@@ -182,7 +182,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef int[:] indXDEM = particles['indXDEM']
   cdef int[:] indYDEM = particles['indYDEM']
   # initialize outputs
-  cdef double[:] Fnormal = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceX = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceY = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceZ = np.zeros(nPart, dtype=np.float64)
@@ -259,21 +258,30 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       xEnd = x + dt * ux
       yEnd = y + dt * uy
       zEnd = z + dt * uz
+
       # this point is not necessarily on the surface, project it on the surface
-      if distReproj:
-        # using a distance concervation method
+      if reprojMethod == 0:
+        # Project vertically on the dem
+        iCellEnd = getCells(xEnd, yEnd, ncols, nrows, csz)
+        if iCellEnd >= 0:
+          wEnd[0], wEnd[1], wEnd[2], wEnd[3] = getWeights(xEnd, yEnd, iCellEnd, csz, ncols, interpOption)
+          LxEnd0 = iCellEnd % ncols
+          LyEnd0 = iCellEnd / ncols
+      elif reprojMethod == 1:
+        # project trying to keep the travelled distance constant
         xEnd, yEnd, zEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = distConservProjectionIteratrive(
           x, y, z, ZDEM, nxArray, nyArray, nzArray, xEnd, yEnd, zEnd, csz, ncols, nrows, interpOption,
           reprojectionIterations, thresholdProjection)
-      else:
-        # using a normal projection method
+      elif reprojMethod == 2:
+        # project using samos method
         xEnd, yEnd, iCellEnd, LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3] = samosProjectionIteratrive(
           xEnd, yEnd, zEnd, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
-        if iCellEnd < 0:
-          # if not on the DEM take x, y as end point
-          LxEnd0 = Lx0
-          LyEnd0 = Ly0
-          wEnd = w
+
+      if iCellEnd < 0:
+        # if not on the DEM take x, y as end point
+        LxEnd0 = Lx0
+        LyEnd0 = Ly0
+        wEnd = w
 
       # get the normal at this location
       nxEnd, nyEnd, nzEnd = getVector(LxEnd0, LyEnd0, wEnd[0], wEnd[1], wEnd[2], wEnd[3], nxArray, nyArray, nzArray)
@@ -307,10 +315,6 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
       else:
         # only use gravity
         gEff[k] = -gravAccNorm
-
-      # ToDo: this is never used
-      if(effAccNorm < 0.0):
-          Fnormal[k] = m * effAccNorm
 
       # here either use the old samos method where forces are computed in the fixed cartesian coordinate system
       # or compute the forces in the local NCS (in this case, forceX is the froce in v1 direction,
@@ -645,7 +649,7 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef double rho = cfg.getfloat('rho')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
-  cdef int distReproj = cfg.getint('distReproj')
+  cdef int reprojMethod = cfg.getint('reprojMethod')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double inLocalCoordSys = cfg.getfloat('inLocalCoordSys')
@@ -715,6 +719,7 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef int Lx0, Ly0, LxNew0, LyNew0, iCell, iCellNew
   cdef double w[4]
   cdef double wNew[4]
+  cdef double errorU = 0
   # loop on particles
   for k in range(nPart):
     m = mass[k]
@@ -743,75 +748,17 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
     uMag = norm(ux, uy, uz)
 
     if inLocalCoordSys == 1:
-      # calling it new just not to change (nx, ny, nz) which needs to stay unnormalized
-      nxNew = nx
-      nyNew = ny
-      nzNew = nz
-      nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
-      uxDir = uxDirArray[k]
-      uyDir = uyDirArray[k]
-      uzDir = uzDirArray[k]
-      if uMag <= velMagMin:
-        # the particle was at rest, the direction vector is given by the forces
-        # first get our arbitrary coordinate system
-        uxOrtho, uyOrtho, uzOrtho = crossProd(nxNew, nyNew, nzNew, uxDir, uyDir, uzDir)
-        uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
-        # now get the driving force direction v1
-        uxDir = uxDir * ForceDriveX + uxOrtho * ForceDriveY
-        uyDir = uyDir * ForceDriveX + uyOrtho * ForceDriveY
-        uzDir = uzDir * ForceDriveX + uzOrtho * ForceDriveY
-        # normalize
-        uxDir, uyDir, uzDir = normalize(uxDir, uyDir, uzDir)
-        # recompute the ForceDrive components (now all in the v1 dir and nothing in 2)
-        # ForceDriveZ should be 0 here
-        ForceDriveX = norm(ForceDriveX, ForceDriveY, ForceDriveZ)
-        ForceDriveY = 0
-        ForceDriveZ = 0
-      else:
-        uxOrtho, uyOrtho, uzOrtho = crossProd(nxNew, nyNew, nzNew, uxDir, uyDir, uzDir)
-        uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
-
-      # we are here in the local coordinate system and want to solve the dif eq of motion on uMag
-      # ForceDriveX is here the force in the v1 direction (Fsph + Fg)
-      uMagNew = uMag + ForceDriveX * dt / m
-      # take friction force into account
-      if typeStop != 1:
-        # add 0 to the other velocity components (dummys)
-        uMagNew, _, _, dtStop = account4FrictionForce(uMagNew, 0, 0, m, dt, forceFrict[k], uMag, explicitFriction)
-      else:
-        dtStop = dt
-      # we have to convert the uMagNew back to cartesian coord system
-      if uMagNew > 0:
-        # only do this if the particle is flowing, otherwise velocity is 0 and we can not update the direction
-        # note that if uMag=0, the ForceDriveY = 0 so alpha2 = 0
-        alpha2 = ForceDriveY / (m * uMagNew)
-        # here too, if uMag=0, curvAcc=0
-        alpha3 = -curvAcc[k]
-        # now update the velocity direction
-        uxDir = uxDir + dt * (alpha2*uxOrtho + alpha3*nxNew)
-        uyDir = uyDir + dt * (alpha2*uyOrtho + alpha3*nyNew)
-        uzDir = uzDir + dt * (alpha2*uzOrtho + alpha3*nzNew)
-        # normalize
-        uxDir, uyDir, uzDir = normalize(uxDir, uyDir, uzDir)
-        uxNew = uMagNew * uxDir
-        uyNew = uMagNew * uyDir
-        uzNew = uMagNew * uzDir
-      else:
-        uxNew = 0
-        uyNew = 0
-        uzNew = 0
-    else:
-      # procede to time integration
+      # update velocity in NCS and project it back to cartesian
       # operator splitting
-      # estimate new velocity due to driving force
-      uxNew = ux + ForceDriveX * dt / m
-      uyNew = uy + ForceDriveY * dt / m
-      uzNew = uz + ForceDriveZ * dt / m
-      # take friction force into account
-      if typeStop != 1:
-        uxNew, uyNew, uzNew, dtStop = account4FrictionForce(uxNew, uyNew, uzNew, m, dt, forceFrict[k], uMag, explicitFriction)
-      else:
-        dtStop = dt
+      uxNew, uyNew, uzNew, dtStop = updateVelocityNCS(nx, ny, nz, uxDirArray[k], uyDirArray[k], uzDirArray[k],
+                                                      ForceDriveX, ForceDriveY, m, dt, uMag, forceFrict[k], curvAcc[k],
+                                                      typeStop, velMagMin)
+      reprojectionIterations = 0
+    else:
+      # update velocity directly in cartesian coord system
+      # operator splitting
+      uxNew, uyNew, uzNew, dtStop = updateVelocityCarte(ux, uy, uz, ForceDriveX, ForceDriveY, ForceDriveZ, m, dt,
+                                                        forceFrict[k], uMag, explicitFriction, typeStop)
 
     # update mass (already done un computeForceC)
     mNew = m
@@ -822,10 +769,22 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
     zNew = z + dtStop * 0.5 * (uz + uzNew)
     # make sure particle is on the mesh (normal reprojection!!)
 
-    if distReproj:
+    if reprojMethod == 0:
+      # Project vertically on the dem
+      iCellNew = getCells(xNew, yNew, ncols, nrows, csz)
+      if iCellNew >= 0:
+        wNew[0], wNew[1], wNew[2], wNew[3] = getWeights(xNew, yNew, iCellNew, csz, ncols, interpOption)
+        Lx0 = iCell % ncols
+        Ly0 = iCell / ncols
+        zNew = getScalar(Lx0, Ly0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
+
+    elif reprojMethod == 1:
+      # project trying to keep the travelled distance constant
       xNew, yNew, zNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = distConservProjectionIteratrive(
-        x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, ncols, nrows, interpOption, reprojectionIterations, thresholdProjection)
-    else:
+        x, y, z, ZDEM, nxArray, nyArray, nzArray, xNew, yNew, zNew, csz, ncols, nrows, interpOption,
+        reprojectionIterations, thresholdProjection)
+    elif reprojMethod == 2:
+      # project using samos method
       xNew, yNew, iCellNew, LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3] = samosProjectionIteratrive(
         xNew, yNew, zNew, ZDEM, nxArray, nyArray, nzArray, csz, ncols, nrows, interpOption, reprojectionIterations)
       zNew = getScalar(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], ZDEM)
@@ -843,39 +802,44 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
       keepParticle[k] = 0
       nRemove = nRemove + 1
 
-    # get normal at the new particle location
-    nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
-    # get average normal between old and new position
-    nx, ny, nz = normalize(nx+nxNew, ny+nyNew, nz+nzNew)
-    # normalize new normal
-    nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
     # compute the distance traveled by the particle
     dl = norm((xNew-x), (yNew-y), (zNew-z))
     lNew = l + dl
     # compute the horizontal distance traveled by the particle
     ds = norm((xNew-x), (yNew-y), 0)
     sNew = s + ds
+    # velocity magnitude
+    uMag = norm(uxNew, uyNew, uzNew)
+
+    if inLocalCoordSys == 0:
+      # get normal at the new particle location
+      nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
+      # get average normal between old and new position
+      nx, ny, nz = normalize(nx+nxNew, ny+nyNew, nz+nzNew)
+      # normalize new normal
+      nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
+      # normal component of the velocity
+      # uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
+      uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
+      # errorU = errorU + math.sqrt(uN*uN)/(uMag+velMagMin)
+      # remove normal component of the velocity
+      uxNew = uxNew - uN * nxNew
+      uyNew = uyNew - uN * nyNew
+      uzNew = uzNew - uN * nzNew
+
+      # velocity magnitude new
+      uMagNew = norm(uxNew, uyNew, uzNew)
+
+      if uMag > 0.0:
+        # ensure that velocitity magnitude stays the same also after reprojection onto terrain
+        uxNew = uxNew * uMag / (uMagNew + velMagMin)
+        uyNew = uyNew * uMag / (uMagNew + velMagMin)
+        uzNew = uzNew * uMag / (uMagNew + velMagMin)
+    else:
+      nx, ny, nz = normalize(nx, ny, nz)
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
     sCorNew = sCor + nz*dl
-    # velocity magnitude
-    uMag = norm(uxNew, uyNew, uzNew)
-    # normal component of the velocity
-    # uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
-    uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
-    # remove normal component of the velocity
-    uxNew = uxNew - uN * nxNew
-    uyNew = uyNew - uN * nyNew
-    uzNew = uzNew - uN * nzNew
-
-    # velocity magnitude new
-    uMagNew = norm(uxNew, uyNew, uzNew)
-
-    if uMag > 0.0:
-      # ensure that velocitity magnitude stays the same also after reprojection onto terrain
-      uxNew = uxNew * uMag / (uMagNew + velMagMin)
-      uyNew = uyNew * uMag / (uMagNew + velMagMin)
-      uzNew = uzNew * uMag / (uMagNew + velMagMin)
 
     # prepare for stopping criterion
     if uMag > uFlowingThreshold:
@@ -924,6 +888,8 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   log.debug('Entrained DFA mass: %s kg', np.asarray(massEntrained))
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew
+
+  # log.info('error on velocityNormal : %.4f %%' % (float(errorU)/float(nPart)*100))
 
   if typeStop == 1:
     # typeStop = 1 for initialisation step where particles are redistributed to reduce SPH force
@@ -980,11 +946,179 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-cpdef (double, double, double, double) account4FrictionForce(double ux, double uy,
-                                                            double uz, double m,
-                                                            double dt, double forceFrict,
-                                                            double uMag, int explicitFriction):
-  """ update velocity with friction force
+cdef (double, double, double, double) updateVelocityNCS(double nx, double ny, double nz, double uxDir, double uyDir,
+                                                         double uzDir, double ForceDriveX,double  ForceDriveY, double m,
+                                                         double dt, double uMag, double forceFrict, double curvAcc,
+                                                         int typeStop, double velMagMin):
+  """ update velocity (when velocity in given in the NCS)
+  First updates the magnitude and direction of the velocity in the NCS before reprojecting it in the cartesian one
+
+  Parameters
+  ----------
+  nx: float
+      x component of normal vector
+  ny: float
+      y component of normal vector
+  nz: float
+      z component of normal vector
+  uxDir: float
+      x component of v1 vector
+  uyDir: float
+      y component of v1 vector
+  uzDir: float
+      z component of v1 vector
+  ForceDriveX: float
+      driving force in v1 dir
+  ForceDriveY: float
+      driving force in v1 dir
+  m : float
+      particle area
+  dt : float
+      time step
+  forceFrict : float
+      friction force
+  curvAcc : float
+      curvature acceleration
+  uMag : float
+      particle speed (velocity magnitude)
+  typeStop: int
+    if 1 add friction, if 0 do not add friction
+  velMagMin: float
+      velocity threshold
+
+  Returns
+  -------
+  uxNew: float
+      x velocity
+  uyNew: float
+      y velocity
+  uzNew: float
+      z velocity
+  dtStop : float
+      time step (smaller then dt if the particle stops during this time step)
+  """
+  cdef double uxNew, uyNew, uzNew # , uxDirNew, uyDirNew, uzDirNew
+  cdef double nxNew, nyNew, nzNew, uxOrtho, uyOrtho, uzOrtho, dtStop, uMagNew, alpha2, alpha3
+  # calling it new just not to change (nx, ny, nz) which needs to stay unnormalized
+  nxNew = nx
+  nyNew = ny
+  nzNew = nz
+  nxNew, nyNew, nzNew = normalize(nx, ny, nz)
+  uxOrtho, uyOrtho, uzOrtho = crossProd(nxNew, nyNew, nzNew, uxDir, uyDir, uzDir)
+  uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+  if uMag < velMagMin:
+    # the particle was at rest, the direction vector is given by the forces
+    # first get our arbitrary coordinate system (uxDir, uyDir, uzDir , uxOrtho, uyOrtho, uzOrtho...)
+    # now get the driving force direction v1
+    uxDir = uxDir * ForceDriveX + uxOrtho * ForceDriveY
+    uyDir = uyDir * ForceDriveX + uyOrtho * ForceDriveY
+    uzDir = uzDir * ForceDriveX + uzOrtho * ForceDriveY
+    # normalize
+    uxDir, uyDir, uzDir = normalize(uxDir, uyDir, uzDir)
+    # recompute the ForceDrive components (now all in the v1 dir and nothing in 2)
+    # ForceDriveZ should be 0 here
+    ForceDriveX = norm(ForceDriveX, ForceDriveY, 0)
+    ForceDriveY = 0
+
+  # we are here in the local coordinate system and want to solve the dif eq of motion on uMag
+  # ForceDriveX is here the force in the v1 direction (Fsph + Fg)
+  uMagNew = uMag + ForceDriveX * dt / m
+  # take friction force into account
+  if typeStop != 1:
+    uMagNew, dtStop = account4FrictionForceNCS(uMagNew, m, dt, forceFrict, uMag)
+  else:
+    dtStop = dt
+
+  # we have to convert the uMagNew back to cartesian coord system
+  if uMagNew >= velMagMin:
+    # only do this if the particle is flowing, otherwise velocity is too small to update the direction
+    # note that if uMag=0, the ForceDriveY = 0 so alpha2 = 0
+    alpha2 = ForceDriveY / (m * uMagNew)
+    # here too, if uMag=0, curvAcc=0
+    alpha3 = -curvAcc
+    # now update the velocity direction
+    uxDir = uxDir + dt * (alpha2*uxOrtho + alpha3*nxNew)
+    uyDir = uyDir + dt * (alpha2*uyOrtho + alpha3*nyNew)
+    uzDir = uzDir + dt * (alpha2*uzOrtho + alpha3*nzNew)
+    # normalize
+    uxDir, uyDir, uzDir = normalize(uxDir, uyDir, uzDir)
+
+    # ForceDriveX = ForceDriveX  + dt * alpha2 * ForceDriveY
+  # now update the velocity
+  # if uMagNew >= velMagMin we use the update magnitude and direction
+  # if uMagNew < velMagMin we use the updated magnitude (which is very small)
+  # and the direction given by the driving force
+  uxNew = uMagNew * uxDir
+  uyNew = uMagNew * uyDir
+  uzNew = uMagNew * uzDir
+  return uxNew, uyNew, uzNew, dtStop
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef (double, double, double, double) updateVelocityCarte(double ux, double uy, double uz, double ForceDriveX,
+                                                           double ForceDriveY, double ForceDriveZ, double m, double dt,
+                                                           double forceFrict, double uMag, int explicitFriction,
+                                                           int typeStop):
+  """ update velocity (when velocity in given in the cartesian coordinate system)
+
+  Parameters
+  ----------
+  ux: float
+      x velocity
+  uy: float
+      y velocity
+  uz: float
+      z velocity
+  ForceDriveX: float
+      x driving force
+  ForceDriveY: float
+      y driving force
+  ForceDriveZ: float
+      z driving force
+  m : float
+      particle area
+  dt : float
+      time step
+  forceFrict : float
+      friction force (actually a force for the explicit method, force/vel for implicit)
+  uMag : float
+      particle speed (velocity magnitude)
+  explicitFriction: int
+    if 1 add resistance with an explicit method. Implicit otherwise
+  typeStop: int
+    if 1 add friction, if 0 do not add friction
+
+  Returns
+  -------
+  uxNew: float
+      x velocity
+  uyNew: float
+      y velocity
+  uzNew: float
+      z velocity
+  dtStop : float
+      time step (smaller then dt if the particle stops during this time step)
+  """
+  cdef double uxNew, uyNew, uzNew, dtStop
+  uxNew = ux + ForceDriveX * dt / m
+  uyNew = uy + ForceDriveY * dt / m
+  uzNew = uz + ForceDriveZ * dt / m
+  # take friction force into account
+  if typeStop != 1:
+    uxNew, uyNew, uzNew, dtStop = account4FrictionForce(uxNew, uyNew, uzNew, m, dt, forceFrict, uMag, explicitFriction)
+  else:
+    dtStop = dt
+  return uxNew, uyNew, uzNew, dtStop
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef (double, double, double, double) account4FrictionForce(double ux, double uy, double uz, double m, double dt,
+                                                             double forceFrict, double uMag, int explicitFriction):
+  """ update velocity with friction force (when velocity in given in the cartesian coordinate system)
 
   Parameters
   ----------
@@ -1022,7 +1156,7 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
     # explicite method
     uMagNew = norm(ux, uy, uz)
     # will friction force stop the particle
-    if uMagNew<dt*forceFrict/m:
+    if uMagNew<=dt*forceFrict/m:
       # stop the particle
       uxNew = 0
       uyNew = 0
@@ -1047,6 +1181,54 @@ cpdef (double, double, double, double) account4FrictionForce(double ux, double u
     dtStop = dt
 
   return uxNew, uyNew, uzNew, dtStop
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cdef (double, double) account4FrictionForceNCS(double uMagNew, double m, double dt, double forceFrict, double uMagOld):
+  """ update velocity with friction force (when velocity in given in the NCS coordinate system)
+
+  The explicit method is used
+
+  Parameters
+  ----------
+  uMagNew: float
+      velocity magnitude after adding the driving force
+  m : float
+      particle area
+  dt : float
+      time step
+  forceFrict : float
+      friction force (actually a force for the explicit method, force/vel for implicit)
+  uMagOld : float
+      velocity magnitude before adding the driving force
+
+  Returns
+  -------
+  uMagNew: float
+      velocity magnitude after adding the driving force and the friction force
+  dtStop : float
+      time step (smaller then dt if the particle stops during this time step)
+  """
+  cdef double dtStop
+
+  # explicite method
+  # will friction force stop the particle
+  if uMagNew<=dt*forceFrict/m:
+    # particle stops after
+    if uMagOld<=0:
+      dtStop = 0
+    else:
+      dtStop = m * uMagNew / (forceFrict)
+    # stop the particle
+    uMagNew = 0
+  else:
+    # add friction force in the opposite direction of the motion
+    uMagNew = uMagNew - forceFrict * dt / m
+    dtStop = dt
+
+  return uMagNew, dtStop
 
 
 @cython.boundscheck(False)
@@ -1363,6 +1545,7 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int viscOption = cfg.getint('viscOption')
+  cdef int inLocalCoordSys = cfg.getint('inLocalCoordSys')
 
   # grid normal raster information
   cdef double cszNormal = headerNormalGrid['cellsize']
@@ -1402,7 +1585,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
   cdef double K2 = 1
   cdef double gravAcc3
   cdef double gradhX, gradhY, gradhZ, uMag, nx, ny, nz, G1, G2, mdwdrr
-  cdef double g1, g2, g11, g12, g22, g33
   cdef double x, y, z, ux, uy, uz, vx, vy, wx, wy, uxOrtho, uyOrtho, uzOrtho
   cdef double dx, dy, dz, dux, duy, duz, dn, r, hr, dwdr, wKernel
   cdef int Lx0, Ly0, iCell
@@ -1424,9 +1606,6 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
     pikl = 0
     G1 = 0
     G2 = 0
-    m11 = 0
-    m12 = 0
-    m22 = 0
     x = xArray[k]
     y = yArray[k]
     z = zArray[k]
@@ -1440,22 +1619,19 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
     indx = <int>math.round(x / cszNeighbourGrid)
     indy = <int>math.round(y / cszNeighbourGrid)
 
-    if SPHoption > 1:
-        # get normal vector
-        Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
-        nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
-        nx, ny, nz = normalize(nx, ny, nz)
-        # projection of gravity on normal vector or use the effective gravity (gravity + curvature acceleration part)
-        gravAcc3 = gEff[k] # scalProd(nx, ny, nz, 0, 0, gravAcc)
-        if SPHoption > 2:
-            ux = uxDirArray[k]
-            uy = uyDirArray[k]
-            uz = uzDirArray[k]
-            uxOrtho, uyOrtho, uzOrtho = crossProd(nx, ny, nz, ux, uy, uz)
-            uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
+    # toDo: everything below is not necessarily needed for the sph computation...
+    # get normal vector
+    Lx0, Ly0, iCell, w[0], w[1], w[2], w[3] = getCellAndWeights(x, y, nColsNormal, nRowsNormal, cszNormal, interpOption)
+    nx, ny, nz = getVector(Lx0, Ly0, w[0], w[1], w[2], w[3], nxArray, nyArray, nzArray)
+    nx, ny, nz = normalize(nx, ny, nz)
+    # projection of gravity on normal vector or use the effective gravity (gravity + curvature acceleration part)
+    gravAcc3 = gEff[k] # scalProd(nx, ny, nz, 0, 0, gravAcc)
+    ux = uxDirArray[k]
+    uy = uyDirArray[k]
+    uz = uzDirArray[k]
+    uxOrtho, uyOrtho, uzOrtho = crossProd(nx, ny, nz, ux, uy, uz)
+    uxOrtho, uyOrtho, uzOrtho = normalize(uxOrtho, uyOrtho, uzOrtho)
 
-            g1 = nx/(nz)
-            g2 = ny/(nz)
 
     # check if we are on the bottom ot top row!!!
     lInd = -1
@@ -1552,14 +1728,12 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
                   if r < rKernel:
                       hr = rKernel - r
                       dwdr = dfacKernel * hr * hr
-                      ml = mass[l]
-                      mdwdrr = ml * dwdr / r
+                      mdwdrr = mass[l] * dwdr / r
                       G1 = mdwdrr * K1*r1
                       G2 = mdwdrr * K2*r2
                       # compute the gradient in the local coord system so gradhX is in v1 and gradhÝ in v2
                       gradhX = gradhX + G1
                       gradhY = gradhY + G2
-                      gradhZ = gradhZ + 0
 
                       # gradhX = gradhX + ux*G1 + uxOrtho*G2
                       # gradhY = gradhY + uy*G1 + uyOrtho*G2
@@ -1581,11 +1755,30 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
         GHX[k] = GHX[k] + gradhX * mk
         GHY[k] = GHY[k] + gradhY * mk
         GHZ[k] = GHZ[k] + gradhZ * mk
+
       else :
         GHX[k] = GHX[k] + gradhX*gravAcc3 / rho* mk
         GHY[k] = GHY[k] + gradhY*gravAcc3 / rho* mk
         GHZ[k] = GHZ[k] + gradhZ*gravAcc3 / rho* mk
 
+
+      if SPHoption <= 2:
+        if inLocalCoordSys == 1:
+          # we need to project the gradient in the NCS
+          r1 = scalProd(GHX[k], GHY[k], GHZ[k], ux, uy, uz)
+          r2 = scalProd(GHX[k], GHY[k], GHZ[k], uxOrtho, uyOrtho, uzOrtho)
+          GHX[k] = r1
+          GHY[k] = r2
+          # there would actually be here a v3 (normal component). Should we use it?
+          GHZ[k] = scalProd(GHX[k], GHY[k], GHZ[k], nx, ny, nz)
+      else:
+        if inLocalCoordSys == 0:
+          # we need to project the gradient from the NCS to the cartesian one
+          r1 = GHX[k]*ux + GHY[k]*uxOrtho
+          r2 = GHX[k]*uy + GHY[k]*uyOrtho
+          GHZ[k] = GHX[k]*uz + GHY[k]*uzOrtho
+          GHX[k] = r1
+          GHY[k] = r2
 
   return GHX, GHY, GHZ
 
@@ -2278,6 +2471,7 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   cdef int interpOption = cfg.getint('interpOption')
   cdef double rho = cfg.getfloat('rho')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactorIni')
+  cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double dt = dT
   cdef int nPart = particles['nPart']
   cdef double csz = dem['header']['cellsize']
@@ -2306,6 +2500,11 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   cdef double[:] forceZ = np.zeros(nPart, dtype=np.float64)
   cdef double[:] forceFrict = np.zeros(nPart, dtype=np.float64)
   cdef double[:] dM = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] uxDirArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] uyDirArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] uzDirArray = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] curvAcc = np.zeros(nPart, dtype=np.float64)
+  cdef double[:] gEff = np.zeros(nPart, dtype=np.float64)
 
   cdef int indCellX, indCellY
   cdef double areaPart, uMag, m, h
@@ -2349,6 +2548,7 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
       uxArray[k] = ux
       uyArray[k] = uy
       uzArray[k] = uz
+      gEff[k] = gravAcc * nz
 
   # save results
   force['dM'] = np.asarray(dM)
@@ -2360,5 +2560,10 @@ def computeIniMovement(cfg, particles, dem, dT, fields):
   particles['uy'] = np.asarray(uyArray)
   particles['uz'] = np.asarray(uzArray)
   particles['m'] = np.asarray(mass)
+  particles['gEff'] = np.asarray(gEff)
+  particles['curvAcc'] = np.asarray(curvAcc)
+  particles['uxDir'] = np.asarray(uxDirArray)
+  particles['uyDir'] = np.asarray(uyDirArray)
+  particles['uzDir'] = np.asarray(uzDirArray)
 
   return particles, force

@@ -67,7 +67,10 @@ def getIniPosition(cfg, particles, dem, fields, inputSimLines, relThField):
             cfg['GENERAL'].getint('sphOptionIni'), gradient=0)
 
         # update position as a result of SPH force and artifical viscosity
+        oldinLocalCoordSys = cfg['GENERAL']['inLocalCoordSys']
+        cfg['GENERAL']['inLocalCoordSys'] = '0'
         particles = DFAfunC.updatePositionC(cfg['GENERAL'], particles, dem, force, typeStop=1)
+        cfg['GENERAL']['inLocalCoordSys'] = oldinLocalCoordSys
 
         particlesList.append(particles.copy())
 

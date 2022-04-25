@@ -26,7 +26,7 @@ from avaframe.in3Utils import logUtils
 
 # +++++++++REQUIRED+++++++++++++
 # name of avalanche directory as list, multiple possible
-avaList = ['avaParabola']
+avaList = ['avaKot1', 'avaAlr1', 'avaParabola', 'avaHelix', 'avaBowl']
 # simType that should be compared (options: null, ent, entres, res) -
 # must also be set in the ini files for the computational modules
 simType = 'null'
@@ -41,7 +41,7 @@ aimecDiffLim = '5'
 aimecContourLevels = '1|3|5|10'
 aimecFlagMass = 'False'
 aimecComModules = 'com1DFAOrig|com1DFA'
-startOfRunoutAreaAngle = '10'
+startOfRunoutAreaAngle = '30'
 # ++++++++++++++++++++++++++++++
 
 # define simTypeString for finding simulations
@@ -54,7 +54,7 @@ logName = 'runCompareCom1DFAOrigvsCom1DFA'
 cfgMain = cfgUtils.getGeneralConfig()
 
 # Set directory for full standard test report
-outDirReport = pathlib.Path.cwd() / 'tests' / 'reportscom1DFAOrigvsCom1DFA'
+outDirReport = pathlib.Path.cwd() / 'tests' / 'reportscom1DFAOrigvsCom1DFA2'
 fU.makeADir(outDirReport)
 
 # Start writing markdown style report for standard tests

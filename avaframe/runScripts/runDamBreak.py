@@ -33,7 +33,7 @@ log.info('Current avalanche: %s', avalancheDir)
 damBreakCfg = pathlib.Path(avalancheDir, 'Inputs', 'damBreak_com1DFACfg.ini')
 
 # Overwriting the sphKernelRadius and meshCellSize from the ini file with the values specified in []
-for sphKernelRadius in [5, 3]:
+for sphKernelRadius in [8, 6, 5, 4, 3]:
     updater = ConfigUpdater()
     updater.read(damBreakCfg)
     updater['GENERAL']['sphKernelRadius'].value = sphKernelRadius
