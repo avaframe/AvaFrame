@@ -220,8 +220,10 @@ def readABinputs(avalancheDir, path2Line='', path2SplitPoint=''):
         path to directory of avalanche to analyze
     path2Line : pathlib path
         pathlib path to altrnative line
+        (if empty, reading the line from the input directory Inputs/LINES/*AB.shp)
     path2SplitPoint : pathlib path
         pathlib path to altrnative splitPoint
+        (if empty, reading the point from the input directory Inputs/LINES/*AB.shp)
 
     Returns
     -------

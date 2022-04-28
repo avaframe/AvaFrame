@@ -113,7 +113,6 @@ def writeABpostOut(pathDict, dem, splitPoint, eqParams, resAB, cfgMain, reportDi
     for i, name in enumerate(resAB):
         avaProfile = resAB[name]
         # Plot the whole profile with beta, alpha ... points and lines
-        # TODO: use savefigFormat
         plotPath(avaProfile, dem, splitPoint, flags)
         FileNamePlot_ext[i] = plotProfile(avaProfile, eqParams, saveOutPath)
         reportAB, FileNameWrite_ext[i] = WriteResults(avaProfile, eqParams, saveOutPath)
