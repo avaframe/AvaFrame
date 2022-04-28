@@ -471,12 +471,6 @@ def getSArea(rasterTransfo, dem):
     xcoord = np.append(xcoord, xcoord[-2, :].reshape(1, m), axis=0)
     ycoord = np.append(ycoord, ycoord[-2, :].reshape(1, m), axis=0)
     n, m = np.shape(xcoord)
-    # calculate dx and dy for each point in the l direction
-    # dxl = xcoord[0:n-1, 1:m]-xcoord[0:n-1, 0:m-1]
-    # dyl = ycoord[0:n-1, 1:m]-ycoord[0:n-1, 0:m-1]
-    # # deduce the distance in l direction
-    # Vl2 = (dxl*dxl + dyl*dyl)
-    # Vl = np.sqrt(Vl2)
     # calculate dx and dy for each point in the s direction
     dxs = xcoord[1:n, 0:m-1]-xcoord[0:n-1, 0:m-1]
     dys = ycoord[1:n, 0:m-1]-ycoord[0:n-1, 0:m-1]
@@ -510,12 +504,9 @@ def getSArea(rasterTransfo, dem):
     demAreaCoef = dem['areaRaster']/(demCellSize*demCellSize)
     # project on ney grid
     areaCoef, _ = geoTrans.projectOnGrid(rasterTransfo['gridx']*demCellSize, rasterTransfo['gridy']*demCellSize,
-                                            demAreaCoef, csz=demCellSize, xllc=xllcenter, yllc=yllcenter)
-    newRasterRealArea = area * areaCoef
-    # projected area
-    # rasterTransfo['rasterArea'] = area
+                                         demAreaCoef, csz=demCellSize, xllc=xllcenter, yllc=yllcenter)
     # real area
-    rasterTransfo['rasterArea'] = newRasterRealArea
+    rasterTransfo['rasterArea'] = area * areaCoef
     # get scoord
     ds = Vs[:, int(np.floor(m/2))-1]
     scoord = np.cumsum(ds)-ds[0]
