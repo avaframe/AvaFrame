@@ -144,10 +144,11 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
   cdef double gravAcc = cfg.getfloat('gravAcc')
   cdef double xsi = cfg.getfloat('xsi')
   cdef double curvAcceleration = cfg.getfloat('curvAcceleration')
+  cdef double curvAccTangent = cfg.getfloat('curvAccTangent')
   cdef double velMagMin = cfg.getfloat('velMagMin')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
-  cdef int reprojMethod = cfg.getint('reprojMethod')
+  cdef int reprojMethod = cfg.getint('reprojMethodForce')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double subgridMixingFactor = cfg.getfloat('subgridMixingFactor')
@@ -332,10 +333,10 @@ def computeForceC(cfg, particles, fields, dem, int frictType):
         else:
           curvAcc[k] = accNormCurv / uMag
       else:
-        # body forces (tangential component of acceleration of gravity)
-        gravAccTangX = - gravAccNorm * nxAvg
-        gravAccTangY = - gravAccNorm * nyAvg
-        gravAccTangZ = - gravAcc - gravAccNorm * nzAvg
+        # body forces (tangential component of acceleration of gravity with the term due to curvature)
+        gravAccTangX = - (gravAccNorm + curvAccTangent * accNormCurv) * nxAvg
+        gravAccTangY = - (gravAccNorm + curvAccTangent * accNormCurv) * nyAvg
+        gravAccTangZ = - gravAcc - (gravAccNorm + curvAccTangent * accNormCurv) * nzAvg
         # adding gravity force contribution
         forceX[k] = forceX[k] + gravAccTangX * m
         forceY[k] = forceY[k] + gravAccTangY * m
@@ -649,10 +650,11 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   cdef double rho = cfg.getfloat('rho')
   cdef int interpOption = cfg.getint('interpOption')
   cdef int explicitFriction = cfg.getint('explicitFriction')
-  cdef int reprojMethod = cfg.getint('reprojMethod')
+  cdef int reprojMethod = cfg.getint('reprojMethodPosition')
   cdef int reprojectionIterations = cfg.getint('reprojectionIterations')
   cdef double thresholdProjection = cfg.getfloat('thresholdProjection')
   cdef double inLocalCoordSys = cfg.getfloat('inLocalCoordSys')
+  cdef double centeredPosition = cfg.getfloat('centeredPosition')
   cdef double csz = dem['header']['cellsize']
   cdef int nrows = dem['header']['nrows']
   cdef int ncols = dem['header']['ncols']
@@ -753,7 +755,7 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
       uxNew, uyNew, uzNew, dtStop = updateVelocityNCS(nx, ny, nz, uxDirArray[k], uyDirArray[k], uzDirArray[k],
                                                       ForceDriveX, ForceDriveY, m, dt, uMag, forceFrict[k], curvAcc[k],
                                                       typeStop, velMagMin)
-      reprojectionIterations = 0
+      # reprojectionIterations = 0
     else:
       # update velocity directly in cartesian coord system
       # operator splitting
@@ -764,9 +766,14 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
     mNew = m
     massEntrained = massEntrained + dM[k]
     # update position
-    xNew = x + dtStop * 0.5 * (ux + uxNew)
-    yNew = y + dtStop * 0.5 * (uy + uyNew)
-    zNew = z + dtStop * 0.5 * (uz + uzNew)
+    if centeredPosition:
+      xNew = x + dtStop * 0.5 * (ux + uxNew)
+      yNew = y + dtStop * 0.5 * (uy + uyNew)
+      zNew = z + dtStop * 0.5 * (uz + uzNew)
+    else:
+      xNew = x + dtStop * uxNew
+      yNew = y + dtStop * uyNew
+      zNew = z + dtStop * uzNew
     # make sure particle is on the mesh (normal reprojection!!)
 
     if reprojMethod == 0:
@@ -811,32 +818,30 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
     # velocity magnitude
     uMag = norm(uxNew, uyNew, uzNew)
 
-    if inLocalCoordSys == 0:
-      # get normal at the new particle location
-      nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
-      # get average normal between old and new position
-      nx, ny, nz = normalize(nx+nxNew, ny+nyNew, nz+nzNew)
-      # normalize new normal
-      nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
-      # normal component of the velocity
-      # uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
-      uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
-      # errorU = errorU + math.sqrt(uN*uN)/(uMag+velMagMin)
-      # remove normal component of the velocity
-      uxNew = uxNew - uN * nxNew
-      uyNew = uyNew - uN * nyNew
-      uzNew = uzNew - uN * nzNew
+    # get normal at the new particle location
+    nxNew, nyNew, nzNew = getVector(LxNew0, LyNew0, wNew[0], wNew[1], wNew[2], wNew[3], nxArray, nyArray, nzArray)
+    # get average normal between old and new position
+    # nx, ny, nz = normalize(nx+nxNew, ny+nyNew, nz+nzNew)
+    # normalize new normal
+    nxNew, nyNew, nzNew = normalize(nxNew, nyNew, nzNew)
+    # normal component of the velocity
+    # uN = scalProd(uxNew, uyNew, uzNew, nxNew, nyNew, nzNew)
+    uN = uxNew*nxNew + uyNew*nyNew + uzNew*nzNew
+    errorU = errorU + math.sqrt(uN*uN)/(uMag+velMagMin)
+    # remove normal component of the velocity
+    uxNew = uxNew - uN * nxNew
+    uyNew = uyNew - uN * nyNew
+    uzNew = uzNew - uN * nzNew
 
-      # velocity magnitude new
-      uMagNew = norm(uxNew, uyNew, uzNew)
+    # velocity magnitude new
+    uMagNew = norm(uxNew, uyNew, uzNew)
 
-      if uMag > 0.0:
-        # ensure that velocitity magnitude stays the same also after reprojection onto terrain
-        uxNew = uxNew * uMag / (uMagNew + velMagMin)
-        uyNew = uyNew * uMag / (uMagNew + velMagMin)
-        uzNew = uzNew * uMag / (uMagNew + velMagMin)
-    else:
-      nx, ny, nz = normalize(nx, ny, nz)
+    if uMag > 0.0:
+      # ensure that velocitity magnitude stays the same also after reprojection onto terrain
+      uxNew = uxNew * uMag / (uMagNew + velMagMin)
+      uyNew = uyNew * uMag / (uMagNew + velMagMin)
+      uzNew = uzNew * uMag / (uMagNew + velMagMin)
+
     # compute the horizontal distance traveled by the particle (corrected with
     # the angle difference between the slope and the normal)
     sCorNew = sCor + nz*dl
@@ -889,7 +894,7 @@ def updatePositionC(cfg, particles, dem, force, int typeStop=0):
   particles['kineticEne'] = TotkinEneNew
   particles['potentialEne'] = TotpotEneNew
 
-  # log.info('error on velocityNormal : %.4f %%' % (float(errorU)/float(nPart)*100))
+  log.info('error on velocityNormal : %.4f %%' % (float(errorU)/float(nPart)*100))
 
   if typeStop == 1:
     # typeStop = 1 for initialisation step where particles are redistributed to reduce SPH force
@@ -1022,7 +1027,18 @@ cdef (double, double, double, double) updateVelocityNCS(double nx, double ny, do
 
   # we are here in the local coordinate system and want to solve the dif eq of motion on uMag
   # ForceDriveX is here the force in the v1 direction (Fsph + Fg)
+  # note that here the new velocity magnitude can be negative !!!!
   uMagNew = uMag + ForceDriveX * dt / m
+  if uMagNew < 0:
+    uMagNew = - uMagNew
+    uxDir = -uxDir
+    uyDir = -uyDir
+    uzDir = -uzDir
+    ForceDriveY = -ForceDriveY
+    uxOrtho = -uxOrtho
+    uyOrtho = -uyOrtho
+    uzOrtho = -uzOrtho
+
   # take friction force into account
   if typeStop != 1:
     uMagNew, dtStop = account4FrictionForceNCS(uMagNew, m, dt, forceFrict, uMag)
@@ -1156,7 +1172,7 @@ cdef (double, double, double, double) account4FrictionForce(double ux, double uy
     # explicite method
     uMagNew = norm(ux, uy, uz)
     # will friction force stop the particle
-    if uMagNew<=dt*forceFrict/m:
+    if uMagNew<dt*forceFrict/m:
       # stop the particle
       uxNew = 0
       uyNew = 0
@@ -1215,7 +1231,7 @@ cdef (double, double) account4FrictionForceNCS(double uMagNew, double m, double 
 
   # explicite method
   # will friction force stop the particle
-  if uMagNew<=dt*forceFrict/m:
+  if uMagNew<dt*forceFrict/m:
     # particle stops after
     if uMagOld<=0:
       dtStop = 0
@@ -1771,6 +1787,13 @@ def computeGradC(cfg, particles, headerNeighbourGrid, headerNormalGrid, double[:
           GHY[k] = r2
           # there would actually be here a v3 (normal component). Should we use it?
           GHZ[k] = scalProd(GHX[k], GHY[k], GHZ[k], nx, ny, nz)
+        # else:
+        #   # remove normal component
+        #   r1 = scalProd(GHX[k], GHY[k], GHZ[k], nx, ny, nz)
+        #   GHX[k] = GHX[k] - r1 * nx
+        #   GHY[k] = GHY[k] - r1 * ny
+        #   GHZ[k] = GHZ[k] - r1 * nz
+
       else:
         if inLocalCoordSys == 0:
           # we need to project the gradient from the NCS to the cartesian one

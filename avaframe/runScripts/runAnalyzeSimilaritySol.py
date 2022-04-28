@@ -62,15 +62,15 @@ solSimi = simiSolTest.mainSimilaritySol(simiSolCfg)
 simDF = simiSolTest.postProcessSimiSol(avalancheDir, cfgMain, cfg, simDF, solSimi, outDirTest)
 
 
-simDF = simDF[simDF['sphOption']==3]
-simDF = simDF[simDF['subgridMixingFactor']==10]
+# simDF = simDF[simDF['sphOption']==3]
+# simDF = simDF[simDF['subgridMixingFactor']==10]
 
 # make convergence plot (if you add the fiting lines, make sure only the coloredBy and sizedBy parameters are varied)
 fig1, ax1 = outAna1Plots.plotErrorConvergence(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'vhErrorL2',
-                          'aPPK', 'sphOption', logScale=True, fit=True)
+                          'inLocalCoordSys', 'sphOption', logScale=True, fit=False)
 
 # make convergence plot
-outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'subgridMixingFactor', 'sphOption')
+outAna1Plots.plotTimeCPULog(simDF, outDirTest, cfg['SIMISOL'], 'nPart', 'inLocalCoordSys', 'sphOption')
 #
 # # do some filtering for the presentation plot
 # simDF = simDF[simDF['sphKernelRadius']==3]
