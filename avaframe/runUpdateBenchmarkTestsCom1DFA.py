@@ -6,6 +6,7 @@
 # Load modules
 import time
 import pathlib
+import shutil
 from configupdater import ConfigUpdater
 
 # Local imports
@@ -24,7 +25,7 @@ from benchmarks import simParametersDict
 
 
 # +++++++++REQUIRED+++++++++++++
-# Which result types for comparison plots
+# Which result types do we want to save in the benchmarks
 outputVariable = ['ppr', 'pfd', 'pfv']
 # ++++++++++++++++++++++++++++++
 
@@ -39,19 +40,12 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
 # filter benchmarks to extract only desiered ones
 type = 'TAGS'
-valuesList = ['standardTest', 'test']
+valuesList = ['standardTest']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
-outDir = pathlib.Path.cwd() / 'tests' / 'reportsCom1DFA'
+outDir = pathlib.Path('..', 'benchmarks')
 fU.makeADir(outDir)
-
-# Start writing markdown style report for standard tests
-reportFile = outDir / 'updateBenchmarkTestsCom1DFA.md'
-with open(reportFile, 'w') as pfile:
-
-    # Write header
-    pfile.write('# Updated benchmarks Report \n')
 
 log = logUtils.initiateLogger(outDir, logName)
 log.info('The following benchmark tests will be updated ')
@@ -63,17 +57,22 @@ for test in testList:
 
     avaDir = test['AVADIR']
 
+    # ################################
     # Fetch benchmark test info
     # toDo: this needs to be changed. We want to read this from the json file
+    # once we updated the benchmarks, we can remove this and remove the fetchBenchParameters function
     benchDict = simParametersDict.fetchBenchParameters(test['NAME'])
+    test['Test Info'] = benchDict['Test Info']
+    test['simType'] = benchDict['simType']
+    # #####################################
+
     simNameRef = test['simNameRef']
     refDir = pathlib.Path('..', 'benchmarks', test['NAME'])
-    simType = benchDict['simType']
-    rel = benchDict['Simulation Parameters']['Release Area Scenario']
 
     # Clean input directory(ies) of old work and output files
     initProj.cleanSingleAvaDir(avaDir, keep=logName)
 
+    # RunCom1DFA
     # Load input parameters from configuration file for standard tests
     avaName = pathlib.Path(avaDir).name
     standardCfg = refDir / ('%s_com1DFACfg.ini' % test['AVANAME'])
@@ -82,8 +81,7 @@ for test in testList:
     # change the ini file to force particle initialization
     updater = ConfigUpdater()
     updater.read(standardCfg)
-    updater['GENERAL']['initialiseParticlesFromFile'].value = False
-
+    updater['GENERAL']['initialiseParticlesFromFile'].value = 'False'
     updater.update_file()
     # Set timing
     startTime = time.time()
@@ -96,44 +94,50 @@ for test in testList:
     # change the ini file to read particles from file
     updater = ConfigUpdater()
     updater.read(standardCfg)
-    updater['GENERAL']['initialiseParticlesFromFile'].value = True
+    updater['GENERAL']['initialiseParticlesFromFile'].value = 'True'
     updater['GENERAL']['particleFile'].value = '../benchmarks/' + test['NAME']
+    updater.update_file()
 
-    print(reportDictList[0])
-    print(test)
+    # Update benchmarks
+    # copy Simulation Parameters to benchmark dict
     rep = reportDictList[0]
     test['simName'] = rep['simName']
     test['Simulation Parameters'] = rep['Simulation Parameters']
-    test['SimNameRef'] = rep['Simulation Parameters']
-    tU.writeDesDicttoJson(test, 'testing', refDir)
-    # # Fetch correct reportDict according to simType and release area scenario
-    # # read all simulation configuration files and return dataFrame and write to csv
-    # parametersDict = {'simTypeActual': simType, 'releaseScenario': rel}
-    # simNameComp = cfgUtils.filterSims(avaDir, parametersDict)
-    # if len(simNameComp) > 1:
-    #     log.error('more than one matching simulation found for criteria! ')
-    # else:
-    #     simNameComp = simNameComp[0]
+    test['simNameRef'] = rep['simName']['name']
+    # get results file names (.asc) add them to the dictionary and copy the files to benchmark
+    # first clean the benchmark directory
+    ascFiles = list(refDir.glob('*.asc'))
+    for file in ascFiles:
+        if file.is_file():
+            file.unlink()
+    partDir = refDir / 'particles'
+    if partDir.is_dir():
+        shutil.rmtree(partDir)
 
-    # find report dictionary corresponding to comparison simulation
-    # reportD = {}
-    # for dict in reportDictList:
-    #     if simNameComp in dict['simName']['name']:
-    #         reportD = dict
-    # if reportD == {}:
-    #     message = 'No matching simulation found for reference simulation: %s' % simNameRef
-    #     log.error(message)
-    #     raise ValueError(message)
-    # log.info('Reference simulation %s and comparison simulation %s ' % (simNameRef, simNameComp))
-    #
-    # # set result files directory
-    # compDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
-    #
-    # # Add info on run time
-    # reportD['runTime'] = timeNeeded
-    #
-    # # add plot info to general report Dict
-    # reportD['Simulation Results'] = plotPaths
-    #
-    # # write report
-    # generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)
+    # set copy peak results
+    resDir = pathlib.Path(avaDir, 'Outputs', modName, 'peakFiles')
+    simName = rep['simName']['name']
+    files = []
+    for suf in outputVariable:
+        simFile = resDir / (simName + '_' + suf + '.asc')
+        if simFile.is_file():
+            # add file name to dict
+            files.append(simFile.stem)
+            # copy file to benchmark
+            destFile = refDir / (simName + '_' + suf + '.asc')
+            shutil.copy2(simFile, destFile)
+    test['FILES'] = files
+    # set copy particles
+    resDir = pathlib.Path(avaDir, 'Outputs', modName, 'particles')
+    simFile = sorted(list(resDir.glob('*.p')))[0]
+    if simFile.is_file():
+        # copy file to benchmark
+        destFile = refDir / 'particles'
+        destFile.mkdir()
+        simComponents = rep['simName']['name'].split('_')
+        destFile = destFile / (simComponents[0] + '_' + simComponents[1])
+        destFile.mkdir()
+        destFile = destFile / (simFile.name)
+        shutil.copy2(simFile, destFile)
+    # write the benchmark dict as jSon
+    tU.writeDesDicttoJson(test, test['NAME'], refDir)
