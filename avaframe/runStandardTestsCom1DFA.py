@@ -71,7 +71,14 @@ for test in testList:
     avaDir = test['AVADIR']
 
     # Fetch benchmark test info
+    # ################################
+    # Fetch benchmark test info
+    # toDo: this needs to be changed. We want to read this from the json file
+    # once we updated the benchmarks, we can remove this and remove the fetchBenchParameters function
     benchDict = simParametersDict.fetchBenchParameters(test['NAME'])
+    # should be replaced by
+    # benchDict = test
+    # #############################
     simNameRef = test['simNameRef']
     refDir = pathlib.Path('..', 'benchmarks', test['NAME'])
     simType = benchDict['simType']
