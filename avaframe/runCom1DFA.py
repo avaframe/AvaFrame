@@ -20,7 +20,7 @@ cfgMain = cfgUtils.getGeneralConfig()
 avalancheDir = cfgMain['MAIN']['avalancheDir']
 
 # Clean input directory of old work and output files from module
-initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=True)
+initProj.cleanModuleFiles(avalancheDir, com1DFA, deleteOutput=False)
 # Start logging
 log = logUtils.initiateLogger(avalancheDir, logName)
 log.info('MAIN SCRIPT')
