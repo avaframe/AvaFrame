@@ -57,7 +57,7 @@ def maincom3Hybrid(cfgMain, cfgHybrid):
         # update the com1DFA mu value
         updater = ConfigUpdater()
         updater.read(hybridModelDFACfg)
-        updater['GENERAL']['mu'].value = muArray[-1]
+        updater['GENERAL']['mu'].value = ('%.4f' % muArray[-1])
         updater.update_file()
 
         # Run dense flow with coulomb friction
