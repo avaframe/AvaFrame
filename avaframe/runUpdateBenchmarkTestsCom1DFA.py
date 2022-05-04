@@ -10,6 +10,7 @@ import shutil
 from configupdater import ConfigUpdater
 
 # Local imports
+from avaframe.version import getVersion
 from avaframe.com1DFA import com1DFA
 from avaframe.ana1Tests import testUtilities as tU
 from avaframe.log2Report import generateReport as gR
@@ -40,14 +41,16 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
 # filter benchmarks to extract only desiered ones
 type = 'TAGS'
-valuesList = ['standardTest']
+valuesList = ['standardTest', 'test']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
 outDir = pathlib.Path('..', 'benchmarks')
+log = logUtils.initiateLogger(outDir, logName)
 fU.makeADir(outDir)
 
-log = logUtils.initiateLogger(outDir, logName)
+version = getVersion()
+
 log.info('The following benchmark tests will be updated ')
 for test in testList:
     log.info('%s' % test['NAME'])
@@ -103,6 +106,9 @@ for test in testList:
     rep = reportDictList[0]
     test['simName'] = rep['simName']
     test['Simulation Parameters'] = rep['Simulation Parameters']
+    # here we need to reset the vesion because after updating the first bench mark,
+    # the version will be marked as dirty...
+    test['Simulation Parameters']['Program version'] = version
     test['simNameRef'] = rep['simName']['name']
     # get results file names (.asc) add them to the dictionary and copy the files to benchmark
     # first clean the benchmark directory

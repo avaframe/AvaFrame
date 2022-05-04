@@ -45,7 +45,7 @@ testDictList = tU.readAllBenchmarkDesDicts(info=False)
 
 # filter benchmarks for tag standardTest
 type = 'TAGS'
-valuesList = ['standardTest']
+valuesList = ['standardTest', 'test']
 testList = tU.filterBenchmarks(testDictList, type, valuesList, condition='and')
 
 # Set directory for full standard test report
@@ -65,6 +65,10 @@ log.info('The following benchmark tests will be fetched ')
 for test in testList:
     log.info('%s' % test['NAME'])
 
+# initialize cpuTime lists
+cpuTimeName = []
+cpuTimeBench = []
+cpuTimeSim = []
 # run Standard Tests sequentially
 for test in testList:
 
@@ -183,3 +187,15 @@ for test in testList:
 
     # write report
     generateCompareReport.writeCompareReport(reportFile, reportD, benchDict, avaName, cfgRep)
+
+    # append cpu Time to arrays for final display
+    cpuTimeName.append(test['NAME'])
+    cpuTimeBench.append(benchDict['Simulation Parameters']['Computation time [s]'])
+    cpuTimeSim.append(reportD['Simulation Parameters']['Computation time [s]'])
+
+# display cpuTime in log
+log.info('CPU performance comparison between benchmark results (version : %s) and curent branch (version : %s)' %
+         (benchDict['Simulation Parameters']['Program version'], reportD['Simulation Parameters']['Program version']))
+for name, cpuBench, cpuSim in zip(cpuTimeName, cpuTimeBench, cpuTimeSim):
+    log.info(('{:<30}'*3).format('Test Name', 'cpu time Benchmark [s]', 'cpu time curent version [s]'))
+    log.info(('{:<30s}'*3).format(name, cpuBench, cpuSim))
