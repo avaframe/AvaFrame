@@ -15,6 +15,7 @@ import matplotlib.path as mpltPath
 from itertools import product
 
 # Local imports
+from avaframe.version import getVersion
 import avaframe.in2Trans.shpConversion as shpConv
 import avaframe.in3Utils.geoTrans as geoTrans
 import avaframe.com1DFA.timeDiscretizations as tD
@@ -577,7 +578,7 @@ def createReportDict(avaDir, logName, relName, inputSimLines, cfgGen, reportArea
                 'time': {'type': 'time', 'time': dateTimeInfo},
                 'Simulation Parameters': {
                 'type': 'list',
-                'Program version': 'development',
+                'Program version': getVersion(),
                 'Parameter set': '',
                 'Release Area Scenario': relName,
                 'Entrainment': entInfo,
