@@ -145,5 +145,5 @@ for test in testList:
         destFile.mkdir()
         destFile = destFile / (simFile.name)
         shutil.copy2(simFile, destFile)
-    # write the benchmark dict as jSon
+    # write the benchmark dict as JSON
     tU.writeDesDicttoJson(test, test['NAME'], refDir)
