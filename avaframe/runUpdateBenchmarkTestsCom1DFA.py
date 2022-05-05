@@ -106,7 +106,7 @@ for test in testList:
     rep = reportDictList[0]
     test['simName'] = rep['simName']
     test['Simulation Parameters'] = rep['Simulation Parameters']
-    # here we need to reset the vesion because after updating the first bench mark,
+    # here we need to reset the version because after updating the first benchmark,
     # the version will be marked as dirty...
     test['Simulation Parameters']['Program version'] = version
     test['simNameRef'] = rep['simName']['name']
